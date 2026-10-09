@@ -1,0 +1,19 @@
+{
+  "event_id": "e59592472a330f3e24eeda910da0382056566eff48dce608e888e6c68a364bdc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_datalink_source_text_owner_oct9.py"
+    ],
+    "evidence": [
+      "The existing fifteen-filler text control extracts the now-typed consumers but still declares raw table aliases; migrate fixture records and retain all distinct source-owned literal, suffix and terraforming gate assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "datalink-text-owner-control-retarget-oct9",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:datalink-rules-table-owners-oct9"
+}

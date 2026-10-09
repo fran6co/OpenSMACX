@@ -1230,32 +1230,27 @@ char DatalinkAdvConceptFile[] = "ADVTITLES";
  *                        preq at +0x14. base.h's SecretProject (0x009A6514)
  *                        sits just past its end, which is what makes this a
  *                        measurement and not a guess.
- *   TechRowBase          0x0094F380 + 9 dwords, so the walk's `rec[-9]` name
- *                        read lands on the technology record's own head.
- *   SocialCategoryRow    0x0094B014, SocialCategories (faction.h,
- *                        0x0094B000) + 0x14 - the first category's first
- *                        choice, whose header id the walk reads at -5.
- *   SocialEffectRowBase  0x00946598, SocialEffects (faction.h, 0x00946580)
- *                        + 0x18, rows 0x68 apart, end 0x00946A10; the Null
- *                        row the filler skips is 0x009466D0.
+ *   Technology           0x0094F358, 89 records of 0x2C. The tech filler
+ *                        reads each record's own name and prerequisite pair.
+ *   SocialCategories     0x0094B000, four RulesSocialCategory records of
+ *                        0xD4. The original row starts at name[0] (+0x14);
+ *                        type is five dwords before it.
+ *   SocialEffects        0x00946580, eleven RulesSocialEffect records of
+ *                        0x68. The original name cursor is set2 (+0x18);
+ *                        the Null row is record 3.
  *   FactionRowBase       0x009472EC, records 0x167 bytes, ids 150001..150008.
  *   TerraformNameBase    0x0096C8AC, three dwords per entry.
- *   TerraformFlagBase    0x00691884, eight dwords per entry - the preq words
- *                        the walk reads at -1 and 0.
+ *   Terraforming         0x00691878, twenty records of 0x20. The original
+ *                        prerequisite cursor begins at preq_tech_sea (+0xC);
+ *                        land and sea gates are the named +8/+C fields.
  *   ProjectPrefixHidden  0x009BC054, clear while the "The " article is to be
  *                        stripped.
  *   the faction filler publishes each record's head dwords to general.h's
  *   GenderDefault / PluralityDefault pair before filing its name, and reads
  *   alpha.h's Language to decide whether the "The " article stays.
  */
-static const int *const TechRowBase = (const int *)0x0094F3A4;
-static const int *const SocialCategoryRow = (const int *)0x0094B014;
-static const char *const SocialEffectRowBase = (const char *)0x00946598;
-static const char *const SocialEffectNullRow = (const char *)0x009466D0;
-static const char *const SocialEffectRowEnd = (const char *)0x00946A10;
 static const char *const FactionRowBase = (const char *)0x009472EC;
 static const int *const TerraformNameBase = (const int *)0x0096C8AC;
-static const int *const TerraformFlagBase = (const int *)0x00691884;
 
 // The label each category's filler draws centred in the entry rectangle, read
 // out of the label blob the way dipedit.cpp reads it:
@@ -2655,11 +2650,15 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_tech() {
-    const int *record = TechRowBase;
+    // The native cursor is Technology[0].preq_tech_2, and each step is one
+    // complete RulesTechnology. Keep the encoded LPSTR name as an integer
+    // handle for StringTable, just as the original pointer-sized word does.
     for (int index = 0; index < 0x59; ++index) {
-        if (record[-1] >= -1 && record[0] >= -1) {
+        const RulesTechnology &record = Technology[index];
+        if (record.preq_tech_1 >= -1 && record.preq_tech_2 >= -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(record[-9]));
+            strcat(StringTemp, StringTable.get(static_cast<int>(
+                reinterpret_cast<intptr_t>(record.name))));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkTechIdSeparator);
                 char digits[0x54];
@@ -2668,7 +2667,6 @@ void Datalink::set_cat_tech() {
             }
             listBox_.item(StringTemp, index + 140000);
         }
-        record += 11;
     }
 
     RECT rect = category_rect_;
@@ -2821,14 +2819,18 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_social() {
-    const int *row = SocialCategoryRow;
-    for (int category = 120001; category < 120021; category += 5, row += 53) {
-        listBox_.item(StringTable.get(row[-5]), category - 1);
+    int category_index = 0;
+    for (int category = 120001; category < 120021;
+         category += 5, ++category_index) {
+        const RulesSocialCategory &row = SocialCategories[category_index];
+        listBox_.item(StringTable.get(static_cast<int>(
+            reinterpret_cast<intptr_t>(row.type))), category - 1);
 
         for (int choice = 0; choice < 4; ++choice) {
             int id = category + choice;
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(row[choice]));
+            strcat(StringTemp, StringTable.get(static_cast<int>(
+                reinterpret_cast<intptr_t>(row.name[choice]))));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkSocialIdSeparator);
                 char digits[80];
@@ -2875,11 +2877,10 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_effect() {
-    const char *row = SocialEffectRowBase;
-    for (int index = 0; row < SocialEffectRowEnd; row += 0x68, ++index) {
-        if (row != SocialEffectNullRow) {
+    for (int index = 0; index < MaxSocialEffectNum; ++index) {
+        if (index != 3) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, row);
+            strcat(StringTemp, SocialEffects[index].set2);
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkEffectIdSeparator);
                 char digits[80];
@@ -2987,10 +2988,11 @@ Status: Complete
 */
 void Datalink::set_cat_terraform() {
     const int *names = TerraformNameBase;
-    const int *flags = TerraformFlagBase;
+    int terraform_index = 0;
     for (int category = 90020; category - 90020 < 0x14;
-         flags += 8, names += 3, ++category) {
-        if (flags[-1] >= -1 && names[-1] != 0) {
+         names += 3, ++category, ++terraform_index) {
+        const RulesTerraforming &terraform = Terraforming[terraform_index];
+        if (terraform.preq_tech >= -1 && names[-1] != 0) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(names[-1]));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
@@ -3005,7 +3007,7 @@ void Datalink::set_cat_terraform() {
         if (category == 90036 || category == 90037) {
             continue;
         }
-        if (flags[0] < -1) {
+        if (terraform.preq_tech_sea < -1) {
             continue;
         }
 

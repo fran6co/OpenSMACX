@@ -33,6 +33,7 @@ extern const char BufferJoinSpace[];
 #include "lock.h"
 #include "alpha.h"
 #include "mapwin.h"   // MainInterfaceGlobal, at 0x007AE820
+#include "maininterface.h"
 #include "tutwin.h"
 #include "console.h"
 #include "interface_fonts.h"
@@ -667,25 +668,24 @@ void SocialWin::bubble_me_elmo2(char *text, int x, int y) {
  * SpaceText          0x00682820 - image .data reads " " (one space). technology
  *                    .cpp already names it in prose for the same reason.
  * PercentText        0x00682EA0 - image .data reads "%".
- * SocialEffectTable  0x0094B024 - indexed [category * 53 + row * 11 + effect]
- *                    with MaxSocialEffectNum == 11; a negative entry marks an
- *                    effect the faction cannot take.
- * SocialEffectRow    0x0094B2CC - indexed [effect] the same way, and the walk
- *                    in draw_psych_alloc steps it three entries at a time.
- * SocialEffectRowEnd SocialEffectRow + 3 - the walk's own end sentinel.
+ * SocialEffectTable  0x0094B024 - SocialCategories[0].model_effect[0]; the
+ *                    53-dword category stride and 11-dword model stride are
+ *                    the declared RulesSocialCategory / SocialEffect layout.
+ *                    A negative entry marks an unavailable effect.
+ * SocialEffectRow    0x0094B2CC - SocialCategories[3].model_effect[1].values_.
+ *                    Native draw_social walks only three entries here, ending
+ *                    at 0x0094B2D8; retain that bound rather than the row's
+ *                    full eleven-entry extent.
  * SocBaseIdProbe / SocBaseIdCompare - 0x009A6568 / 0x009A6574. Both are an int
  *                    base id read the same way: `>= 0`, then
  *                    Bases[id].faction_id_current compared to
  *                    the faction, i.e. "does this base belong to us". immune()
  *                    uses network_backbone and cloning_vats project locations.
- * SocialAllocTable   0x0096CD04 - per-faction, stride 2099 like the other
- *                    faction social arrays in SocialWin::exit; allocate_energy
- *                    reads the allocation it scales by 10 for display.
+ * SocialAllocTable   0x0096CD04 - PlayersData[0].se_alloc_psych; the following
+ *                    dword is se_alloc_labs, with the native 0x20CC PlayerData
+ *                    stride (2099 dwords).
  */
 static int *const StringUpperSlot = (int *)0x0066931C;
-static int *const SocialEffectTable = (int *)0x0094B024;
-static int *const SocialEffectRow = (int *)0x0094B2CC;
-static int *const SocialEffectRowEnd = (int *)0x0094B2D8;
 // Historical SocBaseIdProbe/Compare at 0x009A6568/0x009A6574 are
 // SecretProject.network_backbone/cloning_vats, not independent selectors.
 
@@ -756,20 +756,22 @@ void SocialWin::draw_social(int a1) {
         int countNonzero = 0;
         int countBig = 0;
         int idx = 0;
-        int *p = SocialEffectRow;
-        while (p != SocialEffectRowEnd) {
-            if (p != SocialEffectRow + 3) {
+        int *const social_effect_row =
+            SocialCategories[3].model_effect[1].values_;
+        int *p = social_effect_row;
+        while (p != social_effect_row + 3) {
+            if (p != social_effect_row + 3) {
                 bool skip = false;
                 if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
                     (unsigned int)Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current == (unsigned int)faction) {
                     if (a1 == 2) {
                         if (row == 1) {
-                            if (SocialEffectTable[a1 * 0x35 + idx + row * 0xb] < 0) {
+                            if (SocialCategories[a1].model_effect[row].values_[idx] < 0) {
                                 skip = true;
                             }
                         }
                     } else if (a1 == 3 && row == 3) {
-                        if (SocialEffectTable[a1 * 0x35 + idx + row * 0xb] < 0) {
+                        if (SocialCategories[a1].model_effect[row].values_[idx] < 0) {
                             skip = true;
                         }
                     }
@@ -783,7 +785,7 @@ void SocialWin::draw_social(int a1) {
                     }
                 }
                 if (!skip) {
-                    int v = SocialEffectTable[a1 * 0x35 + idx + row * 0xb];
+                    int v = SocialCategories[a1].model_effect[row].values_[idx];
                     int mag = (v < 0) ? -v : v;
                     countNonzero += (mag != 0) ? 1 : 0;
                     countBig += (v < 0 ? -v : v) > 1 ? 1 : 0;
@@ -803,20 +805,20 @@ void SocialWin::draw_social(int a1) {
         for (int phase = 0; phase < 3; phase++) {
             int drawX2 = drawX;
             int idx2 = 0;
-            int *p2 = SocialEffectRow;
-            while (p2 != SocialEffectRowEnd) {
-                if (p2 != SocialEffectRow + 3) {
+            int *p2 = social_effect_row;
+            while (p2 != social_effect_row + 3) {
+                if (p2 != social_effect_row + 3) {
                     bool skip = false;
                     if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
                         (unsigned int)Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current == (unsigned int)faction) {
                         if (a1 == 2) {
                             if (row == 1) {
-                                if (SocialEffectTable[a1 * 0x35 + idx2 + row * 0xb] < 0) {
+                                if (SocialCategories[a1].model_effect[row].values_[idx2] < 0) {
                                     skip = true;
                                 }
                             }
                         } else if (a1 == 3 && row == 3) {
-                            if (SocialEffectTable[a1 * 0x35 + idx2 + row * 0xb] < 0) {
+                            if (SocialCategories[a1].model_effect[row].values_[idx2] < 0) {
                                 skip = true;
                             }
                         }
@@ -830,7 +832,7 @@ void SocialWin::draw_social(int a1) {
                         }
                     }
                     if (!skip) {
-                        int v = SocialEffectTable[a1 * 0x35 + idx2 + row * 0xb];
+                        int v = SocialCategories[a1].model_effect[row].values_[idx2];
                         int mag = (v < 0) ? -v : v;
                         bool draw = false;
                         if (phase == 0) {
@@ -850,10 +852,10 @@ void SocialWin::draw_social(int a1) {
                                 drawX2 = drawX2 + 1 + bigSprite->source_width();
                             }
                             int *p2adj = p2;
-                            if (p2 > SocialEffectRow + 10) {
+                            if (p2 > social_effect_row + 10) {
                                 p2adj = p2 - 9;
                             }
-                            int smallIdx = (int)(p2adj - SocialEffectRow) + (v > 0 ? 1 : 0) + 1;
+                            int smallIdx = (int)(p2adj - social_effect_row) + (v > 0 ? 1 : 0) + 1;
                             Sprite *smallSprite = &effectIcons_[6 + smallIdx];
                             smallSprite->draw(bufOrNull, smallSprite->transparent_index(), drawX2, drawYBase, 1, 1);
                             drawX2 = drawX2 + 1 + effectIcons_[0].width();
@@ -873,7 +875,6 @@ void SocialWin::draw_social(int a1) {
 // Fixed-slot bindings carried from 004b0d50.cpp
 static int *const PercentText = (int *)0x00682EA0;
 static int *const InterfacePaletteIndex = (int *)0x007AEC74;
-static int *const SocialAllocTable = (int *)0x0096CD04;
 
 typedef char *(__cdecl *ItoaFn)(int, char *, int);
 
@@ -1507,7 +1508,6 @@ void SocialWin::UNK1(int soc_category, int soc_model) {
 */
 void SocialWin::maximize_effect(int effect_id) {
     effectMaximize_ = effect_id;
-    int cat_base = 0;
     ButtonGroup *group = buttonGroups_;
     for (int category = 0; category < 4; ++category) {
         int best_score = 0;
@@ -1516,16 +1516,17 @@ void SocialWin::maximize_effect(int effect_id) {
         int row = 0;
         do {
             int avail = society_avail(category, row, factionID_);
-            if (avail != 0 && best_score < SocialEffectTable[cat_base + model + effect_id]) {
+            if (avail != 0 && best_score <
+                SocialCategories[category].model_effect[row].values_[effect_id]) {
                 best_model = row;
-                best_score = SocialEffectTable[cat_base + model + effect_id];
+                best_score =
+                    SocialCategories[category].model_effect[row].values_[effect_id];
             }
             model += 0xb;
             ++row;
         } while (model < 0x2c);
         group->set(best_model + category * 4, 1);
         UNK1(category, best_model);
-        cat_base += 0x35;
         ++group;
     }
     redraw();
@@ -1622,7 +1623,8 @@ int SocialWin::immune(int soc_category, int soc_model, int effect_id) {
     if (faction_owns_base) {
         if ((soc_category == 2 && soc_model == 1)
             || (soc_category == 3 && soc_model == soc_category)) {
-            if (SocialEffectTable[soc_model * 11 + effect_id + soc_category * 53] < 0) {
+            if (SocialCategories[soc_category].model_effect[soc_model]
+                    .values_[effect_id] < 0) {
                 return 1;
             }
         }
@@ -1636,7 +1638,7 @@ int SocialWin::immune(int soc_category, int soc_model, int effect_id) {
     }
     if (faction_owns_base) {
         if (soc_category == 3 && soc_model == 1) {
-            if (SocialEffectRow[effect_id] < 0) {
+            if (SocialCategories[3].model_effect[1].values_[effect_id] < 0) {
                 return 1;
             }
         }
@@ -2122,7 +2124,8 @@ void SocialWin::draw_mouseover() {
                     Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current ==
                         static_cast<unsigned int>(self_faction)) {
                     if ((cat_idx == 2 && row_idx == 1) || (cat_idx == 3 && row_idx == 3)) {
-                        if (SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)] < 0) {
+                        if (SocialCategories[cat_idx].model_effect[row_idx]
+                                .values_[i] < 0) {
                             skip = true;
                         }
                     }
@@ -2131,13 +2134,13 @@ void SocialWin::draw_mouseover() {
                     Bases[GameDataStateStorage.fields_.secret_project_.network_backbone()].faction_id_current ==
                         static_cast<unsigned int>(self_faction) &&
                     cat_idx == 3 && row_idx == 1 &&
-                    SocialEffectRow[i] < 0) {
+                    SocialCategories[3].model_effect[1].values_[i] < 0) {
                     skip = true;
                 }
                 if (skip) {
                     continue;
                 }
-                v = SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)];
+                v = SocialCategories[cat_idx].model_effect[row_idx].values_[i];
             }
             if (v < 0) {
                 v = -v;
@@ -2163,7 +2166,8 @@ void SocialWin::draw_mouseover() {
                     Bases[GameDataStateStorage.fields_.secret_project_.cloning_vats()].faction_id_current ==
                         static_cast<unsigned int>(self_faction)) {
                     if ((cat_idx == 2 && row_idx == 1) || (cat_idx == 3 && row_idx == 3)) {
-                        if (SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)] < 0) {
+                        if (SocialCategories[cat_idx].model_effect[row_idx]
+                                .values_[i] < 0) {
                             continue;
                         }
                     }
@@ -2172,7 +2176,7 @@ void SocialWin::draw_mouseover() {
                     Bases[GameDataStateStorage.fields_.secret_project_.network_backbone()].faction_id_current ==
                         static_cast<unsigned int>(self_faction) &&
                     cat_idx == 3 && row_idx == 1 &&
-                    SocialEffectRow[i] < 0) {
+                    SocialCategories[3].model_effect[1].values_[i] < 0) {
                     continue;
                 }
 
@@ -2180,7 +2184,7 @@ void SocialWin::draw_mouseover() {
                 if (field_A2C_ == 0xFFFFFFFEU) {
                     v2 = PlayersData[self_faction].soc_effect_base.values_[i];
                 } else {
-                    v2 = SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)];
+                    v2 = SocialCategories[cat_idx].model_effect[row_idx].values_[i];
                 }
 
                 if (v2 == 0) {
@@ -2332,12 +2336,11 @@ void SocialWin::draw_info() {
         row_y -= font6_.line_advance();
     }
 
-    int faction_stride = factionID_ * 2099;
-    int imbalance = SocialAllocTable[faction_stride] - 10
-        + SocialAllocTable[faction_stride + 1] * 2;
+    int imbalance = PlayersData[factionID_].se_alloc_psych - 10
+        + PlayersData[factionID_].se_alloc_labs * 2;
     if (imbalance < 0) {
-        imbalance = (5 - SocialAllocTable[faction_stride + 1]) * 2
-            - SocialAllocTable[faction_stride];
+        imbalance = (5 - PlayersData[factionID_].se_alloc_labs) * 2
+            - PlayersData[factionID_].se_alloc_psych;
     }
     int model_shift = socEffect_.values_[SocialEffect::EFFICIENCY];
     imbalance /= 2;
@@ -2372,8 +2375,8 @@ scaled:
 
     if (imbalance != 0 && shift_side != 0) {
         StringTemp[0] = 0;
-        int reserve = SocialAllocTable[faction_stride + 1];
-        if ((10 - SocialAllocTable[faction_stride]) - reserve < reserve) {
+        int reserve = PlayersData[factionID_].se_alloc_labs;
+        if ((10 - PlayersData[factionID_].se_alloc_psych) - reserve < reserve) {
             int percent = shift_side * imbalance;
             int shown = (percent < 0) ? 0 : ((0x28 < percent) ? 0x28 : percent);
             reinterpret_cast<ItoaFn>(_itoa)(-shown, number, 10);
@@ -2381,7 +2384,7 @@ scaled:
             strcat(StringTemp, SocialWinPercentSpaceTextA);
             strcat(StringTemp, label_get(60));
 
-            if (10 - SocialAllocTable[faction_stride] != reserve) {
+            if (10 - PlayersData[factionID_].se_alloc_psych != reserve) {
                 strcat(StringTemp, SocialWinCommaSpaceText);
                 int percent2 = shift_side * imbalance * 2;
                 percent2 = (percent2 < 0) ? 0 : ((0x50 < percent2) ? 0x50 : percent2);
@@ -2444,17 +2447,14 @@ scaled:
 }
 
 
-// Fixed-slot bindings carried from the 004b2740 work, named from the roles
-// their reads fill.
-// SocialSubInterfaceSlot 0x007AE7F8 - the interface-slot object pointer the
-//                     interface-mode registry walks.
-// InterfaceScreenRect 0x007AF5B0 - the RECT battlewin.cpp binds; the panel
-//                     rectangle MainInterface keeps at front+0xD90.
-// The full panel rectangle copied into tutRect14_ is the now-typed
-// MainInterfaceGlobal.info_panel_frame_ at original 0x007AF5C0.
-// MainPanelLeft/Top/Right 0x007AF5A0/A4/A8 and SocialColumnTop/Right/Bottom
-//                     0x007AF5D4/D8/DC - the layout edges the tooltip and
-//                     column rectangles derive from.
+// Existing source owners behind the original storage used by init:
+// InterfaceRegistry[2] is the SubInterface pointer slot at 0x007AE7F8;
+// MainInterfaceGlobal.main_frame_rect() is the RECT at 0x007AF5A0, and its
+// right_frame_rect()/lower_frame_rect() own the RECTs at 0x007AF5B0/0x007AF5D0.
+// The info panel RECT at 0x007AF5C0 is copied through info_panel_frame().
+// TutorialWindow owns stage dword 0x008CC228 at field_53C0_. The tutorial
+// social RECT 0x008C5380 is TutWinSocWindow.tooltipSocEng_, not this init
+// receiver's rectangle; preserve that singleton relationship.
 // DefaultFontFace and DefaultLargeFontFace are the genuine source-owned
 // globals already bound to the original face-name slots at 0x00691B2C/30.
 // SocialWinPcxName is the writable source-owned array for original 0x006874B0,
@@ -2464,16 +2464,6 @@ scaled:
 // SocialWinTutorialName is the writable source-owned array for original
 // 0x006874BC, whose pinned initial bytes are "SOCWIN".
 // ConsoleGlobal is the modal parent passed to the original window init.
-static int *const SocialSubInterfaceSlot = (int *)0x007AE7F8;
-static RECT *const InterfaceScreenRect = (RECT *)0x007AF5B0;
-static int *const MainPanelLeft = (int *)0x007AF5A0;
-static int *const MainPanelTop = (int *)0x007AF5A4;
-static int *const MainPanelRight = (int *)0x007AF5A8;
-static int *const SocialColumnTop = (int *)0x007AF5D4;
-static int *const SocialColumnRight = (int *)0x007AF5D8;
-static int *const SocialColumnBottom = (int *)0x007AF5DC;
-static int *const TutorialStage = (int *)0x008CC228;
-static RECT *const TutorialSocRect = (RECT *)0x008C5380;
 int __cdecl pop_wait();  // 0x005398E0, defined in faction.cpp
 int __cdecl tut_check2(int veh_id);  // 0x004BA650, defined in tutwin.cpp
 
@@ -2515,8 +2505,7 @@ void SocialWin::init(int faction_id) {
     effectMaximize_ = 0xFFFFFFFFU;
     // The interface-mode registry's own state: the SubInterface base pointer
     // and its mode field.
-    *SocialSubInterfaceSlot = reinterpret_cast<int>(
-        static_cast<SubInterface *>(this));
+    InterfaceRegistry[2] = static_cast<SubInterface *>(this);
     field_4_ = 2;
     int a1 = faction_id;
     int positive = (a1 < 0) ? 1 : 0;
@@ -2581,10 +2570,10 @@ void SocialWin::init(int faction_id) {
     tooltipFactionPower_.bottom = 0x12d;
 
     {
-        int left = *MainPanelLeft + 7;
-        int bottom = *SocialColumnBottom - 7;
-        int top = *SocialColumnTop + 7;
-        int split = ((*SocialColumnRight - left) - 4) / 3 - 3 + left;
+        int left = MainInterfaceGlobal.main_frame_rect().left + 7;
+        int bottom = MainInterfaceGlobal.lower_frame_rect().bottom - 7;
+        int top = MainInterfaceGlobal.lower_frame_rect().top + 7;
+        int split = ((MainInterfaceGlobal.lower_frame_rect().right - left) - 4) / 3 - 3 + left;
         tooltipEconomy_.left = left;
         tooltipEconomy_.top = top;
         tooltipEconomy_.right = split;
@@ -2595,16 +2584,16 @@ void SocialWin::init(int faction_id) {
         tooltipPsych_.top = top;
         tooltipPsych_.right = split;
         tooltipPsych_.bottom = bottom;
-        int right = *SocialColumnRight - 7;
+        int right = MainInterfaceGlobal.lower_frame_rect().right - 7;
         tooltipLabs_.left = split + 3;
         tooltipLabs_.top = top;
         tooltipLabs_.right = right;
         tooltipLabs_.bottom = bottom;
-        tutRect9_.left = *MainPanelLeft + 4;
-        tutRect9_.top = *MainPanelTop + 4;
-        tutRect9_.right = *MainPanelRight - 4;
+        tutRect9_.left = MainInterfaceGlobal.main_frame_rect().left + 4;
+        tutRect9_.top = MainInterfaceGlobal.main_frame_rect().top + 4;
+        tutRect9_.right = MainInterfaceGlobal.main_frame_rect().right - 4;
         tutRect9_.bottom = tooltipLabs_.top - 6;
-        tooltipEffects_ = *InterfaceScreenRect;
+        tooltipEffects_ = MainInterfaceGlobal.right_frame_rect();
         tooltipEffects_.left += 4;
         tooltipEffects_.right -= 4;
         tooltipEffects_.top += 4;
@@ -2728,16 +2717,16 @@ void SocialWin::init(int faction_id) {
             &InterfaceBoxStyles[9]);
     }
     {
-        int stride = factionID_ * 2099;
-        int net_min = 10 - SocialAllocTable[stride + 1] - SocialAllocTable[stride];
+        int net_min = 10 - PlayersData[factionID_].se_alloc_labs
+            - PlayersData[factionID_].se_alloc_psych;
         economyAllocOrig_ = net_min;
         pendingAlloc_[0] = net_min;
         economyAlloc3_ = net_min;
-        int lo = SocialAllocTable[stride];
+        int lo = PlayersData[factionID_].se_alloc_psych;
         psychAllocOrig_ = lo;
         pendingAlloc_[1] = lo;
         psychAlloc3_ = lo;
-        int hi = SocialAllocTable[stride + 1];
+        int hi = PlayersData[factionID_].se_alloc_labs;
         labsAllocOrig_ = hi;
         pendingAlloc_[2] = hi;
         labsAlloc3_ = hi;
@@ -2895,10 +2884,10 @@ void SocialWin::init(int faction_id) {
     if (positive == 0) {
         if (tut_check2(8) != 0) {
             show(0);
-            *TutorialStage = 5;
+            TutorialWindow.set_tour_stage(5);
             int out_a = 0;
             int out_b = 0;
-            TutorialWindow.soc_rect(TutorialSocRect, &out_a, &out_b);
+            TutorialWindow.soc_rect(&TutWinSocWindow.tooltipSocEng_, &out_a, &out_b);
             MapWin *window = MapWinTable[0];
             GraphicWin *graphics = window != 0
                 ? static_cast<GraphicWin *>(window) : 0;

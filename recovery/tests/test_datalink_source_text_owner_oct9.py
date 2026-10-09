@@ -101,6 +101,24 @@ struct Datalink {
 };
 struct VehPrototype { unsigned flags; const char *veh_name; };
 VehPrototype VehPrototypes[100];
+struct RulesTechnology {
+  uint32_t flags; char *name; char id[8]; int padding;
+  int growth_value, tech_value, wealth_value, power_value;
+  int preq_tech_1, preq_tech_2;
+};
+const int MaxTechnologyNum=89; RulesTechnology Technology[MaxTechnologyNum];
+struct SocialEffect { int values_[11]; };
+struct RulesSocialCategory {
+  char *type; int preq_tech[4]; char *name[4]; SocialEffect model_effect[4];
+};
+const int MaxSocialCatNum=4; RulesSocialCategory SocialCategories[MaxSocialCatNum];
+struct RulesSocialEffect { char set1[24], set2[24], padding[56]; };
+const int MaxSocialEffectNum=11; RulesSocialEffect SocialEffects[MaxSocialEffectNum];
+struct RulesTerraforming {
+  char *name, *name_sea; int preq_tech, preq_tech_sea;
+  uint32_t bit, bit_incompatible; int rate; char *shortcuts;
+};
+const int MaxTerrainNum=20; RulesTerraforming Terraforming[MaxTerrainNum];
 struct RulesEntry { int preq_tech; int name; };
 struct RulesChassis { int preq_tech; int offsv_1_name; };
 RulesChassis Chassis[64]; int MaxChassisNum=1;
@@ -111,18 +129,11 @@ RulesEntry Armor[64]; int MaxArmorNum=1;
 RulesEntry Ability[64]; int MaxAbilityNum=1;
 struct RulesFacility { int preq_tech; int name; };
 RulesFacility Facility[64]; int FacilitySPStart=0;
-static int tech_storage[9+0x59*11]; const int *TechRowBase=tech_storage+9;
-static int social_storage[5+4*53]; const int *SocialCategoryRow=social_storage+5;
-static char effect_storage[0x68*4+32];
-const char *SocialEffectRowBase=effect_storage;
-const char *SocialEffectRowEnd=effect_storage+0x68*4;
-const char *SocialEffectNullRow=effect_storage+0x68*3;
 static char faction_storage[8*0x167+0x90];
 const char *FactionRowBase=faction_storage+4;
 int GenderDefault=0, PluralityDefault=0;
-static int name_storage[61], flag_storage[161];
+static int name_storage[61];
 const int *TerraformNameBase=name_storage+1;
-const int *TerraformFlagBase=flag_storage+1;
 struct Strings { char *get(int id) {
   static char value[80];
   if(id==5) std::strcpy(value,"The Lighthouse");
@@ -161,7 +172,10 @@ static void reset() {
   std::memset(Facility,0,sizeof(Facility));
   for(int i=0;i<64;++i) Facility[i].preq_tech=-2;
   std::memset(name_storage,0,sizeof(name_storage));
-  std::memset(flag_storage,0,sizeof(flag_storage));
+  std::memset(Technology,0,sizeof(Technology));
+  std::memset(SocialCategories,0,sizeof(SocialCategories));
+  std::memset(SocialEffects,0,sizeof(SocialEffects));
+  std::memset(Terraforming,0,sizeof(Terraforming));
   GameDataStateStorage.fields_.game_state_=0x1000u; Language=0;
 }
 int main() {
