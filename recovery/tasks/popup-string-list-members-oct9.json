@@ -1,0 +1,29 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "552b6e952d5e0af67c15d828d669e38fbb157faa",
+  "editable_files": [
+    "src/popup.cpp",
+    "recovery/tests/test_popup_string_list_members_oct9.py"
+  ],
+  "evidence": [
+    "Pinned405910..405B01 captures head4059D7 and current405A11; existing entry next/previous/payload at0C/10/08 and string payload text+4 identify typed access. Preserve head/current captures, counts/cursor update/call order and return/message callbacks. Pinned405A27..405A29 andPOP240525A..40525C read address4 when currentnonnull/headnull, and nullcurrent passesnull tostrcat. No guards or intentional bug fixes.",
+    "POP2405140..40559B existingPopup lifetime and cold65078F..650839 are unchanged; replace entry+10 with existing previous member. Normal string path uses real StringStructPayload::text. A typed null payload dereference may represent original malformed-state path only if fresh native code retains zero receiver then load+4; root private both-profile VC6 overlay confirmed this for on_exec. Do not claim deterministic UB result or whole-node allocation/lifetime from bounded consumers.",
+    "Authorize documented temporary local matching regressions only for justified typed member access in these2subjects after pinned/source review, fresh measurements, behavior controls and full build/link. Preserve every original span/claim/seedfinding and coldcleanup, no compiler-policy/baseline changes/demotions/autoacceptance. Native allPopupTU measurements and whole-source claim identity continuity required. New controls use actual source and safe intercepted malformed-pointer boundary or isolated bounded fault test; do not execute strcatnull or rely on arbitrary host UB as proof of game behavior."
+  ],
+  "intent": "Recover the two Popup string-list consumers through existing typed entry/payload members while preserving original list state, capture order, unchecked null-payload behavior and lifecycle.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4217104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4215104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-string-list-members-oct9"
+}
