@@ -44,6 +44,17 @@ struct VoxInstance {
     VOX_Vect *instance_vector_;
     VOX_Matrix *instance_matrix_;
 };
+struct CaviarSceneSetupDescriptorCandidate {
+    void *colour_buffer_;
+    void *depth_buffer_;
+    void *shadow_buffer_;
+    int32_t colour_width_;
+    int32_t height_;
+    int32_t colour_row_step_;
+    int32_t depth_row_step_;
+    int32_t shadow_row_step_;
+    uint8_t pixel_size_;
+};
 struct VoxSceneState {
     uint8_t lead_[4];
     int32_t instance_count_;
@@ -69,19 +80,13 @@ struct CaviarChannelBounds {
 };
 struct VoxCameraBlock { CaviarCamera camera_; CaviarChannelBounds bounds_; };
 struct VoxRenderRecord {
-    uintptr_t setup_block_;
+    CaviarSceneSetupDescriptorCandidate *setup_block_;
     int32_t draw_left_, draw_top_, draw_right_, draw_bottom_;
     int32_t draw_width_, draw_height_;
     int32_t clip_max_a_x_, clip_max_a_y_, clip_min_a_x_, clip_min_a_y_;
     int32_t clip_width_a_, clip_height_a_;
     int32_t clip_max_b_x_, clip_max_b_y_, clip_min_b_x_, clip_min_b_y_;
     int32_t clip_width_b_, clip_height_b_;
-};
-struct CaviarRenderSetupViewCandidate {
-    uint8_t bytes_00_[8];
-    uint32_t shadow_data_;
-    int32_t half_width_;
-    int32_t half_height_;
 };
 struct CaviarSceneProjectionScratchCandidate {
     VOX_Vect camera_offset_;
@@ -187,7 +192,7 @@ static void test_stage_scene_alias_and_shadow_z() {
     VOX_Matrix instance_matrix[1];
     uint8_t colour[1] = {0};
     CvrShape shape;
-    CaviarRenderSetupViewCandidate setup;
+    CaviarSceneSetupDescriptorCandidate setup;
     VoxRenderRecord record;
     VoxCameraBlock camera;
     memset(&context, 0, sizeof(context));
@@ -221,9 +226,9 @@ static void test_stage_scene_alias_and_shadow_z() {
     camera.bounds_.lead_[4] = 1.0f;
     camera.bounds_.values_[4] = 10;
     camera.bounds_.values_[5] = 10;
-    setup.shadow_data_ = 1;
-    setup.half_width_ = setup.half_height_ = 20;
-    record.setup_block_ = reinterpret_cast<uintptr_t>(&setup);
+    setup.shadow_buffer_ = reinterpret_cast<void *>(static_cast<uintptr_t>(1));
+    setup.colour_width_ = setup.height_ = 40;
+    record.setup_block_ = &setup;
     step.shape_ = &shape;
     CaviarProjectionShadowBasis.values[0][0] = 1.0f;
     CaviarProjectionShadowBasis.values[1][1] = 1.0f;
@@ -298,8 +303,8 @@ static void test_inline_shape_stride_sentinel_and_inclusive_edge() {
     context.state_.instances_ = &instance;
     context.state_.instance_steps_ = &step;
     context.state_.scale_ = 1.0f;
-    uint32_t descriptor[3] = {0, 0, 0};
-    record.setup_block_ = reinterpret_cast<uintptr_t>(descriptor);
+    CaviarSceneSetupDescriptorCandidate descriptor = {};
+    record.setup_block_ = &descriptor;
     CaviarSceneProjectionScratch.projected_scale_ = 1.0f;
     CaviarSceneProjectionScratch.view_scene_matrix_ = matrices[0];
     CaviarSceneProjectionScratch.camera_offset_.values[0] = 0.0f;

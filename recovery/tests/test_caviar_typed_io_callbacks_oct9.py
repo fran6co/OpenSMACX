@@ -107,17 +107,18 @@ def compile_actual_source(mutant=None):
     source = SOURCE.read_text()
     header = HEADER.read_text()
     callback_type = extract(header, "struct VoxIoCallbacks {") + ";"
+    shared_type = extract(header, "struct CaviarOutputMessageWindowCandidate {") + ";"
     assert "offsetof(VoxIoCallbacks, allocate) == 0" in source
     assert "offsetof(VoxIoCallbacks, release) == 4" in source
     assert "offsetof(VoxIoCallbacks, read) == 8" in source
     assert "offsetof(VoxIoCallbacks, write) == 12" in source
     assert "offsetof(VoxIoCallbacks, seek) == 16" in source
     assert "offsetof(VoxIoCallbacks, tell) == 20" in source
-    slots = "VoxIoCallbacks vox_callback_slots = {0};"
-    assert slots in source
+    shared_storage = (shared_type + "\n" +
+        "CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};\n")
     actual = [
         callback_type,
-        slots,
+        shared_storage,
         extract(source, "void *Caviar::vx_malloc("),
         extract(source, "void Caviar::vx_free("),
         extract(source, "int Caviar::vx_read("),
@@ -129,7 +130,7 @@ def compile_actual_source(mutant=None):
     ]
     assert "callbacks->allocate" in actual[8]
     assert "callbacks->tell" in actual[8]
-    assert "memcpy(&vox_callback_slots, callbacks, sizeof(vox_callback_slots))" in actual[8]
+    assert "memcpy(&CaviarOutputMessageWindow, callbacks, sizeof(*callbacks))" in actual[8]
     assert "while (total < count)" in actual[9]
     assert "if (read < 0)" in actual[9]
     assert "return _read(fd, buffer, count);" in actual[4]
@@ -139,23 +140,41 @@ def compile_actual_source(mutant=None):
     initializer_start = source.index("    VoxIoCallbacks vx_callbacks = {")
     initializer_end = source.index(";", initializer_start) + 1
     initializer = source[initializer_start:initializer_end].replace("vx_callbacks", "source")
-    read_slot_macro = next(line for line in source.splitlines()
-                           if line.startswith("#define vox_read_slot "))
+    slot_macros = "\n".join(
+        line for line in source.splitlines()
+        if line.startswith(("#define vox_alloc_slot ", "#define vox_free_slot ",
+                            "#define vox_read_slot ", "#define vox_write_slot ",
+                            "#define vox_seek_slot ", "#define vox_tell_slot "))
+    )
+    callback_types = "\n".join(
+        line for line in source.splitlines()
+        if line.startswith(("typedef void *(__cdecl *VoxAllocateCallback)",
+                            "typedef void (__cdecl *VoxReleaseCallback)",
+                            "typedef int (__cdecl *VoxReadCallback)",
+                            "typedef int (__cdecl *VoxWriteCallback)",
+                            "typedef long (__cdecl *VoxSeekCallback)",
+                            "typedef long (__cdecl *VoxTellCallback)"))
+    )
+    load_helper = ("template <typename Callback>\n" +
+                   extract(source, "static Callback vox_load_callback("))
 
     # Compile the real callback type and producer initializer; only unrelated
     # engine globals and the CRT functions are host stubs.
     assert "int (__cdecl *read)(int, char *, long);" in callback_type
     type_end = PREAMBLE.index("struct Caviar {")
     type_start = PREAMBLE.index("#define __cdecl") + len("#define __cdecl")
-    preamble = (PREAMBLE[:type_start] + "\n" + callback_type + "\n" + slots +
-                "\n" + read_slot_macro + "\n" + PREAMBLE[type_end:])
+    preamble = (PREAMBLE[:type_start] + "\n" + callback_type + "\n" + shared_storage +
+                "\n" + callback_types + "\n" + load_helper + "\n" +
+                slot_macros + "\n" + PREAMBLE[type_end:])
     if mutant == "wrong_read_slot":
-        read_slot_macro = read_slot_macro.replace("vox_callback_slots.read",
-                                                  "vox_callback_slots.write")
+        slot_macros = slot_macros.replace(
+            "offsetof(VoxIoCallbacks, read)",
+            "offsetof(VoxIoCallbacks, write)")
         preamble = preamble.replace(
             next(line for line in preamble.splitlines()
                  if line.startswith("#define vox_read_slot ")),
-            read_slot_macro,
+            next(line for line in slot_macros.splitlines()
+                 if line.startswith("#define vox_read_slot ")),
         )
     elif mutant == "drop_read_return":
         actual[4] = actual[4].replace("return _read(fd, buffer, count);", "return 0;")
@@ -165,7 +184,7 @@ def compile_actual_source(mutant=None):
     elif mutant == "copy_before_validation":
         actual[8] = actual[8].replace(
             "    if (callbacks->allocate != 0",
-            "    memcpy(&vox_callback_slots, callbacks, sizeof(vox_callback_slots));\n"
+            "    memcpy(&CaviarOutputMessageWindow, callbacks, sizeof(*callbacks));\n"
             "    if (callbacks->allocate != 0",
             1,
         )
@@ -183,24 +202,27 @@ int main() {
 
   ck(vox_init_callbacks(&source, 1) == 0);
   ck(cpu_detections == 1 && last_error == 0);
-  ck(vox_callback_slots.allocate(37) == &memory_result);
+  ck(vox_alloc_slot(37) == &memory_result);
   expected_buffer = buffer;
-  ck(vox_callback_slots.read(expected_fd, buffer, expected_count) == -2);
+  ck(vox_read_slot(expected_fd, buffer, expected_count) == -2);
   ck(call_count == 1);
-  ck(vox_callback_slots.write(expected_fd, buffer, expected_count) == 4);
-  ck(vox_callback_slots.seek(expected_fd, expected_offset, expected_origin) == -1);
-  ck(vox_callback_slots.tell(expected_fd) == 1234);
-  vox_callback_slots.release(0);
+  ck(vox_write_slot(expected_fd, buffer, expected_count) == 4);
+  ck(vox_seek_slot(expected_fd, expected_offset, expected_origin) == -1);
+  ck(vox_tell_slot(expected_fd) == 1234);
+  vox_free_slot(0);
   ck(free_count == 0);
-  vox_callback_slots.release(buffer);
+  vox_free_slot(buffer);
   ck(free_count == 1);
 
   // Null-table and incomplete-table rejection happen before replacing slots.
-  VoxIoCallbacks installed = vox_callback_slots;
+  VoxIoCallbacks installed;
+  memcpy(&installed, &CaviarOutputMessageWindow, sizeof(installed));
   ck(vox_init_callbacks(0, 1) == 1 && last_error == vox_msg_no_setup);
   VoxIoCallbacks incomplete = source; incomplete.seek = 0;
   ck(vox_init_callbacks(&incomplete, 1) == 1 && last_error == vox_msg_setup_empty);
-  ck(memcmp(&installed, &vox_callback_slots, sizeof(installed)) == 0);
+  VoxIoCallbacks after_rejection;
+  memcpy(&after_rejection, &CaviarOutputMessageWindow, sizeof(after_rejection));
+  ck(memcmp(&installed, &after_rejection, sizeof(installed)) == 0);
 
   // A zero-byte read is retried; only negative read reports the error.
   VoxIoCallbacks scripted = source; scripted.read = &scripted_read;
@@ -220,7 +242,9 @@ int main() {
   // A bad algorithm flag is reported only after the valid table is copied.
   CaviarVoxelAlgoFlag = 6;
   ck(vox_init_callbacks(&source, 1) == 1 && last_error == vox_msg_cpu_unsupported);
-  ck(memcmp(&source, &vox_callback_slots, sizeof(source)) == 0);
+  VoxIoCallbacks after_bad_flag;
+  memcpy(&after_bad_flag, &CaviarOutputMessageWindow, sizeof(after_bad_flag));
+  ck(memcmp(&source, &after_bad_flag, sizeof(source)) == 0);
   return 0;
 }
 '''

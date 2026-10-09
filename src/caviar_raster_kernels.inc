@@ -608,7 +608,7 @@ static const CaviarKernelStepRowCandidate *caviar_kernel_steps_candidate() {
 }
 
 static const int32_t *caviar_kernel_row_offsets_candidate() {
-    return static_cast<const int32_t *>(vox_active_ramp_b_);
+    return vox_active_ramp_b_;
 }
 
 static void caviar_prepare_part_source_bindings_candidate() {
@@ -626,7 +626,7 @@ static void caviar_prepare_part_source_bindings_candidate() {
 
 static void caviar_prepare_part_destination_bindings_candidate(int pixel_size) {
     caviar_prepared_kernel_bindings_candidate.depth_rows_ =
-        reinterpret_cast<uint16_t *const *>(vox_active_ramp_a_);
+        vox_active_ramp_a_;
     caviar_part_output_bases_candidate(
         pixel_size,
         caviar_prepared_kernel_bindings_candidate.colour_lane_base_,

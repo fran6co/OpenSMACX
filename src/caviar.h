@@ -25,6 +25,19 @@ struct VOX_Matrix {
   float values[3][3];
 };
 
+// The voxel engine installs these six callbacks as one contiguous table. The
+// table's storage is also the beginning of the renderer's projection/message
+// output view below; keep the two views in CaviarOutputMessageWindowCandidate
+// rather than inventing independent globals for their overlapping bytes.
+struct VoxIoCallbacks {
+  void *(__cdecl *allocate)(unsigned long);
+  void (__cdecl *release)(void *);
+  int (__cdecl *read)(int, char *, long);
+  int (__cdecl *write)(int, void *, long);
+  long (__cdecl *seek)(int, long, int);
+  long (__cdecl *tell)(int);
+};
+
 // Independently measured isometric projection views. The row structures keep
 // the observed 16-byte strides; the fourth word remains uninterpreted.
 struct CaviarProjectionCell {
@@ -82,9 +95,14 @@ union CaviarKernelProjectionWindowCandidate {
   uint32_t accessed_words_[0x80];
 };
 struct CaviarOutputMessageWindowCandidate {
-  uint32_t projection_words_[0x6B];       // +0x000..+0x1AB
-  uint8_t unidentified_gap_[0x24];        // +0x1AC..+0x1CF
-  char message_[0x100];                    // +0x1D0..+0x2CF
+  // Preserve the observed callback/projection byte overlap without accessing
+  // inactive union members: the prefix ends at the callback seek slot, then
+  // the projection's ordinary uint32_t array occupies the same object bytes.
+  // Callback getters copy pointer representations from this object via memcpy.
+  uint8_t callback_prefix_[offsetof(VoxIoCallbacks, seek)];
+  uint32_t projection_words_[0x6B];
+  uint8_t unidentified_gap_[0x24];
+  char message_[0x100];
 };
 #pragma pack(pop)
 static_assert(sizeof(CaviarKernelStepRowCandidate) == 0x10,
@@ -99,10 +117,21 @@ static_assert(offsetof(CaviarKernelProjectionWindowCandidate, current_views_) ==
               "projection child paths start at the parent base");
 static_assert(sizeof(CaviarKernelProjectionWindowCandidate) == 0x200,
               "projection owner covers the observed 0x200-byte access window");
-static_assert(sizeof(CaviarOutputMessageWindowCandidate) == 0x2D0,
-              "output/message owner covers only the observed corridor");
-static_assert(offsetof(CaviarOutputMessageWindowCandidate, message_) == 0x1D0,
-              "message buffer begins at the observed +0x1D0 offset");
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(CaviarOutputMessageWindowCandidate) == 0x2E0,
+              "Win32 shared callback/projection/message storage is 0x2e0 bytes");
+static_assert(offsetof(CaviarOutputMessageWindowCandidate, projection_words_) == 0x10,
+              "Win32 projection output begins over the seek slot");
+static_assert(offsetof(CaviarOutputMessageWindowCandidate, message_) == 0x1E0,
+              "Win32 message buffer remains at the observed 0x9C0D60 address");
+#else
+static_assert(sizeof(CaviarOutputMessageWindowCandidate) ==
+                  offsetof(VoxIoCallbacks, seek) + 0x2D0,
+              "host shared storage follows host callback pointer width");
+static_assert(offsetof(CaviarOutputMessageWindowCandidate, projection_words_) ==
+                  offsetof(VoxIoCallbacks, seek),
+              "host projection view follows host callback pointer width");
+#endif
 
 extern CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow;
 extern CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow;
@@ -476,17 +505,28 @@ struct CaviarData {
   friend class Caviar;
 };
 
-// The voxel engine consumes six distinct cdecl contracts. Keeping these as
-// function-pointer members preserves the original contiguous six-dword table
-// on Win32 without treating different callback types as interchangeable.
-struct VoxIoCallbacks {
-  void *(__cdecl *allocate)(unsigned long);
-  void (__cdecl *release)(void *);
-  int (__cdecl *read)(int, char *, long);
-  int (__cdecl *write)(int, void *, long);
-  long (__cdecl *seek)(int, long, int);
-  long (__cdecl *tell)(int);
+// A borrowed view into Caviar's scene setup storage. On the original 32-bit
+// target this is 0x24 bytes: 33 bytes are accessed, followed by three bytes of
+// padding. Host-width pointer members intentionally make host layout wider.
+// This is a source-owned view, not a recovered SDK class or allocation bound.
+struct CaviarSceneSetupDescriptorCandidate {
+  void *colour_buffer_;        // +0x00
+  void *depth_buffer_;         // +0x04
+  void *shadow_buffer_;        // +0x08
+  int32_t colour_width_;       // +0x0C
+  int32_t height_;             // +0x10; also ramp entry count
+  int32_t colour_row_step_;    // +0x14
+  int32_t depth_row_step_;     // +0x18
+  int32_t shadow_row_step_;    // +0x1C
+  uint8_t pixel_size_;         // +0x20
+  uint8_t padding_[3];         // +0x21..+0x23
 };
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(CaviarSceneSetupDescriptorCandidate) == 0x24,
+              "borrowed scene setup view spans 0x24 target bytes");
+static_assert(offsetof(CaviarSceneSetupDescriptorCandidate, pixel_size_) == 0x20,
+              "pixel-size discriminator remains at setup+0x20");
+#endif
 
 class SelectPartWin;
 
@@ -729,7 +769,7 @@ void __cdecl vox_fill_colour_table(void *table, unsigned long value,
 // superseded by the dispatch/callsite evidence for five nonvirtual callbacks.
 struct VoxRenderRecord {
     uint32_t setup_id_;        // 0x00 - first argument, stored verbatim
-    uint32_t setup_block_;     // 0x04 - the descriptor block
+    CaviarSceneSetupDescriptorCandidate *setup_block_; // 0x04 borrowed scene view
     uint32_t clip_max_a_x_;    // 0x08  0x7fff
     uint32_t clip_max_a_y_;    // 0x0C  0x7fff
     uint32_t clip_min_a_x_;    // 0x10  0xffff8001 (-32767)
@@ -759,17 +799,11 @@ struct VoxRenderRecord {
     typedef void (__cdecl *PostPartCallback)(VoxRenderRecord *, int32_t);
     ObjectStartCallback object_start_callback_; // +0x58
     PostPartCallback post_part_callback_;       // +0x5C
-    // 0x60, 0x64. The two per-entry ramp pointers. Created zeroed, then
-    // owned by sub_63f9b0: it frees each, reallocates count<<2 bytes (count
-    // = the descriptor's entry count at setup_block+0x10), and fills ramp A
-    // from *(setup_block+4) stepped *(setup_block+0x18)*2 per entry, ramp B
-    // as a running accumulation of *(setup_block+0x14) per entry.
-    // init_class fills the same slots with its own two 256-entry ramps.
-    // The two ramp tables: arrays of shade-row POINTERS (0x100 bytes per
-    // shade level - half a scene row). init_class fills them from the scene
-    // memory; sub_63f9b0 reallocates and refills them per descriptor count.
-    void **ramp_a_ptr_;  // 0x60
-    void **ramp_b_ptr_;  // 0x64
+    // +0x60 is an array of depth-row pointers. +0x64 is an array of signed
+    // relative row offsets, not pointers. sub_63f9b0 frees/reallocates both
+    // arrays and preserves the descriptor's live rereads while filling them.
+    uint16_t **ramp_a_ptr_; // 0x60 depth-row pointers
+    int32_t *ramp_b_ptr_;   // 0x64 relative row offsets
     uint8_t setup_size_code_;  // 0x68 - low byte of the last argument
     uint8_t field_69_[0x6C - 0x69];
     // Nonvirtual callback data in the original 0x6c..0x7f record tail.
@@ -791,6 +825,7 @@ struct VoxRenderRecord {
     SetupCallback setup_callback_;            // +0x7c
 };
 
+#if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(VoxRenderRecord) == 0x80,
               "renderer record must be the 0x80 bytes the engine allocates");
 static_assert(offsetof(VoxRenderRecord, colour_table_) == 0x50,
@@ -799,9 +834,11 @@ static_assert(offsetof(VoxRenderRecord, object_start_callback_) == 0x58,
               "the six-argument callback slot is at +0x58");
 static_assert(offsetof(VoxRenderRecord, post_part_callback_) == 0x5C,
               "the post-part callback slot is at +0x5C");
+#endif
 
-VoxRenderRecord *__cdecl vox_create_record(int a1, void *a2, void *a3, void *a4,
-                                        int a5);
+VoxRenderRecord *__cdecl vox_create_record(
+    int setup_id, void *setup_data, void *shadow_data,
+    CaviarSceneSetupDescriptorCandidate *setup_block, int size_code);
 
 // 0x0063A6F0, the engine's camera transform - homed in caviar.cpp. Takes the
 // renderer's own state block (Caviar::scene_state_, which is what the image's

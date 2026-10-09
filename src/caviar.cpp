@@ -957,8 +957,8 @@ void *vox_active_colour_table_ = 0;  // 0x009BE6BC
 
 // 0x009C0A18, 0x009C082C, 0x009C0A1C. The record's two ramp tables and its
 // pixel-size code, copied to where the per-part walkers read them.
-void *vox_active_ramp_a_ = 0;   // 0x009C0A18
-void *vox_active_ramp_b_ = 0;   // 0x009C082C
+uint16_t **vox_active_ramp_a_ = 0; // 0x009C0A18
+const int32_t *vox_active_ramp_b_ = 0; // 0x009C082C
 uint8_t vox_active_size_code_ = 0;  // 0x009C0A1C
 
 
@@ -978,16 +978,10 @@ struct CaviarSceneRecord {
   uint32_t field_04_;      // 0x9BB43C, zeroed on success
   uint32_t field_08_;      // 0x9BB440, zeroed on success
   uint32_t field_0C_;      // 0x9BB444, zeroed on success
-  void *buffer_a_bits_;    // 0x9BB448
-  void *scene_memory_;     // 0x9BB44C
-  void *buffer_b_bits_;    // 0x9BB450
-  uint32_t width_a_;       // 0x9BB454
-  uint32_t height_a_;      // 0x9BB458
-  void *record_bits_;      // 0x9BB45C
-  uint32_t width_b_;       // 0x9BB460
-  void *record_owner_;     // 0x9BB464
-  uint8_t record_flag_;    // 0x9BB468
-  uint8_t pad_[0x38 - 0x31];
+  CaviarSceneSetupDescriptorCandidate setup_; // 0x9BB448, borrowed by the record
+#if defined(_M_IX86) || defined(__i386__)
+  uint8_t setup_to_renderer_gap_[4]; // 0x9BB46C..0x9BB46F
+#endif
   // 0x9BB470. The renderer object the engine's per-object callbacks dispatch
   // through: object_start's own body opens `mov ecx, [0x9bb470]` rather than
   // using the receiver it was passed. Nothing recovered writes this slot, so
@@ -998,6 +992,14 @@ struct CaviarSceneRecord {
   const void *render_argument_;
   VoxRenderRecord *created_;  // 0x9BB478
 };
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(offsetof(CaviarSceneRecord, setup_) == 0x10,
+              "the borrowed setup view begins at scene+0x10");
+static_assert(offsetof(CaviarSceneRecord, renderer_) == 0x38,
+              "renderer storage remains at scene+0x38");
+static_assert(offsetof(CaviarSceneRecord, created_) == 0x40,
+              "created record remains at scene+0x40");
+#endif
 
 CaviarSceneRecord CaviarScene;  // 0x009BB438
 
@@ -1146,19 +1148,19 @@ int Caviar::init_class() {
     vox_fill_colour_table(CaviarSceneMemory, 0xffff, 0x10000);
 
     // The descriptor block, in the image's store order.
-    CaviarScene.scene_memory_ = CaviarSceneMemory;
-    CaviarScene.record_bits_ = (void *)CaviarSceneBufferA.stride_;
-    CaviarScene.buffer_a_bits_ = (void *)CaviarSceneBufferA.dib_bits_;
-    CaviarScene.width_a_ = 0x100;
-    CaviarScene.height_a_ = 0x100;
-    CaviarScene.record_flag_ = 1;
-    CaviarScene.buffer_b_bits_ = (void *)CaviarSceneBufferB.dib_bits_;
-    CaviarScene.record_owner_ = (void *)CaviarSceneBufferB.stride_;
-    CaviarScene.width_b_ = 0x100;
+    CaviarScene.setup_.depth_buffer_ = CaviarSceneMemory;
+    CaviarScene.setup_.colour_row_step_ = CaviarSceneBufferA.stride_;
+    CaviarScene.setup_.colour_buffer_ = CaviarSceneBufferA.dib_bits_;
+    CaviarScene.setup_.colour_width_ = 0x100;
+    CaviarScene.setup_.height_ = 0x100;
+    CaviarScene.setup_.pixel_size_ = 1;
+    CaviarScene.setup_.shadow_buffer_ = CaviarSceneBufferB.dib_bits_;
+    CaviarScene.setup_.shadow_row_step_ = CaviarSceneBufferB.stride_;
+    CaviarScene.setup_.depth_row_step_ = 0x100;
 
     CaviarScene.created_ = vox_create_record(
         0, CaviarColourSource, CaviarColourSource,
-        (void *)&CaviarScene.buffer_a_bits_, 0x80);
+        &CaviarScene.setup_, 0x80);
     if (CaviarScene.created_ == 0) {
         return 0x17;
     }
@@ -1180,13 +1182,13 @@ int Caviar::init_class() {
     // of the scene memory - half a scene row per shade level, the engine's
     // own ramp granularity. Table B holds the same rows ADDRESSED FROM
     // ZERO; the engine adds the scene base when it renders.
-    void **const ramp_a = record->ramp_a_ptr_;
-    void **const ramp_b = record->ramp_b_ptr_;
-    uint8_t *shade_row = reinterpret_cast<uint8_t *>(CaviarSceneMemory);
+    uint16_t **const ramp_a = record->ramp_a_ptr_;
+    int32_t *const ramp_b = record->ramp_b_ptr_;
+    uint16_t *shade_row = reinterpret_cast<uint16_t *>(CaviarSceneMemory);
     for (int index = 0; index < 0x100; ++index) {
         ramp_a[index] = shade_row;
-        shade_row += 0x100;
-        ramp_b[index] = reinterpret_cast<void *>(index * 0x100);
+        shade_row += 0x80;
+        ramp_b[index] = index * 0x100;
     }
 
     CaviarViewportState[0] = 0;
@@ -1314,17 +1316,10 @@ namespace {
 
 // The six typed vx_* IO callback slots installed at 0x009C0B80..0x009C0B94,
 // ordered alloc/free/read/write/seek/tell in the original contiguous span.
-// Historical compiler notes below preserve the earlier array experiment.
-// Ownership caveat: this span overlaps the existing projection_words_ binding
-// at 0x009C0B90 (the seek/tell slots). The shared-storage alias and lifetime
-// remain unresolved; neither interpretation proves simultaneous independent
-// globals. Keep this callback storage separate and provisional, with no
-// callback-object binding, until the overlap is independently resolved.
-// The image's .data holds them at
-// 0x009C0B80..0x009C0B94 and the engine calls through the memory operand
-// (`call dword ptr [0x9C0B80]`); the typed object remains six contiguous
-// function pointers, and the installer copies its complete Win32 24-byte span.
-VoxIoCallbacks vox_callback_slots = {0};
+// Projection output starts at the seek-slot offset and the first output word
+// overwrites those bytes; the per-row pattern does not touch tell. The
+// callback representations are loaded by memcpy from the shared object's
+// byte representation, while projection words remain ordinary named fields.
 #if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(VoxIoCallbacks) == 24,
               "voxel callback table must remain six contiguous Win32 dwords");
@@ -1335,11 +1330,38 @@ static_assert(offsetof(VoxIoCallbacks, allocate) == 0 &&
               offsetof(VoxIoCallbacks, seek) == 16 &&
               offsetof(VoxIoCallbacks, tell) == 20,
               "voxel callback order must match the original table");
+#else
+static_assert(offsetof(VoxIoCallbacks, allocate) == 0 &&
+              offsetof(VoxIoCallbacks, release) == sizeof(void *) &&
+              offsetof(VoxIoCallbacks, read) == 2 * sizeof(void *) &&
+              offsetof(VoxIoCallbacks, write) == 3 * sizeof(void *) &&
+              offsetof(VoxIoCallbacks, seek) == 4 * sizeof(void *) &&
+              offsetof(VoxIoCallbacks, tell) == 5 * sizeof(void *),
+              "host callback view follows host pointer width");
 #endif
-#define vox_alloc_slot (vox_callback_slots.allocate)
-#define vox_free_slot (vox_callback_slots.release)
-#define vox_read_slot (vox_callback_slots.read)
-#define vox_seek_slot (vox_callback_slots.seek)
+typedef void *(__cdecl *VoxAllocateCallback)(unsigned long);
+typedef void (__cdecl *VoxReleaseCallback)(void *);
+typedef int (__cdecl *VoxReadCallback)(int, char *, long);
+typedef int (__cdecl *VoxWriteCallback)(int, void *, long);
+typedef long (__cdecl *VoxSeekCallback)(int, long, int);
+typedef long (__cdecl *VoxTellCallback)(int);
+
+template <typename Callback>
+static Callback vox_load_callback(size_t offset) {
+    Callback callback;
+    memcpy(&callback,
+           reinterpret_cast<const unsigned char *>(
+               &CaviarOutputMessageWindow) + offset,
+           sizeof(callback));
+    return callback;
+}
+
+#define vox_alloc_slot (vox_load_callback<VoxAllocateCallback>(offsetof(VoxIoCallbacks, allocate)))
+#define vox_free_slot (vox_load_callback<VoxReleaseCallback>(offsetof(VoxIoCallbacks, release)))
+#define vox_read_slot (vox_load_callback<VoxReadCallback>(offsetof(VoxIoCallbacks, read)))
+#define vox_write_slot (vox_load_callback<VoxWriteCallback>(offsetof(VoxIoCallbacks, write)))
+#define vox_seek_slot (vox_load_callback<VoxSeekCallback>(offsetof(VoxIoCallbacks, seek)))
+#define vox_tell_slot (vox_load_callback<VoxTellCallback>(offsetof(VoxIoCallbacks, tell)))
 
 // The engine's fixed-address data bindings live at FILE SCOPE, below, as
 // plain static consts rather than inside this anonymous namespace: the
@@ -1396,6 +1418,7 @@ static const char *const vox_msg_bad_file_format = "Bad file format";  // 0x0069
 static const char *const vox_msg_reading_file = "Reading file";        // 0x006989D4
 static const char *const vox_msg_no_room = "No room";                  // 0x006989D8
 static const char *const vox_msg_user_chunk = "Error reading user data chunk"; // 0x006989E0
+static const char vox_msg_no_address_tables[] = "No room for address tables";
 
 // The loader's two float constants, .rdata 0x00670FE8 and 0x00670FEC. The
 // first is the chain walk's cut: vox_walk_scaled_chain keeps walking while a
@@ -1600,7 +1623,7 @@ char __cdecl vox_init_callbacks(const VoxIoCallbacks *callbacks, int flag) {
     if (callbacks->allocate != 0 && callbacks->release != 0 &&
         callbacks->read != 0 && callbacks->write != 0 &&
         callbacks->seek != 0 && callbacks->tell != 0) {
-        memcpy(&vox_callback_slots, callbacks, sizeof(vox_callback_slots));
+        memcpy(&CaviarOutputMessageWindow, callbacks, sizeof(*callbacks));
         vox_detect_cpu();
         // The RANGE form, not `== 0`: the image branches `test al,al; jbe`
         // here and `cmp al,bl; jbe` in init_class - an unsigned `<= 0`
@@ -1752,7 +1775,7 @@ Purpose: Create the scene render record: allocate it, copy the colour and
          and viewport extents, then run the per-CPU-rank init handler. The
          record pointer, or 0 on any failure.
 // ORIGINAL: 0x006393C0 sub_6393c0 0x006393C0-0x00639612 FILE
-// symbol    ?vox_create_record@@YAPAUVoxRenderRecord@@HPAX00H@Z
+// symbol    ?vox_create_record@@YAPAUVoxRenderRecord@@HPAX0PAUCaviarSceneSetupDescriptorCandidate@@H@Z
 // NAMED RETURN 2026-08-30: the catalogue's K (unsigned long) decorates a
 // pointer - the body allocates a VoxRenderRecord and every caller stores it
 // as one; the return register carries the same dword either way.
@@ -1777,9 +1800,9 @@ Purpose: Create the scene render record: allocate it, copy the colour and
 //        reads the byte straight into al, the image widens through edx
 //        (xor edx,edx / mov dl,[eax+0x20] / mov eax,edx).
 */
-VoxRenderRecord *__cdecl vox_create_record(int setup_id, void *setup_data,
-                                           void *shadow_data,
-                                           void *setup_block, int size_code) {
+VoxRenderRecord *__cdecl vox_create_record(
+    int setup_id, void *setup_data, void *shadow_data,
+    CaviarSceneSetupDescriptorCandidate *setup_block, int size_code) {
     if (setup_data == 0) {
         vox_stage_error(vox_msg_no_colortab);
         return 0;
@@ -1791,14 +1814,13 @@ VoxRenderRecord *__cdecl vox_create_record(int setup_id, void *setup_data,
     }
     memset(record, 0, sizeof(VoxRenderRecord));
     record->setup_id_ = setup_id;
-    record->setup_block_ = (uint32_t)setup_block;
+    record->setup_block_ = setup_block;
     record->setup_size_code_ = (uint8_t)size_code;
 
     // unsigned int, not uint8_t: the image zeroes a register and reads the
     // byte into its low half (xor edx,edx / mov dl,[eax+0x20]) before the
     // dispatch, which is the widening of a 32-bit local.
-    const unsigned int pixel_size =
-        *(const unsigned char *)((const unsigned char *)setup_block + 0x20);
+    const unsigned int pixel_size = setup_block->pixel_size_;
     switch (pixel_size) {
     case 1:
         record->colour_table_ = (void *)vox_alloc_slot(0x1800);
@@ -1839,9 +1861,10 @@ VoxRenderRecord *__cdecl vox_create_record(int setup_id, void *setup_data,
         return 0;
     }
 
-    const uint8_t *desc = (const uint8_t *)setup_block;
-    record->draw_right_ = (int)*(const short *)(desc + 0xc) - 1;
-    const int height_minus_1 = (int)*(const short *)(desc + 0x10) - 1;
+    record->draw_right_ =
+        static_cast<int>(static_cast<uint16_t>(setup_block->colour_width_)) - 1;
+    const int height_minus_1 =
+        static_cast<int>(static_cast<uint16_t>(setup_block->height_)) - 1;
     record->draw_bottom_ = height_minus_1;
     if (record->draw_right_ >= 0 && height_minus_1 >= 0) {
         record->draw_width_ = record->draw_right_ + 1;
@@ -1867,8 +1890,7 @@ VoxRenderRecord *__cdecl vox_create_record(int setup_id, void *setup_data,
     }
     record->ramp_a_ptr_ = 0;
     record->ramp_b_ptr_ = 0;
-    if (*(const uint32_t *)(desc + 0xc) != 0 &&
-        *(const uint32_t *)(desc + 0x10) != 0 &&
+    if (setup_block->colour_width_ != 0 && setup_block->height_ != 0 &&
         sub_63f9b0((unsigned char *)record) != 0) {
         return 0;
     }
@@ -1888,8 +1910,7 @@ Purpose: Fill a render record's pixel-size dispatch slots for CPU ranks 3 and
 void __cdecl sub_63ae20(unsigned char *record) {
     VoxRenderRecord *const typed =
         reinterpret_cast<VoxRenderRecord *>(record);
-    const unsigned char type = static_cast<unsigned char>(
-        *reinterpret_cast<const unsigned char *>(typed->setup_block_ + 0x20));
+    const unsigned char type = typed->setup_block_->pixel_size_;
     caviar_install_record_kernels_candidate(
         typed, type, (typed->setup_id_ & 1u) != 0);
 }
@@ -1976,8 +1997,7 @@ Return Value: n/a
 void __cdecl sub_63ad60(unsigned char *record) {
     VoxRenderRecord *const typed =
         reinterpret_cast<VoxRenderRecord *>(record);
-    const unsigned char type = static_cast<unsigned char>(
-        *reinterpret_cast<const unsigned char *>(typed->setup_block_ + 0x20));
+    const unsigned char type = typed->setup_block_->pixel_size_;
     caviar_install_record_kernels_candidate(
         typed, type, (typed->setup_id_ & 1u) != 0);
 }
@@ -2028,37 +2048,45 @@ Purpose: Allocate a render record's two per-entry ramps. Frees whatever the
 Return Value: 0 when both ramps are filled, 1 on failure.
 */
 extern "C" char __cdecl sub_63f9b0(unsigned char *record) {
-    if (*(int *)(record + 0x60) != 0) {
-        vox_free_slot(reinterpret_cast<void *>(*(unsigned long *)(record + 0x60)));
+    VoxRenderRecord *const typed = reinterpret_cast<VoxRenderRecord *>(record);
+    if (typed->ramp_a_ptr_ != 0) {
+        vox_free_slot(typed->ramp_a_ptr_);
     }
-    if (*(int *)(record + 0x64) != 0) {
-        vox_free_slot(reinterpret_cast<void *>(*(unsigned long *)(record + 0x64)));
+    if (typed->ramp_b_ptr_ != 0) {
+        vox_free_slot(typed->ramp_b_ptr_);
     }
-    *(void **)(record + 0x60) =
-        vox_alloc_slot(*(int *)(*(int *)(record + 4) + 0x10) << 2);
-    *(void **)(record + 0x64) =
-        vox_alloc_slot(*(int *)(*(int *)(record + 4) + 0x10) << 2);
-    if (*(int *)(record + 0x60) != 0 && *(int *)(record + 0x64) != 0) {
-        int info = *(int *)(record + 4);
-        int base = *(int *)(info + 4);
-        if (base == 0) {
+    typed->ramp_a_ptr_ = static_cast<uint16_t **>(
+        vox_alloc_slot(static_cast<uint32_t>(
+            typed->setup_block_->height_) << 2));
+    typed->ramp_b_ptr_ = static_cast<int32_t *>(
+        vox_alloc_slot(static_cast<uint32_t>(
+            typed->setup_block_->height_) << 2));
+    if (typed->ramp_a_ptr_ != 0 && typed->ramp_b_ptr_ != 0) {
+        CaviarSceneSetupDescriptorCandidate *const info = typed->setup_block_;
+        uint32_t base_bits = static_cast<uint32_t>(
+            reinterpret_cast<uintptr_t>(info->depth_buffer_));
+        if (base_bits == 0) {
             return 0;
         }
-        int step = *(int *)(info + 0x18) << 1;
-        int accum = 0;
-        int index = 0;
-        if (*(int *)(info + 0x10) > 0) {
+        const uint32_t step_bits =
+            static_cast<uint32_t>(info->depth_row_step_) << 1;
+        uint32_t accum_bits = 0;
+        int32_t index = 0;
+        if (info->height_ > 0) {
             do {
-                *(int *)(*(int *)(record + 0x60) + index * 4) = base;
-                base += step;
-                *(int *)(*(int *)(record + 0x64) + index * 4) = accum;
-                accum += *(int *)(*(int *)(record + 4) + 0x14);
+                typed->ramp_a_ptr_[index] = reinterpret_cast<uint16_t *>(
+                    static_cast<uintptr_t>(base_bits));
+                base_bits += step_bits;
+                typed->ramp_b_ptr_[index] = static_cast<int32_t>(accum_bits);
+                accum_bits += static_cast<uint32_t>(
+                    typed->setup_block_->colour_row_step_);
                 ++index;
-            } while (index < *(int *)(*(int *)(record + 4) + 0x10));
+            } while (index < typed->setup_block_->height_);
         }
         return 0;
     }
-    memcpy((void *)0x009C0D60, (const void *)0x00698DF0, 27);
+    memcpy(CaviarOutputMessageWindow.message_,
+           vox_msg_no_address_tables, 27);
     return 1;
 }
 
@@ -3399,9 +3427,9 @@ void Caviar::close_class() {
             free(CaviarSceneMemory);
             CaviarSceneMemory = 0;
         }
-        ((uint32_t *)CaviarScene.created_->setup_block_)[0] = 0;
-        ((uint32_t *)CaviarScene.created_->setup_block_)[1] = 0;
-        ((uint32_t *)CaviarScene.created_->setup_block_)[2] = 0;
+        CaviarScene.created_->setup_block_->colour_buffer_ = 0;
+        CaviarScene.created_->setup_block_->depth_buffer_ = 0;
+        CaviarScene.created_->setup_block_->shadow_buffer_ = 0;
         vox_release_record(CaviarScene.created_);
         CaviarScene.created_ = 0;
     }
@@ -3436,13 +3464,6 @@ extern const float CaviarProjectionShadowAxisScaleY;
 extern VOX_Matrix CaviarProjectionShadowBasis;
 extern CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch;
 
-struct CaviarRenderSetupViewCandidate {
-    uint8_t bytes_00_[8];
-    uint32_t shadow_data_;
-    int32_t half_width_;
-    int32_t half_height_;
-};
-
 static int caviar_projection_floor(float value) {
     return static_cast<int>(floor(static_cast<double>(value)));
 }
@@ -3460,9 +3481,7 @@ float __cdecl vox_stage_scene(
     VoxCameraBlock *camera, int step, float *output_a, float *output_b) {
     CaviarSceneProjectionScratchCandidate &scratch =
         CaviarSceneProjectionScratch;
-    CaviarRenderSetupViewCandidate *setup =
-        reinterpret_cast<CaviarRenderSetupViewCandidate *>(
-            static_cast<uintptr_t>(record->setup_block_));
+    CaviarSceneSetupDescriptorCandidate *const setup = record->setup_block_;
 
     vox_matrix_matrix_mul(camera->camera_.rotation.values,
                           context->state_.scene_rotation_.values,
@@ -3512,9 +3531,9 @@ float __cdecl vox_stage_scene(
         matrix_cells[index] *= scratch.projected_scale_;
     }
 
-    const float half_width = static_cast<float>(setup->half_width_ >> 1) -
+    const float half_width = static_cast<float>(setup->colour_width_ >> 1) -
                              CaviarProjectionHalfPixel;
-    const float half_height = static_cast<float>(setup->half_height_ >> 1) -
+    const float half_height = static_cast<float>(setup->height_ >> 1) -
                               CaviarProjectionHalfPixel;
     scratch.camera_offset_.values[0] =
         context->field_7C_ * context->field_90_ + context->field_88_ +
@@ -3563,7 +3582,7 @@ float __cdecl vox_stage_scene(
     scratch.part_clip_.height_ = scratch.part_clip_.top_ - 1 +
                                  scratch.part_clip_.bottom_;
 
-    if (context->field_A4_ != 0 && setup->shadow_data_ != 0) {
+    if (context->field_A4_ != 0 && setup->shadow_buffer_ != 0) {
         float &shadow_z = context->shadow_vector_.values[2];
         if (shadow_z <= CaviarProjectionNearNegativeEpsilon ||
             CaviarProjectionZero <= shadow_z) {
@@ -3726,9 +3745,8 @@ void __cdecl vox_load_scene_view(
         }
 
 shadow_pass:
-        const uint32_t *descriptor =
-            reinterpret_cast<const uint32_t *>(record->setup_block_);
-        if (context->field_A4_ != 0 && descriptor[2] != 0) {
+        if (context->field_A4_ != 0 &&
+            record->setup_block_->shadow_buffer_ != 0) {
             VOX_Vect shadow;
             vox_matrix_vector_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
                                   instance.instance_vector_[step].values,
@@ -4865,14 +4883,23 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
     vox_active_ramp_a_ = record->ramp_a_ptr_;
     vox_active_ramp_b_ = record->ramp_b_ptr_;
     vox_active_size_code_ = record->setup_size_code_;
-    CaviarKernelProjectionWindow.current_views_.tail_.vox_scene_extent_ = ((uint32_t *)record->setup_block_)[0] -
-                        ((uint32_t *)record->setup_block_)[1];
-    vox_setup_copy_[3] = ((uint32_t *)record->setup_block_)[5];
-    vox_setup_copy_[4] = ((uint32_t *)record->setup_block_)[6];
-    vox_setup_copy_[5] = ((uint32_t *)record->setup_block_)[7];
-    vox_setup_copy_[1] = ((uint32_t *)record->setup_block_)[0];
-    vox_setup_copy_[0] = ((uint32_t *)record->setup_block_)[1];
-    vox_setup_copy_[2] = ((uint32_t *)record->setup_block_)[2];
+    CaviarKernelProjectionWindow.current_views_.tail_.vox_scene_extent_ =
+        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
+            record->setup_block_->colour_buffer_)) -
+        static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
+            record->setup_block_->depth_buffer_));
+    vox_setup_copy_[3] = static_cast<uint32_t>(
+        record->setup_block_->colour_row_step_);
+    vox_setup_copy_[4] = static_cast<uint32_t>(
+        record->setup_block_->depth_row_step_);
+    vox_setup_copy_[5] = static_cast<uint32_t>(
+        record->setup_block_->shadow_row_step_);
+    vox_setup_copy_[1] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
+        record->setup_block_->colour_buffer_));
+    vox_setup_copy_[0] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
+        record->setup_block_->depth_buffer_));
+    vox_setup_copy_[2] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
+        record->setup_block_->shadow_buffer_));
 
     // The record's own setup hook, called once before the walk.
     if (VoxRenderRecord::SetupCallback callback = record->setup_callback_) {
@@ -4948,7 +4975,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
         // The shadow pass, when the state asks for it and the record's
         // descriptor block names a shadow.
         if (want_shadow != 0 &&
-            ((uint32_t *)record->setup_block_)[2] != 0) {
+            record->setup_block_->shadow_buffer_ != 0) {
             VOX_Vect shadow;
             vox_matrix_vector_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
                                   instance.instance_vector_[step].values,

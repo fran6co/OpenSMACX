@@ -7,6 +7,7 @@ import tempfile
 ROOT = next(parent for parent in pathlib.Path(__file__).resolve().parents
             if (parent / "src/caviar.cpp").is_file())
 PRODUCT = ROOT / "src/caviar.cpp"
+HEADER = ROOT / "src/caviar.h"
 
 
 def extract_body(source, signature):
@@ -25,6 +26,8 @@ def extract_body(source, signature):
 
 
 FIXTURE = r'''#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
 #ifndef __cdecl
 #define __cdecl
 #endif
@@ -44,15 +47,8 @@ struct CaviarKernelKnownViews { CaviarProjectionCell cells_[0x1A]; CaviarKernelT
 struct CaviarKernelStepRow { int32_t x_, y_, z_; uint32_t unobserved_word_; };
 union CaviarKernelProjectionWindowCandidate { CaviarKernelKnownViews current_views_;
     CaviarKernelStepRow raster_step_rows_[32]; uint32_t accessed_words_[0x80]; };
-struct CaviarOutputMessageWindowCandidate { uint32_t projection_words_[0x6B];
-    uint8_t unidentified_gap_[0x24]; char message_[0x100]; };
 #pragma pack(pop)
 typedef char kernel_window_is_0x200[sizeof(CaviarKernelProjectionWindowCandidate) == 0x200 ? 1 : -1];
-typedef char output_window_is_0x2d0[sizeof(CaviarOutputMessageWindowCandidate) == 0x2D0 ? 1 : -1];
-CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {};
-CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};
-CaviarFixedPointProjectionMatrix CaviarFixedPointProjection = {};
-uint32_t vox_setup_copy_[6] = {};
 '''
 
 
@@ -74,6 +70,12 @@ int main() {
     for (int i = 0; i < 0x1A; ++i) {
         CaviarKernelProjectionWindow.current_views_.cells_[i].unobserved_word_ = 0x13579BDFu;
     }
+    uint32_t seek_sentinel = 0x11223344u;
+    uint32_t tell_sentinel = 0xaabbccddu;
+    memcpy(reinterpret_cast<unsigned char *>(&CaviarOutputMessageWindow) +
+               offsetof(VoxIoCallbacks, seek), &seek_sentinel, sizeof(seek_sentinel));
+    memcpy(reinterpret_cast<unsigned char *>(&CaviarOutputMessageWindow) +
+               offsetof(VoxIoCallbacks, tell), &tell_sentinel, sizeof(tell_sentinel));
     caviar_build_projection_tables();
     if (CaviarKernelProjectionWindow.current_views_.cells_[0].x_ != -10 ||
         CaviarKernelProjectionWindow.current_views_.cells_[0].y_ != -31 ||
@@ -85,11 +87,19 @@ int main() {
     if (CaviarOutputMessageWindow.projection_words_[100] == 0xfeedfaceu ||
         CaviarOutputMessageWindow.projection_words_[105] == 0xfeedfaceu ||
         CaviarOutputMessageWindow.projection_words_[106] == 0xfeedfaceu) return 4;
+    uint32_t seek_after = 0;
+    uint32_t tell_after = 0;
+    memcpy(&seek_after, reinterpret_cast<unsigned char *>(&CaviarOutputMessageWindow) +
+                            offsetof(VoxIoCallbacks, seek), sizeof(seek_after));
+    memcpy(&tell_after, reinterpret_cast<unsigned char *>(&CaviarOutputMessageWindow) +
+                            offsetof(VoxIoCallbacks, tell), sizeof(tell_after));
     if (CaviarKernelProjectionWindow.current_views_.cells_[0].unobserved_word_ != 0x13579BDFu ||
         CaviarKernelProjectionWindow.current_views_.cells_[25].unobserved_word_ != 0x13579BDFu ||
         CaviarOutputMessageWindow.projection_words_[1] != 0xfeedfaceu ||
-        CaviarOutputMessageWindow.projection_words_[2] != 0xfeedfaceu ||
+        CaviarOutputMessageWindow.projection_words_[2] != tell_sentinel ||
         CaviarOutputMessageWindow.projection_words_[3] != 0xfeedfaceu) return 5;
+    if (seek_after != CaviarOutputMessageWindow.projection_words_[0] ||
+        tell_after != tell_sentinel || tell_after == seek_sentinel) return 7;
     if (CaviarKernelProjectionWindow.current_views_.tail_.scratch_e0_ != 13.0f ||
         CaviarKernelProjectionWindow.current_views_.tail_.scratch_e4_ != 11.0f ||
         CaviarKernelProjectionWindow.current_views_.tail_.scratch_e8_ != 7.0f ||
@@ -108,7 +118,17 @@ def compile_and_run(compiler, body, expected_success):
     with tempfile.TemporaryDirectory() as directory:
         source = pathlib.Path(directory) / "actual_projection.cpp"
         executable = pathlib.Path(directory) / "actual_projection"
-        source.write_text(FIXTURE + "\n" + body + MAIN)
+        output_type = extract_body(HEADER.read_text(),
+            "struct CaviarOutputMessageWindowCandidate")
+        descriptor = extract_body(HEADER.read_text(), "struct VoxIoCallbacks {")
+        fixture = (FIXTURE + "\n" + descriptor + ";\n" + output_type + ";\n" +
+            "typedef char projection_follows_seek[offsetof(CaviarOutputMessageWindowCandidate, projection_words_) == offsetof(VoxIoCallbacks, seek) ? 1 : -1];\n" +
+            "typedef char host_storage_extent[sizeof(CaviarOutputMessageWindowCandidate) == offsetof(VoxIoCallbacks, seek) + 0x2D0 ? 1 : -1];\n" +
+            "CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {};\n" +
+            "CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};\n" +
+            "CaviarFixedPointProjectionMatrix CaviarFixedPointProjection = {};\n" +
+            "uint32_t vox_setup_copy_[6] = {};\n")
+        source.write_text(fixture + "\n" + body + MAIN)
         subprocess.run(
             [compiler, "-std=c++98", "-Wall", "-Wextra", "-pedantic",
             str(source), "-o", str(executable)],

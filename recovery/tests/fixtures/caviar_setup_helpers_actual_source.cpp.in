@@ -40,8 +40,8 @@ struct CaviarOutputMessageWindowCandidate {
 CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};
 uintptr_t vox_setup_copy_[6] = {};
 int32_t vox_projection_octant_mask_ = 1;
-void *vox_active_ramp_a_ = 0;
-void *vox_active_ramp_b_ = 0;
+uint16_t **vox_active_ramp_a_ = 0;
+const int32_t *vox_active_ramp_b_ = 0;
 void *vox_active_colour_table_ = 0;
 uint8_t vox_active_size_code_ = 0;
 const uint8_t *vox_projection_selected_angle_ = 0;
