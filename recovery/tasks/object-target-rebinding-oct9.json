@@ -1,0 +1,32 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "895f461f95cb52add777ed459217ef9a4ffe2b8e",
+  "editable_files": [
+    "packages/match-recovery/src/match_recovery/object_source.py",
+    "packages/match-recovery/src/match_recovery/object_writer.py",
+    "packages/match-recovery/src/match_recovery/object_data.py",
+    "packages/match-recovery/tests/test_object_writer.py",
+    "packages/match-recovery/tests/test_object_dependencies.py",
+    "packages/match-recovery/tests/test_object_data.py",
+    "packages/match-recovery/tests/test_member_object_binding.py",
+    "packages/match-recovery/tests/test_object_target_binding.py",
+    "docs/DECOMP_MAP.md",
+    "packages/match-recovery/README.md"
+  ],
+  "evidence": [
+    "The Scroll constructor at 0x006051D0 and close at 0x00605370 use the existing bound 0x009B8DE0..0x009B8E24 defaults window. Mixed numeric and Sprite pointer fields require a typed root object; its new COFF decoration cannot currently retain the historical ?ScrollCloseDynamicDefaults@@3PAIA identity through the native writer.",
+    "Authorize only generic source binding, guarded transformation, current-target resolution, dependency scheduling and collision checks. Preserve original symbol, image/start, optional span/evidence and interpretation_id. No artificial wrapper, identity demotion, C++ edits, allocation inference, claim grant or acceptance-policy change.",
+    "All old grammar versions remain supported. New aliases must refuse ambiguous current definitions, namespace/owner/domain collisions and member/target combinations. Fresh synthetic COFF and initializer/reference controls qualify only this binding capability; Scroll native recovery and full-game acceptance remain separate."
+  ],
+  "intent": "Enable genuine typed root-global recovery while preserving original object identities and initializer obligations, driven by Scroll defaults at 0x009B8DE0.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6312400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "object-target-rebinding-oct9"
+}
