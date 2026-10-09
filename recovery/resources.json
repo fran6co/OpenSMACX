@@ -2,43 +2,43 @@
  "schema_version": 1,
  "slots": [
   {
-   "name": "worker-0",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-0",
+   "name": "worker-8",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-8",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
   },
   {
-   "name": "worker-1",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-1",
+   "name": "worker-9",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-9",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
   },
   {
-   "name": "worker-3",
+   "name": "worker-10",
    "environment": {
     "VC6_PREFIX": "{resource}"
    },
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-3"
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-10"
   },
   {
-   "name": "worker-2",
+   "name": "worker-11",
    "environment": {
     "VC6_PREFIX": "{resource}"
    },
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-2"
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-11"
   },
   {
-   "name": "worker-4",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-4",
+   "name": "worker-12",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-12",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
   },
   {
-   "name": "worker-5",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-5",
+   "name": "worker-13",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-13",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
