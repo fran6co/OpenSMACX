@@ -872,8 +872,11 @@ void SocialWin::draw_social(int a1) {
     do_sound();
 }
 
-// Fixed-slot binding carried from 004b0d50.cpp.
-static int *const PercentText = (int *)0x00682EA0;
+// The pinned text at 0x00682EA0 is the percent character and its terminator.
+// Its complete allocation extent remains unproved; this names only the text
+// consumed by the three allocation renderers.
+// RECOVERY_OBJECT: v1 0x00682EA0 _PercentText
+static const char PercentText[] = "%";
 
 typedef char *(__cdecl *ItoaFn)(int, char *, int);
 
@@ -1007,9 +1010,9 @@ void SocialWin::draw_psych_alloc() {
     strcat(StringTemp, BufferJoinSpace);
 
     char numbuf[80];
-    reinterpret_cast<ItoaFn>(_itoa)(allocation * 10, numbuf, 10);
+    _itoa(allocation * 10, numbuf, 10);
     strcat(StringTemp, numbuf);
-    strcat(StringTemp, reinterpret_cast<char *>(PercentText));
+    strcat(StringTemp, PercentText);
 
     CharUpperA(StringTemp);
 
@@ -1025,7 +1028,10 @@ void SocialWin::draw_psych_alloc() {
     int row_height = local_rect.bottom - energyAllocLock_[0].height();
     int start_x = local_rect.left + energyAllocLock_[0].width();
     int avail_width = local_rect.right - start_x;
-    int scaled = (avail_width * allocation) / 5;
+    // Pinned 0x004B0E17 loads allocation into EBX; 0x004B0EF7 multiplies
+    // it by avail_width, then 0x004B0EFD..0x004B0F0F applies signed
+    // division by ten via 0x66666667, SAR and sign correction.
+    int scaled = (avail_width * allocation) / 10;
     int end_x = start_x + scaled;
 
     int adjusted_end_x = box_rect.right;
@@ -1073,9 +1079,9 @@ void SocialWin::draw_economy_alloc() {
     strcat(StringTemp, label_get(366));
     strcat(StringTemp, BufferJoinSpace);
     char number[80];
-    reinterpret_cast<ItoaFn>(_itoa)(remaining * 10, number, 10);
+    _itoa(remaining * 10, number, 10);
     strcat(StringTemp, number);
-    strcat(StringTemp, reinterpret_cast<char *>(PercentText));
+    strcat(StringTemp, PercentText);
     CharUpperA(StringTemp);
 
     buffer->set_font(&font1_, 0, 0, 0);
@@ -1123,9 +1129,9 @@ void SocialWin::draw_labs_alloc() {
     strcat(StringTemp, label_get(60));
     strcat(StringTemp, BufferJoinSpace);
     char number[80];
-    reinterpret_cast<ItoaFn>(_itoa)(allocation * 10, number, 10);
+    _itoa(allocation * 10, number, 10);
     strcat(StringTemp, number);
-    strcat(StringTemp, reinterpret_cast<char *>(PercentText));
+    strcat(StringTemp, PercentText);
     CharUpperA(StringTemp);
 
     buffer->set_font(&font1_, 0, 0, 0);

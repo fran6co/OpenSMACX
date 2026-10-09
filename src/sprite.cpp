@@ -1646,13 +1646,14 @@ void Sprite::UNK4(int, int) {
 // creates it blank if the PCX is missing.
 Status: Complete
 */
-// NAMED FROM THE IMAGE AND FROM THIS BODY'S OWN COMMENT: 0x00698CAC holds
-// the string 'jackal.pcx' (image_data --string), and 0x009BEAE8 is the
-// 16x16 sprite this loads into - which guarded_teardowns.h ALREADY declares
-// as TeardownObject009BEAE8. Two bindings at one address is the shape
-// duplicate_globals flags, so this file uses the existing declaration
-// rather than minting a second name for the same storage.
-static const char *const JackalPcxPath = (const char *)0x00698CAC;
+// Historical note: the earlier recovery draft described 0x009BEAE8 using
+// guarded_teardowns.h's TeardownObject009BEAE8 scaffold name. The current
+// source owner is BlankSpriteStorageOwner and its blank_sprite() accessor;
+// retain that older interpretation here as provenance, not as a current owner.
+// The pinned short-string read at 0x00698CAC independently establishes this
+// filename's spelling and terminator, not its original allocation extent.
+// RECOVERY_OBJECT: v1 0x00698CAC _JackalPcxPath
+static const char JackalPcxPath[] = "jackal.pcx";
 
 // The exit byte is a real separate global at 0x009BEAE0. The original callback
 // sets bit 0 before calling Sprite::~Sprite; do not fold this byte into an
