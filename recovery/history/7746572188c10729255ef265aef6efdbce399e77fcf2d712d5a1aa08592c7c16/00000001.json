@@ -1,0 +1,20 @@
+{
+  "event_id": "29b8ad0fab83871316ba1a4440edfd5080939eefef3b185c7d55232040b85c70",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_landmark_native_predicates_oct9.py"
+    ],
+    "evidence": [
+      "Correction of initial task evidence: full-function aligned pinned decoding proves original negative-index rejection. ESI is zeroed at464723 before Mount464795 cmp edi,esi/jl464797 and Mesa464910 cmp edi,esi/jl464912; Crater464A4D test edi,edi/jl464A4F independently rejects negatives. KEEP existing -1<index predicates. Only reconstructed upper49 checks are absent.",
+      "Authorize independent pinned instruction predicate control in the added test file, while retaining every current lower-bound/flag/local70/texture-sentinel predicate. Removing negative checks would regress faithful recovery; the initial task phrase claiming their absence is superseded by this fresh evidence. Upper-out-of-range neighboring allocation effects remain unresolved; no UB execution or fabricated expanded table proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "landmark-original-lower-bound-correction-oct9",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mapwin-landmark-original-behavior-oct9"
+}
