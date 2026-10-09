@@ -1,0 +1,40 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "93d5217d1bf01e91c8c1978c365ed575d74c5a31",
+  "editable_files": [
+    "src/veh.cpp",
+    "src/base.cpp",
+    "recovery/tests/test_vehicle_stack_faction_storage_oct9.py"
+  ],
+  "evidence": [
+    "Pinned stack_kill at 0x005B9521/0x005B9537 reads Vehs[index].prev_veh_id_stack at base0x00952828+0x32; 0x005B9557 reads next_veh_id_stack at+0x30 with stride0x34. Current VehLink base0x00952858 plus offsets0x2E/0x2C accesses the wrong words. Existing Veh declarations own the correct signed-short fields; preserve stack traversal and deletion/reindex order.",
+    "PlayersData base0x0096C9E0 and independently asserted stride0x20CC identify proto_id_active at+0x858 (0x0096D238) and total_mil_veh at+0x1058 (0x0096DA38). Pinned upgrade_prototypes4F053E and veh_kill5C0963/5C097B use faction*2099*4; current veh_kill byte alias erroneously omits*4. Remove duplicate absolute aliases from both TUs and use existing member storage. Preserve widths, prototype indices, mutation/read order and original unsafe paths; this is correcting a translation, not an intentional game bug fix.",
+    "Authorize justified temporary matching regressions for these four typed-owner migrations after independent pinned/source review, actual-source controls including nonzero factions and stack deletion/reindex behavior, fresh native measurements, all original/claim continuity checks and full build/link. No placeholder, historical claim demotion, source marker edits, compiler-policy or task-baseline changes; no unrelated base/vehicle behavior changes or automatic/full-game acceptance claim."
+  ],
+  "intent": "Recover vehicle stack links and faction prototype counters through existing proven Veh and PlayerData members, correcting translated offset/stride errors to agree with the pinned original.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6001936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6031552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5178464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5176144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vehicle-stack-faction-storage-oct9"
+}
