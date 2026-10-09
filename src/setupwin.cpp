@@ -322,8 +322,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
                          menu_width, menu_height, nullptr, 0x1000020,
                          opening_window_snapshot_, nullptr, nullptr);
 
-        field_A0_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
-            ExpansionEnabled ? RedTintColorTable : BlueTintColorTable));
+        field_A0_ = ExpansionEnabled ? RedTintColorTable : BlueTintColorTable;
         show(0);
         static_cast<Buffer *>(this)->set_text_color(0x41, -1, 1, 1);
         static_cast<Buffer *>(this)->set_font(&font, nullptr, nullptr, nullptr);

@@ -411,8 +411,8 @@ class Win : public AutoSound {
  protected:
   uint32_t iFlags_;         // 0x98, immediately after AutoSound's 0x98 bytes
   uint32_t iSomeFlag_;
-  uint32_t field_A0_;
-  uint32_t field_A4_;
+  unsigned char *field_A0_;
+  unsigned char *field_A4_;
   // 0xA8. A `Win *`, not a word: `Win::construct` stores `this` here and
   // `Win::get_mouse_window` RETURNS it as the window that owns a position.
   // Nothing else in the tree reads it, so the `uint32_t` cost nothing until

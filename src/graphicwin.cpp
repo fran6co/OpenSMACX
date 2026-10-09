@@ -1389,10 +1389,10 @@ void GraphicWin::on_paint(RECT *area) {
                          outer_rect_.bottom - outer_rect_.top);
         } else if (field_A0_ != 0) {
             Buffer::draw_dest(destination, WinFillColour, x, y, 1, 1,
-                              reinterpret_cast<unsigned char *>(field_A0_));
+                              field_A0_);
         } else if (field_A4_ != 0) {
             Buffer::draw_multi_table_dest(destination, WinFillColour, x, y, 1, 1,
-                                          reinterpret_cast<unsigned char *>(field_A4_));
+                                          field_A4_);
         } else {
             Buffer::draw(destination, WinFillColour, x, y, 1, 1);
         }

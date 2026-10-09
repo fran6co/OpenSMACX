@@ -110,16 +110,15 @@ Return Value: GraphicWin::init's, which is 0 when the window came up.
 Status: homed on this pass; its forwarder and its archive unit are gone, and
         the `multidebug_init` free-function shape in game.h went with them.
 */
-int MultiDebug::init(Net *net, Win *window, unsigned char *text) {
+int MultiDebug::init(Net *net, Win *window, unsigned char *shadow_table) {
     net_ = net;
     int const result =
         GraphicWin::init(0, 0, 0x96, 0x12c, 0, 0x1000002, window, 0, 0);
     if (result != 0) {
         return result;
     }
-    // The text buffer lives in Win::field_A0_, one word the rest of Win
-    // treats as storage; see the base class for why it is not typed.
-    field_A0_ = reinterpret_cast<uint32_t>(text);
+    // The original third argument is the borrowed shadow color table.
+    field_A0_ = shadow_table;
     font_.init("Times New Roman", 0xa, 0);
     fill(0);
     timer_.start(MultiDebug::timer_callback_daemon,
