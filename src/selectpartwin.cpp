@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "interface_fonts.h"
+#include "interface_palette.h"
 #include "selectpartwin.h"
 #include "technology.h"
 #include "general.h"
@@ -491,16 +492,12 @@ void SelectPartWin::on_scrolled(int, int row) {
     redraw();
 }
 
-// The picker consumes the existing vehicle rules owners. Independent UI
-// label-color slots still require storage ownership evidence.
+// The picker consumes the existing vehicle rules owners and interface text
+// palette. These four color pairs are TextColourTable slots 158..161.
 
 // Existing RulesChassis[] owns the picker records: preq_tech is at +0x8E,
 // speed at +0x48, triad at +0x49, and the ordinary picker range is nine
-// records (MaxChassisNum). The independent label-color slots remain raw.
-static int *const PartLabelColorA1 = (int *)0x008C6DD4;
-static int *const PartLabelColorA2 = (int *)0x008C6DD8;
-static int *const PartLabelColorB1 = (int *)0x008C6DDC;
-static int *const PartLabelColorB2 = (int *)0x008C6DE0;
+// records (MaxChassisNum).
 
 
 /*
@@ -664,7 +661,7 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
 
     caviar_.render(buf, x_avg, y_avg, 6);
 
-    buf->set_text_color(*PartLabelColorA1, *PartLabelColorA2, 1, 1);
+    buf->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
 
     Font *const font1 = &font1_;
     Font *const font2 = &font2_;
@@ -682,7 +679,7 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     CharUpperA(StringTemp);
     buf->wrap_cent(font1, StringTemp, &temp);
 
-    buf->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
+    buf->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
 
     temp.left = a2->left;
     temp.right = a2->right;
@@ -782,7 +779,7 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
 
     caviar_.render(buf, cx, cy, 6);
 
-    buf->set_text_color(*PartLabelColorA1, *PartLabelColorA2, 1, 1);
+    buf->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
 
     Font *const font1 = &font1_;
     RECT rect1;
@@ -799,7 +796,7 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
     CharUpperA(StringTemp);
     buf->wrap_cent(StringTemp, &rect1);
 
-    buf->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
+    buf->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
 
     RECT rect2;
     rect2.left = a2->left;
@@ -926,7 +923,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         }
     }
 
-    buf444->set_text_color(*PartLabelColorA1, *PartLabelColorA2, 1, 1);
+    buf444->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     {
         Font *const font45f4 = &font1_;
         rectScratch.left = a2->left;
@@ -944,7 +941,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
                    *reinterpret_cast<const int *>(&Armor[slot].name)));
         CharUpperA(StringTemp);
         buf444->wrap_cent(StringTemp, &rectScratch);
-        buf444->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
+        buf444->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
 
         Font *const font45f4b = &font1_;
         rectScratch.left = a2->left;
@@ -1102,7 +1099,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
                    (a2->right + a2->left) / 2, (a2->bottom + a2->top) / 2, 6);
 
     Buffer *const panel_buf = static_cast<Buffer *>(this);
-    panel_buf->set_text_color(*PartLabelColorA1, *PartLabelColorA2, 1, 1);
+    panel_buf->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
 
     Font *const font45f4 = &font1_;
     RECT tmp_rect;
@@ -1116,7 +1113,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     panel_buf->set_font(font45f4, 0, 0, 0);
     CharUpperA(StringTemp);
     panel_buf->wrap_cent(StringTemp, &tmp_rect);
-    panel_buf->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
+    panel_buf->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
 
     tmp_rect.left = a2->left;
     tmp_rect.right = a2->right;
