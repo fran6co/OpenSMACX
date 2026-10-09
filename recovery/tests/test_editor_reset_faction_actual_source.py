@@ -106,7 +106,7 @@ typedef int (*NullCallback)();
 static int popup_response;
 static int popup_calls;
 static std::vector<std::string> trace;
-static const char StrResetAllFac[] = "RESET_ALL";
+static const char ConsoleStrResetAllFac[] = "RESET_ALL";
 int X_pop(const char *label, NullCallback callback) {
     assert(std::string(label) == "RESET_ALL");
     assert(callback == 0);

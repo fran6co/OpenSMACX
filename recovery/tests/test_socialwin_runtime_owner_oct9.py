@@ -55,17 +55,20 @@ def test_map_window_virtual_base_and_null_argument_are_typed(tmp_path):
 
     harness = r"""
 #include <cassert>
+#include <cstring>
+#include <cstdlib>
 struct Buffer { int id; };
 struct GraphicWin : Buffer {};
 struct MapWin : virtual GraphicWin {};
 MapWin *MapWinTable[8];
-int TutSocWinText=19;
+char SocialWinTutorialName[]="SOCWIN";
 int calls;
 GraphicWin *received;
 int received_a, received_b;
 struct Tutorial {
-  void tut_win(GraphicWin *window, int, int a, int b, int, int, int, int) {
+  void tut_win(GraphicWin *window, const char *title, int a, int b, int, int, int, int) {
     ++calls; received=window; received_a=a; received_b=b;
+    if (title != SocialWinTutorialName || std::strcmp(title, "SOCWIN") != 0) std::abort();
   }
 } TutorialWindow;
 void run(int out_a, int out_b) {

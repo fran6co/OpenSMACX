@@ -111,7 +111,7 @@ struct PendingPlayerEffect { int values_[11]; };
 struct PlayerData { PendingPlayerEffect soc_effect_pending; };
 static PlayerData PlayersData[8];
 static char StringTemp[128];
-static char PlusText[]="+";
+static char SocialWinButtonCountPlusText[]="+";
 static int _itoa(int v, char *s, int) { return std::sprintf(s,"%d",v); }
 typedef int (*ItoaFn)(int,char *,int);
 BODY_ALLOC

@@ -1,0 +1,26 @@
+{
+  "event_id": "448f396ea264033dba88a8dee3a0af0b4da7bdf7138b0c82038b2e4b8af80be5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_socialwin_button_state_owner_oct9.py",
+      "recovery/tests/test_socialwin_handlers.py",
+      "recovery/tests/test_socialwin_playerdata_owner.py",
+      "recovery/tests/test_socialwin_runtime_owner_oct9.py",
+      "recovery/tests/test_socialwin_typed_control_owner_oct9.py",
+      "recovery/tests/test_socialwin_typed_owner_actual_source.py"
+    ],
+    "evidence": [
+      "Repair original-source fixtures for new actual symbol declarations without weakening controls; scope admits existing host-only SocialWin controls, not native lifetime tests.",
+      "Within current authorized SocialWin init, existing original691B2C/30 object bindings already name DefaultFontFace/DefaultLargeFontFace; use actual shared pointer storage, not fixed slot aliases.",
+      "Pinned4B32B8..4B32E0 follows Console vbtable0/4 to Win parent, pushes parent independently at4B32CB and flags1000000 at4B32CC. Current pointer/flags OR and nullparent are translation defects; genuine static_cast<Win*>(&ConsoleGlobal) and separate flags match existing ABI."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "socialwin-text-consumers-and-parent-closure-oct9",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:socialwin-source-text-owner-oct9"
+}

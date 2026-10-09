@@ -69,8 +69,8 @@ int _itoa(int value, char *out, int radix) {
   return 0;
 }
 int Language = 0;
-const char *ConceptArticle = "The ";
-const char *CategoryIdSeparator = "|";
+char DatalinkConceptArticle[] = "The ";
+char DatalinkProjectIdSeparator[] = "|";
 struct GameDataState { unsigned int game_state_; };
 struct GameDataStateRoot { GameDataState fields_; };
 GameDataStateRoot GameDataStateStorage;

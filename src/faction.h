@@ -680,14 +680,14 @@ extern int DiplomacyContactResult;
 extern int DiploFocusX;
 extern int DiploFocusY;
 
-// THE DIPLOMACY STRINGS, read out of the shipped image with
-// tools/image_data.py. Every one is a .rdata literal the diplomacy
-// bodies homed into faction.cpp hand to popup::start or NetMsg::pop as
-// a KEY - the popup resolves it against the script database - or, for
-// the .pcx entries, a sprite file name. Declared here rather than at
-// each use because a namespace-scope `char *const` folds to the
-// immediate the image pushes, and because most are shared by several
-// bodies. The literal is the comment; the address is the evidence.
+// Historical image label inventory retained as seed evidence; the inactive
+// address/text pairings below are not fresh verification claims. A full
+// source/header scan found that only the 31 labels declared after this block
+// have current source consumers; the others remain documented here but are
+// not runtime bindings. Popup keys resolve through the script database, while
+// the .pcx entries are file names. Duplicate contents at different original
+// addresses are intentionally represented by distinct source arrays below.
+/*
 char *const DiploLabelSendingTREATYON = (char *)0x0068D444;  // "Sending TREATY ON"
 char *const DiploLabelSendingTREATYOFF = (char *)0x0068D458;  // "Sending TREATY OFF"
 char *const DiploLabelSendingSETTREATY = (char *)0x0068D46C;  // "Sending SET TREATY"
@@ -827,6 +827,39 @@ char *const DiploLabelBREAKINGTRUCE = (char *)0x0068E7F0;  // "BREAKINGTRUCE"
 char *const DiploLabelBreakSmPcx_800 = (char *)0x0068E800;  // "break_sm.pcx"
 char *const DiploLabelBEGINVENDETTA = (char *)0x0068E810;  // "BEGINVENDETTA"
 char *const DiploLabelMORGAN_82C = (char *)0x0068E82C;  // "MORGAN"
+*/
+
+extern char DiploLabelSendingTREATYON[];
+extern char DiploLabelSendingTREATYOFF[];
+extern char DiploLabelSendingSETTREATY[];
+extern char DiploLabelSendingAGENDAON[];
+extern char DiploLabelSendingAGENDAOFF[];
+extern char DiploLabelSendingSETAGENDA[];
+extern char DiploLabelSendingENERGY[];
+extern char DiploLabelSendingLOAN[];
+extern char DiploLabelSendingTRADEMAPS[];
+extern char DiploLabelSendingTECH[];
+extern char DiploLabelSendingPACTENDS[];
+extern char DiploLabelSendingWITHDRAWAL[];
+extern char DiploLabelSendingCEDEBASE[];
+extern char DiploLabelSendingDOUBLECROSS[];
+extern char DiploLabelGettingDIPLOMATICLOCK[];
+extern char DiploLabelNEEDGLOBAL[];
+extern char DiploLabelReleasingDIPLOMATICLOCK[];
+extern char DiploLabelPACTATTACKS[];
+extern char DiploLabelPACTUNPACT[];
+extern char DiploLabelPACTTRUCE[];
+extern char DiploLabelTEAM[];
+extern char DiploLabelMAJORATROCITY[];
+extern char DiploLabelCouncilSmPcx[];
+extern char DiploLabelBreakSmPcx[];
+extern char DiploLabelBREAKINGPACT[];
+extern char DiploLabelBreakSmPcx_7C0[];
+extern char DiploLabelBREAKINGTREATY[];
+extern char DiploLabelBreakSmPcx_7E0[];
+extern char DiploLabelBREAKINGTRUCE[];
+extern char DiploLabelBreakSmPcx_800[];
+extern char DiploLabelBEGINVENDETTA[];
 // The sound ambience an event asks for by id. Declared here because
 // treaty_on is the homed caller that needs it; the body is still an
 // unrecovered pending_bodies forwarder.

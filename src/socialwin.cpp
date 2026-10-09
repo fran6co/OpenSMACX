@@ -35,12 +35,45 @@ extern const char BufferJoinSpace[];
 #include "mapwin.h"   // MainInterfaceGlobal, at 0x007AE820
 #include "tutwin.h"
 #include "console.h"
+#include "interface_fonts.h"
 #include "netdaemon.h"
 #include "popup.h"
 
 extern int BreakthroughTurnsGlobal;
 extern int NetIncomeGlobal;
 extern uint32_t Language;
+
+// These writable arrays are the source-owned versions of fourteen distinct
+// SocialWin text inputs in the pinned image. Identical spellings remain
+// separate objects where the original has separate addresses.
+// RECOVERY_OBJECT: v2 0x0068749C 0x006874A0 ?SocialWinOverviewSocText@@3PADA 0x004B0410
+char SocialWinOverviewSocText[] = "SOC";           // 0x0068749C
+// RECOVERY_OBJECT: v2 0x006874A0 0x006874A2 ?SocialWinOverviewPlusText@@3PADA 0x004B0410
+char SocialWinOverviewPlusText[] = "+";            // 0x006874A0
+// RECOVERY_OBJECT: v2 0x006874A4 0x006874A6 ?SocialWinMouseoverMinusText@@3PADA 0x004B1080
+char SocialWinMouseoverMinusText[] = "-";          // 0x006874A4
+// RECOVERY_OBJECT: v2 0x006874A8 0x006874AA ?SocialWinMouseoverPlusText@@3PADA 0x004B1080
+char SocialWinMouseoverPlusText[] = "+";           // 0x006874A8
+// RECOVERY_OBJECT: v2 0x006874AC 0x006874AE ?SocialWinButtonCountPlusText@@3PADA 0x004B17A0
+char SocialWinButtonCountPlusText[] = "+";         // 0x006874AC
+// RECOVERY_OBJECT: v2 0x006874B0 0x006874BB ?SocialWinPcxName@@3PADA 0x004B2740
+char SocialWinPcxName[] = "socwin.pcx";            // 0x006874B0
+// RECOVERY_OBJECT: v2 0x006874BC 0x006874C3 ?SocialWinTutorialName@@3PADA 0x004B2740
+char SocialWinTutorialName[] = "SOCWIN";           // 0x006874BC
+// RECOVERY_OBJECT: v2 0x00682E90 0x00682E93 ?SocialWinCommaSpaceText@@3PADA 0x004AFB60
+char SocialWinCommaSpaceText[] = ", ";             // 0x00682E90
+// RECOVERY_OBJECT: v2 0x00682E94 0x00682E97 ?SocialWinColonSpaceText@@3PADA 0x004AFB60
+char SocialWinColonSpaceText[] = ": ";             // 0x00682E94
+// RECOVERY_OBJECT: v2 0x00687480 0x00687483 ?SocialWinPercentSpaceTextA@@3PADA 0x004AFB60
+char SocialWinPercentSpaceTextA[] = "% ";           // 0x00687480
+// RECOVERY_OBJECT: v2 0x00687484 0x00687487 ?SocialWinPercentSpaceTextB@@3PADA 0x004AFB60
+char SocialWinPercentSpaceTextB[] = "% ";           // 0x00687484
+// RECOVERY_OBJECT: v2 0x00687488 0x0068748B ?SocialWinPercentSpaceTextC@@3PADA 0x004AFB60
+char SocialWinPercentSpaceTextC[] = "% ";           // 0x00687488
+// RECOVERY_OBJECT: v2 0x0068748C 0x0068748F ?SocialWinPercentSpaceTextD@@3PADA 0x004AFB60
+char SocialWinPercentSpaceTextD[] = "% ";           // 0x0068748C
+// RECOVERY_OBJECT: v2 0x00687490 0x00687492 ?SocialWinUpheavalPlusText@@3PADA 0x004AFB60
+char SocialWinUpheavalPlusText[] = "+";             // 0x00687490
 
 // ORIGINAL: 0x004AEF10 ?exit@SocialWin@@QAEXXZ 0x004AEF10-0x004AF10C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004aef10.cpp", "image:terranx_original.exe:0x004AEF10", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
@@ -1684,13 +1717,8 @@ void SocialWin::on_button_passover(int a1, int a2) {
     do_all_draws();
 }
 
-// Link-only placeholders; the passover path and init are what reference them.
-// The section keys and short UI strings are image-owned read-only data. The
-// file, rows and receiver are product objects; these four strings are the
-// remaining immutable resources the original painter reads directly.
+// The section key remains a distinct textual value from the SOC path prefix.
 static const char *const SocialOverviewSection = "SOCIO";
-static const char *const SocialOverviewPath = (const char *)0x0068749c;
-static const char *const SocialOverviewPlus = (const char *)0x006874a0;
 // ORIGINAL: 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ 0x004B0410-0x004B089A
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004B0410-0x004B089A draws the effects overview, skips the reserved fourth row, loads each SocialEffects section and repaints the selected/comparison rows", "source:src/socialwin.h: tooltipEffects_, effectMaximize_, socEffect_, font1_ and font7_ are the corresponding declared members", "source:src/faction.h: SocialEffect and RulesSocialEffect define the eleven live rows and their section names"], "reason": "Home the overview painter on the SocialWin-owned rectangles, effects, fonts and rules records; preserve its original identity while replacing the seed's opaque object accesses with the product model."}
 void SocialWin::draw_overview() {
@@ -1749,7 +1777,7 @@ void SocialWin::draw_overview() {
         }
 
         char section[64];
-        strcpy(section, SocialOverviewPath);
+        strcpy(section, SocialWinOverviewSocText);
         strcat(section, SocialEffects[effect].set1);
         if (text_open(0, section) != 0) {
             text_close();
@@ -1798,7 +1826,7 @@ void SocialWin::draw_overview() {
         StringTemp[0] = 0;
         const int value = social_effect_value(socEffect_, effect);
         if (value > 0) {
-            strcat(StringTemp, SocialOverviewPlus);
+            strcat(StringTemp, SocialWinOverviewPlusText);
         }
         char number[32];
         reinterpret_cast<ItoaFn>(_itoa)(value, number, 10);
@@ -1866,11 +1894,6 @@ void SocialWin::reset() {
         redraw();
     }
 }
-
-// Fixed-slot binding carried from the 004b17a0 work: the "+" the effect
-// count is prefixed with. Image .data reads "+" (0x006874AC, beside
-// "socwin.pcx"); no catalogue name.
-static char *const PlusText = (char *)0x006874AC;
 
 /*
  * Purpose: Track the pointer over the social panel: the bubble is cleared
@@ -1996,7 +2019,7 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
 
     StringTemp[0] = 0;
     if (current > 0) {
-        strcat(StringTemp, PlusText);
+        strcat(StringTemp, SocialWinButtonCountPlusText);
     }
     char number[80];
     reinterpret_cast<ItoaFn>(_itoa)(current, number, 10);
@@ -2018,13 +2041,9 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
 //                     strings, rows 0x68 apart.
 // PlayerPowerBlock    0x0096CCB0 - the per-faction power integers the -2
 //                     (faction-power) hover reads, PlayersData stride.
-// MinusText 0x006874A4 / MouseoverPlusText 0x006874A8 - image .data reads
-//                     "-" and "+" (beside the count prefix PlusText below).
 static const int *const SocialCategoryRow = (const int *)0x0094B014;
 static const char *const SocialEffectRowBase = (const char *)0x00946598;
 static int *const PlayerPowerBlock = (int *)0x0096CCB0;
-static char *const MinusText = (char *)0x006874A4;
-static char *const MouseoverPlusText = (char *)0x006874A8;
 
 /*
  * Purpose: Repaint the mouseover panel. The header shows the hovered effect's
@@ -2184,10 +2203,10 @@ void SocialWin::draw_mouseover() {
                 StringTemp[0] = 0;
                 int color_id;
                 if (v2 < 0) {
-                    strcat(StringTemp, MinusText);
+                    strcat(StringTemp, SocialWinMouseoverMinusText);
                     color_id = 0x67;
                 } else {
-                    strcat(StringTemp, MouseoverPlusText);
+                    strcat(StringTemp, SocialWinMouseoverPlusText);
                     color_id = 0x98;
                 }
                 buf->set_text_color(color_id, -1, 1, 1);
@@ -2218,21 +2237,9 @@ void SocialWin::draw_mouseover() {
     do_sound();
 }
 
-// Fixed-slot bindings carried from the 004afb60 work, named from what their
-// reads feed. PlayerUpheavalBlock 0x0096CC28 - the per-faction upheaval
-// baseline social_upheaval's result is compared against. CommaSpaceText
-// 0x00682E90 and ColonSpaceText 0x00682E94 - image .data reads ", " and ": ".
-// PercentSpaceText{A,B,C,D} 0x00687480/84/88/8C - four distinct image copies
-// of "% " the deficit text concatenates.
+// PlayerUpheavalBlock 0x0096CC28 - the per-faction upheaval baseline
+// social_upheaval's result is compared against.
 static int *const PlayerUpheavalBlock = (int *)0x0096CC28;
-static char *const CommaSpaceText = (char *)0x00682E90;
-static char *const ColonSpaceText = (char *)0x00682E94;
-static char *const PercentSpaceTextA = (char *)0x00687480;
-static char *const PercentSpaceTextB = (char *)0x00687484;
-static char *const PercentSpaceTextC = (char *)0x00687488;
-static char *const PercentSpaceTextD = (char *)0x0068748C;
-// UpheavalPlusText 0x00687490 - image .data reads "+" (beside "SOCIO...").
-static char *const UpheavalPlusText = (char *)0x00687490;
 
 /*
  * Purpose: Repaint the info header above the social panel: the category
@@ -2309,7 +2316,7 @@ void SocialWin::draw_info() {
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x3BF));
-    strcat(StringTemp, ColonSpaceText);
+    strcat(StringTemp, SocialWinColonSpaceText);
     char number[80];
     reinterpret_cast<ItoaFn>(_itoa)(NetIncomeGlobal, number, 10);
     strcat(StringTemp, number);
@@ -2320,7 +2327,7 @@ void SocialWin::draw_info() {
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(150));
-    strcat(StringTemp, ColonSpaceText);
+    strcat(StringTemp, SocialWinColonSpaceText);
     reinterpret_cast<ItoaFn>(_itoa)(BreakthroughTurnsGlobal, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, BufferJoinSpace);
@@ -2380,16 +2387,16 @@ scaled:
             int shown = (percent < 0) ? 0 : ((0x28 < percent) ? 0x28 : percent);
             reinterpret_cast<ItoaFn>(_itoa)(-shown, number, 10);
             strcat(StringTemp, number);
-            strcat(StringTemp, PercentSpaceTextA);
+            strcat(StringTemp, SocialWinPercentSpaceTextA);
             strcat(StringTemp, label_get(60));
 
             if (10 - SocialAllocTable[faction_stride] != reserve) {
-                strcat(StringTemp, CommaSpaceText);
+                strcat(StringTemp, SocialWinCommaSpaceText);
                 int percent2 = shift_side * imbalance * 2;
                 percent2 = (percent2 < 0) ? 0 : ((0x50 < percent2) ? 0x50 : percent2);
                 reinterpret_cast<ItoaFn>(_itoa)(-percent2, number, 10);
                 strcat(StringTemp, number);
-                strcat(StringTemp, PercentSpaceTextB);
+                strcat(StringTemp, SocialWinPercentSpaceTextB);
                 strcat(StringTemp, label_get(169));
             }
         } else {
@@ -2398,15 +2405,15 @@ scaled:
                 percent = (percent < 0) ? 0 : ((0x50 < percent) ? 0x50 : percent);
                 reinterpret_cast<ItoaFn>(_itoa)(-percent, number, 10);
                 strcat(StringTemp, number);
-                strcat(StringTemp, PercentSpaceTextC);
+                strcat(StringTemp, SocialWinPercentSpaceTextC);
                 strcat(StringTemp, label_get(60));
-                strcat(StringTemp, CommaSpaceText);
+                strcat(StringTemp, SocialWinCommaSpaceText);
             }
             int percent = shift_side * imbalance;
             percent = (percent < 0) ? 0 : ((0x28 < percent) ? 0x28 : percent);
             reinterpret_cast<ItoaFn>(_itoa)(-percent, number, 10);
             strcat(StringTemp, number);
-            strcat(StringTemp, PercentSpaceTextD);
+            strcat(StringTemp, SocialWinPercentSpaceTextD);
             strcat(StringTemp, label_get(169));
         }
 
@@ -2419,8 +2426,8 @@ scaled:
     if (upheaval < 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(222));
-        strcat(StringTemp, ColonSpaceText);
-        strcat(StringTemp, UpheavalPlusText);
+        strcat(StringTemp, SocialWinColonSpaceText);
+        strcat(StringTemp, SocialWinUpheavalPlusText);
         reinterpret_cast<ItoaFn>(_itoa)(-upheaval, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, BufferJoinSpace);
@@ -2430,7 +2437,7 @@ scaled:
         buf->set_text_color(0xf9, -1, 1, 1);
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(221));
-        strcat(StringTemp, ColonSpaceText);
+        strcat(StringTemp, SocialWinColonSpaceText);
         reinterpret_cast<ItoaFn>(_itoa)(upheaval, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, BufferJoinSpace);
@@ -2458,15 +2465,15 @@ scaled:
 //                     0x007AF5D4/D8/DC - the layout edges the tooltip and
 //                     column rectangles derive from.
 // MainPanelHeight     0x007AF59C - the height the window's y centres against.
-// FontNameArialSlot 0x00691B2C / FontNameNarrowSlot 0x00691B30 - char* slots
-//                     holding "Arial" and "Arial Narrow".
-// SocWinPcxName 0x006874B0 - image .data reads "socwin.pcx".
+// DefaultFontFace and DefaultLargeFontFace are the genuine source-owned
+// globals already bound to the original face-name slots at 0x00691B2C/30.
+// SocialWinPcxName is the writable source-owned array for original 0x006874B0,
+// whose pinned initial bytes are "socwin.pcx".
 // TutorialStage 0x008CC228 - the int the tutorial entry stores 5 into.
 // TutorialSocRect 0x008C5380 - the RECT TutWin::soc_rect fills.
-// TutSocWinText 0x006874BC - image .data reads "SOCWIN", the tutorial call's
-//                     text.
-// ConsoleIfaceSlot 0x009156B0 - console.h's ConsoleGlobal; this TU reaches
-//                     only its first two dwords, so the binding stays local.
+// SocialWinTutorialName is the writable source-owned array for original
+// 0x006874BC, whose pinned initial bytes are "SOCWIN".
+// ConsoleGlobal is the modal parent passed to the original window init.
 static int *const SocialSubInterfaceSlot = (int *)0x007AE7F8;
 static RECT *const InterfaceScreenRect = (RECT *)0x007AF5B0;
 static int *const MainPanelLeft = (int *)0x007AF5A0;
@@ -2476,13 +2483,8 @@ static int *const SocialColumnTop = (int *)0x007AF5D4;
 static int *const SocialColumnRight = (int *)0x007AF5D8;
 static int *const SocialColumnBottom = (int *)0x007AF5DC;
 static int *const MainPanelHeight = (int *)0x007AF59C;
-static char **const FontNameArialSlot = (char **)0x00691B2C;
-static char **const FontNameNarrowSlot = (char **)0x00691B30;
-static char *const SocWinPcxName = (char *)0x006874B0;
 static int *const TutorialStage = (int *)0x008CC228;
 static RECT *const TutorialSocRect = (RECT *)0x008C5380;
-static char *const TutSocWinText = (char *)0x006874BC;
-static int *const ConsoleIfaceSlot = (int *)0x009156B0;
 int __cdecl pop_wait();  // 0x005398E0, defined in faction.cpp
 int __cdecl tut_check2(int veh_id);  // 0x004BA650, defined in tutwin.cpp
 
@@ -2661,21 +2663,21 @@ void SocialWin::init(int faction_id) {
     tutRects1_[2].right = tooltipLabs_.left + 0x1b;
     tutRects1_[2].bottom = tooltipLabs_.bottom - 3;
 
-    font1_.init(*FontNameArialSlot, 0xe, 1);
-    font2_.init(*FontNameArialSlot, 0xe, 1);
-    font3_.init(*FontNameNarrowSlot, 0xe, 1);
-    font4_.init(*FontNameNarrowSlot, 0xe, 1);
-    font5_.init(*FontNameArialSlot, 0xc, 0);
-    font6_.init(*FontNameArialSlot, 0xb, 1);
+    font1_.init(DefaultFontFace, 0xe, 1);
+    font2_.init(DefaultFontFace, 0xe, 1);
+    font3_.init(DefaultLargeFontFace, 0xe, 1);
+    font4_.init(DefaultLargeFontFace, 0xe, 1);
+    font5_.init(DefaultFontFace, 0xc, 0);
+    font6_.init(DefaultFontFace, 0xb, 1);
     font6_.unk_1_ = 3;
-    font7_.init(*FontNameArialSlot, 0xb, 0);
+    font7_.init(DefaultFontFace, 0xb, 0);
     font7_.unk_1_ = 3;
-    font8_.init(*FontNameNarrowSlot, 0xe, 1);
-    font9_.init(*FontNameNarrowSlot, 0xe, 1);
+    font8_.init(DefaultLargeFontFace, 0xe, 1);
+    font9_.init(DefaultLargeFontFace, 0xe, 1);
 
     if (*reinterpret_cast<int *>(
             reinterpret_cast<char *>(&effectIcons_[0]) + 4) == 0) {
-        sheet.load_pcx(SocWinPcxName, 0, 10, 0xec);
+        sheet.load_pcx(SocialWinPcxName, 0, 10, 0xec);
         Sprite *icon = effectIcons_;
         int row = 1;
         for (int r = 0; r < 10; ++r) {
@@ -2722,10 +2724,8 @@ void SocialWin::init(int faction_id) {
     {
         int cx = (WinScreenWidth - 0x321) / 2;
         int cy = (WinScreenHeight - *MainPanelHeight) - 0x162;
-        int flags = 0x1000000
-            | (*reinterpret_cast<int *>(reinterpret_cast<char *>(ConsoleIfaceSlot) + 4)
-               + reinterpret_cast<int>(ConsoleIfaceSlot));
-        GraphicWin::init(cx, cy, 0x341, 0x162, 0, flags, 0, 0, 0);
+        GraphicWin::init(cx, cy, 0x341, 0x162, 0, 0x1000000,
+            static_cast<Win *>(&ConsoleGlobal), 0, 0);
     }
     GraphicWin::fill(9);
     {
@@ -2912,7 +2912,7 @@ void SocialWin::init(int faction_id) {
             MapWin *window = MapWinTable[0];
             GraphicWin *graphics = window != 0
                 ? static_cast<GraphicWin *>(window) : 0;
-            TutorialWindow.tut_win(graphics, TutSocWinText, out_a, out_b,
+            TutorialWindow.tut_win(graphics, SocialWinTutorialName, out_a, out_b,
                 0, 1, -1, -1);
         }
         set_modal(0, pop_wait, &MainInterfaceGlobal);

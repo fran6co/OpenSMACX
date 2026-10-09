@@ -4898,10 +4898,9 @@ struct BufferFontTriple {
 // using wrap's separate return as the vertical endpoint. Preserve those quirks.
 // RECOVERY_OBJECT: v1 0x009B39D8 ?BufferLastWrapWriteResult@@3HA
 int BufferLastWrapWriteResult;
-// 0x00696C90 - the "$LINK<" header token, three copies in a row in .rdata;
-// `find_line_break_l` strncmp's the first six bytes of a '$' segment
-// against it to recognise a link.
-static const char *const MarkupLinkToken = (const char *)0x00696C90;
+// Original .data token at 0x00696C90, compared for its six visible bytes.
+// RECOVERY_OBJECT: v2 0x00696C90 0x00696C97 ?BufferMarkupLinkToken@@3PADA 0x005DC410
+char BufferMarkupLinkToken[] = "$LINK<";
 
 // ORIGINAL: 0x005DD250 ?write_cent_l@Buffer@@QAEHPADHHH@Z 0x005DD250-0x005DD2F3 FILE
 // working copy - scaffold materialised by --work
@@ -6542,7 +6541,7 @@ scan_loop:
         unsigned char ch = (unsigned char)*esi;
         switch (ch) {
         case '$':
-            if (strncmp(esi, reinterpret_cast<const char *>(MarkupLinkToken), 6) == 0) {
+            if (strncmp(esi, BufferMarkupLinkToken, 6) == 0) {
                 markup_pending_ = 1;
                 ebxMode = 3;
                 goto join_compute;

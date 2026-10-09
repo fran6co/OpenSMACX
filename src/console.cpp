@@ -5038,32 +5038,31 @@ Purpose: Edit one faction's four AI priority toggles through the checkbox
 // calls     0x00593310 0x005BF3F0
 */
 void Console::set_ai(int faction_id) {
-    // The four toggles live at PlayersData + 0x3E0: the third dword of the
-    // faction's unk_38 run.
-    int *const entry = PlayersData[faction_id].unk_38 + 2;
-    unsigned char flags = (entry[0] != 0) ? 1 : 0;
-    if (entry[1] != 0) {
+    // The pinned reads/writes at 96CDC0..96CDCC are the four named priority
+    // fields at PlayersData + 0x3E0..0x3EC (VC6 CodeView offsets 992..1004).
+    unsigned char flags = (PlayersData[faction_id].ai_growth != 0) ? 1 : 0;
+    if (PlayersData[faction_id].ai_tech != 0) {
         flags |= 2;
     } else {
         flags &= 0xFD;
     }
-    if (entry[2] != 0) {
+    if (PlayersData[faction_id].ai_wealth != 0) {
         flags |= 4;
     } else {
         flags &= 0xFB;
     }
-    if (entry[3] != 0) {
+    if (PlayersData[faction_id].ai_power != 0) {
         flags |= 8;
     } else {
         flags &= 0xF7;
     }
     PopupWriteCheckState = static_cast<int>(flags);
     if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
-        const char answer = *reinterpret_cast<const char *>(&PopupWriteCheckState);
-        entry[0] = answer & 1;
-        entry[1] = (answer & 2) >> 1;
-        entry[2] = (answer & 4) >> 2;
-        entry[3] = (answer & 8) >> 3;
+        const int answer = PopupWriteCheckState;
+        PlayersData[faction_id].ai_growth = answer & 1;
+        PlayersData[faction_id].ai_tech = (answer & 2) >> 1;
+        PlayersData[faction_id].ai_wealth = (answer & 4) >> 2;
+        PlayersData[faction_id].ai_power = (answer & 8) >> 3;
         synch_ai(faction_id);
     }
 }
@@ -12082,21 +12081,20 @@ case 'R':
     // post-key continuation.
     if ((GameDataStateStorage.fields_.game_more_preferences_ & 0x200u) != 0) {
         const int faction = faction_id_;
-        int *const toggles = PlayersData[faction].unk_38 + 2;
-        PopupWriteCheckState = toggles[0] != 0 ? 1 : 0;
-        if (toggles[1] != 0) {
+        PopupWriteCheckState = PlayersData[faction].ai_growth != 0 ? 1 : 0;
+        if (PlayersData[faction].ai_tech != 0) {
             PopupWriteCheckState |= 2;
         } else {
             PopupWriteCheckState &= ~2;
         }
-        popup_set_write_check_bit(2, toggles[2]);
-        popup_set_write_check_bit(3, toggles[3]);
+        popup_set_write_check_bit(2, PlayersData[faction].ai_wealth);
+        popup_set_write_check_bit(3, PlayersData[faction].ai_power);
         if (x_pop_short(ConsoleStrTechRandom, 1, 0) >= 0) {
-            const char answer = static_cast<char>(PopupWriteCheckState);
-            toggles[0] = answer & 1;
-            toggles[1] = (answer & 2) >> 1;
-            toggles[2] = (answer & 4) >> 2;
-            toggles[3] = (answer & 8) >> 3;
+            const int answer = PopupWriteCheckState;
+            PlayersData[faction].ai_growth = answer & 1;
+            PlayersData[faction].ai_tech = (answer & 2) >> 1;
+            PlayersData[faction].ai_wealth = (answer & 4) >> 2;
+            PlayersData[faction].ai_power = (answer & 8) >> 3;
             synch_ai(faction);
         }
     } else {

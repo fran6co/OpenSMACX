@@ -38,7 +38,6 @@ def harness():
     text = text.replace(
         "struct SocialWin : GraphicWin, SubInterface {",
         "struct SocialCategory { enum ModelIndex { POLITICS, ECONOMICS, VALUES, FUTURE }; uint32_t models_[4]; };\n"
-        "struct SocialEffect { int values_[11]; };\n"
         "struct PlayerData { SocialCategory soc_category_pending; "
         "SocialCategory soc_category_active; int soc_upheaval_cost_paid; "
         "SocialEffect soc_effect_pending; };\n"
@@ -61,7 +60,7 @@ def harness():
     text = text.replace("unsigned char pad_to_faction[0xCF4-0xA1C]; uint32_t factionID_;",
                         "unsigned char pad_to_faction[0xCF4-0xA20]; uint32_t factionID_;")
     text = text.replace(
-        "unsigned char pad_to_effect[0xD08-0xCF8]; int socEffect_[11];\n"
+        "unsigned char pad_to_effect[0xD08-0xCF8]; SocialEffect socEffect_;\n"
         "    unsigned char pad_to_locks[0xD6C-0xD34]; CheckButton energyLockButtons_[3];",
         "SocialCategory socCategory_; SocialEffect socEffect_; SocialEffect socEffectOrig_;\n"
         "    unsigned char pad_to_locks[0xD6C-0xD60]; CheckButton energyLockButtons_[3];")
