@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "task_id": "win-palette-hdc-owner-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover the original Win palette query HDC argument and genuine pointer types, preserving original guards and callback-visible order.",
+  "base_revision": "ae9048a3b2994d09242569b7f7ef719f26f0f221",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6230128
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6249472
+    }
+  ],
+  "editable_files": [
+    "src/win.cpp",
+    "recovery/tests/test_win_palette_hdc_owner_oct9.py"
+  ],
+  "evidence": [
+    "Pinned5F1070 full body loads HDC value at5F1107,pushes it5F110F,receiver5F1110,slot26call5F1111; current ReleaseDC reinterpret_cast<HDC>(&WinSharedHdc) incorrectly passes storage address. GetDC5F10A6 takes address. on_activate5F5C00 already uses correct value; its contrary speculative comment may be clarified, behavior preserved. Existing IDirectDrawSurface2 pointer owns this API.",
+    "Use typed pointers/handles rather than register-like pointer-in-int locals inside authorized OnQueryNewPalette. Trace full original before rewrite; preserve refcount/failure/clear order and re-read after callbacks. No other Win scope. Host actual-source controls, native full-TU baseline/current, identity/claims continuity and fresh build/link before coordinator review/integration. Not a byte-spelling task or full-game acceptance."
+  ]
+}

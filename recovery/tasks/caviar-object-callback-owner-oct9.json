@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "task_id": "caviar-object-callback-owner-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover source-bound Caviar render callbacks and the original post-part callback edge with genuine function-pointer and record types.",
+  "base_revision": "ae9048a3b2994d09242569b7f7ef719f26f0f221",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6391200
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6393248
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6528608
+    }
+  ],
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/caviar.h",
+    "recovery/tests/test_caviar_object_callback_owner_oct9.py",
+    "recovery/tests/test_caviar_initializer.py",
+    "recovery/tests/test_caviar_draw_callbacks_actual_source.py",
+    "recovery/tests/test_caviar_scene_product_source.py",
+    "recovery/tests/fixtures/caviar_product_extraction.cpp"
+  ],
+  "evidence": [
+    "Pinned618C48 stores original618DA0 to record+58. Engine63A0AF passes six stack arguments and caller-cleans18; object_start618DA0 reads stack and plain RET, no ECX receiver. Replace literal executable target with actual static __cdecl source callback, retain original marker identity/historical signature and native observed current symbol through coordinator writer only.",
+    "Pinned vox_draw_scene63A0DE..0F3 reads callback+5C after vox_draw_part, null-tests, pushes current loop argument atESP64 and record, calls then caller-cleans8. Return ignored. Recover that edge, verify whether the second argument is part index or animation step from original setup, do not infer it from variable names. Record allocated/cleared80bytes; current fake54byte VOX_ScnRenderHnd prefix and VoxRenderRecord refer to same allocation/color member50. Unify actual record identity without inventing inheritance or retaining a callback cast shim; typedef compatibility permitted with source provenance. Two differently typed callback fields at58/5C, not integer array.",
+    "Keep existing state/context/shadow and raster behavior outside this closure; report necessary expansion rather than editing other owners. Existing tests may be retargeted only to retain prior properties; no dropping/damage weakening. Host actual-source callback/order/default tests, fresh native ABI/symbol/layout/reference observations, all historical identities and fresh build/link required before manual integration. No full SDK/game acceptance or body-count gain asserted."
+  ]
+}

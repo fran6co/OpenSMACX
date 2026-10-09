@@ -438,6 +438,15 @@ These are recomputed clues, not decisions or fresh structural proofs. A textual
 orphan needs reachability evidence before removal; a documented naming refusal
 must not turn into an invented name just to make a count fall.
 
+Treat casts as type/ownership investigation hints, especially integer-pointer
+conversions, reinterpreted member storage, raw callback words and offset-based
+receiver views. Trace original loads/stores, dereferences, callers, allocation
+bounds and lifecycle before deciding the variable's type. Prefer the recovered
+member, array, base or callback declaration to a cast. A numeric value does not
+become a pointer merely because a byte view was used; justified API/serialization
+boundary casts remain possible. Cosmetic cast removal and local byte equality
+are not structural proof, and a cast census is not function coverage.
+
 Recover bases, embedded versus pointed-to objects, construction/destruction,
 virtual slot evidence, globals and caller relationships before optimizing body
 spellings. Ordinary declarations express the structure. Source annotations hold

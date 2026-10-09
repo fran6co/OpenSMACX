@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task_id": "socialwin-button-state-owner-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover SocialWin text-draw button state through genuine FlatButton and BaseButton members rather than raw byte-offset casts.",
+  "base_revision": "ae9048a3b2994d09242569b7f7ef719f26f0f221",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4921248
+    }
+  ],
+  "editable_files": [
+    "src/socialwin.cpp",
+    "src/flatbutton.h",
+    "src/basebutton.h",
+    "recovery/tests/test_socialwin_button_state_owner_oct9.py",
+    "recovery/tests/test_socialwin_typed_owner_actual_source.py",
+    "recovery/tests/test_socialwin_runtime_owner_oct9.py"
+  ],
+  "evidence": [
+    "Pinned4B17A0..4B1991 receiver flatButtons begins6020, strideB4C; rawAB8/A18/A74 loads map existing FlatButton field_AB8 and BaseButton field_A18/field_A74. selected_state() exists forA18; add narrow const accessors for existing fields if needed without inventing status meanings or changing layout. Preserve unchecked index selection and exact short-circuit order.",
+    "SocialEffect socEffect_ already owns values_; use it rather than reinterpreting containing object as int array if original effect index/offset matches. Trace original before edits. Retain callbacks, Sprite and Buffer behavior and all historical identities/claims; header closure is deliberate. No other owner implementation edits; discoveries request expansion. Actual-source controls, whole affected owner/header measurements/layout and fresh combined build/link required before reviewed integration, not full-game acceptance."
+  ]
+}
