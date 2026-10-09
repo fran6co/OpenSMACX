@@ -81,18 +81,6 @@
 // RECOVERY_OBJECT: v2 0x00834D70 0x008577D4 ?PlanWindow@@3VPlanWin@@A 0x0048AE00
 PlanWin PlanWindow;
 
-// The dword immediately ahead of MapWin's virtual base. MapWin used to
-// declare it as a member; VC6 owns those four bytes as MapWin's vtordisp
-// when MapWin is the most-derived object, but inside PlanWin the base is
-// not most-derived and emits no vtordisp there, so PlanWin names the slot
-// itself (field_21A68_ in planwin.h) to hold the layout. The helper reaches
-// that slot through the parameter, so blink does not pun its own `this`.
-static int32_t &pre_vbase_dword(void *self) {
-    return *reinterpret_cast<int32_t *>(
-        reinterpret_cast<uint8_t *>(self) + 0x21A68);
-}
-
-
 /*
 Purpose: Build a plan window - attach its embedded GraphicWin, the MapWin
          base beneath it, and its own Buffer.
@@ -583,7 +571,7 @@ as a member, went with the member: VC6 places a virtual base where the
 vbtable names it, so PlanWin reaches GraphicWin at its own 0x22050.
 */
 void PlanWin::close() {
-    // WRITTEN INLINE, not through `pre_vbase_dword`. The image emits
+    // WRITTEN INLINE. The image emits
     // `mov [ecx + 0x21a68], 0` then TAIL-JUMPS to MapWin::close; routing the
     // store through a helper call blocks that tail call and costs the claim.
     // The pun of `this` is the price of the tail jump, and it is measured.
@@ -605,7 +593,7 @@ Return Value: n/a
 Status: Complete
 */
 void PlanWin::blink() {
-    if (!pre_vbase_dword(this)) {
+    if (!field_21A68_) {
         return;
     }
     field_21A6C_ = (field_21A6C_ == 0) ? 1 : 0;
