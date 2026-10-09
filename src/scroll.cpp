@@ -50,19 +50,19 @@ uint32_t ScrollCloseDynamicDefaults[17];  // 0x009B8DE0; the sprite slots start 
 static __forceinline void set_scroll_icon_defaults(Sprite *arrows,
                                                     Sprite *filler,
                                                     int thickness) {
-    ScrollCloseDynamicDefaults[5] = reinterpret_cast<uint32_t>(&arrows[0]);
-    ScrollCloseDynamicDefaults[6] = reinterpret_cast<uint32_t>(&arrows[1]);
-    ScrollCloseDynamicDefaults[7] = reinterpret_cast<uint32_t>(&arrows[2]);
-    ScrollCloseDynamicDefaults[11] = reinterpret_cast<uint32_t>(&arrows[3]);
-    ScrollCloseDynamicDefaults[12] = reinterpret_cast<uint32_t>(&arrows[4]);
-    ScrollCloseDynamicDefaults[13] = reinterpret_cast<uint32_t>(&arrows[5]);
-    ScrollCloseDynamicDefaults[2] = reinterpret_cast<uint32_t>(&arrows[6]);
-    ScrollCloseDynamicDefaults[3] = reinterpret_cast<uint32_t>(&arrows[7]);
-    ScrollCloseDynamicDefaults[4] = reinterpret_cast<uint32_t>(&arrows[8]);
-    ScrollCloseDynamicDefaults[8] = reinterpret_cast<uint32_t>(&arrows[9]);
-    ScrollCloseDynamicDefaults[9] = reinterpret_cast<uint32_t>(&arrows[10]);
-    ScrollCloseDynamicDefaults[10] = reinterpret_cast<uint32_t>(&arrows[11]);
-    ScrollCloseDynamicDefaults[15] = reinterpret_cast<uint32_t>(filler);
+    ScrollCloseDynamicDefaults[5] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[0]));
+    ScrollCloseDynamicDefaults[6] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[1]));
+    ScrollCloseDynamicDefaults[7] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[2]));
+    ScrollCloseDynamicDefaults[11] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[3]));
+    ScrollCloseDynamicDefaults[12] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[4]));
+    ScrollCloseDynamicDefaults[13] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[5]));
+    ScrollCloseDynamicDefaults[2] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[6]));
+    ScrollCloseDynamicDefaults[3] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[7]));
+    ScrollCloseDynamicDefaults[4] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[8]));
+    ScrollCloseDynamicDefaults[8] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[9]));
+    ScrollCloseDynamicDefaults[9] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[10]));
+    ScrollCloseDynamicDefaults[10] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[11]));
+    ScrollCloseDynamicDefaults[15] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(filler));
     ScrollDefaultThickness = thickness;
 }
 
@@ -94,46 +94,8 @@ inline LONG long_from_bits(uint32_t bits) {
     return value;
 }
 
-inline uint32_t read_bits(const void *object, size_t offset) {
-    uint32_t value;
-    memcpy(&value, static_cast<const uint8_t *>(object) + offset, sizeof(value));
-    return value;
-}
-
-inline void write_bits(void *object, size_t offset, uint32_t value) {
-    memcpy(static_cast<uint8_t *>(object) + offset, &value, sizeof(value));
-}
-
-inline void write_sprite(void *object, size_t offset, Sprite *sprite) {
-    static_assert(sizeof(uintptr_t) == sizeof(uint32_t),
-                  "Scroll sprite pointers require the 32-bit legacy ABI");
-    const uintptr_t bits = reinterpret_cast<uintptr_t>(sprite);
-    *reinterpret_cast<volatile uintptr_t *>(
-        static_cast<uint8_t *>(object) + offset) = bits;
-}
-
-inline uint32_t read_volatile_bits(const void *object, size_t offset) {
-    return *reinterpret_cast<const volatile uint32_t *>(
-        static_cast<const uint8_t *>(object) + offset);
-}
-
-uint32_t redraw_from_vtable(void *self, uint32_t vtable_bits) {
-    const uint32_t redraw_bits = read_volatile_bits(
-        reinterpret_cast<const void *>(static_cast<uintptr_t>(vtable_bits)), 0xF8);
-    uint32_t result;
-#if defined(_MSC_VER) && defined(_M_IX86)
-    __asm {
-        mov ecx, self
-        mov eax, redraw_bits
-        call eax
-        mov result, eax
-    }
-#else
-    typedef uint32_t (*RedrawProc)(void *);
-    result = reinterpret_cast<RedrawProc>(
-        static_cast<uintptr_t>(redraw_bits))(self);
-#endif
-    return result;
+inline Sprite *sprite_from_default_bits(uint32_t bits) {
+    return reinterpret_cast<Sprite *>(static_cast<uintptr_t>(bits));
 }
 
 // THE FOUR SPRITE SETTERS' SHARED BODY, BYTE_EXACT in all four (0x00605BE0,
@@ -154,8 +116,8 @@ uint32_t redraw_from_vtable(void *self, uint32_t vtable_bits) {
 //     where the image has it - after the three stores, before the branch.
 // Measured 2026-09-03: 5/21 (volatile alias, raw dib reads) -> 8/21 (named
 // dib reads, volatile alias kept) -> 21/21 with the volatile dropped.
-__forceinline void set_sprite_triplet(Scroll *object, Sprite **primary,
-                        size_t button_offset, bool horizontal, Sprite *sprite1,
+__forceinline void set_sprite_triplet(Scroll *object, Sprite *primary[3],
+                        FlatButton *button, bool horizontal, Sprite *sprite1,
                         Sprite *sprite2, Sprite *sprite3) {
     primary[0] = sprite1;
     primary[1] = sprite2;
@@ -165,9 +127,9 @@ __forceinline void set_sprite_triplet(Scroll *object, Sprite **primary,
     const LONG width = object->dib_.bmiHeader.biWidth;
     const bool update_button = horizontal ? width > height : width < height;
     if (update_button) {
-        write_sprite(object, button_offset, sprite1);
-        write_sprite(object, button_offset + 4, sprite2);
-        write_sprite(object, button_offset + 8, sprite3);
+        button->config[12] = sprite1;
+        button->config[13] = sprite2;
+        button->config[14] = sprite3;
     }
 }
 
@@ -177,24 +139,6 @@ uint32_t arithmetic_shift_right_one(uint32_t value) {
 
 uint32_t signed_min(uint32_t left, uint32_t right) {
     return long_from_bits(left) < long_from_bits(right) ? left : right;
-}
-
-OPENSMACX_NOINLINE
-uint32_t signed_divide(uint32_t dividend_bits, uint32_t divisor_bits) {
-    LONG dividend = long_from_bits(dividend_bits);
-    LONG divisor = long_from_bits(divisor_bits);
-    LONG quotient;
-#if defined(_MSC_VER) && defined(_M_IX86)
-    __asm {
-        mov eax, dividend
-        cdq
-        idiv divisor
-        mov quotient, eax
-    }
-#else
-    quotient = dividend / divisor;
-#endif
-    return static_cast<uint32_t>(quotient);
 }
 
 }  // namespace
@@ -313,46 +257,42 @@ Status: Complete
 Scroll::Scroll() {
     // Both vtable stores are the compiler's now that Buffer is a real base of
     // GraphicWin; it puts them where the image does.
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-
     uint32_t *const fixed = ScrollCloseStaticDefaults;
     uint32_t *const dynamic = ScrollCloseDynamicDefaults;
 
-    object[0xA14 / 4] = dynamic[0];
-    object[0xA1C / 4] = fixed[3];
-    object[0xA28 / 4] = 0;
-    object[0xA20 / 4] = dynamic[1];
-    object[0xA24 / 4] = fixed[4];
-    object[0xA2C / 4] = dynamic[1];
-    object[0xA30 / 4] = fixed[2];
-    object[0xA3C / 4] = 0xFFFFFFFFU;
-    object[0xA38 / 4] = 0;
-    object[0xA34 / 4] = fixed[1];
-    object[0xA40 / 4] = fixed[0];
-    object[0xA44 / 4] = 0;
-    object[0xA4C / 4] = 0;
-    object[0xA50 / 4] = 0;
-    object[0xA54 / 4] = 0;
-    object[0xA58 / 4] = 0;
-    object[0xA48 / 4] = fixed[5];
-    object[0xA5C / 4] = fixed[6];
-    object[0xA64 / 4] = fixed[7];
-    object[0xA68 / 4] = fixed[8];
-    object[0xA6C / 4] = fixed[9];
-    object[0xA70 / 4] = fixed[10];
+    field_A14_ = dynamic[0];
+    border_color_ = static_cast<int>(fixed[3]);
+    range_reversed_ = 0;
+    range_minimum_ = static_cast<int>(dynamic[1]);
+    range_maximum_ = static_cast<int>(fixed[4]);
+    position_ = static_cast<int>(dynamic[1]);
+    field_A30_ = fixed[2];
+    field_A3C_ = 0xFFFFFFFFU;
+    field_A38_ = 0;
+    field_A34_ = fixed[1];
+    paging_ = static_cast<int>(fixed[0]);
+    field_A44_ = 0;
+    thumb_rect_.left = 0;
+    thumb_rect_.top = 0;
+    thumb_rect_.right = 0;
+    thumb_rect_.bottom = 0;
+    field_A48_ = fixed[5];
+    color_ = fixed[6];
+    field_A64_ = static_cast<int>(fixed[7]);
+    bevel_thickness_ = fixed[8];
+    bevel_upper_ = fixed[9];
+    bevel_lower_ = fixed[10];
 
-    uint32_t *dest = object + 0xA88 / 4;
     for (int index = 0; index < 3; ++index) {
-        dest[-3] = dynamic[2 + index];
-        dest[0] = dynamic[5 + index];
-        dest[3] = dynamic[8 + index];
-        dest[6] = dynamic[11 + index];
-        ++dest;
+        sprite_left_[index] = sprite_from_default_bits(dynamic[2 + index]);
+        sprite_up_[index] = sprite_from_default_bits(dynamic[5 + index]);
+        sprite_right_[index] = sprite_from_default_bits(dynamic[8 + index]);
+        sprite_down_[index] = sprite_from_default_bits(dynamic[11 + index]);
     }
-    object[0xA74 / 4] = dynamic[15];
-    object[0xA78 / 4] = dynamic[16];
-    object[0x2144 / 4] = 0;
-    object[0x2148 / 4] = 0;
+    thumb_sprite_ = sprite_from_default_bits(dynamic[15]);
+    field_A78_ = sprite_from_default_bits(dynamic[16]);
+    field_2144_ = 0;
+    field_2148_ = 0;
 }
 
 /*
@@ -428,44 +368,42 @@ Return Value: GraphicWin::close return residue
 Status: Complete; embedded FlatButton close redirects are source-owned
 */
 uint32_t Scroll::close() {
-    uint32_t *const object =
-        reinterpret_cast<uint32_t *>(this);
     uint32_t *const fixed = ScrollCloseStaticDefaults;
     uint32_t *const dynamic = ScrollCloseDynamicDefaults;
 
-    object[0xA14 / 4] = dynamic[0];
-    object[0xA1C / 4] = fixed[3];
-    object[0xA28 / 4] = 0;
-    object[0xA20 / 4] = dynamic[1];
-    object[0xA24 / 4] = fixed[4];
-    object[0xA2C / 4] = dynamic[1];
-    object[0xA3C / 4] = 0xFFFFFFFFU;
-    object[0xA38 / 4] = 0;
-    object[0xA30 / 4] = fixed[2];
-    object[0xA34 / 4] = fixed[1];
-    object[0xA40 / 4] = fixed[0];
-    object[0xA44 / 4] = 0;
-    object[0xA4C / 4] = 0;
-    object[0xA50 / 4] = 0;
-    object[0xA54 / 4] = 0;
-    object[0xA58 / 4] = 0;
-    object[0xA48 / 4] = fixed[5];
-    object[0xA5C / 4] = fixed[6];
-    object[0xA64 / 4] = fixed[7];
-    object[0xA68 / 4] = fixed[8];
-    object[0xA6C / 4] = fixed[9];
-    object[0xA70 / 4] = fixed[10];
+    field_A14_ = dynamic[0];
+    border_color_ = static_cast<int>(fixed[3]);
+    range_reversed_ = 0;
+    range_minimum_ = static_cast<int>(dynamic[1]);
+    range_maximum_ = static_cast<int>(fixed[4]);
+    position_ = static_cast<int>(dynamic[1]);
+    field_A3C_ = 0xFFFFFFFFU;
+    field_A38_ = 0;
+    field_A30_ = fixed[2];
+    field_A34_ = fixed[1];
+    paging_ = static_cast<int>(fixed[0]);
+    field_A44_ = 0;
+    thumb_rect_.left = 0;
+    thumb_rect_.top = 0;
+    thumb_rect_.right = 0;
+    thumb_rect_.bottom = 0;
+    field_A48_ = fixed[5];
+    color_ = fixed[6];
+    field_A64_ = static_cast<int>(fixed[7]);
+    bevel_thickness_ = fixed[8];
+    bevel_upper_ = fixed[9];
+    bevel_lower_ = fixed[10];
 
-    for (size_t index = 0; index < 3; ++index) {
-        object[(0xA7C / 4) + index] = dynamic[2 + index];
-        object[(0xA88 / 4) + index] = dynamic[5 + index];
-        object[(0xA94 / 4) + index] = dynamic[8 + index];
-        object[(0xAA0 / 4) + index] = dynamic[11 + index];
+    for (int index = 0; index < 3; ++index) {
+        sprite_left_[index] = sprite_from_default_bits(dynamic[2 + index]);
+        sprite_up_[index] = sprite_from_default_bits(dynamic[5 + index]);
+        sprite_right_[index] = sprite_from_default_bits(dynamic[8 + index]);
+        sprite_down_[index] = sprite_from_default_bits(dynamic[11 + index]);
     }
-    object[0xA74 / 4] = dynamic[15];
-    object[0xA78 / 4] = dynamic[16];
-    object[0x2144 / 4] = 0;
-    object[0x2148 / 4] = 0;
+    thumb_sprite_ = sprite_from_default_bits(dynamic[15]);
+    field_A78_ = sprite_from_default_bits(dynamic[16]);
+    field_2144_ = 0;
+    field_2148_ = 0;
 
     flat_button_left_.close();
     flat_button_right_.close();
@@ -521,11 +459,11 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
         }
 
         if (horizontal) {
-            flat_button_left_.set_scroll_icons(sprite_left1_, sprite_left2_,
-                                                sprite_left3_);
+            flat_button_left_.set_scroll_icons(sprite_left_[0], sprite_left_[1],
+                                                sprite_left_[2]);
         } else {
-            flat_button_left_.set_scroll_icons(sprite_up1_, sprite_up2_,
-                                                sprite_up3_);
+            flat_button_left_.set_scroll_icons(sprite_up_[0], sprite_up_[1],
+                                                sprite_up_[2]);
         }
         flat_button_left_.color_ = color_;
         flat_button_left_.bevel_thickness_ = bevel_thickness_;
@@ -548,11 +486,11 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
         }
 
         if (horizontal) {
-            flat_button_right_.set_scroll_icons(sprite_right1_, sprite_right2_,
-                                                 sprite_right3_);
+            flat_button_right_.set_scroll_icons(sprite_right_[0], sprite_right_[1],
+                                                 sprite_right_[2]);
         } else {
-            flat_button_right_.set_scroll_icons(sprite_down1_, sprite_down2_,
-                                                 sprite_down3_);
+            flat_button_right_.set_scroll_icons(sprite_down_[0], sprite_down_[1],
+                                                 sprite_down_[2]);
         }
         flat_button_right_.color_ = color_;
         flat_button_right_.bevel_thickness_ = bevel_thickness_;
@@ -1140,7 +1078,7 @@ Status: Complete
 */
 void Scroll::set_sprite_left(
         Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
-    set_sprite_triplet(this, &sprite_left1_, 0x15BC, true,
+    set_sprite_triplet(this, sprite_left_, &flat_button_left_, true,
                        sprite1, sprite2, sprite3);
 }
 
@@ -1164,7 +1102,7 @@ Status: Complete
 */
 void Scroll::set_sprite_right(
         Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
-    set_sprite_triplet(this, &sprite_right1_, 0x2108, true,
+    set_sprite_triplet(this, sprite_right_, &flat_button_right_, true,
                        sprite1, sprite2, sprite3);
 }
 
@@ -1195,7 +1133,7 @@ Status: Complete
 */
 void Scroll::set_sprite_up(
         Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
-    set_sprite_triplet(this, &sprite_up1_, 0x15BC, false,
+    set_sprite_triplet(this, sprite_up_, &flat_button_left_, false,
                        sprite1, sprite2, sprite3);
 }
 
@@ -1217,7 +1155,7 @@ Status: Complete
 */
 void Scroll::set_sprite_down(
         Sprite *sprite1, Sprite *sprite2, Sprite *sprite3) {
-    set_sprite_triplet(this, &sprite_down1_, 0x2108, false,
+    set_sprite_triplet(this, sprite_down_, &flat_button_right_, false,
                        sprite1, sprite2, sprite3);
 }
 

@@ -37,9 +37,9 @@ class Scroll : public GraphicWin {
   ~Scroll();
 
   uint32_t close();
-  // 0x006054D0, still a pending_bodies forwarder. The overloads that
-  // wrap it call it BY NAME, so they emit the image's `call rel32`
-  // rather than the `call [ptr]` a function-pointer seam compiles.
+  // 0x006054D0 is the primary initializer. The overloads that wrap it call
+  // it BY NAME, so they emit the image's `call rel32` rather than the
+  // `call [ptr]` a function-pointer seam compiles.
   int init(int x, int y, int width, int height, Win *parent,
            int setting, int options);
   int init(RECT *rect, Win *parent, int setting, int options);
@@ -113,18 +113,10 @@ class Scroll : public GraphicWin {
   // RECOVERY_MEMBER: v3 Scroll thumb_sprite_ Sprite* 0xA74 0x006066F0
   Sprite *thumb_sprite_;
   Sprite *field_A78_;
-  Sprite *sprite_left1_;
-  Sprite *sprite_left2_;
-  Sprite *sprite_left3_;
-  Sprite *sprite_up1_;
-  Sprite *sprite_up2_;
-  Sprite *sprite_up3_;
-  Sprite *sprite_right1_;
-  Sprite *sprite_right2_;
-  Sprite *sprite_right3_;
-  Sprite *sprite_down1_;
-  Sprite *sprite_down2_;
-  Sprite *sprite_down3_;
+  Sprite *sprite_left_[3];
+  Sprite *sprite_up_[3];
+  Sprite *sprite_right_[3];
+  Sprite *sprite_down_[3];
   FlatButton flat_button_left_;
   FlatButton flat_button_right_;
   void (__cdecl *field_2144_)(int, int);
