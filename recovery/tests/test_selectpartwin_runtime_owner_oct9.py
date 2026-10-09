@@ -20,7 +20,10 @@ def test_selectpartwin_uses_owned_palette_and_sprite_tables(tmp_path: Path) -> N
     assert "g_VEH_SPRITES[152]" in sprite_header
     assert "// 0x007777A0" in sprite_header
     assert "render_multi_table_dest(buf444, midX, midY, 0x18,\n                ArmorTransparentColorTables[0], 6)" in source
-    assert "SelectPartTile->draw(&backdrop, SelectPartTile->transparent_index()," in source
+    assert re.search(
+        r"TutWinBaseWindow\.sprite6_\.draw\(\s*&backdrop,\s*"
+        r"TutWinBaseWindow\.sprite6_\.transparent_index\(\),", source)
+    assert "SelectPartTile" not in source
     assert "SelectPartTileColour" not in source
     assert "WeaponSpriteIndexSlot = (signed char *)0x009AB9CE" in source
     assert "if (have_sprite_idx && sprite_idx >= 0)" in source

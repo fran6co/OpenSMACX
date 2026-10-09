@@ -407,9 +407,28 @@ Net::Net() {
     // base at 0x758 is constructed before its list member at 0x72C, whose
     // own allocation base is at 0x750. This preserves the original owner
     // capture order; treating all three as sequential Net members did not.
-    // Other initialization and the receiver/list lifecycle remain unfinished.
+    // The scalar state and sixteen player slots below are the constructor's
+    // direct stores. In particular, the player +0x0C word is not cleared here.
     ActiveNet = this;
+    poll_time_DC_ = 0;
+    poll_timeout_E0_ = 0x4E20;
     NetDirectPlay = 0;
+    field_6DC_ = 0;
+    field_760_ = 0;
+    field_764_ = 0;
+    buffer_6E0_ = 0;
+    field_6E4_ = 0;
+    field_6FC_ = 0xC8;
+    for (int player = 0; player != 16; ++player) {
+        players_[player].field_0_ = 0;
+        players_[player].field_4_ = 0;
+        players_[player].field_8_ = 0;
+        players_[player].flags_14_ = 0;
+        players_[player].stamp_10_ = 0;
+    }
+    field_6D4_ = 0x64;
+    voice_flags_D8_ = 0;
+    field_E4_ = 1;
     // Original 0x0062D8A3..0x0062D8AC initializes the window's voice inputs.
     voice_hotkey_48_ = 0;
     voice_hotkey_4c_ = 0;

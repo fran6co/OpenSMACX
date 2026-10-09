@@ -19,11 +19,13 @@
   ],
   "editable_files": [
     "src/selectpartwin.cpp",
-    "recovery/tests/test_selectpart_tutorial_sprite_owner_oct9.py"
+    "recovery/tests/test_selectpart_tutorial_sprite_owner_oct9.py",
+    "recovery/tests/test_selectpartwin_runtime_owner_oct9.py"
   ],
   "evidence": [
     "Source-owned BaseWin TutWinBaseWindow start6A7628 plus actual Sprite member sprite6_ offsetBDD0 equals original6B33F8. BaseWin constructor408490, CRTinitializer4083B0 and init41E8D0 own member lifetime and interface.pcx extraction439,64 size20x20. No standalone Sprite global or new object binding is warranted.",
     "Pinned immediate references:433DDE passes6B33F8 to Buffer::tile in SelectPartWin draw_part;433FD2 receiver for Sprite::draw in exec backdrop;4947C2 same receiver in ProdPicker::exec, already typed TutWinBaseWindow.sprite6_. Remove SelectPartTile fixedaddress alias, use real member through existing owner includes, preserve original receiver, call arguments, transparency, order and lifetime. Evidence does not authorize other renderer/modal seams.",
-    "Keep all original mappings/claims/useful findings. Host actual-source member receiver controls, wholeTU native baseline/current and fresh application build/link before independent coordinator review. No new globals, invented lifetimes, byte search, original marker edits or full acceptance assertion."
+    "Keep all original mappings/claims/useful findings. Host actual-source member receiver controls, wholeTU native baseline/current and fresh application build/link before independent coordinator review. No new globals, invented lifetimes, byte search, original marker edits or full acceptance assertion.",
+    "Coordinator expands test-only scope to migrate the existing asset regression control from its retired fixed-address alias expectation to the genuine tutorial member, retaining all existing palette, weapon-sprite and runtime assertions. Task baseline and product scope remain unchanged."
   ]
 }

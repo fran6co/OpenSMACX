@@ -9,11 +9,10 @@
 #include "faction.h"  // pop_wait is the typed modal pump at 0x005398E0
 #include "game.h"
 #include "strings.h"
+#include "tutwin.h"
 #include "win.h"
 #include <cstring>
 
-// The picker background tile remains an image-owned alias.
-static Sprite *const SelectPartTile = (Sprite *)0x006B33F8;
 // Renderer origin is the existing veh.cpp object VehLightDirMap.
 
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
@@ -103,8 +102,9 @@ int SelectPartWin::exec(int x, int y, int value0, int kind, int selected,
 
     Buffer backdrop;
     backdrop.init(10, 10, 0, 0);
-    SelectPartTile->draw(&backdrop, SelectPartTile->transparent_index(),
-                         0, 0, 1, 1);
+    TutWinBaseWindow.sprite6_.draw(
+        &backdrop, TutWinBaseWindow.sprite6_.transparent_index(),
+        0, 0, 1, 1);
 
     const int width = WinScreenWidth;
     const int height = WinScreenHeight;
@@ -586,7 +586,7 @@ int SelectPartWin::draw_part(int a1, int a2) {
         }
 
         static_cast<Buffer *>(this)
-            ->tile(reinterpret_cast<Sprite *>(0x006B33F8), x0, y0, x0,
+            ->tile(&TutWinBaseWindow.sprite6_, x0, y0, x0,
                    y0, 0x69, 0x5B);
     }
     return 1;
