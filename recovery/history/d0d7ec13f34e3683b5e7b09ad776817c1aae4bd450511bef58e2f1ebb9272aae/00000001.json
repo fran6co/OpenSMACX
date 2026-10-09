@@ -1,0 +1,20 @@
+{
+  "event_id": "43e95282f65ede75e5182a8cd2c743a127590aa63139012c2371dc7ee16471f0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_remaining_adjustor_actual_source_oct7.py",
+      "recovery/tests/test_ui_owner_behavior.py"
+    ],
+    "evidence": [
+      "Worker affected-suite run found two existing Dialogs extraction fixtures hard-coded to prior integer Scroll callbacks. Authorize only updating their extracted signature/fixture declarations and pointer-identity assertions for the same producer/consumer contract; preserve guards, mutants and all other behavioral checks. No source expansion, historical baseline reset or assertion waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "scroll-pointer-fixture-closure-oct9",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-scroll-lifecycle-closure-oct9"
+}
