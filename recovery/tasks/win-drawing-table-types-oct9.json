@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "task_id": "win-drawing-table-types-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover Win borrowed drawing-table pointer types across all producers, paint consumers and lifecycle/null consumers.",
+  "base_revision": "654c4e433fa4eca41a04ce1c98129ca6af24c18e",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6118640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6068320
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4905840
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4360688
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6206416
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6207040
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6253232
+    }
+  ],
+  "editable_files": [
+    "src/win.h",
+    "src/win.cpp",
+    "src/graphicwin.cpp",
+    "src/multidebug.cpp",
+    "src/setupwin.cpp",
+    "src/credits.cpp",
+    "recovery/tests/test_win_drawing_table_types_oct9.py"
+  ],
+  "evidence": [
+    "Pinned GraphicWin5D5CF0 reads Win+A0 before A4 and passes their 32-bit values to Buffer draw_dest5D8B20 or draw_multi_table_dest5D94B0, whose existing interfaces take unsigned char*. Preserve branch priority, calls, rereads, dimensions and null behavior; no content/lifetime/guard changes.",
+    "Pinned MultiDebug5C9860 stores third arg at5C98A8 to+A0; system_init58F040 passes ShadowColorTable6F107C, not text. SetupWin4ADB70 stores RedTintColorTable6F117C or BlueTintColorTable6F1A7C to+A0 at4ADE63/4ADE6F. Credits4289F0 stores FadeColorTables6F127C into graphicWin2_+A4 at428ACD. Existing source-owned byte arrays need no storage changes.",
+    "Complete current Win field references are constructor/close zeroing, mouse recurse null gate, three producers and GraphicWin paint consumers. Change both fields from uint32 to unsigned char* and remove numeric-pointer casts; retain opaque field names, source mappings, claims and historical findings. MultiDebug parameter-local descriptive rename allowed without interface/mangling change; no out-of-scope source changes.",
+    "Coordinator-reviewed integration requires actual-source controls, native whole affected TU baseline/current measurements, identity/claim continuity and fresh full application build/link. No long byte search, new claims, explicit bug fixes or full acceptance assertion."
+  ]
+}
