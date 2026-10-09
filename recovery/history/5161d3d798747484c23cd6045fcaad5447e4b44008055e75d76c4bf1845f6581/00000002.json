@@ -1,0 +1,21 @@
+{
+  "event_id": "37e179e9f7392da105b39dd650bf92e3847d286d8a13ec5a687a305ea8227243",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/sound_export_storage_harness.cpp",
+      "recovery/tests/wave_device_exports_harness.cpp",
+      "recovery/tests/wave_lifetime_harness.cpp"
+    ],
+    "evidence": [
+      "Native frozen-draft controls: 14 pass/12 fail; remaining harnesses omit export extern before inline accessors and retain removed void-return release/slot-reference contract. Retarget actual harness API and preserve all lifetime, rebinding and damage observations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "73a18a7e1218f517abae40cf49b8fd3e753c603d62d13fc02785a0d7d2161521",
+  "request_id": "soundx-native-harness-retarget-oct9",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:soundx-typed-export-table-oct9"
+}
