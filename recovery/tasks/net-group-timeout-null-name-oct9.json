@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "5b2fb46cee5c1cc3c0d0718b4372631398df7981",
+  "editable_files": [
+    "src/net_class.cpp",
+    "src/net_class.h",
+    "recovery/tests/test_net_group_timeout_name_oct9.py"
+  ],
+  "evidence": [
+    "Pinned62F24C..62F257 scans16 player IDs;62F259 branches on index16 to62F25E xor eax,eax, pushes null at62F26F and calls strcat at62F275. Current slot-zero fallback contradicts both pinned code and user error-path decision in recovery/tasks/net-transport-owner.json. Stable self-matching does not prove concurrent mutation unreachable.",
+    "Change only send_group lookup-miss argument and its misleading comment. Preserve formatting/call order, branches, retry/pending partial initialization and existing current symbols/spans/claims; no safe skip, deterministic output substitute or bug fix.",
+    "Header sub_632cc0 comment incorrectly claims17th-player rejection; original632CE8/ED and current body skip row initialization when full but continue count/broadcast/callback. Correct prose only; do not alter insertion or scope its C++ implementation.",
+    "Regression controls extract actual nullable name selection/call boundary, intercept strcat rather than execute it with null, test found indices and negative miss with a slot-zero mutant. A bounded argument test does not establish concurrency reachability, UB result, full sender/runtime or game acceptance.",
+    "Coordinator-reviewed manual integration after independent pinned/source review, all Net TU native measurements, full application build/link and function identity/claim continuity. No compiler flags, claims/demotions, original-marker edits or task-baseline reset."
+  ],
+  "intent": "Restore the original group-send timeout lookup-miss null argument to strcat, preserving all other sender behavior; correct stale full-table behavior prose without changing insertion.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6483616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "net-group-timeout-null-name-oct9"
+}
