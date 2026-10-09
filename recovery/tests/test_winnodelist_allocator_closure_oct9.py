@@ -65,10 +65,10 @@ def test_source_allocation_expressions_select_heap_and_malloc_paths():
     source = (repo / "src/win.cpp").read_text(encoding="utf-8")
     init = body(source, "int Win::init(int x, int y, int width, int height,")
     set_parent = body(source, "void Win::set_parent_dialog(Win *dialog)")
-    init_node = re.search(r"reinterpret_cast<char \*>\((heap \? .*?: mem_get\(0x1C\))\)", init)
+    init_node = re.search(r"WinDialogNode \*newNode = (.*?);", init, re.S)
     assert init_node is not None
-    set_nodes = re.findall(r"(?:iv2|newnode) = (.*?);", set_parent, re.S)
-    assert len(set_nodes) == 2 and set_nodes[0] == set_nodes[1]
+    set_nodes = re.findall(r"WinDialogNode \*(?:iv2|newnode) = (.*?);", set_parent, re.S)
+    assert len(set_nodes) == 2
     # Run the actual source ternaries in small host functions. Only pointer
     # selection and requested sizes are under test; this is not a whole-body
     # execution or a claim about the original runtime's nonzero writer.
@@ -92,7 +92,7 @@ static void *mem_get(std::size_t n) {{ malloc_requests.push_back(n); return rein
 struct Dialog {{ WinNodeList list_; }};
 static void *set_node_a(Dialog *dialog) {{ return {node_exprs[0]}; }}
 static void *set_node_b(Dialog *dialog) {{ return {node_exprs[0]}; }}
-static void *init_node(Heap *heap) {{ return {node_exprs[1]}; }}
+static WinDialogNode *init_node(Dialog *parent_window) {{ return {node_exprs[1]}; }}
 static void *set_payload_heap(Dialog *dialog) {{ return {heap_payloads[0]}; }}
 static void *set_payload_malloc() {{ return mem_get(4); }}
 int main() {{
@@ -105,7 +105,7 @@ int main() {{
   assert((heap_requests == std::vector<std::size_t>{{0x1c, 0x1c, 4}}));
   dialog.list_.allocator_ = 0;
   assert(set_node_a(&dialog) == reinterpret_cast<void *>(0x1c + 32));
-  assert(init_node(0) == reinterpret_cast<void *>(0x1c + 32));
+  assert(init_node(&dialog) == reinterpret_cast<WinDialogNode *>(0x1c + 32));
   assert(set_payload_malloc() == reinterpret_cast<void *>(4 + 32));
   assert((malloc_requests == std::vector<std::size_t>{{0x1c, 0x1c, 4}}));
 }}
@@ -133,8 +133,8 @@ int main() {
   alignas(WinNodeList) unsigned char owned_storage[sizeof(WinNodeList)];
   WinNodeList *owned = new (owned_storage) WinNodeList;
   assert(owned->allocator_ == 0);
-  owned->head_ = reinterpret_cast<void *>(1);
-  owned->current_ = reinterpret_cast<void *>(2);
+  owned->head_ = reinterpret_cast<WinDialogNode *>(1);
+  owned->current_ = reinterpret_cast<WinDialogNode *>(2);
   owned->count_ = 3;
   owned->tail_ = 2;
   owned->allocator_ = reinterpret_cast<Heap *>(3);

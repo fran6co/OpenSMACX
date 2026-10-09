@@ -39,8 +39,9 @@ typedef void *HANDLE;
 struct WIN32_FIND_DATAA { char cFileName[260]; };
 class Win;
 class FileWin;
-struct WinNodeList { void *current_; int count_; };
-struct FileWinFocusNode { void *tag; Win *window; void *payload; FileWinFocusNode *next; };
+struct WinDialogNode { unsigned unknown_00_; Win *focus_owner_; void *allocation_;
+  WinDialogNode *next_; WinDialogNode *previous_; unsigned char unknown_14_[8]; };
+struct WinNodeList { WinDialogNode *head_; WinDialogNode *current_; int count_; };
 static int close_calls, close_invalid_calls, close_valid_calls;
 static int find_calls, find_result_count, find_index;
 static int populate_calls, populate_result;
@@ -49,7 +50,7 @@ static int release_calls, set_focus_calls;
 static HANDLE find_results[8];
 static char find_names[8][260], populated_name[260], popup_message[260], popup_title[64];
 static Win *last_dialog_focus;
-static FileWinFocusNode edit_node, list_node;
+static WinDialogNode edit_node, list_node;
 
 class Win {
  public:
@@ -116,7 +117,7 @@ static void setup(FileWin &file, Win &modal, const char *name, int action) {
 int main() {
   {
     FileWin file; Win modal; setup(file, modal, "..", 0xC8);
-    modal.list_.count_ = 1; edit_node.window = &file.edit_box_;
+    modal.list_.count_ = 1; edit_node.focus_owner_ = &file.edit_box_;
     modal.list_.current_ = &edit_node; populate_result = 0;
     file.UNK4();
     assert(populate_calls == 1 && strcmp(populated_name, "..") == 0);
@@ -164,7 +165,7 @@ int main() {
     FileWin file; Win modal; setup(file, modal, "bad:name.SC", 0x64);
     file.extension_count_ = 1; strcpy(file.extension_filters_[0], ".SC");
     find_results[0] = (HANDLE)7; find_results[1] = INVALID_HANDLE_VALUE; find_result_count = 2;
-    modal.list_.count_ = 1; edit_node.window = &file.edit_box_;
+    modal.list_.count_ = 1; edit_node.focus_owner_ = &file.edit_box_;
     modal.list_.current_ = &edit_node;
     popup_response = 0; file.UNK4();
     assert(popup_calls == 1 && parse_calls == 0 && release_calls == 0);

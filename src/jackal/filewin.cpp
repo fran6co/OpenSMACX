@@ -119,16 +119,6 @@ have_name:
     return 0;
 }
 
-// The modal Win's focus-list nodes carry a window pointer at +4 and a next
-// pointer at +0xC. WinNodeList owns the sequence and cursor; this view only
-// describes a node encountered by the file-dialog callback.
-struct FileWinFocusNode {
-    void *tag;
-    Win *window;
-    void *payload;
-    FileWinFocusNode *next;
-};
-
 // ORIGINAL: 0x00614B90 ?on_button_clicked@FileWin@@QAEXH@Z 0x00614B90-0x00614C40
 // Historical seed evidence: a nested -2/-1/3 decision, with the -1 arm
 // rewinding the modal WinNodeList before UNK4. Compiler branch ordering in
@@ -146,13 +136,12 @@ void FileWin::on_button_clicked(int button_id) {
                 focus.tail_ = 0;
                 focus.current_ = focus.head_;
                 for (int index = 0; index < focus.count_; ++index) {
-                    FileWinFocusNode *node =
-                        static_cast<FileWinFocusNode *>(focus.current_);
-                    if (node->window == static_cast<Win *>(&edit_box_)) {
+                    WinDialogNode *node = focus.current_;
+                    if (node->focus_owner_ == static_cast<Win *>(&edit_box_)) {
                         break;
                     }
                     ++focus.tail_;
-                    focus.current_ = node->next;
+                    focus.current_ = node->next_;
                 }
             }
         }
@@ -174,9 +163,8 @@ void FileWin::on_button_clicked(int button_id) {
 void FileWin::UNK4() {
     Win *entry_focus = 0;
     if (modal_window_->list_.count_ != 0) {
-        FileWinFocusNode *const node =
-            static_cast<FileWinFocusNode *>(modal_window_->list_.current_);
-        entry_focus = node->window;
+        WinDialogNode *const node = modal_window_->list_.current_;
+        entry_focus = node->focus_owner_;
     }
 
     edit_box_.select_all_text();

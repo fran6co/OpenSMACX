@@ -45,9 +45,12 @@ def one(source, pattern):
 
 
 def actual_source():
-    headers = {name: (ROOT / f'src/{name}.h').read_text() for name in
-               ('win', 'graphicwin', 'editbox', 'editgroup', 'dialogs',
-                'listbox', 'radiobutton', 'checkbox', 'spritebox')}
+    header_paths = {'win':'src/win.h', 'graphicwin':'src/graphicwin.h',
+                    'editbox':'src/editbox.h', 'editgroup':'src/editgroup.h',
+                    'dialogs':'src/dialogs.h', 'listbox':'src/listbox.h',
+                    'radiobutton':'src/jackal/radiobutton.h',
+                    'checkbox':'src/jackal/checkbox.h', 'spritebox':'src/spritebox.h'}
+    headers = {name: (ROOT / path).read_text() for name, path in header_paths.items()}
     source = (ROOT / 'src/editgroup.cpp').read_text()
     group = braced(headers['editgroup'], 'class EditGroup :')
     dialogs = braced(headers['dialogs'], 'class Dialogs :')

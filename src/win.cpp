@@ -695,8 +695,7 @@ int Win::is_dialog_focus() {
         // does compute a zero and merge.
         Win *focused;
         if (parent->list_.head_ != 0) {
-            focused = *reinterpret_cast<Win *const *>(
-                reinterpret_cast<char *>(parent->list_.current_) + 4);
+            focused = parent->list_.current_->focus_owner_;
         } else {
             focused = nullptr;
         }
@@ -4684,7 +4683,7 @@ void Win::get_mouse_pos(int * x, int * y) {
 // named now and the arithmetic is the compiler's.
 void Win::remove_parent_dialog() {
     Win *parent = win_parent_;
-    if (parent != 0 && reinterpret_cast<int>(parent->list_.head_) != 0) {
+    if (parent != 0 && parent->list_.head_ != 0) {
         int counter = 0;
         // HOISTED, unlike is_descendant's count: the image loads it once
         // (`mov edi, [esi + 0xd4]` at 0x005ECB7E) and compares against the
@@ -4693,36 +4692,35 @@ void Win::remove_parent_dialog() {
         const int total = parent->list_.count_;
         if (total > 0) {
             do {
-                char *node = reinterpret_cast<char *>(parent->list_.current_);
-                if (*reinterpret_cast<Win **>(node + 4) == this) {
-                    int prev = *reinterpret_cast<int *>(node + 0xc);
-                    int next = *reinterpret_cast<int *>(node + 0x10);
-                    *reinterpret_cast<int *>(prev + 0x10) = next;
-                    *reinterpret_cast<int *>(next + 0xc) = prev;
-                    counter = reinterpret_cast<int>(parent->list_.current_);
-                    if (counter == reinterpret_cast<int>(parent->list_.head_)) {
-                        parent->list_.head_ = reinterpret_cast<void *>(*reinterpret_cast<int *>(counter + 0xc));
+                WinDialogNode *node = parent->list_.current_;
+                if (node->focus_owner_ == this) {
+                    WinDialogNode *prev = node->next_;
+                    WinDialogNode *next = node->previous_;
+                    prev->previous_ = next;
+                    next->next_ = prev;
+                    if (node == parent->list_.head_) {
+                        parent->list_.head_ = node->next_;
                     }
-                    parent->list_.current_ = reinterpret_cast<void *>(*reinterpret_cast<int *>(counter + 0xc));
+                    parent->list_.current_ = node->next_;
                     if (parent->list_.allocator_ == 0) {
-                        int payload = *reinterpret_cast<int *>(counter + 8);
+                        void *payload = node->allocation_;
                         if (payload != 0) {
-                            free(reinterpret_cast<void *>(payload));
+                            free(payload);
                         }
-                        *reinterpret_cast<int *>(counter + 8) = 0;
-                        if (counter != 0) {
-                            free(reinterpret_cast<void *>(counter));
+                        node->allocation_ = 0;
+                        if (node != 0) {
+                            free(node);
                         }
                     }
                     parent->list_.count_ = parent->list_.count_ - 1;
                     break;
                 }
                 ++counter;
-                parent->list_.current_ = reinterpret_cast<void *>(*reinterpret_cast<int *>(node + 0xc));
+                parent->list_.current_ = node->next_;
             } while (counter < total);
         }
         if (parent->list_.count_ == 0) {
-            parent->list_.head_ = reinterpret_cast<void *>(0);
+            parent->list_.head_ = 0;
         }
         parent->list_.tail_ = parent->list_.count_ - 1;
     }
@@ -5811,10 +5809,6 @@ typedef int (__stdcall *NetCreateGroupFn)(Net *, int *, void *, int, int, int);
 // 0xCC / 4 = SLOT 51, which Win declares. The artifact reached it by
 // building a member-pointer out of the raw vtable entry through a
 // `SlotCCCast` union; with the slot declared, it is just a call.
-static void call_slot_cc(int *obj, int arg) {
-    reinterpret_cast<Win *>(obj)->on_dialog_focus(arg);
-}
-
 // The flip/restore helper block, taken whole from the artifact that
 // defined it. Restoring its pieces one compiler error at a time kept
 // finding another dependency; the block is the coherent unit.
@@ -6851,80 +6845,70 @@ void Win::set_parent_dialog(Win *dialog) {
         return;
     }
 
-    char *b = reinterpret_cast<char *>(dialog);
-    if ((~*reinterpret_cast<unsigned int *>(b + 0x98) & 0x1000) == 0) {
+    if ((~dialog->iFlags_ & 0x1000U) == 0) {
         return;
     }
 
-    if (*reinterpret_cast<int *>(b + 0xd4) == 0) {
-        void *iv2 = (dialog->list_.allocator_ != 0)
-            ? dialog->list_.allocator_->get(0x1c)
-            : mem_get(0x1c);
-        *reinterpret_cast<void **>(b + 0xcc) = iv2;
+    if (dialog->list_.count_ == 0) {
+        WinDialogNode *iv2 = (dialog->list_.allocator_ != 0)
+            ? static_cast<WinDialogNode *>(dialog->list_.allocator_->get(0x1c))
+            : static_cast<WinDialogNode *>(mem_get(0x1c));
+        dialog->list_.head_ = iv2;
         if (iv2 == 0) {
             goto tail_common;
         }
-        *reinterpret_cast<void **>(reinterpret_cast<char *>(iv2) + 4) = this;
-        char *h1 = *reinterpret_cast<char **>(b + 0xcc);
-        *reinterpret_cast<void **>(h1 + 0xc) = h1;
-        char *h2 = *reinterpret_cast<char **>(b + 0xcc);
-        *reinterpret_cast<void **>(h2 + 0x10) = h2;
+        iv2->focus_owner_ = this;
+        dialog->list_.head_->next_ = dialog->list_.head_;
+        dialog->list_.head_->previous_ = dialog->list_.head_;
 
         if (dialog->list_.allocator_ != 0) {
-            *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xcc) + 8) =
+            dialog->list_.head_->allocation_ =
                 dialog->list_.allocator_->get(4);
         } else {
-            *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xcc) + 8) = mem_get(4);
+            dialog->list_.head_->allocation_ = mem_get(4);
         }
-        char *h4 = *reinterpret_cast<char **>(b + 0xcc);
-        if (*reinterpret_cast<int *>(h4 + 8) == 0) {
+        if (dialog->list_.head_->allocation_ == 0) {
             goto tail_common;
         }
-        *reinterpret_cast<void **>(b + 0xd0) = h4;
+        dialog->list_.current_ = dialog->list_.head_;
     } else {
-        void *newnode = (dialog->list_.allocator_ != 0)
-            ? dialog->list_.allocator_->get(0x1c)
-            : mem_get(0x1c);
-        char *head = *reinterpret_cast<char **>(b + 0xcc);
-        char *tail = *reinterpret_cast<char **>(head + 0x10);
-        *reinterpret_cast<void **>(tail + 0xc) = newnode;
+        WinDialogNode *newnode = (dialog->list_.allocator_ != 0)
+            ? static_cast<WinDialogNode *>(dialog->list_.allocator_->get(0x1c))
+            : static_cast<WinDialogNode *>(mem_get(0x1c));
+        WinDialogNode *head = dialog->list_.head_;
+        WinDialogNode *tail = head->previous_;
+        tail->next_ = newnode;
 
-        char *tail2 = *reinterpret_cast<char **>(*reinterpret_cast<char **>(b + 0xcc) + 0x10);
-        char *node = *reinterpret_cast<char **>(tail2 + 0xc);
+        WinDialogNode *tail2 = dialog->list_.head_->previous_;
+        WinDialogNode *node = tail2->next_;
         if (node == 0) {
             goto tail_common;
         }
-        *reinterpret_cast<void **>(node + 0x10) = tail2;
-        *reinterpret_cast<void **>(
-            *reinterpret_cast<char **>(
-                *reinterpret_cast<char **>(*reinterpret_cast<char **>(b + 0xcc) + 0x10) + 0xc) + 0xc) =
-            *reinterpret_cast<char **>(b + 0xcc);
-        *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xcc) + 0x10) =
-            *reinterpret_cast<void **>(
-                *reinterpret_cast<char **>(*reinterpret_cast<char **>(b + 0xcc) + 0x10) + 0xc);
-        char *nn = *reinterpret_cast<char **>(*reinterpret_cast<char **>(b + 0xcc) + 0x10);
-        *reinterpret_cast<void **>(b + 0xd0) = nn;
-        *reinterpret_cast<void **>(nn + 4) = this;
+        node->previous_ = tail2;
+        tail2->next_->next_ = dialog->list_.head_;
+        dialog->list_.head_->previous_ = tail2->next_;
+        WinDialogNode *nn = dialog->list_.head_->previous_;
+        dialog->list_.current_ = nn;
+        nn->focus_owner_ = this;
 
         if (dialog->list_.allocator_ != 0) {
-            *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xd0) + 8) =
+            dialog->list_.current_->allocation_ =
                 dialog->list_.allocator_->get(4);
         } else {
-            *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xd0) + 8) = mem_get(4);
+            dialog->list_.current_->allocation_ = mem_get(4);
         }
-        char *d0 = *reinterpret_cast<char **>(b + 0xd0);
-        if (*reinterpret_cast<int *>(d0 + 8) == 0) {
+        if (dialog->list_.current_->allocation_ == 0) {
             goto tail_common;
         }
     }
 
-    *reinterpret_cast<int *>(b + 0xd8) = *reinterpret_cast<int *>(b + 0xd4);
-    *reinterpret_cast<int *>(b + 0xd4) = *reinterpret_cast<int *>(b + 0xd4) + 1;
+    dialog->list_.tail_ = dialog->list_.count_;
+    dialog->list_.count_ = dialog->list_.count_ + 1;
 
 tail_common:
-    if (*reinterpret_cast<int *>(b + 0xd4) - 1 >= 0) {
-        *reinterpret_cast<int *>(b + 0xd8) = 0;
-        *reinterpret_cast<int *>(b + 0xd0) = *reinterpret_cast<int *>(b + 0xcc);
+    if (dialog->list_.count_ - 1 >= 0) {
+        dialog->list_.tail_ = 0;
+        dialog->list_.current_ = dialog->list_.head_;
     }
     win_parent_ = dialog;
 }
@@ -7766,7 +7750,7 @@ void Win::show(int visible) {
             menu_->redraw();
         }
         if (list_.count_ != 0 && list_.head_ != 0) {
-            Win *obj = *reinterpret_cast<Win **>(reinterpret_cast<char *>(list_.current_) + 4);
+            Win *obj = list_.current_->focus_owner_;
             if (obj != 0) {
                 obj->on_dialog_focus(1);
             }
@@ -8051,13 +8035,13 @@ int Win::key_up_event(int key) {
         return 0;
     }
     if (list_.count_ != 0) {
-        int recvThis;
+        Win *recvThis;
         if (list_.head_ != 0) {
-            recvThis = *(reinterpret_cast<int *>(list_.current_) + 1);
+            recvThis = list_.current_->focus_owner_;
         } else {
             recvThis = 0;
         }
-        if (reinterpret_cast<Win *>(recvThis)->key_up_event(key) != 0) {
+        if (recvThis->key_up_event(key) != 0) {
             return 1;
         }
     }
@@ -8092,10 +8076,10 @@ int Win::key_down_event(int key) {
     int ebx = 0;
 
     if (list_.count_ != 0) {
+        Win *focus = 0;
         if (list_.head_ != 0) {
-            ebx = *(reinterpret_cast<int *>(list_.current_) + 1);
+            focus = list_.current_->focus_owner_;
         }
-        Win *focus = reinterpret_cast<Win *>(ebx);
 
         if (focus->scroll_vert_ != 0) {
             if (focus->scroll_vert_->on_key_click(0, key) != 0) {
@@ -8415,22 +8399,23 @@ int Win::init(int x, int y, int width, int height, char * caption,
     if (!skipMenuList && this->win_parent_ != 0 &&
         (this->win_parent_->iFlags_ & 0x1000) == 0) {
         Win *parent_window = this->win_parent_;
-        char *parent = reinterpret_cast<char *>(parent_window);
-        Heap *heap = parent_window->list_.allocator_;
-        int initCount = *reinterpret_cast<int *>(parent + 0xd4);
+        int initCount = parent_window->list_.count_;
         if (initCount != 0) {
-            char *newNode = reinterpret_cast<char *>(heap ? heap->get(0x1C) : mem_get(0x1C));
-            char *head = *reinterpret_cast<char **>(parent + 0xcc);
-            char *prevOfHead = *reinterpret_cast<char **>(head + 0x10);
-            *reinterpret_cast<char **>(prevOfHead + 0xc) = newNode;
+            WinDialogNode *newNode = parent_window->list_.allocator_
+                ? static_cast<WinDialogNode *>(parent_window->list_.allocator_->get(0x1C))
+                : static_cast<WinDialogNode *>(mem_get(0x1C));
+            WinDialogNode *head = parent_window->list_.head_;
+            WinDialogNode *prevOfHead = head->previous_;
+            prevOfHead->next_ = newNode;
             if (newNode != 0) {
-                *reinterpret_cast<char **>(newNode + 0x10) = prevOfHead;
-                *reinterpret_cast<char **>(newNode + 0xc) = head;
-                *reinterpret_cast<char **>(head + 0x10) = newNode;
-                *reinterpret_cast<void **>(parent + 0xd0) = newNode;
-                *reinterpret_cast<Win **>(newNode + 4) = this;
-                void *link = heap ? heap->get(4) : mem_get(4);
-                *reinterpret_cast<void **>(newNode + 8) = link;
+                newNode->previous_ = prevOfHead;
+                newNode->next_ = head;
+                head->previous_ = newNode;
+                parent_window->list_.current_ = newNode;
+                newNode->focus_owner_ = this;
+                void *link = parent_window->list_.allocator_
+                    ? parent_window->list_.allocator_->get(4) : mem_get(4);
+                newNode->allocation_ = link;
                 if (link == 0) {
                     return 0;
                 }
@@ -8438,31 +8423,34 @@ int Win::init(int x, int y, int width, int height, char * caption,
                 return 0;
             }
         } else {
-            void *newNode = heap ? heap->get(0x1C) : mem_get(0x1C);
-            *reinterpret_cast<void **>(parent + 0xcc) = newNode;
+            WinDialogNode *newNode = parent_window->list_.allocator_
+                ? static_cast<WinDialogNode *>(parent_window->list_.allocator_->get(0x1C))
+                : static_cast<WinDialogNode *>(mem_get(0x1C));
+            parent_window->list_.head_ = newNode;
             if (newNode == 0) {
                 return 0;
             }
-            *reinterpret_cast<Win **>(reinterpret_cast<char *>(newNode) + 4) = this;
-            *reinterpret_cast<void **>(reinterpret_cast<char *>(newNode) + 0xc) = newNode;
-            *reinterpret_cast<void **>(reinterpret_cast<char *>(newNode) + 0x10) = newNode;
-            void *link = heap ? heap->get(4) : mem_get(4);
-            *reinterpret_cast<void **>(reinterpret_cast<char *>(newNode) + 8) = link;
+            newNode->focus_owner_ = this;
+            newNode->next_ = newNode;
+            newNode->previous_ = newNode;
+            void *link = parent_window->list_.allocator_
+                ? parent_window->list_.allocator_->get(4) : mem_get(4);
+            newNode->allocation_ = link;
             if (link == 0) {
                 return 0;
             }
-            *reinterpret_cast<void **>(parent + 0xd0) = newNode;
+            parent_window->list_.current_ = newNode;
         }
 
-        int oldCount = *reinterpret_cast<int *>(parent + 0xd4);
-        *reinterpret_cast<int *>(parent + 0xd8) = oldCount;
-        *reinterpret_cast<int *>(parent + 0xd4) = oldCount + 1;
+        int oldCount = parent_window->list_.count_;
+        parent_window->list_.tail_ = oldCount;
+        parent_window->list_.count_ = oldCount + 1;
 
-        int cnt = *reinterpret_cast<int *>(parent + 0xd4) - 1;
+        int cnt = parent_window->list_.count_ - 1;
         if (cnt >= 0) {
-            void *head = *reinterpret_cast<void **>(parent + 0xcc);
-            *reinterpret_cast<int *>(parent + 0xd8) = 0;
-            *reinterpret_cast<void **>(parent + 0xd0) = head;
+            WinDialogNode *head = parent_window->list_.head_;
+            parent_window->list_.tail_ = 0;
+            parent_window->list_.current_ = head;
         }
     }
 
@@ -9448,8 +9436,7 @@ int Win::key_click_event(int key, int flags) {
     if (list_.count_ != 0) {
         Win *target = 0;
         if (list_.head_ != 0) {
-            int *field_d0 = reinterpret_cast<int *>(list_.current_);
-            target = *(Win **)((char *)field_d0 + 4);
+            target = list_.current_->focus_owner_;
         }
         if (flags == 9) {
             void *tvtbl = *(void **)target;
@@ -10076,7 +10063,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
         if (list_.count_ != 0) {
             void *target;
             if (list_.head_ != 0) {
-                target = reinterpret_cast<void **>(list_.current_)[1];
+                target = list_.current_->focus_owner_;
             } else {
                 target = 0;
             }
@@ -10765,10 +10752,10 @@ void Win::pass_dialog_focus() {
     parent = win_parent_;
     if (parent != 0 && (int)parent->list_.count_ > 1) {
         WinPendingFocus = (parent->list_.head_ != 0)
-            ? *reinterpret_cast<Win **>(reinterpret_cast<char *>(parent->list_.current_) + 4) : 0;
+            ? parent->list_.current_->focus_owner_ : 0;
         parent = win_parent_;
         if (parent->list_.head_ != 0) {
-            parent->list_.current_ = *reinterpret_cast<void **>(reinterpret_cast<char *>(parent->list_.current_) + 0xc);
+            parent->list_.current_ = parent->list_.current_->next_;
             if (++parent->list_.tail_ == parent->list_.count_) {
                 parent->list_.tail_ = 0;
             }
@@ -10776,7 +10763,7 @@ void Win::pass_dialog_focus() {
         this->on_dialog_focus(0);
         parent = win_parent_;
         if (parent->list_.head_ != 0) {
-            obj = *reinterpret_cast<Win **>(reinterpret_cast<char *>(parent->list_.current_) + 4);
+            obj = parent->list_.current_->focus_owner_;
             if (obj != 0) {
                 obj->on_dialog_focus(1);
             }
@@ -10888,13 +10875,13 @@ void Win::close() {
             int listCount = (int)parent->list_.count_;
             if (0 < listCount) {
                 int idx = 0;
-                char *node = (char *)parent->list_.current_;
+                WinDialogNode *node = parent->list_.current_;
                 for (;;) {
-                    if (*(int *)(node + 4) == (int)this) {
+                    if (node->focus_owner_ == this) {
                         found = true;
                         break;
                     }
-                    node = *(char **)(node + 0xc);
+                    node = node->next_;
                     idx = idx + 1;
                     parent->list_.current_ = node;
                     if (!(idx < listCount)) {
@@ -10902,24 +10889,24 @@ void Win::close() {
                     }
                 }
                 if (found) {
-                    char *nodeNext = *(char **)(node + 0xc);
-                    char *nodePrev = *(char **)(node + 0x10);
-                    *(char **)(nodeNext + 0x10) = nodePrev;
-                    char *cur = (char *)parent->list_.current_;
-                    char *curNext = *(char **)(cur + 0xc);
-                    char *curPrev = *(char **)(cur + 0x10);
-                    *(char **)(curPrev + 0xc) = curNext;
-                    cur = (char *)parent->list_.current_;
-                    if (cur == (char *)parent->list_.head_) {
-                        parent->list_.head_ = reinterpret_cast<void *>((uint32_t) * (char **)(cur + 0xc));
+                    WinDialogNode *nodeNext = node->next_;
+                    WinDialogNode *nodePrev = node->previous_;
+                    nodeNext->previous_ = nodePrev;
+                    WinDialogNode *cur = parent->list_.current_;
+                    WinDialogNode *curNext = cur->next_;
+                    WinDialogNode *curPrev = cur->previous_;
+                    curPrev->next_ = curNext;
+                    cur = parent->list_.current_;
+                    if (cur == parent->list_.head_) {
+                        parent->list_.head_ = cur->next_;
                     }
-                    parent->list_.current_ = reinterpret_cast<void *>((uint32_t) * (char **)(cur + 0xc));
+                    parent->list_.current_ = cur->next_;
                     if (parent->list_.allocator_ == 0) {
-                        void *dataPtr = *(void **)(cur + 8);
+                        void *dataPtr = cur->allocation_;
                         if (dataPtr != 0) {
                             free(dataPtr);
                         }
-                        *(void **)(cur + 8) = 0;
+                        cur->allocation_ = 0;
                         if (cur != 0) {
                             free(cur);
                         }
@@ -11027,11 +11014,11 @@ void Win::close() {
         if ((list_.count_ != 0) && (0 < (int)list_.count_)) {
             i = 0;
             do {
-                list_.current_ = reinterpret_cast<void *>(*reinterpret_cast<int *>(reinterpret_cast<char *>(list_.head_) + 0xc));
-                if (*reinterpret_cast<int *>(reinterpret_cast<char *>(list_.head_) + 8) != 0) {
-                    free(*reinterpret_cast<void **>(reinterpret_cast<char *>(list_.head_) + 8));
+                list_.current_ = list_.head_->next_;
+                if (list_.head_->allocation_ != 0) {
+                    free(list_.head_->allocation_);
                 }
-                *reinterpret_cast<int *>(reinterpret_cast<char *>(list_.head_) + 8) = 0;
+                list_.head_->allocation_ = 0;
                 if (list_.head_ != 0) {
                     free((void *)list_.head_);
                 }
@@ -11329,19 +11316,18 @@ void Win::set_dialog_focus(Win * window) {
         return;
     }
 
-    int *newFocus;
+    Win *newFocus;
     if (list_.head_ == 0) {
         newFocus = 0;
     } else {
-        int *node = reinterpret_cast<int *>(list_.current_);
-        newFocus = reinterpret_cast<int *>(node[1]);
+        newFocus = list_.current_->focus_owner_;
     }
 
-    if (reinterpret_cast<int *>(window) == newFocus) {
+    if (window == newFocus) {
         return;
     }
 
-    WinPendingFocus = reinterpret_cast<Win *>(newFocus);
+    WinPendingFocus = newFocus;
 
     if (list_.head_ == 0) {
         return;
@@ -11353,29 +11339,29 @@ void Win::set_dialog_focus(Win * window) {
     list_.current_ = list_.head_;
 
     if (count > 0) {
-        int *node;
+        WinDialogNode *node;
         for (;;) {
-            node = reinterpret_cast<int *>(list_.current_);
-            if (reinterpret_cast<int *>(node[1]) == reinterpret_cast<int *>(window)) {
+            node = list_.current_;
+            if (node->focus_owner_ == window) {
                 break;
             }
             list_.tail_ = list_.tail_ + 1;
             idx++;
-            list_.current_ = reinterpret_cast<void *>(node[3]);
+            list_.current_ = node->next_;
             if (idx >= count) {
                 return;
             }
         }
 
         if (newFocus != 0 && count > 1) {
-            call_slot_cc(newFocus, 0);
+            newFocus->on_dialog_focus(0);
         }
 
         if (list_.head_ != 0) {
-            int *node2 = reinterpret_cast<int *>(list_.current_);
-            int *target = reinterpret_cast<int *>(node2[1]);
+            WinDialogNode *node2 = list_.current_;
+            Win *target = node2->focus_owner_;
             if (target != 0) {
-                call_slot_cc(target, 1);
+                target->on_dialog_focus(1);
             }
         }
     }

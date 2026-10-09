@@ -36,13 +36,6 @@
 #include "general.h"  // mem_get, for the two coverage bodies below
 
 
-namespace {
-struct WinNodeListFocusEntry {
-    uint32_t reserved_prefix;
-    Win *window;
-};
-}
-
 // EditGroupDefault - 0x009B8FCC. Read at construction time into field_84_;
 // a rebindable seam so tests can observe/control it, the same idiom
 // CheckBoxDefault1/2 use.
@@ -641,8 +634,7 @@ void EditGroup::on_redraw() {
 // symbol    ?pass_dialog_focus@EditGroup@@UAEXXZ
 void EditGroup::pass_dialog_focus() {
     if (list_.count_ != 0 && list_.head_ != 0) {
-        Win *const focused =
-            static_cast<WinNodeListFocusEntry *>(list_.current_)->window;
+        Win *const focused = list_.current_->focus_owner_;
         if (focused != 0) {
             focused->pass_dialog_focus();
             return;
