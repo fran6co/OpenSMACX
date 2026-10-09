@@ -12,10 +12,8 @@
 #include "win.h"
 #include <cstring>
 
-// The picker background tile and its colour remain image-owned aliases.
+// The picker background tile remains an image-owned alias.
 static Sprite *const SelectPartTile = (Sprite *)0x006B33F8;
-static const unsigned char *const SelectPartTileColour =
-    (const unsigned char *)0x006B3400;
 // Renderer origin is the existing veh.cpp object VehLightDirMap.
 
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
@@ -105,7 +103,7 @@ int SelectPartWin::exec(int x, int y, int value0, int kind, int selected,
 
     Buffer backdrop;
     backdrop.init(10, 10, 0, 0);
-    SelectPartTile->draw(&backdrop, *SelectPartTileColour & 0xff,
+    SelectPartTile->draw(&backdrop, SelectPartTile->transparent_index(),
                          0, 0, 1, 1);
 
     const int width = WinScreenWidth;
@@ -922,7 +920,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         const int midX = (a2->right + a2->left) / 2;
         if (slot == 5) {
             cav2b9c->render_multi_table_dest(buf444, midX, midY, 0x18,
-                reinterpret_cast<unsigned char *>(0x6EEF7C), 6);
+                ArmorTransparentColorTables[0], 6);
         } else {
             cav2b9c->render(buf444, midX, midY, 6);
         }
@@ -1087,8 +1085,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     }
     if (have_sprite_idx && sprite_idx >= 0) {
         Buffer *const buf_target = static_cast<Buffer *>(this);
-        Sprite *const spr =
-            reinterpret_cast<Sprite *>(0x778400 + sprite_idx * 0x160);
+        Sprite *const spr = &g_VEH_SPRITES[72 + sprite_idx * 8];
         const int x_coord = ((a2->right - a2->left) - 100) / 2 + a2->left;
         const int y_coord = ((a2->bottom - a2->top) - 0x4B) / 2 + a2->top;
         spr->draw(buf_target, spr->transparent_index(), x_coord, y_coord);

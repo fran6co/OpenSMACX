@@ -40,6 +40,7 @@ extern const char BufferJoinSpace[];
 
 extern int BreakthroughTurnsGlobal;
 extern int NetIncomeGlobal;
+extern uint32_t Language;
 
 // ORIGINAL: 0x004AEF10 ?exit@SocialWin@@QAEXXZ 0x004AEF10-0x004AF10C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004aef10.cpp", "image:terranx_original.exe:0x004AEF10", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
@@ -635,14 +636,8 @@ void SocialWin::bubble_me_elmo2(char *text, int x, int y) {
  * 0x0066931C is its loader-owned IAT slot, not a private function table.
  * Panel styles now borrow shared mutable InterfaceBoxStyles elements 3/6;
  * their original starts 0x78D5A0/0x78D618 are no longer address aliases.
- * InterfaceBuffer    0x007AEC64, the shared full-screen drawing Buffer. 55
- *                    archive sites cast it to `Buffer *` and draw through it -
- *                    DesignWin::draw_info, Datalink, DiploPop::start, ReportIf,
- *                    this file. 0x009B7490 is palette.h's ScreenBuffer, a
- *                    different object.
- * InterfaceClipRect  0x007AEC94 = InterfaceBuffer + 0x30, the RECT every one of
- *                    those bodies hands to Buffer::set_clip - the buffer's own
- *                    clip rectangle, not an unrelated global.
+ * MainInterfaceGlobal is the actual owner of this shared canvas Buffer base;
+ * its restore_clip() restores that Buffer's own rect2_ clip rectangle.
  * SpaceText          0x00682820 - image .data reads " " (one space). technology
  *                    .cpp already names it in prose for the same reason.
  * PercentText        0x00682EA0 - image .data reads "%".
@@ -851,8 +846,6 @@ void SocialWin::draw_social(int a1) {
 
 // Fixed-slot bindings carried from 004b0d50.cpp
 static int *const PercentText = (int *)0x00682EA0;
-static int *const InterfaceBuffer = (int *)0x007AEC64;
-static int *const InterfaceClipRect = (int *)0x007AEC94;
 static int *const InterfacePaletteIndex = (int *)0x007AEC74;
 static int *const SocialAllocTable = (int *)0x0096CD04;
 
@@ -864,8 +857,8 @@ typedef void (__cdecl *SoundHookFn)(char *);
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004b19a0.cpp; source:src/socialwin.h:tooltipEconomy_,tooltipLabs_,tooltipPsych_,tutRect11_,tutRect12_,tutRect13_,flatButtons_; source:src/graphicwin.h:GraphicWin Buffer base; image:0x004B19A0-0x004B1B19"], "reason": "Recover SocialWin repaint orchestration through its real category/allocation rectangles, inherited GraphicWin Buffer and typed FlatButton child controls; retain the established panel ordering and child redraw sequence."}
 // symbol    ?on_redraw@SocialWin@@UAEXXZ
 void SocialWin::on_redraw() {
-    Buffer *interface_buffer = reinterpret_cast<Buffer *>(InterfaceBuffer);
-    interface_buffer->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    Buffer *interface_buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
+    interface_buffer->restore_clip();
 
     Buffer *window_buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
     window_buffer->restore_clip();
@@ -964,8 +957,8 @@ void SocialWin::on_redraw() {
 
 
 void SocialWin::draw_psych_alloc() {
-    Buffer *buf = reinterpret_cast<Buffer *>(InterfaceBuffer);
-    buf->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
+    buf->restore_clip();
 
     RECT local_rect = tooltipPsych_;
     buf->box_sprite(&local_rect, &InterfaceBoxStyles[6]);
@@ -1034,8 +1027,8 @@ void SocialWin::draw_psych_alloc() {
 // ORIGINAL: 0x004B08A0 ?draw_economy_alloc@SocialWin@@QAEXXZ 0x004B08A0-0x004B0AF2
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004b08a0.cpp; source:src/socialwin.h:tooltipEconomy_,energyAllocSlider_,energyAllocLock_; source:src/faction.h:PlayerData.se_alloc_psych,se_alloc_labs; image:0x004B08A0-0x004B0AF2"], "reason": "Home the economy allocation panel on SocialWin’s typed rectangles, slider buffers, font, and PlayerData allocation values."}
 void SocialWin::draw_economy_alloc() {
-    Buffer *buffer = reinterpret_cast<Buffer *>(InterfaceBuffer);
-    buffer->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    Buffer *buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
+    buffer->restore_clip();
 
     RECT panel = tooltipEconomy_;
     buffer->box_sprite(&panel, &InterfaceBoxStyles[6]);
@@ -1085,8 +1078,8 @@ void SocialWin::draw_economy_alloc() {
 // ORIGINAL: 0x004B0B00 ?draw_labs_alloc@SocialWin@@QAEXXZ 0x004B0B00-0x004B0D42
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004b0b00.cpp; source:src/socialwin.h:tooltipLabs_,energyAllocSlider_,energyAllocLock_; source:src/faction.h:PlayerData.se_alloc_labs; image:0x004B0B00-0x004B0D42"], "reason": "Home the labs allocation panel on SocialWin’s typed rectangles, slider buffers, font, and PlayerData lab allocation."}
 void SocialWin::draw_labs_alloc() {
-    Buffer *buffer = reinterpret_cast<Buffer *>(InterfaceBuffer);
-    buffer->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    Buffer *buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
+    buffer->restore_clip();
 
     RECT panel = tooltipLabs_;
     buffer->box_sprite(&panel, &InterfaceBoxStyles[6]);
@@ -1708,7 +1701,7 @@ static const char *const SocialOverviewPlus = (const char *)0x006874a0;
 // ORIGINAL: 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ 0x004B0410-0x004B089A
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004B0410-0x004B089A draws the effects overview, skips the reserved fourth row, loads each SocialEffects section and repaints the selected/comparison rows", "source:src/socialwin.h: tooltipEffects_, effectMaximize_, socEffect_, font1_ and font7_ are the corresponding declared members", "source:src/faction.h: SocialEffect and RulesSocialEffect define the eleven live rows and their section names"], "reason": "Home the overview painter on the SocialWin-owned rectangles, effects, fonts and rules records; preserve its original identity while replacing the seed's opaque object accesses with the product model."}
 void SocialWin::draw_overview() {
-    Buffer *buffer = reinterpret_cast<Buffer *>(InterfaceBuffer);
+    Buffer *buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
     int selected = static_cast<int>(field_A30_);
     int selected_effect = -1;
     if (selected >= 0) {
@@ -1718,7 +1711,7 @@ void SocialWin::draw_overview() {
         }
     }
 
-    buffer->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    buffer->restore_clip();
     *InterfacePaletteIndex = 5;
 
     RECT panel = tooltipEffects_;
@@ -2061,9 +2054,9 @@ static char *const MouseoverPlusText = (char *)0x006874A8;
 // indirect  0x004B1162 0x004B12CA
 */
 void SocialWin::draw_mouseover() {
-    Buffer *buf = reinterpret_cast<Buffer *>(InterfaceBuffer);
+    Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
 
-    buf->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    buf->restore_clip();
 
     RECT *header_rect = &tutRect9_;
     RECT rect1 = *header_rect;
@@ -2275,7 +2268,7 @@ static char *const UpheavalPlusText = (char *)0x00687490;
 void SocialWin::draw_info() {
     Buffer *own_buffer = reinterpret_cast<Buffer *>(
         reinterpret_cast<char *>(this) + 0x444);
-    Buffer *buf = reinterpret_cast<Buffer *>(InterfaceBuffer);
+    Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
 
     own_buffer->set_clip(&tutRect14_);
 
@@ -2856,7 +2849,7 @@ void SocialWin::init(int faction_id) {
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(*reinterpret_cast<int *>(
             reinterpret_cast<char *>(Labels.strings_ptr) + 0x198)));
-        if (*reinterpret_cast<int *>(0x009BC054) != 2) {
+        if (Language != 2) {
             CharUpperA(StringTemp);
         }
         FlatButton *button = &flatButtons_[16];
@@ -2937,15 +2930,11 @@ void SocialWin::init(int faction_id) {
             int out_a = 0;
             int out_b = 0;
             TutorialWindow.soc_rect(TutorialSocRect, &out_a, &out_b);
-            int *base_object = *reinterpret_cast<int **>(0x007D3C3C);
-            int window_arg = 0;
-            if (base_object != 0) {
-                window_arg = *reinterpret_cast<int *>(
-                    *reinterpret_cast<int *>(base_object) + 4)
-                    + reinterpret_cast<int>(base_object);
-            }
-            TutorialWindow.tut_win(reinterpret_cast<GraphicWin *>(window_arg),
-                TutSocWinText, out_a, out_b, 0, 1, -1, -1);
+            MapWin *window = MapWinTable[0];
+            GraphicWin *graphics = window != 0
+                ? static_cast<GraphicWin *>(window) : 0;
+            TutorialWindow.tut_win(graphics, TutSocWinText, out_a, out_b,
+                0, 1, -1, -1);
         }
         set_modal(0, pop_wait, &MainInterfaceGlobal);
         release_iface_mode();

@@ -43,12 +43,8 @@ void BattleWin::clear() {
 void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 
-// Fixed-slot bindings the homed body arrived needing, named from evidence -
-// see the block on on_status. InterfaceBuffer is the shared full-screen
-// drawing Buffer, bound under the same name in maininterface.cpp,
-// reportif.cpp and socialwin.cpp; InterfaceScreenRect is the RECT at
-// MainInterface+0xD90 that BaseWin::init insets into its own rects.
-static int *const InterfaceBuffer = (int *)0x007AEC64;
+// InterfaceScreenRect is the RECT at MainInterface+0xD90 that BaseWin::init
+// insets into its own rects. Its private owner member is not exposed yet.
 static RECT *const InterfaceScreenRect = (RECT *)0x007AF5B0;
 
 /*
@@ -101,11 +97,11 @@ Purpose: The interface-mode entry point: put the battle up, or take it down.
 // councwin.cpp declares and forwards them, and the definitions are
 // external-linkage so this TU links against those.
 void BattleWin::on_status(int mode) {
+    Buffer &interface_buffer = static_cast<Buffer &>(MainInterfaceGlobal);
     if (mode != 0) {
-        reinterpret_cast<Buffer *>(InterfaceBuffer)->set_clip(
+        interface_buffer.set_clip(
             0, 0, InterfaceScreenRect->left,
-            -reinterpret_cast<Buffer *>(InterfaceBuffer)
-                 ->dib_.bmiHeader.biHeight);
+            -interface_buffer.dib_.bmiHeader.biHeight);
         MainInterfaceGlobal.restore_back(0);
         MainInterfaceGlobal.flat_button_[3].show(0);
         MainInterfaceGlobal.flat_button_[4].show(0);
@@ -289,8 +285,8 @@ void BattleWin::on_iface_group_clicked(int group, int x_coord,
                                        int y_coord) {
     if (group == 1) {
         SubInterface::release_iface_mode();
-        reinterpret_cast<MainInterface *>(0x7af234)
-            ->MainInterface::on_iface_group_clicked(1, x_coord, y_coord);
+        MainInterfaceGlobal.MainInterface::on_iface_group_clicked(
+            1, x_coord, y_coord);
     }
 }
 
