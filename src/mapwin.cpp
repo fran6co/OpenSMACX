@@ -2606,14 +2606,13 @@ void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type) {
 
 // The first extra receiver is WorldClimateWorldWin's complete embedded MapWin:
 // original WorldWin storage 0x008E9F60 + constructor/destructor member offset
-// 0x152C = 0x008EB48C. Its lifetime belongs to WorldWin, not another global.
-// Only the second extra receiver still lacks a source-owned identity.
-static MapWin *const MapWinTerrainFixupExtra2 =
-    reinterpret_cast<MapWin *>(0x006C5C9C);
+// 0x152C = 0x008EB48C. The next is TutWinBaseWindow's MapWin member:
+// original BaseWin storage 0x006A7628 + member offset 0x1E674 = 0x006C5C9C.
+// Both are genuine declared members with compiler-owned lifetimes.
 
 /*
 Purpose: Fix up terrain on every live MapWin slot, then the embedded world
-         map, one unresolved window and the shared farm display, in that order.
+         map, tutorial BaseWin map and shared farm display, in that order.
 // ORIGINAL: 0x00471240 ?mapwin_terrain_fixup@@YAXXZ 0x00471240-0x00471293 BYTE_EXACT
 // size      83 bytes
 // prototype void (__cdecl ?mapwin_terrain_fixup@@YAXXZ)()
@@ -2636,7 +2635,7 @@ void __cdecl mapwin_terrain_fixup() {
         }
     }
     terrain_fixup(&WorldClimateWorldWin.mapWin_);
-    terrain_fixup(MapWinTerrainFixupExtra2);
+    terrain_fixup(&TutWinBaseWindow.mapWin_);
     terrain_fixup(&FarmMapWindow);
 }
 
