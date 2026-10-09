@@ -1,0 +1,38 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a14a03a2e256c4096a9abe2f2ef1a44de8150723",
+  "schema_version": 1,
+  "target": "opensmacx",
+  "task_id": "basepop-typed-window-sprite-defaults-oct9",
+  "intent": "Recover BasePop default window and sprite references as genuine typed storage across the original-backed producer, constructor and close.",
+  "editable_files": [
+    "src/basepop.cpp",
+    "src/basepop.h",
+    "recovery/tests/test_basepop_owned_close_actual_source.py",
+    "recovery/tests/test_basepop_modal_actual_source.py"
+  ],
+  "subjects": [
+    {
+      "address": 6312176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6293600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6295296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "BasePop::set_def_external_window6050F0 stores GraphicWin pointer then two coordinates into original9B8D04/+4/+8, followed by separate dialog width/height stores. Constructor600860 and close600F00 copy to already-typed external_window_ and uint32 default_loc_a_/b_. Preserve these five stores/read order, uint32 coordinate bit patterns,0x2000 sentinel, shared-default snapshot timing, original unsafe paths and borrowed ownership.",
+    "Default sprite words9B8DBC/+4 are read in constructor/close into Sprite* fields2148/214C, consumed by original-backed redraw604AB0 via Buffer::tile/Sprite reads. A Sprite* array is supported; source has no producer, so external mutation and lifetime remain unresolved. Do not invent a setter, liveness/null normalization, complete allocation boundary or assertion of no binary producer.",
+    "Preserve both historical v1 RECOVERY_OBJECT identities/symbols and all function ORIGINAL/span/claim/LEVER/TRIED findings. Draft a plain pointer-bearing window/coordinate record and Sprite* array; leave object markers unchanged until coordinator actual native old/current symbol observation and generic guarded writer current-target migration. Do not create bounded initialization obligations or claim complete original allocation from accessed windows.",
+    "Update scoped actual-source host fixtures to genuine live64bit pointers, null/non-null default snapshots and subsequent close, producer order/width-height side effects/sentinel coordinates, mutation/borrowed pointer identity. No fake low-address encoded pointers or copied expected body. Freeze for coordinator native verification; no worker Git/Wine/native.",
+    "Coordinator permits justified temporary matching regressions after independent pinned/source review, actual-source controls, native ABI/symbol/initializer-or-qualified-unbounded and function measurements, historical continuity and full build/link. No claim demotion, new exact tokens, source/baseline/flags changes or full-game/automatic acceptance claim."
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a14a03a2e256c4096a9abe2f2ef1a44de8150723",
+  "schema_version": 1,
+  "target": "opensmacx",
+  "task_id": "planwin-blink-member-owner-oct9",
+  "intent": "Remove raw offset access to the already-proven PlanWin lifecycle member from blink, preserving its original zero/nonzero gate and virtual redraw.",
+  "editable_files": [
+    "src/planwin.cpp",
+    "recovery/tests/test_planwin_blink_member_actual_source_oct9.py"
+  ],
+  "subjects": [
+    {
+      "address": 4766752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Original blink48BC20..48BC4B reads ECX+21A68, returns onzero, normalizes/toggles21A6C then dispatches virtualslot30. Constructor48BCD0 clears21A68, init48BC60 sets1, close48BC50 clears then tailjumpsMapWin::close. Actual PlanWin already declaresint32 field_21A68_ in the correct lifetime/layout, distinct from standaloneMapWin vtordisp.",
+    "Replace pre_vbase_dword(this) with directfield_21A68_ and remove only unused raw helper. Keep header layout/discovery explanations, field names/types and closeinline tailjump untouched. Do not invent a more precise semantic name or reinterpret the gate as a bit/bool.",
+    "Actual-source host test covers zero gate/no toggle or redraw, all representative nonzero/signed gates, phase0->1/nonzero->0 and virtual redraw dispatch. Preserve original mappings/claims/history; no workerGit/native/Wine. Coordinator requires fullTU native comparisons/ABI observation, build/link, source/claim/reference continuity before reviewed integration; no new byte claims or automatic/game acceptance."
+  ]
+}

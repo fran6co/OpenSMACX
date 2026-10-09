@@ -1,0 +1,42 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a14a03a2e256c4096a9abe2f2ef1a44de8150723",
+  "schema_version": 1,
+  "target": "opensmacx",
+  "task_id": "caviar-rect-state-owner-oct9",
+  "intent": "Recover Caviar viewport and scene rectangle accumulators as real RECT storage, removing field-array aliasing at the original Win32 UnionRect boundaries.",
+  "editable_files": [
+    "src/caviar.cpp",
+    "recovery/tests/test_caviar_rect_state_actual_source_oct9.py"
+  ],
+  "subjects": [
+    {
+      "address": 6391200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6390896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6385792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6386224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Original render_scene617080..61719E calls imported UnionRect669328 at617182 with9B9690 as destination and third argument, and a RECT derived from render-record bounds as second. render617230..617620 repeats viewport accumulation and unions into scene9BB438. This identifies accessed four signed32bit RECT coordinates; not an independent complete original allocation proof.",
+    "All current viewport consumers/producers are init_class6185A0, clear_buffers618470, render_scene617080 and render617230. Preserve clear order left/right/bottom/top (original slots0/2/3/1), row/span arithmetic and existing original unsafe/overflow paths. Current viewport int32 arithmetic is already signed; do not silently widen, clamp, sanitize or change loops.",
+    "CaviarSceneRecord first16bytes are a rectangle accumulator, followed by unchanged setup at+10, renderer+38, borrowed render argument+3C, created+40. Replace only the first four words with a RECT member at0; preserve original store order, renderer/setup/gap and all other fields/lifetimes. Scope excludes raster/file decoder casts and new naming/ownership guesses elsewhere.",
+    "Essential original starts belong in source. Worker leaves current comments/annotations intact pending coordinator native actual-symbol evidence and generic object_writer additions for newly bound roots; no fabricated historical symbols or full original allocation spans. Preserve all function ORIGINAL/spans/claims/LEVER/TRIED and source discoveries.",
+    "Actual-source host controls must exercise full feasible caller bodies or clearly bounded source blocks for union pointer identities/aliasing and rectangles, exact clear order, negative/nonempty/empty coordinates and repeated updates. A Windows API shim is a boundary control, not Windows/runtime/ABI proof. Keep meaningful preexisting tests intact, request scope expansion before fixture edits elsewhere.",
+    "Coordinator permits justified temporary matching regression only after independent original/source review, native offsets/sizes/symbols/data qualifications and function checks, fresh compile/link and historical continuity. No automatic acceptance/full game proof/new claims."
+  ]
+}
