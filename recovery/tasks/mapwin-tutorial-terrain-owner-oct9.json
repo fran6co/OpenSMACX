@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task_id": "mapwin-tutorial-terrain-owner-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Replace the terrain-fixup raw image receiver with the existing tutorial BaseWin MapWin subobject and its real lifetime.",
+  "base_revision": "0a6def5caf28e5a7fa2a909067a2185a5b0b5e4d",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4657728
+    }
+  ],
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/tests/test_world_map_terrain_owner.py"
+  ],
+  "evidence": [
+    "Source-owned TutWinBaseWindow BaseWin global starts6A7628; existing mapWin_ member offset1E674 gives6C5C9C exactly. Pinned global initializer4083B0 calls BaseWin408490 and registers teardown4083D0->420A70. Original40866A..674 constructs MapWin onBaseWin+1E674;420BDC destroys that same subobject through its virtualGraphicWin view+400E0. Existing implicit member lifetime already owns this object; no new global/storage/header/lifetime is needed.",
+    "Pinned47127A pushes6C5C9C within mapwin_terrain_fixup471240..293 before terrain_fixup4711A0. Replace MapWinTerrainFixupExtra2 with &TutWinBaseWindow.mapWin_ and retire obsolete fixedalias/contrary unresolved prose. Preserve all table-slot active/null quirks, original receiver order WorldClimateWorldWin/tutorial/FarmMapWindow and call sequence. Whole-image immediate scan found this one reference; no inferred broader reference completeness.",
+    "Migrate existing actual-source test from fakeUnresolvedSecond to ownedBaseWin member, retaining slot-zero null behavior and existing missing-world/slot-zero-gated damage controls; add tutorial-member removal control and independent source offset/global/lifecycle checks. Preserve original mappings/spans/historical byteclaims/findings. Fresh wholeMapWin nativebaseline/current and realBaseWin member layout, sourceidentity continuity, fullbuild/link and independentreview required. No byte-search, new claims, bugfixes or full acceptance assertion."
+  ]
+}
