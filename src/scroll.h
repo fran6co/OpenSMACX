@@ -47,11 +47,11 @@ class Scroll : public GraphicWin {
   int init_horz(int x, int y, int length, Win *parent, int setting);
   int init_vert_nc(int x, int y, int length, Win *parent, int setting);
   int init_horz_nc(int x, int y, int length, Win *parent, int setting);
-  uint32_t set_range(int minimum, int maximum);
-  uint32_t set_button_color(int color);
-  uint32_t set_bevel_thickness(int thickness);
-  uint32_t set_bevel_upper(int color);
-  uint32_t set_bevel_lower(int color);
+  void set_range(int minimum, int maximum);
+  void set_button_color(int color);
+  void set_bevel_thickness(int thickness);
+  void set_bevel_upper(int color);
+  void set_bevel_lower(int color);
   uint32_t set_bar_thickness(int thickness);
   void set_border_color(int color);
   void set_sprite_left(Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);

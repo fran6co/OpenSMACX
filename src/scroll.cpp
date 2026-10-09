@@ -640,7 +640,7 @@ Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
 //   further work. 24 of 24, BYTE_EXACT. The "swap defect above" note is
 //   superseded - this was that defect.
 //   The "swap defect" line above is superseded by the 2026-09-03 LEVER.
-// symbol    ?set_range@Scroll@@QAEIHH@Z
+// symbol    ?set_range@Scroll@@QAEXHH@Z
 // size      93 bytes
 // prototype void (__thiscall ?set_range@Scroll@@QAEXHH@Z)(Scroll* this, int, int)
 // callers   12   call targets   1
@@ -651,13 +651,9 @@ Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-// C4716 IS SUPPRESSED ON PURPOSE, for the reason on_left_click documents at
-// the bottom of this file: the image's `ret 8` never sets EAX, so the source
-// cannot end in a `return`. Everything below the pragma through
-// set_bevel_lower shares that shape - each ends on the slot-62 dispatch and
-// leaves EAX as the callee left it.
-#pragma warning(push)
-#pragma warning(disable : 4716)
+// Historical compiler-workaround explanation, retained after correcting the
+// API: each original body ends after redraw without defining EAX, so a
+// non-void C++ signature required suppressing C4716. The source API is void.
 
 // Non-inline forwarder over general.h's MEASURED inline `swap(int *, int *)`.
 // The image CALLS 0x00628A50 from set_range (0x006059B0); the in-class
@@ -668,7 +664,7 @@ static void __cdecl range_swap_call(int *var1, int *var2) {
     swap(var1, var2);
 }
 
-uint32_t Scroll::set_range(int minimum, int maximum) {
+void Scroll::set_range(int minimum, int maximum) {
     if (minimum < maximum) {
         range_reversed_ = 0U;
     } else {
@@ -696,7 +692,7 @@ Purpose: Set the color shared by the scrollbar and both end buttons.
 //   set_bevel_thickness, set_bevel_upper and set_bevel_lower each needed, so
 //   this is the fourth site of one shape rather than four coincidences.
 // LEVER: read_volatile_bits/original_slot inline (not the redraw_from_vtable __asm helper, and the shared helpers marked `inline`) gets the vtable dispatch inlined in place, matching the image's direct load+call; a volatile store on the first field write fixes its scheduling relative to the following `lea`.
-// symbol    ?set_button_color@Scroll@@QAEIH@Z
+// symbol    ?set_button_color@Scroll@@QAEXH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_button_color@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -707,9 +703,9 @@ Purpose: Set the color shared by the scrollbar and both end buttons.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-uint32_t Scroll::set_button_color(int color) {
+void Scroll::set_button_color(int color) {
     const uint32_t value = static_cast<uint32_t>(color);
-    *reinterpret_cast<volatile uint32_t *>(&color_) = value;
+    color_ = value;
     flat_button_left_.color_ = value;
     flat_button_right_.color_ = value;
     flat_button_left_.redraw();
@@ -720,7 +716,7 @@ uint32_t Scroll::set_button_color(int color) {
 Purpose: Set the bevel thickness shared by the scrollbar and both end buttons.
 // ORIGINAL: 0x00605A50 ?set_bevel_thickness@Scroll@@QAEXH@Z 0x00605A50-0x00605A8D BYTE_EXACT
 // LEVER: replaced both redraw_from_vtable(__asm helper) calls with the inline read_volatile_bits/original_slot<func_noarg_virtual> dispatch 0x00605A10 already uses - 4/14 to 7/14 agreeing. First dispatch now matches the image's single `call dword ptr [reg+0xf8]`; the second still schedules as `mov eax,[obj]; mov eax,[eax+0xf8]; call eax`.
-// symbol    ?set_bevel_thickness@Scroll@@QAEIH@Z
+// symbol    ?set_bevel_thickness@Scroll@@QAEXH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -731,9 +727,9 @@ Purpose: Set the bevel thickness shared by the scrollbar and both end buttons.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-uint32_t Scroll::set_bevel_thickness(int thickness) {
+void Scroll::set_bevel_thickness(int thickness) {
     const uint32_t value = static_cast<uint32_t>(thickness);
-    *reinterpret_cast<volatile uint32_t *>(&bevel_thickness_) = value;
+    bevel_thickness_ = value;
     flat_button_left_.bevel_thickness_ = value;
     flat_button_right_.bevel_thickness_ = value;
     flat_button_left_.redraw();
@@ -744,7 +740,7 @@ uint32_t Scroll::set_bevel_thickness(int thickness) {
 Purpose: Set the upper bevel color shared by the scrollbar and both end buttons.
 // ORIGINAL: 0x00605A90 ?set_bevel_upper@Scroll@@QAEXH@Z 0x00605A90-0x00605ACD BYTE_EXACT
 // LEVER: same substitution as 0x00605A50 - 4/14 to 7/14 agreeing, same second-call residual.
-// symbol    ?set_bevel_upper@Scroll@@QAEIH@Z
+// symbol    ?set_bevel_upper@Scroll@@QAEXH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_upper@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -755,9 +751,9 @@ Purpose: Set the upper bevel color shared by the scrollbar and both end buttons.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-uint32_t Scroll::set_bevel_upper(int color) {
+void Scroll::set_bevel_upper(int color) {
     const uint32_t value = static_cast<uint32_t>(color);
-    *reinterpret_cast<volatile uint32_t *>(&bevel_upper_) = value;
+    bevel_upper_ = value;
     flat_button_left_.bevel_upper_ = value;
     flat_button_right_.bevel_upper_ = value;
     flat_button_left_.redraw();
@@ -768,7 +764,7 @@ uint32_t Scroll::set_bevel_upper(int color) {
 Purpose: Set the lower bevel color shared by the scrollbar and both end buttons.
 // ORIGINAL: 0x00605AD0 ?set_bevel_lower@Scroll@@QAEXH@Z 0x00605AD0-0x00605B0D BYTE_EXACT
 // LEVER: same substitution as 0x00605A50 - 4/14 to 7/14 agreeing, same second-call residual.
-// symbol    ?set_bevel_lower@Scroll@@QAEIH@Z
+// symbol    ?set_bevel_lower@Scroll@@QAEXH@Z
 // size      61 bytes
 // prototype void (__thiscall ?set_bevel_lower@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   1   call targets   0
@@ -779,15 +775,14 @@ Purpose: Set the lower bevel color shared by the scrollbar and both end buttons.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-uint32_t Scroll::set_bevel_lower(int color) {
+void Scroll::set_bevel_lower(int color) {
     const uint32_t value = static_cast<uint32_t>(color);
-    *reinterpret_cast<volatile uint32_t *>(&bevel_lower_) = value;
+    bevel_lower_ = value;
     flat_button_left_.bevel_lower_ = value;
     flat_button_right_.bevel_lower_ = value;
     flat_button_left_.redraw();
     flat_button_right_.redraw();
 }
-#pragma warning(pop)
 
 /*
 Purpose: Resize the scrollbar track and its right/down arrow after the parent
