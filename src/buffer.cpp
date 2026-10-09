@@ -20,7 +20,6 @@
 // symbol    ??_GBuffer@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
-#include "original_seam.h"
 #include "buffer.h"
 #include "graphicwin.h"
 #include "filemap.h"
@@ -28,8 +27,9 @@
 #include "general.h"   // mem_get, for the link labels this owns
 #include "palette.h"
 #include "spot.h"
+#include "stringstruct.h"  // StringList is used directly by text wrapping
 
-#include "alpha.h"     // Language, the write/wrap text-selection switch
+#include "jackal/graphics_language.h"  // shared localized graphics setting
 
 #include <new>
 
@@ -619,13 +619,6 @@ uint32_t BufferField520Default = 1;
 // per-Buffer member. Direct scans do not rule out computed indirect access.
 // RECOVERY_OBJECT: v2 0x009B3A10 0x009B3A14 ?BufferFillRowGap@@3IA 0x005DFCD0
 uint32_t BufferFillRowGap;
-
-namespace {
-
-typedef void (OriginalObject::*func_buffer_virtual)();
-
-}  // namespace
-
 
 /*
 Purpose: Copy a region of another buffer into the same position in this one.
@@ -4538,10 +4531,6 @@ Buffer g_BUFFER;
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00628380 0x006283E0 0x00628430 0x006453E0 0x00645470
 // indirect  0x005D7C41
-// placeholder - not yet decompiled
-// To start: tools/decomp_status.py --work 0x005D7B40
-
-
 int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
     try {
         Filemap fm;
@@ -7391,10 +7380,6 @@ forward:
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00628380 0x006283E0 0x00628430 0x006453E0 0x00645470
 // indirect  0x005D7DA1
-// placeholder - not yet decompiled
-// To start: tools/decomp_status.py --work 0x005D7CA0
-
-
 int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
     try {
         Filemap fm;

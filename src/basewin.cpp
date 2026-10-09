@@ -1374,7 +1374,7 @@ void BaseWin::psych_row(int x, int y, int width, int sprite_width,
 void BaseWin::draw_psych() {
     Font font;
     Buffer *const canvas = this;
-    RECT saved_clip = canvas->rect1_;
+    RECT saved_clip = canvas->current_clip();
     canvas->set_clip(&rect1_);
     GraphicWin::fill(0);
     font.init(DefaultFontFace, 12, 1);
@@ -2298,7 +2298,7 @@ void BaseWin::draw_queue(int update_mode) {
     Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
     if (update_mode != 0 && !is_visible()) return;
 
-    RECT saved_clip = canvas->rect1_;
+    RECT saved_clip = canvas->current_clip();
     RECT outer = queue_outer_rect_;
     canvas->set_clip(&outer);
     canvas->box_sprite(&queue_outer_rect_, &InterfaceBoxStyles[3]);
@@ -2383,7 +2383,7 @@ void BaseWin::draw_queue(int update_mode) {
         if (row_font.width(StringTemp) <= text_rect.right - text_rect.left) {
             canvas->set_clip(&text_rect);
             canvas->write_l(StringTemp, &text_rect, strlen(StringTemp));
-            canvas->set_clip(&canvas->rect2_);
+            canvas->restore_clip();
         } else {
             canvas->set_font(&compact_font, nullptr, nullptr, nullptr);
             const bool truncated = compact_font.width(StringTemp)
@@ -2393,7 +2393,7 @@ void BaseWin::draw_queue(int update_mode) {
             if (StringTemp[0] != 0) {
                 canvas->write_l(StringTemp, &text_rect, strlen(StringTemp));
             }
-            canvas->set_clip(&canvas->rect2_);
+            canvas->restore_clip();
             if (truncated) {
                 text_rect.left = text_rect.right;
                 canvas->write_l("+", &text_rect, 1);
@@ -3905,7 +3905,7 @@ void BaseWin::draw_garrison(int update_mode) {
     Font font;
     Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
 
-    RECT saved_clip = canvas->rect1_;
+    RECT saved_clip = canvas->current_clip();
     RECT clip_rect = garrison_rect_;
     canvas->set_clip(&clip_rect);
 
@@ -4022,7 +4022,7 @@ void BaseWin::draw_garrison(int update_mode) {
         ++column;
     }
 
-    canvas->set_clip(&canvas->rect2_);
+    canvas->restore_clip();
     if (update_mode != 0) MainInterfaceGlobal.update(&garrison_rect_, nullptr);
     else MainInterfaceGlobal.soft_update(&garrison_rect_);
     canvas->set_clip(&saved_clip);
@@ -4089,10 +4089,11 @@ void BaseWin::on_left_up(int xCoord, int yCoord) {
             // instead of reusing the outer one.
             // Original 0x007AEC94 is MainInterfaceGlobal + 0x474:
             // its inherited Buffer::rect2_, not separate clip storage.
-            rect.left = MainInterfaceGlobal.Buffer::rect2_.left;
-            rect.top = MainInterfaceGlobal.Buffer::rect2_.top;
-            rect.right = MainInterfaceGlobal.Buffer::rect2_.right;
-            rect.bottom = MainInterfaceGlobal.Buffer::rect2_.bottom;
+            const RECT &interface_clip = MainInterfaceGlobal.Buffer::clip_rect();
+            rect.left = interface_clip.left;
+            rect.top = interface_clip.top;
+            rect.right = interface_clip.right;
+            rect.bottom = interface_clip.bottom;
 
             if (!in_box(xCoord, yCoord, &rect)) {
                 set_cursor(0x7f00);
@@ -4608,10 +4609,11 @@ void BaseWin::on_iface_left_up(int xCoord, int yCoord) {
             // 0x0041DD88..A8 loads left/top/right before storing left, then
             // loads bottom and stores top/right/bottom. Historical spelling
             // trials above are not a proof of the current compiler schedule.
-            local_rect.left = TutWinBaseWindow.Buffer::rect2_.left;
-            local_rect.top = TutWinBaseWindow.Buffer::rect2_.top;
-            local_rect.right = TutWinBaseWindow.Buffer::rect2_.right;
-            local_rect.bottom = TutWinBaseWindow.Buffer::rect2_.bottom;
+            const RECT &tutorial_clip = TutWinBaseWindow.Buffer::clip_rect();
+            local_rect.left = tutorial_clip.left;
+            local_rect.top = tutorial_clip.top;
+            local_rect.right = tutorial_clip.right;
+            local_rect.bottom = tutorial_clip.bottom;
 
             if (in_box(xCoord, yCoord, &local_rect) == 0) {
                 set_cursor(0x7f00);
@@ -5892,7 +5894,7 @@ void BaseWin::draw_info(int update_mode) {
 
     RECT panel = info_title_rect_;
     screen->set_clip(&panel);
-    RECT previous_clip = screen->rect1_;
+    RECT previous_clip = screen->current_clip();
     screen->box_sprite(&panel, &InterfaceBoxStyles[3]);
 
     const int trim = -6 - sprites8_[6].width();
@@ -6215,7 +6217,7 @@ void BaseWin::draw_pop(int update_mode) {
     random.reseed(timeGetTime());
 
     Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
-    RECT saved_clip = canvas->rect1_;
+    RECT saved_clip = canvas->current_clip();
     RECT inner = population_rect_;
     canvas->set_clip(&inner);
     canvas->box_sprite(&population_rect_, &InterfaceBoxStyles[3]);
@@ -6279,7 +6281,7 @@ void BaseWin::draw_pop(int update_mode) {
 // TRIED: SEH-framed function with one real local object (`Font font;`, matching the single ??0Font/??1Font pair) reproduced via plain RAII, same as 0x004ADB70. Diverges at #12 (sim 0.53), not chased further given time. The "own faction" index scan, both box_sprite/set_font/ set_text_color RECT setups, and the tail (soft_update vs update on a1, restore clip) are a direct instruction-level transcription off raw disassembly. The per-faction commerce-report loop body (the `slot` loop building relation strings via write_l) and the military-score ELSE branch are adapted from Ghidra with real field offsets and real calls but approximated message-selection logic - not verified call-for-call against raw bytes given the remaining budget.
 void BaseWin::draw_commerce(int update_mode) {
     Buffer *canvas = this;
-    RECT saved_clip = canvas->rect1_;
+    RECT saved_clip = canvas->current_clip();
     canvas->set_clip(&commerce_outer_rect_);
     canvas->box_sprite(&commerce_outer_rect_, &InterfaceBoxStyles[3]);
 
@@ -6436,7 +6438,7 @@ void BaseWin::draw_commerce(int update_mode) {
 // TRIED: literal transcription of Ghidra's (clean, non-SEH-mangled) pseudocode, mapping the three unlabelled thiscall calls (0x618EA0/0x618EE0/0x618F40) onto BaseWin's already-declared UNK4/UNK7/UNK6 slots by call-site position and declaring the other dozen FUN_ helpers as plain cdecl free functions (their true receiver/convention was not established) compiles and matches the arithmetic/branch structure, but the original installs a real SEH frame (fs:[0] chain) that this body does not reproduce since nothing here needs unwind-safety in the C++ source; diverges from the framed build around #2.
 void BaseWin::draw_nutrients(int update_mode) {
     Buffer *canvas = this;
-    RECT saved_clip = canvas->rect1_;
+    RECT saved_clip = canvas->current_clip();
     canvas->set_clip(&nutrient_outer_rect_);
     canvas->box_sprite(&nutrient_outer_rect_, &InterfaceBoxStyles[3]);
 

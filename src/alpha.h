@@ -18,6 +18,7 @@
 #pragma once
 #include "faction.h"
 #include "strings.h"  // StringTable, which label_get below inlines
+#include "jackal/graphics_language.h"
 
  /*
   * Parsing alpha/x.txt, 'Alpha Centauri.ini' and labels.txt
@@ -728,7 +729,6 @@ extern RulesWorldbuilder WorldBuilder;                      // 0x009502A8
 extern AlphaIniPref AlphaIniPrefs;                          // 0x0094B464
 extern DefaultPref DefaultPrefs;                            // 0x0094B350
 extern PlayerData PlayersData[MaxPlayerNum];               // 0x0096C9E0
-extern uint32_t Language;
 
 int __cdecl tech_name(LPSTR name);
 int __cdecl chas_name(LPSTR name);

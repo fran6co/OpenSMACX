@@ -32,6 +32,8 @@ struct Font {
 struct Buffer {
     RECT rect1_;
     RECT rect2_;
+    const RECT &current_clip() const { return rect1_; }
+    void restore_clip() { set_clip(&rect2_); }
     void set_clip(RECT *rect);
     void set_clip(int, int, int, int) { event("column_clip"); }
     void tile(void *, int, int, int, int, int, int) { event("tile"); }

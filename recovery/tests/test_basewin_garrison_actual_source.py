@@ -113,7 +113,7 @@ def assert_original_contract(body: str) -> None:
     assert "int text_spacing;" in body
     assert "text_spacing = (MapWinCaptionScale * 100) / MapWinCaptionDivisor;" in body
     assert "frame_rect.bottom - line_height + 6, text_spacing," in body
-    assert "canvas->set_clip(&canvas->rect2_);" in body
+    assert "canvas->restore_clip();" in body
 
 
 def compile_run(tmp_path: Path, body: str, mode: int,
@@ -184,16 +184,16 @@ def test_behavior_mutations_are_caught(tmp_path, compiler_name):
          "        }",
          "        int text_spacing = spacing;", 4),
         # Restore saved clip before publication instead of after.
-        ("    canvas->set_clip(&canvas->rect2_);\n"
+        ("    canvas->restore_clip();\n"
          "    if (update_mode != 0) MainInterfaceGlobal.update(&garrison_rect_, nullptr);\n"
          "    else MainInterfaceGlobal.soft_update(&garrison_rect_);\n"
          "    canvas->set_clip(&saved_clip);",
          "    canvas->set_clip(&saved_clip);\n"
          "    if (update_mode != 0) MainInterfaceGlobal.update(&garrison_rect_, nullptr);\n"
          "    else MainInterfaceGlobal.soft_update(&garrison_rect_);\n"
-         "    canvas->set_clip(&canvas->rect2_);", 0),
+         "    canvas->restore_clip();", 0),
         # Replace required live full-window clip with the panel rectangle.
-        ("canvas->set_clip(&canvas->rect2_);",
+        ("canvas->restore_clip();",
          "canvas->set_clip(&clip_rect);", 0),
         # Preserve separate appends for debug label formatting.
         ('strcat(StringTemp, " ");\n            strcat(StringTemp, "(");',

@@ -2,6 +2,7 @@
   "author": "framework-coordinator",
   "base_revision": "38de6eda8ff5204d0b252848879f0fb424138a56",
   "editable_files": [
+    "recovery/tests/basewin_garrison_host_fixture.cpp",
     "recovery/tests/test_basewin_base_access_actual_source.py",
     "recovery/tests/test_basewin_drag_release_ownership.py",
     "recovery/tests/test_basewin_draw_commerce_actual_source.py",

@@ -123,7 +123,12 @@ struct RECT {int left,top,right,bottom;};
 TYPES
 struct AutoSound {virtual ~AutoSound(){}};
 WIN_BASES public:};
-struct Buffer {BUFFER_FIELDS CLIP_METHOD};
+struct Buffer {
+  BUFFER_FIELDS
+  const RECT &current_clip() const { return rect1_; }
+  void restore_clip() { set_clip(&rect2_); }
+  CLIP_METHOD
+};
 GRAPHICWIN_BASES public:GRAPHIC_METHODS};
 MAPWIN_BASES public:MAP_FIELDS MAP_METHODS};
 CONSOLE_BASES public:CONSOLE_FIELDS};
@@ -358,7 +363,7 @@ DAMAGE = [
     ("overlay_unwidened", "GENERATE", "map_radius_half_width(overlay_extent, row)", "mapwin_dest_add(map_radius_half_width(overlay_extent, row), radius == 0 ? 2 : 0)"),
     ("overlay_live_view", "GENERATE", "tile_in_view(tile_x, tile_y, 0)", "true"),
     ("legend_flag", "GENERATE", "(field_1DD70_ & 0x20000) != 0", "false"),
-    ("restore_current_clip", "GENERATE", "set_clip(&canvas->rect2_)", "set_clip(&clip)"),
+    ("restore_current_clip", "GENERATE", "canvas->restore_clip()", "canvas->set_clip(&clip)"),
     ("spectator_faction", "DRAW", "(GameDataStateStorage.fields_.game_state_ & 0x80) != 0", "false"),
     ("negative_draw_skip", "DRAW", "faction, draw_type < 0", "faction, 0"),
     ("cursor_active", "DRAW", "ConsoleGlobal.cursor_active_ == 0", "true"),

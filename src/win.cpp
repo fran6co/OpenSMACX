@@ -2625,15 +2625,13 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                         // as.
                         typedef void(__cdecl * func_win_closed)();
                         func_win_closed closed =
-                            *reinterpret_cast<func_win_closed *>(
-                                reinterpret_cast<char *>(owner) + 0x404);
+                            reinterpret_cast<func_win_closed>(owner->field_404_);
                         if (closed != nullptr) {
                             closed();
                         }
                     }
                     owner->on_sys_close();
-                    sub_5f86a0(*reinterpret_cast<int *>(
-                        reinterpret_cast<char *>(owner) + 0x18));
+                    sub_5f86a0(reinterpret_cast<int>(owner->val_6_));
                     return 0;
                 }
                 case WM_MOUSEMOVE: {
@@ -6999,8 +6997,7 @@ void Win::add_child(Win* child) {
     if (child == 0) {
         return;
     }
-    char *other = reinterpret_cast<char *>(child);
-    if (*reinterpret_cast<unsigned int *>(other + 0x98) & 0x2000000) {
+    if (child->iFlags_ & 0x2000000) {
         int count = child_count_;
         children_[count] = child;
         child_count_ = child_count_ + 1;
@@ -7844,7 +7841,7 @@ void Win::update_back_to_window(Buffer * buffer) {
             WinZOrderCount = 0;
             WinZOrderFlag = 0;
         }
-        if (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(w) + 0x9c) & 1) {
+        if ((w->iSomeFlag_ & 1) != 0) {
             recurse_zorder(w);
         }
     }
@@ -7863,9 +7860,8 @@ void Win::update_back_to_window(Buffer * buffer) {
             goto after_offset_fixup;
         }
         {
-            char *owner = reinterpret_cast<char *>(win_parent_);
-            WinViewOriginX -= *reinterpret_cast<int *>(owner + 0x13c);
-            tail = *reinterpret_cast<int *>(owner + 0x140);
+            WinViewOriginX -= win_parent_->outer_rect_.left;
+            tail = win_parent_->outer_rect_.top;
         }
     } else {
         this->client_to_screen(&WinViewOriginX, &WinViewOriginY);
@@ -7910,7 +7906,7 @@ after_offset_fixup:;
             WinZOrderCount = 0;
             WinZOrderFlag = 0;
         }
-        if (*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(w) + 0x9c) & 1) {
+        if ((w->iSomeFlag_ & 1) != 0) {
             recurse_zorder(w);
         }
     }
@@ -8419,7 +8415,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
                          (((fl & 0x100000) == 0 && ((fl >> 16) & 0x10) != 0) && this->win_parent_ == 0);
 
     if (!skipMenuList && this->win_parent_ != 0 &&
-        ((*reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(this->win_parent_) + 0x98)) & 0x1000) == 0) {
+        (this->win_parent_->iFlags_ & 0x1000) == 0) {
         char *parent = reinterpret_cast<char *>(this->win_parent_);
         Heap *heap = *reinterpret_cast<Heap **>(parent + 0xdc);
         int initCount = *reinterpret_cast<int *>(parent + 0xd4);
@@ -9090,8 +9086,8 @@ void Win::screen_to_nonclient(int * x, int * y) {
         win_parent_ != 0) {
         (win_parent_)->screen_to_client(x, y);
         if ((iFlags_ & 0x8000) != 0) {
-            *x += *reinterpret_cast<int *>(reinterpret_cast<char *>(win_parent_) + 0x13c);
-            *y += *reinterpret_cast<int *>(reinterpret_cast<char *>(win_parent_) + 0x140);
+            *x += win_parent_->outer_rect_.left;
+            *y += win_parent_->outer_rect_.top;
         }
     }
     *x += outer_rect_.left;
@@ -9501,9 +9497,8 @@ int Win::update_window(RECT * area) {
         win_parent_ != 0) {
         client_to_screen(&x, &y);
         if ((iFlags_ & 0x8000) != 0) {
-            char *rel = reinterpret_cast<char *>(win_parent_);
-            x -= *reinterpret_cast<int *>(rel + 0x13c);
-            y -= *reinterpret_cast<int *>(rel + 0x140);
+            x -= win_parent_->outer_rect_.left;
+            y -= win_parent_->outer_rect_.top;
         }
     }
     RECT r;
@@ -9967,23 +9962,22 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
     if (idx >= 0) {
         for (int i = idx; i >= 0; --i) {
             Win *w = reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i]);
-            unsigned char *const wb = reinterpret_cast<unsigned char *>(w);
-            if ((*(wb + 0x9c) & 1) != 0) {
-                Win *menuLike = *reinterpret_cast<Win **>(wb + 0xc4);
+            if ((w->iSomeFlag_ & 1) != 0) {
+                Win *menuLike = w->win_parent_;
                 bool visible = true;
                 if (menuLike != 0) {
                     visible = menuLike->is_visible() != 0;
                 }
                 if (visible) {
-                    if ((*(wb + 0x9c) & 2) != 0) {
+                    if ((w->iSomeFlag_ & 2) != 0) {
                         w->on_nc_paint(area, -1);
                     }
                     bool doSecond = true;
                     if (target != 0) {
-                        doSecond = (target == *reinterpret_cast<int *>(wb + 0xa8));
+                        doSecond = (target == reinterpret_cast<int>(w->poWinBase_));
                     }
                     if (doSecond) {
-                        Win *const other = *reinterpret_cast<Win **>(wb + 0xa8);
+                        Win *const other = w->poWinBase_;
                         other->on_paint(area);
                     }
                 }
@@ -10134,10 +10128,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
 // DUPLICATE `Win::resize_event` removed: two artifacts carried the same body.
 
 // ===== homed from src/unrecovered/005f2680.cpp =====
-typedef long (__stdcall *GetWindowLongAFn)(void *, int);
-typedef long (__stdcall *DefWindowProcAFn)(void *, unsigned int, unsigned int, long);
 typedef void (__cdecl *Callback404)();
-
 // ORIGINAL: 0x005F2680 ?OnSysCommand@Win@@QAAHPAXIHH@Z 0x005F2680-0x005F26FF FILE
 // symbol    ?OnSysCommand@Win@@QAAHPAUHWND__@@IHH@Z
 // provenance (retired seed): git:3cb99d43^:src/unrecovered/005f2680.cpp
@@ -10155,14 +10146,12 @@ int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
                 | static_cast<unsigned short>(x));
     }
     WinCallbackWindow = self;
-    Callback404 cb = *reinterpret_cast<Callback404 *>(
-        reinterpret_cast<char *>(self) + 0x404);
+    Callback404 cb = reinterpret_cast<Callback404>(self->field_404_);
     if (cb != 0) {
         cb();
     }
     self->on_sys_close();
-    Sound *child = *reinterpret_cast<Sound **>(
-        reinterpret_cast<char *>(self) + 0x18);
+    Sound *child = self->val_6_;
     if (child != 0) {
         if (child->is_playing() == 0) {
             child->play();
@@ -10270,7 +10259,7 @@ void Win::update_window_to_buffer(Buffer * buffer) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
-                if ((*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(*piVar4) + 0x9c) & 1) != 0) {
+                if (((*piVar4)->iSomeFlag_ & 1) != 0) {
                     recurse_zorder(*piVar4);
                     iVar2 = reinterpret_cast<int>(WinZOrderWindow);
                 }
@@ -10287,9 +10276,8 @@ void Win::update_window_to_buffer(Buffer * buffer) {
                 Win *parent = win_parent_;
                 parent->client_to_screen(&(WinViewOriginX), &(WinViewOriginY));
                 if ((iFlags_ & 0x8000) != 0) {
-                    char *pself = reinterpret_cast<char *>(win_parent_);
-                    (WinViewOriginX) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
-                    (WinViewOriginY) -= *reinterpret_cast<int32_t *>(pself + 0x140);
+                    (WinViewOriginX) -= win_parent_->outer_rect_.left;
+                    (WinViewOriginY) -= win_parent_->outer_rect_.top;
                 }
             }
         } else {
@@ -10300,9 +10288,8 @@ void Win::update_window_to_buffer(Buffer * buffer) {
                 Win *parent = win_parent_;
                 parent->client_to_screen(&(WinViewOriginX), &(WinViewOriginY));
                 if ((iFlags_ & 0x8000) != 0) {
-                    char *pself = reinterpret_cast<char *>(win_parent_);
-                    (WinViewOriginX) -= *reinterpret_cast<int32_t *>(pself + 0x13c);
-                    (WinViewOriginY) -= *reinterpret_cast<int32_t *>(pself + 0x140);
+                    (WinViewOriginX) -= win_parent_->outer_rect_.left;
+                    (WinViewOriginY) -= win_parent_->outer_rect_.top;
                 }
             }
             (WinViewOriginX) -= outer_rect_.left;
@@ -10325,7 +10312,7 @@ void Win::update_window_to_buffer(Buffer * buffer) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
-                if ((*reinterpret_cast<uint8_t *>(reinterpret_cast<char *>(*piVar4) + 0x9c) & 1) != 0) {
+                if (((*piVar4)->iSomeFlag_ & 1) != 0) {
                     recurse_zorder(*piVar4);
                     iVar2 = reinterpret_cast<int>(WinZOrderWindow);
                 }

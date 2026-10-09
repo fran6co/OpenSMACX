@@ -29,14 +29,11 @@
 #include "buffer.h"
 #include "scroll.h"
 
-#include "statuswin.h"
 #include "dialog.h"
 #include "sounddevice.h"
 #include "menu.h"
 #include "win.h"
 #include "spritebox.h"
-#include "net_class.h"
-#include "basepop.h"
 #include "sprite.h"
 
 #include <cstring>

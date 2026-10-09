@@ -2,6 +2,8 @@
   "author": "framework-coordinator",
   "base_revision": "38de6eda8ff5204d0b252848879f0fb424138a56",
   "editable_files": [
+    "recovery/tests/test_matrix3_consolidated_actual_source.py",
+    "recovery/tests/test_matrix3_pointer_returns.py",
     "recovery/tests/test_matrix3_semantic_api.py",
     "src/matrix3.cpp",
     "src/matrix3.h"

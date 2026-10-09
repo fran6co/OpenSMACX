@@ -1681,7 +1681,7 @@ void MapWin::draw_map(int draw_type) {
             ConsoleGlobal.get_mouse_pos(&mouse_x, &mouse_y);
             on_mouse_move(mouse_x, mouse_y);
         }
-        canvas->set_clip(&canvas->rect2_);
+        canvas->restore_clip();
     }
     if (draw_type != 0) {
         on_update();
@@ -2365,7 +2365,8 @@ void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
     int span = mapwin_dest_add(mapwin_dest_mul(radius, 2), 2);
     int upper_tile_y = 32000;
     int ignored_x;
-    pixel_to_tile(canvas->rect1_.left, canvas->rect1_.top,
+    const RECT &viewport = canvas->current_clip();
+    pixel_to_tile(viewport.left, viewport.top,
                   &ignored_x, &upper_tile_y);
     while (upper_tile_y < mapwin_dest_sub(y, span) && span < 10) {
         span = mapwin_dest_add(span, 2);
@@ -2488,7 +2489,7 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
     if ((field_1DD70_ & 0x20000) != 0) {
         draw_legend();
     }
-    canvas->set_clip(&canvas->rect2_);
+    canvas->restore_clip();
 }
 
 // Original46A2A0..46A496. This consumes the SAME copied vertices produced
@@ -5223,8 +5224,8 @@ void MapWin::draw_base_names() {
     }
 
     Buffer *const canvas = static_cast<Buffer *>(this);
-    RECT saved_clip = canvas->rect1_;
-    canvas->set_clip(&canvas->rect2_);
+    RECT saved_clip = canvas->current_clip();
+    canvas->restore_clip();
     draw_base_dest(0);
 
     const int faction = ConsoleGlobal.faction_id_;

@@ -757,27 +757,6 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   friend int __cdecl polygon_dest(Buffer *, Vert *, int, unsigned char *);
   friend int __cdecl polygon_gouraud(Buffer *, Vert *, int *);
 
-  // DipEdit::init copies `rect2_` out as the starting point for its frame,
-  // title field and button strip - a window body reading its own buffer's
-  // working rectangle, exactly as Win and Caviar do above.
-  friend class DipEdit;
-
-  // BaseWin::on_left_up and MapWin::compute_clip read `rect2_` as the clip
-  // rectangle their hit-tests intersect against - the same working-rectangle
-  // read, reached through the GraphicWin base (MapWin's is virtual, so the
-  // member spelling emits the vbptr walk itself). offsetof(GraphicWin,
-  // rect2_) == 0x474, measured; the same offset ten classes' bodies pass to
-  // RECT * formals. BaseWin's draw_* family saves and restores the target
-  // surface's clip rectangle around its own drawing (`buf->rect1_`, the
-  // working rectangle at +0x0C4C). Compile-time access only: no offset
-  // moves and no emitted byte changes, the same edit this header made for
-  // Win, Caviar and DipEdit.
-  friend class BaseWin;
-  friend class MapWin;
-  // MultiWin::hide reads its GraphicWin Buffer extent and working rectangle
-  // before copying the console background into its owned animation buffer.
-  friend class MultiWin;
-
   // 0x4. The window the surface belongs to - `GraphicWin::init` stores its
   // `this` here before the minimum-size computation, and nothing recovered
   // reads it. `void *` until a reader proves which base pointer the image
