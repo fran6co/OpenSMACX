@@ -66,16 +66,16 @@ src/caviar.cpp,114,0x006182A0,Caviar,NO_COMPILE,this,,uint8_t *,alias-binding,,,
 src/caviar.cpp,140,0x006183B0,Caviar,NO_COMPILE,this,0xd5,uint8_t *,inside-declared-member,field_A5_,0xa5,99,0xa5,,derived,
 src/caviar.cpp,161,0x006183C0,Caviar,MISMATCH,this,0xd5,uint8_t *,inside-declared-member,field_A5_,0xa5,99,0xa5,,derived,
 src/caviar.cpp,408,0x00618370,Caviar,MNEMONIC_ONLY,this,0x38,uint8_t *,exact-member-typeable,field_38_,0x38,4,0x38,,derived,
-src/checkbox.cpp,50,0x0060E7C0,CheckBox,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/checkbox.cpp,100,0x0060EB50,CheckBox,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/checkbox.cpp,135,0x0060ECC0,CheckBox,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
-src/checkbox.cpp,164,0x0060EC80,CheckBox,MISMATCH,this,,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/checkbox.cpp,205,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/checkbox.cpp,208,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/checkbox.cpp,239,0x0060EC80,CheckBox,MISMATCH,this,0xd4,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/checkbox.cpp,242,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/checkbox.cpp,245,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/checkbox.cpp,248,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/checkbox.cpp,50,0x0060E7C0,CheckBox,NO_COMPILE,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/jackal/checkbox.cpp,100,0x0060EB50,CheckBox,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/jackal/checkbox.cpp,135,0x0060ECC0,CheckBox,MISMATCH,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
+src/jackal/checkbox.cpp,164,0x0060EC80,CheckBox,MISMATCH,this,,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/checkbox.cpp,205,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/checkbox.cpp,208,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/checkbox.cpp,239,0x0060EC80,CheckBox,MISMATCH,this,0xd4,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/checkbox.cpp,242,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/checkbox.cpp,245,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/checkbox.cpp,248,0x0060EC80,CheckBox,MISMATCH,this,-0x1c,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/console.cpp,169,0x0050F650,Console,MISMATCH,this,0x23d1c,uint8_t *,exact-member-typeable,field_23D1C_,0x23d1c,4,0x23d1c,,derived,
 src/console.cpp,445,0x005108A0,Console,NO_COMPILE,this,0x23c00,uint8_t *,exact-member-typeable,field_23C00_,0x23c00,4,0x23c00,,derived,
 src/console.cpp,563,0x0051D740,Console,MNEMONIC_ONLY,this,,char *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
@@ -165,16 +165,16 @@ src/popup.cpp,817,0x004456B0,,NO_COMPILE,this,,Win *,unresolvable,,,,,,derived,?
 src/pulldown.cpp,212,0x005F9F40,PullDown,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/pulldown.cpp,467,0x005F88A0,PullDown,NO_COMPILE,this,,VCall *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/pulldown.cpp,468,0x005F88A0,PullDown,NO_COMPILE,this,,Win *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
-src/radiobutton.cpp,50,0x0060D1B0,RadioButton,NO_COMPILE,this,,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/radiobutton.cpp,52,0x0060D1B0,RadioButton,NO_COMPILE,self,,const int32_t *const *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/radiobutton.cpp,57,0x0060D1B0,RadioButton,NO_COMPILE,self,,Dialog *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/radiobutton.cpp,58,0x0060D1B0,RadioButton,NO_COMPILE,self,,GraphicWin *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/radiobutton.cpp,80,0x0060D1B0,RadioButton,NO_COMPILE,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/radiobutton.cpp,82,0x0060D1B0,RadioButton,NO_COMPILE,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/radiobutton.cpp,113,0x0060D1B0,RadioButton,NO_COMPILE,this,0xd8,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/radiobutton.cpp,116,0x0060D1B0,RadioButton,NO_COMPILE,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/radiobutton.cpp,119,0x0060D1B0,RadioButton,NO_COMPILE,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
-src/radiobutton.cpp,122,0x0060D1B0,RadioButton,NO_COMPILE,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/radiobutton.cpp,50,0x0060D1B0,RadioButton,NO_COMPILE,this,,uint8_t *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/radiobutton.cpp,52,0x0060D1B0,RadioButton,NO_COMPILE,self,,const int32_t *const *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/radiobutton.cpp,57,0x0060D1B0,RadioButton,NO_COMPILE,self,,Dialog *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/radiobutton.cpp,58,0x0060D1B0,RadioButton,NO_COMPILE,self,,GraphicWin *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/radiobutton.cpp,80,0x0060D1B0,RadioButton,NO_COMPILE,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/radiobutton.cpp,82,0x0060D1B0,RadioButton,NO_COMPILE,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/radiobutton.cpp,113,0x0060D1B0,RadioButton,NO_COMPILE,this,0xd8,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/radiobutton.cpp,116,0x0060D1B0,RadioButton,NO_COMPILE,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/radiobutton.cpp,119,0x0060D1B0,RadioButton,NO_COMPILE,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
+src/jackal/radiobutton.cpp,122,0x0060D1B0,RadioButton,NO_COMPILE,this,-0x18,char *,receiver-is-subobject,,,,,1,proved,a negative offset in this body proves `this` is not the declared class
 src/reportif.cpp,261,,,,this,,uint8_t *,outside-any-catalogued-body,,,,,,derived,no `Original Offset:` precedes this line
 src/reportif.cpp,299,0x004A9020,ReportIf,MNEMONIC_ONLY,this,,uint8_t *,alias-binding,,,,,,proved,binds the alias later offsets are measured from; carries no displacement itself
 src/reportif.cpp,323,0x004A9020,ReportIf,MNEMONIC_ONLY,this,,SubInterface *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"

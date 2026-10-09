@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+// Generic Jackal control initialized by jackal_init_real.
 #include "dialog.h"
 #include "graphicwin.h"
 
@@ -61,15 +62,15 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   void draw_item(int position, int state, int);
 
  public:
-  // 0x0060FAB0, a pending_bodies forwarder.
+  // 0x0060FAB0: implemented in checkbox.cpp.
   void on_redraw();
 
  public:
-  // 0x0060FBB0, a pending_bodies forwarder.
+  // 0x0060FBB0: implemented in checkbox.cpp.
   void on_mouse_move(int a1, int a2);
 
  public:
-  // 0x0060F700, a pending_bodies forwarder.
+  // 0x0060F700: implemented in checkbox.cpp.
   void on_left_down(int a1, int a2);
 
  public:
@@ -81,7 +82,7 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   int on_key_down(int a) override;
 
  public:
-  // 0x0060E800, a pending_bodies forwarder.
+  // 0x0060E800: implemented in checkbox.cpp.
   int attach(GraphicWin * a1, int a2, int a3, int a4);
 
  public:
@@ -126,19 +127,17 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   // 0x0060EA10: find the item by id and toggle its bit in Dialog's shared
   // selected-position word.
   void flip_state_id(int id);
-  // 0x0060EC10, defined in src/checkbox.cpp beside set_state_id above - the
+  // 0x0060EC10, defined in src/jackal/checkbox.cpp beside set_state_id above - the
   // read-side twin: walks the same list for `id` and returns
   // `(1 << bit) & flags`, nonzero when the box with this id is checked.
   // `int`, not `bool`: DipEdit::read_check tests the result with
   // `test eax, eax`, which is the dword-wide form.
   int get_state_id(int id);
-  // 0x0060ED10 ?calculate_dimensions@CheckBox@@QAEHXZ, still FILE-only in
-  // src/unrecovered/0060ed10.cpp. DECLARATION ONLY, added because Dialogs
-  // ::calculate_dimensions (0x006132A0) tail-calls it for kind 1 - the access
-  // costs nothing and the definition stays where it is.
+  // 0x0060ED10: implemented in checkbox.cpp; Dialogs dimensions delegates
+  // to this control for kind 1.
   int calculate_dimensions();
-  // ?item@CheckBox@@QAEHPADHH@Z at 0x0060E980, still a pending_bodies
-  // forwarder. Adds `text` to the box's item list for `id` and sets or clears
+  // 0x0060E980: implemented in checkbox.cpp. Adds `text` to the item list
+  // for `id` and sets or clears
   // the box's own state bit from `state`. DipEdit::init calls it once per
   // treaty flag with the label string.
   int item(char *text, int id, int state);

@@ -178,7 +178,6 @@ set(OPENSMACX_SOURCES
     src/movie_decoder_frame.cpp
     src/movie_decoder_huffman.cpp
     src/movie_decoder_idct.cpp
-    src/checkbutton.cpp
     src/cursor.cpp
     src/imagebutton.cpp
     src/infowin.cpp
@@ -204,8 +203,6 @@ set(OPENSMACX_SOURCES
     src/popmenu.cpp
     src/popup.cpp
     src/netmsg.cpp
-    src/radiobutton.cpp
-    src/checkbox.cpp
     src/editbox.cpp
     src/editgroup.cpp
     src/xpops.cpp
@@ -317,7 +314,7 @@ endif()
 # not yet a recovered or accepted game. But the artifact is the program
 # being recovered rather than a probe, and its name should say so.
 # The confirmed Jackal lifecycle/version owner is a distinct library. Its
-# referenced entry points and generic Palette implementation are explicit
+# referenced entry points and generic palette/font/control owners are explicit
 # archive inputs; there is no synthetic retention anchor. Other drawing
 # subsystems remain direct application inputs until their membership is
 # established. This is not a claim of complete JACKAL.LIB recovery.

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+// Generic Jackal control initialized by jackal_init_real.
 
 #include "sprite.h"
 
@@ -38,15 +39,15 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   void draw_item(int position, int state);
 
  public:
-  // 0x0060E220, a pending_bodies forwarder.
+  // 0x0060E220: implemented in radiobutton.cpp.
   void on_redraw();
 
  public:
-  // 0x0060E320, a pending_bodies forwarder.
+  // 0x0060E320: implemented in radiobutton.cpp.
   void on_mouse_move(int a1, int a2);
 
  public:
-  // 0x0060DE10, a pending_bodies forwarder.
+  // 0x0060DE10: implemented in radiobutton.cpp.
   void on_left_down(int a1, int a2);
 
  public:
@@ -58,7 +59,7 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   int on_key_down(int a) override;
 
  public:
-  // 0x0060D1F0, a pending_bodies forwarder.
+  // 0x0060D1F0: complete attach behavior is owned in radiobutton.cpp.
   int attach(GraphicWin * a1, int a2, int a3, int a4);
 
  public:
@@ -68,10 +69,8 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   static int init_class();   // 0060E4D0
   void on_mouse_leave(int a1, int a2);
   void on_dialog_focus(int a1);
-  // 0x0060D380 ?calculate_dimensions@RadioButton@@QAEHXZ, still FILE-only in
-  // src/unrecovered/0060d380.cpp. DECLARATION ONLY, added because Dialogs
-  // ::calculate_dimensions (0x006132A0) tail-calls it for kind 0x10 - the
-  // access costs nothing and the definition stays where it is.
+  // 0x0060D380: complete dimensions behavior is owned in radiobutton.cpp;
+  // Dialogs::calculate_dimensions (0x006132A0) calls it for kind 0x10.
   int calculate_dimensions();
   // The catalogue's @H@Z at 0x0060D0E0 describes VC6's hidden most-derived
   // flag, not a source parameter. The emitted symbol is mapped in the TU.

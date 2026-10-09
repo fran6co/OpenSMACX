@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+// Generic Jackal control initialized by jackal_init_real.
 #include "graphicwin.h"
 
  /*

@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 // ORIGINAL: 0x004B3F20 ??_GCheckButton@@UAEPAXI@Z 0x004B3F20-0x004B3F41 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x004B3F20-0x004B3F41", "Pinned class constructor ??0CheckButton@@QAE@XZ at 0x00633750 stores original class/view table VA 0x66dc14 at 0x0063375A (mov dword ptr [esi], 0x66dc14); the current genuine owner vftable ??_7CheckButton@@6BWin@@@ selects generated ??_GCheckButton@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_ECheckButton@@UAEPAXI@Z (mode 2).", "Pinned ??_GCheckButton@@UAEPAXI@Z at 0x004B3F20 calls the source-mapped ??1CheckButton@@QAE@XZ at 0x004B3EC0, then tests byte ptr [ebp + 8], 1; je 0x4b3f3a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/checkbutton.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original CheckButton scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
+// RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x004B3F20-0x004B3F41", "Pinned class constructor ??0CheckButton@@QAE@XZ at 0x00633750 stores original class/view table VA 0x66dc14 at 0x0063375A (mov dword ptr [esi], 0x66dc14); the current genuine owner vftable ??_7CheckButton@@6BWin@@@ selects generated ??_GCheckButton@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_ECheckButton@@UAEPAXI@Z (mode 2).", "Pinned ??_GCheckButton@@UAEPAXI@Z at 0x004B3F20 calls the source-mapped ??1CheckButton@@QAE@XZ at 0x004B3EC0, then tests byte ptr [ebp + 8], 1; je 0x4b3f3a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/jackal/checkbutton.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original CheckButton scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GCheckButton@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
@@ -64,7 +64,7 @@ CheckButton::CheckButton() {
 Purpose: Reset CheckButton's toggle and callback state, restore its two
          borrowed default sprites, and close the GraphicWin base.
 // ORIGINAL: 0x006337A0 ?close@CheckButton@@QAEXXZ 0x006337A0-0x006337D6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/006337a0.cpp","source:src/checkbutton.cpp:CheckButton::CheckButton","source:src/checkbutton.h:CheckButton"],"reason":"Use the real CheckButton members and source-owned default sprite pointers instead of the seed's raw offsets and executable data addresses."}
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/006337a0.cpp","source:src/jackal/checkbutton.cpp:CheckButton::CheckButton","source:src/jackal/checkbutton.h:CheckButton"],"reason":"Use the real CheckButton members and source-owned default sprite pointers instead of the seed's raw offsets and executable data addresses."}
 */
 void CheckButton::close() {
     checked_ = 0;
@@ -80,7 +80,7 @@ void CheckButton::close() {
 Purpose: Tear down CheckButton and its GraphicWin base through ordinary C++
          destruction, preserving the compiler's exception-cleanup path.
 // ORIGINAL: 0x004B3EC0 ??1CheckButton@@QAE@XZ 0x004B3EC0-0x004B3F18;0x00659880-0x00659892 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/004b3ec0.cpp","original:0x004B3EC0-0x004B3F18","source:src/checkbutton.h:CheckButton"],"reason":"Let C++ emit the base teardown and exception cleanup instead of patching vtable addresses and manually invoking a base destructor."}
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/004b3ec0.cpp","original:0x004B3EC0-0x004B3F18","source:src/jackal/checkbutton.h:CheckButton"],"reason":"Let C++ emit the base teardown and exception cleanup instead of patching vtable addresses and manually invoking a base destructor."}
 // symbol    ??1CheckButton@@UAE@XZ
 */
 CheckButton::~CheckButton() {
@@ -91,7 +91,7 @@ CheckButton::~CheckButton() {
 Purpose: Copy the button's surface into its parent and draw the selected
          checked or unchecked sprite onto that surface.
 // ORIGINAL: 0x00633850 ?on_redraw@CheckButton@@QAEXXZ 0x00633850-0x00633912 FILE
-// RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/00633850.cpp","original:0x0066DC40","source:src/checkbutton.h:CheckButton","source:src/buffer.h:Buffer"],"reason":"Use the confirmed virtual override, inherited GraphicWin/Buffer hierarchy, typed parent and sprite members rather than seed vtable arithmetic."}
+// RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/00633850.cpp","original:0x0066DC40","source:src/jackal/checkbutton.h:CheckButton","source:src/buffer.h:Buffer"],"reason":"Use the confirmed virtual override, inherited GraphicWin/Buffer hierarchy, typed parent and sprite members rather than seed vtable arithmetic."}
 // symbol    ?on_redraw@CheckButton@@UAEXXZ
 */
 void CheckButton::on_redraw() {
@@ -117,7 +117,7 @@ void CheckButton::on_redraw() {
 Purpose: Invoke the registered double-click callback with the stored toggle
          argument; the click coordinates are not consumed by this handler.
 // ORIGINAL: 0x00633980 ?on_left_double_click@CheckButton@@QAEXHH@Z 0x00633980-0x00633997 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/00633980.cpp","original:0x0066DC84","source:src/checkbutton.h:CheckButton"],"reason":"Use the confirmed virtual override and typed callback/state members; the guarded recorder banks the freshly exact owner source before the duplicate seed is retired."}
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/00633980.cpp","original:0x0066DC84","source:src/jackal/checkbutton.h:CheckButton"],"reason":"Use the confirmed virtual override and typed callback/state members; the guarded recorder banks the freshly exact owner source before the duplicate seed is retired."}
 // symbol    ?on_left_double_click@CheckButton@@UAEXHH@Z
 */
 void CheckButton::on_left_double_click(int, int) {

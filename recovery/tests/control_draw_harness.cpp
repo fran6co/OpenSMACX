@@ -9,7 +9,10 @@ void equal(RECT a, int l, int t, int r, int b) {
     assert(a.left == l && a.top == t && a.right == r && a.bottom == b);
 }
 struct Payload { char *text; uint32_t field_8_; };
-struct Entry { Payload *payload; };
+struct Entry {
+    Payload *payload;
+    Payload *string_payload() { return payload; }
+};
 struct List {
     Entry *head_, *current_;
     int seeks[4], seek_count, advances;
@@ -25,6 +28,7 @@ struct List {
 struct Font { int descent_; };
 struct Buffer;
 struct Sprite;
+struct GraphicWin;
 static Buffer *expected_control, *expected_parent;
 static Sprite *expected_sprite;
 static List *active_list;
@@ -67,7 +71,7 @@ struct Buffer {
 };
 struct Win {
     Win *win_parent_;
-    virtual int vslot_11(int, int, int, int) { assert(false); return 0; }
+    virtual int vslot_11(GraphicWin *, int, int, RECT *) { assert(false); return 0; }
     int is_dialog_focus() { return focus; }
 };
 struct GraphicWin : Win, Buffer {};
@@ -82,10 +86,9 @@ static Dialog *active_dialog;
 static GraphicWin *active_window;
 static Entry *after_parent;
 struct Parent : GraphicWin {
-    virtual int vslot_11(int receiver, int id, int callback_state, int rectangle) {
-        assert(receiver == reinterpret_cast<int>(active_window) && id == 123);
+    virtual int vslot_11(GraphicWin *receiver, int id, int callback_state, RECT *area) {
+        assert(receiver == active_window && id == 123);
         assert(callback_state == (state ? 2 : current_row ? 1 : 0));
-        RECT *area = reinterpret_cast<RECT *>(rectangle);
         equal(*area, 11, 2, 51, 22);
         area->left = 101; area->top = 31; area->right = 181; area->bottom = 45;
         active_dialog->field_64_ = 67;

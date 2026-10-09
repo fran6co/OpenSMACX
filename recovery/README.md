@@ -63,13 +63,15 @@ changing build evidence; extra linker inputs such as zlib remain separately visi
 Passing this check still does not accept a changed build graph or prove retained
 sections and initialization behavior.
 
-The confirmed Jackal lifecycle/version implementation lives in `src/jackal/`,
+The confirmed Jackal lifecycle/version, palette, font and checkbox/radio controls live in `src/jackal/`,
 whose own `CMakeLists.txt` builds `src/jackal/jackal.lib`.
 Its explicit archive/member binding in `build.json` joins the fresh compiler
 receipt, unchanged physical archive contents and unique final linker member
 label. It does not prove retained sections or membership of other Jackal classes.
-`project.json` selects measurement flag-set index 0 for `src/jackal/jackal.cpp` only;
-other units retain both alternatives until their provenance is established.
+`project.json` selects measurement flag-set index 0 for the Jackal lifecycle,
+palette and font units, and index 1 for the application's interface palette/font
+units. The three moved controls retain both alternatives pending compiler
+provenance evidence; library placement alone does not select their trial flags.
 The generic package owns profile selection and mixed-profile graph verification;
 the compiler commands and this project-specific decision remain local.
 Native migration also enters paired application builds for ordinary tasks when
@@ -497,7 +499,7 @@ It uses the same compiler-observed member/type/base comparisons as task checks;
 one passing definition cannot hide another TU's contradiction. Missing compiler
 evidence remains unknown. Every expectation needs an observed definition in each
 flag set. Valid non-emission is reported, not proof of ABI independence. A scoped
-`--unit src/radiobutton.cpp` diagnostic leaves omitted product units unverified.
+`--unit src/jackal/radiobutton.cpp` diagnostic leaves omitted product units unverified.
 
 The native full gate invokes this serially after initial-data compilation.
 The old header-offset walk and its type-size table are removed.

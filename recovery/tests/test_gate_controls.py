@@ -146,10 +146,10 @@ CASES = (
     Case("compiler_work_ignores_block_comments", "audit:compiler-work", "pass",
          lambda e: e.append("src/jackal/palette.h", "\n/*\n g_00dead02 = (int *)0x00DEAD02;\n*/\n")),
     Case("bounded_pointer_initial_value", "initial-data", "fail",
-         lambda e: e.replace("src/radiobutton.cpp", "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;",
+         lambda e: e.replace("src/jackal/radiobutton.cpp", "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;",
                              "Sprite *RadioButtonDefault1 = 0;")),
     Case("bounded_pointer_target", "initial-data", "fail",
-         lambda e: e.replace("src/radiobutton.cpp", "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;",
+         lambda e: e.replace("src/jackal/radiobutton.cpp", "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;",
                              "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_2;")),
     Case("dropped_initial_value", "project:trailing-address-initial-values", "fail",
          lambda e: e.replace("src/sprite.cpp", "SpriteScaleNumerator = 1;", "SpriteScaleNumerator;")),
@@ -183,7 +183,7 @@ CASES = (
                              "RECOVERY_MEMBER: v1 SpriteList field_24_ 0x28 0x005EB29F"),
          layout_subject=("SpriteList", "field_24_")),
     Case("source_layout_expectation", "layout", "fail",
-         lambda e: e.replace("src/radiobutton.h",
+         lambda e: e.replace("src/jackal/radiobutton.h",
                             "RECOVERY_MEMBER: v3 RadioButton unchecked_sprite_ Sprite* 0x4 0x0060D750",
                             "RECOVERY_MEMBER: v3 RadioButton unchecked_sprite_ Sprite* 0x8 0x0060D750")),
     Case("annotation_identity", "source", "fail",
@@ -403,8 +403,8 @@ def test_damage_anchor_still_applies_and_restores_private_source(case, tmp_path)
     # Exercise every project anchor cheaply, without compiling or touching live
     # source. A legitimate rename/rehoming should update its dependent control
     # before an hours-long full-gate run discovers the stale anchor.
-    names = ["src/jackal/palette.cpp", "src/jackal/palette.h", "src/caviar.cpp", "src/radiobutton.cpp",
-             "src/radiobutton.h", "src/basewin.h", "src/spritebox.h", "src/sprite.cpp", "src/IMAGE_PIN", "README.md",
+    names = ["src/jackal/palette.cpp", "src/jackal/palette.h", "src/caviar.cpp", "src/jackal/radiobutton.cpp",
+             "src/jackal/radiobutton.h", "src/basewin.h", "src/spritebox.h", "src/sprite.cpp", "src/IMAGE_PIN", "README.md",
              "recovery/audits.json", "packages/match-recovery/src/match_recovery/source/writer.py"]
     original = {}
     for name in names:

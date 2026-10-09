@@ -15,7 +15,7 @@ import pytest
 from match_recovery.source import read_file
 
 ROOT = next(p for p in Path(__file__).resolve().parents
-            if (p / "src/radiobutton.cpp").is_file())
+            if (p / "src/jackal/radiobutton.cpp").is_file())
 COMPILERS = [p for p in (shutil.which("g++"), shutil.which("clang++")) if p]
 
 
@@ -145,8 +145,8 @@ def _run(tmp_path: Path, compiler: str, source: str) -> subprocess.CompletedProc
 def test_transported_lifecycle_identities_and_distinct_radio_deleting_entry():
     delete_cleanup = _record("src/net_class.cpp", 0x00402320)
     list_delete = _record("src/dialog.cpp", 0x00406670)
-    radio_body = _record("src/radiobutton.cpp", 0x00406A90)
-    radio_scalar = _record("src/radiobutton.cpp", 0x00406F60)
+    radio_body = _record("src/jackal/radiobutton.cpp", 0x00406A90)
+    radio_scalar = _record("src/jackal/radiobutton.cpp", 0x00406F60)
     assert delete_cleanup.byte_exact and delete_cleanup.symbol == "?cleanup_failed_net_construction@@YAXPAX@Z"
     assert list_delete.byte_exact and list_delete.symbol == "??_GStringList@@UAEPAXI@Z"
     assert radio_body.byte_exact and radio_body.symbol == "??1RadioButton@@UAE@XZ"
@@ -156,8 +156,8 @@ def test_transported_lifecycle_identities_and_distinct_radio_deleting_entry():
 def test_actual_cleanup_and_stringlist_destructor_bodies_reject_mutants(tmp_path: Path, compiler: str):
     cleanup = _body("src/net_class.cpp", "void cleanup_failed_net_construction(void *memory)")
     string_dtor = _body("src/stringlist.cpp", "StringList::~StringList()")
-    close = _body("src/radiobutton.cpp", "uint32_t RadioButton::close()")
-    radio_dtor = _body("src/radiobutton.cpp", "RadioButton::~RadioButton()")
+    close = _body("src/jackal/radiobutton.cpp", "uint32_t RadioButton::close()")
+    radio_dtor = _body("src/jackal/radiobutton.cpp", "RadioButton::~RadioButton()")
     good = _run(tmp_path / "good", compiler, _fixture(cleanup, string_dtor, close, radio_dtor))
     assert good.returncode == 0, good.stdout + good.stderr
 
@@ -178,11 +178,11 @@ def test_actual_cleanup_and_stringlist_destructor_bodies_reject_mutants(tmp_path
 
 
 def test_radio_destructor_is_out_of_line_but_not_a_second_scalar_deleting_body():
-    header = (ROOT / "src/radiobutton.h").read_text(encoding="utf-8")
-    cpp = (ROOT / "src/radiobutton.cpp").read_text(encoding="utf-8")
+    header = (ROOT / "src/jackal/radiobutton.h").read_text(encoding="utf-8")
+    cpp = (ROOT / "src/jackal/radiobutton.cpp").read_text(encoding="utf-8")
     assert "virtual ~RadioButton();" in header
     assert "RadioButton::~RadioButton()" in cpp
-    assert "??_GRadioButton@@UAEPAXI@Z" in _record("src/radiobutton.cpp", 0x00406F60).symbol
-    assert _record("src/radiobutton.cpp", 0x00406A90).symbol != _record("src/radiobutton.cpp", 0x00406F60).symbol
+    assert "??_GRadioButton@@UAEPAXI@Z" in _record("src/jackal/radiobutton.cpp", 0x00406F60).symbol
+    assert _record("src/jackal/radiobutton.cpp", 0x00406A90).symbol != _record("src/jackal/radiobutton.cpp", 0x00406F60).symbol
     # This is declaration evidence only, not a host layout or native ABI claim.
     assert "class RadioButton : public virtual GraphicWin, public virtual Dialog" in header

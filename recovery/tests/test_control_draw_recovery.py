@@ -10,8 +10,8 @@ import test_application_link_recovery as harness_support
 
 def test_live_control_draw_preserves_callback_mutation_and_geometry(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "control_draw_harness.cpp", [
-        ("// LIVE_CHECKBOX", "src/checkbox.cpp", 0x60F030),
-        ("// LIVE_RADIO", "src/radiobutton.cpp", 0x60D750)], declarations=[
+        ("// LIVE_CHECKBOX", "src/jackal/checkbox.cpp", 0x60F030),
+        ("// LIVE_RADIO", "src/jackal/radiobutton.cpp", 0x60D750)], declarations=[
         ("// LIVE_ACCESSOR", "src/stringstruct.h", "  char *current_text() {", "  // 0x006087A0")])
 
 

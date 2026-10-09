@@ -14,10 +14,10 @@ from test_mapwin_adjustor_owner_history_oct6 import MAPWIN_MIGRATED_ADDRESSES
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "ab27be18e1bcb016d2e2a675eb474da187081e93"
 SPECS = (
-    (0x00406FF0, "src/radiobutton.cpp", "?on_redraw@RadioButton@@$4PPPPPPPM@A@AEXXZ"),
-    (0x00407000, "src/radiobutton.cpp", "?on_mouse_move@RadioButton@@$4PPPPPPPM@A@AEXHH@Z"),
-    (0x00407020, "src/radiobutton.cpp", "?on_left_down@RadioButton@@$4PPPPPPPM@A@AEXHH@Z"),
-    (0x00407040, "src/radiobutton.cpp", "?on_left_double_click@RadioButton@@$4PPPPPPPM@A@AEXHH@Z"),
+    (0x00406FF0, "src/jackal/radiobutton.cpp", "?on_redraw@RadioButton@@$4PPPPPPPM@A@AEXXZ"),
+    (0x00407000, "src/jackal/radiobutton.cpp", "?on_mouse_move@RadioButton@@$4PPPPPPPM@A@AEXHH@Z"),
+    (0x00407020, "src/jackal/radiobutton.cpp", "?on_left_down@RadioButton@@$4PPPPPPPM@A@AEXHH@Z"),
+    (0x00407040, "src/jackal/radiobutton.cpp", "?on_left_double_click@RadioButton@@$4PPPPPPPM@A@AEXHH@Z"),
     (0x00407170, "src/dialogs.cpp", "?on_redraw@Dialogs@@$4PPPPPPPM@A@AEXXZ"),
     (0x00407190, "src/dialogs.cpp", "?on_mouse_move@Dialogs@@$4PPPPPPPM@A@AEXHH@Z"),
     (0x004071A0, "src/dialogs.cpp", "?on_mouse_leave@Dialogs@@$4PPPPPPPM@A@AEXHH@Z"),
@@ -78,13 +78,13 @@ def current_source_records():
     return result
 
 
-@pytest.mark.parametrize("path", ("src/dialogs.cpp", "src/radiobutton.cpp"))
+@pytest.mark.parametrize("path", ("src/dialogs.cpp", "src/jackal/radiobutton.cpp"))
 def test_unmigrated_bodies_keep_actual_dialogs_and_radio_extraction(path):
     # Check this lifecycle migration against its fixed pre-change checkpoint.
     # BASE remains the original seed-identity reference in the other controls;
     # intervening reviewed migrations legitimately changed symbols/extraction.
     raw = subprocess.check_output([
-        "git", "show", "55195bdb7:" + path], cwd=ROOT).decode()
+        "git", "show", "55195bdb7:" + path.replace("src/jackal/", "src/")], cwd=ROOT).decode()
     old = {row.address: row for row in read_text(raw, ROOT / path)}
     moved = ({address for address, _, _ in SPECS} | MAPWIN_MIGRATED_ADDRESSES
              | FOLLOW_ON_MIGRATED_ADDRESSES

@@ -143,8 +143,8 @@ def production_parts():
             (ROOT / f"src/{file_name}").read_text(encoding="utf-8"), name
         )
         for name, file_name in (
-            ("ListBox", "listbox.h"), ("RadioButton", "radiobutton.h"),
-            ("CheckBox", "checkbox.h"), ("SpriteBox", "spritebox.h"),
+            ("ListBox", "listbox.h"), ("RadioButton", "jackal/radiobutton.h"),
+            ("CheckBox", "jackal/checkbox.h"), ("SpriteBox", "spritebox.h"),
             ("EditGroup", "editgroup.h"), ("Dialogs", "dialogs.h"),
         )
     }

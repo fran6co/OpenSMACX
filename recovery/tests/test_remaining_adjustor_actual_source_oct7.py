@@ -75,16 +75,16 @@ def assert_archived_history(path: Path, address: int):
 
 def test_all_twelve_full_seed_comment_envelopes_are_archived_in_owners():
     for address, owner, *_ in EXPECTED:
-        assert_archived_history(ROOT / f"src/{owner}.cpp", address)
+        assert_archived_history(ROOT / f"src/{'jackal/' if owner == 'radiobutton' else ''}{owner}.cpp", address)
     for address, owner, *_ in DELETING:
-        assert_archived_history(ROOT / f"src/{owner}.cpp", address)
+        assert_archived_history(ROOT / f"src/{'jackal/' if owner == 'radiobutton' else ''}{owner}.cpp", address)
 
 
 def test_each_adjustor_identity_has_one_real_class_owner_and_original_member():
     assert not (ROOT / "src/adjustor_thunks.cpp").exists()
     assert not (ROOT / "src/adjustor_thunks.h").exists()
     for address, owner, target, _method in EXPECTED:
-        owner_path = ROOT / f"src/{owner}.cpp"
+        owner_path = ROOT / f"src/{'jackal/' if owner == 'radiobutton' else ''}{owner}.cpp"
         owner_record = find_record(owner_path, address)
         assert len(owner_record) == 1, f"{address:08X} must have one owner mapping"
         assert owner_record[0].mode is Mode.FILE
@@ -96,7 +96,7 @@ def test_each_adjustor_identity_has_one_real_class_owner_and_original_member():
 
 
 def test_radio_and_dialogs_express_the_real_virtual_owner_contracts():
-    radio = (ROOT / "src/radiobutton.h").read_text()
+    radio = (ROOT / "src/jackal/radiobutton.h").read_text()
     dialogs = (ROOT / "src/dialogs.h").read_text()
     win = (ROOT / "src/win.h").read_text()
     assert re.search(r"class\s+RadioButton\s*:\s*public\s+virtual\s+GraphicWin\s*,\s*public\s+virtual\s+Dialog", radio)
@@ -120,7 +120,7 @@ def test_scalar_deleting_adjustors_stay_with_real_destructor_owners():
     assert not (ROOT / "src/adjustor_thunks.cpp").exists()
     assert not (ROOT / "src/adjustor_thunks.h").exists()
     for address, owner, primary, _helper in DELETING:
-        owner_path = ROOT / f"src/{owner}.cpp"
+        owner_path = ROOT / f"src/{'jackal/' if owner == 'radiobutton' else ''}{owner}.cpp"
         owner_record = find_record(owner_path, address)
         assert len(owner_record) == 1, f"{address:08X} must have one owner mapping"
         assert owner_record[0].mode is Mode.FILE

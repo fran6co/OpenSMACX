@@ -16,7 +16,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = next(parent for parent in HERE.parents
             if (parent / "src/game.cpp").is_file())
 FIXTURE = (HERE / "control_lifetime_control.cpp").read_text()
-for owner, header in (("ListBox", "listbox"), ("CheckBox", "checkbox"),
+for owner, header in (("ListBox", "listbox"), ("CheckBox", "jackal/checkbox"),
                       ("EditGroup", "editgroup")):
     declaration = re.search(r"class\s+" + owner + r"\s*:[^{]+\{",
                             (ROOT / ("src/" + header + ".h")).read_text())
@@ -36,7 +36,7 @@ def actual_bodies():
             (ROOT / "src/listbox.cpp").read_text(),
             r"ListBox\s*::~\s*ListBox\s*\(\s*\)"),
         "checkbox": LEXER.definition(
-            (ROOT / "src/checkbox.cpp").read_text(),
+            (ROOT / "src/jackal/checkbox.cpp").read_text(),
             r"CheckBox\s*::~\s*CheckBox\s*\(\s*\)"),
         "editgroup": LEXER.definition(
             (ROOT / "src/editgroup.cpp").read_text(),

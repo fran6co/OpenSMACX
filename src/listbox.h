@@ -65,7 +65,7 @@
   * such dword and no override, which is why they convert today. Do not read
   * this as "cannot be done". Note that radiobutton.h, checkbox.h and
   * editgroup.h still carry a copy of the withdrawn paragraph.
-  * This mirrors CheckBox (src/checkbox.h), whose
+  * This mirrors CheckBox (src/jackal/checkbox.h), whose
   * vbtable {0,0x1C,0xA34} has the identical shape. close()/destroy() resolve
   * both base subobjects through the runtime vbtable, never through these
   * compile-time offsets, so an embedded ListBox with a different vbtable still
@@ -337,7 +337,7 @@ static_assert(sizeof(ListBox) == 0xB54,
               "ListBox layout must match the legacy ABI");
 // offsetof asserts are omitted deliberately: GraphicWin privately derives Win,
 // so ListBox is not standard-layout and offsetof would warn. CheckBox
-// (src/checkbox.h) makes the same choice; member ordering plus the two-vbtable
+// (src/jackal/checkbox.h) makes the same choice; member ordering plus the two-vbtable
 // test pin the offsets instead.
 
 extern uint32_t ListBoxCloseDynamicDefault;            // 0x009B8EE0

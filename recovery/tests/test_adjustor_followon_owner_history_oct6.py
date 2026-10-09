@@ -20,7 +20,7 @@ SPECS = (
     (0x0051DF40, "src/console.cpp", "?on_nc_hittest@Console@@$4PPPPPPPM@A@AEHHH@Z", 75),
     (0x0060CF60, "src/listbox.cpp", "?on_mousewheel@ListBox@@$4PPPPPPPM@A@AEXH@Z", 15),
     (0x0060CFB0, "src/listbox.cpp", "?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z", 26),
-    (0x0060FE80, "src/checkbox.cpp", "?on_key_down@CheckBox@@$4PPPPPPPM@A@AEHH@Z", 26),
+    (0x0060FE80, "src/jackal/checkbox.cpp", "?on_key_down@CheckBox@@$4PPPPPPPM@A@AEHH@Z", 26),
     (0x00611850, "src/spritebox.cpp", "?on_left_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z", 19),
     (0x00611880, "src/spritebox.cpp", "?on_right_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z", 22),
     (0x006118B0, "src/spritebox.cpp", "?on_key_down@SpriteBox@@$4PPPPPPPM@A@AEHH@Z", 26),
