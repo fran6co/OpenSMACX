@@ -685,21 +685,6 @@ namespace {
 // The published unit draw-state block: the words the surface sprite's
 // draw_dest_unk1 readers consume, 0x009B3A54..0x009B3A78.
 
-// VC6 rejects a free __thiscall function pointer (C4234), so every indirect
-// virtual dispatch below goes through a member-fn-pointer union: the union's
-// `raw` word is the vtable slot, and only DECLARATION ORDER decides which
-// slot that is. The same pattern dialogs.cpp, checkbox.cpp and editgroup.cpp
-// already carry.
-class NullSlotObj { public: void slot(); };
-union NullSlotShim {
-    void (NullSlotObj::*fn)();
-    void *raw;
-};
-class ReturnSlotObj { public: int slot(); };
-union ReturnSlotShim {
-    int (ReturnSlotObj::*fn)();
-    void *raw;
-};
 }
 
 // ---------------------------------------------------------------------------
@@ -887,61 +872,11 @@ extern "C" void __cdecl tech_wizard_unk1(Popup *first_popup,
     second_popup->exec(0, 0);
 }
 
-// ---------------------------------------------------------------------------
-// sub_447d20, 0x00447D20. The settings-list checkbox cascade: whichever of
-// the first two slots is off gets the next increment of the shared 0x12C
-// delay value and repaints; the second slot also repaints on its own path.
-// The receiver is an unnamed list object whose slots 67/69/70 do the work;
-// they run through member-fn-pointer unions at their measured indices.
-/*
-Purpose: Advance the shared delay value across the settings list's first two
-         entries, repainting whichever entry turned off.
-// ORIGINAL: 0x00447D20 sub_447d20 0x00447D20-0x00447DA5 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original447D20..447DA5; retired seed git:117282ee:src/unrecovered/00447d20.cpp records the same identity and spans.", "The shared delay counter is 0x00683C2C, stepped by 0x12C and floored at -0x4B0 exactly as the seed walks it; the receiver's slots 67/69/70 are dispatched at their measured indices through member-fn-pointer unions because the object's class is unnamed in the catalogue."], "reason": "Coverage transcription of the settings cascade with the delay counter bound and the receiver's slots dispatched at their measured indices."}
-Status: Coverage transcription - unclaimed body
-*/
-namespace {
-static int *const CascadeDelaySlot = (int *)0x00683C2C;
-
-class IntSlotObj { public: int slot(int); };
-union IntSlotShim {
-    int (IntSlotObj::*fn)(int);
-    void *raw;
-};
-class IntIntSlotObj { public: void slot(int, int); };
-union IntIntSlotShim {
-    void (IntIntSlotObj::*fn)(int, int);
-    void *raw;
-};
-}
-
-extern "C" void __fastcall sub_447d20(void *self_raw, void *) {
-    char *const self = reinterpret_cast<char *>(self_raw);
-    void **const vtable = *reinterpret_cast<void ***>(self);
-    IntSlotShim state;
-    state.raw = reinterpret_cast<void *>(vtable[70]);
-    IntIntSlotShim store;
-    store.raw = reinterpret_cast<void *>(vtable[69]);
-    NullSlotShim repaint;
-    repaint.raw = reinterpret_cast<void *>(vtable[67]);
-    IntSlotObj *const receiver = reinterpret_cast<IntSlotObj *>(self);
-    if ((receiver->*state.fn)(1) == 0) {
-        if ((receiver->*state.fn)(2) == 0) {
-            if (*CascadeDelaySlot == 0) {
-                *CascadeDelaySlot = -0x4B0;
-            }
-            *CascadeDelaySlot = *CascadeDelaySlot + 0x12C;
-            (reinterpret_cast<IntIntSlotObj *>(self)->*store.fn)(
-                1, *CascadeDelaySlot);
-            (reinterpret_cast<NullSlotObj *>(self)->*repaint.fn)();
-            return;
-        }
-    }
-    if ((receiver->*state.fn)(2) == 0) {
-        (reinterpret_cast<IntIntSlotObj *>(self)->*store.fn)(2, *CascadeDelaySlot);
-        (reinterpret_cast<NullSlotObj *>(self)->*repaint.fn)();
-    }
-}
+// The old 447D20 binding in this file was a settings-checkbox/repaint seed
+// hypothesis. The pinned body instead calls Midi's trackset status,
+// transpose and play operations; the original identity now lives with Midi.
+// Superseded RECOVERY_BINDING history retained verbatim:
+// {"evidence": ["Original447D20..447DA5; retired seed git:117282ee:src/unrecovered/00447d20.cpp records the same identity and spans.", "The shared delay counter is 0x00683C2C, stepped by 0x12C and floored at -0x4B0 exactly as the seed walks it; the receiver's slots 67/69/70 are dispatched at their measured indices through member-fn-pointer unions because the object's class is unnamed in the catalogue."], "reason": "Coverage transcription of the settings cascade with the delay counter bound and the receiver's slots dispatched at their measured indices."}
 
 
 // ---------------------------------------------------------------------------

@@ -1243,3 +1243,29 @@ Midi::~Midi() {
     }
     device_ = nullptr;
 }
+
+// The pinned cascade is a Midi trackset operation. 0x00683C2C's image
+// initializer is -0x4B0; no wider allocation/lifetime is claimed here.
+// RECOVERY_OBJECT: v1 0x00683C2C ?MidiTracksetTransposition@@3HA
+int MidiTracksetTransposition = -0x4B0;
+
+// ORIGINAL: 0x00447D20 sub_447d20 0x00447D20-0x00447DA5 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00447D20..0x00447DA5: virtual calls at offsets 0x118, 0x114 and 0x10C have the argument/return behavior restored by Midi::is_trackset_playing, Midi::xpose_trackset and Midi::play_trackset.", "Pinned original initializes 0x00683C2C to signed -0x4B0; only this function has an observed source writer/use. Source owns a signed int initialized to that value; full original allocation and indirect writers remain unknown.", "Historical settings-checkbox/repaint interpretation is retained as superseded binding history in stringstruct.cpp, not as current behavior."], "reason": "Recover the pinned trackset cascade through the existing Midi status, transpose and play virtual methods. The dynamic subclass, original helper/member distinction, call lifecycle and full allocation of the shared transposition cell remain unproven."}
+// symbol    ?advance_midi_trackset_transposition@@YIXPAVMidi@@@Z
+void __fastcall advance_midi_trackset_transposition(Midi *midi) {
+    if (!midi->is_trackset_playing(1)) {
+        if (!midi->is_trackset_playing(2)) {
+            if (MidiTracksetTransposition == 0) {
+                MidiTracksetTransposition = -0x4B0;
+            }
+            MidiTracksetTransposition = MidiTracksetTransposition + 0x12C;
+            midi->xpose_trackset(1, MidiTracksetTransposition);
+            midi->play_trackset(1);
+            return;
+        }
+    }
+    if (!midi->is_trackset_playing(2)) {
+        midi->xpose_trackset(2, MidiTracksetTransposition);
+        midi->play_trackset(2);
+    }
+}

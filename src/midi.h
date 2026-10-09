@@ -59,6 +59,7 @@ struct TrackSet;
 struct ChannelCtrl;
 struct ProgramCtrl;
 struct TrackCtrl;
+extern int MidiTracksetTransposition;
 
 class MidiDelegate {
  public:
@@ -204,3 +205,8 @@ class Midi : public Sound {
  protected:
   uint8_t field_54_; // Original clears exactly one byte, leaving55..57 alone.
 };
+
+// Start the next available trackset through Midi's real trackset
+// interface. The original identity's dynamic receiver type and lifecycle
+// are not yet bound more narrowly than this Midi-compatible interface.
+void __fastcall advance_midi_trackset_transposition(Midi *midi);
