@@ -3465,6 +3465,7 @@ void __cdecl climactic_changes() {
 }
 
 // ORIGINAL: 0x0052A980 sub_52a980 0x0052A980-0x0052A9A5 FILE
+// symbol    ?sub_52a980@@YAHXZ
 // size      37 bytes
 // prototype
 // callers   0   call targets   0
@@ -3473,6 +3474,9 @@ void __cdecl climactic_changes() {
 // calls     (none)
 // PRESERVED UNIT - measured MISMATCH.
 //
+// The following PRESERVED UNIT / GENERATED SKELETON prose records an earlier
+// address-bound verification artifact, not current product-source placement.
+// Keep its historical compiler and measurement findings intact.
 // Kept for COVERAGE. This directory IS on the ratchet: every file here
 // carries an ORIGINAL marker, `decomp_status.py` compiles and measures
 // it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
@@ -3525,19 +3529,26 @@ void __cdecl climactic_changes() {
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
 
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const VehPrototypeFlagsBase = (int *)0x009AB898;
-static int *const VehPrototypeFlagsEnd = (int *)0x009B2098;
-
+// Historical candidate note: the const-pointer spelling reproduced the old
+// fixed-address encoding; it is not the current typed-object implementation.
 int __cdecl sub_52a980() {
-    int address = reinterpret_cast<int>(VehPrototypeFlagsBase);
-    int8_t all = -1;
-    do {
-        *reinterpret_cast<uint32_t *>(address) &= 0xfffffffe;
-        *reinterpret_cast<int8_t *>(address - 2) = all;
-        address += 0x34;
-    } while (address < reinterpret_cast<int>(VehPrototypeFlagsEnd));
+    // The original DWORD read/modify/write at prototype +0x30 spans flags
+    // and the adjacent preq_tech word. Keep that full object-representation
+    // window; a flags-only store would narrow the original access.
+    for (int prototype_id = 0; prototype_id < MaxVehProtoNum; ++prototype_id) {
+        VehPrototype &prototype = VehPrototypes[prototype_id];
+        uint32_t flags_and_preq_tech;
+        unsigned char *const prototype_bytes =
+            reinterpret_cast<unsigned char *>(&prototype);
+        memcpy(&flags_and_preq_tech,
+               prototype_bytes + offsetof(VehPrototype, flags),
+               sizeof(flags_and_preq_tech));
+        flags_and_preq_tech &= ~uint32_t(1);
+        memcpy(prototype_bytes + offsetof(VehPrototype, flags),
+               &flags_and_preq_tech,
+               sizeof(flags_and_preq_tech));
+        prototype.icon_offset = -1;
+    }
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     return 0;
@@ -3607,7 +3618,6 @@ int __cdecl sub_52a980() {
 
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-
 int __cdecl sub_52db70() {
     // NEAR MISS, recorded so the next agent does not repeat the search.
     // MISMATCH: #14 original 'ret' vs rebuilt 'mov' (44 vs 45 bytes,
@@ -3842,6 +3852,7 @@ int Demo::init() {
 
 
 // ORIGINAL: 0x0058F4F0 sub_58f4f0 0x0058F4F0-0x0058F609 FILE BYTE_EXACT
+// symbol    _sub_58f4f0
 // LEVER: string-routines-are-calls the body was already right; the scaffold was compiling a string routine the image CALLS into an `/Oi` inline expansion. What was written down here as a tried source form - "VC6 lowers `local_104[0]=0;` as `and byte ptr [buf],0` rather than `mov`, and each branch shares one `lea` instead of recomputing it, both compiler instruction-selection choices at /O1 that plain restatement did not move" - was that expansion changing the register pressure around them. The if/else-if chain matching Ghidra's structure is the right shape and always was.
 // working copy - scaffold materialised by --work
 // size      281 bytes
@@ -3851,16 +3862,27 @@ int Demo::init() {
 // flags     frame;sp_ready;purged_ok
 // calls     0x00625880 0x00645470
 
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const SayTokOpen = (int *)0x0068FA70;
-static int *const SayTokMale = (int *)0x0068FA74;
-static int *const SayTokFemale = (int *)0x0068FA78;
-static int *const SayTokNeutral = (int *)0x0068FA7C;
-static int *const SayTokOne = (int *)0x0068FA80;
-static int *const SayTokTwo = (int *)0x0068FA84;
-static int *const SayTokSep = (int *)0x0068FA88;
-static int *const SayTokClose = (int *)0x0068FA8C;
+// Historical candidate note: the const-pointer spelling reproduced the old
+// fixed-address encoding; it is not the current source-owned token storage.
+// The original reads these eight short markup strings from 0x0068FA70..8C.
+// Keep source-owned semantic constants, not aliases to executable storage.
+// The complete original allocation/pooling extent is unknown.
+// RECOVERY_OBJECT: v1 0x0068FA70 _SayTokOpen
+static const char SayTokOpen[] = "$<";
+// RECOVERY_OBJECT: v1 0x0068FA74 _SayTokMale
+static const char SayTokMale[] = "M";
+// RECOVERY_OBJECT: v1 0x0068FA78 _SayTokFemale
+static const char SayTokFemale[] = "F";
+// RECOVERY_OBJECT: v1 0x0068FA7C _SayTokNeutral
+static const char SayTokNeutral[] = "N";
+// RECOVERY_OBJECT: v1 0x0068FA80 _SayTokOne
+static const char SayTokOne[] = "1";
+// RECOVERY_OBJECT: v1 0x0068FA84 _SayTokTwo
+static const char SayTokTwo[] = "2";
+// RECOVERY_OBJECT: v1 0x0068FA88 _SayTokSep
+static const char SayTokSep[] = ":";
+// RECOVERY_OBJECT: v1 0x0068FA8C _SayTokClose
+static const char SayTokClose[] = ">";
 
 extern "C" char * __cdecl sub_58f4f0(char *a1, int a2, int a3, int a4) {
     char local_204[256];
@@ -3873,22 +3895,22 @@ extern "C" char * __cdecl sub_58f4f0(char *a1, int a2, int a3, int a4) {
         a4 = GenderDefault;
     }
     local_104[0] = 0;
-    strcat(local_104, (char *)SayTokOpen);
+    strcat(local_104, SayTokOpen);
     if (a4 == 0) {
-        strcat(local_104, (char *)SayTokMale);
+        strcat(local_104, SayTokMale);
     } else if (a4 == 1) {
-        strcat(local_104, (char *)SayTokFemale);
+        strcat(local_104, SayTokFemale);
     } else if (a4 == 2) {
-        strcat(local_104, (char *)SayTokNeutral);
+        strcat(local_104, SayTokNeutral);
     }
     if (a3 == 0) {
-        strcat(local_104, (char *)SayTokOne);
+        strcat(local_104, SayTokOne);
     } else if (a3 == 1) {
-        strcat(local_104, (char *)SayTokTwo);
+        strcat(local_104, SayTokTwo);
     }
-    strcat(local_104, (char *)SayTokSep);
+    strcat(local_104, SayTokSep);
     strcat(local_104, Players[a2].adj_name_faction);
-    strcat(local_104, (char *)SayTokClose);
+    strcat(local_104, SayTokClose);
     parse_string(local_104, local_204);
     return strcat(a1, local_204);
 }
@@ -3903,6 +3925,9 @@ extern "C" char * __cdecl sub_58f4f0(char *a1, int a2, int a3, int a4) {
 // calls     0x00625880 0x00645470
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
+// The following PRESERVED UNIT / GENERATED SKELETON prose records an earlier
+// address-bound verification artifact, not current product-source placement.
+// Keep its historical compiler and measurement findings intact.
 // Kept for COVERAGE. This directory IS on the ratchet: every file here
 // carries an ORIGINAL marker, `decomp_status.py` compiles and measures
 // it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
@@ -3933,20 +3958,30 @@ extern "C" char * __cdecl sub_58f4f0(char *a1, int a2, int a3, int a4) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const SayFacTokOpen = (int *)0x0068FAB0;
-static int *const SayFacTokMale = (int *)0x0068FAB4;
-static int *const SayFacTokFemale = (int *)0x0068FAB8;
-static int *const SayFacTokNeutral = (int *)0x0068FABC;
-static int *const SayFacTokOne = (int *)0x0068FAC0;
-static int *const SayFacTokTwo = (int *)0x0068FAC4;
-static int *const SayFacTokSep = (int *)0x0068FAC8;
-static int *const SayFacTokClose = (int *)0x0068FACC;
+// Historical candidate note: the const-pointer spelling reproduced the old
+// fixed-address encoding; it is not the current source-owned token storage.
+// This is a distinct original token set at 0x0068FAB0..CC. Its bytes match
+// SayTok's strings, but no shared original allocation/pooling is established.
+// RECOVERY_OBJECT: v1 0x0068FAB0 _SayFacTokOpen
+static const char SayFacTokOpen[] = "$<";
+// RECOVERY_OBJECT: v1 0x0068FAB4 _SayFacTokMale
+static const char SayFacTokMale[] = "M";
+// RECOVERY_OBJECT: v1 0x0068FAB8 _SayFacTokFemale
+static const char SayFacTokFemale[] = "F";
+// RECOVERY_OBJECT: v1 0x0068FABC _SayFacTokNeutral
+static const char SayFacTokNeutral[] = "N";
+// RECOVERY_OBJECT: v1 0x0068FAC0 _SayFacTokOne
+static const char SayFacTokOne[] = "1";
+// RECOVERY_OBJECT: v1 0x0068FAC4 _SayFacTokTwo
+static const char SayFacTokTwo[] = "2";
+// RECOVERY_OBJECT: v1 0x0068FAC8 _SayFacTokSep
+static const char SayFacTokSep[] = ":";
+// RECOVERY_OBJECT: v1 0x0068FACC _SayFacTokClose
+static const char SayFacTokClose[] = ">";
 
-// Indexed table bases: the address itself is added to a computed index, so
-// the const-pointer spelling (which /O2 folds into a literal and loses the
-// add) is wrong here - see "the lever that keeps working" above.
+// Historical source-form finding for the former indexed fixed-address table
+// bases: see "the lever that keeps working" above; current token constants are
+// distinct source-owned strings, not indexed table views.
 
 void __cdecl say_fac_special(char *a1, char *a2, int a3) {
     char buf1[256];
@@ -3956,25 +3991,25 @@ void __cdecl say_fac_special(char *a1, char *a2, int a3) {
     int table_a = Players[a3].noun_gender;
 
     buf1[0] = 0;
-    strcat(buf1, reinterpret_cast<char *>(SayFacTokOpen));
+    strcat(buf1, SayFacTokOpen);
 
     if (table_a == 0) {
-        strcat(buf1, reinterpret_cast<char *>(SayFacTokMale));
+        strcat(buf1, SayFacTokMale);
     } else if (table_a == 1) {
-        strcat(buf1, reinterpret_cast<char *>(SayFacTokFemale));
+        strcat(buf1, SayFacTokFemale);
     } else if (table_a == 2) {
-        strcat(buf1, reinterpret_cast<char *>(SayFacTokNeutral));
+        strcat(buf1, SayFacTokNeutral);
     }
 
     if (table_b == 0) {
-        strcat(buf1, reinterpret_cast<char *>(SayFacTokOne));
+        strcat(buf1, SayFacTokOne);
     } else if (table_b == 1) {
-        strcat(buf1, reinterpret_cast<char *>(SayFacTokTwo));
+        strcat(buf1, SayFacTokTwo);
     }
 
-    strcat(buf1, reinterpret_cast<char *>(SayFacTokSep));
+    strcat(buf1, SayFacTokSep);
     strcat(buf1, a2);
-    strcat(buf1, reinterpret_cast<char *>(SayFacTokClose));
+    strcat(buf1, SayFacTokClose);
 
     parse_string(buf1, buf2);
     strcat(a1, buf2);
@@ -3990,23 +4025,24 @@ void __cdecl say_fac_special(char *a1, char *a2, int a3) {
 // calls     (none)
 // 0x0052DB40  sub_52db40  ->  _sub_52db40
 //
+// The following notes describe the earlier verification artifact, when this
+// identity had no product owner; current source uses NetDaemon's save view.
+// Preserve the original measurement/history details below as such.
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 
 
-static int *const AlphaNetProcessSlotPattern = (int *)0x0093E99E;
-
 void sub_52db40() {
-    char *record = reinterpret_cast<char *>(AlphaNetProcessSlotPattern) - 2;
-    for (int i = 8; i != 0; --i) {
-        record[0] = -1;
-        record[1] = 0;
-        record[2] = 0;
-        record[3] = -1;
-        record[4] = 2;
-        record += 0x19c;
+    for (int slot = 0; slot < 8; ++slot) {
+        NetDaemonSaveProcessSlot &record =
+            NetDaemonNet.save_storage_.process_slots_[slot];
+        record.identity_ = -1;
+        record.field_25_ = 0;
+        record.field_26_ = 0;
+        record.field_27_ = -1;
+        record.status_bytes_[0] = 2;
     }
 }
 
