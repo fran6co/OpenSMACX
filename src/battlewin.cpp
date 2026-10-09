@@ -43,10 +43,6 @@ void BattleWin::clear() {
 void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 
-// InterfaceScreenRect is the RECT at MainInterface+0xD90 that BaseWin::init
-// insets into its own rects. Its private owner member is not exposed yet.
-static RECT *const InterfaceScreenRect = (RECT *)0x007AF5B0;
-
 /*
 Purpose: The interface-mode entry point: put the battle up, or take it down.
 // ORIGINAL: 0x00422CC0 ?on_status@BattleWin@@QAEXH@Z 0x00422CC0-0x00422DB9 BYTE_EXACT
@@ -100,7 +96,7 @@ void BattleWin::on_status(int mode) {
     Buffer &interface_buffer = static_cast<Buffer &>(MainInterfaceGlobal);
     if (mode != 0) {
         interface_buffer.set_clip(
-            0, 0, InterfaceScreenRect->left,
+            0, 0, MainInterfaceGlobal.right_frame_rect().left,
             -interface_buffer.dib_.bmiHeader.biHeight);
         MainInterfaceGlobal.restore_back(0);
         MainInterfaceGlobal.flat_button_[3].show(0);

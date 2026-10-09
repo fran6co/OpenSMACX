@@ -646,11 +646,8 @@ extern Wave g_MENU_UP_WAVE;
 // ---- editor-panel bindings (the per-file convention basewin.cpp and
 // socialwin.cpp use; each folds to a bare immediate) ------------------------
 
-static int *const InterfaceBuffer = (int *)0x007AEC64;   // the shared
-    // full-screen drawing Buffer - the same binding battlewin.cpp,
-    // basewin.cpp, maininterface.cpp, reportif.cpp and socialwin.cpp carry.
-static int *const InterfaceClipRect = (int *)0x007AEC94; // InterfaceBuffer+0x30,
-    // the RECT every one of those bodies hands to Buffer::set_clip.
+// The shared canvas is MainInterfaceGlobal's GraphicWin Buffer subobject;
+// restore_clip() uses that Buffer's own rect2_, not MainInterface's panel rect2_.
 // draw_flash picks its small font size off WinScreenWidth (win.h, 0x320 on
 // the shipped UI).
 static unsigned char *const InterfaceFlagTail = (unsigned char *)0x009A64C1;
@@ -4053,8 +4050,8 @@ void DesignWin::select_reactor() {
 void DesignWin::draw_stack() {
     Font font;
     RECT area = field_B0C_rect_;
-    Buffer *canvas = reinterpret_cast<Buffer *>(InterfaceBuffer);
-    canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
+    canvas->restore_clip();
     canvas->tile(*StackTileBufferSlot, area.left, area.top, area.left, area.top,
                  area.right - area.left, area.bottom - area.top);
     canvas->box_sprite(&area, &InterfaceBoxStyles[3]);
@@ -4186,7 +4183,7 @@ void DesignWin::draw_stack() {
             label_rect.bottom = label_rect.top + font.line_advance();
             canvas->set_clip(&label_rect);
             canvas->write_l(StringTemp, &label_rect, strlen(StringTemp));
-            canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+            canvas->restore_clip();
 
             RECT stats_rect = rc;
             stats_rect.top = rc.bottom - font.line_advance();
@@ -4231,12 +4228,12 @@ void DesignWin::draw_stack() {
             rc.bottom += 2;
             rc.left += spacer;
             rc.right += spacer + 4;
-            canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+            canvas->restore_clip();
         }
     }
 
     MainInterfaceGlobal.soft_update(&area);
-    canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    canvas->restore_clip();
 }
 
 
@@ -4491,7 +4488,7 @@ void DesignWin::draw_flash() {
     VehPrototypes[0x3f].ability_flags = static_cast<uint32_t>(protoAbilityFlags_);
     VehPrototypes[0x3f].icon_offset = static_cast<int8_t>(0xFF);
 
-    Buffer *canvas = reinterpret_cast<Buffer *>(InterfaceBuffer);
+    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
     int shown = static_cast<int>(field_CE0_);
     if (shown == 0x3F
         && protoChassisType_ == VehPrototypes[protoID_].chassis_id
@@ -4645,7 +4642,7 @@ void DesignWin::draw_flash() {
     }
 
     MainInterfaceGlobal.soft_update(reinterpret_cast<RECT *>(&field_B1C_));
-    canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    canvas->restore_clip();
     draw_stack();
 }
 

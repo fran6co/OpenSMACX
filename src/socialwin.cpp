@@ -872,9 +872,8 @@ void SocialWin::draw_social(int a1) {
     do_sound();
 }
 
-// Fixed-slot bindings carried from 004b0d50.cpp
+// Fixed-slot binding carried from 004b0d50.cpp.
 static int *const PercentText = (int *)0x00682EA0;
-static int *const InterfacePaletteIndex = (int *)0x007AEC74;
 
 typedef char *(__cdecl *ItoaFn)(int, char *, int);
 
@@ -1735,7 +1734,7 @@ void SocialWin::draw_overview() {
     }
 
     buffer->restore_clip();
-    *InterfacePaletteIndex = 5;
+    buffer->set_wrap_width(5);
 
     RECT panel = tooltipEffects_;
     buffer->box_sprite(&panel, &InterfaceBoxStyles[3]);
@@ -1845,7 +1844,7 @@ void SocialWin::draw_overview() {
             + (value > 0 ? value : 0);
     }
 
-    *InterfacePaletteIndex = 5;
+    buffer->set_wrap_width(5);
     soft_update(&tooltipEffects_);
     do_sound();
 }
