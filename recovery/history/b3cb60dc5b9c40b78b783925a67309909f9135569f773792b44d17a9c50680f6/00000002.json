@@ -1,0 +1,19 @@
+{
+  "event_id": "a1f4d81f2a21ede8b9ce002413b5ddb1556ebe4a6fc4cffebc28523b07de9eda",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/data_check.py"
+    ],
+    "evidence": [
+      "The direct-root target keeps data selection keyed to the historical object ID; authorize clarifying existing selection refusal messages only, without adding alias selection or changing acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d4e8344f876b858b67bf72fa8bd86573b3cdf1d840c8aa990d4bc9066f2f1591",
+  "request_id": "object-target-selection-wording-oct9",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:object-target-rebinding-oct9"
+}
