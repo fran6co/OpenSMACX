@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "designwin-special-chassis-input-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Correct DesignWin select_special ability-label branch to use the actual selected chassis, as the pinned executable does.",
+  "base_revision": "36baf412bce1a8cd938d3c464274441d1b40ae5a",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4435056
+    }
+  ],
+  "editable_files": [
+    "src/designwin.cpp",
+    "recovery/tests/test_designwin_special_chassis_oct9.py"
+  ],
+  "evidence": [
+    "Pinned43B5FA loads receiver141FC (protoChassisType_),43B600 scales index90 and43B606 reads Chassis triad byte at94A379=Chassisbase94A330+49. Current code's Chassis[faction].triad is an incorrect translation, not an original quirk. Replace only that input, preserve flags400 override, guards, formatting and error paths.",
+    "Coordinator-owned manual correction, isolated from active Wave_Device worker. Actual-source expression controls with divergent faction/chassis triads, native full67-TU baseline/current measurements, identity/source integrity and fresh build/link precede commit. No marker edits/demotion or new coverage claim; unchanged whole-game/runtime limitations remain."
+  ]
+}
