@@ -415,11 +415,11 @@ void DesignWin::init() {
     for (i = 0; i < 3; ++i)
         flatButtons_[23].field_AD4_[i] = &MainInterfaceGlobal.sprites12_[i];
     flatButtons_[23].redraw();
-    flatButtons_[23].field_A44_ = 100;
+    flatButtons_[23].set_field_A44(100);
     for (i = 0; i < 3; ++i)
         flatButtons_[24].field_AD4_[i] = &MainInterfaceGlobal.sprites12_[i + 3];
     flatButtons_[24].redraw();
-    flatButtons_[24].field_A44_ = 100;
+    flatButtons_[24].set_field_A44(100);
 }
 
 // ORIGINAL: 0x00439700 ?on_right_click@DesignWin@@QAEXHH@Z 0x00439700-0x00439948

@@ -328,7 +328,11 @@ struct CheckBox {
     }
 };
 
-struct Toggle { int field_A18_ = 0; };
+struct Toggle {
+    uint32_t field_A18_ = 0;
+    int selected_state() const { return static_cast<int>(field_A18_); }
+    void set_selected_state(int value) { field_A18_ = static_cast<uint32_t>(value); }
+};
 struct TextEvent { int button; int state; };
 struct PrefWin {
     uint32_t prefsBasicPending_ = 0, morePrefsBasicPending_ = 0;
@@ -345,9 +349,9 @@ struct PrefWin {
 
     void change_volume_button_text(int button) {
         int value = -1;
-        if (button == 0x57) value = volumeVoiceToggle_.field_A18_;
-        if (button == 0x56) value = volumeSFXToggle_.field_A18_;
-        if (button == 0x58) value = volumeMusicToggle_.field_A18_;
+        if (button == 0x57) value = volumeVoiceToggle_.selected_state();
+        if (button == 0x56) value = volumeSFXToggle_.selected_state();
+        if (button == 0x58) value = volumeMusicToggle_.selected_state();
         text_events_.push_back({button, value});
     }
     void set_preferences();
@@ -380,9 +384,9 @@ int main() {
     prefs.morePrefsAVPending_ = MPREF_AV_VOICEOVER_TECH_FAC;
     prefs.prefsAVPending_ = 0;
     prefs.get_preferences();
-    assert(prefs.volumeVoiceToggle_.field_A18_ == 1);
-    assert(prefs.volumeSFXToggle_.field_A18_ == 0);
-    assert(prefs.volumeMusicToggle_.field_A18_ == 0);
+    assert(prefs.volumeVoiceToggle_.selected_state() == 1);
+    assert(prefs.volumeSFXToggle_.selected_state() == 0);
+    assert(prefs.volumeMusicToggle_.selected_state() == 0);
     const std::vector<TextEvent> expected_text{
         {0x57, 1}, {0x56, 0}, {0x58, 0}
     };
@@ -401,15 +405,15 @@ int main() {
     // volume controls. Exercise that actual production read path from stale
     // (all-off) UI state and require its ordered label callbacks to refresh.
     prefs.text_events_.clear();
-    prefs.volumeVoiceToggle_.field_A18_ = 0;
-    prefs.volumeSFXToggle_.field_A18_ = 0;
-    prefs.volumeMusicToggle_.field_A18_ = 0;
+    prefs.volumeVoiceToggle_.set_selected_state(0);
+    prefs.volumeSFXToggle_.set_selected_state(0);
+    prefs.volumeMusicToggle_.set_selected_state(0);
     prefs.morePrefsAVPending_ = MPREF_AV_VOICEOVER_TECH_FAC;
     prefs.prefsAVPending_ = PREF_AV_VOLUME_SFX_TOGGLE | PREF_AV_VOLUME_MUSIC_TOGGLE;
     prefs.get_preferences();
-    assert(prefs.volumeVoiceToggle_.field_A18_ == 1);
-    assert(prefs.volumeSFXToggle_.field_A18_ == 1);
-    assert(prefs.volumeMusicToggle_.field_A18_ == 1);
+    assert(prefs.volumeVoiceToggle_.selected_state() == 1);
+    assert(prefs.volumeSFXToggle_.selected_state() == 1);
+    assert(prefs.volumeMusicToggle_.selected_state() == 1);
     assert(prefs.text_events_.size() == 3);
     assert(prefs.text_events_[0].button == 0x57 && prefs.text_events_[0].state == 1);
     assert(prefs.text_events_[1].button == 0x56 && prefs.text_events_[1].state == 1);
@@ -489,7 +493,11 @@ int PrefWinGeometryValue_8577E4 = 90, PrefWinGeometryValue_8577E0 = 100;
 int pop_wait() { return 0; }
 void slide_show(GraphicWin *, int mode) { event("slide_show", mode); }
 
-struct Toggle { int field_A18_ = 0; };
+struct Toggle {
+    uint32_t field_A18_ = 0;
+    int selected_state() const { return static_cast<int>(field_A18_); }
+    void set_selected_state(int value) { field_A18_ = static_cast<uint32_t>(value); }
+};
 struct Button {
     const char *name;
     void show(int mode) { event(name, mode); }
@@ -509,7 +517,7 @@ struct PrefWin : GraphicWin {
     Button restoreDefaultButton_{"show_restore"}, okButton_{"show_ok"}, cancelButton_{"show_cancel"};
     void get_preferences() { event("get_preferences"); }
     void change_volume_button_text(int button) {
-        event("volume_text", button, volumeMainToggle_.field_A18_);
+        event("volume_text", button, volumeMainToggle_.selected_state());
     }
     void redraw_option();
     void redraw_volume();
@@ -542,9 +550,9 @@ void run_case(int page, int preferences, int post_modal_preferences,
     GamePreferencesAfterModal = post_modal_preferences;
     DialogDefaultStyle = initial_style;
     ConsolePrefWin.field_A14_ = 4;
-    ConsolePrefWin.volumeVoiceToggle_.field_A18_ = 1;
-    ConsolePrefWin.volumeSFXToggle_.field_A18_ = 0;
-    ConsolePrefWin.volumeMusicToggle_.field_A18_ = 1;
+    ConsolePrefWin.volumeVoiceToggle_.set_selected_state(1);
+    ConsolePrefWin.volumeSFXToggle_.set_selected_state(0);
+    ConsolePrefWin.volumeMusicToggle_.set_selected_state(1);
     ConsolePrefWin.display(page);
 
     const std::vector<int> expected_styles{9, 9, 18, 18, 9};
@@ -663,7 +671,10 @@ void prefs_put(const char *key, int value, int flags) {
 }
 Win *console_window() { return static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal)); }
 struct Scroll { int value; int position() const { return value; } };
-struct Button { int field_A9C_ = 1; };
+struct Button {
+    int field_A9C_ = 1;
+    void set_pressed_visual(int value) { field_A9C_ = value; }
+};
 struct PrefWin : GraphicWin {
     int field_A5C_ = 0;
     int prefsFinal_ = 0, morePrefsFinal_ = 0, warningsFinal_ = 0;

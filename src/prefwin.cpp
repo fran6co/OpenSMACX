@@ -388,10 +388,10 @@ void PrefWin::init() {
     volume_toggles[toggle_redraw]->redraw();
   }
   // The state stores precede all hide callbacks, in main/SFX/voice/music order.
-  volumeMainToggle_.field_A18_ = 0;
-  volumeSFXToggle_.field_A18_ = 0;
-  volumeVoiceToggle_.field_A18_ = 0;
-  volumeMusicToggle_.field_A18_ = 0;
+  volumeMainToggle_.set_selected_state(0);
+  volumeSFXToggle_.set_selected_state(0);
+  volumeVoiceToggle_.set_selected_state(0);
+  volumeMusicToggle_.set_selected_state(0);
   for (unsigned int toggle_hide = 0; toggle_hide < 4; ++toggle_hide)
     volume_toggles[toggle_hide]->hide();
 
@@ -421,9 +421,9 @@ void PrefWin::init() {
     footer_buttons[footer_index]->Buffer::set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
     footer_buttons[footer_index]->redraw();
   }
-  restoreDefaultButton_.field_A18_ = 0;
-  okButton_.field_A18_ = 0;
-  cancelButton_.field_A18_ = 0;
+  restoreDefaultButton_.set_selected_state(0);
+  okButton_.set_selected_state(0);
+  cancelButton_.set_selected_state(0);
   for (unsigned int footer_hide = 0; footer_hide < 3; ++footer_hide)
     footer_buttons[footer_hide]->hide();
 
@@ -433,7 +433,7 @@ void PrefWin::init() {
       PrefWinGeometryValue_857898 - 0x17 + PrefWinGeometryValue_8578A4,
       PrefWinGeometryValue_857894, PrefWinTitleButtonHeight,
       preference_window(), 0);
-  moreButton_.field_A18_ = 0;
+  moreButton_.set_selected_state(0);
   moreButton_.hide();
   Win::hide();
 }
@@ -457,8 +457,8 @@ void PrefWin::display(int page) {
       PrefWinGeometryValue_8578C0 + PrefWinGeometryValue_857884};
   Buffer::box_sprite(&buttons, &InterfaceBoxStyles[18]);
   get_preferences();
-  volumeMainToggle_.field_A18_ = volumeVoiceToggle_.field_A18_ ||
-      volumeSFXToggle_.field_A18_ || volumeMusicToggle_.field_A18_;
+  volumeMainToggle_.set_selected_state(volumeVoiceToggle_.selected_state() ||
+      volumeSFXToggle_.selected_state() || volumeMusicToggle_.selected_state());
   change_volume_button_text(0x55);
   redraw_option();
   redraw_volume();
@@ -505,8 +505,8 @@ void PrefWin::destroy() {
   }
   draw_map(1);
   UnkBitfield1 |= 4;
-  okButton_.field_A9C_ = 0;
-  cancelButton_.field_A9C_ = 0;
+  okButton_.set_pressed_visual(0);
+  cancelButton_.set_pressed_visual(0);
   slide_hide(this, 0);
   hide();
   Win::set_def_focus(console_window());
@@ -635,11 +635,11 @@ void PrefWin::set_preferences() {
   write_controls(this, advPrefCheckBox_, kAdvanced, sizeof(kAdvanced) / sizeof(kAdvanced[0]));
   write_controls(this, autoPrefCheckBox_, kAutomation, sizeof(kAutomation) / sizeof(kAutomation[0]));
   write_controls(this, audioVisPrefCheckBox_, kAudioVisual, sizeof(kAudioVisual) / sizeof(kAudioVisual[0]));
-  if (volumeVoiceToggle_.field_A18_)
+  if (volumeVoiceToggle_.selected_state())
     morePrefsAVPending_ |= MPREF_AV_VOICEOVER_TECH_FAC;
-  if (volumeSFXToggle_.field_A18_)
+  if (volumeSFXToggle_.selected_state())
     prefsAVPending_ |= PREF_AV_VOLUME_SFX_TOGGLE;
-  if (volumeMusicToggle_.field_A18_)
+  if (volumeMusicToggle_.selected_state())
     prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
   write_controls(this, mapPrefCheckBox_, kMap, sizeof(kMap) / sizeof(kMap[0]));
   for (unsigned int warning_index = 0;
@@ -662,14 +662,14 @@ void PrefWin::get_preferences() {
   read_controls(this, autoPrefCheckBox_, kAutomation, sizeof(kAutomation) / sizeof(kAutomation[0]));
   // The original reads these three volume controls separately; they are
   // not items in the eight-entry audio/visual CheckBox.
-  volumeVoiceToggle_.field_A18_ =
-      (morePrefsAVPending_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0;
+  volumeVoiceToggle_.set_selected_state(
+      (morePrefsAVPending_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0);
   change_volume_button_text(0x57);
-  volumeSFXToggle_.field_A18_ =
-      (prefsAVPending_ & PREF_AV_VOLUME_SFX_TOGGLE) != 0;
+  volumeSFXToggle_.set_selected_state(
+      (prefsAVPending_ & PREF_AV_VOLUME_SFX_TOGGLE) != 0);
   change_volume_button_text(0x56);
-  volumeMusicToggle_.field_A18_ =
-      (prefsAVPending_ & PREF_AV_VOLUME_MUSIC_TOGGLE) != 0;
+  volumeMusicToggle_.set_selected_state(
+      (prefsAVPending_ & PREF_AV_VOLUME_MUSIC_TOGGLE) != 0);
   change_volume_button_text(0x58);
   read_controls(this, audioVisPrefCheckBox_, kAudioVisual, sizeof(kAudioVisual) / sizeof(kAudioVisual[0]));
   read_controls(this, mapPrefCheckBox_, kMap, sizeof(kMap) / sizeof(kMap[0]));
@@ -716,10 +716,10 @@ void PrefWin::on_button_clicked(int button_id) {
       morePrefsBasicPending_ = default_prefs2();
       morePrefsAdvPending_ = morePrefsAutoPending_ = morePrefsAVPending_ = morePrefsMapPending_ = morePrefsBasicPending_;
       warningsPending_ = default_warn();
-      volumeMainToggle_.field_A18_ = 1;
-      volumeVoiceToggle_.field_A18_ = 1;
-      volumeSFXToggle_.field_A18_ = 1;
-      volumeMusicToggle_.field_A18_ = 1;
+      volumeMainToggle_.set_selected_state(1);
+      volumeVoiceToggle_.set_selected_state(1);
+      volumeSFXToggle_.set_selected_state(1);
+      volumeMusicToggle_.set_selected_state(1);
       volumeMainScroll_.set_pos(0x7F);
       WaveDeviceGlobal.set_volume(0x7F);
       volumeVoiceScroll_.set_pos(0x7F);
@@ -781,19 +781,19 @@ void PrefWin::change_volume_button_text(int button_id) {
   switch (button_id) {
     case 0x55:
       button = &volumeMainToggle_;
-      offset = volumeMainToggle_.field_A18_ ? 0x10E4 : 0x10E0;
+      offset = volumeMainToggle_.selected_state() ? 0x10E4 : 0x10E0;
       break;
     case 0x57:
       button = &volumeVoiceToggle_;
-      offset = volumeVoiceToggle_.field_A18_ ? 0x10EC : 0x10E8;
+      offset = volumeVoiceToggle_.selected_state() ? 0x10EC : 0x10E8;
       break;
     case 0x56:
       button = &volumeSFXToggle_;
-      offset = volumeSFXToggle_.field_A18_ ? 0x10F4 : 0x10F0;
+      offset = volumeSFXToggle_.selected_state() ? 0x10F4 : 0x10F0;
       break;
     case 0x58:
       button = &volumeMusicToggle_;
-      offset = volumeMusicToggle_.field_A18_ ? 0x10FC : 0x10F8;
+      offset = volumeMusicToggle_.selected_state() ? 0x10FC : 0x10F8;
       break;
   }
   if (!button) return;
@@ -807,43 +807,43 @@ void PrefWin::change_volume_button_text(int button_id) {
 void PrefWin::change_volume_button_state(int button_id) {
   switch (button_id) {
     case 0x57:
-      if (volumeVoiceToggle_.field_A18_) {
-        volumeVoiceToggle_.field_A18_ = 0;
+      if (volumeVoiceToggle_.selected_state()) {
+        volumeVoiceToggle_.set_selected_state(0);
         WaveDeviceGlobal.disable_group(0);
         return;
       }
-      volumeVoiceToggle_.field_A18_ = 1;
-      if (!volumeMainToggle_.field_A18_) {
-        volumeMainToggle_.field_A18_ = 1;
+      volumeVoiceToggle_.set_selected_state(1);
+      if (!volumeMainToggle_.selected_state()) {
+        volumeMainToggle_.set_selected_state(1);
         change_volume_button_text(0x55);
       }
       WaveDeviceGlobal.enable_group(0);
       return;
     case 0x56:
-      if (volumeSFXToggle_.field_A18_) {
+      if (volumeSFXToggle_.selected_state()) {
         WaveDeviceGlobal.disable_group(1);
-        volumeSFXToggle_.field_A18_ = 0;
+        volumeSFXToggle_.set_selected_state(0);
         return;
       }
-      volumeSFXToggle_.field_A18_ = 1;
-      if (!volumeMainToggle_.field_A18_) {
-        volumeMainToggle_.field_A18_ = 1;
+      volumeSFXToggle_.set_selected_state(1);
+      if (!volumeMainToggle_.selected_state()) {
+        volumeMainToggle_.set_selected_state(1);
         change_volume_button_text(0x55);
       }
       WaveDeviceGlobal.enable_group(1);
       return;
     case 0x58:
-      if (volumeMusicToggle_.field_A18_) {
+      if (volumeMusicToggle_.selected_state()) {
         if (FactionMusic) {
           delete FactionMusic;
           FactionMusic = nullptr;
         }
-        volumeMusicToggle_.field_A18_ = 0;
+        volumeMusicToggle_.set_selected_state(0);
         return;
       }
-      volumeMusicToggle_.field_A18_ = 1;
-      if (!volumeMainToggle_.field_A18_) {
-        volumeMainToggle_.field_A18_ = 1;
+      volumeMusicToggle_.set_selected_state(1);
+      if (!volumeMainToggle_.selected_state()) {
+        volumeMainToggle_.set_selected_state(1);
         change_volume_button_text(0x55);
       }
       prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
@@ -851,19 +851,19 @@ void PrefWin::change_volume_button_state(int button_id) {
       if (FactionMusic) FactionMusic->begin();
       return;
     case 0x55:
-      if (volumeMainToggle_.field_A18_) {
-        volumeMainToggle_.field_A18_ = 0;
-        volumeMusicToggle_.field_A18_ = 0;
-        volumeVoiceToggle_.field_A18_ = 0;
-        volumeSFXToggle_.field_A18_ = 0;
+      if (volumeMainToggle_.selected_state()) {
+        volumeMainToggle_.set_selected_state(0);
+        volumeMusicToggle_.set_selected_state(0);
+        volumeVoiceToggle_.set_selected_state(0);
+        volumeSFXToggle_.set_selected_state(0);
         WaveDeviceGlobal.disable();
         prefsAVPending_ &= ~0xC00u;
         morePrefsAVPending_ &= ~0x4000u;
       } else {
-        volumeMainToggle_.field_A18_ = 1;
-        volumeMusicToggle_.field_A18_ = 1;
-        volumeVoiceToggle_.field_A18_ = 1;
-        volumeSFXToggle_.field_A18_ = 1;
+        volumeMainToggle_.set_selected_state(1);
+        volumeMusicToggle_.set_selected_state(1);
+        volumeVoiceToggle_.set_selected_state(1);
+        volumeSFXToggle_.set_selected_state(1);
         WaveDeviceGlobal.enable();
       }
       change_volume_button_text(0x58);

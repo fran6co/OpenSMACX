@@ -20,24 +20,16 @@
 // symbol    ??_GBaseButton@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
-#include "original_seam.h"
 #include "general.h"
 #include "basebutton.h"
-#include "worldwin.h"
-#include "dialog.h"
 #include "buttongroup.h"
-#include "wave.h"
+#include "palette.h"
 #include "sound.h"
 
 // The zero-init .bss slots BaseButton's setup reads its field defaults from
 // (0x009B8E2C/0x009B8E30), rebindable like CheckBoxDefault1/2.
 uint32_t BaseButtonA94Default;  // 0x009B8E2C
 uint32_t BaseButtonA98Default;  // 0x009B8E30
-#include "sounddevice.h"
-#include "spritebox.h"
-#include "replaywin.h"
-#include "net_class.h"
-#include "basepop.h"
 
 #include <new>
 
@@ -413,20 +405,6 @@ int BaseButton::set_def_font(Font *font1, Font *font2, Font *font3) {
 // different global from `PaletteCurrent` at 0x009B8174, which is what
 // Buffer's constructor reads.
 
-namespace {
-
-// The three tiers differ only in which Buffer setter they end with, and each
-// republishes the active palette first so the new colours resolve against it.
-typedef void (Buffer::*BufferColourSetter)(int, int, int, int);
-
-__forceinline void recolour(Buffer &buffer, BufferColourSetter setter,
-              int c1, int c2, int c3, int c4) {
-    buffer.sync_to_palette(PaletteActive);
-    (buffer.*setter)(c1, c2, c3, c4);
-}
-
-}  // namespace
-
 /*
 Purpose: Set the button's primary text colours.
 // ORIGINAL: 0x00607360 ?set_text_color@BaseButton@@QAEXHHHH@Z 0x00607360-0x0060739D BYTE_EXACT
@@ -494,19 +472,6 @@ void BaseButton::set_text_color3(int color1, int color2, int color3, int color4)
 
 
 
-
-namespace {
-
-typedef void (OriginalObject::*func_button_refresh_slot)();
-typedef void (OriginalObject::*func_parent_notify_slot)(int, int);
-
-// Both dispatches read the live vtable of whatever object is actually there
-// rather than going through a C++ virtual call, so no table this toolchain
-// lays out can disagree with the original's.
-static const size_t BaseButtonRefreshSlot = 0xF8;
-static const size_t WinValueChangedSlot = 0xB4;
-
-}  // namespace
 
 /*
 Purpose: Give the button a new value, redrawing and notifying its parent only

@@ -34,8 +34,6 @@ class BaseButton : public GraphicWin {
   friend class ButtonGroup;
   friend class FlatButton;
   friend class Scroll;
-  friend class PrefWin;
-  friend class DesignWin;
 
  public:
   virtual void on_dialog_focus(int focus);
@@ -92,6 +90,12 @@ class BaseButton : public GraphicWin {
   // menu is shown/hidden. Keep the legacy word encapsulated in BaseButton.
   void set_pressed_visual(int value) { field_A9C_ = static_cast<uint32_t>(value); }
   int selected_state() const { return static_cast<int>(field_A18_); }
+  // Store-only configuration used by PrefWin: unlike set(), this must not
+  // repaint or notify the parent between the original ordered stores.
+  void set_selected_state(int value) { field_A18_ = static_cast<uint32_t>(value); }
+  // DesignWin initializes this still-unnamed word directly; no new role is
+  // inferred from that store, and no callback or timer operation is added.
+  void set_field_A44(int value) { field_A44_ = static_cast<uint32_t>(value); }
   // Original BaseWin init41FB4B writes this still-unnamed button state.
   void set_field_A14(int value) { field_A14_ = static_cast<uint32_t>(value); }
   // The base governor panel clears this auxiliary state when a priority
