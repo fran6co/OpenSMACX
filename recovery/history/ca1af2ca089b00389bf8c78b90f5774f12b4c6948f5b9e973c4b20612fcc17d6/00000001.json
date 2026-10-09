@@ -1,0 +1,25 @@
+{
+  "event_id": "8502ab509da0e57e461f540c76a30c69833e40dc06616942bb4485bf16687fd7",
+  "payload": {
+    "affects": [
+      "entity-c07f1ce86a5f653e22dee09a2df5ee8f3f8ff0ebb4415063e76507b1d408d578",
+      "entity-c3ab6505cda74476379be71d572ca1adfe37784f992bf5d8728e321d44f07b68",
+      "entity-cfb20082eb00aee4c52f37b2ee8b67f86f20916fddf5310f09489f8d1e96828a",
+      "entity-dbe8797ba72702e8a2350deeaba7b149fd715bd2fe3500eb8f85f7acf9fa0b59"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "message-count-overlap-93e964-oct9",
+    "evidence": [
+      "Pinned MessageWin::add_base at471412 increments absolute93E964; NetDaemon::init at52DFDD clears receiver+1BD4, proving shared storage rather than a bad array extent. Native standalone parent symbol?NetDaemonNet@@3VNetDaemon@@A resolves lock_state_[2].trailing_words_[7] offset1BD4,size4 in both flag sets;93E964-1BD4=93CD90.",
+      "NetDaemon init/reset/newgame/turn reset already use member view, while MessageWin, net_upkeep, endgame/reset and process-message4305 use a separate scalar. Preserve original singleton accesses, signed count comparisons/log/payload ABI and adjacent distinct93E968 word; move the old bounded object identity/end/evidence via native guarded writer.",
+      "Authorize this evidence-backed structural closure immediately across owners without resetting the original task baseline or discarding the current waiting-mask draft. This is edit permission and remaining verification work, not acceptance."
+    ],
+    "hypothesis": "The separately allocated MessageWin network counter duplicates genuine NetDaemon entry2 trailingword7; consolidate the shared state and its caller/reset operations together.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "message-count-overlap-93e964-oct9",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-waiting-mask-owner-oct9"
+}

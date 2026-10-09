@@ -1,0 +1,45 @@
+{
+  "event_id": "0e8e86ab437a083eece464773c7f03c9abb8783d3f71713f061eae7adab2b860",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_end_of_game_actual_source.py",
+      "recovery/tests/test_messagewin_shared_counter_owner_oct9.py",
+      "src/messagewin.cpp",
+      "src/messagewin.h"
+    ],
+    "evidence": [
+      "Pinned MessageWin::add_base at471412 increments absolute93E964; NetDaemon::init at52DFDD clears receiver+1BD4, proving shared storage rather than a bad array extent. Native standalone parent symbol?NetDaemonNet@@3VNetDaemon@@A resolves lock_state_[2].trailing_words_[7] offset1BD4,size4 in both flag sets;93E964-1BD4=93CD90.",
+      "NetDaemon init/reset/newgame/turn reset already use member view, while MessageWin, net_upkeep, endgame/reset and process-message4305 use a separate scalar. Preserve original singleton accesses, signed count comparisons/log/payload ABI and adjacent distinct93E968 word; move the old bounded object identity/end/evidence via native guarded writer.",
+      "Authorize this evidence-backed structural closure immediately across owners without resetting the original task baseline or discarding the current waiting-mask draft. This is edit permission and remaining verification work, not acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4658096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5410976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9693540,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8502ab509da0e57e461f540c76a30c69833e40dc06616942bb4485bf16687fd7",
+  "request_id": "authorize-message-count-overlap-oct9",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netdaemon-waiting-mask-owner-oct9"
+}
