@@ -1,0 +1,34 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a2d8e3e383d534f2213e9a1ba5e98fdae930006c",
+  "editable_files": [
+    "src/net_class.cpp",
+    "src/net_class.h",
+    "recovery/tests/test_net_polling_global_owner_actual_source_oct10.py"
+  ],
+  "evidence": [
+    "Pinned632350 abort-answer path632488 writesDWORD1 to9B2068 thenreturns1 withoutcuttingplayers. Existing int ExitTurnLoop atthatVA is genuinegame.cpp/h storage already used by otherNet paths. Replace the redundant NetDropAbortFlag alias/write with ExitTurnLoop; define no duplicate object.",
+    "Pinned6320E0 accesses independent DWORD reentrancy words: KeepAlive9BE610 read63210F,set1 at63212D,clear0 at632147; Reap9BE60C read632140,set1 at632157,clear6321D5/632225/632280. Pinned writable data initialDWORDs are zero. These are absolute globals, not Net receiver fields, not an aggregate; 9BE614 gap and other adjacent objects stay unclaimed. Actual names/32bit storage supported by consumer behavior, original source linkage/type spelling unproven. External/dynamic producer completeness remains unproven.",
+    "Define two ordinary zero-initialized uint32_t globals using existing NetKeepAliveBusy/NetReapBusy names and extern declarations instead of fixed-address pointer definitions. All scalar accesses in check_polling become direct values. Worker writes ordinary C++ only; coordinator creates bounded RECOVERY_OBJECT mappings with native object writer after fresh actual COFF symbol verification. No hand original markers or BYTE_EXACT/current symbol guesses.",
+    "NetPlayer is actual producer/consumer row model: players_[16] at Net+154, each58hex bytes to6D4, uint32 stamp_10_ atrow+10. Existing staleness branch traverses uint32* pointing inside firstrow via checked*16hex dword offsets, crossing subobject bounds. Access players_[checked].stamp_10_ directly for checked0/1; preserve evaluation/callback rereads, thresholds, unsigned wrap, exactlyonecut timestamp call and storeorder row1thenrow0. Historical pointer-local matching LEVER/TRIED notes remain; do not keep raw cross-field arithmetic for a score.",
+    "Preserve all original guards/callback order, keepaliveclearbeforeReaptest, timer reads, failure/early-return branches and the original branch3 return that leaves ReapBusy set. No RAIIcleanup, safer errorbehavior, new locks/atomics, initialization beyond pinned-zero storage, duplicate sharedglobals, aggregate/layout hypothesis or extended byte iteration.",
+    "Actual-source controls extract fullcheck_polling and actualdrop abort branch; use actual NetPlayer declaration where feasible with size/offset assertions. Exercise cross-instance shared reentrancy, send callback reentry suppression, threshold branches and guard clears, original stuck-Reap earlyreturn, successful timestamp updates/storeeffects, existing ExitTurnLoop setbefore return/no cut. Compiling behavior mutants must be rejected; host abstraction is not full network/runtime or external-producer proof.",
+    "Coordinator-reviewed manual integration: preserve complete original identities/spans/claims/LEVER/TRIED/rolefacts, all findings, before/current fullTU sibling/native referenced-data diagnostics, independent review, fullcombinedbuild/link, sourcecontinuity and references. Workers isolated, no Git/native/Wine/delegation, no edits outsidedeclaredscope; no automatic/fullgameacceptance or baseline reset. Temporary justified structural matching regressions retain historical obligations."
+  ],
+  "intent": "Recover Net polling reentrancy storage as genuine independent globals, reuse the actual turn-exit global, and access original player timestamp rows through their genuine members.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6496480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6497104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "net-polling-global-owner-oct10"
+}
