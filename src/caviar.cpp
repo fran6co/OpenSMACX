@@ -993,10 +993,9 @@ struct CaviarSceneRecord {
   // using the receiver it was passed. Nothing recovered writes this slot, so
   // it is null until whatever sets it in the image is recovered.
   Caviar *renderer_;       // 0x9BB470
-  // 0x9BB474. The value Caviar::UNK2's fourth argument carries lands here
-  // before it calls render, and nothing else in the scene record writes it -
-  // so the slot is named for that one store rather than left in the pad.
-  uint32_t render_argument_;
+  // 0x9BB474. The caller's borrowed colour-table source lands here before
+  // render; object_start reads it for a 0x1800-byte copy and never writes it.
+  const void *render_argument_;
   VoxRenderRecord *created_;  // 0x9BB478
 };
 
@@ -1172,9 +1171,7 @@ int Caviar::init_class() {
     record->draw_bottom_ = 0xff;
     record->draw_width_ = 0x100;
     record->draw_height_ = 0x100;
-    // &Caviar::object_start, still an artifact - the address is the image's
-    // own 0x00618DA0, which this build does not map.
-    record->object_callback_[0] = 0x00618DA0;
+    record->object_start_callback_ = &Caviar::object_start;
 
     // The record's two 256-entry ramp tables. Table A's entries are the
     // addresses of successive 0x100-byte shade rows of the colour table;
@@ -2728,7 +2725,7 @@ Purpose: Render through the scene record with a colour-table override: store
          colour table from - call render, and drop the bit again. A null
          table is rejected with 0x10.
 // ORIGINAL: 0x00617670 ?UNK2@Caviar@@QAEHPAUBuffer@@HHHH@Z 0x00617670-0x006176BA BYTE_EXACT
-// symbol    ?render_with_colour_table@Caviar@@QAEHPAVBuffer@@HHHH@Z
+// symbol    ?render_with_colour_table@Caviar@@QAEHPAVBuffer@@HHPBXH@Z
 // size      74 bytes
 // prototype int (__thiscall ?UNK2@Caviar@@QAEHPAUBuffer@@HHHH@Z)(Caviar* this, Buffer*, int, int, int, int)
 // callers   0   call targets   1
@@ -2745,7 +2742,7 @@ Purpose: Render through the scene record with a colour-table override: store
 Return Value: 0, or 0x10 when the fourth argument is zero.
 */
 int Caviar::render_with_colour_table(Buffer *buffer, int centre_x,
-                                     int centre_y, int colour_table,
+                                     int centre_y, const void *colour_table,
                                      int render_flags) {
     if (colour_table == 0) {
         return 0x10;
@@ -4812,7 +4809,7 @@ Purpose: Draw the scene. Refuses to re-enter, stages the record and the
          the state asks for it, draws the part and its shadow through the
          second view.
 // ORIGINAL: 0x00639E60 sub_639e60 0x00639E60-0x0063A279 FILE
-// symbol    ?vox_draw_scene@@YAXPAUVoxRenderRecord@@PAUVoxSceneState@@PAUVoxCameraBlock@@H@Z
+// symbol    ?vox_draw_scene@@YAXPAUVoxRenderRecord@@PAUCaviarSceneContext@@PAUVoxCameraBlock@@H@Z
 // size      1049 bytes
 // callers   2   call targets   9
 // kind      game
@@ -4875,12 +4872,8 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
         callback();
     }
 
-    // +0x8c into the state block is Caviar::scene_context_.field_A4_ at 0xA4 - the
-    // "keep the scene rectangle too" byte render sets from bit 1 of its flags.
-    // The state struct models only the 0x48 bytes the transform reads, so the
-    // byte is reached by its offset and named here.
-    uint8_t *const state_bytes = reinterpret_cast<uint8_t *>(state);
-    const int want_shadow = state_bytes[0x8c];
+    // The "keep the scene rectangle too" byte is the context's field_A4_.
+    const int want_shadow = context->field_A4_;
 
     for (int index = 0; index < state->instance_count_; ++index) {
         VoxInstance &instance = state->instances_[index];
@@ -4926,20 +4919,24 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
             }
         }
 
-        // The record's per-object callback: object_start, whose protocol is
-        // the handle, the step, the position, the orientation, the bounds and
-        // the direction. The bounds are the channel bounds at view + 0x48 and
-        // the direction is the down vector at state + 0x48.
-        typedef void(__cdecl *object_callback)(void *, int, VOX_Vect *,
-                                               VOX_Matrix *, void *, void *);
-        if (object_callback callback = reinterpret_cast<object_callback>(
-                record->object_callback_[0])) {
-            callback(record, index, &position, &part, &view->bounds_,
-                     state_bytes + 0x48);
+        // The slot's second argument is this instance-table index, not the
+        // animation step used above to select the instance's vectors/matrix.
+        // The bounds pointer is the six-int window at view + 0x48; direction
+        // is the context's light vector at +0x48.
+        if (VoxRenderRecord::ObjectStartCallback callback =
+                record->object_start_callback_) {
+            callback(record, index, &position, &part,
+                     view->bounds_.values_, &context->light_vector_);
         }
         vox_draw_part(record, node, &position, &part, &view->camera_.rotation,
-                      reinterpret_cast<const VOX_Vect *>(state_bytes + 0x48),
-                      extent, visible);
+                      &context->light_vector_, extent, visible);
+
+        // Read +0x5C after drawing: vox_draw_part may change this slot, and
+        // the original edge tests the post-draw value before calling it.
+        if (VoxRenderRecord::PostPartCallback callback =
+                record->post_part_callback_) {
+            callback(record, index);
+        }
 
         // The shadow pass, when the state asks for it and the record's
         // descriptor block names a shadow.
@@ -5674,7 +5671,7 @@ Purpose: The engine's per-object callback. Fills 0x1800 bytes of the handle's
          of render_with_colour_table handed over when bit 4 is on, otherwise
          this renderer's own entry for the instance the engine names.
 // ORIGINAL: 0x00618DA0 ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z 0x00618DA0-0x00618E06 SEMANTIC
-// symbol    ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@1@Z
+// symbol    ?object_start@Caviar@@SAXPAUVoxRenderRecord@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAH1@Z
 //           (VC6 back-references the sixth argument - the same VOX_Vect as
 //           the third - to `1`; the catalogued name spells it out in full.)
 // size      102 bytes
@@ -5684,12 +5681,10 @@ Purpose: The engine's per-object callback. Fills 0x1800 bytes of the handle's
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00645930
 //
-// init_class stores this function's address into the render record's slot at
-// +0x58, so the engine calls it as a plain function and the receiver the
-// __cdecl member name implies is never set up: the body's first instruction
-// loads the renderer from CaviarScene's own slot at 0x9BB470 instead. The
-// third and later arguments are the engine's callback protocol and the body
-// reads none of them.
+// The original mapping and recovered prototype are retained above. The
+// current callback takes int32_t* for bounds because the draw passes the
+// six-int values_ member at view + 0x48. It is static so its address has the
+// plain six-argument __cdecl type; the body reads only the handle and index.
 //
 // PLACED AFTER set_shadow_table so this file's `#pragma function(memcpy)`
 // reaches it: the image CALLS memcpy here (0x00645930), and /Oi would expand
@@ -5706,17 +5701,16 @@ Purpose: The engine's per-object callback. Fills 0x1800 bytes of the handle's
 Return Value: n/a
 Status: Complete
 */
-void __cdecl Caviar::object_start(VOX_ScnRenderHnd *handle, long step,
+void __cdecl Caviar::object_start(VOX_ScnRenderHnd *handle, long instance,
                                   VOX_Vect *position, VOX_Matrix *orientation,
-                                  VOX_Rect *bounds, VOX_Vect *direction) {
+                                  int32_t *bounds, VOX_Vect *direction) {
     Caviar &self = *CaviarScene.renderer_;
     if (self.field_4_ & 8) {
         memcpy(handle->colour_table_, CaviarColourSource, 0x1800);
     } else if (self.field_4_ & 0x10) {
-        memcpy(handle->colour_table_, (void *)CaviarScene.render_argument_,
-               0x1800);
+        memcpy(handle->colour_table_, CaviarScene.render_argument_, 0x1800);
     } else {
-        memcpy(handle->colour_table_, self.instance_palettes_[step], 0x1800);
+        memcpy(handle->colour_table_, self.instance_palettes_[instance], 0x1800);
     }
 }
 

@@ -32,6 +32,7 @@ class FlatButton : public BaseButton {
   friend class DesignWin;
  public:
   FlatButton();
+  int field_AB8() const { return static_cast<int>(field_AB8_); }
   // DEFINED IN-CLASS so enclosing destructors can expand it, which is what
   // the image does: ??1DipEdit carries five expanded copies (the
   // 0x669754/0x66974c stage pair, `call ?close@FlatButton`, `call

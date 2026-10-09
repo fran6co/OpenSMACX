@@ -61,10 +61,24 @@ struct Sprite {
 Sprite *Sprite::drawn; Buffer *Sprite::drawn_buffer; int Sprite::drawn_key;
 int Sprite::drawn_x, Sprite::drawn_y, Sprite::drawn_n, Sprite::drawn_d;
 struct CheckButton { unsigned char prefix[0xA14]; uint32_t checked_; unsigned char tail[0xA2C-0xA18]; };
-struct FlatButton { unsigned char bytes[0xB4C]; };
+struct BaseButton {
+    unsigned char prefix[0xA18];
+    uint32_t field_A18_;
+    unsigned char middle[0xA74-0xA1C];
+    uint32_t field_A74_;
+    unsigned char tail[0xAB8-0xA78];
+    int selected_state() const { return static_cast<int>(field_A18_); }
+    int field_A74() const { return static_cast<int>(field_A74_); }
+};
+struct FlatButton : BaseButton {
+    uint32_t field_AB8_;
+    unsigned char tail[0xB4C-0xABC];
+    int field_AB8() const { return static_cast<int>(field_AB8_); }
+};
+struct SocialEffect { int values_[11]; };
 struct SocialWin : GraphicWin, SubInterface {
     unsigned char pad_to_faction[0xCF4-0xA1C]; uint32_t factionID_;
-    unsigned char pad_to_effect[0xD08-0xCF8]; int socEffect_[11];
+    unsigned char pad_to_effect[0xD08-0xCF8]; SocialEffect socEffect_;
     unsigned char pad_to_locks[0xD6C-0xD34]; CheckButton energyLockButtons_[3];
     unsigned char pad_to_pending[0x2C50-0x2BF0]; uint32_t pendingAlloc_[3];
     unsigned char pad_to_sprites[0x2E18-0x2C5C]; Sprite effectIcons_[90];
@@ -79,11 +93,14 @@ static_assert(sizeof(Win)==0x444, "Win fixture");
 static_assert(sizeof(Buffer)==0x588, "Buffer fixture");
 static_assert(__builtin_offsetof(Buffer, rect2)==0x30, "working rect in Buffer");
 static_assert(__builtin_offsetof(SocialWin, factionID_)==0xCF4, "faction");
+static_assert(__builtin_offsetof(SocialWin, socEffect_)==0xD08, "social effect");
 static_assert(__builtin_offsetof(SocialWin, energyLockButtons_)==0xD6C, "locks");
 static_assert(__builtin_offsetof(SocialWin, pendingAlloc_)==0x2C50, "pending");
 static_assert(__builtin_offsetof(SocialWin, effectIcons_)==0x2E18, "sprites");
 static_assert(sizeof(Sprite)==0x2C, "Sprite stride");
 static_assert(sizeof(CheckButton)==0xA2C, "CheckButton stride");
+static_assert(sizeof(BaseButton)==0xAB8, "BaseButton fixture");
+static_assert(sizeof(FlatButton)==0xB4C, "FlatButton fixture stride");
 static_assert(__builtin_offsetof(CheckButton, checked_)==0xA14, "checked word");
 static_assert(__builtin_offsetof(SocialWin, effectIcons_) - 0x13CC == 51*0x84,
               "raw source base/index relation");
@@ -125,10 +142,10 @@ int main() {
     GraphicWin window; window.Buffer::rect2={10,20,110,120};
     for (int id=0x11;id<=0x1A;++id) for (int flag=0;flag<=1;++flag) {
         std::memset(panel.flatButtons_,0,sizeof(panel.flatButtons_));
-        unsigned char *button=reinterpret_cast<unsigned char *>(panel.flatButtons_)+id*0xB4C;
-        *reinterpret_cast<int *>(button+0xAB8)=flag?0:1;
-        *reinterpret_cast<int *>(button+0xA18)=0;
-        *reinterpret_cast<int *>(button+0xA74)=flag?0:1;
+        FlatButton &button=panel.flatButtons_[id];
+        button.field_AB8_=flag?0:1;
+        button.field_A18_=0;
+        button.field_A74_=flag?0:1;
         const int chosen_flag=flag;
         const int typed_index=(id-0x11)*9+chosen_flag*3;
         panel.effectIcons_[typed_index].key=static_cast<unsigned char>(0x40+id+flag);
@@ -139,6 +156,24 @@ int main() {
         if(Sprite::drawn_key != panel.effectIcons_[typed_index].key) fail("transparent byte");
         if(Sprite::drawn_buffer != static_cast<Buffer *>(&window)) fail("typed Buffer destination");
     }
+    // Cover each original status short circuit and both remaining BaseButton
+    // tests. The actual getter definitions above retain the product bodies.
+    for (int status=0; status<=3; ++status)
+        for (int selected=0; selected<=1; ++selected)
+            for (int auxiliary=0; auxiliary<=1; ++auxiliary) {
+                FlatButton &button=panel.flatButtons_[0x11];
+                button.field_AB8_=static_cast<uint32_t>(status);
+                button.field_A18_=static_cast<uint32_t>(selected);
+                button.field_A74_=static_cast<uint32_t>(auxiliary);
+                const int chosen = status==0 ? 1 :
+                    (status==1 || status==2 || selected!=0) ? 0 : auxiliary==0;
+                const int typed_index=chosen*3;
+                panel.effectIcons_[typed_index].key=static_cast<unsigned char>(0x70+chosen);
+                Sprite::drawn=nullptr;
+                char label[]="label";
+                if(panel.on_button_text_draw(&window,label,0x11)!=1) fail("state paint id");
+                if(Sprite::drawn != &panel.effectIcons_[typed_index]) fail("state branch/index");
+            }
     // Guard remains before all receiver/window use for out-of-domain ids.
     if(panel.on_button_text_draw(nullptr,nullptr,0x10)!=0 ||
        panel.on_button_text_draw(nullptr,nullptr,0x1B)!=0) fail("paint range guard");

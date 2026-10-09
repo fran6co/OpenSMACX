@@ -1969,16 +1969,16 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
     int line_base = effectIcons_[0].height();
     int y_center = (rect.bottom - line_base - rect.top) / 2;
 
-    char *button = reinterpret_cast<char *>(flatButtons_) + button_id * 0xB4C;
-    int status = *reinterpret_cast<int *>(button + 0xAB8);
+    const FlatButton &button = flatButtons_[button_id];
+    int status = button.field_AB8();
     int flag;
     if (status == 0) {
         flag = 1;
     } else if (status == 1 || status == 2
-               || *reinterpret_cast<int *>(button + 0xA18) != 0) {
+               || button.selected_state() != 0) {
         flag = 0;
     } else {
-        flag = (*reinterpret_cast<int *>(button + 0xA74) == 0) ? 1 : 0;
+        flag = (button.field_A74() == 0) ? 1 : 0;
     }
 
     Buffer *icon_buffer = (window != 0) ? win_buffer : 0;
@@ -1993,7 +1993,7 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
         win_buffer->write_l(text, &rect, strlen(text));
     }
 
-    int current = reinterpret_cast<const int *>(&socEffect_)[effect];
+    int current = socEffect_.values_[effect];
     int stored = PlayersData[factionID_].soc_effect_pending.values_[effect];
     if (current > stored) {
         win_buffer->set_text_color(0xfa, -1, 1, 1);

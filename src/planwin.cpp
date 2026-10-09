@@ -85,9 +85,8 @@ PlanWin PlanWindow;
 // declare it as a member; VC6 owns those four bytes as MapWin's vtordisp
 // when MapWin is the most-derived object, but inside PlanWin the base is
 // not most-derived and emits no vtordisp there, so PlanWin names the slot
-// itself (field_21A68_ in planwin.h) to hold the layout. This reaches it
-// the same way `virtual_base_of` reaches the base: through the parameter,
-// so no body has to pun its own `this`.
+// itself (field_21A68_ in planwin.h) to hold the layout. The helper reaches
+// that slot through the parameter, so blink does not pun its own `this`.
 static int32_t &pre_vbase_dword(void *self) {
     return *reinterpret_cast<int32_t *>(
         reinterpret_cast<uint8_t *>(self) + 0x21A68);
@@ -593,22 +592,6 @@ void PlanWin::close() {
 }
 
 
-namespace {
-
-// blink uses genuine virtual on_redraw dispatch. The helper below still
-// serves the separately mapped center operation; its migration is pending.
-
-// Both methods reach the virtual base the way the original does - through the
-// vbtable rather than through the member - so they stay correct for any class
-// that inherits this one and moves the base.
-uint8_t *virtual_base_of(void *self) {
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(self);
-    return reinterpret_cast<uint8_t *>(self) + vbtable[1];
-}
-
-}  // namespace
-
 /*
 Purpose: Toggle the plan window's blink phase and redraw, when blinking is on.
 // ORIGINAL: 0x0048BC20 ?blink@PlanWin@@QAEXXZ 0x0048BC20-0x0048BC4B
@@ -646,14 +629,10 @@ The height is passed negated. That is the original's, not a transcription
 slip: it loads the buffer's field at 0x84 and runs `neg edx` before pushing.
 */
 void PlanWin::UNK1() {
-    uint8_t *const base = virtual_base_of(this);
-    Buffer *const window_buffer = reinterpret_cast<Buffer *>(base + 0x444);
-    int32_t width;
-    int32_t height;
-    std::memcpy(&width, base + 0x4C4, sizeof(width));
-    std::memcpy(&height, base + 0x4C8, sizeof(height));
-    window_buffer->copy(&buffer_, 0, 0, width,
-                        -height);
+    GraphicWin *const graphic = static_cast<GraphicWin *>(this);
+    Buffer *const window_buffer = static_cast<Buffer *>(graphic);
+    window_buffer->copy(&buffer_, 0, 0, graphic->pixel_width(),
+                        graphic->pixel_height());
 }
 
 

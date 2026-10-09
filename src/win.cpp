@@ -10517,10 +10517,7 @@ long Win::on_activate(unsigned int state, void * other, long minimized) {
                     ReleaseDC(HandleMain, WinSharedHdc);
                 } else {
                     // Slot 26, offset 0x68, is IDirectDrawSurface::ReleaseDC
-                    // (HDC by value per ddraw.h); if the image turns out to
-                    // push the ADDRESS instead, that is a finding for this
-                    // body's own grind, recorded on the body - not a reason
-                    // to keep the slot arithmetic here.
+                    // (HDC by value per ddraw.h), as confirmed at 0x005F1111.
                     obj->ReleaseDC(WinSharedHdc);
                 }
                 WinSharedHdc = 0;
@@ -11260,22 +11257,21 @@ void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
 // calls     (none)
 // indirect  0x005F10A6 0x005F10B7 0x005F10DE 0x005F10EB 0x005F1111 0x005F112E
 int __cdecl Win::OnQueryNewPalette(void * hwnd) {
-    int eax;
+    HDC hdc;
+    IDirectDrawSurface2 *surface;
 
     if (BufferDirectDraw != 0) {
         return 1;
     }
 
-    eax = WinHdcRefCount;
-    if (eax != 0) {
-        eax = eax + 1;
-        WinHdcRefCount = eax;
-        eax = reinterpret_cast<int>(WinSharedHdc);
+    if (WinHdcRefCount != 0) {
+        WinHdcRefCount = WinHdcRefCount + 1;
+        hdc = WinSharedHdc;
     } else {
-        eax = reinterpret_cast<int>(DirectDrawSurface);
-        if (eax != 0) {
-            reinterpret_cast<IDirectDrawSurface *>(eax)->GetDC(&WinSharedHdc);
-            eax = reinterpret_cast<int>(WinSharedHdc);
+        surface = DirectDrawSurface;
+        if (surface != 0) {
+            surface->GetDC(&WinSharedHdc);
+            hdc = WinSharedHdc;
         } else {
             // TWO STEPS, and the second one is load-bearing. Calling through
             // `GetDC(...)` directly compiled `mov eax,[0]` + `call [eax]`
@@ -11284,41 +11280,32 @@ int __cdecl Win::OnQueryNewPalette(void * hwnd) {
             // the spelling the rest of this file already uses (see the
             // GetDC call in the macro above, BYTE_EXACT), and it restores
             // the direct indirect-call encoding.
-            eax = reinterpret_cast<int>(GetDC(
-                HandleMain));
-            WinSharedHdc = reinterpret_cast<HDC>(eax);
+            hdc = GetDC(HandleMain);
+            WinSharedHdc = hdc;
         }
-        if (eax == 0) {
+        if (hdc == 0) {
             return 0;
         }
         WinHdcRefCount = 1;
     }
 
-    if (eax == 0) {
+    if (hdc == 0) {
         return 0;
     }
 
-    SelectPalette(reinterpret_cast<HDC>(eax),
-                  reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
+    SelectPalette(hdc, reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
 
     RealizePalette(WinSharedHdc);
 
-    eax = WinHdcRefCount;
-    eax = eax - 1;
-    WinHdcRefCount = eax;
-    if (eax != 0) {
+    WinHdcRefCount = WinHdcRefCount - 1;
+    if (WinHdcRefCount != 0) {
         return 0;
     }
 
-    eax = reinterpret_cast<int>(DirectDrawSurface);
-    if (eax != 0) {
-        // Slot 26 (0x68) is IDirectDrawSurface::ReleaseDC(HDC). The
-        // transcription passes the ADDRESS of WinSharedHdc and both this
-        // body and on_activate agree, so the named call keeps that form;
-        // ddraw.h types the slot HDC-by-value, so the pointer goes as an
-        // explicit reinterpretation rather than pretending it is a handle.
-        reinterpret_cast<IDirectDrawSurface *>(eax)->ReleaseDC(
-            reinterpret_cast<HDC>(&WinSharedHdc));
+    surface = DirectDrawSurface;
+    if (surface != 0) {
+        // Slot 26 (0x68) is IDirectDrawSurface::ReleaseDC(HDC).
+        surface->ReleaseDC(WinSharedHdc);
         WinSharedHdc = 0;
         return 0;
     }

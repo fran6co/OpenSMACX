@@ -311,9 +311,8 @@ extern CaviarData g_VPBR0_CAVIARDATA[4];
 extern CaviarData g_NW_CAVIARDATA;
 extern CaviarData g_NI_CAVIARDATA;
 extern CaviarData g_NLC_CAVIARDATA;
-struct VOX_ScnRenderHnd;
-struct VOX_Rect;
 struct VoxRenderRecord;
+typedef VoxRenderRecord VOX_ScnRenderHnd;
 struct VoxCameraBlock;
 
 // ---------------------------------------------------------------------------
@@ -517,13 +516,13 @@ class Caviar {
   int set_shadow_table(unsigned char *table);
   // 0x006183D0. Rejects a draw with no Buffer and resets the six-int group.
   int set_buffer(Buffer *buffer);
-  // The image's UNK2, named from its own stores: it hands the scene record a
-  // colour table, raises field_4_'s bit 4 - the bit object_start tests to
-  // decide where the next draw reads its colour table from - calls render,
-  // and drops the bit again. centre_x/centre_y are the centre of the box
+  // The image's UNK2: it stores a borrowed colour-table source in the scene
+  // record, raises field_4_'s bit 4 - the bit object_start tests to decide
+  // where the next draw reads its colour table from - calls render, and drops
+  // the bit again. centre_x/centre_y are the centre of the box
   // render builds 0x100 deep around, and render_flags is render's own mask.
   int render_with_colour_table(Buffer *buffer, int centre_x, int centre_y,
-                               int colour_table, int render_flags);
+                               const void *colour_table, int render_flags);
   // 0x00617230. The renderer's own draw. Not homed yet - pending_bodies.cpp
   // forwards it - and the declaration is what keeps the wrapper's call a
   // plain `call rel32` like the image. centre_x/centre_y are the centre of
@@ -585,18 +584,13 @@ class Caviar {
   // 0x00618DA0. The engine's per-object callback: fills the handle's colour
   // table with 0x1800 bytes chosen by field_4_'s bits - the shared monochrome
   // source when bit 3 is on, the caller's table when bit 4 is on, otherwise
-  // the instance table's own entry for the step.
-  // `__cdecl` MEMBER, because the image's own name spells `QAA`: a member
-  // declared __cdecl takes no receiver, which is what lets init_class store
-  // its address as the engine's per-object callback. The five engine
-  // arguments are the callback's protocol and the body reads two of them.
-  // The last four arguments are the engine's callback protocol - position,
-  // orientation, bounds, direction, the packet the engine's other per-object
-  // callbacks take - and this body reads none of them; only the handle and
-  // the step reach the colour table.
-  void __cdecl object_start(VOX_ScnRenderHnd *handle, long step,
-                            VOX_Vect *position, VOX_Matrix *orientation,
-                            VOX_Rect *bounds, VOX_Vect *direction);
+  // the instance table's entry for the callback's instance index.
+  // The renderer installs this static __cdecl function in the engine's
+  // six-argument callback slot. It has no implicit Caviar receiver; the body
+  // obtains the active renderer from CaviarScene.
+  static void __cdecl object_start(VOX_ScnRenderHnd *handle, long instance,
+                                   VOX_Vect *position, VOX_Matrix *orientation,
+                                   int32_t *bounds, VOX_Vect *direction);
   // 0x006181D0. The shadow direction as two angles: the three floats it
   // writes are the rotation's second column.
   void set_shadow_vector(float elevation, float azimuth);
@@ -748,10 +742,14 @@ struct VoxRenderRecord {
     int32_t draw_height_;      // 0x4C
     void *colour_table_;       // 0x50
     void *shadow_table_;       // 0x54
-    // 0x58, 0x5C. The engine's two per-object callbacks: +0x58 is the one
-    // init_class fills with the renderer's own object_start (0x00618DA0), and
-    // the draw calls both - +0x58 with the part, +0x5C after it with the step.
-    uint32_t object_callback_[2];
+    // 0x58: six-argument per-instance callback installed by init_class.
+    // 0x5C: post-part callback; vox_draw_scene reloads it after vox_draw_part
+    // and calls it with this record and the same instance index.
+    typedef void (__cdecl *ObjectStartCallback)(VoxRenderRecord *, long,
+        VOX_Vect *, VOX_Matrix *, int32_t *, VOX_Vect *);
+    typedef void (__cdecl *PostPartCallback)(VoxRenderRecord *, int32_t);
+    ObjectStartCallback object_start_callback_; // +0x58
+    PostPartCallback post_part_callback_;       // +0x5C
     // 0x60, 0x64. The two per-entry ramp pointers. Created zeroed, then
     // owned by sub_63f9b0: it frees each, reallocates count<<2 bytes (count
     // = the descriptor's entry count at setup_block+0x10), and fills ramp A
@@ -786,6 +784,12 @@ struct VoxRenderRecord {
 
 static_assert(sizeof(VoxRenderRecord) == 0x80,
               "renderer record must be the 0x80 bytes the engine allocates");
+static_assert(offsetof(VoxRenderRecord, colour_table_) == 0x50,
+              "the callback handle's colour table is at +0x50");
+static_assert(offsetof(VoxRenderRecord, object_start_callback_) == 0x58,
+              "the six-argument callback slot is at +0x58");
+static_assert(offsetof(VoxRenderRecord, post_part_callback_) == 0x5C,
+              "the post-part callback slot is at +0x5C");
 
 VoxRenderRecord *__cdecl vox_create_record(int a1, void *a2, void *a3, void *a4,
                                         int a5);
@@ -797,16 +801,7 @@ VoxRenderRecord *__cdecl vox_create_record(int a1, void *a2, void *a3, void *a4,
 void __cdecl vox_transform_camera(VoxSceneState *state, int step,
                                   VOX_Vect *position, VOX_Vect *extent);
 
-// The scene render handle the engine hands back to the renderer's callbacks.
-// +0x50 is the colour table the next draw reads, which is what object_start
-// fills; the same 0x80-byte block is modelled as VoxRenderRecord just above,
-// where the same slot is colour_table_.
-struct VOX_ScnRenderHnd {
-  uint8_t lead_[0x50];     // +0x00
-  void *colour_table_;     // +0x50
-};
-
 extern Caviar g_VEHDRAW_CAVIAR;
 
-static_assert(sizeof(VOX_ScnRenderHnd) == 0x54,
-              "the render handle must reach its colour table at +0x50");
+static_assert(sizeof(VOX_ScnRenderHnd) == 0x80,
+              "the callback handle is the same 0x80-byte renderer record");

@@ -90,6 +90,7 @@ class BaseButton : public GraphicWin {
   // menu is shown/hidden. Keep the legacy word encapsulated in BaseButton.
   void set_pressed_visual(int value) { field_A9C_ = static_cast<uint32_t>(value); }
   int selected_state() const { return static_cast<int>(field_A18_); }
+  int field_A74() const { return static_cast<int>(field_A74_); }
   // Store-only configuration used by PrefWin: unlike set(), this must not
   // repaint or notify the parent between the original ordered stores.
   void set_selected_state(int value) { field_A18_ = static_cast<uint32_t>(value); }
