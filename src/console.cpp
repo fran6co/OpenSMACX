@@ -2681,20 +2681,10 @@ void Console::unload(int veh_id) {
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 
 
-// The turn-assignment guard: game.cpp owns the same storage as its TU-private
-// TurnsAssigned static at 0x0093E8C0. Until that static is exported this
-// accessor reaches it without a second definition (the storage audit counts
-// cross-TU duplicate identities).
-inline int &console_turns_assigned() { return *reinterpret_cast<int *>(0x0093E8C0); }
-
-// THE POPUP CHECKBOX ANSWER BYTE at 0x009BC06C. popup.cpp's pops() owns this
-// storage as its TU-private PopupWriteCheckState (read before write_check,
-// overwritten from read_check's result); until that static is exported this
-// file reaches the same dword through a rebindable byte-wide slot - set_ai
-// seeds the four AI checkboxes through it and reads the answer back after
-// x_pop_short, both as a single byte.
-inline unsigned char &console_popup_check_state() {
-    return *reinterpret_cast<unsigned char *>(0x009BC06C);
+// Existing typed owner cells: NetDaemonNet's shared assignment word and
+// Popup's full-width checkbox state.
+inline unsigned int &console_turns_assigned() {
+    return NetDaemonNet.lock_state_[0].leading_words_[1];
 }
 
 // THE GAME-IN-PROGRESS FLAG at 0x009B2074, between game.h's ControlTurnPhase
@@ -5014,9 +5004,9 @@ void Console::set_ai(int faction_id) {
     } else {
         flags &= 0xF7;
     }
-    console_popup_check_state() = flags;
+    PopupWriteCheckState = static_cast<int>(flags);
     if (x_pop_short(StrTechRandom, 1, (NullCallback)0) >= 0) {
-        const char answer = static_cast<char>(console_popup_check_state());
+        const char answer = *reinterpret_cast<const char *>(&PopupWriteCheckState);
         entry[0] = answer & 1;
         entry[1] = (answer & 2) >> 1;
         entry[2] = (answer & 4) >> 2;

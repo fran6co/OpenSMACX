@@ -3652,15 +3652,18 @@ int __cdecl sub_52db70() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00592EE0
 
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const TurnsAssigned = (int *)0x0093E8C0;
+// This is NetDaemonNet.lock_state_[0].leading_words_[1] at +0x1B30.
+// Keep the unsigned owner storage and recover the original signed int view
+// only at the two functions whose ABI returns/compares it as int.
+static int turns_assigned() {
+    return static_cast<int>(NetDaemonNet.lock_state_[0].leading_words_[1]);
+}
 
 int __cdecl next_player_turn() {
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
         return 0;
     }
-    if (*TurnsAssigned == 0) {
+    if (turns_assigned() == 0) {
         return 0;
     }
     int i = GameDataStateStorage.fields_.net_turn_faction_ + 1;
@@ -4149,7 +4152,7 @@ int __cdecl current_server() {
         }
         return 0;
     }
-    return *TurnsAssigned;
+    return turns_assigned();
 }
 
 // ORIGINAL: 0x0058F610 ?say_special@@YAXPADPADH@Z 0x0058F610-0x0058F6F6 BYTE_EXACT
