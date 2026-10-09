@@ -270,6 +270,11 @@
       "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
       "address_space": "pe:va",
       "address": 5121104
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5456896
     }
   ],
   "editable_files": [
@@ -290,13 +295,16 @@
     "recovery/tests/test_netwin_player_packets.py",
     "recovery/tests/test_netwin_row_owners.py",
     "recovery/tests/test_netwin_session_assets_owner_oct9.py",
-    "recovery/tests/test_netwin_faction_record_owner_closure_oct9.py"
+    "recovery/tests/test_netwin_faction_record_owner_closure_oct9.py",
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_lobby_actual_source.py"
   ],
   "evidence": [
     "NetWinFactionRecord already has 0x190 stride and proven owner+4/color+8/filename+A/leader+22/formal+3A/noun+62 layout. Source typed sibling methods get_player_color/pick_player/pick_faction/pick_map/prepare_game/on_button_clicked use this same storage. NetWin members faction_records_+772C/faction_records_copy_+7730 remain void*. Recover genuine typed pointers and complete record allocation/read/write/lifecycle closure, not new fixed-address wrappers or guessed class names.",
     "Pinned verified original identities: setup_faction_data481FD0 allocates/frees/populates arrays, called by NetDaemon::process_message/NetWin::exec/send_faction_data; fill_player481DA0 rawrecord reads, called by process_message; draw_factions47FED0 noun+62; draw_player_names480370 owner+4; draw_session_info480900 owner+4; draw_diffs480180 byte0; send_faction_data47B020 byte1. Other same-owner consumers and setup/close/exec/Escape/destructor freeing/nulling belong in coordinated closure. Preserve callback-observable rereads and order, counts/stride/failure state and all mappings/history/claims.",
     "Original setup/fill access record+192: two bytes beyond asserted190 stride. Adjective string at+112 also reaches beyond that row. Do not invent a larger per-row struct, truncate strings, normalize overlaps or silently add bounds guards. Preserve these explicit allocation/byte-domain operations with evidence-qualified object-representation access while migrating proven in-row fields to ordinary members. Original allocation capacity/last-row error behavior remains obligation if unknown, no bug fixes.",
     "Two bounded additional NetWin types are established by existing APIs/layouts: draw_session_info Buffer+10 wrap-width store may use Buffer::set_wrap_width; on_key_down self+42F4 chat text is editBox_.text_ because member+38E0 and text+A14. Only migrate if actual API side effects match original; do not edit Buffer/EditBox outside owner scope. Report external dependencies before edits.",
-    "Actual-source host record controls should cover producer/fill, all proved field accesses, crossed-stride bytes and string endpoints, lifecycle/failure effects and executed damage mutants. Existing host fixtures may migrate only typed API changes without weakening assertions. All native whole-NetWin baseline/current measurements, layout proof, source identity continuity, fresh isolated/integrated build/link and independent review required. No manual ORIGINAL/claim edits, no extended byte-spelling iterations, preserve justified temporary regressions as matching obligations. Not autonomous or game acceptance."
+    "Actual-source host record controls should cover producer/fill, all proved field accesses, crossed-stride bytes and string endpoints, lifecycle/failure effects and executed damage mutants. Existing host fixtures may migrate only typed API changes without weakening assertions. All native whole-NetWin baseline/current measurements, layout proof, source identity continuity, fresh isolated/integrated build/link and independent review required. No manual ORIGINAL/claim edits, no extended byte-spelling iterations, preserve justified temporary regressions as matching obligations. Not autonomous or game acceptance.",
+    "Coordinator expands the discovered output-parameter closure immediately without resetting base_revision: faction.h PlayerData is unrelated diplomatic state, while fill_player output offsets5/1D/45/5D/DD/F5/175 exactly match existing NetWinLobbyRow strings/tail0. NetDaemon process_message original534400 helper passes message+10 (same existing lobby-row payload) through an incorrect PlayerData cast. Change fill_player declaration/definition to NetWinLobbyRow*, use ordinary output row fields and sentinel noun, remove misleading forward declaration, update only that bounded NetDaemon caller wire-row view and its actual-source lobby fixture API. No other NetDaemon behavior edits or task baseline changes authorized. Preserve original identities/spans/claims and old historical label; coordinator native writer updates freshly observed emitted function symbol. Measure both NetWin and affected NetDaemon scope, compile/link complete closure and independently review target/member layout and actual row writes."
   ]
 }
