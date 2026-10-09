@@ -47,6 +47,9 @@
 #include "interlude.h"
 #include "worldwin.h"
 
+// Current code uses PlayerData::proto_id_active for the byte table historically
+// viewed as veh.cpp's FactionProtoSeenCount; the original LEVER annotations below
+// retain their task-base wording as provenance.
 
 // The UI, network and AI callers share the same base-domain operation.
 // ORIGINAL: 0x004CA7F0 ?action_staple@@YAXH@Z 0x004CA7F0-0x004CAA4B
@@ -5367,7 +5370,8 @@ void __cdecl base_compute(int force) {
  * struct's middle and tail are where the image's own layout disagrees), so
  * neither file can reach the byte through a field name.
  */
-uint8_t *const FactionProtoSeenCount = (uint8_t *)0x0096D238;
+// Current layout evidence supersedes that seed conclusion: 0x0096D238 is
+// PlayersData[0].proto_id_active[0] (PlayerData +0x858), with a 0x20CC row stride.
 
 /*
  * "Don't ask again" latch for the prototype-upgrade confirmation. The automatic
@@ -10578,7 +10582,7 @@ void __cdecl upgrade_prototypes(int faction_id, int proto_id) {
             != Chassis[VehPrototypes[proto_id].chassis_id].triad) {
             continue;
         }
-        if (FactionProtoSeenCount[faction_id * 0x20cc + other] == 0) {
+        if (PlayersData[faction_id].proto_id_active[other] == 0) {
             continue;
         }
         int8_t self_weapon = Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
@@ -10727,18 +10731,19 @@ int __cdecl get_rating(int faction_id, int arg2) {
 void __cdecl draw_map(int draw_type);
 
 void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
-    int faction_offset = faction_id * 0x20cc;
     int cost = upgrade_cost(faction_id, proto_id_new, proto_id_old);
-    int product = cost * FactionProtoSeenCount[faction_offset + proto_id_old] * 10;
+    int product = cost * PlayersData[faction_id].proto_id_active[proto_id_old] * 10;
     PlayersData[faction_id].energy_reserves -= product;
 
     if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
         int i = 0;
         do {
             if (Vehs[i].faction_id == faction_id && Vehs[i].proto_id == proto_id_old) {
-                FactionProtoSeenCount[faction_offset + proto_id_old]--;
-                FactionProtoSeenCount[faction_offset + proto_id_new]++;
+                PlayersData[faction_id].proto_id_active[proto_id_old]--;
+                uint8_t new_count = PlayersData[faction_id].proto_id_active[proto_id_new];
+                ++new_count;
                 Vehs[i].proto_id = proto_id_new;
+                PlayersData[faction_id].proto_id_active[proto_id_new] = new_count;
                 if (has_abil(proto_id_new, ABL_TRAINED) != 0
                     && has_abil(proto_id_old, ABL_TRAINED) == 0) {
                     int morale = Vehs[i].morale + 1;

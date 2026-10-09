@@ -9322,28 +9322,16 @@ Purpose: Kill a vehicle stack by walking the link list to its tail, then
 Return Value: n/a
 Status: Complete
 */
-// The vehLinks array: same 0x34-stride vehicle record the stack walkers
-// use, with the two short link fields proven by the disassembly's scaled
-// addressing (lea x2 for i*13, then a *4 SIB scale on the load).
-struct VehLink {
-    uint8_t pad_0_[0x2C];
-    short field_2c_;
-    short field_2e_;
-    uint8_t pad_30_[0x34 - 0x2E - 2];
-};
-
-static VehLink *const g_vehLinks = (VehLink *)0x00952858;
-
 // Declared, never defined here (a definition would be inlined); the editor
 // command family calls it by name.
 void __cdecl veh_kill(int vehID);
 
 void __cdecl stack_kill(int a1) {
     if (a1 >= 0) {
-        short s = g_vehLinks[a1].field_2e_;
+        short s = Vehs[a1].prev_veh_id_stack;
         while (s >= 0) {
             a1 = s;
-            s = g_vehLinks[a1].field_2e_;
+            s = Vehs[a1].prev_veh_id_stack;
         }
     }
     if (a1 >= 0) {
@@ -9352,7 +9340,7 @@ void __cdecl stack_kill(int a1) {
             if (a1 < 0) {
                 next = a1;
             } else {
-                next = g_vehLinks[a1].field_2c_;
+                next = Vehs[a1].next_veh_id_stack;
             }
             veh_kill(a1);
             if (next > a1) {
@@ -9403,15 +9391,10 @@ char VehLogKillingVehicle[] = "Killing vehicle (v,who,v2)";
 // what writes it - nothing else in the tree reads or writes it.
 int *const VehFindBestDist = (int *)0x009B227C;
 
-// Two PlayerData fields the image reaches by the array's own 0x20CC stride:
-// 0x0096DA38 is +0x1058 into the record and 0x0096D238 is +0x0858. The
-// diplomacy views in faction.h are bound the same way (DiploVendettaTable and
-// friends) - one address per view, the array spelling cannot share the single
-// pair index these compute first. +0x1058 is a dword counter of the faction's
-// living non-worm units (decremented only when VehPrototypes[proto].plan <= 7)
-// and +0x0858 is the per-prototype byte run beside it.
-uint32_t *const FactionAliveUnitCount = (uint32_t *)0x0096DA38;
-uint8_t *const FactionProtoSeenCount = (uint8_t *)0x0096D238;
+// PlayersData owns both faction counters: total_mil_veh is the dword at +0x1058,
+// and proto_id_active is the byte row at +0x0858. veh_kill's native index
+// scales faction*2099 by four before addressing that row, yielding the 0x20CC
+// PlayerData stride.
 
 /*
 Purpose: Remove a vehicle from the game entirely.
@@ -9425,11 +9408,11 @@ Purpose: Remove a vehicle from the game entirely.
 // HOMED from src/recovered/units/005c08c0.cpp, 2026-09-04, which carried 14
 // anonymous address bindings; every one is named or modelled above, and the
 // pending_bodies.cpp forwarder of the same name is gone (this definition
-// replaces it). The 0x952858 walk is over Vehs[] itself, not a second array:
-// eax starts at Vehs + 0x30 and advances 0x34, so `word [eax]`/`word [eax+2]`
-// are next_veh_id_stack/prev_veh_id_stack and `byte [eax - 0x1f]`/`word
-// [eax - 0x1c]` are the PREVIOUS record's order and waypoint_x[0]. The
-// g_vehLinks spelling stack_kill keeps is the same memory shifted by 0x30.
+// replaces it). stack_kill reads Vehs[].next_veh_id_stack at 0x952858 and
+// prev_veh_id_stack at 0x95285A. In veh_kill's compaction loop, eax starts at
+// Vehs + 0x30 and advances 0x34; `word [eax]`/`word [eax+2]` are those same
+// fields. In that same veh_kill loop, `byte [eax - 0x1f]` and `word
+// [eax - 0x1c]` are the previous record's order and waypoint_x[0].
 Return Value: n/a
 Status: MISMATCH #15 - the `xor edx,edx` zero-extending faction_id for log_say
         lands one slot away from the image's; every call, table stride and
@@ -9454,9 +9437,14 @@ void __cdecl veh_kill(int veh_id) {
     const int faction_id = Vehs[veh_id].faction_id;
 
     if (VehPrototypes[proto_id].plan <= 7) {
-        --FactionAliveUnitCount[faction_id * 2099];
+        uint32_t count_bits;
+        memcpy(&count_bits, &PlayersData[faction_id].total_mil_veh,
+               sizeof(count_bits));
+        --count_bits;
+        memcpy(&PlayersData[faction_id].total_mil_veh, &count_bits,
+               sizeof(count_bits));
     }
-    --FactionProtoSeenCount[faction_id * 2099 + proto_id];
+    --PlayersData[faction_id].proto_id_active[proto_id];
 
     veh_lift(veh_id);
 
