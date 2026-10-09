@@ -122,16 +122,20 @@ class ReportWin : public GraphicWin {
   uint32_t field_A34_;  // 0xA34
   // Genuine members are constructed after GraphicWin, in declaration order.
   FlatButton flatButtons1_[7];  // 0xA38
-  uint32_t field_594C_;  // 0x594C
-  uint32_t field_5950_;  // 0x5950
-  uint32_t field_5954_;  // 0x5954
-  uint32_t field_5958_;  // 0x5958
-  uint32_t field_595C_;  // 0x595C
-  uint32_t field_5960_;  // 0x5960
-  uint32_t field_5964_;  // 0x5964
-  uint32_t field_5968_;  // 0x5968
-  uint32_t field_596C_;  // 0x596C
-  uint32_t field_5970_;  // 0x5970
+  // Signed-coordinate views of the chart anchors written by draw_labs and
+  // consumed by labs_line/on_button_passover. Storage remains the original
+  // uint32 dword layout; these semantic names are source interpretations, not
+  // recovered original member spellings.
+  uint32_t lab_prerequisite_x_;  // 0x594C
+  uint32_t lab_center_x_;  // 0x5950
+  uint32_t lab_child_x_;  // 0x5954
+  uint32_t lab_center_y_;  // 0x5958
+  uint32_t lab_three_child_upper_y_;  // 0x595C
+  uint32_t lab_three_child_lower_y_;  // 0x5960
+  uint32_t lab_four_child_top_y_;  // 0x5964
+  uint32_t lab_upper_inner_y_;  // 0x5968
+  uint32_t lab_lower_inner_y_;  // 0x596C
+  uint32_t lab_four_child_bottom_y_;  // 0x5970
   // RECOVERY_MEMBER: v1 ReportWin energy_panel_rect_ 0x5974 0x0049BCD0
   RECT energy_panel_rect_;  // 0x5974; all four edges form one frame
   RECT report_panel_rect_;  // 0x5984, passed to Buffer::box_sprite

@@ -941,6 +941,13 @@ def lab_status_helper():
     return source[start:source.index("\n}\n", start) + 2]
 
 
+def lab_signed_coordinate_helper():
+    root = Path(__file__).resolve().parents[2]
+    source = (root / "src/reportwin.cpp").read_text()
+    start = source.index("static int reportwin_signed_coordinate(")
+    return source[start:source.index("\n}\n", start) + 2]
+
+
 def labs_harness(body):
     return r'''
 #include <cstring>
@@ -1124,6 +1131,7 @@ struct ReportIfFixture { int report_faction_id_, field_1E230_; Font *field_1E190
 struct ConsoleFixture { int faction_id_; } ConsoleGlobal={0};
 struct PlayerDataFixture { int tech_id_researching, tech_accumulated; } PlayersData[8]={{4,7}};
 int GameRules=0, GameState=0, MaxTechnologyNum=89;
+struct GameDataFixture { struct Fields { int game_state_, game_rules_, turn_current_num_; } fields_; } GameDataStateStorage;
 int lab_category_case=2;
 int WinScreenWidth=800;
 int EnergyLabsTotal=9, BreakthroughTurnsGlobal=5, TurnCurrentNum=30;
@@ -1161,8 +1169,8 @@ struct ReportWin : Buffer {
     int field_59A0_,field_59A4_,field_E268_,field_FAB8_,field_A24_;
     uint32_t field_59A8_;
     int field_A28_,field_A2C_,field_A30_,field_A34_;
-    int field_594C_,field_5950_,field_5954_,field_5958_,field_595C_,field_5960_;
-    int field_5964_,field_5968_,field_596C_,field_5970_;
+    uint32_t lab_prerequisite_x_,lab_center_x_,lab_child_x_,lab_center_y_,lab_three_child_upper_y_,lab_three_child_lower_y_;
+    uint32_t lab_four_child_top_y_,lab_upper_inner_y_,lab_lower_inner_y_,lab_four_child_bottom_y_;
     FlatButton flatButtons1_[7];
     SpotFixture spot_;
     ReportWin():field_59A0_(0),field_59A4_(0),field_59A8_(0),field_E268_(12),field_FAB8_(4) {
@@ -1180,7 +1188,7 @@ struct ReportWin : Buffer {
     }
     void draw_labs();
 };
-''' + lab_category_style() + lab_child_collector() + lab_button_helper() + lab_status_helper() + body + r'''
+''' + lab_signed_coordinate_helper() + lab_category_style() + lab_child_collector() + lab_button_helper() + lab_status_helper() + body + r'''
 int main() {
     DatalinkMain.entry.left=10; DatalinkMain.entry.top=20;
     DatalinkMain.entry.right=410; DatalinkMain.entry.bottom=320;
@@ -1188,6 +1196,9 @@ int main() {
     DatalinkMain.working.right=399; DatalinkMain.working.bottom=298;
     if(datalink_case) IfaceIdToSlotStorage[0]=8;
     if(blind_case) GameRules=RULES_BLIND_RESEARCH;
+    GameDataStateStorage.fields_.game_state_=GameState;
+    GameDataStateStorage.fields_.game_rules_=GameRules;
+    GameDataStateStorage.fields_.turn_current_num_=30;
     ConsoleGlobal.faction_id_=1;
     ReportIfGlobal.report_faction_id_=2;
     status_font_first=&status_font_a; status_font_second=&status_font_b;
@@ -1361,22 +1372,22 @@ int main() {
         if(w.field_A28_!=125 || w.field_A30_!=295
             || w.field_A2C_!=53 || w.field_A34_!=293) return 4;
         if(w.rect1_.right!=394 || w.rect1_.bottom!=200
-            || w.field_594C_!=18 || w.field_5950_!=125 || w.field_5954_!=252
-            || w.field_5958_!=150 || w.field_595C_!=94 || w.field_5960_!=206
-            || w.field_5964_!=66 || w.field_5968_!=122
-            || w.field_596C_!=178 || w.field_5970_!=234) return 6;
+            || w.lab_prerequisite_x_!=18 || w.lab_center_x_!=125 || w.lab_child_x_!=252
+            || w.lab_center_y_!=150 || w.lab_three_child_upper_y_!=94 || w.lab_three_child_lower_y_!=206
+            || w.lab_four_child_top_y_!=66 || w.lab_upper_inner_y_!=122
+            || w.lab_lower_inner_y_!=178 || w.lab_four_child_bottom_y_!=234) return 6;
     } else if(w.field_A28_!=115 || w.field_A30_!=305
               || w.field_A2C_!=(wide_case?217:119)
               || w.field_A34_!=(wide_case?391:293)) return 5;
     else if(w.rect1_.right!=400 || w.rect1_.bottom!=153) return 70;
-    else if(w.field_594C_!=15 || w.field_5950_!=115 || w.field_5954_!=215) return 71;
-    else if(w.field_5958_!=(wide_case?74:173)) return 81;
-    else if(w.field_595C_!=(wide_case?18:117)) return 82;
-    else if(w.field_5960_!=(wide_case?130:229)) return 83;
-    else if(w.field_5964_!=(wide_case?-10:89)) return 84;
-    else if(w.field_5968_!=(wide_case?46:145)) return 85;
-    else if(w.field_596C_!=(wide_case?102:201)) return 86;
-    else if(w.field_5970_!=(wide_case?158:257)) return 87;
+    else if(w.lab_prerequisite_x_!=15 || w.lab_center_x_!=115 || w.lab_child_x_!=215) return 71;
+    else if(w.lab_center_y_!=(wide_case?74:173)) return 81;
+    else if(w.lab_three_child_upper_y_!=(wide_case?18:117)) return 82;
+    else if(w.lab_three_child_lower_y_!=(wide_case?130:229)) return 83;
+    else if(reportwin_signed_coordinate(w.lab_four_child_top_y_)!=(wide_case?-10:89)) return 84;
+    else if(w.lab_upper_inner_y_!=(wide_case?46:145)) return 85;
+    else if(w.lab_lower_inner_y_!=(wide_case?102:201)) return 86;
+    else if(w.lab_four_child_bottom_y_!=(wide_case?158:257)) return 87;
     if(chart_case==1) {
         if(button_count!=6 || font_count!=6 || recolor_count!=1
             || line_count!=6) return 8;

@@ -133,6 +133,14 @@ static void reportwin_append_number(char *text, int value) {
     strcat(text, number);
 }
 
+// These chart coordinates are stored in unsigned layout words, but the
+// original renderer consumes them as signed 32-bit coordinates. Avoid an
+// out-of-range unsigned-to-signed conversion while preserving that bit view.
+static int reportwin_signed_coordinate(uint32_t bits) {
+    if (bits <= 0x7FFFFFFFu) return static_cast<int>(bits);
+    return -1 - static_cast<int>(~bits);
+}
+
 // The tree's four upper-tier buttons are fed by at most four matching
 // prerequisite slots. The image's loop notices a fifth match and stops
 // (0x4996CA..0x49970B), then clamps the displayed count to four
@@ -691,21 +699,21 @@ void ReportWin::draw_labs() {
     if (!datalink && WinScreenWidth != 0x320) tier_height -= 0xC8;
     rect1_.right = chart_width;
     rect1_.bottom = chart_height;
-    field_594C_ = chart_left + 5;
-    field_5950_ = chart_left + 5
+    lab_prerequisite_x_ = chart_left + 5;
+    lab_center_x_ = chart_left + 5
         + (chart_width - static_cast<int>(field_59A0_)) / 2 - 5;
-    field_5954_ = chart_left + 5 + chart_width
+    lab_child_x_ = chart_left + 5 + chart_width
         - static_cast<int>(field_59A0_) - 10;
-    field_5950_ = field_A28_;
-    field_5958_ = chart_y
+    lab_center_x_ = field_A28_;
+    lab_center_y_ = chart_y
         + (tier_height - static_cast<int>(field_59A4_)) / 2;
-    field_595C_ = field_5958_ - static_cast<int>(field_59A4_) - 0x10;
-    field_5960_ = field_5958_ + static_cast<int>(field_59A4_) + 0x10;
+    lab_three_child_upper_y_ = lab_center_y_ - static_cast<int>(field_59A4_) - 0x10;
+    lab_three_child_lower_y_ = lab_center_y_ + static_cast<int>(field_59A4_) + 0x10;
     const int tier_pitch = static_cast<int>(field_59A4_) + 0x10;
-    field_5964_ = field_5958_ - tier_pitch - tier_pitch / 2;
-    field_5968_ = field_5958_ - tier_pitch / 2;
-    field_596C_ = field_5958_ + tier_pitch - tier_pitch / 2;
-    field_5970_ = field_5958_ + tier_pitch * 2 - tier_pitch / 2;
+    lab_four_child_top_y_ = lab_center_y_ - tier_pitch - tier_pitch / 2;
+    lab_upper_inner_y_ = lab_center_y_ - tier_pitch / 2;
+    lab_lower_inner_y_ = lab_center_y_ + tier_pitch - tier_pitch / 2;
+    lab_four_child_bottom_y_ = lab_center_y_ + tier_pitch * 2 - tier_pitch / 2;
 
     // The native two-prerequisite route creates the left/right prerequisite
     // controls (0x499867..0x499A99); the one-prerequisite route creates the
@@ -718,21 +726,33 @@ void ReportWin::draw_labs() {
         Win *const parent = datalink ? static_cast<Win *>(&DatalinkMain)
                                      : static_cast<Win *>(this);
         if (prerequisite1 >= 0 && prerequisite2 >= 0) {
-            labs_line(field_A28_, field_5958_, field_594C_, field_5968_,
+            labs_line(reportwin_signed_coordinate(field_A28_),
+                      reportwin_signed_coordinate(lab_center_y_),
+                      reportwin_signed_coordinate(lab_prerequisite_x_),
+                      reportwin_signed_coordinate(lab_upper_inner_y_),
                       field_59A0_, field_59A4_, 0);
             reportwin_init_lab_button(canvas, flatButtons1_[1], prerequisite1,
-                0x379, field_594C_, field_5968_, field_59A0_, field_59A4_,
+                0x379, reportwin_signed_coordinate(lab_prerequisite_x_),
+                reportwin_signed_coordinate(lab_upper_inner_y_), field_59A0_, field_59A4_,
                 parent, faction);
-            labs_line(field_A28_, field_5958_, field_594C_, field_596C_,
+            labs_line(reportwin_signed_coordinate(field_A28_),
+                      reportwin_signed_coordinate(lab_center_y_),
+                      reportwin_signed_coordinate(lab_prerequisite_x_),
+                      reportwin_signed_coordinate(lab_lower_inner_y_),
                       field_59A0_, field_59A4_, 0);
             reportwin_init_lab_button(canvas, flatButtons1_[2], prerequisite2,
-                0x37A, field_594C_, field_596C_, field_59A0_, field_59A4_,
+                0x37A, reportwin_signed_coordinate(lab_prerequisite_x_),
+                reportwin_signed_coordinate(lab_lower_inner_y_), field_59A0_, field_59A4_,
                 parent, faction);
         } else if (prerequisite1 >= 0) {
-            labs_line(field_A28_, field_5958_, field_594C_, field_5958_,
+            labs_line(reportwin_signed_coordinate(field_A28_),
+                      reportwin_signed_coordinate(lab_center_y_),
+                      reportwin_signed_coordinate(lab_prerequisite_x_),
+                      reportwin_signed_coordinate(lab_center_y_),
                       field_59A0_, field_59A4_, 0);
             reportwin_init_lab_button(canvas, flatButtons1_[1], prerequisite1,
-                0x379, field_594C_, field_5958_, field_59A0_, field_59A4_,
+                0x379, reportwin_signed_coordinate(lab_prerequisite_x_),
+                reportwin_signed_coordinate(lab_center_y_), field_59A0_, field_59A4_,
                 parent, faction);
         }
 
@@ -742,25 +762,27 @@ void ReportWin::draw_labs() {
         if (child_count > 4) child_count = 4;
         if (child_count == 1 || child_count == 2
             || child_count == 3 || child_count == 4) {
-            int x = field_5954_;
-            int y = child_count == 4 ? field_5964_
-                : child_count == 3 ? field_595C_
-                : child_count == 2 ? field_5968_ : field_5958_;
+            int x = reportwin_signed_coordinate(lab_child_x_);
+            int y = child_count == 4 ? reportwin_signed_coordinate(lab_four_child_top_y_)
+                : child_count == 3 ? reportwin_signed_coordinate(lab_three_child_upper_y_)
+                : child_count == 2 ? reportwin_signed_coordinate(lab_upper_inner_y_)
+                : reportwin_signed_coordinate(lab_center_y_);
             for (int child = 0; child < child_count; ++child) {
-                labs_line(x, y, field_5950_, field_5958_,
+                labs_line(x, y, reportwin_signed_coordinate(lab_center_x_),
+                          reportwin_signed_coordinate(lab_center_y_),
                           field_59A0_, field_59A4_, 0);
                 reportwin_init_lab_button(canvas, flatButtons1_[child + 3],
                     children[child], 0x37B + child, x, y,
                     field_59A0_, field_59A4_, parent, faction);
                 if (child_count == 4) {
-                    if (child == 0) y = field_5968_;
-                    else if (child == 1) y = field_596C_;
-                    else if (child == 2) y = field_5970_;
+                    if (child == 0) y = reportwin_signed_coordinate(lab_upper_inner_y_);
+                    else if (child == 1) y = reportwin_signed_coordinate(lab_lower_inner_y_);
+                    else if (child == 2) y = reportwin_signed_coordinate(lab_four_child_bottom_y_);
                 } else if (child_count == 2) {
-                    if (child == 0) y = field_596C_;
+                    if (child == 0) y = reportwin_signed_coordinate(lab_lower_inner_y_);
                 } else if (child_count == 3) {
-                    y = child == 0 ? field_5958_
-                        : child == 1 ? field_5960_ : y;
+                    y = child == 0 ? reportwin_signed_coordinate(lab_center_y_)
+                        : child == 1 ? reportwin_signed_coordinate(lab_three_child_lower_y_) : y;
                 }
             }
         }
@@ -850,15 +872,15 @@ void ReportWin::on_button_passover(int button_id, int state) {
     // path rather than silently adding a behavior-changing safety guard.
     report_work_rect_ = flatButtons1_[index].outer_rect();
 
-    int first_x = static_cast<int>(field_5950_);
-    int first_y = static_cast<int>(field_5958_);
+    int first_x = reportwin_signed_coordinate(lab_center_x_);
+    int first_y = reportwin_signed_coordinate(lab_center_y_);
     int last_x = report_work_rect_.left;
     int last_y = report_work_rect_.top;
     if (index >= 3) {
         first_x = report_work_rect_.left;
         first_y = report_work_rect_.top;
-        last_x = static_cast<int>(field_5950_);
-        last_y = static_cast<int>(field_5958_);
+        last_x = reportwin_signed_coordinate(lab_center_x_);
+        last_y = reportwin_signed_coordinate(lab_center_y_);
     }
 
     report_work_rect_.left -= 3;
@@ -866,13 +888,14 @@ void ReportWin::on_button_passover(int button_id, int state) {
     report_work_rect_.right += 3;
     report_work_rect_.bottom += 3;
 
-    const int center_y = (static_cast<int>(field_A34_)
-        + static_cast<int>(field_A2C_) - static_cast<int>(field_A24_)) / 2;
+    const int center_y = (reportwin_signed_coordinate(field_A34_)
+        + reportwin_signed_coordinate(field_A2C_)
+        - reportwin_signed_coordinate(field_A24_)) / 2;
     RECT marker = {
-        static_cast<int>(field_A28_) - 3,
+        reportwin_signed_coordinate(field_A28_) - 3,
         center_y - 9,
-        static_cast<int>(field_59A8_ + field_A28_) + 3,
-        static_cast<int>(field_A24_) + center_y + 6
+        reportwin_signed_coordinate(field_59A8_ + field_A28_) + 3,
+        reportwin_signed_coordinate(field_A24_) + center_y + 6
     };
     Buffer *canvas = static_cast<Buffer *>(host);
     BoxSpriteParams *style = state == 0
@@ -2053,7 +2076,7 @@ tech-tree arrow table.
              arrow = g_IFACE_TECH_TREE_ARROW_SPRITES[style_flag]
              style = style_select == 0 ? styles[3] : styles[5]
 
-The first branch (first_id == fields[0x1654]) draws the tag-to-line
+The first branch (first_id == lab_center_x_) draws the tag-to-line
 connector and returns; the three middle branches draw the line's right
 half for each matched lab pair member; the common tail draws the line box
 and the arrow head.
@@ -2072,11 +2095,6 @@ and the arrow head.
 */
 void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                           int x_offset, int line_height, int style_select) {
-    // The declared member block as dwords: fields[0x1653..0x165C] are
-    // field_594C_..field_5970_, fields[0x166A] is field_59A8_, and
-    // fields[0x3896..0x3899] is the work RECT at field_E258_.
-    int *fields = reinterpret_cast<int *>(this);
-
     // The research screen draws on the Datalink's own surface; every other
     // interface draws on this window's. Both hosts are GraphicWin-derived,
     // so the Buffer base sits at +0x444 either way.
@@ -2099,190 +2117,193 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
 
     RECT *work_rect = &report_work_rect_;
 
-    int line_id = fields[0x1654];
+    const int line_id = reportwin_signed_coordinate(lab_center_x_);
     int half_height = line_height / 2;
-    int centre_y = fields[0x1656] + half_height;
+    int centre_y = reportwin_signed_coordinate(lab_center_y_) + half_height;
 
     int tail_bottom, tail_right;
 
     if (first_id == line_id) {
-        int line_left = fields[0x1653];
+        const int line_left = reportwin_signed_coordinate(lab_prerequisite_x_);
         int centre_x = (line_left + line_id + x_offset) / 2;
-        if (branch_id == fields[0x165A] || branch_id == fields[0x165B]) {
-            fields[0x3896] = line_left + 3 + x_offset;
-            fields[0x3897] = fields[0x165A] + half_height;
-            fields[0x3898] = centre_x - 2;
-            fields[0x3899] = fields[0x165B] + half_height;
-            if (branch_id == fields[0x165A]) {
-                fields[0x3899] = centre_y;
+        if (branch_id == reportwin_signed_coordinate(lab_upper_inner_y_)
+            || branch_id == reportwin_signed_coordinate(lab_lower_inner_y_)) {
+            work_rect->left = line_left + 3 + x_offset;
+            work_rect->top = reportwin_signed_coordinate(lab_upper_inner_y_) + half_height;
+            work_rect->right = centre_x - 2;
+            work_rect->bottom = reportwin_signed_coordinate(lab_lower_inner_y_) + half_height;
+            if (branch_id == reportwin_signed_coordinate(lab_upper_inner_y_)) {
+                work_rect->bottom = centre_y;
             } else {
-                fields[0x3897] = centre_y + 1;
+                work_rect->top = centre_y + 1;
             }
             buffer->set_clip(work_rect);
-            fields[0x3899] = fields[0x165B] + half_height;
-            fields[0x3896] = fields[0x1653] - 4 + x_offset;
-            fields[0x3897] = fields[0x165A] + half_height;
-            fields[0x3898] = centre_x - 2;
+            work_rect->bottom = reportwin_signed_coordinate(lab_lower_inner_y_) + half_height;
+            work_rect->left = reportwin_signed_coordinate(lab_prerequisite_x_) - 4 + x_offset;
+            work_rect->top = reportwin_signed_coordinate(lab_upper_inner_y_) + half_height;
+            work_rect->right = centre_x - 2;
             box_style = (style_select == 0) ? &InterfaceBoxStyles[3]
                                             : &InterfaceBoxStyles[5];
             buffer->box_sprite(work_rect, box_style);
         } else {
             int left_edge = line_left - 4 + x_offset;
-            fields[0x3898] = centre_x + 5;
-            fields[0x3897] = centre_y;
-            fields[0x3896] = left_edge;
-            fields[0x3899] = centre_y + 0x14;
-            fields[0x3896] = left_edge + 7;
-            fields[0x3898] -= 7;
-            fields[0x3899] -= 7;
+            work_rect->right = centre_x + 5;
+            work_rect->top = centre_y;
+            work_rect->left = left_edge;
+            work_rect->bottom = centre_y + 0x14;
+            work_rect->left = left_edge + 7;
+            work_rect->right -= 7;
+            work_rect->bottom -= 7;
             buffer->set_clip(work_rect);
-            fields[0x3896] -= 7;
-            fields[0x3898] += 7;
-            fields[0x3899] += 7;
+            work_rect->left -= 7;
+            work_rect->right += 7;
+            work_rect->bottom += 7;
             box_style = (style_select == 0) ? &InterfaceBoxStyles[3]
                                             : &InterfaceBoxStyles[5];
             buffer->box_sprite(work_rect, box_style);
         }
         buffer->restore_clip();
-        fields[0x3896] = centre_x - 9;
-        fields[0x3897] = centre_y;
-        fields[0x3898] = line_id + 4;
-        fields[0x3899] = centre_y + 0x14;
-        fields[0x3896] += 7;
-        fields[0x3898] -= 7;
-        fields[0x3899] -= 7;
+        work_rect->left = centre_x - 9;
+        work_rect->top = centre_y;
+        work_rect->right = line_id + 4;
+        work_rect->bottom = centre_y + 0x14;
+        work_rect->left += 7;
+        work_rect->right -= 7;
+        work_rect->bottom -= 7;
         buffer->set_clip(work_rect);
-        fields[0x3896] -= 7;
-        fields[0x3898] += 7;
-        fields[0x3899] += 7;
+        work_rect->left -= 7;
+        work_rect->right += 7;
+        work_rect->bottom += 7;
         box_style = (style_select == 0) ? &InterfaceBoxStyles[3]
                                         : &InterfaceBoxStyles[5];
         buffer->box_sprite(work_rect, box_style);
         buffer->restore_clip();
         arrow->draw(draw_buffer, sprite_byte, line_id - 10,
-                    fields[0x1656] - 6 + half_height);
+                    reportwin_signed_coordinate(lab_center_y_) - 6 + half_height);
         return;
     }
 
-    int line_right = fields[0x1655];
-    int mid_x = (fields[0x166A] + line_right + line_id) / 2;
+    const int line_right = reportwin_signed_coordinate(lab_child_x_);
+    const int mid_anchor = reportwin_signed_coordinate(field_59A8_);
+    int mid_x = (mid_anchor + line_right + line_id) / 2;
     int mid_x2 = mid_x - 2;
 
-    if (second_id == fields[0x1657] || second_id == fields[0x1658]) {
-        fields[0x3896] = mid_x2;
-        fields[0x3897] = fields[0x1657] + half_height;
-        fields[0x3898] = line_right - 3;
-        fields[0x3899] = fields[0x1658] + half_height;
+    if (second_id == reportwin_signed_coordinate(lab_three_child_upper_y_) || second_id == reportwin_signed_coordinate(lab_three_child_lower_y_)) {
+        work_rect->left = mid_x2;
+        work_rect->top = reportwin_signed_coordinate(lab_three_child_upper_y_) + half_height;
+        work_rect->right = line_right - 3;
+        work_rect->bottom = reportwin_signed_coordinate(lab_three_child_lower_y_) + half_height;
         int draw_x, draw_y;
-        if (second_id == fields[0x1657]) {
-            fields[0x3899] = centre_y;
+        if (second_id == reportwin_signed_coordinate(lab_three_child_upper_y_)) {
+            work_rect->bottom = centre_y;
             draw_x = line_right;
-            draw_y = fields[0x1657] - 6;
+            draw_y = reportwin_signed_coordinate(lab_three_child_upper_y_) - 6;
         } else {
-            fields[0x3897] = centre_y + 1;
+            work_rect->top = centre_y + 1;
             draw_x = line_right;
-            draw_y = fields[0x1658] - 7;
+            draw_y = reportwin_signed_coordinate(lab_three_child_lower_y_) - 7;
         }
         arrow->draw(draw_buffer, sprite_byte, draw_x - 10,
                     draw_y + half_height);
         buffer->set_clip(work_rect);
         tail_right = line_right + 4;
-        tail_bottom = fields[0x1658] + half_height;
-        fields[0x3897] = fields[0x1657] + half_height;
-        fields[0x3896] = mid_x2;
-    } else if (second_id == fields[0x1659] || second_id == fields[0x165C]) {
-        fields[0x3896] = mid_x2;
-        fields[0x3897] = fields[0x1659] + half_height;
-        fields[0x3898] = line_right - 3;
-        fields[0x3899] = fields[0x165C] + half_height;
+        tail_bottom = reportwin_signed_coordinate(lab_three_child_lower_y_) + half_height;
+        work_rect->top = reportwin_signed_coordinate(lab_three_child_upper_y_) + half_height;
+        work_rect->left = mid_x2;
+    } else if (second_id == reportwin_signed_coordinate(lab_four_child_top_y_) || second_id == reportwin_signed_coordinate(lab_four_child_bottom_y_)) {
+        work_rect->left = mid_x2;
+        work_rect->top = reportwin_signed_coordinate(lab_four_child_top_y_) + half_height;
+        work_rect->right = line_right - 3;
+        work_rect->bottom = reportwin_signed_coordinate(lab_four_child_bottom_y_) + half_height;
         int draw_x, draw_y;
-        if (second_id == fields[0x1659]) {
-            fields[0x3899] = centre_y;
+        if (second_id == reportwin_signed_coordinate(lab_four_child_top_y_)) {
+            work_rect->bottom = centre_y;
             draw_x = line_right;
-            draw_y = fields[0x1659] - 6;
+            draw_y = reportwin_signed_coordinate(lab_four_child_top_y_) - 6;
         } else {
-            fields[0x3897] = centre_y + 1;
+            work_rect->top = centre_y + 1;
             draw_x = line_right;
-            draw_y = fields[0x165C] - 7;
+            draw_y = reportwin_signed_coordinate(lab_four_child_bottom_y_) - 7;
         }
         arrow->draw(draw_buffer, sprite_byte, draw_x - 10,
                     draw_y + half_height);
         buffer->set_clip(work_rect);
         tail_right = line_right + 4;
-        tail_bottom = fields[0x165C] + half_height;
-        fields[0x3897] = fields[0x1659] + half_height;
-        fields[0x3896] = mid_x2;
-    } else if (second_id != fields[0x165A] && second_id != fields[0x165B]) {
+        tail_bottom = reportwin_signed_coordinate(lab_four_child_bottom_y_) + half_height;
+        work_rect->top = reportwin_signed_coordinate(lab_four_child_top_y_) + half_height;
+        work_rect->left = mid_x2;
+    } else if (second_id != reportwin_signed_coordinate(lab_upper_inner_y_) && second_id != reportwin_signed_coordinate(lab_lower_inner_y_)) {
         arrow->draw(draw_buffer, sprite_byte, line_right - 10,
                     centre_y - 6);
-        fields[0x3898] = line_right + 4;
-        fields[0x3897] = centre_y;
-        fields[0x3896] = mid_x - 9;
-        fields[0x3899] = centre_y + 0x14;
-        fields[0x3896] += 7;
-        fields[0x3898] -= 7;
-        fields[0x3899] -= 7;
+        work_rect->right = line_right + 4;
+        work_rect->top = centre_y;
+        work_rect->left = mid_x - 9;
+        work_rect->bottom = centre_y + 0x14;
+        work_rect->left += 7;
+        work_rect->right -= 7;
+        work_rect->bottom -= 7;
         buffer->set_clip(work_rect);
-        fields[0x3896] -= 7;
-        fields[0x3898] += 7;
-        fields[0x3899] += 7;
+        work_rect->left -= 7;
+        work_rect->right += 7;
+        work_rect->bottom += 7;
         goto common_tail;
     } else {
-        fields[0x3896] = mid_x2;
-        fields[0x3897] = fields[0x165A] + half_height;
-        fields[0x3898] = line_right - 3;
-        fields[0x3899] = fields[0x165B] + half_height;
+        work_rect->left = mid_x2;
+        work_rect->top = reportwin_signed_coordinate(lab_upper_inner_y_) + half_height;
+        work_rect->right = line_right - 3;
+        work_rect->bottom = reportwin_signed_coordinate(lab_lower_inner_y_) + half_height;
         int draw_x, draw_y;
-        if (second_id == fields[0x165A]) {
-            fields[0x3899] = centre_y;
+        if (second_id == reportwin_signed_coordinate(lab_upper_inner_y_)) {
+            work_rect->bottom = centre_y;
             draw_x = line_right;
-            draw_y = fields[0x165A] - 6;
+            draw_y = reportwin_signed_coordinate(lab_upper_inner_y_) - 6;
         } else {
-            fields[0x3897] = centre_y + 1;
+            work_rect->top = centre_y + 1;
             draw_x = line_right;
-            draw_y = fields[0x165B] - 7;
+            draw_y = reportwin_signed_coordinate(lab_lower_inner_y_) - 7;
         }
         arrow->draw(draw_buffer, sprite_byte, draw_x - 10,
                     draw_y + half_height);
         buffer->set_clip(work_rect);
         tail_right = line_right + 4;
-        tail_bottom = fields[0x165B] + half_height;
-        fields[0x3897] = fields[0x165A] + half_height;
-        fields[0x3896] = mid_x2;
+        tail_bottom = reportwin_signed_coordinate(lab_lower_inner_y_) + half_height;
+        work_rect->top = reportwin_signed_coordinate(lab_upper_inner_y_) + half_height;
+        work_rect->left = mid_x2;
     }
-    fields[0x3898] = tail_right;
-    fields[0x3899] = tail_bottom;
+    work_rect->right = tail_right;
+    work_rect->bottom = tail_bottom;
 common_tail:
     box_style = (style_select == 0) ? &InterfaceBoxStyles[3]
                                     : &InterfaceBoxStyles[5];
     buffer->box_sprite(work_rect, box_style);
     buffer->restore_clip();
     {
-        int left_edge = fields[0x166A] - 4 + fields[0x1654];
-        fields[0x3896] = left_edge;
-        fields[0x3897] = centre_y;
+        int left_edge = reportwin_signed_coordinate(field_59A8_) - 4
+            + reportwin_signed_coordinate(lab_center_x_);
+        work_rect->left = left_edge;
+        work_rect->top = centre_y;
         if (style_select == 0) {
-            fields[0x3898] = mid_x + 5;
-            fields[0x3899] = centre_y + 0x14;
-            fields[0x3896] += 7;
-            fields[0x3898] -= 7;
-            fields[0x3899] -= 7;
+            work_rect->right = mid_x + 5;
+            work_rect->bottom = centre_y + 0x14;
+            work_rect->left += 7;
+            work_rect->right -= 7;
+            work_rect->bottom -= 7;
             buffer->set_clip(work_rect);
             box_style = &InterfaceBoxStyles[3];
-            fields[0x3896] -= 7;
-            fields[0x3898] += 7;
-            fields[0x3899] += 7;
+            work_rect->left -= 7;
+            work_rect->right += 7;
+            work_rect->bottom += 7;
         } else {
-            fields[0x3898] = mid_x + 5;
-            fields[0x3899] = centre_y + 0x14;
-            fields[0x3896] = left_edge + 7;
-            fields[0x3898] -= 7;
-            fields[0x3899] -= 7;
+            work_rect->right = mid_x + 5;
+            work_rect->bottom = centre_y + 0x14;
+            work_rect->left = left_edge + 7;
+            work_rect->right -= 7;
+            work_rect->bottom -= 7;
             buffer->set_clip(work_rect);
             box_style = &InterfaceBoxStyles[5];
-            fields[0x3896] -= 7;
-            fields[0x3898] += 7;
-            fields[0x3899] += 7;
+            work_rect->left -= 7;
+            work_rect->right += 7;
+            work_rect->bottom += 7;
         }
     }
     buffer->box_sprite(work_rect, box_style);
