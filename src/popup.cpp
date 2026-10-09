@@ -2068,7 +2068,7 @@ int Popup::on_exec() {
             strcat(StringTemp, BufferJoinSpace);
         }
 
-        const uint32_t head = reinterpret_cast<uint32_t>(unit_ids_.head_);
+        StringStructEntry *const head = unit_ids_.head_;
         if (head != 0) {
             unit_ids_.current_ = unit_ids_.current_->next;
             const int next = unit_ids_.current_position_ + 1;
@@ -2078,12 +2078,18 @@ int Popup::on_exec() {
             }
         }
 
-        const char *msg = unit_ids_.current_ == 0
-            ? 0
-            : *(const char **)((head == 0
-                                ? 0
-                                : reinterpret_cast<uint32_t>(
-                                      unit_ids_.current_->string_payload())) + 4);
+        StringStructEntry *const entry = unit_ids_.current_;
+        const char *msg;
+        if (entry == 0) {
+            msg = 0;
+        } else if (head == 0) {
+            // The image reads text at payload+4 from a null payload (absolute
+            // address 4) when a cursor exists without a list head. Keep it.
+            StringStructPayload *payload = 0;
+            msg = payload->text;
+        } else {
+            msg = entry->string_payload()->text;
+        }
         strcat(StringTemp, msg);
     }
 
@@ -2168,8 +2174,7 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
             n = abs(-1);
             if (n > 0) {
                 do {
-                    entry = *reinterpret_cast<StringStructEntry **>(
-                        reinterpret_cast<char *>(entry) + 0x10);
+                    entry = entry->previous;
                     n--;
                 } while (n != 0);
                 pop.unit_ids_.current_ = entry;
@@ -2191,7 +2196,10 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
         if (entry == 0) {
             text = 0;
         } else if (pop.unit_ids_.head_ == 0) {
-            text = reinterpret_cast<const char *>(*reinterpret_cast<int *>(4));
+            // The image reads payload+4 even when the current entry exists
+            // without a list head; preserve that unchecked address-4 load.
+            StringStructPayload *payload = 0;
+            text = payload->text;
         } else {
             text = entry->string_payload()->text;
         }
