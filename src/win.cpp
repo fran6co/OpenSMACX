@@ -5790,12 +5790,10 @@ struct PAINTSTRUCT_ {
 
 void __cdecl flush_input();
 void __cdecl wait_task();
-typedef int (__stdcall *ComSlot17)(void *self, HDC *out);
-
 // The HDC acquire/release pair, recovered from the artifact that defined
 // it: the bodies that paint non-client areas all use it, and a macro
 // does not travel with a function body.
-#define ACQUIRE_HDC(haveHdcVar)      do {          if (WinHdcRefCount == 0) {              if (DirectDrawSurface != 0) {                  ComSlot17 fn = (ComSlot17)(*reinterpret_cast<void ***>(DirectDrawSurface))[0x11];                  fn(DirectDrawSurface, &WinSharedHdc);              } else {                  WinSharedHdc =                       GetDC(HandleMain);              }              (haveHdcVar) = (WinSharedHdc != 0);              if (haveHdcVar) {                  WinHdcRefCount = 1;              }          } else {              ++WinHdcRefCount;              (haveHdcVar) = (WinSharedHdc != 0);          }      } while (0)
+#define ACQUIRE_HDC(haveHdcVar)      do {          if (WinHdcRefCount == 0) {              if (DirectDrawSurface != 0) {                  DirectDrawSurface->GetDC(&WinSharedHdc);              } else {                  WinSharedHdc =                       GetDC(HandleMain);              }              (haveHdcVar) = (WinSharedHdc != 0);              if (haveHdcVar) {                  WinHdcRefCount = 1;              }          } else {              ++WinHdcRefCount;              (haveHdcVar) = (WinSharedHdc != 0);          }      } while (0)
 
 // Helpers the flip/restore body needs, recovered from the artifact that
 // defined them - a static function and a macro do not travel with a
@@ -10671,9 +10669,6 @@ long Win::on_window_pos_changing(WINDOWPOS * pos) {
 // symbol    ?paint_tiled@Win@@QAEXPAVBuffer@@HHHHHHH@Z
 // TRIED: __stdcall(int a1..a8) reading ecx nowhere - the brief's IDA hypothesis; disasm dereferences the entering ecx at [ecx+0x184] (Win::field_184_) and later passes it unchanged as the Win* argument to Buffer::copy_to_window, so it is really a __thiscall Win member with 7 used stack ints + 1 unused pad. Palette::set_active_window is caller-cleaned (add esp,4 after the call) so it is invoked as a free __cdecl function pointer, not through the declared (thiscall-shaped) member.
 // ===== homed from src/unrecovered/005ef950.cpp =====
-typedef int (__stdcall *ComSlot017)(void *self, void *out_hdc);
-typedef int (__stdcall *ComSlot026)(void *self, void *hdc);
-
 void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
                        int clip_top, int clip_width, int clip_height, int unused8) {
     if (tile == 0) {
@@ -10685,8 +10680,7 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
             WinSharedHdc = GetDC(
                 HandleMain);
         } else {
-            ComSlot017 fn = (ComSlot017)(*reinterpret_cast<void ***>(DirectDrawSurface))[17];
-            fn(DirectDrawSurface, WinSharedHdc);
+            DirectDrawSurface->GetDC(&WinSharedHdc);
         }
         if (WinSharedHdc == 0) {
             return;
@@ -10752,8 +10746,7 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
 
     if (--WinHdcRefCount == 0) {
         if (DirectDrawSurface != 0) {
-            ComSlot026 fn = (ComSlot026)(*reinterpret_cast<void ***>(DirectDrawSurface))[26];
-            fn(DirectDrawSurface, WinSharedHdc);
+            DirectDrawSurface->ReleaseDC(WinSharedHdc);
             WinSharedHdc = 0;
             return;
         }

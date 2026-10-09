@@ -15067,14 +15067,13 @@ static void battle_plans_apply_selected_target(int faction_id,
                                                   int selected_base_id) {
     PlayerData &planner = PlayersData[faction_id];
     const Base &selected_base = Bases[selected_base_id];
-    planner.base_id_atk_target = selected_base_id;
     if (planner.x_target < 0) {
         return;
     }
 
     const Map &planned_tile = *map_loc(planner.x_target, planner.y_target);
     const Map &selected_tile = *map_loc(selected_base.x, selected_base.y);
-    if (planned_tile.climate == selected_tile.climate) {
+    if (planned_tile.region == selected_tile.region) {
         return;
     }
 
@@ -15222,6 +15221,8 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
                                  FactionDiplomacyPortraits[faction_b],
                                  pop_wait);
                 } else {
+                    PlayersData[faction_b].base_id_atk_target =
+                        selected_base_id;
                     x_pops_short(BattlePlansSelectionLabel, 0x100000,
                                  FactionDiplomacyPortraits[faction_b],
                                  pop_wait);
