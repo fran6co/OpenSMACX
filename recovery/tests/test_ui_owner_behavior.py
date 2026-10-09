@@ -75,7 +75,7 @@ SOURCE_SIGNATURES = {
     "setup_dtor": ("src/setupwin.cpp", r"^\s*SetupWin::~SetupWin\s*\(\s*\)"),
     "dialog_unk2": ("src/dialog.cpp", r"^\s*void\s+Dialog::UNK2\s*\("),
     "pass_focus": ("src/dialogs.cpp", r"^\s*void\s+Dialogs::pass_dialog_focus\s*\(\s*\)"),
-    "scroll_create": ("src/dialogs.cpp", r"^\s*int\s+Dialogs::on_scroll_create\s*\(\s*\)"),
+    "scroll_create": ("src/dialogs.cpp", r"^\s*Scroll\s*\*\s*Dialogs::on_scroll_create\s*\(\s*\)"),
     "setup_key": ("src/setupwin.cpp", r"^\s*int\s+SetupWin::on_key_click\s*\("),
     "newtech_group": ("src/newtechwin.cpp", r"^\s*void\s+NewTechWin::on_group_clicked\s*\("),
     "flatbutton_move": ("src/flatbutton.cpp", r"^\s*void\s+FlatButton::on_mouse_move\s*\("),
@@ -108,7 +108,7 @@ HEADER_WITNESSES = {
     "src/dialogs.h": (
         r"class\s+Dialogs\s*:\s*public\s+ListBox\s*,\s*public\s+RadioButton",
         r"void\s+pass_dialog_focus\s*\(\s*\)\s*;",
-        r"int\s+on_scroll_create\s*\(\s*\)\s*;",
+        r"Scroll\s*\*\s*on_scroll_create\s*\(\s*\)\s*;",
     ),
     "src/dialog.h": (r"void\s+UNK2\s*\(\s*int\s+window\s*,\s*int\s+message",),
     "src/win.h": (
@@ -242,8 +242,9 @@ int main() {
 
 DIALOGS_HOST = r'''#include <cassert>
 #include <stdint.h>
-struct Win { int focuses, slot8_calls, slot8_result; Win():focuses(0),slot8_calls(0),slot8_result(37){}
-  virtual ~Win(){} virtual int vslot_08(){++slot8_calls; return slot8_result;}
+struct Scroll {};
+struct Win { int focuses, slot8_calls; Scroll *slot8_result; Win():focuses(0),slot8_calls(0),slot8_result(0){}
+  virtual ~Win(){} virtual Scroll *vslot_08(){++slot8_calls; return slot8_result;}
   virtual void pass_dialog_focus(){++focuses;} };
 struct GraphicWin : Win {};
 struct Dialog {};
@@ -256,19 +257,19 @@ struct EditGroup : virtual GraphicWin, virtual Dialog { int edit_focuses; EditGr
 class Dialogs : public ListBox, public RadioButton, public CheckBox, public SpriteBox, public EditGroup {
  public: int kind_; uint32_t iFlags_; Win *win_parent_;
   Dialogs():kind_(0),iFlags_(0),win_parent_(0){}
-  void pass_dialog_focus(); int on_scroll_create();
+  void pass_dialog_focus(); Scroll *on_scroll_create();
 };
 // INSERT_PASS_FOCUS
 // INSERT_SCROLL_CREATE
-int main(){ Dialogs d; Win parent;
+int main(){ Dialogs d; Win parent; Scroll expected;
   d.kind_=1; d.pass_dialog_focus(); d.kind_=2; d.pass_dialog_focus();
   d.kind_=8; d.pass_dialog_focus(); d.kind_=16; d.pass_dialog_focus();
   assert(d.focuses==4 && d.EditGroup::edit_focuses==0);
   d.kind_=4; d.pass_dialog_focus(); assert(d.focuses==4 && d.EditGroup::edit_focuses==1);
   d.kind_=3; d.pass_dialog_focus(); d.kind_=0; d.pass_dialog_focus();
   assert(d.focuses==4 && d.EditGroup::edit_focuses==1);
-  d.kind_=2; d.iFlags_=0x40; d.win_parent_=&parent;
-  assert(d.on_scroll_create()==37 && parent.slot8_calls==1);
+  d.kind_=2; d.iFlags_=0x40; d.win_parent_=&parent; parent.slot8_result=&expected;
+  assert(d.on_scroll_create()==&expected && parent.slot8_calls==1);
   d.iFlags_=0; assert(d.on_scroll_create()==0 && parent.slot8_calls==1);
   d.iFlags_=0x40; d.win_parent_=0; assert(d.on_scroll_create()==0 && parent.slot8_calls==1);
   d.win_parent_=&parent; d.kind_=1; assert(d.on_scroll_create()==0 && parent.slot8_calls==1);

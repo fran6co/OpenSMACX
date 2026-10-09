@@ -568,21 +568,19 @@ class Win : public AutoSound {
   // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_lose_mouse_capture@Win@@UAEXXZ 0x005EB3D0
   virtual void on_lose_mouse_capture() {}
   virtual int vslot_05(int = 0, int = 0, int = 0) { return 0; }  // 0x00404220
-  // Win::init asks slot 6 for an external buffer before allocating its
-  // own Scroll fallback. The default original body returns zero.
-  // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?on_scroll_create@Win@@UAEHXZ 0x005EB3D0
-  virtual int on_scroll_create() { return 0; }  // slot 6, 0x00406B30
+  // Win::init asks slot 6 for an external Scroll before allocating its
+  // own fallback. The default original body returns null.
+  // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?on_scroll_create@Win@@UAEPAVScroll@@XZ 0x005EB3D0
+  virtual Scroll *on_scroll_create() { return 0; }  // slot 6, 0x00406B30
   // Win::close passes the exact Scroll* being removed. The default
   // original body returns that pointer unchanged (0x00404230, ret 4).
-  virtual int on_scroll_delete(Scroll *scroll) {
-    return reinterpret_cast<int>(scroll);
+  virtual Scroll *on_scroll_delete(Scroll *scroll) {
+    return scroll;
   }  // slot 7
-  // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?vslot_08@Win@@UAEHXZ 0x005EB3D0
-  virtual int vslot_08() { return 0; }  // 0x00406B30
-  // The parameter is the POINTER the image's one call site passes through
-  // it (Dialogs::on_scroll_delete hands a Scroll* over this slot); typed as
-  // such rather than as the int the shim era spelled.
-  virtual void *vslot_09(void *value = 0) { return value; }  // 0x00404230
+  // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?vslot_08@Win@@UAEPAVScroll@@XZ 0x005EB3D0
+  virtual Scroll *vslot_08() { return 0; }  // 0x00406B30
+  // ListBox and Dialogs forward Scroll replacement through this parent slot.
+  virtual Scroll *vslot_09(Scroll *value = 0) { return value; }  // 0x00404230
   virtual int vslot_10(int = 0) { return 0; }  // 0x00404250
   virtual int vslot_11(GraphicWin *, int, int, RECT *) { return 0; }  // 0x00404240
   // Slot 12 paints the contents; redraw() at slot 62 drives this callback.

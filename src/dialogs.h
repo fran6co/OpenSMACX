@@ -46,10 +46,10 @@ class Dialogs : public ListBox,
  public:
   // Explicit Win slot-7/slot-6 overrides. Dialogs' kind/parent behavior
   // remains distinct from ListBox's AutoSound-recipient implementation.
-  virtual int on_scroll_delete(Scroll *scroll);
+  virtual Scroll *on_scroll_delete(Scroll *scroll);
 
  public:
-  virtual int on_scroll_create();
+  virtual Scroll *on_scroll_create();
 
  public:
   // 0x00612E00, kind-dispatched through typed widget base views in dialogs.cpp.

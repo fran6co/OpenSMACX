@@ -279,8 +279,8 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // own vbase/vtordisp staging instead. Defined in listbox.cpp.
   ~ListBox();
   // Win-view scroll callbacks: slots 6 and 7 in ListBox's real interface.
-  virtual int on_scroll_create();
-  virtual int on_scroll_delete(Scroll *scroll);
+  virtual Scroll *on_scroll_create();
+  virtual Scroll *on_scroll_delete(Scroll *scroll);
   // close() and destroy() are void in the mangled names but are modelled as
   // uint32_t to preserve the EAX residue (both leave EAX = 0), as GraphicWin
   // and Scroll do for their teardown pair.

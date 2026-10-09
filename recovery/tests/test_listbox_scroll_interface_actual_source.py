@@ -65,20 +65,10 @@ def extract_function(text, signature):
 def actual_listbox_methods(sources):
     source = sources["src/listbox.cpp"]
     methods = [
-        extract_function(source, "int ListBox::on_scroll_create()"),
-        extract_function(source, "int ListBox::on_scroll_delete(Scroll *scroll)"),
+        extract_function(source, "Scroll *ListBox::on_scroll_create()"),
+        extract_function(source, "Scroll *ListBox::on_scroll_delete(Scroll *scroll)"),
     ]
-    combined = "\n\n".join(methods)
-    # The only source adaptation is the target's 32-bit pointer-to-int cast;
-    # host uintptr_t preserves the explicit low-32-bit conversion behavior.
-    combined = combined.replace(
-        "reinterpret_cast<int>(reinterpret_cast<Win *>(val_31_)->vslot_09(scroll))",
-        "host_pointer_to_int(reinterpret_cast<Win *>(val_31_)->vslot_09(scroll))",
-    )
-    combined = combined.replace(
-        "reinterpret_cast<int>(scroll)", "host_pointer_to_int(scroll)"
-    )
-    return combined
+    return "\n\n".join(methods)
 
 
 def close_contract_error(source):
@@ -87,7 +77,7 @@ def close_contract_error(source):
         guard = rf"if\s*\(\s*\({member}\s*!=\s*0\)\s*&&\s*\(\(iFlags_\s*&\s*0x40\)\s*!=\s*0\)\s*\)"
         if not re.search(guard, close):
             return f"missing original flag/nonnull guard for {member}"
-        store = rf"{member}\s*=\s*reinterpret_cast<Scroll\s*\*>\s*\(\s*this->on_scroll_delete\(\s*{member}\s*\)\s*\)"
+        store = rf"{member}\s*=\s*this->on_scroll_delete\(\s*{member}\s*\)"
         if not re.search(store, close):
             return f"missing matching argument/result store for {member}"
     return None
@@ -96,7 +86,7 @@ def close_contract_error(source):
 def test_actual_source_retains_both_original_identities_and_spans():
     list_cpp = actual_sources()["src/listbox.cpp"]
     constructor_marker = list_cpp.index("// ORIGINAL: 0x00609DB0")
-    assert constructor_marker > list_cpp.index("int ListBox::on_scroll_delete(Scroll *scroll)")
+    assert constructor_marker > list_cpp.index("Scroll *ListBox::on_scroll_delete(Scroll *scroll)")
     constructor_prefix = list_cpp[constructor_marker:list_cpp.index("ListBox::ListBox() {")]
     assert "// symbol    ??0ListBox@@QAE@XZ" in constructor_prefix
     assert "// ORIGINAL: 0x0060CED0" not in constructor_prefix
@@ -120,20 +110,22 @@ def test_slot_bindings_and_argument_order():
     dialogs_h = sources["src/dialogs.h"]
     dialogs_cpp = sources["src/dialogs.cpp"]
 
-    assert "virtual int on_scroll_create() { return 0; }" in win_h
-    assert "virtual int on_scroll_delete(Scroll *scroll)" in win_h
-    assert "this->on_scroll_delete(scroll_vert_));" in win_cpp
-    assert "this->on_scroll_delete(scroll_horz_));" in win_cpp
-    assert "scroll_vert_ = reinterpret_cast<Scroll *>" in win_cpp
-    assert "scroll_horz_ = reinterpret_cast<Scroll *>" in win_cpp
+    assert "virtual Scroll *on_scroll_create() { return 0; }" in win_h
+    assert "virtual Scroll *on_scroll_delete(Scroll *scroll)" in win_h
+    assert "scroll_vert_ = this->on_scroll_delete(scroll_vert_);" in win_cpp
+    assert "scroll_horz_ = this->on_scroll_delete(scroll_horz_);" in win_cpp
+    assert "scroll_vert_ = this->on_scroll_create();" in win_cpp
+    assert "scroll_horz_ = this->on_scroll_create();" in win_cpp
+    assert "this->buffer3_ = reinterpret_cast<Buffer *>(this->on_scroll_create())" not in win_cpp
+    assert "this->buffer4_ = reinterpret_cast<Buffer *>(this->on_scroll_create())" not in win_cpp
     assert "this->vslot_07();" not in win_cpp
-    assert "virtual int on_scroll_create();" in list_h
-    assert "virtual int on_scroll_delete(Scroll *scroll);" in list_h
+    assert "virtual Scroll *on_scroll_create();" in list_h
+    assert "virtual Scroll *on_scroll_delete(Scroll *scroll);" in list_h
     assert "val_20_ & 0x40" in list_cpp and "reinterpret_cast<Win *>(val_31_)->vslot_08()" in list_cpp
     assert "reinterpret_cast<Win *>(val_31_)->vslot_09(scroll)" in list_cpp
-    assert "virtual int on_scroll_delete(Scroll *scroll);" in dialogs_h
-    assert "virtual int on_scroll_create();" in dialogs_h
-    assert "int Dialogs::on_scroll_delete(Scroll *scroll)" in dialogs_cpp
+    assert "virtual Scroll *on_scroll_delete(Scroll *scroll);" in dialogs_h
+    assert "virtual Scroll *on_scroll_create();" in dialogs_h
+    assert "Scroll *Dialogs::on_scroll_delete(Scroll *scroll)" in dialogs_cpp
     assert "kind_ == 2" in dialogs_cpp
 
     assert "0x005EB73E" in win_cpp and "scroll_vert_" in win_cpp
@@ -146,11 +138,7 @@ def test_host_behavior_control_extracts_actual_listbox_bodies(tmp_path):
         pytest.skip("no host C++ compiler available")
     sources = actual_sources()
     methods = actual_listbox_methods(sources)
-    (tmp_path / "actual_listbox_methods.inc").write_text(
-        "static int host_pointer_to_int(const void *value) {\n"
-        "    return static_cast<int>(reinterpret_cast<std::uintptr_t>(value));\n"
-        "}\n\n" + methods
-    )
+    (tmp_path / "actual_listbox_methods.inc").write_text(methods)
     source = Path(__file__).with_name("listbox_scroll_host_control.cpp")
     binary = tmp_path / "win_slot67_control"
     subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
@@ -172,11 +160,7 @@ def test_listbox_mutations_are_exercised_against_extracted_bodies(tmp_path):
     template = Path(__file__).with_name("listbox_scroll_host_control.cpp").read_text()
     for index, mutant in enumerate(mutants):
         with (tmp_path / "actual_listbox_methods.inc").open("w") as out:
-            out.write(
-                "static int host_pointer_to_int(const void *value) {\n"
-                "    return static_cast<int>(reinterpret_cast<std::uintptr_t>(value));\n"
-                "}\n\n" + mutant
-            )
+            out.write(mutant)
         source = tmp_path / f"mutant_{index}.cpp"
         source.write_text(template)
         binary = tmp_path / f"mutant_{index}"
@@ -199,8 +183,8 @@ def test_win_close_argument_and_result_stores_come_from_actual_source():
         close.replace("(iFlags_ & 0x40)", "(iFlags_ & 0x20)", 1),
         close.replace("on_scroll_delete(scroll_vert_)",
                       "on_scroll_delete(scroll_horz_)", 1),
-        re.sub(r"scroll_vert_\s*=\s*reinterpret_cast<Scroll\s*\*>\s*\(\s*this->on_scroll_delete\(scroll_vert_\)\s*\)",
-               "this->on_scroll_delete(scroll_vert_)", close, count=1),
+        close.replace("scroll_vert_ = this->on_scroll_delete(scroll_vert_);",
+                      "this->on_scroll_delete(scroll_vert_);", 1),
     )
     assert all(mutant != close for mutant in mutants)
     for mutant in mutants:

@@ -105,8 +105,8 @@ def test_radio_and_dialogs_express_the_real_virtual_owner_contracts():
     assert re.search(r"\bvoid\s+on_redraw\s*\(\s*\)\s*;", radio)
     assert re.search(r"class\s+Dialogs\s*:\s*public\s+ListBox", dialogs)
     for declaration in (
-        r"virtual\s+int\s+on_scroll_create\s*\(\s*\)",
-        r"virtual\s+int\s+on_scroll_delete\s*\(\s*Scroll\s*\*",
+        r"virtual\s+Scroll\s*\*\s*on_scroll_create\s*\(\s*\)",
+        r"virtual\s+Scroll\s*\*\s*on_scroll_delete\s*\(\s*Scroll\s*\*",
         r"void\s+on_mousewheel\s*\([^;]*\)\s*override",
         r"void\s+on_left_click\s*\([^;]*\)\s*override",
         r"void\s+on_right_click\s*\([^;]*\)\s*override",

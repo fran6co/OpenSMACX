@@ -8346,13 +8346,13 @@ int Win::init(int x, int y, int width, int height, char * caption,
 
     if ((this->iFlags_ & 4) != 0) {
         if ((this->iFlags_ & 0x40) != 0) {
-            this->buffer4_ = reinterpret_cast<Buffer *>(this->on_scroll_create());
+            this->scroll_horz_ = this->on_scroll_create();
         }
-        if (this->buffer4_ == 0) {
+        if (this->scroll_horz_ == 0) {
             void *raw = operator new(0x214C);
-            this->buffer4_ = (raw != 0) ? reinterpret_cast<Buffer *>(new (raw) Scroll()) : 0;
-            if (this->buffer4_ == 0) return 4;
-            Scroll *sc = reinterpret_cast<Scroll *>(this->buffer4_);
+            this->scroll_horz_ = (raw != 0) ? new (raw) Scroll() : 0;
+            if (this->scroll_horz_ == 0) return 4;
+            Scroll *sc = this->scroll_horz_;
             int top = ScrollDefaultThickness;
             int nc = this->outer_rect_.bottom - top;
             int arg2 = ((this->iFlags_ & 8) != 0)
@@ -8361,24 +8361,24 @@ int Win::init(int x, int y, int width, int height, char * caption,
             sc->init_horz_nc(0, nc, arg2, this, -2);
             sc->show(0);
         }
+    }
 
-        if ((this->iFlags_ & 8) != 0) {
-            if ((this->iFlags_ & 0x40) != 0) {
-                this->buffer3_ = reinterpret_cast<Buffer *>(this->on_scroll_create());
-            }
-            if (this->buffer3_ == 0) {
-                void *raw = operator new(0x214C);
-                this->buffer3_ = (raw != 0) ? reinterpret_cast<Buffer *>(new (raw) Scroll()) : 0;
-                if (this->buffer3_ == 0) return 4;
-                Scroll *sc = reinterpret_cast<Scroll *>(this->buffer3_);
-                int top = ScrollDefaultThickness;
-                int nc = this->outer_rect_.right - top;
-                int arg2 = ((this->iFlags_ & 4) != 0)
-                               ? (this->outer_rect_.bottom - this->outer_rect_.top) - top
-                               : (this->outer_rect_.bottom - this->outer_rect_.top);
-                sc->init_vert_nc(nc, 0, arg2, this, -1);
-                sc->show(0);
-            }
+    if ((this->iFlags_ & 8) != 0) {
+        if ((this->iFlags_ & 0x40) != 0) {
+            this->scroll_vert_ = this->on_scroll_create();
+        }
+        if (this->scroll_vert_ == 0) {
+            void *raw = operator new(0x214C);
+            this->scroll_vert_ = (raw != 0) ? new (raw) Scroll() : 0;
+            if (this->scroll_vert_ == 0) return 4;
+            Scroll *sc = this->scroll_vert_;
+            int top = ScrollDefaultThickness;
+            int nc = this->outer_rect_.right - top;
+            int arg2 = ((this->iFlags_ & 4) != 0)
+                           ? (this->outer_rect_.bottom - this->outer_rect_.top) - top
+                           : (this->outer_rect_.bottom - this->outer_rect_.top);
+            sc->init_vert_nc(nc, 0, arg2, this, -1);
+            sc->show(0);
         }
     }
 
@@ -10843,8 +10843,7 @@ void Win::close() {
     if ((scroll_vert_ != 0) && ((iFlags_ & 0x40) != 0)) {
         // Historical no-argument reading withdrawn: pinned 0x005EB73E
         // pushes [this+0x43C] immediately before the slot-7 call.
-        scroll_vert_ = reinterpret_cast<Scroll *>(
-            this->on_scroll_delete(scroll_vert_));
+        scroll_vert_ = this->on_scroll_delete(scroll_vert_);
     }
     if (scroll_vert_ != 0) {
         delete scroll_vert_;
@@ -10852,8 +10851,7 @@ void Win::close() {
     }
     if ((scroll_horz_ != 0) && ((iFlags_ & 0x40) != 0)) {
         // The paired horizontal arm pushes [this+0x440] at 0x005EB774.
-        scroll_horz_ = reinterpret_cast<Scroll *>(
-            this->on_scroll_delete(scroll_horz_));
+        scroll_horz_ = this->on_scroll_delete(scroll_horz_);
     }
     if (scroll_horz_ != 0) {
         delete scroll_horz_;
@@ -12857,7 +12855,7 @@ void Win::copy_border_buffers_to_window(Win *target, RECT *clip, int mode) {
 int Win::on_key_click(int, int) { return 0; }
 
 // ORIGINAL: 0x00406B30 sub_406b30 0x00406B30-0x00406B33 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; Win primary table 0x0066FDD0 slot 61 at 0x0066FEC4 relocates to 0x00406B30", "Win slots 6 and 8 at 0x0066FDE8 and 0x0066FDF0 independently target the same identity; guarded RECOVERY_SHARED records preserve their separate int() source contracts", "historical class-table finding retained: 129 virtual slots across 70 classes reach this shared code address; recorded slots have different arities, so no one synthetic prototype represents them", "historical Buffer view remains a research lead, not a new owner mapping: the pinned secondary table selects adjustor 0x00404420 to GraphicWin::get_graphic_win, so no independent Buffer-to-406B30 slot is asserted", "retired source symbol retained as historical evidence: ?nullsub_00406b30_redirect@@YIHPAX0@Z", "existing source-shared bindings for BasePop, VideoSoundState, VoiceRx and VoiceTx remain unchanged as separate typed owners; Buffer's unproved view is not added", "the old opaque fastcall redirect was scaffolding, not ABI evidence; unknown virtual views and incomplete table extents remain restoration/ownership obligations"], "reason": "Place the original identity on one genuine Win method only as a navigation anchor for the folded shared body; preserve the independently typed Win, VideoSoundState, Voice, and BasePop source views with shared mappings. This does not claim that Win::get_graphic_win was the unique historical source owner."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; Win primary table 0x0066FDD0 slot 61 at 0x0066FEC4 relocates to 0x00406B30", "Win slots 6 and 8 at 0x0066FDE8 and 0x0066FDF0 independently target the same identity; the historical source contract was int() in each declaration, while current Scroll* spelling is inferred from Win::init storing slot 6 EAX at +0x440/+0x43C and later treating it as Scroll*; the stripped executable does not prove the original declared C++ return type", "historical class-table finding retained: 129 virtual slots across 70 classes reach this shared code address; recorded slots have different arities, so no one synthetic prototype represents them", "historical Buffer view remains a research lead, not a new owner mapping: the pinned secondary table selects adjustor 0x00404420 to GraphicWin::get_graphic_win, so no independent Buffer-to-406B30 slot is asserted", "retired source symbol retained as historical evidence: ?nullsub_00406b30_redirect@@YIHPAX0@Z", "existing source-shared bindings for BasePop, VideoSoundState, VoiceRx and VoiceTx remain unchanged as separate typed owners; Buffer's unproved view is not added", "the old opaque fastcall redirect was scaffolding, not ABI evidence; unknown virtual views and incomplete table extents remain restoration/ownership obligations"], "reason": "Place the original identity on one genuine Win method only as a navigation anchor for the folded shared body; preserve the independently typed Win, VideoSoundState, Voice, and BasePop source views with shared mappings. This does not claim that Win::get_graphic_win was the unique historical source owner."}
 // symbol    ?get_graphic_win@Win@@UAEPAVGraphicWin@@XZ
 // kind      game
 GraphicWin *Win::get_graphic_win() { return nullptr; }

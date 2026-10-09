@@ -316,8 +316,8 @@ Purpose: Return the configured recipient's slot-8 value under the
 */
 // ORIGINAL: 0x0060CED0 sub_60ced0 0x0060CED0-0x0060CF01 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "original code tests the 32-bit flag at +0x50 and nonnull recipient at +0x7C, then calls recipient Win slot 8 without arguments; AutoSound retains neutral storage and this callsite supplies the Win view", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
-// symbol    ?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEHXZ
-int ListBox::on_scroll_create() {
+// symbol    ?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@XZ
+Scroll *ListBox::on_scroll_create() {
     if ((val_20_ & 0x40) != 0 && val_31_ != 0) {
         return reinterpret_cast<Win *>(val_31_)->vslot_08();
     }
@@ -330,12 +330,12 @@ Purpose: Forward the exact Scroll being removed through recipient slot 9
 */
 // ORIGINAL: 0x0060CF10 sub_60cf10 0x0060CF10-0x0060CF4D FILE
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "original code tests the 32-bit flag at +0x50 and nonnull recipient at +0x7C, then calls recipient Win slot 9 with the Scroll argument; AutoSound retains neutral storage and this callsite supplies the Win view", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
-// symbol    ?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEHPAVScroll@@@Z
-int ListBox::on_scroll_delete(Scroll *scroll) {
+// symbol    ?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@PAV2@@Z
+Scroll *ListBox::on_scroll_delete(Scroll *scroll) {
     if ((val_20_ & 0x40) != 0 && val_31_ != 0) {
-        return reinterpret_cast<int>(reinterpret_cast<Win *>(val_31_)->vslot_09(scroll));
+        return reinterpret_cast<Win *>(val_31_)->vslot_09(scroll);
     }
-    return reinterpret_cast<int>(scroll);
+    return scroll;
 }
 
 // ORIGINAL: 0x00609DB0 ??0ListBox@@QAE@H@Z 0x00609DB0-0x00609EB7;0x00662EF0-0x00662F14 BYTE_EXACT

@@ -10,7 +10,7 @@ METHODS = (
     ("item", "int Dialogs::item("),
     ("get_num_items", "int Dialogs::get_num_items("),
     ("on_mousewheel", "void Dialogs::on_mousewheel("),
-    ("on_scroll_delete", "int Dialogs::on_scroll_delete("),
+    ("on_scroll_delete", "Scroll *Dialogs::on_scroll_delete("),
     ("on_left_click", "void Dialogs::on_left_click("),
 )
 
@@ -41,7 +41,7 @@ struct Events {
     int item_calls, wheel_calls, left_calls, slot_calls;
     int item_kind, item_index, wheel_arg, left_a, left_b;
     const void *item_receiver, *wheel_receiver, *left_receiver, *slot_receiver;
-    void *slot_arg, *slot_result;
+    Scroll *slot_arg, *slot_result;
     Events() : item_calls(0), wheel_calls(0), left_calls(0), slot_calls(0),
         item_kind(-1), item_index(0), wheel_arg(0), left_a(0), left_b(0),
         item_receiver(0), wheel_receiver(0), left_receiver(0),
@@ -55,13 +55,13 @@ protected:
     Win *win_parent_;
 public:
     Win() : iFlags_(0), win_parent_(0) {}
-    virtual void *vslot_09(void *value) {
+    virtual Scroll *vslot_09(Scroll *value) {
         ++events.slot_calls; events.slot_receiver=this; events.slot_arg=value;
         return events.slot_result;
     }
 };
 struct ParentWin : Win {
-    void *vslot_09(void *value) {
+    Scroll *vslot_09(Scroll *value) {
         ++events.slot_calls; events.slot_receiver=this; events.slot_arg=value;
         return events.slot_result;
     }
@@ -103,7 +103,7 @@ struct Dialogs : ListBox, RadioButton, CheckBox, SpriteBox, EditGroup {
     int item(char *, int);
     int get_num_items();
     void on_mousewheel(int);
-    int on_scroll_delete(Scroll *);
+    Scroll *on_scroll_delete(Scroll *);
     void on_left_click(int,int);
 };
 ''' + "\n".join(bodies) + r'''
@@ -144,18 +144,19 @@ int main() {
 
     Scroll scroll;
     d.kind_=2; d.setup_scroll(0, 0);
-    assert(d.on_scroll_delete(&scroll)==static_cast<int>(reinterpret_cast<intptr_t>(&scroll)));
+    assert(d.on_scroll_delete(&scroll)==&scroll);
     assert(events.slot_calls==0);
     d.setup_scroll(0x40, 0);
-    assert(d.on_scroll_delete(&scroll)==static_cast<int>(reinterpret_cast<intptr_t>(&scroll)));
+    assert(d.on_scroll_delete(&scroll)==&scroll);
     assert(events.slot_calls==0); // the original parent-null branch passes back
     ParentWin parent; d.setup_scroll(0x40, &parent);
-    int token=0; events.slot_result=&token;
-    assert(d.on_scroll_delete(&scroll)==static_cast<int>(reinterpret_cast<intptr_t>(&token)));
+    Scroll replacement;
+    events.slot_result=&replacement;
+    assert(d.on_scroll_delete(&scroll)==&replacement);
     assert(events.slot_calls==1 && events.slot_receiver==&parent);
     assert(events.slot_arg==&scroll);
     d.kind_=8;
-    assert(d.on_scroll_delete(&scroll)==static_cast<int>(reinterpret_cast<intptr_t>(&scroll)));
+    assert(d.on_scroll_delete(&scroll)==&scroll);
     assert(events.slot_calls==1);
 }
 '''

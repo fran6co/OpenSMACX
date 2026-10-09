@@ -602,7 +602,7 @@ Purpose: Hand a closing scroll control to the list box: only when the active
          state; `iFlags_` and `win_parent_` name the recovered flag and slot-9
          receiver directly.
 // ORIGINAL: 0x00613260 ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z 0x00613260-0x0061329F BYTE_EXACT
-// symbol    ?on_scroll_delete@Dialogs@@UAEHPAVScroll@@@Z
+// symbol    ?on_scroll_delete@Dialogs@@UAEPAVScroll@@PAV2@@Z
 // size      63 bytes
 // prototype int (__thiscall ?on_scroll_delete@Dialogs@@QAEHPAUScroll@@@Z)(Dialogs* this, Scroll*)
 // callers   0   call targets   0
@@ -611,24 +611,24 @@ Purpose: Hand a closing scroll control to the list box: only when the active
 //
 // PROMOTED from the archived verification unit. Its slot-9 dispatch and
 // pointer pass-back agree with the pinned span; the current owner calls the
-// declared Win slot through the recovered parent pointer. The original
-// 32-bit pointer/int return bridge remains explicit below.
+// declared Win slot through the recovered parent pointer. The historical
+// int return spelling is retained in the original identity; this source uses
+// Scroll* because Win::close consumes the returned value as its Scroll*.
 Return Value: the scroll, or the slot's answer
 Status: Complete
 */
-int Dialogs::on_scroll_delete(Scroll *scroll) {
+Scroll *Dialogs::on_scroll_delete(Scroll *scroll) {
     switch (kind_) {
     case 2: {
         if (iFlags_ & 0x40) {
             Win *parent = win_parent_;
             if (parent != 0) {
-                return static_cast<int>(reinterpret_cast<intptr_t>(
-                    parent->vslot_09(scroll)));
+                return parent->vslot_09(scroll);
             }
         }
     }
     }
-    return static_cast<int>(reinterpret_cast<intptr_t>(scroll));
+    return scroll;
 }
 
 /*
@@ -858,8 +858,8 @@ void Dialogs::pass_dialog_focus() {
 
 // ORIGINAL: 0x00613220 ?on_scroll_create@Dialogs@@QAEHXZ 0x00613220-0x00613254
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00613220.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00613220; physical VC6 COFF emitted symbol ?on_scroll_create@Dialogs@@QAEHXZ."]}
-// symbol    ?on_scroll_create@Dialogs@@UAEHXZ
-int Dialogs::on_scroll_create() {
+// symbol    ?on_scroll_create@Dialogs@@UAEPAVScroll@@XZ
+Scroll *Dialogs::on_scroll_create() {
     if (kind_ == 2 && (iFlags_ & 0x40) != 0 && win_parent_ != 0) {
         return win_parent_->vslot_08();
     }
@@ -1122,7 +1122,7 @@ void Dialogs::on_redraw() {
  */
 // ORIGINAL: 0x00407150 ?on_scroll_create@thunk1_Dialogs@@QAEXXZ 0x00407150-0x00407158 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x00407150 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_scroll_create@Dialogs@@$4PPPPPPPM@A@AEHXZ in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
-// symbol    ?on_scroll_create@Dialogs@@$4PPPPPPPM@A@AEHXZ
+// symbol    ?on_scroll_create@Dialogs@@$4PPPPPPPM@A@AEPAVScroll@@XZ
 // kind      game
 
 /*
@@ -1145,7 +1145,7 @@ void Dialogs::on_redraw() {
  */
 // ORIGINAL: 0x00407160 ?on_scroll_delete@thunk1_Dialogs@@QAEHPAUScroll@@@Z 0x00407160-0x00407168 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class table cell binds 0x00407160 to the complete original thunk span.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded the observed compiler symbol ?on_scroll_delete@Dialogs@@$4PPPPPPPM@A@AEHPAVScroll@@@Z in the class owner's physical COFF vftable relocation.", "That artifact set's MAP/PE cell selects the thunk and its PDB XFIXUP plus linked tail resolve to the mapped typed method.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved original receiver-adjustor identity to the compiler-emitted class-view entry observed in the actual owner object and linked table."}
-// symbol    ?on_scroll_delete@Dialogs@@$4PPPPPPPM@A@AEHPAVScroll@@@Z
+// symbol    ?on_scroll_delete@Dialogs@@$4PPPPPPPM@A@AEPAVScroll@@PAV2@@Z
 // kind      game
 
 /*
