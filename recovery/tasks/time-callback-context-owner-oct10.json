@@ -1,0 +1,143 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "caa846e2f39ca22ae55cc5999d584480c341d022",
+  "editable_files": [
+    "src/time.h",
+    "src/time.cpp",
+    "src/time_lifecycle.cpp",
+    "src/win.cpp",
+    "src/basebutton.h",
+    "src/basebutton.cpp",
+    "src/flatbutton.cpp",
+    "src/diplopop.h",
+    "src/diplopop.cpp",
+    "src/jackal/palette.h",
+    "src/jackal/palette.cpp",
+    "src/basewin.h",
+    "src/basewin.cpp",
+    "src/maininterface.h",
+    "src/maininterface.cpp",
+    "recovery/tests/test_time_callback_context_owner_actual_source_oct10.py"
+  ],
+  "evidence": [
+    "Pinned6162D0 stores callback+0C and context+10; Win window_proc5F0650 at5F0CED..5F0D0E calls callback1(cb_param1) first then callback2(cb_param1,cb_param2). Pinned callback bodies607B10,43F200,43F250,5FEAD0,45C200 consume second cdecl stack dword as respective owner pointer; BaseWin41AF40 no-op ignores both. Eleven observed two-arg registration sites pass owner pointers; no observed numeric context. The stripped image/catalogue mangles do not prove intended original C++ spelling. Common void(__cdecl*)(int,void*) and borrowed void* is an explicitly reviewed compatible source model, not an original debug type claim. Do not infer lifetime or complete caller coverage from mapped-only callers.",
+    "Update all three two-arg Time init/start/pulse public declarations/definitions and callback2_/cb_param2_ storage to common void* context. Use direct assignments and calls, no incompatible callback casts or pointer-int roundtrips. Preserve first signed mode/key/stage argument, 0x28 Time layout, field offsets, original stores/order, dispatch/modal/one-shot/error behavior and borrowed lifetimes. One-arg callback API and bodies stay unchanged; no unrelated timer cleanup or safety fixes.",
+    "Complete actual observed closure: BaseWin init41E8D0/callback41AF40; DiploPop start43F2B0/bioscan callback43F200/portrait callback43F250; Palette init_cycle5FE700/callback5FEAD0; MainInterface init459680/free callback45C200; BaseButton on_left_down6075C0/on_mouse_move607850/member timer_callback607B30/free callback607B10; FlatButton on_mouse_move608500. Check every current registration/declaration/friend and pointer payload site, including header-defined consumer dependencies. Source hints are not unqualified original PDB proof.",
+    "Normalizing overloaded free timer_callback_daemon callbacks to int,void* would collide. Use domain names diplo_bioscan_timer_callback (43F200), diplo_portrait_timer_callback (43F250), main_interface_timer_callback (45C200); typed static_cast from void* inside each existing real callback, not added trampolines. Existing BaseButton free helper may be named base_button_timer_callback. Current function-symbol facts require coordinator fresh native COFF verification and source writer updates, never guess/edit historical ORIGINAL names/spans/claims.",
+    "Coordinator independent complete pinned43F200..43F245 and43F250..43F288 decode proves owner context loaded from[ebp+C] into ESI, TEST ESI,ESI at43F207/43F257 and JE to epilogue43F242/43F285 before any owner access. Current callbacks lack these original null guards: restore them as recovery, not deliberate bug fixes. Preserve bioscan increment/Flic2/update and portrait Flic1/update order and unchecked original paths. Check all callback original guards before translation; do not silently normalize unsafe/error cases.",
+    "Replace wrong active comments claiming Palette-only storage or catalogue int mangles prove original source types with precise supported common-context rationale. Preserve historical mapping/claim/LEVER/TRIED/role facts and useful superseded structural seed history; no new source run logs, fixed exe pointers, vtable shims, copied machine code, claims, demotion or baseline reset.",
+    "Actual-source C++ host controls must exercise three real Time setters and callback dispatch ordering/clear/lifetime state; all six real callback bodies where feasible, real caller registrations through common interface, null owner and mutated owner state, BaseWin no-op and first arg mode/key/stage preservation, Diplo bioscan/portrait distinction. Compile mutants successfully before treating behavior rejection as evidence. No copied alternative implementations; fixtures must explain abstraction limits. Preserve any untestable full-class/runtime effects as obligations.",
+    "Only declared files/subjects. Workers no Git/native/Wine/delegation, isolated coordinator-prepared checkout. Coordinator owns scope, fresh native symbols/layout/call offsets/TU sibling/restoration/reference checks, source continuity, independent review, full combined master build/link and integration. Temporary justified matching regressions authorized with historical restoration obligations retained; no automatic/full-game acceptance. This is one complete multi-owner interface correction, not serial per-function matching work."
+  ],
+  "intent": "Recover the complete borrowed-context Time callback family through one coherent typed interface and restore original DiploPop null-context behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6382288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6227536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6321600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6322256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6322992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6322960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6325504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4453040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4452864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4452944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6285056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6286032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4319440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4304704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4560512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4571648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "time-callback-context-owner-oct10"
+}
