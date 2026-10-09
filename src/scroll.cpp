@@ -40,8 +40,15 @@ int ScrollNonClientInit;  // 0x009B8E24
 // RECOVERY_OBJECT: v1 0x00697020 ?ScrollCloseStaticDefaults@@3PAIA
 uint32_t ScrollCloseStaticDefaults[11] = {2, 0xFFFFFFFF, 250, 0xFFFFFFFF,
     100, 247, 247, 7, 2, 255, 248};
-// RECOVERY_OBJECT: v2 0x009B8DE0 0x009B8E24 ?ScrollCloseDynamicDefaults@@3PAIA 0x006051D0
-uint32_t ScrollCloseDynamicDefaults[17];  // 0x009B8DE0; the sprite slots start at +8
+// RECOVERY_OBJECT: v4 0x009B8DE0 0x009B8E24 ?ScrollCloseDynamicDefaults@@3PAIA 0x006051D0 target ?ScrollCloseDynamicDefaults@@3UScrollCloseDynamicDefaultsData@@A
+// The historical mapping covers the accessed default window; +0x38 remains
+// an opaque word because the original constructor and close never read it.
+ScrollCloseDynamicDefaultsData ScrollCloseDynamicDefaults;
+
+// The older LEVER/TRIED notes below describe experiments against the former
+// integer-array spelling. They remain historical matching evidence; this
+// source now models the pointer-bearing defaults with named fields and leaves
+// the unobserved +0x38 word opaque.
 
 // The original setters populate the same twelve sprite slots in four
 // triplets. These are source-owned sprite pointers, not addresses in the old
@@ -50,19 +57,19 @@ uint32_t ScrollCloseDynamicDefaults[17];  // 0x009B8DE0; the sprite slots start 
 static __forceinline void set_scroll_icon_defaults(Sprite *arrows,
                                                     Sprite *filler,
                                                     int thickness) {
-    ScrollCloseDynamicDefaults[5] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[0]));
-    ScrollCloseDynamicDefaults[6] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[1]));
-    ScrollCloseDynamicDefaults[7] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[2]));
-    ScrollCloseDynamicDefaults[11] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[3]));
-    ScrollCloseDynamicDefaults[12] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[4]));
-    ScrollCloseDynamicDefaults[13] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[5]));
-    ScrollCloseDynamicDefaults[2] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[6]));
-    ScrollCloseDynamicDefaults[3] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[7]));
-    ScrollCloseDynamicDefaults[4] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[8]));
-    ScrollCloseDynamicDefaults[8] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[9]));
-    ScrollCloseDynamicDefaults[9] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[10]));
-    ScrollCloseDynamicDefaults[10] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&arrows[11]));
-    ScrollCloseDynamicDefaults[15] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(filler));
+    ScrollCloseDynamicDefaults.sprite_up[0] = &arrows[0];
+    ScrollCloseDynamicDefaults.sprite_up[1] = &arrows[1];
+    ScrollCloseDynamicDefaults.sprite_up[2] = &arrows[2];
+    ScrollCloseDynamicDefaults.sprite_down[0] = &arrows[3];
+    ScrollCloseDynamicDefaults.sprite_down[1] = &arrows[4];
+    ScrollCloseDynamicDefaults.sprite_down[2] = &arrows[5];
+    ScrollCloseDynamicDefaults.sprite_left[0] = &arrows[6];
+    ScrollCloseDynamicDefaults.sprite_left[1] = &arrows[7];
+    ScrollCloseDynamicDefaults.sprite_left[2] = &arrows[8];
+    ScrollCloseDynamicDefaults.sprite_right[0] = &arrows[9];
+    ScrollCloseDynamicDefaults.sprite_right[1] = &arrows[10];
+    ScrollCloseDynamicDefaults.sprite_right[2] = &arrows[11];
+    ScrollCloseDynamicDefaults.thumb = filler;
     ScrollDefaultThickness = thickness;
 }
 
@@ -92,10 +99,6 @@ inline LONG long_from_bits(uint32_t bits) {
     static_assert(sizeof(value) == sizeof(bits), "Scroll geometry requires 32-bit LONG");
     memcpy(&value, &bits, sizeof(value));
     return value;
-}
-
-inline Sprite *sprite_from_default_bits(uint32_t bits) {
-    return reinterpret_cast<Sprite *>(static_cast<uintptr_t>(bits));
 }
 
 // THE FOUR SPRITE SETTERS' SHARED BODY, BYTE_EXACT in all four (0x00605BE0,
@@ -258,14 +261,14 @@ Scroll::Scroll() {
     // Both vtable stores are the compiler's now that Buffer is a real base of
     // GraphicWin; it puts them where the image does.
     uint32_t *const fixed = ScrollCloseStaticDefaults;
-    uint32_t *const dynamic = ScrollCloseDynamicDefaults;
+    ScrollCloseDynamicDefaultsData *const dynamic = &ScrollCloseDynamicDefaults;
 
-    field_A14_ = dynamic[0];
+    field_A14_ = dynamic->flags;
     border_color_ = static_cast<int>(fixed[3]);
     range_reversed_ = 0;
-    range_minimum_ = static_cast<int>(dynamic[1]);
+    range_minimum_ = static_cast<int>(dynamic->position);
     range_maximum_ = static_cast<int>(fixed[4]);
-    position_ = static_cast<int>(dynamic[1]);
+    position_ = static_cast<int>(dynamic->position);
     field_A30_ = fixed[2];
     field_A3C_ = 0xFFFFFFFFU;
     field_A38_ = 0;
@@ -284,13 +287,13 @@ Scroll::Scroll() {
     bevel_lower_ = fixed[10];
 
     for (int index = 0; index < 3; ++index) {
-        sprite_left_[index] = sprite_from_default_bits(dynamic[2 + index]);
-        sprite_up_[index] = sprite_from_default_bits(dynamic[5 + index]);
-        sprite_right_[index] = sprite_from_default_bits(dynamic[8 + index]);
-        sprite_down_[index] = sprite_from_default_bits(dynamic[11 + index]);
+        sprite_left_[index] = dynamic->sprite_left[index];
+        sprite_up_[index] = dynamic->sprite_up[index];
+        sprite_right_[index] = dynamic->sprite_right[index];
+        sprite_down_[index] = dynamic->sprite_down[index];
     }
-    thumb_sprite_ = sprite_from_default_bits(dynamic[15]);
-    field_A78_ = sprite_from_default_bits(dynamic[16]);
+    thumb_sprite_ = dynamic->thumb;
+    field_A78_ = dynamic->background;
     field_2144_ = 0;
     field_2148_ = 0;
 }
@@ -369,14 +372,14 @@ Status: Complete; embedded FlatButton close redirects are source-owned
 */
 uint32_t Scroll::close() {
     uint32_t *const fixed = ScrollCloseStaticDefaults;
-    uint32_t *const dynamic = ScrollCloseDynamicDefaults;
+    ScrollCloseDynamicDefaultsData *const dynamic = &ScrollCloseDynamicDefaults;
 
-    field_A14_ = dynamic[0];
+    field_A14_ = dynamic->flags;
     border_color_ = static_cast<int>(fixed[3]);
     range_reversed_ = 0;
-    range_minimum_ = static_cast<int>(dynamic[1]);
+    range_minimum_ = static_cast<int>(dynamic->position);
     range_maximum_ = static_cast<int>(fixed[4]);
-    position_ = static_cast<int>(dynamic[1]);
+    position_ = static_cast<int>(dynamic->position);
     field_A3C_ = 0xFFFFFFFFU;
     field_A38_ = 0;
     field_A30_ = fixed[2];
@@ -395,13 +398,13 @@ uint32_t Scroll::close() {
     bevel_lower_ = fixed[10];
 
     for (int index = 0; index < 3; ++index) {
-        sprite_left_[index] = sprite_from_default_bits(dynamic[2 + index]);
-        sprite_up_[index] = sprite_from_default_bits(dynamic[5 + index]);
-        sprite_right_[index] = sprite_from_default_bits(dynamic[8 + index]);
-        sprite_down_[index] = sprite_from_default_bits(dynamic[11 + index]);
+        sprite_left_[index] = dynamic->sprite_left[index];
+        sprite_up_[index] = dynamic->sprite_up[index];
+        sprite_right_[index] = dynamic->sprite_right[index];
+        sprite_down_[index] = dynamic->sprite_down[index];
     }
-    thumb_sprite_ = sprite_from_default_bits(dynamic[15]);
-    field_A78_ = sprite_from_default_bits(dynamic[16]);
+    thumb_sprite_ = dynamic->thumb;
+    field_A78_ = dynamic->background;
     field_2144_ = 0;
     field_2148_ = 0;
 

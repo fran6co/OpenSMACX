@@ -129,10 +129,21 @@ static_assert(sizeof(Scroll) == 0x214C,
 extern int ScrollDefaultThickness;
 extern int ScrollNonClientInit;
 // Defaults copied by close(). The static table contains eleven process
-// constants; the dynamic table spans seventeen process-owned slots, including
-// the sprite defaults and one intentionally unused hole.
+// constants. The dynamic record retains an opaque word at +0x38, which the
+// original constructor and close do not access.
 extern uint32_t ScrollCloseStaticDefaults[11];
-extern uint32_t ScrollCloseDynamicDefaults[17];
+struct ScrollCloseDynamicDefaultsData {
+  uint32_t flags;
+  uint32_t position;
+  Sprite *sprite_left[3];
+  Sprite *sprite_up[3];
+  Sprite *sprite_right[3];
+  Sprite *sprite_down[3];
+  uint32_t reserved_38;
+  Sprite *thumb;
+  Sprite *background;
+};
+extern ScrollCloseDynamicDefaultsData ScrollCloseDynamicDefaults;
 void __cdecl scroll_normal();
 void __cdecl scroll_small();
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
