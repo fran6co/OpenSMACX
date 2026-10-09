@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "task_id": "winnodelist-allocator-closure-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover the evidenced Heap allocator member and typed parent-list allocator accesses, preserving original allocation/free guards, failure paths and repeated reads; retain unresolved nonzero-allocator installation.",
+  "base_revision": "31b844690f25e67646942157c4b9dc99710b0c21",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6206416
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6208896
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6212000
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6212448
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6207040
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6208656
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6260592
+    }
+  ],
+  "editable_files": [
+    "src/win.cpp",
+    "src/winnodelist.h",
+    "recovery/tests/test_winnodelist_allocator_closure_oct9.py",
+    "recovery/tests/test_win_identity_restore_actual_source.py",
+    "recovery/tests/test_worldwin_lifetime.py"
+  ],
+  "evidence": [
+    "Pinned Win::init005EBD80 repeatedly uses parent+DC as Heap receiver for28-byte nodes and4-byte payloads, with malloc fallback; independent set_parent_dialog005EC9A0 uses the same receiver/size pattern.",
+    "Pinned Win::~Win005EBC90 skips individual frees for nonzero+DC; the current real WinNodeList member destructor retains that guard. No source writer of a nonzero allocator is identified; do not invent one or assume unreachable.",
+    "Coordinator-authorized isolated manual draft: only named list allocator and parent-list accesses; no node layout invention, claims/demotion, Git, Wine or native compiler by worker. Request central scope expansion for additional fixtures or discoveries."
+  ]
+}
