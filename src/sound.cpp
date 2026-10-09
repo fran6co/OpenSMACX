@@ -16,8 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "original_seam.h"
 #include "sound.h"
+#include "voice.h"
 #include "general.h"
 #include "wave.h"
 #include "wave_device.h"    // Wave_Device in init_sound
@@ -87,25 +87,14 @@ void Sound::fade(unsigned long a1) {
 
 
 namespace {
+// Historical LEVER/TRIED notes below document manual dispatch spellings that
+// predate this typed external call view; their compiler observations remain
+// useful history, not descriptions of the current call expressions.
 // Sound wraps its device at 0x3C and asks it these questions through the
 // device's own vtable; the original tail-jumps, so the device's answer is the
 // caller's, and with no device wrapped the answer is zero.
-// ONE parameter, `__fastcall`: the receiver goes in ecx and edx is left
-// alone. A second would cost a `xor edx, edx` the image does not have.
-typedef int(__fastcall *sound_device_query)(void *);
-
-__forceinline int query_sound_device(void *device, int vtable_offset) {
-    // THE ZERO PATH LAST, as the image lays it out: `je` jumps FORWARD to
-    // `xor eax, eax; ret` at 0x004C64CC. A guard clause puts it first and
-    // inverts the branch.
-    //
-    // CALLED WHERE THE SLOT LIVES: the image tail-jumps through it -
-    // `jmp dword ptr [eax+0x5c]` at 0x004C64C9 - and reading the slot into a
-    // pointer-to-member first costs a `mov` before the call.
-    if (device) {
-        return vtable_slot<sound_device_query>(device, vtable_offset)(device);
-    }
-    return 0;
+__forceinline SoundDeviceInterface *sound_device(void *device) {
+    return static_cast<SoundDeviceInterface *>(device);
 }
 }  // namespace
 
@@ -123,7 +112,10 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Sound::is_playing() {
-    return query_sound_device(device_, 0x5C);
+    if (device_) {
+        return sound_device(device_)->is_playing();
+    }
+    return 0;
 }
 
 /*
@@ -140,7 +132,10 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Sound::is_looping() {
-    return query_sound_device(device_, 0x58);
+    if (device_) {
+        return sound_device(device_)->is_looping();
+    }
+    return 0;
 }
 
 /*
@@ -161,7 +156,10 @@ Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
 int Sound::get_time() {
-    return query_sound_device(device_, 0x74);
+    if (device_) {
+        return sound_device(device_)->get_time();
+    }
+    return 0;
 }
 
 
@@ -190,7 +188,7 @@ int Sound::play() {
     void *device = device_;
     int result = 0x14;
     if (device) {
-        result = vtable_slot<sound_device_query>(device, 0x1C)(device);
+        result = sound_device(device)->play();
     }
     return result;
 }
@@ -220,9 +218,7 @@ int Sound::play(unsigned int effect) {
     void *device = device_;
     int result = 0x14;
     if (device) {
-        typedef int (OriginalObject::*device_fn)(int a1);
-        result = (ORIGINAL(device)->*vtable_method<device_fn>(device, 0x18))(
-            static_cast<int>(effect));
+        result = sound_device(device)->play(effect);
     }
     return result;
 }
@@ -244,7 +240,7 @@ int Sound::stop() {
     void *device = device_;
     int result = 0x14;
     if (device) {
-        result = vtable_slot<sound_device_query>(device, 0x20)(device);
+        result = sound_device(device)->stop();
     }
     return result;
 }
@@ -266,7 +262,7 @@ int Sound::release() {
     void *device = device_;
     int result = 0x14;
     if (device) {
-        result = vtable_slot<sound_device_query>(device, 0x38)(device);
+        result = sound_device(device)->release();
     }
     return result;
 }
@@ -292,8 +288,7 @@ void Sound::set_loop_state(long loop_state) {
     loop_flag_30_ = value;
     void *device = device_;
     if (device) {
-        typedef void (OriginalObject::*device_fn)(int a1);
-        (ORIGINAL(device)->*vtable_method<device_fn>(device, 0x48))(value);
+        sound_device(device)->set_loop_state(value);
     }
 }
 
@@ -318,8 +313,7 @@ void Sound::set_delay(unsigned int delay) {
     delay_ = value;
     void *device = device_;
     if (device) {
-        typedef void (OriginalObject::*device_fn)(int a1);
-        (ORIGINAL(device)->*vtable_method<device_fn>(device, 0x4C))(value);
+        sound_device(device)->set_delay(static_cast<unsigned int>(value));
     }
 }
 
@@ -354,7 +348,7 @@ int Sound::fade() {
     if (!device) {
         return 0x13;
     }
-    return vtable_slot<sound_device_query>(device, 0x28)(device);
+    return sound_device(device)->fade();
 }
 
 /*
@@ -379,7 +373,7 @@ int Sound::fade_in() {
     if (!device) {
         return 0x13;
     }
-    return vtable_slot<sound_device_query>(device, 0x30)(device);
+    return sound_device(device)->fade_in();
 }
 
 /*
@@ -403,9 +397,7 @@ void Sound::ramp(int a1, int a2, unsigned int a3) {
     if (!device_) {
         return;
     }
-    typedef void (OriginalObject::*ramp_fn)(int a1, int a2, int a3);
-    uint8_t *vtable = *reinterpret_cast<uint8_t **>(device_);
-    (ORIGINAL(device_)->*original_slot<ramp_fn>(vtable + 0x34))(a1, a2, static_cast<int>(a3));
+    sound_device(device_)->ramp(a1, a2, a3);
 }
 
 
@@ -514,25 +506,20 @@ int Sound::load(const char *fname) {
             return created;
         }
     } else {
-        typedef int (OriginalObject::*device_busy_fn)();
-        if ((ORIGINAL(device_)->*vtable_method<device_busy_fn>(device_, 0x60))()) {
+        if (sound_device(device_)->unk_slot24()) {
             return 0xF;
         }
     }
     int result;
     {
-        typedef int (OriginalObject::*device_load_fn)(const char *name);
-        result = (ORIGINAL(device_)->*vtable_method<device_load_fn>(device_, 0x10))(
-            resolved);
+        result = sound_device(device_)->load(resolved);
     }
     if (result == 0) {
         if (!(flags_40_ & 1)) {
             flags_40_ |= 1;
             attach();
             if (loop_flag_30_) {
-                typedef void (OriginalObject::*device_loop_fn)(int on);
-                (ORIGINAL(device_)->*original_slot<device_loop_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x48))(
-                    1);
+                sound_device(device_)->set_loop_state(1);
             }
         }
     } else {
@@ -574,8 +561,7 @@ void Sound::set_volume(int volume) {
     volume &= 0x7F;
     volume_ = volume & 0x7F;
     if (device_) {
-        typedef void (OriginalObject::*device_fn)(int vol);
-        (ORIGINAL(device_)->*vtable_method<device_fn>(device_, 0x40))(volume);
+        sound_device(device_)->set_volume(volume);
     }
 }
 
@@ -602,9 +588,7 @@ int Sound::set_fade(unsigned long fade) {
     }
     fade_38_ = fade;
     if (device_) {
-        typedef void (OriginalObject::*device_fn)(unsigned long t);
-        (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0))(
-            fade);
+        sound_device(device_)->set_fade(fade);
     }
     return 0;
 }
@@ -632,9 +616,7 @@ int Sound::set_fade_in(unsigned int fade_in) {
     }
     fade_38_ = fade_in;
     if (device_) {
-        typedef void (OriginalObject::*device_fn)(unsigned int t);
-        (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x54))(
-            fade_in);
+        sound_device(device_)->set_fade_in(fade_in);
     }
     return 0;
 }
@@ -690,9 +672,7 @@ void Sound::set_pan(int a1) {
     const int pan = a1 < -0x40 ? -0x40 : (a1 > 0x3F ? 0x3F : a1);
     pan_8_ = pan;
     if (device_) {
-        typedef void (OriginalObject::*device_fn)(int pan);
-        (ORIGINAL(device_)->*original_slot<device_fn>(*reinterpret_cast<uint8_t **>(device_) + 0x44))(
-            pan);
+        sound_device(device_)->set_pan(pan);
     }
 }
 
@@ -734,8 +714,7 @@ int Sound::unload() {
         // The no-argument device dispatch goes through the __fastcall slot
         // form, as play()/stop()/release() do - the receiver is already in
         // ecx, so there is no receiver pointer to name at the call site.
-        typedef int (__fastcall *device_fn)(void *self);
-        result = vtable_slot<device_fn>(device, 0x14)(device);
+        result = sound_device(device)->unload();
     }
     detach();
     device_ = nullptr;

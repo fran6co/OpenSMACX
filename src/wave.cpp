@@ -28,6 +28,15 @@
 #include "basepop.h"
 #include "ambience.h"
 
+namespace {
+// Historical LEVER/TRIED comments below record manual slot-dispatch codegen;
+// those spellings are superseded by typed provider calls except at the two
+// captured-vtable operations retained with their original snapshot semantics.
+inline WavePlaybackDeviceInterface *wave_playback_device(void *device) {
+    return static_cast<WavePlaybackDeviceInterface *>(device);
+}
+}
+
 // The Windows multimedia clock is a system import, not storage in this build.
 // RECOVERY_IMPORT: v1 __imp__timeGetTime@0 WINMM.dll name:timeGetTime
 
@@ -206,14 +215,11 @@ Status: Complete
 int Wave::unload() {
     // The wrapped device still has an opaque external interface; our own
     // chain operation uses the inherited Sound virtual contract.
-    typedef int(__fastcall *device_unload_fn)(void *);
-
     int result = 0;
     if (device_) {
-        // CALLED WHERE THE SLOT LIVES: the image's `call dword ptr [eax+0x14]`
-        // at 0x004C6EAF is one instruction, and reading the slot into a
-        // pointer-to-member first costs a `mov` before it.
-        result = vtable_slot<device_unload_fn>(device_, 0x14)(device_);
+        // The original call is through provider slot 5; this uses the typed
+        // Sound prefix and leaves emitted-call matching to native review.
+        result = wave_playback_device(device_)->unload();
     }
     // `mov al, byte ptr [esi+0x54]` at 0x004C6EB4: unload is the one place
     // that narrows the 0x54 dword, and only bit 1 is wanted.
@@ -258,11 +264,9 @@ int Wave::set_pitch(int a1) {
     }
     pitch_ = pitch;
     if (device_) {
-        // The int argument is passed ON THE STACK by the device's own
-        // calling convention, not in edx as a second `__fastcall` parameter
-        // would be; the pointer-to-member type keeps that thiscall shape.
-        typedef void (OriginalObject::*set_pitch_fn)(int pitch);
-        (ORIGINAL(device_)->*vtable_slot<set_pitch_fn>(device_, 0x98))(pitch);
+        // The typed external call keeps the signed, clamped value in the
+        // provider's declared argument type.
+        wave_playback_device(device_)->set_pitch(pitch);
     }
     return 0;
 }
@@ -350,12 +354,9 @@ Return Value: nonzero while playing, 0 once finished or when not started
 Status: Complete
 */
 int Wave::is_playing() {
-    // The device answers through its live vtable rather than a C++ virtual
-    // call, and it is the receiver of that call - the original loads it into
-    // ecx first, then dispatches on `[[ecx]+0x5C]`.
-    typedef int(__fastcall *device_is_playing_fn)(void *);
+    // This is an external virtual call through the Sound prefix's slot 23.
     if (device_) {
-        return vtable_slot<device_is_playing_fn>(device_, 0x5C)(device_);
+        return wave_playback_device(device_)->is_playing();
     }
     // `mov eax, dword ptr [esi+0x54]` then `shr eax, 4` / `test al, 1` at
     // 0x004C6B1A: a dword read of the whole flag field, testing bit 4.
@@ -393,9 +394,8 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::play(int effect) {
-    typedef int (OriginalObject::*device_play_fn)(int effect);
     if (device_) {
-        return (ORIGINAL(device_)->*vtable_slot<device_play_fn>(device_, 0x94))(effect);
+        return wave_playback_device(device_)->play(effect);
     }
     return 0x14;
 }
@@ -421,9 +421,8 @@ Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
 int Wave::is_hwbuffer() {
-    typedef int(__fastcall *device_fn)(void *);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xC8)(device_);
+        return wave_playback_device(device_)->is_hwbuffer();
     }
     return 0;
 }
@@ -445,9 +444,8 @@ Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
 int Wave::get_time(uint32_t a1) {
-    typedef int (OriginalObject::*device_fn)(uint32_t a1);
     if (device_) {
-        return (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0xB4))(a1);
+        return wave_playback_device(device_)->get_time(a1);
     }
     return 0;
 }
@@ -468,9 +466,8 @@ Return Value: the device's answer, or -1 when no device is wrapped
 Status: Complete
 */
 int Wave::get_current_marker() {
-    typedef int(__fastcall *device_fn)(void *);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xB8)(device_);
+        return wave_playback_device(device_)->get_current_marker();
     }
     return -1;
 }
@@ -491,9 +488,8 @@ Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
 int Wave::get_game_hwnd() {
-    typedef int(__fastcall *device_fn)(void *);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0x3C)(device_);
+        return wave_playback_device(device_)->get_game_hwnd();
     }
     return 0;
 }
@@ -514,9 +510,8 @@ Return Value: the device's answer, or 0 when no device is wrapped
 Status: Complete
 */
 int Wave::get_ndevices() {
-    typedef int(__fastcall *device_fn)(void *);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xBC)(device_);
+        return wave_playback_device(device_)->get_ndevices();
     }
     return 0;
 }
@@ -576,9 +571,7 @@ Status: Complete
 int Wave::set_reverb_mix(float mix) {
     reverb_mix_ = mix;
     if (device_) {
-        typedef int(__fastcall *device_fn)(void *, uint32_t);
-        return vtable_slot<device_fn>(device_, 0xE0)(
-            device_, reinterpret_cast<const uint32_t &>(mix));
+        return wave_playback_device(device_)->set_reverb_mix(mix);
     }
     return 0x14;
 }
@@ -603,9 +596,8 @@ int Wave::is_3d() {
     // TRIED: static_cast<unsigned char>(0), a local unsigned char, and a
     // ternary all still compile the no-device path as `xor eax, eax` where
     // the image narrows to `xor al, al`; MNEMONIC_ONLY plateau, 6/7 agreeing.
-    typedef int(__fastcall *device_fn)(void *);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xDC)(device_);
+        return wave_playback_device(device_)->is_3d();
     }
     return 0;
 }
@@ -629,9 +621,8 @@ Return Value: the device's answer, or 1 when no device is wrapped
 Status: Complete
 */
 int Wave::get_device_description(char *a1, int a2, int a3) {
-    typedef int (OriginalObject::*device_fn)(char *a1, int a2, int a3);
     if (device_) {
-        return (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0xC0))(a1, a2, a3);
+        return wave_playback_device(device_)->get_device_description(a1, a2, a3);
     }
     if (a3) {
         *a1 = '\0';
@@ -656,9 +647,8 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::set_position3d(float x, float y, float z) {
-    typedef int(__fastcall *device_fn)(void *, float, float, float);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xCC)(device_, x, y, z);
+        return wave_playback_device(device_)->set_position3d(x, y, z);
     }
     return 0x14;
 }
@@ -680,9 +670,8 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::set_xpos(float x) {
-    typedef int(__fastcall *device_fn)(void *, float);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xD0)(device_, x);
+        return wave_playback_device(device_)->set_xpos(x);
     }
     return 0x14;
 }
@@ -704,9 +693,8 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::set_ypos(float y) {
-    typedef int(__fastcall *device_fn)(void *, float);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xD4)(device_, y);
+        return wave_playback_device(device_)->set_ypos(y);
     }
     return 0x14;
 }
@@ -728,9 +716,8 @@ Return Value: the device's answer, or 0x14 when no device is wrapped
 Status: Complete
 */
 int Wave::set_zpos(float z) {
-    typedef int(__fastcall *device_fn)(void *, float);
     if (device_) {
-        return vtable_slot<device_fn>(device_, 0xD8)(device_, z);
+        return wave_playback_device(device_)->set_zpos(z);
     }
     return 0x14;
 }
@@ -760,7 +747,6 @@ Return Value: n/a
 Status: Complete
 */
 int Wave::set_attrib(unsigned long attrib) {
-    typedef int (OriginalObject::*device_fn)(uint32_t attrib);
     if (attrib & 2) {
         loop_flag_30_ = 1;
     }
@@ -783,7 +769,7 @@ int Wave::set_attrib(unsigned long attrib) {
         flags_54_ |= 0x20;
     }
     if (device_) {
-        (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0x6C))(attrib);
+        wave_playback_device(device_)->set_attrib(attrib);
     }
     return 0;
 }
@@ -810,8 +796,7 @@ Status: Complete
 int Wave::get_attrib() {
     int result = 0;
     if (device_) {
-        typedef int(__fastcall *device_fn)(void *);
-        result = vtable_slot<device_fn>(device_, 0x70)(device_);
+        result = wave_playback_device(device_)->get_attrib();
     }
     if (loop_flag_30_) {
         result |= 2;
@@ -893,8 +878,7 @@ void Wave::set_volume(int volume) {
             scaled * static_cast<double>(WaveDeviceGlobal.groups_[group_slot_].volume)));
     }
     if (device_) {
-        typedef void (OriginalObject::*device_fn)(int level);
-        (ORIGINAL(device_)->*vtable_slot<device_fn>(device_, 0x40))(level);
+        wave_playback_device(device_)->set_volume(level);
     }
 }
 
@@ -967,7 +951,6 @@ Return Value: the device's start answer, 0x14 when disabled or unstartable,
 Status: Complete
 */
 int Wave::play() {
-    typedef int(__fastcall *device_start_fn)(void *);
 
     int result = 0;
     if (group_slot_ < 0x10) {
@@ -980,11 +963,11 @@ int Wave::play() {
         }
     }
     if (device_) {
-        result = vtable_slot<device_start_fn>(device_, 0x1C)(device_);
+        result = wave_playback_device(device_)->play();
     } else if (flags_54_ & 0x10) {
         Wave::load();
         if (device_) {
-            result = vtable_slot<device_start_fn>(device_, 0x1C)(device_);
+            result = wave_playback_device(device_)->play();
         }
     } else {
         result = 0x14;
@@ -1076,18 +1059,14 @@ int Wave::load() {
         if (flags & 0x20) {
             attribs |= 0x100;
         }
-        {
-            typedef void (OriginalObject::*device_attrib_fn)(int attribs);
-            (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
-        }
+        wave_playback_device(device_)->set_attrib(static_cast<unsigned long>(attribs));
         // The original calls Sound::load (0x004C6280) directly. Virtual
         // dispatch here would recurse into Wave's filename overload.
         const int loaded = Sound::load(fname);
         if (loaded) {
             return loaded;
         }
-        typedef int(__fastcall *device_length_fn)(void *);
-        ms_length_ = vtable_slot<device_length_fn>(device_, 0xC4)(device_);
+        ms_length_ = wave_playback_device(device_)->get_ms_length();
         return 0;
     }
     return 8;
@@ -1151,12 +1130,8 @@ int Wave::reload() {
         if (is_looping()) {
             attribs |= 2;
         }
-        {
-            typedef void (OriginalObject::*device_attrib_fn)(int attribs);
-            (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
-        }
-        typedef int(__fastcall *device_reload_fn)(void *);
-        result = vtable_slot<device_reload_fn>(device_, 0x84)(device_);
+        wave_playback_device(device_)->set_attrib(static_cast<unsigned long>(attribs));
+        result = wave_playback_device(device_)->reload();
         // The image's every exit - the reload error, the already-loaded bit,
         // the loop-flag jump and this fall-through - merges into ONE tail.
         // `if (result) return result;` lets VC6 prove the final return is a
@@ -1166,8 +1141,7 @@ int Wave::reload() {
                 flags_40_ |= 1;
                 attach();
                 if (loop_flag_30_) {
-                    typedef void (OriginalObject::*device_loop_fn)(int on);
-                    (ORIGINAL(device_)->*vtable_slot<device_loop_fn>(device_, 0x48))(1);
+                    wave_playback_device(device_)->set_loop_state(1);
                 }
             }
         }
@@ -1233,13 +1207,9 @@ int Wave::dyna_load(char *fname) {
             uint8_t *const device_vtable =
                 *reinterpret_cast<uint8_t **>(device_);
             const int attribs = get_attrib();
-            {
-                // The int argument is passed on the stack, not in edx; the
-                // pointer-to-member type keeps the thiscall shape.
-                typedef void (OriginalObject::*device_attrib_fn)(int attribs);
-                (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(
-                    device_vtable + 0x6C)))(attribs);
-            }
+            typedef void (OriginalObject::*device_attrib_fn)(int attribs);
+            (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(
+                device_vtable + 0x6C)))(attribs);
             attach();
         }
         return created;
@@ -1303,30 +1273,17 @@ int Wave::load(const char *fname) {
     if (flags & 0x10) {
         attribs |= 0x80;
     }
-    {
-        typedef void (OriginalObject::*device_attrib_fn)(int attribs);
-        (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
-    }
+    wave_playback_device(device_)->set_attrib(static_cast<unsigned long>(attribs));
     // The original calls Sound::load (0x004C6280) directly, not this
     // Wave overload. Qualification preserves the non-recursive base call.
     const int loaded = Sound::load(fname);
     if (loaded) {
         return loaded;
     }
-    {
-        typedef int(__fastcall *device_length_fn)(void *);
-        ms_length_ = vtable_slot<device_length_fn>(device_, 0xC4)(device_);
-    }
-    {
-        typedef void (OriginalObject::*device_level_fn)(uint32_t v);
-        (ORIGINAL(device_)->*vtable_slot<device_level_fn>(device_, 0x40))(volume_);
-    }
-    {
-        typedef void (OriginalObject::*device_pitch_fn)(int pitch);
-        (ORIGINAL(device_)->*vtable_slot<device_pitch_fn>(device_, 0x98))(pitch_);
-    }
-    typedef void (OriginalObject::*device_pan_fn)(uint32_t v);
-    (ORIGINAL(device_)->*vtable_slot<device_pan_fn>(device_, 0x44))(pan_8_);
+    ms_length_ = wave_playback_device(device_)->get_ms_length();
+    wave_playback_device(device_)->set_volume(volume_);
+    wave_playback_device(device_)->set_pitch(pitch_);
+    wave_playback_device(device_)->set_pan(static_cast<int>(pan_8_));
     return 0;
 }
 
@@ -1467,19 +1424,14 @@ void Wave::init(char *group_id, unsigned long flags) {
                 uint8_t *const device_vtable =
                     *reinterpret_cast<uint8_t **>(device_);
                 const int attribs = get_attrib();
-                {
-                    // The int argument is passed on the stack, not in edx;
-                    // the pointer-to-member type keeps the thiscall shape.
-                    typedef void (OriginalObject::*device_attrib_fn)(int attribs);
-                    (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(device_vtable + 0x6C)))(
-                        attribs);
-                }
+                typedef void (OriginalObject::*device_attrib_fn)(int attribs);
+                (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(
+                    device_vtable + 0x6C)))(attribs);
                 attach();
             }
         }
         if (device_) {
-            typedef void (OriginalObject::*device_mode_fn)(uint32_t mode);
-            (ORIGINAL(device_)->*vtable_slot<device_mode_fn>(device_, 0x6C))(flags);
+            wave_playback_device(device_)->set_attrib(flags);
         }
     }
     if (flags & 1) {
