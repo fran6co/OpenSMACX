@@ -7129,10 +7129,6 @@ void Win::set_rects() {
 }
 
 // ===== homed from src/recovered/units/005f2ac0.cpp =====
-typedef int (__stdcall *IfaceGetHdcProc)(void *, HDC *);
-typedef int (__stdcall *IfaceReleaseHdcProc)(void *, HDC);
-typedef HDC (__stdcall *GetDCProc)(void *);
-typedef int (__stdcall *ReleaseDCProc)(void *, HDC);
 typedef void *(__stdcall *CreatePenIndirectProc)(const LocalLogPen *);
 typedef void *(__stdcall *SelectObjectProc)(HDC, void *);
 typedef int (__stdcall *MoveToExProc)(HDC, int, int, void *);
@@ -7149,10 +7145,9 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
     if (WinHdcRefCount != 0) {
         WinHdcRefCount = WinHdcRefCount + 1;
     } else {
-        void *iface = DirectDrawSurface;
+        IDirectDrawSurface2 *iface = DirectDrawSurface;
         if (iface != 0) {
-            IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
-            fn(iface, &WinSharedHdc);
+            iface->GetDC(&WinSharedHdc);
         } else {
             WinSharedHdc = GetDC(HandleMain);
         }
@@ -7186,10 +7181,9 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
 
             WinHdcRefCount = WinHdcRefCount - 1;
             if (WinHdcRefCount == 0) {
-                void *iface2 = DirectDrawSurface;
+                IDirectDrawSurface2 *iface2 = DirectDrawSurface;
                 if (iface2 != 0) {
-                    IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
-                    fn2(iface2, WinSharedHdc);
+                    iface2->ReleaseDC(WinSharedHdc);
                     WinSharedHdc = 0;
                     return;
                 }
@@ -9856,10 +9850,9 @@ void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
         WinHdcRefCount = WinHdcRefCount + 1;
         hdc = WinSharedHdc;
     } else {
-        void *iface = DirectDrawSurface;
+        IDirectDrawSurface2 *iface = DirectDrawSurface;
         if (iface != 0) {
-            IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
-            fn(iface, &WinSharedHdc);
+            iface->GetDC(&WinSharedHdc);
             hdc = WinSharedHdc;
         } else {
             WinSharedHdc = GetDC(HandleMain);
@@ -9886,10 +9879,9 @@ void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6) {
 
         WinHdcRefCount = WinHdcRefCount - 1;
         if (WinHdcRefCount == 0) {
-            void *iface2 = DirectDrawSurface;
+            IDirectDrawSurface2 *iface2 = DirectDrawSurface;
             if (iface2 != 0) {
-                IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
-                fn2(iface2, WinSharedHdc);
+                iface2->ReleaseDC(WinSharedHdc);
                 WinSharedHdc = 0;
                 return;
             }
@@ -11383,10 +11375,9 @@ long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
             WinHdcRefCount = WinHdcRefCount + 1;
             hdc = WinSharedHdc;
         } else {
-            void *iface = DirectDrawSurface;
+            IDirectDrawSurface2 *iface = DirectDrawSurface;
             if (iface != 0) {
-                IfaceGetHdcProc fn = (*reinterpret_cast<IfaceGetHdcProc **>(iface))[17];
-                fn(iface, &WinSharedHdc);
+                iface->GetDC(&WinSharedHdc);
                 hdc = WinSharedHdc;
             } else {
                 WinSharedHdc = GetDC(HandleMain);
@@ -11402,12 +11393,10 @@ long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
 
             WinHdcRefCount = WinHdcRefCount - 1;
             if (WinHdcRefCount == 0) {
-                void *iface2 = DirectDrawSurface;
+                IDirectDrawSurface2 *iface2 = DirectDrawSurface;
                 if (iface2 != 0) {
-                    IfaceReleaseHdcProc fn2 = (*reinterpret_cast<IfaceReleaseHdcProc **>(iface2))[26];
-                    fn2(iface2, WinSharedHdc);
+                    iface2->ReleaseDC(WinSharedHdc);
                 } else {
-                    typedef int (__stdcall *ReleaseDCProc)(void *, HDC);
                     ReleaseDC(
                         HandleMain, WinSharedHdc);
                 }

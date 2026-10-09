@@ -2032,19 +2032,6 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
     return 1;
 }
 
-// Fixed-slot bindings carried from the 004b1080 work, named from the same
-// evidence datalink.cpp records for the shared tables.
-// SocialCategoryRow   0x0094B014 - SocialCategories + 0x14; the header id
-//                     the mouseover title reads, indexed
-//                     [category * 0x35 + row].
-// SocialEffectRowBase 0x00946598 - SocialEffects + 0x18; the effect name
-//                     strings, rows 0x68 apart.
-// PlayerPowerBlock    0x0096CCB0 - the per-faction power integers the -2
-//                     (faction-power) hover reads, PlayersData stride.
-static const int *const SocialCategoryRow = (const int *)0x0094B014;
-static const char *const SocialEffectRowBase = (const char *)0x00946598;
-static int *const PlayerPowerBlock = (int *)0x0096CCB0;
-
 /*
  * Purpose: Repaint the mouseover panel. The header shows the hovered effect's
  *          name centred; the body then walks the eleven effects of the current
@@ -2096,7 +2083,9 @@ void SocialWin::draw_mouseover() {
         } else {
             cat_idx = mode / 4;
             row_idx = mode % 4;
-            table_index = SocialCategoryRow[row_idx + cat_idx * 0x35];
+            // Original 0x94B014 is RulesSocialCategory::name + 0x14;
+            // rows advance by sizeof(RulesSocialCategory) == 0xD4.
+            table_index = reinterpret_cast<int>(SocialCategories[cat_idx].name[row_idx]);
         }
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(table_index));
@@ -2124,7 +2113,9 @@ void SocialWin::draw_mouseover() {
             }
             int v;
             if (field_A2C_ == 0xFFFFFFFEU) {
-                v = PlayerPowerBlock[i + self_faction * 2099];
+                // Original 0x96CCB0 is PlayersData::soc_effect_base at +0x2D0;
+                // PlayerData rows have the measured 0x20CC stride.
+                v = PlayersData[self_faction].soc_effect_base.values_[i];
             } else {
                 bool skip = false;
                 if (GameDataStateStorage.fields_.secret_project_.cloning_vats() >= 0 &&
@@ -2187,7 +2178,7 @@ void SocialWin::draw_mouseover() {
 
                 int v2;
                 if (field_A2C_ == 0xFFFFFFFEU) {
-                    v2 = PlayerPowerBlock[i + self_faction * 2099];
+                    v2 = PlayersData[self_faction].soc_effect_base.values_[i];
                 } else {
                     v2 = SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)];
                 }
@@ -2224,7 +2215,9 @@ void SocialWin::draw_mouseover() {
 
                 StringTemp[0] = 0;
                 rect1.left = rect1.left + 0x10 + effectIcons_[0].width();
-                strcat(StringTemp, SocialEffectRowBase + i * 0x68);
+                // Original 0x946598 is SocialEffects::set2 at +0x18;
+                // RulesSocialEffect rows advance by 0x68.
+                strcat(StringTemp, SocialEffects[i].set2);
                 buf->write_l(StringTemp, &rect1, strlen(StringTemp));
                 rect1.left = rect1.left - 0x10 - effectIcons_[0].width();
                 rect1.top += line_height;
@@ -2236,10 +2229,6 @@ void SocialWin::draw_mouseover() {
     GraphicWin::soft_update(header_rect);
     do_sound();
 }
-
-// PlayerUpheavalBlock 0x0096CC28 - the per-faction upheaval baseline
-// social_upheaval's result is compared against.
-static int *const PlayerUpheavalBlock = (int *)0x0096CC28;
 
 /*
  * Purpose: Repaint the info header above the social panel: the category
@@ -2302,7 +2291,9 @@ void SocialWin::draw_info() {
 
     int upheaval = static_cast<int>(social_upheaval(
         factionID_, &socCategory_));
-    upheaval -= PlayerUpheavalBlock[factionID_ * 2099];
+    // Original 0x96CC28 is PlayersData::soc_upheaval_cost_paid at +0x248,
+    // with the measured 0x20CC PlayerData stride.
+    upheaval -= PlayersData[factionID_].soc_upheaval_cost_paid;
 
     int text_y;
     int row_y;
@@ -2464,7 +2455,6 @@ scaled:
 // MainPanelLeft/Top/Right 0x007AF5A0/A4/A8 and SocialColumnTop/Right/Bottom
 //                     0x007AF5D4/D8/DC - the layout edges the tooltip and
 //                     column rectangles derive from.
-// MainPanelHeight     0x007AF59C - the height the window's y centres against.
 // DefaultFontFace and DefaultLargeFontFace are the genuine source-owned
 // globals already bound to the original face-name slots at 0x00691B2C/30.
 // SocialWinPcxName is the writable source-owned array for original 0x006874B0,
@@ -2482,7 +2472,6 @@ static int *const MainPanelRight = (int *)0x007AF5A8;
 static int *const SocialColumnTop = (int *)0x007AF5D4;
 static int *const SocialColumnRight = (int *)0x007AF5D8;
 static int *const SocialColumnBottom = (int *)0x007AF5DC;
-static int *const MainPanelHeight = (int *)0x007AF59C;
 static int *const TutorialStage = (int *)0x008CC228;
 static RECT *const TutorialSocRect = (RECT *)0x008C5380;
 int __cdecl pop_wait();  // 0x005398E0, defined in faction.cpp
@@ -2723,7 +2712,8 @@ void SocialWin::init(int faction_id) {
 
     {
         int cx = (WinScreenWidth - 0x321) / 2;
-        int cy = (WinScreenHeight - *MainPanelHeight) - 0x162;
+        // Original 0x007AF59C is MainInterface::field_D7C_ at +0xD7C.
+        int cy = (WinScreenHeight - MainInterfaceGlobal.panel_height()) - 0x162;
         GraphicWin::init(cx, cy, 0x341, 0x162, 0, 0x1000000,
             static_cast<Win *>(&ConsoleGlobal), 0, 0);
     }
@@ -2765,7 +2755,10 @@ void SocialWin::init(int faction_id) {
                     continue;
                 }
                 StringTemp[0] = 0;
-                strcat(StringTemp, StringTable.get(SocialCategoryRow[row_accum + col]));
+                // Preserve the LPSTR-to-string-table validation path for the
+                // category name pointers stored by Strings::put.
+                strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                    SocialCategories[row].name[col])));
                 CharUpperA(StringTemp);
                 int idx = col + row * 4;
                 RECT *cell = &tutRects3_[2 + idx];
@@ -2790,17 +2783,15 @@ void SocialWin::init(int faction_id) {
 
     buttonGroup_.init(2, 0);
     {
-        const char *name = SocialEffectRowBase;
-        const char *name_end = SocialEffectRowBase + 0x138;
-        const char *name_stop = SocialEffectRowBase + 0x478;
         int row = 0;
         int button_offset = 0;
         int entry = 0;
-        while (name < name_stop) {
-            if (name != name_end) {
+        while (row < 11) {
+            if (row != 3) {
+                const char *name = SocialEffects[row].set2;
                 int col;
                 int offset;
-                if (name < name_end) {
+                if (row < 3) {
                     col = row * 4;
                     offset = button_offset;
                 } else {
@@ -2828,7 +2819,6 @@ void SocialWin::init(int faction_id) {
                         reinterpret_cast<char *>(Labels.strings_ptr)
                         + col * 4 + 0xCF4)));
             }
-            name += 0x68;
             ++row;
             entry += 1;
             button_offset += 0xB4C;
