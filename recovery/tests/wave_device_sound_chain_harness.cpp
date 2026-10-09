@@ -7,8 +7,7 @@
 typedef unsigned int uint32_t;
 typedef int int32_t;
 typedef unsigned char uint8_t;
-class OriginalObject {};
-#define ORIGINAL(object) reinterpret_cast<OriginalObject *>(object)
+typedef void *HWND;
 #define protected public
 // LIVE_DEVICE_BASE_DECL
 // LIVE_FADE_DECLARATION
@@ -30,6 +29,7 @@ struct EAX_REVERB_PROPERTIES;
 // LIVE_DEVICE_DECLARATION
 #undef private
 // LIVE_SLOT_DISPATCH
+}; // The source extraction deliberately stops before the view's closing token.
 // LIVE_GROUP_CONSTRUCTOR
 // LIVE_GROUP_DESTRUCTOR
 SoundDeviceBase::SoundDeviceBase()

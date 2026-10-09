@@ -77,7 +77,7 @@ def run_switch(tmp_path, monkeypatch):
             ("// LIVE_SOUND_DOUBLES", "recovery/tests/sound_chain_storage_harness.cpp", "// SOUND_LINK_DOUBLES_BEGIN", "// SOUND_LINK_DOUBLES_END"),
             ("// LIVE_GROUP_TYPES", "src/wave_device.h", "struct WaveGroupNode {", " /*\n  * Wave_Device class"),
             ("// LIVE_DEVICE_DECLARATION", "src/wave_device.h", "class Wave_Device : public SoundDeviceBase {", "// THE OBJECT, at 0x0090D978"),
-            ("// LIVE_SLOT_DISPATCH", "src/original_seam.h", "template <class Fn>\nFn &vtable_slot", "/*\n * The same slot as a POINTER-TO-MEMBER REFERENCE"),
+            ("// LIVE_SLOT_DISPATCH", "src/soundx_wave_device_abi.h", "class WaveDeviceProviderCallView {", "};"),
         ])
 
 
@@ -105,8 +105,9 @@ def test_actual_switch_rejects_wrong_call_order_or_resume_links(tmp_path, monkey
             return text
         text = text.replace(before, after)
         if "stale_device" in after:
-            text = text.replace("(ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x18))(a1);",
-                                "(ORIGINAL(stale_device)->*vtable_slot<device_fn>(stale_device, 0x18))(a1);")
+            text = text.replace(
+                "static_cast<WaveDeviceProviderCallView *>(device_14_)->select(a1);",
+                "static_cast<WaveDeviceProviderCallView *>(stale_device)->select(a1);")
         return text
     monkeypatch.setattr(Path, "read_text", damaged)
     with pytest.raises(AssertionError):

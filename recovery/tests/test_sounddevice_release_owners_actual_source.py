@@ -88,14 +88,17 @@ def test_typed_dispatch_source_has_guards_rereads_and_wrapper_calls():
     assert "device_14_ != 0 && WaveInDeviceCloseSlot() != 0" in b["wave_in_delete"]
 
     wave = b["wave"]
-    assert "SoundXDeviceAbi::release_device(device_14_);" in wave
-    assert wave.index("SoundXDeviceAbi::release_device(device_14_);") < wave.index("if (device_14_)", wave.index("SoundXDeviceAbi::release_device(device_14_);"))
+    assert "static_cast<WaveDeviceProviderCallView *>(device_14_)->release();" in wave
+    assert wave.index("static_cast<WaveDeviceProviderCallView *>(device_14_)->release();") < wave.index("if (device_14_)", wave.index("static_cast<WaveDeviceProviderCallView *>(device_14_)->release();"))
     assert "SoundDllProcs[5]" in wave and "device_14_ = nullptr;" in wave
     assert re.search(r"return 0;\s*$", wave)
 
 
 HARNESS_PREFIX = r'''#include <cassert>
 #include <cstdint>
+typedef void *HWND;
+struct EAX_REVERB_PROPERTIES;
+#include "soundx_wave_device_abi.h"
 
 typedef void MidiDeviceClose();
 typedef void WaveInDeviceClose();
@@ -121,11 +124,12 @@ struct Wave_In_Device : SoundDeviceBase { int release(); virtual int delete_devi
 struct Wave_Device : SoundDeviceBase { int release(); };
 
 struct Backend {
+  void **vptr;
   void **owner_slot;
   void *replacement;
   bool mutate_owner;
   int value, calls;
-  Backend() : owner_slot(0), replacement(0), mutate_owner(false), value(0x51), calls(0) {}
+  Backend() : vptr(0), owner_slot(0), replacement(0), mutate_owner(false), value(0x51), calls(0) {}
   int release() {
     ++calls;
     if (mutate_owner && owner_slot) *owner_slot = replacement;
@@ -135,6 +139,54 @@ struct Backend {
 namespace SoundXDeviceAbi {
 void release_device(void *device) { static_cast<Backend *>(device)->release(); }
 }
+// Host-only fake provider. Empty bodies exist only to satisfy the borrowed
+// abstract call view; release alone participates in these behavior controls.
+struct WaveProviderMock : WaveDeviceProviderCallView {
+  Backend *backend;
+  explicit WaveProviderMock(Backend *value) : backend(value) {}
+  int reserved_00(uint32_t) override { return 0; }
+  int reserved_04() override { return 0; }
+  void reserved_08() override {}
+  int init(void *, unsigned long) override { return 0; }
+  void release() override { backend->release(); }
+  int get_ndevices() override { return 0; }
+  int select(unsigned long) override { return 0; }
+  void get_description(unsigned long, char *, unsigned long) override {}
+  void set_volume(uint32_t) override {}
+  int reserved_24() override { return 0; }
+  void reserved_28(uint32_t) override {}
+  int reserved_2c(uint32_t) override { return 0; }
+  int reserved_30() override { return 0; }
+  void update_sound() override {}
+  void set_rate(uint32_t) override {}
+  int get_rate() override { return 0; }
+  void reserved_40(uint32_t) override {}
+  uint32_t reserved_44() override { return 0; }
+  void suspend() override {}
+  void restart() override {}
+  int start_raw_dump(char *) override { return 0; }
+  int stop_raw_dump() override { return 0; }
+  int get_hw_mem_size() override { return 0; }
+  void reserved_5c() override {}
+  void enable() override {}
+  void disable() override {}
+  int is_disabled() override { return 0; }
+  int set_hwnd(HWND) override { return 0; }
+  int get_ds() override { return 0; }
+  bool is_eax() override { return false; }
+  int set_eax(EAX_REVERB_PROPERTIES *) override { return 0; }
+  int set_eax(uint32_t) override { return 0; }
+  int set_eax_mix(float) override { return 0; }
+  bool is_3d() override { return false; }
+  int set_listener_position(float, float, float) override { return 0; }
+  int get_listener_position(float *, float *, float *) override { return 0; }
+  int set_listener_xpos(float) override { return 0; }
+  int get_listener_xpos(float *) override { return 0; }
+  int set_listener_ypos(float) override { return 0; }
+  int get_listener_ypos(float *) override { return 0; }
+  int set_listener_zpos(float) override { return 0; }
+  int get_listener_zpos(float *) override { return 0; }
+};
 struct WaveInProbe : Wave_In_Device {
   int deletes;
   WaveInProbe() : deletes(0) {}
@@ -220,16 +272,18 @@ int main() {
   // rebound field invokes the hook and clears it.
   SoundDllProcs[5] = reinterpret_cast<uintptr_t>(&wave_destroy_fn);
   Backend wave_backend;
+  WaveProviderMock wave_provider(&wave_backend);
   Wave_Device wave;
-  wave.device_14_ = &wave_backend;
+  wave.device_14_ = &wave_provider;
   wave_backend.owner_slot = &wave.device_14_;
   wave_backend.mutate_owner = true;
   assert(wave.release() == 0 && wave_backend.calls == 1);
   assert(wave_destroy_calls == 0 && wave.device_14_ == 0);
 
   Backend wave_rebind_backend, wave_replacement;
+  WaveProviderMock wave_rebind_provider(&wave_rebind_backend);
   Wave_Device wave_rebind;
-  wave_rebind.device_14_ = &wave_rebind_backend;
+  wave_rebind.device_14_ = &wave_rebind_provider;
   wave_rebind_backend.owner_slot = &wave_rebind.device_14_;
   wave_rebind_backend.replacement = &wave_replacement;
   wave_rebind_backend.mutate_owner = true;
@@ -278,10 +332,11 @@ def test_extracted_product_bodies_pass_callback_and_override_controls(tmp_path, 
         pytest.skip(f"{compiler_name} unavailable")
     bodies = production_bodies()
     assert all("vtable_slot<" not in bodies[name]
-               for name in ("base", "midi", "wave_in", "wave"))
+               for name in ("base", "midi", "wave_in"))
     source = tmp_path / f"sounddevice_release_{compiler_name}.cpp"
     source.write_text(harness_source(bodies))
     binary = tmp_path / f"sounddevice_release_{compiler_name}"
+    (tmp_path / "soundx_wave_device_abi.h").write_text((ROOT / "src/soundx_wave_device_abi.h").read_text())
     subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
                     str(source), "-o", str(binary)], check=True)
     subprocess.run([str(binary)], check=True, timeout=10)
@@ -301,6 +356,7 @@ def test_compiled_behavior_controls_reject_targeted_mutants(tmp_path, compiler_n
         pytest.skip(f"{compiler_name} unavailable")
     source = tmp_path / f"sounddevice_release_{mutant}_{compiler_name}.cpp"
     source.write_text(harness_source(production_bodies(), mutant))
+    (tmp_path / "soundx_wave_device_abi.h").write_text((ROOT / "src/soundx_wave_device_abi.h").read_text())
     binary = tmp_path / f"sounddevice_release_{mutant}_{compiler_name}"
     subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
                     str(source), "-o", str(binary)], check=True)

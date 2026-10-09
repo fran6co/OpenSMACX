@@ -73,10 +73,19 @@ def run_device(tmp_path, monkeypatch):
         ("// LIVE_DELETE", "src/wave_device.cpp", 0x4C4F10),
         ("// LIVE_RELEASE", "src/wave_device.cpp", 0x4C4F80)], declarations=[
         ("// LIVE_LOADER", "src/sound_loader.cpp", "int __cdecl load_sound_dll()", "// ORIGINAL: 0x004C5F70"),
+        ("// LIVE_DEVICE_BASE_DECLARATION", "src/sounddevice.h", "class SoundDeviceBase {", "class Midi_Device :"),
         ("// LIVE_GROUP_TYPES", "src/wave_device.h", "struct WaveGroupNode {", " /*\n  * Wave_Device class"),
-        ("// LIVE_DEVICE_DECLARATION", "src/wave_device.h", "class Wave_Device {", "// THE OBJECT, at 0x0090D978"),
-        ("// LIVE_ROLE_TYPES", "src/wave_device.h", "typedef int(__cdecl func_wave_device_factory)", "// The per-group construct/teardown pair"),
-        ("// LIVE_SLOT_DISPATCH", "src/original_seam.h", "template <class Fn>\nFn &vtable_slot", "/*\n * The same slot as a POINTER-TO-MEMBER REFERENCE"),
+        ("// LIVE_DEVICE_DECLARATION", "src/wave_device.h", "class Wave_Device : public SoundDeviceBase {", "// THE OBJECT, at 0x0090D978"),
+        ("// LIVE_BASE_CONSTRUCTOR", "src/sounddevice.cpp", "SoundDeviceBase::SoundDeviceBase() {", "SoundDeviceBase::~SoundDeviceBase()"),
+        ("// LIVE_BASE_DESTRUCTOR", "src/sounddevice.cpp", "SoundDeviceBase::~SoundDeviceBase() {", "/*\nPurpose: Enable the wrapped device"),
+        ("// LIVE_GROUP_CONSTRUCTOR", "src/wave_device.cpp", "WaveControlGroup::WaveControlGroup() {", "WaveControlGroup::~WaveControlGroup()"),
+        ("// LIVE_GROUP_DESTRUCTOR", "src/wave_device.cpp", "WaveControlGroup::~WaveControlGroup() {", "Wave_Device::Wave_Device()"),
+        ("// LIVE_WAVE_CONSTRUCTOR", "src/wave_device.cpp", "Wave_Device::Wave_Device() {", "Wave_Device::~Wave_Device()"),
+        ("// LIVE_GET_NDEVICES", "src/wave_device.cpp", "int Wave_Device::get_ndevices() {", "/*\nPurpose: Ask the wrapped device for its hardware memory size"),
+        ("// LIVE_GET_DESCRIPTION", "src/wave_device.cpp", "int Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) {", "/*\nPurpose: Forward start_raw_dump"),
+        ("// LIVE_INIT", "src/wave_device.cpp", "int Wave_Device::init(void *group_id, unsigned long flags) {", "/*\nPurpose: Release the wrapped device"),
+        ("// LIVE_ROLE_TYPES", "src/wave_device.h", "typedef int(__cdecl func_wave_device_factory)", "// The 0x004C5490 / 0x004C5B80 lifecycle is owned directly by"),
+        ("// LIVE_SLOT_DISPATCH", "src/soundx_wave_device_abi.h", "class WaveDeviceProviderCallView {", "};"),
         ("// LIVE_EXPORT_TYPE", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "extern SoundDllProcsTable SoundDllProcs;"),
         ("// LIVE_EXPORT_STORAGE", "src/sound_loader.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()")])
 
