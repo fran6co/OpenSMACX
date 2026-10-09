@@ -1,0 +1,31 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "3f8a2826da8b7b895e014bd2c5f15ee6d805ec43",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "src/midi.cpp",
+    "src/midi.h",
+    "recovery/tests/test_midi_trackset_cascade_owner_actual_source_oct9.py"
+  ],
+  "evidence": [
+    "Independent pinned complete447D20..447DA5 instruction review identifies virtual slots118(is_trackset_playing(unsigned), bool tested AL),114(xpose_trackset(unsigned,int),ignoredresult),10C(play_trackset(unsigned),ignoredresult). Existing src/midi.h real Midi virtual interface matches allthree offsets/signatures; existing midi.cpp definitions own provider forwarding. This supports Midi-or-derived receiver contract, not a particular dynamic subclass or exact original owning member name/lifetime.",
+    "Current StringStruct transcription contradicts original: settings-checkbox/repaint explanation is wrong; nullary repaint drops the original pushed trackset argument and int status ignores original AL bool contract. Fix these recovery defects rather than preserve them for scoring. Use genuine typed Midi virtual calls; no new vtable arrays/reserved slots, unionmember pointer shims, original addresses, redundant casts or changed existing Midi hierarchy/provider ABI.",
+    "Preserve original callback-sensitive order: status(1), only if false status(2); if bothfalse readsharedword, zero=>-1200, add300/store, transpose(1,currentword),play(1),return. Otherwise status(2) is called again (not cached); whenfalse transpose(2,currentword),play(2). Original sharedword683C2C pinned initial signedint=-1200; no other mapped/current source writer or directcaller found, which is not proof absent indirect use/lifecycle. Preserve unchecked/signed original arithmetic, external mutation/return-ignore/branch effects; no overflow fix, bounds guard or behavior normalization.",
+    "Home complete operation on midi.cpp as a correctly named typed helper accepting Midi* (fastcall ECX receiver), with declaration outside class if needed: original evidence does not independently distinguish free fastcall helper from nonvirtual member. Do not invent a Midi member/derived class. Remove unsupported dummy EDX parameter only after current source reference search confirms no consumers; preserve original calling effects. Coordinator verifies actual emitted symbol and writes current symbol fact; ORIGINALname/address/span/claims remain originalidentity.",
+    "Transfer complete original binding/history to Midi owner through match_recovery.source read/write APIs without manual ORIGINAL edits. Retain originalFILE mode and complete133-byte span, prior RECOVERY_BINDING as explicitly superseded seed hypothesis/history rather than erase it. New source-owned structural evidence records actual3Midi operations, omittedtrackset correction and boolcontract, plus originalsharedwordstart. Remove all dead NullSlot/ReturnSlot/IntSlot/IntIntSlot shim types and CascadeDelaySlot only once all actual references in stringstruct are gone; do not edit unrelated DeletionList strings or other bodies.",
+    "Use meaningful initialized signedint storage named for the trackset transposition value near the Midi operation. No pointer to oldexe, fabricated largerallocation or originalunits claim. Source initial -1200 is independently pinned; originalfullcontainingallocation/other computedwriters/lifetime remainunknown. Coordinator adds unboundedstart-only RECOVERY_OBJECT after fresh native actualsymbol verification.",
+    "Actual-source complete typedhelper hostcontrols with real virtual Midi spies: every status branch and mutable callback/repeatedstatus outcomes, originalfirst/second queryorder, zero reset/negative/positive counter, exact playtrackset argument, ignored transposeresult, transpose-beforeplay and callback-time global mutation; meaningful oneatatime mutants for wrongid/missingplayarg/cachedstatus/bool ordefault/store/order defects. No copiedmachinecode; unsafe overflow/original provider/runtime/linkedproof remainunknown.",
+    "Onlydeclared4files. Worker noGit/native/Wine/delegation. Preserveall originalsourceidentity/span/claim/LEVER/TRIED/role facts via writer and wholeconfiguredread comparison. Coordinator owns task creation/preparation, fresh native symbols/rehome TU comparisons/affectedcaller proof, original short data checks, independent review, full build/link, manual integration/consumedcleanup. Correct original behavior, not deliberate bug fix. Temporary reviewed matching regressions authorized with restoration obligations retained; no newclaims/demotion, baseline reset or fabricated automatic/full-game acceptance."
+  ],
+  "intent": "Recover the mislabeled settings cascade as a typed Midi trackset operation, restore the omitted play argument and real boolean result contract, and remove raw dispatch/executable data backing.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4488480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "midi-trackset-cascade-owner-oct9"
+}
