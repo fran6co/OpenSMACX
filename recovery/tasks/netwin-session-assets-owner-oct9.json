@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "task_id": "netwin-session-assets-owner-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover NetWin session and roster inputs through genuine Net session-node members, Player records and shared style/difficulty assets; preserve original byte-width reads and unchecked quirks.",
+  "base_revision": "3c001bcfdf0be4da2f3f801dedcf38f4f53e2134",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4732864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4206304
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4726736
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4699008
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4718208
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4726032
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4732128
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4726176
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4726416
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4730256
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4725456
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4720896
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4719472
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4716896
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4718976
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4718288
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4700000
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4701168
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4703536
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4706112
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4707072
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4716016
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4713568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4714384
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4715200
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4712752
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4727952
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4710416
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4711232
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4712000
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4731280
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4731456
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4731600
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4731664
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4731936
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4732912
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4704624
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4716832
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4716848
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4732112
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4699984
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4716864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4716880
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4732960
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4725840
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4699216
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4732992
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4698144
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4698352
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4698576
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4698720
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4698848
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5121104
+    }
+  ],
+  "editable_files": [
+    "src/netwin.cpp",
+    "src/net_class.h",
+    "recovery/tests/test_netwin_session_assets_owner_oct9.py"
+  ],
+  "evidence": [
+    "Pinned config_players481E90 byte read93D4B0 is NetDaemonNet93CD90+allocation_node_700+max_players_20. Keep explicit low-byte access to the existing uint32 field, not full-width normalization or independent color storage. create_session/join_session supply capacity.",
+    "Pinned draw_session_info480900 pointer read93D494 is allocation_node_.session_name_+4. Existing Net::close/create/join own free/null/replacement lifetime. allocation_node_ is private: a minimal const borrowed inline accessor in Net header is authorized, with no new virtual/member/layout/original mapping.",
+    "Ready panel78DCA8 is InterfaceBoxStyles base78D528+48*28. Existing ready index is0or2: use styles48+ready, preserving skipped element and unchecked original indexing. Difficulty96C85C is existing Difficulty[MaxDiffNum] string pointer array; preserve stringtable index representation.",
+    "Faction template947020 is Players[1].name_leader: Players946A50+Player59C+name34. config_players copies name,+350formal_name_faction,+31Cadj_name_faction,+18title_leader,+30adj_leader and byteC of name_leader, NOT is_leader_female. Existing CouncWin corroborates same typed Player stride. Preserve this odd byte12 read and seven row order; prefer actual Player record iterator, not raw cross-object byte pointer stepping.",
+    "Standing user permission for cheap isolated parallel manual recovery; worker edits only listedfiles, no Git/Wine/compiler/preparation/record/marker changes. Preserve all identities/claims/findings/error paths. Host actual-source field/width/order/packet controls; coordinator later native old/current NetWin and affected Net family measurements/layout and full build/link. This batch removes existing structural debts, not new-function-count or full acceptance.",
+    "NetWin pick_map packet population is already implemented; old missing-session comments are stale and may be corrected as descriptions, without altering historical binding provenance or changing behavior. Do not reimplement or zero-initialize its unspecified packet bytes."
+  ]
+}
