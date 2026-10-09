@@ -259,7 +259,7 @@ Status: Complete
 //   qualified. Explicit C++ qualification keeps the direct call even though
 //   MainInterface correctly implements the interface's virtual slot13.
 void BattleWin::on_iface_button_clicked(int button_id) {
-    reinterpret_cast<SubInterface*>(this)->release_iface_mode();
+    SubInterface::release_iface_mode();
     MainInterfaceGlobal.MainInterface::on_iface_button_clicked(button_id);
 }
 
@@ -392,7 +392,7 @@ Purpose: ?timer_callback_daemon@BattleWin@@QAAXH@Z - run 1 (ORIGINAL(s)->*teardo
          unguarded. The last is a tail jump in the original, so its
          return goes straight to this function's caller.
 // ORIGINAL: 0x00422EC0 ?timer_callback_daemon@BattleWin@@QAAXH@Z 0x00422EC0-0x00422ECA BYTE_EXACT
-// symbol    ?teardown_00422ec0@@YAXXZ
+// symbol    ?teardown_00422ec0@@YAXH@Z
 // size      10 bytes
 // prototype 
 // callers   0   call targets   0
@@ -402,15 +402,14 @@ Purpose: ?timer_callback_daemon@BattleWin@@QAAXH@Z - run 1 (ORIGINAL(s)->*teardo
 Return Value: n/a
 Status: Complete
 */
-void __cdecl teardown_00422ec0() {
+void __cdecl teardown_00422ec0(int) {
     sub_interface_global()->release_iface_mode();
 }
 
 // ORIGINAL: 0x00421B20 ?pulse_timer@BattleWin@@QAEXXZ 0x00421B20-0x00421B37 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The image's 0x00421B20 adds eight to the BattleWin receiver before calling Time::pulse at 0x006164D0, with callback 0x00422EC0, zero parameter, period 0x1388 and resolution 5.", "BattleWin's constructor and destructor establish a real Time member at +8; 0x00422EC0 is the existing source-owned teardown callback."], "reason": "Home the timer pulse through BattleWin's typed Time member and existing callback."}
 void BattleWin::pulse_timer() {
-    time_.pulse(reinterpret_cast<void (__cdecl *)(int)>(&teardown_00422ec0),
-                0, 0x1388, 5);
+    time_.pulse(&teardown_00422ec0, 0, 0x1388, 5);
 }
 
 // Source-owned receiver slot; original complete allocation/lifetime unverified.
@@ -858,6 +857,5 @@ void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
     canvas.restore_clip();
     MainInterfaceGlobal.update(0);
     do_non_input();
-    time_.pulse(reinterpret_cast<void (__cdecl *)(int)>(&teardown_00422ec0),
-                0, 0x1388, 5);
+    time_.pulse(&teardown_00422ec0, 0, 0x1388, 5);
 }
