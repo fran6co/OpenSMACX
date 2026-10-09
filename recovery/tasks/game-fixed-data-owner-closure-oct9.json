@@ -1,0 +1,44 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "e4ff03c5b798f3ba971d9de8aec03da3698a1444",
+  "editable_files": [
+    "src/game.cpp",
+    "src/game.h",
+    "recovery/tests/test_game_fixed_data_owner_actual_source_oct9.py"
+  ],
+  "evidence": [
+    "Current four full bodies still dereference old-executable data:52A980 prototype flags/icon loop;58F4F0 adjective token builder;58F700 say_fac_special noun token builder;52DB40 partial save-slot initializer. Pinned full spans37/281/266/39 bytes decoded. Preserve original identities/spans, existing claims, LEVER/TRIED and useful findings. Cdecl/free-function behavior does not establish a class method or historical TU; keep current Game homes for this bounded closure, with existing true data owners.",
+    "52A980 traverses source VehPrototypes base9AB868,512 entries,34 stride; read/modify/write DWORD at+30 spans uint16 flags plus adjacent int16 preq_tech; separately stores -1 byte at+2E icon_offset. Preserve four-byte access window and high preq bits, all512 entries, icon write order, then vehicle_current_count before base_current_count. Use real prototype object representation for the contiguous window if needed, not hardcoded addresses, invented union/classes, signed overflow or only a two-byte flag write. A bounded object-representation cast/memcpy is justified by this original wider access; do not rewrite all prototype field types without evidence.",
+    "52DB40 original93E99C is NetDaemonNet.save_storage_.process_slots_[0].identity_:daemon+1BE8+24, NOT live AlphaNet process_slots_. For eight19C rows write only identity_=-1,field_25_=0,field_26_=0,field_27_=-1,status_bytes_[0]=2 in that order. Preserve overlapping POD save-view storage and all other bytes. Do not assign whole rows, initialize names/PIDs/status tails, move this to live slots, alter NetDaemon declarations/lifetime or edit another active owner.",
+    "Coordinator independently read both source token sets at68FA70..8C and68FAB0..CC:the short NUL-terminated strings are '$<','M','F','N','1','2',':','>'. They have distinct original starts. Replace fixed pointer views with genuine source-owned semantic token constants used by the functions. Prefer ordinary literals where they preserve load-bearing correspondence; separately named const char arrays may preserve the two distinct data identities without a fabricated shared allocation. Do not invent a packed token class, copy executable byte/padding blobs, add pointer globals holding old addresses or claim original full allocation extents. Coordinator verifies actual emitted token symbols and publishes start-only source bindings if required; duplicate pooled-literal bindings refuse, not permission to fake symbols.",
+    "58F4F0 applies GenderDefault/PluralityDefault only when input arguments negative, appends optional gender/number tokens for cases0/1/2 and0/1, then Players[faction].adj_name_faction; parses into local256 buffer and returns strcat output.58F700 uses noun_gender/is_noun_plural, caller-supplied text and same markup order but separate originaltoken starts; parse then appendvoid. Preserve invalid-value omitted tokens, unchecked indices/strcat buffers, alias/reentrancy/callback effects and return shapes. Do not collapse functions or deduplicate declared original data identities.",
+    "Actual-source tests execute all four complete functions with genuine typed host owner projections,512 prototype rows sentinel patterns including first/last/high preq values, eight save slots with neighboring bytes checked, all grammar branches/negative defaults/invalid values, exact parse input and append/call order. Use pinned short token controls on coordinator if needed, not copied expected algorithm. Damage controls should reject truncated loops, wrong save-owner/prefix writes and token/order/default defects. Qualify original ABI/layout, inaccessible/error paths, linked selection and unchecked memory behavior unproved.",
+    "Worker edits only three declared files; no Git/native compiler/Wine. Coordinator owns isolated setup, fresh symbols/body/affected caller and data/reference checks, independent review, source/history continuity, complete compile/link, manual integration and consumed checkout cleanup. Justified reviewed structural regression authorized with claims/restoration obligations retained. No new claim, demotion, baseline reset, deliberate bug fix or full-game/native autonomous acceptance."
+  ],
+  "intent": "Recover four live Game helpers through genuine source-owned prototype/save objects and markup token storage, removing old executable data backing without changing original behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5417344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5829872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5830400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "game-fixed-data-owner-closure-oct9"
+}
