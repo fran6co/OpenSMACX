@@ -913,9 +913,10 @@ CaviarSceneRow *CaviarSceneMemory;  // 0x009B9100
 Buffer CaviarSceneBufferA;  // 0x009B9108
 Buffer CaviarSceneBufferB;  // 0x009B96B0
 
-// 0x009B9690..0x009B969C: four slots zeroed once the record is built. The
-// image clears them in the order 0, 2, 3, 1 - not slot order.
-int CaviarViewportState[4];  // 0x009B9690
+// 0x009B9690..0x009B969C: the viewport rectangle accumulated by both render
+// entry points. The image clears it in left, right, bottom, top order.
+// RECOVERY_OBJECT: v1 0x009B9690 ?CaviarViewportState@?%src/caviar.cpp@@3UtagRECT@@A
+RECT CaviarViewportState;  // 0x009B9690
 
 // 0x009B9C38. Passed twice to vox_create_record, which reads it as the
 // colour-table source (0x1800 bytes for pixel size 1) and the shadow-table
@@ -984,10 +985,7 @@ const float vox_radius_scale_ = 0.0f;  // 0x00671014
 // The scene render record this function fills and hands to vox_create_record;
 // the created handle lands at the tail (+0x40, 0x009BB478).
 struct CaviarSceneRecord {
-  uint32_t field_00_;      // 0x9BB438, zeroed on success
-  uint32_t field_04_;      // 0x9BB43C, zeroed on success
-  uint32_t field_08_;      // 0x9BB440, zeroed on success
-  uint32_t field_0C_;      // 0x9BB444, zeroed on success
+  RECT scene_rect_;        // 0x9BB438, accumulated scene bounds
   CaviarSceneSetupDescriptorCandidate setup_; // 0x9BB448, borrowed by the record
 #if defined(_M_IX86) || defined(__i386__)
   uint8_t setup_to_renderer_gap_[4]; // 0x9BB46C..0x9BB46F
@@ -1011,6 +1009,7 @@ static_assert(offsetof(CaviarSceneRecord, created_) == 0x40,
               "created record remains at scene+0x40");
 #endif
 
+// RECOVERY_OBJECT: v1 0x009BB438 ?CaviarScene@?%src/caviar.cpp@@3UCaviarSceneRecord@1@A
 CaviarSceneRecord CaviarScene;  // 0x009BB438
 
 
@@ -1201,14 +1200,14 @@ int Caviar::init_class() {
         ramp_b[index] = index * 0x100;
     }
 
-    CaviarViewportState[0] = 0;
-    CaviarViewportState[2] = 0;
-    CaviarViewportState[3] = 0;
-    CaviarViewportState[1] = 0;
-    CaviarScene.field_00_ = 0;
-    CaviarScene.field_08_ = 0;
-    CaviarScene.field_0C_ = 0;
-    CaviarScene.field_04_ = 0;
+    CaviarViewportState.left = 0;
+    CaviarViewportState.right = 0;
+    CaviarViewportState.bottom = 0;
+    CaviarViewportState.top = 0;
+    CaviarScene.scene_rect_.left = 0;
+    CaviarScene.scene_rect_.right = 0;
+    CaviarScene.scene_rect_.bottom = 0;
+    CaviarScene.scene_rect_.top = 0;
     return 0;
 }
 
@@ -3268,7 +3267,7 @@ Purpose: Clear the two scene surfaces and the shared colour table over the
 // Every global it touches is one this file already models: the shared 0x20000
 // -entry table (CaviarSceneMemory, 0x009B9100), the two scene surfaces
 // (CaviarSceneBufferA / CaviarSceneBufferB), the viewport rectangle
-// (CaviarViewportState, 0x009B9690 in the order left, top, right, bottom) and
+// (CaviarViewportState, 0x009B9690 with left, top, right, bottom coordinates) and
 // the scene record CaviarScene. The rows it fills are the table's own 0x200
 // -byte rows, so the walk is `row_span` rows of `col_span` 16-bit entries
 // starting at the viewport's top-left corner.
@@ -3277,13 +3276,13 @@ Status: Complete
 */
 void Caviar::clear_buffers(int fill) {
     if (CaviarSceneMemory != 0) {
-        int height = CaviarViewportState[1];
-        int width = CaviarViewportState[0];
-        int bottom = CaviarViewportState[3];
+        int height = CaviarViewportState.top;
+        int width = CaviarViewportState.left;
+        int bottom = CaviarViewportState.bottom;
         int row_span = bottom - height;
         uint16_t *row = reinterpret_cast<uint16_t *>(CaviarSceneMemory) +
                         height * 0x100 + width;
-        int col_span = CaviarViewportState[2] - width;
+        int col_span = CaviarViewportState.right - width;
         CaviarSceneBufferA.fill(width, height, col_span, row_span, 9);
         CaviarSceneBufferB.fill(0);
         if (fill == 0) {
@@ -3295,14 +3294,14 @@ void Caviar::clear_buffers(int fill) {
                     --count;
                 } while (count != 0);
             }
-            CaviarViewportState[0] = 0;
-            CaviarViewportState[2] = 0;
-            CaviarViewportState[3] = 0;
-            CaviarViewportState[1] = 0;
-            CaviarScene.field_00_ = 0;
-            CaviarScene.field_08_ = 0;
-            CaviarScene.field_0C_ = 0;
-            CaviarScene.field_04_ = 0;
+            CaviarViewportState.left = 0;
+            CaviarViewportState.right = 0;
+            CaviarViewportState.bottom = 0;
+            CaviarViewportState.top = 0;
+            CaviarScene.scene_rect_.left = 0;
+            CaviarScene.scene_rect_.right = 0;
+            CaviarScene.scene_rect_.bottom = 0;
+            CaviarScene.scene_rect_.top = 0;
         }
     }
 }
@@ -5076,8 +5075,7 @@ int Caviar::render_scene(Buffer *buffer, int flags) {
     drawn.top = CaviarScene.created_->clip_max_a_y_;
     drawn.right = CaviarScene.created_->clip_min_a_x_ + 1;
     drawn.bottom = CaviarScene.created_->clip_min_a_y_ + 1;
-    UnionRect(reinterpret_cast<RECT *>(&CaviarViewportState), &drawn,
-              reinterpret_cast<RECT *>(&CaviarViewportState));
+    UnionRect(&CaviarViewportState, &drawn, &CaviarViewportState);
     clear_buffers(flags & 1);
     return 0;
 }
@@ -5461,8 +5459,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     covered.top = record->clip_max_a_y_;
     covered.right = record->clip_min_a_x_ + 1;
     covered.bottom = record->clip_min_a_y_ + 1;
-    UnionRect(reinterpret_cast<RECT *>(&CaviarViewportState), &covered,
-              reinterpret_cast<RECT *>(&CaviarViewportState));
+    UnionRect(&CaviarViewportState, &covered, &CaviarViewportState);
 
     if (scene_context_.field_A4_ != 0) {
         RECT scene;
@@ -5470,8 +5467,8 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
         scene.top = record->clip_max_b_y_;
         scene.right = record->clip_min_b_x_ + 1;
         scene.bottom = record->clip_min_b_y_ + 1;
-        UnionRect(reinterpret_cast<RECT *>(&CaviarScene.field_00_), &scene,
-                  reinterpret_cast<RECT *>(&CaviarScene.field_00_));
+        UnionRect(&CaviarScene.scene_rect_, &scene,
+                  &CaviarScene.scene_rect_);
         if (scene_context_.field_A4_ != 0) {
             unsigned char *colour = static_cast<unsigned char *>(record->colour_table_);
             int mode;
