@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "task_id": "selectpart-tutorial-sprite-owner-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Replace SelectPartWin old-image Sprite pointer with the real tutorial BaseWin member.",
+  "base_revision": "192e665e071859d75e75ff66bf4f56fd3829cdbb",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4407152
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4406624
+    }
+  ],
+  "editable_files": [
+    "src/selectpartwin.cpp",
+    "recovery/tests/test_selectpart_tutorial_sprite_owner_oct9.py"
+  ],
+  "evidence": [
+    "Source-owned BaseWin TutWinBaseWindow start6A7628 plus actual Sprite member sprite6_ offsetBDD0 equals original6B33F8. BaseWin constructor408490, CRTinitializer4083B0 and init41E8D0 own member lifetime and interface.pcx extraction439,64 size20x20. No standalone Sprite global or new object binding is warranted.",
+    "Pinned immediate references:433DDE passes6B33F8 to Buffer::tile in SelectPartWin draw_part;433FD2 receiver for Sprite::draw in exec backdrop;4947C2 same receiver in ProdPicker::exec, already typed TutWinBaseWindow.sprite6_. Remove SelectPartTile fixedaddress alias, use real member through existing owner includes, preserve original receiver, call arguments, transparency, order and lifetime. Evidence does not authorize other renderer/modal seams.",
+    "Keep all original mappings/claims/useful findings. Host actual-source member receiver controls, wholeTU native baseline/current and fresh application build/link before independent coordinator review. No new globals, invented lifetimes, byte search, original marker edits or full acceptance assertion."
+  ]
+}
