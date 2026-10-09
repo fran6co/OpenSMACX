@@ -329,10 +329,16 @@ int __fastcall sub_5d35b0(MediaRuntime *runtime,
                           const unsigned char *compressed,
                           unsigned char *destination,
                           unsigned int output_pitch, int record_kind);
-int __fastcall sub_5d3980(int *param_1, unsigned int *param_2);
-int __fastcall sub_5d3df0(int *, int);
-void __fastcall sub_5d4020(void *thisPtr, unsigned char *dest,
-                           int unusedStackArg, int destStride);
+int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet);
+int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base);
+void __fastcall sub_5d4020(MediaRuntime *runtime, unsigned char *dest,
+                           unsigned char *unusedStackArg, int destStride);
+extern "C" void __cdecl sub_5d439f(unsigned int *scratch_words,
+                        const unsigned char *compressed, int count, int width);
+extern "C" void __cdecl sub_5d4448(int *motion_indices, unsigned char *previous_frame,
+                        unsigned char *current_frame, int run_limit,
+                        int *motion_offsets, unsigned char *block_scratch,
+                        int pitch, int run_count, int height_groups);
 void __cdecl sub_5d4240(unsigned char *);
 
 // DirectSound/DirectDraw bring-up and teardown for the movie window.

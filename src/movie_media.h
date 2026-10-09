@@ -59,6 +59,13 @@ struct MediaPixelFormat {
   void sub_5cc450();                                 // ORIGINAL 005CC450
 };
 
+struct MediaPaletteLookupStorage {
+  DWORD entries[256];                              // descriptor +3b0..+7af
+  BYTE trailing_original_storage_7b0_7b3[4];       // descriptor +7b0..+7b3
+};
+typedef char media_palette_lookup_storage_extent_check[
+    sizeof(MediaPaletteLookupStorage) == 0x404 ? 1 : -1];
+
 // Existing seed identity at 0x005CC940 is an unmangled fastcall free
 // function. A product migration can narrow its int* parameters to these
 // evidence-backed object views while preserving the C-linkage identity.
@@ -126,7 +133,7 @@ struct MediaDescriptor {
     MediaKeyPollMember key_poll_member_b0;     // exec-time member callback
     BYTE palette_rgb_triplets_b0[0x300];       // +b0..+3af; 256 RGB triplets
   };
-  BYTE unresolved_original_storage_3b0_7b3[0x404]; // +3b0..+7b3
+  MediaPaletteLookupStorage palette_lookup_3b0; // +3b0..+7b3
 };
 
 struct MediaQueueRecord {
@@ -247,7 +254,12 @@ struct MediaRuntime {
   BYTE unresolved_original_storage_610_617[8];    // +610..+617
   DWORD unresolved_word_618;                     // +618; native store/read
   DWORD unresolved_word_61c;                     // +61c; native store/loop bound
-  BYTE unresolved_original_storage_620_637[0x18];// +620..+637
+  DWORD decoder_packet_value_620;                  // +620; 5D3980 payload DWORD >> 16
+  DWORD decoder_packet_value_624;                  // +624; 5D3980 payload DWORD >> 16
+  DWORD decoder_packet_value_628;                  // +628; 5D3980 payload DWORD >> 16
+  DWORD decoder_packet_value_62c;                  // +62c; 5D3980 payload DWORD >> 16
+  int decoder_capacity_630;                        // +630; signed 5D3980 capacity comparison
+  int decoder_capacity_634;                        // +634; signed 5D3980 capacity comparison
   BYTE *owned_heap_638;                           // +638; freed with free
   BYTE *owned_heap_63c;                           // +63c; freed with free
   BYTE *owned_heap_640;                           // +640; freed with free
@@ -306,6 +318,17 @@ typedef char media_runtime_decoder_state_offsets_check[
             offsetof(MediaRuntime, unresolved_word_61c) == 0x61c
         ? 1
         : -1];
+typedef char media_runtime_decoder_allocation_state_offsets_check[
+    offsetof(MediaRuntime, decoder_packet_value_620) == 0x620 &&
+    offsetof(MediaRuntime, decoder_packet_value_624) == 0x624 &&
+    offsetof(MediaRuntime, decoder_packet_value_628) == 0x628 &&
+    offsetof(MediaRuntime, decoder_packet_value_62c) == 0x62c &&
+    offsetof(MediaRuntime, decoder_capacity_630) == 0x630 &&
+    offsetof(MediaRuntime, decoder_capacity_634) == 0x634 &&
+    offsetof(MediaRuntime, owned_heap_638) == 0x638
+        ? 1 : -1];
+typedef char media_descriptor_decoder_palette_offset_check[
+    offsetof(MediaDescriptor, palette_lookup_3b0) == 0x3b0 ? 1 : -1];
 typedef char media_record_extent_check[
     sizeof(MediaQueueRecord) == 0x10 ? 1 : -1];
 

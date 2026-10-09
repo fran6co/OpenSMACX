@@ -567,7 +567,7 @@ extern "C" void __fastcall sub_5cda30(MediaRuntime *, unsigned char *,
 void __cdecl sub_5cfaed(unsigned char *, BYTE *, int);
 void __cdecl sub_5d02cc(unsigned char *, void *, int);
 int __fastcall sub_5d35b0(MediaRuntime *, const BYTE *, BYTE *, DWORD, int);
-extern "C" void __fastcall sub_5d3f50(int *);
+extern "C" void __fastcall sub_5d3f50(MediaRuntime *);
 
 // Native 16-bit block writer. Its scale/bank reads are views into the color
 // setup owner: scale[0], packed bank 0, and packed banks 1/2. It indexes 128
@@ -816,15 +816,15 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
 
   switch (runtime->selected_record_kind_39c) {
   case 1:
-    sub_5d3df0((int *)runtime, (int)pixel_payload);
+    sub_5d3df0(runtime, pixel_payload);
     if (d.pixel_format.total_component_bits != 8)
-      sub_5d3f50((int *)runtime);
-    sub_5d4020(runtime, surface_source, (int)surface_source,
+      sub_5d3f50(runtime);
+    sub_5d4020(runtime, surface_source, surface_source,
                (int)output_pitch);
     break;
   case 2:
-    sub_5d3980((int *)runtime, (unsigned int *)pixel_payload);
-    sub_5d4020(runtime, surface_source, (int)surface_source,
+    sub_5d3980(runtime, pixel_payload);
+    sub_5d4020(runtime, surface_source, surface_source,
                (int)output_pitch);
     break;
   case 3: {

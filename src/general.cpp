@@ -2920,6 +2920,7 @@ extern "C" void __fastcall sub_5d2d20(char *src, int mode, int stride,
 }
 
 // ORIGINAL: 0x005D3F50 sub_5d3f50 0x005D3F50-0x005D4014 FILE
+// symbol    @sub_5d3f50@4
 // TRIED: signature cdecl() -> fastcall(int *param_1); evidence: ecx read directly at entry (dereferenced once for an object pointer, re-read every loop iteration), no stack access, plain `ret` (no callee-pop). Dropped Ghidra's explicit `& 0x1f` shift masks per the known lever (extra `and`); still MISMATCH at #4, likely register-allocation/prologue shape for the three precomputed shift amounts.
 // working copy - scaffold materialised by --work
 // size      196 bytes
@@ -2961,36 +2962,33 @@ typedef unsigned short uint16;
 // catalogue ever uses it.
 typedef char int8;
 typedef unsigned char uint8;
-extern "C" void __fastcall sub_5d3f50(int *param_1) {
-    int obj0 = *param_1;
-    unsigned char shiftB = (unsigned char)(8 - *(int *)(obj0 + 0x30));
-    unsigned char shiftC = (unsigned char)(8 - *(int *)(obj0 + 0x2c));
-    unsigned char shiftA = (unsigned char)(8 - *(int *)(obj0 + 0x34));
+extern "C" void __fastcall sub_5d3f50(MediaRuntime *runtime) {
+    MediaDescriptor *const descriptor = runtime->descriptor;
+    const MediaPixelFormat &format = descriptor->pixel_format;
+    const unsigned char shift_green =
+        static_cast<unsigned char>(8 - format.green_bits);
+    const unsigned char shift_red =
+        static_cast<unsigned char>(8 - format.red_bits);
+    const unsigned char shift_blue =
+        static_cast<unsigned char>(8 - format.blue_bits);
 
-    int i = 0;
-    int outOff = 0x3b0;
-    do {
-        int obj = *param_1;
-        unsigned int term1 = *(unsigned char *)(obj + 0xb1 + i);
-        term1 = (term1 >> shiftB) << *(int *)(obj + 0x3c);
-
-        unsigned int term2 = *(unsigned char *)(obj + 0xb0 + i);
-        term2 = (term2 >> shiftC) << *(int *)(obj + 0x38);
-
-        unsigned int result = term1 | term2;
-
-        unsigned int term3 = *(unsigned char *)(obj + 0xb2 + i);
-        term3 = (term3 >> shiftA) << *(int *)(obj + 0x40);
-
-        result |= term3;
-
-        if (*(unsigned char *)(obj + 4) & 0x40) {
+    for (int index = 0; index != 256; ++index) {
+        const int palette_index = index * 3;
+        unsigned int green =
+            (descriptor->palette_rgb_triplets_b0[palette_index + 1] >>
+             (shift_green & 0x1f)) << (format.green_shift & 0x1f);
+        unsigned int red =
+            (descriptor->palette_rgb_triplets_b0[palette_index] >>
+             (shift_red & 0x1f)) << (format.red_shift & 0x1f);
+        unsigned int result = green | red;
+        unsigned int blue =
+            (descriptor->palette_rgb_triplets_b0[palette_index + 2] >>
+             (shift_blue & 0x1f)) << (format.blue_shift & 0x1f);
+        result |= blue;
+        if ((descriptor->flags & 0x40) != 0)
             result |= result << 0x10;
-        }
-        *(unsigned int *)(obj + outOff) = result;
-        outOff += 4;
-        i += 3;
-    } while (outOff < 0x7b0);
+        descriptor->palette_lookup_3b0.entries[index] = result;
+    }
 }
 
 // Historical TRIED (2026-09-06): the first general.cpp trial failed
@@ -3155,6 +3153,7 @@ label_5d4352:
 }
 
 // ORIGINAL: 0x005D439F sub_5d439f 0x005D439F-0x005D4448 FILE
+// symbol    _sub_5d439f
 // working copy - scaffold materialised by --work
 // size      169 bytes
 // prototype 
@@ -3198,7 +3197,14 @@ typedef unsigned char uint8;
 // IDA guessed int __cdecl(int,int,int,int); the tail never sets eax, so the
 // real return type is void, and evidence (only [esp+N] reads, no ecx use)
 // backs the __cdecl free-function shape with 4 stack ints.
-extern "C" void __cdecl sub_5d439f(unsigned int *a1, int a2, int a3, int a4) {
+static unsigned int media_rotate_right_32(unsigned int value, unsigned int count) {
+    count &= 0x1fu;
+    return (value >> count) | (value << ((0u - count) & 0x1fu));
+}
+
+extern "C" void __cdecl sub_5d439f(unsigned int *a1,
+                                    const unsigned char *compressed,
+                                    int a3, int a4) {
     unsigned int bitpos;
     unsigned int mask;
     unsigned char width;
@@ -3207,37 +3213,40 @@ extern "C" void __cdecl sub_5d439f(unsigned int *a1, int a2, int a3, int a4) {
 
     bitpos = 0;
     width = (unsigned char)a4;
-    mask = (1 << (width & 0x1f)) - 1;
+    mask = (1u << (width & 0x1f)) - 1u;
     while (a3 > 3) {
         shift = (unsigned char)bitpos & 7;
-        word = *(unsigned int *)((bitpos >> 3) + a2);
-        word = (word >> shift) | (word << (0x20 - shift));
+        memcpy(&word, compressed + (bitpos >> 3), sizeof(word));
+        word = media_rotate_right_32(word, shift);
         *a1 = word & mask;
-        a1[1] = ((word >> (width & 0x1f)) | (word << (0x20 - (width & 0x1f)))) & mask;
+        a1[1] = media_rotate_right_32(word, width) & mask;
 
-        shift = (unsigned char)(bitpos + width * 2) & 7;
-        word = *(unsigned int *)(((bitpos + a4 * 2) >> 3) + a2);
-        word = (word >> shift) | (word << (0x20 - shift));
+        const unsigned int second_bitpos = bitpos +
+                                           static_cast<unsigned int>(a4) * 2u;
+        shift = static_cast<unsigned char>(second_bitpos) & 7;
+        memcpy(&word, compressed + (second_bitpos >> 3), sizeof(word));
+        word = media_rotate_right_32(word, shift);
         a1[2] = word & mask;
-        a1[3] = ((word >> (width & 0x1f)) | (word << (0x20 - (width & 0x1f)))) & mask;
+        a1[3] = media_rotate_right_32(word, width) & mask;
 
         a1 += 4;
-        bitpos += a4 * 4;
+        bitpos += static_cast<unsigned int>(a4) * 4u;
         a3 -= 4;
     }
     if (a3 - 4 > -4) {
         do {
             a3--;
             shift = (unsigned char)bitpos & 7;
-            word = *(unsigned int *)((bitpos >> 3) + a2);
-            *a1 = ((word >> shift) | (word << (0x20 - shift))) & mask;
-            bitpos += a4;
+            memcpy(&word, compressed + (bitpos >> 3), sizeof(word));
+            *a1 = media_rotate_right_32(word, shift) & mask;
+            bitpos += static_cast<unsigned int>(a4);
             a1++;
         } while (a3 > 0);
     }
 }
 
 // ORIGINAL: 0x005D4448 sub_5d4448 0x005D4448-0x005D44FC FILE
+// symbol    _sub_5d4448
 // TRIED: byte-exact - `pushal`/`popal` at entry has no C++ spelling (documented wall). Landed the nested do/while-with-goto gather loop structurally instead: 9 stack args, an outer per-run counter reset from a saved [ebp+0x24] and an inner index-table lookup vs a direct 16-byte-stride struct-array fallback.
 // working copy - scaffold materialised by --work
 // size      180 bytes
@@ -3280,15 +3289,20 @@ typedef unsigned short uint16;
 typedef char int8;
 typedef unsigned char uint8;
 extern "C" void __cdecl sub_5d4448(
-    int *p1, int p2, int p3, int p4, int *p5, int p6, int p7, int p8, int p9)
+    int *motion_indices, unsigned char *previous_frame,
+    unsigned char *current_frame, int run_limit, int *motion_offsets,
+    unsigned char *block_scratch, int pitch, int run_count,
+    int height_groups)
 {
-    int saved_count = p8;
-    int base8 = p6 - (p4 << 4);
-    int base_c = p2 - p3;
-    int stride = p7;
-    int stride3 = stride * 3;
-    int *src = p1;
-    char *dst = reinterpret_cast<char *>(p3);
+    const int saved_count = run_count;
+    const uintptr_t base8 = reinterpret_cast<uintptr_t>(block_scratch) -
+                            (static_cast<uintptr_t>(run_limit) << 4);
+    const uintptr_t base_c = reinterpret_cast<uintptr_t>(previous_frame) -
+                             reinterpret_cast<uintptr_t>(current_frame);
+    const unsigned int stride = static_cast<unsigned int>(pitch);
+    const unsigned int stride3 = stride * 3u;
+    int *src = motion_indices;
+    unsigned char *dst = current_frame;
     int count;
 
     do {
@@ -3296,26 +3310,37 @@ extern "C" void __cdecl sub_5d4448(
         for (;;) {
             int idx = *src;
             src += 1;
-            if (idx < p4) {
+            if (idx < run_limit) {
                 do {
-                    int entry = p5[idx] + base_c + reinterpret_cast<int>(dst);
-                    *reinterpret_cast<int *>(dst) = *reinterpret_cast<int *>(entry);
-                    *reinterpret_cast<int *>(dst + stride) = *reinterpret_cast<int *>(entry + stride);
-                    *reinterpret_cast<int *>(dst + stride * 2) = *reinterpret_cast<int *>(entry + stride * 2);
-                    *reinterpret_cast<int *>(dst + stride3) = *reinterpret_cast<int *>(entry + stride3);
+                    const uintptr_t entry = base_c +
+                        reinterpret_cast<uintptr_t>(dst) +
+                        static_cast<intptr_t>(motion_offsets[idx]);
+                    *reinterpret_cast<int *>(dst) =
+                        *reinterpret_cast<const int *>(entry);
+                    *reinterpret_cast<int *>(dst + stride) =
+                        *reinterpret_cast<const int *>(entry + stride);
+                    *reinterpret_cast<int *>(dst + stride * 2u) =
+                        *reinterpret_cast<const int *>(entry + stride * 2u);
+                    *reinterpret_cast<int *>(dst + stride3) =
+                        *reinterpret_cast<const int *>(entry + stride3);
                     dst += 4;
                     count -= 1;
                     if (count <= 0) goto end_of_run;
                     idx = *src;
                     src += 1;
-                } while (idx < p4);
+                } while (idx < run_limit);
             }
             {
-                int entry2 = base8 + idx * 16;
-                *reinterpret_cast<int *>(dst) = *reinterpret_cast<int *>(entry2);
-                *reinterpret_cast<int *>(dst + stride) = *reinterpret_cast<int *>(entry2 + 4);
-                *reinterpret_cast<int *>(dst + stride * 2) = *reinterpret_cast<int *>(entry2 + 8);
-                *reinterpret_cast<int *>(dst + stride3) = *reinterpret_cast<int *>(entry2 + 0xc);
+                const uintptr_t entry2 = base8 +
+                    static_cast<intptr_t>(idx) * 16;
+                *reinterpret_cast<int *>(dst) =
+                    *reinterpret_cast<const int *>(entry2);
+                *reinterpret_cast<int *>(dst + stride) =
+                    *reinterpret_cast<const int *>(entry2 + 4);
+                *reinterpret_cast<int *>(dst + stride * 2u) =
+                    *reinterpret_cast<const int *>(entry2 + 8);
+                *reinterpret_cast<int *>(dst + stride3) =
+                    *reinterpret_cast<const int *>(entry2 + 0xc);
                 dst += 4;
                 count -= 1;
             }
@@ -3323,8 +3348,8 @@ extern "C" void __cdecl sub_5d4448(
         }
     end_of_run:
         dst += stride3;
-        p9 -= 1;
-    } while (p9 > 0);
+            height_groups -= 1;
+    } while (height_groups > 0);
 }
 
 // The 3x3 numerical member bodies are consolidated in src/matrix3.cpp.
@@ -3781,7 +3806,7 @@ static DWORD *const MovieBlendTableQuant2 =
     movie_media_conversion_tables.contribution_byte0 + 256;
 
 // ORIGINAL: 0x005D3DF0 sub_5d3df0 0x005D3DF0-0x005D3F48 FILE
-// symbol    ?sub_5d3df0@@YIHPAHH@Z
+// symbol    ?sub_5d3df0@@YIHPAUMediaRuntime@@PAE@Z
 // size      344 bytes
 // prototype
 // callers   ?   call targets   3
@@ -3789,47 +3814,60 @@ static DWORD *const MovieBlendTableQuant2 =
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D427C 0x006470A6 0x00644EF2
 // TRIED: __fastcall(this,a2) signature chosen from the ecx=this / edx=a2 register reads at entry; PROPOSAL below. Landed at 0.88 mnemonic similarity - remaining divergence is prologue register-save scheduling, not logic.
-typedef int (__cdecl *sub5d427c_fn)(int, int, int);
+int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
+  int saved_index;
+  memcpy(&saved_index, &runtime->unresolved_word_61c, sizeof(saved_index));
+  MediaDescriptor *const descriptor = runtime->descriptor;
+  int height;
+  int width;
+  memcpy(&height, &descriptor->output_height_60, sizeof(height));
+  memcpy(&width, &descriptor->output_width_64, sizeof(width));
+  const DWORD pixel_count_bits = static_cast<DWORD>(height) *
+                                 static_cast<DWORD>(width);
+  const DWORD allocation_size = (pixel_count_bits + 0x0fu) & 0xfffffff0u;
 
-int __fastcall sub_5d3df0(int *thisPtr, int frame_base) {
-  int savedIdx = thisPtr[0x187];
-  int *inner = reinterpret_cast<int *>(thisPtr[0]);
-  unsigned int allocSize = static_cast<unsigned int>(inner[0x19] * inner[0x18] + 0xf) & 0xfffffff0u;
-
-  if (thisPtr[0x18e] != 0) {
-    free(reinterpret_cast<void *>(thisPtr[0x18e]));
-    thisPtr[0x18e] = 0;
+  if (runtime->owned_heap_638 != 0) {
+    free(runtime->owned_heap_638);
+    runtime->owned_heap_638 = 0;
   }
-  if (thisPtr[399] != 0) {
-    free(reinterpret_cast<void *>(thisPtr[399]));
-    thisPtr[399] = 0;
+  if (runtime->owned_heap_63c != 0) {
+    free(runtime->owned_heap_63c);
+    runtime->owned_heap_63c = 0;
   }
-  if (thisPtr[0x191] != 0) {
-    free(reinterpret_cast<void *>(thisPtr[0x191]));
-    thisPtr[0x191] = 0;
+  if (runtime->owned_heap_644 != 0) {
+    free(runtime->owned_heap_644);
+    runtime->owned_heap_644 = 0;
   }
-  if (thisPtr[400] != 0) {
-    free(reinterpret_cast<void *>(thisPtr[400]));
-    thisPtr[400] = 0;
+  if (runtime->owned_heap_640 != 0) {
+    free(runtime->owned_heap_640);
+    runtime->owned_heap_640 = 0;
   }
 
-  thisPtr[0x18e] = reinterpret_cast<int>(malloc(allocSize));
-  thisPtr[399] = reinterpret_cast<int>(malloc(allocSize));
-  thisPtr[0x191] = reinterpret_cast<int>(malloc(inner[0x18] << 3));
-  thisPtr[400] = reinterpret_cast<int>(malloc(((allocSize + 0xf) >> 4) << 2));
+  runtime->owned_heap_638 = static_cast<unsigned char *>(malloc(allocation_size));
+  runtime->owned_heap_63c = static_cast<unsigned char *>(malloc(allocation_size));
+  runtime->owned_heap_644 = static_cast<unsigned char *>(
+      malloc(static_cast<DWORD>(height) << 3));
+  runtime->owned_heap_640 = static_cast<unsigned char *>(
+      malloc(((allocation_size + 0x0fu) >> 4) << 2));
 
-  if (thisPtr[0x18e] != 0 && thisPtr[399] != 0 && thisPtr[0x191] != 0 && thisPtr[400] != 0) {
-    int stride = inner[0x18];
-    int value = -(inner[0x19] * stride);
-    unsigned int idx = 0;
+  if (runtime->owned_heap_638 != 0 && runtime->owned_heap_63c != 0 &&
+      runtime->owned_heap_644 != 0 && runtime->owned_heap_640 != 0) {
+    const int stride = height;
+    DWORD value_bits = 0u - pixel_count_bits;
+    DWORD index = 0;
     if ((stride & 0x7fffffff) != 0) {
       do {
-        *reinterpret_cast<int *>(thisPtr[0x191] + idx * 4) = value;
-        value += inner[0x19];
-        idx++;
-      } while (idx < static_cast<unsigned int>(inner[0x18] << 1));
+        int value;
+        memcpy(&value, &value_bits, sizeof(value));
+        reinterpret_cast<int *>(runtime->owned_heap_644)[index] = value;
+        value_bits += static_cast<DWORD>(width);
+        index++;
+      } while (index < (static_cast<DWORD>(height) << 1));
     }
-    reinterpret_cast<sub5d427c_fn>(sub_5d427c)(frame_base + (savedIdx + 4) * 3, thisPtr[0x18e], 1);
+    const DWORD sample_offset = (static_cast<DWORD>(saved_index) + 4u) * 3u;
+    unsigned short *const samples = reinterpret_cast<unsigned short *>(
+        reinterpret_cast<uintptr_t>(frame_base) + sample_offset);
+    sub_5d427c(samples, runtime->owned_heap_638, 1);
     return 1;
   }
   return 0;
@@ -4209,7 +4247,7 @@ unsigned char __cdecl checksum_file(char *file_path) {
 }
 
 // ORIGINAL: 0x005D4020 sub_5d4020 0x005D4020-0x005D4231 FILE
-// symbol    ?sub_5d4020@@YIXPAXPAEHH@Z
+// symbol    ?sub_5d4020@@YIXPAUMediaRuntime@@PAE1H@Z
 // TRIED: not chased past the first instruction (MISMATCH #0 'push' vs 'sub', 62% mnemonic similarity) - __fastcall(this, dest, int, int) reproduces the `ret 8` pop count and the edx-as-second- register-arg evidence (no `mov ebp,esp` frame, `[esp+0x10]` live from entry with no stack spill) but the prologue's register-save order still differs. Structurally follows the raw disassembly's three shapes (mode==8 raw copy via sub_5d271d, else 2-byte-per-pixel CLUT unrolled x8, else 4-byte-per-pixel CLUT unrolled x8).
 // working copy - scaffold materialised by --work
 // size      529 bytes
@@ -4233,22 +4271,30 @@ unsigned char __cdecl checksum_file(char *file_path) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void __fastcall sub_5d4020(void *thisPtr, unsigned char *dest,
-                                       int unusedStackArg, int destStride) {
-    unsigned char *self = (unsigned char *)thisPtr;
-    unsigned char *src = *(unsigned char **)(self + 0x638);
-    unsigned char *info = *(unsigned char **)self;
-    if (*(int *)(info + 0x48) == 8) {
-        if ((*(unsigned char *)(info + 4) & 0x40) != 0) {
-            sub_5d271d((unsigned int *)src, dest, *(int *)(info + 0x64) * *(int *)(info + 0x60));
+void __fastcall sub_5d4020(MediaRuntime *runtime, unsigned char *dest,
+                           unsigned char *unusedStackArg, int destStride) {
+    unsigned char *src = runtime->owned_heap_638;
+    MediaDescriptor *descriptor = runtime->descriptor;
+    int signed_width;
+    int signed_height;
+    memcpy(&signed_width, &descriptor->output_width_64, sizeof(signed_width));
+    memcpy(&signed_height, &descriptor->output_height_60, sizeof(signed_height));
+    if (descriptor->pixel_format.total_component_bits == 8) {
+        if ((descriptor->flags & 0x40) != 0) {
+            const DWORD pixel_count = descriptor->output_width_64 *
+                                      descriptor->output_height_60;
+            int signed_pixel_count;
+            memcpy(&signed_pixel_count, &pixel_count, sizeof(signed_pixel_count));
+            sub_5d271d(reinterpret_cast<unsigned int *>(src), dest,
+                       signed_pixel_count);
             return;
         }
-        if (*(int *)(info + 0x60) == 0) {
+        if (signed_height == 0) {
             return;
         }
         {
-            unsigned int rowCount = *(unsigned int *)(info + 0x60);
-            unsigned int rowBytes = *(unsigned int *)(info + 0x64);
+            unsigned int rowCount = descriptor->output_height_60;
+            unsigned int rowBytes = descriptor->output_width_64;
             unsigned int row = 0;
             unsigned char *s = src;
             unsigned char *d = dest;
@@ -4267,27 +4313,28 @@ void __fastcall sub_5d4020(void *thisPtr, unsigned char *dest,
                     ++sp;
                     ++dp;
                 }
-                info = *(unsigned char **)self;
-                rowBytes = *(unsigned int *)(info + 0x64);
+                descriptor = runtime->descriptor;
+                rowBytes = descriptor->output_width_64;
                 d += (destStride >> 2) * 4;
                 s += rowBytes;
                 ++row;
-            } while (row < *(unsigned int *)(info + 0x60));
+            } while (row < descriptor->output_height_60);
         }
         return;
     }
 
-    unsigned char *clut = info + 0x3b0;
+    unsigned char *clut = reinterpret_cast<unsigned char *>(
+        descriptor->palette_lookup_3b0.entries);
     int row = 0;
-    if ((*(unsigned char *)(info + 4) & 0x40) == 0) {
-        if (*(int *)(info + 0x60) == 0) {
+    if ((descriptor->flags & 0x40) == 0) {
+        if (signed_height == 0) {
             return;
         }
         do {
             unsigned int col = 0;
             unsigned char *sp = src;
             unsigned char *dp = dest;
-            if (*(int *)(info + 0x64) != 0) {
+            if (signed_width != 0) {
                 do {
                     col += 8;
                     src = sp + 8;
@@ -4298,23 +4345,24 @@ void __fastcall sub_5d4020(void *thisPtr, unsigned char *dest,
                     }
                     sp = src;
                     dp = dest;
-                } while (col < *(unsigned int *)(*(unsigned char **)self + 0x64));
+                } while (col < runtime->descriptor->output_width_64);
             }
-            info = *(unsigned char **)self;
-            dest = dest + ((destStride - *(int *)(info + 0x64) * 2) & ~1);
+            descriptor = runtime->descriptor;
+            memcpy(&signed_width, &descriptor->output_width_64, sizeof(signed_width));
+            dest = dest + ((destStride - signed_width * 2) & ~1);
             ++row;
-        } while ((unsigned int)row < *(unsigned int *)(info + 0x60));
+        } while (static_cast<unsigned int>(row) < descriptor->output_height_60);
         return;
     }
 
-    if (*(int *)(info + 0x60) == 0) {
+    if (signed_height == 0) {
         return;
     }
     do {
         unsigned int col = 0;
         unsigned char *sp = src;
         unsigned char *dp = dest;
-        if (*(int *)(info + 0x64) != 0) {
+        if (signed_width != 0) {
             do {
                 col += 8;
                 src = sp + 8;
@@ -4325,16 +4373,17 @@ void __fastcall sub_5d4020(void *thisPtr, unsigned char *dest,
                 }
                 sp = src;
                 dp = dest;
-            } while (col < *(unsigned int *)(*(unsigned char **)self + 0x64));
+            } while (col < runtime->descriptor->output_width_64);
         }
-        info = *(unsigned char **)self;
-        dest = dest + ((destStride - *(int *)(info + 0x64) * 4) & ~3);
+        descriptor = runtime->descriptor;
+        memcpy(&signed_width, &descriptor->output_width_64, sizeof(signed_width));
+        dest = dest + ((destStride - signed_width * 4) & ~3);
         ++row;
-    } while ((unsigned int)row < *(unsigned int *)(info + 0x60));
+    } while (static_cast<unsigned int>(row) < descriptor->output_height_60);
 }
 
 // ORIGINAL: 0x005D3980 sub_5d3980 0x005D3980-0x005D3DF0 FILE
-// symbol    ?sub_5d3980@@YIHPAHPAI@Z
+// symbol    ?sub_5d3980@@YIHPAUMediaRuntime@@PAE@Z
 // TRIED: __fastcall(int *, unsigned int *) direct transcription of the Ghidra decompile (malloc/free node-buffer growth, 10-bit signed coefficient unpack, memcpy raw blocks, 2-bit nibble pixel expansion, two helper calls); diverges at insn #4 in the prologue register-save order, not in control flow
 // working copy - scaffold materialised by --work
 // size      1136 bytes
@@ -4358,77 +4407,87 @@ void __fastcall sub_5d4020(void *thisPtr, unsigned char *dest,
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-int __fastcall sub_5d3980(int *param_1, unsigned int *param_2) {
+int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
     int *piVar1;
     int iVar2, iVar11, iVar13;
     unsigned int uVar3, uVar4, uVar5, uVar6, uVar8, uVar9, uVar10, uVar15;
     void *pvVar7;
-    unsigned int *puVar12, *puVar14, *puVar16, *puVar18;
+    unsigned int *puVar12;
+    const unsigned char *puVar14;
     unsigned char *puVar17;
     int flagOK;
 
-    iVar13 = param_1[399];
+    unsigned char *const previous_frame = runtime->owned_heap_63c;
     flagOK = 1;
-    param_1[399] = param_1[0x18e];
-    param_1[0x18e] = iVar13;
-    uVar3 = *(unsigned int *)((int)param_2 + -2) >> 0x10;
-    param_1[0x188] = uVar3;
-    uVar4 = *param_2 >> 0x10;
-    param_1[0x189] = uVar4;
-    uVar5 = *(unsigned int *)((int)param_2 + 2) >> 0x10;
-    param_1[0x18a] = uVar5;
-    uVar6 = param_2[1] >> 0x10;
-    param_1[0x18b] = uVar6;
+    runtime->owned_heap_63c = runtime->owned_heap_638;
+    runtime->owned_heap_638 = previous_frame;
+    DWORD payload_word;
+    memcpy(&payload_word, packet - 2, sizeof(payload_word));
+    uVar3 = payload_word >> 0x10;
+    runtime->decoder_packet_value_620 = uVar3;
+    memcpy(&payload_word, packet, sizeof(payload_word));
+    uVar4 = payload_word >> 0x10;
+    runtime->decoder_packet_value_624 = uVar4;
+    memcpy(&payload_word, packet + 2, sizeof(payload_word));
+    uVar5 = payload_word >> 0x10;
+    runtime->decoder_packet_value_628 = uVar5;
+    memcpy(&payload_word, packet + 4, sizeof(payload_word));
+    uVar6 = payload_word >> 0x10;
+    runtime->decoder_packet_value_62c = uVar6;
     if (uVar3 != 0) {
-        if (param_1[0x18c] < (int)uVar3) {
-            if (param_1[0x193] != 0) {
-                free((void *)param_1[0x193]);
-                param_1[0x193] = 0;
-                param_1[0x18c] = 0;
+        if (runtime->decoder_capacity_630 < (int)uVar3) {
+            if (runtime->owned_heap_64c != 0) {
+                free(runtime->owned_heap_64c);
+                runtime->owned_heap_64c = 0;
+                runtime->decoder_capacity_630 = 0;
             }
-            if (param_1[0x194] != 0) {
-                free((void *)param_1[0x194]);
-                param_1[0x194] = 0;
+            if (runtime->owned_heap_650 != 0) {
+                free(runtime->owned_heap_650);
+                runtime->owned_heap_650 = 0;
             }
         }
-        if (param_1[0x193] == 0) {
+        if (runtime->owned_heap_64c == 0) {
             pvVar7 = malloc(uVar3 * 8);
-            param_1[0x193] = (int)pvVar7;
-            param_1[0x18c] = uVar3;
+            runtime->owned_heap_64c = static_cast<unsigned char *>(pvVar7);
+            runtime->decoder_capacity_630 = uVar3;
         }
-        if (param_1[0x194] == 0) {
+        if (runtime->owned_heap_650 == 0) {
             pvVar7 = malloc(uVar3 * 4);
-            param_1[0x194] = (int)pvVar7;
-            param_1[0x18c] = uVar3;
+            runtime->owned_heap_650 = static_cast<unsigned char *>(pvVar7);
+            runtime->decoder_capacity_630 = uVar3;
         }
-        flagOK = param_1[0x193] != 0;
-        if (param_1[0x194] == 0) {
+        flagOK = runtime->owned_heap_64c != 0;
+        if (runtime->owned_heap_650 == 0) {
             flagOK = 0;
         }
     }
-    iVar13 = uVar5 + uVar4;
+    const unsigned int count_sum = uVar5 + uVar4;
+    memcpy(&iVar13, &count_sum, sizeof(iVar13));
     if (iVar13 != 0) {
-        if ((param_1[0x18d] < iVar13) && (param_1[0x192] != 0)) {
-            free((void *)param_1[0x192]);
-            param_1[0x192] = 0;
+        if ((runtime->decoder_capacity_634 < iVar13) &&
+            (runtime->owned_heap_648 != 0)) {
+            free(runtime->owned_heap_648);
+            runtime->owned_heap_648 = 0;
         }
-        if (param_1[0x192] == 0) {
+        if (runtime->owned_heap_648 == 0) {
             pvVar7 = malloc(iVar13 * 0x10);
-            param_1[0x192] = (int)pvVar7;
-            param_1[0x18d] = iVar13;
+            runtime->owned_heap_648 = static_cast<unsigned char *>(pvVar7);
+            runtime->decoder_capacity_634 = iVar13;
         }
-        if (param_1[0x192] == 0) {
+        if (runtime->owned_heap_648 == 0) {
             return 0;
         }
     }
     if (flagOK != 0) {
         uVar10 = uVar3 * 2;
         uVar15 = uVar3 * 0x14;
-        puVar12 = (unsigned int *)(param_1[0x193] + uVar3 * 8);
+        puVar12 = reinterpret_cast<unsigned int *>(runtime->owned_heap_64c + uVar3 * 8);
         uVar8 = uVar3;
         while (uVar8 != 0) {
             uVar15 = uVar15 - 10;
-            uVar8 = *(unsigned int *)((int)param_2 + (uVar15 >> 3) + 0xc) >> (uVar15 & 7);
+            memcpy(&payload_word, packet + (uVar15 >> 3) + 0xc,
+                   sizeof(payload_word));
+            uVar8 = payload_word >> (uVar15 & 7);
             uVar9 = uVar8 & 0x3ff;
             if ((uVar8 & 0x200) != 0) {
                 uVar9 = uVar9 | 0xfffffc00;
@@ -4438,54 +4497,76 @@ int __fastcall sub_5d3980(int *param_1, unsigned int *param_2) {
             uVar10 = uVar10 - 1;
             uVar8 = uVar10;
         }
-        iVar13 = *(int *)(*param_1 + 0x60);
-        iVar2 = param_1[0x191];
+        memcpy(&iVar13, &runtime->descriptor->output_height_60,
+               sizeof(iVar13));
+        int *const row_offsets = reinterpret_cast<int *>(runtime->owned_heap_644);
         iVar11 = 0;
         if (uVar3 != 0) {
             do {
-                piVar1 = (int *)(param_1[0x193] + iVar11 * 8);
-                *(int *)(param_1[0x194] + iVar11 * 4) =
-                    *(int *)(iVar2 + iVar13 * 4 + piVar1[1] * 4) + *piVar1;
+                piVar1 = reinterpret_cast<int *>(runtime->owned_heap_64c) +
+                         iVar11 * 2;
+                reinterpret_cast<int *>(runtime->owned_heap_650)[iVar11] =
+                    row_offsets[iVar13 + piVar1[1]] + *piVar1;
                 iVar11 = iVar11 + 1;
             } while (iVar11 < (int)uVar3);
         }
-        puVar14 = (unsigned int *)((int)param_2 + (((int)(uVar3 * 0x14 + 0x1f) >> 3) & 0xfffffffc) + 0xc);
+        const unsigned int following_records_offset =
+            (((static_cast<int>(uVar3 * 0x14u + 0x1fu) >> 3) &
+              0xfffffffcu) + 0xcu);
+        puVar14 = packet + following_records_offset;
         if (uVar4 != 0) {
-            memcpy((void *)param_1[0x192], puVar14, uVar4 * 0x10);
+            memcpy(runtime->owned_heap_648, puVar14, uVar4 * 0x10);
         }
-        puVar14 = puVar14 + uVar4 * 4;
+        puVar14 += uVar4 * 0x10;
         if (uVar5 != 0) {
-            puVar17 = (unsigned char *)(param_1[0x192] + uVar4 * 0x10);
-            puVar16 = puVar14;
+            puVar17 = runtime->owned_heap_648 + uVar4 * 0x10;
+            const unsigned char *packed_run = puVar14;
             for (uVar3 = uVar5; uVar3 != 0; uVar3 = uVar3 - 1) {
-                uVar4 = puVar16[1];
-                puVar17[0xf] = *((unsigned char *)puVar16 + (uVar4 & 3));
-                puVar17[0xe] = *((unsigned char *)puVar16 + (uVar4 >> 2 & 3));
-                puVar17[0xd] = *((unsigned char *)puVar16 + (uVar4 >> 4 & 3));
-                puVar17[0xc] = *((unsigned char *)puVar16 + (uVar4 >> 6 & 3));
-                puVar17[0xb] = *((unsigned char *)puVar16 + (uVar4 >> 8 & 3));
-                puVar17[10] = *((unsigned char *)puVar16 + (uVar4 >> 10 & 3));
-                puVar17[9]  = *((unsigned char *)puVar16 + (uVar4 >> 0xc & 3));
-                puVar17[8]  = *((unsigned char *)puVar16 + (uVar4 >> 0xe & 3));
-                puVar17[7]  = *((unsigned char *)puVar16 + (uVar4 >> 0x10 & 3));
-                puVar17[6]  = *((unsigned char *)puVar16 + (uVar4 >> 0x12 & 3));
-                puVar17[5]  = *((unsigned char *)puVar16 + (uVar4 >> 0x14 & 3));
-                puVar17[4]  = *((unsigned char *)puVar16 + (uVar4 >> 0x16 & 3));
-                puVar17[3]  = *((unsigned char *)puVar16 + (uVar4 >> 0x18 & 3));
-                puVar17[2]  = *((unsigned char *)puVar16 + (uVar4 >> 0x1a & 3));
-                puVar17[1]  = *((unsigned char *)puVar16 + (uVar4 >> 0x1c & 3));
-                puVar17[0]  = *((unsigned char *)puVar16 + (uVar4 >> 0x1e));
-                puVar16 = puVar16 + 2;
+                memcpy(&uVar4, packed_run + 4, sizeof(uVar4));
+                puVar17[0xf] = packed_run[uVar4 & 3];
+                puVar17[0xe] = packed_run[(uVar4 >> 2) & 3];
+                puVar17[0xd] = packed_run[(uVar4 >> 4) & 3];
+                puVar17[0xc] = packed_run[(uVar4 >> 6) & 3];
+                puVar17[0xb] = packed_run[(uVar4 >> 8) & 3];
+                puVar17[10] = packed_run[(uVar4 >> 10) & 3];
+                puVar17[9]  = packed_run[(uVar4 >> 0xc) & 3];
+                puVar17[8]  = packed_run[(uVar4 >> 0xe) & 3];
+                puVar17[7]  = packed_run[(uVar4 >> 0x10) & 3];
+                puVar17[6]  = packed_run[(uVar4 >> 0x12) & 3];
+                puVar17[5]  = packed_run[(uVar4 >> 0x14) & 3];
+                puVar17[4]  = packed_run[(uVar4 >> 0x16) & 3];
+                puVar17[3]  = packed_run[(uVar4 >> 0x18) & 3];
+                puVar17[2]  = packed_run[(uVar4 >> 0x1a) & 3];
+                puVar17[1]  = packed_run[(uVar4 >> 0x1c) & 3];
+                puVar17[0]  = packed_run[(uVar4 >> 0x1e) & 3];
+                packed_run += 8;
                 puVar17 = puVar17 + 0x10;
             }
         }
-        uVar3 = (unsigned int)(*(int *)(*param_1 + 100) * *(int *)(*param_1 + 0x60)) >> 4;
+        int output_width;
+        int output_height;
+        memcpy(&output_width, &runtime->descriptor->output_width_64,
+               sizeof(output_width));
+        memcpy(&output_height, &runtime->descriptor->output_height_60,
+               sizeof(output_height));
+        uVar3 = (static_cast<unsigned int>(output_width) *
+                 static_cast<unsigned int>(output_height)) >> 4;
         if ((uVar6 * uVar3 + 0x1f & 0xffffffe0) != 0) {
-            sub_5d439f((unsigned int *)param_1[400], (int)(puVar14 + uVar5 * 2), uVar3, uVar6);
+            sub_5d439f(reinterpret_cast<unsigned int *>(runtime->owned_heap_640),
+                       puVar14 + uVar5 * 8, static_cast<int>(uVar3),
+                       static_cast<int>(uVar6));
         }
-        uVar3 = *(unsigned int *)(*param_1 + 100);
-        sub_5d4448((int *)param_1[400], param_1[399], param_1[0x18e], param_1[0x188], (int *)param_1[0x194],
-                    param_1[0x192], uVar3, uVar3 >> 2, *(unsigned int *)(*param_1 + 0x60) >> 2);
+        const DWORD final_width = runtime->descriptor->output_width_64;
+        const DWORD final_height = runtime->descriptor->output_height_60;
+        int final_pitch;
+        memcpy(&final_pitch, &final_width, sizeof(final_pitch));
+        sub_5d4448(reinterpret_cast<int *>(runtime->owned_heap_640),
+                   runtime->owned_heap_63c, runtime->owned_heap_638,
+                   static_cast<int>(runtime->decoder_packet_value_620),
+                   reinterpret_cast<int *>(runtime->owned_heap_650),
+                   runtime->owned_heap_648, final_pitch,
+                   static_cast<int>(final_width >> 2),
+                   static_cast<int>(final_height >> 2));
     }
     return flagOK;
 }

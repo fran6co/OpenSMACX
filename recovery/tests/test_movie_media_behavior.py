@@ -441,11 +441,22 @@ def test_media_owner_retains_original_identity_and_findings(address, historical_
 
 
 @pytest.mark.parametrize('address', (0x5CD750,0x5CD8D0,0x5CD980,0x5CDA30,0x5CFAED,0x5D02CC,0x5D35B0))
-def test_unfinished_media_converters_keep_seeds_and_explicit_sentinels(address):
+def test_completed_media_converters_retain_seed_identity_and_findings(address):
     from match_recovery.source import read_file, State
-    seed = ROOT / ('src/unrecovered/%08x.cpp' % address)
-    assert seed.is_file(), 'unfinished owning-TU bodies must not supersede seed evidence'
-    old, = read_file(seed)
-    current, = (record for record in read_file(ROOT / 'src/movie_media.cpp') if record.address == address)
-    assert current.state == State.PLACEHOLDER and '// BODY GOES HERE.' in current.region
+    from match_recovery.source import read_text
+    task = json.loads((ROOT / 'recovery/tasks/movie-media-owner-wave.json').read_text())
+    seed_path = 'src/unrecovered/%08x.cpp' % address
+    historical = subprocess.check_output(
+        ['git', 'show', task['base_revision'] + ':' + seed_path], cwd=ROOT)
+    old, = read_text(historical.decode(), ROOT / seed_path)
+    current, = (record for path in (ROOT / 'src/movie_media.cpp',
+                                   ROOT / 'src/movie_media_decoder.cpp')
+                for record in read_file(path) if record.address == address)
+    assert current.state == State.IMPLEMENTED and '// BODY GOES HERE.' not in current.region
+    assert current.symbol and not current.extract_error
     assert old.image_spans == current.image_spans and old.name == current.name
+    assert not old.byte_exact or current.byte_exact
+    assert not old.semantic or current.semantic
+    for field in ('levers', 'ruled_out', 'unrecoverable', 'deferred'):
+        assert set(getattr(old, field)) <= set(getattr(current, field)), field
+    assert not (ROOT / seed_path).exists(), 'superseded seed must stay retired'
