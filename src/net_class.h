@@ -265,6 +265,8 @@ class NetPlayer {
   // RECOVERY_MEMBER: v1 NetPlayer name_and_tail_ 0x15 0x00631A20
   char name_and_tail_[0x43];
 };
+static_assert(sizeof(NetPlayer) == 0x58,
+              "Net player row stride from the original table");
 
 class Net;
 // Embedded at Net+4; offsets match the worker argument and accesses in
@@ -607,13 +609,10 @@ extern IDirectPlay2 *NetDirectPlay;
 extern unsigned int NetPlayerWriteIndex;
 extern NetPlayer *NetPlayerTable;
 
-// THE TWO RE-ENTRANCY GUARDS beside them, each set to 1 while its own pass is
-// inside the code that must not be re-entered and cleared on the way out.
-// check_polling sends its 0x20 keep-alive under the 0x9BE610 flag and reaps
-// stale players under the 0x9BE60C one. These remaining fixed-address guards
-// still need source-owned storage; they are not aliases of NetDirectPlay.
-uint32_t *const NetReapBusy = (uint32_t *)0x009BE60C;
-uint32_t *const NetKeepAliveBusy = (uint32_t *)0x009BE610;
+// Independent shared re-entrancy words used by check_polling. Pinned initial
+// data is zero; coordinator-owned object mappings retain their original spans.
+extern uint32_t NetReapBusy;
+extern uint32_t NetKeepAliveBusy;
 
 // Shared receive/queue-copy storage. Original Receive advertises the 0x2000
 // capacity initialized by Net::init, not the old four-byte scalar declaration.

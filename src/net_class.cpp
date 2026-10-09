@@ -981,14 +981,14 @@ int Net::send_group_flagged(void *data, int size, long target,
     }
 }
 
-// 0x009B2068 - the flag the "ok to drop the hosts?" answer lights: that
-// answer returns 1 with this set and no player cut.
-static unsigned int *const NetDropAbortFlag = (unsigned int *)0x009B2068;
-
 // 0x009BE5FC, four dwords below ActiveNet: the outgoing field_764_ the host
 // change publishes before the new host's id overwrites it.
 // RECOVERY_OBJECT: v2 0x009BE5FC 0x009BE600 ?NetHostChangeSlot@@3IA 0x00632350
 uint32_t NetHostChangeSlot;
+// RECOVERY_OBJECT: v2 0x009BE60C 0x009BE610 ?NetReapBusy@@3IA 0x006320E0
+uint32_t NetReapBusy;
+// RECOVERY_OBJECT: v2 0x009BE610 0x009BE614 ?NetKeepAliveBusy@@3IA 0x006320E0
+uint32_t NetKeepAliveBusy;
 
 /*
 Purpose: Cut one player out of the session by id, or everyone when the caller
@@ -1039,7 +1039,7 @@ int Net::drop_player(unsigned long key, int reason) {
                 const_cast<char *>("jackal"),
                 const_cast<char *>("NET_OKTODROPHOSTS"), 1, 0, 0);
             if (answer == 0) {
-                *NetDropAbortFlag = 1;
+                ExitTurnLoop = 1;
                 return 1;
             }
             if (answer == 1 || answer > 2) {
@@ -1204,6 +1204,8 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
 //        block at 0x632280 is the outer if's own fall-through, which is why
 //        four different returns land on it while the sixteen-slot loop's tail
 //        writes its own copy inline.
+// Historical spelling below crosses NetPlayer subobjects; the row-owner
+// correction supersedes it, but its compiler observations remain obligations.
 // LEVER: branch 3 walks `stamps[checked * 0x16]` from `&players_->stamp_10_`,
 //        NOT `players_[checked].stamp_10_`: the image spills the BASE pointer
 //        to [esp+0x10] before the loop and writes `*stamps` through it after
@@ -1239,17 +1241,17 @@ void Net::check_polling() {
     if (now() - poll_time_DC_ <= 2000) {
         return;
     }
-    if (*NetKeepAliveBusy != 0) {
+    if (NetKeepAliveBusy != 0) {
         return;
     }
-    *NetKeepAliveBusy = 1;
+    NetKeepAliveBusy = 1;
     send_packet_type(0, 0, 0, 0x20, 0);
     poll_time_DC_ = now();
-    *NetKeepAliveBusy = 0;
-    if (*NetReapBusy != 0) {
+    NetKeepAliveBusy = 0;
+    if (NetReapBusy != 0) {
         return;
     }
-    *NetReapBusy = 1;
+    NetReapBusy = 1;
     if ((voice_flags_D8_ & 0x40000) != 0) {
         if (field_760_ == field_764_) {
             // Every slot: a live player who is not the one the timer words
@@ -1268,35 +1270,34 @@ void Net::check_polling() {
                 }
                 --count;
             } while (count != 0);
-            *NetReapBusy = 0;
+            NetReapBusy = 0;
             return;
         }
         if (field_760_ == players_[1].stamp_10_) {
             if (players_->stamp_10_ == 0) {
-                *NetReapBusy = 0;
+                NetReapBusy = 0;
                 return;
             }
             if (now() - players_->stamp_10_
                     <= poll_timeout_E0_) {
-                *NetReapBusy = 0;
+                NetReapBusy = 0;
                 return;
             }
             if (drop_player(players_->field_0_, 0) != 0) {
-                *NetReapBusy = 0;
+                NetReapBusy = 0;
                 return;
             }
             players_->stamp_10_ = now();
-            *NetReapBusy = 0;
+            NetReapBusy = 0;
             return;
         }
         // Neither timer word names a player this table holds, so both leading
         // slots are stale: cut the lot.
-        uint32_t *stamps = &players_->stamp_10_;
         for (int checked = 0; checked < 2; ++checked) {
-            if (stamps[checked * 0x16] == 0) {
+            if (players_[checked].stamp_10_ == 0) {
                 return;
             }
-            if (now() - stamps[checked * 0x16]
+            if (now() - players_[checked].stamp_10_
                     < poll_timeout_E0_) {
                 return;
             }
@@ -1304,10 +1305,10 @@ void Net::check_polling() {
         if (drop_player(0xFFFFFFFF, 0) == 0) {
             uint32_t cut = now();
             players_[1].stamp_10_ = cut;
-            stamps[0] = cut;
+            players_[0].stamp_10_ = cut;
         }
     }
-    *NetReapBusy = 0;
+    NetReapBusy = 0;
 }
 
 /*
