@@ -1,0 +1,72 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f4a8a67b08adfea05d2ad0d7f034f71b1831bcd8",
+  "editable_files": [
+    "recovery/tests/test_soundx_typed_export_table_oct9.py",
+    "src/midi.cpp",
+    "src/sound.cpp",
+    "src/sound.h",
+    "src/sound_loader.cpp",
+    "src/sounddevice.cpp",
+    "src/sounddevice.h",
+    "src/video.cpp",
+    "src/wave.cpp",
+    "src/wave.h",
+    "src/wave_device.cpp",
+    "src/wave_device.h"
+  ],
+  "evidence": [
+    "Pinned soundx.dll SHA ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5 exports ord1..11 create_sound/delete_sound/init_sound_timer/release_sound/WaveDevicecreate/delete/MidiDevicecreate/delete/WaveIncreate/delete/version; ord12 callback excluded. Native game4C5E85..4C5EA8 assigns11 sequentialwords at90DB24..50. Factory provider classes are DLL-private and distinct from gamefacades; use documented opaque void** boundary view, not invented hierarchy. All typed storage extents/symbols need fresh native evidence; historical object annotation changed only native writer."
+  ],
+  "intent": "Recover the verified eleven-ordinal SoundX export table as named typed callable storage with consistent int-return contracts, preserving loader/failure/unload order and opaque provider ownership.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5004688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5004880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "soundx-typed-export-table-oct9"
+}
