@@ -132,9 +132,8 @@ class ReportIf : public SubInterface {
   // ??0ReportIf@@QAE@XZ installs the SubInterface vftable 0x0066A6E4 into
   // [this + 0] at 0x004AD1A7, before it constructs anything else - the same
   // table seven window classes store at their own +0xA14. The IDB agrees
-  // (`ReportIf,0x0,subIFace,8`), which is why src/reportif.cpp already has to
-  // reach the sub-object with `reinterpret_cast<SubInterface *>(this)`.
-  // SubInterface is the BASE, above, so its 8 bytes are at 0.
+  // (`ReportIf,0x0,subIFace,8`); SubInterface is ReportIf's real first base,
+  // so source methods use its inherited operations directly at offset 0.
   // Shared drawing cursor/extent written by the ReportIf panel renderers.
   // RECOVERY_MEMBER: v1 ReportIf field_C_ 0xC 0x004A7027
   uint32_t field_C_;  // 0xC
@@ -183,6 +182,8 @@ class ReportIf : public SubInterface {
   // not a user-visible argument; the real no-argument ListBox ctor owns it.
   // Singleton885F38+A2D0=890208 and+AE24=890D5C: ReportWin borrows these
   // genuine owned members through its existing friendship, not global copies.
+  // Their separate ListBox lifetimes follow declaration order here and
+  // reverse order during ReportIf destruction.
   ListBox listBox1_;  // 0xA2D0, sizeof(ListBox)
   ListBox listBox2_;  // 0xAE24, sizeof(ListBox)
   ButtonGroup buttonGroup1_;  // 0xB978, sizeof(ButtonGroup)

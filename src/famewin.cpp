@@ -650,12 +650,17 @@ void FameWin::on_redraw() {
       if ((record->award_flags & (1 << banner_award_index)) == 0) continue;
       famewin_clear_text();
       famewin_append_label(award_labels[banner_award_index]);
-      canvas->text_width(StringTemp);
+      const int fill_extent = canvas->text_width(StringTemp) + 0x14;
+      const int fill_y = static_cast<int>(field_A28_) + 0x0F;
       const int text_width = canvas->text_width(StringTemp);
-      fill(static_cast<int>(field_A24_) - text_width / 2 + 0x186,
-           static_cast<int>(field_A28_) + 0x0F, 0x41, 0x15, 0);
-      canvas->write_cent_l(StringTemp, field_A24_, field_A28_ + 0x10,
-                           0x320, text_width);
+      const int fill_x =
+          static_cast<int>(field_A24_) - text_width / 2 + 0x186;
+      fill(fill_x, fill_y, fill_extent, 0x15, 0x41);
+
+      const int text_y = static_cast<int>(field_A28_) + 0x10;
+      const int text_x = static_cast<int>(field_A24_);
+      const int text_length = static_cast<int>(strlen(StringTemp));
+      canvas->write_cent_l(StringTemp, text_x, text_y, 0x320, text_length);
       break;
     }
     canvas->set_font(ReportIfGlobal.field_1E190_, 0, 0, 0);

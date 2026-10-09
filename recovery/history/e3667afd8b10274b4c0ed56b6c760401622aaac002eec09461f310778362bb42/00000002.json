@@ -1,0 +1,18 @@
+{
+  "event_id": "8394a33331d5329b781f64987424905952ab21bf5739a1f12ac4fc3e0c4096dd",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "socialwin-native-toggle-slot-correction-oct9",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/socialwin.cpp SocialWin::init uses genuine flatButtons_[29+i] and set_report_icons for all six triplets in original init/hide/stores/bubble order. The original1B308+AD4 secondtarget resolves1BDDC; old1BDCC translationtypo is removed, not normalized as an originalbug.",
+      "recovery/tests/test_socialwin_typed_control_owner_oct9.py exercises all six pointers and rejects oldsecondslot color/style-clobber mutation; independent source review passed. Fresh bothflag COFF/CodeView confirms flatButtons6020, arrows3DE8, FlatButtonB4C and Sprite pointersAD4. Scoped historical claims/verdicts preserved; this source incorporation decision is not full acceptance."
+    ]
+  },
+  "previous_event": "0b663e1b6aa8db7ec881ccff2de9dd7a2d1f9148b0751f4bb094153be200459e",
+  "request_id": "socialwin-native-toggle-slot-incorporated-oct9",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:socialwin-typed-control-owner-oct9"
+}

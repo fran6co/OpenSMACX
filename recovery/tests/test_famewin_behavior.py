@@ -517,10 +517,9 @@ def test_famewin_damage_control_detects_lost_text_width_call(tmp_path):
     redraw = redraw.replace(
         "reinterpret_cast<int>(Facility[FAC_ASCENT_TO_TRANSCENDENCE].name)", "0"
     ).replace("reinterpret_cast<int>(Difficulty[record->field_20])", "0")
-    duplicate_width = "      canvas->text_width(StringTemp);\n      const int text_width = canvas->text_width(StringTemp);"
-    assert duplicate_width in redraw
-    mutant = redraw.replace(duplicate_width,
-                            "      const int text_width = canvas->text_width(StringTemp);", 1)
+    fill_extent = "const int fill_extent = canvas->text_width(StringTemp) + 0x14;"
+    assert fill_extent in redraw
+    mutant = redraw.replace(fill_extent, "const int fill_extent = 0x41;", 1)
     run_painter_host(tmp_path, (init, mutant), should_pass=False)
 
 

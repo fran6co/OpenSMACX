@@ -2214,7 +2214,7 @@ void SocialWin::draw_mouseover() {
         }
     }
 
-    reinterpret_cast<GraphicWin *>(this)->soft_update(header_rect);
+    GraphicWin::soft_update(header_rect);
     do_sound();
 }
 
@@ -2259,8 +2259,7 @@ static char *const UpheavalPlusText = (char *)0x00687490;
 // calls     0x005B4550 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DCEA0 0x005DD130 0x005E2DD3 0x005FD2B0 0x006169A0 0x006453E0 0x00645470 0x0064FC88
 */
 void SocialWin::draw_info() {
-    Buffer *own_buffer = reinterpret_cast<Buffer *>(
-        reinterpret_cast<char *>(this) + 0x444);
+    Buffer *own_buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
     Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
 
     own_buffer->set_clip(&tutRect14_);
@@ -2443,8 +2442,7 @@ scaled:
 
     MainInterfaceGlobal.soft_update(&tutRect14_);
     do_sound();
-    own_buffer->set_clip(reinterpret_cast<RECT *>(
-        reinterpret_cast<char *>(own_buffer) + 0x30));
+    own_buffer->restore_clip();
 }
 
 
@@ -2510,7 +2508,6 @@ int __cdecl tut_check2(int veh_id);  // 0x004BA650, defined in tutwin.cpp
 // calls     0x0045D380 0x004AECE0 0x004BA650 0x004BC640 0x004BDFE0 0x005B4730 0x005D4EF0 0x005D5250 0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005DAC70 0x005DFF00 0x005E2DD3 0x005E39A0 0x00607210 0x00607550 0x006169A0 0x00618F40 0x0062B7F0 0x0062B810 0x0062B850 0x0062B870 0x006337E0 0x00645470
 */
 void SocialWin::init(int faction_id) {
-    char *self = reinterpret_cast<char *>(this);
     Buffer sheet;
 
     for (int i = 0; i < 0x23; ++i) {
@@ -2737,7 +2734,7 @@ void SocialWin::init(int faction_id) {
         box_rect.top = 0;
         box_rect.right = 0x30a;
         box_rect.bottom = 0x162;
-        reinterpret_cast<Buffer *>(self + 0x444)->box_sprite(&box_rect,
+        static_cast<Buffer *>(static_cast<GraphicWin *>(this))->box_sprite(&box_rect,
             &InterfaceBoxStyles[9]);
     }
     {
@@ -2773,17 +2770,16 @@ void SocialWin::init(int faction_id) {
                 int idx = col + row * 4;
                 RECT *cell = &tutRects3_[2 + idx];
                 FlatButton *button = &flatButtons_[idx];
-                reinterpret_cast<BaseButton *>(button)->init(StringTemp, idx,
+                static_cast<BaseButton *>(button)->init(StringTemp, idx,
                     cell->left, cell->top, cell->right - cell->left,
                     cell->bottom - cell->top, this, 0);
                 button->hide();
-                reinterpret_cast<Buffer *>(reinterpret_cast<char *>(button) + 0x444)
-                    ->set_font(&font2_, 0, 0, 0);
+                static_cast<Buffer *>(button)->set_font(&font2_, 0, 0, 0);
                 button->redraw();
-                reinterpret_cast<BaseButton *>(button)->set_bubble_text(
+                static_cast<BaseButton *>(button)->set_bubble_text(
                     StringTable.get(*reinterpret_cast<int *>(
                         reinterpret_cast<char *>(Labels.strings_ptr) + 0xCF0)));
-                group->add(reinterpret_cast<BaseButton *>(button));
+                group->add(static_cast<BaseButton *>(button));
             }
             group->set(social_category_value(socCategory_, row), 1);
             ++row;
@@ -2818,15 +2814,16 @@ void SocialWin::init(int faction_id) {
                 RECT *cell = &tutRects2_[entry];
                 int y = cell->top;
                 int x = cell->left;
-                BaseButton *button = reinterpret_cast<BaseButton *>(
-                    self + 0x1202C + offset);
+                FlatButton *flat_button = &flatButtons_[
+                    17 + offset / static_cast<int>(sizeof(FlatButton))];
+                BaseButton *button = static_cast<BaseButton *>(flat_button);
                 button->init(StringTemp, col + 0x11, x, y,
                     cell->right - x, cell->bottom - y, this, 0);
                 button->hide();
-                reinterpret_cast<Buffer *>(reinterpret_cast<char *>(button) + 0x444)
+                static_cast<Buffer *>(flat_button)
                     ->set_font(reinterpret_cast<Font *>(0), 0, 0, 0);
                 button->redraw();
-                reinterpret_cast<BaseButton *>(button)->set_bubble_text(
+                button->set_bubble_text(
                     StringTable.get(*reinterpret_cast<int *>(
                         reinterpret_cast<char *>(Labels.strings_ptr)
                         + col * 4 + 0xCF4)));
@@ -2846,20 +2843,19 @@ void SocialWin::init(int faction_id) {
             CharUpperA(StringTemp);
         }
         FlatButton *button = &flatButtons_[16];
-        reinterpret_cast<BaseButton *>(button)->init(StringTemp, 0x10,
+        static_cast<BaseButton *>(button)->init(StringTemp, 0x10,
             tutRect11_.left, tutRect11_.top, tutRect11_.right - tutRect11_.left,
             tutRect11_.bottom - tutRect11_.top, this, 0);
         button->hide();
-        reinterpret_cast<Buffer *>(reinterpret_cast<char *>(button) + 0x444)
-            ->set_font(reinterpret_cast<Font *>(0), 0, 0, 0);
+        static_cast<Buffer *>(button)->set_font(reinterpret_cast<Font *>(0), 0, 0, 0);
         button->redraw();
     }
 
-    reinterpret_cast<BaseButton *>(self + 0x19124)->set_bubble_text(
+    static_cast<BaseButton *>(&flatButtons_[27])->set_bubble_text(
         StringTable.get(*reinterpret_cast<int *>(
             reinterpret_cast<char *>(Labels.strings_ptr) + 0x4F4)));
 
-    reinterpret_cast<BaseButton *>(self + 0x19C70)->set_bubble_text(
+    static_cast<BaseButton *>(&flatButtons_[28])->set_bubble_text(
         StringTable.get(*reinterpret_cast<int *>(
             reinterpret_cast<char *>(Labels.strings_ptr) + 0xD34)));
 
@@ -2887,30 +2883,20 @@ void SocialWin::init(int faction_id) {
         lock2->hide();
     }
 
-    // The six header toggles: the original reaches each at its own raw
-    // offset (0x2D3 stride, receivers that are not FlatButton boundaries),
-    // links it to one of the two arrow-sprite triplets, and reads its frame
-    // from tutRects1_[3..8].
-    static const int toggle_offsets[6] = {
-        0x1A7BC, 0x1B308, 0x1BE54, 0x1C9A0, 0x1D4EC, 0x1E038 };
-    static const int toggle_links[6] = {
-        0x1B290, 0x1BDCC, 0x1C928, 0x1D474, 0x1DFC0, 0x1EB0C };
+    // These six receivers are FlatButton elements 29..34; their original
+    // 0xB4C stride is sizeof(FlatButton). Each borrows its arrow triplet.
     static const int toggle_bubbles[6] = { 0xD24, 0xD24, 0xD28, 0xD28, 0xD2C, 0xD2C };
     for (int toggle_index = 0; toggle_index < 6; ++toggle_index) {
-        BaseButton *toggle = reinterpret_cast<BaseButton *>(
-            self + toggle_offsets[toggle_index]);
+        FlatButton *flat_toggle = &flatButtons_[29 + toggle_index];
+        BaseButton *toggle = static_cast<BaseButton *>(flat_toggle);
         const RECT &rect = tutRects1_[3 + toggle_index];
         toggle->init(0, 0x1d + toggle_index, rect.left, rect.top,
             rect.right - rect.left, rect.bottom - rect.top,
             &MainInterfaceGlobal, 0);
         toggle->hide();
         int first = (toggle_index % 2 == 0) ? 0 : 3;
-        reinterpret_cast<int *>(self + toggle_links[toggle_index])[0]
-            = reinterpret_cast<int>(self + 0x3DE8 + (first + 0) * 0x2C);
-        reinterpret_cast<int *>(self + toggle_links[toggle_index])[1]
-            = reinterpret_cast<int>(self + 0x3DE8 + (first + 1) * 0x2C);
-        reinterpret_cast<int *>(self + toggle_links[toggle_index])[2]
-            = reinterpret_cast<int>(self + 0x3DE8 + (first + 2) * 0x2C);
+        flat_toggle->set_report_icons(&energyAllocArrow_[first + 0],
+            &energyAllocArrow_[first + 1], &energyAllocArrow_[first + 2]);
         toggle->set_bubble_text(StringTable.get(*reinterpret_cast<int *>(
             reinterpret_cast<char *>(Labels.strings_ptr)
             + toggle_bubbles[toggle_index])));

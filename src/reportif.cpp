@@ -953,13 +953,11 @@ Purpose: Close the two intel list boxes.
              mov esi,ecx / lea ecx,[esi+0xA2D0] / call ListBox::close
                            lea ecx,[esi+0xAE24] / call ListBox::close
 
-         Two subobjects, in that order, and nothing else. ReportIf models no
-         fields, so both offsets are documented and raw.
+         Two distinct owned ListBox members, in that order, and nothing else.
 
          ListBox::close resolves its own bases through the object's vbtable at
-         run time, so each of these has to be a real ListBox carrying a table
-         of its own; reaching them by offset is what the original does and is
-         what keeps the two independent.
+         run time, so each member's own ListBox subobject and virtual-base
+         table remain intact.
 // ORIGINAL: 0x004AC980 ?close_intel@ReportIf@@QAEXXZ 0x004AC980-0x004AC99B BYTE_EXACT
 // size      27 bytes
 // prototype void (__thiscall ?close_intel@ReportIf@@QAEXXZ)(ReportIf* this)
@@ -971,9 +969,8 @@ Return Value: n/a
 Status: Complete
 */
 void ReportIf::close_intel() {
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    reinterpret_cast<ListBox *>(self + 0xA2D0)->close();
-    reinterpret_cast<ListBox *>(self + 0xAE24)->close();
+    listBox1_.close();
+    listBox2_.close();
 }
 
 
@@ -1129,7 +1126,7 @@ Status: Complete
 // done() releases its modal loop and gives up the active interface mode.
 void ReportIf::done() {
     ReportWinGlobal.Win::release_modal();
-    reinterpret_cast<SubInterface *>(this)->release_iface_mode();
+    SubInterface::release_iface_mode();
 }
 
 // The seams and definitions for the unrecovered bodies, at the end of the file

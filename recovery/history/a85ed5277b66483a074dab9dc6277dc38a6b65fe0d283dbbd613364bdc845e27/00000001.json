@@ -1,0 +1,19 @@
+{
+  "event_id": "e7cfb1993ddd038511fe0e9214aa3efab8547fc9e2ab664fa71555d2b4066316",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_famewin_behavior.py"
+    ],
+    "evidence": [
+      "The existing lost-width-call damage control anchors the superseded discarded text_width statement. Rebind its mutation to omit the new first measured extent call while keeping its actual full-source host failure assertion; do not weaken or skip the original control."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "famewin-width-mutation-anchor-oct9",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:famewin-award-highlight-owner-oct9"
+}
