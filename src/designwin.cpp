@@ -4838,7 +4838,7 @@ void DesignWin::select_special(int which) {
             // chassis's triad byte is clear they quote the zero-based one
             // and open the stat fragment group.
             if ((Ability[ability].flags & 0x400) != 0
-                || Chassis[faction].triad != 0) {
+                || Chassis[protoChassisType_].triad != 0) {
                 char digits[0x20];
                 _itoa(ability + 1, digits, 10);
                 strcat(StringTemp, digits);
