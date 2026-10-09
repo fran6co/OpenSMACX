@@ -1305,13 +1305,9 @@ Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
              add ecx,0x21D0 / call Dialogs::item / ret 8
 
          A plain delegation: `add ecx, 0x21D0` selects the subobject and the
-         two arguments are forwarded unchanged. BasePop models no field there,
-         so the offset is documented and raw, as its neighbours here already
-         are.
-
-         Dialogs::item takes the Dialog's address from the EMBEDDING object's
-         own vbtable rather than from where a Dialogs sits when it is
-         most-derived, which is why this can hand it a subobject at all.
+         two arguments are forwarded unchanged. The real Dialogs object is
+         the BasePop member `dialogs_`; its item member performs the original
+         delegation and returns the callee's result.
 // ORIGINAL: 0x00558FE0 ?item@BasePop@@QAEHPADH@Z 0x00558FE0-0x00558FFA BYTE_EXACT
 // size      26 bytes
 // prototype int (__thiscall ?item@BasePop@@QAEHPADH@Z)(BasePop* this, int8* lpString, int position)
@@ -1323,30 +1319,17 @@ Return Value: whatever Dialogs::item returns
 Status: Complete
 */
 int BasePop::item(char *text, int index) {
-    // QUALIFIED: `Dialog::item` is virtual now (it is the virtual ListBox
-    // overrides, which is what earns ListBox its Dialog vtordisp), so an
-    // unqualified call here dispatches through the vtable where the image
-    // calls directly.
-    return reinterpret_cast<Dialogs *>(
-        reinterpret_cast<uint8_t *>(this) + 0x21D0)->Dialogs::item(text, index);
+    return dialogs_.Dialogs::item(text, index);
 }
 
 
 /*
-Purpose: Read the state word of the CheckBox embedded at 0x2228.
-
-             mov eax,[ecx+0x2228] / mov edx,[eax+8] / mov eax,[edx+ecx+0x2314]
-
-         The compiler folded the subobject offset into the displacement:
-         0x2228 + 0xEC is 0x2314, so `this + vbtable[2] + 0x2314` is the
-         subobject at 0x2228 plus `vbtable[2] + 0xEC` - exactly the address
-         CheckBox::UNK1, UNK2 and set_state_pos compute, and the vbtable it
-         reads is that subobject's own.
-
-         So this returns the whole word those three edit bit by bit, and the
-         same rule applies: the Dialog displacement comes from the object's
-         vbtable at run time, never from where a CheckBox sits when it is
-         most-derived.
+Purpose: Return the full state word held in the shared Dialog
+         selected_position_ member of this popup's CheckBox/Dialogs state.
+         The original loads the CheckBox view at BasePop+0x2228, follows
+         vbtable[2], then reads Dialog+0xEC (effective address +0x2314).
+         The source selects that same genuine CheckBox view and names its
+         shared virtual Dialog member.
 
          Declared uint32_t although the mangled name says void, as
          SpriteBox::id_to_pos and Dialogs::destroy are: the body ends by
@@ -1364,10 +1347,8 @@ Return Value: the embedded CheckBox's state word
 Status: Complete
 */
 uint32_t BasePop::read_check() {
-    uint8_t *const check = reinterpret_cast<uint8_t *>(this) + 0x2228;
-    const int32_t *const vbtable =
-        *reinterpret_cast<const int32_t *const *>(check);
-    return *reinterpret_cast<const uint32_t *>(check + vbtable[2] + 0xEC);
+    return static_cast<uint32_t>(
+        static_cast<const CheckBox &>(dialogs_).Dialog::selected_position_);
 }
 
 /*
