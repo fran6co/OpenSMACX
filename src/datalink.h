@@ -301,7 +301,7 @@ static_assert(sizeof(Datalink) == 0x1B394,
 // keeps the folded receiver (`mov ecx, 0x703ea0` becomes
 // `mov ecx, <reloc>`) and `->` becomes `.`.
 extern char *DatalinkHelpFile;
-extern int TechnologyHelpEntryName;
+extern LPSTR TechnologyHelpEntryName;
 extern int TechnologyHelpEntryKind;
 extern int TechnologyHelpPrefixEmitted;
 extern int TechnologyHelpSectionSelector;

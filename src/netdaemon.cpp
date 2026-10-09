@@ -6028,9 +6028,7 @@ static void netdaemon_process_project_4d00(unsigned char *message) {
     const int faction_id = *reinterpret_cast<int *>(message + 0x04);
 
     const RulesFacility &project = Facility[FacilitySPStart + project_id];
-    const int project_name_id =
-        static_cast<int>(reinterpret_cast<intptr_t>(project.name));
-    const char *project_name = StringTable.get(project_name_id);
+    LPSTR project_name = StringTable.get(project.name);
     log_say("Received PROJECT", project_name, faction_id, project_status,
             related_project_id);
 
@@ -6049,15 +6047,14 @@ static void netdaemon_process_project_4d00(unsigned char *message) {
     if (project_status == 2) {
         // The original leaves both parser defaults untouched for slots 0/1.
         parse_says(0, faction.adj_name_faction, -1, -1);
-        const int related_name_id = static_cast<int>(
-            reinterpret_cast<intptr_t>(
-                Facility[FacilitySPStart + related_project_id].name));
-        parse_say(1, related_name_id, -1, -1);
+        LPSTR related_name =
+            Facility[FacilitySPStart + related_project_id].name;
+        parse_say(1, related_name, -1, -1);
 
         GenderDefault = faction.noun_gender;
         PluralityDefault = faction.is_noun_plural;
         parse_says(2, faction.noun_faction, -1, -1);
-        parse_say(3, project_name_id, -1, -1);
+        parse_say(3, project_name, -1, -1);
         NetMsgPrimary.pop("CHANGEPROJECT", 5000, 2, nullptr);
         return;
     }
@@ -6073,7 +6070,7 @@ static void netdaemon_process_project_4d00(unsigned char *message) {
     GenderDefault = faction.noun_gender;
     PluralityDefault = faction.is_noun_plural;
     parse_says(2, faction.noun_faction, -1, -1);
-    parse_say(3, project_name_id, -1, -1);
+    parse_say(3, project_name, -1, -1);
 
     if (project_status == 0) {
         NetMsgPrimary.pop("BEGINPROJECT", 5000, 2, nullptr);

@@ -78,10 +78,11 @@ def test_installed_help_reset_and_report_store_paths_are_real_code():
     assert "reinterpret_cast<char *>(0x00" not in help_info
     for kind in ("0x62", "0x63", "0x64"):
         assert help_info.count(f"TechnologyHelpEntryKind = {kind};") == 1
-    assert achieved.count("TechnologyHelpEntryName = -1;") == 1
+    sentinel = "TechnologyHelpEntryName = reinterpret_cast<LPSTR>(static_cast<intptr_t>(-1));"
+    assert achieved.count(sentinel) == 1
     assert achieved.count("TechnologyHelpEntryKind = -1;") == 1
     selection = achieved.index("FirstProposedPrototype = -1;")
-    reset = achieved.index("TechnologyHelpEntryName = -1;")
+    reset = achieved.index(sentinel)
     presentation = achieved.index("say_tech(StringTemp, tech_id, FALSE);", reset)
     assert selection < reset < presentation
 
@@ -121,7 +122,7 @@ struct RulesAbility { char *name; int preq_tech; };
 struct VehPrototype { unsigned char flags; int preq_tech; char veh_name[32]; };
 struct RulesFacility { char *name; int preq_tech, free_tech; };
 struct RulesCitizen { char *singular_name; int preq_tech; };
-struct Table { char *get(int) { return (char*)"TABLE_NAME"; } } StringTable;
+struct Table { char *get(char *name) { return name; } } StringTable;
 struct Datalink { void construct_id(char *, int, int) {} } DatalinkMain;
 struct Buffer {
   int wrapped, measured;
@@ -138,7 +139,7 @@ RulesReactor Reactor[4]; RulesChassis Chassis[9]; RulesWeapon Weapon[26];
 RulesArmor Armor[14]; RulesAbility Ability[29];
 VehPrototype VehPrototypes[MaxVehProtoFactionNum];
 RulesFacility Facility[134]; RulesCitizen Citizen[7];
-char StringTemp[2048]; int TechnologyHelpEntryName=-1, TechnologyHelpEntryKind=-1;
+char StringTemp[2048]; char *TechnologyHelpEntryName=(char*)-1; int TechnologyHelpEntryKind=-1;
 char *label_get(int) { return (char*)"LABEL"; }
 void help_create_link(char *, char *, char *) {}
 int _itoa(int value, char *out, int radix) {
@@ -148,26 +149,27 @@ int _itoa(int value, char *out, int radix) {
 __REPORT_HELPERS__
 int main() {
   Buffer canvas = {}; uint32_t width = 100; int y = 0, measured = 0;
-  Chassis[0].preq_tech=7; Chassis[0].offsv_1_name=(char*)11; Chassis[0].speed=2;
-  Weapon[0].preq_tech=8; Weapon[0].name=(char*)12; Weapon[0].offense_rating=1;
-  Armor[0].preq_tech=9; Armor[0].name=(char*)13; Armor[0].defense_rating=3;
+  char chassis_name[]="chassis", weapon_name[]="weapon", armor_name[]="armor";
+  Chassis[0].preq_tech=7; Chassis[0].offsv_1_name=chassis_name; Chassis[0].speed=2;
+  Weapon[0].preq_tech=8; Weapon[0].name=weapon_name; Weapon[0].offense_rating=1;
+  Armor[0].preq_tech=9; Armor[0].name=armor_name; Armor[0].defense_rating=3;
   reportwin_draw_lab_unlock_sections(canvas,7,false,false,0,y,&width,measured);
-  assert(TechnologyHelpEntryName==-1 && TechnologyHelpEntryKind==-1);
+  assert(TechnologyHelpEntryName==(char*)-1 && TechnologyHelpEntryKind==-1);
   assert(canvas.measured==1 && canvas.wrapped==0);
   reportwin_draw_lab_unlock_sections(canvas,7,false,true,0,y,&width,measured);
-  assert(TechnologyHelpEntryName==11 && TechnologyHelpEntryKind==0x62);
+  assert(TechnologyHelpEntryName==chassis_name && TechnologyHelpEntryKind==0x62);
   assert(canvas.wrapped==1);
   reportwin_draw_lab_unlock_sections(canvas,8,false,false,0,y,&width,measured);
-  assert(TechnologyHelpEntryName==11 && TechnologyHelpEntryKind==0x62);
+  assert(TechnologyHelpEntryName==chassis_name && TechnologyHelpEntryKind==0x62);
   assert(canvas.measured==2 && canvas.wrapped==1);
   reportwin_draw_lab_unlock_sections(canvas,8,false,true,0,y,&width,measured);
-  assert(TechnologyHelpEntryName==12 && TechnologyHelpEntryKind==0x63);
+  assert(TechnologyHelpEntryName==weapon_name && TechnologyHelpEntryKind==0x63);
   assert(canvas.wrapped==2);
   reportwin_draw_lab_unlock_sections(canvas,9,false,false,0,y,&width,measured);
-  assert(TechnologyHelpEntryName==12 && TechnologyHelpEntryKind==0x63);
+  assert(TechnologyHelpEntryName==weapon_name && TechnologyHelpEntryKind==0x63);
   assert(canvas.measured==3 && canvas.wrapped==2);
   reportwin_draw_lab_unlock_sections(canvas,9,false,true,0,y,&width,measured);
-  assert(TechnologyHelpEntryName==13 && TechnologyHelpEntryKind==0x64);
+  assert(TechnologyHelpEntryName==armor_name && TechnologyHelpEntryKind==0x64);
   assert(canvas.wrapped==3);
   return 0;
 }
@@ -186,9 +188,6 @@ def test_installed_reportwin_draw_pass_host_control(compiler, tmp_path):
     start = reportwin.index("static void reportwin_append_lab_entry(")
     end = reportwin.index("// The three-per-category records", start)
     helpers = number + "\n\n" + reportwin[start:end]
-    helpers = helpers.replace(
-        "reinterpret_cast<int>(name)",
-        "static_cast<int>(reinterpret_cast<intptr_t>(name))")
     source = tmp_path / "installed-reportwin.cpp"
     binary = tmp_path / "installed-reportwin"
     source.write_text(REPORT_HARNESS.replace("__REPORT_HELPERS__", helpers))

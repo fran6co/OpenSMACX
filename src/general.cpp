@@ -477,6 +477,7 @@ int __cdecl parse_num(int id, int value) {
 /*
 Purpose: Use the string table input reference to copy a string into the global message buffer.
 // ORIGINAL: 0x00625E50 ?parse_say@@YAHHHHH@Z 0x00625E50-0x00625EB3 BYTE_EXACT
+// symbol    ?parse_say@@YAHHPADHH@Z
 // LEVER: hoisting `StringTable.get(input)` into its own local BEFORE
 // the truncating store moved 17/30 to 20/30 - the image loads the
 // `StringTable` this-pointer (`mov ecx, 0x9b90d8`) right next to the
@@ -503,7 +504,7 @@ Purpose: Use the string table input reference to copy a string into the global m
 Return Value: No errors (0); Error (3)
 Status: Complete
 */
-int __cdecl parse_say(int id, int input, int gender, int pluralality) {
+int __cdecl parse_say(int id, LPSTR input, int gender, int pluralality) {
     if (id > 9) {
         return 3;
     }

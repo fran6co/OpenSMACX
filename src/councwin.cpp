@@ -335,7 +335,7 @@ void CouncWin::draw_info() {
     inner.top += 3;
     inner.bottom -= 3;
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(Proposal[proposal].name))));
+    strcat(StringTemp, StringTable.get(Proposal[proposal].name));
     CharUpperA(StringTemp);
     int wrapped_height = buffer.wrap_height(StringTemp, inner.right - inner.left);
     buffer.wrap_cent(StringTemp, &inner);
@@ -351,8 +351,7 @@ void CouncWin::draw_info() {
             PluralityDefault = 0;
             strcat(StringTemp, Players[target_faction].name_leader);
         } else {
-            strcat(StringTemp, StringTable.get(
-                static_cast<int>(reinterpret_cast<intptr_t>(Proposal[proposal].description))));
+            strcat(StringTemp, StringTable.get(Proposal[proposal].description));
         }
         buffer.wrap_cent(StringTemp, &inner);
     }

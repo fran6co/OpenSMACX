@@ -370,14 +370,13 @@ void Console::editor_edit_veh(int vehicle_id) {
     if (ConsoleGroupAction == 1) {
         popup.start(PopupStartCaption, "EDITMORALE", -1, nullptr, 0x40, nullptr);
         for (int morale_id = 0; morale_id < MaxMoraleNum; ++morale_id) {
-            const char *name = Morale[morale_id].name;
+            LPSTR name = Morale[morale_id].name;
             const VehPrototype &listed_prototype = VehPrototypes[vehicle.proto_id];
             if (vehicle.proto_id < 0x40 &&
                 (Weapon[listed_prototype.weapon_id].offense_rating < 0 || vehicle.proto_id == 0x0F)) {
                 name = Morale[morale_id].name_lifecycle;
             }
-            popup.dialogs().item(StringTable.get(
-                static_cast<int>(reinterpret_cast<uintptr_t>(name))), morale_id);
+            popup.dialogs().item(StringTable.get(name), morale_id);
             if (morale_veh(vehicle_id, 1, 0) == morale_id) {
                 popup.set_value(morale_id);
             }
@@ -2334,10 +2333,10 @@ void Console::convoy(int veh_id) {
                                               vehicle.home_base_id,
                                               vehicle.x, vehicle.y);
             parse_num(resource, amount);
-            const char *name = amount == 1
+            LPSTR name = amount == 1
                 ? Resource[resource].name_singular
                 : Resource[resource].name_plural;
-            parse_say(resource, reinterpret_cast<int>(name), -1, -1);
+            parse_say(resource, name, -1, -1);
         }
         parse_says(3, Bases[vehicle.home_base_id].name_string, -1, -1);
         const int choice = x_pop_short("SUPPLYEXTRACT", 0x40, 0);
@@ -4630,7 +4629,7 @@ void Console::set_tech(int faction_id) {
     int *research = &PlayersData[faction_id].tech_accumulated;
     int *researching = &PlayersData[faction_id].tech_id_researching;
     if (*research != 0 && *researching >= 0) {
-        parse_say(0, (int)Technology[*researching].name, -1, -1);
+        parse_say(0, Technology[*researching].name, -1, -1);
         parse_num(0, *research);
         if (X_pop(ConsoleStrTechChange, (NullCallback)0) == 0) {
             return;
@@ -5446,7 +5445,7 @@ void Console::editor_diff() {
     auto_undo();
     popup.start(PopupStartCaption, "EDITORDIFF", -1, nullptr, 0x40);
     for (int i = 0; i < MaxDiffNum; ++i) {
-        popup.dialogs().item(StringTable.get(reinterpret_cast<int>(Difficulty[i])), i);
+        popup.dialogs().item(StringTable.get(Difficulty[i]), i);
     }
     popup.set_value(GameDataStateStorage.fields_.diff_level_current_);
     const int selected = popup.exec(0, nullptr);
@@ -5530,8 +5529,8 @@ void Console::editor_terrain() {
         }
         char text[256];
         text[0] = 0;
-        char *land_name = StringTable.get(reinterpret_cast<int>(Terraforming[index].name));
-        char *sea_name = StringTable.get(reinterpret_cast<int>(Terraforming[index].name_sea));
+        char *land_name = StringTable.get(Terraforming[index].name);
+        char *sea_name = StringTable.get(Terraforming[index].name_sea);
         strcat(text, land_name);
         if (strcmp(land_name, sea_name) != 0) {
             strcat(text, "/");
@@ -5647,7 +5646,7 @@ void Console::editor_scen_victory() {
         popup.start(PopupStartCaption, "FACOBJ", -1, nullptr, 0);
         for (int facility = 1; facility <= 64; ++facility) {
             popup.dialogs().item(
-                StringTable.get(reinterpret_cast<int>(Facility[facility].name)),
+                StringTable.get(Facility[facility].name),
                 facility);
         }
         GameDataStateStorage.fields_.scenario_victory_facility_ = static_cast<uint32_t>(popup.exec(0, nullptr));
@@ -5738,7 +5737,7 @@ void Console::editor_natural(int place) {
                 -1, nullptr, 0x40);
     for (int natural = 0; natural < MaxNaturalNum; ++natural) {
         popup.dialogs().item(
-            StringTable.get(reinterpret_cast<int>(Natural[natural].name)), natural);
+            StringTable.get(Natural[natural].name), natural);
     }
     const int selected = popup.exec(0, nullptr);
     if (selected < 0) {
@@ -5787,7 +5786,7 @@ void Console::editor_natural(int place) {
                     const int landmark = find_landmark(column, row, 1);
                     if (landmark >= 0 &&
                         strcmp(MapLandmark[landmark].name,
-                               StringTable.get(reinterpret_cast<int>(Natural[LM_FRESH].name))) == 0) {
+                               StringTable.get(Natural[LM_FRESH].name)) == 0) {
                         kill_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y);
                     }
                 }
@@ -5850,7 +5849,7 @@ void Console::editor_natural(int place) {
         const int landmark = find_landmark(tile_x, tile_y, 1);
         if (landmark >= 0 &&
             strcmp(MapLandmark[landmark].name,
-                   StringTable.get(reinterpret_cast<int>(Natural[selected].name))) == 0) {
+                   StringTable.get(Natural[selected].name)) == 0) {
             kill_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y);
         }
     }
@@ -6062,7 +6061,7 @@ void Console::editor_veh() {
         if (action == 3) {
             popup.init(0, 0);
             for (int morale = 0; morale < MaxMoraleNum; ++morale) {
-                popup.dialogs().item(StringTable.get(reinterpret_cast<int>(Morale[morale].name)), morale);
+                popup.dialogs().item(StringTable.get(Morale[morale].name), morale);
             }
             const int chosen = popup.exec(0, nullptr);
             PopupModalState = 0;
@@ -6337,11 +6336,10 @@ void Console::destroy(int veh_id) {
         if (abil_flag == 0 || (tile_flags & abil_flag) == 0 || a == 10) {
             continue;
         }
-        // The rules' label fields carry StringTable offsets; the original
-        // reads the a-th row's int at byte offset x_half*4 of the
-        // Terraforming table and resolves it through the string table.
-        const int label_key = reinterpret_cast<const int *>(Terraforming)[x_half + a * 8];
-        dialogs.item(StringTable.get(label_key), abil_flag);
+        // Preserve the original flattened dword selection into the
+        // Terraforming records; these slots hold StringTable addresses.
+        LPSTR *const terrain_strings = reinterpret_cast<LPSTR *>(Terraforming);
+        dialogs.item(StringTable.get(terrain_strings[x_half + a * 8]), abil_flag);
         item_count++;
     }
 
@@ -6443,8 +6441,9 @@ void Console::custom_my_faction() {
     Player &player = Players[faction_idx];
     // The label pool's key table: slots 0x2E2/0x2E3 pick the custom-name
     // question's wording, the edit fields' captions sit around 0xAE and 0x1E3.
-    const int *const label_keys = reinterpret_cast<const int *>(Labels.strings_ptr);
-    const int key = (player.is_leader_female == 0) ? label_keys[0x2E2] : label_keys[0x2E3];
+    LPSTR *const label_keys = Labels.strings_ptr;
+    const LPSTR key = (player.is_leader_female == 0)
+        ? label_keys[0x2E2] : label_keys[0x2E3];
     strcpy(name_buf, StringTable.get(key));
 
     popup.start(PopupStartCaption, ConsoleStrCustomNames, -1, nullptr, 0x44, nullptr);
@@ -7344,7 +7343,7 @@ void Console::go_to(int subject, int order, int grouped) {
         for (int i = 0; i < 3; ++i) {
             const int destination = i == 0 ? base.auto_forward_land_base_id
                 : i == 1 ? base.auto_forward_sea_base_id : base.auto_forward_air_base_id;
-            strcpy(StringTemp, StringTable.get(reinterpret_cast<int>(Triad[i])));
+            strcpy(StringTemp, StringTable.get(Triad[i]));
             strcat(StringTemp, " (");
             say_base(StringTemp, destination);
             strcat(StringTemp, ")");
@@ -7353,7 +7352,7 @@ void Console::go_to(int subject, int order, int grouped) {
         forward_triad = popup.exec(0, nullptr);
         if (forward_triad < 0) goto finish;
         triad = forward_triad;
-        parse_say(0, reinterpret_cast<int>(Triad[triad]), -1, -1);
+        parse_say(0, Triad[triad], -1, -1);
         parse_says(1, base.name_string, -1, -1);
     } else if (order == -2) {
         source_x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
@@ -7480,7 +7479,7 @@ void Console::go_to(int subject, int order, int grouped) {
                 if (id == GameDataStateStorage.fields_.secret_project_.universal_translator() || (has_fac(8, id, 0) && !(base.state & 0x400))) {
                     strcat(StringTemp, " (");
                     strcat(StringTemp, id == GameDataStateStorage.fields_.secret_project_.universal_translator()
-                        ? StringTable.get(reinterpret_cast<int>(Facility[90].name)) : label_get(0x4c4 / 4));
+                        ? StringTable.get(Facility[90].name) : label_get(0x4c4 / 4));
                     strcat(StringTemp, ")");
                 }
             }
@@ -7876,9 +7875,7 @@ void Console::show_movies() { // 0x00515F70
              ++project_id) {
             StringTemp[0] = 0;
             const int facility_id = FacilitySPStart + project_id;
-            strcat(StringTemp, StringTable.get(
-                static_cast<int>(
-                    reinterpret_cast<intptr_t>(Facility[facility_id].name))));
+            strcat(StringTemp, StringTable.get(Facility[facility_id].name));
             popup.dialogs().item(StringTemp, project_id);
         }
         popup.sort_item_ids(0);
@@ -7950,8 +7947,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
             if (has_abil(proto_id, 1 << ability_id)) {
                 strcat(StringTemp,
-                       StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
-                           Ability[ability_id].abbreviation))));
+                       StringTable.get(Ability[ability_id].abbreviation));
             }
         }
     }
@@ -8131,8 +8127,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
                      ++ability_id) {
                     if (has_abil(candidate_id, 1 << ability_id)) {
                         strcat(StringTemp,
-                               StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
-                                   Ability[ability_id].abbreviation))));
+                               StringTable.get(Ability[ability_id].abbreviation));
                     }
                 }
             }
@@ -8195,8 +8190,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
             if (has_abil(proto_id, 1 << ability_id)) {
                 strcat(StringTemp,
-                       StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
-                           Ability[ability_id].abbreviation))));
+                       StringTable.get(Ability[ability_id].abbreviation));
             }
         }
     }
@@ -8213,8 +8207,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
             if (has_abil(selected_proto_id, 1 << ability_id)) {
                 strcat(StringTemp,
-                       StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
-                           Ability[ability_id].abbreviation))));
+                               StringTable.get(Ability[ability_id].abbreviation));
             }
         }
     }
@@ -9379,9 +9372,7 @@ void Console::use_ability(int vehicle_id) {
             if (has_abil(current_proto_id, static_cast<int>(ability_bit)) == 0) {
                 continue;
             }
-            const int name_address = static_cast<int>(
-                reinterpret_cast<intptr_t>(Ability[ability_id].name));
-            popup.dialogs().item(StringTable.get(name_address),
+            popup.dialogs().item(StringTable.get(Ability[ability_id].name),
                                  static_cast<int>(ability_bit));
         }
         const int result = popup.exec(0, nullptr);
@@ -11412,7 +11403,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
         const int facility_scaled_cost = supply_wrap_mul(
             facility_factor, Facility[facility_id].cost);
         queued_cost = facility_scaled_cost;
-        parse_say(0, reinterpret_cast<int>(Facility[facility_id].name), -1, -1);
+        parse_say(0, Facility[facility_id].name, -1, -1);
         parse_string(TextBufferGetPtr, StringTemp);
         popup.dialogs().item(StringTemp, item_count);
         ++item_count;

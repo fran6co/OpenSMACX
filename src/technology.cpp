@@ -54,8 +54,8 @@ extern int FirstProposedPrototype;
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005badc0.cpp", "image:terranx_original.exe:0x005BADC0", "Pinned5BADDE parser0 then5BADFF parser1; literal6916F0 THESECRET, loaded Technology+4 name pointer and Player+304 adjective; live ConsoleGlobal local faction read follows caption append.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Technology announcement uses loader-owned Technology.name and Player faction adjective; preserves parser order and native local/remote caption suffix."}
 void __cdecl tech_secret(int tech_id, int faction_id) {
     // RulesTechnology::name is the loader-owned string address, not an
-    // ordinal. parse_say retains the original 32-bit integer-pointer ABI.
-    parse_say(0, reinterpret_cast<intptr_t>(Technology[tech_id].name), -1, -1);
+    // ordinal.
+    parse_say(0, Technology[tech_id].name, -1, -1);
     parse_says(1, Players[faction_id].adj_name_faction, -1, -1);
     StringTemp[0] = '\0';
     strcat(StringTemp, "THESECRET");
@@ -385,7 +385,7 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
     } else if (tech_id == 9999) {
         strcat(output, label_get(306)); // "World Map"
     } else if (tech_id < MaxTechnologyNum) {
-        strcat(output, StringTable.get((int)Technology[tech_id].name));
+        strcat(output, StringTable.get(Technology[tech_id].name));
         if (category_lvl) {
             // " " and "(" are TWO separate appends - the image calls strcat
             // with 0x00682820 (" ") and then 0x00682E9C ("("), and there is no
@@ -1350,8 +1350,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     }
     if (reactor_unlock_level != 0 && faction_id == ConsoleGlobal.faction_id_ &&
         IsMultiplayerNet == 0) {
-        parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-            Reactor[reactor_unlock_level - 1].name)), -1, -1);
+        parse_say(0, Reactor[reactor_unlock_level - 1].name, -1, -1);
         X_pop("REACTORUPGRADE", 0);
     }
 
@@ -1383,7 +1382,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
 
     // Pinned 0x005BB71A clears this pair after prototype selection and
     // before the technology presentation path.
-    TechnologyHelpEntryName = -1;
+    TechnologyHelpEntryName = reinterpret_cast<LPSTR>(static_cast<intptr_t>(-1));
     TechnologyHelpEntryKind = -1;
 
     // The presentation payload is prepared for both human and AI recipients.
@@ -1403,8 +1402,8 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         PluralityDefault = Players[faction_id_with].is_noun_plural;
         parse_says(2, Players[faction_id_with].noun_faction + 4, -1, -1);
     } else if (faction_id_with == -1) {
-        parse_say(2, static_cast<int>(reinterpret_cast<intptr_t>(
-            Facility[FacilitySPStart + FAC_PLANETARY_DATALINKS].name)), -1, -1);
+        parse_say(2, Facility[FacilitySPStart + FAC_PLANETARY_DATALINKS].name,
+                  -1, -1);
     } else if (faction_id_with < -1) {
         // Native reads the string-table token at Labels.strings_ptr + 0x35C
         // and resolves it through StringTable::get before parsing.
@@ -1452,8 +1451,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         if (IsMultiplayerNet != 0 &&
             (DiplomacyActive != 0 || CommlinkPending != 0 ||
              TurnRedrawPending != 0)) {
-            parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-                Technology[tech_id].name)), -1, -1);
+            parse_say(0, Technology[tech_id].name, -1, -1);
             NetMsgPrimary.pop("TECHOBTAINED", 0x1388, 0, nullptr);
         } else {
             NewTechWindow.exec(tech_id, faction_id_with);
@@ -1482,10 +1480,8 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             }
         }
         if (faction_id == ConsoleGlobal.faction_id_) {
-            parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-                Technology[tech_id].name)), -1, -1);
-            parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
-                Facility[facility_id].name)), -1, -1);
+            parse_say(0, Technology[tech_id].name, -1, -1);
+            parse_say(1, Facility[facility_id].name, -1, -1);
             NetMsgPrimary.pop("FREEFACTECH", -5000, 0, nullptr);
         }
     }
@@ -1503,10 +1499,8 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             faction_id != ConsoleGlobal.faction_id_) {
             continue;
         }
-        parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-            Technology[tech_id].name)), -1, -1);
-        parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
-            Ability[ability_id].name)), -1, -1);
+        parse_say(0, Technology[tech_id].name, -1, -1);
+        parse_say(1, Ability[ability_id].name, -1, -1);
         NetMsgPrimary.pop("FREEABILTECH", -5000, 0, nullptr);
     }
 
@@ -1580,11 +1574,9 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                     continue;
                 int selection;
                 do {
-                    parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-                        Technology[tech_id].name)), -1, -1);
-                    parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
-                        SocialCategories[category].name[social_model])), -1,
-                        -1);
+                    parse_say(0, Technology[tech_id].name, -1, -1);
+                    parse_say(1,
+                        SocialCategories[category].name[social_model], -1, -1);
                     StringTemp[0] = 0;
                     strcat(StringTemp, "SOCIETY");
                     selection = x_pop_caption_label(
@@ -1614,8 +1606,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
 
         if (GameDataStateStorage.fields_.turn_current_num_ != 0 &&
             faction_id == ConsoleGlobal.faction_id_) {
-            parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-                Technology[tech_id].name)), -1, -1);
+            parse_say(0, Technology[tech_id].name, -1, -1);
             popp(ScriptPopupFile, "SEEMAP2", 0, "native_sm.pcx", nullptr);
             draw_map(1);
             set_dirty();
@@ -1706,8 +1697,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     if (GameDataStateStorage.fields_.turn_current_num_ != 0 && was_new &&
         (Technology[tech_id].flags & TFLAG_SECRETS) != 0) {
         player.flags |= 0x40;
-        parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-            Technology[tech_id].name)), -1, -1);
+        parse_say(0, Technology[tech_id].name, -1, -1);
         parse_says(1, Players[faction_id].adj_name_faction + 4, -1, -1);
         StringTemp[0] = 0;
         strcat(StringTemp, "THESECRET");

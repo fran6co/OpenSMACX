@@ -44,6 +44,7 @@ def test_datalink_rules_consumers_use_typed_records(tmp_path: Path) -> None:
     for retired in (
         "TechRowBase", "SocialCategoryRow", "SocialEffectRowBase",
         "SocialEffectNullRow", "SocialEffectRowEnd", "TerraformFlagBase",
+        "TerraformNameBase",
     ):
         assert retired not in bodies
         assert not re.search(rf"static const [^;]*\b{retired}\b", source)
@@ -53,7 +54,6 @@ def test_datalink_rules_consumers_use_typed_records(tmp_path: Path) -> None:
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
-#include <map>
 #include <string>
 #include <vector>
 typedef unsigned int uint32_t;
@@ -92,21 +92,17 @@ struct RulesTerraforming {
 };
 const int MaxTerrainNum = 20;
 RulesTerraforming Terraforming[MaxTerrainNum] = {};
-
-static int terraform_names[61];
-const int *TerraformNameBase = terraform_names + 1;
-static LPSTR encoded_handle(int value) {
-    return reinterpret_cast<LPSTR>(static_cast<intptr_t>(value));
-}
+struct RulesOrder { LPSTR order, order_sea, letter; };
+RulesOrder Order[30] = {};
 struct StringTableType {
-    std::map<int, std::string> values;
-    char *get(int id) {
-        std::map<int, std::string>::iterator i = values.find(id);
-        if (i == values.end()) i = values.insert(std::make_pair(id, "label" + std::to_string(id))).first;
-        return const_cast<char *>(i->second.c_str());
+    char *get(char *name) {
+        assert(name != 0);
+        return name;
     }
 } StringTable;
-static char *label(int id) { return StringTable.get(id); }
+static char *label(int id) {
+    static char text[32]; std::sprintf(text, "label%d", id); return text;
+}
 #define CATEGORY_LABEL(slot) label(slot)
 static char * _itoa(int value, char *out, int radix) {
     assert(radix == 10); std::sprintf(out, "%d", value); return out;
@@ -133,6 +129,11 @@ struct Datalink {
 static void clear(Datalink &d) { d.listBox_.items.clear(); }
 int main() {
     Datalink d;
+    char tech_names[MaxTechnologyNum][20] = {};
+    char social_types[MaxSocialCatNum][20] = {};
+    char social_names[MaxSocialCatNum][4][32] = {};
+    char land_names[MaxTerrainNum][20] = {};
+    char sea_names[MaxTerrainNum][20] = {};
 
     // Only the real prerequisite pair admits a technology. The first record's
     // negative power field must not be mistaken for either gate.
@@ -140,8 +141,8 @@ int main() {
         Technology[i].preq_tech_1 = -2;
         Technology[i].preq_tech_2 = -2;
         Technology[i].power_value = -9;
-        Technology[i].name = encoded_handle(i + 1);
-        StringTable.values[i + 1] = "tech" + std::to_string(i);
+        std::sprintf(tech_names[i], "tech%d", i);
+        Technology[i].name = tech_names[i];
     }
     Technology[0].preq_tech_1 = -1;
     Technology[0].preq_tech_2 = -1;
@@ -154,12 +155,11 @@ int main() {
 
     clear(d);
     for (int category = 0; category < MaxSocialCatNum; ++category) {
-        SocialCategories[category].type = encoded_handle(100 + category);
-        StringTable.values[100 + category] = "category" + std::to_string(category);
+        std::sprintf(social_types[category], "category%d", category);
+        SocialCategories[category].type = social_types[category];
         for (int choice = 0; choice < 4; ++choice) {
-            const int handle = 200 + category * 4 + choice;
-            SocialCategories[category].name[choice] = encoded_handle(handle);
-            StringTable.values[handle] = "choice" + std::to_string(category) + "." + std::to_string(choice);
+            std::sprintf(social_names[category][choice], "choice%d.%d", category, choice);
+            SocialCategories[category].name[choice] = social_names[category][choice];
         }
     }
     d.set_cat_social();
@@ -192,10 +192,10 @@ int main() {
     for (int i = 0; i < MaxTerrainNum; ++i) {
         Terraforming[i].preq_tech = -2;
         Terraforming[i].preq_tech_sea = -2;
-        terraform_names[3 * i] = 1000 + 2 * i;
-        terraform_names[3 * i + 1] = 1001 + 2 * i;
-        StringTable.values[1000 + 2 * i] = "land" + std::to_string(i);
-        StringTable.values[1001 + 2 * i] = "sea" + std::to_string(i);
+        std::sprintf(land_names[i], "land%d", i);
+        std::sprintf(sea_names[i], "sea%d", i);
+        Order[i + 4].order = land_names[i];
+        Order[i + 4].order_sea = sea_names[i];
     }
     Terraforming[0].preq_tech = -2;
     Terraforming[0].preq_tech_sea = -1;

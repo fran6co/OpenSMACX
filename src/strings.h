@@ -87,7 +87,7 @@ class Strings : public Heap {
   // bare `ret` - see strings.cpp's marker.
   int shutdown();
   LPSTR put(LPCSTR input);
-  LPSTR get(int address);
+  LPSTR get(LPSTR address);
 
  private:
   BOOL is_populated_; // (+20) -> set to true when table is created

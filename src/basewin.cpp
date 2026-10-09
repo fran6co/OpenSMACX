@@ -242,7 +242,7 @@ void BaseWin::pop_click(int position, int, int, int) {
             || (has_tech(citizen.obsol_tech, faction) && i != current)) continue;
         if (BaseCurrent->population_size < static_cast<int>(Rules.min_base_size_specialists)
             && citizen.psych_bonus < 2) { too_small = true; continue; }
-        strcpy(StringTemp, reinterpret_cast<char *>(StringTable.get(reinterpret_cast<int>(citizen.singular_name))));
+        strcpy(StringTemp, StringTable.get(citizen.singular_name));
         strcat(StringTemp, "|");
         char text[224] = "";
         const int bonuses[3] = { citizen.ops_bonus, citizen.psych_bonus, citizen.research_bonus };
@@ -253,7 +253,7 @@ void BaseWin::pop_click(int position, int, int, int) {
             _itoa(bonuses[k], number, 10);
             strcat(text, number);
             strcat(text, " ");
-            strcat(text, reinterpret_cast<char *>(StringTable.get(reinterpret_cast<int>(Energy[k].abbrev))));
+            strcat(text, StringTable.get(Energy[k].abbrev));
         }
         strcat(StringTemp, text);
         popup.dialogs().item(StringTemp, i);
@@ -317,7 +317,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
     if (!empty) {
         const int entry = BaseCurrent->queue_production_id[position];
         if (entry >= 0) parse_says(0, VehPrototypes[entry].veh_name, -1, -1);
-        else parse_say(0, reinterpret_cast<int>(Facility[-entry].name), -1, -1);
+        else parse_say(0, Facility[-entry].name, -1, -1);
     }
     MainInterfaceGlobal.client_to_screen(&x, &y);
     strcpy(StringTemp, empty ? "QUEUE2" : "QUEUE1");
@@ -422,7 +422,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
     if (faction != ConsoleGlobal.faction_id_ && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW))
         return 0;
     parse_says(0, BaseCurrent->name_string, -1, -1);
-    parse_say(1, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+    parse_say(1, Facility[facility].name, -1, -1);
     const int selection = popp(ScriptPopupFile, "FACMENU", 0,
         (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
     if (!selection) return 0;
@@ -466,7 +466,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
         const int granted = Players[faction].faction_bonus_val1[bonus];
         if ((kind == 2 || (kind == 12 && has_tech(Facility[granted].preq_tech, faction)))
             && facility == granted) {
-            parse_say(1, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+            parse_say(1, Facility[facility].name, -1, -1);
             popp(ScriptPopupFile, "FREERECYCLE", 0,
                 (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
             return 0;
@@ -489,10 +489,10 @@ int BaseWin::facilities_click(int facility, int, int, int) {
         proceeds = static_cast<int>(static_cast<uint32_t>(Facility[facility].cost) * payable * 5u);
         parse_num(0, proceeds);
         parse_num(1, possessed);
-        parse_say(0, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+        parse_say(0, Facility[facility].name, -1, -1);
     } else {
         proceeds = static_cast<int>(static_cast<uint32_t>(Facility[facility].cost) * 5u);
-        parse_say(0, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+        parse_say(0, Facility[facility].name, -1, -1);
         parse_num(0, proceeds);
     }
     StringTemp[0] = 0;
@@ -611,9 +611,9 @@ void BaseWin::draw_flash(int redraw_mode) {
     say_stats_3(StringTemp, prototype_id);
     for (int ability = 0; ability < 29; ++ability) {
         if (has_abil(prototype_id, 1 << ability)
-            && strlen(StringTable.get(reinterpret_cast<int>(Ability[ability].abbreviation))) != 0) {
+            && strlen(StringTable.get(Ability[ability].abbreviation)) != 0) {
             strcat(StringTemp, ", ");
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Ability[ability].abbreviation)));
+            strcat(StringTemp, StringTable.get(Ability[ability].abbreviation));
         }
     }
     strcat(StringTemp, ")");
@@ -1521,7 +1521,7 @@ static void set_production_parse_name(int slot, int production_id) {
         parse_says(slot, VehPrototypes[production_id].veh_name, -1, -1);
     } else {
         parse_say(slot,
-                  reinterpret_cast<int>(Facility[-production_id].name),
+                  Facility[-production_id].name,
                   -1, -1);
     }
 }
@@ -2024,7 +2024,7 @@ void BaseWin::hurry() {
         parse_says(1, VehPrototypes[production_id].veh_name, -1, -1);
     } else {
         parse_says(1, StringTable.get(
-            reinterpret_cast<int>(Facility[negative_production_id].name)), -1, -1);
+            Facility[negative_production_id].name), -1, -1);
     }
     parse_num(0, cost);
     parse_num(1, hurry_sub(PlayersData[faction_id].energy_reserves,
@@ -2366,10 +2366,10 @@ void BaseWin::draw_queue(int update_mode) {
             if (production >= 0) {
                 strcat(item_name, VehPrototypes[production].veh_name);
             } else {
-                // Facility.name holds the StringTable key in the original;
-                // StatusWin resolves the same field through get().
+                // Facility.name is already an LPSTR; resolve it through the
+                // shared Strings API as the other facility-name callers do.
                 strcat(item_name, StringTable.get(
-                    reinterpret_cast<int>(Facility[-production].name)));
+                    Facility[-production].name));
             }
         }
         if (selected) canvas->set_text_color(0x41, -1, 1, 1);
@@ -2558,7 +2558,7 @@ void BaseWin::draw_production(int update_mode) {
         content.top += 0x41;
         StringTemp[0] = 0;
         strcat(StringTemp, StringTable.get(
-            reinterpret_cast<int>(Facility[item_id].name)));
+            Facility[item_id].name));
         CharUpperA(StringTemp);
         MainInterfaceGlobal.set_text_color(TextColourTable[116],
                                            TextColourTable[117], 1, 1);
@@ -6562,7 +6562,7 @@ void BaseWin::base_editor_fac() {
         popup.set_ok_text(label_get(0xFC0 / 4));
         for (int facility = 1; facility <= 64; ++facility) {
             StringTemp[0] = 0;
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
+            strcat(StringTemp, StringTable.get(Facility[facility].name));
             strcat(StringTemp, "|");
             if (has_fac(facility, BaseIDCurrentSelected, 0)) {
                 // Unlike the old seed, retain the facility-name prefix on
@@ -6573,7 +6573,7 @@ void BaseWin::base_editor_fac() {
                     BaseCurrent->faction_id_current, BaseIDCurrentSelected, 0);
                 // This clear and rebuild are in both original branches.
                 StringTemp[0] = 0;
-                strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
+                strcat(StringTemp, StringTable.get(Facility[facility].name));
                 strcat(StringTemp, "|");
                 strcat(StringTemp, label_get((available ? 0x3DC : 0x4D8) / 4));
             }
@@ -6610,7 +6610,7 @@ void BaseWin::base_editor_proj() {
         const int project = project_index;
         const RulesFacility &facility = Facility[FacilitySPStart + project];
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(facility.name)));
+        strcat(StringTemp, StringTable.get(facility.name));
         strcat(StringTemp, "|");
         const int owner_base = base_project(project);
         if (owner_base == -2) {
@@ -6628,7 +6628,7 @@ void BaseWin::base_editor_proj() {
     const int project = popup.exec(0, 0);
     PopupModalState = 0;
     if (project < 0) return;
-    parse_say(0, reinterpret_cast<int>(Facility[FacilitySPStart + project].name), -1, -1);
+    parse_say(0, Facility[FacilitySPStart + project].name, -1, -1);
     PopupModalState = 6;
     popup.start(PopupStartCaption, "PICKAPLACE", -1, 0, 0x42, 0);
     popup.dialogs().item(label_get(0xD64 / 4), 9999);
@@ -7139,7 +7139,7 @@ void BaseWin::draw_facilities(int update_mode) {
             if (facility < 65 && has_fac_built(facility, BaseIDCurrentSelected)) strcat(StringTemp, "*");
             canvas->set_text_color(TextColourTable[124], TextColourTable[125], 1, 1);
         } else canvas->set_text_color(TextColourTable[122], TextColourTable[123], 1, 1);
-        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
+        strcat(StringTemp, StringTable.get(Facility[facility].name));
         if (facility == 8 && (BaseCurrent->state & 0x400u)) {
             strcat(StringTemp, " "); strcat(StringTemp, "(");
             strcat(StringTemp, label_get(0x3A0 / 4)); strcat(StringTemp, ")");

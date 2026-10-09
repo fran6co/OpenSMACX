@@ -66,10 +66,9 @@ LPCSTR ScriptTxtID = "SCRIPT";
 static LPSTR Compass[MaxCompassNum];      // 0x00945D48
 
 // Typed view over Compass's existing #COMPASS parsing and eight-entry
-// lifetime. The native reader treats each LPSTR as an encoded StringTable ID.
+// lifetime. Each parsed LPSTR is passed directly to the table range check.
 LPSTR __cdecl compass_name(int direction) {
-    return StringTable.get(static_cast<int>(
-        reinterpret_cast<intptr_t>(Compass[direction])));
+    return StringTable.get(Compass[direction]);
 }
 
 LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
@@ -247,7 +246,7 @@ int __cdecl chas_name(LPSTR name) {
         // `mov ecx, 0x9b90d8` receiver - before the _stricmp. For any pointer
         // Strings::put handed out that is an identity, which is why the
         // recovery's direct compare looked equivalent and was not.
-        if (!_stricmp(name, StringTable.get(int(Chassis[chas_id].offsv_1_name)))) {
+        if (!_stricmp(name, StringTable.get(Chassis[chas_id].offsv_1_name))) {
             return chas_id;
         }
     }
@@ -293,7 +292,7 @@ int __cdecl weap_name(LPSTR name) {
     }
     for (int weap_id = 0; weap_id < MaxWeaponNum; weap_id++) {
         // StringTable.get on the comparison string, as chas_name's loop does.
-        if (!_stricmp(name, StringTable.get(int(Weapon[weap_id].name_short)))) {
+        if (!_stricmp(name, StringTable.get(Weapon[weap_id].name_short))) {
             return weap_id;
         }
     }
@@ -343,7 +342,7 @@ int __cdecl arm_name(LPSTR name) {
     }
     for (int arm_id = 0; arm_id < MaxArmorNum; arm_id++) {
         // StringTable.get on the comparison string, as chas_name's loop does.
-        if (!_stricmp(name, StringTable.get(int(Armor[arm_id].name_short)))) {
+        if (!_stricmp(name, StringTable.get(Armor[arm_id].name_short))) {
             return arm_id;
         }
     }
@@ -873,7 +872,7 @@ void __cdecl read_faction(Player *player, int toggle) {
             for (int j = 0; j < MaxSocialCatNum; j++) {
                 for (int k = 0; k < MaxSocialModelNum; k++) {
                     if (!_stricmp(parse_param,
-                        StringTable.get((int)SocialCategories[j].name[k]))) {
+                        StringTable.get(SocialCategories[j].name[k]))) {
                         player->faction_bonus_id[player->faction_bonus_count] =
                             !_stricmp(parse_rule, BonusName[19].key) ? RULE_IMPUNITY : RULE_PENALTY;
                         player->faction_bonus_val1[player->faction_bonus_count] = j; // category id
@@ -976,7 +975,7 @@ void __cdecl read_faction(Player *player, int toggle) {
         text_get();
         LPSTR soc_category = text_item();
         for (int j = 0; j < MaxSocialCatNum; j++) {
-            LPSTR check_cat_type = StringTable.get((int)SocialCategories[j].type);
+            LPSTR check_cat_type = StringTable.get(SocialCategories[j].type);
             if (Language ? !_strnicmp(soc_category, check_cat_type, 4)
                 : !_stricmp(soc_category, check_cat_type)) {
                 soc_category_value = j;
@@ -987,7 +986,7 @@ void __cdecl read_faction(Player *player, int toggle) {
         int soc_cat_num = soc_category_value;
         if (soc_cat_num >= 0) {
             for (int j = 0; j < MaxSocialModelNum; j++) {
-                LPSTR check_model = StringTable.get((int)SocialCategories[soc_cat_num].name[j]);
+                LPSTR check_model = StringTable.get(SocialCategories[soc_cat_num].name[j]);
                 if (Language ?
                     !_strnicmp(soc_model, check_model, 4) : !_stricmp(soc_model, check_model)) {
                     soc_model_value = j;
@@ -1409,10 +1408,16 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         text_get();
         // Land + sea terraforming
         for (int j = 0; j < 2; j++) {
-            *(&Terraforming[i].name + j) = text_item_string();
-            *(&Terraforming[i].preq_tech + j) = tech_name(text_item());
+            if (j == 0) {
+                Terraforming[i].name = text_item_string();
+                Terraforming[i].preq_tech = tech_name(text_item());
+            } else {
+                Terraforming[i].name_sea = text_item_string();
+                Terraforming[i].preq_tech_sea = tech_name(text_item());
+            }
             // Add in bits & incompatible bits vs hard coded constant struct
-            *(&Terraforming[i].bit + j) = TerraformingBits[i][j];
+            if (j == 0) Terraforming[i].bit = TerraformingBits[i][j];
+            else Terraforming[i].bit_incompatible = TerraformingBits[i][j];
         }
         Terraforming[i].rate = text_item_number();
         // Land + sea orders
@@ -1424,10 +1429,13 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         char order_buf[256];
         strcpy(order_buf, text_item());
         for (j = 0; j < 2; j++) {
-            parse_say(0, (int)*(&Terraforming[i].name + j), -1, -1);
+            parse_say(0, j == 0 ? Terraforming[i].name
+                                : Terraforming[i].name_sea,
+                      -1, -1);
             StringTemp[0] = 0;
             parse_string(order_buf, StringTemp);
-            *(&Order[i + 4].order + j) = StringTable.put(StringTemp);
+            if (j == 0) Order[i + 4].order = StringTable.put(StringTemp);
+            else Order[i + 4].order_sea = StringTable.put(StringTemp);
         }
         Order[i + 4].letter = text_item_string();
         Terraforming[i].shortcuts = text_item_string();
@@ -1767,13 +1775,13 @@ for (i = 0; i < MaxCompassNum; i++) {
         // excludes: Fungus (removal), Aquifer, Raise Land, Lower Land, Level Terrain
         if (Terraforming[i].bit) {
             MainInterfaceGlobal.set_bubble_text(j++ + 17,
-                StringTable.get((int)Terraforming[i].name)); // 17-31
+                StringTable.get(Terraforming[i].name)); // 17-31
         }
     }
-    MainInterfaceGlobal.set_bubble_text(32, StringTable.get((int)Natural[LM_JUNGLE].name_short));
-    MainInterfaceGlobal.set_bubble_text(33, StringTable.get((int)Natural[LM_DUNES].name_short));
-    MainInterfaceGlobal.set_bubble_text(34, StringTable.get((int)Natural[LM_URANIUM].name_short));
-    MainInterfaceGlobal.set_bubble_text(35, StringTable.get((int)Natural[LM_GEOTHERMAL].name_short));
+    MainInterfaceGlobal.set_bubble_text(32, StringTable.get(Natural[LM_JUNGLE].name_short));
+    MainInterfaceGlobal.set_bubble_text(33, StringTable.get(Natural[LM_DUNES].name_short));
+    MainInterfaceGlobal.set_bubble_text(34, StringTable.get(Natural[LM_URANIUM].name_short));
+    MainInterfaceGlobal.set_bubble_text(35, StringTable.get(Natural[LM_GEOTHERMAL].name_short));
     return false;
 }
 
@@ -2295,12 +2303,12 @@ BOOL __cdecl labels_init() {
     }
     text_get();
     Labels.count = text_item_number();
-    Labels.strings_ptr = (LPSTR)mem_get(Labels.count * 4);
+    Labels.strings_ptr = (LPSTR *)mem_get(Labels.count * 4);
     if (!Labels.strings_ptr) {
         return true;
     }
     for (int i = 0; i < Labels.count; i++) {
-        *((LPSTR *)Labels.strings_ptr + i) = text_string();
+        Labels.strings_ptr[i] = text_string();
     }
     text_close();
     return false;

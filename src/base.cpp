@@ -5215,13 +5215,12 @@ void __cdecl base_change(int base_id, int production_id) {
                 Bases[other].queue_production_id[0] = base.queue_production_id[0];
         if (GameDataStateStorage.fields_.sunspot_duration_ > 0) return;
         parse_says(0, player.adj_name_faction, -1, -1);
-        // RulesFacility's existing name field still carries the original
-        // StringTable index with a legacy pointer spelling, as in base_reset.
-        parse_say(1, reinterpret_cast<int>(Facility[abs(previous)].name), -1, -1);
+        // RulesFacility's existing name field is already an LPSTR.
+        parse_say(1, Facility[abs(previous)].name, -1, -1);
         GenderDefault = player.noun_gender;
         PluralityDefault = player.is_noun_plural;
         parse_says(2, player.noun_faction, -1, -1);
-        parse_say(3, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+        parse_say(3, Facility[facility].name, -1, -1);
         popp(ScriptPopupFile, "CHANGEPROJECT", 0, "secproj_sm.pcx", 0);
         faction.secret_project_intel[word] |= mask;
         bitmask(abs(previous) - 70, &word, &mask);
@@ -5239,7 +5238,7 @@ void __cdecl base_change(int base_id, int production_id) {
         GenderDefault = player.noun_gender;
         PluralityDefault = player.is_noun_plural;
         parse_says(2, player.noun_faction, -1, -1);
-        parse_say(3, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+        parse_say(3, Facility[facility].name, -1, -1);
         wave_it((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & 1) ? 36 : 38);
         popp(ScriptPopupFile, "BEGINPROJECT", 0, "secproj_sm.pcx", 0);
         faction.secret_project_intel[word] |= mask;
@@ -5321,8 +5320,7 @@ void __cdecl base_reset(int base_id, int force) {
     int say_result;
     for (;;) {
         parse_says(0, base_name, -1, -1);
-        say_result = parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
-                                   Facility[absolute_location].name)), -1, -1);
+        say_result = parse_say(1, Facility[absolute_location].name, -1, -1);
         // These two original .data slots contain these NUL-terminated strings
         // in the pinned PE; use application-owned literals in the rebuilt tree.
         if (popp(ScriptPopupFile, "GOVPROJECT", 0,
@@ -6583,11 +6581,11 @@ next_spread_tile:
             ConsoleGlobal.focus(event_x, event_y, faction);
             parse_says(0, BaseCurrent->name_string, -1, -1);
             if (report_terraform >= 0 && faction == current_viewer) {
-                const char *improvement_name =
+                LPSTR improvement_name =
                     (map_loc(event_x, event_y)->climate & 0xE0) < 0x60
                         ? Terraforming[report_terraform].name_sea
                         : Terraforming[report_terraform].name;
-                parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(improvement_name)), -1, -1);
+                parse_say(1, improvement_name, -1, -1);
                 POP2("FUNGUSGROWS2", "fung_sm.pcx", BaseIDCurrentSelected);
             } else {
                 POP2("FUNGUSGROWS", "fung_sm.pcx", -1);
@@ -7057,8 +7055,7 @@ void __cdecl base_hurry() {
 
     parse_says(0, Players[current_base->faction_id_current].adj_name_faction,
                -1, -1);
-    parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
-        Facility[facility_index].name)), -1, -1);
+    parse_say(1, Facility[facility_index].name, -1, -1);
     popp(ScriptPopupFile, "DONEPROJECT", 0,
          "secproj_sm.pcx", nullptr);
 }
@@ -9260,7 +9257,7 @@ void __cdecl base_maint() {
                     set_fac(fac, BaseIDCurrentSelected, false);
                     PlayersData[faction_id].energy_reserves
                         = cost_factor(faction_id, RSC_MINERALS, -1) * Facility[fac].cost;
-                    parse_say(1, (int)*(&Facility[fac].name), -1, -1);
+                    parse_say(1, Facility[fac].name, -1, -1);
                     popb("POWERSHORT", 0x10000, 14, "genwarning_sm.pcx", NULL);
                 }
             }
@@ -11095,7 +11092,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                             Bases[otherIdx].queue_production_id[0] == Bases[base_id].queue_production_id[0]) {
                             local_18 = (unsigned int)Bases[otherIdx].queue_production_id[0];
                             parse_says(0, Players[uVar14].adj_name_faction, -1, -1);
-                            parse_say(1, (int)Facility[(int)local_18].name, -1, -1);
+                            parse_say(1, Facility[(int)local_18].name, -1, -1);
                             popp(ScriptPopupFile, "SURVIVEPROJECT", 0, "secproj_sm.pcx", 0);
                             uVar14 = local_8;
                             found = 1;
@@ -11115,7 +11112,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
                     parse_says(2, Players[uVar14].noun_faction, -1, -1);
                     iVar5 = Bases[base_id].queue_production_id[0];
                     if (iVar5 < 0) iVar5 = -iVar5;
-                    parse_say(3, (int)Facility[iVar5].name, -1, -1);
+                    parse_say(3, Facility[iVar5].name, -1, -1);
                     popp(ScriptPopupFile, "HALTPROJECT", 0, "secproj_sm.pcx", 0);
                     iVar5 = Bases[base_id].queue_production_id[0];
                     if (iVar5 < 0) iVar5 = -iVar5;
@@ -11130,7 +11127,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     if (faction_id == ConsoleGlobal.faction_id_ || uVar14 == (unsigned int)ConsoleGlobal.faction_id_) {
         for (int project_record_id = 0; project_record_id < 64; ++project_record_id) {
             if (base_project(project_record_id) == base_id) {
-                parse_say(0, reinterpret_cast<int>(Facility[70 + project_record_id].name), -1, -1);
+                parse_say(0, Facility[70 + project_record_id].name, -1, -1);
                 if (faction_id == ConsoleGlobal.faction_id_) {
                     pcVar19 = "secproj_sm.pcx";
                     pcVar18 = "SEIZEPROJECT";
@@ -12822,8 +12819,7 @@ int __cdecl base_growth() {
                              BaseIDCurrentSelected);
         BaseCurrent->nutrients_accumulated = base_yield_mul(growth,
             base_yield_add(static_cast<int>(BaseCurrent->population_size), 1)) / 2;
-        parse_say(1, static_cast<int>(reinterpret_cast<uintptr_t>(
-            Facility[limit_reason].name)), -1, -1);
+        parse_say(1, Facility[limit_reason].name, -1, -1);
         if ((Players[owner].rule_flags & RFLAG_ALIEN) == 0) {
             popb("POPULATIONLIMIT", 0x800, 0x10, "pop_sm.pcx", 0);
         } else {
@@ -13008,8 +13004,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                 strcat(StringTemp, " ");
                 for (int i = 0; i < MaxAbilityNum; ++i) {
                     if (has_abil(proto_id_old, 1 << (i & 0x1f)) != 0) {
-                        strcat(StringTemp, StringTable.get(static_cast<int>(
-                            reinterpret_cast<uintptr_t>(Ability[i].abbreviation))));
+                        strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
                     }
                 }
             }
@@ -13025,8 +13020,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                 strcat(StringTemp, " ");
                 for (int i = 0; i < MaxAbilityNum; ++i) {
                     if (has_abil(proto_id_new, 1 << (i & 0x1f)) != 0) {
-                        strcat(StringTemp, StringTable.get(static_cast<int>(
-                            reinterpret_cast<uintptr_t>(Ability[i].abbreviation))));
+                        strcat(StringTemp, StringTable.get(Ability[i].abbreviation));
                     }
                 }
             }
@@ -13530,7 +13524,7 @@ ProductionReportResume production_report_stage(
         return PRODUCTION_REPORT_RESUME_274F;
     }
 
-    parse_say(1, reinterpret_cast<int>(Facility[facility_id].name), -1, -1);
+    parse_say(1, Facility[facility_id].name, -1, -1);
     parse_says(2, Players[owner].adj_name_faction, -1, -1);
     if (owner != ConsoleGlobal.faction_id_) {
         return PRODUCTION_REPORT_RESUME_276B;
@@ -13741,8 +13735,7 @@ void production_existing_project_notice(int owner, int facility_id,
         base_reset(BaseIDCurrentSelected, 0);
         return;
     }
-    parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
-        Facility[facility_id].name)), -1, -1);
+    parse_say(1, Facility[facility_id].name, -1, -1);
     StringTemp[0] = '\0';
     strcat(StringTemp, "ALREADYPROJECT");
     const int completed_at = base_project(project_id);
@@ -13768,8 +13761,7 @@ void production_existing_facility_notice(int owner, int facility_id) {
         base_reset(BaseIDCurrentSelected, 0);
         return;
     }
-    parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
-        Facility[facility_id].name)), -1, -1);
+    parse_say(1, Facility[facility_id].name, -1, -1);
     const char *const picture =
         (Players[owner].rule_flags & RFLAG_ALIEN) != 0
             ? "alfacblt_sm.pcx" : "facblt_sm.pcx";
@@ -14740,8 +14732,7 @@ after_popup:
                             base = BaseCurrent;
                             base->facilities_built[offset] &=
                                 static_cast<uint8_t>(~mask);
-                            parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
-                                Facility[spec_type].name)), -1, -1);
+                            parse_say(1, Facility[spec_type].name, -1, -1);
                             if (!is_alien_faction(faction_id)) {
                                 popb("DRONERIOT", 8, -1,
                                      "drone_sm.pcx", 0);

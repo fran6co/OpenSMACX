@@ -2129,7 +2129,7 @@ void ReportIf::draw_energy() {
         if (count == 0) continue;
         StringTemp[0] = 0;
         _itoa(count, number, 10); strcat(StringTemp, number); strcat(StringTemp, " ");
-        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
+        strcat(StringTemp, StringTable.get(Facility[facility].name));
         strcat(StringTemp, "|"); strcat(StringTemp, "-");
         const int project_base = GameDataStateStorage.fields_.secret_project_.planetary_energy_grid();
         if (project_base >= 0 && Bases[project_base].faction_id_current == report_faction_id_) {
@@ -2601,7 +2601,7 @@ void ReportIf::draw_sat() {
             for (int kind = 0; kind < 5; ++kind) {
                 if (kind == 4 && !ExpansionEnabled) { flatButtonsD_[4].hide(); break; }
                 StringTemp[0] = 0;
-                strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[kind == 4 ? 41 : 65+kind].name)));
+                strcat(StringTemp, StringTable.get(Facility[kind == 4 ? 41 : 65+kind].name));
                 draw_workspace_rect_.left = field_C_; draw_workspace_rect_.top = field_10_;
                 draw_workspace_rect_.right = field_C_ + field_14_;
                 draw_workspace_rect_.bottom = field_10_ + 20;

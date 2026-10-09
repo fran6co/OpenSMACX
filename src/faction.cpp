@@ -391,21 +391,17 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
                 parse_says(8, Players[choice].title_leader, -1, -1);
                 parse_num(0, choice);
                 if (DiploScratchFAA8 >= 0) {
-                    parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-                        Technology[DiploScratchFAA8].name)), -1, -1);
+                    parse_say(0, Technology[DiploScratchFAA8].name, -1, -1);
                     if (DiploScratchFA18 < 0) {
                     strcat(StringTemp, "1");
                     } else {
-                        parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
-                            Technology[DiploScratchFA18].name)), -1, -1);
+                        parse_say(1, Technology[DiploScratchFA18].name, -1, -1);
                         if (DiploScratchFA1C < 0) {
                             strcat(StringTemp, "2");
                         } else {
-                            parse_say(4, static_cast<int>(reinterpret_cast<intptr_t>(
-                                Technology[DiploScratchFA1C].name)), -1, -1);
+                            parse_say(4, Technology[DiploScratchFA1C].name, -1, -1);
                             if (DiploScratchFA28 >= 0) {
-                                parse_say(5, static_cast<int>(reinterpret_cast<intptr_t>(
-                                    Technology[DiploScratchFA28].name)), -1, -1);
+                                parse_say(5, Technology[DiploScratchFA28].name, -1, -1);
                                 strcat(StringTemp, "4");
                             } else {
                                 strcat(StringTemp, "3");
@@ -5989,8 +5985,7 @@ void __cdecl diplomacy_caption(int faction_id, int faction_id_with) {
     if (use_special_label) {
         strcat(caption, label_get(0x1E8));
     } else {
-        char *mood_label = StringTable.get(
-            static_cast<int>(reinterpret_cast<intptr_t>(Mood[mood])));
+        char *mood_label = StringTable.get(Mood[mood]);
         say_fac_special(caption, mood_label, faction_id_with);
     }
 
@@ -6195,8 +6190,7 @@ void __cdecl introduce(int faction_id, int other_faction_id) {
             int rank = 7 - static_cast<int>(PlayersData[faction_id].ranking);
             if (rank < 0) rank = 0;
             else if (rank > 6) rank = 6;
-            char *word = StringTable.get(static_cast<int>(
-                reinterpret_cast<intptr_t>(Might[rank].adj)));
+            char *word = StringTable.get(Might[rank].adj);
             if (!Language) {
                 const char first = word[0];
                 const bool vowel = first == 'A' || first == 'E' || first == 'I' ||
@@ -8001,7 +7995,7 @@ if ((PlayersData[peer_id].diplo_treaties[DiploScratchF7E8] & 1u) != 0) {
 }
 if (DiploScratchF800 >= 0) {
     strcat(StringTemp, "TECH");
-    parse_say(4, static_cast<int>(reinterpret_cast<intptr_t>(Technology[DiploScratchF800].name)), -1, -1);
+    parse_say(4, Technology[DiploScratchF800].name, -1, -1);
 }
 communicate_plea_result = x_pops_short(
     StringTemp, 0x00100000, FactionDiplomacyPortraits[peer_id], pop_wait);
@@ -8906,7 +8900,7 @@ if (DiploScratchFAA8 >= 0 && GameDataStateStorage.fields_.turn_current_num_ > 25
 }
 communicate_secondary_offer_text: // native 0x00552F36
 if (communicate_secondary_best_tech >= 0) {
-    parse_say(8, static_cast<int>(reinterpret_cast<intptr_t>(Technology[communicate_secondary_best_tech].name)), -1, -1);
+    parse_say(8, Technology[communicate_secondary_best_tech].name, -1, -1);
 }
 clear();
 if ((Players[DiploScratchFA38].rule_flags & RFLAG_ALIEN) != 0) {
@@ -11558,14 +11552,14 @@ if (has_treaty(peer_id, faction_id, 1) != 0 &&
             PlayersData[peer_id].tech_pact_shared_goals[
                 communicate_late_contact_tech_mask_offset] |=
                     static_cast<uint32_t>(communicate_late_contact_tech_mask);
-            parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(Technology[communicate_late_contact_research_tech].name)), -1, -1);
+            parse_say(0, Technology[communicate_late_contact_research_tech].name, -1, -1);
             bitmask(communicate_late_contact_best_tech,
                     &communicate_late_contact_tech_mask_offset,
                     &communicate_late_contact_tech_mask);
             PlayersData[faction_id].tech_pact_shared_goals[
                 communicate_late_contact_tech_mask_offset] |=
                     static_cast<uint32_t>(communicate_late_contact_tech_mask);
-            parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(Technology[communicate_late_contact_best_tech].name)), -1, -1);
+            parse_say(1, Technology[communicate_late_contact_best_tech].name, -1, -1);
             x_pops_short("TEAMTECH", 0x00100000,
                          FactionDiplomacyPortraits[peer_id], pop_wait);
         }
@@ -14837,8 +14831,7 @@ void __cdecl council(int faction_id, int proposal, int target_faction) {
         GenderDefault = Players[leader_faction].is_leader_female;
         PluralityDefault = FALSE;
         parse_says(1, Players[leader_faction].name_leader, -1, -1);
-        parse_say(2, static_cast<int>(reinterpret_cast<intptr_t>(
-                            Proposal[selected_proposal].name)), -1, -1);
+        parse_say(2, Proposal[selected_proposal].name, -1, -1);
         popp(ScriptPopupFile, "CALLSCOUNCIL", 0, "council_sm.pcx", 0);
     }
 
@@ -19560,13 +19553,9 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
             }
             if (available) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(
-                        Proposal[proposal].name))));
+                strcat(StringTemp, StringTable.get(Proposal[proposal].name));
                 strcat(StringTemp, "|");
-                strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(
-                        Proposal[proposal].description))));
+                strcat(StringTemp, StringTable.get(Proposal[proposal].description));
                 popup.dialogs().item(StringTemp, proposal);
             }
         }

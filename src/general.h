@@ -109,7 +109,7 @@ LPVOID __cdecl mem_get(size_t size);
 FILE *__cdecl env_open_old(LPCSTR source, LPCSTR mode);
 FILE *__cdecl env_open(LPCSTR source, LPCSTR mode);
 int __cdecl parse_num(int id, int value);
-int __cdecl parse_say(int id, int input, int gender, int pluralality);
+int __cdecl parse_say(int id, LPSTR input, int gender, int pluralality);
 int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality);
 int __cdecl stoi(LPCSTR str);
 LPSTR __cdecl findnum(LPSTR str);

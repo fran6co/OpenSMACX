@@ -675,7 +675,7 @@ void DipEdit::on_button_clicked(int button_id) {
         // The caption id is read out of the label blob the way the image reads it:
         // `mov eax, ds:0x9b90f8; mov ecx, [eax + 0xdb4]`.
         popup.dialogs().edit(StringTable.get(
-                                     (int)*((LPSTR *)Labels.strings_ptr + 877)),
+                                     reinterpret_cast<LPSTR *>(Labels.strings_ptr)[877]),
             StringTemp, 20);
 
         StringTemp[0] = '\0';
@@ -683,7 +683,7 @@ void DipEdit::on_button_clicked(int button_id) {
               number_text, 10);
         strcat(StringTemp, number_text);
         popup.dialogs().edit(StringTable.get(
-                                     (int)*((LPSTR *)Labels.strings_ptr + 878)),
+                                     reinterpret_cast<LPSTR *>(Labels.strings_ptr)[878]),
             StringTemp, 20);
 
         if (popup.exec(0, 0) == 0) {

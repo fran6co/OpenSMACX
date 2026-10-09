@@ -150,7 +150,7 @@ LPSTR Strings::put(LPCSTR input) {
 /*
 Purpose: Check if the string address is within the table.
 // ORIGINAL: 0x006169A0 ?get@Strings@@QAEHH@Z 0x006169A0-0x006169BB BYTE_EXACT
-// symbol    ?get@Strings@@QAEPADH@Z
+// symbol    ?get@Strings@@QAEPADPAD@Z
 // size      27 bytes
 // prototype int (__thiscall ?get@Strings@@QAEHH@Z)(Strings* this, int)
 // callers   290   call targets   0
@@ -160,13 +160,17 @@ Purpose: Check if the string address is within the table.
 Return Value: Address of the stored string
 Status: Complete
 */
-LPSTR Strings::get(int address) {
-    if ((LPVOID)address > get_base()) { // checking if ptr is after base
-        // checking ptr is not after end of table
-        return ((LPSTR)address <= LPSTR(size_t(get_base()) + get_base_size())) 
-            ? (LPSTR)address : NULL;
+LPSTR Strings::get(LPSTR address) {
+    const uint32_t address32 = static_cast<uint32_t>(
+        reinterpret_cast<uintptr_t>(address));
+    const uint32_t base32 = static_cast<uint32_t>(
+        reinterpret_cast<uintptr_t>(get_base()));
+    if (address32 > base32) { // checking if ptr is after base
+        // The original x86 add wraps at 32 bits, and the endpoint is inclusive.
+        const uint32_t end32 = base32 + static_cast<uint32_t>(get_base_size());
+        return address32 <= end32 ? address : NULL;
     }
-    return LPSTR(get_base()); // return base
+    return static_cast<LPSTR>(get_base()); // return base
 }
 
 // The five part-name formatters share the same label table, string table,
@@ -179,12 +183,12 @@ LPSTR Strings::get(int address) {
 // TRIED: _itoa needs a real signature -> declared as itoa_impl (own name), since the scaffold's nullary _itoa can't be redeclared (C2733)
 void __cdecl say_reactor(void *output, int reactor_id, int with_detail) {
     char *text = static_cast<char *>(output);
-    strcat(text, StringTable.get(reinterpret_cast<int>(Reactor[reactor_id].name)));
+    strcat(text, StringTable.get(Reactor[reactor_id].name));
     if (with_detail != 0) {
         strcat(text, " ");
         strcat(text, "(");
         strcat(StringTemp, StringTable.get(
-            *reinterpret_cast<int *>(Labels.strings_ptr + 0x13C)));
+            Labels.strings_ptr[0x13C / 4]));
         strcat(text, ": ");
         char number[80];
         _itoa(reactor_id + 1, number, 10);
@@ -199,20 +203,20 @@ void __cdecl say_reactor(void *output, int reactor_id, int with_detail) {
 void __cdecl say_weapon(void *output, int weapon_id, int with_detail) {
     char *text = static_cast<char *>(output);
     const RulesWeapon &weapon = Weapon[weapon_id];
-    strcat(text, StringTable.get(reinterpret_cast<int>(weapon.name)));
+    strcat(text, StringTable.get(weapon.name));
     if (with_detail != 0) {
         strcat(text, " ");
         strcat(text, "(");
         if (weapon.offense_rating == 0) {
             strcat(text, StringTable.get(
-                *reinterpret_cast<int *>(Labels.strings_ptr + 0x284)));
+                Labels.strings_ptr[0x284 / 4]));
         } else {
             strcat(text, StringTable.get(
-                *reinterpret_cast<int *>(Labels.strings_ptr + 0x204)));
+                Labels.strings_ptr[0x204 / 4]));
             strcat(text, ": ");
             if (weapon.offense_rating < 0) {
                 strcat(text, StringTable.get(
-                    *reinterpret_cast<int *>(Labels.strings_ptr + 0x310)));
+                    Labels.strings_ptr[0x310 / 4]));
             } else {
                 char number[80];
                 _itoa(weapon.offense_rating, number, 10);
@@ -232,16 +236,16 @@ void __cdecl say_weapon(void *output, int weapon_id, int with_detail) {
 void __cdecl say_armor(void *output, int armor_id, int with_detail) {
     char *text = static_cast<char *>(output);
     const RulesArmor &armor = Armor[armor_id];
-    strcat(text, StringTable.get(reinterpret_cast<int>(armor.name)));
+    strcat(text, StringTable.get(armor.name));
     if (with_detail != 0) {
         strcat(text, " ");
         strcat(text, "(");
         strcat(StringTemp, StringTable.get(
-            *reinterpret_cast<int *>(Labels.strings_ptr + 0x154)));
+            Labels.strings_ptr[0x154 / 4]));
         strcat(text, ": ");
         if (armor.defense_rating < 0) {
             strcat(text, StringTable.get(
-                *reinterpret_cast<int *>(Labels.strings_ptr + 0x310)));
+                Labels.strings_ptr[0x310 / 4]));
         } else {
             char number[80];
             _itoa(armor.defense_rating, number, 10);
@@ -260,12 +264,12 @@ void __cdecl say_armor(void *output, int armor_id, int with_detail) {
 void __cdecl say_chassis(void *output, int chassis_id, int with_detail) {
     char *text = static_cast<char *>(output);
     const RulesChassis &chassis = Chassis[chassis_id];
-    strcat(text, StringTable.get(reinterpret_cast<int>(chassis.offsv_1_name)));
+    strcat(text, StringTable.get(chassis.offsv_1_name));
     if (with_detail != 0) {
         strcat(text, " ");
         strcat(text, "(");
         strcat(StringTemp, StringTable.get(
-            *reinterpret_cast<int *>(Labels.strings_ptr + 0x140)));
+            Labels.strings_ptr[0x140 / 4]));
         strcat(text, ": ");
         char number[80];
         _itoa(chassis.speed, number, 10);
@@ -274,7 +278,7 @@ void __cdecl say_chassis(void *output, int chassis_id, int with_detail) {
             strcat(text, " ");
             const int offset = chassis.triad == 1 ? 0x28C : 0x288;
             strcat(text, StringTable.get(
-                *reinterpret_cast<int *>(Labels.strings_ptr + offset)));
+                Labels.strings_ptr[offset / 4]));
         }
         strcat(text, ")");
     }
@@ -290,7 +294,7 @@ void __cdecl say_techs(void *output, int tech_id, int with_detail) {
         strcat(text, " ");
         strcat(text, "(");
         strcat(StringTemp, StringTable.get(
-            *reinterpret_cast<int *>(Labels.strings_ptr + 0x274)));
+            Labels.strings_ptr[0x274 / 4]));
         strcat(text, ")");
     }
 }
@@ -385,9 +389,8 @@ Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
 */
 void __cdecl say_facility(void *text, int facility_id, int with_cost) {
     Strings *strings = &StringTable;
-    int name = reinterpret_cast<int>(Facility[facility_id].name);
-    strcat(static_cast<char *>(text),
-           reinterpret_cast<char *>(strings->get(name)));
+    LPSTR name = Facility[facility_id].name;
+    strcat(static_cast<char *>(text), strings->get(name));
     if (with_cost != 0) {
         strcat(static_cast<char *>(text), " ");
         strcat(static_cast<char *>(text), "(");
@@ -419,8 +422,7 @@ Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
         for the 7-int scale and loads StringTable after it.
 */
 void __cdecl say_ability(void *text, int ability_id, int with_detail) {
-    int name = reinterpret_cast<int>(Ability[ability_id].name);
-    char *s1 = StringTable.get(name);
+    char *s1 = StringTable.get(Ability[ability_id].name);
     strcat(static_cast<char *>(text), s1);
     if (with_detail != 0) {
         strcat(static_cast<char *>(text), " ");
@@ -453,9 +455,8 @@ Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
 */
 void __cdecl say_society(void *text, int society_id, int with_model) {
     Strings *strings = &StringTable;
-    int type = reinterpret_cast<int>(SocialCategories[society_id].type);
-    strcat(static_cast<char *>(text),
-           reinterpret_cast<char *>(strings->get(type)));
+    LPSTR type = SocialCategories[society_id].type;
+    strcat(static_cast<char *>(text), strings->get(type));
     if (with_model != 0) {
         strcat(static_cast<char *>(text), " ");
         strcat(static_cast<char *>(text), "(");

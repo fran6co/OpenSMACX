@@ -320,8 +320,8 @@ static int tut_callout(TutWin &tutorial, Win &coordinates, RECT &rect,
     return tutorial.tut_win(owner, label, x, y, 0, 2, -1, -1);
 }
 
-static int tutorial_button_label_index(unsigned int byte_offset) {
-    return reinterpret_cast<const int *>(Labels.strings_ptr)[byte_offset / 4];
+static LPSTR tutorial_button_label(unsigned int byte_offset) {
+    return reinterpret_cast<LPSTR *>(Labels.strings_ptr)[byte_offset / 4];
 }
 
 // ORIGINAL: 0x004BDFE0 ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z 0x004BDFE0-0x004BE643;0x00659CE0-0x00659CF2 FILE
@@ -365,12 +365,12 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
     start(const_cast<char *>("EDITOR"), text, -1, 0, popup_flags, 0);
     if (mode < 2) {
         set_ok_text(StringTable.get(
-            tutorial_button_label_index(0x36C)));
+            tutorial_button_label(0x36C)));
     } else {
         set_ok_text(StringTable.get(
-            tutorial_button_label_index(0x3B0)));
+            tutorial_button_label(0x3B0)));
         set_cancel_text(StringTable.get(
-            tutorial_button_label_index(0x3AC)));
+            tutorial_button_label(0x3AC)));
     }
 
     if (picture != 0) {
@@ -449,12 +449,12 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
     start(const_cast<char *>("EDITOR"), text, -1, 0, popup_flags, 0);
     if (normalized_mode == 0) {
         set_ok_text(StringTable.get(
-            tutorial_button_label_index(0x36C)));
+            tutorial_button_label(0x36C)));
     } else {
         set_ok_text(StringTable.get(
-            tutorial_button_label_index(0x3B0)));
+            tutorial_button_label(0x3B0)));
         set_cancel_text(StringTable.get(
-            tutorial_button_label_index(0x3AC)));
+            tutorial_button_label(0x3AC)));
     }
     if (normalized_mode != 6) {
         set_loc(x, y);

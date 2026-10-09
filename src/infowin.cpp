@@ -183,8 +183,7 @@ void InfoWin::setup_text() {
                 infowin_append_label(text, 0x6a);
                 strcat(text, ": ");
                 strcat(text, label_get(0x15));
-                strcat(text, StringTable.get(
-                    reinterpret_cast<int>(Technology[current_tech].name)));
+                strcat(text, StringTable.get(Technology[current_tech].name));
                 strcat(text, "}");
                 strcpy(row_text_[pane][1], text);
                 displayed_rows = 2;
@@ -193,7 +192,7 @@ void InfoWin::setup_text() {
             }
 
             text[0] = 0;
-            strcat(text, StringTable.get(reinterpret_cast<int>(Energy[0].abbrev)));
+            strcat(text, StringTable.get(Energy[0].abbrev));
             strcat(text, ": ");
             strcat(text, "{");
             infowin_append_number(text,
@@ -209,14 +208,14 @@ void InfoWin::setup_text() {
             strcpy(row_text_[pane][2], text);
 
             text[0] = 0;
-            strcat(text, StringTable.get(reinterpret_cast<int>(Energy[1].abbrev)));
+            strcat(text, StringTable.get(Energy[1].abbrev));
             strcat(text, ": ");
             strcat(text, "{");
             infowin_append_number(text, PlayersData[faction].se_alloc_psych * 10);
             strcat(text, "%}");
             strcpy(row_text_[pane][3], text);
             text[0] = 0;
-            strcat(text, StringTable.get(reinterpret_cast<int>(Energy[2].abbrev)));
+            strcat(text, StringTable.get(Energy[2].abbrev));
             strcat(text, ": {");
             infowin_append_number(text, PlayersData[faction].se_alloc_labs * 10);
             strcat(text, "%");
@@ -302,8 +301,7 @@ void InfoWin::setup_text() {
 
             text[0] = 0;
             const int mood = static_cast<int>(get_mood(DiploFriction));
-            say_special(text,
-                        StringTable.get(reinterpret_cast<int>(Mood[mood])), other);
+            say_special(text, StringTable.get(Mood[mood]), other);
             strcpy(row_text_[pane][2], text);
 
             text[0] = 0;
@@ -344,8 +342,7 @@ void InfoWin::setup_text() {
                 if (rank < 0) rank = 0;
                 else if (rank > 7) rank = 7;
                 say_special(text,
-                            StringTable.get(reinterpret_cast<int>(Repute[rank])),
-                            faction);
+                            StringTable.get(Repute[rank]), faction);
             }
             strcat(text, "}");
             strcpy(row_text_[pane][2], text);
@@ -358,8 +355,7 @@ void InfoWin::setup_text() {
                 if (gap < 1) gap = 1;
                 else if (gap > 7) gap = 7;
                 say_special(text,
-                            StringTable.get(reinterpret_cast<int>(Might[7 - gap].adj)),
-                            faction);
+                            StringTable.get(Might[7 - gap].adj), faction);
             }
             strcat(text, "}");
             strcpy(row_text_[pane][3], text);
@@ -571,24 +567,20 @@ void InfoWin::setup_text() {
             case 4: paint_name = label_get(0xECC / 4); break;
             case 5: paint_name = label_get(0xED0 / 4); break;
             case 26:
-                paint_name = StringTable.get(
-                    reinterpret_cast<int>(Natural[2].name_short));
+                paint_name = StringTable.get(Natural[2].name_short);
                 break;
             case 27:
-                paint_name = StringTable.get(
-                    reinterpret_cast<int>(Natural[6].name_short));
+                paint_name = StringTable.get(Natural[6].name_short);
                 break;
             case 28:
-                paint_name = StringTable.get(
-                    reinterpret_cast<int>(Natural[3].name_short));
+                paint_name = StringTable.get(Natural[3].name_short);
                 break;
             case 29:
-                paint_name = StringTable.get(
-                    reinterpret_cast<int>(Natural[10].name_short));
+                paint_name = StringTable.get(Natural[10].name_short);
                 break;
             default:
-                paint_name = StringTable.get(reinterpret_cast<int>(
-                    Terraforming[MapEditorPaintId - 6].name));
+                paint_name = StringTable.get(
+                    Terraforming[MapEditorPaintId - 6].name);
                 break;
             }
             strcat(text, paint_name);

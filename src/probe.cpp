@@ -446,8 +446,7 @@ static BOOL probe_native_entry_local_warning(int actor_faction_id,
     if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & actor_bit) == 0) return 0;
     if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) == 0) return 0;
 
-    parse_say(0, static_cast<int>(reinterpret_cast<uintptr_t>(
-        Ability[abil_index(8)].name)), -1, -1);
+    parse_say(0, Ability[abil_index(8)].name, -1, -1);
     NetMsgPrimary.pop("PROBEABILAMPHIBIOUS", 5000, 0, 0);
     return 1;
 }
@@ -750,9 +749,7 @@ static void probe_native_selector2_prepare_local_text(int base_id,
         strcat(local_text, VehPrototypes[production_id].veh_name);
     } else {
         const int facility_id = -production_id;
-        const int name_ref = static_cast<int>(reinterpret_cast<uintptr_t>(
-            Facility[facility_id].name));
-        strcat(local_text, StringTable.get(name_ref));
+        strcat(local_text, StringTable.get(Facility[facility_id].name));
     }
 }
 
@@ -831,8 +828,7 @@ static void probe_native_selector2_notice(int selection, int base_id,
         return;
     }
 
-    parse_say(0, static_cast<int>(reinterpret_cast<uintptr_t>(
-        Facility[selection].name)), -1, -1);
+    parse_say(0, Facility[selection].name, -1, -1);
     says("FACVIRUS");
     parse_says(1, Bases[base_id].name_string + 1, -1, -1);
     parse_says(2, get_adjective(actor_faction_id), -1, -1);
@@ -2314,7 +2310,7 @@ label_5a0852:
                     Bases[target_base_id].x, Bases[target_base_id].y);
                 if (first_vehicle >= 0 &&
                     stack_check(first_vehicle, 2, 5, -1, -1) != 0) {
-                    popup.dialogs().item(StringTable.get(0x62), 0x62);
+                    popup.dialogs().item(label_get(0x1010 / 4), 0x62);
                 }
                 local_context = 1;
                 goto label_5a0917;
@@ -2345,7 +2341,8 @@ label_5a0917:
                 bitmask(choice, &facility_byte, &facility_mask);
                 if ((Bases[target_base_id].facilities_built[facility_byte] &
                      facility_mask) != 0) {
-                    popup.dialogs().item(StringTable.get(choice), choice);
+                    popup.dialogs().item(
+                        StringTable.get(Facility[choice].name), choice);
                 }
             }
 
@@ -2353,7 +2350,7 @@ label_5a0917:
             strcat(StringTemp, selector2_prepared_text);
             strcat(StringTemp, " ");
             strcat(StringTemp, "(");
-            strcat(StringTemp, StringTable.get(0xF9));
+            strcat(StringTemp, label_get(0x3E4 / 4));
             strcat(StringTemp, ")");
             popup.dialogs().item(StringTemp, 0);
             parse_it("ABORTSTRING", "SCRIPT");
@@ -2412,8 +2409,7 @@ label_5a0aff:
                         goto label_5a2ce9;
                     }
                 } else {
-                    parse_say(1, static_cast<int>(reinterpret_cast<uintptr_t>(
-                        Facility[local_project_cursor].name)), -1, -1);
+                    parse_say(1, Facility[local_project_cursor].name, -1, -1);
                     const int facility_morale =
                         morale_veh(actor_vehicle_id, 1, 0);
                     const int facility_success = success_rates(
@@ -2479,8 +2475,7 @@ label_5a0917_done:
                 if (actor_faction_id == ConsoleGlobal.faction_id_ && mode != 0 &&
                     (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
                     (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
-                    parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-                        Ability[abil_index(0x20)].name)), -1, -1);
+                    parse_say(0, Ability[abil_index(0x20)].name, -1, -1);
                     NetMsgPrimary.pop("PROBEABILSUPERIORITY", 5000, 0,
                                       nullptr);
                 }
@@ -3005,8 +3000,7 @@ label_5a36ee:
                     const int relocation_morale =
                         morale_veh(actor_vehicle_id, 1, 0);
                     const int native_relocation_parse_result = parse_say(
-                        2, static_cast<int>(reinterpret_cast<intptr_t>(
-                            Morale[relocation_morale].name)), -1, -1);
+                        2, Morale[relocation_morale].name, -1, -1);
                     clear();
                     says("PROBESURVIVAL");
                     if (action_result != 8) {

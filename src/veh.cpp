@@ -91,13 +91,15 @@ int FirstProposedPrototype = -1;
 // Compose a readable prototype name from the already-loaded design rules.
 // Rule-string fields retain pointer-bit values validated by the loaded rules.
 static const char *prototype_rule_name(LPSTR string_id) {
-    return StringTable.get(static_cast<int>(
-        reinterpret_cast<intptr_t>(string_id)));
+    return StringTable.get(string_id);
 }
 
 static const char *prototype_reactor_name(int reactor_id) {
     if (reactor_id == 0) {
-        return StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
+        // Preserve the original reactor-0 alias to palette storage preceding
+        // Reactor[0]. Strings::get only range-checks this borrowed address;
+        // it is not claimed to be text and is not dereferenced here.
+        return StringTable.get(const_cast<char *>(static_cast<const char *>(
             g_PALETTE2.animation_colours(4))));
     }
     return prototype_rule_name(Reactor[reactor_id - 1].name_short);
@@ -191,8 +193,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             continue;
         }
         const char *abbreviation = StringTable.get(
-            static_cast<int>(reinterpret_cast<intptr_t>(
-                Ability[ability_id].abbreviation)));
+            Ability[ability_id].abbreviation);
         if (::strlen(abbreviation) == 0) continue;
         const RulesChassis &chassis = Chassis[chassis_id];
         if (ability_id == 5 && chassis.triad == TRIAD_AIR) continue;
@@ -203,9 +204,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             && (ability_flags & 0x8000) == 0) {
             continue;
         }
-        abbreviation = StringTable.get(
-            static_cast<int>(reinterpret_cast<intptr_t>(
-                Ability[ability_id].abbreviation)));
+        abbreviation = StringTable.get(Ability[ability_id].abbreviation);
         ::strcat(output, abbreviation);
         ::strcat(output, " ");
         break;
@@ -239,12 +238,10 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         }
         name_form_quality = name_combat_rating < name_rating_limit;
         chassis_is_not_basic = chassis.triad != TRIAD_SEA;
-        const char *large_offense_form = StringTable.get(
-            static_cast<int>(reinterpret_cast<intptr_t>(chassis.offsv_lrg_name)));
+        const char *large_offense_form = StringTable.get(chassis.offsv_lrg_name);
         bool has_paired_large_forms = false;
         if (strlen(large_offense_form) != 0) {
-            const char *large_defense_form = StringTable.get(
-                static_cast<int>(reinterpret_cast<intptr_t>(chassis.defsv_lrg_name)));
+            const char *large_defense_form = StringTable.get(chassis.defsv_lrg_name);
             has_paired_large_forms = strlen(large_defense_form) != 0;
         }
         if (!has_paired_large_forms) name_form_quality = 0;
@@ -851,7 +848,7 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
         rr24 = rr2c + rr24;
         r2.left = rr30; r2.top = rr2c; r2.right = rr28; r2.bottom = rr24;
 
-        char *word = StringTable.get(reinterpret_cast<int>(Order[triadIdx].letter));
+        char *word = StringTable.get(Order[triadIdx].letter);
         // The original copies an unbounded label then discards all but its
         // first character. Copy only the displayed character: malformed long
         // rule labels must not overflow the original four-byte scratch.
@@ -1413,11 +1410,9 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
 
         const uint8_t climate = map_loc(x, effect_y)->climate;
         const int terrain_name = ((climate & 0xe0) < 0x60) ? 1 : 0;
-        const int terrain_name_id = reinterpret_cast<int>(
-            terrain_name ? Terraforming[weapon].name_sea
-                         : Terraforming[weapon].name);
-        parse_says(2, StringTable.get(terrain_name_id),
-                  -1, -1);
+        LPSTR terrain_name_text = terrain_name
+            ? Terraforming[weapon].name_sea : Terraforming[weapon].name;
+        parse_says(2, StringTable.get(terrain_name_text), -1, -1);
 
         forest_weapon = weapon == TERRA_FOREST;
         if (chassis.triad == TRIAD_AIR && faction == ConsoleGlobal.faction_id_)
@@ -3036,9 +3031,9 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
     // "+" loop body, ")", and the designate-defender "(d)".
     if (proto_id < MaxVehProtoFactionNum &&
         (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) {
-        strcat(morale_output, StringTable.get((int)Morale[morale].name_lifecycle));
+        strcat(morale_output, StringTable.get(Morale[morale].name_lifecycle));
     } else {
-        strcat(morale_output, StringTable.get((int)Morale[morale].name));
+        strcat(morale_output, StringTable.get(Morale[morale].name));
     }
     if (VehPrototypes[proto_id].plan < PLAN_COLONIZATION) {
         uint32_t morale_penalty = 0;
@@ -4732,7 +4727,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         // StringTemp buffer is safe here.
                         strcpy(StringTemp, label_get(331)); // "Terrain"
                         strcat(StringTemp, " (");
-                        strcat(StringTemp, StringTable.get(int(VehBattleDisplayTerrain)));
+                        strcat(StringTemp, StringTable.get(VehBattleDisplayTerrain));
                         strcat(StringTemp, ")");
                         add_bat(1, 10 * (5 * terrain_def - 10), StringTemp);
                     }
@@ -4815,7 +4810,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                             defense *= def_multi;
                             if (def_multi > 2) {
                                 add_bat(1, 10 * (5 * def_multi - 10),
-                                    StringTable.get(int(display_def)));
+                                    StringTable.get(display_def));
                             }
                         }
                     }
@@ -5785,7 +5780,7 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     int8_t off_rating = get_proto_offense_rating(proto_id);
     if (off_rating < 0) {
         // INLINE: the image open-codes label_get(196) here rather than calling it.
-        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
+        strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
     } else if (off_rating >= 99) {
         strcat(stat, "*");
     } else {
@@ -5793,7 +5788,7 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     }
     strcat(stat, "-");
     if (get_proto_defense_rating(proto_id) < 0) {
-        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
+        strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
     } else {
         say_defense(stat, proto_id);
     }
@@ -5803,10 +5798,10 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
     uint32_t triad = get_proto_triad(proto_id);
     if (triad == TRIAD_SEA) {
         strcat(stat, " ");
-        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 163))); // 'Sea'
+        strcat(stat, StringTable.get(Labels.strings_ptr[163])); // 'Sea'
     } else if (triad == TRIAD_AIR) {
         strcat(stat, " ");
-        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 162))); // 'Air'
+        strcat(stat, StringTable.get(Labels.strings_ptr[162])); // 'Air'
     }
     uint32_t reactor = VehPrototypes[proto_id].reactor_id;
     if (reactor > 1) {
@@ -5862,16 +5857,16 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
     int8_t def_rating = get_proto_defense_rating(proto_id);
     if (plan == PLAN_RECONNAISANCE && triad == TRIAD_LAND && off_rating == 1 && def_rating == 1
         && !VehPrototypes[proto_id].ability_flags) {
-        strcat(stat, StringTable.get((int)PlansFullName[3])); // 'Explore/Defense'
+        strcat(stat, StringTable.get(PlansFullName[3])); // 'Explore/Defense'
         strcat(stat, ", ");
     } else if (mode < 3) { // Projectile, energy, missile
         strcat(stat, StringTable.get((plan != PLAN_DEFENSIVE || (off_rating >= 0 && off_rating <= def_rating))
-            ? (int)PlansShortName[plan] : (int)*((LPSTR *)Labels.strings_ptr + 312))); // 'Combat'
+            ? PlansShortName[plan] : Labels.strings_ptr[312])); // 'Combat'
         strcat(stat, ", ");
     }
     if (off_rating < 0 || mode < 3) {
         if (off_rating < 0) {
-            strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
+            strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
         } else {
             say_offense(stat, proto_id);
         }
@@ -5883,7 +5878,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
         goto append_defense_tail;
     } else if (def_rating != 1 || VehPrototypes[proto_id].ability_flags || (Chassis[chas].speed != 1
         && (mode != WPN_MODE_TRANSPORT || chas != CHSI_FOIL))) {
-        strcat(stat, StringTable.get(int(PlansShortName[mode])));
+        strcat(stat, StringTable.get(PlansShortName[mode]));
         if (plan == PLAN_NAVAL_TRANSPORT) {
             strcat(stat, "(");
             _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
@@ -5893,7 +5888,7 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
         strcat(stat, ", ");
 append_defense_tail:
         if (def_rating < 0) {
-            strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 196))); // 'Psi'
+            strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
         } else {
             say_defense(stat, proto_id);
         }
@@ -5901,7 +5896,7 @@ append_defense_tail:
         _itoa(speed_proto(proto_id) / (int)Rules.move_rate_roads, num_buf, 10);
         strcat(stat, num_buf);
     } else {
-        strcat(stat, StringTable.get((int)PlansFullName[mode]));
+        strcat(stat, StringTable.get(PlansFullName[mode]));
         if (plan == PLAN_NAVAL_TRANSPORT) {
             strcat(stat, "(");
             _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
@@ -5914,10 +5909,10 @@ append_defense_tail:
     }
     if (triad == TRIAD_SEA) {
         strcat(stat, " ");
-        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 163))); // 'Sea'
+        strcat(stat, StringTable.get(Labels.strings_ptr[163])); // 'Sea'
     } else if (triad == TRIAD_AIR) {
         strcat(stat, " ");
-        strcat(stat, StringTable.get((int)*((LPSTR *)Labels.strings_ptr + 162))); // 'Air'
+        strcat(stat, StringTable.get(Labels.strings_ptr[162])); // 'Air'
     }
     uint32_t reactor = VehPrototypes[proto_id].reactor_id;
     if (reactor > 1) {
@@ -9972,14 +9967,14 @@ void __cdecl promote(int veh_id) {
 
     if (proto_id < 0x40) {
         if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating < 0) {
-            parse_say(0, (int)Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
+            parse_say(0, Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
             NetMsgPrimary.pop(VehLabelMORALE2, 0xffffec78, 0,
                              VehIconBATWON2_SM_PCX);
             return;
         }
     }
 
-    parse_say(0, (int)Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
+    parse_say(0, Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
     NetMsgPrimary.pop(VehLabelMORALE, 0xffffec78, 0, VehIconBATWON_SM_PCX);
 }
 
@@ -11614,7 +11609,7 @@ void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) 
         GenderDefault = Players[target].noun_gender;
         PluralityDefault = Players[target].is_noun_plural;
         parse_says(5, Players[target].noun_faction, -1, -1);
-        parse_say(6, reinterpret_cast<int>(Facility[type == 4 ? 41 : 65 + type].name), -1, -1);
+        parse_say(6, Facility[type == 4 ? 41 : 65 + type].name, -1, -1);
         // Native 4CF606 selects Player + 0x304, the faction adjective.
         parse_says(7, Players[target].adj_name_faction, -1, -1);
     }
@@ -12937,8 +12932,7 @@ static int give_random_technology(int faction_id, int notify, int forced,
             says("GOODYDATA");
             if (IsMultiplayerNet) {
                 says("1");
-                parse_say(0,
-                    (int)(long)Technology[tech_id].name, -1, -1);
+                parse_say(0, Technology[tech_id].name, -1, -1);
             }
             NetMsgPrimary.pop(StringTemp,
                               native_terrain ? 5000 : -5000, 0,
@@ -13156,8 +13150,7 @@ dispatch_event:
                     } else {
                         const int facility_id = -production;
                         production_cost = Facility[facility_id].cost;
-                        parse_say(0, (int)(long)Facility[facility_id].name,
-                                  -1, -1);
+                        parse_say(0, Facility[facility_id].name, -1, -1);
                     }
                     const uint32_t adjusted_bits =
                         (uint32_t)cost_factor(faction_id, 1, -1)
@@ -13728,7 +13721,8 @@ dispatch_event:
                         ambience(0xD2);
                         wave_it(0x29);
                     }
-                    parse_say(0, existing_bonus, -1, -1);
+                    parse_say(0, Labels.strings_ptr[0x5B + existing_bonus],
+                              -1, -1);
                     NetMsgPrimary.pop("GOODYRESOURCE", 5000, 0,
                                       "supply_sm.pcx");
                 }
@@ -19502,7 +19496,7 @@ static void order_veh_artifact_dialog_rows(
         int facility_id = queue_item;
         if (facility_id <= -1) facility_id = -facility_id;
         StringTemp[0] = '\0';
-        parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(Facility[facility_id].name)), -1, -1);
+        parse_say(1, Facility[facility_id].name, -1, -1);
         parse_string(row_text, StringTemp);
         popup.dialogs().item(StringTemp, 2);
         ++row_count;
@@ -19655,9 +19649,7 @@ static bool order_veh_zoc_tutorial_notice(
     }
 
     const int ability_id = abil_index(4);
-    parse_say(0, static_cast<int>(reinterpret_cast<uintptr_t>(
-                   Ability[ability_id].name)),
-              -1, -1);
+    parse_say(0, Ability[ability_id].name, -1, -1);
 
     int forward_zoc_x;
     int forward_zoc_y;
@@ -19943,9 +19935,7 @@ static OrderVeh59521fPath order_veh_59521f_front_gate(
         if (action_faction == ConsoleGlobal.faction_id_ &&
             (action_mode & 1) != 0) {
             const int ability_id = abil_index(0x20);
-            parse_say(0, static_cast<int>(reinterpret_cast<uintptr_t>(
-                           Ability[ability_id].name)),
-                      -1, -1);
+            parse_say(0, Ability[ability_id].name, -1, -1);
             NetMsgPrimary.pop("FIGHTERRULE", 5000, 0, NULL);
         }
         if ((vehicle.state & 0x00004200U) != 0) veh_skip(action_vehicle_id);
@@ -20004,9 +19994,7 @@ static bool order_veh_amphibious_tile_notice(int action_faction,
         (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) == 0) {
         return false;
     }
-    parse_say(0, static_cast<int>(reinterpret_cast<uintptr_t>(
-                   Ability[ability_id].name)),
-              -1, -1);
+    parse_say(0, Ability[ability_id].name, -1, -1);
 
     const int owner = tile.val2 & 0x0F;
     const char *label = (tile.bit & BIT_BASE_IN_TILE) != 0 && owner < 8
@@ -20022,9 +20010,7 @@ static bool order_veh_amphibbase_notice(int mode, int selected_faction,
     }
 
     const int ability = abil_index(ABL_AMPHIBIOUS);
-    parse_say(0, static_cast<int>(reinterpret_cast<uintptr_t>(
-                      Ability[ability].name)),
-              -1, -1);
+    parse_say(0, Ability[ability].name, -1, -1);
     NetMsgPrimary.pop(notice_label, 5000, 0, NULL);
     return true;
 }
@@ -20086,8 +20072,7 @@ static void order_veh_5967cf_amphibbase2_or_full_transport(
         if (vehicle_faction_snapshot == ConsoleGlobal.faction_id_ &&
             (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0) {
             const int ability = abil_index(8);
-            parse_say(0, static_cast<int>(reinterpret_cast<uintptr_t>(
-                              Ability[ability].name)), -1, -1);
+            parse_say(0, Ability[ability].name, -1, -1);
             NetMsgPrimary.pop("AMPHIBBASE2", 5000, 0, NULL);
         }
         return;
@@ -20989,8 +20974,7 @@ static OrderVehNativeLifeEventResult order_veh_598317_native_life_base_event(
         StringTemp[0] = 0;
         strcpy(StringTemp, "1");
         set_fac(event.facility_id, base_id, 0);
-        parse_say(1, static_cast<int>(reinterpret_cast<uintptr_t>(
-            Facility[event.facility_id].name)), -1, -1);
+        parse_say(1, Facility[event.facility_id].name, -1, -1);
     }
     if (native_message_flag &&
         destination_faction == ConsoleGlobal.faction_id_) {
@@ -22121,7 +22105,7 @@ label_597350:
         if (chassis.range != 0) {
             if (faction == ConsoleGlobal.faction_id_ &&
                 (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0) {
-                parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(chassis.offsv_1_name)), -1, -1);
+                parse_say(0, chassis.offsv_1_name, -1, -1);
                 NetMsgPrimary.pop("AIRCONQUER", 5000, 0, 0);
             }
             goto label_599b1a;
@@ -22390,8 +22374,7 @@ static int battle_fight_nerve_gas_precombat_v4(
     // attacker. The defender's humanity is deliberately not part of it.
     if (attacker_faction == ConsoleGlobal.faction_id_ && attacker_is_human) {
         parse_says(0, VehPrototypes[attacker_proto].veh_name, -1, -1);
-        parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
-                         Ability[abil_index(ABL_NERVE_GAS)].name)), -1, -1);
+        parse_say(1, Ability[abil_index(ABL_NERVE_GAS)].name, -1, -1);
         g_BattleWin.stop_timer();
         if (popp(ScriptPopupFile, "USENERVE", 0, "biohazd_sm.pcx", 0) != 0)
             Vehs[attacker_id].state |= VSTATE_USED_NERVE_GAS;

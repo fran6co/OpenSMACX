@@ -308,14 +308,11 @@ if (selected_proto.plan != 9) {
 
     for (int terraform_id = 0; terraform_id != 19; ++terraform_id) {
         StringTemp[0] = '\0';
-        const int order_name = static_cast<int>(reinterpret_cast<intptr_t>(
-            sea_order_labels ? Order[terraform_id + 4].order_sea
-                             : Order[terraform_id + 4].order));
+        LPSTR order_name = sea_order_labels ? Order[terraform_id + 4].order_sea
+                                            : Order[terraform_id + 4].order;
         strcat(StringTemp, StringTable.get(order_name));
         strcat(StringTemp, "|");
-        strcat(StringTemp, StringTable.get(
-            static_cast<int>(reinterpret_cast<intptr_t>(
-                Terraforming[terraform_id].shortcuts))));
+        strcat(StringTemp, StringTable.get(Terraforming[terraform_id].shortcuts));
         rename_menu_item(9, 0x900 + terraform_id, StringTemp);
 
         if (terrain_avail(terraform_id, sea_order_labels,
@@ -372,9 +369,8 @@ if (selected_proto.plan != 9) {
             terraform_id, sea_order_labels, ConsoleGlobal.faction_id_);
 
         StringTemp[0] = '\0';
-        const int order_name = static_cast<int>(reinterpret_cast<intptr_t>(
-            sea_order_labels ? Order[terraform_id + 4].order_sea
-                             : Order[terraform_id + 4].order));
+        LPSTR order_name = sea_order_labels ? Order[terraform_id + 4].order_sea
+                                            : Order[terraform_id + 4].order;
         strcat(StringTemp, StringTable.get(order_name));
         if (can_build_here) {
             strcat(StringTemp, " (");
@@ -387,8 +383,7 @@ if (selected_proto.plan != 9) {
             strcat(StringTemp, ")");
         }
         strcat(StringTemp, "|");
-        strcat(StringTemp, StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
-            Terraforming[terraform_id].shortcuts))));
+        strcat(StringTemp, StringTable.get(Terraforming[terraform_id].shortcuts));
         const int menu_item = 0x900 + terraform_id;
         rename_menu_item(9, menu_item, StringTemp);
 
@@ -972,10 +967,9 @@ int AlphaMenu::menu_init() {
     {
         for (int i = 0; i != 19; ++i) {
             StringTemp[0] = 0;
-            strcat(StringTemp,
-                   StringTable.get(reinterpret_cast<int>(Order[i + 4].order)));
+            strcat(StringTemp, StringTable.get(Order[i + 4].order));
             strcat(StringTemp, "|");
-            strcat(StringTemp, StringTable.get((int)Terraforming[i].shortcuts));
+            strcat(StringTemp, StringTable.get(Terraforming[i].shortcuts));
             menu->add_menu_item(9, 0x900 + i, StringTemp);
             if (i == 4 || i == 11 || i == 14) {
                 menu->add_separator(9, i == 14);

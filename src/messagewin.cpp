@@ -69,10 +69,10 @@ void MessageWin::on_selected(int code, int) {
     ConsoleGlobal.client_to_screen(&mouse_x, &mouse_y);
     PullDown menu;
     menu.init(0);
-    int *label_ids = reinterpret_cast<int *>(Labels.strings_ptr);
-    menu.add_item(1, StringTable.get(label_ids[0x44C]));
-    menu.add_item(2, StringTable.get(label_ids[0x44D]));
-    menu.add_item(3, StringTable.get(label_ids[0x44E]));
+    LPSTR *labels = reinterpret_cast<LPSTR *>(Labels.strings_ptr);
+    menu.add_item(1, StringTable.get(labels[0x44C]));
+    menu.add_item(2, StringTable.get(labels[0x44D]));
+    menu.add_item(3, StringTable.get(labels[0x44E]));
     menu.show(mouse_x, mouse_y, 0);
     const int action = menu.get_selected_id();
 

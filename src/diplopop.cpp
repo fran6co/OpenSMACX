@@ -326,8 +326,7 @@ void DiploPop::draw_portrait() {
         repute = 7;
     }
     say_special(StringTemp,
-                StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
-                    Repute[repute]))),
+                StringTable.get(Repute[repute]),
                 counterpart_faction_);
     canvas->write_l(StringTemp, text.left, text.top,
                     static_cast<int>(strlen(StringTemp)));
@@ -339,8 +338,7 @@ void DiploPop::draw_portrait() {
     const int local_faction = ConsoleGlobal.faction_id_;
     const int mood = static_cast<int>(get_mood(
         PlayersData[counterpart_faction_].diplo_friction[local_faction]));
-    char *mood_text = StringTable.get(static_cast<int>(
-        reinterpret_cast<intptr_t>(Mood[mood])));
+    char *mood_text = StringTable.get(Mood[mood]);
     say_special(StringTemp, mood_text, counterpart_faction_);
     canvas->write_l(StringTemp, text.left, text.top,
                     static_cast<int>(strlen(StringTemp)));
@@ -1032,8 +1030,7 @@ void DiploPop::draw_info() {
         int might_index = 7 - static_cast<int>(PlayersData[faction].ranking);
         if (might_index < 0) might_index = 0;
         else if (might_index > 6) might_index = 6;
-        char *const might = StringTable.get(static_cast<int>(
-            reinterpret_cast<intptr_t>(Might[might_index].adj_start)));
+        char *const might = StringTable.get(Might[might_index].adj_start);
         say_special(StringTemp, might, faction);
         CharUpperA(StringTemp);
         canvas->write_l(StringTemp, next_y, text_y,

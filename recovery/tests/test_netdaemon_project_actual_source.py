@@ -23,7 +23,6 @@ HOST_PREAMBLE = r"""
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
-#include <map>
 #include <string>
 #include <vector>
 typedef const char *LPCSTR;
@@ -42,6 +41,11 @@ struct Player {
     BOOL is_noun_plural;
 };
 static Player Players[8];
+static char facility_names[134][32];
+struct Strings {
+    LPSTR get(LPSTR text) { return text; }
+};
+static Strings StringTable;
 struct Base { int faction_id_current; };
 static Base Bases[64];
 static int SecretProject[64];
@@ -51,11 +55,6 @@ static Console ConsoleGlobal;
 static int GenderDefault;
 static int PluralityDefault;
 static std::vector<std::string> events;
-struct Strings {
-    std::map<int, std::string> values;
-    LPSTR get(int key) { return const_cast<char *>(values[key].c_str()); }
-};
-static Strings StringTable;
 struct NetMsg {
     void pop(const char *label, int duration, int channel, const char *target) {
         events.push_back(std::string("pop:") + label + ":" +
@@ -76,11 +75,12 @@ static void parse_says(int id, LPCSTR text, int gender, int plural) {
                      std::to_string(gender < 0 ? GenderDefault : gender) + ":" +
                      std::to_string(plural < 0 ? PluralityDefault : plural));
 }
-static void parse_say(int id, int key, int gender, int plural) {
+static int parse_say(int id, LPSTR text, int gender, int plural) {
     events.push_back(std::string("say:") + std::to_string(id) + ":" +
-                     StringTable.get(key) + ":" +
+                     text + ":" +
                      std::to_string(gender < 0 ? GenderDefault : gender) + ":" +
                      std::to_string(plural < 0 ? PluralityDefault : plural));
+    return 1;
 }
 """
 
@@ -94,8 +94,10 @@ static void setup(int local, int sender, int status, int project, int related,
     Players[sender] = {3, "title", "leader", "adj-name-faction",
                        "noun-faction", 4, 1};
     for (int i = 0; i < 64; ++i) {
-        Facility[FacilitySPStart + i].name = reinterpret_cast<LPSTR>(i + 1);
-        StringTable.values[i + 1] = std::string("project_") + std::to_string(i);
+        std::snprintf(facility_names[FacilitySPStart + i],
+                      sizeof(facility_names[0]), "project_%d", i);
+        Facility[FacilitySPStart + i].name =
+            facility_names[FacilitySPStart + i];
         SecretProject[i] = -1;
         Bases[i].faction_id_current = 0;
     }

@@ -562,13 +562,13 @@ void MonuWin::on_redraw() {
       PluralityDefault = 0;
       parse_says(1, Players[faction].name_leader,
                  Players[faction].is_leader_female, -1);
-      parse_says(2, StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
-                     Facility[FacilitySPStart + record.word_8_].name))), -1, -1);
+      parse_says(2, StringTable.get(
+                     Facility[FacilitySPStart + record.word_8_].name), -1, -1);
       description_section = "PROJECT1ST";
       } else {
       parse_says(0, Players[faction].adj_name_faction, -1, -1);
-      parse_says(1, StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
-                     Facility[FacilitySPStart + record.word_8_].name))), -1, -1);
+      parse_says(1, StringTable.get(
+                     Facility[FacilitySPStart + record.word_8_].name), -1, -1);
       GenderDefault = Players[record.owner_faction_].is_leader_female;
       PluralityDefault = 0;
       parse_says(2, Players[record.owner_faction_].title_leader,

@@ -434,7 +434,7 @@ void DesignWin::on_right_click(int x, int y) {
     // Both special-ability spots (4 and 5) use the same help label.
     int label = 0xCD4 / 4 + (category == 5 ? 4 : category);
     char *text = StringTable.get(
-        reinterpret_cast<int>(reinterpret_cast<LPSTR *>(Labels.strings_ptr)[label]));
+        reinterpret_cast<LPSTR *>(Labels.strings_ptr)[label]);
     client_to_screen(&x, &y);
     RECT rect = {x, y, x, y};
     set_bubble_text(text, &rect);
@@ -457,8 +457,8 @@ void DesignWin::on_redraw() {
     caption.bottom -= 3;
     StringTemp[0] = 0;
     screen->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-        reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xA70 / 4])));
+    strcat(StringTemp, StringTable.get(
+        reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xA70 / 4]));
     screen->set_text_color(0xF0, -1, 1, 1);
     CharUpperA(StringTemp);
     screen->write_cent_l(StringTemp, &caption, strlen(StringTemp));
@@ -698,11 +698,11 @@ int __cdecl tut_check2(int flag);
  * storage/reference correspondence remains a restoration obligation. No
  * native literal symbol or extent binding is asserted here.
  */
-static int *const AbilityLabelIds = (int *)0x009AB540;
-static int *const AbilityLabelIdsEnd = (int *)0x009AB86C;
-    // The ability-label id table draw_flash's stat line walks - 39 dwords at
-    // a 0x1C stride, one per ABL_ bit, each an alpha.txt label StringTable
-    // resolves; SocialEffectRow/RowEnd is the same pointer-pair convention.
+static LPSTR *const AbilityLabelIds = (LPSTR *)0x009AB540;
+static LPSTR *const AbilityLabelIdsEnd = (LPSTR *)0x009AB86C;
+    // The ability-label pointer table draw_flash's stat line walks - 39 dwords
+    // at a 0x1C stride, one per ABL_ bit, each an alpha.txt label pointer;
+    // SocialEffectRow/RowEnd is the same pointer-pair convention.
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -1410,7 +1410,7 @@ void DesignWin::on_iface_left_click(int a1, int a2) {
 // calls     0x004BDDE0 0x005ED240 0x005F83D0 0x005FAB00 0x006169A0
 // Homed from src/unrecovered/0043d290.cpp: a right-click on the prototype
 // stack (spot1_) raises the tutorial-style bubble naming the prototype under
-// the pointer - the label id comes out of the game block at
+// the pointer - the label pointer comes out of the game block at
 // Labels.strings_ptr+0xCE8, and the bubble anchor is that map square pushed
 // through the main interface's client_to_screen.
 void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
@@ -1421,10 +1421,10 @@ void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
         // The image swaps its two argument slots so the client_to_screen call
         // receives (&xCoord, &yCoord); the anchor rect is that screen square.
         MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);
-        // The label id sits at byte offset 0xCE8 of the game block - slot
+        // The label pointer sits at byte offset 0xCE8 of the game block - slot
         // 0x33A of the LPSTR array, the same walk datalink.cpp's
         // CATEGORY_LABEL makes over Labels.strings_ptr.
-        int label_id = (int)reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x33A];
+        LPSTR label = reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x33A];
         RECT rect;
         rect.left = xCoord;
         rect.top = yCoord;
@@ -1432,7 +1432,7 @@ void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
         rect.bottom = yCoord;
         // MainInterface declares its own (button_id, text) set_bubble_text,
         // which would hide the Win member the image calls directly.
-        MainInterfaceGlobal.Win::set_bubble_text(StringTable.get(label_id),
+        MainInterfaceGlobal.Win::set_bubble_text(StringTable.get(label),
                                                  &rect);
     }
 }
@@ -2813,8 +2813,7 @@ void DesignWin::draw_chassis(int redraw) {
     canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
 
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(static_cast<int>(
-        reinterpret_cast<intptr_t>(Chassis[chassis].offsv_1_name))));
+    strcat(StringTemp, StringTable.get(Chassis[chassis].offsv_1_name));
     CharUpperA(StringTemp);
 
     const int available_width = designwin_panel_subtract(rect.right, rect.left);
@@ -2839,8 +2838,7 @@ void DesignWin::draw_chassis(int redraw) {
 
     StringTemp[0] = '\0';
     const unsigned char triad = Chassis[chassis].triad;
-    strcat(StringTemp, StringTable.get(static_cast<int>(
-        reinterpret_cast<intptr_t>(Triad[triad]))));
+    strcat(StringTemp, StringTable.get(Triad[triad]));
     strcat(StringTemp, BufferJoinSpace);
     char speed[80];
     _itoa(static_cast<int>(Chassis[chassis].speed), speed, 10);
@@ -2935,8 +2933,7 @@ void DesignWin::draw_weapon(int redraw) {
     name_line.bottom = designwin_panel_add(name_line.top, font1_.pixel_height());
     canvas->set_text_color(TextColourTable[158], TextColourTable[159], 1, 1);
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(static_cast<int>(
-        reinterpret_cast<unsigned long>(Weapon[protoWeaponType_].name))));
+    strcat(StringTemp, StringTable.get(Weapon[protoWeaponType_].name));
     CharUpperA(StringTemp);
     if (font1_.width(StringTemp) > designwin_panel_subtract(area.right, area.left)) {
         const int wrap_height = designwin_panel_font_height(
@@ -3027,8 +3024,7 @@ void DesignWin::draw_armor(int redraw) {
     if (protoArmorType_ == 0)
         designwin_panel_append_label(StringTemp, 0x64);
     else
-        strcat(StringTemp, StringTable.get(static_cast<int>(
-            reinterpret_cast<unsigned long>(Armor[protoArmorType_].name))));
+        strcat(StringTemp, StringTable.get(Armor[protoArmorType_].name));
     CharUpperA(StringTemp);
     if (font1_.width(StringTemp) > designwin_panel_subtract(area.right, area.left)) {
         const int advance = designwin_panel_font_height(
@@ -3090,8 +3086,7 @@ void DesignWin::draw_reactor(int redraw) {
         designwin_panel_append_label(StringTemp, 0x584);
         strcat(StringTemp, " ");
     }
-    strcat(StringTemp, StringTable.get(static_cast<int>(
-        reinterpret_cast<unsigned long>(Reactor[protoReactorType_ - 1].name))));
+    strcat(StringTemp, StringTable.get(Reactor[protoReactorType_ - 1].name));
     CharUpperA(StringTemp);
     const int description_height = canvas->wrap_height(
         StringTemp, designwin_panel_subtract(area.right, area.left));
@@ -3158,8 +3153,8 @@ void DesignWin::draw_special_1(int redraw) {
     }
 
     const RulesAbility &record = Ability[ability];
-    char *name = StringTable.get(reinterpret_cast<int>(record.name));
-    char *description = StringTable.get(reinterpret_cast<int>(record.description));
+    char *name = StringTable.get(record.name);
+    char *description = StringTable.get(record.description);
     if (name != 0) {
         canvas->set_text_color(0xE0, -1, 1, 1);
         text.top = canvas->wrap_cent(&font2_, name, &text);
@@ -3206,8 +3201,8 @@ void DesignWin::draw_special_2(int redraw) {
     }
 
     const RulesAbility &record = Ability[ability];
-    char *name = StringTable.get(reinterpret_cast<int>(record.name));
-    char *description = StringTable.get(reinterpret_cast<int>(record.description));
+    char *name = StringTable.get(record.name);
+    char *description = StringTable.get(record.description);
     if (name != 0) {
         canvas->set_text_color(0xE0, -1, 1, 1);
         text.top = canvas->wrap_cent(&font2_, name, &text);
@@ -3343,11 +3338,10 @@ void DesignWin::draw_vehicle(int redraw) {
     ability_names[0] = 0;
     for (int bit = 0; bit < MaxAbilityNum; ++bit) {
         if (abilities & (1 << (bit & 0x1f))) {
-            char *name = StringTable.get(reinterpret_cast<int>(Ability[bit].name));
+            char *name = StringTable.get(Ability[bit].name);
             if (strlen(name) != 0) {
                 if (strlen(ability_names) != 0) strcat(ability_names, ", ");
-                strcat(ability_names, StringTable.get(
-                    reinterpret_cast<int>(Ability[bit].name)));
+                strcat(ability_names, StringTable.get(Ability[bit].name));
             }
         }
     }
@@ -3648,8 +3642,7 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, preset_names_[10]);
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
-    strcat(StringTemp, StringTable.get(
-        reinterpret_cast<int>(Triad[Chassis[chassis_id].triad])));
+    strcat(StringTemp, StringTable.get(Triad[Chassis[chassis_id].triad]));
     StringTemp[4] = 0;
     strcat(StringTemp, " ");
     char numbuf7[80];
@@ -3684,8 +3677,7 @@ void DesignWin::draw_vehicle(int redraw) {
         strcat(StringTemp, "-");
     } else {
         ability_names[0] = 0;
-        strcat(ability_names, StringTable.get(reinterpret_cast<int>(
-            Ability[protoAbilityID1_].name)));
+        strcat(ability_names, StringTable.get(Ability[protoAbilityID1_].name));
         strcat(StringTemp, ability_names);
         StringTemp[6] = 0;
         char *sp2 = strchr(ability_names, 0x20);
@@ -3708,8 +3700,7 @@ void DesignWin::draw_vehicle(int redraw) {
         strcat(StringTemp, "-");
     } else {
         ability_names[0] = 0;
-        strcat(ability_names, StringTable.get(reinterpret_cast<int>(
-            Ability[protoAbilityID2_].name)));
+        strcat(ability_names, StringTable.get(Ability[protoAbilityID2_].name));
         strcat(StringTemp, ability_names);
         StringTemp[6] = 0;
         char *sp3 = strchr(ability_names, 0x20);
@@ -4135,8 +4126,8 @@ void DesignWin::draw_stack() {
                     // The label id the interface keeps in the game block at
                     // Labels.strings_ptr+0xE40 (slot 0x390) - same walk as
                     // on_iface_right_click's 0xCE8.
-                    strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
-                        Labels.strings_ptr)[0x390]));
+                    strcat(StringTemp, StringTable.get(
+                        reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x390]));
                 } else {
                     strcat(StringTemp, VehPrototypes[proto_id].veh_name);
                 }
@@ -4145,8 +4136,8 @@ void DesignWin::draw_stack() {
                 unsigned char seen =
                     PlayersData[factionID_].proto_id_active[proto_id];
                 canvas->set_text_color(0xF8 + ((-(seen != 0)) & 7), -1, 1, 1);
-                strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
-                    Labels.strings_ptr)[0x390]));
+                strcat(StringTemp, StringTable.get(
+                    reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x390]));
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 char digits[0x20];
@@ -4209,8 +4200,8 @@ void DesignWin::draw_stack() {
         } else {
             StringTemp[0] = '\0';
             // Slot 0x6E of the same label block: the "undesigned" caption.
-            strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
-                Labels.strings_ptr)[0x6E]));
+            strcat(StringTemp, StringTable.get(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x6E]));
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "#");
             char digits[0x20];
@@ -4589,7 +4580,7 @@ void DesignWin::draw_flash() {
         int prototype_id = Vehs[shown].proto_id;
         say_stats_3(StringTemp, prototype_id);
         int ability_bit = 0;
-        for (int *label = AbilityLabelIds; label < AbilityLabelIdsEnd;
+        for (LPSTR *label = AbilityLabelIds; label < AbilityLabelIdsEnd;
              ++label, ++ability_bit) {
             if (VehPrototypes[prototype_id].ability_flags & (1 << ability_bit)) {
                 if (strlen(StringTable.get(*label)) != 0) {
@@ -4609,8 +4600,8 @@ void DesignWin::draw_flash() {
             strcat(StringTemp, digits);
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp,
-                   StringTable.get((int)reinterpret_cast<LPSTR *>(
-                       Labels.strings_ptr)[0x3A0]));
+                   StringTable.get(
+                       reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x3A0]));
             line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
                                          rc.right - rc.left);
 
@@ -4619,16 +4610,16 @@ void DesignWin::draw_flash() {
             strcat(StringTemp, digits);
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp,
-                   StringTable.get((int)reinterpret_cast<LPSTR *>(
-                       Labels.strings_ptr)[0x3A1]));
+                   StringTable.get(
+                       reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x3A1]));
             line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
                                          rc.right - rc.left);
 
             if (VehPrototypes[shown].obsolete_factions
                 & (1 << (factionID_ & 0x1F))) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
-                    Labels.strings_ptr)[0x390]));
+                strcat(StringTemp, StringTable.get(
+                    reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x390]));
                 CharUpperA(StringTemp);
                 canvas->wrap_cent(StringTemp, line_left, line_top,
                                   rc.right - rc.left);
@@ -4696,9 +4687,7 @@ void DesignWin::select_special(int which) {
         if (which != 0) {
             const int tech_id = static_cast<int>(Rules.tech_two_spec_abilities);
             if (!has_tech(tech_id, faction)) {
-                parse_say(0,
-                          reinterpret_cast<int>(Technology[tech_id].name),
-                          -1, -1);
+                parse_say(0, Technology[tech_id].name, -1, -1);
                 popp(ScriptTxtID, "TWOSPECIAL", 0,
                      "alunit_sm.pcx", pop_wait);
                 popup.close();
@@ -4717,9 +4706,7 @@ void DesignWin::select_special(int which) {
         if (which != 0) {
             const int tech_id = static_cast<int>(Rules.tech_two_spec_abilities);
             if (!has_tech(tech_id, faction)) {
-                parse_say(0,
-                          reinterpret_cast<int>(Technology[tech_id].name),
-                          -1, -1);
+                parse_say(0, Technology[tech_id].name, -1, -1);
                 popp(ScriptTxtID, "TWOSPECIAL", 0,
                      "unit_sm.pcx", pop_wait);
                 popup.close();
@@ -4748,7 +4735,7 @@ void DesignWin::select_special(int which) {
 
     StringTemp[0] = 0;
     strcat(StringTemp,
-           StringTable.get((int)reinterpret_cast<LPSTR *>(
+           StringTable.get(reinterpret_cast<LPSTR *>(
                Labels.strings_ptr)[0x88]));
     dialogs.item(StringTemp, 0x1D);
 
@@ -4791,15 +4778,13 @@ void DesignWin::select_special(int which) {
         }
 
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(
-            reinterpret_cast<int>(Ability[ability].name)));
+        strcat(StringTemp, StringTable.get(Ability[ability].name));
         strcat(StringTemp, ": ");
-        strcat(StringTemp, StringTable.get(
-            reinterpret_cast<int>(Ability[ability].description)));
+        strcat(StringTemp, StringTable.get(Ability[ability].description));
         strcat(StringTemp, "|");
         // The image reads Labels.strings_ptr + 0x160 bytes: dword entry 0x58.
-        strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
-            Labels.strings_ptr)[0x58]));
+        strcat(StringTemp, StringTable.get(
+            reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x58]));
         strcat(StringTemp, ": ");
 
         const int kind = static_cast<int>(Ability[ability].cost_factor);
@@ -4818,8 +4803,7 @@ void DesignWin::select_special(int which) {
                     Chassis[protoChassisType_].triad;
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get(
-                    reinterpret_cast<int>(Triad[triad])));
+                strcat(StringTemp, StringTable.get(Triad[triad]));
                 strcat(StringTemp, ")");
             }
         } else if (kind >= -7) {
@@ -4846,9 +4830,9 @@ void DesignWin::select_special(int which) {
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get((int)labels[0x7C]));
+                strcat(StringTemp, StringTable.get(labels[0x7C]));
                 strcat(StringTemp, "/");
-                strcat(StringTemp, StringTable.get((int)labels[0x55]));
+                strcat(StringTemp, StringTable.get(labels[0x55]));
                 strcat(StringTemp, ")");
                 break;
             }
@@ -4857,7 +4841,7 @@ void DesignWin::select_special(int which) {
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get((int)labels[0x7C]));
+                strcat(StringTemp, StringTable.get(labels[0x7C]));
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, ")");
                 break;
@@ -4866,7 +4850,7 @@ void DesignWin::select_special(int which) {
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get((int)labels[0x55]));
+                strcat(StringTemp, StringTable.get(labels[0x55]));
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, ")");
                 break;
@@ -4875,7 +4859,7 @@ void DesignWin::select_special(int which) {
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get((int)labels[0x2C5]));
+                strcat(StringTemp, StringTable.get(labels[0x2C5]));
                 strcat(StringTemp, "-1");
                 strcat(StringTemp, ")");
                 break;
@@ -4885,9 +4869,9 @@ void DesignWin::select_special(int which) {
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get((int)labels[0x7C]));
+                strcat(StringTemp, StringTable.get(labels[0x7C]));
                 strcat(StringTemp, "+");
-                strcat(StringTemp, StringTable.get((int)labels[0x55]));
+                strcat(StringTemp, StringTable.get(labels[0x55]));
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, ")");
                 break;
@@ -4897,9 +4881,9 @@ void DesignWin::select_special(int which) {
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get((int)labels[0x7C]));
+                strcat(StringTemp, StringTable.get(labels[0x7C]));
                 strcat(StringTemp, "+");
-                strcat(StringTemp, StringTable.get((int)labels[0x2C5]));
+                strcat(StringTemp, StringTable.get(labels[0x2C5]));
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, ")");
                 break;
@@ -4909,9 +4893,9 @@ void DesignWin::select_special(int which) {
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
-                strcat(StringTemp, StringTable.get((int)labels[0x55]));
+                strcat(StringTemp, StringTable.get(labels[0x55]));
                 strcat(StringTemp, "+");
-                strcat(StringTemp, StringTable.get((int)labels[0x2C5]));
+                strcat(StringTemp, StringTable.get(labels[0x2C5]));
                 strcat(StringTemp, "-2");
                 strcat(StringTemp, ")");
                 break;

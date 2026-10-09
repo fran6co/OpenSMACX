@@ -3336,8 +3336,7 @@ void __cdecl time_controls_dialog(Popup *popup) {
     popup->start(PopupStartCaption, "TIMECONTROLS", -1, nullptr, 0x40, nullptr);
     for (int index = 0; index < MaxTimeControlNum; ++index) {
         StringTemp[0] = '\0';
-        strcat(StringTemp, StringTable.get(
-            reinterpret_cast<int>(TimeControl[index].name)));
+        strcat(StringTemp, StringTable.get(TimeControl[index].name));
         strcat(StringTemp, "|");
         strcat(StringTemp, "(");
 

@@ -660,7 +660,7 @@ void ProdPicker::calculate() {
             strcat(nameBuf, ")");
             strcat(nameBuf, " ");
         }
-        strcat(nameBuf, StringTable.get(reinterpret_cast<int>(Facility[facilityId].name)));
+        strcat(nameBuf, StringTable.get(Facility[facilityId].name));
 
         statsBuf[0] = '\0';
         int cost = cost_factor(base->faction_id_current, 1, -1) * Facility[facilityId].cost;
@@ -696,8 +696,7 @@ void ProdPicker::calculate() {
         }
 
         thirdBuf[0] = '\0';
-        const char *suffix = StringTable.get(
-            reinterpret_cast<int>(Facility[facilityId].effect));
+        const char *suffix = StringTable.get(Facility[facilityId].effect);
         if (strlen(suffix) != 0) strcat(thirdBuf, suffix);
 
         prod_a_.pending_text_ = nameBuf;

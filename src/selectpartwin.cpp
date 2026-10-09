@@ -673,9 +673,7 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     temp.bottom = a2->top + font1->line_advance();
 
     StringTemp[0] = 0;
-    strcat(StringTemp,
-           StringTable.get(*reinterpret_cast<const int *>(
-               &Chassis[slot].offsv_1_name)));
+    strcat(StringTemp, StringTable.get(Chassis[slot].offsv_1_name));
     CharUpperA(StringTemp);
     buf->wrap_cent(font1, StringTemp, &temp);
 
@@ -687,9 +685,7 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     temp.top = a2->bottom - font1->line_advance();
 
     StringTemp[0] = 0;
-    strcat(StringTemp,
-           StringTable.get(*reinterpret_cast<const int *>(
-               &Triad[Chassis[slot].triad])));
+    strcat(StringTemp, StringTable.get(Triad[Chassis[slot].triad]));
 
     buf->set_font(font1, 0, 0, 0);
     buf->write_l(StringTemp, &temp,
@@ -790,9 +786,7 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
     buf->set_font(font1, 0, 0, 0);
 
     StringTemp[0] = 0;
-    strcat(StringTemp,
-           StringTable.get(*reinterpret_cast<const int *>(
-               &Reactor[slot - 1].name)));
+    strcat(StringTemp, StringTable.get(Reactor[slot - 1].name));
     CharUpperA(StringTemp);
     buf->wrap_cent(StringTemp, &rect1);
 
@@ -805,8 +799,8 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
     rect2.top = rect2.bottom - font1->line_advance();
 
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(*reinterpret_cast<const int *>(
-                           Labels.strings_ptr + 0x1E4)));
+    strcat(StringTemp, StringTable.get(reinterpret_cast<LPSTR *>(
+        Labels.strings_ptr)[0x1E4 / 4]));
     buf->write_l(StringTemp, &rect2,
                  static_cast<int>(strlen(StringTemp)));
 
@@ -937,8 +931,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         const int slot16 = slot << 4;
         StringTemp[0] = 0;
         strcat(StringTemp,
-               StringTable.get(
-                   *reinterpret_cast<const int *>(&Armor[slot].name)));
+               StringTable.get(Armor[slot].name));
         CharUpperA(StringTemp);
         buf444->wrap_cent(StringTemp, &rectScratch);
         buf444->set_text_color(TextColourTable[160], TextColourTable[161], 1, 1);
@@ -954,8 +947,8 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         const unsigned char flag2 = Armor[slot].mode;
         if (flag2 < 3) {
             strcat(StringTemp,
-                   StringTable.get(*reinterpret_cast<const int *>(
-                       Labels.strings_ptr + 0x1F8)));
+                   StringTable.get(reinterpret_cast<LPSTR *>(
+                       Labels.strings_ptr)[0x1F8 / 4]));
         }
         buf444->write_l(StringTemp, &rectScratch,
                         static_cast<int>(strlen(StringTemp)));
@@ -964,8 +957,8 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         StringTemp[0] = 0;
         if (armLevel < 0) {
             strcat(StringTemp,
-                   StringTable.get(*reinterpret_cast<const int *>(
-                       Labels.strings_ptr + 0x310)));
+                   StringTable.get(reinterpret_cast<LPSTR *>(
+                       Labels.strings_ptr)[0x310 / 4]));
         } else {
             char itoaBuf[32];
             _itoa(armLevel, itoaBuf, 10);
@@ -1108,8 +1101,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     tmp_rect.right = a2->right;
     tmp_rect.bottom = a2->top + font45f4->line_advance();
     StringTemp[0] = 0;
-    strcat(StringTemp,
-           StringTable.get(*reinterpret_cast<const int *>(&Weapon[idx].name)));
+    strcat(StringTemp, StringTable.get(Weapon[idx].name));
     panel_buf->set_font(font45f4, 0, 0, 0);
     CharUpperA(StringTemp);
     panel_buf->wrap_cent(StringTemp, &tmp_rect);
@@ -1121,8 +1113,8 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     tmp_rect.top = tmp_rect.bottom - font45f4->line_advance();
     StringTemp[0] = 0;
     strcat(StringTemp,
-           StringTable.get(*reinterpret_cast<const int *>(
-               Labels.strings_ptr + (cat_byte < 3 ? 0x204 : 0x200))));
+           StringTable.get(reinterpret_cast<LPSTR *>(Labels.strings_ptr)[
+               (cat_byte < 3 ? 0x204 : 0x200) / 4]));
     panel_buf->write_l(StringTemp, &tmp_rect,
                        static_cast<int>(strlen(StringTemp)));
 
@@ -1131,8 +1123,8 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     StringTemp[0] = 0;
     if (count_char == -1) {
         strcat(StringTemp,
-               StringTable.get(*reinterpret_cast<const int *>(
-                   Labels.strings_ptr + 0x310)));
+               StringTable.get(reinterpret_cast<LPSTR *>(
+                   Labels.strings_ptr)[0x310 / 4]));
     } else {
         char num_buf[80];
         if (cat_byte > 2) {

@@ -4247,14 +4247,14 @@ void __cdecl world_climate() {
     random_reseed(timeGetTime());
 
     if (WorldClimateSkipTerrainClear == 0) {
-        int cursor = reinterpret_cast<int>(MapWinTable);
-        const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
+        MapWin **cursor = MapWinTable;
+        MapWin **const end = cursor + MapWinTableSlots;
         do {
-            MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
+            MapWin *const window = *cursor;
             if (window->field_1DD74_ != 0) {
                 window->clear_terrain();
             }
-            cursor += 4;
+            ++cursor;
         } while (cursor < end);
         WorldClimateWorldWin.clear_terrain();
     }
@@ -4515,7 +4515,7 @@ void __cdecl world_crater(int x, int y) {
             }
         }
     }
-    new_landmark(x, y, StringTable.get((int)Natural[LM_CRATER].name));
+    new_landmark(x, y, StringTable.get(Natural[LM_CRATER].name));
 }
 
 /*
@@ -4585,7 +4585,7 @@ void __cdecl world_monsoon(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y, StringTable.get((int)Natural[LM_JUNGLE].name));
+    new_landmark(x, y, StringTable.get(Natural[LM_JUNGLE].name));
 }
 
 /*
@@ -4656,7 +4656,7 @@ void __cdecl world_sargasso(int x, int y) {
             }
         }
     }
-    new_landmark(x, y, StringTable.get((int)Natural[LM_SARGASSO].name));
+    new_landmark(x, y, StringTable.get(Natural[LM_SARGASSO].name));
 }
 
 /*
@@ -4731,7 +4731,7 @@ void __cdecl world_ruin(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y, StringTable.get((int)Natural[LM_RUINS].name));
+    new_landmark(x, y, StringTable.get(Natural[LM_RUINS].name));
 }
 
 /*
@@ -4802,7 +4802,7 @@ void __cdecl world_dune(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y + 2, StringTable.get((int)Natural[LM_DUNES].name));
+    new_landmark(x, y + 2, StringTable.get(Natural[LM_DUNES].name));
 }
 
 /*
@@ -4867,7 +4867,7 @@ void __cdecl world_diamond(int x, int y) {
             }
         }
     }
-    new_landmark(x, y, StringTable.get((int)Natural[LM_URANIUM].name));
+    new_landmark(x, y, StringTable.get(Natural[LM_URANIUM].name));
 }
 
 /*
@@ -4932,7 +4932,7 @@ void __cdecl world_fresh(int x, int y) {
             } else if(!has_set_landmark && x_search >= 0) {
                 int x_fresh = (x_search + x_it - 2) / 2;
                 new_landmark(((x_fresh ^ y_it) & 1) ^ x_fresh, y_it,
-                    StringTable.get((int)Natural[LM_FRESH].name));
+                    StringTable.get(Natural[LM_FRESH].name));
                 has_set_landmark = true;
             }
         }
@@ -5015,7 +5015,7 @@ void __cdecl world_volcano(int x, int y, BOOL is_not_landmark) {
     GameDataStateStorage.fields_.mount_planet_x_ = x;
     GameDataStateStorage.fields_.mount_planet_y_ = y;
     if (!is_not_landmark) {
-        new_landmark(x, y, StringTable.get((int)Natural[LM_VOLCANO].name));
+        new_landmark(x, y, StringTable.get(Natural[LM_VOLCANO].name));
     }
 }
 
@@ -5123,7 +5123,7 @@ void __cdecl world_borehole(int x, int y) {
         }
     }
     bit2_set(x, y, LM_BOREHOLE, true);
-    new_landmark(x, y, StringTable.get((int)Natural[LM_BOREHOLE].name));
+    new_landmark(x, y, StringTable.get(Natural[LM_BOREHOLE].name));
 }
 
 /*
@@ -5185,7 +5185,7 @@ void __cdecl world_temple(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y, StringTable.get((int)Natural[LM_NEXUS].name));
+    new_landmark(x, y, StringTable.get(Natural[LM_NEXUS].name));
 }
 
 /*
@@ -5279,7 +5279,7 @@ void __cdecl world_unity(int x, int y) {
                 }
             }
         }
-        new_landmark(x, y, StringTable.get((int)Natural[LM_UNITY].name));
+        new_landmark(x, y, StringTable.get(Natural[LM_UNITY].name));
     }
 }
 
@@ -5352,7 +5352,7 @@ void __cdecl world_fossil(int x, int y) {
                 code_set(x_radius, y_radius, i);
             }
         }
-        new_landmark(x, y, StringTable.get((int)Natural[LM_FOSSIL].name));
+        new_landmark(x, y, StringTable.get(Natural[LM_FOSSIL].name));
     }
 }
 
@@ -5396,7 +5396,7 @@ void __cdecl world_canyon(int x, int y) {
             code_set(x_radius, y_radius, WorldCanyonOffsetValues[i]); // the above world_alt_set()
         }
     }
-    new_landmark(x, y + 2, StringTable.get((int)Natural[LM_CANYON].name));
+    new_landmark(x, y + 2, StringTable.get(Natural[LM_CANYON].name));
 }
 
 /*
@@ -5458,7 +5458,7 @@ void __cdecl world_mesa(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y + 2, StringTable.get((int)Natural[LM_MESA].name));
+    new_landmark(x, y + 2, StringTable.get(Natural[LM_MESA].name));
 }
 
 /*
@@ -5520,7 +5520,7 @@ void __cdecl world_ridge(int x, int y) {
             code_set(x_radius, y_radius, world_ridge_offset_val[i]); // the above world_alt_set()
         }
     }
-    new_landmark(x, y + 2, StringTable.get((int)Natural[LM_RIDGE].name));
+    new_landmark(x, y + 2, StringTable.get(Natural[LM_RIDGE].name));
 }
 
 /*
@@ -5595,7 +5595,7 @@ void __cdecl world_geothermal(int x, int y) {
             }
         }
     }
-    new_landmark(x, y, StringTable.get((int)Natural[LM_GEOTHERMAL].name));
+    new_landmark(x, y, StringTable.get(Natural[LM_GEOTHERMAL].name));
 }
 
 /*
@@ -6610,8 +6610,8 @@ Purpose: Write a secret project's name, and its cost bracket when asked.
 //        file's .data, so the catalogue gives no parameter names; they are
 //        read off the body (an output buffer, a project index, a flag).
 //        SecretProjectRules is the 0x30-stride rules record whose first field
-//        is the Strings id the name comes from - the same record shape as
-//        Facility[] - and 0x2CC into the label block is label_get(179).
+//        is the original LPSTR name, matching the Facility[] representation;
+//        0x2CC into the label block is label_get(179).
 // TRIED: (as 00590990.cpp) the artifact's `strcat(StringTemp, ...)`,
 //        i.e. no append of StringTemp to the output - it is what the image
 //        does, and it is kept here.
@@ -6630,7 +6630,7 @@ Status: Complete
 */
 void __cdecl say_project(void *text, int project_id, int with_cost) {
     char *output = static_cast<char *>(text);
-    strcat(output, StringTable.get((int)Facility[FacilitySPStart + project_id].name));
+    strcat(output, StringTable.get(Facility[FacilitySPStart + project_id].name));
     if (with_cost != 0) {
         strcat(output, " ");
         strcat(output, "(");

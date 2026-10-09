@@ -284,7 +284,7 @@ int PickTech::on_key_click(int character, int key) {
 }
 
 static const char *picktech_name(LPSTR address) {
-    return StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(address)));
+    return StringTable.get(address);
 }
 
 static void picktech_add_label(int index) {
@@ -362,8 +362,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
     canvas->set_font(&title_font_, &body_font_primary_, &body_font_secondary_, 0);
     canvas->set_text_color(mandate_color(category), 0, 1, 1);
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get(static_cast<int>(
-        reinterpret_cast<intptr_t>(Mandate[category].name_caps))));
+    strcat(StringTemp, StringTable.get(Mandate[category].name_caps));
     strcat(StringTemp, " ");
     _itoa(requirement_count, number_buffer, 10);
     strcat(StringTemp, number_buffer);
@@ -577,8 +576,7 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
             strcat(StringTemp, "{");
             strcat(StringTemp, picktech_name(rule.offsv_1_name));
             strcat(StringTemp, " (");
-            strcat(StringTemp, StringTable.get(static_cast<int>(
-                reinterpret_cast<intptr_t>(Triad[rule.triad]))));
+            strcat(StringTemp, StringTable.get(Triad[rule.triad]));
             strcat(StringTemp, " ");
             _itoa(static_cast<int>(rule.speed),
                   number_buffer, 10);

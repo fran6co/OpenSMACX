@@ -264,8 +264,7 @@ static void reportwin_append_lab_entry(bool datalink, int &entry_count,
     } else {
         strcat(StringTemp, ", ");
     }
-    LPSTR resolved_name = name_in_string_table
-        ? StringTable.get(reinterpret_cast<int>(name)) : name;
+    LPSTR resolved_name = name_in_string_table ? StringTable.get(name) : name;
     if (datalink && category != 0) {
         char id[32];
         DatalinkMain.construct_id(id, category, index);
@@ -358,8 +357,7 @@ static void reportwin_draw_lab_unlock_sections(Buffer &canvas, int technology,
                                    4, i_chassis);
         if (draw_pass) {
             TechnologyHelpEntryKind = 0x62;
-            TechnologyHelpEntryName = static_cast<int>(
-                reinterpret_cast<intptr_t>(Chassis[i_chassis].offsv_1_name));
+            TechnologyHelpEntryName = Chassis[i_chassis].offsv_1_name;
         }
         reportwin_append_chassis_lab_detail(static_cast<signed char>(Chassis[i_chassis].speed),
                                             Chassis[i_chassis].range);
@@ -374,8 +372,7 @@ static void reportwin_draw_lab_unlock_sections(Buffer &canvas, int technology,
                                    6, i_weapon);
         if (draw_pass) {
             TechnologyHelpEntryKind = 0x63;
-            TechnologyHelpEntryName = static_cast<int>(
-                reinterpret_cast<intptr_t>(Weapon[i_weapon].name));
+            TechnologyHelpEntryName = Weapon[i_weapon].name;
         }
         reportwin_append_weapon_lab_detail(Weapon[i_weapon].offense_rating,
                                            Weapon[i_weapon].mode);
@@ -390,8 +387,7 @@ static void reportwin_draw_lab_unlock_sections(Buffer &canvas, int technology,
                                    7, i_armor);
         if (draw_pass) {
             TechnologyHelpEntryKind = 0x64;
-            TechnologyHelpEntryName = static_cast<int>(
-                reinterpret_cast<intptr_t>(Armor[i_armor].name));
+            TechnologyHelpEntryName = Armor[i_armor].name;
         }
         reportwin_append_armor_lab_detail(Armor[i_armor].defense_rating);
     }
@@ -1315,8 +1311,7 @@ void ReportWin::draw_projects() {
                         rect1_.left + 2, rect1_.top + 1, mandate_color(1),
                         row_pitch - 2, g_SECRET_PROJECT_ICON_SPRITES[0].height());
                     StringTemp[0] = 0;
-                    strcat(StringTemp, StringTable.get(
-                        reinterpret_cast<int>(Facility[facility].name)));
+                    strcat(StringTemp, StringTable.get(Facility[facility].name));
                     canvas.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
                     canvas.set_text_color3(ChatItemIdTable[faction], -1, 1, 1);
                     rect1_.top = item.top + 5;
@@ -1382,7 +1377,7 @@ void ReportWin::draw_projects() {
                 row_pitch - 2, g_SECRET_PROJECT_ICON_SPRITES[0].height());
             StringTemp[0] = 0;
             strcat(StringTemp, "[");
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
+            strcat(StringTemp, StringTable.get(Facility[facility].name));
             strcat(StringTemp, "]");
             canvas.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
             canvas.set_text_color3(ChatItemIdTable[faction], -1, 1, 1);
@@ -2981,7 +2976,7 @@ void ReportWin::draw_intel() {
     rect1_.top += field_E268_;
     diplomacy_check(viewer, subject, 0);
     report_intel_label(0xE94 / 4);
-    say_special(StringTemp, StringTable.get(reinterpret_cast<int>(Mood[get_mood(DiploFriction)])), subject);
+    say_special(StringTemp, StringTable.get(Mood[get_mood(DiploFriction)]), subject);
     CharUpperA(StringTemp);
     report_topic_line(canvas, rect1_, text_x);
     rect1_.top += field_E268_;
@@ -3012,9 +3007,9 @@ void ReportWin::draw_intel() {
     const int category = Players[subject].soc_ideology_category;
     const int model = Players[subject].soc_ideology_model;
     if (category >= 0 && model != 0) {
-        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(SocialCategories[category].type)));
+        strcat(StringTemp, StringTable.get(SocialCategories[category].type));
         strcat(StringTemp, ": ");
-        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(SocialCategories[category].name[model])));
+        strcat(StringTemp, StringTable.get(SocialCategories[category].name[model]));
         CharUpperA(StringTemp);
         report_topic_line(canvas, rect1_, text_x);
         rect1_.top += field_E268_;
@@ -3061,10 +3056,10 @@ void ReportWin::draw_intel() {
     for (int category_index = 0; category_index < 4; ++category_index) {
         StringTemp[0] = 0;
         strcat(StringTemp, "[");
-        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(SocialCategories[category_index].type)));
+        strcat(StringTemp, StringTable.get(SocialCategories[category_index].type));
         strcat(StringTemp, ":   ]");
-        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(SocialCategories[category_index].name[
-            report_social_model(PlayersData[subject].soc_category_pending, category_index)])));
+        strcat(StringTemp, StringTable.get(SocialCategories[category_index].name[
+            report_social_model(PlayersData[subject].soc_category_pending, category_index)]));
         CharUpperA(StringTemp);
         canvas.write_l(StringTemp, rect1_.left + 20,
                        rect1_.top + category_index * field_E268_, strlen(StringTemp));
@@ -3474,7 +3469,7 @@ void ReportWin::draw_ops() {
                 const int facility = -production;
                 item_cost = Facility[facility].cost;
                 facility_scratch = facility;
-                strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
+                strcat(StringTemp, StringTable.get(Facility[facility].name));
                 canvas.set_text_color(mandate_color(TutWinBaseWindow.prodPicker_.edbc_fac(facility)), -1, 1, 1);
             } else {
                 strcat(StringTemp, VehPrototypes[production].veh_name);
@@ -3630,7 +3625,7 @@ void ReportWin::draw_sat() {
                 StringTemp[0] = 0;
                 if (!other) {
                     canvas.set_text_color(0xFF, -1, 1, 1);
-                    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[kind == 4 ? 41 : 65 + kind].name)));
+                    strcat(StringTemp, StringTable.get(Facility[kind == 4 ? 41 : 65 + kind].name));
                     canvas.wrap_cent(StringTemp, &report_work_rect_);
                 } else {
                     int elevators = 0;

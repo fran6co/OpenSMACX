@@ -822,13 +822,13 @@ Purpose: Build the map-window caption from the selected label and publish it
 // RECOVERY_BINDING: v1 {"evidence": ["Retained original 0x0046FB20 seed; MapWin mode field and virtual GraphicWin/Win base; Labels and StringTemp source owners"], "reason": "Home the map window caption in the typed MapWin owner translation unit"}
 void MapWin::standard_caption() {
     StringTemp[0] = '\0';
-    int text_id;
+    LPSTR text;
     if ((field_1DD70_ & 0x40000000U) != 0) {
-        text_id = reinterpret_cast<int *>(Labels.strings_ptr)[0x100];
+        text = reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x100];
     } else {
-        text_id = reinterpret_cast<int *>(Labels.strings_ptr)[0x101];
+        text = reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x101];
     }
-    strcat(StringTemp, StringTable.get(text_id));
+    strcat(StringTemp, StringTable.get(text));
 
     Win::set_caption(StringTemp);
 }
@@ -5303,13 +5303,11 @@ void MapWin::draw_base_names() {
                 char detail[256];
                 detail[0] = '\0';
                 strcat(detail, "(");
-                strcat(detail, StringTable.get(
-                    reinterpret_cast<int>(PlansShortName[plan])));
+                strcat(detail, StringTable.get(PlansShortName[plan]));
                 strcat(detail, ": ");
                 const int production_id = base.queue_production_id[0];
                 const char *production_name = production_id < 0
-                    ? StringTable.get(reinterpret_cast<int>(
-                          Facility[-production_id].name))
+                    ? StringTable.get(Facility[-production_id].name)
                     : VehPrototypes[production_id].veh_name;
                 strcat(detail, production_name);
                 strcat(detail, ")");
@@ -5343,8 +5341,7 @@ void MapWin::draw_base_names() {
                     LPSTR production_name = 0;
                     if (production_id < 0 &&
                         -production_id < MaxFacilityNum) {
-                        production_name = StringTable.get(
-                            reinterpret_cast<int>(Facility[-production_id].name));
+                        production_name = StringTable.get(Facility[-production_id].name);
                     } else if (production_id >= 0 &&
                                production_id < MaxVehProtoNum) {
                         production_name = VehPrototypes[production_id].veh_name;
@@ -5474,8 +5471,7 @@ void mapwin_add_base_production(PullDown &menu, const Base &base, int id) {
     const int production = base.queue_production_id[0];
     LPSTR production_name = 0;
     if (production < 0 && -production < MaxFacilityNum) {
-        production_name = StringTable.get(
-            reinterpret_cast<int>(Facility[-production].name));
+        production_name = StringTable.get(Facility[-production].name);
     } else if (production >= 0 && production < MaxVehProtoNum) {
         production_name = VehPrototypes[production].veh_name;
     }
@@ -6053,8 +6049,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
                         0x40, nullptr);
             for (int triad = 0; triad < MaxTriadNum; ++triad) {
                 StringTemp[0] = '\0';
-                strcat(StringTemp, StringTable.get(
-                    reinterpret_cast<int>(Triad[triad])));
+                strcat(StringTemp, StringTable.get(Triad[triad]));
                 strcat(StringTemp, " ");
                 strcat(StringTemp, "(");
                 const int destination = triad == 0
@@ -6092,8 +6087,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
                         static_cast<size_t>(selected_triad) * sizeof(int16_t));
                     *route = static_cast<int16_t>(destination);
                 } else {
-                    parse_say(2, reinterpret_cast<int>(Triad[selected_triad]),
-                              -1, -1);
+                    parse_say(2, Triad[selected_triad], -1, -1);
                     NetMsgPrimary.pop("DESTNO", 0x1388, 0, nullptr);
                 }
             }

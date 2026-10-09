@@ -741,12 +741,10 @@ void BattleWin::battle_report(int first_vehicle_id, int second_vehicle_id,
                      Chassis[prototype.chassis_id].triad != 1);
                 if (use_weapon_branch) {
                     strcat(StringTemp, StringTable.get(
-                        static_cast<int>(reinterpret_cast<size_t>(
-                            Weapon[prototype.weapon_id].name))));
+                        Weapon[prototype.weapon_id].name));
                 } else {
                     strcat(StringTemp, StringTable.get(
-                        static_cast<int>(reinterpret_cast<size_t>(
-                            Armor[prototype.armor_id].name))));
+                        Armor[prototype.armor_id].name));
                 }
             }
 

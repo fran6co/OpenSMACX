@@ -233,7 +233,7 @@ void Datalink::draw_unit() {
         strcat(StringTemp, " ");
         if (weapon.mode > 6 && weapon.mode < 13) {
             strcat(StringTemp, "{");
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(weapon.name)));
+            strcat(StringTemp, StringTable.get(weapon.name));
         } else {
             strcat(StringTemp, label_get(0x204 / 4));
             strcat(StringTemp, ": ");
@@ -247,7 +247,7 @@ void Datalink::draw_unit() {
     datalink_vehicle_append_rating(armor.defense_rating);
     datalink_vehicle_line_finish(description);
     datalink_vehicle_line_start(0x1C / 4);
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Triad[chassis.triad])));
+    strcat(StringTemp, StringTable.get(Triad[chassis.triad]));
     strcat(StringTemp, " ");
     datalink_vehicle_append_number(chassis.speed);
     datalink_vehicle_line_finish(description);
@@ -304,14 +304,14 @@ void Datalink::draw_chassis() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(chassis.offsv_1_name)));
+    strcat(StringTemp, StringTable.get(chassis.offsv_1_name));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     const int left = description_rect_.left + 9
                    + illustration_rect_.right - illustration_rect_.left;
     description.remove_all();
     datalink_vehicle_line_start(0x1C / 4);
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Triad[chassis.triad])));
+    strcat(StringTemp, StringTable.get(Triad[chassis.triad]));
     strcat(StringTemp, " ");
     datalink_vehicle_append_number(chassis.speed);
     datalink_vehicle_line_finish(description);
@@ -374,7 +374,7 @@ void Datalink::draw_reactor() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(reactor.name)));
+    strcat(StringTemp, StringTable.get(reactor.name));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     const int left = description_rect_.left + 9
@@ -424,7 +424,7 @@ void Datalink::draw_weapon() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(weapon.name)));
+    strcat(StringTemp, StringTable.get(weapon.name));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     const int left = description_rect_.left + 12
@@ -433,7 +433,7 @@ void Datalink::draw_weapon() {
     if (weapon.offense_rating < 0) {
         strcat(StringTemp, label_get(0x310 / 4));
     } else if (weapon.mode < 3) {
-        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(OffenseModes[weapon.mode].name)));
+        strcat(StringTemp, StringTable.get(OffenseModes[weapon.mode].name));
     } else {
         strcat(StringTemp, label_get(0x200 / 4));
     }
@@ -495,14 +495,13 @@ void Datalink::draw_defense() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(armor.name)));
+    strcat(StringTemp, StringTable.get(armor.name));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     text.left += illustration_rect_.right - illustration_rect_.left + 3;
     StringTemp[0] = 0;
-    const int mode_name = armor.defense_rating < 0
-        ? reinterpret_cast<int>(reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x310 / 4])
-        : reinterpret_cast<int>(DefenseModes[armor.mode].name);
+    const LPSTR mode_name = armor.defense_rating < 0
+        ? Labels.strings_ptr[0x310 / 4] : DefenseModes[armor.mode].name;
     strcat(StringTemp, StringTable.get(mode_name));
     parse_says(1, StringTemp, -1, -1);
     parse_num(0, armor.defense_rating);
@@ -541,7 +540,7 @@ void Datalink::draw_ability() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(ability.name)));
+    strcat(StringTemp, StringTable.get(ability.name));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     StringTemp[0] = 0;
@@ -552,55 +551,44 @@ void Datalink::draw_ability() {
     } else {
         switch (ability.cost_factor) {
         case -1:
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x1F0 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1F0 / 4]));
             strcat(StringTemp, "/");
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x154 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x154 / 4]));
             break;
         case -2:
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x1F0 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1F0 / 4]));
             strcat(StringTemp, "-1");
             break;
         case -3:
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x154 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x154 / 4]));
             strcat(StringTemp, "-1");
             break;
         case -4:
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xB14 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xB14 / 4]));
             strcat(StringTemp, "-1");
             break;
         case -5:
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x1F0 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1F0 / 4]));
             strcat(StringTemp, "+");
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x154 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x154 / 4]));
             strcat(StringTemp, "-2");
             break;
         case -6:
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x1F0 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1F0 / 4]));
             strcat(StringTemp, "+");
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xB14 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xB14 / 4]));
             strcat(StringTemp, "-2");
             break;
         case -7:
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x154 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x154 / 4]));
             strcat(StringTemp, "+");
-            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xB14 / 4])));
+            strcat(StringTemp, StringTable.get(Labels.strings_ptr[0xB14 / 4]));
             strcat(StringTemp, "-2");
             break;
         }
     }
     parse_says(1, tech_name(ability.preq_tech, 0), -1, -1);
-    parse_say(2, reinterpret_cast<int>(ability.description), -1, -1);
+    parse_say(2, ability.description, -1, -1);
     parse_says(3, StringTemp, -1, -1);
     parse_num(0, ability.preq_tech + 140000);
     help.remove_all();
@@ -680,8 +668,7 @@ void Datalink::draw_terraform() {
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
     const RulesOrder &order = Order[action + 4];
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
-        land ? order.order : order.order_sea)));
+    strcat(StringTemp, StringTable.get(land ? order.order : order.order_sea));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     const RulesTerraforming &terraform = Terraforming[action];
@@ -691,8 +678,7 @@ void Datalink::draw_terraform() {
     parse_num(1, terraform.rate);
     char *extra = DatalinkTerraformExtraText;
     if (action == 3 || action == 5 || action == 6) {
-        extra = StringTable.get(reinterpret_cast<int>(
-            reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x1110 / 4]));
+        extra = StringTable.get(Labels.strings_ptr[0x1110 / 4]);
     }
     parse_says(2, extra, -1, -1);
     StringTemp[0] = 0;
@@ -735,7 +721,7 @@ void Datalink::draw_facility() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[id].name)));
+    strcat(StringTemp, StringTable.get(Facility[id].name));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     Sprite &icon = g_FACILITY_ICON_SPRITES[id];
@@ -794,7 +780,7 @@ void Datalink::draw_project() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[id].name)));
+    strcat(StringTemp, StringTable.get(Facility[id].name));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     Sprite &icon = g_SECRET_PROJECT_ICON_SPRITES[id - 70];
@@ -854,7 +840,7 @@ void Datalink::draw_social() {
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
     char *name = model < 0 ? SocialCategories[category].type : SocialCategories[category].name[model];
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(name)));
+    strcat(StringTemp, StringTable.get(name));
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     if (model >= 0) {
@@ -1094,7 +1080,7 @@ void Datalink::draw_tech() {
     set_font(&font1_, 0, 0, 0);
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Technology[history_[0]].name)));
+    strcat(StringTemp, StringTable.get(Technology[history_[0]].name));
     CharUpperA(StringTemp);
     // Both the standalone original (0x430BA5..0x430BAC) and draw_entry's
     // inline technology case (0x42C1A7..0x42C1AE) test the buffer ADDRESS,
@@ -1239,7 +1225,7 @@ char DatalinkAdvConceptFile[] = "ADVTITLES";
  *                        0x68. The original name cursor is set2 (+0x18);
  *                        the Null row is record 3.
  *   FactionRowBase       0x009472EC, records 0x167 bytes, ids 150001..150008.
- *   TerraformNameBase    0x0096C8AC, three dwords per entry.
+ *   Order[4..23]          0x0096C8A8, with each row's land/sea name pointers.
  *   Terraforming         0x00691878, twenty records of 0x20. The original
  *                        prerequisite cursor begins at preq_tech_sea (+0xC);
  *                        land and sea gates are the named +8/+C fields.
@@ -1250,12 +1236,11 @@ char DatalinkAdvConceptFile[] = "ADVTITLES";
  *   alpha.h's Language to decide whether the "The " article stays.
  */
 static const char *const FactionRowBase = (const char *)0x009472EC;
-static const int *const TerraformNameBase = (const int *)0x0096C8AC;
 
 // The label each category's filler draws centred in the entry rectangle, read
 // out of the label blob the way dipedit.cpp reads it:
 // `mov eax, ds:0x9b90f8; mov ecx, [eax + <slot>]` - slot / 4 is the index.
-#define CATEGORY_LABEL(slot) StringTable.get((int) * ((LPSTR *)Labels.strings_ptr + (slot)))
+#define CATEGORY_LABEL(slot) StringTable.get(Labels.strings_ptr[(slot)])
 
 // See datalink.h. Defined out of line only so VCall's declaration, which
 // basewin.cpp also carries locally, is not dragged into every TU that includes
@@ -2299,7 +2284,7 @@ void Datalink::set_cat_chassis() {
     for (int index = 0; index < MaxChassisNum; ++index) {
         if (Chassis[index].preq_tech >= -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get((int)Chassis[index].offsv_1_name));
+            strcat(StringTemp, StringTable.get(Chassis[index].offsv_1_name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkChassisIdSeparator);
                 char digits[80];
@@ -2352,7 +2337,7 @@ void Datalink::set_cat_reactor() {
     for (; id - 50000 < 5; ++record, ++id) {
         if (record->preq_tech >= -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get((int)record->name));
+            strcat(StringTemp, StringTable.get(record->name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkReactorIdSeparator);
                 char digits[80];
@@ -2398,7 +2383,7 @@ void Datalink::set_cat_weapon() {
     for (int index = 0; index < MaxWeaponNum; ++index) {
         if (Weapon[index].preq_tech >= -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get((int)Weapon[index].name));
+            strcat(StringTemp, StringTable.get(Weapon[index].name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkWeaponIdSeparator);
                 char digits[80];
@@ -2444,7 +2429,7 @@ void Datalink::set_cat_defense() {
     for (int index = 0; index < MaxArmorNum; ++index) {
         if (Armor[index].preq_tech >= -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get((int)Armor[index].name));
+            strcat(StringTemp, StringTable.get(Armor[index].name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkDefenseIdSeparator);
                 char digits[80];
@@ -2490,7 +2475,7 @@ void Datalink::set_cat_ability() {
     for (int index = 0; index < MaxAbilityNum; ++index) {
         if (Ability[index].preq_tech >= -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get((int)Ability[index].name));
+            strcat(StringTemp, StringTable.get(Ability[index].name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkAbilityIdSeparator);
                 char digits[80];
@@ -2543,7 +2528,7 @@ void Datalink::set_cat_facility() {
     for (; id - 100000 < 0x46; ++record, ++id) {
         if (record->preq_tech >= -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get((int)record->name));
+            strcat(StringTemp, StringTable.get(record->name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkFacilityIdSeparator);
                 char digits[80];
@@ -2596,7 +2581,7 @@ void Datalink::set_cat_project() {
         if (record->preq_tech >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp,
-                   StringTable.get((int)record->name));
+                   StringTable.get(record->name));
             if (Language == 0 && strncmp(StringTemp, DatalinkConceptArticle, 4) == 0) {
                 char full[256];
                 strcpy(full, StringTemp);
@@ -2657,8 +2642,7 @@ void Datalink::set_cat_tech() {
         const RulesTechnology &record = Technology[index];
         if (record.preq_tech_1 >= -1 && record.preq_tech_2 >= -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(static_cast<int>(
-                reinterpret_cast<intptr_t>(record.name))));
+            strcat(StringTemp, StringTable.get(record.name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkTechIdSeparator);
                 char digits[0x54];
@@ -2823,14 +2807,12 @@ void Datalink::set_cat_social() {
     for (int category = 120001; category < 120021;
          category += 5, ++category_index) {
         const RulesSocialCategory &row = SocialCategories[category_index];
-        listBox_.item(StringTable.get(static_cast<int>(
-            reinterpret_cast<intptr_t>(row.type))), category - 1);
+        listBox_.item(StringTable.get(row.type), category - 1);
 
         for (int choice = 0; choice < 4; ++choice) {
             int id = category + choice;
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(static_cast<int>(
-                reinterpret_cast<intptr_t>(row.name[choice]))));
+            strcat(StringTemp, StringTable.get(row.name[choice]));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkSocialIdSeparator);
                 char digits[80];
@@ -2987,14 +2969,14 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_terraform() {
-    const int *names = TerraformNameBase;
     int terraform_index = 0;
     for (int category = 90020; category - 90020 < 0x14;
-         names += 3, ++category, ++terraform_index) {
+         ++category, ++terraform_index) {
         const RulesTerraforming &terraform = Terraforming[terraform_index];
-        if (terraform.preq_tech >= -1 && names[-1] != 0) {
+        const RulesOrder &order = Order[4 + terraform_index];
+        if (terraform.preq_tech >= -1 && order.order != 0) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(names[-1]));
+            strcat(StringTemp, StringTable.get(order.order));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkTerraformIdSeparator);
                 char digits[80];
@@ -3012,7 +2994,7 @@ void Datalink::set_cat_terraform() {
         }
 
         StringTemp[0] = '\0';
-        strcat(StringTemp, StringTable.get(names[0]));
+        strcat(StringTemp, StringTable.get(order.order_sea));
         if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
             strcat(StringTemp, DatalinkTerraformSecondSeparator);
             char digits[80];
@@ -3241,8 +3223,8 @@ void __cdecl help_tech_info(void (__cdecl *emit)(char *), int technology,
 int TechnologyHelpPrefixEmitted;
 // Cross-reference values shared with technology help and acquisition.
 // Only the separate observed dword accesses are established; allocation extent is unknown.
-// RECOVERY_OBJECT: v1 0x007591A4 ?TechnologyHelpEntryName@@3HA
-int TechnologyHelpEntryName;
+// RECOVERY_OBJECT: v4 0x007591A4 ?TechnologyHelpEntryName@@3HA target ?TechnologyHelpEntryName@@3PADA
+LPSTR TechnologyHelpEntryName;
 // RECOVERY_OBJECT: v1 0x007591A8 ?TechnologyHelpEntryKind@@3HA
 int TechnologyHelpEntryKind;
 // RECOVERY_OBJECT: v1 0x00684634 ?TechnologyHelpSectionSelector@@3HA
@@ -3798,10 +3780,6 @@ Status: Coverage transcription - unclaimed body; the seed's emit_help
         0x00645460/0x00645470 wrappers are of.
 */
 
-static int datalink_string_key(const void *value) {
-    return static_cast<int>(reinterpret_cast<intptr_t>(value));
-}
-
 void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
     if (a2 >= 0x59) {
         return;
@@ -3903,7 +3881,7 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
                     (i != 1 || prereq[0] != prereq[1])) {
                     LPSTR order = i == 0 ? Order[4 + row].order
                                          : Order[4 + row].order_sea;
-                    parse_say(0, datalink_string_key(order), -1, -1);
+            parse_say(0, order, -1, -1);
                     parse_string(StringTemp, TextBufferGetPtr);
                     emit_help(a1);
                 }
@@ -3918,8 +3896,7 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
                 strcat(StringTemp, TechnologyHelpSeparatorText);
                 strcat(StringTemp, label_get(0x7C8 / 4));
                 strcat(StringTemp, ": ");
-                strcat(StringTemp, StringTable.get(
-                    datalink_string_key(Proposal[proposal].name)));
+                strcat(StringTemp, StringTable.get(Proposal[proposal].name));
                 strcpy(TextBufferGetPtr, StringTemp);
                 emit_help(a1);
             }
@@ -3984,8 +3961,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             }
             DatalinkMain.construct_id(idbuf, 5,
                                                                   idx + 1);
-            char *link = StringTable.get(
-                datalink_string_key(record.name));
+            char *link = StringTable.get(record.name);
             help_create_link(buf, reinterpret_cast<char *>(link), idbuf);
             flushed = (*buf != 0);
             if (a4 >= 0 && *buf != 0) {
@@ -4018,11 +3994,10 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             }
             DatalinkMain.construct_id(idbuf, 4,
                                                                   idx);
-            char *link = StringTable.get(
-                datalink_string_key(record.offsv_1_name));
+            char *link = StringTable.get(record.offsv_1_name);
             help_create_link(buf, reinterpret_cast<char *>(link), idbuf);
             TechnologyHelpEntryKind = 0x62;
-            TechnologyHelpEntryName = datalink_string_key(record.offsv_1_name);
+            TechnologyHelpEntryName = record.offsv_1_name;
             strcat(buf, " ");
             strcat(buf, "(");
             _itoa(record.speed, numbuf, 10);
@@ -4059,21 +4034,18 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             }
             DatalinkMain.construct_id(idbuf, 6,
                                                                   idx);
-            char *link = StringTable.get(
-                datalink_string_key(record.name));
+            char *link = StringTable.get(record.name);
             strcat(buf, "$LINK<");
             strcat(buf, link);
             strcat(buf, "=");
             strcat(buf, idbuf);
             strcat(buf, ">");
             TechnologyHelpEntryKind = 0x63;
-            TechnologyHelpEntryName = datalink_string_key(record.name);
-            if (datalink_string_key(record.name) == a2) {
-                strcat(buf, " ");
-                char *s2 = label_get(0x310 / 4);
-                strcat(buf, s2);
-                strcat(buf, "(");
-            }
+            TechnologyHelpEntryName = record.name;
+            strcat(buf, " ");
+            char *s2 = label_get(0x310 / 4);
+            strcat(buf, s2);
+            strcat(buf, "(");
             unsigned char kind = static_cast<unsigned char>(record.offense_rating);
             if (static_cast<char>(kind) >= 0) {
                 if (record.mode < 3) {
@@ -4119,15 +4091,14 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             }
             DatalinkMain.construct_id(idbuf, 7,
                                                                   idx);
-            char *link = StringTable.get(
-                datalink_string_key(record.name));
+            char *link = StringTable.get(record.name);
             strcat(buf, "$LINK<");
             strcat(buf, link);
             strcat(buf, "=");
             strcat(buf, idbuf);
             strcat(buf, ">");
             TechnologyHelpEntryKind = 0x64;
-            TechnologyHelpEntryName = datalink_string_key(record.name);
+            TechnologyHelpEntryName = record.name;
             strcat(buf, " ");
             strcat(buf, "(");
             char kind2 = record.defense_rating;
@@ -4170,8 +4141,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             }
             DatalinkMain.construct_id(idbuf, 8,
                                                                   idx);
-            char *link = StringTable.get(
-                datalink_string_key(record.name));
+            char *link = StringTable.get(record.name);
             strcat(buf, "$LINK<");
             strcat(buf, link);
             strcat(buf, "=");
@@ -4252,8 +4222,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             DatalinkMain.construct_id(idbuf,
                                                                   category,
                                                                   ctr);
-            char *link = StringTable.get(
-                datalink_string_key(record.name));
+            char *link = StringTable.get(record.name);
             strcat(buf, "$LINK<");
             strcat(buf, link);
             strcat(buf, "=");
@@ -4299,8 +4268,8 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
                     }
                     DatalinkMain.construct_id(
                         idbuf, 0xC, idBase + j);
-                    char *link = StringTable.get(datalink_string_key(
-                        SocialCategories[outerIndex].name[j]));
+                    char *link = StringTable.get(
+                        SocialCategories[outerIndex].name[j]);
                     strcat(buf, "$LINK<");
                     strcat(buf, link);
                     strcat(buf, "=");
@@ -4333,7 +4302,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             } else {
                 strcat(buf, "^");
             }
-            char *link = StringTable.get(datalink_string_key(record.singular_name));
+            char *link = StringTable.get(record.singular_name);
             strcat(buf, link);
             if (*buf != 0) {
                 a1(buf);
@@ -4364,8 +4333,7 @@ void __cdecl help_tech_info(void (__cdecl *a1)(char *), int a2, int a3,
             }
             DatalinkMain.construct_id(idbuf, 0xE,
                                                                   ctr);
-            char *link = StringTable.get(
-                datalink_string_key(record.name));
+            char *link = StringTable.get(record.name);
             strcat(buf, "$LINK<");
             strcat(buf, link);
             strcat(buf, "=");

@@ -1047,7 +1047,7 @@ difficulty_menu:
         popup.start(PopupStartCaption, "DIFFICULTY", -1, 0, 0x40, 0);
         for (int i = 0; i < 6; ++i) {
             StringTemp[0] = 0;
-            strcat(StringTemp, StringTable.get(static_cast<int>(reinterpret_cast<size_t>(Difficulty[i]))));
+            strcat(StringTemp, StringTable.get(Difficulty[i]));
             if (i == 0 || i == 5) {
                 strcat(StringTemp, " ");
                 strcat(StringTemp, "(");

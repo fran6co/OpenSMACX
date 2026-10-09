@@ -114,8 +114,8 @@ void __cdecl call_council(int faction_id) {
     int alternate_selection;
     int sprite_initialized;
     int selected_item;
-    int proposal_text_id;
-    int proposal_description_id;
+    LPSTR proposal_text;
+    LPSTR proposal_description;
     int due_turn;
 
     if (ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN)) {
@@ -366,13 +366,11 @@ reinstate_charter_proposal:
 
 proposal_render:
     StringTemp[0] = 0;
-    proposal_text_id = static_cast<int>(reinterpret_cast<intptr_t>(
-        Proposal[proposal].name));
-    strcat(StringTemp, StringTable.get(proposal_text_id));
+    proposal_text = Proposal[proposal].name;
+    strcat(StringTemp, StringTable.get(proposal_text));
     strcat(StringTemp, "|");
-    proposal_description_id = static_cast<int>(reinterpret_cast<intptr_t>(
-        Proposal[proposal].description));
-    strcat(StringTemp, StringTable.get(proposal_description_id));
+    proposal_description = Proposal[proposal].description;
+    strcat(StringTemp, StringTable.get(proposal_description));
     popup.dialogs().item(StringTemp, rendered_count);
     ++rendered_count;
 

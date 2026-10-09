@@ -565,8 +565,7 @@ void NetWin::fill_player(NetWinLobbyRow *lobby_row, int slot) {
     if (slot == -1) {
         lobby_row->noun_faction_[0] = 0;
         strcat(lobby_row->noun_faction_,
-               StringTable.get(
-                   *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)));
+               label_get(0xFE4 / 4));
         return;
     }
     const NetWinFactionRecord &record = faction_records_[slot];
@@ -646,8 +645,7 @@ void NetWin::config_players() {
         strcpy(row->leader_name_, player->name_leader);
         strcpy(row->formal_faction_name_, player->formal_name_faction);
         strcpy(row->noun_faction_,
-               StringTable.get(
-                   *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)));
+               label_get(0xFE4 / 4));
         strcpy(row->adjective_faction_, player->adj_name_faction);
         strcpy(row->leader_title_, player->title_leader);
         strcpy(row->adjective_leader_, player->adj_leader);
@@ -855,8 +853,7 @@ void NetWin::on_redraw() {
 
     StringTemp[0] = 0;
     strcat(StringTemp,
-           StringTable.get(*reinterpret_cast<int *>(Labels.strings_ptr
-                                                    + 0x3F0)));
+           label_get(0x3F0 / 4));
     CharUpperA(StringTemp);
     buffer->set_font(find_font(0xE, 1), 0, 0, 0);
     buffer->set_text_color(0xE1, -1, 1, 1);
@@ -972,8 +969,7 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp,
-           StringTable.get(
-               *reinterpret_cast<int *>(Labels.strings_ptr + 0xFA4)));
+           label_get(0xFA4 / 4));
     strcat(StringTemp, ": ");
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
@@ -985,8 +981,7 @@ void NetWin::draw_session_info() {
             difficulty = 6;
         }
         strcat(StringTemp,
-               StringTable.get(
-                   reinterpret_cast<int>(Difficulty[difficulty])));
+               StringTable.get(Difficulty[difficulty]));
     }
     {
         int written = buffer->write_l(StringTemp, col, row,
@@ -1003,14 +998,13 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp,
-           StringTable.get(
-               *reinterpret_cast<int *>(Labels.strings_ptr + 0x100C)));
+           label_get(0x100C / 4));
     strcat(StringTemp, ": ");
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
     strcat(StringTemp,
-           StringTable.get(*reinterpret_cast<int *>(
-               &TimeControl[static_cast<unsigned char>(NetWinNinthSlot[3])])));
+           StringTable.get(
+               TimeControl[static_cast<unsigned char>(NetWinNinthSlot[3])].name));
     {
         int written = buffer->write_l(StringTemp, col, row,
                                       strlen(StringTemp));
@@ -1026,15 +1020,13 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp,
-           StringTable.get(
-               *reinterpret_cast<int *>(Labels.strings_ptr + 0x1078)));
+           label_get(0x1078 / 4));
     strcat(StringTemp, ": ");
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
     if (*NetWinScenarioText == 0) {
         strcat(StringTemp,
-               StringTable.get(
-                   *reinterpret_cast<int *>(Labels.strings_ptr + 0x107C)));
+               label_get(0x107C / 4));
     } else {
         strcat(StringTemp,
                reinterpret_cast<const char *>(NetWinScenarioText));
@@ -1043,20 +1035,17 @@ void NetWin::draw_session_info() {
         strcat(StringTemp, " ");
         strcat(StringTemp, "(");
         strcat(StringTemp,
-               StringTable.get(
-                   *reinterpret_cast<int *>(Labels.strings_ptr + 0x10)));
+               label_get(0x10 / 4));
     } else if (*NetWinEighthSlotWord == 2) {
         strcat(StringTemp, " ");
         strcat(StringTemp, "(");
         strcat(StringTemp,
-               StringTable.get(
-                   *reinterpret_cast<int *>(Labels.strings_ptr + 0x1018)));
+               label_get(0x1018 / 4));
     } else if (*NetWinEighthSlotWord == 3) {
         strcat(StringTemp, " ");
         strcat(StringTemp, "(");
         strcat(StringTemp,
-               StringTable.get(
-                   *reinterpret_cast<int *>(Labels.strings_ptr + 0x1014)));
+               label_get(0x1014 / 4));
     }
     {
         int bottom = buffer->wrap(StringTemp, col, row,
@@ -1074,8 +1063,7 @@ void NetWin::draw_session_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, "{");
     strcat(StringTemp,
-           StringTable.get(
-               *reinterpret_cast<int *>(Labels.strings_ptr + 0xFAC)));
+           label_get(0xFAC / 4));
     strcat(StringTemp, ": ");
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
@@ -1083,8 +1071,7 @@ void NetWin::draw_session_info() {
         int opponent = NetWinSessionOptions.option_4_;
         if (opponent == -1) {
             strcat(StringTemp,
-                   StringTable.get(
-                       *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)));
+                   label_get(0xFE4 / 4));
         } else {
             if (opponent < 0) {
                 opponent = 0;
@@ -1092,9 +1079,7 @@ void NetWin::draw_session_info() {
                 opponent = 0x1F;
             }
             strcat(StringTemp,
-                   *reinterpret_cast<char **>(
-                       reinterpret_cast<char *>(Labels.strings_ptr)
-                       + opponent * 0x80 + 0x6614));
+                   Labels.strings_ptr[(opponent * 0x80 + 0x6614) / 4]);
         }
     } else {
         char tally[80];
@@ -1127,7 +1112,8 @@ void NetWin::draw_session_info() {
     for (int rule = 0; rule < 4; ++rule) {
         static const char *const kLabels[4] = {"{", "{", "{", "{"};
         static const char *const kLabelEnds[4] = {"}", "}", "}", "}"};
-        static const int kTextOffsets[4] = {0xFB0, 0xFB4, 0xFB8, 0xFBC};
+        static const int kTextSlots[4] = {
+            0xFB0 / 4, 0xFB4 / 4, 0xFB8 / 4, 0xFBC / 4};
         static const int kSpotIds[4] = {5, 6, 7, 8};
         static const int kTableBases[4] = {0x3D8, 0x3DB, 0x3E1, 0x3E4};
         signed char flag;
@@ -1141,25 +1127,22 @@ void NetWin::draw_session_info() {
         StringTemp[0] = 0;
         strcat(StringTemp, kLabels[rule]);
         strcat(StringTemp,
-               StringTable.get(*reinterpret_cast<int *>(
-                   Labels.strings_ptr + kTextOffsets[rule])));
+               label_get(kTextSlots[rule]));
         strcat(StringTemp, ": ");
         strcat(StringTemp, kLabelEnds[rule]);
         strcat(StringTemp, " ");
 
-        int text_id;
+        LPSTR text_address;
         if (*NetWinScenarioText == 0) {
             if (flag == -1) {
-                text_id = *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4);
+                text_address = Labels.strings_ptr[0xFE4 / 4];
             } else {
-                text_id = *reinterpret_cast<int *>(
-                    Labels.strings_ptr
-                    + (flag + kTableBases[rule]) * 4);
+                text_address = Labels.strings_ptr[flag + kTableBases[rule]];
             }
         } else {
-            text_id = *reinterpret_cast<int *>(Labels.strings_ptr + 0x1000);
+            text_address = Labels.strings_ptr[0x1000 / 4];
         }
-        strcat(StringTemp, StringTable.get(text_id));
+        strcat(StringTemp, StringTable.get(text_address));
 
         int avail = panel->right - col - 10;
         int bottom;
@@ -1209,8 +1192,7 @@ void NetWin::draw_session_info() {
         StringTemp[0] = 0;
         strcat(StringTemp, "{");
         strcat(StringTemp,
-               StringTable.get(
-                   *reinterpret_cast<int *>(Labels.strings_ptr + 0x113C)));
+               label_get(0x113C / 4));
         strcat(StringTemp, ": ");
         strcat(StringTemp, "}");
         strcat(StringTemp, " ");
@@ -1264,8 +1246,7 @@ void NetWin::draw_player_names() {
 
     StringTemp[0] = 0;
     strcat(StringTemp,
-           StringTable.get(
-               *reinterpret_cast<int *>(Labels.strings_ptr + 0x414)));
+           label_get(0x414 / 4));
     CharUpperA(StringTemp);
     buffer->set_font(find_font(0xE, 1), 0, 0, 0);
     buffer->set_text_color(0xE1, -1, 1, 1);
@@ -1391,12 +1372,10 @@ void NetWin::draw_player_names() {
         // Not connected: the left button takes the connect label.
         unsigned char color =
             static_cast<uint8_t>(NetWinLobbyRows[pid_idx].faction_or_color_);
-        const char *label = color != 0
-            ? reinterpret_cast<const char *>(Labels.strings_ptr
-                                             + 0x1054)
-            : reinterpret_cast<const char *>(Labels.strings_ptr + 0x1050);
-        flatButton1_.set_name(const_cast<char *>(StringTable.get(
-            *reinterpret_cast<const int *>(label))));
+        const LPSTR label = color != 0
+            ? Labels.strings_ptr[0x1054 / 4]
+            : Labels.strings_ptr[0x1050 / 4];
+        flatButton1_.set_name(StringTable.get(label));
         flatButton1_.redraw();
     }
 }
@@ -1433,8 +1412,7 @@ void NetWin::draw_custom_rules() {
 
     StringTemp[0] = 0;
     strcat(StringTemp,
-           StringTable.get(
-               *reinterpret_cast<int *>(Labels.strings_ptr + 0xF9C)));
+           label_get(0xF9C / 4));
     CharUpperA(StringTemp);
     buffer->set_font(find_font(0xE, 1), 0, 0, 0);
     buffer->set_text_color(0xE1, -1, 1, 1);
@@ -1624,8 +1602,7 @@ void NetWin::draw_diffs() {
         field.left += 4;
         field.right -= 4;
         buffer->set_clip(&field);
-        char *name = StringTable.get(
-            reinterpret_cast<int>(Difficulty[row->field_2_]));
+        char *name = StringTable.get(Difficulty[row->field_2_]);
         if (name != 0) {
             buffer->write_l(name, &field, strlen(name));
         }
@@ -1694,8 +1671,7 @@ void NetWin::draw_factions() {
         if (mode != -1) {
             named = faction_records_[mode].noun_faction_;
         } else {
-            named = StringTable.get(
-                *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4));
+            named = label_get(0xFE4 / 4);
         }
         strcat(StringTemp, named);
         if (strcmp(named, row->noun_faction_) != 0) {
@@ -2002,9 +1978,7 @@ void NetWin::pick_diff(int slot) {
     pop_menu.init();
 
     for (int index = 0; index < 6; ++index) {
-        const int string_id =
-            reinterpret_cast<int>(Difficulty[index]);
-        pop_menu.dialogs().item(StringTable.get(string_id), index);
+        pop_menu.dialogs().item(StringTable.get(Difficulty[index]), index);
     }
 
     const int answer = pick_answer(*this, pop_menu);
@@ -2191,8 +2165,7 @@ void NetWin::pick_map() {
         }
 
         char *const default_faction_text =
-            StringTable.get(*reinterpret_cast<int *>(
-                Labels.strings_ptr + 0xFE4));
+            label_get(0xFE4 / 4);
         for (int player_slot = 1; player_slot < 8; ++player_slot) {
             NetWinLobbyRow &row = NetWinLobbyRows[player_slot];
             row.faction_or_color_ = -1;
@@ -2263,14 +2236,10 @@ void NetWin::pick_clouds() {
     PullDown pull_down;
     pop_menu.init();
     Dialogs dialogs;
-    dialogs.item(StringTable.get(
-                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
-                 0);
+    dialogs.item(label_get(0xFE4 / 4), 0);
     int index = 1;
-    for (int offset = 0xF84; offset < 0xF90; offset += 4) {
-        dialogs.item(StringTable.get(*reinterpret_cast<int *>(
-                         Labels.strings_ptr + offset)),
-                     index++);
+    for (int slot = 0xF84 / 4; slot < 0xF90 / 4; ++slot) {
+        dialogs.item(label_get(slot), index++);
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
@@ -2300,14 +2269,10 @@ void NetWin::pick_ocean() {
     PullDown pull_down;
     pop_menu.init();
     Dialogs dialogs;
-    dialogs.item(StringTable.get(
-                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
-                 0);
+    dialogs.item(label_get(0xFE4 / 4), 0);
     int index = 1;
-    for (int offset = 0xF60; offset < 0xF6C; offset += 4) {
-        dialogs.item(StringTable.get(*reinterpret_cast<int *>(
-                         Labels.strings_ptr + offset)),
-                     index++);
+    for (int slot = 0xF60 / 4; slot < 0xF6C / 4; ++slot) {
+        dialogs.item(label_get(slot), index++);
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
@@ -2337,14 +2302,10 @@ void NetWin::pick_erosion() {
     PullDown pull_down;
     pop_menu.init();
     Dialogs dialogs;
-    dialogs.item(StringTable.get(
-                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
-                 0);
+    dialogs.item(label_get(0xFE4 / 4), 0);
     int index = 1;
-    for (int offset = 0xF6C; offset < 0xF78; offset += 4) {
-        dialogs.item(StringTable.get(*reinterpret_cast<int *>(
-                         Labels.strings_ptr + offset)),
-                     index++);
+    for (int slot = 0xF6C / 4; slot < 0xF78 / 4; ++slot) {
+        dialogs.item(label_get(slot), index++);
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
@@ -2374,14 +2335,10 @@ void NetWin::pick_native() {
     PullDown pull_down;
     pop_menu.init();
     Dialogs dialogs;
-    dialogs.item(StringTable.get(
-                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
-                 0);
+    dialogs.item(label_get(0xFE4 / 4), 0);
     int index = 1;
-    for (int offset = 0xF90; offset < 0xF9C; offset += 4) {
-        dialogs.item(StringTable.get(*reinterpret_cast<int *>(
-                         Labels.strings_ptr + offset)),
-                     index++);
+    for (int slot = 0xF90 / 4; slot < 0xF9C / 4; ++slot) {
+        dialogs.item(label_get(slot), index++);
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
@@ -2412,9 +2369,7 @@ void NetWin::pick_planet_size() {
     PullDown pull_down;
     pop_menu.init();
     Dialogs dialogs;
-    dialogs.item(StringTable.get(
-                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
-                 0);
+    dialogs.item(label_get(0xFE4 / 4), 0);
     int count = NetWinPlanetSizeLabelCount;
     for (int index = 0; index < count; ++index) {
         dialogs.item(world_size_labels_[index], index + 1);
@@ -2711,13 +2666,9 @@ void NetWin::pick_global_diff() {
     PullDown pull_down;
     pop_menu.init();
     Dialogs dialogs;
-    dialogs.item(StringTable.get(
-                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
-                 0);
+    dialogs.item(label_get(0xFE4 / 4), 0);
     for (int index = 0; index < 6; ++index) {
-        dialogs.item(StringTable.get(reinterpret_cast<int>(
-                         Difficulty[index])),
-                     index + 1);
+        dialogs.item(StringTable.get(Difficulty[index]), index + 1);
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {

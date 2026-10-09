@@ -1922,8 +1922,8 @@ void __cdecl planetfall(int faction_id) {
         parse_num(0, turn);
         for (int project = 0; project < MaxSecretProjectNum; ++project) {
             if (has_project(project, faction_id)) {
-                parse_say(4, static_cast<int>(reinterpret_cast<uintptr_t>(
-                    Facility[FacilitySPStart + project].name)), -1, -1);
+                parse_say(4, Facility[FacilitySPStart + project].name,
+                          -1, -1);
             }
         }
         strcat(StringTemp, "2");
@@ -2864,9 +2864,9 @@ int __cdecl system_init() {
     }
 
     // The Cancel caption, label 102: upper-cased unless the language is 2.
-    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
+    LPSTR *labels = Labels.strings_ptr;
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get((int)labels[102]));
+    strcat(StringTemp, StringTable.get(labels[102]));
     LPSTR (WINAPI *string_upper)(LPSTR) = CharUpperA;
     if (Language != 2) {
         string_upper(StringTemp);
@@ -2874,9 +2874,9 @@ int __cdecl system_init() {
     BasePop::set_def_cancel_text(StringTemp);
 
     // The OK caption, label 101: upper-cased whatever the language.
-    labels = (LPSTR *)Labels.strings_ptr;
+    labels = Labels.strings_ptr;
     StringTemp[0] = '\0';
-    strcat(StringTemp, StringTable.get((int)labels[101]));
+    strcat(StringTemp, StringTable.get(labels[101]));
     string_upper(StringTemp);
     BasePop::set_def_ok_text(StringTemp);
 
@@ -4145,8 +4145,8 @@ char *__cdecl get_pacts(int faction_id) {
     PluralityDefault = 1;
     int noun = Players[faction_id].is_leader_female;
     GenderDefault = noun;
-    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
-    return StringTable.get((int)labels[0xcb + (noun != 0)]);
+    LPSTR *labels = Labels.strings_ptr;
+    return StringTable.get(labels[0xcb + (noun != 0)]);
 }
 
 // ORIGINAL: 0x0058F9D0 ?get_pact@@YAPADH@Z 0x0058F9D0-0x0058FA19
@@ -4165,8 +4165,8 @@ char *__cdecl get_pact(int faction_id) {
     PluralityDefault = 0;
     int noun = Players[faction_id].is_leader_female;
     GenderDefault = noun;
-    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
-    return StringTable.get((int)labels[0xc9 + (noun != 0)]);
+    LPSTR *labels = Labels.strings_ptr;
+    return StringTable.get(labels[0xc9 + (noun != 0)]);
 }
 
 // ORIGINAL: 0x0052DBA0 ?current_server@@YAHXZ 0x0052DBA0-0x0052DBE6
@@ -4599,8 +4599,8 @@ char *__cdecl get_pacts(int faction_id, int other_id) {
             code = 0xcc;
         }
     }
-    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
-    return StringTable.get((int)labels[code]);
+    LPSTR *labels = Labels.strings_ptr;
+    return StringTable.get(labels[code]);
 }
 
 // ORIGINAL: 0x005B0420 ?balance@@YAXXZ 0x005B0420-0x005B0A2C
@@ -4826,8 +4826,8 @@ int __cdecl generators(int faction_id, int *count_out) {
 
 char *__cdecl get_his_her(int faction_id, int sentence_form) {
     int code = 0xcf + (Players[faction_id].is_leader_female != 0);
-    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
-    strcpy(PronounBuffer, StringTable.get((int)labels[code]));
+    LPSTR *labels = Labels.strings_ptr;
+    strcpy(PronounBuffer, StringTable.get(labels[code]));
     if (sentence_form != 0) {
         if (sentence_form == 1) {
             char buf[2];
@@ -4852,8 +4852,8 @@ Status: Coverage transcription - unclaimed body
 */
 char *__cdecl get_him_her(int faction_id, int sentence_form) {
     const int code = 0xC7 + (Players[faction_id].is_leader_female != 0);
-    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
-    strcpy(PronounBuffer, StringTable.get((int)labels[code]));
+    LPSTR *labels = Labels.strings_ptr;
+    strcpy(PronounBuffer, StringTable.get(labels[code]));
     if (sentence_form != 0) {
         if (sentence_form == 1) {
             char buf[2];
@@ -4889,8 +4889,8 @@ char *__cdecl get_pact_hood(int faction_id, int other_id) {
     } else {
         code = 0xcd;
     }
-    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
-    return StringTable.get((int)labels[code]);
+    LPSTR *labels = Labels.strings_ptr;
+    return StringTable.get(labels[code]);
 }
 
 extern int __cdecl tech_advance(int faction_id);
@@ -8970,9 +8970,7 @@ struct RandomEventsNativePositionServices {
     int is_multiplayer_net() { return IsMultiplayerNet; }
     void wait(int milliseconds) { ::clock_wait(milliseconds); }
     void parse_resource_say(int resource_id) {
-        (void)::parse_say(1,
-            static_cast<int>(reinterpret_cast<intptr_t>(
-                Resource[resource_id].name_plural)),
+        (void)::parse_say(1, Resource[resource_id].name_plural,
             -1, -1);
     }
     void popup(const char *caption_key, const char *image_key, int argument) {
@@ -9011,9 +9009,7 @@ struct RandomEventsNativeCase6Services {
     int base_y(int base_id) const { return Bases[base_id].y; }
     int parse_num(int low, int high) { return ::parse_num(low, high); }
     void parse_facility_say(int facility_id, int gender) {
-        (void)::parse_say(1,
-            static_cast<int>(reinterpret_cast<intptr_t>(
-                Facility[facility_id].name)),
+        (void)::parse_say(1, Facility[facility_id].name,
             gender, -1);
     }
     void focus(int x, int y, int faction_id) {
@@ -12402,10 +12398,8 @@ void __cdecl control_turn() {
                             if (council_state != 0) {
                                 const int proposal_id =
                                     CouncilNotifyFormSlots[local_faction];
-                                parse_say(0,
-                                    static_cast<int>(reinterpret_cast<intptr_t>(
-                                        Proposal[proposal_id].name)),
-                                    -1, -1);
+                                parse_say(0, Proposal[proposal_id].name,
+                                          -1, -1);
                                 local_faction = ConsoleGlobal.faction_id_;
                                 int message_state =
                                     CouncilNotifyPluralSlots[local_faction];
@@ -12830,10 +12824,9 @@ int __cdecl load_game(int mode, int load_argument) {
         for (int faction = 1; faction < MaxPlayerNum; ++faction)
             load_faction_art(faction);
         load_flags();
-        // Difficulty still uses the legacy pointer spelling for StringTable
-        // IDs; native passes its32-bit table value, not the pointed-to text.
-        parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
-            Difficulty[GameDataStateStorage.fields_.diff_level_current_])), -1, -1);
+        parse_say(0,
+            Difficulty[GameDataStateStorage.fields_.diff_level_current_],
+            -1, -1);
 
         Player &player = Players[ConsoleGlobal.faction_id_];
         GenderDefault = player.is_leader_female;
@@ -12848,7 +12841,7 @@ int __cdecl load_game(int mode, int load_argument) {
 
         StringTemp[0] = '\0';
         strcat(StringTemp,
-               StringTable.get(reinterpret_cast<int *>(Labels.strings_ptr)[0]));
+               StringTable.get(Labels.strings_ptr[0]));
         strcat(StringTemp, " ");
         say_year(StringTemp);
         parse_says(4, StringTemp, -1, -1);

@@ -152,7 +152,7 @@ void StatusWin::on_right_click(int x, int y, int) {
                         // RulesFacility still types its stored string offset as LPSTR;
                         // that shared type/loader disagreement needs coupled recovery.
                         char *name = production < 0
-                            ? StringTable.get(reinterpret_cast<int>(Facility[-production].name))
+                            ? StringTable.get(Facility[-production].name)
                             : VehPrototypes[production].veh_name;
                         strcat(StringTemp, name);
                     }
@@ -552,7 +552,7 @@ resolve_panel_selection:
             const int crop = crop_yield(viewer, -1, tile_x, tile_y, 0);
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(
-                static_cast<int>(reinterpret_cast<intptr_t>(Resource[0].name_plural))));
+                Resource[0].name_plural));
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
             itoa(crop, number, 10);
@@ -585,7 +585,7 @@ resolve_panel_selection:
             const int minerals = mine_yield(viewer, -1, tile_x, tile_y, 0);
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(
-                static_cast<int>(reinterpret_cast<intptr_t>(Resource[1].name_plural))));
+                Resource[1].name_plural));
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
             itoa(minerals, number, 10);
@@ -614,7 +614,7 @@ resolve_panel_selection:
             const int energy = energy_yield(viewer, -1, tile_x, tile_y, 0);
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(
-                static_cast<int>(reinterpret_cast<intptr_t>(Resource[2].name_plural))));
+                Resource[2].name_plural));
             strcat(StringTemp, ": ");
             strcat(StringTemp, " ");
             itoa(energy, number, 10);
@@ -715,45 +715,45 @@ resolve_panel_selection:
             StringTemp[0] = '\0';
             if ((tile.bit2 & 0x80000002U) == BIT2_VOLCANO) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[1].name_short))));
+                    Natural[1].name_short));
             }
             if ((tile.bit2 & 0x80000001U) == BIT2_CRATER) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[0].name_short))));
+                    Natural[0].name_short));
             }
             if ((tile.bit2 & 0x80000004U) == BIT2_JUNGLE &&
                 altitude >= 0x60) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[2].name_short))));
+                    Natural[2].name_short));
             }
             if ((tile.bit2 & 0x80000008U) == BIT2_URANIUM) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[3].name_short))));
+                    Natural[3].name_short));
             }
             if ((tile.bit2 & 0x80000040U) == BIT2_DUNES) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[6].name_short))));
+                    Natural[6].name_short));
             }
             if ((tile.bit2 & 0x80000100U) == BIT2_MESA) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[8].name_short))));
+                    Natural[8].name_short));
             }
             if ((tile.bit2 & 0x80000200U) == BIT2_CANYON) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[9].name_short))));
+                    Natural[9].name_short));
             }
             if ((tile.bit2 & 0x80000800U) == BIT2_RIDGE) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[11].name_short))));
+                    Natural[11].name_short));
             }
             if ((tile.bit2 & 0x80002000U) == BIT2_NEXUS) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[13].name_short))));
+                    Natural[13].name_short));
             }
             if (ExpansionEnabled != 0 &&
                 (tile.bit2 & 0x80004000U) == BIT2_UNITY) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[14].name_short))));
+                    Natural[14].name_short));
             }
             if (StringTemp[0] != '\0') {
                 canvas->write_l(StringTemp, text_x, text_y, strlen(StringTemp));
@@ -779,14 +779,14 @@ resolve_panel_selection:
             if (ExpansionEnabled != 0 &&
                 (tile.bit2 & 0x80008000U) == BIT2_FOSSIL)
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[15].name_short))));
+                    Natural[15].name_short));
             if ((tile.bit2 & BIT2_FRESH) != 0 && altitude <= 0x5f) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[7].name_short))));
+                    Natural[7].name_short));
             }
             if ((tile.bit2 & 0x80000400U) == BIT2_GEOTHERMAL) {
                 strcat(StringTemp, StringTable.get(
-                    static_cast<int>(reinterpret_cast<intptr_t>(Natural[10].name_short))));
+                    Natural[10].name_short));
             }
             if ((tile.bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
                 if (StringTemp[0] != '\0') strcat(StringTemp, ", ");
@@ -821,7 +821,7 @@ resolve_panel_selection:
             const LPSTR label = (tile.climate & 0xe0) < 0x60
                 ? Terraforming[terrain].name_sea : Terraforming[terrain].name;
             strcat(StringTemp,
-                   StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(label))));
+                   StringTable.get(label));
             has_terraforming_label = true;
         }
         if ((tile.bit & BIT_MONOLITH) != 0) {
@@ -1090,7 +1090,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         for (int ability = 0; ability < MaxAbilityNum; ++ability) {
             if (has_abil(vehicle.proto_id, 1 << ability)) {
                 char *name = StringTable.get(
-                    reinterpret_cast<int>(Ability[ability].abbreviation));
+                    Ability[ability].abbreviation);
                 if (*name != '\0') {
                     strcat(StringTemp, ", ");
                     strcat(StringTemp, name);
@@ -1315,7 +1315,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                     ? FAC_TACHYON_FIELD : 0;
             if (facility_id != 0) {
                 strcat(StringTemp, StringTable.get(
-                    reinterpret_cast<int>(Facility[facility_id].name)));
+                    Facility[facility_id].name));
                 line_y = screen->wrap_cent(StringTemp, content_x, line_y,
                                            content_width);
             }
@@ -1351,7 +1351,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             int production_cost;
             if (production < 0) {
                 strcat(StringTemp, StringTable.get(
-                    reinterpret_cast<int>(Facility[-production].name)));
+                    Facility[-production].name));
                 production_cost = Facility[-production].cost;
             } else {
                 strcat(StringTemp, VehPrototypes[production].veh_name);
@@ -1500,13 +1500,8 @@ void say_orders(int veh_id) {
     say_orders(StringTemp, veh_id);
 }
 
-static const char *vehicle_order_text_id(int id) {
-    return StringTable.get(id);
-}
-
 static const char *vehicle_order_rule_text(LPSTR encoded_id) {
-    return vehicle_order_text_id(static_cast<int>(
-        reinterpret_cast<intptr_t>(encoded_id)));
+    return StringTable.get(encoded_id);
 }
 
 // ORIGINAL: 0x004B43E0 ?say_orders@@YAXPADH@Z 0x004B43E0-0x004B496D
@@ -1579,9 +1574,8 @@ void __cdecl say_orders(char *text, int veh_id) {
 
     if (vehicle.order == ORDER_CONVOY) {
         ::strcat(text, " ");
-        ::strcat(text, StringTable.get(static_cast<int>(
-            reinterpret_cast<intptr_t>(
-                Resource[vehicle.order_auto_type].name_plural))));
+        ::strcat(text, StringTable.get(
+            Resource[vehicle.order_auto_type].name_plural));
         const int base_id = base_at(vehicle.x, vehicle.y);
         if (base_id >= 0) {
             ::strcat(text, " ");

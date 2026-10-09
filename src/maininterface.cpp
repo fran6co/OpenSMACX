@@ -99,11 +99,11 @@ void MainInterface::draw_edit_pane() {
     case 3: tool = label_get(0xEC8 / 4); break;
     case 4: tool = label_get(0xECC / 4); break;
     case 5: tool = label_get(0xED0 / 4); break;
-    case 26: tool = reinterpret_cast<const char *>(StringTable.get(reinterpret_cast<int>(Natural[2].name_short))); break;
-    case 27: tool = reinterpret_cast<const char *>(StringTable.get(reinterpret_cast<int>(Natural[6].name_short))); break;
-    case 28: tool = reinterpret_cast<const char *>(StringTable.get(reinterpret_cast<int>(Natural[3].name_short))); break;
-    case 29: tool = reinterpret_cast<const char *>(StringTable.get(reinterpret_cast<int>(Natural[10].name_short))); break;
-    default: tool = reinterpret_cast<const char *>(StringTable.get(reinterpret_cast<int>(Terraforming[MapEditorPaintId - 6].name))); break;
+    case 26: tool = StringTable.get(Natural[2].name_short); break;
+    case 27: tool = StringTable.get(Natural[6].name_short); break;
+    case 28: tool = StringTable.get(Natural[3].name_short); break;
+    case 29: tool = StringTable.get(Natural[10].name_short); break;
+    default: tool = StringTable.get(Terraforming[MapEditorPaintId - 6].name); break;
     }
     strcat(line, tool);
     canvas.write_l(line, x, y, strlen(line));
@@ -428,14 +428,14 @@ int MainInterface::init(int) {
         int tool = i - 6;
         if (i >= 6 && i <= 20) {
             for (int t = 0; t < 20; ++t) if (Terraforming[t].bit == 0 && tool >= t) ++tool;
-            b.set_bubble_text(StringTable.get(reinterpret_cast<int>(Terraforming[tool].name)));
+            b.set_bubble_text(StringTable.get(Terraforming[tool].name));
         } else {
             StringTemp[0] = 0;
             if (i < 6) strcat(StringTemp, label_get(0xEBC/4 + i));
-            else if (i == 21) strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Natural[2].name_short)));
-            else if (i == 22) strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Natural[6].name_short)));
-            else if (i == 23) strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Natural[3].name_short)));
-            else if (i == 24) strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Natural[10].name_short)));
+            else if (i == 21) strcat(StringTemp, StringTable.get(Natural[2].name_short));
+            else if (i == 22) strcat(StringTemp, StringTable.get(Natural[6].name_short));
+            else if (i == 23) strcat(StringTemp, StringTable.get(Natural[3].name_short));
+            else if (i == 24) strcat(StringTemp, StringTable.get(Natural[10].name_short));
             b.set_bubble_text(StringTemp);
         }
         button_group_[2].add(&b);

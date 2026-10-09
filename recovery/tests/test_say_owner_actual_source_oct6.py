@@ -73,18 +73,19 @@ PRELUDE = r'''
 #include <string>
 #include <vector>
 #define __cdecl
+typedef char *LPSTR;
 static std::vector<std::string> events;
 struct Strings {
-  char *get(int id) { events.push_back("get:" + std::to_string(id));
-    return id == 11 ? const_cast<char *>("facility") :
-           id == 22 ? const_cast<char *>("ability") :
-           id == 33 ? const_cast<char *>("society") :
-           id == 91 ? const_cast<char *>("facility-detail") :
-           id == 92 ? const_cast<char *>("ability-detail") :
-                      const_cast<char *>("society-detail"); }
+  char *get(char *text) { events.push_back(std::string("get:") + text); return text; }
 };
-struct Named { int name_id; };
-struct Social { int type; };
+struct Named { char *name; };
+struct Social { char *type; };
+static char facility_name[] = "facility";
+static char ability_name[] = "ability";
+static char society_name[] = "society";
+static char facility_detail[] = "facility-detail";
+static char ability_detail[] = "ability-detail";
+static char society_detail[] = "society-detail";
 static Named Facility[4];
 static Named Ability[4];
 static Social SocialCategories[4];
@@ -94,23 +95,15 @@ static int last_label = -1;
 static char *label_get(int index) {
   events.push_back("label:" + std::to_string(index));
   last_label = index;
-  return StringTable.get(index == 0x9B ? 91 : index == 0xA4 ? 92 : 93);
+  return StringTable.get(index == 0x9B ? facility_detail :
+                         index == 0xA4 ? ability_detail : society_detail);
 }
 '''
 
 
 def cpp_source(projected: str, mutation: str | None = None) -> str:
     bodies = [extract_body(projected, signature) for signature in SIGNATURES]
-    # The original declarations store name pointers as 32-bit integers. This
-    # host-only shim gives those observed IDs a pointer-width-neutral carrier;
-    # it does not alter flag, label, append, or branch behavior.
-    for old, new in (
-        ("reinterpret_cast<int>(Facility[facility_id].name)", "Facility[facility_id].name_id"),
-        ("reinterpret_cast<int>(Ability[ability_id].name)", "Ability[ability_id].name_id"),
-        ("reinterpret_cast<int>(SocialCategories[society_id].type)", "SocialCategories[society_id].type"),
-    ):
-        assert old in "\n".join(bodies) or new in "\n".join(bodies)
-        bodies = [body.replace(old, new) for body in bodies]
+    assert all("reinterpret_cast<int>" not in body for body in bodies)
     if mutation == "wrong_label_index":
         bodies[0] = bodies[0].replace("label_get(0x9B)", "label_get(0x9C)", 1)
     elif mutation == "append_detail_to_text":
@@ -121,39 +114,39 @@ def cpp_source(projected: str, mutation: str | None = None) -> str:
     main = r'''
 int main() {
   char text[128];
-  Facility[1].name_id = 11;
-  Ability[2].name_id = 22;
-  SocialCategories[3].type = 33;
+  Facility[1].name = facility_name;
+  Ability[2].name = ability_name;
+  SocialCategories[3].type = society_name;
 
   std::strcpy(text, "prefix"); std::strcpy(StringTemp, ""); events.clear();
   say_facility(text, 1, 2);
   assert(std::strcmp(text, "prefixfacility ()") == 0);
   assert(std::strcmp(StringTemp, "facility-detail") == 0);
   assert(last_label == 0x9B);
-  assert(events.size() == 3 && events[0] == "get:11" &&
-         events[1] == "label:155" && events[2] == "get:91");
+  assert(events.size() == 3 && events[0] == "get:facility" &&
+         events[1] == "label:155" && events[2] == "get:facility-detail");
 
   std::strcpy(text, ""); std::strcpy(StringTemp, "seed"); events.clear();
   say_ability(text, 2, -1);
   assert(std::strcmp(text, "ability ()") == 0);
   assert(std::strcmp(StringTemp, "seedability-detail") == 0);
   assert(last_label == 0xA4);
-  assert(events.size() == 3 && events[0] == "get:22" &&
-         events[1] == "label:164" && events[2] == "get:92");
+  assert(events.size() == 3 && events[0] == "get:ability" &&
+         events[1] == "label:164" && events[2] == "get:ability-detail");
 
   std::strcpy(text, ""); std::strcpy(StringTemp, ""); events.clear();
   say_society(text, 3, 1);
   assert(std::strcmp(text, "society ()") == 0);
   assert(std::strcmp(StringTemp, "society-detail") == 0);
   assert(last_label == 0x45);
-  assert(events.size() == 3 && events[0] == "get:33" &&
-         events[1] == "label:69" && events[2] == "get:93");
+  assert(events.size() == 3 && events[0] == "get:society" &&
+         events[1] == "label:69" && events[2] == "get:society-detail");
 
   std::strcpy(text, "no-detail"); std::strcpy(StringTemp, "unchanged"); events.clear();
   say_ability(text, 2, 0);
   assert(std::strcmp(text, "no-detailability") == 0);
   assert(std::strcmp(StringTemp, "unchanged") == 0);
-  assert(events.size() == 1 && events[0] == "get:22");
+  assert(events.size() == 1 && events[0] == "get:ability");
   puts("actual projected say_* controls passed");
 }
 '''
