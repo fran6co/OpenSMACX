@@ -1,0 +1,20 @@
+{
+  "event_id": "5e48a665ea76ca34cacbc1e2981e1fcf3c88c7c6008905f3c118731cb21de97e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_draw_mask_actual_source.py"
+    ],
+    "evidence": [
+      "Fresh combined root host selection:607pass10fail, all ten failures isolated to draw-mask extraction fixture retaining int pointer-cell doubles and omitting newly required actual-source address helpers. Buffer-owned draw_mask_host_control.cpp is already correctly pointer-backed; Python extraction fixture did not contain get_data text and was missed by initial closure grep.",
+      "Authorize fixture pointer declaration/helper extraction retargeting only, preserving all existing pixel/event/phase mutant assertions and actual draw_mask_dest source extraction. No relaxed casts, permissive compiler options, fake successes or unrelated owner scope. Root native Texture compilation also identified two source numeric/const boundary errors; corrected candidate pending fresh configured compiler verification."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "texture-draw-mask-fixture-pointer-closure-oct9",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-pointer-storage-closure-oct9"
+}
