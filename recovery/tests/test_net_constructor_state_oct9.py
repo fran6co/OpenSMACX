@@ -31,6 +31,7 @@ HARNESS = r'''#include <assert.h>
 #include <string.h>
 
 typedef uint32_t DWORD;
+struct GUID { uint32_t a, b, c, d; };
 struct Net;
 static Net *ActiveNet;
 static void *NetDirectPlay;
@@ -65,7 +66,7 @@ struct Net {
   uint32_t field_6D4_, field_6D8_, field_6DC_;
   void *buffer_6E0_;
   uint32_t field_6E4_;
-  uint8_t pad[0x10];
+  GUID service_provider_guid_;
   uint32_t field_6FC_;
   NetAllocationNode allocation_node_;
   DWORD field_760_;
@@ -94,6 +95,7 @@ MAIN = r'''int main() {
   assert(net->field_6DC_ == 0 && net->voice_flags_D8_ == 0 && net->field_E4_ == 1);
   assert(net->field_760_ == 0 && net->field_764_ == 0);
   assert(net->buffer_6E0_ == 0 && net->field_6E4_ == 0);
+  assert(bytes_are(&net->service_provider_guid_, sizeof(net->service_provider_guid_), 0xA5));
   assert(net->field_6FC_ == 0xC8 && net->field_6D4_ == 0x64);
   assert(bytes_are(&net->field_6D8_, sizeof(net->field_6D8_), 0xA5)); // no +0x6D8 store
   assert(bytes_are(&net->voice_key_D4_, sizeof(net->voice_key_D4_), 0xA5));

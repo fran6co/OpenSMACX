@@ -83,7 +83,7 @@ class Net {
   void *buffer_6E0_;
   _GUID *guid_6E8_;
   uint32_t voice_flags_D8_;
-  unsigned char field_6EC_[0x10];
+  GUID service_provider_guid_;
   NetPlayer players_[16];
   VoiceTx voice_tx_;
   ThreadInfo thread_info_;
@@ -98,6 +98,7 @@ static HRESULT create_result;
 static DWORD provider_latency;
 static HRESULT caps_result;
 static int provider_releases;
+static LPGUID directplay_guid;
 struct FakeDirectPlay : IDirectPlay2 {
   HRESULT QueryInterface(const GUID &, void **out) {
     *out = created_provider;
@@ -111,7 +112,8 @@ struct FakeDirectPlay : IDirectPlay2 {
   }
 };
 static FakeDirectPlay provider;
-static HRESULT DirectPlayCreate(LPGUID, LPDIRECTPLAY *out, void *) {
+static HRESULT DirectPlayCreate(LPGUID guid, LPDIRECTPLAY *out, void *) {
+  directplay_guid = guid;
   if (create_result != 0) return create_result;
   created_provider = &provider;
   *out = &provider;
@@ -151,6 +153,8 @@ MAIN = r'''int main() {
   provider_latency = 37;
   caps_result = 0;
   assert(net.join_service(&service) == 0);
+  assert(directplay_guid == &service.provider_guid_);
+  assert(std::memcmp(&net.service_provider_guid_, &service.provider_guid_, sizeof(GUID)) == 0);
   for (int i = 0; i < 16; ++i) {
     assert(net.players_[i].field_C_ == 37);
     assert(net.players_[i].field_0_ == static_cast<uint32_t>(i == 4 || i == 10 ? 777 : 1000 + i));

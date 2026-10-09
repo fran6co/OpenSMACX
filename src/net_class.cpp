@@ -562,7 +562,7 @@ void Net::close() {
     queue_e8_.close();
     queue_10c_.close();
     queue_130_.close();
-    memset(field_6EC_, 0, sizeof(field_6EC_));
+    memset(&service_provider_guid_, 0, sizeof(service_provider_guid_));
     field_E4_ = 1;
     voice_hotkey_48_ = 0;
     voice_hotkey_4c_ = 0;
@@ -2328,16 +2328,10 @@ int Net::join_service(ServiceStruct *service) {
         return 0x10;
     }
 
-    // The provider GUID the enumeration stored at record+8 travels twice:
-    // once into the session's own 0x6EC slot, once as the create/QI/compare
-    // operand. Four dword copies, not a block move, is what the image does.
-    const unsigned int *provider =
-        reinterpret_cast<const unsigned int *>(&service->provider_guid_);
-    unsigned int *kept = reinterpret_cast<unsigned int *>(field_6EC_);
-    kept[0] = provider[0];
-    kept[1] = provider[1];
-    kept[2] = provider[2];
-    kept[3] = provider[3];
+    // The enumeration-owned GUID is copied into this session's inline
+    // provider GUID and its original address remains the DirectPlay operand.
+    GUID *provider = &service->provider_guid_;
+    service_provider_guid_ = *provider;
 
     if (memcmp(provider, &KeptServiceProviderGuid, 0x10) == 0) {
         // The internet service: hand off to the Zone launcher. SW_SHOW, and
@@ -2349,8 +2343,7 @@ int Net::join_service(ServiceStruct *service) {
     void *direct_play = 0;
     // The DX1 create signature - the image's one DirectPlayCreate import,
     // filled through the out parameter the caller owns.
-    HRESULT result = DirectPlayCreate(reinterpret_cast<LPGUID>(
-                                          const_cast<unsigned int *>(provider)),
+    HRESULT result = DirectPlayCreate(provider,
                                       reinterpret_cast<LPDIRECTPLAY *>(
                                           &direct_play),
                                       0);
@@ -2453,11 +2446,9 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
     }
 
     // The modem and serial providers host exactly two players.
-    const unsigned int *provider =
-        reinterpret_cast<const unsigned int *>(field_6EC_);
     int seeded_max_players = max_players;
-    if (memcmp(provider, &NetModemServiceGuid, 0x10) == 0
-        || memcmp(provider, &NetSerialServiceGuid, 0x10) == 0) {
+    if (memcmp(&service_provider_guid_, &NetSerialServiceGuid, 0x10) == 0
+        || memcmp(&service_provider_guid_, &NetModemServiceGuid, 0x10) == 0) {
         seeded_max_players = 2;
     }
 

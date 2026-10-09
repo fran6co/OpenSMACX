@@ -571,7 +571,7 @@ class Net {
   uint32_t field_6E4_;  // 0x6E4, its size
   // RECOVERY_MEMBER: v1 Net guid_6E8_ 0x6E8 0x0062D8E0
   _GUID *guid_6E8_;  // 0x6E8, the session GUID init() was handed
-  uint8_t field_6EC_[0x10];  // 0x6EC
+  GUID service_provider_guid_;  // 0x6EC; close clears it, constructor leaves it untouched
   uint32_t field_6FC_;  // 0x6FC
   // The node owns the list at +0x72C and virtual allocation base at +0x758.
   // Its list has a distinct allocation base at +0x750.
