@@ -1,0 +1,19 @@
+{
+  "event_id": "a71432af3cff714d3240559d17330a245e69d2a56068f2bc0d50b4ecc1a26d53",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/menu-owner-harness.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes the directly dependent Menu host receiver double to follow the corrected Sound interface return; preserve event ordering/assertions and do not turn Win into a Sound subclass. Update stale Font source-owner path in the already authorized test_window_link_dispatch.py to src/jackal/font.h without weakening its checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "adca55044981135f9189d2f360216d0e56a6b3ccdcd29bbc416dcd96d9a16e5e",
+  "request_id": "autosound-menu-fixture-oct9",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:autosound-receiver-closure-oct9"
+}

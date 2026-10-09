@@ -27,23 +27,20 @@ class Sound;
   * mutable block at [0x009BC080,0x009BC114). Loader zero-initialization
   * supplies its initial values; FX::init optionally resets them later.
   *
-  * FIELD MAP (offset = 0x04 + 4*(N-1)). One member is anchored:
-  *   flags_   0x20  BasePop toggles bits 0/1 (UNK3/UNK4)
-  * Three fields have window-pointer uses:
-  *   val_4_   0x10  the window notified after hide, including debug hiding
-  *   val_7_   0x1C  the child `on_mouse_move` notifies when a position
-  *                  arrives that is NOT the window's own - `Win *`
-  *   val_19_  0x4C  the same slot for the from-parent arm - `Win *`
-  * ListBox callsites independently use val_31_ (0x7C), val_36_ (0x90) and
-  * val_37_ (0x94) as Win receivers for their notification slots.
-  * These uses null-test the windows and dispatch vslot_23/vslot_07.
-  * The defaults block stores
-  * whatever pointer value it was filled with, so the int was storage
-  * typing, not behaviour.
-  * Fields whose meaning is still unknown stay numbered
-  * rather than guessed. Their names arrive with the settings/options
-  * writer, still unrecovered. IDB independently numbered them identically
-  * (docs/recovery/idb-members.csv: val1..val37).
+ * FIELD MAP (offset = 0x04 + 4*(N-1)). The recovered Win, Scroll, Menu,
+ * ListBox and BaseButton paths use numbered values through Sound's nullary
+ * vtable slots 23 and 7 (pinned Sound table: is_playing/play; byte offsets
+ * 0x5c/0x1c). Win slot 23 has a different two-coordinate contract. These
+ * call shapes establish the Sound interface view at those uses, not a
+ * concrete subtype, ownership, lifetime, or a semantic setting name.
+ *
+ * Keep context-mixed words neutral: flags_ is also a flag word; val_10_/11_
+ * and val_12_ carry FlatButton Sprite pointers as well as Win Sound receiver
+ * views; val_20_ is both a ListBox flag word and a Win Sound receiver; val_31_
+ * is a BaseButton Sound receiver and a ListBox Win notification target. The
+ * defaults block copies raw 32-bit values. Other meanings stay numbered
+ * until their writers and use families are recovered. IDB independently
+ * numbered the words identically (docs/recovery/idb-members.csv: val1..val37).
   */
 class AutoSound {
  public:
@@ -71,23 +68,18 @@ class AutoSound {
   // close(), deletes only when the caller's flag says so.
   void *scalar_delete(unsigned int mode);
 
-  // Scroll's retained event seeds follow this settings slot at +0x84 as a
-  // window and dispatch vslot_23/vslot_07 on it. Keep its broader meaning
-  // numbered until other owners establish it.
-  Win *scroll_event_target() const { return val_33_; }
+  // Scroll's pinned paths use this word through Sound slots 23/7. This is an
+  // observed interface view, not an ownership or lifetime claim.
+  Sound *legacy_sound_33() const { return val_33_; }
 
-  // ListBox notification paths treat these numbered settings as windows.
-  // Keep their names cautious: the seed callsites establish receiver types
-  // and slots, not a general-purpose relationship among the fields.
-  Win *legacy_window_31() const { return val_31_; }
-  Win *legacy_window_36() const { return val_36_; }
-  Win *legacy_window_37() const { return val_37_; }
-  // BaseButton's retained event paths read these three settings as Win
-  // receivers and dispatch slots 23/7. Keep their storage identifiers
-  // neutral; the callsites establish the pointer type, not a broader role.
-  Win *legacy_window_28() const { return val_28_; }
-  Win *legacy_window_29() const { return val_29_; }
-  Win *legacy_window_30() const { return val_30_; }
+  // BaseButton and ListBox use val_31_ through different receiver tables.
+  void *legacy_value_31() const { return val_31_; }
+  Sound *legacy_sound_36() const { return val_36_; }
+  Sound *legacy_sound_37() const { return val_37_; }
+  Sound *legacy_sound_28() const { return val_28_; }
+  Sound *legacy_sound_29() const { return val_29_; }
+  Sound *legacy_sound_30() const { return val_30_; }
+  Sound *event_window() const { return event_window_; }
 
  protected:
   // PROTECTED, NOT PRIVATE: Win derives from AutoSound and the homed window
@@ -98,15 +90,13 @@ class AutoSound {
   // above. Same four bytes at offset 0, so sizeof(AutoSound) stays 0x98.
   int val_1_;  // 0x0004
   int val_2_;
-  int val_3_;
-  // Win::hide and the debug keyboard path notify this window via slots 23/7.
-  // RECOVERY_MEMBER: v3 AutoSound val_4_ Win* 0x10 0x005EDCD0
-  Win *val_4_;
+  Sound *val_3_;
+  // Pinned Win::hide 0x5EDCD0 uses Sound slots 23/7 at this offset.
+  // RECOVERY_MEMBER: v3 AutoSound val_4_ Sound* 0x10 0x005EDCD0
+  Sound *val_4_;
   int val_5_;
-  int val_6_;
-  // 0x1C. A `Win *`, not an int: `Win::on_mouse_move` reads it as the child
-  // to notify when the position is not the window's own. Was `int val_7_`.
-  Win *val_7_;
+  Sound *val_6_;
+  Sound *val_7_;
  protected:
   // MEASURED: BasePop::UNK3/UNK4 set/clear bits 0/1 of this word
   // (basepop.cpp) - the only per-field behaviour recovered anywhere.
@@ -117,47 +107,47 @@ class AutoSound {
   // the member form uncompilable - the access happened either way, it just
   // could not say what it was touching.
  protected:
-  int val_9_;
-  int val_10_;
-  int val_11_;
+  Sound *val_9_;
+  int val_10_;  // Sprite in FlatButton; Sound receiver in Win dispatch paths.
+  int val_11_;  // Sprite in FlatButton; Sound receiver in Win dispatch paths.
   void *val_12_;
-  void *val_13_;
-  int val_14_;
-  int val_15_;
-  int val_16_;
-  int val_17_;
-  int val_18_;
-  // 0x4C. A `Win *`, not an int: the from-parent arm of
-  // `Win::on_mouse_move` reads it as the child to notify. Was `int val_19_`.
-  Win *val_19_;
-  int val_20_;
-  int val_21_;
-  int val_22_;
-  int val_23_;
-  void *val_24_;
-  void *val_25_;
-  int val_26_;
-  int val_27_;
-  Win *val_28_;
-  Win *val_29_;
-  Win *val_30_;
-  // ListBox double-click notification calls slots 56/55 on this window.
-  // RECOVERY_MEMBER: v3 AutoSound val_31_ Win* 0x7C 0x0060C710
-  Win *val_31_;
+  Sound *val_13_;
+  Sound *val_14_;
+  Sound *val_15_;
+  Sound *val_16_;
+  Sound *val_17_;
+  Sound *val_18_;
+  Sound *val_19_;
+  int val_20_;  // ListBox flags; Win dispatch Sound view at +0x50.
+  Sound *val_21_;
+  Sound *val_22_;
+  Sound *val_23_;
+  Sound *val_24_;
+  Sound *val_25_;
+  Sound *val_26_;
+  Sound *val_27_;
+  Sound *val_28_;
+  Sound *val_29_;
+  Sound *val_30_;
+  // BaseButton uses Sound slots 23/7; ListBox uses Win slots 56/55.
+  // RECOVERY_MEMBER: v3 AutoSound val_31_ void* 0x7C 0x0060C710
+  void *val_31_;
   int val_32_;
-  // RECOVERY_MEMBER: v3 AutoSound val_33_ Win* 0x84 0x006069A0
-  Win *val_33_;
-  // Menu::menu_event (0x005FB8B8) reads this as a window and dispatches
-  // its event slots. The precise relationship remains unnamed.
-  Win *event_window_;  // 0x88
+  // Scroll uses Sound slots 23/7 at +0x84.
+  // RECOVERY_MEMBER: v3 AutoSound val_33_ Sound* 0x84 0x006069A0
+  Sound *val_33_;
+  // Menu's original paths use Sound's slot pair 23/7 at this receiver.
+  // The historical field label is retained without claiming ownership.
+  // RECOVERY_MEMBER: v3 AutoSound event_window_ Sound* 0x88 0x005FB830
+  Sound *event_window_;  // 0x88
   // RECOVERY_MEMBER: v3 AutoSound val_35_ Sound* 0x8C 0x005F2830
   Sound *val_35_;
-  // ListBox selection notification calls slots 23/7 on this window.
-  // RECOVERY_MEMBER: v3 AutoSound val_36_ Win* 0x90 0x0060A020
-  Win *val_36_;
-  // ListBox double-click notification calls slots 23/7 on this window.
-  // RECOVERY_MEMBER: v3 AutoSound val_37_ Win* 0x94 0x0060C710
-  Win *val_37_;
+  // ListBox uses Sound slots 23/7 at this offset.
+  // RECOVERY_MEMBER: v3 AutoSound val_36_ Sound* 0x90 0x0060A020
+  Sound *val_36_;
+  // In ListBox double-click val_37_ is audio; val_31_ is the Win target.
+  // RECOVERY_MEMBER: v3 AutoSound val_37_ Sound* 0x94 0x0060C710
+  Sound *val_37_;
 };
 
 static_assert(sizeof(AutoSound) == 0x98,

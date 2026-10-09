@@ -15,6 +15,14 @@ HWND HandleMain = 0;
 class Font;
 static void (*AfterResize)() = 0;
 
+struct Sound {
+    Sound() : active_(0), plays_(0) {}
+    int is_playing() const { return active_; }
+    int play() { active_ = 1; ++plays_; return 0; }
+    int active_;
+    int plays_;
+};
+
 class Win {
 public:
     explicit Win() : fill_color(0), text_color(0), writes(0), lines(0), redraws(0), hides(0), flushes(0), modal_releases(0), key_calls(0), last_key_input(-1), last_key(-1), win_parent_(0) { set_rect(0,0,200,100); }
@@ -28,7 +36,7 @@ public:
     virtual void release_modal() { ++modal_releases; }
     RECT const &outer_rect() const { return rect_; }
     void set_rect(int l, int t, int r, int b) { rect_.left=l; rect_.top=t; rect_.right=r; rect_.bottom=b; }
-    Win *event_window() { return this; }
+    Sound *event_window() { return &event_sound_; }
     void set_parent(Win *p) { win_parent_ = p; }
     void client_to_screen(int *, int *) {}
     int fill_color, text_color, writes, lines;
@@ -48,6 +56,7 @@ public:
     void flush_input() { ++flushes; }
     int redraws, hides, flushes, modal_releases, key_calls, last_key_input, last_key;
     int selected_fill_text_color;
+    Sound event_sound_;
 protected:
     Win *win_parent_;
     RECT rect_;

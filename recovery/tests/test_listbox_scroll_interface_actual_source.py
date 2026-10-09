@@ -72,8 +72,8 @@ def actual_listbox_methods(sources):
     # The only source adaptation is the target's 32-bit pointer-to-int cast;
     # host uintptr_t preserves the explicit low-32-bit conversion behavior.
     combined = combined.replace(
-        "reinterpret_cast<int>(val_31_->vslot_09(scroll))",
-        "host_pointer_to_int(val_31_->vslot_09(scroll))",
+        "reinterpret_cast<int>(reinterpret_cast<Win *>(val_31_)->vslot_09(scroll))",
+        "host_pointer_to_int(reinterpret_cast<Win *>(val_31_)->vslot_09(scroll))",
     )
     combined = combined.replace(
         "reinterpret_cast<int>(scroll)", "host_pointer_to_int(scroll)"
@@ -129,8 +129,8 @@ def test_slot_bindings_and_argument_order():
     assert "this->vslot_07();" not in win_cpp
     assert "virtual int on_scroll_create();" in list_h
     assert "virtual int on_scroll_delete(Scroll *scroll);" in list_h
-    assert "val_20_ & 0x40" in list_cpp and "val_31_->vslot_08()" in list_cpp
-    assert "val_31_->vslot_09(scroll)" in list_cpp
+    assert "val_20_ & 0x40" in list_cpp and "reinterpret_cast<Win *>(val_31_)->vslot_08()" in list_cpp
+    assert "reinterpret_cast<Win *>(val_31_)->vslot_09(scroll)" in list_cpp
     assert "virtual int on_scroll_delete(Scroll *scroll);" in dialogs_h
     assert "virtual int on_scroll_create();" in dialogs_h
     assert "int Dialogs::on_scroll_delete(Scroll *scroll)" in dialogs_cpp

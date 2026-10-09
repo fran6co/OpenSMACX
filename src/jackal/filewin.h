@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+// Generic Jackal file-selection owner, independent of concrete application classes.
 
 #include "original_seam.h"
 #include "flatbutton.h"
@@ -37,10 +38,15 @@
   * now have roles established by the directory-enumeration body.
 */
 class FileWin {
-  // AlphaSave embeds this owner and forwards its keyboard/scroll events to
-  // these actual EditBox and ListBox subobjects.
-  friend class AlphaSave;
  public:
+  // AlphaSave customizes the generic controls embedded by this owner. These
+  // accessors expose those existing subobjects without coupling FileWin to
+  // the application-specific AlphaSave class.
+  ListBox &list_box() { return list_box_; }
+  EditBox &edit_box() { return edit_box_; }
+  FlatButton &cancel_button() { return flat_button1_; }
+  FlatButton &ok_button() { return flat_button2_; }
+
   // `static`: the image's name ends in `QAA` - a public member declared
   // __cdecl, taking no receiver - and jackal_init_real calls it with no
   // ecx set up, so `Class::method()` is the only legal spelling.
@@ -59,11 +65,11 @@ class FileWin {
   int set_directory(char *directory);
   int prepare_sprites();
   void UNK5();
-  // 0x006146A0 ?UNK4@FileWin@@QAEXXZ - public, __thiscall, void(void). Still
-  // unrecovered; declared because the recovered on_double_clicked calls it
-  // with a direct `call rel32`, which is what makes that body byte-exact.
+  // 0x006146A0: implemented confirmation path over the owned selected-path
+  // buffers, controls and modal focus state. The original method name remains
+  // unknown; the complete body does not imply matching or runtime acceptance.
   void UNK4();
-  // 0x00613900, a pending_bodies forwarder. ~FileWin calls it first.
+  // 0x00613900: owned cleanup, called before compiler-managed destruction.
   void close();
   int add_def_ext(char *extension);
   int set_def_name(char *name);
@@ -127,5 +133,3 @@ void __cdecl filebox_draw(GraphicWin *window, int item_kind, int item_id,
 extern FileWin *ActiveFileWin;
 
 
-// ?UNK4@FileWin@@QAEXXZ (0x006146A0). Unrecovered; on_double_clicked calls it,
-// so its definition is a seam into the original image.

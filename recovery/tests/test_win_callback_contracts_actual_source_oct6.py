@@ -193,7 +193,10 @@ struct DerivedSelect : SelectPartWin {
     DerivedSelect(): calls(0), code(0), row(0) {}
     void on_scrolled(int a, int b) override { ++calls; code = a; row = b; }
 };
-struct FileWin { ListBox list_box_; };
+struct FileWin {
+    ListBox list_box_;
+    ListBox &list_box() { return list_box_; }
+};
 struct AlphaSave : GraphicWin {
     FileWin file_win_;
     void on_scrolled(int, int) override;
@@ -236,12 +239,12 @@ int main() {
     AlphaSave alpha;
     Win *alpha_view = &alpha;
     alpha_view->on_scrolled(5, 8);
-    assert(alpha.file_win_.list_box_.scrolled_calls == 1 &&
-           alpha.file_win_.list_box_.scrolling_calls == 0);
+    assert(alpha.file_win_.list_box().scrolled_calls == 1 &&
+           alpha.file_win_.list_box().scrolling_calls == 0);
     alpha_view->on_scrolling(11, 14);
-    assert(alpha.file_win_.list_box_.scrolling_calls == 1 &&
-           alpha.file_win_.list_box_.code == 11 &&
-           alpha.file_win_.list_box_.position == 14);
+    assert(alpha.file_win_.list_box().scrolling_calls == 1 &&
+           alpha.file_win_.list_box().code == 11 &&
+           alpha.file_win_.list_box().position == 14);
 
     StringBox string_box;
     Win *string_view = &string_box;
@@ -354,8 +357,8 @@ def test_actual_callback_bodies_dispatch_through_correct_owner_slots(tmp_path, c
     assert "dialogs()).on_scrolling(first, second)" in bodies[1]
     assert "field_2B6C_ * row" in bodies[4] and "redraw();" in bodies[4]
     assert "on_scrolled(a1, a2);" in bodies[5]
-    assert "file_win_.list_box_.on_scrolled(code, pos);" in bodies[6]
-    assert "file_win_.list_box_.on_scrolling(code, pos);" in bodies[7]
+    assert "file_win_.list_box().on_scrolled(code, pos);" in bodies[6]
+    assert "file_win_.list_box().on_scrolling(code, pos);" in bodies[7]
     assert "on_scrolled(code, position);" in bodies[9]
     assert "ListBox::on_scrolling(code, pos);" in bodies[2]
     assert "ListBox::on_scrolling(a, b);" in bodies[3]
@@ -380,8 +383,8 @@ def test_actual_callback_bodies_dispatch_through_correct_owner_slots(tmp_path, c
 
     mutants = list(bodies)
     mutants[6] = mutants[6].replace(
-        "file_win_.list_box_.on_scrolled(code, pos);",
-        "file_win_.list_box_.on_scrolling(code, pos);")
+        "file_win_.list_box().on_scrolled(code, pos);",
+        "file_win_.list_box().on_scrolling(code, pos);")
     assert mutants[6] != bodies[6]
     compile_and_run(tmp_path, compiler, mutants, should_pass=False)
 

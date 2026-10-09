@@ -3782,18 +3782,18 @@ void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
             fn(x, y);
         }
         this->on_mouse_move(x, y);
-        Win *const child = val_7_;
+        Sound *const child = val_7_;
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     } else {
         this->on_nc_mouse_move(x, y);
-        Win *const child = val_19_;
+        Sound *const child = val_19_;
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     }
@@ -6347,10 +6347,10 @@ skip_all:
     InvalidateRect(HandleMain, 0, 0);
 
     {
-        Win *other = val_4_;
+        Sound *other = val_4_;
         if (other != 0) {
-            if (reinterpret_cast<Sound *>(other)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(other)->play();
+            if (other->is_playing() == 0) {
+                other->play();
             }
         }
     }
@@ -6416,7 +6416,7 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
     if (double_click != 0 &&
         (iFlags_ & 0x200200) == 0 &&
         (iSomeFlag_ & 8) == 0) {
-        int32_t related;
+        Sound *related;
         if (from_parent == 0) {
             WinCallbackWindow = this;
             int32_t fp = field_40C_;
@@ -6429,8 +6429,8 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
             this->vslot_38(x, y);
             related = val_26_;
         }
-        if (related != 0 && reinterpret_cast<Sound *>(related)->is_playing() == 0) {
-            reinterpret_cast<Sound *>(related)->play();
+        if (related != 0 && related->is_playing() == 0) {
+            related->play();
         }
     }
 
@@ -6482,15 +6482,15 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                     cb(x, y);
                 }
                 this->on_left_click(x, y);
-                Win *child = reinterpret_cast<Win *>(flags_);
-                if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                    reinterpret_cast<Sound *>(child)->play();
+                Sound *child = reinterpret_cast<Sound *>(flags_);
+                if (child != 0 && child->is_playing() == 0) {
+                    child->play();
                 }
             } else {
                 this->vslot_32(x, y);
-                Win *child = reinterpret_cast<Win *>(val_20_);
-                if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                    reinterpret_cast<Sound *>(child)->play();
+                Sound *child = reinterpret_cast<Sound *>(val_20_);
+                if (child != 0 && child->is_playing() == 0) {
+                    child->play();
                 }
             }
         }
@@ -6511,15 +6511,15 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                     cb(x, y);
                 }
                 this->on_left_up(x, y);
-                Win *child = reinterpret_cast<Win *>(val_10_);
-                if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                    reinterpret_cast<Sound *>(child)->play();
+                Sound *child = reinterpret_cast<Sound *>(val_10_);
+                if (child != 0 && child->is_playing() == 0) {
+                    child->play();
                 }
             } else {
                 this->on_nc_left_up(x, y);
-                Win *child = reinterpret_cast<Win *>(val_22_);
-                if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                    reinterpret_cast<Sound *>(child)->play();
+                Sound *child = val_22_;
+                if (child != 0 && child->is_playing() == 0) {
+                    child->play();
                 }
             }
         }
@@ -7527,7 +7527,7 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
         if (in_box(x, y, &testRect)) {
             if ((iFlags_ & 0x200000) == 0) {
                 if ((iSomeFlag_ & 8) == 0) {
-                    int32_t related;
+                    Sound *related;
                     if (dbl == 0) {
                         WinCallbackWindow = this;
                         int32_t fp = field_420_;
@@ -7535,13 +7535,13 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                             reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
                         }
                         this->on_right_click(x, y);
-                        related = val_11_;
+                        related = reinterpret_cast<Sound *>(val_11_);
                     } else {
                         this->vslot_35(x, y);
                         related = val_23_;
                     }
-                    if (related != 0 && reinterpret_cast<Sound *>(related)->is_playing() == 0) {
-                        reinterpret_cast<Sound *>(related)->play();
+                    if (related != 0 && related->is_playing() == 0) {
+                        related->play();
                     }
                 }
             }
@@ -7809,10 +7809,10 @@ void Win::show(int visible) {
 
         InvalidateRect(HandleMain, &rect, 0);
 
-        Win *obj2 = reinterpret_cast<Win *>(val_3_);
+        Sound *obj2 = val_3_;
         if (obj2 != 0) {
-            if (reinterpret_cast<Sound *>(obj2)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(obj2)->play();
+            if (obj2->is_playing() == 0) {
+                obj2->play();
             }
         }
     }
@@ -8073,10 +8073,10 @@ int Win::key_up_event(int key) {
         result = reinterpret_cast<int (__cdecl *)(int)>(callback)(key);
     }
     result += this->vslot_27(key);
-    Win *child = reinterpret_cast<Win *>(val_16_);
+    Sound *child = val_16_;
     if (child != 0) {
-        if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-            reinterpret_cast<Sound *>(child)->play();
+        if (child->is_playing() == 0) {
+            child->play();
         }
     }
     return result;
@@ -8160,10 +8160,10 @@ int Win::key_down_event(int key) {
     }
     int r2 = this->on_key_down(key);
 
-    Win *child = reinterpret_cast<Win *>(val_15_);
+    Sound *child = val_15_;
     if (child != 0) {
-        if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-            reinterpret_cast<Sound *>(child)->play();
+        if (child->is_playing() == 0) {
+            child->play();
         }
     }
     return ebx + r2;
@@ -8756,20 +8756,20 @@ void Win::left_down_event(int x, int y, int from_parent) {
 
     if (from_parent == 0) {
         this->on_left_down(x, y);
-        Win *child = reinterpret_cast<Win *>(val_9_);
+        Sound *child = val_9_;
         if (child != 0) {
-            int r = reinterpret_cast<Sound *>(child)->is_playing();
+            int r = child->is_playing();
             if (r == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+                child->play();
             }
         }
     } else {
         this->on_nc_left_down(x, y);
-        Win *child = reinterpret_cast<Win *>(val_21_);
+        Sound *child = val_21_;
         if (child != 0) {
-            int r = reinterpret_cast<Sound *>(child)->is_playing();
+            int r = child->is_playing();
             if (r == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+                child->play();
             }
         }
     }
@@ -9196,9 +9196,9 @@ void Win::on_char(char param2, int param3) {
 
                 InvalidateRect(HandleMain, 0, 0);
 
-                Win *w = debug_window.val_4_;
-                if (w != 0 && reinterpret_cast<Sound *>(w)->is_playing() == 0) {
-                    reinterpret_cast<Sound *>(w)->play();
+                Sound *w = debug_window.val_4_;
+                if (w != 0 && w->is_playing() == 0) {
+                    w->play();
                 }
             }
         }
@@ -9474,12 +9474,12 @@ int Win::key_click_event(int key, int flags) {
     }
     void *vtbl2 = *(void **)self;
     int r2 = this->on_key_click(key, flags);
-    Win *child = reinterpret_cast<Win *>(val_14_);
+    Sound *child = val_14_;
     if (child != 0) {
         void *cvtbl = *(void **)child;
-        if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
+        if (child->is_playing() == 0) {
             void *cvtbl2 = *(void **)child;
-            reinterpret_cast<Sound *>(child)->play();
+            child->play();
         }
     }
     return result + r2;
@@ -10100,14 +10100,14 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
         }
         vslot_27(with_modifiers);
 
-        Win *next = reinterpret_cast<Win *>(val_16_);
+        Sound *next = val_16_;
         if (next == 0) {
             return;
         }
-        if (reinterpret_cast<Sound *>(next)->is_playing() != 0) {
+        if (next->is_playing() != 0) {
             return;
         }
-        reinterpret_cast<Sound *>(next)->play();
+        next->play();
         return;
     }
 
@@ -10161,11 +10161,11 @@ int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
         cb();
     }
     self->on_sys_close();
-    Win *child = *reinterpret_cast<Win **>(
+    Sound *child = *reinterpret_cast<Sound **>(
         reinterpret_cast<char *>(self) + 0x18);
     if (child != 0) {
-        if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-            reinterpret_cast<Sound *>(child)->play();
+        if (child->is_playing() == 0) {
+            child->play();
         }
     }
     return 0;
@@ -10375,20 +10375,20 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
                 fn(x, y);
             }
             this->on_right_double_click(x, y);
-            Win *child = reinterpret_cast<Win *>(val_18_);
+            Sound *child = val_18_;
             if (child != 0) {
-                int r = reinterpret_cast<Sound *>(child)->is_playing();
+                int r = child->is_playing();
                 if (r == 0) {
-                    reinterpret_cast<Sound *>(child)->play();
+                    child->play();
                 }
             }
         } else {
             this->vslot_39(x, y);
-            Win *child = reinterpret_cast<Win *>(val_27_);
+            Sound *child = val_27_;
             if (child != 0) {
-                int r = reinterpret_cast<Sound *>(child)->is_playing();
+                int r = child->is_playing();
                 if (r == 0) {
-                    reinterpret_cast<Sound *>(child)->play();
+                    child->play();
                 }
             }
         }
@@ -11927,10 +11927,10 @@ void Win::publish_callback_window() {
         callback();
     }
     on_sys_close();
-    Win *second = reinterpret_cast<Win *>(val_6_);
+    Sound *second = val_6_;
     if (second != 0) {
-        if (reinterpret_cast<Sound *>(second)->is_playing() == 0) {
-            reinterpret_cast<Sound *>(second)->play();
+        if (second->is_playing() == 0) {
+            second->play();
         }
     }
 }
@@ -11948,8 +11948,7 @@ void Win::publish_callback_window() {
 // NAMED from its slot: the gate / publish / hook / slot / child-notify shape
 // this file's dispatchers share, raising slot 17 - the image offsets are
 // 0x44 (slot 17), 0x7c (slot 31), and the hook is mouse_move_hook_.
-// The child windows come off val_7_ (0x1C) and val_19_ (0x4C), the two
-// AutoSound words already typed `Win *`.
+// Sound receiver views come off val_7_ (0x1C) and val_19_ (0x4C).
 void Win::dispatch_17(int a, int b, int alternate) {
     if ((iFlags_ & 0x200000) != 0) {
         return;
@@ -11964,18 +11963,18 @@ void Win::dispatch_17(int a, int b, int alternate) {
             hook(a, b);
         }
         on_mouse_move(a, b);
-        Win *child = reinterpret_cast<Win *>(val_7_);
+        Sound *child = val_7_;
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     } else {
         on_nc_mouse_move(a, b);
-        Win *child = reinterpret_cast<Win *>(val_19_);
+        Sound *child = val_19_;
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     }
@@ -12010,18 +12009,18 @@ void Win::dispatch_28(int a, int b, int alternate) {
             hook(a, b);
         }
         on_left_double_click(a, b);
-        Win *child = reinterpret_cast<Win *>(val_17_);
+        Sound *child = val_17_;
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     } else {
         vslot_38(a, b);
-        Win *child = reinterpret_cast<Win *>(val_26_);
+        Sound *child = val_26_;
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     }
@@ -12059,18 +12058,18 @@ void Win::dispatch_29(int a, int b, int alternate) {
             hook(a, b);
         }
         on_right_double_click(a, b);
-        Win *child = reinterpret_cast<Win *>(val_18_);
+        Sound *child = val_18_;
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     } else {
         vslot_39(a, b);
-        Win *child = reinterpret_cast<Win *>(val_27_);
+        Sound *child = val_27_;
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     }
@@ -12115,18 +12114,18 @@ void Win::dispatch_19(int a, int b, int alternate) {
             hook(a, b);
         }
         on_left_click(a, b);
-        Win *child = reinterpret_cast<Win *>(flags_);
+        Sound *child = reinterpret_cast<Sound *>(flags_);
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     } else {
         vslot_32(a, b);
-        Win *child = reinterpret_cast<Win *>(val_20_);
+        Sound *child = reinterpret_cast<Sound *>(val_20_);
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     }
@@ -12161,18 +12160,18 @@ void Win::dispatch_21(int a, int b, int alternate) {
             hook(a, b);
         }
         on_left_up(a, b);
-        Win *child = reinterpret_cast<Win *>(val_10_);
+        Sound *child = reinterpret_cast<Sound *>(val_10_);
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     } else {
         on_nc_left_up(a, b);
-        Win *child = reinterpret_cast<Win *>(val_22_);
+        Sound *child = val_22_;
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     }
@@ -12208,18 +12207,18 @@ void Win::dispatch_22(int a, int b, int alternate) {
             hook(a, b);
         }
         on_right_click(a, b);
-        Win *child = reinterpret_cast<Win *>(val_11_);
+        Sound *child = reinterpret_cast<Sound *>(val_11_);
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     } else {
         vslot_35(a, b);
-        Win *child = reinterpret_cast<Win *>(val_23_);
+        Sound *child = val_23_;
         if (child != 0) {
-            if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                reinterpret_cast<Sound *>(child)->play();
+            if (child->is_playing() == 0) {
+                child->play();
             }
         }
     }

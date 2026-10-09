@@ -34,7 +34,7 @@ def braced(source, signature):
 
 
 def actual_source():
-    header = {n: (ROOT / 'src' / (n + '.h')).read_text() for n in
+    header = {n: (ROOT / 'src/jackal/font.h' if n == 'font' else ROOT / 'src' / (n + '.h')).read_text() for n in
               ('win', 'graphicwin', 'stringbox', 'newtechwin', 'buffer', 'font', 'game')}
     body = {n: (ROOT / 'src' / (n + '.cpp')).read_text() for n in
             ('win', 'stringbox', 'newtechwin', 'buffer')}
@@ -86,6 +86,11 @@ struct Spot {
 int warnings=0,allocations=0,raw_calls=0;
 int MessageBoxA(void*,const char*,const char*,int){++warnings;return 0;}
 void *mem_get(int count){require(count>0);++allocations;return std::malloc(count);}
+struct Sound {
+ int checks=0,plays=0;
+ int is_playing(){++checks;return 0;}
+ int play(){++plays;return 0;}
+};
 struct AutoSound {virtual ~AutoSound(){}};
 class GraphicWin;
 class Buffer {
@@ -255,7 +260,7 @@ def actual_parts():
     parts['WHOLE_DECL'], = re.findall(r'^  virtual void on_l_button_down\([^;]+;', header, re.M)
     parts['WINDOW_FIELDS'] = '\n'.join(re.findall(r'^  uint32_t (?:iFlags_|iSomeFlag_|field_40C_);', header, re.M))
     assert len(parts['WINDOW_FIELDS'].splitlines()) == 3
-    parts['RELATED_FIELDS'] = '\n'.join(re.findall(r'^  int val_(?:17|26)_;', autosound, re.M))
+    parts['RELATED_FIELDS'] = '\n'.join(re.findall(r'^  Sound \*val_(?:17|26)_;', autosound, re.M))
     assert len(parts['RELATED_FIELDS'].splitlines()) == 2
     parts['PROCESS_FIELDS'] = '\n'.join(re.findall(r'^extern (?:Win \*(?:WinPointerOwner1|WinPointerOwner2|WinCallbackWindow)|int (?:WinSizingFlag|WinRootCount));', header, re.M)).replace('extern ', '')
     assert len(parts['PROCESS_FIELDS'].splitlines()) == 5
@@ -355,6 +360,14 @@ void whole_link_case(){
  require(own.fallback_count==0&&unrelated.calls==0&&unrelated.spot_.checks==0);
  own.return_value=-4;call(own,0,7,8,0,-2);require(own.fallback_count==1&&own.fall_dbl==-2);
 }
+void sound_receiver_view_cases(){
+ Win own;Sound local,alternate;reset(own);own.iFlags_=0x2000000;own.val_17_=&local;
+ call(own,1,3,4,0,0);require(local.checks==1&&local.plays==1);
+ require(events==std::vector<Event>({{28,10,3,4}}));
+ reset(own);own.iFlags_=0x2000000;own.val_26_=&alternate;
+ call(own,1,5,6,0,1);require(alternate.checks==1&&alternate.plays==1);
+ require(events==std::vector<Event>({{38,10,5,6}}));
+}
 '''
 
 
@@ -368,7 +381,7 @@ def build(tmp_path, mutation=None):
     harness=HARNESS.replace('#include <cstdint>', '#include <cstdint>\n#define __cdecl')
     harness=harness.replace(' void click_suffix(int,int,int);', ' void click_suffix(int,int,int);\n'+EXTRA_DECLS)
     harness=harness.replace('int main(){string_tests();click_tests();tech_tests();markup_tests();}',
-                            EXTRA_BODIES+'\nint main(){routing_cases();root_and_parent_cases();hook_cases();whole_link_case();}')
+                            EXTRA_BODIES+'\nint main(){routing_cases();root_and_parent_cases();hook_cases();whole_link_case();sound_receiver_view_cases();}')
     for key in sorted(parts,key=len,reverse=True):harness=harness.replace(key,parts[key])
     unit=tmp_path/'whole_click.cpp';unit.write_text(harness);exe=tmp_path/'whole_click'
     compiler=shutil.which('clang++') or shutil.which('g++')

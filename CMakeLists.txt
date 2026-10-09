@@ -183,7 +183,6 @@ set(OPENSMACX_SOURCES
     src/infowin.cpp
     src/interlude.cpp
     src/statuswin.cpp
-    src/filewin.cpp
     src/wave.cpp
     src/battlewin.cpp
     src/councwin.cpp

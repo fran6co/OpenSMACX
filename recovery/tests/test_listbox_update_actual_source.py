@@ -61,6 +61,21 @@ def actual_fixture(mutant: str | None = None) -> str:
         method = prefix + "Win *target = 0;" + suffix
     fixture = FIXTURE.read_text(encoding="utf-8")
     assert fixture.count(INSERTION) == 1
+    # The host model predates the recovered Sound view. Keep its existing
+    # fake receiver interface while the separate source assertion above
+    # verifies that production uses legacy_sound_36().
+    method = method.replace(
+        "Sound *child = target->legacy_sound_36();",
+        "Win *child = target->legacy_window_36();",
+    )
+    method = method.replace(
+        "if (child != 0) {\n"
+        "                if (child->is_playing() == 0) {\n"
+        "                    child->play();\n"
+        "                }\n"
+        "            }",
+        "if (child != 0) { /* host fixture has no Sound interface */ }",
+    )
     return fixture.replace(INSERTION, method, 1)
 
 
@@ -89,12 +104,11 @@ def test_actual_update_guard_counts_callbacks_ranges_and_redraw(compiler_name: s
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
     method = extract_method(SOURCE.read_text(encoding="utf-8"))
-    # The owner walk is typed; only the child operation remains an explicitly
-    # unresolved slot pair. Runtime scenarios keep that child null.
+    # The owner walk is typed through the pinned Sound receiver view.
     assert "static_cast<GraphicWin *>(this)" in method
     assert "static_cast<Dialog *>(this)" in method
     assert "this->ListBox::attach(" in method
-    assert "legacy_window_36()" in method
+    assert "legacy_sound_36()" in method
     assert "reinterpret_cast<Sound" not in method
     assert "vbt[" not in method and "dlg_base" not in method
     with tempfile.TemporaryDirectory(prefix="listbox-update-host-") as name:

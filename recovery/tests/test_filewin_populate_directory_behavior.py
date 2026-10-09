@@ -7,7 +7,7 @@ import tempfile
 
 
 ROOT = Path(__file__).parent
-SOURCE = ROOT.parents[1] / "src" / "filewin.cpp"
+SOURCE = ROOT.parents[1] / "src" / "jackal" / "filewin.cpp"
 FIXTURE = ROOT / "filewin_populate_directory_host_control.cpp"
 MARKER = "/* EXTRACTED_POPULATE_DIRECTORY_METHOD */"
 SIGNATURE = "int FileWin::populate_directory(char *directory)"
@@ -105,8 +105,8 @@ def test_draw_only_listbox_callback_family_is_void_and_typed():
     messagewin_h = (SOURCE_ROOT / "messagewin.h").read_text()
     messagewin_cpp = (SOURCE_ROOT / "messagewin.cpp").read_text()
     designwin_cpp = (SOURCE_ROOT / "designwin.cpp").read_text()
-    filewin_h = (SOURCE_ROOT / "filewin.h").read_text()
-    filewin_cpp = (SOURCE_ROOT / "filewin.cpp").read_text()
+    filewin_h = (SOURCE_ROOT / "jackal/filewin.h").read_text()
+    filewin_cpp = (SOURCE_ROOT / "jackal/filewin.cpp").read_text()
 
     assert "typedef void (__cdecl *DrawCallback)" in listbox_h
     assert "typedef int (__cdecl *WriteCallback)" in listbox_h

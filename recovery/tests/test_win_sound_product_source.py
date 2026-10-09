@@ -80,6 +80,9 @@ public:
     void on_right_down(int x, int y) {
         g_trace->push_back("self23:" + std::to_string(x) + "," + std::to_string(y));
     }
+    void on_right_up(int x, int y) {
+        g_trace->push_back("self24:" + std::to_string(x) + "," + std::to_string(y));
+    }
     void vslot_24(int x, int y) {
         g_trace->push_back("self24:" + std::to_string(x) + "," + std::to_string(y));
     }
@@ -203,12 +206,12 @@ def test_live_product_handler_mutants_are_detected():
     compile_handler_control(mutant_self, body24, "route23", expect_success=False)
 
 
-def test_four_repurposed_autosound_words_are_neutral_pointer_storage():
+def test_mixed_autosound_words_keep_neutral_storage_and_sound_views():
     header = (ROOT / "src" / "autosound.h").read_text()
     assert re.search(r"void\s*\*\s*val_12_\s*;", header)
-    assert re.search(r"void\s*\*\s*val_13_\s*;", header)
-    assert re.search(r"void\s*\*\s*val_24_\s*;", header)
-    assert re.search(r"void\s*\*\s*val_25_\s*;", header)
+    assert re.search(r"Sound\s*\*\s*val_13_\s*;", header)
+    assert re.search(r"Sound\s*\*\s*val_24_\s*;", header)
+    assert re.search(r"Sound\s*\*\s*val_25_\s*;", header)
     assert 'static_assert(sizeof(AutoSound) == 0x98' in header
 
 
@@ -219,8 +222,9 @@ def test_autosound_lifecycle_keeps_the_same_default_and_zero_stores():
         body = function_text(source, signature)
         for field, index in (("val_12_", 11), ("val_13_", 12),
                              ("val_24_", 23), ("val_25_", 24)):
+            value_type = "void" if field == "val_12_" else "Sound"
             assert re.search(
-                rf"{field}\s*=\s*reinterpret_cast<void\s*\*>\(AutoSoundDefaults\[{index}\]\)",
+                rf"{field}\s*=\s*reinterpret_cast<{value_type}\s*\*>\(AutoSoundDefaults\[{index}\]\)",
                 body,
             ), f"{signature} must preserve {field} default word {index}"
     init_body = function_text(source, "void AutoSound::init()")

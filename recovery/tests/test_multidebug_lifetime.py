@@ -228,7 +228,7 @@ def test_real_paint_slot_member_layout_and_global_owner(family):
         sound = layouts.layout("AutoSound")
         assert sound["members"]["val_4_"] == 0x10
         assert sound["member_types"]["val_4_"] == {
-            "kind": "pointer", "width": 4, "target": {"kind": "class_value", "class": "Win"}}
+            "kind": "pointer", "width": 4, "target": {"kind": "class_value", "class": "Sound"}}
         player = layouts.layout("NetPlayer")
         assert player["size"] == 0x58
         assert player["members"]["flags_14_"] == 0x14

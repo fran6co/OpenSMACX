@@ -1,0 +1,28 @@
+{
+  "event_id": "9e0e63bbf4d12026f8bfd94dfef3a831ef467fd3befae41192624ee2e28c2b3d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/README.md",
+      "recovery/tests/control_lifetime_harness.cpp",
+      "recovery/tests/test_control_lifetimes.py",
+      "recovery/tests/test_filewin_default_name_behavior.py",
+      "recovery/tests/test_filewin_extension_behavior.py",
+      "recovery/tests/test_filewin_init_behavior.py",
+      "recovery/tests/test_filewin_load_contract_behavior.py",
+      "recovery/tests/test_filewin_populate_directory_behavior.py",
+      "recovery/tests/test_filewin_unk4_full_branches.py",
+      "recovery/tests/test_pending_bodies_retirement_oct6.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes dependent fixture source-owner paths after FileWin relocation and correction of the lifetime double val_12_ to match the already existing neutral void* Sprite/settings storage; retain every lifetime assertion and event sequence. Documentation describes current source organization, not historical TU/flags proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "filewin-relocation-fixtures-oct9",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}

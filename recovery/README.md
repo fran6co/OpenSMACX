@@ -63,7 +63,8 @@ changing build evidence; extra linker inputs such as zlib remain separately visi
 Passing this check still does not accept a changed build graph or prove retained
 sections and initialization behavior.
 
-The confirmed Jackal lifecycle/version, palette, font and checkbox/radio controls live in `src/jackal/`,
+The confirmed Jackal lifecycle/version, palette, font, checkbox/radio controls and
+generic FileWin owner live in `src/jackal/`,
 whose own `CMakeLists.txt` builds `src/jackal/jackal.lib`.
 Its explicit archive/member binding in `build.json` joins the fresh compiler
 receipt, unchanged physical archive contents and unique final linker member

@@ -43,7 +43,8 @@ uint32_t EditBoxDefaultB28, EditBoxDefaultB2C, EditBoxDefaultB30 = 1, EditBoxDef
 void EditBox::close() { event(23); }
 struct BaseButton {
     int id;
-    int val_10_, val_11_, val_12_;
+    int val_10_, val_11_;
+    void *val_12_;
     uint32_t field_A14_, field_A18_;
     BaseButton() : id(++buttons) { event(10 + id); }
     virtual ~BaseButton() { event(40 + id); }

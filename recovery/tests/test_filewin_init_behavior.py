@@ -7,7 +7,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parent
-SOURCE = ROOT.parents[1] / "src" / "filewin.cpp"
+SOURCE = ROOT.parents[1] / "src" / "jackal" / "filewin.cpp"
 FIXTURE = ROOT / "filewin_init_host_control.cpp"
 
 

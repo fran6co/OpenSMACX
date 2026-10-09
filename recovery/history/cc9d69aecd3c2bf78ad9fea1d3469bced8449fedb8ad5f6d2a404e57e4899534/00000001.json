@@ -1,0 +1,19 @@
+{
+  "event_id": "adca55044981135f9189d2f360216d0e56a6b3ccdcd29bbc416dcd96d9a16e5e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.h"
+    ],
+    "evidence": [
+      "Coordinator authorizes the dependent Win::event_window inline accessor declaration to follow the evidence-backed AutoSound slot34 receiver representation. Original Menu5FBF00/5FB830/5FBAC0 reads slot+88 and calls Sound status/play slots5C/1C. Preserve all original scope, baseline, flags/mixed-slot behavior and obligations; this grants a header edit, not acceptance or new claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "autosound-event-accessor-header-oct9",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:autosound-receiver-closure-oct9"
+}

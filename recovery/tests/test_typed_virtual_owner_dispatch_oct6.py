@@ -35,7 +35,7 @@ def test_source_uses_existing_owner_contracts():
     assert "int on_key_click(int repeat, int key) override;" in scroll_h
     assert "virtual int on_key_click(int = 0, int = 0);" in (ROOT / "src/win.h").read_text()
     assert "static_cast<GraphicWin *>(this)->redraw();" in listing
-    assert "legacy_window_36()" in listing
+    assert "legacy_sound_36()" in listing
     assert "virtual int play();" in sound_h
     assert "virtual int is_playing();" in sound_h
     assert "virtual void redraw();" in graphic_h
@@ -45,8 +45,8 @@ def test_source_uses_existing_owner_contracts():
     assert "InterfaceSingletonAddress" not in scenario
     assert "InterfaceRefreshFunction" not in scenario
     assert "MainInterfaceGlobal.flat_button_[2].hide();" in scenario
-    assert "reinterpret_cast<VCall *>(child)->slot007()" in listing
-    assert "no physical owner" in listing
+    assert "child->play();" in listing
+    assert "Sound slots 23/7 at AutoSound" in listing
     assert "FlatButton flat_button_[42];" in main_h
 
 

@@ -25,7 +25,7 @@ def extract_definition(source: str, signature: str) -> str:
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
 def test_actual_filewin_method_and_alphasave_forwarder(compiler):
-    filewin = (PROJECT_ROOT / "src/filewin.cpp").read_text()
+    filewin = (PROJECT_ROOT / "src/jackal/filewin.cpp").read_text()
     alphasave = (PROJECT_ROOT / "src/alphasave.cpp").read_text()
     body = extract_definition(filewin, "int FileWin::add_def_ext(")
     wrapper = extract_definition(alphasave, "int AlphaSave::add_default_extension(")

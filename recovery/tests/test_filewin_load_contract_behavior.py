@@ -30,7 +30,7 @@ def test_actual_load_returns_full_path_or_null(compiler, tmp_path):
     executable = shutil.which(compiler)
     if executable is None:
         pytest.skip(f"host compiler unavailable: {compiler}")
-    filewin = (ROOT / "src/filewin.cpp").read_text()
+    filewin = (ROOT / "src/jackal/filewin.cpp").read_text()
     alpha = (ROOT / "src/alphasave.cpp").read_text()
     bodies = "\n".join([
         definition(filewin, "char *FileWin::load()"),

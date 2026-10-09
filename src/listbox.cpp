@@ -315,11 +315,11 @@ Purpose: Return the configured recipient's slot-8 value under the
          original AutoSound flag and recipient guards.
 */
 // ORIGINAL: 0x0060CED0 sub_60ced0 0x0060CED0-0x0060CF01 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "original code reads Win/AutoSound val_20_ at +0x50 and val_31_ at +0x7C; current AutoSound layout maps those fields and types val_31_ as Win*", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "original code tests the 32-bit flag at +0x50 and nonnull recipient at +0x7C, then calls recipient Win slot 8 without arguments; AutoSound retains neutral storage and this callsite supplies the Win view", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
 // symbol    ?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEHXZ
 int ListBox::on_scroll_create() {
     if ((val_20_ & 0x40) != 0 && val_31_ != 0) {
-        return val_31_->vslot_08();
+        return reinterpret_cast<Win *>(val_31_)->vslot_08();
     }
     return 0;
 }
@@ -329,11 +329,11 @@ Purpose: Forward the exact Scroll being removed through recipient slot 9
          under the original guards, otherwise return the argument.
 */
 // ORIGINAL: 0x0060CF10 sub_60cf10 0x0060CF10-0x0060CF4D FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "original code reads Win/AutoSound val_20_ at +0x50 and val_31_ at +0x7C; current AutoSound layout maps those fields and types val_31_ as Win*", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "original code tests the 32-bit flag at +0x50 and nonnull recipient at +0x7C, then calls recipient Win slot 9 with the Scroll argument; AutoSound retains neutral storage and this callsite supplies the Win view", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
 // symbol    ?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEHPAVScroll@@@Z
 int ListBox::on_scroll_delete(Scroll *scroll) {
     if ((val_20_ & 0x40) != 0 && val_31_ != 0) {
-        return reinterpret_cast<int>(val_31_->vslot_09(scroll));
+        return reinterpret_cast<int>(reinterpret_cast<Win *>(val_31_)->vslot_09(scroll));
     }
     return reinterpret_cast<int>(scroll);
 }
@@ -465,7 +465,7 @@ void ListBox::on_mouse_leave(int a1, int a2) {
 // receiver slots follow the seed's vbtable walk and callsites.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z 0x0060A020-0x0060A1DD
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0060a020.cpp", "source:src/listbox.h", "source:src/dialog.h", "source:src/win.h", "source:src/autosound.h"], "reason": "Recover ListBox selection, viewport and notify-gated item callbacks through its typed Dialog, GraphicWin and Win owners. The retained seed's vbtable walk resolves to Win::win_parent_ and its AutoSound val_36_ window; preserve the original seed and historical claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0060a020.cpp", "source:src/listbox.h", "source:src/dialog.h", "source:src/win.h", "source:src/autosound.h", "pinned 0x0060A020 reads AutoSound +0x90 and calls Sound slots 23/7"], "reason": "Recover ListBox selection, viewport and notify-gated item callbacks through its typed Dialog and GraphicWin owners. The child at AutoSound +0x90 is a Sound interface view, not a Win* field; preserve the original seed and historical claim."}
 void ListBox::set_selected_pos(int position, int notify) {
     if (Dialog::selected_position_ == position && field_8_ == 0) {
         redraw();
@@ -526,9 +526,9 @@ void ListBox::set_selected_pos(int position, int notify) {
 
             parent = static_cast<GraphicWin *>(this)->parent_window();
             if (parent != 0) {
-                Win *child = parent->legacy_window_36();
-                if (child != 0 && reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-                    reinterpret_cast<Sound *>(child)->play();
+                Sound *child = parent->legacy_sound_36();
+                if (child != 0 && child->is_playing() == 0) {
+                    child->play();
                 }
             }
         }
@@ -1356,7 +1356,7 @@ Purpose: Run the double-click notification: remember the hovered window,
          guard's counter value through it.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h", "source:src/autosound.h", "source:src/win.h"], "reason": "Recover ListBox double-click callbacks through typed GraphicWin, Dialog and the Win windows at AutoSound offsets 0x7c and 0x94, following the retained seed's virtual-base adjustments and slot calls."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h", "source:src/autosound.h", "source:src/win.h", "pinned 0x0060C710 reads AutoSound +0x7C for Win slots 56/55 and +0x94 for Sound slots 23/7"], "reason": "Recover ListBox double-click callbacks through typed GraphicWin and Dialog owners, with contextual Win and Sound receiver views over the distinct numbered AutoSound words. Preserve the retained seed's virtual-base adjustments and call order."}
 // symbol    ?on_left_double_click@ListBox@@UAEXHH@Z
 // size      171 bytes
 // prototype void (__thiscall ?on_left_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -1366,7 +1366,7 @@ Purpose: Run the double-click notification: remember the hovered window,
 void ListBox::on_left_double_click(int, int) {
     GraphicWin *graphic = static_cast<GraphicWin *>(this);
     Dialog *dialog = static_cast<Dialog *>(this);
-    Win *target = graphic->legacy_window_31();
+    Win *target = reinterpret_cast<Win *>(graphic->legacy_value_31());
     WinCallbackWindow = target;
 
     WinNotificationCallback callback = double_click_callback_;
@@ -1374,20 +1374,20 @@ void ListBox::on_left_double_click(int, int) {
         callback(dialog->get_selected_id());
     }
 
-    target = graphic->legacy_window_31();
+    target = reinterpret_cast<Win *>(graphic->legacy_value_31());
     if (target != 0) {
         target->vslot_56(dialog->get_selected_id());
     }
 
     const int guard = ListBoxClickGuard;
-    target = graphic->legacy_window_31();
+    target = reinterpret_cast<Win *>(graphic->legacy_value_31());
     target->vslot_55(dialog->get_selected_id(), guard);
 
-    target = graphic->legacy_window_31();
-    Win *child = target->legacy_window_37();
+    target = reinterpret_cast<Win *>(graphic->legacy_value_31());
+    Sound *child = target->legacy_sound_37();
     if (child != 0) {
-        if (reinterpret_cast<Sound *>(child)->is_playing() == 0) {
-            reinterpret_cast<Sound *>(child)->play();
+        if (child->is_playing() == 0) {
+            child->play();
         }
     }
 }
@@ -1511,17 +1511,12 @@ int ListBox::update_changes() {
     {
         Win *target = window->parent_window();
         if (target != 0) {
-            // The pinned child sequence is slot 23 (nullary int result),
-            // then slot 7 (nullary side effect). This does not match Win's
-            // declared slot-23 coordinate callback, and no physical owner
-            // view proves Sound or another typed receiver here; retain the
-            // distinct unresolved view instead of guessing its class.
-            Win *child = target->legacy_window_36();
+            // The pinned child sequence is Sound slots 23/7 at AutoSound
+            // offset 0x90; Win slot 23 has a different coordinate signature.
+            Sound *child = target->legacy_sound_36();
             if (child != 0) {
-                typedef int (OriginalObject::*slot023_fn)();
-                if ((ORIGINAL(child)->*vtable_method<slot023_fn>(child, 23 * 4))()
-                    == 0) {
-                    reinterpret_cast<VCall *>(child)->slot007();
+                if (child->is_playing() == 0) {
+                    child->play();
                 }
             }
         }

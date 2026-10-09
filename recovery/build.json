@@ -22,7 +22,8 @@
       {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/font.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/font.cpp.obj"},
       {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/checkbox.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/checkbox.cpp.obj"},
       {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/radiobutton.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/radiobutton.cpp.obj"},
-      {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/checkbutton.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/checkbutton.cpp.obj"}
+      {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/checkbutton.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/checkbutton.cpp.obj"},
+      {"archive": "src/jackal/jackal.lib", "object": "src/jackal/CMakeFiles/jackal.dir/filewin.cpp.obj", "member": "src/jackal/CMakeFiles/jackal.dir/filewin.cpp.obj"}
     ],
     "command_stages": {"compile": "compiler-effective", "link": "link-wrapper"},
     "link_files": "OpenSMACX.link.inputs.json",

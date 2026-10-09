@@ -115,6 +115,10 @@ struct FileWinConstruct {
 struct FileWin {
   ListBox list_box_; EditBox edit_box_; FlatButton flat_button2_; FlatButton1 flat_button1_;
   FileWinConstruct captured_;
+  ListBox &list_box() { return list_box_; }
+  EditBox &edit_box() { return edit_box_; }
+  FlatButton1 &cancel_button() { return flat_button1_; }
+  FlatButton &ok_button() { return flat_button2_; }
   int init(int, GraphicWin *, FileWinConstruct *p) { captured_=*p; ++filewin_init_calls; return 0; }
 };
 struct AlphaSave : GraphicWin { FileWin file_win_; void init(); };
@@ -124,12 +128,12 @@ int main() {
   AlphaSave a;
   ConsoleGlobal.visible = 1; WinScreenWidth = 801; WinScreenHeight = 700;
   memset(TextColourTable, 0, sizeof(TextColourTable));
-  int (*preserved_write)(GraphicWin *, int, int, RECT *, char *) = a.file_win_.list_box_.write_;
-  int (*preserved_fill)(GraphicWin *, int, int, RECT *) = a.file_win_.list_box_.fill_;
+  int (*preserved_write)(GraphicWin *, int, int, RECT *, char *) = a.file_win_.list_box().write_;
+  int (*preserved_fill)(GraphicWin *, int, int, RECT *) = a.file_win_.list_box().fill_;
   a.init();
-  assert(a.file_win_.list_box_.draw_ == alpha_save_filebox_draw);
-  assert(a.file_win_.list_box_.write_ == preserved_write);
-  assert(a.file_win_.list_box_.fill_ == preserved_fill);
+  assert(a.file_win_.list_box().draw_ == alpha_save_filebox_draw);
+  assert(a.file_win_.list_box().write_ == preserved_write);
+  assert(a.file_win_.list_box().fill_ == preserved_fill);
   assert(last_x == 219 && last_y == 222 && last_width == 0x18a && last_height == 0x191);
   assert(filewin_init_calls == 1 && box_calls == 2 && fill_calls == 2);
   assert(GraphicWin::styles[0] == &InterfaceBoxStyles[9]);

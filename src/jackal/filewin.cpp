@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+// Generic Jackal file-selection owner; application presentation stays in AlphaSave.
 #include "filewin.h"
 #include "sprite.h"
 #include "text.h"

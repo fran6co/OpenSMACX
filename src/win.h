@@ -226,23 +226,24 @@ class Win : public AutoSound {
 
   // 0x005EE4D0, homed into win.cpp 2026-09-06. The shared dispatcher shape -
   // input gates, publish WinCallbackWindow, run mouse_move_hook_, raise slot
-  // 17 (slot 31 when the third argument is set), then notify the child.
+  // 17 (slot 31 when the third argument is set), then notify the Sound-view
+  // receiver at val_7_ or val_19_ through Sound slots 23/7.
   void dispatch_17(int a, int b, int alternate);
 
   // 0x005EE570 / 0x005EE610, homed into win.cpp 2026-09-06. The same
-  // dispatcher shape around slot 28 (field_40C_ hook, children val_17_ /
-  // val_26_) and slot 29 (field_410_ hook, children val_18_ / val_27_).
+  // dispatcher shape around slot 28 (field_40C_ hook, Sound receivers
+  // val_17_ / val_26_) and slot 29 (field_410_ hook, val_18_ / val_27_).
   void dispatch_28(int a, int b, int alternate);
   void dispatch_29(int a, int b, int alternate);
 
   // 0x005EE6B0, homed into win.cpp 2026-09-06. The same shape around slot 19
-  // (field_414_ hook, children AutoSound+0x20 / val_20_) - see the layout
-  // note in win.cpp about that 0x20 read.
+  // (field_414_ hook, Sound receivers AutoSound+0x20 / val_20_). The first
+  // word remains neutral flags_ storage and is viewed contextually here.
   void dispatch_19(int a, int b, int alternate);
 
   // 0x005EE810 / 0x005EE8B0, homed into win.cpp 2026-09-06. The same shape
-  // around slot 21 (field_41C_ hook, children val_10_ / val_22_) and slot 22
-  // (field_420_ hook, children val_11_ / val_23_).
+  // around slot 21 (field_41C_ hook, Sound views of mixed val_10_ / val_22_)
+  // and slot 22 (field_420_ hook, mixed val_11_ / Sound val_23_).
   void dispatch_21(int a, int b, int alternate);
   void dispatch_22(int a, int b, int alternate);
   // Seed identities 0x5EE950/0x5EE9F0; these source labels are provisional.
@@ -381,7 +382,6 @@ class Win : public AutoSound {
   bool has_dialog_focus_flag() const { return (iFlags_ & 0x1000) != 0; }
   // ListBox row painting tests this existing Win flag to select parent-surface copying.
   bool has_listbox_backfill_flag() const { return (iFlags_ & 0x80000u) != 0; }
-  Win *event_window() const { return event_window_; }
   // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0 - the RECT
   // overload, distinct from the (int*, int*) one above. Not yet recovered,
   // a pending_bodies forwarder.

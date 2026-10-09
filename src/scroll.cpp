@@ -1669,9 +1669,9 @@ void Scroll::on_mouse_move(int x, int y) {
         }
     }
 
-    Win *const target = parent->scroll_event_target();
-    if (target != nullptr && reinterpret_cast<Sound *>(target)->is_playing() == 0) {
-        reinterpret_cast<Sound *>(target)->play();
+    Sound *const target = parent->legacy_sound_33();
+    if (target != nullptr && target->is_playing() == 0) {
+        target->play();
     }
     redraw();
 }
@@ -1795,9 +1795,9 @@ void Scroll::on_mousewheel_up(int delta) {
         }
     }
 
-    Win *const target = parent->scroll_event_target();
-    if (target != nullptr && reinterpret_cast<Sound *>(target)->is_playing() == 0) {
-        reinterpret_cast<Sound *>(target)->play();
+    Sound *const target = parent->legacy_sound_33();
+    if (target != nullptr && target->is_playing() == 0) {
+        target->play();
     }
 
     field_A3C_ = 0xFFFFFFFFU;
@@ -1854,9 +1854,9 @@ int Scroll::on_key_click(int, int key) {
         field_2144_(field_A18_, notified_position);
     }
 
-    Win *const target = parent->scroll_event_target();
-    if (target != nullptr && reinterpret_cast<Sound *>(target)->is_playing() == 0) {
-        reinterpret_cast<Sound *>(target)->play();
+    Sound *const target = parent->legacy_sound_33();
+    if (target != nullptr && target->is_playing() == 0) {
+        target->play();
     }
 
     field_A3C_ = 0xFFFFFFFFU;
@@ -1893,9 +1893,9 @@ void Scroll::on_button_clicked(int button_id) {
         field_2144_(field_A18_, notified_position);
     }
 
-    Win *const target = parent->scroll_event_target();
-    if (target != nullptr && reinterpret_cast<Sound *>(target)->is_playing() == 0) {
-        reinterpret_cast<Sound *>(target)->play();
+    Sound *const target = parent->legacy_sound_33();
+    if (target != nullptr && target->is_playing() == 0) {
+        target->play();
     }
 
     field_A3C_ = 0xFFFFFFFFU;
@@ -1950,9 +1950,9 @@ void Scroll::on_button_pressed(int button_id) {
         }
     }
 
-    Win *const target = parent->scroll_event_target();
-    if (target != nullptr && reinterpret_cast<Sound *>(target)->is_playing() == 0) {
-        reinterpret_cast<Sound *>(target)->play();
+    Sound *const target = parent->legacy_sound_33();
+    if (target != nullptr && target->is_playing() == 0) {
+        target->play();
     }
 
     field_A3C_ = 0xFFFFFFFFU;

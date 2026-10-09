@@ -5,7 +5,7 @@ import pytest
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src" / "filewin.cpp"
+SOURCE = ROOT / "src" / "jackal" / "filewin.cpp"
 
 
 def extract_body(text, signature):

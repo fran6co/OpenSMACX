@@ -89,8 +89,8 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
     general_header = (ROOT / "src/general.h").read_text()
     assert "filewin_close_class" not in general_header
     assert "basepop_close_class" not in general_header
-    assert "static void __cdecl close_class();" in (ROOT / "src/filewin.h").read_text()
-    filewin = [row for row in read_file(ROOT / "src/filewin.cpp")
+    assert "static void __cdecl close_class();" in (ROOT / "src/jackal/filewin.h").read_text()
+    filewin = [row for row in read_file(ROOT / "src/jackal/filewin.cpp")
                if row.address == 0x00614E30]
     assert len(filewin) == 1
     row, = filewin

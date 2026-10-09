@@ -137,19 +137,19 @@ void AlphaSave::init() {
     layout.field_44_ = inset + 8;
     file_win_.init(0, this, &layout);
 
-    Dialog &list_dialog = file_win_.list_box_;
+    Dialog &list_dialog = file_win_.list_box();
     list_dialog.set_dialog_font(MainInterfaceGlobal.secondary_font(), 0, 0);
     list_dialog.set_dialog_text_color(TextColourTable[0], TextColourTable[1], 1, 1);
-    file_win_.list_box_.set_report_text_color(TextColourTable[2]);
-    file_win_.list_box_.reset_report_selection();
-    file_win_.list_box_.set_draw_callback(alpha_save_filebox_draw);
+    file_win_.list_box().set_report_text_color(TextColourTable[2]);
+    file_win_.list_box().reset_report_selection();
+    file_win_.list_box().set_draw_callback(alpha_save_filebox_draw);
     list_dialog.field_48_ = 0x16;
     list_dialog.field_4C_ = 1;
     list_dialog.field_B4_ = 0;
     list_dialog.field_20_ &= ~4u;
     list_dialog.on_redraw();
 
-    EditBox &edit = file_win_.edit_box_;
+    EditBox &edit = file_win_.edit_box();
     edit.set_font(MainInterfaceGlobal.secondary_font(), 0, 0, 0);
     edit.field_B1C_ = TextColourTable[10];
     edit.set_text_color(TextColourTable[4], TextColourTable[5], 1, 1);
@@ -160,12 +160,12 @@ void AlphaSave::init() {
     edit.on_dialog_focus(1);
     edit.redraw();
 
-    file_win_.flat_button2_.set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    file_win_.flat_button2_.redraw();
-    file_win_.flat_button2_.redraw();
-    file_win_.flat_button1_.set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    file_win_.flat_button1_.redraw();
-    file_win_.flat_button1_.redraw();
+    file_win_.ok_button().set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    file_win_.ok_button().redraw();
+    file_win_.ok_button().redraw();
+    file_win_.cancel_button().set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    file_win_.cancel_button().redraw();
+    file_win_.cancel_button().redraw();
 }
 
 // ORIGINAL: 0x00407350 ??0AlphaSave@@QAE@XZ 0x00407350-0x00407410;0x00650BF0-0x00650C60
@@ -218,10 +218,10 @@ int AlphaSave::on_key_click(int key, int flags) {
     case 0x22:
     case 0x26:
     case 0x28:
-        return file_win_.list_box_.key_down_event(flags);
+        return file_win_.list_box().key_down_event(flags);
     default:
-        file_win_.edit_box_.key_down_event(flags);
-        return file_win_.edit_box_.key_click_event(key, flags);
+        file_win_.edit_box().key_down_event(flags);
+        return file_win_.edit_box().key_click_event(key, flags);
     }
 }
 
@@ -231,7 +231,7 @@ int AlphaSave::on_key_click(int key, int flags) {
 // Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/004080e0.cpp
 void AlphaSave::on_scrolled(int code, int pos) {
     // The embedded ListBox dispatches this notification through its Win base.
-    file_win_.list_box_.on_scrolled(code, pos);
+    file_win_.list_box().on_scrolled(code, pos);
 }
 
 // ORIGINAL: 0x00408110 ?on_scrolled@AlphaSave@@QAEXHH@Z 0x00408110-0x0040813C BYTE_EXACT
@@ -240,7 +240,7 @@ void AlphaSave::on_scrolled(int code, int pos) {
 // Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/00408110.cpp
 void AlphaSave::on_scrolling(int code, int pos) {
     // This is the next Win virtual notification, not ListBox's direct handler.
-    file_win_.list_box_.on_scrolling(code, pos);
+    file_win_.list_box().on_scrolling(code, pos);
 }
 
 // ORIGINAL: 0x00407E80 ?on_listbox_scroll_create@AlphaSave@@QAEHXZ 0x00407E80-0x00407ECA BYTE_EXACT
@@ -267,7 +267,7 @@ void AlphaSave::show_save_window(int) {
     }
     if (ConsoleGlobal.is_visible()) {
         slide_show(this, 0);
-        if (file_win_.list_box_.has_scroll_flags()) {
+        if (file_win_.list_box().has_scroll_flags()) {
             scroll_show(this, &scroll_);
         }
         Win::show(3);
@@ -285,7 +285,7 @@ void AlphaSave::hide_save_window() {
         return;
     }
     if (ConsoleGlobal.is_visible()) {
-        if (file_win_.list_box_.has_scroll_flags()) {
+        if (file_win_.list_box().has_scroll_flags()) {
             scroll_hide(this, &scroll_);
         }
         slide_hide(this, 0);
@@ -302,12 +302,12 @@ void AlphaSave::hide_save_window() {
 // esi=list-base, edi=count register trio. The typed body is not yet exact;
 // restore its historical extent through the source identity above.
 void AlphaSave::on_selected(int) {
-    Dialog &dialog = file_win_.list_box_;
+    Dialog &dialog = file_win_.list_box();
     dialog.item_list_.seek_pos(dialog.selected_position_);
-    file_win_.edit_box_.set_text(dialog.item_list_.current_text());
-    file_win_.edit_box_.select_all_text();
-    file_win_.edit_box_.redraw();
-    file_win_.edit_box_.redraw();
+    file_win_.edit_box().set_text(dialog.item_list_.current_text());
+    file_win_.edit_box().select_all_text();
+    file_win_.edit_box().redraw();
+    file_win_.edit_box().redraw();
 }
 
 // ORIGINAL: 0x00407920 ?save@AlphaSave@@QAEXXZ 0x00407920-0x00407A7E
