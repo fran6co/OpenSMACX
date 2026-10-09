@@ -1,0 +1,36 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ae824f56e05240374093fa2334eb061c0bfc8c1c",
+  "editable_files": [
+    "src/win.cpp",
+    "src/win.h",
+    "recovery/tests/test_win_keyboard_focus_oct9.py"
+  ],
+  "evidence": [
+    "Pinned5F6A50..5F6AB0,5F1660..5F16CB,5F15C0..5F1657 select focus/modal or input/default, publish WinActiveWindow, load real poWinBase_+A8, test iSomeFlag_+9C bit1 (not iFlags_+98), follow win_parent_+C4. Existing globals own the original addresses; no integer/fixed-address stand-ins needed.",
+    "get_key_window tests parent presence but calls is_visible on poWinBase receiver; OnChar/OnKey call is_visible on parent. Preserve this original difference and dispatch on inner receiver. OnKey invokes WinKeyHook only when present and flags nonzero, then optional WinMessageHook. Preserve rereads/ordering, original defects and ABI.",
+    "Allow narrowly scoped friend declaration for existing free OnChar (as existing OnSysKey friend); no new fields, guessed hierarchy or ordinary-member/static conversion. Extract actual source controls covering focus permutations, null inner, visibility bit, distinct parent/inner visible outcomes, callback arguments and hook order. Native allWinTU measurements/layout, source identity/claim continuity, independent review and full build/link required before coordinator manual integration. No claim demotions, compiler-policy changes or task baseline reset.",
+    "Coordinator permits a documented temporary local matching regression only for the justified typed member/global migration in these three subjects, after fresh measurement and source/pinned review prove the unchanged original behavior and build/link passes. Preserve historical exact claims as restoration obligations; do not weaken gates or label a regression byte-exact, automatically accepted or game acceptance. Prefer inexpensive exactness, not extended spelling searches."
+  ],
+  "intent": "Recover Win keyboard-focus routing with existing named globals and real members; preserve original selection, distinct visibility receivers, virtual dispatch and hook ordering.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6231648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6253136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6231488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-keyboard-focus-members-oct9"
+}
