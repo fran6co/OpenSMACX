@@ -1,0 +1,79 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "38de6eda8ff5204d0b252848879f0fb424138a56",
+  "editable_files": [
+    "recovery/tests/test_matrix3_semantic_api.py",
+    "src/matrix3.cpp",
+    "src/matrix3.h"
+  ],
+  "evidence": [
+    "Coordinator-authorized disjoint parallel manual recovery batch; workers draft in isolated checkouts, coordinator owns Git, compilation, integration and any scope expansion. Preserve quirks, identities, claims and restoration obligations; no acceptance or claims granted.",
+    "Pinned methods share offsets0..32 and coherent identity/add/subtract/multiply/scale/equality/transform operations. Matrix3 is a chosen semantic source name, not a proved original name/TU/complete size/lifetime. Keep explicit SCAFFOLD/structural obligations until those facts are qualified. Do not invent constructor/destructor or hidden-class-result semantics; no caller fabrication or claimed function-coverage increase."
+  ],
+  "intent": "Expose the proven nine-float 3x3 algebra as a typed mathematical source API, preserving all 12 identities, operand/store order, output aliases, scratch initialization, precision obligations and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6506176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "matrix3-semantic-api-oct9"
+}
