@@ -1,0 +1,41 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a2bf4c7cb6bbd41192d2e844385781ae23ec1155",
+  "editable_files": [
+    "src/selectpartwin.cpp",
+    "recovery/tests/test_selectpartwin_text_colour_owner_actual_source_oct10.py"
+  ],
+  "evidence": [
+    "TextColourTable is genuine int[195] at008C6B5C in interface_palette.cpp/h; interface palette initializer fills this range including slots158..161. Four fixed SelectPartWin aliases008C6DD4/6DD8/6DDC/6DE0 exactly equal table[158]/[159]/[160]/[161]. Pinned signed dword loads at432AE4/432AEA/432B83/432B8C,432F5A/432F60/433002/433008,43332F/433335/4333D9/4333DF,433661/433667/43370A/43370F corroborate ownership and color operand order. Existing table index extent includes allfour slots; no new original allocation/lifetime inference.",
+    "Only selectpartwin.cpp and declared actual-source host test. Replace all eight pair-call source color reads across draw_chassis4329B0,draw_weapon432CC0,draw_armor433170,draw_reactor433520 with existing table access (eight pair calls/sixteen scalar loads if counting each scalar independently). Remove allfour dead executable-address pointer aliases after actual reference search; include owner header explicitly if needed. No new storage/helpers/data extraction/lifecycle code, no hoisting across rendering callbacks or changed color order/flags/control flow.",
+    "Current pair A1/A2 vs B1/B2 semantics may be documented by actual consumer context; don't invent active/disabled names without evidence. Use direct table indices or named evidence-backed index constants, not pointers to original VA. Preserve original first/second color arguments and complete original mappings/spans/historical claims/LEVER/TRIED/role facts; no hand claim/marker edits or guessed symbol updates.",
+    "Actual-source host controls should extract real set_text_color statements from allfour complete owner definitions, use actual TextColourTable declaration extent when practical, inject distinct nontrivial signed values per index to prove both pair choices/order and unchanged remaining call arguments. Test current table mutation between calls rather than cached initial values; compiling oneatatime mutants must be rejected behaviorally. State bounded color-call proof does not establish complete graphics rendering/runtime, native ABI, original full palette lifetime or automatic acceptance.",
+    "Coordinator owns native baseline/current fullTU sibling measurements, scoped strict diagnostics, source/claim continuity and references, independent review, combined master build/link/integration. Worker isolated, no Git/native/Wine/delegation/root edits/framework changes. Temporary justified matching regression preserves restoration obligations; no new claims, behavior fixes, baseline resets or full-game acceptance."
+  ],
+  "intent": "Recover SelectPartWin colour reads through the existing initialized interface palette owner across all four part render methods.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4401584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4402368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4403568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4404512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "selectpartwin-text-colour-owner-oct10"
+}
