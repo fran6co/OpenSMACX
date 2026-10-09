@@ -2458,11 +2458,12 @@ void Console::disband(int veh_id) {
     }
 }
 
-// .rdata strings these bodies pass to X_pop. The image names them by
-// address; the tree names them by their text, read straight out of
-// .rdata (0x0068A9CC "MENUSIMPLE", 0x00688F98 "RESETALLFAC").
-static const char *const StrMenuSimple = (const char *)0x0068A9CC;
-static const char *const StrResetAllFac = (const char *)0x00688F98;
+// Original .data text inputs, with separate writable owners for each
+// address even when another input has the same contents.
+// RECOVERY_OBJECT: v2 0x0068A9CC 0x0068A9D7 ?ConsoleStrMenuSimple@@3PADA 0x00516970
+char ConsoleStrMenuSimple[] = "MENUSIMPLE";  // 0x0068A9CC
+// RECOVERY_OBJECT: v2 0x00688F98 0x00688FA4 ?ConsoleStrResetAllFac@@3PADA 0x004DBB40
+char ConsoleStrResetAllFac[] = "RESETALLFAC";  // 0x00688F98
 
 // THE PER-FACTION DWORD RUN at 0x00946138 - game.h binds that address as
 // TectonicDetonationCount, and editor_reset_faction is the reader that shows
@@ -2471,32 +2472,47 @@ static const char *const StrResetAllFac = (const char *)0x00688F98;
 // the exclusive 0x00946158 where RulesResource Resource[] begins. The run
 // sits between Citizen[9] and Resource[0], so it is not part of either array.
 
-// .rdata strings, read out of the image: 0x00688FA4 is "RESETALLTECH", the
-// confirmation X_pop asks before editor_reset_tech throws every faction's
+// Original .data string at 0x00688FA4 is "RESETALLTECH", the confirmation
+// X_pop asks before editor_reset_tech throws every faction's
 // research away.
-static const char *const StrResetAllTech = (const char *)0x00688FA4;
+// RECOVERY_OBJECT: v2 0x00688FA4 0x00688FB1 ?ConsoleStrResetAllTech@@3PADA 0x004DBC40
+char ConsoleStrResetAllTech[] = "RESETALLTECH";  // 0x00688FA4
 
-// .rdata strings the editor commands pass to x_pop_short / X_pop, read out of
-// the image. The image PUSHES each address as an immediate, so the binding has
-// to keep the image's address rather than a tree string literal.
-static const char *const EditorRockinessLabel = (const char *)0x00689174;    // "ROCKOSITY"
-static const char *const StrEditorMinor = (const char *)0x00689120;  // "EDITORMINOR"
-static const char *const StrMapFlat = (const char *)0x00689148;      // "MAPFLAT"
-static const char *const StrMapRound = (const char *)0x00689150;     // "MAPROUND"
-static const char *const StrEditorYear = (const char *)0x006890F0;   // "EDITORYEAR"
-static const char *const StrMenuDetail = (const char *)0x0068A9C0;   // "MENUDETAIL"
+// Original .data strings passed by editor commands to x_pop_short / X_pop.
+// RECOVERY_OBJECT: v2 0x00689174 0x0068917E ?ConsoleEditorRockinessLabel@@3PADA 0x004E14A0
+char ConsoleEditorRockinessLabel[] = "ROCKOSITY";  // 0x00689174
+// RECOVERY_OBJECT: v2 0x00689120 0x0068912C ?ConsoleStrEditorMinor@@3PADA 0x004E0AD0
+char ConsoleStrEditorMinor[] = "EDITORMINOR";  // 0x00689120
+// RECOVERY_OBJECT: v2 0x00689148 0x00689150 ?ConsoleStrMapFlat@@3PADA 0x004E0F30
+char ConsoleStrMapFlat[] = "MAPFLAT";  // 0x00689148
+// RECOVERY_OBJECT: v2 0x00689150 0x00689159 ?ConsoleStrMapRound@@3PADA 0x004E0F30
+char ConsoleStrMapRound[] = "MAPROUND";  // 0x00689150
+// RECOVERY_OBJECT: v2 0x006890F0 0x006890FB ?ConsoleStrEditorYear@@3PADA 0x004E0210
+char ConsoleStrEditorYear[] = "EDITORYEAR";  // 0x006890F0
+// RECOVERY_OBJECT: v2 0x0068A9C0 0x0068A9CB ?ConsoleStrMenuDetail@@3PADA 0x00516930
+char ConsoleStrMenuDetail[] = "MENUDETAIL";  // 0x0068A9C0
 static const char StrScenarioObjectivesPopup[] = "THEYFAILEDFLECHETTE";
 static char StrScenarioObjectivesTitle[] = "FLECHETTE";
-static const char *const StrFungosity = (const char *)0x0068915C;    // "FUNGOSITY"
-static const char *const StrFungmotize = (const char *)0x00689168;   // "FUNGMOTIZE"
-static const char *const StrProtectOff = (const char *)0x00689198;   // "PROTECTOFF"
-static const char *const StrProtectOn = (const char *)0x006891A4;    // "PROTECTON"
-static const char *const StrTerraSurvey2 = (const char *)0x0068A8E0; // "TERRASURVEY2"
-static const char *const StrTechChange = (const char *)0x0068A8D4;   // "TECHCHANGE"
-static const char *const StrAcLogoSm = (const char *)0x0068AA7C;     // "ac_logo_sm.pcx"
-static const char *const StrVersionControlX = (const char *)0x0068AA8C;  // "VERSIONCONTROLX"
-static const char *const StrDesignated = (const char *)0x00688E44;   // "DESIGNATED"
-static const char *const StrUndesignated = (const char *)0x00688E50; // "UNDESIGNATED"
+// RECOVERY_OBJECT: v2 0x0068915C 0x00689166 ?ConsoleStrFungosity@@3PADA 0x004E13E0
+char ConsoleStrFungosity[] = "FUNGOSITY";  // 0x0068915C
+// RECOVERY_OBJECT: v2 0x00689168 0x00689173 ?ConsoleStrFungmotize@@3PADA 0x004E13E0
+char ConsoleStrFungmotize[] = "FUNGMOTIZE";  // 0x00689168
+// RECOVERY_OBJECT: v2 0x00689198 0x006891A3 ?ConsoleStrProtectOff@@3PADA 0x004E1F70
+char ConsoleStrProtectOff[] = "PROTECTOFF";  // 0x00689198
+// RECOVERY_OBJECT: v2 0x006891A4 0x006891AE ?ConsoleStrProtectOn@@3PADA 0x004E1F70
+char ConsoleStrProtectOn[] = "PROTECTON";  // 0x006891A4
+// RECOVERY_OBJECT: v2 0x0068A8E0 0x0068A8ED ?ConsoleStrTerraSurvey2@@3PADA 0x00515530
+char ConsoleStrTerraSurvey2[] = "TERRASURVEY2";  // 0x0068A8E0
+// RECOVERY_OBJECT: v2 0x0068A8D4 0x0068A8DF ?ConsoleStrTechChange@@3PADA 0x00515010
+char ConsoleStrTechChange[] = "TECHCHANGE";  // 0x0068A8D4
+// RECOVERY_OBJECT: v2 0x0068AA7C 0x0068AA8B ?ConsoleStrAcLogoSm@@3PADA 0x00517180
+char ConsoleStrAcLogoSm[] = "ac_logo_sm.pcx";  // 0x0068AA7C
+// RECOVERY_OBJECT: v2 0x0068AA8C 0x0068AA9C ?ConsoleStrVersionControlX@@3PADA 0x00517180
+char ConsoleStrVersionControlX[] = "VERSIONCONTROLX";  // 0x0068AA8C
+// RECOVERY_OBJECT: v2 0x00688E44 0x00688E4F ?ConsoleStrDesignated@@3PADA 0x004D7CF0
+char ConsoleStrDesignated[] = "DESIGNATED";  // 0x00688E44
+// RECOVERY_OBJECT: v2 0x00688E50 0x00688E5D ?ConsoleStrUndesignated@@3PADA 0x004D7CF0
+char ConsoleStrUndesignated[] = "UNDESIGNATED";  // 0x00688E50
 // show_version reads two more .data slots that hold POINTERS to strings:
 // 0x00691870 -> "RELEASE 2.0" and 0x00691874 -> "20-Dec-1999".
 static int *const VersionReleaseTextSlot = (int *)0x00691870;
@@ -2504,34 +2520,48 @@ static int *const VersionBuildDateSlot = (int *)0x00691874;
 
 typedef int (__cdecl *NullCallback)(void);
 
-// .rdata strings the newly homed bodies hand to the pop helpers, read out of
-// the image exactly like the sibling bindings above: the image PUSHES each
-// address as an immediate, so the binding keeps the image's address and the
-// literal is the comment.
-static const char *const StrEditorEnergy = (const char *)0x006890E0;  // "EDITORENERGY"
-static const char *const StrBrush = (const char *)0x00689140;         // "BRUSH"
-static const char *const StrTechRandom = (const char *)0x0068A8C8;    // "TECHRANDOM"
+// Original .data strings passed to the editor pop helpers.
+// RECOVERY_OBJECT: v2 0x006890E0 0x006890ED ?ConsoleStrEditorEnergy@@3PADA 0x004E0120
+char ConsoleStrEditorEnergy[] = "EDITORENERGY";  // 0x006890E0
+// RECOVERY_OBJECT: v2 0x00689140 0x00689146 ?ConsoleStrBrush@@3PADA 0x004E0EA0
+char ConsoleStrBrush[] = "BRUSH";  // 0x00689140
+// RECOVERY_OBJECT: v2 0x0068A8C8 0x0068A8D3 ?ConsoleStrTechRandom@@3PADA 0x00514F50
+char ConsoleStrTechRandom[] = "TECHRANDOM";  // 0x0068A8C8
 
-// .rdata labels the order handlers raise through NetMsgPrimary, read out of the
-// image. SIMULNO and UNITMOVED each exist twice - the image pushes two
-// distinct .rdata copies of the same text from different guards, so each
-// address keeps its own binding.
-static const char *const StrSimulNo = (const char *)0x00688C68;        // "SIMULNO"
-static const char *const StrUnitMoved = (const char *)0x00688C70;      // "UNITMOVED"
-static const char *const StrSimulNo2 = (const char *)0x00688C7C;       // "SIMULNO"
-static const char *const StrUnitMoved2 = (const char *)0x00688C84;     // "UNITMOVED"
-static const char *const StrOnlyCombat = (const char *)0x00688C90;     // "ONLYCOMBAT"
-static const char *const StrNotBase = (const char *)0x00688C9C;        // "NOTBASE"
-static const char *const StrNotInTriad = (const char *)0x00688CA4;     // "NOTINTRIAD"
-static const char *const StrDestroyBomb = (const char *)0x00688CB0;    // "DESTROYBOMB"
-static const char *const StrDestroy = (const char *)0x00688CBC;        // "DESTROY"
-static const char *const StrNotHere = (const char *)0x00688CC4;        // "NOTHERE"
-static const char *const StrNoBomb = (const char *)0x00688EC0;         // "NOBOMB"
-static const char *const StrScenParam = (const char *)0x00688FF4;      // "SCENPARAM"
-static const char *const StrEditorWhoListTitle = (const char *)0x00688F6C;  // "EDITORWHO"
-static const char *const StrCustomNames = (const char *)0x00689000;    // "CUSTOMNAMES"
-static const char *const StrHostTime = (const char *)0x0068A93C;       // "HOSTTIME"
-static const char *const StrCustomTime = (const char *)0x0068A948;     // "CUSTOMTIME"
+// Original .data labels sent to NetMsgPrimary. Duplicate texts remain distinct
+// arrays because the image contains separate text objects for each use.
+// RECOVERY_OBJECT: v2 0x00688C68 0x00688C70 ?ConsoleStrSimulNo@@3PADA 0x004D52A0
+char ConsoleStrSimulNo[] = "SIMULNO";  // 0x00688C68
+// RECOVERY_OBJECT: v2 0x00688C70 0x00688C7A ?ConsoleStrUnitMoved@@3PADA 0x004D52A0
+char ConsoleStrUnitMoved[] = "UNITMOVED";  // 0x00688C70
+// RECOVERY_OBJECT: v2 0x00688C7C 0x00688C84 ?ConsoleStrSimulNo2@@3PADA 0x004D52A0
+char ConsoleStrSimulNo2[] = "SIMULNO";  // 0x00688C7C
+// RECOVERY_OBJECT: v2 0x00688C84 0x00688C8E ?ConsoleStrUnitMoved2@@3PADA 0x004D52A0
+char ConsoleStrUnitMoved2[] = "UNITMOVED";  // 0x00688C84
+// RECOVERY_OBJECT: v2 0x00688C90 0x00688C9B ?ConsoleStrOnlyCombat@@3PADA 0x004D52A0
+char ConsoleStrOnlyCombat[] = "ONLYCOMBAT";  // 0x00688C90
+// RECOVERY_OBJECT: v2 0x00688C9C 0x00688CA4 ?ConsoleStrNotBase@@3PADA 0x004D52A0
+char ConsoleStrNotBase[] = "NOTBASE";  // 0x00688C9C
+// RECOVERY_OBJECT: v2 0x00688CA4 0x00688CAF ?ConsoleStrNotInTriad@@3PADA 0x004D52A0
+char ConsoleStrNotInTriad[] = "NOTINTRIAD";  // 0x00688CA4
+// RECOVERY_OBJECT: v2 0x00688CB0 0x00688CBC ?ConsoleStrDestroyBomb@@3PADA 0x004D52A0
+char ConsoleStrDestroyBomb[] = "DESTROYBOMB";  // 0x00688CB0
+// RECOVERY_OBJECT: v2 0x00688CBC 0x00688CC4 ?ConsoleStrDestroy@@3PADA 0x004D52A0
+char ConsoleStrDestroy[] = "DESTROY";  // 0x00688CBC
+// RECOVERY_OBJECT: v2 0x00688CC4 0x00688CCC ?ConsoleStrNotHere@@3PADA 0x004D52A0
+char ConsoleStrNotHere[] = "NOTHERE";  // 0x00688CC4
+// RECOVERY_OBJECT: v2 0x00688EC0 0x00688EC7 ?ConsoleStrNoBomb@@3PADA 0x004D8CD0
+char ConsoleStrNoBomb[] = "NOBOMB";  // 0x00688EC0
+// RECOVERY_OBJECT: v2 0x00688FF4 0x00688FFE ?ConsoleStrScenParam@@3PADA 0x004DCCC0
+char ConsoleStrScenParam[] = "SCENPARAM";  // 0x00688FF4
+// RECOVERY_OBJECT: v2 0x00688F6C 0x00688F76 ?ConsoleStrEditorWhoListTitle@@3PADA 0x004D9AD0
+char ConsoleStrEditorWhoListTitle[] = "EDITORWHO";  // 0x00688F6C
+// RECOVERY_OBJECT: v2 0x00689000 0x0068900C ?ConsoleStrCustomNames@@3PADA 0x004DD1B0
+char ConsoleStrCustomNames[] = "CUSTOMNAMES";  // 0x00689000
+// RECOVERY_OBJECT: v2 0x0068A93C 0x0068A945 ?ConsoleStrHostTime@@3PADA 0x00515900
+char ConsoleStrHostTime[] = "HOSTTIME";  // 0x0068A93C
+// RECOVERY_OBJECT: v2 0x0068A948 0x0068A953 ?ConsoleStrCustomTime@@3PADA 0x00515900
+char ConsoleStrCustomTime[] = "CUSTOMTIME";  // 0x0068A948
 // ORIGINAL: 0x004D0450 ?skip@Console@@QAEXH@Z 0x004D0450-0x004D0494 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004D0450-0x004D0494", "source:src/netdaemon.h", "source:src/veh.h", "source:src/game.h", "source:src/console.h"], "reason": "Home the skip order through the typed vehicle-ready predicate, turn guard and NetDaemon order API, and the already named Console skip-state member; remove the seed's receiver/table pointer arithmetic."}
 // The seed's blocked callee at 0x00531780 is now NetDaemon::order_veh; its
@@ -2566,7 +2596,7 @@ void Console::set_road_to(int veh_id, int x_coord, int y_coord, int order) {
     const int target_index = MapLongitude * y_coord + (x_coord >> 1);
     const int origin_index = MapLongitude * vehicle.y + (vehicle.x >> 1);
     if ((map_tiles()[target_index].climate & ~0x1F) < 0x60) {
-        NetMsgPrimary.pop(StrNotHere, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrNotHere, 5000, 0, 0);
         return;
     }
     if (map_tiles()[target_index].region != map_tiles()[origin_index].region) {
@@ -2729,7 +2759,7 @@ inline unsigned int &console_turns_assigned() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005B0D70 0x005B44D0 0x005BF310
 void Console::editor_reset_faction() {
-    if (X_pop(StrResetAllFac, (NullCallback)0) != 0) {
+    if (X_pop(ConsoleStrResetAllFac, (NullCallback)0) != 0) {
         PlayerData *faction = &PlayersData[1];
         unsigned int factionId = 1;
         uint32_t *rules_flag = TectonicDetonationCount + 1;
@@ -2843,11 +2873,11 @@ void Console::editor_clear() {
 }
 
 // ORIGINAL: 0x004E0210 ?editor_date@Console@@QAEXXZ 0x004E0210-0x004E0282
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e0210.cpp;source:src/console.cpp:StrEditorYear;source:src/game.h:game_year;source:src/game.h:TurnCurrentNum;source:src/game.h:StartingMissionYear;source:src/general.h:ParseNumTable;source:src/mapwin.h:MapWinTable;source:src/win.h:Win::on_redraw;source:src/basewin.h:BaseWin::on_redraw;source:src/console.h:Console::update_data"], "reason": "Recover the editor year prompt from its named EDITORYEAR string, the current turn/year fields, and the existing Console, MapWin and BaseWin owners. The seed’s indirect call through the primary MapWin pointer reaches the virtual GraphicWin base at Win::on_redraw slot 12."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e0210.cpp;source:src/console.cpp:ConsoleStrEditorYear;source:src/game.h:game_year;source:src/game.h:TurnCurrentNum;source:src/game.h:StartingMissionYear;source:src/general.h:ParseNumTable;source:src/mapwin.h:MapWinTable;source:src/win.h:Win::on_redraw;source:src/basewin.h:BaseWin::on_redraw;source:src/console.h:Console::update_data"], "reason": "Recover the editor year prompt from its named EDITORYEAR string, the current turn/year fields, and the existing Console, MapWin and BaseWin owners. The seed’s indirect call through the primary MapWin pointer reaches the virtual GraphicWin base at Win::on_redraw slot 12."}
 void Console::editor_date() {
     auto_undo();
     const int accepted = X_pop_ask_number(
-        StrEditorYear, static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_)), 0);
+        ConsoleStrEditorYear, static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_)), 0);
     if (accepted == 0) {
         GameDataStateStorage.fields_.turn_current_num_ = ParseNumTable[0] - static_cast<int>(ScenarioSave.starting_mission_year);
         if (GameDataStateStorage.fields_.turn_current_num_ < 1) {
@@ -3148,15 +3178,15 @@ void Console::menu_simple() {
     // form replaces the MainMenu pun this body used to carry.
     GameDataStateStorage.fields_.game_more_preferences_ &= 0xffdfffff;
     alpha_menu_.check(selected_vehicle_);
-    X_pop(StrMenuSimple, 0);
+    X_pop(ConsoleStrMenuSimple, 0);
 }
 
 // ORIGINAL: 0x00516930 ?menu_detail@Console@@QAEXXZ 0x00516930-0x00516961 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The 0x00516930 seed sets GameMorePreferences bit 0x200000, calls the Console member at +0x22A2C using its current vehicle, and passes the image string at 0x0068A9C0 to X_pop.", "src/console.h identifies alpha_menu_ at Console +0x22A2C and selected_vehicle_; src/console.cpp already binds the matching MENUDETAIL text as StrMenuDetail, and alpha.h names GameMorePreferences."], "reason": "Express menu detail activation through the existing preference flag, typed AlphaMenu member, Console selection state and established string binding."}
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x00516930 seed sets GameMorePreferences bit 0x200000, calls the Console member at +0x22A2C using its current vehicle, and passes the image string at 0x0068A9C0 to X_pop.", "src/console.h identifies alpha_menu_ at Console +0x22A2C and selected_vehicle_; src/console.cpp already binds the matching MENUDETAIL text as ConsoleStrMenuDetail, and alpha.h names GameMorePreferences."], "reason": "Express menu detail activation through the existing preference flag, typed AlphaMenu member, Console selection state and established string binding."}
 void Console::menu_detail() {
     GameDataStateStorage.fields_.game_more_preferences_ |= 0x200000;
     alpha_menu_.check(selected_vehicle_);
-    X_pop(StrMenuDetail, 0);
+    X_pop(ConsoleStrMenuDetail, 0);
 }
 
 // ORIGINAL: 0x00516C50 ?show_scen_objectives@Console@@QAEXXZ 0x00516C50-0x00516D98
@@ -3200,7 +3230,7 @@ void Console::show_scen_objectives() {
 // calls     0x0046B190 0x005BF310 0x005C08C0
 
 void Console::editor_reset_tech() {
-    if (X_pop(StrResetAllTech, 0) != 0) {
+    if (X_pop(ConsoleStrResetAllTech, 0) != 0) {
         for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
             PlayersData[faction_id].tech_ranking = 0;
         }
@@ -3663,7 +3693,7 @@ void Console::cursor_on(int cursor_shape, int veh_id) {
 //      general.h or map.h look like the home - and a pending_bodies forwarder;
 //      the shape is already written there beside the veh_ready/stack_kill
 //      ones.
-//   2. `EditorRockinessLabel` is the image's .data string "ROCKOSITY" at
+//   2. `ConsoleEditorRockinessLabel` is the image's .data string "ROCKOSITY" at
 //      0x00689174. Nothing in the tree binds it. HOWEVER this is spelled, note
 //      that the image PUSHES the address as an immediate (`push 0x689174`),
 //      so a tree string literal at a different address will not match byte for
@@ -3678,13 +3708,13 @@ void Console::cursor_on(int cursor_shape, int veh_id) {
 //
 // HOMED 2026-09-04: both blockers cleared. world_rocky is declared in map.h
 // beside its world_* siblings (the definition landed in map.cpp); the string
-// is bound as `EditorRockinessLabel` at 0x00689174. No forwarder was needed -
+// is bound as `ConsoleEditorRockinessLabel` at 0x00689174. No forwarder was needed -
 // world_rocky is a real definition in map.cpp, not a pending_bodies stub.
 
 
 void Console::editor_rockiness() {
     auto_undo();
-    if (x_pop_short(EditorRockinessLabel, 0x40, 0) != 0) {
+    if (x_pop_short(ConsoleEditorRockinessLabel, 0x40, 0) != 0) {
         world_rocky();
         ::draw_map(1);
     }
@@ -3822,7 +3852,7 @@ void Console::survey2() {
         console_map_win()->field_1DD70_ & 0xffffefff;
     if (tut_check(0x400) != 0) {
         const int slot = ConsoleGlobal.cursor_history_index_;
-        TutorialWindow.tut_map(StrTerraSurvey2, ConsoleGlobal.cursor_history_x_[slot],
+        TutorialWindow.tut_map(ConsoleStrTerraSurvey2, ConsoleGlobal.cursor_history_x_[slot],
                                ConsoleGlobal.cursor_history_y_[slot], -1, nullptr, 0, -1, -1);
     }
 }
@@ -3859,7 +3889,7 @@ void Console::survey2() {
 
 void Console::editor_fungus() {
     auto_undo();
-    const int answer = x_pop_short(StrFungosity, 0x40, 0);
+    const int answer = x_pop_short(ConsoleStrFungosity, 0x40, 0);
     if (answer >= 0) {
         // The image carries no boolean here: it tests the FUNGMOTIZE answer
         // directly (`je 0x4e1472` at 0x004E141B skips the plant loop) and
@@ -3868,7 +3898,7 @@ void Console::editor_fungus() {
         // both of those.
         int confirmed = -1;
         if (answer > 0) {
-            confirmed = x_pop_short(StrFungmotize, 0x40, 0);
+            confirmed = x_pop_short(ConsoleStrFungmotize, 0x40, 0);
             if (confirmed < 0) {
                 return;
             }
@@ -3931,12 +3961,12 @@ void Console::editor_lock2() {
     const uint32_t lock_mask = 0x8000000;
     if (flags & lock_mask) {
         GameDataStateStorage.fields_.game_state_ = flags & ~lock_mask;
-        NetMsgPrimary.pop(StrProtectOff, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrProtectOff, 5000, 0, 0);
         MainInterfaceGlobal.draw_edit_pane();
         return;
     }
     GameDataStateStorage.fields_.game_state_ = flags | lock_mask;
-    NetMsgPrimary.pop(StrProtectOn, 5000, 0, 0);
+    NetMsgPrimary.pop(ConsoleStrProtectOn, 5000, 0, 0);
     if (ConsoleGlobal.cursor_active_ != 0) {
         set_view(1);
     }
@@ -4469,7 +4499,7 @@ void Console::editor_save() {
 //
 // Homed 2026-09-04. The bindings this body needed were already named in the
 // tree: 0x0094988C is map.cpp's MapIsFlat, 0x00689148/0x00689150 are
-// console.cpp's StrMapFlat/StrMapRound, and 0x008E9F60 is map.cpp's
+// console.cpp's ConsoleStrMapFlat/ConsoleStrMapRound, and 0x008E9F60 is map.cpp's
 // WorldClimateWorldWin (declared here as a HANDOFF row until the shared
 // extern lands in worldwin.h).
 
@@ -4480,10 +4510,10 @@ void Console::editor_flat() {
     ::draw_map(1);
     WorldClimateWorldWin.GraphicWin::redraw();
     if (MapIsFlat & 1) {
-        X_pop(StrMapFlat, (NullCallback)0);
+        X_pop(ConsoleStrMapFlat, (NullCallback)0);
         return;
     }
-    X_pop(StrMapRound, (NullCallback)0);
+    X_pop(ConsoleStrMapRound, (NullCallback)0);
 }
 
 // ORIGINAL: 0x004E10C0 ?editor_fast@Console@@QAEXXZ 0x004E10C0-0x004E118D FILE BYTE_EXACT
@@ -4602,7 +4632,7 @@ void Console::set_tech(int faction_id) {
     if (*research != 0 && *researching >= 0) {
         parse_say(0, (int)Technology[*researching].name, -1, -1);
         parse_num(0, *research);
-        if (X_pop(StrTechChange, (NullCallback)0) == 0) {
+        if (X_pop(ConsoleStrTechChange, (NullCallback)0) == 0) {
             return;
         }
     }
@@ -4637,7 +4667,7 @@ void Console::set_tech(int faction_id) {
 void Console::show_version() {
     parse_says(0, (LPCSTR)*VersionReleaseTextSlot, -1, -1);
     parse_says(1, (LPCSTR)*VersionBuildDateSlot, -1, -1);
-    popp((LPCSTR)*ClimatePopupTitle, StrVersionControlX, 0, StrAcLogoSm,
+    popp((LPCSTR)*ClimatePopupTitle, ConsoleStrVersionControlX, 0, ConsoleStrAcLogoSm,
          (NullCallback)0);
 }
 
@@ -4708,11 +4738,11 @@ void Console::editor_paints(int paint_id) {
 // Homed 2026-09-04. The scaffold's three-argument `X_pop(label, 0x40, 0)` is
 // this tree's x_pop_short (0x005BF3F0), the misnaming editor_rockiness
 // already documented in console.cpp; the label is console.cpp's own
-// StrEditorMinor.
+// ConsoleStrEditorMinor.
 
 
 void Console::editor_minor() {
-    int paint = x_pop_short(StrEditorMinor, 0x40, (NullCallback)0);
+    int paint = x_pop_short(ConsoleStrEditorMinor, 0x40, (NullCallback)0);
     if (paint >= 0) {
         editor_paints(paint + 0x1a);
     }
@@ -4777,10 +4807,10 @@ void Console::designate(int veh_id) {
             int16_t proto = Vehs[veh_id].proto_id;
             parse_says(0, VehPrototypes[proto].veh_name, -1, -1);
             if ((Vehs[veh_id].state & 0x80) != 0) {
-                NetMsgPrimary.pop(StrDesignated, 5000, 0, 0);
+                NetMsgPrimary.pop(ConsoleStrDesignated, 5000, 0, 0);
                 return;
             }
-            NetMsgPrimary.pop(StrUndesignated, 5000, 0, 0);
+            NetMsgPrimary.pop(ConsoleStrUndesignated, 5000, 0, 0);
         }
     }
 }
@@ -4950,7 +4980,7 @@ void Console::editor_energy() {
         }
 
         const int answer = X_pop_ask_number(
-            StrEditorEnergy, PlayersData[faction].energy_reserves,
+            ConsoleStrEditorEnergy, PlayersData[faction].energy_reserves,
             (NullCallback)0);
         if (answer == 0) {
             PlayersData[faction].energy_reserves = ParseNumTable[0];
@@ -5028,7 +5058,7 @@ void Console::set_ai(int faction_id) {
         flags &= 0xF7;
     }
     PopupWriteCheckState = static_cast<int>(flags);
-    if (x_pop_short(StrTechRandom, 1, (NullCallback)0) >= 0) {
+    if (x_pop_short(ConsoleStrTechRandom, 1, (NullCallback)0) >= 0) {
         const char answer = *reinterpret_cast<const char *>(&PopupWriteCheckState);
         entry[0] = answer & 1;
         entry[1] = (answer & 2) >> 1;
@@ -5053,7 +5083,7 @@ Purpose: Ask which terrain-improvement brush the scenario editor paints with
 void Console::editor_set_brush() {
     PopupModalState = 6;
     const int answer =
-        x_pop_value_flags(StrBrush, MapEditorBrushId, 0x40, (NullCallback)0);
+        x_pop_value_flags(ConsoleStrBrush, MapEditorBrushId, 0x40, (NullCallback)0);
     PopupModalState = 0;
     if (answer >= 0) {
         MapEditorBrushId = answer;
@@ -5201,7 +5231,7 @@ void Console::zoom_to_upkeep_base() {
 int Console::editor_who(int default_faction, int first_faction) {
     Popup popup;
     PopupModalState = 6;
-    popup.start(PopupStartCaption, StrEditorWhoListTitle, -1, 0, 0x40);
+    popup.start(PopupStartCaption, ConsoleStrEditorWhoListTitle, -1, 0, 0x40);
 
     for (int faction = first_faction < 0 ? 0 : first_faction;
          faction < MaxPlayerNum; ++faction) {
@@ -6088,7 +6118,7 @@ void Console::set_bombing_run(int veh_id, int x_coord, int y_coord) {
         (PlayersData[Vehs[veh_id].faction_id]
              .diplo_treaties[Bases[base_id].faction_id_current] &
          DTREATY_VENDETTA) == 0) {
-        NetMsgPrimary.pop(StrNoBomb, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrNoBomb, 5000, 0, 0);
         return;
     }
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
@@ -6199,7 +6229,7 @@ void Console::editor_scen_param() {
     parse_field_number(5, ScenarioSave.ending_mission_year);
     parse_field_number(6, GameDataStateStorage.fields_.sunspot_duration_);
 
-    popup.start(PopupStartCaption, StrScenParam, -1, nullptr, 0x44, nullptr);
+    popup.start(PopupStartCaption, ConsoleStrScenParam, -1, nullptr, 0x44, nullptr);
 
     if (popup.exec(0, 0) < 0) {
         popup.close();
@@ -6243,23 +6273,23 @@ void Console::destroy(int veh_id) {
     Scroll scroll;
 
     if (not_my_turn()) {
-        NetMsgPrimary.pop(StrSimulNo, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrSimulNo, 5000, 0, 0);
         return;
     }
     if (veh_ready(veh_id) == 0) {
-        NetMsgPrimary.pop(StrUnitMoved, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrUnitMoved, 5000, 0, 0);
         return;
     }
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, -1) != 0) {
         return;
     }
     if (not_my_turn()) {
-        NetMsgPrimary.pop(StrSimulNo2, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrSimulNo2, 5000, 0, 0);
         NetDaemonNet.unlock_veh();
         return;
     }
     if (veh_ready(veh_id) == 0) {
-        NetMsgPrimary.pop(StrUnitMoved2, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrUnitMoved2, 5000, 0, 0);
         NetDaemonNet.unlock_veh();
         return;
     }
@@ -6275,21 +6305,21 @@ void Console::destroy(int veh_id) {
 
     if ((Weapon[weapon_id].offense_rating == 0) &&
         (Weapon[weapon_id].mode != WPN_MODE_TERRAFORMER)) {
-        NetMsgPrimary.pop(StrOnlyCombat, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrOnlyCombat, 5000, 0, 0);
         NetDaemonNet.unlock_veh();
         return;
     }
     if (((tile->bit & 1) != 0) && ((tile->val2 & 0xF) < 8) &&
         ((tile->val2 & 0xF) >= 0)) {
         NetDaemonNet.unlock_veh();
-        NetMsgPrimary.pop(StrNotBase, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrNotBase, 5000, 0, 0);
         return;
     }
 
     const int triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
     if ((triad != 2) && (static_cast<int>(not_ocean) != (triad == 1))) {
         NetDaemonNet.unlock_veh();
-        NetMsgPrimary.pop(StrNotInTriad, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrNotInTriad, 5000, 0, 0);
         return;
     }
 
@@ -6298,7 +6328,7 @@ void Console::destroy(int veh_id) {
     GraphicWin win;
 
     const uint32_t tile_flags = tile->bit;
-    const char *title = (triad == 2) ? StrDestroyBomb : StrDestroy;
+    const char *title = (triad == 2) ? ConsoleStrDestroyBomb : ConsoleStrDestroy;
     popup.start(PopupStartCaption, title, tile_flags, nullptr, 0x40, nullptr);
 
     Dialogs dialogs;
@@ -6318,7 +6348,7 @@ void Console::destroy(int veh_id) {
 
     if (item_count == 0) {
         NetDaemonNet.unlock_veh();
-        NetMsgPrimary.pop(StrNotHere, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrNotHere, 5000, 0, 0);
         return;
     }
 
@@ -6383,7 +6413,7 @@ void Console::custom_my_faction() {
             // start's third argument is the popup's value - the initial
             // list selection - which the original re-stores after start()
             // when the current faction is a playable one.
-            popup2.start(PopupStartCaption, StrEditorWhoListTitle,
+            popup2.start(PopupStartCaption, ConsoleStrEditorWhoListTitle,
                          (ConsoleGlobal.faction_id_ >= 0) ? ConsoleGlobal.faction_id_ : -1,
                          nullptr, 0x40);
             PopupModalState = 6;
@@ -6418,7 +6448,7 @@ void Console::custom_my_faction() {
     const int key = (player.is_leader_female == 0) ? label_keys[0x2E2] : label_keys[0x2E3];
     strcpy(name_buf, StringTable.get(key));
 
-    popup.start(PopupStartCaption, StrCustomNames, -1, nullptr, 0x44, nullptr);
+    popup.start(PopupStartCaption, ConsoleStrCustomNames, -1, nullptr, 0x44, nullptr);
 
     char *const f1 = player.name_leader;
     char *const f2 = player.formal_name_faction;
@@ -6483,7 +6513,7 @@ void Console::time_controls() {
     }
 
     if (console_turns_assigned() == 0) {
-        NetMsgPrimary.pop(StrHostTime, 5000, 0, 0);
+        NetMsgPrimary.pop(ConsoleStrHostTime, 5000, 0, 0);
         popup.close();
         return;
     }
@@ -6511,7 +6541,7 @@ void Console::time_controls() {
         parse_field_number(4, TimeControl[5].extra);
         parse_field_number(result, TimeControl[5].refresh);
 
-        popup.start(PopupStartCaption, StrCustomTime, -1, nullptr, 0x44, nullptr);
+        popup.start(PopupStartCaption, ConsoleStrCustomTime, -1, nullptr, 0x44, nullptr);
         if (popup.exec(0, 0) >= 0) {
             TimeControl[5].base = parse_turn_time_clamped(ParseStrBuffer[0]);
             TimeControl[5].unit = parse_turn_time_clamped(ParseStrBuffer[1]);
@@ -12061,7 +12091,7 @@ case 'R':
         }
         popup_set_write_check_bit(2, toggles[2]);
         popup_set_write_check_bit(3, toggles[3]);
-        if (x_pop_short(StrTechRandom, 1, 0) >= 0) {
+        if (x_pop_short(ConsoleStrTechRandom, 1, 0) >= 0) {
             const char answer = static_cast<char>(PopupWriteCheckState);
             toggles[0] = answer & 1;
             toggles[1] = (answer & 2) >> 1;

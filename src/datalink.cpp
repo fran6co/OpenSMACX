@@ -1162,25 +1162,64 @@ void Datalink::draw_entry() {
 }
 
 /*
- * Fixed-slot bindings the homed category fillers arrived carrying, named from
- * evidence. Each folds to the bare immediate, so a rename moves no byte.
+ * Original image text locations used by the category fillers. The current
+ * owner keeps each observed C string in independent writable source storage;
+ * the old addresses are provenance, not live pointer targets or bounds for a
+ * larger allocation.
  *
- * CategoryIdSeparator  0x006832CC - image .data reads "|" (0x7C, NUL). It is
- *                      the first of seven one-character separator strings
- *                      packed four bytes apart (0x6832CC..0x6832E4), one per
- *                      category filler, and each filler appends it before the
- *                      id suffix that `GameState & 0x1000` asks for.
+ * Each category filler reads its own one-character separator from image
+ * .data. Original addresses are provenance only; the writable arrays below
+ * each hold the observed NUL-terminated contents, without claims about
+ * neighboring storage. Unit 0x6832CC, chassis 0x6832D0, reactor 0x6832D4,
+ * weapon 0x6832D8, defense 0x6832DC, ability 0x6832E0, facility 0x6832E4,
+ * project 0x6832F0, tech 0x6832F4, concept 0x68330C, advanced concept
+ * 0x683328, social 0x68332C, effect 0x683330, faction 0x683334, terraform
+ * first 0x683338, and terraform second 0x68333C each read "|" followed by NUL.
  * Panel frames borrow InterfaceBoxStyles[6], original 0x78D618, from the
  * loader-owned shared pool rather than a fixed-address record.
  * CategoryEntryRect    the category_rect_ member, not a global - listed here
  *                      only to say the fillers share it.
  */
-static const char *const CategoryIdSeparator = (const char *)0x006832CC;
-static const char *const TerraformSecondSeparator = (const char *)0x0068333C;
-static const char *const ConceptArticle = (const char *)0x006832E8;
-static const char *const ConceptFile = (const char *)0x006832F8;
-static const char *const ConceptSection = (const char *)0x00683300;
-static const char *const AdvConceptFile = (const char *)0x00683310;
+// RECOVERY_OBJECT: v2 0x006832CC 0x006832CE ?DatalinkCategoryIdSeparator@@3PADA 0x0042A630
+char DatalinkCategoryIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x006832D0 0x006832D2 ?DatalinkChassisIdSeparator@@3PADA 0x0042A790
+char DatalinkChassisIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x006832D4 0x006832D6 ?DatalinkReactorIdSeparator@@3PADA 0x0042A900
+char DatalinkReactorIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x006832D8 0x006832DA ?DatalinkWeaponIdSeparator@@3PADA 0x0042AA60
+char DatalinkWeaponIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x006832DC 0x006832DE ?DatalinkDefenseIdSeparator@@3PADA 0x0042ABC0
+char DatalinkDefenseIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x006832E0 0x006832E2 ?DatalinkAbilityIdSeparator@@3PADA 0x0042AD20
+char DatalinkAbilityIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x006832E4 0x006832E6 ?DatalinkFacilityIdSeparator@@3PADA 0x0042AE80
+char DatalinkFacilityIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x006832F0 0x006832F2 ?DatalinkProjectIdSeparator@@3PADA 0x0042AFE0
+char DatalinkProjectIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x006832F4 0x006832F6 ?DatalinkTechIdSeparator@@3PADA 0x0042B190
+char DatalinkTechIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x0068330C 0x0068330E ?DatalinkConceptIdSeparator@@3PADA 0x0042B300
+char DatalinkConceptIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x00683328 0x0068332A ?DatalinkAdvConceptIdSeparator@@3PADA 0x0042B490
+char DatalinkAdvConceptIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x0068332C 0x0068332E ?DatalinkSocialIdSeparator@@3PADA 0x0042B630
+char DatalinkSocialIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x00683330 0x00683332 ?DatalinkEffectIdSeparator@@3PADA 0x0042B7E0
+char DatalinkEffectIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x00683334 0x00683336 ?DatalinkFactionIdSeparator@@3PADA 0x0042B940
+char DatalinkFactionIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x00683338 0x0068333A ?DatalinkTerraformIdSeparator@@3PADA 0x0042BAB0
+char DatalinkTerraformIdSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x0068333C 0x0068333E ?DatalinkTerraformSecondSeparator@@3PADA 0x0042BAB0
+char DatalinkTerraformSecondSeparator[] = "|";
+// RECOVERY_OBJECT: v2 0x006832E8 0x006832ED ?DatalinkConceptArticle@@3PADA 0x0042AFE0
+char DatalinkConceptArticle[] = "The ";
+// RECOVERY_OBJECT: v2 0x006832F8 0x006832FF ?DatalinkConceptFile@@3PADA 0x0042B300
+char DatalinkConceptFile[] = "TITLES";
+// RECOVERY_OBJECT: v2 0x00683300 0x0068330A ?DatalinkConceptSection@@3PADA 0x0042B300
+char DatalinkConceptSection[] = "CONCEPTSX";
+// RECOVERY_OBJECT: v2 0x00683310 0x0068331A ?DatalinkAdvConceptFile@@3PADA 0x0042B490
+char DatalinkAdvConceptFile[] = "ADVTITLES";
 
 /*
  * The rules tables the remaining fillers walk. Each is named from what its
@@ -2218,7 +2257,7 @@ void Datalink::set_cat_unit() {
             StringTemp[0] = '\0';
             strcat(StringTemp, proto.veh_name);
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkCategoryIdSeparator);
                 char digits[80];
                 _itoa(index + 30000, digits, 10);
                 strcat(StringTemp, digits);
@@ -2267,7 +2306,7 @@ void Datalink::set_cat_chassis() {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)Chassis[index].offsv_1_name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkChassisIdSeparator);
                 char digits[80];
                 _itoa(index + 40000, digits, 10);
                 strcat(StringTemp, digits);
@@ -2320,7 +2359,7 @@ void Datalink::set_cat_reactor() {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)record->name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkReactorIdSeparator);
                 char digits[80];
                 _itoa(id, digits, 10);
                 strcat(StringTemp, digits);
@@ -2366,7 +2405,7 @@ void Datalink::set_cat_weapon() {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)Weapon[index].name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkWeaponIdSeparator);
                 char digits[80];
                 _itoa(index + 60000, digits, 10);
                 strcat(StringTemp, digits);
@@ -2412,7 +2451,7 @@ void Datalink::set_cat_defense() {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)Armor[index].name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkDefenseIdSeparator);
                 char digits[80];
                 _itoa(index + 70000, digits, 10);
                 strcat(StringTemp, digits);
@@ -2458,7 +2497,7 @@ void Datalink::set_cat_ability() {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)Ability[index].name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkAbilityIdSeparator);
                 char digits[80];
                 _itoa(index + 80000, digits, 10);
                 strcat(StringTemp, digits);
@@ -2511,7 +2550,7 @@ void Datalink::set_cat_facility() {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get((int)record->name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkFacilityIdSeparator);
                 char digits[80];
                 _itoa(id, digits, 10);
                 strcat(StringTemp, digits);
@@ -2563,13 +2602,13 @@ void Datalink::set_cat_project() {
             StringTemp[0] = '\0';
             strcat(StringTemp,
                    StringTable.get((int)record->name));
-            if (Language == 0 && strncmp(StringTemp, ConceptArticle, 4) == 0) {
+            if (Language == 0 && strncmp(StringTemp, DatalinkConceptArticle, 4) == 0) {
                 char full[256];
                 strcpy(full, StringTemp);
                 strcpy(StringTemp, full + 4);
             }
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkProjectIdSeparator);
                 char digits[80];
                 _itoa(index + 68534, digits, 10);
                 strcat(StringTemp, digits);
@@ -2622,7 +2661,7 @@ void Datalink::set_cat_tech() {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(record[-9]));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkTechIdSeparator);
                 char digits[0x54];
                 _itoa(index + 140000, digits, 10);
                 strcat(StringTemp, digits);
@@ -2669,7 +2708,7 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_concept() {
-    if (text_open(ConceptSection, ConceptFile) == 0) {
+    if (text_open(DatalinkConceptSection, DatalinkConceptFile) == 0) {
         text_get();
         for (int index = 0; TextBufferGetPtr != 0
                             && strlen(TextBufferGetPtr) != 0;
@@ -2677,7 +2716,7 @@ void Datalink::set_cat_concept() {
             StringTemp[0] = '\0';
             strcat(StringTemp, TextBufferGetPtr);
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkConceptIdSeparator);
                 char digits[80];
                 _itoa(index, digits, 10);
                 strcat(StringTemp, digits);
@@ -2724,7 +2763,7 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_adv_concept() {
-    if (text_open(ConceptSection, AdvConceptFile) != 0) {
+    if (text_open(DatalinkConceptSection, DatalinkAdvConceptFile) != 0) {
         return;
     }
 
@@ -2734,7 +2773,7 @@ void Datalink::set_cat_adv_concept() {
         StringTemp[0] = '\0';
         strcat(StringTemp, TextBufferGetPtr);
         if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-            strcat(StringTemp, CategoryIdSeparator);
+            strcat(StringTemp, DatalinkAdvConceptIdSeparator);
             char digits[80];
             _itoa(index + 10000, digits, 10);
             strcat(StringTemp, digits);
@@ -2791,7 +2830,7 @@ void Datalink::set_cat_social() {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(row[choice]));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkSocialIdSeparator);
                 char digits[80];
                 _itoa(id, digits, 10);
                 strcat(StringTemp, digits);
@@ -2842,7 +2881,7 @@ void Datalink::set_cat_effect() {
             StringTemp[0] = '\0';
             strcat(StringTemp, row);
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkEffectIdSeparator);
                 char digits[80];
                 _itoa(index + 130000, digits, 10);
                 strcat(StringTemp, digits);
@@ -2895,7 +2934,7 @@ void Datalink::set_cat_faction() {
         StringTemp[0] = '\0';
         strcat(StringTemp, record + 0x84);
         if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-            strcat(StringTemp, CategoryIdSeparator);
+            strcat(StringTemp, DatalinkFactionIdSeparator);
             char digits[80];
             _itoa(index + 150001, digits, 10);
             strcat(StringTemp, digits);
@@ -2955,7 +2994,7 @@ void Datalink::set_cat_terraform() {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(names[-1]));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, CategoryIdSeparator);
+                strcat(StringTemp, DatalinkTerraformIdSeparator);
                 char digits[80];
                 _itoa(category - 20, digits, 10);
                 strcat(StringTemp, digits);
@@ -2973,7 +3012,7 @@ void Datalink::set_cat_terraform() {
         StringTemp[0] = '\0';
         strcat(StringTemp, StringTable.get(names[0]));
         if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-            strcat(StringTemp, TerraformSecondSeparator);
+            strcat(StringTemp, DatalinkTerraformSecondSeparator);
             char digits[80];
             _itoa(category, digits, 10);
             strcat(StringTemp, digits);

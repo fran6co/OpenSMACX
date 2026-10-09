@@ -9395,7 +9395,8 @@ DeletionList VehDeletionList;  // 0x0093E31C
 
 // 0x00691DC0, the log_say title. The image logs every vehicle removal with the
 // vehicle id, its owner and its prototype as the three substitutions.
-char *const LogKillingVehicle = (char *)0x00691DC0;  // "Killing vehicle (v,who,v2)"
+// RECOVERY_OBJECT: v2 0x00691DC0 0x00691DDB ?VehLogKillingVehicle@@3PADA 0x005C08C0
+char VehLogKillingVehicle[] = "Killing vehicle (v,who,v2)";
 
 // 0x009B227C, the slot veh_find reports its winning distance into. It sits in
 // the VehLiftX (0x009B2278) / VehDropLiftVehID (0x009B2280) run and is named by
@@ -9443,7 +9444,7 @@ void __cdecl veh_kill(int veh_id) {
         VehDeletionList.add_deletion(veh_id);
     }
 
-    log_say(LogKillingVehicle, veh_id, Vehs[veh_id].faction_id,
+    log_say(VehLogKillingVehicle, veh_id, Vehs[veh_id].faction_id,
             Vehs[veh_id].proto_id);
 
     const int x = Vehs[veh_id].x;
@@ -9856,10 +9857,14 @@ bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
 // The battle-resolution messages. Each is the (label, icon) pair a
 // NetMsgPrimary.pop takes: the label is the phrase id key, the icon the small
 // portrait drawn beside the line.
-char *const VehLabelMORALE = (char *)0x0068A0A8;      // "MORALE"
-char *const VehIconBATWON_SM_PCX = (char *)0x0068A098;   // "batwon_sm.pcx"
-char *const VehLabelMORALE2 = (char *)0x0068A0C0;     // "MORALE2"
-char *const VehIconBATWON2_SM_PCX = (char *)0x0068A0B0;  // "batwon_sm.pcx"
+// RECOVERY_OBJECT: v2 0x0068A0A8 0x0068A0AF ?VehLabelMORALE@@3PADA 0x005062B0
+char VehLabelMORALE[] = "MORALE";
+// RECOVERY_OBJECT: v2 0x0068A098 0x0068A0A6 ?VehIconBATWON_SM_PCX@@3PADA 0x005062B0
+char VehIconBATWON_SM_PCX[] = "batwon_sm.pcx";
+// RECOVERY_OBJECT: v2 0x0068A0C0 0x0068A0C8 ?VehLabelMORALE2@@3PADA 0x005062B0
+char VehLabelMORALE2[] = "MORALE2";
+// RECOVERY_OBJECT: v2 0x0068A0B0 0x0068A0BE ?VehIconBATWON2_SM_PCX@@3PADA 0x005062B0
+char VehIconBATWON2_SM_PCX[] = "batwon_sm.pcx";
 
 int __cdecl battle_kill(int cur, int *attacker_out, int *defender_out,
                         int *odds_out, int killer_id, int credit_faction);
@@ -10202,7 +10207,8 @@ int __cdecl veh_can_leave_stack(int veh_id) {
 
 // 0x00687FDC, the NetMsg label action_feature pops: the image's .data holds
 // the phrase key the message table looks up.
-char *const VehLabelFEATURE = (char *)0x00687FDC;  // "FEATURE"
+// RECOVERY_OBJECT: v2 0x00687FDC 0x00687FE4 ?VehLabelFEATURE@@3PADA 0x004CD060
+char VehLabelFEATURE[] = "FEATURE";
 
 /*
 Purpose: Open a popup with the climate title and a body, no buttons.
@@ -10692,9 +10698,11 @@ void __cdecl action_go_to(int veh_id) {
 // 0x006919C0 is Terraforming[TERRA_REMOVE_FUNGUS].preq_tech and 0x00691940
 // Terraforming[TERRA_MAGTUBE].preq_tech (base 0x00691878, 0x20 stride).
 // 0x00687E20 / 0x00687E2C are the two phrase keys the arrival popup is titled
-// with, "ROAD" and "TUBE" - which one depends on the order the unit was given.
-char *const VehLabelROAD = (char *)0x00687E20;  // "ROAD"
-char *const VehLabelTUBE = (char *)0x00687E2C;  // "TUBE"
+// with, "ROADTODONE" and "TUBETODONE" - selected by the unit's order.
+// RECOVERY_OBJECT: v2 0x00687E20 0x00687E2B ?VehLabelROAD@@3PADA 0x004CB580
+char VehLabelROAD[] = "ROADTODONE";
+// RECOVERY_OBJECT: v2 0x00687E2C 0x00687E37 ?VehLabelTUBE@@3PADA 0x004CB580
+char VehLabelTUBE[] = "TUBETODONE";
 
 /*
 Purpose: Walk a unit toward its goal, roading or tubing the tiles it crosses.
@@ -10878,26 +10886,46 @@ int *const SecretProjectAirdropBase = (int *)0x009A6580;       // +0x6C
 
 // The phrase keys the terraform popups and the tutorial map call are titled
 // with. All are file-backed .data, all read only here.
-char *const VehLabelBOREHOLEMINE = (char *)0x00687B80;   // "BOREHOLEMINE"
-char *const VehLabelHARVESTFOREST = (char *)0x00687B90;  // "HARVESTFOREST"
-char *const VehLabelTERRAMINE = (char *)0x00687BA0;      // "TERRAMINE"
-char *const VehLabelTERRAYOURS = (char *)0x00687BAC;     // "TERRAYOURS"
-char *const VehLabelDROWNMINE = (char *)0x00687BB8;      // "DROWNMINE"
-char *const VehLabelDROWNYOURS = (char *)0x00687BC4;     // "DROWNYOURS"
-char *const VehLabelMADEFARM = (char *)0x00687BD0;       // "MADEFARM"
-char *const VehLabelMADESOIL = (char *)0x00687BDC;       // "MADESOIL"
-char *const VehLabelMADEMINE = (char *)0x00687BE8;       // "MADEMINE"
-char *const VehLabelMADESOLAR = (char *)0x00687BF4;      // "MADESOLAR"
-char *const VehLabelMADEFOREST = (char *)0x00687C00;     // "MADEFOREST"
-char *const VehLabelMADEROAD = (char *)0x00687C0C;       // "MADEROAD"
-char *const VehLabelMADETUBE = (char *)0x00687C18;       // "MADETUBE"
-char *const VehLabelMADESENSOR = (char *)0x00687C24;     // "MADESENSOR"
-char *const VehLabelMADEAQUIFER = (char *)0x00687C30;    // "MADEAQUIFER"
-char *const VehLabelMADECONDENSER = (char *)0x00687C3C;  // "MADECONDENSER"
-char *const VehLabelMADEBOREHOLE = (char *)0x00687C4C;   // "MADEBOREHOLE"
-char *const VehLabelMADESEAFARM = (char *)0x00687C5C;    // "MADESEAFARM"
-char *const VehLabelMADESEAMINE = (char *)0x00687C68;    // "MADESEAMINE"
-char *const VehLabelMADESEASOLAR = (char *)0x00687C74;   // "MADESEASOLAR"
+// RECOVERY_OBJECT: v2 0x00687B80 0x00687B8D ?VehLabelBOREHOLEMINE@@3PADA 0x004C9B00
+char VehLabelBOREHOLEMINE[] = "BOREHOLEMINE";
+// RECOVERY_OBJECT: v2 0x00687B90 0x00687B9E ?VehLabelHARVESTFOREST@@3PADA 0x004C9B00
+char VehLabelHARVESTFOREST[] = "HARVESTFOREST";
+// RECOVERY_OBJECT: v2 0x00687BA0 0x00687BAA ?VehLabelTERRAMINE@@3PADA 0x004C9B00
+char VehLabelTERRAMINE[] = "TERRAMINE";
+// RECOVERY_OBJECT: v2 0x00687BAC 0x00687BB7 ?VehLabelTERRAYOURS@@3PADA 0x004C9B00
+char VehLabelTERRAYOURS[] = "TERRAYOURS";
+// RECOVERY_OBJECT: v2 0x00687BB8 0x00687BC2 ?VehLabelDROWNMINE@@3PADA 0x004C9B00
+char VehLabelDROWNMINE[] = "DROWNMINE";
+// RECOVERY_OBJECT: v2 0x00687BC4 0x00687BCF ?VehLabelDROWNYOURS@@3PADA 0x004C9B00
+char VehLabelDROWNYOURS[] = "DROWNYOURS";
+// RECOVERY_OBJECT: v2 0x00687BD0 0x00687BD9 ?VehLabelMADEFARM@@3PADA 0x004C9B00
+char VehLabelMADEFARM[] = "MADEFARM";
+// RECOVERY_OBJECT: v2 0x00687BDC 0x00687BE5 ?VehLabelMADESOIL@@3PADA 0x004C9B00
+char VehLabelMADESOIL[] = "MADESOIL";
+// RECOVERY_OBJECT: v2 0x00687BE8 0x00687BF1 ?VehLabelMADEMINE@@3PADA 0x004C9B00
+char VehLabelMADEMINE[] = "MADEMINE";
+// RECOVERY_OBJECT: v2 0x00687BF4 0x00687BFE ?VehLabelMADESOLAR@@3PADA 0x004C9B00
+char VehLabelMADESOLAR[] = "MADESOLAR";
+// RECOVERY_OBJECT: v2 0x00687C00 0x00687C0B ?VehLabelMADEFOREST@@3PADA 0x004C9B00
+char VehLabelMADEFOREST[] = "MADEFOREST";
+// RECOVERY_OBJECT: v2 0x00687C0C 0x00687C15 ?VehLabelMADEROAD@@3PADA 0x004C9B00
+char VehLabelMADEROAD[] = "MADEROAD";
+// RECOVERY_OBJECT: v2 0x00687C18 0x00687C21 ?VehLabelMADETUBE@@3PADA 0x004C9B00
+char VehLabelMADETUBE[] = "MADETUBE";
+// RECOVERY_OBJECT: v2 0x00687C24 0x00687C2F ?VehLabelMADESENSOR@@3PADA 0x004C9B00
+char VehLabelMADESENSOR[] = "MADESENSOR";
+// RECOVERY_OBJECT: v2 0x00687C30 0x00687C3C ?VehLabelMADEAQUIFER@@3PADA 0x004C9B00
+char VehLabelMADEAQUIFER[] = "MADEAQUIFER";
+// RECOVERY_OBJECT: v2 0x00687C3C 0x00687C4A ?VehLabelMADECONDENSER@@3PADA 0x004C9B00
+char VehLabelMADECONDENSER[] = "MADECONDENSER";
+// RECOVERY_OBJECT: v2 0x00687C4C 0x00687C59 ?VehLabelMADEBOREHOLE@@3PADA 0x004C9B00
+char VehLabelMADEBOREHOLE[] = "MADEBOREHOLE";
+// RECOVERY_OBJECT: v2 0x00687C5C 0x00687C68 ?VehLabelMADESEAFARM@@3PADA 0x004C9B00
+char VehLabelMADESEAFARM[] = "MADESEAFARM";
+// RECOVERY_OBJECT: v2 0x00687C68 0x00687C74 ?VehLabelMADESEAMINE@@3PADA 0x004C9B00
+char VehLabelMADESEAMINE[] = "MADESEAMINE";
+// RECOVERY_OBJECT: v2 0x00687C74 0x00687C81 ?VehLabelMADESEASOLAR@@3PADA 0x004C9B00
+char VehLabelMADESEASOLAR[] = "MADESEASOLAR";
 
 // The four facility sprites the first-time tutorial popup draws beside its
 // text. sprite.cpp owns the objects: the farm and soil enricher runs are five
@@ -11486,10 +11514,14 @@ void __cdecl sub_500380(int faction_id, int x, int y) {
 // The other four are the phrase keys and the portrait the two report popups
 // take: the obliterator's own faction gets the plain pair, everyone else the
 // "2" pair the game uses for a faction hearing about another faction's act.
-char *const VehIconBASEOBL_SM_PCX = (char *)0x00687FFC;   // "baseobl_sm.pcx"
-char *const VehLabelOBLITTED = (char *)0x0068800C;        // "OBLITTED"
-char *const VehIconBASEOBL2_SM_PCX = (char *)0x00688018;  // "baseobl_sm.pcx"
-char *const VehLabelOBLITTED2 = (char *)0x00688028;       // "OBLITTED2"
+// RECOVERY_OBJECT: v2 0x00687FFC 0x0068800B ?VehIconBASEOBL_SM_PCX@@3PADA 0x004CD4E0
+char VehIconBASEOBL_SM_PCX[] = "baseobl_sm.pcx";
+// RECOVERY_OBJECT: v2 0x0068800C 0x00688015 ?VehLabelOBLITTED@@3PADA 0x004CD4E0
+char VehLabelOBLITTED[] = "OBLITTED";
+// RECOVERY_OBJECT: v2 0x00688018 0x00688027 ?VehIconBASEOBL2_SM_PCX@@3PADA 0x004CD4E0
+char VehIconBASEOBL2_SM_PCX[] = "baseobl_sm.pcx";
+// RECOVERY_OBJECT: v2 0x00688028 0x00688032 ?VehLabelOBLITTED2@@3PADA 0x004CD4E0
+char VehLabelOBLITTED2[] = "OBLITTED2";
 
 // base_kill's forwarder lives in pending_bodies.cpp beside the other
 // unrecovered callees; no header claims it yet, so this file declares it.
