@@ -476,6 +476,18 @@ struct CaviarData {
   friend class Caviar;
 };
 
+// The voxel engine consumes six distinct cdecl contracts. Keeping these as
+// function-pointer members preserves the original contiguous six-dword table
+// on Win32 without treating different callback types as interchangeable.
+struct VoxIoCallbacks {
+  void *(__cdecl *allocate)(unsigned long);
+  void (__cdecl *release)(void *);
+  int (__cdecl *read)(int, char *, long);
+  int (__cdecl *write)(int, void *, long);
+  long (__cdecl *seek)(int, long, int);
+  long (__cdecl *tell)(int);
+};
+
 class SelectPartWin;
 
 class Caviar {
@@ -610,16 +622,13 @@ class Caviar {
   // bodies read their parameters straight off [esp+4].. with no this -
   // measured on the image; the catalogue's QAA spellings on vx_seek and
   // vx_tell would shift every read +4 and the bytes do not have that.
-  // One-line forwarders onto the allocator and the CRT: mem_get, free,
-  // _read, _write, _lseek, _tell. vx_malloc is `void` yet the engine
-  // reads its result - the body calls mem_get and returns without
-  // touching eax, so the pointer survives in the return register.
-  static void vx_malloc(unsigned long size);
+  // Forward the six typed engine callbacks to the allocator and CRT.
+  static void *vx_malloc(unsigned long size);
   static void vx_free(void *block);
-  static void vx_read(int fd, char *buffer, long count);
-  static void vx_write(int fd, void *buffer, long count);
-  static void vx_seek(int fd, long offset, int origin);
-  static void vx_tell(int fd);
+  static int vx_read(int fd, char *buffer, long count);
+  static int vx_write(int fd, void *buffer, long count);
+  static long vx_seek(int fd, long offset, int origin);
+  static long vx_tell(int fd);
 
  private:
   float scene_scale_;
@@ -706,7 +715,7 @@ void __cdecl vox_normalise_vector(const float *, float *);
 // initialised; a false answer skips the CAVIAR_INVALIDCPU popup. char, not
 // int: the image's call site tests the answer with `test al, al` - a byte
 // -sized value (init_class: image instruction 25).
-char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag);
+char __cdecl vox_init_callbacks(const VoxIoCallbacks *callbacks, int flag);
 
 // 0x0063AF60. Fills the scene colour table with `count` entries of `value`
 // (0xffff through 0x10000 entries here).

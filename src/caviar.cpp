@@ -1086,12 +1086,11 @@ int Caviar::init_class() {
     // below (0x00618E10..0x00618E90 in the image) - the raw literals this
     // array used to carry pointed into the original image's .text, which
     // the standalone build does not map.
-    unsigned long vx_callbacks[6] = {
-        (unsigned long)Caviar::vx_malloc, (unsigned long)Caviar::vx_free,
-        (unsigned long)Caviar::vx_read,   (unsigned long)Caviar::vx_write,
-        (unsigned long)Caviar::vx_seek,   (unsigned long)Caviar::vx_tell};
+    VoxIoCallbacks vx_callbacks = {
+        &Caviar::vx_malloc, &Caviar::vx_free, &Caviar::vx_read,
+        &Caviar::vx_write, &Caviar::vx_seek, &Caviar::vx_tell};
 
-    if (vox_init_callbacks(vx_callbacks, 1) != 0) {
+    if (vox_init_callbacks(&vx_callbacks, 1) != 0) {
         // The engine sized up this machine's CPU. Without a stored
         // preference - or with one above the known range - tell the player
         // this is not a CPU the renderer supports, by listing the popup's
@@ -1209,12 +1208,10 @@ int Caviar::init_class() {
 // ---------------------------------------------------------------------------
 
 /*
-Purpose: The engine's allocation callback - mem_get with the engine's
-         unsigned-long size. Declared `void`, yet the engine reads its
-         result: the body returns without touching eax, so mem_get's
-         pointer survives in the return register exactly as the image
-         leaves it.
+Purpose: The engine's allocation callback - return mem_get's pointer with
+         the engine's unsigned-long size.
 // ORIGINAL: 0x00618E10 ?vx_malloc@Caviar@@SAXK@Z 0x00618E10-0x00618E1E
+// symbol    ?vx_malloc@Caviar@@SAPAXK@Z
 // size      14 bytes
 // calls     0x005D4510
 // TRIED: 5/5 real instructions agree; the image cleans the pushed argument
@@ -1235,8 +1232,8 @@ Purpose: The engine's allocation callback - mem_get with the engine's
 //        `return;`, a discarded `const void *block` local, and
 //        `static_cast<size_t>` on the argument - identical bytes every time.
 */
-void Caviar::vx_malloc(unsigned long size) {
-    mem_get(size);
+void *Caviar::vx_malloc(unsigned long size) {
+    return mem_get(size);
 }
 
 /*
@@ -1262,45 +1259,49 @@ void Caviar::vx_free(void *block) {
 Purpose: The engine's read callback - the CRT's _read with the operands
          forwarded in call order.
 // ORIGINAL: 0x00618E30 ?vx_read@Caviar@@SAXHPADJ@Z 0x00618E30-0x00618E48 BYTE_EXACT
+// symbol    ?vx_read@Caviar@@SAHHPADJ@Z
 // size      24 bytes
 // calls     0x0064A178
 */
-void Caviar::vx_read(int fd, char *buffer, long count) {
-    _read(fd, buffer, count);
+int Caviar::vx_read(int fd, char *buffer, long count) {
+    return _read(fd, buffer, count);
 }
 
 /*
 Purpose: The engine's write callback - the CRT's _write, same forwarding
          shape as vx_read.
 // ORIGINAL: 0x00618E50 ?vx_write@Caviar@@SAXHPAXJ@Z 0x00618E50-0x00618E68 BYTE_EXACT
+// symbol    ?vx_write@Caviar@@SAHHPAXJ@Z
 // size      24 bytes
 // calls     0x00649EAC
 */
-void Caviar::vx_write(int fd, void *buffer, long count) {
-    _write(fd, buffer, count);
+int Caviar::vx_write(int fd, void *buffer, long count) {
+    return _write(fd, buffer, count);
 }
 
 /*
 Purpose: The engine's seek callback - the CRT's _lseek.
 // ORIGINAL: 0x00618E70 ?vx_seek@Caviar@@SAXHJH@Z 0x00618E70-0x00618E88 BYTE_EXACT
+// symbol    ?vx_seek@Caviar@@SAJHJH@Z
 // size      24 bytes
 // calls     0x0064BF67
 */
-void Caviar::vx_seek(int fd, long offset, int origin) {
-    _lseek(fd, offset, origin);
+long Caviar::vx_seek(int fd, long offset, int origin) {
+    return _lseek(fd, offset, origin);
 }
 
 /*
 Purpose: The engine's tell callback - the CRT's _tell.
 // ORIGINAL: 0x00618E90 ?vx_tell@Caviar@@SAXH@Z 0x00618E90-0x00618E9E
+// symbol    ?vx_tell@Caviar@@SAJH@Z
 // size      14 bytes
 // calls     0x00650220
 // TRIED: both of the other shims' residuals at once - `pop ecx` against
 //        the image's `add esp, 4` (auto_save's documented heuristic) and
 //        the incremental-link pad on the CRT `_tell` call.
 */
-void Caviar::vx_tell(int fd) {
-    _tell(fd);
+long Caviar::vx_tell(int fd) {
+    return _tell(fd);
 }
 
 // ---------------------------------------------------------------------------
@@ -1311,31 +1312,34 @@ void Caviar::vx_tell(int fd) {
 
 namespace {
 
-// The six vx_* IO callback slots vox_init_callbacks installs: alloc, free,
-// read, write, seek, tell. The image's .data holds them at
+// The six typed vx_* IO callback slots installed at 0x009C0B80..0x009C0B94,
+// ordered alloc/free/read/write/seek/tell in the original contiguous span.
+// Historical compiler notes below preserve the earlier array experiment.
+// Ownership caveat: this span overlaps the existing projection_words_ binding
+// at 0x009C0B90 (the seek/tell slots). The shared-storage alias and lifetime
+// remain unresolved; neither interpretation proves simultaneous independent
+// globals. Keep this callback storage separate and provisional, with no
+// callback-object binding, until the overlap is independently resolved.
+// The image's .data holds them at
 // 0x009C0B80..0x009C0B94 and the engine calls through the memory operand
-// (`call dword ptr [0x9C0B80]`); this real array keeps every slot call and
-// the installer's memcpy destination as memory operands on this build's own
-// address - the relocation every binding in this tree takes when it becomes
-// real storage. MACROS over the array, not const pointer variables: measured,
-// a const variable's value does not fold at the memcpy intrinsic
-// (`mov edi, dword ptr [var]` against the image's `mov edi, 0x9c0b80`) nor
-// at the indirect call (`mov eax, [var]; call dword ptr [eax]` against
-// `call dword ptr [0x9c0b80]`).
-typedef unsigned long (__cdecl *vox_alloc_fn)(unsigned long);
-typedef void (__cdecl *vox_free_fn)(unsigned long);
-// The engine's FILE slots, typed as its own readers see them. vx_read and
-// vx_seek are `void` in this tree - each calls the CRT and returns without
-// touching eax - so the count / new offset the CRT left in the return
-// register is exactly what these call sites read.
-typedef long (__cdecl *vox_read_fn)(unsigned long, void *, unsigned long);
-typedef long (__cdecl *vox_seek_fn)(unsigned long, long, int);
-void *vox_callback_slots[6];
-#define vox_alloc_slot (*reinterpret_cast<vox_alloc_fn *>(&vox_callback_slots[0]))
-#define vox_free_slot (*reinterpret_cast<vox_free_fn *>(&vox_callback_slots[1]))
-#define vox_read_slot (*reinterpret_cast<vox_read_fn *>(&vox_callback_slots[2]))
-#define vox_seek_slot (*reinterpret_cast<vox_seek_fn *>(&vox_callback_slots[4]))
-#define vox_callback_table (vox_callback_slots)
+// (`call dword ptr [0x9C0B80]`); the typed object remains six contiguous
+// function pointers, and the installer copies its complete Win32 24-byte span.
+VoxIoCallbacks vox_callback_slots = {0};
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(VoxIoCallbacks) == 24,
+              "voxel callback table must remain six contiguous Win32 dwords");
+static_assert(offsetof(VoxIoCallbacks, allocate) == 0 &&
+              offsetof(VoxIoCallbacks, release) == 4 &&
+              offsetof(VoxIoCallbacks, read) == 8 &&
+              offsetof(VoxIoCallbacks, write) == 12 &&
+              offsetof(VoxIoCallbacks, seek) == 16 &&
+              offsetof(VoxIoCallbacks, tell) == 20,
+              "voxel callback order must match the original table");
+#endif
+#define vox_alloc_slot (vox_callback_slots.allocate)
+#define vox_free_slot (vox_callback_slots.release)
+#define vox_read_slot (vox_callback_slots.read)
+#define vox_seek_slot (vox_callback_slots.seek)
 
 // The engine's fixed-address data bindings live at FILE SCOPE, below, as
 // plain static consts rather than inside this anonymous namespace: the
@@ -1560,7 +1564,9 @@ Purpose: Install the six vx_* file-IO callbacks and vet the machine's CPU rank.
          0 = accepted, 1 = rejected (init_class then shows CAVIAR_INVALIDCPU
          when the stored preference is also out of range).
 // ORIGINAL: 0x006392E0 sub_6392e0 0x006392E0-0x0063937F FILE
-// symbol    ?vox_init_callbacks@@YADPAKH@Z
+// symbol    ?vox_init_callbacks@@YADPBUVoxIoCallbacks@@H@Z
+// The LEVER/TRIED measurements below are historical notes from the earlier
+// integer-array/void-slot source model; this typed table supersedes that model.
 // LEVER: the callback-table address must reach the memcpy intrinsic as a
 //        LITERAL - a file-scope `void *const` variable compiles
 //        `mov edi, dword ptr [var]` where the image folds `mov edi, 0x9c0b80`
@@ -1586,14 +1592,15 @@ Purpose: Install the six vx_* file-IO callbacks and vet the machine's CPU rank.
 //        banked tier reads worse than the body is. Same pattern on 0x63AF60
 //        (7 of 96 frameless, 0 of 96 /Oy-).
 */
-char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag) {
+char __cdecl vox_init_callbacks(const VoxIoCallbacks *callbacks, int flag) {
     if (callbacks == 0) {
         vox_stage_error(vox_msg_no_setup);
         return 1;
     }
-    if (callbacks[0] != 0 && callbacks[1] != 0 && callbacks[2] != 0 &&
-        callbacks[3] != 0 && callbacks[4] != 0 && callbacks[5] != 0) {
-        memcpy(vox_callback_table, callbacks, 6 * sizeof(unsigned long));
+    if (callbacks->allocate != 0 && callbacks->release != 0 &&
+        callbacks->read != 0 && callbacks->write != 0 &&
+        callbacks->seek != 0 && callbacks->tell != 0) {
+        memcpy(&vox_callback_slots, callbacks, sizeof(vox_callback_slots));
         vox_detect_cpu();
         // The RANGE form, not `== 0`: the image branches `test al,al; jbe`
         // here and `cmp al,bl; jbe` in init_class - an unsigned `<= 0`
@@ -1804,7 +1811,7 @@ VoxRenderRecord *__cdecl vox_create_record(int setup_id, void *setup_data,
             record->shadow_table_ = (void *)vox_alloc_slot(0x100);
             if (record->shadow_table_ == 0) {
                 vox_stage_error(vox_msg_no_shadow);
-                vox_free_slot((unsigned long)record->colour_table_);
+                vox_free_slot(record->colour_table_);
                 return 0;
             }
             memcpy(record->shadow_table_, shadow_data, 0x100);
@@ -1821,7 +1828,7 @@ VoxRenderRecord *__cdecl vox_create_record(int setup_id, void *setup_data,
             record->shadow_table_ = (void *)vox_alloc_slot(0x20000);
             if (record->shadow_table_ == 0) {
                 vox_stage_error(vox_msg_no_shadow);
-                vox_free_slot((unsigned long)record->colour_table_);
+                vox_free_slot(record->colour_table_);
                 return 0;
             }
             memcpy(record->shadow_table_, shadow_data, 0x20000);
@@ -2022,14 +2029,14 @@ Return Value: 0 when both ramps are filled, 1 on failure.
 */
 extern "C" char __cdecl sub_63f9b0(unsigned char *record) {
     if (*(int *)(record + 0x60) != 0) {
-        vox_free_slot(*(unsigned long *)(record + 0x60));
+        vox_free_slot(reinterpret_cast<void *>(*(unsigned long *)(record + 0x60)));
     }
     if (*(int *)(record + 0x64) != 0) {
-        vox_free_slot(*(unsigned long *)(record + 0x64));
+        vox_free_slot(reinterpret_cast<void *>(*(unsigned long *)(record + 0x64)));
     }
-    *(int *)(record + 0x60) =
+    *(void **)(record + 0x60) =
         vox_alloc_slot(*(int *)(*(int *)(record + 4) + 0x10) << 2);
-    *(int *)(record + 0x64) =
+    *(void **)(record + 0x64) =
         vox_alloc_slot(*(int *)(*(int *)(record + 4) + 0x10) << 2);
     if (*(int *)(record + 0x60) != 0 && *(int *)(record + 0x64) != 0) {
         int info = *(int *)(record + 4);
@@ -2111,23 +2118,23 @@ void __cdecl caviar_free_record(CvrRecord *record) {
     }
     char *first = record->description_;
     if (first != 0) {
-        vox_free_slot((unsigned long)first);
+        vox_free_slot(first);
     }
     char *second = record->palette_name_;
     if (second != 0) {
-        vox_free_slot((unsigned long)second);
+        vox_free_slot(second);
     }
     uint8_t *third = record->palette_;
     if (third != 0) {
-        vox_free_slot((unsigned long)third);
+        vox_free_slot(third);
     }
     uint8_t *fourth = record->field_18_;
     if (fourth != 0) {
-        vox_free_slot((unsigned long)fourth);
+        vox_free_slot(fourth);
     }
     char *fifth = record->parts_name_;
     if (fifth != 0) {
-        vox_free_slot((unsigned long)fifth);
+        vox_free_slot(fifth);
     }
 
     if (record->slot_table_ != 0) {
@@ -2137,11 +2144,11 @@ void __cdecl caviar_free_record(CvrRecord *record) {
                 // No null test - the image frees the slot's answer whatever
                 // it holds.
                 char *element = record->slot_table_[index];
-                vox_free_slot((unsigned long)element);
+                vox_free_slot(element);
                 ++index;
             } while (index < record->part_count_);
         }
-        vox_free_slot((unsigned long)record->slot_table_);
+        vox_free_slot(record->slot_table_);
     }
 
     if (record->parts_ != 0) {
@@ -2150,20 +2157,20 @@ void __cdecl caviar_free_record(CvrRecord *record) {
             do {
                 uint8_t *lead = record->parts_[index].colours_;
                 if (lead != 0) {
-                    vox_free_slot((unsigned long)lead);
+                    vox_free_slot(lead);
                 }
                 VOX_Vect *mid = record->parts_[index].vectors_;
                 if (mid != 0) {
-                    vox_free_slot((unsigned long)mid);
+                    vox_free_slot(mid);
                 }
                 VOX_Matrix *last = record->parts_[index].matrices_;
                 if (last != 0) {
-                    vox_free_slot((unsigned long)last);
+                    vox_free_slot(last);
                 }
                 ++index;
             } while (index < record->part_count_);
         }
-        vox_free_slot((unsigned long)record->parts_);
+        vox_free_slot(record->parts_);
     }
 
     if (record->steps_ != 0) {
@@ -2172,12 +2179,12 @@ void __cdecl caviar_free_record(CvrRecord *record) {
             do {
                 CvrShape *lead = record->steps_[index].shape_;
                 if (lead != 0) {
-                    vox_free_slot((unsigned long)lead);
+                    vox_free_slot(lead);
                 }
                 ++index;
             } while (index < record->part_count_);
         }
-        vox_free_slot((unsigned long)record->steps_);
+        vox_free_slot(record->steps_);
     }
 
     if (record->shadows_ != 0) {
@@ -2186,19 +2193,19 @@ void __cdecl caviar_free_record(CvrRecord *record) {
             do {
                 uint8_t *lead = record->shadows_[index].field_4_;
                 if (lead != 0) {
-                    vox_free_slot((unsigned long)lead);
+                    vox_free_slot(lead);
                 }
                 uint8_t *mid = record->shadows_[index].field_8_;
                 if (mid != 0) {
-                    vox_free_slot((unsigned long)mid);
+                    vox_free_slot(mid);
                 }
                 ++index;
             } while (index < record->part_count_);
         }
-        vox_free_slot((unsigned long)record->shadows_);
+        vox_free_slot(record->shadows_);
     }
 
-    vox_free_slot((unsigned long)record);
+    vox_free_slot(record);
 }
 
 /*
@@ -3335,18 +3342,18 @@ Status: Complete
 */
 void __cdecl vox_release_record(VoxRenderRecord *record) {
     if (record->colour_table_ != 0) {
-        vox_free_slot((unsigned long)record->colour_table_);
+        vox_free_slot(record->colour_table_);
     }
     if (record->shadow_table_ != 0) {
-        vox_free_slot((unsigned long)record->shadow_table_);
+        vox_free_slot(record->shadow_table_);
     }
     if (record->ramp_a_ptr_ != 0) {
-        vox_free_slot((unsigned long)record->ramp_a_ptr_);
+        vox_free_slot(record->ramp_a_ptr_);
     }
     if (record->ramp_b_ptr_ != 0) {
-        vox_free_slot((unsigned long)record->ramp_b_ptr_);
+        vox_free_slot(record->ramp_b_ptr_);
     }
-    vox_free_slot((unsigned long)record);
+    vox_free_slot(record);
     if (vox_record_count != 0) {
         --vox_record_count;
     }
