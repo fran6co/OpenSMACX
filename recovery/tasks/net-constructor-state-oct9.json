@@ -18,7 +18,7 @@
   ],
   "evidence": [
     "Pinned62D6A0..62D8DC and supporting6634A0..6634DF: existing genuine VoiceTx/JackalVoiceRx/three NetFifo/NetAllocationNode members provide lifecycle, but source body omits explicit stores. Preserve constructor/member lifecycle and original order; no replacement with zero-all memset.",
-    "Original62D86C..62D883 iterates16 NetPlayer slots of0x58, clearing only slot+0,+4,+8,+C dwords and+14 byte. Leave untouched fields uninitialized, preserve original quirks. Net+ D8=0,E4=1,6D4=100,6D8=0,6DC=0,6E0=0,6E4=0,6FC=200,760=0,764=0 are missing direct stores into already declared members. Trace full original to confirm exact order and widths before coding; no invented fields or blanket initialization.",
+    "Coordinator re-inspection of pinned62D811,62D82E..62D899 corrects initial offset interpretation: EAX begins at Net+158, i.e. player slot+4. Loop62D871..883 clears slot+0,+4,+8 dwords, then slot+14 byte, then slot+10 dword; slot+C remains untouched. Original direct stores in order: DC=0,E0=0x4E20,NetDirectPlay=0,6DC=0,760=0,764=0,6E0=0,6E4=0,6FC=200,player loop,6D4=100,D8=0,E4=1,then existing voice/thread stores. There is no constructor store to6D8: preserve it uninitialized. No blanket initialization or invented fields.",
     "Restore a complete compiling semantic constructor promptly. Native full-TU baseline/current, source identity and historical claims continuity, actual-source controls explicitly retaining untouched fields and fresh application build/link required before coordinator review. AlphaNet stale note is not a gap; its existing member constructors account for original stores. No AlphaNet edits, manual marker changes or long byte search."
   ]
 }
