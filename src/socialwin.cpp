@@ -127,13 +127,6 @@ void SocialWin::on_button_clicked(int button_id) {
     }
 }
 
-void __fastcall SocialWinFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
-void __fastcall SocialWinFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
-void __fastcall SocialWinCheckButtonCtor(void *self) { reinterpret_cast<CheckButton *>(self)->CheckButton::CheckButton(); }
-void __fastcall SocialWinCheckButtonDtor(void *self) { reinterpret_cast<CheckButton *>(self)->~CheckButton(); }
-void __fastcall SocialWinButtonGroupCtor(void *self) { reinterpret_cast<ButtonGroup *>(self)->ButtonGroup::ButtonGroup(); }
-void __fastcall SocialWinButtonGroupDtor(void *self) { reinterpret_cast<ButtonGroup *>(self)->~ButtonGroup(); }
-
 /*
 Purpose: Install the SubInterface vftable, construct the Spot, nine runs of
          further sub-objects (a CheckButton[3], four Sprite runs, a
