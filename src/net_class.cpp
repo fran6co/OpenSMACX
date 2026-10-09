@@ -1587,10 +1587,10 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
                         break;
                     }
                 }
-                // The native not-found path does not skip this name.  It
-                // falls back to the first player's name at Net+0x169.
+                // The native not-found path passes null to strcat; preserve
+                // that original error-path behavior.
                 char *name = found_index < 0
-                    ? players_[0].name_and_tail_
+                    ? 0
                     : players_[found_index].name_and_tail_;
                 strcat(StringTemp, name);
                 if (!first_name) {

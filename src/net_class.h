@@ -406,8 +406,8 @@ class Net {
   // answer as "cut", which is when it refreshes the player's stamp.
   int drop_player(unsigned long key, int reason);
   // 0x00632CC0. Adds the player record, announces it, then creates and
-  // initializes its VoiceRx receiver. Full-table recovery deliberately
-  // rejects the extra player instead of reproducing the native Net overrun.
+  // initializes its VoiceRx receiver. At a full table native skips row
+  // initialization but continues the count, broadcast and callback path.
   int sub_632cc0(char *text, int id, unsigned char flag);
   // 0x0062E2A0. Joins one enumerated service provider: copies its GUID into
   // the 0x6EC session slot, launches the Zone's "mplaynow.exe" for the
