@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "task_id": "shared-turn-popup-storage-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Remove live executable-address dependencies for shared turn assignment and popup checkbox state, using their existing NetDaemon and Popup owners without duplicate storage or changed byte-width behavior.",
+  "base_revision": "1b8087e6fb8ec3d956aae70c247fccc311a2b5a2",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5430256
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5430176
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5328720
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5331200
+    }
+  ],
+  "editable_files": [
+    "src/game.cpp",
+    "src/console.cpp",
+    "recovery/tests/test_shared_turn_popup_storage_oct9.py"
+  ],
+  "evidence": [
+    "Source NetDaemonNet93CD90 owns lock_state_[0].leading_words_[1] at+1B30=93E8C0; netwin.cpp already binds NetWinRulesGate to this exact member and netdaemon.cpp/newgame.cpp use it. game.cpp TurnsAssigned and console_turns_assigned currently dereference the obsolete executable address rather than that existing member.",
+    "Source PopupWriteCheckState at9BC06C is real int storage in popup.cpp, exported in popup.h; Console::set_ai currently reads/writes only its first unsigned char via fixed address. Preserve byte-wide mutation, other24bits and repeated post-popup read, not a new int-wide assignment or extra storage.",
+    "Coordinator authorizes cheap isolated draft of four affected functions plus existing private aliases. Preserve original branches, callback order, wraparound/signed conversion and historical findings/claims. Do not invent a signed NetDaemon member, change its layout or claim full data allocation evidence; use its existing unsigned storage and original bit-pattern conversion where return requires int.",
+    "No Git, native compiler/Wine, preparation, recording or marker/claim edits by worker. Use actual-source host controls for gate alias/read behavior and preservation of upper popup bytes; request central expansion if scope insufficient. Root combines independent owner work after manual review and build/link. No new-function-count claim for correcting existing address-dependent behavior."
+  ]
+}
