@@ -688,55 +688,24 @@ static unsigned char *const PlayerFlagBlocks = (unsigned char *)0x00946F58;
 // header declares it, and the editor popups pass it as their wait callback.
 int __cdecl pop_wait();
 int __cdecl tut_check2(int flag);
-// The alpha(x).txt keys and panel sprites the editor popups raise (popp's
-// label argument is an alpha.txt key, not display text; the `alunit_sm.pcx`
-// forms are the alien-faction variants). The following names bind the original
-// NUL-terminated .data literals directly.
-static char *const EditorNamePopupLabel = (char *)0x00683604;   // INTRINSICNAME
-static char *const EditorNamePopupAlienLabel = (char *)0x006835E8;
-static char *const EditorNamePopupSprite = (char *)0x006835F8;  // unit_sm.pcx
-static char *const EditorNamePopupAlienSprite = (char *)0x006835D8;
-static char *const EditorNameXPopCaption = (char *)0x0068367C;  // INTRINSICNAME
-static char *const EditorNameXPopAlienCaption = (char *)0x00683660;
-static char *const EditorNameXPopSprite = (char *)0x00683670;   // unit_sm.pcx
-static char *const EditorNameXPopAlienSprite = (char *)0x00683650;
-static char *const EditorTypePopupLabel = (char *)0x00683640;   // INTRINSICTYPE
-static char *const EditorTypePopupAlienLabel = (char *)0x00683624;
-static char *const EditorTypePopupSprite = (char *)0x00683634;  // unit_sm.pcx
-static char *const EditorTypePopupAlienSprite = (char *)0x00683614;
-static char *const EditorOverwritePopupLabel = (char *)0x006836B8;  // OVERWRITEPROTO
-static char *const EditorOverwritePopupAlienLabel = (char *)0x0068369C;
-static char *const EditorOverwritePopupSprite = (char *)0x006836AC;
-static char *const EditorOverwritePopupAlienSprite = (char *)0x0068368C;
-
-// Stack-panel fragments; BufferJoinSpace supplies the shared separator. "(", ")",
-// ". ", ": " and "#".
-static char *const EditorOpenParen = (char *)0x00682E9C;
-static char *const EditorCloseParen = (char *)0x00682E98;
-static char *const EditorDotSpace = (char *)0x00683920;
-static char *const EditorColonSpace = (char *)0x00682E90;
-static char *const EditorHashSign = (char *)0x00683918;
-
-// The unit-special picker popups select_special raises. The labels are
-// alpha(x).txt keys (the popp convention), and the alien-faction variants
-// swap unit_sm.pcx for alunit_sm.pcx. The four stat fragments are the
-// arithmetic the item labels are built from; the image holds duplicated
-// copies of each (0x6838d0/d4/d8, 0x6838dc/e4/ec, 0x6838e0/e8/f0) and the
-// bindings below name the first of each run.
-static char *const SpecialTwoPopupLabel = (char *)0x0068385C;        // TWOSPECIAL
-static char *const SpecialTwoPopupAlienLabel = (char *)0x00683894;   // TWOSPECIAL
-static char *const SpecialMissilePopupLabel = (char *)0x00683878;    // MISSILESPECIAL
-static char *const SpecialMissilePopupAlienLabel = (char *)0x006838AC;
-static char *const SpecialUnitsPopupLabel = (char *)0x006838BC;      // UNITSPECIAL
-static char *const SpecialTwoPopupSprite = (char *)0x00683888;       // unit_sm.pcx
-static char *const SpecialTwoPopupAlienSprite = (char *)0x0068384C;  // alunit_sm.pcx
-static char *const SpecialMissilePopupSprite = (char *)0x006838A0;   // unit_sm.pcx
-static char *const SpecialMissilePopupAlienSprite = (char *)0x00683868;
-static char *const SpecialSlashSign = (char *)0x006838CC;            // "/"
-static char *const SpecialMinusOneText = (char *)0x006838D0;         // "-1"
-static char *const SpecialPlusSignText = (char *)0x006838DC;         // "+"
-static char *const SpecialMinusTwoText = (char *)0x006838E0;         // "-2"
-
+/*
+ * Pinned-image provenance for the retired immutable string aliases above:
+ * original popup text/path references included name keys 0x683604/0x6835E8/
+ * 0x68367C/0x683660 and sprites 0x6835F8/0x6835D8/0x683670/0x683650;
+ * type keys 0x683640/0x683624 and sprites 0x683634/0x683614; overwrite keys
+ * 0x6836B8/0x68369C and sprites 0x6836AC/0x68368C; special keys
+ * 0x68385C/0x683894/0x683878/0x6838AC/0x6838BC and sprite references
+ * 0x683888/0x68384C/0x6838A0/0x683868. These point to immutable initialized
+ * spellings (including `unit_sm.pcx` and `alunit_sm.pcx`), not source-owned
+ * storage. Punctuation references included 0x682E9C/0x682E98/0x683920/
+ * 0x683918 and 0x6838CC. The bytes at 0x682E90 and 0x682E94 are respectively
+ * comma-space and colon-space. Distinct original copies of `-1` were referenced
+ * at 0x6838D0/0x6838D4/0x6838D8, `+` at 0x6838DC/0x6838E4/0x6838EC, and `-2`
+ * at 0x6838E0/0x6838E8/0x6838F0. These sites now use ordinary same-content
+ * literals. Literal pooling can merge emitted storage; original per-occurrence
+ * storage/reference correspondence remains a restoration obligation. No
+ * native literal symbol or extent binding is asserted here.
+ */
 static int *const AbilityLabelIds = (int *)0x009AB540;
 static int *const AbilityLabelIdsEnd = (int *)0x009AB86C;
     // The ability-label id table draw_flash's stat line walks - 39 dwords at
@@ -4183,16 +4152,16 @@ void DesignWin::draw_stack() {
                 strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
                     Labels.strings_ptr)[0x390]));
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, EditorOpenParen);
+                strcat(StringTemp, "(");
                 char digits[0x20];
                 _itoa(proto_id % 64 + 1, digits, 10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, EditorCloseParen);
+                strcat(StringTemp, ")");
             } else {
                 char digits[0x20];
                 _itoa(proto_id % 64 + 1, digits, 10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, EditorDotSpace);
+                strcat(StringTemp, ". ");
                 strcat(StringTemp, VehPrototypes[proto_id].veh_name);
             }
 
@@ -4228,11 +4197,11 @@ void DesignWin::draw_stack() {
             if ((*InterfaceFlagByte & 0x40) != 0
                 && (*InterfaceFlagTail & 0x10) != 0) {
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, EditorOpenParen);
+                strcat(StringTemp, "(");
                 char digits[0x20];
                 _itoa(proto_id, digits, 10);
                 strcat(StringTemp, digits);
-                strcat(StringTemp, EditorCloseParen);
+                strcat(StringTemp, ")");
             }
             canvas->write_cent_l(StringTemp, &stats_rect, strlen(StringTemp));
             spot1_.add(proto_id, 0, rc.left, rc.top, rc.right - rc.left,
@@ -4249,7 +4218,7 @@ void DesignWin::draw_stack() {
             strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
                 Labels.strings_ptr)[0x6E]));
             strcat(StringTemp, BufferJoinSpace);
-            strcat(StringTemp, EditorHashSign);
+            strcat(StringTemp, "#");
             char digits[0x20];
             _itoa(proto_id % 64 + 1, digits, 10);
             strcat(StringTemp, digits);
@@ -4318,11 +4287,11 @@ int DesignWin::design_it() {
                     && strcmp(name, proto.veh_name) != 0) {
                     parse_says(0, proto.veh_name, -1, -1);
                     if ((*PlayerFlagBlocks & 0x80) == 0) {
-                        popp(ScriptTxtID, EditorNamePopupLabel, 0,
-                             EditorNamePopupSprite, pop_wait);
+                        popp(ScriptTxtID, "INTRINSICNAME", 0,
+                             "unit_sm.pcx", pop_wait);
                     } else {
-                        popp(ScriptTxtID, EditorNamePopupAlienLabel, 0,
-                             EditorNamePopupAlienSprite, pop_wait);
+                        popp(ScriptTxtID, "INTRINSICNAME", 0,
+                             "alunit_sm.pcx", pop_wait);
                     }
                 }
             } else if (strlen(name) != 0
@@ -4354,11 +4323,9 @@ int DesignWin::design_it() {
             }
             parse_says(0, current.veh_name, -1, -1);
             if ((*PlayerFlagBlocks & 0x80) == 0) {
-                x_pop_caption_label(EditorNameXPopCaption,
-                                    EditorNameXPopSprite, pop_wait);
+                x_pop_caption_label("INTRINSICNAME", "unit_sm.pcx", pop_wait);
             } else {
-                x_pop_caption_label(EditorNameXPopAlienCaption,
-                                    EditorNameXPopAlienSprite,
+                x_pop_caption_label("INTRINSICNAME", "alunit_sm.pcx",
                                     pop_wait);
             }
             return 0;
@@ -4390,11 +4357,11 @@ int DesignWin::design_it() {
         if (protoID_ < 0x40) {
             parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
             if ((*PlayerFlagBlocks & 0x80) == 0) {
-                popp(ScriptTxtID, EditorTypePopupLabel, 0,
-                     EditorTypePopupSprite, pop_wait);
+                popp(ScriptTxtID, "INTRINSICTYPE", 0,
+                     "unit_sm.pcx", pop_wait);
             } else {
-                popp(ScriptTxtID, EditorTypePopupAlienLabel, 0,
-                     EditorTypePopupAlienSprite, pop_wait);
+                popp(ScriptTxtID, "INTRINSICTYPE", 0,
+                     "alunit_sm.pcx", pop_wait);
             }
             return 0;
         }
@@ -4444,11 +4411,11 @@ int DesignWin::design_it() {
                 char *label;
                 char *sprite;
                 if ((*PlayerFlagBlocks & 0x80) == 0) {
-                    label = EditorOverwritePopupLabel;
-                    sprite = EditorOverwritePopupSprite;
+                    label = "OVERWRITEPROTO";
+                    sprite = "unit_sm.pcx";
                 } else {
-                    label = EditorOverwritePopupAlienLabel;
-                    sprite = EditorOverwritePopupAlienSprite;
+                    label = "OVERWRITEPROTO";
+                    sprite = "alunit_sm.pcx";
                 }
                 if (popp(ScriptTxtID, label, 0, sprite, pop_wait) == 0) {
                     return 0;
@@ -4625,7 +4592,7 @@ void DesignWin::draw_flash() {
         int line_left = rc.left;
 
         StringTemp[0] = '\0';
-        strcat(StringTemp, EditorOpenParen);
+        strcat(StringTemp, "(");
         int ability_id = *reinterpret_cast<const short *>(
             ProtoAbilityIdBase + shown * 0x34);
         say_stats_3(StringTemp, ability_id);
@@ -4634,12 +4601,12 @@ void DesignWin::draw_flash() {
              ++label, ++ability_bit) {
             if (VehPrototypes[ability_id].ability_flags & (1 << ability_bit)) {
                 if (strlen(StringTable.get(*label)) != 0) {
-                    strcat(StringTemp, EditorColonSpace);
+                    strcat(StringTemp, ", ");
                     strcat(StringTemp, StringTable.get(*label));
                 }
             }
         }
-        strcat(StringTemp, EditorCloseParen);
+        strcat(StringTemp, ")");
         line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
                                      rc.right - rc.left);
 
@@ -4740,16 +4707,16 @@ void DesignWin::select_special(int which) {
                 parse_say(0,
                           reinterpret_cast<int>(Technology[tech_id].name),
                           -1, -1);
-                popp(ScriptTxtID, SpecialTwoPopupAlienLabel, 0,
-                     SpecialTwoPopupAlienSprite, pop_wait);
+                popp(ScriptTxtID, "TWOSPECIAL", 0,
+                     "alunit_sm.pcx", pop_wait);
                 popup.close();
                 popup_scroll->close();
                 return;
             }
         }
         if (Chassis[protoChassisType_].missile != 0) {
-            popp(ScriptTxtID, SpecialMissilePopupAlienLabel, 0,
-                 SpecialMissilePopupAlienSprite, pop_wait);
+            popp(ScriptTxtID, "MISSILESPECIAL", 0,
+                 "alunit_sm.pcx", pop_wait);
             popup.close();
             popup_scroll->close();
             return;
@@ -4761,23 +4728,23 @@ void DesignWin::select_special(int which) {
                 parse_say(0,
                           reinterpret_cast<int>(Technology[tech_id].name),
                           -1, -1);
-                popp(ScriptTxtID, SpecialTwoPopupLabel, 0,
-                     SpecialTwoPopupSprite, pop_wait);
+                popp(ScriptTxtID, "TWOSPECIAL", 0,
+                     "unit_sm.pcx", pop_wait);
                 popup.close();
                 popup_scroll->close();
                 return;
             }
         }
         if (Chassis[protoChassisType_].missile != 0) {
-            popp(ScriptTxtID, SpecialMissilePopupLabel, 0,
-                 SpecialMissilePopupSprite, pop_wait);
+            popp(ScriptTxtID, "MISSILESPECIAL", 0,
+                 "unit_sm.pcx", pop_wait);
             popup.close();
             popup_scroll->close();
             return;
         }
     }
 
-    popup.start(PopupStartCaption, SpecialUnitsPopupLabel, -1, nullptr,
+    popup.start(PopupStartCaption, "UNITSPECIAL", -1, nullptr,
                 0x200042);
 
     Dialogs dialogs;
@@ -4832,22 +4799,36 @@ void DesignWin::select_special(int which) {
         }
 
         StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(
+            reinterpret_cast<int>(Ability[ability].name)));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, StringTable.get(
+            reinterpret_cast<int>(Ability[ability].description)));
+        strcat(StringTemp, "|");
+        // The image reads Labels.strings_ptr + 0x160 bytes: dword entry 0x58.
+        strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
+            Labels.strings_ptr)[0x58]));
+        strcat(StringTemp, ": ");
+
         const int kind = static_cast<int>(Ability[ability].cost_factor);
         if (kind >= 0) {
-            // Plain abilities quote their one-based pick position; when the
-            // chassis's triad byte is clear they quote the zero-based one
-            // and open the stat fragment group.
-            if ((Ability[ability].flags & 0x400) != 0
-                || Chassis[protoChassisType_].triad != 0) {
-                char digits[0x20];
-                _itoa(ability + 1, digits, 10);
-                strcat(StringTemp, digits);
-            } else {
-                char digits[0x20];
-                _itoa(ability, digits, 10);
-                strcat(StringTemp, digits);
+            char digits[0x20];
+            int cost = kind;
+            const bool special_cost =
+                (Ability[ability].flags & 0x400) != 0;
+            if (special_cost && Chassis[protoChassisType_].triad == 0) {
+                ++cost;
+            }
+            _itoa(cost, digits, 10);
+            strcat(StringTemp, digits);
+            if (special_cost) {
+                const unsigned char triad =
+                    Chassis[protoChassisType_].triad;
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, EditorOpenParen);
+                strcat(StringTemp, "(");
+                strcat(StringTemp, StringTable.get(
+                    reinterpret_cast<int>(Triad[triad])));
+                strcat(StringTemp, ")");
             }
         } else if (kind >= -7) {
             const unsigned char weapon_cost =
@@ -4856,6 +4837,8 @@ void DesignWin::select_special(int which) {
             const unsigned char chassis_speed =
                 Chassis[protoChassisType_].speed;
             char digits[0x20];
+            // The following image displacements are byte offsets into the
+            // Labels pointer table; these are the corresponding dword slots.
             LPSTR *const labels =
                 reinterpret_cast<LPSTR *>(Labels.strings_ptr);
             switch (kind + 7) {
@@ -4870,75 +4853,75 @@ void DesignWin::select_special(int which) {
                 _itoa(ratio, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, EditorOpenParen);
-                strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
-                strcat(StringTemp, SpecialSlashSign);
-                strcat(StringTemp, StringTable.get((int)labels[0x154]));
-                strcat(StringTemp, EditorCloseParen);
+                strcat(StringTemp, "(");
+                strcat(StringTemp, StringTable.get((int)labels[0x7C]));
+                strcat(StringTemp, "/");
+                strcat(StringTemp, StringTable.get((int)labels[0x55]));
+                strcat(StringTemp, ")");
                 break;
             }
             case 5:
                 _itoa(static_cast<int>(weapon_cost) - 1, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, EditorOpenParen);
-                strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
-                strcat(StringTemp, SpecialMinusOneText);
-                strcat(StringTemp, EditorCloseParen);
+                strcat(StringTemp, "(");
+                strcat(StringTemp, StringTable.get((int)labels[0x7C]));
+                strcat(StringTemp, "-1");
+                strcat(StringTemp, ")");
                 break;
             case 4:
                 _itoa(static_cast<int>(armor_cost) - 1, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, EditorOpenParen);
-                strcat(StringTemp, StringTable.get((int)labels[0x154]));
-                strcat(StringTemp, SpecialMinusOneText);
-                strcat(StringTemp, EditorCloseParen);
+                strcat(StringTemp, "(");
+                strcat(StringTemp, StringTable.get((int)labels[0x55]));
+                strcat(StringTemp, "-1");
+                strcat(StringTemp, ")");
                 break;
             case 3:
                 _itoa(static_cast<int>(chassis_speed) - 1, digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, EditorOpenParen);
-                strcat(StringTemp, StringTable.get((int)labels[0xB14]));
-                strcat(StringTemp, SpecialMinusOneText);
-                strcat(StringTemp, EditorCloseParen);
+                strcat(StringTemp, "(");
+                strcat(StringTemp, StringTable.get((int)labels[0x2C5]));
+                strcat(StringTemp, "-1");
+                strcat(StringTemp, ")");
                 break;
             case 2:
                 _itoa(static_cast<int>(armor_cost + weapon_cost) - 2, digits,
                       10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, EditorOpenParen);
-                strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
-                strcat(StringTemp, SpecialPlusSignText);
-                strcat(StringTemp, StringTable.get((int)labels[0x154]));
-                strcat(StringTemp, SpecialMinusTwoText);
-                strcat(StringTemp, EditorCloseParen);
+                strcat(StringTemp, "(");
+                strcat(StringTemp, StringTable.get((int)labels[0x7C]));
+                strcat(StringTemp, "+");
+                strcat(StringTemp, StringTable.get((int)labels[0x55]));
+                strcat(StringTemp, "-2");
+                strcat(StringTemp, ")");
                 break;
             case 1:
                 _itoa(static_cast<int>(chassis_speed + weapon_cost) - 2,
                       digits, 10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, EditorOpenParen);
-                strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
-                strcat(StringTemp, SpecialPlusSignText);
-                strcat(StringTemp, StringTable.get((int)labels[0xB14]));
-                strcat(StringTemp, SpecialMinusTwoText);
-                strcat(StringTemp, EditorCloseParen);
+                strcat(StringTemp, "(");
+                strcat(StringTemp, StringTable.get((int)labels[0x7C]));
+                strcat(StringTemp, "+");
+                strcat(StringTemp, StringTable.get((int)labels[0x2C5]));
+                strcat(StringTemp, "-2");
+                strcat(StringTemp, ")");
                 break;
             case 0:
                 _itoa(static_cast<int>(chassis_speed + armor_cost) - 2, digits,
                       10);
                 strcat(StringTemp, digits);
                 strcat(StringTemp, BufferJoinSpace);
-                strcat(StringTemp, EditorOpenParen);
-                strcat(StringTemp, StringTable.get((int)labels[0x154]));
-                strcat(StringTemp, SpecialPlusSignText);
-                strcat(StringTemp, StringTable.get((int)labels[0xB14]));
-                strcat(StringTemp, SpecialMinusTwoText);
-                strcat(StringTemp, EditorCloseParen);
+                strcat(StringTemp, "(");
+                strcat(StringTemp, StringTable.get((int)labels[0x55]));
+                strcat(StringTemp, "+");
+                strcat(StringTemp, StringTable.get((int)labels[0x2C5]));
+                strcat(StringTemp, "-2");
+                strcat(StringTemp, ")");
                 break;
             default:
                 break;

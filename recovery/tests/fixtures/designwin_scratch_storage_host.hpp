@@ -9,7 +9,11 @@
 #include <cstring>
 
 struct RECT { int left, top, right, bottom; };
-struct Font { int unk_1_ = 0, line_height_ = 10, height_ = 10; };
+struct Font {
+    int unk_1_ = 0, line_height_ = 10, height_ = 10;
+    int pixel_height() const { return height_; }
+    int line_height() const { return line_height_; }
+};
 struct HostTrace {
     int static_draw = 0, construct = 0, render = 0, multi_render = 0;
     int x = 0, y = 0, multi_x = 0, multi_y = 0;
