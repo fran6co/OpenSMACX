@@ -65,7 +65,7 @@ struct NetDaemon {
     Locks locks_;
     int veh_drop(int,int,int);
     int lock_veh(int *id,int flag,int x,int y,int mode);
-    int wait(const char *,int *ack,int,int);
+    int wait(const char *,uint32_t *ack,int,int);
     void receive();
     void check_spock() {calls.push_back(5);}
 } NetDaemonNet;
@@ -100,7 +100,7 @@ int action_airdrop(int id,int x,int y,int mode) {
 int NetDaemon::lock_veh(int *id,int flag,int x,int y,int mode) {
     assert(*id==1&&flag==4&&x==5&&y==7&&mode==4);return lock_result;
 }
-int NetDaemon::wait(const char *,int *ack,int,int) {*ack=0;return 7;}
+int NetDaemon::wait(const char *,uint32_t *ack,int,int) {*ack=0;return 7;}
 void NetDaemon::receive() {
     calls.push_back(3);
     lock_state_[2].leading_words_[3]=0;

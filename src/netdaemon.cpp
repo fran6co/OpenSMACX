@@ -2399,6 +2399,7 @@ int NetDaemon::init(int option) {
 // Fixed-slot bindings carried from 005303b0.cpp
 
 // ORIGINAL: 0x005303B0 ?wait@NetDaemon@@QAEHPADPAHHH@Z 0x005303B0-0x00530493 FILE
+// symbol    ?wait@NetDaemon@@QAEHPADPAIHH@Z
 // working copy - scaffold materialised by --work
 // size      227 bytes
 // prototype int (__thiscall ?wait@NetDaemon@@QAEHPADPAHHH@Z)(NetDaemon* this, int8*, int*, int, int)
@@ -2408,19 +2409,21 @@ int NetDaemon::init(int option) {
 // calls     0x0047A7D0 0x0047A890 0x0051F1B0 0x00534400 0x005901D0 0x005FC700 0x00630A00
 // indirect  0x005303CF 0x005303F9
 
-int NetDaemon::wait(char * message, int * state, int value, int timeout) {
+int NetDaemon::wait(char * message, uint32_t * state, int value, int timeout) {
     int saved = NetDaemonNet.lock_state_[1].leading_words_[3];
     ++NetBusyCount;
     DWORD (WINAPI *const timeGetTimeFn)() = timeGetTime;
-    unsigned long startTime = timeGetTimeFn();
+    DWORD startTime = timeGetTimeFn();
     bool triggeredTimeout = false;
-    while (*state == value) {
+    while (*state == static_cast<uint32_t>(value)) {
         if (ExitTurnLoop != 0) {
             break;
         }
         if (!triggeredTimeout) {
-            unsigned long now = timeGetTimeFn();
-            if ((int)(now - startTime) > timeout) {
+            DWORD now = timeGetTimeFn();
+            // Original530405 SUB /530407 CMP /530409 JBE compares DWORD
+            // bit patterns unsigned, including tick wrap and negative timeout.
+            if (static_cast<DWORD>(now - startTime) > static_cast<DWORD>(timeout)) {
                 triggeredTimeout = true;
                 NetMsgPrimary.pop(message, 0, 2, 0);
             }
@@ -6455,7 +6458,7 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
                 Vehs[veh_id].state &= 0xFCFFBDFFU;
                 synch_veh(veh_id);
                 if (IsMultiplayerNet != 0) {
-                    int *acknowledged = reinterpret_cast<int *>(&lock_state_[2].trailing_words_[0]);
+                    uint32_t *acknowledged = &lock_state_[2].trailing_words_[0];
                     *acknowledged = 1;
                     log_say("Awaiting acknowledgement of SYNCH",
                             ConsoleGlobal.faction_id_, 0, 0);
@@ -6724,7 +6727,7 @@ send_move:
         message_veh(0x2401, veh_id, direction, 0);
         if (mode == 0 && IsMultiplayerNet != 0) {
             log_say("Client waiting for acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
-            int *flag = reinterpret_cast<int *>(&lock_state_[2].leading_words_[3]);
+            uint32_t *flag = &lock_state_[2].leading_words_[3];
             const int waited = wait("AWAITEXEC", flag, 1, 2000);
             NetDaemonWaitTicks += waited;
             log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
@@ -6801,7 +6804,7 @@ release_lock:
         Vehs[veh_id].state &= 0xFCFFBDFFU;
         synch_veh(veh_id);
         if (IsMultiplayerNet != 0) {
-            int *flag = reinterpret_cast<int *>(&lock_state_[2].trailing_words_[0]);
+            uint32_t *flag = &lock_state_[2].trailing_words_[0];
             *flag = 1;
             log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
             const int waited = wait("AWAITEXEC", flag, 1, 2000);
@@ -6834,7 +6837,7 @@ global_failed:
         Vehs[veh_id].state &= 0xFCFFBDFFU;
         synch_veh(veh_id);
         if (IsMultiplayerNet != 0) {
-            int *flag = reinterpret_cast<int *>(&lock_state_[2].trailing_words_[0]);
+            uint32_t *flag = &lock_state_[2].trailing_words_[0];
             *flag = 1;
             log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
             const int waited = wait("AWAITEXEC", flag, 1, 2000);

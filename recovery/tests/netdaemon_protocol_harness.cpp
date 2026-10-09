@@ -15,12 +15,14 @@ static const int ORDER_MAGTUBE_TO = 28;
 
 struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
 struct Lock { int checks; Lock() : checks(0) {} void check_global() { ++checks; } };
+static char test_message;
 struct Net {
     int gets;
     int next_message;
     Net() : gets(0), next_message(0) {}
-    int get(unsigned long *first, unsigned long *second) {
-        ++gets; *first = 17; *second = 23; return next_message;
+    void *get(unsigned long *first, unsigned long *second) {
+        ++gets; *first = 17; *second = 23;
+        return next_message ? &test_message : 0;
     }
 };
 struct NetDaemon : public Net {
@@ -30,7 +32,7 @@ struct NetDaemon : public Net {
     int automated_lock(int *, int);
     int lock_veh(int *, int, int, int, int);
     int add_global();
-    int wait(const char *, int *, int, int);
+    int wait(const char *, uint32_t *, int, int);
     void process_message(char *, unsigned long, int);
     int action(int, int);
     int order_veh(int, int, int);
@@ -166,7 +168,7 @@ int NetDaemon::add_global() {
     const int i = add_global_calls++;
     return i < add_global_result_count ? add_global_results[i] : 0;
 }
-int NetDaemon::wait(const char *, int *flag, int, int) {
+int NetDaemon::wait(const char *, uint32_t *flag, int, int) {
     ++wait_calls; *flag = 0;
     if (callback_change_net_after_wait) IsMultiplayerNet = 0;
     return wait_value;

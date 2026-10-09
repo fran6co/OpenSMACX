@@ -207,7 +207,7 @@ class NetDaemon : public AlphaNet {
 
  public:
   // homed from 005303b0.cpp
-  int wait(char *message, int *state, int value, int timeout);
+  int wait(char *message, uint32_t *state, int value, int timeout);
 
  public:
   // homed from 0052df30.cpp
