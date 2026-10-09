@@ -783,7 +783,7 @@ extern uint32_t BasePopDefaultField3104[3];
 extern uint32_t BasePopDefaultField31A0[4];
 extern uint32_t BasePopDefaultField21B0[4];
 extern uint32_t BasePopDefaultField31B0[2];
-extern uint32_t BasePopDefaultField2148[2];
+extern Sprite *BasePopDefaultField2148[2];
 extern uint32_t BasePopDefaultField30A4;
 
 

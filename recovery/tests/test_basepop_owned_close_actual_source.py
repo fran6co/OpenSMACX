@@ -130,6 +130,11 @@ def production_parts():
 
     close = extract_body(basepop_cpp, "void BasePop::close()")
     close = re.sub(r"(?<![\w:])free\(", "tracked_free(", close)
+    default_window_setter = extract_body(
+        basepop_cpp,
+        "void BasePop::set_def_external_window(GraphicWin *external_window, int loc_x,\n"
+        "                                      int loc_y, int width, int height)",
+    )
     heap_reset = extract_body(heap_cpp, "void Heap::reset()")
     heap_destructor = extract_body(heap_cpp, "Heap::~Heap()")
     heap_init = extract_body(heap_cpp, "BOOL Heap::init(size_t req_size)")
@@ -157,6 +162,7 @@ def production_parts():
         "dialog_fields": dialog_fields,
         "text_block": text_block_match.group(0),
         "close": close,
+        "default_window_setter": default_window_setter,
         "heap_reset": heap_reset,
         "heap_destructor": heap_destructor,
         "heap_init": heap_init,
@@ -285,6 +291,7 @@ HEAP_INIT
 struct BasePop BASEPOP_BASE {
 public:
   BASEPOP_FIELDS
+  static void set_def_external_window(GraphicWin *, int, int, int, int);
   BasePop() : flat_button1_(1), flat_button2_(2) {
     unit_ids_.id = 0;
     item_ids_.id = 1;
@@ -301,14 +308,20 @@ static uint32_t BasePopDefaultField3104[3];
 static uint32_t BasePopDefaultField31A0[4];
 static uint32_t BasePopDefaultField21B0[4];
 static uint32_t BasePopDefaultField31B0[2];
-static uint32_t BasePopDefaultField2148[2];
+static Sprite *BasePopDefaultField2148[2];
 static uint32_t BasePopDefaultStringColors[4][4];
 static uint32_t BasePopDefaultButtonColors[4][3];
 static Font *BasePopDefaultStringFonts[4];
 static Font *BasePopDefaultButtonFonts[3];
 static Win *BasePopDefaultField322C;
-static uint32_t BasePopDefaultLayout[3];
+struct BasePopDefaultWindowLayout {
+  GraphicWin *external_window;
+  uint32_t loc_x;
+  uint32_t loc_y;
+};
+static BasePopDefaultWindowLayout BasePopDefaultLayout;
 static uint32_t BasePopDefaultDialogSize[2];
+BASEPOP_DEFAULT_WINDOW_SETTER
 #define tracked_free free
 BASEPOP_CLOSE
 #undef tracked_free
@@ -325,6 +338,7 @@ def projection(parts, close=None):
         "EDITGROUP_BASES": parts["controls"]["EditGroup"],
         "DIALOGS_BASES": parts["controls"]["Dialogs"],
         "BASEPOP_BASE": parts["basepop_inheritance"],
+        "BASEPOP_DEFAULT_WINDOW_SETTER": parts["default_window_setter"],
         "HEAP_FIELDS": parts["heap_fields"],
         "HEAP_DESTRUCTOR": parts["heap_destructor"],
         "HEAP_RESET": parts["heap_reset"],
@@ -345,6 +359,12 @@ def projection(parts, close=None):
 
 HOST_MAIN = r'''
 static void dummy_callback(BasePopTextBlock *, int) {}
+static GraphicWin external_window;
+static Sprite default_sprite_a, default_sprite_b;
+static Sprite block_sprites[27];
+static Font default_fonts[7];
+static Win default_parent;
+static StringStructEntry string_entries[4];
 static void initialize_defaults() {
   BasePopDefaultField3094 = dummy_callback;
   BasePopDefaultField30A4 = 0xA0B0C0D0u;
@@ -353,11 +373,11 @@ static void initialize_defaults() {
     BasePopDefaultBlock2F7C[i] = 0x22000000u + (uint32_t)i;
   }
   for (int i=0; i<27; ++i)
-    BasePopDefaultBlock31B8[i] = reinterpret_cast<Sprite *>(uintptr_t(0x1000+i));
+    BasePopDefaultBlock31B8[i] = &block_sprites[i];
   for (int i=0; i<4; ++i) {
     BasePopDefaultField21B0[i] = 0x2100u + (uint32_t)i;
     BasePopDefaultField31A0[i] = 0x3100u + (uint32_t)i;
-    BasePopDefaultStringFonts[i] = reinterpret_cast<Font *>(uintptr_t(0x2000+i));
+    BasePopDefaultStringFonts[i] = &default_fonts[i];
     for (int j=0; j<4; ++j)
       BasePopDefaultStringColors[i][j] = 0x4000u + (uint32_t)(i*16+j);
   }
@@ -368,19 +388,16 @@ static void initialize_defaults() {
   BasePopDefaultField3104[2] = 0x310402;
   BasePopDefaultField31B0[0] = 0x31B000;
   BasePopDefaultField31B0[1] = 0x31B001;
-  BasePopDefaultField2148[0] = 0x214800;
-  BasePopDefaultField2148[1] = 0x214801;
+  BasePopDefaultField2148[0] = &default_sprite_a;
+  BasePopDefaultField2148[1] = &default_sprite_b;
   for (int i=0; i<3; ++i)
-    BasePopDefaultButtonFonts[i] = reinterpret_cast<Font *>(uintptr_t(0x3000+i));
+    BasePopDefaultButtonFonts[i] = &default_fonts[4+i];
   for (int i=0; i<4; ++i)
     for (int j=0; j<3; ++j)
       BasePopDefaultButtonColors[i][j] = 0x5000u + (uint32_t)(i*16+j);
-  BasePopDefaultField322C = reinterpret_cast<Win *>(uintptr_t(0x4455));
-  BasePopDefaultLayout[0] = 1;
-  BasePopDefaultLayout[1] = 0x1234;
-  BasePopDefaultLayout[2] = 0x2000;
-  BasePopDefaultDialogSize[0] = 301;
-  BasePopDefaultDialogSize[1] = 101;
+  BasePopDefaultField322C = &default_parent;
+  BasePop::set_def_external_window(&external_window, 0x1234, 0x2000,
+                                  301, 101);
 }
 static FlatButton *new_item_button(FlatButton **slots, int index) {
   FlatButton *button = new FlatButton(index);
@@ -420,7 +437,7 @@ static void seed_first_close(BasePop &pop) {
   assert(pop.ok_text_ && pop.cancel_text_ && pop.owned_text_);
   pop.external_window_ = 0;
   pop.field_20F4_ = 1;
-  pop.caller_sprite_ = reinterpret_cast<Sprite *>(uintptr_t(0x7777));
+  pop.caller_sprite_ = &default_sprite_a;
   pop.selected_id_ = 88;
   pop.value_ = 99;
   pop.field_21C8_ = 44;
@@ -431,8 +448,8 @@ static void seed_first_close(BasePop &pop) {
   pop.dialogs_.Dialog::field_30_ = 0xBB;
   pop.loc_a_ = 0x1111;
   pop.loc_b_ = 0x2222;
-  pop.unit_ids_.head_ = reinterpret_cast<StringStructEntry *>(uintptr_t(0x11));
-  pop.item_ids_.head_ = reinterpret_cast<StringStructEntry *>(uintptr_t(0x22));
+  pop.unit_ids_.head_ = &string_entries[0];
+  pop.item_ids_.head_ = &string_entries[1];
   pop.unit_ids_.current_position_ = 8;
   pop.item_ids_.current_position_ = 9;
   pop.unit_ids_.remove_calls = pop.item_ids_.remove_calls = 0;
@@ -488,9 +505,10 @@ static void verify_first_close(BasePop &pop, const void *ok, const void *cancel,
   assert(pop.field_31AC_ == BasePopDefaultField31A0[3]);
   assert(pop.field_31B0_ == BasePopDefaultField31B0[0]);
   assert(pop.field_31B4_ == BasePopDefaultField31B0[1]);
-  assert(pop.field_2148_ == reinterpret_cast<Sprite *>(BasePopDefaultField2148[0]));
-  assert(pop.field_214C_ == reinterpret_cast<Sprite *>(BasePopDefaultField2148[1]));
+  assert(pop.field_2148_ == BasePopDefaultField2148[0]);
+  assert(pop.field_214C_ == BasePopDefaultField2148[1]);
   assert(pop.field_322C_ == BasePopDefaultField322C);
+  assert(pop.external_window_ == &external_window);
   assert(pop.default_loc_a_ == 0x1234 && pop.default_loc_b_ == 0x2000);
   assert(pop.dialog_width_ == 301 && pop.dialog_height_ == 101);
   assert(pop.dialogs_.Dialog::field_2C_ == 301);
@@ -526,21 +544,25 @@ int main() {
     assert(events[7].object == static_cast<GraphicWin *>(&pop));
     assert(events[8].object == &pop.sprite_);
     assert(pop.heap_.init(32) == 0); // live Heap member remains reusable after close
-    BasePopDefaultLayout[0] = 0;
-    BasePopDefaultLayout[1] = 0x2000;
-    BasePopDefaultLayout[2] = 0x2000;
+    BasePop::set_def_external_window(0, 0x2000, 0x2000, 401, 201);
+    BasePopDefaultField2148[0] = 0;
+    BasePopDefaultField2148[1] = &default_sprite_a;
     pop.dialogs_.Dialog::field_2C_ = 0xAAAA;
     pop.dialogs_.Dialog::field_30_ = 0xBBBB;
     pop.dialogs_.Dialog::field_20_ = 0xCCCC;
     pop.owned_text_ = static_cast<char *>(std::malloc(8));
     assert(pop.owned_text_ != 0);
-    pop.unit_ids_.head_ = reinterpret_cast<StringStructEntry *>(uintptr_t(0x33));
-    pop.item_ids_.head_ = reinterpret_cast<StringStructEntry *>(uintptr_t(0x44));
+    pop.unit_ids_.head_ = &string_entries[2];
+    pop.item_ids_.head_ = &string_entries[3];
     pop.unit_ids_.current_position_ = 4;
     pop.item_ids_.current_position_ = 5;
     pop.item_buttons_[7] = new_item_button(pop.item_buttons_, 7);
     const int event_start = event_count;
     pop.close();
+    assert(pop.external_window_ == 0);
+    assert(pop.default_loc_a_ == 0x2000 && pop.default_loc_b_ == 0x2000);
+    assert(pop.dialog_width_ == 401 && pop.dialog_height_ == 201);
+    assert(pop.field_214C_ == &default_sprite_a && pop.field_2148_ == 0);
     assert(pop.dialogs_.Dialog::field_2C_ == 0xAAAA);
     assert(pop.dialogs_.Dialog::field_30_ == 0xBBBB);
     assert(pop.dialogs_.Dialog::field_20_ == 0xCCCC);
@@ -561,8 +583,21 @@ int main() {
 def assert_source_contract(parts):
     body = parts["close"]
     assert "self +" not in body
-    assert "reinterpret_cast<GraphicWin *>(BasePopDefaultLayout[0])" in body
-    assert "reinterpret_cast<Sprite *>(BasePopDefaultField2148[" in body
+    assert "external_window_ = BasePopDefaultLayout.external_window;" in body
+    assert "default_loc_a_ = BasePopDefaultLayout.loc_x;" in body
+    assert "default_loc_b_ = BasePopDefaultLayout.loc_y;" in body
+    assert "field_214C_ = BasePopDefaultField2148[1];" in body
+    assert "field_2148_ = BasePopDefaultField2148[0];" in body
+    setter_order = (
+        "BasePopDefaultLayout.external_window = external_window;",
+        "BasePopDefaultLayout.loc_x = loc_x;",
+        "BasePopDefaultLayout.loc_y = loc_y;",
+        "BasePopDefaultDialogSize[0] = width;",
+        "BasePopDefaultDialogSize[1] = height;",
+    )
+    setter_positions = [parts["default_window_setter"].index(item)
+                        for item in setter_order]
+    assert setter_positions == sorted(setter_positions)
     assert "dialogs_.ListBox::close();" in body
     assert "dialogs_.CheckBox::close();" in body
     assert "dialogs_.RadioButton::close();" in body
@@ -588,7 +623,7 @@ def assert_source_contract(parts):
         "flat_button1_.close();", "if (unit_ids_.head_", "if (item_ids_.head_",
         "for (i = 0; i < 8", "field_21B8_ =", "field_30B0_ =",
         "field_3104_ =", "sprite_click_callback_ =", "button_color_a_ =",
-        "field_214C_ =", "external_window_ = reinterpret_cast<GraphicWin *>",
+        "field_214C_ =", "external_window_ = BasePopDefaultLayout.external_window;",
         "if (external_window_ != 0)", "dialogs_.Dialog::field_2C_ =",
         "if (external_window_ == 0)", "dialogs_.Dialog::field_30_ =",
         "dialogs_.Dialog::field_20_ |= 3;", "heap_.reset();",
@@ -623,6 +658,27 @@ def test_actual_body_declarations_order_and_lifetime_contract():
     assert "Heap heap_;" in parts["basepop_fields"]
     assert "Sprite sprite_;" in parts["basepop_fields"]
     assert "Heap::reset()" in parts["heap_reset"]
+
+
+def test_typed_default_constructor_copy_order_and_slot_identity():
+    header = (ROOT / "src/basepop.h").read_text(encoding="utf-8")
+    source = (ROOT / "src/basepop.cpp").read_text(encoding="utf-8")
+    constructor = extract_body(source, "BasePop::BasePop()")
+    assert "Sprite *BasePopDefaultField2148[2];" in source
+    assert "extern Sprite *BasePopDefaultField2148[2];" in header
+    assert "reinterpret_cast<Sprite *>(BasePopDefaultField2148" not in source
+    assert "BasePopDefaultWindowLayout BasePopDefaultLayout;" in source
+    assert "GraphicWin *external_window;" in source
+    assert "uint32_t loc_x;" in source and "uint32_t loc_y;" in source
+    expected = (
+        "field_214C_ = BasePopDefaultField2148[1];",
+        "field_2148_ = BasePopDefaultField2148[0];",
+        "external_window_ = BasePopDefaultLayout.external_window;",
+        "default_loc_a_ = BasePopDefaultLayout.loc_x;",
+        "default_loc_b_ = BasePopDefaultLayout.loc_y;",
+    )
+    positions = [constructor.index(item) for item in expected]
+    assert positions == sorted(positions)
 
 
 def test_host_projection_and_structural_damage_controls():

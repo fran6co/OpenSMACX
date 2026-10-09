@@ -1916,8 +1916,14 @@ BasePop *BasePopDrawnPopup;   // 0x009B8CF4
 // The defaults for external_window_ (the high-res-scaling opt-out set_width tests)
 // and default_loc_a_/default_loc_b_ (the starting loc_a_/loc_b_; 0x2000 keeps the
 // current value, so zero here means "location 0,0").
-// RECOVERY_OBJECT: v1 0x009B8D04 ?BasePopDefaultLayout@@3PAIA
-uint32_t BasePopDefaultLayout[3];  // 0x009B8D04
+// RECOVERY_OBJECT: v4 0x009B8D04 ?BasePopDefaultLayout@@3PAIA target ?BasePopDefaultLayout@@3UBasePopDefaultWindowLayout@@A
+struct BasePopDefaultWindowLayout {
+    GraphicWin *external_window;
+    uint32_t loc_x;
+    uint32_t loc_y;
+};
+
+BasePopDefaultWindowLayout BasePopDefaultLayout;  // 0x009B8D04
 
 // ORIGINAL: 0x006050F0 ?set_def_external_window@BasePop@@QAAXPAUGraphicWin@@HHHH@Z 0x006050F0-0x00605121 FILE BYTE_EXACT
 // symbol    ?set_def_external_window@BasePop@@SAXPAVGraphicWin@@HHHH@Z
@@ -1938,9 +1944,9 @@ uint32_t BasePopDefaultLayout[3];  // 0x009B8D04
 //         [esp+4]..[esp+0x14] and there is no sixth slot for a hidden `this`.
 void BasePop::set_def_external_window(GraphicWin *external_window, int loc_x,
                                       int loc_y, int width, int height) {
-    BasePopDefaultLayout[0] = reinterpret_cast<uint32_t>(external_window);
-    BasePopDefaultLayout[1] = loc_x;
-    BasePopDefaultLayout[2] = loc_y;
+    BasePopDefaultLayout.external_window = external_window;
+    BasePopDefaultLayout.loc_x = loc_x;
+    BasePopDefaultLayout.loc_y = loc_y;
     BasePopDefaultDialogSize[0] = width;
     BasePopDefaultDialogSize[1] = height;
 }
@@ -1960,8 +1966,8 @@ uint32_t BasePopDefaultField21B0[4];  // 0x009B8D88
 uint32_t BasePopDefaultField31B0[2];  // 0x009B8DB4
 
 // Copied to +0x2148/+0x214c.
-// RECOVERY_OBJECT: v1 0x009B8DBC ?BasePopDefaultField2148@@3PAIA
-uint32_t BasePopDefaultField2148[2];  // 0x009B8DBC
+// RECOVERY_OBJECT: v4 0x009B8DBC ?BasePopDefaultField2148@@3PAIA target ?BasePopDefaultField2148@@3PAPAVSprite@@A
+Sprite *BasePopDefaultField2148[2];  // 0x009B8DBC
 
 // Copied to +0x30a4. popups_normal seeds 0x1000080 here at run time.
 // RECOVERY_OBJECT: v1 0x009B8DCC ?BasePopDefaultField30A4@@3IA
@@ -2037,8 +2043,8 @@ BasePop::BasePop() {
     sprite_.close();
 
     caller_sprite_ = 0;
-    field_214C_ = reinterpret_cast<Sprite *>(BasePopDefaultField2148[1]);
-    field_2148_ = reinterpret_cast<Sprite *>(BasePopDefaultField2148[0]);
+    field_214C_ = BasePopDefaultField2148[1];
+    field_2148_ = BasePopDefaultField2148[0];
     field_30B0_ = 0;
     field_30B4_ = 0;
     field_30B8_ = 0;
@@ -2109,9 +2115,9 @@ BasePop::BasePop() {
     field_31B4_ = BasePopDefaultField31B0[1];
     field_322C_ = 0;
     field_322C_ = BasePopDefaultField322C;
-    external_window_ = reinterpret_cast<GraphicWin *>(BasePopDefaultLayout[0]);
-    default_loc_a_ = BasePopDefaultLayout[1];
-    default_loc_b_ = BasePopDefaultLayout[2];
+    external_window_ = BasePopDefaultLayout.external_window;
+    default_loc_a_ = BasePopDefaultLayout.loc_x;
+    default_loc_b_ = BasePopDefaultLayout.loc_y;
     dialog_width_ = BasePopDefaultDialogSize[0];
     dialog_height_ = BasePopDefaultDialogSize[1];
 
@@ -2317,14 +2323,14 @@ void BasePop::close() {
     field_31AC_ = BasePopDefaultField31A0[3];
     field_31B0_ = BasePopDefaultField31B0[0];
     field_31B4_ = BasePopDefaultField31B0[1];
-    field_214C_ = reinterpret_cast<Sprite *>(BasePopDefaultField2148[1]);
-    field_2148_ = reinterpret_cast<Sprite *>(BasePopDefaultField2148[0]);
+    field_214C_ = BasePopDefaultField2148[1];
+    field_2148_ = BasePopDefaultField2148[0];
     field_322C_ = BasePopDefaultField322C;
     field_31A0_ = (uint8_t)BasePopDefaultField31A0[0];
 
-    external_window_ = reinterpret_cast<GraphicWin *>(BasePopDefaultLayout[0]);
-    default_loc_a_ = BasePopDefaultLayout[1];
-    default_loc_b_ = BasePopDefaultLayout[2];
+    external_window_ = BasePopDefaultLayout.external_window;
+    default_loc_a_ = BasePopDefaultLayout.loc_x;
+    default_loc_b_ = BasePopDefaultLayout.loc_y;
     dialog_width_ = BasePopDefaultDialogSize[0];
     dialog_height_ = BasePopDefaultDialogSize[1];
 

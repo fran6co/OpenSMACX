@@ -267,9 +267,13 @@ def test_live_source_has_typed_dispatch_and_graphic_window_storage():
     assert "void set_external_window(GraphicWin *external_window" in header
     assert "static void set_def_external_window(GraphicWin *external_window" in header
     assert "external_window_ = external_window;" in source
-    assert "BasePopDefaultLayout[0] = reinterpret_cast<uint32_t>(external_window);" in source
+    assert "BasePopDefaultLayout.external_window = external_window;" in source
+    assert "BasePopDefaultLayout.loc_x = loc_x;" in source
+    assert "BasePopDefaultLayout.loc_y = loc_y;" in source
+    assert "BasePopDefaultDialogSize[0] = width;" in source
+    assert "BasePopDefaultDialogSize[1] = height;" in source
     assert "BasePop::set_def_external_window(this," in diplomatic_popup
-    assert "external_window_ = reinterpret_cast<GraphicWin *>(BasePopDefaultLayout[0]);" in source
+    assert "external_window_ = BasePopDefaultLayout.external_window;" in source
     assert "external_window_->release_modal();" in clicked
     assert "            release_modal();" in clicked
     assert "        hide();" in clicked
