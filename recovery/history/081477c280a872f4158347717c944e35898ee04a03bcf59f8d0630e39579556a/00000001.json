@@ -1,0 +1,22 @@
+{
+  "event_id": "2635c27806eacdeda6739f4ecb1e065ffda7e4805f595707163fecbaa04b166c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_socialwin_button_state_owner_oct9.py",
+      "recovery/tests/test_socialwin_handlers.py",
+      "recovery/tests/test_socialwin_typed_control_owner_oct9.py"
+    ],
+    "evidence": [
+      "Source/original evidence resolves category name LPSTR as Strings.put storage handles round-tripped through original Strings.get(int); preserve get validation with handle-to-int conversion, no direct dereference or global type change.",
+      "Fresh standalone VC6 both profiles verify PlayerData stride20CC members248/2D0, RulesSocialEffect68 set2+18, RulesSocialCategoryD4 name+14, MainInterface panel+D7C. Original accesses4B125F/156E,4B12AA/33DA,4B1491/3502,4AFCE2,4B329F independently target mapped owners."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "socialwin-rules-string-handles-proven-oct9",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:socialwin-typed-state-rules-oct9"
+}
