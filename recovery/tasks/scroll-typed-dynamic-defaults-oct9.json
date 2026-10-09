@@ -1,0 +1,48 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "de65782cb60c16d073abe2ffafb125918959c88c",
+  "editable_files": [
+    "src/scroll.h",
+    "src/scroll.cpp",
+    "src/popup.cpp",
+    "recovery/tests/test_scroll_default_and_icon_owner_closure_oct9.py"
+  ],
+  "evidence": [
+    "Pinned producer identity independently rechecked: popups_normal ORIGINAL0x00588460..0x005887F2 writes Scroll sprite defaults at0x00588754..0x005887CC and thickness at0x005887D6. popups_small0x00588800 has no such stores and is not an editing subject. scroll_normal588340 and scroll_small5883D0 also publish the same up/down/left/right triplets, then filler and thickness.",
+    "Scroll constructor6051D0 and close605370 consume flags/+0, position/+4, Sprite pointer triplets at+8/+14/+20/+2C, thumb at+3C, background at+40. on_redraw60676E..606797 passes background to Buffer::tile(Sprite*,...), confirming pointer use. +38 is untouched/unobserved, not an invented semantic field. The historical bounded object9B8DE0..9B8E24 is a proven accessed window/source obligation, not independent complete original allocation proof.",
+    "Recover a plain source-owned aggregate with genuine Sprite pointers; no dynamic initializer or byte/fixed-address proxy. Preserve flags and position bit patterns, store/copy order, the untouched word and externally mutable background pointer, original callbacks and unsafe behavior. Do not alter numeric static defaults, thickness ownership, unrelated Popup/Scroll functions or historical LEVER/TRIED comments.",
+    "Use the installed guarded object_writer only to migrate historical ?ScrollCloseDynamicDefaults@@3PAIA to the freshly native-observed current typed-root mangled symbol, retaining exact original span/evidence/interpretation. Coordinator performs compiler/Wine/Git. Worker must leave this historical marker unchanged until coordinator provides native symbol evidence; source type/producer/consumer draft and host controls may proceed in the authorized scope.",
+    "Coordinator authorizes justified temporary matching regressions only after independent pinned/source review, actual-source host controls, fresh native layout/pointer/root initializer and function measurements, all original claims/identities preserved, and full build/link. Preserve restoration obligations; no fabricated exact/full-game/native automatic acceptance or allocation-boundary claims."
+  ],
+  "intent": "Recover Scroll process defaults as a typed record across original-backed producers and consumers, eliminating integer-encoded sprite pointers while preserving pinned behavior and historical matching obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5800768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5800912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5801056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6312400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6312816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "scroll-typed-dynamic-defaults-oct9"
+}
