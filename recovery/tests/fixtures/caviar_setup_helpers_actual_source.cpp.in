@@ -38,7 +38,11 @@ struct CaviarOutputMessageWindowCandidate {
   uint32_t projection_words_[0x6b]; uint8_t gap_[0x24]; char message_[0x100];
 };
 CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};
-uintptr_t vox_setup_copy_[6] = {};
+struct CaviarDrawSetupPointerStorageCandidate {
+  void *depth_buffer_; void *colour_buffer_; void *shadow_buffer_;
+  uint32_t colour_row_step_; uint32_t depth_row_step_; uint32_t shadow_row_step_;
+};
+CaviarDrawSetupPointerStorageCandidate vox_setup_copy_ = {};
 int32_t vox_projection_octant_mask_ = 1;
 uint16_t **vox_active_ramp_a_ = 0;
 const int32_t *vox_active_ramp_b_ = 0;
@@ -135,10 +139,12 @@ static void reset_mode(int size, int odd) {
       : static_cast<void *>(palette16);
   vox_projection_selected_angle_=angle_rows;
   vox_active_size_code_=active_size;
-  vox_setup_copy_[0]=reinterpret_cast<uintptr_t>(descriptor_depth);
-  vox_setup_copy_[1]=reinterpret_cast<uintptr_t>(descriptor_colour);
-  vox_setup_copy_[2]=reinterpret_cast<uintptr_t>(descriptor_shadow);
-  vox_setup_copy_[3]=8; vox_setup_copy_[4]=8; vox_setup_copy_[5]=8;
+  vox_setup_copy_.depth_buffer_=descriptor_depth;
+  vox_setup_copy_.colour_buffer_=descriptor_colour;
+  vox_setup_copy_.shadow_buffer_=descriptor_shadow;
+  vox_setup_copy_.colour_row_step_=8;
+  vox_setup_copy_.depth_row_step_=8;
+  vox_setup_copy_.shadow_row_step_=8;
 }
 
 #ifdef TRACE_SETUP

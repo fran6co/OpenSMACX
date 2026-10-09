@@ -942,11 +942,21 @@ uint8_t CaviarVoxelAlgoFlag = 0;
 // draw is entered while it is set the image spins on `jmp $+0` forever.
 uint8_t vox_scene_busy = 0;
 
-// 0x009BE6A4..0x009BE6BB, six dwords copied out of the descriptor block at
-// the top of the draw. The image writes them in the order +0x18, +0x14, +0x10,
-// +0x04, +0x00, +0x08 - that is, back to front - and each slot's comment names
-// the source offset it takes.
-uint32_t vox_setup_copy_[6];  // [0]=0x009BE6A4, [5]=0x009BE6B8
+// The draw currently accesses this 24-byte x86 window at 0x009BE6A4. The
+// complete original allocation/aggregate ownership is not established here.
+struct CaviarDrawSetupPointerStorageCandidate {
+    void *depth_buffer_;
+    void *colour_buffer_;
+    void *shadow_buffer_;
+    uint32_t colour_row_step_;
+    uint32_t depth_row_step_;
+    uint32_t shadow_row_step_;
+};
+typedef char CaviarDrawSetupPointerStorageCandidate_x86_size[
+    sizeof(void *) != 4 || sizeof(CaviarDrawSetupPointerStorageCandidate) == 0x18
+        ? 1 : -1];
+// RECOVERY_OBJECT: v1 0x009BE6A4 ?vox_setup_copy_@?%src/caviar.cpp@@3UCaviarDrawSetupPointerStorageCandidate@1@A
+CaviarDrawSetupPointerStorageCandidate vox_setup_copy_;
 
 // 0x009BE6BC. The render record's colour table, copied to where the helpers
 // read it.
@@ -4327,7 +4337,7 @@ void __cdecl caviar_build_projection_tables() {
         unsigned int uVar1 = (unsigned int)piVar2->y_;
         int recA = piVar2->x_;
         CaviarOutputMessageWindow.projection_words_[outputIndex + 5] = (uint32_t)(((int)uVar1 >> 8) *
-            (int32_t)vox_setup_copy_[4] + (recA >> 8));
+            (int32_t)vox_setup_copy_.depth_row_step_ + (recA >> 8));
         CaviarOutputMessageWindow.projection_words_[outputIndex] =
             (uint32_t)recA * 0x01000000u + (uVar1 & 0xffu);
         CaviarOutputMessageWindow.projection_words_[outputIndex + 6] =
@@ -4888,18 +4898,15 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
             record->setup_block_->colour_buffer_)) -
         static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
             record->setup_block_->depth_buffer_));
-    vox_setup_copy_[3] = static_cast<uint32_t>(
+    vox_setup_copy_.colour_row_step_ = static_cast<uint32_t>(
         record->setup_block_->colour_row_step_);
-    vox_setup_copy_[4] = static_cast<uint32_t>(
+    vox_setup_copy_.depth_row_step_ = static_cast<uint32_t>(
         record->setup_block_->depth_row_step_);
-    vox_setup_copy_[5] = static_cast<uint32_t>(
+    vox_setup_copy_.shadow_row_step_ = static_cast<uint32_t>(
         record->setup_block_->shadow_row_step_);
-    vox_setup_copy_[1] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
-        record->setup_block_->colour_buffer_));
-    vox_setup_copy_[0] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
-        record->setup_block_->depth_buffer_));
-    vox_setup_copy_[2] = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(
-        record->setup_block_->shadow_buffer_));
+    vox_setup_copy_.colour_buffer_ = record->setup_block_->colour_buffer_;
+    vox_setup_copy_.depth_buffer_ = record->setup_block_->depth_buffer_;
+    vox_setup_copy_.shadow_buffer_ = record->setup_block_->shadow_buffer_;
 
     // The record's own setup hook, called once before the walk.
     if (VoxRenderRecord::SetupCallback callback = record->setup_callback_) {

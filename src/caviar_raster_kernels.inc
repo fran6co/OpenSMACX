@@ -213,7 +213,7 @@ static void caviar_kernel_draw_pixel(CaviarRasterKernelViewCandidate *view,
         // The angle-table branch uses native IMUL y,[setup+0x10] followed by
         // x; the count branch uses the patched ramp-B row-offset lookup.
         destination_offset_bits =
-            static_cast<uint32_t>(screen_y) * vox_setup_copy_[4] +
+            static_cast<uint32_t>(screen_y) * vox_setup_copy_.depth_row_step_ +
             static_cast<uint32_t>(screen_x);
     } else {
         destination_offset_bits =
@@ -577,13 +577,13 @@ static CaviarPreparedKernelBindingsCandidate caviar_prepared_kernel_bindings_can
 
 static void caviar_part_output_bases_candidate(
     int pixel_size, uint8_t *colour_base[4], uint16_t *depth_base[4]) {
-    uint8_t *const colour = reinterpret_cast<uint8_t *>(static_cast<uintptr_t>(vox_setup_copy_[1]));
-    uint16_t *const depth = reinterpret_cast<uint16_t *>(static_cast<uintptr_t>(vox_setup_copy_[0]));
+    uint8_t *const colour = static_cast<uint8_t *>(vox_setup_copy_.colour_buffer_);
+    uint16_t *const depth = static_cast<uint16_t *>(vox_setup_copy_.depth_buffer_);
     // The setup records row width in pixels; size-2 kernels use SHL-by-one
     // before patching color row addresses, while size-1 uses it unchanged.
     const uint32_t colour_pitch =
-        vox_setup_copy_[3] * static_cast<uint32_t>(pixel_size);
-    const uint32_t depth_pitch = vox_setup_copy_[4];
+        vox_setup_copy_.colour_row_step_ * static_cast<uint32_t>(pixel_size);
+    const uint32_t depth_pitch = vox_setup_copy_.depth_row_step_;
     colour_base[0] = colour;
     colour_base[1] = colour + pixel_size;
     colour_base[2] = colour + colour_pitch;
@@ -595,8 +595,8 @@ static void caviar_part_output_bases_candidate(
 }
 
 static void caviar_shadow_output_bases_candidate(uint8_t *shadow_base[4]) {
-    uint8_t *const shadow = reinterpret_cast<uint8_t *>(static_cast<uintptr_t>(vox_setup_copy_[2]));
-    const uint32_t pitch = vox_setup_copy_[5];
+    uint8_t *const shadow = static_cast<uint8_t *>(vox_setup_copy_.shadow_buffer_);
+    const uint32_t pitch = vox_setup_copy_.shadow_row_step_;
     shadow_base[0] = shadow;
     shadow_base[1] = shadow + 1;
     shadow_base[2] = shadow + pitch;

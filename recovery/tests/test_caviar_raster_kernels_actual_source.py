@@ -50,7 +50,11 @@ union CaviarKernelProjectionWindowCandidate {
 struct CaviarOutputMessageWindowCandidate { uint32_t projection_words_[0x6b]; uint8_t gap_[0x24]; char message_[0x100]; };
 CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {};
 CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};
-uint32_t vox_setup_copy_[6] = {};
+struct CaviarDrawSetupPointerStorageCandidate {
+  void *depth_buffer_; void *colour_buffer_; void *shadow_buffer_;
+  uint32_t colour_row_step_; uint32_t depth_row_step_; uint32_t shadow_row_step_;
+};
+CaviarDrawSetupPointerStorageCandidate vox_setup_copy_ = {};
 int32_t vox_projection_octant_mask_ = 1;
 
 /* CURRENT KERNEL VIEW DECLARATIONS */
@@ -313,6 +317,11 @@ def assembled(kernels: str, product: str) -> str:
                      "CaviarPreparedKernelBindingsCandidate"))
     preamble = PREAMBLE.replace("/* CURRENT KERNEL VIEW DECLARATIONS */",
                                 view_declarations)
+    preamble = preamble.replace(
+        "struct CaviarDrawSetupPointerStorageCandidate {\n  void *depth_buffer_; void *colour_buffer_; void *shadow_buffer_;\n  uint32_t colour_row_step_; uint32_t depth_row_step_; uint32_t shadow_row_step_;\n};\nCaviarDrawSetupPointerStorageCandidate vox_setup_copy_ = {};",
+        extract_definition(product, "struct CaviarDrawSetupPointerStorageCandidate") + ";" +
+        "\nCaviarDrawSetupPointerStorageCandidate vox_setup_copy_ = {};",
+    )
     return preamble + "\n".join(defs) + main
 
 

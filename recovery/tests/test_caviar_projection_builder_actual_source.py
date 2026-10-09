@@ -63,7 +63,7 @@ int main() {
     CaviarFixedPointProjection.dword_0C_ = 17;
     CaviarFixedPointProjection.dword_10_ = 19;
     CaviarFixedPointProjection.dword_14_ = 23;
-    vox_setup_copy_[4] = 29;
+    vox_setup_copy_.depth_row_step_ = 29;
     for (int i = 0; i < 0x6B; ++i) {
         CaviarOutputMessageWindow.projection_words_[i] = 0xfeedfaceu;
     }
@@ -127,7 +127,8 @@ def compile_and_run(compiler, body, expected_success):
             "CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {};\n" +
             "CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};\n" +
             "CaviarFixedPointProjectionMatrix CaviarFixedPointProjection = {};\n" +
-            "uint32_t vox_setup_copy_[6] = {};\n")
+            "struct CaviarDrawSetupPointerStorageCandidate { void *depth_buffer_; void *colour_buffer_; void *shadow_buffer_; uint32_t colour_row_step_; uint32_t depth_row_step_; uint32_t shadow_row_step_; };\n"
+            "CaviarDrawSetupPointerStorageCandidate vox_setup_copy_ = {};\n")
         source.write_text(fixture + "\n" + body + MAIN)
         subprocess.run(
             [compiler, "-std=c++98", "-Wall", "-Wextra", "-pedantic",
