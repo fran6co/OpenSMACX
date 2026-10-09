@@ -57,6 +57,7 @@ def actual():
          ('basebutton', 'flatbutton', 'imagebutton', 'gamma')}
     parts = {}
     declarations = [
+        one(h['win'], r'typedef void \(__cdecl \*WinNotificationCallback\)\(int selected_id\);'),
         'struct Win { virtual ~Win() {}', one(h['win'], r'virtual void show\(int visible\);'), '};',
         'struct Buffer {',
         '\n'.join(one(h['buffer'], rf'(?:int|void) {name}\([^;]+;') for name in
@@ -149,6 +150,7 @@ struct Time {int id;Time():id(++next_time){}void close();
 DECLARATIONS
 OWNERS
 uint32_t *const BaseButtonDefaultTextColors=DialogDefaults+5;
+void __cdecl close_callback_probe(int) {}
 Sprite flat_default_sprites[81];
 Sprite push_default_sprites[36], push_seed_sprites[18];
 Sprite *flat_defaults[27];Sprite **const FlatButtonDefaultsTable=flat_defaults;
@@ -208,7 +210,8 @@ void begin(BaseButton&b){
 void end(){observing=false;hook=nullptr;}
 void poison(BaseButton&b){
     b.field_A14_=51;b.field_A18_=52;b.field_A74_=53;b.field_A78_=54;b.field_A9C_=55;
-    b.field_A44_=56;b.field_A48_=57;b.field_AAC_=58;b.field_AB0_=59;b.field_AB4_=60;
+    b.field_A44_=56;b.field_A48_=57;b.field_AAC_=58;
+    b.field_AB0_=close_callback_probe;b.field_AB4_=close_callback_probe;
     b.field_A94_=61;b.color_=62;b.bevel_upper_=63;b.bevel_lower_=64;b.bevel_thickness_=65;
     b.field_A98_=66;b.field_AA4_=67;b.field_AA0_=68;b.group_=&group;
 }

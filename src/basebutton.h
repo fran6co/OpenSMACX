@@ -166,8 +166,12 @@ class BaseButton : public GraphicWin {
   uint32_t field_AA4_;
   ButtonGroup *group_;
   uint32_t field_AAC_;
-  uint32_t field_AB0_;
-  uint32_t field_AB4_;
+  // Native on_left_click/on_left_down null-test and indirect-call these slots
+  // with one caller-cleaned selected-ID dword. The current callback view is
+  // Win's existing one-ID notification ABI; the original callback installers
+  // and targets' declared return type remain unknown (EAX is ignored).
+  WinNotificationCallback field_AB0_;
+  WinNotificationCallback field_AB4_;
 };
 
 static_assert(sizeof(BaseButton) == 0xAB8,

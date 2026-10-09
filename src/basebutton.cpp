@@ -774,7 +774,7 @@ void BaseButton::on_left_down(int, int) {
         }
     }
     if (field_AB4_ != 0) {
-        reinterpret_cast<void (__cdecl *)(int)>(field_AB4_)(field_A78_);
+        field_AB4_(static_cast<int>(field_A78_));
     }
 }
 
@@ -853,7 +853,7 @@ void BaseButton::on_left_click(int, int) {
         }
     }
     if (field_AB0_ != 0) {
-        reinterpret_cast<void (__cdecl *)(int)>(field_AB0_)(field_A78_);
+        field_AB0_(static_cast<int>(field_A78_));
     }
 }
 
