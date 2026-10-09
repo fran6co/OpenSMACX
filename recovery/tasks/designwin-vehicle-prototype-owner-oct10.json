@@ -1,0 +1,32 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "4dde01180727839640ba66de1d1a3909a00bb6d9",
+  "editable_files": [
+    "src/designwin.cpp",
+    "recovery/tests/test_designwin_vehicle_prototype_owner_actual_source_oct10.py"
+  ],
+  "evidence": [
+    "Existing Vehs starts00952828, sizeof/stride Veh=34hex, signed16 proto_id member at+0A. Raw ProtoAbilityIdBase00952832 equals Vehs[0].proto_id; path.cpp independently records address equation and Console::designate already uses Vehs[veh_id].proto_id. Pinned43DBF9,43E092,43E19A,43E1C1 use MOVSX WORD at00952832 plus scaled34hex vehicle index. Current draw_stack43D510 and draw_flash43DD50 contain allthree raw alias source reads; replace with Vehs[unit_id].proto_id or Vehs[shown].proto_id using existing source owner/field.",
+    "Remove obsolete sole ProtoAbilityIdBase after complete actual reference search. Use existing Veh declarations/storage, no new globals/helpers/wrappers/vtable/address pointers or arbitrary bounds. Preserve exact evaluation/read count, signed16 promotion/index types, calls and original unchecked negative/invalid index behavior. No validation/clamping, no array allocation/lifetime claim beyond existing source interpretations.",
+    "Both complete mapped bodies and all ordinary/generated spans/claims/lessons/roles remain intact. Locals currently called ability_id actually hold a vehicle prototype index; rename to prototype_id within authorized draw_flash body where supported, but do not edit unrelated other methods/PlayerFlagBlocks. Adjacent PlayerFlagBlocks byte-field evidence does not establish its larger table traversal and is explicitly out of scope.",
+    "Versioned owner decision is source-equivalence proof from base+offset+stride+signed access and original consumer, not original source class/TU naming proof. Source essential rationale may clarify member correspondence; no run reports, proprietary machine-code/data copies, hand ORIGINAL/claim edits, baseline reset or claim demotion.",
+    "Actual-source host controls should extract the real three member-read/call-site statements from both bodies, use existing Veh declaration/layout where host-compatible, and exercise distinct vehicle rows/signed proto_id promotion and downstream prototype selection/say_stats_3 observations. Successful compilation is required before mutant behavior rejection; tests must state that bounded read/consumer controls do not prove full rendering/runtime or invalid-index safety. Verify complete C++ diff is only supported field reads/local names and dead alias removal.",
+    "Only declared two files. Worker no Git/native/Wine/delegation; coordinator owns baseline/current full DesignWin TU comparisons, actual field layout/signed operand proof, original source continuity/claims/references, independent review, combined master compile/link and manual integration. Preserve all historical restoration obligations through justified matching regression. No new claims, behavior fixes, fabricated automatic/game acceptance or scope expansion."
+  ],
+  "intent": "Replace DesignWin's fixed-executable prototype-ID alias with the genuine existing Veh member in both complete render owners.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4445456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4447568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "designwin-vehicle-prototype-owner-oct10"
+}
