@@ -111,6 +111,38 @@ def owner_object(value=None, *, damage=None, duplicate_symbol=False, nested=Fals
     return obj, path
 
 
+def indexed_owner_object(value=None, *, array_size=88, element_type=0x1002,
+                         subscript_type=0x75,
+                         entry_forward=False, pointer_leaf=False):
+    """Parent->entries[2]->words[10] CodeView fixture with explicit extents."""
+    word_array = record(0x1003, struct.pack("<IIH", 0x74, subscript_type, 40) + b"\x06words_")
+    entry_fields = record(0x1203, struct.pack("<HHIH", 0x1405, 0, 0x1000, 4) + b"\x06words_")
+    entry = record(0x1005, struct.pack("<HHIIIH", 1, 0, 0x1001, 0, 0, 44) + b"\x05Entry")
+    if entry_forward:
+        entry = record(0x1005, struct.pack("<HHIIIH", 0, 0x80, 0, 0, 0, 0) + b"\x05Entry")
+    entries = record(0x1003, struct.pack("<IIH", element_type, subscript_type, array_size) + b"\x07entries")
+    parent_fields = record(0x1203, struct.pack("<HHIH", 0x1405, 0, 0x1003, 8) + b"\x07entries")
+    parent = record(0x1005, struct.pack("<HHIIIH", 1, 0, 0x1004, 0, 0, 100) + b"\x06Parent")
+    types = word_array + entry_fields + entry + entries + parent_fields + parent
+    if pointer_leaf:
+        # Add a regular pointer and a far32 pointer as direct parent fields.
+        ptr = record(0x1002, struct.pack("<II", 0x1002, 0xA))
+        far_ptr = record(0x1002, struct.pack("<II", 0x1002, 0x4A))
+        fields = record(0x1203,
+                        struct.pack("<HHIH", 0x1405, 0, 0x1000, 0) + b"\x07pointer" +
+                        struct.pack("<HHIH", 0x1405, 0, 0x1001, 4) + b"\x0bfar_pointer")
+        parent = record(0x1005, struct.pack("<HHIIIH", 2, 0, 0x1002, 0, 0, 12) + b"\x06Parent")
+        types = ptr + far_ptr + fields + parent
+        parent_index = 0x1003
+        value = bytes(12)
+    else:
+        parent_index = 0x1005
+        value = bytes(100) if value is None else value
+    obj = Coff(__import__("test_object_data").data_fixture(value, type_index=parent_index, types=types))
+    obj.symbols[0] = replace(obj.symbols[0], name=PARENT)
+    return obj
+
+
 def image_for(value, *, absolute=None):
     raw = data_image(value, absolute=absolute)
     pin = hashlib.sha256(raw).hexdigest()
@@ -256,6 +288,77 @@ def test_nested_path_and_bad_path_are_resolved_or_refused_strictly():
         member_data_layout(obj, PARENT, ("inner", "missing"))
     with pytest.raises(ValueError):
         member_data_layout(obj, PARENT, ("inner", "value", "extra"))
+
+
+def test_fixed_array_indices_use_codeview_stride_and_resolve_exact_member_address():
+    path = ("entries[1]", "words_[7]")
+    selected = struct.pack("<I", 0x11223344)
+    original = bytearray(b"\xA5" * 100)
+    original[84:88] = selected
+    obj = indexed_owner_object(bytes(original))
+    layout = member_data_layout(obj, PARENT, path)
+    assert (layout["member_offset"], layout["size"], layout["offset"]) == (84, 4, 84)
+    item = bound_object(0x401054, size=4, path=path)
+    targets, reports = object_targets((item,), {UNIT: obj})
+    assert targets[PARENT] == 0x401000
+    assert reports[0]["definition"] == "pass"
+    assert reports[0]["member_path"] == "entries[1].words_[7]"
+    image, pin = image_for(bytes(original))
+    item = replace(item, origin=Origin(pin, "pe:va", 0x401054),
+                   span=Span(0x401054, 0x401058), evidence=Origin(pin, "pe:va", 0x401054))
+    row, = check_initial_data((item,), {UNIT: obj}, image, {PARENT: 0x401000})
+    assert row["definition"] == "pass" and row["content"] == "pass"
+
+
+@pytest.mark.parametrize("path", [
+    ("entries[2]",),                 # beyond the fresh array count
+    ("entries[1]", "words_[10]"),   # byte extent yields ten elements
+])
+def test_fixed_array_indices_outside_declared_element_count_are_refused(path):
+    with pytest.raises(ValueError, match="outside CodeView array extent"):
+        member_data_layout(indexed_owner_object(), PARENT, path)
+
+
+def test_indexed_array_refuses_invalid_extent_pointer_far_pointer_and_forward_element():
+    with pytest.raises(ValueError, match="array storage extent"):
+        member_data_layout(indexed_owner_object(array_size=87), PARENT, ("entries[0]",))
+    for name in ("pointer_", "far_pointer_"):
+        with pytest.raises(ValueError):
+            member_data_layout(indexed_owner_object(pointer_leaf=True), PARENT, (name + "[0]",))
+    with pytest.raises(ValueError):
+        member_data_layout(indexed_owner_object(entry_forward=True), PARENT, ("entries[0]",))
+
+
+@pytest.mark.parametrize("subscript_type", [0x40, 0x403])
+def test_indexed_array_rejects_nonintegral_or_pointer_subscript_metadata(subscript_type):
+    with pytest.raises(ValueError, match="subscript type is not integral"):
+        member_data_layout(indexed_owner_object(subscript_type=subscript_type), PARENT,
+                           ("entries[0]",))
+
+
+@pytest.mark.parametrize("path", [
+    ("entries[-1]",), ("entries[+1]",), ("entries[01]",),
+    ("entries[]",), ("entries[ 1]",), ("entries[1]suffix",),
+])
+def test_member_binding_rejects_malformed_negative_or_noncanonical_fixed_indices(path):
+    origin = Origin(PIN, "pe:va", 0x401000)
+    with pytest.raises(ValueError, match="canonical fixed indices"):
+        ObjectBinding(origin, "old", UNIT, 1, parent_symbol=PARENT, member_path=path)
+
+
+def test_array_index_path_annotation_and_writer_round_trip_without_normalization():
+    origin = Origin(PIN, "pe:va", 0x401054)
+    item = ObjectBinding(origin, "old_word", UNIT, 1, parent_symbol=PARENT,
+                         member_path=("entries[1]", "words_[7]"))
+    raw = b"int owner;\n"
+    updated = write_object_bytes(raw, expected=(), additions=(item,), path=UNIT,
+                                 pin=PIN, address_space="pe:va")
+    assert b"member _parent entries[1].words_[7]" in updated
+    parsed, = parse_objects(updated.decode(), UNIT, PIN, address_space="pe:va")
+    assert parsed.member_path == item.member_path
+    with pytest.raises(ValueError):
+        parse_objects("// RECOVERY_OBJECT: v3 0x401000 old member _parent entries[01]\n",
+                      UNIT, PIN, address_space="pe:va")
 
 
 def test_relocation_intersecting_member_is_rebased_and_edge_crossing_is_rejected():

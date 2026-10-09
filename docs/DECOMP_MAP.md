@@ -131,9 +131,14 @@ parent object. The unbounded and bounded forms are:
 The old symbol, original start, optional exclusive end and evidence anchor retain
 their historical identity and obligations. `parent-symbol` names the current
 compiled COFF data definition; the dotted path names direct embedded CodeView
-members. It does not follow pointers or inherited bases. Each fresh owner object
-must provide one unambiguous standalone CodeView definition and every path step's
-extent must fit its containing UDT. Several old members may share one parent only
+members. A segment may select a fixed array element with canonical decimal
+`[index]` syntax, for example `entries[0].words[7]`; the index is checked against
+the fresh `LF_ARRAY_ST` byte extent, element type and supported integral/enum
+subscript type in that owner object. Leading zeroes (except `[0]`), signs and
+whitespace are not accepted. It does not follow
+pointers or inherited bases. Each fresh owner object must provide one unambiguous
+standalone CodeView definition and every selected member or array-element extent
+must fit its containing UDT. Several old members may share one parent only
 in the same source unit and only when fresh layout plus original addresses imply
 one consistent parent base. A historical object symbol cannot also name a current
 member owner; that collision would redirect old relocations. Unsupported, missing

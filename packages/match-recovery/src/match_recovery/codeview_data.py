@@ -7,6 +7,7 @@ This observes compiler storage extent, not original extent or C++ lifetime.
 """
 
 from .codeview import Cursor, _fields, _type_records, _unqualified_type
+from .object_source import _MEMBER_SEGMENT
 
 
 def _class_record(leaf, record):
@@ -195,15 +196,72 @@ def _complete_udt(index, records, seen=frozenset()):
     return index, size, members, member_types
 
 
+def _integral_array_subscript(index, records, seen=frozenset()):
+    """Accept only supported integer primitives or enums as array indices."""
+    index = _unqualified_type(index, records)
+    if index is None or index in seen:
+        return False
+    if 0 < index < 0x1000:
+        return (index >> 8) == 0 and (index & 0xFF) in {
+            0x08, 0x10, 0x11, 0x12, 0x13,
+            0x20, 0x21, 0x22, 0x23,
+            0x30, 0x31, 0x32, 0x33,
+            0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
+        }
+    if not 0 <= index - 0x1000 < len(records):
+        return False
+    leaf, record = records[index - 0x1000]
+    if leaf != 0x1007:
+        return False
+    cursor = Cursor(record.data[2:])
+    try:
+        cursor.take(4)  # enum count and properties
+        underlying, _field = cursor.number("<I"), cursor.number("<I")
+        cursor.name()
+        cursor.padding()
+        if cursor.at != len(cursor.data):
+            return False
+        storage_size(index, records, seen)
+        return _integral_array_subscript(underlying, records, seen | {index})
+    except ValueError:
+        return False
+
+
+def _array_element_layout(index, records):
+    """Return the element shape of one complete LF_ARRAY_ST type."""
+    index = _unqualified_type(index, records)
+    if index is None or not 0 <= index - 0x1000 < len(records):
+        raise ValueError("fixed member index requires a complete CodeView array")
+    leaf, record = records[index - 0x1000]
+    if leaf != 0x1003:
+        raise ValueError("fixed member index crosses a non-array value")
+    cursor = Cursor(record.data[2:])
+    element, subscript = cursor.number("<I"), cursor.number("<I")
+    size, _name = cursor.numeric(), cursor.name()
+    cursor.padding()
+    if cursor.at != len(cursor.data) or not subscript:
+        raise ValueError("invalid CodeView array storage record")
+    element_size = storage_size(element, records, frozenset({index}))
+    # The declared byte extent, rather than source spelling or an inferred
+    # element count, establishes both the stride and available fixed indices.
+    storage_size(subscript, records)
+    if not _integral_array_subscript(subscript, records):
+        raise ValueError("CodeView array subscript type is not integral")
+    if size <= 0 or element_size <= 0 or size % element_size:
+        raise ValueError("invalid CodeView array storage extent")
+    return element, size, element_size, size // element_size
+
+
 def member_data_layout(obj, parent_symbol, member_path):
-    """Resolve one named, embedded member path from the parent's CodeView UDT.
+    """Resolve named members and fixed array elements in the parent's CodeView UDT.
 
     The emitted parent remains a real COFF data definition. Offsets and extents
     come only from its directly bound standalone CodeView records.
     """
     if (not isinstance(member_path, tuple) or not member_path
-            or any(not isinstance(part, str) or not part for part in member_path)):
-        raise ValueError("member path must be a nonempty tuple of names")
+            or any(not isinstance(part, str) or not _MEMBER_SEGMENT.fullmatch(part)
+                   for part in member_path)):
+        raise ValueError("member path must contain names and canonical fixed indices")
     parent = data_layout(obj, parent_symbol)
     records = _type_records(obj)
     current_type = parent["type_index"]
@@ -211,28 +269,44 @@ def member_data_layout(obj, parent_symbol, member_path):
     path_rows = []
     visited_udts = set()
     for part in member_path:
+        match = _MEMBER_SEGMENT.fullmatch(part)
+        assert match is not None
+        name, raw_index = match.groups()
         owner_type, owner_size, members, member_types = _complete_udt(current_type, records)
         if owner_type in visited_udts:
             raise ValueError("cyclic embedded CodeView member path")
         visited_udts.add(owner_type)
-        if part not in members or part not in member_types:
+        if name not in members or name not in member_types:
             raise ValueError("named CodeView member is missing or ambiguous")
-        member_offset = members[part]
-        member_type = member_types[part]
+        member_offset = members[name]
+        member_type = member_types[name]
         extent = storage_size(member_type, records)
         normalized_member = _unqualified_type(member_type, records)
         if normalized_member in visited_udts:
             raise ValueError("cyclic embedded CodeView member type")
         if extent <= 0 or member_offset < 0 or member_offset + extent > owner_size:
             raise ValueError("CodeView member lies outside its owning UDT")
-        relative += member_offset
-        path_rows.append({"name": part, "offset": member_offset, "size": extent,
-                          "type_index": member_type})
-        current_type = member_type
-    if relative + path_rows[-1]["size"] > parent["size"]:
+        selected_type, selected_size, selected_offset = member_type, extent, member_offset
+        if raw_index is not None:
+            element_type, array_size, element_size, element_count = _array_element_layout(
+                member_type, records)
+            element_index = int(raw_index, 10)
+            if element_index >= element_count:
+                raise ValueError("fixed member index lies outside CodeView array extent")
+            selected_type, selected_size = element_type, element_size
+            selected_offset += element_index * element_size
+            path_rows.append({"name": name, "offset": member_offset, "size": extent,
+                              "type_index": member_type, "index": element_index,
+                              "array_size": array_size, "element_size": element_size})
+        else:
+            path_rows.append({"name": name, "offset": member_offset, "size": extent,
+                              "type_index": member_type})
+        relative += selected_offset
+        current_type = selected_type
+    if relative + selected_size > parent["size"]:
         raise ValueError("resolved member path lies outside parent storage")
     return {"symbol": parent_symbol, "source_name": parent["source_name"],
             "section": parent["section"], "symbol_offset": parent["offset"],
-            "size": path_rows[-1]["size"], "type_index": path_rows[-1]["type_index"],
+            "size": selected_size, "type_index": current_type,
             "offset": parent["offset"] + relative, "member_offset": relative,
             "parent_size": parent["size"], "member_path": path_rows}

@@ -14,6 +14,7 @@ from typing import Mapping, Sequence
 
 from match_recovery.model import Span
 from match_recovery.object_source import (ObjectBinding, parse_objects,
+                                          valid_member_path,
                                           validate_object_symbol_ownership)
 from match_recovery.source.reader import _block_state_after
 from match_recovery.source.writer import _SYMBOL_SOURCE_TOKENS
@@ -31,9 +32,8 @@ def _record(binding: ObjectBinding, *, path: str, pin: str,
     _symbol_token(binding.symbol)
     if binding.parent_symbol is not None:
         _symbol_token(binding.parent_symbol)
-        if not binding.member_path or any(not re.fullmatch(r"[A-Za-z_][A-Za-z_0-9]*", part)
-                                          for part in binding.member_path):
-            raise ValueError("object member path must contain identifier names")
+        if not valid_member_path(binding.member_path):
+            raise ValueError("object member path must contain names and canonical fixed indices")
     if binding.unit != path:
         raise ValueError("object binding belongs to another source unit")
     if (binding.origin.image_sha256, binding.origin.address_space) != (pin, address_space):

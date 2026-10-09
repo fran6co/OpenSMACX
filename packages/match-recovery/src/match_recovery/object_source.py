@@ -19,7 +19,14 @@ PATTERN = re.compile(r"// RECOVERY_OBJECT: v1 (0x[0-9A-Fa-f]+) (\S+)\s*")
 BOUNDED = re.compile(r"// RECOVERY_OBJECT: v2 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+)\s*")
 MEMBER_UNBOUNDED = re.compile(r"// RECOVERY_OBJECT: v3 (0x[0-9A-Fa-f]+) (\S+) member (\S+) (\S+)\s*")
 MEMBER_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v3 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+) member (\S+) (\S+)\s*")
-_NAME = re.compile(r"[A-Za-z_][A-Za-z_0-9]*\Z")
+_MEMBER_SEGMENT = re.compile(r"([A-Za-z_][A-Za-z_0-9]*)(?:\[(0|[1-9][0-9]*)\])?\Z")
+
+
+def valid_member_path(member_path) -> bool:
+    """Accept direct member names and canonical, fixed nonnegative indices."""
+    return (isinstance(member_path, tuple) and bool(member_path)
+            and all(isinstance(part, str) and _MEMBER_SEGMENT.fullmatch(part)
+                    for part in member_path))
 
 
 @dataclass(frozen=True)
@@ -44,8 +51,8 @@ class ObjectBinding:
             raise ValueError("member-backed object requires both parent symbol and member path")
         if self.parent_symbol is not None:
             require_text(self.parent_symbol, "parent object symbol")
-            if any(not isinstance(part, str) or not _NAME.fullmatch(part) for part in self.member_path):
-                raise ValueError("object member path must contain identifier names")
+            if not valid_member_path(self.member_path):
+                raise ValueError("object member path must contain names and canonical fixed indices")
         if self.span is not None:
             if self.span.start != self.origin.address:
                 raise ValueError("object extent must begin at its original identity")
