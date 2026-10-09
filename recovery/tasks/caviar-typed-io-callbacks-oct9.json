@@ -1,0 +1,645 @@
+{
+  "schema_version": 1,
+  "task_id": "caviar-typed-io-callbacks-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover the six voxel IO callback contracts, installer and producer/consumer closure as genuine typed C++.",
+  "base_revision": "ea9743cffa3eab07bdc3b3fd4bbebc2b14bb8f57",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4546816
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6525824
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6384576
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6384736
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6384416
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6385056
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390432
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390704
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390720
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6387392
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6387408
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390352
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390368
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390384
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390416
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390688
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390400
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390560
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390592
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6385696
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6391200
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6393360
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6393376
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6393392
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6393424
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6393456
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6393488
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6384768
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6384960
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6525424
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6547552
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6525664
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532960
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6525888
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6525840
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532448
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6551984
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6521904
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6522320
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6522448
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6522400
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6522576
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6522656
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6524096
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6524384
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6533234
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6387312
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6387232
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6388000
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6387424
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6387712
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6388384
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6388784
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6389168
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6389536
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6389888
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390896
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6386080
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6526512
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6393120
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6526624
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6529664
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6456032
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6551008
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6552736
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6553088
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6553568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6554864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6713296
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532832
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532864
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532896
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6532928
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6711689
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6710159
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6702843
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6704465
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6717545
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6716015
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6708129
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6706507
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6713192
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6703088
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6701056
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6706752
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6704720
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6710336
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6708384
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6716192
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6714240
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6711936
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6547792
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6549504
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6528608
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6385792
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6455520
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6454816
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6531536
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6530800
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6386224
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6522544
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6391072
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6391136
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390832
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6384592
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6393248
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390736
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390224
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6455840
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6385120
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6455120
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6455952
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6454528
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6521328
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6523072
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6523600
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6524720
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6525072
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6552192
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6554032
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6533404
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6533567
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6533697
+    }
+  ],
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/caviar.h",
+    "recovery/tests/test_caviar_typed_io_callbacks_oct9.py"
+  ],
+  "evidence": [
+    "Pinned618E10..618E9E cdecl wrappers preserve mem_get/_read/_write/_lseek/_tell EAX results; engine allocation, read accumulation and seek-error consumers require pointer/int/long results. Legacy void-decorated labels are historical identities, not permission for incompatible C++ function-pointer calls. Recover returning wrappers with the same x86 argument contract; preserve original identities/spans/claims and bind only independently observed new emitted symbols through the native writer.",
+    "Pinned6392E0 validates all six nonnull callbacks and copies exactly24 bytes into9C0B80..9C0B94, ordered alloc/free/read/write/seek/tell. Caviar6185A0 is the producer. Replace integer address arrays, void-pointer slots and reinterpret-cast macros with heterogeneous typed table and exact Win32 size/offset controls. Consumers include allocation, record rollback/release,63F9B0, read_exact/parser chain and seek status tests; all must retain side-effect/read ordering, null checks, zero-read retry and original unsafe paths. Do not invent write/tell consumers or remove installed slots.",
+    "Scope includes complete Caviar CPP/header to coordinate real callback ABI declarations and consumers immediately. Independently investigate table storage overlap/lifetime before object binding; no fabricated allocation/layout or callback-table object claims. Keep unrelated raw descriptor/message debt for later scoped recovery. Host actual-source return/dispatch/installation/order controls with damage mutants, native whole-TU baseline/current and observed symbols, dependent-header compile/build/link, original identity continuity and independent review required. No new claims, behavior fixes, flag changes, prolonged byte spelling or automatic acceptance assertions."
+  ]
+}
