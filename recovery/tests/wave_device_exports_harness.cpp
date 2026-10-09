@@ -27,10 +27,10 @@ namespace SoundXDeviceAbi {
 void release_device(void *device);
 }
 // LIVE_EXPORT_TYPE
+// LIVE_TYPED_EXPORT_ACCESSORS
 // LIVE_EXPORT_STORAGE
-HMODULE SoundDllModule;
 int WaveDeviceReleaseGuard;
-typedef unsigned int (__cdecl *func_sound_dll_version)();
+HMODULE SoundDllModule;
 
 // LIVE_BASE_CONSTRUCTOR
 // LIVE_BASE_DESTRUCTOR
@@ -78,8 +78,8 @@ static int __cdecl factory(void **slot, unsigned long kind) {
     *slot = &wrapped;
     return 17;
 }
-static void __cdecl destroy() { ++destructions; }
-static void __cdecl alternate_destroy() { ++alternate_destructions; }
+static int __cdecl destroy() { ++destructions; return 0x41; }
+static int __cdecl alternate_destroy() { ++alternate_destructions; return 0x42; }
 static void __cdecl unused_export() {}
 static unsigned int __cdecl version() { return 0x100; }
 static int requested, fail_ordinal;

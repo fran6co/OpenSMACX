@@ -28,7 +28,14 @@ def actual_bodies():
 
 def materialize(bodies: str, fixture: str, directory: Path) -> Path:
     assert fixture.count("/* CANDIDATE_BODIES */") == 1
-    source = fixture.replace("/* CANDIDATE_BODIES */", bodies)
+    assert fixture.count("// SOUNDDLL_ABIS") == 1
+    assert fixture.count("// SOUNDDLL_STORAGE") == 1
+    sound_h = (ROOT / "src/sound.h").read_text()
+    start = sound_h.index("typedef void *SoundDllProcsTable[11];")
+    end = sound_h.index("// Product wrappers around the loader-owned module/export table.")
+    source = fixture.replace("// SOUNDDLL_ABIS", sound_h[start:end])
+    source = source.replace("// SOUNDDLL_STORAGE", "SoundDllProcsTable SoundDllProcs;")
+    source = source.replace("/* CANDIDATE_BODIES */", bodies)
     path = directory / "runtime_service_control.cpp"
     path.write_text(source)
     return path

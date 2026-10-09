@@ -1032,7 +1032,7 @@ int Wave::load() {
             if (!WaveDeviceReleaseGuard) {
                 return 1;
             }
-            const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
+            const int created = (SoundXOrdinal1CreateSound())(&device_, fname, 1);
             if (created) {
                 return created;
             }
@@ -1119,7 +1119,7 @@ int Wave::reload() {
             if (!WaveDeviceReleaseGuard) {
                 return 1;
             }
-            const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
+            const int created = (SoundXOrdinal1CreateSound())(&device_, fname, 1);
             if (created) {
                 return created;
             }
@@ -1198,7 +1198,7 @@ int Wave::dyna_load(char *fname) {
         if (!WaveDeviceReleaseGuard) {
             return 1;
         }
-        const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
+        const int created = (SoundXOrdinal1CreateSound())(&device_, fname, 1);
         if (created == 0) {
             // The device vtable is captured HERE, before the wave's own
             // slot 0x70 composes the attribute mask; the following 0x6C
@@ -1255,7 +1255,7 @@ int Wave::load(const char *fname) {
         if (!WaveDeviceReleaseGuard) {
             return 1;
         }
-        const int created = (WaveDeviceCreateSlot())(&device_, fname, 1);
+        const int created = (SoundXOrdinal1CreateSound())(&device_, fname, 1);
         if (created) {
             return created;
         }
@@ -1415,7 +1415,7 @@ void Wave::init(char *group_id, unsigned long flags) {
     if (streaming) {
         flags_54_ |= 2;
         if (!device_ && WaveDeviceReleaseGuard) {
-            const int created = (WaveDeviceCreateSlot())(&device_, resolved, 1);
+            const int created = (SoundXOrdinal1CreateSound())(&device_, resolved, 1);
             if (!created) {
                 // The device vtable is captured HERE, before the wave's own
                 // slot 0x70 composes the attribute mask; the following 0x6C

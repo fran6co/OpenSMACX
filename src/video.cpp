@@ -74,7 +74,7 @@ int VideoSoundState::release() {
   if (device_ != 0) {
     if (static_cast<VideoSoundDevice *>(device_)->can_release() == 0) {
       if (WaveDeviceReleaseGuard) {
-        (WaveDeviceReleaseSlot())(device_);
+        (SoundXOrdinal2DeleteSound())(device_);
       }
     } else {
       // The query can call back into the owner. Native 4C886B re-reads
@@ -123,7 +123,7 @@ int VideoSoundState::configure_streams(const void *audio_stream,
     if (!WaveDeviceReleaseGuard) {
       return 1;
     }
-    result = (WaveDeviceCreateSlot())(&device_, 0, 4);
+    result = (SoundXOrdinal1CreateSound())(&device_, 0, 4);
     if (result != 0) {
       return result;
     }
@@ -137,7 +137,7 @@ int VideoSoundState::configure_streams(const void *audio_stream,
                                      audio_format, flags);
   if (result != 0) {
     if (WaveDeviceReleaseGuard) {
-      (WaveDeviceReleaseSlot())(device_);
+      (SoundXOrdinal2DeleteSound())(device_);
     }
     device_ = 0;
   }

@@ -78,19 +78,19 @@ def test_typed_dispatch_source_has_guards_rereads_and_wrapper_calls():
     assert "SoundXDeviceAbi::release_device(device_14_);" in midi
     after_release = midi.index("SoundXDeviceAbi::release_device(device_14_);")
     assert "if (device_14_ != 0)" in midi[after_release:]
-    assert "MidiDeviceCloseSlot()" in midi
+    assert "SoundXOrdinal8MidiDeviceDelete()" in midi
     assert re.search(r"return 0;\s*$", midi)
 
     wave_in = b["wave_in"]
     assert "SoundXDeviceAbi::release_device(device_14_);" in wave_in
     assert wave_in.index("SoundXDeviceAbi::release_device(device_14_);") < wave_in.index("delete_device();")
     assert wave_in.index("delete_device();") < wave_in.index("device_14_ = 0;")
-    assert "device_14_ != 0 && WaveInDeviceCloseSlot() != 0" in b["wave_in_delete"]
+    assert "device_14_ != 0 && SoundXOrdinal10WaveInDeviceDelete() != 0" in b["wave_in_delete"]
 
     wave = b["wave"]
     assert "static_cast<WaveDeviceProviderCallView *>(device_14_)->release();" in wave
     assert wave.index("static_cast<WaveDeviceProviderCallView *>(device_14_)->release();") < wave.index("if (device_14_)", wave.index("static_cast<WaveDeviceProviderCallView *>(device_14_)->release();"))
-    assert "SoundDllProcs[5]" in wave and "device_14_ = nullptr;" in wave
+    assert "SoundXOrdinal6WaveDeviceDelete()" in wave and "device_14_ = nullptr;" in wave
     assert re.search(r"return 0;\s*$", wave)
 
 
@@ -100,18 +100,23 @@ typedef void *HWND;
 struct EAX_REVERB_PROPERTIES;
 #include "soundx_wave_device_abi.h"
 
-typedef void MidiDeviceClose();
-typedef void WaveInDeviceClose();
-static MidiDeviceClose *midi_close = 0;
-static WaveInDeviceClose *wave_in_close = 0;
+typedef int (*SoundXMidiDeviceDeleteProc)();
+typedef int (*SoundXWaveInDeviceDeleteProc)();
+typedef int (*SoundXWaveDeviceDeleteProc)();
+static void *SoundDllProcs[11] = {};
 static int midi_close_calls = 0, wave_in_close_calls = 0, wave_destroy_calls = 0;
-static void midi_close_fn() { ++midi_close_calls; }
-static void wave_in_close_fn() { ++wave_in_close_calls; }
-static void wave_destroy_fn() { ++wave_destroy_calls; }
-MidiDeviceClose *&MidiDeviceCloseSlot() { return midi_close; }
-WaveInDeviceClose *&WaveInDeviceCloseSlot() { return wave_in_close; }
-uintptr_t SoundDllProcs[6] = {};
-typedef void func_wave_device_destroy();
+static int midi_close_fn() { ++midi_close_calls; return -11; }
+static int wave_in_close_fn() { ++wave_in_close_calls; return -12; }
+static int wave_destroy_fn() { ++wave_destroy_calls; return -13; }
+static SoundXMidiDeviceDeleteProc SoundXOrdinal8MidiDeviceDelete() {
+  return reinterpret_cast<SoundXMidiDeviceDeleteProc>(SoundDllProcs[7]);
+}
+static SoundXWaveInDeviceDeleteProc SoundXOrdinal10WaveInDeviceDelete() {
+  return reinterpret_cast<SoundXWaveInDeviceDeleteProc>(SoundDllProcs[9]);
+}
+static SoundXWaveDeviceDeleteProc SoundXOrdinal6WaveDeviceDelete() {
+  return reinterpret_cast<SoundXWaveDeviceDeleteProc>(SoundDllProcs[5]);
+}
 
 struct SoundDeviceBase {
   void *device_14_;
@@ -232,7 +237,7 @@ int main() {
   midi.device_14_ = &midi_backend;
   midi_backend.owner_slot = &midi.device_14_;
   midi_backend.mutate_owner = true;
-  midi_close = midi_close_fn;
+  SoundDllProcs[7] = reinterpret_cast<void *>(&midi_close_fn);
   assert(midi.release() == 0 && midi_backend.calls == 1);
   assert(midi_close_calls == 0 && midi.device_14_ == 0);
 
@@ -250,7 +255,7 @@ int main() {
   // Wave-In calls the virtual wrapper override, which delegates to the actual
   // delete_device body. A null callback result skips close; a rebound pointer
   // reaches the configured DLL close hook.
-  wave_in_close = wave_in_close_fn;
+  SoundDllProcs[9] = reinterpret_cast<void *>(&wave_in_close_fn);
   Backend in_backend;
   WaveInProbe wave_in;
   wave_in.device_14_ = &in_backend;
@@ -270,7 +275,7 @@ int main() {
 
   // Wave_Device likewise rereads after backend release: null skips destruction,
   // rebound field invokes the hook and clears it.
-  SoundDllProcs[5] = reinterpret_cast<uintptr_t>(&wave_destroy_fn);
+  SoundDllProcs[5] = reinterpret_cast<void *>(&wave_destroy_fn);
   Backend wave_backend;
   WaveProviderMock wave_provider(&wave_backend);
   Wave_Device wave;

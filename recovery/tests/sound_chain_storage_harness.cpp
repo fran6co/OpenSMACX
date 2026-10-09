@@ -7,11 +7,14 @@
 typedef unsigned int uint32_t;
 typedef int int32_t;
 typedef unsigned char uint8_t;
+typedef void *HMODULE;
+// LIVE_EXPORT_ABIS
 #define protected public
 // LIVE_FADE_DECLARATION
 // LIVE_SOUND_DECLARATION
 #undef protected
 // LIVE_CHAIN_STORAGE
+// LIVE_EXPORT_STORAGE
 
 // SOUND_LINK_DOUBLES_BEGIN
 Sound::Sound() : device_(0), flags_40_(0), chain_prev_(0), chain_next_(0), fname_(0), type_(0) {}
@@ -42,14 +45,12 @@ int Sound::is_looping() { assert(false); return 0; }
 int Sound::is_playing() { assert(false); return 0; }
 int Sound::get_time() { assert(false); return 0; }
 static int releases;
-static void __cdecl release_device(void *device) {
+static int __cdecl release_device(void *device) {
     assert(device == reinterpret_cast<void *>(17));
     ++releases;
+    return 0x61;
 }
-typedef void(__cdecl func_wave_device_release)(void *);
-static func_wave_device_release *release_hook = release_device;
 int WaveDeviceReleaseGuard;
-inline func_wave_device_release *&WaveDeviceReleaseSlot() { return release_hook; }
 // SOUND_LINK_DOUBLES_END
 
 // LIVE_FADE_CONSTRUCTOR
@@ -67,6 +68,7 @@ class OtherSound : public Sound {
 };
 
 int main() {
+    SoundDllProcs[1] = reinterpret_cast<void *>(&release_device);
     assert(SoundChainHead == 0 && SoundChainTail == 0);
     OtherSound first, middle, last;
     first.flags_40_ = middle.flags_40_ = last.flags_40_ = 0x81;

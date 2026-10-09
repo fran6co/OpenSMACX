@@ -19,14 +19,21 @@ ROOT = repo_root()
 
 
 def harness(method: str) -> str:
+    header = (ROOT / "src/sound.h").read_text()
+    start = header.index("typedef int (__cdecl *SoundXCreateSoundProc)")
+    end = header.index("inline SoundXCreateSoundProc SoundXOrdinal1CreateSound()")
+    aliases = header[start:end]
+    accessor = extract_definition(header, "inline SoundXCreateSoundProc SoundXOrdinal1CreateSound()")
     return r'''#include <cassert>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <sys/mman.h>
 #define __cdecl
-typedef int(__cdecl func_wave_device_create)(void **, const char *, int);
-void *SoundDllProcs[11] = {};
+''' + aliases + r'''
+typedef void *SoundDllProcsTable[11];
+SoundDllProcsTable SoundDllProcs = {};
+''' + accessor + r'''
 int WaveDeviceReleaseGuard = 0;
 static int factory_result = 0;
 static bool factory_sets_device = true;

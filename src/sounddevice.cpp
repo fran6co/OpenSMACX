@@ -43,23 +43,6 @@ Midi_Device g_MIDI_DEVICE;
 // RECOVERY_OBJECT: v1 0x0090DB50 ?g_WAVE_IN_DEVICE@@3VWave_In_Device@@A
 Wave_In_Device g_WAVE_IN_DEVICE;
 
-namespace {
-// The loader owns the eleven export cells at original 0x0090DB24.
-// Keep references to its live entries: release callbacks can rebind the table.
-inline MidiDeviceOpen *&MidiDeviceOpenSlot() {
-    return *reinterpret_cast<MidiDeviceOpen **>(&SoundDllProcs[6]);
-}
-inline MidiDeviceClose *&MidiDeviceCloseSlot() {
-    return *reinterpret_cast<MidiDeviceClose **>(&SoundDllProcs[7]);
-}
-inline WaveInDeviceOpen *&WaveInDeviceOpenSlot() {
-    return *reinterpret_cast<WaveInDeviceOpen **>(&SoundDllProcs[8]);
-}
-inline WaveInDeviceClose *&WaveInDeviceCloseSlot() {
-    return *reinterpret_cast<WaveInDeviceClose **>(&SoundDllProcs[9]);
-}
-}  // namespace
-
 // init_sound() directly calls these concrete init methods. Each body invokes
 // wrapper slots 0/1 and delegate slot 3 through their observed interfaces.
 
@@ -842,7 +825,7 @@ int Midi_Device::create_device(unsigned long flags) {
     // is opened INTO this slot, so the address outlives the null check.
     void **slot = reinterpret_cast<void **>(&device_14_);
     if (device_14_ == 0) {
-        MidiDeviceOpen *const open = MidiDeviceOpenSlot();
+        SoundXMidiDeviceCreateProc const open = SoundXOrdinal7MidiDeviceCreate();
         if (open != 0) {
             return open(slot, flags);
         }
@@ -854,8 +837,8 @@ int Midi_Device::create_device(unsigned long flags) {
 // ORIGINAL: 0x004C5710 ?delete_device@Midi_Device@@QAEHXZ 0x004C5710-0x004C5738 BYTE_EXACT
 // symbol    ?delete_device@Midi_Device@@UAEHXZ
 int Midi_Device::delete_device() {
-    if (device_14_ != 0 && MidiDeviceCloseSlot() != 0) {
-        MidiDeviceCloseSlot()();
+    if (device_14_ != 0 && SoundXOrdinal8MidiDeviceDelete() != 0) {
+        SoundXOrdinal8MidiDeviceDelete()();
         device_14_ = 0;
         return 0;
     }
@@ -868,8 +851,8 @@ int Midi_Device::release() {
     if (device_14_ != 0) {
         SoundXDeviceAbi::release_device(device_14_);
         if (device_14_ != 0) {
-            if (MidiDeviceCloseSlot() != 0) {
-                MidiDeviceCloseSlot()();
+            if (SoundXOrdinal8MidiDeviceDelete() != 0) {
+                SoundXOrdinal8MidiDeviceDelete()();
                 device_14_ = 0;
             }
         }
@@ -883,7 +866,7 @@ int Midi_Device::release() {
 int Wave_In_Device::create_device(unsigned long flags) {
     void **slot = reinterpret_cast<void **>(&device_14_);
     if (device_14_ == 0) {
-        WaveInDeviceOpen *const open = WaveInDeviceOpenSlot();
+        SoundXWaveInDeviceCreateProc const open = SoundXOrdinal9WaveInDeviceCreate();
         if (open != 0) {
             return open(slot, flags);
         }
@@ -895,8 +878,8 @@ int Wave_In_Device::create_device(unsigned long flags) {
 // ORIGINAL: 0x004C59E0 ?delete_device@Wave_In_Device@@QAEHXZ 0x004C59E0-0x004C5A08 BYTE_EXACT
 // symbol    ?delete_device@Wave_In_Device@@UAEHXZ
 int Wave_In_Device::delete_device() {
-    if (device_14_ != 0 && WaveInDeviceCloseSlot() != 0) {
-        WaveInDeviceCloseSlot()();
+    if (device_14_ != 0 && SoundXOrdinal10WaveInDeviceDelete() != 0) {
+        SoundXOrdinal10WaveInDeviceDelete()();
         device_14_ = 0;
         return 0;
     }

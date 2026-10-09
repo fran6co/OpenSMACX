@@ -197,7 +197,6 @@ void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
 // operator delete, and its wrapped device through the loader-owned release
 // hook while the guard says it is live. The common Sound chain is declared
 // in sound.h; Wave does not allocate separate ends or narrow its neighbors.
-typedef void(__cdecl func_wave_device_release)(void *device);
 // The process Wave_Device and its release-hook guard are REAL OBJECTS - the
 // device defined in wave_device.cpp (it was `Wave_Device *const
 // WaveDeviceGlobal = (Wave_Device *)0x0090D978` there and a `g_WAVE_DEVICE`
@@ -207,9 +206,7 @@ typedef void(__cdecl func_wave_device_release)(void *device);
 // standalone build. Every `WaveDeviceGlobal->` receiver and every
 // `*WaveDeviceReleaseGuard` read keeps its folded form - the immediates and
 // disp32s become the same instructions against relocated symbols.
-// The loader fills ordinal 2 in its real export array. Read that slot's
-// storage, not the original executable's address or a second pointer global.
-inline func_wave_device_release *&WaveDeviceReleaseSlot() { return *reinterpret_cast<func_wave_device_release **>(&SoundDllProcs[1]); }
+// SoundX ordinal 2's callable contract is centralized in sound.h.
 extern int WaveDeviceReleaseGuard;  // 0x0090DB7C
 
 // Filename allocations use the game CRT heap. Group volume and disabled
@@ -218,15 +215,7 @@ extern int WaveDeviceReleaseGuard;  // 0x0090DB7C
 // Filename and group allocations use the configured CRT operator new,
 // shared with the existing MIDI allocation path.
 
-// load()'s remaining surface: the device-creation hook lives in the slot
-// right beside the release hook, behind the same guard dword, and builds the
-// device straight into the wave's 0x3C field; Sound::load is the base-class
-// loader in sound.cpp. Wave's real Sound base owns the common lifecycle.
-typedef int(__cdecl func_wave_device_create)(void **device_slot,
-                                             const char *fname, int mode);
-// Ordinal 1 has the matching creation signature; both roles use the same
-// loader-owned array so clearing or reloading the DLL updates their targets.
-inline func_wave_device_create *&WaveDeviceCreateSlot() { return *reinterpret_cast<func_wave_device_create **>(&SoundDllProcs[0]); }
+// SoundX ordinal 1's callable contract is centralized in sound.h.
 
 // Movement sound, owned and initialized with the other Wave objects.
 extern Wave g_SCOOT_WAVE;  // 0x00749C18

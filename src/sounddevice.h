@@ -140,9 +140,5 @@ static_assert(sizeof(Wave_In_Device) == 0x20,
 extern Midi_Device g_MIDI_DEVICE;
 extern Wave_In_Device g_WAVE_IN_DEVICE;
 
-// MIDI and Wave-In callback ABIs. The implementation reads loader-owned
-// SoundDllProcs entries 6/7 and 8/9 (original 0x0090DB3C..0x0090DB48).
-typedef int(__cdecl MidiDeviceOpen)(void *slot, unsigned long flags);
-typedef void(__cdecl MidiDeviceClose)(void);
-typedef int(__cdecl WaveInDeviceOpen)(void *slot, unsigned long flags);
-typedef void(__cdecl WaveInDeviceClose)(void);
+// SoundX ordinals 7..10 provide opaque MIDI and Wave-In provider callbacks;
+// their callable contracts are centralized beside the shared table in sound.h.

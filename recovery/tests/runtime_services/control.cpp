@@ -112,19 +112,20 @@ LONG RegSetValueExA(HKEY, LPCSTR name, DWORD, DWORD type,
 }
 LONG RegCloseKey(HKEY) { RegistryCalls.push_back("close"); return 0; }
 
-typedef int (__cdecl *func_sound_dll_release_result)(void *);
-void *SoundDllProcs[11];
+typedef void *HMODULE;
+// SOUNDDLL_ABIS
+// SOUNDDLL_STORAGE
 int WaveDeviceReleaseGuard;
 int ShutdownClearsGuard;
-typedef void *HMODULE;
 HMODULE SoundDllModule;
 std::vector<std::string> SoundEvents;
 int release_callback(void *p) {
     SoundEvents.push_back("release-device"); assert(p != 0); return 9;
 }
-void shutdown_callback() {
+int shutdown_callback() {
     SoundEvents.push_back("sound-dll-shutdown");
     if (ShutdownClearsGuard) WaveDeviceReleaseGuard = 0;
+    return 0x71;
 }
 void free_library(HMODULE) { SoundEvents.push_back("free-library"); }
 

@@ -64,6 +64,7 @@ def test_actual_provider_call_bodies_preserve_guards_arguments_and_order(tmp_pat
         pytest.skip(f"{compiler_name} unavailable")
     source = (ROOT / "src/wave_device.cpp").read_text()
     header = (ROOT / "src/soundx_wave_device_abi.h").read_text()
+    sound_header = (ROOT / "src/sound.h").read_text()
     assert "virtual ~WaveDeviceProviderCallView" not in header
     assert "class WaveDeviceProviderCallView" in header
     selected = "\n".join(definition(source, item) for item in METHODS)
@@ -137,7 +138,7 @@ static int provider_three_ptrs(void *self, float *a, float *b, float *c) {
 static int factory(void **slot, unsigned long flags) {
   ++factory_calls; word_arg = flags; *slot = factory_provider; return factory_result;
 }
-static void destroy() { ++destroy_calls; }
+static int destroy() { ++destroy_calls; return -19; }
 static int provider_init(void *self, void *group, unsigned long flags) {
   assert(self == &provider); assert(group == reinterpret_cast<void *>(0x1234));
   word_arg = flags; ++calls[12]; call_order = call_order * 10 + 1;
@@ -164,11 +165,15 @@ struct Wave_Device {
   int init(void *, unsigned long); int release();
 };
 
-typedef int (__attribute__((cdecl)) func_wave_device_factory)(void **, unsigned long);
-typedef void (__attribute__((cdecl)) func_wave_device_destroy)(void);
-void *SoundDllProcs[11] = {};
-
 '''
+    aliases_start = sound_header.index("typedef int (__cdecl *SoundXCreateSoundProc)")
+    aliases_end = sound_header.index("inline SoundXCreateSoundProc SoundXOrdinal1CreateSound()")
+    aliases = sound_header[aliases_start:aliases_end]
+    export_accessors = "\n".join(definition(sound_header, signature) for signature in (
+        "inline SoundXWaveDeviceCreateProc SoundXOrdinal5WaveDeviceCreate()",
+        "inline SoundXWaveDeviceDeleteProc SoundXOrdinal6WaveDeviceDelete()",
+    ))
+    harness += "#define __cdecl\ntypedef void *SoundDllProcsTable[11];\nSoundDllProcsTable SoundDllProcs = {};\n" + aliases + export_accessors
     # The table uses the actual declaration order and only provides host
     # callbacks at consumed slots. This deliberately is not a DLL provider.
     slot_setup = r'''

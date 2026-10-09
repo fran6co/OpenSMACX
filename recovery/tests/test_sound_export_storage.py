@@ -92,11 +92,9 @@ def test_native_data_check_rejects_a_short_export_owner(export_storage):
 
 def run_loader(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "sound_export_storage_harness.cpp", [], declarations=[
-        ("// LIVE_EXPORT_TYPE", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "extern SoundDllProcsTable SoundDllProcs;"),
-        ("// LIVE_EXPORT_ABIS", "src/sound.h", "typedef unsigned int (__cdecl *func_sound_dll_version)();", "extern HMODULE SoundDllModule;"),
+        ("// LIVE_EXPORT_TYPE", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "// Pinned soundx.dll exports ordinals 1..11 form one fixed callable contract."),
+        ("// LIVE_EXPORT_ABIS", "src/sound.h", "typedef int (__cdecl *SoundXCreateSoundProc)", "// Product wrappers around the loader-owned module/export table."),
         ("// LIVE_EXPORT_STORAGE", "src/sound_loader.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()"),
-        ("// LIVE_RELEASE_SLOT", "src/wave.h", "inline func_wave_device_release *&WaveDeviceReleaseSlot()", "extern int WaveDeviceReleaseGuard;"),
-        ("// LIVE_CREATE_SLOT", "src/wave.h", "typedef int(__cdecl func_wave_device_create)", "// Movement sound, owned and initialized with the other Wave objects."),
         ("// LIVE_LOADER", "src/sound_loader.cpp", "int __cdecl load_sound_dll()", "/*\nPurpose: The sound-DLL version complaint box.")])
 
 
@@ -105,8 +103,8 @@ def test_actual_loader_populates_rebinds_and_clears_the_actual_role_accessors(tm
 
 
 @pytest.mark.parametrize("unit,before,after", [
-    ("src/wave.h", "&SoundDllProcs[1]", "&SoundDllProcs[0]"),
-    ("src/wave.h", "&SoundDllProcs[0]", "&SoundDllProcs[1]"),
+    ("src/sound.h", "reinterpret_cast<SoundXDeleteSoundProc>(SoundDllProcs[1])", "reinterpret_cast<SoundXDeleteSoundProc>(SoundDllProcs[0])"),
+    ("src/sound.h", "reinterpret_cast<SoundXCreateSoundProc>(SoundDllProcs[0])", "reinterpret_cast<SoundXCreateSoundProc>(SoundDllProcs[1])"),
     ("src/sound_loader.cpp", "i < 0xb", "i < 0xa"),
     ("src/sound_loader.cpp", "*slot = proc;", "if (index != 0) *slot = proc;"),
 ])

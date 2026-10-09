@@ -77,11 +77,16 @@ CHAIN_DECLARATIONS = [
     ("// LIVE_SOUND_DECLARATION", "src/sound.h", "class Sound : public SoundFadeState {", "// Two independent sources agree on 0x54"),
     ("// LIVE_CHAIN_STORAGE", "src/sound.cpp", "Sound *SoundChainHead;", "/*\nPurpose: Unknown; the legacy implementation is a constant return that returns 11."),
 ]
+SOUNDX_EXPORT_DECLARATIONS = [
+    ("// LIVE_EXPORT_ABIS", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "// Product wrappers around the loader-owned module/export table."),
+    ("// LIVE_EXPORT_STORAGE", "src/sound_loader.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()"),
+]
 
 
 def run_chain(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "sound_chain_storage_harness.cpp",
-                          CHAIN_HANDLERS, declarations=CHAIN_DECLARATIONS)
+                          CHAIN_HANDLERS, declarations=[*CHAIN_DECLARATIONS,
+                                                        *SOUNDX_EXPORT_DECLARATIONS])
 
 
 def test_real_chain_supports_sound_and_non_wave_subclasses_and_destruction(tmp_path, monkeypatch):

@@ -927,8 +927,7 @@ int Midi::load(const char *a1) {
         if (!WaveDeviceReleaseGuard) {
             return 1;
         }
-        result = (*reinterpret_cast<func_wave_device_create **>(
-            &SoundDllProcs[0]))(&device_, a1, 2);
+        result = SoundXOrdinal1CreateSound()(&device_, a1, 2);
     } else {
         result = static_cast<int>(reinterpret_cast<uintptr_t>(a1));
     }
@@ -977,8 +976,8 @@ int Midi::load() {
             if (!WaveDeviceReleaseGuard) {
                 return 1;
             }
-            const int created = (*reinterpret_cast<func_wave_device_create **>(
-                &SoundDllProcs[0]))(&device_, filename, 2);
+            const int created = SoundXOrdinal1CreateSound()(
+                &device_, filename, 2);
             if (created != 0) {
                 return created;
             }
@@ -1034,8 +1033,7 @@ int Midi::unload() {
         if (is_playing() == 0) {
             static_cast<MidiDelegate *>(device_)->slot005();
             if (WaveDeviceReleaseGuard) {
-                (*reinterpret_cast<func_wave_device_release **>(
-                    &SoundDllProcs[1]))(device_);
+                SoundXOrdinal2DeleteSound()(device_);
             }
         } else {
             result = static_cast<MidiDelegate *>(device_)->slot005();
@@ -1241,7 +1239,7 @@ Midi::~Midi() {
     }
     fname_ = nullptr;
     if (device_ && WaveDeviceReleaseGuard) {
-        (WaveDeviceReleaseSlot())(device_);
+        (SoundXOrdinal2DeleteSound())(device_);
     }
     device_ = nullptr;
 }

@@ -50,9 +50,9 @@ def test_lifecycle_bodies_match_with_loader_owned_targets(device_exports):
 
 
 @pytest.mark.parametrize("before,after,address", [
-    ("SoundDllProcs[4]", "SoundDllProcs[3]", 0x4C4ED0),
-    ("SoundDllProcs[5]", "SoundDllProcs[6]", 0x4C4F10),
-    ("SoundDllProcs[5]", "SoundDllProcs[6]", 0x4C4F80),
+    ("SoundXOrdinal5WaveDeviceCreate()", "SoundXOrdinal7MidiDeviceCreate()", 0x4C4ED0),
+    ("SoundXOrdinal6WaveDeviceDelete()", "SoundXOrdinal8MidiDeviceDelete()", 0x4C4F10),
+    ("SoundXOrdinal6WaveDeviceDelete()", "SoundXOrdinal8MidiDeviceDelete()", 0x4C4F80),
 ])
 def test_native_comparison_rejects_a_wrong_export_entry(device_exports, before, after, address):
     compiler, settings, trials, image, exports, bindings = device_exports
@@ -84,9 +84,10 @@ def run_device(tmp_path, monkeypatch):
         ("// LIVE_GET_NDEVICES", "src/wave_device.cpp", "int Wave_Device::get_ndevices() {", "/*\nPurpose: Ask the wrapped device for its hardware memory size"),
         ("// LIVE_GET_DESCRIPTION", "src/wave_device.cpp", "int Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) {", "/*\nPurpose: Forward start_raw_dump"),
         ("// LIVE_INIT", "src/wave_device.cpp", "int Wave_Device::init(void *group_id, unsigned long flags) {", "/*\nPurpose: Release the wrapped device"),
-        ("// LIVE_ROLE_TYPES", "src/wave_device.h", "typedef int(__cdecl func_wave_device_factory)", "// The 0x004C5490 / 0x004C5B80 lifecycle is owned directly by"),
+        ("// LIVE_ROLE_TYPES", "src/sound.h", "typedef int (__cdecl *SoundXCreateSoundProc)", "inline SoundXCreateSoundProc SoundXOrdinal1CreateSound()"),
         ("// LIVE_SLOT_DISPATCH", "src/soundx_wave_device_abi.h", "class WaveDeviceProviderCallView {", "};"),
-        ("// LIVE_EXPORT_TYPE", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "extern SoundDllProcsTable SoundDllProcs;"),
+        ("// LIVE_EXPORT_TYPE", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "// Pinned soundx.dll exports ordinals 1..11 form one fixed callable contract."),
+        ("// LIVE_TYPED_EXPORT_ACCESSORS", "src/sound.h", "inline SoundXCreateSoundProc SoundXOrdinal1CreateSound()", "// Product wrappers around the loader-owned module/export table."),
         ("// LIVE_EXPORT_STORAGE", "src/sound_loader.cpp", "SoundDllProcsTable SoundDllProcs;", "int __cdecl load_sound_dll()")])
 
 
@@ -95,10 +96,10 @@ def test_actual_lifecycle_observes_loading_rebinding_and_callback_changes(tmp_pa
 
 
 @pytest.mark.parametrize("before,after", [
-    ("SoundDllProcs[4]", "SoundDllProcs[3]"),
-    ("SoundDllProcs[5]", "SoundDllProcs[6]"),
+    ("SoundXOrdinal5WaveDeviceCreate()", "SoundXOrdinal7MidiDeviceCreate()"),
+    ("SoundXOrdinal6WaveDeviceDelete()", "SoundXOrdinal8MidiDeviceDelete()"),
     ("return factory(device_slot, a1);", "return 0x14;"),
-    ("if (device_14_) {\n            func_wave_device_destroy", "if (true) {\n            func_wave_device_destroy"),
+    ("if (device_14_) {\n            SoundXWaveDeviceDeleteProc const hook", "if (true) {\n            SoundXWaveDeviceDeleteProc const hook"),
 ])
 def test_runtime_contract_rejects_bad_targets_or_lifecycle_guards(tmp_path, monkeypatch, before, after):
     original_read = Path.read_text

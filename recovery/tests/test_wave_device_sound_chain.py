@@ -11,7 +11,8 @@ from match_recovery.object_source import object_targets
 from match_recovery.source import read_file
 from match_recovery.source_inventory import image_pin
 from test_application_link_recovery import ROOT, run_recovered_harness
-from test_sound_chain_storage import CHAIN_DECLARATIONS, CHAIN_HANDLERS, HEAD, TAIL, chain
+from test_sound_chain_storage import (CHAIN_DECLARATIONS, CHAIN_HANDLERS,
+                                      SOUNDX_EXPORT_DECLARATIONS, HEAD, TAIL, chain)
 from test_sound_virtual_surface import family, observations
 
 
@@ -73,6 +74,7 @@ def run_switch(tmp_path, monkeypatch):
          ("// LIVE_GROUP_DESTRUCTOR", "src/wave_device.cpp", 0x4C5B80),
          ("// LIVE_SELECT", "src/wave_device.cpp", 0x4C5030)], declarations=[
             *CHAIN_DECLARATIONS,
+            *SOUNDX_EXPORT_DECLARATIONS,
             ("// LIVE_DEVICE_BASE_DECL", "src/sounddevice.h", "class SoundDeviceBase {", "static_assert(sizeof(SoundDeviceBase)"),
             ("// LIVE_SOUND_DOUBLES", "recovery/tests/sound_chain_storage_harness.cpp", "// SOUND_LINK_DOUBLES_BEGIN", "// SOUND_LINK_DOUBLES_END"),
             ("// LIVE_GROUP_TYPES", "src/wave_device.h", "struct WaveGroupNode {", " /*\n  * Wave_Device class"),

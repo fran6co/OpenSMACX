@@ -1,0 +1,22 @@
+{
+  "event_id": "01b2b07cc50b63a4843e86f3728eea48232679b9760f96f96c7284799fe9a9f1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/runtime_services/control.cpp",
+      "recovery/tests/test_runtime_services_behavior.py",
+      "recovery/tests/test_wave_device_sound_chain.py",
+      "recovery/tests/wave_device_sound_chain_harness.cpp"
+    ],
+    "evidence": [
+      "Complete dependent actual-source fixtures using Sound::~Sound and release_sound: preserve original chain/lifetime/rebinding/error behavior while adding typed callable declarations, no old accessor compatibility seams."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1a699974e91cf04fc29220a2ad634bcb032bfdcddb73ca4813a67544bcaacc40",
+  "request_id": "soundx-shared-chain-consumer-fixture-oct9",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:soundx-typed-export-table-oct9"
+}

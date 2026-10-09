@@ -168,9 +168,10 @@ int __cdecl load_sound_dll();
 // keeps the LoadLibraryA reference there; SoundDllProcs is the eleven
 // slots it fills in ordinal order (GetProcAddress ordinal 1 lands at
 // index 0) and zeroes as a block on failure. The tree reads slots
-// individually by role - wave.h's WaveDeviceCreateSlot/ReleaseSlot are
-// indexes 0/1, wave_device.h's factory/destroy slots 4/5, and the version
-// probe init reads at index 10. Definitions in sound_loader.cpp.
+// individually by role through the typed value-loading accessors below.
+// The original provider objects behind these exports are DLL-private opaque
+// interfaces, not the game's Wave_Device, Midi_Device, or Wave_In_Device
+// facades. Definitions in sound_loader.cpp.
 //
 // BYTES: a use is one deref with the address a relocation to our storage -
 // the image's own shape with its own relocation - which is why the natural
@@ -183,28 +184,66 @@ int __cdecl load_sound_dll();
 // read the shipped binary's storage until they are recovered.
 typedef void *SoundDllProcsTable[11];
 extern SoundDllProcsTable SoundDllProcs;
-typedef unsigned int (__cdecl *func_sound_dll_version)();
-// Ordinal 3 is called both during sound setup (its result is ignored) and
-// through init_sound_timer (which returns the result to its caller).
-typedef int (__cdecl *func_sound_dll_init)(unsigned long, unsigned long);
-// The image's forwarding thunk for ordinal 2 returns its EAX value. The
-// Wave/Midi release call sites use the same slot as void(void*) and ignore
-// EAX; retain that caller view while spelling the thunk's own result here.
-typedef int (__cdecl *func_sound_dll_release_result)(void *);
 extern HMODULE SoundDllModule;
+
+// Pinned soundx.dll exports ordinals 1..11 form one fixed callable contract.
+// Keep their physically observed storage as eleven opaque pointer words, but
+// centralize each ABI conversion here. These accessors return the current
+// slot value on every call; they do not cache DLL-private provider objects or
+// turn them into game-side SoundDeviceBase subclasses.
+typedef int (__cdecl *SoundXCreateSoundProc)(void **, const char *, int);
+typedef int (__cdecl *SoundXDeleteSoundProc)(void *);
+typedef int (__cdecl *SoundXInitTimerProc)(unsigned long, unsigned long);
+typedef int (__cdecl *SoundXReleaseSoundProc)();
+typedef int (__cdecl *SoundXWaveDeviceCreateProc)(void **, unsigned long);
+typedef int (__cdecl *SoundXWaveDeviceDeleteProc)();
+typedef int (__cdecl *SoundXMidiDeviceCreateProc)(void **, unsigned long);
+typedef int (__cdecl *SoundXMidiDeviceDeleteProc)();
+typedef int (__cdecl *SoundXWaveInDeviceCreateProc)(void **, unsigned long);
+typedef int (__cdecl *SoundXWaveInDeviceDeleteProc)();
+typedef unsigned int (__cdecl *SoundXVersionProc)();
+
+inline SoundXCreateSoundProc SoundXOrdinal1CreateSound() {
+  return reinterpret_cast<SoundXCreateSoundProc>(SoundDllProcs[0]);
+}
+inline SoundXDeleteSoundProc SoundXOrdinal2DeleteSound() {
+  return reinterpret_cast<SoundXDeleteSoundProc>(SoundDllProcs[1]);
+}
+inline SoundXInitTimerProc SoundXOrdinal3InitTimer() {
+  return reinterpret_cast<SoundXInitTimerProc>(SoundDllProcs[2]);
+}
+inline SoundXReleaseSoundProc SoundXOrdinal4ReleaseSound() {
+  return reinterpret_cast<SoundXReleaseSoundProc>(SoundDllProcs[3]);
+}
+inline SoundXWaveDeviceCreateProc SoundXOrdinal5WaveDeviceCreate() {
+  return reinterpret_cast<SoundXWaveDeviceCreateProc>(SoundDllProcs[4]);
+}
+inline SoundXWaveDeviceDeleteProc SoundXOrdinal6WaveDeviceDelete() {
+  return reinterpret_cast<SoundXWaveDeviceDeleteProc>(SoundDllProcs[5]);
+}
+inline SoundXMidiDeviceCreateProc SoundXOrdinal7MidiDeviceCreate() {
+  return reinterpret_cast<SoundXMidiDeviceCreateProc>(SoundDllProcs[6]);
+}
+inline SoundXMidiDeviceDeleteProc SoundXOrdinal8MidiDeviceDelete() {
+  return reinterpret_cast<SoundXMidiDeviceDeleteProc>(SoundDllProcs[7]);
+}
+inline SoundXWaveInDeviceCreateProc SoundXOrdinal9WaveInDeviceCreate() {
+  return reinterpret_cast<SoundXWaveInDeviceCreateProc>(SoundDllProcs[8]);
+}
+inline SoundXWaveInDeviceDeleteProc SoundXOrdinal10WaveInDeviceDelete() {
+  return reinterpret_cast<SoundXWaveInDeviceDeleteProc>(SoundDllProcs[9]);
+}
+inline SoundXVersionProc SoundXOrdinal11Version() {
+  return reinterpret_cast<SoundXVersionProc>(SoundDllProcs[10]);
+}
 
 // Product wrappers around the loader-owned module/export table.
 void __cdecl unload_sound_dll();
 int __cdecl init_sound_timer(unsigned long timer, unsigned long resolution);
 int __cdecl get_sound_version();
-// Two slots read by role: index 10 is the version probe load_sound_dll
-// checks the game's sound headers against; index 2 is the hook init_sound
-// calls once with two zero arguments as soon as the DLL is up. A slot is
-// CALLED by casting its ADDRESS to the function-pointer type in ONE
-// level - `(*reinterpret_cast<F *>(&SoundDllProcs[2]))()` - the
-// memory-indirect `call dword ptr [slot]` the image makes; casting the
-// slot's VALUE materialises a register first, and reinterpret_cast from
-// void** to F** is C2440.
+// The accessors' value conversions are the unavoidable DLL boundary. Every
+// invocation reloads the current opaque table cell; the loader's ordinal
+// storage and ordering remain unchanged.
 
 int __cdecl release_sound();
 

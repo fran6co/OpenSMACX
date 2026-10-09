@@ -145,13 +145,9 @@ extern Wave_Device WaveDeviceGlobal;  // 0x0090D978
 static_assert(sizeof(WaveControlGroup) == 0x18, "group records stride 24 bytes");
 
 
-// SoundDllProcs slots 4/5 (original 0x0090DB34/0x0090DB38) are consulted
-// by the device lifecycle. The factory builds a device of the requested
-// kind straight into the 0x14 field; the destroy hook takes no arguments.
-// These are role signatures, not separately allocated globals.
-typedef int(__cdecl func_wave_device_factory)(void **device_slot,
-                                              unsigned long kind);
-typedef void(__cdecl func_wave_device_destroy)(void);
+// SoundX ordinals 5/6 provide the opaque provider factory and destroy
+// callbacks. Their callable contracts are centralized beside the shared
+// table in sound.h.
 
 // The 0x004C5490 / 0x004C5B80 lifecycle is owned directly by
 // WaveControlGroup; Wave_Device's typed member array supplies compiler

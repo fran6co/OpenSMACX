@@ -1299,8 +1299,8 @@ int Wave_Device::create_device(unsigned long a1) {
     void **const device_slot = reinterpret_cast<void **>(&device_14_);
     if (!device_14_) {
         // Original 0x0090DB34 is ordinal 5 in the loader's export array.
-        func_wave_device_factory *const factory =
-            reinterpret_cast<func_wave_device_factory *>(SoundDllProcs[4]);
+        SoundXWaveDeviceCreateProc const factory =
+            SoundXOrdinal5WaveDeviceCreate();
         if (factory) {
             return factory(device_slot, a1);
         }
@@ -1331,8 +1331,8 @@ Status: Complete
 int Wave_Device::delete_device() {
     if (device_14_) {
         // Original 0x0090DB38 is ordinal 6, not independent pointer storage.
-        func_wave_device_destroy *const hook =
-            reinterpret_cast<func_wave_device_destroy *>(SoundDllProcs[5]);
+        SoundXWaveDeviceDeleteProc const hook =
+            SoundXOrdinal6WaveDeviceDelete();
         if (hook) {
             hook();
             device_14_ = nullptr;
@@ -1407,8 +1407,8 @@ int Wave_Device::release() {
     if (device_14_) {
         static_cast<WaveDeviceProviderCallView *>(device_14_)->release();
         if (device_14_) {
-            func_wave_device_destroy *const hook =
-                reinterpret_cast<func_wave_device_destroy *>(SoundDllProcs[5]);
+            SoundXWaveDeviceDeleteProc const hook =
+                SoundXOrdinal6WaveDeviceDelete();
             if (hook) {
                 hook();
                 device_14_ = nullptr;

@@ -44,7 +44,7 @@ int VoiceRx::init(unsigned long size, void *context, unsigned long flags) {
         if (WaveDeviceReleaseGuard == 0) {
             return 1;
         }
-        result = WaveDeviceCreateSlot()(&device_, 0, 6);
+        result = SoundXOrdinal1CreateSound()(&device_, 0, 6);
         if (result != 0) {
             return result;
         }
@@ -53,7 +53,7 @@ int VoiceRx::init(unsigned long size, void *context, unsigned long flags) {
         result = static_cast<VoiceRxDeviceInterface *>(device_)->init(size, context, flags);
         if (result != 0) {
             if (WaveDeviceReleaseGuard != 0) {
-                WaveDeviceReleaseSlot()(device_);
+                SoundXOrdinal2DeleteSound()(device_);
             }
             device_ = 0;
         }
@@ -70,7 +70,7 @@ int VoiceRx::release() {
     if (device_ != 0) {
         if (static_cast<VoiceRxDeviceInterface *>(device_)->is_playing() == 0) {
             if (WaveDeviceReleaseGuard != 0) {
-                WaveDeviceReleaseSlot()(device_);
+                SoundXOrdinal2DeleteSound()(device_);
             }
         } else {
             static_cast<VoiceRxDeviceInterface *>(device_)->release();
@@ -237,7 +237,7 @@ VoiceTx::VoiceTx() {
 // symbol    ??1VoiceTx@@UAE@XZ
 VoiceTx::~VoiceTx() {
     if (device_ != 0 && WaveDeviceReleaseGuard != 0) {
-        WaveDeviceReleaseSlot()(device_);
+        SoundXOrdinal2DeleteSound()(device_);
     }
     device_ = 0;
     if (fname_ != 0) {
@@ -369,7 +369,7 @@ int VoiceTx::unload() {
     stop();
     release();
     if (WaveDeviceReleaseGuard != 0) {
-        WaveDeviceReleaseSlot()(device_);
+        SoundXOrdinal2DeleteSound()(device_);
     }
     device_ = 0;
     return 0;
@@ -384,14 +384,14 @@ int VoiceTx::init(unsigned long size, void *context, unsigned long flags) {
         if (WaveDeviceReleaseGuard == 0) {
             return 1;
         }
-        result = WaveDeviceCreateSlot()(&device_, 0, 7);
+        result = SoundXOrdinal1CreateSound()(&device_, 0, 7);
         if (result != 0) return result;
     }
     if (device_ != 0) {
         result = static_cast<VoiceTxDeviceInterface *>(device_)->init(size, context, flags);
         if (result != 0 && result != 0x10) {
             if (WaveDeviceReleaseGuard != 0) {
-                WaveDeviceReleaseSlot()(device_);
+                SoundXOrdinal2DeleteSound()(device_);
             }
             device_ = 0;
         }

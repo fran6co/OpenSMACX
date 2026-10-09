@@ -12,10 +12,6 @@ HMODULE SoundDllModule;
 int WaveDeviceReleaseGuard;
 // LIVE_EXPORT_STORAGE
 
-typedef void (__cdecl func_wave_device_release)(void *);
-// LIVE_RELEASE_SLOT
-// LIVE_CREATE_SLOT
-
 static int requested, loads, frees, warnings, fail_ordinal;
 static int creates, releases, alternate_releases, fake_device;
 static bool fail_load;
@@ -28,14 +24,16 @@ static int __cdecl create_device(void **slot, const char *name, int mode) {
     return 17;
 }
 
-static void __cdecl release_device(void *device) {
+static int __cdecl release_device(void *device) {
     assert(device == &fake_device);
     ++releases;
+    return 0x31;
 }
 
-static void __cdecl alternate_release(void *device) {
+static int __cdecl alternate_release(void *device) {
     assert(device == &fake_device);
     ++alternate_releases;
+    return 0x32;
 }
 
 static unsigned int __cdecl driver_version() { return 0x100; }
@@ -83,17 +81,15 @@ int main() {
     assert(load_sound_dll() == 0);
     assert(requested == 11 && loads == 1 && frees == 0 && warnings == 0);
     assert(SoundDllModule == driver);
-    assert(reinterpret_cast<void *>(&WaveDeviceCreateSlot()) == &SoundDllProcs[0]);
-    assert(reinterpret_cast<void *>(&WaveDeviceReleaseSlot()) == &SoundDllProcs[1]);
-    assert(WaveDeviceCreateSlot() == create_device);
-    assert(WaveDeviceReleaseSlot() == release_device);
+    assert(SoundXOrdinal1CreateSound() == create_device);
+    assert(SoundXOrdinal2DeleteSound() == release_device);
     void *device = 0;
-    assert(WaveDeviceCreateSlot()(&device, "sample.wav", 1) == 17);
+    assert(SoundXOrdinal1CreateSound()(&device, "sample.wav", 1) == 17);
     assert(device == &fake_device && creates == 1);
-    WaveDeviceReleaseSlot()(device);
+    SoundXOrdinal2DeleteSound()(device);
     assert(releases == 1);
     SoundDllProcs[1] = reinterpret_cast<void *>(alternate_release);
-    WaveDeviceReleaseSlot()(device);
+    SoundXOrdinal2DeleteSound()(device);
     assert(releases == 1 && alternate_releases == 1);
     assert(load_sound_dll() == 0 && loads == 1 && requested == 11);
 
@@ -107,7 +103,7 @@ int main() {
         assert(requested == missing && loads == 1 && frees == 1 && warnings == 0);
         assert(SoundDllModule == 0 && WaveDeviceReleaseGuard == 0);
         for (int j = 0; j < 11; ++j) assert(SoundDllProcs[j] == 0);
-        assert(WaveDeviceCreateSlot() == 0 && WaveDeviceReleaseSlot() == 0);
+        assert(SoundXOrdinal1CreateSound() == 0 && SoundXOrdinal2DeleteSound() == 0);
     }
     reset();
     fail_load = true;

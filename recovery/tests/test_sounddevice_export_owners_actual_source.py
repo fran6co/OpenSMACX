@@ -7,10 +7,10 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SLOTS = (
-    ("MidiDeviceOpen", "MidiDeviceOpenSlot", 6),
-    ("MidiDeviceClose", "MidiDeviceCloseSlot", 7),
-    ("WaveInDeviceOpen", "WaveInDeviceOpenSlot", 8),
-    ("WaveInDeviceClose", "WaveInDeviceCloseSlot", 9),
+    ("SoundXMidiDeviceCreateProc", "SoundXOrdinal7MidiDeviceCreate", 6),
+    ("SoundXMidiDeviceDeleteProc", "SoundXOrdinal8MidiDeviceDelete", 7),
+    ("SoundXWaveInDeviceCreateProc", "SoundXOrdinal9WaveInDeviceCreate", 8),
+    ("SoundXWaveInDeviceDeleteProc", "SoundXOrdinal10WaveInDeviceDelete", 9),
 )
 
 
@@ -25,13 +25,11 @@ def definition(text, signature):
     return text[start:end]
 
 
-def harness(source):
-    header = (ROOT / "src/sounddevice.h").read_text()
-    aliases = "\n".join(line for line in header.splitlines()
-                        if line.startswith("typedef ") and any(
-                            f"{name})" in line for name, _, _ in SLOTS))
-    assert aliases.count("typedef") == 4
-    helpers = "\n".join(definition(source, f"inline {name} *&{helper}()")
+def harness(source, header):
+    start = header.index("typedef int (__cdecl *SoundXCreateSoundProc)")
+    end = header.index("inline SoundXCreateSoundProc SoundXOrdinal1CreateSound()")
+    aliases = header[start:end]
+    helpers = "\n".join(definition(header, f"inline {name} {helper}()")
                         for name, helper, _ in SLOTS)
     methods = "\n".join(definition(source, f"int {owner}::{method}(")
                         for owner in ("Midi_Device", "Wave_In_Device")
@@ -40,7 +38,8 @@ def harness(source):
 #include <cassert>
 #define __cdecl
 struct SoundDeviceBase {};
-void *SoundDllProcs[11] = {};
+typedef void *SoundDllProcsTable[11];
+SoundDllProcsTable SoundDllProcs = {};
 ''' + aliases + "\n" + helpers + r'''
 struct Midi_Device {
     void *device_14_ = nullptr;
@@ -56,18 +55,18 @@ struct Wave_In_Device {
 SoundDeviceBase first, second;
 unsigned long seen_flags;
 int opens = 0, closes = 0;
-int open_first(void *slot, unsigned long flags) {
+int open_first(void **slot, unsigned long flags) {
     ++opens; seen_flags = flags;
     *static_cast<void **>(slot) = &first;
     return -7;
 }
-int open_second(void *slot, unsigned long flags) {
+int open_second(void **slot, unsigned long flags) {
     ++opens; seen_flags = flags;
     *static_cast<void **>(slot) = &second;
     return 31;
 }
-void close_first() { closes += 1; }
-void close_second() { closes += 10; }
+int close_first() { closes += 1; return -1; }
+int close_second() { closes += 10; return -2; }
 template<class Owner> void run(int open_index, int close_index) {
     for (void *&entry : SoundDllProcs) entry = nullptr;
     Owner owner;
@@ -98,12 +97,14 @@ def test_live_loader_cells_and_wrong_slot_damage(tmp_path, compiler):
     if not executable:
         pytest.skip(f"{compiler} unavailable")
     source = (ROOT / "src/sounddevice.cpp").read_text()
-    for index, mutant in enumerate([source] + [
-        source.replace(f"&SoundDllProcs[{slot}]", f"&SoundDllProcs[{slot - 1}]", 1)
-        for _, _, slot in SLOTS
-    ]):
+    header = (ROOT / "src/sound.h").read_text()
+    mutants = [header]
+    for slot, wrong_slot in ((6, 8), (7, 9), (8, 6), (9, 7)):
+        mutants.append(header.replace(f"SoundDllProcs[{slot}]",
+                                      f"SoundDllProcs[{wrong_slot}]", 1))
+    for index, mutant in enumerate(mutants):
         path = tmp_path / f"control-{index}.cpp"
-        path.write_text(harness(mutant))
+        path.write_text(harness(source, mutant))
         binary = tmp_path / f"control-{index}"
         result = subprocess.run([executable, "-std=c++17", "-Wall", "-Wextra",
                                  "-Werror", str(path), "-o", str(binary)],

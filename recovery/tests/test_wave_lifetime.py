@@ -7,7 +7,8 @@ from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_REG_ESI
 
 from match_recovery.model import Span
 from test_application_link_recovery import ROOT, references, run_recovered_harness
-from test_sound_chain_storage import CHAIN_DECLARATIONS, CHAIN_HANDLERS
+from test_sound_chain_storage import (CHAIN_DECLARATIONS, CHAIN_HANDLERS,
+                                      SOUNDX_EXPORT_DECLARATIONS)
 from test_sound_lifetime import decode
 from test_sound_virtual_surface import family
 
@@ -42,6 +43,7 @@ def run_lifetime(tmp_path, monkeypatch):
                 for anchor, unit, address in CHAIN_HANDLERS]
     run_recovered_harness(tmp_path, monkeypatch, "wave_lifetime_harness.cpp",
         [*handlers, ("// LIVE_WAVE_DESTRUCTOR", "src/wave.cpp", 0x4C67C0)], declarations=[
+            *SOUNDX_EXPORT_DECLARATIONS,
             *CHAIN_DECLARATIONS,
             ("// LIVE_WAVE_DECLARATION", "src/wave.h", "class Wave : public Sound {", "// The process-wide wave,")])
 
@@ -51,10 +53,10 @@ def test_actual_destructors_have_one_base_stage_and_correct_callback_order(tmp_p
 
 
 @pytest.mark.parametrize("unit,before,after", [
-    ("src/wave.cpp", "Wave::~Wave() {", "Wave::~Wave() { if (device_ && WaveDeviceReleaseGuard) WaveDeviceReleaseSlot()(device_);"),
+    ("src/wave.cpp", "Wave::~Wave() {", "Wave::~Wave() { if (device_ && WaveDeviceReleaseGuard) SoundXOrdinal2DeleteSound()(device_);"),
     ("src/wave.cpp", "Wave::~Wave() {", "Wave::~Wave() { this->Sound::~Sound();"),
     ("src/wave.cpp", "WaveDeviceGlobal.pull_from_group(this);", "/* missing group removal */"),
-    ("src/sound.cpp", "(WaveDeviceReleaseSlot())(device_);", "(WaveDeviceReleaseSlot())(device_); if (fname_) { operator delete(fname_); fname_ = 0; }"),
+    ("src/sound.cpp", "(SoundXOrdinal2DeleteSound())(device_);", "(SoundXOrdinal2DeleteSound())(device_); if (fname_) { operator delete(fname_); fname_ = 0; }"),
     ("src/wave.cpp", "flags_40_ &= ~2u;", "flags_40_ |= 2u;"),
 ])
 def test_lifetime_rejects_wrong_stage_duplicate_cleanup_and_order(tmp_path, monkeypatch, unit, before, after):

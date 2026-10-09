@@ -8,12 +8,15 @@ typedef unsigned int uint32_t;
 typedef int int32_t;
 typedef unsigned char uint8_t;
 typedef void *HWND;
+typedef void *HMODULE;
+// LIVE_EXPORT_ABIS
 #define protected public
 // LIVE_DEVICE_BASE_DECL
 // LIVE_FADE_DECLARATION
 // LIVE_SOUND_DECLARATION
 #undef protected
 // LIVE_CHAIN_STORAGE
+// LIVE_EXPORT_STORAGE
 // LIVE_SOUND_DOUBLES
 // LIVE_FADE_CONSTRUCTOR
 // LIVE_ATTACH

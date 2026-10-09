@@ -8,8 +8,10 @@
 typedef unsigned int uint32_t;
 typedef int int32_t;
 typedef unsigned char uint8_t;
+typedef void *HMODULE;
 #define protected public
 #define private public
+// LIVE_EXPORT_ABIS
 // LIVE_FADE_DECLARATION
 // LIVE_SOUND_DECLARATION
 // LIVE_WAVE_DECLARATION
@@ -22,6 +24,7 @@ static bool throw_group, throw_release, relink, replace_name;
 static Sound *destroying;
 static void *initial_name, *callback_name;
 static void event(int n) { assert(event_count < 32); events[event_count++] = n; }
+// LIVE_EXPORT_STORAGE
 void __cdecl operator delete(void *p) {
     if (p && p == initial_name) { ++name_frees; event(20); }
     if (p && p == callback_name) { ++callback_frees; event(21); }
@@ -101,7 +104,7 @@ int Wave_Device::pull_from_group(Wave *wave) {
     return 0;
 }
 int WaveDeviceReleaseGuard;
-static void __cdecl release_device(void *p) {
+static int __cdecl release_device(void *p) {
     assert(p == reinterpret_cast<void *>(17));
     assert(destroying->play() == 33); // Original has published Sound's table.
     assert(name_frees == 1 && destroying->fname_ == 0);
@@ -111,10 +114,8 @@ static void __cdecl release_device(void *p) {
     if (relink) destroying->Sound::attach();
     if (replace_name) destroying->fname_ = callback_name;
     if (throw_release) throw 30;
+    return 0x51;
 }
-typedef void(__cdecl func_wave_device_release)(void *);
-static func_wave_device_release *release_hook = release_device;
-inline func_wave_device_release *&WaveDeviceReleaseSlot() { return release_hook; }
 
 // LIVE_FADE_CONSTRUCTOR
 // LIVE_ATTACH
@@ -132,6 +133,7 @@ class TestSound : public Sound {
 };
 
 int main() {
+    SoundDllProcs[1] = reinterpret_cast<void *>(&release_device);
     // Normal, no-group, guard-off, no-device, group-exception, and release-exception.
     for (int scenario = 0; scenario != 6; ++scenario) {
         event_count = releases = name_frees = callback_frees = 0;

@@ -117,8 +117,7 @@ int __cdecl load_sound_dll() {
         if (SoundDllModule == 0) {
             version = 0;
         } else {
-            version = (*reinterpret_cast<func_sound_dll_version *>(
-                &SoundDllProcs[10]))();
+            version = SoundXOrdinal11Version()();
         }
         if ((version & 0xff00) != 0x100) {
             sound_version_warning("The sound header files used in the game do not match "
@@ -161,8 +160,7 @@ int __cdecl init_sound_timer(unsigned long timer, unsigned long resolution) {
     if (SoundDllModule == 0) {
         return 4;
     }
-    return (*reinterpret_cast<func_sound_dll_init *>(&SoundDllProcs[2]))(
-        timer, resolution);
+    return SoundXOrdinal3InitTimer()(timer, resolution);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -172,35 +170,33 @@ int __cdecl get_sound_version() {
     if (SoundDllModule == 0) {
         return 0;
     }
-    return static_cast<int>(
-        (*reinterpret_cast<func_sound_dll_version *>(&SoundDllProcs[10]))());
+    return static_cast<int>(SoundXOrdinal11Version()());
 }
 
 // Ordinal 1 is the device-creation callback already typed by
-// WaveDeviceCreateSlot and its Wave/Midi call sites. The image gates this
+// SoundXOrdinal1CreateSound and its Wave/Midi call sites. The image gates this
 // wrapper on the same release guard as other sound-device callbacks.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C6000 sub_4c6000 0x004C6000-0x004C602A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004c6000.cpp; docs/recovery/ghidra-functions.csv:1214; src/wave.h:WaveDeviceCreateSlot; src/wave.cpp/src/midi.cpp slot-0 calls"], "reason": "Image wrapper gates ordinal 1 on the existing wave-device release guard and forwards its three stack arguments to the already typed slot-0 device-create callback; stack cleanup matches cdecl. The same signature is exercised by Midi/Wave call sites."}
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed src/recovered/004c6000.cpp; docs/recovery/ghidra-functions.csv:1214; src/sound.h:SoundXOrdinal1CreateSound; src/wave.cpp/src/midi.cpp slot-0 calls"], "reason": "Image wrapper gates ordinal 1 on the existing wave-device release guard and forwards its three stack arguments to the typed slot-0 device-create callback; stack cleanup matches cdecl. The same signature is exercised by Midi/Wave call sites."}
 extern "C" int __cdecl sub_4c6000(void **device_slot, const char *filename,
                                   int mode) {
     if (WaveDeviceReleaseGuard == 0) {
         return 1;
     }
-    return (*WaveDeviceCreateSlot())(device_slot, filename, mode);
+    return SoundXOrdinal1CreateSound()(device_slot, filename, mode);
 }
 
-// The seed preserves the callback's EAX return. Existing Wave/Midi release
-// callers use the same slot as void(void*) and intentionally ignore EAX.
+// The seed preserves the callback's EAX return. Wave/Midi release callers
+// historically viewed this slot as void(void*); they still ignore its result.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C6030 sub_4c6030 0x004C6030-0x004C6052 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004c6030.cpp; original image disassembly 0x004C6030-0x004C6052; src/wave.h:func_wave_device_release/WaveDeviceReleaseSlot; src/midi.cpp:978-979"], "reason": "The original wrapper tests the wave release guard, pushes one 32-bit argument, calls slot 1, explicitly cleans four stack bytes, and returns callback EAX. This is int cdecl(void*); existing Wave/Midi uses the same cell as void(void*) and ignores EAX, so the distinct typed view preserves one shared cell and caller ABI."}
+// RECOVERY_BINDING: v1 {"evidence": ["historical seed src/recovered/004c6030.cpp and src/wave.h:func_wave_device_release; original image disassembly 0x004C6030-0x004C6052; src/sound.h:SoundXOrdinal2DeleteSound; src/midi.cpp:Midi::~Midi"], "reason": "The original wrapper tests the wave release guard, pushes one 32-bit argument, calls slot 1, explicitly cleans four stack bytes, and returns callback EAX. The shared contract is int cdecl(void*); Wave/Midi callers ignore EAX without changing the shared cell or calling convention."}
 extern "C" int __cdecl sub_4c6030(void *device) {
     if (WaveDeviceReleaseGuard == 0) {
         return 1;
     }
-    return (*reinterpret_cast<func_sound_dll_release_result *>(
-        &SoundDllProcs[1]))(device);
+    return SoundXOrdinal2DeleteSound()(device);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -261,18 +257,14 @@ int __cdecl release_sound() {
         return 1;
     }
 
-    // Ordinal 4 of the existing SoundDllProcs table is called with no stack
-    // arguments by the original. Its higher-level export role is unknown.
-    typedef void(__cdecl *SoundNullaryCallback)();
-    reinterpret_cast<SoundNullaryCallback>(SoundDllProcs[3])();
+    SoundXOrdinal4ReleaseSound()();
 
     while (SoundChainHead != 0) {
         Sound *sound = SoundChainHead;
         void *device = sound->device_;
         if (device != 0) {
             if (WaveDeviceReleaseGuard != 0) {
-                reinterpret_cast<func_sound_dll_release_result>(
-                    SoundDllProcs[1])(device);
+                SoundXOrdinal2DeleteSound()(device);
             }
             sound->device_ = 0;
         }

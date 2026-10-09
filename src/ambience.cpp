@@ -359,7 +359,7 @@ int Ambience::load(const char *filename) {
     if (device_) unload();
     if (!device_) {
         if (!WaveDeviceReleaseGuard) return 1;
-        const int error = (WaveDeviceCreateSlot())(&device_, found, 5);
+        const int error = SoundXOrdinal1CreateSound()(&device_, found, 5);
         if (error) return error;
     }
     // The mode5 factory produces the same Sound/Midi object chain used by

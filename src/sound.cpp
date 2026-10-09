@@ -501,7 +501,7 @@ int Sound::load(const char *fname) {
         return 1;
     }
     if (!device_) {
-        const int created = (WaveDeviceCreateSlot())(&device_, resolved, 1);
+        const int created = (SoundXOrdinal1CreateSound())(&device_, resolved, 1);
         if (created) {
             return created;
         }
@@ -755,7 +755,7 @@ Sound::~Sound() {
     }
     if (device_) {
         if (WaveDeviceReleaseGuard) {
-            (WaveDeviceReleaseSlot())(device_);
+            (SoundXOrdinal2DeleteSound())(device_);
         }
         device_ = nullptr;
     }
@@ -922,7 +922,7 @@ int __cdecl init_sound(void *window, unsigned long backends) {
         return loadResult;
     }
     if (SoundDllModule != 0) {
-        (*reinterpret_cast<func_sound_dll_init *>(&SoundDllProcs[2]))(0, 0);
+        SoundXOrdinal3InitTimer()(0, 0);
     }
     int result = WaveDeviceGlobal.init(window, backends);
     if (result != 0) {
