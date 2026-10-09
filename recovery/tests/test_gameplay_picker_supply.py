@@ -59,8 +59,8 @@ def test_controls_detect_source_damage(tmp_path, damage):
         old = "(action_flags & 1u) != 0 && (action_flags & 2u) == 0"
         new = "(action_flags & 1u) == 0 || (action_flags & 2u) != 0"
     elif damage == "early_close":
-        old = 'if (X_text_open(ClimatePopupTitle[0], "SUPPLYMENU") != 0) {\n        return 0;'
-        new = 'if (X_text_open(ClimatePopupTitle[0], "SUPPLYMENU") != 0) {\n        popup.close();\n        return 0;'
+        old = 'if (X_text_open(ScriptPopupFile, "SUPPLYMENU") != 0) {\n        return 0;'
+        new = 'if (X_text_open(ScriptPopupFile, "SUPPLYMENU") != 0) {\n        popup.close();\n        return 0;'
     elif damage == "modal_zero":
         old = "if (selected_action == 0) {\n            return 0;"
         new = "if (selected_action == 0) {\n            return 1;"

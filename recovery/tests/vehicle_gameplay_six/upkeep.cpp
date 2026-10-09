@@ -54,7 +54,6 @@ uint32_t MapLongitude = 16;
 int VehTerraformStingLatch, MapSeaLevel, GenderDefault,
     PluralityDefault, BaseFindDist;
 char *ScriptPopupFile = (char *)"SCRIPT";
-char **const ClimatePopupTitle = &ScriptPopupFile;
 char StringTemp[1032];
 int killed[16], killed_count, setup_count,
     popup_count, treaty_count, agenda_count, random_event_count,

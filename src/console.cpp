@@ -4657,8 +4657,8 @@ void Console::set_tech(int faction_id) {
 //
 // Homed 2026-09-04. The unit here measured NO_COMPILE, not MISMATCH: the
 // body only ever needed names this tree already had. The caption slot at
-// 0x00691B0C is game.h's ClimatePopupTitle - the same address, so the body
-// reuses it rather than binding a second name. The two parse_says inputs are
+// 0x00691B0C is ScriptPopupFile; older source exposed its address through the
+// ClimatePopupTitle facade, which this body no longer needs. The two parse_says inputs are
 // .data slots holding char* (0x00691870 -> "RELEASE 2.0", 0x00691874 ->
 // "20-Dec-1999"), and the two literals popp takes read straight out of the
 // image: "ac_logo_sm.pcx" at 0x0068AA7C, "VERSIONCONTROLX" at 0x0068AA8C.
@@ -4667,7 +4667,7 @@ void Console::set_tech(int faction_id) {
 void Console::show_version() {
     parse_says(0, (LPCSTR)*VersionReleaseTextSlot, -1, -1);
     parse_says(1, (LPCSTR)*VersionBuildDateSlot, -1, -1);
-    popp((LPCSTR)*ClimatePopupTitle, ConsoleStrVersionControlX, 0, ConsoleStrAcLogoSm,
+    popp(ScriptPopupFile, ConsoleStrVersionControlX, 0, ConsoleStrAcLogoSm,
          (NullCallback)0);
 }
 
@@ -9596,7 +9596,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         const char *const prompt = prompt_base_count == drones
                                        ? "BUREAUCRACY"
                                        : "BUREAUCRACY2";
-        if (popp(*ClimatePopupTitle, prompt, 0x40, "bureau_sm.pcx", nullptr) < 0) {
+        if (popp(ScriptPopupFile, prompt, 0x40, "bureau_sm.pcx", nullptr) < 0) {
             return;
         }
     }
@@ -9775,7 +9775,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
                                         : (founded_altitude >= 0x60
                                                ? "colfoun_sm.pcx"
                                                : "seabas_sm.pcx");
-        popp(*ClimatePopupTitle, "BASEFOUNDED", 0, picture, nullptr);
+        popp(ScriptPopupFile, "BASEFOUNDED", 0, picture, nullptr);
     } else {
         NetMsgPrimary.pop("BASEFOUNDED", 5000, 0, nullptr);
     }
@@ -11394,7 +11394,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
             popup.set_caller_picture(&popup.owned_picture());
         }
     }
-    if (X_text_open(ClimatePopupTitle[0], "SUPPLYMENU") != 0) {
+    if (X_text_open(ScriptPopupFile, "SUPPLYMENU") != 0) {
         return 0;
     }
 

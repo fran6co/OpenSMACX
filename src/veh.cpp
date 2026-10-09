@@ -1454,13 +1454,13 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
             ConsoleGlobal.focus(x, effect_y, 0);
             if (forest_weapon) {
                 if (vehicle.proto_id == BSC_SPORE_LAUNCHER) {
-                    popp(*ClimatePopupTitle, "SPOREFOREST", 0,
+                    popp(ScriptPopupFile, "SPOREFOREST", 0,
                          "sporlnch_sm.pcx", nullptr);
                     goto finish_destroy;
                 }
                 NetMsgPrimary.pop("ATEFOREST", 0x1388, 0, nullptr);
             } else if (vehicle.proto_id == BSC_SPORE_LAUNCHER) {
-                popp(*ClimatePopupTitle, "SPORESLAUNCHED", 0,
+                popp(ScriptPopupFile, "SPORESLAUNCHED", 0,
                      "sporlnch_sm.pcx", nullptr);
                 goto finish_destroy;
             } else {
@@ -3514,7 +3514,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         const char *picture = ai ? "al_drop_sm.pcx" : "airdp_sm.pcx";
         const char *message = drop_range(faction) <= Rules.max_airdrop_sans_orb_insert
             ? "MADEAIRDROP" : "MADEORBITAL";
-        popp(*ClimatePopupTitle, message, 0, picture, nullptr);
+        popp(ScriptPopupFile, message, 0, picture, nullptr);
     }
 
     vehicle.state |= 0x20;
@@ -3652,7 +3652,7 @@ void __cdecl monolith(int veh_id) {
         }
     } else if (IsMultiplayerNet == 0 && (GameDataStateStorage.fields_.game_more_preferences_ & 0x800u) == 0) {
         g_FX.play(6);
-        const int choice = popp(*ClimatePopupTitle, "MONOLITH", 0,
+        const int choice = popp(ScriptPopupFile, "MONOLITH", 0,
                                 "monolith_sm.pcx", 0);
         g_FX.stop(6);
         if (choice == 2) {
@@ -10222,8 +10222,8 @@ Purpose: Open a popup with the climate title and a body, no buttons.
 // HOMED from src/recovered/0050b970.cpp, 2026-09-04 - its archive-only
 // BYTE_EXACT claim re-earned in the TU. A third popp overload beside temp.h's
 // five-argument one; C++ overloading gives the pair the two symbols the image
-// carries. `ClimatePopupTitle` is the title the image reads at 0x00691B0C and
-// lives in game.h for exactly that reason.
+// carries. ScriptPopupFile is the mutable title pointer the image reads at
+// 0x00691B0C; older source exposed it through ClimatePopupTitle in game.h.
 // symbol    ?popp@@YAHPBD0P6AHXZ@Z
 //           The image spells its two const char * parameters out; VC6
 //           12.00.8168 back-references the repeat to PBD0 for the identical
@@ -10233,7 +10233,7 @@ Return Value: whatever the five-argument popp returns.
 Status: BYTE_EXACT.
 */
 int __cdecl popp(const char *label, const char *body, int(__cdecl *callback)()) {
-    return popp((char *)*ClimatePopupTitle, label, 0, body, callback);
+    return popp(ScriptPopupFile, label, 0, body, callback);
 }
 
 /*
@@ -11509,8 +11509,8 @@ void __cdecl sub_500380(int faction_id, int x, int y) {
 }
 
 // 0x00691B0C holds the address of the popup title the obliteration report
-// shares with the climate popup - game.h binds the same slot as
-// ClimatePopupTitle, so this body reads the title through it.
+// shares with the climate popup - game.h owns ScriptPopupFile for that slot;
+// the former ClimatePopupTitle facade no longer mediates this read.
 // The other four are the phrase keys and the portrait the two report popups
 // take: the obliterator's own faction gets the plain pair, everyone else the
 // "2" pair the game uses for a faction hearing about another faction's act.
@@ -11587,10 +11587,10 @@ void __cdecl action_oblit(int veh_id, int base_id) {
     draw_map(1);
 
     if ((int)veh_faction == ConsoleGlobal.faction_id_) {
-        popp((char *)*ClimatePopupTitle, VehLabelOBLITTED, 0,
+        popp(ScriptPopupFile, VehLabelOBLITTED, 0,
              VehIconBASEOBL_SM_PCX, 0);
     } else if ((int)base_former == ConsoleGlobal.faction_id_ || audible) {
-        popp((char *)*ClimatePopupTitle, VehLabelOBLITTED2, 0,
+        popp(ScriptPopupFile, VehLabelOBLITTED2, 0,
              VehIconBASEOBL2_SM_PCX, 0);
     }
 
@@ -11638,15 +11638,15 @@ void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) 
         else --PlayersData[target].satellites_[type];
         ++PlayersData[attacker].sat_odp_deployed;
         if (attacker == ConsoleGlobal.faction_id_)
-            popp(reinterpret_cast<char *>(*ClimatePopupTitle), "WEKILLEDIT", 0, "satbat_sm.pcx", 0);
+            popp(ScriptPopupFile, "WEKILLEDIT", 0, "satbat_sm.pcx", 0);
         else if (target == ConsoleGlobal.faction_id_)
-            popp(reinterpret_cast<char *>(*ClimatePopupTitle), "THEYKILLEDIT", 0, "satbat_sm.pcx", 0);
+            popp(ScriptPopupFile, "THEYKILLEDIT", 0, "satbat_sm.pcx", 0);
     } else {
         --PlayersData[attacker].satellites_[3];
         if (attacker == ConsoleGlobal.faction_id_)
-            popp(reinterpret_cast<char *>(*ClimatePopupTitle), "WEMUFFEDIT", 0, "satbat_sm.pcx", 0);
+            popp(ScriptPopupFile, "WEMUFFEDIT", 0, "satbat_sm.pcx", 0);
         else if (target == ConsoleGlobal.faction_id_)
-            popp(reinterpret_cast<char *>(*ClimatePopupTitle), "THEYMUFFEDIT", 0, "satbat_sm.pcx", 0);
+            popp(ScriptPopupFile, "THEYMUFFEDIT", 0, "satbat_sm.pcx", 0);
     }
     if (ReportIfGlobal.field_8_ == 6 && IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5)
         ReportIfGlobal.on_redraw();
@@ -13966,7 +13966,7 @@ void __cdecl action_tectonic(int vehicle_id, int x, int y) {
         PluralityDefault = Players[attacker].is_noun_plural;
         parse_says(2, Players[attacker].noun_faction, -1, -1);
         parse_says(3, Bases[base_id].name_string, -1, -1);
-        popp(*ClimatePopupTitle, "TECTONICMISSILE", 0,
+        popp(ScriptPopupFile, "TECTONICMISSILE", 0,
              "tectonic_sm.pcx", nullptr);
     }
 
@@ -14016,7 +14016,7 @@ void __cdecl action_tectonic(int vehicle_id, int x, int y) {
             GenderDefault = Players[Vehs[vehicle_id].faction_id].noun_gender;
             PluralityDefault = Players[Vehs[vehicle_id].faction_id].is_noun_plural;
             parse_says(3, Players[Vehs[vehicle_id].faction_id].noun_faction, -1, -1);
-            popp(*ClimatePopupTitle, "TECMOFIED", 0,
+            popp(ScriptPopupFile, "TECMOFIED", 0,
                  "tectonic_sm.pcx", nullptr);
         }
         ++TectonicDetonationCount[Vehs[vehicle_id].faction_id];
@@ -14050,7 +14050,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
         PluralityDefault = Players[attacker].is_noun_plural;
         parse_says(2, Players[attacker].noun_faction, -1, -1);
         parse_says(3, Bases[local_base].name_string, -1, -1);
-        popp(*ClimatePopupTitle, "FUNGALMISSILE", 0,
+        popp(ScriptPopupFile, "FUNGALMISSILE", 0,
              "fungpayld_sm.pcx", nullptr);
     }
     for (int neighbor_index = 0; neighbor_index < nearby_tile_count; ++neighbor_index) {
@@ -14152,7 +14152,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
         GenderDefault = Players[Vehs[vehicle_id].faction_id].noun_gender;
         PluralityDefault = Players[Vehs[vehicle_id].faction_id].is_noun_plural;
         parse_says(3, Players[Vehs[vehicle_id].faction_id].noun_faction, -1, -1);
-        popp(*ClimatePopupTitle, "FUNGMOTIZED", 0,
+        popp(ScriptPopupFile, "FUNGMOTIZED", 0,
              "fungpayld_sm.pcx", nullptr);
     }
 }
@@ -14225,24 +14225,24 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 if (fungal_attack == 0) {
                     if (defender == ConsoleGlobal.faction_id_) {
                         parse_says(1, Players[attacker].adj_name_faction, -1, -1);
-                        popp(*ClimatePopupTitle, "TWESHOTIT2", 0,
+                        popp(ScriptPopupFile, "TWESHOTIT2", 0,
                              "space_sm.pcx", nullptr);
                     } else {
                         if (attacker != ConsoleGlobal.faction_id_) return 1;
                         const int base_faction = Bases[neighbor_base].faction_id_current;
                         parse_says(1, Players[base_faction].adj_name_faction, -1, -1);
-                        popp(*ClimatePopupTitle, "TTHEYSHOTIT2", 0,
+                        popp(ScriptPopupFile, "TTHEYSHOTIT2", 0,
                              "space_sm.pcx", nullptr);
                     }
                 } else if (defender == ConsoleGlobal.faction_id_) {
                     parse_says(1, Players[attacker].adj_name_faction, -1, -1);
-                    popp(*ClimatePopupTitle, "FWESHOTIT2", 0,
+                    popp(ScriptPopupFile, "FWESHOTIT2", 0,
                          "space_sm.pcx", nullptr);
                 } else {
                     if (attacker != ConsoleGlobal.faction_id_) return 1;
                     const int base_faction = Bases[neighbor_base].faction_id_current;
                     parse_says(1, Players[base_faction].adj_name_faction, -1, -1);
-                    popp(*ClimatePopupTitle, "FTHEYSHOTIT2", 0,
+                    popp(ScriptPopupFile, "FTHEYSHOTIT2", 0,
                          "space_sm.pcx", nullptr);
                 }
                 return 1;
@@ -14257,12 +14257,12 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
         if (has_flechette_defense) {
             if (defender == ConsoleGlobal.faction_id_) {
                 parse_says(1, Players[attacker].adj_name_faction, -1, -1);
-                popp(*ClimatePopupTitle, "WEFAILEDFLECHETTE", 0,
+                popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0,
                      "space_sm.pcx", nullptr);
             } else {
                 if (attacker != ConsoleGlobal.faction_id_) return 0;
                 parse_says(1, Players[defender].adj_name_faction, -1, -1);
-                popp(*ClimatePopupTitle, "THEYFAILEDFLECHETTE", 0,
+                popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0,
                      "space_sm.pcx", nullptr);
             }
         }
@@ -14280,7 +14280,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 const int base_id = base_find(x, y);
                 parse_says(0, Bases[base_id].name_string, -1, -1);
                 parse_says(1, Players[attacker].adj_name_faction, -1, -1);
-                const int dismissed = popp(*ClimatePopupTitle,
+                const int dismissed = popp(ScriptPopupFile,
                     fungal_attack == 0 ? "TECTONICSAC" : "FUNGALSAC",
                     0, "space_sm.pcx", nullptr);
                 failed_prompt_dismissed = dismissed != 0;
@@ -14288,18 +14288,18 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 GenderDefault = Players[defender].noun_gender;
                 PluralityDefault = Players[defender].is_noun_plural;
                 parse_says(0, Players[defender].noun_faction, -1, -1);
-                popp(*ClimatePopupTitle, "THEYMUSTSAC", 0,
+                popp(ScriptPopupFile, "THEYMUSTSAC", 0,
                      "space_sm.pcx", nullptr);
             }
         } else if (defender == ConsoleGlobal.faction_id_) {
-            popp(*ClimatePopupTitle,
+            popp(ScriptPopupFile,
                  fungal_attack == 0 ? "TWEMUSTSAC" : "FWEMUSTSAC",
                  0, "space_sm.pcx", nullptr);
         } else if (attacker == ConsoleGlobal.faction_id_) {
             GenderDefault = Players[defender].noun_gender;
             PluralityDefault = Players[defender].is_noun_plural;
             parse_says(0, Players[defender].noun_faction, -1, -1);
-            popp(*ClimatePopupTitle, "THEYMUSTSAC", 0,
+            popp(ScriptPopupFile, "THEYMUSTSAC", 0,
                  "space_sm.pcx", nullptr);
         }
     }
@@ -14308,12 +14308,12 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
         if (has_flechette_defense) {
             if (defender == ConsoleGlobal.faction_id_) {
                 parse_says(1, Players[attacker].adj_name_faction, -1, -1);
-                popp(*ClimatePopupTitle, "WEFAILEDFLECHETTE", 0,
+                popp(ScriptPopupFile, "WEFAILEDFLECHETTE", 0,
                      "space_sm.pcx", nullptr);
             } else {
                 if (attacker != ConsoleGlobal.faction_id_) return 0;
                 parse_says(1, Players[defender].adj_name_faction, -1, -1);
-                popp(*ClimatePopupTitle, "THEYFAILEDFLECHETTE", 0,
+                popp(ScriptPopupFile, "THEYFAILEDFLECHETTE", 0,
                      "space_sm.pcx", nullptr);
             }
         }
@@ -14344,22 +14344,22 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
     if (fungal_attack == 0) {
         if (defender == ConsoleGlobal.faction_id_) {
             parse_says(1, Players[attacker].adj_name_faction, -1, -1);
-            popp(*ClimatePopupTitle, "TWESHOTIT", 0,
+            popp(ScriptPopupFile, "TWESHOTIT", 0,
                  "space_sm.pcx", nullptr);
         } else {
             if (attacker != ConsoleGlobal.faction_id_) return 1;
             parse_says(1, Players[defender].adj_name_faction, -1, -1);
-            popp(*ClimatePopupTitle, "TTHEYSHOTIT", 0,
+            popp(ScriptPopupFile, "TTHEYSHOTIT", 0,
                  "space_sm.pcx", nullptr);
         }
     } else if (defender == ConsoleGlobal.faction_id_) {
         parse_says(1, Players[attacker].adj_name_faction, -1, -1);
-        popp(*ClimatePopupTitle, "FWESHOTIT", 0,
+        popp(ScriptPopupFile, "FWESHOTIT", 0,
              "space_sm.pcx", nullptr);
     } else {
         if (attacker != ConsoleGlobal.faction_id_) return 1;
         parse_says(1, Players[defender].adj_name_faction, -1, -1);
-        popp(*ClimatePopupTitle, "FTHEYSHOTIT", 0,
+        popp(ScriptPopupFile, "FTHEYSHOTIT", 0,
              "space_sm.pcx", nullptr);
     }
     return 1;
@@ -15462,7 +15462,7 @@ int __cdecl study_artifact(int veh_id) {
 
     if (faction_id == ConsoleGlobal.faction_id_) {
         g_FX.play(0x23);
-        popp(*ClimatePopupTitle, message, 0, "art_dis_sm.pcx", 0);
+        popp(ScriptPopupFile, message, 0, "art_dis_sm.pcx", 0);
     }
 
     PlayerData &faction_data = PlayersData[faction_id];

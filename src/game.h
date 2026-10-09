@@ -446,12 +446,10 @@ MEASURED inline int __cdecl energy_limit(int) {
     return 10;
 }
 
-// Original691B0C is the shared script-file pointer cell, initially pointing
-// at SCRIPT text691B7C. Keep the transitional address-of-cell facade typed;
-// neither the cell nor its pointee is an executable-address alias anymore.
+// Original691B0C is the mutable shared script-file pointer cell, initially
+// pointing at SCRIPT text691B7C. Consumers read this cell through ScriptPopupFile.
 extern char ScriptPopupFileText[];
 extern char *ScriptPopupFile;
-char **const ClimatePopupTitle = &ScriptPopupFile;
 
 // The faction-pact captions and the "whose turn is it" test the net turn loop
 // asks. All three are homed originals, defined in game.cpp.

@@ -142,8 +142,6 @@ static int GenderDefault;
 static int PluralityDefault;
 static char StringTemp[1032];
 static char ScriptPopupFile[] = "SCRIPT.txt";
-static char *ScriptPopupCaption = ScriptPopupFile;
-static char **const ClimatePopupTitle = &ScriptPopupCaption;
 static char *const DiploLabelMAJORATROCITY = (char *)"MAJORATROCITY";
 static char *const DiploLabelCouncilSmPcx = (char *)"council_sm.pcx";
 static ConsoleHostProjection ConsoleGlobal;

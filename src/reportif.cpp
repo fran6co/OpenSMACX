@@ -2485,7 +2485,7 @@ void ReportIf::draw_sat() {
         strcpy(paragraph, ReportSatelliteScratchUpperText);
         strcpy(line, ReportSatelliteScratchUpperLine);
         StringTemp[0] = 0; strcat(StringTemp, "SAT0");
-        if (X_text_open(reinterpret_cast<char *>(*ClimatePopupTitle), StringTemp)) {
+        if (X_text_open(ScriptPopupFile, StringTemp)) {
             text_close();
         } else {
             buffer->set_font(field_1E184_, 0, 0, 0);
@@ -2560,7 +2560,7 @@ void ReportIf::draw_sat() {
         strcpy(paragraph, ReportSatelliteScratchLowerText);
         strcpy(line, ReportSatelliteScratchLowerLine);
         StringTemp[0] = 0; strcat(StringTemp, "SAT1");
-        if (X_text_open(reinterpret_cast<char *>(*ClimatePopupTitle), StringTemp)) {
+        if (X_text_open(ScriptPopupFile, StringTemp)) {
             text_close();
         } else {
             buffer->set_font(field_1E184_, 0, 0, 0);

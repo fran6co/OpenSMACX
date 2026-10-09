@@ -423,7 +423,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
         return 0;
     parse_says(0, BaseCurrent->name_string, -1, -1);
     parse_say(1, reinterpret_cast<int>(Facility[facility].name), -1, -1);
-    const int selection = popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "FACMENU", 0,
+    const int selection = popp(ScriptPopupFile, "FACMENU", 0,
         (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
     if (!selection) return 0;
     if (selection == 1) {
@@ -431,13 +431,13 @@ int BaseWin::facilities_click(int facility, int, int, int) {
         return 0;
     }
     if (facility >= 70) {
-        popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "NOTPROJECT", 0, "secproj_sm.pcx", 0);
+        popp(ScriptPopupFile, "NOTPROJECT", 0, "secproj_sm.pcx", 0);
         return 0;
     }
     int offset, mask;
     if (facility < 65) bitmask(facility, &offset, &mask);
     if (facility >= 65 || !(Bases[BaseIDCurrentSelected].facilities_built[offset] & (uint8_t)mask)) {
-        popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "DONTHAVEFAC", 0,
+        popp(ScriptPopupFile, "DONTHAVEFAC", 0,
             (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
         return 0;
     }
@@ -447,17 +447,17 @@ int BaseWin::facilities_click(int facility, int, int, int) {
     }
     if ((BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) {
         parse_says(0, BaseCurrent->name_string, -1, -1);
-        popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "ONERECYCLE", 0,
+        popp(ScriptPopupFile, "ONERECYCLE", 0,
             (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
         return 0;
     }
     if (facility == 1) {
-        popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "HQRECYCLE", 0,
+        popp(ScriptPopupFile, "HQRECYCLE", 0,
             (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
         return 0;
     }
     if (facility == 26 && (map_tiles()[BaseCurrent->y * MapLongitude + (BaseCurrent->x >> 1)].contour & 0xE0) < 0x60) {
-        popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "PRESSURERECYCLE", 0,
+        popp(ScriptPopupFile, "PRESSURERECYCLE", 0,
             (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
         return 0;
     }
@@ -467,7 +467,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
         if ((kind == 2 || (kind == 12 && has_tech(Facility[granted].preq_tech, faction)))
             && facility == granted) {
             parse_say(1, reinterpret_cast<int>(Facility[facility].name), -1, -1);
-            popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "FREERECYCLE", 0,
+            popp(ScriptPopupFile, "FREERECYCLE", 0,
                 (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
             return 0;
         }
@@ -502,7 +502,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
         proceeds = 0;
         strcat(StringTemp, "0");
     }
-    if (!popp(reinterpret_cast<const char *>(*ClimatePopupTitle), StringTemp, 0,
+    if (!popp(ScriptPopupFile, StringTemp, 0,
         (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0)) {
         BaseComputedID = -1;
         base_compute(0);
@@ -1104,7 +1104,7 @@ void BaseWin::staple_the_bastards() {
     parse_says(0, BaseCurrent->name_string, -1, -1);
     const int police = PlayersData[faction].soc_effect_active.values_[SocialEffect::POLICE]
         + has_fac(0x23, BaseIDCurrentSelected, 0) * 2;
-    const char *caption = reinterpret_cast<const char *>(*ClimatePopupTitle);
+    const char *caption = ScriptPopupFile;
     if (police < 0) {
         popp(caption, "NERVESTAPLEHELLNO", 0, alien ? "Alopdir.pcx" : "talent_sm.pcx", nullptr);
         return;

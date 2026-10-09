@@ -426,7 +426,6 @@ int BaseIDCurrentSelected;
 Map tile;
 char popup_title[] = "TITLE";
 char *ScriptPopupFile = popup_title;
-char **const ClimatePopupTitle = &ScriptPopupFile;
 Base entry_base, after_veh_cost, after_cost_factor, after_map_loc;
 Base after_at_goal, after_final_cost;
 int at_goal_args[4], at_goal_result;

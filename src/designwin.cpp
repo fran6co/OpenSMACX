@@ -922,14 +922,14 @@ void DesignWin::on_button_clicked(int button_id) {
 
         const int answer = alien_rules
             ? (active_count != 0
-                ? popp(*ClimatePopupTitle, "RETIRETYPE", 0,
+                ? popp(ScriptPopupFile, "RETIRETYPE", 0,
                        "alunit_sm.pcx", pop_wait)
-                : popp(*ClimatePopupTitle, "RETIRETYPE2", 0,
+                : popp(ScriptPopupFile, "RETIRETYPE2", 0,
                        "alunit_sm.pcx", pop_wait))
             : (active_count != 0
-                ? popp(*ClimatePopupTitle, "RETIRETYPE", 0,
+                ? popp(ScriptPopupFile, "RETIRETYPE", 0,
                        "unit_sm.pcx", pop_wait)
-                : popp(*ClimatePopupTitle, "RETIRETYPE2", 0,
+                : popp(ScriptPopupFile, "RETIRETYPE2", 0,
                        "unit_sm.pcx", pop_wait));
         if (answer == 0) {
             return;
@@ -991,9 +991,9 @@ void DesignWin::on_button_clicked(int button_id) {
         const bool alien_rules =
             (Players[static_cast<int>(factionID_)].rule_flags & 0x80) != 0;
         const int answer = alien_rules
-            ? popp(*ClimatePopupTitle, "RETIREALL", 0,
+            ? popp(ScriptPopupFile, "RETIREALL", 0,
                    "alunit_sm.pcx", 0)
-            : popp(*ClimatePopupTitle, "RETIREALL", 0,
+            : popp(ScriptPopupFile, "RETIREALL", 0,
                    "unit_sm.pcx", 0);
         if (answer == 0) {
             return;
@@ -1169,10 +1169,10 @@ void DesignWin::on_button_clicked(int button_id) {
 
         if (match_count == 0) {
             if ((Players[faction].rule_flags & 0x80) != 0) {
-                popp(*ClimatePopupTitle, "NOUPGRADE", 0, "alunit_sm.pcx",
+                popp(ScriptPopupFile, "NOUPGRADE", 0, "alunit_sm.pcx",
                      pop_wait);
             } else {
-                popp(*ClimatePopupTitle, "NOUPGRADE", 0, "unit_sm.pcx",
+                popp(ScriptPopupFile, "NOUPGRADE", 0, "unit_sm.pcx",
                      pop_wait);
             }
             return;
@@ -1213,10 +1213,10 @@ void DesignWin::on_button_clicked(int button_id) {
 
         if (has_local_units) {
             if ((Players[faction].rule_flags & 0x80) != 0) {
-                popp(*ClimatePopupTitle, "YESUPGRADE", 0, "alunit_sm.pcx",
+                popp(ScriptPopupFile, "YESUPGRADE", 0, "alunit_sm.pcx",
                      pop_wait);
             } else {
-                popp(*ClimatePopupTitle, "YESUPGRADE", 0, "unit_sm.pcx",
+                popp(ScriptPopupFile, "YESUPGRADE", 0, "unit_sm.pcx",
                      pop_wait);
             }
         }
@@ -1271,9 +1271,9 @@ void DesignWin::on_button_clicked(int button_id) {
 
     if (DesignConsiderOverride <= 1) {
         if ((Players[static_cast<int>(factionID_)].rule_flags & 0x80) != 0) {
-            popp(*ClimatePopupTitle, "NOPRESET", 0, "alunit_sm.pcx", pop_wait);
+            popp(ScriptPopupFile, "NOPRESET", 0, "alunit_sm.pcx", pop_wait);
         } else {
-            popp(*ClimatePopupTitle, "NOPRESET", 0, "unit_sm.pcx", pop_wait);
+            popp(ScriptPopupFile, "NOPRESET", 0, "unit_sm.pcx", pop_wait);
         }
         g_FX.play(0x27);
     } else {

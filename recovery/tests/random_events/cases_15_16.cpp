@@ -60,8 +60,7 @@ static Veh Vehs[16];
 static FacilityData Facility[16];
 static int DustCloudDuration;
 static char script_popup_title[] = "SCRIPT";
-static char *script_popup_title_pointer = script_popup_title;
-static char **ClimatePopupTitle = &script_popup_title_pointer;
+static char *ScriptPopupFile = script_popup_title;
 static int VehCurrentCount;
 static const int RadiusOffsetX[49] = {
     0, 1, 2, 1, 0, -1, -2, -1, 0, 2, 2, -2, -2, 1, 3, 3, 1, -1, -3, -3,

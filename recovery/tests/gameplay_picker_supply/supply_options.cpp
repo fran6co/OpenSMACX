@@ -88,7 +88,7 @@ RulesFacility Facility[134]; PlayerData PlayersData[8]; Player Players[8];
 ConsoleGlobalType ConsoleGlobal; NetMsgMock NetMsgPrimary;
 uint32_t LockEnableMask=0xFF; BOOL MapIsFlat=1; uint32_t MapLongitude=80,
     MapLongitudeBounds=160; int PopupModalState=0,IsMultiplayerNet=0;
-char PopupStartCaption[32]; char *ClimatePopupTitle[1]={PopupStartCaption};
+char PopupStartCaption[32]; char *ScriptPopupFile=PopupStartCaption;
 char StringTemp[1032], localized[64], parsed_template[64];
 LPSTR TextBufferGetPtr=localized;
 int facility_parse_calls=0,text_reads=0,cost_calls=0,mutate_cost_proto=0;

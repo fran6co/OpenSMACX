@@ -40,7 +40,7 @@ struct Console { int faction_id_; } ConsoleGlobal;
 int GenderDefault,PluralityDefault;
 struct FacilityRow { char *name; } Facility[69];
 char title[]="title", facility[]="facility";
-char *title_pointer=title; char **ClimatePopupTitle=&title_pointer;
+char *ScriptPopupFile=title;
 struct Report { int field_8_; void on_redraw() {} } ReportIfGlobal;
 int IfaceIdToSlotStorage[8],ActiveIfaceIdStorage;
 const char *slots[8]; int slot_calls[8]; int crosses;

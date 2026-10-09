@@ -3331,7 +3331,7 @@ void NetWin::on_button_clicked(int clicked_id) {
         ready = 0;
 
         if (slot != slot_count &&
-            x_pop_caption_label((char *)*ClimatePopupTitle, "NOTALLREADY",
+            x_pop_caption_label(ScriptPopupFile, "NOTALLREADY",
                                 0) != 0) {
             return;
         }
@@ -3356,7 +3356,7 @@ void NetWin::on_button_clicked(int clicked_id) {
                     }
                     if (scan == scan_count ||
                         owner != NetWinLobbyRows[scan].owner_) {
-                        x_pop_caption_label((char *)*ClimatePopupTitle,
+                        x_pop_caption_label(ScriptPopupFile,
                                             "PASSWORDSNOTVALIDATED", 0);
                         NetWinLobbyLeavePacket packet;
                         packet.header_.opcode_ = 0x0E;

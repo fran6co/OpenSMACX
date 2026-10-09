@@ -1240,7 +1240,7 @@ int __cdecl popp(LPCSTR caption, LPCSTR label, int flags, LPCSTR picture,
                  int (__cdecl *callback)()) {
     Popup popup;
     char *alternative = nullptr;
-    if (strcmp(caption, *reinterpret_cast<char *const *>(ClimatePopupTitle)) == 0
+    if (strcmp(caption, ScriptPopupFile) == 0
         || strcmp(caption, "SCRIPT.txt") == 0) {
         if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
             if (ExpansionEnabled) {
@@ -1887,7 +1887,8 @@ int Popup::on_link_clicked(int id, char *link) {
 //
 // PRESERVED UNIT - measured MISMATCH. Scaffold preamble stripped by hand
 // 2026-09-06: the body below is spelled against the real BasePop / Player
-// declarations and the tree's own names - ClimatePopupTitle, LocalFaction,
+// declarations and the tree's own names - ScriptPopupFile (formerly exposed
+// through ClimatePopupTitle), LocalFaction,
 // ExpansionEnabled, PopupDialogFactionID, Players[].rule_flags - so the homing
 // carries no fixed-slot bindings and no cast of this. It is the member twin of
 // X_pop (xpops.cpp), which identified the same gate: only an expansion alien
@@ -1909,7 +1910,7 @@ int Popup::on_link_clicked(int id, char *link) {
 
 int Popup::start(char *text_file, const char *text_label, int value,
                  char *override_text, int flags, GraphicWin *owner_window) {
-    if (strcmp(text_file, *reinterpret_cast<char *const *>(ClimatePopupTitle)) == 0
+    if (strcmp(text_file, ScriptPopupFile) == 0
         || strcmp(text_file, PopupStartModTag) == 0) {
         if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
             if (ExpansionEnabled == 0) {

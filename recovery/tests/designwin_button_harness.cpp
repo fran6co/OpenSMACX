@@ -45,7 +45,6 @@ static uint32_t UpgradePromptAnswered;
 static char StringTemp[1032];
 static char PopupStartCaption[256];
 static char *ScriptPopupFile = const_cast<char *>("SCRIPT");
-static char **const ClimatePopupTitle = &ScriptPopupFile;
 static uint32_t DesignConsiderAbilities;
 static int DesignConsiderPrototype;
 static int DesignConsiderWeapon;

@@ -78,8 +78,7 @@ NetWinSessionBlock NetWinSessionData = {};
 NetWinSessionOptionsState NetWinSessionOptions = {};
 int NetWinPlayerId = 7;
 int NetWinOtherPlayerId = 8;
-std::uintptr_t popup_title = 0;
-std::uintptr_t *ClimatePopupTitle = &popup_title;
+char *ScriptPopupFile = nullptr;
 int popup_result = 0;
 int popup_calls = 0;
 int x_pop_caption_label(char *, const char *, int) {

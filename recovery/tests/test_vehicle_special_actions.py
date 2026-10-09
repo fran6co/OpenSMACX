@@ -308,8 +308,7 @@ struct Player {
 int GenderDefault, PluralityDefault;
 int ConsoleFaction=2, IsMultiplayerNet, LockEnableMask;
 struct Console { int faction_id_; } ConsoleGlobal;
-char PopupTitle[]="EVENT"; char *PopupTitlePointer=PopupTitle;
-char **ClimatePopupTitle=&PopupTitlePointer;
+char PopupTitle[]="EVENT"; char *ScriptPopupFile=PopupTitle;
 int parse_count, parse_num_count, popup_count, popup_result;
 int parse_slots[16], parsed_numbers[8]; const char *parse_text[16], *popup_label;
 bool mutate_inventory_callbacks, zero_inventory_on_sacrifice;
@@ -2183,7 +2182,7 @@ int last_shoot_attacker=-1;
 int rand_script[8], rand_count, rand_index, whom_at=-1, territory_result=-1, scripted_shot;
 int UnkBitfield1; uint32_t TectonicDetonationCount[8];
 int GenderDefault, PluralityDefault; char PopupTitleText[]="EVENT";
-char *PopupTitle=PopupTitleText; char **ClimatePopupTitle=&PopupTitle;
+char *ScriptPopupFile=PopupTitleText;
 int rand() { if(rand_index>=rand_count) std::exit(91); return rand_script[rand_index++]; }
 bool on_map(int x,int y) { return x>=0&&x<MapLongitudeBounds&&y>=0&&y<MapLatitudeBounds; }
 int xrange(int x) { return x; }

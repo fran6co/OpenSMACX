@@ -2886,7 +2886,8 @@ void __cdecl compute_score(int, int *, int *, int);
 void __cdecl diplomacy_check(int, int, int);
 int __cdecl most_objectives(int *, int *);
 // compute_score/diplomacy_check remain seed-only dependencies requiring owner
-// integration. ClimatePopupTitle is an existing legacy storage seam.
+// integration. ScriptPopupFile is the mutable pointer cell formerly exposed
+// through the ClimatePopupTitle facade.
 
 static void report_topic_number(int n) {
     char number[80];
@@ -3122,7 +3123,7 @@ void ReportWin::draw_score() {
     --title.bottom;
     canvas.write_cent_l(StringTemp, &title, strlen(StringTemp));
     compute_score(faction, 0, 0, 0);
-    if (X_text_open(reinterpret_cast<char *>(*ClimatePopupTitle), "SCORING")) return;
+    if (X_text_open(ScriptPopupFile, "SCORING")) return;
     rect1_.left = body.left + 4;
     rect1_.top = body.top + 4;
     rect1_.right = body.right - body.left - 8;
@@ -3269,7 +3270,7 @@ void ReportWin::draw_score() {
                 if (num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000) < target) continue;
                 if (!(factions_status_byte(0) & (1 << other)) && (GameDataStateStorage.fields_.game_rules_ & 0x80000)) continue;
                 const char *section = outcome > 1 ? "DRAWSTRING" : outcome ? "WINSTRING2" : "WINSTRING";
-                if (X_text_open(reinterpret_cast<char *>(*ClimatePopupTitle), section)) break;
+                if (X_text_open(ScriptPopupFile, section)) break;
                 text_get();
                 PluralityDefault = 0; GenderDefault = Players[other].is_leader_female;
                 parse_says(0, Players[other].title_leader, -1, -1);
@@ -3718,14 +3719,14 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
     if (attacker == target || target < 1) return;
     if (!PlayersData[attacker].satellites_[3]) {
         if (attacker == ConsoleGlobal.faction_id_)
-            popp(reinterpret_cast<const char *>(*ClimatePopupTitle),
+            popp(ScriptPopupFile,
                  "NOKILLERS", 0, "space_sm.pcx", 0);
         return;
     }
     if (static_cast<int>(PlayersData[attacker].sat_odp_deployed)
         >= static_cast<int>(PlayersData[attacker].satellites_[3])) {
         if (attacker == ConsoleGlobal.faction_id_)
-            popp(reinterpret_cast<const char *>(*ClimatePopupTitle),
+            popp(ScriptPopupFile,
                  "KILLERSDEPLOYED", 0, "space_sm.pcx", 0);
         return;
     }

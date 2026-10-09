@@ -615,9 +615,10 @@ Purpose: Find a player's name by key, or nothing.
          0x10 rather than by the loop simply ending: `cmp eax,0x10` is
          repeated after the loop for exactly that reason.
 
-         Reached by raw offset, as this file's header requires: the layout is
-         not established and this function is not evidence enough to establish
-         it - it only shows that something 0x58 bytes wide lives at 0x154.
+         The current NetPlayer layout proves the searched key at +0 and the
+         returned name at +0x15 in each 0x58-byte entry. This method uses the
+         existing typed players_ array while retaining the original
+         post-loop miss test and first-match behavior.
 
 // ORIGINAL: 0x00631A20 ?get_player_name@Net@@QAEPADK@Z 0x00631A20-0x00631A55 BYTE_EXACT
 // size      53 bytes
@@ -630,7 +631,6 @@ Return Value: a pointer to the name, or nullptr
 Status: Complete
 */
 char *Net::get_player_name(unsigned long key) {
-    uint8_t *const bytes = reinterpret_cast<uint8_t *>(this);
     // A `for`, WITH THE MISS DETECTED AFTER THE LOOP. The image's loop
     // tests only the key match inline (`cmp [edx], esi / je found`); the
     // `index == 0x10` check that decides found-vs-not happens once, AFTER
@@ -638,17 +638,14 @@ char *Net::get_player_name(unsigned long key) {
     // from inside the loop body folds that second compare away.
     int index;
     for (index = 0; index < 0x10; ++index) {
-        uint32_t candidate;
-        std::memcpy(&candidate, bytes + 0x154 + index * 0x58,
-                    sizeof(candidate));
-        if (candidate == key) {
+        if (players_[index].field_0_ == key) {
             break;
         }
     }
     if (index == 0x10) {
         return nullptr;
     }
-    return reinterpret_cast<char *>(bytes + 0x169 + index * 0x58);
+    return players_[index].name_and_tail_;
 }
 
 
@@ -1741,22 +1738,18 @@ int Net::init(_GUID *guid, int option_a, int option_b) {
     field_6D8_ = 0xC8;
     // VoiceTx::init, slot 0x84 of the table at voice_tx_'s front.
     voice_tx_.init(0x1000, 0, 0);
-    // The cursor sits one word into each slot - image 0x158, clearing the word
-    // behind it first - so it walks field_4_ and reaches field_0_ as [-1].
-    uint32_t *word = &players_->field_4_;
+    // Preserve the pinned store sequence for every 0x58-byte record:
+    // dwords +0/+4/+8, byte +0x14 (flags), then dword +0x10 (stamp).
+    // field_C_ and all name bytes are untouched by this initialization.
+    NetPlayer *player = players_;
     int count = 0x10;
     do {
-        word[-1] = 0;
-        word[0] = 0;
-        word[1] = 0;
-        // BUG IN THE ORIGINAL: only the FIRST byte of stamp_10_ is cleared.
-        // The field is a dword (check_polling reads and writes all four bytes
-        // as a millisecond timestamp), so three stale high bytes survive a
-        // re-init and a reused slot can look already-heard-from. Reproduced -
-        // a dword store here would not be the image's bytes.
-        *reinterpret_cast<uint8_t *>(&word[4]) = 0;
-        word[3] = 0;
-        word += 0x58 / sizeof(*word);
+        player->field_0_ = 0;
+        player->field_4_ = 0;
+        player->field_8_ = 0;
+        player->flags_14_ = 0;
+        player->stamp_10_ = 0;
+        ++player;
         --count;
     } while (count != 0);
     thread_info_.owner_ = this;
@@ -2391,19 +2384,19 @@ int Net::join_service(ServiceStruct *service) {
     // stores the whole dword, and a zero means the 100 default) lands in
     // every player slot's third word and in the 0x6D4 default beside them.
     unsigned long latency = NetServiceCaps.dwLatency;
-    uint32_t *slot = &players_[0].field_C_;
+    NetPlayer *player = players_;
     int count = 0x10;
     if (latency != 0) {
         do {
-            *slot = latency;
-            slot += 0x58 / sizeof(*slot);
+            player->field_C_ = latency;
+            ++player;
             --count;
         } while (count != 0);
         field_6D4_ = latency;
     } else {
         do {
-            *slot = 100;
-            slot += 0x58 / sizeof(*slot);
+            player->field_C_ = 100;
+            ++player;
             --count;
         } while (count != 0);
         field_6D4_ = 100;

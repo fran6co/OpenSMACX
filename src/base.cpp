@@ -69,7 +69,7 @@ void __cdecl action_staple(int base_id) {
             parse_says(0, base.name_string, -1, -1);
             // The original retains this faction across draw_tile and does
             // not add an ExpansionEnabled test to the alien rule check.
-            popp(reinterpret_cast<char *>(*ClimatePopupTitle), "NERVESTAPLEDONE", 0,
+            popp(ScriptPopupFile, "NERVESTAPLEDONE", 0,
                  (Players[faction].rule_flags & RFLAG_ALIEN)
                      ? "ALdrone_sm.pcx" : "drone_sm.pcx", 0);
         } else {
@@ -84,7 +84,7 @@ void __cdecl action_staple(int base_id) {
         }
     } else if (base.faction_id_current == ConsoleGlobal.faction_id_) {
         parse_says(0, base.name_string, -1, -1);
-        popp(reinterpret_cast<char *>(*ClimatePopupTitle), "NERVESTAPLEFAIL", 0,
+        popp(ScriptPopupFile, "NERVESTAPLEFAIL", 0,
              (Players[faction].rule_flags & RFLAG_ALIEN)
                  ? "ALdrone_sm.pcx" : "drone_sm.pcx", 0);
     }
@@ -5322,7 +5322,7 @@ void __cdecl base_reset(int base_id, int force) {
                                    Facility[absolute_location].name)), -1, -1);
         // These two original .data slots contain these NUL-terminated strings
         // in the pinned PE; use application-owned literals in the rebuilt tree.
-        if (popp(reinterpret_cast<LPCSTR>(ClimatePopupTitle[0]), "GOVPROJECT", 0,
+        if (popp(ScriptPopupFile, "GOVPROJECT", 0,
                  "secproj_sm.pcx", 0) != 3) {
             break;
         }
@@ -6738,10 +6738,10 @@ next_spread_tile:
                 GenderDefault = Players[faction].noun_gender;
                 PluralityDefault = Players[faction].is_noun_plural;
                 parse_says(0, Players[faction].noun_faction, -1, -1);
-                popp(*ClimatePopupTitle, "TRIGGERWARMING2", 0, "searis_sm.pcx", nullptr);
+                popp(ScriptPopupFile, "TRIGGERWARMING2", 0, "searis_sm.pcx", nullptr);
                 return;
             }
-            popp(*ClimatePopupTitle, "TRIGGERWARMING", 0, "searis_sm.pcx", nullptr);
+            popp(ScriptPopupFile, "TRIGGERWARMING", 0, "searis_sm.pcx", nullptr);
             return;
         }
     }
@@ -6790,7 +6790,7 @@ next_spread_tile:
     parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
     if ((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200u) != 0
         || (map_loc(even_x, volcano_y)->visibility & (1u << (ConsoleGlobal.faction_id_ & 31))) != 0) {
-        popp(*ClimatePopupTitle, "VOLCANO", 0, "volc_sm.pcx", nullptr);
+        popp(ScriptPopupFile, "VOLCANO", 0, "volc_sm.pcx", nullptr);
     }
 }
 
@@ -7055,7 +7055,7 @@ void __cdecl base_hurry() {
                -1, -1);
     parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
         Facility[facility_index].name)), -1, -1);
-    popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "DONEPROJECT", 0,
+    popp(ScriptPopupFile, "DONEPROJECT", 0,
          "secproj_sm.pcx", nullptr);
 }
 
@@ -13277,7 +13277,7 @@ bool production_colony_abandon_prompt(int owner, int prototype_id) {
 
     const char *picture = (Players[owner].rule_flags & RFLAG_ALIEN)
                         ? "alopdir.pcx" : "talent_sm.pcx";
-    const int result = popp(ClimatePopupTitle[0], "ABANDONBASE", 0,
+    const int result = popp(ScriptPopupFile, "ABANDONBASE", 0,
                             picture, 0);
     if (IsMultiplayerNet || result < 2) {
         if (result != 0) BaseProductionZoomRequested = 1;

@@ -8208,9 +8208,9 @@ void __cdecl turn_upkeep() {
             world_climate();
             draw_map(1);
             if (step < 1) {
-                popp(*ClimatePopupTitle, "SEAFALLING", 0, "seafal_sm.pcx", 0);
+                popp(ScriptPopupFile, "SEAFALLING", 0, "seafal_sm.pcx", 0);
             } else {
-                popp(*ClimatePopupTitle, "SEARISING", 0, "searis_sm.pcx", 0);
+                popp(ScriptPopupFile, "SEARISING", 0, "searis_sm.pcx", 0);
             }
         }
     }
@@ -8258,7 +8258,7 @@ initialize_factions:
             }
         }
         if (announced_native_faction) {
-            popp(*ClimatePopupTitle, "ALIENSARRIVE", 0, "al_land_sm.pcx", 0);
+            popp(ScriptPopupFile, "ALIENSARRIVE", 0, "al_land_sm.pcx", 0);
             interlude(0x15, 0, 1, 0);
         }
     }
@@ -8320,7 +8320,7 @@ initialize_factions:
         PluralityDefault = 0;
         GenderDefault = Players[faction_for_name].is_leader_female;
         parse_says(1, Players[faction_for_name].name_leader, -1, -1);
-        popp(*ClimatePopupTitle, "ASCENT", 0, "asctran_sm.pcx", 0);
+        popp(ScriptPopupFile, "ASCENT", 0, "asctran_sm.pcx", 0);
     }
     if ((GameDataStateStorage.fields_.turn_current_num_ & 3) == 1) reset_territory();
     do_all_non_input();
@@ -9360,7 +9360,7 @@ static void random_events_cases_15_16(int event_kind, int faction_id,
                                                ConsoleGlobal.faction_id_) == 0)
             draw_map(1);
         GameDataStateStorage.fields_.dust_cloud_duration_ = 10;
-        popp(*ClimatePopupTitle, "EATTHIS", 0, "astp_sm.pcx", 0);
+        popp(ScriptPopupFile, "EATTHIS", 0, "astp_sm.pcx", 0);
         return;
     }
 
@@ -9980,7 +9980,7 @@ struct RandomEventsCase14NativeOps {
     void draw_map(int mode) { ::draw_map(mode); }
     void set_dust_cloud_duration(int value) { GameDataStateStorage.fields_.dust_cloud_duration_ = value; }
     void popp_big_fat_volcano() {
-        ::popp(*ClimatePopupTitle, "BIGFATVOLCANO", 0, "volc_sm.pcx", 0);
+        ::popp(ScriptPopupFile, "BIGFATVOLCANO", 0, "volc_sm.pcx", 0);
     }
 };
 
@@ -10504,7 +10504,7 @@ void __cdecl ascent() {
     GenderDefault = Players[faction_for_name].is_leader_female;
     parse_says(1, Players[faction_for_name].name_leader, -1, -1);
 
-    popp(*ClimatePopupTitle, "ASCENT", 0, "asctran_sm.pcx", 0);
+    popp(ScriptPopupFile, "ASCENT", 0, "asctran_sm.pcx", 0);
 }
 
 // Session lifecycle flag read by Console::load_proc and the new-game menu.

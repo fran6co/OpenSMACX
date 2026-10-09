@@ -15097,7 +15097,7 @@ void __cdecl major_atrocity(int faction_id, int victim_id) {
         char faction_text[80];
         _itoa(faction_id != ConsoleGlobal.faction_id_, faction_text, 10);
         strcat(StringTemp, faction_text);
-        popp(*ClimatePopupTitle, StringTemp, 0, DiploLabelCouncilSmPcx, 0);
+        popp(ScriptPopupFile, StringTemp, 0, DiploLabelCouncilSmPcx, 0);
     }
 }
 
@@ -18699,19 +18699,19 @@ int __cdecl break_treaty(int faction_id, int target_faction_id,
             return 1;
         }
         if ((flags & 2) != 0) {
-            return popp(reinterpret_cast<const char *>(*ClimatePopupTitle),
+            return popp(ScriptPopupFile,
                         DiploLabelBREAKINGTREATY, 0,
                         DiploLabelBreakSmPcx_7C0,
                         reinterpret_cast<int (__cdecl *)()>(0)) == 0;
         }
         if ((flags & 4) != 0 && (flags & 0x10000) == 0) {
-            return popp(reinterpret_cast<const char *>(*ClimatePopupTitle),
+            return popp(ScriptPopupFile,
                         DiploLabelBREAKINGTRUCE, 0,
                         DiploLabelBreakSmPcx_7E0,
                         reinterpret_cast<int (__cdecl *)()>(0)) == 0;
         }
         if ((treaty_bits & 0x10000) == 0) {
-            return popp(reinterpret_cast<const char *>(*ClimatePopupTitle),
+            return popp(ScriptPopupFile,
                         DiploLabelBEGINVENDETTA, 0,
                         DiploLabelBreakSmPcx_800,
                         reinterpret_cast<int (__cdecl *)()>(0)) == 0;

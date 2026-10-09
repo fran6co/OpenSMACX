@@ -63,8 +63,7 @@ int TurnCurrentNum;
 int GenderDefault;
 BOOL PluralityDefault;
 char ScriptPopupTitleText[] = "CLIMATE";
-char *ScriptPopupTitle = ScriptPopupTitleText;
-char **const ClimatePopupTitle = &ScriptPopupTitle;
+char *ScriptPopupFile = ScriptPopupTitleText;
 
 struct ParserEvent { int slot, gender, plurality; const char *text; };
 static ParserEvent ParserEvents[8];

@@ -1026,7 +1026,6 @@ int BaseIDCurrentSelected, BaseComputedID;
 
 int BaseProductionZoomRequested;
 char StringTemp[1024];
-char *ClimatePopupTitle[1];
 int IsMultiplayerNet, BaseProductionUnitCreationDisabled;
 char ScriptPopupFileText[] = "SCRIPT";
 char *ScriptPopupFile = ScriptPopupFileText;
@@ -1549,7 +1548,7 @@ int MapWinSelectedSlot=0;
 uint32_t MapLongitude; int MapIsFlat, ExpansionEnabled;
 
 int GenderDefault, PluralityDefault; int ParseNum[2];
-char climate_title[]="CLIMATE"; char *ClimatePopupTitle[1]={climate_title};
+char climate_title[]="CLIMATE"; char *ScriptPopupFile=climate_title;
 
 struct Vehicle { uint8_t faction_id; uint8_t pad[25]; uint8_t order_auto_type; } Vehs[32];
 int radius_x[289], radius_y[289];

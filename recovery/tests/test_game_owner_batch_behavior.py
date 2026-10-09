@@ -42,7 +42,7 @@ Console ConsoleGlobal; InfoWindow ConsoleInfoWin; NetMsg NetMsgPrimary; FX g_FX;
 WorldWin WorldClimateWorldWin; int BaseCurrentCount,TurnCurrentNum; uint32_t MapLongitude;
 struct Map { uint8_t pad[12]; uint32_t bit2; }; Map MapTiles[2048];
 char StringTemp[1032]; uint32_t UnkBitfield1;
-const char *ClimatePopupTitleStorage="CLIMATE"; const char **ClimatePopupTitle=&ClimatePopupTitleStorage;
+char ScriptPopupFileStorage[]="CLIMATE"; char *ScriptPopupFile=ScriptPopupFileStorage;
 int tech_has[89][8],tech_is_available[89][8],tech_leap_valid[89][8];
 int calls[32],call_count,deterministic_roll;
 static void note(int id) { calls[call_count++]=id; }
