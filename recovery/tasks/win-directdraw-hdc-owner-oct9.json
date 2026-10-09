@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "task_id": "win-directdraw-hdc-owner-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover the remaining Win HDC calls through the existing DirectDraw interface and restore the original output-pointer argument in paint_tiled.",
+  "base_revision": "eed04e0bbb205c47ea12b7da6c24acfcdf983670",
+  "subjects": [
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6222608},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6224208}
+  ],
+  "editable_files": ["src/win.cpp", "recovery/tests/test_win_directdraw_hdc_owner_oct9.py"],
+  "evidence": [
+    "Win already owns DirectDrawSurface as an IDirectDrawSurface2 pointer and uses typed GetDC/ReleaseDC in other bodies. Remaining ACQUIRE_HDC macro and paint_tiled use raw slots17/26. Pinned paint_tiled5EF950 pushes address9B7B2C for GetDC, whereas current raw call passes WinSharedHdc by value. Use the genuine existing interface, preserve all refcount/guard/GDI ordering and original unchecked/error behavior, and verify each original ReleaseDC argument rather than normalizing other owners.",
+    "Coordinator-reviewed isolated recovery, not a byte-spelling search or full-game acceptance. Preserve all source identities, claims and historical findings; actual-source regression controls, full Win TU baseline/current measurements and fresh combined application build/link precede manual integration. Shared macro affects only authorized draw_rect_border and paint_tiled bodies; report any additional affected owner before editing."
+  ]
+}
