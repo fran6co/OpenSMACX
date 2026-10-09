@@ -1,0 +1,39 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "69b24b5f9a3b389267db6d17763368ab5f6871c7",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "src/netdaemon.h",
+    "recovery/tests/test_airdrop_network.py",
+    "recovery/tests/netdaemon_protocol_harness.cpp",
+    "recovery/tests/test_netdaemon_wait_state_actual_source_oct9.py"
+  ],
+  "evidence": [
+    "Current wait5303B0 only tests four-byte state equality; four actual caller sites in veh_drop532140/order_veh531780 cast addresses of existing uint32_t lock_state_[2] leading_words_[3] (daemon+1BB0) and trailing_words_[0] (+1BB8) to int*. Preserve original bit-pattern equality for every signed value, including negatives. Pointee debug type remains unproven; original catalogued int* spelling is historical evidence, not a complete original C++ contract proof.",
+    "LockStateEntry is a uniform3C record and lock_state_[24] overlaps persistent save storage. The same positions in other entries are faction masks, modes and counters. Keep storage, arrays, payload union, producers, dynamic indexing, layout and lifetime unchanged; do not globally convert words to signed integers or invent a heterogeneous original class. Model wait state as uint32_t* matching actual source-owned word addresses; retain int value/timeout and all original bit patterns.",
+    "Keep wait's original busy count, timeGetTime snapshot, signed wrapped timeout test, single popup trigger, ExitTurnLoop break, message/lock/spock pump and global mode save/restore order. Preserve all vehicle/order paths, reentrancy, acknowledgement writes and release timing. Do not sanitize packets, repair unrelated pointer/tag interfaces, fix uninitialized or unsafe paths, add returns or bounds checks, or alter source behavior beyond this proven pointer/storage equality contract.",
+    "Update only actual declarations/definitions, four caller pointer initializations, current emitted symbol hint and the scoped host stubs/harness. Keep ORIGINAL spans/identities, claims, LEVER/TRIED and structural findings intact. New actual-source tests execute full wait and actual affected caller bodies or the existing caller controls, checking live word mutation, negative/high-bit equality, timeout wrap, poll/callback ordering, ExitTurnLoop and mode restoration; explicitly qualify unrelated native ABI/unsafe paths the host fixture cannot establish.",
+    "Worker edits only the five listed files, with no Git/native compiler/Wine. Coordinator owns isolated preparation, fresh original/caller/symbol/body checks, independent review, continuity, full application build/link and manual integration. Justified reviewed structural matching regression is authorized with historical obligations retained; no new claim, demotion, baseline reset, deliberate original bug fix or automatic/full-game acceptance."
+  ],
+  "intent": "Recover the wait-state pointer contract across actual NetDaemon wait, vehicle drop and order owners without integer pointer-punning or unsupported retyping of heterogeneous lock-state storage.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5440432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5445504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5448000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-wait-state-owner-oct9"
+}
