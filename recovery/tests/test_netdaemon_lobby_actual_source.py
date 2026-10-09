@@ -21,13 +21,19 @@ HARNESS = r'''#include <cstdint>
 struct NetWinLobbyRow {
     uint8_t prefix_, ready_, field_2_;
     int8_t faction_or_color_;
-    uint8_t fields_[0x174];
+    uint8_t field_4_;
+    char leader_name_[0x18];
+    char formal_faction_name_[0x28];
+    char noun_faction_[0x18];
+    char adjective_faction_[0x80];
+    char leader_title_[0x18];
+    char adjective_leader_[0x80];
+    uint8_t tail_[3];
     uint32_t owner_;
 };
 static_assert(sizeof(NetWinLobbyRow) == 0x17C, "lobby row stride");
 struct NetWinFactionRecord { uint32_t prefix_, owner_; uint8_t tail_[0x188]; };
 static_assert(sizeof(NetWinFactionRecord) == 0x190, "faction stride");
-struct PlayerData {};
 struct ProcessSlot { uint32_t pid_; };
 struct LockStateEntry { uint32_t leading_words_[4]; };
 struct Net {
@@ -49,9 +55,13 @@ struct NetDaemon : Net {
 };
 struct Session { unsigned int mode_ = 0; };
 struct Dialog {
-    void *faction_records_ = nullptr;
+    NetWinFactionRecord *faction_records_ = nullptr;
     int fills = 0, redraws = 0, last_faction = -99;
-    void fill_player(PlayerData *, int f) { ++fills; last_faction = f; }
+    NetWinLobbyRow *last_row = nullptr;
+    void fill_player(NetWinLobbyRow *row, int f) {
+        ++fills; last_faction = f; last_row = row;
+        if (f == -1) std::strcpy(row->noun_faction_, "fallback");
+    }
     void on_redraw() { ++redraws; }
 };
 NetWinLobbyRow NetWinLobbyRows[8];
@@ -75,6 +85,7 @@ static void reset(unsigned char *m, size_t n) {
     NetWinSessionData.mode_ = 0;
     NetWinDialog.fills = NetWinDialog.redraws = 0;
     NetWinDialog.last_faction = -99;
+    NetWinDialog.last_row = nullptr;
     NetDaemonNet = NetDaemon{};
     for (int i = 0; i < 8; ++i) NetDaemonNet.process_slots_[i].pid_ = 1000 + i;
     put32(m + 4, 2);
@@ -108,6 +119,10 @@ int main() {
     if (NetWinLobbyRows[2].faction_or_color_ != -1 ||
         NetWinLobbyRows[2].owner_ != 77)
         return fail(3, "-1 faction stores and owner+0x188");
+    if (NetWinDialog.last_row != reinterpret_cast<NetWinLobbyRow *>(m + 0x10) ||
+        NetWinDialog.last_faction != -1 ||
+        std::strcmp(NetWinDialog.last_row->noun_faction_, "fallback") != 0)
+        return fail(8, "fill_player receives and updates packet lobby row");
     if (NetDaemonNet.sent_messages != 1 || NetDaemonNet.sends != 0 ||
         NetWinDialog.redraws != 0)
         return fail(4, "marked send skips notification/redraw");

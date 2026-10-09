@@ -235,4 +235,25 @@ def test_complete_painter_bodies_preserve_non_owner_operations():
         }
         for old,new in replacements.items():
             body=body.replace(old,new)
-        assert body == mod.extract_function(after,signature),name
+
+        def normalize_faction_record_owner(text):
+            text=re.sub(
+                r"static_cast<unsigned char>\(\s*static_cast<char \*>\(faction_records_\)\[0\]\s*\)",
+                "FACTION_RECORD_TYPE_BYTE", text)
+            text=text.replace("faction_records_[0].record_type_",
+                              "FACTION_RECORD_TYPE_BYTE")
+            text=re.sub(
+                r"\*reinterpret_cast<unsigned long \*>\(\s*static_cast<char \*>\(faction_records_\)\s*\+\s*mode \* 0x190\s*\+\s*4\s*\)",
+                "FACTION_RECORD_OWNER(mode)", text)
+            text=text.replace("faction_records_[mode].owner_",
+                              "FACTION_RECORD_OWNER(mode)")
+            text=re.sub(
+                r"static_cast<char \*>\(faction_records_\)\s*\+\s*mode \* 0x190\s*\+\s*0x62",
+                "FACTION_RECORD_NOUN(mode)", text)
+            text=text.replace("faction_records_[mode].noun_faction_",
+                              "FACTION_RECORD_NOUN(mode)")
+            return text
+
+        assert normalize_faction_record_owner(body) == normalize_faction_record_owner(
+            mod.extract_function(after,signature)
+        ),name

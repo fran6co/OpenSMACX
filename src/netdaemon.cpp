@@ -5628,7 +5628,7 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
         if (current_faction != faction ||
             previous_faction != current_faction) {
             NetWinDialog.fill_player(
-                reinterpret_cast<PlayerData *>(message + 0x10), faction);
+                reinterpret_cast<NetWinLobbyRow *>(message + 0x10), faction);
         }
 
         daemon.send_message(reinterpret_cast<char *>(message),

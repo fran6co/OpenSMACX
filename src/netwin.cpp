@@ -221,7 +221,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
                 ? 8
                 : static_cast<int>(message_faction_data->record_count_);
         int size = count * 399 + 0x194;
-        faction_records_ = mem_get(size);
+        faction_records_ = static_cast<NetWinFactionRecord *>(mem_get(size));
         memcpy_call(faction_records_, &message_faction_data->record_type_, size);
         return;
     }
@@ -249,8 +249,10 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     record_count = record_count < 8 ? 8 : record_count;
     int record_size = record_count * 399 + 0x194;
 
-    faction_records_ = mem_get(record_size);
-    faction_records_copy_ = mem_get(record_size);
+    faction_records_ =
+        static_cast<NetWinFactionRecord *>(mem_get(record_size));
+    faction_records_copy_ =
+        static_cast<NetWinFactionRecord *>(mem_get(record_size));
 
     // The 7 base factions land first, at the front of the block. The image
     // counts the loop DOWN (`mov [ebp-0x10],7 / dec / jne`), which is why the
@@ -258,22 +260,22 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     if (text_open(AlphaxFileID, NetWinSectionFactions) != 0) {
         return;
     }
-    char *records;
+    NetWinFactionRecord *records;
     int flag_offset;
     int name_offset;
     int record_index;
-    records = static_cast<char *>(faction_records_);
-    records[1] = static_cast<char>(record_count);
-    records = static_cast<char *>(faction_records_);
-    records[0] = 7;
+    records = faction_records_;
+    records[0].record_count_ = static_cast<uint8_t>(record_count);
+    records = faction_records_;
+    records[0].record_type_ = 7;
     flag_offset = 0;
     for (record_index = 7; record_index != 0;
          --record_index, flag_offset += 0x190) {
-        records = static_cast<char *>(faction_records_);
-        records[flag_offset + 9] = 1;
+        records = faction_records_;
+        records[flag_offset / 0x190].active_ = 1;
         text_get();
-        records = static_cast<char *>(faction_records_);
-        strcpy(records + flag_offset + 0xa, text_item());
+        records = faction_records_;
+        strcpy(records[flag_offset / 0x190].filename_, text_item());
     }
 
     // The 7 expansion factions follow, one 0x190 stride further on: the flag
@@ -283,11 +285,11 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     }
     name_offset = 0xaf0;
     for (flag_offset = 0; flag_offset < 0xaf0; flag_offset += 0x190) {
-        records = static_cast<char *>(faction_records_);
-        records[flag_offset + 9] = 1;
+        records = faction_records_;
+        records[flag_offset / 0x190].active_ = 1;
         text_get();
-        records = static_cast<char *>(faction_records_);
-        strcpy(records + name_offset + 0xa, text_item());
+        records = faction_records_;
+        strcpy(records[name_offset / 0x190].filename_, text_item());
         name_offset += 0x190;
     }
 
@@ -299,11 +301,11 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         flag_offset = 0;
         name_offset = 0x15e0;
         for (record_index = custom_count; record_index != 0; --record_index) {
-            records = static_cast<char *>(faction_records_);
-            records[flag_offset + 9] = 1;
+            records = faction_records_;
+            records[flag_offset / 0x190].active_ = 1;
             text_get();
-            records = static_cast<char *>(faction_records_);
-            strcpy(records + name_offset + 0xa, text_item());
+            records = faction_records_;
+            strcpy(records[name_offset / 0x190].filename_, text_item());
             flag_offset += 0x190;
             name_offset += 0x190;
         }
@@ -315,49 +317,64 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     int offset;
     for (record_index = 0, offset = 0; record_index < record_count;
          ++record_index, offset += 0x190) {
-        records = static_cast<char *>(faction_records_);
-        if (text_open(records + offset + 0xa, records + offset + 0xa) != 0) {
+        records = faction_records_;
+        if (text_open(records[record_index].filename_,
+                      records[record_index].filename_) != 0) {
             return;
         }
-        records = static_cast<char *>(faction_records_);
-        records[offset + 9] = 1;
+        records = faction_records_;
+        records[record_index].active_ = 1;
         // text_open returned 0 to get here, and the image stores THAT value
         // at +4 as a dword rather than re-deriving it.
-        *reinterpret_cast<int *>(records + offset + 4) = 0;
+        records[record_index].owner_ = 0;
 
         text_get();
         text_item();
         text_item();
-        strncpy(records + offset + 0x22, text_item(), 0x18);
-        records = static_cast<char *>(faction_records_);
-        records[offset + 0x39] = 0;
+        strncpy(records[record_index].leader_name_, text_item(), 0x18);
+        records = faction_records_;
+        records[record_index].leader_name_[0x17] = 0;
 
         StringTemp[0] = 0;
-        records = static_cast<char *>(faction_records_);
-        strcat(StringTemp, records + offset + 0xa);
+        records = faction_records_;
+        strcat(StringTemp, records[record_index].filename_);
         strcat(StringTemp, NetWinPcxSuffix);
 
         if (buffer.load_pcx(StringTemp, 0, 0xa, 0xec) != 0) {
             buffer.load_pcx(NetWinDefaultPcx, 0, 0xa, 0xec);
         }
-        records = static_cast<char *>(faction_records_);
-        records[offset + 8] = static_cast<char>(buffer.get_pixel(4, 0x2f3));
+        records = faction_records_;
+        records[record_index].color_ =
+            static_cast<uint8_t>(buffer.get_pixel(4, 0x2f3));
 
         // read_faction fills the Player from the faction's own file; the
         // strings it read are then copied back into the record at +0x22,
         // +0x3A, +0x62, +0x7A, +0xFA and +0x112, and the leader-gender flag
-        // rides the record's last byte.
-        strcpy(player.filename, records + offset + 0xa);
-        strcpy(player.search_key, records + offset + 0xa);
+        // crosses its 0x190-byte row stride.
+        strcpy(player.filename, records[record_index].filename_);
+        strcpy(player.search_key, records[record_index].filename_);
         read_faction(&player, 0);
-        records = static_cast<char *>(faction_records_);
-        strcpy(records + offset + 0x22, player.name_leader);
-        strcpy(records + offset + 0x3a, player.formal_name_faction);
-        strcpy(records + offset + 0x62, player.noun_faction);
-        strcpy(records + offset + 0x7a, player.adj_name_faction);
-        strcpy(records + offset + 0xfa, player.title_leader);
-        strcpy(records + offset + 0x112, player.adj_leader);
-        records[offset + 0x192] = static_cast<char>(player.is_leader_female);
+        records = faction_records_;
+        strcpy(records[record_index].leader_name_, player.name_leader);
+        strcpy(records[record_index].formal_faction_name_,
+               player.formal_name_faction);
+        strcpy(records[record_index].noun_faction_, player.noun_faction);
+        strcpy(reinterpret_cast<char *>(records[record_index].data_after_noun_),
+               player.adj_name_faction);
+        strcpy(reinterpret_cast<char *>(records[record_index].data_after_noun_)
+                   + 0x80,
+               player.title_leader);
+
+        // The image copies the 0x80-byte adjective at +0x112 and then stores
+        // the gender byte at +0x192. Both expressions cross the 0x190 row
+        // stride (the latter by two bytes); keep them in the allocation's
+        // byte domain rather than inventing a larger record member.
+        unsigned char *const allocation_bytes =
+            reinterpret_cast<unsigned char *>(records);
+        strcpy(reinterpret_cast<char *>(allocation_bytes + offset + 0x112),
+               player.adj_leader);
+        allocation_bytes[offset + 0x192] =
+            static_cast<unsigned char>(player.is_leader_female);
     }
 
     text_close();
@@ -527,12 +544,13 @@ void NetWin::close() {
 }
 
 /*
-Purpose: Copy one faction record's name/title block into a PlayerData: the
-         six text fields land at +5, +0x1D, +0x45, +0x5D, +0xDD and +0xF5,
-         and the leader-gender byte at +0x175. Slot -1 instead re-reads just
-         the +0x45 field through the string table, for the record the
-         scenario file's own faction entry describes.
+Purpose: Copy one faction record's name/title block into the lobby row
+         carried by the received packet: six text fields land in its named
+         members and the leader-gender byte in tail_[0]. Slot -1 instead
+         re-reads just noun_faction_ through the string table, for the row
+         the scenario file's own faction entry describes.
 // ORIGINAL: 0x00481DA0 ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z 0x00481DA0-0x00481E87 FILE
+// symbol    ?fill_player@NetWin@@QAEXPAUNetWinLobbyRow@@H@Z
 // size      237 bytes
 // prototype void (__thiscall ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z)(NetWin* this, PlayerData*, int)
 // callers   2   call targets   3
@@ -543,26 +561,28 @@ Purpose: Copy one faction record's name/title block into a PlayerData: the
 Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
-void NetWin::fill_player(PlayerData *player_data, int slot) {
+void NetWin::fill_player(NetWinLobbyRow *lobby_row, int slot) {
     if (slot == -1) {
-        unsigned char *text =
-            reinterpret_cast<unsigned char *>(player_data) + 0x45;
-        text[0] = 0;
-        strcat(reinterpret_cast<char *>(text),
+        lobby_row->noun_faction_[0] = 0;
+        strcat(lobby_row->noun_faction_,
                StringTable.get(
                    *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)));
         return;
     }
-    char *record =
-        reinterpret_cast<char *>(faction_records_) + slot * 400;
-    unsigned char *target = reinterpret_cast<unsigned char *>(player_data);
-    strcpy(reinterpret_cast<char *>(target + 5), record + 0x22);
-    strcpy(reinterpret_cast<char *>(target + 0x1D), record + 0x3A);
-    strcpy(reinterpret_cast<char *>(target + 0x45), record + 0x62);
-    strcpy(reinterpret_cast<char *>(target + 0x5D), record + 0x7A);
-    strcpy(reinterpret_cast<char *>(target + 0xDD), record + 0xFA);
-    strcpy(reinterpret_cast<char *>(target + 0xF5), record + 0x112);
-    target[0x175] = static_cast<unsigned char>(record[0x192]);
+    const NetWinFactionRecord &record = faction_records_[slot];
+    strcpy(lobby_row->leader_name_, record.leader_name_);
+    strcpy(lobby_row->formal_faction_name_, record.formal_faction_name_);
+    strcpy(lobby_row->noun_faction_, record.noun_faction_);
+    strcpy(lobby_row->adjective_faction_,
+           reinterpret_cast<const char *>(record.data_after_noun_));
+    strcpy(lobby_row->leader_title_,
+           reinterpret_cast<const char *>(record.data_after_noun_ + 0x80));
+    const unsigned char *const allocation_bytes =
+        reinterpret_cast<const unsigned char *>(faction_records_);
+    strcpy(lobby_row->adjective_leader_,
+           reinterpret_cast<const char *>(allocation_bytes + slot * 0x190
+                                          + 0x112));
+    lobby_row->tail_[0] = allocation_bytes[slot * 0x190 + 0x192];
 }
 
 // 0x0090E778 / 0x0090E79C - the two words beside the seven records
@@ -944,10 +964,9 @@ void NetWin::draw_session_info() {
     const int col = field.left;
     int row = field.top;
     // The wrapped-text width every write_l measures against; 0x14 is the
-    // body's own starting value. Buffer keeps it protected, so the store
-    // goes through the object's own layout - a public setter is still owed.
-    *reinterpret_cast<uint32_t *>(reinterpret_cast<unsigned char *>(buffer)
-                                  + 0x10) = 0x14;
+    // body's own starting value. The existing setter directly assigns the
+    // same Buffer +0x10 member without additional side effects.
+    buffer->set_wrap_width(0x14);
 
     // ---- session name: {Name: } <global difficulty> ----
     StringTemp[0] = 0;
@@ -1165,9 +1184,8 @@ void NetWin::draw_session_info() {
         // nobody in the lobby.
         int connected = 0;
         for (int slot = 8; slot != 0; --slot) {
-            unsigned long owned = *reinterpret_cast<unsigned long *>(
-                static_cast<char *>(faction_records_) + (8 - slot) * 0x190
-                + 4);
+            unsigned long owned =
+                faction_records_[8 - slot].owner_;
             if (owned != 0) {
                 int seen = 0;
                 if (*NetWinPlayerCount > 0) {
@@ -1262,8 +1280,7 @@ void NetWin::draw_player_names() {
     for (int row = 0; slot_record < NetDaemonNet.process_slots_ + 8;
          ++row, ++lobby_row, slot_record += 1) {
         if (*NetWinEighthSlotWord == 3 && faction_records_ != 0
-            && row >= static_cast<unsigned char>(
-                          static_cast<char *>(faction_records_)[0])) {
+            && row >= faction_records_[0].record_type_) {
             break;
         }
         RECT *name_rect = &rects[row * 3];
@@ -1287,9 +1304,7 @@ void NetWin::draw_player_names() {
             locked = 0;
             if (mode != -1) {
                 unsigned long claimed = lobby_row->owner_;
-                unsigned long owned = *reinterpret_cast<unsigned long *>(
-                    static_cast<char *>(faction_records_) + mode * 0x190
-                    + 4);
+                unsigned long owned = faction_records_[mode].owner_;
                 locked = owned != 0 && owned != claimed;
             }
         } else {
@@ -1582,8 +1597,7 @@ void NetWin::draw_diffs() {
     for (int index = 0; row < &NetWinLobbyRows[8];
          ++index, ++row, ++rect) {
         if (*NetWinEighthSlotWord == 3 && faction_records_ != 0
-            && index >= static_cast<unsigned char>(
-                            static_cast<char *>(faction_records_)[0])) {
+            && index >= faction_records_[0].record_type_) {
             break;
         }
         buffer->box_sprite(rect, &InterfaceBoxStyles[0]);
@@ -1648,8 +1662,7 @@ void NetWin::draw_factions() {
     for (int index = 0; row < &NetWinLobbyRows[8];
          ++index, ++row, ++rect) {
         if (*NetWinEighthSlotWord == 3 && faction_records_ != 0
-            && index >= static_cast<unsigned char>(
-                            static_cast<char *>(faction_records_)[0])) {
+            && index >= faction_records_[0].record_type_) {
             break;
         }
         buffer->box_sprite(rect, &InterfaceBoxStyles[0]);
@@ -1679,8 +1692,7 @@ void NetWin::draw_factions() {
         StringTemp[0] = 0;
         const char *named;
         if (mode != -1) {
-            named = static_cast<char *>(faction_records_) + mode * 0x190
-                    + 0x62;
+            named = faction_records_[mode].noun_faction_;
         } else {
             named = StringTable.get(
                 *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4));
@@ -2919,7 +2931,7 @@ int NetWin::on_key_down(int key) {
     }
     NetDaemonNet.pid_2_idx(NetWinPlayerId);
     message_chat(0x1E00, 0,
-                 reinterpret_cast<char *>(this) + 0x42F4);
+                 editBox_.text_);
     editBox_.set_text(0);
     return 1;
 }
@@ -3435,8 +3447,7 @@ void __cdecl send_faction_data(int slot_id) {
         if (NetWinDialog.faction_records_ == 0) {
             NetWinDialog.setup_faction_data(0);
         }
-        const uint8_t count =
-            static_cast<unsigned char *>(NetWinDialog.faction_records_)[1];
+        const uint8_t count = NetWinDialog.faction_records_[0].record_count_;
         const int records = count * 133;
         const uint32_t size = records * 3 + 0x1A4;
         char *frame = static_cast<char *>(mem_get(size));

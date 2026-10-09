@@ -176,10 +176,6 @@ static_assert(offsetof(NetWinFactionRecord, noun_faction_) == 0x62,
 static_assert(sizeof(((NetWinFactionRecord *)0)->noun_faction_) == 0x18,
               "faction noun extent");
 
-// faction.h's per-faction record; fill_player writes the name/title text
-// block of one. Opaque here - only the pointer travels.
-struct PlayerData;
-
  /*
   * NetWin class
   *
@@ -235,9 +231,9 @@ class NetWin : public GraphicWin {
   // 0x004837F0. Destroys the CheckBox view at +0x1C, the Dialog at +0xA34,
   // and the GraphicWin at +0x1C - the CheckBox vbtable's own two displacements.
   void UNK4();
-  // 0x00481DA0. Copies one faction record's name/title block into a
-  // PlayerData, or just clears +0x45 and re-reads it for slot -1.
-  void fill_player(PlayerData *player_data, int slot);
+  // 0x00481DA0. Copies one faction record's name/title block into the
+  // lobby row carried in the packet, or just resets +0x45 for slot -1.
+  void fill_player(NetWinLobbyRow *lobby_row, int slot);
   // 0x00481E90. Seeds the seven base faction records of the static faction
   // table from the 0x59C-stride template records, and resets the trailing
   // eighth/ninth slot words.
@@ -282,14 +278,12 @@ class NetWin : public GraphicWin {
   uint32_t field_7620_;  // 0x7620
   uint8_t field_7624_[0x104];  // 0x7624
   uint32_t field_7728_;  // 0x7728
-  // 0x772C and 0x7730 are the two faction-record blocks setup_faction_data
-  // (0x00481FD0) allocates with mem_get and frees again: the second is a
-  // memcpy of the first, and every reader in the image re-loads the slot it
-  // wants rather than caching it. Renamed from field_772C_/field_7730_ on
-  // that body's evidence - they were the only two unnamed dwords the body
-  // touched, and both were 4 bytes, so the extent is unchanged.
-  void *faction_records_;        // 0x772C
-  void *faction_records_copy_;   // 0x7730
+  // 0x772C and 0x7730 are the two 0x190-stride faction-record blocks
+  // setup_faction_data (0x00481FD0) allocates with mem_get and frees again.
+  // The second is a byte-for-byte copy of the first; their pointers retain
+  // the same four-byte object extent as the former unnamed dwords.
+  NetWinFactionRecord *faction_records_;      // 0x772C
+  NetWinFactionRecord *faction_records_copy_; // 0x7730
 
   // 0x00481FD0. Rebuilds the two faction-record blocks at 0x772C/0x7730 -
   // one cloned from the network message the caller hands in, one rebuilt

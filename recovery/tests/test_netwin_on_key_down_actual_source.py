@@ -83,6 +83,7 @@ static void tracked_free(void *value) {
 struct EditBox {
   int identity;
   int answer;
+  char text_[256];
   int on_key_down(int key) {
     observed_key = key;
     observed_edit_receiver = identity;
@@ -218,7 +219,7 @@ static int test_enter_chat_path() {
   const int expected[] = {
     EVENT_PID_TO_INDEX, EVENT_MESSAGE_CHAT, EVENT_EDIT_SET_TEXT
   };
-  char *const expected_text = reinterpret_cast<char *>(&window) + 0x42F4;
+  char *const expected_text = window.editBox_.text_;
   return answer == 1 && observed_pid == 17
       && observed_message_type == 0x1E00 && observed_message_arg == 0
       && observed_message_text == expected_text
