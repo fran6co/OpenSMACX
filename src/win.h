@@ -120,6 +120,9 @@ class Win : public AutoSound {
   // resolves as active; the image treats it as part of Win even though
   // its receiver is an HWND, not a `this`.
   friend void __cdecl OnSysKey(void *, unsigned int, long, int, unsigned int);
+  // The matching WM_CHAR router is also a free function and reads the same
+  // protected focus/base-window members.
+  friend void __cdecl OnChar(void *, char, int);
   friend int __stdcall win_reparent_window(HWND, int);
  public:
   // homed from 005f1340.cpp

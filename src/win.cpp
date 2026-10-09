@@ -6108,25 +6108,22 @@ void Win::update_nc_buffer(int flags) {
 // unchanged; only the names were wrong. Its siblings OnNCHitTest and
 // OnSysKey were homed as free functions for the same reason.
 void __cdecl OnChar(void *hwnd, char ch, int flags) {
-    int result;
+    Win *active;
     if (WinFocusWindow != nullptr) {
-        result = reinterpret_cast<int>(WinModalFocus);
-        if (result == 0) {
-            result = reinterpret_cast<int>(WinFocusWindow);
-        }
+        active = WinModalFocus;
+        if (active == nullptr) active = WinFocusWindow;
     } else {
-        result = reinterpret_cast<int>(WinInputFocus);
-        if (result == 0) {
-            result = reinterpret_cast<int>(WinDefaultFocus);
-        }
+        active = WinInputFocus;
+        if (active == nullptr) active = WinDefaultFocus;
     }
-    WinActiveWindow = reinterpret_cast<Win *>(result);
-    if (result != 0) {
-        char *p = *reinterpret_cast<char **>(result + 0xa8);
-        if (p != 0 && (*reinterpret_cast<unsigned char *>(p + 0x9c) & 1) != 0) {
-            Win *visobj = *reinterpret_cast<Win **>(p + 0xc4);
-            if (visobj == 0 || visobj->is_visible() != 0) {
-                reinterpret_cast<Win *>(p)->on_char(ch, flags);
+    WinActiveWindow = active;
+    if (active != nullptr) {
+        Win *const base_window = active->poWinBase_;
+        if (base_window != nullptr
+            && (base_window->iSomeFlag_ & 1U) != 0) {
+            Win *const parent = base_window->win_parent_;
+            if (parent == nullptr || parent->is_visible() != 0) {
+                base_window->on_char(ch, flags);
             }
         }
     }
@@ -7657,34 +7654,28 @@ void Win::set_caption_height(int height) {
 // int - but every caller assigns the result to a `Win *`. The int is
 // the pointer, and win.h has said so since the focus-window work.
 Win *Win::get_key_window() {
-    char *w;
+    Win *window;
     if (WinFocusWindow == nullptr) {
-        w = reinterpret_cast<char *>(WinInputFocus);
-        if (WinInputFocus == 0) {
-            w = (char *)WinDefaultFocus;
-        }
+        window = WinInputFocus;
+        if (window == nullptr) window = WinDefaultFocus;
     } else {
-        w = (char *)WinFocusWindow;
-        if (WinModalFocus != 0) {
-            w = (char *)WinModalFocus;
+        window = WinFocusWindow;
+        if (WinModalFocus != nullptr) window = WinModalFocus;
+    }
+    WinActiveWindow = window;
+    if (window == nullptr) return nullptr;
+
+    Win *const base_window = window->poWinBase_;
+    if (base_window != nullptr) {
+        if ((base_window->iSomeFlag_ & 1U) == 0) return nullptr;
+        // Native checks the base window's parent but calls is_visible on the
+        // base window itself. OnChar and OnKey call it on that parent.
+        if (base_window->win_parent_ != nullptr
+            && base_window->is_visible() == 0) {
+            return nullptr;
         }
     }
-    WinActiveWindow = reinterpret_cast<Win *>(w);
-    int result = 0;
-    if (w != 0) {
-        result = *(int *)(w + 0xa8);
-        if (result != 0) {
-            if ((*(unsigned char *)(result + 0x9c) & 1) == 0) {
-                return 0;
-            }
-            if (*(int *)(result + 0xc4) != 0) {
-                if (((Win *)result)->is_visible() == 0) {
-                    return 0;
-                }
-            }
-        }
-    }
-    return reinterpret_cast<Win *>(result);
+    return base_window;
 }
 
 // ===== homed from src/recovered/units/005ed9d0.cpp =====
@@ -10399,53 +10390,28 @@ void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
 // ===== homed from src/unrecovered/005f15c0.cpp =====
 
 void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan) {
-    int *p_9b7ac8 = (int *)0x009B7AC8;
-    int *p_9b7ac4 = (int *)0x009B7AC4;
-    int *p_9b7aec = (int *)0x009B7AEC;
-    int *p_9b7ae0 = (int *)0x009B7AE0;
-    int *p_9b8d7c = (int *)0x009B8D7C;
-    int *p_9b7a8c = (int *)0x009B7A8C;
-    int *p_9b7a88 = (int *)0x009B7A88;
-    int chosen;
-
-    if (*p_9b7ae0 != 0) {
-        chosen = *p_9b8d7c;
-        if (chosen == 0) {
-            chosen = *p_9b7ae0;
-        }
+    Win *chosen;
+    if (WinFocusWindow != nullptr) {
+        chosen = WinModalFocus;
+        if (chosen == nullptr) chosen = WinFocusWindow;
     } else {
-        chosen = *p_9b7ac4;
-        if (chosen == 0) {
-            chosen = *p_9b7aec;
-        }
+        chosen = WinInputFocus;
+        if (chosen == nullptr) chosen = WinDefaultFocus;
     }
-    *p_9b7ac8 = chosen;
+    WinActiveWindow = chosen;
 
-    if (chosen != 0) {
-        char *base = (char *)chosen;
-        Win *inner = *(Win **)(base + 0xa8);
-        if (inner != 0 && (*((unsigned char *)inner + 0x9c) & 1) != 0) {
-            char *innerb = (char *)inner;
-            Win *parent = *(Win **)(innerb + 0xc4);
+    if (chosen != nullptr) {
+        Win *const inner = chosen->poWinBase_;
+        if (inner != nullptr && (inner->iSomeFlag_ & 1U) != 0) {
+            Win *const parent = inner->win_parent_;
             int visible = 1;
-            if (parent != 0) {
-                visible = parent->is_visible();
-            }
-            if (visible != 0) {
-                reinterpret_cast<Win *>(inner)->on_key(key, flags, repeat, scan);
-            }
+            if (parent != nullptr) visible = parent->is_visible();
+            if (visible != 0) inner->on_key(key, flags, repeat, scan);
         }
     }
 
-    if (*p_9b7a8c != 0 && flags != 0) {
-        // 0x009B7A8C IS win.h's typed key hook; call it by its name.
-        WinKeyHook(key);
-    }
-
-    if (*p_9b7a88 != 0) {
-        // 0x009B7A88, likewise the message hook.
-        WinMessageHook();
-    }
+    if (WinKeyHook != nullptr && flags != 0) WinKeyHook(key);
+    if (WinMessageHook != nullptr) WinMessageHook();
 }
 
 // ===== homed from src/unrecovered/005f5c00.cpp =====
