@@ -20,6 +20,11 @@
       "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
       "address_space": "pe:va",
       "address": 6528608
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6387312
     }
   ],
   "editable_files": [
@@ -34,6 +39,7 @@
   "evidence": [
     "Pinned618C48 stores original618DA0 to record+58. Engine63A0AF passes six stack arguments and caller-cleans18; object_start618DA0 reads stack and plain RET, no ECX receiver. Replace literal executable target with actual static __cdecl source callback, retain original marker identity/historical signature and native observed current symbol through coordinator writer only.",
     "Pinned vox_draw_scene63A0DE..0F3 reads callback+5C after vox_draw_part, null-tests, pushes current loop argument atESP64 and record, calls then caller-cleans8. Return ignored. Recover that edge, verify whether the second argument is part index or animation step from original setup, do not infer it from variable names. Record allocated/cleared80bytes; current fake54byte VOX_ScnRenderHnd prefix and VoxRenderRecord refer to same allocation/color member50. Unify actual record identity without inventing inheritance or retaining a callback cast shim; typedef compatibility permitted with source provenance. Two differently typed callback fields at58/5C, not integer array.",
-    "Keep existing state/context/shadow and raster behavior outside this closure; report necessary expansion rather than editing other owners. Existing tests may be retargeted only to retain prior properties; no dropping/damage weakening. Host actual-source callback/order/default tests, fresh native ABI/symbol/layout/reference observations, all historical identities and fresh build/link required before manual integration. No full SDK/game acceptance or body-count gain asserted."
+    "Keep existing state/context/shadow and raster behavior outside this closure; report necessary expansion rather than editing other owners. Existing tests may be retargeted only to retain prior properties; no dropping/damage weakening. Host actual-source callback/order/default tests, fresh native ABI/symbol/layout/reference observations, all historical identities and fresh build/link required before manual integration. No full SDK/game acceptance or body-count gain asserted.",
+    "Coordinator expansion: pinned617688 stores render_with_colour_table fourth argument at9BB474; object_start618DD5-DC reads same member as memcpy source for1800bytes. Existing render_argument_ uint32 and integer parameter erase a borrowed table pointer; recover const void* type if all accesses confirm read-only. No current outside source caller, no pointer-as-integer or cast-at-store stand-in. Original617670 identity/BYTE_EXACT claim retained; coordinator observes new emitted symbol and publishes its fact only through native writer. Callback task base_revision remains unchanged."
   ]
 }

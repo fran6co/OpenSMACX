@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "planwin-buffer-copy-owner-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover PlanWin virtual-base Buffer copy through genuine inheritance and dimension members, retiring its unneeded raw vbtable reader.",
+  "base_revision": "21adfde47d250dc63d397c9c6fc86eff5406b691",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4764608
+    }
+  ],
+  "editable_files": [
+    "src/planwin.cpp",
+    "recovery/tests/test_planwin_buffer_copy_owner_oct9.py"
+  ],
+  "evidence": [
+    "Pinned48B3C0..3EF loads actual GraphicWin virtual base through vbtable, Buffer receiver+444, source PlanWin+21A70, width+4C4 and negatedheight+4C8, calls existing five-argument Buffer.copy5D95B0 once with0,0. Existing public virtual GraphicWin and public Buffer relationship and pixel_width/pixel_height accessors expose exact fields. No new hierarchy/layout or guard; preserve original unchecked negation including unresolved INT_MIN compiler effect.",
+    "virtual_base_of is used only by UNK1 and can be retired after typed source conversion; pre_vbase_dword separately used by blink stays. New host actual-source virtual-base/receiver/source/dimension controls, whole PlanWin TU native baseline/current comparisons, source identity continuity and fresh combined build/link before independent manual review. No original marker/claims edits, long byte search or full-game acceptance."
+  ]
+}
