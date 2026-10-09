@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "task_id": "selectpartwin-runtime-owner-oct9",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover picker armor palette and weapon sprite inputs through existing game asset owners, retaining unchecked original indexing and unresolved assets.",
+  "base_revision": "f95a91b982730d3582f84868a5d88165f9bbeec5",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4407152
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4401520
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4401328
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4405776
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4407120
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4451856
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4405696
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4405280
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4405568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4407088
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4406624
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4401584
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4404512
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4403568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4402368
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4451808
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4452272
+    }
+  ],
+  "editable_files": [
+    "src/selectpartwin.cpp",
+    "recovery/tests/test_selectpartwin_runtime_owner_oct9.py"
+  ],
+  "evidence": [
+    "Pinned draw_armor433170 palette pointer6EEF7C is existing game.cpp/game.h ArmorTransparentColorTables[24][256] source object. Select byte pointerArmorTransparentColorTables[0] for the same renderer input; no copiedbinarytable/newstorage.",
+    "Pinned draw_weapon432CC0 computes778400+index160; sourceg_VEH_SPRITES starts7777A0 andsizeofSprite2C, so778400=base+72elements and160=8elements. Use&g_VEH_SPRITES[72+sprite_idx*8], preserving original index guards and no bounds fix. Do not assert capacity or valid index beyond source/pinned evidence.",
+    "Picker tile6B33F8 remains unowned; its existing raw SelectPartTile pointer is not an independent typed source object. Its color at6B3400 is exactsameSprite+8 namedtransparent_index(); remove the interior color alias via that method if original full-width/byte read matches. Preserve unowned tile and weapon-index byte9AB9CE; no fakeglobal or newannotation.",
+    "Coordinator authorizes isolated cheap full-owner draft; only listed cpp and newtests. No Git/Wine/native compiler/preparation/record/demotion/marker edits by worker; request central scope expansion for additional dependencies. Preserve original quirks, historical claims and seed findings. Host actual-source controls plus later coordinator review/native slot/layout/build/link checks; no new-function-count or acceptance claim implied by replacing existing wrong runtime inputs."
+  ]
+}
