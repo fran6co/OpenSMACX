@@ -804,11 +804,12 @@ extern int BasePopFalloutFlag;  // 0x009B8CFC
 // The two singleton BasePop instances `init_class` allocates (basepop.cpp,
 // which defines them) and `pops` (popup.cpp) chooses between: in the image
 // these are the two zero-initialised pointer dwords at 0x009BC074/78. Real
-// pointer variables here - one storage, one name - instead of the per-TU
+// BasePop pointer variables here, matching PopupAllocHook's return type -
+// one storage, one name - instead of the per-TU
 // pointer bindings into the image's data that read and wrote unmapped
 // memory in the standalone build.
-extern Win *PopupInstanceSlotA;  // 0x009BC074
-extern Win *PopupInstanceSlotB;  // 0x009BC078
+extern BasePop *PopupInstanceSlotA;  // 0x009BC074
+extern BasePop *PopupInstanceSlotB;  // 0x009BC078
 
 // The two default button captions, heap copies the class owns. `init_class`
 // seeds them from the literals "OK" and "Cancel"; the two setters below

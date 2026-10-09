@@ -309,8 +309,8 @@ struct BasePop : Win {
     }
     void close() { ++close_calls;events[event_count++]=5; }
 };
-Win *PopupInstanceSlotA;
-Win *PopupInstanceSlotB;
+BasePop *PopupInstanceSlotA;
+BasePop *PopupInstanceSlotB;
 char StringTemp[1032];
 char PopupStartCaption[256]="SCRIPT";
 int PopupWriteCheckState=0x1234;
@@ -369,6 +369,20 @@ def numeric_source_root() -> Path:
     explicit = os.environ.get("OPENSMACX_POPUP_TEST_SOURCE_ROOT")
     if explicit: return Path(explicit).resolve()
     return Path(__file__).resolve().parents[2]
+
+
+def test_popup_wrappers_keep_allocator_owned_slot_type() -> None:
+    root = numeric_source_root()
+    header = (root / "src/basepop.h").read_text(encoding="utf-8")
+    implementation = (root / "src/basepop.cpp").read_text(encoding="utf-8")
+    popup = (root / "src/popup.cpp").read_text(encoding="utf-8")
+    assert "extern BasePop *PopupInstanceSlotA;" in header
+    assert "extern BasePop *PopupInstanceSlotB;" in header
+    assert "BasePop *PopupInstanceSlotA;" in implementation
+    assert "BasePop *PopupInstanceSlotB;" in implementation
+    assert "Win *win = PopupInstanceSlotB;" not in popup
+    assert "reinterpret_cast<BasePop *>(win)" not in popup
+    assert "static_cast<BasePop *>(PopupInstanceSlot" not in popup
 
 
 def make_numeric_source(root: Path, damage: str = "") -> str:

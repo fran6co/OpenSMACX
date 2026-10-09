@@ -1366,11 +1366,10 @@ int __cdecl pops(char *caption, char *label, int value, char *override_text,
     // default first hoisted its load above the call (98/110); if/else and
     // ternary spellings both grew a `jmp` the image does not have.
     const BOOL winVisible = PopupInstanceSlotA->is_visible();
-    Win *win = PopupInstanceSlotB;
+    BasePop *pop = PopupInstanceSlotB;
     if (!winVisible) {
-        win = PopupInstanceSlotA;
+        pop = PopupInstanceSlotA;
     }
-    BasePop *pop = reinterpret_cast<BasePop *>(win);
 
     if (pop->start(caption, label, value, override_text, flags, 0)) {
         return -1;
@@ -1596,11 +1595,10 @@ int __cdecl pop_ask(char *text_file, char *text_label, int value,
                     char *override_text, int (__cdecl *callback)(),
                     int flags) {
     const BOOL winVisible = PopupInstanceSlotA->is_visible();
-    Win *win = PopupInstanceSlotB;
+    BasePop *pop = PopupInstanceSlotB;
     if (!winVisible) {
-        win = PopupInstanceSlotA;
+        pop = PopupInstanceSlotA;
     }
-    BasePop *pop = reinterpret_cast<BasePop *>(win);
 
     if (pop->start(text_file, text_label, value, override_text, flags | 0x44,
                    0)) {
@@ -1704,11 +1702,10 @@ int __cdecl pop_ask(char *section, char *override_text,
 int __cdecl pop_ask_number(char *label, int initial, int (__cdecl *callback)()) {
     char number_text[80];
     const BOOL winVisible = PopupInstanceSlotA->is_visible();
-    Win *win = PopupInstanceSlotB;
+    BasePop *pop = PopupInstanceSlotB;
     if (!winVisible) {
-        win = PopupInstanceSlotA;
+        pop = PopupInstanceSlotA;
     }
-    BasePop *pop = reinterpret_cast<BasePop *>(win);
 
     StringTemp[0] = 0;
     _itoa(initial, number_text, 10);
@@ -1739,11 +1736,10 @@ int __cdecl pop_ask_number(char *caption, char *label, int initial,
                            int (__cdecl *callback)()) {
     char number_text[80];
     const BOOL winVisible = PopupInstanceSlotA->is_visible();
-    Win *win = PopupInstanceSlotB;
+    BasePop *pop = PopupInstanceSlotB;
     if (!winVisible) {
-        win = PopupInstanceSlotA;
+        pop = PopupInstanceSlotA;
     }
-    BasePop *pop = reinterpret_cast<BasePop *>(win);
 
     StringTemp[0] = 0;
     _itoa(initial, number_text, 10);
@@ -1784,11 +1780,10 @@ int __cdecl pop_ask_number(char *caption, char *label, int initial,
 int __cdecl pop_ask_number(char *label, int (__cdecl *callback)()) {
     char number_text[80];
     const BOOL winVisible = PopupInstanceSlotA->is_visible();
-    Win *win = PopupInstanceSlotB;
+    BasePop *pop = PopupInstanceSlotB;
     if (!winVisible) {
-        win = PopupInstanceSlotA;
+        pop = PopupInstanceSlotA;
     }
-    BasePop *pop = reinterpret_cast<BasePop *>(win);
 
     StringTemp[0] = 0;
     _itoa(0, number_text, 10);
@@ -2118,8 +2113,8 @@ int Popup::on_exec() {
 // ORIGINAL: 0x006272F0 ?pop_close@@YAXXZ 0x006272F0-0x00627306 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned6272F0..627306; retained git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/recovered/006272f0.cpp historical byte obligation.", "PopupInstanceSlotA/B are the existing init_class-owned singleton pointer cells9BC074/78; BasePop derives through GraphicWin from the nonvirtual Win base."], "reason": "Close both source-owned singleton popups through the genuine BasePop receiver; retain the original sequential reload across the first close callback."}
 void __cdecl pop_close() {
-    static_cast<BasePop *>(PopupInstanceSlotA)->close();
-    static_cast<BasePop *>(PopupInstanceSlotB)->close();
+    PopupInstanceSlotA->close();
+    PopupInstanceSlotB->close();
 }
 
 // ORIGINAL: 0x00559000 sub_559000 0x00559000-0x0055903A BYTE_EXACT
@@ -2374,11 +2369,10 @@ int __cdecl pop_ask_number(char *caption, char *label,
                            int (__cdecl *callback)()) {
     char number_text[80];
     const BOOL winVisible = PopupInstanceSlotA->is_visible();
-    Win *win = PopupInstanceSlotB;
+    BasePop *pop = PopupInstanceSlotB;
     if (!winVisible) {
-        win = PopupInstanceSlotA;
+        pop = PopupInstanceSlotA;
     }
-    BasePop *pop = static_cast<BasePop *>(win);
 
     StringTemp[0] = 0;
     _itoa(0, number_text, 10);

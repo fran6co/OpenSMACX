@@ -35,19 +35,19 @@ class Win {
 public:
     virtual ~Win();
 };
-class BasePop { public: static void close_class(); };
+class BasePop : public Win { public: static void close_class(); };
 Font *BasePopDefaultStringFonts[4];
 Font *BasePopDefaultButtonFonts[3];
 char *BasePopDefaultOkText;
 char *BasePopDefaultCancelText;
-Win *PopupInstanceSlotA;
-Win *PopupInstanceSlotB;
+BasePop *PopupInstanceSlotA;
+BasePop *PopupInstanceSlotB;
 
 static int derived_destroyed[4];
 static int delete_calls;
 static bool first_dtor_saw_own_slot;
-static Win *replacement;
-static Win *original_second;
+static BasePop *replacement;
+static BasePop *original_second;
 void operator delete(void *memory) throw() {
     ++delete_calls;
     free(memory);
@@ -59,7 +59,7 @@ void operator delete[](void *memory) throw() {
 Win::~Win() {
     if (this == PopupInstanceSlotA) first_dtor_saw_own_slot = true;
 }
-class TrackedWin : public Win {
+class TrackedWin : public BasePop {
 public:
     explicit TrackedWin(int id) : id_(id) {}
     virtual ~TrackedWin() {
@@ -138,7 +138,7 @@ def body_mutants(body):
     )
     cached_second = body.replace(
         "    if (PopupInstanceSlotA != 0) {",
-        "    Win *cached_second = PopupInstanceSlotB;\n"
+        "    BasePop *cached_second = PopupInstanceSlotB;\n"
         "    if (PopupInstanceSlotA != 0) {", 1,
     ).replace("delete PopupInstanceSlotB;", "delete cached_second;", 1)
     assert missing_delete != body

@@ -1409,8 +1409,14 @@ char *BasePopDefaultCancelText;  // 0x009B8D84
 // per address. Zero-initialised dwords in the image, as here.
 int BasePopFalloutGate;   // 0x009B8D00
 int BasePopFalloutFlag;   // 0x009B8CFC
-Win *PopupInstanceSlotA;  // 0x009BC074
-Win *PopupInstanceSlotB;  // 0x009BC078
+// init_class stores each BasePop-returning allocator result in these cells;
+// callers reload them across visibility and destruction callbacks. The pinned
+// loader image supplies zero initial DWORDs. Bind starts only: these observed
+// pointer-width accesses do not establish a larger original allocation.
+// RECOVERY_OBJECT: v1 0x009BC074 ?PopupInstanceSlotA@@3PAVBasePop@@A
+BasePop *PopupInstanceSlotA;  // 0x009BC074
+// RECOVERY_OBJECT: v1 0x009BC078 ?PopupInstanceSlotB@@3PAVBasePop@@A
+BasePop *PopupInstanceSlotB;  // 0x009BC078
 
 
 /*
