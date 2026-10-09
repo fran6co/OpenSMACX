@@ -26,7 +26,7 @@
 
 #include "alpha.h"     // read_faction
 #include "buffer.h"    // the local Buffer load_pcx / get_pixel run on
-#include "dialog.h"    // Dialog - the +0xA34 base UNK4 destroys
+#include "dialog.h"    // CheckBox's virtual Dialog base is at CheckBox-relative +0xA34.
 #include "dialogs.h"   // Dialogs - the pick_* option lists
 #include "faction.h"   // Player - the record read_faction fills
 #include "game.h"      // ExitTurnLoop, the modal callbacks' stop flag
@@ -2963,29 +2963,24 @@ void NetWin::new_chat(char *message, int slot) {
 }
 
 /*
-Purpose: Destroy the dialog's CheckBox view - the CheckBox subobject whose
-         vbtable puts its GraphicWin base at +0x1C and its Dialog base at
-         +0xA34 - then the Dialog and the GraphicWin, in that order.
+Purpose: Retain the historical original identity while binding its current
+         owner to CheckBox's compiler-emitted complete-object destructor.
+         This is generated from NetWin's real CheckBox member lifetime; it is
+         not a handwritten NetWin method or a manually staged teardown.
 // ORIGINAL: 0x004837F0 ?UNK4@NetWin@@QAEXXZ 0x004837F0-0x00483813 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/004837f0.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/004837f0.cpp (historical NetWin catalogue interpretation and preserved seed claim)", "Consumer-emitted ??_DCheckBox@@QAEXXZ calls the CheckBox, Dialog and GraphicWin destructors at receiver+0x1C/+0xA34/+0x1C; pinned original 0x004837F9/0x00483804/0x0048380B target 0x0060E740/0x00608E10/0x005D4DD0 respectively. These are CheckBox-relative receiver adjustments, not NetWin-relative.", "src/netwin.h: NetWin owns the actual CheckBox checkBox_ member at +0x4454; ordinary member destruction emits the CheckBox complete-object helper in this consuming translation unit. No NetWin::UNK4 source callers exist."], "reason": "Keep the original NetWin catalogue identity and seed provenance as historical facts, but bind its current source identity to the genuine compiler-generated CheckBox complete-object destructor emitted for NetWin's real member. Do not hand-author cleanup or attribute the CheckBox-relative receivers to NetWin."}
+// symbol    ??_DCheckBox@@QAEXXZ
 // size      35 bytes
-// prototype void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this)
+// prototype void (__thiscall ?UNK4@NetWin@@QAEXXZ)(NetWin* this) [historical catalogue interpretation; not the current owner]
 // callers   2   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4DD0 0x00608E10 0x0060E740
 // Homed from src/recovered/004837f0.cpp.
 Return Value: n/a
-Status: Coverage transcription - unclaimed body (the preserved seed keeps its
-        own BYTE_EXACT claim until this converges)
+Status: Compiler-generated CheckBox complete-object destructor, emitted from
+        NetWin's CheckBox member lifetime in this consuming translation unit.
 */
-void NetWin::UNK4() {
-    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
-    reinterpret_cast<CheckBox *>(self + 0x1C)->~CheckBox();
-    reinterpret_cast<Dialog *>(self + 0xA34)->~Dialog();
-    reinterpret_cast<GraphicWin *>(self + 0x1C)->~GraphicWin();
-}
-
 // Native 0x0047C970 password flow. Popup and its owned members use ordinary
 // automatic lifetime; the native explicit close calls in the archived seed
 // are not duplicated over the recovered destructor chain.

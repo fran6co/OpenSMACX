@@ -228,9 +228,6 @@ class NetWin : public GraphicWin {
   // 0x0047FE80. Paints the three dialog panel sprites through the Buffer at
   // +0x444.
   void UNK3();
-  // 0x004837F0. Destroys the CheckBox view at +0x1C, the Dialog at +0xA34,
-  // and the GraphicWin at +0x1C - the CheckBox vbtable's own two displacements.
-  void UNK4();
   // 0x00481DA0. Copies one faction record's name/title block into the
   // lobby row carried in the packet, or just resets +0x45 for slot -1.
   void fill_player(NetWinLobbyRow *lobby_row, int slot);
@@ -268,6 +265,8 @@ class NetWin : public GraphicWin {
   Spot spot_;  // 0xD34
   StringBox stringBox_;  // 0xD40, size == sizeof(StringBox)
   EditBox editBox_;  // 0x38E0, size == sizeof(EditBox)
+  // The compiler emits CheckBox's complete-object cleanup helper for this
+  // member in NetWin's consuming translation unit.
   CheckBox checkBox_;  // 0x4454, declared CheckBox extent == 0xB28
   FlatButton flatButton1_;  // 0x4F7C
   FlatButton flatButton2_;  // 0x5AC8
