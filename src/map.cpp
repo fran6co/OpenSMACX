@@ -4154,20 +4154,17 @@ void __cdecl world_shorelines() {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             int tile_index = MapLongitude * y + (x >> 1);
             int altitude = 0;
-            uint8_t *tile = reinterpret_cast<uint8_t *>(map_tiles()) + tile_index * 44;
-            int depth = tile[1] - MapSeaLevel;
+            Map *tile = &map_tiles()[tile_index];
+            int depth = tile->contour - MapSeaLevel;
 
-            int *threshold = (int *)AltNatural + 6;
             int natural_index = 6;
             do {
-                if (depth >= *threshold) {
+                if (depth >= static_cast<int32_t>(AltNatural[natural_index])) {
                     altitude = natural_index;
                     break;
                 }
-                threshold--;
                 natural_index--;
-            } while (reinterpret_cast<int>(threshold)
-                     >= reinterpret_cast<int>(AltNatural));
+            } while (natural_index >= 0);
 
             alt_set(x, y, altitude);
 
@@ -4192,9 +4189,8 @@ void __cdecl world_shorelines() {
         for (int y = 0; y < MapLatitudeBounds; y++) {
             for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
                 int tile_index = MapLongitude * y + (x >> 1);
-                uint8_t *tile = reinterpret_cast<uint8_t *>(map_tiles())
-                                + tile_index * 44;
-                int rocky = tile[0] >> 5;
+                Map *tile = &map_tiles()[tile_index];
+                int rocky = tile->climate >> 5;
                 if (rocky == natural) {
                     world_alt_set(x, y, rocky, 1);
                 }
@@ -6388,11 +6384,10 @@ void __cdecl world_rocky() {
     for (int y = 0; y < MapLatitudeBounds; y++) {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             int half_x = x >> 1;
-            unsigned int *rec = reinterpret_cast<unsigned int *>(
-                map_tile_bytes() + (MapLongitude * y + half_x) * 0x2c);
+            Map *rec = &map_tiles()[MapLongitude * y + half_x];
             // offset 0xc is the tile's bit2: a landmark code already on the
             // tile disqualifies it from being re-rolled.
-            unsigned int val3 = *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(rec) + 0xc);
+            uint32_t val3 = rec->bit2;
 
             bool skip = false;
             if ((val3 & 0x80000001) == 1 && static_cast<int>(val3 & 0xff000000) < 0x15000000) {
@@ -6412,16 +6407,15 @@ void __cdecl world_rocky() {
             int minerals = minerals_at(x, y);
             rocky_set(x, y, minerals);
 
-            unsigned char *tile = reinterpret_cast<unsigned char *>(
-                map_tile_bytes() + (MapLongitude * y + half_x) * 0x2c);
-            unsigned int flags = *reinterpret_cast<unsigned int *>(tile + 0xc);
+            Map *tile = &map_tiles()[MapLongitude * y + half_x];
+            uint32_t flags = tile->bit2;
 
-            if ((flags & 0x80) != 0 && (*tile & 0xe0) <= 0x5f) {
+            if ((flags & 0x80) != 0 && (tile->climate & 0xe0) <= 0x5f) {
                 continue;
             }
 
             unsigned int bitval;
-            if ((*tile & 0xe0) < 0x60) {
+            if ((tile->climate & 0xe0) < 0x60) {
                 bitval = 0x10000;
             } else {
                 bool useRandomFlat = false;
@@ -6439,7 +6433,7 @@ void __cdecl world_rocky() {
                 if (useRandomFlat) {
                     bitval = 0x10000;
                 } else {
-                    unsigned char b = *tile;
+                    unsigned char b = tile->climate;
                     if ((b & 0xe0) < 0x81 && (b & 0x18) < 9) {
                         continue;
                     }
@@ -6816,16 +6810,16 @@ trailer:
 
 void __cdecl clear_dirty() {
     int i = 0;
-    char *record = reinterpret_cast<char *>(map_tiles());
+    Map *record = map_tiles();
     if (MapLatitudeBounds > 0) {
         int threshold = MapLongitudeBounds;
         do {
             int j = i & 1;
             if (j < threshold) {
                 do {
-                    *reinterpret_cast<unsigned int *>(record + 0xc) |= 0x400000;
+                    record->bit2 |= 0x400000;
                     j += 2;
-                    record += 0x2c;
+                    ++record;
                     threshold = MapLongitudeBounds;
                 } while (j < threshold);
             }

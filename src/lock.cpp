@@ -40,10 +40,9 @@ Status: Complete
 void Lock::reset_map() {
     // NOT CACHED: the image RE-READS *LockMapCount at every iteration's
     // test rather than hoisting it into a local once.
-    // The byte view refers to the map owner's actual allocation.
-    uint8_t *const table = map_tile_bytes();
+    Map *const table = map_tiles();
     for (int32_t index = 0; index < static_cast<int32_t>(MapArea); ++index) {
-        table[index * 0x2C + 5] &= 0xC7;
+        table[index].val3 &= 0xC7;
     }
 }
 
@@ -77,9 +76,9 @@ void Lock::clear() {
     }
     // reset_map()'S BODY, INLINED: `osmx calls` names zero call targets.
     // NOT CACHED: see reset_map() above.
-    uint8_t *const table = map_tile_bytes();
+    Map *const table = map_tiles();
     for (int32_t index = 0; index < static_cast<int32_t>(MapArea); ++index) {
-        table[index * 0x2C + 5] &= 0xC7;
+        table[index].val3 &= 0xC7;
     }
 }
 
