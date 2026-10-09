@@ -4704,7 +4704,7 @@ void Win::remove_parent_dialog() {
                         parent->list_.head_ = reinterpret_cast<void *>(*reinterpret_cast<int *>(counter + 0xc));
                     }
                     parent->list_.current_ = reinterpret_cast<void *>(*reinterpret_cast<int *>(counter + 0xc));
-                    if (parent->list_.external_ == 0) {
+                    if (parent->list_.allocator_ == 0) {
                         int payload = *reinterpret_cast<int *>(counter + 8);
                         if (payload != 0) {
                             free(reinterpret_cast<void *>(payload));
@@ -6859,8 +6859,8 @@ void Win::set_parent_dialog(Win *dialog) {
     }
 
     if (*reinterpret_cast<int *>(b + 0xd4) == 0) {
-        void *iv2 = (*reinterpret_cast<int *>(b + 0xdc) != 0)
-            ? reinterpret_cast<Heap *>(*reinterpret_cast<int *>(b + 0xdc))->get(0x1c)
+        void *iv2 = (dialog->list_.allocator_ != 0)
+            ? dialog->list_.allocator_->get(0x1c)
             : mem_get(0x1c);
         *reinterpret_cast<void **>(b + 0xcc) = iv2;
         if (iv2 == 0) {
@@ -6872,9 +6872,9 @@ void Win::set_parent_dialog(Win *dialog) {
         char *h2 = *reinterpret_cast<char **>(b + 0xcc);
         *reinterpret_cast<void **>(h2 + 0x10) = h2;
 
-        if (*reinterpret_cast<int *>(b + 0xdc) != 0) {
+        if (dialog->list_.allocator_ != 0) {
             *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xcc) + 8) =
-                reinterpret_cast<Heap *>(*reinterpret_cast<int *>(b + 0xdc))->get(4);
+                dialog->list_.allocator_->get(4);
         } else {
             *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xcc) + 8) = mem_get(4);
         }
@@ -6884,8 +6884,8 @@ void Win::set_parent_dialog(Win *dialog) {
         }
         *reinterpret_cast<void **>(b + 0xd0) = h4;
     } else {
-        void *newnode = (*reinterpret_cast<int *>(b + 0xdc) != 0)
-            ? reinterpret_cast<Heap *>(*reinterpret_cast<int *>(b + 0xdc))->get(0x1c)
+        void *newnode = (dialog->list_.allocator_ != 0)
+            ? dialog->list_.allocator_->get(0x1c)
             : mem_get(0x1c);
         char *head = *reinterpret_cast<char **>(b + 0xcc);
         char *tail = *reinterpret_cast<char **>(head + 0x10);
@@ -6908,9 +6908,9 @@ void Win::set_parent_dialog(Win *dialog) {
         *reinterpret_cast<void **>(b + 0xd0) = nn;
         *reinterpret_cast<void **>(nn + 4) = this;
 
-        if (*reinterpret_cast<int *>(b + 0xdc) != 0) {
+        if (dialog->list_.allocator_ != 0) {
             *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xd0) + 8) =
-                reinterpret_cast<Heap *>(*reinterpret_cast<int *>(b + 0xdc))->get(4);
+                dialog->list_.allocator_->get(4);
         } else {
             *reinterpret_cast<void **>(*reinterpret_cast<char **>(b + 0xd0) + 8) = mem_get(4);
         }
@@ -8416,8 +8416,9 @@ int Win::init(int x, int y, int width, int height, char * caption,
 
     if (!skipMenuList && this->win_parent_ != 0 &&
         (this->win_parent_->iFlags_ & 0x1000) == 0) {
-        char *parent = reinterpret_cast<char *>(this->win_parent_);
-        Heap *heap = *reinterpret_cast<Heap **>(parent + 0xdc);
+        Win *parent_window = this->win_parent_;
+        char *parent = reinterpret_cast<char *>(parent_window);
+        Heap *heap = parent_window->list_.allocator_;
         int initCount = *reinterpret_cast<int *>(parent + 0xd4);
         if (initCount != 0) {
             char *newNode = reinterpret_cast<char *>(heap ? heap->get(0x1C) : mem_get(0x1C));
@@ -10923,7 +10924,7 @@ void Win::close() {
                         parent->list_.head_ = reinterpret_cast<void *>((uint32_t) * (char **)(cur + 0xc));
                     }
                     parent->list_.current_ = reinterpret_cast<void *>((uint32_t) * (char **)(cur + 0xc));
-                    if (*(int *)((char *)parent + 0xdc) == 0) {
+                    if (parent->list_.allocator_ == 0) {
                         void *dataPtr = *(void **)(cur + 8);
                         if (dataPtr != 0) {
                             free(dataPtr);

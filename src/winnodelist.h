@@ -19,16 +19,25 @@
 #include <cstdlib>
 
 class Win;  // the payload the nodes carry
+class Heap; // allocator borrowed by the parent window's node list
 
 // THE EMBEDDED OBJECT AT Win+0xC8. Only `??0Win@@QAE@XZ`, `??1Win@@QAE@XZ`
 // and this class's own out-of-line scalar deleting destructor (0x005F8770)
 // reference its vtable at 0x0066FF30 anywhere in .text, and that table is
 // exactly ONE slot - the destructor's own address - so it belongs to Win
-// alone. It is a small singly-linked list: `head_` walks nodes whose own
-// +0x8 is a payload `free()`s and +0xC is the next pointer, proven by
-// 0x005F8770 and by `Win::~Win()` (0x005EBC90) performing the identical
-// walk INLINE at Win+0xCC.._0xDC rather than calling it. `external_` is a
-// "do not own this list" guard: nonzero skips the free loop entirely.
+// alone. It is a circular doubly-linked list: `head_` walks nodes whose own
+// +0x8 is a payload and +0xC is the next pointer, and +0x10 is the
+// previous pointer, with the links shown by set_parent_dialog and the
+// teardown at 0x005F8770 and Win::~Win() (0x005EBC90) performing the identical
+// walk INLINE at Win+0xCC.._0xDC rather than calling it. `allocator_` is a
+// Heap pointer used for list allocations; nonzero also skips individual frees.
+// `allocator_` at +0x14 (Win+0xDC) is a Heap pointer: Win::init at
+// 0x005EC493/0x005EC4A7 and set_parent_dialog at 0x005EC9A0 select
+// Heap::get for 0x1C-byte nodes and 4-byte payloads when it is nonzero,
+// retaining mem_get otherwise. Win::~Win at 0x005EBCD7 skips individual
+// frees when it is nonzero. Construction initializes it to zero. No writer
+// of a nonzero allocator is identified; its installation remains unresolved.
+// The node's leading field at +0 is not established by this evidence.
 // `current_` is scratch during that loop, but is read live elsewhere too -
 // `Win::is_dialog_focus` (0x005F2CA0) reads it as the top-of-stack node,
 // whose own +0x4 holds the `Win *` currently holding focus.
@@ -38,7 +47,7 @@ class Win;  // the payload the nodes carry
 // compiler-generated.
 class WinNodeList {
  public:
-  WinNodeList() : head_(0), current_(0), count_(0), tail_(0), external_(0) {}
+  WinNodeList() : head_(0), current_(0), count_(0), tail_(0), allocator_(0) {}
   // DEFINED IN THE CLASS so VC6 can inline it into `??_GWinNodeList`,
   // which is what the image is: ONE function at 0x005F8770 that restores
   // the vfptr and walks the list. Out-of-line, the deleting destructor
@@ -47,11 +56,11 @@ class WinNodeList {
   virtual ~WinNodeList() {
       // IMAGE ORDER: the head is read before the vfptr-restore that every
       // scalar deleting destructor opens with, matching `Win::~Win()`
-      // performing the same walk inline. `external_` guards the whole loop -
-      // nonzero means this list does not own its nodes.
+      // performing the same walk inline. A nonzero allocator_ skips the
+      // individual frees, as it does in the inline Win teardown.
       void *node = head_;
       if (node != 0) {
-          if (external_ == 0 && count_ > 0) {
+          if (allocator_ == 0 && count_ > 0) {
               int i = 0;
               do {
                   Win *next = *reinterpret_cast<Win **>(
@@ -86,5 +95,5 @@ class WinNodeList {
   // which is a ring position. Same four bytes either way, so the
   // layout is unchanged and the assert still holds.
   int tail_;          // 0x10 (Win+0xD8)
-  int external_;      // 0x14 (Win+0xDC)
+  Heap *allocator_;   // 0x14 (Win+0xDC)
 };
