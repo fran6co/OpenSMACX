@@ -179,15 +179,29 @@ void Console::disband(int x_coord, int y_coord) {
 #include <cstring>
 
 void __cdecl draw_cursor();                               // 0x0046AE00
+void __cdecl ambience_veh(int vehicle);
 
 // ORIGINAL: 0x00511520 ?set_move@Console@@QAEXH@Z 0x00511520-0x005117FD
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963abb2ef8a11892e1d754d80934bd50b12e:src/recovered/units/00511520.cpp", "source:src/console.h", "source:src/veh.h", "source:src/game.h", "source:src/mapwin.h"], "reason": "Coverage transcription using Console members, ConsoleGlobal, Vehs, and named game/network owners in place of seed receiver offsets and duplicate absolute aliases. The ready helper's selection operation is represented by ready_search. Preserved discoveries from the seed: ambience_veh (0x00446D10) and spot_all (0x005B6260) are not product-bound, the multiplayer guards at 0x0093E944 / 0x0093E8E0 are unowned, and 0x0093E8EC is a faction-indexed waiting latch. Their owners need recovery before those effects can be restored here."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963abb2ef8a11892e1d754d80934bd50b12e:src/recovered/units/00511520.cpp", "source:src/console.h", "source:src/veh.h", "source:src/game.h", "source:src/mapwin.h", "pinned:0x00511520..0x005117FD sequential multiplayer gates, ready/ambience selection split, visibility call and callback-sensitive coordinate reads", "source:src/netdaemon.h:NetDaemon::lock_state_"], "reason": "Complete the original Console move workflow through its genuine ready, ambience_veh and spot_all helpers. Preserve the observed ordered guards, selection recheck, offline visibility condition and post-callback field reads. The existing faction waiting-mask symbol remains a historical duplicate view of NetDaemon lock-state storage; its central ownership correction is still outstanding."}
 void Console::set_move(int force_update) {
-    // A network handoff or automated turn owns movement input. not_my_turn()
-    // already combines the network flag, handoff bit and active faction.
-    if (IsMultiplayerNet &&
-        (ConsoleControlTurnActive != 0 || not_my_turn() != 0)) {
-        return;
+    if (IsMultiplayerNet != 0) {
+        if (ConsoleControlTurnActive != 0) {
+            return;
+        }
+        if (NetDaemonNet.lock_state_[2].payload_.flags != 0) {
+            return;
+        }
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0) {
+            const int faction_bit = 1 << faction_id_;
+            if ((ConsoleFactionsWaitingMask & faction_bit) != 0) {
+                return;
+            }
+            if (NetDaemonNet.lock_state_[0].trailing_words_[4] != 0) {
+                return;
+            }
+        } else if (not_my_turn() != 0) {
+            return;
+        }
     }
 
     bool did_reset = false;
@@ -206,18 +220,21 @@ void Console::set_move(int force_update) {
         field_23BE4_ = 0;
     }
 
-    // The seed calls an unhomed Console::ready() helper here. Its recovered
-    // selection algorithm is ready_search; this preserves unit coverage while
-    // leaving the helper's additional presentation effects for its own task.
     if (veh_selectable(selected_vehicle_) == 0) {
-        selected_vehicle_ = ready_search(-1);
+        ready();
         did_reset = false;
+    } else {
+        ambience_veh(selected_vehicle_);
     }
 
     if (selected_vehicle_ >= 0 && veh_selectable(selected_vehicle_) != 0) {
-        const int veh_id = selected_vehicle_;
-        const int tile_x = Vehs[veh_id].x;
-        const int tile_y = Vehs[veh_id].y;
+        const int visible_vehicle_id = selected_vehicle_;
+        if (Vehs[visible_vehicle_id].moves_expended == 0 && IsMultiplayerNet == 0) {
+            spot_all(visible_vehicle_id, 0);
+        }
+        const int coordinate_vehicle_id = selected_vehicle_;
+        const int tile_y = Vehs[coordinate_vehicle_id].y;
+        const int tile_x = Vehs[coordinate_vehicle_id].x;
         field_23BF8_ = 0;
         if (survey_mode_ != 0) {
             survey_mode_ = 0;
@@ -230,11 +247,13 @@ void Console::set_move(int force_update) {
             ConsoleInfoWin.change(0);
             ConsoleStatusWin.redraw();
             console_map_win()->main_caption();
-            const int faction = ConsoleGlobal.cursor_history_index_;
-            focus(ConsoleGlobal.cursor_history_x_[faction],
-                  ConsoleGlobal.cursor_history_y_[faction],
-                  Vehs[veh_id].faction_id);
-            alpha_menu_.check(veh_id);
+            const int focus_vehicle_id = selected_vehicle_;
+            const int history_index = ConsoleGlobal.cursor_history_index_;
+            const int focus_faction = Vehs[focus_vehicle_id].faction_id;
+            const int focus_y = ConsoleGlobal.cursor_history_y_[history_index];
+            const int focus_x = ConsoleGlobal.cursor_history_x_[history_index];
+            focus(focus_x, focus_y, focus_faction);
+            alpha_menu_.check(selected_vehicle_);
         }
         field_23BF4_ = 1;
         return;
@@ -257,11 +276,15 @@ void Console::set_move(int force_update) {
         alpha_menu_.check(selected_vehicle_);
     }
 
-    const int index = ConsoleGlobal.cursor_history_index_;
-    const int tile_x = ConsoleGlobal.cursor_history_x_[index];
-    const int tile_y = ConsoleGlobal.cursor_history_y_[index];
-    ConsoleStatusWin.set_loc(tile_x, tile_y);
-    focus(tile_x, tile_y, faction_id_);
+    const int loc_index = ConsoleGlobal.cursor_history_index_;
+    const int loc_y = ConsoleGlobal.cursor_history_y_[loc_index];
+    const int loc_x = ConsoleGlobal.cursor_history_x_[loc_index];
+    ConsoleStatusWin.set_loc(loc_x, loc_y);
+    const int focus_index = ConsoleGlobal.cursor_history_index_;
+    const int focus_faction = faction_id_;
+    const int focus_y = ConsoleGlobal.cursor_history_y_[focus_index];
+    const int focus_x = ConsoleGlobal.cursor_history_x_[focus_index];
+    focus(focus_x, focus_y, focus_faction);
 }
 
 namespace {
@@ -7165,7 +7188,6 @@ void Console::editor_on() {
     update_data(0);
 }
 
-void __cdecl ambience_veh(int vehicle);
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00510F50 ?ready@Console@@QAEXXZ 0x00510F50-0x00511471
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510f50.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
