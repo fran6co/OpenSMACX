@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "24a8e7582a626d53cfce79c1a6062dcaa2e62c5f",
+  "schema_version": 1,
+  "target": "opensmacx",
+  "task_id": "scroll-void-mutators-oct9",
+  "intent": "Recover the five Scroll range/style mutations as genuine void APIs rather than non-void functions falling off their ends, preserving original state and virtual redraw effects.",
+  "editable_files": [
+    "src/scroll.cpp",
+    "src/scroll.h",
+    "recovery/tests/test_scroll_void_mutators_actual_source_oct9.py"
+  ],
+  "subjects": [
+    {"address": 6314416, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6314512, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6314576, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6314640, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6314704, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "evidence": [
+    "Current source set_range6059B0 and style setters605A10/605A50/605A90/605AD0 are uint32_t APIs with no return statement under C4716 suppression. All five recorded original prototypes are void; current source callers discard results. Pinned full spans independently decoded: ret8/ret4 follow virtual redraw slotF8 without assigning a defined result. Incidental callee EAX does not establish an unsigned-result API.",
+    "Preserve set_range signed comparison, reversed flag, out-of-line range_swap_call, minimum/position/maximum stores, and virtual redraw. Preserve each style setter's own field then left/right button fields, all uint32 input bit patterns and left redraw before right redraw. Do not invent return values, normalize colors/thickness/ranges, alter callback behavior or change fields/layout/virtual declarations.",
+    "Use genuine void declarations/definitions and current emitted // symbol spelling while preserving every ORIGINAL identity/span/historical claim and LEVER/TRIED lesson verbatim. Replace only the four style setters' raw volatile reinterpret stores with plain writes to their already-typed members; volatile was a matching-spelling lever, not evidence of original member type or MMIO ownership. Remove the obsolete warning suppression for these five bodies while preserving the useful historical explanation as clearly historical source evidence. Leave later unrelated warning pragmas and mutators unchanged.",
+    "Actual-source host controls execute all five complete bodies with real typed fixture members and virtual redraw spies: signed ascending/descending/equal/extreme ranges, uint32 conversion of negative/style inputs, state before redraw, left/right ordering and callback-time visibility/mutation. Assert void API compatibility and compile with return-type warnings as errors. These controls are not original/native ABI or full runtime proof.",
+    "Worker scope is only the three editable files; no worker Git/compiler/Wine. Coordinator handles isolated preparation, current-caller and native symbol/body verification, full TU and impacted caller measurements, independent review, source/history continuity and fresh application build/link. Justified temporary matching regression is authorized for reviewed structural correction, with claims/restoration obligations retained; no demotion, new claim, baseline reset, original bug fix or automatic/full-game acceptance."
+  ]
+}
