@@ -23,7 +23,6 @@
 #include "statuswin.h"
 #include "worldwin.h"
 #include "checkbox.h"
-#include "vtable_shim.h"
 #include "faction.h"  // DTREATY_* treaty bit constants
 #include "alpha.h"     // Labels/label_get - the atrocity captions
 #include "popup.h"     // the local Popup, PopupStartCaption, PopupModalState

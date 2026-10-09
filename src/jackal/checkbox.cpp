@@ -53,7 +53,6 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "checkbox.h"
-#include "vtable_shim.h"
 #include "win.h"  // WinCallbackWindow
 
 

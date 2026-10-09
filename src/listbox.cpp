@@ -57,7 +57,6 @@
 #include "original_seam.h"
 #include "listbox.h"
 #include "scroll.h"
-#include "vtable_shim.h"
 #include "spritebox.h"
 #include "net_class.h"
 #include "mapwin.h"

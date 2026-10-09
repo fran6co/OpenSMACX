@@ -6,12 +6,42 @@ it does not emulate VC6 code generation, object-layout evidence, or unknown
 Console interface-object behavior.
 """
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
 import pytest
+from match_recovery.includes import COMMENTS_OR_STRINGS
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def mask_cpp_comments_and_literals(source):
+    """Mask ordinary literals/comments; no raw-string or preprocessor parsing."""
+    return COMMENTS_OR_STRINGS.sub(
+        lambda match: re.sub(r"[^\n]", " ", match[0]), source
+    )
+
+
+def live_vcall_or_shim_include(source):
+    masked_lines = mask_cpp_comments_and_literals(source).splitlines()
+    original_lines = source.splitlines()
+    for code_line, original_line in zip(masked_lines, original_lines):
+        if not re.match(r"^\s*#\s*include\b", code_line):
+            continue
+        include = re.match(
+            r'^\s*#\s*include\s*[<"]([^">]+)[">]', original_line
+        )
+        if include and Path(include.group(1)).name == "vtable_shim.h":
+            return True
+    return re.search(r"\bVCall\b", mask_cpp_comments_and_literals(source)) is not None
+
+
+def configured_source_files():
+    return sorted(
+        path for path in (ROOT / "src").rglob("*")
+        if path.is_file() and path.suffix in {".cpp", ".h", ".hpp", ".inl"}
+    )
 
 
 def test_source_uses_existing_owner_contracts():
@@ -26,8 +56,8 @@ def test_source_uses_existing_owner_contracts():
     sound_h = (ROOT / "src/sound.h").read_text()
     main_h = (ROOT / "src/maininterface.h").read_text()
 
-    assert '#include "vtable_shim.h"' not in win + spritebox
-    assert '#include "vtable_shim.h"' in listing
+    assert not live_vcall_or_shim_include(win + spritebox + listing)
+    assert not (ROOT / "src/vtable_shim.h").exists()
     assert "MenuInitLegacyShim" not in win and "menu->init(this)" in win
     assert "class ScrollSlots" not in win
     assert win.count("->on_key_click((int)param2, WinKeyModifiers)") == 2
@@ -48,6 +78,34 @@ def test_source_uses_existing_owner_contracts():
     assert "child->play();" in listing
     assert "Sound slots 23/7 at AutoSound" in listing
     assert "FlatButton flat_button_[42];" in main_h
+
+
+def test_configured_source_has_no_live_vcall_or_retired_shim_include():
+    references = [
+        str(path.relative_to(ROOT)) for path in configured_source_files()
+        if live_vcall_or_shim_include(path.read_text())
+    ]
+    assert references == []
+
+
+@pytest.mark.parametrize(
+    "fixture",
+    [
+        '#include "vtable_shim.h"\n',
+        "void dispatch() { VCall *slot; }\n",
+        "// VCall comment first\nvoid dispatch() { VCall *slot; }\n",
+    ],
+)
+def test_source_control_rejects_synthetic_live_retired_reference(fixture):
+    assert live_vcall_or_shim_include(fixture)
+
+
+def test_source_control_ignores_comments_and_literals():
+    fixture = r'''// VCall use in old notes
+const char *text = "VCall #include \\\"vtable_shim.h\\\"";
+/* #include "vtable_shim.h" and VCall in a comment */
+'''
+    assert not live_vcall_or_shim_include(fixture)
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])

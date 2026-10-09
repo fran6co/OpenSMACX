@@ -22,7 +22,6 @@
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "diplowin.h"
-#include "vtable_shim.h"
 #include "netdaemon.h"
 #include "basepop.h"
 #include "popup.h"

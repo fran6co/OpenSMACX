@@ -19,7 +19,6 @@
 #include "checkbox.h"
 #include "console.h"
 #include "font.h"
-#include "vtable_shim.h"
 #include <stdlib.h>
 #include <ctype.h>
 

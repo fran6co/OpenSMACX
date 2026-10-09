@@ -33,7 +33,6 @@
 #include "maininterface.h"
 #include "win.h"
 #include "spritebox.h"
-#include "vtable_shim.h"
 #include "reportwin.h"
 #include "strings.h"
 #include "alpha.h"

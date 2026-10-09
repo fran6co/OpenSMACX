@@ -88,7 +88,6 @@
 #include "original_seam.h"
 #include "popup.h"    // pop_caption / pop_caption_value_title, drop_player's asks
 #include "stringstruct.h"
-#include "vtable_shim.h"
 #include "wave.h"
 #include "wave_device.h"
 #include "sounddevice.h"
