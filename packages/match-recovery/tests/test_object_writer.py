@@ -6,7 +6,7 @@ import pytest
 
 from match_recovery.model import Origin, Span
 from match_recovery.object_source import ObjectBinding, parse_objects
-from match_recovery.object_writer import write_object_bytes
+from match_recovery.object_writer import replace_object_records, write_object_bytes
 
 
 PIN = "a" * 64
@@ -166,3 +166,60 @@ def test_ordinary_literal_with_raw_like_text_is_not_a_raw_string():
     written = write_object_bytes(raw, expected=(), additions=(binding(0x403000, "_new", 1),),
                                  path=PATH, pin=PIN, address_space=SPACE)
     assert written.endswith(raw)
+
+
+def test_v4_direct_target_round_trip_preserves_old_identity_and_bounded_evidence():
+    origin = Origin(PIN, SPACE, 0x401000)
+    old = ObjectBinding(origin, "?Old@@3HA", PATH, 1, Span(0x401000, 0x401004),
+                        Origin(PIN, SPACE, 0x402000), target_symbol="?Current@@3HA")
+    written = write_object_bytes(b"int value;\n", expected=(), additions=(old,),
+                                 path=PATH, pin=PIN, address_space=SPACE)
+    parsed, = current(written)
+    assert parsed.symbol == old.symbol
+    assert parsed.target_symbol == old.target_symbol
+    assert parsed.emitted_symbol == old.target_symbol
+    assert parsed.interpretation_id == old.interpretation_id
+    assert b"RECOVERY_OBJECT: v4 0x00401000 0x00401004 ?Old@@3HA 0x00402000 target ?Current@@3HA" in written
+
+
+def test_replace_direct_target_is_guarded_and_does_not_rewrite_history():
+    raw = b"// RECOVERY_OBJECT: v2 0x00401000 0x00401004 _old 0x00402000\nint old;\n"
+    old, = current(raw)
+    replacement = replace(old, line=2, target_symbol="_current")
+    output = replace_object_records({PATH: raw}, expected=(old,), replacements=(replacement,),
+                                    destination=PATH, pin=PIN, address_space=SPACE)
+    updated, = current(output[PATH])
+    assert updated.symbol == old.symbol and updated.origin == old.origin
+    assert updated.span == old.span and updated.evidence == old.evidence
+    assert updated.interpretation_id == old.interpretation_id
+    assert updated.target_symbol == "_current"
+    assert b"RECOVERY_OBJECT: v4" in output[PATH]
+
+
+def test_replace_direct_target_rejects_target_collisions_and_stale_snapshot():
+    raw = (b"// RECOVERY_OBJECT: v1 0x00401000 _old\nint old;\n"
+           b"// RECOVERY_OBJECT: v1 0x00402000 _occupied\nint occupied;\n")
+    first, second = current(raw)
+    collision = replace(first, line=2, target_symbol="_occupied")
+    with pytest.raises(ValueError, match="current object target"):
+        replace_object_records({PATH: raw}, expected=(first, second), replacements=(collision,),
+                               destination=PATH, pin=PIN, address_space=SPACE)
+    with pytest.raises(ValueError, match="complete current source snapshot"):
+        replace_object_records({PATH: raw}, expected=(first,), replacements=(replace(first, line=2,
+                               target_symbol="_new"),), destination=PATH, pin=PIN,
+                               address_space=SPACE)
+
+
+def test_replace_alias_root_can_share_a_current_emitted_member_owner():
+    raw = (b"// RECOVERY_OBJECT: v1 0x00401000 _old_root\n"
+           b"int root;\n"
+           b"// RECOVERY_OBJECT: v3 0x00401004 _old_child member _typed_root field\n"
+           b"int child;\n")
+    root, child = current(raw)
+    replacement = replace(root, line=1, target_symbol="_typed_root")
+    output = replace_object_records({PATH: raw}, expected=(root, child),
+                                    replacements=(replacement,), destination=PATH,
+                                    pin=PIN, address_space=SPACE)
+    result = current(output[PATH])
+    assert result[0].symbol == "_old_root" and result[0].emitted_symbol == "_typed_root"
+    assert result[1].parent_symbol == result[0].emitted_symbol

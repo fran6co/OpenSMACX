@@ -47,6 +47,22 @@ def test_native_cli_and_all_trials_are_read_only(project, monkeypatch, capsys):
     assert before == {p: p.read_bytes() for p in project.rglob("*") if p.is_file()}
 
 
+def test_data_selection_uses_historical_id_while_compiler_resolves_current_target(project):
+    source = project / "code/global.cc"
+    source.write_text(source.read_text().replace(
+        "RECOVERY_OBJECT: v2 0x401000 0x401004 _g 0x401010",
+        "RECOVERY_OBJECT: v4 0x401000 0x401004 _g 0x401010 target _current"))
+    report = check_data(project, project / "image.exe", symbols=["_g"],
+                        compiler=lambda *_: data_fixture(b"\x07\0\0\0", definition=b"_current"))
+    rows = report["objects"]
+    assert report["result"] == "pass"
+    assert len(rows) == 2
+    assert all(row["symbol"] == "_g" and row["target_symbol"] == "_current" for row in rows)
+    with pytest.raises(ValueError, match="historical object IDs"):
+        check_data(project, project / "image.exe", symbols=["_current"],
+                   compiler=lambda *_: data_fixture(definition=b"_current"))
+
+
 def test_native_cli_checks_module_local_const_data_without_externalizing_it(project, monkeypatch, capsys):
     import match_recovery.data_check as module
     source = project / "code/global.cc"

@@ -25,11 +25,10 @@ def referenced_initial_object_units(selected, bindings, objects):
     validate_object_symbol_ownership(bindings)
     owners = {}
     for binding in bindings:
-        for symbol in (binding.symbol, binding.parent_symbol):
-            if symbol is not None:
-                owner = owners.setdefault(symbol, binding.unit)
-                if owner != binding.unit:
-                    raise ValueError("object relocation symbol has multiple declared source owners")
+        symbol = binding.emitted_symbol
+        owner = owners.setdefault(symbol, binding.unit)
+        if owner != binding.unit:
+            raise ValueError("object relocation symbol has multiple declared source owners")
     if len({binding.symbol for binding in bindings}) != len(bindings):
         raise ValueError("duplicate original object symbol binding")
     required = set()
@@ -38,14 +37,15 @@ def referenced_initial_object_units(selected, bindings, objects):
         if binding.span is None or binding.unit not in objects:
             continue
         obj = objects[binding.unit]
-        if binding.parent_symbol is not None and binding.parent_symbol not in validated_targets:
+        if ((binding.parent_symbol is not None or binding.target_symbol is not None)
+                and binding.emitted_symbol not in validated_targets):
             continue
         try:
             if binding.parent_symbol is not None:
                 from .codeview_data import member_data_layout
                 observed = member_data_layout(obj, binding.parent_symbol, binding.member_path)
             else:
-                observed = data_layout(obj, binding.symbol)
+                observed = data_layout(obj, binding.emitted_symbol)
         except ValueError:
             continue
         if observed["size"] != binding.span.end - binding.span.start:
@@ -67,6 +67,7 @@ def check_initial_data(bindings, objects, image, targets, *, literal_targets=Non
         row = {"symbol": binding.symbol, "unit": binding.unit, "address": f"0x{binding.origin.address:08X}",
                "source": {"path": binding.unit, "line": binding.line}, "definition": Result.UNKNOWN,
                "content": Result.UNKNOWN, "lifetime": Result.UNKNOWN}
+        row["target_symbol"] = binding.emitted_symbol
         if binding.parent_symbol is not None:
             row["parent_symbol"] = binding.parent_symbol
             row["member_path"] = ".".join(binding.member_path)
@@ -91,7 +92,10 @@ def check_initial_data(bindings, objects, image, targets, *, literal_targets=Non
                     rows.append(row)
                     continue
             else:
-                observed = data_layout(obj, binding.symbol)
+                if (binding.target_symbol is not None
+                        and targets.get(binding.emitted_symbol) != binding.origin.address):
+                    raise ValueError("direct target alias lacks a validated external object definition")
+                observed = data_layout(obj, binding.emitted_symbol)
             row.update(definition=Result.PASS, compiler_storage=observed)
             if binding.span is None:
                 raise ValueError("original object extent is not declared; initial data remains unverified")

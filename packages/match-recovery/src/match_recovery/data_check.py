@@ -26,7 +26,7 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
     settings = Measurement.read(root)
     if symbols is not None and (not isinstance(symbols, (list, tuple)) or not symbols
             or any(not isinstance(s, str) or not s for s in symbols) or len(symbols) != len(set(symbols))):
-        raise ValueError("data selection requires nonempty unique emitted symbols")
+        raise ValueError("data selection requires nonempty unique source-bound symbols")
     metadata = {"symbols": symbols}
     before = settings.snapshot(root, metadata)
     view, snapshot = project_view(root, allow_empty=True)
@@ -41,7 +41,7 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
     if symbols is not None and len({b.symbol for b in selection}) != len(selection):
         raise ValueError("bare-symbol data selection is ambiguous across literal owners; check all data")
     if not selection or symbols is not None and {b.symbol for b in selection} != set(symbols):
-        raise ValueError("data selection needs source-owned original objects; missing or empty coverage")
+        raise ValueError("data selection needs source-owned historical object IDs or literal symbols; missing or empty coverage")
     generated, imports = read_generated(root, pin), read_imports(root)
     shared = read_shared(root, pin)
     validate_shared(shared, view)

@@ -8,7 +8,8 @@ import pytest
 
 from match_recovery.cli import main
 from match_recovery.model import Origin
-from match_recovery.preservation import check_preservation
+from match_recovery.preservation import (_outside_annotations, _symbol_sources,
+                                         check_preservation)
 from match_recovery.tasks import Task, TaskStore
 from test_binary import coff_fixture
 from test_task_source import git
@@ -268,6 +269,26 @@ def test_object_and_structural_source_bindings_are_not_hidden_by_unchanged_code(
     report = check(project)
     assert all(row["result"] == "pass" for row in report["units"])
     assert report["result"] == "fail" and report["outside_annotation_changes"]
+
+
+def test_direct_object_target_is_preserved_as_current_link_navigation_not_new_history():
+    from match_recovery.source_config import SourceConfiguration
+    pin = "a" * 64
+    source = SourceConfiguration("original/PIN", "pe:va", roots=("code",))
+    old = {"code/model.h": b"// RECOVERY_OBJECT: v4 0x00402000 _old target _new\nint value;\n"}
+    current = {"code/model.h": b"// RECOVERY_OBJECT: v4 0x00402000 _old target _renamed\nint value;\n"}
+    baseline_annotations = _outside_annotations(old, source, pin, frozenset())
+    current_annotations = _outside_annotations(current, source, pin, frozenset())
+    assert baseline_annotations != current_annotations
+    assert len(baseline_annotations) == len(current_annotations) == 1
+    baseline_row = next(iter(baseline_annotations.values()))
+    current_row = next(iter(current_annotations.values()))
+    assert baseline_row["symbol"] == current_row["symbol"] == "_old"
+    assert baseline_row["target_symbol"] == "_new"
+    assert current_row["target_symbol"] == "_renamed"
+    sources = _symbol_sources({}, current_annotations, frozenset())
+    assert sources["_old"][0]["kind"] == "object"
+    assert sources["_renamed"][0]["current_target"] is True
 
 
 def test_scoped_structural_interpretation_still_requires_the_separate_structural_gate(project):

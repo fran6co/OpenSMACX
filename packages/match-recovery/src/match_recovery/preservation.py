@@ -133,6 +133,10 @@ def _symbol_sources(bindings, annotations, selected):
             if row["kind"] == "generated":
                 value["evidence_entity_id"] = Origin(**row["evidence"]).entity_id
             index[row["symbol"]].append(value)
+            current_target = row.get("parent_symbol") or row.get("target_symbol")
+            if row["kind"] == "object" and current_target not in (None, row["symbol"]):
+                target_value = {**value, "current_target": True}
+                index[current_target].append(target_value)
         elif row["kind"] == "component":
             for binding in row["manifest"]["bindings"]:
                 entity = Origin(**binding["origin"]).entity_id

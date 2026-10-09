@@ -34,6 +34,10 @@ def _record(binding: ObjectBinding, *, path: str, pin: str,
         _symbol_token(binding.parent_symbol)
         if not valid_member_path(binding.member_path):
             raise ValueError("object member path must contain names and canonical fixed indices")
+    if binding.target_symbol is not None:
+        _symbol_token(binding.target_symbol)
+        if binding.parent_symbol is not None:
+            raise ValueError("direct target alias cannot be combined with a member owner")
     if binding.unit != path:
         raise ValueError("object binding belongs to another source unit")
     if (binding.origin.image_sha256, binding.origin.address_space) != (pin, address_space):
@@ -43,6 +47,7 @@ def _record(binding: ObjectBinding, *, path: str, pin: str,
 
 
 def _unique(records: Sequence[ObjectBinding]) -> None:
+    validate_object_symbol_ownership(records)
     if len({row.symbol for row in records}) != len(records):
         raise ValueError("duplicate original object symbol binding")
     if len({row.origin.entity_id for row in records}) != len(records):
@@ -64,6 +69,14 @@ def _marker(binding: ObjectBinding) -> bytes:
         text = (f"// RECOVERY_OBJECT: v3 0x{binding.origin.address:08X} "
                 f"0x{binding.span.end:08X} {binding.symbol} 0x{binding.evidence.address:08X} "
                 f"member {binding.parent_symbol} {'.'.join(binding.member_path)}")
+    elif binding.target_symbol is not None and binding.span is None:
+        text = (f"// RECOVERY_OBJECT: v4 0x{binding.origin.address:08X} {binding.symbol} "
+                f"target {binding.target_symbol}")
+    elif binding.target_symbol is not None:
+        assert binding.span is not None and binding.evidence is not None
+        text = (f"// RECOVERY_OBJECT: v4 0x{binding.origin.address:08X} "
+                f"0x{binding.span.end:08X} {binding.symbol} 0x{binding.evidence.address:08X} "
+                f"target {binding.target_symbol}")
     elif binding.span is None:
         text = f"// RECOVERY_OBJECT: v1 0x{binding.origin.address:08X} {binding.symbol}"
     else:
@@ -153,10 +166,10 @@ def write_object_bytes(raw: bytes, *, expected: Sequence[ObjectBinding],
                            path, pin, address_space=address_space)
     _unique(reread)
     wanted = {(row.origin.entity_id, row.symbol, row.span, row.evidence,
-               row.parent_symbol, row.member_path)
+               row.parent_symbol, row.member_path, row.target_symbol)
               for row in tuple(parsed) + tuple(additions)}
     got = {(row.origin.entity_id, row.symbol, row.span, row.evidence,
-            row.parent_symbol, row.member_path)
+            row.parent_symbol, row.member_path, row.target_symbol)
            for row in reread}
     if got != wanted:
         raise ValueError("object annotation round-trip changed its identity")
@@ -168,13 +181,13 @@ def replace_object_records(current: Mapping[str, bytes], *,
                            replacements: Sequence[ObjectBinding],
                            destination: str, pin: str,
                            address_space: str) -> dict[str, bytes]:
-    """Rehome a complete set of existing object identities as member records.
+    """Rehome existing identities as member records or direct target aliases.
 
     ``current`` must contain every affected source unit and ``expected`` must
     be the complete parsed object snapshot for those units. Replacements are
     one-for-one with selected old rows, preserve their old identity and any
-    bounded initializer obligation exactly, and may change only owner/path and
-    source location. All non-replaced records survive byte-for-byte. This is a
+    bounded initializer obligation exactly, and may change only current target,
+    owner/path and source location. All non-replaced records survive byte-for-byte. This is a
     pure transformation; callers remain responsible for native review and
     guarded publication.
     """
@@ -238,8 +251,12 @@ def replace_object_records(current: Mapping[str, bytes], *,
         if (row.symbol, row.origin, row.span, row.evidence, row_interpretation) != (
                 old.symbol, old.origin, old.span, old.evidence, old_interpretation):
             raise ValueError("object replacement changed historical identity or initializer obligation")
-        if row.parent_symbol is None:
-            raise ValueError("object replacement must resolve to a named member owner")
+        if old.parent_symbol is not None and row.target_symbol is not None:
+            raise ValueError("member object replacement cannot add a direct target alias")
+        if old.parent_symbol is None and row.parent_symbol is not None and row.target_symbol is not None:
+            raise ValueError("object replacement cannot combine member and direct target owners")
+        if old.parent_symbol is not None and row.parent_symbol is None:
+            raise ValueError("member object replacement cannot discard its current owner")
         _record(row, path=destination, pin=pin, address_space=address_space,
                 line_limit=len(lines_by_unit[destination]) + 1)
         if boundaries_by_unit[destination][row.line - 1]:
@@ -255,7 +272,7 @@ def replace_object_records(current: Mapping[str, bytes], *,
     # binding under the same emitted symbol.
     owner_identity = {}
     for row in tuple(remaining) + tuple(replacements):
-        emitted = row.parent_symbol or row.symbol
+        emitted = row.emitted_symbol
         # Same-unit direct parent and historical children share one emitted
         # owner. Native object_targets must still prove their original base;
         # this pure writer preserves identities, not compiled layout claims.
@@ -297,7 +314,7 @@ def replace_object_records(current: Mapping[str, bytes], *,
     def continuity(row):
         interpretation_id = row.interpretation_id if row.span is not None else None
         return (row.origin.entity_id, row.symbol, row.span, row.evidence,
-                row.parent_symbol, row.member_path, interpretation_id)
+                row.parent_symbol, row.member_path, row.target_symbol, interpretation_id)
 
     wanted = {continuity(row)
               for row in tuple(remaining) + tuple(replacements)}

@@ -153,6 +153,24 @@ parent symbols, but compilation remains read-only and does not expand edit scope
 The member path is structural source evidence, not a byte claim, lifetime proof,
 final-link selection proof or game acceptance.
 
+Version 4 retains a direct object's historical symbol while naming its current
+COFF definition. Both bounded and unbounded forms are supported:
+
+```cpp
+// RECOVERY_OBJECT: v4 <start> <old-symbol> target <current-symbol>
+// RECOVERY_OBJECT: v4 <start> <end> <old-symbol> <evidence-address> target <current-symbol>
+```
+
+The old symbol, start, optional extent and evidence remain the recovery identity
+and initializer obligation; `target` names the source definition that must be
+present in the current owner object. Relocations resolve only through that
+current name, not through the old spelling. The target must be unique in one
+source owner and cannot collide with another historical object identity or
+member owner. Direct target aliases and member paths are mutually exclusive.
+Bounded records still require fresh ordinary COFF definition and exact CodeView
+extent, initializer and reference evidence. Rebinding does not prove allocation,
+lifetime, final-link selection or runtime ownership.
+
 `match_recovery.object_writer.write_object_bytes` is the pure, add-only writer
 for these object bindings. Supply the complete current `parse_objects` snapshot
 and reviewed `ObjectBinding` additions; their one-based lines anchor insertion
@@ -164,11 +182,11 @@ bounds, initializers, acceptance or recovery permission. Compiler evidence and
 coordinator-authorized publication remain separate requirements.
 
 `match_recovery.object_writer.replace_object_records` is the pure rehome
-transformation for a reviewed v3 migration. Supply the complete object-annotation
+transformation for a reviewed v3 member migration or v4 direct-target change. Supply the complete object-annotation
 snapshot and bytes for every affected source unit; one-for-one replacements retain
 old symbols, original addresses, spans and evidence anchors while changing only
 the parent/path and insertion unit/line. It reparses the result and refuses
-stale/incomplete snapshots, duplicate identities, parent-owner aliases and
+stale/incomplete snapshots, duplicate identities, parent/target-owner aliases and
 insertion inside a block comment. The caller still owns fresh on-disk validation,
 review and guarded publication; the transformation itself writes no files.
 

@@ -202,6 +202,20 @@ def test_direct_parent_and_member_bindings_resolve_one_atomic_target():
     assert member_data_layout(obj, PARENT, ("child",))["member_offset"] == 4
 
 
+def test_rebound_direct_parent_and_member_bindings_still_require_one_verified_base():
+    obj, _ = owner_object(inherited=True)
+    parent = ObjectBinding(Origin(PIN, "pe:va", 0x401000), "old_parent", UNIT, 1,
+                           target_symbol=PARENT)
+    child = bound_object(0x401004)
+    targets, reports = object_targets((parent, child), {UNIT: obj})
+    assert targets[PARENT] == 0x401000
+    assert [row["target_symbol"] for row in reports] == [PARENT, PARENT]
+    wrong_parent = replace(parent, origin=Origin(PIN, "pe:va", 0x402000))
+    targets, reports = object_targets((wrong_parent, child), {UNIT: obj})
+    assert PARENT not in targets
+    assert [row["definition"] for row in reports] == ["unknown", "unknown"]
+
+
 def test_parent_address_mismatch_and_unavailable_layout_refuse_the_whole_group():
     obj, _ = owner_object()
     parent = ObjectBinding(Origin(PIN, "pe:va", 0x402000), PARENT, UNIT, 1)

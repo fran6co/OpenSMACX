@@ -48,16 +48,72 @@ def project(tmp_path):
     return root
 
 
-def check(root, owner=data_object(), failure=None):
+def check(root, owner=data_object(), failure=None, reference=b"_g"):
     calls = []
     def compile_source(path, command, flags):
         calls.append((path.name, flags))
         if path.name == "caller.cc":
-            return coff_fixture(b"\xa1\0\0\0\0\xc3", relocation=(1, 1, 6))
+            raw = bytearray(coff_fixture(b"\xa1\0\0\0\0\xc3", relocation=(1, 1, 6)))
+            symbols = struct.unpack_from("<I", raw, 8)[0]
+            raw[symbols + 18:symbols + 26] = reference.ljust(8, b"\0")
+            return bytes(raw)
         if failure:
             failure(path, flags)
         return owner
     return verify_task(root, "owner", root / "image.exe", compiler=compile_source), calls
+
+
+def test_direct_target_alias_resolves_relocations_without_changing_original_identity(project):
+    (project / "code/global.cc").write_text(
+        "// RECOVERY_OBJECT: v4 0x00401020 _g target _actual\nint g;\n")
+    report, calls = check(project, owner=data_object(b"_actual"), reference=b"_actual")
+    assert report["result"] == "pass"
+    assert report["compile_attempts"] == len(calls) == 4
+    assert all(row["units"] == ["code/global.cc"] for row in report["object_dependencies"])
+
+
+def test_historical_name_is_not_a_relocation_alias_after_direct_rebinding(project):
+    (project / "code/global.cc").write_text(
+        "// RECOVERY_OBJECT: v4 0x00401020 _g target _actual\nint g;\n")
+    report, _ = check(project, owner=data_object(b"_actual"), reference=b"_g")
+    assert report["result"] != "pass"
+    assert all(row["units"] == [] for row in report["object_dependencies"])
+
+
+def test_variant_overlay_schedules_and_resolves_current_direct_target(project):
+    from match_recovery.variants import measure_variants
+    global_path = project / "code/global.cc"
+    global_path.write_text("// RECOVERY_OBJECT: v4 0x00401020 _g target _actual\nint g;\n")
+    task = TaskStore(project).read("owner")
+    original = (project / "code/caller.cc").read_bytes()
+    deck = {"schema_version": 2, "source": "code/caller.cc", "entity_id": task.subjects[0].entity_id,
+            "files": {"code/caller.cc": {"source_sha256": hashlib.sha256(original).hexdigest(),
+                      "before": "int f();", "control": "int f(); // damaged",
+                      "entity_id": task.subjects[0].entity_id}},
+            "candidates": {"reference-current-target": {"code/caller.cc": "int f(); // proposed"}}}
+
+    class Compiler:
+        def __call__(self, source, command, flags):
+            return data_object(b"_actual") if source.name == "global.cc" else coff_fixture(b"\x90" * 5 + b"\xc3")
+
+        def overlay(self, source, replacements, command, flags):
+            if source.name == "global.cc":
+                return data_object(b"_actual")
+            content = replacements["code/caller.cc"]
+            if b"proposed" in content:
+                raw = bytearray(coff_fixture(b"\xa1\0\0\0\0\xc3", relocation=(1, 1, 6)))
+                symbol_table = struct.unpack_from("<I", raw, 8)[0]
+                raw[symbol_table + 18:symbol_table + 26] = b"_actual\0"
+                return bytes(raw)
+            return coff_fixture(b"\xeb\xfe" if b"damaged" in content else b"\x90" * 5 + b"\xc3")
+
+    report = measure_variants(project, "owner", project / "image.exe", deck, compiler=Compiler())
+    assert len(report["candidates"]) == 2
+    for candidate in report["candidates"]:
+        assert candidate["target"]["result"] == "pass"
+        assert candidate["object_dependencies"][0]["unit"] == "code/global.cc"
+        assert candidate["object_dependencies"][0]["result"] == "pass"
+    assert report["status"] == "scored"
 
 
 def test_unselected_global_owner_compiles_once_per_trial_without_expanding_edit_scope(project):

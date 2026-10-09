@@ -2502,9 +2502,9 @@ their historical interpretation/review obligations like other member changes.
 
 ### Original object initialization
 
-`recover check-data --image <original> [--symbol <emitted-name>] [--summary]`
+`recover check-data --image <original> [--symbol <source-bound-name>] [--summary]`
 checks source-owned objects through the configured compiler. Repeated `--symbol`
-selects exact emitted names; the default includes every object binding. A data-only
+selects exact historical object IDs (or literal symbols); the default includes every object binding. A data-only
 project needs no legacy function seeds. Source, compiler policy and image changes
 during measurement invalidate the whole report. Results are disposable JSON.
 
@@ -2540,6 +2540,24 @@ identity names cannot collide with a current member-owner name, because an old
 relocation could otherwise be redirected to a different object. The reader,
 target resolver and rehome writer refuse such aliases.
 
+Version 4 retains a direct object's historical identity while naming a different
+current COFF definition. Its unbounded and bounded forms are:
+
+```cpp
+// RECOVERY_OBJECT: v4 <start> <old-symbol> target <current-symbol>
+// RECOVERY_OBJECT: v4 <start> <end> <old-symbol> <evidence-address> target <current-symbol>
+```
+
+The old symbol remains the source-selection and history key; the target symbol
+must be the unique ordinary definition emitted by the annotated owner TU.
+Relocations and data references resolve only through that current target, never
+through the historical spelling. Current targets cannot collide with another
+historical object identity, another emitted owner, or peer function/generated/
+import/shared/literal namespaces. A direct target and v3 member owner cannot be
+combined. Bounded v4 continues to require fresh layout and exact original
+initializer/reference checks; the alias alone is not evidence of storage extent
+or target ownership.
+
 The candidate extent comes from one standalone CodeView 5 data definition for
 the parent and each named direct embedded member. Pointer traversal, inherited
 members, missing or unresolved forward definitions, ambiguous layouts and unsupported type records remain
@@ -2553,9 +2571,9 @@ selection, complete hierarchy/runtime behavior and game acceptance remain
 separate requirements.
 
 `match_recovery.object_writer.replace_object_records` prepares a one-for-one
-rehome from a complete snapshot of all affected units. It preserves each old
+rehome or direct-target rebinding from a complete snapshot of all affected units. It preserves each old
 symbol, address, span, evidence anchor and interpretation while changing only
-the source unit/line and parent/member path. The pure result is reparsed and
+the source unit/line, parent/member path or direct target. The pure result is reparsed and
 identity-checked; stale or partial snapshots, namespace aliases and unsafe
 comment boundaries refuse. It performs no file writes. The publisher still has
 to revalidate fresh inputs and enforce coordinator authorization.

@@ -19,6 +19,8 @@ PATTERN = re.compile(r"// RECOVERY_OBJECT: v1 (0x[0-9A-Fa-f]+) (\S+)\s*")
 BOUNDED = re.compile(r"// RECOVERY_OBJECT: v2 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+)\s*")
 MEMBER_UNBOUNDED = re.compile(r"// RECOVERY_OBJECT: v3 (0x[0-9A-Fa-f]+) (\S+) member (\S+) (\S+)\s*")
 MEMBER_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v3 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+) member (\S+) (\S+)\s*")
+TARGET_UNBOUNDED = re.compile(r"// RECOVERY_OBJECT: v4 (0x[0-9A-Fa-f]+) (\S+) target (\S+)\s*")
+TARGET_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v4 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+) target (\S+)\s*")
 _MEMBER_SEGMENT = re.compile(r"([A-Za-z_][A-Za-z_0-9]*)(?:\[(0|[1-9][0-9]*)\])?\Z")
 
 
@@ -39,6 +41,7 @@ class ObjectBinding:
     evidence: Origin | None = None
     parent_symbol: str | None = None
     member_path: tuple[str, ...] = ()
+    target_symbol: str | None = None
 
     def __post_init__(self):
         relative_path(self.unit)
@@ -53,6 +56,10 @@ class ObjectBinding:
             require_text(self.parent_symbol, "parent object symbol")
             if not valid_member_path(self.member_path):
                 raise ValueError("object member path must contain names and canonical fixed indices")
+        if self.target_symbol is not None:
+            require_text(self.target_symbol, "target object symbol")
+            if self.parent_symbol is not None:
+                raise ValueError("object target alias cannot be combined with a member owner")
         if self.span is not None:
             if self.span.start != self.origin.address:
                 raise ValueError("object extent must begin at its original identity")
@@ -72,6 +79,11 @@ class ObjectBinding:
         value = self.interpretation
         return digest({"entity_id": self.evidence.entity_id, "value": value})
 
+    @property
+    def emitted_symbol(self) -> str:
+        """Current COFF definition name; ``symbol`` remains historical."""
+        return self.parent_symbol or self.target_symbol or self.symbol
+
 
 def parse_objects(text: str, path: str, pin: str, *, address_space: str) -> tuple[ObjectBinding, ...]:
     """Parse current or historical object identities without reading live files."""
@@ -85,6 +97,20 @@ def parse_objects(text: str, path: str, pin: str, *, address_space: str) -> tupl
             start, end, symbol, evidence = match.groups()
             bindings.append(ObjectBinding(Origin(pin, address_space, int(start, 16)), symbol, path, line,
                                           Span(int(start, 16), int(end, 16)), Origin(pin, address_space, int(evidence, 16))))
+            continue
+        match = TARGET_BOUNDED.fullmatch(source_line.strip())
+        if match:
+            start, end, symbol, evidence, target = match.groups()
+            bindings.append(ObjectBinding(Origin(pin, address_space, int(start, 16)), symbol, path, line,
+                                          Span(int(start, 16), int(end, 16)),
+                                          Origin(pin, address_space, int(evidence, 16)),
+                                          target_symbol=target))
+            continue
+        match = TARGET_UNBOUNDED.fullmatch(source_line.strip())
+        if match:
+            start, symbol, target = match.groups()
+            bindings.append(ObjectBinding(Origin(pin, address_space, int(start, 16)), symbol, path, line,
+                                          target_symbol=target))
             continue
         match = MEMBER_BOUNDED.fullmatch(source_line.strip())
         if match:
@@ -161,8 +187,29 @@ def validate_object_symbol_ownership(bindings) -> None:
     if aliases:
         raise ValueError("historical object identity conflicts with an emitted member owner: "
                          + sorted(aliases)[0])
+    emitted = {}
+    historical = {row.symbol: row for row in rows}
+    for row in rows:
+        name = row.emitted_symbol
+        prior = emitted.setdefault(name, row)
+        if prior.unit != row.unit:
+            raise ValueError("current object owner must remain in one translation unit")
+        if prior is not row:
+            # A parent binding and its children deliberately share a COFF
+            # definition; unrelated direct roots and sibling roots do not.
+            if not (row.parent_symbol == name or prior.parent_symbol == name
+                    or (row.parent_symbol == prior.emitted_symbol == name)):
+                raise ValueError("one current object target is bound to multiple original objects")
+        old = historical.get(name)
+        same_parent_anchor = (old is not None and old is not row
+                             and old.parent_symbol is None and old.emitted_symbol == name
+                             and old.unit == row.unit and row.parent_symbol == name)
+        if old is not None and old is not row and not same_parent_anchor:
+            if old.unit != row.unit:
+                raise ValueError("current object owner must remain in one translation unit")
+            raise ValueError("current object target conflicts with another historical object identity")
     for parent, unit in parent_units.items():
-        direct = [row for row in rows if row.parent_symbol is None and row.symbol == parent]
+        direct = [row for row in rows if row.parent_symbol is None and row.emitted_symbol == parent]
         if direct and (len(direct) != 1 or direct[0].unit != unit):
             raise ValueError("direct parent object identity must share the member owner's translation unit")
         if direct and any((row.origin.image_sha256, row.origin.address_space) !=
@@ -177,7 +224,7 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
     targets, reports = {}, []
     emitted = {}
     for binding in bindings:
-        symbol = binding.parent_symbol or binding.symbol
+        symbol = binding.emitted_symbol
         identity = ("owner", binding.unit, symbol)
         if symbol in emitted and emitted[symbol] != identity:
             raise ValueError("one emitted object symbol is bound to multiple original object identities")
@@ -206,9 +253,9 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
             resolved_groups[(unit, parent)] = (bases[0], layouts)
         except ValueError:
             bad_groups.add((unit, parent))
-    direct_parents = {(row.unit, row.symbol): row for row in bindings
+    direct_parents = {(row.unit, row.emitted_symbol): row for row in bindings
                       if row.parent_symbol is None and any(
-                          member.unit == row.unit and member.parent_symbol == row.symbol
+                          member.unit == row.unit and member.parent_symbol == row.emitted_symbol
                           for member in bindings)}
     # A directly bound parent anchors the whole member group. Refuse its
     # target too if fresh member layout is missing or implies another base.
@@ -220,7 +267,7 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
         obj = objects.get(binding.unit)
         if obj is None:
             continue  # The task does not prove objects owned by uncompiled TUs.
-        target_symbol = binding.parent_symbol or binding.symbol
+        target_symbol = binding.emitted_symbol
         matches = [symbol for symbol in obj.symbols.values() if symbol.name == target_symbol
                    and symbol.storage == 2 and symbol.section > 0 and not symbol.type & 0x20]
         valid = len(matches) == 1 and not obj.sections[matches[0].section - 1].flags & 0x20
@@ -230,17 +277,17 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
             valid = valid and group not in bad_groups and group in resolved_groups
             if valid:
                 address = resolved_groups[group][0]
-        elif (binding.unit, binding.symbol) in direct_parents:
-            group = (binding.unit, binding.symbol)
+        elif (binding.unit, binding.emitted_symbol) in direct_parents:
+            group = (binding.unit, binding.emitted_symbol)
             valid = valid and group not in bad_groups and group in resolved_groups
-        reports.append({"symbol": binding.symbol, "unit": binding.unit,
+        reports.append({"symbol": binding.symbol, "target_symbol": binding.emitted_symbol, "unit": binding.unit,
                         "address": f"0x{binding.origin.address:08X}",
                         "definition": "pass" if valid else "unknown",
                         **({"parent_symbol": binding.parent_symbol, "member_path": ".".join(binding.member_path),
                            "original_parent": f"0x{address:08X}"} if binding.parent_symbol is not None else {})})
         if valid:
             if binding.parent_symbol is None:
-                targets[binding.symbol] = binding.origin.address
+                targets[binding.emitted_symbol] = binding.origin.address
             else:
                 old = targets.setdefault(binding.parent_symbol, address)
                 if old != address:
@@ -250,9 +297,9 @@ def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[
 
 
 def emitted_object_symbols(bindings) -> frozenset[str]:
-    """All old child identities and current emitted owner symbols."""
+    """Historical IDs plus current emitted names for namespace reservation."""
     return frozenset(symbol for binding in bindings
-                     for symbol in (binding.symbol, getattr(binding, "parent_symbol", None))
+                     for symbol in (binding.symbol, binding.emitted_symbol)
                      if symbol is not None)
 
 
@@ -292,12 +339,10 @@ def referenced_object_units(bindings: tuple[ObjectBinding, ...], objects: dict) 
     validate_object_symbol_ownership(bindings)
     owners = {}
     for binding in bindings:
-        for symbol in (binding.symbol, getattr(binding, "parent_symbol", None)):
-            if symbol is None:
-                continue
-            owner = owners.setdefault(symbol, binding.unit)
-            if owner != binding.unit:
-                raise ValueError("object relocation symbol has multiple declared source owners")
+        symbol = binding.emitted_symbol
+        owner = owners.setdefault(symbol, binding.unit)
+        if owner != binding.unit:
+            raise ValueError("object relocation symbol has multiple declared source owners")
     if len({binding.symbol for binding in bindings}) != len(bindings):
         raise ValueError("duplicate original object symbol binding")
     return referenced_symbol_units(owners, objects)
