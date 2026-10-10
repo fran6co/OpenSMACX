@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def satellite_control():
-    source = (ROOT / "src/stringstruct.cpp").read_text()
+    source = (ROOT / "src/reportwin.cpp").read_text()
     body = extract(source, "void __cdecl sat_edit(")
     header = (ROOT / "src/faction.h").read_text()
     declarations = []
@@ -82,21 +82,23 @@ int main(){
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
 @pytest.mark.parametrize("damage", (None,
-    ("type < 4", "type < 3"),
+    ("report_faction_id != 0", "report_faction_id == 0"),
+    ("++PlayersData[target_faction_id].satellites_[satellite_type];", "++PlayersData[0].satellites_[satellite_type];"),
+    ("satellite_type < 4", "satellite_type < 3"),
     ("shift_high == 0", "shift_high != 0"),
-    ("++PlayersData[faction_id].satellites_[type];", "PlayersData[faction_id].satellites_[type] += 2;"),
+    ("++PlayersData[target_faction_id].satellites_[satellite_type];", "PlayersData[target_faction_id].satellites_[satellite_type] += 2;"),
     ("*field = *field - 1;", "*field = *field + 1;"),
     ("& 0x80000000U", "& 0x40000000U"),
-    ("PlayersData[faction_id].sat_odp_deployed =", "PlayersData[faction_id].satellites_[0] =")))
+    ("PlayersData[target_faction_id].sat_odp_deployed =", "PlayersData[target_faction_id].satellites_[0] =")))
 def test_actual_satellite_members_and_mutants(tmp_path, compiler, damage):
     run_control(tmp_path, compiler, satellite_control(), damage)
 
 
 def test_original_unbounded_guard_and_source_log_storage():
     source = (ROOT / "src/stringstruct.cpp").read_text()
-    body = extract(source, "void __cdecl sat_edit(")
-    assert "if (type < 4 && body != 0)" in body
-    assert "type >= 0" not in body and "reinterpret_cast" not in body
+    body = extract((ROOT / "src/reportwin.cpp").read_text(), "void __cdecl sat_edit(")
+    assert "if (satellite_type < 4 && report_faction_id != 0)" in body
+    assert "satellite_type >= 0" not in body and "reinterpret_cast" not in body
     for name, text in (("StrDeletingVehicle", "Deleting vehicle"),
                        ("StrDelConvertedIndex", "DelConverted index")):
         assert f'static const char {name}[] = "{text}";' in source

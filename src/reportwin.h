@@ -241,6 +241,11 @@ static_assert(sizeof(ReportWin) == 0xFABC,
 // below.
 extern ReportWin ReportWinGlobal;  // 0x00876478
 
+// Satellite report click helper: the report faction is only the original
+// nonzero gate; the clicked payload supplies the faction whose count changes.
+void __cdecl sat_edit(int report_faction_id, int target_faction_id,
+                     int satellite_type);
+
 // The fixed890208/890D5C list receivers belong to ReportIfGlobal's
 // listBox1_/listBox2_. ReportWin borrows them; no independent storage/lifetime.
 
