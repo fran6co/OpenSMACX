@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "96c11c59e13145fa5899e7ea06930021de23f5e0",
+  "editable_files": [
+    "src/texture.cpp",
+    "recovery/tests/test_texture_opaque_lit_owner_oct10.py",
+    "recovery/tests/fixtures/texture_opaque_lit_owner_oct10.cpp"
+  ],
+  "evidence": [
+    "Current Texture::draw61B1F0-61B778 loops dst[x]=dst[x], never steps edges, and initializes raw edge fields/call indices incorrectly. Ordinary source placement and compiling body presence do not establish completed behavior coverage.",
+    "Pinned61B346-61B382 uses typed EdgeScan direction-1/+1 and the same saved top-vertex index for both setup_edge_gouraud calls; existing Texture owner/header already defines the observed edge state.",
+    "Pinned61B6F9 loads a texel,61B703 adds high light byte,61B70D always stores. No key comparison/palette/remap lookup. Existing texture_draw_lit_span is the unkeyed sibling kernel; do not substitute keyed draw_trans output.",
+    "Pinned scanline state preserves entry/reset and 24-bit/chop control, saved-row-before-transition state, left-refresh failure suppressing right refresh, positive-span slope publication, clipping with fixed-point skip increments, packed UV/light/count arithmetic, original address guard and cleanup. Revalidate exact ordering independently; no safety or bounds fixes.",
+    "Keep all canonical spans, historical claims/history, unchanged shared helpers and other Texture bodies. Host actual-body controls must reject no-op/sample/key/edge/clip regressions; native local matching is diagnostic, not full-game or x87/runtime acceptance."
+  ],
+  "intent": "Complete the opaque Gouraud-textured draw body in its real Texture owner, replacing its self-copy pixel placeholder and malformed raw edge setup with the pinned typed DDA and existing opaque pixel kernel.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6402544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "texture-opaque-lit-owner-oct10"
+}
