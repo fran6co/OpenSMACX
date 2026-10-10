@@ -10100,7 +10100,8 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
         return;
     }
 
-    *reinterpret_cast<unsigned int *>(WinKeyModifiers) = with_modifiers;
+    // The original 5F5ED8 store targets DWORD 9B7B18 itself, not its value.
+    WinKeyModifiers = with_modifiers;
     if (IsWindow(HandleMain)) {
         this->key_down_event(with_modifiers);
     }
