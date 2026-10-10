@@ -1,0 +1,44 @@
+{
+  "event_id": "c0a15f55cca19568381bd6e27e9f2d96fc538f204309177475cd9f2e619d3a5f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/caviar.cpp"
+    ],
+    "evidence": [
+      "Authorize source-token structural correction: move the genuine g_VEHDRAW_CAVIAR definition after the98CaviarData definitions and before actual scene-buffer ownership; remove only the two unreferenced, unmapped g_CAVIAR_BUFFER_1/2 declarations after positive whole-source checks.",
+      "Retain all200 newly bound function identities, names, spans and rationale,2690 historical claims, object/member bindings and old function behavior. When current helper spellings change, native source writer supplies fresh emitted-symbol facts from actual physical COFF; never hand-edit ORIGINAL markers.",
+      "Expand to the four original scene-buffer lifecycle identities for inspection and genuine guarded ownership recovery; do not grant unmeasured identities or claim existing naked cleanup implements the original guard. Keep full original extents and bugs.",
+      "Require fresh baseline owner measurements, compiler-generated registration/receiver correspondence, verified99-callback relative-order correction, source/claim/reference continuity, complete fresh compile/link and independent C++/evidence review. No flag changes, extended exact-search loop or automatic acceptance waiver.",
+      "The correction is authorized immediately from structural evidence, not deferred to preserve local matching. Cross-TU whole-game startup order, scene-buffer once guards, strict target fidelity, allocation/retained selection and runtime acceptance remain explicit obligations until independently proved."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6384288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6384320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6384352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6384384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8488232aa4abfaef6888ff4e01de3386a66f542c25b42398c7afacd2f0dc8c94",
+  "request_id": "caviar-lifetime-order-scope-oct10",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}
