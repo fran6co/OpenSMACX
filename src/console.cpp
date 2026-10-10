@@ -3304,7 +3304,7 @@ int Console::ready_search(int veh_id) {
         coordA = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
         coordB = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
     } else {
-        coordA = *(short *)((unsigned char *)Vehs + veh_id * 0x34);
+        coordA = Vehs[veh_id].x;
         coordB = Vehs[veh_id].y;
     }
 
@@ -3322,22 +3322,23 @@ int Console::ready_search(int veh_id) {
             goto searchDone;
         }
 
-        vehCount = GameDataStateStorage.fields_.vehicle_current_count_;
-        for (int innerIdx = 0; innerIdx < vehCount; innerIdx++) {
-            unsigned char *rec = reinterpret_cast<unsigned char *>(&Vehs[innerIdx].state);
+        for (int innerIdx = 0;
+             innerIdx < GameDataStateStorage.fields_.vehicle_current_count_;
+             innerIdx++) {
+            Veh &vehicle = Vehs[innerIdx];
 
             if (veh_ready(innerIdx) == 0) continue;
 
             if (outerIdx >= 0 ||
-                (*(unsigned char *)(rec + 1) & 2) != 0 ||
-                (*(unsigned int *)rec & 0x1000200) == 0x1000200 ||
-                (*(unsigned char *)(rec + 1) & 0x40) != 0 ||
-                rec[0xd] != 0) {
+                (vehicle.state & 0x200) != 0 ||
+                (vehicle.state & 0x1000200) == 0x1000200 ||
+                (vehicle.state & 0x4000) != 0 ||
+                vehicle.order != 0) {
 
-                if (*rec & 2) continue;
+                if (vehicle.state & 2) continue;
 
-                int vehX = *(short *)(rec - 4);
-                int vehY = *(short *)(rec - 2);
+                int vehX = vehicle.x;
+                int vehY = vehicle.y;
 
                 int diffX = abs(coordA - vehX);
                 if ((MapIsFlat & 1) == 0 && diffX > (int)MapLongitude) {
@@ -3365,9 +3366,8 @@ int Console::ready_search(int veh_id) {
         if (outerIdx >= 0) {
             vehCount = GameDataStateStorage.fields_.vehicle_current_count_;
             for (int clearIdx = 0; clearIdx < vehCount; clearIdx++) {
-                unsigned int *rec = reinterpret_cast<unsigned int *>(&Vehs[clearIdx].state);
                 if (outerIdx != 0 || clearIdx != selected_vehicle_ || veh_id < 0) {
-                    *rec &= 0xfffffffd;
+                    Vehs[clearIdx].state &= 0xfffffffd;
                 }
             }
         }
