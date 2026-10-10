@@ -1,0 +1,19 @@
+{
+  "event_id": "cccd50a658c723bb4b6214cff3ce17c00e072e707d31377fae0fa18a916e2f3f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_actions_coverage.py"
+    ],
+    "evidence": [
+      "The existing complete threaten fixture encodes the mistranslated capped reserve100 transfer100 (beneficiary10->110). Pinned signed reserve/100*25 makes the capped transfer25: beneficiary35, donor75, with mood14 and raw demand350 unchanged. Update only this full-body scenario expectation and assert both balances; do not alter any other diplomacy test, suppress checks or mutate product behavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "threaten-full-body-golden-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:threaten-reserve-cap-owner-oct10"
+}
