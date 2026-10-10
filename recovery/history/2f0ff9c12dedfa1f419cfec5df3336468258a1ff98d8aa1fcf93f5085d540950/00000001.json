@@ -1,0 +1,23 @@
+{
+  "event_id": "1e0b0e15b2ca0b35fc9da66cfd88b79443bbb3556b541c92ce110556f468a05d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "The explicit four-operation intent includes recurse_zorder at5F4EC0; class-derived subjects omitted this free helper. Authorize its original identity without resetting the baseline or altering the previously authorized source file scope."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6246080,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "include-shared-zorder-walker-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-zorder-pointer-flow-oct10"
+}
