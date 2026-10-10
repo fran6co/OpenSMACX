@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "task_id": "caviar-clip-members-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover renderer-owned clip bounds as genuine nested members and initialize existing draw members directly",
+  "base_revision": "d75dfb27268cf7fed8798eaa77399fce39a0dea2",
+  "subjects": [],
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/caviar.h",
+    "recovery/tests/fixtures/caviar_product_extraction.cpp",
+    "recovery/tests/test_caviar_three_helpers_actual_source.py",
+    "recovery/tests/test_caviar_descriptor_ramps_overlay_oct9.py",
+    "recovery/tests/test_caviar_clip_members_oct11.py"
+  ],
+  "evidence": [
+    "Current VoxRenderRecord owns independently bounded 0x80 allocation; +8 and +0x20 each contain six adjacent dwords. vox_stage_scene writes left/top/right/bottom/width/height for both windows; draw/viewport/clip consumers read those same offsets. Replace flat clip and zero fields with explicit nested six-uint32 bounds, preserving unsigned right/bottom plus-one wrap. Signed projection scratch rectangles remain separate and are not retyped.",
+    "Caviar::init_class currently writes zero_b_[2]/[3] beyond its declared two-element array. The targeted +0x38/+0x3C bytes already belong to draw_left_/draw_top_. Use those existing actual members in the same order without introducing safety fixes or changing original storage.",
+    "Capture all327 native Caviar verdicts before/current; preserve original identities/spans/claims/history and emitted signatures. Require actual-source behavior and damage controls, target ABI layout/offset witnesses, affected Caviar host regressions, independent review, fresh complete application build/link and mapping/reference checks. Do not grant coverage/exactness/runtime acceptance from member regrouping. The source names describe observed roles, not original debug spellings."
+  ]
+}
