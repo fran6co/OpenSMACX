@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "task_id": "netwin-loaded-path-member-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover NetWin loaded-file C string member and remove byte-array casts from map/save loading and lobby population without changing original unchecked behavior",
+  "base_revision": "c8680c9d0",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4707072
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5944832
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5941936
+    }
+  ],
+  "editable_files": [
+    "src/netwin.h",
+    "src/netwin.cpp",
+    "src/game.cpp",
+    "recovery/tests/test_load_map_behavior.py",
+    "recovery/tests/netwin_owner_host_control.cpp",
+    "recovery/tests/netwin_pick_map_host_control.cpp",
+    "recovery/tests/fixtures/game_save_load/load_game_host_fixture.cpp",
+    "recovery/tests/test_netwin_loaded_path_member_oct10.py"
+  ],
+  "evidence": [
+    "Pinned NetWinDialog80A6F8+7624=811D1C. Native5AAD9D..5AADB9 and5AB8AE..5AB8C3 clear first byte and append extensionless save/scenario and map paths. Native47D7D7..47D817 applies strrchr backslash and copies basename to session scenario text. Loaded-file path is not map-only.",
+    "Current uint8_t field_7624_[104] creates char* reinterpret casts despite exclusively C-string access. Next member7728 bounds occupied span104, not a checked input length or independent full allocation proof. Name loaded_file_path_ describes present interpretation, not recovered original spelling. No added initialization, bounds checking, changed null/error behavior or altered wire semantics.",
+    "Coordinator authorizes complete declaration/caller/test scope. Preserve original mappings/spans/historical claims/lessons; capture native before/current scoped comparison and layout, run existing actual-body controls, build/link and source continuity/reference checks with independent review before publishing. No new function or acceptance claim."
+  ]
+}
