@@ -20,7 +20,7 @@ SIGNATURE = (
     "void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {"
 )
 HELPER_NAMES = (
-    "texture_draw_opaque_edge_step",
+    "texture_draw_gouraud_edge_step",
     "texture_difference",
     "texture_span_step",
     "texture_span_pixels",
@@ -150,7 +150,7 @@ static void check_wrap_aware_edge_step() {
     edge.fracSub = 3;
     edge.accumD = 0x7fffffff;
     edge.deltaD = 1;
-    texture_draw_opaque_edge_step(edge);
+    texture_draw_gouraud_edge_step(edge);
     assert(edge.accumA == static_cast<int>(0x80000000u));
     assert(edge.accumB == 0x7fffffff);
     assert(edge.accumC == static_cast<int>(0x80000002u));
@@ -389,8 +389,8 @@ def test_compiling_actual_source_mutants_are_rejected(
         assert old in method
         method = method.replace(old, new, 1)
     elif mutation == "signed_edge_add":
-        helpers["texture_draw_opaque_edge_step"] = helpers[
-            "texture_draw_opaque_edge_step"
+        helpers["texture_draw_gouraud_edge_step"] = helpers[
+            "texture_draw_gouraud_edge_step"
         ].replace(
             "edge.accumA = static_cast<int>(\n        static_cast<unsigned int>(edge.accumA) +\n        static_cast<unsigned int>(edge.deltaA));",
             "edge.accumA += edge.deltaA;",
@@ -436,8 +436,8 @@ def test_compiling_actual_source_mutants_are_rejected(
         assert helpers["texture_draw_opaque_lit_span"] != _definition(source,
                                                                        "texture_draw_opaque_lit_span")
     elif mutation == "signed_edge_add":
-        assert helpers["texture_draw_opaque_edge_step"] != _definition(
-            source, "texture_draw_opaque_edge_step")
+        assert helpers["texture_draw_gouraud_edge_step"] != _definition(
+            source, "texture_draw_gouraud_edge_step")
     else:
         assert method != _braced(source, SIGNATURE)
     result = _compile_and_run(_actual_translation_unit(method, helpers, MAIN),

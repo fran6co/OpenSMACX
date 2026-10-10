@@ -14315,7 +14315,7 @@ consider_gift:
         int cap_denominator = diplo_add(
             diplo_add(PlayersData[otherFac].mil_strength_1,
                       PlayersData[myFac].mil_strength_1), 1);
-        int cap = diplo_mul(cap_numerator / cap_denominator / 100, 50);
+        int cap = diplo_mul(cap_numerator / cap_denominator / 50, 50);
         if (DiplomacyProposalMode != 5 && cap != 0) {
             while (cap > energySnapshot) {
                 cap = diplo_sub(cap, 50);
@@ -16434,8 +16434,8 @@ int __cdecl propose_treaty(int actor, int other)
     if (DiplomacyProposalMode != 5 && treaty_score > PlayersData[actor].energy_reserves) {
         const int excess = diplo_sub(treaty_score, PlayersData[actor].energy_reserves);
         const uint32_t excess_plus_49 = static_cast<uint32_t>(excess) + 49u;
-        const int rounded_hundreds = static_cast<int>(excess_plus_49 / 100u);
-        treaty_score = diplo_sub(treaty_score, diplo_mul(rounded_hundreds, 50));
+        const int rounded_fifties = static_cast<int>(excess_plus_49 / 50u);
+        treaty_score = diplo_sub(treaty_score, diplo_mul(rounded_fifties, 50));
     }
     if (treaty_score < 50) treaty_score = 0;
 

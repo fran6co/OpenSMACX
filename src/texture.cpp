@@ -41,10 +41,10 @@ static void edge_step(EdgeScan &e) {
     e.accumD += e.deltaD;
 }
 
-// The opaque 61B1F0 body uses the same field/order DDA, but its original ADDs
-// wrap at 32 bits. Keep that arithmetic local instead of routing this owner
-// through the other rasterizers' signed-add helper.
-static void texture_draw_opaque_edge_step(EdgeScan &edge) {
+// Pinned 61C304-341/366-3AC keyed rows use DWORD ADDs in this field order,
+// including the conditional C correction. Retain their 32-bit wrap locally
+// instead of using rasterizers' signed-add helper.
+static void texture_draw_gouraud_edge_step(EdgeScan &edge) {
     edge.accumA = static_cast<int>(
         static_cast<unsigned int>(edge.accumA) +
         static_cast<unsigned int>(edge.deltaA));
@@ -1936,7 +1936,7 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
                                     left_rows = left_edge.counter;
                                 }
                             } else {
-                                texture_draw_opaque_edge_step(left_edge);
+                                texture_draw_gouraud_edge_step(left_edge);
                             }
                             if (!left_failed) {
                                 if (--right_rows == 0) {
@@ -1947,7 +1947,7 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
                                         right_rows = right_edge.counter;
                                     }
                                 } else {
-                                    texture_draw_opaque_edge_step(right_edge);
+                                    texture_draw_gouraud_edge_step(right_edge);
                                 }
                             }
 
@@ -2194,7 +2194,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
                                 left_rows = left_edge.counter;
                             }
                         } else {
-                            edge_step(left_edge);
+                            texture_draw_gouraud_edge_step(left_edge);
                         }
                         if (!left_failed) {
                             if (--right_rows == 0) {
@@ -2205,7 +2205,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
                                     right_rows = right_edge.counter;
                                 }
                             } else {
-                                edge_step(right_edge);
+                                texture_draw_gouraud_edge_step(right_edge);
                             }
                         }
 
@@ -2255,7 +2255,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
                                     static_cast<unsigned int>(span_light) +
                                     static_cast<unsigned int>(
                                         (static_cast<__int64>(
-                                             static_cast<short>(light_step)) *
+                                             static_cast<unsigned short>(light_step)) *
                                          fixed_skip) >> 8));
                                 clipped_left = *blit_clip_left;
                             }

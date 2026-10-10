@@ -6458,10 +6458,10 @@ void __cdecl make_proto(int proto_id, int chassis_id, int weapon_id, int armor_i
             }
             int flags_check = VehPrototypes[proto_id_loop].flags;
             if (flags_check & PROTO_ACTIVE) {
-                if ((proto_id_loop <= MaxVehProtoFactionNum &&
+                if ((proto_id_loop < MaxVehProtoFactionNum &&
                     has_tech(VehPrototypes[proto_id_loop].preq_tech,
                         proto_id / MaxVehProtoFactionNum))
-                    || (proto_id_loop > MaxVehProtoFactionNum
+                    || (proto_id_loop >= MaxVehProtoFactionNum
                         && (flags_check & PROTO_TYPED_COMPLETE))) {
                     uint32_t loop_weapon_id = VehPrototypes[proto_id_loop].weapon_id;
                     if (loop_weapon_id == weapon_id) {

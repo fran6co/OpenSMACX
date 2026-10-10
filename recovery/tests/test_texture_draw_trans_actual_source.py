@@ -22,6 +22,7 @@ FIXTURE = ROOT / "recovery/tests/fixtures/texture_draw_trans_host.cpp"
 METHOD_INSERTION = "// ACTUAL_METHOD_INSERTION"
 HELPER_INSERTION = "// ACTUAL_HELPER_INSERTION"
 HELPER_NAMES = (
+    "texture_draw_gouraud_edge_step",
     "texture_draw_source_step",
     "texture_draw_source_index",
     "texture_draw_next_source_index",
