@@ -23,11 +23,15 @@
 #include "win.h"      // screen Buffer's shared-guard lifetime owner
 #include "random.h"   // random in init()
 
+// RECOVERY_OBJECT: v1 0x009B8178 ?PaletteInitialized@@3PAUHPALETTE__@@A
 HPALETTE PaletteInitialized;  // 0x009B8178
+// RECOVERY_OBJECT: v1 0x009B8188 ?PaletteUsesSystemColours@@3HA
 int PaletteUsesSystemColours;  // 0x009B8188
 // RECOVERY_OBJECT: v1 0x009B8180 ?PaletteActive@@3PAVPalette@@A
 Palette *PaletteActive;                 // 0x009B8180
+// RECOVERY_OBJECT: v1 0x009B8184 ?PaletteSeedCache@@3HA
 int PaletteSeedCache;                   // 0x009B8184
+// RECOVERY_OBJECT: v1 0x009BC4A0 ?DirectDrawPalette@@3PAUIDirectDrawPalette@@A
 IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 
 // The HSV colour math's constants, values READ OUT OF THE IMAGE'S .DATA at
