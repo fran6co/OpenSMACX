@@ -180,9 +180,13 @@ int VideoSoundState::submit_audio_buffer(void *record) {
   return 0x13;
 }
 
-// ORIGINAL: 0x004C8910 sub_4c8910 0x004C8910-0x004C891F FILE
+// ORIGINAL: 0x004C8910 sub_4c8910 0x004C8910-0x004C8923 FILE
 // symbol    ?current_frame@VideoSoundState@@UAEHXZ
 // TRIED: the tail-called vtable slot37 matches exactly (mov/test/je/mov/jmp, 5/5 mnemonics), so the divergence is entirely the null branch: the original's `return -1` JUMPS OUT of this function into a shared tail block at 0x4C891F, four bytes past its own 15, and no C++ spelling reaches another function's interior. This body inlines `or eax,-1; ret` instead and is 4 bytes long. Not a lever - it names why the remainder cannot close from here.
+// Original4C8915's null branch selects4C891F..4C8923 directly. That
+// four-byte return tail belongs to this complete source behavior; the IDA
+// underflow label does not establish another function. The historical TRIED
+// interpretation above is retained, not a current boundary proof.
 int VideoSoundState::current_frame() {
   VideoSoundDevice *const device =
       static_cast<VideoSoundDevice *>(device_);
