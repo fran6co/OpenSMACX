@@ -811,8 +811,8 @@ class Win : public AutoSound {
   void window_line_raw(int x2, int y2, int x1, int y1, int colour, int width, unsigned int style);
 
  public:
-  void __cdecl OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned int keys);
-  void __cdecl OnRButtonUp(void * hwnd, int x, int y, unsigned int keys);
+  static void __cdecl OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned int keys);
+  static void __cdecl OnRButtonUp(void * hwnd, int x, int y, unsigned int keys);
   // Original 0x005F5140 consumes only the stack window argument; both
   // callers clean it up. There is no hidden receiver (unlike the child lift).
   static void __cdecl bring_parent_to_top(Win * window);
@@ -848,13 +848,13 @@ class Win : public AutoSound {
   void sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6);
  public:
   void __cdecl OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan);
-  void OnLButtonUp(void *hwnd, int x, int y, unsigned int keys);
+  static void OnLButtonUp(void *hwnd, int x, int y, unsigned int keys);
   int __cdecl OnSysCommand(HWND hwnd, unsigned int command, int x, int y);
   void paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left, int clip_top, int clip_width, int clip_height, int unused8);
   void update_window_to_buffer(Buffer * buffer);
 
  public:
-  void __cdecl OnMouseMove(void * hwnd, int x, int y, unsigned int keys);
+  static void __cdecl OnMouseMove(void * hwnd, int x, int y, unsigned int keys);
 
  public:
   int __cdecl OnQueryNewPalette(void * hwnd);

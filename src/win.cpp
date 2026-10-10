@@ -7574,37 +7574,36 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
 // ===== homed from src/recovered/units/005f25c0.cpp =====
 
 // ORIGINAL: 0x005F25C0 ?OnRButtonDown@Win@@QAAXPAXJHHI@Z 0x005F25C0-0x005F261F FILE
-// symbol    ?OnRButtonDown@Win@@QAAXPAXJHHI@Z
+// symbol    ?OnRButtonDown@Win@@SAXPAXJHHI@Z
 // kind game
 void __cdecl Win::OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned int keys) {
-    int result = reinterpret_cast<int>(get_mouse_window(
-        reinterpret_cast<int *>(&flags), reinterpret_cast<int *>(&x)));
+    Win *result = get_mouse_window(&x, &y);
     if (result != 0) {
-        reinterpret_cast<Win *>(result)->on_r_button_down(reinterpret_cast<long>(hwnd), flags, x, y, WinMouseDirect);
+        result->on_r_button_down(flags, x, y, keys, WinMouseDirect);
     }
     // 0x009B7A94, which window_proc calls as WinMouseHook(HWND, LPARAM).
     // SIGNATURES DISAGREE and the image cannot referee it: both sites push
     // two dwords __cdecl, so the argument TYPES are invisible in the asm.
-    // Here `flags` and `x` hold the translated coordinates get_mouse_window
+    // Here `x` and `y` hold the translated coordinates get_mouse_window
     // wrote back through them, so this site reads the hook as (int, int).
     // Merged onto the typed name with the cast kept at this call.
     if (WinMouseHook != nullptr) {
-        reinterpret_cast<void(__cdecl *)(int, int)>(WinMouseHook)(flags, x);
+        reinterpret_cast<void(__cdecl *)(int, int)>(WinMouseHook)(x, y);
     }
-    if (WinCursorMoved != 0) {
-        reinterpret_cast<void (__cdecl *)()>(WinCursorMoved)();
+    if (WinMessageHook != 0) {
+        WinMessageHook();
         return;
     }
 }
 
 // ===== homed from src/recovered/units/005f2620.cpp =====
 
-// ORIGINAL: 0x005F2620 ?OnRButtonUp@Win@@QAAXPAXHHI@Z 0x005F2620-0x005F2661 FILE
-// symbol    ?OnRButtonUp@Win@@QAAXPAXHHI@Z
+// ORIGINAL: 0x005F2620 ?OnRButtonUp@Win@@QAAXPAXHHI@Z 0x005F2620-0x005F2661 FILE BYTE_EXACT
+// symbol    ?OnRButtonUp@Win@@SAXPAXHHI@Z
 // kind game
 void __cdecl Win::OnRButtonUp(void * hwnd, int x, int y, unsigned int keys) {
     WinTrackingWindow = nullptr;
-    Win *win = reinterpret_cast<Win *>(get_mouse_window(&x, &y));
+    Win *win = get_mouse_window(&x, &y);
     if (win != 0) {
         win->on_r_button_up(x, y, keys, WinMouseDirect);
     }
@@ -10406,17 +10405,17 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
 
 // ===== homed from src/recovered/units/005f2570.cpp =====
 
-// ORIGINAL: 0x005F2570 ?OnLButtonUp@Win@@QAAXPAXHHI@Z 0x005F2570-0x005F25B1 FILE
-// symbol    ?OnLButtonUp@Win@@QAEXPAXHHI@Z
+// ORIGINAL: 0x005F2570 ?OnLButtonUp@Win@@QAAXPAXHHI@Z 0x005F2570-0x005F25B1 FILE BYTE_EXACT
+// symbol    ?OnLButtonUp@Win@@SAXPAXHHI@Z
 // kind game
 void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
     WinTrackingWindow = nullptr;
     // get_mouse_window already RETURNS Win *, and win.h declares slot 82 as
     // on_l_button_up - so the shim was casting a Win to a shim class to call
     // a slot the class itself now names.
-    Win *obj = get_mouse_window(reinterpret_cast<int *>(&hwnd), &x);
+    Win *obj = get_mouse_window(&x, &y);
     if (obj) {
-        obj->on_l_button_up(reinterpret_cast<int>(hwnd), x, y, WinMouseDirect);
+        obj->on_l_button_up(x, y, keys, WinMouseDirect);
     }
 }
 
@@ -11168,7 +11167,8 @@ Win::~Win() {
     close();
 }
 
-// ORIGINAL: 0x005F2290 ?OnMouseMove@Win@@QAAXPAXHHI@Z 0x005F2290-0x005F232D FILE
+// ORIGINAL: 0x005F2290 ?OnMouseMove@Win@@QAAXPAXHHI@Z 0x005F2290-0x005F232D FILE BYTE_EXACT
+// symbol    ?OnMouseMove@Win@@SAXPAXHHI@Z
 // kind game
 // ===== homed from src/unrecovered/005f2290.cpp =====
 
@@ -11179,15 +11179,15 @@ void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
     tracking = WinTrackingWindow;
     WinCursorMoved = 0;
     if (tracking != nullptr) {
-        do_tracking(x, y);
+        tracking->do_tracking(x, y);
         return;
     }
-    hit = (Win *)get_mouse_window(&x, &y);
+    hit = get_mouse_window(&x, &y);
     update_cursor(hit, 1);
     if (hit != 0) {
         if (WinHoverWindow != 0 &&
             (WinCursorMoved != 0 || hit != WinHoverWindow) &&
-            (reinterpret_cast<int>(WinPointerOwner3) == 0 || WinPointerOwner3 == WinHoverWindow)) {
+            (WinPointerOwner3 == 0 || WinPointerOwner3 == WinHoverWindow)) {
             WinHoverWindow->on_mouse_leave(x, y);
         }
         WinHoverWindow = hit;
