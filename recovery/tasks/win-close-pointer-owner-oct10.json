@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "win-close-pointer-owner-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Preserve Win receiver identity directly when close resets its owning-window pointer",
+  "base_revision": "233b699fe545579f57786cc0375b29b6e753dcee",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6207040}],
+  "editable_files": ["src/win.cpp", "recovery/tests/test_win_close_pointer_owner_oct10.py"],
+  "evidence": [
+    "Win::close at 0x005EB640 resets poWinBase_ to its own receiver. win.h declares the field Win* at +0xA8, and Win construction already assigns this without an integer intermediate.",
+    "Only the receiver assignment is authorized; preserve every lifecycle operation, original identity, span, claim, and historical finding. No intentional behavior fixes or full-coverage claims.",
+    "Require fresh whole-Win-TU before/after measurements, bounded actual-source pointer controls, relevant lifecycle regressions, build/link, source continuity, and independent review before a coordinator manual checkpoint."
+  ]
+}
