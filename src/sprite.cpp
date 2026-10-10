@@ -841,25 +841,23 @@ Sprite::Sprite() {
     // The legacy body interleaves the accounting update between the first two
     // field stores and writes the type byte late, so the observable store
     // order is pinned rather than left to the compiler.
-    // THE MEMBERS, still volatile: the store ORDER is what is pinned here,
-    // not the punning. Each `&member` keeps the exact width and the exact
-    // sequence the image writes, and the class stops walking itself.
-    *reinterpret_cast<volatile uint32_t *>(&ppszFileName_) = 0;
+    // Use the actual pointer and signed member types. Volatile receiver
+    // access preserves the original store sequence without aliasing pointer
+    // storage through a dword lvalue. Target pointers are four bytes.
+    volatile Sprite *const receiver = this;
+    receiver->ppszFileName_ = 0;
     SpriteMemoryUsed = static_cast<int>(
         static_cast<uint32_t>(SpriteMemoryUsed) + sizeof(Sprite));
-    *reinterpret_cast<volatile uint32_t *>(&pcBits_) = 0;
-    *reinterpret_cast<volatile uint32_t *>(&iSpriteWidth2_) = 0;
-    *reinterpret_cast<volatile uint32_t *>(&iSpriteWidth_) = 0;
-    *reinterpret_cast<volatile uint32_t *>(&iSpriteHeight_) = 0;
-    *reinterpret_cast<volatile uint32_t *>(&iWidth_) = 0;
-    *reinterpret_cast<volatile uint32_t *>(&iHeight_) = 0;
-    *reinterpret_cast<volatile uint32_t *>(&iLeftOffset_) = 0;
-    *reinterpret_cast<volatile uint32_t *>(&iTopOffset_) = 0;
-    // THE MEMBER, kept volatile: 0x08 is cTransparentIndex_, and the
-    // volatile is what holds this store between the two `ordered[]` writes
-    // either side of it rather than letting VC6 sink it.
-    *reinterpret_cast<volatile uint8_t *>(&cTransparentIndex_) = 9;
-    *reinterpret_cast<volatile uint32_t *>(&fObj1Exists_) = 0;
+    receiver->pcBits_ = 0;
+    receiver->iSpriteWidth2_ = 0;
+    receiver->iSpriteWidth_ = 0;
+    receiver->iSpriteHeight_ = 0;
+    receiver->iWidth_ = 0;
+    receiver->iHeight_ = 0;
+    receiver->iLeftOffset_ = 0;
+    receiver->iTopOffset_ = 0;
+    receiver->cTransparentIndex_ = 9;
+    receiver->fObj1Exists_ = 0;
 }
 
 
