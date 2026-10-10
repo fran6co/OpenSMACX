@@ -67,6 +67,14 @@ def _assert_fixture_tracks_product_layout() -> None:
         assert member in prototype
     assert "MaxVehProtoNum = 512" in header
     assert "MaxVehProtoFactionNum = 64" in header
+    helper = _actual_helpers()[1]
+    assert "reinterpret_cast<const unsigned char *>(&Ability)" in helper
+    assert "27 * sizeof Ability[0]" in helper
+    assert "offsetof(RulesAbility, abbreviation)" in helper
+    assert "&Ability[27].abbreviation" not in helper
+    assert "memcpy" not in helper
+    assert "StringTable" not in helper
+    assert "'\\0'" not in helper
 
 
 HOST_RUNTIME = r"""
@@ -92,6 +100,7 @@ static const int MaxVehProtoNum = 512;
 static const int MaxVehProtoFactionNum = 64;
 static RulesAbility Ability[29];
 static VehPrototype VehPrototypes[MaxVehProtoNum];
+static_assert(sizeof Ability == 29 * sizeof Ability[0], "whole ability array");
 static_assert(offsetof(RulesAbility, abbreviation) == 2 * sizeof(LPSTR),
               "actual abbreviation-member position");
 static_assert(sizeof(VehPrototype) == 0x34, "actual prototype stride");
@@ -115,6 +124,23 @@ static void collide(char *primary, char *alternate, int faction,
         1, 2, 3, 0x1234, 1, primary_difference, gendered, "Dup");
 }
 int main() {
+    // This terminated byte view crosses from Ability[27] into Ability[28].
+    // Its start is the native negative-candidate address; do not resolve the
+    // LPSTR stored there or copy/terminate the production candidate view.
+    std::memset(&Ability, 0, sizeof Ability);
+    const size_t negative_offset =
+        27 * sizeof Ability[0] + offsetof(RulesAbility, abbreviation);
+    const char cross_record_name[] = "0123456789ABCDEFGHIJKLMN";
+    static_assert(sizeof cross_record_name <= 32, "bounded fixture window");
+    unsigned char *const ability_bytes =
+        reinterpret_cast<unsigned char *>(&Ability);
+    std::memcpy(ability_bytes + negative_offset, cross_record_name,
+                sizeof cross_record_name);
+    const char *const negative_name = prototype_collision_name_bytes(-1);
+    assert(negative_name == reinterpret_cast<const char *>(
+        ability_bytes + negative_offset));
+    assert(std::strcmp(negative_name, cross_record_name) == 0);
+
     // A same-name design in faction 1 is ignored; faction 2 participates.
     reset_candidates();
     std::strcpy(VehPrototypes[64].veh_name, "FILTERED");
@@ -206,6 +232,28 @@ def _compile_and_run_runtime(tmp_path: Path) -> None:
     assert "actual name_proto collision helpers passed" in result.stdout
 
 
+def _compile_mutant_and_expect_safe_control_failure(tmp_path: Path,
+                                                     replacement: str) -> None:
+    compiler = shutil.which("g++") or shutil.which("clang++")
+    assert compiler, "GCC or Clang is required for the compiled mutation control"
+    suffix, name_bytes, collisions = _actual_helpers()
+    correct_return = (
+        "return reinterpret_cast<const char *>(ability_bytes + name_offset);"
+    )
+    assert correct_return in name_bytes
+    name_bytes = name_bytes.replace(correct_return, replacement, 1)
+    source = tmp_path / "name_proto_collision_mutant.cpp"
+    binary = tmp_path / "name_proto_collision_mutant"
+    source.write_text(HOST_RUNTIME + suffix + name_bytes + collisions + HOST_CASES)
+    subprocess.run(
+        [compiler, "-std=c++11", "-O0", "-Wall", "-Wextra", "-Werror",
+         str(source), "-o", str(binary)],
+        check=True, capture_output=True, text=True,
+    )
+    result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
+    assert result.returncode != 0, "the host control failed to detect a compiled mutant"
+
+
 def _compile_x86_layout(tmp_path: Path) -> None:
     compiler = shutil.which("g++")
     if not compiler:
@@ -215,6 +263,7 @@ def _compile_x86_layout(tmp_path: Path) -> None:
     source.write_text(
         r"""
 typedef __SIZE_TYPE__ size_t;
+#define offsetof(type, member) __builtin_offsetof(type, member)
 typedef unsigned int uint32_t; typedef unsigned char uint8_t;
 typedef signed char int8_t; typedef short int16_t; typedef unsigned short uint16_t;
 typedef char *LPSTR;
@@ -228,10 +277,14 @@ struct VehPrototype { char veh_name[32]; uint32_t ability_flags;
 static const int MaxVehProtoNum = 512;
 static const int MaxVehProtoFactionNum = 64;
 static RulesAbility Ability[29]; static VehPrototype VehPrototypes[MaxVehProtoNum];
+static_assert(sizeof Ability == 29 * 0x1c, "whole native ability array extent");
 static_assert(sizeof(LPSTR) == 4, "the game image is 32-bit");
 static_assert(__builtin_offsetof(RulesAbility, abbreviation) == 8, "member offset");
 static_assert(sizeof(RulesAbility) == 0x1c, "RulesAbility stride");
 static_assert(sizeof(VehPrototype) == 0x34, "VehPrototype stride");
+static_assert(27 * sizeof Ability[0] + __builtin_offsetof(RulesAbility, abbreviation) == 764,
+              "native negative-candidate byte start");
+static_assert(764 + 32 <= sizeof Ability, "32-byte view within current array");
 extern "C" size_t strlen(const char *);
 extern "C" char *strcat(char *, const char *);
 extern "C" char *strstr(const char *, const char *);
@@ -249,6 +302,21 @@ def test_live_source_collision_helpers_cover_restart_and_member_bytes(tmp_path: 
     if sys.byteorder != "little":
         pytest.skip("the pinned x86 member-byte case is little-endian")
     _compile_and_run_runtime(tmp_path)
+
+
+def test_live_source_array_view_rejects_resolved_and_misoffset_mutants(
+    tmp_path: Path,
+) -> None:
+    if sys.byteorder != "little":
+        pytest.skip("the pinned x86 member-byte case is little-endian")
+    _compile_mutant_and_expect_safe_control_failure(
+        tmp_path,
+        "(void)ability_bytes; (void)name_offset; return Ability[27].abbreviation;",
+    )
+    _compile_mutant_and_expect_safe_control_failure(
+        tmp_path,
+        "return reinterpret_cast<const char *>(ability_bytes + name_offset + 1);",
+    )
 
 
 def test_live_source_collision_helpers_fit_original_32_bit_storage(tmp_path: Path) -> None:

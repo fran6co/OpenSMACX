@@ -131,9 +131,15 @@ static void add_prototype_name_suffix(char *name, const char *suffix,
 
 static const char *prototype_collision_name_bytes(int candidate_id) {
     if (candidate_id == -1) {
-        // On the original 32-bit layout this is exactly VehPrototypes - 1's
-        // veh_name address, but the bytes belong to this real rules member.
-        return reinterpret_cast<const char *>(&Ability[27].abbreviation);
+        // The native negative candidate starts at Ability[27].abbreviation's
+        // object-representation bytes and continues through later fields and
+        // Ability[28]. Derive that view from the complete array object, not
+        // from a pointer to the member; keep strcmp's original unbounded read.
+        const unsigned char *const ability_bytes =
+            reinterpret_cast<const unsigned char *>(&Ability);
+        const size_t name_offset =
+            27 * sizeof Ability[0] + offsetof(RulesAbility, abbreviation);
+        return reinterpret_cast<const char *>(ability_bytes + name_offset);
     }
     return VehPrototypes[candidate_id].veh_name;
 }
