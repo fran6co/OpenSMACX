@@ -2639,26 +2639,6 @@ void __cdecl mapwin_terrain_fixup() {
     terrain_fixup(&FarmMapWindow);
 }
 
-/*
-Purpose: Step the receiver back to the subobject ??_GMainInterface@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x0045F1F0 ??_GMainInterface@@WEEE@AEPAXI@Z 0x0045F1F0-0x0045F1FB BYTE_EXACT
-// symbol    ??_EMainInterface@@WEEE@AEPAXI@Z
-// CORRECTED from ??3MainInterface@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x0045F1C0` into
-//   ??_GMainInterface@@UAEPAXI@Z, which executes `ret 4`; no stack
-//   access and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-
 // THE SLOT INDEX go_reset (time.cpp) works against, defined here beside the
 // table it indexes. The image seeds the dword at 0x0068A5CC with 0xffffffff -
 // no window selected - so the initialiser folds straight into .data and pays

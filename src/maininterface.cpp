@@ -15,6 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+/*
+Purpose: Step the receiver back to the subobject ??_GMainInterface@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x0045F1F0 ??_GMainInterface@@WEEE@AEPAXI@Z 0x0045F1F0-0x0045F1FB BYTE_EXACT
+// symbol    ??_EMainInterface@@WEEE@AEPAXI@Z
+// CORRECTED from ??3MainInterface@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0045F1C0` into
+//   ??_GMainInterface@@UAEPAXI@Z, which executes `ret 4`; no stack
+//   access and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/
+
 // ORIGINAL: 0x0045F1C0 ??_GMainInterface@@UAEPAXI@Z 0x0045F1C0-0x0045F1E1 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x0045F1C0-0x0045F1E1", "Pinned class constructor ??0MainInterface@@QAE@XZ at 0x0045EF10 stores original class/view table VA 0x66c598 at 0x0045F196 (mov dword ptr [esi], 0x66c598); the current genuine owner vftable ??_7MainInterface@@6BWin@@@ selects generated ??_GMainInterface@@UAEPAXI@Z in slot 0 (+0x0) through weak entry ??_EMainInterface@@UAEPAXI@Z (mode 2).", "Pinned ??_GMainInterface@@UAEPAXI@Z at 0x0045F1C0 calls the source-mapped ??1MainInterface@@QAE@XZ at 0x0045EB80, then tests byte ptr [ebp + 8], 1; je 0x45f1da bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/maininterface.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original MainInterface scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GMainInterface@@UAEPAXI@Z

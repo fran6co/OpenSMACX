@@ -110,6 +110,9 @@ void register_iface_mode(int slot, SubInterface *interface_entry);
 // Constructor installs this original interface table at the declared base.
 // Its nineteen observed slots do not independently establish its end bound.
 // RECOVERY_GENERATED: v1 vtable 0x0066C544 ? ??_7MainInterface@@6B@ 0x0045EF10
+// The Buffer-view table start and slot 0 are measured; its full extent,
+// remaining contents and linked weak fallback selection are not established.
+// RECOVERY_GENERATED: v1 vtable 0x0066C590 ? ??_7MainInterface@@6BBuffer@@@ 0x0045EF10
 class MainInterface : public GraphicWin, public SubInterface {
   friend class AlphaMenu;  // AlphaMenu uses the owned menu-window rectangle and state.
   friend class TutWin;  // Tutorial callouts read the owned panel rectangles.
