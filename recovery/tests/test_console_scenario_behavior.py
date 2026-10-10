@@ -202,7 +202,13 @@ char PopupStartCaption[256], StringTemp[1024], StrEditorWhoListTitle[32];
 int PopupModalState=0, GenderDefault=0, PluralityDefault=0;
 int ScenarioVehicleFaction=1, ScenarioVehicleMorale=2, ScenarioVehicleMode=0,
     ScenarioPreviousPrototype=19;
-struct GameDataLockMaskFixture { uint32_t enable_mask_=0; } GameDataLockMask;
+struct GameDataLockMaskBytesFixture {
+  uint8_t human_mask_,alive_mask_,unassigned_[2];
+};
+union GameDataLockMaskFixture {
+  uint32_t enable_mask_=0;
+  GameDataLockMaskBytesFixture bytes_;
+} GameDataLockMask;
 struct GameDataStateFields { GameDataLockMaskFixture lock_masks_; } ;
 struct GameDataStateFixture { GameDataStateFields fields_; } GameDataStateStorage;
 uint32_t &LockEnableMask=GameDataStateStorage.fields_.lock_masks_.enable_mask_;

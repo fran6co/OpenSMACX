@@ -5672,9 +5672,8 @@ void Console::editor_view() {
     Popup popup;
     PopupModalState = 6;
     popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
-    uint8_t *status = reinterpret_cast<uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_);
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-        if ((status[1] & (1u << faction)) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << faction)) == 0) {
             continue;
         }
         char text[256];
@@ -5701,7 +5700,8 @@ void Console::editor_view() {
     if (selected == 0x63) {
         PopupModalState = 6;
         if (X_pop("EDITORCONTROLALL", nullptr) != 0) {
-            status[0] = static_cast<uint8_t>(status[1] & 0xFEu);
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+                static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & 0xFEu);
         }
         GameDataStateStorage.fields_.game_state_ |= 0x80u;
         PopupModalState = 0;
@@ -5718,13 +5718,14 @@ void Console::editor_view() {
     } else {
         MainInterfaceGlobal.flat_button_[2].hide();
     }
-    if ((status[0] & (1u << selected)) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << selected)) == 0) {
         GenderDefault = Players[selected].noun_gender;
         PluralityDefault = Players[selected].is_noun_plural;
         parse_says(0, Players[selected].noun_faction, -1, -1);
         PopupModalState = 6;
         const int answer = X_pop("EDITORCONTROL", nullptr);
-        status[0] = answer != 0 ? static_cast<uint8_t>(1u << selected) : 0;
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+            answer != 0 ? static_cast<uint8_t>(1u << selected) : 0;
         PopupModalState = 0;
     }
 
@@ -6100,8 +6101,8 @@ void Console::editor_veh() {
                 ConsoleGlobal.selected_vehicle_ = vehicle;
                 if (ConsoleGlobal.cursor_active_) set_move(1);
             }
-            uint8_t *const alive = reinterpret_cast<uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_) + 1;
-            *alive |= static_cast<uint8_t>(1u << ScenarioVehicleFaction);
+            GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |=
+                static_cast<uint8_t>(1u << ScenarioVehicleFaction);
         }
         return;
     }
