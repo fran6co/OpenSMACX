@@ -231,11 +231,14 @@ def test_autosound_lifecycle_keeps_the_same_default_and_zero_stores():
         assert re.search(rf"{field}\s*=\s*0\s*;", init_body)
 
 
-def test_flatbutton_pressed_sprite_uses_the_same_neutral_slot_as_pointer():
+def test_flatbutton_scroll_sprites_do_not_overwrite_autosound_words():
     source = (ROOT / "src" / "flatbutton.h").read_text()
     setter = function_text(source, "void set_scroll_icons(Sprite *normal, Sprite *hover, Sprite *pressed)")
-    assert "val_12_ = reinterpret_cast<void *>(pressed);" in setter
-    assert "reinterpret_cast<int>(pressed)" not in setter
+    assert "field_AD4_[0] = normal;" in setter
+    assert "field_AD4_[1] = hover;" in setter
+    assert "field_AD4_[2] = pressed;" in setter
+    assert "val_" not in setter
+    assert "reinterpret_cast" not in setter
 
 
 def test_product_consumer_closure_does_not_call_win_nullary_slot23():

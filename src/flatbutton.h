@@ -56,16 +56,15 @@ class FlatButton : public BaseButton {
   void set_report_page_state(int state) {
     field_AB8_ = static_cast<uint32_t>(state);
   }
-  // Scroll uses the inherited generic three-slot settings run as borrowed
-  // arrow sprites. Other windows use those same AutoSound slots differently,
-  // so keep this interpretation local to a FlatButton configured by Scroll.
+  // Scroll60569A..6056A6 and6057A1..6057AD write the borrowed arrow
+  // sprites to +AD4/+AD8/+ADC, the same run consumed by on_redraw.
+  // These are not AutoSound's unrelated +28/+2C/+30 settings.
   void set_scroll_icons(Sprite *normal, Sprite *hover, Sprite *pressed) {
-    static_assert(sizeof(Sprite *) == sizeof(int), "legacy icon slots are 32-bit");
-    val_10_ = reinterpret_cast<int>(normal);
-    val_11_ = reinterpret_cast<int>(hover);
-    val_12_ = reinterpret_cast<void *>(pressed);
+    field_AD4_[0] = normal;
+    field_AD4_[1] = hover;
+    field_AD4_[2] = pressed;
   }
-  // ReportIf uses this real borrowed-sprite run, not AutoSound settings.
+  // ReportIf and Scroll both use this real borrowed-sprite run.
   void set_report_icons(Sprite *normal, Sprite *hover, Sprite *pressed) {
     field_AD4_[0] = normal;
     field_AD4_[1] = hover;
