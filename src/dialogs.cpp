@@ -20,7 +20,6 @@
 
 /*
 Purpose: Close the dialog manager; the legacy implementation is intentionally empty.
-// ORIGINAL: 0x00612960 ?close@Dialogs@@QAEXXZ 0x00612960-0x00612961 BYTE_EXACT
 // symbol    ?close@Dialogs@@QAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?close@Dialogs@@QAEXXZ)(Dialogs* this)
@@ -51,6 +50,9 @@ converges through its full length.
 */
 Dialogs::Dialogs() { }
 
+// ORIGINAL: 0x00612960 ?close@Dialogs@@QAEXXZ 0x00612960-0x00612961 BYTE_EXACT
+// kind      game
+// symbol    ?close@Dialogs@@QAEXXZ
 void Dialogs::close() {
 }
 

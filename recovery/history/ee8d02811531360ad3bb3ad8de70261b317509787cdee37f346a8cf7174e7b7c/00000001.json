@@ -1,0 +1,19 @@
+{
+  "event_id": "9bab4d86b81d9009b2cd97a1632b083bf1367b749ea9157a0300fd6f3c62f051",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_newtechwin_exec_behavior.py"
+    ],
+    "evidence": [
+      "Fresh existing actual-source NewTechWin exec host control fails compilation because its fake globals still declare retired g_NEWTECHWIN_SPRITES instead of current NewTechSpritesOwner.at; production body tokens are unchanged by mapping relocation and full application compiles/links. Authorize only fixture borrower owner and equivalent pointer identity assertions; preserve all behavioral checks, no production edits or weakened assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "newtech-borrower-fixture-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:source-body-placement-owner-oct10"
+}

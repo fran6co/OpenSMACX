@@ -446,7 +446,6 @@ Net::Net() {
 /*
 Purpose: Tear down a Net - its embedded container, three NetFifo message
          queues, and its VoiceTx.
-// ORIGINAL: 0x004E34D0 ??1Net@@QAE@XZ 0x004E34D0-0x004E365C;0x004E3710-0x004E372B;0x0065C810-0x0065C876
 // symbol    ??1Net@@QAE@XZ
 // size      525 bytes
 // prototype void (__thiscall ??1Net@@QAE@XZ)(Net* this)
@@ -455,34 +454,6 @@ Purpose: Tear down a Net - its embedded container, three NetFifo message
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00401BE0 0x00402970 0x004C8DB0 0x0062E010 0x006339E0
 // indirect  0x004E35D5 0x004E35E2 0x004E3602
-// LEVER: call_diff said MORE, 8 calls against the image's 7, and all three
-//        causes were real defects rather than encoding ones. (1)
-//        `voice_tx_.VoiceTx::~VoiceTx()` was written out in the body of a REAL
-//        destructor whose `voice_tx_` is a REAL member, so VC6 emitted the
-//        destruction TWICE - once here and once after the body, where the
-//        image has it. (2) 0x004E3529 `call 0x402970` is
-//        StringStruct::remove_all entered on the list at sub1 - 0x24, and (3)
-//        0x004E353A `call 0x401be0` is leaf_recoveries.cpp's sub_401be0 on
-//        sub1 - 8. Both went through no-argument `NetVectorTeardownHelper*()`
-//        forwarders, which is an indirect call the image does not make AND a
-//        receiver it does pass. call_diff is now clean.
-// TRIED: 12 of 110 even so, and the ceiling is not spelling. THE IMAGE'S
-//            BODY IS COMPILER-GENERATED MEMBER TEARDOWN, and this tree writes
-//            it out by hand. The image carries EIGHT EH state stores into
-//            [ebp - 4] - 5 before `Net::close`, 6 before remove_all, 4 before
-//            sub_401be0, then 3, 2, 1 for the three NetFifos, 0 for the
-//            container at 0xB0 and -1 at the end - and VC6 emits those ONLY
-//            for members it is destroying itself. The order is exactly
-//            reverse declaration order, which is the evidence: the objects in
-//            the 0x72C..0x750 region go first, then the fifos at 0x130,
-//            0x10C, 0xE8, then the 0xB0 container, then `voice_tx_` at 0x58.
-//            `field_E8_[0x6C]` is precisely three 0x24-byte NetFifos, so the
-//            three explicit `reinterpret_cast<NetFifo *>(self + N)->~NetFifo()`
-//            calls in this body are the compiler's job; so is the 0xB0 walk
-//            and the 0x72C list. Declaring those members - and dropping the
-//            matching explicit construction from Net::Net, which
-//            double_construction.py will then flag - is what this body needs,
-//            and it is a layout job rather than a spelling one.
 Return Value: n/a
 */
 /*
@@ -575,6 +546,11 @@ void Net::close() {
 
 
 
+// ORIGINAL: 0x004E34D0 ??1Net@@QAE@XZ 0x004E34D0-0x004E365C;0x004E3710-0x004E372B;0x0065C810-0x0065C876
+// kind      game
+// symbol    ??1Net@@QAE@XZ
+// LEVER: call_diff said MORE, 8 calls against the image's 7, and all three causes were real defects rather than encoding ones. (1) `voice_tx_.VoiceTx::~VoiceTx()` was written out in the body of a REAL destructor whose `voice_tx_` is a REAL member, so VC6 emitted the destruction TWICE - once here and once after the body, where the image has it. (2) 0x004E3529 `call 0x402970` is StringStruct::remove_all entered on the list at sub1 - 0x24, and (3) 0x004E353A `call 0x401be0` is leaf_recoveries.cpp's sub_401be0 on sub1 - 8. Both went through no-argument `NetVectorTeardownHelper*()` forwarders, which is an indirect call the image does not make AND a receiver it does pass. call_diff is now clean.
+// TRIED: 12 of 110 even so, and the ceiling is not spelling. THE IMAGE'S BODY IS COMPILER-GENERATED MEMBER TEARDOWN, and this tree writes it out by hand. The image carries EIGHT EH state stores into [ebp - 4] - 5 before `Net::close`, 6 before remove_all, 4 before sub_401be0, then 3, 2, 1 for the three NetFifos, 0 for the container at 0xB0 and -1 at the end - and VC6 emits those ONLY for members it is destroying itself. The order is exactly reverse declaration order, which is the evidence: the objects in the 0x72C..0x750 region go first, then the fifos at 0x130, 0x10C, 0xE8, then the 0xB0 container, then `voice_tx_` at 0x58. `field_E8_[0x6C]` is precisely three 0x24-byte NetFifos, so the three explicit `reinterpret_cast<NetFifo *>(self + N)->~NetFifo()` calls in this body are the compiler's job; so is the 0xB0 walk and the 0x72C list. Declaring those members - and dropping the matching explicit construction from Net::Net, which double_construction.py will then flag - is what this body needs, and it is a layout job rather than a spelling one.
 Net::~Net() { close(); }
 
 /*

@@ -4488,7 +4488,6 @@ OPENSMACX_NOINLINE
 // would clear all of eax). Stack reads at [esp+4]/[esp+8]/[esp+0xc] with
 // no prior push are three plain __cdecl arguments (float*, float, int),
 // matching the Ghidra hint's arity.
-// ORIGINAL: 0x006282E0 sub_6282e0 0x006282E0-0x00628377
 // symbol    ?vox_part_behind@@YA_NPBUVOX_Vect@@MPBUVoxCameraBlock@@@Z
 
 // Candidate source body for 0x63F5E0. Uses the real record/shape/vector
@@ -4643,6 +4642,8 @@ void __cdecl caviar_clip_shape(VoxRenderRecord *record,
 }
 
 
+// ORIGINAL: 0x006282E0 sub_6282e0 0x006282E0-0x00628377
+// symbol    ?vox_part_behind@@YA_NPBUVOX_Vect@@MPBUVoxCameraBlock@@@Z
 bool __cdecl vox_part_behind(const VOX_Vect *position, float extent,
                              const VoxCameraBlock *view) {
     const CaviarChannelBounds &clip = view->bounds_;

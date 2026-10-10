@@ -249,7 +249,6 @@ int AlphaNet::who_2_idx(int identity) {
 
 /*
 Purpose: Clear every player's process slot and hand off to the network close.
-// ORIGINAL: 0x004E25B0 ?close@AlphaNet@@QAEXXZ 0x004E25B0-0x004E25D8 BYTE_EXACT
 // size      40 bytes
 // prototype void (__thiscall ?close@AlphaNet@@QAEXXZ)(AlphaNet* this)
 // callers   14   call targets   0
@@ -395,6 +394,8 @@ void AlphaNetLedger::on_remove(NetAllocationNode *payload) {
 
 
 
+// ORIGINAL: 0x004E25B0 ?close@AlphaNet@@QAEXXZ 0x004E25B0-0x004E25D8 BYTE_EXACT
+// kind      game
 void AlphaNet::close() {
     // Eight process-ID slots at 0x78C, one per player, stride 0x19C.
     for (size_t slot = 0; slot < 8; ++slot) {

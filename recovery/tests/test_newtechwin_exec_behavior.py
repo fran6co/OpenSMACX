@@ -74,7 +74,11 @@ struct MainInterface { Font primary; Font *primary_font() { return &primary; } }
 Font font_pool[64] = {};
 Font *find_font(int size, int style) { font_pool[size * 4 + style].id = size * 4 + style; return &font_pool[size * 4 + style]; }
 struct BoxStyle InterfaceBoxStyles[51] = {};
-struct Sprite g_NEWTECHWIN_SPRITES[6] = {};
+// Borrower identity fixture, not a model of production guarded lifetimes.
+struct NewTechSpritesFixtureOwner {
+    Sprite elements_[6];
+    Sprite &at(int index) { return elements_[index]; }
+} NewTechSpritesOwner = {};
 char *label_get(int) { static char label[] = "close"; return label; }
 struct Buffer {
     Font *fonts[4]; int colors[4];
@@ -208,7 +212,7 @@ int main() {
     assert(NewTechWindow.flatButtons_[1].args[2]==518);
     assert(NewTechWindow.flatButtons_[1].args[3]==28);
     assert(NewTechWindow.flatButtons_[1].args[4]==34);
-    assert(NewTechWindow.flatButtons_[2].icons[2]==&g_NEWTECHWIN_SPRITES[5]);
+    assert(NewTechWindow.flatButtons_[2].icons[2]==&NewTechSpritesOwner.at(5));
     assert(NewTechWindow.buttonGroup_.add_count==2 && NewTechWindow.buttonGroup_.selected==1);
     assert(trace.wave_path=="voices\\tech37.mp3" && trace.wave_loads==1);
     assert(trace.wave_unloads==1 && trace.wave_plays==1 && trace.last_volume==73);

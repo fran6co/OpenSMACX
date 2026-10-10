@@ -2376,7 +2376,6 @@ void Sprite::UNK4(int, int) {
 
 
 /*
-// ORIGINAL: 0x0063CE20 sub_63ce20 0x0063CE20-0x0063CEE7;0x00663998-0x006639AD BYTE_EXACT
 // symbol    ?init_class@Sprite@@SAHXZ
 // LEVER 2026-09-03: two things, and the first one is worth stating because
 //   this body carried a TRIED note for two passes claiming otherwise. The /GX
@@ -2479,6 +2478,9 @@ Sprite &BlankSpriteStorageOwner::sprite() {
 }
 
 
+// ORIGINAL: 0x0063CE20 sub_63ce20 0x0063CE20-0x0063CEE7;0x00663998-0x006639AD BYTE_EXACT
+// kind      game
+// symbol    ?init_class@Sprite@@SAHXZ
 int Sprite::init_class() {
     Buffer buf;
     int result;

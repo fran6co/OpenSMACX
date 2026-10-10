@@ -301,7 +301,6 @@ void PlanWin::monocenter(int x, int y, int force_redraw) {
 
 /*
 Purpose: Clear the plan window's line count.
-// ORIGINAL: 0x0048AF20 ?clear_lines@PlanWin@@QAEXXZ 0x0048AF20-0x0048AF2B BYTE_EXACT
 // size      11 bytes
 // prototype void (__thiscall ?clear_lines@PlanWin@@QAEXXZ)(PlanWin* this)
 // callers   5   call targets   0
@@ -549,6 +548,8 @@ void PlanWin::back_redraw() {
     buffer_.copy(source, 0, 0, source->dib_.bmiHeader.biWidth,
                  -source->dib_.bmiHeader.biHeight);
 }
+// ORIGINAL: 0x0048AF20 ?clear_lines@PlanWin@@QAEXXZ 0x0048AF20-0x0048AF2B BYTE_EXACT
+// kind      game
 void PlanWin::clear_lines() {
     line_count_ = 0;
 }
