@@ -18,6 +18,7 @@
     }
   ],
   "editable_files": [
+    "recovery/audits.json",
     "src/texture.cpp",
     "src/texture.h",
     "recovery/tests/texture_edge_cache_owner_harness.cpp",
@@ -26,6 +27,7 @@
     "recovery/tests/test_texture_affine_vertex_api_oct10.py"
   ],
   "evidence": [
+    "Native class-debt audit reports13remaining pointer-parameter-as-int sites after this migration, versus16on the same pre-change source. Lower only that policy ceiling to13in the same source commit; leave unrelated existing audit growth/slack visible and do not raise any ceiling.",
     "Pinned620A10 loads stack0C/14 as pointer values, publishes them into existing typed Vert globals9BB4F4/9BB490 and indexes the first at eight-byte stride with signed x/y at0/+4. Its complete live implementation uses both only as Vert pointer views. Wrapper624CA0 forwards the same values unchanged when sixth argument==-1. The complete source caller closure is these two methods.",
     "The seed-generated decorated symbols and IDA int4 guesses are not original C++ type evidence. Pinned original32-bit stack ABI cannot distinguish int from pointer. Typed contracts are justified by actual dereferences/global consumers, not original source spelling; upstream producers outside the wrapper remain unobserved.",
     "Retain all ORIGINAL markers/spans/claims and historical notes. Observe emitted VC6 symbols for changed signatures; no new claim or automatic demotion. Preserve all96 Texture function verdicts if possible, immediately review any justified temporary regression rather than revert solely for matching.",
