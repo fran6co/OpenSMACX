@@ -3084,10 +3084,10 @@ int Console::selected() {
 void Console::toggle_patrol() {
     MapWin *const first = MapWinTable[0];
     int mask = first->field_1DD70_ & 0x400000;
-    int *p = reinterpret_cast<int *>(MapWinTable);
+    MapWin **p = MapWinTable;
     do {
-        MapWin *const window = *reinterpret_cast<MapWin *const *>(p);
-        if (window != nullptr && (p == reinterpret_cast<int *>(MapWinTable) ||
+        MapWin *const window = *p;
+        if (window != nullptr && (p == MapWinTable ||
                                  window->field_1DD74_ != 0)) {
             if (mask == 0) {
                 window->field_1DD70_ |= 0x400000;
@@ -3098,7 +3098,7 @@ void Console::toggle_patrol() {
             }
         }
         p = p + 1;
-    } while (p < reinterpret_cast<int *>(MapWinTable + MapWinTableSlots));
+    } while (p < MapWinTable + MapWinTableSlots);
 }
 
 // ORIGINAL: 0x00516970 ?menu_simple@Console@@QAEXXZ 0x00516970-0x005169A1 FILE BYTE_EXACT
@@ -4551,14 +4551,14 @@ void Console::editor_flat() {
 void Console::editor_fast() {
     auto_undo();
     unsigned int state = GameDataStateStorage.fields_.game_state_ | 4;
-    unsigned char *base = reinterpret_cast<unsigned char *>(map_tiles());
+    Map *base = map_tiles();
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
     GameDataStateStorage.fields_.game_state_ = state;
     for (int i = 0; i < static_cast<int>(MapArea); i++) {
-        *reinterpret_cast<unsigned int *>(base + i * 0x2c + 8) &= 0xfffffffc;
+        base[i].bit &= 0xfffffffc;
     }
     unsigned int flag80 = GameDataStateStorage.fields_.game_state_ & 0x80;
     GameDataStateStorage.fields_.game_state_ = GameDataStateStorage.fields_.game_state_ & 0xffffff7f;
@@ -6528,11 +6528,7 @@ void Console::time_controls() {
     }
 
     time_controls_dialog(&popup);
-    // BasePop's value slot (basepop.h's private value_ at 0xA44): the row the
-    // dialog opens preselected. editor_diplomacy spells the same write the
-    // same way.
-    *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(&popup) + 0xa44) =
-        static_cast<uint32_t>(GameDataStateStorage.fields_.time_controls_selection_);
+    popup.set_value(GameDataStateStorage.fields_.time_controls_selection_);
     const int result = popup.exec(0, 0);
     if (result < 0) {
         popup.close();
@@ -6816,13 +6812,11 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
     int line_x;
     int line_y;
 
-    // Sprite keeps its geometry private and Console is not among its friends,
-    // so the two track extents keep the image's own offsets (+0x18 into the
-    // vertical drag sprite, +0x1c into the horizontal one).
-    const int track_height = static_cast<int>(*reinterpret_cast<const int *>(
-        reinterpret_cast<const uint8_t *>(&sprite_a_) + 0x18));
-    const int track_width = static_cast<int>(*reinterpret_cast<const int *>(
-        reinterpret_cast<const uint8_t *>(&sprite_b_) + 0x1C));
+    // The original vertical track uses Sprite +0x18 (display width),
+    // and the horizontal track uses +0x1C (display height). Do not swap
+    // these axes to agree with the local track-height/width names.
+    const int track_height = sprite_a_.width();
+    const int track_width = sprite_b_.height();
 
     if (field_23D80_ == 0xFFFFFFFFu) {
         const int half = track_height / 2;
