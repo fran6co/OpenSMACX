@@ -262,7 +262,9 @@ class Texture {
                         Vert *uv, TextureStore *cache);
 
  private:
-  void *pixels_;        // 0x00
+  // Indexed pixel bytes from mem_get or TexHeap; borrowed_ selects lifetime.
+  // Pinned extract copies width bytes per row, with 256-byte borrowed pitch.
+  unsigned char *pixels_; // 0x00
   uint32_t iWidth_;
   uint32_t iHeight_;
   // THE TWO VERTEX-ARRAY BASES, 0x0c and 0x2c. Evidenced three ways: the

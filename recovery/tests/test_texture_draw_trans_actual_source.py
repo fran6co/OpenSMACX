@@ -116,7 +116,7 @@ def _assert_owner_contract(body: str) -> None:
         "setup_edge_gouraud(&right_edge, top_index)",
         "texture_span_step(",
         "texture_light_step(",
-        "static_cast<const unsigned char *>(pixels_)",
+        "row_destination,\n                                pixels_,",
         "texture_draw_keyed_lit_span(",
         "span_light, light_step, pixel_count, key)",
         "buffer->free_data(1)",
@@ -137,7 +137,7 @@ def test_installed_draw_trans_samples_texture_and_preserves_keyed_lit_path() -> 
     "old,new",
     [
         ("texture_draw_keyed_lit_span(", "texture_draw_lit_span("),
-        ("static_cast<const unsigned char *>(pixels_)", "destination"),
+        ("row_destination,\n                                pixels_,", "row_destination,\n                                destination,"),
         ("pixel_count, key)", "pixel_count, 0)"),
     ],
 )

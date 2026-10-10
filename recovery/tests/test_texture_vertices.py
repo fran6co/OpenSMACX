@@ -207,7 +207,7 @@ def raster_harness(methods):
     # Actual storage declarations, made public only in this compact fixture.
     fields = []
     for name in ("pixels_", "iWidth_", "iHeight_", "corners_", "cornersAndMids_", "borrowed_"):
-        matches = re.findall(r"^\s*((?:void\s*\*|uint32_t\s+|Vert\s+)"
+        matches = re.findall(r"^\s*((?:unsigned\s+char\s*\*|uint32_t\s+|Vert\s+)"
                              + name + r"(?:\[[^\]]+\])?\s*;)", texture_class, re.M)
         assert len(matches) == 1, name
         fields.append(matches[0])
@@ -692,7 +692,7 @@ def test_compiling_packed_mutations_are_rejected(tmp_path, before, after):
 
 
 @pytest.mark.parametrize("declaration", [
-    "const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);",
+    "const unsigned char *pixels = pixels_;",
     "const int stride = static_cast<int>(buffer->stride_);",
     "const RECT clip = buffer->rect1_;",
 ])

@@ -22,7 +22,7 @@ public:
 
 class Texture {
 public:
-    void *pixels_;
+    unsigned char *pixels_;
     unsigned int iWidth_;
     unsigned int iHeight_;
     static int setup_edge_gouraud(EdgeScan *, int);

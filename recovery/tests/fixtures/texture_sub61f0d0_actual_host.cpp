@@ -52,7 +52,7 @@ static uintptr_t texture_pointer_address(const void *pointer) {
 
 class Texture {
 public:
-    void *pixels_;
+    unsigned char *pixels_;
     uint32_t iWidth_;
     uint32_t iHeight_;
     Vert corners_[4];

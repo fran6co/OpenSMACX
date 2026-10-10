@@ -52,7 +52,7 @@ def actual_source():
     texture = braced(header, "class Texture {")
     fields = []
     for name in ("pixels_", "iWidth_", "iHeight_", "corners_", "cornersAndMids_", "borrowed_"):
-        fields.append(one(r"^\s*((?:void\s*\*|uint32_t\s+|Vert\s+)" +
+        fields.append(one(r"^\s*((?:unsigned\s+char\s*\*|uint32_t\s+|Vert\s+)" +
                           name + r"(?:\[[^\]]+\])?\s*;)", texture))
     signatures = re.findall(r"  void draw_cached_lit\([^;]+;", header)
     assert len(signatures) == 2
@@ -538,7 +538,7 @@ def test_compiling_cached_lighting_damage(tmp_path,name,method,before,after):
 
 @pytest.mark.parametrize("declaration",[
     "const unsigned char key = static_cast<unsigned char>(TextureRasterKey);",
-    "const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);",
+    "const unsigned char *pixels = pixels_;",
     "const int stride = static_cast<int>(buffer->stride_);",
     "const RECT clip = buffer->rect1_;",
 ])

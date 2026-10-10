@@ -88,7 +88,84 @@ def test_actual_coordinate_acquisition(tmp_path, compiler, damage):
     assert (result.returncode == 0) == (damage is None)
 
 
+def texture_lifecycle_control(damage):
+    source = (ROOT / "src/texture.cpp").read_text()
+    bodies = "\n".join(extract(source, signature) for signature in (
+        "Texture::Texture()", "Texture::~Texture()", "void Texture::close()"))
+    assert "*static_cast<unsigned char *volatile *>(&pixels_) = nullptr;" in bodies
+    if damage:
+        assert bodies.count(damage[0]) == 1
+        bodies = bodies.replace(*damage, 1)
+    return r'''
+#include <cassert>
+#include <cstdint>
+#include <cstddef>
+#include <cstring>
+#include <new>
+static unsigned char *released;
+static int releases;
+static void release(void *pixels){released=static_cast<unsigned char *>(pixels);++releases;}
+#define free release
+struct Texture {
+    unsigned char *pixels_;
+    uint32_t iWidth_,iHeight_;
+    struct Point {int x,y;} corners_[4],cornersAndMids_[8];
+    uint32_t borrowed_;
+    Texture();~Texture();void close();
+};
+BODY
+int main(){
+    unsigned char pixels[16];
+    alignas(Texture) unsigned char storage[sizeof(Texture)];
+    for(int borrowed=0;borrowed!=2;++borrowed){
+        memset(storage,0xA5,sizeof storage);
+        Texture *texture=new(storage)Texture;
+        assert(!texture->pixels_ && !texture->iWidth_ && !texture->iHeight_ && !texture->borrowed_);
+        texture->pixels_=pixels;texture->iWidth_=3;texture->iHeight_=2;texture->borrowed_=borrowed;
+        released=nullptr;releases=0;
+        texture->close();
+        assert(texture->pixels_==(borrowed?pixels:nullptr));
+        assert(!texture->iWidth_ && !texture->iHeight_ && !texture->borrowed_);
+        assert(releases==(borrowed?0:1) && released==(borrowed?nullptr:pixels));
+        // The original close leaves borrowed storage but clears its flag.
+        // Restore the next observed state explicitly; do not normalize close.
+        texture->pixels_=pixels;texture->iWidth_=3;texture->iHeight_=2;texture->borrowed_=borrowed;
+        released=nullptr;releases=0;
+        texture->~Texture();
+        unsigned char *pointer;
+        uint32_t width,height,mode;
+        memcpy(&pointer,storage+offsetof(Texture,pixels_),sizeof pointer);
+        memcpy(&width,storage+offsetof(Texture,iWidth_),sizeof width);
+        memcpy(&height,storage+offsetof(Texture,iHeight_),sizeof height);
+        memcpy(&mode,storage+offsetof(Texture,borrowed_),sizeof mode);
+        assert(pointer==(borrowed?pixels:nullptr) && width==3 && height==2 && mode==static_cast<uint32_t>(borrowed));
+        assert(releases==(borrowed?0:1) && released==(borrowed?nullptr:pixels));
+    }
+}
+'''.replace("BODY", bodies)
+
+
+@pytest.mark.parametrize("compiler", ("g++", "clang++"))
+@pytest.mark.parametrize("damage", (None,
+    ("pixels_ = nullptr;\n    iWidth_ = 0;", "pixels_ = nullptr;\n    iWidth_ = 1;"),
+    ("*static_cast<unsigned char *volatile *>(&pixels_) = nullptr;", ";")))
+def test_actual_texture_pixel_lifecycle(tmp_path, compiler, damage):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip(compiler + " unavailable")
+    source = tmp_path / "texture_lifecycle.cpp"
+    source.write_text(texture_lifecycle_control(damage))
+    binary = tmp_path / "texture_lifecycle"
+    # Observe post-lifetime storage without host dead-store elimination.
+    # Target optimization/store preservation is checked by native measurement.
+    result = subprocess.run([executable, "-std=c++11", "-O0", str(source), "-o", str(binary)], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    result = subprocess.run([str(binary)], capture_output=True, timeout=10)
+    assert (result.returncode == 0) == (damage is None)
+
+
 def texture_control(damage):
+    assert "unsigned char *pixels_;" in (ROOT / "src/texture.h").read_text()
     body = extract((ROOT / "src/texture.cpp").read_text(),
                    "int Texture::extract(Buffer *buffer, int x, int y, int width, int height,\n                     TexHeap *heap)")
     assert "const unsigned char *src = srcData;" in body
@@ -115,7 +192,7 @@ struct TexHeap {
 };
 struct Texture {
     struct Point {int x,y;} corners_[4],cornersAndMids_[8];
-    void *pixels_=nullptr;
+    unsigned char *pixels_=nullptr;
     int iWidth_=0,iHeight_=0,borrowed_=0;
     int extract(Buffer *,int,int,int,int,TexHeap *);
 };

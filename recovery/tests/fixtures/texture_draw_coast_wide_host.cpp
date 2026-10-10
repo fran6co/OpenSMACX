@@ -123,7 +123,7 @@ static uintptr_t texture_pointer_offset(const void *base, uint32_t offset) {
 static int setup_calls;
 static int setup_selectors[16];
 struct Texture {
-    void *pixels_;
+    unsigned char *pixels_;
     uint32_t iWidth_;
     uint32_t iHeight_;
     void draw_coast(Buffer *, Vert *, int *, Texture *, unsigned char *, int, Vert *);

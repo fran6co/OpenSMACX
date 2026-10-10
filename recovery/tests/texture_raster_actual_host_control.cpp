@@ -5,7 +5,7 @@
 #include <sys/mman.h>
 
 struct RECT { int left, top, right, bottom; };
-struct Vert { int a, b; };
+struct Vert { int x, y; };
 struct EdgeScan {
     int f0, counter, id, accumA, accumB, deltaA, deltaB, accumC, deltaC,
         extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
@@ -27,7 +27,7 @@ public:
 };
 class Texture {
 public:
-    void *pixels_;
+    unsigned char *pixels_;
     uint32_t iWidth_, iHeight_;
     Vert corners_[4];
     Vert cornersAndMids_[8];

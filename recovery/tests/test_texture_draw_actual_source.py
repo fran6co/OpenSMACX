@@ -36,7 +36,7 @@ public:
 static int forward_calls = 0;
 class Texture {
 public:
-  void *pixels_ = 0;
+  unsigned char *pixels_ = 0;
   uint32_t iWidth_ = 8;
   void draw(Buffer *, Vert *, int *, int, Vert *) { ++forward_calls; }
   void draw(Buffer *, Vert *, int *, int, Vert *, int);
@@ -131,7 +131,9 @@ int main() {
   unsigned char out[3] = {};
   texture_draw_lit_span(out, pixels, 4, 0x0000f000, 0x0000e000,
                         0x00013000, 0x00015000, 0x0012f000, 0x0100, 3);
-  assert(out[0] == 25 && out[1] == 0x0d && out[2] == 0x16);
+  // Original 62393E reloads the previous texel before 623941/944 advance
+  // the address: S0,S0,S1, with successive shade bytes 0x12,0x13,0x14.
+  assert(out[0] == 25 && out[1] == 26 && out[2] == 14);
   out[0] = 10; out[1] = 20; out[2] = 30;
   texture_draw_keyed_lit_span(out, pixels, 4, 0x0000f000, 0x0000e000,
                               0x00013000, 0x00015000, 0x0012f000,
@@ -245,6 +247,10 @@ def test_live_texture_draw_source_and_dda(compiler_name: str) -> None:
     helper_start = source.index("static unsigned int texture_draw_source_step(")
     helper_end = source.index("static void texture_reset_fpu()", helper_start)
     helpers = source[helper_start:helper_end]
+    # These sibling kernels are not dependencies of this bounded owner.
+    # Exclude them from the fixture rather than relaxing its warning checks.
+    for name in ("texture_draw_opaque_lit_span", "texture_draw_keyed_fill_span"):
+        helpers = helpers.replace(_function(helpers, r"static void " + name + r"\("), "")
     owner = _function(
         source,
         r"void\s+Texture::draw\(Buffer\s*\*[^,]+,\s*Vert\s*\*[^,]+,\s*"

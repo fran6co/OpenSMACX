@@ -30,6 +30,7 @@ SOURCE_IDS = (
     (0x0061D090, "Texture::sub_61d090"),
 )
 HELPERS = (
+    ("static uintptr_t texture_pointer_offset(",),
     ("static unsigned int texture_raster_pixel_count(",),
     ("static uint32_t texture_raster_advance_light(",),
     ("static uint32_t texture_raster_skip_light(",),

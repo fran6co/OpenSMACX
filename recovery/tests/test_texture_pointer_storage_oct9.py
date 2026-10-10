@@ -47,7 +47,7 @@ def test_numeric_row_address_keeps_target_width_and_shade_owner_is_mutable() -> 
         "void Texture::sub_61cb50"))
     shade_end = source.index("if (shade_pixels == 0)", shade)
     shade_code = source[shade:shade_end]
-    assert "static_cast<const unsigned char *>(shade->pixels_)" in shade_code
+    assert "shade->pixels_" in shade_code
     assert "*blit_shade_table = shade->pixels_;" in shade_code
     assert "*blit_shade_table = shade_pixels;" not in shade_code
 

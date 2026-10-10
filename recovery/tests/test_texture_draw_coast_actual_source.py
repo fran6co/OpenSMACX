@@ -60,7 +60,7 @@ struct EdgeScan {
     int extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
 };
 struct Texture {
-    void *pixels_;
+    unsigned char *pixels_;
     unsigned int iWidth_, iHeight_;
     static int setup_edge_gouraud(EdgeScan *, int);
     void draw_coast(struct Buffer *, Vert *, int *, Texture *, unsigned char *, int, Vert *);

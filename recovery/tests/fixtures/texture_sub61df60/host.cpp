@@ -91,10 +91,10 @@ struct Buffer {
 };
 
 struct Texture {
-    void *pixels_;
+    unsigned char *pixels_;
     unsigned int iWidth_, iHeight_;
     unsigned int borrowed_;
-    Texture(void *pixels)
+    Texture(unsigned char *pixels)
         : pixels_(pixels), iWidth_(256), iHeight_(256), borrowed_(1) {}
     static int setup_edge_gouraud(EdgeScan *, int);
     void sub_61df60(Buffer *, Vert *, int *, Texture *, unsigned char *, int,

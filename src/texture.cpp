@@ -656,7 +656,7 @@ Texture::~Texture() {
         // build is entitled to drop it. The original performs it, and the
         // caller's memory keeps the cleared pointer afterwards, so it has
         // to survive.
-        *reinterpret_cast<void *volatile *>(&pixels_) = nullptr;
+        *static_cast<unsigned char *volatile *>(&pixels_) = nullptr;
     }
 }
 
@@ -745,13 +745,13 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
     int stride = buffer->stride_;
     pixels_ = 0;
     if (heap != 0) {
-        pixels_ = reinterpret_cast<void *>(heap->get_tex_mem(iHeight_ << 8));
+        pixels_ = static_cast<unsigned char *>(heap->get_tex_mem(iHeight_ << 8));
         if (pixels_ != 0) {
             borrowed_ = 1;
         }
     }
     if (pixels_ == 0) {
-        pixels_ = mem_get(iHeight_ * iWidth_);
+        pixels_ = static_cast<unsigned char *>(mem_get(iHeight_ * iWidth_));
         if (pixels_ == 0) {
             iWidth_ = 0;
             iHeight_ = 0;
@@ -762,7 +762,7 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
         borrowed_ = 0;
     }
 
-    char *dest = reinterpret_cast<char *>(pixels_);
+    unsigned char *dest = pixels_;
     const unsigned char *src = srcData;
     if (height != 0) {
         int count = height;
@@ -1628,7 +1628,7 @@ int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {
 void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
-    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const unsigned char *pixels = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     const int stride = static_cast<int>(buffer->stride_);
     const RECT clip = buffer->rect1_;
@@ -1737,7 +1737,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
     const Vert *uv = use_eight_vertices ? cornersAndMids_ : corners_;
     const int count = use_eight_vertices ? 8 : 4;
     const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
-    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const unsigned char *pixels = pixels_;
     const int width = static_cast<int>(iWidth_);
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     const int stride = static_cast<int>(buffer->stride_);
@@ -1856,7 +1856,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
 void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
-    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const unsigned char *pixels = pixels_;
     const int width = static_cast<int>(iWidth_);
     const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
     TextureRowPitchScratch = static_cast<int>(iWidth_);
@@ -2152,7 +2152,7 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
                                             static_cast<unsigned int>(clipped_left)));
                                 texture_draw_opaque_lit_span(
                                     row_destination,
-                                    static_cast<const unsigned char *>(pixels_),
+                                    pixels_,
                                     static_cast<int>(iWidth_), span_u, span_v, du, dv,
                                     span_light, light_step, pixel_count);
                             }
@@ -2414,7 +2414,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
                                     blit_light_threshold));
                             texture_draw_keyed_lit_span(
                                 row_destination,
-                                static_cast<const unsigned char *>(pixels_),
+                                pixels_,
                                 static_cast<int>(iWidth_), span_u, span_v, du, dv,
                                 span_light, light_step, pixel_count, key);
                         }
@@ -2934,7 +2934,7 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
                             out[pixel] = color;
                     } else {
                         texture_draw_lit_span(
-                            out, static_cast<const unsigned char *>(pixels_),
+                            out, pixels_,
                             static_cast<int>(iWidth_), u, v, du, dv, light,
                             light_step, static_cast<int>(pixel_count));
                     }
@@ -4374,7 +4374,7 @@ void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int 
                                 Vert *uv, int cutoff) {
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
-    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const unsigned char *pixels = pixels_;
     const int stride = static_cast<int>(buffer->stride_);
     const int width = iWidth_;
     int in_front = 0;
@@ -5616,8 +5616,8 @@ void Texture::sub_61d990(Buffer *buffer, int *vertices, int *zvals,
                         texture_draw_shade_span(
                             reinterpret_cast<unsigned char *>(
                                 *blit_row_offset + left_x),
-                            static_cast<const unsigned char *>(pixels_),
-                            static_cast<const unsigned char *>(shade_texture->pixels_),
+                            pixels_,
+                            shade_texture->pixels_,
                             remap, static_cast<int>(iWidth_), u, v, du, dv,
                             light, light_step,
                             clipped_span);
@@ -5863,7 +5863,7 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
     }
     if (min_y < max_y) {
         texture_raster_gouraud_rows(this, buffer, min_y, max_y, top, 1,
-            borrowed_ != 0, static_cast<const unsigned char *>(pixels_),
+            borrowed_ != 0, pixels_,
             borrowed_ ? 256 : TextureRowPitchScratch);
     }
     if (buffer != 0) buffer->free_data(1);
@@ -5957,7 +5957,7 @@ void Texture::sub_620a10(Buffer *buffer, int vertices_arg, int count,
             v80 = 0;
         }
         texture_raster_plain_rows(this, buffer, min_y, max_y, top,
-            static_cast<const unsigned char *>(pixels_),
+            pixels_,
             borrowed_ ? 256 : TextureRowPitchScratch,
             1, borrowed_ != 0, cache);
     }
@@ -6015,7 +6015,7 @@ void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
     }
     if (min_y < max_y) {
         texture_raster_gouraud_rows(this, buffer, min_y, max_y, top, 0,
-            borrowed_ != 0, static_cast<const unsigned char *>(pixels_),
+            borrowed_ != 0, pixels_,
             borrowed_ ? 256 : TextureRowPitchScratch);
     }
     if (buffer != 0) buffer->free_data(1);
@@ -6478,7 +6478,7 @@ void Texture::sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
         *blit_buffer_stride = static_cast<int>(buffer->stride_);
         *blit_texture_width = static_cast<int>(iWidth_);
         const unsigned char *shade_pixels =
-            static_cast<const unsigned char *>(shade->pixels_);
+            shade->pixels_;
         *blit_shade_table = shade->pixels_;
         if (shade_pixels == 0) goto cleanup;
 
@@ -6578,7 +6578,7 @@ void Texture::sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
                 unsigned char *destination = reinterpret_cast<unsigned char *>(
                     static_cast<intptr_t>(*blit_row_offset)) + x;
                 const unsigned char *base_pixels =
-                    static_cast<const unsigned char *>(pixels_);
+                    pixels_;
                 const unsigned char *lookup_pixels = shade_pixels;
                 for (int px = x; px < end; ++px, ++destination) {
                     const unsigned int tx = (static_cast<unsigned int>(u) >> 16) & 0xffu;
@@ -7580,7 +7580,7 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
     const unsigned char alternate = static_cast<unsigned char>(color);
-    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const unsigned char *pixels = pixels_;
     const int width = static_cast<int>(iWidth_);
     const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
     TextureRowPitchScratch = static_cast<int>(iWidth_);
@@ -7979,7 +7979,7 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
 
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
-    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const unsigned char *pixels = pixels_;
     const int stride = static_cast<int>(buffer->stride_);
     const int width = iWidth_;
     int in_front = 0;
@@ -8110,7 +8110,7 @@ void Texture::draw_cached_lit(Buffer *buffer, Vert *vertices, int *light,
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
     texture_reset_fpu();
-    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const unsigned char *pixels = pixels_;
     const int stride = static_cast<int>(buffer->stride_);
     for (int vertex = 0; vertex < count; ++vertex) {
         int value = light[vertex];

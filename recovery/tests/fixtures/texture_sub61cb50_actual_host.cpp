@@ -78,7 +78,7 @@ struct Buffer {
 };
 
 struct Texture {
-    void *pixels_;
+    unsigned char *pixels_;
     uint32_t iWidth_, iHeight_;
     Vert corners_[4];
     Vert cornersAndMids_[8];

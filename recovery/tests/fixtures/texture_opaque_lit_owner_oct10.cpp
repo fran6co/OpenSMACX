@@ -30,7 +30,7 @@ public:
 
 class Texture {
 public:
-    void *pixels_;
+    unsigned char *pixels_;
     unsigned int iWidth_;
     static int setup_edge_gouraud(EdgeScan *, int);
     void draw(Buffer *, Vert *, int *, int, Vert *);
