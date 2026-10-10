@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "task_id": "zlib-deflate-tree-group-bindings-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind sixteen independently bounded upstream deflate/tree implementations without granting matching claims or inventing data targets",
+  "base_revision": "775f2ff67263c4880a180d88f11a505673593c32",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6543088
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6543392
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6543520
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6544080
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6544448
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6558336
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6558896
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6559472
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6559696
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6560256
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6560368
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6560608
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6561232
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6562640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6562944
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6564032
+    }
+  ],
+  "editable_files": [
+    "src/vendor/zlib.recovery.h",
+    "recovery/tests/test_zlib_deflate_tree_group_bindings_oct10.py",
+    "recovery/tests/test_zlib_ten_member_bindings_oct10.py",
+    "recovery/tests/test_zlib_three_helper_bindings_oct10.py",
+    "recovery/tests/test_zlib_leaf_component_migration.py",
+    "recovery/tests/test_zlib_static_component_migration.py",
+    "recovery/tests/test_zlib_five_identity_continuity.py"
+  ],
+  "evidence": [
+    "Sixteen pinned Ghidra extents agree with independently emitted exclusive physical function COMDATs from unmodified zlib1.0.2 deflate.c and trees.c. Fresh projected native comparison has eleven strict passes and five reference-unknown results, all with passing boundaries and zero differing nonrelocated bytes. This is source correspondence interpretation, not an application implementation gain, claim grant, dependency data proof or full-game acceptance.",
+    "Preserve all twenty-two prior envelopes, identities, spans, historical claims and findings; all prior diagnostic rows must remain identical. Preserve archive provenance, upstream files, compiler flags, selected units and CMake/application policy. Missing data targets remain unknown; exclude deflate_stored absent independently pinned extent.",
+    "Use native source writer and component renderer. Check exact source/provider joins, independently pinned extents, old-policy/history continuity, archive integrity, fresh native qualification, damaged bytes/bounds/callee destinations/missing callee refusals, references/mappings, independent review and full application compile/link before coordinator-reviewed commit."
+  ]
+}
