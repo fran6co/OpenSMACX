@@ -1,0 +1,20 @@
+{
+  "event_id": "6e16ef2028884679a06543bb45508682d9e16d0631bfc595c68b3ede443040d0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_vertices.py"
+    ],
+    "evidence": [
+      "The existing cutoff mutation control matches the obsolete const unsigned char texel=pixels[source] declaration. Ordered prefetch now initializes texel before the loop and refreshes it after source advance. Update only this mutation anchor to perturb the actual source-texel read, retaining compile success and behavioral failure. Do not reintroduce an extra loop-top read, drop the mutant, weaken assertions or change unrelated controls.",
+      "Author reports321passes/13failures across Texture controls; this one stale source anchor is directly caused by authorized sequencing change. Other reported failures require independent baseline comparison and are not permission to alter product behavior or tests."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "texture-prefetched-cutoff-control-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-span-prefetch-owner-oct10"
+}
