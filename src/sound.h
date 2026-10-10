@@ -123,7 +123,7 @@ class Sound : public SoundFadeState {
   uint32_t flags_40_;
   Sound *chain_prev_;     // 0x44, toward the head slot at 0x90DB20
   Sound *chain_next_;     // 0x48, toward the tail slot at 0x90DB1C
-  void *fname_;
+  char *fname_;           // 0x4C: owned filename or Voice display-label copy
   uint32_t type_;
 };
 

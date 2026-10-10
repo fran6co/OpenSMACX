@@ -92,8 +92,8 @@ def test_actual_switch_rethreads_mixed_sound_types_and_observes_callbacks(tmp_pa
     ("Sound *const next = sound->get_next();\n            sound->unload();",
      "sound->unload();\n            Sound *const next = sound->get_next();"),
     ("replay->chain_prev_ = nullptr;", "/* missing link clear */"),
-    ("resume_tail = resume_tail->get_prev();\n        const char *const fname = static_cast<const char *>(replay->fname_);",
-     "const char *const fname = static_cast<const char *>(replay->fname_);\n        resume_tail = resume_tail->get_prev();"),
+    ("resume_tail = resume_tail->get_prev();\n        const char *const fname = replay->fname_;",
+     "const char *const fname = replay->fname_;\n        resume_tail = resume_tail->get_prev();"),
     ("replay->load(fname);", "(void)fname;"),
     ("Sound *resume_tail = nullptr;", "void *stale_device = device_14_; Sound *resume_tail = nullptr;"),
 ])

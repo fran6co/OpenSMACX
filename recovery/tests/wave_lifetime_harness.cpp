@@ -22,7 +22,7 @@ typedef void *HMODULE;
 static int events[32], event_count, releases, name_frees, callback_frees;
 static bool throw_group, throw_release, relink, replace_name;
 static Sound *destroying;
-static void *initial_name, *callback_name;
+static char *initial_name, *callback_name;
 static void event(int n) { assert(event_count < 32); events[event_count++] = n; }
 // LIVE_EXPORT_STORAGE
 void __cdecl operator delete(void *p) {
@@ -140,7 +140,8 @@ int main() {
         throw_group = scenario == 4; throw_release = scenario == 5;
         relink = scenario < 2; replace_name = scenario < 2;
         WaveDeviceReleaseGuard = scenario == 2 ? 0 : 1;
-        initial_name = malloc(8); callback_name = malloc(8);
+        initial_name = static_cast<char *>(malloc(8));
+        callback_name = static_cast<char *>(malloc(8));
         assert(initial_name && callback_name);
         TestSound before, after;
         Wave *wave = new Wave;

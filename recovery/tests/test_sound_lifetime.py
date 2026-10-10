@@ -110,6 +110,8 @@ def run_constructor(tmp_path, monkeypatch):
         ("// LIVE_FADE_DECLARATION", "src/sound.h", "class SoundFadeState {", "// RECOVERY_MEMBER: v1 SoundFadeState volume_"),
         ("// LIVE_SOUND_DECLARATION", "src/sound.h", "class Sound : public SoundFadeState {", "// Two independent sources agree on 0x54"),
         ("// LIVE_VOICE_DECLARATION", "src/voice.h", "class VoiceTx : public Sound {", "// The actual 32-bit product"),
+        ("// LIVE_DEVICE_INTERFACE", "src/voice.h", "class SoundDeviceInterface {", "// The create_sound mode-1"),
+        ("// LIVE_DEVICE_VIEW", "src/sound.cpp", "__forceinline SoundDeviceInterface *sound_device(", "}  // namespace\n\n/*\nPurpose: Ask the wrapped device whether it is playing"),
         ("// LIVE_ROOT_FADE", "src/sound.cpp", "int SoundFadeState::set_fade(", "// Construct the Sound-owned fields")])
 
 

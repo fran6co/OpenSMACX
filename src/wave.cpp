@@ -948,8 +948,8 @@ int Wave::set_fname(const char *fname) {
         if (fname_) {
             operator delete(fname_);
         }
-        fname_ = operator new(strlen(fname) + 1);
-        strcpy(static_cast<char *>(fname_), fname);
+        fname_ = static_cast<char *>(operator new(strlen(fname) + 1));
+        strcpy(fname_, fname);
         return 0;
     }
     return 0xA;
@@ -1066,7 +1066,7 @@ Status: Complete
 */
 int Wave::load() {
     int attribs = 0;
-    const char *const fname = static_cast<const char *>(fname_);
+    const char *const fname = fname_;
     if (fname != nullptr) {
         if (!device_) {
             if (!WaveDeviceReleaseGuard) {
@@ -1153,7 +1153,7 @@ int Wave::reload() {
     // exit shares - spelling each exit its own `return` breaks that tail into
     // two epilogues.
     int result = 0;
-    const char *const fname = static_cast<const char *>(fname_);
+    const char *const fname = fname_;
     if (fname != nullptr) {
         if (!device_) {
             if (!WaveDeviceReleaseGuard) {
@@ -1441,8 +1441,8 @@ void Wave::init(char *group_id, unsigned long flags) {
     if (fname_) {
         operator delete(fname_);
     }
-    fname_ = operator new(strlen(resolved) + 1);
-    strcpy(static_cast<char *>(fname_), resolved);
+    fname_ = static_cast<char *>(operator new(strlen(resolved) + 1));
+    strcpy(fname_, resolved);
     // The original's `memset(this + 0x54, 0, 4)` at 0x004C6A1A. This used to be
     // a byte loop, the only way to spell a four-byte clear while the header
     // declared a byte and three pad bytes at 0x54.
@@ -1594,7 +1594,7 @@ Wave::~Wave() {
     if (group_slot_ < 0x10) {
         WaveDeviceGlobal.pull_from_group(this);
     }
-    void *const block = fname_;
+    char *const block = fname_;
     if (block) {
         operator delete(block);
     }

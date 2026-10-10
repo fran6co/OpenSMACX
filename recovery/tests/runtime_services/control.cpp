@@ -150,7 +150,7 @@ struct Sound;
 Sound *SoundChainHead;
 struct Sound {
     void *device_;
-    void *fname_;
+    char *fname_;
     Sound *next_;
     int id_;
     int detach() {

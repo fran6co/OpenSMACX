@@ -813,8 +813,8 @@ int Midi::init(char *a1, unsigned long a2) {
             operator delete(fname_);
         }
         fname_ = nullptr;
-        fname_ = operator new(strlen(a1) + 1);
-        strcpy(static_cast<char *>(fname_), a1);
+        fname_ = static_cast<char *>(operator new(strlen(a1) + 1));
+        strcpy(fname_, a1);
     }
     return reinterpret_cast<int>(
         memset(&field_54_, 0, 1));
@@ -860,8 +860,8 @@ int Midi::set_fname(const char *fname) {
             operator delete(fname_);
         }
         fname_ = nullptr;
-        fname_ = operator new(strlen(fname) + 1);
-        strcpy(static_cast<char *>(fname_), fname);
+        fname_ = static_cast<char *>(operator new(strlen(fname) + 1));
+        strcpy(fname_, fname);
         return 0;
     }
     return 0xA;
@@ -970,7 +970,7 @@ Return Value: 0 on success, 8 with no filename, 1 with a dead creation
 Status: Complete
 */
 int Midi::load() {
-    const char *filename = static_cast<const char *>(fname_);
+    const char *filename = fname_;
     if (filename != 0) {
         if (device_ == nullptr) {
             if (!WaveDeviceReleaseGuard) {

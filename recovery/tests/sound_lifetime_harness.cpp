@@ -7,10 +7,6 @@ typedef unsigned int uint32_t;
 typedef int int32_t;
 typedef unsigned char uint8_t;
 
-class OriginalObject {};
-#define ORIGINAL(object) reinterpret_cast<OriginalObject *>(object)
-template<class T> T original_slot(void *) { assert(false); return T(); }
-
 #define protected public
 #define private public
 // LIVE_FADE_DECLARATION
@@ -20,6 +16,8 @@ struct _MMIOINFO;
 #undef private
 #undef protected
 
+// LIVE_DEVICE_INTERFACE
+// LIVE_DEVICE_VIEW
 // LIVE_FADE_CONSTRUCTOR
 // LIVE_FADE_INTERVAL
 // LIVE_ROOT_FADE
@@ -104,7 +102,7 @@ int main() {
     assert(voice->device_ == 0 && voice->get_next() == 0 && voice->get_prev() == 0);
     assert(!memcmp(&voice->delay_, untouched_delay, sizeof(untouched_delay)));
     assert(voice->fade_38_ == 1000 && voice->get_type() == 7 && voice->flags_40_ == 0x80);
-    assert(!strcmp(static_cast<const char *>(voice->fname_), "Voice Tx"));
+    assert(!strcmp(voice->fname_, "Voice Tx"));
     for (unsigned int k = sizeof(VoiceTx); k < sizeof(voice_storage.bytes); ++k)
         assert(voice_storage.bytes[k] == 0xA5);
     ::operator delete(voice->fname_);

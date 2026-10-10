@@ -18,8 +18,8 @@
 VoiceRx::VoiceRx() {
     char name[] = "Voice Rx";
     Sound::set_type(6);
-    fname_ = ::operator new(0xA);
-    strcpy(static_cast<char *>(fname_), name);
+    fname_ = static_cast<char *>(::operator new(0xA));
+    strcpy(fname_, name);
 }
 
 // ORIGINAL: 0x004C8A50 ??1VoiceRx@@QAE@XZ 0x004C8A50-0x004C8B35;0x004C8450-0x004C8457;0x00659FA4-0x00659FBE FILE
@@ -228,8 +228,8 @@ Status: Complete
 */
 VoiceTx::VoiceTx() {
     memset(&flags_54_, 0, sizeof(flags_54_));
-    fname_ = ::operator new(0xA);
-    strcpy(static_cast<char *>(fname_), "Voice Tx");
+    fname_ = static_cast<char *>(::operator new(0xA));
+    strcpy(fname_, "Voice Tx");
     Sound::set_type(7);
 }
 

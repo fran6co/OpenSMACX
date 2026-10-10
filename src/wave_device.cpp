@@ -1260,7 +1260,7 @@ int Wave_Device::select(unsigned long a1) {
     while (resume_tail) {
         Sound *const replay = resume_tail;
         resume_tail = resume_tail->get_prev();
-        const char *const fname = static_cast<const char *>(replay->fname_);
+        const char *const fname = replay->fname_;
         replay->chain_next_ = nullptr;
         replay->chain_prev_ = nullptr;
         replay->load(fname);
