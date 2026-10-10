@@ -83,6 +83,7 @@ struct VoxRenderClipBounds {
     uint32_t left_, top_, right_, bottom_, width_, height_;
 };
 struct VoxRenderRecord {
+    uint32_t setup_id_;
     CaviarSceneSetupDescriptorCandidate *setup_block_;
     int32_t draw_left_, draw_top_, draw_right_, draw_bottom_;
     int32_t draw_width_, draw_height_;
@@ -244,6 +245,22 @@ static void test_stage_scene_alias_and_shadow_z() {
     assert(context.shadow_vector_.values[2] == CaviarProjectionNearNegativeEpsilon);
     assert(x == CaviarSceneProjectionScratch.shadow_radius_x_);
     assert(y == CaviarSceneProjectionScratch.shadow_radius_y_);
+
+    // Opposite colour-pointer parity must not select orientation. These are
+    // valid colour-storage addresses, not tags; the flag belongs to the record.
+    uint8_t colour_storage[4] = {0};
+    uint8_t *even_colour = colour_storage;
+    if ((reinterpret_cast<uintptr_t>(even_colour) & 1) != 0) ++even_colour;
+    uint8_t *odd_colour = even_colour + 1;
+    for (uint32_t flag = 0; flag != 4; ++flag) {
+        record.setup_id_ = flag;
+        instance.instance_colour_ = (flag & 1) ? even_colour : odd_colour;
+        vox_stage_scene(&record, &context, &camera, 0, &x, &y);
+        const float expected = (flag & 1) ? -2.0f : 2.0f;
+        assert(CaviarSceneProjectionScratch.view_scene_matrix_.values[2][2] == expected);
+        assert(CaviarSceneProjectionScratch.camera_offset_.values[2] ==
+               ((flag & 1) ? 1.0f : -1.0f));
+    }
 }
 
 static void test_inline_shape_stride_sentinel_and_inclusive_edge() {

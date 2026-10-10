@@ -4205,9 +4205,9 @@ float __cdecl vox_stage_scene(
         half_height + scratch.camera_offset_.values[1] * scratch.projected_scale_;
     scratch.camera_offset_.values[2] -= camera->bounds_.lead_[1];
 
-    const uint8_t *instance_pointer_bytes = reinterpret_cast<const uint8_t *>(
-        &context->state_.instances_[0].instance_colour_);
-    if ((*instance_pointer_bytes & 1) == 0) {
+    // Original 0x639972 tests record+0: ECX is arg1 loaded at 0x6397F6.
+    // This is setup_id_'s orientation bit, not an instance-colour pointer tag.
+    if ((record->setup_id_ & 1) == 0) {
         scratch.view_scene_matrix_.values[2][0] *= scratch.viewport_aspect_;
         scratch.view_scene_matrix_.values[2][1] *= scratch.viewport_aspect_;
         scratch.view_scene_matrix_.values[2][2] *= scratch.viewport_aspect_;
@@ -4223,7 +4223,7 @@ float __cdecl vox_stage_scene(
             -(scratch.camera_offset_.values[2] * scratch.viewport_aspect_);
     }
     scratch.camera_offset_.values[2] += context->field_84_ +
-        (((*instance_pointer_bytes & 1) == 0)
+        (((record->setup_id_ & 1) == 0)
             ? camera->bounds_.lead_[3]
             : camera->bounds_.lead_[4]);
 
