@@ -580,15 +580,14 @@ int Buffer::text_line_height() {
         font1_ = FontDefault;
     }
     const Font *const font = font1_;
-    const int *const fields = reinterpret_cast<const int *>(font);
-    const int height_override = fields[0x00 / 4];
+    const int height_override = font->unk_1_;
     if (height_override >= 0) {
         return static_cast<int>(
-            static_cast<uint32_t>(fields[0x10 / 4])
+            static_cast<uint32_t>(font->height_)
             + static_cast<uint32_t>(height_override));
     }
     // No override: the font's own line height already includes leading.
-    return fields[0x0C / 4];
+    return font->line_height_;
 }
 
 
@@ -4797,7 +4796,7 @@ int Buffer::write_right_l(char * a1, RECT * a2, int a3) {
             if (a3 != 0) {
                 int width = text_width(a1, a3);
                 if (font1_ == 0) {
-                    font1_ = reinterpret_cast<Font *>(FontDefault);
+                    font1_ = FontDefault;
                 }
                 return write_multi_font_raw_l(a1, a2->right - width,
                     (a2->bottom - font1_->height_ - a2->top) / 2 + a2->top, a3);
@@ -4917,8 +4916,8 @@ int Buffer::write_cent_l(char * a1, int a2, int a3, int a4) {
         if (a1 == 0) {
         return a2;
     }
-    int font1 = reinterpret_cast<int>(font1_);
-    if (font1 != 0 && *reinterpret_cast<int *>(font1 + 8) != 0) {
+    Font *font1 = font1_;
+    if (font1 != 0 && font1->font_obj_ != 0) {
         int len1 = strlen(a1);
         int len = a4;
         if (len1 < a4) {
@@ -5465,7 +5464,7 @@ int Buffer::wrap_flying(char * a1) {
         int saved_90 = BufferFlyingX;
         unsigned int flen = strlen(buf);
 
-        if ((int)font1_ != 0 && *(int *)(reinterpret_cast<int>(font1_) + 8) != 0) {
+        if (font1_ != 0 && font1_->font_obj_ != 0) {
             unsigned int a = strlen(buf);
             unsigned int b = flen;
             if ((int)a < (int)b) {
@@ -6458,7 +6457,7 @@ int Buffer::wrap(char * a1, RECT * a2) {
             BufferLastWrapWriteResult = lineResult;
 
             if (font1_ == 0)
-                font1_ = reinterpret_cast<Font *>(FontDefault);
+                font1_ = FontDefault;
 
             Font *fontData = font1_;
             int lineHeight;
