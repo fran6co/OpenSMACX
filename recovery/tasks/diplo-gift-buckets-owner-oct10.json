@@ -1,0 +1,31 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fac1e489f902af21718647e56764cd3a09276c5e",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/tests/test_diplo_gift_buckets_owner_oct10.py",
+    "recovery/tests/fixtures/diplo_gift_buckets_owner_oct10.cpp"
+  ],
+  "evidence": [
+    "Pinned pact54436D-5443BA forms modulo32 energy+50*(myBases-otherBases+FA78), multiplies signed otherStrength, divides by wrapped strength denominator;5443BC-5443D8 buckets signed quotient with trunc(q/50)*50. Current numerator and denominator agree, but cap uses q/100*50. Independent review corrected the earlier misleading delta25 shorthand; preserve delta50 and unguarded IDIV behavior.",
+    "Pact5443D8-544408 bypasses adjustment for mode5/zero/cap<=savedEnergy; only cap>energy iterates wrapped subtract50 then negativezero then99999clamp. Current clamp order agrees and must remain. Current score reset is already correct; stale TRIED is historical, not a new recovery gap.",
+    "Treaty5454AB-5454EC uses mode5 bypass and signed score>reserve; then unsigned wrapped (score-reserve+49)/50 and wrapped score-50*q. Current guard and unsigned construction agree; current /100u is wrong. Preserve wrap and subsequent below50 handling, do not substitute generic mathematical ceil or safe overflow paths.",
+    "Use existing diplo_add/sub/mul and PlayersData storage, no new globals/header/layout changes. Actual-source arithmetic tests must cover signed buckets, division-stage/wrap boundaries, mode and clamp order, unsigned excess wrap and mutations. Full functions and runtime/linked acceptance remain broader obligations; bank no unmeasured claim."
+  ],
+  "intent": "Recover the original signed pact gift bucket and unsigned treaty excess-energy bucket in their existing Faction owner, preserving wrapping, staged truncation, branch and clamp ordering.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5520320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5525056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "diplo-gift-buckets-owner-oct10"
+}

@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fac1e489f902af21718647e56764cd3a09276c5e",
+  "editable_files": [
+    "src/texture.cpp",
+    "recovery/tests/test_texture_keyed_light_owner_oct10.py",
+    "recovery/tests/fixtures/texture_keyed_light_owner_oct10.cpp"
+  ],
+  "evidence": [
+    "Pinned draw_trans61C4C0-61C4D4 zeroes EAX then loads AX light-step WORD, signed IMUL with fixed-point skip and SHRD8. Current draw_trans casts WORD to short, wrongly subtracting on high-bit values. Independent opaque-renderer review found this sibling discrepancy; it is not a deliberate behavior fix.",
+    "Pinned ADD-based DDA steps wrap at32 bits; existing shared edge_step signed additions remain a fidelity obligation. The verified opaque local unsigned-wrap helper expresses the same EdgeScan updates; independently verify keyed pin before reuse. Rename to neutral wrap-helper name if shared by these two owners; do not alter other rasterizers or shared signed helper.",
+    "Current complete keyed renderer has typed edge setup and keyed pixel loop. Preserve existing sampling/key behavior, saved-row/refresh/clipping/cleanup sequencing, all original mappings/claims/history, and shared helper behavior. No globals/header changes or broader renderer replacement is authorized.",
+    "New actual-body controls must exercise high-WORD clipped light and multirow edge stepping, reject signed-step/wrapping regressions, and re-run existing complete keyed/opaque fixtures. Stubbed host controls do not prove native x87/runtime numerics or game acceptance."
+  ],
+  "intent": "Recover original unsigned clipping-light advance in the keyed Texture renderer and its wrapping DDA, retaining typed edges, existing keyed sampling and control/FPU ordering.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6406288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "texture-keyed-light-owner-oct10"
+}
