@@ -1,0 +1,20 @@
+{
+  "event_id": "cb74737ab1b05efb4626dd363fe34ac52c4de17ea6894eae1cc647d9da2c610f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_actions_coverage.py"
+    ],
+    "evidence": [
+      "Disposable actual-source trace disproved an apparent actor-zero failure: actor0 returns1, price500, credits other500, leaves actor0 reserves1000, lock/update calls preserved. The next four-tech scenario is stale: values35 each at turn10 sum280 below corrected price1000, so original /25*25 properly refuses offer. Authorize preserving that input as an additional explicit insufficient-offer/no-transfer regression, and rescaling the accepted live-selector fixture values35->140 so total1120 funds1000 while every selector cutoff remains below1333. Keep all reverse-order/live-selector transfer assertions and mutants.",
+      "Existing PEACE cutoff test similarly relies on old price250. Authorize scaling its three50/one60 tech values by4 to200/240: accumulated1680 becomes PEACE2520, shared updated-total cutoff3780 versus price*4/3=1333, preserving original all-selector-prune and per-checkpoint mutant distinction. Retain original undervalued input as rejection control if useful; no arbitrary assertions removed or blanket expectation weakening. Only affected propose_attack host scenarios in existing test file; product source frozen and unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a98451bfa87265d422b236309c2a83b34b222a91a380e7a22723672d79688a16",
+  "request_id": "diplo-rounding-funded-offer-controls-oct10",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:diplo-proposal-rounding-owner-oct10"
+}
