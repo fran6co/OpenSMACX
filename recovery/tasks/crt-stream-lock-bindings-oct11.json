@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-stream-lock-bindings-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind the two independently bounded stream lock helpers to the pinned external runtime, without recreating CRT code or asserting final-link selection",
+  "base_revision": "bb8f5b194b7b907486db46f66c29fe803b6ae7d4",
+  "subjects": [],
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_stream_lock_bindings_oct11.py",
+    "recovery/tests/test_crt_eight_entry_bindings_oct10.py"
+  ],
+  "evidence": [
+    "Pinned Ghidra boundaries647C66..647C89 and647CB8..647CDB agree with original decoded terminal instructions; the exact selected LIBCMT _file.obj supplies __lock_file2/__unlock_file2 symbol interpretations. Pinned direct calls6497A9/6497C1 inside an unbound stream-allocation helper establish entries, not an application source owner.",
+    "Current manifest plus ONLY these two additions passes bytes/boundary/references: lock references existing__lock647D04 and EnterCriticalSection import; unlock references existing__unlock647D65 and LeaveCriticalSection import. _fopen and__ftbuf are NOT closed without unresolved__fsopen/__flush, and remain unbound in this step. No speculative thirteen-helper mappings or claims are authorized.",
+    "Preserve all prior component/source claims, import/data/absolute-symbol bindings and old verification verdicts. Adapt the eight-entry historical preservation test to permit subsequent additions while continuing to verify its original checkpoint and current prefix exactly. Require byte/boundary/relative-call/import-target/archive-pin damage refusal controls. Runtime correspondence remains distinct from selected-link/storage/runtime proof and adds zero application recoveries."
+  ]
+}
