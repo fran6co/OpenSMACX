@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 
 from match_recovery.component_source import parse_component, render_component
+from test_zlib_inflate_group_bindings_oct10 import EXPECTED as FOURTEEN_MEMBERS, UNITS
 from match_recovery.source.reader import read_file, read_text
 from match_recovery.source.writer import write
 
@@ -33,13 +34,13 @@ def test_prior_dependency_history_and_configuration_are_retained():
     previous = parse_component(old)
     manifest = parse_component(current)
     assert manifest.bindings[:len(previous.bindings)] == previous.bindings
-    assert replace(manifest, bindings=previous.bindings) == previous
+    assert replace(manifest, bindings=previous.bindings, units=previous.units) == previous
     # Historical prose/envelopes are unchanged; new envelopes are inserted
     # immediately before the component block, not into upstream code.
     assert current.startswith(old[:old.index("// RECOVERY_COMPONENT_BEGIN")])
     old_rows = {row.address: row for row in read_text(old, ROOT / COMPANION)}
     rows = {row.address: row for row in read_file(ROOT / COMPANION)}
-    assert set(rows) == set(old_rows) | set(EXPECTED) | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS)
+    assert set(rows) == set(old_rows) | set(EXPECTED) | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS)
     for address, before in old_rows.items():
         after = rows[address]
         for field in fields(before):
