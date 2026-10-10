@@ -174,7 +174,7 @@ def test_special_prefix_executes_source_lookup_order_and_detects_damage(tmp_path
         "reinterpret_cast<int>(Ability[ability].description)",
         "Ability[ability].description",
     ).replace(
-        "(int)reinterpret_cast<LPSTR *>(\n            Labels.strings_ptr)[0x58]",
+        "reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x58]",
         "Labels[0x58]",
     )
     assert "reinterpret_cast" not in prefix

@@ -4657,10 +4657,6 @@ Status: Coverage transcription - unclaimed body
 */
 void DesignWin::select_special(int which) {
     Popup popup;
-    // Popup keeps scroll_ private and no accessor exists; the member is
-    // pinned at 0x3230 - exactly sizeof(BasePop) - see popup.h.
-    Scroll *const popup_scroll = reinterpret_cast<Scroll *>(
-        reinterpret_cast<uint8_t *>(&popup) + 0x3230);
 
     const int faction = static_cast<int>(factionID_);
     // Player::rule_flags is at 0x508, the original 0x946F58 byte.
@@ -4671,16 +4667,12 @@ void DesignWin::select_special(int which) {
                 parse_say(0, Technology[tech_id].name, -1, -1);
                 popp(ScriptTxtID, "TWOSPECIAL", 0,
                      "alunit_sm.pcx", pop_wait);
-                popup.close();
-                popup_scroll->close();
                 return;
             }
         }
         if (Chassis[protoChassisType_].missile != 0) {
             popp(ScriptTxtID, "MISSILESPECIAL", 0,
                  "alunit_sm.pcx", pop_wait);
-            popup.close();
-            popup_scroll->close();
             return;
         }
     } else {
@@ -4690,16 +4682,12 @@ void DesignWin::select_special(int which) {
                 parse_say(0, Technology[tech_id].name, -1, -1);
                 popp(ScriptTxtID, "TWOSPECIAL", 0,
                      "unit_sm.pcx", pop_wait);
-                popup.close();
-                popup_scroll->close();
                 return;
             }
         }
         if (Chassis[protoChassisType_].missile != 0) {
             popp(ScriptTxtID, "MISSILESPECIAL", 0,
                  "unit_sm.pcx", pop_wait);
-            popup.close();
-            popup_scroll->close();
             return;
         }
     }
@@ -4707,12 +4695,10 @@ void DesignWin::select_special(int which) {
     popup.start(PopupStartCaption, "UNITSPECIAL", -1, nullptr,
                 0x200042);
 
-    Dialogs dialogs;
-    Spot spot;
-    StringList helper_list_a;
-    StringList helper_list_b;
-    StringStruct stat_list_a;
-    StringStruct stat_list_b;
+    // Original item receivers are Popup+0x21D0. The apparent Scroll,
+    // Spot and list cleanup locals in the transcription are this Popup's
+    // members; its destructor owns their original reverse teardown.
+    Dialogs &dialogs = popup.dialogs();
 
     StringTemp[0] = 0;
     strcat(StringTemp,
@@ -4756,8 +4742,15 @@ void DesignWin::select_special(int which) {
         if (already_built != 0) {
             continue;
         }
-        if (protoAbilityID1_ == static_cast<uint32_t>(ability)
-            || protoAbilityID2_ == static_cast<uint32_t>(ability)) {
+        int already_selected = 0;
+        for (int slot = 0; slot < 2; ++slot) {
+            const uint32_t selected = slot == 0 ? protoAbilityID1_
+                                                 : protoAbilityID2_;
+            if (slot != which && selected == static_cast<uint32_t>(ability)) {
+                already_selected = 1;
+            }
+        }
+        if (already_selected != 0) {
             continue;
         }
 
@@ -4888,20 +4881,16 @@ void DesignWin::select_special(int which) {
             }
         }
 
-        dialogs.item(StringTemp, static_cast<int>(protoChassisType_));
+        dialogs.item(StringTemp, ability);
         ++items_added;
     }
 
     if (items_added == 0) {
-        popup.close();
-        popup_scroll->close();
         return;
     }
 
     const int exec_result = popup.exec(0, pop_wait);
     if (exec_result < 0) {
-        popup.close();
-        popup_scroll->close();
         return;
     }
 
@@ -4927,8 +4916,7 @@ void DesignWin::select_special(int which) {
         protoAbilityFlags_ = bits;
     }
 
-    // The four panel repaints are unhomed; they go through the original's
-    // addresses like the rest of this file's pending seams.
+    // Refresh the original panels in their original call order.
     draw_special_2(0);
     draw_special_1(0);
     draw_vehicle(0);
@@ -4936,10 +4924,6 @@ void DesignWin::select_special(int which) {
     draw_info();
     on_update();
 
-    stat_list_a.remove_all();
-    stat_list_b.remove_all();
-    popup.close();
-    popup_scroll->close();
 }
 
 // Original interface table 0x0066B0F4 slot 1 targets this shared complete body.
