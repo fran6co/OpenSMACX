@@ -6,10 +6,11 @@
   "intent": "Remove an unused standalone-only receiver adapter and correct superseded hierarchy commentary without changing class declarations",
   "base_revision": "b283cb97b66ac5c1e2fd65a807703c6d3306531c",
   "subjects": [],
-  "editable_files": ["src/listbox.h", "src/dialog.h"],
+  "editable_files": ["src/listbox.h", "src/dialog.h", "recovery/tests/test_dialog_close_recovery.py"],
   "evidence": [
     "Current source has no use of ListBox::from_graphic_base; its fixed subtraction of 0x48 models only the standalone ListBox GraphicWin displacement, not the shared GraphicWin virtual base in derived Dialogs. Preserve real virtual inheritance and all mapped methods; remove the unused helper rather than invent a conversion or original owner.",
     "Dialog::item and ListBox::item are currently nonvirtual. Pinned ListBox::item 0x0060C920 enters on the complete receiver; Dialogs::item 0x00612A70 dispatches by kind and directly calls the appropriate item method. Current Dialog virtual order is destructor, attach, on_redraw. Older ListBox commentary describing virtual item and two compensating forwarders is superseded, not evidence for a new vtable change.",
-    "Require actual-source ListBox/Dialog regression tests, source identity and historical claim continuity, independent review and fresh complete application build/link. No additional function coverage or byte-exactness is claimed."
+    "Require actual-source ListBox/Dialog regression tests, source identity and historical claim continuity, independent review and fresh complete application build/link. No additional function coverage or byte-exactness is claimed.",
+    "Extend scope to correct the obsolete native Dialogs deleting-entry assertion: private overlays of both baseline headers against b283cb97b with both configured flag sets resolve the same ordered targets ??1Dialogs@@UAE@XZ, ??1Dialog@@UAE@XZ, ??1GraphicWin@@UAE@XZ, ??3@YAXPAX@Z and no destroy adapter. Assert that complete current lifetime chain, not the retired adapter. Existing natural-destruction tests remain independent controls."
   ]
 }
