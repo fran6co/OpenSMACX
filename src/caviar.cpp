@@ -604,6 +604,18 @@
 // ORIGINAL: 0x004BF700 _$E19 0x004BF700-0x004BF70A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x006825FC selects init 0x004BF6E0-0x004BF6F6, registering fini 0x004BF700-0x004BF70A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x008CC828; scalar Caviar constructor/destructor 0x00616DA0/0x00617020.", "Current owner physical COFF selects _$E21 via .CRT$XCU and registers _$E19, with relocations naming ?g_VEHDRAW_CAVIAR@@3VCaviar@@A; the genuine global definition owns this lifetime, including possible inline scalar construction.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_VEHDRAW_CAVIAR; no callback body is authored."}
 // symbol    _$E509
+// ORIGINAL: 0x00616AA0 sub_616aa0 0x00616AA0-0x00616AB6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned complete decode establishes this exclusive span and paired startup/atexit cleanup. Original receivers 9B9108 and 9B96B0 share guard byte9B9104 with independent masks1 and2; cleanup sets its bit before direct complete Buffer destruction.", "Private lifetime storage contains one Buffer at offset zero. The lifetime wrapper is a chosen implementation, not a recovered original class name or evidence for a larger combined allocation. A then B startup implies B then A atexit cleanup; explicit Caviar close retains A then B ordering.", "Physical current COFF selects ?CaviarSceneBufferA@?%src/caviar.cpp@@3U?$CaviarSceneBufferLifetime@$00@1@A with generated init symbol _$E516. Explicit Buffer-qualified destruction avoids virtual deleting dispatch. Startup byte restoration and full linked/runtime fidelity remain obligations; this binding banks no claim."], "reason": "Bind the original Caviar scene Buffer init to its source-owned guarded C++ lifetime."}
+// symbol    _$E516
+// ORIGINAL: 0x00616AC0 sub_616ac0 0x00616AC0-0x00616ADF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned complete decode establishes this exclusive span and paired startup/atexit cleanup. Original receivers 9B9108 and 9B96B0 share guard byte9B9104 with independent masks1 and2; cleanup sets its bit before direct complete Buffer destruction.", "Private lifetime storage contains one Buffer at offset zero. The lifetime wrapper is a chosen implementation, not a recovered original class name or evidence for a larger combined allocation. A then B startup implies B then A atexit cleanup; explicit Caviar close retains A then B ordering.", "Physical current COFF selects ?CaviarSceneBufferA@?%src/caviar.cpp@@3U?$CaviarSceneBufferLifetime@$00@1@A with generated fini symbol _$E514. Explicit Buffer-qualified destruction avoids virtual deleting dispatch. Startup byte restoration and full linked/runtime fidelity remain obligations; this binding banks no claim."], "reason": "Bind the original Caviar scene Buffer fini to its source-owned guarded C++ lifetime."}
+// symbol    _$E514
+// ORIGINAL: 0x00616AE0 sub_616ae0 0x00616AE0-0x00616AF6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned complete decode establishes this exclusive span and paired startup/atexit cleanup. Original receivers 9B9108 and 9B96B0 share guard byte9B9104 with independent masks1 and2; cleanup sets its bit before direct complete Buffer destruction.", "Private lifetime storage contains one Buffer at offset zero. The lifetime wrapper is a chosen implementation, not a recovered original class name or evidence for a larger combined allocation. A then B startup implies B then A atexit cleanup; explicit Caviar close retains A then B ordering.", "Physical current COFF selects ?CaviarSceneBufferB@?%src/caviar.cpp@@3U?$CaviarSceneBufferLifetime@$01@1@A with generated init symbol _$E521. Explicit Buffer-qualified destruction avoids virtual deleting dispatch. Startup byte restoration and full linked/runtime fidelity remain obligations; this binding banks no claim."], "reason": "Bind the original Caviar scene Buffer init to its source-owned guarded C++ lifetime."}
+// symbol    _$E521
+// ORIGINAL: 0x00616B00 sub_616b00 0x00616B00-0x00616B1F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned complete decode establishes this exclusive span and paired startup/atexit cleanup. Original receivers 9B9108 and 9B96B0 share guard byte9B9104 with independent masks1 and2; cleanup sets its bit before direct complete Buffer destruction.", "Private lifetime storage contains one Buffer at offset zero. The lifetime wrapper is a chosen implementation, not a recovered original class name or evidence for a larger combined allocation. A then B startup implies B then A atexit cleanup; explicit Caviar close retains A then B ordering.", "Physical current COFF selects ?CaviarSceneBufferB@?%src/caviar.cpp@@3U?$CaviarSceneBufferLifetime@$01@1@A with generated fini symbol _$E519. Explicit Buffer-qualified destruction avoids virtual deleting dispatch. Startup byte restoration and full linked/runtime fidelity remain obligations; this binding banks no claim."], "reason": "Bind the original Caviar scene Buffer fini to its source-owned guarded C++ lifetime."}
+// symbol    _$E519
 #include "stdafx.h"
 #include "caviar.h"
 #include "basepop.h"
@@ -1509,8 +1521,50 @@ CaviarSceneRow *CaviarSceneMemory;  // 0x009B9100
 // CaviarRecordOwnerSource bindings were those very fields under fixed
 // addresses (0x9B915C, 0x9B9704, 0x9B95B0 = BufferA+0x4A8, 0x9B9B58 =
 // BufferB+0x4A8).
-Buffer CaviarSceneBufferA;  // 0x009B9108
-Buffer CaviarSceneBufferB;  // 0x009B96B0
+// The registered exits 616AC0/616B00 test and set separate bits of this
+// shared byte before directly destroying the Buffers. Ordinary implicit
+// destruction would bypass that observed guard; a Buffer member would also
+// be destroyed unconditionally after an early-returning owner destructor.
+// RECOVERY_OBJECT: v1 0x009B9104 ?CaviarSceneBuffersCleanupGuard@?%src/caviar.cpp@@3EA
+uint8_t CaviarSceneBuffersCleanupGuard;  // 0x009B9104
+
+// Private lifetime implementation, not a recovered original class name.
+// Each slot owns exactly one real Buffer, starting at offset zero. The
+// trivial storage prevents a second implicit teardown and adds no fields
+// to Buffer or a speculative parent spanning the gap between the globals.
+union CaviarSceneBufferStorage {
+    char bytes[sizeof(Buffer)];
+    uint32_t alignment_[sizeof(Buffer) / sizeof(uint32_t)];
+};
+
+template<unsigned char Mask> struct CaviarSceneBufferLifetime {
+    CaviarSceneBufferStorage storage_;
+
+    CaviarSceneBufferLifetime() { new (storage_.bytes) Buffer(); }
+    ~CaviarSceneBufferLifetime() {
+        if ((CaviarSceneBuffersCleanupGuard & Mask) != 0) return;
+        CaviarSceneBuffersCleanupGuard |= Mask;
+        // Qualification preserves the original direct complete destructor
+        // call, rather than virtual deleting-destructor dispatch.
+        buffer().Buffer::~Buffer();
+    }
+    Buffer &buffer() {
+        return *reinterpret_cast<Buffer *>(storage_.bytes);
+    }
+};
+
+static_assert(sizeof(CaviarSceneBufferLifetime<1>) == sizeof(Buffer),
+              "guarded Buffer storage extent");
+static_assert(sizeof(CaviarSceneBufferLifetime<2>) == sizeof(Buffer),
+              "guarded Buffer storage extent");
+static_assert(offsetof(CaviarSceneBufferLifetime<1>, storage_) == 0,
+              "first guarded Buffer starts at its owner identity");
+static_assert(offsetof(CaviarSceneBufferLifetime<2>, storage_) == 0,
+              "second guarded Buffer starts at its owner identity");
+// RECOVERY_OBJECT: v3 0x009B9108 ?CaviarSceneBufferA@?%src/caviar.cpp@@3VBuffer@@A member ?CaviarSceneBufferA@?%src/caviar.cpp@@3U?$CaviarSceneBufferLifetime@$00@1@A storage_.bytes
+CaviarSceneBufferLifetime<1> CaviarSceneBufferA;  // 0x009B9108
+// RECOVERY_OBJECT: v3 0x009B96B0 ?CaviarSceneBufferB@?%src/caviar.cpp@@3VBuffer@@A member ?CaviarSceneBufferB@?%src/caviar.cpp@@3U?$CaviarSceneBufferLifetime@$01@1@A storage_.bytes
+CaviarSceneBufferLifetime<2> CaviarSceneBufferB;  // 0x009B96B0
 
 // 0x009B9690..0x009B969C: the viewport rectangle accumulated by both render
 // entry points. The image clears it in left, right, bottom, top order.
@@ -1617,11 +1671,11 @@ CaviarSceneRecord CaviarScene;  // 0x009BB438
 // Narrow Caviar-owned reads preserve the original live Buffer field
 // value without acquiring/releasing pixels or exposing Buffer layout.
 void *Caviar::render_color_dib_bits() {
-    return CaviarSceneBufferA.dib_bits_;
+    return CaviarSceneBufferA.buffer().dib_bits_;
 }
 
 void *Caviar::render_shadow_dib_bits() {
-    return CaviarSceneBufferB.dib_bits_;
+    return CaviarSceneBufferB.buffer().dib_bits_;
 }
 
 /*
@@ -1739,10 +1793,10 @@ int Caviar::init_class() {
                                    "0", ".\\Alpha Centauri.ini");
     }
 
-    if (CaviarSceneBufferA.init(0x100, 0x100, 0, 0) != 0) {
+    if (CaviarSceneBufferA.buffer().init(0x100, 0x100, 0, 0) != 0) {
         return 4;
     }
-    if (CaviarSceneBufferB.init(0x100, 0x100, 0, 0) != 0) {
+    if (CaviarSceneBufferB.buffer().init(0x100, 0x100, 0, 0) != 0) {
         return 4;
     }
 
@@ -1751,19 +1805,19 @@ int Caviar::init_class() {
         return 4;
     }
 
-    CaviarSceneBufferA.fill(9);
-    CaviarSceneBufferB.fill(0);
+    CaviarSceneBufferA.buffer().fill(9);
+    CaviarSceneBufferB.buffer().fill(0);
     vox_fill_colour_table(CaviarSceneMemory, 0xffff, 0x10000);
 
     // The descriptor block, in the image's store order.
     CaviarScene.setup_.depth_buffer_ = CaviarSceneMemory;
-    CaviarScene.setup_.colour_row_step_ = CaviarSceneBufferA.stride_;
-    CaviarScene.setup_.colour_buffer_ = CaviarSceneBufferA.dib_bits_;
+    CaviarScene.setup_.colour_row_step_ = CaviarSceneBufferA.buffer().stride_;
+    CaviarScene.setup_.colour_buffer_ = CaviarSceneBufferA.buffer().dib_bits_;
     CaviarScene.setup_.colour_width_ = 0x100;
     CaviarScene.setup_.height_ = 0x100;
     CaviarScene.setup_.pixel_size_ = 1;
-    CaviarScene.setup_.shadow_buffer_ = CaviarSceneBufferB.dib_bits_;
-    CaviarScene.setup_.shadow_row_step_ = CaviarSceneBufferB.stride_;
+    CaviarScene.setup_.shadow_buffer_ = CaviarSceneBufferB.buffer().dib_bits_;
+    CaviarScene.setup_.shadow_row_step_ = CaviarSceneBufferB.buffer().stride_;
     CaviarScene.setup_.depth_row_step_ = 0x100;
 
     CaviarScene.created_ = vox_create_record(
@@ -3882,8 +3936,8 @@ void Caviar::clear_buffers(int fill) {
         uint16_t *row = reinterpret_cast<uint16_t *>(CaviarSceneMemory) +
                         height * 0x100 + width;
         int col_span = CaviarViewportState.right - width;
-        CaviarSceneBufferA.fill(width, height, col_span, row_span, 9);
-        CaviarSceneBufferB.fill(0);
+        CaviarSceneBufferA.buffer().fill(width, height, col_span, row_span, 9);
+        CaviarSceneBufferB.buffer().fill(0);
         if (fill == 0) {
             if (row_span > 0) {
                 int count = row_span;
@@ -3944,14 +3998,14 @@ Status: Complete
 */
 void Caviar::render_multi_table_dest(Buffer *buffer, int centre_x, int centre_y,
                                      int fill, unsigned char *bits, int flags) {
-    CaviarSceneBufferA.fill(fill);
+    CaviarSceneBufferA.buffer().fill(fill);
     if (render(buffer, centre_x, centre_y, flags | 8) != 0) {
         return;
     }
-    CaviarSceneBufferA.draw_multi_table_dest(buffer, fill, centre_x - 0x80,
+    CaviarSceneBufferA.buffer().draw_multi_table_dest(buffer, fill, centre_x - 0x80,
                                              centre_y - 0x80, 1, 1, bits);
     buffer->free_data(1);
-    CaviarSceneBufferA.fill(9);
+    CaviarSceneBufferA.buffer().fill(9);
     clear_buffers(flags & 1);
 }
 
@@ -4029,8 +4083,8 @@ Status: Complete
 */
 void Caviar::close_class() {
     if (CaviarScene.created_ != 0) {
-        CaviarSceneBufferA.close();
-        CaviarSceneBufferB.close();
+        CaviarSceneBufferA.buffer().close();
+        CaviarSceneBufferB.buffer().close();
         if (CaviarSceneMemory != 0) {
             free(CaviarSceneMemory);
             CaviarSceneMemory = 0;
@@ -6082,7 +6136,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
                 origin_x = left;
                 origin_y = top;
             }
-            CaviarSceneBufferB.draw_dest_source(buffer, 0, origin_x, origin_y,
+            CaviarSceneBufferB.buffer().draw_dest_source(buffer, 0, origin_x, origin_y,
                                                 1, mode, colour);
         }
     }
@@ -6102,7 +6156,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
             origin_x = left;
             origin_y = top;
         }
-        CaviarSceneBufferA.draw(buffer, 9, origin_x, origin_y, 1, mode);
+        CaviarSceneBufferA.buffer().draw(buffer, 9, origin_x, origin_y, 1, mode);
         buffer->free_data(1);
         clear_buffers(flags & 1);
     }
