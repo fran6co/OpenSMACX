@@ -97,7 +97,8 @@ def verify_compile_link_inputs(compilations, link_data: bytes, log_data: bytes, 
         elif supplied is not None and all(item is not None for item in
                 (value["output"]["after"], supplied["before"], supplied["after"])):
             if value["output"]["after"] == supplied["before"] == supplied["after"]:
-                result, reason = Result.PASS, "exact compiled output supplied unchanged to linker"
+                label = "pipeline output" if value.get("postprocess") else "compiled output"
+                result, reason = Result.PASS, "exact " + label + " supplied unchanged to linker"
             else:
                 result, reason = Result.FAIL, "object changed between compilation and linking"
         row = {"source": source, "output": output,

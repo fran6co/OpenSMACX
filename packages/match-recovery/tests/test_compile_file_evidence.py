@@ -30,6 +30,111 @@ def verify(value, **kwargs):
     return verify_compile_files(json.dumps(value).encode(), **kwargs)
 
 
+def pipeline_evidence(root, value=None):
+    """Synthetic trusted capture, not execution or transform-semantic proof."""
+    value = evidence(root) if value is None else value
+    processor = root / "processor"
+    processor.write_bytes(b"synthetic transform executable")
+    tool = str(processor)
+    fingerprint = stamp(processor.read_bytes())
+    value["inputs"].append({"path": tool, "before": fingerprint, "after": fingerprint})
+    raw = stamp(b"synthetic primary output before transform")
+    value.update(schema_version=2, compiler_output={**value["output"], "after": raw},
+        postprocess=[{"tool": tool, "cwd": value["cwd"],
+            "argv": [tool, "opaque-transform", value["output"]["path"]], "inputs": [tool],
+            "input_before": raw, "output_after": value["output"]["after"], "exit_code": 0}])
+    return value
+
+
+def test_pipeline_is_explicit_and_does_not_prove_transform_semantics(tmp_path):
+    value = pipeline_evidence(tmp_path)
+    report = verify(value)
+    assert report["result"] == report["pipeline"]["result"] == "pass"
+    assert report["output_provenance"] == "postprocessed"
+    assert "pipeline output" in report["output"]["reason"]
+    assert report["pipeline"]["compiler_output"] == value["compiler_output"]
+    assert report["pipeline"]["transformation_semantics"] == "unknown"
+    assert report["input_coverage"] == report["linked_selection"] == "unknown"
+    assert not report["ready_for_collection"]
+
+
+def test_multiple_pipeline_steps_and_explicit_empty_pipeline(tmp_path):
+    value = pipeline_evidence(tmp_path)
+    first = value["postprocess"][0]
+    second = deepcopy(first)
+    intermediate = stamp(b"synthetic intermediate")
+    first["output_after"] = intermediate
+    second["input_before"] = intermediate
+    value["postprocess"].append(second)
+    assert verify(value)["result"] == "pass"
+    value["postprocess"] = []
+    value["compiler_output"] = deepcopy(value["output"])
+    report = verify(value)
+    assert report["result"] == "pass" and report["output_provenance"] == "direct"
+    assert report["pipeline"]["stages"] == []
+
+
+@pytest.mark.parametrize("damage", ["primary", "between", "final", "failed_stage", "tool_during", "tool_after"])
+def test_pipeline_discontinuity_or_execution_changes_cannot_pass(tmp_path, damage):
+    value = pipeline_evidence(tmp_path)
+    stage = value["postprocess"][0]
+    if damage == "primary":
+        value["compiler_output"]["after"] = stamp(b"different primary")
+    elif damage == "between":
+        second = deepcopy(stage)
+        second["input_before"] = stamp(b"unrelated intermediate")
+        value["postprocess"].append(second)
+    elif damage == "final":
+        stage["output_after"] = stamp(b"wrong final output")
+    elif damage == "failed_stage":
+        stage["exit_code"] = 1
+    elif damage == "tool_during":
+        value["inputs"][-1]["before"] = stamp(b"old processor")
+    else:
+        Path(stage["tool"]).write_bytes(b"replacement processor")
+    assert verify(value)["result"] == "fail"
+
+
+@pytest.mark.parametrize("damage", ["raw_missing", "raw_empty", "stage_input", "stage_output", "tool_missing"])
+def test_unobserved_pipeline_states_remain_unknown(tmp_path, damage):
+    value = pipeline_evidence(tmp_path)
+    if damage == "raw_missing": value["compiler_output"]["after"] = None
+    elif damage == "raw_empty":
+        value["compiler_output"]["after"] = value["postprocess"][0]["input_before"] = stamp(b"")
+    elif damage == "stage_input": value["postprocess"][0]["input_before"] = None
+    elif damage == "stage_output": value["postprocess"][0]["output_after"] = None
+    else: value["inputs"][-1]["before"] = None
+    assert verify(value)["result"] == "unknown"
+
+
+@pytest.mark.parametrize("damage", ["v1", "no_primary", "no_stages", "primary_extra", "primary_path",
+    "primary_preexisting", "primary_bool", "stage_extra", "stages_type", "stage_bool", "argv_tool",
+    "argv_empty", "argv_nul", "tool_unobserved", "cwd_other", "files_duplicate", "files_unobserved", "files_no_tool"])
+def test_malformed_pipeline_evidence_refuses(tmp_path, damage):
+    value = pipeline_evidence(tmp_path)
+    stage = value["postprocess"][0]
+    if damage == "v1": value["schema_version"] = 1
+    elif damage == "no_primary": del value["compiler_output"]
+    elif damage == "no_stages": del value["postprocess"]
+    elif damage == "primary_extra": value["compiler_output"]["extra"] = True
+    elif damage == "primary_path": value["compiler_output"]["path"] = str(tmp_path / "other.obj")
+    elif damage == "primary_preexisting": value["compiler_output"]["existed_before"] = True
+    elif damage == "primary_bool": value["compiler_output"]["existed_before"] = 0
+    elif damage == "stage_extra": stage["permission"] = True
+    elif damage == "stages_type": value["postprocess"] = {}
+    elif damage == "stage_bool": stage["exit_code"] = False
+    elif damage == "argv_tool": stage["argv"][0] = value["tool"]
+    elif damage == "argv_empty": stage["argv"] = []
+    elif damage == "argv_nul": stage["argv"].append("bad\0argument")
+    elif damage == "tool_unobserved": stage["tool"] = stage["argv"][0] = str(tmp_path / "unobserved")
+    elif damage == "cwd_other": stage["cwd"] = str(tmp_path / "other")
+    elif damage == "files_duplicate": stage["inputs"].append(stage["tool"])
+    elif damage == "files_unobserved": stage["inputs"].append(str(tmp_path / "unobserved"))
+    else: stage["inputs"] = [value["source"]]
+    with pytest.raises(ValueError):
+        parse_compile_files(json.dumps(value).encode())
+
+
 def test_fresh_observations_are_not_complete_input_or_acceptance_proof(tmp_path):
     value = evidence(tmp_path)
     report = verify(value, object_path=tmp_path / "unit.obj")

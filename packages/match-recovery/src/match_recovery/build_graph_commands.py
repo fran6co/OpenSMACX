@@ -69,6 +69,8 @@ def _context(context):
             raise ValueError("application source is outside source context or generated in its build")
         row, declared = compiled[source], bound[source]
         compilation = _pass(row.get("compilation"))
+        if compilation.get("output_provenance") == "postprocessed" or compilation.get("pipeline", {}).get("stages"):
+            raise ValueError("postprocessed compiler output requires unsupported ordered pipeline command comparison")
         output = Path(_path(row.get("output")))
         if (output in outputs or not output.is_relative_to(directory) or output.resolve() != output
                 or not output.is_file()):

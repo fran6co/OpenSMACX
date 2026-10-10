@@ -113,6 +113,24 @@ observation to that exact file, not a same-named substitute. The schema contains
 Paths are absolute host paths; content observations are `{sha256, size}` or null.
 The source and tool must be among the unique inputs. A pass requires exit zero,
 unchanged freshly read declared inputs and a new, nonempty, unchanged output.
+Version 2 additionally requires `compiler_output` with the same path/freshness
+fields as `output`, and an explicit ordered `postprocess` array. This bounded
+format supports in-place transformations only, in the primary compiler's working
+directory. Each stage declares `tool`, `cwd`, full `argv` (starting with that
+exact executable), unique `inputs` naming stable top-level input observations,
+`input_before`, `output_after` content stamps and integer `exit_code`. The stage
+tool must be among its declared inputs. The verifier requires a nonempty observed
+primary object, successful stages and primary → intermediate → final hash
+continuity. Empty pipelines are explicit and require primary/final equality;
+version 1 does not accept version-2 fields. Reports distinguish direct and
+postprocessed output. Intermediate bytes are not independently retained:
+this remains trusted compiler-boundary capture, not execution attestation,
+complete stage-input coverage or transformation-semantic proof. Final output
+may participate in qualified fresh compile/link byte correspondence. Native
+build-graph command comparison refuses postprocessed outputs until it can
+compare ordered stage commands, tools and policy; primary-command equality
+cannot hide a changed transform. None of these observations grant acceptance.
+
 Missing observations and preexisting outputs cannot pass. Keep observations in
 ignored build storage and read them during the enclosing fresh build epoch.
 

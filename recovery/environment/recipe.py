@@ -79,6 +79,11 @@ def invocation(entry: CompilationEntry) -> list[str]:
         command = str((entry.directory / command).resolve())
     kept, iterator = [], iter(words[1:])
     for word in iterator:
+        if word.startswith("--frontend="):
+            if word != "--frontend=intrinsics-i386-no-debug":
+                raise ValueError("unsupported explicit compiler frontend")
+            kept.append(word)
+            continue
         if word.startswith("--repro-root="):
             path = Path(word.split("=", 1)[1])
             if not path.is_absolute() or path.resolve() != path or not path.is_dir():

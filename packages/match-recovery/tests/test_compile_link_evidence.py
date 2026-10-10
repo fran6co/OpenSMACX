@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from match_recovery.compile_link_evidence import verify_compile_link_inputs
-from test_compile_file_evidence import evidence as compilation_evidence, stamp
+from test_compile_file_evidence import evidence as compilation_evidence, pipeline_evidence, stamp
 from test_link_file_evidence import evidence as link_evidence
 from test_link_log import LOG
 
@@ -28,6 +28,18 @@ def verify(build, log=LOG):
     compiles, link, sources = build
     return verify_compile_link_inputs((json.dumps(row).encode() for row in compiles),
                                      json.dumps(link).encode(), log.encode(), sources=sources)
+
+
+def test_pipeline_final_output_correspondence_is_not_transform_proof(build, tmp_path):
+    compiles, _, _ = build
+    compiles[0] = pipeline_evidence(tmp_path, compiles[0])
+    report = verify(build)
+    assert report["result"] == "pass"
+    row, = report["compilations"]
+    assert "pipeline output" in row["reason"]
+    assert row["compilation"]["output_provenance"] == "postprocessed"
+    assert row["compilation"]["pipeline"]["transformation_semantics"] == "unknown"
+    assert report["linked_selection"] == report["build_graph_verification"] == "unknown"
 
 
 def _archive_record(field, body):

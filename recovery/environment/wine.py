@@ -399,6 +399,15 @@ def main(argv: list) -> int:
         print(str(error), file=sys.stderr)
         return 3
     arguments, dep_target, dep_file = take_depfile(arguments)
+    frontends = [word for word in arguments if word.startswith("--frontend=")]
+    if frontends:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from intrinsics import OPTION, compile as intrinsic_compile
+        if tool != "cl" or frontends != [OPTION] or link_diagnostics is not None:
+            print("unsupported or repeated explicit compiler frontend", file=sys.stderr)
+            return 3
+        return intrinsic_compile([word for word in arguments if word != OPTION],
+                                 compile_diagnostics, dep_target, dep_file)
     reproducible = None
     probe_only = False
     if any(word.startswith("--repro-root=") for word in arguments):

@@ -97,6 +97,19 @@ def test_common_commands_and_root_local_tool_identity_are_relocated_exactly(pair
     assert [item.report for item in pair] == original and [item.checks for item in pair] == [2, 2]
 
 
+@pytest.mark.parametrize("side", [0, 1])
+@pytest.mark.parametrize("evidence", ["provenance", "stages"])
+def test_pipeline_commands_cannot_be_ignored_in_build_graph_comparison(pair, side, evidence):
+    compilation = pair[side].proof["compilations"][0]["compilation"]
+    if evidence == "provenance":
+        compilation["output_provenance"] = "postprocessed"
+    else:
+        compilation["pipeline"] = {"stages": [{"argv": ["uncompared transform"]}]}
+    with pytest.raises(ValueError, match="ordered pipeline command comparison"):
+        compare(pair)
+    assert pair[0].checks == pair[1].checks == 2
+
+
 def test_only_added_removed_object_tokens_are_projected_with_explicit_evidence(tmp_path):
     old = Context(tmp_path / "before", ["src/old.cpp", "src/keep.cpp"])
     new = Context(tmp_path / "after", ["src/keep.cpp", "src/new.cpp"])

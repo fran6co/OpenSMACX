@@ -152,18 +152,19 @@ class ReproducibleCompile:
             raise ValueError("reproducible compilation requires one source and an explicit object output")
         return cls(root, cwd, sources[0], original, stable)
 
-    def verify(self, preprocess):
+    def verify(self, preprocess, *, parse_preprocessed=_preprocessed,
+               stable_options=("/Brepro",)):
         """The callback receives argv/cwd and returns unmodified stdout bytes."""
-        ordinary, files = _preprocessed(preprocess(_preprocess_arguments(self.original), self.cwd), self.cwd)
+        ordinary, files = parse_preprocessed(preprocess(_preprocess_arguments(self.original), self.cwd), self.cwd)
         files.add(self.source)
         self.inputs = _snapshot(files)
-        for extra in ([], ["/Brepro"]):
+        for extra in ([], list(stable_options)):
             self.check_inputs()
-            text, observed = _preprocessed(preprocess(_preprocess_arguments(self.stable) + extra, self.root), self.root)
+            text, observed = parse_preprocessed(preprocess(_preprocess_arguments(self.stable) + extra, self.root), self.root)
             self.check_inputs()
             if text != ordinary or {path.resolve() for path in observed} != {path.resolve() for path in files}:
                 raise ValueError("reproducible compilation changes preprocessing or observed inputs")
-        return [*self.stable, "/Brepro"]
+        return [*self.stable, *stable_options]
 
     def check_inputs(self):
         if not self.inputs or _snapshot(Path(name) for name in self.inputs) != self.inputs:

@@ -102,6 +102,8 @@
       "recovery/environment/wine.py",
       "recovery/environment/wine_repro.py",
       "recovery/environment/wine_compile.py",
+      "recovery/environment/intrinsics.py",
+      "recovery/environment/frontends.json",
       "recovery/environment/command_paths.py"
     ],
     "environment": [
@@ -128,6 +130,8 @@
       "recovery/environment/wine.py",
       "recovery/environment/wine_repro.py",
       "recovery/environment/wine_compile.py",
+      "recovery/environment/intrinsics.py",
+      "recovery/environment/frontends.json",
       "recovery/environment/command_paths.py"
     ],
     "environment": [
@@ -137,7 +141,11 @@
       "VC6_LIB",
       "WINEARCH",
       "CL",
-      "_CL_"
+      "_CL_",
+      "INCLUDE",
+      "CPATH",
+      "C_INCLUDE_PATH",
+      "CPLUS_INCLUDE_PATH"
     ]
   },
   "measurement": {

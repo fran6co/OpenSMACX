@@ -46,6 +46,33 @@ not a retained worktree's older editable package. Compiler scripts and flags rem
 project-owned. Older frozen campaign profiles are not silently changed by this
 configuration; updating their compiler interaction requires separate authorization.
 
+The existing compiler wrapper has an explicitly selected
+`--frontend=intrinsics-i386-no-debug` route for small C++ intrinsic owners.
+Ordinary recipes remain VC6. `environment/frontends.json` explicitly registers
+the optional route. When enabled, its binaries and headers are required and
+fingerprinted for the mixed toolchain, including ordinary snapshots; disabling
+it removes those requirements and refuses any recipe selecting it. There is no
+compiler fallback. The project environment fingerprints the resolved
+Clang executable, its resource headers and companion `llvm-objcopy`. This route
+compares ordinary and stable preprocessing, refuses active filename/clock
+dependence, implicit include/compiler/config options and target/language macro
+overrides. A closed argument policy and `--no-default-config` prevent backend
+or default-config injection. Requested `/Z7` and `/Fd` are explicitly omitted
+by this no-debug policy. The pipeline strips modern CodeView
+metadata before VC6 linking. Its observations identify the actual primary
+compiler argv and inputs, plus the postprocessor and versioned pipeline policy;
+the version-2 receipt records the unmodified compiler-output stamp and exact
+ordered postprocessor argv/tool/input/output chain. The final object is not
+claimed to be untouched Clang output. Pipeline command comparison remains
+unsupported and refuses rather than accepting frontend-command equality. Control tests
+compare every remaining section's bytes and nonempty external-global relocation
+targets before/after stripping; the opt-in VC6 debug-link control supplies that
+global from a genuine VC6 object. These controls are not generic transform
+semantic proofs. The route provides no debug/layout/PDB proof for its owner. Explicit
+selection, compiler/linker compatibility and a successful build do not establish
+matching or game acceptance. Live linker control is opt-in with
+`OPENSMACX_INTRINSIC_LINK_CONTROL=1`, under a coordinator-owned compiler lease.
+
 Fresh recovery application builds enable `OPENSMACX_CAPTURE_COMPILES` and export
 their application compilation database. The local wrapper's explicit
 `--compile-diagnostics=<new-file>` captures verified preprocessing inputs, compiler

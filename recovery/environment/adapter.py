@@ -15,7 +15,10 @@ def toolchain_inputs():
     # Locations and environment defaults are compiler interaction, not package
     # policy. Keep these consistent with the actual compile/link wrapper.
     from recovery.environment.wine import VC6_ROOT, sdk_search_paths
-    return {"schema_version": 1, "files": {}, "directories": {
+    from recovery.environment.intrinsics import toolchain_inputs as intrinsic_inputs
+    intrinsic = intrinsic_inputs()
+    return {"schema_version": 1, "files": intrinsic["files"], "directories": {
+        **intrinsic["directories"],
         "compiler": str((VC6_ROOT / "BIN").resolve()),
         **{f"include-{index}": str(path) for index, path in enumerate(
             sdk_search_paths("VC6_INCLUDE", VC6_ROOT / "INCLUDE"))},
