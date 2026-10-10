@@ -448,22 +448,19 @@ Return Value: n/a
 Status: Complete
 */
 void StringBox::add(char *text, int index, int flag) {
-    // ONE ADDRESS, TAKEN ONCE. The image computes `ecx = &field_2B70_` a
-    // single time (`lea ecx, [esi + 0x2b70]`) and reaches every field below
-    // it - the StringList's field_1C_, field_20_ and field_24_ and the
-    // StringStruct::add call itself - off THAT register. Storing through
-    // named members instead makes VC6 re-derive each one from `this`.
-    char *const base = reinterpret_cast<char *>(&stringList_);
-    std::memcpy(base + 0x1c, &text, sizeof(text));
-    *reinterpret_cast<uint32_t *>(base + 0x20) = static_cast<uint32_t>(flag);
-    *reinterpret_cast<uint32_t *>(base + 0x24) = 0;
-    // CALLED BY NAME, same as Dialog::item at 0x00609990: a real
-    // `StringStruct::add` reaches the image's `call rel32`, where the
-    // function-pointer seam this file used to bind compiles
-    // `call dword ptr [0]`.
-    if (reinterpret_cast<StringStruct *>(base)->add(index) == 0) {
+    // The original stages this embedded StringList's pending fields before
+    // its inherited StringStruct insertion. Dialog::item uses the same
+    // declared fields; StringList's real base supplies the receiver.
+    StringList &list = stringList_;
+    list.pending_text_ = text;
+    list.field_20_ = static_cast<uint32_t>(flag);
+    list.field_24_ = 0;
+    if (list.add(index) == 0) {
         StringBox::add_fixup();
     }
+    // Historical spelling experiment: the raw member stores took one list
+    // address and reused its register; named members changed address
+    // materialization. That experiment does not override declared ownership.
     // TRIED: the image emits one further `xor eax, eax` right before the
     // epilogue, on the fixup-taken path only - MISMATCH stays at 14/18
     // (0.971 similar) without it. Tried: an early-return guard clause
