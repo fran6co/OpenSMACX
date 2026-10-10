@@ -1,0 +1,19 @@
+{
+  "event_id": "a98451bfa87265d422b236309c2a83b34b222a91a380e7a22723672d79688a16",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_actions_coverage.py"
+    ],
+    "evidence": [
+      "Independent review found existing full-body propose_attack energy-price goldens still reflect retired /100*25 staging. Extend test-only authorization to the affected propose_attack goldens in already authorized test_diplomacy_actions_coverage.py. Derive each expected value from existing scenario inputs, original signed arithmetic and literal pinned /25*25 chain; retain every assertion, scenario and mutant. No production edits beyond three authorized expressions and no change to unrelated make_a_proposal fixture."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f1d5f2ff160d621576dd7ad614c0627bda335f2985a514419b99c37d5561f873",
+  "request_id": "diplo-rounding-attack-controls-oct10",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:diplo-proposal-rounding-owner-oct10"
+}
