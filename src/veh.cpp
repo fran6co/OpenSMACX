@@ -10294,34 +10294,37 @@ Purpose: Clear a vehicle's move state at the end of its stack walk.
 // symbol    ?veh_move_end@@YAXH@Z
 //           The image's catalogue name is an uninformative `sub_`; this tree
 //           names what the body does. Renames update this fact, not the bytes.
+// SUPERSEDED OFFSET INTERPRETATION (retained seed history, not original behavior):
+// The following HOMED explanation mistook the state address for the Veh array base.
+// Its raw +0xD/+0xE/+0xF implementation consequently accessed the wrong fields.
 // HOMED from src/unrecovered/005b5e10.cpp, 2026-09-04. Its `g_95282c` byte
 // view is Vehs[]: +0x04 state, +0x0D nothing in the tree's Veh (see the note
 // below), +0x0E faction_id, +0x0F year_end_lurking, +0x11 order.
-// BUG IN THE ORIGINAL: the two bytes the body tests against each other,
+// Former explanation: BUG IN THE ORIGINAL: the two bytes the body tests against each other,
 // 0x95282c + veh_id * 0x34 + 0xD and + 0xE, are `unk_1` and `faction_id` in
 // the tree's Veh - the low half of `flags` and the state dword's high byte, so
 // `+ 0xD` is one byte *below* the field the comparison reads. The arithmetic
 // is reproduced exactly as shipped; a reader who "fixes" the offset changes
 // the program.
+// Pinned 5B5E35/5B5E3C compare 95283B/95283A, and 5B5E84/5B5E8F
+// read/clear 952839. Vehs begins 952828, not 95282C: these are +13/+12/+11,
+// the existing patrol_current_point, waypoint_count and order members.
+// Preserve the unchecked index, unsigned counter comparison and state masks.
 Return Value: n/a
 Status: BYTE_EXACT.
 */
 void __cdecl veh_move_end(int veh_id) {
-    const int offset = veh_id * 0x34;
-    unsigned int *flags = reinterpret_cast<unsigned int *>(
-        reinterpret_cast<uint8_t *>(Vehs) + offset + 4);
-    uint8_t *byte_d = reinterpret_cast<uint8_t *>(Vehs) + offset + 0xD;
-    uint8_t *byte_e = reinterpret_cast<uint8_t *>(Vehs) + offset + 0xE;
-    uint8_t *byte_f = reinterpret_cast<uint8_t *>(Vehs) + offset + 0xF;
-    if ((*flags & 0x2000200) == 0x2000200 && *byte_f < *byte_e) {
-        *flags &= 0xfdfffdff;
+    Veh &vehicle = Vehs[veh_id];
+    if ((vehicle.state & 0x2000200) == 0x2000200 &&
+        vehicle.patrol_current_point < vehicle.waypoint_count) {
+        vehicle.state &= 0xfdfffdff;
     }
-    if ((*flags & 0x1000200) == 0x1000200) {
-        *flags &= 0xfefffdff;
+    if ((vehicle.state & 0x1000200) == 0x1000200) {
+        vehicle.state &= 0xfefffdff;
     }
-    *flags &= 0xffffbfff;
-    if (*byte_d == 0x18) {
-        *byte_d = 0;
+    vehicle.state &= 0xffffbfff;
+    if (vehicle.order == 0x18) {
+        vehicle.order = 0;
     }
 }
 
