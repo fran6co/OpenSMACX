@@ -1223,19 +1223,20 @@ char DatalinkAdvConceptFile[] = "ADVTITLES";
  *   SocialEffects        0x00946580, eleven RulesSocialEffect records of
  *                        0x68. The original name cursor is set2 (+0x18);
  *                        the Null row is record 3.
- *   FactionRowBase       0x009472EC, records 0x167 bytes, ids 150001..150008.
+ *   Faction filler       0x009472EC is Players[1].is_noun_plural. Its
+ *                        preceding dword is noun_gender and +0x84 is
+ *                        formal_name_faction. Native rows advance by the
+ *                        0x59C Player stride for ids 150001..150007.
  *   Order[4..23]          0x0096C8A8, with each row's land/sea name pointers.
  *   Terraforming         0x00691878, twenty records of 0x20. The original
  *                        prerequisite cursor begins at preq_tech_sea (+0xC);
  *                        land and sea gates are the named +8/+C fields.
  *   ProjectPrefixHidden  0x009BC054, clear while the "The " article is to be
  *                        stripped.
- *   the faction filler publishes each record's head dwords to general.h's
- *   GenderDefault / PluralityDefault pair before filing its name, and reads
- *   alpha.h's Language to decide whether the "The " article stays.
+ *   the faction filler saves noun_gender and is_noun_plural, clears the
+ *   string buffer, then publishes the pair before filing the formal name.
+ *   The optional numeric suffix is gated by game_state bit 0x1000.
  */
-static const char *const FactionRowBase = (const char *)0x009472EC;
-
 // The label each category's filler draws centred in the entry rectangle, read
 // out of the label blob the way dipedit.cpp reads it:
 // `mov eax, ds:0x9b90f8; mov ecx, [eax + <slot>]` - slot / 4 is the index.
@@ -2892,11 +2893,10 @@ void Datalink::set_cat_effect() {
 }
 
 /*
-Purpose: List the factions, ids 150000 upward.
+Purpose: List faction rows with ids 150001 through 150007.
 
-         Before each name is filed the two dwords at the head of the record
-         are published to the faction-id pair general.h owns, so the list
-         builder knows which faction the line it is adding belongs to.
+         The pinned image loads grammar values, clears StringTemp, then
+         publishes the saved values before building each row.
 // ORIGINAL: 0x0042B940 ?set_cat_faction@Datalink@@QAEXXZ 0x0042B940-0x0042BACC FILE
 // MISMATCH 16/135 against our 111 - the image's frame is 24 bytes larger, so its digits buffer is not the 80 ours is. TRIED: `record += 0x167` on a `const char *` with the head dwords published through general.h's GenderDefault / PluralityDefault, and the name read at +0x84.
 // size      355 bytes
@@ -2909,12 +2909,15 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_faction() {
-    const char *record = FactionRowBase;
-    for (int index = 0; index < 8; record += 0x167, ++index) {
-        GenderDefault = reinterpret_cast<const int *>(record)[-1];
-        PluralityDefault = reinterpret_cast<const int *>(record)[0];
+    for (int index = 0; index < 7; ++index) {
+        // The pinned list starts at Players[1] and advances by 0x59C per row.
+        const Player &player = Players[index + 1];
+        const int gender = player.noun_gender;
+        const BOOL plural = player.is_noun_plural;
         StringTemp[0] = '\0';
-        strcat(StringTemp, record + 0x84);
+        GenderDefault = gender;
+        PluralityDefault = plural;
+        strcat(StringTemp, player.formal_name_faction);
         if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
             strcat(StringTemp, DatalinkFactionIdSeparator);
             char digits[80];

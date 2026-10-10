@@ -492,6 +492,223 @@ static int movie_media_sar17(DWORD value) {
   return -1 - (int)((~value) >> 17);
 }
 
+// The first five source-owned coefficient words are the exact operands read
+// at 009C9594..009C95A4. They remain part of the shared decoder table window.
+// The image's FILD inputs retain signed dword precision through the x87
+// arithmetic. Promote each loaded binary32 coefficient before calculation;
+// these binary64 intermediates avoid float truncation but do not claim the
+// original x87 precision/control-word result for every input.
+// The TRIED lines in this family retain superseded General-transcript history.
+// Current bodies use source-owned coefficient words and qword low-DWORD
+// extraction; prior numeric-cast/raw-alias descriptions are not current code.
+static int movie_media_idct_coefficient_integer(unsigned index) {
+    return movie_media_signed32(movie_media_coefficient_tables.words[index]);
+}
+
+static float movie_media_idct_coefficient_float(unsigned index) {
+    float value;
+    std::memcpy(&value, &movie_media_coefficient_tables.words[index],
+                sizeof(value));
+    return value;
+}
+
+static int movie_media_idct_biased_low_dword(const double &value) {
+    DWORD low_dword;
+    std::memcpy(&low_dword, &value, sizeof(low_dword));
+    return movie_media_signed32(low_dword);
+}
+
+// ORIGINAL: 0x005D29E1 sub_5d29e1 0x005D29E1-0x005D2B20
+// TRIED: this is not addressable with a normal calling convention - the body reads unaff_ESI/unaff_EDI with no stack access and no register setup of its own (first instruction is `push edi`, `mov ebx,[esi+0x14]` immediately after), so the 3 callers must be pre-loading esi/edi before `call`ing in. That is an interprocedural register-allocation artifact of compiling the 3 call sites and this body together as one translation unit; it cannot be reproduced by compiling this function alone under any ordinary C++ signature, since VC6 only picks a non-standard register ABI for an internal-linkage callee when it can see all of its callers. Declared it as a plain two-pointer __cdecl function instead (src, dst) for a faithful, compiling body. Also not reproduced: the fadd-then- reinterpret-low-dword pattern for double->int (`fstp qword ptr`, then `mov` of the low 4 bytes) is the classic magic- number float truncation trick that avoids calling `_ftol`; mimicked with a raw double-then-reinterpret-cast here. Best reached: MISMATCH, edit_count 7, 455 bytes vs 319 - the whole prologue/epilogue and call sequencing differ because of the calling-convention gap above.
+// size      319 bytes
+// prototype
+// callers   3   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+extern "C" void __cdecl sub_5d29e1(int *src, int *dst) {
+    int iVar2, iVar3, iVar4, iVar5, iVar6, iVar7, iVar8;
+    double d1, d2;
+    int local_1c, local_14;
+    double fVar1;
+
+    iVar7 = src[5];
+    iVar6 = src[3];
+    iVar5 = src[1];
+    iVar3 = src[7];
+    if (src[6] || iVar6 || iVar3 || src[2] || iVar7 || iVar5 || src[4]) {
+        fVar1 = (static_cast<double>(movie_media_sub32(iVar5, iVar3))
+                 + static_cast<double>(movie_media_sub32(iVar7, iVar6)))
+            * static_cast<double>(movie_media_idct_coefficient_float(3));
+        iVar4 = movie_media_mul2(movie_media_signed_high_product(
+            movie_media_sub32(
+                movie_media_sub32(movie_media_add32(iVar3, iVar5), iVar6),
+                iVar7), movie_media_idct_coefficient_integer(0)));
+        d1 = static_cast<double>(movie_media_sub32(iVar7, iVar6))
+                * static_cast<double>(movie_media_idct_coefficient_float(1))
+            + fVar1
+            + static_cast<double>(movie_media_idct_coefficient_float(4));
+        local_1c = movie_media_idct_biased_low_dword(d1);
+        d2 = static_cast<double>(movie_media_sub32(iVar5, iVar3))
+                * static_cast<double>(movie_media_idct_coefficient_float(2))
+            - fVar1
+            + static_cast<double>(movie_media_idct_coefficient_float(4));
+        local_14 = movie_media_idct_biased_low_dword(d2);
+        iVar2 = movie_media_add32(local_1c, iVar4);
+        iVar4 = movie_media_add32(iVar4, local_14);
+        local_14 = movie_media_add32(
+            movie_media_add32(
+                movie_media_add32(movie_media_add32(local_14, iVar6), iVar7),
+                iVar3), iVar5);
+        iVar7 = movie_media_add32(src[4], src[0]);
+        iVar3 = movie_media_sub32(src[0], src[4]);
+        iVar5 = movie_media_signed_high_product(
+            movie_media_sub32(src[2], src[6]),
+            movie_media_idct_coefficient_integer(0));
+        iVar6 = movie_media_mul2(iVar5);
+        iVar8 = movie_media_add32(
+            movie_media_add32(src[6], src[2]), iVar6);
+        iVar6 = movie_media_add32(iVar6, iVar3);
+        iVar3 = movie_media_sub32(iVar3, movie_media_mul2(iVar5));
+        iVar5 = movie_media_add32(iVar8, iVar7);
+        iVar7 = movie_media_sub32(iVar7, iVar8);
+        dst[0x12] = movie_media_add32(iVar3, iVar2);
+        dst[0x2d] = movie_media_sub32(iVar3, iVar2);
+        dst[0x1b] = movie_media_add32(iVar7, local_1c);
+        dst[0x24] = movie_media_sub32(iVar7, local_1c);
+        dst[0] = movie_media_add32(iVar5, local_14);
+        dst[9] = movie_media_add32(iVar4, iVar6);
+        dst[0x36] = movie_media_sub32(iVar6, iVar4);
+        dst[0x3f] = movie_media_sub32(iVar5, local_14);
+        return;
+    }
+    iVar7 = src[0];
+    dst[0] = iVar7;
+    dst[9] = iVar7;
+    dst[0x12] = iVar7;
+    dst[0x1b] = iVar7;
+    dst[0x24] = iVar7;
+    dst[0x2d] = iVar7;
+    dst[0x36] = iVar7;
+    dst[0x3f] = iVar7;
+    return;
+}
+
+// ORIGINAL: 0x005D2B20 sub_5d2b20 0x005D2B20-0x005D2C0A FILE
+// TRIED: BYTE_EXACT is likely structurally unreachable here without `__asm` (banned). The disassembly reads `esi` as an 8-int input array from instruction #1 (`mov ebx,[esi+0x14]`) and NEVER writes esi before that first read anywhere in the function - Ghidra names it `unaff_ESI` for exactly this reason. That means the real calling convention hands this function its input array already sitting in esi, which none of __cdecl/__stdcall/__fastcall/__thiscall can express - every standard convention either uses the stack or ecx/edx for the first argument, never esi with zero setup. This is plausible as a compiler-chosen convention specific to this internal, 2-caller helper (proven safe only in the context of its real callers, which this recovery unit does not see), but nothing in valid VC6 C++ can request it. Landed body takes the input array as a normal second parameter instead (MISMATCH from the very first instruction, since the prologue differs immediately) so the arithmetic shape is on record: an 8-point butterfly (pairwise sum/difference of src[0],src[2],src[4], src[6] and separately src[1],src[3],src[5],src[7]) combining one `__int64` fixed-point multiply-by-IdctSin45Q31 (the `imul dword ptr [addr]` high-dword-times-2 pattern) with float arithmetic against IdctInv2CosPi8/IdctInv2Cos3Pi8/IdctCos3Pi8, each float result added to IdctAanScale and reduced to an int via `fstp qword` followed by reading only the low dword - this looks like the classic "magic-constant" double-to-int rounding idiom (add a bias, read the mantissa's low bits) but a plain `(int)(double)expr` cast was NOT enough to reproduce it; the exact bias/rounding trick was not reverse-engineered.
+// size      234 bytes
+// prototype
+// callers   2   call targets   0
+// kind
+// flags
+// calls     (none)
+// working copy - scaffold materialised by --work
+extern "C" void __cdecl sub_5d2b20(int *dst, int *src) {
+    int iVar9 = movie_media_add32(src[3], src[5]);
+    int iVar8 = movie_media_add32(src[7], src[1]);
+    double fVar2 = static_cast<double>(movie_media_sub32(src[5], src[3]));
+    double fVar3 = static_cast<double>(movie_media_sub32(src[1], src[7]));
+    double fVar1 = (fVar3 + fVar2) *
+        static_cast<double>(movie_media_idct_coefficient_float(3));
+    int iVar6 = movie_media_mul2(movie_media_signed_high_product(
+        movie_media_sub32(iVar8, iVar9),
+        movie_media_idct_coefficient_integer(0)));
+    const double biased_first =
+        fVar2 * static_cast<double>(movie_media_idct_coefficient_float(1))
+        + fVar1
+        + static_cast<double>(movie_media_idct_coefficient_float(4));
+    const double biased_second =
+        (fVar3 * static_cast<double>(movie_media_idct_coefficient_float(2))
+         - fVar1)
+        + static_cast<double>(movie_media_idct_coefficient_float(4));
+    int iStack8 = movie_media_idct_biased_low_dword(biased_first);
+    int iStack10 = movie_media_idct_biased_low_dword(biased_second);
+    int iVar4 = movie_media_add32(iStack8, iVar6);
+    iVar6 = movie_media_add32(iVar6, iStack10);
+    iStack10 = movie_media_add32(movie_media_add32(iStack10, iVar9), iVar8);
+    iVar9 = movie_media_add32(src[4], src[0]);
+    int iVar5 = movie_media_sub32(src[0], src[4]);
+    int iVar7 = movie_media_signed_high_product(
+        movie_media_sub32(src[2], src[6]),
+        movie_media_idct_coefficient_integer(0));
+    iVar8 = movie_media_mul2(iVar7);
+    int iVar10 = movie_media_add32(
+        movie_media_add32(src[6], src[2]), iVar8);
+    iVar8 = movie_media_add32(iVar8, iVar5);
+    iVar5 = movie_media_sub32(iVar5, movie_media_mul2(iVar7));
+    iVar7 = movie_media_add32(iVar10, iVar9);
+    iVar9 = movie_media_sub32(iVar9, iVar10);
+    dst[2] = movie_media_add32(iVar5, iVar4);
+    dst[5] = movie_media_sub32(iVar5, iVar4);
+    dst[3] = movie_media_add32(iVar9, iStack8);
+    dst[4] = movie_media_sub32(iVar9, iStack8);
+    dst[0] = movie_media_add32(iVar7, iStack10);
+    dst[1] = movie_media_add32(iVar6, iVar8);
+    dst[6] = movie_media_sub32(iVar8, iVar6);
+    dst[7] = movie_media_sub32(iVar7, iStack10);
+}
+
+// ORIGINAL: 0x005D2C0A sub_5d2c0a 0x005D2C0A-0x005D2D13
+// TRIED: BYTE_EXACT is structurally unreachable here without `__asm` (banned), same finding as the sibling 8-point butterfly at 0x005D2B20 (see the sibling 0x005D2B20 body (homed here)): the disassembly reads `esi` (src) from the very first real instruction and `edi` (dst, saved via `push edi` at entry and reloaded from the stack near the end) with no stack setup for either, which none of __cdecl/__stdcall/__fastcall/__thiscall can request. Landed as `sub_5d2c0a(int *dst, int *src)` (MISMATCH from instruction 0, the prologue) so the arithmetic is on record: identical sum/difference/`__int64` fixed-point-multiply butterfly to the sibling, but every combined pair is additionally scaled by `>> 17` before it is stored, which the sibling's version does not do.
+// size      265 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+extern "C" void __cdecl sub_5d2c0a(int *dst, int *src) {
+    int iVar9 = movie_media_add32(src[3], src[5]);
+    int iVar8 = movie_media_add32(src[7], src[1]);
+    double fVar2 = static_cast<double>(movie_media_sub32(src[5], src[3]));
+    double fVar3 = static_cast<double>(movie_media_sub32(src[1], src[7]));
+    double fVar1 = (fVar3 + fVar2) *
+        static_cast<double>(movie_media_idct_coefficient_float(3));
+    int iVar6 = movie_media_mul2(movie_media_signed_high_product(
+        movie_media_sub32(iVar8, iVar9),
+        movie_media_idct_coefficient_integer(0)));
+    const double biased_first =
+        fVar2 * static_cast<double>(movie_media_idct_coefficient_float(1))
+        + fVar1
+        + static_cast<double>(movie_media_idct_coefficient_float(4));
+    const double biased_second =
+        (fVar3 * static_cast<double>(movie_media_idct_coefficient_float(2))
+         - fVar1)
+        + static_cast<double>(movie_media_idct_coefficient_float(4));
+    int local_1c = movie_media_idct_biased_low_dword(biased_first);
+    int local_14 = movie_media_idct_biased_low_dword(biased_second);
+    int iVar4 = movie_media_add32(local_1c, iVar6);
+    iVar6 = movie_media_add32(iVar6, local_14);
+    local_14 = movie_media_add32(movie_media_add32(local_14, iVar9), iVar8);
+    iVar9 = movie_media_add32(src[4], src[0]);
+    int iVar5 = movie_media_sub32(src[0], src[4]);
+    int iVar7 = movie_media_signed_high_product(
+        movie_media_sub32(src[2], src[6]),
+        movie_media_idct_coefficient_integer(0));
+    iVar8 = movie_media_mul2(iVar7);
+    int iVar10 = movie_media_add32(
+        movie_media_add32(src[6], src[2]), iVar8);
+    iVar8 = movie_media_add32(iVar8, iVar5);
+    iVar5 = movie_media_sub32(iVar5, movie_media_mul2(iVar7));
+    iVar7 = movie_media_add32(iVar10, iVar9);
+    iVar9 = movie_media_sub32(iVar9, iVar10);
+    dst[2] = movie_media_sar17(movie_media_int_bits(
+        movie_media_add32(iVar5, iVar4)));
+    dst[5] = movie_media_sar17(movie_media_int_bits(
+        movie_media_sub32(iVar5, iVar4)));
+    dst[3] = movie_media_sar17(movie_media_int_bits(
+        movie_media_add32(iVar9, local_1c)));
+    dst[4] = movie_media_sar17(movie_media_int_bits(
+        movie_media_sub32(iVar9, local_1c)));
+    dst[0] = movie_media_sar17(movie_media_int_bits(
+        movie_media_add32(iVar7, local_14)));
+    dst[1] = movie_media_sar17(movie_media_int_bits(
+        movie_media_add32(iVar6, iVar8)));
+    dst[6] = movie_media_sar17(movie_media_int_bits(
+        movie_media_sub32(iVar8, iVar6)));
+    dst[7] = movie_media_sar17(movie_media_int_bits(
+        movie_media_sub32(iVar7, local_14)));
+}
+
 // Normalized typed body for the block decoder at 005D0D82. The original
 // fragment receives pitch/output in ECX/EDX and predictor/context/input in
 // EAX/ESI/EDI/EBP from its outlined 005D0AAB caller. Its stack arrays and

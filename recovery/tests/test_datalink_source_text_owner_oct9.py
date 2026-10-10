@@ -61,6 +61,11 @@ def test_datalink_text_arrays_and_actual_consumers(tmp_path: Path) -> None:
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
     source = (ROOT / "src/datalink.cpp").read_text()
+    faction_header = (ROOT / "src/faction.h").read_text()
+    veh_header = (ROOT / "src/veh.h").read_text()
+    player_declaration = re.search(r"struct Player\s*\{.*?\n\};", faction_header, re.DOTALL)
+    order_declaration = re.search(r"struct RulesOrder\s*\{.*?\n\};", veh_header, re.DOTALL)
+    assert player_declaration and order_declaration
     declarations = []
     for name in NAMES:
         match = re.search(rf"char {name}\[\] = \"[^\"]*\";", source)
@@ -81,6 +86,8 @@ def test_datalink_text_arrays_and_actual_consumers(tmp_path: Path) -> None:
 #include <string>
 #include <vector>
 typedef unsigned int uint32_t;
+typedef int BOOL;
+typedef char *LPSTR;
 struct RECT { int left,top,right,bottom; };
 static char StringTemp[1024];
 int Language=0;
@@ -119,6 +126,14 @@ struct RulesTerraforming {
   uint32_t bit, bit_incompatible; int rate; char *shortcuts;
 };
 const int MaxTerrainNum=20; RulesTerraforming Terraforming[MaxTerrainNum];
+''' + player_declaration.group(0) + r'''
+static_assert(sizeof(Player)==0x59C, "actual Player declaration layout");
+const int MaxPlayerNum=8;
+// Oversized host-only backing permits the original inclusive Player[8] read;
+// it does not establish that production has a ninth Players row.
+Player Players[MaxPlayerNum];
+''' + order_declaration.group(0) + r'''
+RulesOrder Order[30];
 struct RulesEntry { int preq_tech; int name; };
 struct RulesChassis { int preq_tech; int offsv_1_name; };
 RulesChassis Chassis[64]; int MaxChassisNum=1;
@@ -129,8 +144,6 @@ RulesEntry Armor[64]; int MaxArmorNum=1;
 RulesEntry Ability[64]; int MaxAbilityNum=1;
 struct RulesFacility { int preq_tech; int name; };
 RulesFacility Facility[64]; int FacilitySPStart=0;
-static char faction_storage[8*0x167+0x90];
-const char *FactionRowBase=faction_storage+4;
 int GenderDefault=0, PluralityDefault=0;
 static int name_storage[61];
 const int *TerraformNameBase=name_storage+1;
@@ -141,6 +154,8 @@ struct Strings { char *get(int id) {
   else if(id==11) std::strcpy(value,"Sea action");
   else std::sprintf(value,"key%d",id);
   return value;
+} char *get(char *text) {
+  return text;
 } } StringTable;
 static const char *text_lines[4]; static int text_line=0;
 char *TextBufferGetPtr=0; int open_result=0,open_calls=0,get_calls=0,close_calls=0;
@@ -176,6 +191,9 @@ static void reset() {
   std::memset(SocialCategories,0,sizeof(SocialCategories));
   std::memset(SocialEffects,0,sizeof(SocialEffects));
   std::memset(Terraforming,0,sizeof(Terraforming));
+  for(int i=0;i<MaxTerrainNum;++i) Terraforming[i].preq_tech_sea=-2;
+  std::memset(Order,0,sizeof(Order));
+  std::memset(Players,0,sizeof(Players));
   GameDataStateStorage.fields_.game_state_=0x1000u; Language=0;
 }
 int main() {
@@ -221,7 +239,11 @@ int main() {
   win.set_cat_project();
   assert(list.entries.size()==1 && list.entries[0].text=="Lighthouse|68534" &&
          list.entries[0].id==68534);
-  reset(); name_storage[0]=10; name_storage[1]=11;
+  reset();
+  Order[4].order=const_cast<char *>("Land action");
+  Order[4].order_sea=const_cast<char *>("Sea action");
+  Terraforming[0].preq_tech=-1;
+  Terraforming[0].preq_tech_sea=-1;
   DatalinkCategoryIdSeparator[0]=';';
   DatalinkTerraformIdSeparator[0]=':';
   win.set_cat_terraform();
@@ -230,6 +252,21 @@ int main() {
   assert(list.entries[1].text=="Sea action|90020" && list.entries[1].id==90020);
   DatalinkCategoryIdSeparator[0]='|';
   DatalinkTerraformIdSeparator[0]='|';
+
+  reset();
+  for(int faction=1;faction<=7;++faction) {
+    Players[faction].noun_gender=100+faction;
+    Players[faction].is_noun_plural=200+faction;
+    std::sprintf(Players[faction].formal_name_faction,"Faction %d",faction);
+  }
+  win.set_cat_faction();
+  assert(list.entries.size()==7);
+  for(int i=0;i<7;++i) {
+    assert(list.entries[i].id==150001+i);
+    char expected[80];
+    std::sprintf(expected,"Faction %d|%d",i+1,150001+i);
+    assert(list.entries[i].text==expected);
+  }
 }
 '''
     cpp = tmp_path / "datalink_text.cpp"

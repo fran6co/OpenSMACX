@@ -1,0 +1,18 @@
+{
+  "event_id": "730a917c787fcc6a0a26f2efac0e3cc46236a6ca8c633c41a30c713d78bfade5",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "correct-seven-row-bound-and-publication-order-oct10",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/datalink.cpp:set_cat_faction now visits Players1..7 with captured int/BOOL grammar values, clears StringTemp before saved gender/plural publication, then builds/formats/files the original IDs150001..150007. Independent review and coordinator pinned PE decoding agree.",
+      "Actual-body host controls in recovery/tests/test_datalink_faction_row_owner_oct10.py and existing aggregate source control use the real Player declaration/extent, execute seven rows and reject eighth-row/publication-order mutants. Fresh worker and integrated application compile/link and unchanged107 native verdicts support this bounded correction, not whole-game acceptance."
+    ]
+  },
+  "previous_event": "42530b219f54b5859f35c482848cf49e83d582ef560464e48c24e9ed041380f2",
+  "request_id": "incorporate-pinned-seven-row-and-grammar-sequence-oct10",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:datalink-faction-row-owner-oct10"
+}
