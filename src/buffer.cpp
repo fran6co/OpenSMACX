@@ -223,6 +223,8 @@ GraphicWin *Buffer::get_graphic_win() { return nullptr; }
 Purpose: Return the address of the pixel at (x, y) in the buffer, locking the
          surface first when needed, and refusing coordinates outside the DIB.
 // ORIGINAL: 0x005E33F3 ?get_data@Buffer@@QAEHHH@Z 0x005E33F3-0x005E349D FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover the coordinate overload's pixel-byte-address return and its typed consumers, rather than treating a buffer address as an integer. Retain the historical catalogue identity and byte claim.","evidence":["pinned5E33F3..5E349D upper-bound-only signed x/y tests, DIB/cached/DirectDraw acquisition, stride/lock-count publication and EAX=locked_bits+stride*y+x at5E3479..3488","18 decoded direct calls across Buffer copy_mask, Flic decoders, Sprite extract and Texture extract consume the result as pixel bytes","parameterless get_data and mixed free_data return contracts remain separate; allocation bounds and invalid-position/32-bit-wrap source semantics remain restoration obligations, not grounds for new coordinate checks"]}
+// symbol    ?get_data@Buffer@@QAEPAEHH@Z
 // size      170 bytes
 // prototype int (__thiscall ?get_data@Buffer@@QAEHHH@Z)(Buffer* this, int, int)
 // callers   9   call targets   0
@@ -237,20 +239,20 @@ the in-class `get_data()` in buffer.h and reads the same members the same way:
 the negated y bound, and the lock path stores `stride_` before
 `locked_bits_`. `Sprite::extract` calls it by name five times.
 */
-int Buffer::get_data(int x, int y) {
+unsigned char *Buffer::get_data(int x, int y) {
     if (x < dib_.bmiHeader.biWidth && y < -dib_.bmiHeader.biHeight) {
-        int value;
+        void *value;
         if (surface_ == nullptr) {
             locked_bits_ = dib_bits_;
             if (dib_bits_ == nullptr) {
                 return 0;
             }
             ++surface_lock_count_;
-            value = reinterpret_cast<int>(dib_bits_);
+            value = dib_bits_;
         } else {
             if (locked_bits_ != nullptr) {
                 ++surface_lock_count_;
-                value = reinterpret_cast<int>(locked_bits_);
+                value = locked_bits_;
             } else {
                 DDSURFACEDESC description;
                 description.dwSize = sizeof(description);
@@ -260,11 +262,16 @@ int Buffer::get_data(int x, int y) {
                 stride_ = description.lPitch;
                 ++surface_lock_count_;
                 locked_bits_ = description.lpSurface;
-                value = reinterpret_cast<int>(description.lpSurface);
+                value = description.lpSurface;
             }
         }
         if (value != 0) {
-            return stride_ * y + reinterpret_cast<int>(locked_bits_) + x;
+            // The original checks only upper bounds, including negative x/y.
+            // Keep its byte displacement and do not add coordinate guards.
+            // stride_ is a 32-bit word; interpret its wrapped row product
+            // as a signed byte displacement before adding it to the pointer.
+            const int row_offset = static_cast<int>(stride_ * y);
+            return static_cast<unsigned char *>(locked_bits_) + row_offset + x;
         }
     }
     return 0;
@@ -4265,13 +4272,11 @@ int Buffer::copy_mask(Buffer *dest, int src_x, int src_y, int x, int y, int w,
     const int inset_x = clipped.left - x;
     const int inset_y = clipped.top - y;
 
-    unsigned char *write_ptr =
-        reinterpret_cast<unsigned char *>(dest->get_data(clipped.left, clipped.top));
+    unsigned char *write_ptr = dest->get_data(clipped.left, clipped.top);
     if (write_ptr == 0) {
         return 3;
     }
-    unsigned char *read_ptr = reinterpret_cast<unsigned char *>(
-        get_data(src_x + inset_x, src_y + inset_y));
+    unsigned char *read_ptr = get_data(src_x + inset_x, src_y + inset_y);
     if (read_ptr == 0) {
         return 3;
     }

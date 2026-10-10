@@ -737,7 +737,7 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
     iHeight_ = height;
     iWidth_ = width;
 
-    int srcData = buffer->get_data(x, y);
+    unsigned char *srcData = buffer->get_data(x, y);
     if (srcData == 0) {
         return 7;
     }
@@ -763,11 +763,11 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
     }
 
     char *dest = reinterpret_cast<char *>(pixels_);
-    int src = srcData;
+    const unsigned char *src = srcData;
     if (height != 0) {
         int count = height;
         do {
-            memcpy(dest, reinterpret_cast<void *>(src), iWidth_);
+            memcpy(dest, src, iWidth_);
             if (borrowed_ == 0) {
                 dest += iWidth_;
             } else {

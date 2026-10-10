@@ -2719,7 +2719,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         cTransparentIndex_ = static_cast<unsigned char>(transparent);
         iWidth_ = width;
         iHeight_ = height;
-        pixels = reinterpret_cast<const uint8_t *>(buffer->get_data(left, top));
+        pixels = buffer->get_data(left, top);
         if (pixels == 0) {
             buffer->free_data(1);
             return 7;
@@ -2746,8 +2746,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         // BOTTOM TRIM: walk up from the last row, right to left, until a row
         // carries a visible pixel. The pointer arrives pre-decremented - the
         // image indexes `row[col]` off `pixels - 1`, not `pixels[col - 1]`.
-        pixels = reinterpret_cast<const uint8_t *>(
-            buffer->get_data(left, top + height - 1));
+        pixels = buffer->get_data(left, top + height - 1);
         iSpriteHeight_ = height - iTopOffset_;
         for (row_index = 0; row_index < height; row_index++) {
             const uint8_t *from_right = pixels - 1;
@@ -2767,8 +2766,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         do_sound();
         buffer->free_data(1);
         // LEFT TRIM: on every kept row, find the first visible column.
-        pixels = reinterpret_cast<const uint8_t *>(
-            buffer->get_data(left, top + iTopOffset_));
+        pixels = buffer->get_data(left, top + iTopOffset_);
         iLeftOffset_ = width;
         for (rows = iSpriteHeight_; rows > 0; rows--) {
             for (col = 0; col < width; col++) {
@@ -2786,8 +2784,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         // RIGHT TRIM: on every kept row, count the transparent pixels at the end.
         // THIS scan indexes `pixels[col - 1]` - the image folds the -1 into the
         // addressing here, unlike the bottom trim above.
-        pixels = reinterpret_cast<const uint8_t *>(
-            buffer->get_data(left, top + iTopOffset_));
+        pixels = buffer->get_data(left, top + iTopOffset_);
         right_trim = width;
         for (rows = iSpriteHeight_; rows > 0; rows--) {
             int counted = 0;
@@ -2840,8 +2837,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
             fObj1Exists_ = 0;
         }
         SpriteMemoryUsed += iSpriteWidth_ * iSpriteHeight_;
-        pixels = reinterpret_cast<const uint8_t *>(
-            buffer->get_data(left + iLeftOffset_, top + iTopOffset_));
+        pixels = buffer->get_data(left + iLeftOffset_, top + iTopOffset_);
         uint8_t *out = reinterpret_cast<uint8_t *>(pcBits_);
         do_sound();
         for (rows = iSpriteHeight_; rows > 0; rows--) {

@@ -363,7 +363,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // the negated top-down `biHeight` the same way. The body lives in
   // buffer.cpp beside its marker; `Sprite::extract` calls it by name five
   // times.
-  int get_data(int x, int y);
+  unsigned char *get_data(int x, int y);
 
   // MEASURED on both of these: the class stopped being dllexport'ed as a
   // side effect of ~Buffer moving out of line (below), and without the

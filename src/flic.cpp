@@ -690,8 +690,7 @@ Status: Complete
 */
 void Flic::decode_byte_run() {
     void *scratch = nullptr;
-    uint8_t *dst = reinterpret_cast<uint8_t *>(
-        buffer2_->get_data(field_5AC_, field_5B0_));
+    uint8_t *dst = buffer2_->get_data(field_5AC_, field_5B0_);
     if (field_5A4_ != 0) {
         scratch = mem_get(buffer2_->stride_);
         if (scratch == nullptr) {
@@ -811,8 +810,7 @@ void Flic::decode_delta_flc() {
             return;
         }
     }
-    row = reinterpret_cast<uint8_t *>(
-        buffer2_->get_data(field_5AC_, field_5B0_));
+    row = buffer2_->get_data(field_5AC_, field_5B0_);
     fread(&num_lines, 2, 1, file_);
     min_touched = 0xffffffff;
     first_row = -1;
@@ -828,14 +826,12 @@ void Flic::decode_delta_flc() {
                 fread(&line_hdr, 2, 1, file_);
             }
             if (line_index == 0) {
-                uint8_t *base = reinterpret_cast<uint8_t *>(
-                    buffer2_->get_data(field_5AC_, field_5B0_));
+                uint8_t *base = buffer2_->get_data(field_5AC_, field_5B0_);
                 first_row = static_cast<int>(row - base) /
                             static_cast<int>(buffer2_->stride_);
             }
             if (line_index == static_cast<int>(num_lines) - 1) {
-                uint8_t *base = reinterpret_cast<uint8_t *>(
-                    buffer2_->get_data(field_5AC_, field_5B0_));
+                uint8_t *base = buffer2_->get_data(field_5AC_, field_5B0_);
                 last_row = static_cast<int>(row - base) /
                            static_cast<int>(buffer2_->stride_);
             }
@@ -1040,8 +1036,7 @@ void Flic::decode_fli_copy() {
     rect->right = x + width;
     rect->bottom = y + height;
 
-    uint8_t *dst = reinterpret_cast<uint8_t *>(
-        buffer2_->get_data(field_5AC_, field_5B0_));
+    uint8_t *dst = buffer2_->get_data(field_5AC_, field_5B0_);
 
     for (int row = 0; row < static_cast<int>(field_5A0_); row++) {
         if (field_5A4_ == 0) {
@@ -1300,8 +1295,7 @@ void Flic::decode_byte_run_trans() {
     rect->bottom = y + height;
 
     void *(Buffer::*get_data)() = &Buffer::get_data;
-    uint8_t *row_dst = reinterpret_cast<uint8_t *>(
-        buffer2_->get_data(field_5AC_, field_5B0_));
+    uint8_t *row_dst = buffer2_->get_data(field_5AC_, field_5B0_);
     uint8_t *row_src = static_cast<uint8_t *>((buffer_.*get_data)());
 
     uint8_t value;
@@ -1401,8 +1395,7 @@ void Flic::decode_delta_flc_trans() {
     uint8_t value;
     uint8_t run;
     uint16_t opcode;
-    uint8_t *dst = reinterpret_cast<uint8_t *>(
-        buffer2_->get_data(field_5AC_, field_5B0_));
+    uint8_t *dst = buffer2_->get_data(field_5AC_, field_5B0_);
     void *(Buffer::*get_data)() = &Buffer::get_data;
     uint8_t *src = static_cast<uint8_t *>((buffer_.*get_data)());
     int row;
@@ -1430,14 +1423,12 @@ void Flic::decode_delta_flc_trans() {
                 src += buffer_.stride_ * (skip & 0xffff);
             } while (true);
             if (row == 0) {
-                uint8_t *base = reinterpret_cast<uint8_t *>(
-                    buffer2_->get_data(field_5AC_, field_5B0_));
+                uint8_t *base = buffer2_->get_data(field_5AC_, field_5B0_);
                 min_y = static_cast<int>(dst - base) /
                         static_cast<int>(buffer2_->stride_);
             }
             if (row == static_cast<int>(line_count) - 1) {
-                uint8_t *base = reinterpret_cast<uint8_t *>(
-                    buffer2_->get_data(field_5AC_, field_5B0_));
+                uint8_t *base = buffer2_->get_data(field_5AC_, field_5B0_);
                 max_y = static_cast<int>(dst - base) /
                         static_cast<int>(buffer2_->stride_);
             }
@@ -1600,8 +1591,7 @@ void Flic::decode_fli_copy_trans() {
     rect->bottom = y + height;
 
     void *(Buffer::*get_data)() = &Buffer::get_data;
-    uint8_t *dst = reinterpret_cast<uint8_t *>(
-        buffer2_->get_data(field_5AC_, field_5B0_));
+    uint8_t *dst = buffer2_->get_data(field_5AC_, field_5B0_);
     uint8_t *src = static_cast<uint8_t *>((buffer_.*get_data)());
 
     for (int row = 0; row < static_cast<int>(field_5A0_); row++) {
