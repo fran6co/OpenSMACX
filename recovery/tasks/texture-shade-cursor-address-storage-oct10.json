@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "task_id": "texture-shade-cursor-address-storage-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover shared shade byte-cursor address storage and remove pointer-to-pointer access through an int cell across its complete raster family",
+  "base_revision": "98dfa254c7389a11f966d636012b9f99842592ed",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6417104
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6438784
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6423264
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6424128
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6418640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6420357
+    }
+  ],
+  "editable_files": [
+    "src/texture.cpp",
+    "recovery/tests/test_texture_raster_edge_members_oct10.py",
+    "recovery/tests/test_texture_draw_coast_actual_source.py",
+    "recovery/tests/test_texture_draw_coast_wide_actual_source.py",
+    "recovery/tests/fixtures/texture_draw_coast_wide_host.cpp",
+    "recovery/tests/fixtures/texture_sub61f0d0_actual_host.cpp",
+    "recovery/tests/test_texture_shade_cursor_oct10.py"
+  ],
+  "evidence": [
+    "All current9BB558writers initialize a shade-plane byte cursor; consumers dereference a byte or advance by pixel/signed row offsets. Native61EF91/61F02E and61F435/61F441/61F502/61F509/61F5FB/61F603/61F623 establish dword address storage and steps. No scalar semantic consumer is established. Correct consumer ownership is6202E0, not61D990; wide coast writer is623F80, not6233C0.",
+    "Use uintptr_t address-domain cell/alias rather than int or an arbitrary class/union. Remove unsignedchar** aliasing of this integer cell in620640. Preserve original target32bitwrapping and branch/pixel behavior; hostpointer-width support is a control, not a changed target ABI. Keep the existing source object identity/address and all original function spans/claims/fragment relation.",
+    "Capture fullTexture96verdicts before/current; require actual-body fixtures and address/truncation/alias damage controls, original identity/claim/history continuity, native symbol/storage width evidence, mappings/references, independent review and fresh full compile/link. Do not change raster arithmetic, bugfix paths, other globals or claim new function coverage/full-game acceptance."
+  ]
+}
