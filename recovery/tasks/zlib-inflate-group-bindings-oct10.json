@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "task_id": "zlib-inflate-group-bindings-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind fourteen independently bounded upstream inflate/allocator implementations and expose all already-built upstream units to dependency verification",
+  "base_revision": "d8936a1c802f766ce8ab4105956e0e532366369f",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6564624
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6564784
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6568272
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6570304
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6572304
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6572656
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6545216
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6545376
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6568336
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6568432
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6569648
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6569888
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6570240
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6556240
+    }
+  ],
+  "editable_files": [
+    "src/vendor/zlib.recovery.h",
+    "recovery/tests/test_zlib_inflate_group_bindings_oct10.py",
+    "recovery/tests/test_zlib_deflate_tree_group_bindings_oct10.py",
+    "recovery/tests/test_zlib_ten_member_bindings_oct10.py",
+    "recovery/tests/test_zlib_three_helper_bindings_oct10.py",
+    "recovery/tests/test_zlib_leaf_component_migration.py",
+    "recovery/tests/test_zlib_static_component_migration.py",
+    "recovery/tests/test_zlib_five_identity_continuity.py"
+  ],
+  "evidence": [
+    "Fourteen independently pinned Ghidra extents agree with fresh physical exclusive function COMDATs emitted from unmodified zlib1.0.2. Eight new entries pass strict verification, six remain unknown due to missing data/string/allocator targets. Source correspondence only, no new matching claims or application substitutes. All eleven source units already compiled by unchanged application CMake are selected for component verification; upstream sources, archive provenance and flags remain unchanged.",
+    "Preserve all38 historical envelopes/bindings/claims/history. Two existing inflate wrappers gain qualified callee resolution; deflateInit2_ gains only zcalloc target evidence while retaining other unknowns. All other old diagnostics must be identical. The six new unknowns remain obligations, not weaker grants; zcfree and large unmatched functions remain outside this batch.",
+    "Native writer/component renderer publication; verify exact source/provider joins, old policy continuity except explicit unit expansion, source archive identity, independent original extents, fresh native qualification, damaged bytes/bounds/callee destinations/missing-callee controls, independent review, references/mappings and fresh application build/link before coordinator-reviewed checkpoint. No whole-library data, retained selection, runtime or game acceptance proof."
+  ]
+}
