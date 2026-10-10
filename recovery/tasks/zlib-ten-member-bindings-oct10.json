@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "task_id": "zlib-ten-member-bindings-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind ten independently bounded upstream deflate/tree members as dependency implementations while retaining their unresolved data/reference qualification",
+  "base_revision": "3ca66d69914ff1e08a26457cfe4b6f8d63d300a1",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6541056},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6564160}
+  ],
+  "editable_files": [
+    "src/vendor/zlib.recovery.h",
+    "recovery/tests/test_zlib_leaf_component_migration.py",
+    "recovery/tests/test_zlib_five_identity_continuity.py",
+    "recovery/tests/test_zlib_three_helper_bindings_oct10.py",
+    "recovery/tests/test_zlib_ten_member_bindings_oct10.py"
+  ],
+  "evidence": [
+    "Authorize source writer/component renderer additions only: deflateInit2_63CF30..63D11C, deflateReset63D120..63D193, deflate63D1A0..63D413, lm_init63D560..63D5F3, _tr_init640BB0..640C22, tr_static_init640C30..640E41, init_block640E50..640EB6, gen_codes640EC0..640F33, _tr_stored_block640F40..640FF3 and _tr_align641000..641273. Names denote unmodified zlib1.0.2 source definitions; emitted C symbols retain leading-underscore decoration. Independently pinned Ghidra extents and fresh whole-source physical COFF boundaries agree; every candidate has zero differing non-relocated bytes.",
+    "The batch is an explicit dependency source-correspondence interpretation, not a fresh exactness grant or an application recovery. Four new members pass bounded bytes/boundary/references; six retain unknown byte/reference qualification because independently bound data/string/allocator targets are missing. Do not invent operand-derived addresses, weaken the comparator or label unknown targets verified. These mappings expose the actual upstream implementation and outstanding verification obligations.",
+    "Keep every prior source envelope, identity, span, claim, useful history and all twelve VendorBindings intact. Upstream files, archive/license provenance, selected units, language, compiler flags and CMake/application code are unchanged. Reverify archive identity, fresh published component checks, body/extent/reference damage controls including unresolved-target controls, source-writer/component roundtrips and identity continuity, independent review, references/mappings and full application build/link before a coordinator-reviewed checkpoint.",
+    "New original annotations remain unclaimed. Prior unknown diagnostics may improve solely through newly evidenced function-target mappings; other prior diagnostics must be unchanged. Bounded COFF correspondence does not establish complete executable coverage, full-library version uniqueness, dependency data coverage, application retained selection or runtime/full-game acceptance."
+  ]
+}
