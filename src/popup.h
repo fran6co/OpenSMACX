@@ -66,7 +66,7 @@ class Popup : public BasePop {
   Scroll *on_listbox_scroll_delete(Scroll *scroll) override;
 
  public:
-  int on_dialog_item_back_draw(GraphicWin *window, int unused, int item, RECT *rect);
+  int on_dialog_item_back_draw(GraphicWin *window, int unused, int item, RECT *rect) override;
   int on_nc_hittest(int x, int y);
 
   // `static`, because the image's name ends in `QAA` - a public member
@@ -91,7 +91,7 @@ class Popup : public BasePop {
   void start(char *a1, const char *a2, int a3, char *a4, int a5);
   void start(const char *label);
   void start(const char *label, int value);
-  int on_dialog_back_draw(::GraphicWin *window);
+  int on_dialog_back_draw(::GraphicWin *window) override;
   // 0x004050A0. The `H` the catalogue carries between the two parameters is
   // this receiver's `int id`, kept even though nothing in the body reads it.
   int on_link_clicked(int id, char *link);

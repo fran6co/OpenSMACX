@@ -622,8 +622,9 @@ class Win : public AutoSound {
   virtual Scroll *on_listbox_scroll_create() { return 0; }  // slot 8
   // ListBox and Dialogs forward Scroll replacement through this parent slot.
   virtual Scroll *on_listbox_scroll_delete(Scroll *value = 0) { return value; }  // slot 9
-  virtual int vslot_10(int = 0) { return 0; }  // 0x00404250
-  virtual int vslot_11(GraphicWin *, int, int, RECT *) { return 0; }  // 0x00404240
+  // Parent background hooks: pinned derived tables override slots 10/11.
+  virtual int on_dialog_back_draw(GraphicWin *) { return 0; }  // slot 10
+  virtual int on_dialog_item_back_draw(GraphicWin *, int, int, RECT *) { return 0; }  // slot 11
   // Slot 12 paints the contents; redraw() at slot 62 drives this callback.
   // Constructor 5EB3D0 installs table66FDD0, selecting the shared empty body.
   // The virtual is spelled on_redraw like every original derived override

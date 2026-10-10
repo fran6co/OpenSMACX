@@ -591,9 +591,8 @@ void EditGroup::on_redraw() {
     Win *const parent = win_parent_;
     if (parent == 0) return;
     WinCallbackWindow = parent;
-    const int handled = parent->vslot_10(
-        static_cast<int>(reinterpret_cast<uintptr_t>(
-            static_cast<GraphicWin *>(this))));
+    const int handled = parent->on_dialog_back_draw(
+        static_cast<GraphicWin *>(this));
     if (handled == 0) {
         static_cast<GraphicWin *>(parent)->copy(
             this, Dialog::field_24_, Dialog::field_28_, 0, 0,

@@ -104,7 +104,7 @@ class Datalink : public GraphicWin, public SubInterface {
   // 0x00429300 ?init@Datalink@@QAEXXZ - the whole-window bring-up.
   void init();
   // 0x0042A150 ?on_dialog_item_back_draw@Datalink@@QAEHPAUGraphicWin@@HHPAURECT@@@Z
-  int on_dialog_item_back_draw(GraphicWin *win, int fade, int mode, RECT *rect);
+  int on_dialog_item_back_draw(GraphicWin *win, int fade, int mode, RECT *rect) override;
   // 0x0042A2C0 ?set_cat@Datalink@@QAEXIH@Z - rebuilds the entry list for one
   // category, then dispatches to the category's own set_cat_* filler.
   void set_cat(unsigned int category, int index);
@@ -162,7 +162,7 @@ class Datalink : public GraphicWin, public SubInterface {
   Font *entry_text_font() { return &auxiliary_font11_; }
   Font *entry_link_font() { return &auxiliary_font10_; }
   // 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z
-  int on_dialog_back_draw(GraphicWin *win);
+  int on_dialog_back_draw(GraphicWin *win) override;
   void on_iface_scrolled(int, int) override;
   void on_iface_scrolling(int, int) override;
   void on_iface_left_up(int, int) override;

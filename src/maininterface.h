@@ -184,11 +184,11 @@ class MainInterface : public GraphicWin, public SubInterface {
 
  public:
   // homed from 0045c8f0.cpp
-  int on_dialog_item_back_draw(GraphicWin* a1, int a2, int a3, RECT* a4);
+  int on_dialog_item_back_draw(GraphicWin* a1, int a2, int a3, RECT* a4) override;
 
  public:
   // homed from 0045c8b0.cpp
-  int on_dialog_back_draw(GraphicWin* a1);
+  int on_dialog_back_draw(GraphicWin* a1) override;
 
  public:
   // homed from 0045c870.cpp

@@ -71,7 +71,7 @@ struct Buffer {
 };
 struct Win {
     Win *win_parent_;
-    virtual int vslot_11(GraphicWin *, int, int, RECT *) { assert(false); return 0; }
+    virtual int on_dialog_item_back_draw(GraphicWin *, int, int, RECT *) { assert(false); return 0; }
     int is_dialog_focus() { return focus; }
 };
 struct GraphicWin : Win, Buffer {};
@@ -86,7 +86,7 @@ static Dialog *active_dialog;
 static GraphicWin *active_window;
 static Entry *after_parent;
 struct Parent : GraphicWin {
-    virtual int vslot_11(GraphicWin *receiver, int id, int callback_state, RECT *area) {
+    virtual int on_dialog_item_back_draw(GraphicWin *receiver, int id, int callback_state, RECT *area) {
         assert(receiver == active_window && id == 123);
         assert(callback_state == (state ? 2 : current_row ? 1 : 0));
         equal(*area, 11, 2, 51, 22);

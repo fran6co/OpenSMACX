@@ -303,7 +303,7 @@ void RadioButton::draw_item(int position, int state) {
     const int callback_state = state != 0
         ? 2
         : (Dialog::field_F0_ == static_cast<uint32_t>(position) ? 1 : 0);
-    const int callback_result = parent->vslot_11(
+    const int callback_result = parent->on_dialog_item_back_draw(
         static_cast<GraphicWin *>(this), Dialog::pos_to_id(position),
         callback_state, &area);
     if (callback_result == 0) {
@@ -523,9 +523,8 @@ int RadioButton::attach(GraphicWin *parent, int x, int y, int flags) {
 void RadioButton::on_redraw() {
     WinCallbackWindow = win_parent_;
     if (win_parent_ == 0) return;
-    const int handled = win_parent_->vslot_10(
-        static_cast<int>(reinterpret_cast<uintptr_t>(
-            static_cast<GraphicWin *>(this))));
+    const int handled = win_parent_->on_dialog_back_draw(
+        static_cast<GraphicWin *>(this));
     if (handled == 0) {
         static_cast<GraphicWin *>(win_parent_)->copy(
             this, Dialog::field_24_, Dialog::field_28_, 0, 0,

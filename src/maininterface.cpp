@@ -2059,7 +2059,7 @@ void MainInterface::on_button_toggled(int a1, int a2) {
 
 
 // ORIGINAL: 0x0045C8B0 ?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z 0x0045C8B0-0x0045C8E6 FILE BYTE_EXACT
-// symbol    ?on_dialog_back_draw@MainInterface@@QAEHPAVGraphicWin@@@Z
+// symbol    ?on_dialog_back_draw@MainInterface@@UAEHPAVGraphicWin@@@Z
 // size      54 bytes
 // prototype int (__thiscall ?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z)(MainInterface* this, GraphicWin*)
 // callers   0   call targets   0
@@ -2134,7 +2134,7 @@ int MainInterface::on_dialog_back_draw(GraphicWin* a1) {
 }
 
 // ORIGINAL: 0x0045C8F0 ?on_dialog_item_back_draw@MainInterface@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0045C8F0-0x0045C932 FILE BYTE_EXACT
-// symbol    ?on_dialog_item_back_draw@MainInterface@@QAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
+// symbol    ?on_dialog_item_back_draw@MainInterface@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // size      66 bytes
 // prototype int (__thiscall ?on_dialog_item_back_draw@MainInterface@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(MainInterface* this, GraphicWin*, int, int, RECT*)
 // callers   0   call targets   0

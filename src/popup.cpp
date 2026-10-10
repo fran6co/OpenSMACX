@@ -477,7 +477,7 @@ void Popup::start(const char *label, int value) {
 Purpose: Draw a popup's dialog background; the legacy implementation does
          nothing and returns 0.
 // ORIGINAL: 0x00405B10 ?on_dialog_back_draw@Popup@@QAEHPAUGraphicWin@@@Z 0x00405B10-0x00405B15 BYTE_EXACT
-// symbol    ?on_dialog_back_draw@Popup@@QAEHPAVGraphicWin@@@Z
+// symbol    ?on_dialog_back_draw@Popup@@UAEHPAVGraphicWin@@@Z
 // size      5 bytes
 // prototype int (__thiscall ?on_dialog_back_draw@Popup@@QAEHPAUGraphicWin@@@Z)(Popup* this, GraphicWin*)
 // callers   0   call targets   0
@@ -3554,7 +3554,7 @@ Purpose: Draw one dialog item's background for the popup: restore the
 // HISTORICAL SCAFFOLD ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
 // ORIGINAL: 0x00405B20 ?on_dialog_item_back_draw@Popup@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x00405B20-0x00405C72 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/popup.h Popup : BasePop and existing field/dialog callback API", "source:src/basepop.h and src/dialogs.h establish the protected dialog kind member", "source:src/interface_palette.cpp textcolor_init populates source-owned TextColourTable", "source:src/diplopop.cpp source-owned DiplomacyPopup object"], "reason": "Own the dialog-item background callback as a nonvirtual Popup member: it reads Popup/BasePop state and uses the already-owned palette table, style tables and diplomacy singleton."}
-// symbol    ?on_dialog_item_back_draw@Popup@@QAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
+// symbol    ?on_dialog_item_back_draw@Popup@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // TRIED: RECT-by-value local plus Sprite/BoxSpriteParams table lookups (a3-indexed, stride 0x2C/0x28) compiles and matches structure; first divergence is #4 push/mov, not chased further.
 // HISTORICAL emitted-symbol fact (old free-function form): ?Popup_on_dialog_item_back_draw@@YIHPAVPopup@@PAXPAVGraphicWin@@HHPAUtagRECT@@@Z
 // size      338 bytes

@@ -70,7 +70,7 @@ struct Win {
             mutate_child(0), mutate_parent(0) {}
     Win *parent_window() { return parent_; }
     bool has_listbox_backfill_flag() const { return (iFlags_ & 0x80000u) != 0; }
-    virtual int vslot_11(GraphicWin *window, int index, int state, RECT *rect);
+    virtual int on_dialog_item_back_draw(GraphicWin *window, int index, int state, RECT *rect);
 };
 
 struct GraphicWin : Win, Buffer {
@@ -130,7 +130,7 @@ struct Dialogs : ListBox {
     void on_scrolling(int, int);
 };
 
-int Win::vslot_11(GraphicWin *window, int index, int state, RECT *rect) {
+int Win::on_dialog_item_back_draw(GraphicWin *window, int index, int state, RECT *rect) {
     ++slot_calls; slot_window=window; slot_index=index; slot_state=state;
     slot_rect=rect;
     if (mutate_child != 0) mutate_child->parent_ = mutate_parent;

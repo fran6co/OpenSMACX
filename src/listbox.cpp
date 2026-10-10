@@ -905,7 +905,7 @@ after_scroll_position:
             if (selected == 0) {
                 state = dialog.field_F0_ == static_cast<uint32_t>(index) ? 1 : 0;
             }
-            callback_result = parent->vslot_11(window, index, state, &row);
+            callback_result = parent->on_dialog_item_back_draw(window, index, state, &row);
             if (callback_result == 0) {
                 if (window->has_listbox_backfill_flag()) {
                     GraphicWin *const live_parent =
@@ -1758,7 +1758,7 @@ void ListBox::on_redraw() {
         handled = true;
     }
     if (!handled && parent != 0 &&
-        parent->vslot_10(static_cast<int>(reinterpret_cast<uintptr_t>(window)))
+        parent->on_dialog_back_draw(window)
             != 0) {
         handled = true;
     }

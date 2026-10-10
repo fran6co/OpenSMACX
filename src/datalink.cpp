@@ -965,7 +965,7 @@ void Datalink::draw_faction() {
 
 // ORIGINAL: 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z 0x0042A100-0x0042A150 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x42A100", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042a100.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
-// symbol    ?on_dialog_back_draw@Datalink@@QAEHPAVGraphicWin@@@Z
+// symbol    ?on_dialog_back_draw@Datalink@@UAEHPAVGraphicWin@@@Z
 int Datalink::on_dialog_back_draw(GraphicWin *win) {
     RECT rect = win->clip_rect();
     const RECT &outer = win->outer_rect();
@@ -976,7 +976,7 @@ int Datalink::on_dialog_back_draw(GraphicWin *win) {
 
 // ORIGINAL: 0x0042A150 ?on_dialog_item_back_draw@Datalink@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0042A150-0x0042A260
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x42A150", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/unrecovered/0042a150.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
-// symbol    ?on_dialog_item_back_draw@Datalink@@QAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
+// symbol    ?on_dialog_item_back_draw@Datalink@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // Historical scaffold experiment, retained from the replaced seed:
 // TRIED: computing width/height/x/y once and branching only on the `tile()` colour argument folds the compiler's output to 187 bytes (vs 272) - VC6 does not hoist a same-polarity guard's body out of line (see 0x0042A100's sibling note), so each of the three `a3` cases needs its own fully-duplicated width/height/x/y/call block. That form (cand2, below) reaches 0.834 mnemonic similarity but still differs on the exact ebx/esi/edi register allocation the original chose; landing the closest.
 int Datalink::on_dialog_item_back_draw(GraphicWin *win, int id, int mode,

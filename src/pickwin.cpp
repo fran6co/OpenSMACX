@@ -567,7 +567,7 @@ void PickWin::on_group_clicked(int a1, int, int mode) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048A840 ?on_dialog_item_back_draw@PickWin@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0048A840-0x0048A8D3 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0048a840.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
-// symbol    ?on_dialog_item_back_draw@PickWin@@QAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
+// symbol    ?on_dialog_item_back_draw@PickWin@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 int PickWin::on_dialog_item_back_draw(GraphicWin *window, int, int index,
                                       RECT *area) {
   if (window == nullptr || area == nullptr) {
