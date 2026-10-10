@@ -3834,15 +3834,17 @@ void __cdecl recurse_zorder(Win * window) {
     // get_mouse_window_recurse where the same retype held. Casts restored
     // for that measurement; the parent field is now named for structural
     // fidelity, without revisiting the pointer/int comparison.
-    int cur;
+    // The later owner-level pointer-flow recovery keeps the historical match
+    // result above while expressing the child/global identity as Win pointers.
+    Win *cur;
 
     if (window->child_count_ > 0) {
-        cur = reinterpret_cast<int>(WinZOrderWindow);
+        cur = WinZOrderWindow;
         Win **child = &window->children_[0];
         do {
             Win *c = *child;
             if ((c->iFlags_ & 0x20) == 0) {
-                if (cur != 0 && cur == reinterpret_cast<int>(c)) {
+                if (cur != 0 && cur == c) {
                     WinZOrderCount = 0;
                     found = true;
                 }
@@ -3851,7 +3853,7 @@ void __cdecl recurse_zorder(Win * window) {
                     if (child_parent == 0 || child_parent->is_visible() != 0) {
                         recurse_zorder(c);
                     }
-                    cur = reinterpret_cast<int>(WinZOrderWindow);
+                    cur = WinZOrderWindow;
                 }
                 if (cur != 0 && found) {
                     break;
@@ -3861,7 +3863,7 @@ void __cdecl recurse_zorder(Win * window) {
             ++child;
         } while (i < window->child_count_);
     } else {
-        cur = reinterpret_cast<int>(WinZOrderWindow);
+        cur = WinZOrderWindow;
     }
 
     if (!(cur != 0 && found)) {
@@ -3870,7 +3872,7 @@ void __cdecl recurse_zorder(Win * window) {
             Win **child = &window->children_[0];
             do {
                 Win *c = *child;
-                if (cur != 0 && cur == reinterpret_cast<int>(c)) {
+                if (cur != 0 && cur == c) {
                     WinZOrderCount = 0;
                     found = true;
                 }
@@ -3881,7 +3883,7 @@ void __cdecl recurse_zorder(Win * window) {
                         if (child_parent == 0 || child_parent->is_visible() != 0) {
                             recurse_zorder(c);
                         }
-                        cur = reinterpret_cast<int>(WinZOrderWindow);
+                        cur = WinZOrderWindow;
                     }
                 }
                 if (cur != 0 && found) {
@@ -9886,9 +9888,9 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
         return 0;
     }
 
-    int target;
+    Win *target;
     if (WinZOrderWindow != 0) {
-        target = reinterpret_cast<int>(window);
+        target = window;
     } else {
         target = 0;
     }
@@ -9899,7 +9901,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
         if (windowCount > 0) {
             Win **table = WinZOrderArray;
             int i = 0;
-            while (reinterpret_cast<int>(table[i]) != target) {
+            while (table[i] != target) {
                 ++i;
                 if (i >= windowCount) {
                     break;
@@ -9922,7 +9924,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
 
     if (idx >= 0) {
         for (int i = idx; i >= 0; --i) {
-            Win *w = reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i]);
+            Win *w = WinZOrderArray[i];
             if ((w->iSomeFlag_ & 1) != 0) {
                 Win *menuLike = w->win_parent_;
                 bool visible = true;
@@ -9935,7 +9937,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
                     }
                     bool doSecond = true;
                     if (target != 0) {
-                        doSecond = (target == reinterpret_cast<int>(w->poWinBase_));
+                        doSecond = (target == w->poWinBase_);
                     }
                     if (doSecond) {
                         Win *const other = w->poWinBase_;
@@ -10212,15 +10214,15 @@ void Win::update_window_to_buffer(Buffer * buffer) {
         WinZOrderCount = 0;
         if (0 < WinRootCount) {
             Win **piVar4 = WinRootWindows;
-            int iVar2 = reinterpret_cast<int>(WinZOrderWindow);
+            Win *iVar2 = WinZOrderWindow;
             do {
-                if (iVar2 != 0 && iVar2 == (int)*piVar4) {
+                if (iVar2 != 0 && iVar2 == *piVar4) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
                 if (((*piVar4)->iSomeFlag_ & 1) != 0) {
                     recurse_zorder(*piVar4);
-                    iVar2 = reinterpret_cast<int>(WinZOrderWindow);
+                    iVar2 = WinZOrderWindow;
                 }
                 iVar3++;
                 piVar4++;
@@ -10265,15 +10267,15 @@ void Win::update_window_to_buffer(Buffer * buffer) {
         WinZOrderCount = 0;
         if (0 < WinRootCount) {
             Win **piVar4 = WinRootWindows;
-            int iVar2 = reinterpret_cast<int>(WinZOrderWindow);
+            Win *iVar2 = WinZOrderWindow;
             do {
-                if (iVar2 != 0 && iVar2 == (int)*piVar4) {
+                if (iVar2 != 0 && iVar2 == *piVar4) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
                 if (((*piVar4)->iSomeFlag_ & 1) != 0) {
                     recurse_zorder(*piVar4);
-                    iVar2 = reinterpret_cast<int>(WinZOrderWindow);
+                    iVar2 = WinZOrderWindow;
                 }
                 iVar3++;
                 piVar4++;
@@ -10929,7 +10931,7 @@ void Win::close() {
                 this->hide();
                 if (i < WinRootCount) {
                     int remaining = WinRootCount - i;
-                    int *node2 = reinterpret_cast<int *>(WinRootWindows + i);
+                    Win **node2 = WinRootWindows + i;
                     do {
                         node2[0] = node2[1];
                         node2 = node2 + 1;

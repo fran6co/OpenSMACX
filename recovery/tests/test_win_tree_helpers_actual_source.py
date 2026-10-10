@@ -90,7 +90,6 @@ unsigned char WinFillColour=9;
 Win *WinPointerOwner1, *WinPointerOwner2, *WinPointerOwner3, *WinPointerOwner4;
 Win *WinFocusWindow, *WinModalWindow, *WinRootWindows[512];
 int WinRootCount;
-int ptr_int(Win *p) { return static_cast<int>(reinterpret_cast<uintptr_t>(p)); }
 // ACTUAL_TREE_HELPERS
 void reset_globals() {
     WinZOrderWindow=0; WinZOrderCount=0; WinZOrderFlag=0;
@@ -196,10 +195,6 @@ def translation(mutant=None):
     zorder = extract(text, "void __cdecl recurse_zorder(Win * window)")
     mouse = extract(text, "Win *__cdecl get_mouse_window_recurse(Win * window, int * x, int * y)")
     wrapper = extract(text, "Win *Win::get_mouse_window(int *x, int *y)")
-    # This host fixture is 64-bit; map the product's 32-bit pointer/int
-    # comparisons to a stable host helper without changing pointer ordering.
-    zorder = zorder.replace("reinterpret_cast<int>(WinZOrderWindow)", "ptr_int(WinZOrderWindow)")
-    zorder = zorder.replace("reinterpret_cast<int>(c)", "ptr_int(c)")
     if mutant == "skip_second_pass":
         changed = zorder.replace("window->poWinBase_ == window", "window->poWinBase_ != window", 1)
         assert changed != zorder
