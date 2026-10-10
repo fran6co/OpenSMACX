@@ -38,8 +38,10 @@ def assert_native_layouts(obj):
         "CvrPart":(12,{"colours_":0,"vectors_":4,"matrices_":8}),
         "CvrStep":(8,{"lead_":0,"shape_":4}),
         "CvrShadow":(12,{"field_0_":0,"field_4_":4,"field_8_":8}),
-        "CvrShape":(32,{"field_0_":0,"byte_size_":4,"scale_":8,"mid_":12,
-                       "axis_x_":20,"axis_y_":22,"axis_z_":24,"offset_x_":26,"offset_y_":28,"offset_z_":30}),
+        "CvrShape":(43,{"field_0_":0,"byte_size_":4,"scale_":8,
+                       "next_shape_offset_":12,"field_10_":16,
+                       "axis_x_":20,"axis_y_":22,"axis_z_":24,"offset_x_":26,"offset_y_":28,"offset_z_":30,
+                       "raster_origin_":32,"item_count_":38,"item_stream_":42}),
         "Caviar":(0x13D0,{"scene_scale_":0,"field_4_":4,"field_8_":8,"buffer_":20,"scene_state_":24,
                           "light_vector_":0x60,"shadow_vector_":0x6C,
                           **{f"field_{offset:X}_":offset for offset in range(0x78,0xA5,4)},
@@ -76,7 +78,7 @@ def actual_source():
     expected=("palette+0x302","palette+0x302","object","object","palette+0x302","object","palette+0x302","object")
     parts["palette_writers"]="\n".join(f"field_13CC_={n}; {body} require(instance_palettes_[{n}]=={value});"
                                          for n,(body,value) in enumerate(zip(writers,expected)))
-    parts["palette_copy"]=re.search(r"memcpy\(handle->colour_table_, self.instance_palettes_\[step\], 0x1800\);",source).group()
+    parts["palette_copy"]=re.search(r"memcpy\(handle->colour_table_, self.instance_palettes_\[instance\], 0x1800\);",source).group()
     return parts
 
 
@@ -98,7 +100,10 @@ def run_host(tmp_path, parts):
         using Bytes=std::vector<unsigned char>;
         CALLBACK_TYPE
         vox_user_chunk_fn vox_user_chunk;
-        char vox_message_buffer[256];
+        // Only the message window is modeled here, not the native callback/
+        // projection overlap or the complete shared object's layout.
+        struct { char message_[256]; } CaviarOutputMessageWindow;
+        char (&vox_message_buffer)[256]=CaviarOutputMessageWindow.message_;
         const char *vox_msg_bad_file_format="Bad file format";
         const char *vox_msg_reading_file="Reading file";
         const char *vox_msg_no_room="No room";
@@ -117,29 +122,29 @@ def run_host(tmp_path, parts):
             if(watched_failure) require(*watched_failure==nullptr);
             std::strcpy(vox_message_buffer,text);
         }
-        unsigned long allocate(unsigned long size) {
+        void *allocate(unsigned long size) {
             ++allocs;if(allocs==fail_alloc)return 0;
             require(size<1000000);
             void *result=std::malloc(size+32);require(result!=nullptr);
             std::memset(result,0xCD,size+32);allocations.push_back(result);allocation_sizes.push_back(size);
             if(mutate_count && captured_count && allocs==mutate_at){*captured_count=mutate_to;mutate_count=false;}
-            return reinterpret_cast<unsigned long>(result);
+            return result;
         }
-        void release(unsigned long address) {
-            void *pointer=reinterpret_cast<void*>(address);freed.push_back(pointer);
+        void release(void *pointer) {
+            freed.push_back(pointer);
             if(mutate_free && free_record) {
                 if(pointer==free_record->description_) free_record->palette_name_=reinterpret_cast<char*>(late_pointer);
                 if(pointer==free_record->parts_[0].colours_) free_record->parts_=&alternate_part;
             }
             if(shorten_free && free_record && pointer==free_record->parts_[0].colours_) free_record->part_count_=1;
         }
-        long read_bytes(unsigned long fd,void *out,unsigned long size) {
+        int read_bytes(int fd,char *out,long size) {
             require(fd==17);++reads;if(reads==fail_read)return -1;
             if(size>input.size()-position)return -1;
-            if(capture_count && size==4)captured_count=static_cast<int*>(out);
-            std::memcpy(out,input.data()+position,size);position+=size;return long(size);
+            if(capture_count && size==4)captured_count=reinterpret_cast<int*>(out);
+            std::memcpy(out,input.data()+position,size);position+=size;return int(size);
         }
-        long seek_bytes(unsigned long fd,long count,int origin) {
+        long seek_bytes(int fd,long count,int origin) {
             require(fd==17 && origin==1);++seeks;if(seeks==fail_seek)return -1;
             require(count>=0 && size_t(count)<=input.size()-position);
             position+=size_t(count);return long(position);
@@ -310,9 +315,9 @@ def run_host(tmp_path, parts):
                 uint8_t *(&instance_palettes_)[200]=self.instance_palettes_;int field_13CC_;
                 PALETTE_WRITERS
                 struct Handle {uint8_t *colour_table_;} handle_value={rendered};Handle *handle=&handle_value;
-                for(int step=0;step<8;++step) {
+                for(int instance=0;instance<8;++instance) {
                     PALETTE_COPY
-                    require(std::memcmp(rendered,instance_palettes_[step],sizeof(rendered))==0);
+                    require(std::memcmp(rendered,instance_palettes_[instance],sizeof(rendered))==0);
                 }
                 require(instance_palettes_[8]==nullptr && instance_palettes_[199]==nullptr);
             }
@@ -340,7 +345,7 @@ def test_behavior_damage_controls(tmp_path,damage):
     parts=actual_source()
     if damage=="magic":parts["vox_load_record"]=parts["vox_load_record"].replace("0x00525643","0x00525644")
     elif damage=="user_length":parts["vox_load_record"]=parts["vox_load_record"].replace("record->user_length_ = vox_chunk_payload(header.length)","record->user_length_ = 3")
-    elif damage=="user_error":parts["vox_load_record"]=parts["vox_load_record"].replace("if (strlen(vox_message_buffer) == 0)","if (true)")
+    elif damage=="user_error":parts["vox_load_record"]=parts["vox_load_record"].replace("if (strlen(CaviarOutputMessageWindow.message_) == 0)","if (true)")
     elif damage=="patch_offset":parts["vox_read_shape_patches"]=parts["vox_read_shape_patches"].replace("prefix + sizeof(uint32_t)","prefix")
     elif damage=="patch_length":parts["vox_read_shape_patches"]=parts["vox_read_shape_patches"].replace("(uint32_t)payload - sizeof(prefix)","(uint32_t)payload - sizeof(prefix) - 8u")
     elif damage=="count_check":parts["vox_read_parts"]=parts["vox_read_parts"].replace("if (expected_count != index)","if (false)")

@@ -2116,8 +2116,7 @@ extern "C" char __cdecl sub_63f9b0(unsigned char *record);
 // The CVR loader, homed below (0x006385D0..0x00638720, 0x00638CC0, 0x00638DE0,
 // 0x0063B072). Declarations first so the loader's own call graph - which is
 // mutually recursive through the chunk readers - compiles in any order.
-extern "C" unsigned char *__cdecl vox_walk_scaled_chain(unsigned char *node,
-                                                        float scale);
+extern "C" CvrShape *__cdecl vox_walk_scaled_chain(CvrShape *node, float scale);
 extern "C" int __cdecl vox_read_exact(int fd, void *buffer, int count);
 extern "C" int __cdecl vox_alloc_block(int size, void **out);
 extern "C" int __cdecl vox_read_length_field(int fd, CvrRecord *record,
@@ -2925,24 +2924,27 @@ Purpose: Walk a node chain and return the node the walk stops at. Each node
 //        or not) loads [esp+8] first and fmul's the node: 15 of 23.
 Return Value: the node the walk stopped at.
 */
-extern "C" unsigned char *__cdecl vox_walk_scaled_chain(unsigned char *node,
-                                                        float scale) {
-    unsigned char *cursor = node;
-    unsigned char flags = *cursor;
+extern "C" CvrShape *__cdecl vox_walk_scaled_chain(CvrShape *node, float scale) {
+    CvrShape *cursor = node;
+    unsigned char flags = static_cast<unsigned char>(cursor->field_0_);
     while (flags & 1) {
         // The extent is read into its own local first: the image loads the
         // node's extent into st(0) and multiplies by the caller's factor, so
         // the read has to be a statement of its own ahead of the multiply.
-        float extent = *(float *)(cursor + 8);
-        if (!(extent * scale < vox_sqrt_two)) {
+        float extent = cursor->scale_;
+        // FCOMP/FNSTSW tests C0, so unordered products continue as well as
+        // values below the cut. A negated '<' would stop on NaN instead.
+        if (extent * scale >= vox_sqrt_two) {
             break;
         }
-        unsigned char *next = cursor + *(int *)(cursor + 0xc);
-        float next_extent = *(float *)(next + 8);
-        if (!(next_extent * scale <= vox_sqrt_two)) {
+        CvrShape *next = reinterpret_cast<CvrShape *>(
+            reinterpret_cast<unsigned char *>(cursor) + cursor->next_shape_offset_);
+        float next_extent = next->scale_;
+        // The second image gate accepts C0 or C3, including unordered.
+        if (next_extent * scale > vox_sqrt_two) {
             break;
         }
-        flags = *next;
+        flags = static_cast<unsigned char>(next->field_0_);
         cursor = next;
     }
     return cursor;
@@ -4372,11 +4374,9 @@ void __cdecl vox_load_scene_view(
         VoxInstance &instance = state.instances_[index];
         if ((instance.instance_colour_[step] & 0x80) != 0) continue;
 
-        const CvrShape *shape = reinterpret_cast<const CvrShape *>(
-            vox_walk_scaled_chain(
-                reinterpret_cast<unsigned char *>(
-                    state.instance_steps_[index].shape_),
-                CaviarSceneProjectionScratch.projected_scale_));
+        const CvrShape *shape = vox_walk_scaled_chain(
+            state.instance_steps_[index].shape_,
+            CaviarSceneProjectionScratch.projected_scale_);
         const float extent = shape->scale_;
 
         VOX_Vect projection_position;
@@ -5574,11 +5574,9 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
         if ((instance.instance_colour_[step] & 0x80) != 0) {
             continue;
         }
-        const CvrShape *node = reinterpret_cast<const CvrShape *>(
-            vox_walk_scaled_chain(
-                reinterpret_cast<unsigned char *>(
-                    state->instance_steps_[index].shape_),
-                CaviarSceneProjectionScratch.projected_scale_));
+        const CvrShape *node = vox_walk_scaled_chain(
+            state->instance_steps_[index].shape_,
+            CaviarSceneProjectionScratch.projected_scale_);
 
         // The part's world position: its own vector through the view's
         // rotation, plus the view's offset.

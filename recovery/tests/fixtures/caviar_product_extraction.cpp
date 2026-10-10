@@ -16,7 +16,8 @@ struct CvrShape {
     uint32_t field_0_;
     uint32_t byte_size_;
     float scale_;
-    uint8_t mid_[8];
+    int32_t next_shape_offset_;
+    uint32_t field_10_;
     int16_t axis_x_, axis_y_, axis_z_;
     int16_t offset_x_, offset_y_, offset_z_;
     int16_t raster_origin_[3];
@@ -167,7 +168,7 @@ static void vox_matrix_inverse(const float source[3][3], float output[3][3]) {
     memcpy(output, copy, sizeof(copy));
 }
 static void sub_63fa80(const VOX_Matrix *) { }
-static unsigned char *__cdecl vox_walk_scaled_chain(unsigned char *node, float) {
+static CvrShape *__cdecl vox_walk_scaled_chain(CvrShape *node, float) {
     return node;
 }
 static bool __cdecl vox_part_behind(const VOX_Vect *, float, const VoxCameraBlock *) {

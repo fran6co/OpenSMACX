@@ -202,7 +202,11 @@ struct CvrShape {
   uint32_t field_0_;   // +0x00, serialized prefix; interpretation unresolved
   uint32_t byte_size_; // +0x04, current shape bytes moved by patch chunks
   float scale_;        // +0x08, the whole-shape scale
-  uint8_t mid_[0x8];   // +0x0C
+  // The scale-chain walker follows this serialized byte displacement from
+  // the current shape, not a relocated native pointer. Bit 0 of field_0_
+  // gates its use; the following word's interpretation remains unresolved.
+  int32_t next_shape_offset_; // +0x0C
+  uint32_t field_10_;         // +0x10
   int16_t axis_x_;     // +0x14, the three per-axis extents the AABB is built from
   int16_t axis_y_;     // +0x16
   int16_t axis_z_;     // +0x18
@@ -215,6 +219,8 @@ struct CvrShape {
 };
 #pragma pack(pop)
 
+static_assert(offsetof(CvrShape, next_shape_offset_) == 0x0C,
+              "CvrShape relative scale-chain link must remain at +0xc");
 static_assert(offsetof(CvrShape, raster_origin_) == 0x20,
               "CvrShape raster origin must follow the historical prefix");
 static_assert(offsetof(CvrShape, item_count_) == 0x26,
