@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "task_id": "designwin-prototype-scans-owner-oct10",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Express both original replacement-slot scans through actual VehPrototype members",
+  "base_revision": "8b14f137db5e11e9344ebd948241028983d8c047",
+  "subjects": [{
+    "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+    "address_space": "pe:va",
+    "address": 4422640
+  }],
+  "editable_files": ["src/designwin.cpp", "recovery/tests/test_designwin_prototype_scans_owner_oct10.py"],
+  "evidence": [
+    "Pinned437D59..437DA5 begins first scan at VehPrototypes flags9AB898, reads obsolete byteflags-4, tests flags lowbit1 and steps34 over64 faction slots. Existing VehPrototype declares obsolete_factions at2C and flags at30 with size34.",
+    "Pinned43811F..4381xx begins second scan at prototype category9AB893, reads category0, obsolete1 and flags5 while stepping34. Category is existing int8_t unk_1; membership is unsigned byte. Preserve first-obsolete/last-inactive versus category/queue replacement policies and byte-mask semantics, original loop endpoints and early settled exit.",
+    "Only replace known byte cursors with existing fields in the complete design_it owner. Do not invent semantic names for the category, guess library/TU boundaries, normalize unchecked paths, remove historical evidence or grant claims. Native whole-DesignWin before/current verdicts, actual extracted-loop controls with independent selection oracles and damaged field/bound/priority mutants, actual prototype layout witnesses, annotation continuity, independent review and fresh complete compile/link precede coordinator integration."
+  ]
+}
