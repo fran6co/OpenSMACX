@@ -1,0 +1,24 @@
+{
+  "event_id": "02e9b021a3f0e5867d6aad539991f6106bd33cc6880ee581b65bd7d38af3a0a1",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/texture_draw_coast_wide_host.cpp",
+      "recovery/tests/fixtures/texture_draw_trans_host.cpp",
+      "recovery/tests/fixtures/texture_opaque_lit_owner_oct10.cpp",
+      "recovery/tests/fixtures/texture_sub61cb50_actual_host.cpp",
+      "recovery/tests/fixtures/texture_sub61df60/host.cpp",
+      "recovery/tests/fixtures/texture_sub61f0d0_actual_host.cpp"
+    ],
+    "evidence": [
+      "Full Texture host controls exposed six standalone fixture classes and two header-extraction patterns retaining old void* pixel member. Expand fixture files before updating their type, keep all assertions and mutant behavior. Native build-hjblm9_y already passes; source remains unchanged while repairing controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "typed-pixel-host-fixtures-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-pixel-member-owner-oct10"
+}
