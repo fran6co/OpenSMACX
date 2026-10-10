@@ -5754,12 +5754,14 @@ int __cdecl sub_61f790(EdgeScan *edge) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
+// These entries read an EdgeScan-shaped record, but incoming producers remain
+// unknown; keep each recovered entry's existing parameter boundary.
 void __cdecl sub_61f800(void *param_1, void *param_2) {
-    char *p1 = reinterpret_cast<char *>(param_1);
-    char *p2 = reinterpret_cast<char *>(param_2);
+    EdgeScan *left = static_cast<EdgeScan *>(param_1);
+    EdgeScan *right = static_cast<EdgeScan *>(param_2);
 
-    int p1_1c = *reinterpret_cast<int *>(p1 + 0x1c);
-    int p2_1c = *reinterpret_cast<int *>(p2 + 0x1c);
+    int p1_1c = left->accumC;
+    int p2_1c = right->accumC;
 
     if (*blit_clip_left >= p2_1c) {
         return;
@@ -5775,7 +5777,7 @@ void __cdecl sub_61f800(void *param_1, void *param_2) {
     int divisor = dy << 16;
     __int64 divisor64 = (__int64)divisor;
 
-    int d_c = *reinterpret_cast<int *>(p2 + 0xc) - *reinterpret_cast<int *>(p1 + 0xc);
+    int d_c = right->accumA - left->accumA;
     __int64 q_c = (((__int64)d_c) << 16) / divisor64;
     int dc_step_raw = (int)q_c;
     int sign_c = 1;
@@ -5786,9 +5788,9 @@ void __cdecl sub_61f800(void *param_1, void *param_2) {
             dc_step_adj = dc_step_raw + 0x10000;
         }
     }
-    int acc_y = (dc_step_adj >> 1) + *reinterpret_cast<int *>(p1 + 0xc);
+    int acc_y = (dc_step_adj >> 1) + left->accumA;
 
-    int d_10 = *reinterpret_cast<int *>(p2 + 0x10) - *reinterpret_cast<int *>(p1 + 0x10);
+    int d_10 = right->accumB - left->accumB;
     __int64 q_10 = (((__int64)d_10) << 16) / divisor64;
     int d10_step_raw = (int)q_10;
     *blit_slot_4e8 = TextureRowPitchScratch;
@@ -5800,7 +5802,7 @@ void __cdecl sub_61f800(void *param_1, void *param_2) {
         }
     }
     int cross_term = (d10_step_adj >> 16) * (TextureRowPitchScratch);
-    int acc_x = (d10_step_adj >> 1) + *reinterpret_cast<int *>(p1 + 0x10);
+    int acc_x = (d10_step_adj >> 1) + left->accumB;
 
     int p2_1c_clamped = p2_1c;
     if (*blit_clip_right <= p2_1c_clamped) {
@@ -6335,14 +6337,14 @@ int __cdecl sub_61fdf0(EdgeScan *edge) {
 // emitter computes declarations; it does not carry lessons.
 
 void __cdecl sub_6202e0(void *param_1, void *param_2) {
-    char *p1 = reinterpret_cast<char *>(param_1);
-    char *p2 = reinterpret_cast<char *>(param_2);
+    EdgeScan *left = static_cast<EdgeScan *>(param_1);
+    EdgeScan *right = static_cast<EdgeScan *>(param_2);
     unsigned short *const g_bb52c_w = blit_light_pack_a;
 
-    int p1_1c = *reinterpret_cast<int *>(p1 + 0x1c);
-    *blit_light_accum_b = *reinterpret_cast<int *>(p1 + 0x34);
-    int p2_1c = *reinterpret_cast<int *>(p2 + 0x1c);
-    *blit_light_step_b = *reinterpret_cast<int *>(p2 + 0x34);
+    int p1_1c = left->accumC;
+    *blit_light_accum_b = left->accumD;
+    int p2_1c = right->accumC;
+    *blit_light_step_b = right->accumD;
 
     if (*blit_clip_left >= p2_1c) {
         return;
@@ -6362,7 +6364,7 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
                       (unsigned int)((*blit_light_step_b - *blit_light_accum_b) << 8);
     *g_bb52c_w = static_cast<unsigned short>(num52c / divisor64);
 
-    int d_c = *reinterpret_cast<int *>(p2 + 0xc) - *reinterpret_cast<int *>(p1 + 0xc);
+    int d_c = right->accumA - left->accumA;
     __int64 q_c = (((__int64)d_c) << 16) / divisor64;
     int dc_step_raw = (int)q_c;
     int sign_c = 1;
@@ -6373,9 +6375,9 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
             dc_step_adj = dc_step_raw + 0x10000;
         }
     }
-    int acc_y = (dc_step_adj >> 1) + *reinterpret_cast<int *>(p1 + 0xc);
+    int acc_y = (dc_step_adj >> 1) + left->accumA;
 
-    int d_10 = *reinterpret_cast<int *>(p2 + 0x10) - *reinterpret_cast<int *>(p1 + 0x10);
+    int d_10 = right->accumB - left->accumB;
     __int64 q_10 = (((__int64)d_10) << 16) / divisor64;
     int d10_step_raw = (int)q_10;
     *blit_slot_4e8 = TextureRowPitchScratch;
@@ -6387,7 +6389,7 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
         }
     }
     int cross_term = (d10_step_adj >> 16) * (TextureRowPitchScratch);
-    int acc_x = (d10_step_adj >> 1) + *reinterpret_cast<int *>(p1 + 0x10);
+    int acc_x = (d10_step_adj >> 1) + left->accumB;
 
     int p2_1c_clamped = p2_1c;
     if (*blit_clip_right <= p2_1c_clamped) {
@@ -6538,17 +6540,17 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
 // emitter computes declarations; it does not carry lessons.
 
 void __cdecl sub_61fe70(int p1, int p2) {
-    char *a = reinterpret_cast<char *>(p1);
-    int p1_0xc  = *reinterpret_cast<int *>(a + 0xc);
-    int p1_0x10 = *reinterpret_cast<int *>(a + 0x10);
-    p1 = *reinterpret_cast<int *>(a + 0x1c);
-    *blit_light_accum_b = *reinterpret_cast<int *>(a + 0x34);
+    EdgeScan *left = reinterpret_cast<EdgeScan *>(p1);
+    int p1_0xc  = left->accumA;
+    int p1_0x10 = left->accumB;
+    p1 = left->accumC;
+    *blit_light_accum_b = left->accumD;
 
-    char *b = reinterpret_cast<char *>(p2);
-    int p2_0xc  = *reinterpret_cast<int *>(b + 0xc);
-    p2 = *reinterpret_cast<int *>(b + 0x10);
-    int p2_0x1c = *reinterpret_cast<int *>(b + 0x1c);
-    *blit_light_step_b = *reinterpret_cast<int *>(b + 0x34);
+    EdgeScan *right = reinterpret_cast<EdgeScan *>(p2);
+    int p2_0xc  = right->accumA;
+    p2 = right->accumB;
+    int p2_0x1c = right->accumC;
+    *blit_light_step_b = right->accumD;
 
     if (*blit_clip_left < p2_0x1c && p1 < *blit_clip_right && (p2_0x1c - p1) > 0) {
         int denom = (p2_0x1c - p1) << 16;
@@ -6707,10 +6709,12 @@ void __cdecl sub_61fe70(int p1, int p2) {
 // emitter computes declarations; it does not carry lessons.
 
 void __cdecl sub_620640(int param_1, int param_2) {
-    int y1 = *reinterpret_cast<int *>(param_1 + 0x1c);
-    *blit_light_accum_b = *reinterpret_cast<unsigned int *>(param_1 + 0x34);
-    int y2 = *reinterpret_cast<int *>(param_2 + 0x1c);
-    *blit_light_step_b = *reinterpret_cast<int *>(param_2 + 0x34);
+    EdgeScan *left = reinterpret_cast<EdgeScan *>(param_1);
+    EdgeScan *right = reinterpret_cast<EdgeScan *>(param_2);
+    int y1 = left->accumC;
+    *blit_light_accum_b = left->accumD;
+    int y2 = right->accumC;
+    *blit_light_step_b = right->accumD;
 
     if (!(*blit_clip_left < y2 && y1 < *blit_clip_right && (y2 - y1) != 0 && y1 <= y2)) {
         return;
@@ -6723,7 +6727,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
     *blit_light_pack_a =
         static_cast<unsigned short>(num1 / static_cast<__int64>(dy16));
 
-    int dx = *reinterpret_cast<int *>(param_2 + 0xc) - *reinterpret_cast<int *>(param_1 + 0xc);
+    int dx = right->accumA - left->accumA;
     __int64 num2 = (static_cast<__int64>(dx * 0x100 >> 0x10) << 32) |
                    static_cast<unsigned int>(dx * 0x1000000);
     __int64 quot1_64 = num2 / static_cast<__int64>(dy16);
@@ -6737,9 +6741,9 @@ void __cdecl sub_620640(int param_1, int param_2) {
         }
     }
     unsigned int xAcc = static_cast<unsigned int>(dxFracAdj >> 1) +
-                         *reinterpret_cast<unsigned int *>(param_1 + 0xc);
+                         static_cast<unsigned int>(left->accumA);
 
-    int dz = *reinterpret_cast<int *>(param_2 + 0x10) - *reinterpret_cast<int *>(param_1 + 0x10);
+    int dz = right->accumB - left->accumB;
     __int64 num3 = (static_cast<__int64>(dz >> 0x10) << 32) |
                    static_cast<unsigned int>(dz * 0x10000);
     __int64 quot2_64 = num3 / static_cast<__int64>(dy16);
@@ -6754,7 +6758,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
     }
     int zWholeStep = (dzFracAdj >> 0x10) * (TextureRowPitchScratch);
     unsigned int zAcc = static_cast<unsigned int>(dzFracAdj >> 1) +
-                         *reinterpret_cast<unsigned int *>(param_1 + 0x10);
+                         static_cast<unsigned int>(left->accumB);
 
     int yEnd = y2;
     if (*blit_clip_right <= yEnd) {
