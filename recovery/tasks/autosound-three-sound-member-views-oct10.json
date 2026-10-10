@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "task_id": "autosound-three-sound-member-views-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover evidenced Sound pointer views for AutoSound words10/11/12 and their complete current Win consumer closure after correcting the erroneous Scroll Sprite writer",
+  "base_revision": "38f3563ec3e23a6d1e0b692161999bfd036388a7",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6470272
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6470640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6471120
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6470976
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6251856
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6252672
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6252304
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6219792
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6219952
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6220112
+    }
+  ],
+  "editable_files": [
+    "src/autosound.h",
+    "src/autosound.cpp",
+    "src/win.h",
+    "src/win.cpp",
+    "recovery/tests/test_autosound_receiver_views.py",
+    "recovery/tests/test_win_sound_product_source.py",
+    "recovery/tests/test_autosound_three_sound_views_oct10.py"
+  ],
+  "evidence": [
+    "After38f3563ec corrected Scroll writes to real FlatButton+AD4/+AD8/+ADC, no remaining source Sprite writer uses AutoSound+28/+2C/+30. Current member10/11/12 consumers in Win left-up/right-up/right-down and dispatch21/22/23 call actual Sound slots23/7. Independently reviewed source closure supports Sound* interface views, not original spelling, nonzero producers, ownership or lifetime.",
+    "AutoSound constructor/close/close2 copy raw defaults9/10/11; init zeros them. Retain the heterogeneous raw uint32_t defaults array and its loader-zero/FX-reset behavior. Genuine mixed-use val20(ListBox flags/Sound) and val31(Sound/Win) remain neutral. No changes to branches, ordering, vtables or allocation.",
+    "Capture fresh full-unit baseline/current verdict continuity for AutoSound and Win, retain identity/claims/seed history, native layout and default-copy controls, actual caller behavior/mutations, source references/mappings, independent review and fresh full compile/link. No new application function identity/coverage or full-game acceptance claim."
+  ]
+}
