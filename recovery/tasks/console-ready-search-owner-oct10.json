@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "task_id": "console-ready-search-owner-oct10",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Recover the complete ready-vehicle selection operation through genuine Veh members and original live-count traversal",
+  "base_revision": "3cde305ff1cec450230cd8518e096630e32c1df5",
+  "subjects": [{
+    "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+    "address_space": "pe:va",
+    "address": 5311712
+  }],
+  "editable_files": ["src/console.cpp", "recovery/tests/test_console_ready_search_owner_oct10.py"],
+  "evidence": [
+    "Pinned510CE0..510F48 anchors inner vehicle cursor at95282C, four bytes into the already declared Veh allocation952828 with stride34. Cursor-4/-2 are x/y; cursor+0D is order at11; AH masks02/40 are state masks0200/4000. Source member declarations establish the same widths and offsets.",
+    "Original510EA3 reloads vehicle_current_count_ after each readiness call and iteration. Preserve that live traversal instead of retaining a count captured before callback calls. Keep all original pass/state-clear order, focus selection, global cursor/faction source, wrap-distance scoring, selected-vehicle tie break and unchecked paths.",
+    "Require complete actual-body controls, state-bit/order/coordinate/count/focus/tie-breaking damaging mutations, native whole-Console before/current diagnostics with outside-subject verdict continuity, historical mapping/claim/note continuity, independent review and a fresh full compile/link. No new claims, policy changes, fabricated owner names, safety fixes or game acceptance assertions."
+  ]
+}
