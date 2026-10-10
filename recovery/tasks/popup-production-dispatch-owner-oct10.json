@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "3f9a69476bd1031221f04b90118763d6c421ee90",
+  "editable_files": [
+    "src/popup.cpp",
+    "recovery/tests/test_popup_production_dispatch_owner_oct10.py",
+    "recovery/tests/fixtures/popup_production_dispatch_owner_oct10.cpp"
+  ],
+  "evidence": [
+    "Independent pinned audits:445794 loads FactionMusic at74DAA0;44579A-4457A0 null-checks and calls vtable+138 without pushed arguments. Existing FactionAmbience events begin75,tech76,terraform77,production78,general79 establish production at138; current callback uses general.",
+    "Independent input_callback4457C0 null-check/tail virtual+13C and its correct source general call corroborate the distinction. Preserve this neighbor unchanged; actual derived MAmbience4474B0 and SAmbience447840 production methods already exist and differ from their general effects; load_music publishes a genuine derived instance.",
+    "Bounded actual-source callback control must distinguish production from general through a derived spy and a compiling old-general mutant. Preserve original preference/armed/index gates, secret-project remap19->25, wave43 clock guard, busy-sound path, Wave load/play and effect38 behavior. No new globals/header/ABI changes, defensive guards or slot arrays; retain all markers, historical claims and findings.",
+    "Host mocks prove bounded event selection, not original physical virtual-table allocation, native runtime or whole-game acceptance. Request explicit expansion for any proved cross-owner dependency; bank no new claim."
+  ],
+  "intent": "Recover the original production-event virtual dispatch from the popup wave callback using the existing FactionAmbience hierarchy, preserving all original sound, preference, index, remap and error behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4478640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-production-dispatch-owner-oct10"
+}
