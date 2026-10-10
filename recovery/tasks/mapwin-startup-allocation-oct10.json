@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "task_id": "mapwin-startup-allocation-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Express the original startup allocation of seven MapWin objects through typed slots and genuine new-expression lifetimes",
+  "base_revision": "5fab410a265e5cb34ef31c1e44da946cb77bb652",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5828672}
+  ],
+  "editable_files": ["src/game.cpp", "recovery/tests/test_mapwin_startup_allocation_oct10.py"],
+  "evidence": [
+    "MapWinTable is source-bound eight-pointer storage7D3C3C..7D3C5C. Original system_init58F040 allocates/constructs slots1..7 and publishes ConsoleGlobal toslot0 only afterward58F1C1. Existing body uses genuine new MapWin but still casts table pointers toint to express the signedcursor bound. The real array permits a signed1..7 index loop without changing construction, publication, failure paths or callback ordering.",
+    "Change only the allocation loop and explanatory comment, retain actual new-expression and all identities/spans/claims/lessons including unwind660BD7..660BEC. Complete native Game unit before/current measurement, outside-body text/identity continuity, actual loop construction/failure controls, relevant startup regressions, fresh full application compile/link and independent review precede manual commit. Temporary matching regression is permitted without demotion; no bugfix or new coverage claim. Host constructor controls are bounded source-order evidence, not native EH-frame or full-game proof."
+  ]
+}
