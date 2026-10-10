@@ -1,0 +1,38 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7a1a6230a0d95bee95f55f3640e555f37cedb385",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/tests/test_diplo_proposal_rounding_owner_oct10.py",
+    "recovery/tests/fixtures/diplo_proposal_rounding_owner_oct10.cpp"
+  ],
+  "evidence": [
+    "Independent pin5445C5..5445F9: wrap-double cap, wrap turn*5, signed maximum, signed IMUL51EB851F/SAR highproduct4/signcorrection (/50), two LEA*5 then SHL1 (*50). Current propose_pact_ahead_refusal uses comparison/100*50; comparison50 gives0 instead of pinned50. Preserve max staging and all mode/offer/energy branch behavior.",
+    "Independent pin54537C..5453DA: signed weighted_energy IDIV result enters IMUL51EB851F/SAR4/signcorrection (/50), then two LEA*5 (*25), no further factor2. Current treaty_score=weighted_energy/100*50 differs:50 gives0 instead of25. Preserve live faction reads, wrapping product and signed IDIV staging, neighboring commerce and dialog logic.",
+    "Independent pin546415..54644E: wrapped(4-policy_class)*score, signed truncating /4, wrapped+24; IMUL51EB851F/SAR3/signcorrection (/25); LEA*5*5. Current proposal_attack_threshold=(score_after_class+24)/100*25 differs: score_after_class1 gives0 instead of25. Preserve original overflow, signed staging and branch conditions.",
+    "Original earlier read-only matches conclusion was withdrawn after coordinator counterexamples. Magic constant alone never proves a divisor: new controls must emulate signed64-bit multiplication, high product, explicit SAR3/SAR4 and sign correction plus final wrap scaling. Compile actual helper/expressions, not a copied desired formula. Cover positive/negative boundaries, INT limits and composed wrapping stages; compile original wrong-expression mutants and show behavioral failures.",
+    "Scope only these expressions/actual-helper adjustment and new bounded host controls. All original annotations/spans/claims/history, other faction functions, headers/globals/storage, compiler flags and original error behavior unchanged. Request scope expansion if a proved full-body fixture golden needs correction; do not suppress existing tests. No new body coverage or byte-exact claim implied by arithmetic repair.",
+    "Separate isolated worker from Texture ownership; coordinator runs Git/native measurements/build/link/integration. Independent review and fresh scoped checks required; host controls are not full-game acceptance."
+  ],
+  "intent": "Recover the original signed rounding and scaling of three diplomacy proposal stages, with numeric controls that emulate the literal pinned multiply-high pipeline.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5520320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5525056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5529216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "diplo-proposal-rounding-owner-oct10"
+}
