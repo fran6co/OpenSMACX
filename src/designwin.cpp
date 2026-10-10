@@ -4304,22 +4304,20 @@ int DesignWin::design_it() {
         // this faction marked obsolete that carries nothing live, else the
         // last inactive one, and ask before its type is overwritten.
         int own = factionID_ * 0x40;
-        unsigned char *flags_walk =
-            reinterpret_cast<unsigned char *>(&VehPrototypes[own].flags);
-        int mask = 1 << (factionID_ & 0x1F);
+        const uint8_t mask = static_cast<uint8_t>(1u << (factionID_ & 0x1F));
         int checked = 0;
         do {
-            if ((flags_walk[-4] & mask) != 0
+            const VehPrototype &candidate = VehPrototypes[own];
+            if ((candidate.obsolete_factions & mask) != 0
                 && PlayersData[factionID_].proto_id_active[own] == 0
                 && PlayersData[factionID_].proto_id_queue[own] == 0) {
                 protoID_ = own;
                 break;
             }
-            if ((*flags_walk & PROTO_ACTIVE) == 0) {
+            if ((candidate.flags & PROTO_ACTIVE) == 0) {
                 protoID_ = own;
             }
             ++checked;
-            flags_walk += 0x34;
             ++own;
         } while (checked < 0x40);
 
@@ -4345,29 +4343,28 @@ int DesignWin::design_it() {
             || protoAbilityFlags_ != VehPrototypes[protoID_].ability_flags
             || protoReactorType_ != VehPrototypes[protoID_].reactor_id)) {
         int search = factionID_ * 0x40;
-        char *category_walk =
-            reinterpret_cast<char *>(&VehPrototypes[search].unk_1);
-        char current_category =
+        const int8_t current_category =
             VehPrototypes[protoID_].unk_1;
+        const uint8_t mask = static_cast<uint8_t>(1u << (factionID_ & 0x1F));
         int replaced = 0;
         int looked = 0;
         do {
-            if ((category_walk[5] & PROTO_ACTIVE) == 0) {
+            const VehPrototype &candidate = VehPrototypes[search];
+            if ((candidate.flags & PROTO_ACTIVE) == 0) {
                 protoID_ = search;
                 goto settled;
             }
-            if ((category_walk[1] & (1 << (factionID_ & 0x1F))) != 0
-                && (*category_walk == current_category
+            if ((candidate.obsolete_factions & mask) != 0
+                && (candidate.unk_1 == current_category
                     || PlayersData[factionID_].proto_id_active[search] == 0)
                 && PlayersData[factionID_].proto_id_active[search] == 0) {
                 if (PlayersData[factionID_].proto_id_queue[search] == 0) {
                     protoID_ = search;
                     replaced = 1;
-                } else if (replaced == 0 && *category_walk == current_category) {
+                } else if (replaced == 0 && candidate.unk_1 == current_category) {
                     protoID_ = search;
                 }
             }
-            category_walk += 0x34;
             ++looked;
             ++search;
         } while (looked < 0x40);
