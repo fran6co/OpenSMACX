@@ -3227,7 +3227,8 @@ struct EdgeLocal {
 };
 
 // ORIGINAL: 0x00619D80 Texture::draw_trans2 0x00619D80-0x0061A23F FILE
-// symbol    ?draw_trans2@Texture@@QAEHPAVBuffer@@PAHH@Z
+// RECOVERY_BINDING: v1 {"reason":"Recover the transparent rasterizer's geometry argument as the shared Vert coordinate-pair type.","evidence":["The pinned original publishes the argument into geometry pointer cell 0x9BB4F4, reads signed x/y at offsets0/4 and advances by8. Current typed edge setup consumes that same shared Vert pointer.","The historical decorated name was generated seed metadata, not original debug type evidence. No incoming producer is established; this binds the consumer contract, not original source spelling."]}
+// symbol    ?draw_trans2@Texture@@QAEHPAVBuffer@@PAUVert@@H@Z
 // TRIED: MISMATCH #4 (push vs mov, prologue) on a 1215-byte function whose own Ghidra decompilation admits it lost the x87 stack (float10/extraout_ST0/in_ST2 markers). Transcribed structure: get_data, min/max vertex scan, two setup_edge calls, an outer per-scanline loop with periodic edge-refresh (mirrors the counter/threshold DDA shape already used at 0x005D9FB0's sibling), and a packed dual-accumulator inner blend loop transcribed instruction-by-instruction from the raw asm (0x61A17C-0x61A1F2) rather than Ghidra's CONCAT/CARRY text. The perspective slope (1/dz, du, dv) is modelled as plain persistent `double`s refreshed only when dz>0 - matching WHEN the original recomputes, not its literal FPU choreography. EdgeScan is opaque (setup_edge is itself unrecovered); the 13-field local struct order is inferred from read/write order, not a confirmed layout.
 // working copy - scaffold materialised by --work
 // size      1215 bytes
@@ -3238,9 +3239,9 @@ struct EdgeLocal {
 // calls     0x005E3373 0x005E34A3 0x00624D80
 
 
-int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
+int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
     *blit_pixel_base = a1->get_data();
-    *blit_edge_uvs_b = reinterpret_cast<Vert *>(a2);
+    *blit_edge_uvs_b = a2;
     *blit_texture_pixels = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     *blit_texture_height = static_cast<int>(iHeight_);
@@ -3268,7 +3269,7 @@ int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
         int maxX = -0x7ffd;
         int minYIdx = 0;
         int idx = 0;
-        Vert *vp = reinterpret_cast<Vert *>(a2);
+        Vert *vp = a2;
 
         if (*blit_vertex_count != 0) {
             do {
@@ -5171,7 +5172,8 @@ free_and_finish:
 }
 
 // ORIGINAL: 0x0061C630 sub_61c630 0x0061C630-0x0061CB4E FILE
-// symbol    ?sub_61c630@Texture@@QAEXPAVBuffer@@PAHPAV1@PAEHH@Z
+// RECOVERY_BINDING: v1 {"reason":"Recover geometry and UV arrays as Vert pointers; the final argument is consumed, not unused.","evidence":["Pinned61C630 publishes its second/final arguments into geometry/UV pointer cells9BB4F4/9BB490 and walks signed coordinates at eight-byte stride. Typed edge setup consumes both channels.","The real623F50sentinel wrapper forwards both values unchanged. Seed-generated integer signatures do not establish original types; producer-side callers outside this closure remain unobserved."]}
+// symbol    ?sub_61c630@Texture@@QAEXPAVBuffer@@PAUVert@@PAV1@PAEH1@Z
 // working copy - scaffold materialised by --work
 // size      1310 bytes
 // prototype 
@@ -5194,21 +5196,19 @@ free_and_finish:
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::sub_61c630(Buffer * bufIn, int * verts, Texture * texB, unsigned char * shadeTable, int vertCount, int unusedIn) {
-    (void)unusedIn;  // the incoming stack slot is reused below for something unrelated to its argument value
-
+void Texture::sub_61c630(Buffer * bufIn, Vert * verts, Texture * texB, unsigned char * shadeTable, int vertCount, Vert *edge_vertices) {
     if (verts == 0) return;
     if (bufIn == 0) return;
 
     if (pixels_ != 0 && shadeTable != 0 && texB != 0) {
         *blit_pixel_base = bufIn->get_data();
         *blit_remap_table = reinterpret_cast<uintptr_t>(shadeTable);
-        *blit_edge_uvs_b = reinterpret_cast<Vert *>(verts);
+        *blit_edge_uvs_b = verts;
         *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
         *blit_vertex_count = vertCount;
-        *blit_edge_uvs_a = reinterpret_cast<Vert *>(unusedIn);
+        *blit_edge_uvs_a = edge_vertices;
         *blit_buffer_stride = static_cast<int>(bufIn->stride_);
         *blit_texture_width = static_cast<int>(iWidth_);
         *blit_shade_table = texB->pixels_;
@@ -5223,15 +5223,15 @@ void Texture::sub_61c630(Buffer * bufIn, int * verts, Texture * texB, unsigned c
             int minYIdx = 0, maxYIdx = 0;
 
             if (vertCount > 0) {
-                int *v = verts;
+                Vert *v = verts;
                 for (int i = 0; i < vertCount; i++) {
-                    int y = v[1];
+                    int y = v->y;
                     if (y < minY) { minY = y; minYIdx = i; }
                     if (y > maxY) { maxYIdx = i; maxY = y; }
-                    int x = v[0];
+                    int x = v->x;
                     if (x < minX) minX = x;
                     if (x > maxX) maxX = x;
-                    v += 2;
+                    ++v;
                 }
 
                 if (minY < maxY) {
@@ -5451,7 +5451,8 @@ static void texture_draw_shade_span(unsigned char *destination,
 }
 
 // ORIGINAL: 0x0061D990 sub_61d990 0x0061D990-0x0061DF5C FILE
-// symbol    ?sub_61d990@Texture@@QAEXPAVBuffer@@PAH1PAV1@PAEH@Z
+// RECOVERY_BINDING: v1 {"reason":"Recover the shaded rasterizer's geometry as Vert pointers while keeping its separate per-vertex int light array.","evidence":["Pinned61D990 publishes geometry to9BB4F4, scans x/y at offsets0/+4 with eight-byte stride, and separately publishes the light pointer to9BB4FC. Existing typed edge consumers distinguish these channels.","Seed-generated decorated symbols are not original type evidence; guards, release order and unknown external producer contracts remain unchanged."]}
+// symbol    ?sub_61d990@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH@Z
 // Historical synthetic seed symbol: ?sub_61d990@Texture@@QAEHPAVBuffer@@PAHHPAV1@PAEH@Z
 // Original ECX receiver and RET 18h establish six stack arguments; the third
 // argument is the per-vertex light array consumed by setup_edge_gouraud.
@@ -5465,7 +5466,7 @@ static void texture_draw_shade_span(unsigned char *destination,
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
-void Texture::sub_61d990(Buffer *buffer, int *vertices, int *zvals,
+void Texture::sub_61d990(Buffer *buffer, Vert *vertices, int *zvals,
                          Texture *shade_texture, unsigned char *remap,
                          int wide_flag) {
     if (vertices == 0) {
@@ -5485,8 +5486,8 @@ void Texture::sub_61d990(Buffer *buffer, int *vertices, int *zvals,
 
     *blit_pixel_base = buffer->get_data();
     texture_reset_fpu();
-    *blit_z_values = reinterpret_cast<int *>(zvals);
-    *blit_edge_uvs_b = reinterpret_cast<Vert *>(vertices);
+    *blit_z_values = zvals;
+    *blit_edge_uvs_b = vertices;
     *blit_remap_table = reinterpret_cast<uintptr_t>(remap);
     *blit_texture_pixels = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
@@ -5510,7 +5511,7 @@ void Texture::sub_61d990(Buffer *buffer, int *vertices, int *zvals,
         int min_x = 0x7fff;
         int max_x = static_cast<int>(0xffff8003u);
         int top_index = 0;
-        const Vert *vertex_pairs = reinterpret_cast<const Vert *>(vertices);
+        const Vert *vertex_pairs = vertices;
         for (int index = 0; index < count; ++index) {
             const int y = vertex_pairs[index].y;
             if (y < min_y) {
@@ -5807,9 +5808,10 @@ static void texture_raster_plain_rows(Texture *texture, Buffer *buffer,
 }
 
 // ORIGINAL: 0x0061B780 sub_61b780 0x0061B780-0x0061C08E FILE
+// RECOVERY_BINDING: v1 {"reason":"Recover separate Vert geometry and int light-array pointer contracts in the Gouraud rasterizer.","evidence":["Pinned61B780 publishes arguments to geometry cell9BB4F4 and light cell9BB4FC; coordinate traversal has eight-byte x/y stride, whereas the light edge consumer indexes independent int values.","No upstream source producer is established. These are use-derived contracts, not original source spelling; existing row/pixel traversal and restoration obligations are retained."]}
 // CURRENT BODY STATUS: multirow/pixel DDA restored; x87 status and
 // exact packed carry spelling remain restoration debt.
-// symbol    ?sub_61b780@Texture@@QAEXPAVBuffer@@PAHHH@Z
+// symbol    ?sub_61b780@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH@Z
 // TRIED (partial): sibling of 0x00620A10 - a gouraud-shaded affine
 //   texture-mapping scanline rasterizer with the same dual FPU/integer
 //   fixed-point DDA pixel loop that packs an `add` carry-out into an
@@ -5832,7 +5834,7 @@ static void texture_raster_plain_rows(Texture *texture, Buffer *buffer,
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
 
-void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
+void Texture::sub_61b780(Buffer *buffer, Vert *vertices, int *zvals, int mode) {
     const int count = mode == 0 ? 4 : 8;
     int min_y = 0x7fff, max_y = -0x7ffd;
     int min_x = 0x7fff, max_x = -0x7ffd;
@@ -5841,10 +5843,10 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
     texture_reset_fpu();
     *blit_pixel_base = destination;
     *blit_light_threshold = *blit_light_threshold_2;
-    *blit_edge_uvs_b = reinterpret_cast<Vert *>(vertices);
+    *blit_edge_uvs_b = vertices;
     *blit_edge_uvs_a = mode == 0 ? corners_ : cornersAndMids_;
     *blit_vertex_count = count;
-    *blit_z_values = reinterpret_cast<int *>(zvals);
+    *blit_z_values = zvals;
     *blit_texture_pixels = pixels_;
     *blit_buffer_stride = buffer->stride_;
     *blit_texture_width = iWidth_;
@@ -5852,7 +5854,7 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
     *blit_clip_left = buffer->rect1_.left;
     *blit_clip_bottom = buffer->rect1_.bottom;
     *blit_clip_top = buffer->rect1_.top;
-    const Vert *vertex_pairs = reinterpret_cast<const Vert *>(vertices);
+    const Vert *vertex_pairs = vertices;
     for (int i = 0; i < count; ++i) {
         const int x = vertex_pairs[i].x;
         const int y = vertex_pairs[i].y;
@@ -5971,7 +5973,8 @@ void Texture::sub_620a10(Buffer *buffer, Vert *vertices_arg, int count,
 // traversal uses no-key Gouraud byte addition. x87 and packed-carry
 // bit equivalence remains a restoration obligation.
 // ORIGINAL: 0x0061D090 sub_61d090 0x0061D090-0x0061D98A FILE
-// symbol    ?sub_61d090@Texture@@QAEXPAVBuffer@@PAH1I@Z
+// RECOVERY_BINDING: v1 {"reason":"Recover the no-key Gouraud rasterizer's geometry pointer as Vert rather than reinterpreting int pairs.","evidence":["Pinned61D090 and its existing typed row helper use geometry pointer9BB4F4 with eight-byte coordinate stride and the separate int light pointer9BB4FC. The original receiver and four stack arguments remain unchanged.","Historical seed symbols were inferred; producer contracts and exact x87/packed-carry restoration remain separate obligations."]}
+// symbol    ?sub_61d090@Texture@@QAEXPAVBuffer@@PAUVert@@PAHI@Z
 // TRIED: this is a perspective/gouraud scanline texture blitter using x87 80-bit stack state Ghidra itself could not track (extraout_ST*) plus hand-written 64-bit carry-chain fixed point (ADC/SBB/SHRD). Landed the bounding-box setup, the edge-stepping loop shape and the two setup_edge_gouraud@Texture call sites faithfully, but the innermost per-pixel blit (the two ADC/SBB loops at 0x61D54B/0x61D7BD) is NOT reproduced - only the step-size math is computed and discarded. This is a real behavioral gap, not just a byte gap: no pixels are written by this body.
 // PINNED RECEIVER EVIDENCE: ECX is preserved and loads Texture fields;
 //           RET 0x10 pops the four explicit member arguments. The emitted
@@ -5986,7 +5989,7 @@ void Texture::sub_620a10(Buffer *buffer, Vert *vertices_arg, int count,
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
 
-void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
+void Texture::sub_61d090(Buffer *buffer, Vert *vertices, int *zvals,
                          unsigned int flag) {
     const int count = flag == 0 ? 4 : 8;
     int min_y = 0x7fff, max_y = -0x7ffd;
@@ -5994,10 +5997,10 @@ void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
     int top = 0;
     *blit_pixel_base = buffer->get_data();
     texture_reset_fpu();
-    *blit_edge_uvs_b = reinterpret_cast<Vert *>(vertices);
+    *blit_edge_uvs_b = vertices;
     *blit_edge_uvs_a = flag == 0 ? corners_ : cornersAndMids_;
     *blit_vertex_count = count;
-    *blit_z_values = reinterpret_cast<int *>(zvals);
+    *blit_z_values = zvals;
     *blit_texture_pixels = pixels_;
     *blit_buffer_stride = buffer->stride_;
     *blit_texture_width = iWidth_;
@@ -6005,7 +6008,7 @@ void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
     *blit_clip_left = buffer->rect1_.left;
     *blit_clip_bottom = buffer->rect1_.bottom;
     *blit_clip_top = buffer->rect1_.top;
-    const Vert *vertex_pairs = reinterpret_cast<const Vert *>(vertices);
+    const Vert *vertex_pairs = vertices;
     for (int i = 0; i < count; ++i) {
         const int x = vertex_pairs[i].x;
         const int y = vertex_pairs[i].y;
@@ -7242,7 +7245,8 @@ void __cdecl sub_620640(int param_1, int param_2) {
 }
 
 // ORIGINAL: 0x0061F0D0 sub_61f0d0 0x0061F0D0-0x0061F785 FILE
-// symbol    ?sub_61f0d0@Texture@@QAEXPAVBuffer@@HHHHIH@Z
+// RECOVERY_BINDING: v1 {"reason":"Recover separate vertex/light pointer inputs without changing the original argument-slot reuse edge case.","evidence":["Pinned61F0D0 publishes vertex/light arguments into9BB4F4/9BB4FC.61F216..61F23Ewalks y-coordinates at eight-byte stride;61F22Aoverwrites the original vertex argument slot with an index only on strict y<0x7FFF.","61F248reloads that slot for both edge setup calls. When no y passes the strict test, the original pointer bits remain the setup index; the typed source retains this residue explicitly instead of initializing index0.","The terminal61F785fragment belongs to this method and retains its identity/span/claim. Source-generated old signatures were hypotheses; original source spelling and unobserved upstream producers remain unknown."]}
+// symbol    ?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHIH@Z
 // TRIED: literal Ghidra-derived transcription (EdgeScan DDA struct, param_2 as Buffer*, CONCAT/CARRY helpers for the dither table lookups) compiles and matches the outer control flow, but MSVC's register allocation for the two 300-line unrolled scanline loops diverges from instruction #5 on; did not attempt hand-tuning further given the size.
 // size      1717 bytes
 // prototype 
@@ -7258,9 +7262,9 @@ void __cdecl sub_620640(int param_1, int param_2) {
 
 // The retained nullsub_259 identity is the terminal ret 0x1C reached by fallthrough from Texture::sub_61f0d0's common epilogue. The source-owned relation below preserves its distinct span and historical claim without inventing a callable null stub or counting another recovered function. This does not exclude an interior-entry path; restoration must establish the complete parent extent as well as the fragment, rather than locating a convenient RET in the compiled body.
 // ORIGINAL: 0x0061F785 nullsub_259 0x0061F785-0x0061F788 FILE BYTE_EXACT
-// RECOVERY_FRAGMENT: v1 {"evidence":["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0061F771-0x0061F788","source:src/texture.cpp:Texture::sub_61f0d0"],"parent_address":"0x0061F0D0","parent_symbol":"?sub_61f0d0@Texture@@QAEXPAVBuffer@@HHHHIH@Z","reason":"terminal return reached by fallthrough from the mapped Texture method epilogue"}
+// RECOVERY_FRAGMENT: v1 {"evidence":["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0061F771-0x0061F788","source:src/texture.cpp:Texture::sub_61f0d0"],"parent_address":"0x0061F0D0","parent_symbol":"?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHIH@Z","reason":"terminal return reached by fallthrough from the mapped Texture method epilogue"}
 // kind      game
-void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
+void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4, int param_5,
                              int param_6, uint32_t param_7, int param_8) {
     ulonglong uVar1;
     ulonglong uVar2;
@@ -7290,8 +7294,8 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
     if (((((pixels_ != 0) && (param_4 != 0)) && (param_6 != 0)) &&
         ((param_5 != 0 && (param_7 != 0)))) &&
        ((*blit_pixel_base) = param_2->get_data(), (*blit_pixel_base) != 0)) {
-      *blit_z_values = reinterpret_cast<int *>(param_4);
-      *blit_edge_uvs_b = reinterpret_cast<Vert *>(param_3);
+      *blit_z_values = param_4;
+      *blit_edge_uvs_b = param_3;
       (*blit_texture_pixels) = pixels_;
       (TextureRowPitchScratch) = static_cast<int>(iWidth_);
       (*blit_texture_height) = static_cast<int>(iHeight_);
@@ -7321,28 +7325,32 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
         iVar3 = 0;
         iVar7 = 0x7fff;
         if (iVar10 != 0) {
-          piVar6 = (int *)(param_3 + 4);
+          // The original reuses its vertex argument slot for the minimum-y
+          // index only on y<0x7fff. Preserve the initial pointer-bit residue
+          // when no vertex satisfies that test; index zero would be a fix.
+          int top_index = static_cast<int>(texture_pointer_address(param_3));
+          const Vert *vertex = param_3;
           do {
-            iVar4 = *piVar6;
+            iVar4 = vertex->y;
             if (iVar4 < iVar7) {
               iVar7 = iVar4;
               iVar10 = (*blit_vertex_count);
-              param_3 = iVar3;
+              top_index = iVar3;
             }
             if (iVar13 < iVar4) {
-              iVar13 = *piVar6;
+              iVar13 = vertex->y;
               (*blit_max_y_index) = iVar3;
             }
             iVar3 = iVar3 + 1;
-            piVar6 = piVar6 + 2;
+            ++vertex;
           } while (iVar3 < iVar10);
           if (iVar7 < iVar13) {
             edge1.f0 = -1;
             (*blit_row_offset) = iVar7;
-            iVar10 = Texture::setup_edge_gouraud(&edge1, param_3);
+            iVar10 = Texture::setup_edge_gouraud(&edge1, top_index);
             if (iVar10 != 0) {
               edge2.f0 = 1;
-              iVar10 = Texture::setup_edge_gouraud(&edge2, param_3);
+              iVar10 = Texture::setup_edge_gouraud(&edge2, top_index);
               if ((iVar10 != 0) && ((*blit_row_offset) < (*blit_clip_bottom))) {
                 do {
                   if ((*blit_clip_top) <= (*blit_row_offset)) {
@@ -7684,7 +7692,8 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv, in
 }
 
 // ORIGINAL: 0x00623F50 sub_623f50 0x00623F50-0x00623F7D BYTE_EXACT
-// symbol    ?sub_623f50@Texture@@QAEXPAVBuffer@@PAHPAV1@PAEHHH@Z
+// RECOVERY_BINDING: v1 {"reason":"Propagate the evidenced geometry/UV pointer contracts through the genuine shaded-raster sentinel wrapper.","evidence":["Pinned623F50forwards geometry and UV arguments unchanged to61C630only when its seventh argument equals-1.61C630's eight-byte coordinate scan and typed shared edge consumers establish the contracts.","The historical claim and full span are retained. Seed-generated int signatures are not original type evidence; no original-address forwarder or new matching claim is introduced."]}
+// symbol    ?sub_623f50@Texture@@QAEXPAVBuffer@@PAUVert@@PAV1@PAEH1H@Z
 // symbol    ?invoke@Subject@@QAEXHHHHHHH@Z
 // size      45 bytes
 // prototype 
@@ -7701,18 +7710,16 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv, in
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
 
-void Texture::sub_623f50(Buffer *a1, int *a2, Texture *a3, uint8_t *a4,
-                         int a5, int a6, int a7) {
-    // 0x00623F50, 45 bytes, `ret 0x1c`. A seven-int wrapper whose seventh is
+void Texture::sub_623f50(Buffer *a1, Vert *a2, Texture *a3, uint8_t *a4,
+                         int a5, Vert *a6, int a7) {
+    // 0x00623F50, 45 bytes, `ret 0x1c`. A seven-argument wrapper whose seventh is
     // the same -1 sentinel `draw2` carries: when it is -1 the first six are
     // forwarded to the span filler at 0x0061C630, and otherwise the function
     // is a bare `ret 0x1c`. It reads nothing but its own arguments, so the
     // receiver it is called with is the one it passes on in ecx - the same
     // liveness 0x00624C70 shows.
     if (a7 == -1) {
-        sub_61c630(reinterpret_cast<Buffer *>(a1), reinterpret_cast<int *>(a2),
-                   reinterpret_cast<Texture *>(a3),
-                   reinterpret_cast<uint8_t *>(a4), a5, a6);
+        sub_61c630(a1, a2, a3, a4, a5, a6);
     }
 }
 

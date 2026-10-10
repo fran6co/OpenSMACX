@@ -89,18 +89,11 @@ int main() {
     assert (result.returncode == 0) == (mutation is None), result.stderr
 
 
-def test_remaining_unresolved_producer_boundaries_keep_current_views():
+def test_remaining_integer_shape_is_not_vertex_pointer_punning():
     source = (ROOT / "src/texture.cpp").read_text()
-    expected = {
-        "draw_trans2": ("a2",),
-        "sub_61c630": ("verts", "unusedIn"),
-        "sub_61d990": ("vertices",),
-        "sub_61b780": ("vertices",),
-        "sub_61d090": ("vertices",),
-        "sub_61f0d0": ("param_3",),
-    }
-    for name, arguments in expected.items():
+    for name in ("draw_trans2", "sub_61c630", "sub_61d990", "sub_61b780",
+                 "sub_61d090", "sub_61f0d0"):
         body = _definition(source, name + "(")
-        for argument in arguments:
-            assert "reinterpret_cast<Vert *>(" + argument + ")" in body
-    assert re.search(r"int Texture::draw_trans2\(Buffer \*a1, int \*a2, int a3\)", source)
+        assert "reinterpret_cast<Vert *>" not in body
+        assert "reinterpret_cast<const Vert *>" not in body
+    assert re.search(r"int Texture::draw_trans2\(Buffer \*a1, Vert \*a2, int a3\)", source)

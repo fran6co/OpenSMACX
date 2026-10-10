@@ -60,8 +60,8 @@ public:
     uint32_t borrowed_;
     static int setup_edge_gouraud(EdgeScan *, int);
     int setup_edge(EdgeScan *, int);
-    void sub_61f0d0(Buffer *, int, int, int, int, uint32_t, int);
-    int draw_trans2(Buffer *, int *, int);
+    void sub_61f0d0(Buffer *, Vert *, int *, int, int, uint32_t, int);
+    int draw_trans2(Buffer *, Vert *, int);
     int draw_trans_3(Buffer *, Vert *, int *, int, Vert *, int);
     void draw_trans(Buffer *, Vert *, int *, int, Vert *);
 };
@@ -185,7 +185,7 @@ static int z_values[8];
 static int remap_words[256];
 static int shade_words[256];
 static Vert input_vertices[8];
-static int input_xy[16];
+static Vert input_xy[8];
 static int input_z[8];
 static Vert input_uv[8];
 static int reset_calls;
@@ -237,7 +237,7 @@ static void reset_case() {
 static void invoke(int count_mode, bool null_pixels = false, bool null_shade = false) {
     if (null_pixels) texture.pixels_ = 0;
     if (null_shade) shade_words[0] = 0; else shade_words[0] = 1;
-    texture.sub_61f0d0(&buffer, as_int(input_vertices), as_int(z_values),
+    texture.sub_61f0d0(&buffer, input_vertices, z_values,
                        as_int(shade_words), as_int(remap_words), 0x12345678u,
                        count_mode);
 }
@@ -268,16 +268,27 @@ static void test_four_and_eight_vertex_member_bindings() {
            buffer.events_[1] == 2 && buffer.events_[2] == 3);
 }
 
+static void test_high_y_retains_original_pointer_bits_as_index() {
+    reset_case();
+    for (int i = 0; i < 8; ++i) input_vertices[i].y = 0x7fff + i;
+    invoke(0);
+    assert(setup_calls == 1);
+    assert(setup_index == as_int(input_vertices));
+    assert(cell_edge_b == input_vertices && cell_z_values == z_values);
+    assert(buffer.events_.size() == 3 && buffer.events_[0] == 1 &&
+           buffer.events_[1] == 2 && buffer.events_[2] == 3);
+}
+
 static void test_guard_order_and_release() {
     reset_case();
-    texture.sub_61f0d0(0, as_int(input_vertices), as_int(z_values),
+    texture.sub_61f0d0(0, input_vertices, z_values,
                        as_int(shade_words), as_int(remap_words), 1, 0);
     assert(setup_calls == 0 && buffer.events_.empty());
 
     for (int guard = 0; guard != 6; ++guard) {
         reset_case();
-        const int vertices = guard == 0 ? 0 : as_int(input_vertices);
-        const int zvals = guard == 1 ? 0 : as_int(z_values);
+        Vert *vertices = guard == 0 ? 0 : input_vertices;
+        int *zvals = guard == 1 ? 0 : z_values;
         const int shade_holder = guard == 2 ? 0 : as_int(shade_words);
         const int remap = guard == 3 ? 0 : as_int(remap_words);
         const uint32_t threshold = guard == 4 ? 0 : 1;
@@ -306,13 +317,13 @@ static void test_draw_trans2_member_setup_without_raster() {
     for (int mode = 0; mode != 2; ++mode) {
         reset_case();
         for (int i = 0; i < 8; ++i) {
-            input_xy[i * 2] = 3 + i;
-            input_xy[i * 2 + 1] = 20; // zero-height bounds skip the raster/setup loop
+            input_xy[i].x = 3 + i;
+            input_xy[i].y = 20; // zero-height bounds skip the raster/setup loop
         }
         const int result = texture.draw_trans2(&buffer, input_xy, mode);
         assert(result == 0 && setup_edge_calls == 0);
         assert(cell_edge_a == (mode == 0 ? texture.corners_ : texture.cornersAndMids_));
-        assert(cell_edge_b == reinterpret_cast<Vert *>(input_xy) && cell_vertex_count == (mode == 0 ? 4 : 8));
+        assert(cell_edge_b == input_xy && cell_vertex_count == (mode == 0 ? 4 : 8));
         assert(cell_texture_pixels == texture.pixels_);
         assert(TextureRowPitchScratch == 31 && cell_texture_width == 31 && cell_texture_height == 47);
         assert(cell_buffer_stride == 73);
@@ -363,6 +374,7 @@ static void test_draw_trans3_light_clamp_setup_and_sentinel() {
 
 int main() {
     test_four_and_eight_vertex_member_bindings();
+    test_high_y_retains_original_pointer_bits_as_index();
     test_guard_order_and_release();
     test_draw_trans2_member_setup_without_raster();
     test_draw_trans3_light_clamp_setup_and_sentinel();

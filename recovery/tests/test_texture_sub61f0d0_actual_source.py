@@ -21,7 +21,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/texture.cpp").is_file())
 SOURCE = ROOT / "src/texture.cpp"
 FIXTURE = Path(__file__).parent / "fixtures" / "texture_sub61f0d0_actual_host.cpp"
-SIGNATURE = "void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,"
+SIGNATURE = "void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4, int param_5,"
 INSERTION = "// ACTUAL_METHOD_INSERTION"
 DRAW_TRANS2_INSERTION = "// ACTUAL_DRAW_TRANS2_INSERTION"
 DRAW_TRANS3_INSERTION = "// ACTUAL_DRAW_TRANS3_INSERTION"
@@ -65,7 +65,7 @@ def translation_unit(method: str, draw_trans2: str | None = None,
     source = SOURCE.read_text(encoding="utf-8")
     if draw_trans2 is None:
         draw_trans2 = extract_method(
-            source, "int Texture::draw_trans2(Buffer *a1, int *a2, int a3)"
+            source, "int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3)"
         )
     if draw_trans3 is None:
         draw_trans3 = extract_method(
@@ -115,7 +115,7 @@ def test_actual_source_setup_bindings_and_release_control(compiler: str) -> None
 def test_draw_trans2_and_draw_trans3_actual_source_controls(compiler: str) -> None:
     source = SOURCE.read_text(encoding="utf-8")
     method2 = extract_method(
-        source, "int Texture::draw_trans2(Buffer *a1, int *a2, int a3)"
+        source, "int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3)"
     )
     method3 = extract_method(
         source, "int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a6)"
@@ -146,7 +146,7 @@ def test_trans_setup_controls_reject_wrong_members(
 ) -> None:
     source = SOURCE.read_text(encoding="utf-8")
     signatures = {
-        2: "int Texture::draw_trans2(Buffer *a1, int *a2, int a3)",
+        2: "int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3)",
         3: "int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a6)",
     }
     body = extract_method(source, signatures[method])

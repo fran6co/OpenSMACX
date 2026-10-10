@@ -34,9 +34,9 @@ public:
     uint32_t borrowed_;
     int setup_edge_gouraud(EdgeScan *, int);
     int setup_edge(EdgeScan *, int);
-    void sub_61b780(Buffer *, int *, int, int);
+    void sub_61b780(Buffer *, Vert *, int *, int);
     void sub_620a10(Buffer *, Vert *, int, Vert *, TextureStore *);
-    void sub_61d090(Buffer *, int *, int *, unsigned int);
+    void sub_61d090(Buffer *, Vert *, int *, unsigned int);
 };
 
 static int slots[64];
@@ -241,11 +241,11 @@ int main() {
     texture.iHeight_ = 4;
     texture.borrowed_ = 0;
     expected_edge_cache = &edge_cache_sentinel;
-    int points[8] = {0, 0, 4, 0, 4, 3, 0, 3};
+    Vert points[4] = {{0, 0}, {4, 0}, {4, 3}, {0, 3}};
     int shade[4] = {1, 1, 1, 1};
 
     TextureRasterKey = 0;
-    texture.sub_61b780(&buffer, points, reinterpret_cast<intptr_t>(shade), 0);
+    texture.sub_61b780(&buffer, points, shade, 0);
     assert(buffer.frees_ == 1 && fpu_resets == 2);
     for (int y = 0; y < 3; ++y) {
         assert(surface[y * 4] == 0); // owned integer path uses light bits 8..15
@@ -258,7 +258,7 @@ int main() {
     buffer.frees_ = 0;
     texture.borrowed_ = 1;
     texture.pixels_ = borrowed_source;
-    texture.sub_61b780(&buffer, points, reinterpret_cast<intptr_t>(shade), 0);
+    texture.sub_61b780(&buffer, points, shade, 0);
     assert(buffer.frees_ == 1);
     for (int y = 0; y < 3; ++y) {
         assert(surface[y * 4] == 77); // borrowed float path compares the texture key

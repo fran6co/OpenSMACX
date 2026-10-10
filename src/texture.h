@@ -90,7 +90,7 @@ class Texture {
 
  public:
   // homed from 00619d80.cpp
-  int draw_trans2(Buffer *buffer, int *verts, int a3);
+  int draw_trans2(Buffer *buffer, Vert *verts, int a3);
 
  public:
   Texture();
@@ -189,17 +189,17 @@ class Texture {
   //   sub_61f0d0  gouraud family, hands each span to sub_620100
   //   sub_620a10  affine rasteriser, setup_edge family + sub_624eb0
   //   sub_622200  cached-edge family: four sub_625080 setup call sites
-  void sub_61b780(Buffer *bufParam, int *verts, int zvals, int mode);
-  void sub_61c630(Buffer *bufIn, int *verts, Texture *texB, uint8_t *shadeTable,
-                  int vertCount, int unusedIn);
+  void sub_61b780(Buffer *bufParam, Vert *verts, int *zvals, int mode);
+  void sub_61c630(Buffer *bufIn, Vert *verts, Texture *texB, uint8_t *shadeTable,
+                  int vertCount, Vert *edge_vertices);
   void sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
                  unsigned char *remap, int use_eight_vertices);
-  void sub_61d990(Buffer *buffer, int *vertArray, int *zvals, Texture *texB,
+  void sub_61d990(Buffer *buffer, Vert *vertArray, int *zvals, Texture *texB,
                  uint8_t *table, int wideFlag);
   void sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
                  Texture *mask_texture, unsigned char *remap, int count,
                  Vert *uv, int threshold, unsigned char *palette);
-  void sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
+  void sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4, int param_5,
                   int param_6, uint32_t param_7, int param_8);
   // The final pointer is the shared ten-record cache consumed by sub_624eb0;
   // flags_ selects geometry-cache replay/fill and next_record_ is its cursor.
@@ -207,14 +207,14 @@ class Texture {
                   Vert *edgeVerts, TextureStore *cache);
   // 0x0061D090: receiver loads and RET 0x10 establish Texture this + four
   // stack arguments; this replaces the old free-function catalogue shape.
-  void sub_61d090(Buffer *buffer, int *vertices, int *zvals, unsigned int flag);
+  void sub_61d090(Buffer *buffer, Vert *vertices, int *zvals, unsigned int flag);
   void sub_622200(Buffer *buffer, Vert *vertices, int *zvals,
                   Texture *shade_texture, unsigned char *remap, int count,
                   Vert *edge_vertices, TextureStore *cache);
-  // 0x00623F50. Seven ints, the seventh the -1 sentinel that selects the
+  // 0x00623F50. Seven stack arguments, the seventh the -1 sentinel that selects the
   // forward into the span filler - the same idiom `draw2` carries.
-  void sub_623f50(Buffer *buffer, int *verts, Texture *texB,
-                  uint8_t *shadeTable, int vertCount, int unusedIn,
+  void sub_623f50(Buffer *buffer, Vert *verts, Texture *texB,
+                  uint8_t *shadeTable, int vertCount, Vert *edge_vertices,
                   int sentinel);
   // 0x00624CA0. Six stack arguments, with the fifth a TextureStore* and the
   // sixth the -1 sentinel. Vertex-pointer contracts follow the callee's

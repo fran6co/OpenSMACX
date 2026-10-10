@@ -9,6 +9,7 @@ import pytest
 from match_recovery.source import read_text
 from test_texture_edge_cache_actual_source import _masked, _run
 from test_texture_raster_actual_source import _continuity_fields, _translation_unit
+from test_texture_vertex_api_family_oct10 import SYMBOLS as FAMILY_SYMBOLS
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "2a85756a748863fcae5fc85538ca0df025032139"
@@ -29,6 +30,8 @@ def test_all_texture_original_identities_spans_claims_and_lessons_retained():
         assert _continuity_fields(after[address]) == _continuity_fields(before[address])
         if address in SYMBOLS:
             assert after[address].symbol == SYMBOLS[address]
+        elif address in FAMILY_SYMBOLS:
+            assert after[address].symbol == FAMILY_SYMBOLS[address]
         else:
             assert after[address].symbol == before[address].symbol
     assert after[0x624CA0].byte_exact

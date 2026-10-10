@@ -102,7 +102,7 @@ public:
     Vert *corners_, *cornersAndMids_;
     Texture() : pixels_(0), iWidth_(4), iHeight_(4), borrowed_(1),
                 corners_(0), cornersAndMids_(0) {}
-    void sub_61d990(Buffer *, int *, int *, Texture *, unsigned char *, int);
+    void sub_61d990(Buffer *, Vert *, int *, Texture *, unsigned char *, int);
 };
 static int slot_values[32] = {0};
 #define SLOT(name, index) static int *const name = &slot_values[index]
@@ -157,7 +157,7 @@ int main() {
     assert(texture_span_pixels(32770) == 1);
     unsigned char pixels[16] = {0};
     unsigned char remap[256] = {0};
-    int vertices[8] = {0,1, 2,1, 2,2, 0,2};
+    Vert vertices[4] = {{0,1}, {2,1}, {2,2}, {0,2}};
     int z_values[4] = {0,0,0,0};
     Buffer buffer;
     buffer.rect1_.left = 0;
@@ -166,8 +166,8 @@ int main() {
     buffer.rect1_.bottom = 2;
     Texture owner, shade;
     owner.pixels_ = pixels;
-    owner.corners_ = reinterpret_cast<Vert *>(vertices);
-    owner.cornersAndMids_ = reinterpret_cast<Vert *>(vertices);
+    owner.corners_ = vertices;
+    owner.cornersAndMids_ = vertices;
     shade.pixels_ = pixels;
     owner.sub_61d990(&buffer, vertices, z_values, &shade, remap, 0);
     assert(buffer.get_count == 1);
@@ -296,7 +296,7 @@ def _assert_owner_shape(source: str, header: str) -> None:
     body = _member(source)
     assert "Texture *shade_texture, unsigned char *remap" in body
     assert "int *zvals" in body
-    assert "*blit_z_values = reinterpret_cast<int *>(zvals)" in body
+    assert "*blit_z_values = zvals;" in body
     assert "wide_flag != 0 ? cornersAndMids_ : corners_" in body
     assert "wide_flag != 0 ? 8 : 4" in body
     acquired = body.index("buffer->get_data()")
@@ -324,7 +324,7 @@ def _assert_owner_shape(source: str, header: str) -> None:
     assert "*blit_light_pack_a =" in body
     assert body.index("*blit_slot_4f8 = u") < body.index("*blit_slot_498 = light >> 8")
     assert "if (done) break;" in body
-    assert "void sub_61d990(Buffer *buffer, int *vertArray, int *zvals, Texture *texB," in header
+    assert "void sub_61d990(Buffer *buffer, Vert *vertArray, int *zvals, Texture *texB," in header
     assert "return 0;" not in body
     assert "if (buffer != 0) buffer->free_data(1);\n        texture_reset_fpu();\n        return;" in body
 
