@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "37342ecf3ea19002a5926c23890acf46e1c60d13",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/tests/test_threaten_reserve_cap_owner_oct10.py",
+    "recovery/tests/fixtures/threaten_reserve_cap_owner_oct10.cpp"
+  ],
+  "evidence": [
+    "Coordinator pinned549C5B-549C83: wrapped elapsed-turn*mood*25, signed truncating /16, signed compare against live opponent reserve. Retain current demand product, ordering and condition.",
+    "Pinned549C8A-549CA1: signed IMUL51EB851F, SAR high product3, sign correction, then two LEA*5 operations, yielding signed reserve/100*25. Current reserve/25*25 is wrong (reserve99 gives75 instead of0 when capped). Native549CA4 continues existing negative-demand clamp; no reserve guard, safety normalization or new storage.",
+    "Actual-source cap-block controls must cover active/inactive cap branch, signed /100 boundaries and final negative clamp separately; compile a wrong-/25 mutant that fails behavioral assertions. Use actual existing arithmetic helper definition where needed, not a guessed replacement. Host controls remain bounded, not whole threaten/runtime proof.",
+    "Scope only source expression correction and new host controls. Preserve all original markers, claims, useful history and neighbor functions; no header/global/ABI/compiler-policy changes. Bank no unmeasured claim; request expansion for proved dependencies."
+  ],
+  "intent": "Recover threaten's original signed reserve cap through existing PlayersData and wrapping arithmetic, without changing original demand generation or error behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5544240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "threaten-reserve-cap-owner-oct10"
+}
