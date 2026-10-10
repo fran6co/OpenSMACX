@@ -1,0 +1,19 @@
+{
+  "event_id": "29d2d39c168b313bf0ba16d000bd2b14f6edfe2003c1b7e1be3c17d459c086a7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_datalink_source_text_owner_oct9.py"
+    ],
+    "evidence": [
+      "Retain existing aggregate actual-body controls while adding source-backed Player/Players fixture types and correcting demonstrated stale declaration signatures required to compile the recovered method. No production scope widening or weakened controls; existing unrelated baseline failures stay visible until independently checked."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "update-player-owned-faction-host-fixture-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:datalink-faction-row-owner-oct10"
+}
