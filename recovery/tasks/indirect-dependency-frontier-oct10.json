@@ -49,7 +49,12 @@
     "src/vendor/dplayx.recovery.h",
     "src/vendor/zlib.recovery.h",
     "recovery/project.json",
-    "recovery/tests/test_indirect_dependency_frontier_oct10.py"
+    "recovery/tests/test_indirect_dependency_frontier_oct10.py",
+    "recovery/tests/test_ddraw_thunk_identity_oct10.py",
+    "recovery/tests/test_zlib_ten_member_bindings_oct10.py",
+    "recovery/tests/test_zlib_deflate_tree_group_bindings_oct10.py",
+    "recovery/tests/test_zlib_inflate_group_bindings_oct10.py",
+    "recovery/tests/test_zlib_main_state_machine_bindings_oct10.py"
   ],
   "evidence": [
     "Six original FF25 import thunks have independent six-byte native boundaries, exact HIGHLOW operand fixups, original IAT module/export identities and physical pinned VC6 short-import records. Native in-memory checks pass with proposed exact source declarations; DSOUND and DPLAYX must use ordinal identities, not guessed export names. Bind source obligations and configured external archive paths, never DLL implementations or executable-address forwards.",
