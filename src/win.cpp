@@ -9967,12 +9967,15 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
                     visible = menuLike->is_visible() != 0;
                 }
                 if (visible) {
+                    // The virtual parent visibility query can change the
+                    // table: 5F73C8 reloads this slot before painting.
+                    w = WinZOrderArray[i];
                     if ((w->iSomeFlag_ & 2) != 0) {
                         w->on_nc_paint(area, -1);
                     }
                     bool doSecond = true;
                     if (target != 0) {
-                        doSecond = (target == w->poWinBase_);
+                        doSecond = (target == target->poWinBase_);
                     }
                     if (doSecond) {
                         Win *const other = w->poWinBase_;
@@ -9987,34 +9990,32 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
         return 0;
     }
 
-    int base = WinFlipSpriteY;
-    int wA = WinClipWidth;
-    int base2 = WinFlipSpriteX;
-    int l10 = base;
-    int l14 = base2;
-    int l18 = wA + base;
-    int wB = WinClipHeight;
-    int l1c = wB + base2;
-
+    int origin_x = WinFlipSpriteY; // original 9B7A30 is RECT.left
+    int origin_y = WinFlipSpriteX; // original 9B7A34 is RECT.top
+    RECT rectangle;
+    rectangle.left = origin_x;
+    rectangle.top = origin_y;
+    rectangle.right = static_cast<int>(static_cast<unsigned int>(origin_x) +
+                                       static_cast<unsigned int>(WinClipWidth));
+    rectangle.bottom = static_cast<int>(static_cast<unsigned int>(origin_y) +
+                                        static_cast<unsigned int>(WinClipHeight));
+    // IAT 669338 is USER32!IntersectRect. The two LEAs at 5F7445/5F744A
+    // denote the same complete stack RECT after the intervening PUSH.
     if (area != 0) {
-        int rectA[2] = {l10, l14};
-        int rectB[2] = {l18, l1c};
-        int result = IntersectRect(reinterpret_cast<RECT *>(&rectB[0]), reinterpret_cast<const RECT *>(area),reinterpret_cast<const tagRECT *>(&rectA[0]));
-        if (result == 0) {
-            return 0;
-        }
-        l1c = rectB[0];
-        l18 = rectB[1];
-        l10 = rectA[0];
-        l14 = rectA[1];
-        base2 = WinFlipSpriteX;
-        base = WinFlipSpriteY;
+        if (IntersectRect(&rectangle, &rectangle, area) == 0) return 0;
+        origin_y = WinFlipSpriteX;
+        origin_x = WinFlipSpriteY;
     }
-
-    (&ScreenBufferOwner.buffer())
-        ->copy(&WinDrawingBufferOwner.buffer(), l14 - base2, l10 - base, l1c - l14,
-               l18 - l10, l14, l10);
-    return 0;
+    return ScreenBufferOwner.buffer().copy(
+        &WinDrawingBufferOwner.buffer(), rectangle.left, rectangle.top,
+        static_cast<int>(static_cast<unsigned int>(rectangle.left) -
+                         static_cast<unsigned int>(origin_x)),
+        static_cast<int>(static_cast<unsigned int>(rectangle.top) -
+                         static_cast<unsigned int>(origin_y)),
+        static_cast<int>(static_cast<unsigned int>(rectangle.right) -
+                         static_cast<unsigned int>(rectangle.left)),
+        static_cast<int>(static_cast<unsigned int>(rectangle.bottom) -
+                         static_cast<unsigned int>(rectangle.top)));
 }
 
 // ===== homed from src/recovered/units/005f5d10.cpp =====
@@ -10596,39 +10597,38 @@ void __cdecl Win::update_zorder() {
 // ===== homed from src/unrecovered/005f53a0.cpp =====
 
 long Win::on_window_pos_changing(WINDOWPOS * pos) {
-    char *wp = reinterpret_cast<char *>(pos);
-    if ((*reinterpret_cast<unsigned char *>(wp + 0x18) & 1) == 0) {
+    if ((pos->flags & 1) == 0) {
         GraphicWin *ok = this->get_graphic_win();
         if (ok != 0) {
-            int cx = *reinterpret_cast<int *>(wp + 0x10);
+            int cx = pos->cx;
             int f134 = field_134_;
             if (cx <= f134) {
                 cx = f134;
             }
-            *reinterpret_cast<int *>(wp + 0x10) = cx;
-            int cy = *reinterpret_cast<int *>(wp + 0x14);
+            pos->cx = cx;
+            int cy = pos->cy;
             int f138 = field_138_;
             if (cy <= f138) {
                 cy = f138;
             }
-            *reinterpret_cast<int *>(wp + 0x14) = cy;
+            pos->cy = cy;
         }
         if ((iFlags_ & 0x800000) != 0) {
-            int ncx = *reinterpret_cast<int *>(wp + 0x10);
-            int ncy = *reinterpret_cast<int *>(wp + 0x14);
+            int ncx = pos->cx;
+            int ncy = pos->cy;
             nonclient_to_client(&ncx, &ncy);
             ncy = (iVertScaleNum_ * ncx) / iVertScaleDenom_;
             client_to_nonclient(&ncx, &ncy);
-            *reinterpret_cast<int *>(wp + 0x14) = ncy;
+            pos->cy = ncy;
         }
     }
     if ((iFlags_ & 0x4000) != 0) {
-        *reinterpret_cast<unsigned int *>(wp + 0x18) |= 4;
+        pos->flags |= 4;
     }
-    if (*reinterpret_cast<int *>(wp + 4) == 0) {
+    if (pos->hwndInsertAfter == 0) {
         PostMessageA(HandleMain, 3, 0, 0);
     }
-    return DefWindowProcA(HandleMain, 0x46, 0, reinterpret_cast<int>(pos));
+    return DefWindowProcA(HandleMain, 0x46, 0, reinterpret_cast<LPARAM>(pos));
 }
 
 // ORIGINAL: 0x005EF950 sub_5ef950 0x005EF950-0x005EFB99 FILE
