@@ -107,8 +107,11 @@ def write_object_bytes(raw: bytes, *, expected: Sequence[ObjectBinding],
     if re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
         raise ValueError("unsupported source line separator")
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
-    if re.search(r"(?:\\|\?\?/)[ \t]*\n", normalized):
-        raise ValueError("object writer does not support line-spliced source")
+    splice = re.search(r"(?:\\|\?\?/)[ \t]*\n", normalized)
+    # A later untouched splice cannot change the lexical state of an earlier
+    # insertion. We do not interpret the spliced suffix: all insertion anchors
+    # must stay strictly before its first physical line, including batch peers.
+    first_splice_line = normalized.count("\n", 0, splice.start()) + 1 if splice else None
     if raw.startswith(b"\xef\xbb\xbf"):
         raise ValueError("object writer does not support BOM-prefixed source")
     if any(re.fullmatch(r'(?:u8|u|U|L)?R"', token.group())
@@ -133,6 +136,8 @@ def write_object_bytes(raw: bytes, *, expected: Sequence[ObjectBinding],
     for binding in additions:
         _record(binding, path=path, pin=pin, address_space=address_space,
                 line_limit=line_count + 1)
+        if first_splice_line is not None and binding.line >= first_splice_line:
+            raise ValueError("object writer does not support insertion in line-spliced source")
         if boundaries[binding.line - 1]:
             raise ValueError("object insertion anchor is inside a block comment")
         if any(row.origin.entity_id == binding.origin.entity_id or

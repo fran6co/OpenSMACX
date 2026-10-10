@@ -1,0 +1,21 @@
+{
+  "event_id": "23411fdd1886e5a401cfa8877ff0c15e58d8cc2af3ad97209b036df5f05162f7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/object_writer.py",
+      "packages/match-recovery/tests/test_object_writer.py"
+    ],
+    "evidence": [
+      "Native object publication of reviewed Win guard/object additions refused because existing COPY_EDGE_TO_TARGET macro is line-spliced after all new insertion anchors. Keep original macro token stream unchanged and fix only this demonstrated library blocker.",
+      "Authorize add-only insertion strictly before the first line splice; insertion at or after it remains refused. Preserve complete existing snapshot, block-comment/injection/round-trip/conflict checks. Add LF/CRLF/trigraph, unsafe-anchor and mixed-batch damage controls. No general splice parsing or weaker mapping/measurement gate is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "win-prefix-object-writer-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:final-three-guarded-startup-lifetimes-oct10"
+}

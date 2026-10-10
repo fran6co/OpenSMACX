@@ -146,6 +146,40 @@ def test_line_splices_refuse_including_crlf_and_trigraphs(raw):
                            path=PATH, pin=PIN, address_space=SPACE)
 
 
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n", b"\r"])
+@pytest.mark.parametrize("splice", [b"\\", b"??/", b"\\ \t"])
+def test_add_before_untouched_spliced_suffix_preserves_all_bytes(newline, splice):
+    prefix = b"int first;" + newline + b"int second;" + newline
+    suffix = b"#define VALUE " + splice + newline + b"  42" + newline
+    raw = prefix + suffix
+    additions = (binding(0x403000, "_first", 1), binding(0x403004, "_second", 2))
+    written = write_object_bytes(raw, expected=current(raw), additions=additions,
+                                 path=PATH, pin=PIN, address_space=SPACE)
+    assert written.endswith(suffix)
+    assert len(current(written)) == 2
+    without_markers = b"".join(line for line in written.splitlines(keepends=True)
+                                if not line.startswith(b"// RECOVERY_OBJECT:"))
+    assert without_markers == raw
+
+
+@pytest.mark.parametrize("anchor", [3, 4, 5])
+def test_spliced_suffix_and_eof_anchors_still_refuse(anchor):
+    raw = b"int first;\nint second;\n#define VALUE \\\n  42\n"
+    # One safe insertion cannot make an unsafe batch peer acceptable.
+    additions = (binding(0x403000, "_first", 1), binding(0x403004, "_unsafe", anchor))
+    with pytest.raises(ValueError, match="line-spliced"):
+        write_object_bytes(raw, expected=current(raw), additions=additions,
+                           path=PATH, pin=PIN, address_space=SPACE)
+
+
+def test_prefix_comment_anchors_still_refuse_with_later_splice():
+    raw = b"/* comment\nint first;\n*/\n#define VALUE \\\n  42\n"
+    with pytest.raises(ValueError, match="block comment"):
+        write_object_bytes(raw, expected=current(raw),
+                           additions=(binding(0x403000, "_first", 2),),
+                           path=PATH, pin=PIN, address_space=SPACE)
+
+
 def test_unbounded_start_cannot_overlap_an_independently_bounded_object():
     bounded = binding(0x403000, "_bounded", 1, end=0x403020)
     start = binding(0x403010, "_start", 2)
