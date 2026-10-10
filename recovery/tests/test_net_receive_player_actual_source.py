@@ -9,6 +9,7 @@ import tempfile
 
 from match_recovery.source import read_file
 from test_game_logic_seed_batch_behavior import _definition
+from test_win_zorder_pointer_flow_oct10 import extract
 
 ROOT = Path(__file__).resolve().parents[2]
 METHODS = {
@@ -223,8 +224,11 @@ MAIN = r'''int main() {
 
 def _definitions() -> str:
     records = {row.address: row for row in read_file(ROOT / "src/net_class.cpp")}
-    return "\n\n".join(_definition(records[address].region, signature)
-                         for address, signature in METHODS.items())
+    record_type = extract((ROOT / "src/net_class.cpp").read_text(),
+                          "struct NetPeerPlayerRecord") + ";"
+    return record_type + "\n\n" + "\n\n".join(
+        _definition(records[address].region, signature)
+        for address, signature in METHODS.items())
 
 
 def test_actual_net_owner_bodies_and_damage_control() -> None:

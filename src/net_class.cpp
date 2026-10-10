@@ -750,6 +750,25 @@ void Net::stop_voice() {
 // RECOVERY_OBJECT: v2 0x009BC4BC 0x009BE4BC ?NetGetScratch@@3PAEA 0x00630A00
 unsigned char NetGetScratch[0x2000];
 
+namespace {
+// Shared wire views for the sender and receiver. Only the fields explicitly
+// written below are initialized; neither envelope padding nor packet tails
+// acquire default values merely because their layout is named.
+struct NetPacketEnvelope {
+    WORD type_flags_;
+    WORD field_2_;
+    DWORD sequence_4_;
+};
+struct NetPeerPlayerRecord {
+    DPID id_;
+    char name_[0x20];
+    DWORD flags_;
+};
+static_assert(sizeof(NetPacketEnvelope) == 8, "DirectPlay packet header extent");
+static_assert(sizeof(NetPeerPlayerRecord) == 0x28, "peer snapshot record stride");
+static_assert(offsetof(NetPeerPlayerRecord, flags_) == 0x24, "peer snapshot flags");
+}
+
 static int __stdcall net_group_player_callback(unsigned long player_id, unsigned long, const DPNAME *, unsigned long, void *);
 
 // ORIGINAL: 0x0062F390 sub_62f390 0x0062F390-0x0062F89D
@@ -792,17 +811,19 @@ int Net::send_group_flagged(void *data, int size, long target,
         static_cast<unsigned char *>(mem_get(allocation_size));
     if (packet == 0) return 0;
 
+    NetPacketEnvelope *const header =
+        reinterpret_cast<NetPacketEnvelope *>(packet);
     const unsigned int reliable = flags & 1U;
     if (reliable == 0) {
-        *reinterpret_cast<unsigned int *>(packet + 4) = 0;
+        header->sequence_4_ = 0;
     } else {
         ++field_E4_;
-        *reinterpret_cast<unsigned int *>(packet + 4) = field_E4_;
+        header->sequence_4_ = field_E4_;
     }
     if (data != 0) memcpy(packet + 8, data, static_cast<unsigned int>(size));
 
     if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
-        *reinterpret_cast<unsigned short *>(packet) = type;
+        header->type_flags_ = type;
         if (NetDirectPlay != 0 &&
             NetDirectPlay->Send(field_760_, static_cast<DPID>(target),
                                 reliable, packet,
@@ -814,7 +835,7 @@ int Net::send_group_flagged(void *data, int size, long target,
         return static_cast<int>(field_E4_);
     }
 
-    *reinterpret_cast<unsigned short *>(packet) =
+    header->type_flags_ =
         static_cast<unsigned short>(type | 4);
     for (int clear_index = 0; clear_index < 16; ++clear_index)
         players_[clear_index].field_8_ = 0;
@@ -2688,8 +2709,12 @@ void Net::receive_directplay_messages(int player_id) {
 /*
 Purpose: Flush Net's whole player table as one packet: when the table's two
          bounds coincide, pack every player record (id, name, flags) into a
-         0x2C-stride array prefixed with the count and hand it to
+         0x28-stride array prefixed with the count and hand it to
          Net::send_packet_type as a 0x10 broadcast.
+
+         The allocation and transmitted length are count*0x2C+4, not the
+         packed records' count*0x28+4. Only the low count byte is written;
+         preserve the other count bytes and oversized tail untouched.
 
          The sixteen 0x58-byte NetPlayer records begin at Net+0x154; the
          walk reads each record's first word, its name at +0x15 and its
@@ -2716,18 +2741,19 @@ void Net::broadcast_player_table() {
             unsigned char *const packet = static_cast<unsigned char *>(mem_get(static_cast<int>(size)));
             *packet = static_cast<unsigned char>(count);
             if (count > 0) {
-                unsigned char *entry = packet + 8;
+                NetPeerPlayerRecord *entry =
+                    reinterpret_cast<NetPeerPlayerRecord *>(packet + 4);
                 NetPlayer *player = players_;
                 int remaining = count;
                 do {
-                    *reinterpret_cast<uint32_t *>(entry - 4) = player->field_0_;
-                    *entry = 0;
+                    entry->id_ = player->field_0_;
+                    entry->name_[0] = 0;
                     player->name_and_tail_[0x1F] = 0;
-                    strcat(reinterpret_cast<char *>(entry), player->name_and_tail_);
+                    strcat(entry->name_, player->name_and_tail_);
                     const unsigned char flags = player->flags_14_;
                     ++player;
-                    *reinterpret_cast<unsigned int *>(entry + 0x20) = flags;
-                    entry += 0x28;
+                    entry->flags_ = flags;
+                    ++entry;
                     --remaining;
                 } while (remaining != 0);
             }
@@ -2977,19 +3003,9 @@ int Net::sub_632cc0(char *text, int id, unsigned char flag) {
 }
 
 namespace {
-struct NetPacketEnvelope {
-    WORD type_flags_;
-    WORD field_2_;
-    DWORD sequence_4_;
-};
 // Peer table payload after the eight-byte envelope: count DWORD then a
 // variable-length row tail. The local producer sends at most sixteen rows,
 // but the original receiver does not impose that bound on incoming packets.
-struct NetPeerPlayerRecord {
-    DPID id_;
-    char name_[0x20];
-    DWORD flags_;
-};
 struct NetPeerPlayerTableMessage {
     NetPacketEnvelope envelope_;
     DWORD count_;
@@ -3001,9 +3017,6 @@ struct NetPeerDropPlayerMessage {
     NetPacketEnvelope envelope_;
     DPID id_;
 };
-static_assert(sizeof(NetPacketEnvelope) == 8, "DirectPlay packet header extent");
-static_assert(sizeof(NetPeerPlayerRecord) == 0x28, "peer snapshot record stride");
-static_assert(offsetof(NetPeerPlayerRecord, flags_) == 0x24, "peer snapshot flags");
 static_assert(sizeof(NetPeerPlayerTableMessage) == 0xC, "peer snapshot header extent");
 static_assert(offsetof(DPMSG_CREATEPLAYERORGROUP, lpData) == 0x10, "create data field");
 static_assert(offsetof(DPMSG_SETPLAYERORGROUPDATA, lpData) == 0xC, "player data field");
