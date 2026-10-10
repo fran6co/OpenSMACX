@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "task_id": "netwin-typed-packet-senders-owner-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Complete typed NetWin wire packet assembly in existing owner without changing original byte writes or behavior",
+  "base_revision": "6fa50e5ef0431bb749702030084eea603c803982",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4698352
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4698576
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4698720
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4698848
+    }
+  ],
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_net_hotseat_owner_actual_source_oct6.py",
+    "recovery/tests/test_netwin_typed_packet_senders_oct10.py"
+  ],
+  "evidence": [
+    "Existing NetWinLobbyPacketHeader, NetWinLobbyFullPacket, NetWinLobbySinglePacket and NetWinSessionOptionsPacket identify the 16-byte header, seven 17C-byte lobby rows and 18-byte options payload. Native sender entries47B0F0,47B1D0,47B260,47B2E0 establish copy-before-send, byte writes, destination branches, guards and untouched header storage. Inspect complete native spans before implementation; no new original identity, bounds check, initialization or bug fix.",
+    "Preserve all source identities, spans, historical claims and lessons. Only these four actual sender bodies/type declarations and host fixtures are in scope. Preserve full-state pre-gate row writes, copy overwrite, single-row prefix-before-copy, exact copy/send sizes, unused arguments, uninitialized header fields and original destinations. Native before/current full netwin.cpp measurements must retain outside-subject verdicts; actual-source behavioral/damage tests and fresh application compile/link must pass. Coordinator authorizes temporary matching regression for this evidence-backed structural closure while preserving historical restoration obligations. Independent review and coordinator-reviewed integration are not automatic/full-game acceptance."
+  ]
+}
