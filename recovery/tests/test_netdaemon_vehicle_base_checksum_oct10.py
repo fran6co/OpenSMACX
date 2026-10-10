@@ -39,6 +39,8 @@ def restore_vehicle_base_checksum_migration(source):
 def test_only_four_segments_change_and_original_obligations_survive():
     path = ROOT / "src/netdaemon.cpp"
     current = path.read_text()
+    from test_netdaemon_typed_map_checksum_oct10 import restore_map_checksum_migration
+    current = restore_map_checksum_migration(current)
     old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
     assert restore_vehicle_base_checksum_migration(current) == old
     rows = read_text(current, path)

@@ -37,6 +37,8 @@ def test_only_two_walks_change_and_all_original_obligations_survive():
     path = ROOT / "src/netdaemon.cpp"
     old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
     current = path.read_text()
+    from test_netdaemon_typed_map_checksum_oct10 import restore_map_checksum_migration
+    current = restore_map_checksum_migration(current)
     # Later authorized packet migration has its own whole-source continuity
     # and actual-source controls; reverse only that bounded step here.
     from test_netdaemon_typed_bulk_landmark_oct10 import restore_packet_migration

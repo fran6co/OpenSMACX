@@ -1448,19 +1448,18 @@ void NetDaemon::game_checksum(int *results) {
     {
         int countA = MapArea;
         if (countA > 0) {
-            char *recBase = (char *)map_tile_bytes();
-            char *p2 = recBase + 8;
+            Map *tile = MapTiles;
             int idxA = 0;
             do {
-                cs = checksum(recBase, 1, cs);
-                cs = checksum(p2 - 5, 1, cs);
-                cs = checksum(p2, 4, cs);
-                cs = checksum(p2 - 7, 1, cs);
-                cs = checksum(p2 - 1, 1, cs);
-                cs = checksum(p2 + 4, 1, cs);
+                cs = checksum((char *)&tile->climate, 1, cs);
+                cs = checksum((char *)&tile->region, 1, cs);
+                cs = checksum((char *)&tile->bit, 4, cs);
+                cs = checksum((char *)&tile->contour, 1, cs);
+                cs = checksum((char *)&tile->territory, 1, cs);
+                // Only the low byte of bit2 participates in this report.
+                cs = checksum((char *)&tile->bit2, 1, cs);
                 countA = MapArea;
-                recBase += 0x2c;
-                p2 += 0x2c;
+                ++tile;
                 idxA++;
             } while (idxA < countA);
         }
@@ -1535,17 +1534,15 @@ void NetDaemon::game_checksum(int *results) {
             {
                 int innerCount = (MapLongitudeBounds >> 1) * div;
                 if (div != 0 && innerCount > 0) {
-                    char *p5 = (char *)(map_tile_bytes() + static_cast<int>(MapLongitude) * recIdx * 0x2c);
-                    char *p6 = p5 + 8;
+                    Map *tile = MapTiles + static_cast<int>(MapLongitude) * recIdx;
                     int idxE;
                     for (idxE = 0; idxE < innerCount; ++idxE) {
-                        cs = checksum(p5, 1, cs);
-                        cs = checksum(p6 - 5, 1, cs);
-                        cs = checksum(p6, 4, cs);
-                        cs = checksum(p6 - 7, 1, cs);
-                        cs = checksum(p6 - 1, 1, cs);
-                        p5 += 0x2c;
-                        p6 += 0x2c;
+                        cs = checksum((char *)&tile->climate, 1, cs);
+                        cs = checksum((char *)&tile->region, 1, cs);
+                        cs = checksum((char *)&tile->bit, 4, cs);
+                        cs = checksum((char *)&tile->contour, 1, cs);
+                        cs = checksum((char *)&tile->territory, 1, cs);
+                        ++tile;
                     }
                 }
             }
@@ -1598,12 +1595,12 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt1 = MapArea;
-            char *pL = (char *)map_tile_bytes();
+            Map *tile = MapTiles;
             int i1;
             for (i1 = 0; i1 < cnt1; ++i1) {
-                cs = checksum(pL, 1, cs);
+                cs = checksum((char *)&tile->climate, 1, cs);
                 cnt1 = MapArea;
-                pL += 0x2c;
+                ++tile;
             }
         }
         *out++ = cs;
@@ -1611,12 +1608,12 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt2 = MapArea;
-            char *pL = (char *)map_tile_bytes() + 3;
+            Map *tile = MapTiles;
             int i2;
             for (i2 = 0; i2 < cnt2; ++i2) {
-                cs = checksum(pL, 1, cs);
+                cs = checksum((char *)&tile->region, 1, cs);
                 cnt2 = MapArea;
-                pL += 0x2c;
+                ++tile;
             }
         }
         *out++ = cs;
@@ -1624,12 +1621,12 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt3 = MapArea;
-            char *pL = (char *)map_tile_bytes() + 8;
+            Map *tile = MapTiles;
             int i3;
             for (i3 = 0; i3 < cnt3; ++i3) {
-                cs = checksum(pL, 4, cs);
+                cs = checksum((char *)&tile->bit, 4, cs);
                 cnt3 = MapArea;
-                pL += 0x2c;
+                ++tile;
             }
         }
         *out++ = cs;
@@ -1637,12 +1634,12 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt4 = MapArea;
-            char *pL = (char *)map_tile_bytes() + 1;
+            Map *tile = MapTiles;
             int i4;
             for (i4 = 0; i4 < cnt4; ++i4) {
-                cs = checksum(pL, 1, cs);
+                cs = checksum((char *)&tile->contour, 1, cs);
                 cnt4 = MapArea;
-                pL += 0x2c;
+                ++tile;
             }
         }
         *out++ = cs;
@@ -1650,12 +1647,12 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt5 = MapArea;
-            char *pL = (char *)map_tile_bytes() + 7;
+            Map *tile = MapTiles;
             int i5;
             for (i5 = 0; i5 < cnt5; ++i5) {
-                cs = checksum(pL, 1, cs);
+                cs = checksum((char *)&tile->territory, 1, cs);
                 cnt5 = MapArea;
-                pL += 0x2c;
+                ++tile;
             }
         }
         *out++ = cs;
@@ -1663,12 +1660,12 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt6 = MapArea;
-            char *pL = (char *)map_tile_bytes() + 0xc;
+            Map *tile = MapTiles;
             int i6;
             for (i6 = 0; i6 < cnt6; ++i6) {
-                cs = checksum(pL, 1, cs);
+                cs = checksum((char *)&tile->bit2, 1, cs);
                 cnt6 = MapArea;
-                pL += 0x2c;
+                ++tile;
             }
         }
         *out++ = cs;
