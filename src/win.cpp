@@ -7389,7 +7389,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
 
     if ((iFlags_ & 0x11) != 0 &&
         (iSomeFlag_ & 1) != 0 &&
-        (win_parent_ == 0 || this->is_visible() != 0)) {
+        (win_parent_ == 0 || win_parent_->is_visible() != 0)) {
         int stack8 = 0, stack4 = 0;
         this->client_to_screen(&stack8, &stack4);
         stack8 -= outer_rect_.left;
@@ -7397,7 +7397,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
 
         if (area != 0) {
             flags = -1;
-            reinterpret_cast<Buffer *>(area)->set_clip(area);
+            ScreenBufferOwner.buffer().set_clip(area);
         }
 
         int iVar1;
@@ -7420,7 +7420,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
                 x = stack8 - WinViewOriginX;
                 y = stack4 - WinViewOriginY;
             }
-            (&ScreenBufferOwner.buffer())->draw(buf, WinFillColour, x, y, 1, 1);
+            buffer1_->draw(buf, WinFillColour, x, y, 1, 1);
         }
 
         if (buffer4_ != 0 && (flags == -1 || flags == 2)) {
@@ -7441,17 +7441,15 @@ void Win::on_nc_paint(RECT * area, int flags) {
                 buf = WinBackBuffer;
                 x = stack8 - WinViewOriginX;
             }
-            (&ScreenBufferOwner.buffer())->draw(buf, WinFillColour, x, v + stack4, 1, 1);
+            buffer4_->draw(buf, WinFillColour, x, v + stack4, 1, 1);
         }
 
         if (buffer3_ != 0 && (flags == -1 || flags == 3)) {
             if (WinBackBuffer == 0) {
-                (&ScreenBufferOwner.buffer())
-                    ->draw((&ScreenBufferOwner.buffer()), WinFillColour, stack8,
+                buffer3_->draw((&ScreenBufferOwner.buffer()), WinFillColour, stack8,
                            stack4 + iVar1, 1, 1);
             } else {
-                (&ScreenBufferOwner.buffer())
-                    ->draw(WinBackBuffer, WinFillColour,
+                buffer3_->draw(WinBackBuffer, WinFillColour,
                            stack8 - WinViewOriginX, (iVar1 - WinViewOriginY) + stack4, 1, 1);
             }
         }
@@ -7472,7 +7470,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
                      border_thickness_) - WinViewOriginX;
                 buf = WinBackBuffer;
             }
-            (&ScreenBufferOwner.buffer())->draw(buf, WinFillColour, v + stack8, yv + stack4, 1, 1);
+            buffer2_->draw(buf, WinFillColour, v + stack8, yv + stack4, 1, 1);
         }
 
         ScreenBufferOwner.buffer().restore_clip();
