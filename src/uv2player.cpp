@@ -253,7 +253,7 @@ int UV2Player::play(int width, int height) {
         return 1;
     }
 
-    ScreenBuffer.fill(0);
+    ScreenBufferOwner.buffer().fill(0);
     Win::flip(nullptr);
 
     if (DirectDrawCreate(nullptr, &direct_draw_, nullptr) != DD_OK) {

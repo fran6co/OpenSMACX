@@ -1,0 +1,17 @@
+{
+  "event_id": "a0828cc030bce13d665ad71f682055257445b6d6e9a40ee21b3eed9f1d4a52c6",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "screen-clip-member-discovery-oct10",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp: removed standalone9B74C0 RECT; retained original receiver+30 member fact beside other Win storage. src/win.h keeps same alias fact and no oldextern. All12borrowers in AlphaMenu/MultiWin/Popup/Win use existing Buffer::restore_clip() against genuine rect2_ member. Native source mapping/claim/object continuity and all535prior direct-owner verdicts retained; new ScreenBufferfini matches locally; fresh final complete build-u8ztgmov compiles/links with physically verified paired guard/startup order. Independent actualdiff review approves. These are bounded manual recovery checks, not complete linked/runtime acceptance."
+    ]
+  },
+  "previous_event": "fc2a80ba7e14ad151bca311a194c6c7f54298a0ecef6ea8a20a7f6ca91633d7c",
+  "request_id": "screen-clip-member-incorporated-oct10",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:screen-buffer-shared-guard-owner-oct10"
+}

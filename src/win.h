@@ -23,6 +23,32 @@
 #include "heap.h"
 #include "spot.h"
 #include "sprite.h"
+#include <new>
+#include <stddef.h>
+
+// Win's two process-lifetime Buffers share one original cleanup byte.
+// Drawing uses bit 1, screen uses bit 2; the bits are published before
+// direct complete destruction, retaining the byte's other state.
+extern uint8_t WinDrawingBufferCleanupGuard;
+union ScreenBufferStorage {
+    char bytes[sizeof(Buffer)];
+    uint32_t alignment_[sizeof(Buffer) / sizeof(uint32_t)];
+};
+struct ScreenBufferLifetime {
+    ScreenBufferStorage storage_;
+    ScreenBufferLifetime() { new (storage_.bytes) Buffer(); }
+    ~ScreenBufferLifetime() {
+        if ((WinDrawingBufferCleanupGuard & 2) != 0) return;
+        WinDrawingBufferCleanupGuard |= 2;
+        buffer().Buffer::~Buffer();
+    }
+    Buffer &buffer() { return *reinterpret_cast<Buffer *>(storage_.bytes); }
+};
+static_assert(sizeof(ScreenBufferLifetime) == sizeof(Buffer),
+              "Screen Buffer storage extent");
+static_assert(offsetof(ScreenBufferLifetime, storage_) == 0,
+              "Screen Buffer starts at its owner identity");
+extern ScreenBufferLifetime ScreenBufferOwner;
 
 class Menu; // forward declaration
 extern HWND HandleMain;
@@ -1059,7 +1085,8 @@ extern Win *WinBubbleCompanion;  // 0x009B7A4C
 // bytes belong to something this tree has not named yet.
 extern Win *WinZOrderArray[512]; // 0x009B6630
 extern RECT WinBubbleRect;       // 0x009B6E38
-extern RECT WinScreenClipRect;   // 0x009B74C0
+// 0x009B74C0 belongs to ScreenBuffer's +0x30 rect2_ member;
+// Buffer::restore_clip() resets clipping against that same object.
 extern RECT WinDirtyRect;        // 0x009B6EE8
 extern Win *WinDefaultFocus;     // 0x009B7AEC
 // Parallel to WinModalStack[4] and indexed by the same depth; the four

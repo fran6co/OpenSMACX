@@ -711,25 +711,25 @@ void AlphaMenu::show() {
   client_to_screen(&screen_rect);
   int y = screen_rect.bottom - sprite1_.height();
   const int step = (screen_rect.bottom - screen_rect.top) / 5;
-  ScreenBuffer.set_clip(&screen_rect);
+  ScreenBufferOwner.buffer().set_clip(&screen_rect);
 
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
     const int frame_x = animation_frame_x();
     WinFlipClipped = 1;
     for (int frame = 0; frame != 6; ++frame) {
       const DWORD started = timeGetTime();
-      static_cast<Buffer *>(this)->draw(&ScreenBuffer, 9,
+      static_cast<Buffer *>(this)->draw(&ScreenBufferOwner.buffer(), 9,
                                         frame_x, y, 1, 1);
       flip(&screen_rect);
       y -= step;
       do_sound();
       wait_for_animation_frame(started);
     }
-    ScreenBuffer.set_clip(&WinScreenClipRect);
+    ScreenBufferOwner.buffer().restore_clip();
     WinFlipClipped = 0;
   }
 
-  ScreenBuffer.set_clip(&WinScreenClipRect);
+  ScreenBufferOwner.buffer().restore_clip();
   WinFlipClipped = 0;
   Win::show(3);
   MainInterfaceGlobal.flat_button_[3].set_pressed_visual(1);
@@ -762,15 +762,15 @@ void AlphaMenu::hide() {
   int y = screen_rect.top;
   const int target_y = screen_rect.bottom - sprite1_.height();
   const int step = (screen_rect.bottom - screen_rect.top) / 5;
-  ScreenBuffer.set_clip(&screen_rect);
+  ScreenBufferOwner.buffer().set_clip(&screen_rect);
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
     const int frame_x = animation_frame_x();
     WinFlipClipped = 1;
     for (int frame = 0; frame != 6; ++frame) {
       const DWORD started = timeGetTime();
-      buffer_.copy(&ScreenBuffer, 0, 0, screen_rect.left, screen_rect.top,
+      buffer_.copy(&ScreenBufferOwner.buffer(), 0, 0, screen_rect.left, screen_rect.top,
                    width, height);
-      static_cast<Buffer *>(this)->draw(&ScreenBuffer, 9, frame_x, y, 1, 1);
+      static_cast<Buffer *>(this)->draw(&ScreenBufferOwner.buffer(), 9, frame_x, y, 1, 1);
       flip(&screen_rect);
       y += step;
       if (y >= target_y) y = target_y;
@@ -778,13 +778,13 @@ void AlphaMenu::hide() {
       wait_for_animation_frame(started);
     }
     if (y < target_y) {
-      buffer_.copy(&ScreenBuffer, 0, 0, screen_rect.left, screen_rect.top,
+      buffer_.copy(&ScreenBufferOwner.buffer(), 0, 0, screen_rect.left, screen_rect.top,
                    width, height);
-      static_cast<Buffer *>(this)->draw(&ScreenBuffer, 9,
+      static_cast<Buffer *>(this)->draw(&ScreenBufferOwner.buffer(), 9,
                                         screen_rect.left, target_y, 1, 1);
       flip(&screen_rect);
     }
-    ScreenBuffer.set_clip(&WinScreenClipRect);
+    ScreenBufferOwner.buffer().restore_clip();
     WinFlipClipped = 0;
   }
 

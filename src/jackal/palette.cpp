@@ -20,20 +20,13 @@
 #include "palette.h"
 #include "general.h"  // mem_get
 #include "buffer.h"   // Buffer::sync_to_palette in set()
+#include "win.h"      // screen Buffer's shared-guard lifetime owner
 #include "random.h"   // random in init()
 
 HPALETTE PaletteInitialized;  // 0x009B8178
 int PaletteUsesSystemColours;  // 0x009B8188
 // RECOVERY_OBJECT: v1 0x009B8180 ?PaletteActive@@3PAVPalette@@A
 Palette *PaletteActive;                 // 0x009B8180
-// ORIGINAL: 0x005EB390 sub_5eb390 0x005EB390-0x005EB3A6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: original initializer 0x005EB390-0x005EB3A6 constructs the Buffer at 0x009B7490 and registers its matching teardown callback.", "Source owner: jackal/palette.cpp declares the actual global Buffer ScreenBuffer, used by the palette and rendering paths; this is the object's typed storage, not an address alias.", "The emitted startup helper _$E31 references ScreenBuffer, Buffer's constructor and the compiler's destructor callback before registering that callback with atexit; _$E29 references the same object and Buffer destructor.", "The old seed's complete mapping and historical matching claim are moved unchanged; generated lifetime bytes remain a restoration obligation, not a new grant or acceptance."], "reason": "Bind the original ScreenBuffer startup initializer to the jackal/palette.cpp global and its compiler-generated lifetime; retain the complete historical identity, span, claim and seed provenance."}
-// symbol    _$E21
-// In this generic owner, the compiler emits _$E21 calling _$E18 (the
-// ScreenBuffer constructor) and _$E20 (atexit registration of _$E19,
-// the destructor of the same ScreenBuffer). The prior _$E31 / _$E29
-// attribution above is historical; this binding does not restore matching.
-Buffer ScreenBuffer;                    // 0x009B7490
 int PaletteSeedCache;                   // 0x009B8184
 IDirectDrawPalette *DirectDrawPalette;  // 0x009BC4A0
 
@@ -259,7 +252,7 @@ void Palette::remove_animation(int key) {
     if (BufferDirectDraw == nullptr) {
         if (PaletteInitialized) {
             PaletteActive = this;
-            ScreenBuffer.sync_to_palette(this);
+            ScreenBufferOwner.buffer().sync_to_palette(this);
             if (PaletteUsesSystemColours == 0 && PaletteSeedCache != seed_) {
                 AnimatePalette(PaletteInitialized, 10, 236, &entries_[10]);
                 PaletteSeedCache = seed_;
@@ -547,7 +540,7 @@ int Palette::set() {
         return 7;
     }
     PaletteActive = this;
-    ScreenBuffer.sync_to_palette(this);
+    ScreenBufferOwner.buffer().sync_to_palette(this);
     if (PaletteUsesSystemColours == 0) {
         // Animate only when the seed changed; entries 10-245 are the ramp.
         if (PaletteSeedCache != seed_) {
@@ -1594,7 +1587,7 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
     if (BufferDirectDraw == nullptr) {
         if (PaletteInitialized != nullptr) {
             PaletteActive = this;
-            ScreenBuffer.sync_to_palette(this);
+            ScreenBufferOwner.buffer().sync_to_palette(this);
             if (PaletteUsesSystemColours == 0 &&
                 PaletteSeedCache != (int)seed_) {
                 AnimatePalette(PaletteInitialized, 10, 0xec, &entries_[10]);

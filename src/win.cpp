@@ -21,6 +21,12 @@
 // ORIGINAL: 0x005EB370 sub_5eb370 0x005EB370-0x005EB38F FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned complete exclusive span and selected CRT startup pair: NewTech483880..4838A4/4838B0..4838D8, sharedSprite5D71D0..5D71E6/5D71F0..5D720F, WinBuffer5EB350..5EB366/5EB370..5EB38F. These are process-start lifetimes, not lazy statics or authored callback substitutes.", "NewTech has six actual stride2C Sprite elements at822610 with separate guard822604 mask1. Shared Buffer Sprite9B3A50 uses mask2 of existing special-text guard9B37CC; Win drawing Buffer9B6F08 uses separate guard9B6E30 mask1. Guard is published before actual reverse/direct teardown, upper bits retained and constructors do not reset it.", "Fresh complete build-4esa2of5 COFF proves owner ?WinDrawingBufferOwner@@3UWinDrawingBufferLifetime@@A with generated fini symbol _$E24. Constructor/registration closures and direct cleanup guard/receiver references are physically verified; aggregate uses real compiler vector construction/destruction. Selected same-owner CRT order stays unchanged. GCC/Clang actual source controls cover prefix unwind, reverse order, shared masks and guarded reentry.", "Chosen owner types are implementation, not recovered original names or enclosing allocation proof. Exact initializer/unwind spelling, original data layout, linked retained selection and runtime/full-game fidelity remain obligations; no measurement claim is granted. Preserve prior claims and historical discoveries."], "reason": "Bind original win guarded global fini to its genuine source-owned lifetime and actual compiler-generated closure."}
 // symbol    _$E24
+// ORIGINAL: 0x005EB390 sub_5eb390 0x005EB390-0x005EB3A6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pre-change provenance, retained verbatim below: Bind the original ScreenBuffer startup initializer to the jackal/palette.cpp global and its compiler-generated lifetime; retain the complete historical identity, span, claim and seed provenance.", "Pre-change history: Pinned terranx_original.exe 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: original initializer 0x005EB390-0x005EB3A6 constructs the Buffer at 0x009B7490 and registers its matching teardown callback.", "Pre-change history: Source owner: jackal/palette.cpp declares the actual global Buffer ScreenBuffer, used by the palette and rendering paths; this is the object's typed storage, not an address alias.", "Pre-change history: The emitted startup helper _$E31 references ScreenBuffer, Buffer's constructor and the compiler's destructor callback before registering that callback with atexit; _$E29 references the same object and Buffer destructor.", "Pre-change history: The old seed's complete mapping and historical matching claim are moved unchanged; generated lifetime bytes remain a restoration obligation, not a new grant or acceptance.", "Pinned ScreenBuffer cleanup5EB3B0..5EB3CF uses mask2 of the exact same guard byte9B6E30 as drawing Buffer cleanup5EB370 mask1. Original CRT slots682678/68267C construct drawing then screen and register callbacks in that order.", "Current source lifetime belongs beside WinDrawingBufferOwner in win.cpp, preserving original registration order and reverse guarded cleanup. Palette/rendering borrowers retain the same genuine underlying Buffer. Source grouping is supported by shared lifetime and runtime consumers, not a recovered original TU/name/allocation proof.", "Retain complete startup identity/span and historical matching restoration obligation; typed lifetime structural recovery does not grant fresh exactness, unwind, data-extent or linked/runtime acceptance."], "reason": "Rehome ScreenBuffer startup to its shared-guard Win lifetime owner; retain complete historical identity, claim and pre-change seed evidence."}
+// symbol    _$E31
+// ORIGINAL: 0x005EB3B0 sub_5eb3b0 0x005EB3B0-0x005EB3CF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original5EB3B0..5EB3CF reads cleanup byte9B6E30, tests mask2, retains other bits while setting bit2 before complete Buffer destructor5D7410 with receiver9B7490. Existing drawing callback5EB370 uses mask1 of the same byte.", "Original consecutive CRT slots682678/68267C construct/register drawing then screen. Current same-TU definitions preserve registration and reverse atexit cleanup without dynamic reference globals or executable-address dispatch. Constructors do not reset the guard.", "Actual retained physical COFF observes _$E29 referring to the same guard and ScreenBufferOwner before direct qualified Buffer destructor. Startup closure references the real Buffer constructor and atexit registration. Source owner storage is offset-zero and aligned for current Buffer; original allocation bounds/names/TU remain unknown.", "Original9B74C0 is ScreenBuffer+30 rect2_, proved by pinned5EFED9push9B74C0/5EFEDEmovecx9B7490/5EFEE3call5D8000. Rendering restores clipping through Buffer::restore_clip, not duplicate RECT storage.", "No unmeasured claim is granted. Preserve all old claims and startup restoration; compiler constructor/unwind equality, complete linked preservation/data extent and game runtime fidelity remain obligations."], "reason": "Bind original ScreenBuffer guarded teardown to the actual compiler-generated callback of its source-owned shared Win lifetime."}
+// symbol    _$E29
 #include "stdafx.h"
 
 // Win constructor-installed Win branch: capture4, resize13, mouse17, update63.
@@ -50,8 +56,8 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include <stddef.h>
 
 // 0x009B6F08 in the image - the buffer Win draws into.
-// Its guard byte at 0x009B6E30 is separate, not a guessed containing object.
-extern uint8_t WinDrawingBufferCleanupGuard;
+// Its guard byte at 0x009B6E30 is separate from both Buffers, not a
+// guessed containing object. ScreenBufferLifetime shares its bit 2.
 union WinDrawingBufferStorage {
     char bytes[sizeof(Buffer)];
     uint32_t alignment_[sizeof(Buffer) / sizeof(uint32_t)];
@@ -817,7 +823,8 @@ Win *WinBubbleCompanion;   // 0x009B7A4C
 Win *WinZOrderArray[512];
 // RECOVERY_OBJECT: v1 0x009B6E38 ?WinBubbleRect@@3UtagRECT@@A
 RECT WinBubbleRect;        // 0x009B6E38
-RECT WinScreenClipRect;    // 0x009B74C0
+// Original 0x009B74C0 is ScreenBuffer's rect2_ at +0x30, not an
+// independent RECT. Borrow it through Buffer::restore_clip().
 // restore_flip_sprite passes this complete RECT to UnionRect at 5F17C7
 // and flip at 5F17DC. Its right member at 9B6EF0 is not a modal result.
 // RECOVERY_OBJECT: v2 0x009B6EE8 0x009B6EF8 ?WinDirtyRect@@3UtagRECT@@A 0x005F1750
@@ -1245,8 +1252,8 @@ which are `right` and `top`. The STORES are correct - the block undoes the
 four adjustments the box made - so only the names mislead.
 
 THREE OF ITS "GLOBALS" ARE MEMBERS. 0x009B74C0, 0x009B7510 and 0x009B7514
-are `ScreenBuffer.rect2_`, `.dib_.bmiHeader.biWidth` and `.biHeight`:
-`ScreenBuffer` is at 0x009B7490 and those are +0x30, +0x80 and +0x84. A
+are `ScreenBufferOwner.buffer().rect2_`, `.dib_.bmiHeader.biWidth` and `.biHeight`:
+`ScreenBufferOwner.buffer()` is at 0x009B7490 and those are +0x30, +0x80 and +0x84. A
 scaffold that binds globals by address cannot see that, which is most of
 why it needed thirty-three of them.
 
@@ -1261,9 +1268,9 @@ void __cdecl Win::flip(RECT *area) {
 
     if (WinBubbleActive != 0) {
         if (area != nullptr) {
-            ScreenBuffer.set_clip(area);
+            ScreenBufferOwner.buffer().set_clip(area);
         }
-        ScreenBuffer.box(&WinBubbleRect, WinBubbleEdgeColour,
+        ScreenBufferOwner.buffer().box(&WinBubbleRect, WinBubbleEdgeColour,
                          WinBubbleEdgeColour);
         // The box is drawn on the border and the fill inside it, so the
         // rectangle moves IN by one on each side and back out below.
@@ -1276,15 +1283,15 @@ void __cdecl Win::flip(RECT *area) {
         WinBubbleRect.top += 1;
         WinBubbleRect.right -= 1;
         WinBubbleRect.bottom -= 1;
-        ScreenBuffer.fill(&WinBubbleRect, WinBubbleFillColour);
-        ScreenBuffer.set_font(WinBubbleFont, nullptr, nullptr, nullptr);
-        ScreenBuffer.set_text_color(WinBubbleTextColour, -1, 1, 1);
+        ScreenBufferOwner.buffer().fill(&WinBubbleRect, WinBubbleFillColour);
+        ScreenBufferOwner.buffer().set_font(WinBubbleFont, nullptr, nullptr, nullptr);
+        ScreenBufferOwner.buffer().set_text_color(WinBubbleTextColour, -1, 1, 1);
 
         LPSTR text = reinterpret_cast<LPSTR>(WinBubbleActive);
         if (strchr(text, '^') == nullptr) {
             // One line, centred in the box.
             if (text != nullptr) {
-                ScreenBuffer.write_cent_l(text, &WinBubbleRect,
+                ScreenBufferOwner.buffer().write_cent_l(text, &WinBubbleRect,
                                           static_cast<int>(strlen(text)));
             }
         } else {
@@ -1297,7 +1304,7 @@ void __cdecl Win::flip(RECT *area) {
                 if (split != nullptr) {
                     *split = '\0';
                 }
-                ScreenBuffer.write_cent_l(
+                ScreenBufferOwner.buffer().write_cent_l(
                     line, WinBubbleRect.left, y,
                     WinBubbleRect.right - WinBubbleRect.left,
                     static_cast<int>(strlen(line)));
@@ -1322,13 +1329,13 @@ void __cdecl Win::flip(RECT *area) {
         WinBubbleRect.right += 1;
         WinBubbleRect.bottom += 1;
         if (area != nullptr) {
-            ScreenBuffer.set_clip(&ScreenBuffer.rect2_);
+            ScreenBufferOwner.buffer().set_clip(&ScreenBufferOwner.buffer().rect2_);
         }
     }
 
     if (WinFlipSprite != nullptr) {
         // The frame index is the sprite's own byte at +8.
-        WinFlipSprite->draw(&ScreenBuffer, WinFlipSprite->cTransparentIndex_,
+        WinFlipSprite->draw(&ScreenBufferOwner.buffer(), WinFlipSprite->cTransparentIndex_,
                             WinFlipSpriteY, WinFlipSpriteX, 1, 1);
     }
 
@@ -1382,7 +1389,7 @@ void __cdecl Win::flip(RECT *area) {
         return;
     }
 
-    const HDC source = ScreenBuffer.get_hdc();
+    const HDC source = ScreenBufferOwner.buffer().get_hdc();
     if (source == nullptr) {
         if (--WinHdcRefCount != 0) {
             return;
@@ -1395,7 +1402,7 @@ void __cdecl Win::flip(RECT *area) {
         return;
     }
 
-    ScreenBuffer.sync_to_palette(PaletteActive);
+    ScreenBufferOwner.buffer().sync_to_palette(PaletteActive);
 
     if (BufferDirectDraw == nullptr) {
         if (WinHdcRefCount != 0) {
@@ -1423,8 +1430,8 @@ void __cdecl Win::flip(RECT *area) {
     }
 
     if (area == nullptr) {
-        BitBlt(WinSharedHdc, 0, 0, ScreenBuffer.dib_.bmiHeader.biWidth,
-               -ScreenBuffer.dib_.bmiHeader.biHeight, source, 0, 0, SRCCOPY);
+        BitBlt(WinSharedHdc, 0, 0, ScreenBufferOwner.buffer().dib_.bmiHeader.biWidth,
+               -ScreenBufferOwner.buffer().dib_.bmiHeader.biHeight, source, 0, 0, SRCCOPY);
     } else {
         BitBlt(WinSharedHdc, area->left, area->top,
                area->right - area->left, area->bottom - area->top,
@@ -1444,7 +1451,7 @@ void __cdecl Win::flip(RECT *area) {
     // was missing entirely. `call_diff.py` flags it as one of the FEWER
     // calls; the image's own `push 1; call 0x5e3563` sits right after the
     // ReleaseDC block, both branches of which converge into it.
-    ScreenBuffer.release_hdc(1);
+    ScreenBufferOwner.buffer().release_hdc(1);
 }
 
 
@@ -2892,7 +2899,7 @@ static const char DDInitClassName[] = "DirectDClass";
 Purpose: Tear down whatever DirectDraw surface and device window this
          object is already holding, then (unless `depth` is zero) bring up
          a new one at the requested size, and paint the splash logo onto
-         `ScreenBuffer` once the new mode is live.
+         `ScreenBufferOwner.buffer()` once the new mode is live.
 // ORIGINAL: 0x00635510 ?init@DDInit@@QAEHHHHH@Z 0x00635510-0x00635746;0x00663870-0x00663885
 // size      587 bytes
 // prototype int (__thiscall ?init@DDInit@@QAEHHHHH@Z)(DDInit *this, int width, int height, int depth, int tgl)
@@ -3023,12 +3030,12 @@ int DDInit::init(int width, int height, int depth, int tgl) {
     WinScreenHeight = height;
 
     if (tgl != 0) {
-        ScreenBuffer.init(width, height, 0, 0);
-        ScreenBuffer.fill(0);
+        ScreenBufferOwner.buffer().init(width, height, 0, 0);
+        ScreenBufferOwner.buffer().fill(0);
         if (buf.load_pcx("logo.pcx", PaletteActive, 10, 0xEC) == 0) {
-            buf.copy(&ScreenBuffer, 0, 0,
-                     (ScreenBuffer.dib_.bmiHeader.biWidth - buf.dib_.bmiHeader.biWidth) / 2,
-                     (buf.dib_.bmiHeader.biHeight - ScreenBuffer.dib_.bmiHeader.biHeight) / 2,
+            buf.copy(&ScreenBufferOwner.buffer(), 0, 0,
+                     (ScreenBufferOwner.buffer().dib_.bmiHeader.biWidth - buf.dib_.bmiHeader.biWidth) / 2,
+                     (buf.dib_.bmiHeader.biHeight - ScreenBufferOwner.buffer().dib_.bmiHeader.biHeight) / 2,
                      buf.dib_.bmiHeader.biWidth,
                      -buf.dib_.bmiHeader.biHeight);
         }
@@ -3248,14 +3255,14 @@ int __cdecl Win::init_class(LPSTR window_name) {
         WinSharedHdc = nullptr;
     }
 
-    ScreenBuffer.init(WinScreenWidth, WinScreenHeight, 0, 0);
-    ScreenBuffer.fill(0);
+    ScreenBufferOwner.buffer().init(WinScreenWidth, WinScreenHeight, 0, 0);
+    ScreenBufferOwner.buffer().fill(0);
     if (logo.load_pcx("logo.pcx", PaletteActive, 10, 0xEC) == 0) {
-        logo.copy(&ScreenBuffer, 0, 0,
-                  (ScreenBuffer.dib_.bmiHeader.biWidth
+        logo.copy(&ScreenBufferOwner.buffer(), 0, 0,
+                  (ScreenBufferOwner.buffer().dib_.bmiHeader.biWidth
                    - logo.dib_.bmiHeader.biWidth) / 2,
                   (logo.dib_.bmiHeader.biHeight
-                   - ScreenBuffer.dib_.bmiHeader.biHeight) / 2,
+                   - ScreenBufferOwner.buffer().dib_.bmiHeader.biHeight) / 2,
                   logo.dib_.bmiHeader.biWidth,
                   -logo.dib_.bmiHeader.biHeight);
     }
@@ -4169,7 +4176,7 @@ Purpose: Restore the saved screen area and union its rectangle into the
 void __cdecl restore_flip_sprite(int do_flip) {
     if (WinFlipSprite != 0) {
         WinDrawingBufferOwner.buffer().copy(
-            (&ScreenBuffer), 0, 0,
+            (&ScreenBufferOwner.buffer()), 0, 0,
             WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
         int x = WinFlipSpriteY;
         int y = WinFlipSpriteX;
@@ -4599,7 +4606,7 @@ void Win::close_class() {
         DestroyWindow(reinterpret_cast<HWND>(HandleMain));
         HandleMain = nullptr;
     }
-    ScreenBuffer.close();
+    ScreenBufferOwner.buffer().close();
     UnregisterClass("JackalClass", WinInstance);
     WinInstance = nullptr;
 }
@@ -5858,7 +5865,7 @@ static void BuildRectDirect(RECT &r) {
 static void RestoreAndFlip(bool useHelper) {
     if (WinFlipSprite != 0) {
         WinDrawingBufferOwner.buffer()
-            .copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
+            .copy((&ScreenBufferOwner.buffer()), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
                    WinClipWidth, WinClipHeight);
         RECT rect;
         if (useHelper) {
@@ -7405,7 +7412,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
             Buffer *buf;
             int x, y;
             if (WinBackBuffer == 0) {
-                buf = (&ScreenBuffer);
+                buf = (&ScreenBufferOwner.buffer());
                 x = stack8;
                 y = stack4;
             } else {
@@ -7413,7 +7420,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
                 x = stack8 - WinViewOriginX;
                 y = stack4 - WinViewOriginY;
             }
-            (&ScreenBuffer)->draw(buf, WinFillColour, x, y, 1, 1);
+            (&ScreenBufferOwner.buffer())->draw(buf, WinFillColour, x, y, 1, 1);
         }
 
         if (buffer4_ != 0 && (flags == -1 || flags == 2)) {
@@ -7426,7 +7433,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
             if (WinBackBuffer == 0) {
                 v = (client_rect_.bottom -
                      client_rect_.top) - v;
-                buf = (&ScreenBuffer);
+                buf = (&ScreenBufferOwner.buffer());
                 x = stack8;
             } else {
                 v = ((client_rect_.bottom -
@@ -7434,16 +7441,16 @@ void Win::on_nc_paint(RECT * area, int flags) {
                 buf = WinBackBuffer;
                 x = stack8 - WinViewOriginX;
             }
-            (&ScreenBuffer)->draw(buf, WinFillColour, x, v + stack4, 1, 1);
+            (&ScreenBufferOwner.buffer())->draw(buf, WinFillColour, x, v + stack4, 1, 1);
         }
 
         if (buffer3_ != 0 && (flags == -1 || flags == 3)) {
             if (WinBackBuffer == 0) {
-                (&ScreenBuffer)
-                    ->draw((&ScreenBuffer), WinFillColour, stack8,
+                (&ScreenBufferOwner.buffer())
+                    ->draw((&ScreenBufferOwner.buffer()), WinFillColour, stack8,
                            stack4 + iVar1, 1, 1);
             } else {
-                (&ScreenBuffer)
+                (&ScreenBufferOwner.buffer())
                     ->draw(WinBackBuffer, WinFillColour,
                            stack8 - WinViewOriginX, (iVar1 - WinViewOriginY) + stack4, 1, 1);
             }
@@ -7457,7 +7464,7 @@ void Win::on_nc_paint(RECT * area, int flags) {
                 v = (client_rect_.right -
                      client_rect_.left) -
                     border_thickness_;
-                buf = (&ScreenBuffer);
+                buf = (&ScreenBufferOwner.buffer());
             } else {
                 yv = iVar1 - WinViewOriginY;
                 v = ((client_rect_.right -
@@ -7465,10 +7472,10 @@ void Win::on_nc_paint(RECT * area, int flags) {
                      border_thickness_) - WinViewOriginX;
                 buf = WinBackBuffer;
             }
-            (&ScreenBuffer)->draw(buf, WinFillColour, v + stack8, yv + stack4, 1, 1);
+            (&ScreenBufferOwner.buffer())->draw(buf, WinFillColour, v + stack8, yv + stack4, 1, 1);
         }
 
-        (&ScreenBuffer)->set_clip(&WinScreenClipRect);
+        ScreenBufferOwner.buffer().restore_clip();
     }
 }
 
@@ -8520,7 +8527,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             WinFlipSpriteY = destX;
             WinFlipSpriteX = destY;
             WinFlipSprite = win->cursor_sprite_;
-            ScreenBuffer.copy(&WinDrawingBufferOwner.buffer(), destX, destY, 0, 0, width, height);
+            ScreenBufferOwner.buffer().copy(&WinDrawingBufferOwner.buffer(), destX, destY, 0, 0, width, height);
 
             RECT rect;
             rect.left = WinFlipSpriteY;
@@ -8627,7 +8634,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
         }
         if (WinFlipSprite != 0) {
             WinDrawingBufferOwner.buffer()
-                .copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
+                .copy((&ScreenBufferOwner.buffer()), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
                        WinClipWidth, WinClipHeight);
             RECT rect;
             make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
@@ -9943,9 +9950,9 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
     } else {
         if (WinBackBuffer == 0) {
             if (area != 0) {
-                (&ScreenBuffer)->fill(area, 0);
+                (&ScreenBufferOwner.buffer())->fill(area, 0);
             } else {
-                (&ScreenBuffer)->fill(0);
+                (&ScreenBufferOwner.buffer())->fill(0);
             }
         }
     }
@@ -10004,7 +10011,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
         base = WinFlipSpriteY;
     }
 
-    (&ScreenBuffer)
+    (&ScreenBufferOwner.buffer())
         ->copy(&WinDrawingBufferOwner.buffer(), l14 - base2, l10 - base, l1c - l14,
                l18 - l10, l14, l10);
     return 0;
@@ -11511,6 +11518,11 @@ void __cdecl add_parent(Win * window) {
 uint8_t WinDrawingBufferCleanupGuard;
 // RECOVERY_OBJECT: v3 0x009B6F08 ?g_WIN_BUFFER@@3VBuffer@@A member ?WinDrawingBufferOwner@@3UWinDrawingBufferLifetime@@A storage_.bytes
 WinDrawingBufferLifetime WinDrawingBufferOwner;
+// Original CRT slots 0x682678/0x68267C construct drawing then screen;
+// registration in this definition order gives reverse atexit cleanup.
+// The screen Buffer starts at 0x009B7490; its allocation bound is unknown.
+// RECOVERY_OBJECT: v3 0x009B7490 ?ScreenBuffer@@3VBuffer@@A member ?ScreenBufferOwner@@3UScreenBufferLifetime@@A storage_.bytes
+ScreenBufferLifetime ScreenBufferOwner;
 
 // ===== homed from src/unrecovered/005ed360.cpp =====
 void __cdecl add_ancestor_origin(int *x, int *y, Win *window);

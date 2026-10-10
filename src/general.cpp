@@ -2245,8 +2245,8 @@ int __cdecl sub_62cd50(int bit_depth) {
         BufferDirectDraw->Release();
         BufferDirectDraw = 0;
     }
-    ScreenBuffer.surface_ = 0;
-    ScreenBuffer.clipper_ = 0;
+    ScreenBufferOwner.buffer().surface_ = 0;
+    ScreenBufferOwner.buffer().clipper_ = 0;
     DirectDrawSurface = 0;
     DirectDrawBackBuffer = 0;
     DDActive = 0;
@@ -2346,14 +2346,14 @@ int __cdecl sub_62cd50(int bit_depth) {
             goto failure;
         }
         DDActive = 1;
-        ScreenBuffer.close();
-        ScreenBuffer.locked_bits_ = 0;
-        ScreenBuffer.hdc2_ = 0;
+        ScreenBufferOwner.buffer().close();
+        ScreenBufferOwner.buffer().locked_bits_ = 0;
+        ScreenBufferOwner.buffer().hdc2_ = 0;
         // Buffer's existing API uses the Surface1 prefix of the Surface2
         // interface, just as UV2Player's ExtDirectDraw bridge already does.
-        ScreenBuffer.surface_ =
+        ScreenBufferOwner.buffer().surface_ =
             reinterpret_cast<IDirectDrawSurface *>(DirectDrawBackBuffer);
-        ScreenBuffer.clipper_ = DirectDrawClipper;
+        ScreenBufferOwner.buffer().clipper_ = DirectDrawClipper;
     }
     return 0;
 
@@ -2380,8 +2380,8 @@ extern "C" int __cdecl sub_62d100() {
         BufferDirectDraw->Release();
         BufferDirectDraw = 0;
     }
-    ScreenBuffer.surface_ = 0;
-    ScreenBuffer.clipper_ = 0;
+    ScreenBufferOwner.buffer().surface_ = 0;
+    ScreenBufferOwner.buffer().clipper_ = 0;
     DirectDrawSurface = 0;
     DirectDrawBackBuffer = 0;
     DDActive = 0;

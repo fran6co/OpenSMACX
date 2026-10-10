@@ -1359,10 +1359,10 @@ void GraphicWin::on_paint(RECT *area) {
             rectangle.bottom -= WinViewOriginY;
             WinBackBuffer->set_clip(&rectangle);
         } else {
-            ScreenBuffer.set_clip(&rectangle);
+            ScreenBufferOwner.buffer().set_clip(&rectangle);
         }
     } else if (area != 0) {
-        ScreenBuffer.set_clip(area);
+        ScreenBufferOwner.buffer().set_clip(area);
     }
 
     if ((iFlags_ & 0x1000000) == 0 && surface_ != 0) {
@@ -1375,7 +1375,7 @@ void GraphicWin::on_paint(RECT *area) {
         DirectDrawBackBuffer->Blt(&rectangle,
             reinterpret_cast<IDirectDrawSurface2 *>(surface_), 0, DDBLT_WAIT, 0);
     } else {
-        Buffer *destination = &ScreenBuffer;
+        Buffer *destination = &ScreenBufferOwner.buffer();
         int x = origin_x;
         int y = origin_y;
         if (WinBackBuffer != 0) {
@@ -1401,7 +1401,7 @@ void GraphicWin::on_paint(RECT *area) {
     if (WinBackBuffer != 0) {
         WinBackBuffer->restore_clip();
     } else {
-        ScreenBuffer.restore_clip();
+        ScreenBufferOwner.buffer().restore_clip();
     }
 }
 

@@ -284,11 +284,14 @@ extern Palette *PaletteActive;
  * Through
  * `extern Buffer *` the same source compiles to
  * `mov ecx, dword ptr [ScreenBuffer]`, a load the image does not perform, and
- * it lands one instruction earlier than the `push esi` beside it. An `extern`
- * declaration of an incomplete type is legal; the DEFINITION in palette.cpp is
- * where `buffer.h` is needed.
+ * it lands one instruction earlier than the `push esi` beside it.
+ * The actual Buffer now lives at offset zero of ScreenBufferOwner in win.cpp,
+ * beside the drawing Buffer whose cleanup uses bit 1 of the same guard byte.
+ * Its inline accessor borrows that object, not a separately initialized pointer
+ * or reference global. The lifetime definition is in win.h.
  */
-extern Buffer ScreenBuffer;
+struct ScreenBufferLifetime;
+extern ScreenBufferLifetime ScreenBufferOwner;
 
 /*
  * 0x009B8184. The seed_ value Palette::set last animated, so it can skip
