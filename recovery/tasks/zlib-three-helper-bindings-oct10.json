@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "task_id": "zlib-three-helper-bindings-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind three witnessed upstream trees.c helpers as dependency functions without changing upstream sources or historical claims",
+  "base_revision": "af2878e4788199a72fede56dec4f263a45786952",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6564160}],
+  "editable_files": ["src/vendor/zlib.recovery.h", "recovery/tests/test_zlib_leaf_component_migration.py", "recovery/tests/test_zlib_static_component_migration.py", "recovery/tests/test_zlib_five_identity_continuity.py", "recovery/tests/test_zlib_three_helper_bindings_oct10.py"],
+  "evidence": [
+    "Existing trees.c _bi_reverse binding owns the companion dependency scope. Authorize adding only _bi_flush at642960..6429EB, _bi_windup at6429F0..642A6C, and _copy_block at642A70..642B07 using the library source writer and component renderer. These are previously unbound original dependency identities, not application recovery or exactness grants.",
+    "Fresh configured zlib1.0.2 compilation with /c /O2 /Gy /GR- /GX and installed strict comparator independently qualifies all three candidate boundaries, bytes and references; _copy_block references _bi_windup. Verify this again from the published bindings with damage controls before integration.",
+    "Preserve all nine existing dependency bindings, their original envelopes and historical claims; upstream archive, selected sources, compiler configuration and application code stay unchanged. Fresh pinned-archive validation, before/after dependency diagnostics, build/link, reference/mapping checks and independent review required.",
+    "New original annotations remain unclaimed. Dependency correspondence and bounded COFF equality do not establish complete executable coverage, full-library version uniqueness, application retained selection, or runtime/full-game acceptance."
+  ]
+}
