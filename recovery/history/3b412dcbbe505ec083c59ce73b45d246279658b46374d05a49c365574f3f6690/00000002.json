@@ -1,0 +1,19 @@
+{
+  "event_id": "e68be55b605b3251a8cd8bf8e747e60fe8ce81482f58ce25a2a9cb9f8378a8af",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/texture_raster_actual_host_control.cpp"
+    ],
+    "evidence": [
+      "The broad host suite also uses the root Texture raster fixture, which retained a void* pixel member and obsolete Vert names/missing pointer-offset helper. Update fixture model to current source and include the actual pointer helper; keep every pixel and mutation assertion. Scope expansion only, no recovery baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "02e9b021a3f0e5867d6aad539991f6106bd33cc6880ee581b65bd7d38af3a0a1",
+  "request_id": "root-raster-pixel-fixture-oct10",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-pixel-member-owner-oct10"
+}
