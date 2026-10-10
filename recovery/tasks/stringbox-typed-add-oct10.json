@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "author": "framework-coordinator",
+  "base_revision": "fc279099b",
+  "intent": "Replace StringBox::add raw StringList member stores and base reinterpretation with declared members and genuine inheritance, preserving original staging, insertion and fixup behavior.",
+  "editable_files": [
+    "src/stringbox.cpp",
+    "recovery/tests/test_stringbox_typed_add_oct10.py"
+  ],
+  "subjects": [
+    {
+      "address": 6461200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Original629710 stages text atStringList+1C, flag at+20 and zero at+24 before calling StringStruct::add(index); zero result invokesStringBox::add_fixup.",
+    "src/stringstruct.h declaresStringList:publicStringStruct, pending_text_ at1C, field_20_ at20 and field_24_ at24; src/stringbox.h declares stringList_ asStringList. No new class, allocation, member extent or original name inference is required.",
+    "Preserve all original identities, spans, claims and legacy spelling lessons. Capture wholeStringBox baseline/current measurements, actual-body host forwarding/fixup tests, full fresh build/link, continuity and independent review. This is structural recovery, not new function coverage, runtime acceptance or strict reference proof. No behavior fix or extended byte-spelling search."
+  ]
+}
