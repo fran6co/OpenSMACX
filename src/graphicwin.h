@@ -118,6 +118,8 @@ class GraphicWin : public Win, public Buffer {
   void load_nc_sprites_from_defs();
   static void load_all_nc_sprites_from_defs();
   friend class Scroll;
+  // The caption callback uses the selected frame sprites' own text offsets.
+  friend int __cdecl def_caption_draw(GraphicWin *, char *, Buffer *);
   // BaseButton's colour setters drive this buffer directly.
   friend class BaseButton;
 

@@ -493,42 +493,30 @@ Return Value: the restored set_clip verdict
 Status: Coverage transcription - unclaimed body
 */
 int __cdecl def_caption_draw(GraphicWin *window, char *text, Buffer *canvas) {
+    // The historical offset-based access rationale above is superseded by
+    // narrow friendship with the existing owners, not by a guessed layout.
+    // Matching obligation: the pinned climate-window exit at 4554CA leaves
+    // EAX unspecified. This transcription's zero result is not proof of the
+    // original return ABI; redraw_nc_buffer ignores the callback result.
     if (window == &WorldClimateWorldWin || text == 0) {
         return 0;
     }
 
-    char *const window_base = reinterpret_cast<char *>(window);
-    char *const canvas_base = reinterpret_cast<char *>(canvas);
-    // The caption origin follows the left/top frame sprites' own offsets:
-    // GraphicWin's private frame_left_/frame_top_ (0x9DC/0x9E8) and their
-    // iLeftOffset_/iTopOffset_ (+0x20/+0x24).
-    const int frame_left_offset = *reinterpret_cast<int *>(
-        *reinterpret_cast<char **>(window_base + 0x9DC) + 0x20);
-    const int frame_top_offset = *reinterpret_cast<int *>(
-        *reinterpret_cast<char **>(window_base + 0x9E8) + 0x24);
-    // Buffer's protected clip rectangle, rect1_ at +0x30.
-    RECT *const canvas_rect = reinterpret_cast<RECT *>(canvas_base + 0x30);
+    // Pinned4554E6 copies Buffer+0x30 before reading the two frame sprites.
+    RECT *const canvas_rect = &canvas->rect1_;
+    RECT area = *canvas_rect;
+    area.right -= 0x28;
+    area.left += 0x23 + window->frame_left_->left_offset();
+    area.top += 0xB + window->frame_top_->top_offset();
+    area.bottom -= 0xC;
 
-    RECT area;
-    area.right = canvas_rect->right - 0x28;
-    area.left = canvas_rect->left + 0x23 + frame_left_offset;
-    area.top = canvas_rect->top + 0xB + frame_top_offset;
-    area.bottom = canvas_rect->bottom - 0xC;
-
-    // Win's protected caption state: the four text colours at
-    // +0x104..+0x110, the font at +0xF8 and the style word at +0x98.
-    canvas->set_text_color(
-        *reinterpret_cast<int *>(window_base + 0x104),
-        *reinterpret_cast<int *>(window_base + 0x108),
-        *reinterpret_cast<int *>(window_base + 0x10C),
-        *reinterpret_cast<int *>(window_base + 0x110));
-    canvas->set_font(
-        *reinterpret_cast<Font **>(window_base + 0xF8), 0, 0, 0);
+    canvas->set_text_color(window->field_104_, window->field_108_,
+                           window->field_10C_, window->field_110_);
+    canvas->set_font(window->field_F8_, 0, 0, 0);
     canvas->set_clip(&area);
 
+    const unsigned int style = window->iFlags_;
     const unsigned int len = strlen(text);
-    const unsigned int style = *reinterpret_cast<unsigned int *>(
-        window_base + 0x98);
     if ((style & 0x10000) != 0) {
         canvas->write_l(text, &area, len);
     } else if ((style & 0x40000) != 0) {
@@ -536,6 +524,8 @@ int __cdecl def_caption_draw(GraphicWin *window, char *text, Buffer *canvas) {
     } else {
         canvas->write_cent_l(text, &area, len);
     }
+    // The original final calls pass live Buffer+0x30, not a saved rectangle.
+    // Preserve that alias even when setting the caption clip changed rect1_.
     return canvas->set_clip(canvas_rect);
 }
 

@@ -732,6 +732,8 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
  // itself friendship for the same reason). Access to a member affects no
  // offset and no emitted byte, so the layout and every claim are untouched.
  protected:
+  // The free GraphicWin caption painter passes this live clip back to set_clip.
+  friend int __cdecl def_caption_draw(GraphicWin *, char *, Buffer *);
   friend class CheckBox;
   // EditBox's redraw uses the Buffer text foreground at original +0x53C.
   friend class EditBox;

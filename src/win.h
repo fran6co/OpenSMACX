@@ -123,6 +123,8 @@ class Win : public AutoSound {
   friend class Credits;
   // Popup configures the style of its embedded Dialogs' shared Win base.
   friend class Popup;
+  // The installed free caption callback reads this window's caption state.
+  friend int __cdecl def_caption_draw(GraphicWin *, char *, Buffer *);
   // Reaches Win's fields directly: the byte-exact body for 0x005F5080
   // is a free function (both member spellings were measured and
   // refuted), and it reads `iFlags_` the way the image does.
