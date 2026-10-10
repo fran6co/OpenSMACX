@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "task_id": "texture-vertex-api-family-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover remaining evidenced Vert pointer contracts, their shared light-array arguments and the genuine sentinel forwarding closure without normalizing original edge/error behavior",
+  "base_revision": "fdf7feb74cc492ce3fb2bfb88afff15b95496ffb",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6397312
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6407728
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6412688
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6403968
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6410384
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6418640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6438736
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6420357
+    }
+  ],
+  "editable_files": [
+    "src/texture.cpp",
+    "src/texture.h",
+    "recovery/tests/test_texture_typed_vertex_context_oct10.py",
+    "recovery/tests/test_texture_affine_vertex_api_oct10.py",
+    "recovery/tests/test_texture_vertex_api_family_oct10.py",
+    "recovery/tests/test_texture_shade_actual_source.py",
+    "recovery/tests/test_texture_sub61f0d0_actual_source.py",
+    "recovery/tests/fixtures/texture_sub61f0d0_actual_host.cpp",
+    "recovery/tests/texture_raster_actual_host_control.cpp"
+  ],
+  "evidence": [
+    "Native eight-byte x/y accesses and publication into existing shared Vert pointer globals establish vertex contracts for draw_trans2,61C630,61D990,61B780,61D090,61F0D0.61C630's last argument is a consumed UV pointer, not unused;623F50forwards that and geometry unchanged only on sentinel-1. All listed source caller closure is explicitly bounded; unobserved upstream producers remain unknown. Seed-generated decorated symbols and IDA integer guesses do not establish original C++ types.",
+    "61B780/61F0D0 publish a separate argument into the existing per-vertex int light-array pointer; recover int* contracts there as part of these consumers. Other61F0D0 integer-shaped shade/remap parameters remain outside this type interpretation.",
+    "61F0D0 reuses its argument storage for a minimum-y index. Verify and preserve its original initial pointer-bit residue when no y<0x7FFF is found; do not initialize a convenient index0or silently add a bounds guard. Its adjacent terminal fragment retains its identity/span/claim and must name the newly observed parent symbol, not become an independent callable function.",
+    "Use fresh compiler symbol observation, native fullTexture96verdict continuity and scoped strict references; preserve all markers, historical claims, source lessons and behavior. Update actual-source host controls/fixtures for typed vertex arrays and explicit extreme-coordinate behavior. Independent review and fresh application compile/link required; no function-count gain or fullgame/autonomous acceptance claim.",
+    "Reconcile earlier affine batch symbol continuity only for these exact newly reviewed functions; preserve its original baseline and all other original fields. No weakening of historical claim/identity checks or resetting baselines."
+  ]
+}
