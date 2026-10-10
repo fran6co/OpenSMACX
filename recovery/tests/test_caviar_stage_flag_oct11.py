@@ -7,7 +7,7 @@ import tempfile
 import pytest
 
 from match_recovery.source import read_text
-from test_texture_raster_actual_source import _continuity_fields
+from test_caviar_shape_chain_oct11 import assert_caviar_owner_continuity
 from test_caviar_scene_product_source import FUNCTIONS, FIXTURE, extract_definition
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -18,9 +18,7 @@ def test_original_identity_claims_symbols_and_history_preserved():
     path = ROOT / "src/caviar.cpp"
     old = subprocess.check_output(["git", "show", BASE + ":src/caviar.cpp"],
                                   cwd=ROOT, text=True)
-    before, after = read_text(old, path), read_text(path.read_text(), path)
-    assert [(_continuity_fields(r), r.symbol, r.function_fragment) for r in before] == [
-        (_continuity_fields(r), r.symbol, r.function_fragment) for r in after]
+    assert_caviar_owner_continuity(read_text(old, path))
 
 
 @pytest.mark.parametrize("damage", ("original_pointer_test", "polarity", "unmasked_flag"))

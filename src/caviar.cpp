@@ -618,6 +618,7 @@
 // symbol    _$E519
 #include "stdafx.h"
 #include "caviar.h"
+#include "caviar_cpu.h"
 #include "basepop.h"
 #include "buffer.h"
 #include "palette.h"
@@ -1578,10 +1579,8 @@ RECT CaviarViewportState;  // 0x009B9690
 // the shipped game is not recovered. Sized to the 0x1800 the call reads.
 uint8_t CaviarColourSource[0x1800];  // 0x009B9C38
 
-// ForceOldVoxelAlgorithm, the PREFERENCES byte the ini read seeds. Real
-// storage - the image's slot is 0x009C0830, unmapped in the standalone
-// build, and both init_class and the engine's algo dispatch read it.
-uint8_t CaviarVoxelAlgoFlag = 0;
+// The CPU rank at original0x009C0830 is owned by caviar_cpu.cpp. Preferences
+// can force its fallback rank; detection and renderer selection share it.
 
 // ---------------------------------------------------------------------------
 // THE ENGINE'S PER-DRAW SCRATCH. Every one of these is written at the top of
@@ -2038,9 +2037,8 @@ typedef char (__cdecl *vox_user_chunk_fn)(int, CvrRecord *, CvrChunkHeader *);
 // RECOVERY_OBJECT: v2 0x009C0834 0x009C0838 ?vox_user_chunk@@3P6ADHPAUCvrRecord@@PAUCvrChunkHeader@@@ZA 0x006381F0
 vox_user_chunk_fn vox_user_chunk = 0; // 0x009C0834, zeroed on accepted CPU report
 uint32_t vox_unk_9c0b78 = 0;    // 0x009C0B78, zeroed on accepted CPU report
-// 0x009C0B70, the CPU VENDOR byte vox_detect_cpu fills: 0 unknown,
+// caviar_cpu.cpp owns the original0x009C0B70 vendor byte: 0 unknown,
 // 1 GenuineIntel, 2 AuthenticAMD.
-uint8_t vox_cpu_vendor = 0;
 uint32_t vox_record_count = 0;  // 0x009BE69C, records created, bumped per create
 
 // The pixel-size dispatch tables the engine's two dispatchers (sub_63ad60
@@ -2210,38 +2208,6 @@ int __cdecl vox_expand_palette(int fd, uint8_t *palette) {
 // Defined at the foot of this file, promoted from its artifact.
 void __cdecl sub_63ae20(unsigned char *record);
 
-/*
-Purpose: The engine's CPU DETECTION PROBE, named vox_detect_cpu 2026-08-30
-         from the decode below. The shipped body toggles EFLAGS.ID (0x40000)
-         to test for the CPUID instruction at all, then EFLAGS.AC (0x200000)
-         to separate 386-class from 486-class, then runs CPUID: leaf 0's
-         vendor string selects vox_cpu_vendor - 1 for "GenuineIntel"
-         (0x00698DD8), 2 for "AuthenticAMD" (0x00698DE4) - and leaf 1's
-         family ((eax>>8)&0xf) with the MMX feature bit (EDX 0x800000)
-         picks the renderer rank in CaviarVoxelAlgoFlag: family 5 = rank 2,
-         family 5+MMX = 3, family 6 = 4, family 6+MMX = 5, anything else 0.
-         A flags-register dance with no C++ spelling, so this stand-in
-         leaves rank 1 (the fallback the AC test itself produces) and skips
-         detection.
-// ORIGINAL: 0x0063E860 sub_63e860 0x0063E860-0x0063E94E
-// symbol    ?vox_detect_cpu@@YAHXZ
-// TRIED: byte-exact is unreachable under the inline-assembly rule - the body
-//        is the flags push/pop pair toggling EFLAGS bit 0x40000 (and
-//        0x200000) plus CPUID itself, and this address calls nothing (from
-//        the promoted artifact).
-*/
-int __cdecl vox_detect_cpu() {
-    // 2026-08-29: rank 1, not 0. This stand-in cannot run CPUID (the flags
-    // dance needs __asm, which the tree bans), and a probe that leaves rank
-    // 0 makes vox_create_record's algo switch take its default arm - which
-    // aborts Caviar::init_class with 0x17 and the whole standalone boot
-    // with it. Rank 1 is the old-algorithm rank the preferences path itself
-    // forces via ForceOldVoxelAlgorithm, so the engine proceeds exactly as
-    // it does on a machine whose user pinned the old path.
-    CaviarVoxelAlgoFlag = 1;
-    vox_cpu_vendor = 0;
-    return 0;
-}
 
 /*
 Purpose: Install the six vx_* file-IO callbacks and vet the machine's CPU rank.

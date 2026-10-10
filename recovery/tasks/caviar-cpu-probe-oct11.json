@@ -22,7 +22,11 @@
     "packages/match-recovery/README.md",
     "recovery/tests/test_intrinsic_environment.py",
     "recovery/tests/test_toolchain_inputs.py",
-    "recovery/tests/test_caviar_cpu_actual_source.py"
+    "recovery/tests/test_caviar_cpu_actual_source.py",
+    "recovery/tests/test_caviar_shape_chain_oct11.py",
+    "recovery/tests/test_caviar_clip_members_oct11.py",
+    "recovery/tests/test_caviar_raster_extent_oct11.py",
+    "recovery/tests/test_caviar_stage_flag_oct11.py"
   ],
   "evidence": [
     "Pinned original 0x0063E860-0x0063E94E toggles AC bit0x40000, clears output bytes9C0830/9C0B70 before the first gate, restores saved flags only after AC success, sets rank1, then toggles ID bit0x200000 without a final restoration. CPUID0 compares EBX/EDX/ECX vendor words, signed-compares maximum leaf against1, and CPUID1 maps base families5/6 and MMX bit0x800000 to ranks2..5; unsupported families clear rank. Preserve all these quirks.",
@@ -33,6 +37,8 @@
     "Actual VC6 debug-link controls reject even Clang's minimal compiler-identification CodeView section. Its companion llvm-objcopy --strip-debug removes that metadata and permits the control to debug-link. Generic compile-file evidence must explicitly distinguish primary compiler output from ordered postprocessed final output; retain strict v1 parsing, observe actual stage argv/tools/inputs and hash continuity, and refuse stage-ignorant build-graph comparison. Trusted capture and final object/link byte correspondence do not prove transformation semantics or acceptance. This narrow package scope expansion is driven by the real CPU recovery blocker, not authorization for unrelated framework work.",
     "Independent review also requires a closed compiler-argument policy, disabled default Clang config, implicit environment/target/language/debug override controls and a nonempty external-global relocation fixture. Register the optional frontend explicitly in project-owned configuration rather than silently requiring its binaries in every ordinary-only project toolchain. Keep the original task baseline and all discoveries.",
     "Fresh pinned instruction review confirms both gates branch on full flags-word XOR equality, not only the toggled bit. The first toggle/read precedes rank/vendor zeroing, which precedes JE at63E886. CPUID0 receives saved flags in ECX and CPUID1 receives CPUID0 vendor-word ECX; retain these inputs through __cpuidex and preserve unproved final condition-flag effects as an obligation.",
-    "The existing toolchain SDK-path test assumes an ordinary-only registry and now fails under the explicitly enabled mixed-toolchain policy. Extend this test file only to distinguish disabled ordinary-only discovery from enabled registered toolchain merging, with no implicit tool lookup in disabled mode. Enabled mixed projects deliberately require their declared compiler tools; this is not a fallback or evidence of matching."
+    "The existing toolchain SDK-path test assumes an ordinary-only registry and now fails under the explicitly enabled mixed-toolchain policy. Extend this test file only to distinguish disabled ordinary-only discovery from enabled registered toolchain merging, with no implicit tool lookup in disabled mode. Enabled mixed projects deliberately require their declared compiler tools; this is not a fallback or evidence of matching.",
+    "The existing shape-chain continuity control assumes all327 Caviar identities remain in one source file. Extend its current owner union to include caviar_cpu.cpp, retain complete original/claim/lesson continuity, and permit only the CPU emitted-symbol change from the old int fallback to the observed void COFF entry and its BODY-to-FILE extraction mode for the new standalone intrinsic TU. This is structural migration, not deletion or claim demotion.",
+    "Broader actual Caviar controls show the same single-file continuity assumption in clip-members, raster-extent and stage-flag tests. Reuse the reviewed owner-union continuity assertion from shape-chain, preserving each test's immutable baseline and complete claims/lessons/symbols except the same explicitly bounded CPU migration. No behavioral assertions or task baselines are weakened."
   ]
 }

@@ -8,7 +8,7 @@ import pytest
 
 from test_caviar_descriptor_ramps_overlay_oct9 import extract
 from test_caviar_rect_state_actual_source_oct9 import source_statement
-from test_texture_raster_actual_source import _continuity_fields
+from test_caviar_shape_chain_oct11 import assert_caviar_owner_continuity
 from match_recovery.source import read_text
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -19,9 +19,7 @@ def test_original_identities_claims_symbols_and_history_are_preserved():
     path = ROOT / "src/caviar.cpp"
     old = subprocess.check_output(["git", "show", BASE + ":src/caviar.cpp"],
                                   cwd=ROOT, text=True)
-    before, after = read_text(old, path), read_text(path.read_text(), path)
-    assert [(_continuity_fields(r), r.symbol, r.function_fragment) for r in before] == [
-        (_continuity_fields(r), r.symbol, r.function_fragment) for r in after]
+    assert_caviar_owner_continuity(read_text(old, path))
 
 
 def program():

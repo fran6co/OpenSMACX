@@ -145,6 +145,7 @@ set(OPENSMACX_SOURCES
     src/polygon.cpp
     src/buttongroup.cpp
     src/caviar.cpp
+    src/caviar_cpu.cpp
     src/council.cpp
     src/dialog.cpp
     src/dialogs.cpp
@@ -322,6 +323,10 @@ add_subdirectory(src/jackal)
 # pointer; generic library bodies have independently measured profiles.
 set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Only the CPU register probe uses the explicitly registered intrinsic frontend.
+# The rest of Caviar and the application continue to use their VC6 recipes.
+set_source_files_properties(src/caviar_cpu.cpp
+    PROPERTIES COMPILE_OPTIONS "--frontend=intrinsics-i386-no-debug")
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
 # Terrain, media decoder and GraphicWin lookup data remain local derivatives of

@@ -17,9 +17,31 @@ def test_original_identity_claim_and_symbol_continuity():
     path = ROOT / "src/caviar.cpp"
     old = subprocess.check_output(["git", "show", BASE + ":src/caviar.cpp"],
                                   cwd=ROOT, text=True)
-    before, after = read_text(old, path), read_text(path.read_text(), path)
-    assert [(_continuity_fields(r), r.symbol, r.function_fragment) for r in before] == [
-        (_continuity_fields(r), r.symbol, r.function_fragment) for r in after]
+    before = read_text(old, path)
+    assert_caviar_owner_continuity(before)
+
+
+def assert_caviar_owner_continuity(before):
+    """Allow only the observed CPU owner migration, not missing obligations."""
+    path = ROOT / "src/caviar.cpp"
+    after = read_text(path.read_text(), path)
+    cpu_path = ROOT / "src/caviar_cpu.cpp"
+    after += read_text(cpu_path.read_text(), cpu_path)
+    by_address = {r.address: r for r in after}
+    assert len(by_address) == len(after) == len(before)
+    for record in before:
+        current = by_address[record.address]
+        assert record.function_fragment == current.function_fragment
+        if record.address == 0x63E860:
+            from match_recovery.source.model import Mode
+            old_fields = _continuity_fields(record)
+            new_fields = _continuity_fields(current)
+            assert record.mode is Mode.BODY and current.mode is Mode.FILE
+            assert old_fields[:1] + old_fields[2:] == new_fields[:1] + new_fields[2:]
+            assert current.symbol == "?vox_detect_cpu@@YAXXZ"
+        else:
+            assert _continuity_fields(record) == _continuity_fields(current)
+            assert record.symbol == current.symbol
 
 
 def test_pinned_original_unordered_gates_and_relative_link():
