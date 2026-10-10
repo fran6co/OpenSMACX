@@ -9,6 +9,36 @@
     {
       "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
       "address_space": "pe:va",
+      "address": 5475600
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5430432
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5430480
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5430512
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5430544
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5430608
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
       "address": 4330448
     },
     {
@@ -2437,7 +2467,20 @@
     "recovery/tests/test_save_daemon_actual_source.py",
     "recovery/tests/test_shared_turn_popup_storage_oct9.py",
     "recovery/tests/time_controls_harness.cpp",
-    "recovery/tests/test_netdaemon_shared_deletion_storage_oct10.py"
+    "recovery/tests/test_netdaemon_shared_deletion_storage_oct10.py",
+    "recovery/tests/test_netdaemon_synch_host.py",
+    "recovery/tests/test_netdaemon_send_files_host.py",
+    "recovery/tests/test_netdaemon_transfer_modal.py",
+    "recovery/tests/test_netwin_loaded_path_member_oct10.py",
+    "recovery/tests/netdaemon_synch_opcode0_harness.cpp",
+    "recovery/tests/netdaemon_synch_owner_copy_harness.cpp",
+    "recovery/tests/altitude_owners/alt_set.cpp",
+    "recovery/tests/fixtures/probe_host_stubs.inc",
+    "recovery/tests/test_net_turn_owner.py",
+    "recovery/tests/test_alphamenu_check_actual_source.py",
+    "recovery/tests/test_monuwin_behavior.py",
+    "recovery/tests/test_newgame_menu.py",
+    "recovery/tests/test_time_controls.py"
   ],
   "evidence": [
     "Pinned fixup_message534330 receiver LEAthis+158C calls DeletionList::convert52DDC0; veh_kill5C08C0 uses93E31C foradd_deletion52DE70; NetDaemonNet93CD90+158C=93E31C. Same storage, not independent VehDeletionList. Real DeletionList records24*3C,current_owner+5A0,size5A4; fake global-scope class mustgo.",
