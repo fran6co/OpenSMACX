@@ -1,0 +1,19 @@
+{
+  "event_id": "fa00d45e2dbb8ec838232d666c628d238526ff99e51883ed5f940744a2092147",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/draw_mask_host_control.cpp"
+    ],
+    "evidence": [
+      "Independent fixture audit identified the final remaining void* pixel-member model in draw_mask_host_control.cpp. Keep every existing mask assertion while bringing its private Texture pixel field into agreement with the source byte pointer."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e68be55b605b3251a8cd8bf8e747e60fe8ce81482f58ce25a2a9cb9f8378a8af",
+  "request_id": "mask-pixel-fixture-oct10",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:texture-pixel-member-owner-oct10"
+}
