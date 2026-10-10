@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "caviar-raster-extent-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Unify the observed variable raster payload extent protocol without unaligned uint32 pointer dereferences",
+  "base_revision": "51eec0d6e95b648f7527d4b78e33f73ec199fb38",
+  "subjects": [],
+  "editable_files": [
+    "src/caviar.cpp",
+    "recovery/tests/test_caviar_scene_product_source.py",
+    "recovery/tests/test_caviar_draw_callbacks_actual_source.py",
+    "recovery/tests/test_caviar_raster_extent_oct11.py"
+  ],
+  "evidence": [
+    "Pinned loops63F86C..63F891,63ECF3..63ED18,63F344..63F369 use fixedheader20 then flagbit0 selects count*3 or dword[payload]. Payload includes encoded size dword; callbacks retain payloadstart. No padding/alignmentrounding occurs; original x86 performs unaligned MOV loads. Existing CvrRasterItemHeaderCandidate is packed, prefix20 and variabletail; complete producer/fileformat ownership remains unproved.",
+    "Use one static source helper returning uint32 extent: flagclear count*3u wrap, flagset memcpy four bytes to uint32 without alignment/effective-type violation. Preserve branch-gated read, payload pointer start, visited count wrap, advance and unchecked loopcondition. Do not add safety guards or infer original helper/class spelling. Pointer arithmetic on invalid backing remains unresolved native ABI debt.",
+    "Require actual helper controls at all addressalignments, both flags and modulo count edgecases, guarded no-read flagclear control and alignment/stride damage cases; explicit-size multi-record part/shadow dispatch and existing clip producer controls. Preserve all original identities/claims/history and327 native verdicts; require independent review, source checks and fresh application build/link. No functioncoverage/exactness/runtime acceptance grant."
+  ]
+}
