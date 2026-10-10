@@ -57,11 +57,12 @@ extern uint32_t UpgradePromptAnswered; // base.cpp owns original90EA3C
 // DISCOVERY 0x00439D30: the retained seed's 0x009AB550 is
 // Ability[].preq_tech, 0x009A6490 is GamePreferences, 0x00949780 is
 // Rules.tech_two_spec_abilities and 0x00939284 is ConsoleGlobal.faction_id_.
-// Its faction-stride scan reaches Players[].faction_bonus_id/val1. The seed
-// scans 41 dwords starting at bonus_id[1], past the eight declared bonus
-// slots and even the Player object. The typed implementation limits this
-// check to the faction's declared bonus entries; exact restoration of that
-// out-of-bounds scan remains a separate obligation.
+// Its faction-stride scan reaches Players[].faction_bonus_id/val1. The
+// original scans 41 dwords from each member start, despite the eight declared
+// bonus slots. The source-owned byte view below preserves those reads; its
+// windows extend past each Player by 0x18 and 0x38 bytes respectively, and the final faction's
+// reads exceed the complete Players[8] allocation. This remains an original
+// out-of-bounds/runtime obligation, not made defined by the typed owner.
 
 // ---- shared seams and bindings the recovered bodies reach -----------------
 void __cdecl proto_sort_2(int faction);
@@ -633,12 +634,6 @@ void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 
 // map.cpp owns the prototype ranking shared with this window's stack list.
 
-// 0x009A64C0 - the interface flag byte scenario.cpp documents (`or dword
-// [0x9A64C0], 0xE0`, `test byte [0x9A64C0], 0x80` and `, 0x40`). Bit 0x40
-// unhides the two toggle buttons flatButtons_[2] and [3] while the design
-// window is open. No catalogue name for the byte.
-static unsigned char *const InterfaceFlagByte = (unsigned char *)0x009A64C0;
-
 // 0x00749C88 - menu.cpp's g_MENU_UP_WAVE; on_status plays it when the window
 // opens. Defined (and owned) there; no header declares it.
 extern Wave g_MENU_UP_WAVE;
@@ -650,28 +645,6 @@ extern Wave g_MENU_UP_WAVE;
 // restore_clip() uses that Buffer's own rect2_, not MainInterface's panel rect2_.
 // draw_flash picks its small font size off WinScreenWidth (win.h, 0x320 on
 // the shipped UI).
-static unsigned char *const InterfaceFlagTail = (unsigned char *)0x009A64C1;
-    // InterfaceFlagByte's next byte; bit 0x10 unhides the prototype numbers.
-
-static Buffer **const StackTileBufferSlot = (Buffer **)0x0078D6B0;
-    // The tile source draw_stack fills its panel from; basewin.cpp documents
-    // the address as a member slot holding a Buffer *, not a Buffer.
-static int *const StackTitleColorMain = (int *)0x008C6CA4;
-static int *const StackTitleColorShadow = (int *)0x008C6CA8;
-static int *const StackTextColorMain = (int *)0x008C6B94;
-static int *const StackTextColorShadow = (int *)0x008C6B98;
-    // Two text color pairs the preview panel draws with (main, shadow), read
-    // straight into Buffer::set_text_color - the bold title line and the stat
-    // lines respectively. No catalogue name for any.
-
-static unsigned char *const WeaponClassRows = (unsigned char *)0x0094AE68;
-    // weapon_id-strided class rows technology.cpp's note describes; the row's
-    // first byte is negative for weapons the editor cannot offer.
-static unsigned char *const PlayerFlagBlocks = (unsigned char *)0x00946F58;
-    // Per-faction byte blocks at sizeof(Player) stride; bit 0x80 of the first
-    // byte selects the alien-faction popup set. The Player array front is
-    // 0x00946A50, so this is +0x508 into player 0. No catalogue name.
-
 // diplo_lock (0x00539820) and diplo_unlock (0x005398C0) are unhomed;
 // design_it reaches them through their original addresses like the other
 // pending seams.
@@ -698,12 +671,6 @@ int __cdecl tut_check2(int flag);
  * storage/reference correspondence remains a restoration obligation. No
  * native literal symbol or extent binding is asserted here.
  */
-static LPSTR *const AbilityLabelIds = (LPSTR *)0x009AB540;
-static LPSTR *const AbilityLabelIdsEnd = (LPSTR *)0x009AB86C;
-    // The ability-label pointer table draw_flash's stat line walks - 39 dwords
-    // at a 0x1C stride, one per ABL_ bit, each an alpha.txt label pointer;
-    // SocialEffectRow/RowEnd is the same pointer-pair convention.
-
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x004345C0 ?UNK1@DesignWin@@QAEXXZ 0x004345C0-0x004345C1 BYTE_EXACT
@@ -1351,7 +1318,7 @@ void DesignWin::on_status(int mode) {
             ++button;
             --count;
         } while (count != 0);
-        if (*InterfaceFlagByte & 0x40) {
+        if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0) {
             flatButtons_[2].show(0);
             flatButtons_[3].show(0);
         } else {
@@ -4042,7 +4009,8 @@ void DesignWin::draw_stack() {
     RECT area = field_B0C_rect_;
     Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
     canvas->restore_clip();
-    canvas->tile(*StackTileBufferSlot, area.left, area.top, area.left, area.top,
+    canvas->tile(InterfaceBoxStyles[9].mask_, area.left, area.top,
+                 area.left, area.top,
                  area.right - area.left, area.bottom - area.top);
     canvas->box_sprite(&area, &InterfaceBoxStyles[3]);
 
@@ -4083,8 +4051,7 @@ void DesignWin::draw_stack() {
                 continue;
             }
             if (proto_id < 0x40) {
-                if (static_cast<signed char>(
-                        WeaponClassRows[VehPrototypes[proto_id].weapon_id * 16]) < 0) {
+                if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating < 0) {
                     continue;
                 }
                 if (proto_id == 0xF) {
@@ -4179,8 +4146,9 @@ void DesignWin::draw_stack() {
             stats_rect.top = rc.bottom - font.line_advance();
             StringTemp[0] = '\0';
             say_stats_3(StringTemp, Vehs[unit_id].proto_id);
-            if ((*InterfaceFlagByte & 0x40) != 0
-                && (*InterfaceFlagTail & 0x10) != 0) {
+            const uint32_t game_state =
+                GameDataStateStorage.fields_.game_state_;
+            if ((game_state & 0x40) != 0 && (game_state & 0x1000) != 0) {
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 char digits[0x20];
@@ -4271,7 +4239,7 @@ int DesignWin::design_it() {
                 if (strlen(name) != 0
                     && strcmp(name, proto.veh_name) != 0) {
                     parse_says(0, proto.veh_name, -1, -1);
-                    if ((*PlayerFlagBlocks & 0x80) == 0) {
+                    if ((Players[factionID_].rule_flags & RFLAG_ALIEN) == 0) {
                         popp(ScriptTxtID, "INTRINSICNAME", 0,
                              "unit_sm.pcx", pop_wait);
                     } else {
@@ -4307,7 +4275,7 @@ int DesignWin::design_it() {
                 return 0;
             }
             parse_says(0, current.veh_name, -1, -1);
-            if ((*PlayerFlagBlocks & 0x80) == 0) {
+            if ((Players[factionID_].rule_flags & RFLAG_ALIEN) == 0) {
                 x_pop_caption_label("INTRINSICNAME", "unit_sm.pcx", pop_wait);
             } else {
                 x_pop_caption_label("INTRINSICNAME", "alunit_sm.pcx",
@@ -4341,7 +4309,7 @@ int DesignWin::design_it() {
 
         if (protoID_ < 0x40) {
             parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
-            if ((*PlayerFlagBlocks & 0x80) == 0) {
+            if ((Players[factionID_].rule_flags & RFLAG_ALIEN) == 0) {
                 popp(ScriptTxtID, "INTRINSICTYPE", 0,
                      "unit_sm.pcx", pop_wait);
             } else {
@@ -4395,7 +4363,7 @@ int DesignWin::design_it() {
                 parse_num(0, PlayersData[factionID_].proto_id_active[protoID_]);
                 char *label;
                 char *sprite;
-                if ((*PlayerFlagBlocks & 0x80) == 0) {
+                if ((Players[factionID_].rule_flags & RFLAG_ALIEN) == 0) {
                     label = "OVERWRITEPROTO";
                     sprite = "unit_sm.pcx";
                 } else {
@@ -4558,7 +4526,7 @@ void DesignWin::draw_flash() {
         }
         CharUpperA(StringTemp);
 
-        canvas->set_text_color(*StackTitleColorMain, *StackTitleColorShadow,
+        canvas->set_text_color(TextColourTable[82], TextColourTable[83],
                                1, 1);
         canvas->set_font(&title_font, 0, 0, 0);
 
@@ -4570,7 +4538,7 @@ void DesignWin::draw_flash() {
         rc.bottom -= stat_font.line_advance();
         canvas->set_font(&stat_font, 0, 0, 0);
 
-        canvas->set_text_color(*StackTextColorMain, *StackTextColorShadow, 1, 1);
+        canvas->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
 
         int line_top = rc.top;
         int line_left = rc.left;
@@ -4580,12 +4548,12 @@ void DesignWin::draw_flash() {
         int prototype_id = Vehs[shown].proto_id;
         say_stats_3(StringTemp, prototype_id);
         int ability_bit = 0;
-        for (LPSTR *label = AbilityLabelIds; label < AbilityLabelIdsEnd;
-             ++label, ++ability_bit) {
+        for (; ability_bit < MaxAbilityNum; ++ability_bit) {
             if (VehPrototypes[prototype_id].ability_flags & (1 << ability_bit)) {
-                if (strlen(StringTable.get(*label)) != 0) {
+                if (strlen(StringTable.get(Ability[ability_bit].abbreviation)) != 0) {
                     strcat(StringTemp, ", ");
-                    strcat(StringTemp, StringTable.get(*label));
+                    strcat(StringTemp,
+                           StringTable.get(Ability[ability_bit].abbreviation));
                 }
             }
         }
@@ -4679,11 +4647,8 @@ void DesignWin::select_special(int which) {
         reinterpret_cast<uint8_t *>(&popup) + 0x3230);
 
     const int faction = static_cast<int>(factionID_);
-    // Per-faction flag block (PlayerFlagBlocks, sizeof(Player) stride): bit
-    // 0x80 of the first byte selects the alien popup set.
-    const unsigned char faction_first_byte =
-        PlayerFlagBlocks[faction * 0x59C];
-    if ((faction_first_byte & 0x80) != 0) {
+    // Player::rule_flags is at 0x508, the original 0x946F58 byte.
+    if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
         if (which != 0) {
             const int tech_id = static_cast<int>(Rules.tech_two_spec_abilities);
             if (!has_tech(tech_id, faction)) {
@@ -4740,10 +4705,8 @@ void DesignWin::select_special(int which) {
     dialogs.item(StringTemp, 0x1D);
 
     int items_added = 1;
-    // The special-ability records: 39 entries at the 0x1C Ability stride,
-    // walked from Ability[0].cost_factor (0x009AB544) to the table end
-    // (0x009AB870).
-    for (int ability = 0; ability < 39; ++ability) {
+    // The original walks 29 Ability records at their 0x1C stride.
+    for (int ability = 0; ability < MaxAbilityNum; ++ability) {
         const int16_t preq_tech = Ability[ability].preq_tech;
         if (!has_tech(preq_tech, faction)) {
             continue;
@@ -4754,18 +4717,23 @@ void DesignWin::select_special(int which) {
             continue;
         }
 
-        // Already built by this faction: one of its 0x29 build slots (the
-        // paired kind/id dwords at +8/+0x28 of the flag block) holds this
-        // ability.
+        // The historical paired scans start at faction_bonus_id/val1 and
+        // inspect 0x29 dwords, beyond the declared eight-entry arrays.
         int already_built = 0;
         {
+            const uint8_t *const player_bytes =
+                reinterpret_cast<const uint8_t *>(&Players);
             const int *const built_kind = reinterpret_cast<const int *>(
-                PlayerFlagBlocks + 8 + faction * 0x59C);
+                player_bytes + sizeof(Player) * faction
+                    + offsetof(Player, faction_bonus_id));
             const int *const built_id = reinterpret_cast<const int *>(
-                PlayerFlagBlocks + 0x28 + faction * 0x59C);
+                player_bytes + sizeof(Player) * faction
+                    + offsetof(Player, faction_bonus_val1));
             for (int slot = 0; slot < 0x29; ++slot) {
                 if (built_kind[slot] == 0xF && built_id[slot] == ability) {
                     already_built = 1;
+                    // Pinned 0x0043AF9E exits this scan on its first match.
+                    break;
                 }
             }
         }
