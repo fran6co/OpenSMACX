@@ -283,20 +283,22 @@ static void texture_draw_lit_span_mode(unsigned char *destination,
     unsigned short light_accumulator = static_cast<unsigned short>(
         static_cast<unsigned int>(light) >> 8);
     const unsigned short du_fraction = static_cast<unsigned short>(du);
+    const volatile unsigned char *source = pixels;
+    unsigned char source_texel = source[source_offset];
 
     for (int pixel = 0; pixel < pixel_count; ++pixel) {
         const unsigned int shade = (light_accumulator >> 8) & 0xffu;
-        const unsigned char texel = pixels[source_offset];
-        if (!keyed || texel != key) {
+        if (!keyed || source_texel != key) {
             destination[0] = static_cast<unsigned char>(
-                static_cast<unsigned int>(texel) + shade);
+                static_cast<unsigned int>(source_texel) + shade);
         }
+        light_accumulator = static_cast<unsigned short>(
+            light_accumulator + light_step);
         source_offset = texture_draw_next_source_index(
             source_offset, v_fraction_and_du_fraction, u_fraction,
             dv_fraction, du_fraction, source_step, width);
-        light_accumulator = static_cast<unsigned short>(
-            light_accumulator + light_step);
         ++destination;
+        source_texel = source[source_offset];
     }
 }
 
@@ -305,8 +307,35 @@ static void texture_draw_lit_span(unsigned char *destination,
                                   int u, int v, int du, int dv,
                                   int light, unsigned short light_step,
                                   int pixel_count) {
-    texture_draw_lit_span_mode(destination, pixels, width, u, v, du, dv,
-                               light, light_step, pixel_count, false, 0);
+    unsigned int source_offset = texture_draw_source_index(width, u, v);
+    unsigned short u_fraction = static_cast<unsigned short>(u);
+    unsigned int v_fraction_and_du_fraction =
+        (static_cast<unsigned int>(static_cast<unsigned short>(v)) << 16) |
+        static_cast<unsigned short>(du);
+    const unsigned int dv_fraction =
+        static_cast<unsigned int>(static_cast<unsigned short>(dv)) << 16;
+    const unsigned int source_step = texture_draw_source_step(du, dv, width);
+    unsigned short light_accumulator = static_cast<unsigned short>(
+        static_cast<unsigned int>(light) >> 8);
+    const unsigned short du_fraction = static_cast<unsigned short>(du);
+    const volatile unsigned char *source = pixels;
+    unsigned char source_texel = source[source_offset];
+
+    // 623921 outputs the initial texel, then 62393E rereads the current
+    // source before 623941/944 advances the address. Later outputs therefore
+    // use the preceding iteration's source byte (S0, S0, S1, ...).
+    for (int pixel = 0; pixel < pixel_count; ++pixel) {
+        const unsigned int shade = (light_accumulator >> 8) & 0xffu;
+        destination[0] = static_cast<unsigned char>(
+            static_cast<unsigned int>(source_texel) + shade);
+        light_accumulator = static_cast<unsigned short>(
+            light_accumulator + light_step);
+        source_texel = source[source_offset];
+        source_offset = texture_draw_next_source_index(
+            source_offset, v_fraction_and_du_fraction, u_fraction,
+            dv_fraction, du_fraction, source_step, width);
+        ++destination;
+    }
 }
 
 // The opaque 61B1F0 loop preloads its first texel, then loads the next source
@@ -1662,19 +1691,20 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
                 // 0x0061A6BA packs the countdown and the U fraction into ESP
                 // itself, so the span writes its first pixel before any test
                 // and an admitted span clipped to zero or inverted width
-                // still writes one pixel. The original also preloads the next
-                // texel at 0x0061A6F6 before testing the counter; this C++
-                // loop omits that unused final read - a known, preserved
-                // difference, not an equivalence claim.
+                // still writes one pixel. The next source byte is read after
+                // each address advance, including after the final store.
                 const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
-                for (unsigned int written = 0; written < remaining; ++written, ++out) {
-                    const unsigned char texel = pixels[source];
+                const volatile unsigned char *source_reads = pixels;
+                unsigned char texel = source_reads[source];
+                for (unsigned int written = 0; written < remaining; ++written) {
                     if (texel != key) *out = texel;
                     uf += static_cast<unsigned short>(du);
                     vf += static_cast<unsigned short>(dv);
                     source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
                     uf &= 0xffff;
                     vf &= 0xffff;
+                    ++out;
+                    texel = source_reads[source];
                 }
             }
             if (done) break;
@@ -1714,6 +1744,9 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
 // reproduced with texture_span_pixels (see 0x0061A240's note); the original
 // preloads the next texel at 0x0061ABF6 before testing the counter and this
 // C++ loop omits that unused final read.
+
+// Superseding recovery evidence: source_reads below now performs the original
+// post-advance load on every pixel, including the final/key-suppressed path.
 void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
@@ -1776,14 +1809,17 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
                 unsigned int vf = static_cast<unsigned short>(v);
                 const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
                 const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
-                for (unsigned int written = 0; written < remaining; ++written, ++out) {
-                    const unsigned char texel = pixels[source];
+                const volatile unsigned char *source_reads = pixels;
+                unsigned char texel = source_reads[source];
+                for (unsigned int written = 0; written < remaining; ++written) {
                     if (texel != key) *out = texel;
                     uf += static_cast<unsigned short>(du);
                     vf += static_cast<unsigned short>(dv);
                     source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
                     uf &= 0xffff;
                     vf &= 0xffff;
+                    ++out;
+                    texel = source_reads[source];
                 }
             }
             if (done) break;
@@ -4189,7 +4225,8 @@ static unsigned short texture_light_step(int delta, int width);
 // Local scratch has the same bounded domain as draw2: established extrema,
 // convex geometry, valid UV allocations, fitting edge divisions, positive
 // pitch, nonwrapping source addresses and row addresses preserving signed
-// order. The original's unused terminal texel preload is omitted. Shared
+// order. Each span retains the original next-texel load after source advance,
+// including the final load even when the key/cutoff suppresses a store. Shared
 // scratch observations and FPU status during release callbacks are unproved.
 // ORIGINAL: 0x0061AC60 Texture::draw 0x0061AC60-0x0061B1E2 FILE
 // symbol    ?draw_below_cutoff@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1H@Z
@@ -4273,8 +4310,9 @@ void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int 
                     unsigned int vf = static_cast<unsigned short>(v);
                     unsigned short light = static_cast<unsigned short>(z >> 8);
                     const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
-                    for (unsigned int written = 0; written < remaining; ++written, ++out) {
-                        const unsigned char texel = pixels[source];
+                    const volatile unsigned char *source_reads = pixels;
+                    unsigned char texel = source_reads[source];
+                    for (unsigned int written = 0; written < remaining; ++written) {
                         const signed char shade = static_cast<signed char>(light >> 8);
                         if (shade < static_cast<signed char>(cutoff))
                             *out = static_cast<unsigned char>(texel + shade);
@@ -4284,6 +4322,8 @@ void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int 
                         uf &= 0xffff;
                         vf &= 0xffff;
                         light = static_cast<unsigned short>(light + dz);
+                        ++out;
+                        texel = source_reads[source];
                     }
                 }
                 if (done) break;
@@ -7394,6 +7434,9 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
 // ESP and is reproduced with texture_span_pixels (see 0x0061A240's note);
 // the original preloads the next texel before testing the counter and this
 // C++ loop omits that unused final read.
+
+// Superseding recovery evidence: each row kernel below now performs the
+// original post-advance load, including the final/key-suppressed path.
 void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv, int color) {
     if (color == -1) {
         draw_color_key(buffer, vertices, count, uv);
@@ -7462,14 +7505,17 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
                 unsigned int vf = static_cast<unsigned short>(v);
                 const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
                 const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
-                for (unsigned int written = 0; written < remaining; ++written, ++out) {
-                    const unsigned char texel = pixels[source];
+                const volatile unsigned char *source_reads = pixels;
+                unsigned char texel = source_reads[source];
+                for (unsigned int written = 0; written < remaining; ++written) {
                     if (texel != key) *out = (parity & 1) != 0 ? texel : alternate;
                     uf += static_cast<unsigned short>(du);
                     vf += static_cast<unsigned short>(dv);
                     source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
                     uf &= 0xffff;
                     vf &= 0xffff;
+                    ++out;
+                    texel = source_reads[source];
                 }
             }
             if (done) break;
@@ -7780,12 +7826,14 @@ static unsigned short texture_light_step(int delta, int width) {
 // divisions, positive pitch, nonwrapping source addresses and row addresses
 // preserving signed order (the original compares signed pointers, not y).
 // Shared-scratch observations
-// and FPU status inside release callbacks remain unproved. The original reads
-// one unused texel on fill rows and preloads an unused texel after the final
-// textured pixel; those unused reads are omitted, as in the keyed kernels.
+// and FPU status inside release callbacks remain unproved. The original
+// reads one texture byte before selecting fill versus lit rows, including on
+// fill rows; lit rows then preload after each source advance, including after
+// the final textured pixel. These volatile reads retain their fault/alias
+// order even when a fill row never otherwise consumes the initial texel.
 // The sentinel delegates to 0x0061AC60's shaded-every-row counterpart above.
 // ORIGINAL: 0x00624670 Texture::draw2 0x00624670-0x00624C6D FILE
-// RECOVERY_BINDING: v1 {"evidence": ["624676..62469D identify seventh-argument minus-one forwarding; 6246B0 acquires the Buffer; 624B99..624BE9 select row parity and perform light-tested sampling; 61FC90 supplies the Gouraud edge interpretation. Bounded geometry and unused-read limitations are documented beside the source body."], "reason": "This Texture member alternates opaque fill rows with cutoff-tested lit texture rows, consuming real Buffer, vertex, depth and UV arrays. Original callers ignore EAX; the ordinary path has no meaningful return value."}
+// RECOVERY_BINDING: v1 {"evidence": ["624676..62469D identify seventh-argument minus-one forwarding; 6246B0 acquires the Buffer; 624BA8 reads the current texture byte before 624BAB selects lit versus fill; 624B99..624BE9 select row parity and perform light-tested sampling; 61FC90 supplies the Gouraud edge interpretation. Bounded geometry and ordered source-read obligations are documented beside the source body."], "reason": "This Texture member alternates opaque fill rows with cutoff-tested lit texture rows, consuming real Buffer, vertex, depth and UV arrays. Original callers ignore EAX; the ordinary path has no meaningful return value."}
 // symbol    ?draw2@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1HH@Z
 void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
                     Vert *uv, int cutoff, int fillColor) {
@@ -7856,20 +7904,21 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
                     }
                     unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
                     const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
+                    int64_t source =
+                        static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
+                            * static_cast<int64_t>(width)
+                        + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
+                    const volatile unsigned char *source_reads = pixels;
+                    unsigned char texel = source_reads[source];
                     if ((y & 1) == 0) {
                         for (unsigned int written = 0; written < remaining; ++written)
                             out[written] = static_cast<unsigned char>(fillColor);
                     } else {
-                        int64_t source =
-                            static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
-                                * static_cast<int64_t>(width)
-                            + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
                         unsigned int uf = static_cast<unsigned short>(u);
                         unsigned int vf = static_cast<unsigned short>(v);
                         unsigned short light = static_cast<unsigned short>(z >> 8);
                         const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
-                        for (unsigned int written = 0; written < remaining; ++written, ++out) {
-                            const unsigned char texel = pixels[source];
+                        for (unsigned int written = 0; written < remaining; ++written) {
                             const signed char shade = static_cast<signed char>(light >> 8);
                             if (shade < static_cast<signed char>(cutoff))
                                 *out = static_cast<unsigned char>(texel + shade);
@@ -7879,6 +7928,8 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
                             uf &= 0xffff;
                             vf &= 0xffff;
                             light = static_cast<unsigned short>(light + dz);
+                            ++out;
+                            texel = source_reads[source];
                         }
                     }
                 }
