@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "netdaemon-typed-map-checksum-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover existing Map record ownership in all tile checksum walks without altering original ranges or traversal",
+  "base_revision": "4c969d3f1357050990cb92dd08883aa4871ee241",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5437664}],
+  "editable_files": ["src/netdaemon.cpp", "recovery/tests/test_netdaemon_typed_map_checksum_oct10.py", "recovery/tests/test_netdaemon_vehicle_base_checksum_oct10.py", "recovery/tests/test_netdaemon_faction_checksum_oct10.py", "recovery/tests/test_netdaemon_typed_bulk_landmark_oct10.py"],
+  "evidence": [
+    "Pinned52FA84 captures MapTiles once for main six-range walk; ranges0/1,3/1,8/4,1/1,7/1,C/1 map to existing Map climate,region,bit,contour,territory and low byte bit2. Preserve live MapArea reload52FAFF. Debug captures separately at52FFD2,530017,53005C,5300A3,5300E8,53012E, with live count reload per iteration.",
+    "Strip walk52FCF5..52FD57 computes signed divide bias, recIdx before final remainder addition, then innerCount with adjusted div; MapLongitude/MapTiles are captured per strip. Preserve existing signed arithmetic and unchecked bounds. No bug fixes or original-function identity/claim changes. Low byte bit2 remains length1, not4.",
+    "Authorize bounded normalization of only this migration in earlier whole-source continuity controls; retain all their baselines and behavior checks. Require actual Map declaration/loop controls with original offset oracle, pointer rebinding and live count mutations, original strip edge cases and damage controls, fresh native Map layout and full NetDaemon baseline/current measurements, fresh full compile/link, mappings/references and independent review. No full acceptance assertion."
+  ]
+}
