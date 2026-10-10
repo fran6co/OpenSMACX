@@ -3,10 +3,31 @@
   "task_id": "global-lifetime-duplicates-oct10",
   "author": "framework-coordinator",
   "target": "opensmacx",
-  "base_revision": "6ed0a5297",
+  "base_revision": "6ed0a52976957887811a12c0ce888e86a1d76037",
   "intent": "Restore single source-owned global lifetimes by removing redundant post-definition extern declarations that cause duplicate VC6 startup and exit registration.",
   "editable_files": ["src/basewin.cpp", "src/buffer.cpp"],
-  "subjects": [],
+  "subjects": [
+  {
+    "address": 4228064,
+    "address_space": "pe:va",
+    "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+  },
+  {
+    "address": 4228096,
+    "address_space": "pe:va",
+    "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+  },
+  {
+    "address": 6123984,
+    "address_space": "pe:va",
+    "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+  },
+  {
+    "address": 6124016,
+    "address_space": "pe:va",
+    "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+  }
+],
   "evidence": [
     "Pinned BaseWin Wave startup 0x004083E0 and registered exit 0x00408400 reference receiver 0x006EEE68 once; current physical owner COFF selects two distinct initializer/finalizer closures targeting g_BASEWIN_WAVE.",
     "Pinned Buffer Sprite startup 0x005D71D0 and registered exit 0x005D71F0 reference receiver 0x009B3A50 once; current physical owner COFF selects two distinct initializer/finalizer closures targeting g_BUFFER_SPRITE.",

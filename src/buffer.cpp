@@ -10217,7 +10217,8 @@ Status: Coverage promotion of the retained seed (src/unrecovered/005d8df0.cpp).
         `unsigned char *` on both sides, so the sprite call forwards it with
         no cast.
 */
-extern Sprite g_BUFFER_SPRITE;  // 0x009B3A50, buffer.cpp's shared surface Sprite
+// The earlier declaration and definition own the shared Sprite at 0x009B3A50.
+// A post-definition extern makes VC6 register its construction again.
 
 int Buffer::draw_dest_source(Buffer *source, int transparent_in, int x, int y,
                              unsigned char *bits) {

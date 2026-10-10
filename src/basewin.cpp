@@ -7187,7 +7187,8 @@ BaseWin::~BaseWin() {}
 #include "alpha.h"
 #include "strings.h"
 
-extern Wave g_BASEWIN_WAVE;
+// The earlier declaration and definition own this Wave's single lifetime.
+// A post-definition extern makes VC6 register its construction again.
 extern int InvertEntryCount;
 extern char InvertEntries[8][32];
 
