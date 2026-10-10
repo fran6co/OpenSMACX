@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "report-satellite-owner-oct10",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Home the satellite click helper with its genuine ReportWin producer and consumer, exposing one evidence-backed interface",
+  "base_revision": "bf1097c96656076db68ec8b7788f47c5ed250a56",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4851728}],
+  "editable_files": ["src/stringstruct.cpp", "src/reportwin.cpp", "src/reportwin.h", "recovery/tests/test_report_satellite_owner_oct10.py"],
+  "evidence": [
+    "Pinned497F99..497FA8 pushes spot kind, spot payload, then ReportIf report_faction_id at8A4160 to original sat_edit4A0810. Callee tests first argument for nonzero, uses second as PlayerData index and third as satellite type. The source draw_sat producer creates kind/other-faction pairs. These independently support a report-page API, not a string-record method or argument permutation.",
+    "Move the complete existing source envelope, identity, spans, history and unchanged algorithm into reportwin.cpp. Name arguments report_faction_id, target_faction_id and satellite_type, with one declaration in reportwin.h. Preserve unchecked indices, signed type upper-bound test, shift sampling, wrapped subtraction, callback order and direct redraw selection. No safety fix or new historical byte claim.",
+    "Require fresh before/current native diagnostics for both affected units, complete annotation/claim continuity, actual-body behavior controls including wrong-faction/type/gate mutants, independent review and fresh compile/link. Preserve any matching regression as a restoration obligation rather than reverting evidence-backed ownership. No compiler-policy changes or full-game acceptance assertion."
+  ]
+}
