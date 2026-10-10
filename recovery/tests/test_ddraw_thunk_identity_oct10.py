@@ -16,6 +16,7 @@ from match_recovery.records import read_json
 from match_recovery.source_history import revision_files
 from match_recovery.source_inventory import image_pin
 from test_indirect_dependency_frontier_oct10 import NEW_COMPONENTS, without_stored_binding
+from test_crt_eight_entry_bindings_oct10 import without_eight_bindings
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "cc7a89781fec346950ce32bc3c2d8d135bde954a"
@@ -70,6 +71,8 @@ def test_preserves_existing_source_components_and_does_not_grant_code_claims(liv
         observed = parse_component((ROOT / name).read_text())
         if observed.component.component_id == "zlib":
             observed = without_stored_binding(observed)
+        elif observed.component.component_id == "vc6-runtime":
+            observed = without_eight_bindings(observed)
         assert observed == manifest
     current = read_components(ROOT / "src")
     assert {m.component.component_id for m in current} == (
