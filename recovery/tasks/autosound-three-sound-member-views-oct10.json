@@ -64,9 +64,11 @@
     "src/win.cpp",
     "recovery/tests/test_autosound_receiver_views.py",
     "recovery/tests/test_win_sound_product_source.py",
+    "recovery/tests/test_win_event_hook_storage_oct9.py",
     "recovery/tests/test_autosound_three_sound_views_oct10.py"
   ],
   "evidence": [
+    "Independent review and GCC/Clang controls identified a stale host dispatcher fixture declaring recovered val10/11/12 as uintptr_t. Extend only that fixture to Sound* and split its setup assignments, retaining existing val13/24 views and all behavior/damage assertions. Original task baseline remains unchanged; fresh production build-a8e73gjv already verifies the identical C++ source.",
     "After38f3563ec corrected Scroll writes to real FlatButton+AD4/+AD8/+ADC, no remaining source Sprite writer uses AutoSound+28/+2C/+30. Current member10/11/12 consumers in Win left-up/right-up/right-down and dispatch21/22/23 call actual Sound slots23/7. Independently reviewed source closure supports Sound* interface views, not original spelling, nonzero producers, ownership or lifetime.",
     "AutoSound constructor/close/close2 copy raw defaults9/10/11; init zeros them. Retain the heterogeneous raw uint32_t defaults array and its loader-zero/FX-reset behavior. Genuine mixed-use val20(ListBox flags/Sound) and val31(Sound/Win) remain neutral. No changes to branches, ordering, vtables or allocation.",
     "Capture fresh full-unit baseline/current verdict continuity for AutoSound and Win, retain identity/claims/seed history, native layout and default-copy controls, actual caller behavior/mutations, source references/mappings, independent review and fresh full compile/link. No new application function identity/coverage or full-game acceptance claim."
