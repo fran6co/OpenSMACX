@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "task_id": "global-lifetime-duplicates-oct10",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "6ed0a5297",
+  "intent": "Restore single source-owned global lifetimes by removing redundant post-definition extern declarations that cause duplicate VC6 startup and exit registration.",
+  "editable_files": ["src/basewin.cpp", "src/buffer.cpp"],
+  "subjects": [],
+  "evidence": [
+    "Pinned BaseWin Wave startup 0x004083E0 and registered exit 0x00408400 reference receiver 0x006EEE68 once; current physical owner COFF selects two distinct initializer/finalizer closures targeting g_BASEWIN_WAVE.",
+    "Pinned Buffer Sprite startup 0x005D71D0 and registered exit 0x005D71F0 reference receiver 0x009B3A50 once; current physical owner COFF selects two distinct initializer/finalizer closures targeting g_BUFFER_SPRITE.",
+    "Native read-only compiler overlays under both configured flag sets remove only the later redundant extern declaration and reduce each global's selected startup closure count from two to one. Earlier declarations, actual definitions and unrelated global constructor closures remain intact.",
+    "Authorize only removal of the later declarations and a concise essential source explanation. Preserve all mappings, historical claims and discoveries. Capture fresh baseline/current owner measurements, verify original identity continuity and application build/link, and obtain independent source/evidence review before coordinator checkpoint.",
+    "This corrects reconstructed source to agree with the original; it is not an original bug fix. No new original mappings, initializer ordering, linked retained-selection proof, byte claim or full-game acceptance is granted. Compiler-generated current local helper names may change and must not silently invalidate any existing binding."
+  ]
+}
