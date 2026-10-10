@@ -2,9 +2,9 @@
 
 The complete mapped bodies and EdgeScan declaration are extracted from product
 source. The fixture uses low-address memory because two recovered entries carry
-record addresses through int parameters and 0x620640 writes a pointer-width
-cursor through an original 32-bit scratch cell. A padded host cursor cell keeps
-that exact body safe on x86-64; this is not a target-layout or ABI proof, nor
+record addresses through int parameters. The shade cursor now uses product
+address-domain storage rather than accessing an int cell as a pointer. This
+is not a target-layout or ABI proof, nor
 does it establish the helpers' incoming producer identity.
 """
 from pathlib import Path
@@ -80,7 +80,7 @@ static uintptr_t *const blit_remap_table = &remap_address_value;
 static void *shade_table_value;
 static void **const blit_shade_table = &shade_table_value;
 static uintptr_t shade_cursor_storage;
-static int *const blit_slot_558 = reinterpret_cast<int *>(&shade_cursor_storage);
+static uintptr_t *const blit_slot_558 = &shade_cursor_storage;
 static int shade_value;
 static int *const blit_slot_4d8 = &shade_value;
 static int dither_address_value;

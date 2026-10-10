@@ -49,6 +49,10 @@ struct Buffer {
 static uintptr_t texture_pointer_address(const void *pointer) {
     return reinterpret_cast<uintptr_t>(pointer);
 }
+static uintptr_t texture_pointer_offset(const void *base, uint32_t offset) {
+    return texture_pointer_address(base) +
+        static_cast<intptr_t>(static_cast<int32_t>(offset));
+}
 
 class Texture {
 public:
@@ -74,14 +78,14 @@ static int cell_buffer_stride, cell_clip_bottom, cell_clip_left, cell_clip_right
     cell_clip_top, cell_colour_step, cell_light_accum_b, cell_light_pack_a,
     cell_light_step_b, cell_max_y,
     cell_row_offset, cell_slot_4d8, cell_slot_4e8,
-    cell_slot_558, cell_slot_55c, cell_texture_height,
+    cell_slot_55c, cell_texture_height,
     cell_texture_width, cell_vertex_count, cell_light_threshold, cell_span_left,
     cell_span_right, cell_slot_4c4, cell_slot_4c8, cell_slot_4ca,
     cell_slot_494, cell_slot_498, cell_slot_4e4, cell_slot_4e6, cell_slot_4f8, cell_slot_4fa,
     cell_slot_530, cell_slot_53c, cell_slot_53e, cell_dither,
     cell_z_key;
 static void *cell_pixel_base, *cell_shade_table, *cell_texture_pixels;
-static uintptr_t cell_remap_table;
+static uintptr_t cell_remap_table, cell_slot_558;
 static int *cell_z_values;
 static Vert *cell_edge_a;
 static Vert *cell_edge_b;
@@ -101,7 +105,7 @@ static int *blit_row_offset = &cell_row_offset;
 static void **blit_shade_table = &cell_shade_table;
 static int *blit_slot_4d8 = &cell_slot_4d8;
 static int *blit_slot_4e8 = &cell_slot_4e8;
-static int *blit_slot_558 = &cell_slot_558;
+static uintptr_t *blit_slot_558 = &cell_slot_558;
 static int *blit_slot_55c = &cell_slot_55c;
 static int *blit_texture_height = &cell_texture_height;
 static void **blit_texture_pixels = &cell_texture_pixels;

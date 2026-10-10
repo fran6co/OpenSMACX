@@ -33,7 +33,8 @@ def actual_parts() -> tuple[str, str, str, str]:
     assert source.count(signature) == 1, "mapped coast owner must have one definition"
     helper_start = source.index("static unsigned int texture_draw_source_step(")
     helper_end = source.index("static void texture_draw_keyed_lit_span(", helper_start)
-    helpers = source[helper_start:helper_end]
+    helpers = (definition(source, "static uintptr_t texture_pointer_offset(") +
+               "\n" + source[helper_start:helper_end])
     result_type = definition(source, "struct TextureDrawSpanResult") + ";"
     coast = definition(source, "static void texture_draw_coast_span(")
     owner_helpers = definition(source, "static int texture_coast_advance_edge(")
@@ -80,7 +81,8 @@ static int buffer_stride_value, texture_width_value, max_y_index_value;
 static int row_offset_value, clip_left_value, clip_top_value, clip_right_value, clip_bottom_value;
 static int step_u_value, step_v_value;
 static int slot_498_value, slot_4f8_value, slot_4c4_value, slot_530_value;
-static int slot_4a4_value, slot_504_value, slot_558_value;
+static int slot_4a4_value, slot_504_value;
+static uintptr_t slot_558_value;
 static int slot_53c_value, span_left_value, span_right_value;
 static void **blit_pixel_base = &pixel_base_value;
 static Vert *uv_vertices_cell = 0;
@@ -108,7 +110,7 @@ static int *blit_slot_498 = &slot_498_value, *blit_slot_4f8 = &slot_4f8_value;
 static int *blit_slot_4c4 = &slot_4c4_value, *blit_slot_530 = &slot_530_value;
 static int *blit_slot_53c = &slot_53c_value;
 static int *blit_slot_4a4 = &slot_4a4_value, *blit_slot_504 = &slot_504_value;
-static int *blit_slot_558 = &slot_558_value;
+static uintptr_t *blit_slot_558 = &slot_558_value;
 static int read_packed_uv_sink_for_mutation_control() { return *blit_slot_4a4; }
 static int *blit_span_left = &span_left_value, *blit_span_right = &span_right_value;
 static int reset_calls;
@@ -179,7 +181,7 @@ static void render_case(unsigned char mapped, unsigned char expected) {
            control_mask == (_MCW_PC | _MCW_RC));
     assert(slot_4a4_value != 0x13572468);
     assert(slot_504_value - static_cast<int>(reinterpret_cast<intptr_t>(base_pixels)) ==
-           slot_558_value - static_cast<int>(reinterpret_cast<intptr_t>(coast_pixels)));
+           static_cast<int>(slot_558_value - reinterpret_cast<uintptr_t>(coast_pixels)));
     assert(canvas[2 * 8 + 2] == expected);
     assert(canvas[2 * 8 + 1] == 0x5a && canvas[2 * 8 + 5] == 0x5a);
     assert(canvas[1 * 8 + 2] == 0x5a && canvas[4 * 8 + 2] == 0x5a);
@@ -224,7 +226,7 @@ static void render_phase_case() {
            control_mask == (_MCW_PC | _MCW_RC));
     assert(slot_4a4_value != 0x13572468);
     assert(slot_504_value - static_cast<int>(reinterpret_cast<intptr_t>(base_pixels)) ==
-           slot_558_value - static_cast<int>(reinterpret_cast<intptr_t>(coast_pixels)));
+           static_cast<int>(slot_558_value - reinterpret_cast<uintptr_t>(coast_pixels)));
     // Different edge U/V/light deltas make current-row versus next-row
     // gradient selection observable.
     assert(canvas[8 + 2] == 22);

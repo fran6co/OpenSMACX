@@ -1135,7 +1135,10 @@ static uintptr_t TextureRasterScratch550;
 // RECOVERY_OBJECT: v1 0x009BB554 _TextureRasterScratch554
 static void *TextureRasterScratch554;
 // RECOVERY_OBJECT: v1 0x009BB558 _TextureRasterShadeCursor
-static int TextureRasterShadeCursor;
+// Byte-address cursor in the second texture plane. Original dword adds wrap
+// on the 32-bit target; address-domain storage avoids aliasing an int cell
+// through unsigned char** and does not truncate host control pointers.
+static uintptr_t TextureRasterShadeCursor;
 // RECOVERY_OBJECT: v1 0x009BB55C _TextureRasterScratch55C
 static int TextureRasterScratch55C;
 // RECOVERY_OBJECT: v1 0x009BB560 _TextureRasterScratch560
@@ -1205,7 +1208,7 @@ static unsigned short *const blit_slot_53e =
 static void **const blit_texture_pixels = &TextureRasterScratch544;
 static uintptr_t *const blit_remap_table = &TextureRasterScratch550;
 static void **const blit_shade_table = &TextureRasterScratch554;
-static int *const blit_slot_558 = &TextureRasterShadeCursor;
+static uintptr_t *const blit_slot_558 = &TextureRasterShadeCursor;
 static int *const blit_slot_55c = &TextureRasterScratch55C;
 static int *const blit_slot_560 = &TextureRasterScratch560;
 static int *const blit_slot_564 = &TextureRasterPalette;
@@ -1401,8 +1404,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                 blit_texture_width[0], u, v);
             *blit_slot_504 = static_cast<int>(
                 static_cast<unsigned int>(texture_pointer_address(blit_texture_pixels[0])) + row_source_offset);
-            *blit_slot_558 = static_cast<int>(
-                static_cast<unsigned int>(texture_pointer_address(*blit_shade_table)) + row_source_offset);
+            *blit_slot_558 = texture_pointer_offset(*blit_shade_table, row_source_offset);
             TextureDrawSpanResult span_result;
             span_result.packed_uv_sink = blit_slot_4a4;
             span_result.preload_pixels = reinterpret_cast<volatile const unsigned char *>(
@@ -3147,7 +3149,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                                             texture_pointer_offset(*blit_texture_pixels,
                                                 base_source_offset));
                                         *blit_slot_504 = reinterpret_cast<int>(src);
-                                        *blit_slot_558 = reinterpret_cast<int>(src) + (texture_pointer_address(*blit_shade_table) - texture_pointer_address(*blit_texture_pixels));
+                                        *blit_slot_558 = texture_pointer_address(src) + (texture_pointer_address(*blit_shade_table) - texture_pointer_address(*blit_texture_pixels));
                                         char *dst = reinterpret_cast<char *>(*blit_span_right + *blit_row_offset);
                                         const int row_light = *blit_slot_498;
                                         *blit_slot_498 = row_light >> 8;
@@ -6762,7 +6764,7 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
 
     unsigned char *src = reinterpret_cast<unsigned char *>(
         texture_pointer_offset(*blit_texture_pixels, static_cast<uint32_t>(out_row_index)));
-    *blit_slot_558 = out_row_index + static_cast<int>(texture_pointer_address(*blit_shade_table));
+    *blit_slot_558 = texture_pointer_offset(*blit_shade_table, static_cast<uint32_t>(out_row_index));
 
     uintptr_t out_seed = (*blit_row_offset) * (*blit_buffer_stride) + start_row + texture_pointer_address(*blit_pixel_base);
 
@@ -7129,9 +7131,8 @@ void __cdecl sub_620640(int param_1, int param_2) {
                      static_cast<unsigned short>(static_cast<short>(zAcc >> 16) * static_cast<short>(TextureRowPitchScratch));
     unsigned char *srcPtr = reinterpret_cast<unsigned char *>(
         texture_pointer_offset(*blit_texture_pixels, static_cast<uint32_t>(rowOffset)));
-    *reinterpret_cast<unsigned char **>(blit_slot_558) =
-        reinterpret_cast<unsigned char *>(
-            texture_pointer_offset(*blit_shade_table, static_cast<uint32_t>(rowOffset)));
+    *blit_slot_558 =
+        texture_pointer_offset(*blit_shade_table, static_cast<uint32_t>(rowOffset));
 
     uintptr_t destBase = (*blit_row_offset) * (*blit_buffer_stride) + yStart + texture_pointer_address(*blit_pixel_base);
     unsigned char *destPtr = reinterpret_cast<unsigned char *>(destBase);
@@ -7171,15 +7172,15 @@ void __cdecl sub_620640(int param_1, int param_2) {
             accPacked = static_cast<unsigned int>(sum);
             if (carried) {
                 srcPtr = srcPtr + 1;
-                *reinterpret_cast<unsigned char **>(blit_slot_558) += 1;
+                *blit_slot_558 += 1;
             }
             srcPtr = srcPtr + zWholeStep;
-            *reinterpret_cast<unsigned char **>(blit_slot_558) += zWholeStep;
+            *blit_slot_558 += zWholeStep;
             *destPtr = static_cast<unsigned char>(srcByte + static_cast<unsigned char>(color));
             if ((accPacked & 0x8000) != 0) {
                 accPacked = accPacked & 0xffff7fff;
                 srcPtr = srcPtr + *blit_slot_4e8;
-                *reinterpret_cast<unsigned char **>(blit_slot_558) += *blit_slot_4e8;
+                *blit_slot_558 += *blit_slot_4e8;
             }
             entry = ditherBase + *srcPtr;
             flag = *reinterpret_cast<unsigned int *>(entry);
@@ -7189,7 +7190,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
                     static_cast<unsigned short>(*reinterpret_cast<short *>(blit_light_accum_b) + *blit_light_pack_a);
                 *blit_slot_4d8 = *blit_light_accum_b >> 8;
             }
-            color = *reinterpret_cast<int *>((**reinterpret_cast<unsigned char **>(blit_slot_558)) * 4 + *blit_remap_table) + *blit_slot_4d8;
+            color = *reinterpret_cast<int *>((*reinterpret_cast<const unsigned char *>(*blit_slot_558)) * 4 + *blit_remap_table) + *blit_slot_4d8;
             rowCount--;
         } while (rowCount != 0);
     } else {
@@ -7209,7 +7210,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
         if (flag != 0) {
             color = *blit_light_accum_b >> 8;
         }
-        int rowColor = *reinterpret_cast<int *>((**reinterpret_cast<unsigned char **>(blit_slot_558)) * 4 + *blit_remap_table) + color;
+        int rowColor = *reinterpret_cast<int *>((*reinterpret_cast<const unsigned char *>(*blit_slot_558)) * 4 + *blit_remap_table) + color;
         *blit_colour_step = zWholeStep;
 
         do {
@@ -7219,16 +7220,16 @@ void __cdecl sub_620640(int param_1, int param_2) {
             bool carried = sum > 0xffffffffu;
             accPacked = static_cast<unsigned int>(sum);
             if (carried) {
-                *reinterpret_cast<unsigned char **>(blit_slot_558) += 1;
+                *blit_slot_558 += 1;
                 srcPtr = srcPtr + 1;
             }
-            *reinterpret_cast<unsigned char **>(blit_slot_558) += zWholeStep;
+            *blit_slot_558 += zWholeStep;
             srcPtr = srcPtr + zWholeStep;
             *destPtr = static_cast<unsigned char>(srcByte + static_cast<unsigned char>(rowColor));
             if ((accPacked & 0x8000) != 0) {
                 accPacked = accPacked & 0xffff7fff;
                 srcPtr = srcPtr + *blit_slot_4e8;
-                *reinterpret_cast<unsigned char **>(blit_slot_558) += *blit_slot_4e8;
+                *blit_slot_558 += *blit_slot_4e8;
             }
             entry = ditherBase + *srcPtr;
             flag = *reinterpret_cast<unsigned int *>(entry);
@@ -7238,7 +7239,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
                     static_cast<unsigned short>(*reinterpret_cast<short *>(blit_light_accum_b) + *blit_light_pack_a);
                 *blit_slot_4d8 = *blit_light_accum_b >> 8;
             }
-            rowColor = *reinterpret_cast<int *>((**reinterpret_cast<unsigned char **>(blit_slot_558)) * 4 + *blit_remap_table) + *blit_slot_4d8;
+            rowColor = *reinterpret_cast<int *>((*reinterpret_cast<const unsigned char *>(*blit_slot_558)) * 4 + *blit_remap_table) + *blit_slot_4d8;
             rowCount--;
         } while (rowCount != 0);
     }
@@ -7404,7 +7405,7 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4, int param
                       iVar13 = ((uint)param_5 >> 0x10) +
                                (uint)(ushort)((ushort)(param_7 >> 16) * (short)(TextureRowPitchScratch));
                       pbVar12 = (byte *)(iVar13 + (texture_pointer_address(*blit_texture_pixels)));
-                      (*blit_slot_558) = iVar13 + (texture_pointer_address(*blit_shade_table));
+                      (*blit_slot_558) = texture_pointer_offset(*blit_shade_table, static_cast<uint32_t>(iVar13));
                       iVar13 = (*blit_row_offset) * (*blit_buffer_stride) + iVar14 + (texture_pointer_address(*blit_pixel_base));
                       if ((*blit_slot_4e8) < 0) {
                         local_88 = -local_88;

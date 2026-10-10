@@ -75,7 +75,7 @@ def _contract(body: str) -> None:
         "span_result.preload_pixels =",
         "span_result.prefetched_source =\n                                            span_result.preload_pixels[base_source_offset];",
         "*blit_slot_504 = reinterpret_cast<int>(src);",
-        "*blit_slot_558 = reinterpret_cast<int>(src) + (texture_pointer_address(*blit_shade_table) - texture_pointer_address(*blit_texture_pixels));",
+        "*blit_slot_558 = texture_pointer_address(src) + (texture_pointer_address(*blit_shade_table) - texture_pointer_address(*blit_texture_pixels));",
         "texture_span_pixels(static_cast<short>(rightX) -",
         "_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);",
         "if ((*blit_dither & 1) == 0)",
@@ -103,7 +103,7 @@ def _contract(body: str) -> None:
     assert body.index("_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);") < body.index("long double invDx")
     assert body.index("a1->free_data(1)") < body.index("epilogue_only:\n    texture_reset_fpu();")
     assert body.index("*blit_slot_504 = reinterpret_cast<int>(src);") < body.index("texture_draw_keyed_coast_fill_span(")
-    assert body.index("*blit_slot_504 = reinterpret_cast<int>(src);") < body.index("*blit_slot_558 = reinterpret_cast<int>(src)")
+    assert body.index("*blit_slot_504 = reinterpret_cast<int>(src);") < body.index("*blit_slot_558 = texture_pointer_address(src)")
     assert body.index("*blit_slot_498 = row_light >> 8;") < body.index("TextureRasterAlternateRowNext.value =")
     assert body.index("span_result.prefetched_source =") < body.index("if ((*blit_dither & 1) == 0)")
 

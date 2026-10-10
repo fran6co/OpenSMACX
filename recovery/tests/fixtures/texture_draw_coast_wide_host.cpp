@@ -49,7 +49,7 @@ static int slot528, light_pack_a, slot53c;
 static void *texture_pixels;
 static uintptr_t remap_table;
 static void *shade_table;
-static int slot558;
+static uintptr_t slot558;
 union TextureRasterRelocatedRowCell { int *initial_target; int value; };
 static int alternate_row_520, alternate_row_524;
 static TextureRasterRelocatedRowCell TextureRasterAlternateRowBase = { &alternate_row_520 };
@@ -92,7 +92,7 @@ static int *const blit_slot_53c = &slot53c;
 static void **const blit_texture_pixels = &texture_pixels;
 static uintptr_t *const blit_remap_table = &remap_table;
 static void **const blit_shade_table = &shade_table;
-static int *const blit_slot_558 = &slot558;
+static uintptr_t *const blit_slot_558 = &slot558;
 static int *const blit_slot_4a4 = &slot4a4;
 static int *const blit_slot_504 = &slot504;
 
