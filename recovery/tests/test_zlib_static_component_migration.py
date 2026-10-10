@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 
 from match_recovery.component_source import parse_component
+from test_zlib_main_state_machine_bindings_oct10 import EXPECTED as MAIN_STATE_MACHINES
 from test_zlib_inflate_group_bindings_oct10 import EXPECTED as FOURTEEN_MEMBERS, UNITS
 from match_recovery.source import read_file, read_text
 from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
@@ -82,7 +83,7 @@ def test_migrated_history_identity_and_native_writer_roundtrip():
                             0x00642960, 0x006429F0, 0x00642A70,
                             0x0063CF30, 0x0063D120, 0x0063D1A0, 0x0063D560,
                             0x00640BB0, 0x00640C30, 0x00640E50, 0x00640EC0,
-                            0x00640F40, 0x00641000} | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS)
+                            0x00640F40, 0x00641000} | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS) | set(MAIN_STATE_MACHINES)
     assert set(manifest.units) == UNITS
     for address, (end, symbol, unit, claimed, history_digest) in EXPECTED.items():
         row = rows[address]

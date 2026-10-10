@@ -551,6 +551,33 @@ This source correspondence has no new matching claim.
 // Original-image bindings for this dependency.
 // These are verification obligations, not claims of current matching.
 // Dependency inputs are unmodified; this companion owns its recovery metadata.
+/*
+// ORIGINAL: 0x0063E110 _inflate 0x0063E110-0x0063E4E8 FILE
+Dependency implementation: unmodified zlib 1.0.2 inflate.c state machine.
+The original mapping retains its independently pinned code-only extent.
+Trailing compiler switch tables require separate physical-boundary evidence.
+This source correspondence grants no matching claim.
+*/
+
+/*
+// ORIGINAL: 0x00642C20 _inflate_blocks 0x00642C20-0x0064390D FILE
+Dependency implementation: unmodified zlib 1.0.2 infblock.c state machine.
+The original mapping retains its independently pinned code-only extent.
+Trailing compiler switch tables require separate physical-boundary evidence.
+This source correspondence grants no matching claim.
+*/
+
+/*
+// ORIGINAL: 0x00644180 _inflate_codes 0x00644180-0x006448E6 FILE
+Dependency implementation: unmodified zlib 1.0.2 infcodes.c state machine.
+The original mapping retains its independently pinned code-only extent.
+Trailing compiler switch tables require separate physical-boundary evidence.
+This source correspondence grants no matching claim.
+*/
+
+// Original-image bindings for this dependency.
+// These are verification obligations, not claims of current matching.
+// Dependency inputs are unmodified; this companion owns its recovery metadata.
 // RECOVERY_COMPONENT_BEGIN v1
 // {
 //   "archive_sha256": "517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6",
@@ -669,7 +696,10 @@ This source correspondence has no new matching claim.
 //     {"evidence": "Unmodified zlib1.0.2 source definition and independently pinned Ghidra extent; exclusive physical VC6 function COMDAT corroborates source correspondence. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x00643EB0", "spans": ["0x00643EB0-0x00643F98"], "symbol": "_inflate_trees_dynamic", "unit": "inftrees.c"},
 //     {"evidence": "Unmodified zlib1.0.2 source definition and independently pinned Ghidra extent; exclusive physical VC6 function COMDAT corroborates source correspondence. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x00643FA0", "spans": ["0x00643FA0-0x006440DE"], "symbol": "_inflate_trees_fixed", "unit": "inftrees.c"},
 //     {"evidence": "Unmodified zlib1.0.2 source definition and independently pinned Ghidra extent; exclusive physical VC6 function COMDAT corroborates source correspondence. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x00644100", "spans": ["0x00644100-0x0064413F"], "symbol": "_inflate_trees_free", "unit": "inftrees.c"},
-//     {"evidence": "Unmodified zlib1.0.2 source definition and independently pinned Ghidra extent; exclusive physical VC6 function COMDAT corroborates source correspondence. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x00640A50", "spans": ["0x00640A50-0x00640A63"], "symbol": "_zcalloc", "unit": "zutil.c"}
+//     {"evidence": "Unmodified zlib1.0.2 source definition and independently pinned Ghidra extent; exclusive physical VC6 function COMDAT corroborates source correspondence. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x00640A50", "spans": ["0x00640A50-0x00640A63"], "symbol": "_zcalloc", "unit": "zutil.c"},
+//     {"evidence": "Unmodified zlib1.0.2 state-machine implementation and independently pinned Ghidra code-only extent. Physical function COMDAT also contains compiler switch tables beyond this code span; their allocation/ownership and complete reference qualification remain obligations. Preserve the code-only span and native boundary failure; do not extend it or manufacture separate table declarations. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x0063E110", "spans": ["0x0063E110-0x0063E4E8"], "symbol": "_inflate", "unit": "inflate.c"},
+//     {"evidence": "Unmodified zlib1.0.2 state-machine implementation and independently pinned Ghidra code-only extent. Physical function COMDAT also contains compiler switch tables beyond this code span; their allocation/ownership and complete reference qualification remain obligations. Preserve the code-only span and native boundary failure; do not extend it or manufacture separate table declarations. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x00642C20", "spans": ["0x00642C20-0x0064390D"], "symbol": "_inflate_blocks", "unit": "infblock.c"},
+//     {"evidence": "Unmodified zlib1.0.2 state-machine implementation and independently pinned Ghidra code-only extent. Physical function COMDAT also contains compiler switch tables beyond this code span; their allocation/ownership and complete reference qualification remain obligations. Preserve the code-only span and native boundary failure; do not extend it or manufacture separate table declarations. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x00644180", "spans": ["0x00644180-0x006448E6"], "symbol": "_inflate_codes", "unit": "infcodes.c"}
 //   ]
 // }
 // RECOVERY_COMPONENT_END

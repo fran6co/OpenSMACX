@@ -7,6 +7,7 @@ import subprocess
 import os
 
 from match_recovery.component_source import parse_component
+from test_zlib_main_state_machine_bindings_oct10 import EXPECTED as MAIN_STATE_MACHINES
 from test_zlib_inflate_group_bindings_oct10 import EXPECTED as FOURTEEN_MEMBERS, UNITS
 from match_recovery.source import read_text
 from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
@@ -145,10 +146,10 @@ def test_zlib_component_keeps_reviewed_provider_bindings_with_witnessed_addition
     additions = {0x00642960, 0x006429F0, 0x00642A70}
     from test_zlib_ten_member_bindings_oct10 import EXPECTED as TEN_MEMBERS
     from test_zlib_deflate_tree_group_bindings_oct10 import EXPECTED as SIXTEEN_MEMBERS
-    assert len(manifest.bindings) == 52, "only independently witnessed additions are allowed"
-    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED) | set(RESTORED) | additions | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS)
+    assert len(manifest.bindings) == 55, "only independently witnessed additions are allowed"
+    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED) | set(RESTORED) | additions | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS) | set(MAIN_STATE_MACHINES)
     for binding in manifest.bindings:
-        witnessed = TEN_MEMBERS | SIXTEEN_MEMBERS | FOURTEEN_MEMBERS
+        witnessed = TEN_MEMBERS | SIXTEEN_MEMBERS | FOURTEEN_MEMBERS | MAIN_STATE_MACHINES
         if binding.origin.address in witnessed:
             end, symbol, unit = witnessed[binding.origin.address]
             assert [(span.start, span.end) for span in binding.spans] == [(binding.origin.address, end)]

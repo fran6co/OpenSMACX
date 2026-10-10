@@ -14,6 +14,7 @@ import subprocess
 
 from match_recovery.component_original_routing import exact_component_record_bindings
 from match_recovery.component_source import parse_component, render_component
+from test_zlib_main_state_machine_bindings_oct10 import EXPECTED as MAIN_STATE_MACHINES
 from test_zlib_inflate_group_bindings_oct10 import EXPECTED as FOURTEEN_MEMBERS, UNITS
 from match_recovery.model import Origin
 from match_recovery.source import read_file, read_text, write
@@ -127,8 +128,8 @@ def test_five_full_seed_prefixes_archive_and_native_writer_roundtrip():
         assert [(span.start, span.end) for span in binding.spans] == [(address, end)]
         assert (binding.symbol, binding.unit) == (symbol, unit)
 
-    assert len(manifest.bindings) == 52
-    assert set(bindings) == set(EXISTING) | set(HISTORY) | {0x00642960, 0x006429F0, 0x00642A70} | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS)
+    assert len(manifest.bindings) == 55
+    assert set(bindings) == set(EXISTING) | set(HISTORY) | {0x00642960, 0x006429F0, 0x00642A70} | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS) | set(MAIN_STATE_MACHINES)
     assert set(manifest.units) == UNITS
     # The initial-prefix comparisons retain the useful original caller/indirect
     # edges and the correction lessons; don't copy post-prefix emitter boilerplate
