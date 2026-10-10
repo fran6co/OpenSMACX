@@ -6269,18 +6269,19 @@ Purpose: Run the destroy-order dialog on one vehicle: eligibility guards, the
 //        the post-exec tail is structurally present but its trailing
 //        confirmation-dialog construction is simplified away rather than
 //        reproduced - treat that half as unverified.
+// Superseded interpretation: the late native calls tear down Popup's owned
+// Scroll, buttons and BasePop, not a separate confirmation dialog. Original
+// Popup at EBP-53A0 owns the Dialogs at +21D0 and Scroll at +3230; use those
+// members rather than constructing detached duplicate UI receivers.
 // size      3307 bytes
 // prototype void (__thiscall ?destroy@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   3   call targets   33
 // calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406820 0x00406880 0x00406910 0x00406E60 0x0047A890 0x004CAA50 0x004E3EF0 0x0050BCC0 0x0052DC70 0x00531020 0x005310F0 0x00531300 0x0055F770 0x00592E10 0x00592EE0 0x005C1B70 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00645550
 */
 void Console::destroy(int veh_id) {
-    // The original wraps this body in an SEH frame from a chain of automatic
-    // objects (Popup, Scroll, two FlatButtons, a GraphicWin); declaring the
-    // real RAII locals reproduces the constructor/destructor cascade rather
-    // than hand-tracking the compiler's unwind states.
+    // The original's UI cleanup addresses all belong to this one Popup.
+    // Its genuine member/base lifetimes own normal and exceptional teardown.
     Popup popup;
-    Scroll scroll;
 
     if (not_my_turn()) {
         NetMsgPrimary.pop(ConsoleStrSimulNo, 5000, 0, 0);
@@ -6307,9 +6308,8 @@ void Console::destroy(int veh_id) {
     const int vy = Vehs[veh_id].y;
     const int vx = Vehs[veh_id].x;
     const uint8_t faction = Vehs[veh_id].faction_id;
-    const int x_half = vx >> 1;
     Map *const tile = map_loc(vx, vy);
-    const bool not_ocean = (tile->climate & 0xE0) < 0x60;
+    const bool is_ocean = (tile->climate & 0xE0) < 0x60;
     const int proto_id = Vehs[veh_id].proto_id;
     const int weapon_id = VehPrototypes[proto_id].weapon_id;
 
@@ -6327,31 +6327,32 @@ void Console::destroy(int veh_id) {
     }
 
     const int triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
-    if ((triad != 2) && (static_cast<int>(not_ocean) != (triad == 1))) {
+    if ((triad != 2) && (static_cast<int>(is_ocean) != (triad == 1))) {
         NetDaemonNet.unlock_veh();
         NetMsgPrimary.pop(ConsoleStrNotInTriad, 5000, 0, 0);
         return;
     }
 
-    FlatButton btn1;
-    FlatButton btn2;
-    GraphicWin win;
-
     const uint32_t tile_flags = tile->bit;
     const char *title = (triad == 2) ? ConsoleStrDestroyBomb : ConsoleStrDestroy;
-    popup.start(PopupStartCaption, title, tile_flags, nullptr, 0x40, nullptr);
+    // Native4D57E9 passes -1, not the tile flags used by the option filter.
+    popup.start(PopupStartCaption, title, -1, nullptr, 0x40, nullptr);
 
-    Dialogs dialogs;
+    Dialogs &dialogs = popup.dialogs();
     int item_count = 0;
     for (int a = 0; a < 0x13; a++) {
+        // Preserve the original exclusion branches before reading this row.
+        if ((a == 5 && (tile_flags & 8) != 0) ||
+            (a == 0 && (tile_flags & 0x80000) != 0) || a == 11) {
+            continue;
+        }
         const uint32_t abil_flag = Terraforming[a].bit;
         if (abil_flag == 0 || (tile_flags & abil_flag) == 0 || a == 10) {
             continue;
         }
-        // Preserve the original flattened dword selection into the
-        // Terraforming records; these slots hold StringTable addresses.
-        LPSTR *const terrain_strings = reinterpret_cast<LPSTR *>(Terraforming);
-        dialogs.item(StringTable.get(terrain_strings[x_half + a * 8]), abil_flag);
+        // Native4D5839 uses its saved ocean boolean, not the vehicle's x/2.
+        dialogs.item(StringTable.get(is_ocean ? Terraforming[a].name_sea
+                                             : Terraforming[a].name), abil_flag);
         item_count++;
     }
 
@@ -6361,22 +6362,23 @@ void Console::destroy(int veh_id) {
         return;
     }
 
-    int32_t result = -1;
+    // A single admitted item takes the original zero-result fast path.
+    int32_t result = 0;
     if (item_count >= 2) {
         result = popup.exec(0, 0);
     }
     if (result == -1) {
+        NetDaemonNet.unlock_veh();
         return;
     }
 
-    int owner;
-    const int territory = whose_territory(faction, vx, vy, &owner, 0);
+    const int territory = whose_territory(faction, vx, vy, nullptr, 0);
     if ((territory >= 0) && (territory != faction)) {
         if (break_treaty(faction, territory, 7) != 0) {
             NetDaemonNet.unlock_veh();
             return;
         }
-        if ((PlayersData[territory].diplo_treaties[faction] & DTREATY_VENDETTA) == 0) {
+        if ((PlayersData[faction].diplo_treaties[territory] & DTREATY_VENDETTA) == 0) {
             if (IsMultiplayerNet != 0) {
                 message_data(0x2440, 0, 0, faction, territory, -1);
                 NetDaemonNet.await_exec(0);
