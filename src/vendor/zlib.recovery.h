@@ -231,6 +231,30 @@ Historical lesson below refers to a retired src/recovered seed, not a live input
 // Original-image bindings for this dependency.
 // These are verification obligations, not claims of current matching.
 // Dependency inputs are unmodified; this companion owns its recovery metadata.
+/*
+Purpose: Flush complete bytes from the deflate bit accumulator, retaining fewer than eight bits.
+// ORIGINAL: 0x00642960 _bi_flush 0x00642960-0x006429EB FILE
+Dependency implementation: unmodified zlib 1.0.2 trees.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Flush the deflate bit accumulator and finish on a byte boundary.
+// ORIGINAL: 0x006429F0 _bi_windup 0x006429F0-0x00642A6C FILE
+Dependency implementation: unmodified zlib 1.0.2 trees.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Align and copy a stored deflate block, optionally emitting its length and complement.
+// ORIGINAL: 0x00642A70 _copy_block 0x00642A70-0x00642B07 FILE
+Dependency implementation: unmodified zlib 1.0.2 trees.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
 // RECOVERY_COMPONENT_BEGIN v1
 // {
 //   "archive_sha256": "517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6",
@@ -300,7 +324,10 @@ Historical lesson below refers to a retired src/recovered seed, not a live input
 //     {"evidence": "zlib 1.0.2; deflate.c definition `int deflateEnd (strm)`; source archive sha256 517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6; seed symbol `_sub_63d4d0` was historical metadata, not a current binary measurement; historical identity/claim restored from git:62a0a9b6610fdb7be399b01425fb0d99f63f6ade:src/unrecovered/0063d4d0.cpp. Source correspondence only; no current COFF qualification is stored here. Fresh configured component measurement is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x0063D4D0", "spans": ["0x0063D4D0-0x0063D55F"], "symbol": "_deflateEnd", "unit": "deflate.c"},
 //     {"evidence": "zlib 1.0.2; inflate.c definition `int inflateEnd(z)`; source archive sha256 517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6; seed symbol `_sub_63df90` was historical metadata, not a current binary measurement; historical identity/claim restored from git:62a0a9b6610fdb7be399b01425fb0d99f63f6ade:src/recovered/0063df90.cpp. Source correspondence only; no current COFF qualification is stored here. Fresh configured component measurement is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x0063DF90", "spans": ["0x0063DF90-0x0063DFDD"], "symbol": "_inflateEnd", "unit": "inflate.c"},
 //     {"evidence": "zlib 1.0.2; inflate.c definition `int inflateInit_(z, version, stream_size)`; source archive sha256 517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6; seed symbol `?sub_63e0f0@@YAHHHH@Z` was historical metadata, not a current binary measurement; historical identity/claim restored from git:62a0a9b6610fdb7be399b01425fb0d99f63f6ade:src/recovered/0063e0f0.cpp. Source correspondence only; no current COFF qualification is stored here. Fresh configured component measurement is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x0063E0F0", "spans": ["0x0063E0F0-0x0063E10A"], "symbol": "_inflateInit_", "unit": "inflate.c"},
-//     {"evidence": "Pinned zlib 1.0.2 upstream deflate.c lines 390-408 define `local void flush_pending(z_stream *strm)`; local is static in this release. The exact upstream archive SHA256 is recorded by this companion.; historical identity/claim restored from git:62a0a9b6610fdb7be399b01425fb0d99f63f6ade:src/unrecovered/0063d450.cpp. Source correspondence only; no current COFF qualification is stored here. Fresh configured component measurement is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x0063D450", "spans": ["0x0063D450-0x0063D4C2"], "symbol": "_flush_pending", "unit": "deflate.c"}
+//     {"evidence": "Pinned zlib 1.0.2 upstream deflate.c lines 390-408 define `local void flush_pending(z_stream *strm)`; local is static in this release. The exact upstream archive SHA256 is recorded by this companion.; historical identity/claim restored from git:62a0a9b6610fdb7be399b01425fb0d99f63f6ade:src/unrecovered/0063d450.cpp. Source correspondence only; no current COFF qualification is stored here. Fresh configured component measurement is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x0063D450", "spans": ["0x0063D450-0x0063D4C2"], "symbol": "_flush_pending", "unit": "deflate.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: trees.c bi_flush reads bi_valid, emits pending bytes through put_short/put_byte, and retains the residual accumulator. Boundaries refer to the independent physical function contribution; following alignment fill is not part of its original body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00642960", "spans": ["0x00642960-0x006429EB"], "symbol": "_bi_flush", "unit": "trees.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: trees.c bi_windup writes one or two bytes according to bi_valid and clears the accumulator and its valid-bit count. Boundaries refer to the independent physical function contribution; following alignment fill is not part of its original body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x006429F0", "spans": ["0x006429F0-0x00642A6C"], "symbol": "_bi_windup", "unit": "trees.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: trees.c copy_block first calls bi_windup, sets last_eob_len to8, optionally emits the length/complement header, then copies the requested bytes. Its mapped call target is _bi_windup at0x006429F0. Boundaries refer to the independent physical function contribution; following alignment fill is not part of its original body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00642A70", "spans": ["0x00642A70-0x00642B07"], "symbol": "_copy_block", "unit": "trees.c"}
 //   ]
 // }
 // RECOVERY_COMPONENT_END

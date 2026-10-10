@@ -76,7 +76,8 @@ def test_migrated_history_identity_and_native_writer_roundtrip():
     manifest = parse_component(header)
     bindings = {binding.origin.address: binding for binding in manifest.bindings}
     assert set(bindings) == {0x00640A80, 0x00644930, *EXPECTED,
-                            0x0063CF00, 0x0063D4D0, 0x0063DF90, 0x0063E0F0, 0x0063D450}
+                            0x0063CF00, 0x0063D4D0, 0x0063DF90, 0x0063E0F0, 0x0063D450,
+                            0x00642960, 0x006429F0, 0x00642A70}
     assert set(manifest.units) == {"adler32.c", "deflate.c", "inflate.c", "infutil.c", "trees.c"}
     for address, (end, symbol, unit, claimed, history_digest) in EXPECTED.items():
         row = rows[address]

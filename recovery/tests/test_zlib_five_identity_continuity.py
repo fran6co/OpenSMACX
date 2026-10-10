@@ -123,8 +123,8 @@ def test_five_full_seed_prefixes_archive_and_native_writer_roundtrip():
         assert [(span.start, span.end) for span in binding.spans] == [(address, end)]
         assert (binding.symbol, binding.unit) == (symbol, unit)
 
-    assert len(manifest.bindings) == 9
-    assert set(bindings) == set(EXISTING) | set(HISTORY)
+    assert len(manifest.bindings) == 12
+    assert set(bindings) == set(EXISTING) | set(HISTORY) | {0x00642960, 0x006429F0, 0x00642A70}
     assert set(manifest.units) == {"adler32.c", "deflate.c", "inflate.c", "infutil.c", "trees.c"}
     # The initial-prefix comparisons retain the useful original caller/indirect
     # edges and the correction lessons; don't copy post-prefix emitter boilerplate
