@@ -39,7 +39,7 @@ int MapIsFlat,MapLongitude=10,MapLongitudeBounds=20,IsMultiplayerNet;
 int ready=1,target=1,direction=4,lock_result,maybe_result,fight_result;
 int calls,observed_mode,observed_id,opcode,notify,destroyed,unlocked,awaited;
 struct NetDaemon {
- struct {uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10];}lock_state_[24];
+ struct {uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10];}channels_[2];
  int lock_veh(int*id,int mode,int x,int y,int zero){
   assert(mode==4&&x==2&&y==0&&zero==0);*id=3;return lock_result;}
  int maybe_lock(int*id,int a,int b,int x,int y,int mode){
@@ -60,13 +60,13 @@ void message_veh(int op,int id,int dir,int zero){assert(id==3&&dir==4&&zero==0);
 int radius_move(int x,int y,int,int,int range){assert(x==0&&y==0&&range==25);return direction;}
 int battle_fight(int id,int dir,int a,int b,int*p){
  assert(dir==4&&a==1&&b==1&&!p);++calls;observed_id=id;
- observed_mode=NetDaemonNet.lock_state_[1].leading_words_[3];return fight_result;}
+ observed_mode=NetDaemonNet.channels_[0].leading_words_[3];return fight_result;}
 BODY
 void reset(){std::memset(PlayersData,0,sizeof PlayersData);std::memset(Vehs,0,sizeof Vehs);
  Vehs[1].faction_id=1;ready=1;target=1;direction=4;lock_result=maybe_result=fight_result=0;
  MapIsFlat=1;IsMultiplayerNet=0;Rules.artillery_max_rng=2;
  calls=observed_mode=observed_id=opcode=notify=destroyed=unlocked=awaited=0;
- NetDaemonNet.lock_state_[1].leading_words_[3]=17;}
+ NetDaemonNet.channels_[0].leading_words_[3]=17;}
 int main(){
  reset();ready=0;action_arty(0,2,0);assert(notify==1&&calls==0);
  reset();action_arty(0,6,0);assert(notify==2&&calls==0);
@@ -80,7 +80,7 @@ int main(){
  reset();target=-1;IsMultiplayerNet=1;lock_result=1;action_arty(0,2,0);assert(opcode==0&&awaited==0);
  reset();action_arty(0,2,0);assert(calls==1&&observed_mode==3&&observed_id==0);
  reset();IsMultiplayerNet=1;maybe_result=1;action_arty(0,2,0);
- assert(calls==0&&NetDaemonNet.lock_state_[1].leading_words_[3]==17);
+ assert(calls==0&&NetDaemonNet.channels_[0].leading_words_[3]==17);
  reset();IsMultiplayerNet=1;fight_result=1;action_arty(0,2,0);
  assert(calls==1&&observed_mode==1&&observed_id==3&&unlocked==1&&opcode==0&&awaited==0);
  reset();IsMultiplayerNet=1;action_arty(0,2,0);
@@ -192,7 +192,8 @@ struct Console : GraphicWin {
 } ConsoleGlobal;
 int MapLongitudeBounds=20, MapLongitude=10, MapIsFlat=1;
 int MapWinCaptionScale=0, MapWinCaptionDivisor=1;
-unsigned GamePreferences;
+struct BoomGameDataFields { unsigned game_preferences_; };
+struct BoomGameDataState { BoomGameDataFields fields_; } GameDataStateStorage;
 int IsMultiplayerNet, TimerHoldFlag, SpriteScaleNumerator, SpriteScaleDenominator;
 struct FX {
     void play(int sound) {
@@ -232,7 +233,7 @@ void reset_case() {
     for (int i=0;i<144;++i) g_XI_BOOM_VEH_SPRITES[i]=Sprite{i,80,32};
     MapIsFlat=1; MapLongitudeBounds=20; MapLongitude=10;
     MapWinCaptionScale=0; MapWinCaptionDivisor=1;
-    GamePreferences=0; IsMultiplayerNet=0; shift_state=0;
+    GameDataStateStorage.fields_.game_preferences_=0; IsMultiplayerNet=0; shift_state=0;
     fake_tick=non_input_calls=update_calls=tile_draw_calls=clock_waits=0;
     flic_init_calls=0; flic_init_result=0; mutate_on_initial_fx=0;
     TimerHoldFlag=0; SpriteScaleNumerator=1; SpriteScaleDenominator=1;
@@ -275,11 +276,11 @@ int main() {
            sprite_draws[0].sprite<96);
     assert(sprite_draws[0].table==&color_table_bytes[5]); // callback-updated weapon 6
 
-    reset_case(); GamePreferences=0;
+    reset_case(); GameDataStateStorage.fields_.game_preferences_=0;
     assert(boom(4,5,0)==1); assert(non_input_calls==16*25);
-    reset_case(); GamePreferences=8;
+    reset_case(); GameDataStateStorage.fields_.game_preferences_=8;
     assert(boom(4,5,0)==1); assert(non_input_calls==16);
-    reset_case(); GamePreferences=8;
+    reset_case(); GameDataStateStorage.fields_.game_preferences_=8;
     assert(boom(4,5,2)==1); assert(non_input_calls==16*50);
     reset_case(); shift_state=0x0100;
     assert(boom(4,5,2)==1); assert(non_input_calls==16);
@@ -331,7 +332,7 @@ def test_live_boom_geometry_sounds_snapshots_and_timing(tmp_path):
 @pytest.mark.parametrize("before,after", [
     ("((flags & 0x100) != 0 ? 6 : 0)", "((flags & 0x100) != 0 ? 0 : 6)"),
     ("pixel_x + full_scaled_width", "pixel_x + scaled_width"),
-    ("((GamePreferences & 8u) != 0)", "((GamePreferences & 8u) == 0)"),
+    ("((GameDataStateStorage.fields_.game_preferences_ & 8u) != 0)", "((GameDataStateStorage.fields_.game_preferences_ & 8u) == 0)"),
     ("if (!skip_multiplayer_frame)", "if (!skip_multiplayer_frame || IsMultiplayerNet)"),
 ])
 def test_boom_damage_controls_are_detected(tmp_path, before, after):

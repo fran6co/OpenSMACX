@@ -106,14 +106,16 @@ def control(kind):
 DECLARATIONS
 static_assert(sizeof(int)==4,"native payload word");
 struct Console { int faction_id_; } ConsoleGlobal;
-struct LockState { uint32_t leading_words_[4]; };
+struct DeletionRecord { uint8_t ack_; uint8_t reserved_[3]; int owner_; int16_t count_; int16_t vehicles_[25]; };
+struct DeletionList { DeletionRecord records_[24]; int current_owner_; uint32_t sequence_bits() const { uint32_t x; std::memcpy(&x,&current_owner_,4); return x; } void set_sequence_bits(uint32_t x) { std::memcpy(&current_owner_,&x,4); } uint32_t advance_sequence() { uint32_t x=sequence_bits()+1; set_sequence_bits(x); return x; } };
+struct LockState { DeletionList deletion_list_; };
 static int NetBusyCount,time_calls,copy_calls,send_calls;
 static int *live_payload;
 static std::vector<unsigned char> sent;
 static int received_target;
 static uint32_t timeGetTime();
 struct Daemon {
-    LockState lock_state_[1];
+    DeletionList deletion_list_;
     int send_message(char *message,uint32_t length,int target){
         assert(NetBusyCount==8+4*copy_calls); // Increment follows optional copy.
         sent.resize(length);std::memcpy(sent.data(),message,length);
@@ -126,7 +128,7 @@ static uint32_t timeGetTime(){
     assert(NetBusyCount==7 && time_calls==0);
     ++time_calls;
     ConsoleGlobal.faction_id_=99;
-    NetDaemonNet.lock_state_[0].leading_words_[0]=0xFEDCBA98u;
+    NetDaemonNet.deletion_list_.set_sequence_bits(0xFEDCBA98u);
     if(live_payload)live_payload[0]=-7654321;
     return 0xF1234567u;
 }
@@ -146,7 +148,7 @@ int main(){
     const int opcode=static_cast<int>(0xABCD2307u),target=-33;
     for(int count:{-2147483647-1,-3,0,1,21,31,32})for(int text_case=0;text_case<4;++text_case){
         NetBusyCount=7;time_calls=copy_calls=send_calls=0;sent.clear();received_target=0;
-        ConsoleGlobal.faction_id_=-7;NetDaemonNet.lock_state_[0].leading_words_[0]=0x12345678;
+        ConsoleGlobal.faction_id_=-7;NetDaemonNet.deletion_list_.set_sequence_bits(0x12345678);
         int values[32];for(int i=0;i<32;++i)values[i]=1009+i*113;
         live_payload=bulk && count>0 ? values : nullptr;
         std::string storage=text_case==1?"":text_case==2?"faction landmark":std::string(31,'z');
@@ -183,7 +185,7 @@ def test_actual_typed_packets_defined_paths_and_write_footprints(tmp_path, compi
     run_control(tmp_path, compiler, program, None)
     common = (
         ("message.faction_ = ConsoleGlobal.faction_id_;", "message.faction_ = 0;"),
-        ("message.sequence_ = NetDaemonNet.lock_state_[0].leading_words_[0];", "message.sequence_ = 0x12345678;"),
+        ("message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();", "message.sequence_ = 0x12345678;"),
         ("message.timestamp_ = timeGetTime();", "message.timestamp_ = timeGetTime(); message.unresolved_2_[0] = 0;"),
         ("    NetBusyCount++;", "    NetBusyCount += 2;"),
     )

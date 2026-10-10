@@ -71,7 +71,7 @@ struct Spot {
   }
 };
 struct LockState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct NetDaemon { LockState lock_state_[24]; } NetDaemonNet;
+struct NetDaemon { LockState channels_[2]; struct { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_; } NetDaemonNet;
 struct { int faction_id_; } ConsoleGlobal;
 struct Player {
   int is_leader_female;
@@ -130,7 +130,7 @@ int main() {
   click.spot_.result = 4; click.spot_.out_x = 8; click.spot_.out_y = 3;
   click.on_left_click(20, 30);
   assert(click.spot_.calls == 1 && click.selectedRecord_ == 8 && click.redraws == 1);
-  NetDaemonNet.lock_state_[2].payload_.flags = 1;
+  NetDaemonNet.channels_[1].payload_.flags = 1;
   click.on_left_click(20, 30);
   assert(click.spot_.calls == 1 && click.redraws == 1);
 
@@ -214,9 +214,9 @@ def test_famewin_actual_record_and_click_bodies(tmp_path):
 
 def test_famewin_damage_control_detects_click_gate_change(tmp_path):
     left_click = source_body(LEFT_CLICK)
-    before = "NetDaemonNet.lock_state_[2].payload_.flags == 0"
+    before = "NetDaemonNet.channels_[1].payload_.flags == 0"
     assert before in left_click
-    mutant = left_click.replace(before, "NetDaemonNet.lock_state_[2].payload_.flags != 0")
+    mutant = left_click.replace(before, "NetDaemonNet.channels_[1].payload_.flags != 0")
     run_host_control(
         tmp_path,
         (mutant, source_body(DEMOTE), source_body(ADD_RECORD)),
@@ -527,8 +527,7 @@ def test_famewin_damage_control_detects_lost_difficulty_uppercase(tmp_path):
     init = source_body(INIT)
     redraw = source_body(REDRAW)
     difficulty_uppercase = (
-        "strcat(StringTemp, StringTable.get(\n"
-        "        reinterpret_cast<int>(Difficulty[record->field_20])));\n"
+        "strcat(StringTemp, StringTable.get(Difficulty[record->field_20]));\n"
         "    CharUpperA(StringTemp);"
     )
     assert difficulty_uppercase in redraw

@@ -24,7 +24,7 @@
 Purpose: Initialize the 24 deletion records and the current owner. The image
          leaves each record's owner, padding and vehicle-id storage untouched.
 // ORIGINAL: 0x0052DCA0 ??0DeletionList@@QAE@XZ 0x0052DCA0-0x0052DCC1 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The original body initializes exactly the DeletionList receiver's 24 record headers and trailing owner field, so the source constructor must own it rather than an unused leaf redirect.","evidence":["Original 0x0052DCA0-0x0052DCC1 writes the dword at +0x5A0, then byte +0 and word +8 across 24 records at 0x3C stride.","The historical exact redirect and its width analysis remain at git:dd29f605:src/leaf_recoveries.cpp; src/veh.cpp defines the DeletionList global at 0x0093E31C."]}
+// RECOVERY_BINDING: v1 {"reason":"The original body initializes exactly the DeletionList receiver's 24 record headers and trailing owner field, so the source constructor must own it rather than an unused leaf redirect.","evidence":["Original 0x0052DCA0-0x0052DCC1 writes the dword at +0x5A0, then byte +0 and word +8 across 24 records at 0x3C stride.","The historical exact redirect and its width analysis remain at git:dd29f605:src/leaf_recoveries.cpp; Historical src/veh.cpp defined a separate DeletionList global at 0x0093E31C; pinned veh_kill5C08C0 and NetDaemon::fixup_message534330 establish the current NetDaemonNet.deletion_list_ receiver at that address."]}
 */
 DeletionList::DeletionList() {
     current_owner_ = 0;

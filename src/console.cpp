@@ -192,13 +192,13 @@ void __cdecl draw_cursor();                               // 0x0046AE00
 void __cdecl ambience_veh(int vehicle);
 
 // ORIGINAL: 0x00511520 ?set_move@Console@@QAEXH@Z 0x00511520-0x005117FD
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963abb2ef8a11892e1d754d80934bd50b12e:src/recovered/units/00511520.cpp", "source:src/console.h", "source:src/veh.h", "source:src/game.h", "source:src/mapwin.h", "pinned:0x00511520..0x005117FD sequential multiplayer gates, ready/ambience selection split, visibility call and callback-sensitive coordinate reads", "source:src/netdaemon.h:NetDaemon::lock_state_"], "reason": "Complete the original Console move workflow through its genuine ready, ambience_veh and spot_all helpers. Preserve the observed ordered guards, selection recheck, offline visibility condition and post-callback field reads. The existing faction waiting-mask symbol remains a historical duplicate view of NetDaemon lock-state storage; its central ownership correction is still outstanding."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963abb2ef8a11892e1d754d80934bd50b12e:src/recovered/units/00511520.cpp", "source:src/console.h", "source:src/veh.h", "source:src/game.h", "source:src/mapwin.h", "pinned:0x00511520..0x005117FD sequential multiplayer gates, ready/ambience selection split, visibility call and callback-sensitive coordinate reads", "source:src/netdaemon.h:NetDaemon::primary_state_"], "reason": "Complete the original Console move workflow through its genuine ready, ambience_veh and spot_all helpers. Preserve the observed ordered guards, selection recheck, offline visibility condition and post-callback field reads. The historical faction waiting-mask identity now binds to NetDaemonNet.primary_state_.trailing_words_[7]; the singleton owns that shared storage."}
 void Console::set_move(int force_update) {
     if (IsMultiplayerNet != 0) {
         if (ConsoleControlTurnActive != 0) {
             return;
         }
-        if (NetDaemonNet.lock_state_[2].payload_.flags != 0) {
+        if (NetDaemonNet.channels_[1].payload_.flags != 0) {
             return;
         }
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0) {
@@ -206,7 +206,7 @@ void Console::set_move(int force_update) {
             if ((NetDaemonNet.factions_waiting_mask() & faction_bit) != 0) {
                 return;
             }
-            if (NetDaemonNet.lock_state_[0].trailing_words_[4] != 0) {
+            if (NetDaemonNet.primary_state_.trailing_words_[4] != 0) {
                 return;
             }
         } else if (not_my_turn() != 0) {
@@ -1024,11 +1024,11 @@ char LandmarkDefaultName[1] = {0};
 void Console::chat(int target_faction) {
     if (!IsMultiplayerNet) return;
 
-    const LockStateEntry *state = NetDaemonNet.lock_state_;
+    NetDaemon &network = NetDaemonNet;
     const unsigned int local_bit = 1u << (ConsoleGlobal.faction_id_ & 31);
     if (ConsoleControlTurnActive &&
-        (state[1].leading_words_[1] & local_bit) == 0 &&
-        state[0].trailing_words_[4] == 0) {
+        (network.channels_[0].leading_words_[1] & local_bit) == 0 &&
+        network.primary_state_.trailing_words_[4] == 0) {
         NetMsgPrimary.pop("FINISHUPKEEP", 1000, 0, 0);
         return;
     }
@@ -1044,15 +1044,15 @@ void Console::chat(int target_faction) {
     }
 
     const unsigned int enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff;
-    if (state[0].trailing_words_[0] >= 2 &&
-        (enabled & state[2].trailing_words_[6]) != enabled) {
+    if (network.primary_state_.trailing_words_[0] >= 2 &&
+        (enabled & network.channels_[1].trailing_words_[6]) != enabled) {
         for (int faction = 1; faction < 8; ++faction) {
             const unsigned int bit = 1u << faction;
             if (!(enabled & bit)) continue;
             const bool selected = target_faction > 0
                 ? faction == target_faction
                 : CommlinkPending ? faction == CommlinkFaction
-                : TurnRedrawPending || (state[2].trailing_words_[6] & bit) != 0;
+                : TurnRedrawPending || (network.channels_[1].trailing_words_[6] & bit) != 0;
             if (!selected) continue;
             message_chat(0x1e00, faction, message);
             log_say("Sent CHAT", message, faction, 0, 0);
@@ -2746,7 +2746,7 @@ void Console::unload(int veh_id) {
 // Existing typed owner cells: NetDaemonNet's shared assignment word and
 // Popup's full-width checkbox state.
 inline unsigned int &console_turns_assigned() {
-    return NetDaemonNet.lock_state_[0].leading_words_[1];
+    return NetDaemonNet.primary_state_.leading_words_[0];
 }
 
 // THE GAME-IN-PROGRESS FLAG at 0x009B2074, between game.h's ControlTurnPhase
@@ -6994,7 +6994,7 @@ void Console::cursor_key(int, int character, int) {
         }
     }
     case 'a':
-        if (!NetDaemonNet.lock_state_[2].payload_.flags) {
+        if (!NetDaemonNet.channels_[1].payload_.flags) {
             const int i = ConsoleGlobal.cursor_history_index_;
             activate(ConsoleGlobal.cursor_history_x_[i],
                      ConsoleGlobal.cursor_history_y_[i], 1);
@@ -7009,7 +7009,7 @@ void Console::cursor_key(int, int character, int) {
         break;
     }
     case 'g':
-        if (!ConsoleControlTurnActive && !NetDaemonNet.lock_state_[2].payload_.flags) {
+        if (!ConsoleControlTurnActive && !NetDaemonNet.channels_[1].payload_.flags) {
             const int i = ConsoleGlobal.cursor_history_index_;
             const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
                                      ConsoleGlobal.cursor_history_y_[i]);
@@ -7055,7 +7055,7 @@ void Console::use_time_bonus() {
         return;
     }
     if ((GameDataStateStorage.fields_.game_state_ & 2) &&
-        ((1u << faction_id_) & NetDaemonNet.lock_state_[0].trailing_words_[7])) {
+        ((1u << faction_id_) & NetDaemonNet.primary_state_.trailing_words_[7])) {
         NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
         return;
     }
@@ -7065,38 +7065,38 @@ void Console::use_time_bonus() {
 namespace {
 inline void console_close_network(unsigned int final_channel_mask) {
     NetDaemonNet.hang_up();
-    LockStateEntry *const state = NetDaemonNet.lock_state_;
-    state[0].leading_words_[1] = 0;
-    state[0].leading_words_[2] = 0;
-    state[0].leading_words_[3] = 0;
-    state[0].payload_.flags = 0;
-    state[0].trailing_words_[8] = 0;
-    state[0].trailing_words_[7] = 0;
-    state[1].leading_words_[1] = 0;
-    state[1].leading_words_[0] = 0;
-    state[1].trailing_words_[0] = 0;
-    state[2].leading_words_[1] = 0;
-    state[1].trailing_words_[9] = 0;
-    state[2].leading_words_[0] = 0;
-    state[2].trailing_words_[5] = 0;
-    state[2].trailing_words_[4] = 0;
-    state[0].trailing_words_[4] = 0;
-    state[0].trailing_words_[5] = 0;
-    state[0].trailing_words_[6] = 0;
-    state[2].trailing_words_[3] = 0;
-    state[2].trailing_words_[2] = 0;
-    state[2].leading_words_[3] = 0;
-    state[2].leading_words_[2] = 0;
-    state[2].payload_.flags = 0;
-    state[0].trailing_words_[0] = 0;
-    state[0].trailing_words_[1] = 0;
-    state[2].trailing_words_[8] = 0;
-    state[2].trailing_words_[7] = 0;
-    state[0].trailing_words_[2] = 0;
-    state[0].trailing_words_[3] = 0;
-    state[2].trailing_words_[6] = final_channel_mask;
-    state[1].payload_.vehicle_selection_follow = 0;
-    for (int i = 6; i < 14; ++i) state[1].trailing_words_[i - 5] = 0;
+    NetDaemon &network = NetDaemonNet;
+    network.primary_state_.leading_words_[0] = 0;
+    network.primary_state_.leading_words_[1] = 0;
+    network.primary_state_.leading_words_[2] = 0;
+    network.primary_state_.flags_ = 0;
+    network.primary_state_.trailing_words_[8] = 0;
+    network.primary_state_.trailing_words_[7] = 0;
+    network.channels_[0].leading_words_[1] = 0;
+    network.channels_[0].leading_words_[0] = 0;
+    network.channels_[0].trailing_words_[0] = 0;
+    network.channels_[1].leading_words_[1] = 0;
+    network.channels_[0].trailing_words_[9] = 0;
+    network.channels_[1].leading_words_[0] = 0;
+    network.channels_[1].trailing_words_[5] = 0;
+    network.channels_[1].trailing_words_[4] = 0;
+    network.primary_state_.trailing_words_[4] = 0;
+    network.primary_state_.trailing_words_[5] = 0;
+    network.primary_state_.trailing_words_[6] = 0;
+    network.channels_[1].trailing_words_[3] = 0;
+    network.channels_[1].trailing_words_[2] = 0;
+    network.channels_[1].leading_words_[3] = 0;
+    network.channels_[1].leading_words_[2] = 0;
+    network.channels_[1].payload_.flags = 0;
+    network.primary_state_.trailing_words_[0] = 0;
+    network.primary_state_.trailing_words_[1] = 0;
+    network.channels_[1].trailing_words_[8] = 0;
+    network.channels_[1].trailing_words_[7] = 0;
+    network.primary_state_.trailing_words_[2] = 0;
+    network.primary_state_.trailing_words_[3] = 0;
+    network.channels_[1].trailing_words_[6] = final_channel_mask;
+    network.channels_[0].payload_.vehicle_selection_follow = 0;
+    for (int i = 6; i < 14; ++i) network.channels_[0].trailing_words_[i - 5] = 0;
     NetDaemonNet.locks_.clear();
     NetDaemonNet.AlphaNet::close();
     IsMultiplayerNet = 0;
@@ -7625,10 +7625,10 @@ void Console::group(int vehicle_id) {
 void Console::activate(int x, int y, int current_selection) {
     log_say("Console ACTIVATE", x, y, 0);
     if (IsMultiplayerNet) {
-        if (NetDaemonNet.lock_state_[2].leading_words_[2] ||
-            NetDaemonNet.lock_state_[2].payload_.flags) return;
+        if (NetDaemonNet.channels_[1].leading_words_[2] ||
+            NetDaemonNet.channels_[1].payload_.flags) return;
         const unsigned int faction_bit = 1u << ConsoleGlobal.faction_id_;
-        if (((NetDaemonNet.lock_state_[0].trailing_words_[7] & faction_bit) &&
+        if (((NetDaemonNet.primary_state_.trailing_words_[7] & faction_bit) &&
              !(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)) || ConsoleControlTurnActive) {
             int vehicle = veh_at(x, y);
             if (stack_check(vehicle, 1, -1, -1, -1) != 1)
@@ -7637,7 +7637,7 @@ void Console::activate(int x, int y, int current_selection) {
                 selected_vehicle_ = vehicle;
                 focus_vehicle_ = vehicle;
             }
-            const bool ready_now = (NetDaemonNet.lock_state_[0].trailing_words_[7] &
+            const bool ready_now = (NetDaemonNet.primary_state_.trailing_words_[7] &
                 (1u << ConsoleGlobal.faction_id_)) && veh_ready(vehicle);
             NetMsgPrimary.pop(ready_now ? "ALREADYDONE" : "FIRSTMOVE", 2000, 0, nullptr);
             return;
@@ -7707,7 +7707,7 @@ void Console::activate(int x, int y, int current_selection) {
         draw_tile(Vehs[vehicle].x, Vehs[vehicle].y, 1);
         if (!ConsoleGlobal.cursor_active_ && !(GameDataStateStorage.fields_.game_state_ & 2) &&
             (!IsMultiplayerNet || (!ConsoleControlTurnActive &&
-             !NetDaemonNet.lock_state_[2].payload_.flags))) {
+             !NetDaemonNet.channels_[1].payload_.flags))) {
             if (popv(ScriptPopupFile, "ALREADYMOVED2", vehicle, 0))
                 set_move(0);
         } else if (IsMultiplayerNet) {
@@ -8348,7 +8348,7 @@ int Console::veh_turn() { // 0x00513B90
 
         // Native reads 0x0093E8E0 here: NetDaemon + 0x1B50, the already
         // typed lock_state_[0].dword_[9]. Its wider semantic role is unknown.
-        if (NetDaemonNet.lock_state_[0].trailing_words_[4] != 0) {
+        if (NetDaemonNet.primary_state_.trailing_words_[4] != 0) {
             if (ConsoleGlobal.cursor_active_ == 0) {
                 goto wait_for_vehicle;
             }
@@ -10222,10 +10222,10 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
         }
     }
 
-    if (NetDaemonNet.lock_state_[2].leading_words_[3] != 0) {
+    if (NetDaemonNet.channels_[1].leading_words_[3] != 0) {
         log_say("I think I've already got my lock", 0, 0, 0);
     }
-    if (NetDaemonNet.lock_state_[2].leading_words_[3] == 0) {
+    if (NetDaemonNet.channels_[1].leading_words_[3] == 0) {
         if (NetDaemonNet.lock_veh(&vehicle_id, 0, -1, -1, 0) != 0) return;
     }
 
@@ -10496,8 +10496,8 @@ finish_turn:
 void Console::veh_key(int key, int character, int command) {
     if (IsMultiplayerNet != 0 && character != 'a') {
         if (ConsoleControlTurnActive != 0) return;
-        if (NetDaemonNet.lock_state_[2].payload_.flags != 0) return;
-        if ((NetDaemonNet.lock_state_[0].trailing_words_[7] &
+        if (NetDaemonNet.channels_[1].payload_.flags != 0) return;
+        if ((NetDaemonNet.primary_state_.trailing_words_[7] &
              (1 << ConsoleGlobal.faction_id_)) != 0) return;
     }
 
@@ -10528,7 +10528,7 @@ void Console::veh_key(int key, int character, int command) {
     }
     case 'U': unload(vehicle_id); break;
     case 'a':
-        if (NetDaemonNet.lock_state_[2].payload_.flags == 0) {
+        if (NetDaemonNet.channels_[1].payload_.flags == 0) {
             activate(Vehs[vehicle_id].x, Vehs[vehicle_id].y, 1);
         }
         break;
@@ -10807,8 +10807,8 @@ void Console::menu_proc(int command) {
     if (IsMultiplayerNet != 0) {
         const int command_group = (command >> 8) & 0xFF;
         if ((ConsoleControlTurnActive != 0 ||
-             NetDaemonNet.lock_state_[2].payload_.flags != 0 ||
-             NetDaemonNet.lock_state_[0].leading_words_[3] != 0) &&
+             NetDaemonNet.channels_[1].payload_.flags != 0 ||
+             NetDaemonNet.primary_state_.leading_words_[2] != 0) &&
             command_group != 0 &&
             command_group != 7 && command_group != 8) {
             return;
@@ -11443,7 +11443,7 @@ int __cdecl supply_options(int veh_id, int base_id) {
         return 0;
     }
 
-    uint32_t &supply_action_flags = NetDaemonNet.lock_state_[1].leading_words_[3];
+    uint32_t &supply_action_flags = NetDaemonNet.channels_[0].leading_words_[3];
     int action;
     if (owner == ConsoleGlobal.faction_id_ && (supply_action_flags & 1u) != 0) {
         const int selected_action = popup.exec(0, 0);
@@ -11682,8 +11682,8 @@ if (IsMultiplayerNet != 0) {
     if (ConsoleControlTurnActive != 0) {
         native_editor_lock = 1;
         goto native_done;
-    } else if (NetDaemonNet.lock_state_[2].payload_.flags != 0 ||
-               NetDaemonNet.lock_state_[0].leading_words_[3] != 0) {
+    } else if (NetDaemonNet.channels_[1].payload_.flags != 0 ||
+               NetDaemonNet.primary_state_.leading_words_[2] != 0) {
         native_editor_lock = 1;
     }
 }
@@ -11861,7 +11861,7 @@ if (normalized_character >= '0' && normalized_character <= '9') {
     const int digit = normalized_character - '0';
     if (native_editor_lock != 0 &&
         (UnkGlobal0093A934 == 0 ||
-         (NetDaemonNet.lock_state_[0].trailing_words_[8] &
+         (NetDaemonNet.primary_state_.trailing_words_[8] &
           (1u << faction_id_)) != 0)) {
         goto native_done;
     }
@@ -11886,7 +11886,7 @@ case 'p':
 case 'c':
     if (!native_editor_lock ||
         (UnkGlobal0093A934 != 0 &&
-         (NetDaemonNet.lock_state_[0].trailing_words_[8] &
+         (NetDaemonNet.primary_state_.trailing_words_[8] &
           (1u << faction_id_)) == 0)) {
         TutWinBaseWindow.production(0, 0);
     }
@@ -13051,7 +13051,7 @@ if (a2 == 0x77) {
 switch (a2) {
 case 0x13: // Ctrl+S/native save menu action
     if (IsMultiplayerNet != 0 &&
-        (NetDaemonNet.lock_state_[0].trailing_words_[4] &
+        (NetDaemonNet.primary_state_.trailing_words_[4] &
          (1u << ConsoleGlobal.faction_id_)) != 0) {
         message_data(0x4C01, 0, 0, 0, 0, 0);
         MultiWindow.draw(0);

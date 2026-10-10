@@ -50,12 +50,21 @@ struct LockEntry {
     uint32_t trailing_words_[10];
     LockEntry() { memset(this,0,sizeof(*this)); }
 };
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; PrimaryState() { memset(this,0,sizeof(*this)); } };
+struct DeletionListProjection {
+    int current_owner_;
+    int cleared[24];
+    void clear(int index) { assert(index >= 0 && index < 24); ++cleared[index]; event("delete_clear", index); }
+    uint32_t sequence_bits() const { return static_cast<uint32_t>(current_owner_); }
+    void set_sequence_bits(uint32_t bits) { memcpy(&current_owner_, &bits, sizeof bits); }
+    uint32_t advance_sequence() { uint32_t next = sequence_bits() + 1; set_sequence_bits(next); return next; }
+};
 struct NetDaemonProjection : AlphaNet {
-    LockEntry lock_state_[3]; LockProjection locks_; int player_count_;
+    DeletionListProjection deletion_list_; PrimaryState primary_state_; LockEntry channels_[2]; LockProjection locks_; int player_count_;
     int clear_playerlock_on_receive;
     NetDaemonProjection() : player_count_(1), clear_playerlock_on_receive(0) {}
-    uint32_t &factions_waiting_mask() { return lock_state_[0].trailing_words_[7]; }
-    uint32_t &network_message_count() { return lock_state_[2].trailing_words_[7]; }
+    uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[7]; }
+    uint32_t &network_message_count() { return channels_[1].trailing_words_[7]; }
     void net_tasks() { event("net_tasks"); }
     void hang_up() { event("hang_up"); }
     int receive_value;
@@ -222,8 +231,8 @@ static int main_control_end_game() {
     assert(first_event("upkeep_phase") < first_event("end_game"));
     assert(count_event("hang_up")==1 && count_event("locks_clear")==1);
     assert(count_event("net_close")==1 && IsMultiplayerNet==0);
-    assert(NetDaemonNet.lock_state_[0].leading_words_[1]==0);
-    assert(NetDaemonNet.lock_state_[0].payload_.flags==0);
+    assert(NetDaemonNet.primary_state_.leading_words_[1]==0);
+    assert(NetDaemonNet.primary_state_.flags_==0);
     return 0;
 }
 static int main_end_turn_network() {
@@ -238,14 +247,14 @@ static int main_end_turn_network() {
     assert(first_event("go_reset")<first_event("mash_planes"));
     assert(first_event("mash_planes")<first_event("checksums"));
     assert(NetUpkeepPhase==0 && ConsoleControlTurnActive==1);
-    assert(NetDaemonNet.lock_state_[0].leading_words_[0]==1);
+    assert(NetDaemonNet.deletion_list_.current_owner_==1);
     return 0;
 }
 static int main_end_turn_lock_mask() {
     reset_events(); NetTurnFlags=0; IsMultiplayerNet=0; ExitTurnLoop=0;
     NextTurnReady=0; GameState=0; GamePreferences=0; ConsoleGlobal.faction_id_=1;
     LockEnableMask=2; ConsoleFactionsWaitingMask=2;
-    NetDaemonNet.player_count_=2; NetDaemonNet.lock_state_[0].leading_words_[1]=1;
+    NetDaemonNet.player_count_=2; NetDaemonNet.primary_state_.leading_words_[0]=1;
     NetDaemonNet.locks_.records_[1].active_=2;
     NetDaemonNet.locks_.records_[1].entry_flags_[0]=1;
     NetDaemonNet.clear_playerlock_on_receive=1; NetDaemonNet.receive_value=0;
@@ -259,7 +268,7 @@ static int main_upkeep_clean() {
     LockEnableMask=0x0606; ConsoleGlobal.faction_id_=1; TurnCurrentNum=1;
     BaseCurrentCount=1; Bases[0].faction_id_current=1; Bases[0].state=0x10000010;
     VehCurrentCount=1; Vehs[0].faction_id=1; Vehs[0].state=0;
-    NetDaemonNet.lock_state_[0].trailing_words_[9]=0;
+    NetDaemonNet.primary_state_.trailing_words_[9]=0;
     GamePreferences=0; GameMorePreferences=0x100000; GameRules=0;
     BaseAtDebugPopupFlag=0; CouncilPendingMessageArgs[0]=-1;
     UpgradePromptAnswered=99; TurnRedrawPending=0;
@@ -279,8 +288,8 @@ static int main_upkeep_clean() {
 static int main_upkeep_checksum_cursor() {
     reset_events(); NetUpkeepPhase=0; LockEnableMask=0x0606;
     ConsoleGlobal.faction_id_=1; GamePreferences=0; GameMorePreferences=0;
-    NetDaemonNet.lock_state_[0].leading_words_[1]=1;
-    NetDaemonNet.lock_state_[0].leading_words_[1]=1;
+    NetDaemonNet.primary_state_.leading_words_[0]=1;
+    NetDaemonNet.primary_state_.leading_words_[0]=1;
     for(int i=0;i<NetTurnChecksumWords;++i) { NetTurnChecksums[i]=i+100; NetPeerTurnChecksums[2][i]=i+100; }
     NetTurnChecksums[20]^=1;
     net_upkeep();

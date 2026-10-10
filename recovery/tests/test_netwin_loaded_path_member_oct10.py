@@ -36,7 +36,8 @@ def test_only_member_name_and_redundant_casts_change(relative):
     for expression in ("NetWinDialog.loaded_file_path_", "loaded_file_path_"):
         expected = expected.replace("reinterpret_cast<char *>(" + expression + ")", expression)
     path = ROOT / relative
-    now = path.read_text()
+    from test_netdaemon_shared_deletion_storage_oct10 import restore_shared_storage_migration
+    now = restore_shared_storage_migration(path.read_text(), relative)
     assert now == expected
     if relative == "src/game.cpp":
         assert restore_loaded_path_member_migration(now) == old

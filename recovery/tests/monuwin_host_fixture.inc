@@ -153,7 +153,8 @@ struct StringList {
 struct ReportInfo { int field_1E230_ = 0; Font *field_1E184_ = &font; } ReportIfGlobal;
 struct ConsoleInfo { int faction_id_ = 3; } ConsoleGlobal;
 struct LockWord { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct NetDaemonDouble { LockWord lock_state_[24]; } NetDaemonNet;
+struct PrimaryStateDouble { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+struct NetDaemonDouble { PrimaryStateDouble primary_state_; LockWord channels_[2]; LockWord lock_state_[24]; } NetDaemonNet;
 struct PlayerInfo {
     int is_leader_female, noun_gender, is_noun_plural;
     char filename[8], title_leader[32], name_leader[32], noun_faction[32], adj_name_faction[32];
@@ -171,7 +172,10 @@ int parse_says(int slot,const char *text,int gender,int plurality) {
     record("text",nullptr,{slot,gender,plurality,GenderDefault,PluralityDefault},text,text); return 0;
 }
 const char *tech_name(int id,int category) { record("technology",nullptr,{id,category}); return technology_name; }
-struct StringTableDouble { const char *get(int id) { record("string_get",nullptr,{id}); return project_name; } } StringTable;
+struct StringTableDouble {
+    const char *get(int id) { record("string_get",nullptr,{id}); return project_name; }
+    const char *get(void *key) { record("string_get",nullptr,{static_cast<int>(reinterpret_cast<intptr_t>(key))}); return project_name; }
+} StringTable;
 // Access policy only is projected for test setup; full live member declarations remain intact.
 #define private public
 __DECLARATION__
@@ -267,9 +271,9 @@ void callback_contracts(MonuWin &window) {
     reset(window); window.selected_monument_type_=14; spot_position=69; window.on_left_click(3,4);
     check(FactionMonuments[3].latest_type_==14,"primary spot resolves current selection");
     for(int gate=0;gate<3;++gate) {
-        reset(window); if(gate==0) NetDaemonNet.lock_state_[0].trailing_words_[7]=1u<<3;
-        if(gate==1) NetDaemonNet.lock_state_[2].payload_.flags=1;
-        if(gate==2) NetDaemonNet.lock_state_[0].leading_words_[3]=1;
+        reset(window); if(gate==0) NetDaemonNet.primary_state_.trailing_words_[7]=1u<<3;
+        if(gate==1) NetDaemonNet.channels_[1].payload_.flags=1;
+        if(gate==2) NetDaemonNet.primary_state_.leading_words_[2]=1;
         window.on_left_click(3,4); window.on_mouse_move(3,4); check(calls.empty(),"all three network gates suppress callbacks");
     }
     for(int type:{0,4,13,15,20,69,-1}) {

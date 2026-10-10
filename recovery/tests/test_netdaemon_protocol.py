@@ -108,7 +108,7 @@ def test_extractor_requires_actual_netdaemon_owner_methods() -> None:
     action_body, order_body = _actual_methods()
     assert "int NetDaemon::action(int veh_id, int mode)" in action_body
     assert "int NetDaemon::order_veh(int veh_id, int direction, int mode)" in order_body
-    assert "NetDaemonNet.lock_state_[1].leading_words_[3]" in action_body
+    assert "NetDaemonNet.channels_[0].leading_words_[3]" in action_body
     assert "PlayersData[" in order_body and "RadiusOffsetX" in order_body
 
 
@@ -125,8 +125,8 @@ def test_actual_owner_host_controls(mode: str) -> None:
     [
         ("timing", "Vehs[veh_id].order, 0)", "action_type, 0)",
          "action log must reload order after automated_lock callback"),
-        ("timing", "NetDaemonNet.lock_state_[1].leading_words_[3] = saved_action_mode;",
-         "lock_state_[1].leading_words_[3] = saved_action_mode;",
+        ("timing", "NetDaemonNet.channels_[0].leading_words_[3] = saved_action_mode;",
+         "channels_[0].leading_words_[3] = saved_action_mode;",
          "0x93E904 timing word belongs to singleton, not receiver"),
         ("radius", "PlayersData[other_faction]\n                             .diplo_treaties[ConsoleGlobal.faction_id_]",
          "PlayersData[ConsoleGlobal.faction_id_]\n                             .diplo_treaties[other_faction]",

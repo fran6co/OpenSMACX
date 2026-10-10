@@ -97,7 +97,8 @@ struct Net {
 };
 struct Daemon : Net {
     int player_count_ = 0;
-    struct Entry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; } lock_state_[24];
+    struct Entry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; } channels_[2];
+    struct { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_;
     int pid_2_idx(int) { return 1; }
 } NetDaemonNet;
 struct NetWin {
@@ -135,7 +136,7 @@ int main() {
     assert(NetWinLobbyRows[1].ready_or_occupied_ == 0);
     assert(NetDaemonNet.recipient == NetWinOtherPlayerId);
 
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
+    NetDaemonNet.primary_state_.leading_words_[0] = 1;
     NetWinSessionData.mode_ = 0;
     win.on_button_clicked(10);
     assert(NetDaemonNet.sent.size() == 0xA74);

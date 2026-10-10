@@ -158,4 +158,4 @@ def test_real_console_owner_and_callers_are_not_repointed():
     assert "AlphaMenu alpha_menu_;" in header
     console = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
     assert "alpha_menu_.check(selected_vehicle_);" in console
-    assert "alpha_menu_.check(veh_id);" in console
+    assert "ConsoleGlobal.alpha_menu_.check(ConsoleGlobal.selected_vehicle_);" in console

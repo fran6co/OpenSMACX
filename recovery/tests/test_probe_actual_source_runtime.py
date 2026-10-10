@@ -161,7 +161,7 @@ def test_product_selector_six_popup_and_accounting_cpp98(tmp_path):
             ProbeHostMaps[2*64+2].climate=0x60;
             ConsoleGlobal.faction_id_=1;
             LockEnableMask=1u<<1;
-            NetDaemonNet.lock_state_[1].leading_words_[3]=3;
+            NetDaemonNet.channels_[0].leading_words_[3]=3;
             PlayersData[1].energy_reserves=100;
             PlayersData[2].energy_reserves=100;
             ProbeHostPopupExecResult=6;
@@ -219,7 +219,7 @@ def test_product_action_six_roll_threshold_rejoin_cpp98(
             ProbeHostMaps[2*64+2].climate=0x60;
             ConsoleGlobal.faction_id_=%d;
             LockEnableMask=1u<<1;
-            NetDaemonNet.lock_state_[1].leading_words_[3]=%d;
+            NetDaemonNet.channels_[0].leading_words_[3]=%d;
             PlayersData[1].energy_reserves=100;
             PlayersData[2].energy_reserves=100;
             %s

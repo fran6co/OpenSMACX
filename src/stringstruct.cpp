@@ -1005,7 +1005,7 @@ void __cdecl net_not_my_turn() {
            && GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
         ConsoleGlobal.field_23BE4_ = 1;
         NetDaemonNet.net_tasks();
-        if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
             const int level = GameDataStateStorage.fields_.net_turn_faction_;
             if (level <= 0) {
                 next_player_turn();

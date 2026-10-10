@@ -341,7 +341,7 @@ struct LockEntry {
     struct Payload { int flags; } payload_;
     int leading_words_[4];
 };
-struct NetDaemon { LockEntry lock_state_[3]; } NetDaemonNet;
+struct NetDaemon { LockEntry channels_[2]; struct { unsigned int leading_words_[3]; unsigned int flags_; unsigned int trailing_words_[10]; } primary_state_; } NetDaemonNet;
 int native_editor_lock;
 int dispatch() {
     native_editor_lock = 0;
@@ -357,10 +357,10 @@ int main() {
     assert(dispatch() == -1);
     ConsoleControlTurnActive = 0;
     assert(dispatch() == 0);
-    NetDaemonNet.lock_state_[2].payload_.flags = 1;
+    NetDaemonNet.channels_[1].payload_.flags = 1;
     assert(dispatch() == 1);
-    NetDaemonNet.lock_state_[2].payload_.flags = 0;
-    NetDaemonNet.lock_state_[0].leading_words_[3] = 1;
+    NetDaemonNet.channels_[1].payload_.flags = 0;
+    NetDaemonNet.primary_state_.leading_words_[2] = 1;
     assert(dispatch() == 1);
     return 0;
 }

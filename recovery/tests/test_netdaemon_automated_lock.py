@@ -65,25 +65,32 @@ struct Popup {
 } PopupObject;
 Popup &NetMsgPrimary = PopupObject;
 struct Net {
-    int get(unsigned long *first, unsigned long *second) {
+    void *get(unsigned long *first, unsigned long *second) {
         ++GetCalls;
         *first = 17;
         *second = 19;
         Events.push_back(5);
-        return 1234;
+        return reinterpret_cast<void *>(1234);
     }
 };
 struct Lock {
     void check_global() { ++CheckCalls; Events.push_back(6); }
 };
 struct State { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+struct DeletionRecord { uint8_t acknowledgements_; uint8_t reserved_[3]; int owner_; int16_t count_; int16_t vehicle_ids_[25]; };
+struct DeletionList { DeletionRecord records_[24]; int current_owner_; uint32_t sequence_bits() const { uint32_t x; std::memcpy(&x, &current_owner_, 4); return x; } void set_sequence_bits(uint32_t x) { std::memcpy(&current_owner_, &x, 4); } uint32_t advance_sequence() { uint32_t x = sequence_bits() + 1; set_sequence_bits(x); return x; } };
 struct NetDaemon : Net {
-    State lock_state_[24];
+    DeletionList deletion_list_;
+    PrimaryState primary_state_;
+    State channels_[2];
+    void *file_index_records_;
+    uint32_t field_1BE4_;
     Lock locks_;
     int automated_lock(int *, int);
     int lock_veh(int *id, int target, int a, int b, int c) {
         assert(target == 4 && a == -1 && b == -1 && c == 0);
-        assert(NetBusyCount == 1 && lock_state_[2].payload_.flags == 1);
+        assert(NetBusyCount == 1 && channels_[1].payload_.flags == 1);
         ++LockCalls;
         Events.push_back(2);
         if (RewriteId) *id = 1;
@@ -108,7 +115,9 @@ void reset() {
     LockCalls = WaitCalls = GetCalls = CheckCalls = SpockCalls = 0;
     PopCalls = CloseCalls = ProcessCalls = Failures = AbortOnPump = 0;
     RewriteId = TimeCalls = 0;
-    std::memset(NetDaemonNet.lock_state_, 0, sizeof(NetDaemonNet.lock_state_));
+    std::memset(&NetDaemonNet.deletion_list_, 0, sizeof(NetDaemonNet.deletion_list_));
+    std::memset(&NetDaemonNet.primary_state_, 0, sizeof(NetDaemonNet.primary_state_));
+    std::memset(NetDaemonNet.channels_, 0, sizeof(NetDaemonNet.channels_));
     Vehs[0].order = 128;
     Vehs[1].order = 127;
     Clock.clear();
@@ -125,13 +134,13 @@ int main() {
     Clock = {100};
     assert(NetDaemonNet.automated_lock(&id, 4) == 3);
     assert(LockCalls == 0 && NetBusyCount == 0);
-    assert(NetDaemonNet.lock_state_[2].payload_.flags == 0);
+    assert(NetDaemonNet.channels_[1].payload_.flags == 0);
     reset();
     RewriteId = 1;
     Clock = {100};
     assert(NetDaemonNet.automated_lock(&id, 4) == 0 && id == 1);
     assert(LockCalls == 1 && NetBusyCount == 0 && PopCalls == 0);
-    assert(NetDaemonNet.lock_state_[2].payload_.flags == 0);
+    assert(NetDaemonNet.channels_[1].payload_.flags == 0);
     reset();
     id = 0;
     Failures = 1;

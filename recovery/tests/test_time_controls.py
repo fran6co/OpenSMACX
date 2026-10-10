@@ -46,13 +46,9 @@ def _extract_sources():
     setter = bodies[0x00523C60]
     dialog = bodies[0x00589330]
 
-    # The production body preserves the original 32-bit StringTable API. This
-    # host-only rewrite maps a pointer to its low 32-bit address key and the
-    # fixture resolves the same key. It does not alter product source/types.
-    old_pointer_cast = "reinterpret_cast<int>(TimeControl[index].name)"
-    assert dialog.count(old_pointer_cast) == 1
-    dialog = dialog.replace(old_pointer_cast,
-                            "host_string_pointer_key(TimeControl[index].name)")
+    # The source uses the StringTable pointer overload; its host projection
+    # maps that same pointer identity to the fixture's 32-bit key.
+    assert dialog.count("StringTable.get(TimeControl[index].name)") == 1
     assert dialog.count("nullptr") == 2
     dialog = dialog.replace("nullptr", "0")  # C++98 host syntax only
     return setter, dialog

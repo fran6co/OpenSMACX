@@ -5687,10 +5687,10 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
     int esi = 0;
     if (IsMultiplayerNet != 0) {
         edi = (ConsoleControlTurnActive == 0 &&
-               NetDaemonNet.lock_state_[2].payload_.flags == 0 &&
-               NetDaemonNet.lock_state_[0].leading_words_[3] == 0) ? 0 : 1;
+               NetDaemonNet.channels_[1].payload_.flags == 0 &&
+               NetDaemonNet.primary_state_.leading_words_[2] == 0) ? 0 : 1;
         esi = (1 << ConsoleGlobal.faction_id_) &
-              static_cast<int>(NetDaemonNet.lock_state_[0].trailing_words_[7]);
+              static_cast<int>(NetDaemonNet.primary_state_.trailing_words_[7]);
         base_id = base_at(tile_x, tile_y);
         vehicle_id = veh_at(tile_x, tile_y);
         selected_vehicle = ConsoleGlobal.selected_vehicle_;

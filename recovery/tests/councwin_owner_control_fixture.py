@@ -150,7 +150,7 @@ uint32_t LockEnableMask = 0;
 int IsMultiplayerNet = 1;
 int IsMultiplayerPBEM = 0;
 struct LockState { uint32_t dword_[8]; uint32_t leading_words_[2]{}; };
-struct NetDaemon { LockState lock_state_[24]; } NetDaemonNet;
+struct NetDaemon { LockState channels_[2]; struct Primary { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_; } NetDaemonNet;
 struct { int faction_id_; } ConsoleGlobal;
 std::vector<int> events;
 int council_get_vote(int faction, int proposal, int target) {
@@ -324,7 +324,7 @@ char StringTemp[1032];
 BoxSpriteParams InterfaceBoxStyles[51];
 struct RulesProposal { char *name; char *description; int preq_tech; };
 RulesProposal Proposal[11];
-struct Strings { char *get(int handle) { return handle == 1 ? const_cast<char *>("PROPOSAL") : const_cast<char *>("DESCRIPTION"); } } StringTable;
+struct Strings { char *get(int handle) { return handle == 1 ? const_cast<char *>("PROPOSAL") : const_cast<char *>("DESCRIPTION"); } char *get(char *value) { return value == reinterpret_cast<char *>(1) ? const_cast<char *>("PROPOSAL") : const_cast<char *>("DESCRIPTION"); } } StringTable;
 const char *label_get(int index) {
   if (index == 498) return "COUNCIL";
   if (index == 495) return "FOR";

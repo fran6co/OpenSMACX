@@ -3667,7 +3667,7 @@ int __cdecl sub_52db70() {
 // Keep the unsigned owner storage and recover the original signed int view
 // only at the two functions whose ABI returns/compares it as int.
 static int turns_assigned() {
-    return static_cast<int>(NetDaemonNet.lock_state_[0].leading_words_[1]);
+    return static_cast<int>(NetDaemonNet.primary_state_.leading_words_[0]);
 }
 
 int __cdecl next_player_turn() {
@@ -4038,7 +4038,7 @@ void __cdecl say_fac_special(char *a1, char *a2, int a3) {
 void sub_52db40() {
     for (int slot = 0; slot < 8; ++slot) {
         NetDaemonSaveProcessSlot &record =
-            NetDaemonNet.save_storage_.process_slots_[slot];
+            NetDaemonNet.saved_process_slots_[slot];
         record.identity_ = -1;
         record.field_25_ = 0;
         record.field_26_ = 0;
@@ -6369,9 +6369,9 @@ int __cdecl save_daemon(char *save_path) {
     if (IsMultiplayerNet != 0) {
         GameDataStateStorage.fields_.game_state_ |= save_state_flag;
         GameDataPlayerCountSnapshot = NetDaemonNet.player_count_;
-        memcpy(NetDaemonNet.save_storage_.process_slots_,
+        memcpy(NetDaemonNet.saved_process_slots_,
                NetDaemonNet.process_slots_,
-               sizeof(NetDaemonNet.save_storage_.process_slots_));
+               sizeof(NetDaemonNet.saved_process_slots_));
     }
 
     char filename[0x100];
@@ -7019,7 +7019,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
                     file, &GameDataStateStorage, 0x398) == 0)
                 return 1;
             if (game_data_candidate_transfer(
-                    file, NetDaemonNet.save_storage_.process_slots_, 0xCE0) == 0)
+                    file, NetDaemonNet.saved_process_slots_, 0xCE0) == 0)
                 return 1;
             if (game_data_candidate_transfer(
                     file, &GameDataPlayerCountSnapshot, 4) == 0)
@@ -10598,7 +10598,7 @@ void __cdecl set_time_controls() {
         const int candidate =
             (eligible_vehicle_support + weighted_base_count) / active_factions +
             control.event * static_cast<int>(
-                NetDaemonNet.lock_state_[2].trailing_words_[8]);
+                NetDaemonNet.channels_[1].trailing_words_[8]);
         if (seconds <= candidate) {
             seconds = candidate;
         }
@@ -10617,7 +10617,6 @@ int TurnControlWord93A954 = 0;
 extern uint32_t UpgradePromptAnswered; // base.cpp, original90EA3C
 extern int BaseAtDebugPopupFlag; // base.cpp, original93A94C
 extern int DiploDefaultFlag93A968; // diplowin.cpp
-extern DeletionList VehDeletionList; // veh.cpp, original93E31C
 extern int SpockHelpActive; // netdaemon.cpp, original93F674
 extern int SpockNotifyPending; // netdaemon.cpp, original93F670
 extern int NetDaemonWaitTicks; // netdaemon.cpp, original93A960
@@ -10716,8 +10715,8 @@ int __cdecl net_upkeep_phase(int phase) {
     const int faction_id = ConsoleGlobal.faction_id_;
     const uint32_t faction_bit =
         1u << (static_cast<unsigned int>(faction_id) & 31u);
-    uint32_t &sent_mask = NetDaemonNet.lock_state_[1].leading_words_[1];
-    uint32_t &ack_mask = NetDaemonNet.lock_state_[0].trailing_words_[8];
+    uint32_t &sent_mask = NetDaemonNet.channels_[0].leading_words_[1];
+    uint32_t &ack_mask = NetDaemonNet.primary_state_.trailing_words_[8];
 
     sent_mask |= faction_bit;
     MultiWindow.draw(0);
@@ -10762,7 +10761,7 @@ int __cdecl net_upkeep_phase(int phase) {
 
     if (ExitTurnLoop != 0) return 1;
 
-    if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
+    if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
         log_say("Client falling out of upkeep loop", phase, 0, 0);
     } else {
         log_say("Server sending upkeep message", phase, 0, 0);
@@ -10796,7 +10795,7 @@ void __cdecl net_upkeep() {
     DiploDefaultFlag93A968 = 0;
     NetUpkeepPhase = 0;
     TurnUpkeepPhase = 1;
-    NetDaemonNet.lock_state_[0].trailing_words_[9] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[9] = 0;
     SpockHelpActive = 0;
     SpockNotifyPending = 0;
 
@@ -10828,7 +10827,7 @@ void __cdecl net_upkeep() {
                  static_cast<int32_t>(NetDaemonNet.network_message_count()),
                  0, 0, 0);
 
-    if (NetDaemonNet.lock_state_[0].trailing_words_[9] != 0) {
+    if (NetDaemonNet.primary_state_.trailing_words_[9] != 0) {
         for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
             const Base &base = Bases[i];
             if (base.faction_id_current == ConsoleGlobal.faction_id_ &&
@@ -10843,7 +10842,7 @@ void __cdecl net_upkeep() {
                 synch_leader(static_cast<int>(faction));
             }
         }
-        if (NetDaemonNet.lock_state_[0].trailing_words_[9] != 0) {
+        if (NetDaemonNet.primary_state_.trailing_words_[9] != 0) {
             while (NetDaemonNet.receive() != 0) { }
             do_all_tasks();
             if (net_upkeep_phase(NetUpkeepPhase) != 0) return;
@@ -10936,7 +10935,7 @@ skip_upkeep_synch:
                 goto upkeep5;
             }
         } else {
-            if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
                 message_data(0x2600, 0, CouncilPendingMessageArgs[0],
                              CouncilPendingMessageArgs[1],
                              CouncilPendingMessageArgs[2], 0);
@@ -10967,9 +10966,9 @@ upkeep5:
     if (net_upkeep_phase(NetUpkeepPhase) != 0) return;
     ++NetUpkeepPhase;
     NetMsgPrimary.pop(NetUpkeepUpkeep6, 0, 1, 0);
-    NetDaemonNet.lock_state_[0].leading_words_[0] = 0;
+    NetDaemonNet.deletion_list_.set_sequence_bits(0);
     for (i = 0; i < 0x18; ++i) {
-        VehDeletionList.clear(i);
+        NetDaemonNet.deletion_list_.clear(i);
     }
     do_checksums(4);
 
@@ -10994,7 +10993,7 @@ upkeep5:
 
     message_big_data(0x2307, 0, NetTurnChecksums, 0x15);
     if (net_upkeep_phase(NetUpkeepPhase) != 0) return;
-    NetDaemonNet.lock_state_[0].trailing_words_[2] = 0xFFFFFFFFu;
+    NetDaemonNet.primary_state_.trailing_words_[2] = 0xFFFFFFFFu;
     ++NetUpkeepPhase;
 
     {
@@ -11020,7 +11019,7 @@ upkeep5:
                 any_mismatch = 1;
                 if (mismatch_seen[word] != 0) continue;
                 mismatch_seen[word] = 1;
-                if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
+                if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
                     continue;
                 }
 
@@ -11136,7 +11135,7 @@ void __cdecl net_end_of_turn() {
 
     log_say(NetEndTurnEnterEndTurnLog,
             static_cast<int>(NetDaemonNet.factions_waiting_mask()),
-            NetDaemonNet.lock_state_[1].leading_words_[0],
+            NetDaemonNet.channels_[0].leading_words_[0],
             GameDataStateStorage.fields_.game_state_ & 2u);
     g_FX.play(0x22);
     GameDataStateStorage.fields_.game_state_ |= 2u;
@@ -11144,10 +11143,10 @@ void __cdecl net_end_of_turn() {
     ConsoleGlobal.set_view(0);
 
     const int local_faction = ConsoleGlobal.faction_id_;
-    if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
+    if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
         NetDaemonNet.factions_waiting_mask() |= 1u << local_faction;
     }
-    NetDaemonNet.lock_state_[0].leading_words_[3] |= 1u << local_faction;
+    NetDaemonNet.primary_state_.leading_words_[2] |= 1u << local_faction;
     MultiWindow.draw(0);
 
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
@@ -11163,12 +11162,12 @@ void __cdecl net_end_of_turn() {
             const bool masks_incomplete =
                 (enabled_factions & NetDaemonNet.factions_waiting_mask()) !=
                     enabled_factions ||
-                (NetDaemonNet.lock_state_[0].trailing_words_[4] &
+                (NetDaemonNet.primary_state_.trailing_words_[4] &
                  enabled_factions) != 0;
             const bool daemon_pending =
-                NetDaemonNet.lock_state_[0].leading_words_[1] != 0 &&
+                NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
                 (NetDaemonNet.locks_.any_locks() != 0 ||
-                 NetDaemonNet.lock_state_[1].trailing_words_[0] != 0);
+                 NetDaemonNet.channels_[0].trailing_words_[0] != 0);
             if (!(masks_incomplete || daemon_pending) || ExitTurnLoop != 0 ||
                 (GameDataStateStorage.fields_.game_state_ & 2u) == 0) {
                 break;
@@ -11187,7 +11186,7 @@ void __cdecl net_end_of_turn() {
     }
 
     if ((GameDataStateStorage.fields_.game_state_ & 2u) != 0) {
-        if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
+        if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
             log_say(NetEndTurnReadyToProceedLog,
                     static_cast<int>(NetDaemonNet.factions_waiting_mask()),
                     GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu, 0);
@@ -11195,7 +11194,7 @@ void __cdecl net_end_of_turn() {
             goto handle_93e8c0;
         }
     }
-    if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
 handle_93e8c0:
         if ((GameDataStateStorage.fields_.game_state_ & 2u) == 0) {
             return;
@@ -11234,8 +11233,8 @@ after_wait:
 
 proceed_next_turn:
     log_say(NetEndTurnProceedingToNextTurnLog, 0, 0, 0);
-    NetDaemonNet.lock_state_[0].trailing_words_[8] = 0;
-    NetDaemonNet.lock_state_[1].leading_words_[1] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[8] = 0;
+    NetDaemonNet.channels_[0].leading_words_[1] = 0;
     NetUpkeepPhase = 0;
     ConsoleControlTurnActive = 1;
     if (TutWinBaseWindow.is_visible() != 0) {
@@ -11260,7 +11259,7 @@ proceed_next_turn:
         log_say(NetEndTurnSaveFileLog, StringTemp, 0, 0, 0);
         save_daemon(StringTemp);
     }
-    NetDaemonNet.lock_state_[0].leading_words_[0] += 1;
+    NetDaemonNet.deletion_list_.advance_sequence();
 }
 
 // RECOVERY_OBJECT: v2 0x0068BE78 0x0068BE92 _NetControlTurnClearTurnSemaphore 0x0052A2E0
@@ -11329,14 +11328,14 @@ void __cdecl net_control_turn() {
 
     for (;;) {
         log_say(NetControlTurnClearTurnSemaphore,
-                NetDaemonNet.lock_state_[0].trailing_words_[7],
-                NetDaemonNet.lock_state_[1].leading_words_[0], 0);
-        NetDaemonNet.lock_state_[0].trailing_words_[7] = 0;
-        NetDaemonNet.lock_state_[1].leading_words_[0] = 0;
-        NetDaemonNet.lock_state_[0].trailing_words_[1] = 1;
+                NetDaemonNet.primary_state_.trailing_words_[7],
+                NetDaemonNet.channels_[0].leading_words_[0], 0);
+        NetDaemonNet.primary_state_.trailing_words_[7] = 0;
+        NetDaemonNet.channels_[0].leading_words_[0] = 0;
+        NetDaemonNet.primary_state_.trailing_words_[1] = 1;
         NetDaemonNet.network_message_count() = 0;
         // The adjacent 0x93E968 store is distinct from the message count.
-        NetDaemonNet.lock_state_[2].trailing_words_[8] = 0;
+        NetDaemonNet.channels_[1].trailing_words_[8] = 0;
         NextTurnReady = 0;
         InterfaceMessageWin.clear();
 
@@ -11360,43 +11359,43 @@ void __cdecl net_control_turn() {
             GameDataStateStorage.fields_.net_turn_faction_ = 0;
             if (end_of_game(1) != 0) {
                 NetDaemonNet.hang_up();
-                NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
-                NetDaemonNet.lock_state_[0].leading_words_[2] = 0;
-                NetDaemonNet.lock_state_[0].leading_words_[3] = 0;
-                NetDaemonNet.lock_state_[0].payload_.flags = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[0] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[1] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[2] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[3] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[4] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[5] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[6] = 0;
+                NetDaemonNet.primary_state_.leading_words_[0] = 0;
+                NetDaemonNet.primary_state_.leading_words_[1] = 0;
+                NetDaemonNet.primary_state_.leading_words_[2] = 0;
+                NetDaemonNet.primary_state_.flags_ = 0;
+                NetDaemonNet.primary_state_.trailing_words_[0] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[1] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[2] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[3] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[4] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[5] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[6] = 0;
                 NetDaemonNet.factions_waiting_mask() = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[8] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[9] = 0;
-                NetDaemonNet.lock_state_[1].leading_words_[0] = 0;
-                NetDaemonNet.lock_state_[1].leading_words_[1] = 0;
-                NetDaemonNet.lock_state_[1].leading_words_[2] = 0;
-                NetDaemonNet.lock_state_[1].leading_words_[3] = 0;
-                NetDaemonNet.lock_state_[1].payload_.flags = 0;
-                NetDaemonNet.lock_state_[1].trailing_words_[0] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[8] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[9] = 0;
+                NetDaemonNet.channels_[0].leading_words_[0] = 0;
+                NetDaemonNet.channels_[0].leading_words_[1] = 0;
+                NetDaemonNet.channels_[0].leading_words_[2] = 0;
+                NetDaemonNet.channels_[0].leading_words_[3] = 0;
+                NetDaemonNet.channels_[0].payload_.flags = 0;
+                NetDaemonNet.channels_[0].trailing_words_[0] = 0;
                 for (int i = 1; i <= 8; ++i) {
-                    NetDaemonNet.lock_state_[1].trailing_words_[i] = 0;
+                    NetDaemonNet.channels_[0].trailing_words_[i] = 0;
                 }
-                NetDaemonNet.lock_state_[1].trailing_words_[9] = 0;
-                NetDaemonNet.lock_state_[2].leading_words_[0] = 0;
-                NetDaemonNet.lock_state_[2].leading_words_[1] = 0;
-                NetDaemonNet.lock_state_[2].leading_words_[2] = 0;
-                NetDaemonNet.lock_state_[2].leading_words_[3] = 0;
-                NetDaemonNet.lock_state_[2].payload_.flags = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[2] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[3] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[4] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[5] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[6] = 0xFF;
+                NetDaemonNet.channels_[0].trailing_words_[9] = 0;
+                NetDaemonNet.channels_[1].leading_words_[0] = 0;
+                NetDaemonNet.channels_[1].leading_words_[1] = 0;
+                NetDaemonNet.channels_[1].leading_words_[2] = 0;
+                NetDaemonNet.channels_[1].leading_words_[3] = 0;
+                NetDaemonNet.channels_[1].payload_.flags = 0;
+                NetDaemonNet.channels_[1].trailing_words_[2] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[3] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[4] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[5] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[6] = 0xFF;
                 NetDaemonNet.network_message_count() = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[8] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[9] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[8] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[9] = 0;
                 NetDaemonNet.locks_.clear();
                 NetDaemonNet.AlphaNet::close();
                 IsMultiplayerNet = 0;
@@ -11408,7 +11407,7 @@ void __cdecl net_control_turn() {
         NetDaemonWaitTicks = static_cast<int>(GameDataStateStorage.fields_.turn_control_duration_milliseconds_);
         GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
         ConsoleControlTurnActive = 0;
-        NetDaemonNet.lock_state_[0].trailing_words_[5] = 0;
+        NetDaemonNet.primary_state_.trailing_words_[5] = 0;
 
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0 &&
             (GameDataStateStorage.fields_.turn_current_num_ == 1 || ControlTurnPhase != 0)) {
@@ -11441,7 +11440,7 @@ void __cdecl net_control_turn() {
         }
 
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0 &&
-            NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+            NetDaemonNet.primary_state_.leading_words_[0] != 0) {
             if (ControlTurnPhase == 0) {
                 next_player_turn();
             } else {
@@ -11505,7 +11504,7 @@ void __cdecl net_control_turn() {
                            GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
                         ConsoleGlobal.field_23BE4_ = 1;
                         NetDaemonNet.net_tasks();
-                        if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+                        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
                             if (GameDataStateStorage.fields_.net_turn_faction_ < 1 ||
                                 ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
                                   static_cast<unsigned char>(1u << (GameDataStateStorage.fields_.net_turn_faction_ & 0x1F))) == 0) ||
@@ -11612,39 +11611,39 @@ void parse_player_identity(int faction_id) {
 
 void clear_multiplayer_endgame_state() {
     NetDaemonNet.hang_up();
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
-    NetDaemonNet.lock_state_[0].leading_words_[2] = 0;
-    NetDaemonNet.lock_state_[0].leading_words_[3] = 0;
-    NetDaemonNet.lock_state_[0].payload_.flags = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[8] = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[7] = 0;
-    NetDaemonNet.lock_state_[1].leading_words_[1] = 0;
-    NetDaemonNet.lock_state_[1].leading_words_[0] = 0;
-    NetDaemonNet.lock_state_[1].trailing_words_[0] = 0;
-    NetDaemonNet.lock_state_[2].leading_words_[1] = 0;
-    NetDaemonNet.lock_state_[1].trailing_words_[9] = 0;
-    NetDaemonNet.lock_state_[2].leading_words_[0] = 0;
-    NetDaemonNet.lock_state_[2].trailing_words_[5] = 0;
-    NetDaemonNet.lock_state_[2].trailing_words_[4] = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[4] = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[5] = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[6] = 0;
-    NetDaemonNet.lock_state_[2].trailing_words_[3] = 0;
-    NetDaemonNet.lock_state_[2].trailing_words_[2] = 0;
-    NetDaemonNet.lock_state_[2].leading_words_[3] = 0;
-    NetDaemonNet.lock_state_[2].leading_words_[2] = 0;
-    NetDaemonNet.lock_state_[2].payload_.flags = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[0] = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[1] = 0;
+    NetDaemonNet.primary_state_.leading_words_[0] = 0;
+    NetDaemonNet.primary_state_.leading_words_[1] = 0;
+    NetDaemonNet.primary_state_.leading_words_[2] = 0;
+    NetDaemonNet.primary_state_.flags_ = 0;
+    NetDaemonNet.primary_state_.trailing_words_[8] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[7] = 0;
+    NetDaemonNet.channels_[0].leading_words_[1] = 0;
+    NetDaemonNet.channels_[0].leading_words_[0] = 0;
+    NetDaemonNet.channels_[0].trailing_words_[0] = 0;
+    NetDaemonNet.channels_[1].leading_words_[1] = 0;
+    NetDaemonNet.channels_[0].trailing_words_[9] = 0;
+    NetDaemonNet.channels_[1].leading_words_[0] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[5] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[4] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[4] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[5] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[6] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[3] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[2] = 0;
+    NetDaemonNet.channels_[1].leading_words_[3] = 0;
+    NetDaemonNet.channels_[1].leading_words_[2] = 0;
+    NetDaemonNet.channels_[1].payload_.flags = 0;
+    NetDaemonNet.primary_state_.trailing_words_[0] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[1] = 0;
     NetDaemonNet.network_message_count() = 0;
-    NetDaemonNet.lock_state_[2].trailing_words_[8] = 0;
-    NetDaemonNet.lock_state_[2].trailing_words_[7] = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[2] = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[3] = 0;
-    NetDaemonNet.lock_state_[2].trailing_words_[6] = 0xFF;
-    NetDaemonNet.lock_state_[1].payload_.flags = 0;
+    NetDaemonNet.channels_[1].trailing_words_[8] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[7] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[2] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[3] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[6] = 0xFF;
+    NetDaemonNet.channels_[0].payload_.flags = 0;
     for (int index = 0; index < 8; ++index) {
-        NetDaemonNet.lock_state_[1].trailing_words_[index + 1] = 0;
+        NetDaemonNet.channels_[0].trailing_words_[index + 1] = 0;
     }
     NetDaemonNet.locks_.clear();
     NetDaemonNet.AlphaNet::close();
@@ -12653,40 +12652,40 @@ int __cdecl save_game(int mode) {
         if (IsMultiplayerNet != 0) {
             NetDaemonNet.hang_up();
 
-            LockStateEntry *const state = NetDaemonNet.lock_state_;
-            state[0].leading_words_[1] = 0;
-            state[0].leading_words_[2] = 0;
-            state[0].leading_words_[3] = 0;
-            state[0].payload_.flags = 0;
-            state[0].trailing_words_[0] = 0;
-            state[0].trailing_words_[1] = 0;
-            state[0].trailing_words_[2] = 0;
-            state[0].trailing_words_[3] = 0;
-            state[0].trailing_words_[4] = 0;
-            state[0].trailing_words_[5] = 0;
-            state[0].trailing_words_[6] = 0;
-            state[0].trailing_words_[7] = 0;
-            state[0].trailing_words_[8] = 0;
-            state[1].leading_words_[0] = 0;
-            state[1].leading_words_[1] = 0;
-            state[1].payload_.flags = 0;
-            state[1].trailing_words_[0] = 0;
-            state[1].trailing_words_[9] = 0;
+            NetDaemon &network = NetDaemonNet;
+            network.primary_state_.leading_words_[0] = 0;
+            network.primary_state_.leading_words_[1] = 0;
+            network.primary_state_.leading_words_[2] = 0;
+            network.primary_state_.flags_ = 0;
+            network.primary_state_.trailing_words_[0] = 0;
+            network.primary_state_.trailing_words_[1] = 0;
+            network.primary_state_.trailing_words_[2] = 0;
+            network.primary_state_.trailing_words_[3] = 0;
+            network.primary_state_.trailing_words_[4] = 0;
+            network.primary_state_.trailing_words_[5] = 0;
+            network.primary_state_.trailing_words_[6] = 0;
+            network.primary_state_.trailing_words_[7] = 0;
+            network.primary_state_.trailing_words_[8] = 0;
+            network.channels_[0].leading_words_[0] = 0;
+            network.channels_[0].leading_words_[1] = 0;
+            network.channels_[0].payload_.flags = 0;
+            network.channels_[0].trailing_words_[0] = 0;
+            network.channels_[0].trailing_words_[9] = 0;
             for (int word = 1; word <= 8; ++word) {
-                state[1].trailing_words_[word] = 0;
+                network.channels_[0].trailing_words_[word] = 0;
             }
-            state[2].leading_words_[0] = 0;
-            state[2].leading_words_[1] = 0;
-            state[2].leading_words_[2] = 0;
-            state[2].leading_words_[3] = 0;
-            state[2].payload_.flags = 0;
-            state[2].trailing_words_[2] = 0;
-            state[2].trailing_words_[3] = 0;
-            state[2].trailing_words_[4] = 0;
-            state[2].trailing_words_[5] = 0;
-            state[2].trailing_words_[6] = 0xFF;
-            state[2].trailing_words_[7] = 0;
-            state[2].trailing_words_[8] = 0;
+            network.channels_[1].leading_words_[0] = 0;
+            network.channels_[1].leading_words_[1] = 0;
+            network.channels_[1].leading_words_[2] = 0;
+            network.channels_[1].leading_words_[3] = 0;
+            network.channels_[1].payload_.flags = 0;
+            network.channels_[1].trailing_words_[2] = 0;
+            network.channels_[1].trailing_words_[3] = 0;
+            network.channels_[1].trailing_words_[4] = 0;
+            network.channels_[1].trailing_words_[5] = 0;
+            network.channels_[1].trailing_words_[6] = 0xFF;
+            network.channels_[1].trailing_words_[7] = 0;
+            network.channels_[1].trailing_words_[8] = 0;
 
             NetDaemonNet.locks_.clear();
             NetDaemonNet.AlphaNet::close();

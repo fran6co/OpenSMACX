@@ -216,19 +216,39 @@ struct BaseSecretProject {
  const int &user_defined_64() const { return user_defined_64_; }
 };
 
-uint32_t GamePreferences, GameMorePreferences, GameWarnings, GameRules;
-uint8_t GameWireOpaque_9A64A0[4], GameWireOpaque_9A64A8[4], GameWireOpaque_9A67C9[3];
-uint32_t GameInterludeFlags, GameState;
-int TutorialFlags, TutorialFlags2, TutWinFlags9A64BC, DiffLevelCurrent;
-int VehCurrentCount, BaseCurrentCount, GameSetupResetWord, TurnCurrentNum;
-uint32_t MissionYearCurrent;
-int VehSelectionFollowLimit, TimeControlsSelection, TurnControlDurationMilliseconds;
-uint32_t LockEnableMask, FactionRankings[8];
-uint32_t RankingFactionIDUnk1, RankingFactionIDUnk2;
-BaseSecretProject SecretProject;
-int GovernorFaction, CouncilResolutionCount[11], CouncilLastResolutionTurn[11];
-uint8_t GameTechAchieved[89];
-char LegacyGameSaveName[256];
+#include "src/game_data_state_window.h"
+GameDataStateWindow GameDataStateStorage = {};
+#define GamePreferences GameDataStateStorage.fields_.game_preferences_
+#define GameMorePreferences GameDataStateStorage.fields_.game_more_preferences_
+#define GameWarnings GameDataStateStorage.fields_.game_warnings_
+#define GameRules GameDataStateStorage.fields_.game_rules_
+#define GameWireOpaque_9A64A0 GameDataStateStorage.fields_.game_wire_opaque_9a64a0_
+#define GameWireOpaque_9A64A8 GameDataStateStorage.fields_.game_wire_opaque_9a64a8_
+#define GameWireOpaque_9A67C9 GameDataStateStorage.fields_.game_wire_opaque_9a67c9_
+#define GameInterludeFlags GameDataStateStorage.fields_.game_interlude_flags_
+#define GameState GameDataStateStorage.fields_.game_state_
+#define TutorialFlags GameDataStateStorage.fields_.tutorial_flags_
+#define TutorialFlags2 GameDataStateStorage.fields_.tutorial_flags_2_
+#define TutWinFlags9A64BC GameDataStateStorage.fields_.tutwin_flags_9a64bc_
+#define DiffLevelCurrent GameDataStateStorage.fields_.diff_level_current_
+#define VehCurrentCount GameDataStateStorage.fields_.vehicle_current_count_
+#define BaseCurrentCount GameDataStateStorage.fields_.base_current_count_
+#define GameSetupResetWord GameDataStateStorage.fields_.game_setup_reset_word_
+#define TurnCurrentNum GameDataStateStorage.fields_.turn_current_num_
+#define MissionYearCurrent GameDataStateStorage.fields_.mission_year_current_
+#define VehSelectionFollowLimit GameDataStateStorage.fields_.vehicle_selection_follow_limit_
+#define TimeControlsSelection GameDataStateStorage.fields_.time_controls_selection_
+#define TurnControlDurationMilliseconds GameDataStateStorage.fields_.turn_control_duration_milliseconds_
+#define LockEnableMask GameDataStateStorage.fields_.lock_masks_.enable_mask_
+#define FactionRankings GameDataStateStorage.fields_.faction_rankings_
+#define RankingFactionIDUnk1 GameDataStateStorage.fields_.ranking_faction_id_unk1_
+#define RankingFactionIDUnk2 GameDataStateStorage.fields_.ranking_faction_id_unk2_
+#define SecretProject GameDataStateStorage.fields_.secret_project_
+#define GovernorFaction GameDataStateStorage.fields_.governor_faction_
+#define CouncilResolutionCount GameDataStateStorage.fields_.council_resolution_count_
+#define CouncilLastResolutionTurn GameDataStateStorage.fields_.council_last_resolution_turn_
+#define GameTechAchieved GameDataStateStorage.fields_.game_tech_achieved_
+#define LegacyGameSaveName GameDataStateStorage.fields_.legacy_game_save_name_
 int ClimateRiseStep, ClimateRiseLimit, ClimateRiseAccum, ClimateSeaLevelDelta;
 uint32_t TerraformAnnouncedMask[2];
 int TranscendenceScoreBonus, TranscendenceScoreWeights[8];

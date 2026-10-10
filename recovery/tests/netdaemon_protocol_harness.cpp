@@ -26,7 +26,12 @@ struct Net {
     }
 };
 struct NetDaemon : public Net {
-    LockStateEntry lock_state_[24];
+    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    LockStateEntry channels_[2];
+    struct DeletionRecord { uint8_t acknowledgements_; uint8_t reserved_[3]; int owner_; int16_t count_; int16_t vehicle_ids_[25]; };
+    struct DeletionList { DeletionRecord records_[24]; int current_owner_; uint32_t sequence_bits() const { uint32_t x; memcpy(&x, &current_owner_, 4); return x; } void set_sequence_bits(uint32_t x) { memcpy(&current_owner_, &x, 4); } uint32_t advance_sequence() { uint32_t x = sequence_bits() + 1; set_sequence_bits(x); return x; } } deletion_list_;
+    void *file_index_records_;
+    uint32_t field_1BE4_;
     Lock locks_;
     NetDaemon();
     int automated_lock(int *, int);
@@ -37,7 +42,7 @@ struct NetDaemon : public Net {
     int action(int, int);
     int order_veh(int, int, int);
 };
-NetDaemon::NetDaemon() { memset(lock_state_, 0, sizeof(lock_state_)); }
+NetDaemon::NetDaemon() { memset(&primary_state_, 0, sizeof(primary_state_)); memset(channels_, 0, sizeof(channels_)); memset(&deletion_list_, 0, sizeof(deletion_list_)); }
 
 struct Veh {
     int16_t x, y;
@@ -109,7 +114,7 @@ int action(int veh) { ++free_action_calls; free_action_veh = veh; return free_ac
 void action_go_to(int veh) { ++go_to_calls; go_to_veh = veh; }
 void action_road_to(int veh) { ++road_to_calls; road_to_veh = veh; }
 void wait_task() {
-    if (active_receiver) active_receiver->lock_state_[2].leading_words_[3] = 0;
+    if (active_receiver) active_receiver->channels_[1].leading_words_[3] = 0;
     if (callback_change_net_after_wait) IsMultiplayerNet = 0;
 }
 void check_spock() { ++check_spock_calls; }
@@ -159,8 +164,8 @@ int NetDaemon::automated_lock(int *veh, int category) {
 int NetDaemon::lock_veh(int *veh, int, int, int, int) {
     ++lock_vehicle_calls;
     if (lock_vehicle_result == 0) {
-        lock_state_[1].payload_.vehicle_selection_follow = veh;
-        lock_state_[2].trailing_words_[3] = 1;
+        channels_[0].payload_.vehicle_selection_follow = veh;
+        channels_[1].trailing_words_[3] = 1;
     }
     return lock_vehicle_result;
 }
@@ -175,7 +180,7 @@ int NetDaemon::wait(const char *, uint32_t *flag, int, int) {
 }
 void NetDaemon::process_message(char *, unsigned long, int) {
     ++process_calls;
-    NetDaemonNet.lock_state_[1].leading_words_[3] = 0x77777777u;
+    NetDaemonNet.channels_[0].leading_words_[3] = 0x77777777u;
 }
 
 /*ACTUAL_METHODS*/
@@ -188,8 +193,10 @@ static void reset_fixture(NetDaemon *receiver = 0) {
     memset(VehMoveDeltaY, 0, sizeof(VehMoveDeltaY));
     memset(RadiusOffsetX, 0, sizeof(RadiusOffsetX));
     memset(RadiusOffsetY, 0, sizeof(RadiusOffsetY));
-    memset(NetDaemonNet.lock_state_, 0, sizeof(NetDaemonNet.lock_state_));
-    if (receiver) memset(receiver->lock_state_, 0, sizeof(receiver->lock_state_));
+    memset(&NetDaemonNet.primary_state_, 0, sizeof(NetDaemonNet.primary_state_));
+    memset(NetDaemonNet.channels_, 0, sizeof(NetDaemonNet.channels_));
+    memset(&NetDaemonNet.deletion_list_, 0, sizeof(NetDaemonNet.deletion_list_));
+    if (receiver) { memset(&receiver->primary_state_, 0, sizeof(receiver->primary_state_)); memset(receiver->channels_, 0, sizeof(receiver->channels_)); memset(&receiver->deletion_list_, 0, sizeof(receiver->deletion_list_)); }
     NetDaemonNet.gets = 0; NetDaemonNet.next_message = 0;
     IsMultiplayerNet = 1; NetBusyCount = 0; NetDaemonWaitTicks = 0; ExitTurnLoop = 0;
     GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0xff00u;
@@ -226,7 +233,7 @@ static void test_action_offline_and_classification() {
     assert(subject.action(12, 0) == 37 && free_action_calls == 1 && free_action_veh == 12);
 
     reset_fixture(&subject); Vehs[12].order = 0x14;
-    subject.lock_state_[2].leading_words_[3] = 0;
+    subject.channels_[1].leading_words_[3] = 0;
     assert(subject.action(12, 0) == 1);
     assert(auto_lock_calls == 1 && auto_lock_category == 0xC && action_packets == 1);
 
@@ -236,12 +243,12 @@ static void test_action_offline_and_classification() {
     reset_fixture(&subject); Vehs[12].order = ORDER_ROAD_TO;
     assert(subject.action(12, 1) == 1 && road_to_calls == 1 && road_to_veh == 12);
     reset_fixture(&subject); Vehs[12].order = 3;
-    subject.lock_state_[1].payload_.vehicle_selection_follow = &followed_vehicle; subject.lock_state_[2].trailing_words_[3] = 99;
+    subject.channels_[0].payload_.vehicle_selection_follow = &followed_vehicle; subject.channels_[1].trailing_words_[3] = 99;
     assert(subject.action(12, 0) == 0);
-    assert(subject.lock_state_[1].payload_.vehicle_selection_follow == &followed_vehicle && subject.lock_state_[2].trailing_words_[3] == 99);
+    assert(subject.channels_[0].payload_.vehicle_selection_follow == &followed_vehicle && subject.channels_[1].trailing_words_[3] == 99);
     assert(cancel_packets == 0);
     assert(subject.action(12, 1) == 0);
-    assert(subject.lock_state_[1].payload_.vehicle_selection_follow == 0 && subject.lock_state_[2].trailing_words_[3] == 0);
+    assert(subject.channels_[0].payload_.vehicle_selection_follow == 0 && subject.channels_[1].trailing_words_[3] == 0);
     assert(cancel_packets == 1);
 }
 
@@ -249,17 +256,17 @@ static void test_action_callback_reload_and_singleton_timing() {
     NetDaemon subject; reset_fixture(&subject);
     Vehs[12].order = 4;
     mutate_order_on_auto_lock = 1; order_after_callback = 0x15;
-    subject.lock_state_[2].leading_words_[3] = 1;
+    subject.channels_[1].leading_words_[3] = 1;
     active_receiver = &subject;
-    NetDaemonNet.lock_state_[1].leading_words_[3] = 0x12345678u;
-    subject.lock_state_[1].leading_words_[3] = 0xabcdef01u;
+    NetDaemonNet.channels_[0].leading_words_[3] = 0x12345678u;
+    subject.channels_[0].leading_words_[3] = 0xabcdef01u;
     NetDaemonNet.next_message = 0x100;
     time_step = 2501;
     assert(subject.action(12, 0) == 1);
     assert(auto_lock_calls == 1 && auto_lock_category == 0);
     assert(action_packets == 1 && process_calls == 1 && check_spock_calls == 1);
-    assert(NetBusyCount == 0 && NetDaemonNet.lock_state_[1].leading_words_[3] == 0x12345678u);
-    assert(subject.lock_state_[1].leading_words_[3] == 0xabcdef01u);
+    assert(NetBusyCount == 0 && NetDaemonNet.channels_[0].leading_words_[3] == 0x12345678u);
+    assert(subject.channels_[0].leading_words_[3] == 0xabcdef01u);
     assert(NetMsgPrimary.closes == 1);
     bool logged_reloaded_order = false;
     for (size_t i = 0; i < logs.size(); ++i)
@@ -274,14 +281,14 @@ static void test_order_offline_repeat_lock_and_speed_edges() {
     assert(subject.order_veh(7, 4, 0) == 8);
     assert(free_order_calls == 1 && free_order_veh == 7 && free_order_x == 4 && free_order_y == 3);
 
-    reset_fixture(&subject); subject.lock_state_[2].trailing_words_[5] = 0; subject.lock_state_[2].leading_words_[2] = 1;
-    assert(subject.order_veh(7, 0, 0) == 0 && subject.lock_state_[2].trailing_words_[5] == 1);
+    reset_fixture(&subject); subject.channels_[1].trailing_words_[5] = 0; subject.channels_[1].leading_words_[2] = 1;
+    assert(subject.order_veh(7, 0, 0) == 0 && subject.channels_[1].trailing_words_[5] == 1);
     assert(NetMsgPrimary.popups.empty());
-    assert(subject.order_veh(7, 0, 0) == 0 && subject.lock_state_[2].trailing_words_[5] == 2);
+    assert(subject.order_veh(7, 0, 0) == 0 && subject.channels_[1].trailing_words_[5] == 2);
     assert(NetMsgPrimary.popups.size() == 1 && NetMsgPrimary.popups[0] == "MOVEPENDING");
-    reset_fixture(&subject); subject.lock_state_[2].trailing_words_[5] = 0; subject.lock_state_[2].leading_words_[2] = 1;
-    subject.lock_state_[2].trailing_words_[3] = 1;
-    assert(subject.order_veh(7, 0, 0) == 0 && subject.lock_state_[2].trailing_words_[5] == 0);
+    reset_fixture(&subject); subject.channels_[1].trailing_words_[5] = 0; subject.channels_[1].leading_words_[2] = 1;
+    subject.channels_[1].trailing_words_[3] = 1;
+    assert(subject.order_veh(7, 0, 0) == 0 && subject.channels_[1].trailing_words_[5] == 0);
     reset_fixture(&subject); lock_vehicle_result = 1;
     assert(subject.order_veh(7, 0, 0) == 0 && lock_vehicle_calls == 1);
 
@@ -343,7 +350,7 @@ static void test_globalfailed_wait_and_popup() {
     assert(subject.order_veh(7, 0, 0) == 0);
     assert(synch_veh_calls == 1 && wait_calls == 1 && NetDaemonWaitTicks == 19);
     assert(Vehs[7].order == 0 && Vehs[7].state == 0x80000U);
-    assert(cancel_packets == 1 && subject.lock_state_[2].trailing_words_[3] == 0);
+    assert(cancel_packets == 1 && subject.channels_[1].trailing_words_[3] == 0);
     assert(NetMsgPrimary.popups.size() == 1 && NetMsgPrimary.popups[0] == "GLOBALFAILED");
 }
 
@@ -356,7 +363,7 @@ static void test_mode_zero_wait_mutates_network_gate() {
     assert(subject.order_veh(7, 0, 0) == 1);
     assert(move_packets == 1 && wait_calls == 1 && NetDaemonWaitTicks == 23);
     assert(cancel_packets == 0); // callback changed the live multiplayer gate before release
-    assert(subject.lock_state_[1].payload_.vehicle_selection_follow == 0 && subject.lock_state_[2].trailing_words_[3] == 0);
+    assert(subject.channels_[0].payload_.vehicle_selection_follow == 0 && subject.channels_[1].trailing_words_[3] == 0);
 }
 
 static void test_sync_callback_mutates_network_gate() {
@@ -371,7 +378,7 @@ static void test_sync_callback_mutates_network_gate() {
     callback_change_net_after_synch = 1;
     assert(subject.order_veh(7, 0, 0) == 0);
     assert(synch_veh_calls == 1 && wait_calls == 0 && NetDaemonWaitTicks == 0);
-    assert(cancel_packets == 0 && subject.lock_state_[2].trailing_words_[3] == 0);
+    assert(cancel_packets == 0 && subject.channels_[1].trailing_words_[3] == 0);
     assert(NetMsgPrimary.popups.size() == 1 && NetMsgPrimary.popups[0] == "GLOBALFAILED");
 }
 
@@ -384,7 +391,7 @@ static void test_early_rejection_does_not_sync_vehicle() {
     assert(subject.order_veh(7, 0, 0) == 0);
     assert(synch_veh_calls == 0 && Vehs[7].order == 6 && Vehs[7].state == 0x80000U);
     assert(wait_calls == 0 && move_packets == 0 && cancel_packets == 1);
-    assert(subject.lock_state_[1].payload_.vehicle_selection_follow == 0 && subject.lock_state_[2].trailing_words_[3] == 0);
+    assert(subject.channels_[0].payload_.vehicle_selection_follow == 0 && subject.channels_[1].trailing_words_[3] == 0);
 }
 
 int main(int argc, char **argv) {

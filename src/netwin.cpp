@@ -893,7 +893,7 @@ static unsigned int *const NetWinRuleBitsC = &NetWinSessionOptions.rule_bits_c_;
 // by NetDaemon's constructor. The game and stringstruct turn-flow bodies
 // refer to the same storage as TurnsAssigned; it is not a separate global.
 static unsigned int *const NetWinRulesGate =
-    &NetDaemonNet.lock_state_[0].leading_words_[1];
+    &NetDaemonNet.primary_state_.leading_words_[0];
 
 // 0x0080A6F0 - the planet-size name count beside the fixed dialog (the
 // names occupy world_size_labels_: 32 rows at native 0x80-byte stride.
@@ -2415,7 +2415,7 @@ int NetWin::exec() {
     // Ordinary array construction owns the original 0x402EE0 iterator and
     // 0x483820 callback. It runs after enable_join even on the no-send path;
     // process-global rows remain passive storage with no startup constructor.
-    if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         lobby_message.header_.opcode_ = 0x04;
         lobby_message.header_.flags_ = 0x0F;
         lobby_message.header_.slot_ = -1;
@@ -2431,7 +2431,7 @@ int NetWin::exec() {
         ::do_task();
     }
 
-    NetDaemonNet.lock_state_[0].payload_.flags = 1;
+    NetDaemonNet.primary_state_.flags_ = 1;
     NetWinExecAdjacentState = 0;
     field_7614_ = 0;
     spot_.init(0x55);
@@ -2540,7 +2540,7 @@ int NetWin::exec() {
     editBox_.show(0);
 
     char *button_text = label_get(
-        (NetDaemonNet.lock_state_[0].leading_words_[1] != 0 ? 0x1058 : 0x1050) / 4);
+        (NetDaemonNet.primary_state_.leading_words_[0] != 0 ? 0x1058 : 0x1050) / 4);
     flatButton1_.init(button_text, 10, r[34].left, r[34].top,
                       r[34].right - r[34].left, r[34].bottom - r[34].top,
                       this, 0);
@@ -2562,7 +2562,7 @@ int NetWin::exec() {
     flatButton2_.redraw();
     flatButton2_.set_text_color(0x41, -1, 1, 1);
 
-    if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         NetWinSessionOptions.rule_bits_a_ = AlphaIniPrefs.rules;
         NetWinSessionOptions.difficulty_ = static_cast<uint8_t>(DefaultPrefs.difficulty);
         NetWinSessionOptions.rule_bits_c_ |= 0x10;
@@ -2587,7 +2587,7 @@ int NetWin::exec() {
         on_update();
         prepare_game();
     }
-    NetDaemonNet.lock_state_[0].payload_.flags = 2;
+    NetDaemonNet.primary_state_.flags_ = 2;
 
     if (faction_records_ != nullptr) {
         free(faction_records_);
@@ -3271,7 +3271,7 @@ void NetWin::on_button_clicked(int clicked_id) {
     const int local_slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);
     const int player_count = NetDaemonNet.player_count_;
 
-    if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         uint8_t &ready = NetWinLobbyRows[local_slot].ready_or_occupied_;
         const int slot_count = player_count + 1;
         int slot = 1;
@@ -3329,7 +3329,7 @@ void NetWin::on_button_clicked(int clicked_id) {
             NetWinLobbyRows[ready_slot].ready_or_occupied_ = 1;
         }
 
-        if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
+        if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
             return;
         }
         NetWinLobbyFullPacket packet;

@@ -179,7 +179,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   if (draw_type != 0) {
     ++MultiWinState7FFF7C;
     if (NetBusyCount == 0 &&
-        NetDaemonNet.lock_state_[0].trailing_words_[4] == 0 &&
+        NetDaemonNet.primary_state_.trailing_words_[4] == 0 &&
         NetDaemonProgressInterval == 0) {
       if (TurnRedrawPending == 0) {
         local_14 = 0;
@@ -296,8 +296,8 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   }
 
   if (draw_type != 0 &&
-      NetDaemonNet.lock_state_[0].trailing_words_[1] != 0 &&
-      NetDaemonNet.lock_state_[0].trailing_words_[4] == 0 &&
+      NetDaemonNet.primary_state_.trailing_words_[1] != 0 &&
+      NetDaemonNet.primary_state_.trailing_words_[4] == 0 &&
       GameDataStateStorage.fields_.time_controls_selection_ != 0) {
     const uint32_t local_faction_bit =
         1u << (ConsoleGlobal.faction_id_ & 0x1f);
@@ -321,7 +321,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0x40c / 4));
   strcat(StringTemp, ": ");
-  if (NetDaemonNet.lock_state_[0].trailing_words_[4] == 0) {
+  if (NetDaemonNet.primary_state_.trailing_words_[4] == 0) {
     if (ConsoleControlTurnActive != 0) {
       StringTemp[0] = 0;
       strcat(StringTemp, label_get(0x988 / 4));
@@ -739,12 +739,12 @@ void MultiWin::on_left_click(int x, int y) {
         const uint32_t bit = 1u << faction;
         if (MultiWindowContactStatusMask & bit) {
             MultiWindowContactStatusMask &= ~bit;
-            NetDaemonNet.lock_state_[2].trailing_words_[6] |= bit;
+            NetDaemonNet.channels_[1].trailing_words_[6] |= bit;
             draw(0);
             return;
         }
-        if (NetDaemonNet.lock_state_[2].trailing_words_[6] & bit) {
-            NetDaemonNet.lock_state_[2].trailing_words_[6] &= ~bit;
+        if (NetDaemonNet.channels_[1].trailing_words_[6] & bit) {
+            NetDaemonNet.channels_[1].trailing_words_[6] &= ~bit;
             draw(0);
             return;
         }
@@ -835,10 +835,10 @@ void MultiWin::on_right_click(int x, int y) {
         const unsigned int bit = 1u << faction;
         if (MultiWindowContactStatusMask & bit) {
             MultiWindowContactStatusMask &= ~bit;
-            NetDaemonNet.lock_state_[2].trailing_words_[6] |= bit;
+            NetDaemonNet.channels_[1].trailing_words_[6] |= bit;
             draw(0);
-        } else if (NetDaemonNet.lock_state_[2].trailing_words_[6] & bit) {
-            NetDaemonNet.lock_state_[2].trailing_words_[6] &= ~bit;
+        } else if (NetDaemonNet.channels_[1].trailing_words_[6] & bit) {
+            NetDaemonNet.channels_[1].trailing_words_[6] &= ~bit;
             draw(0);
         } else {
             MultiWindowContactStatusMask |= bit;

@@ -85,8 +85,8 @@ struct Player { int is_leader_female=2,noun_gender=3,is_noun_plural=1;
 } Players[8];
 struct NetDaemon { int who_2_pid(int n) { assert(n==2); return 11; }
   char *get_player_name(int n) { assert(n==11); return Players[2].name_leader; }
-      uint32_t lock_state_[1][10]{};
-      uint32_t &factions_waiting_mask() { return lock_state_[0][7]; }
+      struct Primary { uint32_t leading_words_[3]{}; uint32_t flags_{}; uint32_t trailing_words_[10]{}; } primary_state_;
+      uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[7]; }
     } NetDaemonNet;
     uint32_t &ConsoleFactionsWaitingMask=NetDaemonNet.factions_waiting_mask();
 const char *popup_caption=0;

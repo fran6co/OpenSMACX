@@ -105,7 +105,8 @@ def harness(bodies, api=None):
         int &VehSelectionFollowLimit = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
         struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
         struct NetDaemon {
-            LockStateEntry lock_state_[24]{};
+            LockStateEntry channels_[2]{};
+            struct Primary { uint32_t leading_words_[3]{}, flags_{}, trailing_words_[10]{}; } primary_state_;
             ACTUAL_FOLLOW_API
         } NetDaemonNet;
 
@@ -216,11 +217,9 @@ def test_status_menu_fixture_uses_actual_handler_and_console_members(tmp_path):
     fixture = (ROOT / "recovery/tests/status_menu_harness.cpp").read_text()
     marker = "// RECOVERED_HANDLER is replaced with read_file(...).region, never a copy."
     assert fixture.count(marker) == 1
-    # This older body represents a label index as a pointer. The fixture uses
-    # only the small token 17, never a host address; allow its existing 32-bit
-    # cast on a 64-bit host without changing the actual handler or VC6 policy.
-    result = run_source(tmp_path, "#include <cstdint>\n#define __cdecl\n" + fixture.replace(marker, method),
-                        host_flags=("-fpermissive",))
+    # The permanent fixture models the current source owners and pointer API;
+    # its small string token is compared, never dereferenced or narrowed.
+    result = run_source(tmp_path, "#include <cstdint>\n#define __cdecl\n" + fixture.replace(marker, method))
     assert result.returncode == 0, result.stderr
 
 
@@ -250,7 +249,7 @@ def test_console_state_damage_is_observed(tmp_path, part, before, after, count):
 
 @pytest.mark.parametrize("before,after", [
     ("payload_.vehicle_selection_follow = slot;", "payload_.vehicle_selection_follow = nullptr;"),
-    ("return lock_state_[1].payload_.vehicle_selection_follow;", "return nullptr;"),
+    ("return channels_[0].payload_.vehicle_selection_follow;", "return nullptr;"),
 ])
 def test_actual_daemon_follow_api_damage_is_observed(tmp_path, before, after):
     api = follow_api()

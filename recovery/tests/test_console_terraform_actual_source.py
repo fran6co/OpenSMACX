@@ -171,7 +171,7 @@ def test_step_path_reloads_climate_instead_of_using_entry_snapshot(
 def test_final_conflict_bit_test_uses_the_reloaded_map_tile() -> None:
     body = function_body(SOURCE.read_text())
     begin = body.index("Map *const final_tile = map_loc(x, y);")
-    end = body.index("if (NetDaemonNet.lock_state_", begin)
+    end = body.index("if (NetDaemonNet.channels_[1]", begin)
     final_scan = body[begin:end]
     def has_reload(scan: str) -> bool:
         return (

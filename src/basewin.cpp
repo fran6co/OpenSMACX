@@ -1180,7 +1180,7 @@ void BaseWin::update_drag_cursor(int spot_type, int spot_pos, int x, int y, int 
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041b1f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_mouse_move@BaseWin@@UAEXHH@Z
 void BaseWin::on_mouse_move(int x, int y) {
-    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].leading_words_[3])) return;
+    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.primary_state_.leading_words_[2])) return;
     clear_bubble_text();
     clear_bubble_text();
     if (field_40B00_ >= 0) {
@@ -1216,7 +1216,7 @@ void BaseWin::iface_click(int x, int y, int right, int is_double) {
         on_lose_mouse_capture();
     }
     if (WinPointerOwner4 == this) WinPointerOwner4 = nullptr;
-    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].leading_words_[3])) return;
+    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.primary_state_.leading_words_[2])) return;
     int position, type;
     if (spot1_.check(x, y, &position, &type) < 0) {
         if (right && in_box(x, y, &population_rect_)) {
@@ -1269,7 +1269,7 @@ void BaseWin::click(int x, int y, int right, int is_double) {
         on_lose_mouse_capture();
     }
     if (WinPointerOwner4 == this) WinPointerOwner4 = nullptr;
-    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].leading_words_[3])) return;
+    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.primary_state_.leading_words_[2])) return;
     if (right) {
         if (in_box(x, y, &rect1_)) {
             int label;
@@ -4181,7 +4181,7 @@ void BaseWin::on_left_down(int xCoord, int yCoord) {
     field_40B50_ = -1;
     field_40B44_ = xCoord;
     field_40B48_ = yCoord;
-    if (is_visible() != 0 && (IsMultiplayerNet == 0 || NetDaemonNet.lock_state_[0].leading_words_[3] == 0)) {
+    if (is_visible() != 0 && (IsMultiplayerNet == 0 || NetDaemonNet.primary_state_.leading_words_[2] == 0)) {
         if (WinPointerOwner3 == 0) {
             WinPointerOwner3 = this;
             WinPointerOwner4 = 0;
@@ -4297,7 +4297,7 @@ void BaseWin::on_iface_left_down(int xCoord, int yCoord) {
     field_40B44_ = xCoord;
     field_40B48_ = yCoord;
 
-    if (is_visible() != 0 && (IsMultiplayerNet == 0 || NetDaemonNet.lock_state_[0].leading_words_[3] == 0)) {
+    if (is_visible() != 0 && (IsMultiplayerNet == 0 || NetDaemonNet.primary_state_.leading_words_[2] == 0)) {
         if (WinPointerOwner3 == 0) {
             WinPointerOwner3 = this;
             WinPointerOwner4 = 0;
@@ -4777,7 +4777,7 @@ Purpose: Handle pointer movement over BaseWin, including queue hover, drag
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041df50.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_iface_mouse_move@BaseWin@@UAEXHH@Z
 void BaseWin::on_iface_mouse_move(int a1, int a2) {
-    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].leading_words_[3])) return;
+    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.primary_state_.leading_words_[2])) return;
     clear_bubble_text();
     clear_bubble_text();
     int position, type;
@@ -6797,8 +6797,8 @@ void base_panel_sprite(Sprite &sprite, Buffer *canvas, int x, int y) {
 void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
     PullDown menu;
     if (Vehs[vehicle_id].faction_id != ConsoleGlobal.faction_id_) return;
-    if (IsMultiplayerNet && (NetDaemonNet.lock_state_[2].leading_words_[2]
-        || NetDaemonNet.lock_state_[2].payload_.flags || ConsoleControlTurnActive)) return;
+    if (IsMultiplayerNet && (NetDaemonNet.channels_[1].leading_words_[2]
+        || NetDaemonNet.channels_[1].payload_.flags || ConsoleControlTurnActive)) return;
     if (!right && (GameDataStateStorage.fields_.game_preferences_ & 0x40000u)) {
         if (IsMultiplayerNet && veh_selectable(vehicle_id)
             && Vehs[vehicle_id].order == 0

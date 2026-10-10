@@ -18,6 +18,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <string.h>
 
 struct DeletionRecord {
   uint8_t acknowledgements_;  // 0x00: completed faction bits; 0xFF marks an empty slot.
@@ -46,10 +47,34 @@ class DeletionList {
   int add_deletion(int veh_id);
   int convert(int original_id, int new_owner);
 
+  // The network sequence and deletion owner are the same native dword.
+  // Preserve its bits for unsigned wrapping network arithmetic without
+  // converting an out-of-range unsigned value to int or adding alias storage.
+  uint32_t sequence_bits() const {
+    // Signed-to-unsigned conversion is defined modulo2^32; native int is
+    // four-byte two's-complement. The reverse store uses the representation.
+    return static_cast<uint32_t>(current_owner_);
+  }
+  void set_sequence_bits(uint32_t bits) {
+    memcpy(&current_owner_, &bits, sizeof bits);
+  }
+  uint32_t advance_sequence() {
+    const uint32_t next = sequence_bits() + 1;
+    set_sequence_bits(next);
+    return next;
+  }
+
   // RECOVERY_MEMBER: v1 DeletionList records_ 0x0 0x0052DCF0
   DeletionRecord records_[24];
   // RECOVERY_MEMBER: v1 DeletionList current_owner_ 0x5A0 0x0052DDC0
   int current_owner_;
+
+ private:
+  friend class NetDaemon;
+  // NetDaemon's native constructor initializes this member after clearing
+  // its locks. This path starts its lifetime without duplicating those writes.
+  struct Uninitialized {};
+  explicit DeletionList(Uninitialized) {}
 };
 
 static_assert(offsetof(DeletionList, current_owner_) == 0x5A0,

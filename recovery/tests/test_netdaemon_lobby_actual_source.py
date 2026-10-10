@@ -35,7 +35,8 @@ static_assert(sizeof(NetWinLobbyRow) == 0x17C, "lobby row stride");
 struct NetWinFactionRecord { uint32_t prefix_, owner_; uint8_t tail_[0x188]; };
 static_assert(sizeof(NetWinFactionRecord) == 0x190, "faction stride");
 struct ProcessSlot { uint32_t pid_; };
-struct LockStateEntry { uint32_t leading_words_[4]; };
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+struct ChannelState { uint32_t leading_words_[4]; union Payload { uint32_t flags_; void *pointer_; } payload_; uint32_t trailing_words_[10]; };
 struct Net {
     int sends = 0;
     unsigned short last_type = 0;
@@ -47,7 +48,8 @@ struct Net {
     }
 };
 struct NetDaemon : Net {
-    LockStateEntry lock_state_[8] = {};
+    PrimaryState primary_state_ = {};
+    ChannelState channels_[2] = {};
     int player_count_ = 3;
     ProcessSlot process_slots_[8] = {};
     int sent_messages = 0;
@@ -98,7 +100,7 @@ int main() {
     // Actual 1F04/no-flag path copies one row, then notify+redraw.
     reset(m, sizeof(m)); put16(m, 0, 0x1F04);
     NetWinSessionData.mode_ = 2;
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
+    NetDaemonNet.primary_state_.leading_words_[0] = 1;
     std::memset(m + 0x10, 0x5A, sizeof(NetWinLobbyRow));
     netdaemon_handle_session_lobby(NetDaemonNet, m, 0x1F04, sizeof(m));
     if (NetWinLobbyRows[2].prefix_ != 0x5A || NetWinLobbyRows[1].prefix_ != 0)
@@ -111,7 +113,7 @@ int main() {
     // packet owner, then send_message and no modal notify/redraw.
     reset(m, sizeof(m)); put16(m, 0, 0x2F04);
     NetWinSessionData.mode_ = 2;
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
+    NetDaemonNet.primary_state_.leading_words_[0] = 1;
     NetWinLobbyRows[2].faction_or_color_ = 3;
     NetWinLobbyRows[2].owner_ = 17;
     put32(m + 4, 2); m[0x13] = 0xFF; put32(m + 0x188, 77);

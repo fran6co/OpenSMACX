@@ -19,6 +19,7 @@
 
 #include "original_seam.h"
 #include "alphanet.h"
+#include "deletionlist.h"
 #include "lock.h"        // locks_ - the whole network-lock block
 #include "playerlock.h"  // its records are PlayerLocks
 #include <stddef.h>
@@ -49,21 +50,10 @@ extern int NetPeerTurnChecksums[NetTurnChecksumPeerSlots][NetTurnChecksumWords];
   // `call rel32`. Spelled `class X : Base` - private, since that is
   // what `class` means - those calls do not compile at all, and the
   // seam that stood in for them cost the caller `call [ptr]`.
-// The lock-table entry (0x158C in NetDaemon) and its parallel state entry.
-struct LockTableEntry {
-  uint8_t flag_;        // the constructor sets this byte to 0xFF
-  uint8_t pad_1_[3];
-  uint32_t field_4_;  // compared with message sequence at +0x0C
-  uint16_t word_8_;
-  uint8_t pad_A_[0x32];
-};
-static_assert(offsetof(LockTableEntry, field_4_) == 4, "lock-table sequence field offset");
-static_assert(sizeof(LockTableEntry) == 0x3C, "lock table stride");
-
-// ONE LOCK-STATE ENTRY, 0x3C bytes. Which entry and which dword a NetDaemon
-// offset names: lock_state_ starts at 0x1B2C, so
-// `offset - 0x1B2C` / 0x3C picks the entry and the remainder / 4 picks the
-// dword. THE MAP, as far as the recovered bodies pin it -
+// Native channel offsets below use the former conceptual channel0..2
+// numbering. Channel0's first dword is DeletionList.current_owner_, not a
+// second object. Its remaining bytes are PrimaryLockStateTail; channels1/2
+// are the two LockStateEntry objects. The map is supported by callers:
 //
 //   0x1B2C  [0].dword_[0]   the shared checksum sequence, incremented per
 //                           forwarded message and stamped into message+0xC
@@ -88,14 +78,20 @@ static_assert(sizeof(LockTableEntry) == 0x3C, "lock table stride");
 //   0x1BD0  [2].dword_[11]  the ctor sets this one to 0xFF, the only byte it
 //                           does not zero
 //
-// Entry3 aliases the file-index pointer and persistent save view below.
-// The constructor's 0x538A53 owner clear is outside the record loop:
-// 0x538A64 branches to 0x538A59. It does not initialize entries3..23.
-// Only channels0..2 have evidenced runtime state accesses; the broader array
-// and overlapping save view below remain structural recovery obligations.
-// The console's bodies read
-// the same run through `NetDaemonNet.lock_state_` - it is the 0x0093E8BC run
-// in the image - which is why the struct and the member are public.
+// Runtime accesses establish only channels0..2. The file-index pointer and
+// saved process slots afterward are disjoint fields, not another21 channels.
+// 0x538A64 branches to0x538A59, after the one-time owner clear at0x538A53.
+struct PrimaryLockStateTail {
+  uint32_t leading_words_[3];
+  uint32_t flags_;
+  uint32_t trailing_words_[10];
+};
+static_assert(sizeof(PrimaryLockStateTail) == 0x38,
+              "primary channel excludes the deletion owner's dword");
+static_assert(offsetof(PrimaryLockStateTail, flags_) == 0xC,
+              "primary channel flag offset from its tail");
+static_assert(offsetof(PrimaryLockStateTail, trailing_words_) == 0x10,
+              "primary channel trailing words offset");
 struct LockStateEntry {
   uint32_t leading_words_[4];
   // Channel0/2 use flags; channel1 borrows a vehicle-ID slot. These are
@@ -113,7 +109,7 @@ static_assert(offsetof(LockStateEntry, trailing_words_) == 0x14,
               "lock-state trailing words");
 static_assert(sizeof(LockStateEntry) == 0x3C, "lock state stride");
 
-// Persistent save/restore storage view beginning eight bytes into state entry 3.
+// Persistent save/restore storage begins at NetDaemon+0x1BE8.
 // The native secondary initializer writes the same five leading bytes as an
 // AlphaNet process record at 0x93E99C + n*0x19C; save_daemon copies the eight
 // complete live records over this view, and game_data transfers the same
@@ -147,21 +143,6 @@ static_assert(sizeof(NetDaemonSaveProcessSlot) == sizeof(AlphaNetProcessSlot),
 static_assert(sizeof(NetDaemonSaveProcessSlot) * 8 == 0xCE0,
               "saved process-slot table extent");
 
-// At NetDaemon+0x1B2C: three complete LockStateEntries, the file-index pointer
-// word at +0x1BE0, the following opaque dword, then the 8-record save view at
-// +0x1BE8. This remains an overlapping storage view, not a disjoint object.
-struct NetDaemonSaveStorageView {
-  LockStateEntry lock_prefix_[3];
-  void *file_index_records_;
-  uint32_t field_1BE4_;
-  NetDaemonSaveProcessSlot process_slots_[8];
-};
-static_assert(offsetof(NetDaemonSaveStorageView, file_index_records_) == 0xB4,
-              "snapshot overlay file-index pointer offset");
-static_assert(offsetof(NetDaemonSaveStorageView, process_slots_) == 0xBC,
-              "snapshot overlay process slots offset");
-static_assert(sizeof(NetDaemonSaveStorageView) == 0xD9C,
-              "snapshot overlay extent from lock-state start");
 class NetDaemonTransferModalCloseGuard;
 class Filemap;
 
@@ -235,27 +216,27 @@ class NetDaemon : public AlphaNet {
   // Borrowed selection storage already owned by channel1 at this+0x1B78.
   // Callers retain the original callback/clear ordering and lifetime obligations.
   void set_vehicle_selection_follow(int *slot) {
-    lock_state_[1].payload_.vehicle_selection_follow = slot;
+    channels_[0].payload_.vehicle_selection_follow = slot;
   }
   int *vehicle_selection_follow() const {
-    return lock_state_[1].payload_.vehicle_selection_follow;
+    return channels_[0].payload_.vehicle_selection_follow;
   }
 
   // Shared faction wait mask, at NetDaemon+0x1B5C (entry 0 trailing dword 7).
   // The original address is also read by callers outside this class; keeping
   // the accessor on the genuine owner avoids a second scalar storage object.
   uint32_t &factions_waiting_mask() {
-    return lock_state_[0].trailing_words_[7];
+    return primary_state_.trailing_words_[7];
   }
   const uint32_t &factions_waiting_mask() const {
-    return lock_state_[0].trailing_words_[7];
+    return primary_state_.trailing_words_[7];
   }
   // MessageWin's network message count shares entry 2, trailing dword 7.
   uint32_t &network_message_count() {
-    return lock_state_[2].trailing_words_[7];
+    return channels_[1].trailing_words_[7];
   }
   const uint32_t &network_message_count() const {
-    return lock_state_[2].trailing_words_[7];
+    return channels_[1].trailing_words_[7];
   }
 
  public:
@@ -337,24 +318,26 @@ class NetDaemon : public AlphaNet {
   // 0x1580/0x1584/0x1588.
   Lock locks_;
 
-  // THE NET LOCK TABLE, 0x158C..0x1B2C: 24 entries of 0x3C. The constructor
-  // sets each entry's flag byte to 0xFF and its word at +8 to 0.
-  LockTableEntry lock_table_[24];  // 0x158C
-
-  // THE LOCK-TABLE STATE - the array AFTER lock_table_ (24 * 0x3C = 0x5A0
-  // bytes later). The ctor clears its first word ONCE before the record
-  // header loop; it does not sweep state/pointer/save words at this stride.
-  // Entries e0..e2 carry the named dwords; the broader array aliases the
-  // file-index pointer and save view but is not a proven original array.
-  // Lock-state view spans0x1B2C..0x20CC / image93E8BC..93EE5C.
-  // The overlapping save view extends through+0x28C8 / image93F658.
-  union {
-    LockStateEntry lock_state_[24];  // 0x1B2C; native lock-state view
-    NetDaemonSaveStorageView save_storage_;  // overlaps from lock_state_[3]+8
-  };
+  // fixup_message534330 passes this+158C to DeletionList::convert52DDC0.
+  // veh_kill5C08C0 passes93E31C to add_deletion52DE70; that is exactly
+  // NetDaemonNet93CD90+158C. There is one embedded object/lifetime, not a
+  // separate VehDeletionList global. current_owner_ also owns sequence1B2C.
+  // RECOVERY_MEMBER: v1 NetDaemon deletion_list_ 0x158C 0x00534330
+  DeletionList deletion_list_;
+  // RECOVERY_MEMBER: v1 NetDaemon primary_state_ 0x1B30 0x005389F0
+  PrimaryLockStateTail primary_state_;
+  // RECOVERY_MEMBER: v1 NetDaemon channels_ 0x1B68 0x005389F0
+  LockStateEntry channels_[2];
+  // The constructor leaves the file-index pointer and save rows untouched.
+  // RECOVERY_MEMBER: v1 NetDaemon file_index_records_ 0x1BE0 0x0052ED40
+  void *file_index_records_;
+  uint32_t field_1BE4_;
+  // Separate from AlphaNet's live process_slots_ at +0x76C.
+  // RECOVERY_MEMBER: v1 NetDaemon saved_process_slots_ 0x1BE8 0x0052DB40
+  NetDaemonSaveProcessSlot saved_process_slots_[8];
 
   // Observed storage reaches+0x28C8 through the persistent save table.
-  // Extent only: this is not proof of complete original sizeof or union intent.
+  // Extent only: this is not proof of complete original sizeof.
   // Separate NetPlayerDropped93F65C and network flags93F660 remain globals.
 };
 

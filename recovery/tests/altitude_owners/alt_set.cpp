@@ -67,7 +67,8 @@ STATIC_CHECK(prototype_chassis, offsetof(VehPrototype, chassis_id) == 0x24);
 STATIC_CHECK(chassis_size, sizeof(Chassis) == 0x90);
 STATIC_CHECK(chassis_triad, offsetof(Chassis, triad) == 0x49);
 
-int TurnCurrentNum;
+struct GameDataFields { int turn_current_num_; };
+struct GameDataState { GameDataFields fields_; } GameDataStateStorage;
 uint32_t WorldClimateSkipTerritoryReset;
 uint32_t UnkBitfield1;
 Map Tile;
@@ -133,7 +134,8 @@ void reset_fixture() {
     memset(Chassis, 0, sizeof(Chassis));
     memset(MapBaseSubmergedCount, 0, sizeof(MapBaseSubmergedCount));
     memset(MapBaseIdClosestSubmergedVeh, 0xFF, sizeof(MapBaseIdClosestSubmergedVeh));
-    TurnCurrentNum = 1; WorldClimateSkipTerritoryReset = 0; UnkBitfield1 = 0;
+    GameDataStateStorage.fields_.turn_current_num_ = 1;
+    WorldClimateSkipTerritoryReset = 0; UnkBitfield1 = 0;
     VehCurrentCount = 0; VehBattleUnkTgl[0] = 0; ConsoleControlTurnActive = 0;
     IsMultiplayerNet = 0;
     ConsoleGlobal.faction_id_ = 2; BaseAtResult = 0; ObjectiveResult = 0;
@@ -144,7 +146,8 @@ void check(bool ok, int line) { if (!ok) { fprintf(stderr, "check failed at %d\n
 #define CHECK(x) check((x), __LINE__)
 int main() {
     reset_fixture();
-    TurnCurrentNum = 0; Tile.climate = 0x60; Tile.bit = 0x1234;
+    GameDataStateStorage.fields_.turn_current_num_ = 0;
+    Tile.climate = 0x60; Tile.bit = 0x1234;
     alt_set(4, 6, ALT_2_LEVELS_ABOVE_SEA);
     CHECK(Tile.climate == 0x60 && UnkBitfield1 == 0 && EventCount == 0);
 

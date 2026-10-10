@@ -80,12 +80,12 @@ struct Net {
     }
 };
 struct NetDaemon : Net {
-    LockStateEntry lock_state_[24]{};
+    LockStateEntry channels_[2]{};
     Lock locks_;
     void process_message(char *message, unsigned long tag, int) {
         assert(message == &message_byte && tag == message_tag);
         events.push_back("process_message");
-        lock_state_[1].leading_words_[3] = 0xdeadbeefu;
+        channels_[0].leading_words_[3] = 0xdeadbeefu;
         if (state_to_clear) *state_to_clear = state_after_message;
     }
     void check_spock() { events.push_back("check_spock"); }
@@ -116,13 +116,13 @@ int main() {
     uint32_t state = 0x80000000u;
     int signed_high_bit;
     std::memcpy(&signed_high_bit, &state, sizeof(state));
-    NetDaemonNet.lock_state_[1].leading_words_[3] = 0x11223344u;
+    NetDaemonNet.channels_[0].leading_words_[3] = 0x11223344u;
     state_to_clear = &state; state_after_message = 0x7fffffffu;
     return_message = true; ticks = {100u, 101u};
     assert(NetDaemonNet.wait(const_cast<char *>("HIGH"), &state, signed_high_bit, 200) == 0);
     assert(state == 0x7fffffffu && tick_index == 2);
     assert(NetBusyCount == 0 && NetMsgPrimary.pops == 0 && NetMsgPrimary.closes == 0);
-    assert(NetDaemonNet.lock_state_[1].leading_words_[3] == 0x11223344u);
+    assert(NetDaemonNet.channels_[0].leading_words_[3] == 0x11223344u);
     assert((events == std::vector<std::string>{"time", "time", "wait_task", "get",
         "process_message", "check_global", "check_spock"}));
 
@@ -134,7 +134,7 @@ int main() {
     assert(NetDaemonNet.wait(const_cast<char *>("ONCE"), &state, 1, 0) == 0);
     assert(state == 0 && NetMsgPrimary.pops == 1 && NetMsgPrimary.closes == 1);
     assert(get_count == 2 && tick_index == 2);
-    assert(NetDaemonNet.lock_state_[1].leading_words_[3] == 0);
+    assert(NetDaemonNet.channels_[0].leading_words_[3] == 0);
     assert((events == std::vector<std::string>{"time", "time", "pop", "wait_task", "get",
         "check_global", "check_spock", "wait_task", "get", "process_message",
         "check_global", "check_spock", "close"}));
@@ -142,10 +142,10 @@ int main() {
     // Elapsed DWORD subtraction wraps across FFFFFFFF, then compares unsigned.
     reset(); state = 9; state_to_clear = &state; state_after_message = 8;
     return_message = true; ticks = {0xfffffffeu, 1u};
-    NetDaemonNet.lock_state_[1].leading_words_[3] = 0x87654321u;
+    NetDaemonNet.channels_[0].leading_words_[3] = 0x87654321u;
     assert(NetDaemonNet.wait(const_cast<char *>("WRAP"), &state, 9, 2) == 0);
     assert(NetMsgPrimary.pops == 1 && NetMsgPrimary.closes == 1 && state == 8);
-    assert(NetDaemonNet.lock_state_[1].leading_words_[3] == 0x87654321u);
+    assert(NetDaemonNet.channels_[0].leading_words_[3] == 0x87654321u);
 
     // 0x80000000 elapsed is greater than a positive signed timeout's DWORD
     // representation, but not greater than timeout -1's FFFFFFFF pattern.
@@ -162,11 +162,11 @@ int main() {
     // ExitTurnLoop breaks before timeout sampling/pumping, while cleanup
     // restores the saved global mode and balances the busy counter.
     reset(); state = 5; ExitTurnLoop = 1;
-    NetDaemonNet.lock_state_[1].leading_words_[3] = 0xaabbccddu;
+    NetDaemonNet.channels_[0].leading_words_[3] = 0xaabbccddu;
     ticks = {20u};
     assert(NetDaemonNet.wait(const_cast<char *>("EXIT"), &state, 5, 0) == 0);
     assert(tick_index == 1 && events == std::vector<std::string>{"time"});
-    assert(NetBusyCount == 0 && NetDaemonNet.lock_state_[1].leading_words_[3] == 0xaabbccddu);
+    assert(NetBusyCount == 0 && NetDaemonNet.channels_[0].leading_words_[3] == 0xaabbccddu);
     return 0;
 }
 '''
@@ -186,7 +186,7 @@ def test_actual_wait_body_controls(tmp_path, mutant):
     changes = {
         "repeat_timeout": ("if (!triggeredTimeout)", "if (true)"),
         "omit_mode_restore": (
-            "NetDaemonNet.lock_state_[1].leading_words_[3] = saved;", "(void)saved;"),
+            "NetDaemonNet.channels_[0].leading_words_[3] = saved;", "(void)saved;"),
         "signed_timeout": (
             "static_cast<DWORD>(now - startTime) > static_cast<DWORD>(timeout)",
             "static_cast<int>(now - startTime) > timeout"),
@@ -217,5 +217,5 @@ def test_wait_state_storage_is_passed_without_integer_pointer_casts():
     assert "int wait(char *message, uint32_t *state, int value, int timeout);" in header
     assert source.count("wait(\"AWAITEXEC\", acknowledged, 1,") == 1
     assert source.count("wait(\"AWAITEXEC\", flag, 1, 2000)") == 3
-    assert "reinterpret_cast<int *>(&lock_state_[2].leading_words_[3])" not in source
-    assert "reinterpret_cast<int *>(&lock_state_[2].trailing_words_[0])" not in source
+    assert "reinterpret_cast<int *>(&channels_[1].leading_words_[3])" not in source
+    assert "reinterpret_cast<int *>(&channels_[1].trailing_words_[0])" not in source

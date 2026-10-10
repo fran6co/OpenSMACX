@@ -111,8 +111,9 @@ struct Council {
 } CouncilWindow;
 struct LockState { uint32_t lead_[4], payload_, trailing_words_[10]; };
 struct Network {
-  LockState lock_state_[1];
-  uint32_t &factions_waiting_mask() { return lock_state_[0].trailing_words_[7]; }
+  struct PrimaryState { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_;
+  LockState channels_[2];
+  uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[7]; }
   int who_2_pid(int identity) { return identity + 40; }
   char *get_player_name(unsigned long id) { static char name[32]; sprintf(name, "Player%lu", id); return name; }
 } NetDaemonNet;
@@ -168,20 +169,20 @@ int main() {
   if (NetDaemonProgressInterval!=0x80000000u || NetDaemonWaitTicks!=1000) return 14;
 
   clear_state();
-  NetDaemonWaitTicks=1500; NetDaemonNet.lock_state_[0].trailing_words_[4]=1;
+  NetDaemonWaitTicks=1500; NetDaemonNet.primary_state_.trailing_words_[4]=1;
   view.draw_time(&bounds,1);
   if (NetDaemonWaitTicks!=1500 || NetDaemonProgressInterval!=0 || MultiWinState7FFF7C!=1 || view.color!=0) return 10;
 
   clear_state();
   NetDaemonWaitTicks=200; MultiWinState7FFF78=5;
-  NetDaemonNet.lock_state_[0].trailing_words_[1]=1;
+  NetDaemonNet.primary_state_.trailing_words_[1]=1;
   view.draw_time(&bounds,1);
   if (NetDaemonWaitTicks != 0 || (GameDataStateStorage.fields_.game_state_ & 0x800)==0 || WaveCount != 1) return 4;
   if (WaveArg!=0x21) return 11;
 
   clear_state();
   NetDaemonWaitTicks=15500; MultiWinState7FFF78=14;
-  NetDaemonNet.lock_state_[0].trailing_words_[1]=1;
+  NetDaemonNet.primary_state_.trailing_words_[1]=1;
   view.draw_time(&bounds,1);
   if (MessagePopCount != 1 || EffectCount != 1 || MultiWinState7FFF78 != 15) return 5;
   if (strcmp(NetMsgPrimary.text,"TIMEWARNING")!=0 || PopDelay!=-5000 || PopArgs[0]!=0 || PopArgs[1]!=0 || FXArg!=0x23) return 12;
@@ -220,7 +221,7 @@ def test_draw_time_compiles_and_preserves_clock_paths_from_installed_source(tmp_
     assert "uint32_t leader_label_kind_[8];  // 0xA54" in council
     required = (
         "MultiWinState7FFF7C", "NetDaemonWaitTicks", "CouncilWindow.field_A3C_",
-        "NetDaemonNet.lock_state_[0].trailing_words_[4]",
+        "NetDaemonNet.primary_state_.trailing_words_[4]",
         "spot_.add(0, 2, bounds->left, bounds->top,",
         "bounds->right - bounds->left, bounds->bottom - bounds->top);",
         "canvas->set_font(&font2_, 0, 0, 0);",

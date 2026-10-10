@@ -102,11 +102,14 @@ struct AbilityRecord { char *name; };
 struct MoraleRecord { char *name; };
 struct TechnologyRecord { uint32_t flags; };
 struct FacilityRecord { char *name; };
-struct StringTableOwner { char *get(int) { static char s[256]; return s; } };
+struct StringTableOwner {
+    char *get(int) { static char s[256]; return s; }
+    char *get(char *s) { return s; }
+};
 struct TutorialBaseWindow { void check_base(int) {} };
 struct Rules { int tgl_probe_can_steal_tech; };
 struct LockState { uint32_t leading_words_[4]; };
-struct NetDaemon { LockState lock_state_[2]; };
+struct NetDaemon { LockState channels_[2]; };
 struct Console {
     int faction_id_;
     void focus(int, int, int) {}
@@ -226,6 +229,7 @@ static AbilityRecord AbilityRecords[128] = {};
 static TechnologyRecord Technology[128] = {};
 static FacilityRecord Facility[128] = {};
 static StringTableOwner StringTable = {};
+static char *label_get(int) { static char label[32] = {}; return label; }
 static TutorialBaseWindow TutWinBaseWindow = {};
 static MoraleRecord *Morale = MoraleRecords;
 static AbilityRecord *Ability = AbilityRecords;

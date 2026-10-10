@@ -5,6 +5,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+struct BaseSecretProject { int words_[64]; };
+#include "src/game_data_state_window.h"
+#define GameRules GameDataStateStorage.fields_.game_rules_
+#define VehCurrentCount GameDataStateStorage.fields_.vehicle_current_count_
+#define BaseCurrentCount GameDataStateStorage.fields_.base_current_count_
+#define TurnCurrentNum GameDataStateStorage.fields_.turn_current_num_
+
 #define NETDAEMON_SYNCH_HOST_STUBS
 #define VK_CONTROL 0x11
 
@@ -31,7 +38,11 @@ extern NetMsg &NetMsgPrimary;
 class NetDaemon {
 public:
     struct LockWords { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-    LockWords lock_state_[24];
+    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    LockWords channels_[2];
+    struct DeletionRecord { uint8_t acknowledgements_; uint8_t reserved_[3]; int owner_; int16_t count_; int16_t vehicle_ids_[25]; };
+    struct DeletionList { DeletionRecord records_[24]; int current_owner_; uint32_t sequence_bits() const { uint32_t x; memcpy(&x, &current_owner_, 4); return x; } void set_sequence_bits(uint32_t x) { memcpy(&current_owner_, &x, 4); } uint32_t advance_sequence() { uint32_t x=sequence_bits()+1; set_sequence_bits(x); return x; } } deletion_list_;
+    void *file_index_records_; uint32_t field_1BE4_;
     void send_message(char *message, unsigned long length, int target);
     void synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                int outgoing, int16_t flags);
@@ -49,9 +60,7 @@ Base Bases[512];
 VehPrototype VehPrototypes[MaxVehProtoNum];
 Console ConsoleGlobal = { 1 };
 char256 ParseStrBuffer[10];
-int VehCurrentCount = 8;
-int BaseCurrentCount = 8;
-int TurnCurrentNum = 4;
+GameDataStateWindow GameDataStateStorage = {};
 int ReplayEventBytes = 0x98;
 int MapLatitudeBounds = 64;
 int MapLongitudeBounds = 64;
@@ -78,9 +87,7 @@ static int map_shutdown_count = 0, map_init_count = 0, path_init_count = 0;
 static int callback_payload_fill = -1;
 static int popup_count = 0, netmsg_close_count = 0, draws_count = 0;
 static int log_count = 0;
-uint32_t GameRules = 0;
 int ConsoleControlTurnActive = 0;
-int NetTurnFaction = 0;
 int SpockNotifyPending = 0;
 static int message_data_count = 0;
 static int message_data_opcode = -1;
@@ -250,7 +257,9 @@ static void reset() {
     mutate_longitude_on_send = mutate_latitude_on_send = 0;
     mutate_longitude_on_display = 0;
     fail_copy = false; active_packet_bytes = 0;
-    GameRules = 0; ConsoleControlTurnActive = 0; NetTurnFaction = 0;
+    GameRules = 0; ConsoleControlTurnActive = 0;
+    GameDataStateStorage.fields_.net_turn_faction_ = 0;
+    VehCurrentCount = 8; BaseCurrentCount = 8; TurnCurrentNum = 4;
     SpockNotifyPending = 0; message_data_count = 0;
     message_data_opcode = -1; memset(message_data_args, 0, sizeof message_data_args);
     BaseAtDebugPopupFlag = ConsoleGroupAction = 0;
@@ -274,8 +283,8 @@ static uint32_t u32(const std::vector<unsigned char> &b, size_t at) {
 /* SOURCE EXTRACTS */
 int main() {
     NetDaemon d;
-    d.lock_state_[0].leading_words_[0] = 0x12345678;
-    d.lock_state_[0].leading_words_[1] = 1;
+    d.deletion_list_.set_sequence_bits(0x12345678);
+    d.primary_state_.leading_words_[0] = 1;
 
     // Independent expected-size table from the pinned jump table at
     // 0x53412C. First field is hex opcode (decimal shown by its value), then
@@ -353,27 +362,27 @@ int main() {
     memcpy(&incoming[0] + 0x10, &op, 2); memcpy(&incoming[0] + 0x12, &ix, 2);
     memcpy(&incoming[0] + 4, &sender, 4);
     callback_payload_fill = 0x6D; active_packet_bytes = &incoming[0];
-    d.lock_state_[2].trailing_words_[1] = 0xFF;
+    d.channels_[1].trailing_words_[1] = 0xFF;
     d.synch(0x7F, 0x1800, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
     assert(display_count == 1 && display_opcode == 0x7F && display_chunk == 1 &&
            display_total == 3);
     assert(copy_in_count == 1 && in_offsets[0] == 0 && in_lengths[0] == 0x800);
-    assert(d.lock_state_[2].trailing_words_[1] == 0xFF);
+    assert(d.channels_[1].trailing_words_[1] == 0xFF);
 
     // Incoming final partial chunk commits rule staging exactly once and
     // clears only sender's bit at the final packet boundary.
-    reset(); d.lock_state_[2].trailing_words_[1] = 0xFF;
+    reset(); d.channels_[1].trailing_words_[1] = 0xFF;
     incoming.assign(0x24 + 0x120, 0x33); op = 0x8B; ix = 3; sender = 2;
     memcpy(&incoming[0] + 0x10, &op, 2); memcpy(&incoming[0] + 0x12, &ix, 2);
     memcpy(&incoming[0] + 4, &sender, 4);
     d.synch(0x8B, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
     assert(copy_in_count == 1 && in_offsets[0] == 0x1800 &&
            in_lengths[0] == 0x120);
-    assert(commit_count == 1 && d.lock_state_[2].trailing_words_[1] == 0xFB);
+    assert(commit_count == 1 && d.channels_[1].trailing_words_[1] == 0xFB);
 
     // Destination and transfer length are resolved from the initial signed
     // packet index, while postprocessing re-reads +0x12 after the callback.
-    reset(); d.lock_state_[2].trailing_words_[1] = 0xFF;
+    reset(); d.channels_[1].trailing_words_[1] = 0xFF;
     incoming.assign(0x24 + 0x800, 0x44); op = 0x8B; ix = 2; sender = 1;
     memcpy(&incoming[0] + 0x10, &op, 2); memcpy(&incoming[0] + 0x12, &ix, 2);
     memcpy(&incoming[0] + 4, &sender, 4);
@@ -382,11 +391,11 @@ int main() {
     assert(display_chunk == 3 && display_total == 4);
     assert(copy_in_count == 1 && in_offsets[0] == 0x1000 &&
            in_lengths[0] == 0x800);
-    assert(commit_count == 1 && d.lock_state_[2].trailing_words_[1] == 0xFF);
+    assert(commit_count == 1 && d.channels_[1].trailing_words_[1] == 0xFF);
 
     // One-chunk opcode 0x11 comparison may suppress copy, but epilogue is kept.
     reset(); Vehs[0].x = 9; Vehs[0].y = 10;
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
+    NetDaemonNet.primary_state_.leading_words_[0] = 1;
     incoming.assign(0x24 + 0x30, 0);
     op = 0x11; ix = 0; memcpy(&incoming[0] + 0x10, &op, 2);
     memcpy(&incoming[0] + 0x12, &ix, 2);
@@ -418,11 +427,11 @@ int main() {
 
     // Typed epilogues use the retained caller IDs and preserve the map-lock gate.
     reset();
-    d.lock_state_[0].leading_words_[1] = 1;
+    d.primary_state_.leading_words_[0] = 1;
     d.synch(0x02, 0, 0, 0, 0, 1, 0x2101);
     assert(map_shutdown_count == 0 && map_init_count == 0 && path_init_count == 0);
     reset();
-    d.lock_state_[0].leading_words_[1] = 0;
+    d.primary_state_.leading_words_[0] = 0;
     d.synch(0x02, 0, 0, 0, 0, 1, 0x2101);
     assert(map_shutdown_count == 1 && map_init_count == 1 && path_init_count == 1);
     reset();
@@ -512,8 +521,8 @@ int main() {
                 GameRules = rule ? 0x10u : 0;
                 ConsoleControlTurnActive = scripted;
                 ConsoleGlobal.faction_id_ = 3;
-                NetTurnFaction = same_faction ? 3 : 4;
-                NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
+                GameDataStateStorage.fields_.net_turn_faction_ = same_faction ? 3 : 4;
+                NetDaemonNet.primary_state_.leading_words_[0] = 1;
                 incoming.assign(0x24 + 0x30, 0);
                 op = 0x11; ix = 0;
                 memcpy(&incoming[0] + 0x10, &op, 2);

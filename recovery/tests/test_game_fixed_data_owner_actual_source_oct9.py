@@ -160,9 +160,8 @@ static_assert(offsetof(NetDaemonSaveProcessSlot, identity_) == 0x24,
 static_assert(offsetof(NetDaemonSaveProcessSlot, status_bytes_) == 0x28,
               "snapshot status offset");
 static_assert(sizeof(NetDaemonSaveProcessSlot) == 0x19C, "snapshot stride");
-struct SaveView { NetDaemonSaveProcessSlot process_slots_[8]; };
 struct NetDaemon {
-    SaveView save_storage_;
+    NetDaemonSaveProcessSlot saved_process_slots_[8];
     NetDaemonSaveProcessSlot process_slots_[8]; // live-table damage control
 };
 NetDaemon NetDaemonNet;
@@ -274,18 +273,18 @@ def test_actual_save_initializer_touches_only_snapshot_prefix(compiler, tmp_path
 int main() {
     std::memset(&NetDaemonNet, 0x5A, sizeof(NetDaemonNet));
     for (int i = 0; i < 8; ++i) {
-        NetDaemonNet.save_storage_.process_slots_[i].identity_ = static_cast<int8_t>(i);
-        NetDaemonNet.save_storage_.process_slots_[i].field_25_ = 0x31 + i;
-        NetDaemonNet.save_storage_.process_slots_[i].field_26_ = 0x41 + i;
-        NetDaemonNet.save_storage_.process_slots_[i].field_27_ = static_cast<int8_t>(0x50 + i);
-        NetDaemonNet.save_storage_.process_slots_[i].status_bytes_[0] = 0x61 + i;
+        NetDaemonNet.saved_process_slots_[i].identity_ = static_cast<int8_t>(i);
+        NetDaemonNet.saved_process_slots_[i].field_25_ = 0x31 + i;
+        NetDaemonNet.saved_process_slots_[i].field_26_ = 0x41 + i;
+        NetDaemonNet.saved_process_slots_[i].field_27_ = static_cast<int8_t>(0x50 + i);
+        NetDaemonNet.saved_process_slots_[i].status_bytes_[0] = 0x61 + i;
         NetDaemonNet.process_slots_[i].identity_ = static_cast<int8_t>(0x70 + i);
     }
     NetDaemon before = NetDaemonNet;
     sub_52db40();
     for (int i = 0; i < 8; ++i) {
-        const NetDaemonSaveProcessSlot &before_row = before.save_storage_.process_slots_[i];
-        const NetDaemonSaveProcessSlot &after_row = NetDaemonNet.save_storage_.process_slots_[i];
+        const NetDaemonSaveProcessSlot &before_row = before.saved_process_slots_[i];
+        const NetDaemonSaveProcessSlot &after_row = NetDaemonNet.saved_process_slots_[i];
         assert(after_row.identity_ == -1);
         assert(after_row.field_25_ == 0);
         assert(after_row.field_26_ == 0);
@@ -398,15 +397,15 @@ int main() {
     snapshot_test = r'''
 int main() {
     std::memset(&NetDaemonNet, 0x5A, sizeof(NetDaemonNet));
-    NetDaemonNet.save_storage_.process_slots_[0].identity_ = 12;
+    NetDaemonNet.saved_process_slots_[0].identity_ = 12;
     NetDaemonNet.process_slots_[0].identity_ = 13;
     sub_52db40();
-    assert(NetDaemonNet.save_storage_.process_slots_[0].identity_ == -1);
+    assert(NetDaemonNet.saved_process_slots_[0].identity_ == -1);
     assert(NetDaemonNet.process_slots_[0].identity_ == 13);
 }
 '''
     owner_mutant = actual_body("sub_52db40").replace(
-        "NetDaemonNet.save_storage_.process_slots_[slot]",
+        "NetDaemonNet.saved_process_slots_[slot]",
         "NetDaemonNet.process_slots_[slot]",
         1,
     )
@@ -432,7 +431,7 @@ int main() {
 int main() {
     std::memset(&NetDaemonNet, 0x5A, sizeof(NetDaemonNet));
     sub_52db40();
-    assert(NetDaemonNet.save_storage_.process_slots_[0].field_25_ == 0);
+    assert(NetDaemonNet.saved_process_slots_[0].field_25_ == 0);
 }
 '''
     require_mutant_rejected(compiler, HARNESS + save_field_mutant + save_field_test, tmp_path)

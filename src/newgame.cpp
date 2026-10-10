@@ -68,40 +68,40 @@ void __cdecl world_build();
 int MapSetupStatus;
 
 static void multiplayer_reset_network_state() {
-    LockStateEntry *const state = NetDaemonNet.lock_state_;
+    NetDaemon &network = NetDaemonNet;
 
-    state[0].leading_words_[1] = 0;      // 0x93E8C0
-    state[0].leading_words_[2] = 0;      // 0x93E8C4
-    state[0].leading_words_[3] = 0;      // 0x93E8C8
-    state[0].payload_.flags = 0;         // 0x93E8CC
-    state[0].trailing_words_[8] = 0;    // 0x93E8F0
-    state[0].trailing_words_[7] = 0;    // 0x93E8EC
-    state[1].leading_words_[1] = 0;      // 0x93E8FC
-    state[1].leading_words_[0] = 0;      // 0x93E8F8
-    state[1].trailing_words_[0] = 0;    // 0x93E90C
-    state[2].leading_words_[1] = 0;      // 0x93E938
-    state[1].trailing_words_[9] = 0;    // 0x93E930
-    state[2].leading_words_[0] = 0;      // 0x93E934
-    state[2].trailing_words_[5] = 0;    // 0x93E95C
-    state[2].trailing_words_[4] = 0;    // 0x93E958
-    state[0].trailing_words_[4] = 0;    // 0x93E8E0
-    state[0].trailing_words_[5] = 0;    // 0x93E8E4
-    state[0].trailing_words_[6] = 0;    // 0x93E8E8
-    state[2].trailing_words_[3] = 0;    // 0x93E954
-    state[2].trailing_words_[2] = 0;    // 0x93E950
-    state[2].leading_words_[3] = 0;      // 0x93E940
-    state[2].leading_words_[2] = 0;      // 0x93E93C
-    state[2].payload_.flags = 0;         // 0x93E944
-    state[0].trailing_words_[0] = 0;    // 0x93E8D0
-    state[0].trailing_words_[1] = 0;    // 0x93E8D4
-    state[2].trailing_words_[8] = 0;    // 0x93E968
-    state[2].trailing_words_[7] = 0;    // 0x93E964
-    state[0].trailing_words_[2] = 0;    // 0x93E8D8
-    state[0].trailing_words_[3] = 0;    // 0x93E8DC
-    state[2].trailing_words_[6] = 0xFF; // 0x93E960
-    state[1].payload_.flags = 0;         // 0x93E908
+    network.primary_state_.leading_words_[0] = 0;      // 0x93E8C0
+    network.primary_state_.leading_words_[1] = 0;      // 0x93E8C4
+    network.primary_state_.leading_words_[2] = 0;      // 0x93E8C8
+    network.primary_state_.flags_ = 0;         // 0x93E8CC
+    network.primary_state_.trailing_words_[8] = 0;    // 0x93E8F0
+    network.primary_state_.trailing_words_[7] = 0;    // 0x93E8EC
+    network.channels_[0].leading_words_[1] = 0;      // 0x93E8FC
+    network.channels_[0].leading_words_[0] = 0;      // 0x93E8F8
+    network.channels_[0].trailing_words_[0] = 0;    // 0x93E90C
+    network.channels_[1].leading_words_[1] = 0;      // 0x93E938
+    network.channels_[0].trailing_words_[9] = 0;    // 0x93E930
+    network.channels_[1].leading_words_[0] = 0;      // 0x93E934
+    network.channels_[1].trailing_words_[5] = 0;    // 0x93E95C
+    network.channels_[1].trailing_words_[4] = 0;    // 0x93E958
+    network.primary_state_.trailing_words_[4] = 0;    // 0x93E8E0
+    network.primary_state_.trailing_words_[5] = 0;    // 0x93E8E4
+    network.primary_state_.trailing_words_[6] = 0;    // 0x93E8E8
+    network.channels_[1].trailing_words_[3] = 0;    // 0x93E954
+    network.channels_[1].trailing_words_[2] = 0;    // 0x93E950
+    network.channels_[1].leading_words_[3] = 0;      // 0x93E940
+    network.channels_[1].leading_words_[2] = 0;      // 0x93E93C
+    network.channels_[1].payload_.flags = 0;         // 0x93E944
+    network.primary_state_.trailing_words_[0] = 0;    // 0x93E8D0
+    network.primary_state_.trailing_words_[1] = 0;    // 0x93E8D4
+    network.channels_[1].trailing_words_[8] = 0;    // 0x93E968
+    network.channels_[1].trailing_words_[7] = 0;    // 0x93E964
+    network.primary_state_.trailing_words_[2] = 0;    // 0x93E8D8
+    network.primary_state_.trailing_words_[3] = 0;    // 0x93E8DC
+    network.channels_[1].trailing_words_[6] = 0xFF; // 0x93E960
+    network.channels_[0].payload_.flags = 0;         // 0x93E908
     for (int i = 1; i != 9; ++i) {
-        state[1].trailing_words_[i] = 0; // 0x93E910..0x93E92C
+        network.channels_[0].trailing_words_[i] = 0; // 0x93E910..0x93E92C
     }
 
     NetDaemonNet.locks_.clear();
@@ -703,7 +703,7 @@ int __cdecl multiplayer_init(int startup_mode) {
         return result;
     }
 
-    NetDaemonNet.lock_state_[0].trailing_words_[2] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[2] = 0;
     if (ExitTurnLoop == 0 && NetWinDialog.exec() > 0) {
         const int difficulty = static_cast<int8_t>(NetWinSessionOptions.difficulty_);
         const uint32_t rules_a = NetWinSessionOptions.rule_bits_a_;
@@ -719,7 +719,7 @@ int __cdecl multiplayer_init(int startup_mode) {
         GameDataStateStorage.fields_.net_turn_flags_ = enable_turn_flag ? (old_turn_flags | 0x10u)
                                         : (old_turn_flags & ~0x10u);
 
-        if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+        if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
             uint8_t mask = 0;
             if (NetDaemonNet.player_count_ > 0) {
                 const int count = NetDaemonNet.player_count_;
@@ -817,18 +817,18 @@ int __cdecl multiplayer_init(int startup_mode) {
                 result = 1;
                 goto do_cleanup;
             }
-            if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0)
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0)
                 scenario_setup();
         } else {
             GameDataStateStorage.fields_.game_state_ &= ~0x10u;
         }
 
         log_reset();
-        if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
+        if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
             for (int i = 0; i != 11; ++i)
                 AltNatural[i] = AltContour[i];
             while (static_cast<int32_t>(
-                       NetDaemonNet.lock_state_[0].trailing_words_[2]) < 8 &&
+                       NetDaemonNet.primary_state_.trailing_words_[2]) < 8 &&
                    ExitTurnLoop == 0) {
                 NetDaemonNet.receive();
                 do_all_tasks();

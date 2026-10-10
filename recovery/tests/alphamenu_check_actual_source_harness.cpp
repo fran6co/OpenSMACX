@@ -6,6 +6,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
+typedef char *LPSTR;
 
 static const uint32_t BIT_FARM = 0x8000u;
 
@@ -51,7 +52,8 @@ static ScenarioSaveState ScenarioSave = {};
 static int &ObjectiveReqVictory = ScenarioSave.objective_req_victory;
 static uint32_t &ObjectivesSuddenDeathVictory = ScenarioSave.objectives_sudden_death_victory;
 static int IsMultiplayerNet, IsMultiplayerPBEM;
-struct WaitMaskDaemon { uint32_t lock_state_[1][10]{}; uint32_t &factions_waiting_mask() { return lock_state_[0][7]; } };
+struct PrimaryState { uint32_t leading_words_[3]{}; uint32_t flags_{}; uint32_t trailing_words_[10]{}; };
+struct WaitMaskDaemon { PrimaryState primary_state_{}; uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[7]; } };
 static WaitMaskDaemon NetDaemonNet;
 static uint32_t &ConsoleFactionsWaitingMask = NetDaemonNet.factions_waiting_mask();
 struct ConsoleState { int cursor_active_; int faction_id_; } ConsoleGlobal;
@@ -95,6 +97,7 @@ struct Strings {
     int calls;
     Strings() : calls(0) {}
     char *get(int) { return (calls++ & 1) ? shortcut_text : order_text; }
+    char *get(char *text) { return text ? text : const_cast<char *>(""); }
 } StringTable;
 static Map *map_loc(int x, int y) { return &MapStorage[(x >> 1) + y * MapLongitude]; }
 static int has_abil(int p, uint32_t mask) { return (VehPrototypes[p].abilities & mask) != 0; }
@@ -391,8 +394,11 @@ static void terrain_label_selector_uses_sea_and_strict_air_climate_boundary() {
 }
 
 int main() {
-    Order[4].order = order_text; Order[4].order_sea = order_text;
-    Terraforming[0].shortcuts = shortcut_text;
+    for (int i = 0; i != 19; ++i) {
+        Order[i + 4].order = order_text;
+        Order[i + 4].order_sea = order_text;
+        Terraforming[i].shortcuts = shortcut_text;
+    }
     regular_plan_uses_order_rows_and_availability();
     plan_nine_uses_cost_and_turn_label_without_false_guard_fallback();
     inactive_cursor_or_negative_vehicle_uses_native_fallback_join();

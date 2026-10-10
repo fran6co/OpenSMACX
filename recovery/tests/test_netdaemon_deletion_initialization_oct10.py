@@ -43,6 +43,8 @@ HEADER_EDITS = (
 
 
 def restore_deletion_initialization_migration(source):
+    from test_netdaemon_shared_deletion_storage_oct10 import restore_shared_storage_migration
+    source = restore_shared_storage_migration(source)
     assert source.count(AFTER) == 1
     return source.replace(AFTER, BEFORE, 1)
 
@@ -58,7 +60,8 @@ def test_only_owner_clear_domain_and_contradicted_comments_change():
     for before, after in HEADER_EDITS:
         assert old.count(before) == 1
         old = old.replace(before, after, 1)
-    assert (ROOT / "src/netdaemon.h").read_text() == old
+    from test_netdaemon_shared_deletion_storage_oct10 import restore_shared_header_migration
+    assert restore_shared_header_migration((ROOT / "src/netdaemon.h").read_text()) == old
 
 
 def test_pinned_backedge_excludes_owner_store_and_keeps_record_widths():
@@ -86,9 +89,12 @@ def test_actual_initialization_fragment_preserves_other_storage(tmp_path):
     This fixed-width host storage models only the observed fragment, not the
     application's inheritance/lifecycle, VC6 ABI, or full constructor effects.
     """
-    source = (ROOT / "src/netdaemon.cpp").read_text()
+    from test_netdaemon_shared_deletion_storage_oct10 import (
+        restore_shared_storage_migration, restore_shared_header_migration,
+    )
+    source = restore_shared_storage_migration((ROOT / "src/netdaemon.cpp").read_text())
     assert source.count(AFTER) == 1
-    header = (ROOT / "src/netdaemon.h").read_text()
+    header = restore_shared_header_migration((ROOT / "src/netdaemon.h").read_text())
     record = header.split("struct LockTableEntry {", 1)[1].split("};", 1)[0]
     harness = """#include <stdint.h>
 #include <string.h>

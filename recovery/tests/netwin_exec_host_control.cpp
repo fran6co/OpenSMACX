@@ -168,12 +168,13 @@ struct NetWin : GraphicWin {
 static NetWin NetWinDialog;
 struct LockState { uint32_t leading_words_[4]; struct { uint32_t flags; } payload_; };
 struct NetDaemon {
-    LockState lock_state_[1];
+    LockState channels_[2];
+    struct Primary { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
     int initial_sends = 0, option_sends = 0;
     uint16_t last_options_opcode = 0;
     int last_options_size = 0;
     NetWinSessionOptionsState last_options{};
-    NetDaemon() { std::memset(lock_state_, 0, sizeof(lock_state_)); }
+    NetDaemon() { std::memset(channels_, 0, sizeof(channels_)); std::memset(&primary_state_, 0, sizeof(primary_state_)); }
     void enable_join() { trace.push_back("enable-join"); }
     void send(void *data, int size, unsigned long, int) {
         if (size == 0xA74) {
@@ -237,8 +238,8 @@ static void reset_fixture() {
     std::memset(observed_row_addresses, 0, sizeof(observed_row_addresses));
     std::memset(observed_row_bytes, 0, sizeof(observed_row_bytes));
     NetWinPlanetSizeLabelCount = 0; NetWinExecAdjacentState = -1;
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
-    NetDaemonNet.lock_state_[0].payload_.flags = 0;
+    NetDaemonNet.primary_state_.leading_words_[0] = 0;
+    NetDaemonNet.primary_state_.flags_ = 0;
     NetDaemonNet.initial_sends = NetDaemonNet.option_sends = 0;
     NetDaemonNet.last_options_opcode = 0;
     NetDaemonNet.last_options_size = 0;
@@ -263,14 +264,14 @@ static void test_exec() {
     assert(NetWinDialog.exec() == 0 && trace.empty());
 
     reset_fixture(); ExitTurnLoop = 0;
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
+    NetDaemonNet.primary_state_.leading_words_[0] = 1;
     assert(NetWinDialog.exec() == 0);
     assert(task_runs == 1 && NetDaemonNet.initial_sends == 1 && NetDaemonNet.option_sends == 1);
     assert(NetDaemonNet.last_options_opcode == 0x2F02);
     assert(NetDaemonNet.last_options_size == 0x28);
     assert(std::memcmp(&NetDaemonNet.last_options, &NetWinSessionOptions,
                        sizeof(NetWinSessionOptions)) == 0);
-    assert(NetDaemonNet.lock_state_[0].payload_.flags == 2);
+    assert(NetDaemonNet.primary_state_.flags_ == 2);
     assert(NetWinPlanetSizeLabelCount == 2);
     assert(std::strcmp(NetWinDialog.world_size_labels_[0], "Tiny world") == 0);
     assert(NetWinDialog.field_761C_ == 0xFFFFFFFFU && NetWinDialog.field_7620_ == 0xFFFFFFFFU);
@@ -296,7 +297,7 @@ static void test_exec() {
 static void test_exec_packet_rows_are_payload() {
     reset_fixture();
     std::memset(NetWinLobbyRows, 0x5A, sizeof(NetWinLobbyRows));
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
+    NetDaemonNet.primary_state_.leading_words_[0] = 0;
     assert(NetWinDialog.exec() == 0);
     assert(observed_row_constructions == 7);
     assert(index_of("enable-join") < index_of("row-constructor"));

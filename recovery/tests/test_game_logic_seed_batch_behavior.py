@@ -164,9 +164,9 @@ struct Sprite {};
 struct Console { int faction_id_; };
 struct Window { int redraws,closes,execs; void redraw(){++redraws;}
     void close(){++closes;} void exec(int,int){++execs;} };
-struct NetState { union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct Net { NetState lock_state_[3]; int waits,last_wait;
-    uint32_t &factions_waiting_mask() { return lock_state_[0].trailing_words_[7]; }
+struct NetState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
+struct Net { NetState channels_[2]; struct PrimaryState { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_; int waits,last_wait;
+    uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[7]; }
     void await_diplo(int v){++waits;last_wait=v;} };
 struct Message { int calls; const char *label; int topic;
     void pop(const char *s,int,int,const char*){++calls;label=s;} };

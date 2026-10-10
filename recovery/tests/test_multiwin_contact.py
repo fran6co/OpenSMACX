@@ -111,7 +111,8 @@ struct LockStateEntry {
 };
 
 struct NetDaemon {
-    LockStateEntry lock_state_[24];
+    LockStateEntry channels_[2];
+    struct PrimaryState { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_;
     int add_calls, add_stop_after, await_calls, awaited_code, unlock_calls;
     int open_calls, open_result;
     NetDaemon() : add_calls(0), add_stop_after(0), await_calls(0),
@@ -300,7 +301,8 @@ static void reset_all() {
     NetMsgPrimary=NetMsg(); ConsoleGlobal=Console();
     ConsoleInfoWin.resets=ConsoleStatusWin.resets=0;
     NetDaemonNet=NetDaemon(); MultiWindowContactStatusMask=CommlinkPending=CommlinkFaction=0;
-    std::memset(NetDaemonNet.lock_state_,0,sizeof(NetDaemonNet.lock_state_));
+    std::memset(NetDaemonNet.channels_,0,sizeof(NetDaemonNet.channels_));
+    std::memset(&NetDaemonNet.primary_state_,0,sizeof(NetDaemonNet.primary_state_));
     g_MULTIWIN_WAVE=Wave(); timeout_pop_result=commlink_gate_result=0;
     has_tech_4e=has_tech_4=0; message_calls=treaty_off_calls=pact_ends_calls=0;
     communicate_calls=diplo_calls=treaty_on_calls=call_council_calls=demand_calls=report_calls=0;
@@ -325,7 +327,7 @@ int main() {
     reset_all(); win.spot_.rc=0; win.spot_.faction=3; win.spot_.kind=0;
     alive_mask_for_ui=1<<3; IsMultiplayerNet=1; MultiWindowContactStatusMask=1<<3;
     win.on_left_click(0,0);
-    assert(MultiWindowContactStatusMask==0&&NetDaemonNet.lock_state_[2].trailing_words_[6]==(1u<<3));
+    assert(MultiWindowContactStatusMask==0&&NetDaemonNet.channels_[1].trailing_words_[6]==(1u<<3));
 
     reset_all(); win.spot_.rc=0; win.spot_.faction=3; win.spot_.kind=1;
     alive_mask_for_ui=1<<3;
@@ -361,7 +363,7 @@ int main() {
     reset_all(); win.spot_.rc=0; win.spot_.faction=2; win.spot_.kind=1;
     alive_mask_for_ui=1<<2; ConsoleGlobal.faction_id_=0; PullDown::selected=0;
     PullDown::forced_id=10; MultiWindowContactStatusMask=1u<<2; win.on_right_click(0,0);
-    assert(MultiWindowContactStatusMask==0&&NetDaemonNet.lock_state_[2].trailing_words_[6]==(1u<<2));
+    assert(MultiWindowContactStatusMask==0&&NetDaemonNet.channels_[1].trailing_words_[6]==(1u<<2));
 
     reset_all(); win.spot_.rc=0; win.spot_.faction=2; win.spot_.kind=1;
     alive_mask_for_ui=1<<2; ConsoleGlobal.faction_id_=0; PullDown::selected=0;

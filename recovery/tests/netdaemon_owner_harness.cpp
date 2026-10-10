@@ -87,6 +87,7 @@ struct AlphaNet : public Net {
     AlphaNetLedger ledger_;
 };
 struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
 
 struct PlayerLock {
     struct Entry { int flag, second, first; };
@@ -102,7 +103,11 @@ struct Locks {
 };
 struct NetDaemon : public AlphaNet {
     Locks locks_;
-    LockStateEntry lock_state_[24];
+    struct DeletionRecord { uint8_t acknowledgements_; uint8_t reserved_[3]; int owner_; int16_t count_; int16_t vehicle_ids_[25]; };
+    struct DeletionList { DeletionRecord records_[24]; int current_owner_; uint32_t sequence_bits() const { uint32_t x; memcpy(&x, &current_owner_, 4); return x; } void set_sequence_bits(uint32_t x) { memcpy(&current_owner_, &x, 4); } uint32_t advance_sequence() { uint32_t x=sequence_bits()+1; set_sequence_bits(x); return x; } } deletion_list_;
+    PrimaryState primary_state_;
+    LockStateEntry channels_[2];
+    void *file_index_records_; uint32_t field_1BE4_;
     void on_player_added(char *name, unsigned long id);
     void on_player_deleted(char *name, unsigned long id);
 };
@@ -226,10 +231,10 @@ static void setup_two_player_delete(NetDaemon &daemon, int lock_phase) {
     daemon.process_slots_[2].identity_ = 2;
     daemon.field_760_ = 10;
     daemon.field_764_ = 10;
-    daemon.lock_state_[0].trailing_words_[0] = lock_phase;
-    daemon.lock_state_[0].trailing_words_[4] = 1u << 2;
-    daemon.lock_state_[1].trailing_words_[0] = 0xFF;
-    daemon.lock_state_[1].trailing_words_[3] = 0x8;
+    daemon.primary_state_.trailing_words_[0] = lock_phase;
+    daemon.primary_state_.trailing_words_[4] = 1u << 2;
+    daemon.channels_[0].trailing_words_[0] = 0xFF;
+    daemon.channels_[0].trailing_words_[3] = 0x8;
     NetWinLobbyRows[2].prefix_ = 0x55;
     strcpy(NetWinLobbyRows[2].leader_name_, "old-leader");
     strcpy(NetWinLobbyRows[2].noun_faction_, "old-noun");
@@ -278,7 +283,7 @@ int main(int argc, char **argv) {
         assert(strcmp(NetWinLobbyRows[2].noun_faction_, "label2") == 0);
         assert(label_calls == 2);
         assert(daemon.locks_.records_[2].entries_[0].first == -1);
-        assert(daemon.lock_state_[1].trailing_words_[0] == (0xFF & ~0x8u));
+        assert(daemon.channels_[0].trailing_words_[0] == (0xFF & ~0x8u));
         assert(NetWinDialog.redraws == 1);
         assert_before("parse:ED", "fx:21");
         assert_before("fx:21", "parse:departed");
@@ -288,26 +293,26 @@ int main(int argc, char **argv) {
         assert_before("popup:DROPPED", "redraw");
     } else if (strcmp(scenario, "delete_inactive_lock") == 0) {
         setup_two_player_delete(daemon, 2);
-        daemon.lock_state_[0].leading_words_[1] = 0;
+        daemon.primary_state_.leading_words_[0] = 0;
         GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x0808; // alive and human faction 3
         daemon.locks_.records_[3].entries_[0].flag = 0;
         clear_trace();
         daemon.on_player_deleted(0, 20);
         assert(daemon.locks_.records_[3].active_ == 0);
         assert(daemon.locks_.records_[3].entries_[0].flag == 0);
-        assert(daemon.lock_state_[0].trailing_words_[0] == 2);
+        assert(daemon.primary_state_.trailing_words_[0] == 2);
         assert(NetWinLobbyRows[2].prefix_ == 0x55); // phase 2: no prefix write
         assert(message_calls == 0);
         assert(label_calls == 2);
     } else if (strcmp(scenario, "delete_active_lock") == 0) {
         setup_two_player_delete(daemon, 2);
-        daemon.lock_state_[0].leading_words_[1] = 0;
+        daemon.primary_state_.leading_words_[0] = 0;
         GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x0808;
         daemon.locks_.records_[3].entries_[0].flag = 1;
         clear_trace();
         daemon.on_player_deleted(0, 20);
         assert(daemon.locks_.records_[3].active_ == 4);
-        assert(daemon.lock_state_[0].trailing_words_[0] == 2);
+        assert(daemon.primary_state_.trailing_words_[0] == 2);
         assert(NetWinLobbyRows[2].prefix_ == 0x55);
         assert(message_calls == 0);
     } else if (strcmp(scenario, "delete_slot8_miss") == 0) {

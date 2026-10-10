@@ -66,7 +66,7 @@ struct GameDataStorageDouble { GameDataFieldsDouble fields_; } GameDataStateStor
 struct ConsoleGlobalDouble { int faction_id_=0; };
 static ConsoleGlobalDouble ConsoleGlobal;
 struct NetState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct NetDaemonDouble { NetState lock_state_[24]; };
+struct NetDaemonDouble { NetState channels_[2]; struct { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_; };
 static NetDaemonDouble NetDaemonNet;
 
 static int ai_votes[MaxPlayerNum];
@@ -256,20 +256,20 @@ static void test_live_ai_mask_refresh_and_network_boundary() {
     check(count_calls("council_get_vote")==6,"AI mask refresh call trace");
 
     reset(c); make_all_votes_nonzero(c); set_status(1u<<1,1u<<1);
-    IsMultiplayerNet=1; NetDaemonNet.lock_state_[0].leading_words_[1]=0;
+    IsMultiplayerNet=1; NetDaemonNet.primary_state_.leading_words_[0]=0;
     c.set_vote(1,-1);
     check(message_data_count==0 && count_calls("hide")==0,
           "network without resolution boundary does not resolve or notify");
 
     reset(c); make_all_votes_nonzero(c); set_status(1u<<1,1u<<1);
-    IsMultiplayerNet=1; NetDaemonNet.lock_state_[0].leading_words_[1]=1;
+    IsMultiplayerNet=1; NetDaemonNet.primary_state_.leading_words_[0]=1;
     c.set_vote(1,-1);
     check(message_data_count==1 && calls.back().name=="message_data" &&
           calls.back().a==0x2603,"network resolution boundary emits opcode 0x2603");
 
     reset(c); make_all_votes_nonzero(c); set_status(1u<<1,1u<<1);
     c.leader_label_kind_[2]=0; IsMultiplayerNet=1;
-    NetDaemonNet.lock_state_[0].leading_words_[1]=1;
+    NetDaemonNet.primary_state_.leading_words_[0]=1;
     c.set_vote(1,-1);
     check(message_data_count==0,"incomplete network council does not announce resolution");
 }

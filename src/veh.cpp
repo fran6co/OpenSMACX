@@ -43,7 +43,7 @@
 #include "palette.h"  // Reactor-zero naming observes the existing palette slot.
 #include "technology.h"
 #include "terraforming.h"
-#include "deletionlist.h"  // VehDeletionList - the multiplayer deletion queue
+#include "deletionlist.h"  // NetDaemonNet owns the embedded deletion queue
 #include "tutwin.h"  // TutWinBaseWindow, TutorialWindow
 #include "mapwin.h"  // draw_tile - the free single-tile redraw the removals end on
 #include "netmsg.h"  // NetMsgPrimary - the promote family reports through it
@@ -1266,12 +1266,12 @@ void __cdecl action_arty(int veh_id, int x, int y) {
     if (direction < 0) return;
 
     if (IsMultiplayerNet == 0) {
-        NetDaemonNet.lock_state_[1].leading_words_[3] = 3;
+        NetDaemonNet.channels_[0].leading_words_[3] = 3;
         battle_fight(veh_id, direction, 1, 1, nullptr);
         return;
     }
     if (NetDaemonNet.maybe_lock(&veh_id, 0, 0, x, y, 4) != 0) return;
-    NetDaemonNet.lock_state_[1].leading_words_[3] = 1;
+    NetDaemonNet.channels_[0].leading_words_[3] = 1;
     if (battle_fight(veh_id, direction, 1, 1, nullptr) != 0) {
         NetDaemonNet.unlock_veh();
     } else {
@@ -3319,7 +3319,7 @@ extern void __cdecl unspot_stack(int veh_id);
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004cc360.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 004CC360..004CD051, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover complete typed airdrop admission/interception, landing selection, stack movement, capture and post-drop updates. Preserve unsigned damage storage with integer thresholds and directional treaty evidence; referenced unfinished dependencies remain explicit, not game acceptance."}
 // TRIED: direct field-for-field transcription (validation chain of terrain/ZOC/treaty/AA checks, each guarding a NetMsg::pop error-return; airdrop-site scoring loop; base-capture tail) diverges at instr #7 (push vs xor), early register-allocation choice; not chased further given the 3313-byte scope.
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
-    NetDaemonNet.lock_state_[1].leading_words_[3] = mode;
+    NetDaemonNet.channels_[0].leading_words_[3] = mode;
 
     Veh &vehicle = Vehs[veh_id];
     const int faction = vehicle.faction_id;
@@ -9362,9 +9362,8 @@ void __cdecl stack_kill(int a1) {
 // exactly as it re-points the hover slot, so the name records the role.
 int *const StatusHoverVehIdAlt = (int *)0x008C6B34;
 
-// 0x0093E31C. The queue the multiplayer deletion path parks a dying vehicle on
-// until the next turn boundary, guarded by IsMultiplayerNet.
-DeletionList VehDeletionList;  // 0x0093E31C
+// Original0x0093E31C is NetDaemonNet.deletion_list_, not a separate global.
+// veh_kill passes this exact embedded receiver to add_deletion52DE70.
 
 // 0x0093E908. A dword * holding the address of one of the vehicle-id slots
 // above: the interface keeps it pointing at whichever selection it wants to
@@ -9425,7 +9424,7 @@ void __cdecl veh_kill(int veh_id) {
     }
 
     if (IsMultiplayerNet != 0) {
-        VehDeletionList.add_deletion(veh_id);
+        NetDaemonNet.deletion_list_.add_deletion(veh_id);
     }
 
     log_say(VehLogKillingVehicle, veh_id, Vehs[veh_id].faction_id,
@@ -19714,7 +19713,7 @@ static OrderVehSupplyOptionsPath order_veh_supply_options_join(
     }
 
     const int options_shown = supply_options(veh_id, selected_base_id);
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2) != 0) {
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) != 0) {
         return options_shown != 0
             ? OrderVehSupplyOptionsCommonCleanupReturnZero
             : OrderVehSupplyOptionsContinue595422;
@@ -19995,7 +19994,7 @@ static bool order_veh_amphibious_tile_notice(int action_faction,
                                              const Map &tile) {
     const int ability_id = abil_index(ABL_AMPHIBIOUS);
     if (action_faction != ConsoleGlobal.faction_id_ ||
-        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) == 0) {
+        (NetDaemonNet.channels_[0].leading_words_[3] & 1) == 0) {
         return false;
     }
     parse_say(0, Ability[ability_id].name, -1, -1);
@@ -20074,7 +20073,7 @@ static void order_veh_5967cf_amphibbase2_or_full_transport(
                     -1, -1) == 0 &&
         stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1) == 0) {
         if (vehicle_faction_snapshot == ConsoleGlobal.faction_id_ &&
-            (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0) {
+            (NetDaemonNet.channels_[0].leading_words_[3] & 1) != 0) {
             const int ability = abil_index(8);
             parse_say(0, Ability[ability].name, -1, -1);
             NetMsgPrimary.pop("AMPHIBBASE2", 5000, 0, NULL);
@@ -20091,7 +20090,7 @@ static void order_veh_596884_full_transport_notice(
     if (stack_check(visible_vehicle_id, 2, PLAN_NAVAL_TRANSPORT,
                     -1, -1) == 0 ||
         vehicle_faction_snapshot != ConsoleGlobal.faction_id_ ||
-        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) == 0) {
+        (NetDaemonNet.channels_[0].leading_words_[3] & 1) == 0) {
         return;
     }
 
@@ -20275,7 +20274,7 @@ static OrderVeh595A92Path order_veh_595a92_hasty_gate(
     const bool show_hasty_prompt =
         action_faction == ConsoleGlobal.faction_id_ &&
         !native_state_4200_snapshot &&
-        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0;
+        (NetDaemonNet.channels_[0].leading_words_[3] & 1) != 0;
     if (show_hasty_prompt) {
         parse_says(0, VehPrototypes[prototype_id].veh_name, -1, -1);
         const int second_remaining_moves =
@@ -20402,7 +20401,7 @@ static OrderVeh5976d6Path order_veh_5976d6_terrain_delay(
         }
         if (visible_vehicle_id >= 0) return OrderVeh5976d6Continue597B24;
     }
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 1U) == 0 &&
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 1U) == 0 &&
         (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
          static_cast<uint8_t>(1U << (action_faction & 0x1f))) != 0) {
         return OrderVeh5976d6Continue597B24;
@@ -20428,7 +20427,7 @@ static OrderVeh5976d6Path order_veh_5976d6_terrain_delay(
 
     if (action_faction == ConsoleGlobal.faction_id_ && vehicle.order == ORDER_NONE &&
         (::GetKeyState(VK_SHIFT) & 0xff00) == 0 &&
-        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1U) != 0 &&
+        (NetDaemonNet.channels_[0].leading_words_[3] & 1U) != 0 &&
         (vehicle.state & 0x0200U) == 0 &&
         (GameDataStateStorage.fields_.game_more_preferences_ & 0x80U) == 0) {
         order_veh_5976d6_focus_stack_scoot(
@@ -20446,7 +20445,7 @@ static OrderVeh5976d6Path order_veh_5976d6_terrain_delay(
             vehicle.order == ORDER_NONE &&
             VehPrototypes[vehicle.proto_id].plan != PLAN_TERRAFORMING &&
             VehPrototypes[vehicle.proto_id].plan != PLAN_ALIEN_ARTIFACT &&
-            (NetDaemonNet.lock_state_[1].leading_words_[3] & 1U) != 0;
+            (NetDaemonNet.channels_[0].leading_words_[3] & 1U) != 0;
     }
     if (slow_fungus_tutorial_gate) {
         if (tut_check(0x1000) != 0) {
@@ -20462,7 +20461,7 @@ static OrderVeh5976d6Path order_veh_5976d6_terrain_delay(
     if (!tutorial_map_was_shown &&
         action_faction == ConsoleGlobal.faction_id_ &&
         vehicle.order == ORDER_NONE && !TutorialWindow.tutorial_blocked() &&
-        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1U) != 0 &&
+        (NetDaemonNet.channels_[0].leading_words_[3] & 1U) != 0 &&
         !((map_loc(destination_x, destination_y)->bit & BIT_FUNGUS) != 0 &&
           (map_loc(destination_x, destination_y)->climate & 0xE0U) >= 0x40U) &&
         tut_check(0x4000) != 0) {
@@ -20477,7 +20476,7 @@ static OrderVeh5976d6Path order_veh_5976d6_terrain_delay(
     }
     veh_skip(veh_id);
     vehicle.state |= 0x8000U;
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 1U) != 0 &&
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 1U) != 0 &&
         IsMultiplayerNet != 0 &&
         ConsoleControlTurnActive == 0) {
         synch_veh(veh_id);
@@ -20497,7 +20496,7 @@ static OrderVeh597b24EntryPath order_veh_597b24_entry(
     int destination_base_id, int destination_controller, int native_local_2c,
     int &native_return_value) {
     const uint32_t action_mode =
-        NetDaemonNet.lock_state_[1].leading_words_[3];
+        NetDaemonNet.channels_[0].leading_words_[3];
     native_return_value = 1;
     if ((action_mode & 2) == 0) {
         return OrderVeh597b24EntryCleanupOne;
@@ -21709,7 +21708,7 @@ int __cdecl order_veh(int veh_id, int direction, int faction) {
     int destination_x;
     int destination_y;
     bool animate;
-    NetDaemonNet.lock_state_[1].leading_words_[3] = faction;
+    NetDaemonNet.channels_[0].leading_words_[3] = faction;
     if ((faction & 1) != 0) ConsoleGlobal.field_23BE4_ = 0;
     else ConsoleGlobal.vehicle_order_ui_state() = 0;
     const int group_count_at_entry = GameDataStateStorage.fields_.vehicle_current_count_;
@@ -21738,7 +21737,7 @@ label_5949b3:
             veh_id, faction, (faction_mask & static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0))
         goto label_599b1a;
     if (order_veh_artifact_announcement(veh_id, base_id, faction,
-            NetDaemonNet.lock_state_[1].leading_words_[3])) {
+            NetDaemonNet.channels_[0].leading_words_[3])) {
         order_veh_start_artifact_popup(popup);
         order_veh_artifact_picture(popup, popup.owned_picture(), "art_dis_sm.pcx", "art_dis_sm.pcx");
         order_veh_artifact_cost_numbers(base_id, faction);
@@ -21747,7 +21746,7 @@ label_5949b3:
     }
     if (direction >= 8) {
         if (order_veh_direction8_popup_gate(veh_id, faction, destination_x,
-                destination_y, NetDaemonNet.lock_state_[1].leading_words_[3])) {
+                destination_y, NetDaemonNet.channels_[0].leading_words_[3])) {
             if (IsMultiplayerNet && !ConsoleControlTurnActive) {
                 synch_veh(veh_id);
                 NetDaemonNet.await_synch();
@@ -21755,7 +21754,7 @@ label_5949b3:
             return 0;
         }
         selector = 1;
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2) == 0)
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) == 0)
             goto label_599b1a;
         veh_skip(veh_id);
         Vehs[veh_id].state &= ~0x40U;
@@ -21764,7 +21763,7 @@ label_5949b3:
     Vehs[veh_id].state |= 4;
     if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_INFO_WARFARE &&
             controller >= 0 && faction != controller) {
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0) {
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 1) != 0) {
             Vehs[veh_id].flags &= ~4U;
             if ((PlayersData[faction].diplo_treaties[controller] & 1) != 0 &&
                     !local_30 && faction == ConsoleGlobal.faction_id_) {
@@ -21795,7 +21794,7 @@ label_594f3c:
                 order_veh_local_stack_animation(veh_id, direction, source_x,
                     source_y, destination_x, destination_y, faction);
             if (order_veh_direction8_probe_sync(veh_id, base_id,
-                    NetDaemonNet.lock_state_[1].leading_words_[3])) return 1;
+                    NetDaemonNet.channels_[0].leading_words_[3])) return 1;
             goto label_599b1a;
         }
         if ((PlayersData[faction].diplo_treaties[controller] & 1) == 0) {
@@ -21804,8 +21803,8 @@ label_594f3c:
             probe_attempted = true;
             if (probe(veh_id, visible_vehicle, -1, 1) && IsMultiplayerNet &&
                     !ConsoleControlTurnActive &&
-                    (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0 &&
-                    (NetDaemonNet.lock_state_[1].leading_words_[3] & 2) == 0) {
+                    (NetDaemonNet.channels_[0].leading_words_[3] & 1) != 0 &&
+                    (NetDaemonNet.channels_[0].leading_words_[3] & 2) == 0) {
                 synch_veh(veh_id);
                 NetDaemonNet.await_synch();
                 return 1;
@@ -21822,7 +21821,7 @@ label_595083:
             goto label_599b1a;
         if (base_id >= 0) {
             if (!has_abil(Vehs[veh_id].proto_id, ABL_AMPHIBIOUS)) {
-                order_veh_amphibbase_notice(NetDaemonNet.lock_state_[1].leading_words_[3],
+                order_veh_amphibbase_notice(NetDaemonNet.channels_[0].leading_words_[3],
                     faction, "AMPHIBBASE");
                 goto label_599b1a;
             }
@@ -21839,7 +21838,7 @@ label_5952c6:
     {
         const OrderVeh595083TransportPath path =
             order_veh_595083_amphibious_transport_fork(veh_id, faction,
-                NetDaemonNet.lock_state_[1].leading_words_[3], base_id, visible_vehicle);
+                NetDaemonNet.channels_[0].leading_words_[3], base_id, visible_vehicle);
         if (path == OrderVeh595083TransportCommonCleanup) goto label_599b1a;
         if (base_id < 0) facility_present = 1;
     }
@@ -21851,7 +21850,7 @@ label_59533d:
             zoc_move(source_x, source_y, faction) &&
             zoc_move(destination_x, destination_y, faction)) {
         if (order_veh_zoc_tutorial_notice(faction, local_30,
-                NetDaemonNet.lock_state_[1].leading_words_[3], veh_id,
+                NetDaemonNet.channels_[0].leading_words_[3], veh_id,
                 source_x, source_y, destination_x, destination_y, OrderVehTutorialNoticeCounter))
             order_veh_reveal_unseen_hostiles(faction, destination_x, destination_y,
                 static_cast<uint8_t>(faction_mask));
@@ -21860,13 +21859,13 @@ label_59533d:
     {
         const OrderVehSupplyOptionsPath supply = order_veh_supply_options_join(
             veh_id, VehPrototypes[Vehs[veh_id].proto_id].plan, base_id,
-            NetDaemonNet.lock_state_[1].leading_words_[3]);
+            NetDaemonNet.channels_[0].leading_words_[3]);
         if (supply == OrderVehSupplyOptionsSyncedReturnOne) return 1;
         if (supply == OrderVehSupplyOptionsCommonCleanupReturnZero) goto label_599b1a;
     }
     {
         const OrderVeh595422Path supply = order_veh_595422_supply_spawn(veh_id,
-            NetDaemonNet.lock_state_[1].leading_words_[3], faction,
+            NetDaemonNet.channels_[0].leading_words_[3], faction,
             destination_x, destination_y, source_lowland != 0,
             destination_lowland != 0, visible_vehicle, local_24);
         if (supply == OrderVeh595422CommonCleanup ||
@@ -21883,24 +21882,24 @@ label_595137:
     {
         const OrderVeh595137Path path = order_veh_595137_gate(veh_id,
             visible_vehicle, faction, controller, destination_x, destination_y,
-            base_id, probe_attempted, NetDaemonNet.lock_state_[1].leading_words_[3]);
+            base_id, probe_attempted, NetDaemonNet.channels_[0].leading_words_[3]);
         if (path == OrderVeh595137CommonCleanup) goto label_599b1a;
         if (path == OrderVeh595137Continue596052) goto label_596052;
     }
     if (order_veh_59521f_front_gate(veh_id, visible_vehicle, faction, base_id,
             *map_loc(destination_x, destination_y),
-            NetDaemonNet.lock_state_[1].leading_words_[3]) == OrderVeh59521fCommonCleanup)
+            NetDaemonNet.channels_[0].leading_words_[3]) == OrderVeh59521fCommonCleanup)
         goto label_599b1a;
     if (order_veh_595798_artillery_amphib(veh_id, faction, source_lowland != 0,
             destination_lowland != 0, triad, *map_loc(source_x, source_y),
-            NetDaemonNet.lock_state_[1].leading_words_[3]) == OrderVeh595798CommonCleanup)
+            NetDaemonNet.channels_[0].leading_words_[3]) == OrderVeh595798CommonCleanup)
         goto label_599b1a;
     {
         const RulesWeapon &weapon = Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id];
         if (weapon.mode == 11 && stack_check(visible_vehicle, 2, PLAN_INFO_WARFARE, -1, -1))
             goto label_595a92;
         if (weapon.offense_rating == 0) {
-            order_veh_noncombatant_notice(faction, NetDaemonNet.lock_state_[1].leading_words_[3]);
+            order_veh_noncombatant_notice(faction, NetDaemonNet.channels_[0].leading_words_[3]);
             goto label_599b1a;
         }
         if (VehPrototypes[Vehs[visible_vehicle].proto_id].plan != PLAN_INFO_WARFARE ||
@@ -21911,7 +21910,7 @@ label_595137:
             goto label_595a92;
         const OrderVeh5958B8PromptPath prompt = order_veh_5958b8_probe_prompt(
             visible_vehicle, faction, controller, destination_x, destination_y,
-            NetDaemonNet.lock_state_[1].leading_words_[3]);
+            NetDaemonNet.channels_[0].leading_words_[3]);
         if (prompt == OrderVeh5958B8PromptCleanup) goto label_599b1a;
         if (prompt == OrderVeh5958B8PromptContinueProbeSuccess) {
             order_veh_probe_success_corridor(veh_id, faction, controller,
@@ -21923,7 +21922,7 @@ label_595137:
 
 label_595a92:
     if (order_veh_595a92_hasty_gate(veh_id, faction,
-            NetDaemonNet.lock_state_[1].leading_words_[3], local_30 != 0) ==
+            NetDaemonNet.channels_[0].leading_words_[3], local_30 != 0) ==
             OrderVeh595A92CommonCleanup) goto label_599b1a;
     goto label_595be6;
 
@@ -21931,7 +21930,7 @@ label_595a92:
 // The enclosing owner supplies the sole Popup and native automatic lifetime.
 label_595be6:
     GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2) == 0)
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) == 0)
         goto label_59729d;
     if (controller != 0) goto label_59724d;
     if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == 2)
@@ -21954,7 +21953,7 @@ label_595be6:
     }
     {
         const int nearby_base = base_find(destination_x, destination_y, faction);
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2) == 0)
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) == 0)
             goto label_59724d;
         if (Vehs[visible_vehicle].order_auto_type == faction)
             goto label_597216;
@@ -22083,14 +22082,14 @@ label_596052:
             (map_loc(source_x, source_y)->bit & BIT_BASE_IN_TILE) != 0 &&
             (map_loc(source_x, source_y)->val2 & 15) < 8 &&
             !stack_check(veh_id, 2, PLAN_NAVAL_TRANSPORT, -1, -1)) {
-        order_veh_amphibbase_notice(NetDaemonNet.lock_state_[1].leading_words_[3],
+        order_veh_amphibbase_notice(NetDaemonNet.channels_[0].leading_words_[3],
             faction, "AMPHIBBASE2");
         goto label_599b1a;
     }
     if (base_id >= 0) goto label_597350;
     if (triad != TRIAD_SEA) goto label_597345;
     if (IsMultiplayerNet || faction != ConsoleGlobal.faction_id_ ||
-            (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) == 0)
+            (NetDaemonNet.channels_[0].leading_words_[3] & 1) == 0)
         goto label_599b1a;
     if (order_veh_disembark_dialog(popup, veh_id, selected_passenger) !=
             OrderVehDisembarkDialogSelectedAt5962BE) goto label_599b1a;
@@ -22108,7 +22107,7 @@ label_597350:
         const RulesChassis &chassis = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id];
         if (chassis.range != 0) {
             if (faction == ConsoleGlobal.faction_id_ &&
-                (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0) {
+                (NetDaemonNet.channels_[0].leading_words_[3] & 1) != 0) {
                 parse_say(0, chassis.offsv_1_name, -1, -1);
                 NetMsgPrimary.pop("AIRCONQUER", 5000, 0, 0);
             }
@@ -22117,21 +22116,21 @@ label_597350:
     } else if (triad == 1) {
         if (!destination_lowland) {
             if (faction == ConsoleGlobal.faction_id_ &&
-                (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0)
+                (NetDaemonNet.channels_[0].leading_words_[3] & 1) != 0)
                 NetMsgPrimary.pop("SEACONQUER", 5000, 0, 0);
             goto label_599b1a;
         }
     } else if (triad == 0 && destination_lowland) {
         if (has_abil(Vehs[veh_id].proto_id, 8) == 0) {
             if (faction == ConsoleGlobal.faction_id_ &&
-                (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0)
+                (NetDaemonNet.channels_[0].leading_words_[3] & 1) != 0)
                 NetMsgPrimary.pop("LANDCONQUER", 5000, 0, 0);
             goto label_599b1a;
         }
     }
     if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating == 0) {
         if (faction == ConsoleGlobal.faction_id_ &&
-            (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0)
+            (NetDaemonNet.channels_[0].leading_words_[3] & 1) != 0)
             NetMsgPrimary.pop("COMBATCONQUER", 5000, 0, 0);
         goto label_599b1a;
     }
@@ -22142,7 +22141,7 @@ label_597350:
         goto label_599b1a;
     }
     if (faction != ConsoleGlobal.faction_id_) goto label_59763b;
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 1) == 0)
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 1) == 0)
         goto label_597564;
     if (break_treaty(faction, controller, 7) != 0) goto label_599b1a;
 
@@ -22150,7 +22149,7 @@ label_597564:
     if (faction != ConsoleGlobal.faction_id_) goto label_59763b;
     if ((static_cast<unsigned char>(faction_mask) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0)
         goto label_59763b;
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 1) == 0)
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 1) == 0)
         goto label_59763b;
     if (Vehs[veh_id].order != ORDER_MOVE_TO) goto label_59763b;
     if (Vehs[veh_id].waypoint_x[0] == destination_x &&
@@ -22235,7 +22234,7 @@ label_597b24:
 
 label_598cb9:
     order_veh_combat_and_turn_prelude(veh_id, faction,
-        NetDaemonNet.lock_state_[1].leading_words_[3],
+        NetDaemonNet.channels_[0].leading_words_[3],
         static_cast<uint8_t>(faction_mask), *map_loc(destination_x, destination_y),
         local_24 != 0, local_30 != 0);
     if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad == TRIAD_AIR) {
@@ -22290,8 +22289,8 @@ label_599b1a:
     if (GameDataStateStorage.fields_.vehicle_current_count_ != group_count_at_entry) return 0;
     if (selector == 0) {
         order_veh_finalize_unselected_action(veh_id, faction,
-            NetDaemonNet.lock_state_[1].leading_words_[3]);
-    } else if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2) != 0) {
+            NetDaemonNet.channels_[0].leading_words_[3]);
+    } else if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) != 0) {
         Veh &vehicle = Vehs[veh_id];
         if (direction >= 0 && direction < 8 && (vehicle.state & 8) != 0 &&
                 vehicle.x == destination_x && vehicle.y == destination_y &&
@@ -22336,7 +22335,7 @@ static int battle_fight_nerve_gas_cancel(int attacker_id,
                                          int movement_charge) {
     g_BattleWin.pulse_timer();
 
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2) != 0) {
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) != 0) {
         const int8_t signed_charge = static_cast<int8_t>(movement_charge);
         Vehs[attacker_id].moves_expended = static_cast<uint8_t>(
             static_cast<int>(Vehs[attacker_id].moves_expended) -
@@ -22365,7 +22364,7 @@ static int battle_fight_nerve_gas_precombat_v4(
         Armor[VehPrototypes[defender_proto].armor_id].defense_rating < 0)
         return 0;
     if (IsMultiplayerNet &&
-        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) == 0)
+        (NetDaemonNet.channels_[0].leading_words_[3] & 1) == 0)
         return 0;
 
     const uint32_t attacker_bit =
@@ -22418,7 +22417,7 @@ static int battle_fight_nerve_gas_precombat_v4(
     }
 
     if (IsMultiplayerNet) synch_veh(attacker_id);
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2) != 0 &&
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) != 0 &&
         (Vehs[attacker_id].state & VSTATE_USED_NERVE_GAS) != 0)
         nerve_gas_active = 1;
     return 1;
@@ -22517,7 +22516,7 @@ static int battle_fight_precombat_commit_v2(
     // NetDaemonNet.lock_state_[1].leading_words_[3] member (netdaemon.cpp's
     // address/layout notes), not a new global alias.
     if ((Vehs[attacker_id].state & VSTATE_UNK_1000) == 0 &&
-        (NetDaemonNet.lock_state_[1].leading_words_[3] & 2) != 0) {
+        (NetDaemonNet.channels_[0].leading_words_[3] & 2) != 0) {
         if (attacker_faction != 0 &&
             VehPrototypes[Vehs[attacker_id].proto_id].plan != 15 &&
             VehPrototypes[Vehs[attacker_id].proto_id].plan !=
@@ -22554,7 +22553,7 @@ static int battle_fight_precombat_commit_v2(
     Vehs[attacker_id].state =
         (Vehs[attacker_id].state & ~VSTATE_UNK_1000) | VSTATE_UNK_4;
     Vehs[defender_id].state |= VSTATE_UNK_4;
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2) == 0)
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) == 0)
         return 0; // exact native early return at 0x507521
     Vehs[attacker_id].state |= VSTATE_UNK_40;
     return 1; // fall-through to 0x50752A
@@ -22708,7 +22707,7 @@ static int battle_fight_pre_prompt_residual_v2(
 
     // This is the native human/local/no-interceptor status presentation gate.
     const bool odds_prompt_gate =
-        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1) != 0 &&
+        (NetDaemonNet.channels_[0].leading_words_[3] & 1) != 0 &&
         interceptor_result == 0 && attacker_is_human &&
         attacker_faction == ConsoleGlobal.faction_id_ && source_mode == 0 &&
         Chassis[attacker_chassis].missile == 0 &&
@@ -22819,7 +22818,7 @@ static int battle_fight_strength_prompt_residual_v2(
     // Decline: reload the multiplayer slot after popp's callback, then apply
     // the low-byte signed movement rollback and exact state/order cleanup.
     g_BattleWin.pulse_timer();
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2) != 0) {
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 2) != 0) {
         const int8_t signed_charge = static_cast<int8_t>(movement_charge);
         Vehs[attacker_id].moves_expended = static_cast<uint8_t>(
             static_cast<int>(Vehs[attacker_id].moves_expended) -
@@ -26468,7 +26467,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
         Chassis[target_stack_chassis].missile == 0 &&
         stack_check(target_stack, 6, ABL_AIR_SUPERIORITY, -1, -1) == 0 &&
         allow_interceptor != 0 &&
-        (NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) != 0) {
+        (NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0) {
         interceptor_result = interceptor(target_stack_faction,
                                          attacker_faction,
                                          target_x, target_y);
@@ -26580,7 +26579,7 @@ int __cdecl battle_fight(int veh_id, int dir, int target_x, int target_y,
          static_cast<unsigned char>(attacker_lock_bit)) != 0 &&
         attacker_definition.plan != 0x0B &&
         (defender_definition.plan != 0x0C || target_base_id >= 0) &&
-        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0 &&
+        (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0 &&
         (IsMultiplayerNet == 0 || interceptor_result == 0) &&
         break_treaty(attacker_faction, defender_faction, 0x0B) != 0) {
         return 2;

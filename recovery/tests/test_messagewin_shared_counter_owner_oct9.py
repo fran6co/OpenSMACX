@@ -38,18 +38,18 @@ def test_shared_counter_signed_order_increment_and_identity(tmp_path: Path) -> N
     assert "extern int MessageWinNetworkMessageCount" not in net_source
     game_source = (ROOT / "src/game.cpp").read_text()
     assert "MessageWinNetworkMessageCount" not in game_source
-    assert "RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A lock_state_[2].trailing_words_[7]" in net_source
+    assert "RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A channels_[1].trailing_words_[7]" in net_source
 
     harness = r'''
 #include <cassert>
 #include <cstdint>
 #include <cstring>
 struct LockState { uint32_t lead_[4]; uint32_t payload_; uint32_t trailing_words_[10]; };
-struct NetDaemon { LockState lock_state_[3];
-  uint32_t &network_message_count() { return lock_state_[2].trailing_words_[7]; }
+struct NetDaemon { LockState channels_[2];
+  uint32_t &network_message_count() { return channels_[1].trailing_words_[7]; }
 } NetDaemonNet;
-struct OtherDaemon { LockState lock_state_[3];
-  uint32_t &network_message_count() { return lock_state_[2].trailing_words_[7]; }
+struct OtherDaemon { LockState channels_[2];
+  uint32_t &network_message_count() { return channels_[1].trailing_words_[7]; }
 } other;
 int logs=0;
 void log_say(const char *,int,int,int) { ++logs; }

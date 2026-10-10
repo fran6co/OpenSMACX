@@ -56,11 +56,12 @@ struct LockStateEntry {
 struct LockCollection { int clears; void clear() { ++clears; } };
 struct AlphaNet { int closes; AlphaNet() : closes(0) {} void close() { ++closes; } };
 struct NetDaemon : AlphaNet {
-    LockStateEntry lock_state_[24];
+    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    LockStateEntry channels_[2];
     LockCollection locks_;
     int hangs;
-    NetDaemon() : hangs(0) { memset(lock_state_, 0, sizeof(lock_state_)); }
-    uint32_t &network_message_count() { return lock_state_[2].trailing_words_[7]; }
+    NetDaemon() : hangs(0) { memset(&primary_state_, 0, sizeof(primary_state_)); memset(channels_, 0, sizeof(channels_)); }
+    uint32_t &network_message_count() { return channels_[1].trailing_words_[7]; }
     void hang_up() { ++hangs; }
 };
 
@@ -198,7 +199,7 @@ int main() {
     if (end_of_game(0) != 1 || NetDaemonNet.hangs != 1 ||
         NetDaemonNet.closes != 1 || NetDaemonNet.locks_.clears != 1 ||
         IsMultiplayerNet != 0 || GameRestartQueued != 0 ||
-        NetDaemonNet.lock_state_[2].trailing_words_[6] != 0xFF)
+        NetDaemonNet.channels_[1].trailing_words_[6] != 0xFF)
         ++failures;
 
     if (failures) fprintf(stderr, "endgame source control failures: %d\n", failures);

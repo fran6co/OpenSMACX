@@ -59,9 +59,12 @@ void treaty_on(int a,int b,int c) {
 }
 AGGRESSION
 struct Entry {uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10];};
+struct PrimaryState {uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10];};
 struct Locks {void check_global() {calls.push_back(4);}};
 struct NetDaemon {
-    Entry lock_state_[24]{};
+    uint32_t deletion_owner_{};
+    PrimaryState primary_state_{};
+    Entry channels_[2]{};
     Locks locks_;
     int veh_drop(int,int,int);
     int lock_veh(int *id,int flag,int x,int y,int mode);
@@ -93,7 +96,7 @@ void synch_veh(int) {}
 int speed(int id,int mode) {assert(id==1&&mode==0);return speed_result;}
 int action_airdrop(int id,int x,int y,int mode) {
     assert(id==1&&x==5&&y==7); ++action_calls; action_mode=mode;
-    NetDaemonNet.lock_state_[1].leading_words_[3]=mode;
+    NetDaemonNet.channels_[0].leading_words_[3]=mode;
     if(!network_stays) IsMultiplayerNet=0;
     return action_result;
 }
@@ -103,8 +106,8 @@ int NetDaemon::lock_veh(int *id,int flag,int x,int y,int mode) {
 int NetDaemon::wait(const char *,uint32_t *ack,int,int) {*ack=0;return 7;}
 void NetDaemon::receive() {
     calls.push_back(3);
-    lock_state_[2].leading_words_[3]=0;
-    NetDaemonNet.lock_state_[1].leading_words_[3]=99;
+    channels_[1].leading_words_[3]=0;
+    NetDaemonNet.channels_[0].leading_words_[3]=99;
     ExitTurnLoop=27;
 }
 DROP
@@ -123,21 +126,21 @@ int main() {
     assert(act_of_aggression(2,3)==1);assert((calls==std::vector<int>{10,11}));
     reset();IsMultiplayerNet=0;action_result=9;
     assert(NetDaemonNet.veh_drop(1,5,7)==9&&action_mode==3);
-    reset();NetDaemonNet.lock_state_[2].leading_words_[2]=1;
-    NetDaemonNet.lock_state_[2].trailing_words_[3]=1;
-    NetDaemonNet.lock_state_[1].payload_.vehicle_selection_follow=&followed_vehicle;
+    reset();NetDaemonNet.channels_[1].leading_words_[2]=1;
+    NetDaemonNet.channels_[1].trailing_words_[3]=1;
+    NetDaemonNet.channels_[0].payload_.vehicle_selection_follow=&followed_vehicle;
     assert(NetDaemonNet.veh_drop(1,5,7)==0);
-    assert(NetDaemonNet.lock_state_[1].payload_.vehicle_selection_follow==&followed_vehicle&&action_calls==0);
-    reset();lock_result=1;NetDaemonNet.lock_state_[1].payload_.vehicle_selection_follow=&followed_vehicle;
+    assert(NetDaemonNet.channels_[0].payload_.vehicle_selection_follow==&followed_vehicle&&action_calls==0);
+    reset();lock_result=1;NetDaemonNet.channels_[0].payload_.vehicle_selection_follow=&followed_vehicle;
     assert(NetDaemonNet.veh_drop(1,5,7)==0);
-    assert(NetDaemonNet.lock_state_[1].payload_.vehicle_selection_follow==&followed_vehicle&&action_calls==0);
-    reset();network_stays=false;NetDaemonNet.lock_state_[1].payload_.vehicle_selection_follow=&followed_vehicle;
+    assert(NetDaemonNet.channels_[0].payload_.vehicle_selection_follow==&followed_vehicle&&action_calls==0);
+    reset();network_stays=false;NetDaemonNet.channels_[0].payload_.vehicle_selection_follow=&followed_vehicle;
     assert(NetDaemonNet.veh_drop(1,5,7)==1);
-    assert(NetDaemonNet.lock_state_[1].payload_.vehicle_selection_follow==&followed_vehicle);
+    assert(NetDaemonNet.channels_[0].payload_.vehicle_selection_follow==&followed_vehicle);
     reset();NetDaemon other;
-    other.lock_state_[2].leading_words_[3]=1;
+    other.channels_[1].leading_words_[3]=1;
     assert(other.veh_drop(1,5,7)==1);
-    assert(NetDaemonNet.lock_state_[1].leading_words_[3]==1);
+    assert(NetDaemonNet.channels_[0].leading_words_[3]==1);
     assert(ExitTurnLoop==27&&NetBusyCount==0);
     assert((calls==std::vector<int>{6,2,3,4,5,6}));
 }

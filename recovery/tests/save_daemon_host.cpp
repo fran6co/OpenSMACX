@@ -27,7 +27,9 @@ typedef AlphaNetProcessSlot AlphaNetProcessSlotHost;
 struct NetDaemonHost {
     int player_count_;
     AlphaNetProcessSlotHost process_slots_[8];
-    NetDaemonSaveStorageView save_storage_;
+    void *file_index_records_;
+    uint32_t field_1BE4_;
+    NetDaemonSaveProcessSlot saved_process_slots_[8];
 } NetDaemonNet;
 struct BaseSecretProject { unsigned char bytes_[0x100]; };
 /* ACTUAL_GAME_DATA_STATE_HEADER */
@@ -120,7 +122,7 @@ static void test_filename_and_success_path() {
     assert(opened_path == "autosave.SAV");
     assert(GameDataPlayerCountSnapshot == 4);
     assert(GameDataStateStorage.fields_.game_state_ == 0x10000000u && seed_calls == 0);
-    assert(std::memcmp(NetDaemonNet.process_slots_, NetDaemonNet.save_storage_.process_slots_,
+    assert(std::memcmp(NetDaemonNet.process_slots_, NetDaemonNet.saved_process_slots_,
                        sizeof NetDaemonNet.process_slots_) == 0);
     assert(calls == "TOHVGKC");
     assert(close_calls == 1 && remove_calls == 0);

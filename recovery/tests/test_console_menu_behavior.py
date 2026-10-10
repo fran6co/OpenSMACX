@@ -57,7 +57,7 @@ struct LockStateEntry {
   struct Payload { uint32_t flags; } payload_;
   uint32_t leading_words_[4];
 };
-struct NetDaemon { LockStateEntry lock_state_[24]; void hang_up() {Trace.push_back("hang_up");} void reset() {Trace.push_back("daemon_reset");} };
+struct NetDaemon { LockStateEntry channels_[2]; struct Primary { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_; void hang_up() {Trace.push_back("hang_up");} void reset() {Trace.push_back("daemon_reset");} };
 struct AlphaMenu {
   void check(int) {Trace.push_back("menu_check");}
   void uncheck_menu_item(...) {}
@@ -280,48 +280,88 @@ struct LockStateEntry {
     union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_;
     uint32_t trailing_words_[10];
 };
+struct DeletionList {
+    uint8_t records_[0x5A0];
+    int current_owner_;
+    uint32_t sequence_bits() const {
+        uint32_t bits;
+        std::memcpy(&bits, &current_owner_, sizeof bits);
+        return bits;
+    }
+};
+struct SavedProcessSlot { uint8_t bytes_[0x19C]; };
 struct NetDaemon : AlphaNet {
     Lock locks_;
-    LockStateEntry lock_state_[24];
-    NetDaemon() { std::memset(lock_state_, 0x7F, sizeof(lock_state_)); }
+    DeletionList deletion_list_;
+    LockStateEntry channels_[2];
+    struct Primary { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_;
+    void *file_index_records_;
+    uint32_t field_1BE4_;
+    SavedProcessSlot saved_process_slots_[8];
+    NetDaemon() : file_index_records_(reinterpret_cast<void *>(0x1234)), field_1BE4_(0xA5A5A5A5u) {
+        std::memset(&deletion_list_, 0x6B, sizeof(deletion_list_));
+        std::memset(channels_, 0x7F, sizeof(channels_));
+        std::memset(&primary_state_, 0x7F, sizeof(primary_state_));
+        std::memset(saved_process_slots_, 0x3C, sizeof(saved_process_slots_));
+        deletion_list_.current_owner_ = 0x12345678;
+    }
     void reset();
 };
 // SOURCE_BODY
 
 int main() {
     NetDaemon daemon;
+    uint8_t deletion_records_snapshot[sizeof(daemon.deletion_list_.records_)];
+    std::memcpy(deletion_records_snapshot, daemon.deletion_list_.records_,
+                sizeof deletion_records_snapshot);
+    uint8_t saved_process_snapshot[sizeof(daemon.saved_process_slots_)];
+    std::memcpy(saved_process_snapshot, daemon.saved_process_slots_, sizeof saved_process_snapshot);
+    const uint32_t sequence_before = daemon.deletion_list_.sequence_bits();
+    void *const file_index_before = daemon.file_index_records_;
+    const uint32_t file_index_adjacent_before = daemon.field_1BE4_;
     daemon.reset();
-    assert(daemon.lock_state_[0].leading_words_[0] == 0x7F7F7F7Fu);
-    for (int i = 1; i < 4; ++i) assert(daemon.lock_state_[0].leading_words_[i] == 0);
-    assert(daemon.lock_state_[0].payload_.flags == 0);
-    for (int i = 0; i < 9; ++i) assert(daemon.lock_state_[0].trailing_words_[i] == 0);
-    assert(daemon.lock_state_[0].trailing_words_[9] == 0x7F7F7F7Fu);
-    assert(daemon.lock_state_[1].leading_words_[0] == 0);
-    assert(daemon.lock_state_[1].leading_words_[1] == 0);
-    assert(daemon.lock_state_[1].leading_words_[2] == 0x7F7F7F7Fu);
-    assert(daemon.lock_state_[1].leading_words_[3] == 0x7F7F7F7Fu);
-    assert(daemon.lock_state_[1].payload_.vehicle_selection_follow == nullptr);
-    for (int i = 0; i < 10; ++i) assert(daemon.lock_state_[1].trailing_words_[i] == 0);
-    for (int i = 0; i < 4; ++i) assert(daemon.lock_state_[2].leading_words_[i] == 0);
-    assert(daemon.lock_state_[2].payload_.flags == 0);
-    assert(daemon.lock_state_[2].trailing_words_[0] == 0x7F7F7F7Fu);
-    assert(daemon.lock_state_[2].trailing_words_[1] == 0x7F7F7F7Fu);
-    assert(daemon.lock_state_[2].trailing_words_[2] == 0);
-    assert(daemon.lock_state_[2].trailing_words_[3] == 0);
-    assert(daemon.lock_state_[2].trailing_words_[4] == 0);
-    assert(daemon.lock_state_[2].trailing_words_[5] == 0);
-    assert(daemon.lock_state_[2].trailing_words_[6] == 0xFF);
-    assert(daemon.lock_state_[2].trailing_words_[7] == 0);
-    assert(daemon.lock_state_[2].trailing_words_[8] == 0);
-    assert(daemon.lock_state_[2].trailing_words_[9] == 0x7F7F7F7Fu);
+    assert(daemon.deletion_list_.current_owner_ == 0x12345678);
+    assert(daemon.deletion_list_.sequence_bits() == sequence_before);
+    assert(std::memcmp(deletion_records_snapshot, daemon.deletion_list_.records_,
+                       sizeof deletion_records_snapshot) == 0);
+    assert(daemon.file_index_records_ == file_index_before);
+    assert(daemon.field_1BE4_ == file_index_adjacent_before);
+    assert(std::memcmp(saved_process_snapshot, daemon.saved_process_slots_,
+                       sizeof saved_process_snapshot) == 0);
+    assert(daemon.primary_state_.leading_words_[0] == 0);
+    assert(daemon.primary_state_.leading_words_[1] == 0);
+    assert(daemon.primary_state_.leading_words_[2] == 0);
+    assert(daemon.primary_state_.flags_ == 0);
+    for (int i = 0; i < 7; ++i) assert(daemon.primary_state_.trailing_words_[i] == 0);
+    assert(daemon.primary_state_.trailing_words_[7] == 0);
+    assert(daemon.primary_state_.trailing_words_[8] == 0);
+    assert(daemon.primary_state_.trailing_words_[9] == 0x7F7F7F7Fu);
+    assert(daemon.channels_[0].leading_words_[0] == 0);
+    assert(daemon.channels_[0].leading_words_[1] == 0);
+    assert(daemon.channels_[0].leading_words_[2] == 0x7F7F7F7Fu);
+    assert(daemon.channels_[0].leading_words_[3] == 0x7F7F7F7Fu);
+    assert(daemon.channels_[0].payload_.vehicle_selection_follow == nullptr);
+    for (int i = 0; i < 8; ++i) assert(daemon.channels_[0].trailing_words_[i] == 0);
+    assert(daemon.channels_[0].trailing_words_[8] == 0);
+    assert(daemon.channels_[0].trailing_words_[9] == 0);
+    assert(daemon.channels_[1].leading_words_[0] == 0);
+    assert(daemon.channels_[1].leading_words_[1] == 0);
+    assert(daemon.channels_[1].leading_words_[2] == 0);
+    assert(daemon.channels_[1].leading_words_[3] == 0);
+    assert(daemon.channels_[1].payload_.flags == 0);
+    assert(daemon.channels_[1].trailing_words_[0] == 0x7F7F7F7Fu);
+    assert(daemon.channels_[1].trailing_words_[1] == 0x7F7F7F7Fu);
+    assert(daemon.channels_[1].trailing_words_[2] == 0);
+    assert(daemon.channels_[1].trailing_words_[3] == 0);
+    assert(daemon.channels_[1].trailing_words_[4] == 0);
+    assert(daemon.channels_[1].trailing_words_[5] == 0);
+    assert(daemon.channels_[1].trailing_words_[6] == 0xFF);
+    assert(daemon.channels_[1].trailing_words_[7] == 0);
+    assert(daemon.channels_[1].trailing_words_[8] == 0);
+    assert(daemon.channels_[1].trailing_words_[9] == 0x7F7F7F7Fu);
     assert(daemon.locks_.cleared);
     assert(daemon.closed);
     assert(events.size()==2 && events[0]=="clear" && events[1]=="close");
-    for(int row=3;row!=24;++row){
-        for(int i=0;i!=4;++i) assert(daemon.lock_state_[row].leading_words_[i]==0x7F7F7F7Fu);
-        assert(daemon.lock_state_[row].payload_.flags==0x7F7F7F7Fu);
-        for(int i=0;i!=10;++i) assert(daemon.lock_state_[row].trailing_words_[i]==0x7F7F7F7Fu);
-    }
 }
 """
     compile_run(program.replace("// SOURCE_BODY", method))

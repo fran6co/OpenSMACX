@@ -158,7 +158,7 @@ def _compile_run(tmp_path, compiler, harness, inject):
     cpp.write_text(source)
     command = [compiler, "-std=c++03", "-Wall", "-Wextra", "-Werror",
                "-pedantic", "-fsanitize=address,undefined",
-               "-fno-omit-frame-pointer", str(cpp), "-o", str(exe)]
+               "-fno-omit-frame-pointer", "-I", str(ROOT), str(cpp), "-o", str(exe)]
     built = subprocess.run(command, capture_output=True, text=True)
     assert built.returncode == 0, built.stdout + built.stderr
     env = dict(os.environ, ASAN_OPTIONS="detect_leaks=0",
@@ -254,13 +254,14 @@ def test_actual_product_definitions_are_selected_not_tmp_proposals():
     assert "NetDaemonSyncWire::copy_out" in net
     assert "NetDaemonSyncWire::copy_in" in net
     assert "copy_member_bytes" in wire0
-    assert "GameWireOpaque_9A67C9" in wire0
+    assert "GameDataStateStorage.fields_.game_wire_opaque_9a67c9_" in wire0
     assert "veh_bung_copy_chunk" in nonrule
     assert "copy_rule_wire_chunk" in rule_copy
     assert "commit_staged_rules" in rule_commit
     assert (ROOT / "src/game.cpp").is_file()
     game = (ROOT / "src/game.cpp").read_text()
-    assert re.search(r"^uint8_t GameWireOpaque_94B4D8\[0x80\];$", game, re.MULTILINE)
+    game_h = (ROOT / "src/game.h").read_text()
+    assert re.search(r"uint8_t wire_opaque_94b4d8\[0x80\];", game_h)
     assert re.search(r"^char NetDaemonFileTransferPath\[0x104\];$", net, re.MULTILINE)
     assert re.search(r"^static unsigned char NetDaemonRulesSyncStaging\[0x1920\];$",
                      net, re.MULTILINE)
@@ -306,7 +307,7 @@ def test_actual_opcode0_owner_source_roundtrip(tmp_path, compiler):
     source_template.write_text(harness)
     injection = _wire0_extract(net)
     _compile_injected(tmp_path, compiler, source_template, injection)
-    old = "COPY0(0x239, LegacyGameSaveName);"
+    old = "COPY0(0x239, GameDataStateStorage.fields_.legacy_game_save_name_);"
     assert old in injection
     _compile_injected(tmp_path, compiler, source_template,
                       injection.replace(old, "", 1), expected=False)
@@ -322,7 +323,7 @@ def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
     source_template.write_text(harness)
     injection = _owner_copy_extract(net)
     _compile_injected(tmp_path, compiler, source_template, injection)
-    old = "COPY_BYTES(0x18, GameWireOpaque_94B4D8,\n                   sizeof GameWireOpaque_94B4D8);"
+    old = "COPY_BYTES(0x18, ScenarioSave.wire_opaque_94b4d8,\n                   sizeof ScenarioSave.wire_opaque_94b4d8);"
     assert old in injection
     _compile_injected(tmp_path, compiler, source_template,
                       injection.replace(old, "", 1), expected=False)

@@ -60,7 +60,7 @@ static MapWin *MapWinTable[8];
 static const size_t MapWinTableSlots = 8;
 
 struct NetState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct NetDaemonDouble { NetState lock_state_[24]; };
+struct NetDaemonDouble { NetState channels_[2]; struct Primary { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_; };
 static NetDaemonDouble NetDaemonNet;
 static int IsMultiplayerNet;
 static int ConsoleControlTurnActive;
@@ -246,9 +246,9 @@ static void test_gates_and_argument_roles() {
     Console c;
     reset(c); IsMultiplayerNet = 1; ConsoleControlTurnActive = 1;
     c.veh_key('B', '.', 0x30046); check(calls.empty(), "control-turn gate");
-    reset(c); IsMultiplayerNet = 1; NetDaemonNet.lock_state_[2].payload_.flags = 1;
+    reset(c); IsMultiplayerNet = 1; NetDaemonNet.channels_[1].payload_.flags = 1;
     c.veh_key('B', '.', 0x30046); check(calls.empty(), "lock-state gate");
-    reset(c); IsMultiplayerNet = 1; NetDaemonNet.lock_state_[0].trailing_words_[7] = 1u << 3;
+    reset(c); IsMultiplayerNet = 1; NetDaemonNet.primary_state_.trailing_words_[7] = 1u << 3;
     ConsoleGlobal.faction_id_ = 3; c.veh_key('B', '.', 0x30046);
     check(calls.empty(), "faction wait-mask gate");
     ConsoleGlobal.faction_id_ = 0;
@@ -256,7 +256,7 @@ static void test_gates_and_argument_roles() {
     reset(c); IsMultiplayerNet = 1; ConsoleControlTurnActive = 1;
     c.veh_key('?', 'a', 0x30046);
     expect({Call{"automate", 41, 6, -999}}, "character a bypasses multiplayer gate");
-    reset(c); IsMultiplayerNet = 1; NetDaemonNet.lock_state_[2].payload_.flags = 1;
+    reset(c); IsMultiplayerNet = 1; NetDaemonNet.channels_[1].payload_.flags = 1;
     c.veh_key('a', 'a', 0);
     check(calls.empty(), "a activation retains its separate lock-state guard");
 
@@ -486,7 +486,7 @@ NetPopup &NetMsgPrimary = popup_message;
 struct Popup { void start(char *,const char *,int,char *,int,void *) { events.push_back("popup-start"); }
   int exec(int,void *) { events.push_back("popup-exec"); return popup_exec_result; } };
 struct LockEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct NetDaemon { LockEntry lock_state_[24];
+struct NetDaemon { LockEntry channels_[2]; struct Primary { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_;
   int lock_veh(int *,int mode,int,int,int) { events.push_back("lock:"+std::to_string(mode));
     if(mode==0) { ++lock0_calls; return lock_mode0_result; }
     ++lock2_calls; return lock_mode2_result;
@@ -530,7 +530,7 @@ void synch_energy(int) { ++synch_energy_calls; events.push_back("synch-energy");
 void Console::update_data(int) { ++update_data_calls; events.push_back("update-data"); }
 void log_say(const char *s,int,int,int) { events.push_back(string("log:")+s);
   if(clear_lock_in_log && std::strcmp(s,"I think I've already got my lock")==0)
-    NetDaemonNet.lock_state_[2].leading_words_[3]=0;
+    NetDaemonNet.channels_[1].leading_words_[3]=0;
 }
 '''
 
@@ -558,7 +558,7 @@ static void reset_state() {
   synch_vehicle_calls=synch_energy_calls=update_data_calls=0;
   popup_exec_result=1; xpop_result=1; parse_says_mode0_seen=0;
   parsed_mode0.clear(); popup_label.clear(); StringTemp[0]=0;
-  NetDaemonNet.lock_state_[2].leading_words_[3]=0;
+  NetDaemonNet.channels_[1].leading_words_[3]=0;
   Vehs[0].proto_id=0; Vehs[0].x=2; Vehs[0].y=2; Vehs[0].faction_id=0;
   VehPrototypes[0].plan=9; VehPrototypes[0].chassis_id=0;
   Chassis[0].triad=TRIAD_LAND; Tiles[2*8+2].climate=0x60;
@@ -575,7 +575,7 @@ int main() {
 
   // The existing lock callback clears state: native's second independent test
   // then reacquires before issuing the order.
-  reset_state(); NetDaemonNet.lock_state_[2].leading_words_[3]=1; clear_lock_in_log=1;
+  reset_state(); NetDaemonNet.channels_[1].leading_words_[3]=1; clear_lock_in_log=1;
   c.terraform(0,TERRA_ROAD);
   assert(lock0_calls==1 && Vehs[0].order==TERRA_ROAD+4);
 
@@ -676,7 +676,8 @@ void message_veh(int,int,int,int){}
 void action_tectonic(int id,int x,int y){assert(id==0&&x==0&&y==0);events.push_back("tectonic");}
 void action_fungal(int id,int x,int y){assert(id==0&&x==0&&y==0);events.push_back("fungal");}
 int StringCalls=0;
-struct Strings { char *get(int) { ++StringCalls; return (char*)"ability"; } } StringTable;
+struct Strings { char *get(int) { ++StringCalls; return (char*)"ability"; }
+ char *get(char *) { ++StringCalls; return (char*)"ability"; } } StringTable;
 int SelectedResult=16;
 struct Dialogs { void item(char *text,int value) { assert(std::strcmp(text,"ability")==0); events.push_back("item:"+std::to_string(value)); } };
 int CloseCalls=0;
@@ -839,7 +840,7 @@ struct Window { int visible=0; int is_visible() { return visible; } };
 Window TutWinBaseWindow,ReportWinGlobal;
 struct TutWin { void tour() { events.push_back("tour"); } } TutorialWindow;
 struct LockState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct NetDaemon { LockState lock_state_[24];
+struct NetDaemon { LockState channels_[2]; struct Primary { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_;
   int action(int,int) { events.push_back("action"); return ActionResult; }
   int automated_lock(int *id,int mode) { (void)id; assert(mode==4); ++AutomatedLockCalls;
     events.push_back("auto-lock"); return AutomatedLockResult; }
@@ -934,6 +935,10 @@ struct Strings { char *get(int value) {
   if(value==1) return const_cast<char *>("ABBR");
   if(value==2) return const_cast<char *>("LONGNAME");
   return const_cast<char *>("ABILITY");
+} char *get(char *value) {
+  return value == reinterpret_cast<char *>(1) ? const_cast<char *>("ABBR") :
+         value == reinterpret_cast<char *>(2) ? const_cast<char *>("LONGNAME") :
+         const_cast<char *>("ABILITY");
 } } StringTable;
 std::vector<std::string> events;
 void parse_num(int slot,int value) {
@@ -1754,7 +1759,7 @@ struct Strings { int gets=0; const char *get(int key) {
     if(key==static_cast<int>(reinterpret_cast<intptr_t>(Facility[i].name)))
       return Facility[i].name;
   assert(false); return "";
-} } StringTable;
+} const char *get(char *value) { ++gets; return value; } } StringTable;
 std::vector<std::string> Events; std::vector<int> MovieCalls;
 struct Item { std::string text; int id; };
 struct Dialogs { std::vector<Item> items;
@@ -1937,7 +1942,7 @@ void log_say(const char *message,int a,int b,int c) {
 struct AlphaNet { void close() { events.push_back("close"); } };
 struct Lock { void clear() { events.push_back("clear_locks"); } };
 struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct NetDaemon:AlphaNet { Lock locks_; LockStateEntry lock_state_[24]{};
+struct NetDaemon:AlphaNet { Lock locks_; LockStateEntry channels_[2]{}; struct Primary { uint32_t leading_words_[3]{}, flags_{}, trailing_words_[10]{}; } primary_state_;
   void hang_up() { events.push_back("hang_up"); } } NetDaemonNet;
 struct Console { int faction_id_=3; void retire_game(); } ConsoleGlobal;
 '''
@@ -1961,7 +1966,7 @@ int main() {
   assert((events==std::vector<std::string>{"prompt:REALLYRETIRE","hang_up","clear_locks",
     "close","score","log"}));
   assert(!IsMultiplayerNet&&ExitTurnLoop==1&&GameRestartQueued==0&&HallCalls==0&&ReplayCalls==0);
-  assert(NetDaemonNet.lock_state_[2].trailing_words_[6]==0xFF);
+  assert(NetDaemonNet.channels_[1].trailing_words_[6]==0xFF);
 }
 '''
     unit = tmp_path / "console_retire_game.cpp"

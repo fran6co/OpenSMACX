@@ -29,7 +29,8 @@ HARNESS = r"""
 #include <cassert>
 #include <cstdint>
 struct LockState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct NetDaemon { LockState lock_state_[24]; } NetDaemonNet;
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+struct NetDaemon { PrimaryState primary_state_; LockState channels_[2]; } NetDaemonNet;
 struct { int faction_id_; } ConsoleGlobal;
 struct Spot {
   int result, selected, checks;
@@ -64,18 +65,18 @@ int main() {
   QuayleWin win{};
   ConsoleGlobal.faction_id_ = 2;
 
-  NetDaemonNet.lock_state_[0].trailing_words_[7] = 1u << 2;
+  NetDaemonNet.primary_state_.trailing_words_[7] = 1u << 2;
   win.on_left_click(20, 30);
   assert(win.spot_.checks == 0 && win.redraws == 0);
-  NetDaemonNet.lock_state_[0].trailing_words_[7] = 0;
-  NetDaemonNet.lock_state_[2].payload_.flags = 1;
+  NetDaemonNet.primary_state_.trailing_words_[7] = 0;
+  NetDaemonNet.channels_[1].payload_.flags = 1;
   win.on_left_click(20, 30);
   assert(win.spot_.checks == 0 && win.redraws == 0);
-  NetDaemonNet.lock_state_[2].payload_.flags = 0;
-  NetDaemonNet.lock_state_[0].leading_words_[3] = 1;
+  NetDaemonNet.channels_[1].payload_.flags = 0;
+  NetDaemonNet.primary_state_.leading_words_[2] = 1;
   win.on_left_click(20, 30);
   assert(win.spot_.checks == 0 && win.redraws == 0);
-  NetDaemonNet.lock_state_[0].leading_words_[3] = 0;
+  NetDaemonNet.primary_state_.leading_words_[2] = 0;
 
   win.spot_.result = 0; win.spot_.selected = 7;
   win.on_left_click(20, 30);

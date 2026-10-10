@@ -5559,38 +5559,38 @@ search:
                 NetDaemonNet.hang_up();
                 // These are the original individual lock-state words, not
                 // a clear of the whole surrounding network allocation.
-                NetDaemonNet.lock_state_[0].leading_words_[1] = 0;
-                NetDaemonNet.lock_state_[0].leading_words_[2] = 0;
-                NetDaemonNet.lock_state_[0].leading_words_[3] = 0;
-                NetDaemonNet.lock_state_[0].payload_.flags = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[8] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[7] = 0;
-                NetDaemonNet.lock_state_[1].leading_words_[1] = 0;
-                NetDaemonNet.lock_state_[1].leading_words_[0] = 0;
-                NetDaemonNet.lock_state_[1].trailing_words_[0] = 0;
-                NetDaemonNet.lock_state_[2].leading_words_[1] = 0;
-                NetDaemonNet.lock_state_[1].trailing_words_[9] = 0;
-                NetDaemonNet.lock_state_[2].leading_words_[0] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[5] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[4] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[4] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[5] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[6] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[3] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[2] = 0;
-                NetDaemonNet.lock_state_[2].leading_words_[3] = 0;
-                NetDaemonNet.lock_state_[2].leading_words_[2] = 0;
-                NetDaemonNet.lock_state_[2].payload_.flags = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[0] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[1] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[8] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[7] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[2] = 0;
-                NetDaemonNet.lock_state_[0].trailing_words_[3] = 0;
-                NetDaemonNet.lock_state_[2].trailing_words_[6] = 255;
-                NetDaemonNet.lock_state_[1].payload_.vehicle_selection_follow = 0;
+                NetDaemonNet.primary_state_.leading_words_[0] = 0;
+                NetDaemonNet.primary_state_.leading_words_[1] = 0;
+                NetDaemonNet.primary_state_.leading_words_[2] = 0;
+                NetDaemonNet.primary_state_.flags_ = 0;
+                NetDaemonNet.primary_state_.trailing_words_[8] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[7] = 0;
+                NetDaemonNet.channels_[0].leading_words_[1] = 0;
+                NetDaemonNet.channels_[0].leading_words_[0] = 0;
+                NetDaemonNet.channels_[0].trailing_words_[0] = 0;
+                NetDaemonNet.channels_[1].leading_words_[1] = 0;
+                NetDaemonNet.channels_[0].trailing_words_[9] = 0;
+                NetDaemonNet.channels_[1].leading_words_[0] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[5] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[4] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[4] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[5] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[6] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[3] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[2] = 0;
+                NetDaemonNet.channels_[1].leading_words_[3] = 0;
+                NetDaemonNet.channels_[1].leading_words_[2] = 0;
+                NetDaemonNet.channels_[1].payload_.flags = 0;
+                NetDaemonNet.primary_state_.trailing_words_[0] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[1] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[8] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[7] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[2] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[3] = 0;
+                NetDaemonNet.channels_[1].trailing_words_[6] = 255;
+                NetDaemonNet.channels_[0].payload_.vehicle_selection_follow = 0;
                 for (int lockword = 6; lockword < 14; ++lockword)
-                    NetDaemonNet.lock_state_[1].trailing_words_[lockword - 5] = 0;
+                    NetDaemonNet.channels_[0].trailing_words_[lockword - 5] = 0;
                 NetDaemonNet.locks_.clear();
                 NetDaemonNet.close();
                 IsMultiplayerNet = 0;
@@ -15826,7 +15826,7 @@ int __cdecl commlink_attempter(int faction_id, int contact_flags) {
 
     if (IsMultiplayerNet != 0 &&
         (ConsoleControlTurnActive != 0 ||
-         NetDaemonNet.lock_state_[2].payload_.flags != 0))
+         NetDaemonNet.channels_[1].payload_.flags != 0))
         return 1;
     return 0;
 }

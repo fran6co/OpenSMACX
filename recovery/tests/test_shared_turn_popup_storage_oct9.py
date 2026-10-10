@@ -56,8 +56,8 @@ SUPPORT = r'''#include <cassert>
 #include <cstring>
 #define __cdecl
 #define NullCallback void*
-struct LockEntry { uint32_t leading_words_[4]{}; };
-struct Net { LockEntry lock_state_[24]{}; };
+struct PrimaryState { uint32_t leading_words_[3]{}, flags_{}, trailing_words_[10]{}; };
+struct Net { PrimaryState primary_state_{}; };
 Net NetDaemonNet;
 struct Fields { int net_turn_flags_=0, net_turn_faction_=0, game_more_preferences_=0; struct { struct { uint32_t alive_mask_=0; } bytes_; uint32_t enable_mask_=0; } lock_masks_; };
 struct GameState { Fields fields_; };
@@ -103,8 +103,8 @@ def test_shared_turn_storage_and_popup_dword_actual_sources(tmp_path: Path,
     ]
     key_route = extract_case(console, "case 'R':")
     assert "0x0093E8C0" not in game[game.find("static int turns_assigned()"):game.find("int __cdecl next_player_turn()")]
-    assert "NetDaemonNet.lock_state_[0].leading_words_[1]" in game
-    assert "NetDaemonNet.lock_state_[0].leading_words_[1]" in console
+    assert "NetDaemonNet.primary_state_.leading_words_[0]" in game
+    assert "NetDaemonNet.primary_state_.leading_words_[0]" in console
     assert "console_turns_assigned()" in time_controls
     assert "reinterpret_cast<int *>(0x0093E8C0)" not in console
     assert "reinterpret_cast<unsigned char *>(0x009BC06C)" not in console
@@ -120,10 +120,10 @@ def test_shared_turn_storage_and_popup_dword_actual_sources(tmp_path: Path,
     source = SUPPORT + "\n".join(bodies) + "\n" + route_method + r'''
 int main() {
   // The game and console accessors are the identical existing owner cell.
-  NetDaemonNet.lock_state_[0].leading_words_[1]=0xFFFFFFFFu;
+  NetDaemonNet.primary_state_.leading_words_[0]=0xFFFFFFFFu;
   assert(console_turns_assigned() == 0xFFFFFFFFu);
   assert(turns_assigned() == -1);
-  assert(&console_turns_assigned() == &NetDaemonNet.lock_state_[0].leading_words_[1]);
+  assert(&console_turns_assigned() == &NetDaemonNet.primary_state_.leading_words_[0]);
 
   GameDataStateStorage.fields_.net_turn_flags_=0x10;
   GameDataStateStorage.fields_.net_turn_faction_=0;
@@ -132,11 +132,11 @@ int main() {
   GameDataStateStorage.fields_.net_turn_flags_=0;
   ConsoleGlobal.faction_id_=1;
   assert(current_server()==-1); // preserve the signed interpretation of 0xFFFFFFFF
-  NetDaemonNet.lock_state_[0].leading_words_[1]=0;
+  NetDaemonNet.primary_state_.leading_words_[0]=0;
   GameDataStateStorage.fields_.net_turn_flags_=0x10;
   NextTurnReady=0;
   assert(next_player_turn()==0 && NextTurnReady==0);
-  NetDaemonNet.lock_state_[0].leading_words_[1]=1;
+  NetDaemonNet.primary_state_.leading_words_[0]=1;
   GameDataStateStorage.fields_.net_turn_faction_=7;
   assert(next_player_turn()==1 && NextTurnReady==1);
 

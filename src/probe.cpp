@@ -444,7 +444,7 @@ static BOOL probe_native_entry_local_warning(int actor_faction_id,
         static_cast<uint32_t>(actor_faction_id) & 31u;
     const uint8_t actor_bit = static_cast<uint8_t>(1u << actor_shift);
     if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & actor_bit) == 0) return 0;
-    if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) == 0) return 0;
+    if ((NetDaemonNet.channels_[0].leading_words_[3] & 1u) == 0) return 0;
 
     parse_say(0, Ability[abil_index(8)].name, -1, -1);
     NetMsgPrimary.pop("PROBEABILAMPHIBIOUS", 5000, 0, 0);
@@ -1720,7 +1720,7 @@ label_59f769:
         const bool local_human_network_choice =
             actor_faction_id == ConsoleGlobal.faction_id_ &&
             (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
-            (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0;
+            (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0;
         if (!local_human_network_choice) {
             if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) == 0)
                 goto label_5a2574;
@@ -1971,7 +1971,7 @@ label_59fb67:
         // completion publishes the directed 0x1000 treaty bit and, for the
         // local actor, refreshes the target's intelligence report.
         if (action_result == 0 &&
-            (NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) != 0) {
+            (NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0) {
             if ((PlayersData[actor_faction_id]
                      .diplo_treaties[target_faction_id] & 0x1000u) == 0) {
                 set_treaty(actor_faction_id, target_faction_id, 0x1000, 1);
@@ -2006,7 +2006,7 @@ label_59fb67:
         if (actor_faction_id == ConsoleGlobal.faction_id_ &&
             (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
              static_cast<uint8_t>(1u << (actor_faction_id & 31))) != 0 &&
-            (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0 &&
+            (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0 &&
             (actor_to_target_treaty & 7u) != 0 &&
             ((target_to_actor_treaty & 1u) == 0 ||
              (target_to_actor_treaty & 0x02000000u) == 0) &&
@@ -2039,7 +2039,7 @@ label_59fb67:
             actor_faction_id == ConsoleGlobal.faction_id_ &&
             (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
              static_cast<uint8_t>(1u << (actor_faction_id & 31))) != 0 &&
-            (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
+            (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0) {
             parse_says(0, Bases[target_base_id].name_string, -1, -1);
             const int first_morale = morale_veh(actor_vehicle_id, 1, 0);
             success_rates(1, first_morale, -1, target_base_id);
@@ -2100,7 +2100,7 @@ label_5a00b2:
                               selected_technology + 1,
                               target_base_id) != 0) {
                 int decoded_choice;
-                if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) != 0) {
+                if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0) {
                     decoded_choice =
                         (Vehs[actor_vehicle_id].probe_action & 8u) >> 3;
                 } else {
@@ -2129,7 +2129,7 @@ label_5a00b2:
             (PlayersData[actor_faction_id].flags & 0x200u) != 0) {
             if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0) {
                 if (actor_faction_id != ConsoleGlobal.faction_id_ ||
-                    (NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) == 0)
+                    (NetDaemonNet.channels_[0].leading_words_[3] & 2u) == 0)
                     goto label_5a2dcd;
                 NetMsgPrimary.pop("STOLENOTHING", -5000, 0, nullptr);
                 goto label_5a2ce9;
@@ -2149,7 +2149,7 @@ label_5a00b2:
             if ((Bases[target_base_id].state & 0x00400000u) == 0 ||
                 actor_faction_id != ConsoleGlobal.faction_id_ ||
                 (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) == 0 ||
-                (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) == 0) {
+                (NetDaemonNet.channels_[0].leading_words_[3] & 1u) == 0) {
                 goto label_5a2dcd;
             }
             parse_says(0, Bases[target_base_id].name_string, -1, -1);
@@ -2276,7 +2276,7 @@ label_5a0852:
                 local_result =
                     (Vehs[actor_vehicle_id].probe_action & 8u) >> 3;
             } else if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
-                       (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
+                       (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0) {
                 const int second_build_morale =
                     morale_veh(actor_vehicle_id, 1, 0);
                 if (success_rates(2, second_build_morale, 1,
@@ -2303,7 +2303,7 @@ label_5a0852:
             if (local_result != 0 &&
                 actor_faction_id == ConsoleGlobal.faction_id_ &&
                 (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
-                (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
+                (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0) {
                 popup.start(PopupStartCaption, "VIRUS", -1, nullptr, 0,
                             nullptr);
                 const int first_vehicle = veh_at(
@@ -2388,7 +2388,7 @@ label_5a0aff:
             const bool report_facility_probe =
                 actor_faction_id == ConsoleGlobal.faction_id_ &&
                 (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
-                (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0;
+                (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0;
             if (!facility_option_available &&
                 local_project_cursor != 4 && local_project_cursor != 5) {
                 goto label_5a2dcd;
@@ -2445,7 +2445,7 @@ label_5a0917_done:
             const bool actor_can_report =
                 actor_faction_id == ConsoleGlobal.faction_id_ &&
                 (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
-                (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0;
+                (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0;
             if (assault_success != 0) {
                 if (!actor_can_report) goto label_5a2dcd;
                 const char *const image = success_morale
@@ -2474,7 +2474,7 @@ label_5a0917_done:
                 !has_abil(actor_proto_id, 0x20)) {
                 if (actor_faction_id == ConsoleGlobal.faction_id_ && mode != 0 &&
                     (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
-                    (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
+                    (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0) {
                     parse_say(0, Ability[abil_index(0x20)].name, -1, -1);
                     NetMsgPrimary.pop("PROBEABILSUPERIORITY", 5000, 0,
                                       nullptr);
@@ -2506,7 +2506,7 @@ label_5a0917_done:
                     target_faction_id)) {
                     if (actor_faction_id == ConsoleGlobal.faction_id_ &&
                         (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 && mode != 0 &&
-                        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
+                        (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0) {
                         parse_says(0,
                             Players[target_faction_id].noun_faction,
                             -1, -1);
@@ -2570,7 +2570,7 @@ label_5a0917_done:
                 if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0) {
                     int chosen_policy =
                         actor_faction_id == ConsoleGlobal.faction_id_ &&
-                        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0
+                        (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0
                         ? -1
                         : ((Vehs[actor_vehicle_id].probe_action & 8u)
                             != 0 ? 2 : 1);
@@ -2613,7 +2613,7 @@ label_5a0917_done:
                     }
                 }
 
-                if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) == 0)
+                if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) == 0)
                     goto label_5a2dcd;
                 probe_native_negative_selector_accounting(
                     actor_faction_id, target_faction_id, amount);
@@ -2621,7 +2621,7 @@ label_5a0917_done:
             }
             if (actor_faction_id == ConsoleGlobal.faction_id_ && mode != 0 &&
                 (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0 &&
-                (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0)
+                (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0)
                 NetMsgPrimary.pop("ALIENPROBE", -5000, 0, nullptr);
             goto label_5a2ce9;
         }
@@ -2641,7 +2641,7 @@ label_5a0917_done:
                 if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) == 0)
                     goto label_5a2574;
                 if (actor_faction_id == ConsoleGlobal.faction_id_ &&
-                    (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
+                    (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0) {
                     parse_says(0, Players[target_faction_id].noun_faction,
                                -1, -1);
                     NetMsgPrimary.pop("MINDIMMUNITY", -5000, 0, nullptr);
@@ -2681,7 +2681,7 @@ label_5a0917_done:
                     if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) == 0)
                         goto label_5a2455;
                     if (actor_faction_id == ConsoleGlobal.faction_id_ &&
-                        (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) != 0) {
+                        (NetDaemonNet.channels_[0].leading_words_[3] & 1u) != 0) {
                         parse_says(0, Players[target_faction_id].noun_faction,
                                    -1, -1);
                         NetMsgPrimary.pop("IMMUNITY", -5000, 0, nullptr);
@@ -2695,7 +2695,7 @@ label_5a0917_done:
             if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & actor_bit) != 0) {
 label_5a2ab3:
                 if (actor_faction_id != ConsoleGlobal.faction_id_ ||
-                    (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u) == 0) {
+                    (NetDaemonNet.channels_[0].leading_words_[3] & 1u) == 0) {
                     local_result =
                         (Vehs[actor_vehicle_id].probe_action & 8u) != 0
                         ? 2 : 1;
@@ -2745,7 +2745,7 @@ label_5a2ab3:
                         native_probe_roll_threshold = 1;
                 }
             }
-            if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) == 0)
+            if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) == 0)
                 goto label_5a2dcd;
             PlayersData[actor_faction_id].energy_reserves = static_cast<int32_t>(
                 static_cast<uint32_t>(
@@ -2803,7 +2803,7 @@ label_5a2dcd:
                 if (chosen_faction != 0)
                     ++native_probe_roll_threshold;
             } else if (actor_faction_id == ConsoleGlobal.faction_id_ &&
-                       (NetDaemonNet.lock_state_[1].leading_words_[3] & 1u)
+                       (NetDaemonNet.channels_[0].leading_words_[3] & 1u)
                            != 0) {
                 const int chosen_faction = probe_native_result_one_choices(
                     popup, actor_faction_id, target_faction_id,
@@ -2835,7 +2835,7 @@ label_5a2dcd:
         // accounting in lock-state bit 1 and runs this first probability gate
         // before those mutations. A failed roll goes directly to the shared
         // relationship response, not through an action helper.
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) == 0)
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) == 0)
             goto label_5a4b15;
         if (!probe_native_success_roll_passes(
                 action_result, actor_vehicle_id, target_base_id,
@@ -2845,7 +2845,7 @@ label_5a2dcd:
         // Native 0x5A2EB2 begins the accounting dispatch. Action one owns the
         // directed stolen-data counter and technology transfer/report path;
         // subsequent selectors continue in the following candidate region.
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) != 0 &&
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0 &&
             action_result == 1) {
             probe_native_result_one_complete(
                 actor_faction_id, target_faction_id, target_base_id,
@@ -2855,7 +2855,7 @@ label_5a2dcd:
             goto label_5a36ee;
         }
 
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) != 0 &&
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0 &&
             action_result == 3) {
             local_result = probe_native_energy_transfer_action(
                 actor_faction_id, target_faction_id, target_base_id,
@@ -2863,7 +2863,7 @@ label_5a2dcd:
             goto label_5a36ee;
         }
 
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) != 0 &&
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0 &&
             action_result == 4) {
             native_probe_roll_threshold = 1;
             probe_native_assimilation_action(target_base_id,
@@ -2872,7 +2872,7 @@ label_5a2dcd:
             goto label_5a36ee;
         }
 
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) != 0 &&
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0 &&
             action_result == 5) {
             local_result = probe_native_tech_theft_action(
                 target_faction_id, actor_faction_id, target_faction_id,
@@ -2881,7 +2881,7 @@ label_5a2dcd:
             goto label_5a36ee;
         }
 
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) != 0 &&
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0 &&
             action_result == 7) {
             probe_native_atrocity_followup(
                 actor_faction_id, target_faction_id, target_base_id,
@@ -2890,7 +2890,7 @@ label_5a2dcd:
             goto label_5a36ee;
         }
 
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) != 0 &&
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0 &&
             action_result == 8) {
             // The native selector-8 seed comes from the high three bits of
             // the vehicle's saved probe action. Its chooser/commit helper
@@ -2910,7 +2910,7 @@ label_5a2dcd:
             goto label_5a36ee;
         }
 
-        if ((NetDaemonNet.lock_state_[1].leading_words_[3] & 2u) != 0 &&
+        if ((NetDaemonNet.channels_[0].leading_words_[3] & 2u) != 0 &&
             action_result == -1) {
             // Native 0x5A4101 reassigns the third-argument vehicle after the
             // shared first roll gate. The persistent EBP-0x30 value chooses

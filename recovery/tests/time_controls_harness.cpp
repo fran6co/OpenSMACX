@@ -44,7 +44,8 @@ struct LockStateEntry {
 };
 
 struct NetDaemonProjection {
-    LockStateEntry lock_state_[3];
+    struct { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    LockStateEntry channels_[2];
 };
 
 RulesTimeControl TimeControl[MaxTimeControlNum];
@@ -109,6 +110,7 @@ struct StringsProjection {
         assert(found != entries.end());
         return found->second;
     }
+    char *get(char *address) { return get(host_string_pointer_key(address)); }
 } StringTable;
 
 struct LabelProjection {
@@ -342,15 +344,15 @@ static void test_setter_against_native_oracle() {
     LockEnableMask = 0xFFu;
     TurnCurrentNum = 5;
     ConsoleControlTurnActive = 0;
-    NetDaemonNet.lock_state_[2].trailing_words_[7] = 999;
-    NetDaemonNet.lock_state_[2].trailing_words_[8] = 2;
+    NetDaemonNet.channels_[1].trailing_words_[7] = 999;
+    NetDaemonNet.channels_[1].trailing_words_[8] = 2;
 
     PlayerData snapshot[MaxPlayerNum + 1];
     memcpy(snapshot, PlayersData, sizeof(snapshot));
     const OracleResult expected = native_oracle(
         TimeControl[TimeControlsSelection], snapshot, LockEnableMask,
         ConsoleControlTurnActive, ControlTurnPhase, TurnCurrentNum,
-        static_cast<int>(NetDaemonNet.lock_state_[2].trailing_words_[8]),
+        static_cast<int>(NetDaemonNet.channels_[1].trailing_words_[8]),
         Vehs, VehCurrentCount);
     set_time_controls();
 
@@ -412,7 +414,7 @@ static void test_no_factions_baseline_maximum_and_early_turn_boundary() {
 
     PlayersData[1].current_num_bases = 1;
     TimeControl[2].turn = 100;
-    NetDaemonNet.lock_state_[2].trailing_words_[8] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[8] = 0;
     set_time_controls();
     assert(TurnControlDurationMilliseconds == 100000); // max(configured, candidate)
 }

@@ -51,8 +51,9 @@ struct LockStateEntry {
     uint32_t trailing_words_[10]{};
 };
 struct NetDaemon {
-    LockStateEntry lock_state_[3];
-    uint32_t &factions_waiting_mask() { return lock_state_[0].trailing_words_[7]; }
+    LockStateEntry channels_[2];
+    struct Primary { uint32_t leading_words_[3]{}; uint32_t flags_{}; uint32_t trailing_words_[10]{}; } primary_state_;
+    uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[7]; }
 };
 NetDaemon NetDaemonNet;
 struct GameFields { uint32_t net_turn_flags_ = 0; };
@@ -164,8 +165,8 @@ static void reset_state() {
     ConsoleControlTurnActive = 0;
     ConsoleFactionsWaitingMask = 0;
     GameDataStateStorage.fields_.net_turn_flags_ = 0;
-    NetDaemonNet.lock_state_[2].payload_.flags = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[4] = 0;
+    NetDaemonNet.channels_[1].payload_.flags = 0;
+    NetDaemonNet.primary_state_.trailing_words_[4] = 0;
     ConsoleGlobal.cursor_active_ = 1;
     ConsoleGlobal.cursor_history_index_ = 0;
     ConsoleGlobal.cursor_history_x_[0] = 5;
@@ -227,16 +228,16 @@ int main() {
     ConsoleControlTurnActive = 1;
     check_blocked(denied);
     ConsoleControlTurnActive = 0;
-    NetDaemonNet.lock_state_[2].payload_.flags = 1;
+    NetDaemonNet.channels_[1].payload_.flags = 1;
     check_blocked(denied);
-    NetDaemonNet.lock_state_[2].payload_.flags = 0;
+    NetDaemonNet.channels_[1].payload_.flags = 0;
     denied.faction_id_ = 2;
     ConsoleFactionsWaitingMask = 1 << 2;
     check_blocked(denied);
     ConsoleFactionsWaitingMask = 0;
-    NetDaemonNet.lock_state_[0].trailing_words_[4] = 1;
+    NetDaemonNet.primary_state_.trailing_words_[4] = 1;
     check_blocked(denied);
-    NetDaemonNet.lock_state_[0].trailing_words_[4] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[4] = 0;
     GameDataStateStorage.fields_.net_turn_flags_ = 0x10;
     not_turn = 1;
     denied.set_move(0);

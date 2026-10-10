@@ -45,13 +45,26 @@ struct FakeNetWin {
 } NetWinDialog;
 struct Slot { unsigned char status_bytes_[4]; };
 struct LockWord { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+struct DeletionRecord { uint8_t acknowledgements_; uint8_t reserved_[3]; int owner_; int16_t count_; int16_t vehicle_ids_[25]; };
+struct DeletionList {
+    DeletionRecord records_[24];
+    int current_owner_;
+    uint32_t sequence_bits() const { uint32_t value; memcpy(&value, &current_owner_, 4); return value; }
+    void set_sequence_bits(uint32_t value) { memcpy(&current_owner_, &value, 4); }
+    uint32_t advance_sequence() { uint32_t value = sequence_bits() + 1; set_sequence_bits(value); return value; }
+};
 class NetDaemonTransferModalCloseGuard;
 struct NetDaemonNetType {
     uint32_t field_760_;
     int pid_2_idx(uint32_t) { return 3; }
 } NetDaemonNet;
 struct NetDaemon {
-    LockWord lock_state_[24];
+    DeletionList deletion_list_;
+    PrimaryState primary_state_;
+    LockWord channels_[2];
+    void *file_index_records_;
+    uint32_t field_1BE4_;
     Slot process_slots_[16];
     int send_calls;
     int last_send_len, last_send_target;
@@ -111,7 +124,7 @@ static bool invoke_modal(NetDaemon &daemon, unsigned short type) {
 static void check_modal(unsigned short type, bool is_host) {
     NetDaemon daemon;
     memset(&daemon, 0, sizeof(daemon));
-    daemon.lock_state_[0].leading_words_[1] = is_host ? 1 : 0;
+    daemon.primary_state_.leading_words_[0] = is_host ? 1 : 0;
     reset_trace();
     g_filemap_dtors = 0;
     const bool consumed = invoke_modal(daemon, type);
@@ -153,10 +166,10 @@ int main() {
 
     NetDaemon daemon;
     memset(&daemon, 0, sizeof(daemon));
-    daemon.lock_state_[0].leading_words_[0] = 9;
+    daemon.deletion_list_.set_sequence_bits(9);
     assert(invoke_message(daemon, 0xF09, 0) == true);
     assert(daemon.fixup_calls == 0 && daemon.send_calls == 0);
-    assert(daemon.lock_state_[0].leading_words_[0] == 9);
+    assert(daemon.deletion_list_.sequence_bits() == 9);
 
     MessageFactionData faction_message;
     memset(&faction_message, 0, sizeof(faction_message));

@@ -43,12 +43,10 @@ def actual_storage_declarations():
     daemon = (ROOT / "src/netdaemon.h").read_text()
     live = extract_definition(alpha, "struct AlphaNetProcessSlot {")
     saved = extract_definition(daemon, "struct NetDaemonSaveProcessSlot {")
-    view = extract_definition(daemon, "struct NetDaemonSaveStorageView {")
-    assert "void *file_index_records_;" in view
-    # The host has no 32-bit libc headers; project the target pointer word to
-    # uint32_t only in this compiled host view. The source declaration itself
-    # is checked above and the native build checks its real layout.
-    view = view.replace("void *file_index_records_;", "uint32_t file_index_records_;")
+    # Saved process rows are now a disjoint NetDaemon member rather than an
+    # overlapping NetDaemonSaveStorageView projection. The file-index owner is
+    # also independent storage and is not part of this save-copy fixture.
+    assert "NetDaemonSaveStorageView" not in daemon
     lock_projection = extract_definition(daemon, "struct LockStateEntry {")
     assert "int *vehicle_selection_follow;" in lock_projection
     lock_projection = lock_projection.replace(
@@ -61,12 +59,8 @@ static_assert(sizeof(NetDaemonSaveProcessSlot) == sizeof(AlphaNetProcessSlot),
               "save/live slot stride");
 static_assert(sizeof(NetDaemonSaveProcessSlot) * 8 == 0xCE0,
               "eight-slot transfer extent");
-static_assert(offsetof(NetDaemonSaveStorageView, file_index_records_) == 0xB4,
-              "file-index pointer offset");
-static_assert(offsetof(NetDaemonSaveStorageView, process_slots_) == 0xBC,
-              "snapshot offset");
 """
-    return "\n".join((lock_projection, live, saved, view, checks))
+    return "\n".join((lock_projection, live, saved, checks))
 
 
 def test_actual_product_body_and_storage_under_cpp98(tmp_path):
@@ -107,9 +101,10 @@ def test_constructor_partial_alias_initialization_is_preserved():
     source = (ROOT / "src/netdaemon.cpp").read_text()
     ctor = extract_definition(source, "NetDaemon::NetDaemon() : AlphaNet()",
                               expect_semicolon=False)
-    owner_clear = "lock_state_[0].leading_words_[0] = 0;"
+    owner_clear = "deletion_list_.current_owner_ = 0;"
     assert ctor.count(owner_clear) == 1
     assert ctor.index(owner_clear) < ctor.index("for (int32_t m = 0;")
-    assert "lock_state_[m].leading_words_[0] = 0;" not in ctor
+    assert "deletion_list_.records_[m].acknowledgements_" in ctor
+    assert "primary_state_.leading_words_[0] = 0;" in ctor
     assert "for (int32_t m = 0; m < 0x18; ++m)" in ctor
     assert "process_slots_" not in ctor

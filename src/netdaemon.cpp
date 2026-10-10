@@ -155,7 +155,7 @@ int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20
     if (ConsoleControlTurnActive) {
         return 1;
     }
-    if (lock_state_[0].leading_words_[3]) {
+    if (primary_state_.leading_words_[2]) {
         return 1;
     }
     Base &base = Bases[base_id];
@@ -173,9 +173,9 @@ int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned52E160..52E364 and52E370..52E8FD; retained recovered seeds are hints, not mandatory C++.", "The not-found delete tail still runs and decrements count. Slot8 identity/status bytes belong to the real ledger; lobby prefix/name writes are byte views wholly inside the existing168-byte session object. Keep both session object lifetimes and their original bindings.", "PlayerLock::active return controls notification; process identity offsets are not doubled. Two label_get calls remain independent, and prefix writes depend on live phase below2.", "Source-owned NextTurnReady, NetUpkeepPhase and NetHostChangeSlot replace private address aliases. Upkeep producer remains unfinished; ledger-derived lock index domain remains unproven.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; actual-source host damage controls and native compilation required", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0052e160.cpp", "Historical seed spelling ?on_player_added@NetDaemon@@QAEXPADK@Z; current source mapping ?on_player_added@NetDaemon@@UAEXPADK@Z; emitted symbol ?on_player_added@NetDaemon@@UAEXPADK@Z."], "reason": "Recover the complete derived network player lifecycle callback through actual AlphaNet records, PlayerLock behavior, NetWin storage and shared turn state. Preserve its original identity and useful seed findings; no exact, runtime or full acceptance claim is implied. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 void NetDaemon::on_player_added(char *name, unsigned long id) {
     const bool same_host = (field_760_ == field_764_);
-    lock_state_[0].leading_words_[1] = same_host ? 1 : 0;
+    primary_state_.leading_words_[0] = same_host ? 1 : 0;
 
-    if (player_count_ < 7 && lock_state_[0].trailing_words_[0] < 2) {
+    if (player_count_ < 7 && primary_state_.trailing_words_[0] < 2) {
         const int slot = ++player_count_;
         AlphaNetProcessSlot &player = process_slots_[slot];
         player.pid_ = static_cast<uint32_t>(id);
@@ -199,7 +199,7 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
             }
         }
 
-        if (lock_state_[0].leading_words_[1] != 0) {
+        if (primary_state_.leading_words_[0] != 0) {
             row.owner_ = 0;
             row.prefix_ = 0xFF;
             row.ready_or_occupied_ = 0;
@@ -235,7 +235,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
 
     const bool server_left = (NetHostChangeSlot == static_cast<uint32_t>(id));
     if (server_left) {
-        lock_state_[2].trailing_words_[6] = 1;
+        channels_[1].trailing_words_[6] = 1;
     }
 
     int slot = 1;
@@ -245,7 +245,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     const bool found = slot <= player_count_;
 
     if (found) {
-        uint32_t &ready_players = lock_state_[0].trailing_words_[4];
+        uint32_t &ready_players = primary_state_.trailing_words_[4];
         if (ready_players != 0) {
             ready_players &= ~(1u << (slot & 31));
             if (ready_players == 0) {
@@ -257,16 +257,16 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         parse_says(0, player.name_, -1, -1);
         const int player_id = player.identity_;
 
-        if (lock_state_[0].trailing_words_[0] == 2) {
+        if (primary_state_.trailing_words_[0] == 2) {
             uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
             humans = static_cast<uint8_t>(humans &
                 ~static_cast<uint8_t>(1u << (player_id & 31)));
             GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFFFF00u) | humans;
         }
-        lock_state_[2].payload_.flags &= ~(1u << (player_id & 31));
+        channels_[1].payload_.flags &= ~(1u << (player_id & 31));
 
         const bool turn_handoff = (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0;
-        if (turn_handoff && lock_state_[0].leading_words_[1] != 0 &&
+        if (turn_handoff && primary_state_.leading_words_[0] != 0 &&
             GameDataStateStorage.fields_.net_turn_faction_ == player_id) {
             const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
             const uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
@@ -297,9 +297,9 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     // Native uses this signed identity as an index without checking its
     // range. The missing-player ledger byte has no proven valid domain.
     locks_.records_[player_id].clear();
-    uint32_t &faction_lock_mask = lock_state_[1].trailing_words_[0];
+    uint32_t &faction_lock_mask = channels_[0].trailing_words_[0];
     const uint32_t player_lock_mask =
-        lock_state_[1].trailing_words_[1 + player_id];
+        channels_[0].trailing_words_[1 + player_id];
     faction_lock_mask &= ~player_lock_mask;
     if (static_cast<int>(locks_.field_E0_) == player_id) {
         locks_.field_E0_ = 0;
@@ -310,9 +310,9 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     const bool skip_lock_notify =
         (turn_bit != 0 && ConsoleControlTurnActive == 0 &&
          GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_) ||
-        (turn_bit == 0 && lock_state_[0].leading_words_[1] != 0);
+        (turn_bit == 0 && primary_state_.leading_words_[0] != 0);
 
-    if (!skip_lock_notify && lock_state_[0].trailing_words_[0] == 2) {
+    if (!skip_lock_notify && primary_state_.trailing_words_[0] == 2) {
         const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
         const uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
         for (int faction = 1; faction < 8; ++faction) {
@@ -352,7 +352,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     }
 
     if (slot == 8) {
-        if (lock_state_[0].trailing_words_[0] < 2) {
+        if (primary_state_.trailing_words_[0] < 2) {
             NetWinSessionData.write_row8_prefix(0xFF);
         }
         strcpy(NetWinSessionData.row8_leader_name(), label_get(0xFE4 / 4));
@@ -360,7 +360,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         strcpy(NetWinSessionData.row8_noun_faction(), label_get(0xFE4 / 4));
     } else {
         NetWinLobbyRow &removed_row = NetWinLobbyRows[slot];
-        if (lock_state_[0].trailing_words_[0] < 2) {
+        if (primary_state_.trailing_words_[0] < 2) {
             removed_row.prefix_ = 0xFF;
         }
         strcpy(removed_row.leader_name_, label_get(0xFE4 / 4));
@@ -375,18 +375,18 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     }
 
     --player_count_;
-    lock_state_[0].leading_words_[1] = (field_760_ == field_764_) ? 1 : 0;
+    primary_state_.leading_words_[0] = (field_760_ == field_764_) ? 1 : 0;
 
     const uint8_t post_turn_bit = static_cast<uint8_t>(GameDataStateStorage.fields_.net_turn_flags_ & 0x10);
     const bool skip_after_delete =
         (post_turn_bit == 0 || ConsoleControlTurnActive != 0 ||
          GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) &&
         ((post_turn_bit != 0 && ConsoleControlTurnActive == 0) ||
-         lock_state_[0].leading_words_[1] == 0);
+         primary_state_.leading_words_[0] == 0);
 
-    if (skip_after_delete && lock_state_[0].trailing_words_[0] == 2) {
+    if (skip_after_delete && primary_state_.trailing_words_[0] == 2) {
         if (post_turn_bit == 0 &&
-            (lock_state_[0].trailing_words_[7] &
+            (primary_state_.trailing_words_[7] &
              (1u << (ConsoleGlobal.faction_id_ & 31))) != 0) {
             message_data(0x8301, 0, 0, 0, 0, 0);
         }
@@ -410,10 +410,10 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         if (NetWinDialog.is_visible() != 0) {
             NetWinDialog.on_button_clicked(-2);
         }
-        lock_state_[2].leading_words_[3] = 0;
-        lock_state_[2].trailing_words_[0] = 0;
-        lock_state_[2].leading_words_[1] = 0;
-        lock_state_[1].leading_words_[2] = 2;
+        channels_[1].leading_words_[3] = 0;
+        channels_[1].trailing_words_[0] = 0;
+        channels_[1].leading_words_[1] = 0;
+        channels_[0].leading_words_[2] = 2;
         NetPlayerDropped = 1;
         locks_.field_E8_ = 1;
     }
@@ -429,7 +429,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         ? process_slots_[server_slot].name_
         : reinterpret_cast<const char *>(&ledger_);
     log_say(server_name, "is now the Server.", 0, 0, 0);
-    lock_state_[0].leading_words_[3] = 0;
+    primary_state_.leading_words_[2] = 0;
 }
 
 /*
@@ -452,7 +452,7 @@ are still opaque storage (see the class declaration), so the eight
 PlayerLocks and the 0x18-entry lock table reach their elements by raw
 offset rather than through invented array members.
 */
-NetDaemon::NetDaemon() : AlphaNet() {
+NetDaemon::NetDaemon() : AlphaNet(), deletion_list_(DeletionList::Uninitialized()) {
     // The eight per-player locks (0x14A0, 0x1C stride), then the embedded
     // Lock of the first one cleared directly - the image calls the Lock
     // version explicitly, twice (here and again after the table below).
@@ -463,46 +463,46 @@ NetDaemon::NetDaemon() : AlphaNet() {
 
     // Native 0x538A53 clears the shared deletion owner once; the backedge
     // at 0x538A64 targets 0x538A59, after this store.
-    lock_state_[0].leading_words_[0] = 0;
+    deletion_list_.current_owner_ = 0;
     for (int32_t m = 0; m < 0x18; ++m) {
-        lock_table_[m].flag_ = 0xFF;
-        lock_table_[m].word_8_ = 0;
+        deletion_list_.records_[m].acknowledgements_ = 0xFF;
+        deletion_list_.records_[m].count_ = 0;
     }
 
-    lock_state_[0].leading_words_[1] = 0;
-    lock_state_[0].leading_words_[2] = 0;
-    lock_state_[0].leading_words_[3] = 0;
-    lock_state_[0].payload_.flags = 0;
-    lock_state_[0].trailing_words_[8] = 0;
-    lock_state_[0].trailing_words_[7] = 0;
-    lock_state_[1].leading_words_[1] = 0;
-    lock_state_[1].leading_words_[0] = 0;
-    lock_state_[1].payload_.vehicle_selection_follow = 0;
-    lock_state_[2].leading_words_[1] = 0;
-    lock_state_[1].trailing_words_[9] = 0;
-    lock_state_[2].leading_words_[0] = 0;
-    lock_state_[2].trailing_words_[4] = 0;
-    lock_state_[2].trailing_words_[3] = 0;
-    lock_state_[0].trailing_words_[4] = 0;
-    lock_state_[0].trailing_words_[5] = 0;
-    lock_state_[0].trailing_words_[6] = 0;
-    lock_state_[2].trailing_words_[1] = 0;
-    lock_state_[2].trailing_words_[0] = 0;
-    lock_state_[2].leading_words_[3] = 0;
-    lock_state_[2].leading_words_[2] = 0;
-    lock_state_[2].payload_.flags = 0;
-    lock_state_[0].trailing_words_[0] = 0;
-    lock_state_[0].trailing_words_[1] = 0;
-    lock_state_[2].trailing_words_[7] = 0;
-    lock_state_[2].trailing_words_[6] = 0;
-    lock_state_[0].trailing_words_[2] = 0;
-    lock_state_[0].trailing_words_[3] = 0;
-    lock_state_[1].leading_words_[3] = 0;
+    primary_state_.leading_words_[0] = 0;
+    primary_state_.leading_words_[1] = 0;
+    primary_state_.leading_words_[2] = 0;
+    primary_state_.flags_ = 0;
+    primary_state_.trailing_words_[8] = 0;
+    primary_state_.trailing_words_[7] = 0;
+    channels_[0].leading_words_[1] = 0;
+    channels_[0].leading_words_[0] = 0;
+    channels_[0].payload_.vehicle_selection_follow = 0;
+    channels_[1].leading_words_[1] = 0;
+    channels_[0].trailing_words_[9] = 0;
+    channels_[1].leading_words_[0] = 0;
+    channels_[1].trailing_words_[4] = 0;
+    channels_[1].trailing_words_[3] = 0;
+    primary_state_.trailing_words_[4] = 0;
+    primary_state_.trailing_words_[5] = 0;
+    primary_state_.trailing_words_[6] = 0;
+    channels_[1].trailing_words_[1] = 0;
+    channels_[1].trailing_words_[0] = 0;
+    channels_[1].leading_words_[3] = 0;
+    channels_[1].leading_words_[2] = 0;
+    channels_[1].payload_.flags = 0;
+    primary_state_.trailing_words_[0] = 0;
+    primary_state_.trailing_words_[1] = 0;
+    channels_[1].trailing_words_[7] = 0;
+    channels_[1].trailing_words_[6] = 0;
+    primary_state_.trailing_words_[2] = 0;
+    primary_state_.trailing_words_[3] = 0;
+    channels_[0].leading_words_[3] = 0;
 
     // 0x1BD0 is lock_state_[2]'s eleventh dword - the ctor sets it to 0xFF.
-    lock_state_[2].trailing_words_[6] = 0xFF;
+    channels_[1].trailing_words_[6] = 0xFF;
     for (int32_t i = 0; i < 8; i++) {
-        lock_state_[1].trailing_words_[i] = 0;
+        channels_[0].trailing_words_[i] = 0;
     }
 
     locks_.clear();
@@ -885,15 +885,15 @@ uint32_t NetDaemon::unlock_veh() {
         residue = message_data(0x2212, 0, 0, 0, 0, 0);
         // The four announce-side fields, in the original's deliberately
         // non-monotonic order: 1BB0, 1BAC, 1BCC, 1BC8.
-        lock_state_[2].leading_words_[3] = 0;
-        lock_state_[2].leading_words_[2] = 0;
-        lock_state_[2].trailing_words_[5] = 0;
-        lock_state_[2].trailing_words_[4] = 0;
+        channels_[1].leading_words_[3] = 0;
+        channels_[1].leading_words_[2] = 0;
+        channels_[1].trailing_words_[5] = 0;
+        channels_[1].trailing_words_[4] = 0;
     }
     // Shared tail: 0x1B78 is the vehicle record lock_veh (0x00531020) stores
     // and 0x1BC4 its held flag.
-    lock_state_[1].payload_.vehicle_selection_follow = 0;
-    lock_state_[2].trailing_words_[3] = 0;
+    channels_[0].payload_.vehicle_selection_follow = 0;
+    channels_[1].trailing_words_[3] = 0;
     return residue;
 }
 
@@ -902,8 +902,8 @@ uint32_t NetDaemon::unlock_veh() {
 // dynamic initializer at 0x0052DB10 constructs it at the fixed address
 // before WinMain; the recovered NetDaemon constructor here runs through this
 // build's own startup instead.
-// RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A lock_state_[0].trailing_words_[7]
-// RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A lock_state_[2].trailing_words_[7]
+// RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A primary_state_.trailing_words_[7]
+// RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A channels_[1].trailing_words_[7]
 // RECOVERY_OBJECT: v1 0x0093CD90 ?NetDaemonNet@@3VNetDaemon@@A
 NetDaemon NetDaemonNet;  // 0x0093CD90
 
@@ -940,10 +940,10 @@ void NetDaemon::unlock() {
     if (IsMultiplayerNet != 0) {
         log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
         message_data(0x2212, 0, 0, 0, 0, 0);
-        lock_state_[2].leading_words_[3] = 0;
-        lock_state_[2].leading_words_[2] = 0;
-        lock_state_[2].trailing_words_[5] = 0;
-        lock_state_[2].trailing_words_[4] = 0;
+        channels_[1].leading_words_[3] = 0;
+        channels_[1].leading_words_[2] = 0;
+        channels_[1].trailing_words_[5] = 0;
+        channels_[1].trailing_words_[4] = 0;
     }
 }
 
@@ -963,7 +963,7 @@ void NetDaemon::close_channel() {
     if (IsMultiplayerNet != 0) {
         message_data(0x8241, 0, 0, 0, 0, 0);
         // 0x1BA0 is lock_state_[1].dword_[14].
-        lock_state_[1].trailing_words_[9] = 0;
+        channels_[0].trailing_words_[9] = 0;
     }
 }
 
@@ -1034,32 +1034,32 @@ void NetDaemon::close_channel() {
 // dwords, 0x1B7C is lock_state_[1].dword_[5] and the four dwords at 0x1B80
 // are lock_state_[1].dword_[6..9] - one per faction.
 void NetDaemon::hang_up() {
-    if (lock_state_[0].payload_.flags != 0) {
+    if (primary_state_.flags_ != 0) {
         return;
     }
     if (IsMultiplayerNet == 0) {
         return;
     }
-    lock_state_[0].payload_.flags = 1;
+    primary_state_.flags_ = 1;
     if (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) {
         if (ConsoleControlTurnActive == 0) {
             if (GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
                 goto L0cc;
             }
-        } else if (NetDaemonNet.lock_state_[0].leading_words_[1] == 0) {
+        } else if (NetDaemonNet.primary_state_.leading_words_[0] == 0) {
             goto L145;
         }
         message_data(0x8301, 0, 0, 0, 0, 0);
     }
 L0cc:
-    if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         locks_.records_[ConsoleGlobal.faction_id_].clear();
         if (locks_.field_E0_ == ConsoleGlobal.faction_id_) {
             locks_.field_E4_ = 0;
             locks_.field_E0_ = 0;
         }
-        lock_state_[1].trailing_words_[0] &=
-            ~lock_state_[1].trailing_words_[1 + ConsoleGlobal.faction_id_];
+        channels_[0].trailing_words_[0] &=
+            ~channels_[0].trailing_words_[1 + ConsoleGlobal.faction_id_];
         message_data(0x4b00, 0, 0, 0, 0, 0);
     }
 L145:
@@ -1740,17 +1740,17 @@ void NetDaemon::game_checksum(int *results) {
 // 0x1B2C/0x1B30 are lock_state_[0].dword_[0]/[1]; 0x1BB0 and 0x1BC0 are
 // lock_state_[2].dword_[3] and [7].
 int NetDaemon::end_of_event(int faction_id, int turn_value) {
-    if (lock_state_[0].leading_words_[1] == 0) {
-        lock_state_[0].leading_words_[0] = turn_value;
+    if (primary_state_.leading_words_[0] == 0) {
+        deletion_list_.set_sequence_bits(turn_value);
     }
     if (faction_id == ConsoleGlobal.faction_id_) {
-        if (lock_state_[2].trailing_words_[2] != 0) {
+        if (channels_[1].trailing_words_[2] != 0) {
             log_say("Remaining Locked2", 0, 0, 0);
-            lock_state_[2].trailing_words_[2] = 0;
+            channels_[1].trailing_words_[2] = 0;
             message_data(0x2214, 0, 0, 0, 0, 0);
             return 0;
         }
-        lock_state_[2].leading_words_[3] = 0;
+        channels_[1].leading_words_[3] = 0;
     }
     return 0;
 }
@@ -1799,7 +1799,7 @@ void __cdecl message_veh(int opcode, int payload_10, int payload_14,
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
-    message.turn_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.turn_ = NetDaemonNet.deletion_list_.sequence_bits();
     message.field_10_ = payload_10;
     message.field_14_ = payload_14;
 
@@ -1829,7 +1829,7 @@ void __cdecl message_base(int opcode, int payload_10, char *text, int target) {
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
-    message.turn_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.turn_ = NetDaemonNet.deletion_list_.sequence_bits();
     message.payload_10_ = payload_10;
     strcpy(message.text_, text);
 
@@ -1880,7 +1880,7 @@ int __cdecl message_data(int opcode, int target, int payload_10,
     message.faction_ = ConsoleGlobal.faction_id_;
     message.timestamp_ = timeGetTime();
     message.payload_14_ = payload_14;
-    message.sequence_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
 
     ++NetBusyCount;
     message.payload_18_ = payload_18;
@@ -1965,7 +1965,7 @@ void __cdecl send_raw_data(int opcode, int target, int payload_10,
     message.opcode_ = static_cast<int16_t>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.timestamp_ = timeGetTime();
-    message.sequence_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
     message.data_[0] = payload_10;
     message.data_[1] = payload_14;
     message.data_[2] = payload_18;
@@ -2006,7 +2006,7 @@ void __cdecl message_big_data(int opcode, int target, int *payload,
     message.opcode_ = static_cast<int16_t>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.timestamp_ = timeGetTime();
-    message.sequence_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
 
     filled = 0;
     if (count > 0) {
@@ -2066,7 +2066,7 @@ void __cdecl message_lock(int opcode, int target, int payload_10,
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
-    message.turn_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.turn_ = NetDaemonNet.deletion_list_.sequence_bits();
     message.field_10_ = payload_10;
     message.field_14_ = payload_14;
     message.field_18_ = target;
@@ -2099,7 +2099,7 @@ void __cdecl message_landmark(int opcode, int target, char *text,
     message.timestamp_ = timeGetTime();
     message.payload_10_ = payload_10;
     message.payload_1C_ = payload_1C;
-    message.sequence_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
     message.payload_14_ = payload_14;
     message.payload_18_ = payload_18;
     if (text) {
@@ -2134,7 +2134,7 @@ void __cdecl message_chat(int opcode, int target, char *text) {
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
-    message.turn_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.turn_ = NetDaemonNet.deletion_list_.sequence_bits();
     strncpy(message.text_, text, 0x100);
 
     NetBusyCount++;
@@ -2259,7 +2259,7 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
     }
     if (flags & 0x8000) {
         int value;
-        if (NetDaemonNet.lock_state_[0].trailing_words_[0] == 1) {
+        if (NetDaemonNet.primary_state_.trailing_words_[0] == 1) {
             value = target;
         } else {
             value = field_764_;
@@ -2268,7 +2268,7 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
         return Net::send(message, length, target, 1);
     }
     if (flags & 0xA000) {
-        const int counter = NetDaemonNet.lock_state_[0].trailing_words_[0];
+        const int counter = NetDaemonNet.primary_state_.trailing_words_[0];
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && ConsoleControlTurnActive == 0 &&
             GameDataStateStorage.fields_.net_turn_faction_ > 0 && counter > 1) {
             return Net::send(message, length,
@@ -2285,7 +2285,7 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
     }
 
     int value;
-    if (NetDaemonNet.lock_state_[0].trailing_words_[0] == 1) {
+    if (NetDaemonNet.primary_state_.trailing_words_[0] == 1) {
         value = target;
     } else {
         value = AlphaNet::who_2_pid(target);
@@ -2324,21 +2324,21 @@ int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
     if (IsMultiplayerNet == 0) {
         return 0;
     }
-    if ((NetDaemonNet.lock_state_[0].trailing_words_[7] & (1 << ConsoleGlobal.faction_id_)) != 0 &&
+    if ((NetDaemonNet.primary_state_.trailing_words_[7] & (1 << ConsoleGlobal.faction_id_)) != 0 &&
         (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
         NetMsgPrimary.pop("ALREADYDONE", 0, 2, 0);
         return 1;
     }
 
-    lock_state_[1].payload_.vehicle_selection_follow = veh_id;
+    channels_[0].payload_.vehicle_selection_follow = veh_id;
     int result = lock(target, Vehs[*veh_id].x, Vehs[*veh_id].y, payload_18,
                       payload_1C, payload_20);
     if (result == 0 && *veh_id >= 0) {
-        lock_state_[2].leading_words_[3] = 1;
-        lock_state_[2].trailing_words_[2] = 0;
+        channels_[1].leading_words_[3] = 1;
+        channels_[1].trailing_words_[2] = 0;
         return 0;
     }
-    lock_state_[1].payload_.vehicle_selection_follow = 0;
+    channels_[0].payload_.vehicle_selection_follow = 0;
     return 1;
 }
 
@@ -2356,7 +2356,7 @@ int NetDaemon::automated_lock(int *veh_id, int target) {
     DWORD retry_time = initial_time;
     // This is the daemon's existing state entry at this+0x1BB4, not
     // separate storage or an executable-address flag.
-    lock_state_[2].payload_.flags = 1;
+    channels_[1].payload_.flags = 1;
     bool awaiting_orders = false;
     if (ExitTurnLoop == 0) {
         do {
@@ -2388,7 +2388,7 @@ int NetDaemon::automated_lock(int *veh_id, int target) {
     }
     log_say("Got auto lock", *veh_id,
             static_cast<int>(static_cast<int8_t>(Vehs[*veh_id].order)), 0);
-    lock_state_[2].payload_.flags = 0;
+    channels_[1].payload_.flags = 0;
     --NetBusyCount;
     return ExitTurnLoop;
 }
@@ -2405,38 +2405,38 @@ int NetDaemon::automated_lock(int *veh_id, int target) {
 
 int NetDaemon::init(int option) {
 
-    lock_state_[0].leading_words_[1] = 0;
-    lock_state_[0].leading_words_[2] = 0;
-    lock_state_[0].leading_words_[3] = 0;
-    lock_state_[0].payload_.flags = 0;
-    lock_state_[0].trailing_words_[8] = 0;
-    lock_state_[0].trailing_words_[7] = 0;
-    lock_state_[1].leading_words_[1] = 0;
-    lock_state_[1].leading_words_[0] = 0;
-    lock_state_[1].trailing_words_[0] = 0;
-    lock_state_[2].leading_words_[1] = 0;
-    lock_state_[1].trailing_words_[9] = 0;
-    lock_state_[2].leading_words_[0] = 0;
-    lock_state_[2].trailing_words_[5] = 0;
-    lock_state_[2].trailing_words_[4] = 0;
-    lock_state_[0].trailing_words_[4] = 0;
-    lock_state_[0].trailing_words_[5] = 0;
-    lock_state_[0].trailing_words_[6] = 0;
-    lock_state_[2].trailing_words_[3] = 0;
-    lock_state_[2].trailing_words_[2] = 0;
-    lock_state_[2].leading_words_[3] = 0;
-    lock_state_[2].leading_words_[2] = 0;
-    lock_state_[2].payload_.flags = 0;
-    lock_state_[0].trailing_words_[0] = 0;
-    lock_state_[0].trailing_words_[1] = 0;
-    lock_state_[2].trailing_words_[8] = 0;
-    lock_state_[2].trailing_words_[7] = 0;
-    lock_state_[0].trailing_words_[2] = 0;
-    lock_state_[0].trailing_words_[3] = 0;
-    lock_state_[2].trailing_words_[6] = 0xff;
-    lock_state_[1].payload_.vehicle_selection_follow = 0;
+    primary_state_.leading_words_[0] = 0;
+    primary_state_.leading_words_[1] = 0;
+    primary_state_.leading_words_[2] = 0;
+    primary_state_.flags_ = 0;
+    primary_state_.trailing_words_[8] = 0;
+    primary_state_.trailing_words_[7] = 0;
+    channels_[0].leading_words_[1] = 0;
+    channels_[0].leading_words_[0] = 0;
+    channels_[0].trailing_words_[0] = 0;
+    channels_[1].leading_words_[1] = 0;
+    channels_[0].trailing_words_[9] = 0;
+    channels_[1].leading_words_[0] = 0;
+    channels_[1].trailing_words_[5] = 0;
+    channels_[1].trailing_words_[4] = 0;
+    primary_state_.trailing_words_[4] = 0;
+    primary_state_.trailing_words_[5] = 0;
+    primary_state_.trailing_words_[6] = 0;
+    channels_[1].trailing_words_[3] = 0;
+    channels_[1].trailing_words_[2] = 0;
+    channels_[1].leading_words_[3] = 0;
+    channels_[1].leading_words_[2] = 0;
+    channels_[1].payload_.flags = 0;
+    primary_state_.trailing_words_[0] = 0;
+    primary_state_.trailing_words_[1] = 0;
+    channels_[1].trailing_words_[8] = 0;
+    channels_[1].trailing_words_[7] = 0;
+    primary_state_.trailing_words_[2] = 0;
+    primary_state_.trailing_words_[3] = 0;
+    channels_[1].trailing_words_[6] = 0xff;
+    channels_[0].payload_.vehicle_selection_follow = 0;
 
-    uint32_t *p = &lock_state_[1].trailing_words_[1];
+    uint32_t *p = &channels_[0].trailing_words_[1];
     for (int i = 8; i != 0; i--) {
         *p = 0;
         p++;
@@ -2445,8 +2445,8 @@ int NetDaemon::init(int option) {
     locks_.clear();
     AlphaNet::close();
 
-    lock_state_[0].payload_.flags = 0;
-    lock_state_[0].leading_words_[3] = 0;
+    primary_state_.flags_ = 0;
+    primary_state_.leading_words_[2] = 0;
 
     if (AlphaNet::setup(option)) {
         return 1;
@@ -2470,7 +2470,7 @@ int NetDaemon::init(int option) {
 // indirect  0x005303CF 0x005303F9
 
 int NetDaemon::wait(char * message, uint32_t * state, int value, int timeout) {
-    int saved = NetDaemonNet.lock_state_[1].leading_words_[3];
+    int saved = NetDaemonNet.channels_[0].leading_words_[3];
     ++NetBusyCount;
     DWORD (WINAPI *const timeGetTimeFn)() = timeGetTime;
     DWORD startTime = timeGetTimeFn();
@@ -2501,7 +2501,7 @@ int NetDaemon::wait(char * message, uint32_t * state, int value, int timeout) {
         NetMsgPrimary.close();
     }
     --NetBusyCount;
-    NetDaemonNet.lock_state_[1].leading_words_[3] = saved;
+    NetDaemonNet.channels_[0].leading_words_[3] = saved;
     return 0;
 }
 
@@ -2524,23 +2524,23 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
   if (IsMultiplayerNet == 0) {
     return 0;
   }
-  if (lock_state_[1].trailing_words_[9] != 0) {
+  if (channels_[0].trailing_words_[9] != 0) {
     return 1;
   }
 
   log_say(reinterpret_cast<char *>("Client requesting Diplo Channel"), ConsoleGlobal.faction_id_, 0, 0);
-  lock_state_[1].trailing_words_[9] = 1;
-  lock_state_[2].leading_words_[0] = 0;
+  channels_[0].trailing_words_[9] = 1;
+  channels_[1].leading_words_[0] = 0;
 
   message_data(0x8240, 0, payload_10, payload_14, 0, 0);
 
   DWORD (WINAPI *const timeGetTime_)() = timeGetTime;
-  int savedE904 = NetDaemonNet.lock_state_[1].leading_words_[3];
+  int savedE904 = NetDaemonNet.channels_[0].leading_words_[3];
   (NetBusyCount)++;
   payload_14 = static_cast<int>(timeGetTime_());
 
   bool sentAwait = false;
-  if (lock_state_[2].leading_words_[0] == 0) {
+  if (channels_[1].leading_words_[0] == 0) {
     for (;;) {
       if (ExitTurnLoop != 0) {
         break;
@@ -2562,7 +2562,7 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
       locks_.check_global();
       check_spock();
 
-      if (lock_state_[2].leading_words_[0] != 0) {
+      if (channels_[1].leading_words_[0] != 0) {
         break;
       }
     }
@@ -2572,12 +2572,12 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
   }
 
   (NetBusyCount)--;
-  NetDaemonNet.lock_state_[1].leading_words_[3] = savedE904;
+  NetDaemonNet.channels_[0].leading_words_[3] = savedE904;
 
-  if (lock_state_[2].leading_words_[0] < 2) {
+  if (channels_[1].leading_words_[0] < 2) {
     return 0;
   }
-  lock_state_[1].trailing_words_[9] = 0;
+  channels_[0].trailing_words_[9] = 0;
   return 1;
 }
 
@@ -2601,26 +2601,26 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
     }
     NetPlayerDropped = 0;
 
-    if (*(int *)(lock_state_[2].leading_words_[2]) != 0) {
-        if (*(int *)(lock_state_[2].trailing_words_[3]) != 0) {
+    if (*(int *)(channels_[1].leading_words_[2]) != 0) {
+        if (*(int *)(channels_[1].trailing_words_[3]) != 0) {
             return 1;
         }
         NetMsgPrimary.pop((const char *)"MOVEPENDING", 0, 2, (const char *)0);
         return 1;
     }
 
-    *(int *)(lock_state_[2].leading_words_[2]) = 1;
-    *(int *)(lock_state_[1].leading_words_[2]) = 0;
+    *(int *)(channels_[1].leading_words_[2]) = 1;
+    *(int *)(channels_[0].leading_words_[2]) = 0;
     *(int *)(locks_.field_E8_) = 0;
 
     log_say((char *)"Client requesting lock", ConsoleGlobal.faction_id_, x, y);
     message_lock(0x2210, target, x, y, payload_18, payload_1C, scratch, 0);
 
     NetBusyCount = NetBusyCount + 1;
-    scratch = NetDaemonNet.lock_state_[1].leading_words_[3];
+    scratch = NetDaemonNet.channels_[0].leading_words_[3];
     unsigned long t0 = timeGetTime();
     int waited = 0;
-    if (*(int *)(lock_state_[1].leading_words_[2]) == 0) {
+    if (*(int *)(channels_[0].leading_words_[2]) == 0) {
         do {
             if (ExitTurnLoop != 0) {
                 break;
@@ -2639,20 +2639,20 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
             }
             locks_.check_global();
             check_spock();
-        } while (*(int *)(lock_state_[1].leading_words_[2]) == 0);
+        } while (*(int *)(channels_[0].leading_words_[2]) == 0);
         if (waited) {
             NetMsgPrimary.close();
         }
     }
 
     NetBusyCount = NetBusyCount - 1;
-    NetDaemonNet.lock_state_[1].leading_words_[3] = scratch;
+    NetDaemonNet.channels_[0].leading_words_[3] = scratch;
 
-    if (*(int *)(lock_state_[1].leading_words_[2]) == 1) {
-        *(int *)(lock_state_[2].trailing_words_[4]) = 0;
+    if (*(int *)(channels_[0].leading_words_[2]) == 1) {
+        *(int *)(channels_[1].trailing_words_[4]) = 0;
         if ((unsigned char)target & 2) {
             NetBusyCount = NetBusyCount + 1;
-            scratch = NetDaemonNet.lock_state_[1].leading_words_[3];
+            scratch = NetDaemonNet.channels_[0].leading_words_[3];
             unsigned long t0b = timeGetTime();
             target = (int)t0b;
             int waited2 = 0;
@@ -2680,25 +2680,25 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
                     NetMsgPrimary.close();
                 }
             }
-            NetDaemonNet.lock_state_[1].leading_words_[3] = scratch;
+            NetDaemonNet.channels_[0].leading_words_[3] = scratch;
             NetBusyCount = NetBusyCount - 1;
         }
         if (NetPlayerDropped == 0) {
             return 0;
         }
-        *(int *)(lock_state_[1].leading_words_[2]) = 2;
+        *(int *)(channels_[0].leading_words_[2]) = 2;
     }
 
-    if (*(int *)(lock_state_[2].trailing_words_[3]) == 0) {
-        *(int *)(lock_state_[2].trailing_words_[4]) = *(int *)(lock_state_[2].trailing_words_[4]) + 1;
-        if (*(int *)(lock_state_[2].trailing_words_[4]) > 0 || *(int *)(lock_state_[1].leading_words_[2]) > 2) {
-            const char *msg = (*(int *)(lock_state_[1].leading_words_[2]) == 2) ? (const char *)"NOLOCK" : (const char *)"NOLOCKGLOBAL";
+    if (*(int *)(channels_[1].trailing_words_[3]) == 0) {
+        *(int *)(channels_[1].trailing_words_[4]) = *(int *)(channels_[1].trailing_words_[4]) + 1;
+        if (*(int *)(channels_[1].trailing_words_[4]) > 0 || *(int *)(channels_[0].leading_words_[2]) > 2) {
+            const char *msg = (*(int *)(channels_[0].leading_words_[2]) == 2) ? (const char *)"NOLOCK" : (const char *)"NOLOCKGLOBAL";
             NetMsgPrimary.pop(msg, 5000, 2, (const char *)0);
-            *(int *)(lock_state_[2].trailing_words_[4]) = 0;
+            *(int *)(channels_[1].trailing_words_[4]) = 0;
         }
     }
 
-    *(int *)(lock_state_[2].leading_words_[2]) = 0;
+    *(int *)(channels_[1].leading_words_[2]) = 0;
     return 1;
 }
 
@@ -2718,15 +2718,15 @@ int NetDaemon::add_lock(int target, int x, int y) {
     if (IsMultiplayerNet == 0) {
         return 0;
     }
-    if (lock_state_[2].leading_words_[2] == 0) {
+    if (channels_[1].leading_words_[2] == 0) {
         return 1;
     }
 
     log_say(reinterpret_cast<char *>("Client requesting ADD LOCK"), ConsoleGlobal.faction_id_, 0, 0);
-    lock_state_[1].leading_words_[2] = 0;
+    channels_[0].leading_words_[2] = 0;
     message_lock(0x2215, target, x, y, 0, -1, -1, 0);
 
-    int savedVal = NetDaemonNet.lock_state_[1].leading_words_[3];
+    int savedVal = NetDaemonNet.channels_[0].leading_words_[3];
     DWORD (WINAPI *const timeGetTimeFn)() = timeGetTime;
     ++NetBusyCount;
     y = timeGetTimeFn();
@@ -2735,7 +2735,7 @@ int NetDaemon::add_lock(int target, int x, int y) {
     NetMsg *netMsg = &NetMsgPrimary;
     Lock &lock = locks_;
 
-    if (lock_state_[1].leading_words_[2] == 0) {
+    if (channels_[0].leading_words_[2] == 0) {
         do {
             if (ExitTurnLoop != 0) {
                 break;
@@ -2755,18 +2755,18 @@ int NetDaemon::add_lock(int target, int x, int y) {
             }
             lock.check_global();
             check_spock();
-        } while (lock_state_[1].leading_words_[2] == 0);
+        } while (channels_[0].leading_words_[2] == 0);
         if (popped) {
             netMsg->close();
         }
     }
 
     --NetBusyCount;
-    NetDaemonNet.lock_state_[1].leading_words_[3] = savedVal;
-    if (lock_state_[1].leading_words_[2] != 1) {
+    NetDaemonNet.channels_[0].leading_words_[3] = savedVal;
+    if (channels_[0].leading_words_[2] != 1) {
         netMsg->pop(reinterpret_cast<const char *>("NOLOCK"), 5000, 2, 0);
     }
-    return lock_state_[1].leading_words_[2] != 1;
+    return channels_[0].leading_words_[2] != 1;
 }
 
 // Fixed-slot bindings carried from 00530aa0.cpp
@@ -2789,15 +2789,15 @@ int NetDaemon::add_global() {
         return 0;
     }
     NetPlayerDropped = 0;
-    lock_state_[1].leading_words_[2] = 0;
+    channels_[0].leading_words_[2] = 0;
     locks_.field_E8_ = 0;
     message_data(0x2211, 0, 0, 0, 0, 0);
     NetBusyCount = NetBusyCount + 1;
-    int saved_e904 = NetDaemonNet.lock_state_[1].leading_words_[3];
+    int saved_e904 = NetDaemonNet.channels_[0].leading_words_[3];
     unsigned long start_time1 = get_time();
 
     bool warned1 = false;
-    if (lock_state_[1].leading_words_[2] == 0) {
+    if (channels_[0].leading_words_[2] == 0) {
         do {
             if (ExitTurnLoop != 0) break;
             if (!warned1) {
@@ -2815,15 +2815,15 @@ int NetDaemon::add_global() {
             }
             locks_.check_global();
             check_spock();
-        } while (lock_state_[1].leading_words_[2] == 0);
+        } while (channels_[0].leading_words_[2] == 0);
         if (warned1) {
             NetMsgPrimary.close();
         }
     }
-    NetDaemonNet.lock_state_[1].leading_words_[3] = saved_e904;
+    NetDaemonNet.channels_[0].leading_words_[3] = saved_e904;
     int newE664 = NetBusyCount - 1;
 
-    if (lock_state_[1].leading_words_[2] == 1) {
+    if (channels_[0].leading_words_[2] == 1) {
         unsigned long start_time2 = get_time();
         bool warned2 = false;
         if (locks_.field_E8_ == 0) {
@@ -2849,30 +2849,30 @@ int NetDaemon::add_global() {
                 NetMsgPrimary.close();
             }
         }
-        NetDaemonNet.lock_state_[1].leading_words_[3] = saved_e904;
+        NetDaemonNet.channels_[0].leading_words_[3] = saved_e904;
         NetBusyCount = NetBusyCount - 1;
         if (NetPlayerDropped == 0) {
-            lock_state_[2].trailing_words_[4] = 0;
+            channels_[1].trailing_words_[4] = 0;
             return 0;
         }
-        lock_state_[1].leading_words_[2] = 2;
+        channels_[0].leading_words_[2] = 2;
         newE664 = NetBusyCount;
     }
     NetBusyCount = newE664;
 
-    if (lock_state_[2].trailing_words_[3] == 0) {
-        int newBc8 = lock_state_[2].trailing_words_[4] + 1;
-        lock_state_[2].trailing_words_[4] = newBc8;
-        if (newBc8 > 0 || lock_state_[1].leading_words_[2] > 2) {
+    if (channels_[1].trailing_words_[3] == 0) {
+        int newBc8 = channels_[1].trailing_words_[4] + 1;
+        channels_[1].trailing_words_[4] = newBc8;
+        if (newBc8 > 0 || channels_[0].leading_words_[2] > 2) {
             const char *msg = reinterpret_cast<const char *>("NOLOCK");
-            if (lock_state_[1].leading_words_[2] != 2) {
+            if (channels_[0].leading_words_[2] != 2) {
                 msg = reinterpret_cast<const char *>("NOLOCKGLOBAL");
             }
             NetMsgPrimary.pop(msg, 5000, 2, 0);
-            lock_state_[2].trailing_words_[4] = 0;
+            channels_[1].trailing_words_[4] = 0;
         }
     }
-    lock_state_[2].leading_words_[2] = 0;
+    channels_[1].leading_words_[2] = 0;
     return 1;
 }
 
@@ -2921,21 +2921,21 @@ int NetDaemon::add_global() {
 
 void NetDaemon::unlock_base(int base_id) {
 
-    log_say(reinterpret_cast<char *>("UnlockBase"), NetDaemonNet.lock_state_[2].leading_words_[2], base_id, 0);
+    log_say(reinterpret_cast<char *>("UnlockBase"), NetDaemonNet.channels_[1].leading_words_[2], base_id, 0);
 
-    if (IsMultiplayerNet != 0 && NetDaemonNet.lock_state_[2].leading_words_[2] != 0) {
+    if (IsMultiplayerNet != 0 && NetDaemonNet.channels_[1].leading_words_[2] != 0) {
         log_say(reinterpret_cast<char *>("UnlockBase doing synch & unlock"), 0, 0, 0);
         synch_base(base_id);
 
         if (IsMultiplayerNet != 0) {
-            lock_state_[2].trailing_words_[0] = 1;
+            channels_[1].trailing_words_[0] = 1;
             log_say(reinterpret_cast<char *>("Awaiting acknowledgement of SYNCH"), ConsoleGlobal.faction_id_, 0, 0);
-            int saved = NetDaemonNet.lock_state_[1].leading_words_[3];
+            int saved = NetDaemonNet.channels_[0].leading_words_[3];
             ++NetBusyCount;
             unsigned long baseline = timeGetTime();
 
             int logged_wait = 0;
-            if (lock_state_[2].trailing_words_[0] == 1) {
+            if (channels_[1].trailing_words_[0] == 1) {
                 do {
                     if (ExitTurnLoop != 0) {
                         break;
@@ -2955,26 +2955,26 @@ void NetDaemon::unlock_base(int base_id) {
                     }
                     locks_.check_global();
                     check_spock();
-                } while (lock_state_[2].trailing_words_[0] == 1);
+                } while (channels_[1].trailing_words_[0] == 1);
                 if (logged_wait) {
                     NetMsgPrimary.close();
                 }
             }
 
             --NetBusyCount;
-            NetDaemonNet.lock_state_[1].leading_words_[3] = saved;
-            if (lock_state_[2].trailing_words_[0] == 0) {
+            NetDaemonNet.channels_[0].leading_words_[3] = saved;
+            if (channels_[1].trailing_words_[0] == 0) {
                 log_say(reinterpret_cast<char *>("Received SYNCH acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
             }
-            lock_state_[2].trailing_words_[0] = 0;
+            channels_[1].trailing_words_[0] = 0;
 
             if (IsMultiplayerNet != 0) {
                 log_say(reinterpret_cast<char *>("Client releasing lock"), ConsoleGlobal.faction_id_, 0, 0);
                 message_data(0x2212, 0, 0, 0, 0, 0);
-                lock_state_[2].leading_words_[3] = 0;
-                lock_state_[2].leading_words_[2] = 0;
-                lock_state_[2].trailing_words_[5] = 0;
-                lock_state_[2].trailing_words_[4] = 0;
+                channels_[1].leading_words_[3] = 0;
+                channels_[1].leading_words_[2] = 0;
+                channels_[1].trailing_words_[5] = 0;
+                channels_[1].trailing_words_[4] = 0;
             }
         }
     }
@@ -3031,12 +3031,12 @@ void NetDaemon::await_exec(int opcode) {
     }
 
     log_say(reinterpret_cast<char *>("Client waiting for acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
-    int saved = NetDaemonNet.lock_state_[1].leading_words_[3];
+    int saved = NetDaemonNet.channels_[0].leading_words_[3];
     ++NetBusyCount;
     unsigned long baseline = timeGetTime();
 
     int logged_wait = 0;
-    if (lock_state_[2].leading_words_[3] == 1) {
+    if (channels_[1].leading_words_[3] == 1) {
         do {
             if (ExitTurnLoop != 0) {
                 break;
@@ -3056,29 +3056,29 @@ void NetDaemon::await_exec(int opcode) {
             }
             locks_.check_global();
             check_spock();
-        } while (lock_state_[2].leading_words_[3] == 1);
+        } while (channels_[1].leading_words_[3] == 1);
         if (logged_wait) {
             NetMsgPrimary.close();
         }
     }
 
     --NetBusyCount;
-    NetDaemonNet.lock_state_[1].leading_words_[3] = saved;
+    NetDaemonNet.channels_[0].leading_words_[3] = saved;
     log_say(reinterpret_cast<char *>("Client received acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
 
     if (opcode != 0) {
         if (IsMultiplayerNet != 0) {
             log_say(reinterpret_cast<char *>("Client releasing lock"), ConsoleGlobal.faction_id_, 0, 0);
             message_data(0x2212, 0, 0, 0, 0, 0);
-            lock_state_[2].leading_words_[3] = 0;
-            lock_state_[2].leading_words_[2] = 0;
-            lock_state_[2].trailing_words_[5] = 0;
-            lock_state_[2].trailing_words_[4] = 0;
+            channels_[1].leading_words_[3] = 0;
+            channels_[1].leading_words_[2] = 0;
+            channels_[1].trailing_words_[5] = 0;
+            channels_[1].trailing_words_[4] = 0;
         }
-        lock_state_[1].payload_.vehicle_selection_follow = 0;
-        lock_state_[2].trailing_words_[3] = 0;
+        channels_[0].payload_.vehicle_selection_follow = 0;
+        channels_[1].trailing_words_[3] = 0;
     }
-    lock_state_[2].leading_words_[3] = 0;
+    channels_[1].leading_words_[3] = 0;
 }
 
 // ORIGINAL: 0x00531480 ?await_synch@NetDaemon@@QAEXXZ 0x00531480-0x005315B6 FILE
@@ -3124,14 +3124,14 @@ void NetDaemon::await_exec(int opcode) {
 
 
 void NetDaemon::await_synch() {
-    uint32_t *state = &lock_state_[2].trailing_words_[0];
+    uint32_t *state = &channels_[1].trailing_words_[0];
 
     if (IsMultiplayerNet != 0) {
         int synching = 1;
         *state = synching;
         log_say(reinterpret_cast<char *>("Awaiting acknowledgement of SYNCH"), ConsoleGlobal.faction_id_, 0, 0);
 
-        int saved = NetDaemonNet.lock_state_[1].leading_words_[3];
+        int saved = NetDaemonNet.channels_[0].leading_words_[3];
         (NetBusyCount)++;
         unsigned long start_time = timeGetTime();
 
@@ -3166,7 +3166,7 @@ void NetDaemon::await_synch() {
         }
 
         (NetBusyCount)--;
-        NetDaemonNet.lock_state_[1].leading_words_[3] = saved;
+        NetDaemonNet.channels_[0].leading_words_[3] = saved;
         if (*state == 0) {
             log_say(reinterpret_cast<char *>("Received SYNCH acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
         }
@@ -3220,13 +3220,13 @@ void NetDaemon::await_synch() {
 
 void NetDaemon::await_diplo(int opcode) {
     if (IsMultiplayerNet != 0) {
-        lock_state_[2].leading_words_[1] = opcode;
+        channels_[1].leading_words_[1] = opcode;
         log_say(reinterpret_cast<char *>("Awaiting DIPLO event"), ConsoleGlobal.faction_id_, 0, 0);
         (NetBusyCount)++;
-        int32_t saved = NetDaemonNet.lock_state_[1].leading_words_[3];
+        int32_t saved = NetDaemonNet.channels_[0].leading_words_[3];
         unsigned int start_time = timeGetTime();
         int timed_out = 0;
-        if (lock_state_[2].leading_words_[1] == opcode) {
+        if (channels_[1].leading_words_[1] == opcode) {
             do {
                 if (ExitTurnLoop != 0) {
                     break;
@@ -3248,384 +3248,20 @@ void NetDaemon::await_diplo(int opcode) {
                 }
                 locks_.check_global();
                 check_spock();
-            } while (lock_state_[2].leading_words_[1] == opcode);
+            } while (channels_[1].leading_words_[1] == opcode);
             if (timed_out) {
                 NetMsgPrimary.close();
             }
         }
         (NetBusyCount)--;
-        NetDaemonNet.lock_state_[1].leading_words_[3] = saved;
-        if (lock_state_[2].leading_words_[1] == 0) {
+        NetDaemonNet.channels_[0].leading_words_[3] = saved;
+        if (channels_[1].leading_words_[1] == 0) {
             log_say(reinterpret_cast<char *>("Received DIPLO acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
         }
-        lock_state_[2].leading_words_[1] = 0;
+        channels_[1].leading_words_[1] = 0;
     }
 }
 
-class DeletionList { public:
-    uint32_t field_0_;
-    uint32_t field_4_;
-    uint32_t field_8_;
-    uint32_t field_C_;
-    uint32_t field_10_;
-    uint32_t field_14_;
-    uint32_t field_18_;
-    uint32_t field_1C_;
-    uint32_t field_20_;
-    uint32_t field_24_;
-    uint32_t field_28_;
-    uint32_t field_2C_;
-    uint32_t field_30_;
-    uint32_t field_34_;
-    uint32_t field_38_;
-    uint32_t field_3C_;
-    uint32_t field_40_;
-    uint32_t field_44_;
-    uint32_t field_48_;
-    uint32_t field_4C_;
-    uint32_t field_50_;
-    uint32_t field_54_;
-    uint32_t field_58_;
-    uint32_t field_5C_;
-    uint32_t field_60_;
-    uint32_t field_64_;
-    uint32_t field_68_;
-    uint32_t field_6C_;
-    uint32_t field_70_;
-    uint32_t field_74_;
-    uint32_t field_78_;
-    uint32_t field_7C_;
-    uint32_t field_80_;
-    uint32_t field_84_;
-    uint32_t field_88_;
-    uint32_t field_8C_;
-    uint32_t field_90_;
-    uint32_t field_94_;
-    uint32_t field_98_;
-    uint32_t field_9C_;
-    uint32_t field_A0_;
-    uint32_t field_A4_;
-    uint32_t field_A8_;
-    uint32_t field_AC_;
-    uint32_t field_B0_;
-    uint32_t field_B4_;
-    uint32_t field_B8_;
-    uint32_t field_BC_;
-    uint32_t field_C0_;
-    uint32_t field_C4_;
-    uint32_t field_C8_;
-    uint32_t field_CC_;
-    uint32_t field_D0_;
-    uint32_t field_D4_;
-    uint32_t field_D8_;
-    uint32_t field_DC_;
-    uint32_t field_E0_;
-    uint32_t field_E4_;
-    uint32_t field_E8_;
-    uint32_t field_EC_;
-    uint32_t field_F0_;
-    uint32_t field_F4_;
-    uint32_t field_F8_;
-    uint32_t field_FC_;
-    uint32_t field_100_;
-    uint32_t field_104_;
-    uint32_t field_108_;
-    uint32_t field_10C_;
-    uint32_t field_110_;
-    uint32_t field_114_;
-    uint32_t field_118_;
-    uint32_t field_11C_;
-    uint32_t field_120_;
-    uint32_t field_124_;
-    uint32_t field_128_;
-    uint32_t field_12C_;
-    uint32_t field_130_;
-    uint32_t field_134_;
-    uint32_t field_138_;
-    uint32_t field_13C_;
-    uint32_t field_140_;
-    uint32_t field_144_;
-    uint32_t field_148_;
-    uint32_t field_14C_;
-    uint32_t field_150_;
-    uint32_t field_154_;
-    uint32_t field_158_;
-    uint32_t field_15C_;
-    uint32_t field_160_;
-    uint32_t field_164_;
-    uint32_t field_168_;
-    uint32_t field_16C_;
-    uint32_t field_170_;
-    uint32_t field_174_;
-    uint32_t field_178_;
-    uint32_t field_17C_;
-    uint32_t field_180_;
-    uint32_t field_184_;
-    uint32_t field_188_;
-    uint32_t field_18C_;
-    uint32_t field_190_;
-    uint32_t field_194_;
-    uint32_t field_198_;
-    uint32_t field_19C_;
-    uint32_t field_1A0_;
-    uint32_t field_1A4_;
-    uint32_t field_1A8_;
-    uint32_t field_1AC_;
-    uint32_t field_1B0_;
-    uint32_t field_1B4_;
-    uint32_t field_1B8_;
-    uint32_t field_1BC_;
-    uint32_t field_1C0_;
-    uint32_t field_1C4_;
-    uint32_t field_1C8_;
-    uint32_t field_1CC_;
-    uint32_t field_1D0_;
-    uint32_t field_1D4_;
-    uint32_t field_1D8_;
-    uint32_t field_1DC_;
-    uint32_t field_1E0_;
-    uint32_t field_1E4_;
-    uint32_t field_1E8_;
-    uint32_t field_1EC_;
-    uint32_t field_1F0_;
-    uint32_t field_1F4_;
-    uint32_t field_1F8_;
-    uint32_t field_1FC_;
-    uint32_t field_200_;
-    uint32_t field_204_;
-    uint32_t field_208_;
-    uint32_t field_20C_;
-    uint32_t field_210_;
-    uint32_t field_214_;
-    uint32_t field_218_;
-    uint32_t field_21C_;
-    uint32_t field_220_;
-    uint32_t field_224_;
-    uint32_t field_228_;
-    uint32_t field_22C_;
-    uint32_t field_230_;
-    uint32_t field_234_;
-    uint32_t field_238_;
-    uint32_t field_23C_;
-    uint32_t field_240_;
-    uint32_t field_244_;
-    uint32_t field_248_;
-    uint32_t field_24C_;
-    uint32_t field_250_;
-    uint32_t field_254_;
-    uint32_t field_258_;
-    uint32_t field_25C_;
-    uint32_t field_260_;
-    uint32_t field_264_;
-    uint32_t field_268_;
-    uint32_t field_26C_;
-    uint32_t field_270_;
-    uint32_t field_274_;
-    uint32_t field_278_;
-    uint32_t field_27C_;
-    uint32_t field_280_;
-    uint32_t field_284_;
-    uint32_t field_288_;
-    uint32_t field_28C_;
-    uint32_t field_290_;
-    uint32_t field_294_;
-    uint32_t field_298_;
-    uint32_t field_29C_;
-    uint32_t field_2A0_;
-    uint32_t field_2A4_;
-    uint32_t field_2A8_;
-    uint32_t field_2AC_;
-    uint32_t field_2B0_;
-    uint32_t field_2B4_;
-    uint32_t field_2B8_;
-    uint32_t field_2BC_;
-    uint32_t field_2C0_;
-    uint32_t field_2C4_;
-    uint32_t field_2C8_;
-    uint32_t field_2CC_;
-    uint32_t field_2D0_;
-    uint32_t field_2D4_;
-    uint32_t field_2D8_;
-    uint32_t field_2DC_;
-    uint32_t field_2E0_;
-    uint32_t field_2E4_;
-    uint32_t field_2E8_;
-    uint32_t field_2EC_;
-    uint32_t field_2F0_;
-    uint32_t field_2F4_;
-    uint32_t field_2F8_;
-    uint32_t field_2FC_;
-    uint32_t field_300_;
-    uint32_t field_304_;
-    uint32_t field_308_;
-    uint32_t field_30C_;
-    uint32_t field_310_;
-    uint32_t field_314_;
-    uint32_t field_318_;
-    uint32_t field_31C_;
-    uint32_t field_320_;
-    uint32_t field_324_;
-    uint32_t field_328_;
-    uint32_t field_32C_;
-    uint32_t field_330_;
-    uint32_t field_334_;
-    uint32_t field_338_;
-    uint32_t field_33C_;
-    uint32_t field_340_;
-    uint32_t field_344_;
-    uint32_t field_348_;
-    uint32_t field_34C_;
-    uint32_t field_350_;
-    uint32_t field_354_;
-    uint32_t field_358_;
-    uint32_t field_35C_;
-    uint32_t field_360_;
-    uint32_t field_364_;
-    uint32_t field_368_;
-    uint32_t field_36C_;
-    uint32_t field_370_;
-    uint32_t field_374_;
-    uint32_t field_378_;
-    uint32_t field_37C_;
-    uint32_t field_380_;
-    uint32_t field_384_;
-    uint32_t field_388_;
-    uint32_t field_38C_;
-    uint32_t field_390_;
-    uint32_t field_394_;
-    uint32_t field_398_;
-    uint32_t field_39C_;
-    uint32_t field_3A0_;
-    uint32_t field_3A4_;
-    uint32_t field_3A8_;
-    uint32_t field_3AC_;
-    uint32_t field_3B0_;
-    uint32_t field_3B4_;
-    uint32_t field_3B8_;
-    uint32_t field_3BC_;
-    uint32_t field_3C0_;
-    uint32_t field_3C4_;
-    uint32_t field_3C8_;
-    uint32_t field_3CC_;
-    uint32_t field_3D0_;
-    uint32_t field_3D4_;
-    uint32_t field_3D8_;
-    uint32_t field_3DC_;
-    uint32_t field_3E0_;
-    uint32_t field_3E4_;
-    uint32_t field_3E8_;
-    uint32_t field_3EC_;
-    uint32_t field_3F0_;
-    uint32_t field_3F4_;
-    uint32_t field_3F8_;
-    uint32_t field_3FC_;
-    uint32_t field_400_;
-    uint32_t field_404_;
-    uint32_t field_408_;
-    uint32_t field_40C_;
-    uint32_t field_410_;
-    uint32_t field_414_;
-    uint32_t field_418_;
-    uint32_t field_41C_;
-    uint32_t field_420_;
-    uint32_t field_424_;
-    uint32_t field_428_;
-    uint32_t field_42C_;
-    uint32_t field_430_;
-    uint32_t field_434_;
-    uint32_t field_438_;
-    uint32_t field_43C_;
-    uint32_t field_440_;
-    uint32_t field_444_;
-    uint32_t field_448_;
-    uint32_t field_44C_;
-    uint32_t field_450_;
-    uint32_t field_454_;
-    uint32_t field_458_;
-    uint32_t field_45C_;
-    uint32_t field_460_;
-    uint32_t field_464_;
-    uint32_t field_468_;
-    uint32_t field_46C_;
-    uint32_t field_470_;
-    uint32_t field_474_;
-    uint32_t field_478_;
-    uint32_t field_47C_;
-    uint32_t field_480_;
-    uint32_t field_484_;
-    uint32_t field_488_;
-    uint32_t field_48C_;
-    uint32_t field_490_;
-    uint32_t field_494_;
-    uint32_t field_498_;
-    uint32_t field_49C_;
-    uint32_t field_4A0_;
-    uint32_t field_4A4_;
-    uint32_t field_4A8_;
-    uint32_t field_4AC_;
-    uint32_t field_4B0_;
-    uint32_t field_4B4_;
-    uint32_t field_4B8_;
-    uint32_t field_4BC_;
-    uint32_t field_4C0_;
-    uint32_t field_4C4_;
-    uint32_t field_4C8_;
-    uint32_t field_4CC_;
-    uint32_t field_4D0_;
-    uint32_t field_4D4_;
-    uint32_t field_4D8_;
-    uint32_t field_4DC_;
-    uint32_t field_4E0_;
-    uint32_t field_4E4_;
-    uint32_t field_4E8_;
-    uint32_t field_4EC_;
-    uint32_t field_4F0_;
-    uint32_t field_4F4_;
-    uint32_t field_4F8_;
-    uint32_t field_4FC_;
-    uint32_t field_500_;
-    uint32_t field_504_;
-    uint32_t field_508_;
-    uint32_t field_50C_;
-    uint32_t field_510_;
-    uint32_t field_514_;
-    uint32_t field_518_;
-    uint32_t field_51C_;
-    uint32_t field_520_;
-    uint32_t field_524_;
-    uint32_t field_528_;
-    uint32_t field_52C_;
-    uint32_t field_530_;
-    uint32_t field_534_;
-    uint32_t field_538_;
-    uint32_t field_53C_;
-    uint32_t field_540_;
-    uint32_t field_544_;
-    uint32_t field_548_;
-    uint32_t field_54C_;
-    uint32_t field_550_;
-    uint32_t field_554_;
-    uint32_t field_558_;
-    uint32_t field_55C_;
-    uint32_t field_560_;
-    uint32_t field_564_;
-    uint32_t field_568_;
-    uint32_t field_56C_;
-    uint32_t field_570_;
-    uint32_t field_574_;
-    uint32_t field_578_;
-    uint32_t field_57C_;
-    uint32_t field_580_;
-    uint32_t field_584_;
-    uint32_t field_588_;
-    uint32_t field_58C_;
-    uint32_t field_590_;
-    uint32_t field_594_;
-    uint32_t field_598_;
-    uint32_t field_59C_;
-    uint32_t field_5A0_;
-    int convert(int, int);
-};
 
 // ORIGINAL: 0x00534330 ?fixup_message@NetDaemon@@QAEHPAD@Z 0x00534330-0x005343FC FILE
 // TRIED: MISMATCH, closest at 212/204 bytes (mnemonic_similarity 0.87, 3 edit blocks). `goto fail;`/`fail:` in place of five scattered `return 0;` was needed to get VC6 to share ONE epilogue the way the original's disassembly jumps into a single shared block - plain early returns each got their own copy. `int code` (signed) not `unsigned short`/`unsigned int` reproduces the `cmp eax,CONST` 32-bit signed compares (jg/jge) the original uses, and writing the boundaries as `<= 0x2406`/`<= 0x2402` (not `< 0x2407`/`< 0x2403`) matches the exact `jg` vs `jge` original picked for each - the `x<N` vs `x<=N-1` lever. `DeletionList*` for `this+0x158c` inlined at each of the three call sites (not cached in an upfront local) matches the original computing it lazily, right before its first use. Remaining diff: the `code== 0x2403` arm compiles to `jne fail; jmp common` where the original does a single `je common`, and the `0x2408 || 0x2413` pair still compiles as two `cmp/je` where the original uses a `sub eax,0x2408; je; sub eax,0xb; jne` switch-lowering idiom - not chased further.
@@ -3650,8 +3286,7 @@ int NetDaemon::fixup_message(char * message) {
                     if (msg[8] != 0x11) {
                         goto fail;
                     }
-                    int r1 = reinterpret_cast<DeletionList *>(lock_table_)
-                                 ->convert(*reinterpret_cast<int *>(msg + 10), *reinterpret_cast<int *>(msg + 6));
+                    int r1 = deletion_list_.convert(*reinterpret_cast<int *>(msg + 10), *reinterpret_cast<int *>(msg + 6));
                     *reinterpret_cast<int *>(msg + 10) = r1;
                     if (*(reinterpret_cast<char *>(msg) + 0x35) != 1) {
                         goto fail;
@@ -3659,8 +3294,7 @@ int NetDaemon::fixup_message(char * message) {
                     if (static_cast<short>(msg[0x1c]) < 0) {
                         goto fail;
                     }
-                    int r2 = reinterpret_cast<DeletionList *>(lock_table_)
-                                 ->convert(static_cast<short>(msg[0x1c]), *reinterpret_cast<int *>(msg + 6));
+                    int r2 = deletion_list_.convert(static_cast<short>(msg[0x1c]), *reinterpret_cast<int *>(msg + 6));
                     unsigned short r2s = static_cast<unsigned short>(r2);
                     msg[0x1c] = r2s;
                     if (r2s != 0xffff) {
@@ -3677,8 +3311,7 @@ int NetDaemon::fixup_message(char * message) {
         goto fail;
     }
     {
-        int r3 = reinterpret_cast<DeletionList *>(lock_table_)
-                     ->convert(*reinterpret_cast<int *>(msg + 8), *reinterpret_cast<int *>(msg + 6));
+        int r3 = deletion_list_.convert(*reinterpret_cast<int *>(msg + 8), *reinterpret_cast<int *>(msg + 6));
         *reinterpret_cast<int *>(msg + 8) = r3;
         if (r3 >= 0) {
             goto fail;
@@ -3778,11 +3411,11 @@ static_assert(sizeof(void *) == sizeof(uint32_t),
               "the native transfer pointer word is 32-bit");
 
 static NetDaemonFileIndexRecord *netdaemon_file_index_records() {
-    return static_cast<NetDaemonFileIndexRecord *>(NetDaemonNet.save_storage_.file_index_records_);
+    return static_cast<NetDaemonFileIndexRecord *>(NetDaemonNet.file_index_records_);
 }
 
 static void netdaemon_set_file_index_records(NetDaemonFileIndexRecord *records) {
-    NetDaemonNet.save_storage_.file_index_records_ = records;
+    NetDaemonNet.file_index_records_ = records;
 }
 // RECOVERY_OBJECT: v1 0x0093F79C ?NetDaemonFileTransferMode@@3HA
 int NetDaemonFileTransferMode;
@@ -3861,7 +3494,7 @@ bool NetDaemon::process_file_transfer_message(char *message,
                                              Filemap &filemap) {
     unsigned char *const bytes = reinterpret_cast<unsigned char *>(message);
     const uint16_t type = netdaemon_transfer_read_u16(bytes);
-    const bool local_is_host = lock_state_[0].leading_words_[1] != 0;
+    const bool local_is_host = primary_state_.leading_words_[0] != 0;
     NetDaemonFileIndexRecord *records = netdaemon_file_index_records();
 
     if (type == 0xF09) { // decimal 3849: native shared-default route
@@ -3870,9 +3503,9 @@ bool NetDaemon::process_file_transfer_message(char *message,
                 const uint16_t forwarded = static_cast<uint16_t>(
                     (type & 0x1FFFU) | 0x4000U);
                 netdaemon_transfer_write_u16(bytes, forwarded);
-                ++lock_state_[0].leading_words_[0];
+                deletion_list_.advance_sequence();
                 netdaemon_transfer_write_u32(bytes + 0x0C,
-                                             lock_state_[0].leading_words_[0]);
+                                             deletion_list_.sequence_bits());
                 send_message(message, static_cast<int>(message_size), 0);
             }
         }
@@ -4060,7 +3693,7 @@ int NetDaemon::send_files() {
     const int local_index = NetDaemonNet.pid_2_idx(
         NetDaemonNet.field_760_);
 
-    NetDaemonNet.lock_state_[2].trailing_words_[9] = 0;
+    NetDaemonNet.channels_[1].trailing_words_[9] = 0;
     netdaemon_set_file_index_records(netdaemon_allocate_file_index_records());
 
     char executable_path[0x104];
@@ -4068,7 +3701,7 @@ int NetDaemon::send_files() {
     char *last_separator = strrchr(executable_path, '\\');
     if (last_separator != 0) last_separator[1] = '\0';
 
-    if (lock_state_[0].leading_words_[1] != 0 && NetDaemonNet.player_count_ > 0) {
+    if (primary_state_.leading_words_[0] != 0 && NetDaemonNet.player_count_ > 0) {
         for (int slot = 1; slot <= NetDaemonNet.player_count_; ++slot) {
             if (local_index != slot) send_mask |= 1U << (slot & 31);
             NetDaemonNet.process_slots_[slot].status_bytes_[0] =
@@ -4076,7 +3709,7 @@ int NetDaemon::send_files() {
         }
     }
 
-    if (lock_state_[0].leading_words_[1] == 0) {
+    if (primary_state_.leading_words_[0] == 0) {
         while (NetDaemonFileTransferMode != 1) {
             unsigned long sender, channel;
             void *packet = NetDaemonNet.Net::get(&sender, &channel);
@@ -4126,15 +3759,15 @@ int NetDaemon::send_files() {
     char previous_directory[0x104];
     GetCurrentDirectoryA(sizeof previous_directory, previous_directory);
     const BOOL changed_directory = SetCurrentDirectoryA(SaveNameBuffer);
-    if (changed_directory == 0 && lock_state_[0].leading_words_[1] == 0) {
+    if (changed_directory == 0 && primary_state_.leading_words_[0] == 0) {
         if (_mkdir(SaveNameBuffer) == 0) SetCurrentDirectoryA(SaveNameBuffer);
     }
 
     int file_count = 0;
-    if (lock_state_[0].leading_words_[1] == 0) {
+    if (primary_state_.leading_words_[0] == 0) {
         for (;;) {
             if (NetDaemonFileTransferMode == 3 ||
-                lock_state_[2].trailing_words_[9] != 0) goto cleanup;
+                channels_[1].trailing_words_[9] != 0) goto cleanup;
             if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
             do_draw();
             unsigned long sender, channel;
@@ -4143,7 +3776,7 @@ int NetDaemon::send_files() {
                 process_message(static_cast<char *>(packet), channel,
                                 static_cast<int>(sender));
         }
-        lock_state_[2].trailing_words_[9] = 1;
+        channels_[1].trailing_words_[9] = 1;
         pop_close();
     } else {
         WIN32_FIND_DATAA found_file;
@@ -4202,7 +3835,7 @@ int NetDaemon::send_files() {
         send_buffer->opcode = 0xF0B;
         for (int file_index = 0; file_index < file_count; ++file_index) {
             if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) {
-                lock_state_[2].trailing_words_[9] = 1;
+                channels_[1].trailing_words_[9] = 1;
                 goto cleanup;
             }
             NetDaemonFileIndexRecord &record = records[file_index];
@@ -4291,7 +3924,7 @@ cleanup:
     SetCurrentDirectoryA(previous_directory);
     void *list_storage = netdaemon_file_index_records();
     if (list_storage != 0) free(list_storage);
-    const int result = static_cast<int>(NetDaemonNet.lock_state_[2].trailing_words_[9]);
+    const int result = static_cast<int>(NetDaemonNet.channels_[1].trailing_words_[9]);
     netdaemon_set_file_index_records(0);
     NetDaemonFileTransferMode = 0;
     return result;
@@ -4306,7 +3939,7 @@ cleanup:
 // handlers return from the real process_message scope.
 static void netdaemon_process_message_marker_tail(NetDaemon &daemon,
                                                    unsigned char *message) {
-    const uint32_t pending = daemon.lock_state_[2].leading_words_[1];
+    const uint32_t pending = daemon.channels_[1].leading_words_[1];
     if (pending != 0) {
         const unsigned short type =
             *reinterpret_cast<unsigned short *>(message);
@@ -4314,7 +3947,7 @@ static void netdaemon_process_message_marker_tail(NetDaemon &daemon,
             static_cast<uint32_t>(type | 0x4000u) == pending &&
             *reinterpret_cast<uint32_t *>(message + 4) ==
                 static_cast<uint32_t>(ConsoleGlobal.faction_id_)) {
-            daemon.lock_state_[2].leading_words_[1] = 0;
+            daemon.channels_[1].leading_words_[1] = 0;
         }
     }
 }
@@ -4323,7 +3956,7 @@ static void netdaemon_process_message_marker_tail(NetDaemon &daemon,
 static void netdaemon_process_sync_request(NetDaemon *daemon,
                                             unsigned char *message) {
     const uint32_t sender = *reinterpret_cast<uint32_t *>(message + 4);
-    uint32_t &pending = daemon->lock_state_[2].trailing_words_[1];
+    uint32_t &pending = daemon->channels_[1].trailing_words_[1];
     const uint32_t old_pending = pending;
     pending |= static_cast<uint32_t>(1) << (sender & 0x1F);
 
@@ -4348,7 +3981,7 @@ static void netdaemon_process_sync_request(NetDaemon *daemon,
     }
 
     if (sender == static_cast<uint32_t>(ConsoleGlobal.faction_id_))
-        daemon->lock_state_[2].trailing_words_[0] = 0;
+        daemon->channels_[1].trailing_words_[0] = 0;
 }
 
 // 0x2301/0x8301 share the native DONE TURN body at 0x537FD0. Keep the two
@@ -4358,8 +3991,8 @@ static void netdaemon_handle_client_done_turn(NetDaemon *daemon,
                                               int resolved_sender) {
     const int faction = resolved_sender;
     const uint32_t faction_bit = static_cast<uint32_t>(1) << (faction & 0x1F);
-    uint32_t &turn_waiters = daemon->lock_state_[0].trailing_words_[7];
-    uint32_t &turn_info = daemon->lock_state_[1].leading_words_[0];
+    uint32_t &turn_waiters = daemon->primary_state_.trailing_words_[7];
+    uint32_t &turn_info = daemon->channels_[0].leading_words_[0];
     turn_waiters |= faction_bit;
     turn_info |= faction_bit;
 
@@ -4378,7 +4011,7 @@ static void netdaemon_handle_client_done_turn(NetDaemon *daemon,
             static_cast<int>(turn_waiters), 0);
 
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
-        if (daemon->lock_state_[0].leading_words_[1] == 0) return;
+        if (daemon->primary_state_.leading_words_[0] == 0) return;
 
         int assigned_next_faction =
             GameDataStateStorage.fields_.net_turn_faction_ + 1;
@@ -4447,7 +4080,7 @@ static void netdaemon_handle_server_turn_info(NetDaemon *daemon,
     log_say("From Server: TURN INFO", faction, acknowledged, turn);
 
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) return;
-    if (daemon->lock_state_[0].leading_words_[1] != 0) return;
+    if (daemon->primary_state_.leading_words_[0] != 0) return;
     if (turn != GameDataStateStorage.fields_.turn_current_num_) {
         MultiWindow.draw(0);
         return;
@@ -4455,7 +4088,7 @@ static void netdaemon_handle_server_turn_info(NetDaemon *daemon,
 
     const uint32_t faction_bit =
         static_cast<uint32_t>(1) << (static_cast<uint32_t>(faction) & 31u);
-    uint32_t &turn_info = daemon->lock_state_[1].leading_words_[0];
+    uint32_t &turn_info = daemon->channels_[0].leading_words_[0];
     if (acknowledged == 0) {
         turn_info &= ~faction_bit;
         MultiWindow.draw(0);
@@ -4514,12 +4147,12 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
     switch (type) {
     case 0x4301: {
         my_srand(*reinterpret_cast<int *>(message + 8));
-        daemon->lock_state_[1].leading_words_[0] = 0xFF;
-        daemon->lock_state_[0].trailing_words_[7] = 0xFF;
+        daemon->channels_[0].leading_words_[0] = 0xFF;
+        daemon->primary_state_.trailing_words_[7] = 0xFF;
         MultiWindow.draw(0);
         log_say("From Server: NEXT TURN",
                 GameDataStateStorage.fields_.turn_current_num_,
-                static_cast<int>(daemon->lock_state_[0].trailing_words_[7]), 0);
+                static_cast<int>(daemon->primary_state_.trailing_words_[7]), 0);
         NetDaemonProgressInterval = 0;
         NetDaemonProgressLastTick = 0;
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
@@ -4540,8 +4173,8 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
                     turn, GameDataStateStorage.fields_.turn_current_num_, 0);
         }
         my_srand(*reinterpret_cast<int *>(message + 8));
-        daemon->lock_state_[1].leading_words_[1] = 0xFF;
-        daemon->lock_state_[0].trailing_words_[9] = 0xFF;
+        daemon->channels_[0].leading_words_[1] = 0xFF;
+        daemon->primary_state_.trailing_words_[9] = 0xFF;
         MultiWindow.draw(0);
         NetDaemonProgressInterval = 0;
         NetDaemonProgressLastTick = 0;
@@ -4549,53 +4182,53 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
     }
     case 0x1201:
         log_say("From Server: LOCK OK", 0, 0, 0);
-        daemon->lock_state_[1].leading_words_[2] = 1;
+        daemon->channels_[0].leading_words_[2] = 1;
         NetDaemonProgressInterval = 0;
         NetDaemonProgressLastTick = 0;
         return;
     case 0x1202:
         log_say("From Server: LOCK FAILED", 0, 0, 0);
-        daemon->lock_state_[1].leading_words_[2] = 2;
+        daemon->channels_[0].leading_words_[2] = 2;
         break;
     case 0x1203:
         log_say("From Server: LOCK FAILED GLOBAL", 0, 0, 0);
-        daemon->lock_state_[1].leading_words_[2] = 3;
+        daemon->channels_[0].leading_words_[2] = 3;
         break;
     case 0x1204:
         log_say("From Server: LOCK FAILED UPKEEP", 0, 0, 0);
-        daemon->lock_state_[1].leading_words_[2] = 4;
+        daemon->channels_[0].leading_words_[2] = 4;
         break;
     case 0x1205:
         log_say("From Server: GLOBAL LOCK READY", 0, 0, 0);
         daemon->locks_.field_E8_ = 1;
         return;
     case 0x1206: {
-        const uint32_t remaining = daemon->lock_state_[2].trailing_words_[2];
+        const uint32_t remaining = daemon->channels_[1].trailing_words_[2];
         log_say("From Server: EXEC DONE", 0, 0,
                 static_cast<int>(remaining));
         if (remaining != 0) {
             log_say("Remaining locked", 0, 0, 0);
-            daemon->lock_state_[2].trailing_words_[2] = 0;
+            daemon->channels_[1].trailing_words_[2] = 0;
             message_data(0x2214, 0, 0, 0, 0, 0);
         } else {
-            daemon->lock_state_[2].leading_words_[3] = 0;
+            daemon->channels_[1].leading_words_[3] = 0;
         }
         return;
     }
     case 0x1207:
         log_say("From Server: ADD LOCK FAIL", 0, 0, 0);
-        daemon->lock_state_[1].leading_words_[2] = 2;
+        daemon->channels_[0].leading_words_[2] = 2;
         return;
     case 0x1208:
         log_say("From Server: ADD LOCK OK", 0, 0, 0);
-        daemon->lock_state_[1].leading_words_[2] = 1;
+        daemon->channels_[0].leading_words_[2] = 1;
         return;
     case 0x1240:
         if (*reinterpret_cast<uint32_t *>(message + 0x10)) {
-            daemon->lock_state_[2].leading_words_[0] = 1;
+            daemon->channels_[1].leading_words_[0] = 1;
             log_say("Received OPEN CHANNEL SUCCESS", 0, 0, 0);
         } else {
-            daemon->lock_state_[2].leading_words_[0] = 2;
+            daemon->channels_[1].leading_words_[0] = 2;
             log_say("Received OPEN CHANNEL FAILED", 0, 0, 0);
         }
         return;
@@ -4637,8 +4270,8 @@ static void netdaemon_handle_client_done_upkeep(NetDaemon *daemon,
                 GameDataStateStorage.fields_.turn_current_num_, 0);
     }
 
-    daemon->lock_state_[1].leading_words_[1] |= sender_bit;
-    uint32_t &already_notified = daemon->lock_state_[0].trailing_words_[8];
+    daemon->channels_[0].leading_words_[1] |= sender_bit;
+    uint32_t &already_notified = daemon->primary_state_.trailing_words_[8];
     if ((already_notified & sender_bit) == 0) {
         already_notified |= sender_bit;
         for (int slot = 1; slot <= daemon->player_count_; ++slot) {
@@ -4698,13 +4331,13 @@ static void netdaemon_complete_local_turn_wait(NetDaemon *daemon,
     const uint32_t state = GameDataStateStorage.fields_.game_state_;
     const uint32_t waiting = NetDaemonNet.factions_waiting_mask();
     const uint32_t assigned =
-        NetDaemonNet.lock_state_[0].leading_words_[1];
+        NetDaemonNet.primary_state_.leading_words_[0];
     if ((state & 2u) != 0 && waiting != 0xFF &&
         (((waiting & faction_bit) != 0) || assigned != 0) &&
         *reinterpret_cast<int *>(message + 0x10) ==
             GameDataStateStorage.fields_.turn_current_num_) {
         NetDaemonNet.factions_waiting_mask() = waiting & ~faction_bit;
-        NetDaemonNet.lock_state_[1].leading_words_[0] &= ~faction_bit;
+        NetDaemonNet.channels_[0].leading_words_[0] &= ~faction_bit;
         GameDataStateStorage.fields_.game_state_ = state & ~2u;
     }
     MultiWindow.draw(0);
@@ -4717,10 +4350,10 @@ static void netdaemon_handle_server_upkeep_info(NetDaemon *daemon,
             *reinterpret_cast<int *>(message + 0x10),
             *reinterpret_cast<int *>(message + 0x14),
             *reinterpret_cast<int *>(message + 0x18));
-    if (daemon->lock_state_[0].leading_words_[1] != 0) return;
+    if (daemon->primary_state_.leading_words_[0] != 0) return;
     const unsigned int faction =
         *reinterpret_cast<uint32_t *>(message + 0x10);
-    daemon->lock_state_[1].leading_words_[1] |=
+    daemon->channels_[0].leading_words_[1] |=
         static_cast<uint32_t>(1) << (faction & 0x1Fu);
     MultiWindow.draw(0);
 }
@@ -4854,20 +4487,20 @@ static bool netdaemon_process_table_e(NetDaemon &daemon,
         (void)daemon.AlphaNet::who_2_idx(identity);
 
         for (int table_index = 0; table_index < 24; ++table_index) {
-            LockTableEntry &entry = daemon.lock_table_[table_index];
+            DeletionRecord &entry = daemon.deletion_list_.records_[table_index];
             const uint8_t enabled = static_cast<uint8_t>(
                 GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-            if ((enabled & entry.flag_) == enabled ||
-                entry.field_4_ != static_cast<uint32_t>(sequence)) {
+            if ((enabled & entry.acknowledgements_) == enabled ||
+                static_cast<uint32_t>(entry.owner_) != static_cast<uint32_t>(sequence)) {
                 continue;
             }
 
             const uint8_t sender_bit = static_cast<uint8_t>(
                 static_cast<uint32_t>(1u) <<
                 (static_cast<uint32_t>(sender_identity) & 31u));
-            entry.flag_ = static_cast<uint8_t>(entry.flag_ | sender_bit);
-            if ((entry.flag_ & enabled) == enabled) {
-                entry.flag_ = 0xFF;
+            entry.acknowledgements_ = static_cast<uint8_t>(entry.acknowledgements_ | sender_bit);
+            if ((entry.acknowledgements_ & enabled) == enabled) {
+                entry.acknowledgements_ = 0xFF;
             }
             break;
         }
@@ -4921,7 +4554,7 @@ static bool netdaemon_process_table_e(NetDaemon &daemon,
 
     case 0x2216:
         log_say("From Server: LOCK OK GLOBAL", 0, 0, 0);
-        daemon.lock_state_[1].leading_words_[2] = 1;
+        daemon.channels_[0].leading_words_[2] = 1;
         NetDaemonProgressInterval = 0;
         NetDaemonProgressLastTick = 0;
         daemon.locks_.field_E8_ = 1;
@@ -4941,7 +4574,7 @@ static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
     switch (type) {
     case 0x4304:
         log_say("From Server: UPKEEP_BASE", 0, 0, 0);
-        daemon->lock_state_[0].trailing_words_[9] = 1;
+        daemon->primary_state_.trailing_words_[9] = 1;
         return true;
 
     case 0x4305: {
@@ -5157,8 +4790,8 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
     }
 
     if (tail != TailUpgrade) {
-        if (daemon.lock_state_[0].leading_words_[1] == 0) {
-            daemon.lock_state_[0].leading_words_[0] = netdaemon_table_g_word(msg, 0x0c);
+        if (daemon.primary_state_.leading_words_[0] == 0) {
+            daemon.deletion_list_.set_sequence_bits(netdaemon_table_g_word(msg, 0x0c));
         }
     }
 
@@ -5167,22 +4800,22 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
             // 0x536D5E local-owner tail, including its original clear/callback
             // order. The notification branch observes and clears dword 0x1BC0
             // before broadcasting 0x2214; the other arm only clears 0x1BB0.
-            if (daemon.lock_state_[2].leading_words_[7] != 0) {
+            if (daemon.channels_[1].leading_words_[7] != 0) {
                 log_say("Remaining Locked2", 0, 0, 0);
-                daemon.lock_state_[2].leading_words_[7] = 0;
+                daemon.channels_[1].leading_words_[7] = 0;
                 message_data(0x2214, 0, 0, 0, 0, 0);
             } else {
-                daemon.lock_state_[2].leading_words_[3] = 0;
+                daemon.channels_[1].leading_words_[3] = 0;
             }
         }
     } else if (tail == TailDispatch &&
                netdaemon_table_g_word(msg, 4) == ConsoleGlobal.faction_id_) {
-        if (daemon.lock_state_[2].leading_words_[7] != 0) {
+        if (daemon.channels_[1].leading_words_[7] != 0) {
             log_say("Remaining Locked2", 0, 0, 0);
-            daemon.lock_state_[2].leading_words_[7] = 0;
+            daemon.channels_[1].leading_words_[7] = 0;
             message_data(0x2214, 0, 0, 0, 0, 0);
         } else {
-            daemon.lock_state_[2].leading_words_[3] = 0;
+            daemon.channels_[1].leading_words_[3] = 0;
         }
     }
 
@@ -5190,14 +4823,14 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
     // It clears the await marker only for a matching marked opcode addressed
     // to this faction; retain the native marker/indexing rather than assigning
     // a new semantic member name.
-    const uint32_t pending_opcode = daemon.lock_state_[2].leading_words_[1];
+    const uint32_t pending_opcode = daemon.channels_[1].leading_words_[1];
     const unsigned short final_type =
         *reinterpret_cast<unsigned short *>(msg);
     if (pending_opcode != 0 && (msg[1] & 0x40) != 0 &&
         (final_type & 0x4000) != 0 &&
         final_type == static_cast<unsigned short>(pending_opcode | 0x4000) &&
         netdaemon_table_g_word(msg, 4) == ConsoleGlobal.faction_id_) {
-        daemon.lock_state_[2].leading_words_[1] = 0;
+        daemon.channels_[1].leading_words_[1] = 0;
     }
     return true;
 }
@@ -5425,7 +5058,7 @@ static bool netdaemon_handle_direct_diplomacy_complete(
             message_data(0x1503, sender, 0, 0, 0, 0);
             return true;
         }
-        if (NetDaemonNet.lock_state_[2].leading_words_[2] != 0) {
+        if (NetDaemonNet.channels_[1].leading_words_[2] != 0) {
             message_data(0x1504, sender, 0, 0, 0, 0);
             return true;
         }
@@ -5636,7 +5269,7 @@ static void netdaemon_handle_session_status(NetDaemon *daemon,
                                              unsigned long message_size) {
     const int faction = *reinterpret_cast<int *>(message + 4);
     if (type == 0x1F00 || type == 0x4E03 || type == 0x4F00)
-        daemon->lock_state_[0].leading_words_[2] = 1;
+        daemon->primary_state_.leading_words_[1] = 1;
 
     unsigned char *status = daemon->process_slots_[faction].status_bytes_;
     status[0] = static_cast<unsigned char>(message[0x18]);
@@ -5654,7 +5287,7 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
                                            unsigned short type,
                                            unsigned long message_size) {
     if (type == 0x1F04 || type == 0x4F04)
-        daemon.lock_state_[0].leading_words_[2] = 1;
+        daemon.primary_state_.leading_words_[1] = 1;
 
     unsigned short &wire_type = *reinterpret_cast<unsigned short *>(message);
     const uint32_t sender = *reinterpret_cast<uint32_t *>(message + 4);
@@ -5735,7 +5368,7 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
 
     std::memcpy(&NetWinLobbyRows[sender], message + 0x10,
                 sizeof(NetWinLobbyRow));
-    if (daemon.lock_state_[0].leading_words_[1] != 0) {
+    if (daemon.primary_state_.leading_words_[0] != 0) {
         const unsigned int tail_mode = NetWinSessionData.mode_;
         if (tail_mode == 2 || tail_mode == 3) {
             unsigned char notification[0x20];
@@ -5754,13 +5387,13 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
 // and 0x536D0F, projected as source-owned routes on the existing daemon.
 // Preserve the distinct checksum source and local-completion branch.
 static void netdaemon_process_local_player_completion(NetDaemon &daemon) {
-    const uint32_t remaining = daemon.lock_state_[2].trailing_words_[2];
+    const uint32_t remaining = daemon.channels_[1].trailing_words_[2];
     if (remaining != 0) {
         log_say("Remaining Locked2", 0, 0, 0);
-        daemon.lock_state_[2].trailing_words_[2] = 0;
+        daemon.channels_[1].trailing_words_[2] = 0;
         message_data(0x2214, 0, 0, 0, 0, 0);
     } else {
-        daemon.lock_state_[2].leading_words_[3] = 0;
+        daemon.channels_[1].leading_words_[3] = 0;
     }
 }
 
@@ -5775,7 +5408,7 @@ static bool netdaemon_handle_five_message_routes(
         log_say("From Server: MOVE VEH", packet_faction, vehicle_id, direction);
         my_srand(*reinterpret_cast<int *>(message + 8));
         if (Vehs[vehicle_id].faction_id != packet_faction) {
-            if (daemon.lock_state_[0].leading_words_[1] != 0) {
+            if (daemon.primary_state_.leading_words_[0] != 0) {
                 SpockNotifyPending = 1;
             } else {
                 message_data(0x2308, 0, 0, 0, 0, 0);
@@ -5783,9 +5416,8 @@ static bool netdaemon_handle_five_message_routes(
         }
         ::order_veh(vehicle_id, direction, 2);
         log_say("Acknowledging MOVE VEH", packet_faction, 0, 0);
-        if (daemon.lock_state_[0].leading_words_[1] == 0)
-            daemon.lock_state_[0].leading_words_[0] =
-                static_cast<uint32_t>(message_size);
+        if (daemon.primary_state_.leading_words_[0] == 0)
+            daemon.deletion_list_.set_sequence_bits(static_cast<uint32_t>(message_size));
         if (packet_faction == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
@@ -5795,12 +5427,11 @@ static bool netdaemon_handle_five_message_routes(
         const int direction = *reinterpret_cast<int *>(message + 0x14);
         log_say("From Server: ARTY", packet_faction, vehicle_id, direction);
         my_srand(*reinterpret_cast<int *>(message + 8));
-        daemon.lock_state_[1].leading_words_[3] = 2;
+        daemon.channels_[0].leading_words_[3] = 2;
         battle_fight(vehicle_id, direction, 1, 1, nullptr);
         log_say("Acknowledging ARTY", packet_faction, 0, 0);
-        if (daemon.lock_state_[0].leading_words_[1] == 0)
-            daemon.lock_state_[0].leading_words_[0] =
-                static_cast<uint32_t>(message_size);
+        if (daemon.primary_state_.leading_words_[0] == 0)
+            daemon.deletion_list_.set_sequence_bits(static_cast<uint32_t>(message_size));
         if (packet_faction == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
@@ -5812,9 +5443,8 @@ static bool netdaemon_handle_five_message_routes(
         my_srand(*reinterpret_cast<int *>(message + 8));
         action_airdrop(vehicle_id, x, y, 2);
         log_say("Acknowledging AIRDROP", packet_faction, 0, 0);
-        if (daemon.lock_state_[0].leading_words_[1] == 0)
-            daemon.lock_state_[0].leading_words_[0] =
-                static_cast<uint32_t>(message_size);
+        if (daemon.primary_state_.leading_words_[0] == 0)
+            daemon.deletion_list_.set_sequence_bits(static_cast<uint32_t>(message_size));
         if (packet_faction == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
@@ -5825,9 +5455,8 @@ static bool netdaemon_handle_five_message_routes(
         log_say("From Server: ACTION", packet_faction, vehicle_id, order);
         my_srand(*reinterpret_cast<int *>(message + 8));
         ::action(vehicle_id);
-        if (daemon.lock_state_[0].leading_words_[1] == 0)
-            daemon.lock_state_[0].leading_words_[0] =
-                static_cast<uint32_t>(message_size);
+        if (daemon.primary_state_.leading_words_[0] == 0)
+            daemon.deletion_list_.set_sequence_bits(static_cast<uint32_t>(message_size));
         if (packet_faction == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
@@ -5839,9 +5468,8 @@ static bool netdaemon_handle_five_message_routes(
         log_say("From Server: DOUBLE CROSS", faction, partner, victim);
         my_srand(*reinterpret_cast<int *>(message + 8));
         double_cross(faction, partner, victim);
-        if (daemon.lock_state_[0].leading_words_[1] == 0)
-            daemon.lock_state_[0].leading_words_[0] =
-                *reinterpret_cast<uint32_t *>(message + 0x0C);
+        if (daemon.primary_state_.leading_words_[0] == 0)
+            daemon.deletion_list_.set_sequence_bits(*reinterpret_cast<uint32_t *>(message + 0x0C));
         if (packet_faction == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
@@ -5899,10 +5527,10 @@ static bool netdaemon_handle_lock_mask_residual(NetDaemon &daemon,
         const uint32_t mask =
             (uint32_t(1) << (static_cast<uint32_t>(first) & 31u)) |
             (uint32_t(1) << (static_cast<uint32_t>(second) & 31u));
-        uint32_t &aggregate = daemon.lock_state_[1].leading_words_[5];
+        uint32_t &aggregate = daemon.channels_[0].leading_words_[5];
         const bool newly_acquired = (mask & aggregate) == 0;
         if (newly_acquired) {
-            daemon.lock_state_[1].leading_words_[6 + identity] = mask;
+            daemon.channels_[0].leading_words_[6 + identity] = mask;
             aggregate |= mask;
         }
         log_say("Received OPEN CHANNEL request", identity, first, second);
@@ -5912,10 +5540,10 @@ static bool netdaemon_handle_lock_mask_residual(NetDaemon &daemon,
 
     if (type == 0x8241) {
         uint32_t &peer_mask =
-            daemon.lock_state_[1].leading_words_[6 + identity];
+            daemon.channels_[0].leading_words_[6 + identity];
         const uint32_t remaining =
-            daemon.lock_state_[1].leading_words_[5] & ~peer_mask;
-        daemon.lock_state_[1].leading_words_[5] = remaining;
+            daemon.channels_[0].leading_words_[5] & ~peer_mask;
+        daemon.channels_[0].leading_words_[5] = remaining;
         log_say("Received CLOSE CHANNEL", identity, peer_mask, remaining);
         peer_mask = 0;
         return true;
@@ -5936,9 +5564,9 @@ static bool netdaemon_handle_server_change_pause(NetDaemon &daemon,
         return true;
     }
     if (type == 0x4C00) {
-        uint32_t &paused = daemon.lock_state_[0].trailing_words_[4];
+        uint32_t &paused = daemon.primary_state_.trailing_words_[4];
         if (paused == 0) {
-            daemon.lock_state_[0].trailing_words_[5] =
+            daemon.primary_state_.trailing_words_[5] =
                 static_cast<uint32_t>(timeGetTime()) -
                 static_cast<uint32_t>(NetDaemonWaitTicks);
             g_FX.play(21);
@@ -5956,7 +5584,7 @@ static bool netdaemon_handle_server_change_pause(NetDaemon &daemon,
     if (type == 0x4C01) {
         const uint32_t sender_bit =
             uint32_t(1) << (static_cast<uint32_t>(identity) & 31u);
-        uint32_t &paused = daemon.lock_state_[0].trailing_words_[4];
+        uint32_t &paused = daemon.primary_state_.trailing_words_[4];
         paused &= ~sender_bit;
         log_say("Received UNPAUSE message", identity,
                 static_cast<int>(paused), 0);
@@ -5984,7 +5612,7 @@ static bool netdaemon_handle_chat_landmark_message(NetDaemon &daemon,
             static_cast<uint32_t>(MultiWindowContactStatusMask)) {
             return true;
         }
-        if (daemon.lock_state_[0].trailing_words_[0] == 1) {
+        if (daemon.primary_state_.trailing_words_[0] == 1) {
             const int slot = daemon.pid_2_idx(
                 static_cast<uint32_t>(sender_id));
             if (slot < 0) return true;
@@ -5998,7 +5626,7 @@ static bool netdaemon_handle_chat_landmark_message(NetDaemon &daemon,
         }
 
         StringTemp[0] = '\0';
-        if (daemon.lock_state_[0].trailing_words_[0] < 2) {
+        if (daemon.primary_state_.trailing_words_[0] < 2) {
             strcat(StringTemp, daemon.get_player_name(
                 static_cast<unsigned long>(sender_id)));
         } else {
@@ -6373,9 +6001,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         if (fixResult == 0) {
             unsigned short masked = (unsigned short)((type & 0x1fff) | 0x4000);
             *reinterpret_cast<unsigned short *>(message) = masked;
-            uint32_t *seq = &lock_state_[0].leading_words_[0];
-            *seq = *seq + 1;
-            *reinterpret_cast<int *>(message + 0xc) = *seq;
+            const uint32_t seq = deletion_list_.advance_sequence();
+            memcpy(message + 0x0C, &seq, sizeof seq);
             send_message(message, message_size, 0);
         }
     }
@@ -6400,7 +6027,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
 // absolute, and NetDaemonNet.locks_.any_locks() folds to the same load.
 void __cdecl help_spock();  // defined below
 void __cdecl check_spock() {
-    if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0 &&
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
         SpockNotifyPending != 0 && UnkGlobal0093A934 == 0 &&
         ConsoleControlTurnActive == 0) {
         SpockHelpActive = 1;
@@ -6422,7 +6049,7 @@ void __cdecl check_spock() {
 // address_index refuses. The four synch/receive sweeps are the session
 // refresh the game runs when a turn boundary catches an unnotified client.
 void __cdecl help_spock() {
-    if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         NetDaemonNet.synch(0x25, 0, 0, 0, 0, 1, 0x2101);
         while (NetDaemonNet.receive() != 0) {
         }
@@ -6481,17 +6108,17 @@ int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
   if (flag != 0) {
     return 0;
   }
-  if (lock_state_[2].leading_words_[2] != 0) {
-    if (lock_state_[2].trailing_words_[3] == 0) {
-      ++lock_state_[2].trailing_words_[5];
+  if (channels_[1].leading_words_[2] != 0) {
+    if (channels_[1].trailing_words_[3] == 0) {
+      ++channels_[1].trailing_words_[5];
       // The image compares the count SIGNED here (`jle`), not unsigned.
-      if (1 < static_cast<int>(lock_state_[2].trailing_words_[5])) {
+      if (1 < static_cast<int>(channels_[1].trailing_words_[5])) {
         NetMsgPrimary.pop("MOVEPENDING", 0, 2, 0);
       }
     }
     return 1;
   }
-  lock_state_[2].trailing_words_[5] = 0;
+  channels_[1].trailing_words_[5] = 0;
   return lock_veh(veh_id, payload_1C | 4, payload_20, payload_18, extra);
 }
 
@@ -6506,15 +6133,15 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
         return action_airdrop(veh_id, x, y, 3);
     }
 
-    if (lock_state_[2].leading_words_[2] != 0) {
-        if (lock_state_[2].trailing_words_[3] != 0) return 0;
-        ++lock_state_[2].trailing_words_[5];
-        if (static_cast<int>(lock_state_[2].trailing_words_[5]) < 2) return 0;
+    if (channels_[1].leading_words_[2] != 0) {
+        if (channels_[1].trailing_words_[3] != 0) return 0;
+        ++channels_[1].trailing_words_[5];
+        if (static_cast<int>(channels_[1].trailing_words_[5]) < 2) return 0;
         NetMsgPrimary.pop("MOVEPENDING", 0, 2, nullptr);
         return 0;
     }
 
-    lock_state_[2].trailing_words_[5] = 0;
+    channels_[1].trailing_words_[5] = 0;
     if (lock_veh(&veh_id, 4, x, y, 4) != 0) return 0;
 
     const int base_id = base_at(x, y);
@@ -6531,12 +6158,12 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
         if (!rejected) rejected = add_global() == 0;
 
         if (!rejected) {
-            if (lock_state_[2].trailing_words_[3] != 0) {
+            if (channels_[1].trailing_words_[3] != 0) {
                 Vehs[veh_id].order = 0;
                 Vehs[veh_id].state &= 0xFCFFBDFFU;
                 synch_veh(veh_id);
                 if (IsMultiplayerNet != 0) {
-                    uint32_t *acknowledged = &lock_state_[2].trailing_words_[0];
+                    uint32_t *acknowledged = &channels_[1].trailing_words_[0];
                     *acknowledged = 1;
                     log_say("Awaiting acknowledgement of SYNCH",
                             ConsoleGlobal.faction_id_, 0, 0);
@@ -6565,10 +6192,10 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
                 log_say("Client waiting for acknowledgement",
                         ConsoleGlobal.faction_id_, 0, 0);
                 ++NetBusyCount;
-                const int saved_action_mode = NetDaemonNet.lock_state_[1].leading_words_[3];
+                const int saved_action_mode = NetDaemonNet.channels_[0].leading_words_[3];
                 const DWORD start_time = timeGetTime();
                 bool showed_wait_popup = false;
-                if (lock_state_[2].leading_words_[3] == 1) {
+                if (channels_[1].leading_words_[3] == 1) {
                     do {
                         if (ExitTurnLoop != 0) break;
                         if (!showed_wait_popup &&
@@ -6580,25 +6207,25 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
                         receive();
                         locks_.check_global();
                         check_spock();
-                    } while (lock_state_[2].leading_words_[3] == 1);
+                    } while (channels_[1].leading_words_[3] == 1);
                     if (showed_wait_popup) NetMsgPrimary.close();
                 }
                 --NetBusyCount;
-                NetDaemonNet.lock_state_[1].leading_words_[3] = saved_action_mode;
+                NetDaemonNet.channels_[0].leading_words_[3] = saved_action_mode;
                 log_say("Client received acknowledgement",
                         ConsoleGlobal.faction_id_, 0, 0);
                 if (IsMultiplayerNet != 0) {
                     log_say("Client releasing lock",
                             ConsoleGlobal.faction_id_, 0, 0);
                     message_data(0x2212, 0, 0, 0, 0, 0);
-                    lock_state_[2].leading_words_[3] = 0;
-                    lock_state_[2].leading_words_[2] = 0;
-                    lock_state_[2].trailing_words_[5] = 0;
-                    lock_state_[2].trailing_words_[4] = 0;
+                    channels_[1].leading_words_[3] = 0;
+                    channels_[1].leading_words_[2] = 0;
+                    channels_[1].trailing_words_[5] = 0;
+                    channels_[1].trailing_words_[4] = 0;
                 }
-                lock_state_[2].leading_words_[2] = 0;
-                lock_state_[2].trailing_words_[3] = 0;
-                lock_state_[2].leading_words_[3] = 0;
+                channels_[1].leading_words_[2] = 0;
+                channels_[1].trailing_words_[3] = 0;
+                channels_[1].leading_words_[3] = 0;
                 return 1;
             }
             return 1;
@@ -6609,13 +6236,13 @@ release_vehicle:
     if (IsMultiplayerNet != 0) {
         log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
         message_data(0x2212, 0, 0, 0, 0, 0);
-        lock_state_[2].leading_words_[3] = 0;
-        lock_state_[2].leading_words_[2] = 0;
-        lock_state_[2].trailing_words_[5] = 0;
-        lock_state_[2].trailing_words_[4] = 0;
+        channels_[1].leading_words_[3] = 0;
+        channels_[1].leading_words_[2] = 0;
+        channels_[1].trailing_words_[5] = 0;
+        channels_[1].trailing_words_[4] = 0;
     }
-    lock_state_[1].payload_.vehicle_selection_follow = 0;
-    lock_state_[2].trailing_words_[3] = 0;
+    channels_[0].payload_.vehicle_selection_follow = 0;
+    channels_[1].trailing_words_[3] = 0;
     return 0;
 }
 
@@ -6646,13 +6273,13 @@ int NetDaemon::action(int veh_id, int mode) {
                 if (IsMultiplayerNet != 0) {
                     log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
                     message_data(0x2212, 0, 0, 0, 0, 0);
-                    lock_state_[2].leading_words_[3] = 0;
-                    lock_state_[2].leading_words_[2] = 0;
-                    lock_state_[2].trailing_words_[5] = 0;
-                    lock_state_[2].trailing_words_[4] = 0;
+                    channels_[1].leading_words_[3] = 0;
+                    channels_[1].leading_words_[2] = 0;
+                    channels_[1].trailing_words_[5] = 0;
+                    channels_[1].trailing_words_[4] = 0;
                 }
-                lock_state_[1].payload_.vehicle_selection_follow = 0;
-                lock_state_[2].trailing_words_[3] = 0;
+                channels_[0].payload_.vehicle_selection_follow = 0;
+                channels_[1].trailing_words_[3] = 0;
             }
             return 0;
         }
@@ -6660,7 +6287,7 @@ int NetDaemon::action(int veh_id, int mode) {
         category = (action_type == 0x14 || action_type == 0x15) ? 0xC : 0;
     }
 
-    lock_state_[2].trailing_words_[3] = 1;
+    channels_[1].trailing_words_[3] = 1;
     if (mode == 0 && automated_lock(&veh_id, category) != 0) return 0;
 
     if (branch == await_exec) {
@@ -6672,12 +6299,12 @@ int NetDaemon::action(int veh_id, int mode) {
             log_say("Client waiting for acknowledgement",
                     ConsoleGlobal.faction_id_, 0, 0);
             const uint32_t saved_action_mode =
-                NetDaemonNet.lock_state_[1].leading_words_[3];
+                NetDaemonNet.channels_[0].leading_words_[3];
             DWORD (WINAPI *const get_time)() = timeGetTime;
             ++NetBusyCount;
             const DWORD start_time = get_time();
             bool showed_wait_popup = false;
-            if (lock_state_[2].leading_words_[3] == 1) {
+            if (channels_[1].leading_words_[3] == 1) {
                 do {
                     if (ExitTurnLoop != 0) break;
                     if (!showed_wait_popup && get_time() - start_time > 2000) {
@@ -6692,23 +6319,23 @@ int NetDaemon::action(int veh_id, int mode) {
                                         second, static_cast<int>(first));
                     locks_.check_global();
                     check_spock();
-                } while (lock_state_[2].leading_words_[3] == 1);
+                } while (channels_[1].leading_words_[3] == 1);
                 if (showed_wait_popup) NetMsgPrimary.close();
             }
             --NetBusyCount;
-            NetDaemonNet.lock_state_[1].leading_words_[3] = saved_action_mode;
+            NetDaemonNet.channels_[0].leading_words_[3] = saved_action_mode;
             log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
             if (IsMultiplayerNet != 0) {
                 log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
                 message_data(0x2212, 0, 0, 0, 0, 0);
-                lock_state_[2].leading_words_[3] = 0;
-                lock_state_[2].leading_words_[2] = 0;
-                lock_state_[2].trailing_words_[5] = 0;
-                lock_state_[2].trailing_words_[4] = 0;
+                channels_[1].leading_words_[3] = 0;
+                channels_[1].leading_words_[2] = 0;
+                channels_[1].trailing_words_[5] = 0;
+                channels_[1].trailing_words_[4] = 0;
             }
-            lock_state_[1].payload_.vehicle_selection_follow = 0;
-            lock_state_[2].trailing_words_[3] = 0;
-            lock_state_[2].leading_words_[3] = 0;
+            channels_[0].payload_.vehicle_selection_follow = 0;
+            channels_[1].trailing_words_[3] = 0;
+            channels_[1].leading_words_[3] = 0;
         }
         log_say("Net.Action Finished awaiting", 0, 0, 0);
     } else if (branch == go_to) {
@@ -6729,14 +6356,14 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
     if (IsMultiplayerNet == 0) return ::order_veh(veh_id, direction, 3);
 
     if (mode == 0) {
-        if (lock_state_[2].leading_words_[2] != 0) {
-            if (lock_state_[2].trailing_words_[3] != 0) return 0;
-            ++lock_state_[2].trailing_words_[5];
-            if (static_cast<int>(lock_state_[2].trailing_words_[5]) < 2) return 0;
+        if (channels_[1].leading_words_[2] != 0) {
+            if (channels_[1].trailing_words_[3] != 0) return 0;
+            ++channels_[1].trailing_words_[5];
+            if (static_cast<int>(channels_[1].trailing_words_[5]) < 2) return 0;
             NetMsgPrimary.pop("MOVEPENDING", 0, 2, nullptr);
             return 0;
         }
-        lock_state_[2].trailing_words_[5] = 0;
+        channels_[1].trailing_words_[5] = 0;
         if (lock_veh(&veh_id, 4, -1, -1, 0) != 0) return 0;
     }
 
@@ -6805,7 +6432,7 @@ send_move:
         message_veh(0x2401, veh_id, direction, 0);
         if (mode == 0 && IsMultiplayerNet != 0) {
             log_say("Client waiting for acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
-            uint32_t *flag = &lock_state_[2].leading_words_[3];
+            uint32_t *flag = &channels_[1].leading_words_[3];
             const int waited = wait("AWAITEXEC", flag, 1, 2000);
             NetDaemonWaitTicks += waited;
             log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
@@ -6813,12 +6440,12 @@ send_move:
                 log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
                 message_data(0x2212, 0, 0, 0, 0, 0);
                 *flag = 0;
-                lock_state_[2].leading_words_[2] = 0;
-                lock_state_[2].trailing_words_[5] = 0;
-                lock_state_[2].trailing_words_[4] = 0;
+                channels_[1].leading_words_[2] = 0;
+                channels_[1].trailing_words_[5] = 0;
+                channels_[1].trailing_words_[4] = 0;
             }
-            lock_state_[1].payload_.vehicle_selection_follow = 0;
-            lock_state_[2].trailing_words_[3] = 0;
+            channels_[0].payload_.vehicle_selection_follow = 0;
+            channels_[1].trailing_words_[3] = 0;
             *flag = 0;
         }
 
@@ -6877,12 +6504,12 @@ send_move:
     }
 
 release_lock:
-    if (lock_state_[2].trailing_words_[3] != 0) {
+    if (channels_[1].trailing_words_[3] != 0) {
         Vehs[veh_id].order = 0;
         Vehs[veh_id].state &= 0xFCFFBDFFU;
         synch_veh(veh_id);
         if (IsMultiplayerNet != 0) {
-            uint32_t *flag = &lock_state_[2].trailing_words_[0];
+            uint32_t *flag = &channels_[1].trailing_words_[0];
             *flag = 1;
             log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
             const int waited = wait("AWAITEXEC", flag, 1, 2000);
@@ -6898,24 +6525,24 @@ release_lock_only:
     if (IsMultiplayerNet != 0) {
         log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
         message_data(0x2212, 0, 0, 0, 0, 0);
-        lock_state_[2].leading_words_[3] = 0;
-        lock_state_[2].leading_words_[2] = 0;
-        lock_state_[2].trailing_words_[5] = 0;
-        lock_state_[2].trailing_words_[4] = 0;
+        channels_[1].leading_words_[3] = 0;
+        channels_[1].leading_words_[2] = 0;
+        channels_[1].trailing_words_[5] = 0;
+        channels_[1].trailing_words_[4] = 0;
     }
-    lock_state_[1].payload_.vehicle_selection_follow = 0;
-    lock_state_[2].trailing_words_[3] = 0;
+    channels_[0].payload_.vehicle_selection_follow = 0;
+    channels_[1].trailing_words_[3] = 0;
     return 0;
 
 global_failed:
     // Kept separate because the seed's add_global failure path pops before
     // returning; it does not perform the generic release helper above.
-    if (lock_state_[2].trailing_words_[3] != 0) {
+    if (channels_[1].trailing_words_[3] != 0) {
         Vehs[veh_id].order = 0;
         Vehs[veh_id].state &= 0xFCFFBDFFU;
         synch_veh(veh_id);
         if (IsMultiplayerNet != 0) {
-            uint32_t *flag = &lock_state_[2].trailing_words_[0];
+            uint32_t *flag = &channels_[1].trailing_words_[0];
             *flag = 1;
             log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
             const int waited = wait("AWAITEXEC", flag, 1, 2000);
@@ -6928,13 +6555,13 @@ global_failed:
     if (IsMultiplayerNet != 0) {
         log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
         message_data(0x2212, 0, 0, 0, 0, 0);
-        lock_state_[2].leading_words_[3] = 0;
-        lock_state_[2].leading_words_[2] = 0;
-        lock_state_[2].trailing_words_[5] = 0;
-        lock_state_[2].trailing_words_[4] = 0;
+        channels_[1].leading_words_[3] = 0;
+        channels_[1].leading_words_[2] = 0;
+        channels_[1].trailing_words_[5] = 0;
+        channels_[1].trailing_words_[4] = 0;
     }
-    lock_state_[1].payload_.vehicle_selection_follow = 0;
-    lock_state_[2].trailing_words_[3] = 0;
+    channels_[0].payload_.vehicle_selection_follow = 0;
+    channels_[1].trailing_words_[3] = 0;
     NetMsgPrimary.pop("GLOBALFAILED", 5000, 0, nullptr);
     return 0;
 }
@@ -7526,7 +7153,7 @@ static void synch_notify_or_queue() {
         } else {
             SpockNotifyPending = 1;
         }
-    } else if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+    } else if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         SpockNotifyPending = 1;
     } else {
         message_data(0x2308, 0, 0, 0, 0, 0);
@@ -7705,7 +7332,7 @@ static void netdaemon_sync_send_chunk(NetDaemon &self, int16_t opcode,
     // Native writes only these header fields. +8..+0xB remain allocator
     // contents; do not zero-fill them.
     const uint32_t faction = NetDaemonSyncWire::current_faction();
-    const uint32_t sequence = self.lock_state_[0].leading_words_[0];
+    const uint32_t sequence = self.deletion_list_.sequence_bits();
     const int32_t wire_a2 = a2, wire_a3 = a3, wire_a4 = a4;
     memcpy(bytes + 0x00, &flags, sizeof flags);
     memcpy(bytes + 0x04, &faction, sizeof faction);
@@ -7739,8 +7366,8 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
     // dword slots 7/8. The popup and state transition order follows the native
     // first dispatch; these calls are before target capture/chunk callbacks.
     if (!outgoing) {
-        uint32_t &game_phase = lock_state_[0].trailing_words_[2];
-        uint32_t &rules_phase = lock_state_[0].trailing_words_[3];
+        uint32_t &game_phase = primary_state_.trailing_words_[2];
+        uint32_t &rules_phase = primary_state_.trailing_words_[3];
         if (opcode == 0x00 && static_cast<int32_t>(game_phase) >= 0) {
             NetMsgPrimary.pop("SYNCHINGGAME", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
@@ -7862,7 +7489,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         uint32_t sender;
         memcpy(&sender, packet + 0x04, sizeof sender);
         if (initial_is_last)
-            lock_state_[2].trailing_words_[1] &=
+            channels_[1].trailing_words_[1] &=
                 ~(static_cast<uint32_t>(1) << (sender & 31));
         synch_display(opcode, static_cast<int>(incoming_index) + 1,
                       total_chunks, a2);
@@ -7899,7 +7526,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
     // send loop / received chunk processing.
     if (opcode == 0) {
         prefs_use();
-    } else if (opcode == 0x02 && lock_state_[0].leading_words_[1] == 0) { // decimal 2
+    } else if (opcode == 0x02 && primary_state_.leading_words_[0] == 0) { // decimal 2
         map_shutdown();
         map_init();
         Paths.init();
@@ -7921,41 +7548,41 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0051dd00.cpp"], "reason": "Recover typed lock-entry reset, borrowed selection pointer clearing and ordered lock cleanup before qualified AlphaNet close."}
 // symbol    ?reset@NetDaemon@@QAEXXZ
 void NetDaemon::reset() {
-    lock_state_[0].leading_words_[1] = 0;
-    lock_state_[0].leading_words_[2] = 0;
-    lock_state_[0].leading_words_[3] = 0;
-    lock_state_[0].payload_.flags = 0;
-    lock_state_[0].trailing_words_[8] = 0;
-    lock_state_[0].trailing_words_[7] = 0;
+    primary_state_.leading_words_[0] = 0;
+    primary_state_.leading_words_[1] = 0;
+    primary_state_.leading_words_[2] = 0;
+    primary_state_.flags_ = 0;
+    primary_state_.trailing_words_[8] = 0;
+    primary_state_.trailing_words_[7] = 0;
 
-    lock_state_[1].leading_words_[1] = 0;
-    lock_state_[1].leading_words_[0] = 0;
-    lock_state_[1].trailing_words_[0] = 0;
-    lock_state_[2].leading_words_[1] = 0;
-    lock_state_[1].trailing_words_[9] = 0;
-    lock_state_[2].leading_words_[0] = 0;
-    lock_state_[2].trailing_words_[5] = 0;
-    lock_state_[2].trailing_words_[4] = 0;
+    channels_[0].leading_words_[1] = 0;
+    channels_[0].leading_words_[0] = 0;
+    channels_[0].trailing_words_[0] = 0;
+    channels_[1].leading_words_[1] = 0;
+    channels_[0].trailing_words_[9] = 0;
+    channels_[1].leading_words_[0] = 0;
+    channels_[1].trailing_words_[5] = 0;
+    channels_[1].trailing_words_[4] = 0;
 
-    lock_state_[0].trailing_words_[4] = 0;
-    lock_state_[0].trailing_words_[5] = 0;
-    lock_state_[0].trailing_words_[6] = 0;
-    lock_state_[2].trailing_words_[3] = 0;
-    lock_state_[2].trailing_words_[2] = 0;
-    lock_state_[2].leading_words_[3] = 0;
-    lock_state_[2].leading_words_[2] = 0;
-    lock_state_[2].payload_.flags = 0;
-    lock_state_[0].trailing_words_[0] = 0;
-    lock_state_[0].trailing_words_[1] = 0;
-    lock_state_[2].trailing_words_[8] = 0;
-    lock_state_[2].trailing_words_[7] = 0;
-    lock_state_[0].trailing_words_[2] = 0;
-    lock_state_[0].trailing_words_[3] = 0;
-    lock_state_[2].trailing_words_[6] = 0xFF;
-    lock_state_[1].payload_.vehicle_selection_follow = nullptr;
+    primary_state_.trailing_words_[4] = 0;
+    primary_state_.trailing_words_[5] = 0;
+    primary_state_.trailing_words_[6] = 0;
+    channels_[1].trailing_words_[3] = 0;
+    channels_[1].trailing_words_[2] = 0;
+    channels_[1].leading_words_[3] = 0;
+    channels_[1].leading_words_[2] = 0;
+    channels_[1].payload_.flags = 0;
+    primary_state_.trailing_words_[0] = 0;
+    primary_state_.trailing_words_[1] = 0;
+    channels_[1].trailing_words_[8] = 0;
+    channels_[1].trailing_words_[7] = 0;
+    primary_state_.trailing_words_[2] = 0;
+    primary_state_.trailing_words_[3] = 0;
+    channels_[1].trailing_words_[6] = 0xFF;
+    channels_[0].payload_.vehicle_selection_follow = nullptr;
 
     for (int i = 1; i <= 8; ++i) {
-        lock_state_[1].trailing_words_[i] = 0;
+        channels_[0].trailing_words_[i] = 0;
     }
 
     locks_.clear();

@@ -684,23 +684,31 @@ static int TurnUpkeepPhase = 0;
 static int GameDataLoadRequest = 0;
 static int GameSessionActive = 0;
 static int WorldClimateSkipTerrainClear = 1;
-static int VehCurrentCount = 1;
+struct GameDataStateMockFields {
+    int game_preferences_, game_more_preferences_, game_state_, game_rules_;
+    int vehicle_current_count_, base_current_count_, turn_current_num_;
+    int net_turn_flags_, net_turn_faction_, diff_level_current_;
+    int time_controls_selection_;
+    struct { int enable_mask_; } lock_masks_;
+};
+struct GameDataStateMock { GameDataStateMockFields fields_; };
+static GameDataStateMock GameDataStateStorage = {};
+static int &VehCurrentCount = GameDataStateStorage.fields_.vehicle_current_count_;
 static int IsMultiplayerPBEM = 0;
 static int IsMultiplayerNet = 0;
 static int ExitTurnLoop = 0;
 static int ControlTurnPhase = 0;
-static int GamePreferences = 0;
-static unsigned int GameState = 0;
-static unsigned int GameRules = 0;
+static int &GamePreferences = GameDataStateStorage.fields_.game_preferences_;
+static int &GameState = GameDataStateStorage.fields_.game_state_;
+static int &GameRules = GameDataStateStorage.fields_.game_rules_;
 static unsigned int MapOceanCoverage = 0;
 static unsigned int MapLandCoverage = 0;
 static unsigned int MapErosiveForces = 0;
 static unsigned int MapPlanetaryOrbit = 0;
 static unsigned int MapCloudCover = 0;
 static unsigned int MapNativeLifeForms = 0;
-static int ObjectiveReqVictory = 0;
-static unsigned int ObjectivesSuddenDeathVictory = 0;
-static unsigned int EndingMissionYear = 0;
+struct ScenarioSaveMock { int objective_req_victory; unsigned int objectives_sudden_death_victory; unsigned int ending_mission_year; };
+static ScenarioSaveMock ScenarioSave = {};
 static int GenderDefault = 0;
 static int PluralityDefault = 0;
 static int parsed_ids[16];
@@ -1080,7 +1088,8 @@ struct MockLock { void clear() { events.push_back("lock-clear"); } };
 struct MockNetDaemon {
     int player_count_;
     AlphaNetProcessSlot process_slots_[9];
-    LockStateEntry lock_state_[24];
+    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    LockStateEntry channels_[2];
     MockLock locks_;
     uint32_t voice_hotkey_48_, voice_hotkey_4c_, voice_flags_D8_;
     int init_result, send_files_result;
@@ -1094,7 +1103,7 @@ struct MockNetDaemon {
         events.push_back("receive");
         ++receive_count;
         if (negative_loop_probe && receive_count == 1)
-            lock_state_[0].trailing_words_[2] = 0xFFFFFFFFu;
+            primary_state_.trailing_words_[2] = 0xFFFFFFFFu;
         else
             ExitTurnLoop = 1;
         return 0;
@@ -1102,6 +1111,7 @@ struct MockNetDaemon {
     void send_rules() { events.push_back("send-rules"); }
     void send_game() { events.push_back("send-game"); }
 };
+typedef MockNetDaemon NetDaemon;
 struct MockNetWin { int exec_result; void config_players() { events.push_back("config-players"); } int exec() { events.push_back("exec"); return exec_result; } };
 struct MockStringTable { void shutdown() { events.push_back("strings-shutdown"); } int get(int) { return 0; } };
 struct MockPath { void init() { events.push_back("path-init"); } };
@@ -1130,15 +1140,29 @@ static MockSession NetWinSessionData;
 static MockLobbyRow NetWinLobbyRows[8];
 static MockPlayer Players[8];
 static MockPlayerData PlayersData[8];
-static uint32_t GameRules, GameState, NetTurnFlags, LockEnableMask;
-static int IsMultiplayerNet, IsMultiplayerPBEM, DiffLevelCurrent;
+struct InitGameDataFields {
+    uint32_t game_rules_, game_state_, net_turn_flags_, game_more_preferences_;
+    int diff_level_current_, time_controls_selection_, vehicle_current_count_;
+    int turn_current_num_, base_current_count_;
+    struct { uint32_t enable_mask_; } lock_masks_;
+};
+struct InitGameData { InitGameDataFields fields_; };
+static InitGameData GameDataStateStorage = {};
+static uint32_t &GameRules = GameDataStateStorage.fields_.game_rules_;
+static uint32_t &GameState = GameDataStateStorage.fields_.game_state_;
+static uint32_t &NetTurnFlags = GameDataStateStorage.fields_.net_turn_flags_;
+static uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+static int IsMultiplayerNet, IsMultiplayerPBEM;
+static int &DiffLevelCurrent = GameDataStateStorage.fields_.diff_level_current_;
 static int GenderDefault, PluralityDefault;
-static int TimeControlsSelection, ControlTurnPhase, VehCurrentCount;
+static int &TimeControlsSelection = GameDataStateStorage.fields_.time_controls_selection_;
+static int ControlTurnPhase;
+static int &VehCurrentCount = GameDataStateStorage.fields_.vehicle_current_count_;
 static int MapSizePlanet, MapLongitudeBounds, MapLatitudeBounds;
 static uint32_t MapOceanCoverage, MapLandCoverage, MapErosiveForces;
 static uint32_t MapPlanetaryOrbit, MapCloudCover, MapNativeLifeForms;
 static uint32_t WorldClimateSkipTerrainClear;
-static uint32_t ObjectiveReqVictory, ObjectivesSuddenDeathVictory, EndingMissionYear;
+struct ScenarioSaveMock { int objective_req_victory; uint32_t objectives_sudden_death_victory; uint32_t ending_mission_year; } ScenarioSave;
 static uint32_t UnkBitfield1;
 static const char *AlphaxFileID = "ALPHAX";
 static uint32_t AltNatural[11], AltContour[11];
@@ -1251,7 +1275,7 @@ int main() {
     NetDaemonNet.player_count_ = 2;
     NetDaemonNet.process_slots_[1].identity_ = 1;
     NetDaemonNet.process_slots_[2].identity_ = 4;
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
+    NetDaemonNet.primary_state_.leading_words_[0] = 1;
     ControlTurnPhase = 1;
     assert(multiplayer_init(1) == 0);
     assert(MapSizePlanet == 2 && MapLongitudeBounds == 0x28 && MapLatitudeBounds == 0x50);
@@ -1279,7 +1303,7 @@ int main() {
         TextNumbers.push_back(10 + i);
         TextNumbers.push_back(20 + i);
     }
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
+    NetDaemonNet.primary_state_.leading_words_[0] = 1;
     ControlTurnPhase = 1;
     assert(multiplayer_init(1) == 0);
     assert(TextNumberIndex == TextNumbers.size());
@@ -1335,7 +1359,7 @@ int main() {
     Players[4].is_leader_female=1; Players[4].noun_gender=4; Players[4].is_noun_plural=0;
     multi_faction_after[0]=3; multi_faction_after[1]=4; multi_faction_after[2]=5;
     multi_faction_mutations=3;
-    NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
+    NetDaemonNet.primary_state_.leading_words_[0] = 1;
     MockGameInitResult = 0;
     ControlTurnPhase = 1;
     assert(multiplayer_init(1) == 0);
@@ -1363,6 +1387,8 @@ int main() {
 // @@CASE_multiplayer_reset@@
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <stdint.h>
 
 struct Payload {
     unsigned int flags;
@@ -1380,19 +1406,32 @@ struct Lock {
     void clear() { ++calls; }
 };
 struct NetDaemonDouble {
-    LockStateEntry lock_state_[24];
+    struct DeletionListState { unsigned char records_[24][0x3C]; int current_owner_; } deletion_list_;
+    struct PrimaryState { unsigned int leading_words_[3]; unsigned int flags_; unsigned int trailing_words_[10]; } primary_state_;
+    LockStateEntry channels_[2];
+    void *file_index_records_;
+    unsigned int field_1BE4_;
+    unsigned char saved_process_slots_[8][0x19C];
     Lock locks_;
     int close_calls;
     void close() { ++close_calls; }
 };
+typedef NetDaemonDouble NetDaemon;
 static NetDaemonDouble NetDaemonNet;
 
 // @@RESET_BODY@@
 
 int main() {
-    for (unsigned int i = 0; i != sizeof NetDaemonNet.lock_state_; ++i) {
-        reinterpret_cast<unsigned char *>(NetDaemonNet.lock_state_)[i] = 0x5A;
-    }
+    memset(&NetDaemonNet.deletion_list_, 0x5A, sizeof NetDaemonNet.deletion_list_);
+    memset(&NetDaemonNet.primary_state_, 0x5A, sizeof NetDaemonNet.primary_state_);
+    memset(NetDaemonNet.channels_, 0x5A, sizeof NetDaemonNet.channels_);
+    memset(NetDaemonNet.saved_process_slots_, 0x5A, sizeof NetDaemonNet.saved_process_slots_);
+    NetDaemonNet.file_index_records_ = reinterpret_cast<void *>(static_cast<uintptr_t>(0x12345678));
+    NetDaemonNet.field_1BE4_ = 0x5A5A5A5Au;
+    unsigned char deletion_snapshot[sizeof NetDaemonNet.deletion_list_];
+    unsigned char saved_slots_snapshot[sizeof NetDaemonNet.saved_process_slots_];
+    memcpy(deletion_snapshot, &NetDaemonNet.deletion_list_, sizeof deletion_snapshot);
+    memcpy(saved_slots_snapshot, NetDaemonNet.saved_process_slots_, sizeof saved_slots_snapshot);
     NetDaemonNet.locks_.calls = 0;
     NetDaemonNet.close_calls = 0;
 
@@ -1400,8 +1439,8 @@ int main() {
 
     // Independently project the native write-address list to the typed array.
     // Only these words are reset; adjacent fields remain sentinel-filled.
-    unsigned int expected[24][15];
-    for (int entry = 0; entry != 24; ++entry)
+    unsigned int expected[3][15];
+    for (int entry = 0; entry != 3; ++entry)
         for (int word = 0; word != 15; ++word)
             expected[entry][word] = 0x5A5A5A5A;
 #define ZERO(entry, word) expected[(entry)][(word)] = 0
@@ -1417,13 +1456,19 @@ int main() {
     for (int word = 6; word <= 13; ++word) ZERO(1, word);
 #undef ZERO
 
-    for (int entry = 0; entry != 24; ++entry) {
+    for (int entry = 0; entry != 3; ++entry) {
         unsigned int actual[15];
-        for (int i = 0; i != 4; ++i)
-            actual[i] = NetDaemonNet.lock_state_[entry].leading_words_[i];
-        actual[4] = NetDaemonNet.lock_state_[entry].payload_.flags;
-        for (int i = 0; i != 10; ++i)
-            actual[5 + i] = NetDaemonNet.lock_state_[entry].trailing_words_[i];
+        if (entry == 0) {
+            actual[0] = static_cast<unsigned int>(NetDaemonNet.deletion_list_.current_owner_);
+            for (int i = 0; i != 3; ++i) actual[1 + i] = NetDaemonNet.primary_state_.leading_words_[i];
+            actual[4] = NetDaemonNet.primary_state_.flags_;
+            for (int i = 0; i != 10; ++i) actual[5 + i] = NetDaemonNet.primary_state_.trailing_words_[i];
+        } else {
+            const LockStateEntry &channel = NetDaemonNet.channels_[entry - 1];
+            for (int i = 0; i != 4; ++i) actual[i] = channel.leading_words_[i];
+            actual[4] = channel.payload_.flags;
+            for (int i = 0; i != 10; ++i) actual[5 + i] = channel.trailing_words_[i];
+        }
         for (int word = 0; word != 15; ++word) {
             if (actual[word] != expected[entry][word]) {
                 std::fprintf(stderr,
@@ -1432,6 +1477,13 @@ int main() {
                 return 1;
             }
         }
+    }
+    if (memcmp(deletion_snapshot, &NetDaemonNet.deletion_list_, sizeof deletion_snapshot) != 0 ||
+        memcmp(saved_slots_snapshot, NetDaemonNet.saved_process_slots_, sizeof saved_slots_snapshot) != 0 ||
+        NetDaemonNet.file_index_records_ != reinterpret_cast<void *>(static_cast<uintptr_t>(0x12345678)) ||
+        NetDaemonNet.field_1BE4_ != 0x5A5A5A5Au) {
+        std::fprintf(stderr, "untouched deletion/save/file-index state changed\n");
+        return 1;
     }
     if (NetDaemonNet.locks_.calls != 1 || NetDaemonNet.close_calls != 1) {
         std::fprintf(stderr, "cleanup call counts differ\n");

@@ -32,6 +32,8 @@ int ConsoleControlTurnActive;
 // It proves source/API use only; it does not assert the production allocation extent.
 struct FakeGameDataStateFields { uint32_t net_turn_flags_; int net_turn_faction_; };
 struct FakeGameDataStateWindow { FakeGameDataStateFields fields_; } GameDataStateStorage;
+struct FakeDeletionList { int current_owner_; uint32_t sequence_bits() const { return static_cast<uint32_t>(current_owner_); } };
+struct FakePrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
 uint32_t fake_time;
 int fake_time_calls;
 int fake_send_result;
@@ -86,7 +88,9 @@ class AlphaNet {
 class NetDaemon : public Net, public AlphaNet {
  public:
     int field_764_;
-    FakeLockState lock_state_[3];
+    FakeDeletionList deletion_list_;
+    FakePrimaryState primary_state_;
+    FakeLockState channels_[2];
     int send_message(char *message, unsigned long length, int target);
     uint32_t unlock_veh();
 };
@@ -111,8 +115,8 @@ int main() {
     fake_send_result = 0x13572468;
     IsMultiplayerNet = 1;
     NetDaemonNet.field_764_ = 88;
-    NetDaemonNet.lock_state_[0].leading_words_[0] = 0x11223344;
-    NetDaemonNet.lock_state_[0].trailing_words_[0] = 1;
+    NetDaemonNet.deletion_list_.current_owner_ = 0x11223344;
+    NetDaemonNet.primary_state_.trailing_words_[0] = 1;
     ConsoleGlobal.faction_id_ = 7;
     NetBusyCount = 4;
     fake_time = 900;
@@ -148,13 +152,13 @@ int main() {
     fake_send_result = -37;
     uint16_t flags = 0x8000;
     memcpy(packet, &flags, sizeof flags);
-    NetDaemonNet.lock_state_[0].trailing_words_[0] = 1;
+    NetDaemonNet.primary_state_.trailing_words_[0] = 1;
     reset_observations();
     assert(NetDaemonNet.send_message(reinterpret_cast<char *>(packet),
                                      sizeof packet, 13) == -37);
     assert(fake_target == 13 && fake_who_calls == 0);
 
-    NetDaemonNet.lock_state_[0].trailing_words_[0] = 2;
+    NetDaemonNet.primary_state_.trailing_words_[0] = 2;
     reset_observations();
     assert(NetDaemonNet.send_message(reinterpret_cast<char *>(packet),
                                      sizeof packet, 13) == -37);
@@ -175,7 +179,7 @@ int main() {
     // branch; reaching it requires 0x2000 without 0x8000.
     flags = 0x2000;
     memcpy(packet, &flags, sizeof flags);
-    NetDaemonNet.lock_state_[0].trailing_words_[0] = 2;
+    NetDaemonNet.primary_state_.trailing_words_[0] = 2;
     GameDataStateStorage.fields_.net_turn_flags_ = 0x10;
     ConsoleControlTurnActive = 0;
     GameDataStateStorage.fields_.net_turn_faction_ = 3;
@@ -187,7 +191,7 @@ int main() {
 
     flags = 0;
     memcpy(packet, &flags, sizeof flags);
-    NetDaemonNet.lock_state_[0].trailing_words_[0] = 2;
+    NetDaemonNet.primary_state_.trailing_words_[0] = 2;
     reset_observations();
     assert(NetDaemonNet.send_message(reinterpret_cast<char *>(packet),
                                      sizeof packet, 13) == -37);
@@ -195,32 +199,34 @@ int main() {
            fake_who_argument == 13);
 
     // Caller closure: all returned bits survive the original cleanup stores.
-    memset(NetDaemonNet.lock_state_, 0x55, sizeof NetDaemonNet.lock_state_);
-    NetDaemonNet.lock_state_[0].trailing_words_[0] = 1;
+    memset(&NetDaemonNet.deletion_list_, 0x55, sizeof NetDaemonNet.deletion_list_);
+    memset(&NetDaemonNet.primary_state_, 0x55, sizeof NetDaemonNet.primary_state_);
+    memset(NetDaemonNet.channels_, 0x55, sizeof NetDaemonNet.channels_);
+    NetDaemonNet.primary_state_.trailing_words_[0] = 1;
     fake_log_calls = 0;
     reset_observations();
     assert(NetDaemonNet.unlock_veh() == static_cast<uint32_t>(-37));
     assert(fake_log_calls == 1 && fake_send_calls == 1 && fake_target == 0);
-    assert(NetDaemonNet.lock_state_[2].leading_words_[3] == 0);
-    assert(NetDaemonNet.lock_state_[2].leading_words_[2] == 0);
-    assert(NetDaemonNet.lock_state_[2].trailing_words_[5] == 0);
-    assert(NetDaemonNet.lock_state_[2].trailing_words_[4] == 0);
-    assert(NetDaemonNet.lock_state_[2].trailing_words_[3] == 0);
-    assert(NetDaemonNet.lock_state_[1].payload_.vehicle_selection_follow == 0);
+    assert(NetDaemonNet.channels_[1].leading_words_[3] == 0);
+    assert(NetDaemonNet.channels_[1].leading_words_[2] == 0);
+    assert(NetDaemonNet.channels_[1].trailing_words_[5] == 0);
+    assert(NetDaemonNet.channels_[1].trailing_words_[4] == 0);
+    assert(NetDaemonNet.channels_[1].trailing_words_[3] == 0);
+    assert(NetDaemonNet.channels_[0].payload_.vehicle_selection_follow == 0);
     assert(NetBusyCount == 4);
 
     IsMultiplayerNet = 0;
-    NetDaemonNet.lock_state_[2].leading_words_[3] = 77;
-    NetDaemonNet.lock_state_[2].trailing_words_[5] = 88;
-    NetDaemonNet.lock_state_[2].trailing_words_[3] = 99;
-    NetDaemonNet.lock_state_[1].payload_.vehicle_selection_follow = 123;
+    NetDaemonNet.channels_[1].leading_words_[3] = 77;
+    NetDaemonNet.channels_[1].trailing_words_[5] = 88;
+    NetDaemonNet.channels_[1].trailing_words_[3] = 99;
+    NetDaemonNet.channels_[0].payload_.vehicle_selection_follow = 123;
     fake_log_calls = 0;
     reset_observations();
     assert(NetDaemonNet.unlock_veh() == 0);
     assert(fake_log_calls == 0 && fake_send_calls == 0);
-    assert(NetDaemonNet.lock_state_[2].leading_words_[3] == 77);
-    assert(NetDaemonNet.lock_state_[2].trailing_words_[5] == 88);
-    assert(NetDaemonNet.lock_state_[2].trailing_words_[3] == 0);
-    assert(NetDaemonNet.lock_state_[1].payload_.vehicle_selection_follow == 0);
+    assert(NetDaemonNet.channels_[1].leading_words_[3] == 77);
+    assert(NetDaemonNet.channels_[1].trailing_words_[5] == 88);
+    assert(NetDaemonNet.channels_[1].trailing_words_[3] == 0);
+    assert(NetDaemonNet.channels_[0].payload_.vehicle_selection_follow == 0);
     return 0;
 }

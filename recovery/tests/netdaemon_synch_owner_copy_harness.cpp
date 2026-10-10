@@ -3,6 +3,9 @@
 #include <stdint.h>
 #include <string.h>
 
+struct BaseSecretProject { int words_[64]; };
+#include "src/game_data_state_window.h"
+
 typedef int BOOL;
 static const int MaxPlayerNum = 8;
 static const int MaxVehProtoNum = 512;
@@ -14,6 +17,14 @@ struct Map { unsigned char bytes[44]; };
 struct Landmark { unsigned char bytes[40]; };
 struct Continent { unsigned char bytes[28]; };
 struct SocialCategory { uint32_t models_[4]; };
+struct ScenarioSaveState {
+    int objective_req_victory;
+    uint32_t objectives_sudden_death_victory, objective_achieve_points;
+    uint32_t victory_achieve_bonus_points, starting_mission_year, ending_mission_year;
+    uint8_t wire_opaque_94b4d8[0x80];
+};
+ScenarioSaveState ScenarioSave;
+#define GameWireOpaque_94B4D8 ScenarioSave.wire_opaque_94b4d8
 struct Player { unsigned char bytes[0x59C]; };
 struct PlayerData {
     uint32_t flags;
@@ -57,7 +68,6 @@ struct Base {
 struct ReplayEventRecord { unsigned char bytes[8]; };
 
 uint32_t LockEnableMask;
-uint8_t GameWireOpaque_94B4D8[0x80];
 char NetDaemonFileTransferPath[0x104];
 int MapLongitudeBounds, MapLatitudeBounds, MapSeaLevel, MapSeaLevelCouncil;
 uint32_t MapRandSeed, MapArea, MapAreaSqRoot;
@@ -80,25 +90,45 @@ uint32_t FactionRankingsUnk[MaxPlayerNum];
 uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];
 int ReplayEventBytes;
 ReplayEventRecord ReplayEvents[1024];
-int ObjectiveReqVictory;
-uint32_t ObjectivesSuddenDeathVictory, ObjectiveAchievePts,
-    VictoryAchieveBonusPts, StartingMissionYear, EndingMissionYear;
-int VehCurrentCount, BaseCurrentCount;
-uint32_t GamePreferences, GameMorePreferences, GameWarnings, GameRules;
-uint8_t GameWireOpaque_9A64A0[4], GameWireOpaque_9A64A8[4], GameWireOpaque_9A67C9[3];
-uint32_t GameInterludeFlags;
-int TutorialFlags, TutorialFlags2;
-uint32_t TerraformAnnouncedMask[2];
-int TutWinFlags9A64BC;
-uint32_t GameState;
-int DiffLevelCurrent, GameSetupResetWord, TurnCurrentNum, MissionYearCurrent;
-int VehSelectionFollowLimit, TimeControlsSelection, TurnControlDurationMilliseconds;
-uint32_t FactionRankings[8];
-int RankingFactionIDUnk1, RankingFactionIDUnk2;
-uint32_t SecretProject[64];
-int GovernorFaction, CouncilResolutionCount[11], CouncilLastResolutionTurn[11];
-uint8_t GameTechAchieved[89];
-char LegacyGameSaveName[256];
+#define ObjectiveReqVictory ScenarioSave.objective_req_victory
+#define ObjectivesSuddenDeathVictory ScenarioSave.objectives_sudden_death_victory
+#define ObjectiveAchievePts ScenarioSave.objective_achieve_points
+#define VictoryAchieveBonusPts ScenarioSave.victory_achieve_bonus_points
+#define StartingMissionYear ScenarioSave.starting_mission_year
+#define EndingMissionYear ScenarioSave.ending_mission_year
+GameDataStateWindow GameDataStateStorage = {};
+#define GamePreferences GameDataStateStorage.fields_.game_preferences_
+#define GameMorePreferences GameDataStateStorage.fields_.game_more_preferences_
+#define GameWarnings GameDataStateStorage.fields_.game_warnings_
+#define GameRules GameDataStateStorage.fields_.game_rules_
+#define GameWireOpaque_9A64A0 GameDataStateStorage.fields_.game_wire_opaque_9a64a0_
+#define GameWireOpaque_9A64A8 GameDataStateStorage.fields_.game_wire_opaque_9a64a8_
+#define GameWireOpaque_9A67C9 GameDataStateStorage.fields_.game_wire_opaque_9a67c9_
+#define LegacyGameSaveName GameDataStateStorage.fields_.legacy_game_save_name_
+#define EcologyEventAccumulator GameDataStateStorage.fields_.ecology_event_accumulator_
+#define GameInterludeFlags GameDataStateStorage.fields_.game_interlude_flags_
+#define TutorialFlags GameDataStateStorage.fields_.tutorial_flags_
+#define TutorialFlags2 GameDataStateStorage.fields_.tutorial_flags_2_
+#define TerraformAnnouncedMask GameDataStateStorage.fields_.terraform_announced_mask_
+#define TutWinFlags9A64BC GameDataStateStorage.fields_.tutwin_flags_9a64bc_
+#define GameState GameDataStateStorage.fields_.game_state_
+#define VehCurrentCount GameDataStateStorage.fields_.vehicle_current_count_
+#define BaseCurrentCount GameDataStateStorage.fields_.base_current_count_
+#define DiffLevelCurrent GameDataStateStorage.fields_.diff_level_current_
+#define GameSetupResetWord GameDataStateStorage.fields_.game_setup_reset_word_
+#define TurnCurrentNum GameDataStateStorage.fields_.turn_current_num_
+#define MissionYearCurrent GameDataStateStorage.fields_.mission_year_current_
+#define VehSelectionFollowLimit GameDataStateStorage.fields_.vehicle_selection_follow_limit_
+#define TimeControlsSelection GameDataStateStorage.fields_.time_controls_selection_
+#define TurnControlDurationMilliseconds GameDataStateStorage.fields_.turn_control_duration_milliseconds_
+#define FactionRankings GameDataStateStorage.fields_.faction_rankings_
+#define RankingFactionIDUnk1 GameDataStateStorage.fields_.ranking_faction_id_unk1_
+#define RankingFactionIDUnk2 GameDataStateStorage.fields_.ranking_faction_id_unk2_
+#define SecretProject GameDataStateStorage.fields_.secret_project_
+#define GovernorFaction GameDataStateStorage.fields_.governor_faction_
+#define CouncilResolutionCount GameDataStateStorage.fields_.council_resolution_count_
+#define CouncilLastResolutionTurn GameDataStateStorage.fields_.council_last_resolution_turn_
+#define GameTechAchieved GameDataStateStorage.fields_.game_tech_achieved_
 int ClimateRiseStep, ClimateRiseLimit, ClimateRiseAccum, ClimateSeaLevelDelta;
 int TranscendenceScoreBonus;
 uint32_t TranscendenceScoreWeights[8];
@@ -106,7 +136,6 @@ int SunspotDuration;
 uint32_t MountPlanetX, MountPlanetY;
 int DustCloudDuration, SaveDaemonStateWord;
 uint32_t ScnVictFacilityObj, GlobalEnergyEventState, NetTurnFlags;
-int NetTurnFaction, EcologyEventAccumulator;
 
 /* SOURCE EXTRACTS */
 
