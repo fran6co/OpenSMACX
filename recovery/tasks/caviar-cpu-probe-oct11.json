@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "task_id": "caviar-cpu-probe-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover the original CPU classification and flag-probe behavior using an explicitly observed intrinsic-capable compiler for a minimal owner TU",
+  "base_revision": "aa9cc9fe6d71565f9b2ed8e29dfd01757fa2c985",
+  "subjects": [],
+  "editable_files": [
+    "src/caviar.cpp", "src/caviar_cpu.cpp", "src/caviar_cpu.h",
+    "CMakeLists.txt", "recovery/project.json", "recovery/README.md",
+    "recovery/environment/intrinsics.py", "recovery/environment/wine.py",
+    "recovery/environment/wine_repro.py", "recovery/environment/adapter.py",
+    "recovery/environment/recipe.py", "recovery/environment/command_paths.py",
+    "recovery/tests/test_intrinsic_environment.py",
+    "recovery/tests/test_caviar_cpu_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned original 0x0063E860-0x0063E94E toggles AC bit0x40000, clears output bytes9C0830/9C0B70 before the first gate, restores saved flags only after AC success, sets rank1, then toggles ID bit0x200000 without a final restoration. CPUID0 compares EBX/EDX/ECX vendor words, signed-compares maximum leaf against1, and CPUID1 maps base families5/6 and MMX bit0x800000 to ranks2..5; unsupported families clear rank. Preserve all these quirks.",
+    "Mapped caller 0x00639330 immediately overwrites AL with byte9C0830 after calling the probe; source ignores the return. Original saves/restores EAX, not an int0 result. Void interpretation is supported at that known caller only; full indirect/executable caller coverage and entry-register/condition-flag fidelity remain obligations. Do not claim ABI equivalence or full original matching.",
+    "Actual clang-cl i686 generated PUSHFD/POPFD/CPUID without source assembly through the existing configured compiler protocol. VC6 LINK6 accepts the no-debug COFF control, but rejects the Z7 CodeView control with LNK1103. A narrowly selected intrinsic frontend must explicitly omit incompatible debug metadata, record its real executable/preprocessing closure/effective argv, preserve ordinary VC6 routing, and export its actual application recipe. No silent fallback or full-Caviar modern compilation.",
+    "Current rank storage is private in Caviar's anonymous namespace, vendor storage is external, and neither has a source object binding. Establish correct source-owned byte starts and coordinated declarations/ownership before splitting the probe; do not infer complete original allocation extents. Source owns mappings; caches remain ignored.",
+    "Ship compiler interaction as project-local code behind existing entrypoints, not library-specific VC6 or Caviar adapters or a new CLI. Require fail-closed compiler-selection/reproducibility/receipt controls, pinned original branch evidence and actual-source hardware-mock tests, scoped historical continuity, independent review, relevant native measurements and fresh full application build/link. Preserve matching obligations; compiler controls are not game acceptance."
+  ]
+}
