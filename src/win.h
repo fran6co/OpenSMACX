@@ -847,9 +847,9 @@ class Win : public AutoSound {
   void set_caption(char * text);
   void sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6);
  public:
-  void __cdecl OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan);
+  static void __cdecl OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan);
   static void OnLButtonUp(void *hwnd, int x, int y, unsigned int keys);
-  int __cdecl OnSysCommand(HWND hwnd, unsigned int command, int x, int y);
+  static int __cdecl OnSysCommand(HWND hwnd, unsigned int command, int x, int y);
   void paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left, int clip_top, int clip_width, int clip_height, int unused8);
   void update_window_to_buffer(Buffer * buffer);
 
@@ -857,10 +857,10 @@ class Win : public AutoSound {
   static void __cdecl OnMouseMove(void * hwnd, int x, int y, unsigned int keys);
 
  public:
-  int __cdecl OnQueryNewPalette(void * hwnd);
+  static int __cdecl OnQueryNewPalette(void * hwnd);
 
  public:
-  long __cdecl OnActivate(void *hwnd, unsigned int state, void *other, long minimized);
+  static long __cdecl OnActivate(void *hwnd, unsigned int state, void *other, long minimized);
   void screen_to_client(RECT * rect);
 
  public:

@@ -10124,7 +10124,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
 
 // ===== homed from src/unrecovered/005f2680.cpp =====
 // ORIGINAL: 0x005F2680 ?OnSysCommand@Win@@QAAHPAXIHH@Z 0x005F2680-0x005F26FF FILE
-// symbol    ?OnSysCommand@Win@@QAAHPAUHWND__@@IHH@Z
+// symbol    ?OnSysCommand@Win@@SAHPAUHWND__@@IHH@Z
 // provenance (retired seed): git:3cb99d43^:src/unrecovered/005f2680.cpp
 int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
                               int y) {
@@ -10420,6 +10420,7 @@ void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
 }
 
 // ORIGINAL: 0x005F15C0 ?OnKey@Win@@QAAXPAXIJHI@Z 0x005F15C0-0x005F1657 FILE
+// symbol    ?OnKey@Win@@SAXPAXIJHI@Z
 // kind game
 // TRIED: MISMATCH #1 test/push at the ternary-vs-if for the first global select; body verified structurally correct otherwise
 // ===== homed from src/unrecovered/005f15c0.cpp =====
@@ -11198,6 +11199,7 @@ void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
 // ===== homed from src/unrecovered/005f1070.cpp =====
 
 // ORIGINAL: 0x005F1070 ?OnQueryNewPalette@Win@@QAAHPAX@Z 0x005F1070-0x005F1141 FILE
+// symbol    ?OnQueryNewPalette@Win@@SAHPAX@Z
 // TRIED: call directly through `(*reinterpret_cast<Fn*>(g_addr))(args)` at the call site instead of binding the function pointer to a named local first - the named local forced an extra reg-to-reg mov before the GetDC argument push. Also: these two "vtable" calls (slots 17/26) push the object pointer as an explicit stack arg with ecx holding the vtable pointer, not a real __thiscall dispatch, so plain `int*`/function-pointer casts matched where the VCall shim would not.
 // TRIED and NOT recovered (2026-08-25): this body was BYTE_EXACT while
 // 0x009B7B2C was read through the `WinScreenDC` fixed-address binding, and
@@ -11348,7 +11350,7 @@ void Win::set_dialog_focus(Win * window) {
 
 // ORIGINAL: 0x005F1480 ?OnActivate@Win@@QAAJPAXIPAXJ@Z 0x005F1480-0x005F15B6 FILE
 // kind game
-// symbol    ?OnActivate@Win@@QAAJPAXI0J@Z
+// symbol    ?OnActivate@Win@@SAJPAXI0J@Z
 // TRIED: testing `a2 == 0` first (zero-set branch as the `if`) compiled to `test;jne`; testing `a2 != 0` first (zero-set branch as the `else`) matches the original's `test;je` polarity. Landed at MISMATCH #42 (up from #10) - same HDC acquire/release idiom as 0x5EF1E0's sub_5ef1e0.
 // ===== homed from src/unrecovered/005f1480.cpp =====
 
