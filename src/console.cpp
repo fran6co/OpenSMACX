@@ -4670,15 +4670,8 @@ void Console::show_version() {
          (NullCallback)0);
 }
 
-// Fixed-slot palette-control bindings carried from 004e0a50.cpp. Tool
-// selection and improvement masks are now owned by mapwin.cpp.
-// PaintCycleGroup: use-site evidence, see editor_paints
-static ButtonGroup *const PaintCycleGroup = (ButtonGroup *)0x007CD1C0;
-// PaintCycleSelection: use-site evidence, see editor_paints
-static int *const PaintCycleSelection = (int *)0x007CD244;
-
 // ORIGINAL: 0x004E0A50 ?editor_paints@Console@@QAEXH@Z 0x004E0A50-0x004E0ACF FILE
-// RECOVERY_BINDING: v1 {"evidence": ["The historical 0x004E0A50 recovery is recorded by the ORIGINAL marker and TRIED notes below.", "src/mapwin.cpp:EditorTerrainRules", "image:0x00691888-0x00691B08 first descriptor words select paint availability"], "reason": "Share a typed paint selection and source-level terrain rules with MapWin instead of reading the original executable's fixed descriptor table; prior TRIED notes below describe the older spelling."}
+// RECOVERY_BINDING: v1 {"evidence": ["The historical 0x004E0A50 recovery is recorded by the ORIGINAL marker and TRIED notes below.", "src/mapwin.cpp:EditorTerrainRules", "image:0x00691888-0x00691B08 first descriptor words select paint availability", "Pinned MainInterface constructor 0x0045EF10 constructs four ButtonGroups at +0x1E878 with stride 0x94; group 2 starts at 0x007CD1C0 and its field_84_ is 0x007CD244.", "MainInterface::init populates button_group_[2] with the 25 paint ids 1011..1035; ButtonGroup::set stores the selected id in field_84_.", "MainInterface exposes button_group(int) as the public accessor for its private button_group_ array; Console::editor_set_brush uses that accessor for group 3."], "reason": "Use MainInterfaceGlobal's public button_group(2) accessor to the constructed paint ButtonGroup for both selected-id comparison and notification, preserving the original conditional set call."}
 // TRIED: `a1 > 5` (jl/jle flip at #12, fixed by `a1 >= 6`); `counter = a1 - 6` as one expression (lea vs sub at #15, tried splitting into `counter=a1; counter-=6;`, no change). Same size as original (127/127), mismatch only at #15.
 // size      127 bytes
 // prototype void (__thiscall ?editor_paints@Console@@QAEXH@Z)(Console* this, int)
@@ -4687,9 +4680,8 @@ static int *const PaintCycleSelection = (int *)0x007CD244;
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00458910 0x0045B550 0x0062B870
 //
-// 0x007AD330 is ConsoleInfoWin's redraw member; 0x007AD2A0 is the owning
-// object and 0x007AE820 is MainInterfaceGlobal. The remaining five slots
-// still need ownership recovery.
+// ConsoleInfoWin owns the redraw phase; MainInterfaceGlobal owns the paint
+// ButtonGroup and selection that the original accessed at 0x007CD1C0/244.
 
 
 // TRIED: hoisting the receiver into `InfoWin *const win = &ConsoleInfoWin;`
@@ -4703,8 +4695,8 @@ static int *const PaintCycleSelection = (int *)0x007CD244;
 //   30 of 38 agree; both remaining runs are these two.
 void Console::editor_paints(int paint_id) {
     // The original paint-availability walk runs the 20 tool rules high to low;
-    // 0x007CD1C0/0x007CD244 are the map-paint cycle ButtonGroup and its
-    // selected-slot int (set(result, 1) only when different).
+    // MainInterface's constructed group 2 owns the selected paint id and
+    // receives set(result, 1) only when that id differs.
     InfoWin *const win = &ConsoleInfoWin;
     MapEditorPaintId = paint_id;
     ConsoleInfoWin.set_redraw_phase(7);
@@ -4720,8 +4712,8 @@ void Console::editor_paints(int paint_id) {
         }
         result = counter + 0x3f9;
     }
-    if (*PaintCycleSelection != result) {
-        PaintCycleGroup->set(result, 1);
+    if (static_cast<int>(MainInterfaceGlobal.button_group(2).field_84_) != result) {
+        MainInterfaceGlobal.button_group(2).set(result, 1);
     }
 }
 
