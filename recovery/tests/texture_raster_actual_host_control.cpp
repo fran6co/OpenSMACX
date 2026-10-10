@@ -35,7 +35,7 @@ public:
     int setup_edge_gouraud(EdgeScan *, int);
     int setup_edge(EdgeScan *, int);
     void sub_61b780(Buffer *, int *, int, int);
-    void sub_620a10(Buffer *, int, int, int, TextureStore *);
+    void sub_620a10(Buffer *, Vert *, int, Vert *, TextureStore *);
     void sub_61d090(Buffer *, int *, int *, unsigned int);
 };
 
@@ -301,12 +301,12 @@ int main() {
     out_cache.flags_ = 0xA5A5A5A5u;
     out_cache.next_record_ = 9;
     expected_edge_cache = &out_cache;
-    int *points_low = static_cast<int *>(
-        mmap(0, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, -1, 0));
-    assert(points_low != MAP_FAILED);
-    memcpy(points_low, points, sizeof(points));
-    texture.sub_620a10(&buffer, static_cast<int>(reinterpret_cast<intptr_t>(points_low)), 4,
-                       static_cast<int>(reinterpret_cast<intptr_t>(points_low)), &out_cache);
+    Vert affine_vertices[4], affine_uv[4];
+    static_assert(sizeof(affine_vertices) == sizeof(points), "coordinate-pair extent");
+    memcpy(affine_vertices, points, sizeof(points));
+    memcpy(affine_uv, points, sizeof(points));
+    texture.sub_620a10(&buffer, affine_vertices, 4, affine_uv, &out_cache);
+    assert(*blit_edge_uvs_b == affine_vertices && *blit_edge_uvs_a == affine_uv);
     assert(buffer.frees_ == 1 && fpu_resets == 10);
     assert(out_cache.next_record_ == 0 && out_cache.flags_ == 1);
     for (int y = 0; y < 3; ++y) {
@@ -324,8 +324,7 @@ int main() {
     buffer.frees_ = 0;
     texture.borrowed_ = 1;
     texture.pixels_ = borrowed_source;
-    texture.sub_620a10(&buffer, static_cast<int>(reinterpret_cast<intptr_t>(points_low)), 4,
-                       static_cast<int>(reinterpret_cast<intptr_t>(points_low)), &out_cache);
+    texture.sub_620a10(&buffer, affine_vertices, 4, affine_uv, &out_cache);
     assert(buffer.frees_ == 1 && fpu_resets == 12);
     assert(edge_helper_calls == 4);
     for (int y = 0; y < 3; ++y) {
@@ -343,13 +342,11 @@ int main() {
     edge_directions = 0;
     edge_helper_period = 2;
     edge_helper_fail_at = 3;
-    texture.sub_620a10(&buffer, static_cast<int>(reinterpret_cast<intptr_t>(points_low)), 4,
-                       static_cast<int>(reinterpret_cast<intptr_t>(points_low)), &out_cache);
+    texture.sub_620a10(&buffer, affine_vertices, 4, affine_uv, &out_cache);
     assert(buffer.frees_ == 1 && edge_helper_calls == 3 && fpu_resets == 14);
     assert(edge_helper_direction[0] == -1 && edge_helper_direction[1] == 1 &&
            edge_helper_direction[2] == -1);
     edge_helper_fail_at = 0;
-    munmap(points_low, 4096);
     munmap(surface, 4096);
     return 0;
 }

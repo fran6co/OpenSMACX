@@ -203,8 +203,8 @@ class Texture {
                   int param_6, uint32_t param_7, int param_8);
   // The final pointer is the shared ten-record cache consumed by sub_624eb0;
   // flags_ selects geometry-cache replay/fill and next_record_ is its cursor.
-  void sub_620a10(Buffer *bufParam, int vertsParam, int countParam,
-                  int edgeVerts, TextureStore *cache);
+  void sub_620a10(Buffer *bufParam, Vert *vertsParam, int countParam,
+                  Vert *edgeVerts, TextureStore *cache);
   // 0x0061D090: receiver loads and RET 0x10 establish Texture this + four
   // stack arguments; this replaces the old free-function catalogue shape.
   void sub_61d090(Buffer *buffer, int *vertices, int *zvals, unsigned int flag);
@@ -217,9 +217,9 @@ class Texture {
                   uint8_t *shadeTable, int vertCount, int unusedIn,
                   int sentinel);
   // 0x00624CA0. Six stack arguments, with the fifth a TextureStore* and the
-  // sixth the -1 sentinel; the historical int* guess is retained in the
-  // source annotation comments beside the body.
-  void sub_624ca0(Buffer *buffer, int verts, int count, int a4,
+  // sixth the -1 sentinel. Vertex-pointer contracts follow the callee's
+  // accesses; source-generated historical signatures were only hypotheses.
+  void sub_624ca0(Buffer *buffer, Vert *verts, int count, Vert *edge_vertices,
                   TextureStore *cache, int sentinel);
   void sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
                   Vert *edgeVerts, TextureStore *cache);                       // 0x006212B0

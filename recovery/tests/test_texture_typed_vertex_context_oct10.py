@@ -89,14 +89,13 @@ int main() {
     assert (result.returncode == 0) == (mutation is None), result.stderr
 
 
-def test_unresolved_producer_boundaries_keep_original_signatures():
+def test_remaining_unresolved_producer_boundaries_keep_current_views():
     source = (ROOT / "src/texture.cpp").read_text()
     expected = {
         "draw_trans2": ("a2",),
         "sub_61c630": ("verts", "unusedIn"),
         "sub_61d990": ("vertices",),
         "sub_61b780": ("vertices",),
-        "sub_620a10": ("vertices_arg", "edge_vertices_arg"),
         "sub_61d090": ("vertices",),
         "sub_61f0d0": ("param_3",),
     }

@@ -110,7 +110,7 @@
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
         "raw self-access": 56,
-        "pointer-parameter as int": 25,
+        "pointer-parameter as int": 13,
         "scaffold name": 3116
       },
       "counters": []

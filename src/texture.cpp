@@ -5873,9 +5873,10 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
 // Fixed-slot bindings carried from 00620a10.cpp
 
 // ORIGINAL: 0x00620A10 sub_620a10 0x00620A10-0x006212A4 FILE
+// RECOVERY_BINDING: v1 {"reason":"Recover the affine rasterizer's two vertex-array arguments as the existing Vert type instead of passing pointers through int.","evidence":["Pinned 0x620A10 stores stack arguments at EBP+0x0C/+0x14 unchanged into shared vertex-pointer cells 0x9BB4F4/0x9BB490; 0x620AE1..0x620B1C indexes the first at eight-byte stride and reads signed x/y at offsets 0/+4.","The complete mapped 0x624CA0 wrapper forwards both pointer values unchanged when its final argument is -1; both shared cells are consumed as Vert arrays by the existing typed edge setup.","Historical decorated seed symbols and IDA int4 guesses were generated hypotheses, not independent original C++ type evidence. The recovered pointer contract follows actual uses; unobserved upstream producers and original type spelling remain unknown."]}
 // CURRENT BODY STATUS: multirow keyed affine pixel traversal restored;
 // exact x87 status/packed carry equivalence remains restoration debt.
-// symbol    ?sub_620a10@Texture@@QAEXPAVBuffer@@HHHPAVTextureStore@@@Z
+// symbol    ?sub_620a10@Texture@@QAEXPAVBuffer@@PAUVert@@H1PAVTextureStore@@@Z
 // TRIED (partial): this is a fixed-point/FPU-dual-mode affine
 //   texture-mapping scanline rasterizer. The two inner pixel loops
 //   (0x620EA1-0x620ECA and 0x621102-0x621197) pack a running fixed-point
@@ -5914,19 +5915,19 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void Texture::sub_620a10(Buffer *buffer, int vertices_arg, int count,
-                         int edge_vertices_arg, TextureStore *cache) {
+void Texture::sub_620a10(Buffer *buffer, Vert *vertices_arg, int count,
+                         Vert *edge_vertices_arg, TextureStore *cache) {
     int v80 = 1;
     cache->next_record_ = 0;
-    Vert *vertices = reinterpret_cast<Vert *>(vertices_arg);
+    Vert *vertices = vertices_arg;
     void *data = buffer->get_data();
     texture_reset_fpu();
     *blit_pixel_base = data;
-    *blit_edge_uvs_b = reinterpret_cast<Vert *>(vertices_arg);
+    *blit_edge_uvs_b = vertices_arg;
     *blit_texture_pixels = pixels_;
     TextureRowPitchScratch = iWidth_;
     *blit_texture_height = iHeight_;
-    *blit_edge_uvs_a = reinterpret_cast<Vert *>(edge_vertices_arg);
+    *blit_edge_uvs_a = edge_vertices_arg;
     *blit_vertex_count = count;
     *blit_light_threshold = *blit_light_threshold_2;
     *blit_buffer_stride = buffer->stride_;
@@ -7716,7 +7717,8 @@ void Texture::sub_623f50(Buffer *a1, int *a2, Texture *a3, uint8_t *a4,
 }
 
 // ORIGINAL: 0x00624CA0 sub_624ca0 0x00624CA0-0x00624CC8 BYTE_EXACT
-// symbol    ?sub_624ca0@Texture@@QAEXPAVBuffer@@HHHPAVTextureStore@@H@Z
+// RECOVERY_BINDING: v1 {"reason":"Carry the affine rasterizer's evidenced Vert pointer contract through its genuine sentinel wrapper.","evidence":["Pinned 0x624CA0 forwards stack arguments two/four unchanged to 0x620A10 when argument six equals -1; otherwise it returns without invoking the rasterizer.","The callee's eight-byte coordinate accesses and publication into typed vertex-pointer globals establish the pointer interpretation. Historical source-generated integer signatures were hypotheses, not original debug symbols.","The historical matching obligation and complete original span are retained; current symbols follow the typed C++ declarations."]}
+// symbol    ?sub_624ca0@Texture@@QAEXPAVBuffer@@PAUVert@@H1PAVTextureStore@@H@Z
 // symbol    ?invoke@Subject@@QAEXHHHHHH@Z
 // size      40 bytes
 // prototype 
@@ -7733,9 +7735,9 @@ void Texture::sub_623f50(Buffer *a1, int *a2, Texture *a3, uint8_t *a4,
 
 // ---- callees, declared and never defined (a definition would be inlined) ----
 
-void Texture::sub_624ca0(Buffer *a1, int a2, int a3, int a4, TextureStore *a5,
+void Texture::sub_624ca0(Buffer *a1, Vert *a2, int a3, Vert *a4, TextureStore *a5,
                          int a6) {
-    // 0x00624CA0, 40 bytes, `ret 0x18`. The sixth int is the -1 sentinel, the
+    // 0x00624CA0, 40 bytes, `ret 0x18`. The sixth argument is the -1 sentinel, the
     // same idiom `draw2` and `sub_623f50` carry: when it is -1 the first five
     // are forwarded to the affine rasteriser at 0x00620A10, otherwise the
     // function is a bare `ret 0x18`.

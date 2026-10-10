@@ -36,20 +36,20 @@ static int fixed_div(int numerator, int denominator) {
 class Buffer;
 class Texture {
 public:
-    void sub_620a10(Buffer *, int, int, int, TextureStore *);
-    void sub_624ca0(Buffer *, int, int, int, TextureStore *, int);
+    void sub_620a10(Buffer *, Vert *, int, Vert *, TextureStore *);
+    void sub_624ca0(Buffer *, Vert *, int, Vert *, TextureStore *, int);
     int calls;
     Buffer *seen_buffer;
-    int seen_vertices;
+    Vert *seen_vertices;
     int seen_count;
-    int seen_edge_vertices;
+    Vert *seen_edge_vertices;
     TextureStore *seen_cache;
     Texture() : calls(0), seen_buffer(0), seen_vertices(0), seen_count(0),
                 seen_edge_vertices(0), seen_cache(0) {}
 };
 
-void Texture::sub_620a10(Buffer *buffer, int vertices, int count,
-                         int edge_vertices, TextureStore *cache) {
+void Texture::sub_620a10(Buffer *buffer, Vert *vertices, int count,
+                         Vert *edge_vertices, TextureStore *cache) {
     ++calls;
     seen_buffer = buffer;
     seen_vertices = vertices;
@@ -235,13 +235,14 @@ static void test_sentinel_wrapper_only_forwards_minus_one() {
     Texture texture;
     Buffer *buffer = reinterpret_cast<Buffer *>(static_cast<uintptr_t>(0x1234));
     TextureStore cache;
-    texture.sub_624ca0(buffer, 11, 12, 13, &cache, 0);
-    texture.sub_624ca0(buffer, 11, 12, 13, &cache, 7);
+    Vert vertices[12] = {}, edge_vertices[12] = {};
+    texture.sub_624ca0(buffer, vertices, 12, edge_vertices, &cache, 0);
+    texture.sub_624ca0(buffer, vertices, 12, edge_vertices, &cache, 7);
     assert(texture.calls == 0);
-    texture.sub_624ca0(buffer, 11, 12, 13, &cache, -1);
+    texture.sub_624ca0(buffer, vertices, 12, edge_vertices, &cache, -1);
     assert(texture.calls == 1);
-    assert(texture.seen_buffer == buffer && texture.seen_vertices == 11);
-    assert(texture.seen_count == 12 && texture.seen_edge_vertices == 13);
+    assert(texture.seen_buffer == buffer && texture.seen_vertices == vertices);
+    assert(texture.seen_count == 12 && texture.seen_edge_vertices == edge_vertices);
     assert(texture.seen_cache == &cache);
 }
 
