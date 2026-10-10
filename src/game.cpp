@@ -2598,19 +2598,18 @@ void __cdecl control_game() {
         {
             // The image loads the primary map-window slot before it stores
             // the skip flag, then ors the live-flag dword through a register.
-            // The flag dword sits above the mapped fields; raw offset, the
-            // way draw_tile reads its neighbour.
+            // Keep the original live volatile dword accesses on the mapped
+            // MapWin field, with the table load before the climate-flag store.
             MapWin *const primary_window = MapWinTable[0];
+            volatile MapWin *const live_window = primary_window;
             WorldClimateSkipTerrainClear = 0;
-            uint32_t flags = *reinterpret_cast<volatile uint32_t *>(
-                reinterpret_cast<uint8_t *>(primary_window) + 0x1DD70);
+            uint32_t flags = live_window->field_1DD70_;
             // The image materializes 0x8C0 into a dead callee-saved
             // register before the loop and ors through it; every spelling of
             // that constant this tree has tried folds to the immediate
             // instead (TRIED: note under the marker).
             flags |= 0x8C0;
-            *reinterpret_cast<volatile uint32_t *>(
-                reinterpret_cast<uint8_t *>(primary_window) + 0x1DD70) = flags;
+            live_window->field_1DD70_ = flags;
         }
         ConsoleGlobal.focus_vehicle_ = -1;
         if (IsMultiplayerNet != 0) {
@@ -2668,7 +2667,7 @@ void __cdecl desktop_close() {
     WorldClimateWorldWin.GraphicWin::close();
     // The MultiWin object's GraphicWin front - the image closes that base
     // directly (`call 0x5d4e40` on `mov ecx, 0x7fd648`).
-    reinterpret_cast<GraphicWin *>(&MultiWindow)->close();
+    MultiWindow.GraphicWin::close();
     MainInterfaceGlobal.Win::hide();
 }
 
@@ -3226,7 +3225,7 @@ int __cdecl game_reload(int mode, int reload) {
         ConsoleStatusWin.close();
         // The world-climate window, named through worldwin.h's declaration.
         WorldClimateWorldWin.GraphicWin::close();
-        reinterpret_cast<GraphicWin *>(&MultiWindow)->close();
+        MultiWindow.GraphicWin::close();
         MainInterfaceGlobal.Win::hide();
     }
     stop_timers_call();
