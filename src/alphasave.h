@@ -25,7 +25,7 @@ class AlphaSave : public GraphicWin {
 
   void close();
   void close_for_load_retry();
-  void on_double_clicked(int button_id);
+  void on_double_clicked(int button_id) override;
   void forward_button_click(int button_id);
   // Constructor-installed primary table 0x669EC8 selects 0x407E80/0x407ED0
   // in Win slots 8/9; the create result is the embedded Scroll at +0x3DD8.

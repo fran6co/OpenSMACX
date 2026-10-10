@@ -1375,12 +1375,12 @@ void ListBox::on_left_double_click(int, int) {
 
     target = reinterpret_cast<Win *>(graphic->legacy_value_31());
     if (target != 0) {
-        target->vslot_56(dialog->get_selected_id());
+        target->on_double_clicked(dialog->get_selected_id());
     }
 
     const int guard = ListBoxClickGuard;
     target = reinterpret_cast<Win *>(graphic->legacy_value_31());
-    target->vslot_55(dialog->get_selected_id(), guard);
+    target->on_double_clicked(dialog->get_selected_id(), guard);
 
     target = reinterpret_cast<Win *>(graphic->legacy_value_31());
     Sound *child = target->legacy_sound_37();

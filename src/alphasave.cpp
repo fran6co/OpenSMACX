@@ -187,6 +187,7 @@ void AlphaSave::close() {
 }
 
 // ORIGINAL: 0x00407CF0 ?on_double_clicked@AlphaSave@@QAEXH@Z 0x00407CF0-0x00407D06 BYTE_EXACT
+// symbol    ?on_double_clicked@AlphaSave@@UAEXH@Z
 void AlphaSave::on_double_clicked(int button_id) {
     file_win_.on_double_clicked(button_id);
 }

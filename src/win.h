@@ -713,8 +713,10 @@ class Win : public AutoSound {
   // one argument slot54. ListBox dispatches each notification separately.
   virtual void on_selected(int) {}  // slot54, original0x00404270
   virtual void on_selected(int, int) {}  // slot53, original0x00404260
-  virtual void vslot_55(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_56(int = 0) {}  // 0x00404270
+  // As with selection, VC6 places the two-argument overload first in the
+  // table. AlphaSave's constructor-selected slot56 forwards to its FileWin.
+  virtual void on_double_clicked(int) {}  // slot56, original0x00404270
+  virtual void on_double_clicked(int, int) {}  // slot55, original0x00404260
   virtual int set_modal(int flag, int (*poll)(), Win *owner);  // slot 57  0x005EE190
   virtual void release_modal();  // slot 58  0x005EE280
   virtual int vslot_59() { return 1; }  // 0x00406840
