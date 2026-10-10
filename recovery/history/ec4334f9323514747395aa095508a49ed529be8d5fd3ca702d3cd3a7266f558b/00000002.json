@@ -1,0 +1,20 @@
+{
+  "event_id": "5e30f4e0bdd5757fe115fe8e0f2d8ee1736515badec59f39234a74ff6b8e3f95",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/object_writer.py",
+      "packages/match-recovery/tests/test_object_writer.py"
+    ],
+    "evidence": [
+      "Coordinator admits only demonstrated prefix-replacement blocker, unchanged suffix and safety controls; no arbitrary parsing or compiler-policy changes. Discovery object-writer-unrelated-suffix remains recorded."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8a2830fe44652eb4cbb0ac913c5d9747bbc61c009e5c324c6c8dbf58775ffba4",
+  "request_id": "admit-object-writer-prefix",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:win-bubble-text-owner-oct10"
+}

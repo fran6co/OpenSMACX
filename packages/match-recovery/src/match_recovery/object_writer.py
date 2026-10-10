@@ -205,13 +205,15 @@ def replace_object_records(current: Mapping[str, bytes], *,
     lines_by_unit = {}
     newline_by_unit = {}
     boundaries_by_unit = {}
+    first_splice_by_unit = {}
     for path, raw in current.items():
         text = raw.decode("utf-8", errors="surrogateescape")
         if re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
             raise ValueError("unsupported source line separator")
         normalized = text.replace("\r\n", "\n").replace("\r", "\n")
-        if re.search(r"(?:\\|\?\?/)[ \t]*\n", normalized):
-            raise ValueError("object writer does not support line-spliced source")
+        splice = re.search(r"(?:\\|\?\?/)[ \t]*\n", normalized)
+        first_splice_by_unit[path] = (
+            normalized.count("\n", 0, splice.start()) + 1 if splice else None)
         if raw.startswith(b"\xef\xbb\xbf"):
             raise ValueError("object writer does not support BOM-prefixed source")
         if any(re.fullmatch(r'(?:u8|u|U|L)?R"', token.group())
@@ -221,6 +223,11 @@ def replace_object_records(current: Mapping[str, bytes], *,
         if raw and not lines:
             raise ValueError("source line parsing failed")
         parsed = parse_objects(text, path, pin, address_space=address_space)
+        # An untouched spliced suffix cannot affect an earlier physical-line
+        # replacement. Do not interpret object records in that suffix.
+        if first_splice_by_unit[path] is not None and any(
+                row.line >= first_splice_by_unit[path] for row in parsed):
+            raise ValueError("object writer does not support records in line-spliced source")
         parsed_by_unit[path] = parsed
         lines_by_unit[path] = lines
         newline_by_unit[path] = next((line[len(line.rstrip(b"\r\n")):] for line in lines
@@ -264,6 +271,9 @@ def replace_object_records(current: Mapping[str, bytes], *,
             raise ValueError("member object replacement cannot discard its current owner")
         _record(row, path=destination, pin=pin, address_space=address_space,
                 line_limit=len(lines_by_unit[destination]) + 1)
+        if (first_splice_by_unit[destination] is not None
+                and row.line >= first_splice_by_unit[destination]):
+            raise ValueError("object writer does not support replacement in line-spliced source")
         if boundaries_by_unit[destination][row.line - 1]:
             raise ValueError("object replacement anchor is inside a block comment")
         selected[row.origin.entity_id] = row

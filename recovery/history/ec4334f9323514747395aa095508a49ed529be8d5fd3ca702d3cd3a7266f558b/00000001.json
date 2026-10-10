@@ -1,0 +1,20 @@
+{
+  "event_id": "8a2830fe44652eb4cbb0ac913c5d9747bbc61c009e5c324c6c8dbf58775ffba4",
+  "payload": {
+    "affects": [
+      "entity-526bd4472d1d8cf1f4f2b615f40e0e10e4ad3a5f414458f82b08a866b813e84c"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "object-writer-unrelated-suffix",
+    "evidence": [
+      "Native replace_object_records refused win.cpp line-spliced COPY_EDGE_TO_TARGET suffix at12737; selected bubble binding is at882 and all object bindings precede the suffix."
+    ],
+    "hypothesis": "Generic object replacement refuses untouched line-spliced suffix after all edited object records. Recovery needs conservative before-first-splice support equivalent to existing insertion writer, with rejection tests for edits at or after the splice.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "object-writer-unrelated-suffix",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-bubble-text-owner-oct10"
+}

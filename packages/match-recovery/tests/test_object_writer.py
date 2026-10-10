@@ -230,6 +230,41 @@ def test_replace_direct_target_is_guarded_and_does_not_rewrite_history():
     assert b"RECOVERY_OBJECT: v4" in output[PATH]
 
 
+@pytest.mark.parametrize("splice", (b"\\\n", b"\\\r\n", b"??/\n"))
+def test_replace_before_untouched_spliced_suffix(splice):
+    prefix=b"// RECOVERY_OBJECT: v1 0x00401000 _old\nint old;\n"
+    suffix=b"#define MACRO "+splice+b"    1\n"
+    raw=prefix+suffix
+    old,=current(raw)
+    replacement=replace(old,line=2,target_symbol="_current")
+    output=replace_object_records({PATH:raw},expected=(old,),replacements=(replacement,),
+                                  destination=PATH,pin=PIN,address_space=SPACE)[PATH]
+    assert output.endswith(suffix)
+    updated,=current(output)
+    assert updated.origin==old.origin and updated.symbol==old.symbol
+    assert updated.target_symbol=="_current"
+
+
+@pytest.mark.parametrize("splice", (b"\\\n", b"\\\r\n", b"??/\n"))
+def test_replace_refuses_anchor_at_or_after_first_splice(splice):
+    raw=b"// RECOVERY_OBJECT: v1 0x00401000 _old\nint old;\n#define M "+splice+b"1\n"
+    old,=current(raw)
+    for line in (3,4,5):
+        with pytest.raises(ValueError,match="line-spliced"):
+            replace_object_records({PATH:raw},expected=(old,),
+                                   replacements=(replace(old,line=line,target_symbol="_current"),),
+                                   destination=PATH,pin=PIN,address_space=SPACE)
+
+
+def test_replace_refuses_object_records_after_splice():
+    raw=b"#define M \\\n1\n// RECOVERY_OBJECT: v1 0x00401000 _old\nint old;\n"
+    old,=current(raw)
+    with pytest.raises(ValueError,match="line-spliced"):
+        replace_object_records({PATH:raw},expected=(old,),
+                               replacements=(replace(old,line=1,target_symbol="_current"),),
+                               destination=PATH,pin=PIN,address_space=SPACE)
+
+
 def test_replace_direct_target_rejects_target_collisions_and_stale_snapshot():
     raw = (b"// RECOVERY_OBJECT: v1 0x00401000 _old\nint old;\n"
            b"// RECOVERY_OBJECT: v1 0x00402000 _occupied\nint occupied;\n")
