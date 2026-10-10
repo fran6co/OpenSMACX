@@ -37,7 +37,8 @@ class Sound;
  * Win uses val_10_/11_/12_ through Sound receiver views. The former
  * FlatButton Sprite interpretation came from an erroneous Scroll setter:
  * native60569A..6056A6 writes FlatButton+AD4/+AD8/+ADC, not these words.
- * Their complete producer contracts remain unresolved. Keep context-mixed
+ * These three fields retain the evidenced Sound pointer interface; their
+ * complete producer/ownership/lifetime contracts remain unresolved. Keep context-mixed
  * words neutral: val_20_ is both a ListBox flag word and a Win Sound receiver; val_31_
  * is a BaseButton Sound receiver and a ListBox Win notification target. The
  * defaults block copies raw 32-bit values. Other meanings stay numbered
@@ -112,9 +113,12 @@ class AutoSound {
   // could not say what it was touching.
  protected:
   Sound *val_9_;
-  int val_10_;  // Sound receiver view in Win; full producer contract unresolved.
-  int val_11_;  // Sound receiver view in Win; full producer contract unresolved.
-  void *val_12_;
+  // RECOVERY_MEMBER: v3 AutoSound val_10_ Sound* 0x28 0x005EE810
+  Sound *val_10_;  // Sound receiver view, not a lifetime/ownership claim.
+  // RECOVERY_MEMBER: v3 AutoSound val_11_ Sound* 0x2C 0x005EE8B0
+  Sound *val_11_;
+  // RECOVERY_MEMBER: v3 AutoSound val_12_ Sound* 0x30 0x005EE950
+  Sound *val_12_;
   Sound *val_13_;
   Sound *val_14_;
   Sound *val_15_;

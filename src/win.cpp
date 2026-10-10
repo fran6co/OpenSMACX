@@ -6532,7 +6532,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                     cb(x, y);
                 }
                 this->on_left_up(x, y);
-                Sound *child = reinterpret_cast<Sound *>(val_10_);
+                Sound *child = val_10_;
                 if (child != 0 && child->is_playing() == 0) {
                     child->play();
                 }
@@ -7537,7 +7537,7 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                             callback(x, y);
                         }
                         this->on_right_click(x, y);
-                        related = reinterpret_cast<Sound *>(val_11_);
+                        related = val_11_;
                     } else {
                         this->vslot_35(x, y);
                         related = val_23_;
@@ -10383,7 +10383,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
                 fn(x, y);
             }
             this->on_right_down(x, y);
-            Sound *child = reinterpret_cast<Sound *>(val_12_);
+            Sound *child = val_12_;
             if (child != 0) {
                 int r = child->is_playing();
                 if (r == 0) {
@@ -12093,7 +12093,7 @@ void Win::dispatch_21(int a, int b, int alternate) {
             hook(a, b);
         }
         on_left_up(a, b);
-        Sound *child = reinterpret_cast<Sound *>(val_10_);
+        Sound *child = val_10_;
         if (child != 0) {
             if (child->is_playing() == 0) {
                 child->play();
@@ -12139,7 +12139,7 @@ void Win::dispatch_22(int a, int b, int alternate) {
             hook(a, b);
         }
         on_right_click(a, b);
-        Sound *child = reinterpret_cast<Sound *>(val_11_);
+        Sound *child = val_11_;
         if (child != 0) {
             if (child->is_playing() == 0) {
                 child->play();
@@ -12177,7 +12177,7 @@ void Win::dispatch_23(int x, int y, int alternate) {
             callback(x, y);
         }
         on_right_down(x, y);
-        Sound *child = reinterpret_cast<Sound *>(val_12_);
+        Sound *child = val_12_;
         if (child != 0 && child->is_playing() == 0) {
             child->play();
         }

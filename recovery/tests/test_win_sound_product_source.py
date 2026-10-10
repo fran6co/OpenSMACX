@@ -97,7 +97,7 @@ public:
     unsigned int iSomeFlag_;
     void (*field_424_)(int, int);
     void (*field_428_)(int, int);
-    void *val_12_;
+    Sound *val_12_;
     void *val_13_;
     void *val_24_;
     void *val_25_;
@@ -206,7 +206,7 @@ def test_live_product_handler_mutants_are_detected():
 
 def test_mixed_autosound_words_keep_neutral_storage_and_sound_views():
     header = (ROOT / "src" / "autosound.h").read_text()
-    assert re.search(r"void\s*\*\s*val_12_\s*;", header)
+    assert re.search(r"Sound\s*\*\s*val_12_\s*;", header)
     assert re.search(r"Sound\s*\*\s*val_13_\s*;", header)
     assert re.search(r"Sound\s*\*\s*val_24_\s*;", header)
     assert re.search(r"Sound\s*\*\s*val_25_\s*;", header)
@@ -221,7 +221,7 @@ def test_autosound_lifecycle_keeps_the_same_default_and_zero_stores():
         body = function_text(source, signature)
         for field, index in (("val_12_", 11), ("val_13_", 12),
                              ("val_24_", 23), ("val_25_", 24)):
-            value_type = "void" if field == "val_12_" else "Sound"
+            value_type = "Sound"
             assert re.search(
                 rf"{field}\s*=\s*reinterpret_cast<{value_type}\s*\*>\(AutoSoundDefaults\[{index}\]\)",
                 body,

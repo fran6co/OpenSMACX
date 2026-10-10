@@ -279,8 +279,8 @@ class Win : public AutoSound {
   void dispatch_19(int a, int b, int alternate);
 
   // 0x005EE810 / 0x005EE8B0, homed into win.cpp 2026-09-06. The same shape
-  // around slot 21 (field_41C_ hook, Sound views of mixed val_10_ / val_22_)
-  // and slot 22 (field_420_ hook, mixed val_11_ / Sound val_23_).
+  // around slot 21 (field_41C_ hook, Sound val_10_ / val_22_)
+  // and slot 22 (field_420_ hook, Sound val_11_ / val_23_).
   void dispatch_21(int a, int b, int alternate);
   void dispatch_22(int a, int b, int alternate);
   // Seed identities 0x5EE950/0x5EE9F0; these source labels are provisional.

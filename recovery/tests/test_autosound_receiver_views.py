@@ -18,8 +18,8 @@ def test_sound_interface_views_and_context_mixed_words_remain_explicit() -> None
                   22, 23, 25, 26, 27, 28, 29, 30, 33, 35, 36, 37):
         assert f"Sound *val_{field}_;" in auto
     assert "Sound *val_8_;" in auto
-    assert "int val_10_;" in auto and "int val_11_;" in auto
-    assert "void *val_12_;" in auto
+    for field in (10, 11, 12):
+        assert f"Sound *val_{field}_;" in auto
     assert "void *val_31_;" in auto
     assert "int val_20_;" in auto
     assert "Sound *event_window_;" in auto
@@ -41,5 +41,7 @@ def test_sound_interface_views_and_context_mixed_words_remain_explicit() -> None
     assert "Sound *child = reinterpret_cast<Sound *>(val_20_);" in win
     assert "Sound *child = val_8_;" in win
     assert "reinterpret_cast<Sound *>(flags_)" not in win
-    assert "Sound *child = reinterpret_cast<Sound *>(val_10_);" in win
-    assert "reinterpret_cast<Sound *>(val_12_)" in win
+    assert "Sound *child = val_10_;" in win
+    assert "Sound *child = val_12_;" in win
+    for field in (10, 11, 12):
+        assert f"reinterpret_cast<Sound *>(val_{field}_)" not in win
