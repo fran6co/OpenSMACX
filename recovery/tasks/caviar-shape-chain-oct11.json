@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "task_id": "caviar-shape-chain-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover the Caviar serialized shape-chain member and typed caller closure, including original unordered x87 branch behavior",
+  "base_revision": "ba1ed66be9324bdccdf8c2b75db88be2dd1b50d9",
+  "subjects": [],
+  "editable_files": [
+    "src/caviar.cpp", "src/caviar.h",
+    "recovery/tests/fixtures/caviar_product_extraction.cpp",
+    "recovery/tests/test_cvr_record_loader.py",
+    "recovery/tests/test_caviar_shape_chain_oct11.py"
+  ],
+  "evidence": [
+    "Pinned 006385D0-00638611 reads flags byte+0, float scale+8, relative next-node displacement DWORD+C and returns the selected node pointer. Source CvrShape owns the corresponding serialized prefix but hides +C in mid_[8]; three annotated renderer callers supply CvrStep::shape_ and cast the result back to CvrShape.",
+    "Pinned first FCOMP/FNSTSW gate tests AH bit1; second gate tests AH bits0x41. Unordered comparisons therefore continue at both gates, unlike the current negated less/less-equal comparisons. Recover this original behavior, including NaN/invalid products, without adding safety checks or changing link traversal ordering.",
+    "Keep external C symbol _vox_walk_scaled_chain, all original identities/spans and historical claims. Serialized links remain relative byte displacements, not invented native pointers or allocation bounds. Coordinate packed header, walker, all source callers and host fixture; native layout and all Caviar verdicts require fresh checks and the full application must build/link before integration.",
+    "Current CPU intrinsic compiler prototype is unrelated preserved WIP. Do not modify or commit its environment files in this recovery step. No full-game acceptance or function census increase is asserted by the type migration."
+  ]
+}
