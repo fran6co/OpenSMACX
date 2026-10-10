@@ -9,6 +9,7 @@ from match_recovery.source.reader import read_file, read_text
 from match_recovery.source.writer import write
 
 from test_zlib_ten_member_bindings_oct10 import EXPECTED as TEN_MEMBERS
+from test_zlib_deflate_tree_group_bindings_oct10 import EXPECTED as SIXTEEN_MEMBERS
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,7 +39,7 @@ def test_prior_dependency_history_and_configuration_are_retained():
     assert current.startswith(old[:old.index("// RECOVERY_COMPONENT_BEGIN")])
     old_rows = {row.address: row for row in read_text(old, ROOT / COMPANION)}
     rows = {row.address: row for row in read_file(ROOT / COMPANION)}
-    assert set(rows) == set(old_rows) | set(EXPECTED) | set(TEN_MEMBERS)
+    assert set(rows) == set(old_rows) | set(EXPECTED) | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS)
     for address, before in old_rows.items():
         after = rows[address]
         for field in fields(before):

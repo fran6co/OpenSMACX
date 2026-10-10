@@ -8,6 +8,7 @@ from match_recovery.component_source import parse_component
 from match_recovery.source import read_file, read_text
 from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
 from match_recovery.source.writer import write
+from test_zlib_deflate_tree_group_bindings_oct10 import EXPECTED as SIXTEEN_MEMBERS
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -80,7 +81,7 @@ def test_migrated_history_identity_and_native_writer_roundtrip():
                             0x00642960, 0x006429F0, 0x00642A70,
                             0x0063CF30, 0x0063D120, 0x0063D1A0, 0x0063D560,
                             0x00640BB0, 0x00640C30, 0x00640E50, 0x00640EC0,
-                            0x00640F40, 0x00641000}
+                            0x00640F40, 0x00641000} | set(SIXTEEN_MEMBERS)
     assert set(manifest.units) == {"adler32.c", "deflate.c", "inflate.c", "infutil.c", "trees.c"}
     for address, (end, symbol, unit, claimed, history_digest) in EXPECTED.items():
         row = rows[address]

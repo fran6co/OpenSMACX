@@ -143,11 +143,13 @@ def test_zlib_component_keeps_reviewed_provider_bindings_with_witnessed_addition
 
     additions = {0x00642960, 0x006429F0, 0x00642A70}
     from test_zlib_ten_member_bindings_oct10 import EXPECTED as TEN_MEMBERS
-    assert len(manifest.bindings) == 22, "only independently witnessed additions are allowed"
-    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED) | set(RESTORED) | additions | set(TEN_MEMBERS)
+    from test_zlib_deflate_tree_group_bindings_oct10 import EXPECTED as SIXTEEN_MEMBERS
+    assert len(manifest.bindings) == 38, "only independently witnessed additions are allowed"
+    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED) | set(RESTORED) | additions | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS)
     for binding in manifest.bindings:
-        if binding.origin.address in TEN_MEMBERS:
-            end, symbol, unit = TEN_MEMBERS[binding.origin.address]
+        witnessed = TEN_MEMBERS | SIXTEEN_MEMBERS
+        if binding.origin.address in witnessed:
+            end, symbol, unit = witnessed[binding.origin.address]
             assert [(span.start, span.end) for span in binding.spans] == [(binding.origin.address, end)]
             assert (binding.symbol, binding.unit) == (symbol, unit)
             continue

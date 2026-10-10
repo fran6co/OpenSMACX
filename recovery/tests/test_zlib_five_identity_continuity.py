@@ -18,6 +18,7 @@ from match_recovery.model import Origin
 from match_recovery.source import read_file, read_text, write
 
 from test_zlib_ten_member_bindings_oct10 import EXPECTED as TEN_MEMBERS
+from test_zlib_deflate_tree_group_bindings_oct10 import EXPECTED as SIXTEEN_MEMBERS
 
 
 REPO_ROOT = next(path for path in Path(__file__).resolve().parents if (path / ".git").exists())
@@ -125,8 +126,8 @@ def test_five_full_seed_prefixes_archive_and_native_writer_roundtrip():
         assert [(span.start, span.end) for span in binding.spans] == [(address, end)]
         assert (binding.symbol, binding.unit) == (symbol, unit)
 
-    assert len(manifest.bindings) == 22
-    assert set(bindings) == set(EXISTING) | set(HISTORY) | {0x00642960, 0x006429F0, 0x00642A70} | set(TEN_MEMBERS)
+    assert len(manifest.bindings) == 38
+    assert set(bindings) == set(EXISTING) | set(HISTORY) | {0x00642960, 0x006429F0, 0x00642A70} | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS)
     assert set(manifest.units) == {"adler32.c", "deflate.c", "inflate.c", "infutil.c", "trees.c"}
     # The initial-prefix comparisons retain the useful original caller/indirect
     # edges and the correction lessons; don't copy post-prefix emitter boilerplate
