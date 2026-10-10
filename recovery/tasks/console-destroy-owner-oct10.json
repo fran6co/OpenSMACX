@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "task_id": "console-destroy-owner-oct10",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Restore the complete original destroy-order picker, owned Popup lifetimes and diplomacy dispatch",
+  "base_revision": "f9a3618dc90de7dd03989422f6a5312ecac5a57f",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5067424
+    }
+  ],
+  "editable_files": [
+    "src/console.cpp",
+    "recovery/tests/test_console_destroy_owner_oct10.py"
+  ],
+  "evidence": [
+    "Pinned4D52A0..4D5D23 and65AB02..65AD6A preserve full ordinary/lifetime identities. Popup local EBP-53A0 owns item receiver-31D0 at+21D0 and Scroll-2170 at+3230; source independent Dialogs/Scroll/FlatButtons/GraphicWin duplicate rather than reconstruct those owned members.",
+    "Native57E9 passes -1 to Popup.start;58xx skips kind5 with tilebit8, kind0 with tilebit80000 and kind11 unconditionally, selects terrain name by ocean flag at EBP-20 rather than x/2. Single-item59D6 selects0; cancel5958 unlocks. Native59E1..E8 supplies null territory output;5AD7 selects actor-faction diplomacy row indexed by territory.",
+    "Correct the whole bounded function and preserve original error/unchecked paths, full mappings, claims and seed history. The apparent late confirmation construction in seed notes is Popup teardown, not permission to add a dialog. No byte-search campaign, new claim, behavior fix, compiler-policy change or game acceptance assertion.",
+    "Require original API/member reference review, fresh before/current all Console diagnostics and scoped matching/restoration, actual-body controls with damaging owner/selection/filter/cancel/diplomacy mutants, annotation continuity and full fresh compile/link. Integrate only the independently reviewed compiling closure; preserve historical matching obligations."
+  ]
+}
