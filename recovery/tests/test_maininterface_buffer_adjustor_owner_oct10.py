@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 
 from match_recovery.generated_source import parse_generated
-from match_recovery.source import read, read_text
+from match_recovery.source import read, read_text, write_symbol
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -46,7 +46,16 @@ def test_original_adjustor_envelope_moves_verbatim_from_task_baseline():
     mapwin = (ROOT / "src/mapwin.cpp").read_text()
     maininterface = (ROOT / "src/maininterface.cpp").read_text()
     assert mapwin == baseline.replace(original + "\n\n", "", 1)
-    assert maininterface.replace(original + "\n\n", "", 1) == baseline_file("src/maininterface.cpp")
+    expected = baseline_file("src/maininterface.cpp").encode()
+    # Later current-symbol corrections preserve the original identities/code.
+    for address, symbol in (
+        (0x45C700, "?on_left_click@MainInterface@@UAEXHH@Z"),
+        (0x45C740, "?on_right_click@MainInterface@@UAEXHH@Z"),
+    ):
+        row = next(row for row in read_text(expected.decode(), "src/maininterface.cpp")
+                   if row.address == address)
+        expected = write_symbol(expected, row, symbol)
+    assert maininterface.replace(original + "\n\n", "", 1).encode() == expected
     assert "ORIGINAL: 0x0045F1F0" not in mapwin
     assert maininterface.count("ORIGINAL: 0x0045F1F0") == 1
     assert envelope(maininterface) == original

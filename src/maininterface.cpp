@@ -1604,6 +1604,7 @@ void MainInterface::on_left_up(int a1, int a2) {
 
 
 // ORIGINAL: 0x0045C700 ?on_left_click@MainInterface@@QAEXHH@Z 0x0045C700-0x0045C734 FILE BYTE_EXACT
+// symbol    ?on_left_click@MainInterface@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_left_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
@@ -1678,6 +1679,7 @@ void MainInterface::on_left_click(int a1, int a2) {
 }
 
 // ORIGINAL: 0x0045C740 ?on_right_click@MainInterface@@QAEXHH@Z 0x0045C740-0x0045C774 FILE BYTE_EXACT
+// symbol    ?on_right_click@MainInterface@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_right_click@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0
