@@ -1215,7 +1215,7 @@ Status: Complete
 */
 void PullDown::hide() {
     release_modal();
-    reinterpret_cast<Win *>(this)->Win::hide();
+    Win::hide();
     do_all_draws();
 }
 

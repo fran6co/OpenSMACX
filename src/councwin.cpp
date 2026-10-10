@@ -1626,7 +1626,7 @@ void CouncWin::show(int visible) {
     // image sets no return value: eax merely holds what the last call left.
     // The catalogue's `?show@CouncWin@@QAEHH@Z` guessed `H` from that, and
     // declaring Win::show virtual is what made the two spellings collide.
-    if (!reinterpret_cast<Win *>(this)->is_visible()) {
+    if (!Win::is_visible()) {
         SubInterface::set_iface_mode();
     }
 }
