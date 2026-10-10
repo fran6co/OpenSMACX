@@ -15,6 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x004C5C50 sub_4c5c50 0x004C5C50-0x004C5C66 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682608 selects startup 0x4c5c50..0x4c5c66 and registers cleanup 0x4c5c70..0x4c5c7a. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?WaveDeviceGlobal@@3VWave_Device@@A is selected by physical COFF constructor/destructor relocations; current generated init symbol is _$E21. Original receiver 0x90d978 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. This binding is unclaimed; selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original init operation to the genuine C++ lifetime of ?WaveDeviceGlobal@@3VWave_Device@@A; retain original behavior and remaining matching obligations."}
+// symbol    _$E21
+// ORIGINAL: 0x004C5C70 sub_4c5c70 0x004C5C70-0x004C5C7A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682608 selects startup 0x4c5c50..0x4c5c66 and registers cleanup 0x4c5c70..0x4c5c7a. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?WaveDeviceGlobal@@3VWave_Device@@A is selected by physical COFF constructor/destructor relocations; current generated fini symbol is _$E19. Original receiver 0x90d978 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. This binding is unclaimed; selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original fini operation to the genuine C++ lifetime of ?WaveDeviceGlobal@@3VWave_Device@@A; retain original behavior and remaining matching obligations."}
+// symbol    _$E19
 #include "stdafx.h"
 #include "wave.h"
 #include "wave_device.h"
@@ -1538,6 +1544,7 @@ Wave_Device::~Wave_Device() {
 // build; the object and the binding were the same address, so the object now
 // carries the public name and every `WaveDeviceGlobal->` call site reaches it
 // directly, the folded `mov ecx, imm32` receivers relocated.
+// RECOVERY_OBJECT: v1 0x0090D978 ?WaveDeviceGlobal@@3VWave_Device@@A
 Wave_Device WaveDeviceGlobal;  // 0x0090D978
 
 // The release-hook guard, 0x0090DB7C in the image: init_sound zeroes it when
