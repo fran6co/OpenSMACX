@@ -246,6 +246,27 @@ int main() {
   reset(record); set_box(1,1,3,3); shape.field_0_=2; shape.item_count_=2; shape.item_stream_=item_bytes;
   vox_draw_shadow(&record,&shape,&position,&matrix,(const void*)1);
   assert(event_count==2);
+
+  // Encoded byte extents include the size dword. Seven payload bytes put
+  // the next header at +0x27 and its size dword at the unaligned +0x47.
+  memset(item_bytes,0,sizeof(item_bytes));
+  item=reinterpret_cast<CvrRasterItemHeaderCandidate*>(item_bytes);
+  second=reinterpret_cast<CvrRasterItemHeaderCandidate*>(item_bytes+0x27);
+  third=reinterpret_cast<CvrRasterItemHeaderCandidate*>(item_bytes+0x4B);
+  item->item_count_=second->item_count_=third->item_count_=1;
+  item->flags_=second->flags_=1;
+  const uint32_t first_extent=7, second_extent=4;
+  memcpy(item->inline_payload_,&first_extent,4);
+  memcpy(second->inline_payload_,&second_extent,4);
+  reset(record); set_box(1,1,3,3); shape.field_0_=2;
+  shape.item_count_=2; shape.item_stream_=item_bytes;
+  vox_draw_part(&record,&shape,&position,&matrix,&matrix,&direction,1.0f,1);
+  assert(event_count==2 && events[0].stream==item_bytes+0x20 &&
+         events[1].stream==item_bytes+0x47);
+  reset(record); set_box(1,1,3,3);
+  vox_draw_shadow(&record,&shape,&position,&matrix,(const void*)1);
+  assert(event_count==2 && events[0].stream==item_bytes+0x20 &&
+         events[1].stream==item_bytes+0x47);
   return 0;
 }
 '''
@@ -255,6 +276,7 @@ def source_bodies(product: str, kernels: str) -> tuple[list[str], str, str]:
     assert "caviar_draw_part_candidate" not in kernels
     assert "caviar_draw_shadow_candidate" not in kernels
     helpers = [extract(kernels, signature) for signature in HELPER_SIGNATURES]
+    helpers.append(extract(product, "static uint32_t caviar_raster_payload_extent("))
     part = extract(product, "void __cdecl vox_draw_part(")
     shadow = extract(product, "void __cdecl vox_draw_shadow(")
     assert "caviar_draw_part_candidate" not in part

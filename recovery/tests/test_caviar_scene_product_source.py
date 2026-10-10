@@ -11,6 +11,7 @@ DEFAULT_SOURCE = next(parent / "src/caviar.cpp" for parent in HERE.parents
                       if (parent / "src/caviar.cpp").is_file())
 FIXTURE = HERE / "fixtures/caviar_product_extraction.cpp"
 FUNCTIONS = (
+    "caviar_raster_payload_extent",
     "caviar_projection_floor",
     "caviar_projection_copy_float_bits",
     "vox_stage_scene",

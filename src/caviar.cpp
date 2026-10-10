@@ -4333,6 +4333,16 @@ float __cdecl vox_stage_scene(
 }
 
 
+// Native 63F86C/63ECF3/63F344: a record's bit 0 selects either three bytes
+// per item or a byte extent stored at the payload start. That dword remains
+// part of the callback payload and need not be aligned. No padding is added.
+static uint32_t caviar_raster_payload_extent(const CvrRasterItemHeaderCandidate *item) {
+    if ((item->flags_ & 1) == 0) return item->item_count_ * 3u;
+    uint32_t extent;
+    memcpy(&extent, item->inline_payload_, sizeof(extent));
+    return extent;
+}
+
 // 0x0063A280. Four arguments, the draw's four.
 void __cdecl caviar_clip_shape(
     VoxRenderRecord *, const CvrShape *, const VOX_Vect *,
@@ -4620,9 +4630,7 @@ void __cdecl caviar_clip_shape(VoxRenderRecord *record,
             }
 
             visited_items += item->item_count_;
-            const uint32_t payload_size = (item->flags_ & 1) == 0
-                ? item->item_count_ * 3u
-                : *reinterpret_cast<const uint32_t *>(item->inline_payload_);
+            const uint32_t payload_size = caviar_raster_payload_extent(item);
             item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
                 item->inline_payload_ + payload_size);
         } while (visited_items < shape->item_count_);
@@ -5375,9 +5383,7 @@ void __cdecl vox_draw_part(
             }
         }
         visited_items += item->item_count_;
-        const uint32_t extent = (item->flags_ & 1) == 0
-            ? item->item_count_ * 3u
-            : *reinterpret_cast<const uint32_t *>(item->inline_payload_);
+        const uint32_t extent = caviar_raster_payload_extent(item);
         item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
             item->inline_payload_ + extent);
     } while (visited_items < shape->item_count_);
@@ -5475,9 +5481,7 @@ void __cdecl vox_draw_shadow(
             }
         }
         visited_items += item->item_count_;
-        const uint32_t extent = (item->flags_ & 1) == 0
-            ? item->item_count_ * 3u
-            : *reinterpret_cast<const uint32_t *>(item->inline_payload_);
+        const uint32_t extent = caviar_raster_payload_extent(item);
         item = reinterpret_cast<const CvrRasterItemHeaderCandidate *>(
             item->inline_payload_ + extent);
     } while (visited_items < shape->item_count_);
