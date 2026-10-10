@@ -43,6 +43,8 @@ def restore_packet_migration(source):
 def test_only_three_packet_builders_and_passive_layouts_change():
     path = ROOT / "src/netdaemon.cpp"
     source = path.read_text()
+    from test_netdaemon_file_control_packets_oct10 import restore_file_control_packet_migration
+    source = restore_file_control_packet_migration(source)
     old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
     from test_netdaemon_vehicle_base_checksum_oct10 import restore_vehicle_base_checksum_migration
     from test_netdaemon_typed_map_checksum_oct10 import restore_map_checksum_migration

@@ -37,6 +37,8 @@ def restore_map_checksum_migration(source):
 def test_only_map_walks_change_and_all_bindings_survive():
     path = ROOT / "src/netdaemon.cpp"
     source = path.read_text()
+    from test_netdaemon_file_control_packets_oct10 import restore_file_control_packet_migration
+    source = restore_file_control_packet_migration(source)
     old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
     assert restore_map_checksum_migration(source) == old
     rows = read_text(source, path)

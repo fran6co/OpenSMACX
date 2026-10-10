@@ -83,6 +83,15 @@ def test_actual_send_files_owner():
 def test_native_transfer_damage_controls():
     owner = owner_source()
     mutants = (
+        ("strcat(path_message.path, NetDaemonFileTransferPath);",
+         "strcat(reinterpret_cast<char *>(&path_message) + 2, NetDaemonFileTransferPath);"),
+        ("announce.source_player = local_index;",
+         "memcpy(reinterpret_cast<unsigned char *>(&announce) + 2, &local_index, sizeof local_index);"),
+        ("list_done.state = 2;",
+         "const int bad_list_state = 2; memcpy(reinterpret_cast<unsigned char *>(&list_done) + 2, &bad_list_state, sizeof bad_list_state);"),
+        ("transfer_done.state = 3;",
+         "const int bad_done_state = 3; memcpy(reinterpret_cast<unsigned char *>(&transfer_done) + 2, &bad_done_state, sizeof bad_done_state);"),
+        ("send_buffer->file_index = file_index;", "send_buffer->file_index = 0;"),
         ("while (NetDaemonFileTransferAckMask != send_mask)",
          "while (NetDaemonFileTransferAckMask == send_mask)"),
         ("while (remaining > 0x7FF)", "while (remaining > 0x800)"),

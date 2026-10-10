@@ -3722,6 +3722,34 @@ static_assert(offsetof(NetDaemonFileIndexRecord, file_size) == 0x14,
 static_assert(offsetof(NetDaemonFileIndexRecord, filename) == 0x18,
               "native file-list filename offset");
 
+// Native F05 writes its path at +0x18 (0x52EE83..0x52EEAA).
+// Only opcode and path are populated; the intervening bytes stay untouched.
+struct NetDaemonFilePathPacket {
+    uint16_t opcode;
+    uint8_t reserved_2[0x16];
+    char path[0x104];
+};
+static_assert(offsetof(NetDaemonFilePathPacket, path) == 0x18,
+              "native transfer path offset");
+static_assert(sizeof(NetDaemonFilePathPacket) == 0x11C,
+              "native transfer path packet extent");
+
+// F0F writes source_player at +4; F07 writes state at +8, not at +2.
+// Each operation leaves all other payload/header bytes untouched.
+struct NetDaemonFileControlPacket {
+    uint16_t opcode;
+    uint16_t reserved_2;
+    int32_t source_player;
+    int32_t state;
+    uint8_t reserved_C[0x14];
+};
+static_assert(offsetof(NetDaemonFileControlPacket, source_player) == 4,
+              "native transfer acknowledgement player offset");
+static_assert(offsetof(NetDaemonFileControlPacket, state) == 8,
+              "native transfer completion state offset");
+static_assert(sizeof(NetDaemonFileControlPacket) == 0x20,
+              "native transfer control packet extent");
+
 struct NetDaemonFileChunkPacket {
     uint16_t opcode;          // +0
     uint16_t reserved_2;      // +2
@@ -4056,11 +4084,10 @@ int NetDaemon::send_files() {
                                 static_cast<int>(sender));
         }
 
-        unsigned char announce[0x20]; // native sends 0x20 bytes
-        const uint16_t announce_type = 0xF0F;
-        memcpy(announce, &announce_type, sizeof announce_type);
-        memcpy(announce + 2, &local_index, sizeof local_index);
-        NetDaemonNet.Net::send(announce, 0x20,
+        NetDaemonFileControlPacket announce;
+        announce.opcode = 0xF0F;
+        announce.source_player = local_index;
+        NetDaemonNet.Net::send(&announce, 0x20,
             static_cast<unsigned long>(field_764_), 1);
 
         SaveNameBuffer[0] = '\0';
@@ -4078,13 +4105,11 @@ int NetDaemon::send_files() {
 
         NetDaemonFileTransferPath[0] = '\0';
         strcat(NetDaemonFileTransferPath, relative_path);
-        uint8_t path_message[0x11C];
-        const uint16_t path_type = 0xF05;
-        memcpy(path_message, &path_type, sizeof path_type);
-        path_message[2] = '\0';
-        strcat(reinterpret_cast<char *>(path_message + 2),
-               NetDaemonFileTransferPath);
-        send_message(reinterpret_cast<char *>(path_message), 0x11C, 0);
+        NetDaemonFilePathPacket path_message;
+        path_message.opcode = 0xF05;
+        path_message.path[0] = '\0';
+        strcat(path_message.path, NetDaemonFileTransferPath);
+        send_message(reinterpret_cast<char *>(&path_message), 0x11C, 0);
         NetDaemonFileTransferAckMask = 0;
         if (send_mask != 0) {
             do {
@@ -4142,12 +4167,10 @@ int NetDaemon::send_files() {
             } while (FindNextFileA(find_handle, &found_file) != 0);
         }
 
-        uint16_t list_done[0x10];
-        list_done[0] = 0xF07;
-        const int list_done_state = 2;
-        memcpy(reinterpret_cast<unsigned char *>(list_done) + 2,
-               &list_done_state, sizeof list_done_state);
-        send_message(reinterpret_cast<char *>(list_done), 0x20, 0);
+        NetDaemonFileControlPacket list_done;
+        list_done.opcode = 0xF07;
+        list_done.state = 2;
+        send_message(reinterpret_cast<char *>(&list_done), 0x20, 0);
         FindClose(find_handle);
 
         for (;;) {
@@ -4255,12 +4278,10 @@ int NetDaemon::send_files() {
                 ++slot;
             if (slot > NetDaemonNet.player_count_) break;
         }
-        uint16_t transfer_done[0x10];
-        transfer_done[0] = 0xF07;
-        const int transfer_done_state = 3;
-        memcpy(reinterpret_cast<unsigned char *>(transfer_done) + 2,
-               &transfer_done_state, sizeof transfer_done_state);
-        send_message(reinterpret_cast<char *>(transfer_done), 0x20, 0);
+        NetDaemonFileControlPacket transfer_done;
+        transfer_done.opcode = 0xF07;
+        transfer_done.state = 3;
+        send_message(reinterpret_cast<char *>(&transfer_done), 0x20, 0);
     }
 
 cleanup:

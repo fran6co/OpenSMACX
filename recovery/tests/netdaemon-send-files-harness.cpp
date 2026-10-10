@@ -39,6 +39,7 @@ static int g_escape_after;
 static int g_draw_count;
 static int g_process_count;
 static int g_find_index;
+static int g_find_count;
 static int g_free_count;
 static int g_findclose_count;
 static int g_setcwd_count;
@@ -85,7 +86,7 @@ public:
         process_slots_[1].pid_ = 0x222;
     }
     int pid_2_idx(unsigned long id) { return id == field_760_ ? 1 : 2; }
-    int get(unsigned long *sender, unsigned long *length) {
+    void *get(unsigned long *sender, unsigned long *length) {
         ++get_calls_;
         if (get_calls_ > 100) { fprintf(stderr, "get pump runaway\\n"); ::abort(); }
         *sender = 0x222;
@@ -97,7 +98,10 @@ public:
         PacketCopy packet;
         packet.type = *reinterpret_cast<unsigned short *>(data);
         packet.size = size;
-        packet.target = static_cast<int>(who); packet.bytes.push_back(mode);
+        if (mode != 1) abort();
+        packet.target = static_cast<int>(who);
+        packet.bytes.resize(size);
+        memcpy(&packet.bytes[0], data, size);
         g_messages.push_back(packet); return 1;
     }
     int create_group(char *) { return 7; }
@@ -109,8 +113,8 @@ public:
         PacketCopy packet;
         packet.type = *reinterpret_cast<unsigned short *>(data);
         packet.size = size; packet.target = 0;
-        const unsigned char *bytes = static_cast<const unsigned char *>(data);
-        packet.bytes.assign(bytes, bytes + size);
+        packet.bytes.resize(size);
+        memcpy(&packet.bytes[0], data, size);
         g_group_packets.push_back(packet); return 1;
     }
     LockStateEntry lock_state_[24];
@@ -194,7 +198,13 @@ static HANDLE FindFirstFileA(const char *, WIN32_FIND_DATAA *data) {
     strcpy(data->cFileName, "sample.dat");
     return reinterpret_cast<HANDLE>(g_next_handle++);
 }
-static BOOL FindNextFileA(HANDLE, WIN32_FIND_DATAA *) { return 0; }
+static BOOL FindNextFileA(HANDLE, WIN32_FIND_DATAA *data) {
+    if (++g_find_index >= g_find_count) return 0;
+    data->dwFileAttributes = 0;
+    data->nFileSizeLow = g_test_file_size;
+    strcpy(data->cFileName, "second.dat");
+    return 1;
+}
 static BOOL FindClose(HANDLE) { ++g_findclose_count; return 1; }
 static DWORD GetFileSize(HANDLE, DWORD *) { return g_test_file_size; }
 
@@ -221,8 +231,8 @@ void NetDaemon::send_message(char *bytes, unsigned long size, int target) {
     PacketCopy packet;
     packet.type = *reinterpret_cast<unsigned short *>(bytes);
     packet.size = static_cast<int>(size); packet.target = target;
-    packet.bytes.assign(reinterpret_cast<unsigned char *>(bytes),
-                        reinterpret_cast<unsigned char *>(bytes) + size);
+    packet.bytes.resize(size);
+    memcpy(&packet.bytes[0], bytes, size);
     g_messages.push_back(packet);
     if (packet.type == 0xF06) {
         // Native callback helper owns this bit; simulate the peer's F08.
@@ -239,6 +249,7 @@ static void test_fail(int line) {
 #define abort() test_fail(__LINE__)
 
 static void reset_fixture() {
+    g_find_count = 1;
     g_messages.clear(); g_group_packets.clear(); g_group_members.clear();
     g_scenario = 0; g_escape_after = -1; g_draw_count = 0; g_process_count = 0;
     g_find_index = 0; g_free_count = 0; g_findclose_count = 0;
@@ -267,6 +278,7 @@ static PacketCopy find_message(unsigned short type) {
 
 static void test_host_send_chunking_and_order() {
     reset_fixture();
+    strcpy(SaveNameBuffer, "C:\\Game\\assets");
     g_test_file_size = 4000;
     NetDaemonNet.lock_state_[0].leading_words_[1] = 1;
     const int result = NetDaemonNet.send_files();
@@ -285,6 +297,18 @@ static void test_host_send_chunking_and_order() {
         strcmp(reinterpret_cast<const char *>(&list.bytes[0x18]), "sample.dat") != 0) abort();
     const PacketCopy done = find_message(0xF07);
     if (done.size != 0x20 || done.target != 0) abort();
+    const PacketCopy path = find_message(0xF05);
+    if (path.size != 0x11C || path.bytes.size() != 0x11C ||
+        memcmp(&path.bytes[0x18], "assets", sizeof("assets")) != 0) abort();
+    int completion_count = 0;
+    for (size_t i = 0; i < g_messages.size(); ++i) {
+        if (g_messages[i].type != 0xF07) continue;
+        int state;
+        memcpy(&state, &g_messages[i].bytes[8], sizeof state);
+        if (state != 2 + completion_count) abort();
+        ++completion_count;
+    }
+    if (completion_count != 2) abort();
     if (strcmp(g_cwd, "C:\\Old") != 0 || NetDaemonFileTransferMode != 0) abort();
 }
 
@@ -328,6 +352,9 @@ static void test_client_escape_and_live_mode_cancel() {
     const int result = NetDaemonNet.send_files();
     if (result != 1 || g_messages.empty()) abort();
     if (g_messages[0].type != 0xF0F || g_messages[0].size != 0x20) abort();
+    int source_player;
+    memcpy(&source_player, &g_messages[0].bytes[4], sizeof source_player);
+    if (source_player != 1) abort();
     if (g_alt_path[0] == 0 || strcmp(g_cwd, "C:\\Old") != 0) abort();
 
     reset_fixture();
@@ -338,11 +365,26 @@ static void test_client_escape_and_live_mode_cancel() {
     if (NetDaemonFileTransferMode != 0) abort();
 }
 
+static void test_multiple_file_indices_are_not_constant_zero() {
+    reset_fixture();
+    strcpy(SaveNameBuffer, "C:\\Game\\assets");
+    g_find_count = 2;
+    g_compressed_size = 2050;
+    if (NetDaemonNet.send_files() != 0 || g_file_open_count != 2) abort();
+    if (g_group_packets.size() != 4) abort();
+    for (size_t i = 0; i < g_group_packets.size(); ++i) {
+        int file_index;
+        memcpy(&file_index, &g_group_packets[i].bytes[8], sizeof file_index);
+        if (file_index != static_cast<int>(i / 2)) abort();
+    }
+}
+
 int main() {
     test_host_send_chunking_and_order();
     test_ack_wait_live_mask_and_status_scan();
     test_exact_chunk_boundary_and_escape_cleanup();
     test_client_escape_and_live_mode_cancel();
+    test_multiple_file_indices_are_not_constant_zero();
     puts("send_files host controls passed");
     return 0;
 }
