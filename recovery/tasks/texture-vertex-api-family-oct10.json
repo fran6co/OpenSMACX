@@ -48,6 +48,7 @@
     }
   ],
   "editable_files": [
+    "recovery/audits.json",
     "src/texture.cpp",
     "src/texture.h",
     "recovery/tests/test_texture_typed_vertex_context_oct10.py",
@@ -59,6 +60,7 @@
     "recovery/tests/texture_raster_actual_host_control.cpp"
   ],
   "evidence": [
+    "Native class-debt pointer-parameter-as-int pattern count falls from13to7in this batch. Lower that policy ceiling to7in the same source commit; leave other existing audit growth/slack visible and never raise ceilings.",
     "Native eight-byte x/y accesses and publication into existing shared Vert pointer globals establish vertex contracts for draw_trans2,61C630,61D990,61B780,61D090,61F0D0.61C630's last argument is a consumed UV pointer, not unused;623F50forwards that and geometry unchanged only on sentinel-1. All listed source caller closure is explicitly bounded; unobserved upstream producers remain unknown. Seed-generated decorated symbols and IDA integer guesses do not establish original C++ types.",
     "61B780/61F0D0 publish a separate argument into the existing per-vertex int light-array pointer; recover int* contracts there as part of these consumers. Other61F0D0 integer-shaped shade/remap parameters remain outside this type interpretation.",
     "61F0D0 reuses its argument storage for a minimum-y index. Verify and preserve its original initial pointer-bit residue when no y<0x7FFF is found; do not initialize a convenient index0or silently add a bounds guard. Its adjacent terminal fragment retains its identity/span/claim and must name the newly observed parent symbol, not become an independent callable function.",
