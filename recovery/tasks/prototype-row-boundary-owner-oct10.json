@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6bb8635238afb36ba06355be3c49f0afd24b70fb",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_prototype_row_boundary_owner_oct10.py",
+    "recovery/tests/fixtures/prototype_row_boundary_owner_oct10.cpp"
+  ],
+  "evidence": [
+    "Pinned make_proto5A5DA5 compares candidate id to64 and JGE5A5DD0 selects typed-complete flags; only ids<64 enter has_tech5A5DAA-5A5DC8. Current make_proto uses <=64 for basic rows and >64 for typed rows, misclassifying row64.",
+    "MaxVehProtoFactionNum is64. Adjacent source-owned get_plan uses >=64 for faction rows and retains its historical exact claim; it is a read-only boundary control, not an editable behavior target.",
+    "Preserve prototype modulo/index loop, component eligibility, flags/cost/name/plan/tail writes, callees and all original mappings/claims/history. No prototype layout/global/header/API change is authorized. Do not infer additional semantic gaps from old matching-only TRIED notes.",
+    "Actual-source full-function tests should distinguish row63 unavailable/available technology, row64 untyped with available technology (must reject), and row64 typed-complete with unavailable technology (must admit), observing has_tech calls and final target flags. Reject compiling old-boundary mutants. Native builds/per-address comparisons and independent pinned review required; this repair does not qualify full game or exact restoration."
+  ],
+  "intent": "Recover make_proto's original basic versus faction-specific prototype-row boundary, preserving complete source-owned construction and classification behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5922112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prototype-row-boundary-owner-oct10"
+}
