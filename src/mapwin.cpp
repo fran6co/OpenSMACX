@@ -3250,7 +3250,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
     uint32_t uVar17;
     int32_t uVar15;
     int *puVar8;
-    uint8_t *pbVar18;
+    Map *neighbor;
     bool bVar23;
     uint8_t bVar10;
     uint8_t bVar11;
@@ -3286,7 +3286,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
         return 1;
     }
     local_rand.reseed(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(tile)));
-    pbVar18 = reinterpret_cast<uint8_t *>(tile);
+    neighbor = tile;
     local_18 = (uint32_t)((tile->climate & 0xe0) < 0x60);
     if (local_18 == 0) {
         TextureLightFloor = 0xfffffffc;
@@ -3322,7 +3322,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
         territory_faction = (uint32_t)ConsoleGlobal.faction_id_;
     }
     iVar5 = static_cast<int>(MapLongitude) * a8 + local_14;
-    pbVar18 = reinterpret_cast<uint8_t *>(&map_tiles()[iVar5]);
+    neighbor = &map_tiles()[iVar5];
     local_84 = (tile->climate & 0x18) >> 3;
     local_8c = (uint32_t)(tile->climate >> 5);
     local_38 = (uint32_t)(tile->val3 >> 6);
@@ -3618,24 +3618,23 @@ LAB_00463603:
                     iVar6 = VehMoveDeltaY[uVar12] + a8;
                     if (iVar6 > -1 && iVar6 < MapLatitudeBounds &&
                         iVar19 > -1 && iVar19 < MapLongitudeBounds) {
-                        pbVar18 = reinterpret_cast<uint8_t *>(
-                            &map_tiles()[static_cast<int>(MapLongitude) * iVar6 +
-                                         (iVar19 >> 1)]);
+                        neighbor = &map_tiles()[static_cast<int>(MapLongitude) * iVar6 +
+                                                (iVar19 >> 1)];
                         bVar11 = (uint8_t)iVar5;
-                        if ((*(uint32_t *)(pbVar18 + 8) & 0x20) != 0 &&
-                            0x3f < (*pbVar18 & 0xe0)) {
+                        if ((neighbor->bit & 0x20) != 0 &&
+                            0x3f < (neighbor->climate & 0xe0)) {
                             local_40 = local_40 | 1 << (bVar11 & 0x1f);
                         }
                         if (local_30 != 0 &&
-                            (*(uint32_t *)(pbVar18 + 0xc) & 0x80000004) ==
+                            (neighbor->bit2 & 0x80000004) ==
                                 4 &&
-                            0x5f < (*pbVar18 & 0xe0)) {
+                            0x5f < (neighbor->climate & 0xe0)) {
                             local_2c |= 1u << (bVar11 & 0x1f);
                         }
                         if (local_84 != 0 &&
-                            ((*pbVar18 & 0xe0) < 0x60 ||
+                            ((neighbor->climate & 0xe0) < 0x60 ||
                              (int)local_84 <=
-                                 (int)(*pbVar18 >> 3 & 3))) {
+                                 (int)(neighbor->climate >> 3 & 3))) {
                             local_28 |= 1u << (bVar11 & 0x1f);
                         }
                     }
@@ -3657,10 +3656,9 @@ LAB_00463603:
                 iVar6 = VehMoveDeltaY[uVar12] + a8;
                 if (iVar6 > -1 && iVar6 < MapLatitudeBounds &&
                     iVar19 > -1 && iVar19 < MapLongitudeBounds) {
-                    pbVar18 = reinterpret_cast<uint8_t *>(
-                        &map_tiles()[static_cast<int>(MapLongitude) * iVar6 + (iVar19 >> 1)]);
-                    if ((*(uint32_t *)(pbVar18 + 8) & 0x20) != 0 &&
-                        0x3f < (*pbVar18 & 0xe0)) {
+                    neighbor = &map_tiles()[static_cast<int>(MapLongitude) * iVar6 + (iVar19 >> 1)];
+                    if ((neighbor->bit & 0x20) != 0 &&
+                        0x3f < (neighbor->climate & 0xe0)) {
                         local_40 = local_40 | 1 << ((uint8_t)iVar5 & 0x1f);
                     }
                 }
