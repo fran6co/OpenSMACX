@@ -1,0 +1,27 @@
+{
+  "event_id": "2a6923c58c21d5a69cbdbe80de427a128840ee8a4fd19a94241436b16c22eba8",
+  "payload": {
+    "affects": [
+      "entity-27a9eca86a2cd27e3feb78703c7f2425d467f82bed854cf7987222b80329b536",
+      "entity-29870fd220b7acc45b68685cdf64539553ec2b4c1690855ecfb09c538a3f9452",
+      "entity-cb4c5c6c930e9b3d1dc6e20a792ba6d3b425685e75d052141060e76e74129a2f",
+      "entity-d63be270c2081cdfe62f012bbb04c1d4bcafc4c34b62570fd147fa3662d38e87"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "caviar-scene-buffer-guard-obligation-oct10",
+    "evidence": [
+      "Original init0x00616AA0/0x00616AE0 directly constructs Buffer objects at0x009B9108/0x009B96B0 during CRT startup and registers fini0x00616AC0/0x00616B00 via0x00645398.",
+      "The corresponding complete fini callbacks read the initially-zero shared byte0x009B9104, test mask1/2, set that mask before tail-jumping Buffer destructor0x005D7410. No independent duplicate registration or other absolute guard reference is evidenced; do not infer a function-local magic-static cause.",
+      "Current source owns those actual objects as CaviarSceneBufferA/B; Caviar::init_class lazily initializes their image surfaces and close_class explicitly closes them. These operations are distinct from startup object construction and registered guarded destruction.",
+      "The removed unused g_CAVIAR_BUFFER_1/2 declarations were extra source-only objects, not replacements for actual scene storage. The scene Buffers remain intact; their exact original generated naming/cause and guard emission remain unresolved.",
+      "This discovery remains pending after correction of renderer/model-data order. It is neither a byte claim nor approval for handwritten callback scaffolding or a behavior fix."
+    ],
+    "hypothesis": "The original Caviar scene-buffer teardown callbacks test/set shared byte0x009B9104 bits1/2 before Buffer destruction, while current genuine global Buffer callbacks lack these guards. Recover compiler/lifetime structure without lazy-construction substitution or authored atexit wrappers.",
+    "kind": "discovery"
+  },
+  "previous_event": "c0a15f55cca19568381bd6e27e9f2d96fc538f204309177475cd9f2e619d3a5f",
+  "request_id": "caviar-scene-buffer-guard-obligation-oct10",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}

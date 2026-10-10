@@ -1,0 +1,20 @@
+{
+  "event_id": "7e8118e450395800252febbd5818413ba362bedede6ba42729bf6dc6a789414a",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "caviar-original-global-lifetime-order-oct10",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source src/caviar.cpp now declares all98 CaviarData globals before the genuine g_VEHDRAW_CAVIAR renderer and retains the actual CaviarSceneBufferA/B declarations after it. The renderer object annotation is preserved unchanged; only the two unreferenced, unmapped synthetic Buffer declarations are removed.",
+      "Fresh physical build-tanswkeg COFF has102 CRT callbacks instead of104; the99 mapped Caviar registrations exactly match their pinned relative order. Native write_symbol/guarded publication derives198 current emitted-symbol facts while preserving original identity/name/span/claim/rationale.",
+      "Fresh source continuity confirms5436 identities,2690 historical exact claims and145 Caviar object bindings unchanged. Full Caviar/NetDaemon measurement retains all125+67 prior verdicts and100 new exact fini results, with100 startup mismatches unclaimed. Final build-ebl5l8lo compile/link and616-file reference checks pass; independent actual-diff review approves.",
+      "Only this bounded ordering/extra-object correction is incorporated. Separate pending caviar-scene-buffer-guard-obligation-oct10 preserves all four scene lifetime origins and exact guard effects. Whole-game startup order, strict reference/retained-selection/runtime acceptance remain unproved."
+    ]
+  },
+  "previous_event": "2a6923c58c21d5a69cbdbe80de427a128840ee8a4fd19a94241436b16c22eba8",
+  "request_id": "caviar-global-order-incorporated-oct10",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}
