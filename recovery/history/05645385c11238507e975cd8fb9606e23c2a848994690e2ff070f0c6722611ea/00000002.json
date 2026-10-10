@@ -1,0 +1,19 @@
+{
+  "event_id": "9cab3088407922c58ced3502934bd1be18535daf290b27053a1ab97105236836",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_draw_trans_actual_source.py"
+    ],
+    "evidence": [
+      "The existing full draw_trans fixture must extract the actual neutral wrapping DDA helper now used by that body, rather than fail compilation or substitute its signed stub. Add this exact test integration file; no assertion weakening, unrelated fixtures or other rasterizer changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ac268e684a4274fbfb38d1ca0d57af52128f6f20e0fc298538f7cc5db07f75e8",
+  "request_id": "keyed-actual-helper-extraction-oct10",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-keyed-light-owner-oct10"
+}
