@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "recovered-status-clarification-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Distinguish current compiled movie recovery from stale seed notes and expose the unresolved Widget adapter as scaffolding",
+  "base_revision": "71569c1962d1d0438cf97a0db7e6da5a883beb2e",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5391216}],
+  "editable_files": ["src/game.cpp", "src/movie_media.cpp", "recovery/tests/test_recovered_status_clarification_oct10.py"],
+  "evidence": [
+    "Pinned524370..524396 filters Enter/Escape/Space, calls unchanged receiver's virtual slot58, returns1. Existing Win slot58 is release_modal, but no positive receiver/class/lifetime link or original vtable reference proves Win/Demo ownership. Local Widget/Slot058 member-pointer adapter is structural scaffolding, not a recovered source owner. Preserve its original identity/span/historical claim and current body.",
+    "movie_media.cpp sub_5cdfa0 is an implemented output worker at1175; sub_5cc940 modes5/6/7 reach actual mapped sub_5d35b0 in movie_media_decoder.cpp and movie_decoder_frame/Huffman/IDCT owners; neighboring mode renderers have general.cpp bodies. Replace obsolete current-status claims, retain TRIED provenance and native equivalence/playback obligations. Do not label these dependencies accepted or proven complete.",
+    "Comments and role annotation only; no C++ token changes. Require baseline/current token equality, exact annotation/claim continuity except the one role, native role parsing and writer roundtrip, mappings/references, relevant existing controls, independent review and fresh compile/link. No recovered-function count gain or matching claim."
+  ]
+}
