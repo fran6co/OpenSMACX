@@ -2919,11 +2919,17 @@ void Net::enable_join() {
     }
 }
 
-// 0x009BE4EC - the DPNAME record the 3-case's GetPlayerName fills; its
-// lpszLongNameA slot at +0xC is the text that case forwards. Fixed storage
-// beside NetServiceCaps, not a Net member.
-static unsigned char *const NetPlayerNameRecord =
-    (unsigned char *)0x009BE4EC;
+// GetPlayerName at 632EDB receives original 9BE4EC with capacity 0x100;
+// 632EF1 reads the resulting DPNAME::lpszLongNameA at +0xC. The response
+// includes provider-written trailing text, not just the sixteen-byte header.
+// This is the observed API capacity, not a claim of the complete original
+// allocation extent. Failed calls leave the previous response visible.
+union NetPlayerNameBuffer {
+    DPNAME name_;
+    unsigned char bytes_[0x100];
+};
+// RECOVERY_OBJECT: v1 0x009BE4EC _NetPlayerNameRecord
+static NetPlayerNameBuffer NetPlayerNameRecord;
 
 // Original player insertion is bound by the coordinator's native writer.
 // ORIGINAL: 0x00632CC0 sub_632cc0 0x00632CC0-0x00632DAA
@@ -2976,7 +2982,33 @@ struct NetPacketEnvelope {
     WORD field_2_;
     DWORD sequence_4_;
 };
+// Peer table payload after the eight-byte envelope: count DWORD then a
+// variable-length row tail. The local producer sends at most sixteen rows,
+// but the original receiver does not impose that bound on incoming packets.
+struct NetPeerPlayerRecord {
+    DPID id_;
+    char name_[0x20];
+    DWORD flags_;
+};
+struct NetPeerPlayerTableMessage {
+    NetPacketEnvelope envelope_;
+    DWORD count_;
+    NetPeerPlayerRecord *records() {
+        return reinterpret_cast<NetPeerPlayerRecord *>(this + 1);
+    }
+};
+struct NetPeerDropPlayerMessage {
+    NetPacketEnvelope envelope_;
+    DPID id_;
+};
 static_assert(sizeof(NetPacketEnvelope) == 8, "DirectPlay packet header extent");
+static_assert(sizeof(NetPeerPlayerRecord) == 0x28, "peer snapshot record stride");
+static_assert(offsetof(NetPeerPlayerRecord, flags_) == 0x24, "peer snapshot flags");
+static_assert(sizeof(NetPeerPlayerTableMessage) == 0xC, "peer snapshot header extent");
+static_assert(offsetof(DPMSG_CREATEPLAYERORGROUP, lpData) == 0x10, "create data field");
+static_assert(offsetof(DPMSG_SETPLAYERORGROUPDATA, lpData) == 0xC, "player data field");
+static_assert(offsetof(DPMSG_SETPLAYERORGROUPNAME, dpnName) == 0xC, "changed name header");
+static_assert(offsetof(DPNAME, lpszLongNameA) == 0xC, "ANSI long name field");
 static_assert(sizeof(MMIOINFO) == 0x48, "voice packet MMIOINFO extent");
 }
 
@@ -3191,10 +3223,9 @@ Purpose: Drain the system-message queue: one 0x28-byte record at a time off
              0x102 -> stamp the named player's slot byte from the message;
              0x103 -> the player's name changed (virtual slot 3).
 
-         The receive scratch doubles as the message body: the type byte at 0,
-         two dwords at 4 and 8, a name pointer at 0xC whose storage ALSO
-         fronts the 0x28-stride join-list entries, and text pointers at 0x10
-         and 0x18.
+         The receive scratch doubles as the message body: peer flags are a
+         byte, but system messages have the SDK's DWORD type. Peer rows and
+         system envelopes are distinct views of the shared receive bytes.
 // ORIGINAL: 0x00632DB0 ?handle_sys_msg@Net@@QAEXXZ 0x00632DB0-0x00632F97 FILE
 // size      487 bytes
 // prototype void (__thiscall ?handle_sys_msg@Net@@QAEXXZ)(Net* this)
@@ -3214,80 +3245,89 @@ void Net::handle_sys_msg() {
     unsigned int key;
     // The pop-the-head read: the routing key comes out with the message, and
     // the scratch receives the body either way.
-    while (queue_130_.get(NetGetScratch, &key,
-                          reinterpret_cast<int *>(0),
-                          reinterpret_cast<unsigned int *>(0)) != 0) {
-        unsigned char *packet = NetGetScratch;
-        unsigned long word_4 =
-            *reinterpret_cast<unsigned long *>(packet + 4);
-        unsigned long id = *reinterpret_cast<unsigned long *>(packet + 8);
+    while (queue_130_.get(NetGetScratch, &key, 0,
+                          static_cast<unsigned int *>(0)) != 0) {
+        // These casts are the received-message ABI boundary, not raw object
+        // member offsets or executable-address aliases. The source-owned
+        // scratch is shared and must be re-read after external callbacks.
         if (key != 0) {
-            unsigned char flags = packet[0];
+            const unsigned char flags = NetGetScratch[0];
             if ((flags & 0x80) != 0) {
-                drop_player(id, 1);
+                const NetPeerDropPlayerMessage *const message =
+                    reinterpret_cast<const NetPeerDropPlayerMessage *>(NetGetScratch);
+                drop_player(message->id_, 1);
             } else if ((flags & 0x10) != 0) {
-                // The join-list refresh: one 0x28-byte entry per count byte,
-                // walked in place over the storage the name pointer fronts.
-                const unsigned char *entry = packet + 0xC;
-                unsigned char count =
-                    static_cast<unsigned char>(id);
-                for (unsigned char seen = 0; seen < count; ++seen) {
-                    sub_632cc0(
-                        reinterpret_cast<char *>(
-                            const_cast<unsigned char *>(entry + 4)),
-                        *reinterpret_cast<const unsigned long *>(entry),
-                        entry[0x24]);
-                    entry += 0x28;
+                NetPeerPlayerTableMessage *const message =
+                    reinterpret_cast<NetPeerPlayerTableMessage *>(NetGetScratch);
+                // Original632E3D reloads the low count byte after each
+                // insertion; the loop index is an integer, not a byte.
+                for (int seen = 0;
+                     seen < static_cast<int>(message->count_ & 0xFF); ++seen) {
+                    NetPeerPlayerRecord &entry = message->records()[seen];
+                    sub_632cc0(entry.name_, entry.id_,
+                              static_cast<unsigned char>(entry.flags_));
                 }
             }
             continue;
         }
-        switch (packet[0]) {
+        const DPMSG_GENERIC *const generic =
+            reinterpret_cast<const DPMSG_GENERIC *>(NetGetScratch);
+        switch (generic->dwType) {
         case 3:
             // Refresh one player's name: only while the two timer words name
             // the same target and the payload word agrees to re-read it.
-            if (field_760_ == field_764_ && word_4 == 1) {
+            if (field_760_ == field_764_) {
+                const DPMSG_CREATEPLAYERORGROUP *const message =
+                    reinterpret_cast<const DPMSG_CREATEPLAYERORGROUP *>(NetGetScratch);
+                if (message->dwPlayerType != 1) break;
                 unsigned long size = 0x100;
-                NetDirectPlay->GetPlayerName(id, NetPlayerNameRecord, &size);
+                NetDirectPlay->GetPlayerName(message->dpId,
+                                             NetPlayerNameRecord.bytes_, &size);
                 unsigned char *text =
-                    *reinterpret_cast<unsigned char **>(packet + 0x10);
+                    static_cast<unsigned char *>(message->lpData);
                 int first = text != 0 ? text[0] : 0;
-                sub_632cc0(
-                    *reinterpret_cast<char **>(NetPlayerNameRecord + 0xC), id,
+                sub_632cc0(NetPlayerNameRecord.name_.lpszLongNameA, message->dpId,
                     static_cast<unsigned char>(first));
             }
             break;
-        case 5:
-            if (word_4 == 1) {
-                drop_player(id, 1);
+        case 5: {
+            const DPMSG_DESTROYPLAYERORGROUP *const message =
+                reinterpret_cast<const DPMSG_DESTROYPLAYERORGROUP *>(NetGetScratch);
+            if (message->dwPlayerType == 1) {
+                drop_player(message->dpId, 1);
             }
             break;
+        }
         case 0x31:
             // The host moved on or the session died: raise it, then close.
             on_session_lost();
             close();
             break;
         case 0x102: {
+            const DPMSG_SETPLAYERORGROUPDATA *const message =
+                reinterpret_cast<const DPMSG_SETPLAYERORGROUPDATA *>(NetGetScratch);
             // Stamp the named player's slot byte from the message's own text.
             int index = 0;
-            while (index < 0x10 && players_[index].field_0_ != id) {
+            while (index < 0x10 && players_[index].field_0_ != message->dpId) {
                 ++index;
             }
             if (index == 0x10) {
                 break;
             }
             unsigned char *text =
-                *reinterpret_cast<unsigned char **>(packet + 0xC);
+                static_cast<unsigned char *>(message->lpData);
             if (text == 0) {
                 break;
             }
             players_[index].flags_14_ = text[0];
             break;
         }
-        case 0x103:
-            on_player_name_changed(
-                *reinterpret_cast<char **>(packet + 0x18), id);
+        case 0x103: {
+            const DPMSG_SETPLAYERORGROUPNAME *const message =
+                reinterpret_cast<const DPMSG_SETPLAYERORGROUPNAME *>(NetGetScratch);
+            on_player_name_changed(message->dpnName.lpszLongNameA, message->dpId);
             break;
+        }
         default:
             break;
         }
