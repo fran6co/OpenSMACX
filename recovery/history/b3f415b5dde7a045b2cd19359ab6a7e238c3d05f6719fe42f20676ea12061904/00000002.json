@@ -1,0 +1,21 @@
+{
+  "event_id": "42530b219f54b5859f35c482848cf49e83d582ef560464e48c24e9ed041380f2",
+  "payload": {
+    "affects": [
+      "entity-3f72f74e6cfc9ae9d6ebe4866b981a1da597c2d816b8e783e8269285b844bef3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "correct-seven-row-bound-and-publication-order-oct10",
+    "evidence": [
+      "Independent review and coordinator fresh pinned PE byte decoding: ESI starts150001; after each item ESI increments, ESI-150000 compared8 and JL repeats, so final filed id150007. EDI advances59C.",
+      "Pinned42B955/958 load gender/plural,42B960 clears StringTemp,42B96D/972 publish saved values; preserve load/clear/store order without inventing OOB or a new safety guard."
+    ],
+    "hypothesis": "Initial task evidence misread the original loop: set_cat_faction visits Players[1..7], never Player[8]. Original also clears StringTemp after loading grammar values but before publishing them. Correct source and tests to that pinned sequence, retaining original task and baseline history.",
+    "kind": "discovery"
+  },
+  "previous_event": "29d2d39c168b313bf0ba16d000bd2b14f6edfe2003c1b7e1be3c17d459c086a7",
+  "request_id": "correct-seven-row-bound-and-publication-order-oct10",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:datalink-faction-row-owner-oct10"
+}
