@@ -23,10 +23,13 @@
  /*
   * ListBox class
   *
-  * MSVC virtual inheritance: ListBox virtually derives from BOTH GraphicWin and
-  * Dialog, each held as a member at the offset the object's own vbtable names
-  * (vbtable 0x00670584 = { 0, 0x48, 0xA60 }) rather than written as
-  * ": virtual GraphicWin, virtual Dialog". MEASURED under VC6 12.00.8168,
+  * ListBox virtually derives from both GraphicWin and Dialog, as declared
+  * below. Its standalone vbtable 0x00670584 = { 0, 0x48, 0xA60 } describes
+  * that complete object's virtual-base placement; derived objects can share
+  * those bases at different displacements.
+  *
+  * Historical layout investigation, before the current real-base model:
+  * MEASURED under VC6 12.00.8168,
   * which is now the only compiler here: that declaration gives 0xB4C against
   * a real 0xB54, and a virtual function on the DERIVED class gives 0xB50 -
   * that +4 is its own vfptr, which this class does not have (offset 0 holds
@@ -55,16 +58,10 @@
   * the vbase displacement, and this class's own 0x44 and 0xA5C dwords are the
   * same slot.
   *
-  * So this is blocked on something specific and fixable: GraphicWin and
-  * Dialog model their vtable as an opaque dword the original installs by
-  * hand, so neither declares a virtual for the compiler to place, and neither
-  * can be overridden. Giving them real virtual functions is a COUPLED edit -
-  * the compiler then emits the vfptr, so the modelled dword must come out in
-  * the same change - and `sizeof(GraphicWin) == 0xA14` is the check that
-  * catches it going wrong. MapWin and Console have a single virtual base, no
-  * such dword and no override, which is why they convert today. Do not read
-  * this as "cannot be done". Note that radiobutton.h, checkbox.h and
-  * editgroup.h still carry a copy of the withdrawn paragraph.
+  * The old opaque-vtable model blocked these overrides. Its replacement
+  * required coupled base declarations and removal of the modelled vfptr
+  * dwords, retaining `sizeof(GraphicWin) == 0xA14`. GraphicWin and Dialog now
+  * declare real virtual functions; that historical blocker is resolved.
   * This mirrors CheckBox (src/jackal/checkbox.h), whose
   * vbtable {0,0x1C,0xA34} has the identical shape. close()/destroy() resolve
   * both base subobjects through the runtime vbtable, never through these
@@ -77,7 +74,7 @@
 // The bases are REAL. `graphic_vbase_adjust_` and `dialog_vbase_adjust_` were
 // this header's own names for the two vtordisps, so it already knew what they
 // were - the compiler emits the GraphicWin one, because this class overrides
-// GraphicWin's on_dialog_focus and on_mouse_leave.
+// Win's on_dialog_focus and on_mouse_leave, inherited through GraphicWin.
 // TRIED: `close()` and `item()` as the Dialog virtual that earns this class's
 //   Dialog vtordisp. BOTH ARE REFUTED BY THE IMAGE, on the same test: a body
 //   entered on a subobject opens by adjusting `this` back by that subobject's
@@ -91,11 +88,8 @@
 //   with only the GraphicWin displacement. Datalink and MessageWin embed one
 //   too and agree.
 //
-//   So the slot is proven and WHICH of ListBox's ~40 methods fills it is not.
-//   Only four of them are recovered and just one enters adjusted, on GraphicWin.
-//
-//   READ THE VTABLE, 2026-08-22, AND THE SLOT IS PROVEN EVEN THOUGH THE
-//   DECLARATION STILL CANNOT EXPRESS IT. This class installs its Dialog vtable
+//   Reading the original table resolved the earlier override ambiguity.
+//   This class installs its Dialog vtable
 //   at 0x00670408; its entries point back into ListBox code through ADJUSTOR
 //   THUNKS, and 0x0060D030 opens `sub ecx, dword ptr [ecx - 4]` - which IS the
 //   vtordisp adjustment, reading the displacement stored four bytes before the
@@ -103,16 +97,11 @@
 //   live beside ListBox's genuine virtual owner in listbox.cpp; the retired
 //   shared adapter catalogue is not a source of current ownership.
 //
-//   Declaring either `virtual` on Dialog was measured and BREAKS THE SIBLINGS:
-//   CheckBox, RadioButton, SpriteBox and EditGroup all declare on_redraw and
-//   attach too, so each would gain a Dialog vtordisp the image says it does
-//   not have - 62 and 63 failed size assertions respectively. Their on_redraw
-//   and attach are GRAPHICWIN's virtuals; ListBox's are in the DIALOG vtable.
-//   One flat declaration per name cannot say which base's slot it fills, and
-//   that - not the identity of the method - is what still blocks this.
-//   `Dialog::item` is declared virtual here because it produces the proven
-//   layout, NOT because the image says it is the override - and the price is
-//   the two forwarders below.
+// Current Dialog virtual slots are destructor, attach and on_redraw. The
+// former virtual-item/forwarder workaround is superseded: Dialog::item and
+// ListBox::item are nonvirtual, and Dialogs::item (0x00612A70) dispatches by
+// kind to the corresponding direct member call. Neither standalone virtual-
+// base offsets nor a matching size justify inventing another virtual slot.
 class ListBox : public virtual GraphicWin, public virtual Dialog {
   friend class QuayleWin;
   friend class FileWin;
@@ -159,20 +148,6 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
     field_14_ = static_cast<uint32_t>(-1);
     iFlags_ = 0x40;
   }
-  // THE ENTERED-RECEIVER WALK. The image's Q-spelled handlers (on_right_down,
-  // on_scrolled, on_right_double_click) are entered with `this` on the
-  // GraphicWin virtual base and fold the walk back to the ListBox front into
-  // every access - `mov eax, [ecx - 0x48]` and receiver
-  // `lea ecx, [edx + ecx - 0x48]`. A Q member's source cannot say "this
-  // arrives as the base", so the walk is spelled: pass the entered receiver,
-  // get the front. The cast lands on the PARAMETER, not on `this`, which
-  // keeps the class_debt raw-self-access census at its ceiling for a pun
-  // that is measured and load-bearing.
-  static ListBox *from_graphic_base(void *entered) {
-    return reinterpret_cast<ListBox *>(
-        static_cast<uint8_t *>(entered) - 0x48);
-  };
-
  public:
   // 0x0060C6A0, a pending_bodies forwarder.
   // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence

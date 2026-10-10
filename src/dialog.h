@@ -38,9 +38,9 @@ class Dialog {
   friend class RadioButton;
   friend class SpriteBox;
   friend class EditGroup;
-  // VIRTUAL, and this is the Dialog virtual ListBox overrides - which is why
-  // ListBox carries a Dialog vtordisp and CheckBox/RadioButton/SpriteBox do
-  // not. The evidence is independent of this file: filewin.h pins
+  // Dialog's destructor, attach and on_redraw are virtual; item is not.
+  // The corresponding overrides produce the original virtual-base vtordisps.
+  // The evidence is independent of this file: filewin.h pins
   // `ListBox list_box_; // 0x286C, sizeof 0xB54, ends 0x33C0` with a field
   // immediately after, so ListBox is 0xB54 - four more than the 0xB50 it
   // measures with only the GraphicWin displacement.

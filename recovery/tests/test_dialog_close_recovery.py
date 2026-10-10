@@ -55,15 +55,13 @@ def test_retained_callback_directly_destroys_the_named_base(objects):
 
 
 def test_retained_external_callers_reach_actual_dialog_destructor(objects):
-    # Reuse the fixture's compiler-availability control. Original direct calls
-    # are at 40711E and 407F45; other teardown in these callers is still pending.
+    # Reuse the fixture's compiler-availability control. The primary deleting
+    # entry now belongs to the real compiler-generated Dialogs lifetime chain.
     settings = Measurement.read(ROOT)
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
     for unit, address in (("src/dialogs.cpp", 0x407100),):
         for flags in settings.flag_sets:
             obj = Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
             targets = references(obj, symbol_at(unit, address))
-            # Dialogs still retains a legacy stage. FileWin's native member
-            # chain is covered by test_control_lifetimes instead.
-            assert targets[targets.index("?destroy@Dialogs@@QAEIXZ") + 1] == "??1Dialog@@UAE@XZ"
-            assert "?destroy@Dialog@@QAEXXZ" not in targets
+            assert targets == ["??1Dialogs@@UAE@XZ", "??1Dialog@@UAE@XZ",
+                               "??1GraphicWin@@UAE@XZ", "??3@YAXPAX@Z"]
