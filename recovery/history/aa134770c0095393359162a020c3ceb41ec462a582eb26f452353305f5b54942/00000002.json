@@ -1,0 +1,19 @@
+{
+  "event_id": "09193da3d1b957f5a4585095c83109a348074e2f38c0176a37ba4d291fa1aae4",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "treaty-rounding-factor-tail-oct10",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject only the initial treaty scale25 proposal. Native5453CF and5453D4 perform LEA*5*5;5453DA SHL EAX,1 yields scale50;5453DC stores score. Correct authorized treaty expression is diplo_mul(weighted_energy /50,50). Weighted50 gives50, not old0 or incomplete-proposal25.",
+      "Pact5445F7 also explicitly doubles after two LEAs, so its authorized /50*50 remains correct. Attack54644B completes two LEAs without doubling, so authorized /25*25 remains correct. Preserve all other staging/source/history and task baseline.",
+      "The draft wrong /50*25 candidate was paused before tests/integration and is superseded by /50*50; no approval or fidelity claim for that draft. Controls must validate complete literal multiply-high/SAR/sign-correction/final-shift chain, not a guessed factor."
+    ]
+  },
+  "previous_event": "5513191ac25e2408a648fcb9a659ab5ba43140ca635f8035de711edde9d1bd97",
+  "request_id": "treaty-rounding-factor-rejected-oct10",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:diplo-proposal-rounding-owner-oct10"
+}

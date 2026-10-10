@@ -1,0 +1,20 @@
+{
+  "event_id": "5513191ac25e2408a648fcb9a659ab5ba43140ca635f8035de711edde9d1bd97",
+  "payload": {
+    "affects": [
+      "entity-40a90f94e775e4b35837fce5916c85f903e301d71312b556de8d9781493ed5b0"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "treaty-rounding-factor-tail-oct10",
+    "evidence": [
+      "The initial bounded instruction read stopped before0x5453DA. Full literal SHA-pinned PeImage decoding through0x5453DC exposes a further SHL EAX,1 before the score store. Coordinator and independent reviewer agree after direct-byte decoding."
+    ],
+    "hypothesis": "The initial task evidence proposed treaty signed /50 followed by scale25, assuming no later doubling.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "treaty-rounding-factor-tail-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:diplo-proposal-rounding-owner-oct10"
+}
