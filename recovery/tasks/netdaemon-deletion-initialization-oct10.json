@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "task_id": "netdaemon-deletion-initialization-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore the deletion-list constructor initialization domain from the pinned backedge before the shared storage ownership migration",
+  "base_revision": "dbef453ae8912bb57bf67982b1e9fd8932fb9182",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5474800
+    }
+  ],
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "src/netdaemon.h",
+    "recovery/tests/test_netdaemon_deletion_initialization_oct10.py",
+    "recovery/tests/test_netdaemon_file_control_packets_oct10.py",
+    "recovery/tests/test_netdaemon_typed_map_checksum_oct10.py",
+    "recovery/tests/test_netdaemon_vehicle_base_checksum_oct10.py",
+    "recovery/tests/test_netdaemon_faction_checksum_oct10.py",
+    "recovery/tests/test_netdaemon_typed_bulk_landmark_oct10.py"
+  ],
+  "evidence": [
+    "Pinned 538A53 stores [EAX+5A0]=0 once before record loop; 538A64 75F3 targets538A59, bypassing store538A53. Record loop only writes byte0=FF and word8=0 at stride3C. Current source incorrectly writes24 state words, including pointer/save storage. Root and independent investigator both verified backedge; previous per-entry scratch/partial-save hypothesis explicitly refuted.",
+    "Scope preserves constructor order, record owner/padding/IDs and untouched save/pointer bytes. Move only owner clear before loop and remove per-entry state clear. Remove contradicted current structural comments without rewriting seed history or original markers. Full DeletionList/NetDaemon/Veh/Game shared-storage migration remains required; this prerequisite does not close it.",
+    "Pinned bytes/branch domain, host poisoned-storage damaging mutation, exact scoped source/history continuity, 69 native baseline/current rows, layout identity, fresh application build/link, refs/mappings and independent review required. Prior snapshot tests normalize only bounded verified substitutions; no baseline reset or byte claim."
+  ]
+}
