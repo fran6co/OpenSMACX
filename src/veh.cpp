@@ -10863,15 +10863,10 @@ int TerraformDrownedBaseId;  // 0x009B22E0
 // clears it.
 uint32_t VehTerraformStingLatch;  // 0x0090DB84
 
-// Two slots of BaseSecretProject (0x009A6514, 64 ints) that this body reads as
-// BASE IDS: >= 0 tests "built", and the value indexes Bases[]. All are stored
-// as SP_Unbuilt/-1 until the project lands. Bound by address the way
-// spying_recovery.h binds interior offsets of PlayersData, because the struct
-// spells the 64 ints as project names and these are the three the image reads
-// as a base.
-int *const SecretProjectBoreholeBase = (int *)0x009A651C;      // +0x08
-int *const SecretProjectXenoempathyBase = (int *)0x009A6534;   // +0x20
-int *const SecretProjectAirdropBase = (int *)0x009A6580;       // +0x6C
+// The native base-id reads at 0x009A651C, 0x009A6534 and 0x009A6580 are slots
+// 2/8/27 of the 64-dword SecretProject owner at 0x009A6514. The real nested
+// owner is GameDataStateStorage.fields_.secret_project_; its existing named
+// accessors preserve those exact slots without executable-address pointers.
 
 // The phrase keys the terraform popups and the tutorial map call are titled
 // with. All are file-backed .data, all read only here.
@@ -11051,14 +11046,14 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
                     }
                     if (action == TERRA_REMOVE_FUNGUS
                         || action == TERRA_PLANT_FUNGUS) {
-                        if (*SecretProjectXenoempathyBase >= 0
-                            && Bases[*SecretProjectXenoempathyBase]
+                        if (GameDataStateStorage.fields_.secret_project_.xenoempathy_dome() >= 0
+                            && Bases[GameDataStateStorage.fields_.secret_project_.xenoempathy_dome()]
                                    .faction_id_current
                                 == (uint8_t)v_faction) {
                             weight = base * 2;
                         }
-                    } else if (*SecretProjectBoreholeBase >= 0
-                               && Bases[*SecretProjectBoreholeBase]
+                    } else if (GameDataStateStorage.fields_.secret_project_.weather_paradigm() >= 0
+                               && Bases[GameDataStateStorage.fields_.secret_project_.weather_paradigm()]
                                       .faction_id_current
                                    == (uint8_t)v_faction) {
                         weight = (base * 3) / 2;
@@ -11086,13 +11081,13 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
             base = 4;
         }
         if (action == TERRA_REMOVE_FUNGUS || action == TERRA_PLANT_FUNGUS) {
-            if (*SecretProjectXenoempathyBase >= 0
-                && Bases[*SecretProjectXenoempathyBase].faction_id_current
+            if (GameDataStateStorage.fields_.secret_project_.xenoempathy_dome() >= 0
+                && Bases[GameDataStateStorage.fields_.secret_project_.xenoempathy_dome()].faction_id_current
                     == (uint8_t)my_faction) {
                 weight = base * 2;
             }
-        } else if (*SecretProjectBoreholeBase >= 0
-                   && Bases[*SecretProjectBoreholeBase].faction_id_current
+        } else if (GameDataStateStorage.fields_.secret_project_.weather_paradigm() >= 0
+                   && Bases[GameDataStateStorage.fields_.secret_project_.weather_paradigm()].faction_id_current
                        == (uint8_t)my_faction) {
             weight = (base * 3) / 2;
         }
@@ -11445,8 +11440,8 @@ void __cdecl sub_500380(int faction_id, int x, int y) {
     bool anywhere;
     if (has_tech_call(Rules.tech_orb_insert_sans_spc_elev, faction_id)) {
         anywhere = true;
-    } else if (*SecretProjectAirdropBase >= 0) {
-        anywhere = Bases[*SecretProjectAirdropBase].faction_id_current
+    } else if (GameDataStateStorage.fields_.secret_project_.space_elevator() >= 0) {
+        anywhere = Bases[GameDataStateStorage.fields_.secret_project_.space_elevator()].faction_id_current
             == (uint8_t)faction_id;
     } else {
         anywhere = false;
