@@ -79,14 +79,14 @@ struct CaviarChannelBounds {
     int32_t values_[6];
 };
 struct VoxCameraBlock { CaviarCamera camera_; CaviarChannelBounds bounds_; };
+struct VoxRenderClipBounds {
+    uint32_t left_, top_, right_, bottom_, width_, height_;
+};
 struct VoxRenderRecord {
     CaviarSceneSetupDescriptorCandidate *setup_block_;
     int32_t draw_left_, draw_top_, draw_right_, draw_bottom_;
     int32_t draw_width_, draw_height_;
-    int32_t clip_max_a_x_, clip_max_a_y_, clip_min_a_x_, clip_min_a_y_;
-    int32_t clip_width_a_, clip_height_a_;
-    int32_t clip_max_b_x_, clip_max_b_y_, clip_min_b_x_, clip_min_b_y_;
-    int32_t clip_width_b_, clip_height_b_;
+    VoxRenderClipBounds primary_clip_, secondary_clip_;
 };
 struct CaviarSceneProjectionScratchCandidate {
     VOX_Vect camera_offset_;
@@ -316,9 +316,14 @@ static void test_inline_shape_stride_sentinel_and_inclusive_edge() {
     vox_load_scene_view(&record, &context, reinterpret_cast<VoxCameraBlock *>(0), 0);
     assert(sub_6401b0_call_count == 2);
     assert(sub_6401b0_centres[0] == 10 && sub_6401b0_centres[1] == 20);
-    assert(record.clip_max_a_x_ == 2 && record.clip_max_a_y_ == 2);
-    assert(record.clip_min_a_x_ == 2 && record.clip_min_a_y_ == 2);
-    assert(record.clip_width_a_ == 1 && record.clip_height_a_ == 1);
+    assert(record.primary_clip_.left_ == 2 && record.primary_clip_.top_ == 2);
+    assert(record.primary_clip_.right_ == 2 && record.primary_clip_.bottom_ == 2);
+    assert(record.primary_clip_.width_ == 1 && record.primary_clip_.height_ == 1);
+    assert(record.secondary_clip_.left_ == 0x7FFFU &&
+           record.secondary_clip_.top_ == 0x7FFFU);
+    assert(record.secondary_clip_.right_ == static_cast<uint32_t>(-0x7FFF) &&
+           record.secondary_clip_.bottom_ == static_cast<uint32_t>(-0x7FFF));
+    assert(record.secondary_clip_.width_ == 0 && record.secondary_clip_.height_ == 0);
 }
 
 static void test_angle_row_wrap_special_case_and_interior_pointer() {

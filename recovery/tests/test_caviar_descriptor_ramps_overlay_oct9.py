@@ -139,6 +139,7 @@ def build_and_run(body, expected_success=True):
     declarations = (
         extract(header, "struct VoxIoCallbacks {") + ";\n" +
         extract(header, "struct CaviarSceneSetupDescriptorCandidate {") + ";\n" +
+        extract(header, "struct VoxRenderClipBounds {") + ";\n" +
         extract(header, "struct VoxRenderRecord {") + ";\n" +
         extract(header, "struct CaviarOutputMessageWindowCandidate {") + ";\n")
     with tempfile.TemporaryDirectory(prefix="caviar-ramps-") as directory:

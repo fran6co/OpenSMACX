@@ -19,7 +19,8 @@ struct CaviarChannelBounds { float lead_[5]; int32_t values_[6]; };
 struct CaviarSceneProjectionScratchCandidate { float projected_scale_; };
 CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch = {1.0f};
 struct VoxCameraBlock { CaviarChannelBounds bounds_; };
-struct VoxRenderRecord { int32_t setup_id_; int32_t clip_max_a_x_; };
+struct VoxRenderClipBounds { uint32_t left_, top_, right_, bottom_, width_, height_; };
+struct VoxRenderRecord { int32_t setup_id_; VoxRenderClipBounds primary_clip_; };
 VOX_Matrix vox_projection_matrix_ = {0};
 int32_t vox_projection_component_[3] = {0};
 int32_t vox_projection_render_stage_ = 0;
@@ -166,7 +167,7 @@ def test_mutant_flag_at_clip_offset_is_rejected():
     source = PRODUCT.read_text()
     original = extract_definition(source, "void __cdecl vox_direction_to_octant(")
     mutant = original.replace("render_record->setup_id_ & 1",
-                              "render_record->clip_max_a_x_ & 1", 1)
+                              "render_record->primary_clip_.left_ & 1", 1)
     assert mutant != original
     run_fixture(shutil.which("g++"), source.replace(original, mutant, 1), False)
 

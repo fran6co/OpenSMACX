@@ -1828,8 +1828,8 @@ int Caviar::init_class() {
     }
 
     VoxRenderRecord *const record = CaviarScene.created_;
-    record->zero_b_[2] = 0;             // 0x38
-    record->zero_b_[3] = 0;             // 0x3C
+    record->draw_left_ = 0;
+    record->draw_top_ = 0;
     record->draw_right_ = 0xff;
     record->draw_bottom_ = 0xff;
     record->draw_width_ = 0x100;
@@ -4462,12 +4462,8 @@ shadow_pass:
     bounds[11] = shadow_right < 0 || shadow_bottom < 0
         ? 0 : shadow_bottom - bounds[7] + 1;
 
-    CaviarRenderClipWindowCandidate *primary =
-        reinterpret_cast<CaviarRenderClipWindowCandidate *>(
-            &record->clip_max_a_x_);
-    CaviarRenderClipWindowCandidate *secondary =
-        reinterpret_cast<CaviarRenderClipWindowCandidate *>(
-            &record->clip_max_b_x_);
+    VoxRenderClipBounds *primary = &record->primary_clip_;
+    VoxRenderClipBounds *secondary = &record->secondary_clip_;
     primary->left_ = bounds[0]; primary->top_ = bounds[1];
     primary->right_ = bounds[2]; primary->bottom_ = bounds[3];
     primary->width_ = bounds[4]; primary->height_ = bounds[5];
@@ -5725,10 +5721,10 @@ int Caviar::render_scene(Buffer *buffer, int flags) {
     vox_draw_scene(CaviarScene.created_, &scene_context_, &camera_view_, 0);
     CaviarScene.renderer_ = 0;
     RECT drawn;
-    drawn.left = CaviarScene.created_->clip_max_a_x_;
-    drawn.top = CaviarScene.created_->clip_max_a_y_;
-    drawn.right = CaviarScene.created_->clip_min_a_x_ + 1;
-    drawn.bottom = CaviarScene.created_->clip_min_a_y_ + 1;
+    drawn.left = CaviarScene.created_->primary_clip_.left_;
+    drawn.top = CaviarScene.created_->primary_clip_.top_;
+    drawn.right = CaviarScene.created_->primary_clip_.right_ + 1;
+    drawn.bottom = CaviarScene.created_->primary_clip_.bottom_ + 1;
     UnionRect(&CaviarViewportState, &drawn, &CaviarViewportState);
     clear_buffers(flags & 1);
     return 0;
@@ -6109,18 +6105,18 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     CaviarScene.renderer_ = 0;
 
     RECT covered;
-    covered.left = record->clip_max_a_x_;
-    covered.top = record->clip_max_a_y_;
-    covered.right = record->clip_min_a_x_ + 1;
-    covered.bottom = record->clip_min_a_y_ + 1;
+    covered.left = record->primary_clip_.left_;
+    covered.top = record->primary_clip_.top_;
+    covered.right = record->primary_clip_.right_ + 1;
+    covered.bottom = record->primary_clip_.bottom_ + 1;
     UnionRect(&CaviarViewportState, &covered, &CaviarViewportState);
 
     if (scene_context_.field_A4_ != 0) {
         RECT scene;
-        scene.left = record->clip_max_b_x_;
-        scene.top = record->clip_max_b_y_;
-        scene.right = record->clip_min_b_x_ + 1;
-        scene.bottom = record->clip_min_b_y_ + 1;
+        scene.left = record->secondary_clip_.left_;
+        scene.top = record->secondary_clip_.top_;
+        scene.right = record->secondary_clip_.right_ + 1;
+        scene.bottom = record->secondary_clip_.bottom_ + 1;
         UnionRect(&CaviarScene.scene_rect_, &scene,
                   &CaviarScene.scene_rect_);
         if (scene_context_.field_A4_ != 0) {
@@ -6213,10 +6209,10 @@ void *Caviar::clip_rect() {
     if (record == 0) {
         return 0;
     }
-    vox_clip_rect[0] = record->clip_max_a_x_;
-    vox_clip_rect[2] = record->clip_min_a_x_ + 1;
-    vox_clip_rect[1] = record->clip_max_a_y_;
-    vox_clip_rect[3] = record->clip_min_a_y_ + 1;
+    vox_clip_rect[0] = record->primary_clip_.left_;
+    vox_clip_rect[2] = record->primary_clip_.right_ + 1;
+    vox_clip_rect[1] = record->primary_clip_.top_;
+    vox_clip_rect[3] = record->primary_clip_.bottom_ + 1;
     return vox_clip_rect;
 }
 
@@ -6252,10 +6248,10 @@ void Caviar::fill_clip_rect(int destination) {
     int *out = (int *)destination;
     if (out != 0) {
         if (CaviarScene.created_ != 0) {
-            out[0] = CaviarScene.created_->clip_max_a_x_;
-            out[2] = CaviarScene.created_->clip_min_a_x_ + 1;
-            out[1] = CaviarScene.created_->clip_max_a_y_;
-            out[3] = CaviarScene.created_->clip_min_a_y_ + 1;
+            out[0] = CaviarScene.created_->primary_clip_.left_;
+            out[2] = CaviarScene.created_->primary_clip_.right_ + 1;
+            out[1] = CaviarScene.created_->primary_clip_.top_;
+            out[3] = CaviarScene.created_->primary_clip_.bottom_ + 1;
         }
     }
 }
