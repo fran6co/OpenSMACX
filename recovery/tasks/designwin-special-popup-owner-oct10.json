@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "designwin-special-popup-owner-oct10",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "intent": "Restore the special-ability picker through its actual Popup-owned dialog and ordinary member lifetimes",
+  "base_revision": "f997ed111e2877a3cbe230667fb42338392849eb",
+  "subjects": [{
+    "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+    "address_space": "pe:va",
+    "address": 4435056
+  }],
+  "editable_files": [
+    "src/designwin.cpp",
+    "recovery/tests/test_designwin_special_popup_owner_oct10.py"
+  ],
+  "evidence": [
+    "Pinned 43AC70..43BDE9 constructs Popup at EBP-56B4; item calls43AF13/43B6BE use EBP-34E4, its existing dialogs_ member at+21D0. Ability-row index EBP-14 is the option payload at43B6B2, not protoChassisType_.",
+    "Original Scroll teardown uses Popup+3230. StringList removal receivers at43BA23/43BD06 are Popup+2150;43BCA0 is Popup+2180. Their signed decoded displacements identify existing item_ids_/unit_ids_, not independent helper/stat lists or an invented missing member. Recover genuine Popup destruction rather than duplicate detached objects or manually staging tables.",
+    "Inspect complete normal and early-return teardown plus the selected-slot exclusion against original instructions before changing source. Preserve original unchecked/error behavior, original spans/claims/seed discoveries and subsequent matching obligations; do not claim bug fixes, new exactness or game acceptance.",
+    "Require fresh before/current whole-DesignWin measurements with outside-subject continuity, actual complete-body owner/payload/selection/lifetime controls and damaging mutants, original annotation/history continuity, independent native review and full fresh compile/link before coordinator integration."
+  ]
+}
