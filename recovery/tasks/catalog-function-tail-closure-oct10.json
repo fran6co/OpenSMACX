@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "task_id": "catalog-function-tail-closure-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Correct nine original function extents to include existing source-owned tails and record only freshly exact full ranges",
+  "base_revision": "44f4141de73d0ddbaa0df731ee0cc0f7cd0a0651",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4373168
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4726176
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4731280
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4731936
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5003680
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5144144
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6308608
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6377040
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6390832
+    }
+  ],
+  "editable_files": [
+    "src/base.cpp",
+    "src/basepop.cpp",
+    "src/caviar.cpp",
+    "src/datalink.cpp",
+    "src/editbox.cpp",
+    "src/netwin.cpp",
+    "src/sounddevice.cpp",
+    "recovery/tests/test_catalog_function_tail_closure_oct10.py"
+  ],
+  "evidence": [
+    "Pinned Ghidra catalog and original branch/epilogue inspection establish omitted tails: Datalink set_cat_terraform last update/epilogue, NetWin fill_player epilogue, modal_callback finalret, new_chat ret immediate, Wave_In_Device create_device two error-return branches, base4E7E50 finalret, BasePop on_button_clicked ret immediate, EditBox constructor finalret and Caviar set_shadow_table ret immediate. Their current source bodies already implement these operations. Preserve old ranges as subsets, all identities, C++ bodies, historical claims and lessons. Heap5D4680 catalog coalesces a separately owned ServiceList method and intervening padding; explicitly excluded from this correction.",
+    "Read-only native complete-range probes:483420,4C59A0,614E50,618430 BYTE_EXACT; remaining five MISMATCH and carry no historical byte claim. Correct all nine extents through match_recovery.source writer with no manual marker or claim-token edits. Only recover record banks the four freshly measured complete ranges; five misses receive no new claim. Native complete affected-unit verdict comparison, full source/metadata invariants, original control-flow/tail witnesses, relevant owner regressions, fresh full application compile/link, claims/mappings/references and independent review precede coordinator commit. This adds44 function-mapped bytes, not nine new implementations or complete executable/runtime acceptance."
+  ]
+}
