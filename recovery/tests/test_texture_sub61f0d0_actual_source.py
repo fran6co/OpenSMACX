@@ -14,6 +14,7 @@ import tempfile
 
 import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from test_texture_draw_trans_actual_source import _definition
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -24,6 +25,14 @@ SIGNATURE = "void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4,
 INSERTION = "// ACTUAL_METHOD_INSERTION"
 DRAW_TRANS2_INSERTION = "// ACTUAL_DRAW_TRANS2_INSERTION"
 DRAW_TRANS3_INSERTION = "// ACTUAL_DRAW_TRANS3_INSERTION"
+HELPER_INSERTION = "// ACTUAL_TRANS3_HELPER_INSERTION"
+TRANS3_HELPERS = (
+    "texture_draw_gouraud_edge_step", "texture_fixed", "texture_difference",
+    "texture_span_step", "texture_light_step", "texture_span_pixels",
+    "texture_draw_source_step", "texture_draw_source_index",
+    "texture_draw_next_source_index", "texture_draw_lit_span_mode",
+    "texture_draw_keyed_lit_span", "texture_draw_keyed_fill_span",
+)
 
 
 def extract_method(source: str, signature: str = SIGNATURE) -> str:
@@ -62,7 +71,10 @@ def translation_unit(method: str, draw_trans2: str | None = None,
         draw_trans3 = extract_method(
             source, "int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a6)"
         )
-    return (fixture.replace(INSERTION, method, 1)
+    assert fixture.count(HELPER_INSERTION) == 1
+    helpers = "\n\n".join(_definition(source, name) for name in TRANS3_HELPERS)
+    return (fixture.replace(HELPER_INSERTION, helpers, 1)
+            .replace(INSERTION, method, 1)
             .replace(DRAW_TRANS2_INSERTION, draw_trans2, 1)
             .replace(DRAW_TRANS3_INSERTION, draw_trans3, 1))
 

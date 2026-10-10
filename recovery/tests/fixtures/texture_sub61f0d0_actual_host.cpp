@@ -21,6 +21,15 @@ struct EdgeScan {
     int f0, counter, id, accumA, accumB, deltaA, deltaB, accumC, deltaC,
         extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
 };
+static const unsigned int _PC_24 = 1, _RC_CHOP = 2, _MCW_PC = 4, _MCW_RC = 8;
+static unsigned int current_fpu, release_fpu;
+static int control_calls;
+static unsigned int _control87(unsigned int mode, unsigned int mask) {
+    assert(mode == (_PC_24 | _RC_CHOP) && mask == (_MCW_PC | _MCW_RC));
+    ++control_calls;
+    current_fpu = mode;
+    return mode;
+}
 struct Buffer {
     int stride_;
     RECT rect1_;
@@ -31,7 +40,11 @@ struct Buffer {
         events_.push_back(1);
         return data_;
     }
-    void free_data(int mode) { assert(mode == 1); events_.push_back(3); }
+    void free_data(int mode) {
+        assert(mode == 1);
+        release_fpu = current_fpu;
+        events_.push_back(3);
+    }
 };
 static uintptr_t texture_pointer_address(const void *pointer) {
     return reinterpret_cast<uintptr_t>(pointer);
@@ -116,6 +129,16 @@ static int *blit_slot_494 = &cell_slot_494;
 static int *blit_slot_498 = &cell_slot_498;
 static int TextureLightCeiling = 256;
 static int TextureLightFloor = -256;
+static int cell_slot_504, cell_slot_528;
+static int *blit_slot_504 = &cell_slot_504;
+static int *blit_slot_528 = &cell_slot_528;
+union TextureRasterRelocatedRowCell {
+    int *initial_target;
+    int value;
+};
+static TextureRasterRelocatedRowCell TextureRasterAlternateRowBase;
+static TextureRasterRelocatedRowCell TextureRasterAlternateRowNext;
+static void texture_reset_fpu();
 
 static int setup_calls;
 static int setup_edge_calls;
@@ -149,6 +172,7 @@ struct EdgeLocal {
         accumC, stepC, stepCExtra, accumD, stepD, threshold;
 };
 
+// ACTUAL_TRANS3_HELPER_INSERTION
 // ACTUAL_METHOD_INSERTION
 // ACTUAL_DRAW_TRANS2_INSERTION
 // ACTUAL_DRAW_TRANS3_INSERTION
@@ -166,7 +190,7 @@ static int input_z[8];
 static Vert input_uv[8];
 static int reset_calls;
 
-static void texture_reset_fpu() { ++reset_calls; }
+static void texture_reset_fpu() { ++reset_calls; current_fpu = 0; }
 
 static int as_int(const void *pointer) {
     const uintptr_t address = reinterpret_cast<uintptr_t>(pointer);
@@ -177,6 +201,7 @@ static int as_int(const void *pointer) {
 static void reset_case() {
     setup_calls = setup_index = setup_selected_uv = 0;
     setup_edge_calls = forward_calls = reset_calls = 0;
+    current_fpu = release_fpu = control_calls = 0;
     setup_edge_result = 0;
     buffer.events_.clear();
     active_buffer = &buffer;
