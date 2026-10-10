@@ -1,0 +1,22 @@
+{
+  "event_id": "f1d5f2ff160d621576dd7ad614c0627bda335f2985a514419b99c37d5561f873",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/propose_pact_control.cpp",
+      "recovery/tests/test_diplomacy_actions_coverage.py"
+    ],
+    "evidence": [
+      "Corrected native treaty weighting changes the full-body fixture input weighted_energy=(1000*100)/201=497 from old/100*50=200 to pinned/50*50=450. Update only the affected treaty goldens after deriving both transferred balances and friction from original/source pipeline; do not disable assertions, weaken mutants or alter unrelated scenarios.",
+      "Coordinator reproduced master baseline test_propose_pact.py:2 failures/1 pass, actual body fails compilation because retained fixture lacks genuine nested GameDataStateStorage API. Update its test-only field subset and reset/scenario accesses to the existing source-owned nested API; no project ABI assertion, artificial aliases or product edits. Preserve scenarios/mutations and derive any corrected rounding goldens from pin.",
+      "Broader code changes beyond the three authorized proposal stages remain out of scope. Existing compiler-backed and host controls keep limitations; fixture repair does not establish full-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "09193da3d1b957f5a4585095c83109a348074e2f38c0176a37ba4d291fa1aae4",
+  "request_id": "diplo-rounding-existing-control-update-oct10",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:diplo-proposal-rounding-owner-oct10"
+}
