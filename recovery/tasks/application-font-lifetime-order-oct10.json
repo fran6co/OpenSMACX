@@ -1,0 +1,91 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b293b9ce17a9d729f6cc4b0f6c2b2af4925317af",
+  "editable_files": [
+    "src/main.cpp",
+    "src/main.h",
+    "src/interface_fonts.cpp",
+    "src/interface_fonts.h",
+    "src/font_queue.cpp",
+    "CMakeLists.txt"
+  ],
+  "evidence": [
+    "Pinned CRT slots prove relative startup order: g_JACKAL_FONT at68253C, FontQueue VAL2 at68263C, VAL1 at682640, FontTable[48] at682648; each constructor registers its paired fini. Root and independent review fully decoded all eight spans and verified storage, scalar calls, array count48/stride28 and current physical COFF correlations.",
+    "Current source/physical COFF puts FontTable before the singleton; current linker places interface_fonts before font_queue. Correct the whole observed relationship, not merely local spelling: source singleton storage belongs in main.cpp, its sole source consumer is WinMain; leave FontTable/find_font together and preserve queue owner. This is evidence-backed current semantic ownership, not proof of original file names.",
+    "Authorize moving the existing Font singleton definition/extern into main.cpp/main.h, removing duplicate old declarations, correcting related stale ordering/pointer-origin comments, and placing font_queue.cpp immediately before interface_fonts.cpp in CMake. Preserve all compiler/build flags and all genuine behavior/other declarations.",
+    "Authorize native start-only object bindings for singleton7D3948 and FontTable93FC58, and eight native unclaimed FILE original bindings to fresh current compiler-local helpers in their actual owners. Preserve existing FontQueue objects, all previous function identities, claims, source findings and restoration obligations. No hand-written callbacks, atexit calls, data-address aliases or machine-code copies.",
+    "Fresh baseline observations: WinMain45F950 and find_font5882F0 exact; FontQueue ctor559290 and dtor55B740 exact; get_zoom5592D0 mismatch. Recheck all five after migration, all eight callbacks, source/object/claim continuity, references, full fresh build/link and physical linked relative callback order. Prepare fresh recipes after the authorized build-input change before measurement.",
+    "Coordinator authorizes evidence-backed temporary matching regressions while preserving historical claims and restoration obligations, but requires faithful original behavior, compiling closure and independent actual source/physical evidence review. No full-game, automatic, strict linked-preservation or complete CRT/runtime acceptance is granted; other source owners, ctype registrations and complete global-order fidelity remain independent obligations."
+  ],
+  "intent": "Recover eight genuine application-font/FontQueue lifetime identities and correct the complete observed singleton, queue and font-table owner/order relationship without inventing historical translation units or changing compiler flags.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4585760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4585792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4585808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5607984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5608016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5608032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5608064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5608080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5608144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5617472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5800608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5800656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5800688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "application-font-lifetime-order-oct10"
+}
