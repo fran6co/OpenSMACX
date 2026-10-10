@@ -10,11 +10,16 @@
     "recovery/tests/test_messagewin_newtech_startup_arrays.py",
     "recovery/tests/sprite_list_lifecycle_control.cpp",
     "recovery/tests/test_spritelist_base_lifetime.py",
-    "recovery/tests/test_sprite_list_lifecycle_actual_source.py"
+    "recovery/tests/test_sprite_list_lifecycle_actual_source.py",
+    "recovery/tests/test_palette_port_writer_actual_source.py",
+    "recovery/tests/test_sound_owner_query_fields_actual_source.py",
+    "recovery/tests/test_midi_load_pointer_return_actual_source.py",
+    "recovery/tests/test_sound_fade_prefix_actual_source.py"
   ],
   "evidence": [
     "Seven inherited failures precede constructor execution or arise from missing callback declarations: two NewTech tests still expect retired g_NEWTECHWIN_SPRITES[6], five SpriteListBase tests lack right-click/down/up/double-click callback members in their host declaration fixture. Production C++ and all original mappings must remain unchanged.",
     "NewTech lifetime tests must extract current array/storage/lifetime declarations and actual Sprite constructor, destructor and members; verify six-element construction, guard publication before reverse cleanup, upper-bit retention and damage sensitivity. Preserve the original source object identity822610..822718 and separate822604 guard, not a flat-array substitute.",
-    "Shared SpriteBox fixture must use the four actual callback names/types supported by spritebox.h. Retire the older test that still models SpriteList as direct StringStruct only after transferring its unique truncation, close-hook and empty-derived-destructor controls into the real intermediate-owner suite. Existing cleanup order and mutation assertions remain effective; do not weaken or manufacture passing product implementations."
+    "Shared SpriteBox fixture must use the four actual callback names/types supported by spritebox.h. Retire the older test that still models SpriteList as direct StringStruct only after transferring its unique truncation, close-hook and empty-derived-destructor controls into the real intermediate-owner suite. Existing cleanup order and mutation assertions remain effective; do not weaken or manufacture passing product implementations.",
+    "Scope extension: four palette/sound/MIDI tests import only repo_root/extract_definition from the obsolete test. Redirect those imports to the surviving equivalent source-root and lexical-definition helpers; preserve each caller's actual source controls. Transfer the old canonical6116E0 identity/full-span/claim/symbol checks before deletion. This extension changes test plumbing only, with no product or task-baseline changes."
   ]
 }
