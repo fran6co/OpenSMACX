@@ -15,6 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x0052DB10 _$E21 0x0052DB10-0x0052DB26 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682634 selects init 0x0052DB10-0x0052DB26, registering fini 0x0052DB30-0x0052DB3A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x0093CD90; scalar NetDaemon constructor/destructor 0x005389F0/0x00538D10.", "Current owner physical COFF selects _$E21 via .CRT$XCU and registers _$E19, with relocations naming ?NetDaemonNet@@3VNetDaemon@@A; the genuine global definition owns this lifetime, including possible inline scalar construction.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned NetDaemonNet; no callback body is authored."}
+// ORIGINAL: 0x0052DB30 _$E19 0x0052DB30-0x0052DB3A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682634 selects init 0x0052DB10-0x0052DB26, registering fini 0x0052DB30-0x0052DB3A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x0093CD90; scalar NetDaemon constructor/destructor 0x005389F0/0x00538D10.", "Current owner physical COFF selects _$E21 via .CRT$XCU and registers _$E19, with relocations naming ?NetDaemonNet@@3VNetDaemon@@A; the genuine global definition owns this lifetime, including possible inline scalar construction.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned NetDaemonNet; no callback body is authored."}
 #include "stdafx.h"
 #include <mmsystem.h>
 #include "original_seam.h"
@@ -894,11 +898,12 @@ uint32_t NetDaemon::unlock_veh() {
 
 
 // The daemon's Net, 0x0093CD90 in the image - see netdaemon.h. The image's
-// dynamic initializer at 0x0052DB00 constructs it at the fixed address
+// dynamic initializer at 0x0052DB10 constructs it at the fixed address
 // before WinMain; the recovered NetDaemon constructor here runs through this
 // build's own startup instead.
 // RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A lock_state_[0].trailing_words_[7]
 // RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A lock_state_[2].trailing_words_[7]
+// RECOVERY_OBJECT: v1 0x0093CD90 ?NetDaemonNet@@3VNetDaemon@@A
 NetDaemon NetDaemonNet;  // 0x0093CD90
 
 
