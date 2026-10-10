@@ -3,13 +3,13 @@
   "task_id": "council-salvage-operands-oct10",
   "target": "opensmacx",
   "author": "coordinator",
-  "intent": "Restore original proposal-two rival operands and signed comparisons without changing other proposal cases",
+  "intent": "Verify existing proposal-two operands against pinned addresses; reject the refuted rival-field substitution without changing C++",
   "base_revision": "a80ca6ae5e9b307ecaed6188d0dbe68d8899431f",
   "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5418672}],
   "editable_files": ["src/council.cpp", "recovery/tests/test_wants_prop_behavior.py", "recovery/tests/test_council_salvage_operands_oct10.py"],
   "evidence": [
-    "Pinned52B77D cursor96EDAC is row1+2E0;52B78C reads cursor-E0 = rival+200 stolen_data_count[0], compared signed against owner+220 energy.52B7A8/AB reads rival+2DC and+2E0, soc_effect_base TALENT/MORALE, while52B79A/A0 reads owner+2FC/+300 unk_13/maint_cost_total. Current rival energy/unk13/maintenance operands are mistranscriptions, not original game bugs.",
-    "Preserve owner ai/energy prefix, factions1..7 excludingactor, signed strict comparisons, wrapping32-bit differences, relative score accumulation and positive signed division tail. Existing proposal behavior fixture needs actual newly accessed members and corrected case2 inputs; do not weaken other tests.",
+    "Rejected original hypothesis: cursor96EDAC was miscomputed as row1+2E0, suggesting stolen_data_count and social-effect operands. The pinned byte/address control refuted this before publication. Correct arithmetic is96C9E0+20CC+300=96EDAC; cursor-E0 is peer+220 energy, cursor-4 is peer+2FC unk_13, and cursor is peer+300 maintenance. Existing C++ operands are correct; no semantic repair or coverage gain is established.",
+    "Preserve the entire existing C++ and existing proposal fixture unchanged. Test actual PlayerData declarations and actual case against corrected pinned-offset oracle with signed/wrap/tie edge cases and deliberately conflicting rejected fields. Both g++ and clang++ controls must reject wrong-field, unsigned and non-strict-comparison mutations.",
     "Require native full Council baseline/current comparisons and PlayerData layouts, actual declaration/case body controls with independent pinned-offset oracle and deliberately decoupled incorrect fields, signed highbit/wrap/tie edges and damage cases, exact source/annotation/claim/lesson continuity outside case2, all proposal controls, fresh full build/link, mappings/references and independent review. No new identity/claim/full acceptance."
   ]
 }
