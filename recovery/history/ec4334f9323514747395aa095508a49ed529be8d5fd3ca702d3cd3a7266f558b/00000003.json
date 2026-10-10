@@ -1,0 +1,17 @@
+{
+  "event_id": "986d05414be21bfa64af03ed7ba6d822cda7c1b15ee1b392b33446fa46920e46",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "object-writer-unrelated-suffix",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "packages/match-recovery/src/match_recovery/object_writer.py conservative first-splice boundary and45 safety controls; native writer preserves WinBubbleActive old identity and targets VC6-verified char pointer symbol in src/win.cpp."
+    ]
+  },
+  "previous_event": "5e30f4e0bdd5757fe115fe8e0f2d8ee1736515badec59f39234a74ff6b8e3f95",
+  "request_id": "incorporated-object-writer-prefix",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:win-bubble-text-owner-oct10"
+}

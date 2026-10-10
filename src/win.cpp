@@ -879,8 +879,8 @@ uint32_t WinStaticDefaults[10] = {  // 0x00696D34, the image's values
 // The original zero-filled extent ends before the caption-pointer owners.
 // RECOVERY_OBJECT: v2 0x009B7AF0 0x009B7B00 ?WinDynamicDefaults@@3UWinDynamicDefaultsTable@@A 0x005EB3D0
 WinDynamicDefaultsTable WinDynamicDefaults;  // 0x009B7AF0
-// RECOVERY_OBJECT: v1 0x009B7A50 ?WinBubbleActive@@3HA
-int WinBubbleActive;       // 0x009B7A50
+// RECOVERY_OBJECT: v4 0x009B7A50 ?WinBubbleActive@@3HA target ?WinBubbleActive@@3PADA
+char *WinBubbleActive;       // 0x009B7A50, borrowed; never freed by Win
 // on_char loads this pointer at 5F612F/5F615F; hide independently does
 // so at 5EDDE3/5EDE13. The binding names pointer storage, not its pointee.
 // RECOVERY_OBJECT: v1 0x009B7A6C ?WinZOrderWindow@@3PAVWin@@A
@@ -1287,7 +1287,7 @@ void __cdecl Win::flip(RECT *area) {
         ScreenBufferOwner.buffer().set_font(WinBubbleFont, nullptr, nullptr, nullptr);
         ScreenBufferOwner.buffer().set_text_color(WinBubbleTextColour, -1, 1, 1);
 
-        LPSTR text = reinterpret_cast<LPSTR>(WinBubbleActive);
+        LPSTR text = WinBubbleActive;
         if (strchr(text, '^') == nullptr) {
             // One line, centred in the box.
             if (text != nullptr) {
@@ -5655,7 +5655,7 @@ void Win::set_bubble_text(char * text, RECT * rect) {
     WinBubbleRect.top = y;
     WinBubbleRect.right = x + max_width;
     WinBubbleRect.bottom = y + line_height;
-    WinBubbleActive = reinterpret_cast<int>(text);
+    WinBubbleActive = text;
     flip(&WinBubbleRect);
 }
 
@@ -6270,9 +6270,9 @@ void Win::hide() {
 
     if (WinBubbleCompanion == this) {
         zero = 0;
-        if (WinBubbleActive != zero) {
+        if (WinBubbleActive != 0) {
             WinBubbleCompanion = 0;
-            WinBubbleActive = zero;
+            WinBubbleActive = 0;
             update_screen(&WinBubbleRect, 0);
             flip(&WinBubbleRect);
         }

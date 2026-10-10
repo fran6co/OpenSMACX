@@ -1121,7 +1121,9 @@ struct WinDynamicDefaultsTable {
   uint32_t rest_[2];      // 0x8; original addresses 0x009B7AF8..0x009B7AFC
 };
 extern WinDynamicDefaultsTable WinDynamicDefaults;
-extern int WinBubbleActive;      // 0x009B7A50
+// Borrowed mutable text: Win stores the caller's pointer and temporarily
+// splits/restores caret-delimited lines. The caller retains storage ownership.
+extern char *WinBubbleActive;      // 0x009B7A50
 extern Win *WinZOrderWindow;  // 0x009B7A6C
 extern int WinZOrderCount;    // 0x009B7B30
 extern int WinZOrderFlag;     // 0x009B7A78
