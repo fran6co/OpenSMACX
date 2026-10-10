@@ -296,6 +296,7 @@ void AlphaSave::hide_save_window() {
 }
 
 // ORIGINAL: 0x00407D90 ?on_selected@AlphaSave@@QAEXH@Z 0x00407D90-0x00407E7B
+// symbol    ?on_selected@AlphaSave@@UAEXH@Z
 // The callback argument is unused in the image. The selected position is
 // held by the embedded ListBox's Dialog virtual base, whose StringList
 // supplies the filename. The retired seed reached 96.4% mnemonic similarity

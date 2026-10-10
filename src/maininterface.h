@@ -168,7 +168,7 @@ class MainInterface : public GraphicWin, public SubInterface {
 
  public:
   // homed from 0045ca00.cpp
-  void on_selected(int a1, int a2);
+  void on_selected(int a1, int a2) override;
 
  public:
   // homed from 0045c9c0.cpp

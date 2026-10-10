@@ -64,14 +64,15 @@ def test_diplowin_redraw_and_listbox_slot54_use_real_virtual_apis():
     assert diplo.count("        redraw();") >= 3
 
     listbox = (ROOT / "src/listbox.cpp").read_text()
-    assert "target->vslot_54(" in listbox
+    assert "target->on_selected(" in listbox
     assert "slot054_fn" not in listbox
     # Keep the distinct unknown child receiver/slot contract rather than
     # incorrectly treating it as Win's two-coordinate slot 23.
-    assert "typedef int (OriginalObject::*slot023_fn)();" in listbox
-    assert "vtable_method<slot023_fn>(child, 23 * 4)" in listbox
+    assert "Sound *child = target->legacy_sound_36();" in listbox
+    assert "child->is_playing()" in listbox
+    assert "child->play();" in listbox
     win = (ROOT / "src/win.h").read_text()
-    assert "virtual void vslot_54(int = 0)" in win
+    assert "virtual void on_selected(int)" in win
 
 
 def test_original_mapping_comments_survive_the_caller_closure():

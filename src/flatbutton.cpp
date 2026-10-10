@@ -569,9 +569,8 @@ void FlatButton::on_redraw() {
       set_text_color(text_color, -1, 1, 1);
     }
 
-    if (parent->vslot_05(reinterpret_cast<int>(this),
-                         reinterpret_cast<int>(name_),
-                         static_cast<int>(field_A78_)) == 0) {
+    if (parent->on_button_text_draw(this, name_,
+                                   static_cast<int>(field_A78_)) == 0) {
       const int text_width = rect_right - rect_left - 6;
       const int wrapped_height = buffer->wrap_height(name_, text_width);
       const int line_height = buffer->text_line_height();

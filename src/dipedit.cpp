@@ -144,6 +144,7 @@ void DipEdit::on_redraw() {
 
 /*
 // ORIGINAL: 0x004DA740 ?on_selected@DipEdit@@QAEXH@Z 0x004DA740-0x004DA760 BYTE_EXACT
+// symbol    ?on_selected@DipEdit@@UAEXH@Z
 // size      32 bytes
 // prototype void (__thiscall ?on_selected@DipEdit@@QAEXH@Z)(DipEdit* this, int)
 // callers   0   call targets   2

@@ -608,7 +608,9 @@ class Win : public AutoSound {
   // slot 4 selects the shared empty body catalogued as AlphaMovie::UNK7.
   // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_lose_mouse_capture@Win@@UAEXXZ 0x005EB3D0
   virtual void on_lose_mouse_capture() {}
-  virtual int vslot_05(int = 0, int = 0, int = 0) { return 0; }  // 0x00404220
+  // SocialWin/CouncWin tables override slot5; FlatButton supplies its
+  // GraphicWin view, borrowed text and button ID, not integer encodings.
+  virtual int on_button_text_draw(GraphicWin *, char *, int) { return 0; }
   // Win::init asks slot 6 for an external Scroll before allocating its
   // own fallback. The default original body returns null.
   // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?on_scroll_create@Win@@UAEPAVScroll@@XZ 0x005EB3D0
@@ -707,8 +709,10 @@ class Win : public AutoSound {
   virtual void vslot_50(int = 0) {}  // 0x00404270
   virtual void on_dialog_focus(int = 0) {}  // 0x00404270
   virtual void vslot_52() {}  // 0x00404280
-  virtual void vslot_53(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_54(int = 0) {}  // 0x00404270
+  // VC6 reverses this overload group: two arguments occupy slot53,
+  // one argument slot54. ListBox dispatches each notification separately.
+  virtual void on_selected(int) {}  // slot54, original0x00404270
+  virtual void on_selected(int, int) {}  // slot53, original0x00404260
   virtual void vslot_55(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_56(int = 0) {}  // 0x00404270
   virtual int set_modal(int flag, int (*poll)(), Win *owner);  // slot 57  0x005EE190

@@ -76,7 +76,7 @@ class NetSessionPickerWin : public GraphicWin {
   void on_redraw() override;
   // Original table 0x670DDC slot 44 -> 0x63C3A0; `ret 4` confirms this API.
   virtual void on_button_clicked(int action);
-  void vslot_54(int value) override;
+  void on_selected(int value) override;
 
   // Original 0x63BF10. Name and virtual slot identity remain unresolved.
   int initialize(Net *network, char *caption, Font *font,

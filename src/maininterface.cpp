@@ -2341,6 +2341,7 @@ void MainInterface::on_mouse_leave(int a1, int a2) {
 }
 
 // ORIGINAL: 0x0045CA00 ?on_selected@MainInterface@@QAEXHH@Z 0x0045CA00-0x0045CA34 FILE BYTE_EXACT
+// symbol    ?on_selected@MainInterface@@UAEXHH@Z
 // size      52 bytes
 // prototype void (__thiscall ?on_selected@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
 // callers   0   call targets   0

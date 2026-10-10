@@ -162,6 +162,7 @@ void QuayleWin::on_left_click(int x, int y) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00496540 ?on_selected@QuayleWin@@QAEXHH@Z 0x00496540-0x00496558 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496540; retained seed src/recovered/00496540.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// symbol    ?on_selected@QuayleWin@@UAEXHH@Z
 void QuayleWin::on_selected(int selection, int) {
   field_2144_ = selection;
   redraw();
@@ -398,10 +399,6 @@ void QuayleWin::on_redraw() {
   }
   strings.remove_all();
   StringAllocationHeap = saved_string_owner;
-}
-
-void QuayleWin::vslot_53(int selection, int unused) {
-  on_selected(selection, unused);
 }
 
 // Promoted historical seed; its superseded source path is Git provenance only.

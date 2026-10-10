@@ -107,7 +107,7 @@ class SocialWin : public GraphicWin, public SubInterface {
 
  public:
   // 0x004B17A0 ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z.
-  int on_button_text_draw(GraphicWin *window, char *text, int a4);
+  int on_button_text_draw(GraphicWin *window, char *text, int a4) override;
 
   // 0x004B19A0 ?on_redraw@SocialWin@@QAEXXZ.
   virtual void on_redraw();

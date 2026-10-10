@@ -84,7 +84,7 @@ class DipEdit : public GraphicWin {
   // into faction_index_ (`mov dword ptr [esi+0xa1c], ecx` at 0x004DB0BA) and
   // then seeds selected_target_ from it.
   void init(int faction_index);
-  void on_selected(int index);
+  void on_selected(int index) override;
   // The four checkbox-to-world writers, 0x004DA760/0x004DA7E0/0x004DA870/
   // 0x004DA900. Each asks the embedded CheckBox whether the item for one
   // diplomatic bit is checked (CheckBox::get_state_id) and settles that bit

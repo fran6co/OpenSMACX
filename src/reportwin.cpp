@@ -1798,6 +1798,7 @@ Purpose: The topic-panel selection callback. The image:
          0x59AC/0x59B0 remember (id, kind): the field pair this class
          declares past flatButtons1_.
 // ORIGINAL: 0x0049D490 ?on_selected@ReportWin@@QAEXHH@Z 0x0049D490-0x0049D535 FILE
+// symbol    ?on_selected@ReportWin@@UAEXHH@Z
 // size      165 bytes
 // prototype void (__thiscall ?on_selected@ReportWin@@QAEXHH@Z)(ReportWin* this, int, int)
 // callers   0   call targets   5

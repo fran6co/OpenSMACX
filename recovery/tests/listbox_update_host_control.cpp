@@ -64,7 +64,7 @@ struct Win {
         horz_min_ = a; horz_max_ = b; events.push_back(EVENT_HORZ_RANGE);
     }
     void set_horz_paging(int a) { horz_page_ = a; events.push_back(EVENT_HORZ_PAGE); }
-    void vslot_54(int selected_id) {
+    void on_selected(int selected_id) {
         ++vslot_calls_; vslot_id_ = selected_id; events.push_back(EVENT_PARENT_NOTIFY);
     }
     Win *parent_window() {

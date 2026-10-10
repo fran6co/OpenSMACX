@@ -1883,6 +1883,7 @@ void __cdecl help_create_link(char *out, char *label, char *id) {
 
 /*
 // ORIGINAL: 0x00432040 ?on_selected@Datalink@@QAEXH@Z 0x00432040-0x00432052 BYTE_EXACT
+// symbol    ?on_selected@Datalink@@UAEXH@Z
 // size      18 bytes
 // prototype void (__thiscall ?on_selected@Datalink@@QAEXH@Z)(Datalink* this, int)
 // callers   0   call targets   1

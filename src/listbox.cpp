@@ -515,12 +515,12 @@ void ListBox::set_selected_pos(int position, int notify) {
         if (notify != 0) {
             Win *parent = static_cast<GraphicWin *>(this)->parent_window();
             if (parent != 0) {
-                parent->vslot_54(Dialog::pos_to_id(position));
+                parent->on_selected(Dialog::pos_to_id(position));
             }
 
             parent = static_cast<GraphicWin *>(this)->parent_window();
             if (parent != 0) {
-                parent->vslot_53(Dialog::pos_to_id(position), 0);
+                parent->on_selected(Dialog::pos_to_id(position), 0);
             }
 
             parent = static_cast<GraphicWin *>(this)->parent_window();
@@ -1503,7 +1503,7 @@ int ListBox::update_changes() {
     {
         Win *target = window->parent_window();
         if (target != 0) {
-            target->vslot_54(dialog->get_selected_id());
+            target->on_selected(dialog->get_selected_id());
         }
     }
 

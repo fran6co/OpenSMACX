@@ -108,7 +108,7 @@ class ReportWin : public GraphicWin {
   // void(int, int). The topic-panel selection callback: the id below 0x400
   // is a base id, above it a tech id; the pair at 0x59AC/0x59B0 remembers
   // the selection kind. The second argument is unused (ret 8).
-  void on_selected(int selection_id, int);
+  void on_selected(int selection_id, int) override;
 
   // Storage the image proves is here: its own methods reach 0xFABC.
   // Extent only - this class carries no size assertion, and the bound is a floor.

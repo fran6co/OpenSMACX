@@ -121,7 +121,7 @@ class CouncWin : public GraphicWin, public SubInterface {
   // PAUGraphicWin@@PADH, per
   // ?on_button_text_draw@CouncWin@@QAEHPAUGraphicWin@@PADH@Z. 0x00426F90 is
   // `xor eax, eax; ret 0xc` and touches none of the three.
-  int on_button_text_draw(::GraphicWin *, char *, int);
+  int on_button_text_draw(::GraphicWin *, char *, int) override;
 
   // Storage the image proves is here: its own methods reach 0xA38.
   // Extent only - this class carries no size assertion, and the bound is a floor.

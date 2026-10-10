@@ -1969,7 +1969,7 @@ void SocialWin::on_mouse_move(int a1, int a2) {
  *          buttons only (0x11..0x1a), with the separator slot skipped.
 // ORIGINAL: 0x004B17A0 ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z 0x004B17A0-0x004B1991 FILE
 // RECOVERY_BINDING: v1 {"reason":"Compare the displayed effect against the selected faction's pending SocialEffect member rather than an original-address word view. Keep the existing selector and unchecked index behavior.","evidence":["pinned:0x004B18DA reads [edx*4+0x0096CC2C] with the selected faction's 2099-dword PlayerData stride and effect index","source:PlayersData base 0x0096C9E0,PlayerData stride 0x20CC,soc_effect_pending+0x24C,SocialEffect::values_+0x0"]}
-// symbol    ?on_button_text_draw@SocialWin@@QAEHPAVGraphicWin@@PADH@Z
+// symbol    ?on_button_text_draw@SocialWin@@UAEHPAVGraphicWin@@PADH@Z
 // TRIED: strlen/strcat named plainly get inlined by /O2 (fixed via the nullary
 //        _strlen/_strcat function-pointer lever, sim 0.71->0.90); remaining
 //        divergence at #17 is this/a1 register-allocation (esi vs edi) not

@@ -38,7 +38,7 @@ class AlphaSave : public GraphicWin {
   // virtual, so these cannot use those names without changing the vtable.
   void show_save_window(int mode);
   void hide_save_window();
-  void on_selected(int selection_id);
+  void on_selected(int selection_id) override;
   char *save();
   char *load();
   void init();

@@ -65,7 +65,7 @@ class Datalink : public GraphicWin, public SubInterface {
  public:
   void hide();
   void show(int visible);
-  void on_selected(int index);
+  void on_selected(int index) override;
   // 0x0042BF10: restore the entry panel and dispatch its selected topic.
   void draw_entry();
   Datalink();

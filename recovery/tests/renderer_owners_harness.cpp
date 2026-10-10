@@ -124,7 +124,7 @@ struct Win {
   bool suppress_focus;
   Win() : suppress_focus(false) {}
   virtual ~Win() {}
-  virtual int vslot_05(int, int, int) { return 0; }
+  virtual int on_button_text_draw(GraphicWin *, char *, int) { return 0; }
   bool has_dialog_focus_flag() const { return suppress_focus; }
 };
 struct BaseButton : GraphicWin {
