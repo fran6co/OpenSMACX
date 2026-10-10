@@ -1,0 +1,45 @@
+{
+  "event_id": "bd4e81c4abf69b54bd5799b4234f9cb5fc6f3c78aa75f1cb7bd12ec56b932476",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Source group includes only free helper identities; explicitly authorize all five class method identities before isolated recovery. No baseline reset or annotation changes.",
+      "Pinned draw_stack43DC0C uses one game_state dword snapshot then AL40/AH10 tests; retain snapshot, not two fresh reads.",
+      "Independent pinned select_special ability cost_factor walk advances1C through29 entries, signed int16 prerequisite, retains full41slot unsafe scan and original row construction order."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4444448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4445456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4422640,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4447568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4435056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "include-five-designwin-method-identities-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:designwin-fixed-owner-flow-oct10"
+}

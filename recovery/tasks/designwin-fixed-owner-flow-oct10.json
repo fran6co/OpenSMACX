@@ -1,0 +1,36 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "44b4b5ee7b67e9a0b9bcd21c429229529b396863",
+  "editable_files": [
+    "recovery/tests/test_designwin_fixed_owner_flow_oct10.py",
+    "src/designwin.cpp",
+    "src/designwin.h"
+  ],
+  "evidence": [
+    "Pinned design_it437E5F/437F83/438051/43827A dynamically indexes Player.rule_flags by active faction; current faction0 reads are wrong",
+    "Pinned draw_flash43E239 steps1C through29 RulesAbility abbreviation fields; select_special cost_factor loop steps1C through29 rows, not39",
+    "Established owners: GameDataStateStorage game_state9A64C0, Weapon offense94AE68, InterfaceBoxStyles9 mask78D6B0, TextColourTable indices82/83 and14/15; verify original snapshot/read ordering",
+    "Original select_special41dword scans atPlayer+510/+530 confirmed pinned43AF84-AFAC; retain unresolved unsafe scan and its evidence, do not invent41entry members or silently normalize bounds"
+  ],
+  "intent": "Recover five DesignWin bodies against pinned behavior using actual game-state, player, weapon, box-style, palette and ability owners; correct demonstrated faction-index and ability-stride/bound mistranslations, preserving original quirks",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5782704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5782736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5783088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "designwin-fixed-owner-flow-oct10"
+}
