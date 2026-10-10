@@ -2693,7 +2693,7 @@ int BasePop::init(int flags, long heap_base) {
 }
 
 
-// ORIGINAL: 0x00604300 ?on_button_clicked@BasePop@@QAEXH@Z 0x00604300-0x006043C8 FILE
+// ORIGINAL: 0x00604300 ?on_button_clicked@BasePop@@QAEXH@Z 0x00604300-0x006043CA FILE
 // symbol    ?on_button_clicked@BasePop@@UAEXH@Z
 //           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
 //           own names (on_button_clicked / on_button_toggled): the body is

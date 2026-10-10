@@ -2968,7 +2968,7 @@ Purpose: List the terraforming options, ids 90000 upward.
 
          The goto shape is the image's: the suffix append and the `item` call
          share one exit, so the "no ids" case still files the name.
-// ORIGINAL: 0x0042BAB0 ?set_cat_terraform@Datalink@@QAEXXZ 0x0042BAB0-0x0042BCA4 FILE
+// ORIGINAL: 0x0042BAB0 ?set_cat_terraform@Datalink@@QAEXXZ 0x0042BAB0-0x0042BCB1 FILE
 // MISMATCH 14/150 against our 159, first divergence at 8. TRIED: the second entry's skip spelled as the image's own pair of compares on ids 90036/90037 and as a `continue` - the two produce the same 159.
 // size      513 bytes
 // prototype void (__thiscall ?set_cat_terraform@Datalink@@QAEXXZ)(Datalink* this)

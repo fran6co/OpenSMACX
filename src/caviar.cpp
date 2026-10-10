@@ -6265,7 +6265,7 @@ Purpose: Install a shadow table into the created render record: the record's
          own 0x54 slot names the 0x100-byte block, and the caller's bytes are
          copied over it. 7 means no record, 0x10 means the record has no
          shadow table.
-// ORIGINAL: 0x00618430 ?set_shadow_table@Caviar@@QAEHPAE@Z 0x00618430-0x00618467
+// ORIGINAL: 0x00618430 ?set_shadow_table@Caviar@@QAEHPAE@Z 0x00618430-0x00618468 BYTE_EXACT
 // symbol    ?set_shadow_table@Caviar@@QAEHPAE@Z
 // size      55 bytes
 // prototype int (__thiscall ?set_shadow_table@Caviar@@QAEHPAE@Z)(Caviar* this, unsigned char*)

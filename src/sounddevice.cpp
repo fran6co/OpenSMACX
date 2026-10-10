@@ -861,7 +861,7 @@ int Midi_Device::release() {
     return 0;
 }
 
-// ORIGINAL: 0x004C59A0 ?create_device@Wave_In_Device@@QAEHK@Z 0x004C59A0-0x004C59C5 BYTE_EXACT
+// ORIGINAL: 0x004C59A0 ?create_device@Wave_In_Device@@QAEHK@Z 0x004C59A0-0x004C59D7 BYTE_EXACT
 // symbol    ?create_device@Wave_In_Device@@UAEHK@Z
 int Wave_In_Device::create_device(unsigned long flags) {
     void **slot = reinterpret_cast<void **>(&device_14_);

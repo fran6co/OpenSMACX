@@ -5,7 +5,7 @@ uninitialized stack contents, linked preservation, or full-game acceptance.
 """
 import shutil
 import subprocess
-from dataclasses import fields
+from dataclasses import fields, replace
 from pathlib import Path
 
 import pytest
@@ -42,6 +42,14 @@ def test_original_identities_and_historical_obligations_are_unchanged():
     assert write(current, read_text(current, "src/netwin.cpp")) == current
     for address, row in rows.items():
         old = old_rows[address]
+        # Later bounded tail closure changes only these three complete extents;
+        # its production recorder freshly banks new_chat. Keep every other
+        # metadata field and all historical lessons strictly baseline-identical.
+        tail_ends = {0x481DA0: 0x481E8D, 0x483190: 0x483234, 0x483420: 0x4834C5}
+        if address in tail_ends:
+            old = replace(old, image_spans=((address, tail_ends[address]),))
+        if address == 0x483420:
+            old = replace(old, byte_exact=True, semantic=False)
         for field in fields(row):
             if field.name not in {"line", "region", "origin"}:
                 assert getattr(row, field.name) == getattr(old, field.name), (

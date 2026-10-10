@@ -554,7 +554,7 @@ Purpose: Copy one faction record's name/title block into the lobby row
          members and the leader-gender byte in tail_[0]. Slot -1 instead
          re-reads just noun_faction_ through the string table, for the row
          the scenario file's own faction entry describes.
-// ORIGINAL: 0x00481DA0 ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z 0x00481DA0-0x00481E87 FILE
+// ORIGINAL: 0x00481DA0 ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z 0x00481DA0-0x00481E8D FILE
 // symbol    ?fill_player@NetWin@@QAEXPAUNetWinLobbyRow@@H@Z
 // size      237 bytes
 // prototype void (__thiscall ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z)(NetWin* this, PlayerData*, int)
@@ -2718,7 +2718,7 @@ Purpose: The modal pump's callback: drain the daemon's receive queue (one
          virtual so the waiting panel repaints, and - if the readiness scan
          has not already passed - walk the static faction records looking for
          an empty slot and answer whether the wait should end.
-// ORIGINAL: 0x00483190 ?modal_callback@NetWin@@QAEHXZ 0x00483190-0x00483233 FILE
+// ORIGINAL: 0x00483190 ?modal_callback@NetWin@@QAEHXZ 0x00483190-0x00483234 FILE
 // size      164 bytes
 // prototype int (__thiscall ?modal_callback@NetWin@@QAEHXZ)(NetWin* this)
 // callers   2   call targets   2
@@ -2896,7 +2896,7 @@ int NetWin::on_key_down(int key) {
 Purpose: Format one chat line and hand it to the message list: the sender's
          name (through the daemon's name table, upper-cased in place), then
          ": ", a space, and the message text.
-// ORIGINAL: 0x00483420 ?new_chat@NetWin@@QAEXPADH@Z 0x00483420-0x004834C4 FILE
+// ORIGINAL: 0x00483420 ?new_chat@NetWin@@QAEXPADH@Z 0x00483420-0x004834C5 FILE BYTE_EXACT
 // size      165 bytes
 // prototype void (__thiscall ?new_chat@NetWin@@QAEXPADH@Z)(NetWin* this, char*, int)
 // callers   2   call targets   6

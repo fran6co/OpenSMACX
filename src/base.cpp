@@ -1254,7 +1254,7 @@ Purpose: Sum one base's terrain yields into the selected Base's intake_2
          passes' result into BaseCurrent's nutrient/mineral/energy/unused
          intake_2 word, returning the sum.
 
-// ORIGINAL: 0x004E7E50 sub_4e7e50 0x004E7E50-0x004E7F63 FILE
+// ORIGINAL: 0x004E7E50 sub_4e7e50 0x004E7E50-0x004E7F64 FILE
 // RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout (x, y, faction, state and contiguous intake_2 words), Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","The function's fourth pass deliberately clears TileYieldRestricted; the body and original pass order are carried unchanged.","The identity remains the unmangled global sub_4e7e50; no original class name is inferred from its Base dataflow."],"reason":"Place the complete existing base-radius yield routine beside its genuine Base/Map dependencies without renaming it, changing pass order, or normalizing the original state updates."}
 // TRIED: various expression orderings for the x/y base+offset sums and the wrap-around guard placement all keep the divergence at the first instructions (register allocation for edx/ecx/a1 differs from the original's push-ebx/push-esi-before-movsx order).
 // size      276 bytes

@@ -583,7 +583,7 @@ int EditBox::init_with_font(Font *font, int x, int y, int width,
 /*
 Purpose: Construct the GraphicWin base and trailing Time member, then publish
          the EditBox field defaults. C++ owns base/member lifetime and tables.
-// ORIGINAL: 0x00614E50 ??0EditBox@@QAE@XZ 0x00614E50-0x00614F2B
+// ORIGINAL: 0x00614E50 ??0EditBox@@QAE@XZ 0x00614E50-0x00614F2C BYTE_EXACT
 // symbol    ??0EditBox@@QAE@XZ
 // size      220 bytes
 // prototype void (__thiscall ??0EditBox@@QAE@XZ)(EditBox* this)
