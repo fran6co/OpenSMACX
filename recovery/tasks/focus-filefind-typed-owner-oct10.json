@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "author": "framework-coordinator",
+  "base_revision": "ee84ce09c",
+  "intent": "Replace the EditBox focus fastcall scaffold with an ordinary source-owned class member, and filefind_init raw BasePop state access with existing typed APIs; preserve original focus and retry behavior.",
+  "editable_files": [
+    "src/editbox.cpp",
+    "src/editbox.h",
+    "src/general.cpp",
+    "recovery/tests/test_focus_and_filefind_typed_owner_oct10.py"
+  ],
+  "subjects": [
+    {
+      "address": 6381984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6292480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Pinned6161A0..6161CA saves ECX, callsWin::is_dialog_focus twice at5F2CA0, reloadsreceiver+C4 only after firstcall; zero firstresult returns0, absentparent returns1, presentparentzero returns0. Existing source catalogue namesEditBox::UNK2; this is ownership hint, not original debug spelling or evidence of callers.",
+    "EditBox publicly derivesGraphicWin, which derivesWin atzero; Win declareswin_parent_ atC4 andis_dialog_focus. Descriptive member nameis_dialog_focus_chain is currentsource interpretation. Nonvirtual declaration preserves classlayout and slotordering; no allocation/caller/lifetime claim inferred.",
+    "General600400 owns aBasePop* allocation hook return type. BasePop already exposesinput_poll_state() forfield3100. Preserve original separate startreturn/inputstate tests, unchanged delete paths and unsafe/error behavior.",
+    "Capture fresh wholeEditBox andGeneral baselines underleases; retain native symbol-writer publication and complete annotations/history. Require complete fresh build/link, neighbor measurements, actual product host controls includingshortcircuit/liveread/nullparent and retrycases, identity/claimcontinuity and independentreview. No claimdemotion/bytegrant orfullgameacceptance."
+  ]
+}
