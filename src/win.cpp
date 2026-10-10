@@ -7949,7 +7949,7 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
     int result = 0;
     if (WinFocusWindow == this) {
         for (;;) {
-            int r = this->vslot_59();
+            int r = this->on_modal();
             if (r == 0) {
                 break;
             }

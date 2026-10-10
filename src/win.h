@@ -719,7 +719,9 @@ class Win : public AutoSound {
   virtual void on_double_clicked(int, int) {}  // slot55, original0x00404260
   virtual int set_modal(int flag, int (*poll)(), Win *owner);  // slot 57  0x005EE190
   virtual void release_modal();  // slot 58  0x005EE280
-  virtual int vslot_59() { return 1; }  // 0x00406840
+  // The modal loop calls slot 59 (+0xEC) and tests the full EAX result.
+  // BasePop and AlphaMovie provide the original continuation policies.
+  virtual int on_modal() { return 1; }  // 0x00406840
   // Border-paint notification receives the source Buffer and quadrant.
   virtual void on_post_redraw_nc_buffer(Buffer * = 0, int = 0) {}  // 0x00404260
   // Slot 61 (0xF4): ordinary windows have no GraphicWin surface.

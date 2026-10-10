@@ -3028,13 +3028,16 @@ void BasePop::on_left_down(int x, int y) {
 }
 
 // ORIGINAL: 0x00604A80 ?on_modal@BasePop@@QAAHXZ 0x00604A80-0x00604A8E BYTE_EXACT
-// symbol    ?on_modal@BasePop@@SAHXZ
+// RECOVERY_BINDING: v1 {"reason":"Recover the real slot-59 modal continuation override, inherited by Popup and TutWin; absence of direct callers or receiver field reads does not imply a static function.","evidence":["pinned SHA25601901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: Win::set_modal 0x005EE233 calls primary vtable+0xEC and zero-tests EAX","constructor-installed primary tables BasePop0x006698D4 Popup0x006695C8 TutWin0x0066DD84 select0x00604A80 at slot59","shared int return preserves the source Win/BasePop full-EAX continuation API; canonical0/1 alone does not prove bool; historical QAA catalogue and former static emitted spelling remain historical evidence"]}
+// symbol    ?on_modal@BasePop@@UAEHXZ
 // size      14 bytes
 // prototype
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// Historical hypothesis below is retained, but REFUTED by the constructor-
+// installed primary tables and the indirect modal-loop call: this is virtual.
 // LEVER: STATIC, like set_def_ok_text - the QAA the catalogue spells puts a
 //         receiver on the stack that nothing passes (no caller at all), and
 //         the body reads only BasePopFalloutFlag.

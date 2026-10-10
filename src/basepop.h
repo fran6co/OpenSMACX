@@ -235,7 +235,7 @@ class BasePop : public GraphicWin {
   static MEASURED int __cdecl set_def_ok_text(LPSTR text);
   static MEASURED int __cdecl set_def_cancel_text(LPSTR text);
   // 0x006050F0, homed from 006050f0.cpp. `static` for the same reason
-  // fallout() and on_modal() are: the catalogued `QAAX` names a __cdecl
+  // fallout() is: the catalogued `QAAX` names a __cdecl
   // MEMBER, so its hidden `this` would sit at [esp+0x18] past the five
   // real arguments - and the image reads its five from [esp+4]..[esp+0x14]
   // and never touches a sixth slot. No receiver exists to pass.
@@ -257,10 +257,9 @@ class BasePop : public GraphicWin {
 
  public:
   static void fallout();
-  // EVIDENCE-FREE as a name is NOT the case here - the body is one load of
-  // the fallout flag - but the catalogue's QAA still names a receiver
-  // nothing passes, so it is static like fallout() and set_def_ok_text.
-  static int on_modal();  // 0x00604A80
+  // Primary slot 59 in BasePop, Popup and TutWin selects 0x00604A80.
+  // Win::set_modal calls it indirectly; no direct caller is required.
+  int on_modal() override;  // 0x00604A80
 
   // `static`, because the receiver its catalogued name claims is a receiver
   // NOTHING PASSES AND NOTHING READS. The body at 0x00604E40 is a factory -

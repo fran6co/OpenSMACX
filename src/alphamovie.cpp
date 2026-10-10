@@ -76,9 +76,13 @@ int MCIVideo::is_playing() {
 
 // ORIGINAL: 0x004041C0 ?on_modal@AlphaMovie@@QAE_NXZ 0x004041C0-0x004041D2
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x004041C0-0x004041D2 calls 0x00600320 through this+0xA14, then normalizes with neg/sbb/neg", "source:src/alphamovie.h AlphaMovie has MCIVideo mciVideo_ at +0xA14", "source:src/leaf_recoveries.cpp historical metadata: 18-byte body; prototype bool (__thiscall ?on_modal@AlphaMovie@@QAE_NXZ)(AlphaMovie* this); caller count 0; one direct call target 0x00600320; flags hidden;sp_ready;purged_ok; return value 1 when playing, 0 otherwise", "pinned behavior note: the original neg/sbb/neg normalizes any nonzero callee result to one; the callee currently masks bit 0, but the normalization remains explicit"], "reason": "Move the original AlphaMovie::on_modal body from the transitional leaf into the real AlphaMovie owner; use its typed embedded MCIVideo and preserve the native nonzero-to-bool normalization."}
-// symbol    ?on_modal@AlphaMovie@@QAE_NXZ
+// symbol    ?on_modal@AlphaMovie@@UAEHXZ
 // kind      game
-bool AlphaMovie::on_modal() {
+// Primary table 0x00669458, installed by the constructor at 0x00404049,
+// selects this body at +0xEC. Win::set_modal tests its full EAX result.
+// The shared int virtual API retains the original normalized 0/1 result;
+// the historical catalogue's bool/nonvirtual spelling is not debug-type proof.
+int AlphaMovie::on_modal() {
     return mciVideo_.is_playing() != 0;
 }
 

@@ -897,7 +897,7 @@ void MultiWin::init() {
         flat_button2_.init(label_get(0x110), 0, 10, top,
                            sprites1_[0].width(), button_height,
                            static_cast<Win *>(this), 0);
-        flat_button2_.vslot_59();
+        flat_button2_.on_modal();
         flat_button2_.set_report_icons(&sprites1_[0], &sprites1_[1], &sprites1_[2]);
         flat_button2_.set_slice_colours(0x65, 0x41, 0x41);
         flat_button2_.redraw();
@@ -910,7 +910,7 @@ void MultiWin::init() {
         flat_button1_.init(label_get(0x1FA), 1, 10, top,
                            sprites1_[0].width(), button_height,
                            static_cast<Win *>(this), 0);
-        flat_button1_.vslot_59();
+        flat_button1_.on_modal();
         flat_button1_.set_report_icons(&sprites1_[0], &sprites1_[1], &sprites1_[2]);
         flat_button1_.set_slice_colours(0x65, 0x41, 0x41);
         flat_button1_.redraw();

@@ -106,7 +106,8 @@ class AlphaMovie : public GraphicWin {
   // alphamovie.cpp from the compatible seed and routed through its embedded
   // MCIVideo member. amovie_project constructs a real AlphaMovie receiver.
   int exec(char *movie_name);
-  bool on_modal();
+  // Original primary slot 59 selects this movie continuation policy.
+  int on_modal() override;
   // 0x00404310 closes the MCI stream and GraphicWin base in the body;
   // the compiler then destroys the embedded MCIVideo and base naturally.
   ~AlphaMovie();

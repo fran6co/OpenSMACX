@@ -99,7 +99,7 @@ struct FlatButton : Win {
     int init(const char *, int button_id, int, int, int, int, Win *, int) {
         ++init_calls; id=button_id; return 0;
     }
-    int vslot_59() { ++virtual_calls; return 0; }
+    int on_modal() { ++virtual_calls; return 0; }
     void set_report_icons(Sprite *a, Sprite *b, Sprite *c) { icons[0]=a; icons[1]=b; icons[2]=c; }
     void set_slice_colours(int, int, int) {}
     void redraw() { ++redraw_calls; }

@@ -28,7 +28,7 @@ struct Win {
     int child_count_=0,shown=0,captured=0,released=0;
     virtual void on_lose_mouse_capture(){++captured;capture_receiver=this;events[event_count++]=1;}
     void show(int value){assert(value==0);show_receiver[shown++]=this;events[event_count++]=2;}
-    int vslot_59(){events[event_count++]=6;return polls++<max_polls;}
+    virtual int on_modal(){events[event_count++]=6;return polls++<max_polls;}
     virtual void release_modal();
     int set_modal(int,int (*)(),Win *);
     void bring_child_to_top(Win *);
