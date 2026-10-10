@@ -1,0 +1,35 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "e5ff5e5c6390800d27f226520fd6498114b549e6",
+  "editable_files": [
+    "src/console.cpp",
+    "recovery/tests/test_console_faction_picker_owner_oct10.py"
+  ],
+  "evidence": [
+    "Pinned custom_my_faction 4DD1B0 uses seven playable Player rows of stride59C: noun2E4, gender2FC, plurality300. Current int-pointer stepping and one-past member address obscure the already source-owned Player array.",
+    "Fresh pinned recheck: outer Popup constructor4DD1D5, save ConsoleGlobal faction in EBX4DD1FC, inner constructor4DD202, modal state6 store4DD227 before start4DD231(value=-1), populate seven rows, conditional saved nonnegative selection4DD273, exec4DD27D. Preserve callback-sensitive saved snapshot and publication stage timing; current startup selection is not equivalent.",
+    "Pinned editor_reload and editor_eliminate publish plurality before gender; adjacent Console selection methods do not all use that order. Preserve each method's instruction-derived sequencing independently.",
+    "Actual-body host controls and independent pin review are required; no safety fixes, array bounds normalization, historical claim demotion, guessed layout or full-game acceptance."
+  ],
+  "intent": "Recover typed faction selection and pinned popup/default publication sequencing in three Console methods, preserving original branches and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5099952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5112464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5113312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-faction-picker-owner-oct10"
+}
