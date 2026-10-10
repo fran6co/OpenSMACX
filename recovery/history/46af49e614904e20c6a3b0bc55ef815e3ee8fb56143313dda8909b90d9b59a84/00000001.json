@@ -1,0 +1,30 @@
+{
+  "event_id": "c51ed542de4f063e52dd131665f60f264f264483135558a7dc24c7a9e0e60e07",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.cpp"
+    ],
+    "evidence": [
+      "Fresh physical build-qaqywyyb console.cpp COFF establishes _$E21/_$E19 belong to ConsoleGlobal, not five-Time group. _$E31 initializes Blink,Blink2,Line,Go,Turn and registers _$E29, which destroys reverse order. Authorize native current-symbol correction only for original50E9B0/50E9F0; retain all ORIGINAL spans, historical BYTE_EXACT obligations and findings, all program tokens and task baseline. Re-measure affected claims; no claim demotion or automatic acceptance authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5302704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5302768,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "console-timer-symbol-correction-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:application-scalar-global-lifetimes-oct10"
+}
