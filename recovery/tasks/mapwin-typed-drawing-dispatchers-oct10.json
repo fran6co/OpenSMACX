@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "task_id": "mapwin-typed-drawing-dispatchers-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover the paired free drawing dispatchers through the existing real window-pointer array",
+  "base_revision": "4d8865ed757e17348bf60873e1591e3d08cfa27b",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4632976},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4632304}
+  ],
+  "editable_files": ["src/mapwin.cpp", "recovery/tests/test_mapwin_typed_drawing_dispatchers_oct10.py"],
+  "evidence": [
+    "Source-owned MapWinTable storage is bounded7D3C3C..7D3C5C, declared MapWinSlots[8]. Free draw_map46B190 and draw_radius46AEF0 walk precisely this array, admit nullable slot zero without reading its activity flag, gate other receivers on1DD74 and call genuine MapWin methods. Existing inline draw_tile/draw_tiles already use typed indexed access. Integer-address walks are a historical matching spelling, not a distinct storage model.",
+    "Replace only the paired free dispatcher walks; retain per-slot live reloads, null-first checks, slot-zero exemption, volatile activity loads, direct member calls and all arguments/order. Callback mutation of future slots must remain observable. Game allocation and other consumers remain outside scope. Preserve all original identities/spans/claims/lessons. Temporary matching regression is authorized for this bounded typed migration without demotion or new exact claims. Complete native TU before/current measurement, actual complete-definition host controls with callback mutation and damages, fresh application build/link, mapping/reference checks and independent review precede manual coordinator commit; none establishes full-game acceptance or increases function count."
+  ]
+}
