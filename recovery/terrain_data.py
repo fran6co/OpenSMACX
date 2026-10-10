@@ -58,7 +58,10 @@ def _terrain_initializer(root: Path, original: Path, output: Path, *,
                          size: int, signed_pairs: bool = False,
                          unsigned_words: bool = False,
                          accessed_window: bool = False,
-                         require_start_only: bool = False) -> None:
+                         require_start_only: bool = False,
+                         signed_bytes: bool = False) -> None:
+    if signed_bytes and (signed_pairs or unsigned_words):
+        raise ValueError('signed byte initializer cannot use word or pair representation')
     if unsigned_words and (signed_pairs or size % 4):
         raise ValueError('altitude initializer requires complete unsigned words')
     root = root.resolve()
@@ -103,6 +106,10 @@ def _terrain_initializer(root: Path, original: Path, output: Path, *,
         signed = [value if value < 128 else value - 256 for value in values]
         rows = ['{%d, %d},' % (signed[i], signed[i + 1])
                 for i in range(0, len(signed), 2)]
+    elif signed_bytes:
+        signed = [value if value < 128 else value - 256 for value in values]
+        rows = [', '.join(str(value) for value in signed[i:i + 16]) + ','
+                for i in range(0, len(signed), 16)]
     else:
         rows = [', '.join(str(value) for value in values[i:i + 16]) + ','
                 for i in range(0, len(values), 16)]
@@ -237,6 +244,24 @@ def project_initializers(root: Path, original: Path, directory: Path) -> None:
         root, original, directory / 'graphicwin_palette_polynomials.inc')
     caviar_projection_rows_initializer(
         root, original, directory / 'caviar_angle_rows.inc')
+    for filename in _POINT_LIGHT_TABLES:
+        point_light_initializer(root, original, directory / filename)
+
+
+_POINT_LIGHT_TABLES = {
+    'terrain_point_light_bit1.inc': '_AltLightBit1',
+    'terrain_point_light_bit2.inc': '_AltLightBit2',
+}
+
+
+def point_light_initializer(root: Path, original: Path, output: Path) -> None:
+    symbol = _POINT_LIGHT_TABLES.get(output.name)
+    if symbol is None:
+        raise ValueError('unknown point-light initializer')
+    _terrain_initializer(root, original, output, output_name=output.name,
+                         unit='src/mapwin.cpp', symbol=symbol, size=113,
+                         accessed_window=True, require_start_only=True,
+                         signed_bytes=True)
 
 
 def terrain_direction_initializer(root: Path, original: Path, output: Path) -> None:

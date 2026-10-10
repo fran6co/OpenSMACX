@@ -27,6 +27,12 @@ is no zero/stale fallback or runtime executable-address dependency. Preparation
 retains and fingerprints its generated header for measurements and overlays.
 The initializer is disposable data, never a matching or acceptance report.
 
+MapWin's two file-backed point-light tables use this same preparation hook
+for signed 113-byte accessed windows. The third point-light table owns mutable
+loader-zero storage. Their start-only source bindings do not prove complete
+original allocation bounds or the absence of indirect writers; original
+indexing remains unchecked.
+
 GraphicWin's palette-pattern row blit uses the same hook for its writable
 33-word accessed window at `0x00696B6C`, emitted into
 `graphicwin_palette_polynomials.inc` in that ignored directory. Its source

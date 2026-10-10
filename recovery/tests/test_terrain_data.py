@@ -22,6 +22,33 @@ ROOT = Path(__file__).resolve().parents[2]
 PAYLOAD = bytes((index * 37 + 19) % 256 for index in range(53))
 
 
+@pytest.mark.parametrize('bit', [1, 2])
+def test_point_light_signed_start_only_window(tmp_path, hook, bit):
+    payload = bytes((index * 37 + 19) % 256 for index in range(113))
+    root, original, unused = project(
+        tmp_path, data_image(payload + b'neighbor'), size=113,
+        symbol=f'_AltLightBit{bit}', unit='mapwin.cpp', bounded=False)
+    output = unused.with_name(f'terrain_point_light_bit{bit}.inc')
+    hook.point_light_initializer(root, original, output)
+    values = [int(x) for x in re.findall(r'-?\d+', output.read_text().split('\n', 1)[1])]
+    assert len(values) == 113 and bytes(x & 255 for x in values) == payload
+    assert min(values) < 0 and max(values) > 0
+    before = output.stat().st_mtime_ns
+    hook.point_light_initializer(root, original, output)
+    assert output.stat().st_mtime_ns == before
+    original.write_bytes(data_image(bytes(113)))
+    with pytest.raises(ValueError):
+        hook.point_light_initializer(root, original, output)
+
+
+def test_point_light_refuses_allocation_extent_claim(tmp_path, hook):
+    root, original, unused = project(
+        tmp_path, data_image(bytes(113)), size=113,
+        symbol='_AltLightBit1', unit='mapwin.cpp', bounded=True)
+    with pytest.raises(ValueError, match='start-only'):
+        hook.point_light_initializer(root, original, unused.with_name('terrain_point_light_bit1.inc'))
+
+
 @pytest.fixture
 def hook():
     spec = importlib.util.spec_from_file_location(

@@ -8,6 +8,7 @@
     "recovery/terrain_data.py",
     "recovery/README.md",
     "recovery/tests/test_terrain_data.py",
+    "recovery/tests/test_movie_decoder_preparation_hook.py",
     "recovery/tests/test_mapwin_point_light_storage_oct10.py"
   ],
   "subjects": [

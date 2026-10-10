@@ -2704,12 +2704,24 @@ void MapWin::on_lose_mouse_capture() {
 // tile's `bit2` dword - 0x1, 0x2 and 0x200 - and nothing else in the tree
 // names what those flags mean, so the names carry the selecting bit rather
 // than a guessed terrain class. 0x00685A24 and 0x00685B60 are in the file
-// image's .data and their bytes read as small signed deltas (-3..+3); the
+// image's .data and their bytes read as small signed deltas; the
 // third, 0x007F6750, is past the bytes the file carries and is zero until
 // something fills it.
-static const signed char *const AltLightBit1 = (const signed char *)0x00685A24;
-static const signed char *const AltLightBit2 = (const signed char *)0x00685B60;
-static const signed char *const AltLightBit200 = (const signed char *)0x007F6750;
+// The 49 declared direction rows select bytes0..112. These arrays own that
+// accessed window only; the original allocation bounds remain unproved.
+// Initializers are pinned ignored derivatives, not runtime image aliases.
+// RECOVERY_OBJECT: v1 0x00685A24 _AltLightBit1
+static const signed char AltLightBit1[113] = {
+#include "terrain_point_light_bit1.inc"
+};
+// RECOVERY_OBJECT: v1 0x00685B60 _AltLightBit2
+static const signed char AltLightBit2[113] = {
+#include "terrain_point_light_bit2.inc"
+};
+// Keep loader-zero storage mutable: absence of observed direct writers is
+// not proof that computed or indirect writes never occur.
+// RECOVERY_OBJECT: v1 0x007F6750 _AltLightBit200
+static signed char AltLightBit200[113];
 
 // Four mutable ocean-shade quads, shared across terrain calls. The renderer
 // publishes each cell before passing these same slices to Texture painters,

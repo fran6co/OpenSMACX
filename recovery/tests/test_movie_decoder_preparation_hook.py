@@ -43,11 +43,15 @@ def test_existing_terrain_hook_retains_all_calls_and_project_hook_extends_it() -
     functions["graphicwin_palette_initializer"] = lambda *args: calls.append("graphicwin")
     functions["caviar_projection_rows_initializer"] = (
         lambda root, original, output: calls.append(("caviar", output)))
+    functions["point_light_initializer"] = (
+        lambda root, original, output: calls.append(("point_light", output)))
     namespace["project_initializers"](Path("/irrelevant"), Path("/irrelevant"),
                                        Path("/irrelevant"))
     assert calls == [
         "terrain", "decoder", "graphicwin",
         ("caviar", Path("/irrelevant") / "caviar_angle_rows.inc"),
+        ("point_light", Path("/irrelevant") / "terrain_point_light_bit1.inc"),
+        ("point_light", Path("/irrelevant") / "terrain_point_light_bit2.inc"),
     ]
 
 
