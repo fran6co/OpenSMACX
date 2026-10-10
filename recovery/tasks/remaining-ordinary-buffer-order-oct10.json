@@ -1,0 +1,153 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "56f8e7cbd7500dbaa053b36b762c858f3f807009",
+  "editable_files": [
+    "src/buffer.cpp",
+    "src/console.cpp",
+    "src/textindex.cpp",
+    "src/wave_device.cpp"
+  ],
+  "evidence": [
+    "Root independently decoded complete exclusive original spans and registered cleanup targets for g_VEHDRAW_BUFFER, WaveDeviceGlobal, ConsoleTimer and four-element TxtIndex. Physical COFF from complete build-r8zs21ee correlates all four source owners and helper closure relocations. Authorize eight native unclaimed FILE bindings, not handwritten callbacks.",
+    "Pinned CRT slots prove same-owner Buffer order: PCX44CC20, 51-array44CF70, middle44D140, vehicle4BF710, ten special-text records5D7170, Sprite5D71D0, shared Buffer5E37B0. Current physical/source order places special-text records and Sprite before PCX. Authorize moving complete real definition/evidence blocks into pinned seven-object order, preserving the special-text byte guard and all original identities, useful findings and claims. This relative order does not prove historical translation-unit boundaries or complete cross-TU order.",
+    "Native current-symbol overrides for existing affected Buffer lifetime identities may change only after fresh physical resulting COFF evidence. Keep immutable ORIGINAL names/spans/claims. Missing start-only object bindings for g_VEHDRAW_BUFFER8CC298, WaveDeviceGlobal90D978 and TxtIndex9B7D08 require native guarded publication and independently correlated receiver evidence; no guessed allocation extents.",
+    "Guarded Sprite/Win/RadioButton/CheckBox/FileWin/Caviar lifetimes remain excluded from new binding admission until faithful guard behavior is recovered. Five native VC6 export/inline source-form controls do not synthesize the original teardown guard; do not invent lazy initialization, a new guard owner or class-wide policy changes from those controls.",
+    "Require fresh prior/current four-owner measurements, complete identity/object/claim continuity, full application build/link, physical generated-symbol and selected linked same-owner ordering checks, independent actual source review and relevant regression controls before source integration. Preserve structural changes and matching obligations through reviewed regressions, without claim demotion. Complete linked preservation, original guards, cross-TU CRT order and runtime/game acceptance remain unfinished."
+  ],
+  "intent": "Recover eight remaining ordinary lifetime identities and correct the complete seven-object Buffer startup order, preserving historical mappings and generated-symbol interpretation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4508704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4508736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4509552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4509600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4510016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4510048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4978448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4978480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5000656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5000800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5004368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5004400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5302656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5302688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6123888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6123936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6124048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6124560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6575844,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6576066,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "remaining-ordinary-buffer-order-oct10"
+}
