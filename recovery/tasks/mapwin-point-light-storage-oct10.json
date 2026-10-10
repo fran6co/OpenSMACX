@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "author": "framework-coordinator",
+  "base_revision": "883a79e3f",
+  "intent": "Replace MapWin point-light fixed executable-address aliases with source-owned signed-byte storage and pinned ignored initializer windows, preserving original indexing and loader initialization.",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/terrain_data.py",
+    "recovery/README.md",
+    "recovery/tests/test_terrain_data.py",
+    "recovery/tests/test_mapwin_point_light_storage_oct10.py"
+  ],
+  "subjects": [
+    {
+      "address": 4654992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Pinned original 4707D8,4707F9,470818 sign-extend byte reads at685A24,685B60,7F6750 respectively. Existing get_point_light uses these aliases after AltDirectionTable indexing with original flag priority1,2,200.",
+    "Source-bound 49-by-five AltDirectionTable initial bytes contain indices0..112. This establishes a113-byte accessed window for valid declared direction rows, not complete original allocations or a proof that all runtime indices remain valid. New object mappings must be start-only and use physically observed emitted symbols.",
+    "Pinned initial windows at685A24 and685B60 are file-backed signed data; the113-byte window at7F6750 is loader-zero. Preserve third-table mutability; do not infer constness from absent direct writes.",
+    "5978 mapped-span decodes and a785830-record heuristic executable-section scan find only the three direct reads in470790. The latter skipped38 data records. Neither scan proves computed pointers, indirect writes or all original function boundaries; preserve these limitations.",
+    "Before editing capture fresh whole-MapWin measurement baseline under a compiler lease. After migration require full fresh application compile/link, whole-MapWin comparison, source/object/claim continuity, pinned initializer refusal controls, actual product signed-byte behavior controls and review. Preserve original unsafe indexing, all prior mappings/claims and unrelated code. No bounds clamp, fallback data, proprietary tracked initializer, byte grant or full-game acceptance claim. CornerLightTable biased exceptional access is a separate unresolved storage relationship and is not silently normalized by this task."
+  ]
+}
