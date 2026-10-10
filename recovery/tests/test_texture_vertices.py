@@ -164,7 +164,7 @@ def raster_bodies():
     source = (ROOT / "src/texture.cpp").read_text()
     result = {name: braced(source, "static int " + name + "(")
               for name in ("texture_fixed", "texture_difference")}
-    for coordinate_type in ("EdgePoint", "Vert"):
+    for coordinate_type in ("Vert",):
         for axis in ("u", "v"):
             signature = "static int texture_" + axis + "(const " + coordinate_type + " &uv)"
             result[axis + "_" + coordinate_type] = braced(source, signature)
@@ -202,12 +202,12 @@ def x87_span_step_expected(delta, width):
 def raster_harness(methods):
     header = (ROOT / "src/texture.h").read_text()
     records = "\n".join(braced(header, "struct " + name + " {") + ";"
-                        for name in ("EdgeScan", "EdgePoint"))
+                        for name in ("EdgeScan",))
     texture_class = braced(header, "class Texture {")
     # Actual storage declarations, made public only in this compact fixture.
     fields = []
     for name in ("pixels_", "iWidth_", "iHeight_", "corners_", "cornersAndMids_", "borrowed_"):
-        matches = re.findall(r"^\s*((?:void\s*\*|uint32_t\s+|EdgePoint\s+)"
+        matches = re.findall(r"^\s*((?:void\s*\*|uint32_t\s+|Vert\s+)"
                              + name + r"(?:\[[^\]]+\])?\s*;)", texture_class, re.M)
         assert len(matches) == 1, name
         fields.append(matches[0])

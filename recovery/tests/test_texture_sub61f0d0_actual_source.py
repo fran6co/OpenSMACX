@@ -108,8 +108,8 @@ def test_draw_trans2_and_draw_trans3_actual_source_controls(compiler: str) -> No
     method3 = extract_method(
         source, "int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a6)"
     )
-    assert "reinterpret_cast<int *>(corners_)" in method2
-    assert "reinterpret_cast<int *>(cornersAndMids_)" in method2
+    assert "*blit_edge_uvs_a = corners_;" in method2
+    assert "*blit_edge_uvs_a = cornersAndMids_;" in method2
     assert "RECT *clip = &a1->rect1_;" in method2
     assert "RECT *clip = &a1->rect1_;" in method3
     assert "if (a6 == -1)" in method3 and method3.index("if (a6 == -1)") < method3.index("a1->get_data()")
@@ -119,10 +119,10 @@ def test_draw_trans2_and_draw_trans3_actual_source_controls(compiler: str) -> No
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
 @pytest.mark.parametrize("method,old,new", (
-    (2, "reinterpret_cast<int *>(corners_)",
-     "reinterpret_cast<int *>(cornersAndMids_)"),
-    (2, "reinterpret_cast<int *>(cornersAndMids_)",
-     "reinterpret_cast<int *>(corners_)"),
+    (2, "*blit_edge_uvs_a = corners_;",
+     "*blit_edge_uvs_a = cornersAndMids_;"),
+    (2, "*blit_edge_uvs_a = cornersAndMids_;",
+     "*blit_edge_uvs_a = corners_;"),
     (2, "RECT *clip = &a1->rect1_;", "RECT *clip = &a1->rect2_;"),
     (2, "*blit_texture_width = static_cast<int>(iWidth_);",
      "*blit_texture_width = static_cast<int>(iHeight_);"),
@@ -148,8 +148,8 @@ def test_trans_setup_controls_reject_wrong_members(
 @pytest.mark.parametrize(
     ("old", "new"),
     [
-        ("reinterpret_cast<int *>(corners_)", "reinterpret_cast<int *>(cornersAndMids_)"),
-        ("reinterpret_cast<int *>(cornersAndMids_)", "reinterpret_cast<int *>(corners_)"),
+        ("*blit_edge_uvs_a = corners_;", "*blit_edge_uvs_a = cornersAndMids_;"),
+        ("*blit_edge_uvs_a = cornersAndMids_;", "*blit_edge_uvs_a = corners_;"),
         ("RECT *clip = &param_2->rect1_;", "RECT *clip = &param_2->rect2_;"),
         ("static_cast<int>(iWidth_)", "static_cast<int>(iHeight_)"),
     ],

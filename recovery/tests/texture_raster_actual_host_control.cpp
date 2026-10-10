@@ -5,7 +5,7 @@
 #include <sys/mman.h>
 
 struct RECT { int left, top, right, bottom; };
-struct EdgePoint { int a, b; };
+struct Vert { int a, b; };
 struct EdgeScan {
     int f0, counter, id, accumA, accumB, deltaA, deltaB, accumC, deltaC,
         extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
@@ -29,8 +29,8 @@ class Texture {
 public:
     void *pixels_;
     uint32_t iWidth_, iHeight_;
-    EdgePoint corners_[4];
-    EdgePoint cornersAndMids_[8];
+    Vert corners_[4];
+    Vert cornersAndMids_[8];
     uint32_t borrowed_;
     int setup_edge_gouraud(EdgeScan *, int);
     int setup_edge(EdgeScan *, int);
@@ -44,10 +44,10 @@ static void *pixel_base_cell;
 static void **blit_pixel_base = &pixel_base_cell;
 static int *blit_light_threshold = &slots[1];
 static int *blit_light_threshold_2 = &slots[2];
-static int *edge_uvs_b_cell = 0;
-static int **blit_edge_uvs_b = &edge_uvs_b_cell;
-static int *edge_uvs_a_cell = 0;
-static int **blit_edge_uvs_a = &edge_uvs_a_cell;
+static Vert *edge_uvs_b_cell = 0;
+static Vert **blit_edge_uvs_b = &edge_uvs_b_cell;
+static Vert *edge_uvs_a_cell = 0;
+static Vert **blit_edge_uvs_a = &edge_uvs_a_cell;
 static int *blit_vertex_count = &slots[5];
 static int *z_values_cell = 0;
 static int **blit_z_values = &z_values_cell;

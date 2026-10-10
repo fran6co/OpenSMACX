@@ -47,13 +47,12 @@ def actual_source():
     declarations = "\n".join([
         braced((ROOT / "src/vert.h").read_text(), "struct Vert {") + ";",
         braced(header, "struct EdgeScan {") + ";",
-        braced(header, "struct EdgePoint {") + ";",
         braced(header, "class TextureStore {") + ";",
     ])
     texture = braced(header, "class Texture {")
     fields = []
     for name in ("pixels_", "iWidth_", "iHeight_", "corners_", "cornersAndMids_", "borrowed_"):
-        fields.append(one(r"^\s*((?:void\s*\*|uint32_t\s+|EdgePoint\s+)" +
+        fields.append(one(r"^\s*((?:void\s*\*|uint32_t\s+|Vert\s+)" +
                           name + r"(?:\[[^\]]+\])?\s*;)", texture))
     signatures = re.findall(r"  void draw_cached_lit\([^;]+;", header)
     assert len(signatures) == 2

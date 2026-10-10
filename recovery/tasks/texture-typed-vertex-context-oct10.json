@@ -20,6 +20,7 @@
     "recovery/tests/test_texture_edgescan_owners.py",
     "recovery/tests/test_texture_raster_storage_live.py",
     "recovery/tests/test_texture_shade_actual_source.py",
+    "recovery/tests/test_texture_sub61f0d0_actual_source.py",
     "recovery/tests/test_texture_vertices.py",
     "recovery/tests/texture_edge_cache_owner_harness.cpp",
     "recovery/tests/texture_raster_actual_host_control.cpp",

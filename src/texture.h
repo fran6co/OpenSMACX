@@ -76,16 +76,11 @@ struct EdgeScan {
 };
 static_assert(sizeof(EdgeScan) == 0x3C, "cached edge record stride");
 
-/*
- * The texture's coordinate pairs, eight bytes each. setup_edge reads the
- * two components at [i * 2] and [i * 2 + 1]. These embedded interpolation
- * coordinates retain the current EdgePoint name. Their shape agrees with
- * Vert, but this separate declaration does not prove a distinct original type.
- */
-struct EdgePoint {
-    int a;
-    int b;
-};
+// Embedded UV pairs share Vert's signed x/y representation and eight-byte
+// stride: extract writes Texture+0x0C and +0x2C through +0x6B, while the
+// original PAUVert APIs and setup consumers establish the same coordinate
+// accesses. UV and screen geometry remain separate roles, not separate
+// speculative record declarations.
 
 class Texture {
  public:
@@ -272,7 +267,7 @@ class Texture {
   uint32_t iHeight_;
   // THE TWO VERTEX-ARRAY BASES, 0x0c and 0x2c. Evidenced three ways: the
   // rasterisers take a base off `this` at one of exactly those two offsets
-  // and index it as EdgePoint[4] or EdgePoint[8] (`sub_61d990` and
+  // and index it as Vert[4] or Vert[8] (`sub_61d990` and
   // `sub_61cb50` both pick `+0xc` with a vertex count of 4 and `+0x2c` with
   // 8); `extract` fills the whole 0x60 bytes between 0x0c and 0x6c with
   // exactly 24 ints; and 0x0c + 4*8 is 0x2c, 0x2c + 8*8 is 0x6c, which is
@@ -280,8 +275,8 @@ class Texture {
   // gets the four corners (0,0), (w-1,0), (w-1,h-1), (0,h-1) and the wide
   // array gets those four plus the four edge midpoints, which is the 8-point
   // perimeter the gouraud rasterisers interpolate across.
-  EdgePoint corners_[4];        // 0x0c .. 0x2b
-  EdgePoint cornersAndMids_[8];  // 0x2c .. 0x6b
+  Vert corners_[4];        // 0x0c .. 0x2b
+  Vert cornersAndMids_[8];  // 0x2c .. 0x6b
   uint32_t borrowed_;   // 0x6C, nonzero when the pixels are not ours to free
 };
 

@@ -53,8 +53,8 @@ def test_live_source_owns_distinct_cells_aliases_and_mapped_identities():
     assert "&TextureRasterScratch4C8.bytes[2]" in source
     assert "&TextureRasterScratch4E4.bytes[2]" in source
     assert "&TextureRasterLightPackA.low_word" in source
-    assert "static int **const g2_009bb490 = &TextureRasterEdgeVerticesA;" in source
-    assert "static int **const g2_009bb4f4 = &TextureRasterEdgeVerticesB;" in source
+    assert "static Vert **const g2_009bb490 = &TextureRasterEdgeVerticesA;" in source
+    assert "static Vert **const g2_009bb4f4 = &TextureRasterEdgeVerticesB;" in source
     assert "static int **const g2_009bb4fc = &TextureRasterZValues;" in source
     assert "{ &TextureRasterScratch520 }" in source
     assert "{ &TextureRasterScratch524 }" in source
@@ -162,7 +162,9 @@ def test_live_storage_pointer_identity_and_overlapping_views(tmp_path, mutation)
         actual_store = "*reinterpret_cast<unsigned int *>(&TextureRasterLightPackA) = light_step;"
     control = r'''#include <cassert>
 #include <cstddef>
+#include <stdint.h>
 unsigned int TextureRasterKey;
+__ACTUAL_VERT__
 __LIVE_STORAGE__
 int main() {
     assert(sizeof(TextureRasterWordPair) == 4);
@@ -171,13 +173,16 @@ int main() {
     assert(TextureRasterAlternateRowBase.initial_target == &TextureRasterScratch520);
     assert(TextureRasterAlternateRowNext.initial_target == &TextureRasterScratch524);
     assert(TextureRasterEdgeVerticesA == 0 && TextureRasterEdgeVerticesB == 0 && TextureRasterZValues == 0);
-    static int first[2] = {11, 22}, second[2] = {33, 44}, light[2] = {55, 66};
+    static Vert first[1] = {{11, 22}}, second[1] = {{33, 44}};
+    static int light[2] = {55, 66};
     *blit_edge_uvs_a = first;
     *blit_edge_uvs_b = second;
     *blit_z_values = light;
-    assert((*g2_009bb490)[1] == 22 && (*g2_009bb4f4)[1] == 44 && (*g2_009bb4fc)[1] == 66);
+    assert((*g2_009bb490)[0].y == 22 && (*g2_009bb4f4)[0].y == 44 && (*g2_009bb4fc)[1] == 66);
     *g2_009bb490 = second;
     assert(*blit_edge_uvs_a == second && *blit_edge_uvs_b == second && *blit_z_values == light);
+    assert(texture_pointer_offset(first, 0) == texture_pointer_address(first));
+    assert(texture_pointer_from_address(texture_pointer_address(second)) == second);
     TextureRasterScratch4C8.dword = 0x11223344;
     TextureRasterScratch4E4.dword = 0x55667788;
     TextureRasterUAccumulator.dword = 0x11223344;
@@ -193,7 +198,8 @@ int main() {
     __ACTUAL_STORE__
     assert(TextureRasterLightPackA.low_word == 0x8001 && TextureRasterLightPackA.high_word == 0x7a55);
 }
-'''.replace("__LIVE_STORAGE__", storage).replace("__ACTUAL_STORE__", actual_store)
+'''.replace("__ACTUAL_VERT__", re.search(
+        r"struct Vert\s*\{.*?\};", (ROOT / "src/vert.h").read_text(), re.S).group(0)).replace("__LIVE_STORAGE__", storage).replace("__ACTUAL_STORE__", actual_store)
     available = 0
     for name in ("g++", "clang++"):
         compiler = shutil.which(name)

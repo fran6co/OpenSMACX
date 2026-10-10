@@ -7,7 +7,6 @@
 
 struct RECT { int left, top, right, bottom; };
 struct Vert { int x, y; };
-struct EdgePoint { int a, b; };
 struct EdgeScan {
     int f0, counter, id, accumA, accumB, deltaA, deltaB, accumC, deltaC;
     int extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
@@ -24,13 +23,13 @@ static int slot_span_left, slot_span_right;
 
 static void **blit_pixel_base = &slot_pixel_base;
 static uintptr_t *blit_remap_table = &slot_remap;
-static int *uv_b_cell = 0;
-static int **blit_edge_uvs_b = &uv_b_cell;
+static Vert *uv_b_cell = 0;
+static Vert **blit_edge_uvs_b = &uv_b_cell;
 static void **blit_texture_pixels = &slot_pixels;
 static int *blit_texture_height = &slot_height;
 static int *blit_vertex_count = &slot_count;
-static int *uv_a_cell = 0;
-static int **blit_edge_uvs_a = &uv_a_cell;
+static Vert *uv_a_cell = 0;
+static Vert **blit_edge_uvs_a = &uv_a_cell;
 static int *blit_buffer_stride = &slot_stride;
 static int *blit_texture_width = &slot_width;
 static void **blit_shade_table = &slot_shade;
@@ -81,16 +80,16 @@ struct Buffer {
 struct Texture {
     void *pixels_;
     uint32_t iWidth_, iHeight_;
-    EdgePoint corners_[4];
-    EdgePoint cornersAndMids_[8];
+    Vert corners_[4];
+    Vert cornersAndMids_[8];
     uint32_t borrowed_;
     Texture() : pixels_(0), iWidth_(256), iHeight_(256), borrowed_(1) {
         int i;
         for (i = 0; i != 4; ++i) {
-            corners_[i].a = 0; corners_[i].b = 0;
+            corners_[i].x = 0; corners_[i].y = 0;
         }
         for (i = 0; i != 8; ++i) {
-            cornersAndMids_[i].a = 0; cornersAndMids_[i].b = 0;
+            cornersAndMids_[i].x = 0; cornersAndMids_[i].y = 0;
         }
     }
     static int setup_edge(EdgeScan *, int);
@@ -156,14 +155,14 @@ static void test_fractional_page_wrap(Texture &receiver, Texture &shade,
     buffer.rect1_.right = 4; buffer.rect1_.bottom = 2;
     // At row one the horizontal UV starts straddle 0xff/0x100 and advance
     // by fractional fixed-point steps. The second case reverses both slopes.
-    receiver.corners_[0].a = negative ? 258 : 254;
-    receiver.corners_[0].b = negative ? 515 : 510;
-    receiver.corners_[1].a = negative ? 242 : 270;
-    receiver.corners_[1].b = negative ? 493 : 530;
-    receiver.corners_[2].a = receiver.corners_[1].a;
-    receiver.corners_[2].b = receiver.corners_[1].b;
-    receiver.corners_[3].a = negative ? 254 : 252;
-    receiver.corners_[3].b = negative ? 511 : 506;
+    receiver.corners_[0].x = negative ? 258 : 254;
+    receiver.corners_[0].y = negative ? 515 : 510;
+    receiver.corners_[1].x = negative ? 242 : 270;
+    receiver.corners_[1].y = negative ? 493 : 530;
+    receiver.corners_[2].x = receiver.corners_[1].x;
+    receiver.corners_[2].y = receiver.corners_[1].y;
+    receiver.corners_[3].x = negative ? 254 : 252;
+    receiver.corners_[3].y = negative ? 511 : 506;
     receiver.sub_61cb50(&buffer, screen, &shade, remap, 0);
     // Native setup starts the left edge at corner 0 and the right edge at
     // corner 1 (the top horizontal edge is skipped). At row one, the paired
@@ -197,8 +196,8 @@ static void test_eight_points_and_expiry(Texture &receiver, Texture &shade,
     screen[6].x = 0; screen[6].y = 4;
     screen[7].x = 0; screen[7].y = 2;
     for (i = 0; i != 8; ++i) {
-        receiver.cornersAndMids_[i].a = 0;
-        receiver.cornersAndMids_[i].b = 0;
+        receiver.cornersAndMids_[i].x = 0;
+        receiver.cornersAndMids_[i].y = 0;
     }
     receiver.pixels_ = base; shade.pixels_ = lookup;
     buffer.rect1_.left = 0; buffer.rect1_.top = 0;

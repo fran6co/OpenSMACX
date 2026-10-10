@@ -88,7 +88,7 @@ def _translation_unit(source=None, header=None):
     harness = HARNESS.read_text(encoding="utf-8")
     actual = {
         "// ACTUAL_EDGESCAN_DECLARATION": _declaration(header, "struct", "EdgeScan"),
-        "// ACTUAL_EDGEPOINT_DECLARATION": _declaration(header, "struct", "EdgePoint"),
+        "// ACTUAL_VERT_DECLARATION": _declaration((ROOT / "src/vert.h").read_text(), "struct", "Vert"),
         "// ACTUAL_TEXTURESTORE_DECLARATION": _declaration(header, "class", "TextureStore"),
         "// ACTUAL_TEXTURESTORE_LIFETIME": "\n\n".join((
             _definition(source, "TextureStore::TextureStore("),

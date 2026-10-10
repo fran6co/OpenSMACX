@@ -58,6 +58,7 @@ OWNER_PREAMBLE = r"""
 #include <cassert>
 #include <stdint.h>
 #include <sys/mman.h>
+struct Vert { int x, y; };
 #define _PC_24 0x0000u
 #define _RC_CHOP 0x0c00u
 #define _MCW_PC 0x0300u
@@ -98,7 +99,7 @@ class Texture {
 public:
     unsigned char *pixels_;
     int iWidth_, iHeight_, borrowed_;
-    int *corners_, *cornersAndMids_;
+    Vert *corners_, *cornersAndMids_;
     Texture() : pixels_(0), iWidth_(4), iHeight_(4), borrowed_(1),
                 corners_(0), cornersAndMids_(0) {}
     void sub_61d990(Buffer *, int *, int *, Texture *, unsigned char *, int);
@@ -107,8 +108,8 @@ static int slot_values[32] = {0};
 #define SLOT(name, index) static int *const name = &slot_values[index]
 static int *z_values_cell = 0;
 static int **blit_z_values = &z_values_cell;
-static int *edge_uvs_b_cell = 0;
-static int **blit_edge_uvs_b = &edge_uvs_b_cell;
+static Vert *edge_uvs_b_cell = 0;
+static Vert **blit_edge_uvs_b = &edge_uvs_b_cell;
 static void *pixel_base_cell;
 static void **blit_pixel_base = &pixel_base_cell;
 SLOT(blit_remap_table, 3);
@@ -116,8 +117,8 @@ static void *texture_pixels_cell;
 static void **blit_texture_pixels = &texture_pixels_cell;
 SLOT(blit_texture_height, 5);
 SLOT(blit_texture_width, 6);
-static int *edge_uvs_a_cell = 0;
-static int **blit_edge_uvs_a = &edge_uvs_a_cell;
+static Vert *edge_uvs_a_cell = 0;
+static Vert **blit_edge_uvs_a = &edge_uvs_a_cell;
 SLOT(blit_vertex_count, 8);
 SLOT(blit_buffer_stride, 9);
 static void *shade_table_cell;
@@ -165,8 +166,8 @@ int main() {
     buffer.rect1_.bottom = 2;
     Texture owner, shade;
     owner.pixels_ = pixels;
-    owner.corners_ = vertices;
-    owner.cornersAndMids_ = vertices;
+    owner.corners_ = reinterpret_cast<Vert *>(vertices);
+    owner.cornersAndMids_ = reinterpret_cast<Vert *>(vertices);
     shade.pixels_ = pixels;
     owner.sub_61d990(&buffer, vertices, z_values, &shade, remap, 0);
     assert(buffer.get_count == 1);

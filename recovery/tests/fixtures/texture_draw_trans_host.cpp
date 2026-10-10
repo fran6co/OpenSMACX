@@ -32,10 +32,10 @@ public:
 static int slots[64];
 static void *pixel_base_cell;
 static void **blit_pixel_base = &pixel_base_cell;
-static int *uv_a_cell = 0;
-static int **blit_edge_uvs_a = &uv_a_cell;
-static int *uv_b_cell = 0;
-static int **blit_edge_uvs_b = &uv_b_cell;
+static Vert *uv_a_cell = 0;
+static Vert **blit_edge_uvs_a = &uv_a_cell;
+static Vert *uv_b_cell = 0;
+static Vert **blit_edge_uvs_b = &uv_b_cell;
 static int *blit_vertex_count = &slots[3];
 static int *z_values_cell = 0;
 static int **blit_z_values = &z_values_cell;

@@ -46,9 +46,9 @@ def extract_braced(source, signature):
     return results[0]
 
 
-def extract_edgescan_declaration(header):
+def extract_edgescan_declaration(header, name="EdgeScan"):
     view = masked(header)
-    match = re.search(r"\bstruct\s+EdgeScan\s*\{", view)
+    match = re.search(r"\bstruct\s+" + re.escape(name) + r"\s*\{", view)
     assert match, "actual EdgeScan declaration absent"
     opening = view.find("{", match.start())
     depth = 0
@@ -73,6 +73,7 @@ FIXTURE = r'''#include <assert.h>
 #endif
 
 // ACTUAL_EDGESCAN_DECLARATION
+// ACTUAL_VERT_DECLARATION
 
 static_assert(sizeof(EdgeScan) == 0x3c, "actual EdgeScan stride");
 class Texture {
@@ -83,13 +84,13 @@ public:
 
 static int max_y_index;
 static int vertex_count;
-static int *uv_a_data;
-static int *uv_b_data;
+static Vert *uv_a_data;
+static Vert *uv_b_data;
 static int *z_data;
 int *blit_max_y_index = &max_y_index;
 int *blit_vertex_count = &vertex_count;
-int **blit_edge_uvs_a = &uv_a_data;
-int **blit_edge_uvs_b = &uv_b_data;
+Vert **blit_edge_uvs_a = &uv_a_data;
+Vert **blit_edge_uvs_b = &uv_b_data;
 int **blit_z_values = &z_data;
 
 // Host-only spelling of fixed_div's signed 16.16 quotient. Multiplication
@@ -132,9 +133,9 @@ static void assert_non_counter_fields_unchanged(const EdgeScan &edge) {
 }
 
 int main() {
-    int uv_a[6] = {1, 2, 5, 6, 9, 10};
+    Vert uv_a[3] = {{1, 2}, {5, 6}, {9, 10}};
     // [z0,y0,z1,y1,z2,y2]: 4-row edge with positive depth delta 21.
-    int uv_b[6] = {10, 0, 31, 4, 50, 8};
+    Vert uv_b[3] = {{10, 0}, {31, 4}, {50, 8}};
     int z[3] = {100, 108, 116};
     uv_a_data = uv_a;
     uv_b_data = uv_b;
@@ -160,8 +161,8 @@ int main() {
 
     // Negative depth keeps signed quotient/correction and positive magnitude
     // remainder; the fraction fields must not be normalized to signed mod.
-    uv_b[0] = 31;
-    uv_b[2] = 10;
+    uv_b[0].x = 31;
+    uv_b[1].x = 10;
     set_sentinels(edge);
     assert(Texture::setup_edge_gouraud(&edge, 0) == 1);
     assert(edge.accumC == 31 && edge.deltaC == -5);
@@ -170,8 +171,8 @@ int main() {
 
     // Plain edge uses no half-pixel bias and leaves the D-channel words
     // untouched even on a successful setup.
-    uv_b[0] = 10;
-    uv_b[2] = 31;
+    uv_b[0].x = 10;
+    uv_b[1].x = 31;
     set_sentinels(edge);
     assert(Texture::setup_edge(&edge, 0) == 1);
     assert(edge.counter == 4 && edge.id == 1);
@@ -183,8 +184,8 @@ int main() {
     assert(edge.fracSub == 4 && edge.fracDelta == 1);
     assert(edge.accumD == 113 && edge.deltaD == 114);
 
-    uv_b[0] = 31;
-    uv_b[2] = 10;
+    uv_b[0].x = 31;
+    uv_b[1].x = 10;
     set_sentinels(edge);
     assert(Texture::setup_edge(&edge, 0) == 1);
     assert(edge.accumC == 31 && edge.deltaC == -5);
@@ -205,7 +206,7 @@ int main() {
     // A zero-height walk visits the next vertices until max-y, writes only
     // counter, and leaves every other field untouched in both helpers.
     max_y_index = 2;
-    uv_b[1] = uv_b[3] = uv_b[5] = 0;
+    uv_b[0].y = uv_b[1].y = uv_b[2].y = 0;
     set_sentinels(edge);
     assert(Texture::setup_edge(&edge, 0) == 0);
     assert(edge.counter == 0);
@@ -217,7 +218,7 @@ int main() {
 
     // A negative first height is stored, then returned early without touching
     // the remaining fields; the original helper intentionally has no guard.
-    uv_b[1] = 0; uv_b[3] = -4; uv_b[5] = -4;
+    uv_b[0].y = 0; uv_b[1].y = -4; uv_b[2].y = -4;
     set_sentinels(edge);
     assert(Texture::setup_edge(&edge, 0) == 0);
     assert(edge.counter == -4);
@@ -298,9 +299,9 @@ int main() {
 
     // Counter refresh: a zero after decrement calls the corresponding real
     // static setup on this same record/id and returns its normalized result.
-    uv_b[0] = 10; uv_b[1] = 0;
-    uv_b[2] = 31; uv_b[3] = 4;
-    uv_b[4] = 50; uv_b[5] = 8;
+    uv_b[0].x = 10; uv_b[0].y = 0;
+    uv_b[1].x = 31; uv_b[1].y = 4;
+    uv_b[2].x = 50; uv_b[2].y = 8;
     vertex_count = 3;
     max_y_index = 2;
     for (int stepper = 0; stepper < 2; ++stepper) {
@@ -340,6 +341,8 @@ def host_source():
     assert FIXTURE.count("// ACTUAL_EDGE_SCAN_METHODS") == 1
     assert FIXTURE.count("// ACTUAL_EDGE_STEP_HELPERS") == 1
     return (FIXTURE.replace("// ACTUAL_EDGESCAN_DECLARATION", edge_scan)
+            .replace("// ACTUAL_VERT_DECLARATION", extract_edgescan_declaration(
+                (HEADER_SOURCE.parent / "vert.h").read_text(), "Vert"))
             .replace("// ACTUAL_EDGE_SCAN_METHODS", "\n\n".join(bodies[:2]))
             .replace("// ACTUAL_EDGE_STEP_HELPERS", "\n\n".join(bodies[2:])))
 

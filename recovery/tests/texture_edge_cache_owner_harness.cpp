@@ -9,7 +9,7 @@
 #endif
 
 // ACTUAL_EDGESCAN_DECLARATION
-// ACTUAL_EDGEPOINT_DECLARATION
+// ACTUAL_VERT_DECLARATION
 // ACTUAL_TEXTURESTORE_DECLARATION
 // ACTUAL_TEXTURESTORE_LIFETIME
 
@@ -17,13 +17,13 @@ static int raster_max_y;
 static int raster_vertex_count;
 static int *const blit_max_y_index = &raster_max_y;
 static int *const blit_vertex_count = &raster_vertex_count;
-static int *raster_edge_a;
-static int *raster_edge_b;
+static Vert *raster_edge_a;
+static Vert *raster_edge_b;
 static int *raster_z_values;
-static int **const blit_edge_uvs_a = &raster_edge_a;
-static int **const blit_edge_uvs_b = &raster_edge_b;
-static int **const g2_009bb490 = &raster_edge_a;
-static int **const g2_009bb4f4 = &raster_edge_b;
+static Vert **const blit_edge_uvs_a = &raster_edge_a;
+static Vert **const blit_edge_uvs_b = &raster_edge_b;
+static Vert **const g2_009bb490 = &raster_edge_a;
+static Vert **const g2_009bb4f4 = &raster_edge_b;
 static int **const g2_009bb4fc = &raster_z_values;
 
 static int fixed_div(int numerator, int denominator) {
@@ -75,22 +75,22 @@ static_assert(offsetof(TextureStore, flags_) == 0, "cache flags offset");
 static_assert(offsetof(TextureStore, next_record_) == 4, "cache cursor offset");
 static_assert(offsetof(TextureStore, edges_) == 8, "cache records offset");
 
-static EdgePoint geometry[3];
-static EdgePoint uv[3];
+static Vert geometry[3];
+static Vert uv[3];
 static int lights[3];
 
 static void install_scene() {
     raster_vertex_count = 3;
     raster_max_y = 2;
-    raster_edge_a = reinterpret_cast<int *>(uv);
-    raster_edge_b = reinterpret_cast<int *>(geometry);
+    raster_edge_a = uv;
+    raster_edge_b = geometry;
     raster_z_values = lights;
-    geometry[0] = EdgePoint{8, 0};
-    geometry[1] = EdgePoint{1, 4};
-    geometry[2] = EdgePoint{6, 8};
-    uv[0] = EdgePoint{2, 3};
-    uv[1] = EdgePoint{10, 11};
-    uv[2] = EdgePoint{18, 19};
+    geometry[0] = Vert{8, 0};
+    geometry[1] = Vert{1, 4};
+    geometry[2] = Vert{6, 8};
+    uv[0] = Vert{2, 3};
+    uv[1] = Vert{10, 11};
+    uv[2] = Vert{18, 19};
     lights[0] = 10;
     lights[1] = 14;
     lights[2] = 18;
@@ -178,7 +178,7 @@ static void test_horizontal_and_descending_edges_preserve_cache() {
     poison_edge(edge, 0x44);
     edge.f0 = 1;
     EdgeScan before = edge;
-    geometry[0].b = geometry[1].b = geometry[2].b = 0;
+    geometry[0].y = geometry[1].y = geometry[2].y = 0;
     assert(sub_624eb0(&edge, 0, &cache) == 0);
     assert(edge.counter == 0 && edge.f0 == before.f0);
     before.counter = 0;

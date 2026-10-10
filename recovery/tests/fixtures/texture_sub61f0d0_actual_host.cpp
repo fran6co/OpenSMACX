@@ -17,7 +17,6 @@ static bool CARRY4(uint a, uint b) { return ulonglong(a) + b > 0xffffffffULL; }
 
 struct RECT { int left, top, right, bottom; };
 struct Vert { int x, y; };
-struct EdgePoint { int a, b; };
 struct EdgeScan {
     int f0, counter, id, accumA, accumB, deltaA, deltaB, accumC, deltaC,
         extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
@@ -43,8 +42,8 @@ public:
     void *pixels_;
     uint32_t iWidth_;
     uint32_t iHeight_;
-    EdgePoint corners_[4];
-    EdgePoint cornersAndMids_[8];
+    Vert corners_[4];
+    Vert cornersAndMids_[8];
     uint32_t borrowed_;
     static int setup_edge_gouraud(EdgeScan *, int);
     int setup_edge(EdgeScan *, int);
@@ -71,8 +70,8 @@ static int cell_buffer_stride, cell_clip_bottom, cell_clip_left, cell_clip_right
 static void *cell_pixel_base, *cell_shade_table, *cell_texture_pixels;
 static uintptr_t cell_remap_table;
 static int *cell_z_values;
-static int *cell_edge_a;
-static int *cell_edge_b;
+static Vert *cell_edge_a;
+static Vert *cell_edge_b;
 static int *blit_buffer_stride = &cell_buffer_stride;
 static int *blit_clip_bottom = &cell_clip_bottom;
 static int *blit_clip_left = &cell_clip_left;
@@ -96,8 +95,8 @@ static void **blit_texture_pixels = &cell_texture_pixels;
 static int *blit_texture_width = &cell_texture_width;
 static int *blit_vertex_count = &cell_vertex_count;
 static int **blit_z_values = &cell_z_values;
-static int **blit_edge_uvs_a = &cell_edge_a;
-static int **blit_edge_uvs_b = &cell_edge_b;
+static Vert **blit_edge_uvs_a = &cell_edge_a;
+static Vert **blit_edge_uvs_b = &cell_edge_b;
 static int *blit_light_threshold = &cell_light_threshold;
 static int *blit_light_threshold_2 = &cell_z_key;
 static int *blit_span_left = &cell_span_left;
@@ -204,7 +203,8 @@ static void reset_case() {
     input_vertices[5].y = 80;
     cell_pixel_base = 0;
     cell_clip_bottom = cell_clip_left = cell_clip_right = cell_clip_top = 0;
-    cell_edge_a = cell_edge_b = cell_z_values = 0;
+    cell_edge_a = cell_edge_b = 0;
+    cell_z_values = 0;
     cell_texture_pixels = 0;
     cell_vertex_count = cell_texture_width = cell_texture_height = cell_buffer_stride = 0;
 }
@@ -225,7 +225,7 @@ static void test_four_and_eight_vertex_member_bindings() {
     assert(cell_vertex_count == 4);
     assert(cell_texture_pixels == texture.pixels_);
     assert(TextureRowPitchScratch == 31 && cell_texture_width == 31 && cell_texture_height == 47);
-    assert(cell_edge_b == reinterpret_cast<int *>(input_vertices));
+    assert(cell_edge_b == input_vertices);
     assert(cell_z_values == z_values);
     assert(cell_remap_table == reinterpret_cast<uintptr_t>(remap_words));
     assert(cell_buffer_stride == 73);
@@ -286,8 +286,8 @@ static void test_draw_trans2_member_setup_without_raster() {
         }
         const int result = texture.draw_trans2(&buffer, input_xy, mode);
         assert(result == 0 && setup_edge_calls == 0);
-        assert(cell_edge_a == reinterpret_cast<int *>(mode == 0 ? texture.corners_ : texture.cornersAndMids_));
-        assert(cell_edge_b == input_xy && cell_vertex_count == (mode == 0 ? 4 : 8));
+        assert(cell_edge_a == (mode == 0 ? texture.corners_ : texture.cornersAndMids_));
+        assert(cell_edge_b == reinterpret_cast<Vert *>(input_xy) && cell_vertex_count == (mode == 0 ? 4 : 8));
         assert(cell_texture_pixels == texture.pixels_);
         assert(TextureRowPitchScratch == 31 && cell_texture_width == 31 && cell_texture_height == 47);
         assert(cell_buffer_stride == 73);
@@ -307,8 +307,8 @@ static void test_draw_trans3_light_clamp_setup_and_sentinel() {
     const int result = texture.draw_trans_3(&buffer, input_vertices, input_z, 3, input_uv, 0x1234);
     assert(result == 0 && setup_calls == 1 && setup_index == 0);
     assert(input_z[0] == 256 && input_z[1] == -256 && input_z[2] == 7);
-    assert(cell_edge_a == reinterpret_cast<int *>(input_uv));
-    assert(cell_edge_b == reinterpret_cast<int *>(input_vertices));
+    assert(cell_edge_a == input_uv);
+    assert(cell_edge_b == input_vertices);
     assert(cell_z_values == input_z && cell_vertex_count == 3);
     assert(cell_texture_pixels == texture.pixels_ && cell_texture_width == 31);
     assert(cell_buffer_stride == 73);

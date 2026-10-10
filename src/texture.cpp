@@ -206,8 +206,6 @@ static int texture_difference(int a, int b) {
                             static_cast<unsigned int>(b));
 }
 
-static int texture_u(const EdgePoint &uv) { return uv.a; }
-static int texture_v(const EdgePoint &uv) { return uv.b; }
 static int texture_u(const Vert &uv) { return uv.x; }
 static int texture_v(const Vert &uv) { return uv.y; }
 
@@ -758,30 +756,30 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
     int heightMinus1 = iHeight_ - 1;
     int widthHalfMinus1 = static_cast<int>(iWidth_) / 2 - 1;
     int heightHalfMinus1 = static_cast<int>(iHeight_) / 2 - 1;
-    corners_[0].a = 0;
-    corners_[0].b = 0;
-    corners_[1].a = widthMinus1;
-    corners_[1].b = 0;
-    corners_[2].a = widthMinus1;
-    corners_[2].b = heightMinus1;
-    corners_[3].a = 0;
-    corners_[3].b = heightMinus1;
-    cornersAndMids_[0].a = 0;
-    cornersAndMids_[0].b = 0;
-    cornersAndMids_[1].a = widthHalfMinus1;
-    cornersAndMids_[1].b = 0;
-    cornersAndMids_[2].a = widthMinus1;
-    cornersAndMids_[2].b = 0;
-    cornersAndMids_[3].a = widthMinus1;
-    cornersAndMids_[3].b = heightHalfMinus1;
-    cornersAndMids_[4].a = widthMinus1;
-    cornersAndMids_[4].b = heightMinus1;
-    cornersAndMids_[5].a = widthHalfMinus1;
-    cornersAndMids_[5].b = heightMinus1;
-    cornersAndMids_[6].a = 0;
-    cornersAndMids_[6].b = heightMinus1;
-    cornersAndMids_[7].a = 0;
-    cornersAndMids_[7].b = heightHalfMinus1;
+    corners_[0].x = 0;
+    corners_[0].y = 0;
+    corners_[1].x = widthMinus1;
+    corners_[1].y = 0;
+    corners_[2].x = widthMinus1;
+    corners_[2].y = heightMinus1;
+    corners_[3].x = 0;
+    corners_[3].y = heightMinus1;
+    cornersAndMids_[0].x = 0;
+    cornersAndMids_[0].y = 0;
+    cornersAndMids_[1].x = widthHalfMinus1;
+    cornersAndMids_[1].y = 0;
+    cornersAndMids_[2].x = widthMinus1;
+    cornersAndMids_[2].y = 0;
+    cornersAndMids_[3].x = widthMinus1;
+    cornersAndMids_[3].y = heightHalfMinus1;
+    cornersAndMids_[4].x = widthMinus1;
+    cornersAndMids_[4].y = heightMinus1;
+    cornersAndMids_[5].x = widthHalfMinus1;
+    cornersAndMids_[5].y = heightMinus1;
+    cornersAndMids_[6].x = 0;
+    cornersAndMids_[6].y = heightMinus1;
+    cornersAndMids_[7].x = 0;
+    cornersAndMids_[7].y = heightHalfMinus1;
     return 0;
 }
 
@@ -1017,7 +1015,7 @@ static TextureRasterRelocatedRowCell TextureRasterAlternateRowNext =
     { &TextureRasterScratch524 };
 
 // RECOVERY_OBJECT: v1 0x009BB490 _TextureRasterEdgeVerticesA
-static int *TextureRasterEdgeVerticesA;
+static Vert *TextureRasterEdgeVerticesA;
 // RECOVERY_OBJECT: v1 0x009BB494 _TextureRasterScratch494
 static int TextureRasterScratch494;
 // RECOVERY_OBJECT: v1 0x009BB498 _TextureRasterScratch498
@@ -1070,7 +1068,7 @@ static void *TextureRasterPixelBase;
 // RECOVERY_OBJECT: v1 0x009BB4F0 _TextureRasterSpanLeft
 static int TextureRasterSpanLeft; // Legacy spelling; original RIGHT x.
 // RECOVERY_OBJECT: v1 0x009BB4F4 _TextureRasterEdgeVerticesB
-static int *TextureRasterEdgeVerticesB;
+static Vert *TextureRasterEdgeVerticesB;
 // RECOVERY_OBJECT: v1 0x009BB4F8 _TextureRasterUAccumulator
 static TextureRasterDwordHighWordView TextureRasterUAccumulator;
 // RECOVERY_OBJECT: v1 0x009BB4FC _TextureRasterZValues
@@ -1187,11 +1185,11 @@ static int *const blit_slot_564 = &TextureRasterPalette;
 static unsigned char *const blit_slot_4ca = &TextureRasterScratch4C8.bytes[2];
 static unsigned char *const blit_slot_4e6 = &TextureRasterScratch4E4.bytes[2];
 
-static int **const blit_edge_uvs_a = &TextureRasterEdgeVerticesA;
-static int **const blit_edge_uvs_b = &TextureRasterEdgeVerticesB;
+static Vert **const blit_edge_uvs_a = &TextureRasterEdgeVerticesA;
+static Vert **const blit_edge_uvs_b = &TextureRasterEdgeVerticesB;
 static int **const blit_z_values = &TextureRasterZValues;
-static int **const g2_009bb490 = &TextureRasterEdgeVerticesA;
-static int **const g2_009bb4f4 = &TextureRasterEdgeVerticesB;
+static Vert **const g2_009bb490 = &TextureRasterEdgeVerticesA;
+static Vert **const g2_009bb4f4 = &TextureRasterEdgeVerticesB;
 static int **const g2_009bb4fc = &TextureRasterZValues;
 
 // Existing TextureRasterKey remains the sole owner of the 0x9BB548 object.
@@ -1237,14 +1235,14 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
 
     blit_pixel_base[0] = a1->get_data();
     texture_reset_fpu();
-    *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
+    *blit_edge_uvs_b = a2;
     *blit_z_values = reinterpret_cast<int *>(a3);
     blit_remap_table[0] = reinterpret_cast<uintptr_t>(a5);
     blit_texture_pixels[0] = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     blit_texture_height[0] = static_cast<int>(iHeight_);
     blit_vertex_count[0] = a6;
-    *blit_edge_uvs_a = reinterpret_cast<int *>(a7);
+    *blit_edge_uvs_a = a7;
     blit_buffer_stride[0] = static_cast<int>(a1->stride_);
     blit_texture_width[0] = static_cast<int>(iWidth_);
     blit_shade_table[0] = a4->pixels_;
@@ -1452,8 +1450,8 @@ int __cdecl Texture::setup_edge_gouraud(EdgeScan * a1, int a2) {
       c = *blit_vertex_count - 1;
     }
 
-    int *arrF4 = *blit_edge_uvs_b;
-    int height = arrF4[c * 2 + 1] - arrF4[b * 2 + 1];
+    Vert *arrF4 = *blit_edge_uvs_b;
+    int height = arrF4[c].y - arrF4[b].y;
     a1->counter = height;
 
     if (height != 0) {
@@ -1463,20 +1461,20 @@ int __cdecl Texture::setup_edge_gouraud(EdgeScan * a1, int a2) {
       a1->id = c;
       int scaled = height * 0x10000;
 
-      int *arr90 = *blit_edge_uvs_a;
-      int x0 = arr90[b * 2] * 0x10000 + 0x8000;
+      Vert *arr90 = *blit_edge_uvs_a;
+      int x0 = arr90[b].x * 0x10000 + 0x8000;
       a1->accumA = x0;
-      int x1 = arr90[b * 2 + 1] * 0x10000 + 0x8000;
+      int x1 = arr90[b].y * 0x10000 + 0x8000;
       a1->accumB = x1;
 
-      int dxdy0 = fixed_div(arr90[c * 2] * 0x10000 - x0, scaled);
+      int dxdy0 = fixed_div(arr90[c].x * 0x10000 - x0, scaled);
       a1->deltaA = dxdy0;
-      int dxdy1 = fixed_div(arr90[c * 2 + 1] * 0x10000 - x1, scaled);
+      int dxdy1 = fixed_div(arr90[c].y * 0x10000 - x1, scaled);
       a1->deltaB = dxdy1;
 
-      int z0 = arrF4[b * 2];
+      int z0 = arrF4[b].x;
       a1->accumC = z0;
-      int zdiff = arrF4[c * 2] - z0;
+      int zdiff = arrF4[c].x - z0;
       a1->deltaC = zdiff / height;
 
       int absz = zdiff;
@@ -1534,24 +1532,24 @@ int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {
     } else if (iVar3 < 0) {
       iVar3 = *blit_vertex_count - 1;
     }
-    int *arr4f4 = *blit_edge_uvs_b;
-    int iVar1 = arr4f4[iVar3 * 2 + 1] - arr4f4[a2 * 2 + 1];
+    Vert *arr4f4 = *blit_edge_uvs_b;
+    int iVar1 = arr4f4[iVar3].y - arr4f4[a2].y;
     a1->counter = iVar1;
     if (iVar1 != 0) {
       if (iVar1 <= 0) {
         return 0;
       }
       a1->id = iVar3;
-      int *arr490 = *blit_edge_uvs_a;
+      Vert *arr490 = *blit_edge_uvs_a;
       int scaled = iVar1 << 0x10;
-      a1->accumA = arr490[a2 * 2] << 0x10;
-      a1->accumB = arr490[a2 * 2 + 1] << 0x10;
+      a1->accumA = arr490[a2].x << 0x10;
+      a1->accumB = arr490[a2].y << 0x10;
       a1->deltaA =
-          fixed_div((arr490[iVar3 * 2] << 0x10) - a1->accumA, scaled);
+          fixed_div((arr490[iVar3].x << 0x10) - a1->accumA, scaled);
       a1->deltaB = fixed_div(
-          (arr490[iVar3 * 2 + 1] << 0x10) - a1->accumB, scaled);
-      a1->accumC = arr4f4[a2 * 2];
-      int diff = arr4f4[iVar3 * 2] - arr4f4[a2 * 2];
+          (arr490[iVar3].y << 0x10) - a1->accumB, scaled);
+      a1->accumC = arr4f4[a2].x;
+      int diff = arr4f4[iVar3].x - arr4f4[a2].x;
       int quotient;
       if (diff < 0) {
         diff = -diff;
@@ -1708,7 +1706,7 @@ unsigned int TextureRasterKey;
 void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices) {
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
-    const EdgePoint *uv = use_eight_vertices ? cornersAndMids_ : corners_;
+    const Vert *uv = use_eight_vertices ? cornersAndMids_ : corners_;
     const int count = use_eight_vertices ? 8 : 4;
     const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
@@ -1939,8 +1937,8 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
     *blit_light_threshold = *blit_light_threshold_2;
     texture_reset_fpu();
 
-    *blit_edge_uvs_a = reinterpret_cast<int *>(a5);
-    *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
+    *blit_edge_uvs_a = a5;
+    *blit_edge_uvs_b = a2;
     *blit_vertex_count = a4;
     *blit_z_values = reinterpret_cast<int *>(a3);
     *blit_texture_pixels = pixels_;
@@ -2200,8 +2198,8 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
 
     *blit_pixel_base = destination;
     *blit_light_threshold = *blit_light_threshold_2;
-    *blit_edge_uvs_a = reinterpret_cast<int *>(uv);
-    *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
+    *blit_edge_uvs_a = uv;
+    *blit_edge_uvs_b = vertices;
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
     *blit_texture_pixels = pixels_;
@@ -2476,12 +2474,12 @@ void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
         remap != 0) {
         *blit_pixel_base = buffer->get_data();
         texture_reset_fpu();
-        *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
+        *blit_edge_uvs_b = vertices;
         *blit_remap_table = reinterpret_cast<uintptr_t>(remap);
         *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
-        *blit_edge_uvs_a = reinterpret_cast<int *>(uv);
+        *blit_edge_uvs_a = uv;
         *blit_vertex_count = count;
         *blit_buffer_stride = static_cast<int>(buffer->stride_);
         *blit_texture_width = static_cast<int>(iWidth_);
@@ -2501,9 +2499,9 @@ void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
                 int max_x = 0x7fff;
                 int min_y_index = 0;
                 int max_y_index = 0;
-                int *vertex_words = reinterpret_cast<int *>(vertices);
+                Vert *vertex = vertices;
                 for (int i = 0; i < count; ++i) {
-                    const int y = vertex_words[1];
+                    const int y = vertex->y;
                     if (y < min_y) {
                         min_y_index = i;
                         min_y = y;
@@ -2513,10 +2511,10 @@ void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
                         max_y = y;
                         *blit_max_y_index = i;
                     }
-                    const int x = vertex_words[0];
+                    const int x = vertex->x;
                     if (x < max_x) max_x = x;
                     if (min_x < x) min_x = x;
-                    vertex_words += 2;
+                    ++vertex;
                 }
                 (void)max_x;
                 (void)min_x;
@@ -2790,8 +2788,8 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
     *reinterpret_cast<unsigned char *>(blit_slot_494) =
         static_cast<unsigned char>(fill_color);
     texture_reset_fpu();
-    *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
-    *blit_edge_uvs_a = reinterpret_cast<int *>(edge_vertices);
+    *blit_edge_uvs_b = vertices;
+    *blit_edge_uvs_a = edge_vertices;
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
     *blit_texture_pixels = pixels_;
@@ -2961,14 +2959,14 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
         *blit_pixel_base = a1->get_data();
         texture_reset_fpu();
         *reinterpret_cast<char *>(blit_slot_494) = static_cast<char>(a8);
-        *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
+        *blit_edge_uvs_b = a2;
         *blit_z_values = reinterpret_cast<int *>(a3);
         *blit_remap_table = reinterpret_cast<uintptr_t>(a5);
         *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
         *blit_vertex_count = a6;
-        *blit_edge_uvs_a = reinterpret_cast<int *>(a7);
+        *blit_edge_uvs_a = a7;
         *blit_buffer_stride = a1->stride_;
         *blit_texture_width = static_cast<int>(iWidth_);
         *blit_shade_table = a4->pixels_;
@@ -2985,11 +2983,11 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
             int minX = 0x7fff;
             int idx = 0;
             int minYIdx = a8;
-            int *verts = reinterpret_cast<int *>(a2);
+            Vert *verts = a2;
 
             if (0 < a6) {
                 do {
-                    int y = verts[idx * 2 + 1];
+                    int y = verts[idx].y;
                     if (y < minY) {
                         minY = y;
                         minYIdx = idx;
@@ -2998,7 +2996,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                         *blit_max_y_index = idx;
                         maxY = y;
                     }
-                    int x = verts[idx * 2];
+                    int x = verts[idx].x;
                     if (x < minX)
                         minX = x;
                     if (maxX < x)
@@ -3214,16 +3212,16 @@ struct EdgeLocal {
 
 int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
     *blit_pixel_base = a1->get_data();
-    *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
+    *blit_edge_uvs_b = reinterpret_cast<Vert *>(a2);
     *blit_texture_pixels = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     *blit_texture_height = static_cast<int>(iHeight_);
 
     if (a3 == 0) {
-        *blit_edge_uvs_a = reinterpret_cast<int *>(corners_);
+        *blit_edge_uvs_a = corners_;
         *blit_vertex_count = 4;
     } else {
-        *blit_edge_uvs_a = reinterpret_cast<int *>(cornersAndMids_);
+        *blit_edge_uvs_a = cornersAndMids_;
         *blit_vertex_count = 8;
     }
     *blit_buffer_stride = a1->stride_;
@@ -3242,11 +3240,11 @@ int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
         int maxX = -0x7ffd;
         int minYIdx = 0;
         int idx = 0;
-        int *vp = a2;
+        Vert *vp = reinterpret_cast<Vert *>(a2);
 
         if (*blit_vertex_count != 0) {
             do {
-                int y = vp[1];
+                int y = vp->y;
                 if (y < minY) {
                     minY = y;
                     minYIdx = idx;
@@ -3255,7 +3253,7 @@ int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
                     maxY = y;
                     *blit_max_y_index = idx;
                 }
-                int x = vp[0];
+                int x = vp->x;
                 if (x < minX) {
                     minX = x;
                 }
@@ -3263,7 +3261,7 @@ int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
                     maxX = x;
                 }
                 idx++;
-                vp += 2;
+                ++vp;
             } while (idx < *blit_vertex_count);
 
             if (minY < maxY) {
@@ -3443,8 +3441,8 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
     *reinterpret_cast<unsigned char *>(blit_slot_494) = static_cast<unsigned char>(a6);
 
     *blit_vertex_count = a4;
-    *blit_edge_uvs_b = reinterpret_cast<int *>(a2);
-    *blit_edge_uvs_a = reinterpret_cast<int *>(a5);
+    *blit_edge_uvs_b = a2;
+    *blit_edge_uvs_a = a5;
     *blit_z_values = reinterpret_cast<int *>(a3);
     *blit_texture_pixels = pixels_;
     *blit_buffer_stride = a1->stride_;
@@ -3472,15 +3470,15 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
 
         int count = *blit_vertex_count;
         if (count > 0) {
-            int *vp = reinterpret_cast<int *>(a2);
+            Vert *vp = a2;
             for (int i = 0; i < count; ++i) {
-                int y = vp[1];
+                int y = vp->y;
                 if (y < minY) { minY = y; topVert = i; }
                 if (maxY < y) { maxY = y; *blit_max_y_index = i; }
-                int x = vp[0];
+                int x = vp->x;
                 if (x < minX) minX = x;
                 if (maxX < x) maxX = x;
-                vp += 2;
+                ++vp;
             }
 
             if (minY < maxY) {
@@ -3704,8 +3702,8 @@ static int texture_advance_cached_edge(EdgeScan &edge, const Vert *vertices,
 
 int __cdecl sub_625080(EdgeScan *edge, int index, TextureStore *cache) {
     return texture_cached_edge(*edge, index,
-        reinterpret_cast<const Vert *>(*blit_edge_uvs_b),
-        reinterpret_cast<const Vert *>(*blit_edge_uvs_a),
+        *blit_edge_uvs_b,
+        *blit_edge_uvs_a,
         reinterpret_cast<const int *>(*blit_z_values),
         *blit_vertex_count, *blit_max_y_index, *cache);
 }
@@ -3754,8 +3752,8 @@ int __cdecl sub_620100(EdgeScan *edge, int vertex_index) {
         } else if (idx < 0) {
             idx = bound;
         }
-        int *tbl4f4 = *g2_009bb4f4;
-        int diff = tbl4f4[idx * 2 + 1] - tbl4f4[vertex_index * 2 + 1];
+        Vert *tbl4f4 = *g2_009bb4f4;
+        int diff = tbl4f4[idx].y - tbl4f4[vertex_index].y;
         edge->counter = diff;
         if (diff != 0) {
             if (diff <= 0) {
@@ -3763,17 +3761,17 @@ int __cdecl sub_620100(EdgeScan *edge, int vertex_index) {
             }
             edge->id = idx;
             int scale = diff * 0x10000;
-            int *tbl490 = *g2_009bb490;
-            edge->accumA = tbl490[vertex_index * 2] << 0x10;
-            edge->accumB = tbl490[vertex_index * 2 + 1] << 0x10;
+            Vert *tbl490 = *g2_009bb490;
+            edge->accumA = tbl490[vertex_index].x << 0x10;
+            edge->accumB = tbl490[vertex_index].y << 0x10;
             tbl490 = *g2_009bb490;
-            edge->deltaA = fixed_div((tbl490[idx * 2] << 0x10) - edge->accumA, scale);
+            edge->deltaA = fixed_div((tbl490[idx].x << 0x10) - edge->accumA, scale);
             tbl490 = *g2_009bb490;
-            edge->deltaB = fixed_div((tbl490[idx * 2 + 1] << 0x10) - edge->accumB, scale);
+            edge->deltaB = fixed_div((tbl490[idx].y << 0x10) - edge->accumB, scale);
             tbl4f4 = *g2_009bb4f4;
-            edge->accumC = tbl4f4[vertex_index * 2];
+            edge->accumC = tbl4f4[vertex_index].x;
             tbl4f4 = *g2_009bb4f4;
-            int deltaY = tbl4f4[idx * 2] - tbl4f4[vertex_index * 2];
+            int deltaY = tbl4f4[idx].x - tbl4f4[vertex_index].x;
             if (deltaY < 0) {
                 int absDelta = -deltaY;
                 edge->fracAccum = 1 - edge->counter;
@@ -3884,8 +3882,8 @@ int __cdecl sub_624eb0(EdgeScan *param_1, int param_2, TextureStore *param_3) {
       idx = *blit_vertex_count - 1;
     }
 
-    delta = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[idx].b -
-            reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[param_2].b;
+    delta = (*blit_edge_uvs_b)[idx].y -
+            (*blit_edge_uvs_b)[param_2].y;
     param_1->counter = delta;
     if (delta != 0) {
       if (delta < 1) {
@@ -3902,28 +3900,28 @@ int __cdecl sub_624eb0(EdgeScan *param_1, int param_2, TextureStore *param_3) {
       EdgeScan &cached = param_3->edges_[slotIndex];
       param_1->id = idx;
       range = param_1->counter;
-      param_1->accumA = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[param_2].a << 0x10;
-      param_1->accumB = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[param_2].b << 0x10;
+      param_1->accumA = (*blit_edge_uvs_a)[param_2].x << 0x10;
+      param_1->accumB = (*blit_edge_uvs_a)[param_2].y << 0x10;
       if ((param_3->flags_ & 2) == 0) {
         param_1->deltaA = cached.deltaA;
         param_1->deltaB = cached.deltaB;
       } else {
         int fx = fixed_div(
-            reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[idx].a * 0x10000 - param_1->accumA,
+            (*blit_edge_uvs_a)[idx].x * 0x10000 - param_1->accumA,
             range << 0x10);
         cached.deltaA = fx;
         param_1->deltaA = fx;
         range = param_1->counter;
         int fy = fixed_div(
-            reinterpret_cast<EdgePoint *>(*blit_edge_uvs_a)[idx].b * 0x10000 - param_1->accumB,
+            (*blit_edge_uvs_a)[idx].y * 0x10000 - param_1->accumB,
             range << 0x10);
         cached.deltaB = fy;
         param_1->deltaB = fy;
       }
 
-      param_1->accumC = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[param_2].a;
-      idx = reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[idx].a -
-            reinterpret_cast<EdgePoint *>(*blit_edge_uvs_b)[param_2].a;
+      param_1->accumC = (*blit_edge_uvs_b)[param_2].x;
+      idx = (*blit_edge_uvs_b)[idx].x -
+            (*blit_edge_uvs_b)[param_2].x;
       if ((param_3->flags_ & 2) != 0) {
         range = param_1->counter;
         cached.deltaC = idx / range;
@@ -4014,13 +4012,13 @@ void Texture::sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
         *reinterpret_cast<unsigned char *>(blit_slot_560) =
             static_cast<unsigned char>(threshold);
         *blit_slot_564 = static_cast<int>(reinterpret_cast<intptr_t>(palette));
-        *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
+        *blit_edge_uvs_b = vertices;
         *blit_z_values = reinterpret_cast<int *>(zvals);
         *blit_remap_table = reinterpret_cast<uintptr_t>(remap);
         *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
-        *blit_edge_uvs_a = reinterpret_cast<int *>(uv);
+        *blit_edge_uvs_a = uv;
         *blit_vertex_count = count;
         *blit_buffer_stride = static_cast<int>(buffer->stride_);
         *blit_texture_width = static_cast<int>(iWidth_);
@@ -4449,8 +4447,8 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
 
     *blit_pixel_base = buf->get_data();
     *blit_light_threshold = *blit_light_threshold_2;
-    *blit_edge_uvs_a = reinterpret_cast<int *>(edgeVerts);
-    *blit_edge_uvs_b = reinterpret_cast<int *>(verts);
+    *blit_edge_uvs_a = edgeVerts;
+    *blit_edge_uvs_b = verts;
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
     *blit_texture_pixels = pixels_;
@@ -4654,8 +4652,8 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
 
     *blit_pixel_base = buf->get_data();
     *blit_light_threshold = light_thresh;
-    *blit_edge_uvs_a = reinterpret_cast<int *>(edgeVerts);
-    *blit_edge_uvs_b = reinterpret_cast<int *>(verts);
+    *blit_edge_uvs_a = edgeVerts;
+    *blit_edge_uvs_b = verts;
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
     *blit_texture_pixels = pixels_;
@@ -4848,13 +4846,13 @@ void Texture::sub_622200(Buffer *a2, Vert *a3, int *a4, Texture *a5,
             *blit_pixel_base = a2->get_data();
             texture_reset_fpu();
             *blit_z_values = a4;
-            *blit_edge_uvs_b = reinterpret_cast<int *>(a3);
+            *blit_edge_uvs_b = a3;
             *blit_remap_table = reinterpret_cast<uintptr_t>(a6);
             *blit_texture_pixels = pixels_;
             TextureRowPitchScratch = static_cast<int>(iWidth_);
             *blit_texture_height = static_cast<int>(iHeight_);
             *blit_vertex_count = a7;
-            *blit_edge_uvs_a = reinterpret_cast<int *>(a8);
+            *blit_edge_uvs_a = a8;
             Buffer *buffer = a2;
             *blit_buffer_stride = buffer->stride_;
             *blit_texture_width = static_cast<int>(iWidth_);
@@ -5151,12 +5149,12 @@ void Texture::sub_61c630(Buffer * bufIn, int * verts, Texture * texB, unsigned c
     if (pixels_ != 0 && shadeTable != 0 && texB != 0) {
         *blit_pixel_base = bufIn->get_data();
         *blit_remap_table = reinterpret_cast<uintptr_t>(shadeTable);
-        *blit_edge_uvs_b = reinterpret_cast<int *>(verts);
+        *blit_edge_uvs_b = reinterpret_cast<Vert *>(verts);
         *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
         *blit_vertex_count = vertCount;
-        *blit_edge_uvs_a = reinterpret_cast<int *>(unusedIn);
+        *blit_edge_uvs_a = reinterpret_cast<Vert *>(unusedIn);
         *blit_buffer_stride = static_cast<int>(bufIn->stride_);
         *blit_texture_width = static_cast<int>(iWidth_);
         *blit_shade_table = texB->pixels_;
@@ -5434,13 +5432,13 @@ void Texture::sub_61d990(Buffer *buffer, int *vertices, int *zvals,
     *blit_pixel_base = buffer->get_data();
     texture_reset_fpu();
     *blit_z_values = reinterpret_cast<int *>(zvals);
-    *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
+    *blit_edge_uvs_b = reinterpret_cast<Vert *>(vertices);
     *blit_remap_table = reinterpret_cast<uintptr_t>(remap);
     *blit_texture_pixels = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
     *blit_texture_height = static_cast<int>(iHeight_);
     *blit_texture_width = static_cast<int>(iWidth_);
-    *blit_edge_uvs_a = reinterpret_cast<int *>(wide_flag != 0 ? cornersAndMids_ : corners_);
+    *blit_edge_uvs_a = wide_flag != 0 ? cornersAndMids_ : corners_;
     *blit_vertex_count = wide_flag != 0 ? 8 : 4;
     *blit_buffer_stride = static_cast<int>(buffer->stride_);
     *blit_shade_table = shade_texture->pixels_;
@@ -5458,8 +5456,9 @@ void Texture::sub_61d990(Buffer *buffer, int *vertices, int *zvals,
         int min_x = 0x7fff;
         int max_x = static_cast<int>(0xffff8003u);
         int top_index = 0;
+        const Vert *vertex_pairs = reinterpret_cast<const Vert *>(vertices);
         for (int index = 0; index < count; ++index) {
-            const int y = vertices[index * 2 + 1];
+            const int y = vertex_pairs[index].y;
             if (y < min_y) {
                 min_y = y;
                 top_index = index;
@@ -5468,7 +5467,7 @@ void Texture::sub_61d990(Buffer *buffer, int *vertices, int *zvals,
                 max_y = y;
                 *blit_max_y_index = index;
             }
-            const int x = vertices[index * 2];
+            const int x = vertex_pairs[index].x;
             if (x < min_x) min_x = x;
             if (max_x < x) max_x = x;
         }
@@ -5788,8 +5787,8 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
     texture_reset_fpu();
     *blit_pixel_base = destination;
     *blit_light_threshold = *blit_light_threshold_2;
-    *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
-    *blit_edge_uvs_a = reinterpret_cast<int *>(mode == 0 ? corners_ : cornersAndMids_);
+    *blit_edge_uvs_b = reinterpret_cast<Vert *>(vertices);
+    *blit_edge_uvs_a = mode == 0 ? corners_ : cornersAndMids_;
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
     *blit_texture_pixels = pixels_;
@@ -5799,9 +5798,10 @@ void Texture::sub_61b780(Buffer *buffer, int *vertices, int zvals, int mode) {
     *blit_clip_left = buffer->rect1_.left;
     *blit_clip_bottom = buffer->rect1_.bottom;
     *blit_clip_top = buffer->rect1_.top;
+    const Vert *vertex_pairs = reinterpret_cast<const Vert *>(vertices);
     for (int i = 0; i < count; ++i) {
-        const int x = vertices[i * 2];
-        const int y = vertices[i * 2 + 1];
+        const int x = vertex_pairs[i].x;
+        const int y = vertex_pairs[i].y;
         if (y < min_y) { min_y = y; top = i; }
         if (y > max_y) { max_y = y; *blit_max_y_index = i; }
         if (x < min_x) min_x = x;
@@ -5864,15 +5864,15 @@ void Texture::sub_620a10(Buffer *buffer, int vertices_arg, int count,
                          int edge_vertices_arg, TextureStore *cache) {
     int v80 = 1;
     cache->next_record_ = 0;
-    int *vertices = reinterpret_cast<int *>(vertices_arg);
+    Vert *vertices = reinterpret_cast<Vert *>(vertices_arg);
     void *data = buffer->get_data();
     texture_reset_fpu();
     *blit_pixel_base = data;
-    *blit_edge_uvs_b = reinterpret_cast<int *>(vertices_arg);
+    *blit_edge_uvs_b = reinterpret_cast<Vert *>(vertices_arg);
     *blit_texture_pixels = pixels_;
     TextureRowPitchScratch = iWidth_;
     *blit_texture_height = iHeight_;
-    *blit_edge_uvs_a = reinterpret_cast<int *>(edge_vertices_arg);
+    *blit_edge_uvs_a = reinterpret_cast<Vert *>(edge_vertices_arg);
     *blit_vertex_count = count;
     *blit_light_threshold = *blit_light_threshold_2;
     *blit_buffer_stride = buffer->stride_;
@@ -5885,8 +5885,8 @@ void Texture::sub_620a10(Buffer *buffer, int vertices_arg, int count,
     int min_x = 0x7fff, max_x = -0x7ffd;
     int top = 0;
     for (int i = 0; i < count; ++i) {
-        const int x = vertices[i * 2];
-        const int y = vertices[i * 2 + 1];
+        const int x = vertices[i].x;
+        const int y = vertices[i].y;
         if (y < min_y) { min_y = y; top = i; }
         if (y > max_y) { max_y = y; *blit_max_y_index = i; }
         if (x < min_x) min_x = x;
@@ -5939,8 +5939,8 @@ void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
     int top = 0;
     *blit_pixel_base = buffer->get_data();
     texture_reset_fpu();
-    *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
-    *blit_edge_uvs_a = reinterpret_cast<int *>(flag == 0 ? corners_ : cornersAndMids_);
+    *blit_edge_uvs_b = reinterpret_cast<Vert *>(vertices);
+    *blit_edge_uvs_a = flag == 0 ? corners_ : cornersAndMids_;
     *blit_vertex_count = count;
     *blit_z_values = reinterpret_cast<int *>(zvals);
     *blit_texture_pixels = pixels_;
@@ -5950,9 +5950,10 @@ void Texture::sub_61d090(Buffer *buffer, int *vertices, int *zvals,
     *blit_clip_left = buffer->rect1_.left;
     *blit_clip_bottom = buffer->rect1_.bottom;
     *blit_clip_top = buffer->rect1_.top;
+    const Vert *vertex_pairs = reinterpret_cast<const Vert *>(vertices);
     for (int i = 0; i < count; ++i) {
-        const int x = vertices[i * 2];
-        const int y = vertices[i * 2 + 1];
+        const int x = vertex_pairs[i].x;
+        const int y = vertex_pairs[i].y;
         if (y < min_y) { min_y = y; top = i; }
         if (y > max_y) { max_y = y; *blit_max_y_index = i; }
         if (x < min_x) min_x = x;
@@ -6409,16 +6410,16 @@ void Texture::sub_61cb50(Buffer *buffer, Vert *vertices, Texture *shade,
         texture_reset_fpu();
 
         *blit_remap_table = reinterpret_cast<uintptr_t>(remap);
-        *blit_edge_uvs_b = reinterpret_cast<int *>(vertices);
+        *blit_edge_uvs_b = vertices;
         *blit_texture_pixels = pixels_;
         TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
         if (use_eight_vertices != 0) {
             *blit_vertex_count = 8;
-            *blit_edge_uvs_a = reinterpret_cast<int *>(cornersAndMids_);
+            *blit_edge_uvs_a = cornersAndMids_;
         } else {
             *blit_vertex_count = 4;
-            *blit_edge_uvs_a = reinterpret_cast<int *>(corners_);
+            *blit_edge_uvs_a = corners_;
         }
         *blit_buffer_stride = static_cast<int>(buffer->stride_);
         *blit_texture_width = static_cast<int>(iWidth_);
@@ -7235,18 +7236,18 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
         ((param_5 != 0 && (param_7 != 0)))) &&
        ((*blit_pixel_base) = param_2->get_data(), (*blit_pixel_base) != 0)) {
       *blit_z_values = reinterpret_cast<int *>(param_4);
-      *blit_edge_uvs_b = reinterpret_cast<int *>(param_3);
+      *blit_edge_uvs_b = reinterpret_cast<Vert *>(param_3);
       (*blit_texture_pixels) = pixels_;
       (TextureRowPitchScratch) = static_cast<int>(iWidth_);
       (*blit_texture_height) = static_cast<int>(iHeight_);
       if (param_8 == 0) {
         iVar10 = 4;
-        *blit_edge_uvs_a = reinterpret_cast<int *>(corners_);
+        *blit_edge_uvs_a = corners_;
         (*blit_vertex_count) = 4;
       }
       else {
         iVar10 = 8;
-        *blit_edge_uvs_a = reinterpret_cast<int *>(cornersAndMids_);
+        *blit_edge_uvs_a = cornersAndMids_;
         (*blit_vertex_count) = 8;
       }
       (*blit_buffer_stride) = param_2->stride_;

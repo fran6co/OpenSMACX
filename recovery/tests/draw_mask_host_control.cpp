@@ -32,8 +32,8 @@ public:
 };
 
 static int slots[64];
-static int *edge_uvs_a_cell = 0;
-static int **blit_edge_uvs_a = &edge_uvs_a_cell;
+static Vert *edge_uvs_a_cell = 0;
+static Vert **blit_edge_uvs_a = &edge_uvs_a_cell;
 static int *blit_slot_498 = &slots[1];
 static int *blit_buffer_stride = &slots[2];
 static int *blit_slot_4a4 = &slots[3];
@@ -50,8 +50,8 @@ static int *blit_slot_4e4 = &slots[13];
 static void *pixel_base_cell;
 static void **blit_pixel_base = &pixel_base_cell;
 static int *blit_span_left = &slots[15];
-static int *edge_uvs_b_cell = 0;
-static int **blit_edge_uvs_b = &edge_uvs_b_cell;
+static Vert *edge_uvs_b_cell = 0;
+static Vert **blit_edge_uvs_b = &edge_uvs_b_cell;
 static int *blit_slot_4f8 = &slots[17];
 static int *blit_slot_4fa = &slots[18];
 static int *z_values_cell = 0;
