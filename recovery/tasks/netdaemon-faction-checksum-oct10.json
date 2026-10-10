@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "task_id": "netdaemon-faction-checksum-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover the seven-row faction checksum walk through actual PlayerData members, independently of host global ordering",
+  "base_revision": "4f8119d85ccd3cc1e3082637a07729a7e5e6bff9",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5437664}
+  ],
+  "editable_files": ["src/netdaemon.cpp", "recovery/tests/test_netdaemon_faction_checksum_oct10.py"],
+  "evidence": [
+    "Original game_checksum52F8E0 walks from96EE78=PlayersData96C9E0+20CC+3CC, increments20CC, and stops at97D40C=PlayersData+8*20CC+3CC. The apparent Bases+3CC endpoint therefore expresses exactly PlayerData rows1..7, not a dependency on unrelated host global allocation order. Both ordinary and debug loops use existing PlayerData members as byte-range anchors; the debug32-byte range atdiplo_patience crosses its8-byte member and must remain32bytes.",
+    "Bounded change to the two faction loops only: preserve ordinary mask values, checksum call order/seeds/lengths, debug per-row outputs, original live reads, identity/spans/claims and all historical findings. No safety fixes, global/layout changes or other checksum-loop migrations. Require fresh native PlayerData layout, whole NetDaemon unit baseline/current comparisons, actual extracted declaration/loop host damage controls, fresh full application build/link, mappings/references and independent review before manual integration. Temporary matching regression may be retained with historical obligations; no new function-coverage or game-acceptance claim."
+  ]
+}
