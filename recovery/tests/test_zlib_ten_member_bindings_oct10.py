@@ -56,7 +56,7 @@ def test_prior_twelve_identities_claims_history_and_policy_unchanged():
 def test_ten_exact_identity_routes_and_native_writer_roundtrip():
     text = (ROOT / COMPANION).read_text()
     manifest = parse_component(text)
-    assert len(manifest.bindings) == 55
+    assert len(manifest.bindings) == 56
     assert parse_component(render_component(manifest)) == manifest
     assert write(text, read_file(ROOT / COMPANION)) == text
     rows = {row.address: row for row in read_file(ROOT / COMPANION)}

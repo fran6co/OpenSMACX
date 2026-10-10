@@ -9,7 +9,11 @@
     },
     "system_import_archives": {
       "winmm-timegettime-thunk": "/home/fran6co/opt/vc6/LIB/WINMM.LIB",
-      "ddraw-directdrawcreate-thunk": "/home/fran6co/opt/vc6/LIB/DDRAW.LIB"
+      "ddraw-directdrawcreate-thunk": "/home/fran6co/opt/vc6/LIB/DDRAW.LIB",
+      "vfw32-import-thunks": "/home/fran6co/opt/vc6/LIB/VFW32.LIB",
+      "dsound-import-thunks": "/home/fran6co/opt/vc6/LIB/DSOUND.LIB",
+      "comdlg32-import-thunks": "/home/fran6co/opt/vc6/LIB/COMDLG32.LIB",
+      "dplayx-import-thunks": "/home/fran6co/opt/vc6/LIB/DPLAYX.LIB"
     }
   },
   "audits": "recovery/audits.json",

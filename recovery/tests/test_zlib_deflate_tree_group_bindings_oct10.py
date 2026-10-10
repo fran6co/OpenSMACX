@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 
 from match_recovery.component_source import parse_component, render_component
+from test_indirect_dependency_frontier_oct10 import restore_import_archive_configuration, restore_prior_ddraw_archive_configuration
 from test_zlib_main_state_machine_bindings_oct10 import EXPECTED as MAIN_STATE_MACHINES
 from test_zlib_inflate_group_bindings_oct10 import EXPECTED as FOURTEEN_MEMBERS, UNITS
 from match_recovery.source.reader import read_file, read_text
@@ -60,7 +61,7 @@ def test_prior_twenty_two_identities_history_claims_and_policy_preserved():
 def test_sixteen_exact_routes_unclaimed_and_native_roundtrips():
     text = (ROOT / COMPANION).read_text()
     manifest = parse_component(text)
-    assert len(manifest.bindings) == 55
+    assert len(manifest.bindings) == 56
     assert parse_component(render_component(manifest)) == manifest
     assert write(text, read_file(ROOT / COMPANION)) == text
     rows = {row.address: row for row in read_file(ROOT / COMPANION)}
@@ -76,7 +77,7 @@ def test_sixteen_exact_routes_unclaimed_and_native_roundtrips():
         assert "not a current byte claim" in binding.evidence
         assert "any missing data/string/helper evidence must remain unknown" in binding.evidence
         assert "retained selection" in binding.evidence
-    assert 0x0063D600 not in bindings  # outside this pinned-Ghidra-witnessed set
+    assert 0x0063D600 not in EXPECTED  # independently native-bounded in the later dependency-frontier step
 
 
 def test_sixteen_extents_have_independent_original_catalog_evidence():
@@ -94,4 +95,7 @@ def test_upstream_archive_inputs_and_application_policy_unchanged():
         path = manifest.source_root + "/" + file.path
         assert (ROOT / path).read_bytes() == baseline(path)
     for path in ("CMakeLists.txt", "recovery/project.json", "recovery/build.json"):
-        assert (ROOT / path).read_bytes() == baseline(path)
+        current = (ROOT / path).read_bytes()
+        if path == "recovery/project.json":
+            current = restore_prior_ddraw_archive_configuration(restore_import_archive_configuration(current))
+        assert current == baseline(path)

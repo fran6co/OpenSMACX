@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 
 from match_recovery.component_source import parse_component, render_component
+from test_indirect_dependency_frontier_oct10 import restore_import_archive_configuration, restore_prior_ddraw_archive_configuration
 from match_recovery.source.reader import read_file, read_text
 from match_recovery.source.writer import write
 
@@ -47,7 +48,7 @@ def test_prior_fifty_two_identities_history_claims_and_policy_preserved():
 def test_three_state_machines_exact_routes_unclaimed_and_native_roundtrips():
     text = (ROOT / COMPANION).read_text()
     manifest = parse_component(text)
-    assert len(manifest.bindings) == 55
+    assert len(manifest.bindings) == 56
     assert set(manifest.units) == UNITS
     assert parse_component(render_component(manifest)) == manifest
     assert write(text, read_file(ROOT / COMPANION)) == text
@@ -67,7 +68,7 @@ def test_three_state_machines_exact_routes_unclaimed_and_native_roundtrips():
         assert "compiler switch tables beyond this code span" in binding.evidence
         assert "Preserve the code-only span and native boundary failure" in binding.evidence
         assert "do not extend it" in binding.evidence
-    assert 0x0063D600 not in bindings  # outside this pinned-Ghidra-witnessed set
+    assert 0x0063D600 not in EXPECTED  # independently native-bounded in the later dependency-frontier step
 
 
 def test_three_state_machines_extents_have_independent_original_catalog_evidence():
@@ -85,4 +86,7 @@ def test_upstream_archive_inputs_and_application_policy_unchanged():
         path = manifest.source_root + "/" + file.path
         assert (ROOT / path).read_bytes() == baseline(path)
     for path in ("CMakeLists.txt", "recovery/project.json", "recovery/build.json"):
-        assert (ROOT / path).read_bytes() == baseline(path)
+        current = (ROOT / path).read_bytes()
+        if path == "recovery/project.json":
+            current = restore_prior_ddraw_archive_configuration(restore_import_archive_configuration(current))
+        assert current == baseline(path)

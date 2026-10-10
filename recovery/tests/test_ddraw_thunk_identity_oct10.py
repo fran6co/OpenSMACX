@@ -15,6 +15,7 @@ from match_recovery.pe_coff import PeImage
 from match_recovery.records import read_json
 from match_recovery.source_history import revision_files
 from match_recovery.source_inventory import image_pin
+from test_indirect_dependency_frontier_oct10 import NEW_COMPONENTS, without_stored_binding
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "cc7a89781fec346950ce32bc3c2d8d135bde954a"
@@ -66,10 +67,13 @@ def test_preserves_existing_source_components_and_does_not_grant_code_claims(liv
     prior = {name: parse_component(data.decode()) for name, data in historical.items()
              if name.endswith(".recovery.h")}
     for name, manifest in prior.items():
-        assert parse_component((ROOT / name).read_text()) == manifest
+        observed = parse_component((ROOT / name).read_text())
+        if observed.component.component_id == "zlib":
+            observed = without_stored_binding(observed)
+        assert observed == manifest
     current = read_components(ROOT / "src")
     assert {m.component.component_id for m in current} == (
-        {m.component.component_id for m in prior.values()} | {COMPONENT})
+        {m.component.component_id for m in prior.values()} | {COMPONENT} | NEW_COMPONENTS)
     text = (ROOT / COMPANION).read_text()
     assert "ORIGINAL:" not in text and "BYTE_EXACT" not in text
     assert component_claim_result({"measurement_backend": "system_import_original_thunk"}) == (
