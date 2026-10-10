@@ -12,6 +12,14 @@
     "recovery/environment/intrinsics.py", "recovery/environment/wine.py",
     "recovery/environment/wine_repro.py", "recovery/environment/adapter.py",
     "recovery/environment/recipe.py", "recovery/environment/command_paths.py",
+    "recovery/environment/wine_compile.py", "recovery/environment/frontends.json",
+    "packages/match-recovery/src/match_recovery/compile_file_evidence.py",
+    "packages/match-recovery/src/match_recovery/compile_link_evidence.py",
+    "packages/match-recovery/src/match_recovery/build_graph_commands.py",
+    "packages/match-recovery/tests/test_compile_file_evidence.py",
+    "packages/match-recovery/tests/test_compile_link_evidence.py",
+    "packages/match-recovery/tests/test_build_graph_commands.py",
+    "packages/match-recovery/README.md",
     "recovery/tests/test_intrinsic_environment.py",
     "recovery/tests/test_caviar_cpu_actual_source.py"
   ],
@@ -20,6 +28,8 @@
     "Mapped caller 0x00639330 immediately overwrites AL with byte9C0830 after calling the probe; source ignores the return. Original saves/restores EAX, not an int0 result. Void interpretation is supported at that known caller only; full indirect/executable caller coverage and entry-register/condition-flag fidelity remain obligations. Do not claim ABI equivalence or full original matching.",
     "Actual clang-cl i686 generated PUSHFD/POPFD/CPUID without source assembly through the existing configured compiler protocol. VC6 LINK6 accepts the no-debug COFF control, but rejects the Z7 CodeView control with LNK1103. A narrowly selected intrinsic frontend must explicitly omit incompatible debug metadata, record its real executable/preprocessing closure/effective argv, preserve ordinary VC6 routing, and export its actual application recipe. No silent fallback or full-Caviar modern compilation.",
     "Current rank storage is private in Caviar's anonymous namespace, vendor storage is external, and neither has a source object binding. Establish correct source-owned byte starts and coordinated declarations/ownership before splitting the probe; do not infer complete original allocation extents. Source owns mappings; caches remain ignored.",
-    "Ship compiler interaction as project-local code behind existing entrypoints, not library-specific VC6 or Caviar adapters or a new CLI. Require fail-closed compiler-selection/reproducibility/receipt controls, pinned original branch evidence and actual-source hardware-mock tests, scoped historical continuity, independent review, relevant native measurements and fresh full application build/link. Preserve matching obligations; compiler controls are not game acceptance."
+    "Ship compiler interaction as project-local code behind existing entrypoints, not library-specific VC6 or Caviar adapters or a new CLI. Require fail-closed compiler-selection/reproducibility/receipt controls, pinned original branch evidence and actual-source hardware-mock tests, scoped historical continuity, independent review, relevant native measurements and fresh full application build/link. Preserve matching obligations; compiler controls are not game acceptance.",
+    "Actual VC6 debug-link controls reject even Clang's minimal compiler-identification CodeView section. Its companion llvm-objcopy --strip-debug removes that metadata and permits the control to debug-link. Generic compile-file evidence must explicitly distinguish primary compiler output from ordered postprocessed final output; retain strict v1 parsing, observe actual stage argv/tools/inputs and hash continuity, and refuse stage-ignorant build-graph comparison. Trusted capture and final object/link byte correspondence do not prove transformation semantics or acceptance. This narrow package scope expansion is driven by the real CPU recovery blocker, not authorization for unrelated framework work.",
+    "Independent review also requires a closed compiler-argument policy, disabled default Clang config, implicit environment/target/language/debug override controls and a nonempty external-global relocation fixture. Register the optional frontend explicitly in project-owned configuration rather than silently requiring its binaries in every ordinary-only project toolchain. Keep the original task baseline and all discoveries."
   ]
 }
