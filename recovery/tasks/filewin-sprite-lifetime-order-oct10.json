@@ -1,0 +1,127 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "dedae2872721ef9637ec3c576dfd660cb6d5b83f",
+  "editable_files": [
+    "src/jackal/filewin.cpp",
+    "recovery/tests/test_filewin_sprite_lifecycle_behavior.py"
+  ],
+  "evidence": [
+    "Independent pinned branch walk fixes case0 to9048 (614C64 jumps614D2A), case1 to9018 (614C6B jumps614CCE), case2 to9078. Current draw selects Sprite1/0/2, and init613B1C width read9030 at Sprite offset18 independently fixes Sprite0=9018. Prepare correctly targets9048 then9018 then9078; no prepare or draw change is authorized.",
+    "Pinned close613900 calls Sprite::close on9048,9018,9078. Original CRT slots6826A4/6A8/6AC construct those same three receivers through613790/6137D0/613810. Fresh existing Jackal member COFF in build-suimc8ut selects Sprite0/1/2 in .CRT$XCU; that declaration order and current close order contradict the pinned relationship.",
+    "Authorize reversing only the first two static Sprite declarations and explicit close calls, adding three native start-only object bindings (_FileWinSprite0=9B9018, _FileWinSprite1=9B9048, _FileWinSprite2=9B9078) and accurate source-owned lifetime/identity comments. Preserve names, every existing function/mapping/claim, headers, build policy, extraction/blank/error/Buffer cleanup behavior.",
+    "Original exit callbacks6137B0/6137F0/613830 test and set shared guard byte9B9014 bits1/2/4 before closing sprites. Current natural cleanup does not reproduce that guard. Retain this explicitly unresolved fidelity obligation; no original finalizer equivalence or exact claim is granted by this change. No hand-authored callback, guessed allocation bounds, old-image pointers or new bug fix.",
+    "Add bounded actual-source host controls for construction/explicit close order and existing extraction/blank/error/Buffer lifetime behavior; demonstrate failure on the old source and passing controls after repair. Require complete fresh owner measurement, claim/object continuity, references, native mappings, full application build/link, fresh physical linked relative order and independent actual-diff review for bounded manual integration.",
+    "This correction is faithful recovery of wrongly translated order, not an intentional original behavior change. Bounded ordering/body controls do not prove complete CRT, once-guard fidelity, original TU names, strict linked preservation, runtime or game acceptance."
+  ],
+  "intent": "Restore original FileWin sprite construction and explicit close ordering through the real static Sprite objects and record their independently established original storage identities.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6373696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6373824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6376336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6375072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6372688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6373216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6374240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6371760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6376528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6371408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4226816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6371584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6372256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6376320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6374224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6374176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6374096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6376288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6376512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6376848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6377008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "filewin-sprite-lifetime-order-oct10"
+}
