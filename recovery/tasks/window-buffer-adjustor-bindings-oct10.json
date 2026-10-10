@@ -1,0 +1,54 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "deb8638890e08cd3eda9c9c97d3c9a0979b0edfb",
+  "editable_files": [
+    "src/councwin.cpp",
+    "src/datalink.cpp",
+    "src/designwin.cpp",
+    "src/diplopop.cpp",
+    "src/diplowin.cpp",
+    "src/newtechwin.cpp"
+  ],
+  "evidence": [
+    "Physical107760-HIGHLOW-site scan of pinned image finds six original readonly Buffer vtable slot targets without an original source-span mapping. Each is11 executable bytes SUB ECX,0x444 then JMP to its already mapped primary deleting destructor, followed by INT3 padding; this is not a guessed function boundary or a handwritten wrapper.",
+    "The current genuine GraphicWin:Win,Buffer hierarchy and each derived constructor/Buffer-view vptr link provide ownership. Fresh existing build-ki_sta03 physical COFF emits one ??_E<Class>@@WEEE@AEPAXI@Z11-byte COMDAT per owner, selected at Buffer table slot0, with REL32 to weak primary_E interpreted by its actual scalar_G. Independently verify constructors/weak fallback against pin before source publication; current names are source interpretations, not original debug-name evidence.",
+    "Authorize only six native FILE-mode bind insertions in existing ownerCPPs and recorder publication after exact measurement. No C++ bodies, hierarchy, storage, tables, flags or handmade thunks added or changed. Preserve every prior identity/span/history/claim; new identities have no historical byte claim until native record banks them. Full linked weak/COMDAT selection, references/structure/runtime are not established by local body equality.",
+    "Require independent actual pin/COFF review, all six owner baseline verdict continuity, fresh build/link, identity/claim continuity with exactly these six added origins, relevant native source/reference checks and freshly recorded measurements. This is missing source-mapping coverage for genuine emitted bodies, not retirement of73 unresolved scaffold classifications."
+  ],
+  "intent": "Bind six newly found original deleting receiver adjustments to genuine compiler-emitted class operations without adding adapter bodies.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4360000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4401216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4452256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4460272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4477216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4737712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "window-buffer-adjustor-bindings-oct10"
+}
