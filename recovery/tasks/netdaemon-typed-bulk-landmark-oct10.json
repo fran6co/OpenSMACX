@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "task_id": "netdaemon-typed-bulk-landmark-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover shared typed bulk-data and landmark wire records while preserving all original written and unwritten stack bytes",
+  "base_revision": "e33cd553388fbe62c77f0d71c629c47d84cd43fe",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5844816},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5844976},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5845264}
+  ],
+  "editable_files": ["src/netdaemon.cpp", "recovery/tests/test_netdaemon_typed_bulk_landmark_oct10.py"],
+  "evidence": [
+    "Current raw sender592F50 uses a90-byte packet, common16-byte header and eight explicitly assigned payload dwords; message_big_data592FF0 uses the same90-byte width/header and32-word payload. The landmark sender593110 uses40-byte storage, commonheader, four payload dwords and nullable text at20. Native original instruction and consumer review is required before interpreting those accessed spans as named wire fields.",
+    "Change only these three packet-builder bodies and their typed passive record declarations. Preserve native store order, live faction/time/sequence reads, opcode truncation, target routing, busy-count ordering, original copy/zero loops, negative and excessive count behavior, unchecked strcpy and nullable text. Unwritten header bytes/raw tail/null-text bytes remain unwritten; no value initialization or safety correction. Keep all original identities/spans/claims/lessons. Fresh complete NetDaemon baseline/current measurement, native record CodeView layouts, actual-source/typed-record host damage controls, relevant packet/routing regressions, fresh full application build/link, source mappings/references and independent review precede a bounded manual recovery commit. Temporary matching regressions retain restoration obligations; no new function-coverage or game acceptance claim."
+  ]
+}
