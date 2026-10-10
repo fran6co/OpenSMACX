@@ -1419,24 +1419,27 @@ void NetDaemon::game_checksum(int *results) {
     cs = 0;
 
     {
-        char *p;
-        for (p = (char *)((char *)PlayersData + 0x2498); p < (char *)((char *)Bases + 0x3CC); p += 0x20cc) {
+        // The original cursor starts at faction 1's research word and stops
+        // after faction 7. Bases happens to follow PlayersData in the image;
+        // its address is not a bound on the source-owned faction array.
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            PlayerData &player = PlayersData[faction];
             unsigned int masked1[8];
             unsigned int masked2[8];
             int idx4;
-            cs = checksum(p - 4, 4, cs);
-            cs = checksum(p, 4, cs);
-            cs = checksum(p + 0x98, 4, cs);
-            cs = checksum(p - 0x1ac, 4, cs);
-            cs = checksum(p - 0x1a4, 0x10, cs);
-            cs = checksum(p + 0x43c, 0x10, cs);
+            cs = checksum((char *)&player.tech_accumulated, 4, cs);
+            cs = checksum((char *)&player.tech_id_researching, 4, cs);
+            cs = checksum((char *)&player.planet_ecology, 4, cs);
+            cs = checksum((char *)&player.energy_reserves, 4, cs);
+            cs = checksum((char *)&player.soc_category_pending, 0x10, cs);
+            cs = checksum((char *)player.satellites_, 0x10, cs);
             for (idx4 = 0; idx4 < 8; ++idx4) {
-                masked1[idx4] = *(unsigned int *)(p - 0x3b4 + idx4 * 4) & 0xb1d3c7f;
-                masked2[idx4] = *(unsigned int *)(p - 0x394 + idx4 * 4) & 0x1e68;
+                masked1[idx4] = player.diplo_treaties[idx4] & 0xb1d3c7f;
+                masked2[idx4] = player.diplo_agenda[idx4] & 0x1e68;
             }
             cs = checksum((char *)masked1, 0x20, cs);
             cs = checksum((char *)masked2, 0x20, cs);
-            cs = checksum(p - 0x2a8, 4, cs);
+            cs = checksum((char *)&player.integrity_blemishes, 4, cs);
         }
     }
     *out++ = cs;
@@ -1567,22 +1570,24 @@ void NetDaemon::game_checksum(int *results) {
         *out++ = cs;
 
         {
-            char *p;
-            for (p = (char *)((char *)PlayersData + 0x2498); p < (char *)((char *)Bases + 0x3CC); p += 0x20cc) {
-                cs = checksum(p - 4, 4, 0);
-                cs = checksum(p, 4, cs);
-                cs = checksum(p + 0x98, 4, cs);
-                cs = checksum(p - 0x1ac, 4, cs);
-                cs = checksum(p - 0x1a4, 0x10, cs);
-                cs = checksum(p + 0x43c, 0x10, cs);
-                cs = checksum(p - 0x3b4, 0x20, cs);
-                cs = checksum(p - 0x394, 0x20, cs);
-                cs = checksum(p - 0x374, 0x20, cs);
-                cs = checksum(p - 0x314, 0x20, cs);
-                cs = checksum(p - 0x334, 0x20, cs);
-                cs = checksum(p - 0x354, 0x20, cs);
-                cs = checksum(p - 0x280, 0x20, cs);
-                cs = checksum(p - 0x2a8, 4, cs);
+            for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+                PlayerData &player = PlayersData[faction];
+                cs = checksum((char *)&player.tech_accumulated, 4, 0);
+                cs = checksum((char *)&player.tech_id_researching, 4, cs);
+                cs = checksum((char *)&player.planet_ecology, 4, cs);
+                cs = checksum((char *)&player.energy_reserves, 4, cs);
+                cs = checksum((char *)&player.soc_category_pending, 0x10, cs);
+                cs = checksum((char *)player.satellites_, 0x10, cs);
+                cs = checksum((char *)player.diplo_treaties, 0x20, cs);
+                cs = checksum((char *)player.diplo_agenda, 0x20, cs);
+                cs = checksum((char *)player.diplo_friction, 0x20, cs);
+                // The original hashes 32 bytes here, not just the eight
+                // patience bytes: retain the following sanction/loan bytes.
+                cs = checksum((char *)&player + offsetof(PlayerData, diplo_patience), 0x20, cs);
+                cs = checksum((char *)player.diplo_merc, 0x20, cs);
+                cs = checksum((char *)player.diplo_spoke, 0x20, cs);
+                cs = checksum((char *)player.diplo_wrongs, 0x20, cs);
+                cs = checksum((char *)&player.integrity_blemishes, 4, cs);
                 *out++ = cs;
             }
         }
