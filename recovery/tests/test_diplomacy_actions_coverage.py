@@ -436,7 +436,7 @@ int main() {
  reset();DiploScratchFA34=6;PlayersData[1].diplo_treaties[2]=1;PlayersData[1].ranking=2;PlayersData[2].ranking=6;
  PlayersData[2].tech_ranking=20;PlayersData[1].tech_ranking=4;
  PlayersData[1].tech_commerce_bonus=1;PlayersData[2].tech_commerce_bonus=4;PlayersData[2].ai_fight=1;
- PlayersData[2].diplo_friction[1]=99;threaten(1,2);assert(DiploScratchFA98==14&&PlayersData[1].energy_reserves==110);
+ PlayersData[2].diplo_friction[1]=99;threaten(1,2);assert(DiploScratchFA98==14&&PlayersData[1].energy_reserves==110&&PlayersData[2].energy_reserves==0);
  reset();DiploScratchFA34=4;DiploScratchFA98=1;DiploScratchF800=8;threaten(1,2);
  assert(tech_calls==1&&technology==8&&DiploScratchF800==-1);
  reset();DiploScratchFA34=13;DiploScratchFA98=1;mutate=1;threaten(1,2);assert(technology==93&&tech_calls==1);

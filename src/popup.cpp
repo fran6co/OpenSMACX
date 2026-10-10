@@ -1039,7 +1039,7 @@ void __cdecl popup_wave_callback(BasePopTextBlock *popup, int) {
         }
     }
     if (popup->field_104_ == 0x19) {
-        if (FactionMusic) FactionMusic->general();
+        if (FactionMusic) FactionMusic->production();
     }
     if (popup->field_104_ == 0x10) {
         g_FX.FX::play(0x38);
