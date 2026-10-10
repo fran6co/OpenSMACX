@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "task_id": "indirect-dependency-frontier-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind seven positively identified dependency entries exposed by direct-call and relocated-pointer surveys without application substitutes",
+  "base_revision": "8f030dcb9",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6573510
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6619632
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6619638
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6619656
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6619662
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6619668
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6542848
+    }
+  ],
+  "editable_files": [
+    "src/vendor/vfw32.recovery.h",
+    "src/vendor/dsound.recovery.h",
+    "src/vendor/comdlg32.recovery.h",
+    "src/vendor/dplayx.recovery.h",
+    "src/vendor/zlib.recovery.h",
+    "recovery/project.json",
+    "recovery/tests/test_indirect_dependency_frontier_oct10.py"
+  ],
+  "evidence": [
+    "Six original FF25 import thunks have independent six-byte native boundaries, exact HIGHLOW operand fixups, original IAT module/export identities and physical pinned VC6 short-import records. Native in-memory checks pass with proposed exact source declarations; DSOUND and DPLAYX must use ordinal identities, not guessed export names. Bind source obligations and configured external archive paths, never DLL implementations or executable-address forwards.",
+    "Pinned deflate63D320..328 indexes the compression strategy table at698CF8; row0 points63D600. Independent native decode and IDA extent bound deflate_stored63D600..63D6EF exclusively;6EF is NOP alignment, fill_window begins6F0. Unmodified zlib1.0.2 deflate.c contains the complete algorithm, and existing physical COFF defines the local symbol in that TU. Bind dependency correspondence only; current exactness, references and retained selection remain verification obligations.",
+    "Retain all existing source annotations/claims and dependency provenance. Use package component serializer, native source/byte/reference verification and damage controls; require mappings/references, independent review and fresh application compile/link. No new application-function coverage or whole-game/autonomous acceptance claim. Reports remain ignored caches."
+  ]
+}
