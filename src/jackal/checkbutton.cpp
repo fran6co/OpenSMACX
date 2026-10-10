@@ -34,8 +34,11 @@
 // (`mov eax,[0x697f20]` then stores the copy) - taking &instance directly
 // compiles one store-immediate instead of that load/store pair and the
 // ctor drops from 17 instructions to 15, 5/17.
-Sprite *const CheckButtonDefaultA24 = &g_CHECKBOX_SPRITE_1;
-Sprite *const CheckButtonDefaultA28 = &g_CHECKBOX_SPRITE_2;
+// Direct static storage addresses: no accessor call or extra dynamic initializer.
+Sprite *const CheckButtonDefaultA24 =
+    reinterpret_cast<Sprite *>(g_CHECKBOX_SPRITE_1.storage_.bytes);
+Sprite *const CheckButtonDefaultA28 =
+    reinterpret_cast<Sprite *>(g_CHECKBOX_SPRITE_2.storage_.bytes);
 
 /*
 Purpose: Construct the GraphicWin base, then install CheckButton's own

@@ -15,7 +15,27 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x00613790 sub_613790 0x00613790-0x006137A6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x613790..0x6137a6; CRT slot 0x6826a4 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite1Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E21 and cleanup _$E19. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original init to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E21
+// ORIGINAL: 0x006137B0 sub_6137b0 0x006137B0-0x006137CF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x6137b0..0x6137cf; CRT slot 0x6826a4 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite1Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E21 and cleanup _$E19. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E19
+// ORIGINAL: 0x006137D0 sub_6137d0 0x006137D0-0x006137E6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x6137d0..0x6137e6; CRT slot 0x6826a8 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite0Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E26 and cleanup _$E24. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original init to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E26
+// ORIGINAL: 0x006137F0 sub_6137f0 0x006137F0-0x0061380F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x6137f0..0x61380f; CRT slot 0x6826a8 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite0Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E26 and cleanup _$E24. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E24
+// ORIGINAL: 0x00613810 sub_613810 0x00613810-0x00613826 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x613810..0x613826; CRT slot 0x6826ac selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite2Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E31 and cleanup _$E29. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original init to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E31
+// ORIGINAL: 0x00613830 sub_613830 0x00613830-0x0061384F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x613830..0x61384f; CRT slot 0x6826ac selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object _FileWinSprite2Owner, guard ?FileWinSpritesCleanupGuard@@3EA, startup _$E31 and cleanup _$E29. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E29
 #include "stdafx.h"
+#include <new>
+#include <stddef.h>
 // Generic Jackal file-selection owner; application presentation stays in AlphaSave.
 #include "filewin.h"
 #include "sprite.h"
@@ -493,15 +513,39 @@ static const char FileWinSpriteSheet[] = "jackal.pcx";
 // The original CRT constructs 1,0,2 (slots 0x6826A4/6A8/6AC), and close()
 // uses that same order. These are storage identities, not executable pointers.
 // Their particular UI roles are unproved, so retain neutral source names.
-// Remaining lifetime obligation: original exits 0x6137B0/7F0/830 test/set
-// bits 1/2/4 of guard byte 0x009B9014 before Sprite::close. The ordinary
-// source lifetimes below do not establish that once-only cleanup guard.
-// RECOVERY_OBJECT: v1 0x009B9048 _FileWinSprite1
-static Sprite FileWinSprite1;
-// RECOVERY_OBJECT: v1 0x009B9018 _FileWinSprite0
-static Sprite FileWinSprite0;
-// RECOVERY_OBJECT: v1 0x009B9078 _FileWinSprite2
-static Sprite FileWinSprite2;
+// Original exits6137B0/7F0/830 test/set bits1/2/4 of independent byte9B9014
+// before directly closing the corresponding Sprite. This private chosen
+// lifetime representation is not proof of an original wrapper class name.
+// RECOVERY_OBJECT: v1 0x009B9014 ?FileWinSpritesCleanupGuard@@3EA
+uint8_t FileWinSpritesCleanupGuard;
+union FileWinSpriteStorage {
+    char bytes[sizeof(Sprite)];
+    uint32_t alignment_[sizeof(Sprite) / sizeof(uint32_t)];
+};
+template<unsigned char Mask> struct FileWinSpriteLifetime {
+    FileWinSpriteStorage storage_;
+    FileWinSpriteLifetime() { new (storage_.bytes) Sprite(); }
+    ~FileWinSpriteLifetime() {
+        if ((FileWinSpritesCleanupGuard & Mask) != 0) return;
+        FileWinSpritesCleanupGuard |= Mask;
+        sprite().Sprite::~Sprite();
+    }
+    Sprite &sprite() { return *reinterpret_cast<Sprite *>(storage_.bytes); }
+};
+static_assert(sizeof(FileWinSpriteLifetime<1>) == sizeof(Sprite) &&
+              sizeof(FileWinSpriteLifetime<2>) == sizeof(Sprite) &&
+              sizeof(FileWinSpriteLifetime<4>) == sizeof(Sprite),
+              "FileWin Sprite lifetime storage extent");
+static_assert(offsetof(FileWinSpriteLifetime<1>, storage_) == 0 &&
+              offsetof(FileWinSpriteLifetime<2>, storage_) == 0 &&
+              offsetof(FileWinSpriteLifetime<4>, storage_) == 0,
+              "FileWin Sprite starts at owner offset zero");
+// RECOVERY_OBJECT: v3 0x009B9048 _FileWinSprite1 member _FileWinSprite1Owner storage_.bytes
+static FileWinSpriteLifetime<1> FileWinSprite1Owner;
+// RECOVERY_OBJECT: v3 0x009B9018 _FileWinSprite0 member _FileWinSprite0Owner storage_.bytes
+static FileWinSpriteLifetime<2> FileWinSprite0Owner;
+// RECOVERY_OBJECT: v3 0x009B9078 _FileWinSprite2 member _FileWinSprite2Owner storage_.bytes
+static FileWinSpriteLifetime<4> FileWinSprite2Owner;
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006139B0 ?init@FileWin@@QAEHPADPAUGraphicWin@@PAUFileWinConstruct@@@Z 0x006139B0-0x00613B97
@@ -564,7 +608,7 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
 
   list_box_.field_8_ = 1;
   static_cast<Dialog &>(list_box_).field_34_ =
-      (FileWinSprite0.width() * 3) / 2;
+      (FileWinSprite0Owner.sprite().width() * 3) / 2;
   list_box_.set_callbacks(&filebox_draw, 0, 0);
 
   directory_list_handle_ = CreateWindowExA(
@@ -587,23 +631,23 @@ void __cdecl filebox_draw(GraphicWin *window, int item_kind, int,
     switch (item_kind) {
     case 0: {
         Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
-        FileWinSprite1.draw(canvas, FileWinSprite1.transparent_index(),
-                            x + FileWinSprite1.width() / 4,
-                            y + (height - FileWinSprite1.height()) / 2, 1, 1);
+        FileWinSprite1Owner.sprite().draw(canvas, FileWinSprite1Owner.sprite().transparent_index(),
+                            x + FileWinSprite1Owner.sprite().width() / 4,
+                            y + (height - FileWinSprite1Owner.sprite().height()) / 2, 1, 1);
         break;
     }
     case 1: {
         Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
-        FileWinSprite0.draw(canvas, FileWinSprite0.transparent_index(),
-                            x + FileWinSprite1.width() / 4,
-                            y + (height - FileWinSprite0.height()) / 2, 1, 1);
+        FileWinSprite0Owner.sprite().draw(canvas, FileWinSprite0Owner.sprite().transparent_index(),
+                            x + FileWinSprite1Owner.sprite().width() / 4,
+                            y + (height - FileWinSprite0Owner.sprite().height()) / 2, 1, 1);
         break;
     }
     case 2: {
         Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
-        FileWinSprite2.draw(canvas, FileWinSprite2.transparent_index(),
-                            x + FileWinSprite1.width() / 4,
-                            y + (height - FileWinSprite2.height()) / 2, 1, 1);
+        FileWinSprite2Owner.sprite().draw(canvas, FileWinSprite2Owner.sprite().transparent_index(),
+                            x + FileWinSprite1Owner.sprite().width() / 4,
+                            y + (height - FileWinSprite2Owner.sprite().height()) / 2, 1, 1);
         break;
     }
     }
@@ -704,9 +748,9 @@ void FileWin::close() {
     extension_count_ = 0;
     directory_[0] = 0;
     strcat(directory_, FileWinTextTableDefaultNext);
-    FileWinSprite1.close();
-    FileWinSprite0.close();
-    FileWinSprite2.close();
+    FileWinSprite1Owner.sprite().close();
+    FileWinSprite0Owner.sprite().close();
+    FileWinSprite2Owner.sprite().close();
     modal_window_ = 0;
     if (directory_list_handle_ != 0) {
         DestroyWindow(directory_list_handle_);
@@ -723,17 +767,17 @@ int FileWin::prepare_sprites() {
     Buffer sheet;
     int result;
     if (sheet.load_pcx(FileWinSpriteSheet, 0, 10, 0xEC) == 0) {
-        result = FileWinSprite1.extract(&sheet, 9, 1, 1, 0x10, 0x10, 0);
+        result = FileWinSprite1Owner.sprite().extract(&sheet, 9, 1, 1, 0x10, 0x10, 0);
         if (result != 0) return result;
-        result = FileWinSprite0.extract(&sheet, 9, 0x12, 1, 0x10, 0x10, 0);
+        result = FileWinSprite0Owner.sprite().extract(&sheet, 9, 0x12, 1, 0x10, 0x10, 0);
         if (result != 0) return result;
-        result = FileWinSprite2.extract(&sheet, 9, 0x23, 1, 0x10, 0x10, 0);
+        result = FileWinSprite2Owner.sprite().extract(&sheet, 9, 0x23, 1, 0x10, 0x10, 0);
     } else {
-        result = FileWinSprite1.create_blank(0x10, 0x10, 9);
+        result = FileWinSprite1Owner.sprite().create_blank(0x10, 0x10, 9);
         if (result != 0) return result;
-        result = FileWinSprite0.create_blank(0x10, 0x10, 9);
+        result = FileWinSprite0Owner.sprite().create_blank(0x10, 0x10, 9);
         if (result != 0) return result;
-        result = FileWinSprite2.create_blank(0x10, 0x10, 9);
+        result = FileWinSprite2Owner.sprite().create_blank(0x10, 0x10, 9);
     }
     return result;
 }

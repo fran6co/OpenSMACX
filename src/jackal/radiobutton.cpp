@@ -15,6 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x0060D060 sub_60d060 0x0060D060-0x0060D076 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x60d060..0x60d076; CRT slot 0x682694 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object ?g_RADIOBUTTON_SPRITE_1@@3U?$RadioButtonSpriteLifetime@$00@@A, guard ?RadioButtonSpritesCleanupGuard@@3EA, startup _$E21 and cleanup _$E19. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original init to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E21
+// ORIGINAL: 0x0060D080 sub_60d080 0x0060D080-0x0060D09F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x60d080..0x60d09f; CRT slot 0x682694 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object ?g_RADIOBUTTON_SPRITE_1@@3U?$RadioButtonSpriteLifetime@$00@@A, guard ?RadioButtonSpritesCleanupGuard@@3EA, startup _$E21 and cleanup _$E19. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E19
+// ORIGINAL: 0x0060D0A0 sub_60d0a0 0x0060D0A0-0x0060D0B6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x60d0a0..0x60d0b6; CRT slot 0x682698 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object ?g_RADIOBUTTON_SPRITE_2@@3U?$RadioButtonSpriteLifetime@$01@@A, guard ?RadioButtonSpritesCleanupGuard@@3EA, startup _$E26 and cleanup _$E24. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original init to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E26
+// ORIGINAL: 0x0060D0C0 sub_60d0c0 0x0060D0C0-0x0060D0DF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x60d0c0..0x60d0df; CRT slot 0x682698 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object ?g_RADIOBUTTON_SPRITE_2@@3U?$RadioButtonSpriteLifetime@$01@@A, guard ?RadioButtonSpritesCleanupGuard@@3EA, startup _$E26 and cleanup _$E24. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E24
 #include "stdafx.h"
 #include "original_seam.h"
 #include "radiobutton.h"
@@ -24,9 +36,11 @@
 // The constructor loads these rebindable pointer cells, not sprite contents.
 // init_class passes their original targets to Sprite::extract.
 // RECOVERY_OBJECT: v2 0x006970F0 0x006970F4 ?RadioButtonDefault1@@3PAVSprite@@A 0x0060D0E0
-Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;
+Sprite *RadioButtonDefault1 =
+    reinterpret_cast<Sprite *>(g_RADIOBUTTON_SPRITE_1.storage_.bytes);
 // RECOVERY_OBJECT: v2 0x006970F4 0x006970F8 ?RadioButtonDefault2@@3PAVSprite@@A 0x0060D0E0
-Sprite *RadioButtonDefault2 = &g_RADIOBUTTON_SPRITE_2;
+Sprite *RadioButtonDefault2 =
+    reinterpret_cast<Sprite *>(g_RADIOBUTTON_SPRITE_2.storage_.bytes);
 
 /*
 Purpose: Construct the virtual bases through VC6's hidden most-derived flag,
@@ -705,8 +719,8 @@ int __cdecl RadioButton::init_class() {
     if (result != 0) {
         return result;
     }
-    g_RADIOBUTTON_SPRITE_1.extract(&buf, 0x109, 1, 0x23, 0x20, 0x20, 0);
-    g_RADIOBUTTON_SPRITE_2.extract(&buf, 0x109, 0x22, 0x23, 0x20, 0x20, 0);
+    g_RADIOBUTTON_SPRITE_1.sprite().extract(&buf, 0x109, 1, 0x23, 0x20, 0x20, 0);
+    g_RADIOBUTTON_SPRITE_2.sprite().extract(&buf, 0x109, 0x22, 0x23, 0x20, 0x20, 0);
     return 0;
 }
 
@@ -725,10 +739,12 @@ Status: Complete
 
 // ====================
 // Original receivers of Sprite::extract at 0x0060E56E / 0x0060E58C.
-// RECOVERY_OBJECT: v1 0x009B8EF8 ?g_RADIOBUTTON_SPRITE_1@@3VSprite@@A
-Sprite g_RADIOBUTTON_SPRITE_1;
-// RECOVERY_OBJECT: v1 0x009B8F28 ?g_RADIOBUTTON_SPRITE_2@@3VSprite@@A
-Sprite g_RADIOBUTTON_SPRITE_2;
+// RECOVERY_OBJECT: v1 0x009B8EF0 ?RadioButtonSpritesCleanupGuard@@3EA
+uint8_t RadioButtonSpritesCleanupGuard; // Original separate zero-fill byte9B8EF0.
+// RECOVERY_OBJECT: v3 0x009B8EF8 ?g_RADIOBUTTON_SPRITE_1@@3VSprite@@A member ?g_RADIOBUTTON_SPRITE_1@@3U?$RadioButtonSpriteLifetime@$00@@A storage_.bytes
+RadioButtonSpriteLifetime<1> g_RADIOBUTTON_SPRITE_1;
+// RECOVERY_OBJECT: v3 0x009B8F28 ?g_RADIOBUTTON_SPRITE_2@@3VSprite@@A member ?g_RADIOBUTTON_SPRITE_2@@3U?$RadioButtonSpriteLifetime@$01@@A storage_.bytes
+RadioButtonSpriteLifetime<2> g_RADIOBUTTON_SPRITE_2;
 
 // ===== close_class: once-only teardown of the managed sprites =====
 
@@ -748,8 +764,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_0060e5d0() {
-    g_RADIOBUTTON_SPRITE_2.close();
-    g_RADIOBUTTON_SPRITE_1.close();
+    g_RADIOBUTTON_SPRITE_2.sprite().close();
+    g_RADIOBUTTON_SPRITE_1.sprite().close();
 }
 
 // ====================

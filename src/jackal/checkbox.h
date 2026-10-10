@@ -21,11 +21,36 @@
 #include "graphicwin.h"
 
 #include "radiobutton.h"
+#include <new>
+#include <stddef.h>
 
 // The checkbox sprites, real objects now: the image holds them at
 // 0x009B8F60 / 0x009B8F90, constructed before WinMain and closed at exit.
-extern Sprite g_CHECKBOX_SPRITE_1;
-extern Sprite g_CHECKBOX_SPRITE_2;
+// Separate guard and offset-zero Sprite storage, not an inferred combined
+// allocation or recovered original owner class. See the RadioButton model.
+extern uint8_t CheckBoxSpritesCleanupGuard;
+union CheckBoxSpriteStorage {
+  char bytes[sizeof(Sprite)];
+  uint32_t alignment_[sizeof(Sprite) / sizeof(uint32_t)];
+};
+template<unsigned char Mask> struct CheckBoxSpriteLifetime {
+  CheckBoxSpriteStorage storage_;
+  CheckBoxSpriteLifetime() { new (storage_.bytes) Sprite(); }
+  ~CheckBoxSpriteLifetime() {
+    if ((CheckBoxSpritesCleanupGuard & Mask) != 0) return;
+    CheckBoxSpritesCleanupGuard |= Mask;
+    sprite().Sprite::~Sprite();
+  }
+  Sprite &sprite() { return *reinterpret_cast<Sprite *>(storage_.bytes); }
+};
+static_assert(sizeof(CheckBoxSpriteLifetime<1>) == sizeof(Sprite) &&
+              sizeof(CheckBoxSpriteLifetime<2>) == sizeof(Sprite),
+              "checkbox Sprite lifetime storage extent");
+static_assert(offsetof(CheckBoxSpriteLifetime<1>, storage_) == 0 &&
+              offsetof(CheckBoxSpriteLifetime<2>, storage_) == 0,
+              "checkbox Sprite starts at owner offset zero");
+extern CheckBoxSpriteLifetime<1> g_CHECKBOX_SPRITE_1;
+extern CheckBoxSpriteLifetime<2> g_CHECKBOX_SPRITE_2;
 
 
 // The original vbtable at 0x00670718 describes GraphicWin at +0x1C and

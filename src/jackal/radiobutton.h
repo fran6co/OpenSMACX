@@ -19,11 +19,39 @@
 // Generic Jackal control initialized by jackal_init_real.
 
 #include "sprite.h"
+#include <new>
+#include <stddef.h>
 
 // The radiobutton sprites, real objects now: the image holds them at
 // 0x009B8EF8 / 0x009B8F28.
-extern Sprite g_RADIOBUTTON_SPRITE_1;
-extern Sprite g_RADIOBUTTON_SPRITE_2;
+// Chosen private lifetime representation, not an original class-name claim.
+// The original registered exits share this independent byte, setting their
+// own bit before Sprite::close. Raw storage prevents duplicate implicit cleanup.
+extern uint8_t RadioButtonSpritesCleanupGuard;
+union RadioButtonSpriteStorage {
+  char bytes[sizeof(Sprite)];
+  uint32_t alignment_[sizeof(Sprite) / sizeof(uint32_t)];
+};
+template<unsigned char Mask> struct RadioButtonSpriteLifetime {
+  RadioButtonSpriteStorage storage_;
+  RadioButtonSpriteLifetime() { new (storage_.bytes) Sprite(); }
+  ~RadioButtonSpriteLifetime() {
+    if ((RadioButtonSpritesCleanupGuard & Mask) != 0) return;
+    RadioButtonSpritesCleanupGuard |= Mask;
+    // The actual Sprite destructor is solely close(); qualification ends
+    // the placed object's lifetime without any second implicit destruction.
+    sprite().Sprite::~Sprite();
+  }
+  Sprite &sprite() { return *reinterpret_cast<Sprite *>(storage_.bytes); }
+};
+static_assert(sizeof(RadioButtonSpriteLifetime<1>) == sizeof(Sprite) &&
+              sizeof(RadioButtonSpriteLifetime<2>) == sizeof(Sprite),
+              "radio Sprite lifetime storage extent");
+static_assert(offsetof(RadioButtonSpriteLifetime<1>, storage_) == 0 &&
+              offsetof(RadioButtonSpriteLifetime<2>, storage_) == 0,
+              "radio Sprite starts at owner offset zero");
+extern RadioButtonSpriteLifetime<1> g_RADIOBUTTON_SPRITE_1;
+extern RadioButtonSpriteLifetime<2> g_RADIOBUTTON_SPRITE_2;
 #include "dialog.h"   // func_dialog_close
 #include "graphicwin.h"
 

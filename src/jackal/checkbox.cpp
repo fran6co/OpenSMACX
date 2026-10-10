@@ -50,6 +50,18 @@
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; retained spans [['0x0060FEF0', '0x0060FEFE']]", "mapped constructor ??0CheckBox@@QAE@H@Z directly stores table 0x0067059C", "pinned primary slot 0x8 contains original thunk VA 0x0060FEF0", "original tail target 0x0060FAB0 is ?on_redraw@CheckBox@@UAEXXZ; current emitted thunk preserves receiver arithmetic and relocates to that same method", "source owner emits ?on_redraw@CheckBox@@$4PPPPPPPM@KBI@AEXXZ in ??_7CheckBox@@6B@ at the proven view/slot", "identity, original extent, claims and lessons retained; fresh native compile/binding review required"], "reason": "Bind the original ordinary virtual-adjustor identity to the compiler-emitted class/view adjustor selected by both the pinned constructor-installed vftable slot and exact-current owner-object relocation. The original wrapper, slot and receiver view remain distinct; no thunk body is hand-authored."}
 // symbol    ?on_redraw@CheckBox@@$4PPPPPPPM@KBI@AEXXZ
 // kind      game
+// ORIGINAL: 0x0060E5F0 sub_60e5f0 0x0060E5F0-0x0060E606 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x60e5f0..0x60e606; CRT slot 0x68269c selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object ?g_CHECKBOX_SPRITE_1@@3U?$CheckBoxSpriteLifetime@$00@@A, guard ?CheckBoxSpritesCleanupGuard@@3EA, startup _$E21 and cleanup _$E19. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original init to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E21
+// ORIGINAL: 0x0060E610 sub_60e610 0x0060E610-0x0060E62F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x60e610..0x60e62f; CRT slot 0x68269c selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object ?g_CHECKBOX_SPRITE_1@@3U?$CheckBoxSpriteLifetime@$00@@A, guard ?CheckBoxSpritesCleanupGuard@@3EA, startup _$E21 and cleanup _$E19. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E19
+// ORIGINAL: 0x0060E630 sub_60e630 0x0060E630-0x0060E646 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x60e630..0x60e646; CRT slot 0x6826a0 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object ?g_CHECKBOX_SPRITE_2@@3U?$CheckBoxSpriteLifetime@$01@@A, guard ?CheckBoxSpritesCleanupGuard@@3EA, startup _$E26 and cleanup _$E24. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original init to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E26
+// ORIGINAL: 0x0060E650 sub_60e650 0x0060E650-0x0060E66F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x60e650..0x60e66f; CRT slot 0x6826a0 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object ?g_CHECKBOX_SPRITE_2@@3U?$CheckBoxSpriteLifetime@$01@@A, guard ?CheckBoxSpritesCleanupGuard@@3EA, startup _$E26 and cleanup _$E24. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
+// symbol    _$E24
 #include "stdafx.h"
 #include "original_seam.h"
 #include "checkbox.h"
@@ -59,9 +71,11 @@
 // The constructor loads these rebindable pointer cells, not sprite contents.
 // init_class passes their original targets to Sprite::extract.
 // RECOVERY_OBJECT: v2 0x00697104 0x00697108 ?CheckBoxDefault1@@3PAVSprite@@A 0x0060E670
-Sprite *CheckBoxDefault1 = &g_CHECKBOX_SPRITE_1;
+Sprite *CheckBoxDefault1 =
+    reinterpret_cast<Sprite *>(g_CHECKBOX_SPRITE_1.storage_.bytes);
 // RECOVERY_OBJECT: v2 0x00697108 0x0069710C ?CheckBoxDefault2@@3PAVSprite@@A 0x0060E670
-Sprite *CheckBoxDefault2 = &g_CHECKBOX_SPRITE_2;
+Sprite *CheckBoxDefault2 =
+    reinterpret_cast<Sprite *>(g_CHECKBOX_SPRITE_2.storage_.bytes);
 
 /*
 Purpose: Construct the virtual bases through VC6's hidden most-derived flag,
@@ -738,8 +752,8 @@ int __cdecl CheckBox::init_class() {
     if (result != 0) {
         return result;
     }
-    g_CHECKBOX_SPRITE_1.extract(&buf, 0x109, 1, 0x44, 0x20, 0x20, 0);
-    g_CHECKBOX_SPRITE_2.extract(&buf, 0x109, 0x22, 0x44, 0x20, 0x20, 0);
+    g_CHECKBOX_SPRITE_1.sprite().extract(&buf, 0x109, 1, 0x44, 0x20, 0x20, 0);
+    g_CHECKBOX_SPRITE_2.sprite().extract(&buf, 0x109, 0x22, 0x44, 0x20, 0x20, 0);
     return 0;
 }
 
@@ -817,10 +831,12 @@ int CheckBox::get_state_id(int id) {
 
 // ====================
 // Original receivers of Sprite::extract at 0x0060FCFE / 0x0060FD1C.
-// RECOVERY_OBJECT: v1 0x009B8F60 ?g_CHECKBOX_SPRITE_1@@3VSprite@@A
-Sprite g_CHECKBOX_SPRITE_1;
-// RECOVERY_OBJECT: v1 0x009B8F90 ?g_CHECKBOX_SPRITE_2@@3VSprite@@A
-Sprite g_CHECKBOX_SPRITE_2;
+// RECOVERY_OBJECT: v1 0x009B8F58 ?CheckBoxSpritesCleanupGuard@@3EA
+uint8_t CheckBoxSpritesCleanupGuard; // Original separate zero-fill byte9B8F58.
+// RECOVERY_OBJECT: v3 0x009B8F60 ?g_CHECKBOX_SPRITE_1@@3VSprite@@A member ?g_CHECKBOX_SPRITE_1@@3U?$CheckBoxSpriteLifetime@$00@@A storage_.bytes
+CheckBoxSpriteLifetime<1> g_CHECKBOX_SPRITE_1;
+// RECOVERY_OBJECT: v3 0x009B8F90 ?g_CHECKBOX_SPRITE_2@@3VSprite@@A member ?g_CHECKBOX_SPRITE_2@@3U?$CheckBoxSpriteLifetime@$01@@A storage_.bytes
+CheckBoxSpriteLifetime<2> g_CHECKBOX_SPRITE_2;
 
 // ===== close_class: once-only teardown of the managed sprites =====
 
@@ -840,8 +856,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_0060fd60() {
-    g_CHECKBOX_SPRITE_1.close();
-    g_CHECKBOX_SPRITE_2.close();
+    g_CHECKBOX_SPRITE_1.sprite().close();
+    g_CHECKBOX_SPRITE_2.sprite().close();
 }
 
 /*
