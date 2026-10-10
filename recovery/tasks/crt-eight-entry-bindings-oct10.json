@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-eight-entry-bindings-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind eight independently bounded runtime entries to the pinned external archive without application substitutes",
+  "base_revision": "b1dc558c176b97f7d957a50f43616bf4c29d16c2",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6576288
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6576328
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6576368
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6577264
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6577808
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6583280
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6591654
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6604979
+    }
+  ],
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_eight_entry_bindings_oct10.py",
+    "recovery/tests/test_ddraw_thunk_identity_oct10.py"
+  ],
+  "evidence": [
+    "Pinned IDA function extents and original terminal/branch instructions establish eight independent intervals. Unique physical LIBCMT members supply symbol interpretations, not original extents. Independently executed native verification passes bytes/boundaries/references for all eight and leaves all31 previous runtime function reports unchanged.",
+    "Preserve source metadata, historical claims, absolute/data/import bindings and dependency provenance. Whole CRT result remains unknown; no original final-link selection, runtime equivalence, new application implementation or full-game/autonomous acceptance claim.",
+    "Use package component serializer and native verification/damage controls. Reconcile only these exact appended bindings in the older DirectDraw preservation test; do not reset its historical baseline. Require fresh mappings/references, independent review and application compile/link before checkpoint."
+  ]
+}
