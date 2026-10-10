@@ -95,6 +95,58 @@ def read_shared(root: Path, pin: str, *, contents=None):
     return tuple(bindings)
 
 
+def write_shared_symbol(raw: bytes, *, expected, binding: SharedFunctionBinding,
+                        symbol: str) -> bytes:
+    """Rename one emitted shared view, preserving original identity/evidence.
+
+    Pure annotation operation, not compiler evidence or editing authorization.
+    The caller supplies a complete current parsed snapshot and independently
+    verifies the new compiler symbol. Body text and every other byte survive.
+    """
+    from dataclasses import replace
+    from .source.writer import _define_directive_lines
+
+    if not isinstance(raw, bytes):
+        raise ValueError("shared symbol rewriting requires source bytes")
+    if (not isinstance(symbol, str) or not symbol or not symbol.isascii()
+            or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in symbol)
+            or any(token in symbol for token in ("/*", "*/", "//", "\\", "??/"))):
+        raise ValueError("shared symbol must be one annotation-safe ASCII token")
+    text = raw.decode("utf-8")
+    if raw.startswith(b"\xef\xbb\xbf") or re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
+        raise ValueError("unsupported shared source encoding or separator")
+    pin, space = binding.origin.image_sha256, binding.origin.address_space
+    current = parse_shared(text, binding.unit, pin, address_space=space)
+    if current != tuple(expected) or current.count(binding) != 1:
+        raise ValueError("shared symbol update requires a current complete snapshot")
+    if any(row != binding and row.symbol == symbol for row in current):
+        raise ValueError("duplicate shared symbol")
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    if binding.line - 1 in _define_directive_lines(normalized):
+        raise ValueError("shared annotation is inside a macro directive")
+    # An earlier splice can alter lexical context. A later untouched macro
+    # cannot affect this annotation and need not prevent a guarded rename.
+    prefix = "\n".join(normalized.splitlines()[:binding.line])
+    if re.search(r"(?:\\|\?\?/)[ \t]*\n", prefix):
+        raise ValueError("shared annotation follows line-spliced source")
+    lines = raw.splitlines(keepends=True)
+    old = lines[binding.line - 1]
+    leading = len(old) - len(old.lstrip(b" \t"))
+    match = PATTERN.fullmatch(old[leading:].decode("utf-8").strip())
+    if match is None or not binding.symbol.isascii():
+        raise ValueError("shared marker is not safely rewritable")
+    start = leading + match.start(3)
+    end = start + len(binding.symbol.encode("ascii"))
+    if old[start:end] != binding.symbol.encode("ascii"):
+        raise ValueError("shared symbol does not match source bytes")
+    lines[binding.line - 1] = old[:start] + symbol.encode("ascii") + old[end:]
+    result = b"".join(lines)
+    wanted = tuple(replace(row, symbol=symbol) if row == binding else row for row in current)
+    if parse_shared(result.decode("utf-8"), binding.unit, pin, address_space=space) != wanted:
+        raise ValueError("shared symbol rewrite changed other binding facts")
+    return result
+
+
 def validate_shared(bindings, view, *, reserved=()):
     """Sharing cannot resolve conflicting originals or invent an original extent."""
     entities = {item["entity_id"]: item for group in view["groups"] for item in group["entities"]}
