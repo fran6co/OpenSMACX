@@ -1,4 +1,4 @@
-"""Actual-source controls for Win's three keyboard-focus routes."""
+"""Actual-source controls for Win's keyboard-focus and system-key routes."""
 
 from pathlib import Path
 import shutil
@@ -29,11 +29,12 @@ def _actual_source(text=None):
     get_key = _body(text, "Win *Win::get_key_window()")
     on_char = _body(text, "void __cdecl OnChar(void *hwnd, char ch, int flags)")
     on_key = _body(text, "void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan)")
-    for body in (get_key, on_char, on_key):
+    on_sys_key = _body(text, "void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,")
+    for body in (get_key, on_char, on_key, on_sys_key):
         assert "p_9b" not in body
         assert "reinterpret_cast" not in body
         assert "(char *)" not in body
-    return get_key + "\n" + on_char + "\n" + on_key
+    return get_key + "\n" + on_char + "\n" + on_key + "\n" + on_sys_key
 
 
 HARNESS = r'''
@@ -48,7 +49,7 @@ struct Win {
     Win *win_parent_;
     int visible, visible_calls;
     Win *visible_receiver;
-    int char_calls, key_calls;
+    int char_calls, key_calls, sys_calls;
     char char_value;
     int char_flags;
     unsigned int key_value;
@@ -59,6 +60,9 @@ struct Win {
     void on_char(char ch, int flags) { ++char_calls; char_value=ch; char_flags=flags; events[event_count++]=2; }
     void on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
         ++key_calls; key_value=key; key_flags=flags; key_repeat=repeat; key_scan=scan; events[event_count++]=3;
+    }
+    int on_sys_key(unsigned int key, long flags, int repeat, unsigned int scan) {
+        ++sys_calls; key_value=key; key_flags=flags; key_repeat=repeat; key_scan=scan; events[event_count++]=6; return 17;
     }
     Win *get_key_window();
     void OnKey(void *, unsigned int, long, int, unsigned int);
@@ -159,6 +163,33 @@ int main() {
     event_count=0; WinFocusWindow=&focus; WinKeyHook=&key_hook; WinMessageHook=&message_hook;
     focus.OnKey(nullptr, 0x80000011U, 0, 2, 3);
     assert(event_count==2 && events[0]==3 && events[1]==5);
+
+    // System-key routing has the same modal/fallback asymmetry, but no
+    // ordinary-key hooks; keep the owner and parent's visibility distinct.
+    for (int route=0; route!=6; ++route) {
+        clear_globals(); base.win_parent_=nullptr; base.iSomeFlag_=1;
+        Win *selected=nullptr;
+        if (route==0) {WinFocusWindow=&focus;WinModalFocus=&modal;selected=&modal;}
+        if (route==1) {WinFocusWindow=&focus;selected=&focus;}
+        if (route==2) {WinModalFocus=&modal;WinInputFocus=&input;selected=&input;}
+        if (route==3) {WinModalFocus=&modal;WinDefaultFocus=&fallback;selected=&fallback;}
+        if (route==4) {WinInputFocus=&input;WinDefaultFocus=&fallback;selected=&input;}
+        WinKeyHook=&key_hook;WinMessageHook=&message_hook;
+        int before=base.sys_calls;
+        OnSysKey(nullptr,0x80000011U,-3,-7,0xFEDCBA98U);
+        assert(WinActiveWindow==selected && base.sys_calls==before+(selected!=nullptr));
+        assert(event_count==(selected!=nullptr) && (!event_count || events[0]==6));
+        if(selected) assert(base.key_value==0x80000011U && base.key_flags==-3 && base.key_repeat==-7 && base.key_scan==0xFEDCBA98U);
+    }
+    clear_globals();WinFocusWindow=&focus;focus.poWinBase_=nullptr;
+    int before=base.sys_calls;OnSysKey(nullptr,1,0,0,0);
+    assert(WinActiveWindow==&focus && base.sys_calls==before);
+    focus.poWinBase_=&base;base.iSomeFlag_=0;OnSysKey(nullptr,1,0,0,0);
+    assert(base.sys_calls==before);
+    base.iSomeFlag_=1;base.win_parent_=&parent;parent.visible=0;
+    OnSysKey(nullptr,1,0,0,0);assert(base.sys_calls==before && parent.visible_receiver==&parent);
+    parent.visible=1;base.visible=0;OnSysKey(nullptr,1,0,0,0);
+    assert(base.sys_calls==before+1 && parent.visible_receiver==&parent);
 }
 ''')
     binary = tmp_path / "win_keyboard_focus"

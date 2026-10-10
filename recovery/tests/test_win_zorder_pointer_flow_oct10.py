@@ -142,7 +142,15 @@ int main(int argc, char **argv) {
     // The start index is the real target's table slot; paints walk backwards.
     assert(nc_paints.size()==2);
     assert(nc_paints[0]==&target && nc_paints[1]==&second);
-    assert(paints.size()==2 && paints[0]==&target && paints[1]==&target);
+    // Pinned 5F73E0..EE compares the requested target with its own +A8
+    // base, not each current entry. A self-rooted target allows all three
+    // entries to paint through their respective +A8 receivers.
+    assert(paints.size()==3 && paints[0]==&target && paints[1]==&target && paints[2]==&alias);
+    paints.clear(); nc_paints.clear(); target.poWinBase_=&alias;
+    assert(Win::update_screen(0, &target)==0);
+    // A non-self-rooted target suppresses all ordinary paints, not NC paint.
+    assert(paints.empty());
+    assert(nc_paints.size()==2 && nc_paints[0]==&target && nc_paints[1]==&second);
     return 0;
   }
   if (argc > 1 && argv[1][0] == 'x') {
@@ -195,9 +203,11 @@ def translation(mutant=None):
     assert "Win **node2 = WinRootWindows + i;" in compaction
     bodies = [zorder, update_screen, update_window]
     if mutant == "wrong_valid_render_entry":
+        # Damage the fresh paint receiver, not the earlier visibility input
+        # which the intact reload would overwrite before either paint call.
         changed = update_screen.replace(
-            "Win *w = WinZOrderArray[i];",
-            "Win *w = WinZOrderArray[i == 2 ? 1 : i];", 1)
+            "\n                    w = WinZOrderArray[i];",
+            "\n                    w = WinZOrderArray[i == 2 ? 1 : i];", 1)
         assert changed != update_screen
         bodies[1] = changed
     elif mutant == "stale_first_reload":

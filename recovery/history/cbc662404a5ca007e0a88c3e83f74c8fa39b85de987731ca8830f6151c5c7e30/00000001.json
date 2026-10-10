@@ -1,0 +1,21 @@
+{
+  "event_id": "c77efaa18a35eecfc47b47ecd7bb4ec68d7d8cc7babb15536367e71e42e13040",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_zorder_pointer_flow_oct10.py"
+    ],
+    "evidence": [
+      "Independent pinned decode5F73E0..EE reloads selected target, comparesitwithitsown+A8 base andsuppressespaintwhenunequal;5F73F0..F9 loads currententry+A8 and dispatchesslot73",
+      "baselinebbcdf9399/currentidenticalrenderbody fixtureexpectswrongtwoelementpaintsequence; original/source actualselfrootedtarget requires[target,target,alias] whileNCsequence remains[target,second]",
+      "Extend existing Win task only for correcting evidence-backed positivecontrol and adding non-selfrooted suppressioncase; no renderproductchange, no weakeningoutside-scopeacceptance or resettingtaskbaseline"
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "pinned-render-control-correction-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-pointer-identity-owner-oct10"
+}

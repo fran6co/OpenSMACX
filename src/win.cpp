@@ -4556,24 +4556,24 @@ Purpose: The window class's WM_SYSKEYDOWN/WM_SYSCHAR router. It resolves
 // calls     0x005F7E90
 void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,
                       unsigned int scan) {
-    int val;
+    Win *active;
     if (WinFocusWindow != nullptr) {
-        val = reinterpret_cast<int>(WinModalFocus);
-        if (val == 0) {
-            val = reinterpret_cast<int>(WinFocusWindow);
+        active = WinModalFocus;
+        if (active == 0) {
+            active = WinFocusWindow;
         }
     } else {
-        val = reinterpret_cast<int>(WinInputFocus);
-        if (val == 0) {
-            val = reinterpret_cast<int>(WinDefaultFocus);
+        active = WinInputFocus;
+        if (active == 0) {
+            active = WinDefaultFocus;
         }
     }
-    WinActiveWindow = reinterpret_cast<Win *>(val);
-    if (val != 0) {
+    WinActiveWindow = active;
+    if (active != 0) {
         // 0xA8 is poWinBase_, which win.h already documents as the window that
 // owns a position - a third witness after Win::construct storing `this`
 // there and Win::get_mouse_window returning it.
-        Win *owner = reinterpret_cast<Win *>(val)->poWinBase_;
+        Win *owner = active->poWinBase_;
         if (owner != 0) {
             if (owner->iSomeFlag_ & 1) {
                 Win *inner = owner->win_parent_;
@@ -5143,7 +5143,7 @@ void Win::release_modal() {
         WinModalStack[last] = 0;
         WinFocusStack[last] = 0;
         if (0 < last) {
-            WinModalWindow = reinterpret_cast<Win *>(WinFocusStack[last - 1]);
+            WinModalWindow = WinFocusStack[last - 1];
             WinFocusWindow = WinModalStack[last - 1];
             return;
         }
@@ -7924,21 +7924,21 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
     }
     int idx = WinModalDepth;
     WinModalStack[idx] = this;
-    reinterpret_cast<void **>(WinFocusStack)[idx] = owner;
+    WinFocusStack[idx] = owner;
     WinModalDepth = idx + 1;
     WinFocusWindow = this;
     WinPointerOwner1 = 0;
     WinPointerOwner2 = 0;
 
-    void *prior = reinterpret_cast<void *>(reinterpret_cast<int>(WinPointerOwner3));
+    Win *prior = WinPointerOwner3;
     if (prior != 0 && prior != this) {
-        reinterpret_cast<Win *>(prior)->on_lose_mouse_capture();
+        prior->on_lose_mouse_capture();
         WinPointerOwner3 = 0;
     }
     WinInputFocus = 0;
     if (owner != 0) {
         WinModalWindow = owner;
-        reinterpret_cast<Win *>(owner)->show(0);
+        owner->show(0);
     }
     this->show(0);
     flush_input();
@@ -7956,9 +7956,9 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
             if (callback != 0) {
                 int rr = callback();
                 if (rr == 0) {
-                    int cur = reinterpret_cast<int>(WinFocusWindow);
+                    Win *cur = WinFocusWindow;
                     if (cur != 0) {
-                        reinterpret_cast<Win *>(cur)->release_modal();
+                        cur->release_modal();
                     }
                     result = 1;
                     break;
@@ -9545,16 +9545,16 @@ void Win::bring_child_to_top(Win * child) {
     WinZOrderCount = 0;
     if (WinRootCount > 0) {
         Win **entry = WinRootWindows;
-        int cur = reinterpret_cast<int>(WinZOrderWindow);
+        Win *cur = WinZOrderWindow;
         int j = 0;
         do {
-            if (cur != 0 && cur == reinterpret_cast<int>(*entry)) {
+            if (cur != 0 && cur == *entry) {
                 WinZOrderCount = 0;
                 WinZOrderFlag = 0;
             }
             if ((*entry)->iSomeFlag_ & 1) {
                 recurse_zorder(*entry);
-                cur = reinterpret_cast<int>(WinZOrderWindow);
+                cur = WinZOrderWindow;
             }
             ++j;
             ++entry;
@@ -10785,8 +10785,8 @@ void Win::close() {
     int count;
     bool doClear;
 
-    modal = (Win *)reinterpret_cast<int>(WinPointerOwner1);
-    focusWin = (Win *)reinterpret_cast<int>(WinPointerOwner2);
+    modal = WinPointerOwner1;
+    focusWin = WinPointerOwner2;
     candidate = modal != 0 ? modal : focusWin;
     doClear = false;
     if (candidate == this) {
