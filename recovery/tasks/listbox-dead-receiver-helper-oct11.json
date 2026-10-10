@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "listbox-dead-receiver-helper-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Remove an unused standalone-only receiver adapter and correct superseded hierarchy commentary without changing class declarations",
+  "base_revision": "b283cb97b66ac5c1e2fd65a807703c6d3306531c",
+  "subjects": [],
+  "editable_files": ["src/listbox.h", "src/dialog.h"],
+  "evidence": [
+    "Current source has no use of ListBox::from_graphic_base; its fixed subtraction of 0x48 models only the standalone ListBox GraphicWin displacement, not the shared GraphicWin virtual base in derived Dialogs. Preserve real virtual inheritance and all mapped methods; remove the unused helper rather than invent a conversion or original owner.",
+    "Dialog::item and ListBox::item are currently nonvirtual. Pinned ListBox::item 0x0060C920 enters on the complete receiver; Dialogs::item 0x00612A70 dispatches by kind and directly calls the appropriate item method. Current Dialog virtual order is destructor, attach, on_redraw. Older ListBox commentary describing virtual item and two compensating forwarders is superseded, not evidence for a new vtable change.",
+    "Require actual-source ListBox/Dialog regression tests, source identity and historical claim continuity, independent review and fresh complete application build/link. No additional function coverage or byte-exactness is claimed."
+  ]
+}
