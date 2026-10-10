@@ -1579,7 +1579,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                         SocialCategories[category].name[social_model], -1, -1);
                     StringTemp[0] = 0;
                     strcat(StringTemp, "SOCIETY");
-                    selection = x_pop_caption_label(
+                    selection = X_pop(
                         TutorialPopupCaption, StringTemp, nullptr);
                     if (selection != 0) social_select(faction_id);
                 } while (selection == 2);

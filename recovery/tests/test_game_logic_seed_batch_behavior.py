@@ -215,7 +215,7 @@ void __cdecl tech_achieved(int,int,int,int){++achieved_calls;}
 void __cdecl bases_reset(int,int,int){++reset_calls;}
 uint32_t __cdecl message_data(int topic,int,int,int,int,int){++message_calls;changed_topic=topic;return 0;}
 int __cdecl parse_says(int,const char *s,int,int){++parse_calls;last_parse=s;return 0;}
-int __cdecl x_pops_short(const char *s,int,Sprite*,int (__cdecl *callback)()){assert(callback==pop_wait);++popup_calls;NetMsgPrimary.label=s;return xpop_result;}
+int __cdecl X_pops(const char *s,int,Sprite*,int (__cdecl *callback)()){assert(callback==pop_wait);++popup_calls;NetMsgPrimary.label=s;return xpop_result;}
 int __cdecl X_pop(const char*,int(*)()){++popup_calls;return 0;}
 void __cdecl log_say(const char*,int,int,int){++log_calls;}
 void __cdecl trade_maps(int,int){++trade_calls;}

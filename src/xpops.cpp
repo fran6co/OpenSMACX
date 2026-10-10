@@ -76,7 +76,7 @@ int __cdecl X_pops(char *caption, const char *label, char *text, int value,
 Purpose: Raise a popup with the defaults the short form implies - the shared
          caption buffer, no title, no override text, and both flags set.
 // ORIGINAL: 0x005BF7D0 ?X_pops@@YAHPBDHPAUSprite@@P6AHXZ@Z 0x005BF7D0-0x005BF7FA BYTE_EXACT
-// symbol    ?x_pops_short@@YAHPBDHPAVSprite@@P6AHXZ@Z
+// symbol    ?X_pops@@YAHPBDHPAVSprite@@P6AHXZ@Z
 // size      42 bytes
 // prototype 
 // callers   27   call targets   1
@@ -86,7 +86,7 @@ Purpose: Raise a popup with the defaults the short form implies - the shared
 Return Value: whatever the full form returns
 Status: Complete
 */
-int __cdecl x_pops_short(const char *label, int value, Sprite *sprite,
+int __cdecl X_pops(const char *label, int value, Sprite *sprite,
                          int (__cdecl *callback)()) {
     return X_pops(PopupStartCaption, label, -1, nullptr, value,
                              sprite, 1, 1, callback);
@@ -117,7 +117,7 @@ Purpose: Raise the caption-less popup with its own caption and label supplied
          by the caller, rather than the shared buffer - value, override text
          and flags all take their defaults (-1, none, 0).
 // ORIGINAL: 0x005BF330 ?X_pop@@YAHPADPBDP6AHXZ@Z 0x005BF330-0x005BF34F BYTE_EXACT
-// symbol    ?x_pop_caption_label@@YAHPADPBDP6AHXZ@Z
+// symbol    ?X_pop@@YAHPADPBDP6AHXZ@Z
 // size      31 bytes
 // prototype 
 // callers   17   call targets   1
@@ -127,7 +127,7 @@ Purpose: Raise the caption-less popup with its own caption and label supplied
 Return Value: whatever the full form returns
 Status: Complete
 */
-int __cdecl x_pop_caption_label(char *caption, const char *label,
+int __cdecl X_pop(char *caption, const char *label,
                                 int (__cdecl *callback)()) {
     return X_pop(caption, label, -1, nullptr, 0, callback);
 }
@@ -849,16 +849,8 @@ int __cdecl X_pops(char *caption, const char *label, int text_length,
                 sprite, flag_a, flag_b, callback);
 }
 
-// Native load_game5AB014 calls the same original5BF7D0 short popup body.
-// RECOVERY_SHARED: v1 0x005BF7D0 0x005BF7FA ?X_pops@@YAHPBDHPAVSprite@@P6AHXZ@Z 0x005AAAB0
-int __cdecl X_pops(const char *label, int value, Sprite *sprite,
-                   int (__cdecl *callback)()) {
-    return X_pops(PopupStartCaption, label, -1, nullptr, value, sprite, 1, 1,
-                  callback);
-}
-// The password warning uses the captioned original5BF330 overload directly.
-// RECOVERY_SHARED: v1 0x005BF330 0x005BF34F ?X_pop@@YAHPADPBDP6AHXZ@Z 0x005AAAB0
-int __cdecl X_pop(char *caption, const char *label,
-                  int (__cdecl *callback)()) {
-    return X_pop(caption, label, -1, nullptr, 0, callback);
-}
+// The load-game path uses the primary short X_pops body (original
+// 0x005BF7D0..0x005BF7FA); the password warning uses captioned X_pop
+// (original 0x005BF330..0x005BF34F). Their former shared bindings retained
+// evidence anchor 0x005AAAB0. Both duplicate definitions are consolidated
+// into the primary bodies above; no additional callable identity.

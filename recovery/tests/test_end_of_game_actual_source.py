@@ -103,7 +103,7 @@ int __cdecl X_pop(const char *label, int) {
     ++xpopup_calls; strncpy(last_xpopup, label, sizeof(last_xpopup) - 1);
     return popup_result;
 }
-int __cdecl x_pop_caption_label(char *caption, const char *, int (*)()) {
+int __cdecl X_pop(char *caption, const char *, int (*)()) {
     ++xpopup_calls; strncpy(last_xpopup, caption, sizeof(last_xpopup) - 1);
     return popup_result;
 }

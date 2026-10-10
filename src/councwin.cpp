@@ -862,7 +862,7 @@ void CouncWin::init(int proposal, int faction_id) {
                 parse_says(3, candidate_player.name_leader, -1, -1);
 
                 clock_wait(500);
-                const int accepted = x_pops_short(
+                const int accepted = X_pops(
                     "VOTEFORME", 0, FactionDiplomacyPortraits[candidate], nullptr);
                 if (accepted != 0) {
                     PlayersData[candidate].energy_reserves -= threshold;
@@ -903,7 +903,7 @@ void CouncWin::init(int proposal, int faction_id) {
             parse_says(3, candidate_player.name_leader, -1, -1);
 
             clock_wait(500);
-            const int accepted = x_pops_short(
+            const int accepted = X_pops(
                 "VOTEFORMETECH", 0, FactionDiplomacyPortraits[candidate], nullptr);
             if (accepted != 0) {
                 tech_achieved(local_faction, DiploScratchF800, candidate, 0);

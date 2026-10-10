@@ -109,7 +109,7 @@ int rand(void) { event(5); return RandomValue; }
 int is_objective(int base) { return base == BaseAtResult ? ObjectiveResult : 0; }
 int parse_says(int, const char *, int, int) { event(6); return 0; }
 int popp(const char *, const char *, int, const char *, int) { event(7); return 0; }
-int x_pop_caption_label(char *, const char *, int) { event(8); return 0; }
+int X_pop(char *, const char *, int) { event(8); return 0; }
 void base_kill(int base) { if (base == BaseAtResult) event(9); }
 int veh_at(int, int) { event(10); return StackHead; }
 int stack_fix(int value) { return value; }

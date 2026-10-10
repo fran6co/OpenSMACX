@@ -37,8 +37,6 @@ int __cdecl X_pops(char *caption, const char *label, char *text, int value,
                    Sprite *sprite, int flag1, int flag2,
                    int (__cdecl *callback)());
 
-int __cdecl x_pops_short(const char *label, int value, Sprite *sprite,
-                                   int (__cdecl *callback)());
 int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
                                      int (__cdecl *callback)());
 
@@ -94,8 +92,6 @@ int __cdecl X_pop_ask_number(char *caption, const char *label,
                              int (__cdecl *callback)());
 int __cdecl X_pop_ask_number(const char *label, int (__cdecl *callback)());
 
-int __cdecl x_pop_caption_label(char *caption, const char *label,
-                                          int (__cdecl *callback)());
 int __cdecl x_pop_value_flags(const char *label, int value, int flags,
                                         int (__cdecl *callback)());
 int __cdecl x_pop_caption_value_flags(char *caption, const char *label,

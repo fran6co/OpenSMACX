@@ -81,7 +81,7 @@ int NetWinOtherPlayerId = 8;
 char *ScriptPopupFile = nullptr;
 int popup_result = 0;
 int popup_calls = 0;
-int x_pop_caption_label(char *, const char *, int) {
+int X_pop(char *, const char *, int) {
     ++popup_calls;
     return popup_result;
 }

@@ -433,11 +433,7 @@ static void X_pop(const char *label, int (__cdecl *callback)()) {
     (void)callback;
     events.push_back(std::string("pop:") + label);
 }
-static void X_pop(char *, const char *label, int (__cdecl *callback)()) {
-    (void)callback;
-    events.push_back(std::string("pop:") + label);
-}
-static int x_pop_caption_label(char *, const char *label,
+static int X_pop(char *, const char *label,
                               int (__cdecl *callback)()) {
     (void)callback;
     events.push_back(std::string("pop:") + label);

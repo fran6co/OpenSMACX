@@ -93,7 +93,7 @@ char *label_get(int index) { return const_cast<char*>(index==0x454/4 ? "an" : "a
 char *_itoa(int value,char *out,int radix) { assert(radix==10); sprintf(out,"%d",value); return out; }
 int pop_wait() { return 0; }
 int x_pops_minimal(const char *label,Sprite*,int (*)()) { labels.push_back(label); DiplomacyContactResult=popup_result_change; return 0; }
-int x_pops_short(const char *label,int value,Sprite*,int (*)()) { assert(value==0x100000); labels.push_back(label); return 0; }
+int X_pops(const char *label,int value,Sprite*,int (*)()) { assert(value==0x100000); labels.push_back(label); return 0; }
 void report_intel(int who) { assert(who==2); ++report_calls; }
 void draw_tiles(int x,int y,int n) { assert(x==5 && y==6 && n==2); ++draw_calls; }
 void log_say(char*,int a,int b,int t) { assert(a==1 && b==2 && t==0x4000); }

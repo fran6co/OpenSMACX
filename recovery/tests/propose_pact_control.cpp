@@ -131,7 +131,7 @@ int last_double_cross_args[3], last_treaty_off_args[3], last_noun_faction;
 char *parse_values[8];
 int switch_network_on_spock;
 
-int __cdecl x_pops_short(const char *label, int value, Sprite *, int (__cdecl *callback)()) {
+int __cdecl X_pops(const char *label, int value, Sprite *, int (__cdecl *callback)()) {
     (void)callback;
     strncpy(popup_labels[popup_count], label, sizeof popup_labels[0] - 1);
     last_popup_value = value;

@@ -541,7 +541,7 @@ void say_tech(char *output, int tech, int category) {
   std::strcpy(output, tech == 21 ? "TECH21" : "TECH22");
 }
 void clock_wait(int milliseconds) { events.push_back("wait:" + std::to_string(milliseconds)); }
-int x_pops_short(const char *label, int value, Sprite *, int (*)()) {
+int X_pops(const char *label, int value, Sprite *, int (*)()) {
   events.push_back(std::string("xpop:") + label + ":" + std::to_string(value));
   if (mutate_scratch_after_popup) {
     DiploScratchF800 = 31;

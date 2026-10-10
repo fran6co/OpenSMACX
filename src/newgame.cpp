@@ -889,7 +889,7 @@ int __cdecl multiplayer_init(int startup_mode) {
             parse_num(1, static_cast<int>(ScenarioSave.objectives_sudden_death_victory));
             parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000u));
             parse_num(3, static_cast<int>(ScenarioSave.ending_mission_year));
-            x_pop_caption_label(const_cast<char *>("INTRO"), "SCENARIO", 0);
+            X_pop(const_cast<char *>("INTRO"), "SCENARIO", 0);
         }
 
         if (ExitTurnLoop == 0) return 0;

@@ -26,7 +26,7 @@
 static char InterludeTextName[] = "INTERLUDEX";
 // RECOVERY_OBJECT: v1 0x00691B08 ?InterludeTextFile@@3PADA
 char *InterludeTextFile = InterludeTextName;
-int __cdecl x_pop_caption_label(char *caption, const char *label,
+int __cdecl X_pop(char *caption, const char *label,
                                 int (__cdecl *callback)());
 
 // ORIGINAL: 0x0045F200 ??0Interlude@@QAE@XZ 0x0045F200-0x0045F2DF;0x00655800-0x00655820 BYTE_EXACT
@@ -145,7 +145,7 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     if (mode != 0) {
         strcat(StringTemp, mode == 2 ? "EPILOGUE" : mode == 3 ? "EPILOGUE2"
                            : mode == 4 ? "EPILOGUE3" : "INTERLUDE");
-        x_pop_caption_label(InterludeTextFile, StringTemp, nullptr);
+        X_pop(InterludeTextFile, StringTemp, nullptr);
     }
     parse_num(1, static_cast<int>(game_year(saved_turn) - game_year(0)));
     if (id == 20) {

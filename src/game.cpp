@@ -8321,7 +8321,7 @@ initialize_factions:
                 set_treaty(caretaker, owner, 0x40, 1);
                 PlayersData[caretaker].diplo_spoke[owner] = GameDataStateStorage.fields_.turn_current_num_;
                 if (owner == ConsoleGlobal.faction_id_) {
-                    x_pops_short("NOTRANSCEND", 0x100000,
+                    X_pops("NOTRANSCEND", 0x100000,
                            FactionDiplomacyPortraits[caretaker], pop_wait);
                 }
             }
@@ -11787,7 +11787,7 @@ int __cdecl end_of_game(int check_victory) {
                 _itoa(static_cast<int>(ScenarioSave.ending_mission_year), year_text, 10);
                 strcat(StringTemp, year_text);
                 parse_says(0, StringTemp, -1, -1);
-                x_pop_caption_label(const_cast<char *>("SCENARIOWARNING"),
+                X_pop(const_cast<char *>("SCENARIOWARNING"),
                                     "SCENARIO", nullptr);
             }
             return 0;
@@ -11874,10 +11874,10 @@ int __cdecl end_of_game(int check_victory) {
             GenderDefault = Players[winner].noun_gender;
             PluralityDefault = Players[winner].is_noun_plural;
             parse_says(2, Players[winner].noun_faction, -1, -1);
-            x_pop_caption_label(const_cast<char *>("SCENTIMEWIN"),
+            X_pop(const_cast<char *>("SCENTIMEWIN"),
                                 "SCENARIO", nullptr);
         } else {
-            x_pop_caption_label(const_cast<char *>("SCENARIO"),
+            X_pop(const_cast<char *>("SCENARIO"),
                                 "SCENTIMELIMIT", nullptr);
         }
         break;
@@ -11892,10 +11892,10 @@ int __cdecl end_of_game(int check_victory) {
         PluralityDefault = Players[winner].is_noun_plural;
         parse_says(2, Players[winner].noun_faction, -1, -1);
         if (winner == static_cast<unsigned int>(ConsoleGlobal.faction_id_)) {
-            x_pop_caption_label(const_cast<char *>("SCENARIO"),
+            X_pop(const_cast<char *>("SCENARIO"),
                                 "SUDDENDEATH0", nullptr);
         } else {
-            x_pop_caption_label(const_cast<char *>("SCENARIO"),
+            X_pop(const_cast<char *>("SCENARIO"),
                                 "SUDDENDEATH", nullptr);
         }
         break;

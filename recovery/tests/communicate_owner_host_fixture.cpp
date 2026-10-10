@@ -189,7 +189,7 @@ int bit_count(int value) {
     return count;
 }
 int territory(int, int, int, int *base_id, int) { *base_id = 0; return 0; }
-int x_pops_short(const char *label, int, Sprite *, int (*)()) {
+int X_pops(const char *label, int, Sprite *, int (*)()) {
     g_short_label = label;
     ++g_short_popup_calls;
     return g_popup;

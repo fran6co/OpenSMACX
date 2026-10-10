@@ -893,7 +893,7 @@ void Console::turn_hints() { // 0x00511800
         GenderDefault = Players[other_faction].noun_gender;
         PluralityDefault = Players[other_faction].is_noun_plural;
         parse_says(2, Players[other_faction].noun_faction, -1, -1);
-        x_pop_caption_label(TutorialPopupCaption, "VENDETTA", nullptr);
+        X_pop(TutorialPopupCaption, "VENDETTA", nullptr);
         return;
     }
 }
@@ -3222,7 +3222,7 @@ void Console::show_scen_objectives() {
     say_year(StringTemp);
     parse_says(4, StringTemp, -1, -1);
     parse_says(0, StringTemp, -1, -1);
-    x_pop_caption_label(StrScenarioObjectivesTitle, StrScenarioObjectivesPopup, 0);
+    X_pop(StrScenarioObjectivesTitle, StrScenarioObjectivesPopup, 0);
 }
 
 // Fixed-slot bindings carried from 004dbc40.cpp

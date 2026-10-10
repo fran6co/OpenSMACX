@@ -278,7 +278,7 @@ struct Popup {Dialogs d;Popup(){d.stage=0;}~Popup(){++destructors;}
 struct Plan {void init(char *s){assert(!s);}void back_redraw(){}void clear_lines(){}
  void monocenter(int,int,int n){assert(!n);}void add_line(int a,int b,int c){assert(a==b&&!c);++lines;}
  void on_redraw(){}void show(int n){assert(!n);++shows;}void close(){++closes;}} PlanWindow;
-int x_pops_short(const char *key,int flags,Sprite *s,int(*cb)()){assert(flags==0x100000&&s==FactionDiplomacyPortraits[2]&&cb==pop_wait);std::strcpy(notice,key);return 0;}
+int X_pops(const char *key,int flags,Sprite *s,int(*cb)()){assert(flags==0x100000&&s==FactionDiplomacyPortraits[2]&&cb==pop_wait);std::strcpy(notice,key);return 0;}
 int x_pops_minimal(const char *key,Sprite *s,int(*cb)()){assert(s==FactionDiplomacyPortraits[2]&&cb==pop_wait);std::strcpy(notice,key);return 0;}
 @@BODY@@
 void reset(){
@@ -386,7 +386,7 @@ char *get_noun_phrase(int who,int kind) {assert(who==1&&kind==8);return Players[
 char *get_pact(int who) {assert(who==1);return Players[1].noun_faction;}
 int random(int a,int b) {assert(!a&&b==2);return 1;}
 char *_itoa(int n,char *s,int base) {assert(base==10);std::sprintf(s,"%d",n);return s;}
-int x_pops_short(const char *key,int flags,Sprite *p,int(*cb)()) {
+int X_pops(const char *key,int flags,Sprite *p,int(*cb)()) {
  assert(flags==0x100000&&p==FactionDiplomacyPortraits[2]&&cb==pop_wait);std::strcpy(notice,key);
  if(mutate&&!std::strcmp(key,"EXTORTCOMMLINK")) DiploScratchFA5C=4;
  return 1;
@@ -522,7 +522,7 @@ int tech_val(int tech,int who,int simple) { assert(tech==DiploScratchFAA8&&who==
 void say_tech(char *s,int tech,int kind) { assert(!*s&&tech==DiploScratchFAA8&&kind==1); std::strcpy(s,"tech"); }
 int random(int a,int b) { assert(!a&&b==2); return 1; }
 char *_itoa(int n,char *s,int base) { assert(base==10); std::sprintf(s,"%d",n); return s; }
-int x_pops_short(const char *key,int flags,Sprite *p,int(*cb)()) {
+int X_pops(const char *key,int flags,Sprite *p,int(*cb)()) {
  assert(flags==0x100000&&p==FactionDiplomacyPortraits[2]&&cb==pop_wait); std::strcpy(notice,key);
  if(!std::strcmp(key,"GIMMEHELP")) return help_response;
  if(!std::strncmp(key,"GIMMETECH",9)&&help_once) { help_once=0; return 2; }
@@ -651,7 +651,7 @@ int parse_says(int n,char *s,int a,int b) { assert(!n && s && a==-1 && b==-1); r
 void parse_num(int n,int v) { assert(!n); price=v; }
 int random(int a,int b) { assert(!a && b==2); ++randoms; return 1; }
 char *_itoa(int n,char *s,int base) { assert(base==10); std::sprintf(s,"%d",n); return s; }
-int x_pops_short(const char *s,int flags,Sprite *p,int(*cb)()) {
+int X_pops(const char *s,int flags,Sprite *p,int(*cb)()) {
  assert(flags==0x100000 && p==FactionDiplomacyPortraits[2] && cb==pop_wait);
  std::strcpy(key,s); ++pops; return popup_answer;
 }
@@ -800,7 +800,7 @@ int net_maps(int a,int b,int mode) {
     if(local_map) ++PlayersData[2].energy_reserves;
     return 0;
 }
-int x_pops_short(const char *key,int flags,Sprite *sprite,int(*cb)()) {
+int X_pops(const char *key,int flags,Sprite *sprite,int(*cb)()) {
     assert(key&&sprite==FactionDiplomacyPortraits[2]&&cb==pop_wait);
     std::strncpy(last_popup,key,sizeof(last_popup)-1); last_popup[sizeof(last_popup)-1]=0;
     if(!std::strcmp(key,"TRADEMAPS")) { map_popup_event=++event_counter; }
@@ -966,7 +966,7 @@ def _run_make_proposal_controls():
             'if (IsMultiplayerNet != 0) {\n            log_say("Sending LOAN"',
             'if (IsMultiplayerNet != 0 || awaits != 0) {\n            log_say("Sending LOAN"'),
         "missing_repayment_modal": body.replace(
-            'x_pops_short("REPAIDLOAN", 0x100000,\n'
+            'X_pops("REPAIDLOAN", 0x100000,\n'
             '                     FactionDiplomacyPortraits[other_faction_id], pop_wait);',
             '(void)0;'),
         "game_state_predicate": body.replace('(GameDataStateStorage.fields_.game_state_ & 1)', '(GameDataStateStorage.fields_.game_rules_ & 1)'),
@@ -1080,7 +1080,7 @@ int parse_says(int, const char *, int, int) { return 0; }
 void help_topic(unsigned int topic, int technology) {
     ++help_calls; help_id = static_cast<int>(topic); help_topic_id = technology;
 }
-int x_pops_short(const char *, int, Sprite *, int (*)()) { return pop_result; }
+int X_pops(const char *, int, Sprite *, int (*)()) { return pop_result; }
 int pop_wait() { return 0; }
 int great_satan(int, int) { return 0; }
 
@@ -1357,7 +1357,7 @@ int parse_says(int channel, const char *value, int, int) {
 char *get_phrase(int faction, int phrase){assert(faction==1&&phrase==3);return Players[faction].assistant_city;}
 int parse_num(int channel, int arg){assert(arg==0);++parse_num_calls;return parse_num_result;}
 char *_itoa(int value,char *buffer,int radix){assert(radix==10);std::sprintf(buffer,"%d",value);return buffer;}
-int x_pops_short(const char *text,int flags,Sprite *sprite,int(*callback)()) {
+int X_pops(const char *text,int flags,Sprite *sprite,int(*callback)()) {
     assert(flags==0x100000&&callback==pop_wait&&sprite==FactionDiplomacyPortraits[2]);
     assert(text&&std::strlen(text)<sizeof(StringTemp));++popup_short_calls;
     std::strcpy(StringTemp,text);return 0;
@@ -1705,7 +1705,7 @@ def test_actual_propose_attack(tmp_path, compiler_name):
     char *get_pacts(int){return Players[3].noun_faction;}
     char *get_phrase(int,int){return Players[3].noun_faction;}
     char *get_him_her(int who,int form){assert(who==3&&form==0);++get_him_her_calls;return Players[3].noun_faction;}
-    int x_pops_short(const char *key,int flags,Sprite *s,int(*cb)()) {
+    int X_pops(const char *key,int flags,Sprite *s,int(*cb)()) {
         assert(key&&flags==0x100000&&s==FactionDiplomacyPortraits[2]&&cb==pop_wait);
         if(short_keys_count<24) std::strncpy(short_keys[short_keys_count++],key,63);
         if(!std::strncmp(key,"MAYBEWARTECH",12)) { ++tech_offer_calls; return tech_offer_response; }
@@ -2014,7 +2014,7 @@ struct Popup {
 char *_itoa(int n,char *d,int base) { assert(base==10); std::sprintf(d,"%d",n); return d; }
 void diplomacy_caption(int a,int b) { assert(a==1 && b==2); }
 int parse_says(int n,char *s,int a,int b) { assert(a==-1 && b==-1 && n>=0 && n<=2 && s); return 0; }
-int x_pops_short(const char *s,int flags,Sprite *p,int(*cb)()) {
+int X_pops(const char *s,int flags,Sprite *p,int(*cb)()) {
  assert(flags==0x100000 && p==FactionDiplomacyPortraits[2] && cb==pop_wait); std::strcpy(notice,s);
  if(mutate_choice && (!std::strcmp(s,"OFFERTECH") || !std::strcmp(s,"OFFERTECH2"))) DiploScratchFAA8=5;
  return response;
@@ -2135,7 +2135,7 @@ int parse_says(int n,char *s,int a,int b) {
 }
 void bitmask(int n,int *offset,int *mask) { assert(n==1); *offset=0; *mask=2; }
 int parse_num(int n,int value) { assert(!n); numeric=value; return 0; }
-int x_pops_short(const char *s,int flags,Sprite *p,int(*cb)()) {
+int X_pops(const char *s,int flags,Sprite *p,int(*cb)()) {
  assert(flags==0x100000 && p==FactionDiplomacyPortraits[2] && cb==pop_wait); notice=s;
  return response;
 }
@@ -2281,7 +2281,7 @@ struct Popup {
  Dialogs &dialogs() { return menu; }
  int exec(int n,int(*cb)()) { assert(!n && cb==pop_wait && item_count>0); ++executions; return selected; }
 };
-int x_pops_short(const char *s,int f,Sprite *p,int(*cb)()) {
+int X_pops(const char *s,int f,Sprite *p,int(*cb)()) {
  assert(f==0x100000 && p==FactionDiplomacyPortraits[2] && !cb); notice=s; return 0;
 }
 void set_treaty(int a,int b,int bit,int state) {
@@ -2489,7 +2489,7 @@ void parse_num(int n,int v) { assert(n>=0 && n<3); nums[n]=v; }
 int random(int a,int b) { assert(!a && b==2); return 1; }
 char *_itoa(int n,char *s,int base) { assert(base==10); std::sprintf(s,"%d",n); return s; }
 void help_topic(int cat,int tech) { assert(cat==14 && tech==3); ++helps; }
-int x_pops_short(const char *s,int flags,Sprite *p,int(*cb)()) {
+int X_pops(const char *s,int flags,Sprite *p,int(*cb)()) {
  assert(flags==0x100000 && p==FactionDiplomacyPortraits[2] && cb==pop_wait);
  std::strcpy(key,s); assert(pops<8); int result=responses[pops++];
  if(mutate && !std::strcmp(s,"SELLSECOND")) { DiploScratchFA18=6; IsMultiplayerNet=1; }

@@ -60,7 +60,7 @@ def test_source_order_and_actual_helper_host_controls(tmp_path: Path) -> None:
     branch_end = source.index("\n            }\n        }\n    }", branch_start)
     branch = source[branch_start:branch_end]
     assignment = "PlayersData[faction_b].base_id_atk_target ="
-    popup = "x_pops_short(BattlePlansSelectionLabel"
+    popup = "X_pops(BattlePlansSelectionLabel"
     cleanup = "battle_plans_apply_selected_target(faction_b,"
     assert branch.index(assignment) < branch.index(popup) < branch.index(cleanup)
     assert "const Base &selected_base = Bases[selected_base_id];" in helper

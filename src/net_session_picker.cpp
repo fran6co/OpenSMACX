@@ -517,12 +517,12 @@ int NetSessionPickerWin::connect_session() {
   for (;;) {
     if (status == -1) return 1;
     if (ParseStrBuffer[0].str[0] == 0) {
-      x_pop_caption_label("jackal", "NETCONNECT_NEED_SESSION", 0);
+      X_pop("jackal", "NETCONNECT_NEED_SESSION", 0);
     } else if (ParseStrBuffer[1].str[0] == 0) {
-      x_pop_caption_label("jackal", "NETCONNECT_NEED_PLAYER", 0);
+      X_pop("jackal", "NETCONNECT_NEED_PLAYER", 0);
     } else {
       if (ParseStrBuffer[2].str[0] != 0) {
-        x_pop_caption_label("jackal", "NETCONNECT_PASSWORD_SET", 0);
+        X_pop("jackal", "NETCONNECT_PASSWORD_SET", 0);
       }
 
       BasePop *popup = PopupAllocHook();

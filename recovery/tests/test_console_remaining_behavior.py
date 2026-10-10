@@ -1464,7 +1464,7 @@ struct TutWin { bool blocked=false; int stages=0,maps=0;
 int __cdecl tut_check(int mask) { events.push_back("check:"+std::to_string(mask)); return (TutMask&mask)!=0; }
 int __cdecl base_find(int x,int y,int faction) { assert(faction==1); events.push_back("find:"+std::to_string(x)+":"+std::to_string(y)); return BaseFound; }
 int __cdecl parse_says(int slot,const char *text,int,int) { events.push_back(std::string("parse:")+std::to_string(slot)+":"+text); return 0; }
-int __cdecl x_pop_caption_label(char *caption,const char *label,int (*callback)()) {
+int __cdecl X_pop(char *caption,const char *label,int (*callback)()) {
   assert(std::strcmp(caption,"TUTOR")==0 && std::strcmp(label,"VENDETTA")==0 && !callback);
   ++PopupCalls; events.push_back("popup"); return 0;
 }

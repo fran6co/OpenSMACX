@@ -699,8 +699,8 @@ int AlphaNet::create() {
     strcpy(ParseStrBuffer[1].str, TextBufferGetPtr);
     int selected = x_pop_caption_value_flags("jackal", "NETCONNECT_CREATE", 0x1F, 0x44, 0);
     while (selected != -1) {
-        if (ParseStrBuffer[0].str[0] == 0) x_pop_caption_label("jackal", "NETCONNECT_NEED_SESSION", 0);
-        else if (ParseStrBuffer[1].str[0] == 0) x_pop_caption_label("jackal", "NETCONNECT_NEED_PLAYER", 0);
+        if (ParseStrBuffer[0].str[0] == 0) X_pop("jackal", "NETCONNECT_NEED_SESSION", 0);
+        else if (ParseStrBuffer[1].str[0] == 0) X_pop("jackal", "NETCONNECT_NEED_PLAYER", 0);
         else break;
         selected = x_pop_caption_value_flags("jackal", "NETCONNECT_CREATE", 0x1F, 0x44, 0);
     }
@@ -729,7 +729,7 @@ int AlphaNet::join() {
             ledger_.allocator_ = 0;
             NetDaemonNet.enumerate_sessions(&ledger_, 0);
             if (ledger_.entry_count_ != 0) break;
-            x_pop_caption_label("jackal", "NETCONNECT_SESSION_NOT_FOUND", 0);
+            X_pop("jackal", "NETCONNECT_SESSION_NOT_FOUND", 0);
             if (ConsoleGroupAction != 1) return 0;
         }
         popup.start("jackal", "NETCONNECT_SESSIONS", -1, 0, 0x42);

@@ -76,7 +76,7 @@ void world_climate() { ++climate_count; }
 int popp(const char *, const char *, int, const char *, int (*)()) {
     ++popup_count; events[event_count++] = 30; return 0;
 }
-int x_pops_short(const char *, int, void *, int (*)()) { ++popup_count; return 0; }
+int X_pops(const char *, int, void *, int (*)()) { ++popup_count; return 0; }
 void alien_fauna() { events[event_count++] = 2; }
 void do_fungal_towers() { events[event_count++] = 3; }
 int rand() { return random_values[random_index++]; }

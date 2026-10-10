@@ -4292,9 +4292,9 @@ int DesignWin::design_it() {
             }
             parse_says(0, current.veh_name, -1, -1);
             if ((Players[factionID_].rule_flags & RFLAG_ALIEN) == 0) {
-                x_pop_caption_label("INTRINSICNAME", "unit_sm.pcx", pop_wait);
+                X_pop("INTRINSICNAME", "unit_sm.pcx", pop_wait);
             } else {
-                x_pop_caption_label("INTRINSICNAME", "alunit_sm.pcx",
+                X_pop("INTRINSICNAME", "alunit_sm.pcx",
                                     pop_wait);
             }
             return 0;

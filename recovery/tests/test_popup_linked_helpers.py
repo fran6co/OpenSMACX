@@ -157,7 +157,7 @@ def test_pending_link_producer_clear_damage_is_detected(tmp_path):
 @pytest.mark.parametrize("old,new", [
     ("Players[faction_id].filename", "Players[faction_id].search_key"),
     ('"DATALINKS"', '"DATALINKS1"'),
-    ("return x_pop_caption_label(", "x_pop_caption_label("),
+    ("return X_pop(", "X_pop("),
 ])
 def test_faction_popup_member_label_and_result_damage_is_detected(tmp_path, old, new):
     bodies = current_bodies()

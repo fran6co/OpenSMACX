@@ -346,7 +346,7 @@ def run_host(tmp_path, body):
             secret_popup_order = ++event_order;
           return xpop_result;
         }
-        int x_pop_caption_label(char *caption, const char *label,
+        int X_pop(char *caption, const char *label,
                                 int (__cdecl *)()) {
           ++social_popup_calls; social_popup_caption = caption;
           social_popup_label = label;

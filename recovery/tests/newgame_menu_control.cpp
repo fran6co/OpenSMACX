@@ -1190,7 +1190,7 @@ static int parse_says(int id, const char *, int, int) {
 }
 static int parse_num(int id, int) { events.push_back(std::string("num-") + char('0' + id)); return 0; }
 static void say_year(char *) { events.push_back("say-year"); }
-static int x_pop_caption_label(char *caption, const char *label, int (*)()) {
+static int X_pop(char *caption, const char *label, int (*)()) {
     assert(strcmp(caption, "INTRO") == 0 && strcmp(label, "SCENARIO") == 0);
     events.push_back("scenario-popup");
     return 0;

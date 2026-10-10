@@ -95,7 +95,7 @@ void parse_says(int slot, const char *text, int, int) {
         PlayersData[2].unk_30[1] = 3;
 }
 void X_pop(const char *, int (*)(void)) { events.push_back({"xpop"}); if (mutate_treaty_on_xpop) PlayersData[2].diplo_treaties[1] = 0x20; }
-void x_pops_short(const char *, int, Sprite *, int (*)(void)) { events.push_back({"xpops"}); }
+void X_pops(const char *, int, Sprite *, int (*)(void)) { events.push_back({"xpops"}); }
 int wants_prop(int a, int b, int c) {
     wants_args.push_back({a, b, c});
     if (wants_cursor < wants_results.size()) return wants_results[wants_cursor++];

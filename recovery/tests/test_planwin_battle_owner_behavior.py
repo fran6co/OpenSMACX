@@ -623,7 +623,7 @@ static int attack_from(int base_id, int faction) {
     return -1;
 }
 static int pop_wait() { return 0; }
-static int x_pops_short(const char *label, int value, Sprite *, int (*)()) {
+static int X_pops(const char *label, int value, Sprite *, int (*)()) {
     LastPopupLabel=label; LastPopupValue=value;
     return PopResultIndex < PopResultCount ? PopResults[PopResultIndex++] : 0;
 }

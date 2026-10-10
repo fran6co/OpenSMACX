@@ -177,11 +177,11 @@ void __cdecl parse_says(int slot, const char *text, int, int) {
 void __cdecl say_stats_2(char *out, int proto) {
     std::sprintf(out, "stats%d", proto); events.push_back("stats");
 }
-int __cdecl x_pops_short(const char *s, int, Sprite *, int (__cdecl *cb)()) {
+int __cdecl X_pops(const char *s, int, Sprite *, int (__cdecl *cb)()) {
     ++popup_calls; popup_labels.push_back(s);
     events.push_back(std::string("popup:") + s); return popup_result;
 }
-int __cdecl x_pop_caption_label(const char *, const char *s, int (__cdecl *cb)()) {
+int __cdecl X_pop(const char *, const char *s, int (__cdecl *cb)()) {
     ++popup_calls; popup_labels.push_back(s);
     caption_null_callbacks.push_back(cb == 0);
     events.push_back(std::string("caption_popup:") + s); return 0;

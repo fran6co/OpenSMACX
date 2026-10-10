@@ -70,7 +70,7 @@ typedef long (__stdcall *func_popup_shell_execute)(void *, const char *,
                                                     const char *, int);
 func_popup_shell_execute &PopupShellExecuteSlot();
 
-int __cdecl x_pop_caption_label(char *, const char *, int (__cdecl *)());
+int __cdecl X_pop(char *, const char *, int (__cdecl *)());
 int __cdecl X_pop(const char *, int (__cdecl *)());
 void __cdecl popup_pending_link_dialog(const char *label);
 int __cdecl popup_faction_datalinks(int faction_id);
@@ -104,7 +104,7 @@ static char label_seen[32];
 static int callback_was_null;
 static int pop_result;
 
-int __cdecl x_pop_caption_label(char *caption, const char *label,
+int __cdecl X_pop(char *caption, const char *label,
                                 int (__cdecl *callback)()) {
     std::strcpy(caption_seen, caption);
     std::strcpy(label_seen, label);

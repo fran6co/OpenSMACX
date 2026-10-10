@@ -8312,7 +8312,7 @@ void __cdecl alt_set(int x, int y, int altitude) {
                                     ConsoleGlobal.focus(base.x, base.y,
                                                         local_faction);
                                     parse_says(0, base.name_string, -1, -1);
-                                    x_pop_caption_label(submerged_title,
+                                    X_pop(submerged_title,
                                                         "subbase_sm.pcx", 0);
                                 } else if (base.visibility &
                                            (1u << (local_faction & 0x1F))) {
@@ -8322,7 +8322,7 @@ void __cdecl alt_set(int x, int y, int altitude) {
                                     parse_says(1,
                                         Players[faction_id].adj_name_faction,
                                         -1, -1);
-                                    x_pop_caption_label(submerged_lost_title,
+                                    X_pop(submerged_lost_title,
                                                         "subbase_sm.pcx", 0);
                                 }
                             }
