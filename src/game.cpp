@@ -4047,6 +4047,7 @@ void sub_52db40() {
     }
 }
 
+// RECOVERY_ROLE: SCAFFOLD Fabricated Widget receiver and manual virtual-slot adapter; original class, receiver ownership and lifecycle remain unproved.
 // ORIGINAL: 0x00524370 sub_524370 0x00524370-0x00524396 BYTE_EXACT
 // symbol    ?on_key@Widget@@QAEHHH@Z
 // size      38 bytes
@@ -4058,6 +4059,10 @@ void sub_52db40() {
 // indirect  0x00524387
 // 0x00524370  sub_524370  ->  _sub_524370
 //
+// Historical emitter notes below predate this compiled game.cpp adapter.
+// Pinned dispatch is slot58 on the unchanged receiver. Win::release_modal
+// has that slot, but no receiver/type relationship establishes a Win or Demo
+// owner here. The matching history does not resolve that structural debt.
 // A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md

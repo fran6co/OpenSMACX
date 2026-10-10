@@ -1,6 +1,6 @@
 // Typed movie/media owners. Historical matching obligations are retained;
-// the explicitly unfinished converter callees below retain their seeds and
-// do not establish recovered codec behavior or working playback.
+// decoder and converter bodies live in their mapped source owners. Their
+// presence does not establish native codec equivalence or working playback.
 #include "stdafx.h"
 #include "movie_media.h"
 #include "movie_decoder_owner.h"
@@ -68,8 +68,8 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *runtime, int payload_bytes);
 // C++ linkage until an authorized identity migration says otherwise.
 extern "C" char *__fastcall sub_5cf120(int code);
 
-// Seed-only output worker. This declaration must bind to its original-mapped
-// owner when that dependency is migrated; no local placeholder is provided.
+// Mapped output worker implemented below; this forward declaration supplies
+// the CRT thread-entry contract, not a seed-only or placeholder dependency.
 extern "C" void __cdecl sub_5cdfa0(void *runtime);
 
 // The pinned image contains exactly 92 adjacent {HRESULT, relocated string}
@@ -660,7 +660,8 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
                                      MediaQueueRecord *record) {
   // The historical case-3 placeholder note above is superseded by the
   // explicit 3/6/12-byte short-run paths and >12-byte dispatch below.
-  // 5D35B0 and its separate downstream renderer remain unfinished.
+  // 5D35B0 is implemented in movie_media_decoder.cpp through the frame,
+  // Huffman and IDCT owners. Matching and playback remain verification debt.
   MediaDescriptor &d = *runtime->descriptor;
   BYTE *packet = record->payload;
   const DWORD record_kind = record->field_0c;
