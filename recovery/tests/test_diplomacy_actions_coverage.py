@@ -565,9 +565,9 @@ void reset() {
  money_amount=awaits=last_await=settlements=offs=crosses=locks=unlocks=redraws=0;notice[0]=0;
 }
 int main() {
- reset();assert(propose_treaty(1,2)==1&&settlements==1&&money_amount==200);
- assert(PlayersData[1].energy_reserves==800&&PlayersData[2].energy_reserves==200);
- assert(PlayersData[2].diplo_friction[1]==8&&PlayersData[1].diplo_friction[2]==17&&DiploFriction==-2);
+ reset();assert(propose_treaty(1,2)==1&&settlements==1&&money_amount==450);
+ assert(PlayersData[1].energy_reserves==550&&PlayersData[2].energy_reserves==450);
+ assert(PlayersData[2].diplo_friction[1]==7&&PlayersData[1].diplo_friction[2]==17&&DiploFriction==-3);
  reset();IsMultiplayerNet=1;assert(propose_treaty(1,2)==1&&money_packets==1&&last_await==0x447&&settlements==1);
  reset();response=0;assert(propose_treaty(1,2)==1&&!settlements&&!std::strcmp(notice,"REJTREATYBADBRIBE"));
  reset();DiplomacyProposalMode=1;DiploScratchFA78=3;response=0;assert(propose_treaty(1,2)==0&&!settlements);
@@ -1789,7 +1789,7 @@ def test_actual_propose_attack(tmp_path, compiler_name):
         // Declining the energy offer must not transfer reserves or enter treaty lock.
         reset(); energy_popup_answer=0;
         assert(propose_attack(1,2)==0);
-        assert(parse_num_calls==1&&energy_price==250&&popup_exec_count==1);
+        assert(parse_num_calls==1&&energy_price==1000&&popup_exec_count==1);
         assert(price_modal_count==1);
         assert(PlayersData[1].energy_reserves==1000&&PlayersData[2].energy_reserves==0);
         assert(!lock_add_calls&&!lock_unlock_calls&&!treaty_on_calls);
@@ -1799,12 +1799,12 @@ def test_actual_propose_attack(tmp_path, compiler_name):
         PlayersData[2].diplo_treaties[3]=0; PlayersData[2].ai_fight=1;
         PlayersData[2].diplo_treaties[1]|=DTREATY_WANT_REVENGE;
         energy_popup_answer=0; assert(propose_attack(1,2)==0);
-        assert(parse_num_calls==1&&energy_price==125);
+        assert(parse_num_calls==1&&energy_price==500);
         reset(); contiguous_result=0; PlayersData[2].diplo_treaties[1]|=DTREATY_PACT;
         PlayersData[2].diplo_treaties[3]=0; PlayersData[2].ai_fight=1;
         PlayersData[2].region_total_bases[7]=1;PlayersData[3].region_total_bases[7]=1;
         energy_popup_answer=0; assert(propose_attack(1,2)==0);
-        assert(parse_num_calls==1&&energy_price==175);
+        assert(parse_num_calls==1&&energy_price==750);
 
         // Equality in the target-power / next-power comparison takes the /4 path.
         reset(); DiploScratchFA78=1000; FactionRankings[7]=3;FactionRankings[6]=4;
@@ -1821,11 +1821,23 @@ def test_actual_propose_attack(tmp_path, compiler_name):
         assert(PlayersData[0].energy_reserves==1000&&PlayersData[2].energy_reserves>0);
         assert(console_update_one==1&&lock_add_calls==1&&lock_unlock_calls==1);
 
-        // A complete tech offer is transferred in reverse selector order and each
-        // selector is re-read after the preceding award changes live state.
+        // The original small tech values do not meet the corrected 1000 offer
+        // price: 4 * (35 * ((10 + 7) / 8)) = 280. A positive popup response
+        // cannot accept an offer that was never shown.
         reset(); DiplomacyProposalMode=4;DiploScratchFA78=2000;
         DiploScratchFA28=40;DiploScratchFA1C=30;DiploScratchFA18=20;DiploScratchFAA8=10;
         tech_values[40]=tech_values[30]=tech_values[20]=tech_values[10]=35;
+        tech_offer_response=1;mutate_live_ids=1;assert(propose_attack(1,2)==0);
+        assert(tech_value_calls==4&&tech_transfer_count==0&&tech_offer_calls==0);
+        assert(short_keys_count==1&&!std::strcmp(short_keys[0],"REJWAR"));
+
+        // A funded complete tech offer is transferred in reverse selector order
+        // and each selector is re-read after the preceding award changes state.
+        // Four 140-value selectors total 1120, enough for price 1000 but below
+        // the 1333 cutoff, so none is pruned before transfer.
+        reset(); DiplomacyProposalMode=4;DiploScratchFA78=2000;
+        DiploScratchFA28=40;DiploScratchFA1C=30;DiploScratchFA18=20;DiploScratchFAA8=10;
+        tech_values[40]=tech_values[30]=tech_values[20]=tech_values[10]=140;
         tech_offer_response=1;mutate_live_ids=1;assert(propose_attack(1,2)==1);
         assert(tech_transfer_count==4);
         assert(transferred_tech[0]==40&&transferred_tech[1]==51&&
@@ -1835,12 +1847,12 @@ def test_actual_propose_attack(tmp_path, compiler_name):
                DiploScratchFA18==-1&&DiploScratchFAA8==-1);
 
         // PEACE uses 3/2 of the updated total for each of the three cutoffs.
-        // With total 420, PEACE updates the total to 630 then uses 945 for all
-        // three cutoffs; the ordinary cutoff is 333 and all three selectors prune.
+        // With total 1680, PEACE updates the total to 2520 then uses 3780 for all
+        // three cutoffs; the ordinary cutoff is 1333 and all three selectors prune.
         // A per-checkpoint cutoff would leave the final two selectors visible.
         reset(); DiplomacyProposalMode=4;DiploScratchFA78=2000;
         DiploScratchFA28=40;DiploScratchFA1C=30;DiploScratchFA18=20;DiploScratchFAA8=10;
-        tech_values[40]=tech_values[30]=tech_values[20]=50;tech_values[10]=60;
+        tech_values[40]=tech_values[30]=tech_values[20]=200;tech_values[10]=240;
         std::strcpy(Players[2].filename,"PEACE");tech_offer_response=0;
         assert(propose_attack(1,2)==0);
         assert(tech_value_calls==4&&DiploScratchFA28==-1&&DiploScratchFA1C==-1&&

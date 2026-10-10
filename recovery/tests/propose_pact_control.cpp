@@ -33,6 +33,17 @@ struct PlayerData {
     char diplo_patience[8];
     uint32_t current_num_bases;
 };
+// Minimal fixture view of the real nested GameDataStateStorage API used by
+// the extracted function; this supplies fields, not compatibility aliases.
+struct GameDataStateWindowFields {
+    uint32_t game_rules_;
+    int turn_current_num_;
+    uint32_t faction_rankings_[8];
+    uint32_t ranking_faction_id_unk1_;
+    uint32_t ranking_faction_id_unk2_;
+};
+struct GameDataStateWindow { GameDataStateWindowFields fields_; };
+GameDataStateWindow GameDataStateStorage;
 struct Console {
     int updates[8]; int update_count;
     void update_data(int value) { updates[update_count++] = value; }
@@ -56,7 +67,6 @@ Player Players[8];
 PlayerData PlayersData[8];
 Sprite diplomacy_sprites[8];
 Sprite *FactionDiplomacyPortraits[8];
-uint32_t FactionRankings[8];
 uint32_t FactionRankingsUnk[8];
 Console ConsoleGlobal;
 InfoWin ConsoleInfoWin;
@@ -64,8 +74,6 @@ NetDaemon NetDaemonNet;
 char StringTemp[1024];
 int IsMultiplayerNet;
 int PopupDialogFactionID;
-int TurnCurrentNum;
-uint32_t GameRules;
 int GenderDefault;
 int PluralityDefault;
 int ExitTurnLoop;
@@ -78,7 +86,6 @@ int DiploScratchFA54, DiploScratchFA68, DiploScratchFA78, DiploScratchFA8C;
 int DiploScratchFA98, DiploScratchFAA8;
 int DiploScratchFA9C, DiploScratchFA70, DiplomacyProposalGateCount;
 int DiplomacyProposalMode;
-uint32_t RankingFactionIDUnk1, RankingFactionIDUnk2;
 
 char *DiploLabelSendingENERGY = (char *)"Sending ENERGY";
 char *DiploLabelSendingSETTREATY = (char *)"Sending SET TREATY";
@@ -198,8 +205,8 @@ uint32_t WINAPI timeGetTime() { ++time_calls; return (uint32_t)time_calls; }
 static void reset_fixture() {
     memset(Players, 0, sizeof Players);
     memset(PlayersData, 0, sizeof PlayersData);
+    memset(&GameDataStateStorage, 0, sizeof GameDataStateStorage);
     memset(diplomacy_sprites, 0, sizeof diplomacy_sprites);
-    memset(FactionRankings, 0, sizeof FactionRankings);
     memset(FactionRankingsUnk, 0, sizeof FactionRankingsUnk);
     memset(&ConsoleGlobal, 0, sizeof ConsoleGlobal);
     memset(&ConsoleInfoWin, 0, sizeof ConsoleInfoWin);
@@ -216,7 +223,7 @@ static void reset_fixture() {
         strcpy(Players[faction].name_leader, "LEADER");
     }
     IsMultiplayerNet = 0; PopupDialogFactionID = -1;
-    TurnCurrentNum = 0; GameRules = 0; GenderDefault = PluralityDefault = 0;
+    GenderDefault = PluralityDefault = 0;
     ExitTurnLoop = 0; DiploFriction = 0;
     DiploFrictionFactionID = DiploFrictionFactionIDWith = 99;
     DiploScratchF7E0 = DiploScratchF7E8 = DiploScratchF7F0 = DiploScratchF7FC = 0;
@@ -224,7 +231,7 @@ static void reset_fixture() {
     DiploScratchFA54 = DiploScratchFA68 = DiploScratchFA78 = DiploScratchFA8C = 0;
     DiploScratchFA98 = 0; DiploScratchFAA8 = -1;
     DiploScratchFA9C = DiploScratchFA70 = DiplomacyProposalGateCount = 0;
-    DiplomacyProposalMode = 1; RankingFactionIDUnk1 = RankingFactionIDUnk2 = 0;
+    DiplomacyProposalMode = 1;
     popup_count = popup_result = last_popup_value = parsed_energy = 0;
     memset(popup_results, 0, sizeof popup_results);
     popup_response_count = popup_response_index = 0;
@@ -299,12 +306,12 @@ int main() {
     // Independently evaluated staged IDIV and repeated gift reduction.
     const int cap_cases[][7] = {
         // my bases, other bases, my energy, my military, other military, gift, friction delta
-        {0, 0, 1000, 100, 100, 250, -4},
-        {4, 0, 1000, 100, 100, 300, -4},
-        {0, 4, 1000, 100, 100, 200, -3},
-        {0, 0, 1200, 100, 100, 300, -4},
-        {0, 0, 1000, 200, 100, 150, -3},
-        {0, 0, 1000, 100, 200, 300, -4},
+        {0, 0, 1000, 100, 100, 500, -5},
+        {4, 0, 1000, 100, 100, 600, -6},
+        {0, 4, 1000, 100, 100, 400, -5},
+        {0, 0, 1200, 100, 100, 600, -6},
+        {0, 0, 1000, 200, 100, 300, -4},
+        {0, 0, 1000, 100, 200, 650, -6},
         {10, 0, 200, 1, 100, 200, -3}
     };
     for (unsigned int c = 0; c < sizeof cap_cases / sizeof cap_cases[0]; ++c) {
@@ -336,13 +343,13 @@ int main() {
     PlayersData[1].mil_strength_1 = PlayersData[2].mil_strength_1 = 100;
     popup_result = 1; mutate_energy_on_callback = 1;
     energy_my_after_callback = 800; energy_other_after_callback = 9200;
-    assert(propose_pact(1, 2) == 1 && parsed_energy == 250);
-    assert(PlayersData[1].energy_reserves == 550 && PlayersData[2].energy_reserves == 9450);
+    assert(propose_pact(1, 2) == 1 && parsed_energy == 500);
+    assert(PlayersData[1].energy_reserves == 300 && PlayersData[2].energy_reserves == 9700);
     reset_fixture(); DiplomacyProposalMode = 2; DiploFriction = 11; DiploScratchFA78 = 1;
     PlayersData[0].energy_reserves = 1000; PlayersData[2].energy_reserves = 9000;
     PlayersData[0].mil_strength_1 = PlayersData[2].mil_strength_1 = 100; popup_result = 1;
-    assert(propose_pact(0, 2) == 1 && parsed_energy == 250);
-    assert(PlayersData[0].energy_reserves == 1000 && PlayersData[2].energy_reserves == 9250);
+    assert(propose_pact(0, 2) == 1 && parsed_energy == 500);
+    assert(PlayersData[0].energy_reserves == 1000 && PlayersData[2].energy_reserves == 9500);
 
     // Accepted tech is snapshotted for transfer; valuation rereads its live ID.
     reset_fixture(); DiplomacyProposalMode = 4; DiploScratchFAA8 = 3;
@@ -397,7 +404,7 @@ int main() {
     PlayersData[1].mil_strength_1 = PlayersData[2].mil_strength_1 = 100;
     IsMultiplayerNet = 1; popup_result = 1;
     assert(propose_pact(1, 2) == 1 && message_count == 1);
-    const int gift_message[6] = {0x2447, 0, 1, -250, 2, 250};
+    const int gift_message[6] = {0x2447, 0, 1, -500, 2, 500};
     assert(memcmp(message_args[0], gift_message, sizeof gift_message) == 0);
     return 0;
 }

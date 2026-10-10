@@ -14081,7 +14081,7 @@ static bool propose_pact_ahead_refusal(int mode, int offer_tech, int energy,
     int doubled_cap = diplo_mul(cap, 2);
     int five_turns = diplo_mul(turn, 5);
     int comparison = doubled_cap > five_turns ? doubled_cap : five_turns;
-    int reserve_threshold = diplo_mul(comparison / 100, 50);
+    int reserve_threshold = diplo_mul(comparison / 50, 50);
     cap = reserve_threshold;
     if (energy < reserve_threshold) {
         return mode == 5 || offer_tech < 0;
@@ -16410,7 +16410,7 @@ int __cdecl propose_treaty(int actor, int other)
     const int weighted_energy = diplo_mul(
         diplo_add(actor_energy, DiploScratchFA78), other_strength)
         / diplo_add(diplo_add(actor_strength, other_strength), 1);
-    int treaty_score = diplo_mul(weighted_energy / 100, 50);
+    int treaty_score = diplo_mul(weighted_energy / 50, 50);
 
     if ((PlayersData[other].diplo_treaties[actor] & 0x20u) == 0) {
         const int commerce_gap = diplo_clamp(diplo_sub(
@@ -17847,7 +17847,7 @@ if (target_trade_favor > target_trade_wrong) {
 const int score_after_class = diplo_mul(
     diplo_sub(4, policy_class), proposal_attack_score) / 4;
 const int proposal_attack_threshold = diplo_mul(
-    diplo_add(score_after_class, 24) / 100, 25);
+    diplo_add(score_after_class, 24) / 25, 25);
 
 const uint32_t target_to_other_treaty =
     PlayersData[selected_target_faction_id]
