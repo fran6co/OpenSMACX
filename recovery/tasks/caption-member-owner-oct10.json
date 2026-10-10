@@ -1,0 +1,64 @@
+{
+  "author": "coordinator",
+  "base_revision": "b8f826995d49113040cae7a93e5f801c4610a352",
+  "editable_files": [
+    "recovery/tests/test_caption_member_owner_oct10.py",
+    "src/buffer.h",
+    "src/graphicwin.h",
+    "src/stringstruct.cpp",
+    "src/stringstruct.h",
+    "src/win.h"
+  ],
+  "evidence": [
+    "pinned4554C0..455606 climate/nulltextguards precede clip copy; GraphicWinframe_left9DC Spriteleft_offset20 andframe_top9E8 Spritetop_offset24; Wincolors104..110/fontF8/style98; these exactsourcefields already exist",
+    "pinned45554F set_text_color,455563 set_font,45556E set_clip; style455573 readbeforestrlen; finalclipcalls4555A0/55D3/55FA passlive Bufferrect1_30 notsavedoriginalclip. Preserve thisquirk andnoaddedguards",
+    "game.cpp installsfreecaptioncallbackat GraphicWinFieldA0CDefault; GraphicWin::redraw_nc_buffer callsfield_A0C_(this,caption,buffer) thenvirtualcaptionhook. RetainfreecdeclABI; narrowfriendaccessdoesnotassertoriginalaccessspecifiers orTU",
+    "freshfourunitbaseline build/recovery/caption-owner-before-oct10.json atb8f826995; no intentionalbugfix/demotion"
+  ],
+  "intent": "Recover typed caption callback access to existing Win GraphicWin Sprite and Buffer owner state without raw offsets",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4543680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4851728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5070704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5414512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5831536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5831904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6020640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6021792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "caption-member-owner-oct10"
+}
