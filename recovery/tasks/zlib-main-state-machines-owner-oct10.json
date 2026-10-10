@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "task_id": "zlib-main-state-machines-owner-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind complete upstream inflate state machines to independently pinned code-only original extents, explicitly retaining compiler switch-table boundary obligations",
+  "base_revision": "a964c27bd332afcb97b9c84b965d30f2731667ac",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6545680
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6564896
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6570368
+    }
+  ],
+  "editable_files": [
+    "src/vendor/zlib.recovery.h",
+    "recovery/tests/test_zlib_main_state_machine_bindings_oct10.py",
+    "recovery/tests/test_zlib_inflate_group_bindings_oct10.py",
+    "recovery/tests/test_zlib_deflate_tree_group_bindings_oct10.py",
+    "recovery/tests/test_zlib_ten_member_bindings_oct10.py",
+    "recovery/tests/test_zlib_three_helper_bindings_oct10.py",
+    "recovery/tests/test_zlib_leaf_component_migration.py",
+    "recovery/tests/test_zlib_static_component_migration.py",
+    "recovery/tests/test_zlib_five_identity_continuity.py"
+  ],
+  "evidence": [
+    "Independent pinned Ghidra spans63E110..63E4E8,642C20..64390D,644180..6448E6 correspond to unmodified zlib1.0.2 inflate.c inflate, infblock.c inflate_blocks and infcodes.c inflate_codes. Fresh physical compilation confirms matching nonrelocated code prefixes and expected state-machine callee/local-label structure; independent review supports source correspondence, not strict qualification.",
+    "Keep all original code-only spans unchanged. Physical COMDATs also contain compiler-emitted switch tables beyond those spans. Original indirect jumps reference63E4E8,643910/643938 and6448E8; HIGHLOW/local-label diagnostics corroborate table interpretation but cannot supply independent allocation/reference target proof. Source bindings must preserve this physical boundary obligation, not expand extents, stamp claims or fabricate separately source-owned table declarations.",
+    "Coordinator explicitly permits unclaimed correspondence publication with native boundary FAIL retained for these three new entries, not a gate waiver, claim regression or automatic acceptance. All52 prior bindings/history/claims and diagnostic rows stay identical; upstream/files/units/compiler flags/application/CMake unchanged. Use native writer/renderer and exact continuity/pinned-extent/roundtrip controls, archive integrity, fresh scoped native diagnostics, independent review, references/mappings and full application compile/link before manual checkpoint. No application-function coverage gain, full-library data, linked preservation or runtime/game acceptance claim."
+  ]
+}
