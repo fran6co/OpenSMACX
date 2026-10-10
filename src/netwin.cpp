@@ -3434,30 +3434,31 @@ Return Value: n/a
 Status: Coverage transcription - claim pending re-measurement
 */
 void __cdecl send_all_player_packets(int slot_id) {
-    char frame[0xA74];
-    char *cursor = frame + 0x10;
+    NetWinLobbyFullPacket packet;
+    NetWinLobbyRow *row = packet.rows_;
     for (int slot = 7; slot != 0; --slot) {
-        *reinterpret_cast<uint32_t *>(cursor + 0x178) = 0;
-        cursor[0] = static_cast<char>(0xFF);
-        cursor[1] = 0;
-        cursor[2] = 0;
-        cursor[3] = static_cast<char>(0xFF);
-        cursor[4] = 2;
-        cursor += 0x17C;
+        row->owner_ = 0;
+        row->prefix_ = 0xFF;
+        row->ready_or_occupied_ = 0;
+        row->field_2_ = 0;
+        row->faction_or_color_ = -1;
+        row->field_4_ = 2;
+        ++row;
     }
     if (slot_id != -1 || *NetWinRulesGate != 0) {
-        *reinterpret_cast<unsigned short *>(frame) = 0xF04;
-        *reinterpret_cast<uint32_t *>(frame + 4) = 0xFFFFFFFF;
-        *reinterpret_cast<uint32_t *>(frame + 8) = 0;
-        memcpy(frame + 0x10, &NetWinLobbyRows[1], 0xA64);
+        packet.header_.opcode_ = 0x04;
+        packet.header_.flags_ = 0x0F;
+        packet.header_.slot_ = -1;
+        packet.header_.field_8_ = 0;
+        memcpy(packet.rows_, &NetWinLobbyRows[1], sizeof(packet.rows_));
         if (slot_id < 0) {
-            *reinterpret_cast<unsigned short *>(frame) |= 0x4000;
-            NetDaemonNet.Net::send(frame, 0xA74, 0, 1);
+            packet.header_.flags_ |= 0x40;
+            NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
             return;
         }
-        *reinterpret_cast<unsigned short *>(frame) |= 0x1000;
+        packet.header_.flags_ |= 0x10;
         NetDaemonNet.Net::send(
-            frame, 0xA74, NetDaemonNet.process_slots_[slot_id].pid_, 1);
+            &packet, sizeof(packet), NetDaemonNet.process_slots_[slot_id].pid_, 1);
     }
 }
 
@@ -3481,27 +3482,21 @@ Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
 void __cdecl sub_47b1d0(int faction_id, void *payload) {
-    struct {
-        short header;
-        short pad;
-        int p1;
-        int zero;
-        int gap;
-        unsigned char addr[5];
-        unsigned char tail[0x177];
-    } msg;
-    msg.addr[0] = 0xFF;
-    msg.addr[3] = 0xFF;
-    msg.addr[1] = 0;
-    msg.addr[2] = 0;
-    msg.addr[4] = 2;
+    NetWinLobbySinglePacket packet;
+    packet.row_.prefix_ = 0xFF;
+    packet.row_.faction_or_color_ = -1;
+    packet.row_.owner_ = 0;
+    packet.row_.ready_or_occupied_ = 0;
+    packet.row_.field_2_ = 0;
+    packet.row_.field_4_ = 2;
     if (faction_id > 0 && payload != 0) {
-        msg.zero = 0;
-        msg.header = 0x2F04;
-        msg.p1 = faction_id;
-        memcpy(msg.addr, payload, 0x17C);
+        packet.header_.field_8_ = 0;
+        packet.header_.opcode_ = 0x04;
+        packet.header_.flags_ = 0x2F;
+        packet.header_.slot_ = faction_id;
+        memcpy(&packet.row_, payload, sizeof(packet.row_));
         NetDaemonNet.Net::send(
-            &msg, 0x18C, NetWinOtherPlayerId, 1);
+            &packet, sizeof(packet), NetWinOtherPlayerId, 1);
     }
 }
 
@@ -3522,27 +3517,35 @@ Return Value: n/a
 Status: Coverage transcription - claim pending re-measurement
 */
 void __cdecl send_session_packet(int slot_id, int target) {
-    struct {
-        unsigned short header_;
-        unsigned short pad_[7];
-        uint32_t payload_[6];
-    } packet;
-    memcpy(packet.payload_, &NetWinSessionOptions, sizeof(packet.payload_));
+    NetWinSessionOptionsPacket packet;
+    memcpy(&packet.options_, &NetWinSessionOptions, sizeof(packet.options_));
     if (target < 0) {
-        packet.header_ = 0x4F02;
-        NetDaemonNet.Net::send(&packet, 0x28, 0, 1);
+        packet.opcode_ = 0x4F02;
+        NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
         return;
     }
     uint32_t who;
     if (target != 0) {
         who = NetDaemonNet.process_slots_[target].pid_;
-        packet.header_ = 0x1F02;
+        packet.opcode_ = 0x1F02;
     } else {
         who = NetWinOtherPlayerId;
-        packet.header_ = 0x2F02;
+        packet.opcode_ = 0x2F02;
     }
-    NetDaemonNet.Net::send(&packet, 0x28, who, 1);
+    NetDaemonNet.Net::send(&packet, sizeof(packet), who, 1);
 }
+
+// The original sender copies 90 dwords after a 16-byte header. Only its
+// opcode word is initialized; reserved header bytes remain untouched.
+struct NetWinSessionBlockPacket {
+    uint16_t opcode_;
+    uint8_t reserved_[0x0E];
+    NetWinSessionBlock session_;
+};
+static_assert(sizeof(NetWinSessionBlockPacket) == 0x178,
+              "session block packet size");
+static_assert(offsetof(NetWinSessionBlockPacket, session_) == 0x10,
+              "session block payload offset");
 
 /*
 Purpose: Broadcast the session state blob: copy the 0x168-byte payload,
@@ -3561,25 +3564,22 @@ Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
 void __cdecl send_session2_packet(int slot_id, int target) {
-    struct {
-        unsigned short header_[8];
-        uint32_t payload_[90];
-    } packet;
-    memcpy(packet.payload_, &NetWinSessionData, sizeof(NetWinSessionData));
+    NetWinSessionBlockPacket packet;
+    memcpy(&packet.session_, &NetWinSessionData, sizeof(packet.session_));
     if (target < 0) {
-        packet.header_[0] = 0x4F03;
-        NetDaemonNet.Net::send(&packet, 0x178, 0, 1);
+        packet.opcode_ = 0x4F03;
+        NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
         return;
     }
     uint32_t who;
     if (target == 0) {
-        packet.header_[0] = 0x2F03;
+        packet.opcode_ = 0x2F03;
         who = NetWinOtherPlayerId;
     } else {
-        packet.header_[0] = 0x1F03;
+        packet.opcode_ = 0x1F03;
         who = NetDaemonNet.process_slots_[target].pid_;
     }
-    NetDaemonNet.Net::send(&packet, 0x178, who, 1);
+    NetDaemonNet.Net::send(&packet, sizeof(packet), who, 1);
 }
 
 /*

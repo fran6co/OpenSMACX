@@ -86,6 +86,24 @@ def installed_sources() -> tuple[Path, dict[int, str], dict[int, object]]:
     return root, bodies, current_rows
 
 
+def installed_packet_declarations() -> str:
+    """Use the product's real payload/header types, not strided host stand-ins."""
+    root = repository_root()
+    header = (root / "src/netwin.h").read_text(encoding="utf-8")
+    source = (root / "src/netwin.cpp").read_text(encoding="utf-8")
+    return "\n".join(
+        extract_definition(text, "struct " + name) + ";"
+        for text, names in (
+            (header, ("NetWinLobbyRow", "NetWinSessionBlock",
+                      "NetWinSessionOptionsState", "NetWinFactionRecord")),
+            (source, ("NetWinLobbyPacketHeader", "NetWinLobbyFullPacket",
+                      "NetWinLobbySinglePacket", "NetWinSessionOptionsPacket",
+                      "NetWinSessionBlockPacket")),
+        )
+        for name in names
+    )
+
+
 def test_history_identity_and_fields_survive_owner_transfer() -> None:
     root, _bodies, current = installed_sources()
     old_leaf = subprocess.run(
@@ -139,6 +157,7 @@ def test_extractor_ignores_comment_and_string_fakes() -> None:
 
 HOST_PRELUDE = r'''#include <cassert>
 #include <cstdint>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <map>
@@ -160,15 +179,13 @@ struct NetDaemonNetType : Net {
 } NetDaemonNet;
 static unsigned *NetWinRulesGate=&NetDaemonNet.lock_state_[0].leading_words_[1];
 static int NetWinPlayerId, NetWinOtherPlayerId;
-struct LobbyRow { unsigned char bytes[0x17C]; };
-static LobbyRow NetWinLobbyRows[8];
-struct SessionData { unsigned char bytes[0x168]; };
-static SessionData NetWinSessionData;
-struct SessionOptions { unsigned char bytes[0x18]; };
-static SessionOptions NetWinSessionOptions;
+// INSERT_INSTALLED_PACKET_DECLARATIONS
+static NetWinLobbyRow NetWinLobbyRows[8];
+static NetWinSessionBlock NetWinSessionData;
+static NetWinSessionOptionsState NetWinSessionOptions;
 static std::vector<void *> allocations;
 static void *mem_get(unsigned n) { void *p=std::malloc(n); assert(p); allocations.push_back(p); return p; }
-struct NetWinDialogType { void *faction_records_; void setup_faction_data(void *) { assert(faction_records_); } } NetWinDialog;
+struct NetWinDialogType { NetWinFactionRecord *faction_records_; void setup_faction_data(int) { assert(faction_records_); } } NetWinDialog;
 struct StringStructPayload { char *text; };
 struct StringStructEntry { int id; StringStructPayload *payload; StringStructEntry *next,*previous;
   StringStructPayload *string_payload() { return payload; } };
@@ -213,18 +230,18 @@ HOST_MAIN = r'''static void reset_send(){sent.clear();sent_to=0;send_calls=0;}
 int main(){
   for(unsigned i=0;i<8;++i)NetDaemonNet.process_slots_[i].pid_=0x1000+i;
   NetWinPlayerId=9;NetWinOtherPlayerId=99;
-  for(unsigned i=0;i<sizeof(NetWinSessionOptions);++i)NetWinSessionOptions.bytes[i]=i*3+1;
-  for(unsigned i=0;i<sizeof(NetWinSessionData);++i)NetWinSessionData.bytes[i]=i*5+7;
+  for(unsigned i=0;i<sizeof(NetWinSessionOptions);++i)reinterpret_cast<unsigned char *>(&NetWinSessionOptions)[i]=i*3+1;
+  for(unsigned i=0;i<sizeof(NetWinSessionData);++i)reinterpret_cast<unsigned char *>(&NetWinSessionData)[i]=i*5+7;
   reset_send();send_session_packet(77,-1);assert(send_calls==1&&sent.size()==0x28&&sent_to==0);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x4F02);
-  assert(!std::memcmp(sent.data()+0x10,NetWinSessionOptions.bytes,0x18));
+  assert(!std::memcmp(sent.data()+0x10,&NetWinSessionOptions,0x18));
   reset_send();send_session_packet(77,0);assert(send_calls==1&&sent_to==(unsigned)NetWinOtherPlayerId);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x2F02);
   reset_send();send_session_packet(77,3);assert(send_calls==1&&sent_to==NetDaemonNet.process_slots_[3].pid_);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x1F02);
   reset_send();send_session2_packet(55,-1);assert(send_calls==1&&sent.size()==0x178&&sent_to==0);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x4F03);
-  assert(!std::memcmp(sent.data()+0x10,NetWinSessionData.bytes,0x168));
+  assert(!std::memcmp(sent.data()+0x10,&NetWinSessionData,0x168));
   reset_send();send_session2_packet(55,0);assert(send_calls==1&&sent_to==(unsigned)NetWinOtherPlayerId);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x2F03);
   reset_send();send_session2_packet(55,3);assert(send_calls==1&&sent_to==NetDaemonNet.process_slots_[3].pid_);
@@ -236,8 +253,8 @@ int main(){
   assert(!std::memcmp(sent.data()+0x10,&NetWinLobbyRows[1],0xA64));
   reset_send();*NetWinRulesGate=1;send_all_player_packets(-1);assert(send_calls==1&&sent_to==0);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x4F04);
-  unsigned char faction[0x17C];for(unsigned i=0;i<sizeof(faction);++i)faction[i]=0xA0+i;faction[1]=1;
-  NetWinDialog.faction_records_=faction;NetWinPlayerId=9;NetWinOtherPlayerId=10;
+  alignas(NetWinFactionRecord) unsigned char faction[0x400];for(unsigned i=0;i<sizeof(faction);++i)faction[i]=0xA0+i;faction[1]=1;
+  NetWinDialog.faction_records_=reinterpret_cast<NetWinFactionRecord *>(faction);NetWinPlayerId=9;NetWinOtherPlayerId=10;
   reset_send();send_faction_data(-1);assert(send_calls==0);NetWinPlayerId=NetWinOtherPlayerId;
   reset_send();send_faction_data(-1);assert(send_calls==1&&sent_to==0);
   assert(*reinterpret_cast<unsigned short*>(sent.data())==0x0F0D);
@@ -291,14 +308,16 @@ def test_installed_owner_bodies_and_behavioral_mutants(tmp_path: Path) -> None:
         (0x00441100, "if (faction_id > faction_id_with)", "if (faction_id < faction_id_with)"),
     )
     for compiler_index, compiler in enumerate(compilers):
-        source = HOST_PRELUDE + "\n".join(bodies[address] for address in OWNERS) + HOST_MAIN
+        prelude = HOST_PRELUDE.replace("// INSERT_INSTALLED_PACKET_DECLARATIONS",
+                                       installed_packet_declarations())
+        source = prelude + "\n".join(bodies[address] for address in OWNERS) + HOST_MAIN
         baseline = compile_and_run(compiler, source, tmp_path, f"baseline-{compiler_index}")
         assert baseline.returncode == 0, baseline.stderr
         for index, (address, old, new) in enumerate(mutations):
             assert bodies[address].count(old) == 1, f"mutation anchor changed for {address:08X}"
             mutant_bodies = dict(bodies)
             mutant_bodies[address] = bodies[address].replace(old, new, 1)
-            mutant = HOST_PRELUDE + "\n".join(mutant_bodies[a] for a in OWNERS) + HOST_MAIN
+            mutant = prelude + "\n".join(mutant_bodies[a] for a in OWNERS) + HOST_MAIN
             damaged = compile_and_run(compiler, mutant, tmp_path,
                                       f"mutant-{compiler_index}-{index}")
             assert damaged.returncode != 0, f"behavioral mutant survived for {address:08X}"
