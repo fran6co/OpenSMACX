@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "task_id": "terrain-neighbor-members-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover terrain-renderer neighbor reads through existing Map members rather than raw byte offsets",
+  "base_revision": "63943872837ee76485c60d1457aca1f6d65a9d42",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4600528}],
+  "editable_files": ["src/mapwin.cpp", "recovery/tests/test_terrain_neighbor_members_oct10.py"],
+  "evidence": [
+    "Original4632D0..466C92 terrain renderer indexes the existing Map allocation at a44-byte stride. Its neighbor byte+0 and dword+8/+C reads agree with existing climate,bit,bit2 declarations and already typed primary-tile reads in the same body.",
+    "Replace only the raw neighboring-tile pointer/access family with Map* and named members; preserve every bound, horizontal wrapping operation, map_tiles read, mask, climate threshold, signed conversion, iteration and source identity/history. No deliberate behavior fix, speculative type, new mapping or exactness grant.",
+    "Fresh whole-MapWin-TU before/after diagnostics, actual-source neighbor-mask controls and mutants, native observed Map layout, relevant renderer regressions, source/reference/claim continuity, build/link and independent review required. Caller APIs and headers remain unchanged.",
+    "This is structural recovery within an already mapped renderer, not added function coverage or scaffold retirement; full rendering, linked preservation, runtime and game acceptance remain separate unfinished obligations."
+  ]
+}
