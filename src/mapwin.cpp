@@ -824,9 +824,9 @@ void MapWin::standard_caption() {
     StringTemp[0] = '\0';
     LPSTR text;
     if ((field_1DD70_ & 0x40000000U) != 0) {
-        text = reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x100];
+        text = Labels.strings_ptr[0x100];
     } else {
-        text = reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x101];
+        text = Labels.strings_ptr[0x101];
     }
     strcat(StringTemp, StringTable.get(text));
 
@@ -7347,8 +7347,9 @@ void MapWin::clear(int index) {
 // four corners. get_brighting walks it, so the helper is spelled once here and
 // expanded at every site - the image computes the address inline at each of
 // them, and a plain .cpp function would cost a `call` the image does not make.
-static __forceinline char *brighting_tile(void *owned, int row, int col_half) {
-    return (char *)owned + ((MapLongitudeBounds >> 1) * row + col_half) * 0xC;
+static __forceinline TerrainCacheEntry *brighting_tile(
+    TerrainCacheEntry *owned, int row, int col_half) {
+    return owned + ((MapLongitudeBounds >> 1) * row + col_half);
 }
 
 // Fixed-slot bindings carried from 00470550.cpp
@@ -7380,15 +7381,14 @@ int MapWin::get_brighting(int x, int y, int corner) {
         return -0x80;
     }
     int colHalf = col >> 1;
-    char *tile = brighting_tile(owned_, row, colHalf);
-    unsigned int v0 = (unsigned char)tile[corner];
-    char *tileByteAddr = tile + corner;
+    TerrainCacheEntry *tile = brighting_tile(owned_, row, colHalf);
+    unsigned int v0 = tile->brightness[corner];
     if (v0 != 0xff) {
         return (int)v0 - 0x80;
     }
     unsigned char terrain = *(unsigned char *)map_loc(col, row);
     if ((terrain & 0xe0) < 0x60) {
-        *tileByteAddr = (char)0x80;
+        tile->brightness[corner] = 0x80;
         return 0;
     }
     get_alt(col, row, 1);
@@ -7396,32 +7396,32 @@ int MapWin::get_brighting(int x, int y, int corner) {
     if (owned_ == 0) {
         v1 = 0;
     } else {
-        char *t = brighting_tile(owned_, row, colHalf);
-        v1 = (unsigned char)t[10] & 0xf;
+        TerrainCacheEntry *t = brighting_tile(owned_, row, colHalf);
+        v1 = t->altitude_detail & 0xf;
     }
     get_alt(col, row, 2);
     int v2;
     if (owned_ == 0) {
         v2 = 0;
     } else {
-        char *t = brighting_tile(owned_, row, colHalf);
-        v2 = ((unsigned char)t[10] >> 4) & 0xf;
+        TerrainCacheEntry *t = brighting_tile(owned_, row, colHalf);
+        v2 = (t->altitude_detail >> 4) & 0xf;
     }
     get_alt(col, row, 3);
     int v3;
     if (owned_ == 0) {
         v3 = 0;
     } else {
-        char *t = brighting_tile(owned_, row, colHalf);
-        v3 = (unsigned char)t[11] & 0xf;
+        TerrainCacheEntry *t = brighting_tile(owned_, row, colHalf);
+        v3 = (t->altitude_detail >> 8) & 0xf;
     }
     get_alt(col, row, 4);
     int v4;
     if (owned_ == 0) {
         v4 = 0;
     } else {
-        char *t = brighting_tile(owned_, row, colHalf);
-        v4 = (unsigned char)t[11] >> 4;
+        TerrainCacheEntry *t = brighting_tile(owned_, row, colHalf);
+        v4 = t->altitude_detail >> 12;
     }
     int result;
     switch (corner) {
@@ -7454,8 +7454,8 @@ int MapWin::get_brighting(int x, int y, int corner) {
         result = (int)v0;
         break;
     }
-    char *finalTile = brighting_tile(owned_, row, colHalf);
-    finalTile[corner] = (char)(result + 0x80);
+    TerrainCacheEntry *finalTile = brighting_tile(owned_, row, colHalf);
+    finalTile->brightness[corner] = (unsigned char)(result + 0x80);
     return result;
 }
 

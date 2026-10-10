@@ -1,6 +1,6 @@
 """Shared ocean-tail alias controls, not complete lighting/game verification.
 
-Extract the real owner, cache POD, addressing helper and complete get_brighting
+Extract the real owner, cache POD, typed addressing helper and complete get_brighting
 body and the real generated-table lookup helper. map_loc and get_alt are explicit
 service doubles. Table contents are independently seeded test data, not original
 initialization proof; CornerLightTable doubles the unresolved exceptional indices.
@@ -44,16 +44,20 @@ def actual_source():
     for name in ("get_brighting", "get_alt"):
         signature, = re.findall(r"int " + name + r"\([^;{}]*\);", header)
         signatures.append(signature)
-    tile_helper = braced(source, "static __forceinline char *brighting_tile(")
+    tile_helper = braced(source, "static __forceinline TerrainCacheEntry *brighting_tile(")
     table, = re.findall(r"^signed char MapLightingTable\[4 \* 49\];", source, re.M)
     light_helper = braced(source, "static __forceinline signed char corner_light_value(int biased_index)")
     body = braced(source, "int MapWin::get_brighting(")
+    assert "return owned + ((MapLongitudeBounds >> 1) * row + col_half);" in tile_helper
+    assert "tile->brightness[corner]" in body
+    assert "t->altitude_detail" in body
     return "\n".join((pod, owner, table, "struct MapWin {", pointer,
                       *signatures, "};", tile_helper, light_helper, body))
 
 
 HARNESS = r'''
 #include <cstdint>
+#include <cstddef>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -140,6 +144,13 @@ void verify_call(int corner,int expected) {
 int main() {
     require(sizeof(int)==4 && sizeof(OceanCornerShades)==64);
     require((std::is_same<decltype(OceanCornerShades),int[16]>::value));
+    require(sizeof(TerrainCacheEntry)==12);
+    require(offsetof(TerrainCacheEntry,brightness)==0);
+    require(offsetof(TerrainCacheEntry,altitude)==4);
+    require(offsetof(TerrainCacheEntry,terrain_bits)==9);
+    require(offsetof(TerrainCacheEntry,altitude_detail)==10);
+    require((std::is_same<decltype(brighting_tile((TerrainCacheEntry *)0,0,0)),
+                          TerrainCacheEntry *>::value));
     for(int i=0;i<16;++i)require(OceanCornerShades[i]==0);
     // All 256 bit patterns, independently in each of the four tail bytes.
     for(int byte=0;byte<4;++byte)for(unsigned value=0;value<256;++value) {
@@ -234,13 +245,19 @@ def test_actual_shared_shade_tail(tmp_path):
     ("if (v0 != 0xff)", "if (v0 != 0xfe)"),
     ("return (int)v0 - 0x80;", "return (int)v0 - 0x7f;"),
     ("(terrain & 0xe0) < 0x60", "(terrain & 0xe0) < 0x40"),
-    ("*tileByteAddr = (char)0x80;", "*tileByteAddr = (char)0x81;"),
+    ("tile->brightness[corner] = 0x80;", "tile->brightness[corner] = 0x81;"),
     ("return -0x80;", "return 0;"),
-    ("finalTile[corner] = (char)(result + 0x80);", "finalTile[corner] = (char)result;"),
+    ("finalTile->brightness[corner] = (unsigned char)(result + 0x80);",
+     "finalTile->brightness[corner] = (unsigned char)result;"),
     ("MapLongitudeBounds >> 1", "8 >> 1"),
     ("v1 = 0;", "v1 = 1;"),
     ("v2 = 0;", "v2 = 1;"),
     ("v3 = 0;", "v3 = 1;"),
+    ("v1 = t->altitude_detail & 0xf;", "v1 = (t->altitude_detail >> 4) & 0xf;"),
+    ("v3 = (t->altitude_detail >> 8) & 0xf;",
+     "v3 = (t->altitude_detail >> 4) & 0xf;"),
+    ("unsigned int v0 = tile->brightness[corner];",
+     "unsigned int v0 = tile->altitude[corner];"),
     ("get_alt(col, row, 1);", "get_alt(col, row, 2);"),
 ])
 def test_compiled_damage_rejected(tmp_path, before, after):

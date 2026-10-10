@@ -54,6 +54,63 @@ int main() {
 '''
 
 
+def caption_harness(caption_body: str) -> str:
+    return r'''#include <cstdio>
+#include <cstring>
+typedef char *LPSTR;
+struct LabelBlock { LPSTR *strings_ptr; } Labels;
+char StringTemp[128];
+struct StringTableType {
+    LPSTR input;
+    LPSTR output;
+    int calls;
+    StringTableType() : input(0), output(0), calls(0) {}
+    LPSTR get(LPSTR text) { input = text; ++calls; return output; }
+} StringTable;
+class Win {
+public:
+    char caption[128];
+    void set_caption(LPSTR text) { std::strcpy(caption, text); }
+};
+class MapWin : public Win {
+public:
+    unsigned int field_1DD70_;
+    void standard_caption();
+};
+''' + caption_body + r'''
+int main() {
+    char detail_label[] = "detail source";
+    char world_label[] = "world source";
+    char detail_text[] = "resolved detail";
+    char world_text[] = "resolved world";
+    LPSTR slots[0x102] = {};
+    slots[0x100] = detail_label;
+    slots[0x101] = world_label;
+    Labels.strings_ptr = slots;
+    MapWin window;
+
+    window.field_1DD70_ = 0x40000000U;
+    StringTable.output = detail_text;
+    window.standard_caption();
+    if (StringTable.calls != 1 || StringTable.input != detail_label ||
+        std::strcmp(window.caption, detail_text) != 0) {
+        std::fprintf(stderr, "FAIL: detail label flows through get into caption\n");
+        return 1;
+    }
+
+    window.field_1DD70_ = 0;
+    StringTable.output = world_text;
+    window.standard_caption();
+    if (StringTable.calls != 2 || StringTable.input != world_label ||
+        std::strcmp(window.caption, world_text) != 0) {
+        std::fprintf(stderr, "FAIL: world label flows through get into caption\n");
+        return 2;
+    }
+    return 0;
+}
+'''
+
+
 def compile_and_run(compiler: str, source: str, tmp_path: Path, name: str):
     unit = tmp_path / f"{name}.cpp"
     executable = tmp_path / name
@@ -104,3 +161,43 @@ def test_compiling_wrong_label_slot_mutant_is_detected(compiler_name: str,
                           f"ui_pointer_flow_mutant_{compiler_name}")
     assert ran.returncode == 1
     assert "FAIL: byte offset selects pointer slot 0x36C/4" in ran.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_mapwin_caption_uses_label_pointer_and_get_result(
+        compiler_name: str, tmp_path: Path):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} is not installed")
+    source = (ROOT / "src/mapwin.cpp").read_text()
+    body = extract_definition(source, "void MapWin::standard_caption()")
+    assert "Labels.strings_ptr[0x100]" in body
+    assert "Labels.strings_ptr[0x101]" in body
+    assert "StringTable.get(text)" in body
+    assert "reinterpret_cast<LPSTR *>" not in body
+    ran = compile_and_run(compiler, caption_harness(body), tmp_path,
+                          f"mapwin_caption_{compiler_name}")
+    assert ran.returncode == 0, ran.stdout + ran.stderr
+
+
+@pytest.mark.parametrize(("before", "after", "failure"), [
+    ("Labels.strings_ptr[0x100]", "Labels.strings_ptr[0x101]",
+     "detail label flows through get into caption"),
+    ("StringTable.get(text)", "text",
+     "detail label flows through get into caption"),
+])
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_compiling_mapwin_caption_mutants_are_detected(
+        compiler_name: str, tmp_path: Path, before: str, after: str,
+        failure: str):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} is not installed")
+    source = (ROOT / "src/mapwin.cpp").read_text()
+    body = extract_definition(source, "void MapWin::standard_caption()")
+    mutant = body.replace(before, after, 1)
+    assert mutant != body
+    ran = compile_and_run(compiler, caption_harness(mutant), tmp_path,
+                          f"mapwin_caption_mutant_{compiler_name}")
+    assert ran.returncode == 1
+    assert failure in ran.stderr
