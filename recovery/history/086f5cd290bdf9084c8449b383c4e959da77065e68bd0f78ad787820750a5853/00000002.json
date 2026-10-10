@@ -1,0 +1,19 @@
+{
+  "event_id": "a9d10d199cfa6d8a8c822db4e85aed5b3643a2f3c0d75b2274133fc3329d6b0e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_autosound_receiver_views.py"
+    ],
+    "evidence": [
+      "Existing receiver-view test explicitly requires the disproven AutoSound flags alias; update it with the proven Sound word and disjoint Dialog style fields."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "667fee843880df8529a8e72666235b11e532eb3c8ad3fc3e2ad74a961a8f73f1",
+  "request_id": "dialog-style-view-control-oct10",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:dialog-style-sound-receiver-owner-oct10"
+}
