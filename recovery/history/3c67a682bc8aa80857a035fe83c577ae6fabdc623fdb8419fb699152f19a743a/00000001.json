@@ -1,0 +1,20 @@
+{
+  "event_id": "a73c12d20825b2e27c15f6f71143d3c235118192341cc68d41260c5f5655a640",
+  "payload": {
+    "affects": [
+      "entity-005309317c935ce2fce82f6a8b3b4ddee74e0f536e81fca86a7e34cfec72517e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "screen-clip-member-discovery-oct10",
+    "evidence": [
+      "Pinned5EFED9push9B74C0/5EFEDEmovecx9B7490/5EFEE3call5D8000; difference30 matches source Buffer.rect2_ and original receiver-member accesses. All12current uses merely reset ScreenBuffer clipping; no separate reads/writes. Existing Buffer::restore_clip inline owns this member borrowing. Independent actual-source/pinned review confirms alias."
+    ],
+    "hypothesis": "Standalone WinScreenClipRect is duplicate source storage for ScreenBuffer.rect2_, not an independent original global.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "screen-clip-member-discovery-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:screen-buffer-shared-guard-owner-oct10"
+}

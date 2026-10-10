@@ -1,0 +1,29 @@
+{
+  "event_id": "fc2a80ba7e14ad151bca311a194c6c7f54298a0ecef6ea8a20a7f6ca91633d7c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/alphamenu.cpp",
+      "src/multiwin.cpp",
+      "src/popup.cpp",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Explicitly authorize the discovered shared-lifetime member correction inside existing task owners: replace all12 ScreenBuffer set_clip(&WinScreenClipRect) calls with existing restore_clip(); remove the standalone RECT definition/extern and retain pinned alias source evidence. Preserve all identities/claims; member belongs to real Buffer and needs no new raw offset, accessor, Buffer header/class-layout change or dynamic global alias. Fresh owner measurements and full compile/link after correction are required; original rendering behavior is restored, not deliberately fixed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6225184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a73c12d20825b2e27c15f6f71143d3c235118192341cc68d41260c5f5655a640",
+  "request_id": "screen-clip-member-scope-oct10",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:screen-buffer-shared-guard-owner-oct10"
+}
