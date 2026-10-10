@@ -2561,30 +2561,17 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl draw_map(int draw_type) {
-    // A do-while walking a raw cursor over the table, not draw_tile's
-    // indexed for-loop: the image parks the table's BASE ADDRESS in a
-    // register (`mov esi, 0x7d3c3c`) and compares the cursor against it
-    // directly (`cmp esi, 0x7d3c3c`) to recognise slot 0, rather than
-    // comparing an index against 0. `int`, not a pointer: the loop
-    // termination check is `jl`, a SIGNED compare, which a real pointer
-    // comparison would not give.
-    int cursor = reinterpret_cast<int>(MapWinTable);
-    const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
-    do {
-        MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
+    // Reload each slot after earlier callbacks; the primary slot bypasses
+    // the activity gate. The image walks the same eight-pointer storage.
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
         if (window != nullptr) {
-            if (cursor == reinterpret_cast<int>(MapWinTable) ||
+            if (slot == 0 ||
                 static_cast<const volatile MapWin *>(window)->field_1DD74_ != 0) {
-                // THE METHOD, not the seam directly: `window->draw_map(...)`
-                // compiles the image's `call rel32` to
-                // `?draw_map@MapWin@@QAEXH@Z`, where dispatching through
-                // MapWinOriginalDrawMap here would be an indirect call
-                // through the seam's own storage.
                 window->draw_map(draw_type);
             }
         }
-        cursor += 4;
-    } while (cursor < end);
+    }
 }
 
 /*
@@ -2602,18 +2589,15 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type) {
-    int cursor = reinterpret_cast<int>(MapWinTable);
-    const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
-    do {
-        MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
         if (window != nullptr) {
-            if (cursor == reinterpret_cast<int>(MapWinTable) ||
+            if (slot == 0 ||
                 static_cast<const volatile MapWin *>(window)->field_1DD74_ != 0) {
                 window->draw_radius(x_coord, y_coord, a3, draw_type);
             }
         }
-        cursor += 4;
-    } while (cursor < end);
+    }
 }
 
 // The first extra receiver is WorldClimateWorldWin's complete embedded MapWin:
