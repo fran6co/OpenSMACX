@@ -680,7 +680,7 @@ Purpose: Does this window hold the dialog focus, and its partner too?
          yes.
 
 // ORIGINAL: 0x006161A0 ?UNK2@EditBox@@QAEXXZ 0x006161A0-0x006161CA
-// symbol    ?leaf_006161a0_redirect@@YIHPAX0@Z
+// symbol    ?is_dialog_focus_chain@EditBox@@QAEHXZ
 // TRIED (2026-08-26, deleting win_is_dialog_focus_redirect and calling
 // Win::is_dialog_focus directly): 2/17 -> 10/17 agreeing, 20 -> 18 compiled
 // instructions. What remains is the wrapper's own tail: ours ends
@@ -697,12 +697,15 @@ Purpose: Does this window hold the dialog focus, and its partner too?
 Return Value: 1 when both hold focus, 0 otherwise
 Status: Complete
 */
-int __fastcall leaf_006161a0_redirect(void *self, void *) {
-    if (reinterpret_cast<Win *>(self)->is_dialog_focus() == 0) {
+// The retained EditBox catalogue and two Win focus calls support this owner
+// interpretation. The name describes observed behavior, not original debug
+// spelling; callers, full original class identity and lifetime remain unproved.
+int EditBox::is_dialog_focus_chain() {
+    if (is_dialog_focus() == 0) {
         return 0;
     }
-    Win *const parent = *reinterpret_cast<Win *const *>(
-        static_cast<uint8_t *>(self) + 0xC4);
+    // Reload only after the first call, as the original does at 0x006161AC.
+    Win *const parent = win_parent_;
     if (parent != nullptr && parent->is_dialog_focus() == 0) {
         return 0;
     }

@@ -1161,7 +1161,7 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
     // the popup allocator through the pointer at 0x00696ECC rather than by
     // name. The BasePop library owns the real `PopupAllocHook` global;
     // calling it directly is the image's single memory-indirect.
-    BasePop *const popup = reinterpret_cast<BasePop *>(PopupAllocHook());
+    BasePop *const popup = PopupAllocHook();
     if (!popup) {
         return 4;
     }
@@ -1212,10 +1212,8 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete) {
             delete popup;
             return response;
         }
-        // field_3100_ (BasePop, private): the popup's own response code.
-        // Read through the raw offset rather than a new accessor, to avoid
-        // touching basepop.h for a single caller.
-        if (*reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(popup) + 0x3100) == 1) {
+        // The popup's own input state is independent of start's return.
+        if (popup->input_poll_state() == 1) {
             // if user response is to retry -> loop around again
             continue;
         }

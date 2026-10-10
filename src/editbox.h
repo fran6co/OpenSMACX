@@ -50,6 +50,9 @@ class EditBox : public GraphicWin {
   virtual void on_dialog_focus(int focused);    // on_dialog_focus
   virtual void pass_dialog_focus();     // slot 64
   int text_fits();
+  // Descriptive name for original 0x006161A0: the editor must hold dialog
+  // focus, and its parent must too when present. Not an original debug name.
+  int is_dialog_focus_chain();
   int text_position(int x);
   int init(int x, int y, int width, int height, Win *parent, int focus_wrap);
   int init_with_font(Font *font, int x, int y, int width, Win *parent,
