@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "task_id": "texture-affine-vertex-api-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover typed Vert pointer contracts across the affine rasterizer and its sentinel wrapper, removing pointer-through-int APIs while retaining original native behavior and historical claims",
+  "base_revision": "2a85756a748863fcae5fc85538ca0df025032139",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6425104
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6442144
+    }
+  ],
+  "editable_files": [
+    "src/texture.cpp",
+    "src/texture.h",
+    "recovery/tests/texture_edge_cache_owner_harness.cpp",
+    "recovery/tests/texture_raster_actual_host_control.cpp",
+    "recovery/tests/test_texture_typed_vertex_context_oct10.py",
+    "recovery/tests/test_texture_affine_vertex_api_oct10.py"
+  ],
+  "evidence": [
+    "Pinned620A10 loads stack0C/14 as pointer values, publishes them into existing typed Vert globals9BB4F4/9BB490 and indexes the first at eight-byte stride with signed x/y at0/+4. Its complete live implementation uses both only as Vert pointer views. Wrapper624CA0 forwards the same values unchanged when sixth argument==-1. The complete source caller closure is these two methods.",
+    "The seed-generated decorated symbols and IDA int4 guesses are not original C++ type evidence. Pinned original32-bit stack ABI cannot distinguish int from pointer. Typed contracts are justified by actual dereferences/global consumers, not original source spelling; upstream producers outside the wrapper remain unobserved.",
+    "Retain all ORIGINAL markers/spans/claims and historical notes. Observe emitted VC6 symbols for changed signatures; no new claim or automatic demotion. Preserve all96 Texture function verdicts if possible, immediately review any justified temporary regression rather than revert solely for matching.",
+    "Update actual-source pixel/cache/sentinel tests to use real vertex arrays. Remove unnecessary low-address mapping only for this recovered pointer API, preserve the unrelated32-bit framebuffer control. Require bounded host controls including damage sensitivity, native identity/reference checks, independent review and fresh application compile/link. No new function coverage or whole-game acceptance claim."
+  ]
+}
