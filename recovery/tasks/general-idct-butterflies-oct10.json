@@ -1,0 +1,37 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "921c644bd7fa127869da2def77106e9973c87aa8",
+  "editable_files": [
+    "src/general.cpp",
+    "src/movie_media_decoder.cpp",
+    "recovery/tests/test_movie_media_butterflies_actual_source_oct10.py"
+  ],
+  "evidence": [
+    "Pinned spans5D29E1-5D2B20,5D2B20-5D2C0A,5D2C0A-5D2D13 share ESI source/EDI output custom convention and five coefficient words9C9594..9C95A4; preserve independent scatter/store orders and first routine DC-only path.",
+    "Pinned FSTP qword followed by low DWORD load differs materially from current numeric int conversion in the two contiguous butterflies. Preserve original magic-biased double representation, not numeric saturation/truncation.",
+    "Existing movie_media_coefficient_tables source owner maps9C9594, begins5A82799A,3F0A8BD4,3FA73D75,3EC3EF15,59C00000 and has overlapping decoder word/byte uses. Do not substitute distinct9C3000 storage or assert original allocation bound.",
+    "Media caller closure includes movie_media_transform_block_pair and decoder sub_5d0d82. These transforms belong with the decoder, not generic fixed-address seam source. Preserve complete annotations and useful seed history when moving all three bodies; no historical claim demotion or new claim grant.",
+    "Explicit wrap32/high multiply/arithmetic SAR and low-word bit extraction improve faithful source semantics; host numerical controls do not prove original custom-register ABI, x87 precision/control word, overlapping buffers or full-game acceptance."
+  ],
+  "intent": "Recover all three original media IDCT butterflies with source-owned constants, biased-double low-DWORD extraction and original 32-bit arithmetic and store ordering.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6105569,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6105888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6106122,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "general-idct-butterflies-oct10"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "e537f925ba0d79c90d68314cfca0ce6aca0ed3546d3efb0590f5f2e9c9840e3c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_selectpartwin_runtime_owner_oct9.py"
+    ],
+    "evidence": [
+      "Existing test demands the raw9AB9CE alias that positive signed field/producers prove obsolete; update that single assertion to require the source-owned VehPrototypes[6].icon_offset while retaining all palette/sprite/input controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "update-retired-icon-alias-test-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:selectpartwin-prototype-icon-owner-oct10"
+}
