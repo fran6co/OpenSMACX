@@ -487,12 +487,20 @@ static const char FileWinTextTableDefaultNext[4] = {'.', 0, 0, 0};  // 0x0069711
 // ordinary source literal, not a pointer into the shipped executable.
 static const char FileWinSpriteSheet[] = "jackal.pcx";
 
-// Three independently owned dialog sprites. The image places them at
-// 0x009B9018, 0x009B9048 and 0x009B9078, but those are original storage
-// identities, not addresses for this build to dereference. Their particular
-// UI roles have not been established, so retain neutral names.
-static Sprite FileWinSprite0;
+// Three independently owned dialog sprites. init's width read at 0x613B1C
+// fixes Sprite0 to 0x009B9018 (+0x18); draw's case0/case1 branches fix
+// Sprite1 to 0x009B9048 and Sprite0 to 0x009B9018. Sprite2 is 0x009B9078.
+// The original CRT constructs 1,0,2 (slots 0x6826A4/6A8/6AC), and close()
+// uses that same order. These are storage identities, not executable pointers.
+// Their particular UI roles are unproved, so retain neutral source names.
+// Remaining lifetime obligation: original exits 0x6137B0/7F0/830 test/set
+// bits 1/2/4 of guard byte 0x009B9014 before Sprite::close. The ordinary
+// source lifetimes below do not establish that once-only cleanup guard.
+// RECOVERY_OBJECT: v1 0x009B9048 _FileWinSprite1
 static Sprite FileWinSprite1;
+// RECOVERY_OBJECT: v1 0x009B9018 _FileWinSprite0
+static Sprite FileWinSprite0;
+// RECOVERY_OBJECT: v1 0x009B9078 _FileWinSprite2
 static Sprite FileWinSprite2;
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -696,8 +704,8 @@ void FileWin::close() {
     extension_count_ = 0;
     directory_[0] = 0;
     strcat(directory_, FileWinTextTableDefaultNext);
-    FileWinSprite0.close();
     FileWinSprite1.close();
+    FileWinSprite0.close();
     FileWinSprite2.close();
     modal_window_ = 0;
     if (directory_list_handle_ != 0) {
