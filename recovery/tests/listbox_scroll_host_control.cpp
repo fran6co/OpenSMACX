@@ -7,8 +7,8 @@ struct Win {
     virtual ~Win() {}
     virtual Scroll *on_scroll_create() { return 0; }
     virtual Scroll *on_scroll_delete(Scroll *value) { return value; }
-    virtual Scroll *vslot_08() { return 0; }
-    virtual Scroll *vslot_09(Scroll *value) { return value; }
+    virtual Scroll *on_listbox_scroll_create() { return 0; }
+    virtual Scroll *on_listbox_scroll_delete(Scroll *value) { return value; }
 };
 
 struct Recipient : Win {
@@ -20,11 +20,11 @@ struct Recipient : Win {
 
     Recipient() : create_calls(0), delete_calls(0), last_scroll(0),
                   create_result(0), delete_result(0) {}
-    Scroll *vslot_08() override {
+    Scroll *on_listbox_scroll_create() override {
         ++create_calls;
         return create_result;
     }
-    Scroll *vslot_09(Scroll *value) override {
+    Scroll *on_listbox_scroll_delete(Scroll *value) override {
         ++delete_calls;
         last_scroll = value;
         return delete_result;

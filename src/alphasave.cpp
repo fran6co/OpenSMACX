@@ -200,8 +200,8 @@ void AlphaSave::forward_button_click(int button_id) {
 }
 
 // ORIGINAL: 0x00407ED0 ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z 0x00407ED0-0x00407EF3 BYTE_EXACT
-// symbol    ?on_listbox_scroll_delete@AlphaSave@@QAEHPAVScroll@@@Z
-int AlphaSave::on_listbox_scroll_delete(Scroll *scroll) {
+// symbol    ?on_listbox_scroll_delete@AlphaSave@@UAEPAVScroll@@PAV2@@Z
+Scroll *AlphaSave::on_listbox_scroll_delete(Scroll *scroll) {
     if (Win::is_visible()) {
         scroll_hide(this, scroll);
     }
@@ -245,15 +245,16 @@ void AlphaSave::on_scrolling(int code, int pos) {
 
 // ORIGINAL: 0x00407E80 ?on_listbox_scroll_create@AlphaSave@@QAEHXZ 0x00407E80-0x00407ECA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407e80.cpp;src/popup.cpp:Popup::on_listbox_scroll_create;src/alphasave.h:scroll_"], "reason": "AlphaSave owns the Scroll at 0x3DD8; original call sequence matches the typed Popup scroll-create pattern and seed evidence"}
+// symbol    ?on_listbox_scroll_create@AlphaSave@@UAEPAVScroll@@XZ
 // Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/00407e80.cpp
-int AlphaSave::on_listbox_scroll_create() {
+Scroll *AlphaSave::on_listbox_scroll_create() {
     scroll_normal();
     scroll_.init(0x147, 0x15, 0x18, 0xd8, this, -1, 1);
     scroll_.hide();
     if (Win::is_visible()) {
         scroll_show(this, &scroll_);
     }
-    return reinterpret_cast<int>(&scroll_);
+    return &scroll_;
 }
 
 // ORIGINAL: 0x00407BE0 ?show@AlphaSave@@QAEXH@Z 0x00407BE0-0x00407C57 BYTE_EXACT

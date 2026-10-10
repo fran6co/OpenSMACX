@@ -1476,10 +1476,10 @@ void Popup::on_adjust_button_placement(int *, int *y, int *) {
 
 // ORIGINAL: 0x00406330 ?on_listbox_scroll_delete@Popup@@QAEHPAUScroll@@@Z 0x00406330-0x0040637C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:243a2cfd:src/recovered/units/00406330.cpp;src/popup.cpp:scroll_hide"], "reason": "Popup owns the scroll lifecycle callback and forwards visibility cleanup to the existing scroll_hide helper"}
-// symbol    ?on_listbox_scroll_delete@Popup@@QAEHPAVScroll@@@Z
-int Popup::on_listbox_scroll_delete(Scroll *scroll) {
+// symbol    ?on_listbox_scroll_delete@Popup@@UAEPAVScroll@@PAV2@@Z
+Scroll *Popup::on_listbox_scroll_delete(Scroll *scroll) {
     if (static_cast<int>(field_30AC_) / 10000 == 1000) {
-        return reinterpret_cast<int>(scroll);
+        return scroll;
     }
     if (Win::is_visible()) {
         scroll_hide(this, scroll);
@@ -1957,6 +1957,7 @@ fallback:
 }
 
 // ORIGINAL: 0x00406260 ?on_listbox_scroll_create@Popup@@QAEHXZ 0x00406260-0x00406323 FILE
+// symbol    ?on_listbox_scroll_create@Popup@@UAEPAVScroll@@XZ
 // size      195 bytes
 // prototype int (__thiscall ?on_listbox_scroll_create@Popup@@QAEHXZ)(Popup* this)
 // callers   0   call targets   5
@@ -1980,7 +1981,7 @@ fallback:
 //   register homing: the image loads the two inset globals into ebx/edx ahead
 //   of the rectangle walk while this tree loads them at first use.
 
-int Popup::on_listbox_scroll_create() {
+Scroll *Popup::on_listbox_scroll_create() {
     if (static_cast<int>(field_30AC_) / 10000 == 1000) {
         return 0;
     }
@@ -2001,7 +2002,7 @@ int Popup::on_listbox_scroll_create() {
     if (is_visible()) {
         scroll_show(this, &scroll_);
     }
-    return reinterpret_cast<int>(&scroll_);
+    return &scroll_;
 }
 
 // ORIGINAL: 0x00405910 ?on_exec@Popup@@QAEHXZ 0x00405910-0x00405B01 FILE

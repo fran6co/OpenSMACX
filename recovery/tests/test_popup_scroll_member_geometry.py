@@ -8,11 +8,10 @@ ROOT=Path(__file__).resolve().parents[2]
 
 def projected_control(damage=None):
     row=next(r for r in read_file(ROOT/'src/popup.cpp') if r.address==0x406260)
-    body=_definition(row.region,'int Popup::on_listbox_scroll_create(')
-    # This host is 64-bit; only the native 32-bit pointer-as-int return is
-    # adapted. Native current/protected TU compilation checks the real ABI.
-    assert 'return reinterpret_cast<int>(&scroll_);' in body
-    body=body.replace('return reinterpret_cast<int>(&scroll_);','return static_cast<int>(reinterpret_cast<intptr_t>(&scroll_));')
+    body=_definition(row.region,'Scroll *Popup::on_listbox_scroll_create(')
+    # The actual pointer return needs no host-width adaptation. Native
+    # compilation separately verifies the original 32-bit virtual ABI.
+    assert 'return &scroll_;' in body
     getter=_definition((ROOT/'src/maininterface.h').read_text(),'Sprite &scroll_frame_sprite(')
     capacity=re.search(r'int visible_item_capacity\(\) const \{[^\n]*\}',(ROOT/'src/listbox.h').read_text()).group(0)
     if damage:

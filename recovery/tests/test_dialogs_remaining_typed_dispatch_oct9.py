@@ -55,13 +55,13 @@ protected:
     Win *win_parent_;
 public:
     Win() : iFlags_(0), win_parent_(0) {}
-    virtual Scroll *vslot_09(Scroll *value) {
+    virtual Scroll *on_listbox_scroll_delete(Scroll *value) {
         ++events.slot_calls; events.slot_receiver=this; events.slot_arg=value;
         return events.slot_result;
     }
 };
 struct ParentWin : Win {
-    Scroll *vslot_09(Scroll *value) {
+    Scroll *on_listbox_scroll_delete(Scroll *value) {
         ++events.slot_calls; events.slot_receiver=this; events.slot_arg=value;
         return events.slot_result;
     }

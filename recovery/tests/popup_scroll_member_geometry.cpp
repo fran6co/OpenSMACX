@@ -46,7 +46,7 @@ public:
     }
     void scroll_normal() { ++log_state.normal; }
     bool is_visible() { return visible_; }
-    int on_listbox_scroll_create();
+    Scroll *on_listbox_scroll_create();
 };
 void scroll_show(Popup*,Scroll*) { ++log_state.show; }
 // ACTUAL_SOURCE_BODY

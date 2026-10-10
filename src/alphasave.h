@@ -27,8 +27,10 @@ class AlphaSave : public GraphicWin {
   void close_for_load_retry();
   void on_double_clicked(int button_id);
   void forward_button_click(int button_id);
-  int on_listbox_scroll_delete(Scroll *scroll);
-  int on_listbox_scroll_create();
+  // Constructor-installed primary table 0x669EC8 selects 0x407E80/0x407ED0
+  // in Win slots 8/9; the create result is the embedded Scroll at +0x3DD8.
+  Scroll *on_listbox_scroll_delete(Scroll *scroll) override;
+  Scroll *on_listbox_scroll_create() override;
   int on_key_click(int key, int flags) override;
   void on_scrolled(int code, int pos);
   void on_scrolling(int code, int pos);

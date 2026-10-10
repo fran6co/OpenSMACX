@@ -121,8 +121,8 @@ def test_slot_bindings_and_argument_order():
     assert "this->vslot_07();" not in win_cpp
     assert "virtual Scroll *on_scroll_create();" in list_h
     assert "virtual Scroll *on_scroll_delete(Scroll *scroll);" in list_h
-    assert "val_20_ & 0x40" in list_cpp and "reinterpret_cast<Win *>(val_31_)->vslot_08()" in list_cpp
-    assert "reinterpret_cast<Win *>(val_31_)->vslot_09(scroll)" in list_cpp
+    assert "val_20_ & 0x40" in list_cpp and "reinterpret_cast<Win *>(val_31_)->on_listbox_scroll_create()" in list_cpp
+    assert "reinterpret_cast<Win *>(val_31_)->on_listbox_scroll_delete(scroll)" in list_cpp
     assert "virtual Scroll *on_scroll_delete(Scroll *scroll);" in dialogs_h
     assert "virtual Scroll *on_scroll_create();" in dialogs_h
     assert "Scroll *Dialogs::on_scroll_delete(Scroll *scroll)" in dialogs_cpp
@@ -154,7 +154,7 @@ def test_listbox_mutations_are_exercised_against_extracted_bodies(tmp_path):
     mutants = (
         original.replace("0x40", "0x20"),
         original.replace("&& val_31_ != 0", "", 1),
-        original.replace("vslot_09(scroll)", "vslot_09(nullptr)", 1),
+        original.replace("on_listbox_scroll_delete(scroll)", "on_listbox_scroll_delete(nullptr)", 1),
     )
     assert all(mutant != original for mutant in mutants)
     template = Path(__file__).with_name("listbox_scroll_host_control.cpp").read_text()

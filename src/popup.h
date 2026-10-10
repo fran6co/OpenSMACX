@@ -44,7 +44,9 @@ class Popup : public BasePop {
 
  public:
   // homed from 00406260.cpp
-  int on_listbox_scroll_create();
+  // Constructor-installed primary table 0x6695C8 selects 0x406260/0x406330
+  // in Win slots 8/9. These return Scroll pointers, not integer handles.
+  Scroll *on_listbox_scroll_create() override;
 
  public:
   // homed from 00404ef0.cpp
@@ -61,7 +63,7 @@ class Popup : public BasePop {
   void on_scrolled(int first, int second) override;
   void on_scrolling(int first, int second) override;
   virtual void on_adjust_button_placement(int *x, int *y, int *unused);
-  int on_listbox_scroll_delete(Scroll *scroll);
+  Scroll *on_listbox_scroll_delete(Scroll *scroll) override;
 
  public:
   int on_dialog_item_back_draw(GraphicWin *window, int unused, int item, RECT *rect);

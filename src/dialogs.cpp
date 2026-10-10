@@ -625,7 +625,7 @@ Scroll *Dialogs::on_scroll_delete(Scroll *scroll) {
         if (iFlags_ & 0x40) {
             Win *parent = win_parent_;
             if (parent != 0) {
-                return parent->vslot_09(scroll);
+                return parent->on_listbox_scroll_delete(scroll);
             }
         }
     }
@@ -863,7 +863,7 @@ void Dialogs::pass_dialog_focus() {
 // symbol    ?on_scroll_create@Dialogs@@UAEPAVScroll@@XZ
 Scroll *Dialogs::on_scroll_create() {
     if (kind_ == 2 && (iFlags_ & 0x40) != 0 && win_parent_ != 0) {
-        return win_parent_->vslot_08();
+        return win_parent_->on_listbox_scroll_create();
     }
     return 0;
 }

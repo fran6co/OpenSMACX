@@ -36,8 +36,8 @@ def test_sound_interface_views_and_context_mixed_words_remain_explicit() -> None
 
     # The same numbered storage retains contextual views where original call
     # shapes differ; these are intentionally not global Win/Sound renames.
-    assert "reinterpret_cast<Win *>(val_31_)->vslot_08()" in listing
-    assert "reinterpret_cast<Win *>(val_31_)->vslot_09(scroll)" in listing
+    assert "reinterpret_cast<Win *>(val_31_)->on_listbox_scroll_create()" in listing
+    assert "reinterpret_cast<Win *>(val_31_)->on_listbox_scroll_delete(scroll)" in listing
     assert "Sound *child = reinterpret_cast<Sound *>(val_20_);" in win
     assert "Sound *child = val_8_;" in win
     assert "reinterpret_cast<Sound *>(flags_)" not in win

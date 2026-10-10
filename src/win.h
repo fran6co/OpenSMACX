@@ -618,10 +618,10 @@ class Win : public AutoSound {
   virtual Scroll *on_scroll_delete(Scroll *scroll) {
     return scroll;
   }  // slot 7
-  // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?vslot_08@Win@@UAEPAVScroll@@XZ 0x005EB3D0
-  virtual Scroll *vslot_08() { return 0; }  // 0x00406B30
+  // RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?on_listbox_scroll_create@Win@@UAEPAVScroll@@XZ 0x005EB3D0
+  virtual Scroll *on_listbox_scroll_create() { return 0; }  // slot 8
   // ListBox and Dialogs forward Scroll replacement through this parent slot.
-  virtual Scroll *vslot_09(Scroll *value = 0) { return value; }  // 0x00404230
+  virtual Scroll *on_listbox_scroll_delete(Scroll *value = 0) { return value; }  // slot 9
   virtual int vslot_10(int = 0) { return 0; }  // 0x00404250
   virtual int vslot_11(GraphicWin *, int, int, RECT *) { return 0; }  // 0x00404240
   // Slot 12 paints the contents; redraw() at slot 62 drives this callback.

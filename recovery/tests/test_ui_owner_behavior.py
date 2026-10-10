@@ -244,7 +244,7 @@ DIALOGS_HOST = r'''#include <cassert>
 #include <stdint.h>
 struct Scroll {};
 struct Win { int focuses, slot8_calls; Scroll *slot8_result; Win():focuses(0),slot8_calls(0),slot8_result(0){}
-  virtual ~Win(){} virtual Scroll *vslot_08(){++slot8_calls; return slot8_result;}
+  virtual ~Win(){} virtual Scroll *on_listbox_scroll_create(){++slot8_calls; return slot8_result;}
   virtual void pass_dialog_focus(){++focuses;} };
 struct GraphicWin : Win {};
 struct Dialog {};
@@ -414,7 +414,7 @@ def test_actual_tracked_bodies_compile_and_execute_cxx98(
         ("setup_dialog", "dialog_unk2", "owner->redraw();", ";"),
         ("setup_dialog", "dialog_unk2", "static_cast<LONG_PTR>(wparam)", "static_cast<LONG_PTR>(lparam)"),
         ("dialogs", "pass_focus", "GraphicWin::pass_dialog_focus();", ";"),
-        ("dialogs", "scroll_create", "return win_parent_->vslot_08();", "return 0;"),
+        ("dialogs", "scroll_create", "return win_parent_->on_listbox_scroll_create();", "return 0;"),
         ("setup_key", "setup_key", "release_modal();", ";"),
         ("newtech", "newtech_group", "stringBox2_.add_fixup();", ";"),
     ),

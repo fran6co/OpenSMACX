@@ -318,7 +318,7 @@ Purpose: Return the configured recipient's slot-8 value under the
 // symbol    ?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@XZ
 Scroll *ListBox::on_scroll_create() {
     if ((val_20_ & 0x40) != 0 && val_31_ != 0) {
-        return reinterpret_cast<Win *>(val_31_)->vslot_08();
+        return reinterpret_cast<Win *>(val_31_)->on_listbox_scroll_create();
     }
     return 0;
 }
@@ -332,7 +332,7 @@ Purpose: Forward the exact Scroll being removed through recipient slot 9
 // symbol    ?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@PAV2@@Z
 Scroll *ListBox::on_scroll_delete(Scroll *scroll) {
     if ((val_20_ & 0x40) != 0 && val_31_ != 0) {
-        return reinterpret_cast<Win *>(val_31_)->vslot_09(scroll);
+        return reinterpret_cast<Win *>(val_31_)->on_listbox_scroll_delete(scroll);
     }
     return scroll;
 }

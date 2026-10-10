@@ -80,8 +80,8 @@ def test_win_scroll_types_and_buffer_fields_are_distinct():
     assert "Scroll *scroll_vert_;" in win_h and "Scroll *scroll_horz_;" in win_h
     assert "virtual Scroll *on_scroll_create()" in win_h
     assert "virtual Scroll *on_scroll_delete(Scroll *scroll)" in win_h
-    assert "virtual Scroll *vslot_08()" in win_h
-    assert "virtual Scroll *vslot_09(Scroll *value = 0)" in win_h
+    assert "virtual Scroll *on_listbox_scroll_create()" in win_h
+    assert "virtual Scroll *on_listbox_scroll_delete(Scroll *value = 0)" in win_h
     assert "virtual Scroll *on_scroll_create();" in list_h
     assert "virtual Scroll *on_scroll_delete(Scroll *scroll);" in list_h
     assert "virtual Scroll *on_scroll_create();" in dialogs_h
