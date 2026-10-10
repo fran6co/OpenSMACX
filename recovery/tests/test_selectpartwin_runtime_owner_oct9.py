@@ -25,7 +25,8 @@ def test_selectpartwin_uses_owned_palette_and_sprite_tables(tmp_path: Path) -> N
         r"TutWinBaseWindow\.sprite6_\.transparent_index\(\),", source)
     assert "SelectPartTile" not in source
     assert "SelectPartTileColour" not in source
-    assert "WeaponSpriteIndexSlot = (signed char *)0x009AB9CE" in source
+    assert "sprite_idx = VehPrototypes[6].icon_offset;" in source
+    assert "WeaponSpriteIndexSlot" not in source
     assert "if (have_sprite_idx && sprite_idx >= 0)" in source
 
     sprite_rhs = re.search(

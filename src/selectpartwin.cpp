@@ -974,9 +974,11 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
     return noTechFlag == 0;
 }
 
-// SelectPartWin::draw_weapon's own slot: the selected weapon's sprite index
-// the mode-0xB rows read (0x009AB9CE, signed char). Nothing else names it.
-static signed char *const WeaponSpriteIndexSlot = (signed char *)0x009AB9CE;
+// Pinned 0x00432E63 uses MOVSX to read the signed byte at 0x009AB9CE.
+// VehPrototypes starts at 0x009AB868 with 0x34-byte rows; +6*0x34+0x2E
+// is that byte, VehPrototypes[6].icon_offset. src/veh.cpp:make_proto
+// initializes the field and src/alpha.cpp:read_units writes its parsed value;
+// this branch keeps the mode-B read signed and after Caviar scaling.
 
 /*
 Purpose: Draw one weapon entry of the design parts list: find the a1'th
@@ -1070,7 +1072,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
         sprite_idx = Weapon[idx].icon;
         have_sprite_idx = true;
     } else if (cat_byte == 0xB) {
-        sprite_idx = *WeaponSpriteIndexSlot;
+        sprite_idx = VehPrototypes[6].icon_offset;
         have_sprite_idx = true;
     }
     if (have_sprite_idx && sprite_idx >= 0) {
