@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "sprite-lifetime-controls-refresh-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore actual-source lifetime controls after guarded NewTech storage and typed SpriteBox callback recovery; retire superseded hierarchy test only after transferring its unique controls",
+  "base_revision": "d9eff840d9ebb7be34434c27a1d10d60039bdda2",
+  "subjects": [],
+  "editable_files": [
+    "recovery/tests/test_messagewin_newtech_startup_arrays.py",
+    "recovery/tests/sprite_list_lifecycle_control.cpp",
+    "recovery/tests/test_spritelist_base_lifetime.py",
+    "recovery/tests/test_sprite_list_lifecycle_actual_source.py"
+  ],
+  "evidence": [
+    "Seven inherited failures precede constructor execution or arise from missing callback declarations: two NewTech tests still expect retired g_NEWTECHWIN_SPRITES[6], five SpriteListBase tests lack right-click/down/up/double-click callback members in their host declaration fixture. Production C++ and all original mappings must remain unchanged.",
+    "NewTech lifetime tests must extract current array/storage/lifetime declarations and actual Sprite constructor, destructor and members; verify six-element construction, guard publication before reverse cleanup, upper-bit retention and damage sensitivity. Preserve the original source object identity822610..822718 and separate822604 guard, not a flat-array substitute.",
+    "Shared SpriteBox fixture must use the four actual callback names/types supported by spritebox.h. Retire the older test that still models SpriteList as direct StringStruct only after transferring its unique truncation, close-hook and empty-derived-destructor controls into the real intermediate-owner suite. Existing cleanup order and mutation assertions remain effective; do not weaken or manufacture passing product implementations."
+  ]
+}
