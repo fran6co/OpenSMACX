@@ -10981,7 +10981,7 @@ void Win::close() {
     iVertScaleNum_ = 0;
     field_134_ = 0;
     field_138_ = 0;
-    poWinBase_ = reinterpret_cast<Win *>((uint32_t)this);
+    poWinBase_ = this;
     cursor_sprite_ = 0;
     field_18C_ = 0;
     field_190_ = 0;
