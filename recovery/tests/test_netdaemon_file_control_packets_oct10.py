@@ -148,6 +148,8 @@ cleanup:
 
 
 def restore_file_control_packet_migration(source):
+    from test_netdaemon_deletion_initialization_oct10 import restore_deletion_initialization_migration
+    source = restore_deletion_initialization_migration(source)
     for before, after in reversed(EDITS):
         assert source.count(after) == 1
         source = source.replace(after, before, 1)

@@ -461,11 +461,12 @@ NetDaemon::NetDaemon() : AlphaNet() {
     }
     locks_.clear();
 
+    // Native 0x538A53 clears the shared deletion owner once; the backedge
+    // at 0x538A64 targets 0x538A59, after this store.
+    lock_state_[0].leading_words_[0] = 0;
     for (int32_t m = 0; m < 0x18; ++m) {
         lock_table_[m].flag_ = 0xFF;
         lock_table_[m].word_8_ = 0;
-        // the per-entry scratch dword lives past the entry, at +0x5A0
-        lock_state_[m].leading_words_[0] = 0;
     }
 
     lock_state_[0].leading_words_[1] = 0;

@@ -107,6 +107,9 @@ def test_constructor_partial_alias_initialization_is_preserved():
     source = (ROOT / "src/netdaemon.cpp").read_text()
     ctor = extract_definition(source, "NetDaemon::NetDaemon() : AlphaNet()",
                               expect_semicolon=False)
-    assert "lock_state_[m].leading_words_[0] = 0;" in ctor
+    owner_clear = "lock_state_[0].leading_words_[0] = 0;"
+    assert ctor.count(owner_clear) == 1
+    assert ctor.index(owner_clear) < ctor.index("for (int32_t m = 0;")
+    assert "lock_state_[m].leading_words_[0] = 0;" not in ctor
     assert "for (int32_t m = 0; m < 0x18; ++m)" in ctor
     assert "process_slots_" not in ctor

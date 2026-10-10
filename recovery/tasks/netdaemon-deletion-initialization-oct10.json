@@ -17,6 +17,7 @@
     "src/netdaemon.h",
     "recovery/tests/test_netdaemon_deletion_initialization_oct10.py",
     "recovery/tests/test_netdaemon_file_control_packets_oct10.py",
+    "recovery/tests/test_save_daemon_actual_source.py",
     "recovery/tests/test_netdaemon_typed_map_checksum_oct10.py",
     "recovery/tests/test_netdaemon_vehicle_base_checksum_oct10.py",
     "recovery/tests/test_netdaemon_faction_checksum_oct10.py",

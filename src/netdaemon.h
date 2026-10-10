@@ -89,8 +89,10 @@ static_assert(sizeof(LockTableEntry) == 0x3C, "lock table stride");
 //                           does not zero
 //
 // Entry3 aliases the file-index pointer and persistent save view below.
-// The constructor also clears leading word0 in entries4..23, partially
-// initializing that overlapping view; do not add whole-snapshot initialization.
+// The constructor's 0x538A53 owner clear is outside the record loop:
+// 0x538A64 branches to 0x538A59. It does not initialize entries3..23.
+// Only channels0..2 have evidenced runtime state accesses; the broader array
+// and overlapping save view below remain structural recovery obligations.
 // The console's bodies read
 // the same run through `NetDaemonNet.lock_state_` - it is the 0x0093E8BC run
 // in the image - which is why the struct and the member are public.
@@ -340,10 +342,10 @@ class NetDaemon : public AlphaNet {
   LockTableEntry lock_table_[24];  // 0x158C
 
   // THE LOCK-TABLE STATE - the array AFTER lock_table_ (24 * 0x3C = 0x5A0
-  // bytes later), which is why the ctor's merged loop writes [entry+0x5A0]
-  // alongside [entry] and [entry+8] with one pointer. Entries e0..e2
-  // carry the named dwords; e3 aliases the file-index pointer and save
-  // view, while e4..e23 retain the constructor's partial alias clears.
+  // bytes later). The ctor clears its first word ONCE before the record
+  // header loop; it does not sweep state/pointer/save words at this stride.
+  // Entries e0..e2 carry the named dwords; the broader array aliases the
+  // file-index pointer and save view but is not a proven original array.
   // Lock-state view spans0x1B2C..0x20CC / image93E8BC..93EE5C.
   // The overlapping save view extends through+0x28C8 / image93F658.
   union {
