@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "netdaemon-file-control-packets-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore native file-transfer control packet payload offsets with typed packet declarations across the producer/receiver ownership group; preserve all original untouched bytes and error paths",
+  "base_revision": "88651d37c8f5880a39d8ac12d37ea5f3f284dea9",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5434688
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5456896
+    }
+  ],
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_file_control_packets_oct10.py",
+    "recovery/tests/test_netdaemon_send_files_host.py",
+    "recovery/tests/netdaemon-send-files-harness.cpp",
+    "recovery/tests/test_netdaemon_typed_map_checksum_oct10.py",
+    "recovery/tests/test_netdaemon_vehicle_base_checksum_oct10.py",
+    "recovery/tests/test_netdaemon_faction_checksum_oct10.py",
+    "recovery/tests/test_netdaemon_typed_bulk_landmark_oct10.py"
+  ],
+  "evidence": [
+    "Pinned send_files52ED40..52F517: F05baseEBP-4D0 vs pathEBP-4B8=+18; F0F52EF42/48baseEBP-6C vs source indexEBP-68=+4; F07list52F0E8/EE and completion52F42D/433 write state2/3 atEBP-64=+8. Current byte/word array casts write all these payloads at+2; receiver reads18/4/8 respectively, and dispatcher/sender passes base unadjusted.",
+    "Rejected initial F0B-zero hypothesis: root independent flow confirms52F399loadsEBX=file index,52F3A2increments,52F3ABstores and52F3B1loops withoutreset. Thus52F21F writes currentfile index; existing chunk field remainscorrect. Preserve multifiIe progression and all original quirks.",
+    "Typed F05path/control packets retain11C/20sizes, opcodeword, exact4-bytewrites and uninitialized holes; no boundschecks/zero init/normalization. CaptureallNetDaemonbaseline/current nativeverdicts andlayouts, hostproducer/receiver/pinned PE controls including negative mutations and source/annotation/history continuity, fullbuild/link references/mappings and independentreview. Onlysend_files packetbuilders and newplainrecorddeclarations maychange; receiving body/dispatcher remainunchanged unless positive newevidence explicitscopeexpansion.",
+    "Earlier checksum/source continuitycontrols normalize only this newly verified boundedpacketmigration againstoriginalbaselines; no baseline reset or droppedhistoricalobligation. No newfunction/claim/fullacceptanceasserted."
+  ]
+}
