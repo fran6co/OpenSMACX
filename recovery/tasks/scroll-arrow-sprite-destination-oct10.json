@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "task_id": "scroll-arrow-sprite-destination-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Correct Scroll arrow sprite producer to the real FlatButton redraw array, not unrelated AutoSound fields",
+  "base_revision": "c013ef7f6e2828e1770caeadca9f29921af12538",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6313168}
+  ],
+  "editable_files": ["src/flatbutton.h", "src/scroll.cpp", "src/autosound.h", "src/win.cpp", "recovery/tests/test_win_sound_product_source.py", "recovery/tests/test_scroll_arrow_sprite_destination_oct10.py"],
+  "evidence": [
+    "Pinned Scroll6054D0 establishes edi as left button at esi+AAC, then60569A/6056A0/6056A6 store the selected sprite triplet to edi+AD8/AD4/ADC. The second button stores the same three destinations at6057A1/6057A7/6057AD. Current set_scroll_icons incorrectly writes AutoSound+28/+2C/+30; FlatButton on_redraw actually reads field_AD4_[state].",
+    "Correct the real borrowed sprite producer and remove current structural rationales asserting this erroneous setter proves Sprite use of AutoSound fields. Retain historical seed lessons and all original markers/claims. Do not globally retype the other mixed-use AutoSound fields without separate evidence.",
+    "Require actual setter host controls that distinguish sprite array writes from sound-word corruption, pinned native destination control, claim identity continuity, independent review, source mapping/reference checks and fresh full compile/link before integration. No new original function identity or full-game acceptance claim."
+  ]
+}
