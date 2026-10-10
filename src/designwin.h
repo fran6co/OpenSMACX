@@ -261,10 +261,11 @@ class DesignWin : public GraphicWin, public SubInterface {
   // 0x71FDBC to iface_rect (0x4BB17D), and draw_stack consumes the same
   // rectangle as its clipped/tiled panel.
   RECT field_B0C_rect_;  // 0xB0C
-  uint32_t field_B1C_;  // 0xB1C
-  uint32_t field_B20_;  // 0xB20
-  uint32_t field_B24_;  // 0xB24
-  uint32_t field_B28_;  // 0xB28
+  // init copies four frame edges here, replaces bottom from B0C.top, then
+  // insets them. draw_flash passes this rectangle to clip and soft_update.
+  // Preview is a descriptive name, not an original debug-name claim.
+  // RECOVERY_MEMBER: v2 DesignWin preview_panel_rect_ tagRECT 0xB1C 0x0043DD50
+  RECT preview_panel_rect_;  // 0xB1C..0xB2B
   // Passed as RECT* to des_rect at 0x4BB0E1 (original address 0x71FDDC).
   // RECOVERY_MEMBER: v2 DesignWin field_B2C_rect_ tagRECT 0xB2C 0x004BAF20
   RECT field_B2C_rect_;  // 0xB2C

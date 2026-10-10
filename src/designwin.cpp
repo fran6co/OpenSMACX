@@ -167,15 +167,15 @@ void DesignWin::init() {
     field_B0C_rect_ = MainInterfaceGlobal.status_hit_rect();
     field_B0C_rect_.left = MainInterfaceGlobal.main_frame_rect().left + 4;
     RECT stat_panel = MainInterfaceGlobal.main_frame_rect();
-    field_B1C_ = stat_panel.left;
-    field_B20_ = stat_panel.top;
-    field_B24_ = stat_panel.right;
-    field_B28_ = stat_panel.bottom;
-    field_B28_ = field_B0C_rect_.top;
-    field_B1C_ += 3;
-    field_B20_ += 3;
-    field_B24_ -= 3;
-    field_B28_ -= 3;
+    preview_panel_rect_.left = stat_panel.left;
+    preview_panel_rect_.top = stat_panel.top;
+    preview_panel_rect_.right = stat_panel.right;
+    preview_panel_rect_.bottom = stat_panel.bottom;
+    preview_panel_rect_.bottom = field_B0C_rect_.top;
+    preview_panel_rect_.left += 3;
+    preview_panel_rect_.top += 3;
+    preview_panel_rect_.right -= 3;
+    preview_panel_rect_.bottom -= 3;
     info_panel_rect_ = MainInterfaceGlobal.lower_frame_rect();
     info_panel_rect_.left += 4;
     info_panel_rect_.top += 4;
@@ -4468,8 +4468,8 @@ void DesignWin::draw_flash() {
         shown = static_cast<int>(protoID_);
     }
 
-    canvas->set_clip(reinterpret_cast<RECT *>(&field_B1C_));
-    RECT rc = *reinterpret_cast<RECT *>(&field_B1C_);
+    canvas->set_clip(&preview_panel_rect_);
+    RECT rc = preview_panel_rect_;
     canvas->box_sprite(&rc, &InterfaceBoxStyles[3]);
 
     rc.left += 3;
@@ -4608,7 +4608,7 @@ void DesignWin::draw_flash() {
         }
     }
 
-    MainInterfaceGlobal.soft_update(reinterpret_cast<RECT *>(&field_B1C_));
+    MainInterfaceGlobal.soft_update(&preview_panel_rect_);
     canvas->restore_clip();
     draw_stack();
 }
