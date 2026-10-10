@@ -1,0 +1,35 @@
+{
+  "author": "coordinator",
+  "base_revision": "a47681f870fe80a95d2b89face3cf89640a77667",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "recovery/tests/test_vehicle_record_storage_owner_oct10.py"
+  ],
+  "evidence": [
+    "Original52DDC0/52DE70 refer to read-only strings68C120/68C134 through log_say(LPCSTR); verify pinned text, publish named source storage and observed COFF bindings. No executable-address reads remain for these strings.",
+    "Original4A0810 accesses PlayerData+808/+814/+364. Existing satellites_[4] proves808 and814; use fresh compiler-observed PlayerData layout to identify364 before changing it. Preserve signed comparison, target32 wrap, guard type<4 with no lower-bound check, clock/key/read/callback order and every unsafe/error path.",
+    "Preserve all existing identities/spans/claims/evidence and restoration obligations. No marker edits or unmeasured exactness grants. New object bindings require pinned bytes and actual emitted symbol evidence; start-only bindings do not prove allocation bounds.",
+    "Fresh whole-TU before/after measurements, source continuity, relevant actual-source mutation controls, complete build/link and independent review required. Coordinator manual checkpoint only, not autonomous/full-game acceptance or added function coverage."
+  ],
+  "intent": "Recover source-owned deletion log text and use witnessed faction satellite/deployment members",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5430720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4851728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vehicle-record-storage-owner-oct10"
+}
