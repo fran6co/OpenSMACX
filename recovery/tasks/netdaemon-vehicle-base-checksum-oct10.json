@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "task_id": "netdaemon-vehicle-base-checksum-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore original full-width vehicle counts, live loop bounds and eight debug checksum outputs through actual Veh/Base records",
+  "base_revision": "f21886f1e9606f78fe10f59774c07cc977e7b984",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5437664}
+  ],
+  "editable_files": ["src/netdaemon.cpp", "recovery/tests/test_netdaemon_vehicle_base_checksum_oct10.py", "recovery/tests/test_netdaemon_faction_checksum_oct10.py", "recovery/tests/test_netdaemon_typed_bulk_landmark_oct10.py"],
+  "evidence": [
+    "Pinned52FB2D loads signed dword9A64C8, not the current char alias; normal outer backedge52FC0D returns to52FB39 without reloading, and only matched records reload52FBEC. Debug53018B reloads dword at each faction entry because530244 branches to53018B; inner53021C reloads unconditionally after every vehicle. Debug53022E..241 outputs one word per faction, eight total, whereas current source outputs only the last. Base count reloads at52FCCD and5302F5 are absent in both current source walks. These are translation errors, not fixes to shipped behavior.",
+    "Use actual Veh stride34 and Base stride134 with named members, preserving all selected byte ranges: debug Veh proto_id3bytes crosses into unk_1; Base prefix7bytes excludes assimilation, and facilities_built hashes only9of12bytes. Preserve ordinary aggregate vsdebug per-faction seeds, actual count reload schedules, full signed counter semantics and unchecked bounds. No map/header/faction/checksum algorithm changes. Source map.cpp do_checksums already reserves47words; restoring8vehicle debug slots restores the original47-slot report rather than adding a new format.",
+    "Require full native NetDaemon baseline/current comparisons, fresh Veh/Base CodeView layouts, actual declaration/loop host controls against an independently modeled original instruction schedule including counts128/256 and callback changes, relevant regression/damage controls, fresh full application compile/link, mappings/references and independent review. Preserve identities/spans/claims/lessons and any temporary matching regression. Authorize only bounded normalization of this four-block migration in prior checksum and packet whole-source tests, retaining their original baselines and all existing controls. No new original-function count or full-game acceptance claim."
+  ]
+}
