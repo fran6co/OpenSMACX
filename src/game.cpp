@@ -2886,13 +2886,11 @@ int __cdecl system_init() {
     load_fixed_sprites();
     config_popups();
 
-    // Slots 1..7. The null check and the delete-on-throw are the compiler's,
-    // from the EH frame the new-expression brings in. The bound is compared as
-    // an INT - the image's `cmp esi, 0x7d3c5c / jl` - because a pointer `<`
-    // renders unsigned and VC6 emits `jb` for it.
-    for (MapWin **slot = &MapWinTable[1]; (int)slot < (int)&MapWinTable[8];
-         ++slot) {
-        *slot = new MapWin;
+    // Construct only slots 1..7, publishing each after construction. Keep
+    // the genuine new-expression so failed construction releases its storage;
+    // slot zero is published separately below as the existing Console.
+    for (int slot = 1; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWinTable[slot] = new MapWin;
     }
 
     SystemInterfaceFlags &= ~0x8C0u;
