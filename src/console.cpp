@@ -5457,9 +5457,12 @@ void Console::editor_reload() {
     PopupModalState = 6;
     popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
     for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
-        GenderDefault = Players[faction_entry].noun_gender;
-        PluralityDefault = Players[faction_entry].is_noun_plural;
-        popup.dialogs().item(Players[faction_entry].noun_faction, faction_entry);
+        Player &row = Players[faction_entry];
+        const int plurality = row.is_noun_plural;
+        const int gender = row.noun_gender;
+        PluralityDefault = plurality;
+        GenderDefault = gender;
+        popup.dialogs().item(row.noun_faction, faction_entry);
     }
     const int faction = popup.exec(0, nullptr);
     PopupModalState = 0;
@@ -5485,9 +5488,12 @@ void Console::editor_eliminate() {
     PopupModalState = 6;
     popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
     for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
-        GenderDefault = Players[faction_entry].noun_gender;
-        PluralityDefault = Players[faction_entry].is_noun_plural;
-        popup.dialogs().item(Players[faction_entry].noun_faction, faction_entry);
+        Player &row = Players[faction_entry];
+        const int plurality = row.is_noun_plural;
+        const int gender = row.noun_gender;
+        PluralityDefault = plurality;
+        GenderDefault = gender;
+        popup.dialogs().item(row.noun_faction, faction_entry);
     }
     const int faction = popup.exec(0, nullptr);
     PopupModalState = 0;
@@ -5496,9 +5502,13 @@ void Console::editor_eliminate() {
     }
 
     const unsigned char faction_bit = static_cast<unsigned char>(1u << faction);
-    uint8_t *status = reinterpret_cast<uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-    status[0] &= static_cast<uint8_t>(~faction_bit);
-    status[1] &= static_cast<uint8_t>(~faction_bit);
+    // The original loads both bytes, then stores human before alive; retain
+    // the rest of the shared lock-mask DWORD unchanged.
+    GameDataLockMaskBytes &status = GameDataStateStorage.fields_.lock_masks_.bytes_;
+    const uint8_t human_mask = status.human_mask_;
+    const uint8_t alive_mask = status.alive_mask_;
+    status.human_mask_ = human_mask & static_cast<uint8_t>(~faction_bit);
+    status.alive_mask_ = alive_mask & static_cast<uint8_t>(~faction_bit);
     for (int base = GameDataStateStorage.fields_.base_current_count_ - 1; base >= 0; --base) {
         if (Bases[base].faction_id_current == faction) {
             base_kill(base);
@@ -6397,27 +6407,26 @@ void Console::custom_my_faction() {
     const unsigned char state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
     if ((state & 0x40) != 0 && (state & 0x80) != 0) {
         int chosen;
+        const int saved_faction = ConsoleGlobal.faction_id_;
         {
             Popup popup2;
-            // start's third argument is the popup's value - the initial
-            // list selection - which the original re-stores after start()
-            // when the current faction is a playable one.
-            popup2.start(PopupStartCaption, ConsoleStrEditorWhoListTitle,
-                         (ConsoleGlobal.faction_id_ >= 0) ? ConsoleGlobal.faction_id_ : -1,
-                         nullptr, 0x40);
             PopupModalState = 6;
+            popup2.start(PopupStartCaption, ConsoleStrEditorWhoListTitle,
+                         -1, nullptr, 0x40);
             // The who list walks factions 1..7 by noun record: each item's
             // text is the faction's noun, with its gender/plurality feeding
             // the parser defaults.
-            int idx = 1;
-            int *entry = &Players[1].noun_gender;
-            do {
-                PluralityDefault = entry[1];
-                GenderDefault = entry[0];
-                popup2.dialogs().item(reinterpret_cast<char *>(entry - 6), idx);
-                entry += 0x167;
-                idx++;
-            } while (entry < &Players[MaxPlayerNum].noun_gender);
+            for (int idx = 1; idx < MaxPlayerNum; ++idx) {
+                Player &row = Players[idx];
+                const int plurality = row.is_noun_plural;
+                const int gender = row.noun_gender;
+                PluralityDefault = plurality;
+                GenderDefault = gender;
+                popup2.dialogs().item(row.noun_faction, idx);
+            }
+            if (saved_faction >= 0) {
+                popup2.set_value(saved_faction);
+            }
             chosen = popup2.exec(0, 0);
             PopupModalState = 0;
         }

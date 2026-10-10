@@ -352,10 +352,10 @@ struct Popup {
 int Popup::selected_result=0;
 struct Console { int cursor_history_index_=0,cursor_history_x_[32]={},cursor_history_y_[32]={};
   void editor_natural(int); } ConsoleGlobal;
-struct NaturalRec { char* name; } Natural[16];
+struct NaturalRec { char* name; char* name_short; } Natural[16];
 struct Map { uint32_t bit2=0; uint8_t climate=0,region=0; } MapTiles[4096];
 struct Landmark { char* name; int x=0,y=0; } MapLandmark[4];
-struct Table { char* get(int){return const_cast<char*>("name");} } StringTable;
+struct Table { char* get(char*){return const_cast<char*>("name");} } StringTable;
 char PopupStartCaption[256];
 const int MaxNaturalNum=16,LM_FRESH=7,BIT2_FRESH=0x10000000;
 const int MapLatitudeBounds=64,MapLongitudeBounds=64;
