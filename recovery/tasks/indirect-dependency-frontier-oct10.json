@@ -4,7 +4,7 @@
   "target": "opensmacx",
   "author": "coordinator",
   "intent": "Bind seven positively identified dependency entries exposed by direct-call and relocated-pointer surveys without application substitutes",
-  "base_revision": "8f030dcb9",
+  "base_revision": "8f030dcb9fd380ed15681d198ce453b31512a5f1",
   "subjects": [
     {
       "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
