@@ -15,6 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x005EB350 sub_5eb350 0x005EB350-0x005EB366 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned complete exclusive span and selected CRT startup pair: NewTech483880..4838A4/4838B0..4838D8, sharedSprite5D71D0..5D71E6/5D71F0..5D720F, WinBuffer5EB350..5EB366/5EB370..5EB38F. These are process-start lifetimes, not lazy statics or authored callback substitutes.", "NewTech has six actual stride2C Sprite elements at822610 with separate guard822604 mask1. Shared Buffer Sprite9B3A50 uses mask2 of existing special-text guard9B37CC; Win drawing Buffer9B6F08 uses separate guard9B6E30 mask1. Guard is published before actual reverse/direct teardown, upper bits retained and constructors do not reset it.", "Fresh complete build-4esa2of5 COFF proves owner ?WinDrawingBufferOwner@@3UWinDrawingBufferLifetime@@A with generated init symbol _$E26. Constructor/registration closures and direct cleanup guard/receiver references are physically verified; aggregate uses real compiler vector construction/destruction. Selected same-owner CRT order stays unchanged. GCC/Clang actual source controls cover prefix unwind, reverse order, shared masks and guarded reentry.", "Chosen owner types are implementation, not recovered original names or enclosing allocation proof. Exact initializer/unwind spelling, original data layout, linked retained selection and runtime/full-game fidelity remain obligations; no measurement claim is granted. Preserve prior claims and historical discoveries."], "reason": "Bind original win guarded global init to its genuine source-owned lifetime and actual compiler-generated closure."}
+// symbol    _$E26
+// ORIGINAL: 0x005EB370 sub_5eb370 0x005EB370-0x005EB38F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned complete exclusive span and selected CRT startup pair: NewTech483880..4838A4/4838B0..4838D8, sharedSprite5D71D0..5D71E6/5D71F0..5D720F, WinBuffer5EB350..5EB366/5EB370..5EB38F. These are process-start lifetimes, not lazy statics or authored callback substitutes.", "NewTech has six actual stride2C Sprite elements at822610 with separate guard822604 mask1. Shared Buffer Sprite9B3A50 uses mask2 of existing special-text guard9B37CC; Win drawing Buffer9B6F08 uses separate guard9B6E30 mask1. Guard is published before actual reverse/direct teardown, upper bits retained and constructors do not reset it.", "Fresh complete build-4esa2of5 COFF proves owner ?WinDrawingBufferOwner@@3UWinDrawingBufferLifetime@@A with generated fini symbol _$E24. Constructor/registration closures and direct cleanup guard/receiver references are physically verified; aggregate uses real compiler vector construction/destruction. Selected same-owner CRT order stays unchanged. GCC/Clang actual source controls cover prefix unwind, reverse order, shared masks and guarded reentry.", "Chosen owner types are implementation, not recovered original names or enclosing allocation proof. Exact initializer/unwind spelling, original data layout, linked retained selection and runtime/full-game fidelity remain obligations; no measurement claim is granted. Preserve prior claims and historical discoveries."], "reason": "Bind original win guarded global fini to its genuine source-owned lifetime and actual compiler-generated closure."}
+// symbol    _$E24
 #include "stdafx.h"
 
 // Win constructor-installed Win branch: capture4, resize13, mouse17, update63.
@@ -40,9 +46,33 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "popup.h"   // pop_caption_title, for DDInit::report_error
 #include "basepop.h"  // Win::set_bubble_text's popup interfaces
 #include <ddraw.h>  // IDirectDrawSurface::GetDC / ReleaseDC in the hdc pair
+#include <new>
+#include <stddef.h>
 
 // 0x009B6F08 in the image - the buffer Win draws into.
-extern Buffer g_WIN_BUFFER;
+// Its guard byte at 0x009B6E30 is separate, not a guessed containing object.
+extern uint8_t WinDrawingBufferCleanupGuard;
+union WinDrawingBufferStorage {
+    char bytes[sizeof(Buffer)];
+    uint32_t alignment_[sizeof(Buffer) / sizeof(uint32_t)];
+};
+struct WinDrawingBufferLifetime {
+    WinDrawingBufferStorage storage_;
+    WinDrawingBufferLifetime() { new (storage_.bytes) Buffer(); }
+    ~WinDrawingBufferLifetime() {
+        if ((WinDrawingBufferCleanupGuard & 1) != 0) return;
+        WinDrawingBufferCleanupGuard |= 1;
+        // Original cleanup calls the complete destructor directly, not
+        // the virtual deleting-destructor entry.
+        buffer().Buffer::~Buffer();
+    }
+    Buffer &buffer() { return *reinterpret_cast<Buffer *>(storage_.bytes); }
+};
+static_assert(sizeof(WinDrawingBufferLifetime) == sizeof(Buffer),
+              "Win drawing Buffer storage extent");
+static_assert(offsetof(WinDrawingBufferLifetime, storage_) == 0,
+              "Win drawing Buffer starts at its owner identity");
+extern WinDrawingBufferLifetime WinDrawingBufferOwner;
 // RECOVERY_OBJECT: v1 0x009B7B6C ?MenuPullDownInputOrigin@@3HA
 // Shared state written by Menu and PullDown keyboard navigation paths.
 int MenuPullDownInputOrigin;
@@ -4138,7 +4168,7 @@ Purpose: Restore the saved screen area and union its rectangle into the
 // rectangle into the dirty region, flip only when asked.
 void __cdecl restore_flip_sprite(int do_flip) {
     if (WinFlipSprite != 0) {
-        g_WIN_BUFFER.copy(
+        WinDrawingBufferOwner.buffer().copy(
             (&ScreenBuffer), 0, 0,
             WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
         int x = WinFlipSpriteY;
@@ -5827,7 +5857,7 @@ static void BuildRectDirect(RECT &r) {
 // or the opaque sub_5f86c0 helper) - both read the same four fields.
 static void RestoreAndFlip(bool useHelper) {
     if (WinFlipSprite != 0) {
-        g_WIN_BUFFER
+        WinDrawingBufferOwner.buffer()
             .copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
                    WinClipWidth, WinClipHeight);
         RECT rect;
@@ -8478,9 +8508,9 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
                 WinClipHeight = win->cursor_sprite_->iHeight_;
                 WinDragOffsetX = win->field_18C_;
                 WinDragOffsetY = win->field_190_;
-                if (g_WIN_BUFFER.dib_.bmiHeader.biWidth != WinClipWidth ||
-                    -g_WIN_BUFFER.dib_.bmiHeader.biHeight != WinClipHeight) {
-                    g_WIN_BUFFER.init(WinClipWidth, WinClipHeight, 0, 0);
+                if (WinDrawingBufferOwner.buffer().dib_.bmiHeader.biWidth != WinClipWidth ||
+                    -WinDrawingBufferOwner.buffer().dib_.bmiHeader.biHeight != WinClipHeight) {
+                    WinDrawingBufferOwner.buffer().init(WinClipWidth, WinClipHeight, 0, 0);
                 }
             }
             int width = WinClipWidth;
@@ -8490,7 +8520,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             WinFlipSpriteY = destX;
             WinFlipSpriteX = destY;
             WinFlipSprite = win->cursor_sprite_;
-            ScreenBuffer.copy(&g_WIN_BUFFER, destX, destY, 0, 0, width, height);
+            ScreenBuffer.copy(&WinDrawingBufferOwner.buffer(), destX, destY, 0, 0, width, height);
 
             RECT rect;
             rect.left = WinFlipSpriteY;
@@ -8596,7 +8626,7 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
             return result;
         }
         if (WinFlipSprite != 0) {
-            g_WIN_BUFFER
+            WinDrawingBufferOwner.buffer()
                 .copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
                        WinClipWidth, WinClipHeight);
             RECT rect;
@@ -9975,7 +10005,7 @@ int __cdecl Win::update_screen(RECT *area, Win *window) {
     }
 
     (&ScreenBuffer)
-        ->copy(&g_WIN_BUFFER, l14 - base2, l10 - base, l1c - l14,
+        ->copy(&WinDrawingBufferOwner.buffer(), l14 - base2, l10 - base, l1c - l14,
                l18 - l10, l14, l10);
     return 0;
 }
@@ -11477,7 +11507,10 @@ void __cdecl add_parent(Win * window) {
 }
 
 // ====================
-Buffer g_WIN_BUFFER;
+// RECOVERY_OBJECT: v1 0x009B6E30 ?WinDrawingBufferCleanupGuard@@3EA
+uint8_t WinDrawingBufferCleanupGuard;
+// RECOVERY_OBJECT: v3 0x009B6F08 ?g_WIN_BUFFER@@3VBuffer@@A member ?WinDrawingBufferOwner@@3UWinDrawingBufferLifetime@@A storage_.bytes
+WinDrawingBufferLifetime WinDrawingBufferOwner;
 
 // ===== homed from src/unrecovered/005ed360.cpp =====
 void __cdecl add_ancestor_origin(int *x, int *y, Win *window);

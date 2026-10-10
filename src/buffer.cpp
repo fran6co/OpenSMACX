@@ -47,6 +47,12 @@
 // ORIGINAL: 0x004BF730 sub_4bf730 0x004BF730-0x004BF73A FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682600 selects startup 0x4bf710..0x4bf726 and registers cleanup 0x4bf730..0x4bf73a. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?g_VEHDRAW_BUFFER@@3VBuffer@@A is selected by physical COFF constructor/destructor relocations; current generated fini symbol is _$E34. Original receiver 0x8cc298 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. This binding is unclaimed; selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original fini operation to the genuine C++ lifetime of ?g_VEHDRAW_BUFFER@@3VBuffer@@A; retain original behavior and remaining matching obligations."}
 // symbol    _$E34
+// ORIGINAL: 0x005D71D0 sub_5d71d0 0x005D71D0-0x005D71E6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned complete exclusive span and selected CRT startup pair: NewTech483880..4838A4/4838B0..4838D8, sharedSprite5D71D0..5D71E6/5D71F0..5D720F, WinBuffer5EB350..5EB366/5EB370..5EB38F. These are process-start lifetimes, not lazy statics or authored callback substitutes.", "NewTech has six actual stride2C Sprite elements at822610 with separate guard822604 mask1. Shared Buffer Sprite9B3A50 uses mask2 of existing special-text guard9B37CC; Win drawing Buffer9B6F08 uses separate guard9B6E30 mask1. Guard is published before actual reverse/direct teardown, upper bits retained and constructors do not reset it.", "Fresh complete build-4esa2of5 COFF proves owner ?BufferSpriteOwner@@3UBufferSpriteLifetime@@A with generated init symbol _$E46. Constructor/registration closures and direct cleanup guard/receiver references are physically verified; aggregate uses real compiler vector construction/destruction. Selected same-owner CRT order stays unchanged. GCC/Clang actual source controls cover prefix unwind, reverse order, shared masks and guarded reentry.", "Chosen owner types are implementation, not recovered original names or enclosing allocation proof. Exact initializer/unwind spelling, original data layout, linked retained selection and runtime/full-game fidelity remain obligations; no measurement claim is granted. Preserve prior claims and historical discoveries."], "reason": "Bind original buffer guarded global init to its genuine source-owned lifetime and actual compiler-generated closure."}
+// symbol    _$E46
+// ORIGINAL: 0x005D71F0 sub_5d71f0 0x005D71F0-0x005D720F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned complete exclusive span and selected CRT startup pair: NewTech483880..4838A4/4838B0..4838D8, sharedSprite5D71D0..5D71E6/5D71F0..5D720F, WinBuffer5EB350..5EB366/5EB370..5EB38F. These are process-start lifetimes, not lazy statics or authored callback substitutes.", "NewTech has six actual stride2C Sprite elements at822610 with separate guard822604 mask1. Shared Buffer Sprite9B3A50 uses mask2 of existing special-text guard9B37CC; Win drawing Buffer9B6F08 uses separate guard9B6E30 mask1. Guard is published before actual reverse/direct teardown, upper bits retained and constructors do not reset it.", "Fresh complete build-4esa2of5 COFF proves owner ?BufferSpriteOwner@@3UBufferSpriteLifetime@@A with generated fini symbol _$E44. Constructor/registration closures and direct cleanup guard/receiver references are physically verified; aggregate uses real compiler vector construction/destruction. Selected same-owner CRT order stays unchanged. GCC/Clang actual source controls cover prefix unwind, reverse order, shared masks and guarded reentry.", "Chosen owner types are implementation, not recovered original names or enclosing allocation proof. Exact initializer/unwind spelling, original data layout, linked retained selection and runtime/full-game fidelity remain obligations; no measurement claim is granted. Preserve prior claims and historical discoveries."], "reason": "Bind original buffer guarded global fini to its genuine source-owned lifetime and actual compiler-generated closure."}
+// symbol    _$E44
 #include "stdafx.h"
 #include "buffer.h"
 #include "graphicwin.h"
@@ -3554,7 +3560,27 @@ int Buffer::write_right_l(char *text, int x_coord, int y_coord, int field_width,
 
 // All buffer blitters borrow the same Sprite descriptor. Its real object
 // definition and original construction evidence are below.
-extern Sprite g_BUFFER_SPRITE;
+// It shares the special-text cleanup byte, but uses its independent bit 2.
+extern uint8_t BufferSpecialTextsCleanupGuard;
+union BufferSpriteStorage {
+    char bytes[sizeof(Sprite)];
+    uint32_t alignment_[sizeof(Sprite) / sizeof(uint32_t)];
+};
+struct BufferSpriteLifetime {
+    BufferSpriteStorage storage_;
+    BufferSpriteLifetime() { new (storage_.bytes) Sprite(); }
+    ~BufferSpriteLifetime() {
+        if ((BufferSpecialTextsCleanupGuard & 2) != 0) return;
+        BufferSpecialTextsCleanupGuard |= 2;
+        sprite().Sprite::~Sprite();
+    }
+    Sprite &sprite() { return *reinterpret_cast<Sprite *>(storage_.bytes); }
+};
+static_assert(sizeof(BufferSpriteLifetime) == sizeof(Sprite),
+              "shared blit Sprite storage extent");
+static_assert(offsetof(BufferSpriteLifetime, storage_) == 0,
+              "shared blit Sprite starts at its owner identity");
+extern BufferSpriteLifetime BufferSpriteOwner;
 
 // ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE BYTE_EXACT
 // LEVER: NAMED MEMBERS AND THE REAL INTERFACE. This was `*(int *)((char *)this
@@ -3589,16 +3615,16 @@ void Buffer::setup_buff_sprite(int colour) {
     if (bits != nullptr) {
         ++surface_lock_count_;
     }
-    g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(bits);
-    g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
-    g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-    g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-    g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
-    g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
-    g_BUFFER_SPRITE.iLeftOffset_ = 0;
-    g_BUFFER_SPRITE.iTopOffset_ = 0;
-    g_BUFFER_SPRITE.cTransparentIndex_ = (uint8_t)colour;
-    g_BUFFER_SPRITE.fObj1Exists_ = 0;
+    BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(bits);
+    BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
+    BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
+    BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+    BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
+    BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
+    BufferSpriteOwner.sprite().iLeftOffset_ = 0;
+    BufferSpriteOwner.sprite().iTopOffset_ = 0;
+    BufferSpriteOwner.sprite().cTransparentIndex_ = (uint8_t)colour;
+    BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
     // The same release pair `get_pixel` ends with, in the same two arms.
     if (surface_ == nullptr) {
@@ -3631,7 +3657,7 @@ Return Value: n/a
 Status: Complete
 */
 void Buffer::release_buff_sprite() {
-    g_BUFFER_SPRITE.pcBits_ = 0;
+    BufferSpriteOwner.sprite().pcBits_ = 0;
 }
 
 // ORIGINAL: 0x005D84C0 ?draw@Buffer@@QAEHPAVBuffer@@HHHHH@Z 0x005D84C0-0x005D8646
@@ -3667,8 +3693,8 @@ int Buffer::draw(Buffer *destination, int index, int x, int y,
         return denominator;
     }
     setup_buff_sprite(index);
-    int result = g_BUFFER_SPRITE.draw(destination, index, x, y, numerator, denominator);
-    g_BUFFER_SPRITE.pcBits_ = 0;
+    int result = BufferSpriteOwner.sprite().draw(destination, index, x, y, numerator, denominator);
+    BufferSpriteOwner.sprite().pcBits_ = 0;
     return result;
 }
 
@@ -3678,7 +3704,7 @@ int Buffer::draw(Buffer *destination, int index, int x, int y,
 int Buffer::draw_mono(Buffer *destination, int transparent, int x, int y,
                       int colour, int numerator, int denominator) {
     setup_buff_sprite(transparent);
-    int result = g_BUFFER_SPRITE.draw_mono(
+    int result = BufferSpriteOwner.sprite().draw_mono(
         destination, transparent, x, y, colour, numerator, denominator);
     release_buff_sprite();
     return result;
@@ -3704,7 +3730,7 @@ int Buffer::draw_mono(Buffer *destination, int transparent, int x, int y,
 int Buffer::draw_mono(Buffer *target, int transparent, int x, int y,
                       int colour) {
     setup_buff_sprite(transparent);
-    int result = g_BUFFER_SPRITE.draw_mono(target, transparent, x, y, colour);
+    int result = BufferSpriteOwner.sprite().draw_mono(target, transparent, x, y, colour);
     release_buff_sprite();
     return result;
 }
@@ -3742,7 +3768,7 @@ int Buffer::draw(Buffer *destination, int index, int x, int y) {
         return index;
     }
     setup_buff_sprite(index);
-    int result = g_BUFFER_SPRITE.draw(destination, index, x, y);
+    int result = BufferSpriteOwner.sprite().draw(destination, index, x, y);
     release_buff_sprite();
     return result;
 }
@@ -4524,8 +4550,8 @@ BufferSpecialTextArrayOwner BufferSpecialTextsOwner;
 // through 0x005E37E0 and registers its cleanup; 0x005D71F0 closes it through
 // 0x005E3820. The blit setup/reset family borrows its pixel pointer rather
 // than owning another allocation. Its original storage is 0x2C zero-fill bytes.
-// RECOVERY_OBJECT: v2 0x009B3A50 0x009B3A7C ?g_BUFFER_SPRITE@@3VSprite@@A 0x005D8290
-Sprite g_BUFFER_SPRITE;
+// RECOVERY_OBJECT: v3 0x009B3A50 0x009B3A7C ?g_BUFFER_SPRITE@@3VSprite@@A 0x005D8290 member ?BufferSpriteOwner@@3UBufferSpriteLifetime@@A storage_.bytes
+BufferSpriteLifetime BufferSpriteOwner;
 
 // See the declaration in buffer.h. Copied verbatim out of the image's .rdata,
 // four characters plus a NUL each, so the loader families append exactly what
@@ -7114,16 +7140,16 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
-        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
-        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iLeftOffset_ = 0;
-        g_BUFFER_SPRITE.iTopOffset_ = 0;
-        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
-        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
+        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
+        BufferSpriteOwner.sprite().iTopOffset_ = 0;
+        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
+        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -7144,9 +7170,9 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
     }
 tail:
     {
-        int result = g_BUFFER_SPRITE.draw_dest(
+        int result = BufferSpriteOwner.sprite().draw_dest(
             a1, a2, a3, a4, reinterpret_cast<unsigned char *>(a5));
-        g_BUFFER_SPRITE.pcBits_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = 0;
         return result;
     }
 }
@@ -7215,16 +7241,16 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
-        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
-        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iLeftOffset_ = 0;
-        g_BUFFER_SPRITE.iTopOffset_ = 0;
-        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
-        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
+        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
+        BufferSpriteOwner.sprite().iTopOffset_ = 0;
+        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
+        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -7245,9 +7271,9 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
     }
 tail:
     {
-        int result = g_BUFFER_SPRITE.draw_multi_table_dest(
+        int result = BufferSpriteOwner.sprite().draw_multi_table_dest(
             a1, a2, a3, a4, reinterpret_cast<unsigned char *>(a5));
-        g_BUFFER_SPRITE.pcBits_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = 0;
         return result;
     }
 }
@@ -7292,16 +7318,16 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
         if (bits != 0) {
             ++surface_lock_count_;
         }
-        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
-        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
-        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iLeftOffset_ = 0;
-        g_BUFFER_SPRITE.iTopOffset_ = 0;
-        g_BUFFER_SPRITE.cTransparentIndex_ = static_cast<char>(transparentIndex);
-        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
+        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
+        BufferSpriteOwner.sprite().iTopOffset_ = 0;
+        BufferSpriteOwner.sprite().cTransparentIndex_ = static_cast<char>(transparentIndex);
+        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
         IDirectDrawSurface *surface = surface_;
         if (surface == 0) {
@@ -7325,8 +7351,8 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
 
 forward:
     {
-        int result = g_BUFFER_SPRITE.draw_dest(a1, a2, a3, a4, a5, a6, a7);
-        g_BUFFER_SPRITE.pcBits_ = 0;
+        int result = BufferSpriteOwner.sprite().draw_dest(a1, a2, a3, a4, a5, a6, a7);
+        BufferSpriteOwner.sprite().pcBits_ = 0;
         return result;
     }
 }
@@ -7364,16 +7390,16 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
         if (bits != 0) {
             ++surface_lock_count_;
         }
-        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
-        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
-        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iLeftOffset_ = 0;
-        g_BUFFER_SPRITE.iTopOffset_ = 0;
-        g_BUFFER_SPRITE.cTransparentIndex_ = static_cast<char>(transparentIndex);
-        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
+        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
+        BufferSpriteOwner.sprite().iTopOffset_ = 0;
+        BufferSpriteOwner.sprite().cTransparentIndex_ = static_cast<char>(transparentIndex);
+        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
         IDirectDrawSurface *surface = surface_;
         if (surface == 0) {
@@ -7397,8 +7423,8 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
 
 forward:
     {
-        int result = g_BUFFER_SPRITE.draw_multi_table_dest(a1, a2, a3, a4, a5, a6, a7);
-        g_BUFFER_SPRITE.pcBits_ = 0;
+        int result = BufferSpriteOwner.sprite().draw_multi_table_dest(a1, a2, a3, a4, a5, a6, a7);
+        BufferSpriteOwner.sprite().pcBits_ = 0;
         return result;
     }
 }
@@ -8137,16 +8163,16 @@ int Buffer::draw_unk2(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
-        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
-        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iLeftOffset_ = 0;
-        g_BUFFER_SPRITE.iTopOffset_ = 0;
-        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
-        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
+        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
+        BufferSpriteOwner.sprite().iTopOffset_ = 0;
+        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
+        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -8165,9 +8191,9 @@ int Buffer::draw_unk2(Buffer *source, int transparent_in, int x, int y,
     }
 tail:
     {
-        int result = g_BUFFER_SPRITE.draw_noop(source,
+        int result = BufferSpriteOwner.sprite().draw_noop(source,
                                           transparent_in, x, y, table);
-        g_BUFFER_SPRITE.pcBits_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = 0;
         return result;
     }
 }
@@ -8187,16 +8213,16 @@ int Buffer::draw(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
-        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
-        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iLeftOffset_ = 0;
-        g_BUFFER_SPRITE.iTopOffset_ = 0;
-        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
-        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
+        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
+        BufferSpriteOwner.sprite().iTopOffset_ = 0;
+        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
+        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -8215,8 +8241,8 @@ int Buffer::draw(Buffer *source, int transparent_in, int x, int y,
     }
 tail:
     {
-        int result = g_BUFFER_SPRITE.draw(source, transparent_in, x, y, table);
-        g_BUFFER_SPRITE.pcBits_ = 0;
+        int result = BufferSpriteOwner.sprite().draw(source, transparent_in, x, y, table);
+        BufferSpriteOwner.sprite().pcBits_ = 0;
         return result;
     }
 }
@@ -8236,16 +8262,16 @@ int Buffer::draw_dest_unk2(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
-        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
-        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iLeftOffset_ = 0;
-        g_BUFFER_SPRITE.iTopOffset_ = 0;
-        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
-        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
+        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
+        BufferSpriteOwner.sprite().iTopOffset_ = 0;
+        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
+        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -8264,9 +8290,9 @@ int Buffer::draw_dest_unk2(Buffer *source, int transparent_in, int x, int y,
     }
 tail:
     {
-        int result = g_BUFFER_SPRITE.draw_dest_unk2(source, transparent_in, x,
+        int result = BufferSpriteOwner.sprite().draw_dest_unk2(source, transparent_in, x,
                                                     y, table);
-        g_BUFFER_SPRITE.pcBits_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = 0;
         return result;
     }
 }
@@ -8446,7 +8472,7 @@ extern const char BufferCenteredSpace[] = " ";
 int Buffer::draw_unk2(Buffer *destination, int transparent, int x, int y,
                       int numerator, int denominator, int table) {
     setup_buff_sprite(transparent);
-    int result = g_BUFFER_SPRITE.draw_noop(destination, transparent, x, y,
+    int result = BufferSpriteOwner.sprite().draw_noop(destination, transparent, x, y,
                                           numerator, denominator, table);
     release_buff_sprite();
     return result;
@@ -8460,7 +8486,7 @@ int Buffer::draw_dest_source(Buffer *destination, int transparent, int x, int y,
                              int numerator, int denominator,
                              unsigned char *table) {
     setup_buff_sprite(transparent);
-    int result = g_BUFFER_SPRITE.draw_dest_source(destination, transparent, x, y,
+    int result = BufferSpriteOwner.sprite().draw_dest_source(destination, transparent, x, y,
                                                   numerator, denominator, table);
     release_buff_sprite();
     return result;
@@ -8473,7 +8499,7 @@ int Buffer::draw_dest_source(Buffer *destination, int transparent, int x, int y,
 int Buffer::draw(Buffer *destination, int transparent, int x, int y,
                   int numerator, int denominator, unsigned char *table) {
     setup_buff_sprite(transparent);
-    int result = g_BUFFER_SPRITE.draw(destination, transparent, x, y,
+    int result = BufferSpriteOwner.sprite().draw(destination, transparent, x, y,
                                       numerator, denominator, table);
     release_buff_sprite();
     return result;
@@ -8487,7 +8513,7 @@ int Buffer::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
                            int numerator, int denominator,
                            unsigned char *table) {
     setup_buff_sprite(transparent);
-    int result = g_BUFFER_SPRITE.draw_dest_unk2(destination, transparent, x, y,
+    int result = BufferSpriteOwner.sprite().draw_dest_unk2(destination, transparent, x, y,
                                                numerator, denominator, table);
     release_buff_sprite();
     return result;
@@ -10071,7 +10097,7 @@ Status: Coverage transcription - unclaimed body
 void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
                             unsigned char *table) {
     setup_buff_sprite(-1);
-    g_BUFFER_SPRITE.draw_dest_unk1(destination, x, y, table);
+    BufferSpriteOwner.sprite().draw_dest_unk1(destination, x, y, table);
     release_buff_sprite();
 }
 
@@ -10090,7 +10116,7 @@ void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
                             int numerator, int denominator,
                             unsigned char *table) {
     setup_buff_sprite(-1);
-    g_BUFFER_SPRITE.draw_dest_unk1(destination, x, y,
+    BufferSpriteOwner.sprite().draw_dest_unk1(destination, x, y,
                                   numerator, denominator, table);
     release_buff_sprite();
 }
@@ -10225,7 +10251,7 @@ int Buffer::load_pcx_from_source(PcxInputView *source, Palette *palette,
 
 /*
 Purpose: The Buffer draw wrapper whose descriptor is the shared surface
-         Sprite (g_BUFFER_SPRITE, 0x009B3A50), the draw_dest_source member:
+         Sprite (BufferSpriteOwner.sprite(), 0x009B3A50), the draw_dest_source member:
          lock the surface (or reuse the DIB bits), publish this buffer's
          geometry into the sprite descriptor the way every draw_* sibling
          does, release the lock when this body holds the last one, then
@@ -10264,16 +10290,16 @@ int Buffer::draw_dest_source(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
-        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
-        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
-        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
-        g_BUFFER_SPRITE.iLeftOffset_ = 0;
-        g_BUFFER_SPRITE.iTopOffset_ = 0;
-        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
-        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
+        BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
+        BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
+        BufferSpriteOwner.sprite().iLeftOffset_ = 0;
+        BufferSpriteOwner.sprite().iTopOffset_ = 0;
+        BufferSpriteOwner.sprite().cTransparentIndex_ = (unsigned char)transparent;
+        BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
         if (surface_ == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
@@ -10292,9 +10318,9 @@ int Buffer::draw_dest_source(Buffer *source, int transparent_in, int x, int y,
     }
 tail:
     {
-        int result = g_BUFFER_SPRITE.draw_dest_source(source, transparent_in,
+        int result = BufferSpriteOwner.sprite().draw_dest_source(source, transparent_in,
                                                       x, y, bits);
-        g_BUFFER_SPRITE.pcBits_ = 0;
+        BufferSpriteOwner.sprite().pcBits_ = 0;
         return result;
     }
 }

@@ -413,7 +413,7 @@ void __cdecl load_box_sprites() {
     }
     for (int technology = 0; technology < 6; ++technology) {
         // Unlike the style pool, these six slots are column-major.
-        extract_interface_box_sprite(g_NEWTECHWIN_SPRITES[technology],
+        extract_interface_box_sprite(NewTechSpritesOwner.at(technology),
                                      391 + (technology / 3) * 29,
                                      566 + (technology % 3) * 35, 28, 34);
     }

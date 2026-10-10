@@ -675,10 +675,8 @@ static char *const StrDelConvertedIndex = (char *)0x0068C120;  // "DelConverted 
 
 }
 
-// The shared surface Sprite buffer.cpp constructs at 0x009B3A50 (its own
-// TU-local extern there) and the tech-wizard facility sprites sprite.cpp
-// defines; the unit draw wrappers and the wizard painter draw through them.
-extern Sprite g_BUFFER_SPRITE;        // 0x009B3A50
+// Buffer owns its shared surface Sprite at 0x009B3A50; this unit does not
+// access that object directly. Sprite owns the tech-wizard facility icons.
 extern Sprite g_TECH_ICON_SPRITES[89];  // 0x00759E28, sprite.cpp's definition
 
 namespace {
