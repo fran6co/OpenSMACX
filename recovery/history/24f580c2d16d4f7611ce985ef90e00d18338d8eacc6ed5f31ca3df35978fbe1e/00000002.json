@@ -1,0 +1,20 @@
+{
+  "event_id": "7a532207b3a977c875fbc8203609638a22163b3c79d2f035ed73b9decaf9820f",
+  "payload": {
+    "affects": [
+      "entity-bed481f51795bcdbfb8aac64265489aeedbe8152d10df014183981fa6349a897"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "threaten-divisor-proposal-misread-oct10",
+    "evidence": [
+      "The initial task and expansion mistakenly interpreted signed IMUL 0x51EB851F followed by high-product SAR3 as /100. Independent arithmetic re-evaluation disproves that interpretation."
+    ],
+    "hypothesis": "Earlier authorization proposed replacing the original signed reserve cap /25 with /100.",
+    "kind": "discovery"
+  },
+  "previous_event": "cccd50a658c723bb4b6214cff3ce17c00e072e707d31377fae0fa18a916e2f3f",
+  "request_id": "threaten-divisor-proposal-misread-oct10",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:threaten-reserve-cap-owner-oct10"
+}
