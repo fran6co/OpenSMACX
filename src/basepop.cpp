@@ -868,17 +868,14 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     if (owner_window_ == this) {
         on_pre_window_init();
 
-        // THE BORDER, in the window's own three thicknesses. See the HANDOFF
-        // on win.h: BorderSizing is twelve bytes, and this local is what
-        // proves it - the frame has room for exactly three dwords here.
-        int sizing[3];
-        sizing[0] = caption_height_;
-        sizing[1] = border_thickness_;
-        sizing[2] = bottom_border_thickness_;
+        // THE BORDER, in the window's own three thicknesses. Win::init reads
+        // this twelve-byte handoff at offsets 0, 4 and 8.
+        BorderSizing sizing = {caption_height_, border_thickness_,
+                               bottom_border_thickness_};
         if (GraphicWin::init(0, 0, static_cast<int>(field_30BC_),
                              static_cast<int>(field_30C0_), owned_text_,
                              style | 0x800, parent, static_cast<Menu *>(0),
-                             reinterpret_cast<BorderSizing *>(sizing)) != 0) {
+                             &sizing) != 0) {
             return 0;
         }
 

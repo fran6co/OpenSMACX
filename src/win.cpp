@@ -8141,31 +8141,29 @@ int Win::init(int x, int y, int width, int height, char * caption,
     this->close();
 
     if (border != 0) {
-        int *bs = reinterpret_cast<int *>(border);
-        this->caption_height_ = bs[0];
-        this->border_thickness_ = bs[1];
-        this->bottom_border_thickness_ = bs[2];
+        this->caption_height_ = border->caption_height;
+        this->border_thickness_ = border->border_thickness;
+        this->bottom_border_thickness_ = border->bottom_border_thickness;
     }
     this->field_1A0_ |= 2;
 
+    // The original FuncInfo at 0x0067F8E8 maps construction states 0..3 to
+    // delete-on-unwind actions for these four scalar Buffer allocations. VC6's
+    // configured operator new may return null; keep each immediate null return.
     {
-        void *raw = operator new(0x588U);
-        this->buffer1_ = (raw != 0) ? new (raw) Buffer() : 0;
+        this->buffer1_ = new Buffer();
         if (this->buffer1_ == 0) return 4;
     }
     {
-        void *raw = operator new(0x588U);
-        this->buffer2_ = (raw != 0) ? new (raw) Buffer() : 0;
+        this->buffer2_ = new Buffer();
         if (this->buffer2_ == 0) return 4;
     }
     {
-        void *raw = operator new(0x588U);
-        this->buffer3_ = (raw != 0) ? new (raw) Buffer() : 0;
+        this->buffer3_ = new Buffer();
         if (this->buffer3_ == 0) return 4;
     }
     {
-        void *raw = operator new(0x588U);
-        this->buffer4_ = (raw != 0) ? new (raw) Buffer() : 0;
+        this->buffer4_ = new Buffer();
         if (this->buffer4_ == 0) return 4;
     }
 
