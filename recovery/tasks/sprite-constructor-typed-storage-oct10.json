@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task_id": "sprite-constructor-typed-storage-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover Sprite constructor initialization through its actual pointer, signed dimension and palette members without integer storage aliases",
+  "base_revision": "52f2d6989240f5db25e08e072cf9d255bfee4119",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6174688
+    }
+  ],
+  "editable_files": [
+    "src/sprite.cpp",
+    "recovery/tests/test_sprite_constructor_typed_storage_oct10.py"
+  ],
+  "evidence": [
+    "Pinned 5E37E0..5E3815 clears receiver+0, adds 0x2C to9B6618, clears+4,+C,+10,+14,+18,+1C,+20,+24, stores palette byte9 at+8, clears+28 and returns the receiver. Preserve this sequence and uint32 accounting wrap; do not initialize padding or change close/borrowed lifetime.",
+    "Existing Sprite declarations and load/copy/close consumers identify+0/+4 as char pointers and dimensions as signed int. Constructor currently stores through volatile uint32 aliases, truncating host pointer initialization and violating typed access. A volatile Sprite receiver preserves ordered accesses without those aliases; no class layout/header/API change is authorized.",
+    "Capture full Sprite native verdict baseline/current and original identity/history continuity. Require actual constructor on poisoned placement storage, unchanged padding/accounting/palette controls, pointer-initialization damage controls, existing asset and startup-array tests, independent review and fresh application compile/link. No new function coverage or whole-game acceptance is claimed."
+  ]
+}
