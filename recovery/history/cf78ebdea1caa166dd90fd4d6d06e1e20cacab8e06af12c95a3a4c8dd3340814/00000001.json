@@ -1,0 +1,19 @@
+{
+  "event_id": "756cd3b31879348144bc193b307ea15b2d7cd6646ccd74d3d13006af4196ca7b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_scenario_behavior.py"
+    ],
+    "evidence": [
+      "Pre-change master host control fails compiling editor_natural: Natural[].name is char* but old mock exposes only StringTable.get(int). Align fixture with actual Strings::get(char*) without changing C++ behavior or weakening assertions; scope is fixture only, not editor_natural source."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "repair-stale-console-scenario-host-string-api-oct10",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-faction-picker-owner-oct10"
+}
