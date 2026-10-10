@@ -12,6 +12,7 @@
   "editable_files": [
     "src/vendor/zlib.recovery.h",
     "recovery/tests/test_zlib_leaf_component_migration.py",
+    "recovery/tests/test_zlib_static_component_migration.py",
     "recovery/tests/test_zlib_five_identity_continuity.py",
     "recovery/tests/test_zlib_three_helper_bindings_oct10.py",
     "recovery/tests/test_zlib_ten_member_bindings_oct10.py"

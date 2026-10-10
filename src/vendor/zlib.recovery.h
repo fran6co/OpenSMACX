@@ -255,6 +255,86 @@ This unclaimed original identity is routed by the component binding below;
 no application substitute body or current measurement claim is recorded here.
 */
 
+/*
+Purpose: Validate and allocate a configured deflate stream before resetting its state.
+// ORIGINAL: 0x0063CF30 _deflateInit2_ 0x0063CF30-0x0063D11C FILE
+Dependency implementation: unmodified zlib 1.0.2 deflate.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Reset a deflate stream while retaining its allocated compression storage.
+// ORIGINAL: 0x0063D120 _deflateReset 0x0063D120-0x0063D193 FILE
+Dependency implementation: unmodified zlib 1.0.2 deflate.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Drive streaming deflate, pending output, block selection and the zlib header/trailer.
+// ORIGINAL: 0x0063D1A0 _deflate 0x0063D1A0-0x0063D413 FILE
+Dependency implementation: unmodified zlib 1.0.2 deflate.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Initialize the sliding-window match finder and compression-level tuning.
+// ORIGINAL: 0x0063D560 _lm_init 0x0063D560-0x0063D5F3 FILE
+Dependency implementation: unmodified zlib 1.0.2 deflate.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Initialize the Huffman descriptors, bit accumulator and first deflate block.
+// ORIGINAL: 0x00640BB0 __tr_init 0x00640BB0-0x00640C22 FILE
+Dependency implementation: unmodified zlib 1.0.2 trees.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Generate static Huffman and length/distance encoding tables once.
+// ORIGINAL: 0x00640C30 _tr_static_init 0x00640C30-0x00640E41 FILE
+Dependency implementation: unmodified zlib 1.0.2 trees.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Reset dynamic Huffman frequencies and seed the end-of-block symbol.
+// ORIGINAL: 0x00640E50 _init_block 0x00640E50-0x00640EB6 FILE
+Dependency implementation: unmodified zlib 1.0.2 trees.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Generate canonical Huffman codes and reverse their transmitted bit order.
+// ORIGINAL: 0x00640EC0 _gen_codes 0x00640EC0-0x00640F33 FILE
+Dependency implementation: unmodified zlib 1.0.2 trees.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Emit a stored-block header and copy its uncompressed bytes.
+// ORIGINAL: 0x00640F40 __tr_stored_block 0x00640F40-0x00640FF3 FILE
+Dependency implementation: unmodified zlib 1.0.2 trees.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
+/*
+Purpose: Emit empty static blocks providing the decoder required lookahead.
+// ORIGINAL: 0x00641000 __tr_align 0x00641000-0x00641273 FILE
+Dependency implementation: unmodified zlib 1.0.2 trees.c.
+This unclaimed original identity is routed by the component binding below;
+no application substitute body or current measurement claim is recorded here.
+*/
+
 // RECOVERY_COMPONENT_BEGIN v1
 // {
 //   "archive_sha256": "517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6",
@@ -327,7 +407,17 @@ no application substitute body or current measurement claim is recorded here.
 //     {"evidence": "Pinned zlib 1.0.2 upstream deflate.c lines 390-408 define `local void flush_pending(z_stream *strm)`; local is static in this release. The exact upstream archive SHA256 is recorded by this companion.; historical identity/claim restored from git:62a0a9b6610fdb7be399b01425fb0d99f63f6ade:src/unrecovered/0063d450.cpp. Source correspondence only; no current COFF qualification is stored here. Fresh configured component measurement is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x0063D450", "spans": ["0x0063D450-0x0063D4C2"], "symbol": "_flush_pending", "unit": "deflate.c"},
 //     {"evidence": "Pinned zlib 1.0.2 source correspondence: trees.c bi_flush reads bi_valid, emits pending bytes through put_short/put_byte, and retains the residual accumulator. Boundaries refer to the independent physical function contribution; following alignment fill is not part of its original body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00642960", "spans": ["0x00642960-0x006429EB"], "symbol": "_bi_flush", "unit": "trees.c"},
 //     {"evidence": "Pinned zlib 1.0.2 source correspondence: trees.c bi_windup writes one or two bytes according to bi_valid and clears the accumulator and its valid-bit count. Boundaries refer to the independent physical function contribution; following alignment fill is not part of its original body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x006429F0", "spans": ["0x006429F0-0x00642A6C"], "symbol": "_bi_windup", "unit": "trees.c"},
-//     {"evidence": "Pinned zlib 1.0.2 source correspondence: trees.c copy_block first calls bi_windup, sets last_eob_len to8, optionally emits the length/complement header, then copies the requested bytes. Its mapped call target is _bi_windup at0x006429F0. Boundaries refer to the independent physical function contribution; following alignment fill is not part of its original body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00642A70", "spans": ["0x00642A70-0x00642B07"], "symbol": "_copy_block", "unit": "trees.c"}
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: trees.c copy_block first calls bi_windup, sets last_eob_len to8, optionally emits the length/complement header, then copies the requested bytes. Its mapped call target is _bi_windup at0x006429F0. Boundaries refer to the independent physical function contribution; following alignment fill is not part of its original body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00642A70", "spans": ["0x00642A70-0x00642B07"], "symbol": "_copy_block", "unit": "trees.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: deflateInit2_ validates version/stream size and compression parameters, supplies zcalloc/zcfree when absent, allocates compression storage, then calls deflateReset; failure reports z_errmsg and releases through deflateEnd. String, allocator and error-table targets require independent qualification. Independently pinned function boundaries agree with the physical upstream COFF contribution; following alignment fill is outside this body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required; any missing data/string/helper evidence must remain unknown. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x0063CF30", "spans": ["0x0063CF30-0x0063D11C"], "symbol": "_deflateInit2_", "unit": "deflate.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: deflateReset clears totals, pending output and status, resets the checksum, initializes trees through _tr_init and match state through lm_init. Independently pinned function boundaries agree with the physical upstream COFF contribution; following alignment fill is outside this body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required; any missing data/string/helper evidence must remain unknown. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x0063D120", "spans": ["0x0063D120-0x0063D193"], "symbol": "_deflateReset", "unit": "deflate.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: deflate emits the header through putShortMSB, drains flush_pending, dispatches the configured compression function and emits alignment/stored blocks and the checksum trailer. Error and configuration-table targets require independent qualification. Independently pinned function boundaries agree with the physical upstream COFF contribution; following alignment fill is outside this body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required; any missing data/string/helper evidence must remain unknown. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x0063D1A0", "spans": ["0x0063D1A0-0x0063D413"], "symbol": "_deflate", "unit": "deflate.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: lm_init clears hash state and reads per-level tuning from configuration_table before resetting match, position and input state. Configuration-table targets require independent qualification. Independently pinned function boundaries agree with the physical upstream COFF contribution; following alignment fill is outside this body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required; any missing data/string/helper evidence must remain unknown. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x0063D560", "spans": ["0x0063D560-0x0063D5F3"], "symbol": "_lm_init", "unit": "deflate.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: _tr_init calls tr_static_init, attaches the three static tree descriptors, resets bit state, then calls init_block. Descriptor data targets require independent qualification; source leading underscore acquires a second underscore under C decoration. Independently pinned function boundaries agree with the physical upstream COFF contribution; following alignment fill is outside this body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required; any missing data/string/helper evidence must remain unknown. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00640BB0", "spans": ["0x00640BB0-0x00640C22"], "symbol": "__tr_init", "unit": "trees.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: tr_static_init gates its static tables on static_init_done, generates length/distance mappings and static literal/distance trees, and calls gen_codes/bi_reverse. Mutable tables, constants and the static guard require independent qualification. Independently pinned function boundaries agree with the physical upstream COFF contribution; following alignment fill is outside this body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required; any missing data/string/helper evidence must remain unknown. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00640C30", "spans": ["0x00640C30-0x00640E41"], "symbol": "_tr_static_init", "unit": "trees.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: init_block clears the literal, distance and bit-length frequency trees, sets END_BLOCK frequency to one, and clears block accounting. Independently pinned function boundaries agree with the physical upstream COFF contribution; following alignment fill is outside this body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required; any missing data/string/helper evidence must remain unknown. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00640E50", "spans": ["0x00640E50-0x00640EB6"], "symbol": "_init_block", "unit": "trees.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: gen_codes computes next_code from bit-length counts and assigns bi_reverse(next_code[length]++,length) to each nonzero-length symbol. Its bi_reverse target is independently source-bound at642940. Independently pinned function boundaries agree with the physical upstream COFF contribution; following alignment fill is outside this body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required; any missing data/string/helper evidence must remain unknown. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00640EC0", "spans": ["0x00640EC0-0x00640F33"], "symbol": "_gen_codes", "unit": "trees.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: _tr_stored_block writes the block-type/eof bits, accounts aligned stored length, then calls copy_block with the length-header flag set. Its copy_block target is independently source-bound at642A70; source leading underscore acquires a second underscore under C decoration. Independently pinned function boundaries agree with the physical upstream COFF contribution; following alignment fill is outside this body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required; any missing data/string/helper evidence must remain unknown. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00640F40", "spans": ["0x00640F40-0x00640FF3"], "symbol": "__tr_stored_block", "unit": "trees.c"},
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: _tr_align emits static-tree END_BLOCK codes, flushes complete bytes and conditionally emits another empty block according to last_eob_len/bi_valid. The static_ltree data target requires independent qualification; source leading underscore acquires a second underscore under C decoration. Independently pinned function boundaries agree with the physical upstream COFF contribution; following alignment fill is outside this body span. This records dependency ownership only, not a current byte claim. Fresh configured component-binary bytes, boundary and reference verification is required; any missing data/string/helper evidence must remain unknown. Application retained selection, whole-library version uniqueness and runtime equivalence remain unproved.", "origin": "0x00641000", "spans": ["0x00641000-0x00641273"], "symbol": "__tr_align", "unit": "trees.c"}
 //   ]
 // }
 // RECOVERY_COMPONENT_END

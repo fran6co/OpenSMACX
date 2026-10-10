@@ -142,9 +142,15 @@ def test_zlib_component_keeps_reviewed_provider_bindings_with_witnessed_addition
     assert manifest.flags == ("/c", "/O2", "/Gy", "/GR-", "/GX")
 
     additions = {0x00642960, 0x006429F0, 0x00642A70}
-    assert len(manifest.bindings) == 12, "only independently witnessed additions are allowed"
-    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED) | set(RESTORED) | additions
+    from test_zlib_ten_member_bindings_oct10 import EXPECTED as TEN_MEMBERS
+    assert len(manifest.bindings) == 22, "only independently witnessed additions are allowed"
+    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED) | set(RESTORED) | additions | set(TEN_MEMBERS)
     for binding in manifest.bindings:
+        if binding.origin.address in TEN_MEMBERS:
+            end, symbol, unit = TEN_MEMBERS[binding.origin.address]
+            assert [(span.start, span.end) for span in binding.spans] == [(binding.origin.address, end)]
+            assert (binding.symbol, binding.unit) == (symbol, unit)
+            continue
         if binding.origin.address in additions:
             # Exact new envelopes, spans and provider symbols have their own
             # continuity/roundtrip controls; historical rows below stay intact.
