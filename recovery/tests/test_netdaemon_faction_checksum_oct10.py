@@ -40,6 +40,8 @@ def test_only_two_walks_change_and_all_original_obligations_survive():
     # Later authorized packet migration has its own whole-source continuity
     # and actual-source controls; reverse only that bounded step here.
     from test_netdaemon_typed_bulk_landmark_oct10 import restore_packet_migration
+    from test_netdaemon_vehicle_base_checksum_oct10 import restore_vehicle_base_checksum_migration
+    current = restore_vehicle_base_checksum_migration(current)
     current = restore_packet_migration(current)
     before = extract_definition(old, SIGNATURE)
     after = extract_definition(current, SIGNATURE)

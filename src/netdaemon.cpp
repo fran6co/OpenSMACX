@@ -1470,24 +1470,24 @@ void NetDaemon::game_checksum(int *results) {
 
     {
         int idx2;
+        int countB = GameDataStateStorage.fields_.vehicle_current_count_;
         for (idx2 = 0; idx2 < 8; ++idx2) {
-            int countB = *(char *)&GameDataStateStorage.fields_.vehicle_current_count_;
             if (countB > 0) {
-                char *p3 = (char *)((char *)Vehs + 2);
+                Veh *vehicle = Vehs;
                 int idxB = 0;
                 do {
-                    if ((unsigned char)p3[0xc] == idx2) {
-                        cs = checksum(p3 - 2, 2, cs);
-                        cs = checksum(p3, 2, cs);
-                        cs = checksum(p3 + 8, 2, cs);
-                        cs = checksum(p3 + 0xc, 1, cs);
-                        cs = checksum(p3 + 0xe, 1, cs);
-                        cs = checksum(p3 + 0x22, 1, cs);
-                        cs = checksum(p3 + 0x26, 1, cs);
-                        cs = checksum(p3 + 0x2c, 2, cs);
-                        countB = *(char *)&GameDataStateStorage.fields_.vehicle_current_count_;
+                    if (vehicle->faction_id == idx2) {
+                        cs = checksum((char *)&vehicle->x, 2, cs);
+                        cs = checksum((char *)&vehicle->y, 2, cs);
+                        cs = checksum((char *)&vehicle->proto_id, 2, cs);
+                        cs = checksum((char *)&vehicle->faction_id, 1, cs);
+                        cs = checksum((char *)&vehicle->dmg_incurred, 1, cs);
+                        cs = checksum((char *)&vehicle->morale, 1, cs);
+                        cs = checksum((char *)&vehicle->moves_expended, 1, cs);
+                        cs = checksum((char *)&vehicle->home_base_id, 2, cs);
+                        countB = GameDataStateStorage.fields_.vehicle_current_count_;
                     }
-                    p3 += 0x34;
+                    ++vehicle;
                     idxB++;
                 } while (idxB < countB);
             }
@@ -1499,19 +1499,22 @@ void NetDaemon::game_checksum(int *results) {
     {
         int countC = GameDataStateStorage.fields_.base_current_count_;
         if (countC > 0) {
-            char *p4 = (char *)((char *)Bases + 0x3C);
+            Base *base = Bases;
             int idxC = 0;
             do {
-                cs = checksum(p4 - 0x3c, 7, cs);
-                cs = checksum(p4, 4, cs);
-                cs = checksum(p4 + 4, 4, cs);
-                cs = checksum(p4 + 0x10, 4, cs);
-                cs = checksum(p4 + 0x14, 4, cs);
-                cs = checksum(p4 + 0x3c, 4, cs);
-                cs = checksum(p4 + 0x48, 8, cs);
-                cs = checksum(p4 + 0x50, 9, cs);
+                // Original prefix excludes assimilation_turns_left; the
+                // facilities checksum deliberately selects only nine bytes.
+                cs = checksum((char *)base, 7, cs);
+                cs = checksum((char *)&base->nutrients_accumulated, 4, cs);
+                cs = checksum((char *)&base->minerals_accumulated, 4, cs);
+                cs = checksum((char *)&base->queue_size, 4, cs);
+                cs = checksum((char *)&base->queue_production_id[0], 4, cs);
+                cs = checksum((char *)&base->resource_sqr_radius, 4, cs);
+                cs = checksum((char *)base->spec, 8, cs);
+                cs = checksum((char *)base->facilities_built, 9, cs);
+                countC = GameDataStateStorage.fields_.base_current_count_;
                 idxC++;
-                p4 += 0x134;
+                ++base;
             } while (idxC < countC);
         }
     }
@@ -1676,46 +1679,49 @@ void NetDaemon::game_checksum(int *results) {
         {
             int idx2b;
             for (idx2b = 0; idx2b < 8; ++idx2b) {
-                int countB2 = *(char *)&GameDataStateStorage.fields_.vehicle_current_count_;
+                int countB2 = GameDataStateStorage.fields_.vehicle_current_count_;
                 cs = 0;
                 if (countB2 > 0) {
-                    char *p3b = (char *)Vehs;
+                    Veh *vehicle = Vehs;
                     int idxBb = 0;
                     do {
-                        if ((unsigned char)p3b[0xe] == idx2b) {
-                            cs = checksum(p3b, 2, cs);
-                            cs = checksum(p3b + 2, 2, cs);
-                            cs = checksum(p3b + 0xa, 3, cs);
-                            cs = checksum(p3b + 0x24, 1, cs);
-                            cs = checksum(p3b + 0x28, 1, cs);
-                            cs = checksum(p3b + 0x2e, 2, cs);
-                            countB2 = *(char *)&GameDataStateStorage.fields_.vehicle_current_count_;
+                        if (vehicle->faction_id == idx2b) {
+                            cs = checksum((char *)&vehicle->x, 2, cs);
+                            cs = checksum((char *)&vehicle->y, 2, cs);
+                            // Original three-byte range includes the low
+                            // byte of unk_1, beyond the two-byte proto_id.
+                            cs = checksum((char *)vehicle + offsetof(Veh, proto_id), 3, cs);
+                            cs = checksum((char *)&vehicle->morale, 1, cs);
+                            cs = checksum((char *)&vehicle->moves_expended, 1, cs);
+                            cs = checksum((char *)&vehicle->home_base_id, 2, cs);
                         }
-                        p3b += 0x34;
+                        countB2 = GameDataStateStorage.fields_.vehicle_current_count_;
+                        ++vehicle;
                         idxBb++;
                     } while (idxBb < countB2);
                 }
+                *out++ = cs;
             }
         }
-        *out++ = cs;
 
         cs = 0;
         {
             int countC2 = GameDataStateStorage.fields_.base_current_count_;
             if (countC2 > 0) {
-                char *p4b = (char *)((char *)Bases + 0x3C);
+                Base *base = Bases;
                 int idxC2 = 0;
                 do {
-                    cs = checksum(p4b - 0x3c, 7, cs);
-                    cs = checksum(p4b, 4, cs);
-                    cs = checksum(p4b + 4, 4, cs);
-                    cs = checksum(p4b + 0x10, 4, cs);
-                    cs = checksum(p4b + 0x14, 4, cs);
-                    cs = checksum(p4b + 0x3c, 4, cs);
-                    cs = checksum(p4b + 0x48, 8, cs);
-                    cs = checksum(p4b + 0x50, 9, cs);
+                    cs = checksum((char *)base, 7, cs);
+                    cs = checksum((char *)&base->nutrients_accumulated, 4, cs);
+                    cs = checksum((char *)&base->minerals_accumulated, 4, cs);
+                    cs = checksum((char *)&base->queue_size, 4, cs);
+                    cs = checksum((char *)&base->queue_production_id[0], 4, cs);
+                    cs = checksum((char *)&base->resource_sqr_radius, 4, cs);
+                    cs = checksum((char *)base->spec, 8, cs);
+                    cs = checksum((char *)base->facilities_built, 9, cs);
+                    countC2 = GameDataStateStorage.fields_.base_current_count_;
                     idxC2++;
-                    p4b += 0x134;
+                    ++base;
                 } while (idxC2 < countC2);
             }
         }

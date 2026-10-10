@@ -44,7 +44,8 @@ def test_only_three_packet_builders_and_passive_layouts_change():
     path = ROOT / "src/netdaemon.cpp"
     source = path.read_text()
     old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
-    assert restore_packet_migration(source) == old
+    from test_netdaemon_vehicle_base_checksum_oct10 import restore_vehicle_base_checksum_migration
+    assert restore_packet_migration(restore_vehicle_base_checksum_migration(source)) == old
     rows = read_text(source, path)
     assert write(source, rows) == source
     previous = {r.address: r for r in read_text(old, path)}
