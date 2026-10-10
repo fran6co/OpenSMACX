@@ -121,23 +121,27 @@ public:
 };
 class Dialog { public: void close() {} };
 class Spot { public: void shutdown() {} };
+static void callback_poison(int) {}
 class SpriteBox : public GraphicWin, public Dialog {
 public:
     SpriteList list_;
     Spot spots_;
     uint32_t field_4_, field_8_, field_1C_, field_20_;
     uint32_t field_54_, field_58_, field_5C_, field_60_;
-    uint32_t field_74_, field_78_, field_7C_, field_84_;
     void (*redraw_callback_)(Sprite *, GraphicWin *, int, int, int);
     void (*field_68_)(int);
     void (*left_down_callback_)(int);
     void (*left_up_callback_)(int);
+    void (*right_click_callback_)(int);
+    void (*right_down_callback_)(int);
+    void (*right_up_callback_)(int);
     void (*double_click_callback_)(int);
+    void (*right_double_click_callback_)(int);
     SpriteBox() : field_4_(0), field_8_(0), field_1C_(0), field_20_(0),
         field_54_(0), field_58_(0), field_5C_(0), field_60_(0),
-        field_74_(0), field_78_(0), field_7C_(0), field_84_(0),
         redraw_callback_(0), field_68_(0), left_down_callback_(0),
-        left_up_callback_(0), double_click_callback_(0) {}
+        left_up_callback_(0), right_click_callback_(0), right_down_callback_(0),
+        right_up_callback_(0), double_click_callback_(0), right_double_click_callback_(0) {}
     void close();
 };
 
@@ -195,6 +199,10 @@ int main() {
     tracked_text = 0;
 
     SpriteBox box;
+    box.right_click_callback_ = callback_poison;
+    box.right_down_callback_ = callback_poison;
+    box.right_up_callback_ = callback_poison;
+    box.right_double_click_callback_ = callback_poison;
     SpriteStruct *box_payload = new SpriteStruct;
     tracked_text = static_cast<char *>(::malloc(8));
     strcpy(tracked_text, "box");
@@ -203,6 +211,8 @@ int main() {
     box.list_.current_ = box.list_.head_;
     box.list_.entry_count_ = 1;
     box.close();
+    assert(box.right_click_callback_ == 0 && box.right_down_callback_ == 0);
+    assert(box.right_up_callback_ == 0 && box.right_double_click_callback_ == 0);
     assert(tracked_text_frees == 3);
     assert(box.list_.head_ == 0 && box.list_.entry_count_ == 0);
     tracked_text = 0;

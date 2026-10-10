@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from test_sprite_list_lifecycle_actual_source import extract_definition, repo_root
+from test_spritelist_base_lifetime import extract_definition, repo_root
 
 
 ROOT = repo_root()

@@ -19,9 +19,13 @@ PACKET = Path(__file__).resolve().parent
 
 def repo_root():
     configured = os.environ.get("OPENSMACX_TEST_SOURCE_ROOT")
-    candidates = [Path(configured).resolve()] if configured else []
-    candidates.extend(PACKET.parents)
-    for candidate in candidates:
+    if configured:
+        candidate = Path(configured).resolve()
+        if ((candidate / "src/spritebox.h").exists()
+                and (candidate / "src/stringstruct.cpp").exists()):
+            return candidate
+        raise AssertionError("OPENSMACX_TEST_SOURCE_ROOT lacks installed lifecycle source")
+    for candidate in PACKET.parents:
         if (candidate / "src/spritebox.h").exists():
             return candidate
     raise AssertionError("cannot locate OpenSMACX src/spritebox.h")
@@ -95,6 +99,8 @@ def installed_bodies(root):
         "SpriteBox member declaration order must preserve list-before-Spot destruction")
 
     base_dtor = extract_definition(sprite_source, "SpriteListBase::~SpriteListBase()")
+    derived_dtor = extract_definition(sprite_source, "SpriteList::~SpriteList()")
+    assert re.search(r"SpriteList::~SpriteList\(\)\s*\{\s*\}$", derived_dtor)
     assert "remove_all()" in base_dtor, "intermediate destructor must drain the shared list"
     assert not re.search(r"\{\s*\}", base_dtor), "empty placeholder destructor is not recovery"
     assert "SpriteListBase::~SpriteListBase()" in sprite_source
@@ -131,6 +137,11 @@ def installed_bodies(root):
 def fixture_source(root, bodies, string_source):
     fixture_path = root / "recovery/tests/sprite_list_lifecycle_control.cpp"
     fixture = fixture_path.read_text()
+    header = (root / "src/spritebox.h").read_text()
+    for member in ("right_click_callback_", "right_down_callback_",
+                   "right_up_callback_", "right_double_click_callback_"):
+        assert re.search(r"ClickCallback\s+" + member + r"\s*;", header)
+        assert re.search(r"void\s*\(\*" + member + r"\)\(int\);", fixture)
     # The checked source header above is the authority for this compact host
     # declaration scaffold; this transformation adds no product method body.
     fixture = fixture.replace(
@@ -230,4 +241,56 @@ def test_dispatching_intermediate_clear_to_sprite_hook_fails(compiler):
     mutant = "static_cast<SpriteList *>(self)->SpriteList::on_remove(payload);"
     assert old in source
     compile_and_run(source.replace(old, mutant, 1), compiler, False)
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_original_entry_count_walk_truncation_is_detected(compiler):
+    root = repo_root()
+    _, string_source, _, bodies, _ = installed_bodies(root)
+    source = fixture_source(root, bodies, string_source)
+    old = "} while (index < self->entry_count_);"
+    assert old in bodies
+    compile_and_run(source.replace(old, "} while (index < 0);", 1), compiler, False)
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_close_skipping_real_sprite_removal_hook_is_detected(compiler):
+    root = repo_root()
+    _, string_source, sprite_source, bodies, _ = installed_bodies(root)
+    close = extract_definition(sprite_source, "void SpriteList::close()")
+    assert "on_remove(payload);" in close
+    mutated = close.replace("on_remove(payload);", "/* omitted removal */", 1)
+    source = fixture_source(root, bodies.replace(close, mutated, 1), string_source)
+    compile_and_run(source, compiler, False)
+
+
+def test_canonical_6116e0_claim_is_unique_and_keeps_its_full_span():
+    from match_recovery.source import read
+    rows = [row for row in read(repo_root() / "src") if row.address == 0x6116E0]
+    assert len(rows) == 1
+    row, = rows
+    assert row.path == repo_root() / "src/spritebox.cpp"
+    assert row.image_spans == ((0x6116E0, 0x611728),)
+    assert row.byte_exact
+    assert row.symbol == "??_GSpriteList@@UAEPAXI@Z"
+
+
+def test_explicit_missing_source_root_cannot_fall_back_to_current_checkout(monkeypatch, tmp_path):
+    monkeypatch.setenv("OPENSMACX_TEST_SOURCE_ROOT", str(tmp_path))
+    with pytest.raises(AssertionError, match="OPENSMACX_TEST_SOURCE_ROOT"):
+        repo_root()
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+@pytest.mark.parametrize("member", ["right_click_callback_", "right_down_callback_",
+                                    "right_up_callback_", "right_double_click_callback_"])
+def test_close_omitting_typed_right_callback_reset_is_detected(compiler, member):
+    root = repo_root()
+    _, string_source, sprite_source, bodies, _ = installed_bodies(root)
+    close = extract_definition(sprite_source, "void SpriteBox::close()")
+    needle = member + " = 0;"
+    assert close.count(needle) == 1
+    mutated = close.replace(needle, "/* omitted callback reset */", 1)
+    source = fixture_source(root, bodies.replace(close, mutated, 1), string_source)
+    compile_and_run(source, compiler, False)
 

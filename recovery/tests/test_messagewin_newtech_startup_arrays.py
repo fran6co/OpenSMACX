@@ -184,41 +184,66 @@ def test_messagewin_pending_list_array_has_real_ctor_and_reverse_cleanup(
     assert mutant.returncode != 0, "omitting actual StringList cleanup must fail"
 
 
-def _sprite_probe(ctor_body: str, dtor_body: str, extent: int) -> str:
+def _sprite_probe(ctor_body: str, dtor_body: str, extent: int,
+                  guard_damage: str | None = None, already_guarded: bool = False) -> str:
+    sprite_header = (ROOT / "src/sprite.h").read_text()
+    fields = sprite_header[sprite_header.index("  char *ppszFileName_;"):]
+    fields = fields[:fields.index("\n};")]
+    header = (ROOT / "src/newtechwin.h").read_text()
+    aggregate = _block(header, "struct NewTechSpriteArray") + ";"
+    assert "Sprite elements_[6];" in aggregate
+    aggregate = aggregate.replace("elements_[6]", f"elements_[{extent}]", 1)
+    storage = _block(header, "union NewTechSpriteStorage") + ";"
+    # Host ABI projection only: source target storage is aligned for Win32.
+    storage = storage.replace("{", "{\n  void *host_alignment;", 1)
+    lifetime = _block(header, "struct NewTechSpriteLifetime") + ";"
+    if guard_damage == "publish":
+        needle, replacement = "NewTechSpritesCleanupGuard |= 1;", "/* omitted guard publication */"
+    elif guard_damage == "upper_bits":
+        needle, replacement = "NewTechSpritesCleanupGuard |= 1;", "NewTechSpritesCleanupGuard = 1;"
+    elif guard_damage == "skip":
+        needle = "if ((NewTechSpritesCleanupGuard & 1) != 0) return;"
+        replacement = "/* omitted guard early return */"
+    if guard_damage:
+        assert lifetime.count(needle) == 1
+        lifetime = lifetime.replace(needle, replacement, 1)
     body = ctor_body.replace("sizeof(Sprite)", "sizeof(HostSprite)")
     body = "HostSprite::HostSprite() " + body[:-1] + "\n  id = constructed_count; constructed[constructed_count++] = id;\n}"
     dtor = dtor_body[1:-1]
-    return r"""
+    source = r"""
 #include <cstdlib>
 #include <stdint.h>
+#include <new>
 static int constructed[12], constructed_count;
 static int closed[12], close_count;
 int SpriteMemoryUsed;
+uint8_t NewTechSpritesCleanupGuard = INITIAL_GUARD;
 struct HostSprite {
-  uint32_t ppszFileName_, pcBits_, iSpriteWidth2_, iSpriteWidth_;
-  uint32_t iSpriteHeight_, iWidth_, iHeight_, iLeftOffset_, iTopOffset_;
-  uint8_t cTransparentIndex_;
-  uint32_t fObj1Exists_;
+""" + fields + r"""
   int id;
   HostSprite();
   ~HostSprite() {
 """ + dtor + r"""
   }
-  void close() { closed[close_count++] = id; }
+  void close() {
+    if ((NewTechSpritesCleanupGuard & 1) == 0) std::abort();
+    closed[close_count++] = id;
+  }
 };
-""" + body + r"""
+typedef HostSprite Sprite;
+""" + body + "\n" + aggregate + "\n" + storage + "\n" + lifetime + r"""
 struct VerifyAtExit {
   ~VerifyAtExit() {
-    if (close_count != 6) std::abort();
-    for (int i = 0; i != 6; ++i)
+    if (close_count != EXPECTED_CLEANUPS || NewTechSpritesCleanupGuard != 0x81) std::abort();
+    for (int i = 0; i != EXPECTED_CLEANUPS; ++i)
       if (closed[i] != 5 - i) std::abort();
   }
 } verify_at_exit;
-""" + f"static HostSprite g_NEWTECHWIN_SPRITES[{extent}];\n" + r"""
+static NewTechSpriteLifetime NewTechSpritesOwner;
 int main() {
-  if (constructed_count != 6) return 51;
+  if (constructed_count != 6 || NewTechSpritesCleanupGuard != INITIAL_GUARD) return 51;
   for (int i = 0; i != 6; ++i) {
-    const HostSprite& sprite = g_NEWTECHWIN_SPRITES[i];
+    const HostSprite& sprite = NewTechSpritesOwner.at(i);
     if (constructed[i] != i || sprite.ppszFileName_ != 0 || sprite.pcBits_ != 0 ||
         sprite.iSpriteWidth2_ != 0 || sprite.iSpriteWidth_ != 0 ||
         sprite.iSpriteHeight_ != 0 || sprite.iWidth_ != 0 || sprite.iHeight_ != 0 ||
@@ -229,6 +254,8 @@ int main() {
   return 0;
 }
 """
+    return source.replace("INITIAL_GUARD", "0x81" if already_guarded else "0x80").replace(
+        "EXPECTED_CLEANUPS", "0" if already_guarded else "6")
 
 
 def test_newtech_sprite_array_real_global_constructor_and_exit_cleanup(
@@ -238,13 +265,14 @@ def test_newtech_sprite_array_real_global_constructor_and_exit_cleanup(
     header = (ROOT / "src/sprite.h").read_text(encoding="utf-8")
     owner = (ROOT / "src/newtechwin.cpp").read_text(encoding="utf-8")
     use_header = (ROOT / "src/newtechwin.h").read_text(encoding="utf-8")
-    declaration = re.search(r"^Sprite\s+g_NEWTECHWIN_SPRITES\s*\[(\d+)\]\s*;",
+    declaration = re.search(r"^NewTechSpriteLifetime\s+NewTechSpritesOwner\s*;",
                             owner, re.MULTILINE)
-    assert declaration and declaration.group(1) == "6"
-    assert "extern Sprite g_NEWTECHWIN_SPRITES[6];" in use_header
+    assert declaration
+    assert "extern NewTechSpriteLifetime NewTechSpritesOwner;" in use_header
+    assert "Sprite elements_[6];" in use_header
     compact_owner = re.sub(r"\s+", " ", owner)
-    assert "set_report_icons(&g_NEWTECHWIN_SPRITES[0], &g_NEWTECHWIN_SPRITES[1], &g_NEWTECHWIN_SPRITES[2])" in compact_owner
-    assert "set_report_icons(&g_NEWTECHWIN_SPRITES[3], &g_NEWTECHWIN_SPRITES[4], &g_NEWTECHWIN_SPRITES[5])" in compact_owner
+    assert "set_report_icons(&NewTechSpritesOwner.at(0), &NewTechSpritesOwner.at(1), &NewTechSpritesOwner.at(2))" in compact_owner
+    assert "set_report_icons(&NewTechSpritesOwner.at(3), &NewTechSpritesOwner.at(4), &NewTechSpritesOwner.at(5))" in compact_owner
 
     _mapped_record("src/newtechwin.cpp", 0x004838B0,
                    "??__Fg_NEWTECHWIN_SPRITES@@YAXXZ", (0x004838B0, 0x004838D8),
@@ -256,6 +284,9 @@ def test_newtech_sprite_array_real_global_constructor_and_exit_cleanup(
     assert objects[0].span is not None and objects[0].span.end == 0x00822718
     assert objects[0].symbol == "?g_NEWTECHWIN_SPRITES@@3PAVSprite@@A"
     assert objects[0].unit == "src/newtechwin.cpp"
+    guard = [row for row in read_objects(ROOT, image_pin(ROOT))
+             if row.origin.address == 0x00822604]
+    assert len(guard) == 1 and guard[0].symbol == "?NewTechSpritesCleanupGuard@@3EA"
 
     image_path = ROOT / ".opensmacx/game/terranx_original.exe"
     if image_path.is_file():
@@ -282,3 +313,23 @@ def test_newtech_sprite_array_real_global_constructor_and_exit_cleanup(
     extent_mutant = _compile_run(tmp_path / "newtech-extent-mutant", host_compiler,
                                  _sprite_probe(ctor, dtor_match.group(1), 5))
     assert extent_mutant.returncode != 0, "changing the six-Sprite object extent must fail"
+
+    for damage in ("publish", "upper_bits"):
+        mutant = _compile_run(tmp_path / f"newtech-guard-{damage}", host_compiler,
+                              _sprite_probe(ctor, dtor_match.group(1), 6, damage))
+        assert mutant.returncode != 0, "guard publication and upper-bit preservation are load-bearing"
+
+
+def test_newtech_guarded_exit_skips_cleanup_without_resetting_guard(
+    tmp_path: Path, host_compiler: str,
+) -> None:
+    impl = (ROOT / "src/sprite.cpp").read_text()
+    header = (ROOT / "src/sprite.h").read_text()
+    ctor = _body(impl, "\nSprite::Sprite()")
+    dtor, = re.findall(r"MEASURED\s+~Sprite\(\)\s*(\{[^}]*\})", header)
+    source = _sprite_probe(ctor, dtor, 6, already_guarded=True)
+    result = _compile_run(tmp_path / "newtech-already-guarded", host_compiler, source)
+    assert result.returncode == 0, result.stdout + result.stderr
+    mutant = _sprite_probe(ctor, dtor, 6, "skip", already_guarded=True)
+    result = _compile_run(tmp_path / "newtech-guard-skip-mutant", host_compiler, mutant)
+    assert result.returncode != 0, "published cleanup bit must suppress element destruction"
