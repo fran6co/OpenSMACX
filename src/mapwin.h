@@ -131,6 +131,9 @@ class MapWin : public virtual GraphicWin {
  public:
   // homed from 0046fce0.cpp
   void UNK7();
+  // Altitude-only whole-cache invalidation. Descriptive recovered name;
+  // the original caller and method spelling remain unknown.
+  void clear_all_altitude();
 
  public:
   // 0x0046F880, source-owned close handler.

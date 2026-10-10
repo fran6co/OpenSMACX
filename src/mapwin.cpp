@@ -7072,6 +7072,23 @@ void __cdecl terrain_fixup(MapWin * window) {
     }
 }
 
+// Reset only the five altitude samples, retaining brightness, terrain and
+// detail. MapArea is tested as signed and re-read after each complete row.
+// The existing cache receiver/storage model supports this source home;
+// original invocation and method spelling remain unresolved.
+// ORIGINAL: 0x0046FC30 sub_46fc30 0x0046FC30-0x0046FC7B
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf full75-byte span46FC30..46FC7B independently decodes to receiver+4 null gate, signed MapArea949884 count/reload, fiveFF byte writes at4..8 and12-byte row advance; terminatingRET fixes exclusive bound. Ghidra candidate is discovery provenance, not original-name evidence.", "MapWin owned_ TerrainCacheEntry* is source-bound at+4; real cache allocation uses MapArea*12. Existing clear_terrain46FD90 and clear_alt46FB90 access identical storage/domain; TerrainCacheEntry altitude[5] owns offsets4..8. No new allocation/type or fixed-address view is introduced.", "Bounded original direct/absolute-pointer/caller search found no reference. Negative search does not prove unused; exact original receiver class spelling and invocation remain obligations, not inferred from adjacency. recovery/tasks/map-cache-all-altitude-owner-oct10.json authorizes reviewed source home. No new historical byte claim."], "reason": "Recover the complete altitude-only terrain-cache reset through existing MapWin storage. Source role/name is descriptive; original invocation and nominal method name remain unresolved."}
+// symbol    ?clear_all_altitude@MapWin@@QAEXXZ
+void MapWin::clear_all_altitude() {
+    if (owned_ != 0) {
+        for (int tile = 0; tile < static_cast<int>(MapArea); ++tile) {
+            for (int sample = 0; sample < 5; ++sample) {
+                owned_[tile].altitude[sample] = -1;
+            }
+        }
+    }
+}
+
 // ORIGINAL: 0x0046FC80 ?UNK6@MapWin@@QAEXHHH@Z 0x0046FC80-0x0046FCD3 FILE
 // TRIED: naming the three tables `static int *const` - /O2 then folds the
 //   0x66F440-0x66EFBC pair into one walking pointer with an `add`, which the
