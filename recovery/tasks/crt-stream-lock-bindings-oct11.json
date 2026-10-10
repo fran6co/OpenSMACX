@@ -9,9 +9,11 @@
   "editable_files": [
     "src/vendor/vc6-runtime.recovery.h",
     "recovery/tests/test_crt_stream_lock_bindings_oct11.py",
-    "recovery/tests/test_crt_eight_entry_bindings_oct10.py"
+    "recovery/tests/test_crt_eight_entry_bindings_oct10.py",
+    "recovery/tests/test_crt_component_migration.py"
   ],
   "evidence": [
+    "Scope extension: refresh iterator migration controls against immutable migration948389543 and classification-retirementfba66b448 checkpoints. Current source must retain iterator identities/history, but the retired scaffold label and total-addition count are historical facts, not constraints forbidding later verified bindings. Preserve exact historical migration checks and validate subsequent label retirement separately.",
     "Pinned Ghidra boundaries647C66..647C89 and647CB8..647CDB agree with original decoded terminal instructions; the exact selected LIBCMT _file.obj supplies __lock_file2/__unlock_file2 symbol interpretations. Pinned direct calls6497A9/6497C1 inside an unbound stream-allocation helper establish entries, not an application source owner.",
     "Current manifest plus ONLY these two additions passes bytes/boundary/references: lock references existing__lock647D04 and EnterCriticalSection import; unlock references existing__unlock647D65 and LeaveCriticalSection import. _fopen and__ftbuf are NOT closed without unresolved__fsopen/__flush, and remain unbound in this step. No speculative thirteen-helper mappings or claims are authorized.",
     "Preserve all prior component/source claims, import/data/absolute-symbol bindings and old verification verdicts. Adapt the eight-entry historical preservation test to permit subsequent additions while continuing to verify its original checkpoint and current prefix exactly. Require byte/boundary/relative-call/import-target/archive-pin damage refusal controls. Runtime correspondence remains distinct from selected-link/storage/runtime proof and adds zero application recoveries."
