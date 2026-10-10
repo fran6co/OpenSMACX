@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "task_id": "designwin-preview-rectangle-owner-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover the embedded preview-panel rectangle through its actual initializer and drawing consumers",
+  "base_revision": "47785ab9c9e9644ac1723b9df9689d0d9e299365",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4440688
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4447568
+    }
+  ],
+  "editable_files": [
+    "src/designwin.h",
+    "src/designwin.cpp",
+    "recovery/tests/test_designwin_preview_rectangle_owner_oct10.py"
+  ],
+  "evidence": [
+    "Native init43C459 selects this+B1C and copies four RECT edge dwords,43C484 replaces bottom atthis+B28 fromB10, then insets edges. Native draw_flash43DE55/43DE64/43E430 uses the same address for Buffer clip, RECT copy and GraphicWin soft_update. Current source models these16 bytes as four uint32_t then reinterpret_casts them to RECT. All current DesignWin references to these four fields are confined to init/draw_flash; nearby fields in other classes are not related.",
+    "Replace only this embedded group with named RECT preview_panel_rect_, preserve original edge stores and odd bottom source, callbacks, branch/order and historical source identities/spans/claims/lessons. Name is descriptive, not original debug evidence. Native before/current complete DesignWin measurement and fresh CodeView group offset/type plus unchanged remaining member/base/class extent are required. Actual source geometry/wholebody normalization controls, relevant regressions, fresh full app compile/link and independent review precede coordinator-reviewed commit. Temporary matching regressions are authorized for this justified structural closure; historical restoration obligations remain. No bugfix or new function-count claim."
+  ]
+}
