@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "task_id": "console-editor-lock-mask-owner-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Express scenario editor lock-mask accesses through existing source-owned byte members",
+  "base_revision": "87414f049",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5108976},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5106944}
+  ],
+  "editable_files": [
+    "src/console.cpp",
+    "recovery/tests/test_console_scenario_behavior.py",
+    "recovery/tests/test_console_editor_lock_mask_owner_oct10.py"
+  ],
+  "evidence": [
+    "Pinned editor_view004DF4F0 native004DF55D tests alive byte9A64E9;004DF6E5/6EB/6EE reads alive, masksFE and stores human byte9A64E8. Existing GameDataLockMaskBytes owns those exact offsets. editor_veh004DED00 native004DF22C..248 updates alive byte9A64E9 after creation. Preserve callback-visible live reads and all original branches and byte operations; no new layout or semantic domain is inferred.",
+    "Preserve both original identities, all ordinary/cold spans and historical claims/notes. This is owner clarity, not newly recovered functions or a bug fix. Leave game_state low-byte reads unchanged. Native before/current measurements must preserve all outside-subject verdicts, relevant actual-source host/damage controls and full application compile/link must pass before independent coordinator-reviewed commit."
+  ]
+}
