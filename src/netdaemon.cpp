@@ -1888,6 +1888,60 @@ int __cdecl message_data(int opcode, int target, int payload_10,
     return result;
 }
 
+// Native automatic wire records. Bytes 2..3 remain unwritten in all three
+// builders; the raw bulk sender also leaves data_[8..31] unwritten. These
+// objects must not be value-initialized merely to make the wire deterministic.
+struct MessageBigDataRecord {
+    int16_t opcode_;
+    unsigned char unresolved_2_[2];
+    int faction_;
+    uint32_t timestamp_;
+    int sequence_;
+    int data_[32];
+};
+
+struct MessageLandmarkRecord {
+    int16_t opcode_;
+    unsigned char unresolved_2_[2];
+    int faction_;
+    uint32_t timestamp_;
+    int sequence_;
+    int payload_10_;
+    int payload_14_;
+    int payload_18_;
+    int payload_1C_;
+    char text_[32];
+};
+
+static_assert(sizeof(MessageBigDataRecord) == 0x90,
+              "bulk-data native transmitted extent");
+static_assert(offsetof(MessageBigDataRecord, faction_) == 0x04,
+              "bulk-data faction word");
+static_assert(offsetof(MessageBigDataRecord, timestamp_) == 0x08,
+              "bulk-data clock word");
+static_assert(offsetof(MessageBigDataRecord, sequence_) == 0x0C,
+              "bulk-data sequence word");
+static_assert(offsetof(MessageBigDataRecord, data_) == 0x10,
+              "bulk-data thirty-two-word payload");
+static_assert(sizeof(MessageLandmarkRecord) == 0x40,
+              "landmark native transmitted extent");
+static_assert(offsetof(MessageLandmarkRecord, faction_) == 0x04,
+              "landmark faction word");
+static_assert(offsetof(MessageLandmarkRecord, timestamp_) == 0x08,
+              "landmark clock word");
+static_assert(offsetof(MessageLandmarkRecord, sequence_) == 0x0C,
+              "landmark sequence word");
+static_assert(offsetof(MessageLandmarkRecord, payload_10_) == 0x10,
+              "landmark first payload word");
+static_assert(offsetof(MessageLandmarkRecord, payload_14_) == 0x14,
+              "landmark second payload word");
+static_assert(offsetof(MessageLandmarkRecord, payload_18_) == 0x18,
+              "landmark third payload word");
+static_assert(offsetof(MessageLandmarkRecord, payload_1C_) == 0x1C,
+              "landmark fourth payload word");
+static_assert(offsetof(MessageLandmarkRecord, text_) == 0x20,
+              "landmark optional text start");
+
 // ORIGINAL: 0x00592F50 sub_592f50 0x00592F50-0x00592FE9
 // symbol    ?send_raw_data@@YAXHHHHHHHHHH@Z
 // size      153 bytes
@@ -1902,24 +1956,23 @@ void __cdecl send_raw_data(int opcode, int target, int payload_10,
                            int payload_14, int payload_18, int payload_1C,
                            int payload_20, int payload_24, int payload_28,
                            int payload_2C) {
-    unsigned char message[0x90];
+    MessageBigDataRecord message;
 
-    *reinterpret_cast<short *>(message + 0x00) = static_cast<short>(opcode);
-    *reinterpret_cast<int *>(message + 0x04) = ConsoleGlobal.faction_id_;
-    *reinterpret_cast<unsigned int *>(message + 0x08) = timeGetTime();
-    *reinterpret_cast<int *>(message + 0x0c) =
-        NetDaemonNet.lock_state_[0].leading_words_[0];
-    *reinterpret_cast<int *>(message + 0x10) = payload_10;
-    *reinterpret_cast<int *>(message + 0x14) = payload_14;
-    *reinterpret_cast<int *>(message + 0x18) = payload_18;
-    *reinterpret_cast<int *>(message + 0x1c) = payload_1C;
-    *reinterpret_cast<int *>(message + 0x20) = payload_20;
-    *reinterpret_cast<int *>(message + 0x24) = payload_24;
-    *reinterpret_cast<int *>(message + 0x28) = payload_28;
-    *reinterpret_cast<int *>(message + 0x2c) = payload_2C;
+    message.opcode_ = static_cast<int16_t>(opcode);
+    message.faction_ = ConsoleGlobal.faction_id_;
+    message.timestamp_ = timeGetTime();
+    message.sequence_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.data_[0] = payload_10;
+    message.data_[1] = payload_14;
+    message.data_[2] = payload_18;
+    message.data_[3] = payload_1C;
+    message.data_[4] = payload_20;
+    message.data_[5] = payload_24;
+    message.data_[6] = payload_28;
+    message.data_[7] = payload_2C;
 
     NetBusyCount++;
-    NetDaemonNet.send_message(reinterpret_cast<char *>(message), 0x90, target);
+    NetDaemonNet.send_message(reinterpret_cast<char *>(&message), 0x90, target);
     NetBusyCount--;
 }
 
@@ -1941,21 +1994,15 @@ void __cdecl send_raw_data(int opcode, int target, int payload_10,
 //        residual: 27 of 47 agree, and no spelling of the loop took it out.
 void __cdecl message_big_data(int opcode, int target, int *payload,
                               int count) {
-    struct Message {
-        short opcode_;
-        int faction_;
-        unsigned long time_;
-        int turn_;
-        int data_[32];
-    } message;
+    MessageBigDataRecord message;
     int filled;
     int i;
     int *dst;
 
-    message.opcode_ = static_cast<short>(opcode);
+    message.opcode_ = static_cast<int16_t>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
-    message.time_ = timeGetTime();
-    message.turn_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.timestamp_ = timeGetTime();
+    message.sequence_ = NetDaemonNet.lock_state_[0].leading_words_[0];
 
     filled = 0;
     if (count > 0) {
@@ -2036,28 +2083,27 @@ void __cdecl message_lock(int opcode, int target, int payload_10,
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00532940 0x00645460
-// The image stores the payload dwords out of order - 0x1C first, then the
-// stamp block, then 0x14 and 0x18 - and that order is kept.
+// Native payload stores are +0x10, +0x1C, sequence, +0x14, +0x18.
+// Null text leaves the entire text area unwritten; strcpy remains unchecked.
 void __cdecl message_landmark(int opcode, int target, char *text,
                               int payload_10, int payload_14, int payload_18,
                               int payload_1C) {
-    char message[0x40];
+    MessageLandmarkRecord message;
 
-    *reinterpret_cast<short *>(message) = static_cast<short>(opcode);
-    *reinterpret_cast<int *>(message + 0x04) = ConsoleGlobal.faction_id_;
-    *reinterpret_cast<unsigned long *>(message + 0x08) = timeGetTime();
-    *reinterpret_cast<int *>(message + 0x1c) = payload_1C;
-    *reinterpret_cast<int *>(message + 0x0c) =
-        NetDaemonNet.lock_state_[0].leading_words_[0];
-    *reinterpret_cast<int *>(message + 0x14) = payload_14;
-    *reinterpret_cast<int *>(message + 0x18) = payload_18;
-    *reinterpret_cast<int *>(message + 0x10) = payload_10;
+    message.opcode_ = static_cast<int16_t>(opcode);
+    message.faction_ = ConsoleGlobal.faction_id_;
+    message.timestamp_ = timeGetTime();
+    message.payload_10_ = payload_10;
+    message.payload_1C_ = payload_1C;
+    message.sequence_ = NetDaemonNet.lock_state_[0].leading_words_[0];
+    message.payload_14_ = payload_14;
+    message.payload_18_ = payload_18;
     if (text) {
-        strcpy(message + 0x20, text);
+        strcpy(message.text_, text);
     }
 
     NetBusyCount++;
-    NetDaemonNet.send_message(message, 0x40, target);
+    NetDaemonNet.send_message(reinterpret_cast<char *>(&message), 0x40, target);
     NetBusyCount--;
 }
 
