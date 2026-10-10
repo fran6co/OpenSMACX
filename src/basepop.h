@@ -283,8 +283,6 @@ class BasePop : public GraphicWin {
   // draw (the two captions and every item), and answers 0 when the caller
   // never opened the popup's text at all.
   int UNK2();
-  void UNK3(int a1);
-  void UNK4(int a1);
   int on_key_click(int a, int b);
   int on_key_up(int a);
   void set_string_color(int c1, int c2, int c3, int c4);

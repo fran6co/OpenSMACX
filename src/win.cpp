@@ -6504,7 +6504,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                     cb(x, y);
                 }
                 this->on_left_click(x, y);
-                Sound *child = reinterpret_cast<Sound *>(flags_);
+                Sound *child = val_8_;
                 if (child != 0 && child->is_playing() == 0) {
                     child->play();
                 }
@@ -12030,12 +12030,9 @@ void Win::dispatch_29(int a, int b, int alternate) {
 // 32 (0x80) as the alternate arm, the hook at field_414_, the children off
 // AutoSound+0x20 and val_20_ (0x50).
 //
-// BUG IN THE ORIGINAL (layout, not behaviour): AutoSound+0x20 is read here as
-// a `Win *` child pointer, and basepop.cpp documents that same word as the
-// flags field BasePop::UNK3/UNK4 set bits 0/1 in. Both cannot be true. The
-// read is left spelled through the declared field rather than an offset so
-// the finding is visible; fixing it means re-modelling AutoSound, not this
-// body.
+// AutoSound+0x20 is a Sound receiver. The former BasePop flag attribution
+// confused this primary-base word with the embedded Dialog virtual base's
+// separate +0x20 style word; the original callers use the adjusted Dialog.
 void Win::dispatch_19(int a, int b, int alternate) {
     if ((iFlags_ & 0x200000) != 0) {
         return;
@@ -12050,7 +12047,7 @@ void Win::dispatch_19(int a, int b, int alternate) {
             hook(a, b);
         }
         on_left_click(a, b);
-        Sound *child = reinterpret_cast<Sound *>(flags_);
+        Sound *child = val_8_;
         if (child != 0) {
             if (child->is_playing() == 0) {
                 child->play();

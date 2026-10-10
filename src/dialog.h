@@ -92,19 +92,17 @@ class Dialog {
   //   mov ecx,edi / push 1 / call 0x00605180
   //   mov ecx,edi / push 1 / call 0x006051A0
   // Both callees are the 27-byte `if (v) f |= bit; else f &= ~bit;` pair over
-  // the Dialog style word at +0x20 that this tree claims as
+  // the Dialog style word at +0x20 historically catalogued as
   // ?UNK3@BasePop@@QAEXH@Z / ?UNK4@BasePop@@QAEXH@Z (0x00605180/0x006051A0,
-  // both BYTE_EXACT in basepop.cpp). The receiver the image hands them is a
-  // DIALOG subobject, not a BasePop, so the catalogue's owner is the folded
-  // twin: the original had this pair on Dialog (or on Dialogs) and VC6's
-  // identical-COMDAT folding merged it with BasePop's own identical body,
-  // keeping one name.
+  // with their historical claims preserved in dialog.cpp). The receiver
+  // is a DIALOG subobject, not a BasePop. Equal code alone did not prove the
+  // previously asserted second BasePop owner or identical-COMDAT folding.
   //
   // LANDED (2026-09-06, dialogs finisher): both are defined OUT OF LINE in
   //        dialog.cpp - an in-class body is two instructions VC6 expands at
   //        the call site, where the image makes a real `call rel32` - and
-  //        BasePop::exec makes the two real calls. The claim stays with the
-  //        folded twin in basepop.cpp; the receiver at the call site is bound
+  //        BasePop::exec makes the two real calls. The original mapping and
+  //        claim live with each setter; the receiver at the call site is bound
   //        ONCE (`Dialog &dialog = dialogs_;`) because two qualified
   //        recomputations of the vbtable walk cost exec 22 -> 15 agreeing
   //        instructions where the image holds the subobject in one register.

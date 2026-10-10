@@ -692,8 +692,8 @@ Purpose: Run the popup modally: size and position it, lay out its two caption
 //        bottom_border_thickness; };` in win.h lets the local below lose its
 //        int[3] spelling.
 // LANDED (2026-09-06, dialogs finisher): the two show-bit setters are Dialog's
-//        set_style_bit_0/1, defined out of line in dialog.cpp (the claim stays
-//        with BasePop's folded twin, 0x00605180/0x006051A0 below), and this
+//        set_style_bit_0/1, defined and mapped out of line in dialog.cpp
+//        (original identities 0x00605180/0x006051A0), and this
 //        body makes the two real calls - call_diff 39 of 42 -> 41 of 42.
 //        LEVER: the receiver is bound ONCE, `Dialog &dialog = dialogs_;`, not
 //        spelled twice as `dialogs_.Dialog::set_style_bit_N(1)` - the double
@@ -819,8 +819,8 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
         // image calls them (0x0060276C / 0x00602775) with the vbtable-adjusted
         // `&dialogs_.Dialog` as the receiver, computed ONCE into a register and
         // reused for both calls; the definitions are in dialog.cpp and the
-        // claim is BasePop's folded twin (0x00605180 / 0x006051A0 in
-        // basepop.cpp). See the HANDOFF on dialog.h above.
+        // claims now live with these actual Dialog definitions at
+        // 0x00605180 / 0x006051A0. See the receiver evidence in dialog.h.
         Dialog &dialog = dialogs_;
         dialog.set_style_bit_0(1);
         dialog.set_style_bit_1(1);
@@ -1233,65 +1233,6 @@ Status: Complete
 */
 int BasePop::on_key_up(int) {
     return static_cast<int>((~field_30A8_ >> 14) & 1U);
-}
-
-
-/*
-Purpose: Set or clear bit 0 of the flags word at offset 0x20 - set when the
-         argument is non-zero, cleared when it is zero.
-
-             mov eax, [esp+4] / test eax, eax / mov eax, [ecx+0x20]
-             je clear / or al, 1 / mov [ecx+0x20], eax / ret 4
-             clear: and al, 0xFE / mov [ecx+0x20], eax / ret 4
-
-         The original reads the whole dword, edits only AL and writes the whole
-         dword back, so the upper three bytes are preserved - which is why this
-         is a read-modify-write of the dword and not a byte store.
-
-         Written through a documented raw offset, as ~BattleWin does for its
-         Time member. 0x20 falls inside Win::auto_sound_ - at AutoSound::val_8_,
-         measured - and that modelling is an approximation of a class whose own
-         header says its layout is not established. Reaching through it by name
-         would state a relationship this function does not need and cannot
-         confirm; the offset is the thing the original encodes.
-// ORIGINAL: 0x00605180 ?UNK3@BasePop@@QAEXH@Z 0x00605180-0x0060519B BYTE_EXACT
-// size      27 bytes
-// prototype void (__thiscall ?UNK3@BasePop@@QAEXH@Z)(BasePop* this, int)
-// callers   1   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void BasePop::UNK3(int a1) {
-    if (a1) {
-        flags_ |= 1U;
-    } else {
-        flags_ &= ~1U;
-    }
-}
-
-
-/*
-Purpose: As UNK3 above, over the same flags word but bit 1 (`or al, 2` /
-         `and al, 0xFD`).
-// ORIGINAL: 0x006051A0 ?UNK4@BasePop@@QAEXH@Z 0x006051A0-0x006051BB BYTE_EXACT
-// size      27 bytes
-// prototype void (__thiscall ?UNK4@BasePop@@QAEXH@Z)(BasePop* this, int)
-// callers   2   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void BasePop::UNK4(int a1) {
-    if (a1) {
-        flags_ |= 2U;
-    } else {
-        flags_ &= ~2U;
-    }
 }
 
 
@@ -3731,7 +3672,7 @@ int BasePop::calculate_dimensions() {
             loc_b_ = default_loc_b_;
         }
         dialogs_.Dialog::field_20_ |= 1;
-        UNK4(1);
+        dialogs_.Dialog::set_style_bit_1(1);
     }
 
     int result = dialogs_.calculate_dimensions();

@@ -273,7 +273,7 @@ class Win : public AutoSound {
 
   // 0x005EE6B0, homed into win.cpp 2026-09-06. The same shape around slot 19
   // (field_414_ hook, Sound receivers AutoSound+0x20 / val_20_). The first
-  // word remains neutral flags_ storage and is viewed contextually here.
+  // val_8_ is the typed Sound interface view of the first word.
   void dispatch_19(int a, int b, int alternate);
 
   // 0x005EE810 / 0x005EE8B0, homed into win.cpp 2026-09-06. The same shape

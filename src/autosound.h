@@ -34,7 +34,7 @@ class Sound;
  * call shapes establish the Sound interface view at those uses, not a
  * concrete subtype, ownership, lifetime, or a semantic setting name.
  *
- * Keep context-mixed words neutral: flags_ is also a flag word; val_10_/11_
+ * Keep context-mixed words neutral: val_10_/11_
  * and val_12_ carry FlatButton Sprite pointers as well as Win Sound receiver
  * views; val_20_ is both a ListBox flag word and a Win Sound receiver; val_31_
  * is a BaseButton Sound receiver and a ListBox Win notification target. The
@@ -98,9 +98,11 @@ class AutoSound {
   Sound *val_6_;
   Sound *val_7_;
  protected:
-  // MEASURED: BasePop::UNK3/UNK4 set/clear bits 0/1 of this word
-  // (basepop.cpp) - the only per-field behaviour recovered anywhere.
-  uint32_t flags_;
+  // Win dispatch reads Sound slots 23/7 at +0x20. The old BasePop flag
+  // attribution used the wrong receiver: 0x605180/0x6051A0 operate on the
+  // embedded Dialog virtual base's separate +0x20 style word.
+  // This interface view does not establish ownership or lifetime.
+  Sound *val_8_;
   // PROTECTED for the same reason the block above says: Win derives from
   // AutoSound and its homed bodies read these fields. They were reached by
   // raw offset off `reinterpret_cast<char *>(this)` because `private` made

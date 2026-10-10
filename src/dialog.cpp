@@ -167,23 +167,16 @@ void Dialog::set_dialog_text_color3(int color1, int color2, int color3, int colo
     text_color_3d_ = color4;
 }
 
-/*
-Purpose: Set the dialog's two show bits in the style word at this+0x20 - the
-         first clearing the bit when the argument is zero, the second the same
-         over bit 1. The image's one body for each is the 27-byte
-         `if (v) f |= bit; else f &= ~bit;` pair the catalogue carries as
-         ?UNK3@BasePop@@QAEXH@Z (0x00605180) and ?UNK4@BasePop@@QAEXH@Z
-         (0x006051A0), both BYTE_EXACT in basepop.cpp.
-
-         The receiver BasePop::exec (0x0060276C / 0x00602775) hands them is NOT
-         a BasePop: it is `&dialogs_.Dialog` computed through the vbtable
-         (`mov eax,[esi+0x21d0] / mov ecx,[eax+8] / lea edi,[ecx+esi+0x21d0]`),
-         i.e. the Dialog virtual base of the embedded Dialogs. These two are
-         Dialog's own setters, and the catalogue's BasePop owner is the folded
-         twin - VC6's identical-COMDAT folding kept one 27-byte body and one
-         name for what the original spelled twice. Claimed where the catalogue
-         puts it (basepop.cpp); this file owns the definitions exec calls.
-*/
+// Both setters operate on this Dialog style word, not on AutoSound.
+// ORIGINAL: 0x00605180 ?UNK3@BasePop@@QAEXH@Z 0x00605180-0x0060519B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:602758-602775 forms the embedded Dialogs virtual Dialog base before calls605180/6051A0", "pinned:603B16-603B35 forms the same Dialog receiver and writes Dialog+20 before calling6051A0", "pinned:setters605180-60519B and6051A0-6051BB update low style bits preserving upper bits", "historical:BasePop catalogue names and byte claims retained, but identical-body folding does not establish a second BasePop owner"], "reason": "Bind the preserved setter identity to the actual Dialog receiver proved by original callers; remove the unsupported BasePop alias and its erroneous AutoSound flag attribution."}
+// symbol    ?set_style_bit_0@Dialog@@QAEXH@Z
+// size      27 bytes
+// prototype void (__thiscall ?UNK3@BasePop@@QAEXH@Z)(BasePop* this, int)
+// callers   1   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
 void Dialog::set_style_bit_0(int on) {
     if (on) {
         field_20_ |= 1U;
@@ -192,6 +185,15 @@ void Dialog::set_style_bit_0(int on) {
     }
 }
 
+// ORIGINAL: 0x006051A0 ?UNK4@BasePop@@QAEXH@Z 0x006051A0-0x006051BB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:602758-602775 forms the embedded Dialogs virtual Dialog base before calls605180/6051A0", "pinned:603B16-603B35 forms the same Dialog receiver and writes Dialog+20 before calling6051A0", "pinned:setters605180-60519B and6051A0-6051BB update low style bits preserving upper bits", "historical:BasePop catalogue names and byte claims retained, but identical-body folding does not establish a second BasePop owner"], "reason": "Bind the preserved setter identity to the actual Dialog receiver proved by original callers; remove the unsupported BasePop alias and its erroneous AutoSound flag attribution."}
+// symbol    ?set_style_bit_1@Dialog@@QAEXH@Z
+// size      27 bytes
+// prototype void (__thiscall ?UNK4@BasePop@@QAEXH@Z)(BasePop* this, int)
+// callers   2   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
 void Dialog::set_style_bit_1(int on) {
     if (on) {
         field_20_ |= 2U;
