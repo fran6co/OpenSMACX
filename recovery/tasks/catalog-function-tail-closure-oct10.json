@@ -60,7 +60,8 @@
     "src/editbox.cpp",
     "src/netwin.cpp",
     "src/sounddevice.cpp",
-    "recovery/tests/test_catalog_function_tail_closure_oct10.py"
+    "recovery/tests/test_catalog_function_tail_closure_oct10.py",
+    "recovery/tests/test_netwin_typed_packet_senders_oct10.py"
   ],
   "evidence": [
     "Pinned Ghidra catalog and original branch/epilogue inspection establish omitted tails: Datalink set_cat_terraform last update/epilogue, NetWin fill_player epilogue, modal_callback finalret, new_chat ret immediate, Wave_In_Device create_device two error-return branches, base4E7E50 finalret, BasePop on_button_clicked ret immediate, EditBox constructor finalret and Caviar set_shadow_table ret immediate. Their current source bodies already implement these operations. Preserve old ranges as subsets, all identities, C++ bodies, historical claims and lessons. Heap5D4680 catalog coalesces a separately owned ServiceList method and intervening padding; explicitly excluded from this correction.",
