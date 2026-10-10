@@ -1,0 +1,20 @@
+{
+  "event_id": "8f5cadf2e0568ff0dd1be180b64aaa552e483e86ecff4e1daefb38621158b036",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphamenu_behavior.py",
+      "recovery/tests/test_win_zorder_pointer_flow_oct10.py"
+    ],
+    "evidence": [
+      "Fresh host pytest reports4compile failures because AlphaMenu/Win pointer-flow fixtures still export retired raw ScreenBuffer or drawingBuffer globals. Authorize these two actual-source fixture updates to typed borrower owners and member-backed clip restoration without rewriting production bodies or weakening existing behavioral/damage assertions. Production C++ is already independently reviewed, fully compiled/linked and committed88079e837; existing native preservation baseline remains unchanged. Broader old fixture consumers remain separate follow-up research, not a blanket gate waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a0828cc030bce13d665ad71f682055257445b6d6e9a40ee21b3eed9f1d4a52c6",
+  "request_id": "screen-buffer-borrower-test-fixtures-oct10",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:screen-buffer-shared-guard-owner-oct10"
+}

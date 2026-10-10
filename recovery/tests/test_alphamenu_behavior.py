@@ -317,15 +317,22 @@ class Buffer {
     draws.push_back({this, destination, index, x, y}); return 0;
   }
   void set_clip(const RECT *r) { clip = *r; ++clip_count; }
+  void restore_clip() { set_clip(&rect2_); }
   int width = 100, height = 100;
   bool initialized = false, closed = false;
   int copy_count = 0, copy_args[6] = {};
   Buffer *copy_source = nullptr, *copy_destination = nullptr;
   int clip_count = 0;
   RECT clip = {};
+  RECT rect2_ = {0, 0, 800, 600};
 };
-Buffer ScreenBuffer;
-RECT WinScreenClipRect = {0, 0, 800, 600};
+// Borrower control only: real placement construction/guarded destruction
+// is verified separately by the actual production lifetime controls.
+struct ScreenBufferFixtureOwner {
+  Buffer value_;
+  Buffer &buffer() { return value_; }
+};
+ScreenBufferFixtureOwner ScreenBufferOwner;
 class Win {
  public:
   int is_visible() const { return visible; }
@@ -370,7 +377,7 @@ int main() {
   assert(menu.buffer_.width == 100 && menu.buffer_.height == 100);
   assert(menu.buffer_.copy_count == 6);
   assert(menu.buffer_.copy_source == &menu.buffer_);
-  assert(menu.buffer_.copy_destination == &ScreenBuffer);
+  assert(menu.buffer_.copy_destination == &ScreenBufferOwner.buffer());
   assert(menu.buffer_.copy_args[0] == 0 && menu.buffer_.copy_args[1] == 0);
   assert(menu.buffer_.copy_args[2] == 10 && menu.buffer_.copy_args[3] == 20);
   assert(menu.buffer_.copy_args[5] == 100);
@@ -382,12 +389,16 @@ int main() {
   assert(draws.size() == 6);
   for (int i = 0; i != 6; ++i) {
     assert(draws[i].source == static_cast<Buffer *>(&menu));
-    assert(draws[i].destination == &ScreenBuffer);
+    assert(draws[i].destination == &ScreenBufferOwner.buffer());
     assert(draws[i].index == 9 && draws[i].x == 0);
   }
   assert(draws[0].y == 20 && draws[1].y == 40 && draws[2].y == 60);
   assert(draws[3].y == 80 && draws[4].y == 100 && draws[5].y == 110);
-  assert(menu.flips == 6 && WinFlipClipped == 0 && ScreenBuffer.clip_count == 2);
+  assert(menu.flips == 6 && WinFlipClipped == 0 && ScreenBufferOwner.buffer().clip_count == 2);
+  assert(ScreenBufferOwner.buffer().clip.left == ScreenBufferOwner.buffer().rect2_.left);
+  assert(ScreenBufferOwner.buffer().clip.top == ScreenBufferOwner.buffer().rect2_.top);
+  assert(ScreenBufferOwner.buffer().clip.right == ScreenBufferOwner.buffer().rect2_.right);
+  assert(ScreenBufferOwner.buffer().clip.bottom == ScreenBufferOwner.buffer().rect2_.bottom);
   assert(!menu.visible && menu.hides == 1 && sounds == 6);
   assert(MainInterfaceGlobal.flat_button_[3].pressed == 0);
   assert(MainInterfaceGlobal.flat_button_[3].redraws == 1);
@@ -398,12 +409,12 @@ int main() {
   GameDataStateStorage.fields_.game_preferences_ = 0;
   IsMultiplayerNet = 1;
   WinFlipClipped = 7;
-  const int clips_before = ScreenBuffer.clip_count;
+  const int clips_before = ScreenBufferOwner.buffer().clip_count;
   const size_t draws_before = draws.size();
   networked.hide();
   assert(draws.size() == draws_before && networked.flips == 0);
-  assert(ScreenBuffer.clip_count == clips_before + 1);
-  assert(ScreenBuffer.clip.left == 10 && ScreenBuffer.clip.top == 20);
+  assert(ScreenBufferOwner.buffer().clip_count == clips_before + 1);
+  assert(ScreenBufferOwner.buffer().clip.left == 10 && ScreenBufferOwner.buffer().clip.top == 20);
   assert(WinFlipClipped == 7);
   assert(!networked.visible && networked.hides == 1 && networked.buffer_.closed);
 }
