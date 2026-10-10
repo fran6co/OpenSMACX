@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "task_id": "window-base-access-oct10",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Use the declared Win base for council visibility and qualified pulldown hiding instead of receiver reinterpretation",
+  "base_revision": "44cd2ae617e231e846f539ed864f4e07d377d78c",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4354352},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6263712}
+  ],
+  "editable_files": ["src/councwin.cpp", "src/pulldown.cpp", "recovery/tests/test_window_base_access_oct10.py"],
+  "evidence": [
+    "CouncWin and PullDown declare public GraphicWin inheritance; GraphicWin declares public Win and Buffer inheritance. Win owns is_visible and hide. Replace only the two this-reinterpretations with explicitly qualified Win calls; no inferred new hierarchy, field, original name or lifetime.",
+    "Council427130 calls Win::is_visible then SubInterface::set_iface_mode only when not visible, ignoring its input argument. Preserve that quirk. PullDown5F93A0 releases modal state, directly calls Win::hide with virtual dispatch suppressed, then draws all windows. Preserve sequence and dispatch.",
+    "Fresh baseline native full-TU measurements captured before editing at build/recovery/window-base-casts-before-oct10.json. Require fresh comparison, actual-body host behavioral/damage controls, identity/claim continuity, references/mappings, independent review and fresh full compile/link. This is structural source cleanup, not a new function-coverage claim or full-game acceptance."
+  ]
+}
