@@ -1,0 +1,19 @@
+{
+  "event_id": "8ce98590a5728403324268d18913f3948d7bc99a44fbd0be7a7963035dcb9de1",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_sound_lifetime.py"
+    ],
+    "evidence": [
+      "Existing constructor fixture extracts current Sound::set_fade but omits its sound_device helper and actual SoundDeviceInterface. Native tests stop at undeclared helper rather than exercising constructor controls. Restore the production call-view/helper in the isolated fixture, remove its obsolete original-vtable stand-in, retain all original initialization and mutant assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a906fa5dfaa1aa8442ab2035e687aaceddb85ee96e3f83db184f6f38e9c3de48",
+  "request_id": "sound-filename-constructor-fixture-oct10",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:sound-filename-owner-oct10"
+}
