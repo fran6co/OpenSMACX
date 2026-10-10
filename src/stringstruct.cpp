@@ -651,8 +651,12 @@ char *__cdecl get_he_she(int faction_id, int sentence_form) {
 namespace {
 // The .rdata strings the deletion paths hand to log_say, read out of the
 // image beside the bindings the same family already carries in veh.cpp.
-static char *const StrDeletingVehicle = (char *)0x0068C134;    // "Deleting vehicle"
-static char *const StrDelConvertedIndex = (char *)0x0068C120;  // "DelConverted index"
+// Original starts identify the read-only strings, not pointer cells or
+// enclosing allocations. log_say takes LPCSTR and borrows these bytes.
+// RECOVERY_OBJECT: v1 0x0068C134 _StrDeletingVehicle
+static const char StrDeletingVehicle[] = "Deleting vehicle";
+// RECOVERY_OBJECT: v1 0x0068C120 _StrDelConvertedIndex
+static const char StrDelConvertedIndex[] = "DelConverted index";
 
 // The one-space join string this file's flying-text wrapper already binds as
 // SpaceText, and the caret separator MultiWin's spot label builds from.
@@ -974,13 +978,14 @@ int DeletionList::add_deletion(int veh_id) {
 // ---------------------------------------------------------------------------
 // sat_edit, 0x004A0810. The satellite editor's click handler: with the shift
 // key up, step the faction's satellite field for the chosen body up (or down
-// under shift, clamped at zero); on the last body the downward step also
-// pulls the seen-map target back and repaints the topic window.
+// under shift, clamped at zero); on the orbital-defense body the downward
+// step also pulls the deployed-pod count back and repaints the topic window.
 /*
 Purpose: Step one faction's satellite count for a body, with the shift-key
          downward path clamped and the seen map refreshed.
 // ORIGINAL: 0x004A0810 ?sat_edit@@YAXHHH@Z 0x004A0810-0x004A08D2 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4A0810..4A08D2; retired seed git:117282ee:src/unrecovered/004a0810.cpp records the same identity and spans.", "The three per-faction fields are PlayerData (faction.h, the 0x833-dword stride the header pins) at +0x808 (the satellite count stepped by body), +0x814 (the seen-map target) and +0x364 (the seen-map floor); the shift state comes through the USER32 GetAsyncKeyState import slot 0x00669330 that mapwin.cpp binds the same way.", "The repaint is see_map_check (faction.h's own) and redraw on the source-owned ReportWinGlobal (reportwin.h, original 0x00876478) through its inherited virtual slot."], "reason": "Coverage transcription of the satellite editor click with the PlayerData offsets documented and the repaint through the tree's own names."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4A0810..4A08D2; retired seed git:117282ee:src/unrecovered/004a0810.cpp retains the same identity/spans.", "Original accesses PlayerData+808 with a word index, +814 and +364. Source satellites_[4] begins808, so814 is satellites_[3]; compiler-observed PlayerData member sat_odp_deployed is364. The shift path clamps deployed orbital-defense pods using the signed result of wrapped dword subtraction, not an unsigned counter comparison.", "GetAsyncKeyState high byte is read only after type<4 and nonzero body guards; preserve negative-index admission, counter wrap, nonzero decrement, both callback paths and direct see_map_check/GraphicWin::redraw ordering. No bounds or behavior fix."], "reason": "Recover the satellite editor through existing PlayerData satellite/deployed members while preserving original arithmetic, indexing and callback behavior."}
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original4A0810..4A08D2; retired seed git:117282ee:src/unrecovered/004a0810.cpp records the same identity and spans.", "The three per-faction fields are PlayerData (faction.h, the 0x833-dword stride the header pins) at +0x808 (the satellite count stepped by body), +0x814 (the seen-map target) and +0x364 (the seen-map floor); the shift state comes through the USER32 GetAsyncKeyState import slot 0x00669330 that mapwin.cpp binds the same way.", "The repaint is see_map_check (faction.h's own) and redraw on the source-owned ReportWinGlobal (reportwin.h, original 0x00876478) through its inherited virtual slot."], "reason": "Coverage transcription of the satellite editor click with the PlayerData offsets documented and the repaint through the tree's own names."}
 Status: Coverage transcription - unclaimed body
 */
 
@@ -989,21 +994,20 @@ void __cdecl sat_edit(int body, int faction_id, int type) {
         const unsigned char shift_high = static_cast<unsigned char>(
             ::GetAsyncKeyState(0x10) >> 8);
         if (shift_high == 0) {
-            reinterpret_cast<int *>(&PlayersData[faction_id])[0x808 / 4 + type]
-                = reinterpret_cast<int *>(&PlayersData[faction_id])[0x808 / 4 + type]
-                  + 1;
+            ++PlayersData[faction_id].satellites_[type];
         } else {
-            int *const field =
-                &reinterpret_cast<int *>(&PlayersData[faction_id])[0x808 / 4 + type];
+            uint32_t *const field = &PlayersData[faction_id].satellites_[type];
             if (*field != 0) {
                 *field = *field - 1;
             }
             if (type == 3
-                && (reinterpret_cast<const int *>(&PlayersData[faction_id])[0x814 / 4]
-                    - reinterpret_cast<const int *>(&PlayersData[faction_id])[0x364 / 4])
-                   < 0) {
-                reinterpret_cast<int *>(&PlayersData[faction_id])[0x364 / 4]
-                    = reinterpret_cast<const int *>(&PlayersData[faction_id])[0x814 / 4];
+                // The original compares the signed result of a wrapping
+                // 32-bit subtraction, not the two unsigned counters.
+                && ((PlayersData[faction_id].satellites_[3]
+                    - PlayersData[faction_id].sat_odp_deployed)
+                    & 0x80000000U) != 0) {
+                PlayersData[faction_id].sat_odp_deployed =
+                    PlayersData[faction_id].satellites_[3];
                 see_map_check();
                 ReportWinGlobal.redraw();
                 return;
