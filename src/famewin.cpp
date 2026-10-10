@@ -393,6 +393,7 @@ int FameWin::init() {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0044A640 ?on_group_clicked@FameWin@@QAEXHHH@Z 0x0044A640-0x0044A655 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/0044a640.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
+// symbol    ?on_group_clicked@FameWin@@UAEXHHH@Z
 void FameWin::on_group_clicked(int, int, int) {
   selectedRecord_ = 0;
   redraw();

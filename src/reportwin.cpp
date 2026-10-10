@@ -861,6 +861,7 @@ ReportWin ReportWinGlobal;  // 0x00876478
 
 // ORIGINAL: 0x0049B220 ?on_button_passover@ReportWin@@QAEXHH@Z 0x0049B220-0x0049B446
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0049B220-0x0049B446 and 0x0065C0C2-0x0065C20E", "git:a538e0a3:src/recovered/units/0049b220.cpp retains the recovered seed and original claim", "source:src/reportwin.h", "source:src/reportif.h:ReportIfGlobal.field_8_"], "reason": "Recover the category-button passover drawing through the seven owned FlatButtons, shared work RECT, real host window and existing labs_line. The original seed and historical claim remain restoration obligations; current byte correspondence is measured separately."}
+// symbol    ?on_button_passover@ReportWin@@UAEXHH@Z
 void ReportWin::on_button_passover(int button_id, int state) {
     GraphicWin *host = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8
         ? static_cast<GraphicWin *>(&DatalinkMain)
@@ -2418,6 +2419,7 @@ void ReportWin::exp_anim() {
 
 // ORIGINAL: 0x004989F0 ?on_group_clicked@ReportWin@@QAEXHHH@Z 0x004989F0-0x00498B06
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004989f0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// symbol    ?on_group_clicked@ReportWin@@UAEXHHH@Z
 void ReportWin::on_group_clicked(int group, int, int state) {
     time2_.stop();
     if (group == 4) ReportIfGlobal.field_1E240_ = state;

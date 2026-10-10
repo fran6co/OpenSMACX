@@ -1839,10 +1839,12 @@ void Scroll::on_button_clicked(int button_id) {
 }
 
 // ORIGINAL: 0x006069A0 ?on_button_pressed@Scroll@@QAEXH@Z 0x006069A0-0x00606B14
-void Scroll::on_button_pressed(int button_id) {
-    Win *const parent = win_parent_;
-    if (parent == nullptr) {
-        return;
+// symbol    ?on_button_pressed@Scroll@@UAEHH@Z
+int Scroll::on_button_pressed(int button_id) {
+    // Constructor table669D58 slot41 selects this int callback. All original
+    // exits converge on606B08, whose epilogue sets EAX=1, including throttling.
+    if (win_parent_ == nullptr) {
+        return 1;
     }
 
     const DWORD start_time = timeGetTime();
@@ -1851,10 +1853,7 @@ void Scroll::on_button_pressed(int button_id) {
         const DWORD now = timeGetTime();
         if (static_cast<int>(now - static_cast<DWORD>(last_time)) <
             static_cast<int>(field_A30_)) {
-            return;
-        }
-        if (field_A38_ == 0) {
-            field_A38_ = static_cast<int>(timeGetTime());
+            return 1;
         }
     } else {
         field_A38_ = static_cast<int>(timeGetTime());
@@ -1870,13 +1869,13 @@ void Scroll::on_button_pressed(int button_id) {
         position_ = old_position + 1;
     }
 
-    WinCallbackWindow = parent;
+    WinCallbackWindow = win_parent_;
     if (old_position != position_) {
         int notified_position = position_;
         if (range_reversed_ != 0U) {
             notified_position = (range_minimum_ - position_) + range_maximum_;
         }
-        parent->on_scrolling(field_A18_, notified_position);
+        win_parent_->on_scrolling(field_A18_, notified_position);
         int callback_position = position_;
         if (range_reversed_ != 0U) {
             callback_position = (range_minimum_ - position_) + range_maximum_;
@@ -1884,11 +1883,12 @@ void Scroll::on_button_pressed(int button_id) {
         if (field_2148_ != nullptr) {
             field_2148_(field_A18_, callback_position);
         }
-    }
-
-    Sound *const target = parent->legacy_sound_33();
-    if (target != nullptr && target->is_playing() == 0) {
-        target->play();
+        // Original606A2F skips this sound path when the position is unchanged.
+        // After notification606AB2 reloads the live parent, not an earlier view.
+        Sound *const target = win_parent_->legacy_sound_33();
+        if (target != nullptr && target->is_playing() == 0) {
+            target->play();
+        }
     }
 
     field_A3C_ = 0xFFFFFFFFU;
@@ -1898,6 +1898,7 @@ void Scroll::on_button_pressed(int button_id) {
     if (elapsed < duration) {
         Sleep(duration - elapsed);
     }
+    return 1;
 }
 
 /*

@@ -56,7 +56,7 @@ class BaseButton : public GraphicWin {
   // tools/catalogue_corrections.py.
   int on_key_click(int a, int b);
   int on_key_down(int a);
-  int on_key_up(int a);
+  int on_key_up(int a) override;
   // OUT OF LINE (defined in basebutton.cpp), 2026-09-03, superseding the
   // in-class `{ ; }`. An in-class constructor is expanded by /Ob2 at every
   // implicit base construction, and because that expansion holds the two

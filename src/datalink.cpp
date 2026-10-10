@@ -1324,6 +1324,7 @@ void Datalink::on_left_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00431FB0 ?on_group_clicked@Datalink@@QAEXHH@Z 0x00431FB0-0x00431FB3 BYTE_EXACT
+// symbol    ?on_group_clicked@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_group_clicked@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -3076,9 +3077,11 @@ void Datalink::on_button_clicked(int button_id) {
 
 // ORIGINAL: 0x00432010 ?on_button_passover@Datalink@@QAEXHH@Z 0x00432010-0x00432032 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00432010-0x00432032 tests Datalink category at +0x29DC against 0xE before forwarding both arguments", "source:src/datalink.h field_29DC_ is the category at 0x29DC", "source:src/reportwin.h declares ReportWin::on_button_passover; its authorized link-only body remains explicitly unfinished in reportwin.cpp"], "reason": "Forward button passover only while the Datalink is displaying report category 0xE, using the established category member and typed ReportWin callback."}
+// symbol    ?on_button_passover@Datalink@@UAEXHH@Z
 void Datalink::on_button_passover(int button_id, int state) {
     if (field_29DC_ == 0xe) {
-        ReportWinGlobal.on_button_passover(button_id, state);
+        // Original432029 calls49B220 directly, not through ReportWin's vtable.
+        ReportWinGlobal.ReportWin::on_button_passover(button_id, state);
     }
 }
 

@@ -53,7 +53,7 @@ struct Win {
   Sound *legacy_sound_28(){events.push_back("sound28");return sound28;}
   Sound *legacy_sound_30(){events.push_back("sound30");return sound30;}
   void *legacy_value_31(){events.push_back("sound31");return sound31;}
-  int vslot_41(int id){log_id("v41",id);return 1;}
+  int on_button_pressed(int id){log_id("v41",id);return 1;}
   int vslot_43(int id){log_id("v43",id);return 1;}
   void on_button_clicked(int id){log_id("parent-click",id);}
 };

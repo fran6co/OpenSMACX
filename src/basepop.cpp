@@ -1222,6 +1222,7 @@ Purpose: As on_key_click above, over the same field and the same bit. Kept as
          separate function with a different stack cleanup and a delegation
          would change the instruction the caller returns to.
 // ORIGINAL: 0x006044B0 ?on_key_up@BasePop@@QAEHH@Z 0x006044B0-0x006044C1 BYTE_EXACT
+// symbol    ?on_key_up@BasePop@@UAEHH@Z
 // size      17 bytes
 // prototype int (__thiscall ?on_key_up@BasePop@@QAEHH@Z)(BasePop* this, int)
 // callers   0   call targets   0

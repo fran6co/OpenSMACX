@@ -90,6 +90,7 @@ PickWin::PickWin() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00489B10 ?on_button_passover@PickWin@@QAEXHH@Z 0x00489B10-0x00489B13 BYTE_EXACT
+// symbol    ?on_button_passover@PickWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_button_passover@PickWin@@QAEXHH@Z)(PickWin* this, int, int)
 // callers   0   call targets   0
@@ -550,6 +551,7 @@ build_list:
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00489B20 ?on_group_clicked@PickWin@@QAEXHHH@Z 0x00489B20-0x00489B94 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00489b20.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
+// symbol    ?on_group_clicked@PickWin@@UAEXHHH@Z
 void PickWin::on_group_clicked(int a1, int, int mode) {
   if (a1 != 0) {
     return;

@@ -41,13 +41,13 @@ class PickWin : public GraphicWin {
   PickWin();
   void init(void (__cdecl *callback)(int), int mode, int faction);
   void on_redraw();
-  void on_group_clicked(int source, int unused, int mode);
+  void on_group_clicked(int source, int unused, int mode) override;
   void on_button_clicked(int button);
   int on_dialog_item_back_draw(GraphicWin *window, int unused, int index,
                                RECT *area) override;
   // Typed members own the native reverse-destruction sequence.
   ~PickWin();
-  void on_button_passover(int a1, int a2);
+  void on_button_passover(int a1, int a2) override;
   // Small picker actions homed from their historical seeds. Button actions
   // dispatch through Win's virtual on_button_clicked interface.
   void close();                    // 0x00489B00, qualified GraphicWin close

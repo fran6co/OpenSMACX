@@ -284,7 +284,7 @@ class BasePop : public GraphicWin {
   // never opened the popup's text at all.
   int UNK2();
   int on_key_click(int a, int b);
-  int on_key_up(int a);
+  int on_key_up(int a) override;
   void set_string_color(int c1, int c2, int c3, int c4);
   void set_string_color2(int c1, int c2, int c3, int c4);
   void set_string_color3(int c1, int c2, int c3, int c4);

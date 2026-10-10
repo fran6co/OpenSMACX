@@ -56,7 +56,7 @@ class ReportWin : public GraphicWin {
   void right_menu(int x, int y, int base_id);
   void on_right_click(int x, int y) override;
   void on_button_clicked(int id);
-  void on_group_clicked(int group, int id, int state);
+  void on_group_clicked(int group, int id, int state) override;
   void draw_ops();
   void draw_sat();
   void draw_security();
@@ -67,7 +67,7 @@ class ReportWin : public GraphicWin {
   void on_mouse_leave(int a1, int a2);
   // 0x0049B220 highlights report-category buttons and redraws their lab
   // connectors on this window or Datalink's canvas.
-  void on_button_passover(int button_id, int state);
+  void on_button_passover(int button_id, int state) override;
   // The two animation ticks driven by callback adapters in reportwin.cpp. Public,
   // __thiscall, void(void). Both use genuine animation members and the
   // existing explosion sprite run; action_sat_attack remains a dependency.

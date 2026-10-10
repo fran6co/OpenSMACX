@@ -76,7 +76,7 @@ class Scroll : public GraphicWin {
   void on_mousewheel_down(int delta);
   void on_mousewheel_up(int delta);
   int on_key_click(int repeat, int key) override;
-  void on_button_pressed(int button_id);
+  int on_button_pressed(int button_id) override;
   void on_button_clicked(int button_id);
   void on_redraw();
   void on_resize(int width, int height);

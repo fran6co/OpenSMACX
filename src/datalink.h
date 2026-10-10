@@ -87,7 +87,7 @@ class Datalink : public GraphicWin, public SubInterface {
   void UNK9();
   void close();
   void on_left_click(int a1, int a2) override;
-  void on_group_clicked(int a1, int a2);
+  void on_group_clicked(int a1, int a2) override;
   void on_mouse_move(int a1, int a2);
   void on_iface_left_click(int a1, int a2);
   void on_iface_right_click(int a1, int a2);
@@ -144,7 +144,7 @@ class Datalink : public GraphicWin, public SubInterface {
   // 0x00431DC0 ?on_link_clicked@Datalink@@QAEHHPAD@Z
   int on_link_clicked(int, char *link);
   void on_redraw();
-  void on_button_passover(int, int);
+  void on_button_passover(int, int) override;
   // VOID, not int: the catalogue spells ?on_button_clicked@Datalink@@QAEXH@Z
   // (0x00431EC0), and Win's slot-44 virtual - renamed on_button_clicked by
   // the win-cluster the same day - is QAEXH too. The int spelling collided

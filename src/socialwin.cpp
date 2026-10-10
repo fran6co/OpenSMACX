@@ -1665,6 +1665,7 @@ int SocialWin::immune(int soc_category, int soc_model, int effect_id) {
  *          armed and nothing is pending the group deselects and the panels
  *          redraw.
 // ORIGINAL: 0x004B1CE0 ?on_group_clicked@SocialWin@@QAEXHH@Z 0x004B1CE0-0x004B1D64 FILE
+// symbol    ?on_group_clicked@SocialWin@@UAEXHH@Z
 // size      132 bytes
 // prototype void (__thiscall ?on_group_clicked@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   3
@@ -1701,6 +1702,7 @@ void SocialWin::on_group_clicked(int a1, int a2) {
  *          the hover cleared), otherwise the new effect id repaints it too.
  *          Every path ends in the shared do_all_draws pass.
 // ORIGINAL: 0x004B1D70 ?on_button_passover@SocialWin@@QAEXHH@Z 0x004B1D70-0x004B1DF3 FILE
+// symbol    ?on_button_passover@SocialWin@@UAEXHH@Z
 // size      131 bytes
 // prototype void (__thiscall ?on_button_passover@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   3

@@ -100,7 +100,7 @@ public:
     virtual ~Win() {}
     virtual void on_mouse_move(int, int) { events.push_back(1); }
     virtual void on_mouse_leave(int = 0, int = 0) {}
-    virtual void vslot_40(int, int) { events.push_back(3); }
+    virtual void on_button_passover(int, int) { events.push_back(3); }
     virtual void redraw() { events.push_back(4); }
     static void clear_bubble_text();
 };
@@ -125,7 +125,7 @@ class ProbeWin : public Win {
 public:
     int payload;
     ProbeWin() : payload(-1) {}
-    void vslot_40(int value, int second) override {
+    void on_button_passover(int value, int second) override {
         assert(second == 0);
         payload = value;
         assert(current_button != 0);
@@ -289,11 +289,11 @@ def test_actual_body_preserves_observed_state_and_callback_order():
     assert body.index("time1_.stop()") < body.index("Win::clear_bubble_text()")
     assert body.index("Win::clear_bubble_text()") < body.index("Win *const buddy = win_parent_")
     assert body.index("Win *const buddy = win_parent_") < body.index("field_A74_ = 0")
-    assert body.index("field_A74_ = 0") < body.index("buddy->vslot_40")
-    assert body.index("buddy->vslot_40") < body.index("redraw()")
+    assert body.index("field_A74_ = 0") < body.index("buddy->on_button_passover")
+    assert body.index("buddy->on_button_passover") < body.index("redraw()")
     # This read stays inside the non-null parent branch and happens after the
     # earlier callbacks, matching the original live reread behavior.
-    notify = body.index("buddy->vslot_40")
+    notify = body.index("buddy->on_button_passover")
     assert body.index("field_A78_", notify) < body.index("redraw()", notify)
 
 

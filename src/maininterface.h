@@ -176,7 +176,7 @@ class MainInterface : public GraphicWin, public SubInterface {
 
  public:
   // homed from 0045c940.cpp
-  void on_group_clicked(int a1, int a2, int a3);
+  void on_group_clicked(int a1, int a2, int a3) override;
 
  public:
   // homed from 0045c980.cpp
@@ -196,7 +196,7 @@ class MainInterface : public GraphicWin, public SubInterface {
 
  public:
   // homed from 0045c830.cpp
-  int on_button_pressed(int a1);
+  int on_button_pressed(int a1) override;
 
  public:
   // homed from 0045c7c0.cpp

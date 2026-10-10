@@ -326,7 +326,7 @@ FLATBUTTON_HOST = r'''#include <cassert>
 struct RECT { int left,top,right,bottom; };
 struct Buffer { protected: RECT rect1_; };
 struct Win { int parent_events,state,redraws; Win():parent_events(0),state(-1),redraws(0){}
-  virtual ~Win(){} void vslot_40(int,int s){++parent_events;state=s;} void redraw(){++redraws;}
+  virtual ~Win(){} void on_button_passover(int,int s){++parent_events;state=s;} void redraw(){++redraws;}
   static int cleared; static void clear_bubble_text(){++cleared;} }; int Win::cleared=0;
 struct GraphicWin:Win,Buffer{};
 struct Time {int stops,inits,pulses;Time():stops(0),inits(0),pulses(0){}

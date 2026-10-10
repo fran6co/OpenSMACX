@@ -557,6 +557,7 @@ int BaseButton::on_key_down(int a) {
 /*
 Purpose: Legacy stub; the original body returns nothing without reading its
 // ORIGINAL: 0x00607810 ?on_key_up@BaseButton@@QAEHH@Z 0x00607810-0x00607815 BYTE_EXACT
+// symbol    ?on_key_up@BaseButton@@UAEHH@Z
 // CORRECTED from ?on_key_up@BaseButton@@QAEXH@Z
 //   body is `xor eax, eax; ret 4`; BasePop::on_key_up returns int
 // size      5 bytes
@@ -766,7 +767,7 @@ void BaseButton::on_left_down(int, int) {
         if (owner != 0 && owner->is_playing() == 0) {
             owner->play();
         }
-        const int accepted = parent->vslot_41(static_cast<int>(field_A78_));
+        const int accepted = parent->on_button_pressed(static_cast<int>(field_A78_));
         if (accepted != 0 && field_A44_ != 0xFFFFFFFFU) {
             time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
         }

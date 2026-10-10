@@ -73,13 +73,13 @@ class SocialWin : public GraphicWin, public SubInterface {
 
  public:
   // 0x004B1CE0 ?on_group_clicked@SocialWin@@QAEXHH@Z.
-  void on_group_clicked(int a1, int a2);
+  void on_group_clicked(int a1, int a2) override;
 
  public:
   // 0x004B1D70 ?on_button_passover@SocialWin@@QAEXHH@Z. Tracks the hovered
   // button per region: category rows highlight through draw_mouseover, the
   // effect column through draw_overview.
-  void on_button_passover(int a1, int a2);
+  void on_button_passover(int a1, int a2) override;
 
  public:
   // 0x004B1080 ?draw_mouseover@SocialWin@@QAEXXZ.

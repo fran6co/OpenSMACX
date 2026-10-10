@@ -1904,6 +1904,7 @@ void MainInterface::on_right_down(int a1, int a2) {
 
 
 // ORIGINAL: 0x0045C830 ?on_button_pressed@MainInterface@@QAEHH@Z 0x0045C830-0x0045C866 FILE BYTE_EXACT
+// symbol    ?on_button_pressed@MainInterface@@UAEHH@Z
 // size      54 bytes
 // prototype int (__thiscall ?on_button_pressed@MainInterface@@QAEHH@Z)(MainInterface* this, int)
 // callers   0   call targets   0
@@ -2238,6 +2239,7 @@ void MainInterface::on_mouse_move(int a1, int a2) {
 }
 
 // ORIGINAL: 0x0045C940 ?on_group_clicked@MainInterface@@QAEXHHH@Z 0x0045C940-0x0045C978 FILE BYTE_EXACT
+// symbol    ?on_group_clicked@MainInterface@@UAEXHHH@Z
 // size      56 bytes
 // prototype void (__thiscall ?on_group_clicked@MainInterface@@QAEXHHH@Z)(MainInterface* this, int, int, int)
 // callers   0   call targets   0

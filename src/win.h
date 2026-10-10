@@ -631,7 +631,7 @@ class Win : public AutoSound {
   // (thunk1/thunk3 pairs in ListBox/SpriteBox/EditGroup prove one original
   // name served both this slot and Dialog slot2); the folded shared body's
   // catalogue name above stays what the image calls it.
-  // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?draw_contents@Win@@UAEXXZ 0x005EB3D0
+  // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_redraw@Win@@UAEXXZ 0x005EB3D0
   virtual void on_redraw() {}  // 0x00404280
   // Slot 13: Win's constructor-installed table66FDD0 selects the shared RET8.
   // MapWin supplies a genuine override; this is not MainInterface's slot13.
@@ -666,7 +666,7 @@ class Win : public AutoSound {
   // Existing slot 25: keyboard input dispatched by key_click_event.
   virtual int on_key_click(int = 0, int = 0);  // slot 25
   virtual int on_key_down(int = 0) { return 0; }  // 0x00404250
-  virtual int vslot_27(int = 0) { return 0; }  // 0x00404250
+  virtual int on_key_up(int = 0) { return 0; }  // 0x00404250
   // Slot 28: Win dispatches left double-clicks here (0x005EE570).
   // RadioButton's table at 0x00669A6C selects its receiver adjustor
   // 0x00407040 at +0x70, reaching the override at 0x0060E1E0.
@@ -682,8 +682,8 @@ class Win : public AutoSound {
   virtual void vslot_37(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_38(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_39(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_40(int = 0, int = 0) {}  // 0x00404260
-  virtual int vslot_41(int = 0) { return 0; }  // 0x00404250
+  virtual void on_button_passover(int = 0, int = 0) {}  // 0x00404260
+  virtual int on_button_pressed(int = 0) { return 0; }  // 0x00404250
   virtual void vslot_42(int = 0) {}  // 0x00404270
   virtual void vslot_43(int = 0) {}  // 0x00404270
   // SLOTS 44 AND 45 HAVE NAMES. BaseWin's front table holds 0x0041D500 and
@@ -698,8 +698,10 @@ class Win : public AutoSound {
   // this one plus a name.
   virtual void on_button_clicked(int = 0) {}       // slot 44  0x00404270
   virtual void on_button_toggled(int = 0, int = 0) {}  // slot 45  0x00404260
-  virtual void vslot_46(int = 0, int = 0, int = 0) {}  // 0x00406B20
-  virtual void vslot_47(int = 0, int = 0) {}  // 0x00404260
+  // VC6 reverses declarations within this overload group. Physical tables
+  // require the three-argument callback in slot46 and two-argument in slot47.
+  virtual void on_group_clicked(int, int) {}  // slot 47
+  virtual void on_group_clicked(int, int, int) {}  // slot 46
   virtual void on_scrolled(int = 0, int = 0) {}  // 0x00404260
   virtual void on_scrolling(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_50(int = 0) {}  // 0x00404270

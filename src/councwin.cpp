@@ -1338,6 +1338,7 @@ void CouncWin::on_status(int mode) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00426EB0 ?on_group_clicked@CouncWin@@QAEXHH@Z 0x00426EB0-0x00426EB3 BYTE_EXACT
+// symbol    ?on_group_clicked@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_group_clicked@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0
@@ -1354,6 +1355,7 @@ void CouncWin::on_group_clicked(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00426F80 ?on_button_passover@CouncWin@@QAEXHH@Z 0x00426F80-0x00426F83 BYTE_EXACT
+// symbol    ?on_button_passover@CouncWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_button_passover@CouncWin@@QAEXHH@Z)(CouncWin* this, int, int)
 // callers   0   call targets   0

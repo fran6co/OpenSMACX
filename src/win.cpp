@@ -8066,7 +8066,7 @@ int Win::key_up_event(int key) {
     if (callback != 0) {
         result = callback(key);
     }
-    result += this->vslot_27(key);
+    result += this->on_key_up(key);
     Sound *child = val_16_;
     if (child != 0) {
         if (child->is_playing() == 0) {
@@ -10087,7 +10087,7 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
         if (cb != 0) {
             cb(with_modifiers);
         }
-        vslot_27(with_modifiers);
+        on_key_up(with_modifiers);
 
         Sound *next = val_16_;
         if (next == 0) {

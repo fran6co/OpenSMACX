@@ -66,9 +66,9 @@ struct Win {
     field_424_=nullptr,field_428_=nullptr;
   WinKeyClickCallback field_42C_=nullptr;
   WinKeyHookFn field_434_=nullptr;
-  Sound *val_17_=nullptr,*val_26_=nullptr,*val_18_=nullptr,*val_27_=nullptr,
+  Sound *val_8_=nullptr,*val_17_=nullptr,*val_26_=nullptr,*val_18_=nullptr,*val_27_=nullptr,
     *val_20_=nullptr,*val_22_=nullptr,*val_23_=nullptr,*val_25_=nullptr;
-  uintptr_t flags_=0,val_10_=0,val_11_=0,val_12_=0,val_13_=0,val_24_=0;
+  uintptr_t val_10_=0,val_11_=0,val_12_=0,val_13_=0,val_24_=0;
   void dispatch_28(int,int,int); void dispatch_29(int,int,int);
   void dispatch_19(int,int,int); void dispatch_21(int,int,int);
   void dispatch_22(int,int,int); void dispatch_23(int,int,int);
@@ -98,7 +98,7 @@ int main(){
     w.field_424_=w.field_428_=&hook;
   w.val_17_=w.val_18_=w.val_20_=w.val_22_=w.val_23_=w.val_25_=&active;
   w.val_26_=w.val_27_=&active;
-  w.flags_=reinterpret_cast<uintptr_t>(&active);
+  w.val_8_=&active;
   w.val_10_=w.val_11_=w.val_12_=w.val_13_=w.val_24_=
     reinterpret_cast<uintptr_t>(&active);
   struct Case { void (Win::*call)(int,int,int); const char *self; } cases[] = {
@@ -203,7 +203,7 @@ struct Win {
   virtual void on_button_clicked(int id){trace.push_back("button:"+std::to_string(id));}
   virtual void pass_dialog_focus(){}
   virtual int on_key_click(int key,int flags){trace.push_back("self:"+std::to_string(key)+":"+std::to_string(flags));return click_result;}
-  virtual int vslot_27(int key){trace.push_back("virtual:"+std::to_string(key));return up_result;}
+  virtual int on_key_up(int key){trace.push_back("virtual:"+std::to_string(key));return up_result;}
 };
 __KEY_CLICK__
 __KEY_UP__

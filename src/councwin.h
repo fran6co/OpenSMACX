@@ -71,8 +71,8 @@ class CouncWin : public GraphicWin, public SubInterface {
   // them and the rest of the chain is identical. The retired adapter used
   // an explicit destructor call; the compiler-generated destructor is now
   // the source-owned lifetime operation.
-  void on_group_clicked(int a1, int a2);
-  void on_button_passover(int a1, int a2);
+  void on_group_clicked(int a1, int a2) override;
+  void on_button_passover(int a1, int a2) override;
   void on_iface_left_click(int a1, int a2);
   void on_iface_right_click(int a1, int a2);
   void on_iface_left_down(int a1, int a2);

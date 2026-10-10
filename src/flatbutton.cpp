@@ -336,7 +336,7 @@ void FlatButton::on_mouse_move(int x, int y) {
             if (bubble_text_ != 0) Win::clear_bubble_text();
             field_A74_ = 0;
             if (win_parent_ != 0) {
-                win_parent_->vslot_40(static_cast<int>(field_A78_), 0);
+                win_parent_->on_button_passover(static_cast<int>(field_A78_), 0);
             }
             redraw();
         }
@@ -344,7 +344,7 @@ void FlatButton::on_mouse_move(int x, int y) {
         if (WinButtonHoverHook != 0) WinButtonHoverHook();
         field_A74_ = 1;
         if (win_parent_ != 0) {
-            win_parent_->vslot_40(static_cast<int>(field_A78_), 1);
+            win_parent_->on_button_passover(static_cast<int>(field_A78_), 1);
         }
         if (bubble_text_ != 0) {
             time1_.init(base_button_timer_callback, 0,
@@ -376,7 +376,7 @@ void FlatButton::on_mouse_leave(int x, int y) {
         Win *const buddy = win_parent_;
         field_A74_ = 0;
         if (buddy != nullptr) {
-            buddy->vslot_40(static_cast<int>(field_A78_), 0);
+            buddy->on_button_passover(static_cast<int>(field_A78_), 0);
         }
         redraw();
     }
