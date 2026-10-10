@@ -14,7 +14,7 @@ runtime/unwind equivalence require separate evidence.
 
 from __future__ import annotations
 
-from dataclasses import fields
+from dataclasses import fields, replace
 from pathlib import Path
 import subprocess
 
@@ -23,6 +23,9 @@ from match_recovery.source import read_text
 
 
 BASELINE = "2c29aa969f7ccdc6b7e9c2e261dbc6d7aedf8b9b"
+MIGRATION = "948389543"
+CLASSIFICATION_RETIREMENT = "fba66b448"
+PROVENANCE_CHECKPOINT = "a866ab99c"
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / 'src/IMAGE_PIN').is_file())
 LEAF = Path("src/leaf_recoveries.cpp")
 COMPONENT = Path("src/vendor/vc6-runtime.recovery.h")
@@ -43,9 +46,9 @@ EXPECTED = {
 }
 
 
-def _git_text(path: Path) -> str:
+def _git_text(path: Path, revision=BASELINE) -> str:
     result = subprocess.run(
-        ["git", "show", f"{BASELINE}:{path.as_posix()}"],
+        ["git", "show", f"{revision}:{path.as_posix()}"],
         cwd=ROOT,
         check=True,
         capture_output=True,
@@ -95,21 +98,39 @@ def test_original_iterator_annotations_are_rehomed_without_losing_identity_or_hi
     baseline_leaf = _git_text(LEAF)
     assert not (ROOT / LEAF).exists(), "retired leaf owner source reappeared"
     active_component = (ROOT / COMPONENT).read_text(encoding="utf-8")
-    component_states = _states(active_component, COMPONENT)
+    migrated_component = _git_text(COMPONENT, MIGRATION)
+    component_states = _states(migrated_component, COMPONENT)
+    active_states = _states(active_component, COMPONENT)
+    retired_states = _states(_git_text(COMPONENT, CLASSIFICATION_RETIREMENT), COMPONENT)
     baseline_states = _states(baseline_leaf, LEAF)
 
     for address in EXPECTED:
         original = baseline_states[address]
         assert address in component_states
         assert _preservation_view(component_states[address]) == _preservation_view(original)
-        assert _raw_original_block(active_component, address) == _raw_original_block(
+        assert _raw_original_block(migrated_component, address) == _raw_original_block(
             baseline_leaf, address)
+        assert _preservation_view(active_states[address]) == _preservation_view(retired_states[address])
+        # Only the explicitly reviewed scaffold classification was retired.
+        classified = replace(component_states[address],
+                             source_role=retired_states[address].source_role,
+                             source_role_reason=retired_states[address].source_role_reason)
+        assert _preservation_view(classified) == _preservation_view(retired_states[address])
+        assert _raw_original_block(active_component, address) == _raw_original_block(
+            _git_text(COMPONENT, PROVENANCE_CHECKPOINT), address)
 
 
 def test_runtime_component_adds_only_the_reviewed_iterator_bindings():
     baseline = _manifest(_git_text(COMPONENT))
-    active_text = (ROOT / COMPONENT).read_text(encoding="utf-8")
+    active_text = _git_text(COMPONENT, MIGRATION)
     active = _manifest(active_text)
+    installed = _manifest((ROOT / COMPONENT).read_text(encoding="utf-8"))
+    historical_ids = {binding.origin.entity_id for binding in active.bindings}
+    retained_installed = tuple(binding for binding in installed.bindings
+                              if binding.origin.entity_id in historical_ids)
+    assert {binding.origin.entity_id: binding for binding in retained_installed} == {
+        binding.origin.entity_id: binding for binding in active.bindings}
+    assert replace(installed, bindings=active.bindings) == active
     baseline_ids = {binding.origin.entity_id for binding in baseline.bindings}
     additions = [binding for binding in active.bindings
                  if binding.origin.entity_id not in baseline_ids]

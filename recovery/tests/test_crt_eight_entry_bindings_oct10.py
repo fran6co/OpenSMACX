@@ -14,6 +14,7 @@ from match_recovery.pe_coff import PeImage
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "b1dc558c176b97f7d957a50f43616bf4c29d16c2"
+ADDITION = "2a85756a7"
 COMPANION = "src/vendor/vc6-runtime.recovery.h"
 EXPECTED = (
     (0x6458A0, 0x6458C7, "_strrchr", "build/intel/mt_obj/strrchr.obj"),
@@ -29,20 +30,25 @@ EXPECTED = (
 
 def without_eight_bindings(manifest):
     """Remove exactly this reviewed addition for historical preservation controls."""
-    tail = manifest.bindings[-len(EXPECTED):]
+    addresses = {address for address, _, _, _ in EXPECTED}
+    tail = tuple(binding for binding in manifest.bindings if binding.origin.address in addresses)
     assert tuple((b.origin.address, b.spans[0].end, b.symbol, b.unit)
                  for b in tail) == EXPECTED
     assert all(b.spans == (Span(a, e),)
                for b, (a, e, _, _) in zip(tail, EXPECTED))
-    return replace(manifest, bindings=manifest.bindings[:-len(EXPECTED)])
+    return replace(manifest, bindings=tuple(
+        binding for binding in manifest.bindings if binding.origin.address not in addresses))
 
 
 def test_only_eight_runtime_bindings_added_without_changing_prior_source():
     prior_text = subprocess.check_output(
         ["git", "show", BASE + ":" + COMPANION], cwd=ROOT, text=True)
-    text = (ROOT / COMPANION).read_text()
+    text = subprocess.check_output(
+        ["git", "show", ADDITION + ":" + COMPANION], cwd=ROOT, text=True)
     current, prior = parse_component(text), parse_component(prior_text)
     assert without_eight_bindings(current) == prior
+    installed = parse_component((ROOT / COMPANION).read_text())
+    assert replace(installed, bindings=installed.bindings[:len(current.bindings)]) == current
     assert parse_component(render_component(current)) == current
     added = [line for line in text.splitlines()
              if any('"origin": "0x%08X"' % a in line for a, _, _, _ in EXPECTED)]
@@ -87,7 +93,8 @@ def test_eight_pass_and_all_prior_runtime_results_remain_unchanged(inputs):
     manifest, _, _, _ = inputs
     before = verify(inputs, without_eight_bindings(manifest))
     after = verify(inputs)
-    assert after["functions"][:-len(EXPECTED)] == before["functions"]
+    addresses = {address for address, _, _, _ in EXPECTED}
+    assert [row for row in after["functions"] if int(row["address"], 16) not in addresses] == before["functions"]
     for address, _, _, _ in EXPECTED:
         result = row(after, address)
         assert all(result[k] == "pass" for k in ("result", "boundary", "bytes", "references"))
