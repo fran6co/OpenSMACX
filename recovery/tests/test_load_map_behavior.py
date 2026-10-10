@@ -46,7 +46,7 @@ static char recorded_key[64], recorded_popup[1024], daemon_path[260];
 static int extensions_count = 0, init_count = 0, destructor_count = 0;
 static int destructor_order[2], destructor_order_count = 0;
 static char extensions[2][16];
-struct NetWinMock { unsigned char field_7624_[0x104]; int field_7728_; };
+struct NetWinMock { char loaded_file_path_[0x104]; int field_7728_; };
 static NetWinMock NetWinDialog;
 class FileBox { public: FileBox() {} ~FileBox() { ++destructor_count; destructor_order[destructor_order_count++] = 1; } };
 class AlphaSave {
@@ -102,7 +102,7 @@ int main() {
   reset_case(); IsMultiplayerNet = 1; strcpy(pref_value, "last");
   strcpy(selected_value, "maps\\two.part.SC");
   assert(load_map() == 0);
-  assert(strcmp((char *)NetWinDialog.field_7624_, "maps\\two") == 0);
+  assert(strcmp(NetWinDialog.loaded_file_path_, "maps\\two") == 0);
   assert(NetWinDialog.field_7728_ == 1 && popup_count == 0);
   assert(strcmp(pref_value, "maps\\two") == 0);
 

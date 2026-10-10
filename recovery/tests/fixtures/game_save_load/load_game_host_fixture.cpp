@@ -66,7 +66,7 @@ struct Label { int *strings_ptr; };
 struct FakeStrings { char *get(int) { return const_cast<char *>("YEAR"); } };
 struct Sprite {};
 struct NetWin {
-    char field_7624_[0x104];
+    char loaded_file_path_[0x104];
     int field_7728_;
 };
 static int label_ids[0x300] = {0};
@@ -87,8 +87,11 @@ NetWin NetWinDialog = {};
 int ExitTurnLoop = 0;
 int GameSessionActive = 0;
 int DiffLevelCurrent = 0;
-unsigned int GameState = 0;
-unsigned int GamePreferences = 0;
+struct GameDataFields {
+    unsigned int game_state_, game_preferences_, diff_level_current_;
+};
+struct GameDataStorage { GameDataFields fields_; };
+GameDataStorage GameDataStateStorage = {};
 int IsMultiplayerNet = 0;
 int IsMultiplayerPBEM = 0;
 unsigned int WorldClimateSkipTerrainClear = 1;
@@ -123,7 +126,7 @@ int parse_says(int id, char *text, int, int) {
     if (id == -1) std::strcpy(parsed_filename, text);
     return 0;
 }
-int parse_say(int, int, int, int) { return 0; }
+int parse_say(int, char *, int, int) { return 0; }
 int parse_num(int, int) { return 0; }
 void say_year(char *text) { std::strcat(text, " 2100"); }
 char *_itoa(int value, char *text, int) { std::sprintf(text, "%d", value); return text; }
@@ -138,7 +141,7 @@ int main(int argc, char **argv) {
         selected_file[0] = '\0';
         std::strcpy(selected_file, "scenarios\\sample.sc");
         IsMultiplayerNet = 1;
-        GameState = 0xC0;
+        GameDataStateStorage.fields_.game_state_ = 0xC0;
     }
     if (argc > 1 && std::strcmp(argv[1], "dot") == 0) {
         std::strcpy(selected_file, "saves\\test.part.sav");
@@ -171,11 +174,11 @@ int main(int argc, char **argv) {
         return result == 1 && daemon_calls == 0 ? 0 : 1;
     if (argc > 1 && std::strcmp(argv[1], "scenario") == 0)
         return result == 0 && NetWinDialog.field_7728_ == 3 &&
-                       std::strcmp(NetWinDialog.field_7624_, "scenarios\\sample") == 0 &&
+                       std::strcmp(NetWinDialog.loaded_file_path_, "scenarios\\sample") == 0 &&
                        hide_calls == 1 && show_calls == 0 && prompt_calls == 0
                    ? 0 : 2;
     if (argc > 1 && std::strcmp(argv[1], "dot") == 0)
-        return std::strcmp(NetWinDialog.field_7624_, "saves\\test") == 0
+        return std::strcmp(NetWinDialog.loaded_file_path_, "saves\\test") == 0
                    ? 0 : 5;
     if (argc > 1 && std::strcmp(argv[1], "retry") == 0)
         return result == 0 && daemon_calls == 2 && prompt_calls == 2 &&

@@ -275,7 +275,11 @@ class NetWin : public GraphicWin {
   uint32_t field_7618_;  // 0x7618
   uint32_t field_761C_;  // 0x761C
   uint32_t field_7620_;  // 0x7620
-  uint8_t field_7624_[0x104];  // 0x7624
+  // load_map/load_game append the extensionless map/save/scenario path here
+  // (0x5AB8AE/0x5AAD9D); pick_map takes its basename (0x47D7D7).
+  // The next word bounds this occupied span, not a checked input length.
+  // RECOVERY_MEMBER: v1 NetWin loaded_file_path_ 0x7624 0x0047D300
+  char loaded_file_path_[0x104];  // 0x7624..0x7727
   uint32_t field_7728_;  // 0x7728
   // 0x772C and 0x7730 are the two 0x190-stride faction-record blocks
   // setup_faction_data (0x00481FD0) allocates with mem_get and frees again.

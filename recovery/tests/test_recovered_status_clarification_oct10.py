@@ -5,6 +5,7 @@ import subprocess
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source import read_text, write
+from test_netwin_loaded_path_member_oct10 import restore_loaded_path_member_migration
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "71569c1962d1d0438cf97a0db7e6da5a883beb2e"
@@ -21,7 +22,8 @@ def test_only_comments_and_one_role_change_without_losing_original_evidence():
         path = ROOT / relative
         current = path.read_text()
         before = subprocess.check_output(["git", "show", BASE + ":" + relative], cwd=ROOT).decode()
-        assert cpp_without_comments(current) == cpp_without_comments(before)
+        # Later verified typed-path callers change spelling, not this status step.
+        assert cpp_without_comments(restore_loaded_path_member_migration(current)) == cpp_without_comments(before)
         prior = {r.address: r for r in read_text(before, path)}
         rows = read_text(current, path)
         assert {r.address for r in rows} == set(prior)

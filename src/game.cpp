@@ -7417,8 +7417,8 @@ int __cdecl load_map() {
     const int result = load_map_daemon(selected_path);
     if (IsMultiplayerNet != 0) {
         if (result == 0) {
-            NetWinDialog.field_7624_[0] = '\0';
-            strcat(reinterpret_cast<char *>(NetWinDialog.field_7624_),
+            NetWinDialog.loaded_file_path_[0] = '\0';
+            strcat(NetWinDialog.loaded_file_path_,
                    preference_value);
             NetWinDialog.field_7728_ = 1;
         } else {
@@ -12766,8 +12766,8 @@ int __cdecl load_game(int mode, int load_argument) {
         result = load_daemon(selected_path, load_argument);
 
         if (IsMultiplayerNet != 0 && result == 0) {
-            NetWinDialog.field_7624_[0] = '\0';
-            strcat(reinterpret_cast<char *>(NetWinDialog.field_7624_), save_stem);
+            NetWinDialog.loaded_file_path_[0] = '\0';
+            strcat(NetWinDialog.loaded_file_path_, save_stem);
             NetWinDialog.field_7728_ = (mode != 0) + 2;
         }
 

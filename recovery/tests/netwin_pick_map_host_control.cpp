@@ -89,14 +89,12 @@ struct Player {
 struct PlayerData { uint32_t unk_102 = 0; };
 struct DefaultPreferences { uint32_t difficulty = 5; };
 struct AlphaIniPreference { uint32_t preferences, more_preferences, announce, rules, semaphore; };
-struct LabelBank { char *strings_ptr; };
-struct StringBank { char *get(int) { return const_cast<char *>("Default faction"); } };
 
 struct NetWin {
     void *faction_records_ = nullptr;
     void *faction_records_copy_ = nullptr;
     int field_7728_ = 0;
-    char field_7624_[0x104] = "C:\\scenario.scn";
+    char loaded_file_path_[0x104] = "C:\\scenario.scn";
     void pick_map();
 };
 
@@ -105,7 +103,6 @@ static int map_result = 0, game_result = 0;
 static int map_loads = 0, game_loads = 0, last_game_host = -1;
 static int pops = 0, parses = 0;
 static int parse_value = -1, faction_sends = 0;
-static char label_values[0x1100] = {};
 static char *label_get(int) { return const_cast<char *>("menu item"); }
 static int pick_answer(NetWin &, PopMenu &) { return scripted_choice; }
 static int load_map() { ++map_loads; return map_result; }
@@ -143,8 +140,6 @@ static int netwin_rules_gate = 1;
 static int *const NetWinRulesGate = &netwin_rules_gate;
 static Player Players[8];
 static PlayerData PlayersData[8];
-static LabelBank Labels = {label_values};
-static StringBank StringTable;
 static char string_temp[256];
 static char *StringTemp = string_temp;
 static char NetWinScenarioStorage[0x164];

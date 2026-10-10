@@ -2083,9 +2083,9 @@ void NetWin::pick_map() {
                 NetWinSessionData.state_[0x20] = 0;
 
                 char *scenario_name = strrchr(
-                    reinterpret_cast<char *>(field_7624_), '\\');
+                    loaded_file_path_, '\\');
                 if (scenario_name == nullptr) {
-                    scenario_name = reinterpret_cast<char *>(field_7624_);
+                    scenario_name = loaded_file_path_;
                 } else {
                     ++scenario_name;
                 }

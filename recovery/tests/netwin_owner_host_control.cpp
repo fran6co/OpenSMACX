@@ -48,7 +48,7 @@ class NetWin : public GraphicWin {
 public:
     uint8_t field_6614_[0x1000];
     uint32_t field_7614_, field_7618_, field_761C_, field_7620_;
-    uint8_t field_7624_[0x104];
+    char loaded_file_path_[0x104];
     uint32_t field_7728_;
     void *faction_records_;
     void *faction_records_copy_;
