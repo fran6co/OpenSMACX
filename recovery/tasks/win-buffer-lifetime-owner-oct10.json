@@ -1,0 +1,33 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "411ae800a9ffaa5819cf4f7693d166f0b5c5c62b",
+  "editable_files": [
+    "src/win.cpp",
+    "src/basepop.cpp",
+    "recovery/tests/test_win_buffer_lifetime_owner_oct10.py",
+    "recovery/tests/fixtures/win_buffer_lifetime_owner_oct10.cpp"
+  ],
+  "evidence": [
+    "Pinned Win::init 5EBD80-5EC621 registers handler662CC2; FuncInfo67F8E8 has maxState6 and unwind map67F908. States0..3 cover the four Buffer constructors and map to delete actions662C80/8B/96/A1 using the active allocation temporary. Current manual allocation plus placement construction lacks this delete-on-constructor-throw behavior.",
+    "Pinned allocator64558A calls __nh_malloc6470B8 with flag1; configured VC6 /GX /MT static LIBC new.obj has the same returning-null allocator. Genuine scalar new Buffer() preserves original null tests and immediate return4 after each stored member; do not clean up earlier successful allocations on this error path.",
+    "Existing Buffer sizeof588 matches all four pinned allocations. No class/header layout changes or speculative type assignments are needed.",
+    "BasePop::exec602834-602868 publishes three ordered local border fields; Win::init5EBDA8-5EBDBC reads +0/+4/+8 into existing caption/border/bottom members. Existing BorderSizing declaration is the genuine typed twelve-byte handoff.",
+    "Preserve all original identities, spans, historical claims and seed lessons. Host tests must exercise actual source allocation prefix, all four returned-null and throwing-constructor positions, successful order and partial-initialization behavior. Fresh native compilation/measurement/build and independent pin review required; no full-game acceptance implied."
+  ],
+  "intent": "Recover compiler-owned allocation cleanup for the four Win::init Buffer members and the typed BorderSizing handoff from BasePop::exec, retaining original null-return and partial initialization behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6208896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6301184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-buffer-lifetime-owner-oct10"
+}
