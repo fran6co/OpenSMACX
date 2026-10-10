@@ -1,0 +1,59 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "1e9389afb73fe26662459f969a0a86a6c7a23246",
+  "editable_files": [
+    "src/texture.cpp",
+    "recovery/tests/test_texture_span_prefetch_owner_oct10.py",
+    "recovery/tests/fixtures/texture_span_prefetch_owner_oct10.cpp"
+  ],
+  "evidence": [
+    "Independent pin:61A6DA initial read;61A6E9 conditional store;61A6EB-61A6EE source advance;61A6F6 next read before countdown61A6F9. Keyed61ABDA/61ABF6 and keyed-light61C59F/61C5CB likewise preserve terminal reads after source advance, including when current key suppresses the store.",
+    "Cutoff61B158 initial read;61B170 conditional store;61B172-61B175 source advance;61B184 next read before countdown. Alternate-key623E96/623EB2 and fill-key623EC5/623EE1 likewise advance then read.",
+    "Important distinct mixed-lit6233C0 kernel:623921 preloads S0,623935 outputs current sample,623937 advances light,62393E reads CURRENT source before623941/623944 advance source,62394B destination advance,62394C countdown. This yields delayed next sampling; do not normalize to the other kernels. Existing lit-span helper must be separated from keyed mode if ordering differs.",
+    "Draw2 initial624BA8 source read occurs BEFORE branch624BAB selects lit versus fill. Lit reads advanced source624BE0 before countdown; fill624BED onward reads fill byte each iteration but no additional texture byte. Preserve the initial source read on both branches, not only the lit branch.",
+    "Existing helper caller audit: texture_draw_lit_span is called only by6233C0; texture_draw_keyed_lit_span only by61C090. Opaque61B1F0 trailing-read implementation is already integrated and outside repair scope; preserve its behavior and all other Texture functions. No headers/globals/compiler-policy changes.",
+    "Controls must compile actual relevant source kernels/bodies, exercise distinct multiple-texel mixed-lit output sequence and alias sequencing, successful extra-byte reads, and isolated guard-page faults with shared destination proving last store precedes terminal fault. Include key-skip and draw2 fill initial-read behavior; damage mutants must compile then fail. Original fault behavior is preserved, not a deliberate fix.",
+    "Preserve all original identities/spans/claims/history and source-owned storage; do not hand-bank claims or erase known exceptional-domain obligations. Independent review plus fresh build/link, affected/native measurements and outside-source fact continuity required. Host tests are bounded, not full x87/ABI/runtime acceptance."
+  ],
+  "intent": "Recover the original source-read/output/DDA sequencing of seven Texture span owners, including terminal reads and the mixed-lit delayed sample, retaining original faults and alias behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6398528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6399840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6401120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6406288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6435776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6437344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6440560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "texture-span-prefetch-owner-oct10"
+}
