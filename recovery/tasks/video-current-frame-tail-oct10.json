@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "author": "framework-coordinator",
+  "base_revision": "753fd25f9",
+  "intent": "Complete VideoSoundState current-frame original span ownership with its existing null-device return tail; do not invent another source function or change behavior.",
+  "editable_files": ["src/video.cpp"],
+  "subjects": [{"address": 5015824, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}],
+  "evidence": [
+    "Pinned4C8910..4C8923 loads device+4, tests null, branches directly to4C891F, otherwise tail-jumps device vtable+94.4C891F..4C8923 returns-1. Existing C++ implements both routes, but its original span ends4C891F and leaves those four bytes unowned.",
+    "IDA underflow label at4C891F is an untrusted library-name hint, not proof of a separate function. Preserve original identity/name/symbol/claims/lessons, only extend the existing span through its branch-selected tail using the native source writer and guarded publication.",
+    "Require original whole-span decode review, whole-Video measurements, unchanged C++ tokens, fresh full application compile/link and identity/claim continuity. No new function-count credit, automatic byte grant or full-game acceptance claim."
+  ]
+}
