@@ -17,17 +17,21 @@
  */
 #pragma once
 
+class Font;
+// Original storage 0x007D3948; constructed before WinMain and destroyed at
+// exit. Its definition belongs with the entrypoint that initializes it.
+extern Font g_JACKAL_FONT;
+
 /*
- * The four globals WinMain writes before anything else in the process runs.
+ * The three startup controls WinMain sets before entering the game.
  *
  * They are declared here rather than in the header of whichever subsystem
  * later reads them because the startup order is the fact worth keeping: every
  * one of these is set by 0x0045F950 and read by code that runs after it, so
  * "who owns this" is answered by the entry point and nothing else.
  *
- * Each is an OBJECT, not a pointer to the address in the shipped image. See
- * the note on `g_JACKAL_FONT` in atexit_thunks.h: the pointer form is what a
- * DLL injected into terranx.exe needed, and this is no longer that.
+ * These are real source-owned storage, not pointers to their addresses in
+ * the shipped image. The old injected-DLL pointer bindings are retired.
  *
  * WHERE THEIR INITIAL VALUES COME FROM, which is a question with a mechanical
  * answer. `.data` runs 0x00682000-0x009C21F8 but the executable only STORES
@@ -42,8 +46,9 @@
  *                        recovered value, exactly, and there is nothing to
  *                        look up.
  *
- * Three of the four below are above the line. That is not a gap in the
- * recovery; it is the recovery.
+ * Two of the three controls below are above the line. The Font declared
+ * separately above also has zero-initialized storage, followed by CRT
+ * construction before WinMain.
  */
 
 // 0x007D3970, and ABOVE the line - a zero-filled buffer, so this declaration

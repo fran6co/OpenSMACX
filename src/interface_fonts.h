@@ -36,8 +36,3 @@ Font *__cdecl find_font(int size, int style);
  */
 extern LPCSTR DefaultFontFace;
 extern LPCSTR DefaultLargeFontFace;
-
-
-// 0x007D3948 in the image - the single game-wide font, initialised by
-// WinMain and closed at exit.
-extern Font g_JACKAL_FONT;

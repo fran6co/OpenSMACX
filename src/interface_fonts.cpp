@@ -1,9 +1,13 @@
+// ORIGINAL: 0x005882A0 _$E19 0x005882A0-0x005882C4 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original CRT slot0x00682648 selects initializer0x005882A0-0x005882C4 and its registration names fini0x005882D0-0x005882E4; complete instruction decode fixes both ends.", "Original operations identify storage0x0093FC58; 48 Font objects, stride0x28, constructor/destructor618EA0/618EE0 through vector helpers6457C2/6456E4. Source object binding names ?FontTable@@3PAVFont@@A.", "Fresh owner COFF selects _$E19 via .CRT$XCU and registers _$E17, both naming the same global. Fresh linked callback order is singleton, FontQueue VAL2/VAL1, FontTable, agreeing with their original slots.", "Current compiler-local names are emission interpretations, not original debug names or historical TU proof. The selected relative order does not establish complete CRT order, strict reference/linked preservation, dependency equivalence or runtime acceptance."], "reason": "Bind the original startup function to the genuine compiler-generated lifetime of source-owned FontTable; declarations and construction order, not authored callbacks, provide the implementation."}
+// ORIGINAL: 0x005882D0 _$E17 0x005882D0-0x005882E4 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original CRT slot0x00682648 selects initializer0x005882A0-0x005882C4 and its registration names fini0x005882D0-0x005882E4; complete instruction decode fixes both ends.", "Original operations identify storage0x0093FC58; 48 Font objects, stride0x28, constructor/destructor618EA0/618EE0 through vector helpers6457C2/6456E4. Source object binding names ?FontTable@@3PAVFont@@A.", "Fresh owner COFF selects _$E19 via .CRT$XCU and registers _$E17, both naming the same global. Fresh linked callback order is singleton, FontQueue VAL2/VAL1, FontTable, agreeing with their original slots.", "Current compiler-local names are emission interpretations, not original debug names or historical TU proof. The selected relative order does not establish complete CRT order, strict reference/linked preservation, dependency equivalence or runtime acceptance."], "reason": "Bind the original exit function to the genuine compiler-generated lifetime of source-owned FontTable; declarations and construction order, not authored callbacks, provide the implementation."}
 #include "stdafx.h"
 #include "interface_fonts.h"
 
 // Application fonts, selected and initialized by config_popups and WinMain.
-// Keep FontTable before g_JACKAL_FONT in this TU: their original source-owned
-// construction and reverse teardown ordering is not delegated to Jackal.
+// FontTable stays with find_font; the entrypoint's singleton is in main.cpp.
+// Original CRT order is singleton, FontQueue VAL2/VAL1, then FontTable.
 
 // RECOVERY_OBJECT: v1 0x00691B2C ?DefaultFontFace@@3PBDB
 LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
@@ -48,13 +52,14 @@ Font *__cdecl find_font(int size, int style) {
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk
-// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// (dispatcher at 0x00644EEB, table at 0x00682000..0x006826CC).
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
 // Was `Font g_FONTS[48]` beside the `Font *const FontTable = (Font
 // *)0x0093FC58` binding - the array is the binding's storage, so the object
 // now carries the public name and find_font's `FontTable + N` indexes it
 // directly. See interface_fonts.h.
+// RECOVERY_OBJECT: v1 0x0093FC58 ?FontTable@@3PAVFont@@A
 Font FontTable[48];  // 0x0093FC58, 0x28 stride
 
 // 0x0068F220, twelve point sizes find_font matches against. The values are
@@ -66,7 +71,3 @@ const int FontSizeTable[FontSizeTableCount] = {
 // Original 0x0068F250..0x0068F260: config_popups indexes all four styles.
 // RECOVERY_OBJECT: v1 0x0068F250 ?FontStyleTable@@3QBHB
 const int FontStyleTable[4] = {0, 1, 2, 4};
-
-// 0x007D3948 in the image - the single game-wide font, initialised by
-// WinMain and closed at exit.
-Font g_JACKAL_FONT;
