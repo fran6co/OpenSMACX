@@ -161,9 +161,11 @@ void movie_media_write_macroblock_rows(unsigned char *destination,
 // caller-owned 0x800-byte scratch frame.
 void movie_media_decode_six_coefficient_blocks(
     MediaDecoderContext *context, DWORD *scratch_words);
-void __cdecl sub_5d0aab(MediaDecoderContext *context, DWORD *scratch_words);
-void __cdecl sub_5d0d82(MediaDecoderContext *context, DWORD predictor_value,
-                        BYTE *destination, int row_pitch_bytes);
+DWORD __cdecl sub_5d0aab(MediaDecoderContext *context, DWORD *scratch_words,
+                         const BYTE *input, DWORD bit_position);
+DWORD __cdecl sub_5d0d82(MediaDecoderContext *context, DWORD predictor_value,
+                         const BYTE *input, BYTE *destination,
+                         int row_pitch_bytes, DWORD bit_position);
 
 extern "C" void __cdecl sub_5d29e1(int *source, int *destination);
 extern "C" void __cdecl sub_5d2c0a(int *destination, int *source);

@@ -3,10 +3,95 @@ from __future__ import annotations
 import shutil
 import subprocess
 from pathlib import Path
+import os
 
 
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT.parents[1] / "src"
+PINNED_SHA256 = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+
+
+def test_pinned_outer_wrappers_capture_and_publish_bitstream_state_once() -> None:
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from capstone.x86 import (
+        X86_OP_IMM, X86_OP_MEM, X86_OP_REG,
+        X86_REG_EBP, X86_REG_EDI, X86_REG_ESI,
+    )
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+
+    image_path = Path(os.environ.get(
+        "OPENSMACX_IMAGE", str(SRC.parent / ".opensmacx/game/terranx_original.exe")
+    ))
+    if not image_path.is_file():
+        import pytest
+        pytest.skip("pinned original unavailable")
+    image = PeImage(image_path.read_bytes(), PINNED_SHA256)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    wrapper_specs = (
+        (0x5D1278, 0x5D1466, 0x5D128B, 0x5D1291, 0x5D1297, 0x5D129C),
+        (0x5D1466, 0x5D1654, 0x5D1479, 0x5D147F, 0x5D1485, 0x5D148A),
+        (0x5D1654, 0x5D1842, 0x5D1667, 0x5D166D, 0x5D1673, 0x5D1678),
+        (0x5D1842, 0x5D1A30, 0x5D1855, 0x5D185B, 0x5D1861, 0x5D1866),
+        (0x5D1A30, 0x5D1B88, 0x5D1A3A, 0x5D1A40, 0x5D1A46, 0x5D1A4B),
+    )
+
+    def decoded(start: int, end: int):
+        instructions = list(decoder.disasm(image.read(Span(start, end)), start))
+        assert sum(item.size for item in instructions) == end - start
+        return {item.address: item for item in instructions}
+
+    def reg_operand(insn, index: int, register: int) -> bool:
+        operand = insn.operands[index]
+        return operand.type == X86_OP_REG and operand.reg == register
+
+    def mem_operand(insn, index: int, base: int, disp: int) -> bool:
+        operand = insn.operands[index]
+        return (operand.type == X86_OP_MEM and operand.mem.base == base
+                and operand.mem.disp == disp and operand.mem.index == 0)
+
+    for start, end, input_at, cursor_at, call_at, store_at in wrapper_specs:
+        instructions = decoded(start, end)
+        input_load = instructions[input_at]
+        cursor_load = instructions[cursor_at]
+        decode_call = instructions[call_at]
+        cursor_store = instructions[store_at]
+        assert input_load.mnemonic == "mov" and reg_operand(input_load, 0, X86_REG_EBP)
+        assert mem_operand(input_load, 1, X86_REG_ESI, 0x200)
+        assert cursor_load.mnemonic == "mov" and reg_operand(cursor_load, 0, X86_REG_EDI)
+        assert mem_operand(cursor_load, 1, X86_REG_ESI, 0x204)
+        assert input_load.address < cursor_load.address < decode_call.address
+        assert decode_call.mnemonic == "call" and decode_call.operands[0].type == X86_OP_IMM
+        assert decode_call.operands[0].imm == 0x5D0AAB
+        assert cursor_store.mnemonic == "mov" and mem_operand(cursor_store, 0, X86_REG_ESI, 0x204)
+        assert reg_operand(cursor_store, 1, X86_REG_EDI)
+        assert decode_call.address < cursor_store.address
+        cursor_stores = [
+            item for item in instructions.values()
+            if item.mnemonic == "mov" and item.operands
+            and item.operands[0].type == X86_OP_MEM
+            and item.operands[0].mem.base == X86_REG_ESI
+            and item.operands[0].mem.disp == 0x204
+        ]
+        assert cursor_stores == [cursor_store]
+        assert all(
+            item.address > cursor_store.address
+            for item in instructions.values()
+            if item.mnemonic == "call" and item.address != decode_call.address
+        )
+
+    # The outlined bitstream body consumes EBP/EDI register snapshots. It
+    # updates predictor members per block but does not publish either captured
+    # input or cursor through context+0x200/+0x204.
+    for start, end in ((0x5D0AAB, 0x5D0D82), (0x5D0D82, 0x5D1278)):
+        instructions = decoded(start, end)
+        for item in instructions.values():
+            for operand in item.operands:
+                if operand.type != X86_OP_MEM or operand.mem.base != X86_REG_ESI:
+                    continue
+                assert operand.mem.disp != 0x200
+                assert operand.mem.disp != 0x204
 
 
 def _function(source: str, signature: str) -> str:
@@ -39,12 +124,26 @@ def test_actual_six_step_predictor_and_dct_bodies(tmp_path: Path) -> None:
         "static DWORD movie_media_decode_predictor_delta",
         "static DWORD movie_media_coefficient_entry",
         "static int movie_media_sar17",
-        "void __cdecl sub_5d0d82(",
-        "void __cdecl sub_5d0aab(",
+        "DWORD __cdecl sub_5d0d82(",
+        "DWORD __cdecl sub_5d0aab(",
+        "void movie_media_decode_six_coefficient_blocks(",
+        "void __cdecl sub_5d1278(",
         "void __cdecl sub_5d1466(",
+        "void __cdecl sub_5d1654(",
+        "void __cdecl sub_5d1842(",
+        "void __cdecl sub_5d1a30(",
     )
-    bodies = "\n\n".join(_function(source_text, signature)
-                           for signature in signatures)
+    extracted = [_function(source_text, signature) for signature in signatures]
+    reader = extracted[0]
+    read_needle = "static DWORD movie_media_read_bits32(const BYTE *input, DWORD bit_position) {"
+    assert reader.count(read_needle) == 1
+    extracted[0] = reader.replace(
+        read_needle,
+        read_needle + "\n  if (!first_read_input) first_read_input = input;\n"
+        "  else if (first_read_input != input) ++different_read_inputs;",
+        1,
+    )
+    bodies = "\n\n".join(extracted)
     unit_source = r'''#include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -65,13 +164,27 @@ struct MediaDecoderContext {
 };
 struct MediaCoefficientTableStorage { DWORD words[325]; };
 MediaCoefficientTableStorage movie_media_coefficient_tables = {};
-void __cdecl sub_5d0d82(MediaDecoderContext *, DWORD, BYTE *, int);
+DWORD __cdecl sub_5d0d82(MediaDecoderContext *, DWORD, const BYTE *, BYTE *, int, DWORD);
+static const BYTE *first_read_input;
+static int different_read_inputs;
+static MediaDecoderContext *active_context;
+static const BYTE *replacement_input;
+static bool mutate_input_on_transform;
+static bool did_mutate_context_input;
+static bool throw_on_transform;
+static bool observe_converter_commit;
+static DWORD expected_converter_cursor;
 static int row_calls;
 static int column_calls;
 static int converter_calls;
 static int first_row_value;
 extern "C" void __cdecl sub_5d29e1(int *source, int *destination) {
   if (row_calls == 0) first_row_value = source[0];
+  if (mutate_input_on_transform && row_calls == 0) {
+    active_context->compressed_input_200 = replacement_input;
+    did_mutate_context_input = true;
+  }
+  if (throw_on_transform) throw 7;
   ++row_calls;
   for (int i = 0; i != 8; ++i) destination[i * 9] = source[0] + i;
 }
@@ -79,7 +192,22 @@ extern "C" void __cdecl sub_5d2c0a(int *destination, int *source) {
   ++column_calls;
   for (int i = 0; i != 8; ++i) destination[i] = source[0] + i;
 }
-void __cdecl sub_5d2037(int *, int *, unsigned int *) { ++converter_calls; }
+static void observe_conversion() {
+  if (observe_converter_commit) {
+    assert(active_context != nullptr);
+    assert(active_context->bit_position_204 == expected_converter_cursor);
+  }
+  ++converter_calls;
+}
+void __cdecl sub_5d2037(int *, int *, unsigned int *) { observe_conversion(); }
+void __cdecl sub_5d2536(int *, int *, int *) { observe_conversion(); }
+void __cdecl sub_5d1b88(unsigned int *, int *, int *) { observe_conversion(); }
+void __cdecl OutputPixelRow16(short *, unsigned int *, unsigned int *) {
+  observe_conversion();
+}
+void __cdecl OutputPixelRow(int *, unsigned int *, unsigned int *) {
+  observe_conversion();
+}
 ''' + byte_view + byte_accessors + "\n" + bodies + r'''
 static void set_msb(BYTE *buffer, unsigned position, unsigned value,
                     unsigned width) {
@@ -127,11 +255,13 @@ int main() {
   reinterpret_cast<BYTE *>(movie_media_coefficient_tables.words)[0x414] = 0x12;
   DWORD scratch[512];
   for (int i = 0; i != 512; ++i) scratch[i] = 0x5a5a5a5au;
-  sub_5d0aab(&runtime, scratch);
+  const DWORD completed_position = sub_5d0aab(
+      &runtime, scratch, runtime.compressed_input_200, runtime.bit_position_204);
   assert(runtime.predictor_4f8 == 5);
   assert(runtime.predictor_4fc == 4);
   assert(runtime.predictor_500 == 6);
-  assert(runtime.bit_position_204 == 18);
+  assert(completed_position == 18);
+  assert(runtime.bit_position_204 == 0);
   const int starts[6] = {1, 9, 129, 137, 257, 321};
   const int fills[6] = {8, 7, 6, 5, 4, 6};
   for (int block = 0; block != 6; ++block) {
@@ -161,8 +291,12 @@ int main() {
   ac_runtime.block_transform_weights[3] = 0x20000;
   BYTE output[8 * 64];
   std::memset(output, 0xa5, sizeof(output));
-  sub_5d0d82(&ac_runtime, 0, output, 64);
-  assert(ac_runtime.bit_position_204 == 1);
+  ac_runtime.bit_position_204 = 77;
+  const DWORD block_position = sub_5d0d82(
+      &ac_runtime, 0, ac_runtime.compressed_input_200, output, 64,
+      0);
+  assert(block_position == 1);
+  assert(ac_runtime.bit_position_204 == 77);
   assert(row_calls == 8 && column_calls == 8);
   assert(first_row_value == -0x20000);
 
@@ -175,6 +309,153 @@ int main() {
   assert(wrapper_runtime.bit_position_204 == 18);
   assert(wrapper_runtime.predictor_4f8 == static_cast<DWORD>(-2));
   assert(converter_calls == 16);
+
+  // Every native outer wrapper publishes the completed cursor once before
+  // its first pixel/conversion call.
+  using Wrapper = void (__cdecl *)(BYTE *, int, MediaDecoderContext *);
+  const Wrapper wrappers[5] = {
+      sub_5d1278, sub_5d1466, sub_5d1654, sub_5d1842, sub_5d1a30};
+  for (Wrapper wrapper : wrappers) {
+    MediaDecoderContext state = {};
+    state.compressed_input_200 = zero_input;
+    state.block_transform_weights[0] = 0x20000;
+    BYTE destination[16 * 64] = {};
+    converter_calls = 0;
+    active_context = &state;
+    expected_converter_cursor = 18;
+    observe_converter_commit = true;
+    wrapper(destination, 64, &state);
+    observe_converter_commit = false;
+    assert(state.bit_position_204 == 18);
+    assert(converter_calls == 16);
+  }
+
+  // The public convenience wrapper follows the same snapshot-and-single-commit
+  // contract even though it has no output-conversion phase.
+  BYTE block_input[32] = {};
+  BYTE other_input[32] = {};
+  set_msb(block_input, 3, 0x3f, 17);
+  set_msb(block_input, 20, 0, 1);
+  movie_media_coefficient_tables.words[228] = 0x00000101u;
+  movie_media_coefficient_tables.words[212] = 0x00004100u;
+  movie_media_coefficient_tables.words[68] = 3;
+  MediaDecoderContext expected_convenience = {};
+  expected_convenience.block_transform_weights[0] = 0x20000;
+  expected_convenience.block_transform_weights[3] = 0x20000;
+  DWORD expected_convenience_scratch[512] = {};
+  active_context = &expected_convenience;
+  mutate_input_on_transform = false;
+  const DWORD expected_convenience_position = sub_5d0aab(
+      &expected_convenience, expected_convenience_scratch, block_input, 0);
+  MediaDecoderContext convenience = {};
+  convenience.compressed_input_200 = block_input;
+  convenience.block_transform_weights[0] = 0x20000;
+  convenience.block_transform_weights[3] = 0x20000;
+  DWORD convenience_scratch[512] = {};
+  active_context = &convenience;
+  row_calls = 0;
+  column_calls = 0;
+  first_read_input = nullptr;
+  different_read_inputs = 0;
+  mutate_input_on_transform = true;
+  did_mutate_context_input = false;
+  replacement_input = other_input;
+  movie_media_decode_six_coefficient_blocks(&convenience, convenience_scratch);
+  assert(did_mutate_context_input);
+  assert(convenience.compressed_input_200 == other_input);
+  assert(different_read_inputs == 0);
+  assert(convenience.bit_position_204 == expected_convenience_position);
+
+  MediaDecoderContext convenience_interrupted = {};
+  convenience_interrupted.compressed_input_200 = block_input;
+  convenience_interrupted.block_transform_weights[0] = 0x20000;
+  convenience_interrupted.block_transform_weights[3] = 0x20000;
+  active_context = &convenience_interrupted;
+  row_calls = 0;
+  column_calls = 0;
+  mutate_input_on_transform = false;
+  throw_on_transform = true;
+  bool convenience_threw = false;
+  try {
+    movie_media_decode_six_coefficient_blocks(
+        &convenience_interrupted, convenience_scratch);
+  } catch (int value) { convenience_threw = value == 7; }
+  throw_on_transform = false;
+  assert(convenience_threw);
+  assert(convenience_interrupted.bit_position_204 == 0);
+  assert(convenience_interrupted.predictor_4f8 != 0);
+
+  // A transform callback can alter the context's input pointer after block
+  // one. The native outer wrapper captured EBP once, so all later reads must
+  // still use the original input pointer. Compare against the same stream
+  // without mutation for every wrapper.
+  set_msb(block_input, 3, 0x3f, 17);
+  set_msb(block_input, 20, 0, 1);
+  for (int i = 0; i != 325; ++i) movie_media_coefficient_tables.words[i] = 0;
+  movie_media_coefficient_tables.words[228] = 0x00000101u;
+  movie_media_coefficient_tables.words[212] = 0x00004100u;
+  movie_media_coefficient_tables.words[68] = 3;
+  reinterpret_cast<BYTE *>(movie_media_coefficient_tables.words)[0x394] = 0x12;
+  reinterpret_cast<BYTE *>(movie_media_coefficient_tables.words)[0x414] = 0x12;
+  for (Wrapper wrapper : wrappers) {
+    MediaDecoderContext baseline = {};
+    baseline.compressed_input_200 = block_input;
+    baseline.block_transform_weights[0] = 0x20000;
+    baseline.block_transform_weights[3] = 0x20000;
+    BYTE baseline_output[16 * 64] = {};
+    active_context = &baseline;
+    row_calls = 0;
+    column_calls = 0;
+    first_read_input = nullptr;
+    different_read_inputs = 0;
+    mutate_input_on_transform = false;
+    throw_on_transform = false;
+    wrapper(baseline_output, 64, &baseline);
+    const DWORD baseline_position = baseline.bit_position_204;
+
+    MediaDecoderContext changed = {};
+    changed.compressed_input_200 = block_input;
+    changed.block_transform_weights[0] = 0x20000;
+    changed.block_transform_weights[3] = 0x20000;
+    BYTE changed_output[16 * 64] = {};
+    active_context = &changed;
+    row_calls = 0;
+    column_calls = 0;
+    first_read_input = nullptr;
+    different_read_inputs = 0;
+    replacement_input = other_input;
+    mutate_input_on_transform = true;
+    did_mutate_context_input = false;
+    wrapper(changed_output, 64, &changed);
+    assert(did_mutate_context_input);
+    assert(changed.compressed_input_200 == other_input);
+    assert(different_read_inputs == 0);
+    assert(changed.bit_position_204 == baseline_position);
+  }
+
+  // Throwing from a transform after a predictor update leaves the caller's
+  // cursor uncommitted, exactly as the native wrapper's post-decode store.
+  for (Wrapper wrapper : wrappers) {
+    MediaDecoderContext interrupted = {};
+    interrupted.compressed_input_200 = block_input;
+    interrupted.block_transform_weights[0] = 0x20000;
+    interrupted.block_transform_weights[3] = 0x20000;
+    BYTE interrupted_output[16 * 64] = {};
+    active_context = &interrupted;
+    row_calls = 0;
+    column_calls = 0;
+    first_read_input = nullptr;
+    different_read_inputs = 0;
+    mutate_input_on_transform = false;
+    throw_on_transform = true;
+    bool threw = false;
+    try { wrapper(interrupted_output, 64, &interrupted); }
+    catch (int value) { threw = value == 7; }
+    throw_on_transform = false;
+    assert(threw);
+    assert(interrupted.bit_position_204 == 0);
+    assert(interrupted.predictor_4f8 != 0);
+  }
 }
 '''
     unit = tmp_path / "movie_decoder_six_blocks.cpp"
@@ -192,9 +473,18 @@ int main() {
         ("block < 4 ? 0x40 : 0x20", "block < 4 ? 0x20 : 0x20"),
         ("{1, 9, 129, 137, 257, 321}", "{2, 9, 129, 137, 257, 321}"),
         ("197 + (code >> 1)", "198 + (code >> 1)"),
+        ("  if (run_position == 0x3f) {",
+         "  context->bit_position_204 = bit_position;\n"
+         "  if (run_position == 0x3f) {"),
+        ("context, *predictor, input,",
+         "context, *predictor, context->compressed_input_200,"),
+        ("context->bit_position_204 = bit_position;\n"
+         "  for (int row = 0; row != 16; ++row) {",
+         "static_cast<void>(bit_position);\n"
+         "  for (int row = 0; row != 16; ++row) {"),
     )
     for index, (before, after) in enumerate(mutants):
-        assert before in unit_source
+        assert unit_source.count(before) >= 1
         mutated_source = unit_source.replace(before, after, 1)
         mutated_unit = tmp_path / f"movie_decoder_mutant_{index}.cpp"
         mutated_unit.write_text(mutated_source)

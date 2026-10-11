@@ -303,9 +303,6 @@ void __cdecl sub_5d02cc(unsigned char *, void *, int);
 struct MediaRuntime;
 struct MediaDecodedPixelBlock4x4;
 struct MediaDecoderContext;
-void __cdecl sub_5d0aab(MediaDecoderContext *context, unsigned int *scratch_words);
-void __cdecl sub_5d0d82(MediaDecoderContext *context, unsigned int predictor_value,
-                        unsigned char *destination, int row_pitch_bytes);
 void __cdecl sub_5d1278(unsigned char *base, int stride, MediaDecoderContext *context);
 void __cdecl sub_5d1466(unsigned char *base, int stride, MediaDecoderContext *context);
 void __cdecl sub_5d1654(unsigned char *base, int stride, MediaDecoderContext *context);
