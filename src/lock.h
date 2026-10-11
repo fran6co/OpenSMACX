@@ -68,8 +68,8 @@ static_assert(sizeof(Lock) == 0xEC,
 // Original94A30C is the map owner's allocation pointer, not an independent
 // Lock-owned array. map_tile_bytes() views that same allocation for byte
 // operations; map_init/map_read/map_shutdown own its allocation lifecycle.
-// MapArea at original949884 supplies the shared tile count.
-extern uint32_t MapArea;       // 0x00949884, defined in map.cpp
+// MapArea at original949884 supplies the shared tile count through the
+// genuine MapStorage metadata member declared by the map.h include above.
 
 // A per-slot enable mask any_locks gates its record scan on, at a fixed
 // address; rebindable for tests.

@@ -186,10 +186,6 @@ const int MapDirectionPermutation[9] = { 9, 6, 3, 2, 1, 4, 7, 8, 5 };
 
 // Loader-zero pointer cells at 94A30C/94A310. map_init allocates both
 // arrays; map_shutdown releases them with the matching CRT free.
-// RECOVERY_OBJECT: v1 0x0094A30C ?MapTiles@@3PAUMap@@A
-Map *MapTiles;
-// RECOVERY_OBJECT: v1 0x0094A310 ?MapAbstractTiles@@3PAEA
-uint8_t *MapAbstractTiles;
 // Resampling retains its previous allocation and dimensions in these
 // original scratch cells (945AD0/945AD4/945AD8).
 // RECOVERY_OBJECT: v1 0x00945AD0 ?MapResamplePreviousTiles@@3PAUMap@@A
@@ -199,29 +195,17 @@ int MapResamplePreviousWidth;
 // RECOVERY_OBJECT: v1 0x00945AD8 ?MapResamplePreviousHeight@@3HA
 int MapResamplePreviousHeight;
 
-// RECOVERY_OBJECT: v1 0x00949870 ?MapLongitudeBounds@@3HA
-int MapLongitudeBounds;  // 0x00949870
-// RECOVERY_OBJECT: v1 0x00949874 ?MapLatitudeBounds@@3HA
-int MapLatitudeBounds;  // 0x00949874
-uint32_t MapRandSeed;  // 0x00949878
-int MapSeaLevel;  // 0x0094987C
-int MapSeaLevelCouncil;  // 0x00949880
-// RECOVERY_OBJECT: v1 0x00949884 ?MapArea@@3IA
-uint32_t MapArea;  // 0x00949884
-uint32_t MapAreaSqRoot;  // 0x00949888
-// RECOVERY_OBJECT: v1 0x0094988C ?MapIsFlat@@3HA
-BOOL MapIsFlat;  // 0x0094988C
-int MapLandmarkCount;  // 0x00949890
-int MapAbstractLongBounds;  // 0x0094A294
-uint32_t MapAbstractLatBounds;  // 0x0094A298
-uint32_t MapAbstractArea;  // 0x0094A29C
-uint32_t MapSizePlanet;  // 0x0094A2A0
-uint32_t MapOceanCoverage;  // 0x0094A2A4
-uint32_t MapLandCoverage;  // 0x0094A2A8
-uint32_t MapErosiveForces;  // 0x0094A2AC
-uint32_t MapPlanetaryOrbit;  // 0x0094A2B0
-uint32_t MapCloudCover;  // 0x0094A2B4
-uint32_t MapNativeLifeForms;  // 0x0094A2B8
+// Metadata scalars formerly lived here; landmarks_ and file_path_ formerly
+// lived in alpha.cpp. All had static zero initialization. Their exact native
+// address/offset relationship is now declared in map.h in one real allocation.
+// MapLongitude (68FAF0) remains an independently initialized row-stride object.
+// RECOVERY_OBJECT: v3 0x0094A30C ?MapTiles@@3PAUMap@@A member ?MapStorage@@3UMapStorageWindow@@A tiles_
+// RECOVERY_OBJECT: v3 0x0094A310 ?MapAbstractTiles@@3PAEA member ?MapStorage@@3UMapStorageWindow@@A abstract_tiles_
+// RECOVERY_OBJECT: v3 0x00949870 ?MapLongitudeBounds@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.longitude_bounds_
+// RECOVERY_OBJECT: v3 0x00949874 ?MapLatitudeBounds@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.latitude_bounds_
+// RECOVERY_OBJECT: v3 0x00949884 ?MapArea@@3IA member ?MapStorage@@3UMapStorageWindow@@A metadata_.area_
+// RECOVERY_OBJECT: v3 0x0094988C ?MapIsFlat@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.is_flat_
+MapStorageWindow MapStorage;
 
 // The tile-flag mask the fungus pass clears off the Map record it has just
 // given bit 0x20 to: world_fungus does `tile->bit &= ~MapTileFlagClearMask`
@@ -2403,7 +2387,7 @@ Status: Complete
 //        `neg;sbb;inc` boolean, no third branch at all). Matching that
 //        shape is BYTE_EXACT.
 BOOL __cdecl map_write(FILE *map_file) {
-    if (!fwrite(&MapLongitudeBounds, 2724, 1, map_file)) {
+    if (!fwrite(&MapStorage, 0xAA4, 1, map_file)) {
         return true;
     }
     if (!fwrite(map_tiles(), MapArea * sizeof(Map), 1, map_file)) {
@@ -2428,7 +2412,7 @@ Status: Complete
 */
 BOOL __cdecl map_read(FILE *map_file) {
     map_shutdown();
-    if (!fread(&MapLongitudeBounds, 2724, 1, map_file)) {
+    if (!fread(&MapStorage, 0xAA4, 1, map_file)) {
         return true;
     }
     map_tiles() = 0;
@@ -3221,8 +3205,21 @@ void __cdecl paint_land(int x, int y, int altitude, int radius) {
             brush(x_rad_base, y_rad_base, altitude);
             int offset = rand() % 8 | 1;
             if (offset == search) {
-                if (++unk_val > ((MapLandCoverage * MapLandCoverage) + 2)) {
-                    offset = (offset - (MapLandCoverage * MapLandCoverage) + unk_val - 2) % 8;
+                // Pinned5C2841 keeps the low dword of IMUL, then5C284C
+                // uses signed JLE on that wrapped product plus two. Large
+                // positive file-loaded settings survive world_build's test.
+                uint32_t coverage = static_cast<uint32_t>(MapLandCoverage);
+                uint32_t square = coverage * coverage;
+                uint32_t threshold_bits = square + 2u;
+                int threshold;
+                memcpy(&threshold, &threshold_bits, sizeof(threshold));
+                ++unk_val;
+                int count;
+                memcpy(&count, &unk_val, sizeof(count));
+                if (count > threshold) {
+                    // Original5C284E..2854 is low-dword SUB/LEA and AND7.
+                    offset = (static_cast<uint32_t>(offset) - square
+                        + unk_val - 2u) & 7u;
                 }
             } else {
                 search = offset;
@@ -3298,8 +3295,14 @@ void __cdecl build_continent(int size) {
                         radius += radius / 2;
                     }
                 } else {
-                    int r_bound = 4 - MapLandCoverage;
-                    if ((r_bound - 1 > 0) ? rand() % r_bound : 0) {
+                    uint32_t r_bound_bits = 4u - static_cast<uint32_t>(MapLandCoverage);
+                    int r_bound;
+                    memcpy(&r_bound, &r_bound_bits, sizeof(r_bound));
+                    // Original5C2A9D LEA wraps before TEST/JLE5C2AA0/2.
+                    uint32_t bound_test_bits = r_bound_bits - 1u;
+                    int bound_test;
+                    memcpy(&bound_test, &bound_test_bits, sizeof(bound_test));
+                    if ((bound_test > 0) ? rand() % r_bound : 0) {
                         radius /= 2;
                     }
                 }
@@ -3363,7 +3366,7 @@ void __cdecl build_hills(int altitude) {
             }
         }
         keep_going = false;
-        int plat_mod = WorldBuilder.plateau_mod * (2 - MapOceanCoverage);
+        int plat_mod = WorldBuilder.plateau_mod * (2u - static_cast<uint32_t>(MapOceanCoverage));
         if (altitude != ALT_1_LEVEL_ABOVE_SEA) {
             plat_mod /= 4;
         }
@@ -3399,13 +3402,29 @@ Status: Complete - testing
 */
 void __cdecl world_riverbeds() {
     Map *tile = map_tiles();
-    for (uint32_t i = 0; i < MapArea; i++) {
+    // Native5C3697..36B6 retains this loaded area for the signed clearing
+    // loop and the low-dword target product; a high-bit area skips clearing.
+    uint32_t area_bits = MapArea;
+    int area;
+    memcpy(&area, &area_bits, sizeof(area));
+    int i;
+    for (i = 0; i < area; i++) {
         tile->bit &= ~(BIT_RIVERBED);
         tile++;
     }
-    uint32_t riverbed_count = 0;
-    uint32_t max_riverbeds = (MapArea * ((4 - MapOceanCoverage) * (WorldBuilder.rivers_base
-        + MapCloudCover * WorldBuilder.rivers_rain_mod) / 3)) / 3200;
+    int riverbed_count = 0;
+    // Pinned5C36C4..36FF: low-dword multiply/add/subtract, signed /3,
+    // another low-dword multiply by the retained area, then signed /3200.
+    // Unsigned builder storage must not turn these two quotients unsigned.
+    uint32_t rain_bits = WorldBuilder.rivers_base
+        + static_cast<uint32_t>(MapCloudCover) * WorldBuilder.rivers_rain_mod;
+    uint32_t target_bits = (4u - static_cast<uint32_t>(MapOceanCoverage)) * rain_bits;
+    int target;
+    memcpy(&target, &target_bits, sizeof(target));
+    uint32_t scaled_bits = area_bits * static_cast<uint32_t>(target / 3);
+    int scaled;
+    memcpy(&scaled, &scaled_bits, sizeof(scaled));
+    int max_riverbeds = scaled / 3200;
     for (i = 0; i < 4000 && riverbed_count < max_riverbeds; i++) {
         int x_bound = MapLongitudeBounds;
         int x = (x_bound - 1 > 0) ? rand() % x_bound : 0;
@@ -3534,13 +3553,27 @@ void __cdecl world_temperature() {
             if ((bit2_at(x, y) & (BIT2_UNK_80000000 | BIT2_CRATER)) != BIT2_CRATER
                 || code_at(x, y) >= 21) {
                 int rand_seed = random(0, thermal_deviance * 2);
-                int rand_orbit = random(0, MapPlanetaryOrbit + 1);
+                // The native load follows the first random call; INC423C
+                // wraps even when a file-loaded orbit is INT_MAX.
+                uint32_t orbit_bound_bits = static_cast<uint32_t>(MapPlanetaryOrbit) + 1u;
+                int orbit_bound;
+                memcpy(&orbit_bound, &orbit_bound_bits, sizeof(orbit_bound));
+                int rand_orbit = random(0, orbit_bound);
                 int val1 = (MapLatitudeBounds / 2) - rand_seed - y + thermal_deviance;
                 if (val1 < 0) { // abs?
                     val1 = rand_seed - (MapLatitudeBounds / 2) - thermal_deviance + y;
                 }
-                int val2 = (thermal_banding / 2 + (val1 - temp_heat * (MapPlanetaryOrbit - 1)
-                    - MapSeaLevelCouncil * global_warming) * 2) / thermal_banding;
+                // Reload the orbit after random as at426E. The products and
+                // SUB/LEA4279..4290 keep low dwords; IDIV4294 is signed.
+                uint32_t orbit_heat_bits = static_cast<uint32_t>(temp_heat)
+                    * (static_cast<uint32_t>(MapPlanetaryOrbit) - 1u);
+                uint32_t council_heat_bits = static_cast<uint32_t>(MapSeaLevelCouncil)
+                    * static_cast<uint32_t>(global_warming);
+                uint32_t band_bits = static_cast<uint32_t>(thermal_banding / 2)
+                    + (static_cast<uint32_t>(val1) - orbit_heat_bits - council_heat_bits) * 2u;
+                int band;
+                memcpy(&band, &band_bits, sizeof(band));
+                int val2 = band / thermal_banding;
                 int temperature = (val2 > 2) ? ((val2 <= 9) + 1) : 3;
                 int alt = alt_at(x, y);
                 for (int i = 0; i < 8; i++) {
@@ -4082,7 +4115,7 @@ void __cdecl world_fungus() {
     fractal.init();
 
     int y_coord = 0;
-    int fungus_level = (MapNativeLifeForms - 1) * WorldBuilder.fungus;
+    int fungus_level = (static_cast<uint32_t>(MapNativeLifeForms) - 1u) * WorldBuilder.fungus;
 
     if (MapLatitudeBounds > 0) {
         do {
@@ -7627,8 +7660,8 @@ void __cdecl world_build() {
         WorldClimateRedrawRequest = 1;
         WorldClimateSkipTerritoryReset = 1;
 
-        for (uint32_t *rules = &MapSizePlanet; rules < &MapNativeLifeForms + 1;
-             ++rules) {
+        int *const rule_end = MapStorage.metadata_.planet_rules_ + 7;
+        for (int *rules = MapStorage.metadata_.planet_rules_; rules < rule_end; ++rules) {
             if (*rules >= 0) {
                 continue;
             }
@@ -7638,7 +7671,7 @@ void __cdecl world_build() {
         map_wipe();
 
         MapIsFlat = 0;
-        int land_target = (2 - MapOceanCoverage) * WorldBuilder.land_mod
+        int land_target = (2u - static_cast<uint32_t>(MapOceanCoverage)) * WorldBuilder.land_mod
                           + WorldBuilder.land_base;
         land_target = land_target * MapArea / 3200;
         int island_target = WorldBuilder.islands * MapArea / 3200;
@@ -7659,7 +7692,7 @@ void __cdecl world_build() {
         }
 
         if (MapErosiveForces >= 1) {
-            int hills = (MapErosiveForces - 1) * WorldBuilder.hills_mod
+            int hills = (static_cast<uint32_t>(MapErosiveForces) - 1u) * WorldBuilder.hills_mod
                         + WorldBuilder.hills_base;
             hills = hills * MapArea / 3200;
             if (MapOceanCoverage == 2) {

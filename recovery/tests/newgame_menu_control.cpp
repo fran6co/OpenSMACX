@@ -33,8 +33,8 @@ static void record(const char *s) {
 struct DefaultPref { uint32_t difficulty,faction_id,pad,map_type,top_menu; } DefaultPrefs;
 int MapSetupStatus;
 int IsMultiplayerNet;
-uint32_t MapOceanCoverage, MapLandCoverage, MapErosiveForces;
-uint32_t MapPlanetaryOrbit, MapCloudCover, MapNativeLifeForms;
+int MapOceanCoverage, MapLandCoverage, MapErosiveForces;
+int MapPlanetaryOrbit, MapCloudCover, MapNativeLifeForms;
 char PopupStartCaption[256];
 
 class Popup {
@@ -163,8 +163,8 @@ static int count_text(const char *text, const char *needle) {
 }
 
 struct AlphaIniPrefMock { uint32_t custom_world[7]; } AlphaIniPrefs;
-uint32_t MapSizePlanet, MapOceanCoverage, MapLandCoverage, MapErosiveForces;
-uint32_t MapPlanetaryOrbit, MapCloudCover, MapNativeLifeForms;
+int MapSizePlanet, MapOceanCoverage, MapLandCoverage, MapErosiveForces;
+int MapPlanetaryOrbit, MapCloudCover, MapNativeLifeForms;
 char StringTemp[1032];
 char PopupStartCaption[256];
 int WinScreenWidth=800;
@@ -352,7 +352,7 @@ int main() {
     for (int i=0;i<4;++i) popup_returns[i]=0;
     field_actions[0]=1; field_action_count=1;
     CHECK(custom_planet(0,0)==0);
-    CHECK(MapOceanCoverage==0xFFFFFFFFu && AlphaIniPrefs.custom_world[1]==1);
+    CHECK(MapOceanCoverage==-1 && AlphaIniPrefs.custom_world[1]==1);
     CHECK(prefs_save_calls==1 && prefs_save_value==0);
 
     reset();
@@ -468,8 +468,8 @@ static int last_put_x, last_put_y;
 // @@HELPERS_size_of_planet@@
 
 struct DefaultPrefsMock { uint32_t custom_world[7]; } AlphaIniPrefs;
-uint32_t MapSizePlanet, MapOceanCoverage, MapLandCoverage, MapErosiveForces;
-uint32_t MapPlanetaryOrbit, MapCloudCover, MapNativeLifeForms;
+int MapSizePlanet, MapOceanCoverage, MapLandCoverage, MapErosiveForces;
+int MapPlanetaryOrbit, MapCloudCover, MapNativeLifeForms;
 int MapLongitudeBounds, MapLatitudeBounds;
 int MapSetupStatus;
 uint32_t UnkBitfield1;

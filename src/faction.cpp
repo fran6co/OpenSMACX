@@ -5470,7 +5470,9 @@ search:
                 || (lifecycle_is_fresh(conqueror) && attempts <= 899 && 36 - spacing_relaxation > static_cast<int>(Continents[region].tile_count))) goto search;
             if (!(definition.rule_flags & 0x100)) {
                 int handicap = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction)) ? (6 - GameDataStateStorage.fields_.diff_level_current_) * 8 : 8;
-                if (static_cast<int>(Continents[region].open_terrain * (MapOceanCoverage + 1)) / 2
+                // Native5B1CEB LEA/5B1CF5 IMUL preserve low-dword arithmetic.
+                if (static_cast<int>(Continents[region].open_terrain
+                    * (static_cast<uint32_t>(MapOceanCoverage) + 1u)) / 2
                     < 24 + handicap - GameDataStateStorage.fields_.turn_current_num_ / 16 - attempts / 16) goto search;
             }
             int difficulty = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction)) ? GameDataStateStorage.fields_.diff_level_current_ : 3;

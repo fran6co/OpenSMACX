@@ -148,10 +148,15 @@ void MainInterface::draw_edit_pane() {
     y += canvas.text_line_height();
     line[0] = 0;
     strcat(line, label_get(0x84 / 4)); strcat(line, ": "); strcat(line, "{");
-    strcat(line, label_get(0x50 / 4 + MapSizePlanet)); strcat(line, "}");
+    // Original45BA7E loads the cloud setting, not the planet-size setting;
+    // its indexed label offset is a low-dword addition, without a bounds check.
+    uint32_t cloud_label_bits = 0x50u / 4u + static_cast<uint32_t>(MapCloudCover);
+    int cloud_label;
+    memcpy(&cloud_label, &cloud_label_bits, sizeof(cloud_label));
+    strcat(line, label_get(cloud_label)); strcat(line, "}");
     canvas.write_l(line, x, y, strlen(line));
     y += canvas.text_line_height();
-    // The original deliberately appends to the preceding planet-size line.
+    // The original deliberately appends to the preceding cloud-setting line.
     strcat(line, "{");
     int label;
     if (GetKeyState(VK_SCROLL) & 1) label = 0xF50;

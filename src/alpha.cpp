@@ -114,7 +114,7 @@ Player Players[MaxPlayerNum];                               // 0x00946A50
 // RECOVERY_OBJECT: v1 0x0096C9E0 ?PlayersData@@3PAUPlayerData@@A
 PlayerData PlayersData[MaxPlayerNum];                       // 0x0096C9E0
 RulesNatural Natural[MaxNaturalNum];                        // 0x0094ADE0
-Landmark MapLandmark[MaxLandmarkNum];                       // 0x00949894
+// MapLandmark at 0x00949894 is MapStorage.metadata_.landmarks_ (map.cpp).
 // RECOVERY_OBJECT: v1 0x009AA730 ?Continents@@3PAUContinent@@A
 Continent Continents[MaxContinentNum];                      // 0x009AA730
 // rankings (0x005AC690) writes the eight native dwords at
@@ -129,7 +129,7 @@ uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009
 // is evidence of identity, not a pointer used by the product build.
 HallOfFameRecord HallOfFameRecords[HallOfFameRecordCount];  // 0x009A3840
 int HallOfFameIOMode;  // 0x00759194
-char MapFilePath[80];                                       // 0x0094A2BC
+// MapFilePath at 0x0094A2BC is MapStorage.metadata_.file_path_ (map.cpp).
 // read_tech walks the array from `mov esi, 0x94F360` (&Technology[0].id,
 // base+8 over flags/name) with the 0x2C stride declared in technology.h.
 // RECOVERY_OBJECT: v1 0x0094F358 ?Technology@@3PAURulesTechnology@@A

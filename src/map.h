@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include <stddef.h>
 
 // Synchronization progress callback owned by map.cpp (original 0x00532C30).
 void __cdecl synch_display(int stage, int chunk, int chunk_count, int subject);
@@ -299,36 +300,101 @@ extern const int RadiusOffsetY[289];
 extern const int CornerOffsetX[4][4];
 extern const int CornerOffsetY[4][4];
 
-extern int MapLongitudeBounds; // x
-extern int MapLatitudeBounds; // y
-extern uint32_t MapRandSeed;
-extern int MapSeaLevel;
-extern int MapSeaLevelCouncil; // Solar Shade (-3); Melt Polar Caps (+3)
-extern uint32_t MapArea;
-extern uint32_t MapAreaSqRoot;
-extern BOOL MapIsFlat;
-extern int MapLandmarkCount;
-extern Landmark MapLandmark[MaxLandmarkNum];   // 0x00949894
-// `int`: `abstract_at` shifts it right and the image's shift is
-// `sar eax, 1` at 0x0059121B - arithmetic, so the value is signed.
-extern int MapAbstractLongBounds; // abstract x
-extern uint32_t MapAbstractLatBounds; // abstract y
-extern uint32_t MapAbstractArea;
-extern uint32_t MapSizePlanet;
-extern uint32_t MapOceanCoverage;
-extern uint32_t MapLandCoverage; // 2 - MapOceanCoverage
-extern uint32_t MapErosiveForces;
-extern uint32_t MapPlanetaryOrbit; // affects temp
-extern uint32_t MapCloudCover; // affects rainfall, rivers
-extern uint32_t MapNativeLifeForms;
-extern char MapFilePath[80];                   // 0x0094A2BC, the working map-path buffer
+// Proven global storage windows, not a claim about an original class name.
+// NetDaemon::synch opcode 2/0x1002 transfers the metadata prefix [949870,94A30C).
+// map_write/map_read transfer [949870,94A314), including the two pointer cells.
+// The original loader zero-fills both windows; no constructor is added.
+// These mapped transfers do not prove the complete original allocation.
+struct MapMetadataFields {
+    int longitude_bounds_;                    // +0x000
+    int latitude_bounds_;                     // +0x004
+    uint32_t rand_seed_;                       // +0x008
+    int sea_level_;                           // +0x00C
+    int sea_level_council_;                    // +0x010
+    uint32_t area_;                            // +0x014
+    uint32_t area_sq_root_;                    // +0x018
+    BOOL is_flat_;                            // +0x01C
+    int landmark_count_;                      // +0x020
+    Landmark landmarks_[MaxLandmarkNum];       // +0x024, 64 * 40 bytes
+    // abstract_at uses SAR for this width (59121B).
+    int abstract_long_bounds_;                // +0xA24
+    uint32_t abstract_lat_bounds_;             // +0xA28
+    uint32_t abstract_area_;                   // +0xA2C
+    // world_build5C870C..5C872E walks seven signed dwords, testing each
+    // against zero before rand()%3; size/ocean/land/erosion/orbit/clouds/life.
+    int planet_rules_[7];                     // +0xA30
+    char file_path_[80];                       // +0xA4C
+};
+
+struct MapStorageWindow {
+    MapMetadataFields metadata_;
+    Map *tiles_;                              // +0xA9C on i386
+    uint8_t *abstract_tiles_;                  // +0xAA0 on i386
+};
+
+extern MapStorageWindow MapStorage;
+
+// Transitional named source member aliases preserve caller spellings without creating
+// reference objects, duplicate allocations or loader-address dependencies.
+#define MapLongitudeBounds (MapStorage.metadata_.longitude_bounds_)
+#define MapLatitudeBounds (MapStorage.metadata_.latitude_bounds_)
+#define MapRandSeed (MapStorage.metadata_.rand_seed_)
+#define MapSeaLevel (MapStorage.metadata_.sea_level_)
+#define MapSeaLevelCouncil (MapStorage.metadata_.sea_level_council_)
+#define MapArea (MapStorage.metadata_.area_)
+#define MapAreaSqRoot (MapStorage.metadata_.area_sq_root_)
+#define MapIsFlat (MapStorage.metadata_.is_flat_)
+#define MapLandmarkCount (MapStorage.metadata_.landmark_count_)
+#define MapLandmark (MapStorage.metadata_.landmarks_)
+#define MapAbstractLongBounds (MapStorage.metadata_.abstract_long_bounds_)
+#define MapAbstractLatBounds (MapStorage.metadata_.abstract_lat_bounds_)
+#define MapAbstractArea (MapStorage.metadata_.abstract_area_)
+#define MapSizePlanet (MapStorage.metadata_.planet_rules_[0])
+#define MapOceanCoverage (MapStorage.metadata_.planet_rules_[1])
+#define MapLandCoverage (MapStorage.metadata_.planet_rules_[2])
+#define MapErosiveForces (MapStorage.metadata_.planet_rules_[3])
+#define MapPlanetaryOrbit (MapStorage.metadata_.planet_rules_[4])
+#define MapCloudCover (MapStorage.metadata_.planet_rules_[5])
+#define MapNativeLifeForms (MapStorage.metadata_.planet_rules_[6])
+#define MapFilePath (MapStorage.metadata_.file_path_)
+#define MapTiles (MapStorage.tiles_)
+#define MapAbstractTiles (MapStorage.abstract_tiles_)
+
+static_assert(sizeof(Landmark) == 40, "native landmark stride");
+static_assert(offsetof(Landmark, x) == 0, "native landmark x");
+static_assert(offsetof(Landmark, y) == 4, "native landmark y");
+static_assert(offsetof(Landmark, name) == 8, "native landmark name");
+static_assert(offsetof(MapMetadataFields, longitude_bounds_) == 0x000, "native longitude bounds");
+static_assert(offsetof(MapMetadataFields, latitude_bounds_) == 0x004, "native latitude bounds");
+static_assert(offsetof(MapMetadataFields, rand_seed_) == 0x008, "native map random seed");
+static_assert(offsetof(MapMetadataFields, sea_level_) == 0x00C, "native sea level");
+static_assert(offsetof(MapMetadataFields, sea_level_council_) == 0x010, "native council sea level");
+static_assert(offsetof(MapMetadataFields, area_) == 0x014, "native map area");
+static_assert(offsetof(MapMetadataFields, area_sq_root_) == 0x018, "native map area root");
+static_assert(offsetof(MapMetadataFields, is_flat_) == 0x01C, "native flat map flag");
+static_assert(offsetof(MapMetadataFields, landmark_count_) == 0x020, "native landmark count");
+static_assert(offsetof(MapMetadataFields, landmarks_) == 0x024, "native landmark records");
+static_assert(offsetof(MapMetadataFields, abstract_long_bounds_) == 0xA24, "native abstract longitude");
+static_assert(offsetof(MapMetadataFields, abstract_lat_bounds_) == 0xA28, "native abstract latitude");
+static_assert(offsetof(MapMetadataFields, abstract_area_) == 0xA2C, "native abstract area");
+static_assert(offsetof(MapMetadataFields, planet_rules_) == 0xA30, "native planet rule array");
+static_assert(offsetof(MapMetadataFields, file_path_) == 0xA4C, "native map file path");
+static_assert(sizeof(MapMetadataFields) == 0xA9C, "native network metadata extent");
+static_assert(sizeof(((MapMetadataFields *)0)->planet_rules_) == 0x1C, "native planet rule extent");
+static_assert(offsetof(MapStorageWindow, metadata_) == 0, "native metadata prefix");
+// Host witnesses can have eight-byte pointers. Only the actual i386 build
+// establishes the pointer-tail/file span; host layout is not native ABI proof.
+static_assert(sizeof(void *) != 4 || offsetof(MapStorageWindow, tiles_) == 0xA9C,
+              "native map tile pointer cell");
+static_assert(sizeof(void *) != 4 || offsetof(MapStorageWindow, abstract_tiles_) == 0xAA0,
+              "native abstract pointer cell");
+static_assert(sizeof(void *) != 4 || sizeof(MapStorageWindow) == 0xAA4,
+              "native map file storage extent");
 // The tile-flag mask cleared off a Map record's `bit` dword, and the value
 // argument at the four tile-setter sites that hand the mask over rather than
 // applying it. Image .data holds 0x00288050. See map.cpp, which defines it
 // beside the evidence.
 extern uint32_t MapTileFlagClearMask;          // 0x006919EC
-extern Map *MapTiles;
-extern uint8_t *MapAbstractTiles;
 inline Map *&map_tiles() { return MapTiles; }
 // Byte-oriented legacy consumers view the same Map allocation; no second
 // pointer cell or pointer-to-pointer alias is maintained.
