@@ -145,6 +145,7 @@ static_assert(sizeof(NetDaemonSaveProcessSlot) * 8 == 0xCE0,
 
 class NetDaemonTransferModalCloseGuard;
 class Filemap;
+struct NetDaemonFileIndexRecord;
 
 // Original daemon construction first constructs AlphaNet at this+0.
 // RECOVERY_BASE: v1 NetDaemon AlphaNet 0x0 0x005389F0
@@ -330,7 +331,7 @@ class NetDaemon : public AlphaNet {
   LockStateEntry channels_[2];
   // The constructor leaves the file-index pointer and save rows untouched.
   // RECOVERY_MEMBER: v1 NetDaemon file_index_records_ 0x1BE0 0x0052ED40
-  void *file_index_records_;
+  NetDaemonFileIndexRecord *file_index_records_;
   uint32_t field_1BE4_;
   // Separate from AlphaNet's live process_slots_ at +0x76C.
   // RECOVERY_MEMBER: v1 NetDaemon saved_process_slots_ 0x1BE8 0x0052DB40

@@ -3422,7 +3422,7 @@ static_assert(sizeof(void *) == sizeof(uint32_t),
               "the native transfer pointer word is 32-bit");
 
 static NetDaemonFileIndexRecord *netdaemon_file_index_records() {
-    return static_cast<NetDaemonFileIndexRecord *>(NetDaemonNet.file_index_records_);
+    return NetDaemonNet.file_index_records_;
 }
 
 static void netdaemon_set_file_index_records(NetDaemonFileIndexRecord *records) {
@@ -4840,9 +4840,9 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
             // 0x536D5E local-owner tail, including its original clear/callback
             // order. The notification branch observes and clears dword 0x1BC0
             // before broadcasting 0x2214; the other arm only clears 0x1BB0.
-            if (daemon.channels_[1].leading_words_[7] != 0) {
+            if (daemon.channels_[1].trailing_words_[2] != 0) {
                 log_say("Remaining Locked2", 0, 0, 0);
-                daemon.channels_[1].leading_words_[7] = 0;
+                daemon.channels_[1].trailing_words_[2] = 0;
                 message_data(0x2214, 0, 0, 0, 0, 0);
             } else {
                 daemon.channels_[1].leading_words_[3] = 0;
@@ -4850,9 +4850,9 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
         }
     } else if (tail == TailDispatch &&
                netdaemon_table_g_word(msg, 4) == ConsoleGlobal.faction_id_) {
-        if (daemon.channels_[1].leading_words_[7] != 0) {
+        if (daemon.channels_[1].trailing_words_[2] != 0) {
             log_say("Remaining Locked2", 0, 0, 0);
-            daemon.channels_[1].leading_words_[7] = 0;
+            daemon.channels_[1].trailing_words_[2] = 0;
             message_data(0x2214, 0, 0, 0, 0, 0);
         } else {
             daemon.channels_[1].leading_words_[3] = 0;
@@ -4860,18 +4860,9 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
     }
 
     // 0x538266 is the actual shared exit of all these arms, including 4411.
-    // It clears the await marker only for a matching marked opcode addressed
-    // to this faction; retain the native marker/indexing rather than assigning
-    // a new semantic member name.
-    const uint32_t pending_opcode = daemon.channels_[1].leading_words_[1];
-    const unsigned short final_type =
-        *reinterpret_cast<unsigned short *>(msg);
-    if (pending_opcode != 0 && (msg[1] & 0x40) != 0 &&
-        (final_type & 0x4000) != 0 &&
-        final_type == static_cast<unsigned short>(pending_opcode | 0x4000) &&
-        netdaemon_table_g_word(msg, 4) == ConsoleGlobal.faction_id_) {
-        daemon.channels_[1].leading_words_[1] = 0;
-    }
+    // Share the native32-bit pending comparison; a duplicated16-bit version
+    // would incorrectly accept a pending opcode with nonzero upper bits.
+    netdaemon_process_message_marker_tail(daemon, msg);
     return true;
 }
 
@@ -5607,8 +5598,8 @@ static bool process_council_message(unsigned char *msg,
 }
 
 // Pinned process_message targets 0x537CE9 (0x8240) and 0x537F35
-// (0x8241). The 0x1B7C word is lock_state_[1].leading_words_[5], and the
-// indexed 0x1B80 words are lock_state_[1].leading_words_[6..9]. `identity`
+// (0x8241). The 0x1B7C word is channels_[0].trailing_words_[0], and the
+// indexed 0x1B80 words are channels_[0].trailing_words_[1 + identity]. `identity`
 // is the resolved EDI faction value used by the native dispatcher, not the
 // transport process ID passed to process_message.
 static bool netdaemon_handle_lock_mask_residual(NetDaemon &daemon,
@@ -5621,10 +5612,10 @@ static bool netdaemon_handle_lock_mask_residual(NetDaemon &daemon,
         const uint32_t mask =
             (uint32_t(1) << (static_cast<uint32_t>(first) & 31u)) |
             (uint32_t(1) << (static_cast<uint32_t>(second) & 31u));
-        uint32_t &aggregate = daemon.channels_[0].leading_words_[5];
+        uint32_t &aggregate = daemon.channels_[0].trailing_words_[0];
         const bool newly_acquired = (mask & aggregate) == 0;
         if (newly_acquired) {
-            daemon.channels_[0].leading_words_[6 + identity] = mask;
+            daemon.channels_[0].trailing_words_[1 + identity] = mask;
             aggregate |= mask;
         }
         log_say("Received OPEN CHANNEL request", identity, first, second);
@@ -5634,10 +5625,10 @@ static bool netdaemon_handle_lock_mask_residual(NetDaemon &daemon,
 
     if (type == 0x8241) {
         uint32_t &peer_mask =
-            daemon.channels_[0].leading_words_[6 + identity];
+            daemon.channels_[0].trailing_words_[1 + identity];
         const uint32_t remaining =
-            daemon.channels_[0].leading_words_[5] & ~peer_mask;
-        daemon.channels_[0].leading_words_[5] = remaining;
+            daemon.channels_[0].trailing_words_[0] & ~peer_mask;
+        daemon.channels_[0].trailing_words_[0] = remaining;
         log_say("Received CLOSE CHANNEL", identity, peer_mask, remaining);
         peer_mask = 0;
         return true;

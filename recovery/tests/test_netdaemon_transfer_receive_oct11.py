@@ -25,7 +25,8 @@ def apply_transfer_receive_migration(source):
         after = "".join(line[1:] for line in lines if line.startswith((" ", "+")))
         assert before and source.count(before) == 1, before
         source = source.replace(before, after, 1)
-    return source
+    from test_netdaemon_typed_storage_oct11 import apply_typed_storage_migration
+    return apply_typed_storage_migration(source)
 
 
 def test_reviewed_receiver_recipe_preserves_all_other_source_and_identities():

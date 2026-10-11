@@ -125,7 +125,7 @@ public:
     DeletionList deletion_list_;
     PrimaryState primary_state_;
     LockStateEntry channels_[2];
-    void *file_index_records_;
+    struct NetDaemonFileIndexRecord *file_index_records_;
     uint32_t field_1BE4_;
     AlphaNetProcessSlot process_slots_[8];
     unsigned long field_760_;

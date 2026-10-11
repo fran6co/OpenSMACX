@@ -170,6 +170,9 @@ HEADER_EDITS = {
 }
 
 def restore_shared_header_migration(source, relative="src/netdaemon.h"):
+ if relative=="src/netdaemon.h":
+  from test_netdaemon_typed_storage_oct11 import apply_typed_storage_migration
+  source=apply_typed_storage_migration(source,relative,True)
  for before, after in reversed(HEADER_EDITS[relative]):
   assert source.count(after)==1, relative
   source=source.replace(after,before,1)
