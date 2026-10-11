@@ -1144,7 +1144,7 @@ static int TextureRasterScratch55C;
 // RECOVERY_OBJECT: v1 0x009BB560 _TextureRasterScratch560
 static int TextureRasterScratch560;
 // RECOVERY_OBJECT: v1 0x009BB564 _TextureRasterPalette
-static int TextureRasterPalette;
+static unsigned char *TextureRasterPalette;
 
 // These mapped cells are pointer-sized on the original 32-bit target. Keep
 // address arithmetic in an integer domain so raster offsets do not perform
@@ -1211,7 +1211,7 @@ static void **const blit_shade_table = &TextureRasterScratch554;
 static uintptr_t *const blit_slot_558 = &TextureRasterShadeCursor;
 static int *const blit_slot_55c = &TextureRasterScratch55C;
 static int *const blit_slot_560 = &TextureRasterScratch560;
-static int *const blit_slot_564 = &TextureRasterPalette;
+static unsigned char **const blit_slot_564 = &TextureRasterPalette;
 
 static unsigned char *const blit_slot_4ca = &TextureRasterScratch4C8.bytes[2];
 static unsigned char *const blit_slot_4e6 = &TextureRasterScratch4E4.bytes[2];
@@ -2513,7 +2513,7 @@ void Texture::draw_mask_dest(Buffer *buffer, Vert *vertices,
         *blit_vertex_count = count;
         *blit_buffer_stride = static_cast<int>(buffer->stride_);
         *blit_texture_width = static_cast<int>(iWidth_);
-        *blit_slot_564 = static_cast<int>(reinterpret_cast<intptr_t>(palette));
+        *blit_slot_564 = palette;
 
         RECT *buffer_rect = &buffer->rect1_;
         if (buffer_rect != 0) {
@@ -4068,7 +4068,7 @@ void Texture::sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
         texture_reset_fpu();
         *reinterpret_cast<unsigned char *>(blit_slot_560) =
             static_cast<unsigned char>(threshold);
-        *blit_slot_564 = static_cast<int>(reinterpret_cast<intptr_t>(palette));
+        *blit_slot_564 = palette;
         *blit_edge_uvs_b = vertices;
         *blit_z_values = reinterpret_cast<int *>(zvals);
         *blit_remap_table = reinterpret_cast<uintptr_t>(remap);

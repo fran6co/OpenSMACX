@@ -72,7 +72,8 @@ static int *blit_slot_530 = &slots[28];
 static int *blit_slot_534 = &slots[29];
 static int *blit_slot_538 = &slots[30];
 static int *blit_slot_53c = &slots[31];
-static int *blit_slot_564 = &slots[32];
+static unsigned char *palette_cell;
+static unsigned char **blit_slot_564 = &palette_cell;
 static unsigned short light_pack_words[2] = {};
 static unsigned short *blit_light_pack_a = &light_pack_words[0];
 static int TextureRowPitchScratch;
@@ -228,6 +229,7 @@ int main() {
     texture.iWidth_ = 4;
     texture.iHeight_ = 4;
     texture.draw_mask_dest(&buffer, vertices, remap, palette, 4, uv);
+    assert(palette_cell == palette);
     assert(buffer.frees == 1);
     assert(fpu_reset_calls == 2 && rounding_control_calls == 1);
     assert(edge_setup_calls == 3);

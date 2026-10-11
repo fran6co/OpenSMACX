@@ -25,7 +25,8 @@ static Vert test_vertices[5];
 static Vert test_uv[5];
 static int test_light[5];
 static void *slot_pixel_base, *slot_pixels, *slot_shade;
-static int slot560, slot564, slot_height, slot_count;
+static int slot560, slot_height, slot_count;
+static unsigned char *slot564;
 static uintptr_t slot_remap;
 static int slot_stride, slot_width, slot_clip_right, slot_clip_left;
 static int slot_clip_bottom, slot_clip_top, slot_max_y, slot_row, slot_4c4;
@@ -35,7 +36,7 @@ static int TextureRowPitchScratch;
 static int reset_calls, control_calls, free_calls, setup_calls;
 static void **blit_pixel_base = &slot_pixel_base;
 static int *blit_slot_560 = &slot560;
-static int *blit_slot_564 = &slot564;
+static unsigned char **blit_slot_564 = &slot564;
 static Vert *edge_uvs_b_cell = 0;
 static Vert **blit_edge_uvs_b = &edge_uvs_b_cell;
 static int *z_values_cell = 0;
@@ -172,6 +173,7 @@ static void test_short_right_edge_refresh_changes_geometry() {
     Texture source(source_page), mask(mask_page);
     source.sub_61df60(&buffer, test_vertices, test_light, &mask, remap_data,
                       5, test_uv, 10, palette_data);
+    assert(slot564 == palette_data);
     // The right edge refreshes from vertex 1 to vertex 2 before the third
     // visible row, extending its endpoint to x=4. Without that refresh the
     // stale x=3 endpoint leaves pixel 3 untouched on row 2.

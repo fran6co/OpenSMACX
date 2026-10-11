@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "task_id": "texture-palette-storage-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover the shared raster palette cell as pointer storage across both producing Texture owners, preserving original behavior and all historical obligations.",
+  "base_revision": "268fb06faa36d40050b29eaa068b954e40a30615",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6414176},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6415680}
+  ],
+  "editable_files": ["src/texture.cpp", "recovery/tests/draw_mask_host_control.cpp", "recovery/tests/fixtures/texture_sub61df60/host.cpp", "recovery/tests/test_texture_lookup_pointer_contract_oct11.py", "recovery/tests/test_texture_palette_storage_oct11.py"],
+  "evidence": [
+    "Pinned61DFD5 and61E5D8 store the palette argument into9BB564;61E4D3..D9 and61EA54..63 use that cell as the base of a byte lookup. The actual source producers already receive unsigned char* palettes; an int cell and pointer truncation do not represent this storage contract.",
+    "Change only the palette cell type, its slot type and two assignments. Keep RECOVERY_OBJECT address/name and every original function identity/span/claim untouched. Existing pixel loops remain unchanged; no new behavioral coverage or original type name is asserted.",
+    "Host controls must observe full pointer identity in both owners. Native before/current compilation must compare all function signatures under both configured profiles; build/link, source mappings/references, historical continuity and independent review are required before integration. No complete linked preservation or game acceptance is claimed."
+  ]
+}

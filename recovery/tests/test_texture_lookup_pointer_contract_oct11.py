@@ -50,7 +50,14 @@ def test_pointer_contract_changes_only_selected_body_and_symbol_bindings():
     expected=before.replace(old,body,1)
     assert expected.count(OLD_SYMBOL)==2
     expected=expected.replace(OLD_SYMBOL,NEW_SYMBOL)
-    assert current==expected
+    # Project only the independently verified later palette-cell migration
+    # out of this earlier exact whole-source checkpoint.
+    restored=current.replace("static unsigned char *TextureRasterPalette;", "static int TextureRasterPalette;")
+    restored=restored.replace("static unsigned char **const blit_slot_564 = &TextureRasterPalette;",
+                              "static int *const blit_slot_564 = &TextureRasterPalette;")
+    restored=restored.replace("*blit_slot_564 = palette;",
+                              "*blit_slot_564 = static_cast<int>(reinterpret_cast<intptr_t>(palette));")
+    assert restored==expected
     prior={r.address:r for r in read_text(before,path)}
     after={r.address:r for r in read_text(current,path)}
     assert set(prior)==set(after)
