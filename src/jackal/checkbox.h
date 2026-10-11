@@ -170,7 +170,10 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
  private:
   // The vbtable pointer is EMITTED by the compiler now.
   uint32_t field_4_;  // 0x0004
-  uint32_t field_8_;
+  // Key handling loads and invokes this cell at original 0x0060F9BD/0x0060F9D1.
+  // Registration/producer remains unknown; the selected-position word is passed.
+  // RECOVERY_MEMBER: v3 CheckBox key_notification_callback_ WinNotificationCallback 0x8 0x0060F8B0
+  WinNotificationCallback key_notification_callback_;  // 0x0008
  public:
   // BasePop::calculate_dimensions installs this notification; the check-box
   // entry passes Dialog's selected position, with caller stack cleanup.

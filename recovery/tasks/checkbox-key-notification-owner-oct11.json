@@ -1,0 +1,23 @@
+{
+  "author": "coordinator",
+  "base_revision": "04ed99ab1a48ca7f91a87c828bb1da1f140e0941",
+  "editable_files": [
+    "src/jackal/checkbox.cpp",
+    "src/jackal/checkbox.h",
+    "recovery/tests/control_lifetime_control.cpp",
+    "recovery/tests/test_control_lifetime.py",
+    "recovery/tests/test_checkbox_key_notification_oct11.py"
+  ],
+  "evidence": [
+    "Pinned 60F8B0 key handler enters via GraphicWin subobject;60F9BD loads own CheckBox+8 as ESI-14,60F9C0 null-tests,60F9C9 loads Dialog selected-position word,60F9D0 pushes it,60F9D1 calls EAX,60F9D3 caller-cleans four bytes. Existing WinNotificationCallback is void cdecl(int).",
+    "The constructor, destructor and close reset this same cell to zero. Preserve the reset order and complete inherited key behavior, source identities, claims and layout. No producer/registration is recovered; do not assert a full callback registration API or game acceptance."
+  ],
+  "intent": "Recover CheckBox own+8 notification callback type across construction, reset/teardown and key consumer without integer/function-pointer aliasing.",
+  "schema_version": 1,
+  "subjects": [
+    {"address": 6350448, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6350656, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6350784, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6355120, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ]
+}

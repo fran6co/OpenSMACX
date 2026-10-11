@@ -92,7 +92,7 @@ def test_actual_product_destructors_and_damage_controls(compiler_name):
 
             removed_checkbox_reset = dict(source_bodies)
             removed_checkbox_reset["checkbox"] = re.sub(
-                r"field_4_\s*=\s*0;\s*field_8_\s*=\s*0;\s*double_click_callback_\s*=\s*0;",
+                r"field_4_\s*=\s*0;\s*key_notification_callback_\s*=\s*0;\s*double_click_callback_\s*=\s*0;",
                 "/* reset omitted */", removed_checkbox_reset["checkbox"], count=1)
             assert removed_checkbox_reset["checkbox"] != source_bodies["checkbox"]
             mutants.append(removed_checkbox_reset)

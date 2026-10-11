@@ -55,13 +55,14 @@ public:
     virtual ~ListBox();
 };
 
+static void key_notification(int) {}
 class CheckBox : public virtual GraphicWin, public virtual Dialog {
 public:
-    CheckBox() : field_4_(7), field_8_(8), double_click_callback_(this),
+    CheckBox() : field_4_(7), key_notification_callback_(key_notification), double_click_callback_(this),
                  checked_sprite_(this), unchecked_sprite_(this) {}
     virtual ~CheckBox();
     int field_4_;
-    int field_8_;
+    void (*key_notification_callback_)(int);
     void *double_click_callback_;
     void *checked_sprite_;
     void *unchecked_sprite_;
@@ -79,7 +80,7 @@ void Dialog::close() {
     record(DIALOG_CLOSE);
     if (active_checkbox != 0) {
         CheckBox *box = active_checkbox;
-        expect(box->field_4_ == 0 && box->field_8_ == 0 &&
+        expect(box->field_4_ == 0 && box->key_notification_callback_ == 0 &&
                box->double_click_callback_ == 0 &&
                box->checked_sprite_ == CheckBoxDefault2 &&
                box->unchecked_sprite_ == CheckBoxDefault1,

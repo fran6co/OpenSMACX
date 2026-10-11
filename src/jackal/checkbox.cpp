@@ -104,7 +104,7 @@ CheckBox::CheckBox() {
     // VC6 owns virtual-base construction and derived table setup under its
     // hidden most-derived flag. The body initializes this class's own state.
     field_4_ = 0;
-    field_8_ = 0;
+    key_notification_callback_ = 0;
     double_click_callback_ = 0;
     checked_sprite_ = CheckBoxDefault2;
     unchecked_sprite_ = CheckBoxDefault1;
@@ -161,7 +161,7 @@ CheckBox::~CheckBox() {
     // calls - the compiler's virtual-base dispatch.
 
     field_4_ = 0;
-    field_8_ = 0;
+    key_notification_callback_ = 0;
     double_click_callback_ = 0;
     checked_sprite_ = CheckBoxDefault2;
     unchecked_sprite_ = CheckBoxDefault1;
@@ -206,7 +206,7 @@ uint32_t CheckBox::close() {
     // time exactly as the old hand walk did, so the embedded case still
     // reaches the right subobjects.
     field_4_ = 0;
-    field_8_ = 0;
+    key_notification_callback_ = 0;
     double_click_callback_ = 0;
     checked_sprite_ = CheckBoxDefault2;
     unchecked_sprite_ = CheckBoxDefault1;
@@ -1011,8 +1011,7 @@ int CheckBox::on_key_down(int key) {
         return 0;
     }
 
-    WinNotificationCallback callback =
-        reinterpret_cast<WinNotificationCallback>(field_8_);
+    WinNotificationCallback callback = key_notification_callback_;
     if (callback != 0) {
         callback(static_cast<int>(selected_position_));
     }
