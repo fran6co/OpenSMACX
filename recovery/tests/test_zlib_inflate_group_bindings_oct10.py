@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 
 from match_recovery.component_source import parse_component, render_component
+from test_zlib_allocator_bindings_oct11 import EXPECTED as ALLOCATOR_MEMBERS
 from test_indirect_dependency_frontier_oct10 import restore_import_archive_configuration, restore_prior_ddraw_archive_configuration
 from test_zlib_main_state_machine_bindings_oct10 import EXPECTED as MAIN_STATE_MACHINES
 from match_recovery.source.reader import read_file, read_text
@@ -49,7 +50,7 @@ def test_prior_thirty_eight_identities_history_claims_and_policy_preserved():
     assert current.startswith(old[:old.index("// RECOVERY_COMPONENT_BEGIN")])
     before = {row.address: row for row in read_text(old, ROOT / COMPANION)}
     after = {row.address: row for row in read_file(ROOT / COMPANION)}
-    assert set(after) == set(before) | set(EXPECTED) | set(MAIN_STATE_MACHINES)
+    assert set(after) == set(before) | set(EXPECTED) | set(MAIN_STATE_MACHINES) | set(ALLOCATOR_MEMBERS)
     for address, row in before.items():
         for field in fields(row):
             if field.name not in {"line", "region", "origin"}:
@@ -60,7 +61,7 @@ def test_prior_thirty_eight_identities_history_claims_and_policy_preserved():
 def test_fourteen_exact_routes_unclaimed_and_native_roundtrips():
     text = (ROOT / COMPANION).read_text()
     manifest = parse_component(text)
-    assert len(manifest.bindings) == 56
+    assert len(manifest.bindings) == 58
     assert set(manifest.units) == UNITS
     assert parse_component(render_component(manifest)) == manifest
     assert write(text, read_file(ROOT / COMPANION)) == text

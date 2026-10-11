@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "task_id": "zlib-allocator-bindings-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "a85e8b9e467e6d4861df2c513d03ba70879d3460",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6556272
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6570208
+    }
+  ],
+  "editable_files": [
+    "src/vendor/zlib.recovery.h",
+    "recovery/tests/test_zlib_allocator_bindings_oct11.py",
+    "recovery/tests/zlib-allocator-bindings-oct11.patch",
+    "recovery/tests/test_zlib_three_helper_bindings_oct10.py",
+    "recovery/tests/test_zlib_ten_member_bindings_oct10.py",
+    "recovery/tests/test_zlib_deflate_tree_group_bindings_oct10.py",
+    "recovery/tests/test_zlib_inflate_group_bindings_oct10.py",
+    "recovery/tests/test_zlib_main_state_machine_bindings_oct10.py",
+    "recovery/tests/test_indirect_dependency_frontier_oct10.py"
+  ],
+  "intent": "Bind two original zlib allocator callbacks to the pinned unmodified upstream source, preserving existing dependency and historical source identities without application implementations or match claims.",
+  "evidence": [
+    "Pinned zlib1.0.2 source and native/IDA boundaries corroborate zcfree640A70..640A7C and static falloc6440E0..6440F8; locally compiled upstream COFF symbols corroborate their source units, not original archive selection. Neither target has an independent Ghidra function row.",
+    "zcfree calls already bound runtime free644EF2 and is selected by deflate/inflate initialization. falloc is installed by inflate_trees_fixed at64400C; fixed_mem placement/allocation and the relocation remain unknown, not a guessed data binding.",
+    "Use source writer for unclaimed FILE marker envelopes and typed component rendering for appended VendorBinding entries; retain all prior header content, claims, bindings, compiler policy and upstream source. Narrow older test censuses allow only these two explicit identities.",
+    "Dependency correspondence is not whole-library version uniqueness, original retained selection, runtime equivalence or game acceptance. Fresh native controls and independent review precede coordinator-reviewed integration."
+  ]
+}

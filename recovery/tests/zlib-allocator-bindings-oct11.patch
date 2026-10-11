@@ -1,0 +1,34 @@
+diff --git a/src/vendor/zlib.recovery.h b/src/vendor/zlib.recovery.h
+index 5bdb7e807..f7e8bf0f7 100644
+--- a/src/vendor/zlib.recovery.h
++++ b/src/vendor/zlib.recovery.h
+@@ -578,6 +578,18 @@ This source correspondence grants no matching claim.
+ // Original-image bindings for this dependency.
+ // These are verification obligations, not claims of current matching.
+ // Dependency inputs are unmodified; this companion owns its recovery metadata.
++/*
++// ORIGINAL: 0x00640A70 _zcfree 0x00640A70-0x00640A7C FILE
++Dependency implementation: unmodified zlib 1.0.2 zutil.c.
++Pinned zlib1.0.2 zutil.c definition and original640A70..640A7C: free(ptr) through already bound runtime free644EF2; callbacks selected at63CF8A and63E034. IDA extent, complete native decode and locally compiled unmodified upstream COFF corroborate source correspondence, not original archive selection; no independent Ghidra row. This is not a current byte claim; dependency retained selection and runtime equivalence remain unproved.
++*/
++
++/*
++// ORIGINAL: 0x006440E0 _falloc 0x006440E0-0x006440F8 FILE
++Dependency implementation: unmodified zlib 1.0.2 inftrees.c.
++Pinned zlib1.0.2 inftrees.c static allocator; original inflate_trees_fixed installs its pointer at64400C. Native6440E0..6440F8 decrements the opaque count then forms fixed_mem-relative storage. IDA extent, complete native decode and locally compiled static COFF symbol corroborate source correspondence, not original archive selection; no independent Ghidra row. The fixed_mem original allocation/extent and reference remain unknown; do not infer a data binding from the LEA immediate. This is not a current byte claim; dependency retained selection and runtime equivalence remain unproved.
++*/
++
+ // RECOVERY_COMPONENT_BEGIN v1
+ // {
+ //   "archive_sha256": "517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6",
+@@ -700,7 +712,9 @@ This source correspondence grants no matching claim.
+ //     {"evidence": "Unmodified zlib1.0.2 state-machine implementation and independently pinned Ghidra code-only extent. Physical function COMDAT also contains compiler switch tables beyond this code span; their allocation/ownership and complete reference qualification remain obligations. Preserve the code-only span and native boundary failure; do not extend it or manufacture separate table declarations. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x0063E110", "spans": ["0x0063E110-0x0063E4E8"], "symbol": "_inflate", "unit": "inflate.c"},
+ //     {"evidence": "Unmodified zlib1.0.2 state-machine implementation and independently pinned Ghidra code-only extent. Physical function COMDAT also contains compiler switch tables beyond this code span; their allocation/ownership and complete reference qualification remain obligations. Preserve the code-only span and native boundary failure; do not extend it or manufacture separate table declarations. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x00642C20", "spans": ["0x00642C20-0x0064390D"], "symbol": "_inflate_blocks", "unit": "infblock.c"},
+ //     {"evidence": "Unmodified zlib1.0.2 state-machine implementation and independently pinned Ghidra code-only extent. Physical function COMDAT also contains compiler switch tables beyond this code span; their allocation/ownership and complete reference qualification remain obligations. Preserve the code-only span and native boundary failure; do not extend it or manufacture separate table declarations. This is not a current byte claim; any missing data/string/helper evidence must remain unknown. Complete dependency data, retained selection and runtime equivalence remain obligations.", "origin": "0x00644180", "spans": ["0x00644180-0x006448E6"], "symbol": "_inflate_codes", "unit": "infcodes.c"},
+-//     {"evidence": "Unmodified zlib1.0.2 deflate.c local deflate_stored; pinned deflate63D320..328 selects the level-zero configuration table pointer at698CF8. Independent complete native decode and IDA extent end at RET63D6EE, exclusive63D6EF; the alignment NOP at6EF is not body. Calls fill_window63D6F0, __tr_flush_block641280 and flush_pending63D450; existing physical dependency COFF corroborates the static symbol and TU. This binds dependency correspondence only: current exactness/references, linked selection and runtime equivalence remain obligations.", "origin": "0x0063D600", "spans": ["0x0063D600-0x0063D6EF"], "symbol": "_deflate_stored", "unit": "deflate.c"}
++//     {"evidence": "Unmodified zlib1.0.2 deflate.c local deflate_stored; pinned deflate63D320..328 selects the level-zero configuration table pointer at698CF8. Independent complete native decode and IDA extent end at RET63D6EE, exclusive63D6EF; the alignment NOP at6EF is not body. Calls fill_window63D6F0, __tr_flush_block641280 and flush_pending63D450; existing physical dependency COFF corroborates the static symbol and TU. This binds dependency correspondence only: current exactness/references, linked selection and runtime equivalence remain obligations.", "origin": "0x0063D600", "spans": ["0x0063D600-0x0063D6EF"], "symbol": "_deflate_stored", "unit": "deflate.c"},
++//     {"evidence": "Pinned zlib1.0.2 zutil.c definition and original640A70..640A7C: free(ptr) through already bound runtime free644EF2; callbacks selected at63CF8A and63E034. IDA extent, complete native decode and locally compiled unmodified upstream COFF corroborate source correspondence, not original archive selection; no independent Ghidra row. This is not a current byte claim; dependency retained selection and runtime equivalence remain unproved.", "origin": "0x00640A70", "spans": ["0x00640A70-0x00640A7C"], "symbol": "_zcfree", "unit": "zutil.c"},
++//     {"evidence": "Pinned zlib1.0.2 inftrees.c static allocator; original inflate_trees_fixed installs its pointer at64400C. Native6440E0..6440F8 decrements the opaque count then forms fixed_mem-relative storage. IDA extent, complete native decode and locally compiled static COFF symbol corroborate source correspondence, not original archive selection; no independent Ghidra row. The fixed_mem original allocation/extent and reference remain unknown; do not infer a data binding from the LEA immediate. This is not a current byte claim; dependency retained selection and runtime equivalence remain unproved.", "origin": "0x006440E0", "spans": ["0x006440E0-0x006440F8"], "symbol": "_falloc", "unit": "inftrees.c"}
+ //   ]
+ // }
+ // RECOVERY_COMPONENT_END

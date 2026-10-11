@@ -34,6 +34,8 @@ ARCHIVES = {"vfw32": "VFW32.LIB", "dsound": "DSOUND.LIB", "comdlg32": "COMDLG32.
 
 def without_stored_binding(manifest):
     """Undo only this exact addition for older baseline comparisons."""
+    from test_zlib_allocator_bindings_oct11 import without_allocator_bindings
+    manifest = without_allocator_bindings(manifest)
     binding = manifest.bindings[-1]
     assert (binding.origin.address, binding.symbol, binding.unit, binding.spans) == (
         0x63D600, "_deflate_stored", "deflate.c", (Span(0x63D600, 0x63D6EF),))
@@ -76,7 +78,12 @@ def test_only_one_zlib_dependency_binding_added_without_changing_prior_obligatio
     assert len(added) == 1
     assert "ORIGINAL:" not in added[0] and "BYTE_EXACT" not in added[0]
     # Existing source prose, legacy markers and all other manifest bytes remain.
-    restored = text.replace(added[0] + "\n", "", 1)
+    from test_zlib_allocator_bindings_oct11 import restore_allocator_source
+    restored = restore_allocator_source(text)
+    restored_added = [line for line in restored.splitlines()
+                      if '"origin": "0x0063D600"' in line]
+    assert len(restored_added) == 1
+    restored = restored.replace(restored_added[0] + "\n", "", 1)
     old_last = prior_text.splitlines()[-4]
     assert old_last + "," in restored
     restored = restored.replace(old_last + ",", old_last, 1)
