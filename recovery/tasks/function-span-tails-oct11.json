@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "function-span-tails-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "32729ca84ad3e1dab7221a5231bf221edfe4c432",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6389168},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6393376},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4955792}
+  ],
+  "editable_files": ["src/caviar.cpp", "src/statuswin.cpp", "recovery/tests/test_function_span_tails_oct11.py", "recovery/tests/function-span-tails-oct11.patch", "recovery/tests/test_caviar_shape_chain_oct11.py"],
+  "intent": "Repair three truncated original function spans through the installed source writer, preserving bodies, identities and claims. This closes twenty omitted mapped bytes, not three missing implementations.",
+  "evidence": [
+    "Caviar::add_object617DB0 originally stopped at617F12, excluding its null-argument epilogue. Native return16 at617F1C ends617F1F;617F1F is padding before next mapped617F20. Existing source returns10 for either null definition.",
+    "Caviar::vx_free618E20 originally stopped at618E2F, excluding its return targeted by the null branch. RET ends618E30, next mappedvx_read entry. Legacy size16 already agrees with the complete extent.",
+    "StatusWin::UNK4 originally stopped4B9E97, excluding the StatusFlags writeback and RET. RET4B9E9C ends9D; alignment padding is excluded. Source already performs the flag update.",
+    "All selected records have no current byte-exact claim. API-generated marker edits extend only image_spans; durable source rationale and corrected add_object size accompany them. Annotation identity/history continuity and native tail/control-flow tests precede reviewed integration."
+  ]
+}

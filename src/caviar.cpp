@@ -1902,7 +1902,8 @@ void *Caviar::vx_malloc(unsigned long size) {
 /*
 Purpose: The engine's release callback - free behind a null test, so the
          engine may hand back a slot it never filled.
-// ORIGINAL: 0x00618E20 ?vx_free@Caviar@@SAXPAX@Z 0x00618E20-0x00618E2F
+// ORIGINAL: 0x00618E20 ?vx_free@Caviar@@SAXPAX@Z 0x00618E20-0x00618E30
+// RECOVERY_BINDING: v1 {"reason":"Include the release callback's final return in its original span; retain the existing source implementation and historical findings without granting a match claim.","evidence":["pinned:0x00618E26 branches to the return at0x00618E2F; the return ends0x00618E30, which is the next mapped callback entry","source:Caviar::vx_free preserves the null test and ordinary CRT free call"]}
 // size      16 bytes
 // calls     0x00644EF2
 // TRIED: 6/6 real instructions agree; the unit's link binds the header's
@@ -3736,10 +3737,11 @@ Purpose: Append one .cvr definition's parts to the instance table in full -
          source and a raw object pointer as the instance's id. The count and
          the step entry come off the first record, the part arrays and the
          rotation step off the second.
-// ORIGINAL: 0x00617DB0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@H@Z 0x00617DB0-0x00617F12
+// ORIGINAL: 0x00617DB0 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@H@Z 0x00617DB0-0x00617F1F
+// RECOVERY_BINDING: v1 {"reason":"Map the complete instance-append body including its null-argument epilogue, not only its success/full/missing-record exits; no new implementation or match claim.","evidence":["pinned:the null-argument branches enter0x00617F12; that epilogue returns0x10 and ends after ret16 at0x00617F1F; the following byte is alignment padding before mapped0x00617F20","source:Caviar::add_object already returns0x10 for either null definition"]}
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAE0H@Z
 //           (VC6 back-references the repeated CaviarData to `0`.)
-// size      354 bytes
+// size      367 bytes
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@PAEPAUCaviarData@@H@Z)(Caviar* this, CaviarData*, uint8*, CaviarData*, int)
 // callers   0   call targets   0
 // kind      game
