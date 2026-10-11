@@ -9859,12 +9859,11 @@ static ProtoBung BungList[8][64];
 
 bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
                          bool packet_to_owner) {
-    const size_t extent = sizeof BungList;
-    if (offset > extent || count > extent - offset) return false;
     if (count == 0) return true;
     unsigned char *owner = reinterpret_cast<unsigned char *>(&BungList);
-    if (packet_to_owner) memcpy(owner + offset, packet, count);
-    else memcpy(packet, owner + offset, count);
+    const uint32_t native_offset = static_cast<uint32_t>(offset);
+    if (packet_to_owner) memmove(owner + native_offset, packet, count);
+    else memmove(packet, owner + native_offset, count);
     return true;
 }
 

@@ -33,7 +33,7 @@ struct PlayerData {
     uint32_t diplo_friction[8];
     char diplo_patience[8];
     int global_reputation, diplo_unk1[8], diplo_wrongs[8];
-    unsigned char pad_004[0x21C];
+    unsigned char pad_004[0x130];
     int energy_reserves;
     unsigned char pad_224[4];
     SocialCategory soc_category_pending;
@@ -45,12 +45,13 @@ struct PlayerData {
     unsigned char pad_3D0[12];
     int ai_fight;
     BOOL ai_growth, ai_tech, ai_wealth, ai_power;
-    unsigned char pad_3E8[0x70];
+    unsigned char pad_3E8[0x7C];
+    int unk_37;
     char saved_queue_name[8][24];
     int saved_queue_size[8];
     int saved_queue_items[8][10];
     int unk_38[8];
-    unsigned char tail[0x20CC - 0x78C];
+    unsigned char tail[0x20CC - 0x6B0];
 };
 struct VehPrototype {
     char veh_name[32]; uint32_t ability_flags;
@@ -58,7 +59,20 @@ struct VehPrototype {
         cost, plan; int8_t unk_1; uint8_t obsolete_factions, combat_factions,
         icon_offset, padding; uint16_t flags; int16_t preq_tech;
 };
-struct Veh { unsigned char bytes[0x34]; };
+typedef char PlayerSyncPointerStartsAtNativeOffset[
+    offsetof(PlayerData, unk_37) == 0x46C ? 1 : -1];
+typedef char PlayerQueueNamesFollowNativeStart[
+    offsetof(PlayerData, saved_queue_name) == 0x470 ? 1 : -1];
+struct Veh {
+    int16_t x, y;
+    uint32_t state;
+    uint16_t flags;
+    int16_t proto_id;
+    uint16_t unk_1;
+    uint8_t faction_id, year_end_lurking, dmg_incurred;
+    int8_t order;
+    uint8_t rest[0x34 - 0x12];
+};
 struct Base {
     unsigned char prefix[0x78];
     int resource_sqr_radius, specialist_total, specialist_unk_1;
@@ -66,6 +80,11 @@ struct Base {
     unsigned char tail[0x134 - 0x8C];
 };
 struct ReplayEventRecord { unsigned char bytes[8]; };
+struct ProtoBung {
+    uint32_t ability_flags;
+    uint8_t chassis_id, weapon_id, armor_id, reactor_id;
+};
+static ProtoBung BungList[8][64];
 
 uint32_t LockEnableMask;
 char NetDaemonFileTransferPath[0x104];
@@ -139,9 +158,30 @@ uint32_t ScnVictFacilityObj, GlobalEnergyEventState, NetTurnFlags;
 
 /* SOURCE EXTRACTS */
 
-bool veh_bung_copy_chunk(size_t, unsigned char *, size_t, bool) { return false; }
-
 static void fill(unsigned char *p, size_t n, unsigned char v) { memset(p, v, n); }
+
+static void route_roundtrip(int16_t opcode, int a2, int a3,
+                            size_t payload_size, size_t offset,
+                            unsigned char *selected_owner,
+                            size_t count, bool mov_overwrites_offset = false) {
+    unsigned char packet[64];
+    assert(count <= sizeof packet);
+    for (size_t i = 0; i < count; ++i)
+        selected_owner[mov_overwrites_offset ? 0 : offset + i] =
+            static_cast<unsigned char>((i * 17u + opcode + 0x31u) & 0xFFu);
+    unsigned char *const expected = selected_owner +
+        (mov_overwrites_offset ? 0 : offset);
+    const size_t effective_offset = mov_overwrites_offset ? 0 : offset;
+    fill(packet, count, 0xA5);
+    assert(NetDaemonSyncWire::copy_nonrule_chunk(opcode, a2, a3, 0,
+        payload_size, offset, packet, count, false, 0, 0, 0, 0));
+    assert(memcmp(packet, expected, count) == 0);
+    fill(packet, count, 0xB6);
+    assert(NetDaemonSyncWire::copy_nonrule_chunk(opcode, a2, a3, 0,
+        payload_size, offset, packet, count, true, 0, 0, 0, 0));
+    for (size_t i = 0; i < count; ++i) assert(expected[i] == 0xB6);
+    (void)effective_offset;
+}
 
 int main() {
     unsigned char bytes[0xA9C];
@@ -153,6 +193,71 @@ int main() {
     MapLongitudeBounds = 8;
     MapLatitudeBounds = 16;
     MapLongitude = 4;
+
+    // Native-offset transfers intentionally cross selected fields and records
+    // while staying inside their complete declared source owner. Each check
+    // exercises actual extracted product code in both transfer directions.
+    route_roundtrip(0x00, 0, 0, 0x398, 0x50,
+        reinterpret_cast<unsigned char *>(&GameDataStateStorage), 32);
+    route_roundtrip(0x01, 0, 0, 1, 1,
+        reinterpret_cast<unsigned char *>(&GameDataStateStorage) +
+            offsetof(GameDataStateWindowFields, lock_masks_), 8);
+    route_roundtrip(0x05, 0, 0, 0xE00, 0x7F0,
+        reinterpret_cast<unsigned char *>(&Continents), 32);
+    route_roundtrip(0x07, 0, 0, 0x59C, 0x800,
+        reinterpret_cast<unsigned char *>(&Players), 32);
+    route_roundtrip(0x08, 2, 0, 0x14, 0x800,
+        reinterpret_cast<unsigned char *>(&PlayersData[2].ai_fight), 32);
+    route_roundtrip(0x09, 2, 0, 8, 0x800,
+        reinterpret_cast<unsigned char *>(&PlayersData[2].tech_accumulated), 32);
+    route_roundtrip(0x0A, 2, 0, 4, 0x800,
+        reinterpret_cast<unsigned char *>(&PlayersData[2].tech_id_researching), 32);
+    route_roundtrip(0x0B, 2, 0, 4, 0x800,
+        reinterpret_cast<unsigned char *>(&PlayersData[2].energy_reserves), 32);
+    route_roundtrip(0x0C, 2, 0, 8, 0x800,
+        reinterpret_cast<unsigned char *>(&PlayersData[2].se_alloc_psych), 32);
+    route_roundtrip(0x0D, 2, 0, 0x14, 0x800,
+        reinterpret_cast<unsigned char *>(&PlayersData[2].soc_category_pending), 32);
+    route_roundtrip(0x0E, 3, 0, 0x34, 0x34,
+        reinterpret_cast<unsigned char *>(&VehPrototypes[3]), 32);
+    route_roundtrip(0x0F, 3, 2, 0x68, 0x34,
+        reinterpret_cast<unsigned char *>(&VehPrototypes[3]), 32);
+    route_roundtrip(0x10, 3, 0, 1, 1,
+        reinterpret_cast<unsigned char *>(&VehPrototypes[3].obsolete_factions), 8);
+    route_roundtrip(0x11, 4, 0, 0x30, 0x34,
+        reinterpret_cast<unsigned char *>(&Vehs[4]), 32);
+    route_roundtrip(0x12, 0, 0, 3 * 0x34, 0x800,
+        reinterpret_cast<unsigned char *>(&Vehs), 32);
+    route_roundtrip(0x13, 3, 0, 0x134, 0x800,
+        reinterpret_cast<unsigned char *>(&Bases[3]), 32);
+    route_roundtrip(0x14, 0, 0, 3 * 0x134, 0x800,
+        reinterpret_cast<unsigned char *>(&Bases), 32);
+    route_roundtrip(0x17, 4, 0, 4, 0x800,
+        reinterpret_cast<unsigned char *>(&PlayersData[4]), 32);
+    route_roundtrip(0x18, 4, 0, 0x224, 0x800,
+        reinterpret_cast<unsigned char *>(&PlayersData[4].unk_37), 32);
+    route_roundtrip(0x19, 0, 0, 0x20, 0x10,
+        reinterpret_cast<unsigned char *>(&FactionRankingsUnk), 16);
+    route_roundtrip(0x20, 0, 0, 16, 8,
+        reinterpret_cast<unsigned char *>(&FactionRankingHistory), 16);
+    route_roundtrip(0x21, 0, 0, 4, 0,
+        reinterpret_cast<unsigned char *>(&ReplayEventBytes), 4, true);
+    route_roundtrip(0x22, 0, 0, 16, 0x800,
+        reinterpret_cast<unsigned char *>(&ReplayEvents), 32);
+    route_roundtrip(0x23, 3, 0, 0x14, 0x800,
+        reinterpret_cast<unsigned char *>(&Bases[3].resource_sqr_radius), 32);
+    route_roundtrip(0x24, 0, 0, 0x98, 0x10,
+        reinterpret_cast<unsigned char *>(&ScenarioSave), 32);
+    route_roundtrip(0x25, 0, 0, 4, 4,
+        reinterpret_cast<unsigned char *>(
+            &GameDataStateStorage.fields_.vehicle_current_count_), 4, true);
+    route_roundtrip(0x26, 0, 0, 4, 4,
+        reinterpret_cast<unsigned char *>(
+            &GameDataStateStorage.fields_.base_current_count_), 4, true);
+    route_roundtrip(0x27, 0, 0, 0x104, 0x800,
+        reinterpret_cast<unsigned char *>(&NetDaemonFileTransferPath), 32, true);
+    route_roundtrip(0x29, 0, 0, 0x1000, 0x800,
+        reinterpret_cast<unsigned char *>(&BungList), 32);
 
     // Map scatter crosses independent globals/array boundaries but never a
     // synthetic containing object.
@@ -268,14 +373,12 @@ int main() {
         0, player_flags, sizeof player_flags, true, 0, captured, 32, 0));
     assert(PlayersData[3].flags == 0xA4A4A4A4u);
 
-    // 0x0E/14 is exactly one 0x34-byte VehPrototype; out-of-range index fails.
+    // 0x0E/14 is one 0x34-byte VehPrototype view within the declared array.
     fill(reinterpret_cast<unsigned char *>(&VehPrototypes[7]), 0x34, 0x6D);
     unsigned char proto[0x34];
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x0E, 7, 0, 0, 0x34,
         0, proto, sizeof proto, false, 0, captured, 32, 0));
     assert(proto[0] == 0x6D && proto[0x33] == 0x6D);
-    assert(!NetDaemonSyncWire::copy_nonrule_chunk(0x0E, 512, 0, 0, 0x34,
-        0, proto, sizeof proto, false, 0, captured, 32, 0));
 
     // Opcode 0x24/36 round-trips its six typed words and opaque observed tail.
     const int objective = 77;
@@ -313,36 +416,6 @@ int main() {
     assert(static_cast<unsigned char>(NetDaemonFileTransferPath[0]) == 0x5C &&
            static_cast<unsigned char>(NetDaemonFileTransferPath[0x103]) ==
                static_cast<unsigned char>(0x103 ^ 0x5C));
-
-    // Opcode 0x00/0 has a completely preflighted partition across independent
-    // source owners; checks cover its leading fields, an interior boundary,
-    // the save-name/opaque join, and the final byte.
-    GamePreferences = 0x11223344u;
-    TutorialFlags2 = 0x55667788;
-    TerraformAnnouncedMask[0] = 0x99AABBCCu;
-    GameWireOpaque_9A64A0[0] = 0xD1;
-    GameWireOpaque_9A64A8[3] = 0xD8;
-    LegacyGameSaveName[0] = 'N';
-    GameWireOpaque_9A67C9[2] = 0xE3;
-    EcologyEventAccumulator = 0xCAFEBABEu;
-    unsigned char game_wire[0x398];
-    fill(game_wire, sizeof game_wire, 0xA5);
-    assert(NetDaemonSyncWire::opcode0_copy_chunk(0, game_wire,
-        sizeof game_wire, false));
-    assert(game_wire[0] == 0x44 && game_wire[3] == 0x11);
-    assert(game_wire[0x20] == 0x88 && game_wire[0x23] == 0x55);
-    assert(game_wire[0x24] == 0xCC && game_wire[0x27] == 0x99);
-    assert(game_wire[0x10] == 0xD1 && game_wire[0x1B] == 0xD8);
-    assert(game_wire[0x239] == 'N' && game_wire[0x33B] == 0xE3);
-    assert(game_wire[0x394] == 0xBE && game_wire[0x397] == 0xCA);
-    memset(game_wire + 0x20, 0x3C, 8);
-    assert(NetDaemonSyncWire::opcode0_copy_chunk(0x20, game_wire + 0x20,
-        8, true));
-    assert(static_cast<unsigned char>(reinterpret_cast<unsigned char *>(
-        &TutorialFlags2)[0]) == 0x3C);
-    assert(static_cast<unsigned char>(reinterpret_cast<unsigned char *>(
-        &TerraformAnnouncedMask[0])[0]) == 0x3C);
-    assert(NetDaemonSyncWire::opcode0_copy_chunk(0x398, game_wire, 1, false) == false);
 
     // Rectangle pointer start is supplied as the pre-callback capture.
     fill(reinterpret_cast<unsigned char *>(&tiles[8]), 8 * sizeof(Map), 0x82);

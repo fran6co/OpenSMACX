@@ -6689,158 +6689,6 @@ global_failed:
 // RECOVERY_OBJECT: v1 0x0093AC88 ?NetDaemonFileTransferPath@@3PADA
 char NetDaemonFileTransferPath[0x104];
 
-namespace NetDaemonSyncWire {
-
-template <class T>
-static size_t copy_member_bytes(size_t chunk_offset, uint8_t *chunk,
-                                size_t chunk_size, size_t wire_offset,
-                                T &member, bool packet_to_owner) {
-    const size_t chunk_end = chunk_offset + chunk_size;
-    const size_t member_end = wire_offset + sizeof member;
-    const size_t first = chunk_offset > wire_offset
-        ? chunk_offset : wire_offset;
-    const size_t last = chunk_end < member_end ? chunk_end : member_end;
-    if (first >= last) return 0;
-
-    unsigned char *member_bytes =
-        reinterpret_cast<unsigned char *>(&member);
-    const size_t member_delta = first - wire_offset;
-    const size_t chunk_delta = first - chunk_offset;
-    const size_t bytes = last - first;
-    if (packet_to_owner) {
-        memcpy(member_bytes + member_delta, chunk + chunk_delta, bytes);
-    } else {
-        memcpy(chunk + chunk_delta, member_bytes + member_delta, bytes);
-    }
-    return bytes;
-}
-
-static bool wire0_range_is_owned(size_t first, size_t count) {
-    struct Span { size_t first; size_t size; };
-    const Span spans[] = {
-        {0x000, sizeof GameDataStateStorage.fields_.game_preferences_}, {0x004, sizeof GameDataStateStorage.fields_.game_more_preferences_},
-        {0x008, sizeof GameDataStateStorage.fields_.game_warnings_}, {0x00C, sizeof GameDataStateStorage.fields_.game_rules_},
-        {0x010, sizeof GameDataStateStorage.fields_.game_wire_opaque_9a64a0_},
-        {0x014, sizeof GameDataStateStorage.fields_.game_interlude_flags_},
-        {0x018, sizeof GameDataStateStorage.fields_.game_wire_opaque_9a64a8_},
-        {0x01C, sizeof GameDataStateStorage.fields_.tutorial_flags_}, {0x020, sizeof GameDataStateStorage.fields_.tutorial_flags_2_},
-        {0x024, sizeof GameDataStateStorage.fields_.terraform_announced_mask_},
-        {0x02C, sizeof GameDataStateStorage.fields_.tutwin_flags_9a64bc_}, {0x030, sizeof GameDataStateStorage.fields_.game_state_},
-        {0x034, sizeof GameDataStateStorage.fields_.diff_level_current_}, {0x038, sizeof GameDataStateStorage.fields_.vehicle_current_count_},
-        {0x03C, sizeof GameDataStateStorage.fields_.base_current_count_}, {0x040, sizeof GameDataStateStorage.fields_.game_setup_reset_word_},
-        {0x044, sizeof GameDataStateStorage.fields_.turn_current_num_}, {0x048, sizeof GameDataStateStorage.fields_.mission_year_current_},
-        {0x04C, sizeof GameDataStateStorage.fields_.vehicle_selection_follow_limit_},
-        {0x050, sizeof GameDataStateStorage.fields_.time_controls_selection_},
-        {0x054, sizeof GameDataStateStorage.fields_.turn_control_duration_milliseconds_},
-        {0x058, sizeof GameDataStateStorage.fields_.lock_masks_.enable_mask_}, {0x05C, sizeof GameDataStateStorage.fields_.faction_rankings_},
-        {0x07C, sizeof GameDataStateStorage.fields_.ranking_faction_id_unk1_},
-        {0x080, sizeof GameDataStateStorage.fields_.ranking_faction_id_unk2_}, {0x084, sizeof GameDataStateStorage.fields_.secret_project_},
-        {0x184, sizeof GameDataStateStorage.fields_.governor_faction_},
-        {0x188, sizeof GameDataStateStorage.fields_.council_resolution_count_},
-        {0x1B4, sizeof GameDataStateStorage.fields_.council_last_resolution_turn_},
-        {0x1E0, sizeof GameDataStateStorage.fields_.game_tech_achieved_},
-        {0x239, sizeof GameDataStateStorage.fields_.legacy_game_save_name_},
-        {0x339, sizeof GameDataStateStorage.fields_.game_wire_opaque_9a67c9_},
-        {0x33C, sizeof GameDataStateStorage.fields_.climate_rise_step_}, {0x340, sizeof GameDataStateStorage.fields_.climate_rise_limit_},
-        {0x344, sizeof GameDataStateStorage.fields_.climate_rise_accum_},
-        {0x348, sizeof GameDataStateStorage.fields_.climate_sea_level_delta_},
-        {0x34C, sizeof GameDataStateStorage.fields_.transcendence_score_bonus_},
-        {0x350, sizeof GameDataStateStorage.fields_.transcendence_score_weights_},
-        {0x370, sizeof GameDataStateStorage.fields_.sunspot_duration_}, {0x374, sizeof GameDataStateStorage.fields_.mount_planet_x_},
-        {0x378, sizeof GameDataStateStorage.fields_.mount_planet_y_}, {0x37C, sizeof GameDataStateStorage.fields_.dust_cloud_duration_},
-        {0x380, sizeof GameDataStateStorage.fields_.save_daemon_state_word_},
-        {0x384, sizeof GameDataStateStorage.fields_.scenario_victory_facility_},
-        {0x388, sizeof GameDataStateStorage.fields_.global_energy_event_state_},
-        {0x38C, sizeof GameDataStateStorage.fields_.net_turn_flags_}, {0x390, sizeof GameDataStateStorage.fields_.net_turn_faction_},
-        {0x394, sizeof GameDataStateStorage.fields_.ecology_event_accumulator_}
-    };
-    const size_t end = first + count;
-    size_t covered = first;
-    size_t i;
-    for (i = 0; i < sizeof spans / sizeof spans[0] && covered < end; ++i) {
-        const size_t span_end = spans[i].first + spans[i].size;
-        if (spans[i].first <= covered && span_end > covered)
-            covered = span_end < end ? span_end : end;
-    }
-    return covered == end;
-}
-
-// Implement in netdaemon.cpp after the listed owner declarations are exposed.
-// chunk_offset/count must be bounded to [0,0x398) by the packet layer.
-bool opcode0_copy_chunk(size_t chunk_offset, uint8_t *chunk, size_t count,
-                        bool packet_to_owner) {
-    if (chunk_offset > 0x398 || count > 0x398 - chunk_offset) return false;
-    if (!wire0_range_is_owned(chunk_offset, count)) return false;
-    size_t copied = 0;
-#define COPY0(offset, object) copied += copy_member_bytes(chunk_offset, chunk, count, offset, object, packet_to_owner)
-
-    // game.cpp/game.h objects. The four-byte and three-byte opaque objects
-    // below are retained independent arrays, not padding or a packed block.
-    COPY0(0x000, GameDataStateStorage.fields_.game_preferences_);
-    COPY0(0x004, GameDataStateStorage.fields_.game_more_preferences_);
-    COPY0(0x008, GameDataStateStorage.fields_.game_warnings_);
-    COPY0(0x00C, GameDataStateStorage.fields_.game_rules_);
-    COPY0(0x010, GameDataStateStorage.fields_.game_wire_opaque_9a64a0_);
-    COPY0(0x014, GameDataStateStorage.fields_.game_interlude_flags_);
-    COPY0(0x018, GameDataStateStorage.fields_.game_wire_opaque_9a64a8_);
-    COPY0(0x01C, GameDataStateStorage.fields_.tutorial_flags_);
-    COPY0(0x020, GameDataStateStorage.fields_.tutorial_flags_2_);
-
-    // veh.cpp/terraforming.h owns this two-word announced mask.
-    COPY0(0x024, GameDataStateStorage.fields_.terraform_announced_mask_);
-    COPY0(0x02C, GameDataStateStorage.fields_.tutwin_flags_9a64bc_);
-
-    COPY0(0x030, GameDataStateStorage.fields_.game_state_);
-    COPY0(0x034, GameDataStateStorage.fields_.diff_level_current_);
-    COPY0(0x038, GameDataStateStorage.fields_.vehicle_current_count_);
-    COPY0(0x03C, GameDataStateStorage.fields_.base_current_count_);
-    COPY0(0x040, GameDataStateStorage.fields_.game_setup_reset_word_);
-    COPY0(0x044, GameDataStateStorage.fields_.turn_current_num_);
-    COPY0(0x048, GameDataStateStorage.fields_.mission_year_current_);
-    COPY0(0x04C, GameDataStateStorage.fields_.vehicle_selection_follow_limit_);
-    COPY0(0x050, GameDataStateStorage.fields_.time_controls_selection_);
-    COPY0(0x054, GameDataStateStorage.fields_.turn_control_duration_milliseconds_);
-    COPY0(0x058, GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-
-    // Canonical current owners: eight FactionRankings entries, followed by
-    // the two other ranking words, then SecretProject exactly once.
-    COPY0(0x05C, GameDataStateStorage.fields_.faction_rankings_);
-    COPY0(0x07C, GameDataStateStorage.fields_.ranking_faction_id_unk1_);
-    COPY0(0x080, GameDataStateStorage.fields_.ranking_faction_id_unk2_);
-    COPY0(0x084, GameDataStateStorage.fields_.secret_project_);
-
-    COPY0(0x184, GameDataStateStorage.fields_.governor_faction_);
-    COPY0(0x188, GameDataStateStorage.fields_.council_resolution_count_);
-    COPY0(0x1B4, GameDataStateStorage.fields_.council_last_resolution_turn_);
-    COPY0(0x1E0, GameDataStateStorage.fields_.game_tech_achieved_);
-    COPY0(0x239, GameDataStateStorage.fields_.legacy_game_save_name_);
-    COPY0(0x339, GameDataStateStorage.fields_.game_wire_opaque_9a67c9_);
-
-    COPY0(0x33C, GameDataStateStorage.fields_.climate_rise_step_);
-    COPY0(0x340, GameDataStateStorage.fields_.climate_rise_limit_);
-    COPY0(0x344, GameDataStateStorage.fields_.climate_rise_accum_);
-    COPY0(0x348, GameDataStateStorage.fields_.climate_sea_level_delta_);
-    COPY0(0x34C, GameDataStateStorage.fields_.transcendence_score_bonus_);
-    COPY0(0x350, GameDataStateStorage.fields_.transcendence_score_weights_);
-    COPY0(0x370, GameDataStateStorage.fields_.sunspot_duration_);
-    COPY0(0x374, GameDataStateStorage.fields_.mount_planet_x_);
-    COPY0(0x378, GameDataStateStorage.fields_.mount_planet_y_);
-    COPY0(0x37C, GameDataStateStorage.fields_.dust_cloud_duration_);
-    COPY0(0x380, GameDataStateStorage.fields_.save_daemon_state_word_);
-    COPY0(0x384, GameDataStateStorage.fields_.scenario_victory_facility_);
-    COPY0(0x388, GameDataStateStorage.fields_.global_energy_event_state_);
-    COPY0(0x38C, GameDataStateStorage.fields_.net_turn_flags_);
-    COPY0(0x390, GameDataStateStorage.fields_.net_turn_faction_);
-    COPY0(0x394, GameDataStateStorage.fields_.ecology_event_accumulator_);
-
-#undef COPY0
-    // A valid native request is fully covered by the independently owned
-    // fields below. Refuse any uncovered byte rather than sending allocator
-    // residue or claiming a partial incoming scatter succeeded.
-    return copied == count;
-}
-
-} // namespace NetDaemonSyncWire
 
 namespace NetDaemonSyncWire {
 
@@ -6890,8 +6738,6 @@ static size_t bounded_array_copy(size_t request_offset,
 void gather_saved_diplomacy(int faction_a, int faction_b, uint32_t wire[18]);
 void scatter_saved_diplomacy(int faction_a, int faction_b,
                              const uint32_t wire[18]);
-bool opcode0_copy_chunk(size_t offset, unsigned char *packet, size_t count,
-                        bool packet_to_owner);
 template <class T>
 static uint32_t native_word(const T &value) {
     typedef char NativeWordMustBeFourBytes[
@@ -6963,6 +6809,48 @@ void scatter_saved_diplomacy(int faction_a, int faction_b,
 }
 
 
+static bool native_owner_copy(void *owner, uint32_t native_offset,
+                              unsigned char *packet, size_t count,
+                              bool packet_to_owner) {
+    if (count == 0) return true;
+    unsigned char *const owner_bytes =
+        reinterpret_cast<unsigned char *>(owner) + native_offset;
+    if (packet_to_owner) memmove(owner_bytes, packet, count);
+    else memmove(packet, owner_bytes, count);
+    return true;
+}
+
+static const unsigned char *native_notification_view(int16_t opcode, int a2,
+                                                       size_t offset) {
+    uint32_t native_offset = static_cast<uint32_t>(offset);
+    if (opcode == 0x11)
+        native_offset += static_cast<uint32_t>(a2) * 0x34u;
+    else if (opcode == 0x13)
+        native_offset += static_cast<uint32_t>(a2) * 0x134u;
+    else
+        return 0;
+    const void *owner = opcode == 0x11
+        ? static_cast<const void *>(&Vehs)
+        : static_cast<const void *>(&Bases);
+    return reinterpret_cast<const unsigned char *>(owner) + native_offset;
+}
+
+static const unsigned char *native_notification_owner_view(int16_t opcode,
+                                                            int a2) {
+    uint32_t native_offset;
+    const void *owner;
+    if (opcode == 0x11) {
+        native_offset = static_cast<uint32_t>(a2) * 0x34u;
+        owner = &Vehs;
+    } else if (opcode == 0x13) {
+        native_offset = static_cast<uint32_t>(a2) * 0x134u;
+        owner = &Bases;
+    } else {
+        return 0;
+    }
+    return reinterpret_cast<const unsigned char *>(owner) + native_offset;
+}
+
 bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
                         size_t payload_size, size_t offset,
                         unsigned char *packet, size_t count,
@@ -6970,30 +6858,136 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
                         Map *captured_map_tiles,
                         size_t captured_map_tile_capacity,
                         size_t captured_map_tile_first) {
+    (void)a3;
     (void)a4;
-    if (opcode == 0x06) { // decimal 6: native copies a whole PlayerData record
-        // The native address table selects 0x96C9E0 + a2 * 0x20CC, then the
-        // common chunk path adds the signed-index-derived byte displacement.
-        // Keep the arithmetic in 32 bits and copy the requested bytes without
-        // intersecting them back to the selected record's extent. A byte view
-        // of the complete declared array preserves contiguous
-        // transfers that cross a selected record boundary. Requests beyond
-        // the whole array retain unresolved native neighbor/fault effects;
-        // current application globals do not claim the original placement.
-        const uint32_t native_offset = static_cast<uint32_t>(a2) * 0x20CCu +
-                                       static_cast<uint32_t>(offset);
-        unsigned char *const player_data_base =
-            reinterpret_cast<unsigned char *>(&PlayersData);
-        unsigned char *const player_record_bytes =
-            player_data_base + native_offset;
-        if (count != 0) {
-            if (packet_to_owner)
-                memmove(player_record_bytes, packet, count);
-            else
-                memmove(packet, player_record_bytes, count);
-        }
+    (void)payload_size;
+    const uint32_t chunk = static_cast<uint32_t>(offset);
+#define NATIVE_COPY(owner, base_offset) \
+    native_owner_copy(owner, static_cast<uint32_t>(base_offset) + chunk, \
+                      packet, count, packet_to_owner)
+#define NATIVE_COPY_MOV(owner) \
+    native_owner_copy(owner, 0, packet, count, packet_to_owner)
+#define NATIVE_ARRAY(owner, base_offset, index, stride) \
+    native_owner_copy(owner, static_cast<uint32_t>(base_offset) + \
+                      static_cast<uint32_t>(index) * \
+                          static_cast<uint32_t>(stride) + chunk, \
+                      packet, count, packet_to_owner)
+
+    // These declarations are the actual owners used by native pointer routes.
+    // Preserve their proved strides; effects beyond a complete owner remain
+    // unresolved and are not exercised by the in-owner host controls.
+    typedef char PlayerDataHasNativeStride[sizeof(PlayerData) == 0x20CC ? 1 : -1];
+    typedef char PlayerHasNativeStride[sizeof(Players[0]) == 0x59C ? 1 : -1];
+    typedef char VehicleHasNativeStride[sizeof(Vehs[0]) == 0x34 ? 1 : -1];
+    typedef char VehiclePrototypeAtNativeOffset[
+        offsetof(Veh, proto_id) == 0x0A ? 1 : -1];
+    typedef char VehicleFactionAtNativeOffset[
+        offsetof(Veh, faction_id) == 0x0E ? 1 : -1];
+    typedef char PrototypeHasNativeStride[sizeof(VehPrototypes[0]) == 0x34 ? 1 : -1];
+    typedef char BaseHasNativeStride[sizeof(Bases[0]) == 0x134 ? 1 : -1];
+    typedef char PlayerEnergyAtNativeOffset[
+        offsetof(PlayerData, energy_reserves) == 0x220 ? 1 : -1];
+    typedef char PlayerSocialAtNativeOffset[
+        offsetof(PlayerData, soc_category_pending) == 0x228 ? 1 : -1];
+    typedef char PlayerSeAtNativeOffset[
+        offsetof(PlayerData, se_alloc_psych) == 0x324 ? 1 : -1];
+    typedef char PlayerTechnologyAtNativeOffset[
+        offsetof(PlayerData, tech_accumulated) == 0x3C8 ? 1 : -1];
+    typedef char PlayerAiAtNativeOffset[
+        offsetof(PlayerData, ai_fight) == 0x3DC ? 1 : -1];
+    typedef char PlayerQueueSyncAtNativeOffset[
+        offsetof(PlayerData, unk_37) == 0x46C ? 1 : -1];
+    typedef char PlayerSavedQueueAfterNativeStart[
+        offsetof(PlayerData, saved_queue_name) == 0x470 ? 1 : -1];
+    typedef char PrototypeObsoleteAtNativeOffset[
+        offsetof(VehPrototype, obsolete_factions) == 0x2C ? 1 : -1];
+    typedef char GameLockMaskAtNativeOffset[
+        offsetof(GameDataStateWindowFields, lock_masks_) == 0x58 ? 1 : -1];
+    (void)sizeof(PlayerDataHasNativeStride);
+    (void)sizeof(PlayerHasNativeStride);
+    (void)sizeof(VehicleHasNativeStride);
+    (void)sizeof(VehiclePrototypeAtNativeOffset);
+    (void)sizeof(VehicleFactionAtNativeOffset);
+    (void)sizeof(PrototypeHasNativeStride);
+    (void)sizeof(BaseHasNativeStride);
+    (void)sizeof(PlayerEnergyAtNativeOffset);
+    (void)sizeof(PlayerSocialAtNativeOffset);
+    (void)sizeof(PlayerSeAtNativeOffset);
+    (void)sizeof(PlayerTechnologyAtNativeOffset);
+    (void)sizeof(PlayerAiAtNativeOffset);
+    (void)sizeof(PlayerQueueSyncAtNativeOffset);
+    (void)sizeof(PlayerSavedQueueAfterNativeStart);
+    (void)sizeof(PrototypeObsoleteAtNativeOffset);
+    (void)sizeof(GameLockMaskAtNativeOffset);
+
+    switch (opcode) {
+    case 0x00: {
+        typedef char GameDataStateHasNativeExtent[
+            sizeof(GameDataStateStorage) == 0x398 ? 1 : -1];
+        (void)sizeof(GameDataStateHasNativeExtent);
+        NATIVE_COPY(&GameDataStateStorage, 0);
         return true;
     }
+    case 0x01: NATIVE_COPY(&GameDataStateStorage,
+        offsetof(GameDataStateWindowFields, lock_masks_)); return true;
+    case 0x05: NATIVE_COPY(&Continents, 0); return true;
+    case 0x06: case 0x17:
+        NATIVE_ARRAY(&PlayersData, 0, a2, 0x20CC); return true;
+    case 0x07: NATIVE_ARRAY(&Players, 0, a2, 0x59C); return true;
+    case 0x08: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, ai_fight),
+                             a2, 0x20CC); return true;
+    case 0x09: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, tech_accumulated),
+                             a2, 0x20CC); return true;
+    case 0x0A: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, tech_id_researching),
+                             a2, 0x20CC); return true;
+    case 0x0B: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, energy_reserves),
+                             a2, 0x20CC); return true;
+    case 0x0C: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, se_alloc_psych),
+                             a2, 0x20CC); return true;
+    case 0x0D: NATIVE_ARRAY(&PlayersData, offsetof(PlayerData, soc_category_pending),
+                             a2, 0x20CC); return true;
+    case 0x0E: case 0x0F:
+        NATIVE_ARRAY(&VehPrototypes, 0, a2, 0x34); return true;
+    case 0x10: NATIVE_ARRAY(&VehPrototypes,
+        offsetof(VehPrototype, obsolete_factions), a2, 0x34); return true;
+    case 0x11: NATIVE_ARRAY(&Vehs, 0, a2, 0x34); return true;
+    case 0x12: NATIVE_COPY(&Vehs, 0); return true;
+    case 0x13: NATIVE_ARRAY(&Bases, 0, a2, 0x134); return true;
+    case 0x14: NATIVE_COPY(&Bases, 0); return true;
+    case 0x15: NATIVE_COPY(&ControlTurnPhase, 0); return true;
+    case 0x18: NATIVE_ARRAY(&PlayersData,
+        offsetof(PlayerData, unk_37), a2, 0x20CC); return true;
+    case 0x19: NATIVE_COPY(&FactionRankingsUnk, 0); return true;
+    case 0x20: NATIVE_COPY(&FactionRankingHistory, 0); return true;
+    case 0x21: NATIVE_COPY_MOV(&ReplayEventBytes); return true;
+    case 0x22: NATIVE_COPY(&ReplayEvents, 0); return true;
+    case 0x23: {
+        typedef char BaseSyncTailAtNativeOffset[
+            offsetof(Base, resource_sqr_radius) == 0x78 ? 1 : -1];
+        (void)sizeof(BaseSyncTailAtNativeOffset);
+        NATIVE_ARRAY(&Bases, 0x78, a2, 0x134); return true;
+    }
+    case 0x24: NATIVE_COPY(&ScenarioSave, 0); return true;
+    case 0x25:
+        NATIVE_COPY_MOV(&GameDataStateStorage.fields_.vehicle_current_count_);
+        return true;
+    case 0x26:
+        NATIVE_COPY_MOV(&GameDataStateStorage.fields_.base_current_count_);
+        return true;
+    case 0x27: NATIVE_COPY_MOV(&NetDaemonFileTransferPath); return true;
+    case 0x28: return true;
+    case 0x29: return veh_bung_copy_chunk(offset, packet, count,
+                                          packet_to_owner);
+    default: break;
+    }
+
+#undef NATIVE_ARRAY
+#undef NATIVE_COPY_MOV
+#undef NATIVE_COPY
+
+    // Keep split map projections/captured arrays and the local diplomacy tuple
+    // on their specialized paths until their full owner/capture semantics are
+    // recovered. Their existing range handling is not generalized here.
     if (offset > payload_size || count > payload_size - offset) return false;
     if (count == 0) return true;
     size_t copied = 0;
@@ -7001,13 +6995,6 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
 #define COPY_BYTES(wire, pointer, bytes) copied += overlap_copy(offset, packet, count, wire, reinterpret_cast<unsigned char *>(pointer), bytes, packet_to_owner)
 
     switch (opcode) {
-    case 0x00: // decimal 0: one interval serialized from separately owned Game globals
-        return opcode0_copy_chunk(offset, packet, count, packet_to_owner);
-    case 0x01: { // decimal 1: only the first LockEnableMask byte
-        uint32_t &mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
-        COPY_BYTES(0, &mask, 1);
-        break;
-    }
     case 0x02: case 0x1002: { // decimal 2 / 4098: Map metadata, pointer cell excluded
         COPY_AT(0x000, MapLongitudeBounds);
         COPY_AT(0x004, MapLatitudeBounds);
@@ -7042,160 +7029,12 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
                 i * sizeof(Map), captured_map_tiles[i], packet_to_owner);
         break;
     }
-    case 0x05: // decimal 5
-        copied += bounded_array_copy(offset, packet, count, Continents,
-            128 * sizeof Continents[0], packet_to_owner);
-        break;
-    case 0x07: // decimal 7: one complete Player record
-        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
-        COPY_AT(0, Players[a2]);
-        break;
-    case 0x08: { // decimal 8: five named AI preference dwords
-        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
-        PlayerData &p = PlayersData[a2];
-        COPY_AT(0x00, p.ai_fight); COPY_AT(0x04, p.ai_growth);
-        COPY_AT(0x08, p.ai_tech); COPY_AT(0x0C, p.ai_wealth);
-        COPY_AT(0x10, p.ai_power);
-        break;
-    }
-    case 0x09: { // decimal 9
-        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
-        PlayerData &p = PlayersData[a2];
-        COPY_AT(0, p.tech_accumulated); COPY_AT(4, p.tech_id_researching);
-        break;
-    }
-    case 0x0A: case 0x10: { // decimal 10 is research id; decimal 16 is proto obsolete byte
-        if (opcode == 0x0A) {
-            if (a2 < 0 || a2 >= MaxPlayerNum) return false;
-            COPY_AT(0, PlayersData[a2].tech_id_researching);
-        } else {
-            if (a2 < 0 || a2 >= MaxVehProtoNum) return false;
-            COPY_BYTES(0, &VehPrototypes[a2].obsolete_factions, 1);
-        }
-        break;
-    }
-    case 0x0B: { // decimal 11
-        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
-        COPY_AT(0, PlayersData[a2].energy_reserves);
-        break;
-    }
-    case 0x0C: { // decimal 12
-        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
-        PlayerData &p = PlayersData[a2];
-        COPY_AT(0, p.se_alloc_psych); COPY_AT(4, p.se_alloc_labs);
-        break;
-    }
-    case 0x0D: { // decimal 13: pending category plus first active-category dword
-        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
-        PlayerData &p = PlayersData[a2];
-        COPY_AT(0, p.soc_category_pending);
-        COPY_BYTES(0x10, &p.soc_category_active, sizeof(uint32_t));
-        break;
-    }
-    case 0x0E: case 0x0F: { // decimal 14/15: prototype record/range
-        if (a2 < 0 || a2 >= MaxVehProtoNum) return false;
-        if (opcode == 0x0E) COPY_AT(0, VehPrototypes[a2]);
-        else {
-            if (a3 < 0 || a3 > MaxVehProtoNum - a2) return false;
-            COPY_BYTES(0, &VehPrototypes[a2],
-                       static_cast<size_t>(a3) * sizeof VehPrototypes[0]);
-        }
-        break;
-    }
-    case 0x11: { // decimal 17: first 0x30 bytes of one live Veh object
-        if (a2 < 0 || a2 >= 2049) return false;
-        COPY_BYTES(0, &Vehs[a2], 0x30);
-        break;
-    }
-    case 0x12: // decimal 18: captured payload size is bounded by the true static array
-        copied += bounded_array_copy(offset, packet, count, Vehs,
-            payload_size, packet_to_owner);
-        break;
-    case 0x13: // decimal 19
-        if (a2 < 0 || a2 >= MaxBaseNum) return false;
-        COPY_AT(0, Bases[a2]);
-        break;
-    case 0x14: // decimal 20
-        copied += bounded_array_copy(offset, packet, count, Bases,
-            payload_size, packet_to_owner);
-        break;
-    case 0x15: // decimal 21
-        COPY_AT(0, ControlTurnPhase);
-        break;
     case 0x16: // decimal 22: caller supplies the saved local 18-dword tuple
         if (!diplomacy_wire) return false;
         copied += overlap_copy(offset, packet, count, 0,
             reinterpret_cast<unsigned char *>(diplomacy_wire),
             18 * sizeof diplomacy_wire[0], packet_to_owner);
         break;
-    case 0x17: // decimal 23: native selects the first dword of PlayerData
-        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
-        COPY_BYTES(0, &PlayersData[a2], sizeof(uint32_t));
-        break;
-    case 0x18: { // decimal 24: four separately bounded PlayerData members/slices
-        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
-        PlayerData &p = PlayersData[a2];
-        COPY_BYTES(0x000,
-            reinterpret_cast<unsigned char *>(&p.saved_queue_name) + 20, 172);
-        COPY_AT(0x0AC, p.saved_queue_size);
-        COPY_AT(0x0CC, p.saved_queue_items);
-        COPY_BYTES(0x20C, &p.unk_38[0], 6 * sizeof p.unk_38[0]);
-        break;
-    }
-    case 0x19: // decimal 25
-        copied += bounded_array_copy(offset, packet, count, FactionRankingsUnk,
-            sizeof FactionRankingsUnk, packet_to_owner);
-        break;
-    case 0x20: // decimal 32: history window is Turns * eight 16-bit ranks
-        if (payload_size > sizeof FactionRankingHistory) return false;
-        copied += bounded_array_copy(offset, packet, count,
-            FactionRankingHistory, payload_size, packet_to_owner);
-        break;
-    case 0x21: // decimal 33
-        COPY_AT(0, ReplayEventBytes);
-        break;
-    case 0x22: // decimal 34: live event-byte prefix
-        if (ReplayEventBytes < 0 ||
-            static_cast<size_t>(ReplayEventBytes) > sizeof ReplayEvents ||
-            payload_size != static_cast<size_t>(ReplayEventBytes)) return false;
-        copied += bounded_array_copy(offset, packet, count, ReplayEvents,
-            payload_size, packet_to_owner);
-        break;
-    case 0x23: { // decimal 35: the native 0x14-byte Base tail
-        if (a2 < 0 || a2 >= MaxBaseNum) return false;
-        Base &b = Bases[a2];
-        COPY_AT(0x00, b.resource_sqr_radius);
-        COPY_AT(0x04, b.specialist_total);
-        COPY_AT(0x08, b.specialist_unk_1);
-        COPY_AT(0x0C, b.spec);
-        break;
-    }
-    case 0x24: { // decimal 36: six named game words + observed opaque wire tail
-        COPY_AT(0x00, ScenarioSave.objective_req_victory);
-        COPY_AT(0x04, ScenarioSave.objectives_sudden_death_victory);
-        COPY_AT(0x08, ScenarioSave.objective_achieve_points);
-        COPY_AT(0x0C, ScenarioSave.victory_achieve_bonus_points);
-        COPY_AT(0x10, ScenarioSave.starting_mission_year);
-        COPY_AT(0x14, ScenarioSave.ending_mission_year);
-        COPY_BYTES(0x18, ScenarioSave.wire_opaque_94b4d8,
-                   sizeof ScenarioSave.wire_opaque_94b4d8);
-        break;
-    }
-    case 0x25: // decimal 37
-        COPY_AT(0, GameDataStateStorage.fields_.vehicle_current_count_);
-        break;
-    case 0x26: // decimal 38
-        COPY_AT(0, GameDataStateStorage.fields_.base_current_count_);
-        break;
-    case 0x27: // decimal 39: actual NetDaemon::send_files path owner, shared across methods
-        copied += bounded_array_copy(offset, packet, count,
-            NetDaemonFileTransferPath, sizeof NetDaemonFileTransferPath,
-            packet_to_owner);
-        break;
-    case 0x28: // decimal 40
-        return true;
-    case 0x29: // decimal 41: actual Veh ProtoBung owner
-        return veh_bung_copy_chunk(offset, packet, count, packet_to_owner);
     case 0x30: { // decimal 48: row rectangle in the typed MapTiles array
         if (payload_size % sizeof(Map) != 0 || !captured_map_tiles ||
             captured_map_tile_first > captured_map_tile_capacity ||
@@ -7230,8 +7069,10 @@ namespace NetDaemonSyncWire {
     // Gather/scatter exactly [offset, offset+length) in the opcode's native
     // wire view. For rules receive, scatter writes the source-owned shared
     // native staging block; commit_rules is invoked only on the last chunk.
-    // For opcode 0 each implementation must refuse still-unowned bytes rather
-    // than inventing gap data. All calls resolve live fields at call time.
+    // Opcode 0 is one native byte view of GameDataStateStorage. Contiguous
+    // owner routes copy that aggregate directly; split map/diplomacy views keep
+    // their independently evidenced ownership and capture semantics.
+    // All calls resolve live fields at call time.
     bool copy_out(int16_t opcode, int a2, int a3, int a4,
                   size_t payload_size, size_t offset, void *packet_bytes,
                   size_t length,
@@ -7243,7 +7084,9 @@ namespace NetDaemonSyncWire {
                  const MapRouteCapture &map_capture,
                  uint32_t diplomacy_wire[18]);
     bool compare_and_notify(int16_t opcode, int a2, int a3, int a4,
-                            const void *packet_bytes, size_t length,
+                            const void *native_view,
+                            const void *native_owner_view,
+                            const void *packet_bytes,
                             int log_arg_lo, int log_arg_hi);
     void commit_rules(int16_t opcode);
     void gather_saved_diplomacy(int faction_a, int faction_b,
@@ -7308,40 +7151,67 @@ static void synch_debug_popup() {
 }
 
 bool NetDaemonSyncWire::compare_and_notify(int16_t opcode, int a2, int a3,
-    int a4, const void *packet_payload, size_t payload_size,
+    int a4, const void *native_view, const void *native_owner_view,
+    const void *packet_payload,
     int log_arg_lo, int log_arg_hi) {
     (void)a3; (void)a4;
+    const unsigned char *current_bytes =
+        static_cast<const unsigned char *>(native_view);
+    const unsigned char *owner_bytes =
+        static_cast<const unsigned char *>(native_owner_view);
     const unsigned char *old_bytes =
         static_cast<const unsigned char *>(packet_payload);
-    if (opcode == 0x11 && payload_size == 0x30) { // decimal 17
-        int16_t old_x, old_y;
+    if (opcode == 0x11) { // decimal 17; caller gates on native total_chunks == 1
+        int16_t old_x, old_y, current_x, current_y, current_proto;
+        uint8_t current_faction;
         memcpy(&old_x, old_bytes, sizeof old_x);
         memcpy(&old_y, old_bytes + 2, sizeof old_y);
-        const Veh &current = Vehs[a2];
-        if (old_x == current.x && old_y == current.y) return false;
-        parse_num(0, old_x); parse_num(1, old_y);
-        parse_num(2, current.x); parse_num(3, current.y);
-        parse_num(4, current.faction_id);
-        parse_num(5, current.proto_id);
+        memcpy(&current_x, current_bytes + offsetof(Veh, x), sizeof current_x);
+        memcpy(&current_y, current_bytes + offsetof(Veh, y), sizeof current_y);
+        if (old_x == current_x && old_y == current_y) return false;
+        parse_num(0, old_x);
+        memcpy(&old_y, old_bytes + 2, sizeof old_y);
+        parse_num(1, old_y);
+        memcpy(&current_x, current_bytes + offsetof(Veh, x), sizeof current_x);
+        parse_num(2, current_x);
+        memcpy(&current_y, current_bytes + offsetof(Veh, y), sizeof current_y);
+        parse_num(3, current_y);
+        // Native recomputes a2*0x34 for these identity fields and prototype
+        // lookups; only coordinate reads retain the selected chunk view.
+        memcpy(&current_faction, owner_bytes + offsetof(Veh, faction_id),
+               sizeof current_faction);
+        parse_num(4, current_faction);
+        memcpy(&current_proto, owner_bytes + offsetof(Veh, proto_id),
+               sizeof current_proto);
+        parse_num(5, current_proto);
         parse_num(6, a2);
-        parse_says(0, VehPrototypes[current.proto_id].veh_name, -1, -1);
+        memcpy(&current_proto, owner_bytes + offsetof(Veh, proto_id),
+               sizeof current_proto);
+        parse_says(0, VehPrototypes[current_proto].veh_name, -1, -1);
         log_say("Synch changed vehicle", ParseStrBuffer[0].str,
                 a2, log_arg_lo, log_arg_hi);
         synch_debug_popup();
         synch_notify_or_queue();
         return true;
     }
-    if (opcode == 0x13 && payload_size == 0x134) { // decimal 19
-        int16_t old_x, old_y;
+    if (opcode == 0x13) { // decimal 19; caller gates on native total_chunks == 1
+        int16_t old_x, old_y, current_x, current_y;
         memcpy(&old_x, old_bytes, sizeof old_x);
         memcpy(&old_y, old_bytes + 2, sizeof old_y);
-        const Base &current = Bases[a2];
-        if (old_x == current.x && old_y == current.y) return false;
-        parse_num(0, old_x); parse_num(1, old_y);
-        parse_num(2, current.x); parse_num(3, current.y);
+        memcpy(&current_x, current_bytes + offsetof(Base, x), sizeof current_x);
+        memcpy(&current_y, current_bytes + offsetof(Base, y), sizeof current_y);
+        if (old_x == current_x && old_y == current_y) return false;
+        parse_num(0, old_x);
+        memcpy(&old_y, old_bytes + 2, sizeof old_y);
+        parse_num(1, old_y);
+        memcpy(&current_x, current_bytes + offsetof(Base, x), sizeof current_x);
+        parse_num(2, current_x);
+        memcpy(&current_y, current_bytes + offsetof(Base, y), sizeof current_y);
+        parse_num(3, current_y);
         parse_num(4, a2);
         parse_says(0, reinterpret_cast<const char *>(old_bytes + 0x13), -1, -1);
-        parse_says(1, current.name_string, -1, -1);
+        parse_says(1, reinterpret_cast<const char *>(current_bytes +
+            offsetof(Base, name_string)), -1, -1);
         log_say("Synch changed base", ParseStrBuffer[0].str,
                 a2, log_arg_lo, log_arg_hi);
         synch_debug_popup();
@@ -7457,6 +7327,7 @@ static void netdaemon_sync_send_chunk(NetDaemon &self, int16_t opcode,
     int total_chunks, int remainder,
     int chunk_index, const NetDaemonSyncWire::MapRouteCapture &map_capture,
     uint32_t diplomacy_wire[18]) {
+    (void)a3;
     const int payload_length = (chunk_index == total_chunks - 1 && remainder)
         ? remainder : 0x800;
     int source_offset = chunk_index * 0x800;
@@ -7623,6 +7494,10 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         // only when the later compare/scatter instruction does so.
         const NetDaemonSyncWire::MapRouteCapture map_capture =
             capture_map_route(opcode, a2, map_rows);
+        const unsigned char *const notification_view =
+            NetDaemonSyncWire::native_notification_view(opcode, a2, current_offset);
+        const unsigned char *const notification_owner_view =
+            NetDaemonSyncWire::native_notification_owner_view(opcode, a2);
         uint32_t sender;
         memcpy(&sender, packet + 0x04, sizeof sender);
         if (initial_is_last)
@@ -7635,12 +7510,12 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         // reloads payload from the original packet argument after the callback.
         // The final-chunk postprocessing below independently reloads +0x12.
         bool suppress_copy = false;
-        if (current_length == size &&
+        if (total_chunks == 1 &&
             (opcode == 0x11 || opcode == 0x13)) { // decimal 17 or 19
             suppress_copy = NetDaemonSyncWire::compare_and_notify(
-                opcode, a2, a3, a4, packet + 0x24,
-                static_cast<size_t>(current_length), log_arg_lo,
-                log_arg_hi);
+                opcode, a2, a3, a4, notification_view,
+                notification_owner_view, packet + 0x24,
+                log_arg_lo, log_arg_hi);
         }
         if (!suppress_copy && !NetDaemonSyncWire::copy_in(
                 opcode, a2, a3, a4, static_cast<size_t>(size),

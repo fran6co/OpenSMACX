@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <vector>
 #include <string.h>
@@ -98,6 +99,9 @@ static bool debug_popup_mutates_action = false;
 int BaseAtDebugPopupFlag = 0;
 int ConsoleGroupAction = 0;
 static int parse_num_count = 0, parse_says_count = 0;
+static int parse_num_args[8];
+static unsigned char *parse_num_mutation_view = 0;
+static const char *last_parse_says_text = 0;
 static unsigned char *active_packet_bytes = 0;
 static int callback_index_override = -1;
 static int callback_a2_override = -1, callback_a3_override = -1;
@@ -165,8 +169,26 @@ void scatter_saved_diplomacy(int a, int b, const uint32_t wire[18]) {
 }
 
 NetDaemon NetDaemonNet;
-int __cdecl parse_num(int, int) { ++parse_num_count; return 0; }
-int __cdecl parse_says(int, const char *, int, int) {
+int __cdecl parse_num(int index, int value) {
+    ++parse_num_count;
+    if (index >= 0 && index < 8) parse_num_args[index] = value;
+    if (parse_num_mutation_view) {
+        int16_t word;
+        switch (index) {
+        case 0: word = 19; memcpy(parse_num_mutation_view + offsetof(Veh, x), &word, 2); break;
+        case 1: word = 20; memcpy(parse_num_mutation_view + offsetof(Veh, y), &word, 2); break;
+        case 2: word = 21; memcpy(parse_num_mutation_view + offsetof(Veh, y), &word, 2); break;
+        case 3: parse_num_mutation_view[offsetof(Veh, faction_id)] = 5; break;
+        case 4: word = 1; memcpy(parse_num_mutation_view + offsetof(Veh, proto_id), &word, 2); break;
+        case 5: word = 2; memcpy(parse_num_mutation_view + offsetof(Veh, proto_id), &word, 2); break;
+        case 6: word = 3; memcpy(parse_num_mutation_view + offsetof(Veh, proto_id), &word, 2); break;
+        default: break;
+        }
+    }
+    return 0;
+}
+int __cdecl parse_says(int, const char *text, int, int) {
+    last_parse_says_text = text;
     ++parse_says_count; return 0;
 }
 uint32_t __cdecl message_data(int a, int b, int c, int d, int e, int f) {
@@ -266,6 +288,8 @@ static void reset() {
     debug_popup_count = async_key_count = debug_event_order = 0;
     debug_popup_mutates_action = false;
     parse_num_count = parse_says_count = 0;
+    memset(parse_num_args, 0, sizeof parse_num_args);
+    parse_num_mutation_view = 0; last_parse_says_text = 0;
     memset(&NetDaemonNet, 0, sizeof NetDaemonNet);
     callback_index_override = -1;
     callback_a2_override = callback_a3_override = -1;
@@ -404,6 +428,69 @@ int main() {
     assert(last_veh_check == 0);
     assert(SpockNotifyPending == 1 && message_data_count == 0);
     assert(parse_says_count == 1);
+
+    // The native gate is total_chunks == 1, not current_length == payload
+    // size. A malformed nonfinal index still compares the already-selected
+    // Vehs byte view at +0x800; that view stays inside the complete array.
+    reset();
+    unsigned char *veh_bytes = reinterpret_cast<unsigned char *>(&Vehs);
+    const size_t vehicle_view_offset = 0x800;
+    int16_t view_x = 31, view_y = 32, view_proto = 0;
+    memcpy(veh_bytes + vehicle_view_offset + offsetof(Veh, x), &view_x, 2);
+    memcpy(veh_bytes + vehicle_view_offset + offsetof(Veh, y), &view_y, 2);
+    memcpy(veh_bytes + vehicle_view_offset + offsetof(Veh, proto_id), &view_proto, 2);
+    const uint8_t view_faction = 2;
+    const int16_t nominal_proto = 1;
+    Vehs[0].faction_id = 7;
+    Vehs[0].proto_id = nominal_proto;
+    memcpy(veh_bytes + vehicle_view_offset + offsetof(Veh, faction_id),
+           &view_faction, sizeof view_faction);
+    incoming.assign(0x24 + 0x800, 0);
+    op = 0x11; ix = 1;
+    memcpy(&incoming[0] + 0x10, &op, 2);
+    memcpy(&incoming[0] + 0x12, &ix, 2);
+    d.synch(0x11, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(copy_in_count == 0 && parse_says_count == 1);
+    assert(parse_num_args[2] == 31 && parse_num_args[3] == 32);
+    assert(parse_num_args[4] == 7 && parse_num_args[5] == nominal_proto);
+    assert(last_parse_says_text == VehPrototypes[nominal_proto].veh_name);
+
+    // Native re-reads selected fields between parser calls rather than
+    // freezing a whole notification snapshot. Mutations by parser callbacks
+    // must therefore affect later x/y/faction/proto/name reads in order.
+    reset();
+    Vehs[0].x = 9; Vehs[0].y = 10; Vehs[0].proto_id = 0;
+    incoming.assign(0x24 + 0x30, 0);
+    int16_t old_x = 1, old_y = 2;
+    op = 0x11; ix = 0;
+    memcpy(&incoming[0] + 0x10, &op, 2);
+    memcpy(&incoming[0] + 0x12, &ix, 2);
+    memcpy(&incoming[0] + 0x24, &old_x, 2);
+    memcpy(&incoming[0] + 0x26, &old_y, 2);
+    parse_num_mutation_view = reinterpret_cast<unsigned char *>(&Vehs[0]);
+    d.synch(0x11, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(parse_num_count == 7);
+    assert(parse_num_args[0] == 1 && parse_num_args[1] == 2);
+    assert(parse_num_args[2] == 19 && parse_num_args[3] == 21);
+    assert(parse_num_args[4] == 5 && parse_num_args[5] == 1 &&
+           parse_num_args[6] == 0);
+    assert(last_parse_says_text == VehPrototypes[3].veh_name);
+
+    // Base notification uses the same malformed-index native view and gate.
+    reset();
+    unsigned char *base_bytes = reinterpret_cast<unsigned char *>(&Bases);
+    const size_t base_view_offset = 0x800;
+    view_x = 41; view_y = 42;
+    memcpy(base_bytes + base_view_offset + offsetof(Base, x), &view_x, 2);
+    memcpy(base_bytes + base_view_offset + offsetof(Base, y), &view_y, 2);
+    memcpy(base_bytes + base_view_offset + offsetof(Base, name_string), "current", 8);
+    incoming.assign(0x24 + 0x800, 0);
+    op = 0x13; ix = 1;
+    memcpy(&incoming[0] + 0x10, &op, 2);
+    memcpy(&incoming[0] + 0x12, &ix, 2);
+    memcpy(&incoming[0] + 0x24 + 0x13, "old base", 9);
+    d.synch(0x13, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(copy_in_count == 0 && parse_says_count == 2);
 
     // The native notification gate queues the same message when the receiver
     // is not held by the singleton daemon; it does not set Spock pending.

@@ -20,6 +20,7 @@ else:
 
 NET = ROOT / "src/netdaemon.cpp"
 ALPHA = ROOT / "src/alpha.cpp"
+VEH = ROOT / "src/veh.cpp"
 
 
 def _mask_cpp(text):
@@ -130,7 +131,6 @@ def _must_source_is_imported():
     alpha = ALPHA.read_text()
     # Strict product-source precondition. Never substitute the /tmp proposal.
     core = _definition(net, r"void\s+NetDaemon::synch", "NetDaemon::synch")
-    wire0 = _definition(net, r"bool\s+opcode0_copy_chunk", "opcode0_copy_chunk")
     nonrule = _definition(net, r"bool\s+copy_nonrule_chunk", "copy_nonrule_chunk")
     rule_copy = _definition(alpha, r"bool\s+copy_rule_wire_chunk", "copy_rule_wire_chunk")
     rule_commit = _definition(alpha, r"bool\s+commit_staged_rules", "commit_staged_rules")
@@ -142,7 +142,7 @@ def _must_source_is_imported():
     assert "message_data(0x2308, 0, 0, 0, 0, 0)" in net
     assert 'X_pop("VEHSYNCH", 0)' in net
     assert "if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);" in net
-    return net, alpha, core, wire0, nonrule, rule_copy, rule_commit
+    return net, alpha, core, nonrule, rule_copy, rule_commit
 
 
 def _compiler_names():
@@ -182,13 +182,19 @@ def _compile_injected(tmp_path, compiler, harness, inject, expected=True):
 def _core_extract(net):
     struct = ("namespace NetDaemonSyncWire {\n" +
         _struct_definition(net, "MapRouteCapture") + "\n" +
-        "bool compare_and_notify(int16_t, int, int, int, const void *, size_t, int, int);\n} ")
+        "bool compare_and_notify(int16_t, int, int, int, const void *, const void *, const void *, int, int);\n} ")
+    notification_views = ("namespace NetDaemonSyncWire {\n" +
+        _plain_definition(net, r"static\s+const\s+unsigned\s+char\s*\*\s*native_notification_view",
+                          "native notification view") + "\n" +
+        _plain_definition(net, r"static\s+const\s+unsigned\s+char\s*\*\s*native_notification_owner_view",
+                          "nominal notification owner view") + "\n}")
     pieces = [
         struct,
         _plain_definition(net, r"static\s+int\s+native_map_sync_rows", "native map rows"),
         _plain_definition(net, r"static\s+NetDaemonSyncWire::MapRouteCapture\s+capture_map_route", "map route capture"),
         _plain_definition(net, r"static\s+void\s+synch_notify_or_queue", "notify helper"),
         _plain_definition(net, r"static\s+void\s+synch_debug_popup", "debug popup helper"),
+        notification_views,
         _definition(net, r"bool\s+NetDaemonSyncWire::compare_and_notify", "compare-and-notify"),
         _plain_definition(net, r"static\s+int\s+netdaemon_sync_payload_size", "payload size router"),
         _plain_definition(net, r"static\s+void\s+netdaemon_sync_send_chunk", "outgoing chunk sender"),
@@ -197,17 +203,8 @@ def _core_extract(net):
     return struct, "\n\n".join(pieces[1:])
 
 
-def _wire0_extract(net):
-    funcs = [
-        _templated_function(net, r"static\s+size_t\s+copy_member_bytes", "member byte copy"),
-        _plain_definition(net, r"static\s+bool\s+wire0_range_is_owned", "wire0 preflight"),
-        _definition(net, r"bool\s+opcode0_copy_chunk", "opcode0 serializer"),
-    ]
-    api = "bool opcode0_copy_chunk(size_t, unsigned char *, size_t, bool);\nbool veh_bung_copy_chunk(size_t, unsigned char *, size_t, bool);\n"
-    return "namespace NetDaemonSyncWire {\n" + "\n\n".join(funcs) + "\n}\n"
-
-
 def _owner_copy_extract(net):
+    veh = VEH.read_text()
     funcs = [
         _plain_definition(net, r"static\s+size_t\s+overlap_copy", "overlap copy"),
         _templated_function(net, r"static\s+size_t\s+member_copy", "member copy"),
@@ -217,28 +214,39 @@ def _owner_copy_extract(net):
         _definition(net, r"void\s+gather_saved_diplomacy", "saved diplomacy gather"),
         _templated_function(net, r"static\s+void\s+scatter_word", "native word scatter"),
         _definition(net, r"void\s+scatter_saved_diplomacy", "saved diplomacy scatter"),
+        _definition(net, r"static\s+bool\s+native_owner_copy", "native owner byte copy"),
         _definition(net, r"bool\s+copy_nonrule_chunk", "nonrule owner router"),
     ]
-    api = "bool opcode0_copy_chunk(size_t, unsigned char *, size_t, bool);\n"
+    veh_copy = _definition(veh, r"bool\s+veh_bung_copy_chunk", "Veh BungList owner copy")
     global_api = "bool veh_bung_copy_chunk(size_t, unsigned char *, size_t, bool);\n"
-    return (_wire0_extract(net) + "\n" + global_api +
-            "namespace NetDaemonSyncWire {\n" + api +
-            "\n\n".join(funcs) + "\n}\n")
+    return (global_api + "namespace NetDaemonSyncWire {\n" +
+            "\n\n".join(funcs) + "\n}\n" + veh_copy + "\n")
 
 
-def _assert_opcode06_source_contract(nonrule):
-    branch = nonrule.find("if (opcode == 0x06)")
-    generic_bounds = nonrule.find("if (offset > payload_size || count > payload_size - offset)")
-    assert 0 <= branch < generic_bounds, "opcode 0x06 must bypass split-owner bounds/intersection"
-    player_copy = nonrule[branch:generic_bounds]
-    assert "static_cast<uint32_t>(a2) * 0x20CCu" in player_copy
-    assert "static_cast<uint32_t>(offset)" in player_copy
-    assert "reinterpret_cast<unsigned char *>(&PlayersData)" in player_copy
-    assert "player_data_base + native_offset" in player_copy
-    assert "memmove(player_record_bytes, packet, count)" in player_copy
-    assert "memmove(packet, player_record_bytes, count)" in player_copy
-    assert "a2 < 0" not in player_copy and "a2 >= MaxPlayerNum" not in player_copy
-    assert "member_copy(" not in player_copy and "overlap_copy(" not in player_copy
+def _assert_contiguous_owner_source_contract(nonrule):
+    dispatch = nonrule.find("switch (opcode)")
+    split_bounds = nonrule.find("if (offset > payload_size || count > payload_size - offset)")
+    assert 0 <= dispatch < split_bounds, "contiguous native owners must bypass split-view clipping"
+    owner_dispatch = nonrule[dispatch:split_bounds]
+    for opcode in ("0x00", "0x05", "0x06", "0x07", "0x08", "0x09",
+                   "0x0A", "0x0B", "0x0C", "0x0D", "0x0E", "0x0F",
+                   "0x10", "0x11", "0x12", "0x13", "0x14", "0x15",
+                   "0x17", "0x18", "0x19", "0x20", "0x21", "0x22",
+                   "0x23", "0x24", "0x25", "0x26", "0x27", "0x29"):
+        assert f"case {opcode}" in owner_dispatch, f"missing contiguous opcode {opcode}"
+    assert "native_owner_copy" in nonrule
+    assert "offsetof(PlayerData, energy_reserves)" in owner_dispatch
+    assert "offsetof(PlayerData, ai_fight)" in owner_dispatch
+    assert "offsetof(PlayerData, unk_37)" in owner_dispatch
+    assert "offsetof(PlayerData, saved_queue_name) == 0x470" in nonrule
+    assert "offsetof(VehPrototype, obsolete_factions)" in owner_dispatch
+    assert "offsetof(Base, resource_sqr_radius)" in owner_dispatch
+    assert "NATIVE_COPY_MOV(&ReplayEventBytes)" in owner_dispatch
+    assert "NATIVE_COPY_MOV(&NetDaemonFileTransferPath)" in owner_dispatch
+    assert "case 0x02: case 0x1002" in nonrule[split_bounds:]
+    assert "case 0x30" in nonrule[split_bounds:]
+    assert "if (a2 < 0" not in owner_dispatch
+    assert "bounded_array_copy" not in owner_dispatch
 
 
 def _rule_extract(alpha):
@@ -268,11 +276,13 @@ def _rule_extract(alpha):
 
 
 def test_actual_product_definitions_are_selected_not_tmp_proposals():
-    net, alpha, core, wire0, nonrule, rule_copy, rule_commit = _must_source_is_imported()
+    net, alpha, core, nonrule, rule_copy, rule_commit = _must_source_is_imported()
     assert "NetDaemonSyncWire::copy_out" in net
     assert "NetDaemonSyncWire::copy_in" in net
-    assert "copy_member_bytes" in wire0
-    assert "GameDataStateStorage.fields_.game_wire_opaque_9a67c9_" in wire0
+    assert "opcode0_copy_chunk" not in net
+    assert "NATIVE_COPY(&GameDataStateStorage, 0)" in nonrule
+    game_window_h = (ROOT / "src/game_data_state_window.h").read_text()
+    assert "game_wire_opaque_9a67c9_" in game_window_h
     assert "veh_bung_copy_chunk" in nonrule
     assert "copy_rule_wire_chunk" in rule_copy
     assert "commit_staged_rules" in rule_commit
@@ -288,7 +298,7 @@ def test_actual_product_definitions_are_selected_not_tmp_proposals():
 
 @pytest.mark.parametrize("compiler", _compiler_names())
 def test_actual_synch_method_source_with_callback_damage_controls(tmp_path, compiler):
-    net, _, _, _, _, _, _ = _must_source_is_imported()
+    net, _, _, _, _, _ = _must_source_is_imported()
     template = HERE.with_name("netdaemon_synch_core_harness.cpp")
     assert template.is_file(), "copy netdaemon_synch_core_harness.cpp beside this test before importing it"
     interface, injection = _core_extract(net)
@@ -313,28 +323,36 @@ def test_actual_synch_method_source_with_callback_damage_controls(tmp_path, comp
         assert old in injection
         _compile_injected(tmp_path, compiler, source_template,
                           injection.replace(old, new, 1), expected=False)
-
-
-@pytest.mark.parametrize("compiler", _compiler_names())
-def test_actual_opcode0_owner_source_roundtrip(tmp_path, compiler):
-    net, _, _, _, _, _, _ = _must_source_is_imported()
-    template = HERE.with_name("netdaemon_synch_opcode0_harness.cpp")
-    assert template.is_file(), "copy netdaemon_synch_wire_harness.cpp beside this test before importing it"
-    harness = template.read_text()
-    source_template = tmp_path / "wire-template.cpp"
-    source_template.write_text(harness)
-    injection = _wire0_extract(net)
-    _compile_injected(tmp_path, compiler, source_template, injection)
-    old = "COPY0(0x239, GameDataStateStorage.fields_.legacy_game_save_name_);"
-    assert old in injection
+    stale_notify_gate = injection.replace(
+        "if (total_chunks == 1 &&", "if (current_length == size &&", 1)
+    assert stale_notify_gate != injection
     _compile_injected(tmp_path, compiler, source_template,
-                      injection.replace(old, "", 1), expected=False)
+                      stale_notify_gate, expected=False)
+    nominal_record_notify_view = injection.replace(
+        "uint32_t native_offset = static_cast<uint32_t>(offset);",
+        "uint32_t native_offset = 0; (void)offset;",
+        1)
+    assert nominal_record_notify_view != injection
+    _compile_injected(tmp_path, compiler, source_template,
+                      nominal_record_notify_view, expected=False)
+    selected_faction_substitute = injection.replace(
+        "owner_bytes + offsetof(Veh, faction_id)",
+        "current_bytes + offsetof(Veh, faction_id)", 1)
+    assert selected_faction_substitute != injection
+    _compile_injected(tmp_path, compiler, source_template,
+                      selected_faction_substitute, expected=False)
+    selected_proto_substitute = injection.replace(
+        "owner_bytes + offsetof(Veh, proto_id)",
+        "current_bytes + offsetof(Veh, proto_id)", 1)
+    assert selected_proto_substitute != injection
+    _compile_injected(tmp_path, compiler, source_template,
+                      selected_proto_substitute, expected=False)
 
 
 @pytest.mark.parametrize("compiler", _compiler_names())
 def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
-    net, _, _, _, nonrule, _, _ = _must_source_is_imported()
-    _assert_opcode06_source_contract(nonrule)
+    net, _, _, nonrule, _, _ = _must_source_is_imported()
+    _assert_contiguous_owner_source_contract(nonrule)
     template = HERE.with_name("netdaemon_synch_owner_copy_harness.cpp")
     assert template.is_file(), "copy netdaemon_synch_owner_harness.cpp beside this test before importing it"
     harness = template.read_text()
@@ -343,19 +361,21 @@ def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
     injection = _owner_copy_extract(net)
     _compile_injected(tmp_path, compiler, source_template, injection)
     old = "COPY_BYTES(0x18, ScenarioSave.wire_opaque_94b4d8,\n                   sizeof ScenarioSave.wire_opaque_94b4d8);"
+    old = "NATIVE_COPY(&GameDataStateStorage, 0);"
     assert old in injection
     _compile_injected(tmp_path, compiler, source_template,
-                      injection.replace(old, "", 1), expected=False)
+                      injection.replace(old, "NATIVE_COPY(&GameDataStateStorage, 4);", 1),
+                      expected=False)
     offset_guard = injection.replace(
-        "player_data_base + native_offset;\n        if (count != 0) {",
-        "player_data_base + native_offset;\n        if (offset > payload_size || count > payload_size - offset) return false;\n        if (count != 0) {",
+        "const uint32_t chunk = static_cast<uint32_t>(offset);",
+        "const uint32_t chunk = static_cast<uint32_t>(offset);\n    if (offset > payload_size || count > payload_size - offset) return false;",
         1)
     assert offset_guard != injection
     _compile_injected(tmp_path, compiler, source_template, offset_guard,
                       expected=False)
     record_intersection = injection.replace(
-        "player_data_base + native_offset;\n        if (count != 0) {",
-        "player_data_base + native_offset;\n        if (offset >= sizeof PlayersData[0]) return false;\n        if (count != 0) {",
+        "const uint32_t chunk = static_cast<uint32_t>(offset);",
+        "const uint32_t chunk = static_cast<uint32_t>(offset);\n    if (offset >= 0x59C) return false;",
         1)
     assert record_intersection != injection
     _compile_injected(tmp_path, compiler, source_template, record_intersection,
@@ -367,7 +387,7 @@ def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
     assert "memcpy-param-overlap" in overlap_failure.stderr
 
 
-def test_pinned_opcode06_size_chunk_and_address_dispatch_have_no_index_guard():
+def test_pinned_contiguous_size_and_address_dispatch_paths():
     from hashlib import sha256
     from match_recovery.model import Span
     from match_recovery.pe_coff import PeImage
@@ -386,6 +406,69 @@ def test_pinned_opcode06_size_chunk_and_address_dispatch_have_no_index_guard():
     except ImportError:
         pytest.skip("Capstone unavailable for bounded i386 instruction decoding")
     decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+
+    contiguous = {
+        0x00: (0x532E55, 0x533454), 0x01: (0x532F93, 0x53345F),
+        0x05: (0x532EFF, 0x53348B), 0x06: (0x532F38, 0x53372A),
+        0x07: (0x532F71, 0x533496), 0x08: (0x5330C0, 0x5334AD),
+        0x09: (0x53334C, 0x5334C9), 0x0A: (0x532EB2, 0x5334E5),
+        0x0B: (0x532EB2, 0x533501), 0x0C: (0x53334C, 0x53351D),
+        0x0D: (0x5330C0, 0x533539), 0x0E: (0x532F7B, 0x533555),
+        0x0F: (0x532F85, 0x533567), 0x10: (0x532F93, 0x533579),
+        0x11: (0x532F9D, 0x53358B), 0x12: (0x532FFD, 0x5335B5),
+        0x13: (0x533048, 0x5335C0), 0x14: (0x5330A1, 0x5335ED),
+        0x15: (0x532E99, 0x53346A), 0x17: (0x532EB2, 0x53372A),
+        0x18: (0x5330D4, 0x533746), 0x19: (0x5330DE, 0x533762),
+        0x20: (0x533117, 0x53376D), 0x21: (0x533125, 0x533778),
+        0x22: (0x533166, 0x533782), 0x23: (0x5330C0, 0x5335F8),
+        0x24: (0x532E8F, 0x533475), 0x25: (0x532EB2, 0x53378D),
+        0x26: (0x532EB2, 0x533797), 0x27: (0x533178, 0x5337AB),
+        0x28: (0x533171, 0x5337A1), 0x29: (0x533182, 0x5337B5),
+    }
+    for opcode, (size_target_expected, address_target_expected) in contiguous.items():
+        size_target, = struct.unpack(
+            "<I", image.read(Span(0x53412C + opcode * 4,
+                                  0x534130 + opcode * 4)))
+        address_target, = struct.unpack(
+            "<I", image.read(Span(0x53420C + opcode * 4,
+                                  0x534210 + opcode * 4)))
+        assert (size_target, address_target) == (
+            size_target_expected, address_target_expected), hex(opcode)
+
+    # The native address table has both additive views and scalar MOV routes.
+    # Do not turn those scalar routes into per-index array offsets.
+    for address, expected in ((0x533778, ("mov", "esi, 0x9469f8")),
+                              (0x53378D, ("mov", "esi, 0x9a64c8")),
+                              (0x533797, ("mov", "esi, 0x9a64cc")),
+                              (0x5337A1, ("mov", "esi, 0x9b86a0")),
+                              (0x5337AB, ("mov", "esi, 0x93ac88")),
+                              (0x533454, ("add", "esi, 0x9a6490")),
+                              (0x53345F, ("add", "esi, 0x9a64e8"))):
+        instruction, = tuple(decoder.disasm(
+            image.read(Span(address, address + 8)), address))[:1]
+        assert (instruction.mnemonic, instruction.op_str.lower()) == expected
+
+    # Opcode 0x18 starts at PlayerData+0x46C (unk_37), immediately before the
+    # named saved-queue array at +0x470. The old saved_queue_name+20 route was
+    # not the address table's pointer target.
+    queue_path = tuple(decoder.disasm(
+        image.read(Span(0x533746, 0x53375D)), 0x533746))
+    queue_target = {item.address: (item.mnemonic, item.op_str.lower())
+                    for item in queue_path}
+    assert queue_target[0x533756] == (
+        "lea", "esi, [esi + eax*4 + 0x96ce4c]")
+    assert 0x96CE4C - 0x96C9E0 == 0x46C
+    vehicle_identity = {item.address: (item.mnemonic, item.op_str.lower())
+                        for item in decoder.disasm(
+                            image.read(Span(0x53396E, 0x5339A5)), 0x53396E)}
+    assert vehicle_identity[0x533979] == (
+        "mov", "cl, byte ptr [esi + 0x952836]")
+    assert vehicle_identity[0x533987] == (
+        "movsx", "edx, word ptr [esi + 0x952832]")
+    assert vehicle_identity[0x53399E] == (
+        "movsx", "eax, word ptr [esi + 0x952832]")
+    assert 0x952836 - 0x952828 == 0x0E
+    assert 0x952832 - 0x952828 == 0x0A
 
     # First dispatch: opcode 6 selects fixed payload size 0x20CC; there is no
     # a2 validation before the common size/chunk derivation.
@@ -440,7 +523,7 @@ def test_pinned_opcode06_size_chunk_and_address_dispatch_have_no_index_guard():
 
 @pytest.mark.parametrize("compiler", _compiler_names())
 def test_actual_alpha_rule_source_compactions(tmp_path, compiler):
-    _, alpha, _, _, _, _, _ = _must_source_is_imported()
+    _, alpha, _, _, _, _ = _must_source_is_imported()
     template = HERE.with_name("netdaemon_synch_rules_harness.cpp")
     assert template.is_file(), "copy netdaemon_synch_rules_harness.cpp beside this test before importing it"
     harness = template.read_text()
