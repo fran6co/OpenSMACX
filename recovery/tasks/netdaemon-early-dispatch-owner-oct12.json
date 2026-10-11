@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "task_id": "netdaemon-early-dispatch-owner-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "1160fa48a52e80df2c68aa093f8bf84b045eb43c",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5456896
+    }
+  ],
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_early_routes_oct12.py",
+    "recovery/tests/test_netdaemon_sender_identity_oct11.py",
+    "recovery/tests/test_netdaemon_synch_dispatch.py"
+  ],
+  "intent": "Recover the complete early dispatcher ownership closure: synchronization, server lock/status, client turn/upkeep, direct diplomacy prompts and Table F. Preserve the pinned original's callback-visible packet/global/member reads, native state writes, UI ordering and unchecked paths. No byte-spelling search, bug fix, header/layout migration, or unrelated function edits.",
+  "evidence": [
+    "Pinned 5363D2 writes receiver+1B60=FF for4303; existing primary_state_.trailing_words_[8] owns the notification mask, not[9]. Phase/turn reload at53637E/536398 after logging. DONE UPKEEP final log536105 reloads packet+10 after notification/draw.",
+    "Pinned1206 logs receiver+1BC0 as first numeric argument at534F1C..534F2C and rereads it at534F31. UPKEEP INFO53505E, TURN INFO535144 and assigned DONE TURN538087 test absolute93E8C0, owned by NetDaemonNet, while their mask stores retain the passed receiver.",
+    "TURN INFO reloads packet turn/ack/faction at535151/535161/53516C; slowpoke female/plurality resets recur before name at535247..535269 and5381AE..5381D0. Server pop5352E8..5352FB precedes draw535300..535307. Sync completion5362C4 reloads packet+4 after synch/poll callbacks.",
+    "TableF4304/4305 log entry-resolved sender EDI at53662D..536637 and53664E..53665A, separate from transport sender.4305 reloads count53665F.4306 reloads faction536696, exits on nonpositive count5366B4..5366BD, calls GraphicWin::redraw536706, then rereads selection536722..536733.",
+    "NEXT PLAYER TURN4309 reloads packet faction536426, chooses local/remote before parser calls and clears existing TurnControlWord93A954 on local path536446. Later parser/name lookups reread assigned global faction, including536476/5364AE/5364EC.",
+    "Direct1501 captures sender after log53534E, reads busy state from receiver+1BAC at535388 and assigns caller portrait conditional on picture_enabled at535507..535524.1502 reloads packet+4 at5356E4/53571E/535737;1503/1504/1505/150F reread faction between leader/name/noun parses.150A reloads sender after its log.",
+    "Authorize ten related existing helpers and process_message argument plumbing together, using current BasePop picture APIs, GraphicWin redraw, daemon state, Players and TimeControl declarations. Preserve reviewed G/H, high-message fixes, transfer lifetime source, all original mappings and historical claims; discoveries outside scope return to coordinator. Actual-source callback/damage controls must cover distinct global/receiver, field sentinels, reloads and native event ordering. Manual coordinator-reviewed integration still requires fresh build/link, scoped checks, continuity and independent review; no automatic or game acceptance is implied."
+  ]
+}
