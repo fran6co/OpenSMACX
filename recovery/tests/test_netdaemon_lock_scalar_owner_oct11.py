@@ -42,7 +42,8 @@ def apply_lock_scalar_migration(source):
         assert body.count(before) == 1, before
         body = body.replace(before, after, 1)
     assert source.count(old) == 1
-    return source.replace(old, body, 1)
+    from test_netdaemon_table_e_reads_oct11 import apply_table_e_read_migration
+    return apply_table_e_read_migration(source.replace(old, body, 1))
 
 
 PREAMBLE = r'''

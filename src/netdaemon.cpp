@@ -4480,15 +4480,14 @@ static bool netdaemon_process_table_e(NetDaemon &daemon,
         return true;
 
     case 0x2213: {
-        const int player_index =
-            *reinterpret_cast<int *>(message + 0x10);
-        const int sequence = *reinterpret_cast<int *>(message + 0x0C);
         const int identity = *reinterpret_cast<int *>(message + 0x10);
         log_say("From Client: ACKNOWLEDGE", sender_identity, identity, 0);
 
         // The original performs this one-based lookup but discards EAX before
-        // selecting the PlayerLock from the unmodified packet word at +0x10.
-        (void)daemon.AlphaNet::who_2_idx(identity);
+        // selecting the PlayerLock from the post-log packet word at +0x10.
+        const int player_index = *reinterpret_cast<int *>(message + 0x10);
+        (void)daemon.AlphaNet::who_2_idx(player_index);
+        const int sequence = *reinterpret_cast<int *>(message + 0x0C);
 
         for (int table_index = 0; table_index < 24; ++table_index) {
             DeletionRecord &entry = daemon.deletion_list_.records_[table_index];
@@ -4541,12 +4540,14 @@ static bool netdaemon_process_table_e(NetDaemon &daemon,
 
         const int first = *reinterpret_cast<int *>(message + 0x10);
         const int second = *reinterpret_cast<int *>(message + 0x14);
-        const int third = *reinterpret_cast<int *>(message + 0x18);
         log_say("From Client: ADD LOCK", sender_identity, first, second);
 
         // Stack push order at 0x535F64 passes slot, +0x18, +0x10, +0x14
         // to Lock::add_lock; preserve that non-obvious wire/ABI permutation.
-        if (daemon.locks_.add_lock(sender_identity, third, first, second) != 0) {
+        if (daemon.locks_.add_lock(sender_identity,
+                *reinterpret_cast<int *>(message + 0x18),
+                *reinterpret_cast<int *>(message + 0x10),
+                *reinterpret_cast<int *>(message + 0x14)) != 0) {
             log_say("(Sending: Add failed)", 0, 0, 0);
             message_data(0x1208, sender_identity, 0, 0, 0, 0);
         } else {
