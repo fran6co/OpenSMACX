@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "task_id": "win-menu-entry-ownership-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Separate the already implemented independent Win menu-update entry from the Menu default-font setter's wrongly combined source extent, retaining historical identities, claims, all original bytes and useful binding evidence.",
+  "base_revision": "7850ec596c1a3d2fb37071e4f46634440aefbe0a",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6227232},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6270688}
+  ],
+  "editable_files": ["src/menu.cpp", "src/win.cpp", "recovery/tests/test_win_menu_entry_ownership_oct11.py"],
+  "evidence": [
+    "Pinned5FAEE0..5FAEEE is the standalone font setter followed by JMP5F0520. Pinned5F0520..5F0535 is a separately callable GetCurrentThreadId/EnumThreadWindows body with its own RET; Ghidra's pinned catalogue separates the entries. Source already implements both owners and this caller/callee relationship.",
+    "Native source writer narrows the caller marker to its actual body and adds a neutral original identity for the callee, with compiler-observed emitted symbol. Preserve the caller's existing historical claim and rationale; retain its complete old combined extent across caller and new callee source mappings and explicit binding evidence. Before integration the independently exact callee must acquire its own measured native-record byte obligation; the range union and binding prose alone do not mechanically preserve it. Grant no token without native recording.",
+    "No C++ body or ABI changes. Require native before/current function signatures under both configured profiles, scoped helper/caller measurements, full original-span union and claim continuity, build/link, mappings/references, host callback-order control and independent review. Correct entry accounting is not newly implemented behavior or full game acceptance."
+  ]
+}

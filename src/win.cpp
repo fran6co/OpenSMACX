@@ -5950,6 +5950,9 @@ typedef long (__stdcall *GetWindowLongProc)(void *, int);
 
 // Original5F0520 enumerates this thread's windows through the shared Win
 // callback. Menu's font setter tail-enters this separate policy helper.
+// ORIGINAL: 0x005F0520 sub_5f0520 0x005F0520-0x005F0535 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned5F0520..5F0535 calls GetCurrentThreadId and EnumThreadWindows using source-owned Win::adjust_menus callback5F0540; terminal RET ends this callable body.", "Pinned5FAEE0..5FAEEE stores MenuDefaultFont then tail-jumps here at5FAEE9. Historical set_def_font mapping included this complete span; it now retains only its actual caller body and original byte obligation."], "reason": "Own the independent original thread-window menu update entry in its existing Win implementation, separating it from Menu::set_def_font without losing the historical combined extent."}
+// symbol    ?update_menus@Win@@SAXXZ
 void Win::update_menus() {
     EnumThreadWindows(GetCurrentThreadId(),
         reinterpret_cast<WNDENUMPROC>(Win::adjust_menus), 0);
