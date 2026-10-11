@@ -50,7 +50,7 @@ struct PlayerData {
     int saved_queue_size[8];
     int saved_queue_items[8][10];
     int unk_38[8];
-    unsigned char tail[0x20CC - 0x5F8];
+    unsigned char tail[0x20CC - 0x78C];
 };
 struct VehPrototype {
     char veh_name[32]; uint32_t ability_flags;
@@ -176,6 +176,85 @@ int main() {
     assert(static_cast<unsigned char>(PlayersData[2].diplo_patience[1]) == 1);
     assert(static_cast<uint32_t>(PlayersData[1].diplo_friction[2]) == 0xA0000002u);
     assert(static_cast<uint32_t>(PlayersData[2].diplo_friction[1]) == 0xA0000003u);
+
+    // Native opcode 0x06 copies a complete contiguous PlayerData record in
+    // five chunks (four full chunks and the 0xCC-byte tail). Exercise the
+    // actual extracted product router in both directions across every byte.
+    assert(sizeof(PlayerData) == 0x20CC);
+    unsigned char player_record_expected[0x20CC];
+    unsigned char player_record_chunk[0x800];
+    unsigned char *player_record_bytes =
+        reinterpret_cast<unsigned char *>(&PlayersData[4]);
+    for (size_t i = 0; i < sizeof player_record_expected; ++i) {
+        player_record_expected[i] = static_cast<unsigned char>((i * 37u + 11u) & 0xFFu);
+        player_record_bytes[i] = player_record_expected[i];
+    }
+    for (size_t chunk = 0; chunk < 5; ++chunk) {
+        const size_t offset = chunk * 0x800;
+        const size_t count = chunk == 4 ? 0xCC : 0x800;
+        fill(player_record_chunk, count, 0xA5);
+        assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 4, 0, 0,
+            0x20CC, offset, player_record_chunk, count, false,
+            0, captured, 32, 0));
+        assert(memcmp(player_record_chunk, player_record_expected + offset,
+                      count) == 0);
+    }
+    for (size_t chunk = 0; chunk < 5; ++chunk) {
+        const size_t offset = chunk * 0x800;
+        const size_t count = chunk == 4 ? 0xCC : 0x800;
+        for (size_t i = 0; i < count; ++i)
+            player_record_chunk[i] =
+                static_cast<unsigned char>(((offset + i) * 19u + 7u) & 0xFFu);
+        memcpy(player_record_expected + offset, player_record_chunk, count);
+        assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 4, 0, 0,
+            0x20CC, offset, player_record_chunk, count, true,
+            0, captured, 32, 0));
+    }
+    assert(memcmp(player_record_bytes, player_record_expected,
+                  sizeof player_record_expected) == 0);
+
+    // A nonfinal native chunk with signed index 5 begins beyond the selected
+    // a2=0 record but remains entirely within the declared PlayersData array.
+    // This safely distinguishes a raw contiguous copy from the old 0x20CC
+    // payload guard/member intersection without claiming external neighbors.
+    unsigned char *all_player_data =
+        reinterpret_cast<unsigned char *>(&PlayersData);
+    const size_t crossing_offset = 5 * 0x800;
+    const size_t crossing_count = 0x800;
+    assert(crossing_offset + crossing_count < sizeof PlayersData);
+    for (size_t i = 0; i < crossing_count; ++i)
+        all_player_data[crossing_offset + i] =
+            static_cast<unsigned char>((i * 13u + 0x39u) & 0xFFu);
+    assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 0, 0, 0,
+        0x20CC, crossing_offset, player_record_chunk, crossing_count,
+        false, 0, captured, 32, 0));
+    for (size_t i = 0; i < crossing_count; ++i)
+        assert(player_record_chunk[i] ==
+            static_cast<unsigned char>((i * 13u + 0x39u) & 0xFFu));
+    fill(player_record_chunk, crossing_count, 0xB6);
+    assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 0, 0, 0,
+        0x20CC, crossing_offset, player_record_chunk, crossing_count,
+        true, 0, captured, 32, 0));
+    for (size_t i = 0; i < crossing_count; ++i)
+        assert(all_player_data[crossing_offset + i] == 0xB6);
+
+    // The native common copy routine is overlap-aware. Exercise its direction
+    // for packet-to-owner and owner-to-packet aliases, all within the declared
+    // PlayersData array; memcpy-forward substitutes fail under ASan.
+    unsigned char alias_expected[0x300];
+    memcpy(alias_expected, all_player_data, sizeof alias_expected);
+    memmove(alias_expected + 0x180, alias_expected + 0x100, 0x100);
+    assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 0, 0, 0,
+        0x20CC, 0x180, all_player_data + 0x100, 0x100,
+        true, 0, captured, 32, 0));
+    assert(memcmp(all_player_data, alias_expected, sizeof alias_expected) == 0);
+
+    memcpy(alias_expected, all_player_data, sizeof alias_expected);
+    memmove(alias_expected + 0x180, alias_expected + 0x100, 0x100);
+    assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 0, 0, 0,
+        0x20CC, 0x100, all_player_data + 0x180, 0x100,
+        false, 0, captured, 32, 0));
+    assert(memcmp(all_player_data, alias_expected, sizeof alias_expected) == 0);
 
     // Native opcode 0x17/23 shares PlayerData's base with 0x06/6 but transfers
     // only its leading dword; it must not copy an entire 0x20CC record.

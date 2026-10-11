@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import struct
 import subprocess
 
 import pytest
@@ -223,6 +224,21 @@ def _owner_copy_extract(net):
             "\n\n".join(funcs) + "\n}\n")
 
 
+def _assert_opcode06_source_contract(nonrule):
+    branch = nonrule.find("if (opcode == 0x06)")
+    generic_bounds = nonrule.find("if (offset > payload_size || count > payload_size - offset)")
+    assert 0 <= branch < generic_bounds, "opcode 0x06 must bypass split-owner bounds/intersection"
+    player_copy = nonrule[branch:generic_bounds]
+    assert "static_cast<uint32_t>(a2) * 0x20CCu" in player_copy
+    assert "static_cast<uint32_t>(offset)" in player_copy
+    assert "reinterpret_cast<unsigned char *>(&PlayersData)" in player_copy
+    assert "player_data_base + native_offset" in player_copy
+    assert "memmove(player_record_bytes, packet, count)" in player_copy
+    assert "memmove(packet, player_record_bytes, count)" in player_copy
+    assert "a2 < 0" not in player_copy and "a2 >= MaxPlayerNum" not in player_copy
+    assert "member_copy(" not in player_copy and "overlap_copy(" not in player_copy
+
+
 def _rule_extract(alpha):
     signatures = [
         (r"static\s+bool\s+copy_rule_object_chunk", "typed rule object copy", True),
@@ -315,7 +331,8 @@ def test_actual_opcode0_owner_source_roundtrip(tmp_path, compiler):
 
 @pytest.mark.parametrize("compiler", _compiler_names())
 def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
-    net, _, _, _, _, _, _ = _must_source_is_imported()
+    net, _, _, _, nonrule, _, _ = _must_source_is_imported()
+    _assert_opcode06_source_contract(nonrule)
     template = HERE.with_name("netdaemon_synch_owner_copy_harness.cpp")
     assert template.is_file(), "copy netdaemon_synch_owner_harness.cpp beside this test before importing it"
     harness = template.read_text()
@@ -327,6 +344,95 @@ def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
     assert old in injection
     _compile_injected(tmp_path, compiler, source_template,
                       injection.replace(old, "", 1), expected=False)
+    offset_guard = injection.replace(
+        "player_data_base + native_offset;\n        if (count != 0) {",
+        "player_data_base + native_offset;\n        if (offset > payload_size || count > payload_size - offset) return false;\n        if (count != 0) {",
+        1)
+    assert offset_guard != injection
+    _compile_injected(tmp_path, compiler, source_template, offset_guard,
+                      expected=False)
+    record_intersection = injection.replace(
+        "player_data_base + native_offset;\n        if (count != 0) {",
+        "player_data_base + native_offset;\n        if (offset >= sizeof PlayersData[0]) return false;\n        if (count != 0) {",
+        1)
+    assert record_intersection != injection
+    _compile_injected(tmp_path, compiler, source_template, record_intersection,
+                      expected=False)
+    memcpy_substitute = injection.replace("memmove(", "memcpy(")
+    assert memcpy_substitute != injection
+    _compile_injected(tmp_path, compiler, source_template, memcpy_substitute,
+                      expected=False)
+
+
+def test_pinned_opcode06_size_chunk_and_address_dispatch_have_no_index_guard():
+    from hashlib import sha256
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+
+    image_override = os.environ.get("OPENSMACX_IMAGE")
+    image_path = (Path(image_override).resolve() if image_override else
+                  ROOT / ".opensmacx/game/terranx_original.exe")
+    if not image_path.is_file():
+        pytest.skip("pinned original image unavailable")
+    image_bytes = image_path.read_bytes()
+    digest = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    assert sha256(image_bytes).hexdigest() == digest
+    image = PeImage(image_bytes, digest)
+    try:
+        from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+    except ImportError:
+        pytest.skip("Capstone unavailable for bounded i386 instruction decoding")
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+
+    # First dispatch: opcode 6 selects fixed payload size 0x20CC; there is no
+    # a2 validation before the common size/chunk derivation.
+    size_table_target, = struct.unpack(
+        "<I", image.read(Span(0x53412C + 6 * 4, 0x53412C + 7 * 4)))
+    assert size_table_target == 0x532F38
+    size_path = tuple(decoder.disasm(image.read(Span(size_table_target,
+                                                    size_table_target + 0x39)),
+                                     size_table_target))
+    size_instructions = {item.address: (item.mnemonic, item.op_str.lower())
+                         for item in size_path}
+    assert size_instructions[0x532F38] == ("test", "ecx, ecx")
+    assert size_instructions[0x532F3A] == ("jne", "0x532f67")
+    assert size_instructions[0x532F67] == ("mov", "esi, 0x20cc")
+    assert size_instructions[0x532F6C] == ("jmp", "0x53334c")
+    assert not any("ebx" in item.op_str.lower() or "[ebp + 0xc]" in item.op_str.lower()
+                   for item in size_path)
+
+    # Second dispatch: derives the real PlayerData array base plus 0x20CC*a2
+    # and reaches common copy without a conditional index/range branch.
+    address_table_target, = struct.unpack(
+        "<I", image.read(Span(0x53420C + 6 * 4, 0x53420C + 7 * 4)))
+    assert address_table_target == 0x53372A
+    address_path = tuple(decoder.disasm(image.read(Span(address_table_target,
+                                                       0x533746)),
+                                        address_table_target))
+    assert not any(item.mnemonic.startswith("j") and item.mnemonic != "jmp"
+                   for item in address_path)
+    assert (address_path[-2].mnemonic, address_path[-2].op_str.lower()) == (
+        "lea", "esi, [esi + edx*4 + 0x96c9e0]")
+    assert (address_path[-1].mnemonic, address_path[-1].op_str.lower()) == (
+        "jmp", "0x533a77")
+
+    # Incoming index is sign-extended/equality-tested only. A nonfinal index
+    # shifts by 11 for its byte displacement; both directions enter the common
+    # copy path. No out-of-array host address is executed by these controls.
+    chunk_path = {item.address: (item.mnemonic, item.op_str.lower()) for item in
+        decoder.disasm(image.read(Span(0x53339A, 0x5333DD)), 0x53339A)}
+    assert chunk_path[0x5333A0] == ("movsx", "ecx, word ptr [ecx + 0x12]")
+    assert chunk_path[0x5333A4] == ("cmp", "ecx, edi")
+    assert chunk_path[0x5333A6] == ("jne", "0x5333d1")
+    assert chunk_path[0x5333D1] == ("mov", "esi, ecx")
+    assert chunk_path[0x5333DA] == ("shl", "esi, 0xb")
+    common = tuple(decoder.disasm(image.read(Span(0x533A77, 0x533C45)), 0x533A77))
+    assert any(item.address == 0x533A7C and item.mnemonic == "je" and
+               item.op_str.lower() == "0x5338e6" for item in common)
+    assert any(item.address == 0x533AE3 and item.mnemonic == "call" and
+               item.op_str.lower() == "0x645930" for item in common)
+    assert any(item.address == 0x533C3F and item.mnemonic == "call" and
+               item.op_str.lower() == "0x645930" for item in common)
 
 
 @pytest.mark.parametrize("compiler", _compiler_names())

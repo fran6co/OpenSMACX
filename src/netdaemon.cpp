@@ -6971,6 +6971,29 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
                         size_t captured_map_tile_capacity,
                         size_t captured_map_tile_first) {
     (void)a4;
+    if (opcode == 0x06) { // decimal 6: native copies a whole PlayerData record
+        // The native address table selects 0x96C9E0 + a2 * 0x20CC, then the
+        // common chunk path adds the signed-index-derived byte displacement.
+        // Keep the arithmetic in 32 bits and copy the requested bytes without
+        // intersecting them back to the selected record's extent. A byte view
+        // of the complete declared array preserves contiguous
+        // transfers that cross a selected record boundary. Requests beyond
+        // the whole array retain unresolved native neighbor/fault effects;
+        // current application globals do not claim the original placement.
+        const uint32_t native_offset = static_cast<uint32_t>(a2) * 0x20CCu +
+                                       static_cast<uint32_t>(offset);
+        unsigned char *const player_data_base =
+            reinterpret_cast<unsigned char *>(&PlayersData);
+        unsigned char *const player_record_bytes =
+            player_data_base + native_offset;
+        if (count != 0) {
+            if (packet_to_owner)
+                memmove(player_record_bytes, packet, count);
+            else
+                memmove(packet, player_record_bytes, count);
+        }
+        return true;
+    }
     if (offset > payload_size || count > payload_size - offset) return false;
     if (count == 0) return true;
     size_t copied = 0;
@@ -7022,10 +7045,6 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
     case 0x05: // decimal 5
         copied += bounded_array_copy(offset, packet, count, Continents,
             128 * sizeof Continents[0], packet_to_owner);
-        break;
-    case 0x06: // decimal 6: one complete PlayerData record
-        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
-        COPY_AT(0, PlayersData[a2]);
         break;
     case 0x07: // decimal 7: one complete Player record
         if (a2 < 0 || a2 >= MaxPlayerNum) return false;
