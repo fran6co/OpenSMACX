@@ -161,8 +161,18 @@ int main() {
     check_modal(0xF06, true);
     check_modal(0xF07, true);
     check_modal(0xF0B, true);
-    check_modal(0xF08, false);
     check_modal(0xF0F, false);
+
+    // F08 on a client is an ordinary no-op, not the modal abort path.
+    NetDaemon client;
+    memset(&client, 0, sizeof(client));
+    reset_trace();
+    assert(invoke_modal(client, 0xF08));
+    assert(Popup::trace_n == 2 && Popup::trace[0] == 1 && Popup::trace[1] == 3);
+    // Missing F0B records use the same explicit modal close as wrong-side F0B.
+    records_owner=0;
+    check_modal(0xF0B, false);
+    records_owner=records;
 
     NetDaemon daemon;
     memset(&daemon, 0, sizeof(daemon));

@@ -50,7 +50,8 @@ def apply_receive_output_migration(source):
             body = body.replace(before, after, 1)
         assert source.count(old) == 1
         source = source.replace(old, body, 1)
-    return source
+    from test_netdaemon_transfer_exits_oct11 import apply_transfer_exit_migration
+    return apply_transfer_exit_migration(source)
 
 
 PREAMBLE = r'''

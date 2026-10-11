@@ -3454,6 +3454,7 @@ class NetDaemonTransferModalCloseGuard {
         if (armed_) popup_->close();
     }
     void arm() { armed_ = true; }
+    bool modal_abort() const { return armed_; }
  private:
     Popup *popup_;
     bool armed_;
@@ -3604,7 +3605,7 @@ bool NetDaemon::process_file_transfer_message(char *message,
     }
 
     if (type == 0xF08) { // decimal 3848: peer ready for one file
-        if (!local_is_host) return netdaemon_transfer_modal_cleanup(guard);
+        if (!local_is_host) return true;
         const unsigned int file_index = bytes[0x10];
         const unsigned int slot = netdaemon_transfer_read_u32(bytes + 4);
         records = netdaemon_file_index_records();
@@ -3622,7 +3623,7 @@ bool NetDaemon::process_file_transfer_message(char *message,
     if (type == 0xF0B) { // decimal 3851: compressed file data
         if (local_is_host) return netdaemon_transfer_modal_cleanup(guard);
         records = netdaemon_file_index_records();
-        if (records == 0) return true;
+        if (records == 0) return netdaemon_transfer_modal_cleanup(guard);
 
         const uint32_t file_index = netdaemon_transfer_read_u32(bytes + 8);
         const uint32_t chunk_index = netdaemon_transfer_read_u32(bytes + 0x0C);
@@ -3954,8 +3955,8 @@ static void netdaemon_process_message_marker_tail(NetDaemon &daemon,
     if (pending != 0) {
         const unsigned short type =
             *reinterpret_cast<unsigned short *>(message);
-        if ((message[1] & 0x40u) != 0 && (type & 0x4000u) != 0 &&
-            static_cast<uint32_t>(type | 0x4000u) == pending &&
+        if ((message[1] & 0x40u) != 0 &&
+            static_cast<uint32_t>(type) == (pending | 0x4000u) &&
             *reinterpret_cast<uint32_t *>(message + 4) ==
                 static_cast<uint32_t>(ConsoleGlobal.faction_id_)) {
             daemon.channels_[1].leading_words_[1] = 0;
@@ -5916,6 +5917,11 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     if (type >= 0xF05 && type <= 0xF0F) {
         if (process_file_transfer_message(message, message_size, sender_id,
                                           guard, filemap)) {
+            // Native normal routes join 538266; modal aborts instead unwind
+            // through 534DCD. Keep the shared marker update out of that unwind.
+            if (!guard.modal_abort()) {
+                netdaemon_process_message_marker_tail(*this, msg);
+            }
             return;
         }
     }

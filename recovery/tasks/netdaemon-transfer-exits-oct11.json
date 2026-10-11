@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "8fcb993ca",
+  "editable_files": ["src/netdaemon.cpp", "recovery/tests/test_netdaemon_transfer_exits_oct11.py", "recovery/tests/test_netdaemon_receive_outputs_oct11.py", "recovery/tests/netdaemon-transfer-modal-harness.cpp"],
+  "intent": "Recover native normal versus modal-abort transfer exits and the shared pending-opcode acknowledgement predicate, preserving all original identities and historical byte obligations.",
+  "evidence": [
+    "Pinned53458D subtractsF05 before the11-entry transfer table: allF05..F0F routes already exist; this change adds no function identities.",
+    "Native534AE7 clientF08 joins538266 normally;534B2B missing-recordF0B joins534D21 explicit modal cleanup. Normal routes must execute538266; modal aborts unwind through534DCD instead.",
+    "Native538266..53829A tests packet byte1 bit40, compares packet type with pending|4000, compares packet sender with Console faction and then clears the pending opcode. await_diplo writes the unmarked pending opcode; the former source reversed this comparison.",
+    "Actual-source host controls test the shared predicate and caller branch, modal teardown order, clientF08 and absent-recordF0B. Mutants reverse the predicate, skip the tail, run it on abort or ignore sender and must fail. These controls do not prove complete game behavior or full acceptance.",
+    "Remaining receiver discoveries are preserved for the next compiling closure: F06 create(name,0,0); F0B signed chunk count, payload copy before UI, post-popup progress decrement, create sequence0, native inflater input extent and current-file pop_close on nonfinal chunks. Native68C11C has two stores and no established semantic owner; do not invent its meaning or silently erase the obligation."
+  ]
+}
