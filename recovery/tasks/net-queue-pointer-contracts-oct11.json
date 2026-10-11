@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "9296b9cb88ae14663527136e2d8c4c9b3102767c",
+  "editable_files": ["src/net_class.cpp", "src/net_class.h", "recovery/tests/test_net_queue_pointer_contracts_oct11.py"],
+  "intent": "Recover typed key input/output and length output parameters and scratch-buffer return for three middle-FIFO methods. Preserve key-input pointer in630A40, key-output pointer in630980 and scalar key in6309C0, original guards, queue operations, shared storage and historical claims. Do not infer original spelling or caller coverage from generated seed symbols.",
+  "evidence": [
+    "Native63099B..6309A4 passes first as key-out to peek_head;630A63..630A6C passes first as key-input pointer to get, whose actual body filters on *key without writing it. Both pass second as signed length-out.6309E3..6309EC instead passes a scalar key to peek_key. All return the actual9BC4BC buffer address or zero via neg/sbb/and.",
+    "NetFifo implementations/declarations distinguish unsigned int* key output from unsigned scalar key and signed int* size output. NetGetScratch is source-owned unsigned char[0x2000]. Preserve overwritten scratch storage; no per-call allocation or owned returned packet is implied.",
+    "Old QAEHHH symbols are seed/current source spellings, not independent pinned original C++ prototypes. Header explicitly calls these what this tree emits. VC6 COFF observed new symbols QAEPAXPAIPAH for630980/630A40 and QAEPAXHPAH for6309C0. Historical ORIGINAL identities and claims remain unchanged.",
+    "No direct source caller of these three methods is currently identified. A caller catalogue count or empty mapped caller scan cannot prove complete reachability. Return ownership, buffer lifetime across reads and unknown indirect consumers remain review obligations. No behavior fix is authorized."
+  ],
+  "subjects": [
+    {"address":6490688,"address_space":"pe:va","image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address":6490496,"address_space":"pe:va","image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address":6490560,"address_space":"pe:va","image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ]
+}

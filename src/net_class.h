@@ -448,13 +448,13 @@ class Net {
   int poll_services(ServiceList *list);
   // 0x00630A40, homed into net_class.cpp: reads one message off the middle
   // queue. No catalogue name, so the fact records what this tree emits.
-  int sub_630a40(int first, int second);
+  void *sub_630a40(unsigned int *key, int *length_out);
   // 0x00630980, homed into net_class.cpp: the sender's twin, answering the
   // buffer's address through the queue's own reader.
-  int sub_630980(int first, int second);
+  void *sub_630980(unsigned int *key_out, int *length_out);
   // 0x006309C0, homed into net_class.cpp: the sibling sender on the second
   // reader of the same queue.
-  int sub_6309c0(int first, int second);
+  void *sub_6309c0(int key, int *length_out);
   // The timeout readers operate on the embedded middle FIFO. The head form
   // writes the key out; the keyed form uses the supplied key and signed size.
   void *read_queue_head_until_timeout(unsigned int *key_out, unsigned int *length_out);

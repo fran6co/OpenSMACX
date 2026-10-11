@@ -2516,36 +2516,34 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
 }
 
 // ORIGINAL: 0x00630A40 sub_630a40 0x00630A40-0x00630A7D BYTE_EXACT
-// symbol    ?sub_630a40@Net@@QAEHHH@Z
+// symbol    ?sub_630a40@Net@@QAEPAXPAIPAH@Z
 // size      62 bytes
-// prototype int (__thiscall sub_630a40)(Net* this, int, int)
-// callers   1   call targets   1
+// Historical seed prototype: int (__thiscall sub_630a40)(Net* this, int, int)
+// Historical catalogue: callers 1, call targets 1; not reachability proof.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
-// Reads one message off the 0x10C queue: NetGetScratch is the buffer, `first`
-// receives the routing key and `second` the caller's int. The answer is the
+// Reads a matching message off the 0x10C queue: NetGetScratch is the buffer,
+// key supplies the routing-key filter and length_out receives the signed length.
+// The answer is the
 // BUFFER's address when the read landed and zero when it did not - the
 // image's `neg/sbb/and eax, 0x9bc4bc` tail, which is why the guard has to be
 // an `extern` object and not a folded literal.
-int Net::sub_630a40(int first, int second) {
+void *Net::sub_630a40(unsigned int *key, int *length_out) {
   if (NetDirectPlay == 0) {
     return 0;
   }
-  if (first == 0) {
+  if (key == 0) {
     return 0;
   }
-  int got = queue_10c_.get(NetGetScratch,
-                            reinterpret_cast<unsigned int *>(first),
-                            reinterpret_cast<int *>(0),
-                            reinterpret_cast<int *>(second));
-  return got != 0 ? reinterpret_cast<int>(NetGetScratch) : 0;
+  int got = queue_10c_.get(NetGetScratch, key, 0, length_out);
+  return got != 0 ? NetGetScratch : 0;
 }
 
 // ORIGINAL: 0x00630980 sub_630980 0x00630980-0x006309BA BYTE_EXACT
-// symbol    ?sub_630980@Net@@QAEHHH@Z
+// symbol    ?sub_630980@Net@@QAEPAXPAIPAH@Z
 // size      59 bytes
-// prototype int (__thiscall sub_630980)(Net* this, int, int)
-// callers   1   call targets   1
+// Historical seed prototype: int (__thiscall sub_630980)(Net* this, int, int)
+// Historical catalogue: callers 1, call targets 1; not reachability proof.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // The sender's twin of sub_630a40 above: hand the message to the 0x10C queue's
@@ -2555,20 +2553,19 @@ int Net::sub_630a40(int first, int second) {
 //   whose image gives each guard its own inline `ret 8` and so wants two
 //   separate `if`s. Measured both ways: chained 20/20 BYTE_EXACT, separate
 //   guards 2/19 with the branch polarity flipped. 2026-09-04.
-int Net::sub_630980(int first, int second) {
-  if (NetDirectPlay == 0 || first == 0) {
+void *Net::sub_630980(unsigned int *key_out, int *length_out) {
+  if (NetDirectPlay == 0 || key_out == 0) {
     return 0;
   }
-  int got = queue_10c_.peek_head(NetGetScratch, reinterpret_cast<unsigned int *>(first),
-                              0, reinterpret_cast<int *>(second));
-  return got != 0 ? reinterpret_cast<int>(NetGetScratch) : 0;
+  int got = queue_10c_.peek_head(NetGetScratch, key_out, 0, length_out);
+  return got != 0 ? NetGetScratch : 0;
 }
 
 // ORIGINAL: 0x006309C0 sub_6309c0 0x006309C0-0x006309FD BYTE_EXACT
-// symbol    ?sub_6309c0@Net@@QAEHHH@Z
+// symbol    ?sub_6309c0@Net@@QAEPAXHPAH@Z
 // size      61 bytes
-// prototype int (__thiscall sub_6309c0)(Net* this, int, int)
-// callers   1   call targets   1
+// Historical seed prototype: int (__thiscall sub_6309c0)(Net* this, int, int)
+// Historical catalogue: callers 1, call targets 1; not reachability proof.
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // LEVER: the mirror image of sub_630980 above, and the guards are the one
@@ -2576,16 +2573,16 @@ int Net::sub_630980(int first, int second) {
 //   `xor/ret 8`, so the two tests stay SEPARATE; chaining them shared one
 //   tail and flipped the polarity (2/19). Same body, opposite branch shape,
 //   on two functions 64 bytes apart. Measured both ways, 2026-09-04.
-int Net::sub_6309c0(int first, int second) {
+void *Net::sub_6309c0(int key, int *length_out) {
   if (NetDirectPlay == 0) {
     return 0;
   }
-  if (first == 0) {
+  if (key == 0) {
     return 0;
   }
-  int got = queue_10c_.peek_key(NetGetScratch, static_cast<unsigned int>(first),
-                             0, reinterpret_cast<int *>(second));
-  return got != 0 ? reinterpret_cast<int>(NetGetScratch) : 0;
+  int got = queue_10c_.peek_key(NetGetScratch, static_cast<unsigned int>(key),
+                             0, length_out);
+  return got != 0 ? NetGetScratch : 0;
 }
 
 
