@@ -1886,12 +1886,12 @@ int MediaRuntime::sub_5cae00() {
 // TRIED: the four vtable-slot-2 calls read `push piVar1; mov ecx, [piVar1]; call dword ptr [ecx+8]` - a plain function-pointer call taking one explicit pointer argument, NOT a thiscall dispatch (the receiver never lands in ecx before the call), so these are cdecl function-pointer casts, not virtual calls through an introduced class. `sub_5cbae0` similarly cannot be called by name (catalogued unmangled with no CRT_SIGNATURES entry, so declfix leaves it nullary - C2660 direct, C2733 redeclared) and the real call passes `this` in ecx and a literal 0 in edx with no stack push, i.e. __fastcall(void*, int); routed through a __fastcall function-pointer cast. Best reached: MISMATCH, edit_count 4, 338 bytes vs 326, mnemonic similarity ~0.98.
 void MediaRuntime::sub_5cc710() {
   if (teardown_gate_3c != 0) {
-    if (owned_heap_648 != 0) { free(owned_heap_648); owned_heap_648 = 0; }
-    if (owned_heap_64c != 0) { free(owned_heap_64c); owned_heap_64c = 0; }
-    if (owned_heap_650 != 0) { free(owned_heap_650); owned_heap_650 = 0; }
+    if (decoded_pixel_blocks != 0) { free(decoded_pixel_blocks); decoded_pixel_blocks = 0; }
+    if (motion_coordinates != 0) { free(motion_coordinates); motion_coordinates = 0; }
+    if (motion_pixel_offsets != 0) { free(motion_pixel_offsets); motion_pixel_offsets = 0; }
     if (owned_heap_638 != 0) { free(owned_heap_638); owned_heap_638 = 0; }
     if (owned_heap_63c != 0) { free(owned_heap_63c); owned_heap_63c = 0; }
-    if (owned_heap_644 != 0) { free(owned_heap_644); owned_heap_644 = 0; }
+    if (motion_row_offsets != 0) { free(motion_row_offsets); motion_row_offsets = 0; }
     if (owned_heap_640 != 0) { free(owned_heap_640); owned_heap_640 = 0; }
 
     if (queue_record_kind == 2 && output_handle_candidate != 0)

@@ -301,6 +301,7 @@ void __cdecl sub_5cfaed(unsigned char *compressed, unsigned char *destination,
                         int row_pitch_bytes);
 void __cdecl sub_5d02cc(unsigned char *, void *, int);
 struct MediaRuntime;
+struct MediaDecodedPixelBlock4x4;
 struct MediaDecoderContext;
 void __cdecl sub_5d0aab(MediaDecoderContext *context, unsigned int *scratch_words);
 void __cdecl sub_5d0d82(MediaDecoderContext *context, unsigned int predictor_value,
@@ -337,7 +338,7 @@ extern "C" void __cdecl sub_5d439f(unsigned int *scratch_words,
                         const unsigned char *compressed, int count, int width);
 extern "C" void __cdecl sub_5d4448(int *motion_indices, unsigned char *previous_frame,
                         unsigned char *current_frame, int run_limit,
-                        int *motion_offsets, unsigned char *block_scratch,
+                        int *motion_offsets, MediaDecodedPixelBlock4x4 *block_scratch,
                         int pitch, int run_count, int height_groups);
 void __cdecl sub_5d4240(unsigned char *);
 

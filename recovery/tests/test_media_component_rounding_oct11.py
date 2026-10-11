@@ -18,6 +18,8 @@ def test_only_private_scaling_body_changes_and_mappings_survive():
     old = subprocess.check_output(["git", "show", BASE + ":src/movie_media.cpp"],
                                   cwd=ROOT, text=True)
     new = path.read_text()
+    from test_media_motion_storage_oct11 import restore_motion_storage
+    new = restore_motion_storage(new, 'src/movie_media.cpp')
     assert old.replace(definition(old, SIGNATURE), "REVIEWED_SCALING") == new.replace(
         definition(new, SIGNATURE), "REVIEWED_SCALING")
     assert [(_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(old, path)] == [

@@ -159,6 +159,23 @@ struct MediaDecoderContext {
 typedef char media_decoder_context_extent_check[
     sizeof(MediaDecoderContext) == 0x208 ? 1 : -1];
 
+// Descriptive recovered types, not original debug names. 5D3980 decodes
+// signed ten-bit x/y pairs; 5D4448 consumes their signed pixel offsets.
+struct MediaMotionCoordinate {
+  int x;
+  int y;
+};
+
+// 5D3980 copies/expands sixteen byte pixels; 5D4448 copies four rows.
+struct MediaDecodedPixelBlock4x4 {
+  BYTE pixels[16];
+};
+
+typedef char media_motion_coordinate_extent_check[
+    sizeof(MediaMotionCoordinate) == 8 ? 1 : -1];
+typedef char media_decoded_pixel_block_extent_check[
+    sizeof(MediaDecodedPixelBlock4x4) == 16 ? 1 : -1];
+
 struct MediaRuntime {
   // Original-mapped family bodies proposed for this owner.
   static int __fastcall initialize_stream(LPSTR filename,
@@ -263,10 +280,10 @@ struct MediaRuntime {
   BYTE *owned_heap_638;                           // +638; freed with free
   BYTE *owned_heap_63c;                           // +63c; freed with free
   BYTE *owned_heap_640;                           // +640; freed with free
-  BYTE *owned_heap_644;                           // +644; freed with free
-  BYTE *owned_heap_648;                           // +648; freed with free
-  BYTE *owned_heap_64c;                           // +64c; freed with free
-  BYTE *owned_heap_650;                           // +650; freed with free
+  int *motion_row_offsets;                       // +644; 2*height signed entries, starts at -width*height
+  MediaDecodedPixelBlock4x4 *decoded_pixel_blocks; // +648; decoder_capacity_634 blocks
+  MediaMotionCoordinate *motion_coordinates;     // +64c; decoder_capacity_630 pairs
+  int *motion_pixel_offsets;                     // +650; decoder_capacity_630 signed entries
   BYTE *decoder_coefficient_plane_654;            // +654, allocator result
   BYTE *decoder_temporary_plane_a_658;            // +658, allocator result
   BYTE *decoder_temporary_plane_b_65c;            // +65c, allocator result

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "media-motion-storage-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover signed media row/pixel-offset arrays, signed coordinate pairs and sixteen-byte pixel blocks across production, raster consumption and teardown without changing original behavior.",
+  "base_revision": "8f65307007e7ba275ae9b4e42c78a42f1095cdd3",
+  "subjects": [
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6110704},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6109568},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6112328},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6080272}
+  ],
+  "editable_files": ["src/general.cpp","src/general.h","src/movie_media.cpp","src/movie_media.h","recovery/tests/test_media_motion_storage_oct11.py","recovery/tests/media-motion-storage-oct11.patch","recovery/tests/test_movie_runtime_decoder_ownership_actual_source_oct9.py","recovery/tests/test_media_output_buffers_oct11.py","recovery/tests/test_media_component_rounding_oct11.py"],
+  "evidence": [
+    "Pinned 5D3DF0 allocates twice the height in signed row offsets starting at -width*height with width increments. 5D3980 allocates eight bytes per signed x/y pair and four bytes per signed linear offset; pair fields are sign-extended ten-bit values and offsets are row_offsets[height+y]+x.",
+    "Pinned 5D3980 allocates sixteen bytes per raw/expanded block, copies raw blocks and expands sixteen byte pixels in descending destination order. 5D4448 consumes four four-byte rows per block. These are descriptive recovered types, not original debug names.",
+    "Preserve allocations, capacities, failure/cleanup ordering, frame swapping, unchecked indexing, bit-pattern sign conversion, all original identities and historical claims. Require native owner comparisons and application compile/link; no original error-path normalization, exactness grant or game acceptance."
+  ]
+}

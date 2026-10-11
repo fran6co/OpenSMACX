@@ -1,0 +1,305 @@
+diff --git a/src/general.cpp b/src/general.cpp
+index fa24f2e0f..8a66282fc 100644
+--- a/src/general.cpp
++++ b/src/general.cpp
+@@ -3202,7 +3202,7 @@ typedef unsigned char uint8;
+ extern "C" void __cdecl sub_5d4448(
+     int *motion_indices, unsigned char *previous_frame,
+     unsigned char *current_frame, int run_limit, int *motion_offsets,
+-    unsigned char *block_scratch, int pitch, int run_count,
++    MediaDecodedPixelBlock4x4 *block_scratch, int pitch, int run_count,
+     int height_groups)
+ {
+     const int saved_count = run_count;
+@@ -3686,9 +3686,9 @@ int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
+     free(runtime->owned_heap_63c);
+     runtime->owned_heap_63c = 0;
+   }
+-  if (runtime->owned_heap_644 != 0) {
+-    free(runtime->owned_heap_644);
+-    runtime->owned_heap_644 = 0;
++  if (runtime->motion_row_offsets != 0) {
++    free(runtime->motion_row_offsets);
++    runtime->motion_row_offsets = 0;
+   }
+   if (runtime->owned_heap_640 != 0) {
+     free(runtime->owned_heap_640);
+@@ -3697,13 +3697,13 @@ int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
+ 
+   runtime->owned_heap_638 = static_cast<unsigned char *>(malloc(allocation_size));
+   runtime->owned_heap_63c = static_cast<unsigned char *>(malloc(allocation_size));
+-  runtime->owned_heap_644 = static_cast<unsigned char *>(
++  runtime->motion_row_offsets = static_cast<int *>(
+       malloc(static_cast<DWORD>(height) << 3));
+   runtime->owned_heap_640 = static_cast<unsigned char *>(
+       malloc(((allocation_size + 0x0fu) >> 4) << 2));
+ 
+   if (runtime->owned_heap_638 != 0 && runtime->owned_heap_63c != 0 &&
+-      runtime->owned_heap_644 != 0 && runtime->owned_heap_640 != 0) {
++      runtime->motion_row_offsets != 0 && runtime->owned_heap_640 != 0) {
+     const int stride = height;
+     DWORD value_bits = 0u - pixel_count_bits;
+     DWORD index = 0;
+@@ -3711,7 +3711,7 @@ int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
+       do {
+         int value;
+         memcpy(&value, &value_bits, sizeof(value));
+-        reinterpret_cast<int *>(runtime->owned_heap_644)[index] = value;
++        runtime->motion_row_offsets[index] = value;
+         value_bits += static_cast<DWORD>(width);
+         index++;
+       } while (index < (static_cast<DWORD>(height) << 1));
+@@ -4260,11 +4260,9 @@ void __fastcall sub_5d4020(MediaRuntime *runtime, unsigned char *dest,
+ // emitter computes declarations; it does not carry lessons.
+ 
+ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
+-    int *piVar1;
+     int iVar2, iVar11, iVar13;
+-    unsigned int uVar3, uVar4, uVar5, uVar6, uVar8, uVar9, uVar10, uVar15;
++    unsigned int uVar3, uVar4, uVar5, uVar6, uVar8, uVar9, uVar15;
+     void *pvVar7;
+-    unsigned int *puVar12;
+     const unsigned char *puVar14;
+     unsigned char *puVar17;
+     int flagOK;
+@@ -4288,28 +4286,28 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
+     runtime->decoder_packet_value_62c = uVar6;
+     if (uVar3 != 0) {
+         if (runtime->decoder_capacity_630 < (int)uVar3) {
+-            if (runtime->owned_heap_64c != 0) {
+-                free(runtime->owned_heap_64c);
+-                runtime->owned_heap_64c = 0;
++            if (runtime->motion_coordinates != 0) {
++                free(runtime->motion_coordinates);
++                runtime->motion_coordinates = 0;
+                 runtime->decoder_capacity_630 = 0;
+             }
+-            if (runtime->owned_heap_650 != 0) {
+-                free(runtime->owned_heap_650);
+-                runtime->owned_heap_650 = 0;
++            if (runtime->motion_pixel_offsets != 0) {
++                free(runtime->motion_pixel_offsets);
++                runtime->motion_pixel_offsets = 0;
+             }
+         }
+-        if (runtime->owned_heap_64c == 0) {
++        if (runtime->motion_coordinates == 0) {
+             pvVar7 = malloc(uVar3 * 8);
+-            runtime->owned_heap_64c = static_cast<unsigned char *>(pvVar7);
++            runtime->motion_coordinates = static_cast<MediaMotionCoordinate *>(pvVar7);
+             runtime->decoder_capacity_630 = uVar3;
+         }
+-        if (runtime->owned_heap_650 == 0) {
++        if (runtime->motion_pixel_offsets == 0) {
+             pvVar7 = malloc(uVar3 * 4);
+-            runtime->owned_heap_650 = static_cast<unsigned char *>(pvVar7);
++            runtime->motion_pixel_offsets = static_cast<int *>(pvVar7);
+             runtime->decoder_capacity_630 = uVar3;
+         }
+-        flagOK = runtime->owned_heap_64c != 0;
+-        if (runtime->owned_heap_650 == 0) {
++        flagOK = runtime->motion_coordinates != 0;
++        if (runtime->motion_pixel_offsets == 0) {
+             flagOK = 0;
+         }
+     }
+@@ -4317,48 +4315,50 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
+     memcpy(&iVar13, &count_sum, sizeof(iVar13));
+     if (iVar13 != 0) {
+         if ((runtime->decoder_capacity_634 < iVar13) &&
+-            (runtime->owned_heap_648 != 0)) {
+-            free(runtime->owned_heap_648);
+-            runtime->owned_heap_648 = 0;
++            (runtime->decoded_pixel_blocks != 0)) {
++            free(runtime->decoded_pixel_blocks);
++            runtime->decoded_pixel_blocks = 0;
+         }
+-        if (runtime->owned_heap_648 == 0) {
++        if (runtime->decoded_pixel_blocks == 0) {
+             pvVar7 = malloc(iVar13 * 0x10);
+-            runtime->owned_heap_648 = static_cast<unsigned char *>(pvVar7);
++            runtime->decoded_pixel_blocks = static_cast<MediaDecodedPixelBlock4x4 *>(pvVar7);
+             runtime->decoder_capacity_634 = iVar13;
+         }
+-        if (runtime->owned_heap_648 == 0) {
++        if (runtime->decoded_pixel_blocks == 0) {
+             return 0;
+         }
+     }
+     if (flagOK != 0) {
+-        uVar10 = uVar3 * 2;
+         uVar15 = uVar3 * 0x14;
+-        puVar12 = reinterpret_cast<unsigned int *>(runtime->owned_heap_64c + uVar3 * 8);
+-        uVar8 = uVar3;
+-        while (uVar8 != 0) {
+-            uVar15 = uVar15 - 10;
+-            memcpy(&payload_word, packet + (uVar15 >> 3) + 0xc,
+-                   sizeof(payload_word));
+-            uVar8 = payload_word >> (uVar15 & 7);
+-            uVar9 = uVar8 & 0x3ff;
+-            if ((uVar8 & 0x200) != 0) {
+-                uVar9 = uVar9 | 0xfffffc00;
++        unsigned int coordinate_index = uVar3;
++        while (coordinate_index != 0) {
++            --coordinate_index;
++            MediaMotionCoordinate &coordinate =
++                runtime->motion_coordinates[coordinate_index];
++            // Original backward unpack order is y then x for each pair.
++            for (int axis = 1; axis >= 0; --axis) {
++                uVar15 = uVar15 - 10;
++                memcpy(&payload_word, packet + (uVar15 >> 3) + 0xc,
++                       sizeof(payload_word));
++                uVar8 = payload_word >> (uVar15 & 7);
++                uVar9 = uVar8 & 0x3ff;
++                if ((uVar8 & 0x200) != 0) {
++                    uVar9 = uVar9 | 0xfffffc00;
++                }
++                int &component = axis == 1 ? coordinate.y : coordinate.x;
++                memcpy(&component, &uVar9, sizeof(component));
+             }
+-            puVar12 = puVar12 - 1;
+-            *puVar12 = uVar9;
+-            uVar10 = uVar10 - 1;
+-            uVar8 = uVar10;
+         }
+         memcpy(&iVar13, &runtime->descriptor->output_height_60,
+                sizeof(iVar13));
+-        int *const row_offsets = reinterpret_cast<int *>(runtime->owned_heap_644);
++        int *const row_offsets = runtime->motion_row_offsets;
+         iVar11 = 0;
+         if (uVar3 != 0) {
+             do {
+-                piVar1 = reinterpret_cast<int *>(runtime->owned_heap_64c) +
+-                         iVar11 * 2;
+-                reinterpret_cast<int *>(runtime->owned_heap_650)[iVar11] =
+-                    row_offsets[iVar13 + piVar1[1]] + *piVar1;
++                const MediaMotionCoordinate &coordinate =
++                    runtime->motion_coordinates[iVar11];
++                runtime->motion_pixel_offsets[iVar11] =
++                    row_offsets[iVar13 + coordinate.y] + coordinate.x;
+                 iVar11 = iVar11 + 1;
+             } while (iVar11 < (int)uVar3);
+         }
+@@ -4367,13 +4367,14 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
+               0xfffffffcu) + 0xcu);
+         puVar14 = packet + following_records_offset;
+         if (uVar4 != 0) {
+-            memcpy(runtime->owned_heap_648, puVar14, uVar4 * 0x10);
++            memcpy(runtime->decoded_pixel_blocks, puVar14, uVar4 * 0x10);
+         }
+         puVar14 += uVar4 * 0x10;
+         if (uVar5 != 0) {
+-            puVar17 = runtime->owned_heap_648 + uVar4 * 0x10;
++            MediaDecodedPixelBlock4x4 *block = runtime->decoded_pixel_blocks + uVar4;
+             const unsigned char *packed_run = puVar14;
+             for (uVar3 = uVar5; uVar3 != 0; uVar3 = uVar3 - 1) {
++                puVar17 = block->pixels;
+                 memcpy(&uVar4, packed_run + 4, sizeof(uVar4));
+                 puVar17[0xf] = packed_run[uVar4 & 3];
+                 puVar17[0xe] = packed_run[(uVar4 >> 2) & 3];
+@@ -4392,7 +4393,7 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
+                 puVar17[1]  = packed_run[(uVar4 >> 0x1c) & 3];
+                 puVar17[0]  = packed_run[(uVar4 >> 0x1e) & 3];
+                 packed_run += 8;
+-                puVar17 = puVar17 + 0x10;
++                ++block;
+             }
+         }
+         int output_width;
+@@ -4415,8 +4416,8 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
+         sub_5d4448(reinterpret_cast<int *>(runtime->owned_heap_640),
+                    runtime->owned_heap_63c, runtime->owned_heap_638,
+                    static_cast<int>(runtime->decoder_packet_value_620),
+-                   reinterpret_cast<int *>(runtime->owned_heap_650),
+-                   runtime->owned_heap_648, final_pitch,
++                   runtime->motion_pixel_offsets,
++                   runtime->decoded_pixel_blocks, final_pitch,
+                    static_cast<int>(final_width >> 2),
+                    static_cast<int>(final_height >> 2));
+     }
+diff --git a/src/general.h b/src/general.h
+index 57b93c4ca..fa303df06 100644
+--- a/src/general.h
++++ b/src/general.h
+@@ -301,6 +301,7 @@ void __cdecl sub_5cfaed(unsigned char *compressed, unsigned char *destination,
+                         int row_pitch_bytes);
+ void __cdecl sub_5d02cc(unsigned char *, void *, int);
+ struct MediaRuntime;
++struct MediaDecodedPixelBlock4x4;
+ struct MediaDecoderContext;
+ void __cdecl sub_5d0aab(MediaDecoderContext *context, unsigned int *scratch_words);
+ void __cdecl sub_5d0d82(MediaDecoderContext *context, unsigned int predictor_value,
+@@ -337,7 +338,7 @@ extern "C" void __cdecl sub_5d439f(unsigned int *scratch_words,
+                         const unsigned char *compressed, int count, int width);
+ extern "C" void __cdecl sub_5d4448(int *motion_indices, unsigned char *previous_frame,
+                         unsigned char *current_frame, int run_limit,
+-                        int *motion_offsets, unsigned char *block_scratch,
++                        int *motion_offsets, MediaDecodedPixelBlock4x4 *block_scratch,
+                         int pitch, int run_count, int height_groups);
+ void __cdecl sub_5d4240(unsigned char *);
+ 
+diff --git a/src/movie_media.cpp b/src/movie_media.cpp
+index 316f505eb..f924ee125 100644
+--- a/src/movie_media.cpp
++++ b/src/movie_media.cpp
+@@ -1886,12 +1886,12 @@ int MediaRuntime::sub_5cae00() {
+ // TRIED: the four vtable-slot-2 calls read `push piVar1; mov ecx, [piVar1]; call dword ptr [ecx+8]` - a plain function-pointer call taking one explicit pointer argument, NOT a thiscall dispatch (the receiver never lands in ecx before the call), so these are cdecl function-pointer casts, not virtual calls through an introduced class. `sub_5cbae0` similarly cannot be called by name (catalogued unmangled with no CRT_SIGNATURES entry, so declfix leaves it nullary - C2660 direct, C2733 redeclared) and the real call passes `this` in ecx and a literal 0 in edx with no stack push, i.e. __fastcall(void*, int); routed through a __fastcall function-pointer cast. Best reached: MISMATCH, edit_count 4, 338 bytes vs 326, mnemonic similarity ~0.98.
+ void MediaRuntime::sub_5cc710() {
+   if (teardown_gate_3c != 0) {
+-    if (owned_heap_648 != 0) { free(owned_heap_648); owned_heap_648 = 0; }
+-    if (owned_heap_64c != 0) { free(owned_heap_64c); owned_heap_64c = 0; }
+-    if (owned_heap_650 != 0) { free(owned_heap_650); owned_heap_650 = 0; }
++    if (decoded_pixel_blocks != 0) { free(decoded_pixel_blocks); decoded_pixel_blocks = 0; }
++    if (motion_coordinates != 0) { free(motion_coordinates); motion_coordinates = 0; }
++    if (motion_pixel_offsets != 0) { free(motion_pixel_offsets); motion_pixel_offsets = 0; }
+     if (owned_heap_638 != 0) { free(owned_heap_638); owned_heap_638 = 0; }
+     if (owned_heap_63c != 0) { free(owned_heap_63c); owned_heap_63c = 0; }
+-    if (owned_heap_644 != 0) { free(owned_heap_644); owned_heap_644 = 0; }
++    if (motion_row_offsets != 0) { free(motion_row_offsets); motion_row_offsets = 0; }
+     if (owned_heap_640 != 0) { free(owned_heap_640); owned_heap_640 = 0; }
+ 
+     if (queue_record_kind == 2 && output_handle_candidate != 0)
+diff --git a/src/movie_media.h b/src/movie_media.h
+index d5f0ba64e..6ce8aebae 100644
+--- a/src/movie_media.h
++++ b/src/movie_media.h
+@@ -159,6 +159,23 @@ struct MediaDecoderContext {
+ typedef char media_decoder_context_extent_check[
+     sizeof(MediaDecoderContext) == 0x208 ? 1 : -1];
+ 
++// Descriptive recovered types, not original debug names. 5D3980 decodes
++// signed ten-bit x/y pairs; 5D4448 consumes their signed pixel offsets.
++struct MediaMotionCoordinate {
++  int x;
++  int y;
++};
++
++// 5D3980 copies/expands sixteen byte pixels; 5D4448 copies four rows.
++struct MediaDecodedPixelBlock4x4 {
++  BYTE pixels[16];
++};
++
++typedef char media_motion_coordinate_extent_check[
++    sizeof(MediaMotionCoordinate) == 8 ? 1 : -1];
++typedef char media_decoded_pixel_block_extent_check[
++    sizeof(MediaDecodedPixelBlock4x4) == 16 ? 1 : -1];
++
+ struct MediaRuntime {
+   // Original-mapped family bodies proposed for this owner.
+   static int __fastcall initialize_stream(LPSTR filename,
+@@ -263,10 +280,10 @@ struct MediaRuntime {
+   BYTE *owned_heap_638;                           // +638; freed with free
+   BYTE *owned_heap_63c;                           // +63c; freed with free
+   BYTE *owned_heap_640;                           // +640; freed with free
+-  BYTE *owned_heap_644;                           // +644; freed with free
+-  BYTE *owned_heap_648;                           // +648; freed with free
+-  BYTE *owned_heap_64c;                           // +64c; freed with free
+-  BYTE *owned_heap_650;                           // +650; freed with free
++  int *motion_row_offsets;                       // +644; 2*height signed entries, starts at -width*height
++  MediaDecodedPixelBlock4x4 *decoded_pixel_blocks; // +648; decoder_capacity_634 blocks
++  MediaMotionCoordinate *motion_coordinates;     // +64c; decoder_capacity_630 pairs
++  int *motion_pixel_offsets;                     // +650; decoder_capacity_630 signed entries
+   BYTE *decoder_coefficient_plane_654;            // +654, allocator result
+   BYTE *decoder_temporary_plane_a_658;            // +658, allocator result
+   BYTE *decoder_temporary_plane_b_65c;            // +65c, allocator result
+

@@ -115,8 +115,11 @@ struct MediaRuntime {
   DWORD decoder_packet_value_620, decoder_packet_value_624;
   DWORD decoder_packet_value_628, decoder_packet_value_62c;
   int decoder_capacity_630, decoder_capacity_634;
-  BYTE *owned_heap_638, *owned_heap_63c, *owned_heap_640, *owned_heap_644;
-  BYTE *owned_heap_648, *owned_heap_64c, *owned_heap_650;
+  BYTE *owned_heap_638, *owned_heap_63c, *owned_heap_640;
+  int *motion_row_offsets;
+  MediaDecodedPixelBlock4x4 *decoded_pixel_blocks;
+  MediaMotionCoordinate *motion_coordinates;
+  int *motion_pixel_offsets;
 };
 static int allocation_calls;
 static int fail_allocation_call;
@@ -165,28 +168,28 @@ int main() {
          allocation_sizes[2] == 32 && allocation_sizes[3] == 4);
   assert(last_samples == reinterpret_cast<unsigned short *>(frame + 12));
   assert(last_steps == runtime.owned_heap_638 && last_sample_count == 1);
-  int *row_steps = reinterpret_cast<int *>(runtime.owned_heap_644);
+  int *row_steps = reinterpret_cast<int *>(runtime.motion_row_offsets);
   assert(row_steps[0] == -8 && row_steps[1] == -6 && row_steps[4] == 0 &&
          row_steps[7] == 6);
   assert(reinterpret_cast<std::uintptr_t>(runtime.owned_heap_638) > 0xffffffffu);
   std::free(runtime.owned_heap_638); std::free(runtime.owned_heap_63c);
-  std::free(runtime.owned_heap_640); std::free(runtime.owned_heap_644);
+  std::free(runtime.owned_heap_640); std::free(runtime.motion_row_offsets);
 
   BYTE *old_638 = static_cast<BYTE *>(std::malloc(4));
   BYTE *old_63c = static_cast<BYTE *>(std::malloc(4));
   BYTE *old_640 = static_cast<BYTE *>(std::malloc(4));
-  BYTE *old_644 = static_cast<BYTE *>(std::malloc(4));
+  int *old_644 = static_cast<int *>(std::malloc(4));
   runtime.owned_heap_638 = old_638; runtime.owned_heap_63c = old_63c;
-  runtime.owned_heap_640 = old_640; runtime.owned_heap_644 = old_644;
+  runtime.owned_heap_640 = old_640; runtime.motion_row_offsets = old_644;
   allocation_calls = free_calls = 0; fail_allocation_call = 2;
   assert(sub_5d3df0(&runtime, frame) == 0);
   assert(free_calls == 4 && freed_addresses[0] == old_638 &&
          freed_addresses[1] == old_63c && freed_addresses[2] == old_644 &&
          freed_addresses[3] == old_640);
   assert(allocation_calls == 4 && runtime.owned_heap_638 != 0 &&
-         runtime.owned_heap_63c == 0 && runtime.owned_heap_644 != 0 &&
+         runtime.owned_heap_63c == 0 && runtime.motion_row_offsets != 0 &&
          runtime.owned_heap_640 != 0);
-  std::free(runtime.owned_heap_638); std::free(runtime.owned_heap_644);
+  std::free(runtime.owned_heap_638); std::free(runtime.motion_row_offsets);
   std::free(runtime.owned_heap_640);
 
   descriptor.pixel_format.red_bits = 5;
@@ -247,16 +250,57 @@ int main() {
   sub_5d439f(decoded, reinterpret_cast<BYTE *>(compressed_words), 4, 1);
 
   int motion_indices[2] = {0, 1}; int motion_offsets[2] = {0, 0};
-  BYTE previous[32], current[32] = {}, block[16];
+  BYTE previous[32], current[32] = {};
+  MediaDecodedPixelBlock4x4 block;
   for (int i = 0; i < 32; ++i) previous[i] = static_cast<BYTE>(i + 1);
   sub_5d4448(motion_indices, previous, current, 1, motion_offsets,
-             block, 4, 1, 1);
+             &block, 4, 1, 1);
   assert(memcmp(previous, current, 16) == 0);
-  for (int i = 0; i < 16; ++i) block[i] = static_cast<BYTE>(0x80 + i);
+  for (int i = 0; i < 16; ++i) block.pixels[i] = static_cast<BYTE>(0x80 + i);
   memset(current, 0, sizeof(current)); motion_indices[0] = 1;
   sub_5d4448(motion_indices, previous, current, 1, motion_offsets,
-             block, 4, 1, 1);
-  assert(memcmp(block, current, 16) == 0);
+             &block, 4, 1, 1);
+  assert(memcmp(block.pixels, current, 16) == 0);
+
+  // Two signed coordinate pairs and both raw/compressed pixel blocks.
+  // No guards, capacity normalization or extra initialization in the body.
+  MediaDescriptor motion_descriptor = {};
+  motion_descriptor.output_width_64 = motion_descriptor.output_height_60 = 4;
+  MediaRuntime motion = {};
+  motion.descriptor = &motion_descriptor;
+  BYTE motion_frame[128] = {};
+  allocation_calls = free_calls = 0; fail_allocation_call = 0;
+  assert(sub_5d3df0(&motion, motion_frame) == 1);
+  int *motion_indices_word = reinterpret_cast<int *>(motion.owned_heap_640);
+  *motion_indices_word = 2; // Choose raw block, not the previous-frame branch.
+  BYTE motion_packet_storage[128] = {};
+  BYTE *motion_packet = motion_packet_storage + 2;
+  unsigned short motion_fields[4] = {2, 1, 1, 0};
+  memcpy(motion_packet, motion_fields, sizeof(motion_fields));
+  const unsigned coordinate_words[4] = {1023, 1, 2, 1023};
+  for (unsigned component = 0; component < 4; ++component)
+    for (unsigned bit = 0; bit < 10; ++bit)
+      if (coordinate_words[component] & (1u << bit)) {
+        const unsigned position = component * 10 + bit;
+        motion_packet[12 + position / 8] |= 1u << (position % 8);
+      }
+  for (unsigned i = 0; i < 16; ++i) motion_packet[20 + i] = 0x70 + i;
+  motion_packet[36] = 0x10; motion_packet[37] = 0x20;
+  motion_packet[38] = 0x30; motion_packet[39] = 0x40;
+  const DWORD packed_pixels = 0x1b1b1b1b;
+  memcpy(motion_packet + 40, &packed_pixels, sizeof(packed_pixels));
+  assert(sub_5d3980(&motion, motion_packet) == 1);
+  assert(motion.motion_coordinates[0].x == -1 && motion.motion_coordinates[0].y == 1);
+  assert(motion.motion_coordinates[1].x == 2 && motion.motion_coordinates[1].y == -1);
+  assert(motion.motion_pixel_offsets[0] == 3 && motion.motion_pixel_offsets[1] == -2);
+  assert(memcmp(motion.decoded_pixel_blocks[0].pixels, motion_packet + 20, 16) == 0);
+  for (unsigned i = 0; i < 16; ++i)
+    assert(motion.decoded_pixel_blocks[1].pixels[i] ==
+           motion_packet[36 + ((packed_pixels >> ((15 - i) * 2)) & 3)]);
+  std::free(motion.owned_heap_638); std::free(motion.owned_heap_63c);
+  std::free(motion.owned_heap_640); std::free(motion.motion_row_offsets);
+  std::free(motion.motion_coordinates); std::free(motion.motion_pixel_offsets);
+  std::free(motion.decoded_pixel_blocks);
 
   MediaDescriptor video_descriptor = {};
   video_descriptor.output_width_64 = 4;
@@ -266,11 +310,11 @@ int main() {
   BYTE *frame_a = static_cast<BYTE *>(std::malloc(16));
   BYTE *frame_b = static_cast<BYTE *>(std::malloc(16));
   BYTE *scratch = static_cast<BYTE *>(std::malloc(4));
-  BYTE *rows = static_cast<BYTE *>(std::malloc(64));
+  int *rows = static_cast<int *>(std::malloc(64));
   for (int i = 0; i < 16; ++i) frame_a[i] = static_cast<BYTE>(i + 10);
   memset(frame_b, 0, 16); memset(scratch, 0, 4); memset(rows, 0, 64);
   video.owned_heap_638 = frame_a; video.owned_heap_63c = frame_b;
-  video.owned_heap_640 = scratch; video.owned_heap_644 = rows;
+  video.owned_heap_640 = scratch; video.motion_row_offsets = rows;
   BYTE packet_storage[128] = {}; BYTE *packet = packet_storage + 2;
   unsigned short fields[4] = {1, 1, 0, 8};
   memcpy(packet, fields, sizeof(fields));
@@ -284,13 +328,13 @@ int main() {
          allocation_sizes[1] == 4 && allocation_sizes[2] == 16);
   assert(video.owned_heap_638 == frame_b && video.owned_heap_63c == frame_a);
   assert(memcmp(frame_a, frame_b, 16) == 0);
-  BYTE *saved_block = video.owned_heap_648;
+  MediaDecodedPixelBlock4x4 *saved_block = video.decoded_pixel_blocks;
   const int saved_allocations = allocation_calls;
 
   unsigned short smaller_fields[4] = {1, 0, 0, 0};
   memcpy(packet, smaller_fields, sizeof(smaller_fields));
   assert(sub_5d3980(&video, packet) == 1);
-  assert(video.owned_heap_648 == saved_block &&
+  assert(video.decoded_pixel_blocks == saved_block &&
          video.decoder_capacity_634 == 1 && allocation_calls == saved_allocations);
 
   unsigned short larger_fields[4] = {1, 2, 0, 0};
@@ -298,13 +342,17 @@ int main() {
   allocation_calls = free_calls = 0; fail_allocation_call = 1;
   assert(sub_5d3980(&video, packet) == 0);
   assert(free_calls == 1 && freed_addresses[0] == saved_block);
-  assert(video.owned_heap_648 == 0 && video.decoder_capacity_634 == 2 &&
+  assert(video.decoded_pixel_blocks == 0 && video.decoder_capacity_634 == 2 &&
          allocation_calls == 1 && allocation_sizes[0] == 32);
   std::free(video.owned_heap_638); std::free(video.owned_heap_63c);
-  std::free(video.owned_heap_640); std::free(video.owned_heap_644);
-  std::free(video.owned_heap_64c); std::free(video.owned_heap_650);
+  std::free(video.owned_heap_640); std::free(video.motion_row_offsets);
+  std::free(video.motion_coordinates); std::free(video.motion_pixel_offsets);
 }
 '''
+    header = (ROOT / "src/movie_media.h").read_text()
+    types = (_definition(header, "struct MediaMotionCoordinate") + ";\n" +
+             _definition(header, "struct MediaDecodedPixelBlock4x4") + ";\n")
+    unit = unit.replace("struct MediaRuntime {", types + "struct MediaRuntime {")
     unit = unit.replace("/* ACTUAL_HELPERS */", bodies)
     with tempfile.TemporaryDirectory(prefix="movie-runtime-helpers-") as directory:
         _compile_run(Path(directory), unit, "runtime_helpers")

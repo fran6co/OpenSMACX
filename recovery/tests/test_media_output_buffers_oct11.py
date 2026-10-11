@@ -14,6 +14,8 @@ SIGNATURE = 'extern "C" void __fastcall sub_5cc940('
 
 
 def without_renderer_body(text):
+    from test_media_motion_storage_oct11 import restore_motion_storage
+    text=restore_motion_storage(text,'src/movie_media.cpp')
     # Independently verified follow-up correction has its own bounded-source
     # and pinned rounding controls in test_media_component_rounding_oct11.
     text=text.replace('''  const __int64 product =
@@ -55,6 +57,8 @@ HEADER_AFTER = '''  // 5CBBC0 swaps this address into +4c before the next record
 
 
 def restore_output_header(text):
+    from test_media_motion_storage_oct11 import restore_motion_storage
+    text=restore_motion_storage(text,'src/movie_media.h')
     return text.replace(HEADER_AFTER,HEADER_BEFORE).replace(
         'extern "C" void __fastcall sub_5cc940(', 'extern "C" int __fastcall sub_5cc940(')
 
