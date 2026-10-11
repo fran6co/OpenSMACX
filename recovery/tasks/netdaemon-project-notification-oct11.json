@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "dde4a04c4",
+  "editable_files": ["src/netdaemon.cpp", "recovery/tests/test_netdaemon_project_actual_source.py", "recovery/tests/test_netdaemon_session_options_oct11.py", "recovery/tests/test_netdaemon_project_notification_oct11.py", "recovery/tests/netdaemon-project-notification-oct11.patch"],
+  "intent": "Recover complete project-notification observation ordering, negative exit and raw-token parser inputs within the existing NetDaemon dispatcher. No new function identity or intentional bug fix.",
+  "evidence": [
+    "Pinned53778F snapshots packet14 for logging;5377C8 reloads it after Strings::get/log.5377CD exits negative values without popup/parser calls. The existing extra HALTPROJECT on this path was not faithful.",
+    "Pinned537856/537905 reload Facility record name and pass its raw token to parse_say625E50, which itself resolves through Strings::get. The translated lookup result is for logging only; do not cache it for parsing.",
+    "Pinned53790F reloads packet14 after parser callbacks before BEGINPROJECT versus base/HALTPROJECT. Source keeps project/faction/related ID snapshots, unchecked indexing, status2 inherited parser defaults and all existing base-owner tests.",
+    "BaseWin sends4D00 through message_data592EE0 using the existing MessageDataRecord fields; shared MessageCommandView reads those fields individually through memcpy and does not cache across callbacks. Reuse this serialization view instead of raw int-pointer casts. It is not a new original class or a bulk record read; minimal1C-byte receiver controls extract the actual sender declaration and view.",
+    "Actual-source host controls distinguish token pointers from idempotent display pointers and verify the input contract. Controlled logging/parser packet and record mutations test reload boundaries; they are not evidence that ordinary callbacks routinely mutate these values. Negative-status expectation is corrected against native instructions, not waived.",
+    "Fixed source migration and parsed annotation identity checks preserve all historical claims and unrelated source. Native compile/link, scoped byte-claim continuity and independent review remain required."
+  ]
+}

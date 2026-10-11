@@ -28,9 +28,13 @@ AFTER = '''    NetWinSessionOptions.receive_wire_block(
 
 
 def apply_session_options_migration(source, reverse=False):
+    from test_netdaemon_project_notification_oct11 import apply_project_notification_migration
+    if reverse:
+        source = apply_project_notification_migration(source, reverse=True)
     before, after = (AFTER, BEFORE) if reverse else (BEFORE, AFTER)
     assert source.count(before) == 1
-    return source.replace(before, after, 1)
+    source = source.replace(before, after, 1)
+    return source if reverse else apply_project_notification_migration(source)
 
 
 def test_only_reviewed_options_tail_changed():

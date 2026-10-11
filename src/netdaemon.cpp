@@ -5825,24 +5825,27 @@ static bool netdaemon_handle_time_control(NetDaemon &daemon,
 }
 
 // Pinned NetDaemon::process_message arm 0x4D00 -> 0x537775. This is a
-// proposal fragment for insertion in the existing owner, not a new identity.
+// shared notification path in the existing owner, not a new identity.
 // Keep packet-derived project and faction indices unchecked as in the image.
 static void netdaemon_process_project_4d00(unsigned char *message) {
-    const int project_id = *reinterpret_cast<int *>(message + 0x10);
-    const int project_status = *reinterpret_cast<int *>(message + 0x14);
-    const int related_project_id = *reinterpret_cast<int *>(message + 0x18);
-    const int faction_id = *reinterpret_cast<int *>(message + 0x04);
+    const MessageCommandView packet(message);
+    const int project_id = packet.payload_10();
+    const int related_project_id = packet.payload_18();
+    const int faction_id = packet.faction();
 
     const RulesFacility &project = Facility[FacilitySPStart + project_id];
+    const int logged_status = packet.payload_14();
     LPSTR project_name = StringTable.get(project.name);
-    log_say("Received PROJECT", project_name, faction_id, project_status,
+    log_say("Received PROJECT", project_name, faction_id, logged_status,
             related_project_id);
 
     if (faction_id == ConsoleGlobal.faction_id_) {
         return;
     }
+    // Native 0x5377C8 reloads status after lookup/logging. Negative values
+    // exit at 0x5377CD without parser or popup work.
+    const int project_status = packet.payload_14();
     if (project_status < 0) {
-        NetMsgPrimary.pop("HALTPROJECT", 5000, 2, nullptr);
         return;
     }
     if (project_status > 2) {
@@ -5860,7 +5863,7 @@ static void netdaemon_process_project_4d00(unsigned char *message) {
         GenderDefault = faction.noun_gender;
         PluralityDefault = faction.is_noun_plural;
         parse_says(2, faction.noun_faction, -1, -1);
-        parse_say(3, project_name, -1, -1);
+        parse_say(3, project.name, -1, -1);
         NetMsgPrimary.pop("CHANGEPROJECT", 5000, 2, nullptr);
         return;
     }
@@ -5876,9 +5879,11 @@ static void netdaemon_process_project_4d00(unsigned char *message) {
     GenderDefault = faction.noun_gender;
     PluralityDefault = faction.is_noun_plural;
     parse_says(2, faction.noun_faction, -1, -1);
-    parse_say(3, project_name, -1, -1);
+    parse_say(3, project.name, -1, -1);
 
-    if (project_status == 0) {
+    // Parser calls precede the native status reload at 0x53790F. The
+    // parser receives the record's raw token, not its translated log name.
+    if (packet.payload_14() == 0) {
         NetMsgPrimary.pop("BEGINPROJECT", 5000, 2, nullptr);
         return;
     }

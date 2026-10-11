@@ -21,6 +21,9 @@ SOURCE = ROOT / "src/netdaemon.cpp"
 HELPER_NAME = "netdaemon_process_project_4d00"
 HOST_PREAMBLE = r"""
 #include <cassert>
+#include <climits>
+#include <cstddef>
+#include <cstring>
 #include <cstdint>
 #include <cstdio>
 #include <string>
@@ -42,8 +45,17 @@ struct Player {
 };
 static Player Players[8];
 static char facility_names[134][32];
+static char display_names[134][32];
+static unsigned char *active_packet;
+static int after_log_status = INT_MIN;
+static int after_parse_status = INT_MIN;
+static int replacement_token = -1;
 struct Strings {
-    LPSTR get(LPSTR text) { return text; }
+    LPSTR get(LPSTR text) {
+        for (int i = 0; i < 134; ++i)
+            if (text == facility_names[i]) return display_names[i];
+        return text;
+    }
 };
 static Strings StringTable;
 struct Base { int faction_id_current; };
@@ -68,26 +80,39 @@ static void log_say(LPCSTR label, LPCSTR value, int a, int b, int c) {
     events.push_back(std::string("log:") + label + ":" + value + ":" +
                      std::to_string(a) + ":" + std::to_string(b) + ":" +
                      std::to_string(c));
+    if (after_log_status != INT_MIN)
+        *reinterpret_cast<int *>(active_packet + 0x14) = after_log_status;
 }
 static void parse_says(int id, LPCSTR text, int gender, int plural) {
     events.push_back(std::string("says:") + std::to_string(id) + ":" +
                      text + ":" +
                      std::to_string(gender < 0 ? GenderDefault : gender) + ":" +
                      std::to_string(plural < 0 ? PluralityDefault : plural));
+    if (id == 2 && replacement_token >= 0)
+        Facility[FacilitySPStart + 3].name = facility_names[FacilitySPStart + replacement_token];
 }
 static int parse_say(int id, LPSTR text, int gender, int plural) {
+    if (id == 3) assert(text == Facility[FacilitySPStart + 3].name);
+    text = StringTable.get(text);
     events.push_back(std::string("say:") + std::to_string(id) + ":" +
                      text + ":" +
                      std::to_string(gender < 0 ? GenderDefault : gender) + ":" +
                      std::to_string(plural < 0 ? PluralityDefault : plural));
+    if (id == 3 && after_parse_status != INT_MIN)
+        *reinterpret_cast<int *>(active_packet + 0x14) = after_parse_status;
     return 1;
 }
 """
 
 HOST_MAIN = r"""
 static void setup(int local, int sender, int status, int project, int related,
-                  int base_id = -1, int base_owner = 0) {
+                  int base_id = -1, int base_owner = 0,
+                  int log_status = INT_MIN, int parse_status = INT_MIN,
+                  int new_token = -1) {
     events.clear();
+    after_log_status = log_status;
+    after_parse_status = parse_status;
+    replacement_token = new_token;
     ConsoleGlobal.faction_id_ = local;
     GenderDefault = 91;
     PluralityDefault = 92;
@@ -98,6 +123,8 @@ static void setup(int local, int sender, int status, int project, int related,
                       sizeof(facility_names[0]), "project_%d", i);
         Facility[FacilitySPStart + i].name =
             facility_names[FacilitySPStart + i];
+        std::snprintf(display_names[FacilitySPStart + i],
+                      sizeof(display_names[0]), "project_%d", i);
         SecretProject[i] = -1;
         Bases[i].faction_id_current = 0;
     }
@@ -105,7 +132,8 @@ static void setup(int local, int sender, int status, int project, int related,
         SecretProject[project] = base_id;
         Bases[base_id].faction_id_current = base_owner;
     }
-    unsigned char packet[0x1C] = {};
+    alignas(int) unsigned char packet[0x1C] = {};
+    active_packet = packet;
     *reinterpret_cast<int *>(packet + 0x04) = sender;
     *reinterpret_cast<int *>(packet + 0x10) = project;
     *reinterpret_cast<int *>(packet + 0x14) = status;
@@ -133,11 +161,27 @@ int main() {
         "says:2:noun-faction:4:1", "say:3:project_3:4:1",
         "pop:CHANGEPROJECT:5000:2:null"}));
     setup(7, 2, -1, 3, 5);
-    assert(events.size() == 2 && events.back() == "pop:HALTPROJECT:5000:2:null");
+    assert(events.size() == 1); // native negative-status exit has no popup
     setup(7, 2, 3, 3, 5);
     assert(events.size() == 1);
     setup(2, 2, -1, 3, 5);
     assert(events.size() == 1); // log precedes packet-local faction exit
+
+    // Controlled callback mutation proves native reload boundaries, not that
+    // ordinary logging/parser implementations routinely mutate these packets.
+    setup(7, 2, 0, 3, 5, -1, 0, -1);
+    assert(events.size() == 1 && events[0] == "log:Received PROJECT:project_3:2:0:5");
+    setup(7, 2, -1, 3, 5, -1, 0, 2);
+    assert(events.back() == "pop:CHANGEPROJECT:5000:2:null");
+    setup(7, 2, 0, 3, 5, -1, 0, INT_MIN, 1);
+    assert(events.back() == "pop:HALTPROJECT:5000:2:null");
+    setup(7, 2, 1, 3, 5, 9, 2, INT_MIN, 0);
+    assert(events.back() == "pop:BEGINPROJECT:5000:2:null");
+    for (int status = 0; status <= 2; status += 2) {
+        setup(7, 2, status, 3, 5, -1, 0, INT_MIN, INT_MIN, 6);
+        assert(events[0].find("project_3") != std::string::npos);
+        assert(events[events.size() - 2] == "say:3:project_6:4:1");
+    }
     std::puts("actual-source 0x4D00 helper controls passed");
 }
 """
@@ -201,7 +245,11 @@ def source_parts():
 def compile_and_run(helper, compiler, directory, label):
     source_path = directory / f"{label}.cpp"
     binary = directory / label
-    source_path.write_text(HOST_PREAMBLE + "\n" + helper + "\n" + HOST_MAIN)
+    from test_netdaemon_transfer_modal import extract
+    actual = SOURCE.read_text()
+    wire = extract(actual, "struct MessageDataRecord {") + ";\n"
+    wire += extract(actual, "class MessageCommandView {") + ";\n"
+    source_path.write_text(HOST_PREAMBLE + "\n" + wire + helper + "\n" + HOST_MAIN)
     subprocess.run(
         [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
          str(source_path), "-o", str(binary)],
@@ -254,18 +302,30 @@ def test_actual_source_damage_controls_fail():
     _, helper, _ = source_parts()
     mutants = {
         "wrong_packet_identity": (
-            "message + 0x04", "message + 0x08"),
+            "packet.faction()", "packet.timestamp_bits()"),
         "wrong_related_project_offset": (
-            "message + 0x18", "message + 0x14"),
+            "packet.payload_18()", "packet.payload_14()"),
         "wrong_status_gate": (
             "if (project_status > 2)", "if (project_status >= 2)"),
+        "cached_post_log_status": (
+            "const int project_status = packet.payload_14();",
+            "const int project_status = logged_status;"),
+        "cached_post_parse_status": (
+            "if (packet.payload_14() == 0)",
+            "if (project_status == 0)"),
+        "translated_parser_token": (
+            "parse_say(3, project.name, -1, -1);",
+            "parse_say(3, project_name, -1, -1);", 2),
+        "negative_popup": (
+            "if (project_status < 0) {",
+            "if (project_status < 0) { NetMsgPrimary.pop(\"HALTPROJECT\", 5000, 2, nullptr);"),
         "status_two_defaults_no_longer_inherit": (
             "parse_says(0, faction.adj_name_faction, -1, -1);",
             "GenderDefault = faction.noun_gender;\n"
             "        PluralityDefault = faction.is_noun_plural;\n"
             "        parse_says(0, faction.adj_name_faction, -1, -1);"),
         "local_exit_precedes_log": (
-            "    log_say(\"Received PROJECT\", project_name, faction_id, project_status,\n"
+            "    log_say(\"Received PROJECT\", project_name, faction_id, logged_status,\n"
             "            related_project_id);\n\n"
             "    if (faction_id == ConsoleGlobal.faction_id_) {\n"
             "        return;\n"
@@ -273,7 +333,7 @@ def test_actual_source_damage_controls_fail():
             "    if (faction_id == ConsoleGlobal.faction_id_) {\n"
             "        return;\n"
             "    }\n"
-            "    log_say(\"Received PROJECT\", project_name, faction_id, project_status,\n"
+            "    log_say(\"Received PROJECT\", project_name, faction_id, logged_status,\n"
             "            related_project_id);"),
         "wrong_parse_order": (
             "parse_says(2, faction.noun_faction, -1, -1);",
