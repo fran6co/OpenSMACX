@@ -29,8 +29,10 @@ def _hex(value: object) -> int:
 def render_component(manifest: ComponentManifest) -> str:
     data = json.loads(canonical(manifest.to_dict()))
     bindings = data.pop("bindings")
-    origins = {(binding["origin"]["image_sha256"], binding["origin"]["address_space"])
-               for binding in bindings}
+    origin_rows = ([binding["origin"] for binding in bindings]
+                   + [item["origin"] for item in data.get("data_sections", [])]
+                   + [item["origin"] for item in data.get("code_sections", [])])
+    origins = {(origin["image_sha256"], origin["address_space"]) for origin in origin_rows}
     if len(origins) != 1:
         raise ValueError("a component source mapping must identify one original image/address space")
     image, space = origins.pop()
@@ -75,8 +77,10 @@ def parse_component(text: str) -> ComponentManifest:
     image = data.pop("image", None)
     if not isinstance(image, dict) or set(image) != {"sha256", "address_space"}:
         raise ValueError("component annotation needs one pinned image/address space")
-    if not isinstance(data.get("bindings"), list) or not data["bindings"]:
-        raise ValueError("component annotation needs original bindings")
+    if not isinstance(data.get("bindings"), list):
+        raise ValueError("component annotation bindings must be an array")
+    if not data["bindings"] and not (data.get("code_sections") or data.get("data_sections")):
+        raise ValueError("component annotation needs an original function or section binding")
     for binding in data["bindings"]:
         if not isinstance(binding, dict) or "origin" not in binding or not isinstance(binding.get("spans"), list):
             raise ValueError("invalid source binding")
