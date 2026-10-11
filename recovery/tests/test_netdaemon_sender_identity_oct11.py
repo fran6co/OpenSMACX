@@ -60,6 +60,13 @@ def apply_lock_response_migration(source):
     before = "                         sender, 0, 0, 0, 0);\n        }\n        daemon->locks_.check_global();"
     after = "                         sender, 0, 0, 0, 0);\n            return true;\n        }\n        message_data(0x1201, sender, 0, 0, 0, 0);\n        daemon->locks_.check_global();"
     assert source.count(before) == 1
+    return apply_lock_operand_migration(source.replace(before, after, 1))
+
+
+def apply_lock_operand_migration(source):
+    before = "            field_10, field_14,\n            *reinterpret_cast<int *>(message + 0x1C),\n            *reinterpret_cast<int *>(message + 0x24),"
+    after = "            *reinterpret_cast<int *>(message + 0x10),\n            *reinterpret_cast<int *>(message + 0x14),\n            *reinterpret_cast<int *>(message + 0x24),\n            *reinterpret_cast<int *>(message + 0x1C),"
+    assert source.count(before) == 1
     return source.replace(before, after, 1)
 
 

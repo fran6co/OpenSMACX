@@ -31,11 +31,21 @@ static int ConsoleControlTurnActive;
 struct Console { int faction_id_; } ConsoleGlobal;
 static std::vector<std::string> events;
 static int logged_sender = -1;
+static int logged_x=-1, logged_y=-1;
+static unsigned char *mutated_packet;
 static int sent_type = -1, sent_target = -1, sends;
-static void log_say(const char *label, int a, int, int) {
+static void log_say(const char *label, int a, int b, int c) {
     events.push_back(std::string("log:") + label);
     if (std::string(label) == "From Client: LOCK" ||
         std::string(label) == "From Client: LOCK GLOBAL") logged_sender = a;
+    if (std::string(label)=="From Client: LOCK") {
+        logged_x=b; logged_y=c;
+        if (mutated_packet) {
+            const int x=101, y=102;
+            std::memcpy(mutated_packet+0x10,&x,4);
+            std::memcpy(mutated_packet+0x14,&y,4);
+        }
+    }
 }
 static void message_data(int type, int target, int, int, int, int) {
     events.push_back("send"); ++sends; sent_type = type; sent_target = target;
@@ -80,9 +90,18 @@ int main() {
     assert(logged_sender == 1 && accepted.locks_.lock_calls_ == 1);
     assert(accepted.locks_.args_[0] == 1 && accepted.locks_.args_[1] == 12);
     assert(accepted.locks_.args_[2] == 10 && accepted.locks_.args_[3] == 11);
-    assert(accepted.locks_.args_[4] == 13 && accepted.locks_.args_[5] == 14);
+    assert(accepted.locks_.args_[4] == 14 && accepted.locks_.args_[5] == 13);
     assert(accepted.locks_.args_[6] == 15);
     assert(sent_type == 0x1201 && sent_target == 1);
+    // Native logs old coordinates, but reloads both after the callback.
+    mutated_packet=packet;
+    NetDaemon reentrant;
+    assert(netdaemon_handle_client_lock_message(&reentrant,0x2210,packet,1));
+    assert(logged_x==10 && logged_y==11);
+    assert(reentrant.locks_.args_[2]==101 && reentrant.locks_.args_[3]==102);
+    assert(reentrant.locks_.args_[4]==14 && reentrant.locks_.args_[5]==13);
+    mutated_packet=nullptr;
+    put32(packet,0x10,10); put32(packet,0x14,11);
 
     // Reverse the decoy: resolved remote identity must reject even though
     // the packet word claims the local faction.
@@ -229,6 +248,8 @@ def test_actual_helper_controls_and_identity_mutation_under_gcc_and_clang():
         "missing_ready_reply": helper.replace(reply_tail, "        daemon->locks_.check_global();"),
         "failure_fallthrough": helper.replace(failure_tail, failure_tail.replace("            return true;\n", "")),
         "failure_global_check": helper.replace(failure_tail, failure_tail.replace("            return true;", "            daemon->locks_.check_global();\n            return true;")),
+        "cached_coordinates": helper.replace("            *reinterpret_cast<int *>(message + 0x10),\n            *reinterpret_cast<int *>(message + 0x14),", "            field_10, field_14,"),
+        "swapped_operands": helper.replace("            *reinterpret_cast<int *>(message + 0x24),\n            *reinterpret_cast<int *>(message + 0x1C),", "            *reinterpret_cast<int *>(message + 0x1C),\n            *reinterpret_cast<int *>(message + 0x24),"),
     }
     with tempfile.TemporaryDirectory(prefix="osmx-2210-identity-") as temporary:
         directory = Path(temporary)
@@ -253,10 +274,24 @@ def test_pinned_lock_reply_opcodes_and_global_branch_order():
                    "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
     cs = Cs(CS_ARCH_X86, CS_MODE_32)
     instructions = {}
-    for start, end in ((0x535C70, 0x535D07), (0x535D07, 0x535D70)):
+    for start, end in ((0x535C4C, 0x535D07), (0x535D07, 0x535D70)):
         instructions.update({i.address: (i.mnemonic, i.op_str)
                             for i in cs.disasm(image.read(Span(start, end)), start)})
     expected = {
+        0x535C4C: ("mov", "eax, dword ptr [ebx + 0x20]"),
+        0x535C4F: ("mov", "edx, dword ptr [ebx + 0x1c]"),
+        0x535C52: ("push", "eax"),
+        0x535C53: ("mov", "eax, dword ptr [ebx + 0x24]"),
+        0x535C56: ("push", "edx"),
+        0x535C57: ("mov", "edx, dword ptr [ebx + 0x14]"),
+        0x535C5A: ("push", "eax"),
+        0x535C5B: ("mov", "eax, dword ptr [ebx + 0x10]"),
+        0x535C5E: ("push", "edx"),
+        0x535C5F: ("mov", "edx, dword ptr [ebx + 0x18]"),
+        0x535C62: ("push", "eax"),
+        0x535C63: ("push", "edx"),
+        0x535C6A: ("push", "edi"),
+        0x535C6B: ("call", "0x590300"),
         0x535C8C: ("push", "edi"),
         0x535C9A: ("add", "eax, 0x1202"),
         0x535D20: ("call", "0x5902c0"),

@@ -5189,9 +5189,10 @@ static bool netdaemon_handle_client_lock_message(NetDaemon *daemon,
 
         const int result = daemon->locks_.lock(
             sender, *reinterpret_cast<int *>(message + 0x18),
-            field_10, field_14,
-            *reinterpret_cast<int *>(message + 0x1C),
+            *reinterpret_cast<int *>(message + 0x10),
+            *reinterpret_cast<int *>(message + 0x14),
             *reinterpret_cast<int *>(message + 0x24),
+            *reinterpret_cast<int *>(message + 0x1C),
             *reinterpret_cast<int *>(message + 0x20));
         if (result != 0) {
             log_say("(Sending: Lock Failed)", 0, 0, 0);
