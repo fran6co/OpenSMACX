@@ -10,6 +10,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 
 import pytest
@@ -173,4 +174,21 @@ def test_runtime_controls_reject_member_or_clip_rectangle_mutants(
     body = extract_method(SOURCE.read_text(encoding="utf-8"))
     mutant = body.replace(old, new, 1)
     assert mutant != body, f"mutation anchor absent: {old}"
+    build_and_run(translation_unit(mutant), compiler, expect_success=False)
+
+
+@pytest.mark.parametrize("compiler", ("g++", "clang++"))
+def test_actual_remap_cell_rejects_pointer_truncation(compiler: str) -> None:
+    if sys.maxsize <= 0xffffffff:
+        pytest.skip("pointer truncation control requires a 64-bit host")
+    body = extract_method(SOURCE.read_text(encoding="utf-8"))
+    before = "(*blit_remap_table) = remap;"
+    assert body.count(before) == 1
+    mutant = body.replace(
+        before,
+        "(*blit_remap_table) = reinterpret_cast<const void *>(\n"
+        "          static_cast<uint32_t>(texture_pointer_address(remap)));",
+        1,
+    )
+    build_and_run(translation_unit(body), compiler, expect_success=True)
     build_and_run(translation_unit(mutant), compiler, expect_success=False)

@@ -14,7 +14,7 @@ struct EdgeScan {
 
 static unsigned char destination_bytes[256];
 static void *slot_pixel_base, *slot_pixels, *slot_shade;
-static uintptr_t slot_remap;
+static const void *slot_remap;
 static int slot_height, slot_count;
 static int slot_stride, slot_width, slot_clip_right, slot_clip_left;
 static int slot_clip_bottom, slot_clip_top, slot_max_y, slot_row, slot_du, slot_dv;
@@ -22,7 +22,7 @@ static int slot_498, slot_4c4, slot_530, slot_4f8, slot_53c;
 static int slot_span_left, slot_span_right;
 
 static void **blit_pixel_base = &slot_pixel_base;
-static uintptr_t *blit_remap_table = &slot_remap;
+static const void **blit_remap_table = &slot_remap;
 static Vert *uv_b_cell = 0;
 static Vert **blit_edge_uvs_b = &uv_b_cell;
 static void **blit_texture_pixels = &slot_pixels;

@@ -1,7 +1,11 @@
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
 #include <cassert>
 #include <stdint.h>
 #include <cstring>
 #include <vector>
+#include <sys/mman.h>
 
 #define __int64 long long
 typedef unsigned char byte;
@@ -85,7 +89,8 @@ static int cell_buffer_stride, cell_clip_bottom, cell_clip_left, cell_clip_right
     cell_slot_530, cell_slot_53c, cell_slot_53e, cell_dither,
     cell_z_key;
 static void *cell_pixel_base, *cell_shade_table, *cell_texture_pixels;
-static uintptr_t cell_remap_table, cell_slot_558;
+static const void *cell_remap_table;
+static uintptr_t cell_slot_558;
 static int *cell_z_values;
 static Vert *cell_edge_a;
 static Vert *cell_edge_b;
@@ -100,7 +105,7 @@ static unsigned short *blit_light_pack_a = reinterpret_cast<unsigned short *>(&c
 static int *blit_light_step_b = &cell_light_step_b;
 static int *blit_max_y_index = &cell_max_y;
 static void **blit_pixel_base = &cell_pixel_base;
-static uintptr_t *blit_remap_table = &cell_remap_table;
+static const void **blit_remap_table = &cell_remap_table;
 static int *blit_row_offset = &cell_row_offset;
 static void **blit_shade_table = &cell_shade_table;
 static int *blit_slot_4d8 = &cell_slot_4d8;
@@ -186,7 +191,7 @@ static Buffer buffer;
 static unsigned char pixels[64];
 static unsigned char texels[256];
 static int z_values[8];
-static uint32_t remap_words[256];
+static uint32_t *remap_words;
 static void *shade_words[256];
 static Vert input_vertices[8];
 static Vert input_xy[8];
@@ -256,7 +261,10 @@ static void test_four_and_eight_vertex_member_bindings() {
     assert(TextureRowPitchScratch == 31 && cell_texture_width == 31 && cell_texture_height == 47);
     assert(cell_edge_b == input_vertices);
     assert(cell_z_values == z_values);
-    assert(cell_remap_table == reinterpret_cast<uintptr_t>(remap_words));
+    assert(cell_remap_table == remap_words);
+#if defined(__linux__) && UINTPTR_MAX > UINT32_MAX
+    assert(reinterpret_cast<uintptr_t>(cell_remap_table) > UINT32_MAX);
+#endif
     assert(cell_shade_table == shade_words[0]);
     assert(static_cast<uint32_t>(cell_slot_55c) == 0x12345678u);
     assert(cell_buffer_stride == 73);
@@ -379,9 +387,22 @@ static void test_draw_trans3_light_clamp_setup_and_sentinel() {
 }
 
 int main() {
+#if defined(__linux__) && UINTPTR_MAX > UINT32_MAX
+    void *remap_mapping = mmap(0, 4096, PROT_READ | PROT_WRITE,
+                               MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    assert(remap_mapping != MAP_FAILED);
+    assert(reinterpret_cast<uintptr_t>(remap_mapping) > UINT32_MAX);
+    remap_words = static_cast<uint32_t *>(remap_mapping);
+#else
+    uint32_t low_remap_words[256];
+    remap_words = low_remap_words;
+#endif
     test_four_and_eight_vertex_member_bindings();
     test_high_y_retains_original_pointer_bits_as_index();
     test_guard_order_and_release();
     test_draw_trans2_member_setup_without_raster();
     test_draw_trans3_light_clamp_setup_and_sentinel();
+#if defined(__linux__) && UINTPTR_MAX > UINT32_MAX
+    assert(munmap(remap_mapping, 4096) == 0);
+#endif
 }

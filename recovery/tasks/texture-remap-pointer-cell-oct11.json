@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "task_id": "texture-remap-pointer-cell-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover the shared Texture remap/lookup cell as a real pointer across all producers and byte/DWORD consumers, preserving native arithmetic and historical matching obligations.",
+  "base_revision": "eb5295280a402f3b89157f79878ffdca01e4eb3a",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6417104
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6415680
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6438784
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6414176
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6431232
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6407728
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6412688
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6409040
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6418640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6423264
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6424128
+    }
+  ],
+  "editable_files": [
+    "src/texture.cpp",
+    "recovery/tests/draw_mask_host_control.cpp",
+    "recovery/tests/fixtures/texture_draw_coast_wide_host.cpp",
+    "recovery/tests/fixtures/texture_sub61cb50_actual_host.cpp",
+    "recovery/tests/fixtures/texture_sub61df60/host.cpp",
+    "recovery/tests/fixtures/texture_sub61f0d0_actual_host.cpp",
+    "recovery/tests/test_texture_draw_coast_actual_source.py",
+    "recovery/tests/test_texture_lookup_pointer_contract_oct11.py",
+    "recovery/tests/test_texture_pointer_storage_oct9.py",
+    "recovery/tests/test_texture_raster_edge_members_oct10.py",
+    "recovery/tests/test_texture_sub61f0d0_actual_source.py",
+    "recovery/tests/test_texture_palette_storage_oct11.py",
+    "recovery/tests/test_texture_shade_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned draw_coast61EAD0 loads a pointer argument into EBX at61EB05 and stores it to9BB550 at61EB39;61F03E adds that pointer base to a zero-extended byte index, then61F044 reads a byte. sub6202E0 shifts a zero-extended byte index left2 at6204F9, adds9BB550 at6204FC and reads a DWORD at620502. This is shared table-pointer storage, not a scalar or a universally byte-element table.",
+    "All nine producers publish table pointer parameters. Use const void* for the shared cell without assigning an unproved single element type, complete table allocation extent, original symbol spelling, or owner beyond the current Texture raster state. Integer-domain offset construction preserves original 32-bit wrapping and the separate shade cursor; no pointer subtraction or safety fix.",
+    "Keep object binding9BB550, all ORIGINAL identities/spans/history/claims, public signatures and unaffected source text. Update host fixtures to the same pointer contract; historical lexical migration controls may project only this independently verified later change, retaining their original exact source comparisons. Actual-body byte and DWORD lookup controls and damage sensitivity, pinned instructions, independent review, native Texture measurements and fresh full application compile/link are required. This creates no new function coverage or byte claim and does not prove full game acceptance."
+  ]
+}

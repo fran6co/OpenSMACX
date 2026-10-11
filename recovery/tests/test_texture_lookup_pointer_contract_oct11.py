@@ -1,5 +1,6 @@
 """Use-derived pointer contracts; no unseen shade class or raster proof."""
 from pathlib import Path
+import re
 import subprocess
 import pytest
 
@@ -12,6 +13,70 @@ ROOT = Path(__file__).resolve().parents[2]
 BASE = "8e6691299"
 OLD_SYMBOL = "?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHIH@Z"
 NEW_SYMBOL = "?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPBXPBIPBEH@Z"
+
+
+def project_raster_pointer_cell_change(source):
+    """Project the later 9bb550 pointer-cell migration out of this checkpoint."""
+    def exact(before, after, count=1):
+        nonlocal source
+        assert source.count(before) == count, (before, source.count(before), count)
+        source = source.replace(before, after)
+
+    exact("// Callers publish a table pointer here. The pinned 0x61EB05/0x61EB39 path\n"
+          "// writes the remap pointer, 0x61F03E/0x61F044 consumes byte entries, and\n"
+          "// 0x6204F9/0x6204FC/0x620502 reads four-byte entries from the same cell. The\n"
+          "// pointer is generic because these consumers use different table element\n"
+          "// widths; this does not assert a capacity for every producer.\n", "")
+    exact("static const void *TextureRasterScratch550;", "static uintptr_t TextureRasterScratch550;")
+    exact("static const void **const blit_remap_table = &TextureRasterScratch550;",
+          "static uintptr_t *const blit_remap_table = &TextureRasterScratch550;")
+    exact("blit_remap_table[0] = a5;", "blit_remap_table[0] = reinterpret_cast<uintptr_t>(a5);")
+    exact("*blit_remap_table = remap;", "*blit_remap_table = reinterpret_cast<uintptr_t>(remap);", 4)
+    exact("*blit_remap_table = a5;", "*blit_remap_table = reinterpret_cast<uintptr_t>(a5);")
+    exact("*blit_remap_table = a6;", "*blit_remap_table = reinterpret_cast<uintptr_t>(a6);")
+    exact("*blit_remap_table = shadeTable;", "*blit_remap_table = reinterpret_cast<uintptr_t>(shadeTable);")
+    exact("(*blit_remap_table) = remap;", "(*blit_remap_table) = texture_pointer_address(remap);")
+
+    # Restore the former address-to-pointer spelling at byte-table consumers.
+    exact("static_cast<const unsigned char *>(*blit_remap_table)",
+          "reinterpret_cast<const unsigned char *>(*blit_remap_table)", 4)
+    byte_cast = "reinterpret_cast<const unsigned char *>(*blit_remap_table)"
+    assert source.count(byte_cast) == 4
+    first_byte_cast = source.index(byte_cast)
+    source = source[:first_byte_cast] + "reinterpret_cast<const unsigned char *>(static_cast<intptr_t>(*blit_remap_table))" + source[first_byte_cast + len(byte_cast):]
+    byte_cast = "reinterpret_cast<const unsigned char *>(*blit_remap_table)"
+    assert source.count(byte_cast) == 3
+    last_byte_cast = source.rfind(byte_cast)
+    source = source[:last_byte_cast] + "reinterpret_cast<unsigned char *>(*blit_remap_table)" + source[last_byte_cast + len(byte_cast):]
+    exact("const unsigned char *table =\n                                                reinterpret_cast<unsigned char *>(*blit_remap_table);",
+          "unsigned char *table =\n                                                reinterpret_cast<unsigned char *>(*blit_remap_table);")
+
+    # Restore the original byte-offset lookup and four-byte-entry lookup
+    # expressions, with exact occurrence counts so this remains a narrow
+    # historical projection rather than a generic cast normalizer.
+    exact("""texture_pointer_offset(*blit_remap_table, static_cast<uint32_t>(concat22(
+                                                        static_cast<unsigned short>(
+                                                            static_cast<unsigned int>(texture_pointer_address(*blit_shade_table)) >> 16),
+                                                        static_cast<unsigned short>(
+                                                            reinterpret_cast<unsigned int>(puVar11)))))""",
+          "static_cast<unsigned int>(concat22(\n                                                        static_cast<unsigned short>(\n                                                            static_cast<unsigned int>(texture_pointer_address(*blit_shade_table)) >> 16),\n                                                        static_cast<unsigned short>(\n                                                            reinterpret_cast<unsigned int>(puVar11)))) +\n                                                    *blit_remap_table")
+    exact("unsigned char texel = *reinterpret_cast<const unsigned char *>(\n                                                    static_cast<unsigned int>(concat22(",
+          "unsigned char texel = *reinterpret_cast<unsigned char *>(\n                                                    static_cast<unsigned int>(concat22(")
+    source, count = re.subn(
+        r"\*reinterpret_cast<const unsigned int \*>\(\s*texture_pointer_offset\(\*blit_remap_table, texel \* 4\)\)",
+        "*reinterpret_cast<int *>((*blit_remap_table) + texel * 4)", source)
+    assert count == 4, count
+    dword_index = re.compile(
+        r"\*reinterpret_cast<const int \*>\(texture_pointer_offset\(\s*\*blit_remap_table,\s*static_cast<uint32_t>\(\*reinterpret_cast<const unsigned char \*>\(\*blit_slot_558\)\) \* 4\)\)")
+    matches = list(dword_index.finditer(source))
+    assert len(matches) == 6, len(matches)
+    spellings = (
+        "*reinterpret_cast<int *>((*reinterpret_cast<const unsigned char *>(*blit_slot_558)) * 4 + *blit_remap_table)",
+        "*(int *)((uint)(*(byte *)(*blit_slot_558)) * 4 + (*blit_remap_table))",
+    )
+    for index, match in reversed(list(enumerate(matches))):
+        source = source[:match.start()] + spellings[0 if index < 3 else 1] + source[match.end():]
+    return source
 
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
@@ -52,7 +117,8 @@ def test_pointer_contract_changes_only_selected_body_and_symbol_bindings():
     expected=expected.replace(OLD_SYMBOL,NEW_SYMBOL)
     # Project only the independently verified later palette-cell migration
     # out of this earlier exact whole-source checkpoint.
-    restored=current.replace("static unsigned char *TextureRasterPalette;", "static int TextureRasterPalette;")
+    restored=project_raster_pointer_cell_change(current)
+    restored=restored.replace("static unsigned char *TextureRasterPalette;", "static int TextureRasterPalette;")
     restored=restored.replace("static unsigned char **const blit_slot_564 = &TextureRasterPalette;",
                               "static int *const blit_slot_564 = &TextureRasterPalette;")
     restored=restored.replace("*blit_slot_564 = palette;",

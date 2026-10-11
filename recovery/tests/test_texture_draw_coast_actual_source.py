@@ -76,7 +76,8 @@ struct Buffer {
 };
 
 static void *pixel_base_value, *texture_pixels_value, *coast_pixels_value;
-static int remap_value, vertex_count_value;
+static const void *remap_value;
+static int vertex_count_value;
 static int buffer_stride_value, texture_width_value, max_y_index_value;
 static int row_offset_value, clip_left_value, clip_top_value, clip_right_value, clip_bottom_value;
 static int step_u_value, step_v_value;
@@ -89,7 +90,7 @@ static Vert *uv_vertices_cell = 0;
 static Vert **blit_edge_uvs_b = &uv_vertices_cell;
 static int *z_values_cell = 0;
 static int **blit_z_values = &z_values_cell;
-static int *blit_remap_table = &remap_value;
+static const void **blit_remap_table = &remap_value;
 static void **blit_texture_pixels = &texture_pixels_value;
 static int TextureRowPitchScratch;
 static int texture_height_value, *blit_texture_height = &texture_height_value;

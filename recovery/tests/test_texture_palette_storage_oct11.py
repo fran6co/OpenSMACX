@@ -72,7 +72,10 @@ def test_exact_bounded_storage_migration_and_identity_continuity():
     for old, new, count in EDITS:
         assert expected.count(old) == count
         expected = expected.replace(old, new)
-    assert path.read_text() == expected
+    # Keep this earlier palette checkpoint exact after projecting only the
+    # independently checked, later shared remap-pointer migration.
+    from test_texture_lookup_pointer_contract_oct11 import project_raster_pointer_cell_change
+    assert project_raster_pointer_cell_change(path.read_text()) == expected
     from recovery.tests.test_texture_raster_actual_source import _continuity_fields
     assert [_continuity_fields(r) for r in read_text(before, path)] == [
         _continuity_fields(r) for r in read_text(expected, path)]

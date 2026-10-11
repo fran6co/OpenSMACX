@@ -17,6 +17,8 @@ import sys
 import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from match_recovery.source import read_text
+from test_texture_raster_actual_source import _continuity_fields
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -75,8 +77,8 @@ static int *const blit_buffer_stride = &buffer_stride_value;
 static void *texture_pixels_value;
 static void **const blit_texture_pixels = &texture_pixels_value;
 static int TextureRowPitchScratch;
-static uintptr_t remap_address_value;
-static uintptr_t *const blit_remap_table = &remap_address_value;
+static const void *remap_address_value;
+static const void **const blit_remap_table = &remap_address_value;
 static void *shade_table_value;
 static void **const blit_shade_table = &shade_table_value;
 static uintptr_t shade_cursor_storage;
@@ -205,7 +207,7 @@ int main() {
     shade_table[9] = 3;
     remap[3] = 7;
     shade_table_value = shade_table;
-    remap_address_value = reinterpret_cast<uintptr_t>(remap);
+    remap_address_value = remap;
     sub_6202e0(left, right);
     assert_destination(destination, 57, 58);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
@@ -220,7 +222,7 @@ int main() {
     remap[3] = 7;
     dither[source[9]] = 1;
     shade_table_value = shade_table;
-    remap_address_value = reinterpret_cast<uintptr_t>(remap);
+    remap_address_value = remap;
     dither_address_value = static_cast<int>(reinterpret_cast<uintptr_t>(dither));
     sub_620640(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
                static_cast<int>(reinterpret_cast<uintptr_t>(right)));
@@ -298,7 +300,7 @@ int main() {
     shade_table[9] = 3;
     remap[3] = 7;
     shade_table_value = shade_table;
-    remap_address_value = reinterpret_cast<uintptr_t>(remap);
+    remap_address_value = remap;
     snapshot_records(*left, *right, left_bytes, right_bytes);
     sub_6202e0(left, right);
     assert_destination(destination, 6, 211);
@@ -315,7 +317,7 @@ int main() {
     remap[3] = 7;
     dither[source[9]] = 1;
     shade_table_value = shade_table;
-    remap_address_value = reinterpret_cast<uintptr_t>(remap);
+    remap_address_value = remap;
     dither_address_value = static_cast<int>(reinterpret_cast<uintptr_t>(dither));
     snapshot_records(*left, *right, left_bytes, right_bytes);
     sub_620640(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
@@ -442,6 +444,34 @@ def test_four_actual_edge_raster_bodies_use_typed_fields(compiler, tmp_path):
                     else ("accumA", "accumB", "accumC", "accumD")))
     ran = _compile_and_run(source, compiler_path, tmp_path, f"actual_{compiler}")
     assert ran.returncode == 0, ran.stdout + ran.stderr
+
+
+@pytest.mark.parametrize("compiler", ("g++", "clang++"))
+def test_dword_remap_stride_mutant_fails_actual_pixel_fixture(compiler, tmp_path):
+    _require_low_address_host()
+    compiler_path = shutil.which(compiler)
+    if compiler_path is None:
+        pytest.skip(f"{compiler} is unavailable")
+    source = TEXTURE.read_text(encoding="utf-8")
+    before = "texture_pointer_offset(*blit_remap_table, texel * 4)"
+    assert source.count(before) == 4
+    mutated = source.replace(before, "texture_pointer_offset(*blit_remap_table, texel)")
+    ran = _compile_and_run(mutated, compiler_path, tmp_path,
+                           f"mutant_dword_remap_stride_{compiler}")
+    assert ran.returncode != 0, "byte-stride table mutant unexpectedly passed"
+
+
+def test_texture_mapping_identity_and_claims_survive_pointer_cell_migration():
+    baseline = subprocess.check_output(
+        ["git", "show", "eb5295280:src/texture.cpp"], cwd=ROOT, text=True)
+    current = TEXTURE.read_text(encoding="utf-8")
+    before_records = {record.address: record for record in read_text(baseline, TEXTURE)}
+    after_records = {record.address: record for record in read_text(current, TEXTURE)}
+    assert set(before_records) == set(after_records)
+    for address, record in before_records.items():
+        assert _continuity_fields(record) == _continuity_fields(after_records[address]), hex(address)
+        assert record.symbol == after_records[address].symbol, hex(address)
+        assert record.function_fragment == after_records[address].function_fragment, hex(address)
 
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
