@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-exception-helpers-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind two independently bounded static VC6 exception helpers to exclusive physical frame.obj contributions; preserve deeper exception-handler and provider-selection obligations.",
+  "base_revision": "de298dcd28b4b42598aaa47a12e3e612b9767169",
+  "subjects": [
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6589421},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6590697}
+  ],
+  "editable_files": ["src/vendor/vc6-runtime.recovery.h", "recovery/tests/test_crt_exception_helpers_oct11.py", "recovery/tests/test_crt_fp_control_oct11.py"],
+  "evidence": [
+    "Independent pinned IDA and Ghidra12.1.2 extents agree on TypeMatch648BED..648C4A and AdjustPointer6490E9..64910C. Native incoming calls648AAB and648F4D/648FEA/649031/64904B corroborate callable entries. Physical frame.obj sections5/20 contain unique static function symbols at valuezero, exclusive extents93/35, with the only relocation at TypeMatch+39 targeting the existing strcmp645660 binding.",
+    "Require native strict boundary/complete-byte/reference PASS for both helpers and exact equality of all91 prior verdict rows. Preserve the26 existing UNKNOWNs, all source original identities/spans/claims and every manifest field other than two appended bindings. Damage controls change extents, bytes or the relative call displacement under a fresh image pin; explicitly masking only that four-byte displacement hides the changed target, while strict relocated-byte and reference checks must both fail.",
+    "Older FP and strict-frontier controls project out only these exactly identified two additions through a checked helper; no arbitrary symbol filtering, demotion or count reset. Independent review, source mappings/references, historical identity continuity and fresh application compile/link remain required. This is dependency correspondence, not full C++ exception/runtime recovery, original provider/retained-link selection, runtime or game acceptance; adds no application implementation or byte claim."
+  ]
+}

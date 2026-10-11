@@ -29,6 +29,8 @@ EXPECTED = (
 
 def without_fp_control(manifest):
     """Remove only this fully identified addition from historical controls."""
+    from recovery.tests.test_crt_exception_helpers_oct11 import without_exception_helpers
+    manifest = without_exception_helpers(manifest)
     owned = {row[2] for row in EXPECTED}
     added = tuple(b for b in manifest.bindings if b.symbol in owned)
     if not added:
@@ -44,7 +46,8 @@ def previous():
 
 def test_only_five_complete_bindings_added():
     before, after = previous(), SOURCE.read_text()
-    old, current = parse_component(before), parse_component(after)
+    from recovery.tests.test_crt_exception_helpers_oct11 import without_exception_helpers
+    old, current = parse_component(before), without_exception_helpers(parse_component(after))
     assert without_fp_control(current) == old
     assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in current.bindings[-5:]] == [r[:4] for r in EXPECTED]
     assert all("not original archive selection" in b.evidence for b in current.bindings[-5:])
@@ -57,7 +60,8 @@ def artifacts():
     image, archive = ROOT / ".opensmacx/game/terranx_original.exe", VC6_ROOT / "LIB/LIBCMT.LIB"
     if not image.is_file() or not archive.is_file():
         pytest.skip("pinned original and external runtime archive required")
-    return parse_component(SOURCE.read_text()), image.read_bytes(), archive.read_bytes()
+    from recovery.tests.test_crt_exception_helpers_oct11 import without_exception_helpers
+    return without_exception_helpers(parse_component(SOURCE.read_text())), image.read_bytes(), archive.read_bytes()
 
 
 def test_strict_closure_and_all_previous_verdicts(artifacts):
