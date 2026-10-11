@@ -20,6 +20,7 @@ from test_crt_eight_entry_bindings_oct10 import repin, raw_offset
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "209b1258c"
+ADDITION = "f5dc7f52a"
 COMPANION = "src/vendor/vc6-runtime.recovery.h"
 EXPECTED = (
     (0x00646829, 0x00646855, "__mkdir", "build/intel/mt_obj/mkdir.obj", 1, "e1607841a197a3a188f4bc29cd8e1e90393965e41dc19ce0563f4cd6c5c4d009"),
@@ -59,8 +60,11 @@ def prior():
 
 def test_preserves_source_and_previous_bindings():
     old = prior()
-    text = (ROOT / COMPANION).read_text()
+    text = subprocess.check_output(
+        ["git", "show", ADDITION + ":" + COMPANION], cwd=ROOT, text=True)
     before, after = parse_component(old), parse_component(text)
+    installed = parse_component((ROOT / COMPANION).read_text())
+    assert replace(installed, bindings=installed.bindings[:232]) == after
     assert len(before.bindings) == 224 and len(after.bindings) == 232
     assert replace(after, bindings=after.bindings[:224]) == before
     assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit)
@@ -87,7 +91,8 @@ def inputs():
         assert path.is_file(), "explicit pinned image path unavailable"
     if not path.is_file() or not archive_path.is_file():
         pytest.skip("external pinned image/runtime archive unavailable")
-    manifest = parse_component((ROOT / COMPANION).read_text())
+    manifest = parse_component(subprocess.check_output(
+        ["git", "show", ADDITION + ":" + COMPANION], cwd=ROOT, text=True))
     image, archive = path.read_bytes(), archive_path.read_bytes()
     assert hashlib.sha256(image).hexdigest() == manifest.bindings[0].origin.image_sha256
     assert hashlib.sha256(archive).hexdigest() == manifest.archive_sha256
