@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task_id": "council-selection-paths-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore original council click selection dataflow and branch-specific cancellation without changing other voting/error paths.",
+  "base_revision": "bf8268f4621fc58fc2e8233b0e09f561d9e90e81",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4345936
+    }
+  ],
+  "editable_files": [
+    "src/councwin.cpp",
+    "recovery/tests/test_council_selection_paths_oct11.py",
+    "recovery/tests/council-selection-paths-oct11.patch",
+    "recovery/tests/test_emitted_symbol_facts_oct11.py"
+  ],
+  "evidence": [
+    "Pinned42511F dead-target branch reaches4253CA: reload original y argument from ebp+C, not Spot's local type output. Rejoin425362 shared9999 sentinel before net reads/field_A40 writes. This edge has no generic signed-negative cancellation.",
+    "Government exec42534A result is tested signed-negative at425351/425356; cleanup4259B5 reloads receiver then4259B8 draws clicked leader and cleans up. WHICHVOTE instead transforms -1-X_pop, exits on zero, and tests9999 in sharedmerge; its negative results are not canceled.",
+    "Preserve original names, spans, claims, authored historical TRIED and all callback-visible faction/lock-mask reloads. Keep unsupported normal-input reachability explicit; test a controlled concurrent-mask observation for the old dead-target y dataflow, not as proof of ordinary gameplay reachability. Verify actual source/mutations, pinned branches, native owner verdicts, outside-body continuity, references/mappings and build/link; no new function coverage or full-game acceptance."
+  ]
+}

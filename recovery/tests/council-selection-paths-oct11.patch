@@ -1,0 +1,39 @@
+diff --git a/src/councwin.cpp b/src/councwin.cpp
+index 45fa8c3fc..909d432a5 100644
+--- a/src/councwin.cpp
++++ b/src/councwin.cpp
+@@ -86,8 +86,9 @@ void CouncWin::on_left_click(int x, int y) {
+         return;
+     }
+     if ((clicked_bit & alive) == 0) {
+-        // Native rejoins its shared post-selection path with Spot::check's
+-        // second output as the selected proposal option.
++        // Native 0x4253CA reloads the original y argument, not Spot's type
++        // output, before the shared selection/sentinel path.
++        selection = y;
+         goto vote_selection_ready;
+     }
+ 
+@@ -141,7 +142,8 @@ void CouncWin::on_left_click(int x, int y) {
+         }
+         (void)current_selection;
+         selection = popup.exec(0, pop_wait);
+-        if (selection == 0x270f) {
++        // Only the government popup has native signed-negative cancellation.
++        if (selection < 0) {
+             draw_leader(clicked_faction);
+             popup.close();
+             return;
+@@ -149,6 +151,12 @@ void CouncWin::on_left_click(int x, int y) {
+     }
+ 
+ vote_selection_ready:
++    // Native 0x425362 applies this sentinel to all three selection paths.
++    if (selection == 0x270f) {
++        draw_leader(clicked_faction);
++        popup.close();
++        return;
++    }
+     if (!IsMultiplayerNet) {
+         if ((alive & clicked_bit) == 0) {
+             GenderDefault = Players[clicked_faction].is_leader_female;

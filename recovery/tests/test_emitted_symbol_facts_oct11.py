@@ -52,7 +52,11 @@ def test_writer_only_adds_current_symbol_and_preserves_originals(stem):
     selected = next(r for r in before if r.address==address)
     assert not selected.symbol and selected.name != symbol
     expected = write_symbol(old,selected,symbol)
-    assert expected == path.read_bytes()
+    current = path.read_text()
+    if stem == 'councwin':
+        from test_council_selection_paths_oct11 import restore_council_selection_paths
+        current = restore_council_selection_paths(current)
+    assert expected.decode() == current
     assert migration(old.decode(),relative)==expected.decode()
     assert restore_emitted_symbol_facts(expected.decode(),relative)==old.decode()
     after = read_text(expected.decode(),path)
