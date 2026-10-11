@@ -1,0 +1,48 @@
+diff --git a/src/datalink.cpp b/src/datalink.cpp
+index 16ddb76bd..1c00a05dd 100644
+--- a/src/datalink.cpp
++++ b/src/datalink.cpp
+@@ -2906,7 +2906,8 @@ Purpose: List faction rows with ids 150001 through 150007.
+ 
+          The pinned image loads grammar values, clears StringTemp, then
+          publishes the saved values before building each row.
+-// ORIGINAL: 0x0042B940 ?set_cat_faction@Datalink@@QAEXXZ 0x0042B940-0x0042BACC FILE
++// ORIGINAL: 0x0042B940 ?set_cat_faction@Datalink@@QAEXXZ 0x0042B940-0x0042BAA3 FILE
++// RECOVERY_BINDING: v1 {"reason":"Correct the historical 0x0042BACC extent, which overlapped the separately implemented set_cat_terraform. The faction category method ends at its own RET, before alignment padding and the next method.","evidence":["pinned:0x0042B940-0x0042BAA3 complete instruction decode; terminal RET at 0x0042BAA2 and no branch leaves this body","pinned:0x0042BAA3-0x0042BAB0 NOP padding followed by the independent set_cat_terraform entry","source:src/datalink.cpp set_cat_terraform owns 0x0042BAB0-0x0042BCB1; IDA and Ghidra agree on these separate entries"]}
+ // MISMATCH 16/135 against our 111 - the image's frame is 24 bytes larger, so its digits buffer is not the 80 ours is. TRIED: `record += 0x167` on a `const char *` with the head dwords published through general.h's GenderDefault / PluralityDefault, and the name read at +0x84.
+ // size      355 bytes
+ // prototype void (__thiscall ?set_cat_faction@Datalink@@QAEXXZ)(Datalink* this)
+diff --git a/src/movie_media_decoder.cpp b/src/movie_media_decoder.cpp
+index ca8036395..3d4898be9 100644
+--- a/src/movie_media_decoder.cpp
++++ b/src/movie_media_decoder.cpp
+@@ -1538,9 +1538,10 @@ Purpose: Apply the first IDCT pass to one 8-coefficient vector. In the
+          nine-dword-stride intermediate block.
+ // Typed owner implementation; native ABI/output, original reference targets
+ // and exceptional behavior remain restoration obligations, not owner stubs.
+-// ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEF8A
++// ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEE80
++// RECOVERY_BINDING: v1 {"reason":"The historical 0x005CEF8A bound included the complete separate sub_5cee80 transform. End this transform at its terminal RET; preserve both identities and their independently implemented behavior and unresolved ABI/precision obligations.","evidence":["pinned:0x005CED1D-0x005CEE80 complete instruction decode ending with RET at 0x005CEE7F; no branch leaves this body","pinned:independent sub_5cee80 begins exactly at 0x005CEE80, with its own complete 0x005CEE80-0x005CEF8A mapping","source:src/movie_media_decoder.cpp separate transform bodies; IDA and Ghidra agree on both entry/return boundaries"]}
+ // symbol    ?sub_5ced1d@@YAXPAH@Z
+-// size      621 bytes
++// size      355 bytes
+ // kind      game
+ // calls     (none)
+ Status: Typed semantic body present through the shared column transform.
+diff --git a/src/veh.cpp b/src/veh.cpp
+index dd668a17c..463f4ec8d 100644
+--- a/src/veh.cpp
++++ b/src/veh.cpp
+@@ -11524,8 +11524,9 @@ void __cdecl base_kill(int base_id);
+ 
+ /*
+ Purpose: Obliterate a base and report it to every faction that can hear.
+-// ORIGINAL: 0x004CD4E0 ?action_oblit@@YAXHH@Z 0x004CD4E0-0x004CD6F9
+-// size      537 bytes
++// ORIGINAL: 0x004CD4E0 ?action_oblit@@YAXHH@Z 0x004CD4E0-0x004CD69D
++// RECOVERY_BINDING: v1 {"reason":"The historical 0x004CD6F9 extent crossed padding and the separate valid_patrol entry; action_oblit ends at its own terminal RET. Preserve the complete original behavior and identity without attributing another function's bytes to this body.","evidence":["pinned:0x004CD4E0-0x004CD69D complete instruction decode; terminal RET at 0x004CD69C and no branch leaves this body","pinned:0x004CD69D-0x004CD6A0 NOP padding; independent valid_patrol starts at 0x004CD6A0 and has separately mapped callers","source:src/veh.cpp valid_patrol owns 0x004CD6A0-0x004CDA23; both IDA and Ghidra catalogues agree on the separate entries"]}
++// size      445 bytes
+ // prototype void (__cdecl ?action_oblit@@YAXHH@Z)(int veh_id, int base_id)
+ // callers   1   call targets   4
+ // kind      game
+

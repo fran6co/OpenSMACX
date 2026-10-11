@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "task_id": "function-span-overlaps-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Correct three unclaimed function spans that extend through a native return into separately implemented functions; preserve all bodies, original identities and historical findings.",
+  "base_revision": "635b9085b7a426bb3b20f5fd3175af1237ae5174",
+  "subjects": [
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":5035232},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":4372800},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6090013}
+  ],
+  "editable_files": ["src/veh.cpp","src/datalink.cpp","src/movie_media_decoder.cpp","recovery/tests/test_function_span_overlaps_oct11.py","recovery/tests/function-span-overlaps-oct11.patch"],
+  "evidence": [
+    "Independent catalogue/native audit and coordinator complete native decode prove action_oblit ends4CD69D, set_cat_faction ends42BAA3 and sub_5ced1d ends5CEE80, each at terminal RET with no outgoing intra-body branch. Their historical extents cross separately mapped valid_patrol4CD6A0, set_cat_terraform42BAB0 and sub_5cee805CEE80.",
+    "First two bodies are followed only by NOP alignment before the next independently implemented entry; the transform ends exactly at its distinct successor. These are not shared tails or a reason to delete either entry. All three changed extents are unclaimed; preserve every other span and all historical claims/lessons.",
+    "Use match_recovery.source writer for span changes and literal bounded fixtures for durable rationale/size changes. Require pinned whole-decode/branch/return/successor controls, no C++ body changes, native baseline/current owner measurements, mapping/reference checks and application compile/link. No invented source ownership or new coverage/acceptance claim."
+  ]
+}

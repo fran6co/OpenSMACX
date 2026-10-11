@@ -1538,9 +1538,10 @@ Purpose: Apply the first IDCT pass to one 8-coefficient vector. In the
          nine-dword-stride intermediate block.
 // Typed owner implementation; native ABI/output, original reference targets
 // and exceptional behavior remain restoration obligations, not owner stubs.
-// ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEF8A
+// ORIGINAL: 0x005CED1D sub_5ced1d 0x005CED1D-0x005CEE80
+// RECOVERY_BINDING: v1 {"reason":"The historical 0x005CEF8A bound included the complete separate sub_5cee80 transform. End this transform at its terminal RET; preserve both identities and their independently implemented behavior and unresolved ABI/precision obligations.","evidence":["pinned:0x005CED1D-0x005CEE80 complete instruction decode ending with RET at 0x005CEE7F; no branch leaves this body","pinned:independent sub_5cee80 begins exactly at 0x005CEE80, with its own complete 0x005CEE80-0x005CEF8A mapping","source:src/movie_media_decoder.cpp separate transform bodies; IDA and Ghidra agree on both entry/return boundaries"]}
 // symbol    ?sub_5ced1d@@YAXPAH@Z
-// size      621 bytes
+// size      355 bytes
 // kind      game
 // calls     (none)
 Status: Typed semantic body present through the shared column transform.

@@ -2906,7 +2906,8 @@ Purpose: List faction rows with ids 150001 through 150007.
 
          The pinned image loads grammar values, clears StringTemp, then
          publishes the saved values before building each row.
-// ORIGINAL: 0x0042B940 ?set_cat_faction@Datalink@@QAEXXZ 0x0042B940-0x0042BACC FILE
+// ORIGINAL: 0x0042B940 ?set_cat_faction@Datalink@@QAEXXZ 0x0042B940-0x0042BAA3 FILE
+// RECOVERY_BINDING: v1 {"reason":"Correct the historical 0x0042BACC extent, which overlapped the separately implemented set_cat_terraform. The faction category method ends at its own RET, before alignment padding and the next method.","evidence":["pinned:0x0042B940-0x0042BAA3 complete instruction decode; terminal RET at 0x0042BAA2 and no branch leaves this body","pinned:0x0042BAA3-0x0042BAB0 NOP padding followed by the independent set_cat_terraform entry","source:src/datalink.cpp set_cat_terraform owns 0x0042BAB0-0x0042BCB1; IDA and Ghidra agree on these separate entries"]}
 // MISMATCH 16/135 against our 111 - the image's frame is 24 bytes larger, so its digits buffer is not the 80 ours is. TRIED: `record += 0x167` on a `const char *` with the head dwords published through general.h's GenderDefault / PluralityDefault, and the name read at +0x84.
 // size      355 bytes
 // prototype void (__thiscall ?set_cat_faction@Datalink@@QAEXXZ)(Datalink* this)

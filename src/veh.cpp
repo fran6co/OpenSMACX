@@ -11524,8 +11524,9 @@ void __cdecl base_kill(int base_id);
 
 /*
 Purpose: Obliterate a base and report it to every faction that can hear.
-// ORIGINAL: 0x004CD4E0 ?action_oblit@@YAXHH@Z 0x004CD4E0-0x004CD6F9
-// size      537 bytes
+// ORIGINAL: 0x004CD4E0 ?action_oblit@@YAXHH@Z 0x004CD4E0-0x004CD69D
+// RECOVERY_BINDING: v1 {"reason":"The historical 0x004CD6F9 extent crossed padding and the separate valid_patrol entry; action_oblit ends at its own terminal RET. Preserve the complete original behavior and identity without attributing another function's bytes to this body.","evidence":["pinned:0x004CD4E0-0x004CD69D complete instruction decode; terminal RET at 0x004CD69C and no branch leaves this body","pinned:0x004CD69D-0x004CD6A0 NOP padding; independent valid_patrol starts at 0x004CD6A0 and has separately mapped callers","source:src/veh.cpp valid_patrol owns 0x004CD6A0-0x004CDA23; both IDA and Ghidra catalogues agree on the separate entries"]}
+// size      445 bytes
 // prototype void (__cdecl ?action_oblit@@YAXHH@Z)(int veh_id, int base_id)
 // callers   1   call targets   4
 // kind      game
