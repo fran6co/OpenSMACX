@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task_id": "runtime-xtoa-pair-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind the independently bounded CRT integer conversion pair to the pinned unmodified archive; no application implementation or final-link claim.",
+  "base_revision": "7668c4874c1f9e555ec049c1fc31fed89f0f8545",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6618248},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6618293}
+  ],
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_runtime_xtoa_pair_oct11.py",
+    "recovery/tests/runtime-xtoa-pair-oct11.patch",
+    "recovery/tests/test_runtime_mantissa_family_oct11.py"
+  ],
+  "evidence": [
+    "Independent retained IDA/Ghidra bounds identify __itoa64FC88..64FCB5 and static _xtoa64FCB5..64FD11. Complete native decoding and the connecting direct call must agree; mere archive size is not original-boundary proof.",
+    "Pinned LIBCMT.LIB sha2561ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b contains unique build/intel/mt_obj/xtoa.obj sha256515195b822124c3c7a05b35c07342f926a8e43a5dcf5f3e89e5babf8d86738ca; section1 __itoa has one REL32 to section2 static _xtoa. Native strict verification passes both bodies and reference closure together.",
+    "Append only these two component bindings using parse/render APIs; preserve every prior binding, data section, import, absolute symbol, historical annotation and result. Do not alter runtime source/build/configuration or fabricate globals; focused damage controls must refuse missing callee and wrong symbols/extents/member/archive pin.",
+    "This is bounded dependency correspondence, not application coverage, original archive-member selection, full runtime ABI qualification, game fidelity or autonomous acceptance. Existing whole-component unknown evidence remains unknown."
+  ]
+}

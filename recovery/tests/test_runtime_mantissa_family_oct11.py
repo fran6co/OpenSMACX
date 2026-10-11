@@ -11,6 +11,7 @@ from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.model import Span
 from match_recovery.source import read_text
 from test_crt_eight_entry_bindings_oct10 import inputs, verify, row, repin, raw_offset
+from test_runtime_xtoa_pair_oct11 import without_xtoa_pair
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = "src/vendor/vc6-runtime.recovery.h"
@@ -43,6 +44,7 @@ def baseline():
 def test_exact_addition_preserves_all_prior_metadata_and_original_claims():
     text = (ROOT / SOURCE).read_text()
     current, old = parse_component(text), baseline()
+    current = without_xtoa_pair(current)
     assert replace(current, bindings=current.bindings[:-12]) == old
     assert tuple((b.origin.address, b.spans[0].end, b.symbol,
                   b.unit) for b in current.bindings[-12:]) == tuple(
