@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "checkbox-callback-annotation-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Repair an invalid class-pointer annotation on an already recovered function-pointer member; preserve its native offset, original anchor and unchanged C++ callback declaration.",
+  "base_revision": "acb1bc751",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6355120}],
+  "editable_files": ["src/jackal/checkbox.h", "recovery/tests/test_checkbox_key_notification_oct11.py", "recovery/tests/test_checkbox_callback_annotation_oct11.py"],
+  "evidence": [
+    "Original 60F9BD loads the callback cell; 60F9D1 invokes it after pushing the selected position and 60F9D3 performs caller cleanup. The existing C++ WinNotificationCallback declaration is already the corresponding cdecl function-pointer typedef, not a class pointer.",
+    "RECOVERY_MEMBER v3 only represents class pointers with explicit star. The old typedef-without-star spelling is rejected by the native parser; it never supplied a valid class-pointer obligation. Use the supported v1 offset interpretation with exactly the same owner/member/offset/evidence anchor; keep the callback signature in unchanged source and original instruction controls. No C++ declaration/body/ABI or byte claim changes.",
+    "This repairs current source interpretation. Historical task baselines containing the invalid spelling can still refuse parsing; do not bypass their refusal, reset their baselines, claim full restoration acceptance or silently ignore historical evidence. Require scoped tests, native current-layout parsing, source identity continuity, independent review and fresh compile/link."
+  ]
+}

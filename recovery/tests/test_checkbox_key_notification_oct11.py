@@ -34,11 +34,11 @@ def test_complete_source_change_and_historical_obligations():
     new_declaration = (
         "  // Key handling loads and invokes this cell at original 0x0060F9BD/0x0060F9D1.\n"
         "  // Registration/producer remains unknown; the selected-position word is passed.\n"
-        "  // RECOVERY_MEMBER: v3 CheckBox key_notification_callback_ WinNotificationCallback 0x8 0x0060F8B0\n"
+        "  // RECOVERY_MEMBER: v1 CheckBox key_notification_callback_ 0x8 0x0060F8B0\n"
         "  WinNotificationCallback key_notification_callback_;  // 0x0008")
     assert header == previous_header.replace(old_declaration, new_declaration, 1)
     assert "WinNotificationCallback key_notification_callback_;" in header
-    assert "RECOVERY_MEMBER: v3 CheckBox key_notification_callback_ WinNotificationCallback 0x8 0x0060F8B0" in header
+    assert "RECOVERY_MEMBER: v1 CheckBox key_notification_callback_ 0x8 0x0060F8B0" in header
 
 
 def test_pinned_null_gate_argument_and_caller_cleanup():
