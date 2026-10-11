@@ -543,6 +543,7 @@ static const size_t SurfaceDescriptorData = 0x24;
 Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
          first reference and counting every acquisition.
 // ORIGINAL: 0x005E3373 ?get_data@Buffer@@QAEHXZ 0x005E3373-0x005E33EA BYTE_EXACT
+// body      src/buffer.h
 // symbol    ?get_data@Buffer@@QAEPAXXZ
 // size      119 bytes
 // prototype int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
@@ -1703,6 +1704,7 @@ Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
 // assembly one.
 //
 // ORIGINAL: 0x005DFF00 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DFF00-0x005E079B
+// body      src/buffer.h
 // TRIED: byte-exactness, twice over, and it was RULED OUT IN PROSE ONLY
 //   until now - which is why `frontier.py --untouched` kept offering this
 //   body. Both reasons are mechanical facts, not judgements.
@@ -1953,6 +1955,7 @@ MEASURED Buffer::~Buffer() { close(); }
 /*
 Purpose: Acquire the device context, taking one reference on the shared handle.
 // ORIGINAL: 0x005E3503 ?get_hdc@Buffer@@QAEHXZ 0x005E3503-0x005E355C BYTE_EXACT
+// body      src/buffer.h
 // symbol    ?get_hdc@Buffer@@QAEPAUHDC__@@XZ
 // size      89 bytes
 // prototype int (__thiscall ?get_hdc@Buffer@@QAEHXZ)(Buffer* this)
@@ -1969,6 +1972,7 @@ Status: Complete
 Purpose: Drop the given number of device-context references, releasing the
          handle once the last one is gone.
 // ORIGINAL: 0x005E3563 ?release_hdc@Buffer@@QAEXH@Z 0x005E3563-0x005E35C3 BYTE_EXACT
+// body      src/buffer.h
 // size      96 bytes
 // prototype void (__thiscall ?release_hdc@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   8   call targets   0

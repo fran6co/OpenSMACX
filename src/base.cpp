@@ -7477,6 +7477,7 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad) {
 /*
 Purpose: Calculate the new native unit lifecycle bonus modifier provided by a base and faction.
 // ORIGINAL: 0x004E65C0 ?breed_mod@@YAHHH@Z 0x004E65C0-0x004E673D
+// body      src/base.h
 // LEVER: body lives in base.h (MEASURED inline) as four has_fac_built_call()
 //        checks instead of has_fac_built() - fixes breed_mod's OWN call
 //        count (0 -> 4 real bitmask() calls) and moves its best similarity
@@ -9320,6 +9321,7 @@ void __cdecl make_base_unique(int base_id) {
 /*
 Purpose: Check if a faction has the specified secret project built in a base they control.
 // ORIGINAL: 0x004F80D0 ?has_project@@YAHHH@Z 0x004F80D0-0x004F8103 BYTE_EXACT
+// body      src/base.h
 // size      51 bytes
 // prototype int (__cdecl ?has_project@@YAHHH@Z)(int projectID, int factionID)
 // callers   8   call targets   0
@@ -9338,6 +9340,7 @@ Status: Complete
 /*
 Purpose: Checks whether the facility (non-SP) has been build in the currently selected base.
 // ORIGINAL: 0x00500290 ?has_fac_built@@YA_NH@Z 0x00500290-0x005002DE
+// body      src/base.h
 // size      78 bytes
 // prototype bool (__cdecl ?has_fac_built@@YA_NH@Z)(int facilityID)
 // callers   1   call targets   1
@@ -9375,6 +9378,7 @@ Status: Complete
 /*
 Purpose: Get the current status of the specified project.
 // ORIGINAL: 0x005002E0 ?base_project@@YAHH@Z 0x005002E0-0x005002EF BYTE_EXACT
+// body      src/base.h
 // size      15 bytes
 // prototype int (__cdecl ?base_project@@YAHH@Z)(int projectID)
 // callers   1   call targets   0
@@ -10097,6 +10101,7 @@ BOOL __cdecl transcending(int faction_id) {
 /*
 Purpose: Check if Voice of Planet has been built that starts the Ascent to Transcendence sequence.
 // ORIGINAL: 0x005AC680 ?ascending@@YAHH@Z 0x005AC680-0x005AC68F BYTE_EXACT
+// body      src/base.h
 // size      15 bytes
 // prototype int (__cdecl ?ascending@@YAHH@Z)(int factionID)
 // callers   4   call targets   0

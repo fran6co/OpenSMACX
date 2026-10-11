@@ -4060,6 +4060,7 @@ void __cdecl do_fungal_towers() {
 /*
 Purpose: Check whether the specified prototype is a planet buster.
 // ORIGINAL: 0x005004F0 ?planet_buster2@@YAHH@Z 0x005004F0-0x00500518 BYTE_EXACT
+// body      src/veh.h
 // symbol    ?planet_buster2@@YAIH@Z
 // size      40 bytes
 // prototype int (__cdecl ?planet_buster2@@YAHH@Z)(int protoID)
@@ -4079,6 +4080,7 @@ Status: Complete
 /*
 Purpose: Check whether the specified unit is a planet buster.
 // ORIGINAL: 0x00500520 ?planet_buster@@YAHH@Z 0x00500520-0x00500556 BYTE_EXACT
+// body      src/veh.h
 // symbol    ?planet_buster@@YAIH@Z
 // size      54 bytes
 // prototype int (__cdecl ?planet_buster@@YAHH@Z)(int vehID)
@@ -4431,6 +4433,7 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
 /*
 Purpose: Initialize or reset the battle related global variables.
 // ORIGINAL: 0x00501D30 ?battle_init@@YAXXZ 0x00501D30-0x00501D47 BYTE_EXACT
+// body      src/veh.h
 // LEVER: the real-object conversion SURVIVED the claim. 2026-08-29
 //        VehBattleModCount/VehBattleUnkTgl became real arrays (veh.h);
 //        measured 6/6, 16 bytes discounted as relocations.
@@ -5342,6 +5345,7 @@ int __cdecl veh_top(int veh_id) {
 /*
 Purpose: Get the current moves left for the specified unit.
 // ORIGINAL: 0x00579960 ?veh_moves@@YAHH@Z 0x00579960-0x00579998 BYTE_EXACT
+// body      src/veh.h
 // size      56 bytes
 // prototype int (__cdecl ?veh_moves@@YAHH@Z)(int vehID)
 // callers   1   call targets   1
@@ -5360,6 +5364,7 @@ Status: Complete
 /*
 Purpose: Get the specified unit's reactor power value from its prototype.
 // ORIGINAL: 0x005799A0 ?proto_power@@YAHH@Z 0x005799A0-0x005799F9 BYTE_EXACT
+// body      src/veh.h
 // LEVER: neither of its two callers (best_defender 0x5044D0, action_home
 //        0x4CBAA0) has it in their `calls` list - both inline it - but this
 //        tree defined it as a plain (non-`inline`) function, so under /Ob1
@@ -6144,6 +6149,7 @@ int __cdecl armor_budget(int faction_id, int max_cost) {
 /*
 Purpose: Get the index value of a particular ability's bitfield.
 // ORIGINAL: 0x00581170 ?abil_index@@YAHH@Z 0x00581170-0x00581187 BYTE_EXACT
+// body      src/veh.h
 // size      23 bytes
 // prototype int (__cdecl ?abil_index@@YAHH@Z)(int abilityID)
 // callers   7   call targets   0
@@ -6237,6 +6243,7 @@ int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src, int x_d
 /*
 Purpose: Relocate an existing unit to the specified tile.
 // ORIGINAL: 0x005A59B0 ?veh_put@@YAXHHH@Z 0x005A59B0-0x005A59D2 BYTE_EXACT
+// body      src/veh.h
 // size      34 bytes
 // prototype void (__cdecl ?veh_put@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   1   call targets   2
@@ -6416,6 +6423,7 @@ uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
 /*
 Purpose: Calculates the base cost of the specified prototype.
 // ORIGINAL: 0x005A5D00 ?base_cost@@YAHH@Z 0x005A5D00-0x005A5D3F BYTE_EXACT
+// body      src/veh.h
 // size      63 bytes
 // prototype int (__cdecl ?base_cost@@YAHH@Z)(int protoID)
 // callers   1   call targets   1
@@ -8646,6 +8654,7 @@ BOOL __cdecl veh_jail(int veh_id) {
 /*
 Purpose: Sets all moves for the specified unit as expended.
 // ORIGINAL: 0x005C1D20 ?veh_skip@@YAXH@Z 0x005C1D20-0x005C1D42 BYTE_EXACT
+// body      src/veh.h
 // size      34 bytes
 // prototype void (__cdecl ?veh_skip@@YAXH@Z)(int vehID)
 // callers   19   call targets   1
@@ -8664,6 +8673,7 @@ Status: Complete
 /*
 Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for various UI elements.
 // ORIGINAL: 0x005C1D50 ?veh_fake@@YAHHH@Z 0x005C1D50-0x005C1D6F BYTE_EXACT
+// body      src/veh.h
 // size      31 bytes
 // prototype int (__cdecl ?veh_fake@@YAHHH@Z)(int protoID, int factionID)
 // callers   13   call targets   1

@@ -239,6 +239,7 @@ StringStructPayload *StringStruct::current_entry() {
 /*
 Purpose: Advance the current string-list entry and return its payload.
 // ORIGINAL: 0x00402500 ?next_entry@StringStruct@@QAEHXZ 0x00402500-0x0040252F BYTE_EXACT
+// body      src/stringstruct.h
 // symbol    ?next_entry@StringStruct@@QAEPAVStringStructPayload@@XZ
 //   as current_entry above: typed for the string, resolved through this
 //   emitted name.
@@ -414,6 +415,7 @@ Heap *StringAllocationHeap;  // 0x009B3374
 
 /*
 // ORIGINAL: 0x004015B0 ?seek_pos@StringStruct@@QAEHH@Z 0x004015B0-0x00401636 BYTE_EXACT
+// body      src/stringstruct.h
 // size      134 bytes
 // prototype int (__thiscall ?seek_pos@StringStruct@@QAEHH@Z)(StringStruct* this, int)
 // callers   2   call targets   1

@@ -192,6 +192,7 @@ void __cdecl parse_it(char *file_name, const char *section) {
 /*
 Purpose: Trim the trailing spaces in-line from the end of the string.
 // ORIGINAL: 0x00600780 ?purge_trailing@@YAXPAD@Z 0x00600780-0x006007AD BYTE_EXACT
+// body      src/general.h
 // size      45 bytes
 // prototype 
 // callers   0   call targets   1
@@ -349,6 +350,7 @@ void __cdecl add_lf(LPSTR str) {
 /*
 Purpose: Use the min and max parameters to bound the input.
 // ORIGINAL: 0x00422F00 ?range@@YAHHHH@Z 0x00422F00-0x00422F1E BYTE_EXACT
+// body      src/general.h
 // size      30 bytes
 // prototype int (__cdecl ?range@@YAHHHH@Z)(int input, int min, int max)
 // callers   10   call targets   0
@@ -439,6 +441,7 @@ FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
 /*
 Purpose: Set the global gender and plurality variables used by various parse functions.
 // ORIGINAL: 0x005A58E0 ?parse_set@@YAXHH@Z 0x005A58E0-0x005A58F6 BYTE_EXACT
+// body      src/general.h
 // size      22 bytes
 // prototype 
 // callers   1   call targets   0
@@ -593,6 +596,7 @@ int __cdecl parse_says(int id, LPCSTR input, int gender, int pluralality) {
 /*
 Purpose: Convert the binary string to an integer.
 // ORIGINAL: 0x006288D0 ?btoi@@YAHPAD@Z 0x006288D0-0x006288ED BYTE_EXACT
+// body      src/general.h
 // symbol    ?btoi@@YAHPBD@Z
 // size      29 bytes
 // prototype int (__cdecl ?btoi@@YAHPAD@Z)(int8* input)
@@ -610,6 +614,7 @@ Status: Complete
 /*
 Purpose: Convert the hex string to an integer.
 // ORIGINAL: 0x006288F0 ?htoi@@YAHPAD@Z 0x006288F0-0x0062894B BYTE_EXACT
+// body      src/general.h
 // symbol    ?htoi@@YAHPBD@Z
 // size      91 bytes
 // prototype int (__cdecl ?htoi@@YAHPAD@Z)(int8* input)
@@ -1394,6 +1399,7 @@ void __cdecl my_srand(int reseed) {
 Purpose: Swap the values of two 32-bit variables. Added an additional check when swapping the same
          memory location.
 // ORIGINAL: 0x00628A50 ?swap@@YAXPAHPAH@Z 0x00628A50-0x00628A73 BYTE_EXACT
+// body      src/general.h
 // symbol    ?swap@@YAXPAH0@Z
 // size      35 bytes
 // prototype 
@@ -1414,6 +1420,7 @@ Status: Complete
 Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
          memory location.
 // ORIGINAL: 0x00628A80 ?swap@@YAXPAEPAE@Z 0x00628A80-0x00628AA3 BYTE_EXACT
+// body      src/general.h
 // symbol    ?swap@@YAXPAE0@Z
 // size      35 bytes
 // prototype 

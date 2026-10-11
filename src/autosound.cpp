@@ -275,6 +275,7 @@ Status: Complete
 /*
 Purpose: Legacy sound processing hook retained as a no-op.
 // ORIGINAL: 0x005FD2B0 ?do_sound@@YAHXZ 0x005FD2B0-0x005FD2B3 BYTE_EXACT
+// body      src/autosound.h
 // CORRECTED from ?do_sound@@YAXXZ
 //   body is `xor eax, eax; ret` - a void function would emit `ret` alone
 // size      3 bytes

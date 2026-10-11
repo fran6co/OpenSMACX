@@ -877,6 +877,7 @@ uint32_t load_scaling_bits(const void *source) {
 /*
 Purpose: Initialize an empty Caviar object-data record.
 // ORIGINAL: 0x00616BC0 ??0CaviarData@@QAE@XZ 0x00616BC0-0x00616BCD BYTE_EXACT
+// body      src/caviar.h
 // size      13 bytes
 // prototype void (__thiscall ??0CaviarData@@QAE@XZ)(CaviarData* this)
 // callers   82   call targets   0

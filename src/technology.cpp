@@ -419,6 +419,7 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
 /*
 Purpose: Get tech string for tech_id and store it into TechName buffer.
 // ORIGINAL: 0x005B9EF0 ?tech_name@@YAPADHH@Z 0x005B9EF0-0x005B9F16 BYTE_EXACT
+// body      src/technology.h
 // size      38 bytes
 // prototype int8* (__cdecl ?tech_name@@YAPADHH@Z)(int techID, BOOL categoryLvl)
 // callers   9   call targets   1
@@ -437,6 +438,7 @@ Status: Complete
 /*
 Purpose: Check whether faction has a particular tech or not.
 // ORIGINAL: 0x005B9F20 ?has_tech@@YA_NHH@Z 0x005B9F20-0x005B9F89 BYTE_EXACT
+// body      src/technology.h
 // LEVER: (2026-09-03, BYTE_EXACT 46/46) the pointer lever below was HALF right
 //   and the last 14 instructions were the other half: the two preq reads must
 //   be SUBSCRIPTS off the array - `Technology[tech_id].preq_tech_1` into a
@@ -481,6 +483,7 @@ Status: Complete
 /*
 Purpose: Determine technology level for tech_id.
 // ORIGINAL: 0x005B9F90 ?tech_recurse@@YAHHH@Z 0x005B9F90-0x005B9FE0
+// body      src/technology.h
 // LEVER: hoist-next-lvl `const int next_lvl = base_lvl + 1;` ahead of the tech
 //   pointer, passed to both recursive calls instead of writing `base_lvl + 1`
 //   twice. The image reads base_lvl at 0x005B9F9F, before the index arithmetic
@@ -669,6 +672,7 @@ void __cdecl tech_effects(int faction_id) {
 /*
 Purpose: Determine if preqTechID is a prerequisite of parentTechID within descending range.
 // ORIGINAL: 0x005BCB60 ?tech_is_preq@@YAHHHH@Z 0x005BCB60-0x005BCBDB BYTE_EXACT
+// body      src/technology.h
 // LEVER: guard-split, in technology.h where the body lives - the first two tests are
 //   TWO separate early returns, each with its own `xor eax,eax / pop ebx / pop ebp / ret`
 //   epilogue, not one `if (preq_tech_id < 0 || parent_tech_id < 0)`. The chained spelling
@@ -1017,6 +1021,7 @@ int __cdecl tech_ai(int faction_id) {
 /*
 Purpose: Get power_value from technology struct for tech id.
 // ORIGINAL: 0x005BDD70 ?tech_mil@@YAHH@Z 0x005BDD70-0x005BDD8E BYTE_EXACT
+// body      src/technology.h
 // size      30 bytes
 // prototype
 // callers   1   call targets   0
@@ -1041,6 +1046,7 @@ Status: Complete
 /*
 Purpose: Get tech_value from technology struct for tech id.
 // ORIGINAL: 0x005BDD90 ?tech_tech@@YAHH@Z 0x005BDD90-0x005BDDB1 BYTE_EXACT
+// body      src/technology.h
 // size      33 bytes
 // prototype
 // callers   1   call targets   0
@@ -1060,6 +1066,7 @@ Status: Complete
 /*
 Purpose: Get wealth_value from technology struct for tech id.
 // ORIGINAL: 0x005BDDC0 ?tech_infra@@YAHH@Z 0x005BDDC0-0x005BDDE1 BYTE_EXACT
+// body      src/technology.h
 // LEVER: same guard-clause rewrite as tech_tech/tech_colonize - the ternary
 // spelling (`(tech_id >= Max) ? 1 : *(&Technology[tech_id].wealth_value)`)
 // was a different program, not just a different shape.
@@ -1081,6 +1088,7 @@ Status: Complete
 /*
 Purpose: Get growth_value from technology struct for tech id.
 // ORIGINAL: 0x005BDDF0 ?tech_colonize@@YAHH@Z 0x005BDDF0-0x005BDE11 BYTE_EXACT
+// body      src/technology.h
 // size      33 bytes
 // prototype
 // callers   1   call targets   0

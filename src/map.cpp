@@ -247,6 +247,7 @@ LPCSTR MapExtension = "MP";
 /*
 Purpose: Check whether the coordinates are on the map.
 // ORIGINAL: 0x004712A0 ?on_map@@YAHHH@Z 0x004712A0-0x004712CC BYTE_EXACT
+// body      src/map.h
 // size      44 bytes
 // prototype BOOL (__cdecl ?on_map@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   7   call targets   0
@@ -265,6 +266,7 @@ Status: Complete
 /*
 Purpose: Bounds check and handling of x coordinate for round maps.
 // ORIGINAL: 0x0048BEE0 ?xrange@@YAHH@Z 0x0048BEE0-0x0048BF05 BYTE_EXACT
+// body      src/map.h
 // LEVER: `!(MapIsFlat & 1)`, not `!MapIsFlat` - the image reads the low BYTE
 //   and tests bit zero, matching every other MapIsFlat site in the tree
 //   (game.cpp, veh.cpp, terraforming.cpp already do this). Also, the guard's
@@ -393,6 +395,7 @@ Purpose: Take the absolute distance between two points as parameters to calculat
          radiate. This is mainly used to determine proximity or how far away the two points are from
          each other in a rough circle shape (see RadiusOffsetX[]/RadiusOffsetY[]).
 // ORIGINAL: 0x004F8090 ?vector_dist@@YAHHH@Z 0x004F8090-0x004F80CB BYTE_EXACT
+// body      src/map.h
 // LEVER: the two `abs()` stay real calls (image: `call _abs` 0x00644F3A
 //            twice) because stdafx.h's project-wide `#pragma function` line
 //            names abs - /Oi would otherwise expand it inline at every site.
@@ -639,6 +642,7 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
 /*
 Purpose: Check to see if two port bases share a common body of water determined by region.
 // ORIGINAL: 0x0050E160 ?port_to_port@@YAHHH@Z 0x0050E160-0x0050E306
+// body      src/map.h
 // LEVER: call_diff showed this tree calling base_on_sea where the image makes
 //        no calls at all - the image inlines base_on_sea's whole body into
 //        the loop instead. Manually inlining it (guard clause on
@@ -791,6 +795,7 @@ BOOL __cdecl convoy(int veh_id, int base_id) {
 /*
 Purpose: Validate region bounds. Bad regions include: 0, 63, 64, 127, 128.
 // ORIGINAL: 0x005591C0 ?bad_reg@@YAHH@Z 0x005591C0-0x005591DD BYTE_EXACT
+// body      src/map.h
 // size      29 bytes
 // prototype 
 // callers   1   call targets   0
@@ -993,6 +998,7 @@ int __cdecl elev_at(int x, int y) {
 /*
 Purpose: Calculate the natural altitude of the specified tile.
 // ORIGINAL: 0x005918A0 ?alt_natural@@YAHHH@Z 0x005918A0-0x005918EF
+// body      src/map.h
 // TRIED: same index-fold plateau as alt_at/alt_detail_at - the inlined
 //            map_loc(x,y)->contour read (via alt_detail_at) schedules the
 //            width-load/imul/shift with ecx/eax swapped from the image's
@@ -1048,6 +1054,7 @@ void __cdecl alt_set_both(int x, int y, int altitude_natural) {
 /*
 Purpose: Get the bit shifted (down) altitude of the specified tile.
 // ORIGINAL: 0x00500150 ?alt_at@@YAHHH@Z 0x00500150-0x0050017B
+// body      src/map.h
 // TRIED: best 12/16, 0.875 similar (MISMATCH) at every flag set - image
 //            schedules `xor ecx,ecx` (the future zero-extend register) right
 //            after computing the tile index, before loading the map_tiles()
@@ -1085,6 +1092,7 @@ Status: Complete
 /*
 Purpose: Get the altitude details of the specified tile.
 // ORIGINAL: 0x00500180 ?alt_detail_at@@YAHHH@Z 0x00500180-0x005001A9
+// body      src/map.h
 // TRIED: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
 //            loading the map_tiles() pointer into edx; this tree loads the
 //            pointer into ecx first and zeroes edx later for the byte-load.
@@ -1107,6 +1115,7 @@ Status: Complete
 /*
 Purpose: Set the altitude details for the specified tile.
 // ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288 SEMANTIC
+// body      src/map.h
 // TRIED: shared plateau with region_set (identical shape). Image loads
 //            the byte parameter into cl BEFORE loading map_tiles(); the
 //            compiler always loads map_tiles() first regardless of source
@@ -1187,6 +1196,7 @@ void __cdecl site_set(int x, int y, int site) {
 /*
 Purpose: Get the region of the specified tile.
 // ORIGINAL: 0x00500220 ?region_at@@YAHHH@Z 0x00500220-0x00500249
+// body      src/map.h
 // TRIED: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
 //            loading the map_tiles() pointer into edx; this tree loads the
 //            pointer into ecx first and zeroes edx later for the byte-load.
@@ -1210,6 +1220,7 @@ Status: Complete
 /*
 Purpose: Set the region for the specified tile.
 // ORIGINAL: 0x00591B90 ?region_set@@YAXHHH@Z 0x00591B90-0x00591BB8 SEMANTIC
+// body      src/map.h
 // TRIED: same plateau as alt_put_detail - byte-parameter load and
 //            map_tiles() pointer load are swapped by the compiler
 //            regardless of source order. Tried a `Map *tile` temp before
@@ -1259,6 +1270,7 @@ void __cdecl using_set(int x, int y, int faction_id) {
 /*
 Purpose: Set the lock faction id for the specified tile.
 // ORIGINAL: 0x00591C50 ?lock_set@@YAHHHH@Z 0x00591C50-0x00591C88 BYTE_EXACT
+// body      src/map.h
 // symbol    ?lock_set@@YAXHHH@Z
 // size      56 bytes
 // prototype int (__cdecl ?lock_set@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
@@ -1367,6 +1379,7 @@ void __cdecl rocky_set(int x, int y, int rocky) {
 /*
 Purpose: Get the bit of the specified tile.
 // ORIGINAL: 0x005001B0 ?bit_at@@YAHHH@Z 0x005001B0-0x005001D5 BYTE_EXACT
+// body      src/map.h
 // size      37 bytes
 // prototype int (__cdecl ?bit_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -1380,6 +1393,7 @@ Status: Complete
 /*
 Purpose: Set the bit for the specified tile.
 // ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58 SEMANTIC
+// body      src/map.h
 // size      40 bytes
 // prototype void (__cdecl ?bit_put@@YAXHHH@Z)(int xCoord, int yCoord, int bit)
 // callers   1   call targets   0
@@ -1477,6 +1491,7 @@ void __cdecl code_set(int x, int y, int code) {
 /*
 Purpose: Synchronize the actual tile bit with the faction visible bit.
 // ORIGINAL: 0x00591E50 ?synch_bit@@YAXHHH@Z 0x00591E50-0x00591E82 BYTE_EXACT
+// body      src/map.h
 // LEVER: `Map *tile = map_loc(x, y);` shared between the read of `tile->bit`
 //        and the write to `tile->bit_visible[...]`, instead of two separate
 //        `map_loc()`/`bit_at()` calls, so the address is computed once.
@@ -1625,6 +1640,7 @@ int __cdecl minerals_at(int x, int y) {
 Purpose: Determine if the tile has a resource bonus. While the last parameter is unused, it's set to
          1 by two calls inside world_site(). Otherwise, all other calls have it set to 0.
 // ORIGINAL: 0x00592030 ?bonus_at@@YAHHHH@Z 0x00592030-0x00592135
+// body      src/map.h
 // TRIED (body is in map.h): the image reads the climate byte (alt_at) before the bit
 //            dword (bit_at) at the shared `site_tile`-style address, while map.h's body
 //            declares `bit` before `alt`. Swapping the declaration order to match the
@@ -1862,6 +1878,7 @@ void __cdecl fungus_radius(int x, int y) {
 /*
 Purpose: Search for the first landmark found within the radius range of the specified tile.
 // ORIGINAL: 0x00592550 ?find_landmark@@YAHHHH@Z 0x00592550-0x005925F8
+// body      src/map.h
 // size      168 bytes
 // prototype 
 // callers   5   call targets   0
@@ -2013,6 +2030,7 @@ BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius) {
 /*
 Purpose: Check whether the specified tile is part of an ocean.
 // ORIGINAL: 0x005001E0 ?is_ocean@@YAHHH@Z 0x005001E0-0x00500211
+// body      src/map.h
 // TRIED: same root plateau as `alt_at` (image schedules `xor ecx,ecx`
 //            before loading the map_tiles() pointer; this tree loads the
 //            pointer first). Downstream that also means the image has a
@@ -2033,6 +2051,7 @@ Status: Complete
 /*
 Purpose: Get the owner of the specified tile if there is a unit in it.
 // ORIGINAL: 0x00500250 ?veh_who@@YAHHH@Z 0x00500250-0x00500288 BYTE_EXACT
+// body      src/map.h
 // size      56 bytes
 // prototype int (__cdecl ?veh_who@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   3   call targets   0
@@ -2131,6 +2150,7 @@ void __cdecl rebuild_base_bits() {
 /*
 Purpose: Calculate the distance between two x coordinates with handling for round maps.
 // ORIGINAL: 0x00579790 ?x_dist@@YAHHH@Z 0x00579790-0x005797C7
+// body      src/map.h
 // size      55 bytes
 // prototype 
 // callers   1   call targets   1
@@ -2199,6 +2219,7 @@ BOOL __cdecl is_known(int x, int y, int faction_id) {
 /*
 Purpose: If a base exists, get the owner of the specified tile.
 // ORIGINAL: 0x005798A0 ?base_who@@YAHHH@Z 0x005798A0-0x005798D8 BYTE_EXACT
+// body      src/map.h
 // size      56 bytes
 // prototype 
 // callers   2   call targets   0
@@ -2238,6 +2259,7 @@ int __cdecl anything_at(int x, int y) {
 /*
 Purpose: Shutdown allocated map variables.
 // ORIGINAL: 0x00590E90 ?map_shutdown@@YAXXZ 0x00590E90-0x00590EC5 BYTE_EXACT
+// body      src/map.h
 // size      53 bytes
 // prototype 
 // callers   3   call targets   1
@@ -2484,6 +2506,7 @@ void __cdecl map_resample(int width, int height) {
 /*
 Purpose: Get the region value for the specified tile.
 // ORIGINAL: 0x00591210 ?abstract_at@@YAHHH@Z 0x00591210-0x00591230 SEMANTIC
+// body      src/map.h
 // symbol    ?abstract_at@@YAEHH@Z
 // size      32 bytes
 // prototype int (__cdecl ?abstract_at@@YAHHH@Z)(int xCoord, int yCoord)
@@ -2515,6 +2538,7 @@ Status: Complete
 /*
 Purpose: Set the region value for the specified tile.
 // ORIGINAL: 0x00591230 ?abstract_set@@YAXHHE@Z 0x00591230-0x00591253 SEMANTIC
+// body      src/map.h
 // TRIED: same plateau as abstract_at/alt_at. Image computes a row
 //            pointer (base + y*(bounds>>1)) explicitly, then indexes it by
 //            x>>1 in the final SIB store; VC6 -O2 always pre-sums the two
@@ -2598,6 +2622,7 @@ void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int 
 /*
 Purpose: Determine if the specified offsets are within the range radius.
 // ORIGINAL: 0x005A65A0 ?radius_move@@YAHHHH@Z 0x005A65A0-0x005A65D0 BYTE_EXACT
+// body      src/map.h
 // size      48 bytes
 // prototype int (__cdecl ?radius_move@@YAHHHH@Z)(int xCoord, int yCoord, int range)
 // callers   1   call targets   0
@@ -4270,6 +4295,7 @@ void __cdecl world_climate() {
 /*
 Purpose: Set the default altitude details for the specified tile.
 // ORIGINAL: 0x005C58C0 ?world_alt_put_detail@@YAXHH@Z 0x005C58C0-0x005C58DB
+// body      src/map.h
 // size      27 bytes
 // prototype void (__cdecl ?world_alt_put_detail@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -4417,6 +4443,7 @@ void __cdecl world_linearize_contours() {
 /*
 Purpose: Determine if the specified tile is near a landmark.
 // ORIGINAL: 0x005C5BD0 ?near_landmark@@YAHHH@Z 0x005C5BD0-0x005C5C61
+// body      src/map.h
 // size      145 bytes
 // prototype BOOL (__cdecl ?near_landmark@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0

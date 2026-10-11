@@ -1850,6 +1850,7 @@ void __cdecl reset_territory() {
 Purpose: Determine whether the turn currently belongs to another faction in a
          networked game, which is what gates local input.
 // ORIGINAL: 0x0052DC70 ?not_my_turn@@YAHXZ 0x0052DC70-0x0052DC9C BYTE_EXACT
+// body      src/game.h
 // size      44 bytes
 // prototype
 // callers   8   call targets   0
@@ -1961,6 +1962,7 @@ void __cdecl clear_scenario() {
 /*
 Purpose: Calculate game year from start date and turn number.
 // ORIGINAL: 0x005C89A0 ?game_year@@YAHH@Z 0x005C89A0-0x005C89B0 BYTE_EXACT
+// body      src/game.h
 // symbol    ?game_year@@YAIH@Z
 // size      16 bytes
 // prototype int (__cdecl ?game_year@@YAHH@Z)(int turn)
@@ -2352,6 +2354,7 @@ void __cdecl repair_phase(int faction_id) {
 Purpose: The ceiling on a single energy allocation slider. The legacy
          implementation is a constant return.
 // ORIGINAL: 0x00445440 ?energy_limit@@YAHH@Z 0x00445440-0x00445446 BYTE_EXACT
+// body      src/game.h
 // size      6 bytes
 // prototype int (__cdecl ?energy_limit@@YAHH@Z)(int factionID)
 // callers   3   call targets   0

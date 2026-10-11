@@ -320,6 +320,7 @@ int Dialog::init(RECT *rect, Heap *heap) {
 /*
 Purpose: Find an item ID's bounded position in the dialog string list.
 // ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B BYTE_EXACT
+// body      src/dialog.h
 // MEASURED inline: the body lives at the end of dialog.h. The image keeps
 //        this out-of-line copy at 0x00609AF0 AND inlines the same walk into
 //        set_selected_id (0x006099D0); the `inline` keyword is what makes

@@ -1125,6 +1125,7 @@ Purpose: Broadcast a single-tile redraw to every live map window. Walks the
          argument order from mutation testing entirely, leaving both functions
          with zero mutants. The duplication buys verification.
 // ORIGINAL: 0x0046AF40 ?draw_tile@@YAXHHH@Z 0x0046AF40-0x0046AF86 BYTE_EXACT
+// body      src/mapwin.h
 // LEVER: `window->draw_radius(...)` (the METHOD) in place of
 //        `(ORIGINAL(window)->*MapWinOriginalDrawRadius)(...)` (the seam
 //        variable) - the image's own call site is a direct `call 0x46a2a0`,
@@ -1159,6 +1160,7 @@ Purpose: The radius-1 sibling of draw_tile - the identical 70-byte broadcast,
          instruction for instruction. Transcribed in full for the mutation
          coverage reason recorded on draw_tile.
 // ORIGINAL: 0x0046B140 ?draw_tiles@@YAXHHH@Z 0x0046B140-0x0046B186 BYTE_EXACT
+// body      src/mapwin.h
 // LEVER: same as draw_tile above - `window->draw_radius(...)` in place of
 //        the `MapWinOriginalDrawRadius` seam dispatch.
 // size      70 bytes

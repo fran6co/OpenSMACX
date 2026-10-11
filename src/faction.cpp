@@ -746,6 +746,7 @@ void __cdecl psych_check(int faction_id, int *drones, int *talents) {
 Purpose: Check whether the primary faction has at least one of the specified treaties (bitfield)
          with the secondary faction.
 // ORIGINAL: 0x005002F0 ?has_treaty@@YAHHHH@Z 0x005002F0-0x00500319 BYTE_EXACT
+// body      src/faction.h
 // size      41 bytes
 // prototype int (__cdecl ?has_treaty@@YAHHHH@Z)(int factionID, int factionIDWith, int treaty)
 // callers   4   call targets   0
@@ -764,6 +765,7 @@ Status: Complete
 /*
 Purpose: Get the faction's name adjective.
 // ORIGINAL: 0x0050B910 ?get_adjective@@YAHH@Z 0x0050B910-0x0050B92A BYTE_EXACT
+// body      src/faction.h
 // symbol    ?get_adjective@@YAPADH@Z
 // size      26 bytes
 // prototype int (__cdecl ?get_adjective@@YAHH@Z)(int factionID)
@@ -783,6 +785,7 @@ Status: Complete
 /*
 Purpose: Get the faction's noun.
 // ORIGINAL: 0x0050B930 ?get_noun@@YAHH@Z 0x0050B930-0x0050B964 BYTE_EXACT
+// body      src/faction.h
 // LEVER: calling `parse_set(...)` grouped the two field reads together (matching
 //        the image's read/read/store/store order) but gave the temps the wrong
 //        registers (edx for gender, ecx for plurality). Assigning `GenderDefault`
@@ -3014,6 +3017,7 @@ void __cdecl social_upkeep(int faction_id) {
 /*
 Purpose: Calculate the cost of the social upheaval for the specified faction.
 // ORIGINAL: 0x005B4550 ?social_upheaval@@YAHHPAH@Z 0x005B4550-0x005B45F8
+// body      src/faction.h
 // symbol    ?social_upheaval@@YAIHPAUSocialCategory@@@Z
 // size      168 bytes
 // prototype int (__cdecl ?social_upheaval@@YAHHPAH@Z)(int factionID, social_category* category)
