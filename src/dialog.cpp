@@ -901,12 +901,6 @@ Dialog::~Dialog() {
     close();
 }
 
-// Retained leaf callers still use this callback ABI. The actual C++ destructor
-// owns its virtual-table stage, member destruction and exception cleanup.
-void __fastcall dialog_destructor_redirect(Dialog *self, void *) {
-    self->Dialog::~Dialog();
-}
-
 /*
 Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and free the storage through the executable's operator

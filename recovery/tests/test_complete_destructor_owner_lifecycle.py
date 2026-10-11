@@ -127,11 +127,13 @@ def test_natural_typed_owners_and_only_superseded_seams_are_removed():
                          "dialogs_destructor_redirect", "graphic_win_destructor_redirect"):
             assert obsolete not in text, (rel, obsolete)
 
-    # This partial Dialog teardown helper is an independently exercised real
-    # behavior and remains separate from complete-object compiler lifetimes.
-    assert "void __fastcall dialog_destructor_redirect(Dialog *self, void *)" in source("src/dialog.cpp")
-    assert "dialog_destructor_redirect(dialog, 0);" in source("recovery/tests/dialog_lifetime_harness.cpp")
-    assert "dialog_destructor_redirect" in source("recovery/tests/test_dialog_close_recovery.py")
+    # Named-base destruction needs no production callback adapter. Exercise
+    # qualified C++ destruction separately from complete-object lifetimes.
+    for rel in ("src/dialog.cpp", "src/dialog.h"):
+        assert "dialog_destructor_redirect" not in source(rel)
+    harness = source("recovery/tests/dialog_lifetime_harness.cpp")
+    assert "dialog->Dialog::~Dialog();" in harness
+    assert "derived->Dialog::~Dialog();" in harness
 
 
 def test_host_control_compiles_the_actual_listbox_destructor_body_and_virtual_base_lifetime():

@@ -1,4 +1,4 @@
-// Actual Dialog declaration/destructor and retained callback. Member/close
+// Actual Dialog declaration/destructor. Member/close
 // doubles expose lifetime order; this is not a full-game exception oracle.
 #include <assert.h>
 #include <stddef.h>
@@ -24,7 +24,6 @@ struct StringList {
 Dialog::Dialog() {}
 void Dialog::close() { event(3); if (throw_close) throw 13; }
 // LIVE_DIALOG_DESTRUCTION
-// LIVE_DIALOG_CALLBACK
 
 struct DerivedDialog : Dialog {
     ~DerivedDialog() { event(7); }
@@ -51,15 +50,15 @@ int main() {
     void *storage = malloc(sizeof(Dialog));
     assert(storage);
     Dialog *dialog = ::new(storage) Dialog;
-    dialog_destructor_redirect(dialog, 0);
+    dialog->Dialog::~Dialog();
     expect(normal, 5);
-    free(storage); // Non-deleting callback must not free the allocation.
+    free(storage); // Explicit destruction must not free the allocation.
 
     count = 0;
     storage = malloc(sizeof(DerivedDialog));
     assert(storage);
     DerivedDialog *derived = ::new(storage) DerivedDialog;
-    dialog_destructor_redirect(derived, 0);
+    derived->Dialog::~Dialog();
     expect(normal, 5); // Original entry destroys only the named Dialog base.
     free(storage);
 

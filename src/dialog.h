@@ -332,5 +332,3 @@ inline int Dialog::id_to_pos(int id) {
     }
     return item_list_.current_position_;
 }
-
-void __fastcall dialog_destructor_redirect(Dialog *self, void *);

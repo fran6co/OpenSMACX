@@ -34,8 +34,6 @@ def test_actual_destructor_and_generated_delete_own_member_lifetimes(tmp_path, m
     run_recovered_harness(tmp_path, monkeypatch, "dialog_lifetime_harness.cpp", [], declarations=[
         ("// LIVE_DIALOG_DECL", "src/dialog.h", "class Dialog {", "static_assert(sizeof(Dialog)"),
         ("// LIVE_DIALOG_DESTRUCTION", "src/dialog.cpp", "Dialog::~Dialog() {",
-         "// Retained leaf callers still use this callback ABI."),
-        ("// LIVE_DIALOG_CALLBACK", "src/dialog.cpp", "void __fastcall dialog_destructor_redirect(",
          "/*\nPurpose: The compiler-generated scalar deleting destructor:")])
 
 
@@ -48,10 +46,10 @@ def test_generated_scalar_entry_targets_actual_destructor(objects):
                        and s.section > 0 for s in obj.symbols.values())
 
 
-def test_retained_callback_directly_destroys_the_named_base(objects):
+def test_obsolete_destructor_callback_is_not_emitted(objects):
     for obj in objects["src/dialog.cpp"]:
-        assert references(obj, "?dialog_destructor_redirect@@YIXPAVDialog@@PAX@Z") == [
-            "??1Dialog@@UAE@XZ"]
+        assert not any(s.name == "?dialog_destructor_redirect@@YIXPAVDialog@@PAX@Z"
+                       and s.section > 0 for s in obj.symbols.values())
 
 
 def test_retained_external_callers_reach_actual_dialog_destructor(objects):
