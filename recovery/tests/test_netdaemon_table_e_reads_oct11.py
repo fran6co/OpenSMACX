@@ -27,7 +27,8 @@ def apply_table_e_read_migration(source):
         assert body.count(before) == 1, before
         body = body.replace(before, after, 1)
     assert source.count(old) == 1
-    return source.replace(old, body, 1)
+    from test_netdaemon_global_lock_signed_oct11 import apply_global_lock_signed_migration
+    return apply_global_lock_signed_migration(source.replace(old, body, 1))
 
 
 PREAMBLE = r'''

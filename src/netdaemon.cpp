@@ -2867,9 +2867,12 @@ int NetDaemon::add_global() {
     NetBusyCount = newE664;
 
     if (channels_[1].trailing_words_[3] == 0) {
-        int newBc8 = channels_[1].trailing_words_[4] + 1;
-        channels_[1].trailing_words_[4] = newBc8;
-        if (newBc8 > 0 || channels_[0].leading_words_[2] > 2) {
+        ++channels_[1].trailing_words_[4];
+        // Native INC wraps, while its JG/JLE comparisons interpret signed bits.
+        int32_t retries, response;
+        std::memcpy(&retries, &channels_[1].trailing_words_[4], sizeof retries);
+        std::memcpy(&response, &channels_[0].leading_words_[2], sizeof response);
+        if (retries > 0 || response > 2) {
             const char *msg = reinterpret_cast<const char *>("NOLOCK");
             if (channels_[0].leading_words_[2] != 2) {
                 msg = reinterpret_cast<const char *>("NOLOCKGLOBAL");

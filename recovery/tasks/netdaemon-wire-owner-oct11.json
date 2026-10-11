@@ -2,6 +2,7 @@
   "author": "coordinator",
   "base_revision": "a18f9cd7c43aaf731732104bd6db627154578f04",
   "editable_files": [
+    "recovery/tests/test_netdaemon_global_lock_signed_oct11.py",
     "recovery/tests/test_netdaemon_table_e_reads_oct11.py",
     "recovery/tests/test_netdaemon_lock_scalar_owner_oct11.py",
     "recovery/tests/test_netdaemon_client_lock_identity_actual_source.py",
