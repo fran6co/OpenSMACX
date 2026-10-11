@@ -5195,7 +5195,7 @@ static bool netdaemon_handle_client_lock_message(NetDaemon *daemon,
             *reinterpret_cast<int *>(message + 0x20));
         if (result != 0) {
             log_say("(Sending: Lock Failed)", 0, 0, 0);
-            message_data(0x1201 +
+            message_data(0x1202 +
                          static_cast<int>(daemon->locks_.field_E0_ != 0),
                          sender, 0, 0, 0, 0);
             return true;
@@ -5214,10 +5214,12 @@ static bool netdaemon_handle_client_lock_message(NetDaemon *daemon,
     if (type == 0x2211) {
         log_say("From Client: LOCK GLOBAL", sender, 0, 0);
         if (daemon->locks_.check_global_2(sender) != 0) {
-            message_data(0x1201 +
+            message_data(0x1202 +
                          static_cast<int>(daemon->locks_.field_E0_ != 0),
                          sender, 0, 0, 0, 0);
+            return true;
         }
+        message_data(0x1201, sender, 0, 0, 0, 0);
         daemon->locks_.check_global();
         return true;
     }

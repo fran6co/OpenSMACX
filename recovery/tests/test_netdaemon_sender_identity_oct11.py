@@ -49,7 +49,18 @@ def apply_entry_identity_migration(source):
     for before, after, count in IDENTITY_EDITS:
         assert source.count(before) == count, before
         source = source.replace(before, after, count)
-    return source
+    return apply_lock_response_migration(source)
+
+
+def apply_lock_response_migration(source):
+    before = "message_data(0x1201 +\n                         static_cast<int>(daemon->locks_.field_E0_ != 0)"
+    after = "message_data(0x1202 +\n                         static_cast<int>(daemon->locks_.field_E0_ != 0)"
+    assert source.count(before) == 2
+    source = source.replace(before, after)
+    before = "                         sender, 0, 0, 0, 0);\n        }\n        daemon->locks_.check_global();"
+    after = "                         sender, 0, 0, 0, 0);\n            return true;\n        }\n        message_data(0x1201, sender, 0, 0, 0, 0);\n        daemon->locks_.check_global();"
+    assert source.count(before) == 1
+    return source.replace(before, after, 1)
 
 
 def product():

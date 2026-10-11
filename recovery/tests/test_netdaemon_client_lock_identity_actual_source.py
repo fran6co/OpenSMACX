@@ -106,7 +106,7 @@ int main() {
     NetDaemon failed; failed.locks_.result_ = 1; failed.locks_.field_E0_ = 1;
     assert(netdaemon_handle_client_lock_message(
         &failed, 0x2210, packet, 2));
-    assert(failed.locks_.lock_calls_ == 1 && sent_type == 0x1202 &&
+    assert(failed.locks_.lock_calls_ == 1 && sent_type == 0x1203 &&
            sent_target == 2);
 
     NetDaemon global; global.locks_.global_result_ = 1;
@@ -115,10 +115,26 @@ int main() {
         &global, 0x2211, packet, 2));
     assert(logged_sender == 2 && global.locks_.global2_calls_ == 1 &&
            global.locks_.global2_sender_ == 2);
-    assert(sent_type == 0x1202 && sent_target == 2);
-    assert(events[events.size()-3] == "global2" &&
-           events[events.size()-2] == "send" &&
-           events[events.size()-1] == "global");
+    assert(sent_type == 0x1203 && sent_target == 2);
+    assert(events[events.size()-2] == "global2" &&
+           events[events.size()-1] == "send");
+    // Both failure opcodes use the live global-lock owner, not player identity.
+    for (int owner : {0, 9}) {
+        NetDaemon blocked; blocked.locks_.result_=1; blocked.locks_.field_E0_=owner;
+        events.clear(); sends=0;
+        assert(netdaemon_handle_client_lock_message(&blocked,0x2210,packet,2));
+        assert(sends==1 && sent_type==0x1202+(owner!=0) && sent_target==2);
+        NetDaemon global_blocked; global_blocked.locks_.global_result_=1;
+        global_blocked.locks_.field_E0_=owner; events.clear(); sends=0;
+        assert(netdaemon_handle_client_lock_message(&global_blocked,0x2211,packet,2));
+        assert(sends==1 && sent_type==0x1202+(owner!=0) && sent_target==2);
+        assert(events.back()=="send"); // Failure exits without check_global.
+    }
+    NetDaemon global_ready; events.clear(); sends=0;
+    assert(netdaemon_handle_client_lock_message(&global_ready,0x2211,packet,2));
+    assert(sends==1 && sent_type==0x1201 && sent_target==2);
+    assert(events[events.size()-3]=="global2" &&
+           events[events.size()-2]=="send" && events.back()=="global");
     return 0;
 }
 """
@@ -203,10 +219,55 @@ def test_actual_helper_controls_and_identity_mutation_under_gcc_and_clang():
         "(void)sender_identity;\n    const int sender = *reinterpret_cast<int *>(message + 4);",
     )
     assert mutant != helper
+    reply_tail = "        message_data(0x1201, sender, 0, 0, 0, 0);\n        daemon->locks_.check_global();"
+    assert helper.count(reply_tail) == 1
+    failure_tail = "                         sender, 0, 0, 0, 0);\n            return true;\n        }\n        message_data(0x1201, sender, 0, 0, 0, 0);"
+    assert helper.count(failure_tail) == 1
+    mutants = {
+        "identity": mutant,
+        "failure_opcode": helper.replace("message_data(0x1202 +", "message_data(0x1201 +"),
+        "missing_ready_reply": helper.replace(reply_tail, "        daemon->locks_.check_global();"),
+        "failure_fallthrough": helper.replace(failure_tail, failure_tail.replace("            return true;\n", "")),
+        "failure_global_check": helper.replace(failure_tail, failure_tail.replace("            return true;", "            daemon->locks_.check_global();\n            return true;")),
+    }
     with tempfile.TemporaryDirectory(prefix="osmx-2210-identity-") as temporary:
         directory = Path(temporary)
         for number, compiler in enumerate(compilers):
             good = compile_and_run(helper, compiler, directory, f"good_{number}")
             assert good.returncode == 0, good.stdout + good.stderr
-            bad = compile_and_run(mutant, compiler, directory, f"mutant_{number}")
-            assert bad.returncode != 0, "packet-sender identity mutant escaped control"
+            for name, damaged in mutants.items():
+                assert damaged != helper
+                bad = compile_and_run(damaged, compiler, directory, f"{name}_{number}")
+                assert bad.returncode != 0, name + " mutant escaped control"
+
+
+def test_pinned_lock_reply_opcodes_and_global_branch_order():
+    import pytest
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.model import Span
+    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    if not path.is_file():
+        pytest.skip("pinned original unavailable")
+    image = PeImage(path.read_bytes(),
+                   "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
+    cs = Cs(CS_ARCH_X86, CS_MODE_32)
+    instructions = {}
+    for start, end in ((0x535C70, 0x535D07), (0x535D07, 0x535D70)):
+        instructions.update({i.address: (i.mnemonic, i.op_str)
+                            for i in cs.disasm(image.read(Span(start, end)), start)})
+    expected = {
+        0x535C8C: ("push", "edi"),
+        0x535C9A: ("add", "eax, 0x1202"),
+        0x535D20: ("call", "0x5902c0"),
+        0x535D2F: ("push", "edi"),
+        0x535D30: ("je", "0x535d53"),
+        0x535D3F: ("add", "ecx, 0x1202"),
+        0x535D46: ("call", "0x592ee0"),
+        0x535D4E: ("jmp", "0x538266"),
+        0x535D53: ("push", "0x1201"),
+        0x535D58: ("call", "0x592ee0"),
+        0x535D66: ("call", "0x5901d0"),
+    }
+    for address, instruction in expected.items():
+        assert instructions[address] == instruction
