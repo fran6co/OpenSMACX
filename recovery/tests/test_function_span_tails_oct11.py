@@ -8,6 +8,9 @@ import pytest
 
 from match_recovery.source import read_text
 from match_recovery.source.writer import write_bytes
+from test_verified_tail_claims_oct11 import (
+    RECORDED, apply_verified_tail_claims, expected_recorded_tail,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "32729ca84"
@@ -44,12 +47,13 @@ def test_api_extent_edits_preserve_all_other_source_and_claims(relative):
     path = ROOT / relative
     old = subprocess.check_output(["git", "show", BASE + ":" + relative], cwd=ROOT)
     current = path.read_bytes()
-    assert apply_span_tail_migration(old.decode(), relative) == current.decode()
+    migrated = apply_span_tail_migration(old.decode(), relative)
+    assert apply_verified_tail_claims(migrated, relative) == current.decode()
     before = {r.address: r for r in read_text(old.decode(), path)}
     after = {r.address: r for r in read_text(current.decode(), path)}
     assert before.keys() == after.keys()
     for address, record in before.items():
-        expected = expected_extended_record(record)
+        expected = expected_recorded_tail(expected_extended_record(record))
         for field in fields(record):
             if field.name not in {"line", "region", "origin"}:
                 assert getattr(expected, field.name) == getattr(after[address], field.name)
@@ -61,7 +65,8 @@ def test_api_extent_edits_preserve_all_other_source_and_claims(relative):
                     for lesson in row.origin]
         assert lessons(record) == lessons(after[address])
         if address in TAILS:
-            assert not record.byte_exact and not after[address].byte_exact
+            assert not record.byte_exact
+            assert after[address].byte_exact == (address in RECORDED)
             # Generate the marker through the real writer, not a hand-spelled
             # marker expectation. Durable rationale/size are separate edits.
             preview = write_bytes(old, [expected]).decode()

@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "task_id": "verified-tail-claims-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Use the production recorder to bank freshly remeasured historical masked-byte obligations for two complete source-owned tails; no body change or full acceptance claim.",
+  "base_revision": "84df17bd71a4f8da80608096518756fa5f424033",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6393376
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4955792
+    }
+  ],
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/statuswin.cpp",
+    "recovery/tests/test_function_span_tails_oct11.py",
+    "recovery/tests/test_caviar_shape_chain_oct11.py",
+    "recovery/tests/test_verified_tail_claims_oct11.py",
+    "recovery/tests/verified-tail-claims-oct11.patch"
+  ],
+  "evidence": [
+    "Commit a85e8b9e4 corrected independently reviewed complete spans using the source writer. Current Caviar vx_free618E20..618E30 and StatusWin UNK4 4B9E90..4B9E9D retain complete bodies and source ownership; no new implementation is inferred.",
+    "Fresh previous two-TU comparison changed only these selected measurements from mismatch to byte-exact. The production recorder must remeasure under prepared current compiler inputs and verify historical identity integrity before publication; earlier reports are not recorder inputs.",
+    "Only recorder publication may bank claims. Keep add_object unclaimed; its extended epilogue still mismatches. Preserve all identities, spans, bodies, references, binding evidence and prior claims; narrow fixed-patch controls must prove only the two new obligations.",
+    "Legacy relocation-masked claims do not qualify full reference identity, retained link/structure/runtime evidence or the complete game. Coordinator-reviewed bounded recording does not establish autonomous acceptance."
+  ]
+}

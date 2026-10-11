@@ -1738,7 +1738,7 @@ void StatusWin::on_redraw() {
 }
 
 /*
-// ORIGINAL: 0x004B9E90 ?UNK4@StatusWin@@QAEXXZ 0x004B9E90-0x004B9E9D
+// ORIGINAL: 0x004B9E90 ?UNK4@StatusWin@@QAEXXZ 0x004B9E90-0x004B9E9D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Include the StatusFlags writeback and return in the complete original body; preserve existing behavior and historical matching notes without granting a claim.","evidence":["pinned:0x004B9E90 reads0x00939ED8, ORs bit0x20, writes back at0x004B9E97 and returns at0x004B9E9C; padding starts0x004B9E9D","source:StatusWin::UNK4 updates the source-owned StatusFlags object"]}
 // TRIED: the scaffold bound the word as `static int *const g_00939ed8`, which
 //        hid its meaning. It is now the source-owned StatusFlags object.

@@ -1902,7 +1902,7 @@ void *Caviar::vx_malloc(unsigned long size) {
 /*
 Purpose: The engine's release callback - free behind a null test, so the
          engine may hand back a slot it never filled.
-// ORIGINAL: 0x00618E20 ?vx_free@Caviar@@SAXPAX@Z 0x00618E20-0x00618E30
+// ORIGINAL: 0x00618E20 ?vx_free@Caviar@@SAXPAX@Z 0x00618E20-0x00618E30 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Include the release callback's final return in its original span; retain the existing source implementation and historical findings without granting a match claim.","evidence":["pinned:0x00618E26 branches to the return at0x00618E2F; the return ends0x00618E30, which is the next mapped callback entry","source:Caviar::vx_free preserves the null test and ordinary CRT free call"]}
 // size      16 bytes
 // calls     0x00644EF2

@@ -9,6 +9,7 @@ from match_recovery.source import read_text
 from test_caviar_draw_callbacks_actual_source import extract
 from test_texture_raster_actual_source import _continuity_fields
 from test_function_span_tails_oct11 import expected_extended_record
+from test_verified_tail_claims_oct11 import expected_recorded_tail
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "ba1ed66be9324bdccdf8c2b75db88be2dd1b50d9"
@@ -31,7 +32,7 @@ def assert_caviar_owner_continuity(before):
     by_address = {r.address: r for r in after}
     assert len(by_address) == len(after) == len(before)
     for record in before:
-        record = expected_extended_record(record)
+        record = expected_recorded_tail(expected_extended_record(record))
         current = by_address[record.address]
         assert record.function_fragment == current.function_fragment
         if record.address == 0x63E860:
