@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "task_id": "buffer-bmp-extent-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Remove a separate unowned constant-return function from the BMP writer's incorrect unclaimed extent, exposing rather than concealing the original function-coverage frontier.",
+  "base_revision": "4655012ec8488bef8253f15308dafbcc602548eb",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6158608},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6159168}
+  ],
+  "editable_files": ["src/buffer.cpp", "recovery/tests/test_buffer_bmp_extent_oct11.py", "recovery/tests/test_buffer_mono.py"],
+  "evidence": [
+    "Pinned writer epilogue RET4 starts at5DFB3C and ends at5DFB3F; a NOP follows. Separate aligned5DFB40 entry returns constant8 with RET16 ending at5DFB48. Both IDA catalogues independently separate the entries; no static caller or stored pointer currently establishes an owner/signature for the tiny body.",
+    "The original writer seed extent5DF910..5DFB48 was unclaimed, with no byte or semantic claim. Narrow only through native source writer to5DF910..5DFB3F, preserve the entire old extent and unresolved leaf finding in source binding evidence, retain all other original identities and obligations, and change no C++ behavior or ABI. Do not fabricate an owner, replacement wrapper or byte claim for the separate entry.",
+    "Require native writer reproduction, original terminal/leaf evidence, source identity and claim continuity, independent review, mappings/references, relevant Buffer regression tests and fresh application build/link. This decreases false source-span containment, not unbound-entry count or remaining implementation work.",
+    "The existing Buffer mono host harness predates BufferSpriteOwner and fails to compile actual current bodies. Supply only its controlled owner accessor, retaining the same observed shared Sprite identity and every argument/borrow/release damage control; retarget the two exact mutation spellings to current source with an explicit replacement-count assertion. No production lifetime or ABI behavior is supplied by this double."
+  ]
+}

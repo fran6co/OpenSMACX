@@ -7944,8 +7944,9 @@ int Buffer::write_pcx(char *filename) {
     return 4;
 }
 
-// ORIGINAL: 0x005DF910 ?write_bmp@Buffer@@QAEHPAD@Z 0x005DF910-0x005DFB48
-// size      568 bytes
+// ORIGINAL: 0x005DF910 ?write_bmp@Buffer@@QAEHPAD@Z 0x005DF910-0x005DFB3F
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned write_bmp epilogue ends with RET4 at5DFB3C..5DFB3F;5DFB3F is alignment NOP. The independent5DFB40..5DFB48 body is MOV EAX,8;RET16, corroborated by both IDA catalogues. It is not writer padding or a writer cold block.", "Historical unclaimed seed extent5DF910..5DFB48 is retained here as provenance. The separate5DFB40 entry has no established C++ owner or signature; do not count it implemented by this writer, create an adapter, or infer ownership merely from adjacency. No byte claim was attached to the combined extent."], "reason": "Bind the BMP writer only to its reachable original body; the old seed extent swallowed a separate still-unowned constant-return entry."}
+// size      559 bytes
 // prototype int (__thiscall ?write_bmp@Buffer@@QAEHPAD@Z)(Buffer* this, char*)
 // callers   0   call targets   4
 // kind      game

@@ -55,6 +55,9 @@ def actual_source():
         "struct Buffer; struct Sprite {", sprite_fields,
         "int draw_mono(Buffer *, int, int, int, int, int, int); };",
         "Sprite g_BUFFER_SPRITE;",
+        # Controlled owner accessor; process-start lifetime/layout are tested
+        # separately. Keep the real consumer bodies and observed Sprite identity.
+        "struct SharedSpriteOwnerDouble { Sprite &sprite() { return g_BUFFER_SPRITE; } } BufferSpriteOwner;",
         "struct Buffer {", buffer_fields,
         "Dib dib_; void setup_buff_sprite(int); static void release_buff_sprite();",
         signature[0], "};",
@@ -211,8 +214,8 @@ def test_actual_buffer_mono(actual_executable, scenario):
      "destination, transparent, x, y, colour, denominator, numerator);", 0),
     ("    release_buff_sprite();", "    /* missing release */", 0),
     ("    return result;", "    return 0;", 0),
-    ("g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;",
-     "g_BUFFER_SPRITE.iSpriteWidth2_ = dib_.bmiHeader.biWidth;", 0),
+    ("BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;",
+     "BufferSpriteOwner.sprite().iSpriteWidth2_ = dib_.bmiHeader.biWidth;", 0),
     ("    setup_buff_sprite(transparent);", "    if (!destination) return 3;\n    setup_buff_sprite(transparent);", 6),
     ("    setup_buff_sprite(transparent);", "    if (surface_) return 3;\n    setup_buff_sprite(transparent);", 5),
     ("++surface_lock_count_;", "/* missing acquisition */", 2),
@@ -232,8 +235,9 @@ def test_release_before_draw_is_behavioral_damage(tmp_path):
     source = actual_source()
     assert source.count("    release_buff_sprite();") == 1
     source = source.replace("    release_buff_sprite();", "")
-    source = source.replace("    int result = g_BUFFER_SPRITE.draw_mono(",
-                            "    release_buff_sprite();\n    int result = g_BUFFER_SPRITE.draw_mono(")
+    draw = "    int result = BufferSpriteOwner.sprite().draw_mono("
+    assert source.count(draw) == 1
+    source = source.replace(draw, "    release_buff_sprite();\n" + draw)
     executable = compile_host(tmp_path, source)
     result = subprocess.run([str(executable), "0"], capture_output=True,
                             text=True, timeout=10)
