@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "602b8d5b4",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_combat_ability_modifiers_oct11.py",
+    "recovery/tests/test_combat_defense_closure_oct11.py",
+    "recovery/tests/test_combat_terrain_modifiers_oct11.py"
+  ],
+  "intent": "Recover original combat ability, faction and sensor modifier semantics as one bounded owner batch, including native branch polarity, multiply-before-divide and report values. Preserve original unchecked reads, identities and historical matching obligations; do not add safety fixes or claim a new application function.",
+  "evidence": [
+    "Native501DD5..501E02 reads the attacker vehicle prototype/chassis missile flag without a negative-index guard. Preserve that direct read instead of guarded cached prototype; caller reachability of negative attackers is not established. Tests model preceding memory with legitimate backing storage, not host out-of-bounds reads.",
+    "Empath gate502282 masks PSI state with2;502335..502381 requires defender PSI and multiplies (rule+100)*offense before signed /100. Airdrop502409..50243C uses rule9497E4, not the Empath field;5024BE..5024C4 negates that penalty for display. Faction offense5025B9..50265A and defense502A51..502B6C multiply strength by val1 before signed /100 and report val1-100, including zero-valued supplied rows.",
+    "Native503ABB..503AE2 uses base_find on land and immediately reads its result's base faction without a success guard;503AE4..503B0E uses whose_territory on ocean and admits unowned or defender-owned tiles. Preserve the unchecked land lookup, do not turn owner correction into a safety fix. Sensor paths503B56..503B79/503BCE..503BF1 and Trance503CA8..503CCB multiply defense before division.",
+    "Native503E28..503E2F sends AIR defenders to air-to-air; other defenders take Ground Strike. Defender air superiority503F7A..504030 requires defender ability and absence of attacker ability, zero PSI, both non-missile AIR units, then product-before-division. Noncombat5040DB..5040FC, ship-port5041B3..5041CB, jammer50435B..504378 and AAA504437..50444E have the same product order. Pulse3/8 armor504220..504273 gates both armor alternatives on land attacker speed greater than1.",
+    "Extracted actual source runs through bounded map, prototype, rule and report doubles under GCC and Clang. Cases cover negative/fractional rules, PSI bits, opposite Air Superiority cases, terrain ownership, negative lookup backing, zero faction-bonus rows, armor/speed/triad gates, displayed values and compounded arithmetic. Mutations restore each confirmed defect and must fail. Pinned native anchors independently constrain gates/products/reports. This is not complete battle_compute or game/runtime acceptance. The independently unconfirmed artillery-tail ownership/predicate remains unchanged."
+  ],
+  "subjects": [
+    {"address": 5250464, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ]
+}

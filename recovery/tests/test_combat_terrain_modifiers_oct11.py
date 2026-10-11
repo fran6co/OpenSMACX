@@ -35,6 +35,8 @@ def test_only_modifier_region_changes_and_original_obligations_survive():
     path=ROOT/"src/veh.cpp"
     old=subprocess.check_output(["git","show",BASE+":src/veh.cpp"],cwd=ROOT,text=True)
     new=path.read_text()
+    from test_combat_ability_modifiers_oct11 import restore_regions
+    new=restore_regions(new,old)
     assert old.replace(modifiers_region(old),"REVIEWED_MODIFIERS")==new.replace(
         modifiers_region(new),"REVIEWED_MODIFIERS")
     assert [(_continuity_fields(r),r.symbol,r.function_fragment) for r in read_text(old,path)]==[

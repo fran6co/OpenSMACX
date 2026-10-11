@@ -4540,8 +4540,9 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
     }
     battle_init();
     BOOL is_artillery = combat_type & 1;
-    BOOL is_bombard = (is_artillery // added veh_id_atk bounds check
-        || (veh_id_atk >= 0 && is_proto_missile(proto_id_atk))) ? true : false;
+    // Native non-artillery selection reads this row even for a negative attacker.
+    BOOL is_bombard = (is_artillery
+        || is_proto_missile(Vehs[veh_id_atk].proto_id)) ? true : false;
     uint32_t psi_combat_type = 0;
     if (!is_bombard || proto_id_atk == BSC_SPORE_LAUNCHER || proto_id_def == BSC_SPORE_LAUNCHER) {
         if (veh_id_atk >= 0 && get_proto_offense_rating(proto_id_atk) < 0) {
@@ -4596,17 +4597,17 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         offense = (offense * 125) / 100;
                         add_bat(0, 25, label_get(1110)); // "Resonance Attack"
                     }
-                    if (!has_abil(proto_id_def, ABL_DISSOCIATIVE_WAVE) && psi_combat_type
+                    if (!has_abil(proto_id_def, ABL_DISSOCIATIVE_WAVE) && (psi_combat_type & 2)
                         && has_abil(proto_id_atk, ABL_EMPATHIC)
                         && Rules.combat_pct_emp_song_atk_vs_psi) {
-                        offense *= ((Rules.combat_pct_emp_song_atk_vs_psi + 100) / 100);
+                        offense = (Rules.combat_pct_emp_song_atk_vs_psi + 100) * offense / 100;
                         add_bat(0, Rules.combat_pct_emp_song_atk_vs_psi,
                             Ability[abil_index(ABL_EMPATHIC)].name);
                     }
                 }
                 if (Vehs[veh_id_atk].state & VSTATE_MADE_AIRDROP
                     && has_abil(proto_id_atk, ABL_DROP_POD) && Rules.combat_pen_pct_atk_airdrop) {
-                    offense = (100 - Rules.combat_pct_emp_song_atk_vs_psi) * offense / 100;
+                    offense = (100 - Rules.combat_pen_pct_atk_airdrop) * offense / 100;
                     /*
                     uint32_t dropRange;
                     if (has_tech(Rules.tech_orb_insert_sans_spc_elev, faction_id_atk)
@@ -4617,7 +4618,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         dropRange = Rules.max_airdrop_sans_orb_insert;
                     }
                     */
-                    add_bat(0, Rules.combat_pen_pct_atk_airdrop,
+                    add_bat(0, -Rules.combat_pen_pct_atk_airdrop,
                         drop_range(faction_id_atk) <= Rules.max_airdrop_sans_orb_insert
                         ? label_get(437) // "Air Drop"
                         : label_get(438)); // "Orbital Insertion"
@@ -4631,8 +4632,8 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                 for (int i = 0; i < bonus_count; i++) {
                     if (Players[faction_id_atk].faction_bonus_id[i] == RULE_OFFENSE) {
                         int rule_off_bonus = Players[faction_id_atk].faction_bonus_val1[i];
-                        offense *= (rule_off_bonus / 100);
-                        add_bat(0, rule_off_bonus, label_get(1108)); // "Alien Offense"
+                        offense = rule_off_bonus * offense / 100;
+                        add_bat(0, rule_off_bonus - 100, label_get(1108)); // "Alien Offense"
                     }
                 }
                 if (psi_combat_type && faction_id_atk) {
@@ -4651,8 +4652,8 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
             for (int i = 0; i < bonus_count; i++) {
                 if (Players[faction_id_def].faction_bonus_id[i] == RULE_DEFENSE) {
                     int rule_def_bonus = Players[faction_id_def].faction_bonus_val1[i];
-                    defense *= (rule_def_bonus / 100);
-                    add_bat(1, rule_def_bonus, label_get(1109)); // "Alien Defense"
+                    defense = rule_def_bonus * defense / 100;
+                    add_bat(1, rule_def_bonus - 100, label_get(1109)); // "Alien Defense"
                 }
             }
             if (veh_id_atk >= 0 && VehPrototypes[proto_id_def].plan == PLAN_INFO_WARFARE) {
@@ -4851,16 +4852,16 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                                 && (sensor_status = is_sensor(x_radius, y_radius), sensor_status)) {
                                 BOOL has_sensor = false;
                                 if (!is_ocean(x_radius, y_radius)) {
+                                    int base_id_find = base_find(x_radius, y_radius);
+                                    // Preserve the original unchecked lookup result.
+                                    if (Bases[base_id_find].faction_id_current == faction_id_def) {
+                                        has_sensor = true;
+                                    }
+                                } else {
                                     int faction_id_terr = whose_territory(faction_id_def, x_radius,
                                         y_radius, NULL, false);
                                     if (faction_id_terr < 0
                                         || (uint32_t)faction_id_terr == faction_id_def) {
-                                        has_sensor = true;
-                                    }
-                                } else {
-                                    int base_id_find = base_find(x_radius, y_radius);
-                                    // assumes will find a base?
-                                    if (Bases[base_id_find].faction_id_current == faction_id_def) {
                                         has_sensor = true;
                                     }
                                 }
@@ -4874,18 +4875,18 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         }
                     }
                     if (sensor_def & 1) {
-                        defense *= ((Rules.combat_pct_def_range_sensor + 100) / 100);
+                        defense = (Rules.combat_pct_def_range_sensor + 100) * defense / 100;
                         add_bat(1, Rules.combat_pct_def_range_sensor, label_get(613)); // "Sensor"
                     }
                     if (sensor_def & 2) {
-                        defense *= ((Rules.combat_pct_def_range_sensor + 100) / 100);
+                        defense = (Rules.combat_pct_def_range_sensor + 100) * defense / 100;
                         add_bat(1, Rules.combat_pct_def_range_sensor, label_get(1123)); // "GSP"
                     }
                 }
                 if (!has_abil(proto_id_atk, ABL_DISSOCIATIVE_WAVE)
                     && Rules.combat_pct_trance_def_vs_psi && veh_id_atk >= 0 && psi_combat_type & 1
                     && has_abil(proto_id_def, ABL_TRANCE)) {
-                    defense *= ((Rules.combat_pct_trance_def_vs_psi + 100) / 100);
+                    defense = (Rules.combat_pct_trance_def_vs_psi + 100) * defense / 100;
                     add_bat(1, Rules.combat_pct_trance_def_vs_psi, label_get(329)); // "Trance"
                 }
                 uint32_t armor_id_def = VehPrototypes[proto_id_def].armor_id;
@@ -4897,16 +4898,16 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                 // add check veh_id_atk >= 0 to skip this entire code section? original jumps to end
                 if (veh_id_atk >= 0 && get_proto_triad(proto_id_atk) == TRIAD_AIR
                     && has_abil(proto_id_atk, ABL_AIR_SUPERIORITY) && !psi_combat_type) {
-                    if (get_proto_triad(proto_id_def) == TRIAD_AIR) {
+                    if (get_proto_triad(proto_id_def) != TRIAD_AIR) {
                         int ground_strike_pen = Rules.combat_pen_pct_air_supr_vs_grnd;
                         if (ground_strike_pen) {
-                            offense *= ((100 - ground_strike_pen) / 100);
+                            offense = (100 - ground_strike_pen) * offense / 100;
                             add_bat(0, -ground_strike_pen, label_get(448)); // "Ground Strike"
                         }
                     } else {
                         int air_to_air = Rules.combat_pct_air_supr_vs_air;
                         if (air_to_air && !has_abil(proto_id_def, ABL_AIR_SUPERIORITY)) {
-                            offense *= ((air_to_air + 100) / 100);
+                            offense = (air_to_air + 100) * offense / 100;
                             add_bat(0, air_to_air, label_get(449)); // "Air-to-Air"
                         }
                     }
@@ -4915,16 +4916,16 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                 if (veh_id_atk >= 0 && get_proto_triad(proto_id_atk) == TRIAD_AIR
                     && get_proto_triad(proto_id_def) == TRIAD_AIR
                     && has_abil(proto_id_def, ABL_AIR_SUPERIORITY)
-                    && has_abil(proto_id_atk, ABL_AIR_SUPERIORITY) && !psi_combat_type
+                    && !has_abil(proto_id_atk, ABL_AIR_SUPERIORITY) && !psi_combat_type
                     && !is_proto_missile(proto_id_atk) && !is_proto_missile(proto_id_def)
                     && Rules.combat_pct_air_supr_vs_air) {
-                    defense *= ((Rules.combat_pct_air_supr_vs_air + 100) / 100);
+                    defense = (Rules.combat_pct_air_supr_vs_air + 100) * defense / 100;
                     add_bat(1, Rules.combat_pct_air_supr_vs_air, label_get(449)); // "Air-to-Air"
                 }
                 if (!get_proto_offense_rating(proto_id_def)
                     && get_proto_defense_rating(proto_id_def) == 1 && (faction_id_atk
                         || base_id_def < 0) && Rules.combat_pen_pct_non_cbt_def_vs_cbt) {
-                    defense *= ((100 - Rules.combat_pen_pct_non_cbt_def_vs_cbt) / 100);
+                    defense = (100 - Rules.combat_pen_pct_non_cbt_def_vs_cbt) * defense / 100;
                     // "Non Combat"
                     add_bat(1, -Rules.combat_pen_pct_non_cbt_def_vs_cbt, label_get(439));
                 }
@@ -4932,10 +4933,10 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     && get_proto_triad(proto_id_atk) == TRIAD_SEA
                     && get_proto_triad(proto_id_def) == TRIAD_SEA && base_id_def >= 0
                     && Rules.combat_pct_bonus_vs_ship_port) {
-                    offense *= ((Rules.combat_pct_bonus_vs_ship_port + 100) / 100);
+                    offense = (Rules.combat_pct_bonus_vs_ship_port + 100) * offense / 100;
                     add_bat(0, Rules.combat_pct_bonus_vs_ship_port, label_get(335)); // "In Port"
                 }
-                if (armor_id_def == ARM_PULSE_3_ARMOR || armor_id_def == ARM_PULSE_8_ARMOR
+                if ((armor_id_def == ARM_PULSE_3_ARMOR || armor_id_def == ARM_PULSE_8_ARMOR)
                     && get_proto_triad(proto_id_atk) == TRIAD_LAND
                     && Chassis[VehPrototypes[proto_id_atk].chassis_id].speed > 1) {
                     defense = 125 * defense / 100;
@@ -4946,13 +4947,13 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     && get_proto_triad(proto_id_atk) == TRIAD_LAND
                     && Chassis[VehPrototypes[proto_id_atk].chassis_id].speed > 1
                     && Rules.combat_pct_com_jam_def_vs_mobl) {
-                    defense *= ((Rules.combat_pct_com_jam_def_vs_mobl + 100) / 100);
+                    defense = (Rules.combat_pct_com_jam_def_vs_mobl + 100) * defense / 100;
                     add_bat(1, Rules.combat_pct_com_jam_def_vs_mobl, label_get(336)); // "Jammer"
                 }
                 if (!has_abil(proto_id_atk, ABL_DISSOCIATIVE_WAVE)
                     && has_abil(proto_id_def, ABL_AAA) && get_proto_triad(proto_id_atk) == TRIAD_AIR
                     && Rules.combat_pct_aaa_bonus_vs_air) {
-                    defense *= ((Rules.combat_pct_aaa_bonus_vs_air + 100) / 100);
+                    defense = (Rules.combat_pct_aaa_bonus_vs_air + 100) * defense / 100;
                     add_bat(1, Rules.combat_pct_aaa_bonus_vs_air, label_get(337)); // "Tracking"
                 }
             }
