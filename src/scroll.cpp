@@ -870,7 +870,9 @@ void Scroll::on_redraw() {
                             thumb_sprite_->transparent_index(), x, y, 1, 1);
     }
 
-    for (unsigned int layer = 0; layer < bevel_thickness_; ++layer) {
+    // Native6067F2/6067FC and60684B use signed comparisons. The stored
+    // word can retain a negative set_bevel_thickness(int) bit pattern.
+    for (int layer = 0; layer < long_from_bits(bevel_thickness_); ++layer) {
         Buffer::box(&thumb, bevel_upper_, bevel_lower_);
         ++thumb.left;
         --thumb.right;
@@ -1674,6 +1676,7 @@ void Scroll::on_left_up(int, int) {
 }
 
 // ORIGINAL: 0x00606320 ?on_mousewheel_down@Scroll@@QAEXH@Z 0x00606320-0x0060643E
+// RECOVERY_BINDING: v1 {"reason":"Keep the original chosen reversal branch, callback-visible reloads and delta-gated sound operation instead of caching notification values or omitting sound.","evidence":["pinned:606382..6063FD reloads callback/id/position/bounds after parent notification inside the original reversal branch","pinned:60637C jumps directly to redraw for delta zero;606402..606425 otherwise reloads the live parent and checks/plays its sound after both notifications, without another parent-null guard"]}
 void Scroll::on_mousewheel_down(int delta) {
     Win *const parent = win_parent_;
     if (parent == nullptr) {
@@ -1692,13 +1695,22 @@ void Scroll::on_mousewheel_down(int delta) {
     }
 
     if (delta != 0) {
-        int notified_position = position_;
-        if (range_reversed_ != 0U) {
-            notified_position = (range_minimum_ - position_) + range_maximum_;
+        if (range_reversed_ == 0U) {
+            win_parent_->on_scrolled(field_A18_, position_);
+            if (field_2144_ != nullptr) {
+                field_2144_(field_A18_, position_);
+            }
+        } else {
+            win_parent_->on_scrolled(field_A18_,
+                                    (range_minimum_ - position_) + range_maximum_);
+            if (field_2144_ != nullptr) {
+                field_2144_(field_A18_,
+                            (range_minimum_ - position_) + range_maximum_);
+            }
         }
-        parent->on_scrolled(field_A18_, notified_position);
-        if (field_2144_ != nullptr) {
-            field_2144_(field_A18_, notified_position);
+        Sound *const target = win_parent_->legacy_sound_33();
+        if (target != nullptr && target->is_playing() == 0) {
+            target->play();
         }
     }
 
@@ -1707,6 +1719,7 @@ void Scroll::on_mousewheel_down(int delta) {
 }
 
 // ORIGINAL: 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z 0x00606440-0x0060655C
+// RECOVERY_BINDING: v1 {"reason":"Preserve the original delta gate over notifications and sound, branch-selected reversal mapping, and callback-visible reloads.","evidence":["pinned:60649C skips directly to redraw for delta zero;6064BC/6064EE invoke parent notification;6064C2..60651C reads current callback/position/ranges/id within the previously selected branch","pinned:606521 reloads live parent after callbacks for sound; no additional parent-null guard is present"]}
 void Scroll::on_mousewheel_up(int delta) {
     Win *const parent = win_parent_;
     if (parent == nullptr) {
@@ -1724,19 +1737,23 @@ void Scroll::on_mousewheel_up(int delta) {
     }
 
     if (delta != 0) {
-        int notified_position = position_;
-        if (range_reversed_ != 0U) {
-            notified_position = (range_maximum_ - position_) + range_minimum_;
+        if (range_reversed_ == 0U) {
+            win_parent_->on_scrolled(field_A18_, position_);
+            if (field_2144_ != nullptr) {
+                field_2144_(field_A18_, position_);
+            }
+        } else {
+            win_parent_->on_scrolled(field_A18_,
+                                    (range_minimum_ - position_) + range_maximum_);
+            if (field_2144_ != nullptr) {
+                field_2144_(field_A18_,
+                            (range_maximum_ - position_) + range_minimum_);
+            }
         }
-        parent->on_scrolled(field_A18_, notified_position);
-        if (field_2144_ != nullptr) {
-            field_2144_(field_A18_, notified_position);
+        Sound *const target = win_parent_->legacy_sound_33();
+        if (target != nullptr && target->is_playing() == 0) {
+            target->play();
         }
-    }
-
-    Sound *const target = parent->legacy_sound_33();
-    if (target != nullptr && target->is_playing() == 0) {
-        target->play();
     }
 
     field_A3C_ = 0xFFFFFFFFU;
@@ -1784,16 +1801,23 @@ int Scroll::on_key_click(int, int key) {
     }
 
     WinCallbackWindow = parent;
-    int notified_position = position_;
-    if (range_reversed_ != 0U) {
-        notified_position = (range_maximum_ - position_) + range_minimum_;
-    }
-    parent->on_scrolled(field_A18_, notified_position);
-    if (field_2144_ != nullptr) {
-        field_2144_(field_A18_, notified_position);
+    // Native606625 chooses the mapping branch before the virtual callback;
+    // 606655/60668B reload its values afterward without retesting reversal.
+    if (range_reversed_ == 0U) {
+        win_parent_->on_scrolled(field_A18_, position_);
+        if (field_2144_ != nullptr) {
+            field_2144_(field_A18_, position_);
+        }
+    } else {
+        win_parent_->on_scrolled(field_A18_,
+                                (range_maximum_ - position_) + range_minimum_);
+        if (field_2144_ != nullptr) {
+            field_2144_(field_A18_,
+                        (range_maximum_ - position_) + range_minimum_);
+        }
     }
 
-    Sound *const target = parent->legacy_sound_33();
+    Sound *const target = win_parent_->legacy_sound_33();
     if (target != nullptr && target->is_playing() == 0) {
         target->play();
     }
@@ -1804,6 +1828,7 @@ int Scroll::on_key_click(int, int key) {
 }
 
 // ORIGINAL: 0x00606B20 ?on_button_clicked@Scroll@@QAEXH@Z 0x00606B20-0x00606C43 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Preserve the original branch-selected notification mapping while reloading callback-visible position, bounds, callback identity and parent after external notifications; do not reuse pre-callback snapshots.","evidence":["pinned:606B7E..606B9F selects normal/reversed notification before the parent virtual call;606BA5..606BB5 reloads the normal callback and current position;606BDB..606C03 reloads the reversed callback and current max/position/min/id without retesting reversal","pinned:606C08 reloads current parent+0xC4 and its sound+0x80 after both notifications; there is no second parent-null guard. Preserve that original error path, final thumb reset and virtual redraw."]}
 // symbol    ?on_button_clicked@Scroll@@UAEXH@Z
 void Scroll::on_button_clicked(int button_id) {
     Win *const parent = win_parent_;
@@ -1823,16 +1848,23 @@ void Scroll::on_button_clicked(int button_id) {
         ++position_;
     }
 
-    int notified_position = position_;
-    if (range_reversed_ != 0U) {
-        notified_position = (range_maximum_ - position_) + range_minimum_;
-    }
-    parent->on_scrolled(field_A18_, notified_position);
-    if (field_2144_ != nullptr) {
-        field_2144_(field_A18_, notified_position);
+    // The original chooses the mapping branch once, before notification.
+    // Callbacks can change the values, but not that already chosen branch.
+    if (range_reversed_ == 0U) {
+        win_parent_->on_scrolled(field_A18_, position_);
+        if (field_2144_ != nullptr) {
+            field_2144_(field_A18_, position_);
+        }
+    } else {
+        win_parent_->on_scrolled(field_A18_,
+                                (range_maximum_ - position_) + range_minimum_);
+        if (field_2144_ != nullptr) {
+            field_2144_(field_A18_,
+                        (range_maximum_ - position_) + range_minimum_);
+        }
     }
 
-    Sound *const target = parent->legacy_sound_33();
+    Sound *const target = win_parent_->legacy_sound_33();
     if (target != nullptr && target->is_playing() == 0) {
         target->play();
     }

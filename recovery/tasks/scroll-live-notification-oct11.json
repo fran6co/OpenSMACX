@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "task_id": "scroll-live-notification-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore native Scroll callback-visible state, wheel sound gating and signed bevel rendering without intentional behavior fixes, identity changes or claim demotion.",
+  "base_revision": "f227548f6bc61838fb0005ef9140bae3bae1a779",
+  "subjects": [
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6316832},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6317120},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6317408},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6317808},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6318880}
+  ],
+  "editable_files": ["src/scroll.cpp", "recovery/tests/test_scroll_notification_live_state_oct11.py", "recovery/tests/test_scroll_arrow_sprite_destination_oct10.py"],
+  "evidence": [
+    "Pinned parent virtual notifications choose reversal branch before callbacks; subsequent callback pointer, ID, position and range values are reloaded within that branch. Sound uses the current parent after both callbacks, not entry parent; original has no second null guard. WinCallbackWindow retains entry parent. Independent read-only review confirmed all four handler paths.",
+    "Down previously omitted sound; up previously played even for delta zero. Pinned60637C/60649C skip notifications and sound together for delta zero, but preserve movement, thumb invalidation and redraw. Pinned6067FC/60684B use signed bevel comparisons, so negative stored thickness performs zero layers.",
+    "Require actual-source host callback, delta-gate and signed-loop controls; pre-change body and stale-state/retested-branch/entry-parent/unsigned-loop damages must fail. Preserve all identities, symbols, complete spans and historical claims; temporary matching regressions remain restoration obligations under standing manual coordinator permission. Require fresh application compile/link, source mappings/references and independent review. This corrects five implemented functions, not five newly covered entries or full-game acceptance.",
+    "The older arrow-sprite continuity test predates the independently reviewed 5F0520 Win menu entry. Allow exactly that later bound identity, retaining equality for all prior records; its native migration/record controls remain in test_win_menu_entry_ownership_oct11.py."
+  ]
+}

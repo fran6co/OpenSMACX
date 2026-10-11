@@ -71,7 +71,11 @@ def test_original_identities_claims_and_seed_history_survive():
                                         cwd=ROOT, text=True)
         before = {r.address: r for r in read_text(prior, path)}
         after = {r.address: r for r in read_text(path.read_text(), path)}
-        assert set(before) == set(after)
+        # The separately reviewed menu-entry migration subsequently bound this
+        # independent Win helper; its native writer/claim controls live in
+        # test_win_menu_entry_ownership_oct11.py. No arbitrary additions allowed.
+        additions = {0x5F0520} if filename == "win.cpp" else set()
+        assert set(before) | additions == set(after)
         for address, row in before.items():
             assert _continuity_fields(row) == _continuity_fields(after[address])
             assert row.symbol == after[address].symbol
