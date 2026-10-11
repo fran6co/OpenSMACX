@@ -11,10 +11,9 @@ static const int MaxPlayerNum = 8;
 static const int MaxVehProtoNum = 512;
 static const int MaxBaseNum = 512;
 static const int MaxContinentNum = 128;
-static const int MaxLandmarkNum = 64;
 static const int MaxRankingHistoryTurns = 1000;
 struct Map { unsigned char bytes[44]; };
-struct Landmark { unsigned char bytes[40]; };
+/* MAP STORAGE DECLARATIONS */
 struct Continent { unsigned char bytes[28]; };
 struct SocialCategory { uint32_t models_[4]; };
 struct ScenarioSaveState {
@@ -88,16 +87,7 @@ static ProtoBung BungList[8][64];
 
 uint32_t LockEnableMask;
 char NetDaemonFileTransferPath[0x104];
-int MapLongitudeBounds, MapLatitudeBounds, MapSeaLevel, MapSeaLevelCouncil;
-uint32_t MapRandSeed, MapArea, MapAreaSqRoot;
-BOOL MapIsFlat;
-int MapLandmarkCount, MapAbstractLongBounds;
-uint32_t MapAbstractLatBounds, MapAbstractArea, MapSizePlanet,
-    MapOceanCoverage, MapLandCoverage, MapErosiveForces, MapPlanetaryOrbit,
-    MapCloudCover, MapNativeLifeForms, MapLongitude;
-Landmark MapLandmark[MaxLandmarkNum];
-char MapFilePath[80];
-Map *MapTiles;
+uint32_t MapLongitude;
 Continent Continents[MaxContinentNum];
 Player Players[MaxPlayerNum];
 PlayerData PlayersData[MaxPlayerNum];
@@ -183,9 +173,75 @@ static void route_roundtrip(int16_t opcode, int a2, int a3,
     (void)effective_offset;
 }
 
+static void metadata_routes() {
+    assert(sizeof(MapMetadataFields) == 0xA9C);
+    assert(offsetof(MapStorageWindow, metadata_) == 0);
+    // Host pointer alignment may differ. These controls establish host
+    // behavior within the actual owner, not the original i386 pointer ABI.
+    assert(sizeof(void *) != 4 || offsetof(MapStorageWindow, tiles_) == 0xA9C);
+    assert(sizeof(void *) != 4 || sizeof(MapStorageWindow) == 0xAA4);
+    unsigned char *const owner = reinterpret_cast<unsigned char *>(&MapStorage);
+    unsigned char expected[sizeof MapStorage];
+    unsigned char packet[0xA9C];
+    const int16_t opcodes[] = {0x02, 0x1002};
+    for (size_t op = 0; op < 2; ++op) {
+        for (size_t i = 0; i < sizeof MapStorage; ++i)
+            owner[i] = static_cast<unsigned char>(i * 17u + 9u);
+        memcpy(expected, owner, sizeof expected);
+        assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
+            0xA9C, 0, packet, sizeof packet, false, 0, 0, 0, 0));
+        assert(memcmp(packet, expected, sizeof packet) == 0);
+        assert(memcmp(owner, expected, sizeof expected) == 0);
+
+        // Nominal network chunks cover the entire metadata prefix and leave
+        // both pointer cells (and any host padding) unchanged.
+        for (size_t i = 0; i < sizeof packet; ++i)
+            packet[i] = static_cast<unsigned char>(i * 23u + 0x41u);
+        memcpy(expected, packet, sizeof packet);
+        assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
+            0xA9C, 0, packet, sizeof packet, true, 0, 0, 0, 0));
+        assert(memcmp(owner, expected, sizeof expected) == 0);
+        for (size_t chunk = 0; chunk < 2; ++chunk) {
+            const size_t offset = chunk * 0x800;
+            const size_t count = chunk == 0 ? 0x800 : 0x29C;
+            assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
+                0xA9C, offset, packet + offset, count, true, 0, 0, 0, 0));
+            memset(packet + offset, 0, count);
+            assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
+                0xA9C, offset, packet + offset, count, false, 0, 0, 0, 0));
+            assert(memcmp(packet + offset, expected + offset, count) == 0);
+        }
+        assert(memcmp(owner, expected, sizeof expected) == 0);
+        // Cross landmarks->abstract dimensions, rules->path, and final edge.
+        for (size_t i = 0; i < 3; ++i) {
+            const size_t offsets[] = {0xA20, 0xA48, 0xA98};
+            route_roundtrip(opcodes[op], 0, 0, 0xA9C, offsets[i], owner,
+                            i == 2 ? 4 : 16);
+        }
+        // Native address selection ignores the nominal payload boundary.
+        // Stay inside the whole owner; no neighboring allocation/fault effects
+        // are represented by this host-only malformed-transfer control.
+        route_roundtrip(opcodes[op], 0, 0, 0xA9C, 0xA98, owner, 8);
+        route_roundtrip(opcodes[op], 0, 0, 0xA9C,
+            offsetof(MapStorageWindow, tiles_), owner, sizeof(MapStorage.tiles_));
+        for (int receive = 0; receive < 2; ++receive) {
+            for (int reverse = 0; reverse < 2; ++reverse) {
+                const size_t source = reverse ? 0xA00 : 0x9C0;
+                const size_t destination = reverse ? 0x9C0 : 0xA00;
+                memcpy(expected, owner, sizeof expected);
+                memmove(expected + destination, expected + source, 0x80);
+                assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
+                    0xA9C, receive ? destination : source,
+                    owner + (receive ? source : destination), 0x80,
+                    receive != 0, 0, 0, 0, 0));
+                assert(memcmp(owner, expected, sizeof expected) == 0);
+            }
+        }
+    }
+}
+
 int main() {
-    unsigned char bytes[0xA9C];
-    fill(bytes, sizeof bytes, 0xA5);
+    metadata_routes();
     Map tiles[32];
     Map *captured = tiles;
     MapTiles = tiles;
@@ -258,14 +314,6 @@ int main() {
         reinterpret_cast<unsigned char *>(&NetDaemonFileTransferPath), 32, true);
     route_roundtrip(0x29, 0, 0, 0x1000, 0x800,
         reinterpret_cast<unsigned char *>(&BungList), 32);
-
-    // Map scatter crosses independent globals/array boundaries but never a
-    // synthetic containing object.
-    uint32_t value = 0x44332211;
-    memcpy(&MapRandSeed, &value, 4);
-    assert(NetDaemonSyncWire::copy_nonrule_chunk(2, 0, 0, 0, 0xA9C,
-        8, bytes, 4, false, 0, captured, 32, 0));
-    assert(memcmp(bytes, &value, 4) == 0);
 
     uint32_t diplomacy[18];
     PlayersData[1].diplo_patience[2] = static_cast<char>(0xFE);

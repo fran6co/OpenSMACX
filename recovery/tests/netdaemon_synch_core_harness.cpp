@@ -19,6 +19,7 @@ struct BaseSecretProject { int words_[64]; };
 typedef int BOOL;
 #define __cdecl
 struct Map { unsigned char bytes[44]; };
+/* MAP STORAGE DECLARATIONS */
 struct Veh { int16_t x, y; uint32_t state; uint16_t flags; int16_t proto_id;
     uint16_t unk_1; uint8_t faction_id, year_end_lurking, dmg_incurred;
     int8_t order; uint8_t rest[0x34 - 0x12]; };
@@ -63,12 +64,8 @@ Console ConsoleGlobal = { 1 };
 char256 ParseStrBuffer[10];
 GameDataStateWindow GameDataStateStorage = {};
 int ReplayEventBytes = 0x98;
-int MapLatitudeBounds = 64;
-int MapLongitudeBounds = 64;
-uint32_t MapArea = 64;
 uint32_t MapLongitude = 64;
 static Map MapFixture[64];
-Map *MapTiles = MapFixture;
 static Map MapFixtureMutated[256];
 Path Paths;
 BaseWin TutWinBaseWindow;
@@ -306,6 +303,10 @@ static uint32_t u32(const std::vector<unsigned char> &b, size_t at) {
 
 /* SOURCE EXTRACTS */
 int main() {
+    MapLatitudeBounds = 64;
+    MapLongitudeBounds = 64;
+    MapArea = 64;
+    MapTiles = MapFixture;
     NetDaemon d;
     d.deletion_list_.set_sequence_bits(0x12345678);
     d.primary_state_.leading_words_[0] = 1;

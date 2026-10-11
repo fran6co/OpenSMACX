@@ -6721,16 +6721,6 @@ static size_t member_copy(size_t request_offset, unsigned char *packet,
         packet_to_owner);
 }
 
-template <class T>
-static size_t bounded_array_copy(size_t request_offset,
-                                 unsigned char *packet,
-                                 size_t request_size, T &owner,
-                                 size_t extent, bool packet_to_owner) {
-    if (extent > sizeof owner) return 0;
-    return overlap_copy(request_offset, packet, request_size, 0,
-        reinterpret_cast<unsigned char *>(&owner), extent, packet_to_owner);
-}
-
 // The saved diplomacy words are one native 0x48-byte local tuple. Pair IDs
 // are captured by NetDaemon::synch before callbacks and retained through the
 // epilogue; they must not be reconstructed from a later callback-modified
@@ -6930,6 +6920,9 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
     }
     case 0x01: NATIVE_COPY(&GameDataStateStorage,
         offsetof(GameDataStateWindowFields, lock_masks_)); return true;
+    case 0x02: case 0x1002:
+        NATIVE_COPY(&MapStorage, offsetof(MapStorageWindow, metadata_));
+        return true;
     case 0x05: NATIVE_COPY(&Continents, 0); return true;
     case 0x06: case 0x17:
         NATIVE_ARRAY(&PlayersData, 0, a2, 0x20CC); return true;
@@ -6985,40 +6978,13 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
 #undef NATIVE_COPY_MOV
 #undef NATIVE_COPY
 
-    // Keep split map projections/captured arrays and the local diplomacy tuple
+    // Keep captured map arrays and the local diplomacy tuple
     // on their specialized paths until their full owner/capture semantics are
     // recovered. Their existing range handling is not generalized here.
     if (offset > payload_size || count > payload_size - offset) return false;
     if (count == 0) return true;
     size_t copied = 0;
-#define COPY_AT(wire, object) copied += member_copy(offset, packet, count, wire, object, packet_to_owner)
-#define COPY_BYTES(wire, pointer, bytes) copied += overlap_copy(offset, packet, count, wire, reinterpret_cast<unsigned char *>(pointer), bytes, packet_to_owner)
-
     switch (opcode) {
-    case 0x02: case 0x1002: { // decimal 2 / 4098: Map metadata, pointer cell excluded
-        COPY_AT(0x000, MapLongitudeBounds);
-        COPY_AT(0x004, MapLatitudeBounds);
-        COPY_AT(0x008, MapRandSeed);
-        COPY_AT(0x00C, MapSeaLevel);
-        COPY_AT(0x010, MapSeaLevelCouncil);
-        COPY_AT(0x014, MapArea);
-        COPY_AT(0x018, MapAreaSqRoot);
-        COPY_AT(0x01C, MapIsFlat);
-        COPY_AT(0x020, MapLandmarkCount);
-        COPY_AT(0x024, MapLandmark);
-        COPY_AT(0xA24, MapAbstractLongBounds);
-        COPY_AT(0xA28, MapAbstractLatBounds);
-        COPY_AT(0xA2C, MapAbstractArea);
-        COPY_AT(0xA30, MapSizePlanet);
-        COPY_AT(0xA34, MapOceanCoverage);
-        COPY_AT(0xA38, MapLandCoverage);
-        COPY_AT(0xA3C, MapErosiveForces);
-        COPY_AT(0xA40, MapPlanetaryOrbit);
-        COPY_AT(0xA44, MapCloudCover);
-        COPY_AT(0xA48, MapNativeLifeForms);
-        COPY_AT(0xA4C, MapFilePath);
-        break;
-    }
     case 0x04: { // decimal 4: MapTiles objects, never the pointer cell
         if (payload_size % sizeof(Map) != 0 || !captured_map_tiles ||
             payload_size / sizeof(Map) > captured_map_tile_capacity)
@@ -7051,8 +7017,6 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
     default:
         return false;
     }
-#undef COPY_AT
-#undef COPY_BYTES
     return copied == count;
 }
 

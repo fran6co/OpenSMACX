@@ -126,6 +126,18 @@ def _templated_function(text, signature, label):
     return text[start:text.index(function)] + function
 
 
+def _map_storage_extract():
+    header = (ROOT / "src/map.h").read_text()
+    declarations = [_struct_definition(header, name) for name in
+                    ("Landmark", "MapMetadataFields", "MapStorageWindow")]
+    aliases = re.findall(r"^#define Map\w+ \(MapStorage\.[^\n]+", header, re.M)
+    assert len(aliases) == 23, "extract every actual MapStorage member alias"
+    count, = re.findall(r"^static const int MaxLandmarkNum = \d+;", header, re.M)
+    return (count + "\n" +
+            "\n".join(declarations) + "\nMapStorageWindow MapStorage = {};\n" +
+            "\n".join(aliases) + "\n")
+
+
 def _must_source_is_imported():
     net = NET.read_text()
     alpha = ALPHA.read_text()
@@ -208,7 +220,6 @@ def _owner_copy_extract(net):
     funcs = [
         _plain_definition(net, r"static\s+size_t\s+overlap_copy", "overlap copy"),
         _templated_function(net, r"static\s+size_t\s+member_copy", "member copy"),
-        _templated_function(net, r"static\s+size_t\s+bounded_array_copy", "bounded array copy"),
         _templated_function(net, r"static\s+uint32_t\s+native_word", "native word"),
         _plain_definition(net, r"static\s+uint32_t\s+sign_extended_char", "signed byte"),
         _definition(net, r"void\s+gather_saved_diplomacy", "saved diplomacy gather"),
@@ -243,7 +254,9 @@ def _assert_contiguous_owner_source_contract(nonrule):
     assert "offsetof(Base, resource_sqr_radius)" in owner_dispatch
     assert "NATIVE_COPY_MOV(&ReplayEventBytes)" in owner_dispatch
     assert "NATIVE_COPY_MOV(&NetDaemonFileTransferPath)" in owner_dispatch
-    assert "case 0x02: case 0x1002" in nonrule[split_bounds:]
+    assert "case 0x02: case 0x1002" in owner_dispatch
+    assert "NATIVE_COPY(&MapStorage, offsetof(MapStorageWindow, metadata_))" in owner_dispatch
+    assert "case 0x02" not in nonrule[split_bounds:]
     assert "case 0x30" in nonrule[split_bounds:]
     assert "if (a2 < 0" not in owner_dispatch
     assert "bounded_array_copy" not in owner_dispatch
@@ -302,7 +315,8 @@ def test_actual_synch_method_source_with_callback_damage_controls(tmp_path, comp
     template = HERE.with_name("netdaemon_synch_core_harness.cpp")
     assert template.is_file(), "copy netdaemon_synch_core_harness.cpp beside this test before importing it"
     interface, injection = _core_extract(net)
-    harness = template.read_text().replace("/* SOURCE INTERFACE */", interface)
+    harness = (template.read_text().replace("/* SOURCE INTERFACE */", interface)
+               .replace("/* MAP STORAGE DECLARATIONS */", _map_storage_extract()))
     source_template = tmp_path / "core-template.cpp"
     source_template.write_text(harness)
     _compile_injected(tmp_path, compiler, source_template, injection)
@@ -355,12 +369,11 @@ def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
     _assert_contiguous_owner_source_contract(nonrule)
     template = HERE.with_name("netdaemon_synch_owner_copy_harness.cpp")
     assert template.is_file(), "copy netdaemon_synch_owner_harness.cpp beside this test before importing it"
-    harness = template.read_text()
+    harness = template.read_text().replace("/* MAP STORAGE DECLARATIONS */", _map_storage_extract())
     source_template = tmp_path / "owner-template.cpp"
     source_template.write_text(harness)
     injection = _owner_copy_extract(net)
     _compile_injected(tmp_path, compiler, source_template, injection)
-    old = "COPY_BYTES(0x18, ScenarioSave.wire_opaque_94b4d8,\n                   sizeof ScenarioSave.wire_opaque_94b4d8);"
     old = "NATIVE_COPY(&GameDataStateStorage, 0);"
     assert old in injection
     _compile_injected(tmp_path, compiler, source_template,
@@ -385,6 +398,15 @@ def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
     overlap_failure = _compile_injected(
         tmp_path, compiler, source_template, memcpy_substitute, expected=False)
     assert "memcpy-param-overlap" in overlap_failure.stderr
+    map_route = "NATIVE_COPY(&MapStorage, offsetof(MapStorageWindow, metadata_));"
+    assert map_route in injection
+    for replacement in (
+        "if (offset > payload_size || count > payload_size - offset) return false;\n        " + map_route,
+        "if (offset + count > sizeof(MapStorage.metadata_)) return false;\n        " + map_route,
+        "native_owner_copy(&MapStorage.metadata_, chunk + 4, packet, count, packet_to_owner);",
+    ):
+        _compile_injected(tmp_path, compiler, source_template,
+                          injection.replace(map_route, replacement, 1), expected=False)
 
 
 def test_pinned_contiguous_size_and_address_dispatch_paths():
@@ -409,6 +431,7 @@ def test_pinned_contiguous_size_and_address_dispatch_paths():
 
     contiguous = {
         0x00: (0x532E55, 0x533454), 0x01: (0x532F93, 0x53345F),
+        0x02: (0x533342, 0x533A71),
         0x05: (0x532EFF, 0x53348B), 0x06: (0x532F38, 0x53372A),
         0x07: (0x532F71, 0x533496), 0x08: (0x5330C0, 0x5334AD),
         0x09: (0x53334C, 0x5334C9), 0x0A: (0x532EB2, 0x5334E5),
@@ -434,6 +457,26 @@ def test_pinned_contiguous_size_and_address_dispatch_paths():
                                   0x534210 + opcode * 4)))
         assert (size_target, address_target) == (
             size_target_expected, address_target_expected), hex(opcode)
+
+    # 0x1002 bypasses both low-opcode tables and selects opcode 2's exact
+    # payload/address routes. Their ADD retains the incoming chunk displacement.
+    metadata_pins = {
+        0x5331C8: ("cmp", "eax, 0x1002"),
+        0x5331D3: ("je", "0x533342"),
+        0x533342: ("mov", "esi, 0xa9c"),
+        0x533347: ("jmp", "0x53334c"),
+        0x5337E6: ("cmp", "eax, 0x1002"),
+        0x5337F1: ("je", "0x533a71"),
+        0x533A71: ("add", "esi, 0x949870"),
+    }
+    metadata_instructions = {
+        item.address: (item.mnemonic, item.op_str.lower())
+        for start, end in ((0x5331C8, 0x5331D9), (0x533342, 0x53334C),
+                           (0x5337E6, 0x5337F7), (0x533A71, 0x533A77))
+        for item in decoder.disasm(image.read(Span(start, end)), start)
+    }
+    for address, expected in metadata_pins.items():
+        assert metadata_instructions[address] == expected
 
     # The native address table has both additive views and scalar MOV routes.
     # Do not turn those scalar routes into per-index array offsets.
