@@ -25,11 +25,17 @@ def hunks(relative):
 
 
 def apply_typed_storage_migration(source,relative="src/netdaemon.cpp",reverse=False):
+    if relative == "src/netdaemon.cpp" and reverse:
+        from test_netdaemon_session_status_oct11 import apply_session_status_migration
+        source = apply_session_status_migration(source, reverse=True)
     edits=hunks(relative)
     for before,after in (reversed(edits) if reverse else edits):
         if reverse: before,after=after,before
         assert before and source.count(before)==1,before
         source=source.replace(before,after,1)
+    if relative == "src/netdaemon.cpp" and not reverse:
+        from test_netdaemon_session_status_oct11 import apply_session_status_migration
+        source = apply_session_status_migration(source)
     return source
 
 

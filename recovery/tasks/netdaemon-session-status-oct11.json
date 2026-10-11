@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "4c771e24f",
+  "editable_files": ["src/netdaemon.cpp", "recovery/tests/test_netdaemon_session_status_oct11.py", "recovery/tests/test_netdaemon_typed_storage_oct11.py"],
+  "intent": "Recover session-status writes to the existing AlphaNet process-slot prefix rather than the independent transfer-status region. Preserve original byte order, unchecked index, opcode rewrite and rebroadcast sequencing.",
+  "evidence": [
+    "Pinned 537BD5 sets daemon+1B34 for 1F00/4F00; 2F00 enters537BDF without this store.",
+    "Pinned537BEF/537BF5 loads packet18 and stores daemon+790+faction*19C;537BFB/537BFE loads14 and stores792;537C04/537C07 loads10 and stores791. Existing process_slots_ begins76C; AlphaNetProcessSlot identity_/field_25_/field_26_ are24/25/26 and stride19C.",
+    "Pinned537C0D..537C32 rereads wire opcode, changes2000 to4000 and rebroadcasts original size after all three stores. No new bounds check or initialization is authorized.",
+    "Actual-source host controls use the complete current AlphaNetProcessSlot declaration, all eight valid rows and three routes, checking every preserved byte and callback-visible updates. Mutation controls reject old destination, swapped source bytes and an added client flag store. Native compile/link and scoped measurement remain required before integration."
+  ]
+}

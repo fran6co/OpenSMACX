@@ -5301,14 +5301,17 @@ static void netdaemon_handle_session_status(NetDaemon *daemon,
                                              unsigned short type,
                                              char *message,
                                              unsigned long message_size) {
-    const int faction = *reinterpret_cast<int *>(message + 4);
-    if (type == 0x1F00 || type == 0x4E03 || type == 0x4F00)
+    if (type == 0x1F00 || type == 0x4F00)
         daemon->primary_state_.leading_words_[1] = 1;
+    const int faction = *reinterpret_cast<int *>(message + 4);
 
-    unsigned char *status = daemon->process_slots_[faction].status_bytes_;
-    status[0] = static_cast<unsigned char>(message[0x18]);
-    status[2] = static_cast<unsigned char>(message[0x14]);
-    status[1] = static_cast<unsigned char>(message[0x10]);
+    // Native 0x537BF5/0x537BFE/0x537C07 write +0x790/+0x792/+0x791.
+    // Slot base +0x76C makes these +0x24/+0x26/+0x25, not the +0x28
+    // transfer-status region. Preserve the original unchecked row index.
+    AlphaNetProcessSlot &slot = daemon->process_slots_[faction];
+    slot.identity_ = static_cast<int8_t>(message[0x18]);
+    slot.field_26_ = static_cast<uint8_t>(message[0x14]);
+    slot.field_25_ = static_cast<uint8_t>(message[0x10]);
     netdaemon_rebroadcast_session_packet(daemon, message, message_size);
 }
 
