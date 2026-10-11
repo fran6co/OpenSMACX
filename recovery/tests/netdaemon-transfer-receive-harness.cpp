@@ -19,7 +19,7 @@ struct LockWords { uint32_t leading_words_[4]; };
 struct Slot { uint8_t status_bytes_[4]; };
 struct MessageFactionData {};
 struct { void setup_faction_data(MessageFactionData *) {} bool is_visible() { return false; } void pick_pass(int) {} } NetWinDialog;
-struct Sequence { uint32_t sequence_bits() { return 0; } void advance_sequence() {} };
+struct Sequence { uint32_t value; uint32_t sequence_bits() { return value; } uint32_t advance_sequence() { return ++value; } };
 @@RECORD@@
 static NetDaemonFileIndexRecord *rows;
 int NetDaemonFileTransferMode, NetDaemonFileTransferCurrentFile;
@@ -63,6 +63,7 @@ struct NetDaemon {
     bool process_file_transfer_message(char *,unsigned long,int,NetDaemonTransferModalCloseGuard &,Filemap &);
 };
 static unsigned char checksum_file(const char *) { return 0; }
+static uint32_t timeGetTime() { return 0x13572468; }
 static int netdaemon_inflate_buffer(unsigned char *dest,unsigned long *size,unsigned char *input,unsigned int count) {
     assert(dest==output && *size==0x1200 && input==NetDaemonFileTransferReceiveBuffer);
     inflate_size=count; ++inflate_calls; events.push_back(4); return -1; // Native ignores this error.

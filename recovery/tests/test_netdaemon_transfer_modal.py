@@ -39,7 +39,6 @@ def compile_and_run(source: str, owner_source: str):
             "static uint32_t netdaemon_transfer_read_u32(",
             "static int32_t netdaemon_transfer_read_i32(",
             "static void netdaemon_transfer_write_u16(",
-            "static void netdaemon_transfer_write_u32(",
             "static void netdaemon_transfer_write_i32(",
         ))
     record_allocator = extract(owner_source,
@@ -48,7 +47,7 @@ def compile_and_run(source: str, owner_source: str):
     generated = TEMPLATE.read_text().replace(
         "@@TRANSFER_CALLBACK_BODIES@@",
         guard + "\n" + record_allocator + "\n" + byte_helpers + "\n" +
-        helper + "\n" + body)
+        helper + "\n" + extract(source, "static void netdaemon_forward_default_message(") + "\n" + body)
     with tempfile.TemporaryDirectory(prefix="net-transfer-modal-") as scratch:
         cpp = Path(scratch) / "harness.cpp"
         exe = Path(scratch) / "harness"

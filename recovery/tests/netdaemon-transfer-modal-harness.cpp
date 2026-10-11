@@ -103,6 +103,7 @@ static void parse_num(int, int) {}
 static void pop_close() {}
 static void x_pop_caption_flags(const char *, const char *, int, int) {}
 static unsigned char checksum_file(const char *) { return 0; }
+static uint32_t timeGetTime() { return 0x13572468; }
 
 // Source-extracted guard, helper and member definition are inserted verbatim.
 @@TRANSFER_CALLBACK_BODIES@@

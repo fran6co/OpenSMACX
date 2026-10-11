@@ -3488,11 +3488,6 @@ static void netdaemon_transfer_write_u16(unsigned char *bytes,
     memcpy(bytes, &value, sizeof value);
 }
 
-static void netdaemon_transfer_write_u32(unsigned char *bytes,
-                                         uint32_t value) {
-    memcpy(bytes, &value, sizeof value);
-}
-
 static void netdaemon_transfer_write_i32(unsigned char *bytes,
                                          int32_t value) {
     memcpy(bytes, &value, sizeof value);
@@ -3502,6 +3497,26 @@ static bool netdaemon_transfer_modal_cleanup(
     NetDaemonTransferModalCloseGuard &guard) {
     guard.arm();
     return true;
+}
+
+// The guarded-table holes, including F09, join the same native forwarding
+// arm. Stamp before fixup, then reload its possibly changed opcode; receiver
+// sequence state and the ordinary shared marker tail remain distinct.
+static void netdaemon_forward_default_message(NetDaemon &daemon,
+                                               char *message,
+                                               unsigned long message_size) {
+    unsigned char *const bytes = reinterpret_cast<unsigned char *>(message);
+    if ((bytes[1] & 0xA0u) == 0) return;
+    const uint32_t timestamp = static_cast<uint32_t>(timeGetTime());
+    memcpy(bytes + 8, &timestamp, sizeof timestamp);
+    if (daemon.fixup_message(message) != 0) return;
+    uint16_t opcode;
+    memcpy(&opcode, bytes, sizeof opcode);
+    opcode = static_cast<uint16_t>((opcode & 0x1FFFu) | 0x4000u);
+    memcpy(bytes, &opcode, sizeof opcode);
+    const uint32_t sequence = daemon.deletion_list_.advance_sequence();
+    memcpy(bytes + 0x0C, &sequence, sizeof sequence);
+    daemon.send_message(message, message_size, 0);
 }
 
 bool NetDaemon::process_file_transfer_message(char *message,
@@ -3515,17 +3530,7 @@ bool NetDaemon::process_file_transfer_message(char *message,
     NetDaemonFileIndexRecord *records = netdaemon_file_index_records();
 
     if (type == 0xF09) { // decimal 3849: native shared-default route
-        if ((bytes[1] & 0xA0U) != 0) {
-            if (fixup_message(message) == 0) {
-                const uint16_t forwarded = static_cast<uint16_t>(
-                    (type & 0x1FFFU) | 0x4000U);
-                netdaemon_transfer_write_u16(bytes, forwarded);
-                deletion_list_.advance_sequence();
-                netdaemon_transfer_write_u32(bytes + 0x0C,
-                                             deletion_list_.sequence_bits());
-                send_message(message, static_cast<int>(message_size), 0);
-            }
-        }
+        netdaemon_forward_default_message(*this, message, message_size);
         return true;
     }
 
@@ -4717,16 +4722,17 @@ static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
     }
 }
 
-// Proposal-only helper for the 0x4405..0x4418 dispatch table.
-// Include in netdaemon.cpp after its existing game-owner headers.
-// Returns true only for a concrete Table G arm; the six default slots remain
-// with process_message's existing fixup/rebroadcast path.
+// These Table G arms belong to the original process_message dispatcher, not
+// independent original functions. Its six holes join the shared forwarding
+// path; concrete arms retain their distinct native capture and tail routes.
 static int netdaemon_table_g_word(unsigned char *msg, int offset) {
     return *reinterpret_cast<int *>(msg + offset);
 }
 
 static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
-                                      unsigned short type) {
+                                      unsigned short type,
+                                      int entry_packet_faction,
+                                      uint32_t entry_sequence) {
     // These three native tails are intentionally distinct: the original
     // dispatch arms enter them at different addresses and 0x4411 bypasses
     // sequence/local-owner processing altogether.
@@ -4736,15 +4742,20 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
     int tail;
 
     switch (type) {
-    case 0x4405:
+    case 0x4405: {
         log_say("From Server: SPECIAL TERRAFORM", netdaemon_table_g_word(msg, 4),
                 netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
         my_srand(netdaemon_table_g_word(msg, 8));
-        action_terraform(netdaemon_table_g_word(msg, 0x10),
-                         netdaemon_table_g_word(msg, 0x14) - 4, 1);
-        Vehs[netdaemon_table_g_word(msg, 0x10)].order = *reinterpret_cast<int8_t *>(msg + 0x18);
+        const int vehicle_id = netdaemon_table_g_word(msg, 0x10);
+        const uint32_t order_word = static_cast<uint32_t>(
+            netdaemon_table_g_word(msg, 0x14)) - 4u;
+        int32_t order;
+        memcpy(&order, &order_word, sizeof order);
+        action_terraform(vehicle_id, order, 1);
+        Vehs[vehicle_id].order = *reinterpret_cast<int8_t *>(msg + 0x18);
         tail = TailDispatch;
         break;
+    }
     case 0x4406:
         log_say("From Server: DESTROY TERRAIN", netdaemon_table_g_word(msg, 4),
                 netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
@@ -4762,10 +4773,8 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
         } else {
             kill(netdaemon_table_g_word(msg, 0x10));
         }
-        Vehs[netdaemon_table_g_word(msg, 0x10)].order = *reinterpret_cast<int8_t *>(msg + 0x18);
         tail = TailDispatch;
         break;
-    case 0x4408:
     case 0x4416:
         log_say("From Server: GIVE VEH", netdaemon_table_g_word(msg, 4),
                 netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
@@ -4773,7 +4782,7 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
         action_give(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
         tail = TailSequence;
         break;
-    case 0x4409:
+    case 0x4408:
         log_say("From Server: BUILD BASE",
                 reinterpret_cast<char *>(msg + 0x14), netdaemon_table_g_word(msg, 4),
                 netdaemon_table_g_word(msg, 0x10), 0);
@@ -4781,13 +4790,25 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
         action_build(netdaemon_table_g_word(msg, 0x10), reinterpret_cast<char *>(msg + 0x14));
         tail = TailSequence;
         break;
-    case 0x4410:
+    case 0x4409: {
+        const int vehicle_id = netdaemon_table_g_word(msg, 0x10);
+        log_say("From Server: OBLIT", netdaemon_table_g_word(msg, 4),
+                vehicle_id, netdaemon_table_g_word(msg, 0x14));
+        my_srand(netdaemon_table_g_word(msg, 8));
+        action_oblit(vehicle_id, netdaemon_table_g_word(msg, 0x14));
+        log_say("Acknowledging OBLIT", 0, 0, 0);
+        tail = TailSequence;
+        break;
+    }
+    case 0x4410: {
+        const int vehicle_id = netdaemon_table_g_word(msg, 0x10);
         log_say("From Server: GATE", netdaemon_table_g_word(msg, 4),
-                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
-        action_gate(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+                vehicle_id, netdaemon_table_g_word(msg, 0x14));
+        action_gate(vehicle_id, netdaemon_table_g_word(msg, 0x14));
         log_say("Acknowledging GATE", 0, 0, 0);
         tail = TailSequence;
         break;
+    }
     case 0x4411:
         log_say("From Server: UPGRADE UNIT", netdaemon_table_g_word(msg, 4),
                 netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
@@ -4829,32 +4850,38 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
         retire_proto(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
         tail = TailSequence;
         break;
-    case 0x4417:
+    case 0x4417: {
+        const int vehicle_id = netdaemon_table_g_word(msg, 0x10);
+        const int x = netdaemon_table_g_word(msg, 0x14);
+        const int y = netdaemon_table_g_word(msg, 0x18);
         my_srand(netdaemon_table_g_word(msg, 8));
-        action_tectonic(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14),
-                        netdaemon_table_g_word(msg, 0x18));
-        log_say("Acknowledging TECTONIC", 0, 0, 0);
+        action_tectonic(vehicle_id, x, y);
+        log_say("Acknowledging TECTONIC", entry_packet_faction, 0, 0);
         tail = TailDispatch;
         break;
-    case 0x4418:
+    }
+    case 0x4418: {
+        const int vehicle_id = netdaemon_table_g_word(msg, 0x10);
+        const int x = netdaemon_table_g_word(msg, 0x14);
+        const int y = netdaemon_table_g_word(msg, 0x18);
         my_srand(netdaemon_table_g_word(msg, 8));
-        action_fungal(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14),
-                      netdaemon_table_g_word(msg, 0x18));
-        log_say("Acknowledging FUNGAL", 0, 0, 0);
+        action_fungal(vehicle_id, x, y);
+        log_say("Acknowledging FUNGAL", entry_packet_faction, 0, 0);
         tail = TailDispatch;
         break;
+    }
     default:
         return false;
     }
 
     if (tail != TailUpgrade) {
         if (daemon.primary_state_.leading_words_[0] == 0) {
-            daemon.deletion_list_.set_sequence_bits(netdaemon_table_g_word(msg, 0x0c));
+            daemon.deletion_list_.set_sequence_bits(entry_sequence);
         }
     }
 
     if (tail == TailSequence) {
-        if (netdaemon_table_g_word(msg, 4) == ConsoleGlobal.faction_id_) {
+        if (entry_packet_faction == ConsoleGlobal.faction_id_) {
             // 0x536D5E local-owner tail, including its original clear/callback
             // order. The notification branch observes and clears dword 0x1BC0
             // before broadcasting 0x2214; the other arm only clears 0x1BB0.
@@ -4867,7 +4894,7 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
             }
         }
     } else if (tail == TailDispatch &&
-               netdaemon_table_g_word(msg, 4) == ConsoleGlobal.faction_id_) {
+               entry_packet_faction == ConsoleGlobal.faction_id_) {
         if (daemon.channels_[1].trailing_words_[2] != 0) {
             log_say("Remaining Locked2", 0, 0, 0);
             daemon.channels_[1].trailing_words_[2] = 0;
@@ -6082,7 +6109,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         }
     }
 
-    if (netdaemon_process_table_g(*this, msg, type)) {
+    if (netdaemon_process_table_g(*this, msg, type,
+                                  entry_packet_faction, entry_sequence)) {
         return;
     }
 
@@ -6132,16 +6160,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     // Default path, reached by the overwhelming majority of message types
     // (the vast majority of jump-table slots point here in the original):
     // validate and re-broadcast the message.
-    if ((msg[1] & 0xa0) != 0) {
-        int fixResult = fixup_message(message);
-        if (fixResult == 0) {
-            unsigned short masked = (unsigned short)((type & 0x1fff) | 0x4000);
-            *reinterpret_cast<unsigned short *>(message) = masked;
-            const uint32_t seq = deletion_list_.advance_sequence();
-            memcpy(message + 0x0C, &seq, sizeof seq);
-            send_message(message, message_size, 0);
-        }
-    }
+    netdaemon_forward_default_message(*this, message, message_size);
 
     netdaemon_process_message_marker_tail(*this, msg);
 }

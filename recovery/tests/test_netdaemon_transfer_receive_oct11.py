@@ -52,8 +52,9 @@ def test_actual_receiver_packet_ui_and_completion_semantics(tmp_path, damage):
     definitions = ["class NetDaemonTransferModalCloseGuard {", "static NetDaemonFileIndexRecord *netdaemon_allocate_file_index_records(",
                    "static uint16_t netdaemon_transfer_read_u16(", "static uint32_t netdaemon_transfer_read_u32(",
                    "static int32_t netdaemon_transfer_read_i32(", "static void netdaemon_transfer_write_u16(",
-                   "static void netdaemon_transfer_write_u32(", "static void netdaemon_transfer_write_i32(",
-                   "static bool netdaemon_transfer_modal_cleanup(", "bool NetDaemon::process_file_transfer_message("]
+                   "static void netdaemon_transfer_write_i32(",
+                   "static bool netdaemon_transfer_modal_cleanup(",
+                   "static void netdaemon_forward_default_message(", "bool NetDaemon::process_file_transfer_message("]
     body = "\n".join(extract(actual,s) + (";" if s.startswith("class ") else "") for s in definitions)
     changes = {
         "create_sequence": ("decompressed_size, 0)", "decompressed_size, 1)"),
