@@ -8468,16 +8468,22 @@ void __cdecl base_nutrient() {
     uint32_t faction_id = BaseCurrent->faction_id_current;
     BaseCurrentGrowthRate = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::GROWTH];
     if (has_fac_built_call(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected)) {
-        BaseCurrentGrowthRate += 2; // +2 on growth scale
+        BaseCurrentGrowthRate = base_yield_add(BaseCurrentGrowthRate, 2); // +2 on growth scale
     }
     if (BaseCurrent->state & BSTATE_GOLDEN_AGE_ACTIVE) {
-        BaseCurrentGrowthRate += 2;
+        BaseCurrentGrowthRate = base_yield_add(BaseCurrentGrowthRate, 2);
     }
-    BaseCurrent->nutrient_intake_2 += BaseCurrentConvoyTo[RSC_NUTRIENTS];
-    BaseCurrent->nutrient_consumption = BaseCurrentConvoyFrom[RSC_NUTRIENTS]
-        + BaseCurrent->population_size * Rules.nutrient_req_citizen;
-    BaseCurrent->nutrient_surplus = BaseCurrent->nutrient_intake_2
-        - BaseCurrent->nutrient_consumption;
+    // Preserve native dword wrapping before the signed surplus branches:
+    // MOVSX population_size/IMUL nutrient_req at 004E9C13/17, then SUB at 9C37.
+    BaseCurrent->nutrient_intake_2 = base_yield_add(
+        BaseCurrent->nutrient_intake_2,
+        base_yield_signed_bits(BaseCurrentConvoyTo[RSC_NUTRIENTS]));
+    BaseCurrent->nutrient_consumption = base_yield_add(
+        base_yield_signed_bits(BaseCurrentConvoyFrom[RSC_NUTRIENTS]),
+        base_yield_mul(static_cast<int>(BaseCurrent->population_size),
+            base_yield_signed_bits(Rules.nutrient_req_citizen)));
+    BaseCurrent->nutrient_surplus = base_yield_sub(
+        BaseCurrent->nutrient_intake_2, BaseCurrent->nutrient_consumption);
     if (BaseCurrent->nutrient_surplus >= 0) {
         if (BaseCurrent->nutrients_accumulated < 0) {
             BaseCurrent->nutrients_accumulated = 0;

@@ -37,13 +37,17 @@ def braced(source,signature):
 def actual_source():
     base=(ROOT/"src/base.cpp").read_text()
     headers={name:(ROOT/"src"/name).read_text() for name in
-             ("base.h","map.h","faction.h","alpha.h","general.h","technology.h")}
+             ("base.h","map.h","faction.h","alpha.h","general.h","technology.h",
+              "game_data_state_window.h")}
     declarations=[]
     for filename,names in (("base.h",("Base","RulesCitizen","BaseSecretProject")),("map.h",("Map",)),
                            ("faction.h",("SocialCategory","SocialEffect","Goal","PlayerData")),
                            ("alpha.h",("RulesBasic",))):
         for name in names:
             declarations.append(braced(headers[filename],"struct "+name+" {")+";")
+    for signature in ("struct GameDataLockMaskBytes {", "union GameDataLockMaskView {",
+                      "struct GameDataStateWindowFields {", "struct GameDataStateWindow {"):
+        declarations.append(braced(headers["game_data_state_window.h"],signature)+";")
     for name in ("RadiusOffsetX","RadiusOffsetY"):
         table,=re.findall(r"const int "+name+r"\[289\]\s*=\s*\{[^}]*\};",(ROOT/"src/map.cpp").read_text())
         declarations.append(table)
@@ -92,9 +96,13 @@ void check(bool ok,int line){if(!ok){std::fprintf(stderr,"assertion line %d\n",l
 #define require(x) check((x),__LINE__)
 ACTUAL_DECLARATIONS
 Base Bases[4],*BaseCurrent;
-PlayerData PlayersData[8];RulesCitizen Citizen[10];RulesBasic Rules;BaseSecretProject SecretProject;
-int BaseIDCurrentSelected,MapLongitudeBounds,MapLatitudeBounds,MapIsFlat,TurnCurrentNum,UnkGlobal0093A934;
-uint32_t MapLongitude,LockEnableMask,BaseUpkeepStage,FarmStatus[25],FarmUnavailableMask;
+PlayerData PlayersData[8];RulesCitizen Citizen[10];RulesBasic Rules;
+GameDataStateWindow GameDataStateStorage;
+BaseSecretProject &SecretProject=GameDataStateStorage.fields_.secret_project_;
+int BaseIDCurrentSelected,MapLongitudeBounds,MapLatitudeBounds,MapIsFlat,UnkGlobal0093A934;
+int &TurnCurrentNum=GameDataStateStorage.fields_.turn_current_num_;
+uint32_t MapLongitude,BaseUpkeepStage,FarmStatus[25],FarmUnavailableMask;
+uint32_t &LockEnableMask=GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 uint32_t BaseCurrentForcesMaintCost;
 int TileYieldRestricted;
 int BaseCurrentGrowthRate;
@@ -402,8 +410,8 @@ def test_actual_base_yield(tmp_path):
     (3,"(base->governor & 0x80000040u) == 0x80000040u","(base->governor & 0x80000000u) != 0"),
     (3,"base_yield_add(intake, 1) / 2","intake / 2"),
     (3,"if (selected->population_size < intake)","if (false)"),
-    (3,"SecretProject.cloudbase_academy() >= 0","false"),
-    (3,"Bases[SecretProject.space_elevator()].faction_id_current == faction","true"),
+    (3,"GameDataStateStorage.fields_.secret_project_.cloudbase_academy() >= 0","false"),
+    (3,"Bases[GameDataStateStorage.fields_.secret_project_.space_elevator()].faction_id_current == faction","true"),
     (3,"if (!automatic || UnkGlobal0093A934 == 0)","if (true)"),
     (3,"BaseCurrent->resource_sqr_radius &= ~FarmUnavailableMask | 1u;",
        "BaseCurrent->resource_sqr_radius &= ~FarmUnavailableMask;"),
@@ -443,6 +451,8 @@ def test_actual_base_yield(tmp_path):
 def test_base_yield_damage_is_observed(tmp_path,part,before,after):
     parts=list(actual_source())
     assert before in parts[part]
+    if "GameDataStateStorage.fields_.secret_project_" in before:
+        assert parts[part].count(before)==1
     parts[part]=parts[part].replace(before,after)
     result=run_host(tmp_path,*parts)
     assert result.returncode!=0
