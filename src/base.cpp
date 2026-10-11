@@ -8601,7 +8601,10 @@ void __cdecl base_minerals() {
     BaseCurrent->eco_damage = ((PlayersData[faction_id].tech_ranking
         - PlayersData[faction_id].theory_of_everything)
         * (3 - range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET], -3, 2))
-        * (MapNativeLifeForms + 1) * BaseCurrent->eco_damage * diff_factor) / 6;
+        // Native4EA140 INC keeps the low dword for the following IMUL;
+        // the signed Map rule may contain INT_MAX after metadata transport.
+        * (static_cast<uint32_t>(MapNativeLifeForms) + 1u)
+        * BaseCurrent->eco_damage * diff_factor) / 6;
     BaseCurrent->eco_damage = (BaseCurrent->eco_damage + 50) / 100;
     int queue_id;
     if (has_project(SP_SPACE_ELEVATOR, faction_id) // orbital facilities double mineral prod rate

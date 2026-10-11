@@ -237,7 +237,7 @@ static const char CustomPlanetMoonOther[3][20] = {
 static const char *const CustomPlanetKindLabels[6] = {
     "LAND", "", "TIDES", "ORBIT", "CLOUDS", "LIFE"};
 
-static uint32_t &custom_planet_map_slot(int slot) {
+static int &custom_planet_map_slot(int slot) {
     switch (slot) {
     case 0: return MapSizePlanet;
     case 1: return MapOceanCoverage;
@@ -285,8 +285,8 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
         const int slot = CustomPlanetSlots[iteration - 1];
         if (slot == 0) continue;
         const int saved_value = static_cast<int>(AlphaIniPrefs.custom_world[slot]);
-        uint32_t &destination = custom_planet_map_slot(slot);
-        destination = static_cast<uint32_t>(saved_value);
+        int &destination = custom_planet_map_slot(slot);
+        destination = saved_value;
 
         if (use_saved_choices != 0) continue;
 
@@ -343,7 +343,7 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
         popup.set_value(static_cast<int>(AlphaIniPrefs.custom_world[slot]));
         const int selection = show_preview != 0
             ? setup.do_menu(&popup, 1, 0) : popup.exec(0, 0);
-        destination = static_cast<uint32_t>(selection);
+        destination = selection;
         if (selection < 0) {
             prefs_save(0);
             return 1;
@@ -360,7 +360,8 @@ int __cdecl custom_planet(int show_preview, int use_saved_choices) {
             setup.overlay_buffers_[image] = 0;
         }
     }
-    MapLandCoverage = 2 - MapOceanCoverage;
+    uint32_t land_bits = 2u - static_cast<uint32_t>(MapOceanCoverage);
+    memcpy(&MapLandCoverage, &land_bits, sizeof(MapLandCoverage));
     prefs_save(0);
     return 0;
 }
@@ -410,7 +411,8 @@ map_menu_retry:
                 } else {
                     MapOceanCoverage = 0;
                 }
-                MapLandCoverage = 2 - MapOceanCoverage;
+                uint32_t land_bits = 2u - static_cast<uint32_t>(MapOceanCoverage);
+                memcpy(&MapLandCoverage, &land_bits, sizeof(MapLandCoverage));
                 const int life_roll = rand();
                 MapErosiveForces = 1;
                 MapPlanetaryOrbit = 1;
@@ -771,7 +773,8 @@ int __cdecl multiplayer_init(int startup_mode) {
                 } else {
                     MapOceanCoverage = 0;
                 }
-                MapLandCoverage = 2 - MapOceanCoverage;
+                uint32_t land_bits = 2u - static_cast<uint32_t>(MapOceanCoverage);
+                memcpy(&MapLandCoverage, &land_bits, sizeof(MapLandCoverage));
                 rand();
                 MapOceanCoverage = static_cast<int8_t>(
                     NetWinSessionOptions.ocean_coverage_);
