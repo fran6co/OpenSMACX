@@ -42,7 +42,9 @@ def actual_detail_branch() -> str:
     return block.replace(
         "reinterpret_cast<int>(Facility[-production_id].name)",
         "Facility[-production_id].name_id",
-    )
+    ).replace("Facility[-production_id].name)", "Facility[-production_id].name_id)") \
+     .replace("GameDataStateStorage.fields_.game_rules_", "GameRules") \
+     .replace("GameDataStateStorage.fields_.game_more_preferences_", "GameMorePreferences")
 
 
 def test_actual_mapwin_detail_branch():
@@ -58,12 +60,16 @@ const int MaxVehProtoNum = 10;
 const uint32_t MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES = 1;
 static uint32_t GameMorePreferences, GameRules, field_1DD70_;
 static int faction, base_id, pixel_x, pixel_y, label_calls, objective_result, spy_result;
+static bool change_queue;
 static char production[] = "SECRET UNIT";
+static char changed_production[] = "CHANGED UNIT";
 static char objective_text[] = "objective";
 static char descriptor[] = "GOVERNOR";
 struct Base {{ int faction_id_current; int queue_production_id[1]; uint32_t governor; }} base;
-struct FacilityRecord {{ int name_id; }} Facility[MaxFacilityNum];
-struct VehiclePrototype {{ LPSTR veh_name; }} VehPrototypes[MaxVehProtoNum];
+// Extra host rows observe unchecked selection without executing out-of-bounds
+// C++. They do not assert original adjacent allocation contents.
+struct FacilityRecord {{ int name_id; }} Facility[20];
+struct VehiclePrototype {{ LPSTR veh_name; }} VehPrototypes[20];
 struct StringTableMock {{ LPSTR get(int) {{ return production; }} }} StringTable;
 struct FontMock {{ int line_advance() {{ return 12; }} }} font_a_;
 struct CanvasMock {{
@@ -74,7 +80,11 @@ struct CanvasMock {{
 }} canvas_storage;
 static CanvasMock *canvas = &canvas_storage;
 static int field_1DDBC_, field_1DDC8_;
-static int is_objective(int) {{ return objective_result; }}
+static int is_objective(int) {{
+    // Synthetic phase-order hook, not a claim about the current pure owner.
+    if (change_queue) base.queue_production_id[0] = 2;
+    return objective_result;
+}}
 static int spying(int) {{ return spy_result; }}
 static LPSTR label_get(int id) {{ ++label_calls; return id == 898 ? objective_text : descriptor; }}
 static void CharUpperA(char *s) {{ for (; *s; ++s) *s = (char)toupper((unsigned char)*s); }}
@@ -84,6 +94,8 @@ static void run(int pref, int window_pref, int owner, int spy, int objective, ui
     faction = 1; base_id = 3; pixel_x = 20; pixel_y = 30;
     base.faction_id_current = owner; base.queue_production_id[0] = 1; base.governor = 0;
     VehPrototypes[1].veh_name = production;
+    VehPrototypes[2].veh_name = changed_production;
+    change_queue = false;
     GameRules = rules; spy_result = spy; objective_result = objective;
     label_calls = 0; canvas_storage.count = 0;
 }}
@@ -109,6 +121,18 @@ int main() {{
     assert(canvas_storage.count == 1 && strcmp(canvas_storage.written[0], "(SECRET UNIT)") == 0);
     run(0, 0, 2, 0, 1, 0); actual_branch();
     assert(canvas_storage.count == 1 && strcmp(canvas_storage.written[0], "OBJECTIVE") == 0);
+    run(1, 0, 1, 0, 1, 0); actual_branch();
+    assert(canvas_storage.count == 1 && strcmp(canvas_storage.written[0], "(OBJECTIVE: SECRET UNIT)") == 0);
+    run(1, 0, 1, 0, 0, 0); base.governor = 0x80000001U; actual_branch();
+    assert(strcmp(canvas_storage.written[0], "(GOVERNOR: SECRET UNIT)") == 0);
+    run(1, 0, 1, 0, 1, 0); change_queue = true; actual_branch();
+    assert(strcmp(canvas_storage.written[0], "(OBJECTIVE: CHANGED UNIT)") == 0);
+    run(1, 0, 1, 0, 0, 0); base.queue_production_id[0] = 12;
+    VehPrototypes[12].veh_name = production; actual_branch();
+    assert(canvas_storage.count == 1 && strcmp(canvas_storage.written[0], "(SECRET UNIT)") == 0);
+    run(1, 0, 1, 0, 0, 0); base.queue_production_id[0] = -12;
+    Facility[12].name_id = 12; actual_branch();
+    assert(canvas_storage.count == 1 && strcmp(canvas_storage.written[0], "(SECRET UNIT)") == 0);
 }}
 """
     compilers = [name for name in ("g++", "clang++") if shutil.which(name)]

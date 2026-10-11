@@ -5306,81 +5306,66 @@ void MapWin::draw_base_names() {
                     if (is_objective(base_id) &&
                         (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                         LPSTR objective = label_get(898);
-                        if (objective) {
-                            char detail[256];
-                            detail[0] = '\0';
-                            strcat(detail, objective);
-                            CharUpperA(detail);
-                            canvas->write_cent_l(detail,
-                                pixel_x + field_1DDBC_,
-                                pixel_y + (field_1DDC8_ * 7) / 2 +
-                                    font_a_.line_advance(),
-                                strlen(detail));
-                        }
-                    }
-                } else if (base.faction_id_current == faction ||
-                           spying(base.faction_id_current) != 0) {
-                    const int production_id = base.queue_production_id[0];
-                    LPSTR production_name = 0;
-                    if (production_id < 0 &&
-                        -production_id < MaxFacilityNum) {
-                        production_name = StringTable.get(Facility[-production_id].name);
-                    } else if (production_id >= 0 &&
-                               production_id < MaxVehProtoNum) {
-                        production_name = VehPrototypes[production_id].veh_name;
-                    }
-                    if (production_name) {
                         char detail[256];
                         detail[0] = '\0';
-                        const bool objective = is_objective(base_id) != 0;
-                        if (objective && (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
-                            LPSTR name = label_get(898);
-                            if (name) {
-                                strcat(detail, name);
-                                strcat(detail, ": ");
-                                CharUpperA(detail);
-                            }
-                        } else if ((base.governor & 0x80000001U) ==
-                                   0x80000001U) {
-                            int descriptor_label = 649;
-                            if ((base.governor & 0x01000000U) != 0)
-                                descriptor_label = 650;
-                            else if ((base.governor & 0x02000000U) != 0)
-                                descriptor_label = 651;
-                            else if ((base.governor & 0x04000000U) != 0)
-                                descriptor_label = 652;
-                            else if ((base.governor & 0x08000000U) != 0)
-                                descriptor_label = 653;
-                            LPSTR descriptor = label_get(descriptor_label);
-                            if (descriptor) {
-                                strcat(detail, descriptor);
-                                strcat(detail, ": ");
-                            }
-                        }
-                        strcat(detail, "(");
-                        strcat(detail, production_name);
-                        strcat(detail, ")");
+                        strcat(detail, objective);
+                        CharUpperA(detail);
                         canvas->write_cent_l(detail,
                             pixel_x + field_1DDBC_,
                             pixel_y + (field_1DDC8_ * 7) / 2 +
                                 font_a_.line_advance(),
                             strlen(detail));
                     }
+                } else if (base.faction_id_current == faction ||
+                           spying(base.faction_id_current) != 0) {
+                    char detail[256];
+                    detail[0] = '\0';
+                    strcat(detail, "(");
+                    const bool objective = is_objective(base_id) != 0;
+                    if (objective && (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
+                        LPSTR name = label_get(898);
+                        strcat(detail, name);
+                        strcat(detail, ": ");
+                        CharUpperA(detail);
+                    } else if ((base.governor & 0x80000001U) ==
+                               0x80000001U) {
+                        int descriptor_label = 649;
+                        if ((base.governor & 0x01000000U) != 0)
+                            descriptor_label = 650;
+                        else if ((base.governor & 0x02000000U) != 0)
+                            descriptor_label = 651;
+                        else if ((base.governor & 0x04000000U) != 0)
+                            descriptor_label = 652;
+                        else if ((base.governor & 0x08000000U) != 0)
+                            descriptor_label = 653;
+                        LPSTR descriptor = label_get(descriptor_label);
+                        strcat(detail, descriptor);
+                        strcat(detail, ": ");
+                    }
+                    const int production_id = base.queue_production_id[0];
+                    const char *production_name = production_id < 0
+                        ? StringTable.get(Facility[-production_id].name)
+                        : VehPrototypes[production_id].veh_name;
+                    strcat(detail, production_name);
+                    strcat(detail, ")");
+                    canvas->write_cent_l(detail,
+                        pixel_x + field_1DDBC_,
+                        pixel_y + (field_1DDC8_ * 7) / 2 +
+                            font_a_.line_advance(),
+                        strlen(detail));
                 } else {
                     const bool objective = is_objective(base_id) != 0;
                     if (objective && (GameDataStateStorage.fields_.game_rules_ & 0x20000000U) == 0) {
                         LPSTR objective_name = label_get(898);
-                        if (objective_name) {
-                            char detail[256];
-                            detail[0] = '\0';
-                            strcat(detail, objective_name);
-                            CharUpperA(detail);
-                            canvas->write_cent_l(detail,
-                                pixel_x + field_1DDBC_,
-                                pixel_y + (field_1DDC8_ * 7) / 2 +
-                                    font_a_.line_advance(),
-                                strlen(detail));
-                        }
+                        char detail[256];
+                        detail[0] = '\0';
+                        strcat(detail, objective_name);
+                        CharUpperA(detail);
+                        canvas->write_cent_l(detail,
+                            pixel_x + field_1DDBC_,
+                            pixel_y + (field_1DDC8_ * 7) / 2 +
+                                font_a_.line_advance(),
+                            strlen(detail));
                     }
                 }
             }

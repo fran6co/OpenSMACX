@@ -3402,10 +3402,10 @@ void __cdecl send_faction_data(int slot_id) {
         const int records = count * 133;
         const uint32_t size = records * 3 + 0x1A4;
         char *frame = static_cast<char *>(mem_get(size));
-        memcpy(frame + 0x10, NetWinDialog.faction_records_, records * 3 + 0x194);
         *reinterpret_cast<unsigned short *>(frame) = 0xF0D;
         *reinterpret_cast<uint32_t *>(frame + 4) = 0xFFFFFFFF;
         *reinterpret_cast<uint32_t *>(frame + 8) = 0;
+        memcpy(frame + 0x10, NetWinDialog.faction_records_, records * 3 + 0x194);
         if (slot_id < 0) {
             NetDaemonNet.Net::send(frame, size, 0, 1);
             return;
