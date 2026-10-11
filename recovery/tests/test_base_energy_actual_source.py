@@ -137,6 +137,44 @@ int main() {
   base_energy();
   if (Bases[0].labs_total != 3 || Bases[0].economy_total != 11) return 8;
 
+  // The two branches consume the same raw IMUL result in different order:
+  // labs-first clamps a copy, then doubles the raw word for economy; the
+  // economy-first branch doubles raw for labs and uses raw once for economy.
+  reset(); PlayersData[1].se_alloc_psych=2; PlayersData[1].se_alloc_labs=7;
+  PlayersData[1].soc_effect_pending.values_[SocialEffect::EFFICIENCY]=3;
+  Bases[0].specialist_total=1; Citizen[0].ops_bonus=100;
+  base_energy();
+  if (Bases[0].economy_total != 91) return 15;
+  reset(); PlayersData[1].se_alloc_psych=5; PlayersData[1].se_alloc_labs=1;
+  PlayersData[1].soc_effect_pending.values_[SocialEffect::EFFICIENCY]=3;
+  Bases[0].specialist_total=1; Citizen[0].ops_bonus=100;
+  base_energy();
+  if (Bases[0].economy_total != 110) return 16;
+
+  // Native IMUL wraps to a negative raw product. Labs clamp a copy to zero,
+  // but the later economy LEA doubles the untouched raw bits to +160, then
+  // clamps that value to 80. The direct int fields admit these values.
+  reset(); PlayersData[1].se_alloc_psych=0;
+  PlayersData[1].se_alloc_labs=134217738;
+  PlayersData[1].soc_effect_pending.values_[SocialEffect::EFFICIENCY]=-4;
+  Bases[0].energy_intake_2=0;
+  Bases[0].specialist_total=1; Citizen[0].ops_bonus=100;
+  base_energy();
+  if (Bases[0].labs_total != 0 || Bases[0].economy_total != 20) return 17;
+
+  // The alternate branch also retains raw product: a negative labs share
+  // reaches the fallback delta and selects the economy-first native path.
+  // The wrapped raw value doubles to +480 for labs, but remains negative for
+  // the economy clamp.
+  reset(); PlayersData[1].se_alloc_psych=0;
+  PlayersData[1].se_alloc_labs=-134217738;
+  PlayersData[1].soc_effect_pending.values_[SocialEffect::EFFICIENCY]=-4;
+  Bases[0].energy_intake_2=0;
+  Bases[0].specialist_total=1; Citizen[0].ops_bonus=100;
+  Citizen[0].research_bonus=100;
+  base_energy();
+  if (Bases[0].labs_total != 20 || Bases[0].economy_total != 100) return 18;
+
   // Obsolete specialist promotes to the first eligible nonobsolete higher-yield
   // entry and publishes the new packed nibble.
   reset(); Bases[0].specialist_total=1; Bases[0].spec[0]=1;
@@ -215,14 +253,49 @@ def test_actual_base_energy_preserves_original_paths() -> None:
     start = projected.index("void __cdecl base_energy() {")
     end = projected.index("\n// ORIGINAL:", start)
     body = projected[start:end]
+    helper_start = projected.index("int base_yield_signed_bits(")
+    helper_end = projected.index("int base_yield_denominator(", helper_start)
+    helpers = projected[helper_start:helper_end]
     compilers = [c for c in ("g++", "clang++") if shutil.which(c)]
     if not compilers:
         raise SystemExit("neither g++ nor clang++ is available")
     with tempfile.TemporaryDirectory(prefix="base-energy-source-") as td:
         cpp = Path(td) / "actual_base_energy.cpp"
         exe = Path(td) / "base_energy_controls"
-        cpp.write_text(CPP_PREFIX + "\n" + body + "\n" + CPP_MAIN)
+        cpp.write_text(CPP_PREFIX + "\n" + helpers + "\n" + body + "\n" + CPP_MAIN)
         for compiler in compilers:
-            subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(cpp), "-o", str(exe)], check=True)
-            subprocess.run([str(exe)], check=True)
-            print(f"PASS {compiler}: extracted live base_energy source body and behavioral controls")
+            warning_flags = ["-Wno-error=maybe-uninitialized"] if Path(compiler).name.startswith("g++") else []
+            for optimization in ("-O0", "-O2"):
+                subprocess.run([compiler, "-std=c++11", optimization, "-Wall", "-Wextra", "-Werror", *warning_flags, str(cpp), "-o", str(exe)], check=True)
+                subprocess.run([str(exe)], check=True)
+                print(f"PASS {compiler} {optimization}: extracted live base_energy source body and behavioral controls")
+
+
+def test_base_energy_raw_penalty_control_rejects_clamped_double_mutant() -> None:
+    source_path = Path(os.environ.get("OPENSMACX_BASE_SOURCE", ROOT / "src/base.cpp"))
+    projected = source_path.read_text()
+    start = projected.index("void __cdecl base_energy() {")
+    end = projected.index("\n// ORIGINAL:", start)
+    body = projected[start:end]
+    helpers_start = projected.index("int base_yield_signed_bits(")
+    helpers_end = projected.index("int base_yield_denominator(", helpers_start)
+    helpers = projected[helpers_start:helpers_end]
+    correct = "penalty = base_yield_add(raw_penalty, raw_penalty);"
+    assert correct in body
+    # Reintroduce precisely the previous first-branch dataflow: after clamping
+    # the labs penalty, double that clamped temporary for the economy path.
+    mutant = body.replace(correct, "penalty *= 2;", 1)
+    compilers = [c for c in ("g++", "clang++") if shutil.which(c)]
+    assert compilers, "neither g++ nor clang++ is available"
+    with tempfile.TemporaryDirectory(prefix="base-energy-mutant-") as td:
+        cpp = Path(td) / "mutated_base_energy.cpp"
+        exe = Path(td) / "base_energy_mutant"
+        cpp.write_text(CPP_PREFIX + "\n" + helpers + "\n" + mutant + "\n" + CPP_MAIN)
+        for compiler in compilers:
+            warning_flags = ["-Wno-error=maybe-uninitialized"] if Path(compiler).name.startswith("g++") else []
+            for optimization in ("-O0", "-O2"):
+                subprocess.run([compiler, "-std=c++11", optimization, "-Wall", "-Wextra", "-Werror", *warning_flags, str(cpp), "-o", str(exe)], check=True)
+                result = subprocess.run([str(exe)], check=False)
+                assert result.returncode == 17, (
+                    f"{compiler} {optimization} failed to detect the raw-vs-clamped mutation: {result.returncode}"
+                )

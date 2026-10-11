@@ -680,22 +680,25 @@ void __cdecl base_energy() {
     if (clamped_efficiency > 4) clamped_efficiency = 4;
     int efficiency_factor = (4 - clamped_efficiency) * 2;
     if (commerce_delta != 0 && efficiency_factor != 0) {
+        // Native IMUL retains its raw low word for both clamps; labs clamp a
+        // copy before the economy path doubles that original word.
+        const int raw_penalty = base_yield_mul(efficiency_factor, commerce_delta);
         int penalty;
         if ((10 - labs_share) - psych_share < labs_share) {
-            penalty = efficiency_factor * commerce_delta;
+            penalty = raw_penalty;
             if (penalty < 0) penalty = 0;
             else if (penalty > 40) penalty = 40;
             base.labs_total = ((100 - penalty) * base.labs_total + 50) / 100;
-            penalty *= 2;
+            penalty = base_yield_add(raw_penalty, raw_penalty);
             if (penalty < 0) penalty = 0;
             else if (penalty > 80) penalty = 80;
             base.economy_total = ((100 - penalty) * base.economy_total + 50) / 100;
         } else {
-            penalty = efficiency_factor * commerce_delta * 2;
+            penalty = base_yield_add(raw_penalty, raw_penalty);
             if (penalty < 0) penalty = 0;
             else if (penalty > 80) penalty = 80;
             base.labs_total = ((100 - penalty) * base.labs_total + 50) / 100;
-            penalty = efficiency_factor * commerce_delta;
+            penalty = raw_penalty;
             if (penalty < 0) penalty = 0;
             else if (penalty > 40) penalty = 40;
             base.economy_total = ((100 - penalty) * base.economy_total + 50) / 100;

@@ -2676,18 +2676,17 @@ Status: Complete
 */
 void Net::receive_directplay_messages(int player_id) {
     if (NetDirectPlay != 0) {
-        int working_id;
+        DPID working_id;
         HRESULT result;
         do {
             // The native loop restores the input player id before each call,
             // even though Receive writes through this same local.
-            working_id = player_id;
+            working_id = static_cast<DPID>(player_id);
             DPID counterpart = field_760_;
             DWORD size = field_6E4_;
             const DWORD flags = (player_id != 0) ? 6 : 3;
             result = NetDirectPlay->Receive(
-                reinterpret_cast<LPDPID>(&working_id), &counterpart,
-                flags, NetGetScratch, &size);
+                &working_id, &counterpart, flags, NetGetScratch, &size);
         } while (result == 0);
     }
 }
