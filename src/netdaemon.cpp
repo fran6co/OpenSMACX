@@ -2601,17 +2601,17 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
     }
     NetPlayerDropped = 0;
 
-    if (*(int *)(channels_[1].leading_words_[2]) != 0) {
-        if (*(int *)(channels_[1].trailing_words_[3]) != 0) {
+    if (channels_[1].leading_words_[2] != 0) {
+        if (channels_[1].trailing_words_[3] != 0) {
             return 1;
         }
         NetMsgPrimary.pop((const char *)"MOVEPENDING", 0, 2, (const char *)0);
         return 1;
     }
 
-    *(int *)(channels_[1].leading_words_[2]) = 1;
-    *(int *)(channels_[0].leading_words_[2]) = 0;
-    *(int *)(locks_.field_E8_) = 0;
+    channels_[1].leading_words_[2] = 1;
+    channels_[0].leading_words_[2] = 0;
+    locks_.field_E8_ = 0;
 
     log_say((char *)"Client requesting lock", ConsoleGlobal.faction_id_, x, y);
     message_lock(0x2210, target, x, y, payload_18, payload_1C, scratch, 0);
@@ -2620,7 +2620,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
     scratch = NetDaemonNet.channels_[0].leading_words_[3];
     unsigned long t0 = timeGetTime();
     int waited = 0;
-    if (*(int *)(channels_[0].leading_words_[2]) == 0) {
+    if (channels_[0].leading_words_[2] == 0) {
         do {
             if (ExitTurnLoop != 0) {
                 break;
@@ -2633,13 +2633,14 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
                 }
             }
             wait_task();
-            void *got = NetDaemonNet.Net::get((unsigned long *)&y, (unsigned long *)&x);
+            unsigned long sender, length;
+            void *got = NetDaemonNet.Net::get(&sender, &length);
             if (got != 0) {
-                this->process_message(static_cast<char *>(got), (unsigned long)x, y);
+                this->process_message(static_cast<char *>(got), length, static_cast<int>(sender));
             }
             locks_.check_global();
             check_spock();
-        } while (*(int *)(channels_[0].leading_words_[2]) == 0);
+        } while (channels_[0].leading_words_[2] == 0);
         if (waited) {
             NetMsgPrimary.close();
         }
@@ -2648,15 +2649,15 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
     NetBusyCount = NetBusyCount - 1;
     NetDaemonNet.channels_[0].leading_words_[3] = scratch;
 
-    if (*(int *)(channels_[0].leading_words_[2]) == 1) {
-        *(int *)(channels_[1].trailing_words_[4]) = 0;
+    if (channels_[0].leading_words_[2] == 1) {
+        channels_[1].trailing_words_[4] = 0;
         if ((unsigned char)target & 2) {
             NetBusyCount = NetBusyCount + 1;
             scratch = NetDaemonNet.channels_[0].leading_words_[3];
             unsigned long t0b = timeGetTime();
             target = (int)t0b;
             int waited2 = 0;
-            if (*(int *)(locks_.field_E8_) == 0) {
+            if (locks_.field_E8_ == 0) {
                 do {
                     if (ExitTurnLoop != 0) {
                         break;
@@ -2669,13 +2670,14 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
                         }
                     }
                     wait_task();
-                    void *got2 = NetDaemonNet.Net::get((unsigned long *)&y, (unsigned long *)&x);
+                    unsigned long sender, length;
+                    void *got2 = NetDaemonNet.Net::get(&sender, &length);
                     if (got2 != 0) {
-                        this->process_message(static_cast<char *>(got2), (unsigned long)x, y);
+                        this->process_message(static_cast<char *>(got2), length, static_cast<int>(sender));
                     }
                     locks_.check_global();
                     check_spock();
-                } while (*(int *)(locks_.field_E8_) == 0);
+                } while (locks_.field_E8_ == 0);
                 if (waited2) {
                     NetMsgPrimary.close();
                 }
@@ -2686,19 +2688,23 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
         if (NetPlayerDropped == 0) {
             return 0;
         }
-        *(int *)(channels_[0].leading_words_[2]) = 2;
+        channels_[0].leading_words_[2] = 2;
     }
 
-    if (*(int *)(channels_[1].trailing_words_[3]) == 0) {
-        *(int *)(channels_[1].trailing_words_[4]) = *(int *)(channels_[1].trailing_words_[4]) + 1;
-        if (*(int *)(channels_[1].trailing_words_[4]) > 0 || *(int *)(channels_[0].leading_words_[2]) > 2) {
-            const char *msg = (*(int *)(channels_[0].leading_words_[2]) == 2) ? (const char *)"NOLOCK" : (const char *)"NOLOCKGLOBAL";
+    if (channels_[1].trailing_words_[3] == 0) {
+        ++channels_[1].trailing_words_[4];
+        // Native INC wraps, while its JG/JLE comparisons interpret signed bits.
+        int32_t retries, response;
+        std::memcpy(&retries, &channels_[1].trailing_words_[4], sizeof retries);
+        std::memcpy(&response, &channels_[0].leading_words_[2], sizeof response);
+        if (retries > 0 || response > 2) {
+            const char *msg = (channels_[0].leading_words_[2] == 2) ? (const char *)"NOLOCK" : (const char *)"NOLOCKGLOBAL";
             NetMsgPrimary.pop(msg, 5000, 2, (const char *)0);
-            *(int *)(channels_[1].trailing_words_[4]) = 0;
+            channels_[1].trailing_words_[4] = 0;
         }
     }
 
-    *(int *)(channels_[1].leading_words_[2]) = 0;
+    channels_[1].leading_words_[2] = 0;
     return 1;
 }
 

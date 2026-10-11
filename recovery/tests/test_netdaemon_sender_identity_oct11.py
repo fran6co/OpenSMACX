@@ -67,7 +67,8 @@ def apply_lock_operand_migration(source):
     before = "            field_10, field_14,\n            *reinterpret_cast<int *>(message + 0x1C),\n            *reinterpret_cast<int *>(message + 0x24),"
     after = "            *reinterpret_cast<int *>(message + 0x10),\n            *reinterpret_cast<int *>(message + 0x14),\n            *reinterpret_cast<int *>(message + 0x24),\n            *reinterpret_cast<int *>(message + 0x1C),"
     assert source.count(before) == 1
-    return source.replace(before, after, 1)
+    from test_netdaemon_lock_scalar_owner_oct11 import apply_lock_scalar_migration
+    return apply_lock_scalar_migration(source.replace(before, after, 1))
 
 
 def product():
