@@ -25,7 +25,8 @@ def apply_global_lock_signed_migration(source):
     old = extract(source, "int NetDaemon::add_global(")
     assert old.count(BEFORE) == 1
     assert source.count(old) == 1
-    return source.replace(old, old.replace(BEFORE, AFTER, 1), 1)
+    from test_netdaemon_receive_outputs_oct11 import apply_receive_output_migration
+    return apply_receive_output_migration(source.replace(old, old.replace(BEFORE, AFTER, 1), 1))
 
 
 PREAMBLE = r'''

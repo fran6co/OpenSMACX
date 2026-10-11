@@ -2489,10 +2489,10 @@ int NetDaemon::wait(char * message, uint32_t * state, int value, int timeout) {
             }
         }
         wait_task();
-        unsigned long outVar;
-        void *result = NetDaemonNet.Net::get(reinterpret_cast<unsigned long *>(&message), &outVar);
+        unsigned long sender, length;
+        void *result = NetDaemonNet.Net::get(&sender, &length);
         if (result != 0) {
-            process_message(static_cast<char *>(result), outVar, reinterpret_cast<int>(message));
+            process_message(static_cast<char *>(result), length, static_cast<int>(sender));
         }
         locks_.check_global();
         check_spock();
@@ -2528,7 +2528,7 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
     return 1;
   }
 
-  log_say(reinterpret_cast<char *>("Client requesting Diplo Channel"), ConsoleGlobal.faction_id_, 0, 0);
+  log_say("Client requesting Diplo Channel", ConsoleGlobal.faction_id_, 0, 0);
   channels_[0].trailing_words_[9] = 1;
   channels_[1].leading_words_[0] = 0;
 
@@ -2537,7 +2537,7 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
   DWORD (WINAPI *const timeGetTime_)() = timeGetTime;
   int savedE904 = NetDaemonNet.channels_[0].leading_words_[3];
   (NetBusyCount)++;
-  payload_14 = static_cast<int>(timeGetTime_());
+  const DWORD start_time = timeGetTime_();
 
   bool sentAwait = false;
   if (channels_[1].leading_words_[0] == 0) {
@@ -2546,18 +2546,18 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
         break;
       }
       if (!sentAwait) {
-        int elapsed = static_cast<int>(timeGetTime_()) - payload_14;
+        const DWORD elapsed = timeGetTime_() - start_time;
         if (elapsed > 0x640) {
           sentAwait = true;
-          NetMsgPrimary.pop(reinterpret_cast<const char *>("AWAITCHANNEL"), 0, 2, 0);
+          NetMsgPrimary.pop("AWAITCHANNEL", 0, 2, 0);
         }
       }
       wait_task();
 
-      unsigned long local4;
-      void *gotten = NetDaemonNet.Net::get(reinterpret_cast<unsigned long *>(&payload_10), &local4);
+      unsigned long sender, length;
+      void *gotten = NetDaemonNet.Net::get(&sender, &length);
       if (gotten != 0) {
-        process_message(static_cast<char *>(gotten), local4, payload_10);
+        process_message(static_cast<char *>(gotten), length, static_cast<int>(sender));
       }
       locks_.check_global();
       check_spock();
@@ -2574,7 +2574,9 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
   (NetBusyCount)--;
   NetDaemonNet.channels_[0].leading_words_[3] = savedE904;
 
-  if (channels_[1].leading_words_[0] < 2) {
+  int32_t response;
+  std::memcpy(&response, &channels_[1].leading_words_[0], sizeof response);
+  if (response < 2) {
     return 0;
   }
   channels_[0].trailing_words_[9] = 0;
@@ -2728,7 +2730,7 @@ int NetDaemon::add_lock(int target, int x, int y) {
         return 1;
     }
 
-    log_say(reinterpret_cast<char *>("Client requesting ADD LOCK"), ConsoleGlobal.faction_id_, 0, 0);
+    log_say("Client requesting ADD LOCK", ConsoleGlobal.faction_id_, 0, 0);
     channels_[0].leading_words_[2] = 0;
     message_lock(0x2215, target, x, y, 0, -1, -1, 0);
 
@@ -2749,15 +2751,15 @@ int NetDaemon::add_lock(int target, int x, int y) {
             if (!popped) {
                 if (static_cast<unsigned int>(timeGetTimeFn() - y) > 0x640) {
                     popped = true;
-                    netMsg->pop(reinterpret_cast<const char *>("AWAITLOCK"), 0, 2, 0);
+                    netMsg->pop("AWAITLOCK", 0, 2, 0);
                 }
             }
             wait_task();
-            void *msgResult = NetDaemonNet.Net::get(reinterpret_cast<unsigned long *>(&x),
-                                                reinterpret_cast<unsigned long *>(&target));
+            unsigned long sender, length;
+            void *msgResult = NetDaemonNet.Net::get(&sender, &length);
             if (msgResult != 0) {
                 process_message(static_cast<char *>(msgResult),
-                                 static_cast<unsigned long>(target), x);
+                                 length, static_cast<int>(sender));
             }
             lock.check_global();
             check_spock();
@@ -2770,7 +2772,7 @@ int NetDaemon::add_lock(int target, int x, int y) {
     --NetBusyCount;
     NetDaemonNet.channels_[0].leading_words_[3] = savedVal;
     if (channels_[0].leading_words_[2] != 1) {
-        netMsg->pop(reinterpret_cast<const char *>("NOLOCK"), 5000, 2, 0);
+        netMsg->pop("NOLOCK", 5000, 2, 0);
     }
     return channels_[0].leading_words_[2] != 1;
 }
