@@ -16,7 +16,8 @@ COUNCIL_AFTER = "static bool process_council_message(unsigned char *msg,\n      
 
 def apply_council_wire_migration(source):
     assert source.count(COUNCIL_BEFORE) == 1
-    return source.replace(COUNCIL_BEFORE, COUNCIL_AFTER, 1)
+    from test_netdaemon_sender_identity_oct11 import apply_transfer_faction_migration
+    return apply_transfer_faction_migration(source.replace(COUNCIL_BEFORE, COUNCIL_AFTER, 1))
 
 
 def product():

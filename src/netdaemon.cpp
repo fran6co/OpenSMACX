@@ -5879,9 +5879,10 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     std::memcpy(&entry_packet_faction, msg + 0x04, sizeof entry_packet_faction);
     unsigned short type = *reinterpret_cast<unsigned short *>(message);
 
-    // Special-cased "file transfer" message-type band (0x1500-0x15FF).
+    // Masked file-transfer response band; 0x1501 bypasses interception.
+    // Its commlink comparison and reply target use the captured packet faction.
     bool skip500 = ((type & 0xf00) != 0x500) || (type == 0x1501);
-    if (!skip500 && CommlinkPending != 0 && CommlinkFaction == sender_id) {
+    if (!skip500 && CommlinkPending != 0 && CommlinkFaction == entry_packet_faction) {
         skip500 = true;
     }
     if (!skip500) {
@@ -5889,7 +5890,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
             netdaemon_transfer_modal_cleanup(guard);
             return;
         }
-        message_data(0x1505, sender_id, 0, 0, 0, 0);
+        message_data(0x1505, entry_packet_faction, 0, 0, 0, 0);
     }
 
     type = *reinterpret_cast<unsigned short *>(message);
