@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-stdio-bindings-oct11",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "fdd976176ef1b5cb07bdfd6b16dc771377e4af19",
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_stdio_bindings_oct11.py",
+    "recovery/tasks/crt-stdio-bindings-oct11.json"
+  ],
+  "subjects": [
+    {
+      "address": 6578239,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6578286,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6585399,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6585481,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6591697,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6591743,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6591835,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6591844,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6593940,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6594220,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6594321,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "intent": "Attribute the complete pinned stdio output/flush/stream-lock family to the existing external VC6 runtime; do not fabricate application implementations, CRT storage or final-link selection.",
+  "evidence": [
+    "The pinned IDA catalogue and independently decoded original entry/call/terminal graphs bound the output and flush family, including reachable post-RET blocks. Unique independent physical LIBCMT code sections identify the library member/symbol interpretation; catalogue labels such as sub_64603F and sub_64955B are not original application ownership.",
+    "Use coordinator-reviewed manual dependency integration, not structural task auto-creation: the native structural planner deliberately refuses component ownership groups. This explicit decision authorizes only the listed runtime identities and companion/test files against the committed baseline.",
+    "The fwrite wrapper calls the independently bounded stream-lock, fwrite_lk and stream-unlock entries. Preserve all pre-existing component bindings, original annotations, historical claims and imports. Source-owned new dependency references may resolve one another only after independent entry/boundary/member evidence.",
+    "CRT __iob, __nstream, __nhandle, ___piob, ___pioinfo and ___badioinfo storage/allocation; other libc callees and original archive retention remain separate obligations. Do not derive relocation target bindings from the operands being tested or promote unknowns to acceptance. Proprietary source and bytes remain external/ignored."
+  ]
+}
