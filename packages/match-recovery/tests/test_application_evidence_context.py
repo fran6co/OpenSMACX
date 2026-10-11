@@ -28,7 +28,9 @@ def native_context(configured, monkeypatch):
         directory = root / settings.artifacts / 'synthetic-build'
         directory.mkdir(parents=True)
         _, _, policy, artifacts = observations_fixture.__wrapped__(directory, files_fixture.__wrapped__(directory))
-        assert policy == settings.compile_link
+        # Build.read canonicalizes an omitted archive list to an empty list.
+        # Retain every fixture policy field and any explicit archive entries.
+        assert {"archive_members": [], **policy} == settings.compile_link
         # Real files/native collector; only the compiler/build process is a
         # fixture. No synthetic result is used for correspondence or freshness.
         proof = verify_build_compilations(root, directory, policy, outputs=artifacts)
