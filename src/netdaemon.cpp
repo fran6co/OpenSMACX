@@ -3731,10 +3731,9 @@ int NetDaemon::send_files() {
     Filemap filemap;
     uint32_t send_mask = 0;
     int group_handle = 0;
-    const int local_index = NetDaemonNet.pid_2_idx(
-        NetDaemonNet.field_760_);
-
+    const unsigned long local_player_id = NetDaemonNet.field_760_;
     NetDaemonNet.channels_[1].trailing_words_[9] = 0;
+    const int local_index = NetDaemonNet.pid_2_idx(local_player_id);
     netdaemon_set_file_index_records(netdaemon_allocate_file_index_records());
 
     char executable_path[0x104];
@@ -3745,8 +3744,8 @@ int NetDaemon::send_files() {
     if (primary_state_.leading_words_[0] != 0 && NetDaemonNet.player_count_ > 0) {
         for (int slot = 1; slot <= NetDaemonNet.player_count_; ++slot) {
             if (local_index != slot) send_mask |= 1U << (slot & 31);
-            NetDaemonNet.process_slots_[slot].status_bytes_[0] =
-                static_cast<uint8_t>(local_index == slot ? 0 : 2);
+            process_slots_[slot].status_bytes_[0] =
+                static_cast<uint8_t>(local_index == slot ? 2 : 0);
         }
     }
 
@@ -3762,7 +3761,7 @@ int NetDaemon::send_files() {
         NetDaemonFileControlPacket announce;
         announce.opcode = 0xF0F;
         announce.source_player = local_index;
-        NetDaemonNet.Net::send(&announce, 0x20,
+        Net::send(&announce, 0x20,
             static_cast<unsigned long>(field_764_), 1);
 
         SaveNameBuffer[0] = '\0';
@@ -3808,7 +3807,7 @@ int NetDaemon::send_files() {
     if (primary_state_.leading_words_[0] == 0) {
         for (;;) {
             if (NetDaemonFileTransferMode == 3 ||
-                channels_[1].trailing_words_[9] != 0) goto cleanup;
+                NetDaemonNet.channels_[1].trailing_words_[9] != 0) goto cleanup;
             if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
             do_draw();
             unsigned long sender, channel;
@@ -3817,26 +3816,32 @@ int NetDaemon::send_files() {
                 process_message(static_cast<char *>(packet), channel,
                                 static_cast<int>(sender));
         }
-        channels_[1].trailing_words_[9] = 1;
+        NetDaemonNet.channels_[1].trailing_words_[9] = 1;
         pop_close();
     } else {
         WIN32_FIND_DATAA found_file;
         HANDLE find_handle = FindFirstFileA("*.*", &found_file);
         if (find_handle != 0) {
-            NetDaemonFileIndexRecord *records = netdaemon_file_index_records();
             do {
                 if ((found_file.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
-                    NetDaemonFileIndexRecord &record = records[file_count];
+                    NetDaemonFileIndexRecord &record =
+                        netdaemon_file_index_records()[file_count];
                     record.opcode = 0xF06;
                     record.source_player = local_index;
                     record.ready_flags = 0;
                     record.chunk_count = (found_file.nFileSizeLow + 0x800) >> 11;
                     record.file_index = static_cast<uint8_t>(file_count);
                     record.file_size = found_file.nFileSizeLow;
-                    record.checksum = checksum_file(found_file.cFileName);
-                    record.filename[0] = '\0';
-                    strcat(record.filename, found_file.cFileName);
-                    send_message(reinterpret_cast<char *>(&record), 0x11C, 0);
+                    const uint8_t checksum = checksum_file(found_file.cFileName);
+                    // Native reloads the shared table after checksum_file,
+                    // then again when selecting the outgoing record.
+                    NetDaemonFileIndexRecord &checked_record =
+                        netdaemon_file_index_records()[file_count];
+                    checked_record.checksum = checksum;
+                    checked_record.filename[0] = '\0';
+                    strcat(checked_record.filename, found_file.cFileName);
+                    send_message(reinterpret_cast<char *>(
+                        netdaemon_file_index_records() + file_count), 0x11C, 0);
                     ++file_count;
                 }
             } while (FindNextFileA(find_handle, &found_file) != 0);
@@ -3858,7 +3863,7 @@ int NetDaemon::send_files() {
             if (NetDaemonNet.player_count_ < 1) break;
             bool all_present = true;
             for (int slot = 1; slot <= NetDaemonNet.player_count_; ++slot) {
-                if (NetDaemonNet.process_slots_[slot].status_bytes_[0] == 0) {
+                if (process_slots_[slot].status_bytes_[0] == 0) {
                     all_present = false;
                     break;
                 }
@@ -3876,31 +3881,32 @@ int NetDaemon::send_files() {
         send_buffer->opcode = 0xF0B;
         for (int file_index = 0; file_index < file_count; ++file_index) {
             if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) {
-                channels_[1].trailing_words_[9] = 1;
+                NetDaemonNet.channels_[1].trailing_words_[9] = 1;
                 goto cleanup;
             }
-            NetDaemonFileIndexRecord &record = records[file_index];
-            if (record.ready_flags == 0) continue;
+            NetDaemonFileIndexRecord &record =
+                netdaemon_file_index_records()[file_index];
+            const uint32_t ready_flags = record.ready_flags;
+            if (ready_flags == 0) continue;
 
             parse_says(0, record.filename, -1, -1);
-            --ready_count;
-            parse_num(0, ready_count);
+            parse_num(0, ready_count--);
             PopupModalState = 6;
             pop_close();
-            x_pop_caption_flags(const_cast<char *>("SCRIPT"), "MPSENDFILE",
+            x_pop_caption_flags(ScriptPopupFile, "MPSENDFILE",
                                 0x214200, 0);
             PopupModalState = 0;
             send_buffer->file_index = file_index;
 
-            if (group_handle != 0) NetDaemonNet.delete_group(group_handle);
-            group_handle = NetDaemonNet.create_group(const_cast<char *>("temp"));
+            if (group_handle != 0) delete_group(group_handle);
+            group_handle = create_group(const_cast<char *>("temp"));
             for (int slot = 1; slot < 8; ++slot) {
-                if ((record.ready_flags & (1U << (slot & 31))) != 0)
-                    NetDaemonNet.add_to_group(group_handle,
-                        NetDaemonNet.process_slots_[slot].pid_);
+                if ((ready_flags & (1U << (slot & 31))) != 0)
+                    add_to_group(group_handle, process_slots_[slot].pid_);
             }
 
-            if (filemap.open_read(record.filename, TRUE) != 0) {
+            if (filemap.open_read(
+                    netdaemon_file_index_records()[file_index].filename, TRUE) != 0) {
                 const DWORD original_size = GetFileSize(filemap.get_handle(), 0);
                 const float compressed_capacity_ratio = 1.01f;
                 unsigned long compressed_capacity = static_cast<unsigned long>(
@@ -3915,22 +3921,34 @@ int NetDaemon::send_files() {
 
                 const unsigned char *source =
                     static_cast<const unsigned char *>(compressed);
-                int remaining = static_cast<int>(compressed_capacity);
+                const uint32_t capacity_word = static_cast<uint32_t>(compressed_capacity);
+                const uint32_t end_word = static_cast<uint32_t>(
+                    reinterpret_cast<uintptr_t>(compressed)) + capacity_word;
+                int32_t remaining;
+                memcpy(&remaining, &capacity_word, sizeof remaining);
                 int chunk_index = 0;
                 while (remaining > 0x7FF) {
                     do_draw();
-                    memcpy(send_buffer->payload, source, 0x800);
+                    memmove(send_buffer->payload, source, 0x800);
                     remaining -= 0x800;
                     source += 0x800;
                     send_buffer->chunk_index = chunk_index++;
-                    NetDaemonNet.send_group(send_buffer, 0x820, group_handle, 1);
+                    send_group(send_buffer, 0x820, group_handle, 1);
                 }
                 send_buffer->chunk_index = chunk_index;
-                if (remaining > 0) {
-                    memcpy(send_buffer->payload, source,
-                           static_cast<size_t>(remaining));
-                    NetDaemonNet.send_group(send_buffer, remaining + 0x20,
-                                            group_handle, 1);
+                // The final native branch compares unsigned pointer words,
+                // not the signed full-chunk remainder. Retain its wrapping
+                // subtraction/addition without asserting allocation capacity
+                // or the fault/neighbor effects of malformed compressor output.
+                const uint32_t source_word = static_cast<uint32_t>(
+                    reinterpret_cast<uintptr_t>(source));
+                if (end_word > source_word) {
+                    const uint32_t tail_length = end_word - source_word;
+                    memmove(send_buffer->payload, source, tail_length);
+                    const uint32_t packet_word = tail_length + 0x20u;
+                    int32_t packet_length;
+                    memcpy(&packet_length, &packet_word, sizeof packet_length);
+                    send_group(send_buffer, packet_length, group_handle, 1);
                 }
                 filemap.close();
                 if (compressed != 0) free(compressed);
@@ -3949,7 +3967,7 @@ int NetDaemon::send_files() {
             if (NetDaemonNet.player_count_ < 1) break;
             int slot = 1;
             while (slot <= NetDaemonNet.player_count_ &&
-                   NetDaemonNet.process_slots_[slot].status_bytes_[0] > 1)
+                   process_slots_[slot].status_bytes_[0] > 1)
                 ++slot;
             if (slot > NetDaemonNet.player_count_) break;
         }

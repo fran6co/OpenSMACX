@@ -9,7 +9,7 @@
 #include <string>
 
 typedef int BOOL;
-typedef unsigned long DWORD;
+typedef uint32_t DWORD;
 typedef void *HANDLE;
 typedef const char *LPCSTR;
 typedef void *LPVOID;
@@ -57,6 +57,29 @@ static char g_cwd[260] = "C:\\Old";
 static char g_saved_cwd[260];
 static char g_alt_path[260];
 static int g_next_handle = 1;
+class NetDaemon;
+static NetDaemon *g_active_daemon;
+static std::vector<const void *> g_method_owners;
+static std::vector<int> g_reported_counts;
+static std::vector<std::string> g_open_names;
+static std::vector<void *> g_retained_tables;
+static bool g_rebind_tables;
+static bool g_fail_open;
+static bool g_observe_invalid_tail;
+static uintptr_t g_observed_base;
+static uint32_t g_observed_capacity;
+static size_t g_observed_copy_count;
+static uint32_t g_observed_send_count;
+static int g_observed_copies;
+static int g_observed_sends;
+static bool g_observed_memmove;
+static const char *g_popup_file;
+static int g_setup_receiver_status;
+static int g_setup_local_status;
+static int g_setup_global_status;
+static bool g_observe_lookup;
+static uint32_t g_lookup_abort;
+static void producer_callback(int stage);
 extern uint32_t NetDaemonFileTransferAckMask;
 static void do_draw();
 
@@ -71,7 +94,11 @@ class Filemap {
 public:
     Filemap() : opened_(false) {}
     ~Filemap() {}
-    LPVOID open_read(LPCSTR, BOOL) { opened_ = true; ++g_file_open_count; return reinterpret_cast<LPVOID>(1); }
+    LPVOID open_read(LPCSTR name, BOOL) {
+        g_open_names.push_back(name); ++g_file_open_count;
+        opened_ = !g_fail_open;
+        return opened_ ? reinterpret_cast<LPVOID>(1) : 0;
+    }
     HANDLE get_handle() { return reinterpret_cast<HANDLE>(1); }
     LPVOID get_view() { static unsigned char bytes[4096]; return bytes; }
     LPVOID create(LPCSTR, uint32_t, BOOL) { static unsigned char bytes[4096]; return bytes; }
@@ -90,7 +117,11 @@ public:
         memset(&deletion_list_, 0, sizeof(deletion_list_));
         process_slots_[1].pid_ = 0x222;
     }
-    int pid_2_idx(unsigned long id) { return id == field_760_ ? 1 : 2; }
+    int pid_2_idx(unsigned long id) {
+        const int result = id == field_760_ ? 1 : 2;
+        producer_callback(4);
+        return result;
+    }
     void *get(unsigned long *sender, unsigned long *length) {
         ++get_calls_;
         if (get_calls_ > 100) { fprintf(stderr, "get pump runaway\\n"); ::abort(); }
@@ -100,6 +131,7 @@ public:
         return 0;
     }
     int send(void *data, int size, unsigned long who, int mode) {
+        g_method_owners.push_back(this);
         PacketCopy packet;
         packet.type = *reinterpret_cast<unsigned short *>(data);
         packet.size = size;
@@ -109,12 +141,19 @@ public:
         memcpy(&packet.bytes[0], data, size);
         g_messages.push_back(packet); return 1;
     }
-    int create_group(char *) { return 7; }
-    void delete_group(int) {}
+    int create_group(char *) { g_method_owners.push_back(this); return 7; }
+    void delete_group(int) { g_method_owners.push_back(this); }
     int add_to_group(long, unsigned long member) {
+        g_method_owners.push_back(this);
         g_group_members.push_back(static_cast<int>(member)); return 0;
     }
     int send_group(void *data, int size, long, int) {
+        g_method_owners.push_back(this);
+        if (g_observe_invalid_tail) {
+            ++g_observed_sends;
+            g_observed_send_count = static_cast<uint32_t>(size);
+            return 1;
+        }
         PacketCopy packet;
         packet.type = *reinterpret_cast<unsigned short *>(data);
         packet.size = size; packet.target = 0;
@@ -150,6 +189,9 @@ static NetDaemon NetDaemonNet;
 static char SaveNameBuffer[0x104] = "C:\\Game";
 char NetDaemonFileTransferPath[0x104] = "assets";
 static char *StringTemp;
+static char g_script_file[] = "SCRIPT";
+static char g_rebound_script_file[] = "CALLBACK_SCRIPT";
+static char *ScriptPopupFile = g_script_file;
 static int PopupModalState;
 static int NetDaemonFileTransferMode;
 uint32_t NetDaemonFileTransferAckMask;
@@ -158,14 +200,19 @@ static int NetDaemonFileTransferChunkCount;
 static int NetDaemonFileTransferProgress;
 static unsigned char *NetDaemonFileTransferReceiveBuffer;
 
-static void *mem_get(size_t size) { return calloc(1, size == 0 ? 1 : size); }
-static int checksum_file(const char *) { return 0x5A; }
+static void *mem_get(size_t size) {
+    if (g_observe_invalid_tail && size != 0x11C00 && size != 0x820)
+        return reinterpret_cast<void *>(g_observed_base);
+    return calloc(1, size == 0 ? 1 : size);
+}
+static int checksum_file(const char *) { producer_callback(1); return 0x5A; }
 static void filefind_set_alternative(const char *path) {
     strncpy(g_alt_path, path, sizeof(g_alt_path) - 1);
 }
-static void parse_says(int, char *, int, int) {}
-static void parse_num(int, int) {}
-static void x_pop_caption_flags(char *, char *, int, int) {
+static void parse_says(int, char *, int, int) { producer_callback(3); }
+static void parse_num(int, int value) { g_reported_counts.push_back(value); }
+static void x_pop_caption_flags(char *file, char *, int, int) {
+    g_popup_file = file;
     g_chunk_start = g_group_packets.size();
     g_transfer_ui = 1;
 }
@@ -175,6 +222,7 @@ static void pop_close() {}
 
 int netdaemon_deflate_buffer(unsigned char *out, unsigned long *out_size,
                unsigned char *, unsigned int) {
+    if (g_observe_invalid_tail) { *out_size = g_observed_capacity; return -5; }
     if (*out_size < g_compressed_size) return -5;
     memset(out, 0xA5, g_compressed_size);
     *out_size = g_compressed_size;
@@ -182,7 +230,25 @@ int netdaemon_deflate_buffer(unsigned char *out, unsigned long *out_size,
 }
 static void test_free(void *p) {
     if (p != 0) ++g_free_count;
+    if (g_observe_invalid_tail && reinterpret_cast<uintptr_t>(p) == g_observed_base)
+        return;
     ::free(p);
+}
+static void *test_memmove(void *destination, const void *source, size_t count) {
+    if (g_observe_invalid_tail && reinterpret_cast<uintptr_t>(source) == g_observed_base) {
+        ++g_observed_copies; g_observed_copy_count = count;
+        g_observed_memmove = true;
+        return destination;
+    }
+    return ::memmove(destination, source, count);
+}
+static void *test_memcpy(void *destination, const void *source, size_t count) {
+    if (g_observe_invalid_tail && reinterpret_cast<uintptr_t>(source) == g_observed_base) {
+        ++g_observed_copies; g_observed_copy_count = count;
+        g_observed_memmove = false;
+        return destination;
+    }
+    return ::memcpy(destination, source, count);
 }
 
 static DWORD GetModuleFileNameA(void *, char *path, DWORD) {
@@ -208,6 +274,7 @@ static HANDLE FindFirstFileA(const char *, WIN32_FIND_DATAA *data) {
 }
 static BOOL FindNextFileA(HANDLE, WIN32_FIND_DATAA *data) {
     if (++g_find_index >= g_find_count) return 0;
+    producer_callback(2);
     data->dwFileAttributes = 0;
     data->nFileSizeLow = g_test_file_size;
     strcpy(data->cFileName, "second.dat");
@@ -221,21 +288,60 @@ static void do_draw() {
     if (g_draw_count > 100) { fprintf(stderr, "draw pump runaway\\n"); ::abort(); }
     if (g_transfer_ui && g_group_packets.size() == g_chunk_start)
         ++g_chunk_draws;
-    NetDaemonNet.process_slots_[1].status_bytes_[0] =
+    g_active_daemon->process_slots_[1].status_bytes_[0] =
         static_cast<unsigned char>(g_draw_count < 4 ? 1 : 2);
     if (NetDaemonNet.player_count_ > 1) {
         for (int slot = 2; slot <= NetDaemonNet.player_count_; ++slot)
-            NetDaemonNet.process_slots_[slot].status_bytes_[0] = 2;
+            g_active_daemon->process_slots_[slot].status_bytes_[0] = 2;
     }
     if (g_scenario == 3 && g_draw_count == 1) NetDaemonFileTransferMode = 3;
+    if (g_scenario == 5 && g_draw_count == 1)
+        NetDaemonNet.channels_[1].trailing_words_[9] = 1;
 }
 void NetDaemon::do_draw() { ::do_draw(); }
 
 #define free test_free
+#define memmove test_memmove
+#define memcpy test_memcpy
 @@OWNER_SOURCE@@
+#undef memcpy
+#undef memmove
 #undef free
 
+static void producer_callback(int stage) {
+    if (stage == 4 && g_observe_lookup) {
+        g_lookup_abort = NetDaemonNet.channels_[1].trailing_words_[9];
+        NetDaemonNet.channels_[1].trailing_words_[9] = 1;
+    }
+    if (stage == 4) return;
+    if (!g_rebind_tables) return;
+    NetDaemonFileIndexRecord *previous = netdaemon_file_index_records();
+    NetDaemonFileIndexRecord *replacement = netdaemon_allocate_file_index_records();
+    memcpy(replacement, previous, 0x11C00);
+    g_retained_tables.push_back(previous);
+    netdaemon_set_file_index_records(replacement);
+    if (stage == 3) {
+        // Keep the old objects alive: this proves reload/capture selection,
+        // not whether real callbacks destroy storage or leave dangling rows.
+        replacement[0].ready_flags = 1U << 2;
+        replacement[1].ready_flags = 1U << 3;
+        previous[0].ready_flags = 1U << 4;
+        previous[1].ready_flags = 1U << 4;
+        strcpy(replacement[0].filename, "rebound-first.dat");
+        strcpy(replacement[1].filename, "rebound-second.dat");
+        ScriptPopupFile = g_rebound_script_file;
+    }
+}
+
 void NetDaemon::send_message(char *bytes, unsigned long size, int target) {
+    g_method_owners.push_back(this);
+    if (*reinterpret_cast<unsigned short *>(bytes) == 0xF05) {
+        // F05 precedes every draw/status pump. Preserve the native initial
+        // equal-local =>2, unequal-peer =>0 distinction here.
+        g_setup_local_status = process_slots_[1].status_bytes_[0];
+        g_setup_receiver_status = process_slots_[2].status_bytes_[0];
+        g_setup_global_status = NetDaemonNet.process_slots_[2].status_bytes_[0];
+    }
     PacketCopy packet;
     packet.type = *reinterpret_cast<unsigned short *>(bytes);
     packet.size = static_cast<int>(size); packet.target = target;
@@ -263,6 +369,17 @@ static void reset_fixture() {
     g_find_index = 0; g_free_count = 0; g_findclose_count = 0;
     g_setcwd_count = 0; g_file_open_count = 0; g_next_handle = 1;
     g_chunk_draws = 0; g_chunk_start = 0; g_transfer_ui = 0;
+    g_active_daemon = &NetDaemonNet;
+    g_method_owners.clear(); g_reported_counts.clear(); g_open_names.clear();
+    g_rebind_tables = false; g_fail_open = false; g_observe_invalid_tail = false;
+    g_observed_copies = g_observed_sends = 0;
+    g_observed_memmove = false;
+    g_observed_copy_count = 0; g_observed_send_count = 0; g_popup_file = 0;
+    ScriptPopupFile = g_script_file;
+    g_setup_receiver_status = g_setup_global_status = -1;
+    g_setup_local_status = -1;
+    g_observe_lookup = false; g_lookup_abort = 0xFFFFFFFF;
+    g_test_file_size = 4000; g_compressed_size = 2050;
     NetDaemonNet.get_calls_ = 0; g_ack_value = 0;
     strcpy(g_cwd, "C:\\Old"); g_saved_cwd[0] = 0; g_alt_path[0] = 0;
     NetDaemonNet.player_count_ = 1;
@@ -290,7 +407,8 @@ static void test_host_send_chunking_and_order() {
     g_test_file_size = 4000;
     NetDaemonNet.primary_state_.leading_words_[0] = 1;
     const int result = NetDaemonNet.send_files();
-    if (result != 0 || g_file_open_count != 1 || g_findclose_count != 1) abort();
+    if (result != 0 || g_file_open_count != 1 || g_findclose_count != 1 ||
+        g_setup_local_status != 2) abort();
     if (g_group_members.size() != 1 || g_group_members[0] != 0x222) abort();
     if (g_group_packets.size() != 2) abort();
     if (g_group_packets[0].type != 0xF0B || g_group_packets[0].size != 0x820 ||
@@ -348,7 +466,8 @@ static void test_exact_chunk_boundary_and_escape_cleanup() {
     NetDaemonNet.primary_state_.leading_words_[0] = 1;
     g_escape_after = 0;
     if (NetDaemonNet.send_files() != 1) abort();
-    if (!g_group_packets.empty() || NetDaemonNet.channels_[1].trailing_words_[9] != 1) abort();
+    if (!g_group_packets.empty() || NetDaemonNet.channels_[1].trailing_words_[9] != 1 ||
+        g_free_count != 1) abort(); // Native early escape leaks the send buffer.
     if (strcmp(g_cwd, "C:\\Old") != 0 || NetDaemonFileTransferMode != 0) abort();
 }
 
@@ -387,12 +506,134 @@ static void test_multiple_file_indices_are_not_constant_zero() {
     }
 }
 
+static void test_callback_rebinds_and_saved_masks() {
+    reset_fixture();
+    g_find_count = 2;
+    g_rebind_tables = true;
+    if (NetDaemonNet.send_files() != 0) abort();
+    if (g_reported_counts.size() != 2 || g_reported_counts[0] != 2 ||
+        g_reported_counts[1] != 1) abort();
+    if (g_open_names.size() != 2 || g_open_names[0] != "rebound-first.dat" ||
+        g_open_names[1] != "rebound-second.dat") abort();
+    if (g_group_members.size() != 2 || g_group_members[0] != 0x222 ||
+        g_group_members[1] != 0x444) abort();
+    if (g_popup_file != g_rebound_script_file) abort();
+    int lists = 0;
+    for (size_t i = 0; i < g_messages.size(); ++i) {
+        if (g_messages[i].type != 0xF06) continue;
+        if (g_messages[i].bytes[0x11] != 0x5A ||
+            g_messages[i].bytes[0x10] != lists) abort();
+        if (strcmp(reinterpret_cast<const char *>(&g_messages[i].bytes[0x18]),
+                   lists == 0 ? "sample.dat" : "second.dat") != 0) abort();
+        ++lists;
+    }
+    if (lists != 2) abort();
+    for (size_t i = 0; i < g_retained_tables.size(); ++i) ::free(g_retained_tables[i]);
+    g_retained_tables.clear();
+
+    reset_fixture();
+    g_fail_open = true;
+    if (NetDaemonNet.send_files() != 0 || !g_group_packets.empty() ||
+        g_file_open_count != 1 || g_reported_counts[0] != 1 ||
+        strcmp(g_cwd, "C:\\Old") != 0) abort();
+}
+
+static void test_receiver_methods_and_global_protocol_state() {
+    reset_fixture();
+    NetDaemon receiver;
+    g_active_daemon = &receiver;
+    receiver.primary_state_.leading_words_[0] = 1;
+    NetDaemonNet.player_count_ = 2;
+    NetDaemonNet.process_slots_[2].status_bytes_[0] = 0;
+    receiver.process_slots_[2].status_bytes_[0] = 77;
+    g_scenario = 4; g_ack_value = 4;
+    receiver.player_count_ = 0; // Native count is the singleton's count.
+    receiver.process_slots_[1].pid_ = 0x987;
+    receiver.channels_[1].trailing_words_[9] = 77;
+    NetDaemonNet.primary_state_.leading_words_[0] = 0;
+    if (receiver.send_files() != 0 || g_group_members.size() != 1 ||
+        g_group_members[0] != 0x987 || receiver.process_slots_[1].status_bytes_[0] != 2 ||
+        NetDaemonNet.process_slots_[1].status_bytes_[0] != 0 ||
+        receiver.channels_[1].trailing_words_[9] != 77 ||
+        receiver.file_index_records_ != 0 || NetDaemonNet.file_index_records_ != 0 ||
+        g_setup_local_status != 2 || g_setup_receiver_status != 0 ||
+        g_setup_global_status != 0 ||
+        NetDaemonNet.get_calls_ == 0 || receiver.get_calls_ != 0) abort();
+    for (size_t i = 0; i < g_method_owners.size(); ++i)
+        if (g_method_owners[i] != &receiver) abort();
+
+    reset_fixture();
+    NetDaemon client;
+    g_active_daemon = &client;
+    client.primary_state_.leading_words_[0] = 0;
+    client.field_764_ = 0x765;
+    g_scenario = 5;
+    if (client.send_files() != 1 || client.channels_[1].trailing_words_[9] != 0 ||
+        NetDaemonNet.channels_[1].trailing_words_[9] != 1 ||
+        g_messages[0].target != 0x765 || g_method_owners[0] != &client) abort();
+
+    reset_fixture();
+    NetDaemon escaping_client;
+    g_active_daemon = &escaping_client;
+    escaping_client.primary_state_.leading_words_[0] = 0;
+    g_escape_after = 0;
+    if (escaping_client.send_files() != 1 ||
+        escaping_client.channels_[1].trailing_words_[9] != 0 ||
+        NetDaemonNet.channels_[1].trailing_words_[9] != 1) abort();
+
+    reset_fixture();
+    NetDaemon escaping;
+    g_active_daemon = &escaping;
+    escaping.primary_state_.leading_words_[0] = 1;
+    g_escape_after = 0;
+    if (escaping.send_files() != 1 || escaping.channels_[1].trailing_words_[9] != 0 ||
+        NetDaemonNet.channels_[1].trailing_words_[9] != 1) abort();
+}
+
+static void test_observation_only_unsigned_tail_words() {
+    // Synthetic allocator/compressor observations, not real native storage
+    // or allocation success. Neither fake addresses nor enormous extents are
+    // accessed: BOTH copy APIs and send_group are intercepted in this mode.
+    const uintptr_t bases[] = {0x1000, 0xFFFFFF00, 0x1000, 0x1000, 0x1000, 4};
+    const uint32_t capacities[] = {0x200, 0x200, 0x80000000, 0xFFFFFFFF, 0, 0xFFFFFFF0};
+    const int copies[] = {1, 0, 1, 0, 0, 1};
+    for (int i = 0; i < 6; ++i) {
+        reset_fixture();
+        g_observe_invalid_tail = true;
+        g_observed_base = bases[i]; g_observed_capacity = capacities[i];
+        if (NetDaemonNet.send_files() != 0 || g_observed_copies != copies[i] ||
+            g_observed_sends != copies[i]) abort();
+        if (copies[i] && (g_observed_copy_count != capacities[i] ||
+            g_observed_send_count != capacities[i] + 0x20u ||
+            !g_observed_memmove)) abort();
+    }
+}
+
+static void test_abort_clear_precedes_lookup_observation() {
+    reset_fixture();
+    NetDaemon receiver;
+    g_active_daemon = &receiver;
+    receiver.primary_state_.leading_words_[0] = 0;
+    g_observe_lookup = true;
+    NetDaemonNet.channels_[1].trailing_words_[9] = 9;
+    g_scenario = 3;
+    // Observe the actual source call prefix. This does not assert that the
+    // real pid lookup reenters or establish behavior after a native failure.
+    if (receiver.send_files() != 1 || g_lookup_abort != 0 || g_draw_count != 0)
+        abort();
+}
+
 int main() {
     test_host_send_chunking_and_order();
     test_ack_wait_live_mask_and_status_scan();
     test_exact_chunk_boundary_and_escape_cleanup();
     test_client_escape_and_live_mode_cancel();
     test_multiple_file_indices_are_not_constant_zero();
+    NetDaemonNet.process_slots_[3].pid_ = 0x444;
+    test_callback_rebinds_and_saved_masks();
+    test_receiver_methods_and_global_protocol_state();
+    test_observation_only_unsigned_tail_words();
+    test_abort_clear_precedes_lookup_observation();
     puts("send_files host controls passed");
     return 0;
 }
