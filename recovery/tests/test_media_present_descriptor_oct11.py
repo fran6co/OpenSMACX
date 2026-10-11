@@ -62,7 +62,7 @@ typedef unsigned char BYTE; typedef void *LPPALETTEENTRY;
 const HRESULT DD_OK=0, DDERR_SURFACELOST=static_cast<HRESULT>(0x887601C2U);
 const DWORD DDWAITVB_BLOCKBEGIN=1, DDBLT_ASYNC=0x1000000, DDFLIP_WAIT=1, DDLOCK_WAIT=1;
 struct RECT { LONG left,top,right,bottom; };
-struct DDSURFACEDESC { DWORD dwSize; void *lpSurface; BYTE unused[100]; };
+struct DDSURFACEDESC { DWORD dwSize; LONG lPitch; void *lpSurface; BYTE unused[100]; };
 struct MediaDescriptor;
 struct MediaRuntime;
 static MediaRuntime *active;

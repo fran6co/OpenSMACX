@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "6b15ca08d2df432a9ee175bb4ce430c164cf1eea",
+  "editable_files": [
+    "src/movie_media.cpp",
+    "recovery/tests/test_media_present_descriptor_oct11.py",
+    "recovery/tests/test_media_locked_pitch_oct11.py"
+  ],
+  "intent": "Restore original kind-2 media row copy with DirectDraw returned signed pitch, descriptor reloads and failed-Lock fallthrough into the shared presentation tail.",
+  "evidence": [
+    "Pinned 5CB7F3 loads locked DDSURFACEDESC.lPitch;5CB80A/80B/818/820 implement signed divide by four truncated toward zero;5CB89A advances destination by that dword stride. Source advance remains width-derived and native eight-dword chunk rounding is retained.",
+    "Pinned 5CB7CF/7F7/897/8A8 reload descriptor after overlay/Lock and before height retest/Unlock. The initial surface null guard is real. A failed Lock jumps to5CBA60 shared tail rather than returning; keep that original control flow.",
+    "Actual-source host controls include positive/negative padded and non-multiple-of-four pitch, source chunk rounding, empty height/width, receiver replacement and failed-Lock tail. They do not establish COM ABI, production reentrancy, linked preservation or full-game acceptance; kind1 remains independently unfinished."
+  ],
+  "subjects": [
+    {
+      "address": 6076096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ]
+}

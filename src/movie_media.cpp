@@ -2015,28 +2015,30 @@ void MediaRuntime::sub_5cb6c0() {
       DDSURFACEDESC locked;
       memset(&locked, 0, 0x6c);
       locked.dwSize = 0x6c;
-      if (d.surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK) return;
-      DWORD group_count = (d.output_width_64 & 0x7fffffff) >> 1;
-      BYTE *source_row = owned_heap_638;
-      BYTE *destination_row = (BYTE *)locked.lpSurface;
-      DWORD groups = (group_count + 7) >> 3;
-      for (DWORD row = 0; row < d.output_height_60; ++row) {
-        BYTE *source = source_row;
-        BYTE *destination = destination_row;
-        for (DWORD group = 0; group < groups; ++group) {
-          DWORD *src = (DWORD *)source;
-          DWORD *dst = (DWORD *)destination;
-          dst[0] = src[0]; dst[1] = src[1];
-          dst[2] = src[2]; dst[3] = src[3];
-          dst[4] = src[4]; dst[5] = src[5];
-          dst[6] = src[6]; dst[7] = src[7];
-          source += 0x20;
-          destination += 0x20;
+      if (descriptor->surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) == DD_OK) {
+        DWORD group_count = (descriptor->output_width_64 & 0x7fffffff) >> 1;
+        LONG destination_stride = (locked.lPitch / 4) * 4;
+        BYTE *source_row = owned_heap_638;
+        BYTE *destination_row = (BYTE *)locked.lpSurface;
+        DWORD groups = (group_count + 7) >> 3;
+        for (DWORD row = 0; row < descriptor->output_height_60; ++row) {
+          BYTE *source = source_row;
+          BYTE *destination = destination_row;
+          for (DWORD group = 0; group < groups; ++group) {
+            DWORD *src = (DWORD *)source;
+            DWORD *dst = (DWORD *)destination;
+            dst[0] = src[0]; dst[1] = src[1];
+            dst[2] = src[2]; dst[3] = src[3];
+            dst[4] = src[4]; dst[5] = src[5];
+            dst[6] = src[6]; dst[7] = src[7];
+            source += 0x20;
+            destination += 0x20;
+          }
+          source_row += group_count * 4;
+          destination_row += destination_stride;
         }
-        source_row += group_count * 4;
-        destination_row += group_count * 4;
+        descriptor->surface_1c->Unlock(0);
       }
-      d.surface_1c->Unlock(0);
     }
   } else if (queue_record_kind == 4) {
     if ((flags & 0x00001000) != 0)
