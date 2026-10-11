@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "task_id": "base-nutrient-dword-contract-oct11",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "289c3f23ea7b67745ab63bcf6d0958b88625e265",
+  "intent": "Translate the complete Base nutrient pass's original 32-bit add/multiply/subtract effects explicitly while preserving signed branch tests, unsigned field declarations, callback order and all existing edge behavior.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5151600
+    }
+  ],
+  "editable_files": [
+    "src/base.cpp",
+    "recovery/tests/test_base_nutrient_contract_oct11.py",
+    "recovery/tests/test_base_yield.py",
+    "recovery/tasks/base-nutrient-dword-contract-oct11.json"
+  ],
+  "evidence": [
+    "Pinned base_nutrient span 004E9B70..004E9CAD is completely decoded by the test using match_recovery PeImage/Span and Capstone. 004E9BDB/9BED add 2 to the growth global; 004E9BF4..9C02 adds convoy-to into nutrient intake; 004E9C13 MOVSX reads signed population, 9C17 IMUL multiplies by the rule dword, 9C1E adds convoy-from, and 9C37 subtracts consumption from intake. The upkeep tail reloads surplus at 9C77, clamps only values above 99 at 9C81..9C93, and adds the result to the faction dword at 9CA1; the fixture statically checks that field is uint32_t and verifies UINT32_MAX + 1 wraps to zero.",
+    "The native signed branch at 004E9C4A..9C62 tests the wrapped surplus and takes signed JL/JGE paths to reset negative accumulation or replace an exactly-zero value with -1. The source now uses existing base_yield add/multiply/subtract and signed-bits helpers to make these native low-word effects explicit without changing signed comparisons or declared data types.",
+    "Complete-body host controls include ordinary growth/intake/consumption/surplus/upkeep values and overflow fixtures for growth-rate addition, convoy-to intake, signed-byte population multiplication plus unsigned dword convoy-from, and the overflow-sensitive surplus branch. A saturating-subtraction damage mutant preserves normal-case arithmetic but must fail specifically at the wrapped-surplus fixture. Tests run available g++/clang++ at -O0 and -O2; existing intentionally uninitialized locals/paths are untouched.",
+    "The surplus counterexample (intake INT_MIN, convoy-from 1, population 0, requirement 0, accumulated -1) yields native wrapped INT_MAX surplus, resetting accumulated to 0. It demonstrates the original machine behavior for this bit pattern, not that this state is normally reachable in gameplay.",
+    "The existing base_yield harness now extracts the current typed GameDataStateWindow/Fields/lock-mask declarations from game_data_state_window.h and supplies one typed storage instance, allowing its existing full-source controls and damage mutants to compile without projection stubs or source changes. Pinned instruction test requires explicit absolute OPENSMACX_IMAGE and exact SHA. No mapping or original claim changes; scope is src/base.cpp plus these two host tests and task record. Host controls are not byte-exact, runtime or full-project acceptance."
+  ]
+}
