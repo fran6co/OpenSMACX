@@ -187,7 +187,7 @@ struct MediaRuntime {
   DWORD surface_width_004;                        // +004; SurfaceDesc.dwWidth
   DWORD surface_height_008;                       // +008; SurfaceDesc.dwHeight
   DWORD output_rect_extent_0c;                    // +00c; added to left edge
-  DWORD output_rect_or_draw2_bits_10;             // +010; rect height or COM pointer bits
+  DWORD output_rect_height_10;                   // +010; destination rectangle height
   DWORD output_rect_left_14;                      // +014
   DWORD output_rect_top_18;                       // +018
   BYTE *input_ring_base;                          // +01c; 1,200,000 bytes

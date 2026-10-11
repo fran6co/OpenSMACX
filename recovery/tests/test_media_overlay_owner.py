@@ -48,7 +48,7 @@ struct MediaDescriptor {
 struct MediaRuntime {
   MediaDescriptor *descriptor;
   DWORD output_rect_left_14,output_rect_top_18,output_rect_extent_0c;
-  DWORD output_rect_or_draw2_bits_10,queue_record_kind;
+  DWORD output_rect_height_10,queue_record_kind;
   int update_overlay(int show);
 };
 struct Surface : IDirectDrawSurface2 {

@@ -30,7 +30,7 @@ int __fastcall MediaRuntime::update_overlay(int show) {
   source_rectangle.left = static_cast<LONG>(output_rect_left_14);
   source_rectangle.top = static_cast<LONG>(output_rect_top_18);
   source_rectangle.right = static_cast<LONG>(output_rect_left_14 + output_rect_extent_0c);
-  source_rectangle.bottom = static_cast<LONG>(output_rect_top_18 + output_rect_or_draw2_bits_10);
+  source_rectangle.bottom = static_cast<LONG>(output_rect_top_18 + output_rect_height_10);
 
   MediaDescriptor *const output = descriptor;
   RECT destination_rectangle;
@@ -694,17 +694,17 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
   runtime->output_rect_left_14 = 0;
   runtime->output_rect_top_18 = 0;
   runtime->output_rect_extent_0c = d.output_width_64;
-  runtime->output_rect_or_draw2_bits_10 = d.output_height_60;
+  runtime->output_rect_height_10 = d.output_height_60;
   if ((d.flags & 0x40) != 0) runtime->output_rect_extent_0c <<= 1;
   if ((d.flags & 0x30) != 0)
-    runtime->output_rect_or_draw2_bits_10 <<= 1;
+    runtime->output_rect_height_10 <<= 1;
   if ((d.flags & 0x04) != 0)
     runtime->output_rect_left_14 =
         (int)(runtime->surface_width_004 - runtime->output_rect_extent_0c) >> 1;
   if ((d.flags & 0x08) != 0)
     runtime->output_rect_top_18 =
         (int)(runtime->surface_height_008 -
-              runtime->output_rect_or_draw2_bits_10) >> 1;
+              runtime->output_rect_height_10) >> 1;
   if ((d.flags & 0x01) != 0)
     runtime->output_rect_left_14 += d.geometry_offset_x_68;
   if ((d.flags & 0x02) != 0)
@@ -712,7 +712,7 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
   if ((d.flags & 0x80) != 0)
     runtime->output_rect_extent_0c = d.geometry_width_override_70;
   if ((d.flags & 0x100) != 0)
-    runtime->output_rect_or_draw2_bits_10 = d.geometry_height_override_74;
+    runtime->output_rect_height_10 = d.geometry_height_override_74;
 
   BYTE *surface_source = 0;
   DWORD output_pitch = 0;
@@ -767,7 +767,7 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
         fill_rectangle.top = runtime->output_rect_top_18;
         fill_rectangle.right = fill_rectangle.left + runtime->output_rect_extent_0c;
         fill_rectangle.bottom = fill_rectangle.top +
-            runtime->output_rect_or_draw2_bits_10;
+            runtime->output_rect_height_10;
         DDBLTFX fill_effects;
         memset(&fill_effects, 0, 0x64);
         fill_effects.dwSize = 0x64;
@@ -1936,6 +1936,7 @@ void MediaRuntime::sub_5cb6c0() {
   MediaDescriptor &d = *descriptor;
   DWORD flags = d.flags;
   DWORD saved_output = output_handle_candidate;
+  BYTE *saved_palette_entries = d.palette_entries_28;
   if ((flags & 0x00000800) != 0) return;
 
   if (queue_record_kind == 1) {
@@ -1963,7 +1964,7 @@ void MediaRuntime::sub_5cb6c0() {
         destination.top = (LONG)output_rect_top_18;
         destination.right = (LONG)(output_rect_left_14 + output_rect_extent_0c);
         destination.bottom = (LONG)(output_rect_top_18 +
-                                     output_rect_or_draw2_bits_10);
+                                     output_rect_height_10);
         RECT source;
         source.left = 0;
         source.top = 0;
@@ -2038,45 +2039,39 @@ void MediaRuntime::sub_5cb6c0() {
       d.surface_1c->Unlock(0);
     }
   } else if (queue_record_kind == 4) {
-    IDirectDraw2 *draw_device =
-        reinterpret_cast<IDirectDraw2 *>(output_rect_or_draw2_bits_10);
-    if ((flags & 0x00001000) != 0 && draw_device != 0)
-      draw_device->WaitForVerticalBlank(DDWAITVB_BLOCKBEGIN, 0);
+    if ((flags & 0x00001000) != 0)
+      descriptor->draw_device_10->WaitForVerticalBlank(DDWAITVB_BLOCKBEGIN, 0);
 
-    if (d.surface_1c != 0 && d.surface_14 != 0) {
-      HRESULT status = d.surface_1c->IsLost();
-      if (status == DDERR_SURFACELOST && d.surface_1c->Restore() != DD_OK)
-        return;
+    RECT source;
+    source.left = 0;
+    source.top = 0;
+    source.right = (LONG)descriptor->output_width_64 - 1;
+    source.bottom = (LONG)descriptor->output_height_60 - 1;
+    RECT destination;
+    destination.left = (LONG)output_rect_left_14;
+    destination.top = (LONG)output_rect_top_18;
+    destination.right = (LONG)(output_rect_left_14 + output_rect_extent_0c);
+    destination.bottom = (LONG)(output_rect_top_18 + output_rect_height_10);
 
-      RECT destination;
-      destination.left = (LONG)output_rect_left_14;
-      destination.top = (LONG)output_rect_top_18;
-      destination.right = (LONG)(output_rect_left_14 + output_rect_extent_0c);
-      destination.bottom = (LONG)(output_rect_top_18 +
-                                   output_rect_or_draw2_bits_10);
-      RECT source;
-      source.left = 0;
-      source.top = 0;
-      source.right = (LONG)d.output_width_64 - 1;
-      source.bottom = (LONG)d.output_height_60 - 1;
-      if (d.surface_14->Blt(&destination, d.surface_1c, &source,
-                            DDBLT_ASYNC, 0) != DD_OK)
-        queue_record_kind = 1;
-    }
+    HRESULT status = descriptor->surface_1c->IsLost();
+    if (status == DDERR_SURFACELOST &&
+        descriptor->surface_1c->Restore() != DD_OK)
+      return;
+
+    if (descriptor->surface_14->Blt(&destination, descriptor->surface_1c,
+                                  &source, DDBLT_ASYNC, 0) != DD_OK)
+      queue_record_kind = 1;
   }
 
-  if ((flags & 0x08000000) != 0 && queue_record_kind == 1) {
-    if (d.pixel_format.total_component_bits == 8) {
-      if (d.surface_14 != 0) d.surface_14->Flip(0, DDFLIP_WAIT);
-      if (d.palette_24 != 0 && d.palette_entries_28 != 0)
-        d.palette_24->SetEntries(0, 0, 0x100,
-                                 (LPPALETTEENTRY)d.palette_entries_28);
+  if ((descriptor->flags & 0x08000000) != 0 && queue_record_kind == 1) {
+    if (descriptor->pixel_format.total_component_bits == 8) {
+      descriptor->surface_14->Flip(0, DDFLIP_WAIT);
+      descriptor->palette_24->SetEntries(0, 0, 0x100,
+                                       (LPPALETTEENTRY)saved_palette_entries);
       return;
     }
-    if (d.surface_14 != 0) {
-      HRESULT result = d.surface_14->Flip(0, DDFLIP_WAIT);
-      if (result != DD_OK) OutputDebugStringA(sub_5cf120(result));
-    }
+    HRESULT result = descriptor->surface_14->Flip(0, DDFLIP_WAIT);
+    if (result != DD_OK) OutputDebugStringA(sub_5cf120(result));
   }
 }
 

@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "21651a88042981bae291f49ca649ef7d1f269d1b",
+  "editable_files": [
+    "src/movie_media.cpp",
+    "src/movie_media.h",
+    "recovery/tests/test_media_overlay_owner.py",
+    "recovery/tests/test_media_present_descriptor_oct11.py"
+  ],
+  "intent": "Separate MediaRuntime rectangle height from the descriptor DirectDraw device and restore kind-4 presentation/shared-tail receiver reloads and original error-path behavior.",
+  "evidence": [
+    "Pinned 5CB700 reads descriptor+10 for WaitForVerticalBlank;5CB738 and5CB942 read runtime+10 as rectangle height. Existing descriptor producers retain a typed IDirectDraw2 pointer. No class-identity expansion is inferred.",
+    "Pinned 5CB70D/759/76C and5CBA60/86 reload runtime->descriptor after COM calls. Source and destination rectangles precede IsLost; palette entries are captured from descriptor+28 at entry and reused with the freshly loaded palette after Flip. Null guards added by the translation are absent in these original paths.",
+    "This bounded correction does not establish complete kind-1/2 fidelity, native COM ABI/layout proof, byte equality or game acceptance. Preserve historical claims and all original annotations; retain callback-visible reload timing without asserting a known production callback that replaces the descriptor."
+  ],
+  "subjects": [
+    {
+      "address": 6077152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6080832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6079536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6076096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6077376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ]
+}
