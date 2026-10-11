@@ -19,11 +19,26 @@ from match_recovery.pe_coff import Coff, PeImage
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/vendor/vc6-runtime.recovery.h"
 BASE = "af91b787101b2eaf99f215797e2aa1289a038e0d"
+ADDITION = "db9aaeb81629d511fb9c60f80e9bcb83d76e7cfe"
 PINNED_IMAGE_SHA256 = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 PINNED_ARCHIVE_SHA256 = "1ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b"
 UNIT = "build/intel/mt_obj/mbctype.obj"
 MEMBER_SHA256 = "74924cfef4395b03a742c0dbcbff475c3ed322e1853cedec84c8e28a48a0874e"
 EXPECTED = (0x0064EE16, 0x0064EE49, "_CPtoLCID", UNIT, 7)
+
+
+def snapshot(revision):
+    text = subprocess.check_output(
+        ["git", "show", f"{revision}:src/vendor/vc6-runtime.recovery.h"], cwd=ROOT, text=True)
+    return parse_component(text), text
+
+
+def assert_installed_history(installed, historical):
+    identity = lambda b: (b.origin.address, b.symbol)
+    current = {identity(b): b for b in installed.bindings}
+    assert len(current) == len(installed.bindings)
+    assert all(current.get(identity(b)) == b for b in historical.bindings)
+    assert replace(installed, bindings=historical.bindings) == historical
 
 
 def without_codepage_helper(manifest):
@@ -43,20 +58,25 @@ def test_exact_component_addition_preserves_existing_history_and_records():
     from match_recovery.source import read_text
     from test_texture_raster_actual_source import _continuity_fields
 
-    prior = subprocess.check_output(
-        ["git", "show", f"{BASE}:src/vendor/vc6-runtime.recovery.h"], cwd=ROOT, text=True)
+    old, prior = snapshot(BASE)
+    new, step_text = snapshot(ADDITION)
     current = SOURCE.read_text(encoding="utf-8")
-    old, new = parse_component(prior), parse_component(current)
+    installed = parse_component(current)
+    assert_installed_history(installed, new)
     assert sum(b.symbol == EXPECTED[2] for b in new.bindings) == 1
     assert without_codepage_helper(new) == old
     assert parse_component(render_component(new)) == new
-    assert new.bindings[-1].origin.address == EXPECTED[0]
-    assert (new.bindings[-1].spans, new.bindings[-1].symbol, new.bindings[-1].unit) == (
+    addition, = (b for b in new.bindings if b.symbol == EXPECTED[2])
+    assert addition.origin.address == EXPECTED[0]
+    assert (addition.spans, addition.symbol, addition.unit) == (
         (Span(EXPECTED[0], EXPECTED[1]),), EXPECTED[2], EXPECTED[3])
     for delimiter, index in (("// RECOVERY_COMPONENT_BEGIN v1", 0), ("// RECOVERY_COMPONENT_END", 1)):
-        assert prior.split(delimiter)[index] == current.split(delimiter)[index]
-    assert [(r.address, _continuity_fields(r), r.symbol) for r in read_text(prior, SOURCE)] == [
-        (r.address, _continuity_fields(r), r.symbol) for r in read_text(current, SOURCE)]
+        assert prior.split(delimiter)[index] == step_text.split(delimiter)[index]
+    old_records = {(r.address, r.symbol): (r.address, _continuity_fields(r), r.symbol)
+                   for r in read_text(prior, SOURCE)}
+    installed_records = {(r.address, r.symbol): (r.address, _continuity_fields(r), r.symbol)
+                         for r in read_text(current, SOURCE)}
+    assert all(installed_records.get(key) == record for key, record in old_records.items())
 
 
 def test_projection_is_idempotent_and_rejects_a_different_binding():
@@ -65,7 +85,10 @@ def test_projection_is_idempotent_and_rejects_a_different_binding():
     projected = without_codepage_helper(manifest)
     assert without_codepage_helper(projected) == projected
     for changed in (replace(binding, unit="wrong.obj"),
-                    replace(binding, spans=(Span(EXPECTED[0], EXPECTED[1]-1),))):
+                    replace(binding, spans=(Span(EXPECTED[0], EXPECTED[1]-1),)),
+                    replace(binding,
+                            origin=replace(binding.origin, address=EXPECTED[0] + 1),
+                            spans=(Span(EXPECTED[0] + 1, EXPECTED[1]),))):
         damaged = replace(manifest, bindings=tuple(
             changed if b.symbol == EXPECTED[2] else b for b in manifest.bindings))
         with pytest.raises(AssertionError):
@@ -79,7 +102,10 @@ def artifacts():
     image = ROOT / ".opensmacx/game/terranx_original.exe"
     if not image.is_file() or not archive.is_file():
         pytest.skip("pinned original and external runtime archive required")
-    return parse_component(SOURCE.read_text(encoding="utf-8")), image.read_bytes(), archive.read_bytes()
+    installed = parse_component(SOURCE.read_text(encoding="utf-8"))
+    historical, _ = snapshot(ADDITION)
+    assert_installed_history(installed, historical)
+    return historical, image.read_bytes(), archive.read_bytes()
 
 
 def test_strict_leaf_pass_and_existing_verdicts_unchanged(artifacts):
@@ -90,10 +116,12 @@ def test_strict_leaf_pass_and_existing_verdicts_unchanged(artifacts):
     before = verify_toolchain(without_codepage_helper(manifest), image, archive,
                               import_bindings=imports)
     after = verify_toolchain(manifest, image, archive, import_bindings=imports)
-    assert after["functions"][:-1] == before["functions"]
+    before_rows = {(r["address"], r["symbol"]): r for r in before["functions"]}
+    after_rows = {(r["address"], r["symbol"]): r for r in after["functions"]}
+    assert all(after_rows.get(key) == row for key, row in before_rows.items())
     assert Counter(r["result"] for r in before["functions"]) == {"pass": 67, "unknown": 26}
     assert Counter(r["result"] for r in after["functions"]) == {"pass": 68, "unknown": 26}
-    row = after["functions"][-1]
+    row = next(r for r in after["functions"] if r["symbol"] == EXPECTED[2])
     assert row["result"] == row["boundary"] == row["bytes"] == row["references"] == "pass", row
     assert row["span"] == {"start": EXPECTED[0], "end": EXPECTED[1]}
     assert row["symbol"] == EXPECTED[2] and row["unit"] == UNIT and row["section"] == EXPECTED[4]

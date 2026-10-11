@@ -17,6 +17,7 @@ from recovery.environment.wine import VC6_ROOT
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/vendor/vc6-runtime.recovery.h"
 BASE = "82ee8966f"
+ADDITION = "acb1bc751d34170517554c8b784299672e104d4b"
 EXPECTED = (
     (0x646010, 0x64601D, "_srand", "build/intel/mt_obj/rand.obj", 1),
     (0x64601D, 0x64603F, "_rand", "build/intel/mt_obj/rand.obj", 3),
@@ -36,6 +37,20 @@ EXPECTED = (
 )
 
 
+def snapshot(revision):
+    text = subprocess.check_output(
+        ["git", "show", f"{revision}:src/vendor/vc6-runtime.recovery.h"], cwd=ROOT, text=True)
+    return parse_component(text), text
+
+
+def assert_installed_history(installed, historical):
+    identity = lambda b: (b.origin.address, b.symbol)
+    current = {identity(b): b for b in installed.bindings}
+    assert len(current) == len(installed.bindings)
+    assert all(current.get(identity(b)) == b for b in historical.bindings)
+    assert replace(installed, bindings=historical.bindings) == historical
+
+
 def previous():
     return subprocess.check_output(["git", "show", BASE + ":src/vendor/vc6-runtime.recovery.h"], cwd=ROOT, text=True)
 
@@ -44,13 +59,13 @@ def without_strict_frontier(manifest):
     """Project this exact later addition out of older historical controls."""
     from recovery.tests.test_crt_fp_control_oct11 import without_fp_control
     manifest = without_fp_control(manifest)
-    owned = {row[2] for row in EXPECTED}
-    additions = tuple(b for b in manifest.bindings if b.symbol in owned)
+    symbols = {row[2] for row in EXPECTED}
+    additions = tuple(b for b in manifest.bindings if b.symbol in symbols)
     if not additions:
         return manifest
     assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in additions] == [row[:4] for row in EXPECTED]
     assert all(b.spans == (Span(start, end),) for b, (start, end, *_) in zip(additions, EXPECTED))
-    return replace(manifest, bindings=tuple(b for b in manifest.bindings if b.symbol not in owned))
+    return replace(manifest, bindings=tuple(b for b in manifest.bindings if b.symbol not in symbols))
 
 
 def source_without_strict_frontier(text):
@@ -60,17 +75,29 @@ def source_without_strict_frontier(text):
 
 
 def test_only_append_fifteen_bounded_bindings():
-    before = previous()
-    after = SOURCE.read_text()
-    old, current = parse_component(before), parse_component(after)
-    owned = {b.symbol for b in old.bindings} | {row[2] for row in EXPECTED}
-    current = replace(current, bindings=tuple(b for b in current.bindings if b.symbol in owned))
-    assert current.bindings[:-15] == old.bindings
-    assert replace(current, bindings=old.bindings) == old
-    assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in current.bindings[-15:]] == [row[:4] for row in EXPECTED]
-    assert all("not original archive selection" in b.evidence for b in current.bindings[-15:])
+    old, before = snapshot(BASE)
+    current, step_text = snapshot(ADDITION)
+    installed = parse_component(SOURCE.read_text())
+    assert_installed_history(installed, current)
+    projected = without_strict_frontier(current)
+    assert projected == old
+    assert parse_component(render_component(current)) == current
+    additions = [b for b in current.bindings if b.symbol in {row[2] for row in EXPECTED}]
+    assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in additions] == [row[:4] for row in EXPECTED]
+    assert all("not original archive selection" in b.evidence for b in additions)
     for delimiter, index in (("// RECOVERY_COMPONENT_BEGIN v1", 0), ("// RECOVERY_COMPONENT_END", 1)):
-        assert before.split(delimiter)[index] == after.split(delimiter)[index]
+        assert before.split(delimiter)[index] == step_text.split(delimiter)[index]
+
+
+def test_projection_rejects_same_symbol_at_wrong_origin():
+    manifest, _ = snapshot(ADDITION)
+    target = next(b for b in manifest.bindings if b.symbol == EXPECTED[0][2])
+    address = target.origin.address + 1
+    wrong = replace(target, origin=replace(target.origin, address=address),
+                    spans=(Span(address, target.spans[0].end),))
+    damaged = replace(manifest, bindings=tuple(wrong if b == target else b for b in manifest.bindings))
+    with pytest.raises(AssertionError):
+        without_strict_frontier(damaged)
 
 
 @pytest.fixture(scope="module")
@@ -79,24 +106,29 @@ def artifacts():
     archive = VC6_ROOT / "LIB/LIBCMT.LIB"
     if not image.is_file() or not archive.is_file():
         pytest.skip("pinned executable and external runtime archive required")
-    return parse_component(SOURCE.read_text()), image.read_bytes(), archive.read_bytes()
+    installed = parse_component(SOURCE.read_text())
+    historical, _ = snapshot(ADDITION)
+    assert_installed_history(installed, historical)
+    return installed, image.read_bytes(), archive.read_bytes()
 
 
 def test_native_strict_rows_and_unchanged_previous_verdicts(artifacts):
     manifest, image, archive = artifacts
-    old = parse_component(previous())
-    owned = {b.symbol for b in old.bindings} | {row[2] for row in EXPECTED}
-    manifest = replace(manifest, bindings=tuple(b for b in manifest.bindings if b.symbol in owned))
+    old, _ = snapshot(BASE)
+    owned = {(b.origin.address, b.symbol) for b in old.bindings} | {
+        (row[0], row[2]) for row in EXPECTED}
+    manifest = replace(manifest, bindings=tuple(
+        b for b in manifest.bindings if (b.origin.address, b.symbol) in owned))
     imports = read_imports(ROOT)
     before = verify_toolchain(old, image, archive, import_bindings=imports)
     after = verify_toolchain(manifest, image, archive, import_bindings=imports)
-    previous_rows = {r["symbol"]: r for r in before["functions"]}
-    current_rows = {r["symbol"]: r for r in after["functions"]}
-    assert all(current_rows[symbol] == row for symbol, row in previous_rows.items())
+    previous_rows = {(r["address"], r["symbol"]): r for r in before["functions"]}
+    current_rows = {(r["address"], r["symbol"]): r for r in after["functions"]}
+    assert all(current_rows.get(identity) == row for identity, row in previous_rows.items())
     assert Counter(r["result"] for r in before["functions"]) == {"pass": 45, "unknown": 26}
     assert Counter(r["result"] for r in after["functions"]) == {"pass": 60, "unknown": 26}
     for start, end, symbol, unit, section in EXPECTED:
-        row = current_rows[symbol]
+        row = current_rows[(f"0x{start:08X}", symbol)]
         assert row["result"] == row["boundary"] == row["bytes"] == row["references"] == "pass", row
         assert row["span"] == {"start": start, "end": end}
         assert row["unit"] == unit and row["section"] == section
@@ -118,8 +150,10 @@ def test_independent_catalogue_extents(artifacts):
 @pytest.mark.parametrize("damage", ("extent", "body"))
 def test_correspondence_damage_refuses_pass(artifacts, symbol, damage):
     manifest, image, archive = artifacts
-    owned = {b.symbol for b in parse_component(previous()).bindings} | {row[2] for row in EXPECTED}
-    bindings = tuple(b for b in manifest.bindings if b.symbol in owned)
+    owned = {(b.origin.address, b.symbol) for b in parse_component(previous()).bindings} | {
+        (row[0], row[2]) for row in EXPECTED}
+    bindings = tuple(b for b in manifest.bindings
+                     if (b.origin.address, b.symbol) in owned)
     target = next(b for b in bindings if b.symbol == symbol)
     if damage == "extent":
         target = replace(target, spans=(Span(target.origin.address, target.spans[0].end - 1),))

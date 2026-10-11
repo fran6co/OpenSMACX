@@ -18,6 +18,7 @@ from recovery.environment.wine import VC6_ROOT
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/vendor/vc6-runtime.recovery.h"
 BASE = "25e0aa110c85c051a66f91f7bdbbb6aa90820aa1"
+ADDITION = "f227548f6bc61838fb0005ef9140bae3bae1a779"
 EXPECTED = (
     (0x649840, 0x649852, "__setdefaultprecision", "build/intel/mt_obj/fp8.obj", 1),
     (0x64D259, 0x64D28E, "__control87", "../build/intel/mt_obj/ieee87.obj", 3),
@@ -27,32 +28,61 @@ EXPECTED = (
 )
 
 
+def snapshot(revision):
+    text = subprocess.check_output(
+        ["git", "show", f"{revision}:src/vendor/vc6-runtime.recovery.h"], cwd=ROOT, text=True)
+    return parse_component(text), text
+
+
+def assert_installed_history(installed, historical):
+    identity = lambda b: (b.origin.address, b.symbol)
+    current = {identity(b): b for b in installed.bindings}
+    assert len(current) == len(installed.bindings)
+    assert all(current.get(identity(b)) == b for b in historical.bindings)
+    assert replace(installed, bindings=historical.bindings) == historical
+
+
 def without_fp_control(manifest):
     """Remove only this fully identified addition from historical controls."""
     from recovery.tests.test_crt_exception_helpers_oct11 import without_exception_helpers
     manifest = without_exception_helpers(manifest)
-    owned = {row[2] for row in EXPECTED}
-    added = tuple(b for b in manifest.bindings if b.symbol in owned)
+    symbols = {row[2] for row in EXPECTED}
+    added = tuple(b for b in manifest.bindings if b.symbol in symbols)
     if not added:
         return manifest
     assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in added] == [r[:4] for r in EXPECTED]
     assert all(b.spans == (Span(a, e),) for b, (a, e, *_) in zip(added, EXPECTED))
-    return replace(manifest, bindings=tuple(b for b in manifest.bindings if b.symbol not in owned))
+    return replace(manifest, bindings=tuple(b for b in manifest.bindings if b.symbol not in symbols))
 
 
 def previous():
-    return subprocess.check_output(["git", "show", BASE + ":src/vendor/vc6-runtime.recovery.h"], cwd=ROOT, text=True)
+    return snapshot(BASE)[1]
+
+
+def test_projection_rejects_same_symbol_at_wrong_origin():
+    manifest, _ = snapshot(ADDITION)
+    target = next(b for b in manifest.bindings if b.symbol == EXPECTED[0][2])
+    address = target.origin.address + 1
+    wrong = replace(target, origin=replace(target.origin, address=address),
+                    spans=(Span(address, target.spans[0].end),))
+    damaged = replace(manifest, bindings=tuple(wrong if b == target else b for b in manifest.bindings))
+    with pytest.raises(AssertionError):
+        without_fp_control(damaged)
 
 
 def test_only_five_complete_bindings_added():
     before, after = previous(), SOURCE.read_text()
+    historical, step_text = snapshot(ADDITION)
+    installed = parse_component(after)
+    assert_installed_history(installed, historical)
     from recovery.tests.test_crt_exception_helpers_oct11 import without_exception_helpers
-    old, current = parse_component(before), without_exception_helpers(parse_component(after))
+    old, current = parse_component(before), without_exception_helpers(historical)
     assert without_fp_control(current) == old
-    assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in current.bindings[-5:]] == [r[:4] for r in EXPECTED]
-    assert all("not original archive selection" in b.evidence for b in current.bindings[-5:])
+    additions = [b for b in historical.bindings if b.symbol in {row[2] for row in EXPECTED}]
+    assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in additions] == [r[:4] for r in EXPECTED]
+    assert all("not original archive selection" in b.evidence for b in additions)
     for delimiter, index in (("// RECOVERY_COMPONENT_BEGIN v1", 0), ("// RECOVERY_COMPONENT_END", 1)):
-        assert before.split(delimiter)[index] == after.split(delimiter)[index]
+        assert before.split(delimiter)[index] == step_text.split(delimiter)[index]
 
 
 @pytest.fixture(scope="module")
@@ -60,19 +90,25 @@ def artifacts():
     image, archive = ROOT / ".opensmacx/game/terranx_original.exe", VC6_ROOT / "LIB/LIBCMT.LIB"
     if not image.is_file() or not archive.is_file():
         pytest.skip("pinned original and external runtime archive required")
-    from recovery.tests.test_crt_exception_helpers_oct11 import without_exception_helpers
-    return without_exception_helpers(parse_component(SOURCE.read_text())), image.read_bytes(), archive.read_bytes()
+    installed = parse_component(SOURCE.read_text())
+    historical, _ = snapshot(ADDITION)
+    assert_installed_history(installed, historical)
+    return historical, image.read_bytes(), archive.read_bytes()
 
 
 def test_strict_closure_and_all_previous_verdicts(artifacts):
     manifest, image, archive = artifacts
     imports = read_imports(ROOT)
-    before = verify_toolchain(without_fp_control(manifest), image, archive, import_bindings=imports)
+    prior, _ = snapshot(BASE)
+    before = verify_toolchain(prior, image, archive, import_bindings=imports)
     after = verify_toolchain(manifest, image, archive, import_bindings=imports)
-    assert before["functions"] == after["functions"][:-5]
+    before_rows = {(r["address"], r["symbol"]): r for r in before["functions"]}
+    after_rows = {(r["address"], r["symbol"]): r for r in after["functions"]}
+    assert all(after_rows.get(key) == row for key, row in before_rows.items())
     assert Counter(r["result"] for r in before["functions"]) == {"pass": 60, "unknown": 26}
     assert Counter(r["result"] for r in after["functions"]) == {"pass": 65, "unknown": 26}
-    for row, (start, end, symbol, unit, section) in zip(after["functions"][-5:], EXPECTED):
+    for start, end, symbol, unit, section in EXPECTED:
+        row = next(r for r in after["functions"] if r["symbol"] == symbol)
         assert row["result"] == row["boundary"] == row["bytes"] == row["references"] == "pass", row
         assert row["span"] == {"start": start, "end": end}
         assert row["symbol"] == symbol and row["unit"] == unit and row["section"] == section

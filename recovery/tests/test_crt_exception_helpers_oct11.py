@@ -20,11 +20,26 @@ from test_crt_codepage_helper_oct11 import without_codepage_helper
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/vendor/vc6-runtime.recovery.h"
 BASE = "de298dcd28b4b42598aaa47a12e3e612b9767169"
+ADDITION = "eb5295280a402f3b89157f79878ffdca01e4eb3a"
 UNIT = "build/intel/mt_obj/frame.obj"
 EXPECTED = (
     (0x648BED, 0x648C4A, "?TypeMatch@@YAHPBU_s_HandlerType@@PBU_s_CatchableType@@PBU_s_ThrowInfo@@@Z", UNIT, 5),
     (0x6490E9, 0x64910C, "?AdjustPointer@@YAPAXPAXABUPMD@@@Z", UNIT, 20),
 )
+
+
+def snapshot(revision):
+    text = subprocess.check_output(
+        ["git", "show", f"{revision}:src/vendor/vc6-runtime.recovery.h"], cwd=ROOT, text=True)
+    return parse_component(text), text
+
+
+def assert_installed_history(installed, historical):
+    identity = lambda b: (b.origin.address, b.symbol)
+    current = {identity(b): b for b in installed.bindings}
+    assert len(current) == len(installed.bindings)
+    assert all(current.get(identity(b)) == b for b in historical.bindings)
+    assert replace(installed, bindings=historical.bindings) == historical
 
 
 def without_exception_helpers(manifest):
@@ -39,19 +54,35 @@ def without_exception_helpers(manifest):
     return replace(manifest, bindings=tuple(b for b in manifest.bindings if b.symbol not in symbols))
 
 
+def test_projection_rejects_same_symbol_at_wrong_origin():
+    manifest, _ = snapshot(ADDITION)
+    target = next(b for b in manifest.bindings if b.symbol == EXPECTED[0][2])
+    address = target.origin.address + 1
+    wrong = replace(target, origin=replace(target.origin, address=address),
+                    spans=(Span(address, target.spans[0].end),))
+    damaged = replace(manifest, bindings=tuple(wrong if b == target else b for b in manifest.bindings))
+    with pytest.raises(AssertionError):
+        without_exception_helpers(damaged)
+
+
 def test_exact_two_binding_addition_preserves_old_source_obligations():
     from match_recovery.source import read_text
     from test_texture_raster_actual_source import _continuity_fields
-    prior = subprocess.check_output(["git", "show", BASE + ":src/vendor/vc6-runtime.recovery.h"], cwd=ROOT, text=True)
+    old, prior = snapshot(BASE)
+    new, step_text = snapshot(ADDITION)
     current = SOURCE.read_text()
-    old, new = parse_component(prior), parse_component(current)
+    installed = parse_component(current)
+    assert_installed_history(installed, new)
     assert without_exception_helpers(new) == old
     pair = [b for b in new.bindings if b.symbol in {r[2] for r in EXPECTED}]
     assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in pair] == [r[:4] for r in EXPECTED]
     for delimiter, index in (("// RECOVERY_COMPONENT_BEGIN v1", 0), ("// RECOVERY_COMPONENT_END", 1)):
-        assert prior.split(delimiter)[index] == current.split(delimiter)[index]
-    assert [(r.address, _continuity_fields(r), r.symbol) for r in read_text(prior, SOURCE)] == [
-        (r.address, _continuity_fields(r), r.symbol) for r in read_text(current, SOURCE)]
+        assert prior.split(delimiter)[index] == step_text.split(delimiter)[index]
+    old_records = {(r.address, r.symbol): (r.address, _continuity_fields(r), r.symbol)
+                   for r in read_text(prior, SOURCE)}
+    installed_records = {(r.address, r.symbol): (r.address, _continuity_fields(r), r.symbol)
+                         for r in read_text(current, SOURCE)}
+    assert all(installed_records.get(key) == record for key, record in old_records.items())
 
 
 @pytest.fixture(scope="module")
@@ -60,18 +91,25 @@ def artifacts():
     archive = VC6_ROOT / "LIB/LIBCMT.LIB"
     if not image.is_file() or not archive.is_file():
         pytest.skip("pinned original and external runtime archive required")
-    return parse_component(SOURCE.read_text()), image.read_bytes(), archive.read_bytes()
+    installed = parse_component(SOURCE.read_text())
+    historical, _ = snapshot(ADDITION)
+    assert_installed_history(installed, historical)
+    return historical, image.read_bytes(), archive.read_bytes()
 
 
 def test_strict_complete_pair_and_unchanged_old_verdicts(artifacts):
     manifest, image, archive = artifacts
     imports = read_imports(ROOT)
-    before = verify_toolchain(without_exception_helpers(manifest), image, archive, import_bindings=imports)
-    after = verify_toolchain(without_codepage_helper(manifest), image, archive, import_bindings=imports)
-    assert before["functions"] == after["functions"][:-2]
+    prior, _ = snapshot(BASE)
+    before = verify_toolchain(prior, image, archive, import_bindings=imports)
+    after = verify_toolchain(manifest, image, archive, import_bindings=imports)
+    before_rows = {(r["address"], r["symbol"]): r for r in before["functions"]}
+    after_rows = {(r["address"], r["symbol"]): r for r in after["functions"]}
+    assert all(after_rows.get(key) == row for key, row in before_rows.items())
     assert Counter(r["result"] for r in before["functions"]) == {"pass": 65, "unknown": 26}
     assert Counter(r["result"] for r in after["functions"]) == {"pass": 67, "unknown": 26}
-    for row, (start, end, symbol, unit, section) in zip(after["functions"][-2:], EXPECTED):
+    for start, end, symbol, unit, section in EXPECTED:
+        row = next(r for r in after["functions"] if r["symbol"] == symbol)
         assert row["boundary"] == row["bytes"] == row["references"] == row["result"] == "pass", row
         assert row["span"] == {"start": start, "end": end}
         assert row["symbol"] == symbol and row["unit"] == unit and row["section"] == section
