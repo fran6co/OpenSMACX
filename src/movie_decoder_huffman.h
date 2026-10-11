@@ -2,16 +2,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "movie_decoder_bit_state.h"
 
 namespace movie_decoder_huffman {
 
 // Index and availability are kept separate: the original state contains a
 // left-aligned accumulator and a signed count of valid high bits.
-struct BitState {
-  const uint8_t *cursor;
-  uint32_t accumulator;
-  int32_t available_bits;
-};
+typedef ::MovieDecoderBitState BitState;
 
 struct Tables {
   const uint32_t *primary;

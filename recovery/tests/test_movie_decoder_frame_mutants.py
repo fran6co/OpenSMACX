@@ -32,6 +32,31 @@ def test_actual_frame_body_rejects_schedule_and_pitch_mutants(tmp_path: Path) ->
             "row < args.height - 1",
             "row < args.height",
         ),
+        "packet_words_after_count_publication": (
+            "const uint32_t packet_accumulator =\n"
+            "      (static_cast<uint32_t>(read_u16(args.compressed + 0x10)) << 16) |\n"
+            "      read_u16(args.compressed + 0x12);\n"
+            "  const uint8_t *const packet_cursor = args.compressed + 0x14;",
+            "args.bit_state->available_bits = 0x20;\n"
+            "  const uint32_t packet_accumulator =\n"
+            "      (static_cast<uint32_t>(read_u16(args.compressed + 0x10)) << 16) |\n"
+            "      read_u16(args.compressed + 0x12);\n"
+            "  const uint8_t *const packet_cursor = args.compressed + 0x14;",
+        ),
+        "record_mode_before_reader_publication": (
+            "args.bit_state->available_bits = 0x20;\n"
+            "  args.bit_state->accumulator = packet_accumulator;\n"
+            "  const int32_t first_scaled = signed_word(\n"
+            "      static_cast<uint32_t>(args.transform_products[0]) << 15);\n"
+            "  args.bit_state->cursor = packet_cursor;\n"
+            "  *args.record_mode = record_mode_value;",
+            "*args.record_mode = record_mode_value;\n"
+            "  args.bit_state->available_bits = 0x20;\n"
+            "  args.bit_state->accumulator = packet_accumulator;\n"
+            "  const int32_t first_scaled = signed_word(\n"
+            "      static_cast<uint32_t>(args.transform_products[0]) << 15);\n"
+            "  args.bit_state->cursor = packet_cursor;",
+        ),
     }
 
     for name, (old, replacement) in mutants.items():
@@ -64,3 +89,7 @@ def test_actual_frame_body_rejects_schedule_and_pitch_mutants(tmp_path: Path) ->
             [str(executable)], capture_output=True, text=True, check=False
         )
         assert execution.returncode != 0, name
+        if name == "packet_words_after_count_publication":
+            assert "alias_bits->accumulator == expected_accumulator" in execution.stderr
+        elif name == "record_mode_before_reader_publication":
+            assert "alias_bits->available_bits == 1" in execution.stderr

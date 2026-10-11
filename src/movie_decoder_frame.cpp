@@ -51,9 +51,8 @@ static void write_repeat(uint32_t *destination, uint32_t value,
   for (uint32_t i = 0; i != count; ++i) destination[i] = value;
 }
 
-static void initialize_scale_outputs(FrameArgs &args, int8_t record_bias) {
-  const int32_t first_scaled = static_cast<int32_t>(
-      static_cast<uint32_t>(args.transform_products[0]) << 15);
+static void initialize_scale_outputs(FrameArgs &args, int8_t record_bias,
+                                     int32_t first_scaled) {
   args.tables.scale_output[0] =
       fixed_product_16(args.tables.scale_source[0], first_scaled);
 
@@ -141,22 +140,31 @@ int decode_frame(FrameArgs &args) {
         args.callbacks.calloc_bytes(byte_count));
   }
 
-  *args.record_mode = args.record_kind != 5;
-  if (*args.table_init_gate == 0) {
+  const uint32_t record_mode_value = args.record_kind != 5;
+  const uint32_t table_init_gate = *args.table_init_gate;
+  const int8_t record_bias =
+      static_cast<int8_t>(args.compressed[0x0d]);
+  if (table_init_gate == 0) {
     initialize_codebooks(args.tables, args.codebook_records);
     *args.table_init_gate = 1;
     args.tables.block_prefix[48] = 0xfc000006u;
   }
 
-  const int8_t record_bias =
-      static_cast<int8_t>(args.compressed[0x0d]);
-  args.bit_state->cursor = args.compressed + 0x14;
-  args.bit_state->accumulator =
+  // The original reads both packet words and computes the cursor before it
+  // publishes the three shared reader fields, in count/accumulator/cursor
+  // order. Keep the record-mode store after those publications as well.
+  const uint32_t packet_accumulator =
       (static_cast<uint32_t>(read_u16(args.compressed + 0x10)) << 16) |
       read_u16(args.compressed + 0x12);
+  const uint8_t *const packet_cursor = args.compressed + 0x14;
   args.bit_state->available_bits = 0x20;
+  args.bit_state->accumulator = packet_accumulator;
+  const int32_t first_scaled = signed_word(
+      static_cast<uint32_t>(args.transform_products[0]) << 15);
+  args.bit_state->cursor = packet_cursor;
+  *args.record_mode = record_mode_value;
 
-  initialize_scale_outputs(args, record_bias);
+  initialize_scale_outputs(args, record_bias, first_scaled);
   uint8_t *selected = args.record_kind == 7
       ? *args.planes->temporary_b : *args.planes->temporary_a;
 
