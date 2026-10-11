@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task_id": "menu-live-slot-contract-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore native saved-entry-slot and post-callout reload semantics in Menu key and mouse close/open paths without changing menu behavior outside those original entries.",
+  "base_revision": "9ea5e078e9f926989fd9bf2a7c5c25fa7adc7c56",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6274816},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6274080}
+  ],
+  "editable_files": [
+    "src/menu.cpp",
+    "recovery/tests/test_menu_live_slot_contract_oct11.py",
+    "recovery/tests/test_win_menu_entry_ownership_oct11.py",
+    "recovery/tests/menu-owner-harness.cpp",
+    "recovery/tasks/menu-live-slot-contract-oct11.json"
+  ],
+  "evidence": [
+    "Pinned5FBC76 saves EDI=&entries_[current].pull_down and5FBC9D/5FBCFF reload [EDI] after redraw/flush in the two on_left_down close arms. The close task receiver therefore comes from the saved entry cell, even if callbacks change Menu.field_A24_ or replace that cell's PullDown.",
+    "Pinned5FBF2A/31 and5FBFA5 save the selected pull_down cell for key close routes. Native5FBF58,5FBFCC,5FBFE2,5FBFF9 and5FC179 reload it after the corresponding redraw/flush/task/draw/get-selected callouts. Enter preserves the selected entry cell while re-reading its PullDown for get_selected and item access; do not recapture through the current selected index. The original unchecked item index semantics are unchanged.",
+    "Pinned mnemonic-open path reloads Menu.field_A24_ at5FC1F7 after flush/redraw, then loads that live row's PullDown at5FC204 and calls show at5FC20B. The local mnemonic index is not reused for the final receiver.",
+    "Host fixtures extract complete actual Menu methods and inject callbacks only into the mock ABI, including a do_all_draws replacement before the Enter receiver is reloaded. Four compiled mutants must fail specific assertions: cached object, recaptured selection, saved mnemonic index and premature pre-draw receiver capture. Exact native call anchors 5FBFDD/5FBFE4 protect the draws/get-selected boundary. Synthetic callback mutation establishes that the saved-cell and reload points are reachable under the fixture; it does not claim those pure get-selected callbacks mutate application state or prove gameplay reachability. Native instruction operands/ordering remain the source of behavior authority.",
+    "The existing Win/Menu writer regression is bound to its committed historical migration snapshot82ee8966fae8ea56548cba4a4123d7b931ab0160 for exact writer input/output. Current source is checked for caller/callee identity, spans and claims without freezing later Menu/Win implementations to that snapshot. This is a bounded historical writer control, not current whole-file preservation evidence.",
+    "Tracing the shared host harness exposed uninitialized mnemonic pointers in its separately populated PullDown keyboard rows. The fixture now initializes those rows explicitly before supplying flags/mnemonics; recovered application code and its unchecked/error behavior are unchanged. Correct-source controls also reject any UBSan diagnostic, rather than treating a zero exit with diagnostics as passing."
+  ]
+}

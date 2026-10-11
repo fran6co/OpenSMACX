@@ -280,6 +280,13 @@ int main() {
     assert(m.writes == 3 && m.lines == 1);
 
     PullDown pd;
+    // Supply valid empty rows before selectively populating the keyboard fixture.
+    // Otherwise the mnemonic scan can dereference an uninitialized test pointer.
+    for (int i = 0; i < 64; ++i) {
+        pd.items_[i].id = 0;
+        pd.items_[i].flags = 0;
+        pd.items_[i].mnemonic = 0;
+    }
     Win keyboard_parent;
     pd.set_parent(&keyboard_parent);
     pd.item_count_ = 4;
