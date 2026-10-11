@@ -19,7 +19,7 @@ SYMBOLS = {
     0x61D990: "?sub_61d990@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPAV1@PAEH@Z",
     0x61B780: "?sub_61b780@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH@Z",
     0x61D090: "?sub_61d090@Texture@@QAEXPAVBuffer@@PAUVert@@PAHI@Z",
-    0x61F0D0: "?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHIH@Z",
+    0x61F0D0: "?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPBXPBIPBEH@Z",
     0x623F50: "?sub_623f50@Texture@@QAEXPAVBuffer@@PAUVert@@PAV1@PAEH1H@Z",
 }
 
@@ -75,7 +75,7 @@ void probe(Texture &t, Buffer *b, Vert *v, int *light, unsigned char *remap) {
     t.sub_61d990(b,v,light,&t,remap,0);
     t.sub_61b780(b,v,light,0);
     t.sub_61d090(b,v,light,0);
-    t.sub_61f0d0(b,v,light,0,0,1,0);
+    t.sub_61f0d0(b,v,light,0,0,remap,0);
     t.sub_623f50(b,v,&t,remap,4,v,-1);
 }
 int main() { return 0; }

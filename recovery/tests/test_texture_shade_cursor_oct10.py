@@ -28,8 +28,14 @@ def test_shade_cursor_preserves_all_texture_original_obligations():
     assert [_continuity_fields(row) for row in current] == [
         _continuity_fields(row) for row in old
     ]
+    # The later input-contract migration changes the emitted C++ signature,
+    # not the original identities or fragment relationship. Derive its two
+    # explicit symbol substitutions from this unchanged historical baseline.
+    from test_texture_lookup_pointer_contract_oct11 import OLD_SYMBOL, NEW_SYMBOL
+    assert before.count(OLD_SYMBOL) == 2
+    expected = read_text(before.replace(OLD_SYMBOL, NEW_SYMBOL), edge.TEXTURE)
     assert [(row.symbol, row.function_fragment) for row in current] == [
-        (row.symbol, row.function_fragment) for row in old
+        (row.symbol, row.function_fragment) for row in expected
     ]
 
 

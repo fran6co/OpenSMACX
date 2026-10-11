@@ -2,6 +2,10 @@
   "author": "coordinator",
   "base_revision": "d91b0f103f623813b10a2cec7881962efc315216",
   "editable_files": [
+    "recovery/tests/test_texture_shade_cursor_oct10.py",
+    "recovery/tests/fixtures/texture_sub61f0d0_actual_host.cpp",
+    "recovery/tests/test_texture_vertex_api_family_oct10.py",
+    "recovery/tests/test_texture_lookup_pointer_contract_oct11.py",
     "recovery/tests/test_buffer_pixel_address_owner_oct10.py",
     "recovery/tests/test_texture_cached_lighting.py",
     "recovery/tests/test_texture_draw_actual_source.py",
@@ -31,6 +35,7 @@
     "src/texture.h"
   ],
   "evidence": [
+    "Coordinator expands this existing immutable Texture ownership scope to 61F0D0 pointer inputs and its retained61F785 fragment:61F1AE/61F1C2/61F1C6 loads a leading pixels-pointer cell;61F1BC publishes remap base, later DWORD reads use byte selector times four;61F1B7 publishes full lookup base,61F4C0..61F4CA performs byte-offset DWORD reads. No producer-side shade class or table extent is established. Recover minimal pointer contracts, retain original arithmetic, ABI stack width, guard/read order, mappings and fragment parent symbol; do not assert nominal Texture input ownership or pixel-loop acceptance from a setup-only host control.",
     "Pinned Texture::extract 619710..6198DE publishes allocator byte-buffer results to receiver+0, copies width bytes per row with owned width or borrowed 256 destination pitch. Constructor, close/destructor and all pixel users are owned in texture.cpp.",
     "Pinned draw_trans 6198E0 publishes receiver+0 at619910 then samples bytes at619D20. Source consumers consistently use unsigned byte texels. Replace opaque void* member with unsigned char* without retyping shared raster scratch, numeric target-width addressing or ownership flags.",
     "Preserve borrowed/owned allocation/free semantics and the destructor pointer-clear store. Use a same-type volatile pointer view instead of aliasing the member through void**; retain historical mappings/claims and all offset/layout facts.",

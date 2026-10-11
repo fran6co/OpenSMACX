@@ -199,8 +199,11 @@ class Texture {
   void sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
                  Texture *mask_texture, unsigned char *remap, int count,
                  Vert *uv, int threshold, unsigned char *palette);
-  void sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4, int param_5,
-                  int param_6, uint32_t param_7, int param_8);
+  // Shade source exposes only its leading pixel-pointer cell, not a proved
+  // Texture object. Lookup reads DWORDs at byte offsets, unlike remap's stride.
+  void sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
+                  const void *shade_source, const uint32_t *remap,
+                  const unsigned char *lookup_bytes, int param_8);
   // The final pointer is the shared ten-record cache consumed by sub_624eb0;
   // flags_ selects geometry-cache replay/fill and next_record_ is its cursor.
   void sub_620a10(Buffer *bufParam, Vert *vertsParam, int countParam,

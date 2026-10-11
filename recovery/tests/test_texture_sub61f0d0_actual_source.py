@@ -21,7 +21,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/texture.cpp").is_file())
 SOURCE = ROOT / "src/texture.cpp"
 FIXTURE = Path(__file__).parent / "fixtures" / "texture_sub61f0d0_actual_host.cpp"
-SIGNATURE = "void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4, int param_5,"
+SIGNATURE = "void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,"
 INSERTION = "// ACTUAL_METHOD_INSERTION"
 DRAW_TRANS2_INSERTION = "// ACTUAL_DRAW_TRANS2_INSERTION"
 DRAW_TRANS3_INSERTION = "// ACTUAL_DRAW_TRANS3_INSERTION"

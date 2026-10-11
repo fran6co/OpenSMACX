@@ -64,7 +64,7 @@ public:
     uint32_t borrowed_;
     static int setup_edge_gouraud(EdgeScan *, int);
     int setup_edge(EdgeScan *, int);
-    void sub_61f0d0(Buffer *, Vert *, int *, int, int, uint32_t, int);
+    void sub_61f0d0(Buffer *, Vert *, int *, const void *, const uint32_t *, const unsigned char *, int);
     int draw_trans2(Buffer *, Vert *, int);
     int draw_trans_3(Buffer *, Vert *, int *, int, Vert *, int);
     void draw_trans(Buffer *, Vert *, int *, int, Vert *);
@@ -186,8 +186,8 @@ static Buffer buffer;
 static unsigned char pixels[64];
 static unsigned char texels[256];
 static int z_values[8];
-static int remap_words[256];
-static int shade_words[256];
+static uint32_t remap_words[256];
+static void *shade_words[256];
 static Vert input_vertices[8];
 static Vert input_xy[8];
 static int input_z[8];
@@ -240,9 +240,9 @@ static void reset_case() {
 
 static void invoke(int count_mode, bool null_pixels = false, bool null_shade = false) {
     if (null_pixels) texture.pixels_ = 0;
-    if (null_shade) shade_words[0] = 0; else shade_words[0] = 1;
+    if (null_shade) shade_words[0] = 0; else shade_words[0] = reinterpret_cast<void *>(1);
     texture.sub_61f0d0(&buffer, input_vertices, z_values,
-                       as_int(shade_words), as_int(remap_words), 0x12345678u,
+                       shade_words, remap_words, reinterpret_cast<const unsigned char *>(0x12345678u),
                        count_mode);
 }
 
@@ -257,6 +257,8 @@ static void test_four_and_eight_vertex_member_bindings() {
     assert(cell_edge_b == input_vertices);
     assert(cell_z_values == z_values);
     assert(cell_remap_table == reinterpret_cast<uintptr_t>(remap_words));
+    assert(cell_shade_table == shade_words[0]);
+    assert(static_cast<uint32_t>(cell_slot_55c) == 0x12345678u);
     assert(cell_buffer_stride == 73);
     assert(cell_clip_left == 11 && cell_clip_top == 12 && cell_clip_right == 113 && cell_clip_bottom == 114);
     assert(buffer.events_.size() == 3 && buffer.events_[0] == 1 &&
@@ -286,16 +288,16 @@ static void test_high_y_retains_original_pointer_bits_as_index() {
 static void test_guard_order_and_release() {
     reset_case();
     texture.sub_61f0d0(0, input_vertices, z_values,
-                       as_int(shade_words), as_int(remap_words), 1, 0);
+                       shade_words, remap_words, reinterpret_cast<const unsigned char *>(1), 0);
     assert(setup_calls == 0 && buffer.events_.empty());
 
     for (int guard = 0; guard != 6; ++guard) {
         reset_case();
         Vert *vertices = guard == 0 ? 0 : input_vertices;
         int *zvals = guard == 1 ? 0 : z_values;
-        const int shade_holder = guard == 2 ? 0 : as_int(shade_words);
-        const int remap = guard == 3 ? 0 : as_int(remap_words);
-        const uint32_t threshold = guard == 4 ? 0 : 1;
+        const void *shade_holder = guard == 2 ? 0 : shade_words;
+        const uint32_t *remap = guard == 3 ? 0 : remap_words;
+        const unsigned char *threshold = guard == 4 ? 0 : reinterpret_cast<const unsigned char *>(1);
         if (guard == 5) texture.pixels_ = 0;
         texture.sub_61f0d0(&buffer, vertices, zvals, shade_holder, remap,
                            threshold, 0);

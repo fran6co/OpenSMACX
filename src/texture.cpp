@@ -7247,7 +7247,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
 
 // ORIGINAL: 0x0061F0D0 sub_61f0d0 0x0061F0D0-0x0061F785 FILE
 // RECOVERY_BINDING: v1 {"reason":"Recover separate vertex/light pointer inputs without changing the original argument-slot reuse edge case.","evidence":["Pinned61F0D0 publishes vertex/light arguments into9BB4F4/9BB4FC.61F216..61F23Ewalks y-coordinates at eight-byte stride;61F22Aoverwrites the original vertex argument slot with an index only on strict y<0x7FFF.","61F248reloads that slot for both edge setup calls. When no y passes the strict test, the original pointer bits remain the setup index; the typed source retains this residue explicitly instead of initializing index0.","The terminal61F785fragment belongs to this method and retains its identity/span/claim. Source-generated old signatures were hypotheses; original source spelling and unobserved upstream producers remain unknown."]}
-// symbol    ?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHIH@Z
+// symbol    ?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPBXPBIPBEH@Z
 // TRIED: literal Ghidra-derived transcription (EdgeScan DDA struct, param_2 as Buffer*, CONCAT/CARRY helpers for the dither table lookups) compiles and matches the outer control flow, but MSVC's register allocation for the two 300-line unrolled scanline loops diverges from instruction #5 on; did not attempt hand-tuning further given the size.
 // size      1717 bytes
 // prototype 
@@ -7263,10 +7263,15 @@ void __cdecl sub_620640(int param_1, int param_2) {
 
 // The retained nullsub_259 identity is the terminal ret 0x1C reached by fallthrough from Texture::sub_61f0d0's common epilogue. The source-owned relation below preserves its distinct span and historical claim without inventing a callable null stub or counting another recovered function. This does not exclude an interior-entry path; restoration must establish the complete parent extent as well as the fragment, rather than locating a convenient RET in the compiled body.
 // ORIGINAL: 0x0061F785 nullsub_259 0x0061F785-0x0061F788 FILE BYTE_EXACT
-// RECOVERY_FRAGMENT: v1 {"evidence":["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0061F771-0x0061F788","source:src/texture.cpp:Texture::sub_61f0d0"],"parent_address":"0x0061F0D0","parent_symbol":"?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHIH@Z","reason":"terminal return reached by fallthrough from the mapped Texture method epilogue"}
+// RECOVERY_FRAGMENT: v1 {"evidence":["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0061F771-0x0061F788","source:src/texture.cpp:Texture::sub_61f0d0"],"parent_address":"0x0061F0D0","parent_symbol":"?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPBXPBIPBEH@Z","reason":"terminal return reached by fallthrough from the mapped Texture method epilogue"}
 // kind      game
-void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4, int param_5,
-                             int param_6, uint32_t param_7, int param_8) {
+void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
+                             const void *shade_source, const uint32_t *remap,
+                             const unsigned char *lookup_bytes, int param_8) {
+    // Native argument slots are reused for fixed-point accumulators only
+    // after pointer publication. Keep those numeric lifetimes separate.
+    int param_5;
+    uint32_t param_7;
     ulonglong uVar1;
     ulonglong uVar2;
     int32_t iVar3;
@@ -7292,8 +7297,8 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4, int param
     if (param_2 == 0) {
       return;
     }
-    if (((((pixels_ != 0) && (param_4 != 0)) && (param_6 != 0)) &&
-        ((param_5 != 0 && (param_7 != 0)))) &&
+    if (((((pixels_ != 0) && (param_4 != 0)) && (remap != 0)) &&
+        ((shade_source != 0 && (lookup_bytes != 0)))) &&
        ((*blit_pixel_base) = param_2->get_data(), (*blit_pixel_base) != 0)) {
       *blit_z_values = param_4;
       *blit_edge_uvs_b = param_3;
@@ -7312,10 +7317,13 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4, int param
       }
       (*blit_buffer_stride) = param_2->stride_;
       (*blit_texture_width) = static_cast<int>(iWidth_);
-      (*blit_slot_55c) = param_7;
-      (*blit_remap_table) = param_6;
-      (*blit_shade_table) = reinterpret_cast<void *>(
-          static_cast<uintptr_t>(*reinterpret_cast<int32_t *>(param_5)));
+      (*blit_slot_55c) = static_cast<uint32_t>(texture_pointer_address(lookup_bytes));
+      (*blit_remap_table) = texture_pointer_address(remap);
+      // Only a leading pointer-sized cell is proved. Copy its representation
+      // without overlaying an unproved class or aliasing a Texture member.
+      void *shade_pixels;
+      std::memcpy(&shade_pixels, shade_source, sizeof shade_pixels);
+      (*blit_shade_table) = shade_pixels;
       RECT *clip = &param_2->rect1_;
       if (((texture_pointer_address(*blit_shade_table)) != 0) && (clip != 0)) {
         (*blit_clip_right) = clip->right;
