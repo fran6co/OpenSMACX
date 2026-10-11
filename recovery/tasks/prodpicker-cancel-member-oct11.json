@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "task_id": "prodpicker-cancel-member-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Preserve the original production-menu cancellation/disabled-selection callback-word read through its genuine inherited storage, retaining x86 wrapping dispatch arithmetic.",
+  "base_revision": "b0b6eb1d890534a3fc8120813164b9544bc42e44",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4800160}],
+  "editable_files": ["src/prodpicker.cpp", "recovery/tests/test_prodpicker_cancel_member_oct11.py", "recovery/tests/prodpicker-cancel-member-oct11.patch", "recovery/tests/test_emitted_symbol_facts_oct11.py", "recovery/tests/test_prodpicker_behavior.py"],
+  "evidence": [
+    "Native4940C5 calls get_selected; signed compare4940CA/JGE admits-1. Probe4940D2 uses menu base ebp-F4C and ID displacement-A52C: slot-1 resolves menu+A0C. PullDown constructor5F8818/5F882A/5F8837 establishes items atA18, ID+8 and stride14; GraphicWin owns callback memberA0C.",
+    "Native5F9F40..5F9F5C returns-1 for cancellation or disabled selected item. Existing GraphicWin::field_A0C_value copies its exact32-bit representation. Use the named member for-1 only; no arbitrary negative-index domain or new cancellation guard is claimed. Other item accesses retain the existing unchecked route.",
+    "Native4940DE DEC EAX followed by unsigned JA is wrapping32-bit dispatch. Use unsigned local action/unsigned decrement, not signed-overflow undefined arithmetic. Tiny callback words in host controls are deliberately controlled storage representations, not claimed valid callback addresses or ordinary gameplay reachability.",
+    "Preserve complete original spans, emitted symbol, historical claims and useful seed lessons. Require actual source/getter controls and mutations, pinned anchors, native layout, owner/outside-code measurements, identity continuity, build/link and independent review. No new function coverage or full-game acceptance."
+  ]
+}

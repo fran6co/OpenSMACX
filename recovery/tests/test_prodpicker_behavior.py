@@ -213,6 +213,7 @@ struct PullDown {
     void show(int, int, int) { }
     int get_selected() { return selectedMenuRow; }
     int item_id(int index) { return ids[index]; }
+    uint32_t field_A0C_value() const { return 0x005D69F0U; }
 };
 struct ProdPicker {
     int field_A774_ = 0, field_B68_ = 0;

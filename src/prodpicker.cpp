@@ -1010,11 +1010,19 @@ void ProdPicker::on_right_click(int x, int y) {
     menu.show(x, y, 0);
 
     const int selectedItem = menu.get_selected();
-    int action = -1;
-    if (selectedItem >= 0 && selectedItem < 0x40)
-        action = menu.item_id(selectedItem);
+    uint32_t action = 0xffffffffU;
+    if (selectedItem < 0x40) {
+        // Native's signed upper-bound check admits cancellation (-1).
+        // items_[-1].id lands on GraphicWin's caption callback at +0xA0C:
+        // 0xA18 - sizeof(PullDownItem) + offsetof(PullDownItem, id).
+        // Read that named word, not an item outside the array. Other
+        // indices retain the original unchecked item access.
+        action = selectedItem == -1 ? menu.field_A0C_value()
+            : static_cast<uint32_t>(menu.item_id(selectedItem));
+    }
 
-    switch (action - 1) {
+    // Original SUB EAX,1 wraps for every 32-bit callback/item word.
+    switch (action - 1U) {
     case 0:
     {
         const int faction = BaseCurrent->faction_id_current;
