@@ -1,0 +1,39 @@
+diff --git a/src/net_class.cpp b/src/net_class.cpp
+index 4314841d7..7a88e2925 100644
+--- a/src/net_class.cpp
++++ b/src/net_class.cpp
+@@ -1176,7 +1176,7 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
+ 
+          Three shapes of staleness, in the image's order:
+            1. the two timer words agree            - sweep all sixteen slots;
+-           2. the first agrees with player 1's stamp - sweep that one player;
++           2. the first agrees with player 1's ID  - reap player 0;
+            3. neither                              - look at players 0 and 1,
+              and if both are stale, cut every player at once.
+ 
+@@ -1186,6 +1186,7 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
+          memory-indirect call for the two after the register is spent, so the
+          source calls through the slot each time rather than copying it.
+ // ORIGINAL: 0x006320E0 ?check_polling@Net@@QAEXXZ 0x006320E0-0x00632290
++// RECOVERY_BINDING: v1 {"reason":"The one-player reaping arm compares the local player ID with row 1's ID, not row 1's timestamp. Preserve the original row-0 timestamp/drop logic, distinct timeout comparisons, failure returns and busy-flag effects.","evidence":["pinned:0x0063216E loads Net+0x760 into EAX; 0x006321E2 compares EAX with Net+0x1AC","source:Net players_ begins at +0x154; NetPlayer stride is 0x58, field_0_ is the ID at +0 and stamp_10_ is the timestamp at +0x10, so row 1 ID is +0x1AC and row 1 stamp is +0x1BC","pinned:0x006321EA reads row 0 stamp at +0x164; 0x00632206 loads row 0 ID at +0x154 for drop_player and 0x0063221A refreshes the timestamp after successful drop"]}
+ // symbol    ?check_polling@Net@@QAEXXZ
+ // size      432 bytes
+ // prototype void (__thiscall ?check_polling@Net@@QAEXXZ)(Net* this)
+@@ -1218,6 +1219,7 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
+ //        clock into a `register` local - none of them removes the zero
+ //        register, and the pointer-local removal brings back a frame pointer
+ //        (`push ebp / mov ebp,esp`), which the image has none of.
++// Historical residual analysis predates the corrected row-1 ID discriminator.
+ // THE RESIDUAL. MISMATCH 11 of 135, and it is one register-assignment cascade
+ // plus one dead-store difference, not a transcription error. The image loads
+ // the clock's import slot into EBP once, AFTER the NetDirectPlay test, and never
+@@ -1269,7 +1271,7 @@ void Net::check_polling() {
+             NetReapBusy = 0;
+             return;
+         }
+-        if (field_760_ == players_[1].stamp_10_) {
++        if (field_760_ == players_[1].field_0_) {
+             if (players_->stamp_10_ == 0) {
+                 NetReapBusy = 0;
+                 return;
+

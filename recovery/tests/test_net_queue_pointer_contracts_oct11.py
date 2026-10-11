@@ -28,7 +28,9 @@ def test_only_three_interfaces_change_and_obligations_remain():
     path = ROOT / 'src/net_class.cpp'
     old = subprocess.check_output(['git','show',BASE+':src/net_class.cpp'],cwd=ROOT,text=True)
     current = path.read_text()
-    normalized = current
+    # Reverse only the independently bounded original player-ID correction.
+    from test_net_polling_player_id_oct11 import restore_polling_player_id
+    normalized = restore_polling_player_id(current)
     for address, signature in METHODS.items():
         name = signature.split('Net::')[1].split('(')[0]
         previous = 'int Net::'+name+'(int first, int second)'

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "net-polling-player-id-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore the original row-1 player-ID discriminator in Net::check_polling, preserving row-0 timing, drop results and original busy-flag behavior.",
+  "base_revision": "57729afb89ce3ed036b3b26268213db23a86540f",
+  "subjects": [{"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6496480}],
+  "editable_files": ["src/net_class.cpp","recovery/tests/test_net_polling_player_id_oct11.py","recovery/tests/net-polling-player-id-oct11.patch","recovery/tests/test_net_queue_pointer_contracts_oct11.py"],
+  "evidence": [
+    "Pinned 63216E loads Net+760; 6321E2 compares Net+1AC, the second player ID at154+58, not its stamp at1BC. Native6321EA/632206 read row0 stamp/ID and63221C refreshes only row0 after successful drop.",
+    "Keep whole-source identities/spans/claims, historical compiler observations, one-player timeout equality and failure returns, zero-ID behavior and third-arm stuck busy-flag quirk. Test both true ID equality and accidental timestamp equality with actual source and deliberate damage controls.",
+    "Require baseline/current whole-Net measurements, mapping/reference checks and full application compile/link. This corrects a transcription, not an original bug; no safety normalization, claim grant or full-game acceptance."
+  ]
+}
