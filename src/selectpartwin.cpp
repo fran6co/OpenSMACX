@@ -21,21 +21,21 @@ void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
 
 // ORIGINAL: 0x00433F70 ?exec@SelectPartWin@@QAEHHHHHHHHHHHPAE@Z 0x00433F70-0x0043446F;0x00653F5A-0x00653F6F FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/unrecovered/00433f70.cpp", "SelectPartWin member layout in src/selectpartwin.h", "Caviar renderer API in src/caviar.h", "RulesChassis/RulesWeapon/RulesArmor/RulesReactor in src/veh.h"], "reason": "Implement the shared part-picker modal with typed window, buffer, renderer, scroll and rules-table members while retaining the unresolved image-owned renderer/modal seams."}
-int SelectPartWin::exec(int x, int y, int value0, int kind, int selected,
+int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
                         int chassis, int weapon, int armor, int abilities,
                         int reactor, unsigned char *palette) {
     (void)x;
     (void)y;
-    (void)value0;
+    (void)palette;
     const int saved_selection = selected;
-    field_2B68_ = value0;
-    field_2B88_ = chassis;
-    field_2B8C_ = weapon;
-    field_2B90_ = armor;
-    field_2B84_ = kind;
-    field_2B94_ = abilities;
-    field_2B98_ = reactor;
-    field_4644_ = reinterpret_cast<uint32_t>(palette);
+    faction_id_ = faction;
+    chassis_id_ = chassis;
+    weapon_id_ = weapon;
+    armor_id_ = armor;
+    part_kind_ = kind;
+    ability_flags_ = abilities;
+    reactor_id_ = reactor;
+    palette_ = SpotlightColorTable;
     if (kind == 3) {
         --selected;
     }
@@ -195,7 +195,7 @@ void SelectPartWin::close() {
     field_2B6C_ = 0;
     field_2B70_ = 0;
     field_2B80_ = 0;
-    field_2B68_ = -1;
+    faction_id_ = -1;
     field_4648_ = 0;
     GraphicWin::close();
     buffer_.close();
@@ -557,7 +557,7 @@ int SelectPartWin::draw_part(int a1, int a2) {
             rect.bottom -= 3;
 
             int result;
-            switch (field_2B84_) {
+            switch (part_kind_) {
                 case 0:
                     result = draw_chassis(a1, &rect,
                                                         a2);
@@ -626,7 +626,7 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
             if (idx == a1) {
                 const int tech_id = entry->preq_tech;
                 if (has_tech(tech_id,
-                             field_2B68_) == 0) {
+                             faction_id_) == 0) {
                     has_all_tech_flag = 1;
                 }
                 break;
@@ -645,8 +645,8 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     }
 
     caviar_.reset_objects();
-    vehdraw_construct_chassis(field_2B68_, slot,
-                              0, 0, field_2B98_,
+    vehdraw_construct_chassis(faction_id_, slot,
+                              0, 0, reactor_id_,
                               &caviar_);
     caviar_.set_scaling_bits(0x3D75C28F);
 
@@ -742,7 +742,7 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
             if (valid_count == a1) {
                 const short tech_id = Reactor[slot - 1].preq_tech;
                 if (!has_tech(tech_id,
-                              field_2B68_)) {
+                              faction_id_)) {
                     has_tech_failed = 1;
                 }
                 break;
@@ -758,9 +758,9 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
 
     caviar_.reset_objects();
     vehdraw_construct_reactor(ConsoleGlobal.faction_id_,
-                              field_2B88_,
-                              field_2B8C_, slot,
-                              field_2B94_,
+                              chassis_id_,
+                              weapon_id_, slot,
+                              ability_flags_,
                               &caviar_);
     caviar_.set_scaling(0.2f);
 
@@ -849,7 +849,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
     int noTechFlag = 0;
     RECT rectScratch;
 
-    const int chassis = field_2B88_;
+    const int chassis = chassis_id_;
     const unsigned char flagByte = Chassis[chassis].missile;
 
     if (flagByte != 0) {
@@ -866,7 +866,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
                     slot = idx;
                     const short techShort = entry->preq_tech;
                     if (has_tech(techShort,
-                                 field_2B68_) ==
+                                 faction_id_) ==
                         0) {
                         noTechFlag = 1;
                     }
@@ -891,8 +891,8 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
     }
 
     if (slot != 0) {
-        const int v2b8c = field_2B8C_;
-        const int v2b88 = field_2B88_;
+        const int v2b8c = weapon_id_;
+        const int v2b88 = chassis_id_;
         caviar_.reset_objects();
         vehdraw_construct_armor(ConsoleGlobal.faction_id_, v2b88, v2b8c, slot, 1,
                                 cav2b9c);
@@ -1013,7 +1013,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
             if (visibleCount == a1) {
                 visibleCount =
                     has_tech(Weapon[idx].preq_tech,
-                             field_2B68_)
+                             faction_id_)
                         ? 1
                         : 0;
                 if (visibleCount == 0) {
@@ -1050,7 +1050,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
         caviar->add_object(&g_FUNLOAD_CAVIARDATA, 0);
         scale_imm = 0.06f;
     } else {
-        vehdraw_construct_weapon(field_2B68_, -1,
+        vehdraw_construct_weapon(faction_id_, -1,
                                  idx, caviar);
         const unsigned char weapon_class = Weapon[idx].mode;
         if (weapon_class < 3) {

@@ -3862,7 +3862,7 @@ void DesignWin::select_chassis() {
     const int selected_row = picker.exec(
         outer_rect_.left, outer_rect_.top, factionID_, 0, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
-        protoAbilityFlags_, protoReactorType_, 0);
+        protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
     const int previous_kind = Chassis[protoChassisType_].triad;
     const int next_chassis = picker_record_at(selected_row, Chassis,
                                               DesignSelectableChassisCount);
@@ -3924,7 +3924,7 @@ void DesignWin::select_weapon() {
     const int selected_row = picker.exec(
         outer_rect_.left, outer_rect_.top, factionID_, 1, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
-        protoAbilityFlags_, protoReactorType_, 0);
+        protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
     const int previous_weapon = protoWeaponType_;
     const int selected_weapon = picker_record_at(selected_row, Weapon,
                                                  MaxWeaponNum);
@@ -3982,7 +3982,7 @@ void DesignWin::select_armor() {
     const int selected_row = picker.exec(
         outer_rect_.left, outer_rect_.top, factionID_, 2, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
-        protoAbilityFlags_, protoReactorType_, 0);
+        protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
     protoArmorType_ = picker_record_at(selected_row, Armor, MaxArmorNum);
     if (Armor[protoArmorType_].defense_rating > 1 &&
         Weapon[protoWeaponType_].offense_rating <= 1) {
@@ -3998,10 +3998,10 @@ void DesignWin::select_reactor() {
     const int row = picker_row_before(protoReactorType_, Reactor,
                                       MaxReactorNum);
     const int selected_row = picker.exec(
-        protoReactorType_, protoAbilityFlags_, protoArmorType_, 3,
-        protoChassisType_, row, 3, factionID_, outer_rect_.top,
-        outer_rect_.left, 0);
-    protoReactorType_ = picker_record_at(selected_row - 1, Reactor,
+        outer_rect_.left, outer_rect_.top, factionID_, 3, row,
+        protoChassisType_, protoWeaponType_, protoArmorType_,
+        protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
+    protoReactorType_ = picker_record_at(selected_row, Reactor,
                                          MaxReactorNum);
     redraw_design_picker_changes(this);
 }

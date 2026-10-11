@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "task_id": "design-part-picker-contract-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore the original reactor picker calling contract and ordinal mapping, recovering typed palette storage and evidence-backed part context members together.",
+  "base_revision": "817b245ffa3aa2715ce985269e7078ece6ec3237",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4401328
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4401520
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4401584
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4402368
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4403568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4404512
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4405280
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4405568
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4405696
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4405776
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4406624
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4407088
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4407120
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4407152
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4431648
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4432640
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4433760
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4434432
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4451808
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4451856
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4452272
+    }
+  ],
+  "editable_files": [
+    "src/designwin.cpp",
+    "src/selectpartwin.cpp",
+    "src/selectpartwin.h",
+    "recovery/tests/test_design_part_picker_contract_oct11.py",
+    "recovery/tests/design-part-picker-contract-oct11.patch",
+    "recovery/tests/test_emitted_symbol_facts_oct11.py"
+  ],
+  "evidence": [
+    "Native43AA58..43AAAB arguments match the other three component pickers: outer rect, faction, kind, eligible ordinal, five component values, SpotlightColorTable. Native43AABC..43AAD2 consumes returned ordinal directly, including cancellation. No minus-one correction.",
+    "Native433FF5 saves original selected;43404B decrements only kind3 working selection;434413 increments successful kind3 selection;43445C returns saved ordinal on cancel. Preserve these conventions, exhausted scans and original unsafe paths.",
+    "Native434006..434039 stores faction/kind/component arguments in2B68 and2B84..2B98. Field2B90 is the armor argument slot with no observed reader, not a proof of downstream armor semantics. Native43403F stores source-owned SpotlightColorTable at4644, independently of unused final palette argument. No consumer established; pointer cleanup and initialization fidelity do not prove user-visible behavior.",
+    "Preserve all original identities, spans, claims and seed lessons. Actual-source/mutation tests, pinned instruction anchors, both-profile owner measurements, native member-layout observations, build/link and independent review required. This is not new function coverage or full-game acceptance."
+  ]
+}
