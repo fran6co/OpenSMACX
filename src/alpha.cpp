@@ -356,6 +356,7 @@ int __cdecl arm_name(LPSTR name) {
 /*
 Purpose: Parse the current tech name inside the Txt item buffer into a tech id.
 // ORIGINAL: 0x00585150 ?tech_item@@YAHXZ 0x00585150-0x00585164 BYTE_EXACT
+// body      src/alpha.h
 // LEVER: `osmx calls` on 0x00585170 (read_basic_rules) shows this tree
 //        calling `tech_item` where the image calls `tech_name` directly at
 //        all ten sites - `callers 0` above already said the image never
@@ -683,6 +684,7 @@ BOOL __cdecl read_tech() {
 /*
 Purpose: Clear the rule values for the specified player.
 // ORIGINAL: 0x00585FE0 ?clear_faction@@YAXPAUPlayer@@@Z 0x00585FE0-0x00586049 BYTE_EXACT
+// body      src/alpha.h
 // LEVER: `MEASURED inline` in alpha.h - `callers 0` above already says the image never `call`s
 //   this address; read_faction (0x00586090) writes all 15 stores out inline instead
 //   ('mov dword ptr [esi+0x4d4],eax' etc., no call to 0x585fe0 anywhere in its own call list).
@@ -1882,6 +1884,7 @@ uint32_t __cdecl default_prefs2() {
 /*
 Purpose: Get the default value for the warning pop-up preferences.
 // ORIGINAL: 0x0059DB20 ?default_warn@@YAHXZ 0x0059DB20-0x0059DB26 BYTE_EXACT
+// body      src/alpha.h
 // symbol    ?default_warn@@YAIXZ
 // size      6 bytes
 // prototype 
@@ -2317,6 +2320,7 @@ BOOL __cdecl labels_init() {
 /*
 Purpose: Shutdown or reset the labels global variable.
 // ORIGINAL: 0x006169D0 ?labels_shutdown@@YAXXZ 0x006169D0-0x006169F7 BYTE_EXACT
+// body      src/alpha.h
 // size      39 bytes
 // prototype 
 // callers   4   call targets   1
@@ -2335,6 +2339,7 @@ Status: Complete
 /*
 Purpose: Set the game's language.
 // ORIGINAL: 0x00627100 ?set_language@@YAXH@Z 0x00627100-0x0062710A BYTE_EXACT
+// body      src/alpha.h
 // size      10 bytes
 // prototype void (__cdecl ?set_language@@YAXH@Z)(int lang)
 // callers   2   call targets   0
