@@ -4978,15 +4978,15 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                     uint32_t alt_atk = alt_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y);
                     uint32_t alt_def = alt_at(Vehs[veh_id_def].x, Vehs[veh_id_def].y);
                     if (alt_def >= alt_atk) {
-                        if (alt_def > alt_atk) { // ???
+                        if (alt_def > alt_atk) {
                             int alt_modifier_def = (alt_def - alt_atk)
                                 * Rules.combat_pct_art_bonus_lvl_alt;
-                            defense *= ((alt_modifier_def + 100) / 100);
+                            defense = (alt_modifier_def + 100) * defense / 100;
                             add_bat(1, alt_modifier_def, label_get(576)); // "Altitude"
                         }
                     } else {
                         int alt_mod_atk = (alt_atk - alt_def) * Rules.combat_pct_art_bonus_lvl_alt;
-                        offense *= ((alt_mod_atk + 100) / 100);
+                        offense = (alt_mod_atk + 100) * offense / 100;
                         add_bat(0, alt_mod_atk, label_get(576)); // "Altitude"
                     }
                 }

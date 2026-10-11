@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "ae160dcc3",
+  "editable_files": ["src/veh.cpp", "recovery/tests/test_combat_artillery_altitude_oct11.py", "recovery/tests/test_combat_ability_modifiers_oct11.py"],
+  "intent": "Close the independently correlated artillery fallback altitude family with original product-before-division on both accumulators. Preserve gates, reports, bounded terrain values, identities and claims; no prospective behavior fixes.",
+  "evidence": [
+    "Native502726..50275A selects combat_type bit2 fallback, requires nonnegative defender, calls get_basic_offense5015B0 with defender/attacker/PSI/bombard/true, and skips modifiers on combat_type&0x18. Native triad branches502762..5028F4 use land-gun rule9497EC before altitude, matching the source's mutually exclusive triad cases.",
+    "Native altitude block5028F4..502A0C uses rule9497F0, reads both vehicle coordinates and map climate byte shifted right5 (altitudes0..7). Defender altitudeESI versus attackerEDI at502955 selects the higher side; equality does not apply a modifier.502959..502980 scales offense by (delta*rule+100) before signed /100;5029D2..5029FD scales defense likewise. Reports use the corresponding delta*rule. Earlier tentative association with949824 was wrong: that belongs to the PSI planet modifier, not this altitude block.",
+    "Actual complete source tail is executed under GCC/Clang over all8x8 altitude pairs, all3x3 triad pairs, both zero/nonzero land-gun rules, negative/fractional/zero/max configured altitude rules and both0x18 skip bits. Damage controls restore early division, wrong equality, missing skip bit and wrong report side. This is bounded recovery evidence, not full combat, runtime/game or autonomous acceptance."
+  ],
+  "subjects": [{"address":5250464,"address_space":"pe:va","image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}]
+}

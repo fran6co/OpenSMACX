@@ -30,6 +30,8 @@ def restore_regions(current, prior):
     for new, old in zip(regions(current), regions(prior)):
         assert current.count(new) == 1
         current = current.replace(new, old, 1)
+    from test_combat_artillery_altitude_oct11 import artillery_region
+    current = current.replace(artillery_region(current), artillery_region(prior), 1)
     return current
 
 
@@ -39,6 +41,9 @@ def test_only_reviewed_ability_regions_change_and_claims_survive():
     path = ROOT / "src/veh.cpp"
     before = subprocess.check_output(["git", "show", BASE + ":src/veh.cpp"], cwd=ROOT, text=True)
     after = path.read_text()
+    # The reviewed subsequent artillery-tail closure has a separate whole-diff guard.
+    from test_combat_artillery_altitude_oct11 import artillery_region
+    after = after.replace(artillery_region(after), artillery_region(before), 1)
     assert restore_regions(after, before) == before
     assert [(_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(before, path)] == [
         (_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(after, path)]
