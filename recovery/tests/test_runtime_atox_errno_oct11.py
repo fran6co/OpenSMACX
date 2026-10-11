@@ -12,6 +12,7 @@ from match_recovery.coff_archive import CoffArchive
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.model import Span
 from test_crt_eight_entry_bindings_oct10 import inputs, verify, row, repin, raw_offset
+from test_crt_strict_frontier_oct11 import without_strict_frontier, source_without_strict_frontier
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = '86cbf7e2cdf108524130ba2200f62e7c29528c92'
@@ -32,6 +33,7 @@ MEMBERS = {'atox': '1ef88177c1cc4517e658fdfaec788a2f47bccd7f56a04f957cd075ef51f5
 
 
 def without_atox_errno(manifest):
+    manifest = without_strict_frontier(manifest)
     tail = manifest.bindings[-len(EXPECTED):]
     assert tuple((b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in tail) == tuple(
         (a, e, s, 'build/intel/mt_obj/'+u+'.obj') for a,e,s,u,_ in EXPECTED)
@@ -41,7 +43,7 @@ def without_atox_errno(manifest):
 
 def test_exact_append_only_metadata_and_native_rendering():
     before = subprocess.check_output(['git','show',BASE+':'+SOURCE],cwd=ROOT,text=True)
-    text = (ROOT/SOURCE).read_text()
+    text = source_without_strict_frontier((ROOT/SOURCE).read_text())
     current, old = parse_component(text), parse_component(before)
     assert without_atox_errno(current) == old
     assert parse_component(render_component(current)) == current
@@ -54,7 +56,8 @@ def test_exact_append_only_metadata_and_native_rendering():
 
 def test_three_closed_rows_and_four_explicit_unknowns_preserve_prior_results(inputs):
     manifest, _, archive, _ = inputs
-    previous, current = verify(inputs,without_atox_errno(manifest)), verify(inputs)
+    historical = without_strict_frontier(manifest)
+    previous, current = verify(inputs,without_atox_errno(manifest)), verify(inputs,historical)
     assert current['functions'][:-len(EXPECTED)] == previous['functions']
     for key in ('data_sections','absolute_symbols'):
         assert current[key] == previous[key]
@@ -98,7 +101,8 @@ def test_independent_catalogues_and_complete_original_bounds(inputs):
 @pytest.mark.parametrize('damage',['none','callee','extent','symbol','member','archive_pin','body'])
 def test_bad_or_incomplete_correspondence_never_passes(inputs,address,damage):
     manifest,image,archive,_ = inputs
-    selected = replace(manifest,bindings=manifest.bindings[-len(EXPECTED):],data_sections=(),absolute_symbols=())
+    historical = without_strict_frontier(manifest)
+    selected = replace(historical,bindings=historical.bindings[-len(EXPECTED):],data_sections=(),absolute_symbols=())
     subject = next(b for b in selected.bindings if b.origin.address == address)
     if damage == 'callee':
         target = 0x645D1C if address == 0x645DA7 else 0x6491C3

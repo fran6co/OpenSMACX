@@ -33,7 +33,8 @@ def without_xtoa_pair(manifest):
 
 def test_exact_append_only_source_metadata_and_writer_roundtrip():
     before = subprocess.check_output(["git", "show", BASE + ":" + SOURCE], cwd=ROOT, text=True)
-    text = (ROOT / SOURCE).read_text()
+    from test_crt_strict_frontier_oct11 import source_without_strict_frontier
+    text = source_without_strict_frontier((ROOT / SOURCE).read_text())
     from test_runtime_atox_errno_oct11 import without_atox_errno
     installed = parse_component(text)
     historical = without_atox_errno(installed)

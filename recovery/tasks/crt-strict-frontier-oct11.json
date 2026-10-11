@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-strict-frontier-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind fifteen independently bounded original runtime entries to unique physical functions in the pinned external LIBCMT archive, without recovering library source or claiming application implementation progress.",
+  "base_revision": "82ee8966f",
+  "subjects": [
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6578192},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6578205},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6583456},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6592889},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6593888},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6604857},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6604934},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6604997},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6605038},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6605058},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6609022},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6609664},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6610128},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6610240},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6618962}
+  ],
+  "editable_files": ["src/vendor/vc6-runtime.recovery.h", "recovery/tests/test_crt_strict_frontier_oct11.py", "recovery/tests/test_runtime_atox_errno_oct11.py", "recovery/tests/test_runtime_xtoa_pair_oct11.py"],
+  "evidence": [
+    "Original image SHA256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; LIBCMT SHA256 1ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b. Independent IDA intervals coincide with exclusive physical section extents; pinned Ghidra concurs except for __allmul, which has no Ghidra row. Every selected function starts at physical section offset zero.",
+    "Native verify_toolchain verifies complete boundary/bytes/reference correspondence for each selected binding. _srand and _rand refer to the existing __getptd identity, whose runtime closure remains UNKNOWN. No pre-existing binding, storage obligation, archive pin or unknown is changed.",
+    "Require previous-row equality, fifteen strict PASS rows, extent/body damage refusal, independent review, mapping/reference checks and fresh application compile/link. Attribution is not original archive selection, final-link retention, full dependency closure, newly implemented application behavior or game acceptance."
+  ]
+}
