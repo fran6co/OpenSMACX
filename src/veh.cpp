@@ -4544,7 +4544,8 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
     BOOL is_bombard = (is_artillery
         || is_proto_missile(Vehs[veh_id_atk].proto_id)) ? true : false;
     uint32_t psi_combat_type = 0;
-    if (!is_bombard || proto_id_atk == BSC_SPORE_LAUNCHER || proto_id_def == BSC_SPORE_LAUNCHER) {
+    if (!is_bombard || Vehs[veh_id_atk].proto_id == BSC_SPORE_LAUNCHER
+        || Vehs[veh_id_def].proto_id == BSC_SPORE_LAUNCHER) {
         if (veh_id_atk >= 0 && get_proto_offense_rating(proto_id_atk) < 0) {
             psi_combat_type = 1; // PSI attacker
         }
@@ -4555,6 +4556,7 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
         //       combat morale functions.
         if (psi_combat_type) {
             // Calculate PSI attack bonus
+            faction_id_atk = Vehs[veh_id_atk].faction_id;
             int rule_psi_atk = Players[faction_id_atk].rule_psi;
             if (rule_psi_atk) {
                 add_bat(0, rule_psi_atk, label_get(342)); // "Gaian Psi Bonus"
@@ -4562,18 +4564,20 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
             if (has_project(SP_DREAM_TWISTER, faction_id_atk)) {
                 add_bat(0, 50, label_get(343)); // "Dream Twist"
             }
-            // PSI Defense?
-            if (psi_combat_type) { // shouldn't this be & 2?
-                int rule_psi_def = Players[faction_id_def].rule_psi;
-                if (rule_psi_def) {
-                    add_bat(1, rule_psi_def, label_get(342)); // "Gaian Psi Bonus"
-                }
-                if (has_project(SP_NEURAL_AMPLIFIER, faction_id_def)) {
-                    add_bat(1, 50, label_get(344)); // "Neural Amp"
-                }
-                if (veh_id_def >= 0 && proto_id_def == BSC_FUNGAL_TOWER) {
-                    add_bat(1, 50, VehPrototypes[BSC_FUNGAL_TOWER].veh_name); // "Fungal Tower"
-                }
+        }
+        // Native reads the defender row before testing the PSI display gate,
+        // including a negative ID. Do not substitute faction zero here.
+        faction_id_def = Vehs[veh_id_def].faction_id;
+        if (psi_combat_type) {
+            int rule_psi_def = Players[faction_id_def].rule_psi;
+            if (rule_psi_def) {
+                add_bat(1, rule_psi_def, label_get(342)); // "Gaian Psi Bonus"
+            }
+            if (has_project(SP_NEURAL_AMPLIFIER, faction_id_def)) {
+                add_bat(1, 50, label_get(344)); // "Neural Amp"
+            }
+            if (veh_id_def >= 0 && proto_id_def == BSC_FUNGAL_TOWER) {
+                add_bat(1, 50, VehPrototypes[BSC_FUNGAL_TOWER].veh_name); // "Fungal Tower"
             }
         }
         if (veh_id_atk >= 0) {

@@ -22,6 +22,8 @@ def test_only_artillery_tail_changes_with_original_obligations_preserved():
     path = ROOT / "src/veh.cpp"
     old = subprocess.check_output(["git", "show", BASE + ":src/veh.cpp"], cwd=ROOT, text=True)
     new = path.read_text()
+    from test_combat_psi_selection_oct11 import restore_psi_region
+    new = restore_psi_region(new, old)
     assert new.replace(artillery_region(new), artillery_region(old), 1) == old
     assert [(_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(old, path)] == [
         (_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(new, path)]

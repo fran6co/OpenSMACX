@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "a6dd9e351",
+  "editable_files": ["src/veh.cpp", "recovery/tests/test_combat_psi_selection_oct11.py", "recovery/tests/test_combat_ability_modifiers_oct11.py", "recovery/tests/test_combat_artillery_altitude_oct11.py"],
+  "intent": "Recover original unchecked spore-launcher selection and PSI display faction reads without introducing safe invalid-ID fallbacks or weakening historical claims.",
+  "evidence": [
+    "Native501E26..501E49 directly tests attacker then defender signed prototype words at row+0A when bombard is selected; short-circuit ordering is retained. Guarded strength/rating paths remain guarded.",
+    "Native501ED0 reads attacker faction byte row+0E when PSI display is nonzero. Native501FC6 reads defender faction byte before testing PSI at501FD1, not only inside a PSI-defender-bit path. Each fetched faction is retained across its display/project work.",
+    "Native501F08/502008 calls Strings::get for the label before501F0D/50200D rereads the player's PSI rule. Strings::get is read-only; do not claim a state-changing callback semantic omission or introduce one in the controls. Rule-value spelling restoration remains a separate matching obligation.",
+    "Actual-source host controls use real backing rows for negative receiver indices to test bounded observable behavior without claiming native negative-ID reachability or whole-game undefined-path equivalence. Preserve original mapping/claims; all matching regressions remain restoration obligations."
+  ]
+}

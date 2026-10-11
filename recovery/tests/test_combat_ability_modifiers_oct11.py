@@ -27,6 +27,8 @@ def regions(text):
 
 
 def restore_regions(current, prior):
+    from test_combat_psi_selection_oct11 import restore_psi_region
+    current = restore_psi_region(current, prior)
     for new, old in zip(regions(current), regions(prior)):
         assert current.count(new) == 1
         current = current.replace(new, old, 1)
