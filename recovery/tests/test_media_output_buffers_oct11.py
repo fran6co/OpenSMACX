@@ -14,6 +14,13 @@ SIGNATURE = 'extern "C" void __fastcall sub_5cc940('
 
 
 def without_renderer_body(text):
+    # Independently verified follow-up correction has its own bounded-source
+    # and pinned rounding controls in test_media_component_rounding_oct11.
+    text=text.replace('''  const __int64 product =
+      (__int64)(int)movie_media_conversion_tables.block_scale_entries[0] * (int)component;
+  // Native SHL/SHR/ADC adds product bit 15 before the caller's SAR 1.
+  return (int)(product >> 16) + (int)((product >> 15) & 1);''', '''  return (int)(((__int64)movie_media_conversion_tables.block_scale_entries[0] *
+                (int)component) >> 16);''')
     replacements=[]
     for signature in ('extern "C" int __fastcall sub_5cc940(', SIGNATURE,
             'void MediaRuntime::sub_5cbbc0()',

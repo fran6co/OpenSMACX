@@ -573,8 +573,10 @@ extern "C" void __fastcall sub_5d3f50(MediaRuntime *);
 // setup owner: scale[0], packed bank 0, and packed banks 1/2. It indexes 128
 // entries in each packed bank and writes four 16-byte-wide, eight-row blocks.
 static int media_scale_signed_component(signed char component) {
-  return (int)(((__int64)movie_media_conversion_tables.block_scale_entries[0] *
-                (int)component) >> 16);
+  const __int64 product =
+      (__int64)(int)movie_media_conversion_tables.block_scale_entries[0] * (int)component;
+  // Native SHL/SHR/ADC adds product bit 15 before the caller's SAR 1.
+  return (int)(product >> 16) + (int)((product >> 15) & 1);
 }
 
 static void media_write_16bit_block(unsigned int pitch, BYTE *destination,

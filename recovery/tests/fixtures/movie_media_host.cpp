@@ -323,9 +323,20 @@ static void test_5cd2d0_tables() {
 }
 
 static void test_5cd560_block_layout() {
+  const int scales[] = {65536, 32768, 98304, 65535, -32768, -98304,
+                        2147483647, (-2147483647 - 1)};
+  for (unsigned scale_index = 0; scale_index != sizeof(scales)/sizeof(scales[0]);
+       ++scale_index) {
   memset(&movie_media_conversion_tables, 0,
          sizeof(movie_media_conversion_tables));
-  movie_media_conversion_tables.block_scale_entries[0] = 65536;
+  movie_media_conversion_tables.block_scale_entries[0] = scales[scale_index];
+  // Independent floor-division oracle for the image's round-half-up Q16.
+  for (int component = -128; component != 128; ++component) {
+    const long long biased = (long long)scales[scale_index] * component + 32768;
+    const int expected = (int)(biased >= 0 ? biased / 65536 :
+                              -((-biased + 65535) / 65536));
+    assert(media_scale_signed_component((signed char)component) == expected);
+  }
   DWORD *bank = movie_media_conversion_tables.packed_component_words;
   for (int i = 0; i != 128; ++i) {
     bank[i] = 100 + i;
@@ -337,10 +348,14 @@ static void test_5cd560_block_layout() {
   memset(pixels, 0xcc, sizeof(pixels));
   sub_5cd560(components[0], components[1], components[2], components[3],
              components[4], components[5], (int *)pixels, 64);
-  const int idx[6] = {
-      (components[0] >> 1) & 0x7f, (components[1] >> 1) & 0x7f,
-      (components[2] >> 1) & 0x7f, (components[3] >> 1) & 0x7f,
-      (components[4] >> 1) & 0x7f, (components[5] >> 1) & 0x7f};
+  int idx[6];
+  for (int i = 0; i != 6; ++i) {
+    const long long biased = (long long)scales[scale_index] * components[i] + 32768;
+    const int rounded = (int)(biased >= 0 ? biased / 65536 :
+                             -((-biased + 65535) / 65536));
+    const int half = rounded >= 0 ? rounded / 2 : -((-rounded + 1) / 2);
+    idx[i] = half & 0x7f;
+  }
   const unsigned short block_pixels[4] = {
       (unsigned short)(bank[idx[0]] + bank[128 + idx[5]] + bank[256 + idx[4]]),
       (unsigned short)(bank[idx[1]] + bank[128 + idx[5]] + bank[256 + idx[4]]),
@@ -356,6 +371,7 @@ static void test_5cd560_block_layout() {
         assert(actual == block_pixels[block]);
       }
     }
+  }
   }
 }
 

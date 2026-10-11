@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "03ad13280",
+  "editable_files": ["src/movie_media.cpp", "recovery/tests/fixtures/movie_media_host.cpp", "recovery/tests/test_movie_media_behavior.py", "recovery/tests/test_media_output_buffers_oct11.py", "recovery/tests/test_media_component_rounding_oct11.py"],
+  "intent": "Restore native round-half-up Q16 scaling before the 16-bit block writer halves and masks each component. This corrects a translation omission, not the original algorithm.",
+  "evidence": [
+    "Pinned 5CD571..5CD580 and repeated component sites use signed IMUL, SHL EDX16, SHR EAX16, ADC EAX,EDX, then SAR EAX1 and AND EAX7F. SHR carries original product bit15 into ADC.",
+    "Existing sub_5cd3b0 expresses the same round-highword idiom. The private media_scale_signed_component previously omitted the carry, changing packed-bank indices for fractional positive and negative products.",
+    "Host tests extract actual helper and writer definitions, check all signed-byte components over eight signed scales, and check four output blocks against independent floor-division rounding. Host doubles do not establish complete codec or runtime acceptance."
+  ],
+  "subjects": [{"address":6083936,"address_space":"pe:va","image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}]
+}
