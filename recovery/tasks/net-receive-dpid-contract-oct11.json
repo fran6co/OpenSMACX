@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task_id": "net-receive-dpid-contract-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Represent receive_directplay_messages' mutable DirectPlay player-ID output as DPID storage without changing its recovered int method interface or behavior.",
+  "base_revision": "af91b787101b2eaf99f215797e2aa1289a038e0d",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6491008
+    }
+  ],
+  "editable_files": [
+    "src/net_class.cpp",
+    "recovery/tests/test_net_receive_player_actual_source.py",
+    "recovery/tests/test_net_receive_dpid_contract_oct11.py",
+    "recovery/tasks/net-receive-dpid-contract-oct11.json"
+  ],
+  "evidence": [
+    "Pinned 0x630B90 captures the incoming int in EDI. Before each Receive call, 0x630BB3 stores that preserved value into a four-byte stack out slot; 0x630BC9/0x630BCE form the two DPID pointer arguments for the indirect call at 0x630BD4. A zero HRESULT retries through 0x630BD9, reinitializing the slot on the next pass. The method retains its original int argument and ret 4 ABI.",
+    "DirectPlay Receive accepts LPDPID for its mutable player-ID result. `DPID working_id`, assigned with `static_cast<DPID>(player_id)` and passed by address, represents the API contract directly while preserving the native four-byte slot and low-32-bit value. `counterpart`, flags, scratch buffer, size and retry behavior remain unchanged.",
+    "The actual-source contract control rejects the previous int-plus-LPDPID-cast representation, implicit conversion, and wrong output address. The existing Net receiver host fixture's mutation now targets the explicit DPID conversion while retaining its runtime behavior checks. Pinned instruction assertions protect the input capture, per-call slot initialization, argument addresses, indirect Receive dispatch, retry edge and stack cleanup. No new function identity, behavior coverage, claim, or ABI change is asserted."
+  ]
+}

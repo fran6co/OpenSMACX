@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "task_id": "base-energy-raw-penalty-contract-oct11",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "af91b787101b2eaf99f215797e2aa1289a038e0d",
+  "intent": "Preserve the native wrapped raw penalty across the two Base energy social-efficiency branches, including the labs-first copy-clamp-then-double ordering, without changing any other original path.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5158240
+    }
+  ],
+  "editable_files": [
+    "src/base.cpp",
+    "recovery/tests/test_base_energy_actual_source.py",
+    "recovery/tests/test_base_energy_raw_penalty_contract_oct11.py",
+    "recovery/tasks/base-energy-raw-penalty-contract-oct11.json"
+  ],
+  "evidence": [
+    "The pin test verifies the exact original image SHA, uses match_recovery PeImage/Span, and Capstone-decodes all bytes in the complete 004EB560..004EC3A6 span. It asserts the 004EC212/214 branch to 004EC2A9, labs-first raw IMUL at 004EC21A, copy clamp (`mov eax, esi`) at 004EC22D, raw double at 004EC25B, alternate raw IMUL/double at 004EC2A9/2AC, and the later raw-value test at 004EC2E9.",
+    "Concrete labs-first signed-int counterexample: psych=0, labs=134217738, efficiency=-4 yields commerce_delta=134217733 and raw IMUL bits 80000050 (-2147483568). Native labs penalty clamps to zero; doubling raw bits wraps to 160 and economy penalty clamps to 80. The old source instead doubled the clamped labs value, yielding economy penalty zero.",
+    "The alternate branch is independently exercised with psych=0, labs=-134217738, efficiency=-4: fallback delta=134217743 selects the economy-first path; raw IMUL wraps to 800000F0 (-2147483408), doubled raw wraps to 480 and clamps the labs penalty to 80, while raw itself clamps the economy penalty to zero.",
+    "Use existing base_yield_mul/base_yield_add to model x86 low-word behavior without signed-overflow UB. The host test extracts and executes the complete current base_energy body and actual helpers under available g++/clang++ at -O0 and -O2. It preserves the original uninitialized locals; GCC's corresponding -O2 diagnostic is not promoted to error. A source-body mutant that doubles the clamped labs penalty must fail at the overflow fixture. The pinned-image test uses OPENSMACX_IMAGE or a repository-relative ignored-image fallback and fails, rather than silently skipping, if missing.",
+    "No mapping or historical claim is created, removed or changed. Preserve the deliberately uninitialized alien subtotal/ordinal paths and all unrelated behavior. Host controls are not byte-exact recovery, runtime acceptance or full-project acceptance."
+  ]
+}

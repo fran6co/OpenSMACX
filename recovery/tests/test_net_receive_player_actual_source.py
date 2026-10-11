@@ -235,7 +235,8 @@ def test_actual_net_owner_bodies_and_damage_control() -> None:
     compilers = [compiler for compiler in ("g++", "clang++") if shutil.which(compiler)]
     assert compilers, "neither GCC nor Clang is available"
     source = HARNESS + _definitions() + "\n" + MAIN
-    mutant = source.replace("working_id = player_id;", "working_id = 0;", 1)
+    mutant = source.replace(
+        "working_id = static_cast<DPID>(player_id);", "working_id = 0;", 1)
     hresult_mutant = source.replace("return result;", "return 0;", 1)
     assert mutant != source and hresult_mutant != source
     with tempfile.TemporaryDirectory(prefix="osmx-net-owner-host-") as temp:
