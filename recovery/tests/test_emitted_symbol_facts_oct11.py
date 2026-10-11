@@ -60,6 +60,8 @@ def test_writer_only_adds_current_symbol_and_preserves_originals(stem):
         from test_design_part_picker_contract_oct11 import restore_design_picker_contract
         current = restore_design_picker_contract(current)
     if stem == 'prodpicker':
+        from test_prodpicker_display_id_oct11 import restore_prodpicker_display_id
+        current = restore_prodpicker_display_id(current)
         from test_prodpicker_cancel_member_oct11 import restore_prodpicker_cancel_member
         current = restore_prodpicker_cancel_member(current)
     assert expected.decode() == current

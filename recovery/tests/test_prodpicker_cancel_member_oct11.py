@@ -35,7 +35,8 @@ def test_bounded_source_and_original_obligations():
     path=ROOT/'src/prodpicker.cpp'
     before=subprocess.check_output(['git','show',BASE+':src/prodpicker.cpp'],cwd=ROOT,text=True)
     expected=migration(before)
-    assert expected==path.read_text() and restore_prodpicker_cancel_member(expected)==before
+    from test_prodpicker_display_id_oct11 import restore_prodpicker_display_id
+    assert expected==restore_prodpicker_display_id(path.read_text()) and restore_prodpicker_cancel_member(expected)==before
     old,new=read_text(before,path),read_text(expected,path)
     assert len(old)==len(new)
     for a,b in zip(old,new):

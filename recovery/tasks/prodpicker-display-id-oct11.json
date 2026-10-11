@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "prodpicker-display-id-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore the production list flag-to-signed-display-ID contract so facility/project rows take their original sprite branch, without changing stored IDs or other rendering behavior.",
+  "base_revision": "5acbd78b80262c7b99c49fa9dbefd4adbec949ec",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4794304}],
+  "editable_files": ["src/prodpicker.cpp", "recovery/tests/test_prodpicker_display_id_oct11.py", "recovery/tests/prodpicker-display-id-oct11.patch", "recovery/tests/test_prodpicker_behavior.py", "recovery/tests/test_emitted_symbol_facts_oct11.py", "recovery/tests/test_prodpicker_cancel_member_oct11.py"],
+  "evidence": [
+    "Native492A48 tests row payload bit20;492A4F negates stored display ID only when clear;492C00..492C05 signed dispatch then selects facility/project sprites versus vehicle model rendering. Existing calculate stores positive vehicle IDs with20 and positive facility IDs without20. exec applies the same sign convention on return. Keep stored IDs/payload unchanged.",
+    "Preserve x86 NEG wraparound through unsigned arithmetic plus defined signed interpretation; INT_MIN classification is tested without claiming a valid INT_MIN sprite index. Historical TRIED producer/consumer conflict remains history; the new body explains its resolution.",
+    "Repair the existing calculate host double with its missing typed string-pointer overload, preserving its integer-address damage control. Exercise actual calculate prefix/category bodies, actual classification and complete draw_item with host renderer doubles and mutation refusals. This is not full GUI/runtime proof. Preserve original mappings, spans, claims and seed lessons; require native owner/outside checks, build/link, identity continuity and independent review."
+  ]
+}

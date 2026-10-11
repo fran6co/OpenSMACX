@@ -156,11 +156,13 @@ void ProdPicker::draw_item(int item, int update) {
         productionId = prod_a_.current_id();
         itemFlags = nameEntry->field_8_;
     }
-    // Preserve the current StringList ID exactly: current_id() returns the
-    // stored ID unchanged. The original draw code tests its sign to choose an
-    // icon family, while calculate's visible facility path appears to add
-    // positive IDs; that producer/consumer discrepancy remains unresolved.
-    const int displayId = productionId;
+    // Native 0x492A48..0x492A51 signs the display ID using the vehicle
+    // flag, resolving the producer/consumer discrepancy in the seed notes.
+    // Keep the list's stored ID unchanged and preserve x86 NEG wraparound.
+    uint32_t displayBits = static_cast<uint32_t>(productionId);
+    if ((itemFlags & 0x20) == 0) displayBits = 0U - displayBits;
+    const int displayId = displayBits <= 0x7fffffffU
+        ? static_cast<int>(displayBits) : -1 - static_cast<int>(~displayBits);
     StringStructPayload *name = prod_a_.current_entry();
     StringStructPayload *cost = prod_c_.current_entry();
     char *nameText = name ? name->text : 0;

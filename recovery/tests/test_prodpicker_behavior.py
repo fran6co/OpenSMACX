@@ -301,6 +301,7 @@ LabelsTable Labels{LabelStrings};
 const char *label_get(int index) { return LabelStrings[index]; }
 struct StringTableMock {
     bool saw_entry_address = false;
+    const char *get(const char *text) { return text; }
     const char *get(intptr_t address) {
         if (address == reinterpret_cast<intptr_t>(Labels.strings_ptr + 0xC4)) {
             saw_entry_address = true;
