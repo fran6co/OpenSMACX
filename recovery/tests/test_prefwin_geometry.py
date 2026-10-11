@@ -1,8 +1,9 @@
 """Actual-source controls for compiler-owned PrefWin geometry initialization.
 
-The test extracts only the natural scalar definitions from src/prefwin.cpp and
-executes those exact expressions in a host harness. It does not import the
-proposal emitter or assert a VC6-generated symbol spelling/native ABI.
+Host tests execute the natural scalar definitions from src/prefwin_geometry.cpp.
+The opt-in physical control checks the configured /Gy arithmetic subjects and
+startup wrapper edges with the installed compiler/binary APIs. It does not prove
+the non-/Gy linked application's initializer correspondence or historical TUs.
 """
 from __future__ import annotations
 
@@ -168,6 +169,101 @@ def test_installed_natural_initializer_source_is_ordered_and_maps_all_originals(
     assert order == sorted(order)
 
 
+def assert_arithmetic_bindings(source: str) -> None:
+    rows = list(read_text(source, Path("src/prefwin_geometry.cpp")))
+    assert [row.address for row in rows] == ADDRESSES
+    assert [row.symbol for row in rows] == [f"_$E{14 + 3 * i}" for i in range(26)]
+
+
+def test_geometry_mappings_select_arithmetic_helpers_not_startup_wrappers():
+    source = GEOMETRY.read_text()
+    assert_arithmetic_bindings(source)
+    for helper in range(14, 90, 3):
+        mutant = source.replace(f"// symbol    _$E{helper}\n",
+                                f"// symbol    _$E{helper + 1}\n", 1)
+        assert mutant != source
+        with pytest.raises(AssertionError):
+            assert_arithmetic_bindings(mutant)
+
+
+@pytest.mark.skipif(os.environ.get("OPENSMACX_PREFWIN_INITIALIZER_CONTROL") != "1",
+                    reason="requires pinned image and coordinator-leased VC6 compiler")
+def test_native_geometry_arithmetic_references_and_startup_edges(tmp_path):
+    # The coordinator supplies the compiler lease; do not allocate a second
+    # lease inside this control. Preparation must already be terminal.
+    from match_recovery.binary import BoundedTarget, compare_bound_code
+    from match_recovery.compiler import Compiler
+    from match_recovery.measurement import Measurement
+    from match_recovery.model import Result, Span
+    from match_recovery.pe_coff import Coff, PeImage
+
+    configuration = SourceConfiguration.read(SOURCE_ROOT)
+    pin = image_pin(SOURCE_ROOT, configuration)
+    image = PeImage(Path(os.environ["OPENSMACX_IMAGE"]).read_bytes(), pin)
+    source = GEOMETRY.read_text()
+    assert_source_family(source)
+    assert_arithmetic_bindings(source)
+    rows = list(read_text(source, GEOMETRY))
+    bindings = parse_objects(source, "src/prefwin_geometry.cpp", pin,
+                             address_space=configuration.address_space)
+    by_name = {item.emitted_symbol: item for item in bindings}
+    startup = Span(0x0068257C, 0x0068257C + 26 * 4)
+    startup_bytes = image.read(startup)
+    assert [int.from_bytes(startup_bytes[i:i + 4], "little")
+            for i in range(0, len(startup_bytes), 4)] == ADDRESSES
+    assert image.absolute_sites(startup) == frozenset(range(0, 26 * 4, 4))
+    settings = Measurement.read(SOURCE_ROOT)
+    # These three equivalent expressions still have different operand-load
+    # ordering. Do not mistake the masked comparator for strict-reference proof
+    # or enshrine a mismatch as an expected result: future restoration may pass.
+    outstanding_order = {0x48D610, 0x48D790, 0x48D7F0}
+    for index, flags in enumerate(settings.flags_for("src/prefwin_geometry.cpp")):
+        data = Compiler(SOURCE_ROOT, profile=settings.compiler_profile)(GEOMETRY, (), flags)
+        (tmp_path / f"geometry-trial-{index}.obj").write_bytes(data)
+        obj = Coff(data)
+        targets = {str(i): BoundedTarget(by_name[s.name].span)
+                   for i, s in obj.symbols.items() if s.name in by_name}
+        wrappers = [f"_$E{15 + 3 * i}" for i in range(26)]
+        crt = [section for section in obj.sections if section.name == ".CRT$XCU"]
+        assert len(crt) == 1
+        assert [(offset, obj.symbols[target].name, kind)
+                for offset, target, kind in crt[0].relocations][:26] == [
+                    (i * 4, name, 6) for i, name in enumerate(wrappers)]
+        assert crt[0].data[:26 * 4] == bytes(26 * 4)
+        for row, wrapper_name in zip(rows, wrappers, strict=True):
+            helper = obj.function(row.symbol)
+            code, relocations, alignment = obj.subject(helper)
+            span = Span(*row.image_spans[0])
+            original = image.read(span)
+            absolute_sites = image.absolute_sites(span)
+            result = compare_bound_code(span, original, code, relocations, targets,
+                                        original_absolute_sites=absolute_sites,
+                                        alignment=alignment)
+            if row.address not in outstanding_order:
+                assert result["result"] is Result.PASS, (hex(row.address), result)
+                # A wrong source-owned object binding must fail, even though
+                # masking the relocation operand could still produce equality.
+                damaged = dict(targets)
+                target = relocations[0].target
+                binding = damaged[target].span
+                damaged[target] = BoundedTarget(Span(binding.start + 4, binding.end + 4))
+                assert compare_bound_code(
+                    span, original, code, relocations, damaged,
+                    original_absolute_sites=absolute_sites, alignment=alignment
+                )["result"] is Result.FAIL
+            wrapper = obj.function(wrapper_name)
+            wrapper_code, edges, wrapper_alignment = obj.subject(wrapper)
+            assert wrapper_code[0] == 0xE9 and wrapper_code[1:5] == bytes(4)
+            assert all(byte in (0x90, 0xCC) for byte in wrapper_code[5:])
+            assert len(edges) == 1 and edges[0].offset == 1
+            assert edges[0].kind.value == "relative32"
+            assert obj.symbols[int(edges[0].target)].name == row.symbol
+            assert compare_bound_code(
+                span, original, wrapper_code, edges, {},
+                original_absolute_sites=absolute_sites, alignment=wrapper_alignment
+            )["result"] is not Result.PASS
+
+
 def test_real_window_and_timer_owners_retain_original_identity_and_order():
     console = (SOURCE_ROOT / "src/console.cpp").read_text()
     info = (SOURCE_ROOT / "src/infowin.cpp").read_text()
@@ -221,8 +317,8 @@ def test_real_window_and_timer_owners_retain_original_identity_and_order():
     assert "Time ConsoleTimer;" not in time_source
     assert "Time BlinkTimer," not in time_source
     for address, name, end, symbol in (
-        (0x0050E9B0, "sub_50e9b0", 0x0050E9EE, "_$E21"),
-        (0x0050E9F0, "sub_50e9f0", 0x0050EA22, "_$E19"),
+        (0x0050E9B0, "sub_50e9b0", 0x0050E9EE, "_$E31"),
+        (0x0050E9F0, "sub_50e9f0", 0x0050EA22, "_$E29"),
     ):
         rows = [row for row in read_text(console, Path("src/console.cpp")) if row.address == address]
         assert len(rows) == 1 and rows[0].name == name and rows[0].symbol == symbol
