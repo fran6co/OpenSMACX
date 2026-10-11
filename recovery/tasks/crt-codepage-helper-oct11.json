@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-codepage-helper-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind the independently bounded original codepage helper to its complete physical VC6 runtime contribution without claiming runtime provider selection.",
+  "base_revision": "af91b787101b2eaf99f215797e2aa1289a038e0d",
+  "subjects": [
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6614550}
+  ],
+  "editable_files": ["src/vendor/vc6-runtime.recovery.h", "recovery/tests/test_crt_codepage_helper_oct11.py", "recovery/tests/test_crt_exception_helpers_oct11.py"],
+  "evidence": [
+    "Pinned IDA and Ghidra12.1.2 agree on 64EE16..64EE49; direct original calls64ED43 and64ED7C select this entry. Pinned LIBCMT mbctype.obj SHA25674924cfef4395b03a742c0dbcbff475c3ed322e1853cedec84c8e28a48a0874e section7 exclusively owns the sole static _CPtoLCID function, 51bytes without relocations.",
+    "Require strict boundary, complete-byte and reference PASS, exact preservation of all93 prior verdict rows and all source identities/spans/claims/history. Preserve the26 existing UNKNOWN results. Extent and body damage must refuse PASS. Older controls project out exactly this identified addition, not arbitrary symbols or failures.",
+    "Independent review, source mappings/references and fresh application compile/link are required before coordinator-reviewed integration. This is dependency correspondence, not an application implementation, a new historical claim, proof of original archive/member selection, linked retention, runtime equivalence or game acceptance. The pending isolated C++ work retains its original task baseline."
+  ]
+}

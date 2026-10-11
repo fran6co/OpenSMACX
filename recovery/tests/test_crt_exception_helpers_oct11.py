@@ -15,6 +15,7 @@ from match_recovery.import_source import read_imports
 from match_recovery.model import Origin, Span
 from match_recovery.pe_coff import Coff, PeImage
 from recovery.environment.wine import VC6_ROOT
+from test_crt_codepage_helper_oct11 import without_codepage_helper
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/vendor/vc6-runtime.recovery.h"
@@ -27,7 +28,8 @@ EXPECTED = (
 
 
 def without_exception_helpers(manifest):
-    """Project only this precisely checked later addition out of older controls."""
+    """Project later additions in order, preserving this older baseline."""
+    manifest = without_codepage_helper(manifest)
     symbols = {r[2] for r in EXPECTED}
     additions = tuple(b for b in manifest.bindings if b.symbol in symbols)
     if not additions:
@@ -44,7 +46,8 @@ def test_exact_two_binding_addition_preserves_old_source_obligations():
     current = SOURCE.read_text()
     old, new = parse_component(prior), parse_component(current)
     assert without_exception_helpers(new) == old
-    assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in new.bindings[-2:]] == [r[:4] for r in EXPECTED]
+    pair = [b for b in new.bindings if b.symbol in {r[2] for r in EXPECTED}]
+    assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in pair] == [r[:4] for r in EXPECTED]
     for delimiter, index in (("// RECOVERY_COMPONENT_BEGIN v1", 0), ("// RECOVERY_COMPONENT_END", 1)):
         assert prior.split(delimiter)[index] == current.split(delimiter)[index]
     assert [(r.address, _continuity_fields(r), r.symbol) for r in read_text(prior, SOURCE)] == [
@@ -64,7 +67,7 @@ def test_strict_complete_pair_and_unchanged_old_verdicts(artifacts):
     manifest, image, archive = artifacts
     imports = read_imports(ROOT)
     before = verify_toolchain(without_exception_helpers(manifest), image, archive, import_bindings=imports)
-    after = verify_toolchain(manifest, image, archive, import_bindings=imports)
+    after = verify_toolchain(without_codepage_helper(manifest), image, archive, import_bindings=imports)
     assert before["functions"] == after["functions"][:-2]
     assert Counter(r["result"] for r in before["functions"]) == {"pass": 65, "unknown": 26}
     assert Counter(r["result"] for r in after["functions"]) == {"pass": 67, "unknown": 26}
