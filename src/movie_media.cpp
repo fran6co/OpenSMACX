@@ -1943,68 +1943,58 @@ void MediaRuntime::sub_5cb6c0() {
     if ((flags & 0x00000400) == 0) {
       IDirectDrawSurface2 *target =
           (flags & 0x08000000) != 0 ? d.surface_18 : d.surface_14;
-      if (target != 0) {
-        if (d.pixel_format.total_component_bits == 8 &&
-            d.palette_entries_28 != 0) {
-          BYTE *out = d.palette_entries_28;
-          for (int i = 0; i < 0x300; i += 3) {
-            *out++ = d.palette_rgb_triplets_b0[i];
-            *out++ = d.palette_rgb_triplets_b0[i + 1];
-            *out++ = d.palette_rgb_triplets_b0[i + 2];
-            *out++ = 0;
-          }
+      if (d.pixel_format.total_component_bits == 8) {
+        BYTE *out = saved_palette_entries;
+        for (int i = 0; i < 0x300; i += 3) {
+          *out++ = descriptor->palette_rgb_triplets_b0[i];
+          *out++ = descriptor->palette_rgb_triplets_b0[i + 1];
+          *out++ = descriptor->palette_rgb_triplets_b0[i + 2];
+          *out++ = 0;
         }
+      }
 
-        HRESULT status = d.surface_1c->IsLost();
-        if (status == DDERR_SURFACELOST && d.surface_1c->Restore() != DD_OK)
-          return;
+      RECT source;
+      source.left = 0;
+      source.top = 0;
+      source.right = (LONG)(descriptor->output_width_64 - 1);
+      source.bottom = (LONG)(descriptor->output_height_60 - 1);
+      RECT destination;
+      destination.left = (LONG)output_rect_left_14;
+      destination.top = (LONG)output_rect_top_18;
+      destination.right = (LONG)(output_rect_left_14 + output_rect_extent_0c);
+      destination.bottom = (LONG)(output_rect_top_18 + output_rect_height_10);
 
-        RECT destination;
-        destination.left = (LONG)output_rect_left_14;
-        destination.top = (LONG)output_rect_top_18;
-        destination.right = (LONG)(output_rect_left_14 + output_rect_extent_0c);
-        destination.bottom = (LONG)(output_rect_top_18 +
-                                     output_rect_height_10);
-        RECT source;
-        source.left = 0;
-        source.top = 0;
-        source.right = (LONG)d.output_width_64 - 1;
-        source.bottom = (LONG)d.output_height_60 - 1;
+      HRESULT status = target->IsLost();
+      if (status == DDERR_SURFACELOST && target->Restore() != DD_OK)
+        return;
 
-        if ((flags & 0x00000020) == 0) {
-          if ((flags & 0x00000010) == 0) {
-            target->Blt(&destination, d.surface_1c, &source,
-                        DDBLT_ASYNC, 0);
-          } else if (d.output_height_60 != 0) {
-            for (DWORD row = 0; row < d.output_height_60; row += 2) {
-              RECT row_destination = destination;
-              RECT row_source = source;
-              row_destination.top = (LONG)(output_rect_top_18 + row);
-              row_destination.bottom = row_destination.top + 1;
-              row_source.top = (LONG)(row >> 1);
-              row_source.bottom = row_source.top + 1;
-              target->Blt(&row_destination, d.surface_1c, &row_source,
-                          DDBLT_ASYNC, 0);
-
-              RECT second_destination = row_destination;
-              second_destination.top += 1;
-              second_destination.bottom = second_destination.top + 1;
-              target->Blt(&second_destination, d.surface_1c, &row_source,
-                          DDBLT_ASYNC, 0);
-            }
-          }
-        } else if (d.output_height_60 != 0) {
-          for (DWORD row = 0; row < d.output_height_60; row += 2) {
-            RECT row_destination = destination;
-            RECT row_source = source;
-            row_destination.top = (LONG)(output_rect_top_18 + row);
-            row_destination.bottom = row_destination.top + 1;
-            row_source.top = (LONG)(row >> 1);
-            row_source.bottom = row_source.top + 1;
-            target->Blt(&row_destination, d.surface_1c, &row_source,
-                        DDBLT_ASYNC, 0);
-          }
+      DWORD presentation_flags = descriptor->flags;
+      if ((presentation_flags & 0x00000020) != 0) {
+        for (DWORD row = 0; row < descriptor->output_height_60; row += 2) {
+          destination.top = (LONG)(output_rect_top_18 + row);
+          destination.bottom = (LONG)(output_rect_top_18 + row + 1);
+          source.top = (LONG)(row >> 1);
+          source.bottom = (LONG)((row >> 1) + 1);
+          target->Blt(&destination, descriptor->surface_1c, &source,
+                      DDBLT_ASYNC, 0);
         }
+      } else if ((presentation_flags & 0x00000010) != 0) {
+        for (DWORD row = 0; row < descriptor->output_height_60; row += 2) {
+          destination.top = (LONG)(output_rect_top_18 + row);
+          destination.bottom = (LONG)(output_rect_top_18 + row + 1);
+          source.top = (LONG)(row >> 1);
+          source.bottom = (LONG)((row >> 1) + 1);
+          target->Blt(&destination, descriptor->surface_1c, &source,
+                      DDBLT_ASYNC, 0);
+
+          destination.top = (LONG)(output_rect_top_18 + row + 1);
+          destination.bottom = (LONG)(output_rect_top_18 + row + 2);
+          target->Blt(&destination, descriptor->surface_1c, &source,
+                      DDBLT_ASYNC, 0);
+        }
+      } else {
+        target->Blt(&destination, descriptor->surface_1c, &source,
+                    DDBLT_ASYNC, 0);
       }
     }
   } else if (queue_record_kind == 2) {
@@ -2047,8 +2037,8 @@ void MediaRuntime::sub_5cb6c0() {
     RECT source;
     source.left = 0;
     source.top = 0;
-    source.right = (LONG)descriptor->output_width_64 - 1;
-    source.bottom = (LONG)descriptor->output_height_60 - 1;
+    source.right = (LONG)(descriptor->output_width_64 - 1);
+    source.bottom = (LONG)(descriptor->output_height_60 - 1);
     RECT destination;
     destination.left = (LONG)output_rect_left_14;
     destination.top = (LONG)output_rect_top_18;

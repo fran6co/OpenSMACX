@@ -46,11 +46,13 @@ def test_bounded_kind2_change_and_claim_continuity():
     base="6b15ca08d2df432a9ee175bb4ce430c164cf1eea"
     old=subprocess.check_output(["git","show",base+":src/movie_media.cpp"],cwd=ROOT,text=True)
     new=path.read_text()
-    def outside_kind2(text):
+    def kind2(text):
         start=text.index("  } else if (queue_record_kind == 2) {",text.index(SIGNATURE))
         end=text.index("  } else if (queue_record_kind == 4) {",start)
-        return text[:start]+"KIND2"+text[end:]
-    assert outside_kind2(old)==outside_kind2(new)
+        return text[start:end]
+    reviewed=subprocess.check_output(["git","show","22a6607d34d6527117d0ff14452b630086ecff78:src/movie_media.cpp"],cwd=ROOT,text=True)
+    assert kind2(reviewed)==kind2(new)
+    assert old.replace(extract(old,SIGNATURE),"PRESENT_BODY")==new.replace(extract(new,SIGNATURE),"PRESENT_BODY")
     assert [(r.address,_continuity_fields(r),r.symbol,r.function_fragment) for r in read_text(old,path)]==[
         (r.address,_continuity_fields(r),r.symbol,r.function_fragment) for r in read_text(new,path)]
 

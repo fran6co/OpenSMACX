@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "22a6607d34d6527117d0ff14452b630086ecff78",
+  "editable_files": [
+    "src/movie_media.cpp",
+    "recovery/tests/test_media_present_descriptor_oct11.py",
+    "recovery/tests/test_media_locked_pitch_oct11.py",
+    "recovery/tests/test_media_destination_loss_oct11.py"
+  ],
+  "intent": "Restore kind-1 presentation destination loss/restore ownership, rectangle lifetime, descriptor refresh and native unguarded palette/target behavior; preserve 32-bit rectangle decrement/wrap in kind1 and kind4.",
+  "evidence": [
+    "Pinned5CB8CE/D3 selects destination surface18/14 intoEDI;5CB953/955 and5CB95F/962 call IsLost/Restore through retainedEDI, not descriptor.surface1c. Target stays retained for Blt; surface1c is its source. Native has no target/palette null guard.",
+    "Pinned5CB916..94F captures source/destination rectangles before loss callbacks;5CB96D/96F refresh descriptor flags for row mode.5CB9B6/5CBA3A refresh loop height and5CBA0A/20 refresh second-row origin/source. Reuse the same rectangles across Blts instead of resetting callback-visible fields from copies.",
+    "Native DEC/add instructions wrap32bits; unsigned dimension subtraction and output-coordinate sums preserve that behavior without signed C++ overflow. Controls include UBSan extreme coordinates and dimensions, both destination choices, palette output, row modes/priority, descriptor replacement, retained rectangle fields, original null paths and failed Restore.",
+    "This is reviewed semantic fidelity restoration, not full COM ABI, game runtime, linked preservation or complete byte-exact acceptance. Mocks deliberately expose native read/rectangle lifetime distinctions; no production callback mutation is asserted. Historical identities and byte obligations remain untouched."
+  ],
+  "subjects": [
+    {
+      "address": 6076096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ]
+}

@@ -168,15 +168,20 @@ def test_actual_kind4_and_final_tail(tmp_path, compiler_name, damage):
     body = extract((ROOT / "src/movie_media.cpp").read_text(), SIGNATURE)
     mutations = {
         "stale_surface": ("HRESULT status = descriptor->surface_1c->IsLost();", "HRESULT status = d.surface_1c->IsLost();"),
-        "late_rectangle": ("source.right = (LONG)descriptor->output_width_64 - 1;", "source.right = (LONG)99 - 1;"),
+        "late_rectangle": ("source.right = (LONG)(descriptor->output_width_64 - 1);", "source.right = (LONG)99 - 1;"),
         "stale_flags": ("if ((descriptor->flags & 0x08000000) != 0", "if ((flags & 0x08000000) != 0"),
         "changed_palette_buffer": ("(LPPALETTEENTRY)saved_palette_entries", "(LPPALETTEENTRY)descriptor->palette_entries_28"),
         "stale_palette": ("descriptor->palette_24->SetEntries", "d.palette_24->SetEntries"),
     }
     if damage != "none":
         old, new = mutations[damage]
-        assert body.count(old) == 1
-        body = body.replace(old, new, 1)
+        if damage == "late_rectangle":
+            assert body.count(old) == 2
+            at = body.index("} else if (queue_record_kind == 4)")
+            body = body[:at] + body[at:].replace(old, new, 1)
+        else:
+            assert body.count(old) == 1
+            body = body.replace(old, new, 1)
     source = tmp_path / "present.cpp"
     source.write_text(HARNESS.replace("ACTUAL_BODY", body))
     exe = tmp_path / "present"
