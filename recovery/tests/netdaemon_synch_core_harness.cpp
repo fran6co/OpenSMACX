@@ -107,6 +107,10 @@ static int callback_a2_override = -1, callback_a3_override = -1;
 static int last_saved_diplo_a = -1, last_saved_diplo_b = -1;
 static uint32_t last_diplomacy_wire[18];
 static int copy_in_count = 0, copy_out_count = 0;
+static bool observe_invalid_send_prefix = false;
+static size_t allocation_length_seen = 0;
+static int allocation_count = 0;
+static size_t out_payload_size_seen = 0, in_payload_size_seen = 0;
 static size_t in_offsets[16], in_lengths[16], out_offsets[16], out_lengths[16];
 static std::vector< std::vector<unsigned char> > sent;
 static Map *out_map_tiles[16], *in_map_tiles[16];
@@ -120,15 +124,19 @@ static int mutate_longitude_on_display = 0;
 
 namespace NetDaemonSyncWire {
 uint32_t current_faction() { return faction_id; }
-bool copy_out(int16_t opcode, int, int, int, size_t, size_t offset,
+bool copy_out(int16_t opcode, int, int, int, size_t payload_size, size_t offset,
               void *bytes, size_t n,
               const MapRouteCapture &map_capture, uint32_t diplomacy[18]) {
     if (fail_copy) return false;
     assert(copy_out_count < 16);
     out_offsets[copy_out_count] = offset; out_lengths[copy_out_count] = n;
+    out_payload_size_seen = payload_size;
     out_map_tiles[copy_out_count] = map_capture.tiles;
     out_map_offset[copy_out_count] = map_capture.byte_offset;
     ++copy_out_count;
+    // Observation-only stop before an invalid native copy: neither owner nor
+    // packet payload is accessed, and no native fault/neighbor claim follows.
+    if (observe_invalid_send_prefix) return false;
     if (opcode == 0x16 && n == sizeof last_diplomacy_wire)
         memcpy(last_diplomacy_wire, diplomacy, n);
     for (size_t i = 0; i < n; ++i)
@@ -136,12 +144,13 @@ bool copy_out(int16_t opcode, int, int, int, size_t, size_t offset,
             static_cast<unsigned char>((offset + i) & 0xFF);
     return true;
 }
-bool copy_in(int16_t opcode, int, int, int, size_t, size_t offset,
+bool copy_in(int16_t opcode, int, int, int, size_t payload_size, size_t offset,
              const void *bytes, size_t n,
              const MapRouteCapture &map_capture, uint32_t diplomacy[18]) {
     if (fail_copy) return false;
     assert(copy_in_count < 16);
     in_offsets[copy_in_count] = offset; in_lengths[copy_in_count] = n;
+    in_payload_size_seen = payload_size;
     in_map_tiles[copy_in_count] = map_capture.tiles;
     in_map_offset[copy_in_count] = map_capture.byte_offset;
     ++copy_in_count;
@@ -238,9 +247,13 @@ void __cdecl log_say(const char *, int, int, int) { ++log_count; }
 void __cdecl log_say(const char *, const char *, int, int, int) { ++log_count; }
 
 void *mem_get(size_t length) {
-    void *p = malloc(length);
+    allocation_length_seen = length; ++allocation_count;
+    // Safe test-owned header allocation for observing only the prefix of a
+    // malformed send. This does not model native allocator success/failure.
+    const size_t fixture_length = observe_invalid_send_prefix ? 0x40 : length;
+    void *p = malloc(fixture_length);
     assert(p != 0);
-    memset(p, 0xA5, length);
+    memset(p, 0xA5, fixture_length);
     if (mutate_map_on_allocate) {
         MapTiles = mutate_map_on_allocate;
         MapLongitude = 32;
@@ -313,6 +326,9 @@ static void reset() {
     popup_count = netmsg_close_count = draws_count = log_count = 0;
     rules_callback_phase = 0; mutate_phase_on_draw = false;
     popup_phase_seen = draw_phase_seen = 0;
+    observe_invalid_send_prefix = false;
+    allocation_count = 0; allocation_length_seen = 0;
+    out_payload_size_seen = in_payload_size_seen = 0;
 }
 static uint16_t u16(const std::vector<unsigned char> &b, size_t at) {
     uint16_t x; memcpy(&x, &b[at], 2); return x;
@@ -703,6 +719,91 @@ int main() {
     memcpy(&incoming[0] + 0x12, &ix, 2);
     d.synch(0x30, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
     assert(copy_in_count == 1 && in_offsets[0] == 0xFFFFF800u && in_lengths[0] == 0x800);
+
+    // Native scalar size products use low DWORDs, never C++ signed overflow
+    // or a signed-left-shift assumption. Expected constants are independent.
+    quotient = 0;
+    assert(netdaemon_sync_payload_size(0x0F, 0, 0x40000001, quotient) == 52);
+    assert(netdaemon_sync_payload_size(0x0F, 0, 0x7FFFFFFF, quotient) == -52);
+    assert(netdaemon_sync_payload_size(0x0F, 0, (-2147483647 - 1), quotient) == 0);
+    VehCurrentCount = 0x40000001;
+    assert(netdaemon_sync_payload_size(0x12, 0, 0, quotient) == 52);
+    VehCurrentCount = -1;
+    assert(netdaemon_sync_payload_size(0x12, 0, 0, quotient) == -52);
+    BaseCurrentCount = 0x40000001;
+    assert(netdaemon_sync_payload_size(0x14, 0, 0, quotient) == 308);
+    BaseCurrentCount = -1;
+    assert(netdaemon_sync_payload_size(0x14, 0, 0, quotient) == -308);
+    TurnCurrentNum = 0x10000001;
+    assert(netdaemon_sync_payload_size(0x20, 0, 0, quotient) == 16);
+    TurnCurrentNum = -1;
+    assert(netdaemon_sync_payload_size(0x20, 0, 0, quotient) == -16);
+
+    // The actual method's negative receive path is observed through hooks:
+    // a signed remainder is passed as a native unsigned DWORD copy count.
+    // No owner bytes, invalid pointer, huge copy, or neighbor are executed.
+    const int variable_ops[] = {0x0F, 0x12, 0x14, 0x20, 0x22};
+    const int negative_sizes[] = {-52, -52, -308, -16, -1};
+    for (int v = 0; v < 5; ++v) {
+        for (int ix_case = 0; ix_case < 3; ++ix_case) {
+            reset(); VehCurrentCount = BaseCurrentCount = TurnCurrentNum = -1;
+            ReplayEventBytes = -1;
+            incoming.assign(0x24 + 0x800, 0x5C);
+            ix = ix_case == 0 ? 0 : (ix_case == 1 ? 1 : -1);
+            memcpy(&incoming[0] + 0x12, &ix, 2);
+            callback_index_override = ix == 0 ? 1 : 0;
+            active_packet_bytes = &incoming[0];
+            d.synch(static_cast<int16_t>(variable_ops[v]), 0, -1, 0,
+                    reinterpret_cast<char *>(&incoming[0]), 0, 0);
+            assert(display_count == 1 && display_total == 1 && display_chunk == ix + 1);
+            assert(copy_in_count == 1 && in_payload_size_seen == static_cast<uint32_t>(negative_sizes[v]));
+            assert(in_lengths[0] == (ix == 0 ? static_cast<uint32_t>(negative_sizes[v]) : 0x800u));
+            assert(in_offsets[0] == (ix == 0 ? 0 : static_cast<uint32_t>(ix) * 0x800u));
+            assert(rebuild_v_count == (variable_ops[v] == 0x12 && ix != 0 ? 1 : 0));
+            assert(rebuild_b_count == (variable_ops[v] == 0x14 && ix != 0 ? 1 : 0));
+        }
+        reset(); VehCurrentCount = BaseCurrentCount = TurnCurrentNum = -1;
+        ReplayEventBytes = -1;
+        observe_invalid_send_prefix = true;
+        d.synch(static_cast<int16_t>(variable_ops[v]), 0, -1, 0, 0, 1, 0);
+        assert(allocation_count == 1 && copy_out_count == 1);
+        assert(allocation_length_seen == static_cast<uint32_t>(negative_sizes[v]) + 0x24u);
+        assert(out_payload_size_seen == static_cast<uint32_t>(negative_sizes[v]));
+        assert(out_lengths[0] == static_cast<uint32_t>(negative_sizes[v]) && out_offsets[0] == 0);
+        assert(sent.empty()); // The observation hook, not a native safety path.
+    }
+    const int boundary_sizes[] = {-2047, -2048, -2049, (-2147483647 - 1), 0, 2048, 2049};
+    const int expected_totals[] = {1, -1, 0, -1048576, 0, 1, 2};
+    for (size_t v = 0; v < sizeof boundary_sizes / sizeof boundary_sizes[0]; ++v) {
+        reset(); ReplayEventBytes = boundary_sizes[v];
+        incoming.assign(0x24 + 0x800, 0); ix = 0;
+        memcpy(&incoming[0] + 0x12, &ix, 2);
+        d.synch(0x22, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+        assert(copy_in_count == (expected_totals[v] > 0 ? 1 : 0));
+        if (expected_totals[v] > 0) {
+            assert(display_total == expected_totals[v]);
+            assert(in_lengths[0] == (boundary_sizes[v] == -2047 ? 0xFFFFF801u : 0x800u));
+        } else assert(display_count == 0);
+    }
+    // Literal zero count returns after the native progress callbacks, while
+    // a nonzero count whose product wraps to zero goes through common math.
+    reset(); VehCurrentCount = 0;
+    d.primary_state_.trailing_words_[2] = 4;
+    incoming.assign(0x24 + 0x800, 0);
+    d.synch(0x12, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(popup_count == 1 && draws_count == 1 && d.primary_state_.trailing_words_[2] == 5);
+    assert(copy_in_count == 0 && display_count == 0 && rebuild_v_count == 0);
+    reset(); BaseCurrentCount = 0;
+    d.synch(0x14, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(copy_in_count == 0 && display_count == 0 && rebuild_b_count == 0);
+    reset(); VehCurrentCount = 0x40000000;
+    assert(netdaemon_sync_payload_size(0x12, 0, 0, quotient) == 0);
+    d.synch(0x12, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(copy_in_count == 0 && display_count == 0 && rebuild_v_count == 0);
+    // The unknown-opcode fallback is intentionally not recovered here.
+    reset(); d.synch(0x7F, -1, 0, 0, 0, 1, 0);
+    assert(copy_out_count == 0 && allocation_count == 0 && sent.empty());
+    ReplayEventBytes = 0x98;
 
     // Exhaust all eight combinations of the rule bit, scripted-turn bit, and
     // faction-equality predicate. The singleton daemon lock is held for this

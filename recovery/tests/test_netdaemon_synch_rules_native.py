@@ -116,3 +116,80 @@ def test_counter_rules_window_preserves_three_native_object_identities():
     technology = (ROOT / "src/technology.cpp").read_text()
     assert "int TechValidCount;" not in technology
     assert "int TechCommerceCount;" not in technology
+
+
+def test_supported_variable_sizes_keep_native_signed_chunk_flow():
+    from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not path.is_file():
+        pytest.skip("pinned original unavailable")
+    raw = path.read_bytes()
+    assert sha256(raw).hexdigest() == PIN
+    image = PeImage(raw, PIN)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+
+    def decode(start, end):
+        return {i.address: (i.mnemonic, i.op_str.lower())
+                for i in decoder.disasm(image.read(Span(start, end)), start)}
+
+    # Source scalar inputs correspond to these indexed size-table arms.
+    targets = {0x0F: 0x532F85, 0x12: 0x532FFD, 0x14: 0x5330A1,
+               0x20: 0x533117, 0x22: 0x533166}
+    for opcode, target in targets.items():
+        assert struct.unpack("<I", image.read(Span(0x53412C + opcode * 4,
+                                                  0x534130 + opcode * 4))) == (target,)
+    assert tuple(decode(0x532F85, 0x532F93).values()) == (
+        ("lea", "eax, [edx + edx*2]"), ("lea", "esi, [edx + eax*4]"),
+        ("shl", "esi, 2"), ("jmp", "0x53334c"))
+    vehicle = decode(0x532FFD, 0x533048)
+    base = decode(0x5330A1, 0x5330C0)
+    assert vehicle[0x53302C] == ("mov", "esi, dword ptr [0x9a64c8]")
+    assert vehicle[0x533032] == ("test", "esi, esi")
+    assert vehicle[0x533034] == ("je", "0x534120")
+    assert tuple(vehicle[a] for a in (0x53303A, 0x53303D, 0x533040)) == (
+        ("lea", "ecx, [esi + esi*2]"), ("lea", "esi, [esi + ecx*4]"), ("shl", "esi, 2"))
+    assert vehicle[0x533018][0] == vehicle[0x53301D][0] == "call"
+    assert vehicle[0x533022] == ("mov", "dword ptr [edi + 0x1b48], 5")
+    assert base[0x5330A1] == ("mov", "esi, dword ptr [0x9a64cc]")
+    assert base[0x5330A7] == ("test", "esi, esi")
+    assert base[0x5330A9] == ("je", "0x534120")
+    assert tuple(base[a] for a in (0x5330AF, 0x5330B2, 0x5330B5, 0x5330B8)) == (
+        ("lea", "ecx, [esi + esi*8]"), ("lea", "edx, [esi + ecx*2]"),
+        ("lea", "esi, [esi + edx*4]"), ("shl", "esi, 2"))
+    assert tuple(decode(0x533117, 0x533125).values()) == (
+        ("mov", "esi, dword ptr [0x9a64d4]"), ("shl", "esi, 4"), ("jmp", "0x53334c"))
+    assert tuple(decode(0x533166, 0x533171).values()) == (
+        ("mov", "esi, dword ptr [0x9469f8]"), ("jmp", "0x53334c"))
+
+    common = decode(0x53334C, 0x533387)
+    assert tuple(common[a] for a in (0x53334C, 0x53334E, 0x53334F, 0x533355,
+                                     0x533357, 0x53335F, 0x533362)) == (
+        ("mov", "eax, esi"), ("cdq", ""), ("and", "edx, 0x7ff"),
+        ("add", "eax, edx"), ("sar", "eax, 0xb"), ("shl", "edx, 0xb"),
+        ("sub", "esi, edx"))
+    assert common[0x533367] == ("je", "0x53336d")
+    assert common[0x533369] == ("inc", "eax")
+    assert common[0x533376] == ("jle", "0x533f95")
+    receive = decode(0x53339A, 0x5333DD)
+    assert receive[0x5333A0] == ("movsx", "ecx, word ptr [ecx + 0x12]")
+    assert receive[0x5333A4] == ("cmp", "ecx, edi")
+    assert receive[0x5333AB] == ("test", "esi, esi")
+    assert receive[0x5333B9] == ("mov", "dword ptr [ebp + 0xc], eax")
+    assert receive[0x5333D3] == ("mov", "dword ptr [ebp + 0xc], 0x800")
+    assert receive[0x5333DA] == ("shl", "esi, 0xb")
+    send = decode(0x533400, 0x533431)
+    assert send[0x533407] == ("test", "edi, edi")
+    assert send[0x533409] == ("je", "0x533427")
+    assert send[0x533412] == ("mov", "dword ptr [ebp + 0xc], edi")
+    assert send[0x533419] == ("mov", "dword ptr [ebp + 0xc], edi")
+    packet = decode(0x533A82, 0x533AF5)
+    assert packet[0x533A85] == ("lea", "eax, [edx + 0x24]")
+    assert packet[0x533A8C] == ("call", "0x5d4510")
+    assert packet[0x533ADD] == ("lea", "eax, [edi + 0x24]")
+    assert packet[0x533AE0] == ("push", "edx")
+    assert packet[0x533AE3] == ("call", "0x645930")
+    # Only observation hooks execute malformed lengths in host controls.
+    # No assertion here establishes allocation success, copy faults or neighbors.

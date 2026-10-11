@@ -7228,16 +7228,25 @@ static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3,
     case 0x0A: case 0x0B: case 0x17:
     case 0x25: case 0x26: return 4;                 // decimal 10,11,23,37,38
     case 0x0E: return 0x34;                         // decimal 14; VehPrototype[a2]
-    case 0x0F: return a3 * 52;                      // decimal 15
+    case 0x0F: return native_sync_signed_word(static_cast<uint32_t>(a3) * 52u); // 15
     case 0x11: return 0x30;                         // decimal 17
-    case 0x12: return GameDataStateStorage.fields_.vehicle_current_count_ == 0 ? -1 : GameDataStateStorage.fields_.vehicle_current_count_ * 52; // 18
+    case 0x12: {
+        const int count = GameDataStateStorage.fields_.vehicle_current_count_;
+        // -1 represents only the native literal-zero early return: a wrapped
+        // product by 52 cannot have that bit pattern.
+        return count == 0 ? -1 : native_sync_signed_word(static_cast<uint32_t>(count) * 52u);
+    }
     case 0x13: return 0x134;                        // decimal 19
-    case 0x14: return GameDataStateStorage.fields_.base_current_count_ == 0 ? -1 : GameDataStateStorage.fields_.base_current_count_ * 308; // 20
+    case 0x14: {
+        const int count = GameDataStateStorage.fields_.base_current_count_;
+        return count == 0 ? -1 : native_sync_signed_word(static_cast<uint32_t>(count) * 308u);
+    }
     case 0x15: return 4;                            // decimal 21
     case 0x16: return 0x48;                         // decimal 22
     case 0x18: return 0x224;                        // decimal 24
     case 0x19: return 0x20;                         // decimal 25
-    case 0x20: return GameDataStateStorage.fields_.turn_current_num_ << 4;           // decimal 32
+    case 0x20: return native_sync_signed_word(
+        static_cast<uint32_t>(GameDataStateStorage.fields_.turn_current_num_) << 4); // 32
     case 0x21: return 4;                            // decimal 33
     case 0x22: return ReplayEventBytes;              // decimal 34
     case 0x24: return 0x98;                         // decimal 36
@@ -7281,8 +7290,8 @@ static void netdaemon_sync_send_chunk(NetDaemon &self, int16_t opcode,
     if (chunk_index == total_chunks - 1 && remainder) {
         source_offset = total_chunks == 1 ? 0 : (total_chunks - 1) * 0x800;
     }
-    char *packet = static_cast<char *>(mem_get(
-        static_cast<size_t>(payload_length + 0x24)));
+    const uint32_t packet_length = static_cast<uint32_t>(payload_length) + 0x24u;
+    char *packet = static_cast<char *>(mem_get(packet_length));
     uint8_t *bytes = reinterpret_cast<uint8_t *>(packet);
     // Native writes only these header fields. +8..+0xB remain allocator
     // contents; do not zero-fill them.
@@ -7299,14 +7308,14 @@ static void netdaemon_sync_send_chunk(NetDaemon &self, int16_t opcode,
     memcpy(bytes + 0x18, &wire_a3, sizeof wire_a3);
     memcpy(bytes + 0x1C, &wire_a4, sizeof wire_a4);
     if (!NetDaemonSyncWire::copy_out(opcode, a2, a3, a4,
-            static_cast<size_t>(payload_size),
+            static_cast<uint32_t>(payload_size),
             static_cast<size_t>(source_offset), bytes + 0x24,
-            static_cast<size_t>(payload_length), map_capture,
+            static_cast<uint32_t>(payload_length), map_capture,
             diplomacy_wire)) {
         free(packet);
         return;
     }
-    self.send_message(packet, static_cast<unsigned long>(payload_length + 0x24), 0);
+    self.send_message(packet, packet_length, 0);
     free(packet);
 }
 
@@ -7401,14 +7410,19 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
 
     int map_strip_quotient = 0;
     const int size = netdaemon_sync_payload_size(opcode, a2, a3, map_strip_quotient);
-    // Native early exits for empty live vehicle/base tables.
-    // Map lengths instead retain the native signed chunk calculation even
-    // when low-DWORD products are negative; their invalid memory effects
-    // are not established by bounded host allocation controls.
-    if (size < 0 && opcode != 0x04 && opcode != 0x30) return;
+    // Only literal-zero vehicle/base counts take their native early return.
+    // The helper's -1 sentinel cannot be produced by either wrapped product.
+    if (size == -1 && (opcode == 0x12 || opcode == 0x14)) return;
+    // The supported variable-size routes retain signed common-loop behavior.
+    // Unknown/default fixed-address routes remain a separate recovery scope;
+    // keep their existing negative-size rejection rather than broaden them.
+    if (size < 0 && opcode != 0x04 && opcode != 0x30 &&
+        opcode != 0x0F && opcode != 0x12 && opcode != 0x14 &&
+        opcode != 0x20 && opcode != 0x22) return;
 
-    // Match signed x86 div/mod-by-0x800 rounding. Native ordinary inputs are
-    // nonnegative; for negative values the arithmetic-shift path is retained.
+    // Native truncates signed division toward zero, retains the signed
+    // remainder, increments on any nonzero remainder, then tests the total.
+    // Invalid huge copy/allocation effects are not established by host hooks.
     const int quotient = size / 0x800;
     const int remainder = size % 0x800;
     const int total_chunks = quotient + (remainder != 0 ? 1 : 0);
@@ -7467,7 +7481,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 log_arg_lo, log_arg_hi);
         }
         if (!suppress_copy && !NetDaemonSyncWire::copy_in(
-                opcode, a2, a3, a4, static_cast<size_t>(size),
+                opcode, a2, a3, a4, static_cast<uint32_t>(size),
                 current_offset, packet + 0x24,
                 static_cast<uint32_t>(current_length), map_capture,
                 diplomacy_wire)) return;
