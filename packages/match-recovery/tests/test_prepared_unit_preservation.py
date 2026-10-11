@@ -156,7 +156,8 @@ def test_new_and_removed_tus_use_fresh_versioned_recipe_membership(prepared, com
     assert unit["unit_presence"] == {"baseline": remove, "current": not remove}
     assert unit["result"] == unit["replica"] == "pass"
     control, = report["controls"][0]["files"]
-    assert control == {"path": NEW_UNIT, "unit": NEW_UNIT, "tree": present, "result": "pass"}
+    assert control == {"path": NEW_UNIT, "unit": NEW_UNIT, "tree": present, "result": "pass",
+                       "flags": ["optimize"], "graph_flags": ["optimize"]}
     new_calls = [call for call in compiler_calls if call["unit"] == NEW_UNIT]
     assert len(new_calls) >= 3 and all(NEW_UNIT in call["graph"] for call in new_calls)
     damaged = [call for call in new_calls if call["contents"].startswith(b"#error MATCH_RECOVERY_")]
