@@ -246,3 +246,77 @@ def test_diplomacy_native_arm_replaces_common_chunk_address_and_count():
     assert epilogue[0x534026] == ("mov", "dl, byte ptr [ebp - 0x7c]")
     assert epilogue[0x53402C] == ("mov", "byte ptr [esi + ecx + 0x96ca98], dl")
     # No larger stack owner or short-packet access behavior is asserted.
+
+
+def test_native_default_routes_keep_chunk_address_without_a_named_base():
+    from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+    from test_netdaemon_synch_host import _definition
+
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not path.is_file():
+        pytest.skip("pinned original unavailable")
+    raw = path.read_bytes()
+    assert sha256(raw).hexdigest() == PIN
+    image = PeImage(raw, PIN)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+
+    def decode(start, end):
+        return {i.address: (i.mnemonic, i.op_str.lower())
+                for i in decoder.disasm(image.read(Span(start, end)), start)}
+
+    for opcode in (0x03, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F):
+        for base, target in ((0x53412C, 0x533349), (0x53420C, 0x533A77)):
+            assert struct.unpack("<I", image.read(Span(base + opcode * 4,
+                                                       base + opcode * 4 + 4))) == (target,)
+    assert decode(0x533349, 0x53334C) == {0x533349: ("mov", "esi, dword ptr [ebp + 0xc]")}
+    size_guards = decode(0x532E2F, 0x532E55) | decode(0x5331C8, 0x5331EC)
+    address_guards = decode(0x533431, 0x533454) | decode(0x5337E6, 0x53380A)
+    for address, expected in {
+        0x532E2F: ("movsx", "eax, word ptr [ebp + 8]"),
+        0x532E36: ("jg", "0x5331c8"), 0x532E3F: ("je", "0x53318c"),
+        0x532E45: ("cmp", "eax, 0x29"), 0x532E48: ("ja", "0x533349"),
+        0x5331C8: ("cmp", "eax, 0x1002"), 0x5331CD: ("jg", "0x533349"),
+        0x5331D3: ("je", "0x533342"), 0x5331D9: ("add", "eax, -0x80"),
+        0x5331DC: ("cmp", "eax, 0xd"), 0x5331DF: ("ja", "0x533349"),
+    }.items():
+        assert size_guards[address] == expected
+    for address, expected in {
+        0x533431: ("movsx", "eax, word ptr [ebp + 8]"),
+        0x533438: ("jg", "0x5337e6"), 0x53343E: ("je", "0x5337c0"),
+        0x533444: ("cmp", "eax, 0x29"), 0x533447: ("ja", "0x533a77"),
+        0x5337E6: ("cmp", "eax, 0x1002"), 0x5337EB: ("jg", "0x533a77"),
+        0x5337F1: ("je", "0x533a71"), 0x5337F7: ("add", "eax, -0x80"),
+        0x5337FA: ("cmp", "eax, 0xd"), 0x5337FD: ("ja", "0x533a77"),
+    }.items():
+        assert address_guards[address] == expected
+    common = decode(0x53336D, 0x533431)
+    assert common[0x533376] == ("jle", "0x533f95")
+    assert common[0x53337C] == ("mov", "esi, dword ptr [ebp - 0xc]")
+    assert common[0x5333A0] == ("movsx", "ecx, word ptr [ecx + 0x12]")
+    assert common[0x5333B7] == ("xor", "esi, esi")
+    assert common[0x5333D1] == ("mov", "esi, ecx")
+    assert common[0x5333DA] == ("shl", "esi, 0xb")
+    assert common[0x533410] == ("xor", "esi, esi")
+    assert common[0x533427] == ("shl", "esi, 0xb")
+    # Both guard defaults join before any base ADD/MOV; ESI is the data
+    # pointer from common chunk selection, not an original executable address.
+    assert decode(0x533A77, 0x533A82)[0x533A7C] == ("je", "0x5338e6")
+    receive = decode(0x5338E6, 0x533912)
+    assert receive[0x5338F9] == ("call", "0x532c30")
+    assert receive[0x533904] == ("lea", "edi, [eax + 0x24]")
+    assert decode(0x533C39, 0x533C47)[0x533C3F] == ("call", "0x645930")
+    caller = decode(0x536258, 0x536282)
+    assert tuple(caller[a] for a in (0x53626A, 0x53626D, 0x536270, 0x536274, 0x53627D)) == (
+        ("mov", "eax, dword ptr [ebx + 0x1c]"),
+        ("mov", "ecx, dword ptr [ebx + 0x18]"),
+        ("mov", "edx, dword ptr [ebx + 0x14]"),
+        ("mov", "ax, word ptr [ebx + 0x10]"), ("call", "0x532e00"))
+    assert not any(mnemonic.startswith("j") for mnemonic, _ in caller.values())
+    source = (ROOT / "src/netdaemon.cpp").read_text()
+    request = _definition(source, r"static\s+void\s+netdaemon_process_sync_request", "incoming synch request")
+    assert "message + 0x10" not in request[:request.index("daemon->synch(")]
+    assert "*reinterpret_cast<int16_t *>(message + 0x10)" in request
+    # Reachability/address/count proof only: no raw low-page access executes,
+    # and native allocator, fault, neighbor and runtime effects remain unknown.

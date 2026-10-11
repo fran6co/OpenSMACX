@@ -109,6 +109,10 @@ static uint32_t last_diplomacy_wire[18];
 static int copy_in_count = 0, copy_out_count = 0;
 static bool observe_invalid_send_prefix = false;
 static bool observe_diplomacy_callback_order = false;
+static bool observe_default_route = false;
+static int default_copy_count = 0, default_copy_display_seen = -1;
+static uintptr_t default_destination_seen = 0, default_source_seen = 0;
+static size_t default_count_seen = 0;
 static size_t allocation_length_seen = 0;
 static int allocation_count = 0;
 static size_t out_payload_size_seen = 0, in_payload_size_seen = 0;
@@ -135,6 +139,11 @@ bool copy_out(int16_t opcode, int, int, int, size_t payload_size, size_t offset,
     out_map_tiles[copy_out_count] = map_capture.tiles;
     out_map_offset[copy_out_count] = map_capture.byte_offset;
     ++copy_out_count;
+    if (observe_default_route) {
+        const bool copied = native_default_copy(static_cast<uint32_t>(offset),
+            static_cast<unsigned char *>(bytes), static_cast<uint32_t>(n), false);
+        return observe_invalid_send_prefix ? false : copied;
+    }
     // Observation-only stop before an invalid native copy: neither owner nor
     // packet payload is accessed, and no native fault/neighbor claim follows.
     if (observe_invalid_send_prefix) return false;
@@ -155,6 +164,10 @@ bool copy_in(int16_t opcode, int, int, int, size_t payload_size, size_t offset,
     in_map_tiles[copy_in_count] = map_capture.tiles;
     in_map_offset[copy_in_count] = map_capture.byte_offset;
     ++copy_in_count;
+    if (observe_default_route)
+        return native_default_copy(static_cast<uint32_t>(offset),
+            const_cast<unsigned char *>(static_cast<const unsigned char *>(bytes)),
+            static_cast<uint32_t>(n), true);
     if (n && callback_payload_fill >= 0)
         assert(static_cast<const unsigned char *>(bytes)[0] ==
                static_cast<unsigned char>(callback_payload_fill));
@@ -332,6 +345,9 @@ static void reset() {
     popup_phase_seen = draw_phase_seen = 0;
     observe_invalid_send_prefix = false;
     observe_diplomacy_callback_order = false;
+    observe_default_route = false; default_copy_count = 0;
+    default_copy_display_seen = -1;
+    default_destination_seen = default_source_seen = default_count_seen = 0;
     allocation_count = 0; allocation_length_seen = 0;
     out_payload_size_seen = in_payload_size_seen = 0;
 }
@@ -340,6 +356,18 @@ static uint16_t u16(const std::vector<unsigned char> &b, size_t at) {
 }
 static uint32_t u32(const std::vector<unsigned char> &b, size_t at) {
     uint32_t x; memcpy(&x, &b[at], 4); return x;
+}
+
+// The real extracted default helper calls this observation-only boundary.
+// It records values/order and never accesses either operand. Allocator/copy
+// fault or neighbor behavior is not simulated or established by this hook.
+static void *observe_default_memmove(void *destination, const void *source, size_t count) {
+    assert(observe_default_route);
+    default_destination_seen = reinterpret_cast<uintptr_t>(destination);
+    default_source_seen = reinterpret_cast<uintptr_t>(source);
+    default_count_seen = count; ++default_copy_count;
+    default_copy_display_seen = display_count;
+    return destination;
 }
 
 /* SOURCE EXTRACTS */
@@ -833,9 +861,56 @@ int main() {
     assert(netdaemon_sync_payload_size(0x12, 0, 0, quotient) == 0);
     d.synch(0x12, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
     assert(copy_in_count == 0 && display_count == 0 && rebuild_v_count == 0);
-    // The unknown-opcode fallback is intentionally not recovered here.
-    reset(); d.synch(0x7F, -1, 0, 0, 0, 1, 0);
-    assert(copy_out_count == 0 && allocation_count == 0 && sent.empty());
+    // Unsupported/default opcodes select no named owner. Actual source helper
+    // copies are intercepted below: no low-page or out-of-bounds access occurs.
+    const int16_t default_ops[] = {-32768, -1, 0x03, 0x1A, 0x1F, 0x2A, 0x2F,
+        0x31, 0x7F, 0x8E, 0x1001, 0x1003, 32767};
+    const int default_sizes[] = {-1, -2047, -2048, -2049, (-2147483647 - 1), 0, 1, 2048, 2049};
+    const int default_totals[] = {1, 1, -1, 0, -1048576, 0, 1, 1, 2};
+    const int16_t default_indices[] = {0, 1, -1, 32767, -32768};
+    for (size_t op_at = 0; op_at < sizeof default_ops / sizeof default_ops[0]; ++op_at) {
+        for (size_t size_at = 0; size_at < sizeof default_sizes / sizeof default_sizes[0]; ++size_at) {
+            for (size_t index_at = 0; index_at < sizeof default_indices / sizeof default_indices[0]; ++index_at) {
+                reset(); incoming.assign(0x24 + 0x800, 0x67);
+                ix = default_indices[index_at];
+                memcpy(&incoming[0] + 0x12, &ix, 2);
+                callback_index_override = ix == 0 ? 1 : 0;
+                callback_a2_override = 123; callback_a3_override = 456;
+                callback_payload_fill = 0x69; active_packet_bytes = &incoming[0];
+                observe_default_route = true;
+                d.synch(default_ops[op_at], default_sizes[size_at], 0, 0,
+                    reinterpret_cast<char *>(&incoming[0]), 0, 0);
+                const int total = default_totals[size_at];
+                assert(default_copy_count == (total > 0 ? 1 : 0));
+                if (total > 0) {
+                    const int last = total - 1;
+                    const int rem = default_sizes[size_at] % 0x800;
+                    const bool partial = ix == last && rem != 0;
+                    const uint32_t expected_address = partial ? static_cast<uint32_t>(last) * 0x800u : static_cast<uint32_t>(ix) * 0x800u;
+                    const uint32_t expected_count = partial ? static_cast<uint32_t>(rem) : 0x800u;
+                    assert(display_count == 1 && display_total == total && display_chunk == static_cast<int>(ix) + 1);
+                    assert(default_copy_display_seen == 1 && default_destination_seen == expected_address);
+                    assert(default_source_seen == reinterpret_cast<uintptr_t>(&incoming[0] + 0x24));
+                    assert(default_count_seen == expected_count && in_lengths[0] == expected_count);
+                    assert(in_offsets[0] == expected_address && in_payload_size_seen == static_cast<uint32_t>(default_sizes[size_at]));
+                } else assert(display_count == 0 && copy_in_count == 0);
+            }
+            reset(); observe_default_route = true;
+            const int n = default_sizes[size_at], total = default_totals[size_at];
+            observe_invalid_send_prefix = n < 0;
+            d.synch(default_ops[op_at], n, 0, 0, 0, 1, 0);
+            assert(default_copy_count == (total > 0 ? total : 0));
+            assert(allocation_count == (total > 0 ? total : 0));
+            if (total > 0) {
+                const int rem = n % 0x800;
+                assert(default_source_seen == static_cast<uint32_t>(total - 1) * 0x800u);
+                assert(default_count_seen == (rem != 0 ? static_cast<uint32_t>(rem) : 0x800u));
+                assert(default_copy_display_seen == 0);
+                assert(allocation_length_seen == static_cast<uint32_t>(default_count_seen) + 0x24u);
+                assert(sent.size() == (n < 0 ? 0 : static_cast<size_t>(total)));
+            } else assert(sent.empty());
+        }
+    }
     ReplayEventBytes = 0x98;
 
     // Exhaust all eight combinations of the rule bit, scripted-turn bit, and

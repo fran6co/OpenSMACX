@@ -194,7 +194,8 @@ def _compile_injected(tmp_path, compiler, harness, inject, expected=True):
 def _core_extract(net):
     struct = ("namespace NetDaemonSyncWire {\n" +
         _struct_definition(net, "MapRouteCapture") + "\n" +
-        "bool compare_and_notify(int16_t, int, int, int, const void *, const void *, const void *, int, int);\n} ")
+        "bool compare_and_notify(int16_t, int, int, int, const void *, const void *, const void *, int, int);\n"
+        "static bool native_default_copy(uint32_t, unsigned char *, uint32_t, bool);\n} ")
     notification_views = ("namespace NetDaemonSyncWire {\n" +
         _plain_definition(net, r"static\s+const\s+unsigned\s+char\s*\*\s*native_notification_view",
                           "native notification view") + "\n" +
@@ -202,6 +203,9 @@ def _core_extract(net):
                           "nominal notification owner view") + "\n}")
     pieces = [
         struct,
+        "namespace NetDaemonSyncWire {\n#define memmove observe_default_memmove\n#define memcpy observe_default_memmove\n" +
+        _definition(net, r"static\s+bool\s+native_default_copy", "native default byte copy") +
+        "\n#undef memcpy\n#undef memmove\n}\n",
         _plain_definition(net, r"static\s+int\s+native_map_sync_rows", "native map rows"),
         _plain_definition(net, r"static\s+NetDaemonSyncWire::MapRouteCapture\s+capture_map_route", "map route capture"),
         _plain_definition(net, r"static\s+int\s+native_sync_signed_word", "signed native word"),
@@ -225,6 +229,9 @@ def _owner_copy_extract(net):
         _templated_function(net, r"static\s+void\s+scatter_word", "native word scatter"),
         _definition(net, r"void\s+scatter_saved_diplomacy", "saved diplomacy scatter"),
         _definition(net, r"static\s+bool\s+native_owner_copy", "native owner byte copy"),
+        "#define memmove observe_default_memmove\n#define memcpy observe_default_memmove\n" +
+        _definition(net, r"static\s+bool\s+native_default_copy", "native default byte copy") +
+        "\n#undef memcpy\n#undef memmove\n",
         _definition(net, r"bool\s+copy_nonrule_chunk", "nonrule owner router"),
     ]
     veh_copy = _definition(veh, r"bool\s+veh_bung_copy_chunk", "Veh BungList owner copy")
@@ -235,8 +242,10 @@ def _owner_copy_extract(net):
 
 def _assert_contiguous_owner_source_contract(nonrule):
     dispatch = nonrule.find("switch (opcode)")
-    split_bounds = nonrule.find("if (offset > payload_size || count > payload_size - offset)")
-    assert 0 <= dispatch < split_bounds, "contiguous native owners must bypass split-view clipping"
+    split_bounds = nonrule.find("#undef NATIVE_ARRAY")
+    assert 0 <= dispatch < split_bounds, "native owner dispatch must precede default pointer copy"
+    assert "if (offset > payload_size || count > payload_size - offset)" not in nonrule
+    assert "return native_default_copy(chunk, packet, static_cast<uint32_t>(count)," in nonrule
     owner_dispatch = nonrule[dispatch:split_bounds]
     for opcode in ("0x00", "0x04", "0x05", "0x06", "0x07", "0x08", "0x09",
                    "0x0A", "0x0B", "0x0C", "0x0D", "0x0E", "0x0F",
@@ -373,6 +382,15 @@ def test_actual_synch_method_source_with_callback_damage_controls(tmp_path, comp
          "const int current_length = opcode == 0x16 && false ? 0x48 :"),
         ("const size_t current_offset = opcode == 0x16 ? 0 :",
          "const size_t current_offset = opcode == 0x16 && false ? 0 :"),
+        ("static_cast<uintptr_t>(captured_address)",
+         "static_cast<uintptr_t>(captured_address & 0u)"),
+        ("static_cast<uintptr_t>(captured_address)",
+         "static_cast<uintptr_t>(static_cast<int32_t>(captured_address))"),
+        ("if (packet_to_owner) memmove(address, packet, count);",
+         "if (count & 0x80000000u) return false;\n"
+         "    if (packet_to_owner) memmove(address, packet, count);"),
+        ("if (packet_to_owner) memmove(address, packet, count);",
+         "if (packet_to_owner) memmove(packet, address, count);"),
         ("static_cast<uint32_t>(map_strip_quotient) *",
          "(static_cast<uint32_t>(MapLatitudeBounds / 16) + "
          "0u * static_cast<uint32_t>(map_strip_quotient)) *"),
@@ -451,6 +469,11 @@ def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
         _compile_injected(tmp_path, compiler, source_template,
                           injection.replace(map_route, replacement, 1), expected=False)
     for old, new in (
+        ("return native_default_copy(chunk, packet, static_cast<uint32_t>(count),",
+         "return native_default_copy(static_cast<uint32_t>(a2), packet, static_cast<uint32_t>(count),"),
+        ("return native_default_copy(chunk, packet, static_cast<uint32_t>(count),",
+         "if (count != 0) return false;\n"
+         "    return native_default_copy(chunk, packet, static_cast<uint32_t>(count),"),
         ("native_owner_copy(diplomacy_wire, 0, packet, 0x48,",
          "native_owner_copy(diplomacy_wire, chunk, packet, 0x48,"),
         ("native_owner_copy(diplomacy_wire, 0, packet, 0x48,",

@@ -6781,6 +6781,21 @@ static bool native_owner_copy(void *owner, uint32_t native_offset,
     return true;
 }
 
+// Guarded-table defaults leave ESI as the selected low-DWORD chunk address;
+// they do not add a named data owner or an executable address. The caller
+// captures these address bits and count before receive callbacks. Preserve
+// this raw data-pointer behavior; its fault/neighbor effects remain unknown.
+static bool native_default_copy(uint32_t captured_address,
+                                unsigned char *packet, uint32_t count,
+                                bool packet_to_owner) {
+    if (count == 0) return true;
+    void *const address = reinterpret_cast<void *>(
+        static_cast<uintptr_t>(captured_address));
+    if (packet_to_owner) memmove(address, packet, count);
+    else memmove(packet, address, count);
+    return true;
+}
+
 static const unsigned char *native_notification_view(int16_t opcode, int a2,
                                                        size_t offset) {
     uint32_t native_offset = static_cast<uint32_t>(offset);
@@ -6958,10 +6973,8 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
 #undef NATIVE_COPY_MOV
 #undef NATIVE_COPY
 
-    // Retain the unrecovered default's current refusal behavior. It is not
-    // the native integer-derived address route; that recovery is separate.
-    if (offset > payload_size || count > payload_size - offset) return false;
-    return count == 0;
+    return native_default_copy(chunk, packet, static_cast<uint32_t>(count),
+                               packet_to_owner);
 }
 
 } // namespace NetDaemonSyncWire
@@ -7386,13 +7399,6 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
     // Only literal-zero vehicle/base counts take their native early return.
     // The helper's -1 sentinel cannot be produced by either wrapped product.
     if (size == -1 && (opcode == 0x12 || opcode == 0x14)) return;
-    // The supported variable-size routes retain signed common-loop behavior.
-    // Unknown/default fixed-address routes remain a separate recovery scope;
-    // keep their existing negative-size rejection rather than broaden them.
-    if (size < 0 && opcode != 0x04 && opcode != 0x30 &&
-        opcode != 0x0F && opcode != 0x12 && opcode != 0x14 &&
-        opcode != 0x20 && opcode != 0x22) return;
-
     // Native truncates signed division toward zero, retains the signed
     // remainder, increments on any nonzero remainder, then tests the total.
     // Invalid huge copy/allocation effects are not established by host hooks.
@@ -7426,7 +7432,9 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             ? (total_chunks == 1 ? 0 :
                static_cast<size_t>(total_chunks - 1) * 0x800)
             : static_cast<uint32_t>(incoming_index) * 0x800u;
-        // Native computes the destination address before synch_display; keep
+        // Native computes the destination address before synch_display.
+        // current_offset captures default-route integer address bits; later
+        // pointer conversion does not reread the packet or index. Keep the
         // allocation pointer/displacement stable across that callback for this
         // received packet, while reading the selected object's current bytes
         // only when the later compare/scatter instruction does so.

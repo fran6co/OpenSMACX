@@ -145,6 +145,20 @@ uint32_t MountPlanetX, MountPlanetY;
 int DustCloudDuration, SaveDaemonStateWord;
 uint32_t ScnVictFacilityObj, GlobalEnergyEventState, NetTurnFlags;
 
+// Observation-only interception of the actual default helper. Never access
+// an integer-derived low address, regardless of direction or requested size.
+static bool observe_default_route = false;
+static uintptr_t default_destination_seen = 0, default_source_seen = 0;
+static size_t default_count_seen = 0;
+static int default_copy_count = 0;
+static void *observe_default_memmove(void *destination, const void *source, size_t count) {
+    assert(observe_default_route);
+    default_destination_seen = reinterpret_cast<uintptr_t>(destination);
+    default_source_seen = reinterpret_cast<uintptr_t>(source);
+    default_count_seen = count; ++default_copy_count;
+    return destination;
+}
+
 /* SOURCE EXTRACTS */
 
 static void fill(unsigned char *p, size_t n, unsigned char v) { memset(p, v, n); }
@@ -540,5 +554,35 @@ int main() {
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x30, 1, 0, 0,
         sizeof tile_packet, 0, tile_packet, sizeof tile_packet, false, 0, captured, 8 * sizeof(Map)));
     assert(tile_packet[0] == 0x82 && tile_packet[sizeof tile_packet - 1] == 0x82);
+    // Complete actual router/default helper, without executing raw copies.
+    // Pointer values are observed only; no native memory owner is invented.
+    const int16_t default_ops[] = {-32768, -1, 0x03, 0x1A, 0x1B, 0x1C,
+        0x1D, 0x1E, 0x1F, 0x2A, 0x2F, 0x31, 0x7F, 0x8E, 0x1001, 0x1003, 32767};
+    const uint32_t default_addresses[] = {0, 0x800, 0xFFFFF800u, 0x03FFF800u, 0xFC000000u};
+    unsigned char observed_packet[0x24];
+    observe_default_route = true;
+    for (size_t op = 0; op < sizeof default_ops / sizeof default_ops[0]; ++op) {
+        for (size_t address = 0; address < sizeof default_addresses / sizeof default_addresses[0]; ++address) {
+            for (int direction = 0; direction <= 1; ++direction) {
+                const int before = default_copy_count;
+                assert(NetDaemonSyncWire::copy_nonrule_chunk(default_ops[op], 0x12345678,
+                    0, 0, 0x48, default_addresses[address], observed_packet,
+                    0xFFFFFFD0u, direction != 0, 0, captured, 0));
+                assert(default_copy_count == before + 1 && default_count_seen == 0xFFFFFFD0u);
+                assert((direction ? default_destination_seen : default_source_seen) == default_addresses[address]);
+                assert((direction ? default_source_seen : default_destination_seen) == reinterpret_cast<uintptr_t>(observed_packet));
+            }
+        }
+    }
+    const int before = default_copy_count;
+    assert(NetDaemonSyncWire::copy_nonrule_chunk(0x03, 0, 0, 0,
+        0, 0xFFFFF800u, observed_packet, 0, true, 0, captured, 0));
+    assert(default_copy_count == before);
+    if (sizeof(size_t) > 4) {
+        const size_t wrapped = (static_cast<size_t>(0x10000u) << 16) + 0x800;
+        assert(NetDaemonSyncWire::copy_nonrule_chunk(0x03, 0, 0, 0,
+            0, wrapped, observed_packet, 0x48, true, 0, captured, 0));
+        assert(default_destination_seen == 0x800 && default_count_seen == 0x48);
+    }
     return 0;
 }
