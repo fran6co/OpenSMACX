@@ -604,6 +604,7 @@
   "editable_files": [
     "src/vendor/vc6-runtime.recovery.h",
     "recovery/tests/test_crt_stdio_bindings_oct11.py",
+    "recovery/tests/test_crt_eight_entry_bindings_oct10.py",
     "recovery/tests/test_crt_bulk_attribution_oct11.py",
     "recovery/tasks/crt-bulk-attribution-oct11.json"
   ],
@@ -612,6 +613,6 @@
     "Source-owned entry/extent/member/symbol interpretations retain the load-bearing attribution; derive scan and verification reports rather than versioning them. Equal IDA9.4/Ghidra spans, complete exclusive physical code sections, unique matching non-relocation body/absolute-relocation shapes across ordinary and COMDAT members support this proposal. Full linear decoding does not establish reachable CFGs, retained linking or runtime equivalence.",
     "All119 independent candidates are reviewed together with the existing105 bindings/current imports. Known call-target closure must not fail, unknown CRT references remain unknown. The17 byte-identical ambiguous candidates are deliberately not attributed; other disagreed bounds/decode failures/no-match candidates remain investigation obligations, not exclusions.",
     "Manual coordinator-reviewed dependency scope: native structural-task planner does not create component tasks. No source/class/function ownership in another active worker is changed. Preserve every previous binding, all annotation identities/spans/claims, imports and actual C++/build settings.",
-    "The earlier stdio tests now project their immutable reviewed105-entry checkpoint so further appended bindings do not destroy historical preservation/damage controls. Actual current whole-component verification and old-to-new monotonic reference checks belong to this batch's native tests. No unmeasured claims or final acceptance assertion."
+    "The earlier stdio and eight-entry tests project their immutable reviewed checkpoints so further appended callers do not destroy historical preservation/damage controls. Actual current whole-component verification and old-to-new monotonic reference checks belong to this batch's native tests. The eight-entry fixture accepts the explicitly configured pinned image path for isolated checkout controls. No unmeasured claims or final acceptance assertion."
   ]
 }

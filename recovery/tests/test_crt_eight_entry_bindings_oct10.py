@@ -1,6 +1,7 @@
 """Bounded runtime correspondence; not selected-link or application coverage."""
 from dataclasses import replace
 import hashlib
+import os
 from pathlib import Path
 import subprocess
 
@@ -66,11 +67,18 @@ def test_only_eight_runtime_bindings_added_without_changing_prior_source():
 
 @pytest.fixture(scope="module")
 def inputs():
-    image_path = ROOT / ".opensmacx/game/terranx_original.exe"
+    image_path = Path(os.environ.get("OPENSMACX_IMAGE",
+                                     ROOT / ".opensmacx/game/terranx_original.exe"))
+    if "OPENSMACX_IMAGE" in os.environ:
+        assert image_path.is_file(), "explicit pinned image path is unavailable"
     archive_path = Path("/home/fran6co/opt/vc6/LIB/LIBCMT.LIB")
     if not image_path.is_file() or not archive_path.is_file():
         pytest.skip("external pinned image/runtime archive unavailable")
-    manifest = parse_component((ROOT / COMPANION).read_text())
+    # Preserve this addition's original before/after proof. Later independently
+    # bound callers can legitimately depend on these eight runtime entries.
+    # Current-manifest preservation is exercised by each subsequent batch.
+    manifest = parse_component(subprocess.check_output(
+        ["git", "show", ADDITION + ":" + COMPANION], cwd=ROOT, text=True))
     image, archive = image_path.read_bytes(), archive_path.read_bytes()
     assert hashlib.sha256(image).hexdigest() == manifest.bindings[0].origin.image_sha256
     assert hashlib.sha256(archive).hexdigest() == manifest.archive_sha256
