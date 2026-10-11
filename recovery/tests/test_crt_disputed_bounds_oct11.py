@@ -22,6 +22,7 @@ from test_crt_eight_entry_bindings_oct10 import repin, raw_offset
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "9c76904f56b3853366e7c8cef37c967b65a2e3eb"
+ADDITION = "d0f9a4dc7bc9d4ededef71a9f278aa754d5fe840"
 COMPANION = "src/vendor/vc6-runtime.recovery.h"
 EXPECTED = (
     (0x0064513B, 0x006451B0, "?TranslatorGuardHandler@@YA?AW4_EXCEPTION_DISPOSITION@@PAUEHExceptionRecord@@PAUTranslatorGuardRN@@PAX2@Z", "build/intel/mt_obj/trnsctrl.obj", 12, "f9efd58c6a13efa62b50d2b9a7532bc77d511fc1d629cbf635f4e6cec6916f9c", 0x006451B0, 0x006451A8),
@@ -45,12 +46,19 @@ def prior():
                                    cwd=ROOT, text=True)
 
 
+def addition_snapshot():
+    return subprocess.check_output(["git", "show", ADDITION + ":" + COMPANION],
+                                   cwd=ROOT, text=True)
+
+
 def test_only_twelve_complete_bindings_added():
-    old = prior()
-    text = (ROOT / COMPANION).read_text()
+    old, text = prior(), addition_snapshot()
+    installed = parse_component((ROOT / COMPANION).read_text())
     before, after = parse_component(old), parse_component(text)
     assert len(before.bindings) == 232 and len(after.bindings) == 244
+    assert len(installed.bindings) == 248
     assert replace(after, bindings=after.bindings[:232]) == before
+    assert replace(installed, bindings=installed.bindings[:244]) == after
     assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit)
             for b in after.bindings[232:]] == [x[:4] for x in EXPECTED]
     lines = [l for l in text.splitlines() if l.startswith("//     {") and '"unit"' in l
@@ -71,7 +79,7 @@ def inputs():
         assert path.is_file(), "explicit pinned image unavailable"
     if not path.is_file() or not archive_path.is_file():
         pytest.skip("external pinned image/runtime archive unavailable")
-    manifest = parse_component((ROOT / COMPANION).read_text())
+    manifest = parse_component(addition_snapshot())
     image, archive = path.read_bytes(), archive_path.read_bytes()
     assert hashlib.sha256(image).hexdigest() == manifest.bindings[0].origin.image_sha256
     assert hashlib.sha256(archive).hexdigest() == manifest.archive_sha256

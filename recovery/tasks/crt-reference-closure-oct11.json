@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-reference-closure-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "40e1077fe7333ae5860a543518a52fab43558c15",
+  "subjects": [
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6575637},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6575686},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6599102},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6606707}
+  ],
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_reference_closure_oct11.py",
+    "recovery/tests/test_crt_disputed_bounds_oct11.py",
+    "recovery/tasks/crt-reference-closure-oct11.json"
+  ],
+  "intent": "Attribute four independently bounded runtime entries to exclusive physical LIBCMT functions selected by independently bound reference targets, without implementation or provider/selection claims.",
+  "evidence": [
+    "The pinned image SHA256 is 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf and LIBCMT.LIB SHA256 is 1ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b. The ignored original-main audit records all candidate alternatives and member hashes; complete physical COFF functions and catalogue extents are independently checked by native controls.",
+    "Relocation-masked byte equality does not select a CRT family. __fsopen calls independently bound __openfile; the coupled __wfsopen/__wfopen alternative resolves through the contradictory __wopenfile family. _write_multi_char calls independently bound _write_char, whose wide alternative has a different, shorter extent. __open calls independently bound __sopen, while __wsopen is a 720-byte alternative with 80 non-relocation-byte differences.",
+    "The original 244 runtime bindings and source identities/claims are an immutable prefix at base 40e1077fe7333ae5860a543518a52fab43558c15. New controls require four strict native PASS rows, unchanged prior rows, reference/body/extent/member damage refusal, family-coupled wide alternatives remaining unknown or failing, and existing unresolved runtime identities staying unknown.",
+    "This is bounded recognized-runtime attribution only. It does not prove archive selection, provider version, final-link retention, complete runtime closure or application recovery; the native full-manifest result remains UNKNOWN. Build/link and independent coordinator review remain subsequent integration requirements."
+  ]
+}
