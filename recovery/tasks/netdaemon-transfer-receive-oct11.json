@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "1b8b5853e",
+  "editable_files": ["src/netdaemon.cpp", "recovery/tests/test_netdaemon_transfer_exits_oct11.py", "recovery/tests/netdaemon-transfer-modal-harness.cpp", "recovery/tests/test_netdaemon_transfer_receive_oct11.py", "recovery/tests/netdaemon-transfer-receive-harness.cpp", "recovery/tests/netdaemon-transfer-receive-oct11.patch"],
+  "intent": "Recover the original transfer receiver arithmetic, call arguments, UI ordering, callback reloads and current-file cleanup without normalizing its unsafe or erroneous paths.",
+  "evidence": [
+    "Native534A44 sends F08 then reloads table and packet byte10;534A8F/534A9B push0/0 for Filemap::create(name,0,0). F07 computes pid index before testing CurrentFile;5348D5 supplies incoming message_size to send, then reloads packet+8 into mode.",
+    "Native534B7E..534BA4 wraps ADD800 at32 bits, applies signed truncation toward zero and writes the file record count, not global93F7A8.534BC2 copies before parse_says/parse_num/X_pop;534C22 rereads progress and decrements after popup.",
+    "Native534C67 creates map(name,file_size,0);534C6C..534C81 reloads packet chunk index and passes (chunk_index<<11)+incoming message_size to inflater. This retains the original header-inclusive extent and ignored inflater status.534CD3 joins534D17 pop_close for nonfinal current-file chunks too.",
+    "Native534773/534890 write-1 to independent68C11C, initially FFFFFFFF in pinned image. Source-owned NetDaemonTransferResetWord retains that observed four-byte state; original semantic domain and naming remain unproved. No native .text consumer was found; this is not grounds to erase the stores or attach them to a class.",
+    "Actual-source sanitizer controls cover first/nonfinal/final chunks, signed and wrap boundaries, UI mutations, packet mutations after mapping, post-send record index reload, original send lengths, reset stores and modal cleanup. Callback mutations qualify the translated operations, not actual native reentrancy reachability. They do not execute native unsafe accesses or prove whole-game decompression/runtime behavior.",
+    "Fixed checked-in source edit recipe protects unrelated text and every original mapping/claim. No function identity added or historical byte obligation weakened; matching and full-game acceptance remain separate obligations."
+  ]
+}

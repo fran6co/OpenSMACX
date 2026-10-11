@@ -28,7 +28,8 @@ def apply_transfer_exit_migration(source):
     for before, after in EDITS:
         assert source.count(before) == 1, before
         source = source.replace(before, after, 1)
-    return source
+    from test_netdaemon_transfer_receive_oct11 import apply_transfer_receive_migration
+    return apply_transfer_receive_migration(source)
 
 
 def test_fixed_exit_recipe_preserves_all_other_source_and_identities():

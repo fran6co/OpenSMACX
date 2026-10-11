@@ -1,0 +1,173 @@
+diff --git a/src/netdaemon.cpp b/src/netdaemon.cpp
+index caa042a45..7d759d15c 100644
+--- a/src/netdaemon.cpp
++++ b/src/netdaemon.cpp
+@@ -3440,6 +3440,11 @@ int NetDaemonFileTransferChunkCount;
+ int NetDaemonFileTransferProgress;
+ // RECOVERY_OBJECT: v1 0x0093F7B0 ?NetDaemonFileTransferReceiveBuffer@@3PAEA
+ unsigned char *NetDaemonFileTransferReceiveBuffer;
++// Native534773/534890 reset this independent four-byte word to-1 in F05/F07.
++// The pinned image initializes it to-1. No native .text consumer is known;
++// this descriptive source name does not establish its original semantic domain.
++// RECOVERY_OBJECT: v1 0x0068C11C ?NetDaemonTransferResetWord@@3HA
++int NetDaemonTransferResetWord = -1;
+ 
+ // Declare this guard between Popup and Filemap in process_message. On an
+ // armed return, reverse lexical destruction does Filemap exactly once, then
+@@ -3537,6 +3542,7 @@ bool NetDaemon::process_file_transfer_message(char *message,
+ 
+     if (type == 0xF05) { // decimal 3845: transfer path from host to client
+         if (local_is_host) return netdaemon_transfer_modal_cleanup(guard);
++        NetDaemonTransferResetWord = -1;
+         NetDaemonFileTransferMode = 1;
+         NetDaemonFileTransferCurrentFile = -1;
+         NetDaemonFileTransferProgress = 0;
+@@ -3571,20 +3577,24 @@ bool NetDaemon::process_file_transfer_message(char *message,
+ 
+         // The list is created by F05. Native does not guard file_index against
+         // 256 records; keep that original domain rather than silently clamp.
++        // The outgoing call can pump messages: native reloads the packet's
++        // index and the table afterward rather than retaining the earlier row.
+         records = netdaemon_file_index_records();
+-        NetDaemonFileIndexRecord &record = records[file_index];
++        NetDaemonFileIndexRecord &record = records[bytes[0x10]];
+         record.filename[0] = '\0';
+         strcat(record.filename, reinterpret_cast<const char *>(bytes + 0x18));
+         record.file_size = netdaemon_transfer_read_u32(bytes + 0x14);
+         record.chunk_count = netdaemon_transfer_read_u32(bytes + 0x0C);
+ 
+-        filemap.create(record.filename, record.file_size, 1);
++        filemap.create(record.filename, 0, 0);
+         filemap.close();
+         return true;
+     }
+ 
+     if (type == 0xF07) { // decimal 3847: mode completion/advance
+         if (local_is_host) return netdaemon_transfer_modal_cleanup(guard);
++        NetDaemonTransferResetWord = -1;
++        const int local_index = NetDaemonNet.pid_2_idx(NetDaemonNet.field_760_);
+         if (NetDaemonFileTransferCurrentFile < 0) {
+             netdaemon_transfer_write_u16(bytes, 0xF0C);
+             records = netdaemon_file_index_records();
+@@ -3595,9 +3605,8 @@ bool NetDaemon::process_file_transfer_message(char *message,
+         } else {
+             netdaemon_transfer_write_u16(bytes, 0xF0A);
+         }
+-        netdaemon_transfer_write_i32(bytes + 4, NetDaemonNet.pid_2_idx(
+-            NetDaemonNet.field_760_));
+-        send_message(message, 0x20, sender_id);
++        netdaemon_transfer_write_i32(bytes + 4, local_index);
++        send_message(message, static_cast<int>(message_size), sender_id);
+         // Native reloads this dword after send_message; preserve callback
+         // mutation rather than caching its value across the outgoing call.
+         NetDaemonFileTransferMode = netdaemon_transfer_read_i32(bytes + 8);
+@@ -3625,42 +3634,58 @@ bool NetDaemon::process_file_transfer_message(char *message,
+         records = netdaemon_file_index_records();
+         if (records == 0) return netdaemon_transfer_modal_cleanup(guard);
+ 
+-        const uint32_t file_index = netdaemon_transfer_read_u32(bytes + 8);
+-        const uint32_t chunk_index = netdaemon_transfer_read_u32(bytes + 0x0C);
+-        if (chunk_index == 0) {
++        if (netdaemon_transfer_read_u32(bytes + 0x0C) == 0) {
+             if (NetDaemonFileTransferReceiveBuffer != 0) {
+                 free(NetDaemonFileTransferReceiveBuffer);
+                 NetDaemonFileTransferReceiveBuffer = 0;
+             }
+-            const uint32_t declared_size = records[file_index].file_size;
++            const uint32_t declared_size =
++                records[netdaemon_transfer_read_u32(bytes + 8)].file_size;
+             NetDaemonFileTransferReceiveBuffer =
+                 static_cast<unsigned char *>(mem_get(static_cast<int>(declared_size)));
+-            const uint32_t compressed_size =
+-                netdaemon_transfer_read_u32(bytes + 4);
+-            NetDaemonFileTransferChunkCount =
+-                static_cast<int>((compressed_size + 0x800U) >> 11);
+-            records[file_index].chunk_count =
+-                static_cast<uint32_t>(NetDaemonFileTransferChunkCount);
+-
+-            parse_says(0, records[file_index].filename, -1, -1);
+-            parse_num(0, --NetDaemonFileTransferProgress);
+-            PopupModalState = 6;
+-            pop_close();
+-            x_pop_caption_flags("SCRIPT", "MPSENDFILE", 0x214200, 0);
+-            PopupModalState = 0;
++            // Native wraps ADD at32 bits, then divides the signed result
++            // toward zero. It updates this record, not the shared chunk count.
++            const uint32_t rounded_bits =
++                netdaemon_transfer_read_u32(bytes + 4) + 0x800U;
++            int32_t rounded_size;
++            memcpy(&rounded_size, &rounded_bits, sizeof rounded_size);
++            records = netdaemon_file_index_records();
++            records[netdaemon_transfer_read_u32(bytes + 8)].chunk_count =
++                static_cast<uint32_t>(rounded_size / 0x800);
+         }
+ 
+         // Preserve native packet size arithmetic (message bytes minus header)
+         // and the original unchecked chunk offset/capacity behavior.
+-        memcpy(NetDaemonFileTransferReceiveBuffer + (chunk_index << 11),
++        memcpy(NetDaemonFileTransferReceiveBuffer +
++                   (netdaemon_transfer_read_u32(bytes + 0x0C) << 11),
+                bytes + 0x20, static_cast<size_t>(message_size - 0x20));
+ 
+-        if (records[file_index].chunk_count == chunk_index + 1) {
++        if (netdaemon_transfer_read_u32(bytes + 0x0C) == 0) {
++            records = netdaemon_file_index_records();
++            parse_says(0, records[netdaemon_transfer_read_u32(bytes + 8)].filename,
++                       -1, -1);
++            parse_num(0, NetDaemonFileTransferProgress);
++            PopupModalState = 6;
++            x_pop_caption_flags("SCRIPT", "MPSENDFILE", 0x214200, 0);
++            PopupModalState = 0;
++            --NetDaemonFileTransferProgress;
++        }
++
++        // UI and mapping calls can reenter the receiver. Retain the native
++        // packet/table reloads rather than a file/chunk snapshot across them.
++        records = netdaemon_file_index_records();
++        uint32_t file_index = netdaemon_transfer_read_u32(bytes + 8);
++        if (records[file_index].chunk_count ==
++            netdaemon_transfer_read_u32(bytes + 0x0C) + 1U) {
+             uLongf decompressed_size = records[file_index].file_size;
+-            const uLong compressed_size = netdaemon_transfer_read_u32(bytes + 4);
+             unsigned char *const mapped = static_cast<unsigned char *>(
+                 filemap.create(records[file_index].filename,
+-                               decompressed_size, 1));
++                               decompressed_size, 0));
++            // This original extent includes the final packet's header bytes;
++            // preserve that quirk instead of substituting compressed_size.
++            const uint32_t compressed_size =
++                (netdaemon_transfer_read_u32(bytes + 0x0C) << 11) +
++                static_cast<uint32_t>(message_size);
+             netdaemon_inflate_buffer(mapped, &decompressed_size,
+                                     NetDaemonFileTransferReceiveBuffer,
+                                     static_cast<unsigned int>(compressed_size));
+@@ -3671,16 +3696,20 @@ bool NetDaemon::process_file_transfer_message(char *message,
+             }
+         }
+ 
+-        if (static_cast<int>(file_index) == NetDaemonFileTransferCurrentFile &&
+-            records[file_index].chunk_count == chunk_index + 1) {
+-            netdaemon_transfer_write_u16(bytes, 0xF0C);
+-            netdaemon_transfer_write_i32(bytes + 4, NetDaemonNet.pid_2_idx(
+-                NetDaemonNet.field_760_));
+-            send_message(message, 0x20, sender_id);
++        file_index = netdaemon_transfer_read_u32(bytes + 8);
++        if (static_cast<int>(file_index) == NetDaemonFileTransferCurrentFile) {
+             records = netdaemon_file_index_records();
+-            if (records != 0) {
+-                free(records);
+-                netdaemon_set_file_index_records(0);
++            if (records[file_index].chunk_count ==
++                netdaemon_transfer_read_u32(bytes + 0x0C) + 1U) {
++                netdaemon_transfer_write_u16(bytes, 0xF0C);
++                netdaemon_transfer_write_i32(bytes + 4, NetDaemonNet.pid_2_idx(
++                    NetDaemonNet.field_760_));
++                send_message(message, 0x20, sender_id);
++                records = netdaemon_file_index_records();
++                if (records != 0) {
++                    free(records);
++                    netdaemon_set_file_index_records(0);
++                }
+             }
+             pop_close();
+         }

@@ -91,6 +91,7 @@ int NetDaemonFileTransferChunkCount, NetDaemonFileTransferProgress;
 unsigned char *NetDaemonFileTransferReceiveBuffer;
 char NetDaemonFileTransferPath[260];
 int PopupModalState;
+int NetDaemonTransferResetWord = -1;
 static void *mem_get(int size) { return malloc((size_t)size); }
 // This modal control doubles the transfer operation; the separate actual-body
 // owner controls exercise the recovered wrapper's statuses and size writeback.
