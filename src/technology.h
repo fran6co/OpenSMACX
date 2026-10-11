@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "alpha.h"  // shared counters/basic-rules storage
 #include "base.h"  // contiguous game_data state owner
 extern int AiResearchBatchActive;
 extern int TechAchievedGate;
@@ -169,8 +170,6 @@ extern RulesTechnology Technology[MaxTechnologyNum]; // 0x0094F358
 // Its original 0x009A6670 object identity is retained as a member in game.cpp;
 // there is no separately emitted GameTechAchieved array.
 extern RulesMandate Mandate[MaxMandateNum]; // 0x0094B4A0
-extern int TechValidCount;
-extern int TechCommerceCount;
 extern char TechName[80];
 
 void __cdecl say_tech(int tech_id, BOOL category_lvl);

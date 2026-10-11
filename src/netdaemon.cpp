@@ -7000,9 +7000,9 @@ namespace NetDaemonSyncWire {
         Map *tiles;
         uint32_t byte_offset;
     };
-    // Gather/scatter exactly [offset, offset+length) in the opcode's native
-    // wire view. For rules receive, scatter writes the source-owned shared
-    // native staging block; commit_rules is invoked only on the last chunk.
+    // Copy the opcode's native wire view. High rules 81/82/84 are direct MOV
+    // owners in both directions, ignoring offset; the remaining high rules
+    // receive into shared native staging and compact only on the last chunk.
     // Opcode 0 is one native byte view of GameDataStateStorage. Contiguous
     // owner routes copy that aggregate directly; dynamic map routes retain
     // their captured allocation pointer and native byte displacement.
@@ -7370,7 +7370,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             NetMsgPrimary.pop("RULESYNCHFAC", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); rules_phase = 4;
-        } else if (opcode == 0x8D) {
+        } else if (opcode == 0x8D && rules_phase == 4) {
             NetMsgPrimary.close(); do_all_draws(); rules_phase = 5;
         }
     }
@@ -7478,7 +7478,8 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 rebuild_vehicle_bits();
             else if (opcode == 0x14) // decimal 20
                 rebuild_base_bits();
-            else if (opcode >= 0x80 && opcode <= 0x8D)
+            else if (opcode == 0x80 || opcode == 0x83 ||
+                     (opcode >= 0x85 && opcode <= 0x8D))
                 NetDaemonSyncWire::commit_rules(opcode);
         }
     }

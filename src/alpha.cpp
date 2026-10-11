@@ -89,7 +89,10 @@ RulesResourceinfo ResourceInfo[MaxResourceInfoNum]; // 0x00945F50
 RulesTimeControl TimeControl[MaxTimeControlNum];    // 0x0094F1B8
 RulesResource Resource[MaxResourceNum];             // 0x00946158
 RulesEnergy Energy[MaxEnergyNum];                   // 0x0094A318
-RulesBasic Rules;                                   // 0x00949738
+// RECOVERY_OBJECT: v3 0x00949738 ?Rules@@3URulesBasic@@A member ?RulesStorage@@3URulesStorageWindow@@A rules_
+// RECOVERY_OBJECT: v3 0x00949730 ?TechValidCount@@3HA member ?RulesStorage@@3URulesStorageWindow@@A tech_valid_count_
+// RECOVERY_OBJECT: v3 0x00949734 ?TechCommerceCount@@3HA member ?RulesStorage@@3URulesStorageWindow@@A tech_commerce_count_
+RulesStorageWindow RulesStorage;
 RulesWorldbuilder WorldBuilder;                     // 0x009502A8
 // prefs_load (0x0059DCF0) stores every field in place - `mov dword ptr
 // [0x94B464], eax` for preferences through custom_world at 0x0094B480
@@ -2398,88 +2401,50 @@ Status: Complete
 namespace NetDaemonSyncRules {
 
 template <class T>
-static bool copy_rule_object_chunk(T &owner, size_t owner_extent,
-                                   size_t offset, unsigned char *chunk,
-                                   size_t count, bool packet_to_owner) {
-    if (owner_extent > sizeof owner || offset > owner_extent ||
-        count > owner_extent - offset) return false;
-    if (count == 0) return true;
+static bool copy_rule_object_chunk(T &owner, uint32_t offset,
+                                   unsigned char *chunk, size_t count,
+                                   bool packet_to_owner) {
     unsigned char *owner_bytes = reinterpret_cast<unsigned char *>(&owner);
-    if (packet_to_owner) memcpy(owner_bytes + offset, chunk, count);
-    else memcpy(chunk, owner_bytes + offset, count);
+    if (packet_to_owner) memmove(owner_bytes + offset, chunk, count);
+    else memmove(chunk, owner_bytes + offset, count);
     return true;
 }
 
-// Outgoing raw-table routes and incoming staging writes. The call site must
-// pass the persistent receive-stage object owned by NetDaemon.
+// Native direct MOV routes ignore the packet index in both directions. The
+// other high-table routes use low-DWORD index arithmetic and receive into the
+// persistent shared stage. No capacity check existed here; neighbor/fault
+// effects beyond the declared source owners remain unknown.
 bool copy_rule_wire_chunk(int opcode, size_t offset, unsigned char *chunk,
                           size_t count, bool packet_to_owner,
                           unsigned char *shared_staging) {
-    size_t extent = 0;
     switch (opcode) {
-    case 0x80: extent = MaxTechnologyNum * sizeof Technology[0]; break;
-    case 0x81: extent = 0x13C; break;
-    case 0x82: extent = sizeof WorldBuilder; break;
-    case 0x83: extent = MaxTerrainNum * sizeof Terraforming[0]; break;
-    case 0x84: extent = MaxResourceInfoNum * sizeof ResourceInfo[0]; break;
-    case 0x85: extent = MaxTimeControlNum * sizeof TimeControl[0]; break;
-    case 0x86: extent = 9 * sizeof Chassis[0]; break;
-    case 0x87: extent = MaxReactorNum * sizeof Reactor[0]; break;
-    case 0x88: extent = MaxWeaponNum * sizeof Weapon[0]; break;
-    case 0x89: extent = MaxArmorNum * sizeof Armor[0]; break;
-    case 0x8A: extent = MaxAbilityNum * sizeof Ability[0]; break;
-    case 0x8B: extent = MaxFacilityNum * sizeof Facility[0]; break;
-    case 0x8C: extent = MaxCitizenNum * sizeof Citizen[0]; break;
-    case 0x8D: extent = MaxSocialCatNum * sizeof SocialCategories[0]; break;
+    case 0x81: return copy_rule_object_chunk(RulesStorage, 0, chunk, count, packet_to_owner);
+    case 0x82: return copy_rule_object_chunk(WorldBuilder, 0, chunk, count, packet_to_owner);
+    case 0x84: return copy_rule_object_chunk(ResourceInfo, 0, chunk, count, packet_to_owner);
+    case 0x80: case 0x83: case 0x85: case 0x86: case 0x87:
+    case 0x88: case 0x89: case 0x8A: case 0x8B: case 0x8C: case 0x8D:
+        break;
     default: return false;
     }
-    if (offset > extent || count > extent - offset) return false;
-    if (!packet_to_owner) {
-        if (opcode == 0x81) {
-            bool copied = false;
-            if (offset < 4) {
-                const size_t n = (offset + count < 4) ? count : 4 - offset;
-                memcpy(chunk, reinterpret_cast<unsigned char *>(&TechValidCount) + offset, n);
-                copied = n == count;
-            }
-            if (offset < 8 && offset + count > 4) {
-                const size_t first = offset > 4 ? offset : 4;
-                const size_t last = offset + count < 8 ? offset + count : 8;
-                memcpy(chunk + first - offset,
-                       reinterpret_cast<unsigned char *>(&TechCommerceCount) + first - 4,
-                       last - first);
-                copied = true;
-            }
-            if (offset < 0x13C && offset + count > 8) {
-                const size_t first = offset > 8 ? offset : 8;
-                const size_t last = offset + count;
-                memcpy(chunk + first - offset,
-                       reinterpret_cast<unsigned char *>(&Rules) + first - 8,
-                       last - first);
-                copied = true;
-            }
-            return count == 0 || copied;
-        }
-        switch (opcode) {
-        case 0x80: return copy_rule_object_chunk(Technology, extent, offset, chunk, count, false);
-        case 0x82: return copy_rule_object_chunk(WorldBuilder, extent, offset, chunk, count, false);
-        case 0x83: return copy_rule_object_chunk(Terraforming, extent, offset, chunk, count, false);
-        case 0x84: return copy_rule_object_chunk(ResourceInfo, extent, offset, chunk, count, false);
-        case 0x85: return copy_rule_object_chunk(TimeControl, extent, offset, chunk, count, false);
-        case 0x86: return copy_rule_object_chunk(Chassis, extent, offset, chunk, count, false);
-        case 0x87: return copy_rule_object_chunk(Reactor, extent, offset, chunk, count, false);
-        case 0x88: return copy_rule_object_chunk(Weapon, extent, offset, chunk, count, false);
-        case 0x89: return copy_rule_object_chunk(Armor, extent, offset, chunk, count, false);
-        case 0x8A: return copy_rule_object_chunk(Ability, extent, offset, chunk, count, false);
-        case 0x8B: return copy_rule_object_chunk(Facility, extent, offset, chunk, count, false);
-        case 0x8C: return copy_rule_object_chunk(Citizen, extent, offset, chunk, count, false);
-        case 0x8D: return copy_rule_object_chunk(SocialCategories, extent, offset, chunk, count, false);
-        default: return false;
-        }
+    const uint32_t chunk_offset = static_cast<uint32_t>(offset);
+    if (packet_to_owner) {
+        memmove(shared_staging + chunk_offset, chunk, count);
+        return true;
     }
-    if (!shared_staging) return false;
-    memcpy(shared_staging + offset, chunk, count);
-    return true;
+    switch (opcode) {
+    case 0x80: return copy_rule_object_chunk(Technology, chunk_offset, chunk, count, false);
+    case 0x83: return copy_rule_object_chunk(Terraforming, chunk_offset, chunk, count, false);
+    case 0x85: return copy_rule_object_chunk(TimeControl, chunk_offset, chunk, count, false);
+    case 0x86: return copy_rule_object_chunk(Chassis, chunk_offset, chunk, count, false);
+    case 0x87: return copy_rule_object_chunk(Reactor, chunk_offset, chunk, count, false);
+    case 0x88: return copy_rule_object_chunk(Weapon, chunk_offset, chunk, count, false);
+    case 0x89: return copy_rule_object_chunk(Armor, chunk_offset, chunk, count, false);
+    case 0x8A: return copy_rule_object_chunk(Ability, chunk_offset, chunk, count, false);
+    case 0x8B: return copy_rule_object_chunk(Facility, chunk_offset, chunk, count, false);
+    case 0x8C: return copy_rule_object_chunk(Citizen, chunk_offset, chunk, count, false);
+    case 0x8D: return copy_rule_object_chunk(SocialCategories, chunk_offset, chunk, count, false);
+    default: return false;
+    }
 }
 
 // In alpha.cpp, against the real RulesTimeControl / TimeControl declarations.
@@ -2648,23 +2613,13 @@ void compact_citizen_fields(const unsigned char *staging) {
 
 // Native incoming rule bytes remain in the receiver's shared staging storage
 // until the final packet. This router borrows that storage; it does not define
-// or initialize a replacement allocation. Add this dispatcher beside the
-// owner declarations in the NetDaemon TU, with the owner-specific direct-copy
-// arms moved into their actual TUs as needed.
+// or initialize a replacement allocation. The three direct MOV routes never
+// reach this compaction dispatcher.
 bool commit_staged_rules(int opcode, const unsigned char *staging) {
     if (!staging) return false;
     switch (opcode) {
     case 0x80: compact_technology_fields(staging); return true;
-    case 0x81:
-        // The native direct destination is the two technology counters and
-        // then the separate Alpha Rules object; these are not one C++ object.
-        memcpy(&TechValidCount, staging, sizeof TechValidCount);
-        memcpy(&TechCommerceCount, staging + 4, sizeof TechCommerceCount);
-        memcpy(&Rules, staging + 8, sizeof Rules);
-        return true;
-    case 0x82: memcpy(&WorldBuilder, staging, sizeof WorldBuilder); return true;
     case 0x83: compact_terraforming_fields(staging); return true;
-    case 0x84: memcpy(ResourceInfo, staging, sizeof ResourceInfo); return true;
     case 0x85: compact_time_controls(staging); return true;
     case 0x86: compact_chassis_fields(staging); return true;
     case 0x87: compact_reactor_prerequisites(staging); return true;

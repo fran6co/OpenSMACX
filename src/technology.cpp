@@ -136,10 +136,6 @@ int __cdecl tech_selection(int faction) {
     return result;
 }
 
-// RECOVERY_OBJECT: v1 0x00949730 ?TechValidCount@@3HA
-int TechValidCount;  // 0x00949730
-// RECOVERY_OBJECT: v1 0x00949734 ?TechCommerceCount@@3HA
-int TechCommerceCount;  // 0x00949734
 // 0x00945E80, read off the image's own tech_name body: `push 0x945e80` /
 // `mov byte ptr [0x945e80], 0` / `mov eax, 0x945e80` at
 // 0x005B9EFB/0x005B9F00/0x005B9F0F - the buffer tech_name zeroes, passes to

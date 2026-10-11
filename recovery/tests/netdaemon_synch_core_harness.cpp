@@ -83,6 +83,9 @@ static int last_base_check = -1, last_veh_check = -1;
 static int map_shutdown_count = 0, map_init_count = 0, path_init_count = 0;
 static int callback_payload_fill = -1;
 static int popup_count = 0, netmsg_close_count = 0, draws_count = 0;
+static uint32_t *rules_callback_phase = 0;
+static uint32_t popup_phase_seen = 0, draw_phase_seen = 0;
+static bool mutate_phase_on_draw = false;
 static int log_count = 0;
 int ConsoleControlTurnActive = 0;
 int SpockNotifyPending = 0;
@@ -216,9 +219,21 @@ void rebuild_base_bits() { ++rebuild_b_count; }
 void Path::init() { ++path_init_count; }
 void BaseWin::check_base(int id) { ++base_finish_count; last_base_check = id; }
 void BaseWin::check_veh(int id) { ++veh_finish_count; last_veh_check = id; }
-void NetMsg::pop(const char *, int, int, const char *) { ++popup_count; }
-void NetMsg::close() { ++netmsg_close_count; }
-void __cdecl do_all_draws() { ++draws_count; }
+void NetMsg::pop(const char *, int, int, const char *) {
+    ++popup_count;
+    if (rules_callback_phase) popup_phase_seen = *rules_callback_phase;
+}
+void NetMsg::close() {
+    ++netmsg_close_count;
+    if (rules_callback_phase) popup_phase_seen = *rules_callback_phase;
+}
+void __cdecl do_all_draws() {
+    ++draws_count;
+    if (rules_callback_phase) {
+        draw_phase_seen = *rules_callback_phase;
+        if (mutate_phase_on_draw) *rules_callback_phase = 0xBADCAFEu;
+    }
+}
 void __cdecl log_say(const char *, int, int, int) { ++log_count; }
 void __cdecl log_say(const char *, const char *, int, int, int) { ++log_count; }
 
@@ -296,6 +311,8 @@ static void reset() {
     last_saved_diplo_a = last_saved_diplo_b = -1;
     memset(last_diplomacy_wire, 0, sizeof last_diplomacy_wire);
     popup_count = netmsg_close_count = draws_count = log_count = 0;
+    rules_callback_phase = 0; mutate_phase_on_draw = false;
+    popup_phase_seen = draw_phase_seen = 0;
 }
 static uint16_t u16(const std::vector<unsigned char> &b, size_t at) {
     uint16_t x; memcpy(&x, &b[at], 2); return x;
@@ -743,6 +760,47 @@ int main() {
     d.synch(0x11, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
     assert(debug_popup_count == 1 && async_key_count == 1 && debug_event_order == 2);
 
+    // Every high-table opcode: final staged receives compact, direct MOV
+    // receives never commit. The core stub does not execute owner addresses.
+    const int high_sizes[] = {0xF4C, 0x13C, 0x7C, 0x280, 0x90, 0xC0,
+        0x510, 0x30, 0x1A0, 0xE0, 0x32C, 0x1920, 0x118, 0x350};
+    for (int high = 0x80; high <= 0x8D; ++high) {
+        reset();
+        incoming.assign(0x24 + 0x800, 0x33);
+        op = static_cast<int16_t>(high);
+        ix = static_cast<int16_t>((high_sizes[high - 0x80] - 1) / 0x800);
+        memcpy(&incoming[0] + 0x10, &op, 2);
+        memcpy(&incoming[0] + 0x12, &ix, 2);
+        d.primary_state_.trailing_words_[3] = 0xFFFFFFFFu;
+        d.synch(op, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+        assert(copy_in_count == 1);
+        assert(commit_count == ((high == 0x81 || high == 0x82 || high == 0x84) ? 0 : 1));
+        assert(popup_count == 0 && netmsg_close_count == 0 && draws_count == 0);
+    }
+    // Each phase gate is receive-only; callbacks observe the previous value
+    // and callback mutation is overwritten by the later native phase store.
+    const int phase_ops[] = {0x80, 0x83, 0x86, 0x8B, 0x8D};
+    const uint32_t phase_values[] = {0, 1, 2, 3, 4, 5, 0x7FFFFFFFu, 0x80000000u, 0xFFFFFFFFu};
+    for (int p = 0; p < 5; ++p) {
+        for (size_t v = 0; v < sizeof phase_values / sizeof phase_values[0]; ++v) {
+            for (int outgoing = 0; outgoing <= 1; ++outgoing) {
+                reset(); incoming.assign(0x24 + 0x800, 0);
+                op = static_cast<int16_t>(phase_ops[p]); ix = 0;
+                memcpy(&incoming[0] + 0x10, &op, 2);
+                memcpy(&incoming[0] + 0x12, &ix, 2);
+                d.primary_state_.trailing_words_[3] = phase_values[v];
+                rules_callback_phase = &d.primary_state_.trailing_words_[3];
+                mutate_phase_on_draw = true;
+                d.synch(op, 0, 0, 0, outgoing ? 0 : reinterpret_cast<char *>(&incoming[0]), outgoing, 0);
+                const bool notify = !outgoing && (p == 0 ? phase_values[v] <= 0x7FFFFFFFu : phase_values[v] == static_cast<uint32_t>(p));
+                assert(draws_count == (notify ? 1 : 0));
+                assert(popup_count == (notify && p != 4 ? 1 : 0));
+                assert(netmsg_close_count == (notify && p == 4 ? 1 : 0));
+                assert(d.primary_state_.trailing_words_[3] == (notify ? static_cast<uint32_t>(p + 1) : phase_values[v]));
+                if (notify) assert(popup_phase_seen == phase_values[v] && draw_phase_seen == phase_values[v]);
+            }
+        }
+    }
     puts("synch chunk-core controls passed");
     return 0;
 }

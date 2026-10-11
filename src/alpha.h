@@ -522,6 +522,26 @@ struct RulesBasic { // Alpha(x).txt
     uint32_t subspace_generators_needed;
 };
 
+// Observed 0x949730..0x94986C transfer window: two signed counters followed
+// by the basic rules. This source owner does not name an original class or
+// establish the extent of any enclosing native allocation.
+struct RulesStorageWindow {
+    int tech_valid_count_;
+    int tech_commerce_count_;
+    RulesBasic rules_;
+};
+
+static_assert(offsetof(RulesStorageWindow, tech_valid_count_) == 0 &&
+              offsetof(RulesStorageWindow, tech_commerce_count_) == 4 &&
+              offsetof(RulesStorageWindow, rules_) == 8 &&
+              sizeof(RulesStorageWindow) == 0x13C,
+              "counter/basic-rules window must retain its observed native layout");
+
+extern RulesStorageWindow RulesStorage;
+#define TechValidCount (RulesStorage.tech_valid_count_)
+#define TechCommerceCount (RulesStorage.tech_commerce_count_)
+#define Rules (RulesStorage.rules_)
+
 struct RulesWorldbuilder { // Alpha(x).txt
     // #WORLDBUILDER: Seeded land size of a standard world
     // Original bounds: 50 to 4000
@@ -724,7 +744,6 @@ extern RulesResourceinfo ResourceInfo[MaxResourceInfoNum];  // 0x00945F50
 extern RulesTimeControl TimeControl[MaxTimeControlNum];     // 0x0094F1B8
 extern RulesResource Resource[MaxResourceNum];              // 0x00946158
 extern RulesEnergy Energy[MaxEnergyNum];                    // 0x0094A318
-extern RulesBasic Rules;                                    // 0x00949738
 extern RulesWorldbuilder WorldBuilder;                      // 0x009502A8
 extern AlphaIniPref AlphaIniPrefs;                          // 0x0094B464
 extern DefaultPref DefaultPrefs;                            // 0x0094B350

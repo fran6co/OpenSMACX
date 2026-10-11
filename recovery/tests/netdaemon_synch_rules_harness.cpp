@@ -1,13 +1,13 @@
-// Host-only C++03 layout doubles; the test injects definitions extracted from
-// src/alpha.cpp into the SOURCE EXTRACTS marker.
-// These are not source declarations or VC6 ABI proof: pointers are represented
-// as uint32_t to model the pinned 32-bit object fields on a 64-bit host.
+// Actual source declarations and function bodies are extracted from src/.
+// LPSTR is a 32-bit host word, not native pointer ABI proof. Controls execute
+// only within declared fixture allocations; unknown neighbor effects are not tested.
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
 typedef uint32_t LPSTR;
+typedef int BOOL;
 static const int MaxTimeControlNum = 6;
 static const int MaxFacilityNum = 134;
 static const int MaxResourceInfoNum = 9;
@@ -22,74 +22,7 @@ static const int MaxArmorNum = 14;
 static const int MaxAbilityNum = 29;
 static const int MaxCitizenNum = 10;
 
-struct RulesTimeControl {
-    LPSTR name;
-    int turn, base, unit, event, extra, refresh, accumulated;
-};
-struct RulesFacility {
-    LPSTR name;
-    LPSTR effect;
-    uint32_t pad;
-    int cost;
-    uint32_t maint;
-    int preq_tech, free_tech, sp_ai_fight, sp_ai_growth, sp_ai_tech,
-        sp_ai_wealth, sp_ai_power;
-};
-struct SocialEffect {
-    enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
-                       GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
-    int values_[11];
-};
-struct RulesSocialCategory {
-    LPSTR type;
-    int preq_tech[4];
-    LPSTR name[4];
-    SocialEffect model_effect[4];
-};
-struct RulesTechnology {
-    uint32_t flags;
-    LPSTR name;
-    char id[8];
-    int padding, growth_value, tech_value, wealth_value, power_value;
-    int preq_tech_1, preq_tech_2;
-};
-struct RulesTerraforming {
-    LPSTR name, name_sea;
-    int preq_tech, preq_tech_sea;
-    uint32_t bit, bit_incompatible;
-    int rate;
-    LPSTR shortcuts;
-};
-struct RulesChassis {
-    unsigned char prefix[0x48];
-    uint8_t speed, triad, range, cargo, cost, missile;
-    unsigned char sprite_offsets[0x40];
-    int16_t preq_tech;
-};
-struct RulesReactor { LPSTR name, name_short; int16_t preq_tech; uint16_t power; };
-struct RulesWeapon {
-    LPSTR name, name_short;
-    int8_t offense_rating, icon;
-    uint8_t mode, cost;
-    int16_t preq_tech, padding;
-};
-struct RulesArmor {
-    LPSTR name, name_short;
-    int8_t defense_rating;
-    uint8_t mode, cost, padding1;
-    int16_t preq_tech, padding2;
-};
-struct RulesAbility {
-    LPSTR name, description, abbreviation;
-    int cost_factor, unk_1;
-    uint32_t flags;
-    int16_t preq_tech;
-    uint16_t padding;
-};
-struct RulesCitizen {
-    LPSTR singular_name, plural_name;
-    int preq_tech, obsol_tech, ops_bonus, psych_bonus, research_bonus;
-};
+/* RULE DECLARATIONS */
 
 typedef char check_time_size[(sizeof(RulesTimeControl) == 0x20) ? 1 : -1];
 typedef char check_facility_size[(sizeof(RulesFacility) == 0x30) ? 1 : -1];
@@ -134,14 +67,12 @@ RulesWeapon Weapon[MaxWeaponNum + 1];
 RulesArmor Armor[MaxArmorNum + 1];
 RulesAbility Ability[MaxAbilityNum + 1];
 RulesCitizen Citizen[MaxCitizenNum + 1];
-struct RulesBasic { unsigned char bytes[0x134]; };
-struct RulesWorldbuilder { unsigned char bytes[0x7C]; };
-struct RulesResourceinfo { unsigned char bytes[0x10]; };
-uint32_t TechValidCount;
-uint32_t TechCommerceCount;
-RulesBasic Rules;
+RulesStorageWindow RulesStorage;
+typedef char check_rules_window[(offsetof(RulesStorageWindow, tech_valid_count_) == 0 &&
+    offsetof(RulesStorageWindow, tech_commerce_count_) == 4 &&
+    offsetof(RulesStorageWindow, rules_) == 8 && sizeof(RulesStorageWindow) == 0x13C) ? 1 : -1];
 RulesWorldbuilder WorldBuilder;
-RulesResourceinfo ResourceInfo[9];
+RulesResourceinfo ResourceInfo[MaxResourceInfoNum];
 
 /* SOURCE EXTRACTS */
 
@@ -362,59 +293,111 @@ static void citizen_compaction() {
 }
 
 static void direct_rule_routes() {
-    unsigned char wire81[0x13C];
-    fill_bytes(wire81, sizeof wire81, 0x13);
-    assert(NetDaemonSyncRules::commit_staged_rules(0x81, wire81));
-    assert(memcmp(&TechValidCount, wire81, 4) == 0);
-    assert(memcmp(&TechCommerceCount, wire81 + 4, 4) == 0);
-    assert(memcmp(&Rules, wire81 + 8, sizeof Rules) == 0);
-
-    unsigned char wire82[0x7C];
-    fill_bytes(wire82, sizeof wire82, 0x82);
-    assert(NetDaemonSyncRules::commit_staged_rules(0x82, wire82));
-    assert(memcmp(&WorldBuilder, wire82, sizeof WorldBuilder) == 0);
-
-    unsigned char wire84[9 * 0x10];
-    fill_bytes(wire84, sizeof wire84, 0x84);
-    assert(NetDaemonSyncRules::commit_staged_rules(0x84, wire84));
-    assert(memcmp(ResourceInfo, wire84, sizeof ResourceInfo) == 0);
-    assert(!NetDaemonSyncRules::commit_staged_rules(0x7F, wire84));
-    assert(!NetDaemonSyncRules::commit_staged_rules(0x81, 0));
-
-    // Outgoing gathers cover exactly each native rule extent. The fixture has
-    // sentinel rows for fixed tables; those rows must not leak onto the wire.
+    unsigned char staged[0x1920], original_stage[sizeof staged];
+    fill_bytes(staged, sizeof staged, 0x55);
+    memcpy(original_stage, staged, sizeof staged);
     const int opcodes[] = {0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86,
                            0x87, 0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D};
     const size_t extents[] = {0xF4C, 0x13C, 0x7C, 0x280, 0x90, 0xC0,
                               0x510, 0x30, 0x1A0, 0xE0, 0x32C,
                               0x1920, 0x118, 0x350};
+    void *owners[] = {Technology, &RulesStorage, &WorldBuilder, Terraforming,
+                     ResourceInfo, TimeControl, Chassis, Reactor, Weapon,
+                     Armor, Ability, Facility, Citizen, SocialCategories};
     for (size_t i = 0; i < sizeof opcodes / sizeof opcodes[0]; ++i) {
-        unsigned char first = 0;
+        const bool direct = opcodes[i] == 0x81 || opcodes[i] == 0x82 || opcodes[i] == 0x84;
+        unsigned char wire[0x1920], before[sizeof wire], received[sizeof wire];
+        fill_bytes(static_cast<unsigned char *>(owners[i]), extents[i], opcodes[i]);
+        memcpy(before, owners[i], extents[i]);
+        const size_t first = extents[i] > 0x800 ? 0x800 : extents[i];
+        // All nominal outgoing chunks, including final partial chunks.
+        for (size_t offset = 0; offset < extents[i]; offset += 0x800) {
+            const size_t n = extents[i] - offset < 0x800 ? extents[i] - offset : 0x800;
+            assert(NetDaemonSyncRules::copy_rule_wire_chunk(
+                opcodes[i], offset, wire + offset, n, false, 0));
+        }
+        assert(memcmp(before, wire, extents[i]) == 0);
+        fill_bytes(received, extents[i], 0xA0 + opcodes[i]);
+        memcpy(staged, original_stage, sizeof staged);
         assert(NetDaemonSyncRules::copy_rule_wire_chunk(
-            opcodes[i], 0, &first, 1, false, 0));
-        assert(NetDaemonSyncRules::copy_rule_wire_chunk(
-            opcodes[i], extents[i] - 1, &first, 1, false, 0));
-        assert(!NetDaemonSyncRules::copy_rule_wire_chunk(
-            opcodes[i], extents[i], &first, 1, false, 0));
+            opcodes[i], 0, received, first, true, staged));
+        if (direct) {
+            assert(memcmp(owners[i], received, first) == 0);
+            assert(memcmp(staged, original_stage, sizeof staged) == 0);
+            assert(!NetDaemonSyncRules::commit_staged_rules(opcodes[i], staged));
+            // Even a negative incoming index cannot displace a MOV owner.
+            assert(NetDaemonSyncRules::copy_rule_wire_chunk(
+                opcodes[i], static_cast<size_t>(0xFFFFF800u), wire, extents[i], false, 0));
+            assert(memcmp(wire, owners[i], extents[i]) == 0);
+            assert(NetDaemonSyncRules::copy_rule_wire_chunk(
+                opcodes[i], static_cast<size_t>(0xFFFFF800u), received, extents[i], true, staged));
+            assert(memcmp(owners[i], received, extents[i]) == 0);
+            assert(memcmp(staged, original_stage, sizeof staged) == 0);
+        } else {
+            assert(memcmp(owners[i], before, extents[i]) == 0);
+            assert(memcmp(staged, received, first) == 0);
+            assert(memcmp(staged + first, original_stage + first, sizeof staged - first) == 0);
+            for (size_t offset = first; offset < extents[i]; offset += 0x800) {
+                const size_t n = extents[i] - offset < 0x800 ? extents[i] - offset : 0x800;
+                assert(NetDaemonSyncRules::copy_rule_wire_chunk(
+                    opcodes[i], offset, received + offset, n, true, staged));
+            }
+            assert(memcmp(staged, received, extents[i]) == 0);
+            assert(memcmp(owners[i], before, extents[i]) == 0);
+        }
     }
-    unsigned char boundary_wire[10];
-    assert(NetDaemonSyncRules::copy_rule_wire_chunk(
-        0x81, 1, boundary_wire, sizeof boundary_wire, false, 0));
-    assert(memcmp(boundary_wire, reinterpret_cast<unsigned char *>(&TechValidCount) + 1, 3) == 0);
-    assert(memcmp(boundary_wire + 3, &TechCommerceCount, 4) == 0);
-    assert(memcmp(boundary_wire + 7, &Rules, 3) == 0);
+    assert(!NetDaemonSyncRules::copy_rule_wire_chunk(0x2A, 0, staged, 1, false, 0));
 
-    unsigned char staged[0x1921];
-    memset(staged, 0xA5, sizeof staged);
-    const unsigned char chunk[3] = {0x10, 0x20, 0x30};
-    assert(NetDaemonSyncRules::copy_rule_wire_chunk(
-        0x8B, 0x191D, const_cast<unsigned char *>(chunk), sizeof chunk,
-        true, staged));
-    assert(memcmp(staged + 0x191D, chunk, sizeof chunk) == 0);
-    assert(staged[0x1920] == 0xA5);
-    assert(!NetDaemonSyncRules::copy_rule_wire_chunk(
-        0x8B, 0x191F, const_cast<unsigned char *>(chunk), sizeof chunk,
-        true, staged));
+    // Chassis has 19 actual source rows but a nine-row wire payload. Crossing
+    // that nominal edge within the actual owner is not clipped.
+    unsigned char cross[32];
+    fill_bytes(reinterpret_cast<unsigned char *>(Chassis), sizeof Chassis, 0x44);
+    assert(NetDaemonSyncRules::copy_rule_wire_chunk(0x86, 0x508, cross, sizeof cross, false, 0));
+    assert(memcmp(cross, reinterpret_cast<unsigned char *>(Chassis) + 0x508, sizeof cross) == 0);
+    // The shared stage likewise is not clipped to a small opcode's payload.
+    unsigned char receive[32]; fill_bytes(receive, sizeof receive, 0xAB);
+    assert(NetDaemonSyncRules::copy_rule_wire_chunk(0x87, 0x28, receive, sizeof receive, true, staged));
+    assert(memcmp(staged + 0x28, receive, sizeof receive) == 0);
+    if (sizeof(size_t) > 4) {
+        const size_t wrapped = (static_cast<size_t>(0x10000u) << 16) + 8;
+        assert(NetDaemonSyncRules::copy_rule_wire_chunk(0x86, wrapped, cross, sizeof cross, false, 0));
+        assert(memcmp(cross, reinterpret_cast<unsigned char *>(Chassis) + 8, sizeof cross) == 0);
+        assert(NetDaemonSyncRules::copy_rule_wire_chunk(0x87, wrapped, receive, sizeof receive, true, staged));
+        assert(memcmp(staged + 8, receive, sizeof receive) == 0);
+    }
+    // Direct traffic leaves a partly received larger staged table untouched.
+    fill_bytes(staged, sizeof staged, 0x23); memcpy(original_stage, staged, sizeof staged);
+    unsigned char direct_wire[0x13C]; fill_bytes(direct_wire, sizeof direct_wire, 0x71);
+    assert(NetDaemonSyncRules::copy_rule_wire_chunk(0x81, 0x800, direct_wire, sizeof direct_wire, true, staged));
+    assert(memcmp(&TechValidCount, direct_wire, 4) == 0);
+    assert(memcmp(&TechCommerceCount, direct_wire + 4, 4) == 0);
+    assert(memcmp(&Rules, direct_wire + 8, sizeof Rules) == 0);
+    assert(memcmp(staged, original_stage, sizeof staged) == 0);
+
+    // Both overlap directions across all 81 members use the whole parent.
+    for (int direction = 0; direction < 2; ++direction) {
+        unsigned char expected[sizeof RulesStorage];
+        fill_bytes(reinterpret_cast<unsigned char *>(&RulesStorage), sizeof RulesStorage, 0x80 + direction);
+        memcpy(expected, &RulesStorage, sizeof expected);
+        unsigned char *owner = reinterpret_cast<unsigned char *>(&RulesStorage);
+        if (direction == 0) {
+            memmove(expected + 3, expected, sizeof expected - 3);
+            assert(NetDaemonSyncRules::copy_rule_wire_chunk(0x81, 0x800, owner + 3, sizeof expected - 3, false, 0));
+        } else {
+            memmove(expected, expected + 3, sizeof expected - 3);
+            assert(NetDaemonSyncRules::copy_rule_wire_chunk(0x81, 0x800, owner + 3, sizeof expected - 3, true, staged));
+        }
+        assert(memcmp(owner, expected, sizeof expected) == 0);
+    }
+    for (int direction = 0; direction < 2; ++direction) {
+        unsigned char expected[sizeof staged];
+        fill_bytes(staged, sizeof staged, 0x90 + direction);
+        memcpy(expected, staged, sizeof expected);
+        const size_t dst = direction ? 0 : 4, src = direction ? 4 : 0;
+        memmove(expected + dst, expected + src, 64);
+        assert(NetDaemonSyncRules::copy_rule_wire_chunk(0x80, dst, staged + src, 64, true, staged));
+        assert(memcmp(staged, expected, sizeof staged) == 0);
+    }
 }
 
 int main() {

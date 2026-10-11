@@ -290,6 +290,30 @@ def _rule_extract(alpha):
     return "namespace NetDaemonSyncRules {\n" + "\n\n".join(pieces) + "\n}\n"
 
 
+def _rule_declarations_extract():
+    # Actual source declarations, with only LPSTR represented as a 32-bit
+    # host fixture word. This is not native compiler/ABI evidence.
+    groups = {
+        "alpha.h": ("RulesBasic", "RulesStorageWindow", "RulesWorldbuilder",
+                    "RulesResourceinfo", "RulesTimeControl"),
+        "technology.h": ("RulesTechnology",),
+        "terraforming.h": ("RulesTerraforming",),
+        "veh.h": ("RulesChassis", "RulesReactor", "RulesWeapon", "RulesArmor", "RulesAbility"),
+        "base.h": ("RulesFacility", "RulesCitizen"),
+        "faction.h": ("SocialEffect", "RulesSocialCategory"),
+    }
+    pieces = []
+    for header, names in groups.items():
+        source = (ROOT / "src" / header).read_text()
+        pieces.extend(_struct_definition(source, name) for name in names)
+    alpha_h = (ROOT / "src/alpha.h").read_text()
+    for name in ("TechValidCount", "TechCommerceCount", "Rules"):
+        match = re.search(r"^#define " + name + r" .*", alpha_h, re.MULTILINE)
+        assert match, name
+        pieces.append(match.group(0))
+    return "\n\n".join(pieces)
+
+
 def test_actual_product_definitions_are_selected_not_tmp_proposals():
     net, alpha, core, nonrule, rule_copy, rule_commit = _must_source_is_imported()
     assert "NetDaemonSyncWire::copy_out" in net
@@ -327,8 +351,8 @@ def test_actual_synch_method_source_with_callback_damage_controls(tmp_path, comp
     for old, new in [
         ("total_chunks == 1 ? 0 :", "total_chunks != 1 ? 0 :"),
         ("bytes + 0x24,", "bytes + 0x20,"),
-        ("opcode >= 0x80 && opcode <= 0x8D)",
-         "opcode >= 0x80 && opcode <= 0x8D && false)"),
+        ("(opcode >= 0x85 && opcode <= 0x8D))",
+         "(opcode >= 0x85 && opcode <= 0x8D && false))"),
         ("if (rules_notify && !scripted_turn)",
          "if (rules_notify && scripted_turn)"),
         ("message_data(0x2308, 0, 0, 0, 0, 0)",
@@ -336,6 +360,8 @@ def test_actual_synch_method_source_with_callback_damage_controls(tmp_path, comp
         ("if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);",
          "if (ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);"),
         ("map_strip_quotient = q;", "map_strip_quotient = a2 == 0xF ? latitude - q * 15 : q;"),
+        ("opcode == 0x8D && rules_phase == 4", "opcode == 0x8D"),
+        ("do_all_draws(); rules_phase = 1;", "rules_phase = 1; do_all_draws();"),
         ("static_cast<uint32_t>(map_strip_quotient) *",
          "(static_cast<uint32_t>(MapLatitudeBounds / 16) + "
          "0u * static_cast<uint32_t>(map_strip_quotient)) *"),
@@ -629,7 +655,7 @@ def test_actual_alpha_rule_source_compactions(tmp_path, compiler):
     _, alpha, _, _, _, _ = _must_source_is_imported()
     template = HERE.with_name("netdaemon_synch_rules_harness.cpp")
     assert template.is_file(), "copy netdaemon_synch_rules_harness.cpp beside this test before importing it"
-    harness = template.read_text()
+    harness = template.read_text().replace("/* RULE DECLARATIONS */", _rule_declarations_extract())
     source_template = tmp_path / "rules-template.cpp"
     source_template.write_text(harness)
     injection = _rule_extract(alpha)
@@ -639,3 +665,18 @@ def test_actual_alpha_rule_source_compactions(tmp_path, compiler):
     _compile_injected(tmp_path, compiler, source_template,
                       injection.replace(old, "src + 0x08, sizeof dst.turn", 1),
                       expected=False)
+    for old, new in (
+        ("copy_rule_object_chunk(RulesStorage, 0,", "copy_rule_object_chunk(RulesStorage, static_cast<uint32_t>(offset),"),
+        ("copy_rule_object_chunk(WorldBuilder, 0,", "copy_rule_object_chunk(WorldBuilder, static_cast<uint32_t>(offset),"),
+        ("copy_rule_object_chunk(ResourceInfo, 0,", "copy_rule_object_chunk(ResourceInfo, static_cast<uint32_t>(offset),"),
+        ("const uint32_t chunk_offset = static_cast<uint32_t>(offset);",
+         "const uint32_t chunk_offset = static_cast<uint32_t>(offset); if (opcode == 0x86 && offset + count > 0x510) return false;"),
+        ("const uint32_t chunk_offset = static_cast<uint32_t>(offset);",
+         "const size_t chunk_offset = offset;"),
+        ("memmove(", "memcpy("),
+        ("case 0x81: return copy_rule_object_chunk(RulesStorage, 0, chunk, count, packet_to_owner);",
+         "case 0x81: if (packet_to_owner) { memmove(shared_staging, chunk, count); return true; } return copy_rule_object_chunk(RulesStorage, 0, chunk, count, packet_to_owner);"),
+    ):
+        assert old in injection
+        _compile_injected(tmp_path, compiler, source_template,
+                          injection.replace(old, new), expected=False)
