@@ -32,7 +32,7 @@ METHODS = (
     "void Wave_Device::suspend()", "void Wave_Device::restart()",
     "void Wave_Device::update_sound()", "int Wave_Device::get_ndevices()",
     "int Wave_Device::get_hw_mem_size()", "int Wave_Device::get_rate()",
-    "int Wave_Device::get_ds()", "bool Wave_Device::is_eax()",
+    "IDirectSound *Wave_Device::get_ds()", "bool Wave_Device::is_eax()",
     "int Wave_Device::is_disabled()", "int Wave_Device::stop_raw_dump()",
     "bool Wave_Device::is_3d()", "void Wave_Device::set_rate(unsigned long rate)",
     "void Wave_Device::set_volume(unsigned long volume)",
@@ -95,6 +95,11 @@ static int factory_result;
 static int call_order;
 
 struct ProviderObject { void **vptr; } provider;
+struct IDirectSound {};
+static IDirectSound direct_sound;
+static IDirectSound *provider_direct_sound(void *self) {
+  assert(self == &provider); ++calls[1]; return &direct_sound;
+}
 static void provider_noarg_void(void *self) {
   assert(self == &provider); ++calls[0];
 }
@@ -153,7 +158,7 @@ struct Wave_Device {
   void *device_14_;
   int enable(); int disable(); void suspend(); void restart();
   void update_sound(); int get_ndevices(); int get_hw_mem_size(); int get_rate();
-  int get_ds(); bool is_eax(); int is_disabled(); int stop_raw_dump(); bool is_3d();
+  IDirectSound *get_ds(); bool is_eax(); int is_disabled(); int stop_raw_dump(); bool is_3d();
   void set_rate(unsigned long); void set_volume(unsigned long); int set_hwnd(void *);
   int get_description(unsigned long, char *, unsigned long); int start_raw_dump(char *);
   int set_eax(EAX_REVERB_PROPERTIES *); int set_eax(unsigned long); int set_eax_mix(float);
@@ -197,7 +202,7 @@ static void setup_provider() {
   table[25] = reinterpret_cast<void *>(&provider_noarg_void);
   table[26] = reinterpret_cast<void *>(&provider_noarg_int);
   table[27] = reinterpret_cast<void *>(&provider_hwnd);
-  table[28] = reinterpret_cast<void *>(&provider_noarg_int);
+  table[28] = reinterpret_cast<void *>(&provider_direct_sound);
   table[29] = reinterpret_cast<void *>(&provider_noarg_bool);
       // Host compiler overload order is intentionally only a host harness;
       // coordinator VC6 probes establish the target physical offsets.
@@ -228,7 +233,8 @@ int main() {
   assert(w.get_description(1, 0, 2) == 0 && calls[6] == 0);
   w.device_14_ = &provider;
   value_result = -17;
-  assert(w.get_ndevices() == -17 && w.get_rate() == -17 && w.get_ds() == -17);
+  assert(w.get_ndevices() == -17 && w.get_rate() == -17);
+  assert(w.get_ds() == &direct_sound);
   assert(w.get_hw_mem_size() == -17 && w.is_disabled() == -17 && w.stop_raw_dump() == -17);
   assert(w.is_eax() && w.is_3d());
   const unsigned long raw = 0xfedcba98UL;

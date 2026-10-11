@@ -177,7 +177,7 @@ struct WaveProviderMock : WaveDeviceProviderCallView {
   void disable() override {}
   int is_disabled() override { return 0; }
   int set_hwnd(HWND) override { return 0; }
-  int get_ds() override { return 0; }
+  IDirectSound *get_ds() override { return 0; }
   bool is_eax() override { return false; }
   int set_eax(EAX_REVERB_PROPERTIES *) override { return 0; }
   int set_eax(uint32_t) override { return 0; }

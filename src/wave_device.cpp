@@ -267,6 +267,8 @@ int Wave_Device::get_rate() {
 Purpose: Ask the wrapped device for its DirectSound interface, through its
          vtable slot 0x70.
 // ORIGINAL: 0x004C5190 ?get_ds@Wave_Device@@QAEHXZ 0x004C5190-0x004C519F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Carry the borrowed DirectSound interface through the provider query and wrapper API instead of an integer; preserve the historical catalogue identity and byte obligation.","evidence":["Pinned4C5190 forwards provider slot70 unchanged or returns zero; original caller4BEB76 stores EAX at UV2Player+17C, the embedded MediaDescriptor+54 DirectSound field.","MediaDescriptor+54 participates in DirectSoundCreate, SetCooperativeLevel, GetCaps, CreateSoundBuffer and Release; this query does not add a reference or change provider ownership.","Current VC6 COFF directly observed pointer-return symbol ?get_ds@Wave_Device@@QAEPAUIDirectSound@@XZ; source symbol binding names that candidate, not a changed original identity."]}
+// symbol    ?get_ds@Wave_Device@@QAEPAUIDirectSound@@XZ
 // size      15 bytes
 // prototype int (__thiscall ?get_ds@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   1   call targets   0
@@ -276,7 +278,7 @@ Purpose: Ask the wrapped device for its DirectSound interface, through its
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
-int Wave_Device::get_ds() {
+IDirectSound *Wave_Device::get_ds() {
     if (device_14_) {
         return static_cast<WaveDeviceProviderCallView *>(device_14_)->get_ds();
     }

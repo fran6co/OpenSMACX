@@ -466,8 +466,7 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
     // build before this proposal is integrated.
     media_.key_poll_member_b0 = &UV2Player::on_key;
 
-    media_.sound_device =
-        reinterpret_cast<IDirectSound *>(WaveDeviceGlobal.get_ds());
+    media_.sound_device = WaveDeviceGlobal.get_ds();
     media_.flags |= 0x00600000;
     media_.source_buffer_58 = 0;
     if ((flags & 0x0001) != 0) media_.flags |= 0x0001;

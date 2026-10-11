@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "0f913ad9242021223960a85d6db0e9a57e17bf33",
+  "editable_files": [
+    "src/wave_device.h", "src/wave_device.cpp", "src/soundx_wave_device_abi.h", "src/uv2player.cpp",
+    "recovery/tests/test_sound_owner_query_fields_actual_source.py",
+    "recovery/tests/test_wave_device_provider_owner_oct9.py",
+    "recovery/tests/test_sounddevice_release_owners_actual_source.py",
+    "recovery/tests/wave_device_exports_harness.cpp",
+    "recovery/tests/wave_device_sound_chain_harness.cpp",
+    "recovery/tests/test_media_audio_owner_oct11.py",
+    "recovery/tests/test_wave_directsound_return_oct11.py"
+  ],
+  "intent": "Recover the borrowed IDirectSound pointer contract across provider slot70, Wave_Device query and its original UV2Player consumer; remove the integer-return workaround without changing calls, references or lifetime behavior.",
+  "evidence": [
+    "Pinned4C5190..4C519F forwards provider slot70 result unchanged; original4BEB76 caller stores it at UV2Player+17C, its embedded MediaDescriptor+54 IDirectSound field. Null wrapper returns zero. No new QueryInterface/AddRef/Release belongs in this forwarding query.",
+    "Local VC6 compilation directly observed ?get_ds@Wave_Device@@QAEPAUIDirectSound@@XZ. Keep ORIGINAL catalogue symbol ?get_ds@Wave_Device@@QAEHXZ and historical byte claim intact; use the observed // symbol for current measurements.",
+    "Host provider fixtures must return actual interface pointers rather than integer sentinels. Native wrapper byte equality and unchanged provider slot do not establish the external soundx DLL implementation, complete provider class or whole-game acceptance."
+  ],
+  "subjects": [
+    {"address": 5001616, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 4975184, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ]
+}

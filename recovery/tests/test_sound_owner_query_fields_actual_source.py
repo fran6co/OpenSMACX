@@ -25,7 +25,7 @@ WAVE_METHODS = (
     ("int Wave_Device::get_ndevices()", "int get_ndevices();"),
     ("int Wave_Device::get_hw_mem_size()", "int get_hw_mem_size();"),
     ("int Wave_Device::get_rate()", "int get_rate();"),
-    ("int Wave_Device::get_ds()", "int get_ds();"),
+    ("IDirectSound *Wave_Device::get_ds()", "IDirectSound *get_ds();"),
     ("bool Wave_Device::is_eax()", "bool is_eax();"),
     ("int Wave_Device::is_disabled()", "int is_disabled();"),
     ("int Wave_Device::stop_raw_dump()", "int stop_raw_dump();"),
@@ -108,7 +108,9 @@ static void reset_trace() { calls = 0; last_slot = -1; last_receiver = 0; last_a
 static int q_14(void *p) { record(0x14, p); return answer; }
 static int q_58(void *p) { record(0x58, p); return answer; }
 static int q_3c(void *p) { record(0x3C, p); return answer; }
-static int q_70(void *p) { record(0x70, p); return answer; }
+struct IDirectSound {};
+static IDirectSound direct_sound_answer;
+static IDirectSound *q_70(void *p) { record(0x70, p); return &direct_sound_answer; }
 static int q_68(void *p) { record(0x68, p); return answer; }
 static int q_54(void *p) { record(0x54, p); return answer; }
 static bool q_eax(void *p) { record(0x74, p); return answer != 0; }
@@ -173,7 +175,7 @@ int main() {
     reset_trace(); failures += check("query slots and results", wave.get_ndevices() == 91 && last_slot == 0x14 && last_receiver == &wave_provider && calls == 1);
     reset_trace(); failures += check("memory query", wave.get_hw_mem_size() == 91 && last_slot == 0x58);
     reset_trace(); failures += check("rate query", wave.get_rate() == 91 && last_slot == 0x3C);
-    reset_trace(); failures += check("DirectSound query", wave.get_ds() == 91 && last_slot == 0x70);
+    reset_trace(); failures += check("DirectSound query", wave.get_ds() == &direct_sound_answer && last_slot == 0x70);
     reset_trace(); failures += check("EAX byte query", wave.is_eax() && last_slot == 0x74 && last_receiver == &wave_provider && calls == 1);
     reset_trace(); failures += check("disabled query", wave.is_disabled() == 91 && last_slot == 0x68);
     reset_trace(); failures += check("raw dump query", wave.stop_raw_dump() == 91 && last_slot == 0x54);

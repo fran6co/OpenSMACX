@@ -22,6 +22,7 @@
 
 class Wave;
 struct EAX_REVERB_PROPERTIES;
+struct IDirectSound;
 
 // One node of a group's wave list, allocated on the game CRT heap by the
 // insert helper and freed by pull_from_group.
@@ -93,7 +94,7 @@ class Wave_Device : public SoundDeviceBase {
   int get_ndevices();
   int get_hw_mem_size();
   int get_rate();
-  int get_ds();
+  IDirectSound *get_ds();
   bool is_eax();
   int is_disabled();
   int stop_raw_dump();

@@ -27,6 +27,7 @@ typedef void *HMODULE;
 
 class Wave;
 struct EAX_REVERB_PROPERTIES;
+struct IDirectSound;
 // LIVE_GROUP_TYPES
 #define private public
 // LIVE_DEVICE_DECLARATION

@@ -43,6 +43,10 @@ def test_exact_owner_migration_and_original_identity_continuity():
             expected = before.replace(HEADER_BEFORE, HEADER_AFTER)
         elif name == "uv2player.cpp":
             expected = before.replace("media_.unresolved_source_or_rate_58 = 0;", "media_.source_buffer_58 = 0;")
+            # The separately bounded Wave interface migration now carries
+            # this pointer through its producer instead of an integer cast.
+            after = after.replace("media_.sound_device = WaveDeviceGlobal.get_ds();",
+                                  "media_.sound_device =\n        reinterpret_cast<IDirectSound *>(WaveDeviceGlobal.get_ds());")
         else:
             expected = before.replace("d.unresolved_source_or_rate_58", "d.source_buffer_58")
             for indent in ("  ", "      "):

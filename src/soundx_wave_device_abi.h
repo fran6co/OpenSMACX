@@ -1,4 +1,5 @@
 #pragma once
+struct IDirectSound;
 
 // Borrowed call view for the provider returned by soundx.dll ordinal 5.
 // This is not the game's Wave_Device/SoundDeviceBase hierarchy and does not
@@ -40,7 +41,7 @@ public:
     virtual void disable() = 0;
     virtual int is_disabled() = 0;
     virtual int set_hwnd(HWND) = 0;
-    virtual int get_ds() = 0;
+    virtual IDirectSound *get_ds() = 0;
     virtual bool is_eax() = 0;
     // Keep the observed physical overload order explicit: pointer at 0x7C,
     // then the one-word value at 0x78 in the vtable.

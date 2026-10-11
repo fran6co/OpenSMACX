@@ -15,6 +15,7 @@ typedef int (__stdcall *FARPROC)();
 
 class Wave;
 struct EAX_REVERB_PROPERTIES;
+struct IDirectSound;
 // LIVE_DEVICE_BASE_DECLARATION
 // LIVE_GROUP_TYPES
 #define private public
