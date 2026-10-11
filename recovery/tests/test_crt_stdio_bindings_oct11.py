@@ -20,6 +20,7 @@ from test_crt_eight_entry_bindings_oct10 import repin, raw_offset
 ROOT = Path(__file__).resolve().parents[2]
 COMPANION = "src/vendor/vc6-runtime.recovery.h"
 BASE = "fdd976176ef1b5cb07bdfd6b16dc771377e4af19"
+ADDITION = "239910dc8"
 EXPECTED = (
     (0x64603F, 0x64606E, "_fwrite", "build/intel/mt_obj/fwrite.obj", 1),
     (0x64606E, 0x646178, "__fwrite_lk", "build/intel/mt_obj/fwrite.obj", 2),
@@ -43,8 +44,11 @@ IMPORTS = (
 def test_existing_bindings_claims_and_source_preserved():
     old = subprocess.check_output(["git", "show", BASE + ":" + COMPANION],
                                   cwd=ROOT, text=True)
-    text = (ROOT / COMPANION).read_text()
+    text = subprocess.check_output(["git", "show", ADDITION + ":" + COMPANION],
+                                   cwd=ROOT, text=True)
     manifest = parse_component(text)
+    installed = parse_component((ROOT / COMPANION).read_text())
+    assert replace(installed, bindings=installed.bindings[:len(manifest.bindings)]) == manifest
     additions = tuple(b for b in manifest.bindings if b.origin.address in ADDRESSES)
     assert tuple((b.origin.address, b.spans[0].end, b.symbol, b.unit)
                  for b in additions) == tuple(item[:4] for item in EXPECTED)
@@ -71,7 +75,8 @@ def inputs():
     archive_path = Path("/home/fran6co/opt/vc6/LIB/LIBCMT.LIB")
     if not image_path.is_file() or not archive_path.is_file():
         pytest.skip("external pinned image/runtime archive unavailable")
-    manifest = parse_component((ROOT / COMPANION).read_text())
+    manifest = parse_component(subprocess.check_output(
+        ["git", "show", ADDITION + ":" + COMPANION], cwd=ROOT, text=True))
     image, archive = image_path.read_bytes(), archive_path.read_bytes()
     assert hashlib.sha256(image).hexdigest() == manifest.bindings[0].origin.image_sha256
     assert hashlib.sha256(archive).hexdigest() == manifest.archive_sha256
