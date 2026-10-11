@@ -11,6 +11,7 @@ from match_recovery.source.writer import write_bytes
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = '635b9085b7a426bb3b20f5fd3175af1237ae5174'
+FIXED = '18f93db66f4f21dc74122f759676e95aee5b3126'
 EXTENTS = {
     0x4CD4E0: ('src/veh.cpp', 0x4CD6F9, 0x4CD69D, 0x4CD6A0),
     0x42B940: ('src/datalink.cpp', 0x42BACC, 0x42BAA3, 0x42BAB0),
@@ -23,7 +24,9 @@ def test_writer_extent_and_exact_bounded_source(address):
     relative, old_end, new_end, successor = EXTENTS[address]
     path = ROOT / relative
     old = subprocess.check_output(['git', 'show', BASE + ':' + relative], cwd=ROOT)
-    current = path.read_bytes()
+    # The bounded historical writer operation must reproduce its checkpoint,
+    # not freeze every unrelated future implementation in these owner files.
+    fixed = subprocess.check_output(['git', 'show', FIXED + ':' + relative], cwd=ROOT)
     expected = old.decode()
     fixture = Path(__file__).with_name('function-span-overlaps-oct11.patch').read_text()
     section = next(s for s in fixture.split('diff --git ')[1:]
@@ -34,7 +37,7 @@ def test_writer_extent_and_exact_bounded_source(address):
         after = ''.join(l[1:] for l in lines if l.startswith((' ', '+')))
         assert before and expected.count(before) == 1
         expected = expected.replace(before, after, 1)
-    assert expected == current.decode()
+    assert expected == fixed.decode()
     before, after = read_text(old.decode(), path), read_text(expected, path)
     assert len(before) == len(after)
     for a, b in zip(before, after):
@@ -51,6 +54,9 @@ def test_writer_extent_and_exact_bounded_source(address):
         assert lessons(a) == lessons(b)
     following = next(r for r in after if r.address == successor)
     assert following.image_spans[0][0] >= new_end
+    current = read_text(path.read_text(), path)
+    assert next(r for r in current if r.address == address).image_spans == ((address, new_end),)
+    assert next(r for r in current if r.address == successor).image_spans[0][0] >= new_end
 
 
 @pytest.mark.parametrize('address', EXTENTS)
