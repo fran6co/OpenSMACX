@@ -168,10 +168,22 @@ def check_layout(root: Path, *, units=None, compiler=None, command_for=None, pro
         from .layout_witness import missing_layout_witnesses
         groups = defaultdict(list)
         for name in classes:
-            for flags in settings.flags_for(hosts[name]["unit"]):
+            host_unit = hosts[name]["unit"]
+            if host_unit is None:
+                # No literal include path means there is no safe TU in which
+                # to run a same-TU probe. Preserve the gap as UNKNOWN; never
+                # inject a declaration into an unrelated source file.
+                applicable_flags = sorted({flags for trials in trials_by_unit.values()
+                                           for flags in trials})
+                supplements.extend({"class_name": name, "unit": None, "flags": list(flags),
+                                    "result": Result.UNKNOWN,
+                                    "reason": "no literal-include host for a same-TU declaration witness"}
+                                   for flags in applicable_flags)
+                continue
+            for flags in trials_by_unit[host_unit]:
                 if flags in observed_flags[name]:
                     continue
-                unit = hosts[name]["unit"]
+                unit = host_unit
                 saved = baselines.get((unit, flags))
                 if saved is None or name not in saved[2]:
                     supplements.append({"class_name": name, "unit": unit, "flags": list(flags),

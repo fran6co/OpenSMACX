@@ -176,7 +176,10 @@ def check_requirements(inventory, candidate):
                       if "generated_coverage" in reports["binary"] else grids["binary"])
     absences = {}
     for row in reports["layout"].get("coverage", []):
-        if row.get("observation") not in ("no_complete_definition", "not_emitted"):
+        # Ordinary non-emission is an unknown product observation, not a
+        # controlled declaration-absence witness. Only the latter may close
+        # declaration coverage, and it still cannot satisfy a layout row.
+        if row.get("observation") != "no_complete_definition":
             continue
         name, unit, flags, witness = (row.get(key) for key in ("class_name", "unit", "flags", "witness"))
         units, trials, _ = grids["layout"]
