@@ -2,12 +2,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-struct Map { unsigned char bytes[44]; };
+/* SOURCE MAP DECLARATIONS */
 struct Console { int faction_id_; };
 Console ConsoleGlobal;
 
 namespace NetDaemonSyncWire {
-struct MapRouteCapture { Map *tiles; size_t capacity; size_t first; };
+/* SOURCE MAP CAPTURE */
 uint32_t current_faction();
 bool copy_out(int16_t, int, int, int, size_t, size_t, void *, size_t,
               const MapRouteCapture &, uint32_t [18]);
@@ -16,7 +16,7 @@ bool copy_in(int16_t, int, int, int, size_t, size_t, const void *, size_t,
 void commit_rules(int16_t);
 bool copy_nonrule_chunk(int16_t, int, int, int, size_t, size_t,
                         unsigned char *, size_t, bool, uint32_t [18],
-                        Map *, size_t, size_t);
+                        Map *, uint32_t);
 }
 namespace NetDaemonSyncRules {
 bool copy_rule_wire_chunk(int16_t, size_t, unsigned char *, size_t, bool,
@@ -37,7 +37,7 @@ static int last_a2, last_a3, last_a4;
 static size_t last_payload;
 static uint32_t *last_diplomacy;
 static Map *last_tiles;
-static size_t last_capacity, last_first;
+static uint32_t last_map_offset;
 
 namespace NetDaemonSyncRules {
 bool copy_rule_wire_chunk(int16_t opcode, size_t offset, unsigned char *bytes,
@@ -62,14 +62,14 @@ namespace NetDaemonSyncWire {
 bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
                         size_t payload, size_t offset, unsigned char *bytes,
                         size_t count, bool direction, uint32_t diplomacy[18],
-                        Map *tiles, size_t capacity, size_t first) {
+                        Map *tiles, uint32_t byte_offset) {
     ++nonrule_calls;
     last_opcode = opcode;
     last_a2 = a2; last_a3 = a3; last_a4 = a4;
     last_payload = payload; last_offset = offset; last_bytes = bytes;
     last_count = count; last_direction = direction;
     last_diplomacy = diplomacy; last_tiles = tiles;
-    last_capacity = capacity; last_first = first;
+    last_map_offset = byte_offset;
     return true;
 }
 }
@@ -86,7 +86,7 @@ static void reset_calls() {
     last_payload = 0;
     last_diplomacy = 0;
     last_tiles = 0;
-    last_capacity = last_first = 0;
+    last_map_offset = 0;
 }
 
 int main() {
@@ -94,8 +94,7 @@ int main() {
     Map tiles[12];
     MapRouteCapture capture;
     capture.tiles = tiles;
-    capture.capacity = 12;
-    capture.first = 5;
+    capture.byte_offset = 5 * 44u;
     uint32_t diplomacy[18];
     unsigned char packet[32];
     ConsoleGlobal.faction_id_ = 6;
@@ -136,7 +135,7 @@ int main() {
     assert(last_payload == 0x4567 && last_offset == 13);
     assert(last_bytes == packet + 2 && last_count == 6 && !last_direction);
     assert(last_diplomacy == diplomacy && last_tiles == tiles);
-    assert(last_capacity == 12 && last_first == 5);
+    assert(last_map_offset == 5 * 44u);
 
     reset_calls();
     assert(copy_in(0x8E, 21, 22, 23, 0x7654, 15,
@@ -146,7 +145,7 @@ int main() {
     assert(last_payload == 0x7654 && last_offset == 15);
     assert(last_bytes == packet + 1 && last_count == 5 && last_direction);
     assert(last_diplomacy == diplomacy && last_tiles == tiles);
-    assert(last_capacity == 12 && last_first == 5);
+    assert(last_map_offset == 5 * 44u);
     return 0;
 }
 

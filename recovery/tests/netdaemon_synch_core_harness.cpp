@@ -18,7 +18,6 @@ struct BaseSecretProject { int words_[64]; };
 
 typedef int BOOL;
 #define __cdecl
-struct Map { unsigned char bytes[44]; };
 /* MAP STORAGE DECLARATIONS */
 struct Veh { int16_t x, y; uint32_t state; uint16_t flags; int16_t proto_id;
     uint16_t unk_1; uint8_t faction_id, year_end_lurking, dmg_incurred;
@@ -108,10 +107,10 @@ static int copy_in_count = 0, copy_out_count = 0;
 static size_t in_offsets[16], in_lengths[16], out_offsets[16], out_lengths[16];
 static std::vector< std::vector<unsigned char> > sent;
 static Map *out_map_tiles[16], *in_map_tiles[16];
-static size_t out_map_capacity[16], in_map_capacity[16];
-static size_t out_map_first[16], in_map_first[16];
+static size_t out_map_offset[16], in_map_offset[16];
 static Map *mutate_map_on_send = 0;
 static Map *mutate_map_on_display = 0;
+static Map *mutate_map_on_allocate = 0;
 static int mutate_longitude_on_send = 0;
 static int mutate_latitude_on_send = 0;
 static int mutate_longitude_on_display = 0;
@@ -125,8 +124,7 @@ bool copy_out(int16_t opcode, int, int, int, size_t, size_t offset,
     assert(copy_out_count < 16);
     out_offsets[copy_out_count] = offset; out_lengths[copy_out_count] = n;
     out_map_tiles[copy_out_count] = map_capture.tiles;
-    out_map_capacity[copy_out_count] = map_capture.capacity;
-    out_map_first[copy_out_count] = map_capture.first;
+    out_map_offset[copy_out_count] = map_capture.byte_offset;
     ++copy_out_count;
     if (opcode == 0x16 && n == sizeof last_diplomacy_wire)
         memcpy(last_diplomacy_wire, diplomacy, n);
@@ -142,8 +140,7 @@ bool copy_in(int16_t opcode, int, int, int, size_t, size_t offset,
     assert(copy_in_count < 16);
     in_offsets[copy_in_count] = offset; in_lengths[copy_in_count] = n;
     in_map_tiles[copy_in_count] = map_capture.tiles;
-    in_map_capacity[copy_in_count] = map_capture.capacity;
-    in_map_first[copy_in_count] = map_capture.first;
+    in_map_offset[copy_in_count] = map_capture.byte_offset;
     ++copy_in_count;
     if (n && callback_payload_fill >= 0)
         assert(static_cast<const unsigned char *>(bytes)[0] ==
@@ -229,6 +226,11 @@ void *mem_get(size_t length) {
     void *p = malloc(length);
     assert(p != 0);
     memset(p, 0xA5, length);
+    if (mutate_map_on_allocate) {
+        MapTiles = mutate_map_on_allocate;
+        MapLongitude = 32;
+        mutate_map_on_allocate = 0;
+    }
     return p;
 }
 void NetDaemon::send_message(char *message, unsigned long length, int target) {
@@ -273,6 +275,7 @@ static void reset() {
     map_shutdown_count = map_init_count = path_init_count = 0;
     copy_in_count = copy_out_count = 0; callback_payload_fill = -1;
     mutate_map_on_send = mutate_map_on_display = 0;
+    mutate_map_on_allocate = 0;
     mutate_longitude_on_send = mutate_latitude_on_send = 0;
     mutate_longitude_on_display = 0;
     fail_copy = false; active_packet_bytes = 0;
@@ -577,10 +580,9 @@ int main() {
     mutate_longitude_on_send = 32; mutate_latitude_on_send = 16;
     d.synch(0x30, 15, 0, 0, 0, 1, 0x2101);
     assert(copy_out_count == 3 && sent.size() == 3);
-    assert(out_map_tiles[0] == MapFixture && out_map_first[0] == 3840);
-    assert(out_map_tiles[1] == MapFixtureMutated && out_map_first[1] == 1920);
-    assert(out_map_tiles[2] == MapFixtureMutated && out_map_first[2] == 1920);
-    assert(out_map_capacity[0] == 256 && out_map_capacity[1] == 256);
+    assert(out_map_tiles[0] == MapFixture && out_map_offset[0] == 3840 * 44u);
+    assert(out_map_tiles[1] == MapFixtureMutated && out_map_offset[1] == 1920 * 44u);
+    assert(out_map_tiles[2] == MapFixtureMutated && out_map_offset[2] == 1920 * 44u);
 
     // Receive selects the map destination before synch_display. A display
     // callback changing globals must not redirect this chunk's scatter.
@@ -595,7 +597,95 @@ int main() {
     mutate_longitude_on_display = 32;
     d.synch(0x30, 15, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
     assert(copy_in_count == 1 && in_map_tiles[0] == MapFixture);
-    assert(in_map_first[0] == 3840 && in_map_capacity[0] == 256);
+    assert(in_map_offset[0] == 3840 * 44u);
+
+    // Last-strip payload rows include the remainder, but the native address
+    // retains the quotient saved before that adjustment. These hooks observe
+    // the actual selection and chunk math without dereferencing byte views.
+    reset();
+    MapArea = 128; MapLongitudeBounds = 8; MapLatitudeBounds = 17;
+    MapLongitude = 4; MapTiles = MapFixture;
+    d.synch(0x30, 15, 0, 0, 0, 1, 0x2101);
+    assert(copy_out_count == 1 && out_map_offset[0] == 15 * 4 * 44u);
+    assert(out_lengths[0] == 2 * 4 * 44u);
+
+    // Native address selection also precedes packet allocation. A test-owned
+    // allocator hook changes globals while both old/new fixtures remain live.
+    reset();
+    MapLatitudeBounds = 17; MapLongitudeBounds = 8; MapLongitude = 4;
+    MapTiles = MapFixture; mutate_map_on_allocate = MapFixtureMutated;
+    d.synch(0x30, 15, 0, 0, 0, 1, 0x2101);
+    assert(MapTiles == MapFixtureMutated && MapLongitude == 32);
+    assert(out_map_tiles[0] == MapFixture && out_map_offset[0] == 15 * 4 * 44u);
+
+    reset();
+    MapLatitudeBounds = 33; MapLongitudeBounds = 64; MapLongitude = 32;
+    MapTiles = MapFixture;
+    mutate_map_on_send = MapFixtureMutated;
+    mutate_longitude_on_send = 16; mutate_latitude_on_send = 16;
+    d.synch(0x30, 15, 0, 0, 0, 1, 0x2101);
+    assert(copy_out_count == 3 && out_lengths[2] == 0x80);
+    assert(out_map_tiles[0] == MapFixture && out_map_offset[0] == 2 * 15 * 32 * 44u);
+    assert(out_map_tiles[1] == MapFixtureMutated && out_map_offset[1] == 2 * 15 * 16 * 44u);
+    assert(out_map_offset[2] == out_map_offset[1]);
+
+    reset();
+    MapLatitudeBounds = 17; MapLongitudeBounds = 8; MapLongitude = 4;
+    MapTiles = MapFixture;
+    incoming.assign(0x24 + 0x800, 0x5C); op = 0x30; ix = 0;
+    memcpy(&incoming[0] + 0x10, &op, 2); memcpy(&incoming[0] + 0x12, &ix, 2);
+    active_packet_bytes = &incoming[0];
+    mutate_map_on_display = MapFixtureMutated; mutate_longitude_on_display = 32;
+    d.synch(0x30, 15, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(in_map_tiles[0] == MapFixture && in_map_offset[0] == 15 * 4 * 44u);
+    assert(in_lengths[0] == 2 * 4 * 44u);
+
+    reset();
+    MapArea = 128; MapTiles = MapFixture;
+    mutate_map_on_send = MapFixtureMutated;
+    d.synch(0x04, 0, 0, 0, 0, 1, 0x2101);
+    assert(copy_out_count == 3 && out_lengths[2] == 0x600);
+    assert(out_map_tiles[0] == MapFixture && out_map_tiles[1] == MapFixtureMutated);
+    assert(out_map_offset[0] == 0 && out_map_offset[1] == 0);
+
+    reset();
+    MapArea = 128; MapTiles = MapFixture;
+    incoming.assign(0x24 + 0x800, 0x5C); op = 0x04; ix = 0;
+    memcpy(&incoming[0] + 0x10, &op, 2); memcpy(&incoming[0] + 0x12, &ix, 2);
+    active_packet_bytes = &incoming[0]; mutate_map_on_display = MapFixtureMutated;
+    d.synch(0x04, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(in_map_tiles[0] == MapFixture && in_map_offset[0] == 0);
+
+    // Both multiplication and displacement arithmetic retain low DWORDs.
+    // Scalar/hook checks avoid dereferencing invalid or neighboring storage.
+    int quotient = 0;
+    MapArea = 0x40000001u;
+    assert(netdaemon_sync_payload_size(0x04, 0, 0, quotient) == 44);
+    MapArea = 0x20000000u;
+    assert(netdaemon_sync_payload_size(0x04, 0, 0, quotient) == (-2147483647 - 1));
+    MapLongitudeBounds = 0x40000002; MapLatitudeBounds = 32;
+    assert(netdaemon_sync_payload_size(0x30, 0, 0, quotient) == 88 && quotient == 2);
+    MapLongitudeBounds = -2; MapLatitudeBounds = 17;
+    assert(netdaemon_sync_payload_size(0x30, 15, 0, quotient) == -88 && quotient == 1);
+    MapLongitude = 0x40000000u;
+    assert(capture_map_route(0x30, -1, 1).byte_offset == 0);
+    MapLongitude = 4;
+    assert(capture_map_route(0x30, -1, 1).byte_offset == 0xFFFFFF50u);
+    reset();
+    MapLatitudeBounds = -16; MapLongitudeBounds = 2; MapTiles = MapFixture;
+    incoming.assign(0x24 + 0x800, 0x5C); ix = 0;
+    memcpy(&incoming[0] + 0x12, &ix, 2);
+    d.synch(0x30, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(copy_in_count == 1 && in_lengths[0] == 0xFFFFFFD4u);
+    reset();
+    MapArea = 0x3FFFFFFFu;
+    d.synch(0x04, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(copy_in_count == 1 && in_lengths[0] == 0xFFFFFFD4u);
+    reset();
+    MapLatitudeBounds = 16; ix = -1;
+    memcpy(&incoming[0] + 0x12, &ix, 2);
+    d.synch(0x30, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+    assert(copy_in_count == 1 && in_offsets[0] == 0xFFFFF800u && in_lengths[0] == 0x800);
 
     // Exhaust all eight combinations of the rule bit, scripted-turn bit, and
     // faction-equality predicate. The singleton daemon lock is held for this

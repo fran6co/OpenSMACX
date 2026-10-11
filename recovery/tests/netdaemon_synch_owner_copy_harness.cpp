@@ -12,7 +12,6 @@ static const int MaxVehProtoNum = 512;
 static const int MaxBaseNum = 512;
 static const int MaxContinentNum = 128;
 static const int MaxRankingHistoryTurns = 1000;
-struct Map { unsigned char bytes[44]; };
 /* MAP STORAGE DECLARATIONS */
 struct Continent { unsigned char bytes[28]; };
 struct SocialCategory { uint32_t models_[4]; };
@@ -164,11 +163,11 @@ static void route_roundtrip(int16_t opcode, int a2, int a3,
     const size_t effective_offset = mov_overwrites_offset ? 0 : offset;
     fill(packet, count, 0xA5);
     assert(NetDaemonSyncWire::copy_nonrule_chunk(opcode, a2, a3, 0,
-        payload_size, offset, packet, count, false, 0, 0, 0, 0));
+        payload_size, offset, packet, count, false, 0, 0, 0));
     assert(memcmp(packet, expected, count) == 0);
     fill(packet, count, 0xB6);
     assert(NetDaemonSyncWire::copy_nonrule_chunk(opcode, a2, a3, 0,
-        payload_size, offset, packet, count, true, 0, 0, 0, 0));
+        payload_size, offset, packet, count, true, 0, 0, 0));
     for (size_t i = 0; i < count; ++i) assert(expected[i] == 0xB6);
     (void)effective_offset;
 }
@@ -189,7 +188,7 @@ static void metadata_routes() {
             owner[i] = static_cast<unsigned char>(i * 17u + 9u);
         memcpy(expected, owner, sizeof expected);
         assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
-            0xA9C, 0, packet, sizeof packet, false, 0, 0, 0, 0));
+            0xA9C, 0, packet, sizeof packet, false, 0, 0, 0));
         assert(memcmp(packet, expected, sizeof packet) == 0);
         assert(memcmp(owner, expected, sizeof expected) == 0);
 
@@ -199,16 +198,16 @@ static void metadata_routes() {
             packet[i] = static_cast<unsigned char>(i * 23u + 0x41u);
         memcpy(expected, packet, sizeof packet);
         assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
-            0xA9C, 0, packet, sizeof packet, true, 0, 0, 0, 0));
+            0xA9C, 0, packet, sizeof packet, true, 0, 0, 0));
         assert(memcmp(owner, expected, sizeof expected) == 0);
         for (size_t chunk = 0; chunk < 2; ++chunk) {
             const size_t offset = chunk * 0x800;
             const size_t count = chunk == 0 ? 0x800 : 0x29C;
             assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
-                0xA9C, offset, packet + offset, count, true, 0, 0, 0, 0));
+                0xA9C, offset, packet + offset, count, true, 0, 0, 0));
             memset(packet + offset, 0, count);
             assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
-                0xA9C, offset, packet + offset, count, false, 0, 0, 0, 0));
+                0xA9C, offset, packet + offset, count, false, 0, 0, 0));
             assert(memcmp(packet + offset, expected + offset, count) == 0);
         }
         assert(memcmp(owner, expected, sizeof expected) == 0);
@@ -233,15 +232,66 @@ static void metadata_routes() {
                 assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
                     0xA9C, receive ? destination : source,
                     owner + (receive ? source : destination), 0x80,
-                    receive != 0, 0, 0, 0, 0));
+                    receive != 0, 0, 0, 0));
                 assert(memcmp(owner, expected, sizeof expected) == 0);
             }
         }
     }
 }
 
+static void map_allocation_routes() {
+    Map allocation[256];
+    Map redirected[256];
+    MapTiles = redirected;
+    MapArea = 1;
+    unsigned char *const owner = reinterpret_cast<unsigned char *>(&allocation);
+    unsigned char expected[sizeof allocation];
+    unsigned char packet[0x800];
+    memset(redirected, 0xD4, sizeof redirected);
+    const int16_t opcodes[] = {0x04, 0x30};
+    for (size_t op = 0; op < 2; ++op) {
+        const uint32_t base = op == 0 ? 0 : 8 * 44u;
+        for (size_t i = 0; i < sizeof allocation; ++i)
+            owner[i] = static_cast<unsigned char>(i * 11u + 0x19u);
+        memcpy(expected, owner, sizeof expected);
+        // Native selects the captured allocation, not the newly rebound
+        // global. A chunk crossing records and the advertised payload stays
+        // within this real fixture's lifetime/extent; MapArea is not capacity.
+        assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
+            44, 0x800, packet, sizeof packet, false, 0, allocation, base));
+        assert(memcmp(packet, owner + base + 0x800, sizeof packet) == 0);
+        memset(packet, 0x83, sizeof packet);
+        memset(expected + base + 0x800, 0x83, sizeof packet);
+        assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
+            44, 0x800, packet, sizeof packet, true, 0, allocation, base));
+        assert(memcmp(owner, expected, sizeof expected) == 0);
+        for (int receive = 0; receive < 2; ++receive) {
+            for (int reverse = 0; reverse < 2; ++reverse) {
+                const uint32_t source = base + (reverse ? 0x480 : 0x440);
+                const uint32_t destination = base + (reverse ? 0x440 : 0x480);
+                memcpy(expected, owner, sizeof expected);
+                memmove(expected + destination, expected + source, 0x100);
+                assert(NetDaemonSyncWire::copy_nonrule_chunk(opcodes[op], 0, 0, 0,
+                    44, (receive ? destination : source) - base,
+                    owner + (receive ? source : destination), 0x100,
+                    receive != 0, 0, allocation, base));
+                assert(memcmp(owner, expected, sizeof expected) == 0);
+            }
+        }
+        for (size_t i = 0; i < sizeof redirected; ++i)
+            assert(reinterpret_cast<unsigned char *>(&redirected)[i] == 0xD4);
+    }
+    // Native displacement addition wraps before forming the allocation view.
+    // The wrapped result is zero; no out-of-allocation address is executed.
+    assert(NetDaemonSyncWire::copy_nonrule_chunk(0x30, 0, 0, 0,
+        44, 44, packet, 44, false, 0, allocation, 0xFFFFFFD4u));
+    assert(memcmp(packet, owner, 44) == 0);
+    MapTiles = 0;
+}
+
 int main() {
     metadata_routes();
+    map_allocation_routes();
     Map tiles[32];
     Map *captured = tiles;
     MapTiles = tiles;
@@ -348,7 +398,7 @@ int main() {
         fill(player_record_chunk, count, 0xA5);
         assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 4, 0, 0,
             0x20CC, offset, player_record_chunk, count, false,
-            0, captured, 32, 0));
+            0, captured, 0));
         assert(memcmp(player_record_chunk, player_record_expected + offset,
                       count) == 0);
     }
@@ -361,7 +411,7 @@ int main() {
         memcpy(player_record_expected + offset, player_record_chunk, count);
         assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 4, 0, 0,
             0x20CC, offset, player_record_chunk, count, true,
-            0, captured, 32, 0));
+            0, captured, 0));
     }
     assert(memcmp(player_record_bytes, player_record_expected,
                   sizeof player_record_expected) == 0);
@@ -380,14 +430,14 @@ int main() {
             static_cast<unsigned char>((i * 13u + 0x39u) & 0xFFu);
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 0, 0, 0,
         0x20CC, crossing_offset, player_record_chunk, crossing_count,
-        false, 0, captured, 32, 0));
+        false, 0, captured, 0));
     for (size_t i = 0; i < crossing_count; ++i)
         assert(player_record_chunk[i] ==
             static_cast<unsigned char>((i * 13u + 0x39u) & 0xFFu));
     fill(player_record_chunk, crossing_count, 0xB6);
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 0, 0, 0,
         0x20CC, crossing_offset, player_record_chunk, crossing_count,
-        true, 0, captured, 32, 0));
+        true, 0, captured, 0));
     for (size_t i = 0; i < crossing_count; ++i)
         assert(all_player_data[crossing_offset + i] == 0xB6);
 
@@ -399,14 +449,14 @@ int main() {
     memmove(alias_expected + 0x180, alias_expected + 0x100, 0x100);
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 0, 0, 0,
         0x20CC, 0x180, all_player_data + 0x100, 0x100,
-        true, 0, captured, 32, 0));
+        true, 0, captured, 0));
     assert(memcmp(all_player_data, alias_expected, sizeof alias_expected) == 0);
 
     memcpy(alias_expected, all_player_data, sizeof alias_expected);
     memmove(alias_expected + 0x180, alias_expected + 0x100, 0x100);
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x06, 0, 0, 0,
         0x20CC, 0x100, all_player_data + 0x180, 0x100,
-        false, 0, captured, 32, 0));
+        false, 0, captured, 0));
     assert(memcmp(all_player_data, alias_expected, sizeof alias_expected) == 0);
 
     // Native opcode 0x17/23 shares PlayerData's base with 0x06/6 but transfers
@@ -414,18 +464,18 @@ int main() {
     PlayersData[3].flags = 0x12345678u;
     unsigned char player_flags[4];
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x17, 3, 0, 0, 4,
-        0, player_flags, sizeof player_flags, false, 0, captured, 32, 0));
+        0, player_flags, sizeof player_flags, false, 0, captured, 0));
     assert(memcmp(player_flags, &PlayersData[3].flags, 4) == 0);
     memset(player_flags, 0xA4, sizeof player_flags);
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x17, 3, 0, 0, 4,
-        0, player_flags, sizeof player_flags, true, 0, captured, 32, 0));
+        0, player_flags, sizeof player_flags, true, 0, captured, 0));
     assert(PlayersData[3].flags == 0xA4A4A4A4u);
 
     // 0x0E/14 is one 0x34-byte VehPrototype view within the declared array.
     fill(reinterpret_cast<unsigned char *>(&VehPrototypes[7]), 0x34, 0x6D);
     unsigned char proto[0x34];
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x0E, 7, 0, 0, 0x34,
-        0, proto, sizeof proto, false, 0, captured, 32, 0));
+        0, proto, sizeof proto, false, 0, captured, 0));
     assert(proto[0] == 0x6D && proto[0x33] == 0x6D);
 
     // Opcode 0x24/36 round-trips its six typed words and opaque observed tail.
@@ -436,13 +486,13 @@ int main() {
     unsigned char tail[0x98];
     fill(tail, sizeof tail, 0xCC);
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x24, 0, 0, 0, 0x98,
-        0, tail, sizeof tail, false, 0, captured, 32, 0));
+        0, tail, sizeof tail, false, 0, captured, 0));
     assert(tail[0] == static_cast<unsigned char>(objective));
     assert(tail[0x18] == GameWireOpaque_94B4D8[0]);
     assert(tail[0x97] == GameWireOpaque_94B4D8[0x7F]);
     fill(GameWireOpaque_94B4D8, sizeof GameWireOpaque_94B4D8, 0xCC);
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x24, 0, 0, 0, 0x98,
-        0, tail, sizeof tail, true, 0, captured, 32, 0));
+        0, tail, sizeof tail, true, 0, captured, 0));
     assert(ObjectiveReqVictory == objective);
     assert(GameWireOpaque_94B4D8[0] == 0xA7 &&
            GameWireOpaque_94B4D8[0x7F] ==
@@ -454,13 +504,13 @@ int main() {
         NetDaemonFileTransferPath[i] = static_cast<char>(i ^ 0x5C);
     unsigned char path_wire[0x104];
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x27, 0, 0, 0, 0x104,
-        0, path_wire, sizeof path_wire, false, 0, captured, 32, 0));
+        0, path_wire, sizeof path_wire, false, 0, captured, 0));
     assert(path_wire[0] == 0x5C &&
            path_wire[0x103] == static_cast<uint8_t>(0x103 ^ 0x5C));
     fill(reinterpret_cast<unsigned char *>(NetDaemonFileTransferPath),
          sizeof NetDaemonFileTransferPath, 0);
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x27, 0, 0, 0, 0x104,
-        0, path_wire, sizeof path_wire, true, 0, captured, 32, 0));
+        0, path_wire, sizeof path_wire, true, 0, captured, 0));
     assert(static_cast<unsigned char>(NetDaemonFileTransferPath[0]) == 0x5C &&
            static_cast<unsigned char>(NetDaemonFileTransferPath[0x103]) ==
                static_cast<unsigned char>(0x103 ^ 0x5C));
@@ -469,8 +519,7 @@ int main() {
     fill(reinterpret_cast<unsigned char *>(&tiles[8]), 8 * sizeof(Map), 0x82);
     unsigned char tile_packet[8 * sizeof(Map)];
     assert(NetDaemonSyncWire::copy_nonrule_chunk(0x30, 1, 0, 0,
-        sizeof tile_packet, 0, tile_packet, sizeof tile_packet, false, 0,
-        captured, 32, 8));
+        sizeof tile_packet, 0, tile_packet, sizeof tile_packet, false, 0, captured, 8 * sizeof(Map)));
     assert(tile_packet[0] == 0x82 && tile_packet[sizeof tile_packet - 1] == 0x82);
     return 0;
 }

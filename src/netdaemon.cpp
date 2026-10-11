@@ -6712,15 +6712,6 @@ static size_t overlap_copy(size_t request_offset, unsigned char *packet,
     return length;
 }
 
-template <class T>
-static size_t member_copy(size_t request_offset, unsigned char *packet,
-                          size_t request_size, size_t owner_offset,
-                          T &owner, bool packet_to_owner) {
-    return overlap_copy(request_offset, packet, request_size, owner_offset,
-        reinterpret_cast<unsigned char *>(&owner), sizeof owner,
-        packet_to_owner);
-}
-
 // The saved diplomacy words are one native 0x48-byte local tuple. Pair IDs
 // are captured by NetDaemon::synch before callbacks and retained through the
 // epilogue; they must not be reconstructed from a later callback-modified
@@ -6846,8 +6837,7 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
                         unsigned char *packet, size_t count,
                         bool packet_to_owner, uint32_t diplomacy_wire[18],
                         Map *captured_map_tiles,
-                        size_t captured_map_tile_capacity,
-                        size_t captured_map_tile_first) {
+                        uint32_t captured_map_tile_offset) {
     (void)a3;
     (void)a4;
     (void)payload_size;
@@ -6923,6 +6913,12 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
     case 0x02: case 0x1002:
         NATIVE_COPY(&MapStorage, offsetof(MapStorageWindow, metadata_));
         return true;
+    // The loaded pointer owns the dynamic tile allocation. Native selection
+    // uses byte offsets, without consulting the live metadata for its capacity.
+    // Effects beyond that allocation remain unresolved.
+    case 0x04: NATIVE_COPY(captured_map_tiles, 0); return true;
+    case 0x30: NATIVE_COPY(captured_map_tiles, captured_map_tile_offset);
+        return true;
     case 0x05: NATIVE_COPY(&Continents, 0); return true;
     case 0x06: case 0x17:
         NATIVE_ARRAY(&PlayersData, 0, a2, 0x20CC); return true;
@@ -6978,42 +6974,17 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
 #undef NATIVE_COPY_MOV
 #undef NATIVE_COPY
 
-    // Keep captured map arrays and the local diplomacy tuple
-    // on their specialized paths until their full owner/capture semantics are
-    // recovered. Their existing range handling is not generalized here.
+    // The local diplomacy tuple retains its specialized range handling.
     if (offset > payload_size || count > payload_size - offset) return false;
     if (count == 0) return true;
     size_t copied = 0;
     switch (opcode) {
-    case 0x04: { // decimal 4: MapTiles objects, never the pointer cell
-        if (payload_size % sizeof(Map) != 0 || !captured_map_tiles ||
-            payload_size / sizeof(Map) > captured_map_tile_capacity)
-            return false;
-        const size_t tile_count = payload_size / sizeof(Map);
-        for (size_t i = 0; i < tile_count; ++i)
-            copied += member_copy(offset, packet, count,
-                i * sizeof(Map), captured_map_tiles[i], packet_to_owner);
-        break;
-    }
     case 0x16: // decimal 22: caller supplies the saved local 18-dword tuple
         if (!diplomacy_wire) return false;
         copied += overlap_copy(offset, packet, count, 0,
             reinterpret_cast<unsigned char *>(diplomacy_wire),
             18 * sizeof diplomacy_wire[0], packet_to_owner);
         break;
-    case 0x30: { // decimal 48: row rectangle in the typed MapTiles array
-        if (payload_size % sizeof(Map) != 0 || !captured_map_tiles ||
-            captured_map_tile_first > captured_map_tile_capacity ||
-            payload_size / sizeof(Map) >
-                captured_map_tile_capacity - captured_map_tile_first)
-            return false;
-        const size_t tile_count = payload_size / sizeof(Map);
-        for (size_t i = 0; i < tile_count; ++i)
-            copied += member_copy(offset, packet, count,
-                i * sizeof(Map), captured_map_tiles[captured_map_tile_first + i],
-                packet_to_owner);
-        break;
-    }
     default:
         return false;
     }
@@ -7027,16 +6998,15 @@ namespace NetDaemonSyncWire {
     uint32_t current_faction();
     struct MapRouteCapture {
         Map *tiles;
-        size_t capacity;
-        size_t first;
+        uint32_t byte_offset;
     };
     // Gather/scatter exactly [offset, offset+length) in the opcode's native
     // wire view. For rules receive, scatter writes the source-owned shared
     // native staging block; commit_rules is invoked only on the last chunk.
     // Opcode 0 is one native byte view of GameDataStateStorage. Contiguous
-    // owner routes copy that aggregate directly; split map/diplomacy views keep
-    // their independently evidenced ownership and capture semantics.
-    // All calls resolve live fields at call time.
+    // owner routes copy that aggregate directly; dynamic map routes retain
+    // their captured allocation pointer and native byte displacement.
+    // Fixed owners use current bytes; map routes use the supplied capture.
     bool copy_out(int16_t opcode, int a2, int a3, int a4,
                   size_t payload_size, size_t offset, void *packet_bytes,
                   size_t length,
@@ -7065,24 +7035,34 @@ namespace NetDaemonSyncWire {
 // RECOVERY_OBJECT: v1 0x0093AD8C _NetDaemonRulesSyncStaging
 static unsigned char NetDaemonRulesSyncStaging[0x1920];
 
-static int native_map_sync_rows(int latitude, int a2) {
+static int native_map_sync_rows(int latitude, int a2, int &map_strip_quotient) {
     // x86's add-sign-mask/sar sequence is signed division toward zero here.
     const int q = latitude / 16;
+    map_strip_quotient = q;
     return a2 == 0xF ? latitude - q * 15 : q;
 }
 
 static NetDaemonSyncWire::MapRouteCapture capture_map_route(
-    int16_t opcode, int a2, int map_rows) {
+    int16_t opcode, int a2, int map_strip_quotient) {
     NetDaemonSyncWire::MapRouteCapture captured;
-    captured.tiles = MapTiles;
-    // MapArea is the actual MapTiles element extent; payload_size was
-    // calculated once at method entry and is not a substitute after callbacks.
-    captured.capacity = static_cast<size_t>(MapArea);
-    captured.first = 0;
+    captured.tiles = 0;
+    captured.byte_offset = 0;
+    if (opcode == 0x04 || opcode == 0x30) captured.tiles = MapTiles;
     if (opcode == 0x30) {
-        captured.first = static_cast<size_t>(map_rows * a2) * MapLongitude;
+        // The first dispatch saves latitude/16 before enlarging the final
+        // strip's payload. Address selection uses that saved quotient and
+        // reloads the row stride/pointer for every outgoing chunk, or once
+        // before the receive display callback. IMUL/LEA retain low DWORDs.
+        captured.byte_offset = static_cast<uint32_t>(map_strip_quotient) *
+            static_cast<uint32_t>(a2) * MapLongitude * 44u;
     }
     return captured;
+}
+
+static int native_sync_signed_word(uint32_t bits) {
+    int32_t value;
+    memcpy(&value, &bits, sizeof value);
+    return value;
 }
 
 // Uses the actual NetDaemon declaration from netdaemon.h: lock_state_ and
@@ -7191,10 +7171,10 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
                         unsigned char *packet, size_t count,
                         bool packet_to_owner, uint32_t diplomacy_wire[18],
                         Map *captured_map_tiles,
-                        size_t captured_map_tile_capacity,
-                        size_t captured_map_tile_first);
+                        uint32_t captured_map_tile_offset);
 }
-static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3);
+static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3,
+                                        int &map_strip_quotient);
 
 uint32_t NetDaemonSyncWire::current_faction() {
     return static_cast<uint32_t>(ConsoleGlobal.faction_id_);
@@ -7210,7 +7190,7 @@ bool NetDaemonSyncWire::copy_out(int16_t opcode, int a2, int a3, int a4,
     return copy_nonrule_chunk(opcode, a2, a3, a4,
         payload_size,
         offset, bytes, length, false, diplomacy_wire, map_capture.tiles,
-        map_capture.capacity, map_capture.first);
+        map_capture.byte_offset);
 }
 
 bool NetDaemonSyncWire::copy_in(int16_t opcode, int a2, int a3, int a4,
@@ -7225,7 +7205,7 @@ bool NetDaemonSyncWire::copy_in(int16_t opcode, int a2, int a3, int a4,
     return copy_nonrule_chunk(opcode, a2, a3, a4,
         payload_size,
         offset, bytes, length, true, diplomacy_wire, map_capture.tiles,
-        map_capture.capacity, map_capture.first);
+        map_capture.byte_offset);
 }
 
 void NetDaemonSyncWire::commit_rules(int16_t opcode) {
@@ -7233,12 +7213,13 @@ void NetDaemonSyncWire::commit_rules(int16_t opcode) {
                                             NetDaemonRulesSyncStaging);
 }
 
-static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3) {
+static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3,
+                                        int &map_strip_quotient) {
     switch (opcode) {
     case 0x00: return 0x398;                         // decimal 0
     case 0x01: case 0x10: return 1;                 // decimal 1, 16
     case 0x02: case 0x1002: return 0xA9C;           // decimal 2, 4098
-    case 0x04: return MapArea * 44;                  // decimal 4
+    case 0x04: return native_sync_signed_word(MapArea * 44u); // decimal 4
     case 0x05: return 0xE00;                        // decimal 5
     case 0x06: return 0x20CC;                       // decimal 6
     case 0x07: return 0x59C;                        // decimal 7
@@ -7265,8 +7246,10 @@ static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3) {
     case 0x29: return 0x1000;                       // decimal 41
     case 0x30: {
         const int latitude = MapLatitudeBounds;
-        const int rows = native_map_sync_rows(latitude, a2);
-        return (MapLongitudeBounds >> 1) * rows * sizeof(Map);
+        const int rows = native_map_sync_rows(latitude, a2, map_strip_quotient);
+        return native_sync_signed_word(
+            static_cast<uint32_t>(MapLongitudeBounds >> 1) *
+            static_cast<uint32_t>(rows) * 44u);
     }
     case 0x80: return 0xF4C;  // decimal 128
     case 0x81: return 0x13C;  // decimal 129
@@ -7416,17 +7399,19 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         NetDaemonSyncWire::gather_saved_diplomacy(
             saved_diplomacy_a, saved_diplomacy_b, diplomacy_wire);
 
-    const int size = netdaemon_sync_payload_size(opcode, a2, a3);
+    int map_strip_quotient = 0;
+    const int size = netdaemon_sync_payload_size(opcode, a2, a3, map_strip_quotient);
     // Native early exits for empty live vehicle/base tables.
-    if (size < 0) return;
+    // Map lengths instead retain the native signed chunk calculation even
+    // when low-DWORD products are negative; their invalid memory effects
+    // are not established by bounded host allocation controls.
+    if (size < 0 && opcode != 0x04 && opcode != 0x30) return;
 
     // Match signed x86 div/mod-by-0x800 rounding. Native ordinary inputs are
     // nonnegative; for negative values the arithmetic-shift path is retained.
     const int quotient = size / 0x800;
     const int remainder = size % 0x800;
     const int total_chunks = quotient + (remainder != 0 ? 1 : 0);
-    const int map_rows = opcode == 0x30
-        ? native_map_sync_rows(MapLatitudeBounds, a2) : 0;
     if (total_chunks <= 0) {
         // Native jumps directly to the epilogue; no callback or packet.
     } else if (outgoing) {
@@ -7434,7 +7419,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
             // Native resolves source pointers inside each loop iteration, so
             // send_message mutations can affect the next chunk's live owner.
             const NetDaemonSyncWire::MapRouteCapture map_capture =
-                capture_map_route(opcode, a2, map_rows);
+                capture_map_route(opcode, a2, map_strip_quotient);
             netdaemon_sync_send_chunk(*this, opcode, a2, a3, a4, flags, size,
                                       total_chunks, remainder, i, map_capture,
                                       diplomacy_wire);
@@ -7451,13 +7436,13 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         const size_t current_offset = initial_is_last && remainder
             ? (total_chunks == 1 ? 0 :
                static_cast<size_t>(total_chunks - 1) * 0x800)
-            : static_cast<size_t>(incoming_index) * 0x800;
+            : static_cast<uint32_t>(incoming_index) * 0x800u;
         // Native computes the destination address before synch_display; keep
-        // pointer/capacity selection stable across that callback for this
+        // allocation pointer/displacement stable across that callback for this
         // received packet, while reading the selected object's current bytes
         // only when the later compare/scatter instruction does so.
         const NetDaemonSyncWire::MapRouteCapture map_capture =
-            capture_map_route(opcode, a2, map_rows);
+            capture_map_route(opcode, a2, map_strip_quotient);
         const unsigned char *const notification_view =
             NetDaemonSyncWire::native_notification_view(opcode, a2, current_offset);
         const unsigned char *const notification_owner_view =
@@ -7484,7 +7469,7 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         if (!suppress_copy && !NetDaemonSyncWire::copy_in(
                 opcode, a2, a3, a4, static_cast<size_t>(size),
                 current_offset, packet + 0x24,
-                static_cast<size_t>(current_length), map_capture,
+                static_cast<uint32_t>(current_length), map_capture,
                 diplomacy_wire)) return;
 
         memcpy(&incoming_index, packet + 0x12, sizeof incoming_index);

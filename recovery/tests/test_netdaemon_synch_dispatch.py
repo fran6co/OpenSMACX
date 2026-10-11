@@ -115,8 +115,11 @@ def _compiler_names():
 
 
 def _compile(tmp_path, compiler, injection, expected=True):
+    from test_netdaemon_synch_host import _map_storage_extract, _struct_definition
     harness = (HERE.with_name("netdaemon_synch_dispatch_harness.cpp").read_text()
-               .replace("/* SOURCE EXTRACTS */", injection))
+               .replace("/* SOURCE EXTRACTS */", injection)
+               .replace("/* SOURCE MAP DECLARATIONS */", "typedef int BOOL;\n" + _map_storage_extract())
+               .replace("/* SOURCE MAP CAPTURE */", _struct_definition(NET.read_text(), "MapRouteCapture")))
     cpp = tmp_path / "dispatch.cpp"
     exe = tmp_path / "dispatch"
     cpp.write_text(harness)
