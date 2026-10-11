@@ -12,11 +12,12 @@ from match_recovery.model import Span
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.source import read_text
 
-from test_crt_eight_entry_bindings_oct10 import inputs, verify, row, repin, raw_offset
+from test_crt_eight_entry_bindings_oct10 import inputs as current_inputs, verify, row, repin, raw_offset
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = "src/vendor/vc6-runtime.recovery.h"
 BASE = "f144385fa"
+ADDITION = "602b8d5b4"
 UNIT = "build/intel/mt_obj/crt0dat.obj"
 MEMBER_SHA = "48be3defdca3560f39e7d593e4dd110cb2977874227eae911a707868f722b961"
 EXPECTED = (
@@ -24,6 +25,17 @@ EXPECTED = (
     (0x644ECF, 0x644ED8, "__unlockexit", 16, 2, "__unlock"),
     (0x644ED8, 0x644EF2, "__initterm", 18, 3, None),
 )
+
+
+@pytest.fixture(scope="module")
+def inputs(current_inputs):
+    # Verify this historical addition against fresh pinned binaries, not a
+    # replayed report. Later helper closure is tested in its own current scope.
+    installed, image, archive, imports = current_inputs
+    historical = parse_component(subprocess.check_output(
+        ["git", "show", ADDITION + ":" + SOURCE], cwd=ROOT, text=True))
+    assert replace(installed, bindings=installed.bindings[:len(historical.bindings)]) == historical
+    return historical, image, archive, imports
 
 
 def without_new(manifest):
@@ -39,7 +51,7 @@ def without_new(manifest):
 
 def test_only_three_bindings_added_without_changing_prior_source_or_claims():
     old = subprocess.check_output(["git", "show", BASE + ":" + SOURCE], cwd=ROOT, text=True)
-    text = (ROOT / SOURCE).read_text()
+    text = subprocess.check_output(["git", "show", ADDITION + ":" + SOURCE], cwd=ROOT, text=True)
     manifest = parse_component(text)
     assert without_new(manifest) == parse_component(old)
     assert parse_component(render_component(manifest)) == manifest

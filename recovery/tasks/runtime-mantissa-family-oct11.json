@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "ab4d03b7143c92a9278bf2816f6877a311c1aafb",
+  "editable_files": ["src/vendor/vc6-runtime.recovery.h", "recovery/tests/test_runtime_mantissa_family_oct11.py", "recovery/tests/test_runtime_exit_entries_oct11.py"],
+  "intent": "Bind the closed twelve-entry decimal/mantissa CRT helper family to independently bounded pinned LIBCMT members; preserve all existing original identities and claims. This is library correspondence, not recovered application source or original provider selection.",
+  "evidence": [
+    "Pinned IDA and Ghidra extents agree for seven intrncvt helpers64D3BF..64D5B9 and five mantold helpers64F383..64F524; complete decoding ends each interval with RET and no cross-boundary jump fragments.",
+    "Unique external COFF definitions at section offset0 and complete physical section lengths corroborate native extents. intrncvt member SHA2564df3d60d0e40f94ac3f89fc956858b79b648470927fb1c578c4fbec3fb3239b3; mantold member SHA256bbfa4484dcc4b5336e731b38daf8d0c190cc5328b761d8dfe75c8e86ec51a0a7; archive pin remains unchanged.",
+    "Original incoming calls from ld12cvt, strgtold12, ld12mul and within the family corroborate entries. The twelve ld12cvt helper references close; strgtold12 gains only its mtold12 target, retaining unrelated unknowns. All other previous original-check rows remain identical.",
+    "No implementation C sources found for these members. FLTINTRN.H is supporting declaration evidence only; do not fabricate application implementations or final-link/runtime equivalence. Existing exit-entry tests retain their historical scoped projection while new controls verify current closure and continuity."
+  ]
+}
