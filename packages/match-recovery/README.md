@@ -3271,6 +3271,12 @@ load-bearing fields:
 - Optional `data_sections`: complete initialized non-COMDAT COFF contributions,
   with exact member/section identity, original full span, static symbol offsets
   and independent evidence. These anchors assert no per-symbol extent or type.
+- Optional `code_sections`: complete ordinary executable, non-COMDAT COFF
+  contributions, each with `unit`, positive `section` ordinal, `section_name`,
+  `origin`, full `span` and independent `evidence`. A section is not a function:
+  its internal entry points and labels acquire no independent function extent.
+  A toolchain manifest requires at least one function, data or code binding;
+  `bindings` may be empty for a section-only interpretation.
 
 Toolchain function `unit` values are opaque canonical archive keys, not filesystem
 paths; parent-looking names are allowed, but controls, non-ASCII names and
@@ -3280,6 +3286,16 @@ flags, exact symbol inventory and relocation-free COFF/PE storage agree. Only
 passing contributions supply section bases for function-reference verification;
 unsupported or damaged contributions cannot resolve those references. This does
 not establish linked allocation, selection, object lifetimes or application coverage.
+
+Code contributions require exact complete-section bounds, ordinary executable
+flags, executable image backing, nonrelocation bytes and original HIGHLOW
+relocation shape. References resolve through independently placed same-member
+sections or existing explicit function, import and absolute bindings. Unresolved
+cross-member code-section symbols remain unknown; matching operands never supply
+their own targets. These placements do not supply targets to function checks.
+Reports keep `code_sections` and `code_section_counts` separate from function
+counts, with `callable` and `link_target` false. A passing contribution is not
+provider-selection, linked-preservation, application-function or runtime proof.
 
 The companion uses one `image` pin/address space and hexadecimal binding spans.
 It contains no archive location, extracted objects, derived per-member hashes,

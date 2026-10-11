@@ -376,9 +376,10 @@ class ToolchainManifest:
     component: Component
     archive_sha256: str
     license_evidence: str
-    bindings: tuple[VendorBinding | ToolchainBinding, ...]
+    bindings: tuple[VendorBinding | ToolchainBinding, ...] = ()
     absolute_symbols: tuple[AbsoluteSymbolBinding, ...] = ()
     data_sections: tuple[ToolchainDataSectionBinding, ...] = ()
+    code_sections: tuple[ToolchainCodeSectionBinding, ...] = ()
 
     def __post_init__(self):
         if (self.component.delivery != Delivery.TOOLCHAIN
@@ -387,8 +388,10 @@ class ToolchainManifest:
         require_digest(self.archive_sha256)
         require_text(self.license_evidence, "toolchain license/provenance evidence")
         identities = {item.origin.entity_id for item in self.bindings}
-        if not self.bindings or len(identities) != len(self.bindings):
-            raise ValueError("toolchain original bindings must be nonempty and unique")
+        if len(identities) != len(self.bindings):
+            raise ValueError("toolchain original bindings must be unique")
+        if not (self.bindings or self.data_sections or self.code_sections):
+            raise ValueError("toolchain manifest needs an original function or section binding")
         if len({item.symbol for item in self.bindings}) != len(self.bindings):
             raise ValueError("toolchain symbol bindings must be unique")
         if len({item.symbol for item in self.absolute_symbols}) != len(self.absolute_symbols):
@@ -402,31 +405,36 @@ class ToolchainManifest:
                 raise ValueError("toolchain function spans overlap")
         for item in self.data_sections:
             archive_member_identity(item.unit)
-        if len({(item.unit, item.section) for item in self.data_sections}) != len(self.data_sections):
-            raise ValueError("duplicate toolchain data-section binding")
-        if len({item.origin.entity_id for item in self.data_sections}) != len(self.data_sections):
-            raise ValueError("duplicate toolchain data-section identity")
-        if identities & {item.origin.entity_id for item in self.data_sections}:
-            raise ValueError("one original identity cannot be both a function and a data section")
-        origins = [item.origin for item in self.bindings] + [item.origin for item in self.data_sections]
+        section_rows = self.data_sections + self.code_sections
+        if len({(item.unit, item.section) for item in section_rows}) != len(section_rows):
+            raise ValueError("duplicate toolchain section placement")
+        section_ids = {item.origin.entity_id for item in section_rows}
+        if len(section_ids) != len(section_rows):
+            raise ValueError("duplicate toolchain section identity")
+        if identities & section_ids:
+            raise ValueError("one original identity cannot be both a function and a section")
+        origins = [item.origin for item in self.bindings] + [item.origin for item in section_rows]
         if any(origin.address_space != "pe:va" for origin in origins):
             raise ValueError("toolchain bindings require PE virtual addresses")
         if len({origin.image_sha256 for origin in origins}) != 1:
             raise ValueError("toolchain bindings must refer to one pinned image")
         spans = [span for item in self.bindings for span in item.spans]
-        spans.extend(item.span for item in self.data_sections)
+        spans.extend(item.span for item in section_rows)
         ordered_spans = sorted(spans)
         if any(left.end > right.start for left, right in zip(ordered_spans, ordered_spans[1:])):
             raise ValueError("toolchain function/data-section spans overlap")
 
     def to_dict(self) -> dict:
-        return {"schema_version": 1, "kind": "toolchain_component", **asdict(self)}
+        data = asdict(self)
+        if not self.code_sections:
+            data.pop("code_sections")
+        return {"schema_version": 1, "kind": "toolchain_component", **data}
 
     @classmethod
     def from_dict(cls, value: dict) -> ToolchainManifest:
         allowed = {"schema_version", "kind", "component", "archive_sha256",
-                   "license_evidence", "bindings", "absolute_symbols", "data_sections"}
-        required = allowed - {"data_sections"}
+                   "license_evidence", "bindings", "absolute_symbols", "data_sections", "code_sections"}
+        required = allowed - {"data_sections", "code_sections"}
         if not isinstance(value, dict) or not required <= set(value) or set(value) - allowed:
             raise ValueError(f"invalid toolchain manifest fields; expected required {sorted(required)}")
         if type(value["schema_version"]) is not int or value["schema_version"] != 1:
@@ -467,8 +475,16 @@ class ToolchainManifest:
                             for anchor in _list(item["symbols"], "data-section symbols"))
             data_sections.append(ToolchainDataSectionBinding(item["unit"], item["section"],
                                item["section_name"], origin, span, symbols, item["evidence"]))
+        code_sections = []
+        for item in _list(value.get("code_sections", []), "code_sections"):
+            _fields(item, {"unit", "section", "section_name", "origin", "span", "evidence"},
+                    "code-section binding")
+            origin = Origin(**_fields(item["origin"], {"image_sha256", "address_space", "address"}, "origin"))
+            span = Span(**_fields(item["span"], {"start", "end"}, "code-section span"))
+            code_sections.append(ToolchainCodeSectionBinding(item["unit"], item["section"],
+                                item["section_name"], origin, span, item["evidence"]))
         return cls(owner, value["archive_sha256"], value["license_evidence"], tuple(bindings),
-                   tuple(absolutes), tuple(data_sections))
+                   tuple(absolutes), tuple(data_sections), tuple(code_sections))
 
 
 ComponentManifest = VendorManifest | ToolchainManifest | SystemImportManifest
@@ -478,8 +494,8 @@ ComponentManifest = VendorManifest | ToolchainManifest | SystemImportManifest
 class AbsoluteSymbolBinding:
     """An absolute linker constant a pinned archive member defines.
 
-    The member must define the symbol with a negative section (COFF absolute)
-    and exactly this value; the value is what every link resolves it to, so a
+    The member must define the symbol in COFF section -1 (IMAGE_SYM_ABSOLUTE)
+    with exactly this value; the value is what every link resolves it to, so a
     verified binding may resolve reference fields byte-exactly. It is never a
     function extent or an image address.
     """
@@ -534,6 +550,27 @@ class ToolchainDataSectionBinding:
             raise ValueError("data-section binding needs unique symbol anchors")
         if any(item.offset >= self.span.end - self.span.start for item in self.symbols):
             raise ValueError("data-section symbol anchor is outside the section span")
+
+
+@dataclass(frozen=True)
+class ToolchainCodeSectionBinding:
+    """One whole ordinary executable COFF contribution, not a function entry."""
+    unit: str
+    section: int
+    section_name: str
+    origin: Origin
+    span: Span
+    evidence: str
+
+    def __post_init__(self):
+        archive_member_identity(self.unit)
+        if type(self.section) is not int or self.section < 1:
+            raise ValueError("code section ordinal must be positive")
+        require_text(self.section_name, "COFF code section name")
+        require_text(self.evidence, "code-section evidence")
+        if (self.origin.address_space != "pe:va" or self.span.start != self.origin.address
+                or self.span.end <= self.span.start):
+            raise ValueError("code-section binding requires a nonempty original PE span")
 
 
 def source_integrity(root: Path, manifest: VendorManifest, archive: Path | None = None) -> dict:
