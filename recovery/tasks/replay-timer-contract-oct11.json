@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "replay-timer-contract-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover a directly type-compatible static ReplayWin timer bridge, preserving the original one-word cdecl receiver payload and null-guarded dispatch.",
+  "base_revision": "db92cacc2d789d6c96196a3d0258b02870ae9b83",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5953312},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 5954512}
+  ],
+  "editable_files": [
+    "src/replaywin.cpp", "src/replaywin.h",
+    "recovery/tests/test_replay_timer_contract_oct11.py",
+    "recovery/tests/replay-timer-contract-oct11.patch"
+  ],
+  "evidence": [
+    "Pinned ReplayWin::init5AD720 registers5ADBD0 with Time::start616350, pushing5,64 and the ESI receiver at5AD970..5AD97C. Time::start and Win::window_proc own the cdecl(int)/int callback contract, also used by MultiDebug's genuine static callback.",
+    "Complete original5ADBD0..5ADBE1 reads its sole stack payload, null-tests it, calls ReplayWin::timer_callback5AD9E0 as a thiscall receiver and returns with plain RET. The catalogue Q spelling is historical evidence, not proof of an extra implicit receiver.",
+    "Replace the pointer-typed free-function declaration/body and incompatible function-pointer registration cast with static ReplayWin::timer_callback_daemon(int), decoding the borrowed pointer only at the callback boundary. Preserve original identity/span/claim and all behavior; observe the emitted static symbol and remeasure the complete owner before integration.",
+    "The source-owned static name is a structural interpretation, not recovered debug names. No timer lifetime, layout, callback sequencing, error behavior, compiler policy or historical claim demotion is authorized. Full game matching/runtime/linked preservation remain unproved."
+  ]
+}

@@ -31,8 +31,6 @@
 #include "console.h"
 
 
-void __cdecl fn_005adbd0(ReplayWin *window);
-
 // setup_game clears 0x800 dwords at 0x00950324 and timer_callback reads
 // eight-byte records from the same interval. The counter advances in bytes.
 // RECOVERY_OBJECT: v2 0x00950324 0x00952324 ?ReplayEvents@@3PAUReplayEventRecord@@A 0x005ADE80
@@ -100,7 +98,7 @@ void ReplayWin::init() {
     replay_turn_ = 0;
     event_offset_ = 0;
     timer_.set_modal();
-    timer_.start(reinterpret_cast<void (__cdecl *)(int)>(&fn_005adbd0),
+    timer_.start(&ReplayWin::timer_callback_daemon,
                  reinterpret_cast<int>(this), 0x64, 5);
     set_modal(0, 0, 0);
     timer_.release_modal();
@@ -416,7 +414,8 @@ void ReplayWin::on_left_up(int, int) {
 
 /*
 // ORIGINAL: 0x005ADBD0 ?timer_callback_daemon@ReplayWin@@QAAXH@Z 0x005ADBD0-0x005ADBE1 BYTE_EXACT
-// symbol    ?fn_005adbd0@@YAXPAVReplayWin@@@Z
+// RECOVERY_BINDING: v1 {"reason":"Own the replay timer bridge as a directly type-compatible static cdecl callback; its integer payload carries the borrowed ReplayWin receiver, without calling through an incompatible function-pointer type.","evidence":["pinned:5AD970..5AD97C registers callback5ADBD0 and ESI receiver with Time::start616350, using embedded Time at receiver+252EC","pinned:5ADBD0..5ADBE1 loads its sole stack word into ECX, null-tests it, calls ReplayWin::timer_callback5AD9E0 and returns with plain RET; the catalogue Q spelling is not an entry thiscall receiver","source:Time::start stores cdecl(int) callback1_ and int cb_param1_; Win::window_proc invokes that exact contract; MultiDebug uses the same typed static-owner bridge"]}
+// symbol    ?timer_callback_daemon@ReplayWin@@SAXH@Z
 // size      17 bytes
 // prototype 
 // callers   0   call targets   1
@@ -425,9 +424,10 @@ void ReplayWin::on_left_up(int, int) {
 // calls     0x005AD9E0
 Status: Complete
 */
-void __cdecl fn_005adbd0(ReplayWin* a1) {
-    if (a1) {
-        a1->timer_callback();
+void __cdecl ReplayWin::timer_callback_daemon(int context) {
+    ReplayWin *const window = reinterpret_cast<ReplayWin *>(context);
+    if (window) {
+        window->timer_callback();
     }
 }
 

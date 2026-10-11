@@ -78,6 +78,9 @@ void __cdecl replay_base(int type, int x, int y, int faction_id);
 class ReplayWin : public GraphicWin {
  public:
   void timer_callback();
+  // Time's one-word cdecl callback payload is a borrowed ReplayWin address,
+  // not an implicit thiscall receiver. Decode it only at this ABI boundary.
+  static void __cdecl timer_callback_daemon(int context);
   void init();
   void close();
   ReplayWin() { ; }
