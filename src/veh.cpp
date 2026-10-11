@@ -7901,6 +7901,11 @@ Purpose: Temporarily remove the specified unit from its current square and stack
 // TRIED 2026-09-03: NO x/y locals at all - `VehLiftX = Vehs[veh_id].x;` after the four -1 stores. The loads then sit AFTER the stores (VC6 will not hoist a load above a store to the same field), where the image hoists them BEFORE the stores, which needs the locals. 54/60 - better than 49/60, kept; the remaining 6 are the two movsx loads plus which register holds the -1 (ours edx, image eax).
 // TRIED 2026-09-03: `VehDropLiftVehID = veh_id;` hoisted ABOVE the x/y reads (so VC6 sees the global store early) - regressed to 49/60, matching the original note's finding that the image assigns it between reading y and zeroing the fields.
 // TRIED: were cached into locals BEFORE the prev/next stack-pointer fixup and the on_map/bit_set branch; the image re-reads `Vehs[veh_id].x`/`.y` fresh at each site (inside the branch, and again at the join point for VehLiftX/Y) instead of hoisting one read to the top. Also `VehDropLiftVehID = veh_id;` moved to AFTER the x/y reads (image assigns it between reading y and zeroing the fields, not before). 4/60 -> 49/60 (0.829 -> 0.983 similar).
+// Faithful order: after the optional bit_set call, native 005C003A/0041
+// captures the then-current signed coordinates; it stores VehDropLiftVehID
+// at 005C004B, clears the record at 005C0051..0066, then publishes the saved
+// coordinates to VehLiftX/Y at 005C0070/0076. The old matching candidate read
+// those fields only after clearing them and therefore published -1/-1.
 // symbol    ?veh_lift@@YAHH@Z
 // size      223 bytes
 // prototype void (__cdecl ?veh_lift@@YAXH@Z)(int vehID)
@@ -7924,13 +7929,15 @@ int __cdecl veh_lift(int veh_id) {
     } else if (!prev_stack_exists && on_map(Vehs[veh_id].x, Vehs[veh_id].y)) {
         bit_set(Vehs[veh_id].x, Vehs[veh_id].y, BIT_VEH_IN_TILE, false);
     }
+    const int lift_x = Vehs[veh_id].x;
+    const int lift_y = Vehs[veh_id].y;
     VehDropLiftVehID = veh_id;
     Vehs[veh_id].x = -1;
     Vehs[veh_id].y = -1;
     Vehs[veh_id].next_veh_id_stack = -1;
     Vehs[veh_id].prev_veh_id_stack = -1;
-    VehLiftX = Vehs[veh_id].x;
-    VehLiftY = Vehs[veh_id].y;
+    VehLiftX = lift_x;
+    VehLiftY = lift_y;
     return veh_id;
 }
 

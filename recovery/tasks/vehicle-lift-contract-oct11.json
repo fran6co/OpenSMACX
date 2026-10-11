@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "task_id": "vehicle-lift-contract-oct11",
+  "author": "framework-coordinator",
+  "target": "opensmacx",
+  "base_revision": "9ea5e078e9f926989fd9bf2a7c5c25fa7adc7c56",
+  "intent": "Preserve the native veh_lift coordinate capture after optional map-bit handling and before record clearing, without changing stack or callback order.",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6029216
+    }
+  ],
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_vehicle_lift_contract_oct11.py",
+    "recovery/tasks/vehicle-lift-contract-oct11.json"
+  ],
+  "evidence": [
+    "The complete pinned span 005BFFA0..005C007E is decoded with match_recovery PeImage/Span and Capstone. 005C003A/0041 sign-extend the then-current x/y after the optional bit_set path; 005C004B stores VehDropLiftVehID; 005C0051..0066 clear x/y and both stack links; 005C0070/0076 publish the earlier x/y values to VehLiftX/Y.",
+    "The old source candidate read Vehs[veh_id].x/y only after setting the fields to -1, so it published (-1,-1) instead of the lifted unit's prior coordinates. The faithful source captures signed x/y after optional map-bit handling, before the drop-id store and field clears, and publishes them afterward. This preserves the original reload point relative to the optional bit_set call and all unsafe/error behavior.",
+    "The complete-body host fixture extracts Veh's actual signed int16 coordinate/link declarations and TerrainBit enum from their owners. It covers the linked-neighbor updates separately and together, a no-neighbor on-map bit_set branch checking its arguments/record state before mutation, and a no-neighbor off-map path. The old post-clear-read mutant removes capture locals and fails at the first coordinate assertion; a pre-bit_set capture mutant fails the synthetic coordinate-reload case. These controls do not assert that the real bit_set routine mutates vehicle records. Return-value checks retain the existing source behavior, with native 005C006D loading EDI into EAX before return.",
+    "No mapping, symbol, original marker, or historical TRIED note was removed or changed. The new concise source annotation explains that earlier matching candidate's post-clear reads contradicted native dataflow. No byte-exact, full-game, or runtime acceptance claim is made."
+  ]
+}
