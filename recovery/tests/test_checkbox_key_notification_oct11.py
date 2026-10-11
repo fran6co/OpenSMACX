@@ -23,7 +23,13 @@ def test_complete_source_change_and_historical_obligations():
     assert expected.count(old) == 1
     expected = expected.replace(old, "    WinNotificationCallback callback = key_notification_callback_;")
     current = path.read_text()
-    assert current == expected
+    # Later native receiver/hover corrections change only these two methods;
+    # its actual-body controls are in test_control_parent_snapshot_oct11.py.
+    current_without_later_redraw = current
+    for signature in ("void CheckBox::on_redraw(", "void CheckBox::on_mouse_move("):
+        current_without_later_redraw = current_without_later_redraw.replace(
+            extract(current, signature), extract(expected, signature), 1)
+    assert current_without_later_redraw == expected
     prior, after = read_text(before, path), read_text(current, path)
     assert [(r.address, _continuity_fields(r), r.symbol, r.function_fragment) for r in prior] == [
         (r.address, _continuity_fields(r), r.symbol, r.function_fragment) for r in after]

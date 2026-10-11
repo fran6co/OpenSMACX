@@ -521,12 +521,14 @@ int RadioButton::attach(GraphicWin *parent, int x, int y, int flags) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060e220.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e220 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_redraw@RadioButton@@UAEXXZ
 void RadioButton::on_redraw() {
-    WinCallbackWindow = win_parent_;
-    if (win_parent_ == 0) return;
-    const int handled = win_parent_->on_dialog_back_draw(
+    // Native60E220 retains this parent across back-draw and fallback copying.
+    Win *const parent = win_parent_;
+    WinCallbackWindow = parent;
+    if (parent == 0) return;
+    const int handled = parent->on_dialog_back_draw(
         static_cast<GraphicWin *>(this));
     if (handled == 0) {
-        static_cast<GraphicWin *>(win_parent_)->copy(
+        static_cast<GraphicWin *>(parent)->copy(
             this, Dialog::field_24_, Dialog::field_28_, 0, 0,
             static_cast<int>(dib_.bmiHeader.biWidth),
             -static_cast<int>(dib_.bmiHeader.biHeight));

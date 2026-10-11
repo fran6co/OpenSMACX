@@ -196,7 +196,10 @@ int CheckButton::init(int x, int y, GraphicWin *parent, int toggle_argument) {
 // symbol    ?on_left_click@CheckButton@@UAEXHH@Z
 // kind      game
 void CheckButton::on_left_click(int, int) {
-    if (win_parent_ == 0) {
+    // Native633924 retains the parent through redraw and the callback; the
+    // later notification reloads the argument, but uses that original parent.
+    Win *const parent = win_parent_;
+    if (parent == 0) {
         return;
     }
 
@@ -205,7 +208,7 @@ void CheckButton::on_left_click(int, int) {
     if (click_callback_ != 0) {
         click_callback_(toggle_argument_);
     }
-    win_parent_->on_button_clicked(toggle_argument_);
+    parent->on_button_clicked(toggle_argument_);
     redraw();
 }
 

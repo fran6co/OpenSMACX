@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "task_id": "control-parent-snapshot-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Restore original control receiver snapshots and CheckBox hover arithmetic/unchanged-selection gate, preserving original behavior and historical matching obligations.",
+  "base_revision": "f35836fc519023ddf0f89da5e8db1b9a2894f686",
+  "subjects": [
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6355632},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6349344},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6502688},
+    {"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6355888}
+  ],
+  "editable_files": ["src/jackal/checkbox.cpp", "src/jackal/radiobutton.cpp", "src/jackal/checkbutton.cpp", "recovery/tests/test_control_parent_snapshot_oct11.py", "recovery/tests/test_checkbox_key_notification_oct11.py"],
+  "evidence": [
+    "CheckBox60FAB0 and RadioButton60E220 retain entry parent in EBX across on_dialog_back_draw and fallback copy; CheckButton633920 retains parent in EDI across redraw and click callback before on_button_clicked. Preserve their differing null/global-publication order, live copy geometry, and live toggle-argument reloads.",
+    "CheckBox mousemove60FBD3/FBDC/FBE0/FBE7 divides x and y separately and multiplies x quotient by row count, with native32-bit wrapping. Native receiver is GraphicWin(root+1C); adding root vbtable Dialog displacementA34 produces Dialog+1C, so original raw offsets28/48/4C/3C are the existing source44/64/68/58 quartet, not new member discoveries. Native60FC00 skips redraw when selected hover is already-1; unselected repeated hover still redraws.",
+    "Require actual-body host controls rejecting baseline, live-parent replacement, cached post-callback geometry, cached toggle argument, wrong axes and missing hover gate; pinned instruction controls; strict source identity/span/claim/symbol continuity; independent review, fresh compile/link and native measurements. No safety guard, new byte claim, claim demotion, API/layout migration or newly implemented function is authorized. Temporary matching regressions retain restoration obligations under standing manual integration permission.",
+    "Earlier key-notification migration's whole-file lexical control predates these two independently checked method corrections. Normalize only redraw/mousemove before its original exact migration comparison; retain all other text, declaration and original-identity constraints."
+  ]
+}
