@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "ee413fae0760f5b846b82264bb49524d36e65bd5",
+  "editable_files": ["src/veh.cpp", "recovery/tests/test_combat_defense_closure_oct11.py"],
+  "intent": "Recover battle_compute's complete base-defense/shared terrain multiplier block rather than correcting a predicate in isolation. Preserve native base0, negative-base route, facility/project/Tachyon dataflow, Blink, percentage arithmetic and infantry prototype gate.",
+  "evidence": [
+    "5032A8 initializes facility accumulator ESI2;5032FB skips base-only section only for negative base IDs. base_at enumerates from0 and returns-1 for absence. Facility/project success sets ESI4, Tachyon adds2,503514 assigns the live multiplier. Negative attacker path5034C6 loads the original negative attacker ID into ESI; preserve it, including Tachyon query and percentage eligibility.",
+    "50351D..5035B9 applies nonzero base percentage only for low/default facility multiplier and absent attacker or non-Blink attacker; multiplication precedes division.5035BC starts shared Blink logic even without a base;503648..503674 admits prototype>=64 or conventional non-Spore built-ins.5032AD clears display EBX.50361F..503648 reloads Vehs[attacker].faction/prototype without a new negative-attacker guard; preserve the original pre-array read. Host backing storage models alternative preceding contents without host out-of-bounds access or asserting actual game memory contents.",
+    "503713..503780 has an independent no-base artillery terrain path: reject rocky/forest, accept no fungus or altitude below shelf.503780..50378C multiplies defense on all paths; reporting follows. The earlier source had base ID truthiness, a dropped facility multiplier, inverted Blink/fungus conditions, truncated percentage factors and incorrectly nested shared operations.",
+    "Tests execute the extracted actual source block with bounded lookup doubles, not the whole battle_compute or game. Preserve all mappings/claims; remaining behavior and exactness in this large function remain obligations. No gameplay bug fix or new safe fallback is authorized."
+  ],
+  "subjects": [{"address":5250464,"address_space":"pe:va","image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}]
+}

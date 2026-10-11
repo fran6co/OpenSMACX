@@ -4737,19 +4737,19 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                         strcat(StringTemp, ")");
                         add_bat(1, 10 * (5 * terrain_def - 10), StringTemp);
                     }
-                    LPSTR display_def; // only one is displayed
+                    LPSTR display_def = 0; // only one is displayed
                     uint32_t def_multi = 2;
                     if (bit_at(x_def, y_def) & BIT_BUNKER && (veh_id_atk < 0
                         || get_triad(veh_id_atk) != TRIAD_AIR)) {
                         def_multi = 3;
                         display_def = label_get(358); // "Bunker"
                     }
-                    if (base_id_def) {
+                    if (base_id_def >= 0) {
                         display_def = label_get(332); // "Base"
                         def_multi = 2;
+                        int fac_modifier = veh_id_atk < 0 ? veh_id_atk : 2;
                         if (veh_id_atk >= 0) {
                             uint32_t triad_atk = get_triad(veh_id_atk);
-                            uint32_t fac_modifier = 0;
                             switch (triad_atk) {
                               case TRIAD_LAND:
                                 if (has_fac_built(FAC_PERIMETER_DEFENSE, base_id_def)
@@ -4776,49 +4776,54 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                                 fac_modifier = def_multi;
                                 break;
                             }
-                            if (has_fac_built(FAC_TACHYON_FIELD, base_id_def)) {
-                                fac_modifier += 2;
-                                display_def = label_get(357); // "Tachyon"
-                            }
-                            if (fac_modifier < 2 || def_multi == 2
-                                && (veh_id_atk < 0 || has_abil(proto_id_atk, ABL_BLINK_DISPLACER)
-                                    && Rules.combat_pct_base_def)) {
-                                add_bat(1, Rules.combat_pct_base_def, label_get(332)); // "Base"
-                                defense *= ((Rules.combat_pct_base_def + 100) / 100);
-                            }
-                            if (veh_id_atk >= 0 && has_abil(proto_id_atk, ABL_BLINK_DISPLACER)) {
-                                if (def_multi > 2) {
-                                    def_multi = 2;
-                                }
-                                display_def = label_get(428); // "Base vs. Blink"
-                            }
-                            if (Rules.combat_pct_infantry_vs_base && !combat_type
-                                && base_id_def >= 0 && faction_id_atk
-                                && proto_id_atk > MaxVehProtoFactionNum
-                                && get_proto_offense_rating(proto_id_atk) >= 0
-                                && proto_id_atk != BSC_SPORE_LAUNCHER
-                                && !get_proto_triad(proto_id_atk)
-                                && Chassis[VehPrototypes[proto_id_atk].chassis_id].speed == 1) {
-                                offense *= ((Rules.combat_pct_infantry_vs_base + 100) / 100);
-                                // "Infantry vs. Base"
-                                add_bat(0, Rules.combat_pct_infantry_vs_base, label_get(547));
-                            }
-                            uint32_t bit_def;
-                            if (is_artillery && def_multi <= 2 && base_id_def < 0
-                                && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY
-                                && (bit_def = bit_at(x_def, y_def),
-                                    !(bit_def & BIT_FOREST)) && (bit_def & BIT_FUNGUS
-                                        || altitude_at(x_def, y_def)
-                                        < ALT_BIT_OCEAN_SHELF)) {
-                                def_multi = 3;
-                                display_def = label_get(525); // "Open Ground"
-                            }
-                            defense *= def_multi;
-                            if (def_multi > 2) {
-                                add_bat(1, 10 * (5 * def_multi - 10),
-                                    StringTable.get(display_def));
-                            }
                         }
+                        if (has_fac_built(FAC_TACHYON_FIELD, base_id_def)) {
+                            fac_modifier += 2;
+                            display_def = label_get(357); // "Tachyon"
+                        }
+                        if (fac_modifier >= 2) {
+                            def_multi = fac_modifier;
+                        }
+                        if (fac_modifier <= 2
+                            && (veh_id_atk < 0 || !has_abil(proto_id_atk, ABL_BLINK_DISPLACER))
+                            && Rules.combat_pct_base_def) {
+                            add_bat(1, Rules.combat_pct_base_def, label_get(332)); // "Base"
+                            defense = (Rules.combat_pct_base_def + 100) * defense / 100;
+                        }
+                    }
+                    if (veh_id_atk >= 0 && has_abil(proto_id_atk, ABL_BLINK_DISPLACER)) {
+                        if (def_multi > 2) {
+                            def_multi = 2;
+                        }
+                        display_def = label_get(428); // "Base vs. Blink"
+                    }
+                    if (Rules.combat_pct_infantry_vs_base && !combat_type
+                        && base_id_def >= 0 && Vehs[veh_id_atk].faction_id) {
+                        const int infantry_proto = Vehs[veh_id_atk].proto_id;
+                        if ((infantry_proto >= MaxVehProtoFactionNum
+                            || (get_proto_offense_rating(infantry_proto) >= 0
+                                && infantry_proto != BSC_SPORE_LAUNCHER))
+                            && !get_proto_triad(infantry_proto)
+                            && Chassis[VehPrototypes[infantry_proto].chassis_id].speed == 1) {
+                            offense = (Rules.combat_pct_infantry_vs_base + 100) * offense / 100;
+                            // "Infantry vs. Base"
+                            add_bat(0, Rules.combat_pct_infantry_vs_base, label_get(547));
+                        }
+                    }
+                    uint32_t bit_def;
+                    if (is_artillery && def_multi <= 2 && base_id_def < 0
+                        && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY
+                        && (bit_def = bit_at(x_def, y_def),
+                            !(bit_def & BIT_FOREST)) && (!(bit_def & BIT_FUNGUS)
+                                || altitude_at(x_def, y_def)
+                                < ALT_BIT_OCEAN_SHELF)) {
+                        def_multi = 3;
+                        display_def = label_get(525); // "Open Ground"
+                    }
+                    defense *= def_multi;
+                    if (def_multi > 2) {
+                        add_bat(1, 10 * (5 * def_multi - 10),
+                            StringTable.get(display_def));
                     }
                 }
                 if (faction_id_def && veh_id_atk >= 0 && is_proto_missile(proto_id_atk)) {
