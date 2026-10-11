@@ -34,8 +34,11 @@ def prior(manifest):
 def test_only_two_dependency_bindings_added_and_all_history_preserved():
     old_text = subprocess.check_output(["git", "show", BASE + ":" + COMPANION],
                                        cwd=ROOT, text=True)
-    text = (ROOT / COMPANION).read_text()
+    text = subprocess.check_output(["git", "show", "d75dfb272:" + COMPANION],
+                                   cwd=ROOT, text=True)
     current = parse_component(text)
+    installed = parse_component((ROOT / COMPANION).read_text())
+    assert replace(installed, bindings=installed.bindings[:len(current.bindings)]) == current
     assert prior(current) == parse_component(old_text)
     assert parse_component(render_component(current)) == current
     path = ROOT / COMPANION
@@ -60,7 +63,11 @@ def test_only_two_dependency_bindings_added_and_all_history_preserved():
 
 def test_both_pass_without_new_helper_hypotheses_and_prior_verdicts_unchanged(inputs):
     manifest, _, _, _ = inputs
-    before, after = verify(inputs, prior(manifest)), verify(inputs)
+    # Retain this step's exact evidence while allowing later reviewed additions.
+    historical = parse_component(subprocess.check_output(
+        ["git", "show", "d75dfb272:" + COMPANION], cwd=ROOT, text=True))
+    manifest = replace(manifest, bindings=manifest.bindings[:len(historical.bindings)])
+    before, after = verify(inputs, prior(manifest)), verify(inputs, manifest)
     assert after["functions"][:-2] == before["functions"]
     for address, _, _, callee, imported in EXPECTED:
         result = row(after, address)

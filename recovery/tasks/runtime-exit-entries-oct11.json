@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "f144385fa",
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_runtime_exit_entries_oct11.py",
+    "recovery/tests/test_crt_stream_lock_bindings_oct11.py",
+    "recovery/tests/test_runtime_array_unwind_oct11.py"
+  ],
+  "intent": "Attribute three previously unbound runtime entries to the pinned external CRT member, retaining all source mappings, historical claims and reference obligations; no fabricated application implementation or original-link selection claim.",
+  "evidence": [
+    "Pinned original exit/onexit callers select lockexit644EC6..644ECF and unlockexit644ECF..644ED8; their calls644EC8/644ED1 select the already bound lock/unlock entries. The terminal returns and independent following prologues corroborate the Ghidra/IDA extents.",
+    "Pinned cinit/doexit callers select init traversal644ED8..644EF2; unsigned half-open endpoint test, null skip, indirect call and four-byte increment are independently decoded. Static COFF __initterm storage3 is not an application public function.",
+    "Unique external pinned LIBCMT crt0dat.obj SHA25648be3defdca3560f39e7d593e4dd110cb2977874227eae911a707868f722b961 owns complete sections14/16/18. External CRT/SRC/CRT0DAT.C SHA256f4d93616dec8b3ca286bfbef4aaa1d5cb2a53bcc0c2daf9b1cfcb6f77851e2ed corroborates the source family. Proprietary source and binary bytes remain external/ignored.",
+    "Do not extend this binding to _exit/_doexit: the original _doexit extent is163 bytes but the physical member section is165. Fresh current link-provider observations are not proof of original selection; static-placement verification and whole-runtime acceptance remain unfinished. Historical tests project their original reviewed additions; the new test bounds the complete current annotation change."
+  ]
+}
