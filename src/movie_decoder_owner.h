@@ -3,6 +3,7 @@
 
 #include "movie_media.h"
 #include "movie_decoder_records.h"
+#include "movie_decoder_bit_state.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -64,11 +65,7 @@ extern MediaDecoderProcessStorage movie_media_decoder_process_storage;
 // view of those accesses, not proof of a single original allocation boundary.
 // The coefficient offset table is pinned initialized data; the other tables
 // are runtime-built/used windows and need one shared definition.
-struct MediaDecoderFrameBitState {
-  const BYTE *cursor;
-  uint32_t accumulator;
-  int32_t available_bits;
-};
+typedef MovieDecoderBitState MediaDecoderFrameBitState;
 
 struct MediaDecoderTableStorage {
   int32_t decoded_coefficient_words[64];            // [009C314C,009C324C)

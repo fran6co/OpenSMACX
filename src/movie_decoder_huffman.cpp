@@ -19,11 +19,22 @@ uint32_t pull_word(BitState &state) {
   return value;
 }
 
+uint32_t read_word(const uint8_t *cursor) {
+  return static_cast<uint32_t>(cursor[0]) |
+         (static_cast<uint32_t>(cursor[1]) << 8);
+}
+
 void refill_if_short(BitState &state) {
-  if (state.available_bits < 0x10) {
+  if (static_cast<uint32_t>(state.available_bits) < 0x10u) {
     const int8_t old_count = static_cast<int8_t>(state.available_bits);
-    state.accumulator |= pull_word(state) << ((0x10 - old_count) & 0x1f);
-    state.available_bits += 0x10;
+    const uint8_t *const cursor = state.cursor;
+    const uint32_t word = read_word(cursor);
+    const int32_t new_count = state.available_bits + 0x10;
+    const uint32_t new_accumulator = state.accumulator |
+        (word << ((0x10 - old_count) & 0x1f));
+    state.available_bits = new_count;
+    state.accumulator = new_accumulator;
+    state.cursor = cursor + 2;
   }
 }
 
@@ -55,8 +66,11 @@ uint32_t consume_block_code(BitState &bits,
                                  const uint32_t table[64]) {
   const uint32_t entry = table[bits.accumulator >> 26];
   const unsigned count = entry & 0xff;
-  bits.accumulator <<= (count & 0x1f);
-  bits.available_bits -= static_cast<int32_t>(count);
+  const uint32_t accumulator = bits.accumulator << (count & 0x1f);
+  const int32_t available_bits =
+      bits.available_bits - static_cast<int32_t>(count);
+  bits.available_bits = available_bits;
+  bits.accumulator = accumulator;
   refill_if_short(bits);
   return entry;
 }
@@ -92,24 +106,79 @@ BlockHeader decode_block_header(BitState &state, bool header_enabled,
   result.coefficient_cursor = coefficient_plane;
   if (!header_enabled) return result;
   uint32_t flags = 0;
-  if ((state.accumulator & 0xc0000000u) == 0) {
-    state.accumulator <<= 2;
-    state.available_bits -= 2;
-    refill_word(state);
-  } else {
-    if ((state.accumulator & 0x80000000u) != 0) {
-      flags = 0x3ff;
-      state.accumulator <<= 1;
-      --state.available_bits;
-    } else {
-      flags = state.accumulator >> 24;
-      state.accumulator <<= 8;
-      state.available_bits -= 8;
+  uint32_t accumulator = state.accumulator;
+  int count = state.available_bits;
+  if ((accumulator & 0xc0000000u) == 0) {
+    accumulator <<= 2;
+    count -= 2;
+    state.accumulator = accumulator;
+    state.available_bits = count;
+    if (static_cast<uint32_t>(count) < 0x10u) {
+      const int8_t old_count = static_cast<int8_t>(count);
+      const uint8_t *const cursor = state.cursor;
+      const uint32_t word = read_word(cursor);
+      count += 0x10;
+      accumulator |= word << ((0x10 - old_count) & 0x1f);
+      state.available_bits = count;
+      state.accumulator = accumulator;
+      state.cursor = cursor + 2;
     }
-    refill_word(state);
-    const uint32_t first = consume_block_code(state, block_huffman);
+  } else {
+    if ((accumulator & 0x80000000u) != 0) {
+      flags = 0x3ff;
+      accumulator <<= 1;
+      --count;
+    } else {
+      flags = accumulator >> 24;
+      accumulator <<= 8;
+      count -= 8;
+    }
+    state.accumulator = accumulator;
+    state.available_bits = count;
+    if (static_cast<uint32_t>(count) < 0x10u) {
+      const int8_t old_count = static_cast<int8_t>(count);
+      const uint8_t *const cursor = state.cursor;
+      const uint32_t word = read_word(cursor);
+      count += 0x10;
+      accumulator |= word << ((0x10 - old_count) & 0x1f);
+      // The native flag prelude publishes only ESI here. EAX/EDX remain
+      // register-local until the first prefix entry has been consumed.
+      state.cursor = cursor + 2;
+    }
+
+    uint32_t first = block_huffman[accumulator >> 26];
+    unsigned consumed = first & 0xff;
+    accumulator <<= (consumed & 0x1f);
+    count -= static_cast<int>(consumed);
+    state.available_bits = count;
+    state.accumulator = accumulator;
+    if (static_cast<uint32_t>(count) < 0x10u) {
+      const int8_t old_count = static_cast<int8_t>(count);
+      const uint8_t *const cursor = state.cursor;
+      const uint32_t word = read_word(cursor);
+      count += 0x10;
+      accumulator |= word << ((0x10 - old_count) & 0x1f);
+      // Likewise, this refill commits only the advanced input pointer.
+      state.cursor = cursor + 2;
+    }
+
     const int32_t first_symbol = arithmetic_shift_right(first, 22);
-    const uint32_t second = consume_block_code(state, block_huffman);
+    uint32_t second = block_huffman[accumulator >> 26];
+    consumed = second & 0xff;
+    accumulator <<= (consumed & 0x1f);
+    count -= static_cast<int>(consumed);
+    state.available_bits = count;
+    state.accumulator = accumulator;
+    if (static_cast<uint32_t>(count) < 0x10u) {
+      const int8_t old_count = static_cast<int8_t>(count);
+      const uint8_t *const cursor = state.cursor;
+      const uint32_t word = read_word(cursor);
+      count += 0x10;
+      accumulator |= word << ((0x10 - old_count) & 0x1f);
+      state.available_bits = count;
+      state.accumulator = accumulator;
+      state.cursor = cursor + 2;
+    }
     const int32_t second_symbol = arithmetic_shift_right(second, 22);
     const int32_t position =
         second_symbol * half_width + (first_symbol >> 1);

@@ -1009,10 +1009,8 @@ static void movie_decoder_pack_rows(const uint8_t *component_rows,
 // TRIED: MISMATCH #0 'sub' vs 'push' (prologue itself diverges). JPEG- style Huffman bitstream decoder for 6 DCT-ish blocks (4 at stride-0x10, 2 at stride-8), each either memset from a fill value or decoded via a shared Huffman-table walk; factored the identical block body into decode_or_fill()/fill_block() and the repeated "refill bit buffer if count<0x10" idiom into a REFILL macro, both landed in this file (not a separate helper unit). Retargeted the signature from the emitter's own guessed `__stdcall(int)` to `void __fastcall(int,int,int)` to match Ghidra's ecx/edx/stack-arg reading and the `ret 4` epilogue (one stack-passed int, callee-cleaned) - did not close the prologue gap. `sub_5cef8a`/`sub_5cea09` are declared 0-arg/ unknown-arity in the scaffold but called with 2/4 args in the disassembly; bypassed via raw __stdcall function-pointer casts to the same addresses rather than editing the conflicting extern declarations.
 void __fastcall sub_5d2e70(BYTE *coefficient_block,
                            BYTE *temporary_block, int row_width) {
-  movie_decoder_huffman::BitState bits;
-  bits.cursor = movie_media_decoder_tables.frame_bit_state.cursor;
-  bits.accumulator = movie_media_decoder_tables.frame_bit_state.accumulator;
-  bits.available_bits = movie_media_decoder_tables.frame_bit_state.available_bits;
+  movie_decoder_huffman::BitState *const bits =
+      &movie_media_decoder_tables.frame_bit_state;
 
   movie_decoder_huffman::Tables huffman_tables;
   huffman_tables.primary = movie_media_decoder_tables.primary_symbol_words;
@@ -1026,7 +1024,7 @@ void __fastcall sub_5d2e70(BYTE *coefficient_block,
       movie_media_decoder_tables.decoded_coefficient_scale_words;
 
   movie_decoder_huffman::State coefficient_state;
-  coefficient_state.bits = bits;
+  coefficient_state.bits = *bits;
   coefficient_state.fill_value = 0;
   std::memcpy(&coefficient_state.scale_factor,
               &movie_media_decoder_tables.decoded_coefficient_scale_words[0],
@@ -1045,7 +1043,7 @@ void __fastcall sub_5d2e70(BYTE *coefficient_block,
       movie_media_decoder_process_storage.wide_block_output_bytes;
   args.scratch.chroma_16x8 =
       movie_media_decoder_process_storage.narrow_block_output_bytes;
-  args.bits = &bits;
+  args.bits = bits;
   args.block_huffman = movie_media_decoder_tables.block_prefix_words;
   args.coefficient_state = &coefficient_state;
   args.idct_rows = movie_decoder_idct_rows;
@@ -1054,35 +1052,15 @@ void __fastcall sub_5d2e70(BYTE *coefficient_block,
   args.pack_rows = movie_decoder_pack_rows;
 
   movie_decoder_huffman::decode_six_blocks(args);
-  movie_media_decoder_tables.frame_bit_state.cursor = bits.cursor;
-  movie_media_decoder_tables.frame_bit_state.accumulator = bits.accumulator;
-  movie_media_decoder_tables.frame_bit_state.available_bits = bits.available_bits;
 }
-
-struct MovieDecoderFrameBridgeContext {
-  movie_decoder_frame::BitState *bit_state;
-};
 
 static void movie_decoder_decode_six_blocks(
     void *context, uint8_t *coefficient_block,
     uint8_t *temporary_block, int row_width) {
-  // 5D2E70 consumes the shared frame reader.  The frame body carries that
-  // same live state between rows, so synchronize it around the mapped owner.
-  MovieDecoderFrameBridgeContext *bridge =
-      static_cast<MovieDecoderFrameBridgeContext *>(context);
-  movie_media_decoder_tables.frame_bit_state.cursor =
-      bridge->bit_state->cursor;
-  movie_media_decoder_tables.frame_bit_state.accumulator =
-      bridge->bit_state->accumulator;
-  movie_media_decoder_tables.frame_bit_state.available_bits =
-      bridge->bit_state->available_bits;
+  // The native frame and six-block owners mutate this single reader state in
+  // place. The context is unused because the global table is that owner.
+  static_cast<void>(context);
   sub_5d2e70(coefficient_block, temporary_block, row_width);
-  bridge->bit_state->cursor =
-      movie_media_decoder_tables.frame_bit_state.cursor;
-  bridge->bit_state->accumulator =
-      movie_media_decoder_tables.frame_bit_state.accumulator;
-  bridge->bit_state->available_bits =
-      movie_media_decoder_tables.frame_bit_state.available_bits;
 }
 
 static void movie_decoder_pack_row(const uint32_t *source,
@@ -1106,11 +1084,6 @@ int __fastcall sub_5d35b0(MediaRuntime *runtime,
   planes.temporary_a = &runtime->decoder_temporary_plane_a_658;
   planes.temporary_b = &runtime->decoder_temporary_plane_b_65c;
 
-  movie_decoder_frame::BitState bits;
-  bits.cursor = movie_media_decoder_tables.frame_bit_state.cursor;
-  bits.accumulator = movie_media_decoder_tables.frame_bit_state.accumulator;
-  bits.available_bits = movie_media_decoder_tables.frame_bit_state.available_bits;
-
   movie_decoder_frame::Tables tables;
   tables.primary = movie_media_decoder_tables.primary_symbol_words;
   tables.secondary_a = movie_media_decoder_tables.secondary_symbol_words_a;
@@ -1123,9 +1096,6 @@ int __fastcall sub_5d35b0(MediaRuntime *runtime,
   callbacks.calloc_bytes = movie_decoder_allocate;
   callbacks.decode_six_blocks = movie_decoder_decode_six_blocks;
   callbacks.pack_plane_row = movie_decoder_pack_row;
-  MovieDecoderFrameBridgeContext bridge_context;
-  bridge_context.bit_state = &bits;
-
   movie_decoder_frame::FrameArgs args;
   args.planes = &planes;
   args.allocation_gate =
@@ -1137,7 +1107,7 @@ int __fastcall sub_5d35b0(MediaRuntime *runtime,
   args.width = runtime->descriptor->output_width_64;
   args.height = runtime->descriptor->output_height_60;
   args.compressed = compressed;
-  args.bit_state = &bits;
+  args.bit_state = &movie_media_decoder_tables.frame_bit_state;
   args.destination = output;
   args.output_pitch = output_pitch;
   args.record_kind = record_kind;
@@ -1145,14 +1115,10 @@ int __fastcall sub_5d35b0(MediaRuntime *runtime,
   args.transform_products =
       movie_media_decoder_static_storage.transform_product_words;
   args.tables = tables;
-  args.decoder_context = &bridge_context;
+  args.decoder_context = nullptr;
   args.callbacks = callbacks;
 
-  const int result = movie_decoder_frame::decode_frame(args);
-  movie_media_decoder_tables.frame_bit_state.cursor = bits.cursor;
-  movie_media_decoder_tables.frame_bit_state.accumulator = bits.accumulator;
-  movie_media_decoder_tables.frame_bit_state.available_bits = bits.available_bits;
-  return result;
+  return movie_decoder_frame::decode_frame(args);
 }
 
 // Source-owned 005CF5C7 and 005CF852 row converters. Their table slices are

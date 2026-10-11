@@ -44,6 +44,15 @@ void idct(std::uint8_t *target, int stride_arg) {
   last_stride_arg = stride_arg;
 }
 
+BitState *throwing_idct_bits;
+
+void throwing_idct(std::uint8_t *, int) {
+  assert(throwing_idct_bits->cursor != nullptr);
+  assert(throwing_idct_bits->accumulator == 0);
+  assert(throwing_idct_bits->available_bits == 21);
+  throw 1;
+}
+
 void test_refill_word() {
   const std::uint8_t input[] = {0x34, 0x12, 0xaa};
   BitState bits{input, 0x01020304u, 8};
@@ -51,6 +60,11 @@ void test_refill_word() {
   assert(bits.cursor == input + 2);
   assert(bits.available_bits == 24);
   assert(bits.accumulator == (0x01020304u | (0x1234u << 8)));
+  BitState negative_count{nullptr, 0x12345678u, -1};
+  refill_word(negative_count);
+  assert(negative_count.cursor == nullptr);
+  assert(negative_count.accumulator == 0x12345678u);
+  assert(negative_count.available_bits == -1);
 }
 
 void test_block_header_paths() {
@@ -92,6 +106,63 @@ void test_block_header_paths() {
   assert(escaped_flags.accumulator == 0);
   assert(escaped.coefficient_cursor == coefficient_plane +
          (64 * 12 + 32) * 4);
+}
+
+void test_negative_header_count_skips_refill() {
+  std::uint32_t table[64];
+  for (std::uint32_t &entry : table) entry = 0x30;
+  std::uint8_t coefficient_plane[16] = {};
+  BitState no_flags{nullptr, 0, -2};
+  BlockHeader empty = decode_block_header(
+      no_flags, true, table, coefficient_plane, 8);
+  assert(empty.flags == 0);
+  assert(no_flags.cursor == nullptr);
+  assert(no_flags.accumulator == 0);
+  assert(no_flags.available_bits == -4);
+
+  BitState flags{nullptr, 0x80000000u, -1};
+  BlockHeader all_flags = decode_block_header(
+      flags, true, table, coefficient_plane, 8);
+  assert(all_flags.flags == 0x3ff);
+  assert(flags.cursor == nullptr);
+  assert(flags.available_bits == -98);
+}
+
+void test_negative_count_flagged_delta_skips_refill() {
+  std::uint32_t primary[512] = {};
+  std::uint32_t secondary_a[256] = {};
+  std::uint32_t secondary_b[256] = {};
+  std::int32_t offsets[64] = {};
+  std::int32_t scales[64] = {};
+  std::int32_t coefficients[64] = {};
+  std::uint32_t block_huffman[64] = {};
+  std::uint8_t coefficient_plane[8192] = {};
+  std::uint8_t luma[0x400] = {};
+  std::uint8_t chroma[0x200] = {};
+  std::uint8_t destination[0x100] = {};
+  std::uint8_t remap[256] = {};
+  active_byte_remap = remap;
+  block_huffman[0] = 0x10000000u;  // consumed-bit count 0, symbol 64
+  Tables tables{primary, secondary_a, secondary_b, offsets, scales};
+  State coefficient_state{{nullptr, 0, 0}, 0, 0, coefficients, &tables};
+  BitState bits{nullptr, 0x80000000u, 0};
+  SixBlockArgs args;
+  args.coefficient_plane = coefficient_plane;
+  args.destination = destination;
+  args.row_width = 16;
+  args.header_enabled = true;
+  args.scratch = {luma, chroma};
+  args.bits = &bits;
+  args.block_huffman = block_huffman;
+  args.coefficient_state = &coefficient_state;
+  args.idct_rows = 0;
+  args.byte_remap = remap;
+  args.pack_rows = pack_rows;
+
+  decode_six_blocks(args);
+  assert(bits.cursor == nullptr);
+  assert(bits.accumulator == 0);
+  assert(bits.available_bits == -1);
 }
 
 void test_terminal_huffman_entry() {
@@ -306,6 +377,45 @@ void test_six_block_idct_route() {
   assert(last_stride_arg == 0x10);
 }
 
+void test_reader_commit_precedes_throwing_idct() {
+  std::uint8_t stream[16] = {};
+  BitState bits{stream, 0x01400000u, 32};
+  std::int32_t coeffs[64] = {};
+  std::uint32_t primary[512] = {};
+  std::uint32_t secondary_a[256] = {};
+  std::uint32_t secondary_b[256] = {};
+  std::int32_t offsets[64] = {};
+  std::int32_t scales[64] = {};
+  primary[128] = 0x00410001u;
+  primary[256] = 0x30;
+  offsets[2] = 4;
+  scales[1] = 5;
+  Tables tables{primary, secondary_a, secondary_b, offsets, scales};
+  State coeff_state{bits, 0, 9, coeffs, &tables};
+  std::uint8_t coefficient_plane[128] = {};
+  std::uint8_t luma[0x400] = {};
+  std::uint8_t chroma[0x200] = {};
+  std::uint8_t remap[256] = {};
+  std::uint32_t output[16 * 8] = {};
+  SixBlockArgs args{coefficient_plane, reinterpret_cast<std::uint8_t *>(output),
+                    16, false, {luma, chroma}, &bits, primary, &coeff_state,
+                    throwing_idct, remap, pack_rows};
+  throwing_idct_bits = &bits;
+  bool caught = false;
+  try {
+    decode_six_blocks(args);
+  } catch (int value) {
+    assert(value == 1);
+    caught = true;
+  }
+  assert(caught);
+  assert(bits.cursor == stream && bits.accumulator == 0);
+  assert(bits.available_bits == 21);
+  assert(coeff_state.bits.cursor == bits.cursor);
+  assert(coeff_state.bits.accumulator == bits.accumulator);
+  assert(coeff_state.bits.available_bits == bits.available_bits);
+}
+
 void test_six_flagged_delta_dispatch() {
   idct_calls = 0;
   const int half_width = 16;
@@ -431,6 +541,8 @@ void test_delta_block_shapes_and_byte_wrap() {
 int main() {
   test_refill_word();
   test_block_header_paths();
+  test_negative_header_count_skips_refill();
+  test_negative_count_flagged_delta_skips_refill();
   test_terminal_huffman_entry();
   test_value_then_terminal_entry();
   test_signed_fill_byte();
@@ -439,6 +551,7 @@ int main() {
   test_initial_refill_restores_sixteen_bits();
   test_six_block_native_dispatch_and_fill();
   test_six_block_idct_route();
+  test_reader_commit_precedes_throwing_idct();
   test_six_flagged_delta_dispatch();
   test_sixteen_tile_progression_and_pack();
   test_delta_block_shapes_and_byte_wrap();

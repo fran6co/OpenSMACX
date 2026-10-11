@@ -2,6 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "movie_decoder_bit_state.h"
 #include "movie_decoder_records.h"
 
 namespace movie_decoder_frame {
@@ -23,11 +24,7 @@ struct RuntimePlanes {
   uint8_t **temporary_b;
 };
 
-struct BitState {
-  const uint8_t *cursor;
-  uint32_t accumulator;
-  int32_t available_bits;
-};
+typedef ::MovieDecoderBitState BitState;
 
 struct Callbacks {
   void *(*calloc_bytes)(size_t bytes);

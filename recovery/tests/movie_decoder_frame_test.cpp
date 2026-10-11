@@ -1,8 +1,10 @@
 #include "movie_decoder_frame.h"
 
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <new>
 
 using namespace movie_decoder_frame;
 
@@ -18,6 +20,10 @@ struct TestContext {
   std::uint8_t **temporary_a_slot;
   std::uint8_t **temporary_b_slot;
   BitState *bits;
+  const std::uint8_t *expected_reader_cursor;
+  std::uint32_t expected_reader_accumulator;
+  std::int32_t expected_reader_count;
+  bool throw_on_decode;
   int packed_rows;
   std::uint32_t pack_source_offsets[40];
   std::uint32_t pack_destination_offsets[40];
@@ -49,7 +55,11 @@ static void decode_block(void *opaque, std::uint8_t *coefficient,
   assert(destination == context->selected_base +
                             context->decode_offsets[context->decode_calls]);
   assert(context->bits->cursor != 0);
+  assert(context->bits->cursor == context->expected_reader_cursor);
+  assert(context->bits->accumulator == context->expected_reader_accumulator);
+  assert(context->bits->available_bits == context->expected_reader_count);
   ++context->decode_calls;
+  if (context->throw_on_decode) throw 1;
 }
 
 static void pack_row(const std::uint32_t *source, std::uint32_t *destination,
@@ -88,7 +98,113 @@ static CodebookRecord record_for(int index, bool second_group) {
   return record;
 }
 
+static void test_packet_and_mode_alias_publication() {
+  alignas(BitState) std::uint8_t alias_storage[96] = {};
+  BitState *const alias_bits = new (alias_storage + 16) BitState;
+  alias_bits->cursor = alias_storage + 40;
+  alias_bits->accumulator = 0xaaaaaaaa;
+  alias_bits->available_bits = 0x45674567;
+  const std::uint32_t expected_accumulator = 0x45674567;
+  const std::uint8_t *const packet =
+      reinterpret_cast<const std::uint8_t *>(alias_bits) +
+      offsetof(BitState, available_bits) - 0x10;
+
+  std::uint8_t *coefficient = alias_storage;
+  std::uint8_t *temporary_a = alias_storage + 1;
+  std::uint8_t *temporary_b = alias_storage + 2;
+  RuntimePlanes planes = {&coefficient, &temporary_a, &temporary_b};
+  std::uint32_t allocation_gate = 1;
+  std::uint32_t table_gate = 1;
+  std::int32_t scale_source[64] = {};
+  std::int32_t scale_output[64] = {};
+  std::int32_t transform_products[64] = {};
+  Tables tables = {0, 0, 0, 0, scale_source, scale_output};
+  std::uint8_t destination[1] = {};
+  Callbacks callbacks = {0, 0, 0};
+  FrameArgs args;
+  args.planes = &planes;
+  args.allocation_gate = &allocation_gate;
+  args.record_mode = reinterpret_cast<std::uint32_t *>(
+      &alias_bits->available_bits);
+  args.table_init_gate = &table_gate;
+  args.width = 0;
+  args.height = 1;
+  args.compressed = packet;
+  args.bit_state = alias_bits;
+  args.destination = destination;
+  args.output_pitch = 0;
+  args.record_kind = 7;
+  args.codebook_records = 0;
+  args.transform_products = transform_products;
+  args.tables = tables;
+  args.decoder_context = 0;
+  args.callbacks = callbacks;
+
+  assert(decode_frame(args) == 0);
+  assert(alias_bits->cursor == packet + 0x14);
+  assert(alias_bits->accumulator == expected_accumulator);
+  assert(alias_bits->available_bits == 1);
+}
+
+static void test_bias_byte_precedes_codebook_initialization() {
+  alignas(std::uint32_t) std::uint8_t storage[0x900] = {};
+  const std::uint8_t *const compressed = storage + 3;
+  std::uint32_t *const primary =
+      reinterpret_cast<std::uint32_t *>(storage + 16);
+  primary[0] = 0x11223380u;
+  std::uint32_t secondary_a[256] = {};
+  std::uint32_t secondary_b[256] = {};
+  std::uint32_t block_prefix[64] = {};
+  std::int32_t scale_source[64] = {};
+  std::int32_t scale_output[64] = {};
+  std::int32_t transform_products[64] = {};
+  CodebookRecord records[222];
+  for (int i = 0; i != 94; ++i) records[i] = record_for(i, false);
+  for (int i = 0; i != 128; ++i) records[94 + i] = record_for(i, true);
+  scale_source[1] = 1;
+  transform_products[1] = 1;
+
+  std::uint8_t *coefficient = storage;
+  std::uint8_t *temporary_a = storage + 1;
+  std::uint8_t *temporary_b = storage + 2;
+  RuntimePlanes planes = {&coefficient, &temporary_a, &temporary_b};
+  std::uint32_t allocation_gate = 1;
+  std::uint32_t table_gate = 0;
+  std::uint32_t record_mode = 0;
+  BitState bits = {0, 0, 0};
+  Tables tables = {primary, secondary_a, secondary_b, block_prefix,
+                   scale_source, scale_output};
+  std::uint8_t destination[1] = {};
+  Callbacks callbacks = {0, 0, 0};
+  FrameArgs args;
+  args.planes = &planes;
+  args.allocation_gate = &allocation_gate;
+  args.record_mode = &record_mode;
+  args.table_init_gate = &table_gate;
+  args.width = 0;
+  args.height = 1;
+  args.compressed = compressed;
+  args.bit_state = &bits;
+  args.destination = destination;
+  args.output_pitch = 0;
+  args.record_kind = 5;
+  args.codebook_records = records;
+  args.transform_products = transform_products;
+  args.tables = tables;
+  args.decoder_context = 0;
+  args.callbacks = callbacks;
+
+  assert(static_cast<std::uint8_t>(compressed[0x0d]) == 0x80);
+  assert(decode_frame(args) == 0);
+  assert(primary[0] == 0x0fu);
+  // Bias is captured as signed -128 before the codebook initializer overwrites
+  // its aliased source byte with 0x0f; applying the latter would yield zero.
+  assert(scale_output[1] == -8);
+}
+
 int main() {
+  test_packet_and_mode_alias_publication();
+  test_bias_byte_precedes_codebook_initialization();
   std::uint32_t primary[512];
   std::uint32_t secondary_a[256];
   std::uint32_t secondary_b[256];
@@ -125,6 +241,12 @@ int main() {
   TestContext context;
   std::memset(&context, 0, sizeof(context));
   context.bits = &bits;
+  context.expected_reader_cursor = compressed + 0x14;
+  context.expected_reader_accumulator =
+      (static_cast<std::uint32_t>(compressed[0x10] | (compressed[0x11] << 8)) << 16) |
+      static_cast<std::uint32_t>(compressed[0x12] | (compressed[0x13] << 8));
+  context.expected_reader_count = 0x20;
+  context.throw_on_decode = false;
   context.coefficient_slot = &coefficient_plane;
   context.temporary_a_slot = &temporary_plane_a;
   context.temporary_b_slot = &temporary_plane_b;
@@ -204,5 +326,26 @@ int main() {
   assert(coefficient_plane == context.planes[1]);
   assert(temporary_plane_a == context.planes[0]);
   assert(context.decode_calls == 4 && context.packed_rows == 31);
+
+  // A failing downstream callback sees and leaves the packet reader published.
+  context.decode_calls = 0;
+  context.throw_on_decode = true;
+  args.record_kind = 5;
+  bits.cursor = 0;
+  bits.accumulator = 0xdeadbeefu;
+  bits.available_bits = -7;
+  bool caught = false;
+  try {
+    decode_frame(args);
+  } catch (int value) {
+    assert(value == 1);
+    caught = true;
+  }
+  assert(caught && context.decode_calls == 1);
+  assert(record_mode == 0);
+  assert(bits.cursor == compressed + 0x14);
+  assert(bits.accumulator == context.expected_reader_accumulator);
+  assert(bits.available_bits == 0x20);
+
   return 0;
 }

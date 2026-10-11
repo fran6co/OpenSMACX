@@ -55,7 +55,7 @@ def test_live_huffman_body_and_all_three_fixture_initializers(
     assert "void (*pack_rows)(const uint8_t *component_rows" in header
     assert "args.pack_rows(args.scratch.luma_16x16, args.scratch.chroma_16x8," in source
     assert "transform_sixteen(args.scratch.luma_16x16" not in source
-    assert host.count("idct, remap, pack_rows};") == 3
+    assert host.count("idct, remap, pack_rows};") == 4
     assert "&coeff_state, idct, remap, pack_rows};" in host
 
     general = (SRC / "general.cpp").read_text()
@@ -82,6 +82,13 @@ def test_live_5d2e70_bridge_calls_mapped_5cea09_with_native_arguments(
     bridge = (SRC / "movie_media_decoder.cpp").read_text()
     assert "sub_5cea09(component_rows, chroma_rows, destination, row_pitch_bytes);" in bridge
     assert "args.pack_rows = movie_decoder_pack_rows;" in bridge
+    six_body = _function(bridge, "void __fastcall sub_5d2e70(")
+    assert "args.bits = bits;" in six_body
+    assert "&movie_media_decoder_tables.frame_bit_state" in six_body
+    assert "movie_media_decoder_tables.frame_bit_state.cursor = bits.cursor" not in six_body
+    frame_body = _function(bridge, "int __fastcall sub_5d35b0(")
+    assert "args.bit_state = &movie_media_decoder_tables.frame_bit_state;" in frame_body
+    assert "MovieDecoderFrameBridgeContext" not in bridge
     wrappers = "\n\n".join(
         _function(bridge, sig)
         for sig in ("static void movie_decoder_idct_rows(",
@@ -102,6 +109,7 @@ def test_live_5d2e70_bridge_calls_mapped_5cea09_with_native_arguments(
 using BYTE=uint8_t; using DWORD=uint32_t; using LONG=int32_t;
 ''' + helpers + r'''
 #include "movie_decoder_huffman.h"
+#include "movie_decoder_bit_state.h"
 struct MediaDecoderProcessStorage {
   BYTE narrow_block_output_bytes[0x200]; BYTE wide_block_output_bytes[0x400];
   DWORD selected_record_mode_3364, plane_allocation_gate_3368, decoder_table_init_gate_336c;
@@ -110,7 +118,7 @@ struct MediaDecoderTableStorage {
   int32_t decoded_coefficient_words[64], scale_source_words[64], coefficient_position_byte_offsets[64];
   uint32_t primary_symbol_words[512], secondary_symbol_words_a[256], secondary_symbol_words_b[256], block_prefix_words[64];
   int32_t decoded_coefficient_scale_words[64];
-  struct { const BYTE *cursor; uint32_t accumulator; int32_t available_bits; } frame_bit_state;
+  MovieDecoderBitState frame_bit_state;
 };
 struct MediaConversionTableStorage { struct { DWORD words[1024]; } remap_or_lookup_storage; };
 MediaDecoderProcessStorage movie_media_decoder_process_storage = {};
@@ -118,7 +126,10 @@ MediaDecoderTableStorage movie_media_decoder_tables = {};
 MediaConversionTableStorage movie_media_conversion_tables = {};
 static int pack_calls; static const BYTE *pack_component, *pack_chroma;
 static BYTE *pack_destination; static int pack_pitch;
+static const BYTE *packet_anchor;
 void __cdecl sub_5cea09(const BYTE *component, const BYTE *chroma, BYTE *destination, int pitch) {
+  assert(movie_media_decoder_tables.frame_bit_state.cursor==packet_anchor+6);
+  assert(movie_media_decoder_tables.frame_bit_state.available_bits==20);
   ++pack_calls; pack_component=component; pack_chroma=chroma; pack_destination=destination; pack_pitch=pitch;
   for (int row=0; row!=16; ++row) std::memset(destination+row*pitch, 0, 32);
 }
@@ -128,6 +139,7 @@ int main() {
   for (int i=0; i!=512; ++i) movie_media_decoder_tables.primary_symbol_words[i]=0x30;
   movie_media_decoder_tables.decoded_coefficient_scale_words[0]=1;
   BYTE packet[64]={}, coefficients[1024]={}, output[528]; std::memset(output,0xa5,sizeof(output));
+  packet_anchor=packet;
   movie_media_decoder_tables.frame_bit_state.cursor=packet;
   movie_media_decoder_tables.frame_bit_state.accumulator=0;
   movie_media_decoder_tables.frame_bit_state.available_bits=32;
