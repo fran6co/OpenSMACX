@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-disputed-bounds-oct11",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "9c76904f56b3853366e7c8cef37c967b65a2e3eb",
+  "subjects": [
+    {
+      "address": 6574395,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6575018,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6576196,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6585211,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6585379,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6590100,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6592787,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6592865,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6605491,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6605690,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6605707,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6609204,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_reference_attribution_oct11.py",
+    "recovery/tests/test_crt_disputed_bounds_oct11.py",
+    "recovery/tasks/crt-disputed-bounds-oct11.json"
+  ],
+  "intent": "Bind twelve unique complete exclusive CRT functions whose catalogue bounds are disputed or missing, using pinned physical archive extent and native instruction/reference evidence instead of guessed truncation.",
+  "evidence": [
+    "Source retains exact catalogue boundary disagreement and physical member/span interpretation; scan summaries remain ignored. Complete exclusive sections match every non-relocation byte and original absolute fixup shape without overlap with existing owned source/dependency spans.",
+    "Do not attribute the ambiguous FrameUnwindFilter/ArrayUnwindFilter body or one-byte RET-only uncertain instances. Multi-entry memcpy/memmove,87disp and adj_fdiv contributions remain distinct research obligations; no fake function-scope boundaries or padding recoveries.",
+    "Preserve every original source identity, claim and existing function/data/import binding. No application C++ or compiler policy changes. Full original linear decode is not a complete reachable-CFG, linked-provider or runtime proof.",
+    "Manual coordinator-reviewed component task requires build/link, current232-to244 reference preservation, boundary/body/reference damage controls and independent review. Previous8 tests retain their original immutable checkpoint+installedprefix, not a fabricated current acceptance."
+  ]
+}
