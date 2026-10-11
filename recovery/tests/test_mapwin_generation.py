@@ -823,13 +823,26 @@ void Texture::draw2(Buffer *b, Vert *v, int *l, int n, Vert *uv, int, int) {
 
 // ---- the window ---------------------------------------------------------
 bool landmark_lighting = false;
+// ACTUAL TERRAIN CACHE RECORD
 struct MapWin : Buffer {
-    void *owned_;
+    TerrainCacheEntry *owned_;
+    TerrainCacheEntry *next_cache;
+    bool replace_cache;
+    int altitude_calls;
     unsigned int field_8_;
     Font font_b_;
-    int get_alt(int, int, int) { return 0; }
+    int get_alt(int, int, int) {
+        ++altitude_calls;
+        // The first four calls establish the tile's earlier vertical origin;
+        // replacement is exercised at the subsequent wireframe cache reads.
+        if (replace_cache && altitude_calls > 4) owned_ = next_cache;
+        // Only this dedicated control poisons the return value; ordinary
+        // renderer cases retain their existing zero-altitude service double.
+        return replace_cache && altitude_calls > 4 ? 777 : 0;
+    }
     int get_point_light(int, int, int corner) { return 0x37 + (landmark_lighting ? corner * 3 : 0); }
-    MapWin() : Buffer(), owned_(0), field_8_(0) {}
+    MapWin() : Buffer(), owned_(0), next_cache(0), replace_cache(false),
+               altitude_calls(0), field_8_(0) {}
 };
 
 struct WorldWin { MapWin mapWin_; };
@@ -1625,12 +1638,43 @@ int main() {
             check(lines[i].y1 == 100 + ((i + 1) & 3) * 16);
         }
     }
+    // Real corner domain and signed cache member, including pointer replacement
+    // inside get_alt. This observes the complete actual renderer, not a rewrite.
+    for (int clear = 0; clear != 2; ++clear) {
+        treset();
+        TerrainCacheEntry before[32] = {}, after[32] = {};
+        static_assert(sizeof(TerrainCacheEntry) == 12, "original record stride");
+        const int ids[12] = {0,1,2,0,2,3,0,3,4,0,4,1};
+        const int values[5] = {-128,-17,23,-64,127};
+        for (int i=0;i<12;++i) LandCornerId_storage[i]=ids[i];
+        for (int i=0;i<5;++i) {
+            before[0].altitude[i]=99;
+            after[0].altitude[i]=static_cast<signed char>(values[i]);
+        }
+        window.owned_=before;
+        window.next_cache=clear ? 0 : after;
+        window.replace_cache=true;
+        window.altitude_calls=0;
+        tile->climate=0x60;
+        gen_terrain_poly(&buffer,&window,5,1,0x16,1,0,0,100,100);
+        check(window.altitude_calls==16 && window.owned_==window.next_cache);
+        check(Line_calls==4);
+        for(int i=0;i<4;++i) {
+            int next=(i+1)&3;
+            check(lines[i].y0==100+i*16-(clear ? 0 : values[ids[i*3+1]]));
+            check(lines[i].y1==100+next*16-(clear ? 0 : values[ids[next*3+1]]));
+        }
+        window.owned_=0;
+        window.replace_cache=false;
+    }
     return 0;
 }
 '''.replace('// ACTUAL LANDMARK OWNERS', landmark_owners()).replace(
     '// ORIGINAL LANDMARK ORACLE', landmark_oracle()).replace(
     '// ACTUAL COAST DECLARATION', coast_palette_declaration()).replace(
-    '// ACTUAL COAST OWNER', coast_palette_owner()).replace('// ACTUAL MAP', body((ROOT / 'src/map.h').read_text(),
+    '// ACTUAL COAST OWNER', coast_palette_owner()).replace(
+    '// ACTUAL TERRAIN CACHE RECORD', body((ROOT / 'src/mapwin.h').read_text(),
+                                         'struct TerrainCacheEntry') + ';').replace('// ACTUAL MAP', body((ROOT / 'src/map.h').read_text(),
                                 'struct Map {') + ';').replace('// ACTUAL VEH', body((ROOT / 'src/veh.h').read_text(),
                                 'struct Veh {') + ';').replace('// SOURCE', source_text)
 
@@ -1748,6 +1792,24 @@ def terrain_run(tmp_path, text):
 def test_actual_terrain_poly_receivers(tmp_path):
     result = terrain_run(tmp_path, terrain_harness(terrain_source()))
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize(('old', 'new'), [
+    ('.altitude[corner];', '.altitude[(corner + 1) % 5];'),
+    ('.altitude[corner];', '.brightness[corner % 4];'),
+    ('window->get_alt(a7, a8, corner);', '(void)window;'),
+    ('delta = window->owned_\n'
+     '                                    [(MapLongitudeBounds >> 1) * a8 + local_14]\n'
+     '                                        .altitude[corner];',
+     'delta = static_cast<unsigned char>(window->owned_\n'
+     '                                    [(MapLongitudeBounds >> 1) * a8 + local_14]\n'
+     '                                        .altitude[corner]);'),
+])
+def test_renderer_cache_member_damage_is_observed(tmp_path, old, new):
+    actual = terrain_source()
+    assert actual.count(old) == 1
+    result = terrain_run(tmp_path, terrain_harness(actual.replace(old, new)))
+    assert result.returncode == 91 and 'assertion at' in result.stderr, result.stderr
 
 
 @pytest.mark.parametrize('family', ['MountPlanetTable', 'SunnyMesaTable', 'GarlandCraterTable'])

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "fc9d7909ee8fde8fcb93e454e65d57ed36587b43",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/tests/test_mapwin_renderer_cache_member_oct11.py",
+    "recovery/tests/test_mapwin_generation.py"
+  ],
+  "intent": "Use the existing terrain-cache altitude member in the wireframe renderer, preserving get_alt side effects, post-call pointer reload/null guard, signed byte result and unchecked original coordinates. No new allocation, bounds check or owner claim.",
+  "evidence": [
+    "Pinned466B4E calls46FE70 before466B56 reloads MapWin+4. The branch guards that reloaded cache pointer;466B69 uses arithmetic half-width,466B71/76 form twelve-byte records,466B79 loads member+4+corner,466B7D sign-extends the byte.",
+    "src/mapwin.h already defines the twelve-byte TerrainCacheEntry with signed altitude[5] at+4; cache allocation/initialization/get_alt/terrain_fixup already access this same member.",
+    "LandCornerId has twelve entries all within0..4, source-bound at685F80..685FB0. Negative coordinates and invalid allocation-relative accesses are not normalized. Complete renderer arithmetic, overflow effects and game behavior remain separate obligations."
+  ],
+  "subjects": [
+    {"address": 4600528, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ]
+}

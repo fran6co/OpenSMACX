@@ -3677,12 +3677,9 @@ LAB_00463603:
                             if (window->owned_ == 0) {
                                 delta = 0;
                             } else {
-                                delta = reinterpret_cast<char *>(
-                                            window->owned_)
-                                    [((MapLongitudeBounds >> 1) * a8 +
-                                      local_14) *
-                                         0xc +
-                                     4 + corner];
+                                delta = window->owned_
+                                    [(MapLongitudeBounds >> 1) * a8 + local_14]
+                                        .altitude[corner];
                             }
                         }
                         land_vertices[tri * 3 + c].y -= delta;
