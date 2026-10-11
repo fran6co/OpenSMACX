@@ -185,17 +185,32 @@ def verify_layout(root: Path, task_name: str, *, compiler=None, command_for=None
     # coverage only; each requirement still needs a real witness in every trial.
     all_rows = rows + base_rows
     def covered(item, unit, flags):
+        # A controlled absence can establish that this TU has no declaration
+        # to compare. Ordinary non-emission is only an unknown observation.
         return (any(row["interpretation_id"] == item.interpretation_id and row["unit"] == unit
                     and row["flags"] == list(flags) for row in all_rows)
                 or any(row["class_name"] == item.class_name and row["unit"] == unit
                        and row["flags"] == list(flags)
-                       and row["observation"] in ("no_complete_definition", "not_emitted")
+                       and row["observation"] == "no_complete_definition"
                        for row in observations))
 
     missing_witnesses = [{"interpretation_id": item.interpretation_id, "unit": unit, "flags": list(flags)}
                          for item in (*expected, *expected_bases) for unit in units
                          for flags in settings.flags_for(unit)
                          if not covered(item, unit, flags)]
+    # Absence controls may cover irrelevant TUs, but cannot establish the
+    # requirement itself. Every configured flag profile still needs at least
+    # one actual class definition and layout observation somewhere in scope.
+    for item in (*expected, *expected_bases):
+        actual_flags = {tuple(row["flags"]) for row in observations
+                        if row["class_name"] == item.class_name
+                        and row["observation"] in ("observed", "witnessed")}
+        for flags in sorted({flags for unit in units for flags in settings.flags_for(unit)} - actual_flags):
+            if not any(row["interpretation_id"] == item.interpretation_id
+                       and row["flags"] == list(flags)
+                       for row in missing_witnesses):
+                missing_witnesses.append({"interpretation_id": item.interpretation_id,
+                                          "unit": None, "flags": list(flags)})
     result = (Result.FAIL if any(row["result"] == Result.FAIL for row in all_rows) else
               Result.UNKNOWN if not all_rows or missing_witnesses or any(row["result"] == Result.UNKNOWN for row in all_rows) else Result.PASS)
     return {"task_id": task_name, "check": "declared_member_and_base_offsets", "result": result,
