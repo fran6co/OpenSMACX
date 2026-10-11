@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-reference-attribution-oct11",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "209b1258cdc1dcbef30e1801fe81f054a58fff64",
+  "subjects": [
+    {
+      "address": 6580265,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6580560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6580727,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6594936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6602599,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6605720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6605748,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6619680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_bulk_attribution_oct11.py",
+    "recovery/tests/test_crt_reference_attribution_oct11.py",
+    "recovery/tasks/crt-reference-attribution-oct11.json"
+  ],
+  "intent": "Bind eight complete CRT archive functions using independently identified import and existing runtime helper targets; preserve ambiguity and unknown data without application stand-ins or compiler-policy changes.",
+  "evidence": [
+    "Equal pinned IDA/Ghidra bounds and exclusive archive section extents establish eight measurement units. Nonrelocation-body equality alone was ambiguous; actual PE import exports or known runtime helper identities supply the distinguishing reference evidence.",
+    "Known bindings, original identities, historical claims and source evidence remain unchanged. Five added import declarations state DLL/export identities, never copied IAT addresses or new candidate provider/version claims.",
+    "Manual coordinator-reviewed component scope. Build/link, source identity continuity and native comparison controls required; unresolved runtime globals and linked archive selection remain obligations. Native tests evaluate chosen and competing physical members, not just selected bytes.",
+    "The earlier119 batch retains its original immutable checkpoint/prefix and full damage controls; this batch owns current224-to232 monotonic preservation. Derivable reports remain ignored."
+  ]
+}

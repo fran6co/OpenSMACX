@@ -20,6 +20,7 @@ from test_crt_eight_entry_bindings_oct10 import repin, raw_offset
 ROOT = Path(__file__).resolve().parents[2]
 COMPANION = "src/vendor/vc6-runtime.recovery.h"
 BASE = "d516fb1728a65933c0e4afb8c622f3d862f46b1b"
+ADDITION = "8aa4fe262"
 EXPECTED = (
     (0x00644DD2, 0x00644DFF, "__cinit", "build/intel/mt_obj/crt0dat.obj", 2, "48be3defdca3560f39e7d593e4dd110cb2977874227eae911a707868f722b961"),
     (0x00644DFF, 0x00644E10, "_exit", "build/intel/mt_obj/crt0dat.obj", 4, "48be3defdca3560f39e7d593e4dd110cb2977874227eae911a707868f722b961"),
@@ -151,8 +152,11 @@ def prior_text():
 
 def test_only_expected_bindings_added():
     old = prior_text()
-    current = (ROOT / COMPANION).read_text()
+    current = subprocess.check_output(
+        ["git", "show", ADDITION + ":" + COMPANION], cwd=ROOT, text=True)
     before, after = parse_component(old), parse_component(current)
+    installed = parse_component((ROOT / COMPANION).read_text())
+    assert replace(installed, bindings=installed.bindings[:224]) == after
     assert len(before.bindings) == 105 and len(after.bindings) == 224
     assert replace(after, bindings=tuple(b for b in after.bindings
                    if b.origin.address not in ADDRESSES)) == before
@@ -175,7 +179,8 @@ def inputs():
     archive_path = Path("/home/fran6co/opt/vc6/LIB/LIBCMT.LIB")
     if not path.is_file() or not archive_path.is_file():
         pytest.skip("external pinned image/runtime archive unavailable")
-    manifest = parse_component((ROOT / COMPANION).read_text())
+    manifest = parse_component(subprocess.check_output(
+        ["git", "show", ADDITION + ":" + COMPANION], cwd=ROOT, text=True))
     image, archive = path.read_bytes(), archive_path.read_bytes()
     assert hashlib.sha256(image).hexdigest() == manifest.bindings[0].origin.image_sha256
     assert hashlib.sha256(archive).hexdigest() == manifest.archive_sha256
