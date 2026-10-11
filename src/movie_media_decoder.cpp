@@ -716,7 +716,7 @@ extern "C" void __cdecl sub_5d2c0a(int *dst, int *src) {
 // separate table alias is used.
 // ORIGINAL: 0x005D0D82 sub_5d0d82 0x005D0D82-0x005D1278
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Complete typed VLC/range decode plus 8 row and 8 column transforms. Reuse the shared 325-DWORD accessed coefficient window and mapped sub_5d29e1/sub_5d2c0a; retain the observed fill branch and caller-supplied output pitch."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
-// symbol    ?sub_5d0d82@@YAXPAUMediaDecoderContext@@KPAEH@Z
+// symbol    ?sub_5d0d82@@YAKPAUMediaDecoderContext@@KPBEPAEHK@Z
 // TRIED: judged on its own disassembly (a prior batch-10 note on this file was removed as recorded-on-a-placeholder; this supersedes it with fresh evidence). This is genuinely register-passing on BOTH sides - entry and its two callees - not just parameter count: - entry: `push ecx; push edx; sub esp,0x300` then the body reads `esi` (`mov edx,[esi]` at 0x5D0D8C, later `unaff_ESI[idx]`), `edi` (`unaff_EDI>>5` / `unaff_EDI&0x1f` as a bitstream bit-cursor from the first instruction that touches it, 0x5D0DB4), `ebp` (`[ebp+(edi>>5)*4]` at 0x5D0DBB, a bitstream data base) and `eax` (`imul edx` at 0x5D0D91 multiplies THE INCOMING eax, never loaded from anywhere) - Ghidra's own decompile names all four unaff_EBP/unaff_ESI/unaff_EDI/in_EAX, i.e. its dataflow analysis independently found no definition for them inside this function either. ecx/edx ARE ordinary __fastcall params (pushed to [esp] then reloaded near the tail at 0x5D10D8/0x5D1196), so the two-argument part alone would be expressible - it is the extra four registers that are not. - callees: the eight `call 0x5d29e1` sites (0x5D1057..0x5D10D3) and eight `call 0x5d2c0a` sites (0x5D10E6..0x5D117E) each set up ONLY `esi`/`edi` immediately before the call (`lea esi,[esp+N]; lea edi,[esp+M]; call`) - no ecx/edx/stack push at all. No MSVC convention (cdecl/stdcall/fastcall/thiscall) passes arguments in esi/edi, so even a correct internal transcription of sub_5d0d82 could not legally CALL its own two helpers from standard C++. This is two independent, compounding blockers (the entry contract and the call sites inside it), and both require `__asm`/`_emit` to express, which the rules bar outright regardless of effort spent. Left the compiling placeholder in place (MISMATCH #0, same divergence point any body would hit given the prologue itself can't match) rather than writing an untestable ~150-line transcription whose only achievable tier is identical to what is already there.
 // Historical placeholder-era facts/table findings (retained; storage is now source-owned):
 // Historical emitted symbol    ?sub_5d0d82@@YAHXZ
@@ -737,9 +737,9 @@ extern "C" void __cdecl sub_5d2c0a(int *dst, int *src) {
 // Huffman/range-coded bitstream decoder over a 64-entry int weight table -
 // the DCT-coefficient stage of the movie codec, to judge by the table shapes
 // and the 64-int output.
-void __cdecl sub_5d0d82(
-    MediaDecoderContext *context, DWORD predictor_value, BYTE *destination,
-    int row_pitch_bytes) {
+DWORD __cdecl sub_5d0d82(
+    MediaDecoderContext *context, DWORD predictor_value, const BYTE *input,
+    BYTE *destination, int row_pitch_bytes, DWORD bit_position) {
   // Model the native 0x300-byte scratch as DWORD objects. The original writes
   // coefficient words and later addresses the same frame as bytes; retaining
   // a byte array plus DWORD type-punning would make the C++ translation rely
@@ -750,8 +750,6 @@ void __cdecl sub_5d0d82(
   coefficients[0] = dc;
   for (int i = 1; i != 64; ++i) coefficients[i] = 0;
 
-  DWORD bit_position = context->bit_position_204;
-  const BYTE *const input = context->compressed_input_200;
   const DWORD *const weights = context->block_transform_weights;
   BYTE run_position = 0x3f;
   for (;;) {
@@ -795,8 +793,6 @@ void __cdecl sub_5d0d82(
         movie_media_coefficient_tables.words[6 + run_position];
     coefficients[coefficient_index] = amplitude * weights[coefficient_index];
   }
-  context->bit_position_204 = bit_position;
-
   if (run_position == 0x3f) {
     const int fill_value = movie_media_sar17(dc);
     for (int row = 0; row != 8; ++row) {
@@ -805,7 +801,7 @@ void __cdecl sub_5d0d82(
       for (int column = 0; column != 8; ++column)
         output[column] = fill_value;
     }
-    return;
+    return bit_position;
   }
 
   // The native row transforms write a 9-DWORD-spaced intermediate matrix;
@@ -822,6 +818,7 @@ void __cdecl sub_5d0d82(
     sub_5d2c0a(reinterpret_cast<int *>(destination + column * row_pitch_bytes),
                reinterpret_cast<int *>(local_storage_bytes + 0x10c + column * 0x24));
   }
+  return bit_position;
 }
 
 // Normalized source body for the six predictor/transform sequence beginning
@@ -830,12 +827,11 @@ void __cdecl sub_5d0d82(
 // ECX/EDX setup pairs plus the final fallthrough setup in the pinned image.
 // ORIGINAL: 0x005D0AAB sub_5d0aab 0x005D0AAB-0x005D0D82
 // RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Normalize the shared ESI/EDI/EBP/EAX state into the proven MediaRuntime and caller-owned 0x800-byte scratch. Perform six delta/predictor steps and invoke the typed 5D0D82 block body for each; preserve the sixth native fallthrough as an explicit source call edge."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
-// symbol    ?sub_5d0aab@@YAXPAUMediaDecoderContext@@PAK@Z
+// symbol    ?sub_5d0aab@@YAKPAUMediaDecoderContext@@PAKPBEK@Z
 // TRIED: no prologue/epilogue in the original (falls into 0x5D0D82, no ret) - edi/esi/ebp are register-passed by one caller sharing its frame; no standalone C parameter list can receive that, so byte-exactness is not reachable here. Modelled as static globals a companion routine would set instead.
-void __cdecl sub_5d0aab(
-    MediaDecoderContext *context, DWORD *scratch_words) {
-  DWORD bit_position = context->bit_position_204;
-  const BYTE *const input = context->compressed_input_200;
+DWORD __cdecl sub_5d0aab(
+    MediaDecoderContext *context, DWORD *scratch_words, const BYTE *input,
+    DWORD bit_position) {
   const BYTE *const lookup_a = reinterpret_cast<const BYTE *>(
       movie_media_coefficient_tables.words) + 0x394;
   const BYTE *const lookup_b = reinterpret_cast<const BYTE *>(
@@ -861,18 +857,21 @@ void __cdecl sub_5d0aab(
     }
     *predictor += movie_media_decode_predictor_delta(
         input, bit_position, lookup, lookup_shift);
-    context->bit_position_204 = bit_position;
-    sub_5d0d82(
-        context, *predictor,
+    bit_position = sub_5d0d82(
+        context, *predictor, input,
         reinterpret_cast<BYTE *>(scratch_words + output_offsets[block]),
-        block < 4 ? 0x40 : 0x20);
-    bit_position = context->bit_position_204;
+        block < 4 ? 0x40 : 0x20, bit_position);
   }
+  return bit_position;
 }
 
 void movie_media_decode_six_coefficient_blocks(
     MediaDecoderContext *context, DWORD *scratch_words) {
-  sub_5d0aab(context, scratch_words);
+  const BYTE *const input = context->compressed_input_200;
+  const DWORD initial_bit_position = context->bit_position_204;
+  const DWORD bit_position = sub_5d0aab(
+      context, scratch_words, input, initial_bit_position);
+  context->bit_position_204 = bit_position;
 }
 
 // ORIGINAL: 0x005D1466 sub_5d1466 0x005D1466-0x005D1654
@@ -881,7 +880,11 @@ void movie_media_decode_six_coefficient_blocks(
 // TRIED: callee (sub_5d2037) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
 void __cdecl sub_5d1466(BYTE *base, int stride, MediaDecoderContext *context) {
   DWORD scratch_words[512];
-  sub_5d0aab(context, scratch_words);
+  const BYTE *const input = context->compressed_input_200;
+  const DWORD initial_bit_position = context->bit_position_204;
+  const DWORD bit_position = sub_5d0aab(
+      context, scratch_words, input, initial_bit_position);
+  context->bit_position_204 = bit_position;
   for (int row = 0; row != 16; ++row) {
     int *const source = reinterpret_cast<int *>(
         reinterpret_cast<BYTE *>(scratch_words) + row * 0x40);
@@ -898,7 +901,11 @@ void __cdecl sub_5d1466(BYTE *base, int stride, MediaDecoderContext *context) {
 // TRIED: callee (OutputPixelRow16) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
 void __cdecl sub_5d1842(BYTE *base, int stride, MediaDecoderContext *context) {
   DWORD scratch_words[512];
-  sub_5d0aab(context, scratch_words);
+  const BYTE *const input = context->compressed_input_200;
+  const DWORD initial_bit_position = context->bit_position_204;
+  const DWORD bit_position = sub_5d0aab(
+      context, scratch_words, input, initial_bit_position);
+  context->bit_position_204 = bit_position;
   for (int row = 0; row != 16; ++row) {
     unsigned int *const component = reinterpret_cast<unsigned int *>(
         reinterpret_cast<BYTE *>(scratch_words) + row * 0x40);
@@ -915,7 +922,11 @@ void __cdecl sub_5d1842(BYTE *base, int stride, MediaDecoderContext *context) {
 // TRIED: callee (sub_5d1b88) takes its args in esi/edi/ebp with no stack push before `call` - no cdecl/fastcall signature the compiler can be told to use reproduces that register setup without __asm, which is barred. Landed with plausible field offsets and call count/order; prologue register save order and the per-call register loads do not match.
 void __cdecl sub_5d1654(BYTE *base, int stride, MediaDecoderContext *context) {
   DWORD scratch_words[512];
-  sub_5d0aab(context, scratch_words);
+  const BYTE *const input = context->compressed_input_200;
+  const DWORD initial_bit_position = context->bit_position_204;
+  const DWORD bit_position = sub_5d0aab(
+      context, scratch_words, input, initial_bit_position);
+  context->bit_position_204 = bit_position;
   for (int row = 0; row != 16; ++row) {
     int *const source = reinterpret_cast<int *>(
         reinterpret_cast<BYTE *>(scratch_words) + row * 0x40);
@@ -932,7 +943,11 @@ void __cdecl sub_5d1654(BYTE *base, int stride, MediaDecoderContext *context) {
 // TRIED: OutputPixelRow (0x005CF5C7) is itself unrecovered and takes its row source/dest through esi/ebx/edi set by the caller before each call - a register-argument convention with no C++ expression that isn't __asm. Transcribed as 16 nullary calls in source order, matching call count/topology, not the per-call register setup.
 void __cdecl sub_5d1a30(BYTE *base, int stride, MediaDecoderContext *context) {
   DWORD scratch_words[512];
-  sub_5d0aab(context, scratch_words);
+  const BYTE *const input = context->compressed_input_200;
+  const DWORD initial_bit_position = context->bit_position_204;
+  const DWORD bit_position = sub_5d0aab(
+      context, scratch_words, input, initial_bit_position);
+  context->bit_position_204 = bit_position;
   for (int row = 0; row != 16; ++row) {
     unsigned int *const component = reinterpret_cast<unsigned int *>(
         reinterpret_cast<BYTE *>(scratch_words) + row * 0x40);
@@ -949,7 +964,11 @@ void __cdecl sub_5d1a30(BYTE *base, int stride, MediaDecoderContext *context) {
 // TRIED: sub_5d2536/sub_5d0aab take no C-expressible params (register- implicit edi/esi/ebp with no prologue); the esi/edi/ebp setup before each bare call cannot be threaded through a normal argument list without __asm, so the calls below are faithful in COUNT and ORDER, not operands.
 void __cdecl sub_5d1278(BYTE *base, int stride, MediaDecoderContext *context) {
   DWORD scratch_words[512];
-  sub_5d0aab(context, scratch_words);
+  const BYTE *const input = context->compressed_input_200;
+  const DWORD initial_bit_position = context->bit_position_204;
+  const DWORD bit_position = sub_5d0aab(
+      context, scratch_words, input, initial_bit_position);
+  context->bit_position_204 = bit_position;
   for (int row = 0; row != 16; ++row) {
     int *const source = reinterpret_cast<int *>(
         reinterpret_cast<BYTE *>(scratch_words) + row * 0x40);
