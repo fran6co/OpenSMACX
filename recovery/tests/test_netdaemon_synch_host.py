@@ -162,7 +162,9 @@ def _compile_run(tmp_path, compiler, harness, inject):
                "-fno-omit-frame-pointer", "-I", str(ROOT), str(cpp), "-o", str(exe)]
     built = subprocess.run(command, capture_output=True, text=True)
     assert built.returncode == 0, built.stdout + built.stderr
-    env = dict(os.environ, ASAN_OPTIONS="detect_leaks=0",
+    # Keep overlap/undefined-behavior detection active, but avoid external
+    # symbolizer/slow unwinding during deliberately failing mutation controls.
+    env = dict(os.environ, ASAN_OPTIONS="detect_leaks=0:symbolize=0:fast_unwind_on_fatal=1:abort_on_error=1",
                UBSAN_OPTIONS="halt_on_error=1")
     return subprocess.run([str(exe)], capture_output=True, text=True,
                           timeout=20, env=env)
@@ -360,8 +362,9 @@ def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
                       expected=False)
     memcpy_substitute = injection.replace("memmove(", "memcpy(")
     assert memcpy_substitute != injection
-    _compile_injected(tmp_path, compiler, source_template, memcpy_substitute,
-                      expected=False)
+    overlap_failure = _compile_injected(
+        tmp_path, compiler, source_template, memcpy_substitute, expected=False)
+    assert "memcpy-param-overlap" in overlap_failure.stderr
 
 
 def test_pinned_opcode06_size_chunk_and_address_dispatch_have_no_index_guard():
