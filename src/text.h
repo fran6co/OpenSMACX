@@ -136,10 +136,13 @@ class Text {
 // `??__FTxt` (0x005FD460) are that pair. They are annotated on the
 // definition itself, because there is no other source line they come from.
 //
-// WHAT IT COSTS, stated where the decision is: neither can ever be measured.
-// VC6 names generated initialisers `_$E<n>` and registers them through
-// `.CRT$XCU`; the `??__E`/`??__F` spellings are IDA's reconstruction of what
-// they DO, and the byte match looks a subject up by name. The hand-written
+// Measurement uses explicit current emitted-symbol facts on the object in
+// text.cpp. VC6 registers its startup root through `.CRT$XCU` and its shutdown
+// through `atexit`; identify that graph and its accesses to Txt, not a guessed
+// `_$E<n>` counter. Counters can change after TU edits. Compiler profiles may
+// inline the operations or emit separate constructor/registration helpers;
+// measuring the startup root does not grant its helpers the original span.
+// The `??__E`/`??__F` names retain the original catalogue identities. The hand-written
 // stand-ins that used to sit in text.cpp could be scored - one reached 97.8%
 // - and were deleted with this change, because a hand-written copy of a
 // function the compiler emits anyway is two definitions of one thing.

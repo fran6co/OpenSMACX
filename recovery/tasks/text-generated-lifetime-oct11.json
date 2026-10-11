@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "task_id": "text-generated-lifetime-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind the existing Txt object startup/shutdown mappings to observed generated compiler functions, preserving original identities and all lifetime behavior.",
+  "base_revision": "0a4561ea47200ae85a3d3319d6c09db7a45a2297",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6280192},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6280288}
+  ],
+  "editable_files": ["src/text.cpp", "src/text.h", "recovery/tests/test_text_generated_lifetime_oct11.py"],
+  "evidence": [
+    "Original CRT slot682680 selects5FD400; it initializes Text at9B7BA0, allocates two512-byte buffers, and registers5FD460 with atexit. The paired original shutdown closes the file and frees/clears both buffers. Text Txt(512), inline construction/destruction and declaration-order buffer globals own this lifecycle already.",
+    "Identify the current startup function by its CRT registration and the construction/atexit graph referencing the real Txt object. Existing recovery profiles may split these operations across generated helpers; the application build may inline them. Preserve that distinction, unchanged flags and original spans. Do not bind the constructor-only helper as the complete original startup function.",
+    "Use source.writer.write_symbol for current compiler facts only. Keep original names, spans, claims and historical TRIED lessons. No new implementation coverage, claim grant, generated-helper span exemption, linked-selection proof or game acceptance. Require fresh compiler-profile and application observations, unchanged physical code/references, source regression controls, build/link and independent review."
+  ]
+}
