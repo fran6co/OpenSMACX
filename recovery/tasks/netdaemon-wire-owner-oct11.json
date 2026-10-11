@@ -2,6 +2,8 @@
   "author": "coordinator",
   "base_revision": "a18f9cd7c43aaf731732104bd6db627154578f04",
   "editable_files": [
+    "recovery/tests/test_netdaemon_client_lock_identity_actual_source.py",
+    "recovery/tests/test_netdaemon_waiting_mask_owner_oct9.py",
     "recovery/tests/test_netdaemon_sender_identity_oct11.py",
     "recovery/tests/test_netdaemon_council_wire_oct11.py",
     "recovery/tests/test_netdaemon_wire_owner_oct11.py",

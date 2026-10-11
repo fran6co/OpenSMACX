@@ -185,9 +185,11 @@ def test_actual_dispatch_passes_resolved_identity_and_not_packet_word():
     assert "0x00534400-0x005388B9;0x0065E0C2-0x0065E442" in text
     assert re.search(
         r"netdaemon_handle_client_lock_message\(this,\s*type,\s*msg,\s*"
-        r"this->AlphaNet::pid_2_who\(static_cast<unsigned long>\(sender_id\)\)\)",
+        r"entry_sender_identity\)",
         route,
     )
+    assert text.count("this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id))") == 1
+    assert text.index("const int entry_sender_identity =") < text.index("uint32_t entry_sequence;")
     assert "message + 4" not in helper
     assert "const int sender = sender_identity;" in helper
 

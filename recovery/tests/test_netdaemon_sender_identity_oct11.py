@@ -2,6 +2,7 @@
 from pathlib import Path
 import shutil
 import subprocess
+import re
 
 import pytest
 
@@ -24,6 +25,30 @@ def apply_transfer_faction_migration(source):
     for before, after in TRANSFER_EDITS:
         assert source.count(before) == 1
         source = source.replace(before, after, 1)
+    return apply_entry_identity_migration(source)
+
+
+IDENTITY_EDITS = (
+    ("                                                 int sender_id = 0) {", "                                                 int sender_identity) {", 1),
+    ("                daemon->AlphaNet::pid_2_who(static_cast<uint32_t>(sender_id)),", "                sender_identity,", 1),
+    ("// dispatcher converts it through the same AlphaNet lookup as the native EDI.", "// dispatcher supplies its entry-captured identity, retained in native EDI.", 1),
+    ("                                                 int sender_id) {\n    const int sender = daemon->AlphaNet::pid_2_who(\n        static_cast<uint32_t>(sender_id));", "                                                 int sender_identity) {\n    const int sender = sender_identity;", 1),
+    ("                                                int sender_id) {\n    const int sender = daemon->AlphaNet::pid_2_who(\n        static_cast<uint32_t>(sender_id));", "                                                int sender_identity) {\n    const int sender = sender_identity;", 1),
+    ("    Filemap filemap;\n    // The acknowledged-sync request", "    Filemap filemap;\n    // Pinned53444E/534456 resolves the transport ID once, before packet reads\n    // and dispatch callbacks. Keep this identity distinct from packet faction.\n    const int entry_sender_identity =\n        this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id));\n    // The acknowledged-sync request", 1),
+    ("netdaemon_handle_server_lock_status(this, type, msg, sender_id)", "netdaemon_handle_server_lock_status(this, type, msg, entry_sender_identity)", 1),
+    ("netdaemon_handle_withdraw_end_turn(this, msg, sender_id)", "netdaemon_handle_withdraw_end_turn(this, msg, entry_sender_identity)", 1),
+    ("netdaemon_handle_client_done_upkeep(this, msg, sender_id)", "netdaemon_handle_client_done_upkeep(this, msg, entry_sender_identity)", 1),
+)
+
+
+def apply_entry_identity_migration(source):
+    # Replace only the six original late call arguments, before adding capture.
+    late = "this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id))"
+    assert source.count(late) == 6
+    source = source.replace(late, "entry_sender_identity")
+    for before, after, count in IDENTITY_EDITS:
+        assert source.count(before) == count, before
+        source = source.replace(before, after, count)
     return source
 
 
@@ -107,7 +132,7 @@ def test_actual_transfer_guard_uses_packet_faction(tmp_path, damage):
     assert (result.returncode == 0) == (damage == "none"), result.stderr
 
 
-def test_only_two_reviewed_transfer_expressions_and_band_comment_changed():
+def test_only_reviewed_transfer_and_entry_identity_migration_changed():
     old = subprocess.check_output(["git","show",BASE+":src/netdaemon.cpp"],cwd=ROOT,text=True)
     assert apply_transfer_faction_migration(old) == SOURCE.read_text()
     with pytest.raises(AssertionError):
@@ -173,3 +198,60 @@ def test_pinned_sender_lookup_is_entry_owned_and_retained_by_routes():
     }
     for address, instruction in expected.items():
         assert by_address[address] == instruction
+
+
+@pytest.mark.parametrize("damage", ["none", "late_lookup", "transport_id", "packet_faction"])
+def test_actual_entry_capture_survives_reentrant_identity_change(tmp_path, damage):
+    compiler = shutil.which("g++") or shutil.which("clang++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    body = extract(SOURCE.read_text(), "void NetDaemon::process_message(")
+    start = body.index("    const int entry_sender_identity =")
+    end = body.index(";", start) + 1
+    capture = body[start:end]
+    call = re.search(r"netdaemon_handle_client_lock_message\(this,.*?\);", body, re.S).group()
+    if damage != "none":
+        value = {"late_lookup": "this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id))",
+                 "transport_id": "sender_id", "packet_faction": "3"}[damage]
+        assert call.count("entry_sender_identity") == 1
+        call = call.replace("entry_sender_identity", value)
+    harness = r'''
+#include <cassert>
+struct AlphaNet {
+    int identity=2, lookups=0;
+    int pid_2_who(unsigned long id) { assert(id==10001); ++lookups; return identity; }
+};
+struct NetDaemon : AlphaNet { void run(); };
+static int received=-1;
+static void netdaemon_handle_client_lock_message(NetDaemon *, unsigned short type,
+                                                unsigned char *, int identity) {
+    assert(type==0x2210); received=identity;
+}
+void NetDaemon::run() {
+    int sender_id=10001;
+    unsigned short type=0x2210;
+    unsigned char packet[32]={}; unsigned char *msg=packet;
+'''
+    harness += capture + "\n    identity=7; // A dispatch callback changes the live process table.\n" + call
+    harness += "\n}\nint main() { NetDaemon daemon; daemon.run(); assert(received==2 && daemon.lookups==1); }\n"
+    source = tmp_path / "entry.cpp"
+    binary = tmp_path / "entry"
+    source.write_text(harness)
+    subprocess.run([compiler, "-std=c++11", str(source), "-o", str(binary)],
+                   check=True, capture_output=True, timeout=60)
+    result = subprocess.run([str(binary)], capture_output=True, timeout=10)
+    assert (result.returncode == 0) == (damage == "none")
+
+
+def test_identity_propagation_does_not_replace_transport_consumers():
+    source = SOURCE.read_text()
+    body = extract(source, "void NetDaemon::process_message(")
+    assert body.count("pid_2_who(") == 1
+    assert body.index("Filemap filemap;") < body.index("const int entry_sender_identity =") < body.index("unsigned char *msg =")
+    for helper in ("netdaemon_handle_server_lock_status", "netdaemon_handle_withdraw_end_turn",
+                   "netdaemon_handle_client_done_upkeep"):
+        assert "pid_2_who" not in extract(source, "static void " + helper + "(")
+    assert "netdaemon_handle_table_f(this, type, msg, sender_id)" in body
+    assert "*this, type, sender_id,\n            entry_sender_identity" in body
+    assert "*this, msg, type, sender_id,\n            entry_sender_identity" in body
+    assert "*this, msg, type, sender_id))" in body

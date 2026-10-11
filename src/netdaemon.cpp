@@ -4143,7 +4143,7 @@ static void netdaemon_handle_server_turn_info(NetDaemon *daemon,
 static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
                                                  unsigned short type,
                                                  unsigned char *message,
-                                                 int sender_id = 0) {
+                                                 int sender_identity) {
     switch (type) {
     case 0x4301: {
         my_srand(*reinterpret_cast<int *>(message + 8));
@@ -4234,7 +4234,7 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
         return;
     case 0x2308:
         log_say("From Client: HELP ME SPOCK",
-                daemon->AlphaNet::pid_2_who(static_cast<uint32_t>(sender_id)),
+                sender_identity,
                 0, 0);
         SpockNotifyPending = 1;
         return;
@@ -4252,12 +4252,11 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
 // 0x536037 is opcode 0x2303, "From Client: DONE UPKEEP". The wait words are
 // existing NetDaemon lock-state members and the player identities are the
 // actual AlphaNet process slots. The sender argument is a process ID; the
-// dispatcher converts it through the same AlphaNet lookup as the native EDI.
+// dispatcher supplies its entry-captured identity, retained in native EDI.
 static void netdaemon_handle_client_done_upkeep(NetDaemon *daemon,
                                                  unsigned char *message,
-                                                 int sender_id) {
-    const int sender = daemon->AlphaNet::pid_2_who(
-        static_cast<uint32_t>(sender_id));
+                                                 int sender_identity) {
+    const int sender = sender_identity;
     const uint32_t sender_bit = static_cast<uint32_t>(1) << (sender & 0x1F);
     const int phase = *reinterpret_cast<int *>(message + 0x10);
     const int turn = *reinterpret_cast<int *>(message + 0x14);
@@ -4293,9 +4292,8 @@ static void netdaemon_handle_client_done_upkeep(NetDaemon *daemon,
 // other active process identities. Every non-early native path reaches draw.
 static void netdaemon_handle_withdraw_end_turn(NetDaemon *daemon,
                                                 unsigned char *message,
-                                                int sender_id) {
-    const int sender = daemon->AlphaNet::pid_2_who(
-        static_cast<uint32_t>(sender_id));
+                                                int sender_identity) {
+    const int sender = sender_identity;
     const uint32_t sender_bit = static_cast<uint32_t>(1) << (sender & 0x1F);
     log_say("From Client: WITHDRAW END-OF-TURN", sender, 0, 0);
 
@@ -5863,6 +5861,10 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     Popup popup;
     NetDaemonTransferModalCloseGuard guard(popup);
     Filemap filemap;
+    // Pinned53444E/534456 resolves the transport ID once, before packet reads
+    // and dispatch callbacks. Keep this identity distinct from packet faction.
+    const int entry_sender_identity =
+        this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id));
     // The acknowledged-sync request uses lock_state_[2].trailing_words_[1]
     // at +0x1BBC; its local completion clears trailing_words_[0] at +0x1BB8.
     // The DONE UPKEEP handshake uses lock_state_[0].trailing_words_[8]
@@ -5911,7 +5913,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     if ((type >= 0x1201 && type <= 0x1208) ||
         type == 0x1240 || type == 0x4301 ||
         type == 0x4303 || type == 0x2308) {
-        netdaemon_handle_server_lock_status(this, type, msg, sender_id);
+        netdaemon_handle_server_lock_status(this, type, msg, entry_sender_identity);
         netdaemon_process_message_marker_tail(*this, msg);
         return;
     }
@@ -5923,18 +5925,18 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     }
 
     if (type == 0x2302) {
-        netdaemon_handle_withdraw_end_turn(this, msg, sender_id);
+        netdaemon_handle_withdraw_end_turn(this, msg, entry_sender_identity);
         netdaemon_process_message_marker_tail(*this, msg);
         return;
     }
     if (type == 0x2303) {
-        netdaemon_handle_client_done_upkeep(this, msg, sender_id);
+        netdaemon_handle_client_done_upkeep(this, msg, entry_sender_identity);
         netdaemon_process_message_marker_tail(*this, msg);
         return;
     }
     if (type == 0x2301 || type == 0x8301) {
         netdaemon_handle_client_done_turn(this,
-            this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)));
+            entry_sender_identity);
         netdaemon_process_message_marker_tail(*this, msg);
         return;
     }
@@ -5984,7 +5986,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
 
     if (type >= 0x2212 && type <= 0x2216) {
         if (netdaemon_process_table_e(*this, msg, type,
-                this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)))) {
+                entry_sender_identity)) {
             netdaemon_process_message_marker_tail(*this, msg);
             return;
         }
@@ -5992,7 +5994,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
 
     if (type == 0x2210 || type == 0x2211) {
         netdaemon_handle_client_lock_message(this, type, msg,
-            this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)));
+            entry_sender_identity);
         netdaemon_process_message_marker_tail(*this, msg);
         return;
     }
@@ -6024,19 +6026,19 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     }
     if (netdaemon_handle_lock_mask_residual(
             *this, type, msg,
-            this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)))) {
+            entry_sender_identity)) {
         netdaemon_process_message_marker_tail(*this, msg);
         return;
     }
     if (netdaemon_handle_server_change_pause(
             *this, type, sender_id,
-            this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)))) {
+            entry_sender_identity)) {
         netdaemon_process_message_marker_tail(*this, msg);
         return;
     }
     if (netdaemon_handle_time_control(
             *this, msg, type, sender_id,
-            this->AlphaNet::pid_2_who(static_cast<unsigned long>(sender_id)))) {
+            entry_sender_identity)) {
         netdaemon_process_message_marker_tail(*this, msg);
         return;
     }

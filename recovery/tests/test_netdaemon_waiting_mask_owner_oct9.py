@@ -105,7 +105,7 @@ int main() {
   // The callback changes the singleton mask: native code reloads after log_say.
   NetDaemonNet.factions_waiting_mask()=1u<<2;
   log_mutation=1;
-  netdaemon_handle_withdraw_end_turn(&passed,message,77);
+  netdaemon_handle_withdraw_end_turn(&passed,message,2);
   assert(NetDaemonNet.factions_waiting_mask()==(1u<<4));
   assert(passed.factions_waiting_mask()==0);
   assert(messages==2 && draws==1);
