@@ -223,7 +223,8 @@ def _trial_bindings(view, originals, contents, selected, settings, pin, *, contr
                     basis = "source_symbol" if emitted else "catalogued_symbol"
                 candidates.append(Candidate(Origin(**row["origin"]), tuple(Span(**span) for span in row["spans"]),
                                             row["path"], line, row["seed"], symbol, owner,
-                                            row["component"], basis, row["catalogued_owner_hint"]))
+                                            row["component"], basis, row["catalogued_owner_hint"],
+                                            function_fragment=row.get("function_fragment")))
     selected_all = frozenset(entity["entity_id"] for group in view["groups"] for entity in group["entities"])
     bindings, refused, externals = select_bindings(partition(candidates), selected_all)
     return bindings, refused, externals, changes

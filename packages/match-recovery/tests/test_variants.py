@@ -88,6 +88,53 @@ def test_deck_reuses_source_map_and_scores_without_writing_or_banking(project, m
     assert {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()} == before
 
 
+@pytest.mark.parametrize("same_unit", [False, True])
+def test_body_deck_retains_noncallable_fragment_interpretation(project, same_unit):
+    from match_recovery.application_binary import select_bindings
+    from match_recovery.measurement import Measurement
+    from match_recovery.ownership_source import project_view
+    from match_recovery.variants import _trial_bindings
+
+    root, task = project
+    path = root / ("code/unit.cc" if same_unit else "code/other.cc")
+    prefix = path.read_text() if path.exists() else ""
+    relation = {"parent_address": "0x00401010", "parent_symbol": "_parent",
+                "reason": "separate original terminal slice of parent",
+                "evidence": ["synthetic:terminal-slice"]}
+    path.write_text(prefix +
+                    "// ORIGINAL: 0x00401010 parent 0x00401010-0x00401011 FILE\n"
+                    "// symbol _parent\n"
+                    "// ORIGINAL: 0x00401011 tail 0x00401011-0x00401012 FILE\n"
+                    "// RECOVERY_FRAGMENT: v1 " + json.dumps(relation) + "\n")
+    view, snapshot = project_view(root)
+    selected_all = frozenset(e["entity_id"] for g in view["groups"] for e in g["entities"])
+    before, refused, targets = select_bindings(view, selected_all)
+    original = (root / "code/unit.cc").read_bytes()
+    proposed = original.replace(b"/* baseline */", b"/* proposed */")
+    after, after_refused, after_targets, changes = _trial_bindings(
+        view, {"code/unit.cc": original}, {"code/unit.cc": proposed},
+        frozenset(s.entity_id for s in task.subjects), Measurement.read(root),
+        snapshot["image_sha256"])
+    assert after == before and after_refused == refused and after_targets == targets
+    assert not changes
+    child = Origin(snapshot["image_sha256"], "pe:va", 0x401011).entity_id
+    assert child not in {b.origin.entity_id for b in after}
+    assert "tail" not in after_targets
+    input_bytes = {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()}
+    report = measure(project)
+    assert report["status"] == "scored"
+    assert report["controls"][0]["result"] == "pass"
+    assert [row["target"]["result"] for row in report["candidates"]] == ["pass", "fail"]
+    ranking, = report["rankings"]
+    assert ranking["flags"] == ["-O2"] and ranking["names"] == ["exact", "different"]
+    assert ranking["details"][0]["scored_results"] == {"pass": 1, "fail": 0, "unknown": 0}
+    assert ranking["details"][1]["lost_passing_measurements"] == [
+        {"kind": "function", "unit": "code/unit.cc", "entity_id": project[1].subjects[0].entity_id, "after": "fail"}]
+    assert not report["ready_for_collection"] and not report["scope_complete"] and not report["persisted"]
+    assert report["structure_verification"] == "unknown"
+    assert {p.relative_to(root): p.read_bytes() for p in root.rglob("*") if p.is_file()} == input_bytes
+
+
 def test_variant_baseline_damage_and_candidates_use_the_pinned_unit_profile(project):
     root, _ = project
     path = root / "recovery/project.json"
