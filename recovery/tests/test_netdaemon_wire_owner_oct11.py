@@ -22,12 +22,13 @@ PREAMBLE = r'''
 #include <vector>
 struct Console { int faction_id_; } ConsoleGlobal;
 struct Vehicle { int faction_id; int order; } Vehs[32];
-struct Words { uint32_t leading_words_[4], trailing_words_[11]; };
+@@LOCK_DECLARATIONS@@
 struct DeletionList {
     uint32_t value; int stores;
     void set_sequence_bits(uint32_t next) { value=next; ++stores; }
 };
-struct NetDaemon { Words primary_state_, channels_[2]; DeletionList deletion_list_; };
+struct NetDaemon { PrimaryLockStateTail primary_state_; LockStateEntry channels_[2]; DeletionList deletion_list_; };
+static NetDaemon NetDaemonNet;
 static int SpockNotifyPending, order_calls, action_calls, fight_calls, drop_calls, cross_calls;
 static int arg0, arg1, arg2, seed, logged_faction, acknowledged_faction;
 static bool mutate_clock, mutate_cross;
@@ -65,6 +66,7 @@ static void double_cross(int a,int b,int c) {
 MAIN = r'''
 static void reset(NetDaemon &daemon, unsigned char *packet) {
     std::memset(&daemon,0,sizeof daemon); std::memset(packet,0,32);
+    std::memset(&NetDaemonNet,0,sizeof NetDaemonNet);
     live_packet=packet; put(4,7); put(8,123); put(0xc,456);
     put(0x10,1); put(0x14,11); put(0x18,13);
     ConsoleGlobal.faction_id_=7; Vehs[1].faction_id=7; Vehs[1].order=42;
@@ -76,6 +78,7 @@ int main() {
     NetDaemon daemon; alignas(4) unsigned char packet[32];
     // Server rejects a faction mismatch but still acknowledges the request.
     reset(daemon,packet); daemon.primary_state_.leading_words_[0]=1;
+    NetDaemonNet.primary_state_.leading_words_[0]=1;
     Vehs[1].faction_id=2;
     assert(netdaemon_handle_five_message_routes(daemon,0x4401,packet,7,456));
     assert(SpockNotifyPending==1 && order_calls==0 && acknowledged_faction==7);
@@ -98,7 +101,7 @@ int main() {
     reset(daemon,packet); mutate_clock=true;
     assert(netdaemon_handle_five_message_routes(daemon,0x4402,packet,7,456));
     assert(fight_calls==1 && arg0==1 && arg1==19);
-    assert(daemon.channels_[0].leading_words_[3]==2 && daemon.deletion_list_.value==456);
+    assert(NetDaemonNet.channels_[0].leading_words_[3]==2 && daemon.channels_[0].leading_words_[3]==0 && daemon.deletion_list_.value==456);
     reset(daemon,packet); mutate_clock=true;
     assert(netdaemon_handle_five_message_routes(daemon,0x4403,packet,7,456));
     assert(drop_calls==1 && arg0==1 && arg1==11 && arg2==13);
@@ -119,6 +122,14 @@ int main() {
     reset(daemon,packet);
     assert(!netdaemon_handle_five_message_routes(daemon,0x9999,packet,7,456));
     assert(events.empty() && daemon.deletion_list_.stores==0);
+    reset(daemon,packet); NetDaemonNet.primary_state_.leading_words_[0]=1;
+    Vehs[1].faction_id=2;
+    assert(netdaemon_handle_five_message_routes(daemon,0x4401,packet,7,456));
+    assert(SpockNotifyPending==1 && order_calls==0 && daemon.deletion_list_.stores==1);
+    reset(daemon,packet); daemon.primary_state_.leading_words_[0]=1;
+    Vehs[1].faction_id=2;
+    assert(netdaemon_handle_five_message_routes(daemon,0x4401,packet,7,456));
+    assert(SpockNotifyPending==0 && order_calls==1 && daemon.deletion_list_.stores==0);
 }
 '''
 
@@ -177,7 +188,16 @@ def product():
         text, "static bool netdaemon_handle_five_message_routes(")
 
 
-@pytest.mark.parametrize("damage", ["none", "server_order", "sequence", "direction", "action", "cross"])
+def preamble():
+    header=(ROOT/"src/netdaemon.h").read_text()
+    declarations=extract(header,"struct PrimaryLockStateTail {")+";\n"
+    declarations+=extract(header,"struct LockStateEntry {").replace("int *vehicle_selection_follow;","uint32_t vehicle_selection_follow;")+";"
+    # No pointer payload is consumed; this host64 substitution preserves only
+    # wire word geometry. The coordinator's native build owns ABI validation.
+    return PREAMBLE.replace("@@LOCK_DECLARATIONS@@",declarations)
+
+
+@pytest.mark.parametrize("damage", ["none", "server_order", "sequence", "direction", "action", "cross", "receiver_move", "receiver_arty"])
 @pytest.mark.parametrize("wire_offset", [0, 1])
 def test_actual_five_routes_and_call_boundary_reloads(tmp_path, damage, wire_offset):
     compiler = shutil.which("g++") or shutil.which("clang++")
@@ -185,6 +205,8 @@ def test_actual_five_routes_and_call_boundary_reloads(tmp_path, damage, wire_off
         pytest.skip("host C++ compiler unavailable")
     body = product()
     changes = {
+        "receiver_move": ("NetDaemonNet.primary_state_.leading_words_[0]", "daemon.primary_state_.leading_words_[0]"),
+        "receiver_arty": ("NetDaemonNet.channels_[0].leading_words_[3]", "daemon.channels_[0].leading_words_[3]"),
         "server_order": ("execute_order = false;", "execute_order = true;"),
         "sequence": ("set_sequence_bits(entry_sequence)", "set_sequence_bits(24)"),
         "direction": ("::order_veh(vehicle_id, packet.payload_14(), 2)",
@@ -201,7 +223,7 @@ def test_actual_five_routes_and_call_boundary_reloads(tmp_path, damage, wire_off
     executable = tmp_path / "routes"
     main = MAIN.replace("alignas(4) unsigned char packet[32];",
                         "alignas(4) unsigned char storage[36]; unsigned char *packet=storage+" + str(wire_offset) + ";")
-    source.write_text(PREAMBLE + body + main)
+    source.write_text(preamble() + body + main)
     subprocess.run([compiler,"-std=c++11","-O1",str(source),"-o",str(executable)],
                    check=True,capture_output=True,text=True,timeout=60)
     result = subprocess.run([str(executable)],capture_output=True,timeout=10)
@@ -234,7 +256,7 @@ int main() {
 '''
     source = tmp_path / "bounded.cpp"
     executable = tmp_path / "bounded"
-    source.write_text("#include <sys/mman.h>\n#include <unistd.h>\n" + PREAMBLE + product() + main)
+    source.write_text("#include <sys/mman.h>\n#include <unistd.h>\n" + preamble() + product() + main)
     subprocess.run([compiler,"-std=c++11","-O1",str(source),"-o",str(executable)],
                    check=True,capture_output=True,text=True,timeout=60)
     subprocess.run([str(executable)],check=True,capture_output=True,timeout=10)

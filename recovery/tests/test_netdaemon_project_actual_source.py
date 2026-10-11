@@ -31,18 +31,10 @@ HOST_PREAMBLE = r"""
 typedef const char *LPCSTR;
 typedef char *LPSTR;
 typedef int BOOL;
-struct RulesFacility { LPSTR name; };
+@@FACILITY@@
 static const int FacilitySPStart = 70;
 static RulesFacility Facility[134];
-struct Player {
-    int is_leader_female;
-    LPCSTR title_leader;
-    LPCSTR name_leader;
-    LPCSTR adj_name_faction;
-    LPCSTR noun_faction;
-    int noun_gender;
-    BOOL is_noun_plural;
-};
+@@PLAYER@@
 static Player Players[8];
 static char facility_names[134][32];
 static char display_names[134][32];
@@ -50,6 +42,7 @@ static unsigned char *active_packet;
 static int after_log_status = INT_MIN;
 static int after_parse_status = INT_MIN;
 static int replacement_token = -1;
+static bool replace_packet_ids;
 struct Strings {
     LPSTR get(LPSTR text) {
         for (int i = 0; i < 134; ++i)
@@ -64,6 +57,8 @@ static int SecretProject[64];
 static int base_project(int project) { return SecretProject[project]; }
 struct Console { int faction_id_; };
 static Console ConsoleGlobal;
+@@LOCK_DECLARATIONS@@
+struct NetDaemon { LockStateEntry channels_[2]; void route(unsigned char *); };
 static int GenderDefault;
 static int PluralityDefault;
 static std::vector<std::string> events;
@@ -82,6 +77,11 @@ static void log_say(LPCSTR label, LPCSTR value, int a, int b, int c) {
                      std::to_string(c));
     if (after_log_status != INT_MIN)
         *reinterpret_cast<int *>(active_packet + 0x14) = after_log_status;
+    if (replace_packet_ids) {
+        *reinterpret_cast<int *>(active_packet + 4) = 6;
+        *reinterpret_cast<int *>(active_packet + 0x10) = 8;
+        *reinterpret_cast<int *>(active_packet + 0x18) = 9;
+    }
 }
 static void parse_says(int id, LPCSTR text, int gender, int plural) {
     events.push_back(std::string("says:") + std::to_string(id) + ":" +
@@ -116,8 +116,13 @@ static void setup(int local, int sender, int status, int project, int related,
     ConsoleGlobal.faction_id_ = local;
     GenderDefault = 91;
     PluralityDefault = 92;
-    Players[sender] = {3, "title", "leader", "adj-name-faction",
-                       "noun-faction", 4, 1};
+    Players[sender].is_leader_female = 3;
+    std::strcpy(Players[sender].title_leader, "title");
+    std::strcpy(Players[sender].name_leader, "leader");
+    std::strcpy(Players[sender].adj_name_faction, "adj-name-faction");
+    std::strcpy(Players[sender].noun_faction, "noun-faction");
+    Players[sender].noun_gender = 4;
+    Players[sender].is_noun_plural = 1;
     for (int i = 0; i < 64; ++i) {
         std::snprintf(facility_names[FacilitySPStart + i],
                       sizeof(facility_names[0]), "project_%d", i);
@@ -134,11 +139,18 @@ static void setup(int local, int sender, int status, int project, int related,
     }
     alignas(int) unsigned char packet[0x1C] = {};
     active_packet = packet;
+    const unsigned short opcode=0x4D00;
+    std::memcpy(packet,&opcode,2);
     *reinterpret_cast<int *>(packet + 0x04) = sender;
     *reinterpret_cast<int *>(packet + 0x10) = project;
     *reinterpret_cast<int *>(packet + 0x14) = status;
     *reinterpret_cast<int *>(packet + 0x18) = related;
-    netdaemon_process_project_4d00(packet);
+    NetDaemon daemon;
+    std::memset(&daemon,0,sizeof daemon);
+    daemon.channels_[1].leading_words_[1]=0x0D00;
+    daemon.route(packet);
+    assert(daemon.channels_[1].leading_words_[1]==
+           (*reinterpret_cast<int *>(packet+4)==local ? 0u : 0x0D00u));
 }
 
 int main() {
@@ -183,6 +195,16 @@ int main() {
         assert(events[events.size() - 2] == "say:3:project_6:4:1");
     }
     std::puts("actual-source 0x4D00 helper controls passed");
+    // Native retains all three IDs and the facility row across the logger.
+    replace_packet_ids = true;
+    setup(7, 2, 2, 3, 5);
+    assert(events[1] == "says:0:adj-name-faction:91:92");
+    assert(events[2] == "say:1:project_5:91:92");
+    assert(events[4] == "say:3:project_3:4:1");
+    setup(7, 2, 1, 3, 5, 9, 2);
+    assert(events.size()==5); // Saved project/faction suppress their own halt.
+    setup(6, 2, 0, 3, 5);
+    assert(events.back()=="pop:BEGINPROJECT:5000:2:null");
 }
 """
 
@@ -249,7 +271,16 @@ def compile_and_run(helper, compiler, directory, label):
     actual = SOURCE.read_text()
     wire = extract(actual, "struct MessageDataRecord {") + ";\n"
     wire += extract(actual, "class MessageCommandView {") + ";\n"
-    source_path.write_text(HOST_PREAMBLE + "\n" + wire + helper + "\n" + HOST_MAIN)
+    faction=(ROOT / "src/faction.h").read_text()
+    declarations="\n".join(extract(faction,"struct "+name+" {")+";" for name in ("SocialCategory","SocialEffect","Goal","Player"))
+    preamble=HOST_PREAMBLE.replace("@@PLAYER@@",declarations).replace("@@FACILITY@@",extract((ROOT/"src/base.h").read_text(),"struct RulesFacility {")+";")
+    lock=extract((ROOT/"src/netdaemon.h").read_text(),"struct LockStateEntry {").replace("int *vehicle_selection_follow;","uint32_t vehicle_selection_follow;")+";"
+    preamble=preamble.replace("@@LOCK_DECLARATIONS@@",lock)
+    parent=extract(actual,"void NetDaemon::process_message(")
+    start=parent.index("    if (type == 0x4D00)");stop=parent.index("\n\n    // Default path",start)
+    caller="\nvoid NetDaemon::route(unsigned char *msg) { unsigned short type; std::memcpy(&type,msg,2);\n"+parent[start:stop]+"\nassert(false);\n}"
+    marker=extract(actual,"static void netdaemon_process_message_marker_tail(")
+    source_path.write_text(preamble + "\n" + wire + marker + helper + caller + "\n" + HOST_MAIN)
     subprocess.run(
         [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
          str(source_path), "-o", str(binary)],
@@ -301,6 +332,15 @@ def test_actual_extracted_helper_compiles_and_runs_with_gcc_and_clang():
 def test_actual_source_damage_controls_fail():
     _, helper, _ = source_parts()
     mutants = {
+        "reread_saved_project": (
+            "const int base_id = base_project(project_id);",
+            "const int base_id = base_project(packet.payload_10());"),
+        "reread_saved_faction": (
+            "Bases[base_id].faction_id_current == faction_id",
+            "Bases[base_id].faction_id_current == packet.faction()"),
+        "reread_saved_related": (
+            "Facility[FacilitySPStart + related_project_id].name",
+            "Facility[FacilitySPStart + ((void)related_project_id, packet.payload_18())].name"),
         "wrong_packet_identity": (
             "packet.faction()", "packet.timestamp_bits()"),
         "wrong_related_project_offset": (

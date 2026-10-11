@@ -67,6 +67,7 @@ PREAMBLE=r'''
 struct Primary { uint32_t leading_words_[3]; };
 struct Sequence { uint32_t value; void set_sequence_bits(uint32_t v) { value=v; } };
 struct NetDaemon { Primary primary_state_; LockStateEntry channels_[2]; Sequence deletion_list_; };
+static NetDaemon NetDaemonNet;
 static struct { int faction_id_; } ConsoleGlobal;
 static struct { int8_t order; } Vehs[8];
 static int broadcasts,logs;
@@ -709,3 +710,306 @@ def test_pinned_complete_table_h_live_reads_owners_and_local_exit():
         assert image.read(Span(address,address+len(literal)+1))==literal+b"\0"
     # 4600's adjacent council target is not part of 444F. Source row controls
     # prove in-owner selection only, never unbounded memory or action runtime.
+
+
+HIGH_CALLBACK_CONTROL = r'''
+#include <cassert>
+#include <stdint.h>
+#include <cstring>
+#include <cstddef>
+#include <string>
+#include <vector>
+typedef int BOOL;
+typedef char *LPSTR;
+@@DECLARATIONS@@
+static Player Players[8];
+static Landmark MapLandmark[64];
+static RulesTimeControl TimeControl[8];
+static struct { struct Fields { int turn_control_duration_milliseconds_, time_controls_selection_; } fields_; } GameDataStateStorage;
+static struct { int faction_id_; } ConsoleGlobal;
+static int NetDaemonWaitTicks, GenderDefault, PluralityDefault, MultiWindowContactStatusMask, CommlinkPending;
+static char StringTemp[1024];
+static unsigned char *active_packet;
+static std::vector<std::string> events;
+static int mode, read_count, name_forms, logged_a, logged_b, logged_c, action_x, action_y, draws, slot, recipient;
+static void put(int offset,int value) { std::memcpy(active_packet+offset,&value,4); }
+static void observed_read(void *target,const void *source,size_t size) { ++read_count; std::memcpy(target,source,size); }
+static const char *observed_name(const unsigned char *message) { ++name_forms; return reinterpret_cast<const char *>(message+0x20); }
+static void log_say(const char *label,int a,int b,int c) {
+    events.push_back(label); logged_a=a; logged_b=b; logged_c=c;
+    if(mode==1) { put(4,3); put(0x10,7); put(0x14,9); }
+    if(mode==6) active_packet[0]=0x42;
+    if(mode==7) ConsoleGlobal.faction_id_=2;
+}
+static void log_say(const char *label,const char *,int a,int b,int c) { log_say(label,a,b,c); }
+static unsigned long timeGetTime() { events.push_back("clock"); NetDaemonWaitTicks=30; return 100; }
+struct Net { char *get_player_name(unsigned long pid) { assert(pid==99); events.push_back("name"); return const_cast<char *>("peer"); } };
+struct NetDaemon : Net {
+    PrimaryLockStateTail primary_state_; LockStateEntry channels_[2];
+    int pid_2_idx(uint32_t pid);
+    void route(unsigned char *,unsigned short,int,int);
+};
+static NetDaemon NetDaemonNet;
+int NetDaemon::pid_2_idx(uint32_t pid) { assert(this==&NetDaemonNet && pid==99); events.push_back("lookup"); return slot; }
+static void my_srand(int value) { events.push_back("seed"); recipient=value; }
+static void council(int a,int b,int c) { action_x=a;action_y=b;recipient=c;events.push_back("council"); }
+static struct {
+    void set_vote(int a,int b) { action_x=a;action_y=b;events.push_back("vote"); }
+    void arrived(int a) { action_x=a;events.push_back("arrive"); }
+    void make_resolution(int a) { assert(a==1);events.push_back("resolution"); }
+} CouncilWindow;
+struct GraphicWin { void redraw() { events.push_back("redraw"); if(mode==2) GameDataStateStorage.fields_.time_controls_selection_=2; } };
+static GraphicWin MultiWindow;
+static struct { void play(int id) { assert(id==21); events.push_back("sound"); if(mode==3) NetDaemonNet.primary_state_.trailing_words_[4]=0x80; } } g_FX;
+static struct { void pop(const char *label,int,int,void *) { events.push_back(label); } } NetMsgPrimary;
+static void parse_says(int id,const char *text,int,int) {
+    events.push_back(std::string("says")+char('0'+id)+":"+text);
+    if(mode==2) GameDataStateStorage.fields_.time_controls_selection_=3;
+}
+static int parse_say(int id,char *text,int,int) {
+    assert(id==1); events.push_back(std::string("say1:")+text);
+    if(mode==2) { GameDataStateStorage.fields_.time_controls_selection_=1; ConsoleGlobal.faction_id_=4; }
+    return 0;
+}
+static void parse_num(int id,int value) {
+    assert(value==((mode==2 ? (id%3)+1 : 1)*100)+id);
+    events.push_back(std::string("num")+char('0'+id));
+    if(mode==2) GameDataStateStorage.fields_.time_controls_selection_=(id+1)%3+1;
+}
+static void say_num(int value) { events.push_back(value?"suffix1":"suffix0"); strcat(StringTemp,value?"1":"0"); }
+static void set_time_controls() { events.push_back("set"); GameDataStateStorage.fields_.turn_control_duration_milliseconds_=250; }
+static struct { void new_chat(char *,int value) { recipient=value; events.push_back("lobby"); } } NetWinDialog;
+static struct { void new_chat(char *,int value) { recipient=value; events.push_back("diplo"); } } DiploWindow;
+static struct { void chat(char *text,int faction) { events.push_back(std::string("chat:")+text); recipient=faction; } } MainInterfaceGlobal;
+static void new_landmark(int x,int y,const char *) { action_x=x;action_y=y;events.push_back("new"); if(mode==1) put(4,2); }
+static void kill_landmark(int x,int y) { new_landmark(x,y,0); events.back()="kill"; }
+static int find_landmark(int x,int y,int flag) { assert(flag==1); new_landmark(x,y,0);events.back()="find"; return slot; }
+static void draw_map(int flag) { assert(flag==1); ++draws; events.push_back("draw"); }
+static void message_data(int op,int who,int acquired,int,int,int) { assert(op==0x1240&&who==1); recipient=acquired; events.push_back("reply"); }
+static char *observed_cat(char *dest,const char *text) {
+    char *result=std::strcat(dest,text);
+    if(mode==4 && text==Players[2].title_leader) put(4,3);
+    if(mode==4 && text==reinterpret_cast<char *>(active_packet+0x10)) put(4,4);
+    return result;
+}
+#define strcat observed_cat
+@@ACTUAL_SOURCE@@
+#undef strcat
+static unsigned char storage[128];
+static void reset(NetDaemon &daemon) {
+    std::memset(&daemon,0,sizeof daemon);std::memset(&NetDaemonNet,0,sizeof NetDaemonNet);
+    std::memset(storage,0,sizeof storage);active_packet=storage;
+    put(4,2);put(0xc,11);put(0x10,4);put(0x14,6);std::strcpy(reinterpret_cast<char *>(storage+0x20),"place");
+    ConsoleGlobal.faction_id_=2;NetDaemonWaitTicks=40;GenderDefault=8;PluralityDefault=9;
+    GameDataStateStorage.fields_.turn_control_duration_milliseconds_=200;
+    GameDataStateStorage.fields_.time_controls_selection_=1;
+    mode=read_count=name_forms=draws=MultiWindowContactStatusMask=CommlinkPending=0;slot=0;recipient=-1;events.clear();
+    StringTemp[0]=0;
+}
+int main() {
+    NetDaemon daemon;
+    for(int i=0;i<8;++i) {
+        std::strcpy(Players[i].title_leader,i==2?"Title2":"Title3");std::strcpy(Players[i].name_leader,i==3?"Name3":"Name2");Players[i].is_leader_female=i;
+        TimeControl[i].name=const_cast<char *>(i==3?"control3":"control1");
+        TimeControl[i].turn=i*100;TimeControl[i].base=i*100+1;TimeControl[i].unit=i*100+2;
+        TimeControl[i].extra=i*100+3;TimeControl[i].refresh=i*100+4;TimeControl[i].accumulated=i*100+5;
+    }
+    for(int op=0x4600;op<=0x4603;++op) {
+        reset(daemon);mode=1;ConsoleGlobal.faction_id_=3;put(8,17);put(0x18,13);daemon.channels_[1].leading_words_[1]=op&0x1fff;
+        daemon.route(storage,op,99,1);assert(daemon.channels_[1].leading_words_[1]==0);
+        if(op<=0x4601)assert(action_x==7&&action_y==9&&events[1]=="seed");
+        if(op==0x4600)assert(recipient==13&&events.back()=="council");
+        if(op==0x4602)assert(action_x==7&&events.back()=="arrive");
+        if(op==0x4603)assert(events.back()=="resolution");
+    }
+    reset(daemon);assert(!netdaemon_handle_chat_landmark_message(daemon,storage,0x9999,99));assert(read_count==0&&events.empty());
+    for(int op=0x4e01;op<=0x4e03;++op) {
+        reset(daemon);mode=1;put(4,3);daemon.channels_[1].leading_words_[1]=op&0x1fff;
+        daemon.route(storage,op,99,1);assert(action_x==7&&action_y==9&&draws==1);
+        assert(name_forms==(op==0x4e02?0:1));
+        assert(daemon.channels_[1].leading_words_[1]==0);
+        if(op==0x4e03)assert(std::string(MapLandmark[0].name)=="place");
+    }
+    reset(daemon);mode=1;slot=-1;assert(netdaemon_handle_chat_landmark_message(daemon,storage,0x4e03,99));assert(draws==1);
+    reset(daemon);mode=6;daemon.channels_[1].leading_words_[1]=0x0e01;
+    daemon.route(storage,0x4e01,99,1);assert(daemon.channels_[1].leading_words_[1]==0x0e01);
+    for(int op=0x1e00;op<=0x4e00;op+=0x3000) {
+        reset(daemon);mode=1;MultiWindowContactStatusMask=8;
+        daemon.route(storage,op,99,1);assert(events.size()==1);
+        reset(daemon);daemon.primary_state_.trailing_words_[0]=1;slot=5;daemon.route(storage,op,99,1);
+        assert(recipient==5&&events.back()=="lobby");
+        reset(daemon);daemon.primary_state_.trailing_words_[0]=1;slot=-1;daemon.route(storage,op,99,1);assert(recipient==-1);
+        reset(daemon);CommlinkPending=1;mode=1;daemon.route(storage,op,99,1);assert(recipient==3&&events.back()=="diplo");
+        reset(daemon);daemon.primary_state_.trailing_words_[0]=0xffffffffu;
+        std::strcpy(reinterpret_cast<char *>(storage+0x10),"hello");daemon.route(storage,op,99,1);
+        assert(events.back()=="chat:peer: hello");
+        reset(daemon);daemon.primary_state_.trailing_words_[0]=2;mode=4;
+        std::strcpy(reinterpret_cast<char *>(storage+0x10),"hello");daemon.route(storage,op,99,1);
+        assert(events.back()=="chat:Title2 Name3: hello"&&recipient==4&&GenderDefault==3&&PluralityDefault==0);
+    }
+    reset(daemon);daemon.route(storage,0x4b00,99,1);assert(events.back()=="CHANGINGSERVERS");
+    reset(daemon);daemon.route(storage,0x4c00,99,33);assert(daemon.primary_state_.trailing_words_[4]==2&&daemon.primary_state_.trailing_words_[5]==70);
+    reset(daemon);daemon.primary_state_.trailing_words_[4]=3;daemon.route(storage,0x4c01,99,0);assert(daemon.primary_state_.trailing_words_[4]==2);
+    reset(daemon);daemon.primary_state_.trailing_words_[4]=1;daemon.route(storage,0x4c01,99,0);assert(daemon.primary_state_.trailing_words_[4]==0&&events[1]=="sound");
+    reset(daemon);ConsoleGlobal.faction_id_=1;put(0x10,1);daemon.route(storage,0x4c02,99,1);
+    assert(NetDaemonWaitTicks==90&&events.size()==7&&events[2]=="redraw"&&events[3]=="name"&&events[4]=="says0:peer"&&events[5]=="say1:control1"&&events.back()=="WECHANGEDTIME");
+    // Popup adds a seventh event after the unconditional parser work.
+    reset(daemon);ConsoleGlobal.faction_id_=7;put(0x10,1);mode=2;daemon.route(storage,0x4c02,99,1);
+    assert(NetDaemonWaitTicks==90&&events[5]=="say1:control3"&&events.back()=="HECHANGEDTIME1");
+    reset(daemon);ConsoleGlobal.faction_id_=1;put(0x10,1);mode=2;daemon.route(storage,0x4c02,99,1);
+    assert(events.back()=="HECHANGEDTIME1"); // Local comparison follows both parser callbacks.
+    reset(daemon);NetDaemonWaitTicks=0x7fffffff;GameDataStateStorage.fields_.turn_control_duration_milliseconds_=-2147483647-1;
+    ConsoleGlobal.faction_id_=1;put(0x10,1);daemon.route(storage,0x4c02,99,1);assert(NetDaemonWaitTicks==249);
+    // Original lock mask stores can alias the packet within the real channel.
+    reset(daemon);active_packet=reinterpret_cast<unsigned char *>(&daemon.channels_[0]);
+    put(0x10,1);put(0x14,32);daemon.route(active_packet,0x8240,99,1);
+    assert(logged_b==1&&logged_c==35&&recipient==1&&daemon.channels_[0].trailing_words_[2]==3);
+    reset(daemon);daemon.channels_[0].trailing_words_[0]=6;daemon.channels_[0].trailing_words_[2]=2;
+    daemon.route(storage,0x8241,99,1);assert(logged_b==2&&logged_c==4&&daemon.channels_[0].trailing_words_[2]==0);
+}
+'''
+
+
+@pytest.mark.parametrize("compiler", [c for c in ("g++","clang++") if shutil.which(c)])
+def test_actual_high_routes_guards_callbacks_owners_and_common_tail(tmp_path,compiler):
+    source=(ROOT/"src/netdaemon.cpp").read_text()
+    faction=(ROOT/"src/faction.h").read_text();net=(ROOT/"src/netdaemon.h").read_text()
+    declarations="\n".join(extract(faction,"struct "+name+" {")+";" for name in ("SocialCategory","SocialEffect","Goal","Player"))
+    declarations+="\n"+extract(net,"struct PrimaryLockStateTail {")+";\n"+extract(net,"struct LockStateEntry {").replace("int *vehicle_selection_follow;","uint32_t vehicle_selection_follow;")+";\n"
+    declarations+=extract((ROOT/"src/alpha.h").read_text(),"struct RulesTimeControl {")+";\n"+extract((ROOT/"src/map.h").read_text(),"struct Landmark {")+";"
+    declarations+="\n"+extract(source,"struct MessageDataRecord {")+";"
+    view=extract(source,"class MessageCommandView {").replace("std::memcpy(","observed_read(")+";"
+    body=view+"\n"+"\n".join(extract(source,s) for s in (
+        "static void netdaemon_process_message_marker_tail(","static bool process_council_message(","static bool netdaemon_handle_lock_mask_residual(",
+        "static bool netdaemon_handle_server_change_pause(","static bool netdaemon_handle_chat_landmark_message(",
+        "static int netdaemon_subtract_i32_bits(","static bool netdaemon_handle_time_control("))
+    # Observe only evaluation of the real source pointer expression, within
+    # allocated fixture storage. This is not a short-packet/OOB runtime test.
+    body=body.replace("reinterpret_cast<const char *>(msg + 0x20)","observed_name(msg)")
+    parent=extract(source,"void NetDaemon::process_message(")
+    start=parent.index("    if (process_council_message(msg, type))");end=parent.index("    if (type == 0x4D00)",start)
+    body+="\nvoid NetDaemon::route(unsigned char *msg,unsigned short type,int sender_id,int entry_sender_identity) {\nstd::memcpy(msg,&type,2);\n"+parent[start:end]+"assert(false);\n}"
+    def run(candidate):
+        cpp=tmp_path/"high.cpp";exe=tmp_path/"high"
+        cpp.write_text(HIGH_CALLBACK_CONTROL.replace("@@DECLARATIONS@@",declarations).replace("@@ACTUAL_SOURCE@@",candidate))
+        built=subprocess.run([compiler,"-std=c++11","-Wall","-Wextra","-Werror","-Wno-unused-variable","-Wno-unused-function",str(cpp),"-o",str(exe)],capture_output=True,text=True,timeout=60)
+        assert built.returncode==0,built.stderr
+        return subprocess.run([str(exe)],capture_output=True,text=True,timeout=10)
+    result=run(body);assert result.returncode==0,result.stderr
+    for before,after in (
+        ("MultiWindow.GraphicWin::redraw();", "/* omitted native redraw */"),
+        ("    parse_say(1, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].name,\n              -1, -1);", "/* omitted native name */"),
+        ("parse_num(1, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].base)","parse_num(1, TimeControl[1].base)"),
+        ("const int slot = NetDaemonNet.pid_2_idx(","const int slot = daemon.pid_2_idx("),
+        ("                                 packet.faction());","                                 sender_id);"),
+        ("if (state < 2)","if (daemon.primary_state_.trailing_words_[0] < 2)"),
+        ("MainInterfaceGlobal.chat(StringTemp, packet.faction())","MainInterfaceGlobal.chat(StringTemp, 2)"),
+        ("new_landmark(packet.payload_10(), packet.payload_14(), name)","new_landmark(4, 6, name)"),
+        ("kill_landmark(packet.payload_10(), packet.payload_14())","kill_landmark(4, 6)"),
+        ("find_landmark(packet.payload_10(), packet.payload_14(), 1)","find_landmark(4, 6, 1)"),
+        ("if (packet.faction() == ConsoleGlobal.faction_id_)","if (3 == ConsoleGlobal.faction_id_)"),
+        ("                *reinterpret_cast<int *>(message + 0x14));", "                second);"),
+    ):
+        assert before in body
+        assert run(body.replace(before,after)).returncode!=0,before
+    guard="    if (type != 0x1E00"
+    assert guard in body
+    assert run(body.replace(guard,"    observed_read(&read_count, msg + 4, 4);\n"+guard,1)).returncode!=0
+    declaration="        const char *const name = observed_name(msg);\n"
+    assert body.count(declaration)==2
+    hoisted=body.replace(declaration,"").replace("    if (type == 0x4E01) {", "    const char *const name = observed_name(msg);\n    if (type == 0x4E01) {",1)
+    assert run(hoisted).returncode!=0
+
+
+def test_pinned_complete_high_family_guards_calls_and_capture_boundaries():
+    from hashlib import sha256
+    from capstone import Cs,CS_ARCH_X86,CS_MODE_32
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+    path=Path(os.environ.get("OPENSMACX_IMAGE",ROOT/".opensmacx/game/terranx_original.exe"))
+    if not path.is_file(): pytest.skip("pinned original unavailable")
+    raw=path.read_bytes();pin="01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    assert sha256(raw).hexdigest()==pin
+    image=PeImage(raw,pin)
+    decoded={i.address:i for start,end in ((0x516490,0x5165A6),(0x592EE0,0x592F50),(0x593110,0x593190),
+             (0x535A17,0x535A3D),(0x536781,0x536939),(0x536DA5,0x538266))
+             for i in Cs(CS_ARCH_X86,CS_MODE_32).disasm(image.read(Span(start,end)),start)}
+    targets={0x4600:0x5373AF,0x4601:0x53744C,0x4602:0x537424,0x4603:0x537483,
+             0x4B00:0x5374B2,0x4C00:0x5374D5,0x4C01:0x537709,0x4C02:0x537574,
+             0x4D00:0x537775,0x4E00:0x53797C,0x4E01:0x537ADF,0x4E02:0x537BA5,
+             0x4E03:0x537B44,0x8240:0x537CE9,0x8241:0x537F35}
+    # Mechanically execute only the scalar opcode-selection instructions.
+    # No packet memory/action is emulated, and no low-page/OOB access is run.
+    def select(opcode,start=0x536DA5):
+        pc=start;eax=opcode;comparison=0;unsigned_above=False
+        for _ in range(50):
+            if pc in set(targets.values())|{0x537F7A}: return pc
+            i=decoded[pc];m=i.mnemonic;s=i.op_str;next_pc=pc+i.size
+            if m=="cmp":
+                assert s.startswith("eax, ");operand=int(s.split(", ")[1],0)
+                comparison=eax-operand;unsigned_above=(eax&0xffffffff)>(operand&0xffffffff)
+            elif m in ("sub","add"):
+                assert s.startswith("eax, ");v=int(s.split(", ")[1],0)
+                eax=(eax+v if m=="add" else eax-v)&0xffffffff
+                if eax&0x80000000:eax-=0x100000000
+                comparison=eax
+            elif m=="dec": assert s=="eax";eax-=1;comparison=eax
+            elif m in ("je","jne","jg","jle","ja"):
+                take={"je":comparison==0,"jne":comparison!=0,"jg":comparison>0,"jle":comparison<=0,"ja":unsigned_above}[m]
+                if take:next_pc=int(s,0)
+            else: raise AssertionError((hex(pc),m,s))
+            pc=next_pc
+        raise AssertionError("opcode guard did not terminate")
+    for opcode,target in targets.items(): assert select(opcode)==target,hex(opcode)
+    assert select(0x1E00,0x535A17)==targets[0x4E00]
+    assert select(0x4440,0x536DB6)==0x537F7A # Guard's unsigned underflow, not a TableH arm.
+    for opcode in (0x4604,0x4AFF,0x4B01,0x4C03,0x4CFF,0x4D01,0x4DFF,0x4E04,0x4EFF,0x823F,0x8242,0x8300):
+        assert select(opcode)==0x537F7A,hex(opcode)
+    pins={
+        0x5373C0:("call","0x6262f0"),0x5373C5:("mov","eax, dword ptr [ebx + 8]"),
+        0x5373CE:("mov","ecx, dword ptr [ebx + 0x18]"),0x5373DA:("call","0x428350"),
+        0x537431:("call","0x6262f0"),0x537436:("mov","edx, dword ptr [ebx + 0x10]"),0x537442:("call","0x4271c0"),
+        0x53745B:("call","0x6262f0"),0x537469:("mov","eax, dword ptr [ebx + 0x14]"),0x537479:("call","0x424720"),
+        0x53749D:("call","0x424410"),0x5374BD:("call","0x6262f0"),
+        0x5374DF:("call","dword ptr [0x669368]"),0x5374E5:("mov","ecx, dword ptr [0x93a960]"),
+        0x5374FF:("mov","eax, dword ptr [esi + 0x1b50]"),0x537519:("mov","dword ptr [esi + 0x1b50], eax"),
+        0x537732:("mov","eax, dword ptr [esi + 0x1b50]"),0x537755:("call","0x631a20"),
+        0x53757E:("call","0x6262f0"),0x537590:("mov","ecx, dword ptr [ebx + 0x10]"),0x53759F:("call","0x523c60"),
+        0x5375AF:("mov","ecx, 0x7fd648"),0x5375BA:("call","0x5d5a70"),0x5375C9:("call","0x631a20"),
+        0x5375D6:("mov","ecx, dword ptr [0x9a64e0]"),0x5375EC:("call","0x625e50"),
+        0x5375F9:("cmp","edi, eax"),0x537610:("mov","eax, dword ptr [0x9a64e0]"),
+        0x537626:("mov","edx, dword ptr [0x9a64e0]"),0x53763D:("mov","ecx, dword ptr [0x9a64e0]"),
+        0x537654:("mov","eax, dword ptr [0x9a64e0]"),0x53766A:("mov","edx, dword ptr [0x9a64e0]"),
+        0x537681:("mov","ecx, dword ptr [0x9a64e0]"),0x5376AE:("mov","edx, dword ptr [0x9a64e0]"),
+        0x537775:("mov","eax, dword ptr [ebx + 0x10]"),0x537778:("mov","ecx, dword ptr [ebx + 0x18]"),
+        0x53777B:("mov","edi, dword ptr [ebx + 4]"),0x5377A5:("mov","dword ptr [ebp + 0xc], eax"),
+        0x5377A8:("call","0x6169a0"),0x5377B3:("call","0x626250"),0x5377C8:("mov","eax, dword ptr [ebx + 0x14]"),
+        0x537807:("mov","eax, dword ptr [ebp + 8]"),0x53784F:("mov","ecx, dword ptr [ebp + 0xc]"),
+        0x53790F:("mov","eax, dword ptr [ebx + 0x14]"),0x537919:("mov","edx, dword ptr [ebp - 0x14]"),
+        0x537932:("mov","edx, dword ptr [ebp + 0x10]"),
+        0x537993:("mov","ecx, dword ptr [ebx + 4]"),0x5379BB:("mov","ecx, 0x93cd90"),
+        0x5379C0:("call","0x4e25e0"),0x5379EF:("push","ecx"),0x5379F6:("call","0x4412f0"),
+        0x537A10:("jge","0x537a2d"),0x537A2D:("mov","ecx, dword ptr [ebx + 4]"),
+        0x537A70:("mov","ecx, dword ptr [ebx + 4]"),0x537AC4:("mov","edx, dword ptr [ebx + 4]"),
+        0x537AF7:("mov","edx, dword ptr [ebx + 0x14]"),0x537B00:("call","0x592600"),0x537B05:("mov","ecx, dword ptr [ebx + 4]"),
+        0x537AE7:("lea","edi, [ebx + 0x20]"),0x537B4C:("lea","edi, [ebx + 0x20]"),
+        0x537B5C:("mov","ecx, dword ptr [ebx + 0x14]"),0x537B66:("call","0x592550"),
+        0x537BB9:("mov","edx, dword ptr [ebx + 0x14]"),0x537BC1:("call","0x5926f0"),
+        0x537D28:("mov","ecx, dword ptr [ebx + 0x14]"),0x537D4B:("call","0x592ee0"),
+        0x537F4D:("mov","eax, dword ptr [esi + edi*4 + 0x1b80]"),0x537F63:("mov","dword ptr [esi + edi*4 + 0x1b80], 0"),
+        0x5367B9:("mov","eax, dword ptr [0x93e8c0]"),0x536893:("mov","dword ptr [0x93e904], 2"),
+        0x592F32:("push","0x20"),0x592F3D:("call","0x532940"),
+        0x593179:("push","0x40"),0x593181:("call","0x532940"),
+    }
+    for address,expected in pins.items():
+        i=decoded[address];assert (i.mnemonic,i.op_str.lower())==expected,hex(address)
+    kill=[i for address,i in decoded.items() if 0x537BA5<=address<0x537BD5]
+    assert [i.op_str for i in kill if i.mnemonic=="call"]==["0x6262f0","0x5926f0"]
+    assert not any("[ebx + 0x20]" in i.op_str for i in kill)
+    erase=[i for address,i in decoded.items() if 0x516490<=address<0x5165A6]
+    calls=[i for i in erase if i.mnemonic=="call" and i.op_str=="0x592ee0"]
+    assert len(calls)==1
+    assert any(i.mnemonic=="push" and i.op_str=="0x2e02" for i in erase)
+    # These are scalar branches, not a guessed jump table or contiguous owner.
+    # Host controls model valid allocated objects and callback observations;
+    # native short-packet, out-of-owner and asynchronous lifetime effects remain unknown.

@@ -5582,7 +5582,7 @@ static bool netdaemon_handle_five_message_routes(
         my_srand(packet.timestamp_bits());
         bool execute_order = true;
         if (Vehs[vehicle_id].faction_id != packet.faction()) {
-            if (daemon.primary_state_.leading_words_[0] != 0) {
+            if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
                 SpockNotifyPending = 1;
                 // Pinned5367CC jumps past order_veh to the acknowledgement.
                 execute_order = false;
@@ -5604,7 +5604,7 @@ static bool netdaemon_handle_five_message_routes(
         const int direction = packet.payload_14();
         log_say("From Server: ARTY", packet.faction(), vehicle_id, direction);
         my_srand(packet.timestamp_bits());
-        daemon.channels_[0].leading_words_[3] = 2;
+        NetDaemonNet.channels_[0].leading_words_[3] = 2;
         battle_fight(vehicle_id, packet.payload_14(), 1, 1, nullptr);
         log_say("Acknowledging ARTY", entry_packet_faction, 0, 0);
         if (daemon.primary_state_.leading_words_[0] == 0)
@@ -5658,10 +5658,8 @@ static bool netdaemon_handle_five_message_routes(
     }
 }
 
-// Candidate helper for the four pinned Council message routes in
-// NetDaemon::process_message. Keep the caller's existing early file-transfer
-// and 0x1101 returns ahead of this dispatch; false leaves the old default
-// forwarding path untouched.
+// These four Council arms belong to process_message's existing identity;
+// unsupported types leave its shared forwarding path untouched.
 static bool process_council_message(unsigned char *msg,
                                     unsigned short type) {
     // Share sender-owned wire offsets without assuming packet alignment.
@@ -5712,7 +5710,9 @@ static bool netdaemon_handle_lock_mask_residual(NetDaemon &daemon,
             daemon.channels_[0].trailing_words_[1 + identity] = mask;
             aggregate |= mask;
         }
-        log_say("Received OPEN CHANNEL request", identity, first, second);
+        log_say("Received OPEN CHANNEL request", identity,
+                *reinterpret_cast<int *>(message + 0x10),
+                *reinterpret_cast<int *>(message + 0x14));
         message_data(0x1240, identity, newly_acquired, 0, 0, 0);
         return true;
     }
@@ -5745,9 +5745,9 @@ static bool netdaemon_handle_server_change_pause(NetDaemon &daemon,
     if (type == 0x4C00) {
         uint32_t &paused = daemon.primary_state_.trailing_words_[4];
         if (paused == 0) {
+            const uint32_t now = static_cast<uint32_t>(timeGetTime());
             daemon.primary_state_.trailing_words_[5] =
-                static_cast<uint32_t>(timeGetTime()) -
-                static_cast<uint32_t>(NetDaemonWaitTicks);
+                now - static_cast<uint32_t>(NetDaemonWaitTicks);
             g_FX.play(21);
         }
         const uint32_t sender_bit =
@@ -5783,16 +5783,17 @@ static bool netdaemon_handle_chat_landmark_message(NetDaemon &daemon,
                                                    unsigned char *msg,
                                                    unsigned short type,
                                                    int sender_id) {
-    const int *const words = reinterpret_cast<const int *>(msg);
-    const int faction = words[1];
+    if (type != 0x1E00 && type != 0x4E00 && type != 0x4E01 &&
+        type != 0x4E02 && type != 0x4E03) return false;
+    const MessageCommandView packet(msg);
     if (type == 0x1E00 || type == 0x4E00) {
-        log_say("Received CHAT", StringTemp, faction, 0, 0);
-        if ((uint32_t(1) << (static_cast<uint32_t>(faction) & 31u)) &
+        log_say("Received CHAT", StringTemp, packet.faction(), 0, 0);
+        if ((uint32_t(1) << (static_cast<uint32_t>(packet.faction()) & 31u)) &
             static_cast<uint32_t>(MultiWindowContactStatusMask)) {
             return true;
         }
         if (daemon.primary_state_.trailing_words_[0] == 1) {
-            const int slot = daemon.pid_2_idx(
+            const int slot = NetDaemonNet.pid_2_idx(
                 static_cast<uint32_t>(sender_id));
             if (slot < 0) return true;
             NetWinDialog.new_chat(reinterpret_cast<char *>(msg + 0x10), slot);
@@ -5800,50 +5801,50 @@ static bool netdaemon_handle_chat_landmark_message(NetDaemon &daemon,
         }
         if (CommlinkPending != 0) {
             DiploWindow.new_chat(reinterpret_cast<char *>(msg + 0x10),
-                                 sender_id);
+                                 packet.faction());
             return true;
         }
 
         StringTemp[0] = '\0';
-        if (daemon.primary_state_.trailing_words_[0] < 2) {
+        int state;
+        std::memcpy(&state, &daemon.primary_state_.trailing_words_[0], sizeof state);
+        if (state < 2) {
             strcat(StringTemp, daemon.get_player_name(
                 static_cast<unsigned long>(sender_id)));
         } else {
-            const Player &player = Players[faction];
             PluralityDefault = 0;
-            GenderDefault = player.is_leader_female;
-            strcat(StringTemp, player.title_leader);
+            GenderDefault = Players[packet.faction()].is_leader_female;
+            strcat(StringTemp, Players[packet.faction()].title_leader);
             strcat(StringTemp, " ");
             PluralityDefault = 0;
-            GenderDefault = player.is_leader_female;
-            strcat(StringTemp, player.name_leader);
+            GenderDefault = Players[packet.faction()].is_leader_female;
+            strcat(StringTemp, Players[packet.faction()].name_leader);
         }
         strcat(StringTemp, ": ");
         strcat(StringTemp, reinterpret_cast<char *>(msg + 0x10));
-        MainInterfaceGlobal.chat(StringTemp, faction);
+        MainInterfaceGlobal.chat(StringTemp, packet.faction());
         return true;
     }
 
-    const int x = words[4];
-    const int y = words[5];
-    const char *const name = reinterpret_cast<const char *>(msg + 0x20);
     if (type == 0x4E01) {
-        log_say("Received LANDMARK", name, x, y, 0);
-        new_landmark(x, y, name);
-        if (faction == ConsoleGlobal.faction_id_) draw_map(1);
+        const char *const name = reinterpret_cast<const char *>(msg + 0x20);
+        log_say("Received LANDMARK", name, packet.payload_10(), packet.payload_14(), 0);
+        new_landmark(packet.payload_10(), packet.payload_14(), name);
+        if (packet.faction() == ConsoleGlobal.faction_id_) draw_map(1);
         return true;
     }
     if (type == 0x4E02) {
-        log_say("Received KILL LANDMARK", x, y, 0);
-        kill_landmark(x, y);
-        if (faction == ConsoleGlobal.faction_id_) draw_map(1);
+        log_say("Received KILL LANDMARK", packet.payload_10(), packet.payload_14(), 0);
+        kill_landmark(packet.payload_10(), packet.payload_14());
+        if (packet.faction() == ConsoleGlobal.faction_id_) draw_map(1);
         return true;
     }
     if (type == 0x4E03) {
-        log_say("Received RENAME LANDMARK", name, x, y, 0);
-        const int landmark = find_landmark(x, y, 1);
+        const char *const name = reinterpret_cast<const char *>(msg + 0x20);
+        log_say("Received RENAME LANDMARK", name, packet.payload_10(), packet.payload_14(), 0);
+        const int landmark = find_landmark(packet.payload_10(), packet.payload_14(), 1);
         if (landmark >= 0) strcpy(MapLandmark[landmark].name, name);
-        if (faction == ConsoleGlobal.faction_id_) draw_map(1);
+        if (packet.faction() == ConsoleGlobal.faction_id_) draw_map(1);
         return true;
     }
     return false;
@@ -5881,22 +5882,24 @@ static bool netdaemon_handle_time_control(NetDaemon &daemon,
     NetDaemonWaitTicks = netdaemon_subtract_i32_bits(
         GameDataStateStorage.fields_.turn_control_duration_milliseconds_,
         elapsed_ticks);
+    MultiWindow.GraphicWin::redraw();
+
+    parse_says(0, daemon.Net::get_player_name(
+                      static_cast<uint32_t>(sender_id)), -1, -1);
+    parse_say(1, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].name,
+              -1, -1);
 
     if (sender_identity == ConsoleGlobal.faction_id_) {
         NetMsgPrimary.pop("WECHANGEDTIME", 5000, 0, 0);
         return true;
     }
 
-    parse_says(0, daemon.Net::get_player_name(
-                      static_cast<uint32_t>(sender_id)), -1, -1);
-    const RulesTimeControl &control =
-        TimeControl[GameDataStateStorage.fields_.time_controls_selection_];
-    parse_num(0, control.turn);
-    parse_num(1, control.base);
-    parse_num(2, control.unit);
-    parse_num(3, control.extra);
-    parse_num(4, control.refresh);
-    parse_num(5, control.accumulated);
+    parse_num(0, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].turn);
+    parse_num(1, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].base);
+    parse_num(2, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].unit);
+    parse_num(3, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].extra);
+    parse_num(4, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].refresh);
+    parse_num(5, TimeControl[GameDataStateStorage.fields_.time_controls_selection_].accumulated);
 
     StringTemp[0] = 0;
     strcat(StringTemp, "HECHANGEDTIME");
