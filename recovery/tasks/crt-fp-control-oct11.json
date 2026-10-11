@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-fp-control-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind the complete five-entry default-precision/control-word runtime family to independently bounded physical contributions in the pinned LIBCMT dependency; do not count this as application implementation.",
+  "base_revision": "25e0aa110c85c051a66f91f7bdbbb6aa90820aa1",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6592576
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6607449
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6607502
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6607524
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6607670
+    }
+  ],
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_fp_control_oct11.py",
+    "recovery/tests/test_crt_strict_frontier_oct11.py"
+  ],
+  "evidence": [
+    "Independent pinned Ghidra12.1.2 and IDA catalogue extents agree for all five functions; original calls establish defaultprecision->controlfp->control87->abstract_cw/hw_cw. Each selected physical COFF contribution starts at offset zero and has the same complete span size; static storage conversion helpers are bound only to their exact member/section.",
+    "Native strict comparison must pass boundary, complete bytes and references for all five with exact previous-row equality. Preserve all 26 existing UNKNOWN rows and every source/historical identity. Tests damage each extent and original body under a freshly rebound pin; historical tests project out only this precisely validated addition.",
+    "Require independent review, source mapping/reference/claim continuity and fresh full application compile/link. These bindings establish neither original archive selection nor final linked/runtime acceptance. No application implementation is added, and no byte claim is granted."
+  ]
+}

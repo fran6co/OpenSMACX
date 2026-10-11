@@ -42,6 +42,8 @@ def previous():
 
 def without_strict_frontier(manifest):
     """Project this exact later addition out of older historical controls."""
+    from recovery.tests.test_crt_fp_control_oct11 import without_fp_control
+    manifest = without_fp_control(manifest)
     owned = {row[2] for row in EXPECTED}
     additions = tuple(b for b in manifest.bindings if b.symbol in owned)
     if not additions:
