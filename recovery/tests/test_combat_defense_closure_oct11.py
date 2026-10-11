@@ -22,6 +22,10 @@ def test_only_defense_block_changes_and_original_obligations_survive():
     path = ROOT / "src/veh.cpp"
     old = subprocess.check_output(["git", "show", BASE + ":src/veh.cpp"], cwd=ROOT, text=True)
     new = path.read_text()
+    # Reviewed follow-up terrain/PSI modifiers have their own actual-source,
+    # outside-scope and pinned controls; keep this older defense review bounded.
+    from test_combat_terrain_modifiers_oct11 import modifiers_region
+    new = new.replace(modifiers_region(new), modifiers_region(old))
     assert old.replace(block(old), "REVIEWED_DEFENSE_BLOCK") == new.replace(
         block(new), "REVIEWED_DEFENSE_BLOCK")
     assert [(_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(old, path)] == [

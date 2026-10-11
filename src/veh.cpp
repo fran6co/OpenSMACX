@@ -4664,48 +4664,47 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                 if (psi_combat_type) {
                     if (base_id_def >= 0 && Rules.combat_pct_base_def) {
                         add_bat(1, Rules.combat_pct_base_def, label_get(332)); // "Base"
-                        defense *= ((Rules.combat_pct_base_def + 100) / 100);
+                        defense = (Rules.combat_pct_base_def + 100) * defense / 100;
                     }
                     defense *= 4;
                 } else {
                     uint32_t triad_def = get_proto_triad(proto_id_def);
-                    uint32_t terrain_def = (triad_def == TRIAD_AIR)
+                    int terrain_def = (triad_def == TRIAD_AIR)
                         ? 2 : defense_value(faction_id_def, x_def, y_def, veh_id_def, veh_id_atk);
-                    uint32_t alt_atk;
-                    uint32_t alt_def;
+                    int alt_atk;
+                    int alt_def;
                     if (veh_id_atk >= 0 && get_triad(veh_id_atk) == TRIAD_LAND) {
                         if (combat_type && Rules.combat_pct_art_bonus_lvl_alt
                             && triad_def == TRIAD_LAND
                             && (alt_atk = alt_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y),
                                 alt_def = alt_at(x_def, y_def), alt_atk > alt_def)) {
-                            offense *= ((Rules.combat_pct_art_bonus_lvl_alt
-                                * (alt_atk - alt_def) + 100) / 100);
+                            offense = (Rules.combat_pct_art_bonus_lvl_alt
+                                * (alt_atk - alt_def) + 100) * offense / 100;
                             // "Altitude"
-                            add_bat(0, Rules.combat_pct_art_bonus_lvl_alt, label_get(576));
+                            add_bat(0, Rules.combat_pct_art_bonus_lvl_alt
+                                * (alt_atk - alt_def), label_get(576));
                         }
                         if (Rules.combat_pct_mobile_open_ground && !combat_type && base_id_def < 0
                             && terrain_def == 2
                             && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY) {
-                            uint32_t speed_atk = speed_proto(proto_id_atk);
+                            int speed_atk = speed_proto(proto_id_atk);
                             if (speed_atk > Rules.move_rate_roads
-                                && speed_proto(proto_id_def) < speed_atk) {
-                                offense *= ((Rules.combat_pct_mobile_open_ground + 100) / 100);
+                                && speed_proto(proto_id_def) <= speed_atk) {
+                                offense = (Rules.combat_pct_mobile_open_ground + 100) * offense / 100;
                                 // "Mobile in open"
                                 add_bat(0, Rules.combat_pct_mobile_open_ground, label_get(611));
                             }
                         }
                         if (Rules.combat_pct_def_vs_mobile_rough && !combat_type
                             && (terrain_def > 2 || base_id_def >= 0)
-                            && rocky_at(x_def, y_def) < TERRAIN_BIT_ROCKY
                             && speed_proto(proto_id_atk) > Rules.move_rate_roads) {
-                            defense *= ((Rules.combat_pct_def_vs_mobile_rough + 100) / 100);
+                            defense = (Rules.combat_pct_def_vs_mobile_rough + 100) * defense / 100;
                             // "Rough vs. Mobile" : "Mobile vs. Base"
                             add_bat(1, Rules.combat_pct_def_vs_mobile_rough, base_id_def < 0
                                 ? label_get(548) : label_get(612));
                         }
                         if (Rules.combat_pct_atk_road && !combat_type) {
-                            // TODO: add check road/tube Combat % -> attacking along road
-                            offense *= ((Rules.combat_pct_atk_road + 100) / 100);
+                            offense = (Rules.combat_pct_atk_road + 100) * offense / 100;
                             add_bat(0, Rules.combat_pct_atk_road, label_get(606)); // "Road Attack"
                         }
 
@@ -4713,16 +4712,16 @@ void __cdecl battle_compute(int veh_id_atk, int veh_id_def, int *offense_out, in
                             && altitude_at(x_def, y_def)
                             > altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)
                             && !has_abil(proto_id_atk, ABL_ANTIGRAV_STRUTS)) {
-                            defense *= ((Rules.combat_pen_pct_atk_lwr_elev + 100) / 100);
                             // "Uphill"
                             add_bat(1, Rules.combat_pen_pct_atk_lwr_elev, label_get(441));
+                            defense = (Rules.combat_pen_pct_atk_lwr_elev + 100) * defense / 100;
                         }
                         if (Rules.combat_pct_atk_higher_elev && !combat_type
                             && altitude_at(Vehs[veh_id_atk].x, Vehs[veh_id_atk].y)
                             > altitude_at(x_def, y_def)
                             && !has_abil(proto_id_def, ABL_ANTIGRAV_STRUTS)) {
-                            offense *= ((Rules.combat_pct_atk_higher_elev + 100) / 100);
-                            add_bat(0, Rules.combat_pct_atk_road, label_get(330)); // "Downhill"
+                            add_bat(0, Rules.combat_pct_atk_higher_elev, label_get(330)); // "Downhill"
+                            offense = (Rules.combat_pct_atk_higher_elev + 100) * offense / 100;
                         }
                     }
                     defense *= terrain_def;

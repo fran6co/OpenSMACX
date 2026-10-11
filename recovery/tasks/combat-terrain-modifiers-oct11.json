@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "146be170c3e6300b829018f24e62b16653102c20",
+  "editable_files": ["src/veh.cpp", "recovery/tests/test_combat_terrain_modifiers_oct11.py", "recovery/tests/test_combat_defense_closure_oct11.py"],
+  "intent": "Recover the complete adjacent PSI-base and conventional terrain percentage modifier family in battle_compute, including original signed multiply-before-divide, altitude-difference report, equal-speed mobile admission and Downhill report rule. Preserve original gates, quirks, identities and matching obligations.",
+  "evidence": [
+    "Native502D09..502D25 forms signed (altitude rule*level difference+100)*offense before /100, then502D3B..502D66 records rule*level difference. Level operands come from zero-extended byte>>5, range0..7; keep signed combined percentage arithmetic, including negative rule values.",
+    "Native502E15..502E17 accepts defender speed equal to attacker speed (JG rejects greater).502DEB..502DED compares attacker speed to road move rate as signed. Terrain/mobile/rough/road/elevation branches502E19..502E3C,502EDE..502EF6,502F6C..502F89,5030AA..5030C2,503199..5031B0 multiply the accumulator before signed division.503159 uses the higher-elevation rule for Downhill reporting, not the road rule;503190 reloads it for arithmetic. Uphill/Downhill report before arithmetic; the other conventional modifiers report after arithmetic. Rough path502EA4..502ED3 has no extra rocky rejection; remove the unsupported source condition, unlike mobile which retains its native rocky gate.",
+    "PSI base gate5037E9..5037F4 admits base0 and requires nonzero percent;50384E..503864 multiplies defense by rule+100 then divides before common x4. Road rule path502F5B..502F89 has no extra road/tube terrain gate; remove stale prospective TODO, do not introduce a new condition.",
+    "Actual extracted PSI/terrain source blocks run with bounded map/prototype/rules doubles. Tests check independent wide-product arithmetic, branch boundaries, compounded order, displayed percentages, negative rule values and damage controls. This does not establish complete battle_compute behavior, full native equivalence or game acceptance."
+  ],
+  "subjects": [{"address":5250464,"address_space":"pe:va","image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}]
+}
