@@ -30,7 +30,8 @@ def test_only_three_interfaces_change_and_obligations_remain():
     current = path.read_text()
     # Reverse only the independently bounded original player-ID correction.
     from test_net_polling_player_id_oct11 import restore_polling_player_id
-    normalized = restore_polling_player_id(current)
+    from test_net_session_guid_copy_oct11 import restore_session_guid_copy
+    normalized = restore_polling_player_id(restore_session_guid_copy(current))
     for address, signature in METHODS.items():
         name = signature.split('Net::')[1].split('(')[0]
         previous = 'int Net::'+name+'(int first, int second)'

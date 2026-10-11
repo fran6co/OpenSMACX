@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "net-session-guid-copy-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Use established GUID types for the two complete native session identifier copies without changing failure behavior or any other session logic.",
+  "base_revision": "18f93db66f4f21dc74122f759676e95aee5b3126",
+  "subjects": [{"image_sha256":"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","address_space":"pe:va","address":6482592}],
+  "editable_files": ["src/net_class.cpp","recovery/tests/test_net_session_guid_copy_oct11.py","recovery/tests/net-session-guid-copy-oct11.patch","recovery/tests/test_net_polling_player_id_oct11.py","recovery/tests/test_net_queue_pointer_contracts_oct11.py"],
+  "evidence": [
+    "Pinned 62EB7C..62EB99 copies the borrowed GUID pointer established by Net::init into DPSESSIONDESC2::guidApplication. Native dereferences without a null guard; do not add one.",
+    "Pinned 62ECD7..62ECEE copies the successfully populated heap descriptor's guidInstance into the inline NetAllocationNode GUID at Net+70C..718, before flags/count stores and free. Source and destination objects are distinct under the existing allocation contract.",
+    "Both source and destination GUID types already exist in net_class.h and SDK descriptors; Net::enumerate_sessions already assigns guidApplication directly. Remove word-punning only, preserving statement locations and all original error/leak/uninitialized paths. Validate actual source controls, whole-owner native baseline comparison, unchanged mappings/claims/references and application build/link. No new coverage or acceptance claim."
+  ]
+}

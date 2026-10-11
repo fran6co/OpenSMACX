@@ -1,0 +1,36 @@
+diff --git a/src/net_class.cpp b/src/net_class.cpp
+index 7a88e2925..0981dc16d 100644
+--- a/src/net_class.cpp
++++ b/src/net_class.cpp
+@@ -2455,14 +2455,7 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
+     memset(&desc, 0, 0x50);
+     desc.dwSize = 0x50;
+     desc.dwFlags = DPSESSION_MIGRATEHOST;
+-    const unsigned int *session_guid =
+-        reinterpret_cast<const unsigned int *>(guid_6E8_);
+-    unsigned int *application =
+-        reinterpret_cast<unsigned int *>(&desc.guidApplication);
+-    application[0] = session_guid[0];
+-    application[1] = session_guid[1];
+-    application[2] = session_guid[2];
+-    application[3] = session_guid[3];
++    desc.guidApplication = *guid_6E8_;
+     desc.dwMaxPlayers = seeded_max_players;
+     desc.lpszSessionNameA = name;
+     desc.lpszPasswordA =
+@@ -2501,14 +2494,7 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
+         strcpy(allocation_node_.password_, password);
+     }
+ 
+-    const unsigned int *live_guid =
+-        reinterpret_cast<const unsigned int *>(&live->guidInstance);
+-    unsigned int *node_guid =
+-        reinterpret_cast<unsigned int *>(&allocation_node_.instance_guid_);
+-    node_guid[0] = live_guid[0];
+-    node_guid[1] = live_guid[1];
+-    node_guid[2] = live_guid[2];
+-    node_guid[3] = live_guid[3];
++    allocation_node_.instance_guid_ = live->guidInstance;
+     allocation_node_.session_flags_ = live->dwFlags;
+     allocation_node_.max_players_ = max_players;
+     allocation_node_.current_players_ = 0;

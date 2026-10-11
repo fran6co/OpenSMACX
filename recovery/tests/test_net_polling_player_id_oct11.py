@@ -36,7 +36,8 @@ def test_exact_bounded_source_and_historical_continuity():
     path = ROOT / 'src/net_class.cpp'
     old = subprocess.check_output(['git', 'show', BASE + ':src/net_class.cpp'], cwd=ROOT, text=True)
     expected = migration(old)
-    assert expected == path.read_text()
+    from test_net_session_guid_copy_oct11 import restore_session_guid_copy
+    assert expected == restore_session_guid_copy(path.read_text())
     assert migration(expected, reverse=True) == old
     before, after = read_text(old, path), read_text(expected, path)
     assert len(before) == len(after)
