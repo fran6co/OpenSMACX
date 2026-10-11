@@ -15,6 +15,7 @@ BASE = "a18f9cd7c43aaf731732104bd6db627154578f04"
 
 PREAMBLE = r'''
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <string>
@@ -141,22 +142,43 @@ WIRE_EDITS = (
 )
 
 
+COMMAND_VIEW_DECLARATION = "// Borrowed wire view over the layout already owned by message_data's sender.\n// Read one field at a time: MOVE packets have only two payload words, while\n// AIRDROP/DOUBLE CROSS have three. Do not copy a full 32-byte record, impose\n// alignment, cache fields across calls, or initialize original unwritten bytes.\n// This is a serialization boundary, not a claim about a new original class.\nclass MessageCommandView {\npublic:\n    explicit MessageCommandView(const unsigned char *bytes) : bytes_(bytes) {}\n    int faction() const {\n        int value;\n        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, faction_), sizeof value);\n        return value;\n    }\n    int timestamp_bits() const {\n        int value;\n        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, timestamp_), sizeof value);\n        return value;\n    }\n    uint32_t sequence() const {\n        uint32_t value;\n        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, sequence_), sizeof value);\n        return value;\n    }\n    int payload_10() const {\n        int value;\n        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_10_), sizeof value);\n        return value;\n    }\n    int payload_14() const {\n        int value;\n        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_14_), sizeof value);\n        return value;\n    }\n    int payload_18() const {\n        int value;\n        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_18_), sizeof value);\n        return value;\n    }\nprivate:\n    const unsigned char *bytes_;\n};\n\n"
+COMMAND_FIELD_EDITS = [["*reinterpret_cast<int *>(message + 4)","packet.faction()",5],["*reinterpret_cast<int *>(message + 8)","packet.timestamp_bits()",5],["*reinterpret_cast<int *>(message + 0x10)","packet.payload_10()",7],["*reinterpret_cast<int *>(message + 0x14)","packet.payload_14()",7],["*reinterpret_cast<int *>(message + 0x18)","packet.payload_18()",3],["*reinterpret_cast<uint32_t *>(message + 0x0C)","packet.sequence()",1]]
+
+
+def apply_command_view_migration(source):
+    old = extract(source, "static bool netdaemon_handle_five_message_routes(")
+    new = old
+    for before, after, count in COMMAND_FIELD_EDITS:
+        assert new.count(before) == count
+        new = new.replace(before, after)
+    assert new.count("    switch (type) {") == 1
+    new = new.replace("    switch (type) {", "    const MessageCommandView packet(message);\n    switch (type) {", 1)
+    assert source.count(old) == 1
+    return source.replace(old, COMMAND_VIEW_DECLARATION + new, 1)
+
+
 def apply_wire_migration(source):
     """Only the reviewed dispatch edits; never derive a runtime source diff."""
     for before, after, count in WIRE_EDITS:
         assert source.count(before) == count
         source = source.replace(before, after)
-    return source
+    return apply_command_view_migration(source)
 
 
 def product():
     text = SOURCE.read_text()
-    return extract(text, "static void netdaemon_process_local_player_completion(") + "\n" + extract(
+    record_start = text.index("struct MessageDataRecord {")
+    record_end = text.index("// ORIGINAL:", record_start)
+    record = text[record_start:record_end]
+    view = extract(text, "class MessageCommandView {") + ";\n"
+    return record + view + extract(text, "static void netdaemon_process_local_player_completion(") + "\n" + extract(
         text, "static bool netdaemon_handle_five_message_routes(")
 
 
 @pytest.mark.parametrize("damage", ["none", "server_order", "sequence", "direction", "action", "cross"])
-def test_actual_five_routes_and_call_boundary_reloads(tmp_path, damage):
+@pytest.mark.parametrize("wire_offset", [0, 1])
+def test_actual_five_routes_and_call_boundary_reloads(tmp_path, damage, wire_offset):
     compiler = shutil.which("g++") or shutil.which("clang++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
@@ -164,10 +186,10 @@ def test_actual_five_routes_and_call_boundary_reloads(tmp_path, damage):
     changes = {
         "server_order": ("execute_order = false;", "execute_order = true;"),
         "sequence": ("set_sequence_bits(entry_sequence)", "set_sequence_bits(24)"),
-        "direction": ("::order_veh(vehicle_id, *reinterpret_cast<int *>(message + 0x14), 2)",
+        "direction": ("::order_veh(vehicle_id, packet.payload_14(), 2)",
                       "::order_veh(vehicle_id, direction, 2)"),
-        "action": ("::action(*reinterpret_cast<int *>(message + 0x10))", "::action(vehicle_id)"),
-        "cross": ("double_cross(*reinterpret_cast<int *>(message + 0x10),\n                     *reinterpret_cast<int *>(message + 0x14),\n                     *reinterpret_cast<int *>(message + 0x18))",
+        "action": ("::action(packet.payload_10())", "::action(vehicle_id)"),
+        "cross": ("double_cross(packet.payload_10(),\n                     packet.payload_14(),\n                     packet.payload_18())",
                   "double_cross(faction, partner, victim)"),
     }
     if damage != "none":
@@ -176,11 +198,45 @@ def test_actual_five_routes_and_call_boundary_reloads(tmp_path, damage):
         body = body.replace(before, after)
     source = tmp_path / "routes.cpp"
     executable = tmp_path / "routes"
-    source.write_text(PREAMBLE + body + MAIN)
+    main = MAIN.replace("alignas(4) unsigned char packet[32];",
+                        "alignas(4) unsigned char storage[36]; unsigned char *packet=storage+" + str(wire_offset) + ";")
+    source.write_text(PREAMBLE + body + main)
     subprocess.run([compiler,"-std=c++11","-O1",str(source),"-o",str(executable)],
                    check=True,capture_output=True,text=True,timeout=60)
     result = subprocess.run([str(executable)],capture_output=True,timeout=10)
     assert (result.returncode == 0) == (damage == "none"), result.stderr
+
+
+def test_move_packet_reads_only_its_transmitted_24_bytes(tmp_path):
+    compiler = shutil.which("g++") or shutil.which("clang++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    main = r'''
+int main() {
+    long page = sysconf(_SC_PAGESIZE);
+    assert(page > 0);
+    void *mapping = mmap(0, 2*page, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+    assert(mapping != MAP_FAILED);
+    unsigned char *base = static_cast<unsigned char *>(mapping);
+    assert(mprotect(base+page, page, PROT_NONE)==0);
+    unsigned char *packet = base+page-24;
+    std::memset(packet,0,24);
+    live_packet=packet; put(4,7); put(8,123); put(0xc,456);
+    put(0x10,1); put(0x14,11);
+    NetDaemon daemon; std::memset(&daemon,0,sizeof daemon);
+    ConsoleGlobal.faction_id_=7; Vehs[1].faction_id=7;
+    assert(netdaemon_handle_five_message_routes(daemon,0x4401,packet,7,456));
+    assert(order_calls==1 && arg0==1 && arg1==11);
+    assert(daemon.deletion_list_.value==456);
+    assert(munmap(mapping,2*page)==0);
+}
+'''
+    source = tmp_path / "bounded.cpp"
+    executable = tmp_path / "bounded"
+    source.write_text("#include <sys/mman.h>\n#include <unistd.h>\n" + PREAMBLE + product() + main)
+    subprocess.run([compiler,"-std=c++11","-O1",str(source),"-o",str(executable)],
+                   check=True,capture_output=True,text=True,timeout=60)
+    subprocess.run([str(executable)],check=True,capture_output=True,timeout=10)
 
 
 def test_identity_and_entry_header_ownership():

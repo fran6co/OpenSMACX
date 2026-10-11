@@ -5397,20 +5397,63 @@ static void netdaemon_process_local_player_completion(NetDaemon &daemon) {
     }
 }
 
+// Borrowed wire view over the layout already owned by message_data's sender.
+// Read one field at a time: MOVE packets have only two payload words, while
+// AIRDROP/DOUBLE CROSS have three. Do not copy a full 32-byte record, impose
+// alignment, cache fields across calls, or initialize original unwritten bytes.
+// This is a serialization boundary, not a claim about a new original class.
+class MessageCommandView {
+public:
+    explicit MessageCommandView(const unsigned char *bytes) : bytes_(bytes) {}
+    int faction() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, faction_), sizeof value);
+        return value;
+    }
+    int timestamp_bits() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, timestamp_), sizeof value);
+        return value;
+    }
+    uint32_t sequence() const {
+        uint32_t value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, sequence_), sizeof value);
+        return value;
+    }
+    int payload_10() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_10_), sizeof value);
+        return value;
+    }
+    int payload_14() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_14_), sizeof value);
+        return value;
+    }
+    int payload_18() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_18_), sizeof value);
+        return value;
+    }
+private:
+    const unsigned char *bytes_;
+};
+
 static bool netdaemon_handle_five_message_routes(
         NetDaemon &daemon, unsigned short type, unsigned char *message,
         int entry_packet_faction, uint32_t entry_sequence) {
     // Original stack+8 is the faction captured at534466, not a transport
     // identity. Stack-10 is the packet sequence captured at534461, not its
     // byte length. The DOUBLE CROSS arm instead rereads both packet fields.
+    const MessageCommandView packet(message);
     switch (type) {
     case 0x4401: {
-        const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
-        const int direction = *reinterpret_cast<int *>(message + 0x14);
-        log_say("From Server: MOVE VEH", *reinterpret_cast<int *>(message + 4), vehicle_id, direction);
-        my_srand(*reinterpret_cast<int *>(message + 8));
+        const int vehicle_id = packet.payload_10();
+        const int direction = packet.payload_14();
+        log_say("From Server: MOVE VEH", packet.faction(), vehicle_id, direction);
+        my_srand(packet.timestamp_bits());
         bool execute_order = true;
-        if (Vehs[vehicle_id].faction_id != *reinterpret_cast<int *>(message + 4)) {
+        if (Vehs[vehicle_id].faction_id != packet.faction()) {
             if (daemon.primary_state_.leading_words_[0] != 0) {
                 SpockNotifyPending = 1;
                 // Pinned5367CC jumps past order_veh to the acknowledgement.
@@ -5420,7 +5463,7 @@ static bool netdaemon_handle_five_message_routes(
             }
         }
         if (execute_order)
-            ::order_veh(vehicle_id, *reinterpret_cast<int *>(message + 0x14), 2);
+            ::order_veh(vehicle_id, packet.payload_14(), 2);
         log_say("Acknowledging MOVE VEH", entry_packet_faction, 0, 0);
         if (daemon.primary_state_.leading_words_[0] == 0)
             daemon.deletion_list_.set_sequence_bits(entry_sequence);
@@ -5429,12 +5472,12 @@ static bool netdaemon_handle_five_message_routes(
         return true;
     }
     case 0x4402: {
-        const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
-        const int direction = *reinterpret_cast<int *>(message + 0x14);
-        log_say("From Server: ARTY", *reinterpret_cast<int *>(message + 4), vehicle_id, direction);
-        my_srand(*reinterpret_cast<int *>(message + 8));
+        const int vehicle_id = packet.payload_10();
+        const int direction = packet.payload_14();
+        log_say("From Server: ARTY", packet.faction(), vehicle_id, direction);
+        my_srand(packet.timestamp_bits());
         daemon.channels_[0].leading_words_[3] = 2;
-        battle_fight(vehicle_id, *reinterpret_cast<int *>(message + 0x14), 1, 1, nullptr);
+        battle_fight(vehicle_id, packet.payload_14(), 1, 1, nullptr);
         log_say("Acknowledging ARTY", entry_packet_faction, 0, 0);
         if (daemon.primary_state_.leading_words_[0] == 0)
             daemon.deletion_list_.set_sequence_bits(entry_sequence);
@@ -5443,10 +5486,10 @@ static bool netdaemon_handle_five_message_routes(
         return true;
     }
     case 0x4403: {
-        const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
-        const int x = *reinterpret_cast<int *>(message + 0x14);
-        const int y = *reinterpret_cast<int *>(message + 0x18);
-        my_srand(*reinterpret_cast<int *>(message + 8));
+        const int vehicle_id = packet.payload_10();
+        const int x = packet.payload_14();
+        const int y = packet.payload_18();
+        my_srand(packet.timestamp_bits());
         action_airdrop(vehicle_id, x, y, 2);
         log_say("Acknowledging AIRDROP", entry_packet_faction, 0, 0);
         if (daemon.primary_state_.leading_words_[0] == 0)
@@ -5456,11 +5499,11 @@ static bool netdaemon_handle_five_message_routes(
         return true;
     }
     case 0x4404: {
-        const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
+        const int vehicle_id = packet.payload_10();
         const int order = Vehs[vehicle_id].order;
-        log_say("From Server: ACTION", *reinterpret_cast<int *>(message + 4), vehicle_id, order);
-        my_srand(*reinterpret_cast<int *>(message + 8));
-        ::action(*reinterpret_cast<int *>(message + 0x10));
+        log_say("From Server: ACTION", packet.faction(), vehicle_id, order);
+        my_srand(packet.timestamp_bits());
+        ::action(packet.payload_10());
         if (daemon.primary_state_.leading_words_[0] == 0)
             daemon.deletion_list_.set_sequence_bits(entry_sequence);
         if (entry_packet_faction == ConsoleGlobal.faction_id_)
@@ -5468,17 +5511,17 @@ static bool netdaemon_handle_five_message_routes(
         return true;
     }
     case 0x4440: {
-        const int faction = *reinterpret_cast<int *>(message + 0x10);
-        const int partner = *reinterpret_cast<int *>(message + 0x14);
-        const int victim = *reinterpret_cast<int *>(message + 0x18);
+        const int faction = packet.payload_10();
+        const int partner = packet.payload_14();
+        const int victim = packet.payload_18();
         log_say("From Server: DOUBLE CROSS", faction, partner, victim);
-        my_srand(*reinterpret_cast<int *>(message + 8));
-        double_cross(*reinterpret_cast<int *>(message + 0x10),
-                     *reinterpret_cast<int *>(message + 0x14),
-                     *reinterpret_cast<int *>(message + 0x18));
+        my_srand(packet.timestamp_bits());
+        double_cross(packet.payload_10(),
+                     packet.payload_14(),
+                     packet.payload_18());
         if (daemon.primary_state_.leading_words_[0] == 0)
-            daemon.deletion_list_.set_sequence_bits(*reinterpret_cast<uint32_t *>(message + 0x0C));
-        if (*reinterpret_cast<int *>(message + 4) == ConsoleGlobal.faction_id_)
+            daemon.deletion_list_.set_sequence_bits(packet.sequence());
+        if (packet.faction() == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
     }
