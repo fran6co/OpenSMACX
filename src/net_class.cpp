@@ -2417,6 +2417,7 @@ Purpose: Host a named session: close any live one, size it to two players
          fills for received sessions. Leaves the 0x10000 "in a lobby session"
          bit lit.
 // ORIGINAL: 0x0062EAA0 ?create_session@Net@@QAEHPADHPAD@Z 0x0062EAA0-0x0062ED2F FILE
+// symbol    ?create_session@Net@@QAEPAVNetAllocationNode@@PADH0@Z
 // size      655 bytes
 // prototype int (__thiscall ?create_session@Net@@QAEHPADHPAD@Z)(Net* this, int8*, int, int8*)
 // callers   3   call targets   6

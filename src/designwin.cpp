@@ -2467,6 +2467,7 @@ int DesignWin::UNK2(int proto_id) {
 }
 
 // ORIGINAL: 0x00439960 ?on_left_click@DesignWin@@QAEXHH@Z 0x00439960-0x004399FA FILE
+// symbol    ?on_left_click@DesignWin@@UAEXHH@Z
 // size      154 bytes
 // prototype void (__thiscall ?on_left_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int xCoord, int yCoord)
 // callers   0   call targets   7

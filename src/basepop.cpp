@@ -2358,6 +2358,7 @@ int BasePop::string(char *text) {
 }
 
 // ORIGINAL: 0x00604410 ?on_key_down@BasePop@@QAEHH@Z 0x00604410-0x0060448E FILE
+// symbol    ?on_key_down@BasePop@@UAEHH@Z
 // TRIED: both int-arithmetic (`off1 + (int)self`) and pointer-arithmetic (`self + off1`) forms for the `[edx+esi]` adjusted base diverge identically at instr #14 (original 'lea' vs rebuilt 'add') - an addressing-mode choice, not a control-flow one. 0x21d0/0x2228/0x2314/0x229c/0x2350 all fall inside the opaque `dialogs_[0xC94]` byte blob, so reached by raw offset.
 // working copy - scaffold materialised by --work
 // size      126 bytes

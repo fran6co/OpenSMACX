@@ -28,6 +28,8 @@ def migration(text, *, reverse=False):
 
 
 def restore_session_guid_copy(text):
+    from test_emitted_symbol_facts_oct11 import restore_emitted_symbol_facts
+    text = restore_emitted_symbol_facts(text, 'src/net_class.cpp')
     return migration(text, reverse=True) if '    allocation_node_.instance_guid_ = live->guidInstance;' in text else text
 
 
@@ -35,7 +37,8 @@ def test_exact_bounded_source_and_historical_continuity():
     path = ROOT / 'src/net_class.cpp'
     old = subprocess.check_output(['git', 'show', BASE + ':src/net_class.cpp'], cwd=ROOT, text=True)
     expected = migration(old)
-    assert expected == path.read_text()
+    from test_emitted_symbol_facts_oct11 import restore_emitted_symbol_facts
+    assert expected == restore_emitted_symbol_facts(path.read_text(), 'src/net_class.cpp')
     assert migration(expected, reverse=True) == old
     before, after = read_text(old, path), read_text(expected, path)
     assert len(before) == len(after)

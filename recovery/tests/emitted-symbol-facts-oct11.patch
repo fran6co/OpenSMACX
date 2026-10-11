@@ -1,0 +1,108 @@
+diff --git a/src/basebutton.cpp b/src/basebutton.cpp
+index 1bb362737..965779a5e 100644
+--- a/src/basebutton.cpp
++++ b/src/basebutton.cpp
+@@ -825,6 +825,7 @@ void BaseButton::on_left_up(int, int) {
+ // TRIED: caching *(self+0xc4) into one local instead of re-reading it at each of the two use sites moved `push edi` out of place. A member-pointer union shim per call site (void/int-return/int-arg) reproduces direct `call [reg+disp]` for the void and arg slots; the int-returning slot (0x5c) still gets an extra `mov eax,[...]` before `call eax` instead of a direct `call [eax+0x5c]`, and the target==-1/-2 short-circuit collapses the original's per-branch duplicated `test/je` into one shared test. 2 edits, 63/65 shared.
+ // ORIGINAL: 0x00607A20 ?on_left_click@BaseButton@@QAEXHH@Z 0x00607A20-0x00607AF3 FILE
+ // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607a20.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607a20 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
++// symbol    ?on_left_click@BaseButton@@UAEXHH@Z
+ void BaseButton::on_left_click(int, int) {
+     if (WinPointerOwner3 == this) {
+         WinPointerOwner3 = 0;
+diff --git a/src/basepop.cpp b/src/basepop.cpp
+index 73480f360..74d9f8686 100644
+--- a/src/basepop.cpp
++++ b/src/basepop.cpp
+@@ -2358,6 +2358,7 @@ int BasePop::string(char *text) {
+ }
+ 
+ // ORIGINAL: 0x00604410 ?on_key_down@BasePop@@QAEHH@Z 0x00604410-0x0060448E FILE
++// symbol    ?on_key_down@BasePop@@UAEHH@Z
+ // TRIED: both int-arithmetic (`off1 + (int)self`) and pointer-arithmetic (`self + off1`) forms for the `[edx+esi]` adjusted base diverge identically at instr #14 (original 'lea' vs rebuilt 'add') - an addressing-mode choice, not a control-flow one. 0x21d0/0x2228/0x2314/0x229c/0x2350 all fall inside the opaque `dialogs_[0xC94]` byte blob, so reached by raw offset.
+ // working copy - scaffold materialised by --work
+ // size      126 bytes
+diff --git a/src/councwin.cpp b/src/councwin.cpp
+index b1f43e883..45fa8c3fc 100644
+--- a/src/councwin.cpp
++++ b/src/councwin.cpp
+@@ -58,6 +58,7 @@ CouncWin CouncilWindow;
+ 
+ // ORIGINAL: 0x00425050 ?on_left_click@CouncWin@@QAEXHH@Z 0x00425050-0x00425B92;0x00652EC7-0x006530F4 FILE
+ // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00425050.cpp", "image:terranx_original.exe:0x00425050", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
++// symbol    ?on_left_click@CouncWin@@UAEXHH@Z
+ // TRIED: `Popup popup;` RAII local with the council-vote business logic (Spot::check, treaty/pact gate checks, eligible-faction dialog population loop, popup.exec, network vs single-player branches with parse_says/message_data/NetMsg::pop/ buy_council_vote/diplomacy_ends/vtable slot62) converging on draw_leader+ popup.close(); the `0x4253ca` "reuse a2 as menu selection, skip the dialog" edge case was simplified to a direct jump to draw_leader (goto could not reach the shared merge point without crossing a block's initializations). Diverges at instr #10.
+ void CouncWin::on_left_click(int x, int y) {
+     Popup popup;
+diff --git a/src/designwin.cpp b/src/designwin.cpp
+index a28958b07..76196acb8 100644
+--- a/src/designwin.cpp
++++ b/src/designwin.cpp
+@@ -2467,6 +2467,7 @@ int DesignWin::UNK2(int proto_id) {
+ }
+ 
+ // ORIGINAL: 0x00439960 ?on_left_click@DesignWin@@QAEXHH@Z 0x00439960-0x004399FA FILE
++// symbol    ?on_left_click@DesignWin@@UAEXHH@Z
+ // size      154 bytes
+ // prototype void (__thiscall ?on_left_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int xCoord, int yCoord)
+ // callers   0   call targets   7
+diff --git a/src/diplowin.cpp b/src/diplowin.cpp
+index 824d8eb0a..c4e68eacd 100644
+--- a/src/diplowin.cpp
++++ b/src/diplowin.cpp
+@@ -1804,6 +1804,7 @@ void DiploWin::on_button_clicked(int button_id) {
+ }
+ 
+ // ORIGINAL: 0x00442510 ?on_left_click@DiploWin@@QAEXHH@Z 0x00442510-0x00442558 FILE BYTE_EXACT
++// symbol    ?on_left_click@DiploWin@@UAEXHH@Z
+ // LEVER: homed from units/00442510.cpp once kill_offer (0x004413F0) landed in
+ // this TU - the call was the only thing blocking it. The declared `spot_`
+ // member at 0xED0 and the same vtable_slot dispatch done_deal uses replaced
+diff --git a/src/famewin.cpp b/src/famewin.cpp
+index 444f02091..3007c1143 100644
+--- a/src/famewin.cpp
++++ b/src/famewin.cpp
+@@ -736,6 +736,7 @@ void FameWin::on_redraw() {
+ 
+ // ORIGINAL: 0x0044A500 ?on_left_click@FameWin@@QAEXHH@Z 0x0044A500-0x0044A563 FILE BYTE_EXACT
+ // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/0044a500.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
++// symbol    ?on_left_click@FameWin@@UAEXHH@Z
+ // kind      game
+ void FameWin::on_left_click(int x, int y) {
+   if ((NetDaemonNet.primary_state_.trailing_words_[7] &
+diff --git a/src/net_class.cpp b/src/net_class.cpp
+index 0981dc16d..20f15cce8 100644
+--- a/src/net_class.cpp
++++ b/src/net_class.cpp
+@@ -2417,6 +2417,7 @@ Purpose: Host a named session: close any live one, size it to two players
+          fills for received sessions. Leaves the 0x10000 "in a lobby session"
+          bit lit.
+ // ORIGINAL: 0x0062EAA0 ?create_session@Net@@QAEHPADHPAD@Z 0x0062EAA0-0x0062ED2F FILE
++// symbol    ?create_session@Net@@QAEPAVNetAllocationNode@@PADH0@Z
+ // size      655 bytes
+ // prototype int (__thiscall ?create_session@Net@@QAEHPADHPAD@Z)(Net* this, int8*, int, int8*)
+ // callers   3   call targets   6
+diff --git a/src/prodpicker.cpp b/src/prodpicker.cpp
+index ecca75c67..e75b2f107 100644
+--- a/src/prodpicker.cpp
++++ b/src/prodpicker.cpp
+@@ -981,6 +981,7 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
+ // Superseded seed deleted; seed paths below are historical Git provenance.
+ // ORIGINAL: 0x00493EA0 ?on_right_click@ProdPicker@@QAEXHH@Z 0x00493EA0-0x0049419F;0x00658C09-0x00658C1E FILE
+ // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00493ea0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
++// symbol    ?on_right_click@ProdPicker@@UAEXHH@Z
+ void ProdPicker::on_right_click(int x, int y) {
+     on_left_click(x, y);
+     client_to_screen(&x, &y);
+diff --git a/src/socialwin.cpp b/src/socialwin.cpp
+index b3a3c4cbb..79b8260c3 100644
+--- a/src/socialwin.cpp
++++ b/src/socialwin.cpp
+@@ -294,6 +294,7 @@ void SocialWin::on_left_click(int, int) {
+ 
+ // ORIGINAL: 0x004B1BC0 ?on_right_click@SocialWin@@QAEXHH@Z 0x004B1BC0-0x004B1CD1 FILE
+ // RECOVERY_BINDING: v1 {"evidence": ["The 0x004B1BC0 body resets TutorialWindow, probes four contiguous category rectangles beginning at +0x1F110 then the faction-power rectangle at +0x1F2A0, and retrieves label slots 828 or 840.", "The existing SocialWin layout has those rectangles and the on_iface_right_click body establishes label_get, client_to_screen and set_bubble_text as the typed tooltip path."], "reason": "Recover the SocialWin right-click tooltip through real rectangle members and source-owned labels."}
++// symbol    ?on_right_click@SocialWin@@UAEXHH@Z
+ void SocialWin::on_right_click(int x, int y) {
+     TutorialWindow.reset();
+     RECT *categories[4] = {&tooltipSocEng_, &tutRect4_,

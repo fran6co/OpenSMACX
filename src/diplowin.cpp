@@ -1804,6 +1804,7 @@ void DiploWin::on_button_clicked(int button_id) {
 }
 
 // ORIGINAL: 0x00442510 ?on_left_click@DiploWin@@QAEXHH@Z 0x00442510-0x00442558 FILE BYTE_EXACT
+// symbol    ?on_left_click@DiploWin@@UAEXHH@Z
 // LEVER: homed from units/00442510.cpp once kill_offer (0x004413F0) landed in
 // this TU - the call was the only thing blocking it. The declared `spot_`
 // member at 0xED0 and the same vtable_slot dispatch done_deal uses replaced

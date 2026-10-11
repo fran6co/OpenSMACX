@@ -294,6 +294,7 @@ void SocialWin::on_left_click(int, int) {
 
 // ORIGINAL: 0x004B1BC0 ?on_right_click@SocialWin@@QAEXHH@Z 0x004B1BC0-0x004B1CD1 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["The 0x004B1BC0 body resets TutorialWindow, probes four contiguous category rectangles beginning at +0x1F110 then the faction-power rectangle at +0x1F2A0, and retrieves label slots 828 or 840.", "The existing SocialWin layout has those rectangles and the on_iface_right_click body establishes label_get, client_to_screen and set_bubble_text as the typed tooltip path."], "reason": "Recover the SocialWin right-click tooltip through real rectangle members and source-owned labels."}
+// symbol    ?on_right_click@SocialWin@@UAEXHH@Z
 void SocialWin::on_right_click(int x, int y) {
     TutorialWindow.reset();
     RECT *categories[4] = {&tooltipSocEng_, &tutRect4_,

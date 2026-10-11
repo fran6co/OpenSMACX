@@ -58,6 +58,7 @@ CouncWin CouncilWindow;
 
 // ORIGINAL: 0x00425050 ?on_left_click@CouncWin@@QAEXHH@Z 0x00425050-0x00425B92;0x00652EC7-0x006530F4 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00425050.cpp", "image:terranx_original.exe:0x00425050", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// symbol    ?on_left_click@CouncWin@@UAEXHH@Z
 // TRIED: `Popup popup;` RAII local with the council-vote business logic (Spot::check, treaty/pact gate checks, eligible-faction dialog population loop, popup.exec, network vs single-player branches with parse_says/message_data/NetMsg::pop/ buy_council_vote/diplomacy_ends/vtable slot62) converging on draw_leader+ popup.close(); the `0x4253ca` "reuse a2 as menu selection, skip the dialog" edge case was simplified to a direct jump to draw_leader (goto could not reach the shared merge point without crossing a block's initializations). Diverges at instr #10.
 void CouncWin::on_left_click(int x, int y) {
     Popup popup;

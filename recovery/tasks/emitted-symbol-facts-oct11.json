@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "task_id": "emitted-symbol-facts-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind nine existing source implementations to freshly observed physical emitted symbols; preserve historical original names, spans, claims and behavior.",
+  "base_revision": "094185e602c671759be086f15b53a6c3e7411961",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6322720
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6308880
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4345936
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4430176
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4465936
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4498688
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6482592
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4800160
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 4922304
+    }
+  ],
+  "editable_files": [
+    "src/basebutton.cpp",
+    "src/basepop.cpp",
+    "src/councwin.cpp",
+    "src/designwin.cpp",
+    "src/diplowin.cpp",
+    "src/famewin.cpp",
+    "src/net_class.cpp",
+    "src/prodpicker.cpp",
+    "src/socialwin.cpp",
+    "recovery/tests/emitted-symbol-facts-oct11.patch",
+    "recovery/tests/test_emitted_symbol_facts_oct11.py",
+    "recovery/tests/test_net_session_guid_copy_oct11.py"
+  ],
+  "evidence": [
+    "Fresh build-1h7bu6dw physical same-owner COFF has one exclusive ordinary-function COMDAT for each existing source method/function stem. Source declaration and definition must independently confirm identity, not merely a similar symbol name.",
+    "Eight current virtual overrides emit U rather than historical Q member decorations. create_session returns its source-owned NetAllocationNode pointer. These are current emission facts, not original debug names, signature changes or new function recovery.",
+    "Use the package write_symbol pure writer. Preserve every ORIGINAL name/span/claim, binding and authored lesson; no C++ change. Verify all nine files byte-for-byte against writer output and baseline, whole-owner native verdict continuity except these formerly unresolved identities, fresh build/link, mappings/references, historical claims and independent review. These facts only enable measurement; misses remain obligations, never acceptance or new byte claims.",
+    "Independent review rejected has_fac_built: original500290 loads BaseIDCurrentSelected and consumes one argument, matching the inline one-argument wrapper in base.h, not the separately emitted two-argument helper. Do not infer identity from a unique available function-name stem; leave that mapping unchanged."
+  ]
+}

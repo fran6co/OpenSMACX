@@ -736,6 +736,7 @@ void FameWin::on_redraw() {
 
 // ORIGINAL: 0x0044A500 ?on_left_click@FameWin@@QAEXHH@Z 0x0044A500-0x0044A563 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/0044a500.cpp", "Pinned original owner review: original clip resets and absent-record branches, CharUpperA import, difficulty-label capitalization and exact demote tail copying."], "reason": "Recover FameWin owner behavior through existing GraphicWin/Buffer bases, owned buttons and sprites, and typed HallOfFame/Player records; retain historical seed identity and extents without a measurement claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// symbol    ?on_left_click@FameWin@@UAEXHH@Z
 // kind      game
 void FameWin::on_left_click(int x, int y) {
   if ((NetDaemonNet.primary_state_.trailing_words_[7] &

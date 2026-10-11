@@ -981,6 +981,7 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00493EA0 ?on_right_click@ProdPicker@@QAEXHH@Z 0x00493EA0-0x0049419F;0x00658C09-0x00658C1E FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00493ea0.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
+// symbol    ?on_right_click@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_right_click(int x, int y) {
     on_left_click(x, y);
     client_to_screen(&x, &y);
