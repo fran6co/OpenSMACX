@@ -148,7 +148,7 @@ struct MediaDescriptor {
   IDirectDrawSurface2 *surface_20;
   DWORD flags;
   BYTE *provided_output_base_4c;
-  DWORD provided_output_pitch_50;
+  BYTE *provided_output_alternate_50;
 };
 struct MediaRuntime {
   MediaDescriptor *descriptor;
@@ -176,12 +176,13 @@ int main() {
   assert(descriptor.surface_1c == reinterpret_cast<void *>(0x30));
   assert(descriptor.surface_20 == reinterpret_cast<void *>(0x40));
   descriptor.flags = 0x800;
-  descriptor.provided_output_base_4c = reinterpret_cast<BYTE *>(0x1234);
-  descriptor.provided_output_pitch_50 = 0x5678;
+  BYTE first_output[16],second_output[16];
+  descriptor.provided_output_base_4c = first_output;
+  descriptor.provided_output_alternate_50 = second_output;
   runtime.queue_record_kind = 0;
   runtime.sub_5cbbc0();
-  assert(descriptor.provided_output_base_4c == reinterpret_cast<BYTE *>(0x5678));
-  assert(descriptor.provided_output_pitch_50 == 0x1234);
+  assert(descriptor.provided_output_base_4c == second_output);
+  assert(descriptor.provided_output_alternate_50 == first_output);
   return 0;
 }
 '''

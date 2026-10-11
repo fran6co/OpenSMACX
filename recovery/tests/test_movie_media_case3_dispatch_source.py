@@ -54,7 +54,7 @@ def _compile_and_run(source: str, tmp_path: Path, suffix: str) -> int:
 
 def test_actual_case3_dispatch_preserves_large_run_edge(tmp_path: Path) -> None:
     text = (SRC / "movie_media.cpp").read_text()
-    body = _function(text, 'extern "C" int __fastcall sub_5cc940(')
+    body = _function(text, 'extern "C" void __fastcall sub_5cc940(')
     case3 = _case_block(body)
     harness = r'''#include <cassert>
 #include <cstdint>
@@ -76,27 +76,40 @@ static int large_16_calls;
 static int large_32_calls;
 static int short_16_calls;
 static int short_32_calls;
+static BYTE *seen_destinations[8];
+static unsigned seen_pitches[8], seen_count;
+static void capture(void *destination, unsigned pitch) {
+  assert(seen_count < 8);
+  seen_destinations[seen_count] = static_cast<BYTE *>(destination);
+  seen_pitches[seen_count++] = pitch;
+}
 void media_build_runtime_block_scale_table(int) {}
-void sub_5d02cc(unsigned char *, void *, int) { ++large_16_calls; }
-void sub_5cfaed(unsigned char *, BYTE *, int) { ++large_32_calls; }
-void sub_5cd3b0(char, char, char, char, char, char, int *, unsigned int) {
+void sub_5d02cc(unsigned char *, void *d, int p) { ++large_16_calls; capture(d,p); }
+void sub_5cfaed(unsigned char *, BYTE *d, int p) { ++large_32_calls; capture(d,p); }
+void sub_5cd3b0(char, char, char, char, char, char, int *d, unsigned int p) {
   ++short_32_calls;
+  capture(d,p);
 }
 void sub_5cd560(signed char, signed char, signed char, signed char,
-                signed char, signed char, int *, unsigned int) {
+                signed char, signed char, int *d, unsigned int p) {
   ++short_16_calls;
+  capture(d,p);
 }
-static void run_case(DWORD flags, BYTE run_bytes) {
+static void run_case(DWORD flags, BYTE run_bytes, DWORD height=16) {
+  seen_count=0;
   MediaRuntime runtime_value = {};
+  runtime_value.output_rect_top_18=3;
+  runtime_value.output_rect_left_14=2;
   MediaRuntime *runtime = &runtime_value;
   MediaDescriptor d = {};
   d.output_width_64 = 16;
-  d.output_height_60 = 16;
+  d.output_height_60 = height;
   d.flags = flags;
   BYTE compressed_storage[32] = {};
   compressed_storage[0] = run_bytes;
+  compressed_storage[1+run_bytes] = run_bytes;
   BYTE *compressed = compressed_storage;
-  BYTE surface_storage[4096] = {};
+  BYTE surface_storage[8192] = {};
   BYTE *surface_source = surface_storage;
   DWORD output_pitch = 64;
   switch (3) {
@@ -104,12 +117,21 @@ static void run_case(DWORD flags, BYTE run_bytes) {
     case 4:
       break;
   }
+  if (run_bytes > 12 || run_bytes == 3 || run_bytes == 6 || run_bytes == 12) {
+    const unsigned pitch=(flags&0x30)?128:64;
+    assert(seen_count==height/16);
+    for(unsigned row=0;row<seen_count;++row) {
+      assert(seen_pitches[row]==pitch);
+      // Origin uses the undoubled stride; only block/row stepping scales.
+      assert(seen_destinations[row]==surface_storage+3*64+2*((flags&0x40)?4:2)+row*pitch*16);
+    }
+  } else assert(seen_count==0);
 }
 int main() {
   run_case(0, 13);
   assert(large_16_calls == 1 && large_32_calls == 0);
   run_case(0x40, 13);
-  assert(large_16_calls == 2 && large_32_calls == 0);
+  assert(large_16_calls == 1 && large_32_calls == 1);
   run_case(0, 3);
   assert(short_16_calls == 1 && short_32_calls == 0);
   run_case(0x40, 3);
@@ -123,22 +145,20 @@ int main() {
     run_case(0, static_cast<BYTE>(run_bytes));
   }
   assert(short_16_calls == 2 && short_32_calls == 2);
+  for (DWORD pixel_mode : {DWORD(0),DWORD(0x40)})
+    for (DWORD scale : {DWORD(0),DWORD(0x10),DWORD(0x20),DWORD(0x30)}) {
+      run_case(pixel_mode|scale,13,32);
+      run_case(pixel_mode|scale,3,32);
+    }
 }
 '''
+    harness = '#include <initializer_list>\n' + harness
     assert _compile_and_run(harness, tmp_path, "actual") == 0
 
-    wrong_dispatch = (
-        "sub_5d02cc((unsigned char *)compressed, output_block,\n"
-        "                     (int)block_pitch);"
-    )
-    replacement = (
-        "if (four_byte_pixels)\n"
-        "            sub_5cfaed((unsigned char *)compressed, output_block,\n"
-        "                       (int)block_pitch);\n"
-        "          else\n"
-        "            sub_5d02cc((unsigned char *)compressed, output_block,\n"
-        "                       (int)block_pitch);"
-    )
-    assert wrong_dispatch in harness
-    mutant = harness.replace(wrong_dispatch, replacement, 1)
-    assert _compile_and_run(mutant, tmp_path, "wrong_large_dispatch") != 0
+    for label, before, after in (
+        ('wrong_large_dispatch','sub_5cfaed((unsigned char *)compressed','sub_5d02cc((unsigned char *)compressed'),
+        ('missing_scaled_stride','if ((d.flags & 0x30) != 0) block_pitch <<= 1;','/* missing scaling */'),
+        ('scaled_origin','runtime->output_rect_top_18 * output_pitch','runtime->output_rect_top_18 * (output_pitch * ((d.flags & 0x30) ? 2 : 1))'),
+    ):
+        assert before in harness
+        assert _compile_and_run(harness.replace(before,after,1),tmp_path,label)!=0

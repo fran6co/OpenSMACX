@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "74795287356356950f454c02e645861d0946d245",
+  "editable_files": [
+    "src/movie_media.cpp", "src/movie_media.h",
+    "recovery/tests/test_media_output_buffers_oct11.py",
+    "recovery/tests/test_media_audio_owner_oct11.py",
+    "recovery/tests/test_movie_media_case3_dispatch_source.py",
+    "recovery/tests/test_movie_media_owner_actual_source.py",
+    "recovery/tests/test_movie_media_last_six_bodies.py",
+    "recovery/tests/test_movie_runtime_decoder_ownership_actual_source_oct9.py"
+  ],
+  "intent": "Recover the alternating caller-buffer relationship and native conversion paths together: pointer-owned +4c/+50 swap, derived stride and bypass, ignored helper argument positions, pixel-mode decoder selection, scaled block pitch after origin calculation, and Unlock-only tail. Preserve all original identities, historical claims and remaining codec obligations.",
+  "evidence": [
+    "Pinned5CCA87 branches past all surface preparation/cooperative checks/Lock selection to5CCDDE under flag800. There +4c is destination, +50 is the ignored converter argument, EBX is width*2 or width*4. Tail5CD1FE bypasses Unlock on this same path.",
+    "Pinned5CBBC0 swaps +4c/+50, reloading the descriptor between stores. Caller5CB4CF performs this after conversion and record advancement; the next record converts through the former +50 address. Both fields are output-buffer pointers, neither pitch nor capacity. No added allocation, reference count or buffer lifetime is proved.",
+    "Pinned case3 has separate flag40 loops: large32 call5CCF34->5CFAED, large16 call5CD046->5D02CC. Both compute origin with the original pitch, then double converter/row pitch for flags30 at5CCEEF/5CD001. Existing test incorrectly enshrined the opposite large32 edge; update it from these independent native anchors.",
+    "Pinned tail5CD1F6..5CD285 calls only Unlock slot80; no second IsLost query exists. Counter selection follows pre-call flags/queue kind, not pointer identity: slots can alias one surface. Keep this original selection without adding a safety fix.",
+    "All four observed mapped callers5CABE8/5CAC11/5CB460/5CB489 ignore EAX. Native epilogues leave incidental helper/COM results; recover void rather than inventing a status contract. Unknown indirect users remain an obligation, not evidence of a returned status.",
+    "Helpers5CD8D0/5CD980/5CDA30 do not read their middle stack argument;5D4020 does not read its first stack argument. Preserve the original buffer-pointer values and positions without inventing pointee access. C-linkage names/fastcall stack widths remain unchanged.",
+    "Complete scale-table arithmetic, callback descriptor reload fidelity, external COM/provider behavior, exact matching and full-game acceptance remain unproved. Correct these demonstrated translations without claiming complete codec recovery."
+  ],
+  "subjects": [
+    {"address": 6080832, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6077376, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6084816, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6084992, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6085168, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ]
+}

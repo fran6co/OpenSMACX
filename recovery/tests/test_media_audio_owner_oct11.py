@@ -23,10 +23,13 @@ def without_audio_owner_functions(text):
     for name in ("setup_sound_device", "create_playback_buffer", "release_session_interfaces"):
         signature = "int MediaRuntime::" + name + "()"
         text = text.replace(definition(text, signature), "AUDIO_OWNER " + name)
-    return text
+    from test_media_output_buffers_oct11 import without_renderer_body
+    return without_renderer_body(text)
 
 
 def restore_audio_header(text):
+    from test_media_output_buffers_oct11 import restore_output_header
+    text = restore_output_header(text)
     assert text.count(HEADER_AFTER) == 1
     return text.replace(HEADER_AFTER, HEADER_BEFORE)
 
@@ -41,6 +44,8 @@ def test_exact_owner_migration_and_original_identity_continuity():
         if name == "movie_media.h":
             assert before.count(HEADER_BEFORE) == 1
             expected = before.replace(HEADER_BEFORE, HEADER_AFTER)
+            from test_media_output_buffers_oct11 import restore_output_header
+            after = restore_output_header(after)
         elif name == "uv2player.cpp":
             expected = before.replace("media_.unresolved_source_or_rate_58 = 0;", "media_.source_buffer_58 = 0;")
             # The separately bounded Wave interface migration now carries
@@ -56,7 +61,11 @@ def test_exact_owner_migration_and_original_identity_continuity():
             expected = expected.replace("format.nSamplesPerSec = d.source_buffer_58;", "format.nSamplesPerSec = playback_frequency;")
             expected = expected.replace("format.nAvgBytesPerSec = d.source_buffer_58 << 2;", "format.nAvgBytesPerSec = playback_frequency << 2;")
             expected = expected.replace("d.play_buffer->SetFrequency(d.source_buffer_58);", "d.play_buffer->SetFrequency(playback_frequency);")
-        assert expected == after
+        if name == "movie_media.cpp":
+            from test_media_output_buffers_oct11 import without_renderer_body
+            assert without_renderer_body(expected) == without_renderer_body(after)
+        else:
+            assert expected == after
         assert [(_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(before, path)] == [
             (_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(after, path)]
 

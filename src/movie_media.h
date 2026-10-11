@@ -69,7 +69,7 @@ typedef char media_palette_lookup_storage_extent_check[
 // Existing seed identity at 0x005CC940 is an unmangled fastcall free
 // function. A product migration can narrow its int* parameters to these
 // evidence-backed object views while preserving the C-linkage identity.
-extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
+extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
                                      MediaQueueRecord *record);
 extern "C" int __fastcall sub_5cbc00(int ecx_arg, int edx_arg,
                                      int stack_1, int stack_2, int stack_3,
@@ -99,7 +99,9 @@ struct MediaDescriptor {
   BYTE *palette_entries_28;                       // +28; allocated 0x400 bytes
   MediaPixelFormat pixel_format;                // +2c..+4b; passed as 5CC450 receiver
   BYTE *provided_output_base_4c;                 // +4c; selected without Lock
-  DWORD provided_output_pitch_50;                 // +50; byte pitch in same path
+  // 5CBBC0 swaps this address into +4c before the next record conversion.
+  // The provided-buffer stride is derived from width/pixel mode, not +50.
+  BYTE *provided_output_alternate_50;            // +50; alternating output buffer
   IDirectSound *sound_device;                    // +54
   // Setup5CE340 queries this optional buffer; teardown5CE450 releases it.
   // The parsed playback rate is MediaRuntime+58, a different object's field.

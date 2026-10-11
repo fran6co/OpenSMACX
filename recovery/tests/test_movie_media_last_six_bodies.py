@@ -151,7 +151,7 @@ int main() {
       runtime.decoder_context_3f8.predictor_4fc =
       runtime.decoder_context_3f8.predictor_500 = 9;
   runtime.decoder_context_3f8.bit_position_204 = 9;
-  sub_5cd8d0(&runtime, compressed, destination, 77, 64);
+  sub_5cd8d0(&runtime, compressed, destination, compressed, 64);
   assert(runtime.decoder_context_3f8.compressed_input_200 == compressed &&
          runtime.decoder_context_3f8.bit_position_204 == 0);
   assert(runtime.decoder_context_3f8.predictor_4f8 == 0 &&
@@ -168,7 +168,7 @@ int main() {
 
   call_count = 0;
   runtime.record_option_040 = 0;
-  sub_5cd980(&runtime, compressed, destination, 88, 64);
+  sub_5cd980(&runtime, compressed, destination, compressed, 64);
   assert(call_count == 4);
   assert(calls[0].address == destination);
   assert(calls[1].address == destination + 64);
@@ -177,7 +177,7 @@ int main() {
   assert(calls[0].variant == 4);
 
   call_count = 0;
-  sub_5cda30(&runtime, compressed, destination, 99, 64);
+  sub_5cda30(&runtime, compressed, destination, compressed, 64);
   assert(call_count == 4);
   assert(calls[0].address == destination);
   assert(calls[1].address == destination + 32);

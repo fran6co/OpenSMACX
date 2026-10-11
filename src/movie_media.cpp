@@ -559,11 +559,11 @@ extern "C" void __cdecl sub_5cd560(signed char, signed char, signed char,
                                     signed char, signed char, signed char,
                                     int *, unsigned int);
 extern "C" void __fastcall sub_5cd8d0(MediaRuntime *, unsigned char *,
-                                      unsigned char *, int, unsigned int);
+                                      unsigned char *, unsigned char *, unsigned int);
 extern "C" void __fastcall sub_5cd980(MediaRuntime *, unsigned char *,
-                                      unsigned char *, int, unsigned int);
+                                      unsigned char *, unsigned char *, unsigned int);
 extern "C" void __fastcall sub_5cda30(MediaRuntime *, unsigned char *,
-                                      unsigned char *, int, unsigned int);
+                                      unsigned char *, unsigned char *, unsigned int);
 void __cdecl sub_5cfaed(unsigned char *, BYTE *, int);
 void __cdecl sub_5d02cc(unsigned char *, void *, int);
 int __fastcall sub_5d35b0(MediaRuntime *, const BYTE *, BYTE *, DWORD, int);
@@ -656,8 +656,13 @@ static void media_build_runtime_block_scale_table(int quality) {
 // symbol    @sub_5cc940@8
 // kind      game
 // TRIED: a DirectDraw surface-format-change/blit handler (COM vtable dispatch through IDirectDrawSurface-shaped interfaces, confirmed by the 0x887601c2/DDERR_SURFACELOST-style comparisons and the guidance's own COM-dispatch note). Landed: __fastcall signature (ecx=param_1, edx=param_2, matches `mov eax,edx; mov esi,ecx` at entry), the first switch's dispatch table resolved directly from the image at 0x5CD28C (parsed the PE section table by hand since no RESOLVED JUMP TABLE section was printed for this address: index->target is 0->0x5CC9D4, 1->0x5CC9EF, 2->0x5CC98C, 3->0x5CC9A7, 4..6->0x5CC9DD), the geometry/clip-flag field arithmetic (param_1[3..6]), the COM CreateSurface/QueryInterface/TestCooperativeLevel/Restore/Lock call sequence with real vtable slot numbers (0x10/0x14/0x18/0x1c/0x20 => the emitter's own slots 5,6,13,24,25,27,32) and real arguments, and the second switch's call-out shape to the already-catalogued blit helpers (sub_5cd8d0/5cd980/5cda30/5d35b0/5d4020/5d3980/5d3df0/5d3f50). Case 3 of the second switch is a pixel-format converter that packs 1/3/6 source bytes into 32-bit BGRA-ish words via byte-granularity CONCAT31 before calling sub_5cd560/5cd3b0 (16bpp) or sub_5d02cc/5cfaed (raw copy) - left as a placeholder (TRIED) rather than guess the per-run-type byte layout without more time.
-extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
+extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
                                      MediaQueueRecord *record) {
+  // Native callers5CABE8/5CAC11/5CB460/5CB489 do not consume EAX.
+  // The epilogues leave incidental helper/COM results, not a status contract.
+  // Provided buffers bypass surface preparation/Lock and Unlock.5CBBC0 swaps
+  // the alternate pointer into the next record's destination; the helpers
+  // retain its original argument position but never dereference that slot.
   // The historical case-3 placeholder note above is superseded by the
   // explicit 3/6/12-byte short-run paths and >12-byte dispatch below.
   // 5D35B0 is implemented in movie_media_decoder.cpp through the frame,
@@ -715,6 +720,7 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
     runtime->output_rect_height_10 = d.geometry_height_override_74;
 
   BYTE *surface_source = 0;
+  BYTE *unused_output = 0;
   DWORD output_pitch = 0;
   DDSURFACEDESC locked;
   memset(&locked, 0, 0x6c);
@@ -722,7 +728,9 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
 
   if ((d.flags & 0x800) != 0) {
     surface_source = d.provided_output_base_4c;
-    output_pitch = d.provided_output_pitch_50;
+    unused_output = d.provided_output_alternate_50;
+    output_pitch = d.output_width_64 << 1;
+    if ((d.flags & 0x40) != 0) output_pitch <<= 1;
   } else if ((d.flags & 0x400) != 0) {
     if (d.surface_1c == 0) {
       DDSURFACEDESC surface_description;
@@ -780,71 +788,77 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
     }
   }
 
-  IDirectDrawSurface2 *cooperative_surfaces[4] = {
-      d.surface_14, d.surface_18, d.surface_1c, d.surface_20};
-  const DWORD restore_flags[4] = {0x02000000, 0x08000000, 0, 0};
-  for (int i = 0; i != 4; ++i) {
-    IDirectDrawSurface2 *surface = cooperative_surfaces[i];
-    if (surface == 0) continue;
-    if (i < 2 && (d.flags & restore_flags[i]) == 0) continue;
-    if (surface->IsLost() == DDERR_SURFACELOST) {
-      if (surface->Restore() != DD_OK) return 0;
-      if (i == 2) {
-        runtime->queue_record_kind = 2;
-        runtime->output_handle_candidate = 1;
+  if ((d.flags & 0x800) == 0) {
+    IDirectDrawSurface2 *cooperative_surfaces[4] = {
+        d.surface_14, d.surface_18, d.surface_1c, d.surface_20};
+    const DWORD restore_flags[4] = {0x02000000, 0x08000000, 0, 0};
+    for (int i = 0; i != 4; ++i) {
+      IDirectDrawSurface2 *surface = cooperative_surfaces[i];
+      if (surface == 0) continue;
+      if (i < 2 && (d.flags & restore_flags[i]) == 0) continue;
+      if (surface->IsLost() == DDERR_SURFACELOST) {
+        if (surface->Restore() != DD_OK) return;
+        if (i == 2) {
+          runtime->queue_record_kind = 2;
+          runtime->output_handle_candidate = 1;
+        }
       }
     }
+
+    if (runtime->queue_record_kind == 1) {
+      IDirectDrawSurface2 *lock_target;
+      if ((d.flags & 0x400) == 0) lock_target = d.surface_1c;
+      else if ((d.flags & 0x08000000) == 0) lock_target = d.surface_14;
+      else lock_target = d.surface_18;
+      if (lock_target->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK) return;
+      surface_source = (BYTE *)locked.lpSurface;
+      output_pitch = (DWORD)locked.lPitch;
+    } else if (runtime->queue_record_kind == 2) {
+      surface_source = runtime->owned_heap_638;
+      output_pitch = d.output_width_64 << 1;
+    } else if (runtime->queue_record_kind == 4) {
+      if (d.surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK) return;
+      surface_source = (BYTE *)locked.lpSurface;
+      output_pitch = (DWORD)locked.lPitch;
+    }
+    unused_output = surface_source;
   }
 
   const BYTE *compressed = packet + 8;
   BYTE *pixel_payload = packet;
-  if (runtime->queue_record_kind == 1) {
-    IDirectDrawSurface2 *lock_target;
-    if ((d.flags & 0x400) == 0) lock_target = d.surface_1c;
-    else if ((d.flags & 0x08000000) == 0) lock_target = d.surface_14;
-    else lock_target = d.surface_18;
-    if (lock_target->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK) return 0;
-    surface_source = (BYTE *)locked.lpSurface;
-    output_pitch = (DWORD)locked.lPitch;
-  } else if (runtime->queue_record_kind == 2) {
-    surface_source = runtime->owned_heap_638;
-    output_pitch = d.output_width_64 << 1;
-  } else if (runtime->queue_record_kind == 4) {
-    if (d.surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK) return 0;
-    surface_source = (BYTE *)locked.lpSurface;
-    output_pitch = (DWORD)locked.lPitch;
-  }
-
   switch (runtime->selected_record_kind_39c) {
   case 1:
     sub_5d3df0(runtime, pixel_payload);
     if (d.pixel_format.total_component_bits != 8)
       sub_5d3f50(runtime);
-    sub_5d4020(runtime, surface_source, surface_source,
+    sub_5d4020(runtime, surface_source, unused_output,
                (int)output_pitch);
     break;
   case 2:
     sub_5d3980(runtime, pixel_payload);
-    sub_5d4020(runtime, surface_source, surface_source,
+    sub_5d4020(runtime, surface_source, unused_output,
                (int)output_pitch);
     break;
   case 3: {
     media_build_runtime_block_scale_table((int)runtime->record_scale_byte_048);
     const bool four_byte_pixels = (d.flags & 0x40) != 0;
     const unsigned int block_step = four_byte_pixels ? 0x40 : 0x20;
-    const DWORD block_pitch = output_pitch;
+    DWORD block_pitch = output_pitch;
     BYTE *output_row = surface_source +
         runtime->output_rect_top_18 * output_pitch +
         runtime->output_rect_left_14 * (four_byte_pixels ? 4 : 2);
+    if ((d.flags & 0x30) != 0) block_pitch <<= 1;
     for (DWORD block_y = 0; block_y < d.output_height_60; block_y += 16) {
       BYTE *output_block = output_row;
       for (DWORD block_x = 0; block_x < d.output_width_64; block_x += 16) {
         const unsigned int run_bytes = *compressed++;
         if (run_bytes > 12) {
-          // The pinned >12 branch has one direct edge, to 5D02CC, regardless
-          // of the output-format flag used for block stepping below.
-          sub_5d02cc((unsigned char *)compressed, output_block,
-                     (int)block_pitch);
+          if (four_byte_pixels)
+            sub_5cfaed((unsigned char *)compressed, output_block,
+                       (int)block_pitch);
+          else
+            sub_5d02cc((unsigned char *)compressed, output_block,
+                       (int)block_pitch);
         } else if (run_bytes == 3) {
           if (four_byte_pixels)
             sub_5cd3b0((char)compressed[0], (char)compressed[0],
@@ -897,7 +911,7 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
             runtime->output_rect_top_18 * output_pitch +
             runtime->output_rect_left_14 * 2;
         sub_5cd8d0(runtime, (BYTE *)compressed, destination,
-                   (int)runtime->output_rect_extent_0c, pitch);
+                   unused_output, pitch);
       } else {
         DWORD pitch = output_pitch;
         if ((d.flags & 0x30) != 0) pitch *= 2;
@@ -905,10 +919,10 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
             runtime->output_rect_top_18 * output_pitch +
             runtime->output_rect_left_14 * 4;
         sub_5cd980(runtime, (BYTE *)compressed, destination,
-                   (int)runtime->output_rect_extent_0c, pitch);
+                   unused_output, pitch);
       }
     } else {
-      sub_5cda30(runtime, (BYTE *)compressed, surface_source, 0,
+      sub_5cda30(runtime, (BYTE *)compressed, surface_source, unused_output,
                  output_pitch);
     }
     break;
@@ -928,42 +942,23 @@ extern "C" int __fastcall sub_5cc940(MediaRuntime *runtime,
 
   if ((d.flags & 0x800) == 0) {
     if (runtime->queue_record_kind == 1) {
-      if ((d.flags & 0x400) == 0) {
-        if (d.surface_1c->IsLost() != DD_OK)
-          ++runtime->surface_loss_counter_038;
-      } else if ((d.flags & 0x08000000) == 0) {
-        if (d.surface_14->IsLost() != DD_OK) {
-          ++runtime->surface_loss_counter_02c;
-          return 0;
-        }
-      } else if (d.surface_18->IsLost() != DD_OK) {
-        ++runtime->surface_loss_counter_030;
-        return 0;
-      }
-    } else if (runtime->queue_record_kind == 4 &&
-               d.surface_1c->IsLost() != DD_OK) {
-      ++runtime->surface_loss_counter_038;
-      return 0;
-    }
-
-    if (runtime->queue_record_kind == 1) {
+      const DWORD unlock_flags = d.flags;
       IDirectDrawSurface2 *unlock_target;
-      if ((d.flags & 0x400) == 0) unlock_target = d.surface_1c;
-      else if ((d.flags & 0x08000000) == 0) unlock_target = d.surface_14;
+      if ((unlock_flags & 0x400) == 0) unlock_target = d.surface_1c;
+      else if ((unlock_flags & 0x08000000) == 0) unlock_target = d.surface_14;
       else unlock_target = d.surface_18;
       if (unlock_target->Unlock(0) != DD_OK) {
-        if (unlock_target == d.surface_14) ++runtime->surface_loss_counter_02c;
-        else if (unlock_target == d.surface_18) ++runtime->surface_loss_counter_030;
-        else ++runtime->surface_loss_counter_038;
-        return 0;
+        if ((unlock_flags & 0x400) == 0) ++runtime->surface_loss_counter_038;
+        else if ((unlock_flags & 0x08000000) == 0) ++runtime->surface_loss_counter_02c;
+        else ++runtime->surface_loss_counter_030;
+        return;
       }
     } else if (runtime->queue_record_kind == 4 &&
                d.surface_1c->Unlock(0) != DD_OK) {
       ++runtime->surface_loss_counter_038;
-      return 0;
+      return;
     }
   }
-  return 0;
 }
 
 /*
@@ -2077,7 +2072,7 @@ Purpose: After a read-record event, update the associated media descriptor.
          ECX is MediaRuntime* and [ECX] is its MediaDescriptor*. The first
          swap is gated by descriptor+0x20 being nonzero and runtime+0x4c
          equaling one; the second independently tests descriptor flags bit
-         11, then swaps the pointer-shaped +0x4c and DWORD +0x50 values.
+         11, then swaps the alternating output-buffer pointers at +0x4c/+0x50.
 
          The original reloads [ECX] between stores in both groups. The typed
          owner keeps a descriptor reload at each corresponding point.
@@ -2102,7 +2097,8 @@ void MediaRuntime::sub_5cbbc0() {
     // The first word of MediaRuntime is its descriptor pointer. Pinned
     // 0x5CBBC0 swaps descriptor +0x1c/+0x20 only when queue kind is 1,
     // then independently swaps +0x4c/+0x50 when descriptor flags contain
-    // bit 11. The latter deliberately exchanges pointer bits and a DWORD.
+    // bit 11. Both are output buffers: the next conversion writes through
+    // +4c after this swap. Neither address is a pitch or a capacity.
     MediaDescriptor *view = descriptor;
     if (view->surface_20 != 0 && queue_record_kind == 1) {
         IDirectDrawSurface2 *previous = view->surface_1c;
@@ -2112,13 +2108,10 @@ void MediaRuntime::sub_5cbbc0() {
     }
     view = descriptor;
     if ((view->flags & 0x800U) != 0) {
-        const DWORD previous_pitch = view->provided_output_pitch_50;
-        const DWORD previous_base = static_cast<DWORD>(
-            reinterpret_cast<uintptr_t>(view->provided_output_base_4c));
-        view->provided_output_pitch_50 = previous_base;
+        BYTE *previous_alternate = view->provided_output_alternate_50;
+        view->provided_output_alternate_50 = view->provided_output_base_4c;
         view = descriptor;
-        view->provided_output_base_4c = reinterpret_cast<BYTE *>(
-            static_cast<uintptr_t>(previous_pitch));
+        view->provided_output_base_4c = previous_alternate;
     }
 }
 
@@ -2483,7 +2476,7 @@ extern "C" void __fastcall sub_5cd750(MediaRuntime *runtime,
 // kind      game
 extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
                                       BYTE *compressed, BYTE *destination,
-                                      int unused, unsigned int pitch) {
+                                      BYTE *unused, unsigned int pitch) {
   // The second fastcall argument arrives in EDX and is retained in +5F8.
   // The unused fourth logical argument remains present for the native stack
   // cleanup and is deliberately not repurposed.
@@ -2521,7 +2514,7 @@ extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
 // kind      game
 extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
                                       BYTE *compressed, BYTE *destination,
-                                      int unused, unsigned int pitch) {
+                                      BYTE *unused, unsigned int pitch) {
   MediaDescriptor &descriptor = *runtime->descriptor;
   runtime->decoder_context_3f8.predictor_500 = 0;
   runtime->decoder_context_3f8.predictor_4fc = 0;
@@ -2557,7 +2550,7 @@ extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
 // kind      game
 extern "C" void __fastcall sub_5cda30(MediaRuntime *runtime,
                                       BYTE *compressed, BYTE *destination,
-                                      int unused, unsigned int pitch) {
+                                      BYTE *unused, unsigned int pitch) {
   MediaDescriptor &descriptor = *runtime->descriptor;
   runtime->decoder_context_3f8.compressed_input_200 = compressed;
   runtime->decoder_context_3f8.bit_position_204 = 0;
