@@ -11554,14 +11554,20 @@ Purpose: Obliterate a base and report it to every faction that can hear.
 // .faction_id_current / .faction_id_former / .population_size / .visibility /
 // .name_string (0x0097D044/45/46/4A/53, 0x134 stride), and Rules.
 // tgl_oblit_base_atrocity (0x00949860 = Rules + 0x128) gating the atrocity.
-// The three Player rows it walks are name_leader (+0x34), title_leader
-// (+0x4C) and faction_bonus_count (+0x50C, read as GenderDefault's value) -
-// 0x00946A50 is Players itself, so a row index of n * 0x167 is the n-th
-// record's dword at that offset.
+// Player grammar reads at 0x004CD55C/5B0/5C9 select is_leader_female (+0),
+// not faction_bonus_count (+0x50C), as the historical seed interpreted them.
+// Slot 1 at 0x004CD562 selects the console faction's title_leader (+0x4C),
+// slot 2 the former owner's adj_name_faction (+0x304), and slots 3/4 the
+// vehicle faction's title_leader (+0x4C) and name_leader (+0x34).
+// All faction rows use the actual Player stride, 0x59C. Actor/former IDs
+// are captured before parsing; visibility is captured after parsing and before
+// base_kill, while the popup faction and atrocity rule are read afterward.
 //
-// BUG IN THE ORIGINAL: the owner's name row is computed once into a local and
+// Historical seed note, not confirmed by the complete pinned instruction decode:
+// "BUG IN THE ORIGINAL: the owner's name row is computed once into a local and
 // then reused for BOTH the fourth and the fifth parse_says, so the fifth call
-// prints from a row it never recomputed for. Transcribed as written.
+// prints from a row it never recomputed for. Transcribed as written."
+// The decode actually retains the vehicle faction's row for its title/name pair.
 //
 // TRIED (the units archive, which measured 0.90 similarity / 15 of 138 edits
 //        at 445 bytes both sides): the remaining divergence is the prologue's
@@ -11579,16 +11585,16 @@ void __cdecl action_oblit(int veh_id, int base_id) {
     parse_says(0, Bases[base_id].name_string, -1, -1);
 
     PluralityDefault = 0;
-    GenderDefault = Players[ConsoleGlobal.faction_id_].faction_bonus_count;
-    parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+    parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
 
     parse_says(2, Players[base_former].adj_name_faction, -1, -1);
 
     PluralityDefault = 0;
-    GenderDefault = Players[veh_faction].faction_bonus_count;
+    GenderDefault = Players[veh_faction].is_leader_female;
     parse_says(3, Players[veh_faction].title_leader, -1, -1);
 
-    GenderDefault = Players[veh_faction].faction_bonus_count;
+    GenderDefault = Players[veh_faction].is_leader_female;
     PluralityDefault = 0;
     parse_says(4, Players[veh_faction].name_leader, -1, -1);
 
