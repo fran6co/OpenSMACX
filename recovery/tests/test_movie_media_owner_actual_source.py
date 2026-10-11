@@ -272,6 +272,14 @@ def test_all_eight_installed_mappings_preserve_reader_history():
         assert after.region
         assert definition in installed_definition(after.path, definition)
         for field in PRESERVED_FIELDS:
+            if address == 0x005CED1D and field == "image_spans":
+                # Reviewed extent repair 18f93db66 separates two independent
+                # transforms. The original seed covered both; retain its
+                # complete range through the two current owner identities.
+                assert before.image_spans == ((0x005CED1D, 0x005CEF8A),)
+                assert after.image_spans == ((0x005CED1D, 0x005CEE80),)
+                assert current[0x005CEE80].image_spans == ((0x005CEE80, 0x005CEF8A),)
+                continue
             assert getattr(after, field) == getattr(before, field), (
                 f"0x{address:08X} changed historical {field}"
             )

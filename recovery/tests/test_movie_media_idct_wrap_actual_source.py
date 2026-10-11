@@ -67,6 +67,10 @@ def host_source(source: str, mutation: str | None = None) -> str:
         bodies[11] = bodies[11].replace(
             needle, "static_cast<DWORD>(stride_arg) << 1;", 1
         )
+    elif mutation == "advance_after_final_row":
+        needle = "if (row != 7)"
+        assert bodies[11].count(needle) == 1
+        bodies[11] = bodies[11].replace(needle, "if (row != 8)", 1)
 
     return r'''#include <cassert>
 #include <climits>
@@ -127,7 +131,7 @@ int main() {
   movie_media_idct_set_output_pointer(output);
   sub_5cef8a(reinterpret_cast<BYTE *>(output), 0x40000001);
   assert(movie_media_idct_storage.output_pitch_bytes == 4);
-  assert(movie_media_idct_output_pointer() == output + 8);
+  assert(movie_media_idct_output_pointer() == output + 7);
   for (int i = 0; i != 15; ++i) assert(output[i] == 0);
   assert(output[15] == -7);
 }
@@ -175,7 +179,9 @@ def test_host_projection_does_not_hide_helper_definition_after_first_use(tmp_pat
 
 
 @pytest.mark.parametrize(
-    "compiler_name,mutation", [("g++", "add32_or"), ("clang++", "pitch_shift")]
+    "compiler_name,mutation", [("g++", "add32_or"), ("clang++", "pitch_shift"),
+                              ("g++", "advance_after_final_row"),
+                              ("clang++", "advance_after_final_row")]
 )
 def test_installed_idct_wrap_mutations_fail(
     compiler_name: str, mutation: str, tmp_path: Path

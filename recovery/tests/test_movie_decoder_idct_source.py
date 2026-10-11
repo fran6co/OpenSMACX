@@ -3,11 +3,47 @@ from __future__ import annotations
 import shutil
 import subprocess
 import re
+import os
 from pathlib import Path
 
+import pytest
 
 ROOT = Path(__file__).resolve().parent
 SRC = ROOT.parents[1] / "src"
+
+
+def test_pinned_idct_wrapper_advances_output_only_between_row_calls() -> None:
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from capstone.x86 import X86_OP_IMM, X86_OP_MEM
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+
+    path = Path(os.environ.get("OPENSMACX_IMAGE",
+                              str(SRC.parent / ".opensmacx/game/terranx_original.exe")))
+    if not path.is_file():
+        pytest.skip("pinned original unavailable")
+    image = PeImage(path.read_bytes(),
+                    "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    instructions = list(decoder.disasm(image.read(Span(0x5CF048, 0x5CF11D)), 0x5CF048))
+    assert sum(i.size for i in instructions) == 0x5CF11D - 0x5CF048
+    calls = [i for i in instructions if i.mnemonic == "call"
+             and i.operands[0].type == X86_OP_IMM
+             and i.operands[0].imm == 0x5CEE80]
+    stores = [i for i in instructions if i.mnemonic == "mov"
+              and i.operands[0].type == X86_OP_MEM
+              and not i.operands[0].mem.base and not i.operands[0].mem.index
+              and i.operands[0].mem.disp == 0x9C3004]
+    assert len(calls) == len(stores) == 8  # Initial pointer and seven advances.
+    assert calls[0].address == 0x5CF04D
+    assert calls[-1].address == 0x5CF111
+    assert calls[-1].address + calls[-1].size == 0x5CF116
+    assert stores[0].address < calls[0].address
+    for previous, current in zip(calls, calls[1:]):
+        assert sum(previous.address < s.address < current.address for s in stores) == 1
+    assert not any(s.address > calls[-1].address for s in stores)
+    assert instructions[-1].mnemonic == "ret"
 
 
 def _function(source: str, signature: str) -> str:
@@ -93,16 +129,17 @@ int main() {
   BYTE *final_pointer = 0;
   std::memcpy(&final_pointer,
       &movie_media_idct_storage.current_output_pointer_bits, sizeof(final_pointer));
-  assert(final_pointer == output + 8 * 64);
-  bool changed = false;
+  assert(final_pointer == output + 7 * 64);
   for (int row = 0; row != 8; ++row) {
+    bool changed = false;
     for (int column = 0; column != 8; ++column)
-      changed = changed || reinterpret_cast<int *>(output)[row * 16 + column] != 0;
+      changed = changed || reinterpret_cast<int *>(output)[row * 16 + column] !=
+                            static_cast<int>(0xa5a5a5a5u);
+    assert(changed);
     for (int column = 8; column != 16; ++column)
       assert(reinterpret_cast<int *>(output)[row * 16 + column] ==
              static_cast<int>(0xa5a5a5a5u));
   }
-  assert(changed);
   assert(movie_media_idct_storage.butterfly_fp_scratch_words[1] != 0 ||
          movie_media_idct_storage.butterfly_fp_scratch_words[3] != 0);
 }

@@ -1520,9 +1520,14 @@ void __cdecl sub_5cef8a(unsigned char *row_base, int stride_arg) {
         int *const source =
             &movie_media_idct_storage.intermediate_words[row * 9];
         sub_5cee80(source);
-        BYTE *destination = reinterpret_cast<BYTE *>(movie_media_idct_output_pointer());
-        destination += movie_media_idct_storage.output_pitch_bytes;
-        movie_media_idct_set_output_pointer(reinterpret_cast<int *>(destination));
+        // Pinned 5CF052..5CF111 advances only between row calls. The final
+        // call at 5CF111 returns directly to the epilogue at 5CF116, leaving
+        // shared output storage pointing at row seven, not beyond the block.
+        if (row != 7) {
+            BYTE *destination = reinterpret_cast<BYTE *>(movie_media_idct_output_pointer());
+            destination += movie_media_idct_storage.output_pitch_bytes;
+            movie_media_idct_set_output_pointer(reinterpret_cast<int *>(destination));
+        }
     }
 }
 

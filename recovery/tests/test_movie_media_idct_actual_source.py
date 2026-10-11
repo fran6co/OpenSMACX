@@ -193,7 +193,7 @@ def _run(source: str, compiler: str, tmp_path: Path) -> int:
 
 def test_idct_owner_identity_and_full_spans_are_continuous() -> None:
     expected = {
-        0x005CED1D: ("sub_5ced1d", ((0x005CED1D, 0x005CEF8A),)),
+        0x005CED1D: ("sub_5ced1d", ((0x005CED1D, 0x005CEE80),)),
         0x005CEE80: ("sub_5cee80", ((0x005CEE80, 0x005CEF8A),)),
         0x005CEF8A: ("sub_5cef8a", ((0x005CEF8A, 0x005CF11D),)),
     }
