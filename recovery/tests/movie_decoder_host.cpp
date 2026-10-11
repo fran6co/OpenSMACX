@@ -180,7 +180,11 @@ int main() {
   assert(context.block_calls == 1);
   assert(context.row_transform_calls == 0); // terminal coefficient entries use fill path
   assert(context.blended_rows == 15);
-  assert(context.frame_bit_state.cursor == compressed + 0x14 + 10);
+  // This callback deliberately disables block headers. Six terminal 0x30
+  // coefficient blocks consume 10 bits each (8 DC + 2 terminal bits), so
+  // their initial 32-bit reservoir needs three 16-bit refills: six bytes.
+  // This synthetic coefficient-path fixture is not record-kind-7 coverage.
+  assert(context.frame_bit_state.cursor == compressed + 0x14 + 6);
   assert(context.frame_bit_state.available_bits == 20);
   assert(temporary_plane_b == context.allocated_planes[2]);
   assert(temporary_plane_a == context.allocated_planes[1]);
