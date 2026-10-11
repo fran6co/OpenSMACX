@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "task_id": "packet-label-fidelity-oct11",
+  "target": "opensmacx",
+  "author": "framework-coordinator",
+  "base_revision": "e6e4f71b4fc8afb7656c25c2550546fa50e926ea",
+  "subjects": [
+    {
+      "address": 4698144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4619744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/netwin.cpp",
+    "src/mapwin.cpp",
+    "recovery/tests/test_mapwin_base_objectives.py",
+    "recovery/tests/test_packet_label_fidelity_oct11.py",
+    "recovery/tasks/packet-label-fidelity-oct11.json"
+  ],
+  "intent": "Restore native faction-packet header-before-copy ordering and complete normal base-production caption flow, preserving unchecked original indexes/null names, callback-visible queue reads, ownership and historical matching obligations.",
+  "evidence": [
+    "Independent native audit:0x47B07A..0x47B086 writes the faction frame header before original memcpy at0x47B098. Preserve allocation, partial initialization, copy sizes, leak and target branches.",
+    "Independent native complete draw_base_names audit:0x46845D..0x468470 clears and appends opening parenthesis before objective/governor calls.0x4685A5 reads queue ID after prefix side effects; sign-only indexing resolves production name and directly appends it at0x4685DA, followed by closing parenthesis at0x4685EE. Current safety bounds/null guards and prefix parentheses/call reordering do not reproduce the original.",
+    "Objective-only and prefix label_get return values flow directly to strcat at0x4683C8,0x4684B0,0x468589 with no null guard. Preserve ordinary owning types and complete spans; do not stamp claims, normalize unsafe paths or infer full-game/automatic acceptance.",
+    "Coordinator-reviewed manual bounded integration; actual-source bounded host controls plus pinned native anchors, historical annotation continuity, build/link and scoped measurements. Context fixtures require adaptation to already-existing GameDataStateStorage and Facility member names, not an application ABI change."
+  ]
+}
