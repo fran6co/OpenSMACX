@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "6fd43a4ab",
+  "editable_files": ["src/caviar_render_types.h", "recovery/tests/test_caviar_type_owner_cleanup_oct11.py"],
+  "intent": "Delete unused duplicate scene/dispatch proposals and fictional standalone clip declarations after their active source owners are recovered. Preserve all used raster/clip/scratch types, layouts, symbols and original bindings; do not promote uncertain serialized allocation or lifetime ownership.",
+  "evidence": [
+    "The active CaviarSceneContext is owned in caviar.h388 onward, embedded at Caviar+18..A4 with source member witnesses616DE0/6181D0. The older CaviarSceneContextCandidate is declared only in caviar_render_types.h, not used by any source consumer.",
+    "VoxRenderRecord in caviar.h784 onward owns the actual typed nonvirtual callbacks at6C/70/74/78, with allocation/callsite evidence. The old candidate dispatch typedefs and separate slot record have no uses. Removing them neither changes active callbacks nor reinterprets them as a vtable.",
+    "Former standalone extern clips9C0B08/9C0B58 have no definitions or uses; existing mapped CaviarSceneProjectionScratch owns the actual part_clip_ and shadow_clip_ members in caviar_projection_state.h. Preserve that independent global scratch and its Candidate symbol rather than invent a Caviar instance lifetime.",
+    "caviar.cpp includes caviar_projection_state.h, which includes the cleaned header: replace its stale never-included claim. Active CvrRasterItemHeaderCandidate and CaviarRenderClipWindowCandidate definitions/guards are retained verbatim. Header tests compile those actual definitions; existing producer/raster controls and fresh Caviar measurements/build supply the implementation evidence. This cleanup does not close a scaffold function or establish complete original type identity."
+  ]
+}
