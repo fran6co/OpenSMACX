@@ -2918,8 +2918,8 @@ int ReportIf::on_iface_dialog_back_draw(::GraphicWin *) {
 
 /*
 // ORIGINAL: 0x004A4050 ?bl_daemon@@YAXH@Z 0x004A4050-0x004A405D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["ReportIf declares bl_anim(); reportif.h documents the existing leaf callback and the ReportIf receiver.","The image records an int callback ABI while this source body accepts the object pointer; keep both identities and verify emitted behavior."],"reason":"Move the current callback body to ReportIf's owner TU without adding a thunk or claiming the source spelling proves ABI equivalence."}
-// symbol    ?bl_daemon@@YAXPAVReportIf@@@Z
+// RECOVERY_BINDING: v1 {"evidence":["ReportWin::on_left_click registers bl_daemon with Time::init616260 using its owned timer and the borrowed ReportIfGlobal receiver as the one-word integer context.","Pinned4A4050..4A405D loads its sole stack word into ECX, calls ReportIf::bl_anim4A4060 unconditionally and ends in plain RET; Time invokes its cdecl(int) contract.","Earlier source accepted ReportIf* and was registered through an incompatible function-pointer cast; preserve that translation finding as history, not a second current prototype."],"reason":"Home the blink animation bridge with its genuine ReportIf instance target and a directly compatible cdecl(int) timer contract; preserve borrowed lifetime and unconditional dispatch."}
+// symbol    ?bl_daemon@@YAXH@Z
 // size      13 bytes
 // prototype
 // callers   0   call targets   1
@@ -2928,6 +2928,7 @@ int ReportIf::on_iface_dialog_back_draw(::GraphicWin *) {
 // calls     0x004A4060
 Status: Complete
 */
-void __cdecl bl_daemon(ReportIf *a1) {
-    a1->bl_anim();
+void __cdecl bl_daemon(int context) {
+    ReportIf *const report = reinterpret_cast<ReportIf *>(context);
+    report->bl_anim();
 }

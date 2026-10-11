@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task_id": "report-timer-contracts-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover the three report animation bridges with directly compatible cdecl(int) callbacks, preserving borrowed receiver payloads and unconditional native dispatch.",
+  "base_revision": "e16e67dcc2adbdfafe12f24d23fcd054cb58071e",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4849600},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4850256},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4866128},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4849616},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4812304},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4846416}
+  ],
+  "editable_files": [
+    "src/reportwin.cpp", "src/reportif.cpp",
+    "recovery/tests/test_report_timer_contracts_oct11.py",
+    "recovery/tests/report-timer-contracts-oct11.patch"
+  ],
+  "evidence": [
+    "Pinned callbacks49FFC0/4A0250/4A4050 each consume one stack context word, transfer it to ECX, unconditionally call49FE40/4A0100/4A4060 respectively and return with plain RET. Preserve all13bytes and historical BYTE_EXACT obligations; no null guard is authorized.",
+    "ReportWin draw_sat49F350 passes this and4000; start_attack49FFD0 passes ReportWinGlobal and50; on_left_click496E10 passes ReportIfGlobal and150 to Time::init616260, then separately starts the owned timer. The blink receiver is ReportIf even though its timer belongs to ReportWin.",
+    "Retain the existing free callback names and owner TUs, changing their declarations/definitions to Time's cdecl(int) contract and decoding borrowed pointers inside each bridge. Remove registration function-pointer casts, not context conversions. Preserve historical pointer-translation discoveries as provenance in the source bindings.",
+    "Require complete baseline/current measurements for both TUs, observed int-parameter symbols, historical identity/claim/lesson continuity, actual-source context/unguarded-dispatch controls and application build/link. No compiler policy, timer layout/lifetime, intentional bug fix, full linked preservation or game acceptance claim."
+  ]
+}

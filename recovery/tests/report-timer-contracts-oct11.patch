@@ -1,0 +1,110 @@
+diff --git a/src/reportif.cpp b/src/reportif.cpp
+index ffa9480e3..16808966e 100644
+--- a/src/reportif.cpp
++++ b/src/reportif.cpp
+@@ -2918,8 +2918,8 @@ int ReportIf::on_iface_dialog_back_draw(::GraphicWin *) {
+ 
+ /*
+ // ORIGINAL: 0x004A4050 ?bl_daemon@@YAXH@Z 0x004A4050-0x004A405D BYTE_EXACT
+-// RECOVERY_BINDING: v1 {"evidence":["ReportIf declares bl_anim(); reportif.h documents the existing leaf callback and the ReportIf receiver.","The image records an int callback ABI while this source body accepts the object pointer; keep both identities and verify emitted behavior."],"reason":"Move the current callback body to ReportIf's owner TU without adding a thunk or claiming the source spelling proves ABI equivalence."}
+-// symbol    ?bl_daemon@@YAXPAVReportIf@@@Z
++// RECOVERY_BINDING: v1 {"evidence":["ReportWin::on_left_click registers bl_daemon with Time::init616260 using its owned timer and the borrowed ReportIfGlobal receiver as the one-word integer context.","Pinned4A4050..4A405D loads its sole stack word into ECX, calls ReportIf::bl_anim4A4060 unconditionally and ends in plain RET; Time invokes its cdecl(int) contract.","Earlier source accepted ReportIf* and was registered through an incompatible function-pointer cast; preserve that translation finding as history, not a second current prototype."],"reason":"Home the blink animation bridge with its genuine ReportIf instance target and a directly compatible cdecl(int) timer contract; preserve borrowed lifetime and unconditional dispatch."}
++// symbol    ?bl_daemon@@YAXH@Z
+ // size      13 bytes
+ // prototype
+ // callers   0   call targets   1
+@@ -2928,6 +2928,7 @@ int ReportIf::on_iface_dialog_back_draw(::GraphicWin *) {
+ // calls     0x004A4060
+ Status: Complete
+ */
+-void __cdecl bl_daemon(ReportIf *a1) {
+-    a1->bl_anim();
++void __cdecl bl_daemon(int context) {
++    ReportIf *const report = reinterpret_cast<ReportIf *>(context);
++    report->bl_anim();
+ }
+diff --git a/src/reportwin.cpp b/src/reportwin.cpp
+index db1e264ee..53a150ed4 100644
+--- a/src/reportwin.cpp
++++ b/src/reportwin.cpp
+@@ -58,9 +58,9 @@
+ // Shared dependencies identified by the original animation calls. The daemon
+ // implementations live in reportwin.cpp; action_sat_attack is implemented in
+ // veh.cpp. The colour table remains an external dependency.
+-void __cdecl sat_anim_daemon(ReportWin *win);
+-void __cdecl sat_expl_daemon(ReportWin *win);
+-void __cdecl bl_daemon(ReportIf *report);
++void __cdecl sat_anim_daemon(int context);
++void __cdecl sat_expl_daemon(int context);
++void __cdecl bl_daemon(int context);
+ void __cdecl action_sat_attack(int attacker, int target, int type, int base_id);
+ extern Sprite g_TECH_ICON_SPRITES[89];
+ // Original init passes these two independently addressed empty captions at
+@@ -2385,7 +2385,7 @@ void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
+         buffer1_.init(43, 47, 0, 0);
+         static_cast<Buffer *>(this)->copy(&buffer1_, explosion_rect_.left,
+             explosion_rect_.top, 0, 0, 43, 47);
+-        time3_.init(reinterpret_cast<void (__cdecl *)(int)>(sat_expl_daemon),
++        time3_.init(sat_expl_daemon,
+                     reinterpret_cast<int>(&ReportWinGlobal), 50, 5);
+         time3_.start();
+     }
+@@ -2925,7 +2925,7 @@ void ReportWin::on_left_click(int x, int y) {
+     ReportIfGlobal.animation_y_ -= 5;
+     ReportIfGlobal.animation_state_ = -1;
+     ReportIfGlobal.bl_anim();
+-    time1_.init(reinterpret_cast<void (__cdecl *)(int)>(bl_daemon),
++    time1_.init(bl_daemon,
+         reinterpret_cast<int>(&ReportIfGlobal), 150, 5);
+     time1_.start();
+ }
+@@ -3756,7 +3756,7 @@ void ReportWin::draw_sat() {
+         ++field_E29C_;
+     }
+     sat_anim();
+-    time2_.init(reinterpret_cast<void (__cdecl *)(int)>(sat_anim_daemon), reinterpret_cast<int>(this), 4000, 5);
++    time2_.init(sat_anim_daemon, reinterpret_cast<int>(this), 4000, 5);
+     time2_.start();
+ }
+ 
+@@ -3827,8 +3827,8 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
+ 
+ /*
+ // ORIGINAL: 0x0049FFC0 ?sat_anim_daemon@@YAXH@Z 0x0049FFC0-0x0049FFCD BYTE_EXACT
+-// RECOVERY_BINDING: v1 {"evidence":["ReportWin declares sat_anim(); reportwin.cpp already declares this callback and passes it to Time::init with the ReportWin payload.","The original identity's int callback ABI and current pointer-typed source symbol are both retained as facts; native symbol qualification is still required."],"reason":"Move the existing callback body into the ReportWin owner TU, preserving its typed dispatch and historical ABI mismatch evidence."}
+-// symbol    ?sat_anim_daemon@@YAXPAVReportWin@@@Z
++// RECOVERY_BINDING: v1 {"evidence":["ReportWin::draw_sat registers this callback with Time::init616260 and the borrowed ReportWin receiver as its one-word integer context.","Pinned49FFC0..49FFCD loads its sole stack argument into ECX, calls ReportWin::sat_anim49FE40 unconditionally and ends in plain RET; Time stores and invokes cdecl(int).","Earlier source translated the context as a pointer parameter and cast the function to Time's integer callback type; keep that finding as provenance, not a conflicting current prototype."],"reason":"Own the report animation bridge with Time's directly compatible one-word cdecl callback contract; decode the borrowed receiver at its ABI boundary without introducing a null guard or changing dispatch."}
++// symbol    ?sat_anim_daemon@@YAXH@Z
+ // size      13 bytes
+ // prototype
+ // callers   0   call targets   1
+@@ -3837,14 +3837,15 @@ void __cdecl sat_attack(int attacker, int target, int kind) {
+ // calls     0x0049FE40
+ Status: Complete
+ */
+-void __cdecl sat_anim_daemon(ReportWin *a1) {
+-    a1->sat_anim();
++void __cdecl sat_anim_daemon(int context) {
++    ReportWin *const window = reinterpret_cast<ReportWin *>(context);
++    window->sat_anim();
+ }
+ 
+ /*
+ // ORIGINAL: 0x004A0250 ?sat_expl_daemon@@YAXH@Z 0x004A0250-0x004A025D BYTE_EXACT
+-// RECOVERY_BINDING: v1 {"evidence":["ReportWin declares exp_anim(); reportwin.cpp already declares this callback for its Time::init callback path.","The original int callback ABI versus pointer-typed source fact remains a native qualification obligation."],"reason":"Move the existing callback into reportwin.cpp unchanged; this does not independently prove the callback's original parameter type."}
+-// symbol    ?sat_expl_daemon@@YAXPAVReportWin@@@Z
++// RECOVERY_BINDING: v1 {"evidence":["ReportWin::start_attack registers this callback with Time::init616260 and ReportWinGlobal as its one-word integer context.","Pinned4A0250..4A025D loads its sole stack argument into ECX, calls ReportWin::exp_anim4A0100 unconditionally and ends in plain RET; Time stores and invokes cdecl(int).","Earlier source accepted ReportWin* and registered through an incompatible function-pointer cast; retain that translation finding as history, not a current ABI declaration."],"reason":"Recover the explosion animation bridge as a directly compatible cdecl(int) callback with a borrowed ReportWin receiver; preserve the original unconditional instance dispatch."}
++// symbol    ?sat_expl_daemon@@YAXH@Z
+ // size      13 bytes
+ // prototype
+ // callers   0   call targets   1
+@@ -3853,6 +3854,7 @@ void __cdecl sat_anim_daemon(ReportWin *a1) {
+ // calls     0x004A0100
+ Status: Complete
+ */
+-void __cdecl sat_expl_daemon(ReportWin *a1) {
+-    a1->exp_anim();
++void __cdecl sat_expl_daemon(int context) {
++    ReportWin *const window = reinterpret_cast<ReportWin *>(context);
++    window->exp_anim();
+ }
