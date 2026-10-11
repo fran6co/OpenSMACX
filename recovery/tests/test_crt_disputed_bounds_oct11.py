@@ -56,7 +56,10 @@ def test_only_twelve_complete_bindings_added():
     installed = parse_component((ROOT / COMPANION).read_text())
     before, after = parse_component(old), parse_component(text)
     assert len(before.bindings) == 232 and len(after.bindings) == 244
-    assert len(installed.bindings) == 248
+    checkpoint = parse_component(subprocess.check_output(
+        ["git", "show", "54c9d27ec:" + COMPANION], cwd=ROOT, text=True))
+    assert len(checkpoint.bindings) == 248
+    assert replace(installed, bindings=installed.bindings[:248]) == checkpoint
     assert replace(after, bindings=after.bindings[:232]) == before
     assert replace(installed, bindings=installed.bindings[:244]) == after
     assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit)

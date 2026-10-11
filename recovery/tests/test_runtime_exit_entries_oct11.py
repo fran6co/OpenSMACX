@@ -31,7 +31,12 @@ EXPECTED = (
 def inputs(current_inputs):
     # Verify this historical addition against fresh pinned binaries, not a
     # replayed report. Later helper closure is tested in its own current scope.
-    installed, image, archive, imports = current_inputs
+    inherited, image, archive, imports = current_inputs
+    # The eight-entry fixture deliberately supplies its own older historical
+    # manifest. Installed-prefix continuity must read the actual companion.
+    installed = parse_component((ROOT / SOURCE).read_text())
+    assert installed.archive_sha256 == inherited.archive_sha256
+    assert installed.bindings[0].origin.image_sha256 == inherited.bindings[0].origin.image_sha256
     historical = parse_component(subprocess.check_output(
         ["git", "show", ADDITION + ":" + SOURCE], cwd=ROOT, text=True))
     assert replace(installed, bindings=installed.bindings[:len(historical.bindings)]) == historical
