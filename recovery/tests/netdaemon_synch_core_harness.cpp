@@ -108,6 +108,7 @@ static int last_saved_diplo_a = -1, last_saved_diplo_b = -1;
 static uint32_t last_diplomacy_wire[18];
 static int copy_in_count = 0, copy_out_count = 0;
 static bool observe_invalid_send_prefix = false;
+static bool observe_diplomacy_callback_order = false;
 static size_t allocation_length_seen = 0;
 static int allocation_count = 0;
 static size_t out_payload_size_seen = 0, in_payload_size_seen = 0;
@@ -271,6 +272,9 @@ void NetDaemon::send_message(char *message, unsigned long length, int target) {
     }
 }
 void synch_display(int op, int chunk, int total, int) {
+    if (observe_diplomacy_callback_order) {
+        assert(op == 0x16 && copy_in_count == 0 && diplo_finish_count == 0);
+    }
     ++display_count; display_opcode = op; display_chunk = chunk;
     display_total = total;
     if (callback_payload_fill >= 0 && active_packet_bytes)
@@ -327,6 +331,7 @@ static void reset() {
     rules_callback_phase = 0; mutate_phase_on_draw = false;
     popup_phase_seen = draw_phase_seen = 0;
     observe_invalid_send_prefix = false;
+    observe_diplomacy_callback_order = false;
     allocation_count = 0; allocation_length_seen = 0;
     out_payload_size_seen = in_payload_size_seen = 0;
 }
@@ -603,6 +608,34 @@ int main() {
     assert(last_saved_diplo_a == 3 && last_saved_diplo_b == 4);
     for (int i = 0; i < 18; ++i)
         assert(last_diplomacy_wire[i] == 0xB0000000u + static_cast<uint32_t>(i));
+    assert(copy_out_count == 1 && out_offsets[0] == 0 && out_lengths[0] == 0x48);
+    assert(sent.size() == 1 && sent[0].size() == 0x6C);
+
+    // Native 0x16 overrides both common-loop displacement and count. Even
+    // adversarial signed indices transfer exactly the one actual local tuple.
+    // Callback mutation changes payload/header bytes, not retained pair IDs
+    // or the acknowledgement gate computed from the initial signed index.
+    const int16_t diplo_indices[] = {0, 1, -1, 32767, -32768};
+    for (size_t at = 0; at < sizeof diplo_indices / sizeof diplo_indices[0]; ++at) {
+        reset(); incoming.assign(0x24 + 0x800, 0xA5);
+        op = 0x16; ix = diplo_indices[at]; sender = 4;
+        memcpy(&incoming[0] + 0x10, &op, 2);
+        memcpy(&incoming[0] + 0x12, &ix, 2);
+        memcpy(&incoming[0] + 0x04, &sender, 4);
+        d.channels_[1].trailing_words_[1] = 0xFFFFFFFFu;
+        active_packet_bytes = &incoming[0];
+        callback_payload_fill = 0x3C;
+        callback_index_override = ix == 0 ? 1 : 0;
+        callback_a2_override = 6; callback_a3_override = 7;
+        observe_diplomacy_callback_order = true;
+        d.synch(op, 1, 2, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
+        assert(display_count == 1 && display_opcode == 0x16 &&
+               display_chunk == static_cast<int>(ix) + 1 && display_total == 1);
+        assert(copy_in_count == 1 && in_offsets[0] == 0 && in_lengths[0] == 0x48);
+        assert(d.channels_[1].trailing_words_[1] == (ix == 0 ? 0xFFFFFFEFu : 0xFFFFFFFFu));
+        assert(diplo_finish_count == 1 && last_saved_diplo_a == 1 && last_saved_diplo_b == 2);
+        for (int word = 0; word < 18; ++word) assert(last_diplomacy_wire[word] == 0x3C3C3C3Cu);
+    }
 
     // The native map-row count is captured once before send callbacks, while
     // the tile pointer/longitude are resolved again for each outgoing chunk.

@@ -6692,26 +6692,6 @@ char NetDaemonFileTransferPath[0x104];
 
 namespace NetDaemonSyncWire {
 
-static size_t overlap_copy(size_t request_offset, unsigned char *packet,
-                           size_t request_size, size_t owner_offset,
-                           unsigned char *owner_bytes, size_t owner_size,
-                           bool packet_to_owner) {
-    const size_t first = request_offset > owner_offset
-        ? request_offset : owner_offset;
-    const size_t request_end = request_offset + request_size;
-    const size_t owner_end = owner_offset + owner_size;
-    const size_t last = request_end < owner_end ? request_end : owner_end;
-    if (first >= last) return 0;
-    const size_t length = last - first;
-    if (packet_to_owner)
-        memcpy(owner_bytes + first - owner_offset,
-               packet + first - request_offset, length);
-    else
-        memcpy(packet + first - request_offset,
-               owner_bytes + first - owner_offset, length);
-    return length;
-}
-
 // The saved diplomacy words are one native 0x48-byte local tuple. Pair IDs
 // are captured by NetDaemon::synch before callbacks and retained through the
 // epilogue; they must not be reconstructed from a later callback-modified
@@ -6944,6 +6924,10 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
     case 0x13: NATIVE_ARRAY(&Bases, 0, a2, 0x134); return true;
     case 0x14: NATIVE_COPY(&Bases, 0); return true;
     case 0x15: NATIVE_COPY(&ControlTurnPhase, 0); return true;
+    // Native 533618/53361B replaces both address and count: a MOV-like local
+    // tuple route, not a displaced or clipped slice of the common chunk.
+    case 0x16: return native_owner_copy(diplomacy_wire, 0, packet, 0x48,
+                                       packet_to_owner);
     case 0x18: NATIVE_ARRAY(&PlayersData,
         offsetof(PlayerData, unk_37), a2, 0x20CC); return true;
     case 0x19: NATIVE_COPY(&FactionRankingsUnk, 0); return true;
@@ -6974,21 +6958,10 @@ bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
 #undef NATIVE_COPY_MOV
 #undef NATIVE_COPY
 
-    // The local diplomacy tuple retains its specialized range handling.
+    // Retain the unrecovered default's current refusal behavior. It is not
+    // the native integer-derived address route; that recovery is separate.
     if (offset > payload_size || count > payload_size - offset) return false;
-    if (count == 0) return true;
-    size_t copied = 0;
-    switch (opcode) {
-    case 0x16: // decimal 22: caller supplies the saved local 18-dword tuple
-        if (!diplomacy_wire) return false;
-        copied += overlap_copy(offset, packet, count, 0,
-            reinterpret_cast<unsigned char *>(diplomacy_wire),
-            18 * sizeof diplomacy_wire[0], packet_to_owner);
-        break;
-    default:
-        return false;
-    }
-    return copied == count;
+    return count == 0;
 }
 
 } // namespace NetDaemonSyncWire
@@ -7445,9 +7418,11 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         memcpy(&incoming_index, packet + 0x12, sizeof incoming_index);
         const int last_index = total_chunks - 1;
         const bool initial_is_last = incoming_index == last_index;
-        const int current_length = (initial_is_last && remainder)
-            ? remainder : 0x800;
-        const size_t current_offset = initial_is_last && remainder
+        // The diplomacy address arm overwrites the common count with 0x48
+        // and selects the local tuple start for every incoming index.
+        const int current_length = opcode == 0x16 ? 0x48 :
+            ((initial_is_last && remainder) ? remainder : 0x800);
+        const size_t current_offset = opcode == 0x16 ? 0 : initial_is_last && remainder
             ? (total_chunks == 1 ? 0 :
                static_cast<size_t>(total_chunks - 1) * 0x800)
             : static_cast<uint32_t>(incoming_index) * 0x800u;

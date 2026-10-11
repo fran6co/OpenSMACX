@@ -219,7 +219,6 @@ def _core_extract(net):
 def _owner_copy_extract(net):
     veh = VEH.read_text()
     funcs = [
-        _plain_definition(net, r"static\s+size_t\s+overlap_copy", "overlap copy"),
         _templated_function(net, r"static\s+uint32_t\s+native_word", "native word"),
         _plain_definition(net, r"static\s+uint32_t\s+sign_extended_char", "signed byte"),
         _definition(net, r"void\s+gather_saved_diplomacy", "saved diplomacy gather"),
@@ -242,7 +241,7 @@ def _assert_contiguous_owner_source_contract(nonrule):
     for opcode in ("0x00", "0x04", "0x05", "0x06", "0x07", "0x08", "0x09",
                    "0x0A", "0x0B", "0x0C", "0x0D", "0x0E", "0x0F",
                    "0x10", "0x11", "0x12", "0x13", "0x14", "0x15",
-                   "0x17", "0x18", "0x19", "0x20", "0x21", "0x22",
+                   "0x16", "0x17", "0x18", "0x19", "0x20", "0x21", "0x22",
                    "0x23", "0x24", "0x25", "0x26", "0x27", "0x29", "0x30"):
         assert f"case {opcode}" in owner_dispatch, f"missing contiguous opcode {opcode}"
     assert "native_owner_copy" in nonrule
@@ -370,6 +369,10 @@ def test_actual_synch_method_source_with_callback_damage_controls(tmp_path, comp
         ("static_cast<uint32_t>(payload_length), map_capture,", "static_cast<size_t>(payload_length), map_capture,"),
         ("const uint32_t packet_length = static_cast<uint32_t>(payload_length) + 0x24u;",
          "const size_t packet_length = static_cast<size_t>(payload_length + 0x24);"),
+        ("const int current_length = opcode == 0x16 ? 0x48 :",
+         "const int current_length = opcode == 0x16 && false ? 0x48 :"),
+        ("const size_t current_offset = opcode == 0x16 ? 0 :",
+         "const size_t current_offset = opcode == 0x16 && false ? 0 :"),
         ("static_cast<uint32_t>(map_strip_quotient) *",
          "(static_cast<uint32_t>(MapLatitudeBounds / 16) + "
          "0u * static_cast<uint32_t>(map_strip_quotient)) *"),
@@ -448,6 +451,10 @@ def test_actual_nonrule_owner_source_routes(tmp_path, compiler):
         _compile_injected(tmp_path, compiler, source_template,
                           injection.replace(map_route, replacement, 1), expected=False)
     for old, new in (
+        ("native_owner_copy(diplomacy_wire, 0, packet, 0x48,",
+         "native_owner_copy(diplomacy_wire, chunk, packet, 0x48,"),
+        ("native_owner_copy(diplomacy_wire, 0, packet, 0x48,",
+         "native_owner_copy(diplomacy_wire, 0, packet, count,"),
         ("NATIVE_COPY(captured_map_tiles, 0);",
          "NATIVE_COPY(MapTiles, 0);"),
         ("NATIVE_COPY(captured_map_tiles, captured_map_tile_offset);",

@@ -380,6 +380,25 @@ int main() {
     assert(static_cast<uint32_t>(PlayersData[1].diplo_friction[2]) == 0xA0000002u);
     assert(static_cast<uint32_t>(PlayersData[2].diplo_friction[1]) == 0xA0000003u);
 
+    // Actual saved tuple width is 18 DWORDs. The specialized native route
+    // ignores offset and forces 0x48, even if common-loop count was 0x800.
+    // Only complete tuples/packets are supplied; short-packet effects are not
+    // claimed. No larger native stack owner or neighboring fields are modeled.
+    unsigned char tuple_packet[0x48];
+    const size_t tuple_offsets[] = {0, 0x800, 0xFFFFF800u, 0x03FFF800u, 0xFC000000u};
+    for (size_t at = 0; at < sizeof tuple_offsets / sizeof tuple_offsets[0]; ++at) {
+        fill(tuple_packet, sizeof tuple_packet, static_cast<unsigned char>(0x11 + at));
+        assert(NetDaemonSyncWire::copy_nonrule_chunk(0x16, 1, 2, 0,
+            0x48, tuple_offsets[at], tuple_packet, 0x800, true, diplomacy, captured, 0));
+        assert(memcmp(diplomacy, tuple_packet, sizeof diplomacy) == 0);
+        fill(tuple_packet, sizeof tuple_packet, 0);
+        assert(NetDaemonSyncWire::copy_nonrule_chunk(0x16, 1, 2, 0,
+            0x48, tuple_offsets[at], tuple_packet, 0x800, false, diplomacy, captured, 0));
+        assert(memcmp(diplomacy, tuple_packet, sizeof diplomacy) == 0);
+    }
+    assert(NetDaemonSyncWire::copy_nonrule_chunk(0x16, 1, 2, 0,
+        0x48, 0, reinterpret_cast<unsigned char *>(diplomacy), 0, true, diplomacy, captured, 0));
+
     // Native opcode 0x06 copies a complete contiguous PlayerData record in
     // five chunks (four full chunks and the 0xCC-byte tail). Exercise the
     // actual extracted product router in both directions across every byte.

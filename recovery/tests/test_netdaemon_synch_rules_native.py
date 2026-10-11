@@ -193,3 +193,56 @@ def test_supported_variable_sizes_keep_native_signed_chunk_flow():
     assert packet[0x533AE3] == ("call", "0x645930")
     # Only observation hooks execute malformed lengths in host controls.
     # No assertion here establishes allocation success, copy faults or neighbors.
+
+
+def test_diplomacy_native_arm_replaces_common_chunk_address_and_count():
+    from capstone import CS_ARCH_X86, CS_MODE_32, Cs
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not path.is_file():
+        pytest.skip("pinned original unavailable")
+    raw = path.read_bytes()
+    assert sha256(raw).hexdigest() == PIN
+    image = PeImage(raw, PIN)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+
+    def decode(start, end):
+        return {i.address: (i.mnemonic, i.op_str.lower())
+                for i in decoder.disasm(image.read(Span(start, end)), start)}
+
+    assert struct.unpack("<I", image.read(Span(0x53412C + 0x16 * 4,
+                                              0x534130 + 0x16 * 4))) == (0x5330CA,)
+    assert struct.unpack("<I", image.read(Span(0x53420C + 0x16 * 4,
+                                              0x534210 + 0x16 * 4))) == (0x53360D,)
+    assert tuple(decode(0x5330CA, 0x5330D4).values()) == (
+        ("mov", "esi, 0x48"), ("jmp", "0x53334c"))
+    assert tuple(decode(0x53360D, 0x533628).values()) == (
+        ("mov", "eax, dword ptr [ebp + 0x1c]"),
+        ("mov", "dword ptr [ebp - 0x30], ebx"), ("test", "eax, eax"),
+        ("mov", "dword ptr [ebp - 0x2c], edx"),
+        ("lea", "esi, [ebp - 0x7c]"),
+        ("mov", "dword ptr [ebp + 0xc], 0x48"), ("je", "0x5338e6"))
+    # Incoming skips gather; outgoing writes all 18 four-byte local cells.
+    gather = decode(0x533628, 0x53372A)
+    stores = [operands for mnemonic, operands in gather.values()
+              if mnemonic == "mov" and operands.startswith("dword ptr [ebp - ")]
+    local_stores = [text.split("]", 1)[0] for text in stores]
+    assert all(f"dword ptr [ebp - {offset:#x}" in local_stores
+               for offset in range(0x38, 0x80, 4))
+    assert gather[0x533725] == ("jmp", "0x533a77")
+    receive = decode(0x5338E6, 0x533912)
+    assert receive[0x5338EE] == ("movsx", "edx, word ptr [ecx + 0x12]")
+    assert receive[0x5338F6] == ("inc", "edx")
+    assert receive[0x5338F9] == ("call", "0x532c30")
+    assert receive[0x5338FE] == ("mov", "eax, dword ptr [ebp + 0x18]")
+    assert receive[0x533904] == ("lea", "edi, [eax + 0x24]")
+    assert receive[0x533907] == ("mov", "eax, dword ptr [ebp + 0xc]")
+    epilogue = decode(0x533F78, 0x534111)
+    assert epilogue[0x533F7C] == ("mov", "ecx, dword ptr [ebp - 0x2c]")
+    assert epilogue[0x533F7F] == ("mov", "eax, dword ptr [ebp - 0x30]")
+    assert epilogue[0x534009] == ("cmp", "dx, 0x16")
+    assert epilogue[0x534026] == ("mov", "dl, byte ptr [ebp - 0x7c]")
+    assert epilogue[0x53402C] == ("mov", "byte ptr [esi + ecx + 0x96ca98], dl")
+    # No larger stack owner or short-packet access behavior is asserted.
