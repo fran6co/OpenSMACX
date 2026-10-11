@@ -260,10 +260,12 @@ struct MediaRuntime {
   DWORD decoder_state_3dc;                       // +3dc; decoder read/write
   DWORD decoder_state_3e0;                       // +3e0; decoder read/write
   DWORD decoder_state_3e4;                       // +3e4; decoder read/write
-  DWORD decoder_state_3e8;                       // +3e8; 5CE6E3 input/output
-  DWORD decoder_state_3ec;                       // +3ec; 5CE6E3 input/output
-  DWORD decoder_state_3f0;                       // +3f0; 5CE6E3 input/output
-  DWORD decoder_state_3f4;                       // +3f4; 5CE6E3 input/output
+  // Native5CA3CE/5CA3D4 pass these two words directly to5CE6E3.
+  // Each packs signed 16-bit left/right state; adjacent words are untouched.
+  int decoder_state_3e8;                         // +3e8; packed predictors
+  DWORD decoder_state_3ec;                       // +3ec; uninterpreted neighboring storage
+  int decoder_state_3f0;                         // +3f0; packed step byte offsets
+  DWORD decoder_state_3f4;                       // +3f4; uninterpreted neighboring storage
   MediaDecoderContext decoder_context_3f8;       // +3f8..+5ff
   BYTE unresolved_original_storage_600_607[8];   // +600..+607
   DWORD start_ticks;                              // +608

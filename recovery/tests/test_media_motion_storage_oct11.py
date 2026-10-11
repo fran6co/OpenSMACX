@@ -28,6 +28,9 @@ def migration(text, relative, *, reverse=False):
 
 
 def restore_motion_storage(text, relative):
+    from test_media_stereo_state_owner_oct11 import restore_stereo_state
+    if relative in ("src/movie_media.cpp", "src/movie_media.h"):
+        text = restore_stereo_state(text, relative)
     # Earlier migration controls compare their own immutable checkpoints.
     # Project out this exact later migration only when its fields are present.
     present = "struct MediaMotionCoordinate {" if relative.endswith(".h") else "decoded_pixel_blocks"
@@ -38,7 +41,10 @@ def restore_motion_storage(text, relative):
 def test_bounded_source_and_identity_claim_continuity(relative):
     path = ROOT / relative
     old = subprocess.check_output(["git", "show", BASE + ":" + relative], cwd=ROOT, text=True)
+    from test_media_stereo_state_owner_oct11 import restore_stereo_state
     new = path.read_text()
+    if relative in ("src/movie_media.cpp", "src/movie_media.h"):
+        new = restore_stereo_state(new, relative)
     assert migration(old, relative) == new
     assert migration(new, relative, reverse=True) == old
     before, after = read_text(old, path), read_text(new, path)

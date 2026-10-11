@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "task_id": "media-stereo-state-owner-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Express stereo ADPCM state as the two packed runtime words actually passed by address, not copied two-word vectors. Preserve adjacent uninterpreted storage, all original behavior and historical obligations.",
+  "base_revision": "50480d8ad5feb80faaad000e52ce069a468e260e",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6071056}],
+  "editable_files": ["src/movie_media.cpp", "src/movie_media.h", "recovery/tests/test_media_stereo_state_owner_oct11.py", "recovery/tests/test_media_motion_storage_oct11.py"],
+  "evidence": [
+    "Pinned5CA3CE/5CA3D4 form runtime+3F0/+3E8 addresses passed directly at5CA3E6. Decoder5CE6E9/5CE701 reads one DWORD from each and terminal writeback modifies one DWORD; +3EC/+3F4 are not decoder inputs or outputs.",
+    "Preserve complete MediaRuntime extent and offsets. Signed int words serve the existing int* decoder API; signed halves remain encoded in the unchanged four-byte representation. No original class spelling or additional state-field semantics are inferred.",
+    "Require actual source pointer/storage controls, independent pinned caller/decoder instructions, original identity continuity, native layout, scoped measurements/preservation, build/link and independent review before integration. This is structural fidelity, not new function coverage or game acceptance."
+  ]
+}

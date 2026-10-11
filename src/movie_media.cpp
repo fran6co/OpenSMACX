@@ -1662,12 +1662,8 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
     output_bytes = byte_count * 4;
     if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
       r->decoded_ring_current = r->decoded_ring_base;
-    int predictors[2] = {(int)r->decoder_state_3e8, (int)r->decoder_state_3ec};
-    int indices[2] = {(int)r->decoder_state_3f0, (int)r->decoder_state_3f4};
     sub_5ce6e3(input + 0x14, (short *)r->decoded_ring_current, byte_count,
-               predictors, indices);
-    r->decoder_state_3e8 = predictors[0]; r->decoder_state_3ec = predictors[1];
-    r->decoder_state_3f0 = indices[0]; r->decoder_state_3f4 = indices[1];
+               &r->decoder_state_3e8, &r->decoder_state_3f0);
     byte_count = output_bytes;
   } else {
     byte_count = *(int *)(input + 0x14);
