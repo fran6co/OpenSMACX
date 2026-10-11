@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "7cbf413a2",
+  "editable_files": ["src/netdaemon.cpp", "recovery/tests/test_netdaemon_session_status_oct11.py", "recovery/tests/test_netdaemon_session_options_oct11.py"],
+  "intent": "Recover the omitted NetWin redraw after unmarked session-options packets, preserving the existing 24-byte source-owned option state and marked rebroadcast path.",
+  "evidence": [
+    "Pinned1F02/2F02/4F02 converge537C42: six dwords from packet10 to90E8E0.537C51 rereads opcode after copy;537C57 branches unmarked to537CB4 loading NetWinDialog80A6F8 and calling on_redraw481AD0.",
+    "Marked path537C59..537C76 replaces2000 with4000 and sends original message size to target0, then reaches common marker tail. Unmarked redraw does not rewrite/send. Existing session-block handler already follows this shared redraw branch.",
+    "Actual-source controls extract the real options declaration and receive_wire_block implementation plus the actual dispatcher helper. All three routes check complete copied state before redraw/send, opcode rewrite and untouched payload. Damage controls reject missing/early redraw, inverted marker test and short copy.",
+    "No bounds checks, initialization, new packet ownership or bug fix is authorized. Existing identities/claims and outside-helper source are protected by fixed edit recipes. Fresh native compile/link and independent review remain prerequisites."
+  ]
+}

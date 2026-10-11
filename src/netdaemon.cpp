@@ -5279,7 +5279,16 @@ static void netdaemon_handle_session_options(NetDaemon *daemon,
                                               unsigned long message_size) {
     NetWinSessionOptions.receive_wire_block(
         reinterpret_cast<const unsigned char *>(message + 0x10));
-    netdaemon_rebroadcast_session_packet(daemon, message, message_size);
+    // Native 0x537C57 shares the unmarked redraw tail at 0x537CB4
+    // with the session-data packet; the option block is already copied.
+    unsigned short type = *reinterpret_cast<unsigned short *>(message);
+    if ((type & 0x2000u) == 0) {
+        NetWinDialog.on_redraw();
+    } else {
+        type = static_cast<unsigned short>((type & 0xDFFFu) | 0x4000u);
+        *reinterpret_cast<unsigned short *>(message) = type;
+        daemon->send_message(message, message_size, 0);
+    }
 }
 
 static void netdaemon_handle_session_block(NetDaemon *daemon,

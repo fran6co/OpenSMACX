@@ -32,9 +32,13 @@ AFTER = '''    if (type == 0x1F00 || type == 0x4F00)
 
 
 def apply_session_status_migration(source, reverse=False):
+    from test_netdaemon_session_options_oct11 import apply_session_options_migration
+    if reverse:
+        source = apply_session_options_migration(source, reverse=True)
     before, after = (AFTER, BEFORE) if reverse else (BEFORE, AFTER)
     assert source.count(before) == 1
-    return source.replace(before, after, 1)
+    source = source.replace(before, after, 1)
+    return source if reverse else apply_session_options_migration(source)
 
 
 def test_only_reviewed_session_stores_changed():
