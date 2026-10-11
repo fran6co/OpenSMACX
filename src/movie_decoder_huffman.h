@@ -25,7 +25,7 @@ struct State {
   BitState bits;
   int32_t fill_value;
   int32_t scale_factor;
-  int32_t *coefficients;
+  int32_t *coefficients; // 64-word window: DC at 0, AC coefficients at 1..63
   const Tables *tables;
 };
 

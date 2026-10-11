@@ -21,6 +21,8 @@ int last_stride_arg;
 std::uint8_t *last_idct_target;
 
 const std::uint8_t *active_byte_remap;
+bool inspect_idct_coefficients;
+const std::int32_t *idct_coefficients;
 
 void pack_rows(const std::uint8_t *component_rows,
                const std::uint8_t *chroma_rows,
@@ -31,6 +33,12 @@ void pack_rows(const std::uint8_t *component_rows,
 }
 
 void idct(std::uint8_t *target, int stride_arg) {
+  if (inspect_idct_coefficients) {
+    assert(idct_coefficients[0] == 9);
+    assert(idct_coefficients[1] == 5);
+    for (int i = 2; i != 64; ++i) assert(idct_coefficients[i] == 0);
+    inspect_idct_coefficients = false;
+  }
   ++idct_calls;
   last_idct_target = target;
   last_stride_arg = stride_arg;
@@ -92,10 +100,11 @@ void test_terminal_huffman_entry() {
   std::uint32_t secondary_b[256] = {};
   std::int32_t offsets[64] = {};
   std::int32_t scales[64] = {};
-  std::int32_t coefficients[63];
+  std::int32_t coefficients[64];
   const std::uint8_t stream[] = {0x55, 0xaa};
   primary[0] = 0x30;  // high tag class takes the terminal branch
   Tables tables{primary, secondary_a, secondary_b, offsets, scales};
+  for (std::int32_t &coefficient : coefficients) coefficient = 0x12345678;
   State state{{stream, 0, 32}, 0, 7, coefficients, &tables};
 
   const int result = decode_coefficients(state);
@@ -104,7 +113,7 @@ void test_terminal_huffman_entry() {
   assert(state.bits.cursor == stream);
   assert(state.bits.accumulator == 0);
   assert(state.bits.available_bits == 22);
-  for (int i = 0; i != 63; ++i) assert(coefficients[i] == 0);
+  for (int i = 0; i != 64; ++i) assert(coefficients[i] == 0);
 }
 
 void test_value_then_terminal_entry() {
@@ -113,19 +122,22 @@ void test_value_then_terminal_entry() {
   std::uint32_t secondary_b[256] = {};
   std::int32_t offsets[64] = {};
   std::int32_t scales[64] = {};
-  std::int32_t coefficients[63] = {};
+  std::int32_t coefficients[64];
   const std::uint8_t stream[] = {0, 0};
   primary[128] = 0x00410001u;  // value 1, next coefficient slot 2, one bit
   primary[256] = 0x30;         // terminal class consumes the final two bits
   offsets[2] = 4;              // slot offsets are byte offsets
   scales[1] = 5;
+  for (std::int32_t &coefficient : coefficients) coefficient = 0x12345678;
   Tables tables{primary, secondary_a, secondary_b, offsets, scales};
-  State state{{stream, 0x00400000u, 32}, 0, 9, coefficients, &tables};
+  State state{{stream, 0x01400000u, 32}, 0, 9, coefficients, &tables};
 
   const int result = decode_coefficients(state);
   assert(result == 3);
+  assert(coefficients[0] == 9);
   assert(coefficients[1] == 5);
-  assert(state.fill_value == 0);
+  assert(coefficients[63] == 0);
+  assert(state.fill_value == 9);
   assert(state.bits.accumulator == 0);
   assert(state.bits.available_bits == 21);
   assert(state.bits.cursor == stream);
@@ -137,14 +149,58 @@ void test_signed_fill_byte() {
   std::uint32_t secondary_b[256] = {};
   std::int32_t offsets[64] = {};
   std::int32_t scales[64] = {};
-  std::int32_t coefficients[63] = {};
+  std::int32_t coefficients[64];
   const std::uint8_t stream[] = {0, 0};
   primary[0] = 0x30;
   Tables tables{primary, secondary_a, secondary_b, offsets, scales};
+  for (std::int32_t &coefficient : coefficients) coefficient = 0x12345678;
   State state{{stream, 0xff000000u, 32}, 0, 3, coefficients, &tables};
   assert(decode_coefficients(state) == 1);
   assert(state.fill_value == -3);
+  assert(coefficients[0] == -3);
+  assert(coefficients[63] == 0);
   assert(state.bits.cursor == stream);
+}
+
+void test_dc_low32_wrap() {
+  std::uint32_t primary[512] = {};
+  std::uint32_t secondary_a[256] = {};
+  std::uint32_t secondary_b[256] = {};
+  std::int32_t offsets[64] = {};
+  std::int32_t scales[64] = {};
+  std::int32_t coefficients[64] = {};
+  const std::uint8_t stream[] = {0, 0};
+  primary[0] = 0x30;
+  Tables tables{primary, secondary_a, secondary_b, offsets, scales};
+  State state{{stream, 0x7f000000u, 32}, 0, INT32_MAX,
+              coefficients, &tables};
+  assert(decode_coefficients(state) == 1);
+  assert(state.fill_value == static_cast<std::int32_t>(0x7fffff81u));
+  assert(coefficients[0] == state.fill_value);
+}
+
+void test_dc_store_precedes_initial_refill() {
+  std::uint32_t primary[512] = {};
+  std::uint32_t secondary_a[256] = {};
+  std::uint32_t secondary_b[256] = {};
+  std::int32_t offsets[64] = {};
+  std::int32_t scales[64] = {};
+  std::int32_t coefficients[64];
+  for (std::int32_t &coefficient : coefficients) coefficient = 0x12345678;
+  primary[0] = 0x30;
+  Tables tables{primary, secondary_a, secondary_b, offsets, scales};
+  const auto *aliased_input = reinterpret_cast<const std::uint8_t *>(coefficients);
+  State state{{aliased_input, 0x80000000u, 8}, 0, 0x10000,
+              coefficients, &tables};
+
+  assert(decode_coefficients(state) == 1);
+  assert(state.fill_value == -0x800000);
+  assert(coefficients[0] == -0x800000);
+  assert(state.bits.cursor == aliased_input + 4);
+  // Refill after the terminal code consumes DC bytes 2..3, proving the
+  // initial refill source observed the store before it read the alias.
+  assert(state.bits.accumulator == (0xff80u << 2));
+  assert(state.bits.available_bits == 30);
 }
 
 void test_initial_refill_restores_sixteen_bits() {
@@ -153,7 +209,7 @@ void test_initial_refill_restores_sixteen_bits() {
   std::uint32_t secondary_b[256] = {};
   std::int32_t offsets[64] = {};
   std::int32_t scales[64] = {};
-  std::int32_t coefficients[63] = {};
+  std::int32_t coefficients[64] = {};
   const std::uint8_t stream[] = {0x00, 0x40, 0x00, 0x00};
   primary[128] = 0x30;
   Tables tables{primary, secondary_a, secondary_b, offsets, scales};
@@ -168,7 +224,7 @@ void test_six_block_native_dispatch_and_fill() {
   idct_calls = 0;
   std::uint8_t stream[16] = {};
   BitState bits{stream, 0, 32};
-  std::int32_t coeffs[63] = {};
+  std::int32_t coeffs[64] = {};
   std::uint32_t primary[512] = {};
   std::uint32_t secondary_a[256] = {};
   std::uint32_t secondary_b[256] = {};
@@ -216,8 +272,9 @@ void test_six_block_native_dispatch_and_fill() {
 
 void test_six_block_idct_route() {
   std::uint8_t stream[16] = {};
-  BitState bits{stream, 0x00400000u, 32};
-  std::int32_t coeffs[63] = {};
+  BitState bits{stream, 0x01400000u, 32};
+  std::int32_t coeffs[64];
+  for (std::int32_t &coefficient : coeffs) coefficient = 0x12345678;
   std::uint32_t primary[512] = {};
   std::uint32_t secondary_a[256] = {};
   std::uint32_t secondary_b[256] = {};
@@ -237,6 +294,8 @@ void test_six_block_idct_route() {
   std::uint32_t output[16 * 8] = {};
   idct_calls = 0;
   last_idct_target = nullptr;
+  inspect_idct_coefficients = true;
+  idct_coefficients = coeffs;
   SixBlockArgs args{coefficient_plane, reinterpret_cast<std::uint8_t *>(output),
                     16, false, {luma, chroma}, &bits, primary, &coeff_state,
                     idct, remap, pack_rows};
@@ -257,7 +316,7 @@ void test_six_flagged_delta_dispatch() {
   BitState bits{stream, 0xc0000000u, 32};
   std::uint8_t coefficient_plane[8192];
   for (std::uint8_t &value : coefficient_plane) value = 10;
-  std::int32_t coeffs[63] = {};
+  std::int32_t coeffs[64] = {};
   std::uint32_t primary[512] = {};
   std::uint32_t secondary_a[256] = {};
   std::uint32_t secondary_b[256] = {};
@@ -375,6 +434,8 @@ int main() {
   test_terminal_huffman_entry();
   test_value_then_terminal_entry();
   test_signed_fill_byte();
+  test_dc_low32_wrap();
+  test_dc_store_precedes_initial_refill();
   test_initial_refill_restores_sixteen_bits();
   test_six_block_native_dispatch_and_fill();
   test_six_block_idct_route();

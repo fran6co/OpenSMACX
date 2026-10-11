@@ -130,6 +130,7 @@ int decode_coefficients(State &state) {
   int count = bits.available_bits - 8;
   state.fill_value = low32_product(
       arithmetic_shift_right(bits.accumulator, 24), state.scale_factor);
+  state.coefficients[0] = state.fill_value;
 
   if (count < 0x10) {
     const uint16_t word = static_cast<uint16_t>(pull_word(bits));
@@ -138,7 +139,7 @@ int decode_coefficients(State &state) {
     count += 0x10;
   }
 
-  std::memset(state.coefficients, 0, 63 * sizeof(*state.coefficients));
+  std::memset(state.coefficients + 1, 0, 63 * sizeof(*state.coefficients));
   int position = 1;
   const Tables &tables = *state.tables;
   for (;;) {
