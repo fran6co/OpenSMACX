@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "runtime-atox-errno-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind seven independently bounded conversion and thread-state runtime entries to the pinned unmodified archive, retaining unresolved reference obligations rather than hand-decompiling the dependency.",
+  "base_revision": "86cbf7e2cdf108524130ba2200f62e7c29528c92",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6577436},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6577575},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6597174},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6597183},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6590896},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6590915},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6591018}
+  ],
+  "editable_files": ["src/vendor/vc6-runtime.recovery.h", "recovery/tests/test_runtime_atox_errno_oct11.py", "recovery/tests/test_runtime_xtoa_pair_oct11.py", "recovery/tests/test_runtime_mantissa_family_oct11.py"],
+  "evidence": [
+    "Pinned IDA and Ghidra independent bounds agree for ATOX atol/atoi, DOSMAP errno/doserrno and TIDTABLE initptd/getptd/freeptd. The unmodified pinned LIBCMT archive supplies unique physical section-local definitions of the same sizes; use native strict byte/reference verification, not address-region ownership guesses.",
+    "Keep original global/import/helper reference obligations explicit. The three small forwarding/accessor entries can close their direct references through the declared sibling/provider identities; declaring those providers does not prove their own unresolved locale, TLS, exception and import closure.",
+    "Append only these component bindings through native parse/render representation; preserve all existing entries, data, absolute symbols, historical annotations, claims and results. Update bounded historical fixture projections for this exact addition. Require damage refusals, fresh application build/link, mappings/references, claim continuity and independent review. No application function coverage, runtime-wide qualification, original archive selection or game acceptance is claimed."
+  ]
+}

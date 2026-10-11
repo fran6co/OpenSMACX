@@ -44,6 +44,8 @@ def baseline():
 def test_exact_addition_preserves_all_prior_metadata_and_original_claims():
     text = (ROOT / SOURCE).read_text()
     current, old = parse_component(text), baseline()
+    from test_runtime_atox_errno_oct11 import without_atox_errno
+    current = without_atox_errno(current)
     current = without_xtoa_pair(current)
     assert replace(current, bindings=current.bindings[:-12]) == old
     assert tuple((b.origin.address, b.spans[0].end, b.symbol,

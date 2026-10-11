@@ -22,18 +22,30 @@ EXPECTED = ((0x64FC88, 0x64FCB5, "__itoa", 1, 2),
 
 
 def without_xtoa_pair(manifest):
-    added = manifest.bindings[-2:]
+    addresses = {a for a,*_ in EXPECTED}
+    added = tuple(b for b in manifest.bindings if b.origin.address in addresses)
     assert tuple((b.origin.address, b.spans[0].end, b.symbol) for b in added) == tuple(
         item[:3] for item in EXPECTED)
     assert all(b.unit == UNIT and b.spans == (Span(a, e),)
                for b, (a, e, *_) in zip(added, EXPECTED))
-    return replace(manifest, bindings=manifest.bindings[:-2])
+    return replace(manifest, bindings=tuple(b for b in manifest.bindings if b.origin.address not in addresses))
 
 
 def test_exact_append_only_source_metadata_and_writer_roundtrip():
     before = subprocess.check_output(["git", "show", BASE + ":" + SOURCE], cwd=ROOT, text=True)
     text = (ROOT / SOURCE).read_text()
+    from test_runtime_atox_errno_oct11 import without_atox_errno
+    installed = parse_component(text)
+    historical = without_atox_errno(installed)
+    added = installed.bindings[-7:]
+    for b in added:
+        line = next(l for l in text.splitlines() if '"origin": "0x%08X"' % b.origin.address in l)
+        text = text.replace(line+'\n','',1)
+    last = next(l for l in reversed(text.splitlines()) if '"origin": "0x' in l)
+    assert last.endswith(',')
+    text = text.replace(last+'\n',last[:-1]+'\n',1)
     manifest = parse_component(text)
+    assert manifest == historical
     assert without_xtoa_pair(manifest) == parse_component(before)
     assert parse_component(render_component(manifest)) == manifest
     patch = Path(__file__).with_name("runtime-xtoa-pair-oct11.patch").read_text()
@@ -50,7 +62,7 @@ def test_native_pair_closes_references_and_preserves_all_prior_results(inputs):
     manifest, _, archive, _ = inputs
     prior = verify(inputs, without_xtoa_pair(manifest))
     current = verify(inputs)
-    assert current["functions"][:-2] == prior["functions"]
+    assert [r for r in current["functions"] if int(r['address'],16) not in {a for a,*_ in EXPECTED}] == prior["functions"]
     assert current["data_sections"] == prior["data_sections"]
     assert current["absolute_symbols"] == prior["absolute_symbols"]
     member = CoffArchive(archive).member(UNIT)
@@ -100,7 +112,7 @@ def test_independent_original_boundaries_and_connecting_call(inputs):
 @pytest.mark.parametrize("damage", ("none", "missing_callee", "extent", "symbol", "member", "archive_pin", "body"))
 def test_incomplete_or_wrong_pair_never_passes(inputs, damage):
     manifest, image, archive, _ = inputs
-    selected = replace(manifest, bindings=manifest.bindings[-2:], absolute_symbols=(), data_sections=())
+    selected = replace(manifest, bindings=tuple(b for b in manifest.bindings if b.origin.address in {a for a,*_ in EXPECTED}), absolute_symbols=(), data_sections=())
     first, second = selected.bindings
     if damage == "missing_callee":
         selected = replace(selected, bindings=(first,))
