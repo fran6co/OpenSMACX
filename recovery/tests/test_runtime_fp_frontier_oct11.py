@@ -27,6 +27,10 @@ def test_prior_source_bindings_and_notes_preserved():
     before=subprocess.check_output(["git","show",BASE+":src/vendor/vc6-runtime.recovery.h"],cwd=ROOT,text=True)
     after=SOURCE.read_text()
     old,new=parse_component(before),parse_component(after)
+    # Later dependency discoveries may append bindings. Project this step's
+    # original identities without weakening their preservation assertions.
+    owned={b.symbol for b in old.bindings}|set(EXPECTED)
+    new=replace(new,bindings=tuple(b for b in new.bindings if b.symbol in owned))
     assert new.bindings[:-4]==old.bindings
     assert replace(new,bindings=old.bindings)==old
     for delimiter,index in (("// RECOVERY_COMPONENT_BEGIN v1",0),("// RECOVERY_COMPONENT_END",1)):
@@ -52,6 +56,8 @@ def test_native_full_manifest_four_rows_and_existing_unknowns(artifacts):
     prior=parse_component(subprocess.check_output(["git","show",BASE+":src/vendor/vc6-runtime.recovery.h"],cwd=ROOT,text=True))
     imports=read_imports(ROOT)
     before=verify_toolchain(prior,image,archive,import_bindings=imports)
+    owned={b.symbol for b in prior.bindings}|set(EXPECTED)
+    manifest=replace(manifest,bindings=tuple(b for b in manifest.bindings if b.symbol in owned))
     after=verify_toolchain(manifest,image,archive,import_bindings=imports)
     assert before["result"]==after["result"]=="unknown"
     previous={r["symbol"]:r for r in before["functions"]}

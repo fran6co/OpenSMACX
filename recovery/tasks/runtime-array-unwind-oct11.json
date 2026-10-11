@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "1a3e786153d43cdcb5debfa594600d45f5962448",
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_runtime_array_unwind_oct11.py",
+    "recovery/tests/test_runtime_fp_frontier_oct11.py"
+  ],
+  "intent": "Attribute the complete virtual-base constructor iterator and array-unwind runtime bodies, including internal funclets, to the pinned external dependency. Connect the constructor iterator to genuine source-owned StringList array lifetimes; do not invent application functions or claim unresolved exception-reference closure.",
+  "evidence": [
+    "Pinned original calls440F43 and51DF93 enter645F8E from generated initializers already owned by DiplomacyTranscriptLists[8][8] and MessageWinDeferredBaseMessages[8]. Whole native constructor body645F8E..646010 includes internal finally helper645FF8; main RET14 does not bound the complete runtime function.",
+    "Original calls64575E,64583E and64600A identify __ArrayUnwind645764..6457C2. Its internal exception filter6457A0..6457AD is part of that full body, not an unmapped independent application function. Filter call6457A3 reaches648CE8.",
+    "Unique pinned LIBCMT members ehveccvb.obj section1 and ehvecdtr.obj section3 corroborate whole physical extents and non-relocation bytes. Generated scope tables671088/671068, exception handler and filter remain unresolved reference obligations. No local C source, selected final-link provider or runtime-equivalence acceptance is established. Preserve all prior source identities, claims, bindings and discoveries."
+  ],
+  "subjects": [
+    {"address": 6578062, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6575972, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ]
+}
