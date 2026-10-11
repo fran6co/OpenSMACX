@@ -3251,13 +3251,17 @@ char TechnologyHelpSectionName[] = "TECHHECK";
 char TechnologyHelpSeparatorText[] = "^";
 
 // ORIGINAL: 0x0044B340 sub_44b340 0x0044B340-0x0044B37B BYTE_EXACT
-// symbol    ?sub_44b340@@YAXP6AXH@Z@Z
-void __cdecl sub_44b340(void (__cdecl *callback)(int)) {
+// symbol    ?sub_44b340@@YAXP6AXPAD@Z@Z
+// Native44B359 passes the caret string and44B36D reloads TextBufferGetPtr
+// after that callback: these are text pointers, not integer callback values.
+// No observed original caller connects this entry to the similar emit_help
+// factoring below; keep that relationship unclaimed.
+void __cdecl sub_44b340(void (__cdecl *callback)(char *)) {
     if (TechnologyHelpPrefixEmitted == 0 && TechnologyHelpSectionSelector == -1) {
         TechnologyHelpPrefixEmitted = 1;
-        callback(static_cast<int>(reinterpret_cast<long>(TechnologyHelpPrefixText)));
+        callback(TechnologyHelpPrefixText);
     }
-    callback(static_cast<int>(reinterpret_cast<long>(TextBufferGetPtr)));
+    callback(TextBufferGetPtr);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

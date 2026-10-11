@@ -56,7 +56,7 @@ def test_installed_datalink_owner_identity_and_objects():
     assert row.path == owner
     assert row.mode.value == "body"
     assert row.name == "sub_44b340"
-    assert row.symbol == "?sub_44b340@@YAXP6AXH@Z@Z"
+    assert row.symbol == "?sub_44b340@@YAXP6AXPAD@Z@Z"
     assert row.image_spans == ((0x0044B340, 0x0044B37B),)
     assert row.byte_exact
     objects = parse_objects(owner.read_text(), "src/datalink.cpp", PIN,
@@ -69,14 +69,14 @@ def test_installed_datalink_owner_identity_and_objects():
 
 
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
-def test_installed_body_int_callback_controls(compiler, tmp_path):
+def test_installed_body_text_callback_controls(compiler, tmp_path):
     executable = shutil.which(compiler)
     if executable is None:
         pytest.skip(f"{compiler} unavailable")
     root = repository_root()
     owner = (root / "src/datalink.cpp").read_text()
     function = extract_function(
-        owner, "void __cdecl sub_44b340(void (__cdecl *callback)(int))")
+        owner, "void __cdecl sub_44b340(void (__cdecl *callback)(char *))")
     globals_source = "\n".join((
         "int TechnologyHelpPrefixEmitted;",
         "int TechnologyHelpSectionSelector = -1;",
@@ -87,27 +87,40 @@ def test_installed_body_int_callback_controls(compiler, tmp_path):
 #include <cassert>
 #define __cdecl
 __GLOBALS__
-static int got[4];
+static char *got[4];
 static int count = 0;
-static void __cdecl collect(int value) { got[count++] = value; }
+static char *redirect = 0;
+static void __cdecl collect(char *value) {
+    got[count++] = value;
+    if (value == TechnologyHelpPrefixText) {
+        assert(TechnologyHelpPrefixEmitted == 1);
+        if (redirect) TextBufferGetPtr = redirect;
+    }
+}
 __FUNCTION__
 int main() {
     char text[] = "staged";
     TextBufferGetPtr = text;
     sub_44b340(collect);
     assert(count == 2);
-    assert(got[0] == static_cast<int>(reinterpret_cast<long>(TechnologyHelpPrefixText)));
-    assert(got[1] == static_cast<int>(reinterpret_cast<long>(text)));
+    assert(got[0] == TechnologyHelpPrefixText);
+    assert(got[1] == text);
     assert(TechnologyHelpPrefixEmitted == 1);
     count = 0;
     sub_44b340(collect);
-    assert(count == 1 && got[0] == static_cast<int>(reinterpret_cast<long>(text)));
+    assert(count == 1 && got[0] == text);
     TechnologyHelpPrefixEmitted = 0;
     TechnologyHelpSectionSelector = 0;
     count = 0;
     sub_44b340(collect);
-    assert(count == 1 && got[0] == static_cast<int>(reinterpret_cast<long>(text)));
+    assert(count == 1 && got[0] == text);
     assert(TechnologyHelpPrefixEmitted == 0);
+    char redirected[] = "redirected";
+    redirect = redirected;
+    TechnologyHelpSectionSelector = -1;
+    count = 0;
+    sub_44b340(collect);
+    assert(count == 2 && got[0] == TechnologyHelpPrefixText && got[1] == redirected);
     return 0;
 }
 """

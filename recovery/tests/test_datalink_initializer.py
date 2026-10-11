@@ -11,7 +11,7 @@ mutations = {
     "wrong_title_left": ("field_103EC_ + 9", "category_rect_.bottom + 9"),
     "wrong_special_top": ("topic_button_bounds_[17].top = side_width + 0x14e;", "topic_button_bounds_[17].top = 0x288;"),
     "wrong_matrix_row": ("camera_rotation.values[2][axis] = -camera_rotation.values[2][axis];", "camera_rotation.values[1][axis] = -camera_rotation.values[1][axis];"),
-    "wrong_forward_source": ("caviar_.shadow_vector_.values[0] = forward[0];", "caviar_.shadow_vector_.values[0] = transformed_forward[0];"),
+    "wrong_forward_source": ("caviar_.shadow_vector().values[0] = forward[0];", "caviar_.shadow_vector().values[0] = transformed_forward[0];"),
     "wrong_dialog_position": ("rect.left, rect.top,\n                  0x1000020", "rect.right, rect.bottom,\n                  0x1000020"),
     "wrong_blurb_font": ("set_font(&auxiliary_font8_, 0, 0, 0)", "set_font(&link_font_, 0, 0, 0)"),
     "wrong_concept_parent": ("static_cast<Win *>(this), 0, -1);\n    static_cast<Buffer &>(concept_box_)", "static_cast<Win *>(&MainInterfaceGlobal), 0, -1);\n    static_cast<Buffer &>(concept_box_)"),

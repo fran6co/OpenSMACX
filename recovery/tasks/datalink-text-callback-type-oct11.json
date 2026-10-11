@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "task_id": "datalink-text-callback-type-oct11",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Give the mapped technology-help emission callback its proven text-pointer argument, preserving original callback timing, shared state, source identity and historical matching obligation.",
+  "base_revision": "99726732092cbfc451ed8cb8a5f04f459806c8e4",
+  "subjects": [{"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 4502336}],
+  "editable_files": ["src/datalink.cpp", "recovery/tests/test_datalink_techhelp_actual_source.py", "recovery/tests/test_datalink_text_callback_type_oct11.py", "recovery/tests/datalink_initializer_control.cpp", "recovery/tests/test_datalink_initializer.py"],
+  "evidence": [
+    "The existing initializer host double and forward-vector damage mutation lagged the already recovered Caviar light_vector()/shadow_vector() accessors. Update the double and mutation to the real API, preserving all geometry checks and requiring the damaged forward source to fail; do not change the application initializer.",
+    "Pinned44B359 passes source-owned caret string684638 to the callback;44B36D reloads the shared text pointer9B7D00 after that call and passes it too. The source owns both as character pointers and the technology-help consumer family takes char*. No original caller relationship to the separate emit_help factoring is proved or introduced.",
+    "Use the native annotation writer for the compiler-observed char-pointer callback symbol. Keep original marker/name/span and historical claim untouched. Native before/current compilation must hold helper bytes/references and all outside function signatures under both configured profiles; current exactness is measured, not inferred from the historical token.",
+    "Host pointer-identity and callback-reentrancy controls, pinned instruction assertions, source identity continuity, fresh build/link, mappings/references, historical continuity and independent review are required before coordinator integration. No application coverage increase, native original caller discovery, linked-preservation proof or game acceptance is claimed."
+  ]
+}

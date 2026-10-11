@@ -69,6 +69,8 @@ static void vox_matrix_vector_mul(const float (*matrix)[3],const float *input,fl
 }
 struct Caviar {
     VOX_Matrix matrix_;VOX_Vect position_,light_vector_,shadow_vector_;int flag_;
+    VOX_Vect &light_vector() {return light_vector_;}
+    VOX_Vect &shadow_vector() {return shadow_vector_;}
     void init() {}
     void set_field_A4(int flag) {flag_=flag;}
     void set_camera_direct(VOX_Vect *position,VOX_Matrix *matrix) {position_=*position;matrix_=*matrix;}
