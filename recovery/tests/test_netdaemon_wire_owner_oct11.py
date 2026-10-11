@@ -155,7 +155,8 @@ def apply_command_view_migration(source):
     assert new.count("    switch (type) {") == 1
     new = new.replace("    switch (type) {", "    const MessageCommandView packet(message);\n    switch (type) {", 1)
     assert source.count(old) == 1
-    return source.replace(old, COMMAND_VIEW_DECLARATION + new, 1)
+    from test_netdaemon_council_wire_oct11 import apply_council_wire_migration
+    return apply_council_wire_migration(source.replace(old, COMMAND_VIEW_DECLARATION + new, 1))
 
 
 def apply_wire_migration(source):

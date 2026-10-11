@@ -5536,23 +5536,23 @@ static bool netdaemon_handle_five_message_routes(
 // forwarding path untouched.
 static bool process_council_message(unsigned char *msg,
                                     unsigned short type) {
-    // The original uses direct x86 dword reads from these wire offsets; keep
-    // that unchecked access/extent behavior instead of adding packet guards.
-    const int *const words = reinterpret_cast<const int *>(msg);
+    // Share sender-owned wire offsets without assuming packet alignment.
+    // Original logs and actions read independently across external calls.
+    const MessageCommandView packet(msg);
     switch (type) {
     case 0x4600:
-        log_say("Received CONVENE COUNCIL", words[4], words[5], words[6]);
-        my_srand(words[2]);
-        council(words[4], words[5], words[6]);
+        log_say("Received CONVENE COUNCIL", packet.payload_10(), packet.payload_14(), packet.payload_18());
+        my_srand(packet.timestamp_bits());
+        council(packet.payload_10(), packet.payload_14(), packet.payload_18());
         return true;
     case 0x4601:
-        log_say("Received COUNCIL VOTE", words[4], 0, 0);
-        my_srand(words[2]);
-        CouncilWindow.set_vote(words[4], words[5]);
+        log_say("Received COUNCIL VOTE", packet.payload_10(), packet.payload_14(), 0);
+        my_srand(packet.timestamp_bits());
+        CouncilWindow.set_vote(packet.payload_10(), packet.payload_14());
         return true;
     case 0x4602:
-        log_say("Received COUNCIL ARRIVE", 0, 0, 0);
-        CouncilWindow.arrived(words[4]);
+        log_say("Received COUNCIL ARRIVE", packet.payload_10(), 0, 0);
+        CouncilWindow.arrived(packet.payload_10());
         return true;
     case 0x4603:
         log_say("Received COUNCIL RESOLUTION", 0, 0, 0);
