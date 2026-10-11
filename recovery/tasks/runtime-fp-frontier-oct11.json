@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "766dcf74c6e7d402f8a776c9dc80a22ed44f271b",
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_runtime_fp_frontier_oct11.py"
+  ],
+  "intent": "Bind four independently bounded original floating-point runtime entries to their exact pinned external LIBCMT archive members, without inventing application implementations or asserting source-C recovery.",
+  "evidence": [
+    "Pinned image instructions independently terminate each function at RET:64F09C..64F09F(__matherr),64CA1D..64CA2B(__statfp),64CA2B..64CA3A(__clrfp),64CA3A..64CA5D(__ctrlfp). Original direct-call operands corroborate all entries; Ghidra catalogued extents are hints corroborated by whole-span decoding.",
+    "Pinned LIBCMT SHA2561ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b contains unique matherr.obj and fpctrl.obj function sections. Native bytes/boundaries/references pass without relocations for all four.",
+    "This is archive-backed runtime attribution only. No matching local C source was located. Existing runtime UNKNOWNs and final-link provider-selection/runtime proof obligations remain; no application recovery or byte claim is granted. Preserve prior manifest metadata, bindings, notes and all source historical identities."
+  ],
+  "subjects": [
+    {
+      "address": 6615196,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6605341,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6605355,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6605370,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ]
+}
