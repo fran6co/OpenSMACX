@@ -140,3 +140,36 @@ def test_pinned_transfer_guard_and_reply_faction_anchors():
     }
     for address,instruction in expected.items():
         assert instructions[address]==instruction
+
+
+def test_pinned_sender_lookup_is_entry_owned_and_retained_by_routes():
+    """Evidence for the next migration; this does not certify current timing."""
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.model import Span
+    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    if not path.is_file():
+        pytest.skip("pinned original unavailable")
+    image = PeImage(path.read_bytes(), "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
+    instructions = list(Cs(CS_ARCH_X86, CS_MODE_32).disasm(
+        image.read(Span(0x534400, 0x5388B9)), 0x534400))
+    assert instructions[-1].address + instructions[-1].size == 0x5388B9
+    lookups = [i.address for i in instructions
+               if i.mnemonic == "call" and i.op_str == "0x4e2610"]
+    assert lookups == [0x53444E]
+    by_address = {i.address: (i.mnemonic, i.op_str) for i in instructions}
+    expected = {
+        0x534444: ("mov", "eax, dword ptr [ebp + 0x10]"),
+        0x534449: ("push", "eax"),
+        0x534456: ("mov", "edi, eax"),
+        # LOCK logs and compares the captured identity, not packet faction.
+        0x535BE3: ("push", "edi"),
+        0x535C03: ("cmp", "edi, dword ptr [0x939284]"),
+        # DONE UPKEEP uses it after the phase/turn diagnostic callbacks.
+        0x536072: ("mov", "ecx, edi"),
+        # WITHDRAW END-OF-TURN retains it across logging as well.
+        0x536121: ("push", "edi"),
+        0x536146: ("mov", "ecx, edi"),
+    }
+    for address, instruction in expected.items():
+        assert by_address[address] == instruction
