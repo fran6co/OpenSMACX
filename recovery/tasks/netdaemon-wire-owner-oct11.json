@@ -3,11 +3,15 @@
   "base_revision": "a18f9cd7c43aaf731732104bd6db627154578f04",
   "editable_files": [
     "recovery/tests/test_netdaemon_wire_owner_oct11.py",
+    "recovery/tests/test_netdaemon_shared_deletion_storage_oct10.py",
     "src/netdaemon.cpp",
     "src/netdaemon.h"
   ],
   "evidence": [
-    "Current message_veh/message_data packet builders establish opcode, faction, clock, sequence and payload layout; process_message reads the same fields via raw byte offsets. Pinned sender and dispatch instructions must be correlated before changing access. Preserve original unwritten bytes, unchecked packet paths, reload/call order, original mappings and historical claims; no new matching or acceptance claim."
+    "Current message_veh/message_data packet builders establish opcode, faction, clock, sequence and payload layout; process_message reads the same fields via raw byte offsets. Pinned sender and dispatch instructions must be correlated before changing access. Preserve original unwritten bytes, unchecked packet paths, reload/call order, original mappings and historical claims; no new matching or acceptance claim.",
+    "Pinned534458/534461 captures packet+0xC into frame-10;53445E/534466 captures packet+4 into frame+8. Four five-route acknowledgements store frame-10, not transport length. DOUBLE CROSS536D45/536D48 rereads packet sequence/faction. MOVE5367CC server faction-mismatch jumps to acknowledgement5367F4 without order_veh; client mismatch falls through after message_data. Current unconditional order and message_size substitution are translation errors, not original behavior to preserve.",
+    "Pinned5367E5 and53689D reload direction after external calls;53690A reloads ACTION vehicle;536D2E..536D34 reload DOUBLE CROSS operands after RNG. AIRDROP saves coordinates before RNG536838..536845. Preserve these distinctions, entry-owned faction acknowledgements, actual local-completion flow and every source identity/claim. Independent source/pinned review, actual-source damage controls, scoped measurement and fresh application build/link are required; not full-game or byte-exact acceptance.",
+    "Eight historical source-change controls fail because shared-deletion-storage's fixed migration recipe excludes these new dispatch corrections. Extend that recipe through literal, count-guarded before/after edits in the new wire test, keeping immutable baseline revisions, original assertions and unrelated-change detection. Do not compute arbitrary current-source diffs at test runtime or mask CouncWin's independent migration failure."
   ],
   "intent": "Recover shared sender/receiver wire field ownership and preserve original message dispatch semantics",
   "schema_version": 1,

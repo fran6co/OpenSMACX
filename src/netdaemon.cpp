@@ -5399,40 +5399,46 @@ static void netdaemon_process_local_player_completion(NetDaemon &daemon) {
 
 static bool netdaemon_handle_five_message_routes(
         NetDaemon &daemon, unsigned short type, unsigned char *message,
-        unsigned long message_size) {
-    const int packet_faction = *reinterpret_cast<int *>(message + 4);
+        int entry_packet_faction, uint32_t entry_sequence) {
+    // Original stack+8 is the faction captured at534466, not a transport
+    // identity. Stack-10 is the packet sequence captured at534461, not its
+    // byte length. The DOUBLE CROSS arm instead rereads both packet fields.
     switch (type) {
     case 0x4401: {
         const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
         const int direction = *reinterpret_cast<int *>(message + 0x14);
-        log_say("From Server: MOVE VEH", packet_faction, vehicle_id, direction);
+        log_say("From Server: MOVE VEH", *reinterpret_cast<int *>(message + 4), vehicle_id, direction);
         my_srand(*reinterpret_cast<int *>(message + 8));
-        if (Vehs[vehicle_id].faction_id != packet_faction) {
+        bool execute_order = true;
+        if (Vehs[vehicle_id].faction_id != *reinterpret_cast<int *>(message + 4)) {
             if (daemon.primary_state_.leading_words_[0] != 0) {
                 SpockNotifyPending = 1;
+                // Pinned5367CC jumps past order_veh to the acknowledgement.
+                execute_order = false;
             } else {
                 message_data(0x2308, 0, 0, 0, 0, 0);
             }
         }
-        ::order_veh(vehicle_id, direction, 2);
-        log_say("Acknowledging MOVE VEH", packet_faction, 0, 0);
+        if (execute_order)
+            ::order_veh(vehicle_id, *reinterpret_cast<int *>(message + 0x14), 2);
+        log_say("Acknowledging MOVE VEH", entry_packet_faction, 0, 0);
         if (daemon.primary_state_.leading_words_[0] == 0)
-            daemon.deletion_list_.set_sequence_bits(static_cast<uint32_t>(message_size));
-        if (packet_faction == ConsoleGlobal.faction_id_)
+            daemon.deletion_list_.set_sequence_bits(entry_sequence);
+        if (entry_packet_faction == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
     }
     case 0x4402: {
         const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
         const int direction = *reinterpret_cast<int *>(message + 0x14);
-        log_say("From Server: ARTY", packet_faction, vehicle_id, direction);
+        log_say("From Server: ARTY", *reinterpret_cast<int *>(message + 4), vehicle_id, direction);
         my_srand(*reinterpret_cast<int *>(message + 8));
         daemon.channels_[0].leading_words_[3] = 2;
-        battle_fight(vehicle_id, direction, 1, 1, nullptr);
-        log_say("Acknowledging ARTY", packet_faction, 0, 0);
+        battle_fight(vehicle_id, *reinterpret_cast<int *>(message + 0x14), 1, 1, nullptr);
+        log_say("Acknowledging ARTY", entry_packet_faction, 0, 0);
         if (daemon.primary_state_.leading_words_[0] == 0)
-            daemon.deletion_list_.set_sequence_bits(static_cast<uint32_t>(message_size));
-        if (packet_faction == ConsoleGlobal.faction_id_)
+            daemon.deletion_list_.set_sequence_bits(entry_sequence);
+        if (entry_packet_faction == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
     }
@@ -5442,22 +5448,22 @@ static bool netdaemon_handle_five_message_routes(
         const int y = *reinterpret_cast<int *>(message + 0x18);
         my_srand(*reinterpret_cast<int *>(message + 8));
         action_airdrop(vehicle_id, x, y, 2);
-        log_say("Acknowledging AIRDROP", packet_faction, 0, 0);
+        log_say("Acknowledging AIRDROP", entry_packet_faction, 0, 0);
         if (daemon.primary_state_.leading_words_[0] == 0)
-            daemon.deletion_list_.set_sequence_bits(static_cast<uint32_t>(message_size));
-        if (packet_faction == ConsoleGlobal.faction_id_)
+            daemon.deletion_list_.set_sequence_bits(entry_sequence);
+        if (entry_packet_faction == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
     }
     case 0x4404: {
         const int vehicle_id = *reinterpret_cast<int *>(message + 0x10);
         const int order = Vehs[vehicle_id].order;
-        log_say("From Server: ACTION", packet_faction, vehicle_id, order);
+        log_say("From Server: ACTION", *reinterpret_cast<int *>(message + 4), vehicle_id, order);
         my_srand(*reinterpret_cast<int *>(message + 8));
-        ::action(vehicle_id);
+        ::action(*reinterpret_cast<int *>(message + 0x10));
         if (daemon.primary_state_.leading_words_[0] == 0)
-            daemon.deletion_list_.set_sequence_bits(static_cast<uint32_t>(message_size));
-        if (packet_faction == ConsoleGlobal.faction_id_)
+            daemon.deletion_list_.set_sequence_bits(entry_sequence);
+        if (entry_packet_faction == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
     }
@@ -5467,10 +5473,12 @@ static bool netdaemon_handle_five_message_routes(
         const int victim = *reinterpret_cast<int *>(message + 0x18);
         log_say("From Server: DOUBLE CROSS", faction, partner, victim);
         my_srand(*reinterpret_cast<int *>(message + 8));
-        double_cross(faction, partner, victim);
+        double_cross(*reinterpret_cast<int *>(message + 0x10),
+                     *reinterpret_cast<int *>(message + 0x14),
+                     *reinterpret_cast<int *>(message + 0x18));
         if (daemon.primary_state_.leading_words_[0] == 0)
             daemon.deletion_list_.set_sequence_bits(*reinterpret_cast<uint32_t *>(message + 0x0C));
-        if (packet_faction == ConsoleGlobal.faction_id_)
+        if (*reinterpret_cast<int *>(message + 4) == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
     }
@@ -5820,6 +5828,12 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     // existing GameDataStateStorage wait bit and faction masks.
 
     unsigned char *msg = reinterpret_cast<unsigned char *>(message);
+    // Pinned534458..534466 captures these original packet words before
+    // dispatch. Transport message_size is never the sequence acknowledgement.
+    uint32_t entry_sequence;
+    int entry_packet_faction;
+    std::memcpy(&entry_sequence, msg + 0x0C, sizeof entry_sequence);
+    std::memcpy(&entry_packet_faction, msg + 0x04, sizeof entry_packet_faction);
     unsigned short type = *reinterpret_cast<unsigned short *>(message);
 
     // Special-cased "file transfer" message-type band (0x1500-0x15FF).
@@ -5956,7 +5970,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     }
 
     if (netdaemon_handle_five_message_routes(
-            *this, type, msg, message_size)) {
+            *this, type, msg, entry_packet_faction, entry_sequence)) {
         netdaemon_process_message_marker_tail(*this, msg);
         return;
     }

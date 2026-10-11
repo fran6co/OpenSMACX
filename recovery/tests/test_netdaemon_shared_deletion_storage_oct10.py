@@ -82,6 +82,9 @@ DeletionList VehDeletionList;  // 0x0093E31C
  for before, after in EVIDENCE_EDITS.get(relative, ()):
   assert new.count(before)==1
   new=new.replace(before,after,1)
+ if relative == "src/netdaemon.cpp":
+  from test_netdaemon_wire_owner_oct11 import apply_wire_migration
+  new = apply_wire_migration(new)
  return new
 
 @lru_cache(None)
