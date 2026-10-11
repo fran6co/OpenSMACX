@@ -4911,12 +4911,9 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
     return true;
 }
 
-// Source-only implementation candidate for Table H inside the existing
-// NetDaemon::process_message owner. These opcode labels are not independent
-// ORIGINAL identities. Return true after handling so the caller continues
-// through process_message's actual shared tail (including the conditional
-// lock-word clear and ordinary C++ scope cleanup); never return from the
-// dispatcher itself here.
+// Table H belongs to process_message, not independent original functions.
+// Each arm rejoins its marker/cleanup tail. Packet fields stay live across
+// logger, seed, action and parser calls, and between the two raw row stores.
 static void netdaemon_table_h_add_energy(int &energy, int delta) {
     // The pinned instruction is a 32-bit ADD. Express its low-dword result
     // without invoking C++ signed-overflow undefined behavior.
@@ -4935,31 +4932,43 @@ static bool netdaemon_handle_table_h(char *message) {
         const int other = *reinterpret_cast<int *>(message + 0x14);
         const int flags = *reinterpret_cast<int *>(message + 0x18);
         log_say_hex("Received TREATY ON", actor, other, flags);
-        treaty_on(actor, other, flags);
+        treaty_on(*reinterpret_cast<int *>(message + 0x10),
+                  *reinterpret_cast<int *>(message + 0x14),
+                  *reinterpret_cast<int *>(message + 0x18));
 
-        if (actor == ConsoleGlobal.faction_id_ ||
-            other == ConsoleGlobal.faction_id_)
+        const int checked_actor = *reinterpret_cast<int *>(message + 0x10);
+        const int local_faction = ConsoleGlobal.faction_id_;
+        if (checked_actor == local_faction ||
+            *reinterpret_cast<int *>(message + 0x14) == local_faction)
             break;
-        if (!spying(actor) && !spying(other) &&
+        if (!spying(checked_actor) &&
+            !spying(*reinterpret_cast<int *>(message + 0x14)) &&
             (GameDataStateStorage.fields_.game_state_ & 0x80u) == 0)
             break;
 
-        GenderDefault = Players[actor].noun_gender;
-        PluralityDefault = Players[actor].is_noun_plural;
-        parse_says(0, Players[actor].noun_faction, -1, -1);
-        GenderDefault = Players[other].noun_gender;
-        PluralityDefault = Players[other].is_noun_plural;
-        parse_says(1, Players[other].noun_faction, -1, -1);
-        parse_says(2, get_pact_hood(actor, other), -1, -1);
+        const int noun_actor = *reinterpret_cast<int *>(message + 0x10);
+        GenderDefault = Players[noun_actor].noun_gender;
+        PluralityDefault = Players[noun_actor].is_noun_plural;
+        parse_says(0, Players[noun_actor].noun_faction, -1, -1);
+        const int noun_other = *reinterpret_cast<int *>(message + 0x14);
+        GenderDefault = Players[noun_other].noun_gender;
+        PluralityDefault = Players[noun_other].is_noun_plural;
+        parse_says(1, Players[noun_other].noun_faction, -1, -1);
+        parse_says(2, get_pact_hood(
+            *reinterpret_cast<int *>(message + 0x10),
+            *reinterpret_cast<int *>(message + 0x14)), -1, -1);
 
-        if (flags & 1) {
+        const int announcement_flags = *reinterpret_cast<int *>(message + 0x18);
+        if (announcement_flags & 1) {
             NetMsgPrimary.pop("ENEMIESTEAMUP2", 0, 0, 0);
-        } else if (flags & 2) {
+        } else if (announcement_flags & 2) {
             NetMsgPrimary.pop("ENEMYTREATY", 0, 0, 0);
-        } else if ((flags & 4) && (flags & 0x10000) &&
-                   has_treaty(actor, other, 0x10)) {
+        } else if ((announcement_flags & 4) &&
+                   (!(announcement_flags & 0x10000) || has_treaty(
+                       *reinterpret_cast<int *>(message + 0x10),
+                       *reinterpret_cast<int *>(message + 0x14), 0x10))) {
             NetMsgPrimary.pop("ENEMYTRUCE", 0, 0, 0);
-        } else if (flags & 0x10) {
+        } else if (announcement_flags & 0x10) {
             NetMsgPrimary.pop("ENEMYWAR", 0, 0, 0);
         }
         break;
@@ -4969,16 +4978,20 @@ static bool netdaemon_handle_table_h(char *message) {
         const int other = *reinterpret_cast<int *>(message + 0x14);
         const int flags = *reinterpret_cast<int *>(message + 0x18);
         log_say_hex("Received TREATY OFF", actor, other, flags);
-        treaty_off(actor, other, flags);
+        treaty_off(*reinterpret_cast<int *>(message + 0x10),
+                   *reinterpret_cast<int *>(message + 0x14),
+                   *reinterpret_cast<int *>(message + 0x18));
         break;
     }
     case 0x4443: {
         const int actor = *reinterpret_cast<int *>(message + 0x10);
         const int other = *reinterpret_cast<int *>(message + 0x14);
         const int treaty = *reinterpret_cast<int *>(message + 0x18);
-        const int set = *reinterpret_cast<int *>(message + 0x1C);
         log_say_hex("Received SET TREATY", actor, other, treaty);
-        set_treaty(actor, other, treaty, set);
+        set_treaty(*reinterpret_cast<int *>(message + 0x10),
+                   *reinterpret_cast<int *>(message + 0x14),
+                   *reinterpret_cast<int *>(message + 0x18),
+                   *reinterpret_cast<int *>(message + 0x1C));
         break;
     }
     case 0x4444: {
@@ -4986,7 +4999,9 @@ static bool netdaemon_handle_table_h(char *message) {
         const int other = *reinterpret_cast<int *>(message + 0x14);
         const int agenda = *reinterpret_cast<int *>(message + 0x18);
         log_say_hex("Received AGENDA ON", actor, other, agenda);
-        agenda_on(actor, other, agenda);
+        agenda_on(*reinterpret_cast<int *>(message + 0x10),
+                  *reinterpret_cast<int *>(message + 0x14),
+                  *reinterpret_cast<int *>(message + 0x18));
         break;
     }
     case 0x4445: {
@@ -4994,37 +5009,43 @@ static bool netdaemon_handle_table_h(char *message) {
         const int other = *reinterpret_cast<int *>(message + 0x14);
         const int agenda = *reinterpret_cast<int *>(message + 0x18);
         log_say_hex("Received AGENDA OFF", actor, other, agenda);
-        agenda_off(actor, other, agenda);
+        agenda_off(*reinterpret_cast<int *>(message + 0x10),
+                   *reinterpret_cast<int *>(message + 0x14),
+                   *reinterpret_cast<int *>(message + 0x18));
         break;
     }
     case 0x4446: {
         const int actor = *reinterpret_cast<int *>(message + 0x10);
         const int other = *reinterpret_cast<int *>(message + 0x14);
         const int agenda = *reinterpret_cast<int *>(message + 0x18);
-        const int set = *reinterpret_cast<int *>(message + 0x1C);
         log_say_hex("Received SET AGENDA", actor, other, agenda);
-        set_agenda(actor, other, agenda, set);
+        set_agenda(*reinterpret_cast<int *>(message + 0x10),
+                   *reinterpret_cast<int *>(message + 0x14),
+                   *reinterpret_cast<int *>(message + 0x18),
+                   *reinterpret_cast<int *>(message + 0x1C));
         break;
     }
     case 0x4447: {
         const int actor = *reinterpret_cast<int *>(message + 0x10);
         const int amount = *reinterpret_cast<int *>(message + 0x14);
         const int other = *reinterpret_cast<int *>(message + 0x18);
-        const int other_amount = *reinterpret_cast<int *>(message + 0x1C);
         log_say("Received ENERGY", actor, amount, other);
-        if (actor != 0)
-            netdaemon_table_h_add_energy(PlayersData[actor].energy_reserves,
-                                         amount);
-        if (other != 0)
-            netdaemon_table_h_add_energy(PlayersData[other].energy_reserves,
-                                         other_amount);
+        const int current_actor = *reinterpret_cast<int *>(message + 0x10);
+        if (current_actor != 0)
+            netdaemon_table_h_add_energy(PlayersData[current_actor].energy_reserves,
+                                         *reinterpret_cast<int *>(message + 0x14));
+        const int current_other = *reinterpret_cast<int *>(message + 0x18);
+        if (current_other != 0)
+            netdaemon_table_h_add_energy(PlayersData[current_other].energy_reserves,
+                                         *reinterpret_cast<int *>(message + 0x1C));
         break;
     }
     case 0x4448: {
         const int actor = *reinterpret_cast<int *>(message + 0x10);
         const int other = *reinterpret_cast<int *>(message + 0x14);
         log_say("Received TRADE MAPS", actor, other, 0);
-        trade_maps(actor, other);
+        trade_maps(*reinterpret_cast<int *>(message + 0x10),
+                   *reinterpret_cast<int *>(message + 0x14));
         break;
     }
     case 0x4449: {
@@ -5032,7 +5053,8 @@ static bool netdaemon_handle_table_h(char *message) {
         const int other = *reinterpret_cast<int *>(message + 0x14);
         log_say("Received CEDE BASE", actor, other, 0);
         my_srand(*reinterpret_cast<int *>(message + 8));
-        give_a_base(actor, other);
+        give_a_base(*reinterpret_cast<int *>(message + 0x10),
+                    *reinterpret_cast<int *>(message + 0x14));
         break;
     }
     case 0x444A: {
@@ -5040,7 +5062,8 @@ static bool netdaemon_handle_table_h(char *message) {
         const int other = *reinterpret_cast<int *>(message + 0x14);
         log_say("Received WITHDRAWAL", actor, other, 0);
         my_srand(*reinterpret_cast<int *>(message + 8));
-        do_withdrawal(actor, other);
+        do_withdrawal(*reinterpret_cast<int *>(message + 0x10),
+                      *reinterpret_cast<int *>(message + 0x14));
         break;
     }
     case 0x444B:
@@ -5050,16 +5073,19 @@ static bool netdaemon_handle_table_h(char *message) {
         const int recipient = *reinterpret_cast<int *>(message + 0x18);
         log_say("From Server: TECH", actor, tech, recipient);
         my_srand(*reinterpret_cast<int *>(message + 8));
-        tech_achieved(actor, tech, recipient, 0);
+        tech_achieved(*reinterpret_cast<int *>(message + 0x10),
+                      *reinterpret_cast<int *>(message + 0x14),
+                      *reinterpret_cast<int *>(message + 0x18), 0);
 
-        // The two opcodes share the original target; only 444C may announce
-        // the tech to the local recipient.
-        if (opcode == 0x444C && recipient == ConsoleGlobal.faction_id_) {
-            GenderDefault = Players[actor].noun_gender;
-            PluralityDefault = Players[actor].is_noun_plural;
-            parse_says(0, Players[actor].noun_faction, -1, -1);
+        // The shared arm reloads opcode and recipient after tech_achieved.
+        if (*reinterpret_cast<unsigned short *>(message) == 0x444C &&
+            *reinterpret_cast<int *>(message + 0x18) == ConsoleGlobal.faction_id_) {
+            const int announced_actor = *reinterpret_cast<int *>(message + 0x10);
+            GenderDefault = Players[announced_actor].noun_gender;
+            PluralityDefault = Players[announced_actor].is_noun_plural;
+            parse_says(0, Players[announced_actor].noun_faction, -1, -1);
             StringTemp[0] = 0;
-            say_tech(StringTemp, tech, 0);
+            say_tech(StringTemp, *reinterpret_cast<int *>(message + 0x14), 0);
             parse_says(1, StringTemp, -1, -1);
             NetMsgPrimary.pop("STOLETECH", 0, 0, 0);
         }
@@ -5070,36 +5096,47 @@ static bool netdaemon_handle_table_h(char *message) {
         const int other = *reinterpret_cast<int *>(message + 0x14);
         log_say("Received PACT ENDS", actor, other, 0);
         my_srand(*reinterpret_cast<int *>(message + 8));
-        pact_ends(actor, other);
+        pact_ends(*reinterpret_cast<int *>(message + 0x10),
+                  *reinterpret_cast<int *>(message + 0x14));
         break;
     }
     case 0x444E: {
         const int actor = *reinterpret_cast<int *>(message + 0x10);
         const int other = *reinterpret_cast<int *>(message + 0x14);
         const int balance = *reinterpret_cast<int *>(message + 0x18);
-        const int payment = *reinterpret_cast<int *>(message + 0x1C);
         log_say("Received LOAN", actor, other, balance);
         // The pinned body performs both stores unconditionally and addresses
         // both fields in the p10 PlayerData row; preserve the unchecked access.
-        PlayersData[actor].loan_balance[other] = balance;
-        PlayersData[actor].loan_payment[other] = payment;
+        PlayersData[*reinterpret_cast<int *>(message + 0x10)]
+            .loan_balance[*reinterpret_cast<int *>(message + 0x14)] =
+                *reinterpret_cast<int *>(message + 0x18);
+        PlayersData[*reinterpret_cast<int *>(message + 0x10)]
+            .loan_payment[*reinterpret_cast<int *>(message + 0x14)] =
+                *reinterpret_cast<int *>(message + 0x1C);
         break;
     }
     case 0x444F: {
         const int actor = *reinterpret_cast<int *>(message + 0x10);
         const int year = *reinterpret_cast<int *>(message + 0x14);
         const int other = *reinterpret_cast<int *>(message + 0x18);
-        log_say_hex("Received CORNERING", actor, year, other);
-        if (actor != ConsoleGlobal.faction_id_) {
-            GenderDefault = 0;
+        log_say("Received CORNERING", actor, year, other);
+        const int leader_actor = *reinterpret_cast<int *>(message + 0x10);
+        if (leader_actor != ConsoleGlobal.faction_id_) {
+            GenderDefault = Players[leader_actor].is_leader_female;
             PluralityDefault = 0;
-            parse_says(0, Players[actor].title_leader, -1, -1);
-            parse_says(1, Players[actor].name_leader, -1, -1);
-            GenderDefault = Players[actor].noun_gender;
-            PluralityDefault = Players[actor].is_noun_plural;
-            parse_says(2, Players[actor].noun_faction, -1, -1);
-            parse_says(3, &Players[actor].adj_name_faction[4], -1, -1);
-            parse_num(0, static_cast<int>(game_year(year)));
+            parse_says(0, Players[leader_actor].title_leader, -1, -1);
+            const int name_actor = *reinterpret_cast<int *>(message + 0x10);
+            GenderDefault = Players[name_actor].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[name_actor].name_leader, -1, -1);
+            const int noun_actor = *reinterpret_cast<int *>(message + 0x10);
+            GenderDefault = Players[noun_actor].noun_gender;
+            PluralityDefault = Players[noun_actor].is_noun_plural;
+            parse_says(2, Players[noun_actor].noun_faction, -1, -1);
+            parse_says(3, Players[*reinterpret_cast<int *>(message + 0x10)]
+                .adj_name_faction, -1, -1);
+            parse_num(0, static_cast<int>(game_year(
+                *reinterpret_cast<int *>(message + 0x14))));
             popp(ScriptPopupFile, "CORNERWARNING", 0, "econwin_sm.pcx", 0);
         }
         break;

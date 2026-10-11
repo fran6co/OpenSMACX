@@ -411,3 +411,301 @@ def test_pinned_complete_table_g_targets_captures_and_shared_default():
     clock=next(item for item in image.imports() if item.address==0x669368)
     assert clock.name=="timeGetTime" and clock.module.lower()=="winmm.dll"
     # No action runtime, unbounded packet access or vehicle-allocation proof.
+
+
+H_CALLBACK_CONTROL = r'''
+#include <cassert>
+#include <stdint.h>
+#include <cstring>
+#include <cstddef>
+typedef int BOOL;
+@@FACTION_DECLARATIONS@@
+@@LOCK_STATE@@
+static Player Players[MaxPlayerNum];
+static PlayerData PlayersData[MaxPlayerNum];
+struct NetDaemon { LockStateEntry channels_[2]; void route(char *); };
+static struct { int faction_id_; } ConsoleGlobal;
+static struct { struct { uint32_t game_state_; } fields_; } GameDataStateStorage;
+static int GenderDefault,PluralityDefault;
+static char StringTemp[1032];
+static char script[]="SCRIPT",changed_script[]="CALLBACK_SCRIPT";
+static char *ScriptPopupFile=script;
+static uint32_t packet[16];
+static char *message;
+static int opcode,mode,actions,args[4],seeds,parses,pops,year_input,tech_input;
+static int spy_calls,spy_result[2],hood_actor,hood_other;
+static uint16_t post_tech_opcode;
+static int post_recipient;
+static const char *popup_key;
+static int read_word(int offset) { int value;std::memcpy(&value,message+offset,4);return value; }
+static void write_word(int offset,uint32_t value) { std::memcpy(message+offset,&value,4); }
+static void set_opcode(uint16_t value) { std::memcpy(message,&value,2); }
+static void mutate(int stage) {
+    if(mode==0) return;
+    if(stage==1) { write_word(0x10,4);write_word(0x14,5);write_word(0x18,6);write_word(0x1C,7); }
+    if(stage==2) { write_word(0x10,2);write_word(0x14,3);write_word(0x18,4);write_word(0x1C,5); }
+    if(stage==3) {
+        write_word(0x10,3);write_word(0x14,4);write_word(0x18,5);write_word(0x1C,6);
+        if(mode==2) { set_opcode(post_tech_opcode);write_word(0x18,post_recipient); }
+    }
+}
+static void logger(bool hex,int a,int b,int c) {
+    assert(hex==(opcode>=0x4441 && opcode<=0x4446));
+    assert(a==read_word(0x10) && b==read_word(0x14));
+    assert(c==((opcode==0x4448 || opcode==0x4449 || opcode==0x444A || opcode==0x444D)?0:read_word(0x18)));
+    mutate(1);
+}
+static void log_say(const char *,int a,int b,int c) { logger(false,a,b,c); }
+static void log_say_hex(const char *,int a,int b,int c) { logger(true,a,b,c); }
+static void my_srand(int value) { assert(value==read_word(8));++seeds;mutate(2); }
+static void action(int kind,int a,int b,int c=0,int d=0) {
+    assert(kind==opcode || (kind==0x444B && opcode==0x444C));
+    ++actions;args[0]=a;args[1]=b;args[2]=c;args[3]=d;mutate(3);
+}
+static void treaty_on(int a,int b,int c) { action(0x4441,a,b,c); }
+static void treaty_off(int a,int b,int c) { action(0x4442,a,b,c); }
+static void set_treaty(int a,int b,int c,int d) { action(0x4443,a,b,c,d); }
+static void agenda_on(int a,int b,int c) { action(0x4444,a,b,c); }
+static void agenda_off(int a,int b,int c) { action(0x4445,a,b,c); }
+static void set_agenda(int a,int b,int c,int d) { action(0x4446,a,b,c,d); }
+static void trade_maps(int a,int b) { action(0x4448,a,b); }
+static void give_a_base(int a,int b) { action(0x4449,a,b); }
+static void do_withdrawal(int a,int b) { action(0x444A,a,b); }
+static void tech_achieved(int a,int b,int c,int d) { assert(d==0);action(0x444B,a,b,c,d); }
+static void pact_ends(int a,int b) { action(0x444D,a,b); }
+static int spying(int a) {
+    assert(a==read_word(spy_calls==0?0x10:0x14));
+    const int value=spy_result[spy_calls++];
+    if(mode==3) { write_word(0x10,4);write_word(0x14,5); }
+    return value;
+}
+static bool has_treaty(int a,int b,int mask) { return (PlayersData[a].diplo_treaties[b]&mask)!=0; }
+static char hood[]="hood";
+static char *get_pact_hood(int a,int b) { hood_actor=a;hood_other=b;assert(a==read_word(0x10)&&b==read_word(0x14));return hood; }
+static void parse_says(int index,const char *text,int a,int b) {
+    assert(a==-1 && b==-1);++parses;
+    const int actor=read_word(0x10),other=read_word(0x14);
+    if(opcode==0x4441) {
+        if(index<2) {
+            const int row=index?other:actor;
+            assert(text==Players[row].noun_faction && GenderDefault==Players[row].noun_gender && PluralityDefault==Players[row].is_noun_plural);
+        } else assert(text==hood);
+    } else if(opcode==0x444F) {
+        if(index<2) assert(text==(index?Players[actor].name_leader:Players[actor].title_leader) &&
+            GenderDefault==Players[actor].is_leader_female && PluralityDefault==0);
+        if(index==2) assert(text==Players[actor].noun_faction && GenderDefault==Players[actor].noun_gender && PluralityDefault==Players[actor].is_noun_plural);
+        if(index==3) assert(text==Players[actor].adj_name_faction && GenderDefault==(mode?55:Players[actor].noun_gender) &&
+            PluralityDefault==(mode?66:Players[actor].is_noun_plural));
+    } else {
+        if(index==0) assert(text==Players[actor].noun_faction && GenderDefault==Players[actor].noun_gender && PluralityDefault==Players[actor].is_noun_plural);
+        if(index==1) assert(text==StringTemp && StringTemp[0]=='T');
+    }
+    if(mode) {
+        write_word(0x10,actor%7+1);write_word(0x14,other%7+1);
+        if(opcode==0x444F) write_word(0x14,other+100);
+        if(opcode==0x4441) write_word(0x18,4);
+        GenderDefault=55;PluralityDefault=66;
+    }
+}
+static void say_tech(char *text,int tech,int flag) { assert(text==StringTemp && text[0]==0 && tech==read_word(0x14) && flag==0);tech_input=tech;strcpy(text,"Tech"); }
+static int game_year(int value) { assert(value==read_word(0x14));year_input=value;return value+2100; }
+static void parse_num(int index,int value) { assert(index==0 && value==year_input+2100);ScriptPopupFile=changed_script; }
+static void popp(char *file,const char *key,int a,const char *icon,int b) {
+    assert(file==ScriptPopupFile && file==changed_script && !strcmp(key,"CORNERWARNING") && !strcmp(icon,"econwin_sm.pcx") && a==0 && b==0);++pops;popup_key=key;
+}
+static struct NetMessage {
+    void pop(const char *key,int a,int b,int c) { assert(a==0 && b==0 && c==0);++pops;popup_key=key; }
+} NetMsgPrimary;
+@@ACTUAL_SOURCE@@
+static void reset(unsigned short type,int callback_mode=0) {
+    std::memset(packet,0,sizeof packet);message=reinterpret_cast<char *>(packet);packet[0]=type;
+    packet[1]=0;packet[2]=0x12345678;packet[4]=1;packet[5]=2;packet[6]=3;packet[7]=4;
+    opcode=type;mode=callback_mode;actions=seeds=parses=pops=spy_calls=0;popup_key=0;year_input=tech_input=-1;
+    spy_result[0]=spy_result[1]=0;GameDataStateStorage.fields_.game_state_=0;ConsoleGlobal.faction_id_=0;
+    ScriptPopupFile=script;std::memset(PlayersData,0,sizeof PlayersData);
+    for(int i=0;i<8;++i) { Players[i].is_leader_female=i%2;Players[i].noun_gender=i+10;Players[i].is_noun_plural=(i+1)%2; }
+}
+int main() {
+    assert(sizeof(Player)==0x59C && sizeof(PlayerData)==0x20CC);
+    assert(offsetof(Player,is_leader_female)==0 && offsetof(Player,adj_name_faction)==0x304);
+    assert(offsetof(PlayerData,energy_reserves)==0x220 && offsetof(PlayerData,loan_balance)==0xC4 && offsetof(PlayerData,loan_payment)==0xE4);
+    for(unsigned short type=0x4441;type<=0x444F;++type) for(int callback_mode=0;callback_mode<2;++callback_mode) {
+        reset(type,callback_mode);NetDaemon daemon;std::memset(&daemon,0,sizeof daemon);
+        daemon.channels_[1].leading_words_[1]=type&~0x4000u;
+        daemon.route(message);
+        const bool seeded=(type>=0x4449 && type<=0x444D);
+        assert(seeds==int(seeded));
+        if(type!=0x4447 && type!=0x444E && type!=0x444F) {
+            assert(actions==1 && args[0]==(callback_mode?(seeded?2:4):1) && args[1]==(callback_mode?(seeded?3:5):2));
+            if(type<=0x4446 || type==0x444B || type==0x444C) assert(args[2]==(callback_mode?(seeded?4:6):3));
+            if(type==0x4443 || type==0x4446) assert(args[3]==(callback_mode?7:4));
+        } else assert(actions==0);
+        if(type==0x4447) assert(PlayersData[callback_mode?4:1].energy_reserves==(callback_mode?5:2) && PlayersData[callback_mode?6:3].energy_reserves==(callback_mode?7:4));
+        if(type==0x444E) assert(PlayersData[callback_mode?4:1].loan_balance[callback_mode?5:2]==(callback_mode?6:3) &&
+            PlayersData[callback_mode?4:1].loan_payment[callback_mode?5:2]==(callback_mode?7:4));
+        if(type==0x444F) assert(parses==4 && pops==1);
+        assert(daemon.channels_[1].leading_words_[1]==0);
+    }
+    // Every 4441 branch uses post-parser flags; low bit priority and truce's
+    // conditional treaty check are independent of actor/other UI reloads.
+    const uint32_t flags[]={1,2,3,4,0x14,0x10004,0x10014,0x10,0};
+    for(unsigned n=0;n<sizeof(flags)/sizeof(*flags);++n) for(int treaty=0;treaty<2;++treaty) {
+        reset(0x4441);packet[6]=flags[n];GameDataStateStorage.fields_.game_state_=0x80;
+        PlayersData[1].diplo_treaties[2]=treaty?0x10:0;
+        assert(netdaemon_handle_table_h(message));
+        const char *expected=(flags[n]&1)?"ENEMIESTEAMUP2":(flags[n]&2)?"ENEMYTREATY":
+            ((flags[n]&4)&&(!(flags[n]&0x10000)||treaty))?"ENEMYTRUCE":(flags[n]&0x10)?"ENEMYWAR":0;
+        assert(parses==3 && pops==int(expected!=0));if(expected) assert(!strcmp(popup_key,expected));
+    }
+    reset(0x4441,3);spy_result[0]=spy_result[1]=0;GameDataStateStorage.fields_.game_state_=0x80;
+    assert(netdaemon_handle_table_h(message));assert(spy_calls==2 && parses==3 && hood_actor==6 && hood_other==7 && !strcmp(popup_key,"ENEMYTRUCE"));
+    for(int spy=0;spy<2;++spy) {
+        reset(0x4441);spy_result[0]=spy;spy_result[1]=!spy;
+        assert(netdaemon_handle_table_h(message));assert(spy_calls==(spy?1:2)&&parses==3);
+    }
+    reset(0x4441);ConsoleGlobal.faction_id_=1;assert(netdaemon_handle_table_h(message));assert(spy_calls==0 && parses==0);
+    reset(0x444F);ConsoleGlobal.faction_id_=1;assert(netdaemon_handle_table_h(message));assert(parses==0&&pops==0&&seeds==0);
+    for(unsigned short initial=0x444B;initial<=0x444C;++initial)
+    for(unsigned short final=0x444B;final<=0x444C;++final) for(int local=0;local<2;++local) {
+        reset(initial,2);ConsoleGlobal.faction_id_=3;post_tech_opcode=final;post_recipient=local?3:2;
+        assert(netdaemon_handle_table_h(message));const bool announce=final==0x444C&&local;
+        assert(parses==int(announce?2:0)&&pops==int(announce));if(announce) assert(tech_input==5&&!strcmp(popup_key,"STOLETECH"));
+    }
+    reset(0x4447);packet[4]=0;packet[6]=0;assert(netdaemon_handle_table_h(message));for(int i=0;i<8;++i) assert(PlayersData[i].energy_reserves==0);
+    reset(0x4447);packet[5]=1;packet[6]=0;PlayersData[1].energy_reserves=0x7FFFFFFF;
+    assert(netdaemon_handle_table_h(message));assert(uint32_t(PlayersData[1].energy_reserves)==0x80000000u);
+    // In-owner aliases model exact load/store order, not transport reachability
+    // or fault/neighbor effects. The full actual PlayersData array stays live.
+    reset(0x444E);message=reinterpret_cast<char *>(&PlayersData[1])+offsetof(PlayerData,loan_balance)-0x10;
+    set_opcode(0x444E);write_word(0x10,1);write_word(0x14,0);write_word(0x18,2);write_word(0x1C,123);
+    assert(netdaemon_handle_table_h(message));assert(PlayersData[1].loan_balance[0]==2 && PlayersData[1].loan_payment[0]==0 && PlayersData[2].loan_payment[0]==123);
+    reset(0x4447);message=reinterpret_cast<char *>(&PlayersData[1])+offsetof(PlayerData,energy_reserves)-0x18;
+    set_opcode(0x4447);write_word(0x10,1);write_word(0x14,1);write_word(0x18,2);write_word(0x1C,7);
+    assert(netdaemon_handle_table_h(message));assert(PlayersData[1].energy_reserves==3 && PlayersData[2].energy_reserves==0 && PlayersData[3].energy_reserves==7);
+}
+'''
+
+
+@pytest.mark.parametrize("compiler", [c for c in ("g++", "clang++") if shutil.which(c)])
+def test_actual_table_h_routes_live_fields_grammar_and_in_owner_aliases(tmp_path,compiler):
+    source=(ROOT/"src/netdaemon.cpp").read_text();header=(ROOT/"src/faction.h").read_text()
+    declarations="\n".join(extract(header,"struct "+name+" {")+";" for name in ("SocialCategory","SocialEffect","Goal","Player","PlayerData"))
+    declarations+="\n"+next(line for line in header.splitlines() if line=="static const int MaxPlayerNum = 8;")
+    lock=extract((ROOT/"src/netdaemon.h").read_text(),"struct LockStateEntry {")+";"
+    lock=lock.replace("int *vehicle_selection_follow;","uint32_t vehicle_selection_follow;")
+    body="\n".join(extract(source,s) for s in ("static void netdaemon_process_message_marker_tail(","static void netdaemon_table_h_add_energy(","static bool netdaemon_handle_table_h("))
+    process=extract(source,"void NetDaemon::process_message(");start=process.index("    if (netdaemon_handle_table_h(message))")
+    stop=process.index("\n\n    if (netdaemon_handle_five_message_routes",start)
+    body+="\nvoid NetDaemon::route(char *message) {\nunsigned char *msg=reinterpret_cast<unsigned char *>(message);\n"+process[start:stop]+"\nassert(false);\n}"
+    def run(candidate):
+        cpp=tmp_path/"h.cpp";exe=tmp_path/"h"
+        cpp.write_text(H_CALLBACK_CONTROL.replace("@@FACTION_DECLARATIONS@@",declarations).replace("@@LOCK_STATE@@",lock).replace("@@ACTUAL_SOURCE@@",candidate))
+        built=subprocess.run([compiler,"-std=c++03","-Wall","-Wextra","-Werror","-Wno-unused-function","-fsanitize=address,undefined",str(cpp),"-o",str(exe)],capture_output=True,text=True,timeout=60)
+        assert built.returncode==0,built.stderr
+        return subprocess.run([str(exe)],capture_output=True,text=True,timeout=10,env=dict(os.environ,ASAN_OPTIONS="detect_leaks=0"))
+    result=run(body);assert result.returncode==0,result.stderr
+    for before,after in (
+        ("treaty_on(*reinterpret_cast<int *>(message + 0x10),", "treaty_on(actor,"),
+        ("treaty_off(*reinterpret_cast<int *>(message + 0x10),", "treaty_off(actor,"),
+        ("set_treaty(*reinterpret_cast<int *>(message + 0x10),", "set_treaty(actor,"),
+        ("agenda_on(*reinterpret_cast<int *>(message + 0x10),", "agenda_on(actor,"),
+        ("agenda_off(*reinterpret_cast<int *>(message + 0x10),", "agenda_off(actor,"),
+        ("set_agenda(*reinterpret_cast<int *>(message + 0x10),", "set_agenda(actor,"),
+        ("trade_maps(*reinterpret_cast<int *>(message + 0x10),", "trade_maps(actor,"),
+        ("give_a_base(*reinterpret_cast<int *>(message + 0x10),", "give_a_base(actor,"),
+        ("do_withdrawal(*reinterpret_cast<int *>(message + 0x10),", "do_withdrawal(actor,"),
+        ("pact_ends(*reinterpret_cast<int *>(message + 0x10),", "pact_ends(actor,"),
+        ("tech_achieved(*reinterpret_cast<int *>(message + 0x10),", "tech_achieved(actor,"),
+        ("const int checked_actor = *reinterpret_cast<int *>(message + 0x10);", "const int checked_actor = actor;"),
+        ("const int noun_other = *reinterpret_cast<int *>(message + 0x14);", "const int noun_other = other;"),
+        ("const int announcement_flags = *reinterpret_cast<int *>(message + 0x18);", "const int announcement_flags = flags;"),
+        ("(!(announcement_flags & 0x10000) || has_treaty(", "((announcement_flags & 0x10000) && has_treaty("),
+        ("const int current_actor = *reinterpret_cast<int *>(message + 0x10);", "const int current_actor = actor;"),
+        ("const int current_other = *reinterpret_cast<int *>(message + 0x18);", "const int current_other = other;"),
+        ("if (*reinterpret_cast<unsigned short *>(message) == 0x444C &&", "if (opcode == 0x444C &&"),
+        ("*reinterpret_cast<int *>(message + 0x18) == ConsoleGlobal.faction_id_", "recipient == ConsoleGlobal.faction_id_"),
+        ("const int announced_actor = *reinterpret_cast<int *>(message + 0x10);", "const int announced_actor = actor;"),
+        ("say_tech(StringTemp, *reinterpret_cast<int *>(message + 0x14), 0);", "say_tech(StringTemp, tech, 0);"),
+        ("log_say(\"Received CORNERING\"", "log_say_hex(\"Received CORNERING\""),
+        ("const int leader_actor = *reinterpret_cast<int *>(message + 0x10);", "const int leader_actor = actor;"),
+        ("GenderDefault = Players[leader_actor].is_leader_female;", "GenderDefault = 0;"),
+        ("GenderDefault = Players[name_actor].is_leader_female;", "(void)GenderDefault;"),
+        (".adj_name_faction, -1, -1);", ".adj_name_faction + 4, -1, -1);"),
+        ("*reinterpret_cast<int *>(message + 0x14))));", "year)));"),
+        ("bits += static_cast<uint32_t>(delta);", "bits += static_cast<uint32_t>(delta) + 1u;"),
+        ("netdaemon_process_message_marker_tail(*this, msg);", "(void)msg;"),
+    ):
+        assert before in body,before
+        damaged=run(body.replace(before,after,1));assert damaged.returncode!=0,before
+    early_other=body.replace("        if (current_actor != 0)",
+        "        const int current_other = *reinterpret_cast<int *>(message + 0x18);\n        if (current_actor != 0)",1)
+    early_other=early_other.replace("        const int current_other = *reinterpret_cast<int *>(message + 0x18);\n        if (current_other != 0)",
+        "        if (current_other != 0)",1)
+    assert early_other!=body and run(early_other).returncode!=0
+    stale_loan=body.replace("PlayersData[*reinterpret_cast<int *>(message + 0x10)]\n            .loan_payment", "PlayersData[actor]\n            .loan_payment",1)
+    assert stale_loan!=body and run(stale_loan).returncode!=0
+
+
+def test_pinned_complete_table_h_live_reads_owners_and_local_exit():
+    from hashlib import sha256
+    from struct import unpack
+    from capstone import Cs,CS_ARCH_X86,CS_MODE_32
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+    path=Path(os.environ.get("OPENSMACX_IMAGE",ROOT/".opensmacx/game/terranx_original.exe"))
+    if not path.is_file(): pytest.skip("pinned original unavailable")
+    raw=path.read_bytes();pin="01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    assert sha256(raw).hexdigest()==pin
+    image=PeImage(raw,pin)
+    assert unpack("<15I",image.read(Span(0x5389AC,0x5389E8)))==(
+        0x536DCB,0x536F51,0x536F80,0x536FB3,0x536FE2,0x537011,0x537044,
+        0x53710A,0x537133,0x537165,0x537197,0x537197,0x53725D,0x5370A8,0x53728F)
+    ins={i.address:(i.mnemonic,i.op_str.lower())
+         for i in Cs(CS_ARCH_X86,CS_MODE_32).disasm(image.read(Span(0x536DA5,0x5373E7)),0x536DA5)}
+    pins={
+        0x536DB0:("je","0x5373af"),0x536DB6:("add","eax, 0xffffbbbf"),
+        0x536DBB:("cmp","eax, 0xe"),0x536DBE:("ja","0x537f7a"),
+        0x536DC4:("jmp","dword ptr [eax*4 + 0x5389ac]"),
+        0x536DDC:("call","0x6263f0"),0x536DE7:("mov","ecx, dword ptr [ebx + 0x10]"),
+        0x536DED:("call","0x55b870"),0x536DF2:("mov","eax, dword ptr [ebx + 0x10]"),
+        0x536E1C:("mov","edx, dword ptr [ebx + 0x14]"),0x536E39:("mov","ecx, dword ptr [ebx + 0x10]"),
+        0x536E74:("mov","ecx, dword ptr [ebx + 0x14]"),
+        0x536EAF:("mov","edx, dword ptr [ebx + 0x14]"),0x536EB2:("mov","eax, dword ptr [ebx + 0x10]"),
+        0x536ECE:("mov","eax, dword ptr [ebx + 0x18]"),0x536F00:("test","eax, 0x10000"),
+        0x536F05:("je","0x536f29"),0x536F07:("mov","ecx, dword ptr [ebx + 0x10]"),
+        0x536F1F:("test","byte ptr [ecx*4 + 0x96c9f8], 0x10"),
+        0x536F73:("call","0x55b760"),0x536FA6:("call","0x55bb30"),
+        0x536FD5:("call","0x55ba80"),0x537004:("call","0x55b820"),0x537037:("call","0x55bba0"),
+        0x537055:("call","0x6262f0"),0x53705A:("mov","eax, dword ptr [ebx + 0x10]"),
+        0x537071:("mov","edx, dword ptr [ebx + 0x14]"),
+        0x537077:("add","dword ptr [eax*4 + 0x96cc00], edx"),
+        0x53707E:("mov","eax, dword ptr [ebx + 0x18]"),
+        0x53709C:("add","dword ptr [eax*4 + 0x96cc00], edx"),
+        0x5370BE:("mov","eax, dword ptr [ebx + 0x10]"),
+        0x5370DC:("mov","dword ptr [edx*4 + 0x96caa4], eax"),
+        0x5370E3:("mov","eax, dword ptr [ebx + 0x10]"),
+        0x5370F6:("mov","eax, dword ptr [ebx + 0x14]"),
+        0x5370FE:("mov","dword ptr [edx*4 + 0x96cac4], eax"),
+        0x537126:("call","0x543a20"),0x537158:("call","0x54cf40"),
+        0x53718A:("call","0x548f80"),0x5371C4:("call","0x5bb000"),
+        0x5371CC:("cmp","word ptr [ebx], 0x444c"),
+        0x5371DD:("mov","eax, dword ptr [ebx + 0x18]"),0x5371E8:("mov","ecx, dword ptr [ebx + 0x10]"),
+        0x53722A:("mov","eax, dword ptr [ebx + 0x14]"),0x537282:("call","0x53c650"),
+        0x5372A0:("call","0x6262f0"),0x5372A5:("mov","ecx, dword ptr [ebx + 0x10]"),
+        0x5372B2:("je","0x538266"),0x5372D2:("mov","ecx, dword ptr [eax + 0x946a50]"),
+        0x5372D8:("lea","edx, [eax + 0x946a9c]"),0x5372EB:("mov","ecx, dword ptr [ebx + 0x10]"),
+        0x537306:("mov","ecx, dword ptr [eax + 0x946a50]"),0x53730C:("lea","eax, [eax + 0x946a84]"),
+        0x537320:("mov","ecx, dword ptr [ebx + 0x10]"),
+        0x53735B:("mov","eax, dword ptr [ebx + 0x10]"),
+        0x53736D:("lea","eax, [edx*4 + 0x946d54]"),
+        0x53737C:("mov","ecx, dword ptr [ebx + 0x14]"),0x537383:("call","0x5c89a0"),
+        0x53738F:("mov","edx, dword ptr [0x691b0c]"),0x5373A2:("call","0x48c0a0"),
+        0x5373AA:("jmp","0x538266"),0x5373DA:("call","0x428350"),
+    }
+    for address,expected in pins.items():assert ins[address]==expected,hex(address)
+    for address,literal in ((0x68D060,b"ENEMIESTEAMUP2"),(0x68D070,b"ENEMYTREATY"),
+                            (0x68D07C,b"ENEMYTRUCE"),(0x68D088,b"ENEMYWAR"),
+                            (0x68D168,b"STOLETECH"),(0x68D19C,b"econwin_sm.pcx"),(0x68D1AC,b"CORNERWARNING")):
+        assert image.read(Span(address,address+len(literal)+1))==literal+b"\0"
+    # 4600's adjacent council target is not part of 444F. Source row controls
+    # prove in-owner selection only, never unbounded memory or action runtime.
