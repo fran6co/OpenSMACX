@@ -23,7 +23,8 @@
 //     "address_space": "pe:va"
 //   },
 //   "bindings": [
-//     {"evidence": "Pinned six-byte thunk; independent DDRAW DirectDrawCreate loader slot; physical VC6 short-import record.", "import_symbol": "__imp__DirectDrawCreate@12", "occurrence": 9, "origin": "0x005D44FC", "spans": ["0x005D44FC-0x005D4502"], "symbol": "DirectDrawCreate", "unit": "DDRAW.dll"}
+//     {"evidence": "Pinned six-byte thunk; independent DDRAW DirectDrawCreate loader slot; physical VC6 short-import record.", "import_symbol": "__imp__DirectDrawCreate@12", "occurrence": 9, "origin": "0x005D44FC", "spans": ["0x005D44FC-0x005D4502"], "symbol": "DirectDrawCreate", "unit": "DDRAW.dll"},
+//     {"evidence": "Pinned FF25 thunk650202..650208 with HIGHLOW operand and original DirectDrawEnumerateA IAT66901C; physical pinned SDK record and existing general.cpp import/call. DLL runtime and current link selection remain unknown.", "import_symbol": "__imp__DirectDrawEnumerateA@8", "occurrence": 11, "origin": "0x00650202", "spans": ["0x00650202-0x00650208"], "symbol": "DirectDrawEnumerateA", "unit": "DDRAW.dll"}
 //   ]
 // }
 // RECOVERY_COMPONENT_END

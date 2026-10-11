@@ -8,6 +8,7 @@
  * (at your option) any later version.
  */
 #include "stdafx.h"
+// RECOVERY_IMPORT: v1 __imp__GetOpenFileNameA@4 comdlg32.dll name:GetOpenFileNameA
 #include "filebox.h"
 #include <commdlg.h>
 #include <cstring>

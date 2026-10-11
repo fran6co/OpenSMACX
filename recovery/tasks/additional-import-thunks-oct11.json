@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "6e945592aba8e8497c06cde7f01deeb198f12f33",
+  "intent": "Bind four source-used original system import thunks to their physical SDK records, preserving dependency/application separation and unknown current-link/DLL proof.",
+  "editable_files": [
+    "src/vendor/ddraw.recovery.h",
+    "src/vendor/vfw32.recovery.h",
+    "src/vendor/comdlg32.recovery.h",
+    "src/video.cpp",
+    "src/filebox.cpp",
+    "recovery/tests/test_additional_import_thunks_oct11.py",
+    "recovery/tests/test_indirect_dependency_frontier_oct10.py",
+    "recovery/tests/test_ddraw_thunk_identity_oct10.py"
+  ],
+  "evidence": [
+    "Pinned original six-byte FF25 spans644DC0..644DC6 ICClose,644DCC..644DD2 ICOpen,6501FC..650202 GetOpenFileNameA,650202..650208 DirectDrawEnumerateA each have unique HIGHLOW operand fixup and matching independent PE loader slot.",
+    "Native SystemImportManifest checks physical pinned VFW32/COMDLG32/DDRAW short-import records at occurrences27/12/13/11. Existing project links dependencies and calls these APIs. Bindings attribute original loader bytes only: no DLL/runtime/ABI/current archive selection proof, new application function or byte claim."
+  ],
+  "subjects": [
+    {
+      "address": 6573504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6573516,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6619644,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6619650,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ]
+}

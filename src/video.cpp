@@ -6,6 +6,8 @@
 #include "wave.h"
 #include "general.h"
 #include <stdio.h>
+// RECOVERY_IMPORT: v1 __imp__ICClose@4 MSVFW32.dll name:ICClose
+// RECOVERY_IMPORT: v1 __imp__ICOpen@12 MSVFW32.dll name:ICOpen
 
 // Real source-owned storage; original allocation extents beyond the observed
 // API spans are unknown. No executable-address aliases or pointer stand-ins.

@@ -17,9 +17,12 @@ ROOT = Path(__file__).resolve().parents[2]
 BASE = "8f030dcb9"
 NEW_COMPONENTS = {key + "-import-thunks" for key in ("vfw32", "dsound", "comdlg32", "dplayx")}
 EXPECTED = {
-    "vfw32": [(0x644DC6, "ICSendMessage", "__imp__ICSendMessage@16", 9, "MSVFW32.dll", "ICSendMessage", None, 0x66925C)],
+    "vfw32": [(0x644DC6, "ICSendMessage", "__imp__ICSendMessage@16", 9, "MSVFW32.dll", "ICSendMessage", None, 0x66925C),
+              (0x644DC0, "ICClose", "__imp__ICClose@4", 27, "MSVFW32.dll", "ICClose", None, 0x669260),
+              (0x644DCC, "ICOpen", "__imp__ICOpen@12", 12, "MSVFW32.dll", "ICOpen", None, 0x669258)],
     "dsound": [(0x6501F0, "DirectSoundCreate", "__imp__DirectSoundCreate@12", 6, "DSOUND.dll", None, 1, 0x669034)],
-    "comdlg32": [(0x6501F6, "GetSaveFileNameA", "__imp__GetSaveFileNameA@4", 15, "comdlg32.dll", "GetSaveFileNameA", None, 0x669394)],
+    "comdlg32": [(0x6501F6, "GetSaveFileNameA", "__imp__GetSaveFileNameA@4", 15, "comdlg32.dll", "GetSaveFileNameA", None, 0x669394),
+                 (0x6501FC, "GetOpenFileNameA", "__imp__GetOpenFileNameA@4", 13, "comdlg32.dll", "GetOpenFileNameA", None, 0x669398)],
     "dplayx": [
         (0x650208, "DirectPlayLobbyCreateA", "__imp__DirectPlayLobbyCreateA@20", 7, "DPLAYX.dll", None, 4, 0x669024),
         (0x65020E, "DirectPlayEnumerateA", "__imp__DirectPlayEnumerateA@8", 5, "DPLAYX.dll", None, 2, 0x669028),

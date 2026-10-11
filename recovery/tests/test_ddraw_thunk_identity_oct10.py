@@ -33,6 +33,8 @@ def live():
     manifest = parse_component(text)
     assert isinstance(manifest, SystemImportManifest)
     assert render_component(manifest) == text
+    from test_additional_import_thunks_oct11 import without_additional_imports
+    manifest = without_additional_imports(manifest)
     assert manifest.component.component_id == COMPONENT
     assert manifest.component.ownership.value == "system"
     assert manifest.component.delivery.value == "system_import"
