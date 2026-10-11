@@ -469,7 +469,7 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
     media_.sound_device =
         reinterpret_cast<IDirectSound *>(WaveDeviceGlobal.get_ds());
     media_.flags |= 0x00600000;
-    media_.unresolved_source_or_rate_58 = 0;
+    media_.source_buffer_58 = 0;
     if ((flags & 0x0001) != 0) media_.flags |= 0x0001;
     if ((flags & 0x0002) != 0) media_.flags |= 0x0002;
     if ((flags & 0x0004) != 0) media_.flags |= 0x0004;

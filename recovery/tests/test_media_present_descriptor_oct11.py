@@ -15,16 +15,17 @@ SIGNATURE = "void MediaRuntime::sub_5cb6c0()"
 
 
 def test_source_identity_and_bounded_change():
+    from recovery.tests.test_media_audio_owner_oct11 import without_audio_owner_functions, restore_audio_header
     path = ROOT / "src/movie_media.cpp"
     before = subprocess.check_output(["git", "show", BASE + ":src/movie_media.cpp"], cwd=ROOT, text=True)
     after = path.read_text()
-    assert before.replace(extract(before, SIGNATURE), "PRESENT_BODY").replace(
-        "output_rect_or_draw2_bits_10", "output_rect_height_10") == after.replace(
-        extract(after, SIGNATURE), "PRESENT_BODY")
+    assert without_audio_owner_functions(before.replace(extract(before, SIGNATURE), "PRESENT_BODY").replace(
+        "output_rect_or_draw2_bits_10", "output_rect_height_10")) == without_audio_owner_functions(after.replace(
+        extract(after, SIGNATURE), "PRESENT_BODY"))
     assert [(r.address, _continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(before, path)] == [
         (r.address, _continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(after, path)]
     old_header = subprocess.check_output(["git", "show", BASE + ":src/movie_media.h"], cwd=ROOT, text=True)
-    assert (ROOT / "src/movie_media.h").read_text() == old_header.replace(
+    assert restore_audio_header((ROOT / "src/movie_media.h").read_text()) == old_header.replace(
         "DWORD output_rect_or_draw2_bits_10;             // +010; rect height or COM pointer bits",
         "DWORD output_rect_height_10;                   // +010; destination rectangle height")
 

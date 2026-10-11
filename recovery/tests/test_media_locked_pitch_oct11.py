@@ -40,6 +40,7 @@ def test_pinned_pitch_rounding_and_failed_lock_tail():
 
 
 def test_bounded_kind2_change_and_claim_continuity():
+    from recovery.tests.test_media_audio_owner_oct11 import without_audio_owner_functions
     from match_recovery.source import read_text
     from test_texture_raster_actual_source import _continuity_fields
     path=ROOT/"src/movie_media.cpp"
@@ -52,7 +53,7 @@ def test_bounded_kind2_change_and_claim_continuity():
         return text[start:end]
     reviewed=subprocess.check_output(["git","show","22a6607d34d6527117d0ff14452b630086ecff78:src/movie_media.cpp"],cwd=ROOT,text=True)
     assert kind2(reviewed)==kind2(new)
-    assert old.replace(extract(old,SIGNATURE),"PRESENT_BODY")==new.replace(extract(new,SIGNATURE),"PRESENT_BODY")
+    assert without_audio_owner_functions(old.replace(extract(old,SIGNATURE),"PRESENT_BODY"))==without_audio_owner_functions(new.replace(extract(new,SIGNATURE),"PRESENT_BODY"))
     assert [(r.address,_continuity_fields(r),r.symbol,r.function_fragment) for r in read_text(old,path)]==[
         (r.address,_continuity_fields(r),r.symbol,r.function_fragment) for r in read_text(new,path)]
 

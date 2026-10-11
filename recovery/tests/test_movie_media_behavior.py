@@ -303,11 +303,11 @@ def test_current_actual_media_bodies() -> None:
         ),
         ("\"DDERR_ALREADYINITIALIZED\"", "\"DDERR_CHANGED\""),
         (
-            "format.nSamplesPerSec = d.unresolved_source_or_rate_58;",
+            "format.nSamplesPerSec = playback_frequency;",
             "format.nSamplesPerSec = 44100;",
         ),
         (
-            "d.play_buffer->SetFrequency(d.unresolved_source_or_rate_58);",
+            "d.play_buffer->SetFrequency(playback_frequency);",
             "d.play_buffer->SetVolume(d.volume_argument);",
         ),
     ],
@@ -358,9 +358,11 @@ def test_native_media_layout_storage_and_uv2_preservation():
     settings = Measurement.read(ROOT)
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
     image = PeImage((ROOT / '.opensmacx/game/terranx_original.exe').read_bytes(), image_pin(ROOT))
-    base = json.loads((ROOT / 'recovery/tasks/movie-media-owner-wave.json').read_text())['base_revision']
+    # Check this owner correction against its immutable, compiling predecessor;
+    # the earlier seed-era tree requires headers retired by later migrations.
+    base = json.loads((ROOT / 'recovery/tasks/media-audio-owner-oct11.json').read_text())['base_revision']
     baseline_sources = {path: subprocess.check_output(['git', 'show', base + ':' + path], cwd=ROOT)
-                        for path in ('src/uv2player.cpp', 'src/uv2player.h')}
+                        for path in ('src/uv2player.cpp', 'src/uv2player.h', 'src/movie_media.h')}
     for flags in settings.flag_sets:
         media = Coff(compiler(ROOT / 'src/movie_media.cpp', (), flags + settings.layout_flags))
         for name, size in (('MediaRuntime', 0x660), ('MediaDescriptor', 0x7B4),
@@ -369,7 +371,7 @@ def test_native_media_layout_storage_and_uv2_preservation():
             assert class_layout(media, name)['size'] == size
         descriptor = class_layout(media, 'MediaDescriptor')['members']
         assert descriptor['runtime'] == 0 and descriptor['pixel_format'] == 0x2C
-        assert descriptor['unresolved_source_or_rate_58'] == 0x58
+        assert descriptor['source_buffer_58'] == 0x58
         bindings = tuple(b for b in read_objects(ROOT, image_pin(ROOT))
                          if b.symbol.startswith('?movie_media_conversion_tables@@'))
         assert len(bindings) == 1

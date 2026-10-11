@@ -1763,7 +1763,7 @@ int MediaRuntime::setup_sound_device() {
     }
   }
   if (d.sound_device == 0) {
-    d.unresolved_source_or_rate_58 = 0;
+    d.source_buffer_58 = 0;
     return 0;
   }
 
@@ -1772,9 +1772,7 @@ int MediaRuntime::setup_sound_device() {
   device_caps.dwSize = 0x60;
   d.sound_device->GetCaps(&device_caps); // result ignored by native body
   emulated_device = (device_caps.dwFlags & DSCAPS_EMULDRIVER) != 0;
-  IDirectSoundBuffer *source_buffer =
-      reinterpret_cast<IDirectSoundBuffer *>(
-          d.unresolved_source_or_rate_58);
+  IDirectSoundBuffer *source_buffer = d.source_buffer_58;
   if ((d.flags & 0x00400000) != 0 && source_buffer != 0) {
     DSBCAPS source_caps;
     memset(&source_caps, 0, 0x14);
@@ -1798,8 +1796,8 @@ int MediaRuntime::create_playback_buffer() {
     memset(&format, 0, sizeof(format));
     format.wFormatTag = WAVE_FORMAT_PCM;
     format.nChannels = 2;
-    format.nSamplesPerSec = d.unresolved_source_or_rate_58;
-    format.nAvgBytesPerSec = d.unresolved_source_or_rate_58 << 2;
+    format.nSamplesPerSec = playback_frequency;
+    format.nAvgBytesPerSec = playback_frequency << 2;
     format.nBlockAlign = 4;
     format.wBitsPerSample = 16;
 
@@ -1811,7 +1809,7 @@ int MediaRuntime::create_playback_buffer() {
     buffer_desc.dwReserved = 0;
     buffer_desc.lpwfxFormat = &format;
     if (d.sound_device->CreateSoundBuffer(&buffer_desc, &d.play_buffer, 0) == DS_OK) {
-      d.play_buffer->SetFrequency(d.unresolved_source_or_rate_58);
+      d.play_buffer->SetFrequency(playback_frequency);
       if ((d.flags & 0x2000) != 0) d.play_buffer->SetVolume(d.volume_argument);
 
       DSBCAPS created_caps;
@@ -1845,12 +1843,10 @@ int MediaRuntime::release_session_interfaces() {
   MediaDescriptor &d = *descriptor;
   if ((d.flags & 0x00800000) != 0) {
     if (release_optional_buffer != 0 &&
-        d.unresolved_source_or_rate_58 != 0) {
-      IDirectSoundBuffer *source_buffer =
-          reinterpret_cast<IDirectSoundBuffer *>(
-              d.unresolved_source_or_rate_58);
+        d.source_buffer_58 != 0) {
+      IDirectSoundBuffer *source_buffer = d.source_buffer_58;
       source_buffer->Release();
-      d.unresolved_source_or_rate_58 = 0;
+      d.source_buffer_58 = 0;
     }
     if (release_sound_device != 0 && d.sound_device != 0) {
       d.sound_device->Release();

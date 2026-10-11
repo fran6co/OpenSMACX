@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "c30c6facc4dbb2873f47ccf9acc468c32b86774f",
+  "editable_files": [
+    "src/movie_media.cpp", "src/movie_media.h", "src/uv2player.cpp",
+    "recovery/tests/test_movie_media_behavior.py",
+    "recovery/tests/fixtures/movie_media_host.cpp",
+    "recovery/tests/test_media_audio_owner_oct11.py",
+    "recovery/tests/test_media_present_descriptor_oct11.py",
+    "recovery/tests/test_media_locked_pitch_oct11.py",
+    "recovery/tests/test_media_destination_loss_oct11.py"
+  ],
+  "intent": "Correct a demonstrated cross-owner field confusion: descriptor+58 is an optional IDirectSoundBuffer pointer; runtime+58 is parsed playback frequency. Recover original sound-buffer ownership and rate reads without changing original branches, error paths or historical claims.",
+  "evidence": [
+    "Native5CE4B6 establishes ESI=MediaRuntime;5CE508 and5CE561 read runtime+58 for WAVEFORMATEX and SetFrequency. Parser5CA71A initializes runtime+58 to5622 and tag updates the same owner. Existing source already declares and produces playback_frequency.",
+    "Native5CE3E8 reads MediaDescriptor+58 and5CE415 invokes IDirectSoundBuffer::GetCaps.5CE468/472/477 release and clear that descriptor pointer. UV2Player::exec clears the same embedded descriptor member before media startup; these are distinct objects, not an overlapping union.",
+    "Expand the ownership correction across MediaDescriptor, MediaRuntime and UV2Player caller initialization. Host controls distinguish a live optional source pointer from parsed rate and exercise the post-CreateSoundBuffer frequency reload. Preserve all mappings, claims and prior discoveries; local tests do not establish whole codec/game acceptance."
+  ],
+  "subjects": [
+    {"address": 6087488, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6087856, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6087760, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ]
+}

@@ -161,6 +161,7 @@ def test_actual_destination_and_row_callbacks(tmp_path,compiler_name,damage):
 
 
 def test_kind1_and_kind4_bounded_source_migration():
+    from recovery.tests.test_media_audio_owner_oct11 import without_audio_owner_functions
     from match_recovery.source import read_text
     from test_texture_raster_actual_source import _continuity_fields
     path=ROOT/"src/movie_media.cpp"
@@ -172,6 +173,6 @@ def test_kind1_and_kind4_bounded_source_migration():
         return text[:start]+"KIND1"+text[end:]
     expected=outside_kind1(before).replace("(LONG)descriptor->output_width_64 - 1","(LONG)(descriptor->output_width_64 - 1)").replace(
         "(LONG)descriptor->output_height_60 - 1","(LONG)(descriptor->output_height_60 - 1)")
-    assert expected==outside_kind1(after)
+    assert without_audio_owner_functions(expected)==without_audio_owner_functions(outside_kind1(after))
     assert [(r.address,_continuity_fields(r),r.symbol,r.function_fragment) for r in read_text(before,path)]==[
         (r.address,_continuity_fields(r),r.symbol,r.function_fragment) for r in read_text(after,path)]

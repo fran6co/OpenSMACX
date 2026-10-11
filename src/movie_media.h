@@ -101,11 +101,9 @@ struct MediaDescriptor {
   BYTE *provided_output_base_4c;                 // +4c; selected without Lock
   DWORD provided_output_pitch_50;                 // +50; byte pitch in same path
   IDirectSound *sound_device;                    // +54
-  // Native readers assign incompatible meanings to this same DWORD: setup
-  // passes it as an optional source-buffer interface, while create-buffer
-  // shifts it left twice for a sample/byte rate. Preserve raw storage and
-  // provenance; callers' initialization has not yet explained the overlap.
-  DWORD unresolved_source_or_rate_58;
+  // Setup5CE340 queries this optional buffer; teardown5CE450 releases it.
+  // The parsed playback rate is MediaRuntime+58, a different object's field.
+  IDirectSoundBuffer *source_buffer_58;          // +58; optional caller buffer
   IDirectSoundBuffer *play_buffer;               // +5c
   DWORD output_height_60;                        // +60; DirectDraw loop/rectangle bound
   DWORD output_width_64;                         // +64; DirectDraw rectangle bound

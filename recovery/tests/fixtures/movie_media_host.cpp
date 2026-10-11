@@ -91,7 +91,7 @@ struct MediaDescriptor {
   DWORD stream_gate_7c;
   HWND window;
   IDirectSound *sound_device;
-  DWORD unresolved_source_or_rate_58;
+  IDirectSoundBuffer *source_buffer_58;
   IDirectSoundBuffer *play_buffer;
   LONG volume_argument;
 };
@@ -226,12 +226,15 @@ struct MockSound : IDirectSound {
   HRESULT cooperative_result, caps_result, create_result;
   DWORD cap_flags;
   MockBuffer *buffer;
+  MediaRuntime *frequency_owner;
+  DWORD frequency_after_create;
   int releases;
   DSBUFFERDESC observed_description;
   WAVEFORMATEX observed_format;
   MockSound()
       : cooperative_result(DS_OK), caps_result(DS_OK), create_result(DS_OK),
-        cap_flags(DSCAPS_EMULDRIVER), buffer(0), releases(0),
+        cap_flags(DSCAPS_EMULDRIVER), buffer(0), frequency_owner(0),
+        frequency_after_create(0), releases(0),
         observed_description(), observed_format() {}
   HRESULT SetCooperativeLevel(HWND, DWORD level) {
     sound_event('c');
@@ -249,6 +252,8 @@ struct MockSound : IDirectSound {
     sound_event('C');
     observed_description = *desc;
     observed_format = *desc->lpwfxFormat;
+    if (frequency_owner != 0)
+      frequency_owner->playback_frequency = frequency_after_create;
     if (create_result == DS_OK) *out = buffer;
     return create_result;
   }
@@ -433,10 +438,11 @@ static void test_directsound_setup_create_release_order() {
   MediaDescriptor descriptor = {};
   descriptor.flags = 0x00800000 | 0x00002000;
   descriptor.window = &descriptor;
-  descriptor.unresolved_source_or_rate_58 = 22050;
+  descriptor.source_buffer_58 = 0;
   descriptor.volume_argument = -500;
   MediaRuntime runtime = {};
   runtime.descriptor = &descriptor;
+  runtime.playback_frequency = 22050;
   reset_sound_events();
 
   assert(runtime.setup_sound_device() == 0);
@@ -479,7 +485,7 @@ static void test_directsound_create_failure_falls_back() {
   sound.cooperative_result = -1;
   MediaDescriptor descriptor = {};
   descriptor.flags = 0x00800000;
-  descriptor.unresolved_source_or_rate_58 = 22050;
+  descriptor.source_buffer_58 = 0;
   MediaRuntime runtime = {};
   runtime.descriptor = &descriptor;
   assert(runtime.setup_sound_device() == 0);
@@ -493,6 +499,40 @@ static void test_directsound_create_failure_falls_back() {
   assert(runtime.buffer_setup_finished == 1);
 }
 
+static void test_optional_source_buffer_is_not_playback_rate() {
+  MockSound sound;
+  MockBuffer source, playback;
+  source.actual_bytes = 0x2400;
+  sound.buffer = &playback;
+  MediaDescriptor descriptor = {};
+  descriptor.flags = 0x00C00000;
+  descriptor.sound_device = &sound;
+  descriptor.source_buffer_58 = &source;
+  MediaRuntime runtime = {};
+  runtime.descriptor = &descriptor;
+  runtime.playback_frequency = 32000;
+  reset_sound_events();
+  assert(runtime.setup_sound_device() == 0);
+  assert(runtime.source_buffer_bytes == 0x2400);
+  assert(source.releases == 0 && descriptor.source_buffer_58 == &source);
+  // The original reloads runtime+58 after CreateSoundBuffer. This mock
+  // mutation tests the read boundary, not an assertion about real COM events.
+  sound.frequency_owner = &runtime;
+  sound.frequency_after_create = 48000;
+  assert(runtime.create_playback_buffer() == 0);
+  assert(sound.observed_format.nSamplesPerSec == 32000);
+  assert(sound.observed_format.nAvgBytesPerSec == 32000U * 4);
+  assert(playback.frequency == 48000 && source.frequency == 0);
+  assert(sound.observed_description.dwBufferBytes == source.actual_bytes);
+  runtime.release_optional_buffer = 1;
+  assert(runtime.release_session_interfaces() == 0);
+  assert(source.releases == 1 && descriptor.source_buffer_58 == 0);
+  assert(sound.releases == 0 && descriptor.sound_device == &sound);
+  assert(runtime.playback_frequency == 48000);
+  assert(runtime.release_playback_buffer() == 0);
+  assert(playback.releases == 1);
+}
+
 int main() {
   test_5cc860_success();
   test_5cc860_failure_ownership();
@@ -503,6 +543,7 @@ int main() {
   test_ring_cleanup();
   test_directsound_setup_create_release_order();
   test_directsound_create_failure_falls_back();
+  test_optional_source_buffer_is_not_playback_rate();
   std::puts("movie media actual-source host controls passed");
   return 0;
 }
