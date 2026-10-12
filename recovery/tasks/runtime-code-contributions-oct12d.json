@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "bb26bc273d8a50ae0c578c783fa02d561acfc890",
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_runtime_code_contributions_oct12d.py"
+  ],
+  "intent": "Bind seventeen independently reviewed ordinary runtime code contributions to the pinned external archive for verification, without inventing application functions or granting provider selection, exclusions, matching or acceptance.",
+  "evidence": [
+    "Original pinned image SHA25601901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf and external LIBCMT archive SHA2561ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b. Independent physical review corroborates full ordinary executable section lengths, symbol offsets and bytes outside supported relocation operands for exsup, chkstk, strchr, sin, cos, sqrt, atan, pow, exsup3, acos, lowhelpr, 87disp, common, genexcep, 87tran, adj_fdiv and stricmp members.",
+    "All seventeen full ranges are disjoint from all currently parsed source function, object, literal, generated and component intervals. Two sections have no relocations; fifteen retain unresolved relocation-target obligations. Unique observed correspondence is not proof of original archive-member selection or original runtime version. Native verification must retain UNKNOWN where evidence is missing and detect nonrelocation damage.",
+    "Use existing native component_source reader/writer and ToolchainCodeSectionBinding schema. Preserve every existing component binding, data section, absolute symbol, archive pin, license/provenance, original identity and historical claim. No callable function identities, blanket exclusions, proprietary bytes, compiler changes or new CLI. Do not admit alternative-member, COMDAT, overlapping or otherwise unqualified contributions.",
+    "This coordinator-reviewed metadata-only batch uses whole contribution measurement units, not function task subjects; it does not invoke or satisfy the autonomous function driver. Actual symbol offsets and member evidence belong beside the source-owned contribution bindings; derivable run reports stay ignored. Verify roundtrip, identity continuity, source/mapping/reference integrity, relevant damage controls and application build/link before integration, then recheck the destination. Full executable fidelity and application coverage remain unproven."
+  ]
+}
