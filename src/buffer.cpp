@@ -4634,7 +4634,9 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
     }
 }
 
-// ORIGINAL: 0x005E3193 ?box@Buffer@@QAEHHHHHHH@Z 0x005E3193-0x005E31FC FILE
+// ORIGINAL: 0x005E3193 ?box@Buffer@@QAEHHHHHHH@Z 0x005E3193-0x005E31FC FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned 0x005E3193 performs the four hline/vline calls below and returns after the final void vline without assigning EAX; this supports a void source operation but does not prove the original return contract.","The mapped SpriteBox::draw_item caller at 0x00610FE3 ignores EAX, and the current source caller also discards the result. This supports the bounded current void interface at that caller only; mapped caller search is incomplete and indirect/full-executable callers remain unknown.","The historical decorated identity includes H/int but is catalogue/history provenance, not independent original debug proof. Preserve the ORIGINAL identity and historical claim unchanged; the current emitted symbol must be established from fresh COFF evidence.","Only the coordinate overload is covered. RECT overloads and dotted_box overloads retain their separate return/error contracts."],"reason":"Remove the fabricated zero return from the coordinate box drawing operation while expressing the evidence-supported void source interface at its known caller; retain uncertainty about the original return contract and incomplete caller closure."}
+// symbol    ?box@Buffer@@QAEXHHHHHH@Z
 // TRIED: falling off the end without a return (C4716 under the scoring flags, treated as an error); the near-miss is the extra "xor eax,eax" that "return 0" adds versus the original's bare "pop"-chain tail.
 // working copy - scaffold materialised by --work
 // size      105 bytes
@@ -4644,12 +4646,11 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005E1A80 0x005E1BF0
 
-int Buffer::box(int a1, int a2, int a3, int a4, int a5, int a6) {
-    hline(a1 + 1, a3, a2, a5);
-    hline(a1, a3 - 1, a4, a6);
-    vline(a1, a2, a4 - 1, a5);
-    vline(a3, a2 + 1, a4, a6);
-    return 0;
+void Buffer::box(int left, int top, int right, int bottom, int color1, int color2) {
+    hline(left + 1, right, top, color1);
+    hline(left, right - 1, bottom, color2);
+    vline(left, top, bottom - 1, color1);
+    vline(right, top + 1, bottom, color2);
 }
 
 
