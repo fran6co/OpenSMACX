@@ -1,0 +1,19 @@
+{
+  "event_id": "6019ffb310731d0c7413b8f1f267784200dd0520c4d6184136f134864fa920dc",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_netwin_owner_behavior.py"
+    ],
+    "evidence": [
+      "Full original password/faction snapshot before signed slot guards uses existing TU-local static memcpy_call. Extend only kind3 actual-source extraction to prepend that existing helper; preserve original assertions/layout/body checks and original task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "netwin-auth-helper-control-oct12",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netwin-editor-auth-oct12"
+}
