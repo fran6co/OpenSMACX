@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "task_id": "vehicle-kill-dispatch-owner-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "a94ae29c8c28e61390805112b2574a95f5955083",
+  "intent": "Recover the complete vehicle kill operation and its evidenced Net dispatch alias ordering; bind the existing StatusWin active-vehicle member instead of accessing the original executable address. Preserve all original branches, callbacks, bugs, mappings and claims.",
+  "subjects": [
+    {"address": 6032128, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6031552, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5456896, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "editable_files": [
+    "src/veh.cpp",
+    "src/netdaemon.cpp",
+    "recovery/tests/test_vehicle_kill_actual_source_oct12.py",
+    "recovery/tests/test_netdaemon_double_cross_actual_source_oct12.py",
+    "recovery/tests/test_status_hover_owner.py",
+    "recovery/tests/test_console_state.py"
+  ],
+  "evidence": [
+    "Pinned kill 0x005C0B00..0x005C0CB0 captures coordinates/faction before has_abil, but reloads prototype at 0x005C0B43 and captures home base at 0x005C0B4D after that callback. Current source captures prototype/home base too early. Review every cargo/stack/terrain branch and original callback effects together.",
+    "Pinned kill valid-tile altitude>=60 path 0x005C0BF4..0x005C0C1E calls veh_kill and joins the common 0x005C0C27 tutorial plus draw tail. Current early return after tutorial loses redraw. Preserve the original branch/tail ordering, including unsafe lookup paths; do not introduce safety fixes.",
+    "Pinned Net DOUBLE CROSS route 0x00536D45/0x00536D48 captures sequence and faction before the 0x00536D52 sequence-owner store. Current helper rereads faction after that store; preserve the original packet-alias effects. Only this helper within original parent 0x00534400 is editable here; unrelated Net routes remain untouched.",
+    "Pinned veh_kill 0x005C08C0..0x005C0AF4 updates word 0x008C6B34 at 0x005C0A71..0x005C0A85. Source-owned ConsoleStatusWin begins at 0x008C5568; its existing private field_15CC_ is exactly this word. StatusWin::reset_active 0x004B6544 reads receiver+0x15CC and existing producers/readers use this same member. statuswin.h already friends veh_kill and veh.cpp includes the complete owner. Replace the old-address StatusHoverVehIdAlt alias with the real member; no new layout, field or virtual contract is authorized.",
+    "Worker uses its fresh isolated checkout only; coordinator owns Git, native compiler leases/recording, independent review, build/link, identity/reference continuity and integration. Preserve all original annotations and historical obligations. Existing host fixtures must retain their behavioral assertions while using real-owner storage; never weaken checks to admit a regression. Header or other owner discoveries require explicit scope expansion before edits."
+  ]
+}
