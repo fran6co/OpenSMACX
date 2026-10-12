@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "window-frame-painters-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "0b1619c4dbb65d57e2b08635ed939f30032d883a",
+  "intent": "Recover the complete Win and GraphicWin non-client frame painters on their real owners, preserving original geometry, callback-sensitive receiver/member reads and all error paths without extended byte-spelling iteration.",
+  "editable_files": [
+    "src/win.cpp",
+    "src/graphicwin.cpp",
+    "recovery/tests/test_window_frame_painters_actual_source_oct12.py"
+  ],
+  "subjects": [
+    {"address": 6237424, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6120432, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "evidence": [
+    "Pinned original Win::on_redraw_nc 0x005F2CF0..0x005F37BA: caption bounds at 0x005F2FD1..0x005F3000 use the real field_128 inset on all four edges, not the current zero/caption-height substitute. Review all four edge painters together against native geometry and clip/tile behavior.",
+    "Pinned original GraphicWin::on_redraw_nc 0x005D63F0..0x005D68B7: 0x005D657F..0x005D6591 reload current caption and buffer1 after callbacks for the slot-89 call; 0x005D6597 reloads buffer1 for slot 60. Recover the entire callback/receiver/geometry closure, not only these initial witnesses.",
+    "Existing source annotations retain both complete original identities/spans and current emitted symbols in their genuine Win and GraphicWin owners. Preserve all mappings, historical claims and useful findings; no manual ORIGINAL edits or BYTE_EXACT grants.",
+    "Only the coordinator mutates Git, prepares/uses native compiler resources, records measured claims and integrates reviewed changes. Worker edits stay in its new isolated checkout. Header, layout, virtual-contract or outside-owner changes need explicit scope expansion supported by original evidence. Do not fabricate buffer types or normalize original unsafe/error behavior."
+  ]
+}
