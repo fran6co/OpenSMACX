@@ -1,0 +1,20 @@
+{
+  "event_id": "ae67c20abfd92cdd245429d533997097e015217467636eb34b134a8c1fbe9810",
+  "payload": {
+    "affects": [
+      "entity-0a4634f04497e33bf89f1521d3243bcb5e347a6866de17fcee97e015321c50bf"
+    ],
+    "author": "coordinator",
+    "discovery_id": "font-inline-emission-discovery-oct12g",
+    "evidence": [
+      "Source-preserving replica/damage controlled native probes in font.cpp,buffer.cpp,pulldown.cpp,councwin.cpp,designwin.cpp under both configured profiles drop close619230 and bounded width6192F0 when only their MEASURED attributes are removed. Other typed function sections differ in four caller TUs; font.cpp remaining sections agree. Pinned original has direct callers plus known same-TU inline expansions, so absence in rebuilt output is not evidence of original non-use. These physical diagnostics do not isolate code changes from relocation-addend/allocation effects or prove linked selection, complete include closure or runtime behavior. Production source remains unchanged. Preserve historical claims, original inline/direct-call observations and pending scope expansion; investigate visibility, actual compiler inlining and target call/reference effects before adopting a replacement. Cache build/recovery/font-natural-inline-physical-oct12g.json is recomputable, not authoritative acceptance."
+    ],
+    "hypothesis": "The production dllexport attributes compensate for unresolved Font definition visibility or compilation policy rather than an established original export feature. Attribute-only removal cannot yet preserve mapped standalone helper emission.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "font-inline-emission-discovery-oct12g",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:font-natural-inline-emission-oct12g"
+}
