@@ -1,0 +1,62 @@
+{
+  "author": "coordinator",
+  "base_revision": "361f5176199a52ac0bc3f425cb139f0230730824",
+  "editable_files": [
+    "src/map.cpp",
+    "recovery/tests/test_world_fossil_native_contract_oct12i.py",
+    "recovery/tests/test_landmark_mask_contract_oct12i.py"
+  ],
+  "evidence": [
+    "Pinned bit2_set 0x00591DB0 directly ORs its third argument into the 32-bit tile bit2 field (0x00591DDA-0x00591DDF); it does not convert an index. map.h separately declares TerrainLandmarkBit2 one-hot masks and TerrainLandmarkId label indices. Current eight writers pass LM_* indices at nine sites, setting unrelated bits and omitting intended features.",
+    "Original immediates prove monsoon:0x005C61B1 mask4; dune:0x005C6988 mask0x40; borehole:0x005C7271/0x005C7509 mask0x1000; temple:0x005C76F9 mask0x2000; unity:0x005C79FE mask0x4000; fossil:0x005C7C52 mask0x8000; canyon:0x005C7EDE mask0x200; ridge:0x005C8358 mask0x800. Use corresponding BIT2_* constants only for bit2_set arguments. Retain Natural[LM_*].name label lookups and source-owned masks consumed by statuswin/base/terraforming/game/mapwin; those consumers require no edits.",
+    "Pinned world_fossil 0x005C7A80-0x005C7CA1 enters coordinate validation directly, unlike world_unity's genuine ExpansionEnabled load/test at 0x005C7756/0x005C775E. Remove fossil's unsupported entry wrapper only. Console::editor_natural directly calls fossil at 0x004E1674; generation callers at 0x005C8696/0x005C8903 own native outer checks. Preserve unity's guard and all caller checks.",
+    "Preserve original 1000-attempt checks at fossil 0x005C7B01/0x005C7BBA, rand/parity effects, six radius entries, bounds/ocean filtering, altitude/bit/code ordering and final original label lookup. No safety normalization, body placeholders, declaration or compiler-policy changes. Preserve all markers/spans/claims/TRIED/LEVER lessons; qualify obsolete divergence prose without discarding history.",
+    "Use actual-source fossil controls and actual callsite/helper mask controls under both native profiles, fresh application compile/link, scoped measurements, identity/reference continuity and independent source/pin review. Historical byte obligations remain restoration requirements. Manual coordinator-reviewed integration is not automatic or game acceptance; synthetic collaborators and isolated callsite/helper tests do not prove complete owner control flow or original runtime. Missing full linked preservation remains unknown."
+  ],
+  "intent": "Restore the eight landmark writers' original tile-mask arguments and world_fossil's unguarded entry contract, retaining original label indices, search/retry behavior and caller guards.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6053616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6055744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6058016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6059328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6059856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6060672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6061232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6062416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "world-landmark-mask-contract-oct12i"
+}
