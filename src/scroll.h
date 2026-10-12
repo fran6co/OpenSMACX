@@ -147,5 +147,3 @@ extern ScrollCloseDynamicDefaultsData ScrollCloseDynamicDefaults;
 void __cdecl scroll_normal();
 void __cdecl scroll_small();
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
-void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
-                                             unsigned int mode);

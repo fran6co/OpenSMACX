@@ -783,8 +783,8 @@ Sound::~Sound() {
 Purpose: The compiler-generated scalar deleting destructor: destroy the
          sound and, when bit 0 of the mode asks, free the storage to the
          game heap.
-// ORIGINAL: 0x004C92D0 ??_GSound@@UAEPAXI@Z 0x004C92D0-0x004C92F1 BYTE_EXACT
-// symbol    ?sound_scalar_dtor_redirect@@YIPAXPAVSound@@PAXI@Z
+// ORIGINAL: 0x004C92D0 ??_GSound@@UAEPAXI@Z 0x004C92D0-0x004C92F1 FILE BYTE_EXACT
+// symbol    ??_GSound@@UAEPAXI@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GSound@@UAEPAXI@Z)(Sound* this, unsigned int)
 // callers   0   call targets   2
@@ -794,18 +794,12 @@ Purpose: The compiler-generated scalar deleting destructor: destroy the
 Return Value: the object pointer
 Status: Complete
 */
-void *__fastcall sound_scalar_dtor_redirect(Sound *self, void *,
-                                            unsigned int mode) {
-    // QUALIFIED, not `self->~Sound()`: the bare spelling makes VC6 dispatch
-    // the DELETING destructor through slot 8 (`push 0; mov eax,[esi]; call
-    // [eax+8]`, re-reading the mode off [esp+8]) where the image calls
-    // ??1Sound@@QAE@XZ directly.
-    self->Sound::~Sound();
-    if (mode & 1) {
-        operator delete(self);
-    }
-    return self;
-}
+// The existing virtual destructor owns this compiler-generated entry.
+// Historical seed evidence: its qualified Sound destructor call reproduced
+// the original direct call. The unqualified form dispatched through slot 8,
+// re-reading the mode from the stack. The real generated deleting destructor
+// now owns that complete-destructor call; no handwritten dispatch is needed.
+
 
 /*
 Purpose: Join the sound chain at the tail. A sound with either neighbour

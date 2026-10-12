@@ -189,8 +189,7 @@ extern Wave g_CPU_WAVES[45];  // 0x0074C5F0
 static_assert(sizeof(Wave) == 0x6C, "Wave layout must match terranx.exe");
 
 
-void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
-                                           unsigned int mode);
+
 
 // A wave holding one of the 0x10 device group slots is pulled from its
 // group by WaveDeviceGlobal. Its filename allocation is returned through

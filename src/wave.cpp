@@ -1499,8 +1499,8 @@ void Wave::init(char *group_id, unsigned long flags) {
 Purpose: The compiler-generated scalar deleting destructor: destroy the wave
          and, when bit 0 of the mode argument asks for it, return the storage
          to the game CRT heap.
-// ORIGINAL: 0x004C9300 ??_GWave@@UAEPAXI@Z 0x004C9300-0x004C9321 BYTE_EXACT
-// symbol    ?wave_scalar_dtor_redirect@@YIPAXPAVWave@@PAXI@Z
+// ORIGINAL: 0x004C9300 ??_GWave@@UAEPAXI@Z 0x004C9300-0x004C9321 FILE BYTE_EXACT
+// symbol    ??_GWave@@UAEPAXI@Z
 // size      33 bytes
 // prototype void* (__thiscall ??_GWave@@UAEPAXI@Z)(Wave* this, unsigned int)
 // callers   0   call targets   2
@@ -1515,17 +1515,8 @@ Purpose: The compiler-generated scalar deleting destructor: destroy the wave
 Return Value: the object pointer
 Status: Complete
 */
-void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
-                                           unsigned int mode) {
-    // QUALIFIED, not `self->~Wave()`. ~Wave is virtual through ~Sound, so the
-    // unqualified form dispatches through the live vtable
-    // (`mov eax,[esi]; call [eax+8]`) where the image calls ??1Wave directly.
-    self->Wave::~Wave();
-    if (mode & 1) {
-        operator delete(self);
-    }
-    return self;
-}
+// The existing virtual destructor owns this compiler-generated entry.
+
 
 // The destructor's dependencies. pull_from_group is the Wave_Device method at
 // 0x004C5280 with its singleton receiver at 0x0090D978; the buffer free goes

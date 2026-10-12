@@ -146,8 +146,7 @@ static_assert(sizeof(Sound) == 0x54, "Sound layout must match the original execu
 extern Sound *SoundChainHead;
 extern Sound *SoundChainTail;
 
-void *__fastcall sound_scalar_dtor_redirect(Sound *self, void *,
-                                            unsigned int mode);
+
 
 // Sound subsystem bring-up, called once from WinMain with the main window and
 // a bitmask of the requested backends. `void *` rather than `HWND` because the

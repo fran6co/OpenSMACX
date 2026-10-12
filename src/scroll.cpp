@@ -1978,8 +1978,8 @@ Scroll::~Scroll() {
 Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and, when bit 0 of the mode asks, free the storage to the
          game heap.
-// ORIGINAL: 0x00406F20 ??_GScroll@@UAEPAXI@Z 0x00406F20-0x00406F41 BYTE_EXACT
-// symbol    ?scroll_scalar_dtor_redirect@@YIPAXPAVScroll@@PAXI@Z
+// ORIGINAL: 0x00406F20 ??_GScroll@@UAEPAXI@Z 0x00406F20-0x00406F41 FILE BYTE_EXACT
+// symbol    ??_GScroll@@UAEPAXI@Z
 // size      33 bytes
 // prototype 
 // callers   0   call targets   2
@@ -1989,14 +1989,8 @@ Purpose: The compiler-generated scalar deleting destructor: run the complete
 Return Value: the object pointer
 Status: Complete
 */
-void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
-                                             unsigned int mode) {
-    self->Scroll::~Scroll();
-    if (mode & 1) {
-        operator delete(self);
-    }
-    return self;
-}
+// The existing virtual destructor owns this compiler-generated entry.
+
 
 /*
 Purpose: Step the receiver back to the subobject ??_GScroll@@UAEPAXI@Z expects,
