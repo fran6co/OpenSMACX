@@ -40,6 +40,11 @@ def test_exact_scope_and_all_historical_mapping_fields_survive():
     path = ROOT / "src/base.cpp"
     before = subprocess.check_output(["git", "show", BASE + ":src/base.cpp"], cwd=ROOT, text=True)
     current = path.read_text()
+    # The separately reviewed production/growth/upkeep group is reversed only
+    # against its exact 908fd predecessor. Its bridge preserves all mappings,
+    # history and outside-group code; this older BASE/economy3 guard stays live.
+    from test_base_production_growth_upkeep_oct12 import restore_group_to_baseline
+    current = restore_group_to_baseline(current, path)
     old = {r.address: r for r in read_text(before, path)}
     new = {r.address: r for r in read_file(path)}
     assert new.keys() == old.keys()

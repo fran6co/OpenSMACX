@@ -975,6 +975,7 @@ struct PlayerData {
     int diff_level;
     int unk_28;
     int pop_total;
+    int ai_power;
     int planet_ecology;
     uint32_t satellites_[4];
 };
@@ -1099,8 +1100,9 @@ int base_project(int) { return production_test_project_base; }
 void production_existing_project_notice(int, int, int) {
     ++existing_project_notice_calls; call_order.push_back(40);
 }
-bool production_facility_built(int base_id, int facility_id) {
+bool production_facility_built(int base_id, int facility_id, int &bitmask_offset) {
     const int byte_offset = facility_id >> 3;
+    bitmask_offset = byte_offset;
     const uint8_t mask = static_cast<uint8_t>(1u << (facility_id & 7));
     return (Bases[base_id].facilities_built[byte_offset] & mask) != 0;
 }
@@ -1149,7 +1151,7 @@ void mon_facility_built(int, const char *) { ++production_monitor_calls; call_or
 void mon_built_preserve(int) { ++preserve_monitor_calls; call_order.push_back(73); }
 void interlude(int id, char *, int, int) { last_interlude_id = id; call_order.push_back(74); }
 int production_project_events_tail(int, int) { ++project_tail_calls; call_order.push_back(80); return 0; }
-void production_voice_of_planet_spread() { call_order.push_back(81); }
+void production_voice_of_planet_spread(int &) { call_order.push_back(81); }
 void amovie_project(int) { call_order.push_back(82); }
 void amovie_project(const char *) { call_order.push_back(83); }
 void help_project(int) { call_order.push_back(84); }
@@ -1157,6 +1159,7 @@ void production_late_reconcile(int, int, unsigned char, int) {
     ++late_reconcile_calls; call_order.push_back(90);
 }
 void base_reset(int, int) { ++base_reset_calls; call_order.push_back(5); }
+void draw_tile(int, int, int) { call_order.push_back(89); }
 const Map *map_loc(int, int) { return &MapProbe; }
 void popb(const char *text, int, int, const char *image, void *) {
     ++popb_calls; last_popb_text = text; last_popb_image = image;
@@ -1199,6 +1202,7 @@ static void reset_case() {
     memset(&MapProbe, 0, sizeof(MapProbe));
     BaseCurrent = &Bases[0]; GameDataStateStorage.fields_.base_current_count_ = 2;
     BaseIDCurrentSelected = 0; BaseComputedID = -1;
+    ConsoleGlobal.faction_id_ = 1;
     Bases[0].faction_id_current = 1; Bases[0].queue_production_id[0] = 3;
     Bases[0].nutrients_accumulated = 10; Bases[0].minerals_accumulated = 100;
     Bases[0].population_size = 3; Bases[0].state = 0x80000000u;
@@ -1255,6 +1259,13 @@ static void test_unit_paths() {
     assert(order_index(20) >= 0 && order_index(21) > order_index(20));
 
     reset_case();
+    ConsoleGlobal.faction_id_ = 2;
+    base_production();
+    check_popup_lifetime();
+    assert(Vehs[0].morale == 4 && (Vehs[0].state & VSTATE_UNK_2000) != 0);
+    assert((Vehs[0].flags & 0x1000u) == 0);
+
+    reset_case();
     Bases[0].queue_production_id[0] = 3;
     Bases[0].minerals_accumulated = 1;
     base_production();
@@ -1304,6 +1315,8 @@ static void test_stockpile_and_native_bitmap_hq() {
     assert((Bases[0].facilities_built[0]
             & static_cast<uint8_t>(1u << FAC_HEADQUARTERS)) != 0);
     assert(set_fac_calls == 1 && production_report_calls == 1);
+    assert(order_index(89) >= 0 && order_index(89) < order_index(51));
+    assert(reveal_calls == 0);
 }
 static void test_orbital_project_and_duplicate() {
     reset_case();
@@ -1314,6 +1327,7 @@ static void test_orbital_project_and_duplicate() {
     assert(PlayersData[1].satellites_[0] == 1);
     assert(set_fac_calls == 0 && production_report_calls == 1);
     assert(last_report_orbital == 1 && production_monitor_calls == 1);
+    assert(reveal_calls == 1 && order_index(89) >= 0 && order_index(89) < order_index(51));
 
     reset_case();
     Bases[0].queue_production_id[0] = -72;
