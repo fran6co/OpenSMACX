@@ -1727,14 +1727,26 @@ struct NetWinSessionOptionsPacket {
 static_assert(sizeof(NetWinSessionOptionsPacket) == 0x28,
               "session options packet size");
 
-// The shared tail of the eight pick_* dialogs: the mode byte is in, the
-// daemon knows the local slot, and the complete state rides to the peer.
+// The shared tail of the eight scalar pickers runs even on cancellation:
+// only the option-byte write is conditional. Native 47E137/47E426 and their
+// sibling joins resolve the local slot before copying the live options.
 static void pick_send_state() {
     NetDaemonNet.pid_2_idx(NetWinPlayerId);
     NetWinSessionOptionsPacket packet;
-    packet.opcode_ = 0x2F02;
     packet.options_ = NetWinSessionOptions;
+    packet.opcode_ = 0x2F02;
     NetDaemonNet.send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
+}
+
+// Number/planet pickers and rule clicks load the destination before copying
+// (47E147/47EA57/47B9B5), unlike the other six scalar pickers.
+static void pick_send_state_with_captured_target() {
+    NetDaemonNet.pid_2_idx(NetWinPlayerId);
+    const int target = NetWinOtherPlayerId;
+    NetWinSessionOptionsPacket packet;
+    packet.options_ = NetWinSessionOptions;
+    packet.opcode_ = 0x2F02;
+    NetDaemonNet.send(&packet, sizeof(packet), target, 1);
 }
 
 // The option pick itself: mouse position to screen coordinates, then the
@@ -1802,9 +1814,10 @@ void NetWin::on_left_click(int x, int y) {
         case 16: NetWinSessionOptions.rule_bits_b_ ^= 0x800000; break;
         case 17: NetWinSessionOptions.rule_bits_b_ ^= 0x1000000; break;
         case 100: NetWinSessionOptions.rule_bits_c_ ^= 0x10; break;
-        default: return;
+        // Native 47B8BA and selector slot18 join the unchanged-options send.
+        default: break;
         }
-        pick_send_state();
+        pick_send_state_with_captured_target();
         return;
     case 2:
         if (NetDaemonNet.process_slots_[spot_position + 1].pid_ ==
@@ -2238,9 +2251,8 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::pick_clouds() {
     PopMenu pop_menu;
-    PullDown pull_down;
     pop_menu.init();
-    Dialogs dialogs;
+    Dialogs &dialogs = pop_menu.dialogs();
     dialogs.item(label_get(0xFE4 / 4), 0);
     int index = 1;
     for (int slot = 0xF84 / 4; slot < 0xF90 / 4; ++slot) {
@@ -2250,8 +2262,8 @@ void NetWin::pick_clouds() {
     if (answer >= 0) {
         NetWinSessionOptions.cloud_cover_ =
             static_cast<unsigned char>(answer - 1);
-        pick_send_state();
     }
+    pick_send_state();
 }
 
 /*
@@ -2271,9 +2283,8 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::pick_ocean() {
     PopMenu pop_menu;
-    PullDown pull_down;
     pop_menu.init();
-    Dialogs dialogs;
+    Dialogs &dialogs = pop_menu.dialogs();
     dialogs.item(label_get(0xFE4 / 4), 0);
     int index = 1;
     for (int slot = 0xF60 / 4; slot < 0xF6C / 4; ++slot) {
@@ -2283,8 +2294,8 @@ void NetWin::pick_ocean() {
     if (answer >= 0) {
         NetWinSessionOptions.ocean_coverage_ =
             static_cast<unsigned char>(answer - 1);
-        pick_send_state();
     }
+    pick_send_state();
 }
 
 /*
@@ -2304,9 +2315,8 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::pick_erosion() {
     PopMenu pop_menu;
-    PullDown pull_down;
     pop_menu.init();
-    Dialogs dialogs;
+    Dialogs &dialogs = pop_menu.dialogs();
     dialogs.item(label_get(0xFE4 / 4), 0);
     int index = 1;
     for (int slot = 0xF6C / 4; slot < 0xF78 / 4; ++slot) {
@@ -2316,8 +2326,8 @@ void NetWin::pick_erosion() {
     if (answer >= 0) {
         NetWinSessionOptions.erosion_ =
             static_cast<unsigned char>(answer - 1);
-        pick_send_state();
     }
+    pick_send_state();
 }
 
 /*
@@ -2337,9 +2347,8 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::pick_native() {
     PopMenu pop_menu;
-    PullDown pull_down;
     pop_menu.init();
-    Dialogs dialogs;
+    Dialogs &dialogs = pop_menu.dialogs();
     dialogs.item(label_get(0xFE4 / 4), 0);
     int index = 1;
     for (int slot = 0xF90 / 4; slot < 0xF9C / 4; ++slot) {
@@ -2349,8 +2358,8 @@ void NetWin::pick_native() {
     if (answer >= 0) {
         NetWinSessionOptions.native_life_ =
             static_cast<unsigned char>(answer - 1);
-        pick_send_state();
     }
+    pick_send_state();
 }
 
 /*
@@ -2371,20 +2380,19 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::pick_planet_size() {
     PopMenu pop_menu;
-    PullDown pull_down;
     pop_menu.init();
-    Dialogs dialogs;
+    Dialogs &dialogs = pop_menu.dialogs();
     dialogs.item(label_get(0xFE4 / 4), 0);
-    int count = NetWinPlanetSizeLabelCount;
-    for (int index = 0; index < count; ++index) {
+    // Native 47E9F4 reloads the bound after each owned-dialog insertion.
+    for (int index = 0; index < NetWinPlanetSizeLabelCount; ++index) {
         dialogs.item(world_size_labels_[index], index + 1);
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
         NetWinSessionOptions.planet_size_ =
             static_cast<unsigned char>(answer - 1);
-        pick_send_state();
     }
+    pick_send_state_with_captured_target();
 }
 
 static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom) {
@@ -2629,9 +2637,8 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::pick_num_players() {
     PopMenu pop_menu;
-    PullDown pull_down;
     pop_menu.init();
-    Dialogs dialogs;
+    Dialogs &dialogs = pop_menu.dialogs();
     int first = *NetWinPlayerCount;
     if (first < 2) {
         first = 2;
@@ -2645,9 +2652,14 @@ void NetWin::pick_num_players() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinSessionOptions.player_count_ = static_cast<unsigned char>(answer - 1);
-        pick_send_state();
+        // Native 47E11A..47E132 retains the pre-modal lower bound.
+        int count = static_cast<int>(static_cast<uint32_t>(answer) +
+                                     static_cast<uint32_t>(first));
+        if (count < 2) count = 2;
+        else if (count > 7) count = 7;
+        NetWinSessionOptions.player_count_ = static_cast<unsigned char>(count);
     }
+    pick_send_state_with_captured_target();
 }
 
 /*
@@ -2668,19 +2680,17 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::pick_global_diff() {
     PopMenu pop_menu;
-    PullDown pull_down;
     pop_menu.init();
-    Dialogs dialogs;
-    dialogs.item(label_get(0xFE4 / 4), 0);
+    Dialogs &dialogs = pop_menu.dialogs();
     for (int index = 0; index < 6; ++index) {
-        dialogs.item(StringTable.get(Difficulty[index]), index + 1);
+        dialogs.item(StringTable.get(Difficulty[index]), index);
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
         NetWinSessionOptions.difficulty_ =
-            static_cast<unsigned char>(answer - 1);
-        pick_send_state();
+            static_cast<unsigned char>(answer);
     }
+    pick_send_state();
 }
 
 /*
@@ -2701,15 +2711,14 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::pick_time() {
     PopMenu pop_menu;
-    PullDown pull_down;
     pop_menu.init();
     time_controls_dialog(&pop_menu);
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
         NetWinSessionOptions.time_control_ =
-            static_cast<unsigned char>(answer - 1);
-        pick_send_state();
+            static_cast<unsigned char>(answer);
     }
+    pick_send_state();
 }
 
 /*

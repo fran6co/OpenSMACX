@@ -95,7 +95,7 @@ static_assert(offsetof(NetWinLobbyRow, noun_faction_) +
 extern NetWinSessionBlock NetWinSessionData; // 0x0090E778, after the rows
 struct NetWinSessionOptionsState {
   uint8_t status_;          // +0
-  uint8_t player_count_;    // +1, pick_num_players stores answer - 1
+  uint8_t player_count_;    // +1, pick_num_players clamps selected index + lower bound to 2..7
   uint8_t difficulty_;      // +2
   uint8_t time_control_;    // +3
   uint8_t option_4_;        // +4
