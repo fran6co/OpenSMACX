@@ -1,0 +1,60 @@
+{
+  "author": "coordinator",
+  "base_revision": "315913ede6904b9dd5b063b3143addaeaec5eb30",
+  "editable_files": [
+    "src/general.cpp",
+    "src/general.h",
+    "src/text.h",
+    "src/heap.cpp",
+    "src/heap.h",
+    "src/basebutton.cpp",
+    "recovery/tests/test_button_close_dispatch.py",
+    "recovery/tests/test_text_generated_lifetime_oct11.py",
+    "recovery/tests/test_basepop_owned_close_actual_source.py",
+    "recovery/tests/test_allocator_signed_contract_oct13a.py"
+  ],
+  "evidence": [
+    "Recorded original identities are mem_get5D4510 void*(int), Heap::init5D4620 bool(int), Heap::get5D4680 void*(int), whereas current emitted symbols use size_t and BOOL. Heap::get has signed cmp/jge at5D468C-5D468F and signed requested-size error formatting. Recover signed request declarations consistently; on the target32 ABI malloc conversion must preserve the complete incoming dword including negative bit patterns. Preserve all storage fields and arithmetic/error ordering.",
+    "Heap::init returns EAX1 on failure at5D465B and zero on success at5D466F. Known callers test full EAX; this does not independently distinguish bool from BOOL, so do not overstate type proof from those instructions. The recorded _NH identity supports the proposed bool(int) source contract; fresh native controls must check real emitted return effects, caller behavior, symbol identity and historical restoration rather than assuming a byte match.",
+    "BaseButton::set_bubble_text607550 calls canonical mem_get5D4510 at607581; set_name6074E0 calls it at607511; init607210 calls it at607240. All three currently call helper-only mem_get_old. Redirect these exact callers before deleting its duplicate declaration/body. Complete current source search found only those three calls and no function-pointer uses. Preserve failure exit4, pointer-store/null-check/concat order and all surrounding owner behavior. Qualify obsolete DLL/malloc notes as history, not current routes.",
+    "General and Text both declare mem_get; change both consistently without an alias, overload, compatibility layer or new original identity. Only remove redundant request casts made unnecessary by signed declarations; do not rewrite raw pointer arithmetic, alter private borrowed constructor, normalize negative/overflow requests, repair stale current_ after realloc, add guards or change existing allocation/failure branches.",
+    "Fresh emitted-symbol evidence precedes current symbol annotation updates; never hand-edit ORIGINAL identities/spans/claims. Preserve historical exactness and restoration obligations through justified type migration, including dependent callers affected by bool code generation. Recheck caller closure and request scope expansion if any outside edit is needed.",
+    "Update existing source-sensitive fixtures for real signed/boolean declarations and canonical allocation calls; add target32 request/conversion, growth/borrowed/error-order and result controls, including damage cases. Require fresh build/link, relevant native tests, mappings/references/claim continuity, scoped original matching and affected historical restoration. No masked match or bounded fixture establishes full linked preservation or game/automatic acceptance."
+  ],
+  "intent": "Recover the recorded allocator request/result contracts and canonical BaseButton allocator references, then retire the superseded duplicate helper without changing allocation or error-path behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6112528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6321488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6321376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6320656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "allocator-signed-contract-oct13a"
+}
