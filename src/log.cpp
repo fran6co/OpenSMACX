@@ -61,15 +61,12 @@ int Log::init(LPCSTR input) {
 // the address is terranx.exe's data, unmapped in a standalone build.
 BOOL IsLoggingDisabled;  // 0x009BC004
 
-// THE OBJECT, at 0x009BBFF8 in the image - was `Log *const Logging =
-// (Log *)0x009BBFF8` (see log.h). Zero at load there, as here; the image's
-// ??__ELogging (log_logging below) reaches `construct` as an ordinary method
-// against this storage, and the real constructor runs ahead of it in both
-// binaries.
-Log Logging;  // 0x009BBFF8
+// This global owns the filename constructor and destructor lifetime. Its
+// initial zero storage is followed by Log("logfile.txt") initialization.
+Log Logging("logfile.txt");  // 0x009BBFF8
 
-// ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B BYTE_EXACT
-// symbol    ?log_logging@@YAXXZ
+// ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B FILE BYTE_EXACT
+// symbol    _$E19
 // size      107 bytes
 // prototype 
 // callers   0   call targets   6
@@ -77,6 +74,8 @@ Log Logging;  // 0x009BBFF8
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00634BB0 0x00645398 0x006453E0 0x00645470 0x00645598
 // notes     Staged hybrid export redirect calls the source-owned initializer
+// Historical placement-construction experiment below is superseded by the
+// pinned CRT/global lifetime evidence; retain it as seed provenance only.
 // LEVER: `Logging.construct("logfile.txt")` (an ordinary method, see
 //        log.h) rather than `new (Logging) Log(...)` - the constructor
 //        spelling wraps the body in an SEH frame the image does not have.
@@ -84,13 +83,12 @@ Log Logging;  // 0x009BBFF8
 //        the `Log *const Logging = (Log *)0x009BBFF8` fixed-address binding.
 //        Was 2/107 through the binding; the object's folded receiver measured
 //        this in, and `record` banked it on that change.
-void __cdecl log_logging() {
-    Logging.construct("logfile.txt");
-    atexit(log_logging_exit);
-}
+// The compiler-generated global lifetime performs filename initialization.
+// VC6 currently factors this startup into a CRT root, filename construction
+// and atexit registration. Its original single-body byte obligation remains.
 
-// ORIGINAL: 0x00625F90 ??__FLogging@@YAXXZ 0x00625F90-0x00625FAD BYTE_EXACT
-// symbol    ?log_logging_exit@@YAXXZ
+// ORIGINAL: 0x00625F90 ??__FLogging@@YAXXZ 0x00625F90-0x00625FAD FILE BYTE_EXACT
+// symbol    _$E17
 // size      29 bytes
 // prototype 
 // callers   0   call targets   1
@@ -100,7 +98,7 @@ void __cdecl log_logging() {
 // notes     Staged hybrid export redirect calls the source-owned exit cleanup
 // LEVER: Logging as the REAL OBJECT (log.h/log.cpp, 2026-08-29) instead of
 //        the `Log *const` fixed-address binding; measured in on that change.
-void __cdecl log_logging_exit() { Logging.~Log(); }
+// The compiler-generated global lifetime performs destruction.
 
 // ORIGINAL: 0x00626230 ?log_reset@@YAXXZ 0x00626230-0x0062624F BYTE_EXACT
 // size      31 bytes
@@ -256,9 +254,13 @@ void __cdecl log_set_state(BOOL state) { Logging.set_state(state); }
 
 /*
 // ORIGINAL: 0x00625FC0 ??0Log@@QAE@PAD@Z 0x00625FC0-0x00626016 BYTE_EXACT
+// Historical placement-new inference below is superseded by the pinned
+// global startup and matching arbitrary-receiver filename initialization.
 // LEVER: not a constructor - see the "NOT a constructor" note in log.h. `Logging.construct(input)` is an ordinary method (`??__ELogging` reaches it that way, not through a `new`-expression), which drops the SEH frame VC6 wraps around a placement-new'd non-trivial destructor. Inlines env_open/fclose directly on `input` rather than calling `reset()`, because the image keeps the incoming pointer live in edi and reopens THAT, not a reload of log_file_.
+// The original filename initialization is owned by Log(LPCSTR); it allocates
+// and copies the name, then opens the incoming pointer and closes only success.
 // body      src/log.h
-// symbol    ?construct@Log@@QAEPAV1@PBD@Z
+// symbol    ??0Log@@QAE@PBD@Z
 // size      86 bytes
 // prototype Log* (__thiscall ??0Log@@QAE@PAD@Z)(Log* this, int8*)
 // callers   0   call targets   5

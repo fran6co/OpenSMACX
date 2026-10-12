@@ -103,8 +103,6 @@ static_assert(sizeof(Random) == 4, "Random layout must match the legacy ABI");
 
 // global
 extern Random Rand;
-void __cdecl random_rand();
-void __cdecl random_rand_exit();
 void __cdecl random_reseed(uint32_t new_seed);
 uint32_t __cdecl random_get();
 uint32_t __cdecl random(int min, int max);

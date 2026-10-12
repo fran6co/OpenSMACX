@@ -80,8 +80,8 @@ Status: Complete
 // image passes the object's address outright. Same defect `stringTemp` had.
 Random Rand;   // 0x009BB568
 
-// ORIGINAL: 0x00625700 ??__ERand@@YAXXZ 0x00625700-0x00625716 BYTE_EXACT
-// symbol    ?random_rand@@YAXXZ
+// ORIGINAL: 0x00625700 ??__ERand@@YAXXZ 0x00625700-0x00625716 FILE BYTE_EXACT
+// symbol    _$E17
 // size      22 bytes
 // prototype 
 // callers   0   call targets   1
@@ -89,6 +89,7 @@ Random Rand;   // 0x009BB568
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00645398
 // notes     Staged hybrid export redirect calls the source-owned initializer
+// Historical substitute experiment below is not the current C++ lifetime.
 // LEVER: `Rand = Random();`, NOT `Rand.reseed(0)`. This stands in for the
 //        generated `??__ERand`, whose whole job is to run the constructor, and
 //        the image is one `mov dword ptr [0x9bb568], 0`. `reseed(0)` used to
@@ -96,10 +97,12 @@ Random Rand;   // 0x009BB568
 //        once reseed became the aliasing xor-swap above it stopped folding and
 //        this address went BYTE_EXACT -> MISMATCH. Assigning a default-built
 //        temporary says what the initialiser actually does and restores it.
-void __cdecl random_rand() { Rand = Random(); atexit(random_rand_exit); }
+// Random's global object owns startup through its default constructor.
+// VC6 currently factors zero initialization and atexit registration into
+// generated callees; restoration of the original combined body is pending.
 
-// ORIGINAL: 0x00625720 ??__FRand@@YAXXZ 0x00625720-0x0062572B BYTE_EXACT
-// symbol    ?random_rand_exit@@YAXXZ
+// ORIGINAL: 0x00625720 ??__FRand@@YAXXZ 0x00625720-0x0062572B FILE BYTE_EXACT
+// symbol    _$E15
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0
@@ -107,7 +110,7 @@ void __cdecl random_rand() { Rand = Random(); atexit(random_rand_exit); }
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned exit cleanup
-void __cdecl random_rand_exit() { Rand.~Random(); }
+// Random's global object owns cleanup through its destructor.
 
 // ORIGINAL: 0x006257E0 ?random_reseed@@YAXK@Z 0x006257E0-0x006257F9 BYTE_EXACT
 // LEVER: BYTE_EXACT 8/8, and not one character of THIS body changed. The image inlines `Rand.reseed(new_seed)` here and keeps the xor chain, dropping only the first of reseed's two stores - dead once the second follows. Blocking VC6's xor-swap algebra inside reseed - see the LEVER on 0x00625750 - is what makes those four xors survive inlining here too.

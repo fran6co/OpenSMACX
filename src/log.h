@@ -27,17 +27,9 @@ class Log {
  public:
   MEASURED Log() : log_file_(nullptr), is_disabled_(false) {
   } // 00625FB0
-  // NOT a constructor: `??__ELogging` reaches this through an ordinary
-  // method call (`Logging->construct(...)`), not a `new`-expression. VC6
-  // wraps a placement-new'd, non-trivially-destructible object in an SEH
-  // frame when its constructor calls an external (non-intrinsic) function,
-  // to run the destructor if construction throws - the image has none, so
-  // the original reached this some other way. An ordinary member function
-  // is just a call, and drops the frame entirely. // 00625FC0
-  // MEASURED, and load-bearing: ??__ELogging is this body's only caller and
-  // under /Ob2 it expanded the whole thing, so /Gy dropped the COMDAT and
-  // 0x00625FC0 had nothing to be measured against.
-  MEASURED Log *construct(LPCSTR input) {
+  // Filename initialization belongs to this constructor; Logging's global
+  // object receives the filename before ordinary application code runs.
+  MEASURED Log(LPCSTR input) {
       log_file_ = nullptr;
       if (input) {
           void *buf = mem_get(strlen(input) + 1);
@@ -51,7 +43,6 @@ class Log {
               }
           }
       }
-      return this;
   }
   MEASURED ~Log() {
       if (log_file_) {
@@ -116,8 +107,6 @@ static_assert(sizeof(Log) == 8, "Log layout must match the legacy ABI");
 // operands off the object - while `->` becomes `.`.
 extern Log Logging;  // 0x009BBFF8
 
-void __cdecl log_logging();
-void __cdecl log_logging_exit();
 void __cdecl log_reset();
 void __cdecl log_say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
 void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3);
