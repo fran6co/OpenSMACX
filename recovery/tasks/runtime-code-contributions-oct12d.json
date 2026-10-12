@@ -4,10 +4,27 @@
   "base_revision": "bb26bc273d8a50ae0c578c783fa02d561acfc890",
   "editable_files": [
     "src/vendor/vc6-runtime.recovery.h",
-    "recovery/tests/test_runtime_code_contributions_oct12d.py"
+    "recovery/tests/test_runtime_code_contributions_oct12d.py",
+    "recovery/tests/test_crt_codepage_helper_oct11.py",
+    "recovery/tests/test_crt_strict_frontier_oct11.py",
+    "recovery/tests/test_crt_stream_lock_bindings_oct11.py",
+    "recovery/tests/test_crt_fp_control_oct11.py",
+    "recovery/tests/test_crt_exception_helpers_oct11.py",
+    "recovery/tests/test_crt_bulk_attribution_oct11.py",
+    "recovery/tests/test_crt_reference_attribution_oct11.py",
+    "recovery/tests/test_crt_stdio_bindings_oct11.py",
+    "recovery/tests/test_runtime_exit_entries_oct11.py",
+    "recovery/tests/test_crt_eight_entry_bindings_oct10.py",
+    "recovery/tests/test_crt_component_migration.py",
+    "recovery/tests/test_crt_disputed_bounds_oct11.py",
+    "recovery/tests/test_crt_reference_closure_oct11.py",
+    "recovery/tests/test_runtime_array_unwind_oct11.py",
+    "recovery/tests/test_runtime_atox_errno_oct11.py",
+    "recovery/tests/test_runtime_mantissa_family_oct11.py"
   ],
   "intent": "Bind seventeen independently reviewed ordinary runtime code contributions to the pinned external archive for verification, without inventing application functions or granting provider selection, exclusions, matching or acceptance.",
   "evidence": [
+    "Coordinator extends only the listed historical runtime test fixtures to project code_sections from their exact historical snapshot when comparing earlier function-binding additions. Preserve every other historical field, original checkpoint and mutation control. The new current-contribution test separately guards all seventeen code sections and complete pre-batch manifest continuity. Do not generically strip or ignore contribution obligations in current verification or image damage tests; any unsupported fixture case returns for review.",
     "Original pinned image SHA25601901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf and external LIBCMT archive SHA2561ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b. Independent physical review corroborates full ordinary executable section lengths, symbol offsets and bytes outside supported relocation operands for exsup, chkstk, strchr, sin, cos, sqrt, atan, pow, exsup3, acos, lowhelpr, 87disp, common, genexcep, 87tran, adj_fdiv and stricmp members.",
     "All seventeen full ranges are disjoint from all currently parsed source function, object, literal, generated and component intervals. Two sections have no relocations; fifteen retain unresolved relocation-target obligations. Unique observed correspondence is not proof of original archive-member selection or original runtime version. Native verification must retain UNKNOWN where evidence is missing and detect nonrelocation damage.",
     "Use existing native component_source reader/writer and ToolchainCodeSectionBinding schema. Preserve every existing component binding, data section, absolute symbol, archive pin, license/provenance, original identity and historical claim. No callable function identities, blanket exclusions, proprietary bytes, compiler changes or new CLI. Do not admit alternative-member, COMDAT, overlapping or otherwise unqualified contributions.",
