@@ -921,6 +921,11 @@ def scope_bridge(candidate: dict[str, str], baseline: dict[str, str]) -> None:
                            tuple(text for _, text in lesson.lines)) for lesson in row.origin))
         assert [identity(row) for row in before] == [identity(row) for row in after]
         text = candidate[file_name]
+        if file_name.endswith("net_fifo.cpp"):
+            # Reverse only the later authorized two-head closure against its
+            # own 908fd8cdc baseline before retaining this original 58563 guard.
+            from test_net_fifo_live_head_oct12 import restore_live_head
+            text = restore_live_head(text)
         heads = NET_METHODS if file_name.endswith("net_class.cpp") else FIFO_METHODS
         for head in heads:
             old_head = head

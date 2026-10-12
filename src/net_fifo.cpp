@@ -212,7 +212,9 @@ int NetFifo::get(void *data, unsigned int *key, int *type,
     }
     node->data_ = 0;
   }
-  head_ = node->next_;
+  // 633FD5 reloads the receiver's head after the output copy/free; the
+  // selected node still supplies the outputs/result and is the node freed.
+  head_ = head_->next_;
   if (key != 0) {
     *key = node->key_;
   }
@@ -586,16 +588,18 @@ int NetFifo::peek_head(void *data, unsigned int *key_out, int *caller_value_out,
     if (size_out != 0) {
         *size_out = static_cast<int>(node->data_size_);
     }
-    if (node->data_ != 0 && data != 0) {
-        memcpy(data, node->data_, node->data_size_);
+    // Unlike the searched peeks, 63422F/634256/634265/63426B reload this
+    // receiver's head after each preceding output/copy, not the entry node.
+    if (head_->data_ != 0 && data != 0) {
+        memcpy(data, head_->data_, head_->data_size_);
     }
     if (key_out != 0) {
-        *key_out = node->key_;
+        *key_out = head_->key_;
     }
     if (caller_value_out != 0) {
-        *caller_value_out = node->caller_value_;
+        *caller_value_out = head_->caller_value_;
     }
-    const int result = node->result_;
+    const int result = head_->result_;
     LeaveCriticalSection(&lock_);
     return result;
 }
