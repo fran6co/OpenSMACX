@@ -1,0 +1,19 @@
+{
+  "event_id": "9d647dbb9faa659c8122ad9ef8a53629e5185b45e3fec338c70f2d2f702e4b1b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_transport_queue_closure_oct12.py"
+    ],
+    "evidence": [
+      "Authorize one narrow prior-control bridge that invokes the new exact two-head-body restoration before the older transport scope guard. New restore_live_head must restore ONLY get-head633F70 and peek_head634200 to their original task908fd baseline and verify all mappings/claims/lessons plus byte-identical outside-body text. Keep old transport58563 baseline, original eight-body/header/symbol assertions and all damage controls unchanged; no broad body exemption or prior DPID guard normalization. Include executed damage controls proving outside edits or failed restorations still refuse."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "prior-fifo-transport-exact-bridge-oct12",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:net-fifo-live-head-oct12"
+}
