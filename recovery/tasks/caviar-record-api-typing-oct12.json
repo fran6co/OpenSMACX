@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "task_id": "caviar-record-api-typing-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "de37a7cda0820dc5827e58919e350e22fa0c6c6f",
+  "intent": "Recover the shared Caviar record creation and pointer API closure from pinned evidence; correct signed low-word dimension bounds, retain full-width descriptor accesses, original allocation/failure behavior and historical restoration obligations.",
+  "subjects": [
+    {
+      "address": 6391072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6391136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6525888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6532448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6532640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6551984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/caviar.h",
+    "recovery/tests/test_caviar_record_api_typing_oct12.py",
+    "recovery/tests/test_caviar_clip_members_oct11.py",
+    "recovery/tests/test_caviar_descriptor_ramps_overlay_oct9.py",
+    "recovery/tests/test_caviar_shape_chain_oct11.py",
+    "recovery/tests/test_original_extent_closure_oct12.py"
+  ],
+  "evidence": [
+    "Pinned 6393E2/6393E7 allocation is 0x80; EBX retains the VoxRenderRecord identity through calls6395BC/6395C4/6395DF. Installers and ramp allocator directly consume record+4 descriptor and typed callback/row members. Preserve C linkage of63AD60 and63F9B0, C++ cdecl63AE20.",
+    "Pinned63957B/639586 sign-extend descriptor low-word width/height before decrement and signed bounds tests. Current uint16 conversion is semantically wrong for8000..FFFF. Later full-dword descriptor tests and row allocation must remain full width.",
+    "618560 consumes an actual output pointer, writes words in order0,2,1,3 and reloads the created-record global between stores.618520 returns its existing mutable four-word cache. Preserve aliasing/null behavior, wrapping arithmetic and current member contract; ECX non-use does not establish statification or original ownership.",
+    "Preserve every original identity, complete span, historical claim and useful discoveries. No manual marker edits, demotions or new byte tokens. Coordinator observes emitted COFF symbols before package writer updates hints. Tests may receive narrowly explicit migration bridges for these six identities; do not reset their historical baselines or blanket-exempt Caviar changes.",
+    "Require actual-source host controls and independent source/evidence review, fresh native build/link, scoped measurement and outside-scope comparison before coordinator-reviewed integration. Differing matching results remain restoration obligations; none of these checks establish full-game or autonomous acceptance."
+  ]
+}
