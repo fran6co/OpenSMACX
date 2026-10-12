@@ -1,0 +1,77 @@
+{
+  "author": "coordinator",
+  "base_revision": "02494139b21b005b388b3b977584faa65141e5ce",
+  "editable_files": [
+    "src/matrix3.cpp",
+    "src/matrix3.h"
+  ],
+  "evidence": [
+    "Pinned634720,634980,634AD0 each initialize a nine-float identity local before computing and copying a class-shaped result. This is positive evidence compatible with an inlined identity constructor, not proof of original class name, constructor identity, full extent/lifetime or Jackal ownership. One source-preserving native multi-file deck may introduce an unclaimed inline identity constructor in the chosen Matrix3 view and replace scratch-array/memcpy staging with a single local result while preserving operation/alias order. Do not remap6346C0 or634B70 as constructors, change ORIGINAL metadata/roles, bank claims, add vtables/fields, or alter compiler flags. Review actual generated lifetime/ABI and all twelve restoration obligations before any production adoption; preserve findings if the compiler rejects or removes required initialization. Compiler experiments are hints, not ownership or acceptance proof."
+  ],
+  "intent": "Test and recover native identity-initialized class result construction across the three value-result operations, preserving all original identities and structural obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6506176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "matrix3-constructed-results-oct12f"
+}
