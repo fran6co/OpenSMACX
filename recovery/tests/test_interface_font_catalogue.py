@@ -33,10 +33,22 @@ def test_application_catalogue_is_not_a_generic_font_dependency():
     generic = (ROOT / 'src/jackal/font.cpp').read_text()
     generic_header = (ROOT / 'src/jackal/font.h').read_text()
     for name in ('FontTable', 'FontSizeTable', 'FontStyleTable', 'find_font',
-                 'DefaultFontFace', 'DefaultLargeFontFace', 'g_JACKAL_FONT'):
+                 'DefaultFontFace', 'DefaultLargeFontFace'):
         assert name in app and name in app_header
         assert name not in generic and name not in generic_header
-    assert app.index('Font FontTable[48];') < app.index('Font g_JACKAL_FONT;')
+    assert 'Font FontTable[48];' in app
+    # The entrypoint owns the singleton supplied to Jackal, not the catalogue.
+    main = (ROOT / 'src/main.cpp').read_text()
+    assert 'Font g_JACKAL_FONT;' in main
+    assert 'extern Font g_JACKAL_FONT;' in (ROOT / 'src/main.h').read_text()
+    for text in (app, app_header, generic, generic_header):
+        assert 'g_JACKAL_FONT' not in text
+    assert '// RECOVERY_OBJECT: v1 0x007D3948 ?g_JACKAL_FONT@@3VFont@@A\nFont g_JACKAL_FONT;' in main
+    lifecycle = {r.address: r for r in read_file(ROOT / 'src/main.cpp')}
+    for address, symbol, end in ((0x45F920, '_$E21', 0x45F936),
+                                 (0x45F940, '_$E19', 0x45F94A)):
+        assert lifecycle[address].name == symbol
+        assert lifecycle[address].image_spans == ((address, end),)
     assert 'src/interface_fonts.cpp' in (ROOT / 'CMakeLists.txt').read_text()
     assert '#include "interface_fonts.h"' not in (ROOT / 'src/jackal/jackal.cpp').read_text()
 
