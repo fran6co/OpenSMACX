@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "natural-scalar-destructor-owners-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "92d876fe14fd75508d7df4031cbd8c9a90d58a11",
+  "intent": "Replace the uncalled Scroll, Sound and Wave handwritten scalar deleting-destructor replicas with their existing true class-generated operations, retaining every original identity, span, claim and useful finding.",
+  "editable_files": ["src/scroll.cpp", "src/scroll.h", "src/sound.cpp", "src/sound.h", "src/wave.cpp", "src/wave.h", "recovery/tests/test_natural_scalar_destructor_owners_oct12.py"],
+  "subjects": [
+    {"address": 4222752, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5018320, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 5018368, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "evidence": [
+    "Fresh clean-baseline VC6 COFF observations under both configured profiles independently define ??_GScroll@@UAEPAXI@Z, ??_GSound@@UAEPAXI@Z and ??_GWave@@UAEPAXI@Z as well as the redundant scalar_dtor_redirect replicas. These generated operations already belong to the genuine virtual-destructor hierarchy.",
+    "Pinned 406F20..406F41,4C92D0..4C92F1,4C9300..4C9321 call each owning complete destructor, conditionally operator delete on mode bit0, and return the same receiver. Product source references to replicas are definitions/prototypes only; preserve unknown indirect original callers rather than inferring no executable use.",
+    "Do not change destructor bodies, class layout, inheritance, virtual-slot order, allocators, provider ABI, member cleanup or error behavior. Keep existing Scroll adjusted deletion identity and its generated symbol untouched. Native writer alone renders mode/symbol facts from observed COFF; no original marker hand editing or claim grant/demotion.",
+    "Independent review, fresh compiling/linking closure, all original identity/claim continuity and selected native matching are required before coordinator-reviewed integration. A justified temporary match regression retains its historical obligation, not an automatic acceptance waiver. No full-game or strict linked-preservation acceptance is asserted."
+  ]
+}
