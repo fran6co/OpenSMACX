@@ -3672,6 +3672,16 @@ structural acceptance. They neither choose project recipes nor stamp source.
 Flag trials may be native argument arrays or legacy strings. Native array tokens
 are passed unchanged; quoted display labels are never reparsed into arguments.
 
+The historical whole-function comparator and recorder require exactly one
+original image span. For a multi-span mapping, `measure` and `record` refuse
+the subject as incomplete evidence, and `check-matches` cannot verify its byte
+claim. This prevents a primary-span comparison from silently omitting disjoint
+cold code. `original_asm` may still be used to inspect the primary span, but
+that diagnostic is not a complete-function match or recordable claim. The
+separate strict binary verifier can compare multiple spans only when fresh COFF
+evidence uniquely binds those spans to its supported one- or two-section code
+layout; this does not relax its other evidence requirements.
+
 `source.asm.compare_unit(records, image, source, arguments, flag_sets,
 compiler=...)` measures selected mappings from one host together, using that same
 per-function comparison. It compiles once per requested flag configuration and

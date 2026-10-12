@@ -68,6 +68,40 @@ def project(tmp_path):
     return tmp_path
 
 
+@pytest.fixture
+def multispan_project(tmp_path):
+    """A synthetic project whose original cold span differs from its primary."""
+    git(tmp_path, "init", "-b", "main")
+    git(tmp_path, "config", "user.name", "Control")
+    git(tmp_path, "config", "user.email", "control@example.test")
+    for name in ("engine", "seeds", "original", "recovery"):
+        (tmp_path / name).mkdir()
+    (tmp_path / ".gitignore").write_text("build/\noriginal/input.exe\n")
+    source = FIRST.replace("0x00401000-0x00401001\n",
+                           "0x00401000-0x00401001;0x00401010-0x00401013\n")
+    (tmp_path / "engine/family.cc").write_text(source)
+    (tmp_path / "engine/types.hpp").write_text("struct Value { int field; };\n")
+    image = pe_fixture(b"\xc3" + b"\x90" * 15 + b"\x33\xc0\xc3")
+    (tmp_path / "original/input.exe").write_bytes(image)
+    (tmp_path / "original/PIN").write_text(
+        "sha256 " + hashlib.sha256(image).hexdigest() + "\n")
+    compiler(tmp_path, raw_object=coff([("_f", b"\xc3")]))
+    (tmp_path / "recovery/project.json").write_text(json.dumps({
+        "schema_version": 1,
+        "source": {"image_pin": "original/PIN", "address_space": "pe:va", "roots": ["engine", "seeds"],
+                   "extensions": [".cc", ".hpp"], "seed_roots": ["seeds"]},
+        "compiler": {"command": {"argv": [sys.executable, "recovery/compiler.py"], "timeout": 10},
+                     "inputs": ["recovery/compiler.py"], "environment": ["RECORDING_CONTROL"]},
+        "measurement": {"backend": "pe-coff-i386", "compiler_profile": "fixture",
+                         "flag_sets": [["first", "/Dvalue=two words"], ["second"]], "layout_flags": [],
+                         "unit_extensions": [".cc"], "inputs": [], "input_roots": []}}))
+    baseline = commit(tmp_path, "Initial disjoint-span synthetic source")
+    configuration(tmp_path, lambda value: value.update(source_history={
+        "baseline_revision": baseline, "evidence": ["Synthetic disjoint-span measurement control"]}))
+    commit(tmp_path, "Declare synthetic source history")
+    return tmp_path
+
+
 def run(root, *targets, **kwargs):
     return recording.record(root, targets or ("_f", "_h"), image=Path("original/input.exe"), **kwargs)
 
@@ -173,6 +207,45 @@ def test_local_generated_multiple_original_spans_cannot_bank_only_the_primary(pr
     assert "one original image span" in json.dumps(report)
     assert before == (path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns)
     assert not any(row.byte_exact for row in read_file(path))
+
+
+def test_external_multiple_spans_cannot_bank_a_primary_only_match(multispan_project):
+    """External COMDAT symbols must not turn an omitted cold span into exactness."""
+    project = multispan_project
+    path = project / "engine/family.cc"
+    # Primary is RET and matches the object. The disjoint cold span is XOR EAX,EAX; RET.
+
+    before = path.read_bytes()
+    measured = measure_source(project, ("_f",), image=Path("original/input.exe"))
+    assert measured["result"] == "unknown" and measured["counts"] == {"unknown": 1}
+    assert "one original image span" in measured["measurements"][0]["diagnostic"]
+    assert before == path.read_bytes()
+
+    code, report = run(project, "_f")
+    assert code == 3 and len(report["unresolved"]) == 1 and report["updated"] == []
+    assert "one original image span" in report["unresolved"][0]["diagnostic"]
+    assert before == path.read_bytes() and not read_file(path)[0].byte_exact
+
+
+def test_check_matches_does_not_verify_multispan_historical_claim(multispan_project, capsys):
+    project = multispan_project
+    path = project / "engine/family.cc"
+    path.write_text(path.read_text().replace("0x00401010-0x00401013\n",
+                                            "0x00401010-0x00401013 BYTE_EXACT\n"))
+    (project / "build").mkdir()
+    (project / "build/commands.json").write_text(json.dumps([
+        {"directory": str(project), "file": "engine/family.cc", "arguments": ["compiler", "engine/family.cc"]}
+    ]))
+    configuration(project, lambda value: value.update(mappings={
+        "compile_commands": "build/commands.json", "forwarder_macros": []}))
+    before = path.read_bytes()
+    code = main(["check-matches", "--root", str(project), "--image", "original/input.exe"])
+    report = json.loads(capsys.readouterr().out)
+    assert code == 1 and report["result"] == "fail"
+    assert report["counts"] == {"fail": 1} and report["verified"] == 0
+    assert report["regressed"][0]["byte_obligation"] is True
+    assert "one original image span" in report["regressed"][0]["diagnostic"]
+    assert read_file(path)[0].byte_exact and path.read_bytes() == before
 
 
 def test_local_generated_body_cannot_borrow_adjacent_original_function(project):

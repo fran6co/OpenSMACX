@@ -322,6 +322,10 @@ class CompileFailed(Exception):
     """
 
 
+class SpanComparisonRefused(ValueError):
+    """The legacy whole-function comparison cannot cover every mapped span."""
+
+
 # SECTION CHARACTERISTICS. A section that is both executable and writable is
 # code that can rewrite itself - which is what the copy protection in this
 # image does, and why nothing a compiler emits can equal a body that is not
@@ -682,6 +686,9 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
             f"emits for it")
     if len({(value, sec) for _n, value, sec, _storage in matches}) > 1:
         raise ValueError(f"{wanted} is ambiguous in the object")
+    if spans is not None and len(spans) != 1:
+        raise SpanComparisonRefused(
+            "complete function measurement requires one original image span")
     _name, value, sec, _storage = matches[0]
     _sec_name, raw_size, raw_ptr, reloc_ptr, n_relocs = sections[sec]
     code = obj[raw_ptr + value:raw_ptr + raw_size]
@@ -1018,6 +1025,9 @@ def compare_subject(record: DecompilationState, exe: Path | str,
     pure comparison of two listings, which is what makes it testable
     without an image.
     """
+    if len(record.image_spans) != 1:
+        raise SpanComparisonRefused(
+            "complete function comparison requires one original image span")
     original = original_asm(record, exe)
     if len(compiled.code) > len(original.code):
         try:
@@ -1520,6 +1530,8 @@ def compare_source(record: DecompilationState, exe: Path | str,
             if retry_compile is None or retry_compile(str(failed)):
                 continue
             break
+        except SpanComparisonRefused as refused:
+            return AsmComparison(verdict=Tier.REFUSED, diagnostic=str(refused))
         except ValueError as absent:
             # A SUBJECT THAT ONE INVOCATION DOES NOT EMIT. An `inline`
             # function is folded into its callers under /O2 and emitted as

@@ -125,6 +125,36 @@ def test_coff_function_extracts_and_strips_padding():
     assert asm._coff_function_masked(obj, "?f@@YAXXZ")[0] == code
 
 
+def test_external_coff_subject_refuses_disjoint_original_spans(tmp_path):
+    record = record_in(
+        tmp_path,
+        MARKED.replace("0x00401000-0x00401008",
+                       "0x00401000-0x00401004;0x00401010-0x00401014"))
+    obj = tiny_coff(b"\xC3", record.name)
+    with pytest.raises(ValueError, match="complete function measurement requires one original image span"):
+        asm._coff_function_masked(obj, record.name, record.symbol,
+                                  spans=record.image_spans)
+    with pytest.raises(ValueError, match="complete function comparison requires one original image span"):
+        asm.compare_subject(record, "unused.exe", asm.Listing(code=b"\xC3", base=record.address))
+
+
+def test_compare_record_reports_multispan_refusal_without_trying_other_flags(tmp_path, monkeypatch):
+    record = record_in(
+        tmp_path,
+        MARKED.replace("0x00401000-0x00401008",
+                       "0x00401000-0x00401004;0x00401010-0x00401014"))
+    calls = []
+    monkeypatch.setattr(asm, "span_refusal", lambda *args: None)
+    monkeypatch.setattr(asm, "original_asm", lambda *args, **kwargs:
+                        asm.Listing(code=b"\xC3", base=record.address))
+    result = asm.compare_record(
+        record, "unused.exe", ["cl"], ("first", "second"),
+        compiler=lambda *args, **kwargs: (calls.append(args) or tiny_coff(b"\xC3", record.name)))
+    assert result.verdict == "REFUSED"
+    assert "one original image span" in result.diagnostic
+    assert len(calls) == 1
+
+
 def test_coff_function_refuses_an_absent_symbol():
     obj = tiny_coff(b"\xC3", "?f@@YAXXZ")
     with pytest.raises(ValueError, match="not found"):
