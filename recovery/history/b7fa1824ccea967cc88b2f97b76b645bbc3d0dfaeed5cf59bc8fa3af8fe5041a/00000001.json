@@ -1,0 +1,20 @@
+{
+  "event_id": "82522c194421a4d2ee32a38e63fcc8f507f9292abf9f7807e11dc1309cfdd41f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_landmark_canyon_phase_contract_oct12i.py",
+      "recovery/tests/test_landmark_ridge_phase_contract_oct12i.py"
+    ],
+    "evidence": [
+      "Scope clarification for existing canyon/ridge subjects: pinned Canyon altitude pass 0x5C7E05-0x5C7E88 performs ALT4 then ALT3 per valid tile for all12 entries, followed by a separate mask/code pass 0x5C7E8E-0x5C7F0A. Restore two loops, not interleaved metadata. Ridge altitude pass 0x5C8290-0x5C82F8 and metadata pass 0x5C82FA-0x5C837E both traverse13 entries at original table0x685908-0x68593C. Pinned PeImage read confirms47,44,24,20,8,7,0,5,4,17,23,35,45; current455 is a typo and i<12 suppresses original validlast45. Restore13 entries and two passes; do not create an out-of-bounds alias or safetyfix. world_alt_set mutates neighbors andowners, so pass order is load-bearing. Addactualbody phase/count controls with fusedpasses,12-entry and455 mutants. Existing identity/baseline/claims remain immutable; this grants no measurement or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "landmark-two-pass-and-ridge-extent-oct12i",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:world-landmark-mask-contract-oct12i"
+}
