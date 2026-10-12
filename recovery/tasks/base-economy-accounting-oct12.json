@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "task_id": "base-economy-accounting-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "58563bc456781d3224dca06e4d52c5175691a29e",
+  "intent": "Recover complete Base mineral/ecology and maintenance arithmetic/lifecycle together, preserving original signed/wrapped effects and live owner reads.",
+  "subjects": [
+    {
+      "address": 5151920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5203440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5203216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/base.cpp",
+    "recovery/tests/test_base_economy_accounting_oct12.py",
+    "recovery/tests/test_map_metadata_owner.py"
+  ],
+  "evidence": [
+    "Pinned4E9D94..9E low-word IMUL then signed /2 contradicts unsigned mineral_bonus;4E9E19 arithmetic SAR3 differs from truncating /8 for negative eco. Preserve32bit low-product wrapping and native signed interpretation, not undefined convenient results.",
+    "Pinned4E9FF1 and4EA056 separately divide major_atrocities and Tectonic terms, with distinct human/clamp reads; merged source division changes ordinary ecology0→1 in evidenced fixture.4EA13D..159 wraps products then signed /6; existing metadata test wrongly interprets80000000 as unsigned. Keep wrappedINC/factors; correct only divide contract with actual-source controls.",
+    "Pinned4F66C8..CB signed maint /2 incl negative/carry behavior;4F6772..7C reloads live BaseCurrent faction after facility-clear for cost_factor, while initially captured faction retains energy-ledger ownership.4F6539..3F wrapped difficulty INC then signed /2 before rejection in fac_maint.",
+    "Only3complete bodies and scoped controls; existing wrapping helpers suffice, no unproved storage/header renaming. Preserve pre-scaling zero clamp only; original has no post-scaling clamp. Full span bounds/callback/branch/accounting controls and executable mutants must not introduce safety fixes or weaken existing assertions except proven unsigned golden error.",
+    "Retain every original mapping/span/symbol/claim/lesson, no manual marker edits/demotion/newbyte tokens. Fresh build/link, scope measurements/outside-scope checks, independent original/source review and destination verification before manual integration; full caller scan has6unrelateddecodegaps and is not complete executable proof."
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "task_id": "net-transport-queue-closure-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "58563bc456781d3224dca06e4d52c5175691a29e",
+  "intent": "Recover the complete shared Net transport/peer/FIFO ownership contract: source-captured receive data, original unsigned sequence gating, scalar-key API, queue results/chains, peer removal and targeted/broadcast sender timing.",
+  "subjects": [
+    {
+      "address": 6498272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6500256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6497104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6490688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6490880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6503088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6503824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6486176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/net_class.cpp",
+    "src/net_class.h",
+    "src/net_fifo.cpp",
+    "src/net_fifo.h",
+    "recovery/tests/test_net_transport_queue_closure_oct12.py",
+    "recovery/tests/test_net_receive_player_actual_source.py",
+    "recovery/tests/test_net_queue_pointer_contracts_oct11.py",
+    "recovery/tests/test_net_fifo_actual_source.py",
+    "recovery/tests/test_net_transport.py",
+    "recovery/tests/net_transport_control.cpp"
+  ],
+  "evidence": [
+    "Complete6327E0..632CB3 loads buffer before Receive and retains it; stored peer+4 >=incoming rejects, only unsigned newer accepted in two arms. ACK packetWORD reread after queue.add/SetEvent, signedqueue count gate and low32wrappedvoice product must survive. Incoming200 perversely calls primaryslot88 start4C8C20, not slot20 stop4C8C40, on unknown peer; knownpeer sequence0 ordinaryreject. Preserve original quirk, unchecked short envelopes and no modular-sequence fix.",
+    "Complete632FA0..633007 compares/stores shared peer sequence+4, not polling stamp+10. Preserve those separate typed fields and test distinct sentinels. Native send/send_packet_type produce increasing reliable seq,0otherwise; no sender API changes beyond scoped timing routine.",
+    "CompleteFIFOadd633AB0..633B9A zeroes next+14 then stores fifth argument into result+8, not next. Keyedget633D90..633E75 consumes raw second DWORD key, not pointed value; wrappers630A40/630B00 forward scalar. Recover typed scalar key through declarations/definitions/callers (valueparams int per project law; preserve32bit equality); separate head-get remains true pointer output. Root observes fresh COFF before guarded writer hint updates;630A40 historicalBYTE claim retained.",
+    "Complete drop_player632350..632716 compares same localID760 againsthost764 and row1ID, re-searches requested key aftermodal, treats pluralmodal outside0/1/2 as return0, sends address of original key argumentDWORD from proven6326F4 stack—not uninitialized notice. Preserve switch tables/row shifts and actual class/provider order; do not add bounds normalization.",
+    "Complete send_packet_type62F8A0..63007F targetedwait uses captured MIN eligible RTT across outer passes, unlike actual send live reload; retain lastselected retryrow separately. Broadcastnonzero-cancel path shows original final failure MessageBox beforefree. Existing transport golden for changedRTT is wrong; preserve real send behavior unchanged.",
+    "New full-routine/coupled controls execute actual FIFO add/get chains/results/partial allocation failures, fullreceive known/unknown sequence/callback buffers/header/voice owner contracts, scalar wrapper forwarding, modal row replacement/drop notice, sender timing/message boxes. Correct only proven wrong existing pointer/timestamp/timing goldens, no baseline resets or assertions removed. Preserve all original identities/fullspans/claims/lessons and table/full-error quirks.",
+    "Do not narrow historicalhead-get633F70..634067 obligation: actualbody633F70..63401D, paddingthen634020sibling overlaps oldspan; retain originalclaim/map and measurement-boundary limitation, no ad hocextent rewrite. Fresh nativebuild/link, scopedmatching/restoration/outside-scope evidence, independent review and destination verification precede manualintegration; no automatic/full-game acceptance asserted."
+  ]
+}
