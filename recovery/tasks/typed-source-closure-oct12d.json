@@ -14,13 +14,16 @@
     "src/veh.cpp",
     "src/wave_device.cpp",
     "src/win.cpp",
-    "recovery/tests/test_designwin_special_text_literals_oct9.py"
+    "recovery/tests/test_designwin_special_text_literals_oct9.py",
+    "recovery/tests/council_vote_purchase_harness.cpp"
   ],
   "evidence": [
     "Labels::strings_ptr is declared LPSTR*: remove only same-type casts at the 31 scoped audited expressions, preserving every index, call, order and tutorial helper byte-offset division. Read ignored build/recovery/typed-source-cleanup-frontier-oct12d.json for locations and exclusions.",
     "Use MultiWindow.GraphicWin::redraw() preserving explicit nonvirtual base dispatch; ConsoleGlobal has an existing evidenced public MapWin base, so use static_cast<MapWin *>; native device members already have void* type and DirectDraw surf_ already has the SDK out-parameter type. Do not rename fields, alter layouts or introduce new behavior.",
     "Scope contains only the 21 named original identities and their tutorial_button_label helper. Preserve all source annotations, original spans, historical claims and discoveries. No bounds checks, initialization fixes, algorithm changes, array flattening changes, MEASURED removal, header edits or out-of-scope cleanup.",
-    "Coordinator owns Git, compiler leases and integration. Require independent review, paired complete physical code/data COFF sections and relocation target equality under both current profiles, fresh claimed single-span measurements, build/link, references and claim continuity. Unsupported whole-project or linked preservation remains unknown; this is not function-coverage gain or full acceptance."
+    "Coordinator owns Git, compiler leases and integration. Require independent review, paired complete physical code/data COFF sections and relocation target equality under both current profiles, fresh claimed single-span measurements, build/link, references and claim continuity. Unsupported whole-project or linked preservation remains unknown; this is not function-coverage gain or full acceptance.",
+    "Coordinator expansion retains the original baseline and adds review/restoration scope for unchanged propose_treaty0x544E40, setup_player0x5B0E00 and goody_box0x57A660: complete paired physical diagnostic returns2, with Faction alternate profile and both Veh profiles differing despite unchanged surrounding source bodies. All other21 of24 unit/profile pairs pass. Under standing coordinator-reviewed manual recovery authority, these specific temporary compiler-output regressions may be retained after source review, build/link, identity continuity and relevant controls; they are not a preservation pass, claim demotion or native automatic admission. Full matching and linked/game acceptance obligations remain.",
+    "Add council_vote0x53EB50 only for relevant regression-control scope. Its source is unchanged; six harness tests fail identically on master and worker because stale parse_say takes int instead of the canonical general.h LPSTR input and int return. Authorize only changing the harness stub to int parse_say(int,char*,int,int){return0;} retaining its existing no-op behavior and all tests/damage controls. No product behavior change is permitted."
   ],
   "intent": "Replace 37 evidenced redundant casts with genuine existing types and base relationships across 21 mapped functions, preserving original behavior and all historical obligations.",
   "schema_version": 1,
@@ -127,6 +130,26 @@
     },
     {
       "address": 6509840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5525056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5967360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5744224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5499728,
       "address_space": "pe:va",
       "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
     }
