@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "task_id": "matrix3-value-results-oct12b",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "ba13b343766c3d50a7a2ccd77d1f8624b6dde677",
+  "intent": "Replace three explicit destination-pointer numerical APIs with genuine C++ Matrix3 value results in the existing provisional mathematical model; preserve complete original behavior, ABI observations, identities and structural uncertainties.",
+  "editable_files": [
+    "src/matrix3.cpp",
+    "src/matrix3.h",
+    "recovery/tests/test_matrix3_consolidated_actual_source.py",
+    "recovery/tests/test_matrix3_pointer_returns.py",
+    "recovery/tests/test_matrix3_semantic_api.py",
+    "recovery/tests/test_matrix3_value_results_oct12b.py"
+  ],
+  "subjects": [
+    {
+      "address": 6506272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Pinned634720/634980/634AD0 compute complete nine-float scratch results, copy to the first stack argument, retain that address in EAX and ret8. The established Vector operator+6343E0 and scale634670 exhibit the same independently observed C++ class-result convention, with actual veh_scoot temporary lifetime evidence for Vector.",
+    "Comparison supports a class-value-result model but does not prove the original Matrix class name, complete extent, lifetime, method/operator spelling, or rule out an explicitly written pointer-result API. Retain SCAFFOLD roles and all structural obligations; do not count this source-model correction as qualified owner coverage.",
+    "Supersede only prior matrix3-semantic-api-oct9 prohibition on exploring hidden class results. Define non-const members Matrix3 add(const Matrix3*), Matrix3 multiply(const Matrix3*), Matrix3 scaled(float); keep the const pointer operand model without inventing original reference types/operator names. No new constructor/destructor, guessed additional fields, or source compatibility overloads.",
+    "Preserve scratch identity initialization even when overwritten, exact operand order, multiplication orientation, staging before publication, original x87 precision obligations and unchecked null/unsafe inputs. Matrix transform does not prove the same result convention and stays untouched. Native compiler must demonstrate ret8/first hidden slot/receiver convention; no assembly in product source.",
+    "No product callers exist for the three current APIs; update all actual-source host controls and alias-via-value-assignment cases. Retain all other nine mapped bodies and claims, complete identities/spans, old binding/LEVER evidence as explicit history. Root owns native symbol publication through native writer, compiler/Git and integration. Independently reviewed build/link, scoped ABI/regression and whole claim continuity precede manual publication; matching regressions stay restoration obligations, not demotions or acceptance."
+  ]
+}
