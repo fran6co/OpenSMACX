@@ -178,6 +178,14 @@ const int RiverStepX[4] = { 1, 1, -1, -1 };
 // RECOVERY_OBJECT: v2 0x0066EF3C 0x0066EF4C ?RiverStepY@@3QBHB 0x00409100
 const int RiverStepY[4] = { -1, 1, 1, -1 };
 
+// Pinned persistent reads cover 0x006858D8..0x00685908 and
+// 0x00685908..0x0068593C in writable .data. These bounded windows do not
+// establish original source constness, full allocation extents, or writers.
+// RECOVERY_OBJECT: v2 0x006858D8 0x00685908 ?WorldCanyonOffsetValues@@3PAIA 0x005C7DFD
+uint32_t WorldCanyonOffsetValues[12] = { 26, 27, 9, 1, 2, 0, 3, 4, 17, 23, 36, 35 };
+// RECOVERY_OBJECT: v2 0x00685908 0x0068593C ?world_ridge_offset_val@@3PAIA 0x005C8299
+uint32_t world_ridge_offset_val[13] = { 47, 44, 24, 20, 8, 7, 0, 5, 4, 17, 23, 35, 45 };
+
 // Nine original direction indices, bounded by the next RadiusOffsetX
 // table at 0x0066EFBC. MapWin's legend and tutorial navigation consume
 // this permutation; it is independent data, not a callable/address alias.
@@ -5455,7 +5463,6 @@ void __cdecl world_canyon(int x, int y) {
             return;
         }
     } 
-    const uint32_t WorldCanyonOffsetValues[12] = { 26, 27, 9, 1, 2, 0, 3, 4, 17, 23, 36, 35 };
     for (uint32_t i = 0; i < 12; i++) {
         int x_radius = xrange(x + RadiusOffsetX[WorldCanyonOffsetValues[i]]);
         int y_radius = y + RadiusOffsetY[WorldCanyonOffsetValues[i]];
@@ -5588,7 +5595,6 @@ void __cdecl world_ridge(int x, int y) {
             return;
         }
     }
-    const uint32_t world_ridge_offset_val[13] = { 47, 44, 24, 20, 8, 7, 0, 5, 4, 17, 23, 35, 45 };
     for (uint32_t i = 0; i < 13; i++) {
         int x_radius = xrange(x + RadiusOffsetX[world_ridge_offset_val[i]]);
         int y_radius = y + RadiusOffsetY[world_ridge_offset_val[i]];

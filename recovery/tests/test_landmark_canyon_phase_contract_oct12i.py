@@ -121,11 +121,27 @@ def source_facts():
     body = function_body(source, "void __cdecl world_canyon(")
     assert "Natural[LM_CANYON].name" in body
     assert "bit2_set(x_radius, y_radius, BIT2_CANYON, true)" in body
-    return body, values
+    table = array_definition(source, "WorldCanyonOffsetValues", 12)
+    body = remove_table_declaration(body, "WorldCanyonOffsetValues", 12)
+    return body, values, table
 
 
-def parse_canyon_offsets(body):
-    match = re.search(r"WorldCanyonOffsetValues\[12\]\s*=\s*\{([^}]*)\}", body)
+def array_definition(source, name, count):
+    pattern = (r"(?:(?:const\s+)?uint32_t)\s+" + re.escape(name)
+               + r"\s*\[\s*" + str(count) + r"\s*\]\s*=\s*\{[^}]*\}\s*;")
+    matches = re.findall(pattern, source)
+    assert len(matches) == 1, "expected one source-owned definition for " + name
+    return matches[0]
+
+
+def remove_table_declaration(body, name, count):
+    pattern = (r"(?:(?:const\s+)?uint32_t)\s+" + re.escape(name)
+               + r"\s*\[\s*" + str(count) + r"\s*\]\s*=\s*\{[^}]*\}\s*;")
+    return re.sub(pattern, "", body, count=1)
+
+
+def parse_canyon_offsets(table):
+    match = re.search(r"WorldCanyonOffsetValues\[12\]\s*=\s*\{([^}]*)\}", table)
     assert match is not None, "actual twelve-entry canyon offset table missing"
     offsets = tuple(int(token.strip(), 0) for token in match.group(1).split(",") if token.strip())
     assert offsets == CANYON_OFFSETS, offsets
@@ -177,7 +193,7 @@ static void new_landmark(int x, int y, const char *label) {
 '''
 
 
-def program_source(body, values, offsets):
+def program_source(body, values, offsets, table):
     enums = dict(values)
     enum_text = ",\n       ".join(name + " = " + hex(value) for name, value in enums.items())
     expected_table = ", ".join(str(value) for value in offsets)
@@ -217,7 +233,7 @@ int main() {
     return 0;
 }
 '''
-    return (PRELUDE.replace("@ENUMS@", enum_text) + expected + body + main)
+    return (PRELUDE.replace("@ENUMS@", enum_text) + expected + table + "\n" + body + main)
 
 
 def compile_run(program, compiler, tmp_path):
@@ -231,27 +247,31 @@ def compile_run(program, compiler, tmp_path):
 
 
 def test_canyon_actual_source_two_pass_phase_order_and_fused_old_body_control(tmp_path):
-    body, values = source_facts()
-    offsets = parse_canyon_offsets(body)
+    body, values, table = source_facts()
+    offsets = parse_canyon_offsets(table)
     compilers = [compiler for compiler in ("g++", "clang++") if shutil.which(compiler)]
     assert compilers
-    good_program = program_source(body, values, offsets)
-    wrong_offset, changed = re.subn(
-        r"(WorldCanyonOffsetValues\[12\]\s*=\s*\{\s*)26\b",
-        r"\g<1>25", body, count=1)
+    good_program = program_source(body, values, offsets, table)
+    wrong_offset, changed = re.subn(r"(\{\s*)26\b", r"\g<1>25", table, count=1)
     assert changed == 1
-    wrong_offset_program = program_source(wrong_offset, values, offsets)
+    wrong_offset_program = program_source(body, values, offsets, wrong_offset)
+    shortened, loop_count = re.subn(r"([ij]\s*<\s*)12(?=\s*;)", r"\g<1>11", body)
+    assert shortened != body and loop_count == 2
+    shortened_program = program_source(shortened, values, offsets, table)
     baseline = subprocess.check_output(["git", "show", BASE + ":src/map.cpp"], cwd=ROOT).decode()
     fused_body = function_body(baseline, "void __cdecl world_canyon(")
+    fused_body = remove_table_declaration(fused_body, "WorldCanyonOffsetValues", 12)
     # Keep the old fused traversal's control flow while correcting only its
     # mask argument, so the negative control isolates pass ordering.
     fused_body = fused_body.replace("LM_CANYON, true", "BIT2_CANYON, true")
-    fused_program = program_source(fused_body, values, offsets)
+    fused_program = program_source(fused_body, values, offsets, table)
     for compiler in compilers:
         good = compile_run(good_program, compiler, tmp_path)
         assert good.returncode == 0, good.stdout + good.stderr
         wrong = compile_run(wrong_offset_program, compiler, tmp_path)
         assert wrong.returncode != 0, "wrong first offset survived pinned PE tuple oracle"
+        shortened_result = compile_run(shortened_program, compiler, tmp_path)
+        assert shortened_result.returncode != 0, "shortened table pass survived 12-entry oracle"
         fused = compile_run(fused_program, compiler, tmp_path)
         assert fused.returncode != 0, "fused per-point old body survived phase-order oracle"
 
@@ -267,16 +287,18 @@ def test_vc6_x86_actual_canyon_behavior_and_fused_damage_control(tmp_path):
 
     if not (VC6_ROOT / "BIN/CL.EXE").is_file() or shutil.which("wine32") is None:
         pytest.skip("VC6 and Wine32 are required under the coordinator lease")
-    body, values = source_facts()
-    offsets = parse_canyon_offsets(body)
+    body, values, table = source_facts()
+    offsets = parse_canyon_offsets(table)
     baseline = subprocess.check_output(["git", "show", BASE + ":src/map.cpp"], cwd=ROOT).decode()
     fused_body = function_body(baseline, "void __cdecl world_canyon(")
+    fused_body = remove_table_declaration(fused_body, "WorldCanyonOffsetValues", 12)
     fused_body = fused_body.replace("LM_CANYON, true", "BIT2_CANYON, true")
     assert fused_body != body
     settings = Measurement.read(ROOT)
     wrapper = ROOT / "recovery/environment/wine.py"
     command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
-    programs = (program_source(body, values, offsets), program_source(fused_body, values, offsets))
+    programs = (program_source(body, values, offsets, table),
+                program_source(fused_body, values, offsets, table))
     for profile, flags in enumerate(settings.flag_sets):
         for variant, program in enumerate(programs):
             source = tmp_path / ("canyon-%d-%d.cpp" % (profile, variant))

@@ -116,18 +116,38 @@ def actual_body():
     body = function_body(source, "void __cdecl world_ridge(")
     assert "bit2_set(x_radius, y_radius, BIT2_RIDGE, true)" in body
     assert "Natural[LM_RIDGE].name" in body
-    match = re.search(r"world_ridge_offset_val\[13\]\s*=\s*\{([^}]*)\}", body)
-    assert match is not None, "actual 13-entry Ridge table absent"
-    offsets = tuple(int(token.strip(), 0) for token in match.group(1).split(",") if token.strip())
+    table = array_definition(source, "world_ridge_offset_val", 13)
+    offsets = parse_ridge_offsets(table)
     assert offsets == PINNED_OFFSETS, offsets
     loops = re.findall(r"for\s*\(\s*uint32_t\s+([ij])\s*=\s*0\s*;\s*\1\s*<\s*13\s*;", body)
     assert len(loops) == 2, "Ridge must visit all thirteen native points in both passes"
+    body = remove_table_declaration(body, "world_ridge_offset_val", 13)
     rows = {row.address: row for row in __import__("match_recovery.source", fromlist=["read_file"]).read_file(SOURCE)}
     row = rows[0x005C8150]
     assert row.name == "?world_ridge@@YAXHH@Z"
     assert row.image_spans == ((0x005C8150, 0x005C83AB),)
     assert row.byte_exact is False and row.semantic is False
-    return body, offsets
+    return body, offsets, table
+
+
+def array_definition(source, name, count):
+    pattern = (r"(?:(?:const\s+)?uint32_t)\s+" + re.escape(name)
+               + r"\s*\[\s*" + str(count) + r"\s*\]\s*=\s*\{[^}]*\}\s*;")
+    matches = re.findall(pattern, source)
+    assert len(matches) == 1, "expected one source-owned definition for " + name
+    return matches[0]
+
+
+def remove_table_declaration(body, name, count):
+    pattern = (r"(?:(?:const\s+)?uint32_t)\s+" + re.escape(name)
+               + r"\s*\[\s*" + str(count) + r"\s*\]\s*=\s*\{[^}]*\}\s*;")
+    return re.sub(pattern, "", body, count=1)
+
+
+def parse_ridge_offsets(table):
+    match = re.search(r"world_ridge_offset_val\[13\]\s*=\s*\{([^}]*)\}", table)
+    assert match is not None, "actual 13-entry Ridge table absent"
+    return tuple(int(token.strip(), 0) for token in match.group(1).split(",") if token.strip())
 
 
 PRELUDE = r'''#include <assert.h>
@@ -217,11 +237,11 @@ int main() {
 '''
 
 
-def build_program(body, values, offsets):
+def build_program(body, values, offsets, table):
     enum_text = ",\n       ".join(name + " = " + hex(value) for name, value in values.items())
     expected = "static const int ExpectedOffsets[13] = { "
     expected += ", ".join(str(value) for value in offsets) + " };\n"
-    return PRELUDE.replace("@ENUMS@", enum_text) + expected + body + MAIN
+    return PRELUDE.replace("@ENUMS@", enum_text) + expected + table + "\n" + body + MAIN
 
 
 def run_program(program, compiler, tmp_path):
@@ -235,28 +255,29 @@ def run_program(program, compiler, tmp_path):
 
 
 def test_ridge_actual_source_two_13_point_passes_and_damage_controls(tmp_path):
-    body, offsets = actual_body()
+    body, offsets, table = actual_body()
     values = pinned_values()
     compilers = [compiler for compiler in ("g++", "clang++") if shutil.which(compiler)]
     assert compilers
-    good_program = build_program(body, values, offsets)
+    good_program = build_program(body, values, offsets, table)
 
     shortened, loop_count = re.subn(r"([ij]\s*<\s*)13(?=\s*;)", r"\g<1>12", body)
     assert shortened != body and loop_count == 2
 
-    bad_offset, count = re.subn(r"(,\s*)45(\s*\})", r"\g<1>455\g<2>", body)
+    bad_offset, count = re.subn(r"(,\s*)45(\s*\})", r"\g<1>455\g<2>", table)
     assert count == 1
 
     baseline = subprocess.check_output(["git", "show", BASE + ":src/map.cpp"], cwd=ROOT).decode()
     fused_body = function_body(baseline, "void __cdecl world_ridge(")
+    fused_body = remove_table_declaration(fused_body, "world_ridge_offset_val", 13)
     fused_body = fused_body.replace("LM_RIDGE, true", "BIT2_RIDGE, true")
     for compiler in compilers:
         good = run_program(good_program, compiler, tmp_path)
         assert good.returncode == 0, good.stdout + good.stderr
-        for label, bad_body in (("12-point passes", shortened),
-                                ("455 out-of-range offset", bad_offset),
-                                ("baseline fused 12-point body", fused_body)):
-            bad = run_program(build_program(bad_body, values, offsets), compiler, tmp_path)
+        for label, bad_body, bad_table in (("12-point passes", shortened, table),
+                                           ("455 out-of-range offset", body, bad_offset),
+                                           ("baseline fused 12-point body", fused_body, table)):
+            bad = run_program(build_program(bad_body, values, offsets, bad_table), compiler, tmp_path)
             assert bad.returncode != 0, label + " damage survived"
 
 
@@ -274,8 +295,8 @@ def test_native_ridge_phase_controls_both_profiles_when_leased(tmp_path):
     settings = Measurement.read(ROOT)
     wrapper = ROOT / "recovery/environment/wine.py"
     command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
-    body, offsets = actual_body()
-    program = build_program(body, pinned_values(), offsets)
+    body, offsets, table = actual_body()
+    program = build_program(body, pinned_values(), offsets, table)
     for profile, flags in enumerate(settings.flag_sets):
         source = tmp_path / ("ridge-phase-%d.cpp" % profile)
         obj = tmp_path / ("ridge-phase-%d.obj" % profile)
