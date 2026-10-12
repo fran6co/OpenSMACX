@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "task_id": "base-production-growth-upkeep-oct12",
+  "intent": "Recover complete Base production/growth/upkeep ownership and helper domain/read ordering, preserving original unsafe behavior and historical obligations.",
+  "editable_files": [
+    "src/base.cpp",
+    "recovery/tests/test_base_production_growth_upkeep_oct12.py"
+  ],
+  "evidence": [
+    "Pinned4F09B0 NEG normalizes queued negative item into positive facility ID;4F342F/3435 and4F386A/3870 negate that positive ID for late negative queue comparisons. Current production_late_reconcile receives the wrong signed domain. Full production body and its unannotated production_late_reconcile/production_vehicle_morale helpers are authorized together.",
+    "Pinned4F113D reads PlayerData.ai_power at96CDCC, not Players record family.4F11EB prototype cutoff is64, not512; custom prototypes take ordinary morale_mod.4F13D9..E3 vehicle flag1000 depends on captured actor matching ConsoleGlobal faction. Original morale/state stores4F13C5/13DB precede colony population decrement4F1441/base_kill4F1466; preserve complete owner/lifetime/order closure and original error paths.",
+    "Growth4EF438/44A/469 and4EF575/585/5AA reread Player.rule_population across has_fac; do not introduce a constness guarantee absent from native reads. Host evaluation controls are not native callback/gameplay proof.",
+    "Upkeep4F7F05 reads lowbyte of game_state at9A64C0 for bits1/8 zoom gate, not game_preferences.4F7FB8 loads live BaseIDCurrentSelected for turn-periodic state clear, not captured base_id. Full production primary+cold, growth and upkeep extents were independently decoded; preserve all spans/claims/lessons and provider declarations.",
+    "Complete whole-owner controls and damage cases, independent review, fresh build/link and matching/restoration/reference/identity observations precede coordinator-reviewed integration. No original bug fixes, claims/demotion, ad hoc CLI or altered task baseline. Additional owner/header/test changes need explicit expansion."
+  ],
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "908fd8cdcd7db78475f500bb03c4f143560bdb98",
+  "subjects": [
+    {
+      "address": 5179360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5173696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5208512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ]
+}

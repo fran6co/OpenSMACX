@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task_id": "net-fifo-live-head-oct12",
+  "intent": "Recover the complete FIFO head-reader/peek live receiver contract without fixing original null-output leaks or weakening overlapping historical spans.",
+  "editable_files": [
+    "src/net_fifo.cpp",
+    "recovery/tests/test_net_fifo_live_head_oct12.py"
+  ],
+  "evidence": [
+    "Head get actualbody633F70..63401D retains historical mapping..634067, including padding/sibling overlap. Native633FD5 reloads receiver.head then633FD7 follows current head after outputs/copy/free; current code uses selected node for head unlink. Keep selected-node freeing and other original ordering while recovering live receiver unlink.",
+    "Peek head634200..63427E reloads head63422F after length output,634256 for key,634265 for caller,63426B for result after previous writes/copy. Recover full method, not isolated conditions.",
+    "Allocated non-overlapping payload copy into receiver.head can replace selectedA with validB; A.next=C and B.next=D and distinct metadata/results discriminate both readers. Test actual declarations/complete bodies and original native operations with explicit host ABI limitations, no fabricated fault outcomes.",
+    "Null-output payload leak is native633FAE->633FD5 and633EFB->633F22; do not normalize it. Other add/remove/peek/close bodies inspected so far match, not implicit editing permission. Preserve all original identities/spans/symbols/claims/lessons and overlapping extent obligation; no manual narrowing or claim demotion.",
+    "Independent review plus fresh native build/link, scoped matching/restoration and outside-scope/reference/identity checks before bounded manual integration. Native extent/refusal, full linked/runtime/provider proof remain limitations, never green from host controls. Request explicit expansion for any fixture/header/API changes."
+  ],
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "908fd8cdcd7db78475f500bb03c4f143560bdb98",
+  "subjects": [
+    {
+      "address": 6504304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ]
+}
