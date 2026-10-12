@@ -1,0 +1,17 @@
+{
+  "event_id": "7510184ba2701543b5e1c57c49014a79b50a6a92f19dd25819770ff5b87cfb28",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "pointer-cache-necessity-oct12l",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/basewin.cpp retained typed Bases[candidate]/Bases[focusedBaseID]/Bases[nearest]/Bases[selected] members already express original Base record stride; src/base.h proves0x134 layout. Independent pin review found native index-plus-offset traversal, no ownership/lifetime/type/behavior defect in that source. Candidate patch and fresh masked measurement retained in ignored build/recovery; do not publish an unnecessary cache rewrite as structural recovery. Preserve useful actual-source regression controls and all source identities/claims."
+    ]
+  },
+  "previous_event": "7b467f5727e88e8b1c724f47036a049a8bd966391d781dabdceba252b8ec0783",
+  "request_id": "reject-unnecessary-pointer-caches-oct12l",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:basewin-pointer-traversal-oct12l"
+}

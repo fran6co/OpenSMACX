@@ -1,0 +1,21 @@
+{
+  "event_id": "7b467f5727e88e8b1c724f47036a049a8bd966391d781dabdceba252b8ec0783",
+  "payload": {
+    "affects": [
+      "entity-47260bfb6e981bb8b521fd30be56b6064640a71de30605efdab5588b364a97ba",
+      "entity-d6a6ec16a92344196ecb73b7c38f260e1d3ab7d8a312033a4746eec1f52f5dbf"
+    ],
+    "author": "coordinator",
+    "discovery_id": "pointer-cache-necessity-oct12l",
+    "evidence": [
+      "Pinned candidate traversal uses index plus byte offset0 incremented by0x134; original source already expresses that stride through genuine Base array indexing. Fresh candidate probe yields109vs110 instructions and MISMATCH for both methods. Independent reviewer found no ownership, lifetime, type or behavior defect repaired by the caches; preserve trial cache and retain semantic controls."
+    ],
+    "hypothesis": "Native record stride requires additional pointer caches rather than the existing typed Base array indexing.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "pointer-cache-necessity-oct12l",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:basewin-pointer-traversal-oct12l"
+}
