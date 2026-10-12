@@ -66,6 +66,9 @@ Purpose: Initialize the class using the font name, height and style.
 // flags     sp_ready;purged_ok
 // calls     0x00644EF2 0x00645470
 // indirect  0x00618F83 0x00618F94 0x00618FC3 0x00619043 0x0061906C 0x0061907A 0x006190AB 0x006190B9
+// Historical context: the following LEVER records the original in-class
+// source form and its measured image behavior; it is not the current helper
+// name or mapped definition location.
 // LEVER: WRONG CALLEE, three parts. (1) close() (0x00619230, in-class
 //        MEASURED method) hand-inlined at the `else` site - the image's
 //        only calls here are free() (0x00644EF2, inside close()'s body)
@@ -117,8 +120,8 @@ int Font::init(LPCSTR font_name, int height, int style) {
         return 3;
     }
     if (!(is_fot_set_ & 1)) {
-        // close() (0x00619230, in-class MEASURED method) is hand-inlined
-        // here: the image writes its whole body out at this call site
+        // The close() teardown (0x00619230) is hand-inlined here: the image
+        // writes its whole body out at this call site
         // (free(), the only call it makes, is the one it keeps), rather
         // than calling out to it. LEVER: guard clause polarity - the image
         // falls through into this (the `else` arm originally) rather than
@@ -245,7 +248,7 @@ Return Value: Zero on success, non-zero on error
 Status: Complete
 */
 int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
-    close();
+    release_resources();
     if (!file || !font_name) {
         return 16;
     }
@@ -283,7 +286,6 @@ int Font::init(LPCSTR file, LPCSTR font_name, int height, int style) {
 /*
 Purpose: Close an instance of the class.
 // ORIGINAL: 0x00619230 ?close@Font@@QAEXXZ 0x00619230-0x0061927D BYTE_EXACT
-// body      src/jackal/font.h
 // size      77 bytes
 // prototype void (__thiscall ?close@Font@@QAEXXZ)(Font* this)
 // callers   5   call targets   1
@@ -294,6 +296,30 @@ Purpose: Close an instance of the class.
 Return Value: n/a
 Status: Complete
 */
+
+void Font::close() {        // 00619230
+    // IMAGE ORDER: height_ before line_height_, as in the constructor.
+    unk_1_ = -1;
+    height_ = 0;
+    line_height_ = 0;
+    ascent_ = 0;
+    descent_ = 0;
+    if (font_obj_) {
+      DeleteObject(font_obj_);
+      font_obj_ = 0;
+    }
+    if (fot_file_name_) {
+      RemoveFontResourceA(fot_file_name_);
+      // THE SECOND CHECK IS IN THE IMAGE. It is redundant - nothing between
+      // it and the first can null the pointer - and it was removed here as
+      // dead code, which is exactly the kind of tidying a byte match cannot
+      // afford.
+      if (fot_file_name_) {
+        free(fot_file_name_);
+      }
+      fot_file_name_ = 0;
+    }
+}
 
 
 /*
@@ -323,9 +349,10 @@ int Font::width(LPSTR input) {
 /*
 Purpose: Get the width for the input text with a maximum length.
 // ORIGINAL: 0x006192F0 ?width@Font@@QAEHPADH@Z 0x006192F0-0x0061936B BYTE_EXACT
-// body      src/jackal/font.h
 // symbol    ?width@Font@@QAEHPADI@Z
-// MOVED IN-CLASS: `find_line_break_l` (0x00619370) inlines this twice -
+// HISTORICAL MOVED IN-CLASS: `find_line_break_l` (0x00619370) used the
+// source body twice inline; it now calls the private source-only helper, not
+// an original mapped identity.
 //        its own `calls` list never names 0x006192F0.
 // LEVER: `strlen` called TWICE and compared SIGNED. The image's clamp is a min
 //   MACRO that re-evaluates its argument - `call strlen; cmp ebx, eax; jl;
@@ -360,6 +387,27 @@ Return Value: Width otherwise zero on error
 Status: Complete
 */
 
+#define FONT_MIN(a, b) ((a) < (b) ? (a) : (b))
+int Font::width(LPSTR input, size_t max_len) {   // 006192F0
+    if (!input) {
+      return 0;
+    }
+    // `strlen` TWICE, and SIGNED. The clamp is a min MACRO that re-evaluates
+    // its argument - `call strlen; cmp ebx, eax; jl; call strlen` - so the
+    // macro form (which evaluates `b` once for the test and once for the
+    // value) is what produces the image's two calls. `jl`, not `jbe`, because
+    // both operands are int there; a `size_t` comparison emits the unsigned
+    // branch.
+    int len = FONT_MIN(static_cast<int>(max_len),
+                       static_cast<int>(strlen(input)));
+    SelectObject(FontHDC, font_obj_);
+    SIZE size;
+    GetTextExtentPoint32A(FontHDC, input, len, &size);
+    SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
+    return size.cx;
+  }
+#undef FONT_MIN
+
 /*
 Purpose: Find a space in the input string that can be used as a natural line break.
 // ORIGINAL: 0x00619370 ?find_line_break_l@Font@@QAEHPADPAHH@Z 0x00619370-0x006195A7
@@ -371,6 +419,8 @@ Purpose: Find a space in the input string that can be used as a natural line bre
 // flags     sp_ready;purged_ok
 // calls     0x006453E0 0x006473F0
 // indirect  0x006193EB 0x006193FA 0x00619402 0x00619410 0x006194AD 0x006194BC 0x006194C4 0x006194D2
+// Historical context: the following LEVER records the earlier in-class
+// source arrangement; the call sites now use the private source-only helper.
 // LEVER: `width(LPSTR, size_t)` moved IN-CLASS (font.h) so it inlines here
 //        twice, matching the image's own `calls`/`indirect` lists (no
 //        0x006192F0, but 8 indirect WinAPI calls and strlen showing up
@@ -423,7 +473,7 @@ LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
         do {
         LPSTR space = (LPSTR)memchr(search_str + 1, ' ', len);
         if (!space) {
-            search_brk -= width(search_str, len);
+            search_brk -= measure_bounded_width(search_str, len);
             if (search_brk < 0) {
                 *break_len = 0;
                 if (search_str != input) {
@@ -433,7 +483,7 @@ LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
             }
             break;
         }
-        search_brk -= width(search_str, space - search_str);
+        search_brk -= measure_bounded_width(search_str, space - search_str);
         if (search_brk < 0) {
             *break_len = 0;
             if (search_str != input) {
@@ -566,7 +616,7 @@ Font::Font(LPSTR font_name, int height, int style) {
 // notes     Staged hybrid export redirect calls the source-owned destructor
 */
 Font::~Font() {
-    close();
+    release_resources();
 }
 
 // 0x009BB484. The process default font: `Font::init_font_class` sets it,

@@ -19,7 +19,8 @@
 
 // The clamp in Font::width(LPSTR, size_t) is a MACRO, not an `if`: a macro
 // re-evaluates its argument, and the image calls `strlen` twice because of
-// it. Kept next to the only body that uses it and undefined straight after.
+// it. This definition serves the private inline body below; font.cpp scopes
+// an identical definition around the public mapped body.
 #define FONT_MIN(a, b) ((a) < (b) ? (a) : (b))
 
  /*
@@ -41,8 +42,10 @@ class Font {
   // int UNK1(int, int, int, int) { return 1; } // no direct references
   int init(LPCSTR font_name, int height, int style);
   int init(LPCSTR file, LPCSTR font_name, int height, int style);
-  // IN-CLASS so `~Font` inlines it, which is what the image does.
-  MEASURED void close() {        // 00619230
+ private:
+  // Source-only cleanup helper. Its name is not an original mapped identity;
+  // the public Font::close() mapping remains defined in font.cpp.
+  void release_resources() {
     // IMAGE ORDER: height_ before line_height_, as in the constructor.
     unk_1_ = -1;
     height_ = 0;
@@ -65,11 +68,14 @@ class Font {
       fot_file_name_ = 0;
     }
   }
+ public:
+  void close(); // 00619230
   int width(LPSTR input);
-  // IN-CLASS so `find_line_break_l` inlines it twice - the image's own
-  // `calls` list never names 0x006192F0, only the WinAPI it reaches
-  // through and the two `strlen` calls its own clamp makes.
-  MEASURED int width(LPSTR input, size_t max_len) {   // 006192F0
+  // Source-only bounded-width helper used at both line-break sites. Its
+  // private name is not an original mapped identity; Font::width remains
+  // the public mapped operation defined in font.cpp.
+ private:
+  int measure_bounded_width(LPSTR input, size_t max_len) {
     if (!input) {
       return 0;
     }
@@ -87,6 +93,8 @@ class Font {
     SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
     return size.cx;
   }
+ public:
+  int width(LPSTR input, size_t max_len); // 006192F0
   LPSTR find_line_break_l(LPSTR input, int *break_len, size_t len);
   bool is_initialized() const { return font_obj_ != NULL; }
   int descent() const { return descent_; }
@@ -146,8 +154,8 @@ class Font {
   LPSTR fot_file_name_;
 };
 
-// The macro is only spelled inside the class above, so it stops here rather
-// than leaking into every TU that includes this header.
+// The header's macro stops here rather than leaking into including TUs.
+// The public body in font.cpp defines and undefines its own local copy.
 #undef FONT_MIN
 
 // 0x28, and statuswin.h is the evidence rather than a count of members:

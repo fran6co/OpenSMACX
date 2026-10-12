@@ -1568,6 +1568,7 @@ Purpose: Close the design window: dismiss all 25 palette buttons, release the
 //   vtable_slot once /Ob2 inlines it (at /Ob0 the template function itself
 //   is CALLED - `push 0x168 / push edi / call`, which is why /Ob0's
 //   higher-similarity 6/42 is the worse listing; do not chase it).
+//   Historical source-form finding before Font's public/internal split:
 //   Everything from image instruction 12 on diverges for the catalogued
 //   MEASURED-inline ceiling: spot2_.shutdown(), time_.close() and the three
 //   font_.close() calls are in-class definitions in spot.h / time.h /
@@ -1576,6 +1577,10 @@ Purpose: Close the design window: dismiss all 25 palette buttons, release the
 //   0x00616780, 0x00619230 x3) - 141 instructions against the image's 42.
 //   Out-of-line bodies would regress those destructor claims, and VC6
 //   honours no per-site noinline.
+//   Font now has ordinary public close() in font.cpp and a private inline
+//   implementation for Font-owned expansions. These three calls reach the
+//   public method, as the image does; the Spot/Time observations above remain
+//   separate restoration obligations.
 Return Value: n/a
 Status: Complete
 */
