@@ -7129,7 +7129,7 @@ after_wrap:
 //        pointer named BlitSprite. Byte-exact first time through the named
 //        members; the archive's `VCall` shim and `ReleaseFn` vtable walk
 //        become `surface_->Unlock(locked_bits_)` like everywhere else.
-// symbol    ?draw_dest@Buffer@@QAEHPAV1@HHHH@Z
+// symbol    ?draw_dest@Buffer@@QAEHPAV1@HHHPAE@Z
 //           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
 //           the back-reference `PAV1@` for the same type, so the fact names what
 //           this tree actually emits. Bytes are unchanged.
@@ -7145,10 +7145,11 @@ after_wrap:
 // function's own a5 is `int`, so the tail call casts it.
 
 
-int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
-    int transparent = a2;
+int Buffer::draw_dest(Buffer *destination, int transparent_in, int x, int y,
+                      unsigned char *table) {
+    int transparent = transparent_in;
     if (surface_ == 0) {
-        if (a2 == -1) {
+        if (transparent_in == -1) {
             transparent = WinFillColour;
         }
         locked_bits_ = dib_bits_;
@@ -7186,7 +7187,7 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
 tail:
     {
         int result = BufferSpriteOwner.sprite().draw_dest(
-            a1, a2, a3, a4, reinterpret_cast<unsigned char *>(a5));
+            destination, transparent_in, x, y, table);
         BufferSpriteOwner.sprite().pcBits_ = 0;
         return result;
     }
@@ -7230,7 +7231,7 @@ int Buffer::check_pcx_input_data(PcxInputView *source, int, int, int) {
 // LEVER: same shape and same landing as draw_dest above - the descriptor is
 //        the Sprite at 0x009B3A50, the release is surface_->Unlock, and the
 //        byte-exact form needs no spelling beyond the tree's own members.
-// symbol    ?draw_multi_table_dest@Buffer@@QAEHPAV1@HHHH@Z
+// symbol    ?draw_multi_table_dest@Buffer@@QAEHPAV1@HHHPAE@Z
 //           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
 //           the back-reference `PAV1@` for the same type, so the fact names what
 //           this tree actually emits. Bytes are unchanged.
@@ -7246,10 +7247,11 @@ int Buffer::check_pcx_input_data(PcxInputView *source, int, int, int) {
 // param where this function's own a5 is `int`, so the tail call casts it.
 
 
-int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
-    int transparent = a2;
+int Buffer::draw_multi_table_dest(Buffer *destination, int transparent_in, int x,
+                                  int y, unsigned char *table) {
+    int transparent = transparent_in;
     if (surface_ == 0) {
-        if (a2 == -1) {
+        if (transparent_in == -1) {
             transparent = WinFillColour;
         }
         locked_bits_ = dib_bits_;
@@ -7287,7 +7289,7 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5) {
 tail:
     {
         int result = BufferSpriteOwner.sprite().draw_multi_table_dest(
-            a1, a2, a3, a4, reinterpret_cast<unsigned char *>(a5));
+            destination, transparent_in, x, y, table);
         BufferSpriteOwner.sprite().pcBits_ = 0;
         return result;
     }

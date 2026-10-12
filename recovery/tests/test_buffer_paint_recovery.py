@@ -48,7 +48,14 @@ def test_missing_override_control_selects_wrong_base_entry(paint_objects):
 
 def test_draw_uses_one_real_sprite_and_correct_six_argument_entry(paint_objects):
     draw = "?draw@Buffer@@QAEHPAV1@HHHHH@Z"
-    shared = "?g_BUFFER_SPRITE@@3VSprite@@A"
+    from match_recovery.object_source import parse_objects
+    pin = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    binding, = (row for row in parse_objects(
+        (ROOT / "src/buffer.cpp").read_text(), "src/buffer.cpp", pin,
+        address_space="pe:va") if row.origin.address == 0x9B3A50)
+    shared = binding.emitted_symbol
+    assert shared == "?BufferSpriteOwner@@3UBufferSpriteLifetime@@A"
+    assert binding.member_path == ("storage_", "bytes")
     for obj in paint_objects["src/buffer.cpp"]:
         assert len([s for s in obj.symbols.values() if s.name == shared and s.section > 0]) == 1
         targets = references(obj, draw)
@@ -56,9 +63,12 @@ def test_draw_uses_one_real_sprite_and_correct_six_argument_entry(paint_objects)
         assert "?draw@Sprite@@QAEHPAVBuffer@@HHHHH@Z" in targets
         assert not any("BlitSource" in s.name or "BlitClip" in s.name for s in obj.symbols.values())
         for name in ("?setup_buff_sprite@Buffer@@QAEXH@Z", "?release_buff_sprite@Buffer@@SAXXZ",
-                     "?draw_dest@Buffer@@QAEHPAV1@HHHH@Z",
-                     "?draw_multi_table_dest@Buffer@@QAEHPAV1@HHHH@Z"):
+                     symbol_at("src/buffer.cpp", 0x5D8A30),
+                     symbol_at("src/buffer.cpp", 0x5D93C0)):
             assert shared in references(obj, name)
+        for address, target in ((0x5D8A30, "?draw_dest@Sprite@@QAEHPAVBuffer@@HHHPAE@Z"),
+                                (0x5D93C0, "?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHPAE@Z")):
+            assert target in references(obj, symbol_at("src/buffer.cpp", address))
     for unit, address in (("src/graphicwin.cpp", 0x5D5CF0), ("src/caviar.cpp", 0x617230)):
         for obj in paint_objects[unit]:
             assert draw in references(obj, symbol_at(unit, address))

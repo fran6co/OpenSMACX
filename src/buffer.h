@@ -501,14 +501,16 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
            unsigned char *table);
   int draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
                      unsigned char *table);
-  int draw_dest(Buffer *source, int a, int b, int c, int d);
+  int draw_dest(Buffer *destination, int transparent, int x, int y,
+                unsigned char *table);
   int draw_dest(Buffer *source, int a, int b, int c, int d, int e,
                 unsigned char *bits);
   int draw_dest_source(Buffer *source, int a, int b, int c,
                        unsigned char *bits);
   int draw_dest_source(Buffer *source, int a, int b, int c, int d, int e,
                        unsigned char *bits);
-  int draw_multi_table_dest(Buffer *source, int a, int b, int c, int d);
+  int draw_multi_table_dest(Buffer *destination, int transparent, int x, int y,
+                            unsigned char *table);
   int draw_multi_table_dest(Buffer *source, int a, int b, int c, int d, int e,
                             unsigned char *bits);
   int copy(Buffer *source, int src_x, int src_y, int src_w, int src_h,
