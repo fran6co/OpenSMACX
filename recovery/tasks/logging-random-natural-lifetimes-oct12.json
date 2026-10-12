@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "task_id": "logging-random-natural-lifetimes-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "54738d3db40bc2903e3b2a1e53fc2026f6f86d20",
+  "intent": "Recover real Logging filename construction and Random/Logging global startup/cleanup instead of uncalled manual CRT substitutes; preserve original behavior and all matching obligations.",
+  "editable_files": [
+    "src/log.cpp",
+    "src/log.h",
+    "src/random.cpp",
+    "src/random.h",
+    "recovery/tests/test_logging_random_natural_lifetimes_oct12.py"
+  ],
+  "subjects": [
+    {
+      "address": 6444800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6446880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6446992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Pinned original CRT slots6826BC/6826C0 relocate to625700/625F20;646C9D calls644DD2 which traverses682000..6826CC using644ED8 indirect initializer loop. The four existing source helpers are uncalled; C++ globals own startup instead.",
+    "625700 clears Rand then registers625720;625F20 initializes Logging filename, allocates/copies logfile.txt, opens wt and closes successful opens, then registers625F90. 625FC0 owns same filename initialization on arbitrary receiver. No original default Log constructor precedes filename initialization.",
+    "Use genuine Log(LPCSTR) and Log Logging(\"logfile.txt\"); retain default constructor for Console automatic Log. Filename constructor MUST leave is_disabled_ untouched; global zero storage supplies its initial value. Preserve allocator/null/failure order and existing destructor/Log::init quirks; no bug fixes or safety guards.",
+    "Remove only four superseded initializer/finalizer bodies/prototypes after complete identity/span/claim/history continuity. Native writer and freshly observed COFF bind actual generated symbols and filename constructor. Placement-new SEH observation is historical evidence, not a reason to substitute ordinary methods for construction.",
+    "Only coordinator runs Git/compiler/publication. Frozen build/link, native measurements, source continuity/reference checks and independent actual-source review precede manual integration. Temporary structural matching regression retains claims/restoration obligations; linked CRT ordering and complete game acceptance remain separate unresolved proof."
+  ]
+}
