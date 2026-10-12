@@ -348,20 +348,19 @@ Matrix3 Matrix3::multiply(const Matrix3 *other) {
 // loop (`sub edi, ebp` at 0x634939, one per row); spelling that
 // difference out as a local lets /O2 prove it loop-invariant and hoist
 // it past the loop it belongs to, which is 69 bytes against 85.
-Return Value: true when no cell comparison is ordered unequal; unordered passes.
+Return Value: true when all cell pairs compare equal under the native predicate.
+The pinned VC6/x87 lowering accepts unordered NaN pairs; ordinary host C++ !=
+rejects them, so host and native NaN behavior is characterized separately.
 Status: Complete
 */
 bool Matrix3::equals(const float *other) {
     const float *mine = cells;
     for (int row = 0; row < 3; row++) {
         for (int col = 0; col < 3; col++) {
-            const float left = mine[row * 3 + col];
-            const float right = other[row * 3 + col];
-            // The original FCOMP tests x87 C3, which is set for both equal
-            // and unordered operands. With masked x87 exceptions, ordered
-            // less/greater are the only comparisons that reject this cell.
-            // Signaling-NaN and unmasked-exception behavior is not established.
-            if (left < right || left > right) {
+            // The pinned VC6 FCOMP lowering accepts unordered NaN pairs with
+            // masked exceptions. Standard host C++ != rejects them instead.
+            // Signaling-NaN, unmasked exceptions and x87 status remain unknown.
+            if (mine[row * 3 + col] != other[row * 3 + col]) {
                 return false;
             }
         }

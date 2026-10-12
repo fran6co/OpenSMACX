@@ -14,6 +14,7 @@ import pytest
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/matrix3.cpp").is_file())
+HEADER = ROOT / "src/matrix3.h"
 SOURCE = ROOT / "src/matrix3.cpp"
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
@@ -103,26 +104,33 @@ def test_actual_installed_matrix_methods_on_vc6_both_configured_flags(
         pytest.skip("VC6 and Wine32 are required")
 
     text = SOURCE.read_text()
-    owner_start = text.index("struct Matrix3ReceiverView {")
-    owner_end = text.index("\n};", owner_start) + len("\n};")
-    methods = text[owner_start:owner_end]
-    methods += "\n" + _definition(text, "bool Matrix3ReceiverView::equals(")
-    methods += "\n" + _definition(text, "void Matrix3ReceiverView::transform(")
+    methods = HEADER.read_text()
+    methods += "\n" + _definition(text, "bool Matrix3::equals(")
+    methods += "\n" + _definition(text, "void Matrix3::transform(")
     if damage == "unordered_comparison":
         old = "mine[row * 3 + col] != other[row * 3 + col]"
         assert methods.count(old) == 1
         methods = methods.replace(old,
-            "mine[row * 3 + col] < other[row * 3 + col] || "
-            "mine[row * 3 + col] > other[row * 3 + col]", 1)
+            "test_unordered(mine[row * 3 + col], other[row * 3 + col]) || "
+            "mine[row * 3 + col] != other[row * 3 + col]", 1)
     elif damage == "early_output_store":
         old = "    result[1] = m[4] * in[1] + m[3] * in[0] + m[5] * in[2];"
         assert methods.count(old) == 1
         methods = methods.replace(old, "    out[0] = result[0];\n" + old, 1)
     harness = r"""
 #include <cstring>
+static bool test_unordered(float left, float right) {
+    unsigned int left_bits, right_bits;
+    memcpy(&left_bits, &left, sizeof(left));
+    memcpy(&right_bits, &right, sizeof(right));
+    const unsigned int exponent = 0x7f800000u;
+    const unsigned int fraction = 0x007fffffu;
+    return (((left_bits & exponent) == exponent) && (left_bits & fraction) != 0) ||
+           (((right_bits & exponent) == exponent) && (right_bits & fraction) != 0);
+}
 """ + methods + r"""
 int main() {
-    Matrix3ReceiverView matrix = {{1,2,3,4,5,6,7,8,9}};
+    Matrix3 matrix = {{1,2,3,4,5,6,7,8,9}};
     float other[9] = {1,2,3,4,5,6,7,8,9};
     if (!matrix.equals(other)) return 1;
     other[4] = 50;
@@ -137,7 +145,7 @@ int main() {
     other[8] = qnan;
     if (!matrix.equals(other)) return 4;
 
-    Matrix3ReceiverView matrix3 = {{1,2,3,4,5,6,7,8,9}};
+    Matrix3 matrix3 = {{1,2,3,4,5,6,7,8,9}};
     const float input[3] = {2,3,4};
     float output[3] = {-1,-1,-1};
     matrix3.transform(output, input);

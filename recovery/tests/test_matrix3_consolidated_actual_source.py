@@ -84,10 +84,29 @@ int main() {
   for (int i = 0; i < 9; ++i) {
     fill(&x.value, 1.0f);
     x.value.cells[i] = nan;
-    if (!x.value.equals(a)) return 27;
+    // Standard host != rejects unordered operands; native VC6 is covered by
+    // the separate leased runtime control.
+    if (x.value.equals(a)) return 27;
     with_nan[i] = nan;
     fill(&x.value, 1.0f);
-    if (!x.value.equals(with_nan)) return 28;
+    if (x.value.equals(with_nan)) return 28;
+    with_nan[i] = a[i];
+  }
+  const float infinity = std::numeric_limits<float>::infinity();
+  for (int i = 0; i < 9; ++i) {
+    fill(&x.value, 1.0f);
+    x.value.cells[i] = 0.0f; with_nan[i] = -0.0f;
+    if (!x.value.equals(with_nan)) return 30;
+    x.value.cells[i] = -0.0f; with_nan[i] = 0.0f;
+    if (!x.value.equals(with_nan)) return 31;
+    x.value.cells[i] = infinity; with_nan[i] = infinity;
+    if (!x.value.equals(with_nan)) return 32;
+    with_nan[i] = -infinity;
+    if (x.value.equals(with_nan)) return 33;
+    x.value.cells[i] = 1.0f; with_nan[i] = infinity;
+    if (x.value.equals(with_nan)) return 34;
+    x.value.cells[i] = infinity; with_nan[i] = 1.0f;
+    if (x.value.equals(with_nan)) return 35;
     with_nan[i] = a[i];
   }
 
@@ -122,6 +141,14 @@ int main() {
   float alias[3] = {2,3,5};
   x.value.transform(alias, alias);
   if (alias[0] != 23 || alias[1] != 53 || alias[2] != 83) return 18;
+  fill(&x.value, 0.0f);
+  x.value.cells[0] = 1.0e20f;
+  x.value.cells[1] = -1.0e20f;
+  x.value.cells[2] = 3.0f;
+  const float ones[3] = {1,1,1};
+  float rounded[3] = {-1,-1,-1};
+  x.value.transform(rounded, ones);
+  if (rounded[0] != 0.0f) return 29;
   fill(&x.value, 1.0f);
   x.value.transform(x.value.cells, input);
   if (x.value.cells[0] != 23 || x.value.cells[1] != 53 || x.value.cells[2] != 83) return 26;
@@ -260,7 +287,8 @@ MUTANTS = (
      "scale + cells[row * 3 + column]"),
     ("subtract_assign", "cells[row * 3 + column] -",
      "cells[row * 3 + column] +"),
-    ("equals", "left < right || left > right", "left != right"),
+    ("equals", "mine[row * 3 + col] != other[row * 3 + col]",
+     "mine[row * 3 + col] < other[row * 3 + col] || mine[row * 3 + col] > other[row * 3 + col]"),
     ("multiply", "other->cells[depth * 3 + column]", "other->cells[column * 3 + depth]"),
     ("multiply", "++depth;", "depth += 2;"),
     ("multiply", "std::memcpy(result.cells, local, sizeof(local));", "std::memcpy(result.cells, local, sizeof(result.cells[0]));"),
