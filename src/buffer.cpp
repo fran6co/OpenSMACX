@@ -1949,7 +1949,7 @@ Purpose: Destroy a Buffer by installing its virtual table, releasing every
 Status: Complete
 */
 
-MEASURED Buffer::~Buffer() { close(); }
+Buffer::~Buffer() { close(); }
 
 
 /*

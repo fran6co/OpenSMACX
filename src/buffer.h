@@ -262,7 +262,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // into every local Buffer's teardown, where the image makes
   // `call ??1Buffer@@QAE@XZ` at all 87 of its sites (checkbox, radiobutton,
   // sprite, palette textcolor_init). Same lever as general.h's bitmask_call.
-  MEASURED virtual ~Buffer();
+  virtual ~Buffer();
   // Slot 1 queries the owning GraphicWin, or null for a plain Buffer.
   // load_pcx dispatches resize through the returned window's slot 3.
   virtual GraphicWin *get_graphic_win();

@@ -729,7 +729,7 @@ Palette::Palette() {
 
 // The whole destructor: close() is the last thing it does, so /O2 compiles
 // the call as the tail jump the marker names.
-MEASURED Palette::~Palette() { close(); }
+Palette::~Palette() { close(); }
 
 /*
 Purpose: Restart the timer of the colour-cycling slot that owns `key`.

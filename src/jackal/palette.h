@@ -133,7 +133,7 @@ class Palette {
   // catalogued sites. alphamovie.h and gamma.h embed Palette by value too.
   // Same measured lever as buffer.h's ~Buffer (2026-09-03): the inliner
   // has no body to fold.
-  MEASURED ~Palette();               // 005FE2E0
+  ~Palette();                        // 005FE2E0
 
   int get_rgbquad(RGBQUAD *output, int start, int count);
   // 0x005FE650. Not recovered; `Buffer::load_pcx` hands it the buffer's own

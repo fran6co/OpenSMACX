@@ -284,7 +284,7 @@ extern uint32_t DialogDefaults[37];
 // member; the body is a __cdecl free function over the defaults table, so
 // the emitted name is the extern "C" one and the `// symbol` fact under the
 // marker carries it.
-extern "C" MEASURED void __cdecl dialog_set_def_dialog_text_color(
+extern "C" void __cdecl dialog_set_def_dialog_text_color(
     int color_a, int color_b, int color_c, int color_d, int slot);
 
 // The zero-init .bss slots the Dialog constructor reads its field defaults

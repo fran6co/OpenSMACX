@@ -682,13 +682,14 @@ Purpose: Set the default dialog text colour for one of the four colour
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// MEASURED: the image's one caller is not recovered, so nothing here
-//        references the body and /Gy would drop the COMDAT; dllexport is
-//        what keeps it emitted for its own claim.
+// Historical note: the original image's one caller had not been recovered
+// when this annotation was written. The recovered popups_normal (0x00588460)
+// in popup.cpp now calls this helper directly; that source-owned caller keeps
+// the ordinary definition referenced without a forced-export attribute.
 Return Value: n/a
 Status: Complete
 */
-MEASURED void __cdecl dialog_set_def_dialog_text_color(
+void __cdecl dialog_set_def_dialog_text_color(
     int color_a, int color_b, int color_c, int color_d, int slot) {
     if (slot < 0 || slot > 3) {
         slot = 0;
