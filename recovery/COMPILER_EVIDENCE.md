@@ -8,6 +8,20 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
 
 ## Structural questions first
 
+- Imported disassembler names and `library` flags are not dependency or class
+  identities. Tiny bodies can collide with library signatures: the IDA9 export
+  calls `0x004042B0` an `Iostream_init` constructor, while the original table
+  slots and adjustor at `0x00404420`, preserved in `src/graphicwin.cpp`, identify
+  the real `GraphicWin::get_graphic_win` self-query. The same export's
+  `Iostream_init` labels at `0x00616D70` and `0x00634BA0` therefore do not prove
+  runtime ownership. Its Concurrency template labels at `0x00447D10` and
+  `0x0050EA30` likewise have no retained signature/database provenance and
+  conflict with the pinned PE's December 1999 timestamp and linker version 6.0.
+  Microsoft documents ConcRT/PPL as part of the platform introduced with
+  [Visual Studio 2010](https://learn.microsoft.com/en-us/archive/msdn-magazine/2010/april/visual-c-exploring-new-c-and-mfc-features-in-visual-studio-2010).
+  Treat these labels as unverified hypotheses, not exclusions; actual callers,
+  table cells, receiver relationships and dependency provenance must establish
+  ownership. Missing static references do not establish dead code.
 - Virtual-base flags are ABI inputs, not necessarily source parameters. Earlier
   catalogue names and the brief contradicted themselves about constructors and
   destructors. Determine explicit arguments from callers, base construction,
