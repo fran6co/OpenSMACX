@@ -1,0 +1,82 @@
+{
+  "author": "coordinator",
+  "base_revision": "b3be21d06467489ac8befa258c111ae77806a108",
+  "editable_files": [
+    "src/jackal/font.cpp",
+    "src/jackal/font.h"
+  ],
+  "evidence": [
+    "Pinned direct callers of619230 are CouncWin init/close/on_button_clicked/on_key_click and DesignWin close. Pinned6192F0 callers are Buffer text_width/write_raw_l and PullDown compute_length. Font init/destructor and find_line_break_l instead contain original inlined expansions. Authorize a source-preserving MEASURED-only removal deck for the two Font header definitions, preserving bodies, signatures, mappings, historical claims and inline semantics; do not move bodies out of line or change flags. Verify natural emitted symbols and physical code/relocation/directive changes with the caller TUs before adoption, expanding affected ownership scopes as required. Missing standalone emission in mapped font.cpp stays an explicit restoration/measurement obligation, not a passing claim. No exports are established as an original feature, and these diagnostics do not prove linked selection or full-game acceptance."
+  ],
+  "intent": "Determine whether the existing real Font users naturally retain mapped inline cleanup and bounded-width bodies without production dllexport forcing.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6174288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "font-natural-inline-emission-oct12g"
+}
