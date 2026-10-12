@@ -1,0 +1,25 @@
+{
+  "event_id": "d9610fd4355de636417131bd94aec1d2c05418c1af5053060f90d101353fbbfe",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_is_coast_native_contract_oct12h.py"
+    ],
+    "evidence": [
+      "Pinned is_coast 0x004E49D0-0x004E4A91 returns the matching signed neighbor index (1..8 or 1..20), or zero, not boolean 1. Preserve truthy 9/21 radius selection, one-step horizontal wrapping, signed bounds and original low-bit MapIsFlat caching after the loop-entry guard; do not add safety changes. Existing faction.cpp naval placement consumes the returned index for RadiusOffsetX/Y; no caller edit is required. Restore the function and int-compatible declaration in the same map owner, retain markers/claims/TRIED history, and add actual-body positive/damage controls for all indices, both radii, wrapping, skipped bounds and direction-index consumption. This permission is prepared on the coordinator only: do not transfer it or change the measured worker until its current epoch is terminal."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5130704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "is-coast-index-contract-oct12h",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:coast-native-contract-oct12h"
+}
