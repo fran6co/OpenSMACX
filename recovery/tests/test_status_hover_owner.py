@@ -20,18 +20,20 @@ def test_hover_uses_existing_status_storage(tmp_path):
     for alias in ("IfaceCursorSpot", "StatusHoverBaseId", "StatusHoverVehId"):
         assert alias not in interface
     assert "int *const StatusHoverVehId =" not in vehicle
-    assert "int *const StatusHoverVehIdAlt = (int *)0x008C6B34;" in vehicle
+    assert "StatusHoverVehIdAlt" not in vehicle
+    assert "ConsoleStatusWin.field_15CC_" in vehicle
+    assert "int32_t field_15CC_;" in header
     assert "hover_vehicle_id_" in header and "hover_base_id_" in header
     hover = between(interface, "    int check2 = ConsoleStatusWin.spot_.check",
                     "    if (iface_redraw_pending_ == 1)")
     compact = between(vehicle, "    if (ConsoleStatusWin.hover_vehicle_id_ == veh_id)",
-                      "    if (*StatusHoverVehIdAlt")
+                      "    if (GameDataStateStorage.fields_.vehicle_selection_follow_limit_")
     harness = r'''
     #include <cassert>
     struct Spot { int result, pos, type;
       int check(int,int,int *p,int *t) {*p=pos;*t=type;return result;} };
     struct StatusWin {
-      int hover_vehicle_id_, hover_base_id_; Spot spot_;
+      int hover_vehicle_id_, hover_base_id_, field_15CC_; Spot spot_;
       int draws, resets, vehicle, base;
       void draw_active(int v,int b,int) {++draws;vehicle=v;base=b;}
       void reset_active() {++resets;hover_vehicle_id_=hover_base_id_=-1;}
@@ -55,6 +57,9 @@ def test_hover_uses_existing_status_storage(tmp_path):
       ConsoleStatusWin.hover_vehicle_id_=5;compact(5);assert(ConsoleStatusWin.hover_vehicle_id_==-1);
       ConsoleStatusWin.hover_vehicle_id_=9;compact(5);assert(ConsoleStatusWin.hover_vehicle_id_==8);
       ConsoleStatusWin.hover_vehicle_id_=4;compact(5);assert(ConsoleStatusWin.hover_vehicle_id_==4);
+      ConsoleStatusWin.field_15CC_=5;compact(5);assert(ConsoleStatusWin.field_15CC_==-1);
+      ConsoleStatusWin.field_15CC_=9;compact(5);assert(ConsoleStatusWin.field_15CC_==8);
+      ConsoleStatusWin.field_15CC_=4;compact(5);assert(ConsoleStatusWin.field_15CC_==4);
     }
     '''.replace("ACTUAL_HOVER", hover).replace("ACTUAL_COMPACT", compact)
     compiler = shutil.which("clang++") or shutil.which("g++")

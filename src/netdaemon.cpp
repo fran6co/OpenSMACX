@@ -5687,9 +5687,14 @@ static bool netdaemon_handle_five_message_routes(
         double_cross(packet.payload_10(),
                      packet.payload_14(),
                      packet.payload_18());
-        if (daemon.primary_state_.leading_words_[0] == 0)
-            daemon.deletion_list_.set_sequence_bits(packet.sequence());
-        if (packet.faction() == ConsoleGlobal.faction_id_)
+        // Native536D3F..536D48 captures host, sequence and faction before
+        //536D52 stores the sequence owner, which can alias the packet faction.
+        const uint32_t host = daemon.primary_state_.leading_words_[0];
+        const uint32_t received_sequence = packet.sequence();
+        const int received_faction = packet.faction();
+        if (host == 0)
+            daemon.deletion_list_.set_sequence_bits(received_sequence);
+        if (received_faction == ConsoleGlobal.faction_id_)
             netdaemon_process_local_player_completion(daemon);
         return true;
     }

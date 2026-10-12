@@ -9383,10 +9383,9 @@ void __cdecl stack_kill(int a1) {
 // ---- the .data slots veh_kill compacts when a vehicle id disappears ----
 // 0x008C6B2C is the vehicle id the map cursor is hovering: MainInterface::
 // on_iface_mouse_move (0x0045D000) writes it and clears the base id beside it
-// before handing the pair to StatusWin::draw_active. 0x008C6B34 sits in the
-// same run; the whole tree reaches it exactly once, here, and re-points it
-// exactly as it re-points the hover slot, so the name records the role.
-int *const StatusHoverVehIdAlt = (int *)0x008C6B34;
+// before handing the pair to StatusWin::draw_active. The active vehicle at
+// 0x008C6B34 is ConsoleStatusWin.field_15CC_: native reset_active4B6544
+// reads receiver+15CC, and veh_kill5C0A71 updates that same source-owned word.
 
 // Original0x0093E31C is NetDaemonNet.deletion_list_, not a separate global.
 // veh_kill passes this exact embedded receiver to add_deletion52DE70.
@@ -9518,10 +9517,10 @@ void __cdecl veh_kill(int veh_id) {
     } else if (veh_id < ConsoleStatusWin.hover_vehicle_id_) {
         --ConsoleStatusWin.hover_vehicle_id_;
     }
-    if (*StatusHoverVehIdAlt == veh_id) {
-        *StatusHoverVehIdAlt = -1;
-    } else if (veh_id < *StatusHoverVehIdAlt) {
-        --*StatusHoverVehIdAlt;
+    if (ConsoleStatusWin.field_15CC_ == veh_id) {
+        ConsoleStatusWin.field_15CC_ = -1;
+    } else if (veh_id < ConsoleStatusWin.field_15CC_) {
+        --ConsoleStatusWin.field_15CC_;
     }
     if (GameDataStateStorage.fields_.vehicle_selection_follow_limit_ != 0 && veh_id <= GameDataStateStorage.fields_.vehicle_selection_follow_limit_) {
         --GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
@@ -9559,11 +9558,14 @@ Status: HOMED, unmeasured tier.
 void __cdecl kill(int veh_id) {
     const int x = Vehs[veh_id].x;
     const int y = Vehs[veh_id].y;
-    const int proto_id = Vehs[veh_id].proto_id;
+    const int initial_proto_id = Vehs[veh_id].proto_id;
     const int faction_id = Vehs[veh_id].faction_id;
-    const int home_base_id = Vehs[veh_id].home_base_id;
 
-    const int worm_abil = has_abil(proto_id, 2);
+    const int worm_abil = has_abil(initial_proto_id, 2);
+    // Native5C0B43/5C0B4D reload these fields after the ability call; the
+    // coordinates and faction above retain their earlier captured values.
+    const int proto_id = Vehs[veh_id].proto_id;
+    const int home_base_id = Vehs[veh_id].home_base_id;
 
     const int carry_capacity = VehPrototypes[proto_id].carry_capacity;
     int passengers;
@@ -9578,23 +9580,20 @@ void __cdecl kill(int veh_id) {
     if (passengers == 0) {
         veh_kill(veh_id);
     } else {
-        if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < MapLongitudeBounds) {
-            // `[+0]` read as a byte and masked 0xE0 is `climate`'s altitude
-            // bits - see map.h's note on the 0x2C stride. 0x60 and above is
-            // ocean, and a vehicle that cannot carry passengers drowns there
-            // rather than sitting in the stack.
-            if ((map_loc(x, y)->climate & 0xe0) >= 0x60) {
-                veh_kill(veh_id);
-                TutWinBaseWindow.check_base(home_base_id);
+        const bool valid_tile = y >= 0 && y < MapLatitudeBounds &&
+                                x >= 0 && x < MapLongitudeBounds;
+        if (valid_tile && (map_loc(x, y)->climate & 0xe0) >= 0x60) {
+            // Native5C0BF4 joins the ordinary vehicle deletion at5C0C1E,
+            // then the common tutorial and redraw tail at5C0C27.
+            veh_kill(veh_id);
+        } else {
+            if (!valid_tile && x == -2) {
+                stack_kill(veh_id);
                 return;
             }
-        } else if (x == -2) {
+            stack_veh(veh_id, 2);
             stack_kill(veh_id);
-            return;
         }
-
-        stack_veh(veh_id, 2);
-        stack_kill(veh_id);
     }
 
     TutWinBaseWindow.check_base(home_base_id);

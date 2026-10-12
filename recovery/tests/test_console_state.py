@@ -98,10 +98,10 @@ def harness(bodies, api=None):
         ProjectLocations &SecretProject = GameDataStateStorage.fields_.secret_project_;
         enum { RFLAG_ALIEN = 16 };
         struct Player { uint32_t rule_flags; } Players[8];
-        struct StatusWin { int hover_vehicle_id_; } ConsoleStatusWin;
+        struct StatusWin { int hover_vehicle_id_, field_15CC_; } ConsoleStatusWin;
         int &hover = ConsoleStatusWin.hover_vehicle_id_;
-        int hover_alt, followed_value;
-        int *StatusHoverVehIdAlt = &hover_alt;
+        int &hover_alt = ConsoleStatusWin.field_15CC_;
+        int followed_value;
         int &VehSelectionFollowLimit = GameDataStateStorage.fields_.vehicle_selection_follow_limit_;
         struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
         struct NetDaemon {
@@ -163,24 +163,28 @@ def harness(bodies, api=None):
             // slots were already processed and must not be decremented twice.
             for (int selected = 1; selected <= 3; ++selected)
               for (int focus = 1; focus <= 3; ++focus)
-                for (int mode = 0; mode != 5; ++mode)
+                for (int mode = 0; mode != 6; ++mode)
+                  for (int active = 1; active <= 3; ++active)
                   for (int net = 0; net != 2; ++net) {
                     ConsoleGlobal.selected_vehicle_ = selected;
                     ConsoleGlobal.focus_vehicle_ = focus;
                     ConsoleGlobal.cursor_active_ = 0x12345678;
                     ConsoleGlobal.field_23BE4_ = 0x87654321;
                     ConsoleGlobal.field_23BE8_ = 0x76543210;
-                    hover = 2; hover_alt = 3; VehSelectionFollowLimit = 4; followed_value = 5;
+                    hover = 2; hover_alt = active; VehSelectionFollowLimit = 4; followed_value = 5;
                     int *followed = mode == 0 ? nullptr : mode == 1 ? &ConsoleGlobal.selected_vehicle_
                         : mode == 2 ? &ConsoleGlobal.focus_vehicle_
-                        : mode == 3 ? &VehSelectionFollowLimit : &followed_value;
+                        : mode == 3 ? &VehSelectionFollowLimit : mode == 4 ? &followed_value
+                        : &ConsoleStatusWin.field_15CC_;
                     NetDaemonNet.set_vehicle_selection_follow(followed);
                     IsMultiplayerNet = net;
                     update_selection(2);
                     require(NetDaemonNet.vehicle_selection_follow() == followed);
                     require(ConsoleGlobal.selected_vehicle_ == adjusted(selected, 2));
                     require(ConsoleGlobal.focus_vehicle_ == adjusted(focus, 2));
-                    require(hover == -1 && hover_alt == 2 && VehSelectionFollowLimit == 3);
+                    // Native skips three previously handled slots, but not
+                    // the active StatusWin slot: follow can decrement it again.
+                    require(hover == -1 && hover_alt == (net && mode == 5 && active == 3 ? 1 : adjusted(active,2)) && VehSelectionFollowLimit == 3);
                     require(followed_value == (net && mode == 4 ? 4 : 5));
                     require(ConsoleGlobal.cursor_active_ == 0x12345678);
                     require(ConsoleGlobal.field_23BE4_ == 0x87654321);
@@ -238,6 +242,7 @@ def test_actual_consumers_share_console_members_and_preserve_pointer_identity(tm
     (2, "slot != &GameDataStateStorage.fields_.vehicle_selection_follow_limit_", "true", 1),
     (2, "ConsoleGlobal.selected_vehicle_ = -1;", "ConsoleGlobal.selected_vehicle_ = 0;", 1),
     (2, "ConsoleGlobal.focus_vehicle_ = -1;", "ConsoleGlobal.focus_vehicle_ = 0;", 1),
+    (2, "ConsoleStatusWin.field_15CC_ = -1;", "ConsoleStatusWin.field_15CC_ = 0;", 1),
 ])
 def test_console_state_damage_is_observed(tmp_path, part, before, after, count):
     bodies = list(actual_bodies())
