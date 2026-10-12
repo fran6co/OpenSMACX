@@ -76,7 +76,7 @@ struct RadioButton : public virtual GraphicWin, public virtual Dialog {
   RadioButton() : field_C_(7), double_click_callback_(reinterpret_cast<int *>(1)),
     checked_sprite_(0), unchecked_sprite_(0) {}
   uint32_t close();
-  ~RadioButton();
+  virtual ~RadioButton() """ + radio_dtor + r"""
 };
 #define free tracked_free
 void cleanup_failed_net_construction(void *memory) {
@@ -85,7 +85,6 @@ void cleanup_failed_net_construction(void *memory) {
 #undef free
 StringList::~StringList() """ + string_dtor + r"""
 uint32_t RadioButton::close() """ + radio_close + r"""
-RadioButton::~RadioButton() """ + radio_dtor + r"""
 int main() {
   Heap owner;
   StringAllocationHeap = &owner;
@@ -145,19 +144,32 @@ def _run(tmp_path: Path, compiler: str, source: str) -> subprocess.CompletedProc
 def test_transported_lifecycle_identities_and_distinct_radio_deleting_entry():
     delete_cleanup = _record("src/net_class.cpp", 0x00402320)
     list_delete = _record("src/dialog.cpp", 0x00406670)
-    radio_body = _record("src/jackal/radiobutton.cpp", 0x00406A90)
-    radio_scalar = _record("src/jackal/radiobutton.cpp", 0x00406F60)
+    radio_body = _record("src/dialogs.cpp", 0x00406A90)
+    radio_scalar = _record("src/dialogs.cpp", 0x00406F60)
     assert delete_cleanup.byte_exact and delete_cleanup.symbol == "?cleanup_failed_net_construction@@YAXPAX@Z"
     assert list_delete.byte_exact and list_delete.symbol == "??_GStringList@@UAEPAXI@Z"
     assert radio_body.byte_exact and radio_body.symbol == "??1RadioButton@@UAE@XZ"
     assert radio_scalar.byte_exact and radio_scalar.symbol == "??_GRadioButton@@UAEPAXI@Z"
+    for address, name, span, symbol in (
+        (0x00406A90, "sub_406a90", (0x00406A90, 0x00406AE3), "??1RadioButton@@UAE@XZ"),
+        (0x00406F60, "??1RadioButton@@QAE@H@Z", (0x00406F60, 0x00406FE2), "??_GRadioButton@@UAEPAXI@Z"),
+        (0x00406F50, "??1thunk1_RadioButton@@QAE@H@Z", (0x00406F50, 0x00406F58), "??_ERadioButton@@$4PPPPPPPM@A@AEPAXI@Z"),
+        (0x00407060, "??1thunk2_RadioButton@@QAE@H@Z", (0x00407060, 0x00407071), "??_ERadioButton@@$4PPPPPLLI@EEE@AEPAXI@Z"),
+        (0x00407080, "??1thunk3_RadioButton@@QAE@H@Z", (0x00407080, 0x0040708E), "??_ERadioButton@@$4PPPPPPPM@KBI@AEPAXI@Z"),
+    ):
+        row = _record("src/dialogs.cpp", address)
+        assert row.name == name
+        assert row.image_spans == (span,)
+        assert row.mode.value == "file"
+        assert row.byte_exact and not row.semantic
+        assert row.symbol == symbol
 
 
 def test_actual_cleanup_and_stringlist_destructor_bodies_reject_mutants(tmp_path: Path, compiler: str):
     cleanup = _body("src/net_class.cpp", "void cleanup_failed_net_construction(void *memory)")
     string_dtor = _body("src/stringlist.cpp", "StringList::~StringList()")
     close = _body("src/jackal/radiobutton.cpp", "uint32_t RadioButton::close()")
-    radio_dtor = _body("src/jackal/radiobutton.cpp", "RadioButton::~RadioButton()")
+    radio_dtor = _body("src/jackal/radiobutton.h", "virtual ~RadioButton()")
     good = _run(tmp_path / "good", compiler, _fixture(cleanup, string_dtor, close, radio_dtor))
     assert good.returncode == 0, good.stdout + good.stderr
 
@@ -177,12 +189,12 @@ def test_actual_cleanup_and_stringlist_destructor_bodies_reject_mutants(tmp_path
                 _fixture(cleanup, string_dtor, close, radio_mutant)).returncode != 0
 
 
-def test_radio_destructor_is_out_of_line_but_not_a_second_scalar_deleting_body():
+def test_radio_destructor_is_inline_and_not_a_second_scalar_deleting_body():
     header = (ROOT / "src/jackal/radiobutton.h").read_text(encoding="utf-8")
     cpp = (ROOT / "src/jackal/radiobutton.cpp").read_text(encoding="utf-8")
-    assert "virtual ~RadioButton();" in header
-    assert "RadioButton::~RadioButton()" in cpp
-    assert "??_GRadioButton@@UAEPAXI@Z" in _record("src/jackal/radiobutton.cpp", 0x00406F60).symbol
-    assert _record("src/jackal/radiobutton.cpp", 0x00406A90).symbol != _record("src/jackal/radiobutton.cpp", 0x00406F60).symbol
+    assert _body("src/jackal/radiobutton.h", "virtual ~RadioButton()") == "{ close(); }"
+    assert "RadioButton::~RadioButton()" not in cpp
+    assert "??_GRadioButton@@UAEPAXI@Z" in _record("src/dialogs.cpp", 0x00406F60).symbol
+    assert _record("src/dialogs.cpp", 0x00406A90).symbol != _record("src/dialogs.cpp", 0x00406F60).symbol
     # This is declaration evidence only, not a host layout or native ABI claim.
     assert "class RadioButton : public virtual GraphicWin, public virtual Dialog" in header
