@@ -163,6 +163,13 @@ task per address. Keep uncertain assignments explicit.
 
 ## 2. Authorize a task, then prepare its worktree
 
+`recovery/tasks/` contains only native task records created by the installed
+package. Historical manual checkpoint decisions that were not native tasks live
+in `recovery/decisions/`, unchanged; they are evidence, not runnable assignments
+or current ownership reservations. Do not infer missing subjects, expand an old
+baseline to the current revision, or relax the task schema to activate them.
+Any new native assignment needs its own explicit scope and authorization.
+
 In an already isolated, configured worktree, `uv run recover start --planner
 <delegation.json> --reviewer recovery/reviewer.json` can select an ownership task
 and run the same recovery driver. Optional `--coordinator` enables bounded discovery
