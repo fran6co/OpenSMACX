@@ -294,7 +294,7 @@ def test_newtech_sprite_array_real_global_constructor_and_exit_cleanup(
         assert image.read_initial(Span(0x00822610, 0x00822718)) == bytes(0x108)
 
     ctor = _body(impl, "\nSprite::Sprite()")
-    dtor_match = re.search(r"MEASURED\s+~Sprite\(\)\s*(\{[^}]*\})", header)
+    dtor_match = re.search(r"~Sprite\(\)\s*(\{[^}]*\})", header)
     assert dtor_match and dtor_match.group(1).strip() == "{ close(); }"
     baseline = _compile_run(tmp_path / "newtech-good", host_compiler,
                             _sprite_probe(ctor, dtor_match.group(1), 6))
@@ -326,7 +326,7 @@ def test_newtech_guarded_exit_skips_cleanup_without_resetting_guard(
     impl = (ROOT / "src/sprite.cpp").read_text()
     header = (ROOT / "src/sprite.h").read_text()
     ctor = _body(impl, "\nSprite::Sprite()")
-    dtor, = re.findall(r"MEASURED\s+~Sprite\(\)\s*(\{[^}]*\})", header)
+    dtor, = re.findall(r"~Sprite\(\)\s*(\{[^}]*\})", header)
     source = _sprite_probe(ctor, dtor, 6, already_guarded=True)
     result = _compile_run(tmp_path / "newtech-already-guarded", host_compiler, source)
     assert result.returncode == 0, result.stdout + result.stderr

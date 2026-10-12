@@ -65,7 +65,7 @@ def actual_source():
     for pattern, header in (
         (r"^unsigned int TextureRasterKey;", "texture"),
         (r"^unsigned char TerrainCoastPalette\[12\];", "game"),
-        (r"^IDirectDraw \*BufferDirectDraw;", "buffer"),
+        (r"^IDirectDraw2 \*BufferDirectDraw;", "buffer"),
     ):
         definition = one(pattern, owners)
         objects.append(definition)
@@ -74,16 +74,16 @@ def actual_source():
     sprite = headers["sprite"]
     sprite_methods = [
         one(r"  Sprite\(\);", sprite),
-        one(r"  MEASURED ~Sprite\(\) \{ close\(\); \}", sprite),
+        one(r"  ~Sprite\(\) \{ close\(\); \}", sprite),
         one(r"  void close\(\);", sprite),
         one(r"  unsigned char cTransparentIndex_;", sprite),
         one(r"  unsigned char transparent_index\(\) const \{[^}]+\}", sprite),
-        one(r"  int extract\([^;]+;", sprite),
+        one(r"  int extract\(Buffer \*buffer, int a,[^;]+;", sprite),
         one(r"  int draw\(Buffer \*destination, int transparent, int x, int y,\s*unsigned char \*table\);", sprite),
         one(r"  int draw_dest\(Buffer \*destination, int transparent, int x, int y,\s*unsigned char \*table\);", sprite),
     ]
     buffer_methods = [one(pattern, headers["buffer"]) for pattern in (
-        r"  Buffer\(\);", r"  MEASURED virtual ~Buffer\(\);",
+        r"  Buffer\(\);", r"  virtual ~Buffer\(\);",
         r"  int load_pcx\(const char \*[^;]+;",
         r"  int change_color\(int a1, int a2\);", r"  void close\(\);",
         r"  int init\(int width, int height, int tgl, ExtDirectDraw \*direct_draw\);",
@@ -215,7 +215,7 @@ HARNESS = r'''
 #include <algorithm>
 #define __cdecl
 #define MEASURED
-struct Palette;struct TexHeap;struct ExtDirectDraw;struct IDirectDraw {};
+struct Palette;struct TexHeap;struct ExtDirectDraw;struct IDirectDraw2 {};
 struct Buffer;
 INTERFACES
 DECLARATIONS
@@ -234,7 +234,7 @@ std::vector<const void*> live;
 std::vector<std::string> lifecycle;
 std::vector<std::vector<std::string> > expected;
 int pixel_count, draw_count, init_count;
-IDirectDraw mode;
+IDirectDraw2 mode;
 struct Failure {};
 void check(bool ok,int line){if(!ok){std::fprintf(stderr,"assertion line %d scenario %d event %zu\n",line,scenario,cursor);std::_Exit(100);}}
 #define require(x) check((x),__LINE__)

@@ -165,7 +165,7 @@ class Sprite {
   static void close_class();
   Sprite();
   // `jmp ?close@Sprite@@QAEXXZ` in the image - see Palette.
-  MEASURED ~Sprite() { close(); }   // 00406850
+  ~Sprite() { close(); }   // 00406850
 
   void close();
 
