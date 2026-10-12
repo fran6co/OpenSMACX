@@ -5218,6 +5218,10 @@ void MapWin::draw_base_names() {
         (field_1DD70_ & 0x800U) != 0 &&
         (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_MAP_SHOW_BASE_NAMES) != 0;
 
+    if (!show_base_names) {
+        canvas->set_clip(&saved_clip);
+        return;
+    }
     if (show_base_names && field_1DD98_ < -10) {
         canvas->set_clip(&saved_clip);
         return;
