@@ -20,7 +20,8 @@
     "recovery/tests/test_crt_reference_closure_oct11.py",
     "recovery/tests/test_runtime_array_unwind_oct11.py",
     "recovery/tests/test_runtime_atox_errno_oct11.py",
-    "recovery/tests/test_runtime_mantissa_family_oct11.py"
+    "recovery/tests/test_runtime_mantissa_family_oct11.py",
+    "recovery/tests/test_crt_frontier_bindings_oct12.py"
   ],
   "intent": "Bind seventeen independently reviewed ordinary runtime code contributions to the pinned external archive for verification, without inventing application functions or granting provider selection, exclusions, matching or acceptance.",
   "evidence": [
