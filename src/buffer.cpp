@@ -3044,7 +3044,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
             // The height is the link font's, and `font4_` falling back to
             // `font1_` is the image's own guard - `unk_1_` when negative,
             // `height_ + unk_1_` when not.
-            if (write_font_slot_ == 3 && link_count_ < 20) {
+            if (write_font_slot_ == 3 && static_cast<int>(link_count_) < 20) {
                 Font *const link_font = font4_ ? font4_ : font1_;
                 if (link_font) {
                         const int height = link_font->unk_1_ < 0
@@ -3062,7 +3062,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
         if (letter == '$' && strncmp(stop, "$LINK<", 6) == 0) {
             markup_pending_ = 1;
             next_slot = 3;
-            if (++link_count_ > 20) {
+            if (static_cast<int>(++link_count_) > 20) {
                 MessageBoxA(nullptr, "Maximum hypertext links exceeded",
                             "WARNING!", 0);
             }
@@ -3103,13 +3103,13 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
             LPSTR const close = strchr(stop, '>');
             if (close) {
                 // The label between `=` and `>` is copied out and owned.
-                if (link_count_ < 20) {
+                if (static_cast<int>(link_count_) < 20) {
                     const int label = static_cast<int>(close - text);
                     char *const kept = static_cast<char *>(mem_get(label + 1));
                     owned_[link_count_ - 1] = kept;
-                    if (kept) {
-                        memcpy(kept, text, label);
-                        kept[label] = '\0';
+                    if (owned_[link_count_ - 1]) {
+                        memcpy(owned_[link_count_ - 1], text, label);
+                        static_cast<char *>(owned_[link_count_ - 1])[label] = '\0';
                     }
                 }
                 len += static_cast<int>(text - close) - 1;
@@ -3123,7 +3123,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
         // The height is the link font's, and `font4_` falling back to
         // `font1_` is the image's own guard - `unk_1_` when negative,
         // `height_ + unk_1_` when not.
-        if (write_font_slot_ == 3 && link_count_ < 20) {
+        if (write_font_slot_ == 3 && static_cast<int>(link_count_) < 20) {
             Font *const link_font = font4_ ? font4_ : font1_;
             if (link_font) {
                 const int height = link_font->unk_1_ < 0

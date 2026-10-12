@@ -150,7 +150,9 @@ int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
     }
 
     bool has_more = true;
-    char parse_buffer[608];
+    // The native parser output has a 0x100-byte window before its Text
+    // local. Historical array spelling/padding and overflow layout are unknown.
+    char parse_buffer[256];
     for (;;) {
         char *line;
         for (;;) {
@@ -200,9 +202,8 @@ int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
         field_20_ = static_cast<uint32_t>(kind);
         field_24_ = 0;
         const int add_result = add(0);
-        // on_insert copies the text into its payload. Do not leave a pointer
-        // to this function's stack buffer for a later, unrelated insertion.
-        pending_text_ = nullptr;
+        // on_insert copies the text into its payload, but the original keeps
+        // this borrowed stack slice, including its expired value after return.
         if (add_result != 0) {
             text.close();
             return 1;

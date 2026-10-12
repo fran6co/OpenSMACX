@@ -52,6 +52,41 @@ def one(source, pattern):
     return result
 
 
+def exact_link_migration(original):
+    """Only four signed views and three indexed owned-pointer reloads."""
+    assert original.count('link_count_ < 20') == 3
+    assert original.count('++link_count_ > 20') == 1
+    expected = original.replace('link_count_ < 20', 'static_cast<int>(link_count_) < 20')
+    expected = expected.replace('++link_count_ > 20', 'static_cast<int>(++link_count_) > 20')
+    for before, after in (
+        ('if (kept)', 'if (owned_[link_count_ - 1])'),
+        ('memcpy(kept, text, label);', 'memcpy(owned_[link_count_ - 1], text, label);'),
+        ("kept[label] = '\\0';", "static_cast<char *>(owned_[link_count_ - 1])[label] = '\\0';"),
+    ):
+        assert expected.count(before) == 1
+        expected = expected.replace(before, after, 1)
+    return expected
+
+
+def reverse_exact_link_guard_migration(source, baseline):
+    """Bridge only the explicit later guard/reload edits, not a body waiver.
+
+    The three-body transaction still uses its original fdce370 baseline. Any
+    other writer change (including comments) refuses this exact reversal.
+    The later task independently checks its complete two-body transaction.
+    """
+    signature = "int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,"
+    original = body(baseline, signature)
+    current = body(source, signature)
+    if current == original:
+        return source
+    expected = exact_link_migration(original)
+    assert current.count('static_cast<int>(link_count_) < 20') == 3
+    assert current.count('static_cast<int>(++link_count_) > 20') == 1
+    assert current == expected
+    return source.replace(current, original, 1)
+
+
 def test_only_three_complete_bodies_change_and_all_obligations_survive():
     task = json.loads((ROOT / "recovery/tasks/buffer-line-layout-fidelity-oct12.json").read_text())
     baseline = subprocess.check_output(
@@ -64,11 +99,35 @@ def test_only_three_complete_bodies_change_and_all_obligations_survive():
         restored = restored.replace(current_body, body(baseline, signature), 1)
         row, = (r for r in read_file(ROOT / "src/buffer.cpp") if r.address == address)
         assert row.image_spans == ((address, end),)
-    assert restored == baseline
+    assert reverse_exact_link_guard_migration(restored, baseline) == baseline
     assert current.count("if (found[-1] == ' ' || found == segStart)") == 2
     # Full byte-for-byte restoration also preserves every annotation and seed
     # envelope, rather than relying on a same-count claim check.
     assert "char *find_line_break_l(char *text, int *break_len, int len);" in (ROOT / "src/buffer.h").read_text()
+
+
+@pytest.mark.parametrize("before,after", (
+    ('static_cast<int>(link_count_) < 20', 'static_cast<int>(link_count_) <= 20'),
+    ('static_cast<int>(++link_count_) > 20', '++link_count_ > 20'),
+    ('if (owned_[link_count_ - 1])', 'if (kept)'),
+    ('memcpy(owned_[link_count_ - 1], text, label);', 'memcpy(kept, text, label);'),
+    ("static_cast<char *>(owned_[link_count_ - 1])[label] = '\\0';", "kept[label] = '\\0';"),
+    ('// The label between `=` and `>` is copied out and owned.', '// unapproved change'),
+))
+def test_exact_later_guard_bridge_rejects_damage(before, after):
+    task = json.loads((ROOT / "recovery/tasks/buffer-line-layout-fidelity-oct12.json").read_text())
+    baseline = subprocess.check_output(
+        ["git", "show", task["base_revision"] + ":src/buffer.cpp"], cwd=ROOT).decode()
+    # Construct the one permitted evolution from the original, without making
+    # this regression depend on which later checkpoint currently owns it.
+    signature = "int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,"
+    original = body(baseline, signature)
+    migrated = exact_link_migration(original)
+    source = baseline.replace(original, migrated, 1)
+    assert reverse_exact_link_guard_migration(source, baseline) == baseline
+    assert before in migrated
+    with pytest.raises(AssertionError):
+        reverse_exact_link_guard_migration(source.replace(before, after, 1), baseline)
 
 
 def test_pinned_complete_branch_evidence_and_dependencies():
