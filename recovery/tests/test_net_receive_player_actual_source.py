@@ -14,7 +14,7 @@ from test_win_zorder_pointer_flow_oct10 import extract
 ROOT = Path(__file__).resolve().parents[2]
 METHODS = {
     0x630A80: "void *Net::read_queue_head_until_timeout(unsigned int *key_out, unsigned int *length_out)",
-    0x630B00: "void *Net::read_queue_key_until_timeout(unsigned int *key, int *length_out)",
+    0x630B00: "void *Net::read_queue_key_until_timeout(int key, int *length_out)",
     0x630B80: "void Net::receive_directplay_messages(int player_id)",
     0x62D5F0: "void Net::broadcast_player_table()",
     0x632290: "int Net::set_player_host_flag(int is_host)",
@@ -62,9 +62,9 @@ class NetFifo {
     if (size) *size = returned_size;
     return head_result;
   }
-  int get(void *, unsigned int *key, int *, int *size) {
+  int get(void *, int key, int *, int *size) {
     ++keyed_calls;
-    if (keyed_result != 0 && key && *key != returned_key) return 0;
+    if (keyed_result != 0 && static_cast<uint32_t>(key) != returned_key) return 0;
     if (size) *size = returned_signed_size;
     return keyed_result;
   }
@@ -90,7 +90,7 @@ class Net {
     return 0;
   }
   void *read_queue_head_until_timeout(unsigned int *, unsigned int *);
-  void *read_queue_key_until_timeout(unsigned int *, int *);
+  void *read_queue_key_until_timeout(int, int *);
   void receive_directplay_messages(int);
   void broadcast_player_table();
   int set_player_host_flag(int);
@@ -168,7 +168,7 @@ MAIN = r'''int main() {
   key_out = 0x5678;
   time_values[0] = 300; time_values[1] = 300;
   time_count = 2; time_index = 0;
-  assert(net.read_queue_key_until_timeout(&key_out, reinterpret_cast<int *>(&size_out)) == NetGetScratch);
+  assert(net.read_queue_key_until_timeout(static_cast<int>(key_out), reinterpret_cast<int *>(&size_out)) == NetGetScratch);
   assert(net.queue_10c_.keyed_calls == 1 && static_cast<int>(size_out) == -3);
 
   net.field_760_ = 77;
@@ -212,10 +212,12 @@ MAIN = r'''int main() {
   assert(net.set_player_host_flag(1) == 0);
 
   net.players_[2].field_0_ = 99;
-  net.players_[2].stamp_10_ = 700;
+  net.players_[2].field_4_ = 700;
+  net.players_[2].stamp_10_ = 0xABCDEF01;
   assert(net.check_message(99, 700) == 1);
   assert(net.check_message(99, 699) == 1);
-  assert(net.check_message(99, 701) == 0 && net.players_[2].stamp_10_ == 701);
+  assert(net.check_message(99, 701) == 0 && net.players_[2].field_4_ == 701);
+  assert(net.players_[2].stamp_10_ == 0xABCDEF01);
   assert(net.check_message(100, 800) == 0);
   return 0;
 }

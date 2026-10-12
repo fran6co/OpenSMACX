@@ -30,7 +30,7 @@ class NetFifo {
                int *size_out);
   int peek_head(void *data, unsigned int *key_out, int *caller_value_out,
                 int *size_out);
-  int get(void *data, unsigned int *key, int *type, int *len);
+  int get(void *data, int key, int *type, int *len);
   int get(void *data, unsigned int *key, int *type, unsigned int *len);
 
   // Each original add allocates one 0x18-byte intrusive node; the gets free

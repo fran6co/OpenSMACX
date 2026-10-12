@@ -337,7 +337,7 @@ static void test_send_targeted_wait_interval_reloads_live_peer_rtt() {
     assert(g_reset_handles[3] == reinterpret_cast<HANDLE>(3));
 }
 
-static void test_packet_type_targeted_wait_interval_reloads_live_peer_rtt() {
+static void test_packet_type_targeted_wait_interval_retains_captured_peer_rtt() {
     Net net;
     unsigned char payload = 0x6A;
     reset_observers();
@@ -351,7 +351,7 @@ static void test_packet_type_targeted_wait_interval_reloads_live_peer_rtt() {
     assert(net.send_packet_type(&payload, 1, 10, 1, 1) == 1);
     assert(g_wait_calls == 2);
     assert(g_wait_timeouts[0] == 1000U);
-    assert(g_wait_timeouts[1] == 2000U);
+    assert(g_wait_timeouts[1] == 1000U);
     assert(g_wait_handles[0][0] == reinterpret_cast<HANDLE>(1));
     assert(g_wait_handles[0][1] == reinterpret_cast<HANDLE>(2));
     assert(g_wait_handles[1][0] == reinterpret_cast<HANDLE>(1));
@@ -432,7 +432,7 @@ int main() {
     test_packet_type_broadcast_lists_all_pending_peers();
     test_packet_type_target_timeout_names_selected_peer();
     test_send_targeted_wait_interval_reloads_live_peer_rtt();
-    test_packet_type_targeted_wait_interval_reloads_live_peer_rtt();
+    test_packet_type_targeted_wait_interval_retains_captured_peer_rtt();
     test_direct_send_failure_dialogs_are_distinct();
     test_signed_size_and_player_count_comparisons();
     test_send_packet_word_for_voice_and_protocol_paths();

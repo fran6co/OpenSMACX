@@ -448,7 +448,7 @@ class Net {
   int poll_services(ServiceList *list);
   // 0x00630A40, homed into net_class.cpp: reads one message off the middle
   // queue. No catalogue name, so the fact records what this tree emits.
-  void *sub_630a40(unsigned int *key, int *length_out);
+  void *sub_630a40(int key, int *length_out);
   // 0x00630980, homed into net_class.cpp: the sender's twin, answering the
   // buffer's address through the queue's own reader.
   void *sub_630980(unsigned int *key_out, int *length_out);
@@ -458,7 +458,7 @@ class Net {
   // The timeout readers operate on the embedded middle FIFO. The head form
   // writes the key out; the keyed form uses the supplied key and signed size.
   void *read_queue_head_until_timeout(unsigned int *key_out, unsigned int *length_out);
-  void *read_queue_key_until_timeout(unsigned int *key, int *length_out);
+  void *read_queue_key_until_timeout(int key, int *length_out);
   // DirectPlay receive pump and its source-owned player/session companions.
   void receive_directplay_messages(int player_id);
   void broadcast_player_table();

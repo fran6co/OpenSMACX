@@ -1026,7 +1026,7 @@ int Net::drop_player(unsigned long key, int reason) {
     }
 
     if (reason == 0) {
-        if (field_760_ != field_764_ && key != players_[1].field_0_) {
+        if (field_760_ != field_764_ && field_760_ != players_[1].field_0_) {
             // The two hosts are named - the grammar slots 0 and 1 - and the
             // plural question asked.
             parse_says(0, get_player_name(players_[0].field_0_), -1, -1);
@@ -1038,7 +1038,7 @@ int Net::drop_player(unsigned long key, int reason) {
                 ExitTurnLoop = 1;
                 return 1;
             }
-            if (answer == 1 || answer > 2) {
+            if (answer != 2) {
                 return 0;
             }
             // answer 2: the tolerance popup, then no cut.
@@ -1102,9 +1102,12 @@ int Net::drop_player(unsigned long key, int reason) {
     // emptied up front the way the image does when the id has already gone.
     char name[0x100];
     name[0] = 0;
-    char *named = get_player_name(key);
-    if (named != 0) {
-        strcpy(name, named);
+    // 63259C repeats the ID search after the modal callbacks. The original
+    // presence check's index is not the row subsequently copied/shifted.
+    index = 0;
+    while (index < 0x10 && players_[index].field_0_ != key) ++index;
+    if (index != 0x10) {
+        strcat(name, players_[index].name_and_tail_);
         // Close the slot: every later record shifts down one. The image does
         // not clear the top slot, so its data stays duplicated behind.
         for (int moved = index; moved < 0xF; ++moved) {
@@ -1126,13 +1129,14 @@ int Net::drop_player(unsigned long key, int reason) {
     // Sound's own deleting destructor, and free the node through its virtual
     // base - the vbase-adjusted call the image makes.
     if (jackal_voice_rx_.head_ != 0) {
+        const int count = jackal_voice_rx_.count_;
         int scanned = 0;
-        while (scanned < jackal_voice_rx_.count_
+        while (scanned < count
                && jackal_voice_rx_.cursor_->id_ != key) {
             jackal_voice_rx_.cursor_ = jackal_voice_rx_.cursor_->next_;
             ++scanned;
         }
-        if (scanned < jackal_voice_rx_.count_) {
+        if (scanned < count) {
             VoiceReceiverEntry *entry = jackal_voice_rx_.cursor_;
             entry->next_->previous_ = entry->previous_;
             entry->previous_->next_ = entry->next_;
@@ -1159,10 +1163,9 @@ int Net::drop_player(unsigned long key, int reason) {
     }
 
     if (reason == 0) {
-        // The frame slot the image passes through unwritten: mode 4, 0x80
-        // bytes of it, flagged 1.
-        int notice;
-        send_packet_type(&notice, 4, 0, 0x80, 1);
+        // 6326F4's stack address is the original first argument, not a fresh
+        // uninitialized local: send the removed player ID as four bytes.
+        send_packet_type(&key, 4, 0, 0x80, 1);
     }
     return 1;
 }
@@ -2505,7 +2508,7 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
 }
 
 // ORIGINAL: 0x00630A40 sub_630a40 0x00630A40-0x00630A7D BYTE_EXACT
-// symbol    ?sub_630a40@Net@@QAEPAXPAIPAH@Z
+// symbol    ?sub_630a40@Net@@QAEPAXHPAH@Z
 // size      62 bytes
 // Historical seed prototype: int (__thiscall sub_630a40)(Net* this, int, int)
 // Historical catalogue: callers 1, call targets 1; not reachability proof.
@@ -2517,7 +2520,7 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
 // BUFFER's address when the read landed and zero when it did not - the
 // image's `neg/sbb/and eax, 0x9bc4bc` tail, which is why the guard has to be
 // an `extern` object and not a folded literal.
-void *Net::sub_630a40(unsigned int *key, int *length_out) {
+void *Net::sub_630a40(int key, int *length_out) {
   if (NetDirectPlay == 0) {
     return 0;
   }
@@ -2623,7 +2626,7 @@ Purpose: The sender's twin of sub_630a80: wait on the same queue for the
          timeout at Net+0x6FC expires.
 
 // ORIGINAL: 0x00630B00 sub_630b00 0x00630B00-0x00630B7C
-// symbol    ?read_queue_key_until_timeout@Net@@QAEPAXPAIPAH@Z
+// symbol    ?read_queue_key_until_timeout@Net@@QAEPAXHPAH@Z
 // TRIED: kept the contract's __stdcall(int,int) head question open - the disasm sets ebx = ecx on entry, so it is really this receiver.
 // Historical emitted-symbol hint: @sub_630b00@16
 // size      124 bytes
@@ -2636,7 +2639,7 @@ Purpose: The sender's twin of sub_630a80: wait on the same queue for the
 Return Value: NetGetScratch when a packet was read, zero otherwise
 Status: Complete
 */
-void *Net::read_queue_key_until_timeout(unsigned int *key, int *length_out) {
+void *Net::read_queue_key_until_timeout(int key, int *length_out) {
     if (NetDirectPlay != 0 && key != 0) {
         const DWORD start = timeGetTime();
         DWORD now = timeGetTime();
@@ -2829,10 +2832,10 @@ int Net::check_message(unsigned long player, unsigned long stamp) {
     if (slot == 0x10) {
         return 0;
     }
-    if (stamp <= record->stamp_10_) {
+    if (stamp <= record->field_4_) {
         return 1;
     }
-    record->stamp_10_ = stamp;
+    record->field_4_ = stamp;
     return 0;
 }
 
@@ -3018,14 +3021,16 @@ int NetThreadInfo::internal_receive() {
     Net *const net = owner_;
     if (NetDirectPlay == 0) return 0;
 
+    // 6327FD retains this pointer across Receive, even if the provider changes
+    // the record's buffer member while filling the originally supplied block.
+    unsigned char *const bytes = static_cast<unsigned char *>(buffer_);
     DWORD from = 0;
     DWORD to = net->field_760_;
     DWORD size = net->field_6E4_;
     const HRESULT receive_result = direct_play_->Receive(
-        &from, &to, 3, buffer_, &size);
+        &from, &to, 3, bytes, &size);
     if (receive_result != DP_OK) return 0;
 
-    unsigned char *const bytes = static_cast<unsigned char *>(buffer_);
     if (from == 0 || (bytes[0] & 0x80) != 0) {
         net->queue_130_.add(bytes, size, from, 0,
                             static_cast<unsigned long>(-1));
@@ -3047,7 +3052,7 @@ int NetThreadInfo::internal_receive() {
             }
         }
     } else if (message_type == 1) {
-        if (net->queue_10c_.count_ < 0xC8) {
+        if (static_cast<int32_t>(net->queue_10c_.count_) < 0xC8) {
             net->queue_10c_.add(bytes + 8, size, from, 0,
                                 static_cast<unsigned long>(-1));
             SetEvent(events_[4]);
@@ -3082,10 +3087,14 @@ int NetThreadInfo::internal_receive() {
                     receivers.cursor_ = receivers.cursor_->next_;
                 }
                 if (found) {
-                    VoiceRxAllocation *const voice =
-                        receivers.cursor_->payload_;
+                    VoiceRxAllocation *voice = 0;
+                    if (receivers.head_ != 0) voice = receivers.cursor_->payload_;
+                    // Original rechecks head, then still calls through a null
+                    // payload if that recheck fails; this is not a safe fallback.
                     const int level = voice->get_nbuffers();
-                    if ((static_cast<int>(net->field_6DC_) - 1) * level < 0xC8) {
+                    const uint32_t queued_load = (net->field_6DC_ - 1U)
+                        * static_cast<uint32_t>(level);
+                    if (static_cast<int32_t>(queued_load) < 0xC8) {
                         voice->add_buffer(&voice_packet);
                     }
                     const int sound_version = get_sound_version();
@@ -3104,7 +3113,7 @@ int NetThreadInfo::internal_receive() {
             ++sequence_player_index;
         int accept = 1;
         if (sequence_player_index != 16) {
-            if (sequence >= net->players_[sequence_player_index].field_4_)
+            if (net->players_[sequence_player_index].field_4_ >= sequence)
                 accept = 0;
             else net->players_[sequence_player_index].field_4_ = sequence;
         }
@@ -3118,7 +3127,12 @@ int NetThreadInfo::internal_receive() {
                 if (count > 0) {
                     for (int entry = 0; entry < count; ++entry) {
                         if (receivers.cursor_->id_ == static_cast<int>(from)) {
-                            receivers.cursor_->payload_->stop();
+                            VoiceRxAllocation *voice = 0;
+                            if (receivers.head_ != 0)
+                                voice = receivers.cursor_->payload_;
+                            // Incoming 0x200 calls slot +88 (start), not the
+                            // Sound stop slot +20, despite clearing this flag.
+                            voice->start();
                             break;
                         }
                         ++receivers.cursor_index_;
@@ -3158,16 +3172,18 @@ int NetThreadInfo::internal_receive() {
                 ++ack_player_index;
             int accept = 1;
             if (ack_player_index != 16) {
-                if (sequence >= net->players_[ack_player_index].field_4_)
+                if (net->players_[ack_player_index].field_4_ >= sequence)
                     accept = 0;
                 else net->players_[ack_player_index].field_4_ = sequence;
             }
             if (accept) {
-                net->queue_10c_.add(bytes + 8, size, from, 0, timeGetTime());
+                const DWORD queued_at = timeGetTime();
+                net->queue_10c_.add(bytes + 8, size, from, 0, queued_at);
                 SetEvent(events_[4]);
             }
         }
-        packet->type_flags_ = (type_flags & 0xFFFB) | 2;
+        // Queue publication/event callbacks can alter the shared packet WORD.
+        packet->type_flags_ = (packet->type_flags_ & 0xFFFB) | 2;
         direct_play_->Send(net->field_760_, to, 0, bytes, 0x0C);
     }
     return 1;
@@ -3964,18 +3980,20 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
         }
     }
 
-    const int allocation_size = data_size + 0x0C;
+    // Native LEA adds the overhead in a DWORD, including signed-size wrap.
+    const int allocation_size = static_cast<int32_t>(
+        static_cast<uint32_t>(data_size) + 0x0CU);
     unsigned char *const packet =
         static_cast<unsigned char *>(mem_get(allocation_size));
     if (packet == 0) return 0;
 
     const unsigned int reliable = ack_requested & 1U;
     const uint32_t sequence = reliable != 0 ? ++field_E4_ : 0;
-    memcpy(packet, &type, sizeof(type));
     memcpy(packet + 4, &sequence, sizeof(sequence));
     if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(data_size));
 
     if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
+        memcpy(packet, &type, sizeof(type));
         if (NetDirectPlay == 0 ||
             NetDirectPlay->Send(field_760_, static_cast<DPID>(target),
                                 reliable, packet,
@@ -4103,6 +4121,8 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
             if (choice != 0) {
                 if (choice == 1) close();
                 else if (choice == 2) ExitTurnLoop = 1;
+                MessageBoxA(0, "Oh no!! Send failed after many tries!",
+                            "Message from the Net Underworld", 0);
                 free(packet);
                 return 0;
             }
@@ -4117,12 +4137,14 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
 
     int selected = -1;
     unsigned int retry_delay = 0xFFFFFFFFU;
+    unsigned int wait_timeout = 0xFFFFFFFFU;
     for (index = 0; index < 16; ++index) {
         NetPlayer &peer = players_[index];
         if (peer.field_0_ == target &&
             ((peer.flags_14_ & 2U) != 0 || (type & 0x10U) != 0)) {
             selected = index;
             retry_delay = peer.field_C_;
+            if (peer.field_C_ < wait_timeout) wait_timeout = peer.field_C_;
             peer.field_8_ = 1;
         } else {
             peer.field_8_ = 0;
@@ -4134,7 +4156,9 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
     }
 
     DWORD sent_at = timeGetTime();
-    if (NetDirectPlay == 0 || NetDirectPlay->Send(field_760_,
+    // Native targeted send dereferences the live interface without a second
+    // null guard after timeGetTime; a disappearing provider is not normalized.
+    if (NetDirectPlay->Send(field_760_,
             static_cast<DPID>(target), 0, packet,
             static_cast<DWORD>(allocation_size)) != DP_OK) {
         MessageBoxA(0, "Oh no!! Send failed!",
@@ -4143,8 +4167,8 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
         return 0;
     }
     for (;;) {
-        // The native outer retry pass reloads the live peer +0xC wait value.
-        const unsigned int wait_timeout = players_[selected].field_C_;
+        // 62FA55 captures the minimum eligible RTT once. The last matching
+        // row supplies retry state, not this wait interval; send() differs.
         const DWORD interval_start = timeGetTime();
         DWORD elapsed = timeGetTime() - interval_start;
         while (elapsed < 20000U) {
@@ -4203,10 +4227,10 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
             return 0;
         }
         sent_at = timeGetTime();
-        if (NetDirectPlay == 0 || NetDirectPlay->Send(field_760_,
+        if (NetDirectPlay->Send(field_760_,
                 static_cast<DPID>(target), 0, packet,
                 static_cast<DWORD>(allocation_size)) != DP_OK) {
-            MessageBoxA(0, "Oh no!! Send failed after many tries!",
+            MessageBoxA(0, "Oh no!! Send failed!",
                         "Message from the Net Underworld", 0);
             free(packet);
             return 0;

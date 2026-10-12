@@ -105,7 +105,7 @@ int main() {
     assert(q.add_head(first, 2, 31, 2, 301) == 0);
     assert(q.add_head(second, 3, 32, 3, 302) == 0);
     key = 31; size = 0; caller = -1;
-    assert(q.get(out, &key, &caller, reinterpret_cast<int *>(&size)) == 301);
+    assert(q.get(out, static_cast<int>(key), &caller, reinterpret_cast<int *>(&size)) == 301);
     assert(key == 31 && size == 2 && caller == 2 && memcmp(out, first, 2) == 0);
     key = 0; caller = -1; size = 0;
     assert(q.get(out, &key, &caller, &size) == 302);

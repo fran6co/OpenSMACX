@@ -76,38 +76,44 @@ int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
                  unsigned long extra) {
   EnterCriticalSection(&lock_);
 
-  NetFifoNode *node = reinterpret_cast<NetFifoNode *>(mem_get(0x18));
+  // The empty/nonempty choice precedes allocation. Subsequent stores use
+  // the live tail again, including after payload allocation/copy.
+  NetFifoNode *node;
   if (head_ == 0) {
+    node = static_cast<NetFifoNode *>(mem_get(0x18));
     head_ = node;
     if (node == 0) {
       LeaveCriticalSection(&lock_);
       return 4;
     }
   } else {
-    NetFifoNode *tail = tail_;
-    tail->next_ = node;
-    if (tail->next_ == 0) {
+    node = static_cast<NetFifoNode *>(mem_get(0x18));
+    tail_->next_ = node;
+    node = tail_->next_;
+    if (node == 0) {
       LeaveCriticalSection(&lock_);
       return 4;
     }
   }
   tail_ = node;
-  node->next_ = 0;
+  tail_->next_ = 0;
 
-  node->key_ = key;
-  node->caller_value_ = type;
-  node->next_ = reinterpret_cast<NetFifoNode *>(extra);
+  tail_->key_ = key;
+  tail_->caller_value_ = type;
+  // Fifth argument is the result DWORD at +8; +14 remains the link.
+  tail_->result_ = static_cast<int>(extra);
 
   if (size != 0) {
-    node->data_ = mem_get(size);
-    if (node->data_ == 0) {
+    void *const payload = mem_get(size);
+    tail_->data_ = payload;
+    if (tail_->data_ == 0) {
       LeaveCriticalSection(&lock_);
       return 4;
     }
     if (data != 0) {
-      memcpy(node->data_, data, size);
+      memcpy(tail_->data_, data, size);
     }
-    node->data_size_ = size;
+    tail_->data_size_ = size;
   }
 
   ++count_;
@@ -116,7 +122,7 @@ int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
 }
 
 // ORIGINAL: 0x00633D90 ?get@NetFifo@@QAEHPAXPAIPAH1@Z 0x00633D90-0x00633E75
-// symbol    ?get@NetFifo@@QAEHPAXPAIPAH2@Z
+// symbol    ?get@NetFifo@@QAEHPAXHPAH1@Z
 // size      229 bytes
 // prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAH1@Z)(NetFifo* this, void*, unsigned int*, int*, int*)
 // callers   1   call targets   2
@@ -124,7 +130,8 @@ int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
 // flags     frame;hidden;sp_ready;purged_ok
 // The queue is walked from the head for a matching key, so this is the
 // remove-by-key form; the 0x633F70 overload below pops the head instead.
-int NetFifo::get(void *data, unsigned int *key, int *type, int *len) {
+// 633DBC/633DC0 compares the raw second argument DWORD, not its pointee.
+int NetFifo::get(void *data, int key, int *type, int *len) {
   EnterCriticalSection(&lock_);
 
   NetFifoNode *cur = head_;
@@ -134,7 +141,7 @@ int NetFifo::get(void *data, unsigned int *key, int *type, int *len) {
   }
 
   NetFifoNode *prev = 0;
-  while (cur->key_ != *key) {
+  while (cur->key_ != static_cast<uint32_t>(key)) {
     NetFifoNode *next = cur->next_;
     prev = cur;
     if (next == 0) {
@@ -151,12 +158,14 @@ int NetFifo::get(void *data, unsigned int *key, int *type, int *len) {
     if (data != 0) {
       memcpy(data, cur->data_, cur->data_size_);
     }
-    free(cur->data_);
+    if (cur->data_ != 0) {
+      free(cur->data_);
+    }
     cur->data_ = 0;
   }
 
   if (prev == 0) {
-    head_ = cur->next_;
+    head_ = head_->next_;
   } else {
     prev->next_ = cur->next_;
   }
