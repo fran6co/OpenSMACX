@@ -1,0 +1,27 @@
+{
+  "author": "coordinator",
+  "base_revision": "f0d0dd13b691c770e813b2be6960b37af29190c0",
+  "editable_files": [
+    "src/buffer.cpp",
+    "src/buffer.h",
+    "recovery/tests/test_buffer_box_return_contract_oct13b.py"
+  ],
+  "evidence": [
+    "Pinned coordinate box0x005E3193-0x005E31FC performs four drawing calls and ends after the final void vline call without assigning a result to EAX. Current int body fabricates return0. The catalogue H decoration/prototype is historical analysis, not independent original debug provenance; keep ORIGINAL identity/spans unchanged and do not assert proven original void ABI.",
+    "Only mapped direct caller is SpriteBox::draw_item0x00610C50-0x0061103B, call at0x00610FE3. Its original instructions and current source ignore the box result. Fresh native caller compilation must retain arguments, stack cleanup and result-use protocol while targeting the compiler-confirmed current void symbol. Mapped-only caller search has errors/unknowns; full indirect/runtime caller and original return contract remain unresolved.",
+    "Edit only coordinate box declaration/definition and its bounded rationale. Preserve hline/vline call order, coordinate/color arithmetic, mutable drawing collaborators and original quirks; no new guards, normalized coordinates, returned stand-in, undefined non-void fallthrough, asm, copied bytes, warning pragmas or altered compiler flags. Descriptive coordinate parameter names are supported by existing buffer.h declaration. RECT overloads and both dotted_box overloads are outside editing scope and retain their original result/error behavior.",
+    "Current symbol alias is published only after fresh actual COFF evidence; preserve original catalogue identity and historical findings. A bounded void interpretation is supported at the known caller, not original class/interface or whole ABI proof. Require real source-extracted call-order/arithmetic controls with meaningful mutants, both-profile compiler/caller observations, build/link, identity/reference/claim continuity and relevant historical Buffer/SpriteBox restoration before coordinator review/integration.",
+    "The isolated allocator worker has frozen source outside this scope; do not mutate, rebase or integrate it. This task baseline remains the authorized ancestor through later integration; never reset it to erase differences. Preserve candidate work and any contradictory evidence without claiming automatic/game acceptance."
+  ],
+  "intent": "Recover the coordinate Buffer box operation as a bounded void source API, removing the fabricated zero result while preserving its drawing and known caller protocol; retain original return-type uncertainty.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6173075,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-box-return-contract-oct13b"
+}
