@@ -4651,7 +4651,7 @@ void __cdecl world_monsoon(int x, int y) {
             if (i < 21 && is_ocean(x_radius, y_radius)) {
                 world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
             }
-            bit2_set(x_radius, y_radius, LM_JUNGLE, true);
+            bit2_set(x_radius, y_radius, BIT2_JUNGLE, true);
             code_set(x_radius, y_radius, i);
         }
     }
@@ -4867,7 +4867,7 @@ void __cdecl world_dune(int x, int y) {
                 world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
             }
             bit_set(x_radius, y_radius, BIT_FUNGUS, false);
-            bit2_set(x_radius, y_radius, LM_DUNES, true);
+            bit2_set(x_radius, y_radius, BIT2_DUNES, true);
             rocky_set(x_radius, y_radius, ROCKINESS_FLAT);
             code_set(x_radius, y_radius, i);
         }
@@ -5160,7 +5160,7 @@ void __cdecl world_borehole(int x, int y) {
             bit_set(x_radius, y_radius, BIT_SUPPLY_REMOVE, true);
             if (i == val1 || i == val2 || i == val3) {
                 bit_set(x_radius, y_radius, BIT_THERMAL_BORE, true);
-                bit2_set(x_radius, y_radius, LM_BOREHOLE, true);
+                bit2_set(x_radius, y_radius, BIT2_BOREHOLE, true);
                 code_set(x_radius, y_radius, i);
             }
         }
@@ -5192,7 +5192,7 @@ void __cdecl world_borehole(int x, int y) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
         }
     }
-    bit2_set(x, y, LM_BOREHOLE, true);
+    bit2_set(x, y, BIT2_BOREHOLE, true);
     new_landmark(x, y, StringTable.get(Natural[LM_BOREHOLE].name));
 }
 
@@ -5251,7 +5251,7 @@ void __cdecl world_temple(int x, int y) {
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
             bit_set(x_radius, y_radius, BIT_SUPPLY_REMOVE, true);
-            bit2_set(x_radius, y_radius, LM_NEXUS, true);
+            bit2_set(x_radius, y_radius, BIT2_NEXUS, true);
             code_set(x_radius, y_radius, i);
         }
     }
@@ -5340,7 +5340,7 @@ void __cdecl world_unity(int x, int y) {
                 rocky_set(x_radius, y_radius, ROCKINESS_FLAT);
                 bit_set(x_radius, y_radius, BIT_RIVERBED, false);
                 bit_set(x_radius, y_radius, BIT_FUNGUS, false);
-                bit2_set(x_radius, y_radius, LM_UNITY, true);
+                bit2_set(x_radius, y_radius, BIT2_UNITY, true);
                 code_set(x_radius, y_radius, i);
                 if (!i || i == 8 || i == 10 || i == 19) {
                     bit_set(x_radius, y_radius, BIT_SUPPLY_POD, true);
@@ -5356,7 +5356,7 @@ void __cdecl world_unity(int x, int y) {
 /*
 Purpose: Setup the 'Fossil Ridge' landmark (SMACX only).
 // ORIGINAL: 0x005C7A80 ?world_fossil@@YAXHH@Z 0x005C7A80-0x005C7CA1
-// KNOWN DIVERGENCE (documented, left alone): the `if (ExpansionEnabled)`
+// HISTORICAL KNOWN DIVERGENCE (now restored): the `if (ExpansionEnabled)`
 //            guard at the top of this body has no counterpart in the image -
 //            0x005C7A80 goes straight into the site search, and the only
 //            guard is in world_landmarks (0x005C8629). It is this tree's own
@@ -5383,47 +5383,45 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl world_fossil(int x, int y) {
-    if (ExpansionEnabled) { // added check similar to Unity Wreckage
-        uint32_t loc_attempts = 0;
-        if (!on_map(x, y)) {
+    uint32_t loc_attempts = 0;
+    if (!on_map(x, y)) {
+        do {
             do {
-                do {
-                    int lat_bounds = MapLatitudeBounds - 16;
-                    int rnd_y;
-                    if (lat_bounds - 1 <= 0) {
-                        rnd_y = 0;
-                    } else {
-                        rnd_y = rand() % lat_bounds;
-                    }
-                    y = rnd_y + 8;
-                    int lon_bounds = MapLongitudeBounds;
-                    int x_seed;
-                    if (lon_bounds - 1 <= 0) {
-                        x_seed = 0;
-                    } else {
-                        x_seed = rand() % lon_bounds;
-                    }
-                    x = ((x_seed ^ y) & 1) ^ x_seed;
-                    if (++loc_attempts >= 1000) {
-                        return;
-                    }
-                } while (!is_ocean(x, y));
-            } while (near_landmark(x, y));
-            if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
-                return;
-            }
+                int lat_bounds = MapLatitudeBounds - 16;
+                int rnd_y;
+                if (lat_bounds - 1 <= 0) {
+                    rnd_y = 0;
+                } else {
+                    rnd_y = rand() % lat_bounds;
+                }
+                y = rnd_y + 8;
+                int lon_bounds = MapLongitudeBounds;
+                int x_seed;
+                if (lon_bounds - 1 <= 0) {
+                    x_seed = 0;
+                } else {
+                    x_seed = rand() % lon_bounds;
+                }
+                x = ((x_seed ^ y) & 1) ^ x_seed;
+                if (++loc_attempts >= 1000) {
+                    return;
+                }
+            } while (!is_ocean(x, y));
+        } while (near_landmark(x, y));
+        if (loc_attempts >= 1000) { // redundant check? would have already returned, remove?
+            return;
         }
-        for (uint32_t i = 0; i < 6; i++) {
-            int x_radius = xrange(x + RadiusOffsetX[i]);
-            int y_radius = y + RadiusOffsetY[i];
-            if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
-                world_alt_set(x_radius, y_radius, ALT_OCEAN, true);
-                bit2_set(x_radius, y_radius, LM_FOSSIL, true);
-                code_set(x_radius, y_radius, i);
-            }
-        }
-        new_landmark(x, y, StringTable.get(Natural[LM_FOSSIL].name));
     }
+    for (uint32_t i = 0; i < 6; i++) {
+        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
+            world_alt_set(x_radius, y_radius, ALT_OCEAN, true);
+            bit2_set(x_radius, y_radius, BIT2_FOSSIL, true);
+            code_set(x_radius, y_radius, i);
+        }
+    }
+    new_landmark(x, y, StringTable.get(Natural[LM_FOSSIL].name));
 }
 
 /*
@@ -5438,6 +5436,8 @@ Purpose: Setup the 'Nessus Canyon' landmark.
 Return Value: n/a
 Status: Complete - testing
 */
+// Historical implementation note: ALT4/ALT3 and BIT2/code were rolled into one loop; the
+// pinned function performs the altitude pass first and a separate mask/code pass afterward.
 void __cdecl world_canyon(int x, int y) {
     uint32_t loc_attempts = 0;
     if (!on_map(x, y)) {
@@ -5462,8 +5462,14 @@ void __cdecl world_canyon(int x, int y) {
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_1_LEVEL_ABOVE_SEA, true);
             world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
-            bit2_set(x_radius, y_radius, LM_CANYON, true); // rolled these two into single loop with
-            code_set(x_radius, y_radius, WorldCanyonOffsetValues[i]); // the above world_alt_set()
+        }
+    }
+    for (uint32_t j = 0; j < 12; j++) {
+        int x_radius = xrange(x + RadiusOffsetX[WorldCanyonOffsetValues[j]]);
+        int y_radius = y + RadiusOffsetY[WorldCanyonOffsetValues[j]];
+        if (on_map(x_radius, y_radius)) {
+            bit2_set(x_radius, y_radius, BIT2_CANYON, true);
+            code_set(x_radius, y_radius, WorldCanyonOffsetValues[j]);
         }
     }
     new_landmark(x, y + 2, StringTable.get(Natural[LM_CANYON].name));
@@ -5550,6 +5556,8 @@ Purpose: Setup the 'Pholus Ridge' landmark.
 Return Value: n/a
 Status: Complete - testing
 */
+// Historical implementation note: BIT2/code was rolled into the ALT4 loop; the pinned function
+// performs separate 13-entry altitude and mask/code passes using the original offset table.
 void __cdecl world_ridge(int x, int y) {
     uint32_t loc_attempts = 0;
     if (!on_map(x, y)) {
@@ -5580,14 +5588,20 @@ void __cdecl world_ridge(int x, int y) {
             return;
         }
     }
-    const uint32_t world_ridge_offset_val[13] = { 47, 44, 24, 20, 8, 7, 0, 5, 4, 17, 23, 35, 455 };
-    for (uint32_t i = 0; i < 12; i++) {
+    const uint32_t world_ridge_offset_val[13] = { 47, 44, 24, 20, 8, 7, 0, 5, 4, 17, 23, 35, 45 };
+    for (uint32_t i = 0; i < 13; i++) {
         int x_radius = xrange(x + RadiusOffsetX[world_ridge_offset_val[i]]);
         int y_radius = y + RadiusOffsetY[world_ridge_offset_val[i]];
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, ALT_1_LEVEL_ABOVE_SEA, true);
-            bit2_set(x_radius, y_radius, LM_RIDGE, true); // rolled these two into single loop with
-            code_set(x_radius, y_radius, world_ridge_offset_val[i]); // the above world_alt_set()
+        }
+    }
+    for (uint32_t j = 0; j < 13; j++) {
+        int x_radius = xrange(x + RadiusOffsetX[world_ridge_offset_val[j]]);
+        int y_radius = y + RadiusOffsetY[world_ridge_offset_val[j]];
+        if (on_map(x_radius, y_radius)) {
+            bit2_set(x_radius, y_radius, BIT2_RIDGE, true);
+            code_set(x_radius, y_radius, world_ridge_offset_val[j]);
         }
     }
     new_landmark(x, y + 2, StringTable.get(Natural[LM_RIDGE].name));
