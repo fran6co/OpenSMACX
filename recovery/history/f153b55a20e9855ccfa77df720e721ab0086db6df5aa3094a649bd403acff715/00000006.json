@@ -1,0 +1,19 @@
+{
+  "event_id": "a4f4593dc27c9f0977fcff10c1795e50487fec8be79462c6222d098558e93677",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/designwin.cpp"
+    ],
+    "evidence": [
+      "Independent review found obsolete current-source explanation in the already scoped DesignWin close mapping: it says Font close is still header-defined and inlined, despite the verified reconstruction restoring the original three direct Font calls. Authorize ONLY qualifying that historical prose and adding the current Font distinction; preserve Original marker, claims, useful historical five-call observations and all DesignWin executable code. No new source operation or matching waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b9384e2f4f6203ce8056f1011df1a501b09f605c93a53516b902cfbf92e3cb11",
+  "request_id": "font-caller-prose-scope-oct12g",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:font-natural-inline-emission-oct12g"
+}
