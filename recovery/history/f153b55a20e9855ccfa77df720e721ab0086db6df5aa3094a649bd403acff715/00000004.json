@@ -1,0 +1,63 @@
+{
+  "event_id": "f6ac50ff56993c3dd6d600acf772ea2308d7f61af50f740e49193e7a7ada4a3c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Expand measurement ownership to the mapped application callers while preserving all original baselines and pending discoveries. Authorize one private coupled source-preserving deck: ordinary public Font close/width declarations and complete unchanged method definitions in Fontcpp, with equivalent private in-class nonvirtual implementation bodies used only by the original inline phases (destructor, init(file,name,height,style), and two find_line_break_l sites). Helper names are reconstruction-only implementation sharing, not recovered original methods or new coverage. No additional fields/vtables, flag change, exports, forced-inline/noinline or address anchors. Public methods retain real complete bodies, not address forwarders or placeholders; all store/API and redundant pointer checks and width double-strlen/signed-clamp order remain. Only visibility/internal calls may change; callers source remains untouched. Candidate must naturally emit public helper bodies and expand private implementations, with replica and independent body/header damage controls and full measured caller/Font obligations. This is diagnostic scope, not production adoption; coupled behavioral controls, independent review, build/link and fresh continuity/reference checks remain required. Do not silently move or edit ORIGINAL markers; candidate body-host metadata must accurately follow body placement before eventual adoption."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4354608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4354400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4343920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4348832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4440480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6145984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6145936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6143232,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6266160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "44b6b08345646781ad9e4340d41d5e81e99e9d24eb70903e6d0bd852d5113453",
+  "request_id": "font-coupled-sharing-scope-oct12g",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:font-natural-inline-emission-oct12g"
+}
