@@ -1,0 +1,23 @@
+{
+  "event_id": "4163bb92070cd9321fc1a0adba364b75272876b4e1a7dd4f34a3ea97c9f44cb5",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent review pinned47B9B5 captures target before47B9C7 copy in on_left_click47B760; include dependent existing caller in same record/send scope and use existing captured-target helper. Preserve all other complete caller behavior/mappings/history. Expand new actual-source test accordingly; original task baseline unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4700000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b47ca53007cc9cb72d0b4c125622aed37c9a069f9478fd3bb8fd5982a7c65604",
+  "request_id": "netwin-dependent-click-target-oct12",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netwin-scalar-pickers-oct12"
+}
