@@ -1,0 +1,135 @@
+{
+  "author": "coordinator",
+  "base_revision": "5099f0bfd4bbfee8b152984ddc11c41fe0df4546",
+  "editable_files": [
+    "src/designwin.cpp",
+    "src/dipedit.cpp",
+    "src/faction.cpp",
+    "src/mapwin.cpp",
+    "src/messagewin.cpp",
+    "src/selectpartwin.cpp",
+    "src/socialwin.cpp",
+    "src/sounddevice.cpp",
+    "src/tutwin.cpp",
+    "src/veh.cpp",
+    "src/wave_device.cpp",
+    "src/win.cpp"
+  ],
+  "evidence": [
+    "Labels::strings_ptr is declared LPSTR*: remove only same-type casts at the 31 scoped audited expressions, preserving every index, call, order and tutorial helper byte-offset division. Read ignored build/recovery/typed-source-cleanup-frontier-oct12d.json for locations and exclusions.",
+    "Use MultiWindow.GraphicWin::redraw() preserving explicit nonvirtual base dispatch; ConsoleGlobal has an existing evidenced public MapWin base, so use static_cast<MapWin *>; native device members already have void* type and DirectDraw surf_ already has the SDK out-parameter type. Do not rename fields, alter layouts or introduce new behavior.",
+    "Scope contains only the 21 named original identities and their tutorial_button_label helper. Preserve all source annotations, original spans, historical claims and discoveries. No bounds checks, initialization fixes, algorithm changes, array flattening changes, MEASURED removal, header edits or out-of-scope cleanup.",
+    "Coordinator owns Git, compiler leases and integration. Require independent review, paired complete physical code/data COFF sections and relocation target equality under both current profiles, fresh claimed single-span measurements, build/link, references and claim continuity. Unsupported whole-project or linked preservation remains unknown; this is not function-coverage gain or full acceptance."
+  ],
+  "intent": "Replace 37 evidenced redundant casts with genuine existing types and base relationships across 21 mapped functions, preserving original behavior and all historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4402368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4403568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4404512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4422048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4429568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4435056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4444816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4445456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4447568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4598112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4659392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4919424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4925248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4972512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5000912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5003680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5086688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5247168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5617776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6509840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "typed-source-closure-oct12d"
+}
