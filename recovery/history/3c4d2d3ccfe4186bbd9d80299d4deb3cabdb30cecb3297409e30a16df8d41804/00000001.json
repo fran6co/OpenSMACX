@@ -1,0 +1,20 @@
+{
+  "event_id": "b8d3ad581e31ff8c329a1b19dd3f23fa38f056cf58e87dbf8893bfe0c9badace",
+  "payload": {
+    "affects": [
+      "entity-bfc0566319616e2e2b3feb049d8a9f1bb53faf2fa2d614139ee166a42ce699a8"
+    ],
+    "author": "coordinator",
+    "discovery_id": "matrix3-native-unordered-discovery-oct12e",
+    "evidence": [
+      "Leased actual-source runtime controls fail baseline return3 and early-store case return3 before alias witness; quietNaNbitpattern7fc00000. Original85-byte span inspected from pinned image shows onlyC3 test. Host positive tests are not an x87 oracle."
+    ],
+    "hypothesis": "Current ordered-comparison source rejects quiet NaN under pinned VC6; original634940 fnstsw and634942 test AH40 accept unordered. Restore original compiler/runtime comparison effects rather than normalizing host semantics.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "matrix3-native-unordered-discovery-oct12e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:matrix3-current-controls-and-traversal-oct12e"
+}

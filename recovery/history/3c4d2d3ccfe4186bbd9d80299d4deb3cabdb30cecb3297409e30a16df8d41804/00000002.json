@@ -1,0 +1,19 @@
+{
+  "event_id": "f223426545e94257700eb956cfa4708a36749b9d44540783b123abbfb1e9aecd",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_matrix3_native_equals_oct12e.py"
+    ],
+    "evidence": [
+      "Expand beyond the initial three arithmetic-spelling candidates: explicitly authorize restoring equals634920 in already scoped src/matrix3.cpp from native/pinned comparison evidence, plus compiler-aware host/native expectations and a focused identity guard. Preserve twelve scaffold roles, all historical claims/spans/symbols, no header/layout/ABI/flags changes. Try one native comparator deck using ordinary !=/negated== reconstructed C++ and retain native NaN-pass; host differences must be characterized explicitly, not called native equivalence. No production NaN-bit helper, no deliberate safety or behavior fix; document pinned compiler behavior in source. Original task baseline and pending discovery are retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b8d3ad581e31ff8c329a1b19dd3f23fa38f056cf58e87dbf8893bfe0c9badace",
+  "request_id": "matrix3-native-equals-scope-oct12e",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:matrix3-current-controls-and-traversal-oct12e"
+}
