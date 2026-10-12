@@ -1,0 +1,20 @@
+{
+  "event_id": "44b6b08345646781ad9e4340d41d5e81e99e9d24eb70903e6d0bd852d5113453",
+  "payload": {
+    "affects": [
+      "entity-0a4634f04497e33bf89f1521d3243bcb5e347a6866de17fcee97e015321c50bf"
+    ],
+    "author": "coordinator",
+    "discovery_id": "font-public-definition-boundary-oct12g",
+    "evidence": [
+      "True unchanged-overlay replica controls pass for five TUs under both existing profiles; actual private helper-body damage changes output and declaration mismatch fails compilation as required. Moving unchanged close and bounded width definitions privately to Fontcpp emits both helpers without export directives: all80/128 physical section bytes and nonlocal reference tuples equal existing helper copies under both profiles. App callers now relocate to helper symbols, including5 CouncWin close calls and3 DesignWin close calls; Buffer and PullDown bounded-width direct calls return. Conversely Font destructor/init/find_line_break now call public helpers where pinned originals have inline effects. Definition visibility alone is not the complete original reconstruction. A coupled implementation-sharing hypothesis and full caller closure still need review; original compiler policy, linked selection and runtime/full-game acceptance remain unknown. All production source, original annotations, claims and flag configuration remain unchanged; recomputable COFF/control cache build/recovery/font-definition-visibility-oct12g.json is not an acceptance ledger."
+    ],
+    "hypothesis": "Ordinary public Font definitions restore natural standalone emission and application direct-call boundaries, but same-TU implementation sharing remains unresolved under current compiler policy.",
+    "kind": "discovery"
+  },
+  "previous_event": "08919728a7b62aa46e8fbdab596f5aea4f185724e07ceb95ecc34f7ac7ca0449",
+  "request_id": "font-public-definition-boundary-oct12g",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:font-natural-inline-emission-oct12g"
+}
