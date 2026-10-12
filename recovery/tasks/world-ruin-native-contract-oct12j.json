@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "8d824c6b584028b18c726763b6e3fcae069d6a66",
+  "editable_files": [
+    "src/map.cpp",
+    "recovery/tests/test_world_ruin_native_contract_oct12j.py"
+  ],
+  "evidence": [
+    "Pinned world_ruin 0x005C64A0-0x005C6734 computes ESI=x_radius and EDI=y_radius. Terrain lookup after world_alt_set at 0x005C6688-0x005C66AD indexes with EDI, not center y. Land branch bit_set at 0x005C66AF-0x005C66BD passes EDI/ESI with mask0x100020. Current source wrongly uses center y for these two operations. Change only those arguments to y_radius.",
+    "Pinned ending 0x005C6719 loads y and 0x005C671F adds2 before new_landmark call; restore new_landmark(x,y+2,label). Preserve Natural[LM_RUINS] label ID and BIT2_RUINS mask0x20, fungus/supply mask0x100020 and monolith mask0x2000.",
+    "Retain the ocean classification AFTER world_alt_set, because altitude mutation has neighbor effects. Preserve native 25-entry loop, invalid-coordinate rand/parity search and both1000-attempt checks, occupied-landmark scan and center/nearby monolith rules. The redundant altitude predicate compares i<25 just like its loop bound; the native retains it, so do not turn this task into a cleanup or bug fix.",
+    "Original caller contexts: Console editor case5 call0x004E1659, world_landmarks0x005C866C and world_build0x005C88D9; no caller edits authorized. Preserve all original identities/spans/claims/history and unchanged helper contracts. Actual-body controls must isolate both wrong-row mutations and wrong final label position under host and leased native compilers; build/link, source references and relevant matching continuity must pass for manual review.",
+    "This new task is authorized in a separate coordinator checkout while canonical master is frozen in destination verification. Do not mutate measured master or copy/reset the existing landmark task baseline. New worktree preparation uses its own compiler lease. Bounded synthetic collaborators are not complete owner/runtime equivalence, linked preservation, automatic or game acceptance. Existing byte misses remain restoration work."
+  ],
+  "intent": "Restore original world_ruin radius-tile read/write coordinates and landmark label displacement, retaining the original terrain-mutation sequence and quirks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6055072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "world-ruin-native-contract-oct12j"
+}
