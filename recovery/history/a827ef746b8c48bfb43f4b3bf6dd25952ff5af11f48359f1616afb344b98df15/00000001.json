@@ -1,0 +1,20 @@
+{
+  "event_id": "d1d551e582e3608785d8906f81fc642158be61b7385dcc597cc1faeb9817babb",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/diplowin.cpp",
+      "src/diplowin.h"
+    ],
+    "evidence": [
+      "Pinned150C535A4F/535A55 reads packet+14 and stores DiploWindow.A24 before535A5B/535A63 reads packet+10 and storesA28; bulk receive_no_deal loads both first and differs for valid in-owner aliasing. Authorize existing two-party inline set_offer_state(side,state), evidenced by DiploWin PBEM restore cpp352, and remove the sole-caller unmapped bulk helper. No layout, virtual slots, mapped DiploWin body, byte claim, original task baseline, or unrelated source changes authorized. Correct4307 per-iteration faction reload536762/536765/536773 and DONEUPKEEP conditional turn read53604F in existing helper scope; add actual-storage alias/conditional-read damage controls and reverify the complete batch."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "net-early-diplo-interleaved-state-oct12",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-early-dispatch-owner-oct12"
+}
