@@ -92,7 +92,7 @@ def test_netwin_method_body(compiler_name, kind, signature, flags, tmp_path):
         body = "\n".join(
             extract_function(source, name) + ";"
             for name in ("struct NetWinLobbyPacketHeader", "struct NetWinLobbySinglePacket")
-        ) + "\n" + body
+        ) + "\n" + extract_function(source, "static void *memcpy_call(") + "\n" + body
     fixture = FIXTURE.read_text()
     marker = "/* NETWIN_BODY_INSERTION */"
     assert fixture.count(marker) == 3

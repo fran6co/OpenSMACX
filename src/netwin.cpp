@@ -1858,16 +1858,20 @@ void NetWin::on_left_click(int x, int y) {
 // field, and signed-positive packet condition are now represented below using
 // the existing Popup, Player, ParseStrBuffer, and lobby packet owners.
 void NetWin::pick_player() {
+    // Native 47BC1B constructs the owner even on the saved-mode early exit.
+    Popup popup;
     if (NetWinSessionData.mode_ == 2 || NetWinSessionData.mode_ == 3) {
         return;
     }
     const int slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);
 
-    char gender_text[0x18];
+    // Native scratch starts at EBP-41C, after the 537C-byte Popup, and
+    // precedes the first packet at EBP-31C. Recover that 100h accessed
+    // window, not an original array/padding declaration or overflow layout.
+    char gender_text[0x100];
     strcpy(gender_text,
            label_get((NetWinLobbyRows[slot].tail_[0] == 0 ? 0xB88 : 0xB8C) /
                      4));
-    Popup popup;
     popup.start(PopupStartCaption, "CUSTOMNAMES", -1, 0, 0x200044, 0);
     EditGroup &fields = static_cast<EditGroup &>(popup.dialogs());
     fields.edit(label_get(0x2B8 / 4), NetWinLobbyRows[slot].leader_name_, 0x17);
@@ -1886,13 +1890,14 @@ void NetWin::pick_player() {
     if (popup.input_poll_state() == 1) {
         const int faction = updated.faction_or_color_;
         if (faction == -1) {
-            char *const default_faction = label_get(0xFE4 / 4);
-            strcpy(updated.leader_name_, default_faction);
-            strcpy(updated.formal_faction_name_, default_faction);
-            strcpy(updated.noun_faction_, default_faction);
-            strcpy(updated.adjective_faction_, default_faction);
-            strcpy(updated.leader_title_, default_faction);
-            strcpy(updated.adjective_leader_, default_faction);
+            // Native 47C073..47C13E interleaves six fresh lookups/copies.
+            strcpy(updated.leader_name_, label_get(0xFE4 / 4));
+            strcpy(updated.formal_faction_name_, label_get(0xFE4 / 4));
+            strcpy(updated.noun_faction_, label_get(0xFE4 / 4));
+            strcpy(updated.adjective_faction_, label_get(0xFE4 / 4));
+            strcpy(updated.leader_title_, label_get(0xFE4 / 4));
+            strcpy(updated.adjective_leader_, label_get(0xFE4 / 4));
+            updated.tail_[0] = 10; // Native 47C146, not a boolean default.
         } else {
             const Player &player = Players[faction];
             strcpy(updated.leader_name_, player.name_leader);
@@ -1938,17 +1943,21 @@ void NetWin::pick_faction(int slot) {
 
     pop_menu.dialogs().item(label_get(0xFE4 / 4), 0);
 
-    NetWinFactionRecord *const records =
-        static_cast<NetWinFactionRecord *>(faction_records_);
-    const int count = records[0].record_count_;
+    const int count = static_cast<NetWinFactionRecord *>(
+        faction_records_)[0].record_count_;
+    int player_count = count > 0 ? *NetWinPlayerCount : 0;
     for (int faction = 0; faction < count; ++faction) {
+        // Native 47C618 reloads the allocation, but not the captured count.
+        NetWinFactionRecord *const records =
+            static_cast<NetWinFactionRecord *>(faction_records_);
         if (records[faction].active_ == 0) {
             continue;
         }
 
         bool already_selected = false;
         if (NetWinSessionData.mode_ == 2 || NetWinSessionData.mode_ == 3) {
-            const int player_count = *NetWinPlayerCount;
+            // Native 47C656 compares zero with a negative scan bound too.
+            already_selected = player_count < 0;
             for (int player = 1; player <= player_count; ++player) {
                 if (NetWinLobbyRows[player].faction_or_color_ == faction) {
                     already_selected = true;
@@ -1958,6 +1967,7 @@ void NetWin::pick_faction(int slot) {
         }
         if (!already_selected) {
             pop_menu.dialogs().item(records[faction].noun_faction_, faction + 1);
+            player_count = *NetWinPlayerCount;
         }
     }
 
@@ -1976,15 +1986,17 @@ void NetWin::pick_faction(int slot) {
         return;
     }
 
+    // Native 47C811 snapshots the restored live row before the signed guard.
+    NetWinLobbyRow updated;
+    memcpy_call(&updated, &NetWinLobbyRows[slot], 0x17C);
+    updated.faction_or_color_ = static_cast<int8_t>(chosen_faction);
     if (slot >= 1) {
         NetWinLobbySinglePacket packet;
         packet.header_.opcode_ = 0x04;
         packet.header_.flags_ = 0x2F;
         packet.header_.slot_ = slot;
         packet.header_.field_8_ = 0;
-        packet.row_ = NetWinLobbyRows[slot];
-        packet.row_.faction_or_color_ =
-            static_cast<int8_t>(chosen_faction);
+        packet.row_ = updated;
         NetDaemonNet.Net::send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
     }
 }
@@ -2954,9 +2966,9 @@ Status: Compiler-generated CheckBox complete-object destructor, emitted from
 // TRIED: MISMATCH #10 'push' vs 'mov' (framed build). SEH-frame password dialog: local `Popup popup;` is a real automatic object (BasePop fully laid out in the scaffold: embedded FlatButton x2 and Sprite, plus Popup's own `Scroll scroll_` which itself embeds two more FlatButtons at offsets 0xAAC/0x15F8 - matches the trailer thunks in the disassembly exactly), so ctor/dtor calls are emitted by the language rather than hand-modelled. Explicit popup.close()/ popup.scroll_.close() only where the disassembly names them, not at every scope exit. Did not attempt to reproduce the compiler's own SEH funclet layout - accepted as an "omitted as unreachable" divergence per the precedent in dialog.cpp/graphicwin.cpp.
 int NetWin::pick_pass(int payload) {
     Popup popup;
+    const int slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);
     const bool faction_mode = NetWinSessionData.mode_ == 2 ||
                               NetWinSessionData.mode_ == 3;
-    const int slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);
 
     if (!faction_mode && payload != 0) {
         return 1;
@@ -2969,21 +2981,16 @@ int NetWin::pick_pass(int payload) {
         return 1;
     }
 
-    NetWinFactionRecord *records = nullptr;
-    uint32_t expected_hash = 0;
-    uint32_t stored_hash = 0;
     if (faction_mode) {
-        records = static_cast<NetWinFactionRecord *>(faction_records_);
-        expected_hash = records[faction].owner_;
-        stored_hash = row.owner_;
-    }
-
-    if (faction_mode &&
-        (expected_hash == 0 || expected_hash == stored_hash)) {
-        if (payload == 0) {
-            X_pop(ScriptPopupFile, "PASSWORDOK", nullptr);
+        const uint32_t expected_hash = static_cast<NetWinFactionRecord *>(
+            faction_records_)[faction].owner_;
+        // Native 47CB5A..47CB64 bypasses the row read for a zero hash.
+        if (expected_hash == 0 || expected_hash == row.owner_) {
+            if (payload == 0) {
+                X_pop(ScriptPopupFile, "PASSWORDOK", nullptr);
+            }
+            return 1;
         }
-        return 1;
     }
 
     uint32_t entered_hash = 0;
@@ -2991,6 +2998,8 @@ int NetWin::pick_pass(int payload) {
         entered_hash = 0;
         const char *prompt;
         if (faction_mode) {
+            NetWinFactionRecord *const records =
+                static_cast<NetWinFactionRecord *>(faction_records_);
             parse_says(0, records[faction].noun_faction_, -1, -1);
             prompt = "ENTERPASSWORDFACTION";
         } else {
@@ -3001,11 +3010,15 @@ int NetWin::pick_pass(int payload) {
                       nullptr, 0x800040) == -1) {
             return 0;
         }
-        if (ParseStrBuffer[0].str[0] != 0) {
+        const bool have_password = ParseStrBuffer[0].str[0] != 0;
+        if (have_password) {
             entered_hash = checksum_password(ParseStrBuffer[0].str);
         }
         if (faction_mode) {
-            if (expected_hash != entered_hash) {
+            // Native 47CD43..47CD4C checks the live post-modal allocation.
+            NetWinFactionRecord *const records =
+                static_cast<NetWinFactionRecord *>(faction_records_);
+            if (records[faction].owner_ != entered_hash) {
                 X_pop("BADPASSWORD", nullptr);
                 return 0;
             }
@@ -3013,7 +3026,7 @@ int NetWin::pick_pass(int payload) {
             return 1;
         }
 
-        if (ParseStrBuffer[0].str[0] == 0) {
+        if (!have_password) {
             break;
         }
 
@@ -3028,13 +3041,16 @@ int NetWin::pick_pass(int payload) {
     }
 
     row.owner_ = entered_hash;
+    // Native 47CE7B copies before checking whether the slot may be sent.
+    NetWinLobbyRow updated;
+    memcpy_call(&updated, &row, 0x17C);
     if (slot >= 1) {
         NetWinLobbySinglePacket packet;
         packet.header_.opcode_ = 0x04;
         packet.header_.flags_ = 0x2F;
         packet.header_.slot_ = slot;
         packet.header_.field_8_ = 0;
-        memcpy(&packet.row_, &row, 0x17C);
+        memcpy(&packet.row_, &updated, 0x17C);
         NetDaemonNet.Net::send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
     }
     return 1;

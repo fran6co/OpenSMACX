@@ -267,7 +267,7 @@ int main() {
     assert(std::memcmp(&NetWinLobbyRows[2], &before_cancel, sizeof(before_cancel)) == 0);
 
     // State 1 plus faction -1 restores the localized default name in all six
-    // text slots, keeps the row's gender and unrelated fields, and publishes
+    // text slots, sets native gender byte 10, keeps unrelated fields, and publishes
     // exactly one 0x2F04 full-row packet.
     clear_run();
     seed_row(NetWinLobbyRows[2], -1, 0);
@@ -285,6 +285,7 @@ int main() {
     std::strcpy(expected_default.adjective_faction_, "DefaultFaction");
     std::strcpy(expected_default.leader_title_, "DefaultFaction");
     std::strcpy(expected_default.adjective_leader_, "DefaultFaction");
+    expected_default.tail_[0] = 10;
     verify_packet(expected_default, 2);
 
     // State 1 plus a selected faction copies all six typed Player fields and
