@@ -893,9 +893,10 @@ def test_voice_initialized_runtime_damage_controls(tmp_path,damage):
         "cluster_territory":("            bit_set_call(x_coord, y_coord, BIT_FUNGUS, TRUE);", "            if (whose_territory(owner, x_coord, y_coord, 0, 0) != owner) continue;\n            bit_set_call(x_coord, y_coord, BIT_FUNGUS, TRUE);"),
         "climate_occupant":("center_tile->val2 & 0x0f", "center_tile->climate & 0x0f"),
         "missing_global_pass":("const int attempts = base_yield_signed_bits(MapArea) / 10;", "const int attempts = 0;"),
-        # The fixture's negative area would otherwise overrun even valid
-        # allocated storage; UBSan diagnoses it rather than hanging a walk.
-        "unsigned_reveal_walk":("tile_index < tile_count", "static_cast<uint32_t>(tile_index) < MapArea"),
+        # Observe the wrong walk on the negative-area case without overrunning
+        # this fixture's sixteen allocated tiles. The final visibility assertion
+        # rejects these in-bounds writes; a sanitizer fault/timeout is not proof.
+        "unsigned_reveal_walk":("tile_index < tile_count", "static_cast<uint32_t>(tile_index) < MapArea && tile_index < 16"),
     }
     old,new=changes[damage];assert text.count(old)==1
     run_actual(tmp_path,text.replace(old,new,1),False)
