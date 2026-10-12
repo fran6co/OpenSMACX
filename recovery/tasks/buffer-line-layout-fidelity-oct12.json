@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "task_id": "buffer-line-layout-fidelity-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "fdce370be73b468e7e2b6e5e9bb1b650a3574ed6",
+  "intent": "Recover the complete shared Buffer line-layout result, centered-width and callback-sensitive StringList measuring closure from pinned original behavior; preserve all parser quirks and historical obligations.",
+  "subjects": [
+    {
+      "address": 6145040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6142432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6139248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/buffer.cpp",
+    "recovery/tests/test_buffer_line_layout_fidelity_oct12.py",
+    "recovery/tests/test_buffer_markup_text_owner_oct9.py"
+  ],
+  "evidence": [
+    "Pinned complete5DC410..5DC70A: four nonnull Font-result arms624/642/682/6C7 clear pending, read found[-1] BEFORE segment-start equality, return found unchanged for preceding space/equality, otherwise call existing memrchr628AF0(originalinput,found,' '). Current source translates found-segmentStart+originalinput and omits reverse search. Preserve unsafe preceding-byte access and existing inclusive-end/exclusive-start memrchr behavior; no memrchr code edit required.",
+    "Pinned5DB9E0..5DBAF5 centered wrapper reloads untouched original width5DBA6C/77 after findbreak5DBA61 and in null arm5DBA8A, rather than forwarding mutated local residual. Preserve font overrides, loop line height and original width forwarding.",
+    "Pinned5DAD70..5DB03E captures payload before callback5DAF78, reloads current head/current_entry5DAF7D/88 and livepayload5DAF8D for plain/flush gate while retaining saved payload for dispatch5DAF9F/C8. Current measuring body gates on cached metadata; drawing twin already has correct separate gate. Preserve source-owned StringList callback/order behavior.",
+    "Only three complete Buffer bodies plus actual-source tests; do not edit headers/font/memrchr/drawing twin or unrelated consumers. Existing markup fixture requires actual memrchr provider for recovered calls; retain all previous controls. New suite covers four parser result arms, pointer identity/reverse-search boundaries/null/default/mode quirks, centered originalwidth and mutated StringList node/payload callbacks with runtime damage controls.",
+    "Preserve original mappings/fullspans, emitted symbols, claims and seed lessons. No manual markers/newclaims/demotion, no safe normalization of negative lengths/token boundaries. Independent review and fresh native build/link/scoped matching/outside-scope checks precede coordinator integration; no automatic or full-game acceptance implied."
+  ]
+}
