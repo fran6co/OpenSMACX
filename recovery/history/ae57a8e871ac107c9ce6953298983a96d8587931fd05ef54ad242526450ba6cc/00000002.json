@@ -1,0 +1,23 @@
+{
+  "event_id": "795ad8e393a71bcc77083fd62ce637c0bf0ea50dca0fdedda6d305b2d42dbab3",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize production_finish_vehicle in the existing complete base_production identity:4F155C reads live BaseIDCurrentSelected,4F157A sets prototype name parse_says1,4F1585 reloads live BaseCurrent after queue/parser calls rather than recentering from captured entry id. No header/other file changes. Treat unannotated production_* helpers used exclusively within this production ownership group as part of the full subject; further evidence-backed fixes may be implemented there with original branch/order/error/lifetime evidence and exact full-group continuity. No other mapped functions or external-owner helpers authorized. Preserve baseline/spans/claims and original quirks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5179360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "cb5a28adb9d6f2a8f675a2b07f2f65b7ee38daac551696eb867eb74d6db2fce1",
+  "request_id": "production-finish-owner-closure-oct12",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:base-production-growth-upkeep-oct12"
+}
