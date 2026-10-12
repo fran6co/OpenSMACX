@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "task_id": "win-init-close-owner-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "29def3c84d9f261f0b29d368ccdda6677227d55f",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6208896},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6207040}
+  ],
+  "editable_files": [
+    "src/win.cpp",
+    "recovery/tests/test_win_init_close_actual_source_oct12.py",
+    "recovery/tests/test_win_dialog_node_owner_closure_oct9.py",
+    "recovery/tests/test_winnodelist_allocator_closure_oct9.py",
+    "recovery/tests/test_win_scroll_lifecycle_oct9.py"
+  ],
+  "intent": "Recover complete Win initialization and close behavior using the existing genuine Win/WinNodeList owners. Correct evidenced flag, geometry, allocation-failure, callback-reload and teardown deviations while preserving original unsafe/error paths. No invented layout, bug fix, unrelated function edit, or extended byte-spelling search.",
+  "evidence": [
+    "Pinned init5EBF9D checks this child_count_ after close, not parent count.5EC12F uses negative client left;5EC17C converts client_rect_. Caption allocation failure5EC220..261 bypasses on_nc_paint but retains set_rects.5EC2A4..2AE assigns border offset when flag20 is clear.",
+    "Pinned5EC44C..451 enters registration when100000 is set;5EC46F..476 tests1000 for its conditional null-parent bypass.5EC47C retains the unchecked parent dereference. All registration uses the saved parent argument rather than a callback-mutated win_parent_.",
+    "Pinned5EC4EA..50F/5EC59B..5C2 reloads parent list head/current after payload allocation. Node/payload failures retain partial links, pass through common cursor/count tail and repeat saved-parent assignment5EC5F6 before setting initialized bit5EC5D7..604. Unknown node bytes and the four-byte payload remain uninitialized.",
+    "Pinned close5EB869..86A updates parent list tail to count-1 after removal attempt;5EB99A clears palette_seed_cache_;5EB9B7..9BD guards owned-node frees when allocator is nonzero;5EBB5A..6C clears cached_outer_rect_. Current Win members and WinDialogNode provide these storage relationships without new fields.",
+    "Review constructor/destructor/deleting entries, WinNodeList destructor and registration/removal/focus/geometry callees as read-only closure. Existing set_parent_dialog preserves the insertion failure pattern; no positive evidence authorizes changing those adjacent methods, EditGroup, FileWin, GraphicWin, Scroll or Heap. Preserve init support span662C80..662CCC and all historical identities/claims.",
+    "Actual complete-method controls must cover geometry, self/parent distinction, caption failure, eligibility, partial insertion failures, saved-parent restoration, Heap callback head/current changes, allocator-owned versus ordinary-node teardown, reset fields and lifecycle order, with original-image pins and executed damage controls. Host controls do not establish native fault/ABI/runtime behavior. Coordinator owns fresh native build/link, scoped measurements, continuity, review and integration; no autonomous/game acceptance is implied."
+  ]
+}
