@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "task_id": "text-load-link-contracts-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "3b6e8cb22f385ecc6f788e944c03eb073ac003b3",
+  "intent": "Recover original StringList loader scratch/pending storage and Buffer signed link-count guards, preserving original lifetime/error/overflow domains without inventing an original declaration.",
+  "subjects": [
+    {
+      "address": 6326656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6146784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/stringlist.cpp",
+    "src/buffer.cpp",
+    "recovery/tests/test_text_load_link_contracts_oct12.py"
+  ],
+  "evidence": [
+    "Pinned608B1B stores parser scratch slice into pending member+1C; add608B27, subsequent normal/error paths never clear it. Remove current post-add null normalization, preserve original borrowed dangling state, and test pointer bits without dereferencing expired storage.",
+    "Pinned loader reserves268h locals: parser output atESP+14h and actual160h Text receiver atESP+114h leave100h scratch window. Current608-byte scratch is contradicted; use evidence-backed256-byte window, explicitly retain historical array spelling/padding/native overflow-layout uncertainty rather than claim exact original allocation/layout.",
+    "Pinned link writer5DCAE0..5DCE23 has signed warning JLE5DCC18 and signed guard JGE5DCCAF/5DCD2E/5DCDD8. Existing unsigned32 increment wrapping can remain with explicit signed guard views; no unsupported original member-type/header promotion. Init/clear reset count; constructor/close do not.",
+    "Safe allocated host counterexample countbitsFFFFFFFE with $LINK<x and no label allocation: original warning0 and one Spot row with position-2; current warning1/rows0. Actual Spot uses independent healthy append index and arbitrary signed position. Negative owned-string indexing remains original unsafe pin-only evidence, not executed as a safe control.",
+    "Only these two complete bodies and new controls; preserve all markers/fullspans/claims/symbols/lessons and existing providers. Loader controls include lifecycle/error/caret/sticky blank lines and buffer extent evidence; link controls include19/20/21/negative/wrap/live callbacks with executed mutations. Conditional uninitialized write_raw_l arm reachability is unknown and not silently fixed in this task.",
+    "Independent source/evidence review, fresh native build/link, scoped measurements/outside-scope physical checks and destination verification precede manual integration. Existing BufferSpecialTexts cleanup span refusal and special-text fixture count failures remain limitations, no baseline resets or weakened gates."
+  ]
+}

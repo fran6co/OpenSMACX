@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "task_id": "netwin-editor-auth-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "3b6e8cb22f385ecc6f788e944c03eb073ac003b3",
+  "intent": "Recover complete lobby editor, faction and password ownership/lifetime/live-storage behavior together, preserving original quirks and historical obligations.",
+  "subjects": [
+    {
+      "address": 4701168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4703536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4704624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_editor_auth_actual_source_oct12.py",
+    "recovery/tests/test_netwin_pick_player_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned47BC1B constructs Popup before47BC20 mode read and saved-mode exits; move existing automatic owner before guard/identity/labels. Default-faction branch47C146 writes gender byte10, not copied prior gender.",
+    "Pinned47C603..608 captures faction record count, but47C618 reloads receiver records each iteration after item callbacks. Saved-mode negative player count suppresses real items via47C638..658; zero count permits them. Preserve actual allocated table replacements, captured count and original unchecked indices.",
+    "Pinned47C9DC identity precedes mode47C9E3; prompt47CC1E and validation47CD43..4C reload record owners/live hash after callbacks. Initial zero-hash success47CB5A..64 bypasses row-owner read. Preserve full primary/cold spans, modal/cancel/error/send and object lifetime.",
+    "Source checksum_password strcpy_s is not a native safety regression: actual VC6 compatibility wrapper drops bounds and forwards unbounded strcpy; no general.cpp expansion. Preserve all existing identities/spans/symbols/claims/lessons and packet unspecified bytes.",
+    "New actual-source coupled controls cover lifetime, default gender10, live faction/hash tables, negative counts and original branch/conditional-read order. Existing pick_player fixture must be corrected narrowly to native gender semantics without deleting coverage; old player_packets fixture failures stay recorded. Independent review, fresh native build/link, scoped measurements/outside-scope checks and destination verification before manual integration; no automatic/full-game acceptance implied."
+  ]
+}
