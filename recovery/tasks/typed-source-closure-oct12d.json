@@ -13,7 +13,8 @@
     "src/tutwin.cpp",
     "src/veh.cpp",
     "src/wave_device.cpp",
-    "src/win.cpp"
+    "src/win.cpp",
+    "recovery/tests/test_designwin_special_text_literals_oct9.py"
   ],
   "evidence": [
     "Labels::strings_ptr is declared LPSTR*: remove only same-type casts at the 31 scoped audited expressions, preserving every index, call, order and tutorial helper byte-offset division. Read ignored build/recovery/typed-source-cleanup-frontier-oct12d.json for locations and exclusions.",
