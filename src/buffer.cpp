@@ -5226,7 +5226,7 @@ int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5) {
                 else {
                     lineLen = static_cast<int>(breakPos - str);
                 }
-                write_cent_l(str, a3, y, outParam, lineLen);
+                write_cent_l(str, a3, y, a5, lineLen);
             }
             field_18_ += 1;
             if (font1_ == 0) {
@@ -6669,7 +6669,10 @@ join_compute:
         }
         if (found != 0) {
             markup_pending_ = 0;
-            return reinterpret_cast<char *>(found) - segStart + a1;
+            if (found[-1] == ' ' || found == segStart) {
+                return found;
+            }
+            return const_cast<char *>(memrchr(a1, found, ' '));
         }
     }
 
@@ -6710,7 +6713,10 @@ tail_exit:
         if (found == 0) {
             return 0;
         }
-        return reinterpret_cast<char *>(found) - segStart + a1;
+        if (found[-1] == ' ' || found == segStart) {
+            return found;
+        }
+        return const_cast<char *>(memrchr(a1, found, ' '));
     }
 }
 
@@ -7712,7 +7718,7 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
                                                                  line_payload);
             }
 
-            if (strings->head_ == 0 || line_payload == 0) {
+            if (strings->head_ == 0 || strings->current_entry()->field_8_ == 0) {
                 wrap_height_flying(strings->current_text());
             } else {
                 total_height += wrap_height_flying_flush();

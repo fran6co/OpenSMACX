@@ -36,6 +36,9 @@ def extract_definition(source: str, signature: str) -> str:
 PRELUDE = r"""
 #include <cassert>
 #include <cstring>
+#define __cdecl
+typedef const char *LPCSTR;
+const char *__cdecl memrchr(LPCSTR, LPCSTR, char);
 struct Font;
 static Font *FontDefault;
 static int call_count;
@@ -113,13 +116,16 @@ def test_markup_token_actual_parser_and_mutant(compiler: str) -> None:
     assert token_match.group(1) == "$LINK<"
     assert "strncmp(esi, BufferMarkupLinkToken, 6) == 0" in product
     body = extract_definition(product, "char *Buffer::find_line_break_l(char * a1, int * a2, int a3)")
+    search = extract_definition(
+        (repository_root() / "src/general.cpp").read_text(encoding="utf-8"),
+        "const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value)")
 
-    control = PRELUDE + token_match.group(0) + "\n" + body + "\n" + MAIN
+    control = PRELUDE + search + "\n" + token_match.group(0) + "\n" + body + "\n" + MAIN
     run_control(compiler, control, succeeds=True)
 
     damaged = product.replace('char BufferMarkupLinkToken[] = "$LINK<";',
                               'char BufferMarkupLinkToken[] = "$LINK?";', 1)
     damaged_match = re.search(r'^char BufferMarkupLinkToken\[\] = "([^"\\]*)";', damaged, re.M)
     assert damaged_match is not None
-    mutated = PRELUDE + damaged_match.group(0) + "\n" + body + "\n" + MAIN
+    mutated = PRELUDE + search + "\n" + damaged_match.group(0) + "\n" + body + "\n" + MAIN
     run_control(compiler, mutated, succeeds=False)
