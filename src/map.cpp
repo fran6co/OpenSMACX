@@ -4785,12 +4785,12 @@ void __cdecl world_ruin(int x, int y) {
             if (i < RadiusRange[2] || !is_ocean(x_radius, y_radius)) { // is_ocean check pointless?
                 world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true);
             }
-            if (is_ocean(x_radius, y)) {
+            if (is_ocean(x_radius, y_radius)) {
                 if (i && i < 9) {
                     bit_set(x_radius, y_radius, BIT_MONOLITH, true); // in ocean tiles?
                 }
             } else {
-                bit_set(x_radius, y, BIT_FUNGUS | BIT_SUPPLY_REMOVE, true);
+                bit_set(x_radius, y_radius, BIT_FUNGUS | BIT_SUPPLY_REMOVE, true);
                 if (!i) {
                     bit_set(x_radius, y_radius, BIT_FUNGUS, false);
                 } else if (i < 9) {
@@ -4801,7 +4801,7 @@ void __cdecl world_ruin(int x, int y) {
             code_set(x_radius, y_radius, i);
         }
     }
-    new_landmark(x, y, StringTable.get(Natural[LM_RUINS].name));
+    new_landmark(x, y + 2, StringTable.get(Natural[LM_RUINS].name));
 }
 
 /*
