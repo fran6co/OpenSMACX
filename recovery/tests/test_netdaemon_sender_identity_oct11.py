@@ -270,7 +270,7 @@ def test_identity_propagation_does_not_replace_transport_consumers():
     for helper in ("netdaemon_handle_server_lock_status", "netdaemon_handle_withdraw_end_turn",
                    "netdaemon_handle_client_done_upkeep"):
         assert "pid_2_who" not in extract(source, "static void " + helper + "(")
-    assert "netdaemon_handle_table_f(this, type, msg, sender_id)" in body
+    assert "netdaemon_handle_table_f(this, type, msg, sender_id,\n                                    entry_sender_identity)" in body
     assert "*this, type, sender_id,\n            entry_sender_identity" in body
     assert "*this, msg, type, sender_id,\n            entry_sender_identity" in body
     assert "*this, msg, type, sender_id))" in body

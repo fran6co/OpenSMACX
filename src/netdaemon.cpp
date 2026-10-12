@@ -4044,7 +4044,9 @@ static void netdaemon_process_sync_request(NetDaemon *daemon,
         }
     }
 
-    if (sender == static_cast<uint32_t>(ConsoleGlobal.faction_id_))
+    // Native 5362C4 reloads the request faction after synch/poll callbacks.
+    if (*reinterpret_cast<uint32_t *>(message + 4) ==
+        static_cast<uint32_t>(ConsoleGlobal.faction_id_))
         daemon->channels_[1].trailing_words_[0] = 0;
 }
 
@@ -4075,7 +4077,7 @@ static void netdaemon_handle_client_done_turn(NetDaemon *daemon,
             static_cast<int>(turn_waiters), 0);
 
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
-        if (daemon->primary_state_.leading_words_[0] == 0) return;
+        if (NetDaemonNet.primary_state_.leading_words_[0] == 0) return;
 
         int assigned_next_faction =
             GameDataStateStorage.fields_.net_turn_faction_ + 1;
@@ -4118,6 +4120,8 @@ static void netdaemon_handle_client_done_turn(NetDaemon *daemon,
     GenderDefault = faction_data.is_leader_female;
     PluralityDefault = 0;
     parse_says(0, faction_data.title_leader, -1, -1);
+    GenderDefault = faction_data.is_leader_female;
+    PluralityDefault = 0;
     parse_says(1, faction_data.name_leader, -1, -1);
     GenderDefault = faction_data.noun_gender;
     PluralityDefault = faction_data.is_noun_plural;
@@ -4144,16 +4148,18 @@ static void netdaemon_handle_server_turn_info(NetDaemon *daemon,
     log_say("From Server: TURN INFO", faction, acknowledged, turn);
 
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) return;
-    if (daemon->primary_state_.leading_words_[0] != 0) return;
-    if (turn != GameDataStateStorage.fields_.turn_current_num_) {
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) return;
+    if (*reinterpret_cast<int *>(message + 0x18) !=
+        GameDataStateStorage.fields_.turn_current_num_) {
         MultiWindow.draw(0);
         return;
     }
 
     const uint32_t faction_bit =
-        static_cast<uint32_t>(1) << (static_cast<uint32_t>(faction) & 31u);
+        static_cast<uint32_t>(1) <<
+        (*reinterpret_cast<uint32_t *>(message + 0x10) & 31u);
     uint32_t &turn_info = daemon->channels_[0].leading_words_[0];
-    if (acknowledged == 0) {
+    if (*reinterpret_cast<int *>(message + 0x14) == 0) {
         turn_info &= ~faction_bit;
         MultiWindow.draw(0);
         return;
@@ -4188,6 +4194,8 @@ static void netdaemon_handle_server_turn_info(NetDaemon *daemon,
     GenderDefault = player.is_leader_female;
     PluralityDefault = 0;
     parse_says(0, player.title_leader, -1, -1);
+    GenderDefault = player.is_leader_female;
+    PluralityDefault = 0;
     parse_says(1, player.name_leader, -1, -1);
     GenderDefault = player.noun_gender;
     PluralityDefault = player.is_noun_plural;
@@ -4197,8 +4205,8 @@ static void netdaemon_handle_server_turn_info(NetDaemon *daemon,
         if (daemon->process_slots_[slot].identity_ == next_faction)
             parse_says(3, daemon->process_slots_[slot].name_, -1, -1);
     }
-    MultiWindow.draw(0);
     NetMsgPrimary.pop("SLOWPOKE", 5000, 0, 0);
+    MultiWindow.draw(0);
 }
 
 // Original 0x534E23..0x534FD9.  The two timing words are separate global
@@ -4229,16 +4237,18 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
         const int phase = *reinterpret_cast<int *>(message + 0x10);
         const int turn = *reinterpret_cast<int *>(message + 0x14);
         log_say("From Server: NEXT UPKEEP", phase, turn, 0);
-        if (phase != NetUpkeepPhase) {
+        if (*reinterpret_cast<int *>(message + 0x10) != NetUpkeepPhase) {
             log_say("(Upkeep instruction for wrong phase!)",
-                    phase, NetUpkeepPhase, 0);
-        } else if (turn != GameDataStateStorage.fields_.turn_current_num_) {
+                    *reinterpret_cast<int *>(message + 0x10), NetUpkeepPhase, 0);
+        } else if (*reinterpret_cast<int *>(message + 0x14) !=
+                   GameDataStateStorage.fields_.turn_current_num_) {
             log_say("(Upkeep instruction for wrong turn!)",
-                    turn, GameDataStateStorage.fields_.turn_current_num_, 0);
+                    *reinterpret_cast<int *>(message + 0x14),
+                    GameDataStateStorage.fields_.turn_current_num_, 0);
         }
         my_srand(*reinterpret_cast<int *>(message + 8));
         daemon->channels_[0].leading_words_[1] = 0xFF;
-        daemon->primary_state_.trailing_words_[9] = 0xFF;
+        daemon->primary_state_.trailing_words_[8] = 0xFF;
         MultiWindow.draw(0);
         NetDaemonProgressInterval = 0;
         NetDaemonProgressLastTick = 0;
@@ -4268,9 +4278,8 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
         return;
     case 0x1206: {
         const uint32_t remaining = daemon->channels_[1].trailing_words_[2];
-        log_say("From Server: EXEC DONE", 0, 0,
-                static_cast<int>(remaining));
-        if (remaining != 0) {
+        log_say("From Server: EXEC DONE", static_cast<int>(remaining), 0, 0);
+        if (daemon->channels_[1].trailing_words_[2] != 0) {
             log_say("Remaining locked", 0, 0, 0);
             daemon->channels_[1].trailing_words_[2] = 0;
             message_data(0x2214, 0, 0, 0, 0, 0);
@@ -4279,11 +4288,13 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
         }
         return;
     }
-    case 0x1207:
+    // Pinned table 5388E8: entry6 (1207) ->534F71 OK/state1;
+    // entry7 (1208) ->534F4F FAIL/state2. Retain the producer's native replies.
+    case 0x1208:
         log_say("From Server: ADD LOCK FAIL", 0, 0, 0);
         daemon->channels_[0].leading_words_[2] = 2;
         return;
-    case 0x1208:
+    case 0x1207:
         log_say("From Server: ADD LOCK OK", 0, 0, 0);
         daemon->channels_[0].leading_words_[2] = 1;
         return;
@@ -4323,14 +4334,16 @@ static void netdaemon_handle_client_done_upkeep(NetDaemon *daemon,
     const int sender = sender_identity;
     const uint32_t sender_bit = static_cast<uint32_t>(1) << (sender & 0x1F);
     const int phase = *reinterpret_cast<int *>(message + 0x10);
-    const int turn = *reinterpret_cast<int *>(message + 0x14);
 
     if (phase != NetUpkeepPhase) {
         log_say("(Upkeep acknowledgement for wrong phase!)",
                 phase, NetUpkeepPhase, 0);
-    } else if (turn != GameDataStateStorage.fields_.turn_current_num_) {
-        log_say("(Upkeep ack for wrong turn!)", turn,
-                GameDataStateStorage.fields_.turn_current_num_, 0);
+    } else {
+        const int turn = *reinterpret_cast<int *>(message + 0x14);
+        if (turn != GameDataStateStorage.fields_.turn_current_num_) {
+            log_say("(Upkeep ack for wrong turn!)", turn,
+                    GameDataStateStorage.fields_.turn_current_num_, 0);
+        }
     }
 
     daemon->channels_[0].leading_words_[1] |= sender_bit;
@@ -4347,7 +4360,8 @@ static void netdaemon_handle_client_done_upkeep(NetDaemon *daemon,
         MultiWindow.draw(0);
     }
 
-    log_say("From Client: DONE UPKEEP", sender, phase,
+    log_say("From Client: DONE UPKEEP", sender,
+            *reinterpret_cast<int *>(message + 0x10),
             static_cast<int>(already_notified));
 }
 
@@ -4412,7 +4426,7 @@ static void netdaemon_handle_server_upkeep_info(NetDaemon *daemon,
             *reinterpret_cast<int *>(message + 0x10),
             *reinterpret_cast<int *>(message + 0x14),
             *reinterpret_cast<int *>(message + 0x18));
-    if (daemon->primary_state_.leading_words_[0] != 0) return;
+    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) return;
     const unsigned int faction =
         *reinterpret_cast<uint32_t *>(message + 0x10);
     daemon->channels_[0].leading_words_[1] |=
@@ -4446,9 +4460,10 @@ static bool netdaemon_handle_diplo_cd_message(unsigned short type,
         PluralityDefault = 0;
         GenderDefault = Players[faction].is_leader_female;
         parse_says(0, Players[faction].title_leader, -1, -1);
+        const int name_faction = *reinterpret_cast<int *>(message + 4);
         PluralityDefault = 0;
-        GenderDefault = Players[faction].is_leader_female;
-        parse_says(1, Players[faction].name_leader, -1, -1);
+        GenderDefault = Players[name_faction].is_leader_female;
+        parse_says(1, Players[name_faction].name_leader, -1, -1);
         NetMsgPrimary.pop("DIPLOCLOSE", 5000, 0, 0);
         return true;
     }
@@ -4489,9 +4504,10 @@ static bool netdaemon_handle_diplo_cd_message(unsigned short type,
     case 0x150C:
         log_say("Received NO DEAL",
                 *reinterpret_cast<int *>(message + 4), 0, 0);
-        DiploWindow.receive_no_deal(
-            *reinterpret_cast<int *>(message + 0x14),
-            *reinterpret_cast<int *>(message + 0x10));
+        // Native535A55 stores side0 before535A5B reads the second payload.
+        DiploWindow.set_offer_state(0, *reinterpret_cast<int *>(message + 0x14));
+        DiploWindow.set_offer_state(1, *reinterpret_cast<int *>(message + 0x10));
+        DiploWindow.GraphicWin::redraw();
         return true;
     case 0x150D:
         log_say("Received DONE DEAL",
@@ -4503,17 +4519,20 @@ static bool netdaemon_handle_diplo_cd_message(unsigned short type,
                 *reinterpret_cast<int *>(message + 4), 0, 0);
         return true;
     case 0x150F: {
+        log_say("Received VENDETTA WARNING",
+                *reinterpret_cast<int *>(message + 4), 0, 0);
         const int faction = *reinterpret_cast<int *>(message + 4);
-        log_say("Received VENDETTA WARNING", faction, 0, 0);
         PluralityDefault = 0;
         GenderDefault = Players[faction].is_leader_female;
         parse_says(0, Players[faction].title_leader, -1, -1);
+        const int name_faction = *reinterpret_cast<int *>(message + 4);
         PluralityDefault = 0;
-        GenderDefault = Players[faction].is_leader_female;
-        parse_says(1, Players[faction].name_leader, -1, -1);
-        GenderDefault = Players[faction].noun_gender;
-        PluralityDefault = Players[faction].is_noun_plural;
-        parse_says(2, Players[faction].noun_faction, -1, -1);
+        GenderDefault = Players[name_faction].is_leader_female;
+        parse_says(1, Players[name_faction].name_leader, -1, -1);
+        const int noun_faction = *reinterpret_cast<int *>(message + 4);
+        GenderDefault = Players[noun_faction].noun_gender;
+        PluralityDefault = Players[noun_faction].is_noun_plural;
+        parse_says(2, Players[noun_faction].noun_faction, -1, -1);
         NetMsgPrimary.pop("VENDETTAWARNING", 5000, 0, 0);
         return true;
     }
@@ -4633,29 +4652,32 @@ static bool netdaemon_process_table_e(NetDaemon &daemon,
 // The caller retains the common marker-tail and normal C++ scope cleanup.
 
 static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
-                                     unsigned char *message, int sender_id) {
+                                     unsigned char *message, int sender_id,
+                                     int sender_identity) {
     switch (type) {
     case 0x4304:
-        log_say("From Server: UPKEEP_BASE", 0, 0, 0);
+        log_say("From Server: UPKEEP_BASE", sender_identity, 0, 0);
         daemon->primary_state_.trailing_words_[9] = 1;
         return true;
 
     case 0x4305: {
         const int incoming = *reinterpret_cast<int *>(message + 0x10);
-        log_say("From Server: MSG_EVENTS", 0, incoming, 0);
-        if (static_cast<int32_t>(NetDaemonNet.network_message_count()) <= incoming)
-            NetDaemonNet.network_message_count() = static_cast<uint32_t>(incoming);
+        log_say("From Server: MSG_EVENTS", sender_identity, incoming, 0);
+        const int updated = *reinterpret_cast<int *>(message + 0x10);
+        if (static_cast<int32_t>(NetDaemonNet.network_message_count()) <= updated)
+            NetDaemonNet.network_message_count() = static_cast<uint32_t>(updated);
         return true;
     }
 
     case 0x4306: {
-        const int faction_id = *reinterpret_cast<int *>(message + 4);
         const int event_value = *reinterpret_cast<int *>(message + 0x10);
-        log_say("From Server: MSG_TIME_BONUS", faction_id, event_value, 0);
+        log_say("From Server: MSG_TIME_BONUS",
+                *reinterpret_cast<int *>(message + 4), event_value, 0);
+        const int faction_id = *reinterpret_cast<int *>(message + 4);
         if (ConsoleControlTurnActive != 0) return true;
 
-        if (PlayersData[faction_id].time_bonus_count > 0)
-            --PlayersData[faction_id].time_bonus_count;
+        if (PlayersData[faction_id].time_bonus_count <= 0) return true;
+        --PlayersData[faction_id].time_bonus_count;
 
         const int selection =
             GameDataStateStorage.fields_.time_controls_selection_;
@@ -4663,11 +4685,12 @@ static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
         NetDaemonWaitTicks += duration;
         GameDataStateStorage.fields_.turn_control_duration_milliseconds_ +=
             duration;
-        MultiWindow.draw(0);
+        MultiWindow.GraphicWin::redraw();
 
         parse_says(0, daemon->get_player_name(
                           static_cast<unsigned long>(sender_id)), -1, -1);
-        parse_num(0, TimeControl[selection].event);
+        parse_num(0, TimeControl[
+            GameDataStateStorage.fields_.time_controls_selection_].event);
         NetMsgPrimary.pop(
             faction_id == ConsoleGlobal.faction_id_ ? "WEBONUSED" : "HEBONUSED",
             5000, 0, nullptr);
@@ -4675,35 +4698,44 @@ static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
     }
 
     case 0x4307: {
-        // The pinned loop indexes by the packet faction without a range check.
-        int *destination = NetPeerTurnChecksums[
-            *reinterpret_cast<int *>(message + 4)];
-        const int *source = reinterpret_cast<int *>(message + 0x10);
-        for (int index = 0; index < NetTurnChecksumWords; ++index)
-            destination[index] = source[index];
+        // Native536762 reloads the unchecked faction before every payload read.
+        for (int index = 0; index < NetTurnChecksumWords; ++index) {
+            const int faction = *reinterpret_cast<int *>(message + 4);
+            const int value = *reinterpret_cast<int *>(
+                message + 0x10 + index * sizeof(int));
+            NetPeerTurnChecksums[faction][index] = value;
+        }
         return true;
     }
 
     case 0x4309: {
+        log_say("From Server: NEXT PLAYER TURN",
+                *reinterpret_cast<int *>(message + 0x10), 0, 0);
         const int faction_id = *reinterpret_cast<int *>(message + 0x10);
-        log_say("From Server: NEXT PLAYER TURN", faction_id, 0, 0);
         GameDataStateStorage.fields_.net_turn_faction_ = faction_id;
+        const bool local_turn = faction_id == ConsoleGlobal.faction_id_;
+        if (local_turn) TurnControlWord93A954 = 0;
 
         Player &player = Players[faction_id];
         PluralityDefault = 0;
         GenderDefault = player.is_leader_female;
         parse_says(0, player.title_leader, -1, -1);
+        Player &name_player = Players[
+            GameDataStateStorage.fields_.net_turn_faction_];
         PluralityDefault = 0;
-        GenderDefault = player.is_leader_female;
-        parse_says(1, player.name_leader, -1, -1);
-        GenderDefault = player.noun_gender;
-        PluralityDefault = player.is_noun_plural;
-        parse_says(2, player.noun_faction, -1, -1);
-        const int player_pid = daemon->who_2_pid(faction_id);
+        GenderDefault = name_player.is_leader_female;
+        parse_says(1, name_player.name_leader, -1, -1);
+        Player &noun_player = Players[
+            GameDataStateStorage.fields_.net_turn_faction_];
+        GenderDefault = noun_player.noun_gender;
+        PluralityDefault = noun_player.is_noun_plural;
+        parse_says(2, noun_player.noun_faction, -1, -1);
+        const int player_pid = daemon->who_2_pid(
+            GameDataStateStorage.fields_.net_turn_faction_);
         parse_says(3, daemon->get_player_name(
                           static_cast<unsigned long>(player_pid)), -1, -1);
 
-        if (faction_id == ConsoleGlobal.faction_id_) {
+        if (local_turn) {
             char year_text[0x194];
             year_text[0] = 0;
             say_year(year_text);
@@ -5152,26 +5184,28 @@ static bool netdaemon_handle_table_h(char *message) {
 // owner/layout unresolved rather than inventing an address-backed C++ alias.
 static int netdaemon_run_contact_prompt(Popup &popup, int faction_id) {
     popup.start(PopupStartCaption, "COMMDIPLO", -1, 0, 0, 0);
+    Sprite *portrait = FactionDiplomacyPortraits[faction_id];
+    popup.set_caller_picture(popup.picture_enabled() ? 0 : portrait);
     popup.dialogs().SpriteBox::sprite(
-        FactionDiplomacyPortraits[faction_id], 0, 0);
+        portrait, 0, 0);
     return popup.exec(0, pop_expire);
 }
 
 static bool netdaemon_handle_direct_diplomacy_complete(
-    unsigned short type, unsigned char *message, Popup &popup,
+    NetDaemon &daemon, unsigned short type, unsigned char *message, Popup &popup,
     int &contact_response_mask) {
     switch (type) {
     case 0x1501: {
+        log_say("Received OPEN CHAN",
+                *reinterpret_cast<int *>(message + 4), 0, 0);
         const int sender = *reinterpret_cast<int *>(message + 4);
         const uint32_t sender_bit =
             1u << (static_cast<uint32_t>(sender) & 31u);
-        log_say("Received OPEN CHAN", sender, 0, 0);
-
         if ((static_cast<uint32_t>(contact_response_mask) & sender_bit) != 0) {
             message_data(0x1503, sender, 0, 0, 0, 0);
             return true;
         }
-        if (NetDaemonNet.channels_[1].leading_words_[2] != 0) {
+        if (daemon.channels_[1].leading_words_[2] != 0) {
             message_data(0x1504, sender, 0, 0, 0, 0);
             return true;
         }
@@ -5181,10 +5215,13 @@ static bool netdaemon_handle_direct_diplomacy_complete(
                 message_data(0x1502, sender, 0, 0, 0, 0);
                 CommlinkPending = 1;
                 diplo(ConsoleGlobal.faction_id_, sender);
-            } else {
-                message_data(0x1504, sender, 0, 0, 0, 0);
+                return true;
             }
-            return true;
+            // Native 5353FA rechecks pending after the visibility query.
+            if (CommlinkPending != 0) {
+                message_data(0x1504, sender, 0, 0, 0, 0);
+                return true;
+            }
         }
         if (DiplomacyActive != 0) {
             message_data(0x1504, sender, 0, 0, 0, 0);
@@ -5221,27 +5258,30 @@ static bool netdaemon_handle_direct_diplomacy_complete(
         }
     }
     case 0x1502: {
-        const int sender = *reinterpret_cast<int *>(message + 4);
-        log_say("Received OPEN ACKNOWLEDGE", sender, 0, 0);
-        if (CommlinkPending != 0 && sender != CommlinkFaction) {
-            message_data(0x1505, sender, 0, 0, 0, 0);
+        log_say("Received OPEN ACKNOWLEDGE",
+                *reinterpret_cast<int *>(message + 4), 0, 0);
+        if (CommlinkPending != 0 &&
+            *reinterpret_cast<int *>(message + 4) != CommlinkFaction) {
+            message_data(0x1505, *reinterpret_cast<int *>(message + 4), 0, 0, 0, 0);
             return true;
         }
         if (DiploWindow.is_visible() != 0) return true;
-        message_data(0x2441, 0, ConsoleGlobal.faction_id_, sender, 8, 0);
-        diplo(ConsoleGlobal.faction_id_, sender);
+        message_data(0x2441, 0, ConsoleGlobal.faction_id_,
+                     *reinterpret_cast<int *>(message + 4), 8, 0);
+        diplo(ConsoleGlobal.faction_id_, *reinterpret_cast<int *>(message + 4));
         return true;
     }
     case 0x1503: {
-        const int sender = *reinterpret_cast<int *>(message + 4);
         CommlinkPending = 0;
-        log_say("Received OPEN REFUSE", sender, 0, 0);
+        log_say("Received OPEN REFUSE", *reinterpret_cast<int *>(message + 4), 0, 0);
+        const int sender = *reinterpret_cast<int *>(message + 4);
         GenderDefault = Players[sender].is_leader_female;
         PluralityDefault = 0;
         parse_says(0, Players[sender].title_leader, -1, -1);
-        GenderDefault = Players[sender].is_leader_female;
+        const int name_sender = *reinterpret_cast<int *>(message + 4);
+        GenderDefault = Players[name_sender].is_leader_female;
         PluralityDefault = 0;
-        parse_says(1, Players[sender].name_leader, -1, -1);
+        parse_says(1, Players[name_sender].name_leader, -1, -1);
         const int response = *reinterpret_cast<int *>(message + 0x10);
         if (response == 0)
             NetMsgPrimary.pop("DIPLOREFUSE", 5000, 0, 0);
@@ -5250,15 +5290,16 @@ static bool netdaemon_handle_direct_diplomacy_complete(
         return true;
     }
     case 0x1504: {
-        const int sender = *reinterpret_cast<int *>(message + 4);
         CommlinkPending = 0;
-        log_say("Received OPEN BUSY", sender, 0, 0);
+        log_say("Received OPEN BUSY", *reinterpret_cast<int *>(message + 4), 0, 0);
+        const int sender = *reinterpret_cast<int *>(message + 4);
         GenderDefault = Players[sender].is_leader_female;
         PluralityDefault = 0;
         parse_says(0, Players[sender].title_leader, -1, -1);
-        GenderDefault = Players[sender].is_leader_female;
+        const int name_sender = *reinterpret_cast<int *>(message + 4);
+        GenderDefault = Players[name_sender].is_leader_female;
         PluralityDefault = 0;
-        parse_says(1, Players[sender].name_leader, -1, -1);
+        parse_says(1, Players[name_sender].name_leader, -1, -1);
         const int response = *reinterpret_cast<int *>(message + 0x10);
         if (response == 0)
             NetMsgPrimary.pop("DIPLOBUSY", 5000, 0, 0);
@@ -5267,9 +5308,8 @@ static bool netdaemon_handle_direct_diplomacy_complete(
         return true;
     }
     case 0x150A: {
-        const int sender = *reinterpret_cast<int *>(message + 4);
-        log_say("Received MAYBE DEAL", sender, 0, 0);
-        DiploWindow.receive_maybe_deal(sender);
+        log_say("Received MAYBE DEAL", *reinterpret_cast<int *>(message + 4), 0, 0);
+        DiploWindow.receive_maybe_deal(*reinterpret_cast<int *>(message + 4));
         return true;
     }
     default:
@@ -6100,7 +6140,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     }
 
     if (netdaemon_handle_direct_diplomacy_complete(
-            type, msg, popup, MultiWindowContactStatusMask)) {
+            *this, type, msg, popup, MultiWindowContactStatusMask)) {
         netdaemon_process_message_marker_tail(*this, msg);
         return;
     }
@@ -6143,7 +6183,8 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     }
 
     if (type >= 0x4304 && type <= 0x4309) {
-        if (netdaemon_handle_table_f(this, type, msg, sender_id)) {
+        if (netdaemon_handle_table_f(this, type, msg, sender_id,
+                                    entry_sender_identity)) {
             netdaemon_process_message_marker_tail(*this, msg);
             return;
         }

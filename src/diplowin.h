@@ -64,7 +64,11 @@ class DiploWin : public GraphicWin, public SubInterface {
   void kill_offer(int a1, int a2);
   void receive_clear_offer();
   void receive_channel_status(int status);
-  void receive_no_deal(int field_A24_value, int field_A28_value);
+  // The two-party state lanes used by exec's PBEM restoration. Callers own
+  // the ordering of separate state stores and any subsequent redraw.
+  void set_offer_state(int side, int state) {
+    (side == 0 ? field_A24_ : field_A28_) = state;
+  }
   void receive_maybe_deal(int sender);
 
  public:

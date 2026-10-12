@@ -1405,11 +1405,6 @@ void DiploWin::receive_channel_status(int status) {
     redraw();
 }
 
-void DiploWin::receive_no_deal(int field_A24_value, int field_A28_value) {
-    field_A24_ = field_A24_value;
-    field_A28_ = field_A28_value;
-    redraw();
-}
 // fields are read in the same conjunction/order as the original dispatcher;
 // the 0x150C payload deliberately sends A24 at +10 and A28 at +14.
 void DiploWin::receive_maybe_deal(int sender) {
