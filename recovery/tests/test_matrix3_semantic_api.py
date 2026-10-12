@@ -44,12 +44,13 @@ int main() {
     fill(&x, 3); if (x.write_identity() != &x || !same(&x, identity)) return 3;
 
     fill(&x, 1); descending(&y);
-    if (x.add_into(&out, &y) != &out || !same(&out, sum)) return 4;
+    out = x.add(&y);
+    if (!same(&out, sum)) return 4;
     if (!same(&x, a) || !same(&y, b)) return 5;
-    x.add_into(&x, &y);
+    x = x.add(&y);
     const float added[9] = {10,10,10,10,10,10,10,10,10};
     if (!same(&x, added)) return 6;
-    fill(&x, 1); descending(&y); x.add_into(&y, &y);
+    fill(&x, 1); descending(&y); y = x.add(&y);
     if (!same(&y, added) || !same(&x, a)) return 23;
     fill(&x, 1); descending(&y); x.add_assign(&y);
     if (!same(&x, added)) return 7;
@@ -61,11 +62,14 @@ int main() {
     if (!same(&x, zero)) return 9;
 
     fill(&x, 1); descending(&y);
-    if (x.multiply_into(&out, &y) != &out || !same(&out, product)) return 10;
+    out = x.multiply(&y);
+    if (!same(&out, product)) return 10;
     fill(&x, 1); descending(&y);
-    if (x.multiply_into(&x, &y) != &x || !same(&x, product)) return 24;
+    x = x.multiply(&y);
+    if (!same(&x, product)) return 24;
     fill(&x, 1); descending(&y);
-    if (x.multiply_into(&y, &y) != &y || !same(&y, product) || !same(&x, a)) return 25;
+    y = x.multiply(&y);
+    if (!same(&y, product) || !same(&x, a)) return 25;
     fill(&x, 1); descending(&y); x.multiply_assign(&y);
     if (!same(&x, product)) return 11;
     fill(&x, 1); x.multiply_assign(&x);
@@ -76,8 +80,9 @@ int main() {
     const float doubled[9] = {2,4,6,8,10,12,14,16,18};
     if (!same(&x, doubled)) return 13;
     fill(&x, 1);
-    if (x.scale_into(&out, 2.0f) != &out || !same(&out, doubled)) return 14;
-    fill(&x, 1); x.scale_into(&x, 2.0f);
+    out = x.scaled(2.0f);
+    if (!same(&out, doubled)) return 14;
+    fill(&x, 1); x = x.scaled(2.0f);
     if (!same(&x, doubled)) return 15;
 
     fill(&x, 1);

@@ -53,12 +53,12 @@ int main() {
   if (x.value.write_identity() != &x.value || !same(&x.value, ident)) return 3;
 
   fill(&x.value, 1.0f); fill(&y.value, 9.0f);
-  x.value.add_into(&z.value, &y.value);
+  z.value = x.value.add(&y.value);
   if (!same(&z.value, sum) || !same(&x.value, a)) return 4;
-  x.value.add_into(&x.value, &y.value);
+  x.value = x.value.add(&y.value);
   if (!same(&x.value, sum)) return 5;
   fill(&x.value, 1.0f); fill(&y.value, 9.0f);
-  x.value.add_into(&y.value, &y.value);
+  y.value = x.value.add(&y.value);
   if (!same(&y.value, sum) || !same(&x.value, a)) return 24;
   fill(&x.value, 1.0f); fill(&y.value, 9.0f);
   x.value.add_assign(&y.value);
@@ -95,17 +95,17 @@ int main() {
   y.value.cells[0] = 9; y.value.cells[1] = 8; y.value.cells[2] = 7;
   y.value.cells[3] = 6; y.value.cells[4] = 5; y.value.cells[5] = 4;
   y.value.cells[6] = 3; y.value.cells[7] = 2; y.value.cells[8] = 1;
-  x.value.multiply_into(&z.value, &y.value);
+  z.value = x.value.multiply(&y.value);
   if (!same(&z.value, ab)) return 13;
   fill(&x.value, 1.0f); fill(&y.value, 9.0f);
   for (int i = 0; i < 9; ++i) y.value.cells[i] = 9.0f - (float)i;
-  x.value.multiply_into(&x.value, &y.value);
+  x.value = x.value.multiply(&y.value);
   if (!same(&x.value, ab)) return 14;
   fill(&x.value, 1.0f); fill(&y.value, 9.0f);
   y.value.cells[0] = 9; y.value.cells[1] = 8; y.value.cells[2] = 7;
   y.value.cells[3] = 6; y.value.cells[4] = 5; y.value.cells[5] = 4;
   y.value.cells[6] = 3; y.value.cells[7] = 2; y.value.cells[8] = 1;
-  x.value.multiply_into(&y.value, &y.value);
+  y.value = x.value.multiply(&y.value);
   if (!same(&y.value, ab) || !same(&x.value, a)) return 25;
   fill(&x.value, 1.0f); fill(&y.value, 9.0f);
   for (int i = 0; i < 9; ++i) y.value.cells[i] = 9.0f - (float)i;
@@ -127,9 +127,9 @@ int main() {
   if (x.value.cells[0] != 23 || x.value.cells[1] != 53 || x.value.cells[2] != 83) return 26;
   fill(&x.value, 1.0f);
   Matrix3 scaled;
-  x.value.scale_into(&scaled, 2.0f);
+  scaled = x.value.scaled(2.0f);
   for (int i = 0; i < 9; ++i) if (scaled.cells[i] != 2.0f * (float)(i + 1)) return 19;
-  x.value.scale_into(&x.value, 2.0f);
+  x.value = x.value.scaled(2.0f);
   for (int i = 0; i < 9; ++i)
     if (x.value.cells[i] != 2.0f * (float)(i + 1)) return 20;
   if (x.before != 0x12345678U || x.after != 0x87654321U) return 21;
@@ -224,9 +224,9 @@ def _compile_and_run(text: str, compiler: str, tmp_path: Path, label: str) -> su
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 def test_consolidated_actual_source_owner(compiler_name: str, tmp_path: Path) -> None:
     text = SOURCE.read_text()
-    for method in ("identity", "reset_identity", "add_into", "add_assign",
+    for method in ("identity", "reset_identity", "add", "add_assign",
                    "multiply_assign", "scale_assign", "subtract_assign", "write_identity",
-                   "equals", "multiply_into", "transform", "scale_into"):
+                   "equals", "multiply", "transform", "scaled"):
         _body_span(text, method)
     result = _compile_and_run(text, _compiler(compiler_name), tmp_path, compiler_name)
     assert result.returncode == 0, result.stdout + result.stderr
@@ -234,7 +234,7 @@ def test_consolidated_actual_source_owner(compiler_name: str, tmp_path: Path) ->
 
 def test_add_preserves_original_x87_operand_load_order() -> None:
     text = SOURCE.read_text()
-    opening, closing = _body_span(text, "add_into")
+    opening, closing = _body_span(text, "add")
     body = text[opening + 1:closing]
     def has_original_order(candidate: str) -> bool:
         return (candidate.count("other->cells[row * 3 + column] +") == 1 and
@@ -261,11 +261,11 @@ MUTANTS = (
     ("subtract_assign", "cells[row * 3 + column] -",
      "cells[row * 3 + column] +"),
     ("equals", "left < right || left > right", "left != right"),
-    ("multiply_into", "other->cells[depth * 3 + column]", "other->cells[column * 3 + depth]"),
-    ("multiply_into", "for (int i = 0; i < 9; ++i)", "for (int i = 0; i < 8; ++i)"),
-    ("multiply_into", "out->cells[i] = local[i];", "out->cells[i] = out->cells[i];"),
+    ("multiply", "other->cells[depth * 3 + column]", "other->cells[column * 3 + depth]"),
+    ("multiply", "++depth;", "depth += 2;"),
+    ("multiply", "std::memcpy(result.cells, local, sizeof(local));", "std::memcpy(result.cells, local, sizeof(result.cells[0]));"),
     ("transform", "m[1] * in[1]", "m[0] * in[1]"),
-    ("scale_into", "scale * cells[i]", "scale + cells[i]"),
+    ("scaled", "scale * cells[i]", "scale + cells[i]"),
 )
 
 

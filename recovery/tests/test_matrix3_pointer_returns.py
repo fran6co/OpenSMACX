@@ -1,9 +1,4 @@
-"""Host controls for the actual bounded matrix output-pointer contracts.
-
-Compile the entire product matrix3.cpp without rewriting its implementation.
-These controls do not establish original ownership, hidden class-result semantics,
-VC6 ABI emission, or floating-point equivalence with the pinned executable.
-"""
+"""Host controls for the actual Matrix3 value-result contracts."""
 
 from pathlib import Path
 import shutil
@@ -15,26 +10,27 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/matrix3.cpp"
 HARNESS = r"""
+static bool same(const Matrix3 &matrix, const float *expected) {
+    for (int i = 0; i < 9; ++i)
+        if (matrix.cells[i] != expected[i]) return false;
+    return true;
+}
+
 int main() {
     Matrix3 left;
     Matrix3 right;
-    Matrix3 out;
     for (int i = 0; i < 9; ++i) {
         left.cells[i] = (float)(i + 1);
         right.cells[i] = (float)(i + 10);
-        out.cells[i] = -99.0f;
     }
-
     const float sum[9] = {11,13,15,17,19,21,23,25,27};
-    if (left.add_into(&out, &right) != &out) return 1;
-    for (int i = 0; i < 9; ++i) if (out.cells[i] != sum[i]) return 2;
-
-    // The original routines stage into local storage before copying out; keep
-    // valid alias cases explicit and verify the EAX-source pointer contract.
-    if (left.add_into(&left, &right) != &left) return 3;
-    for (int i = 0; i < 9; ++i) if (left.cells[i] != sum[i]) return 4;
-    if (left.add_into(&right, &right) != &right) return 5;
-    for (int i = 0; i < 9; ++i) if (right.cells[i] != sum[i] + (float)(i + 10)) return 6;
+    Matrix3 separate = left.add(&right);
+    if (!same(separate, sum)) return 1;
+    left = left.add(&right);
+    if (!same(left, sum)) return 2;
+    for (int i = 0; i < 9; ++i) left.cells[i] = (float)(i + 1);
+    right = left.add(&right);
+    if (!same(right, sum)) return 3;
 
     const float descending[9] = {9,8,7,6,5,4,3,2,1};
     for (int i = 0; i < 9; ++i) {
@@ -42,30 +38,32 @@ int main() {
         right.cells[i] = descending[i];
     }
     const float product[9] = {30,24,18,84,69,54,138,114,90};
-    Matrix3 separate;
-    if (left.multiply_into(&separate, &right) != &separate) return 7;
-    for (int i = 0; i < 9; ++i) if (separate.cells[i] != product[i]) return 8;
-    if (left.multiply_into(&left, &right) != &left) return 9;
-    for (int i = 0; i < 9; ++i) if (left.cells[i] != product[i]) return 10;
+    separate = left.multiply(&right);
+    if (!same(separate, product)) return 4;
+    left = left.multiply(&right);
+    if (!same(left, product)) return 5;
+    for (int i = 0; i < 9; ++i) left.cells[i] = (float)(i + 1);
+    right = left.multiply(&right);
+    if (!same(right, product)) return 6;
 
     for (int i = 0; i < 9; ++i) left.cells[i] = (float)(i + 1);
-    if (left.scale_into(&left, 3.0f) != &left) return 11;
-    for (int i = 0; i < 9; ++i) if (left.cells[i] != 3.0f * (float)(i + 1)) return 12;
-    Matrix3 scaled;
-    if (left.scale_into(&scaled, 2.0f) != &scaled) return 13;
-    for (int i = 0; i < 9; ++i) if (scaled.cells[i] != 6.0f * (float)(i + 1)) return 14;
+    const float tripled[9] = {3,6,9,12,15,18,21,24,27};
+    separate = left.scaled(3.0f);
+    if (!same(separate, tripled)) return 7;
+    left = left.scaled(3.0f);
+    if (!same(left, tripled)) return 8;
     return 0;
 }
 """
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-def test_explicit_output_pointer_return_and_aliasing(tmp_path, compiler_name):
+def test_value_results_assign_to_distinct_and_aliased_objects(tmp_path, compiler_name):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} not installed")
-    unit = tmp_path / "matrix3_pointer_return.cpp"
-    executable = tmp_path / "matrix3_pointer_return"
+    unit = tmp_path / "matrix3_value_results.cpp"
+    executable = tmp_path / "matrix3_value_results"
     unit.write_text(SOURCE.read_text() + "\n" + HARNESS)
     built = subprocess.run(
         [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror", "-pedantic",
@@ -74,25 +72,3 @@ def test_explicit_output_pointer_return_and_aliasing(tmp_path, compiler_name):
     assert built.returncode == 0, built.stderr
     ran = subprocess.run([str(executable)], text=True, capture_output=True, timeout=10)
     assert ran.returncode == 0, ran.stdout + ran.stderr
-
-
-@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-def test_missing_pointer_return_is_rejected(tmp_path, compiler_name):
-    compiler = shutil.which(compiler_name)
-    if compiler is None:
-        pytest.skip(f"{compiler_name} not installed")
-    original = SOURCE.read_text()
-    for index, returned in enumerate(("destination", "out", "dest")):
-        anchor = "return " + returned + ";"
-        assert original.count(anchor) == 1
-        damaged = original.replace(anchor, "return 0;", 1)
-        unit = tmp_path / ("damaged_%d.cpp" % index)
-        executable = tmp_path / ("damaged_%d" % index)
-        unit.write_text(damaged + "\n" + HARNESS)
-        built = subprocess.run(
-            [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror", "-pedantic",
-         "-iquote", str(ROOT / "src"), str(unit), "-o", str(executable)],
-            text=True, capture_output=True, timeout=30)
-        assert built.returncode == 0, built.stderr
-        ran = subprocess.run([str(executable)], text=True, capture_output=True, timeout=10)
-        assert ran.returncode != 0, "missing %s result survived" % returned

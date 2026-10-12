@@ -77,7 +77,7 @@ void Matrix3::reset_identity() {
 
 /*
 Purpose: Add another matrix into this one through an identity scratch
-         buffer, then copy the sum out to a destination.
+         buffer, then publish the completed sum as a Matrix3 value.
 
          The identity fill of the scratch is fully overwritten by the sum
          - every one of its nine slots is stored before any read - but the
@@ -88,19 +88,20 @@ Purpose: Add another matrix into this one through an identity scratch
 // containing owner, lifecycle, callers, TU, and x87 precision remain unknown.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
 // ORIGINAL: 0x00634720 sub_634720 0x00634720-0x006347BE FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x006347A3/0x006347B2/0x006347BB: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the chosen nine-float Matrix3 view does not assert an original complete class, allocation size, constructor or lifetime"], "reason": "Represent the observed output buffer as a typed pointer to the chosen Matrix3 view; hidden-class-result semantics and receiver ownership remain unresolved."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x006347A3/0x006347B2/0x006347BB: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the chosen nine-float Matrix3 view does not assert an original complete class, allocation size, constructor or lifetime", "source:src/vector.h and mapped Vector operator+6343E0/scale634670 establish independently observed class-result conventions; their receiver, result-copy/EAX and ret8 protocol matches this routine."], "reason": "Model the observed staged nine-float result as a C++ Matrix3 value in the chosen mathematical view. The first stack slot is supplied by the current compiler as a class-result pointer. Pinned protocol and established Vector value-result ABI support this interpretation, but do not distinguish an original explicit output-pointer API or establish original class identity, complete extent or lifetime."}
+// Historical explicit-pointer binding: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x006347A3/0x006347B2/0x006347BB: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the chosen nine-float Matrix3 view does not assert an original complete class, allocation size, constructor or lifetime"], "reason": "Represent the observed output buffer as a typed pointer to the chosen Matrix3 view; hidden-class-result semantics and receiver ownership remain unresolved."}
 // TRIED: nothing yet; the nested row/column countdown pair is the original's own shape.
-// symbol   ?add_into@Matrix3@@QAEPAU1@PAU1@PBU1@@Z
+// symbol   ?add@Matrix3@@QAE?AU1@PBU1@@Z
 // size      158 bytes
 // prototype
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: the supplied output-buffer address
+Return Value: the completed nine-float result value
 Status: Complete
 */
-Matrix3 *Matrix3::add_into(Matrix3 *destination, const Matrix3 *other) {
+Matrix3 Matrix3::add(const Matrix3 *other) {
     float scratch[9] = {1.0f, 0.0f, 0.0f,
                         0.0f, 1.0f, 0.0f,
                         0.0f, 0.0f, 1.0f};
@@ -110,8 +111,9 @@ Matrix3 *Matrix3::add_into(Matrix3 *destination, const Matrix3 *other) {
                                         cells[row * 3 + column];
         }
     }
-    std::memcpy(destination->cells, scratch, sizeof(scratch));
-    return destination;
+    Matrix3 result;
+    std::memcpy(result.cells, scratch, sizeof(scratch));
+    return result;
 }
 
 /*
@@ -293,19 +295,20 @@ Matrix3 *Matrix3::write_identity() {
 // traversal, not promoted as an ABI or matching claim.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
 // ORIGINAL: 0x00634980 sub_634980 0x00634980-0x00634A50 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00634A35/0x00634A44/0x00634A4D: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the chosen nine-float Matrix3 view does not assert an original complete class, allocation size, constructor or lifetime"], "reason": "Represent the observed output buffer as a typed pointer to the chosen Matrix3 view; hidden-class-result semantics and receiver ownership remain unresolved."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00634A35/0x00634A44/0x00634A4D: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the chosen nine-float Matrix3 view does not assert an original complete class, allocation size, constructor or lifetime", "source:src/vector.h and mapped Vector operator+6343E0/scale634670 establish independently observed class-result conventions; their receiver, result-copy/EAX and ret8 protocol matches this routine."], "reason": "Model the observed staged nine-float result as a C++ Matrix3 value in the chosen mathematical view. The first stack slot is supplied by the current compiler as a class-result pointer. Pinned protocol and established Vector value-result ABI support this interpretation, but do not distinguish an original explicit output-pointer API or establish original class identity, complete extent or lifetime."}
+// Historical explicit-pointer binding: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00634A35/0x00634A44/0x00634A4D: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the chosen nine-float Matrix3 view does not assert an original complete class, allocation size, constructor or lifetime"], "reason": "Represent the observed output buffer as a typed pointer to the chosen Matrix3 view; hidden-class-result semantics and receiver ownership remain unresolved."}
 // Historical source symbol hypothesis: ?multiply@Mat3@@QAEXPAM0@Z
-// symbol    ?multiply_into@Matrix3@@QAEPAU1@PAU1@PBU1@@Z
+// symbol    ?multiply@Matrix3@@QAE?AU1@PBU1@@Z
 // TRIED: `extern "C" int __stdcall sub_634980(int a1, int a2)` per the given def head - disasm reads *ecx directly as a float* with no matching stack slot (a 3x3 matrix "this"), so the receiver is a __thiscall member, not a 2-arg __stdcall free function; changed to a `Mat3::multiply` member. `dst`/`a` tracked as independent incrementing pointers gives a MISMATCH at the prologue (#4, 87% similarity); an `int off = dst - a` delta recomputed each outer iteration (matching the original's spill of that delta to `[esp+0x14]` and its `add esi, ebx` re-derivation) gets to 89.5% similarity, 7 edits, all register-allocation choices (which callee-saved reg holds which pointer) rather than control-flow shape. Pointer-to-int delta form is retired here; the observation remains historical, not an implementation requirement.
 // size      208 bytes
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: the supplied output-buffer address
+Return Value: the completed nine-float result value
 Status: Complete
 */
-Matrix3 *Matrix3::multiply_into(Matrix3 *out, const Matrix3 *other) {
+Matrix3 Matrix3::multiply(const Matrix3 *other) {
     float local[9] = {
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
@@ -328,10 +331,9 @@ Matrix3 *Matrix3::multiply_into(Matrix3 *out, const Matrix3 *other) {
         } while (column < 3);
         ++row;
     } while (row < 3);
-    for (int i = 0; i < 9; ++i) {
-        out->cells[i] = local[i];
-    }
-    return out;
+    Matrix3 result;
+    std::memcpy(result.cells, local, sizeof(local));
+    return result;
 }
 
 /*
@@ -399,19 +401,20 @@ void Matrix3::transform(float *out, const float *in) {
 // pointer-to-int scratch delta with flat indexing for host-width safety.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
 // ORIGINAL: 0x00634AD0 sub_634ad0 0x00634AD0-0x00634B67 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00634B4E/0x00634B5D/0x00634B64: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the chosen nine-float Matrix3 view does not assert an original complete class, allocation size, constructor or lifetime"], "reason": "Represent the observed output buffer as a typed pointer to the chosen Matrix3 view; hidden-class-result semantics and receiver ownership remain unresolved."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00634B4E/0x00634B5D/0x00634B64: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the chosen nine-float Matrix3 view does not assert an original complete class, allocation size, constructor or lifetime", "source:src/vector.h and mapped Vector operator+6343E0/scale634670 establish independently observed class-result conventions; their receiver, result-copy/EAX and ret8 protocol matches this routine."], "reason": "Model the observed staged nine-float result as a C++ Matrix3 value in the chosen mathematical view. The first stack slot is supplied by the current compiler as a class-result pointer. Pinned protocol and established Vector value-result ABI support this interpretation, but do not distinguish an original explicit output-pointer API or establish original class identity, complete extent or lifetime."}
+// Historical explicit-pointer binding: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x00634B4E/0x00634B5D/0x00634B64: load first entry stack argument into EAX, copy nine dwords to it, retain EAX through ret 8", "source:the chosen nine-float Matrix3 view does not assert an original complete class, allocation size, constructor or lifetime"], "reason": "Represent the observed output buffer as a typed pointer to the chosen Matrix3 view; hidden-class-result semantics and receiver ownership remain unresolved."}
 // Historical source symbol hypothesis: ?scale_into@Mat3x3@@QAEXPAMM@Z
-// symbol    ?scale_into@Matrix3@@QAEPAU1@PAU1@M@Z
+// symbol    ?scaled@Matrix3@@QAE?AU1@M@Z
 // TRIED: extern "C" __stdcall(int,int) contract head - disasm reads ecx as an implicit receiver (thiscall) into a 3x3 float matrix, not a stack int; rewrote as Mat3x3::scale_into(float*,float). MISMATCH #1 push/lea, prologue layout only, structure otherwise matches Ghidra's nested-loop scale+copy. The old pointer-to-int delta is retired; preserve this as historical source-form evidence.
 // size      151 bytes
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: the supplied output-buffer address
+Return Value: the completed nine-float result value
 Status: Complete
 */
-Matrix3 *Matrix3::scale_into(Matrix3 *dest, float scale) {
+Matrix3 Matrix3::scaled(float scale) {
     float tmp[9] = {
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
@@ -420,8 +423,7 @@ Matrix3 *Matrix3::scale_into(Matrix3 *dest, float scale) {
     for (int i = 0; i < 9; ++i) {
         tmp[i] = scale * cells[i];
     }
-    for (int output_index = 0; output_index < 9; ++output_index) {
-        dest->cells[output_index] = tmp[output_index];
-    }
-    return dest;
+    Matrix3 result;
+    std::memcpy(result.cells, tmp, sizeof(tmp));
+    return result;
 }
