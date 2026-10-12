@@ -823,7 +823,7 @@ int Midi_Device::create_device(unsigned long flags) {
     // The image takes `&device_14_` into eax first (0x004C56D3 `lea eax,
     // [ecx + 0x14]`), then loads the field for the test - the wrapped device
     // is opened INTO this slot, so the address outlives the null check.
-    void **slot = reinterpret_cast<void **>(&device_14_);
+    void **slot = &device_14_;
     if (device_14_ == 0) {
         SoundXMidiDeviceCreateProc const open = SoundXOrdinal7MidiDeviceCreate();
         if (open != 0) {
@@ -864,7 +864,7 @@ int Midi_Device::release() {
 // ORIGINAL: 0x004C59A0 ?create_device@Wave_In_Device@@QAEHK@Z 0x004C59A0-0x004C59D7 BYTE_EXACT
 // symbol    ?create_device@Wave_In_Device@@UAEHK@Z
 int Wave_In_Device::create_device(unsigned long flags) {
-    void **slot = reinterpret_cast<void **>(&device_14_);
+    void **slot = &device_14_;
     if (device_14_ == 0) {
         SoundXWaveInDeviceCreateProc const open = SoundXOrdinal9WaveInDeviceCreate();
         if (open != 0) {

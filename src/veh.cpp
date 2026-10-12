@@ -4134,7 +4134,7 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
                 return 2;
     }
     uint32_t is_rocky = rocky_at(x, y) > TERRAIN_BIT_ROLLING;
-    VehBattleDisplayTerrain = *((LPSTR *)Labels.strings_ptr + 91); // "Rocky"
+    VehBattleDisplayTerrain = *(Labels.strings_ptr + 91); // "Rocky"
     uint32_t defense = is_rocky;
     if (bit & BIT_FUNGUS && altitude_at(x, y) >= ALT_BIT_OCEAN_SHELF && !defense
         && get_triad(veh_id_def) != TRIAD_AIR) {
@@ -4143,14 +4143,14 @@ int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
             || has_project(SP_PHOLUS_MUTAGEN, Vehs[veh_id_atk].faction_id))) {
             defense = is_rocky;
         } else {
-            VehBattleDisplayTerrain = *((LPSTR *)Labels.strings_ptr + 338); // "Fungus"
+            VehBattleDisplayTerrain = *(Labels.strings_ptr + 338); // "Fungus"
             defense = (has_project(SP_PHOLUS_MUTAGEN, faction_id)
                 || (Vehs[veh_id_def].proto_id < MaxVehProtoFactionNum
                     && get_offense_rating(veh_id_def) < 0)) ? 2 : 1;
         }
     }
     if (bit & BIT_FOREST && !defense && (veh_id_atk < 0 || get_triad(veh_id_atk) == TRIAD_LAND)) {
-        VehBattleDisplayTerrain = *((LPSTR *)Labels.strings_ptr + 291); // "Forest"
+        VehBattleDisplayTerrain = *(Labels.strings_ptr + 291); // "Forest"
         defense = 1;
     }
     return defense + 2;

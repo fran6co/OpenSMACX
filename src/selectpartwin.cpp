@@ -799,8 +799,7 @@ int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
     rect2.top = rect2.bottom - font1->line_advance();
 
     StringTemp[0] = 0;
-    strcat(StringTemp, StringTable.get(reinterpret_cast<LPSTR *>(
-        Labels.strings_ptr)[0x1E4 / 4]));
+    strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x1E4 / 4]));
     buf->write_l(StringTemp, &rect2,
                  static_cast<int>(strlen(StringTemp)));
 
@@ -947,8 +946,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         const unsigned char flag2 = Armor[slot].mode;
         if (flag2 < 3) {
             strcat(StringTemp,
-                   StringTable.get(reinterpret_cast<LPSTR *>(
-                       Labels.strings_ptr)[0x1F8 / 4]));
+                   StringTable.get(Labels.strings_ptr[0x1F8 / 4]));
         }
         buf444->write_l(StringTemp, &rectScratch,
                         static_cast<int>(strlen(StringTemp)));
@@ -957,8 +955,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         StringTemp[0] = 0;
         if (armLevel < 0) {
             strcat(StringTemp,
-                   StringTable.get(reinterpret_cast<LPSTR *>(
-                       Labels.strings_ptr)[0x310 / 4]));
+                   StringTable.get(Labels.strings_ptr[0x310 / 4]));
         } else {
             char itoaBuf[32];
             _itoa(armLevel, itoaBuf, 10);
@@ -1115,7 +1112,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     tmp_rect.top = tmp_rect.bottom - font45f4->line_advance();
     StringTemp[0] = 0;
     strcat(StringTemp,
-           StringTable.get(reinterpret_cast<LPSTR *>(Labels.strings_ptr)[
+           StringTable.get(Labels.strings_ptr[
                (cat_byte < 3 ? 0x204 : 0x200) / 4]));
     panel_buf->write_l(StringTemp, &tmp_rect,
                        static_cast<int>(strlen(StringTemp)));
@@ -1125,8 +1122,7 @@ int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     StringTemp[0] = 0;
     if (count_char == -1) {
         strcat(StringTemp,
-               StringTable.get(reinterpret_cast<LPSTR *>(
-                   Labels.strings_ptr)[0x310 / 4]));
+               StringTable.get(Labels.strings_ptr[0x310 / 4]));
     } else {
         char num_buf[80];
         if (cat_byte > 2) {

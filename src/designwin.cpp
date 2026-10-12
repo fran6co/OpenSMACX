@@ -447,7 +447,7 @@ void DesignWin::on_right_click(int x, int y) {
     // Both special-ability spots (4 and 5) use the same help label.
     int label = 0xCD4 / 4 + (category == 5 ? 4 : category);
     char *text = StringTable.get(
-        reinterpret_cast<LPSTR *>(Labels.strings_ptr)[label]);
+        Labels.strings_ptr[label]);
     client_to_screen(&x, &y);
     RECT rect = {x, y, x, y};
     set_bubble_text(text, &rect);
@@ -471,7 +471,7 @@ void DesignWin::on_redraw() {
     StringTemp[0] = 0;
     screen->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
     strcat(StringTemp, StringTable.get(
-        reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xA70 / 4]));
+        Labels.strings_ptr[0xA70 / 4]));
     screen->set_text_color(0xF0, -1, 1, 1);
     CharUpperA(StringTemp);
     screen->write_cent_l(StringTemp, &caption, strlen(StringTemp));
@@ -1403,7 +1403,7 @@ void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
         // The label pointer sits at byte offset 0xCE8 of the game block - slot
         // 0x33A of the LPSTR array, the same walk datalink.cpp's
         // CATEGORY_LABEL makes over Labels.strings_ptr.
-        LPSTR label = reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x33A];
+        LPSTR label = Labels.strings_ptr[0x33A];
         RECT rect;
         rect.left = xCoord;
         rect.top = yCoord;
@@ -4111,7 +4111,7 @@ void DesignWin::draw_stack() {
                     // Labels.strings_ptr+0xE40 (slot 0x390) - same walk as
                     // on_iface_right_click's 0xCE8.
                     strcat(StringTemp, StringTable.get(
-                        reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x390]));
+                        Labels.strings_ptr[0x390]));
                 } else {
                     strcat(StringTemp, VehPrototypes[proto_id].veh_name);
                 }
@@ -4121,7 +4121,7 @@ void DesignWin::draw_stack() {
                     PlayersData[factionID_].proto_id_active[proto_id];
                 canvas->set_text_color(0xF8 + ((-(seen != 0)) & 7), -1, 1, 1);
                 strcat(StringTemp, StringTable.get(
-                    reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x390]));
+                    Labels.strings_ptr[0x390]));
                 strcat(StringTemp, BufferJoinSpace);
                 strcat(StringTemp, "(");
                 char digits[0x20];
@@ -4186,7 +4186,7 @@ void DesignWin::draw_stack() {
             StringTemp[0] = '\0';
             // Slot 0x6E of the same label block: the "undesigned" caption.
             strcat(StringTemp, StringTable.get(
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x6E]));
+                    Labels.strings_ptr[0x6E]));
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp, "#");
             char digits[0x20];
@@ -4583,7 +4583,7 @@ void DesignWin::draw_flash() {
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp,
                    StringTable.get(
-                       reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x3A0]));
+                       Labels.strings_ptr[0x3A0]));
             line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
                                          rc.right - rc.left);
 
@@ -4593,7 +4593,7 @@ void DesignWin::draw_flash() {
             strcat(StringTemp, BufferJoinSpace);
             strcat(StringTemp,
                    StringTable.get(
-                       reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x3A1]));
+                       Labels.strings_ptr[0x3A1]));
             line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
                                          rc.right - rc.left);
 
@@ -4601,7 +4601,7 @@ void DesignWin::draw_flash() {
                 & (1 << (factionID_ & 0x1F))) {
                 StringTemp[0] = '\0';
                 strcat(StringTemp, StringTable.get(
-                    reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x390]));
+                    Labels.strings_ptr[0x390]));
                 CharUpperA(StringTemp);
                 canvas->wrap_cent(StringTemp, line_left, line_top,
                                   rc.right - rc.left);
@@ -4701,8 +4701,7 @@ void DesignWin::select_special(int which) {
 
     StringTemp[0] = 0;
     strcat(StringTemp,
-           StringTable.get(reinterpret_cast<LPSTR *>(
-               Labels.strings_ptr)[0x88]));
+           StringTable.get(Labels.strings_ptr[0x88]));
     dialogs.item(StringTemp, 0x1D);
 
     int items_added = 1;
@@ -4760,7 +4759,7 @@ void DesignWin::select_special(int which) {
         strcat(StringTemp, "|");
         // The image reads Labels.strings_ptr + 0x160 bytes: dword entry 0x58.
         strcat(StringTemp, StringTable.get(
-            reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x58]));
+            Labels.strings_ptr[0x58]));
         strcat(StringTemp, ": ");
 
         const int kind = static_cast<int>(Ability[ability].cost_factor);
@@ -4791,8 +4790,7 @@ void DesignWin::select_special(int which) {
             char digits[0x20];
             // The following image displacements are byte offsets into the
             // Labels pointer table; these are the corresponding dword slots.
-            LPSTR *const labels =
-                reinterpret_cast<LPSTR *>(Labels.strings_ptr);
+            LPSTR *const labels = Labels.strings_ptr;
             switch (kind + 7) {
             case 6: {
                 int ratio = static_cast<int>(weapon_cost) /

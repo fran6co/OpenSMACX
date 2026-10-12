@@ -3010,7 +3010,7 @@ int DDInit::init(int width, int height, int depth, int tgl) {
     }
 
     HRESULT hr = (surf_ == nullptr)
-        ? DirectDrawCreate(nullptr, reinterpret_cast<LPDIRECTDRAW *>(&surf_), nullptr)
+        ? DirectDrawCreate(nullptr, &surf_, nullptr)
         : DD_OK;
     if (hr == DD_OK) {
         hr = surf_->SetCooperativeLevel(HandleMain, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);

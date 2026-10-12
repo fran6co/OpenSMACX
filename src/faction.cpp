@@ -46,6 +46,7 @@
 #include "console.h"  // ConsoleGlobal, which net_energy refreshes
 #include "socialwin.h"
 #include "mapwin.h"
+#include "multiwin.h"
 #include "planwin.h"
 #include "alphamovie.h"
 #include "strings.h"
@@ -1598,7 +1599,7 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
     PlayersData[faction_id_with].diplo_treaties[index] |= treaty;
     if ((faction_id == local_faction || faction_id_with == local_faction)
         && (treaty & 0x1f) && MultiWindowOpen) {
-        reinterpret_cast<GraphicWin *>(&MultiWindow)->GraphicWin::redraw();
+        MultiWindow.GraphicWin::redraw();
     }
 }
 

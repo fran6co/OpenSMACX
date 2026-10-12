@@ -1209,7 +1209,7 @@ Return Value: 1 when this is ConsoleGlobal, 0 otherwise
 Status: Complete
 */
 int MapWin::UNK1() {
-    return this == reinterpret_cast<MapWin *>(&ConsoleGlobal) ? 1 : 0;
+    return this == static_cast<MapWin *>(&ConsoleGlobal) ? 1 : 0;
 }
 
 // Original0x0046B310 tests the requested tile against the visible scroll

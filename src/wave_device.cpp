@@ -1304,7 +1304,7 @@ Return Value: the factory's answer, 0xC with a device already wrapped, or
 Status: Complete
 */
 int Wave_Device::create_device(unsigned long a1) {
-    void **const device_slot = reinterpret_cast<void **>(&device_14_);
+    void **const device_slot = &device_14_;
     if (!device_14_) {
         // Original 0x0090DB34 is ordinal 5 in the loader's export array.
         SoundXWaveDeviceCreateProc const factory =

@@ -325,7 +325,7 @@ static int tut_callout(TutWin &tutorial, Win &coordinates, RECT &rect,
 }
 
 static LPSTR tutorial_button_label(unsigned int byte_offset) {
-    return reinterpret_cast<LPSTR *>(Labels.strings_ptr)[byte_offset / 4];
+    return Labels.strings_ptr[byte_offset / 4];
 }
 
 // ORIGINAL: 0x004BDFE0 ?tut_win@TutWin@@QAEHPAUGraphicWin@@PBDHHPAUSprite@@HHH@Z 0x004BDFE0-0x004BE643;0x00659CE0-0x00659CF2 FILE

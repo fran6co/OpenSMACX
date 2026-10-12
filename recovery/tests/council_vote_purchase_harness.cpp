@@ -113,7 +113,7 @@ int tech_val(int technology, int faction, int simple) {
 }
 void parse_string(const char *s, char *out) { if (s != out) std::strncpy(out, s, 1020); out[1020]=0; }
 void parse_num(int, int) {}
-void parse_say(int, int, int, int) {}
+int parse_say(int, char *, int, int) { return 0; }
 void message_data(int a,int b,int c,int d,int e,int f) { Event ev{"message"}; ev.a[0]=a;ev.a[1]=b;ev.a[2]=c;ev.a[3]=d;ev.a[4]=e;ev.a[5]=f; events.push_back(ev); }
 int X_text_open(const char *, const char *) { return force_text_open; }
 void text_get() { std::strcpy(TextBufferGetPtr, "row"); }

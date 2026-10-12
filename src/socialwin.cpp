@@ -2093,7 +2093,7 @@ void SocialWin::draw_mouseover() {
     if (mode != -1) {
         LPSTR table_text;
         if (mode == -2) {
-            table_text = reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xB94 / 4];
+            table_text = Labels.strings_ptr[0xB94 / 4];
         } else {
             cat_idx = mode / 4;
             row_idx = mode % 4;
@@ -2771,8 +2771,7 @@ void SocialWin::init(int faction_id) {
                 static_cast<Buffer *>(button)->set_font(&font2_, 0, 0, 0);
                 button->redraw();
                 static_cast<BaseButton *>(button)->set_bubble_text(
-                    StringTable.get(reinterpret_cast<LPSTR *>(
-                        Labels.strings_ptr)[0xCF0 / 4]));
+                    StringTable.get(Labels.strings_ptr[0xCF0 / 4]));
                 group->add(static_cast<BaseButton *>(button));
             }
             group->set(social_category_value(socCategory_, row), 1);
@@ -2816,8 +2815,7 @@ void SocialWin::init(int faction_id) {
                     ->set_font(reinterpret_cast<Font *>(0), 0, 0, 0);
                 button->redraw();
                 button->set_bubble_text(
-                    StringTable.get(reinterpret_cast<LPSTR *>(
-                        Labels.strings_ptr)[0xCF4 / 4 + col]));
+                    StringTable.get(Labels.strings_ptr[0xCF4 / 4 + col]));
             }
             ++row;
             entry += 1;
@@ -2827,8 +2825,7 @@ void SocialWin::init(int faction_id) {
 
     {
         StringTemp[0] = 0;
-        strcat(StringTemp, StringTable.get(reinterpret_cast<LPSTR *>(
-            Labels.strings_ptr)[0x198 / 4]));
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x198 / 4]));
         if (Language != 2) {
             CharUpperA(StringTemp);
         }
@@ -2842,12 +2839,10 @@ void SocialWin::init(int faction_id) {
     }
 
     static_cast<BaseButton *>(&flatButtons_[27])->set_bubble_text(
-        StringTable.get(reinterpret_cast<LPSTR *>(
-            Labels.strings_ptr)[0x4F4 / 4]));
+        StringTable.get(Labels.strings_ptr[0x4F4 / 4]));
 
     static_cast<BaseButton *>(&flatButtons_[28])->set_bubble_text(
-        StringTable.get(reinterpret_cast<LPSTR *>(
-            Labels.strings_ptr)[0xD34 / 4]));
+        StringTable.get(Labels.strings_ptr[0xD34 / 4]));
 
     {
         CheckButton *lock0 = &energyLockButtons_[0];
@@ -2887,8 +2882,8 @@ void SocialWin::init(int faction_id) {
         int first = (toggle_index % 2 == 0) ? 0 : 3;
         flat_toggle->set_report_icons(&energyAllocArrow_[first + 0],
             &energyAllocArrow_[first + 1], &energyAllocArrow_[first + 2]);
-        toggle->set_bubble_text(StringTable.get(reinterpret_cast<LPSTR *>(
-            Labels.strings_ptr)[toggle_bubbles[toggle_index] / 4]));
+        toggle->set_bubble_text(StringTable.get(
+            Labels.strings_ptr[toggle_bubbles[toggle_index] / 4]));
     }
 
     if (positive == 0) {

@@ -38,7 +38,7 @@ def test_special_text_prefix_suffix_and_labels_are_source_owned():
     prefix = [
         "Ability[ability].name", "strcat(StringTemp, \": \")",
         "Ability[ability].description", "strcat(StringTemp, \"|\")",
-        "Labels.strings_ptr)[0x58]", "strcat(StringTemp, \": \")",
+        "Labels.strings_ptr[0x58]", "strcat(StringTemp, \": \")",
     ]
     offsets = []
     cursor = special.index("StringTemp[0] = 0")
@@ -163,7 +163,7 @@ def test_special_prefix_executes_source_lookup_order_and_detects_damage(tmp_path
     special = body("void DesignWin::select_special(int which)")
     name_at = special.index("Ability[ability].name")
     start = special.rfind("strcat(StringTemp, StringTable.get(", 0, name_at)
-    label_at = special.index("Labels.strings_ptr)[0x58]", name_at)
+    label_at = special.index("Labels.strings_ptr[0x58]", name_at)
     end = special.index('strcat(StringTemp, ": ");', label_at) + len(
         'strcat(StringTemp, ": ");'
     )
@@ -174,7 +174,7 @@ def test_special_prefix_executes_source_lookup_order_and_detects_damage(tmp_path
         "reinterpret_cast<int>(Ability[ability].description)",
         "Ability[ability].description",
     ).replace(
-        "reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x58]",
+        "Labels.strings_ptr[0x58]",
         "Labels[0x58]",
     )
     assert "reinterpret_cast" not in prefix
