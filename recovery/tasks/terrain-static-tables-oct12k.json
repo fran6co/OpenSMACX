@@ -1,0 +1,32 @@
+{
+  "author": "coordinator",
+  "base_revision": "79dca81c0ff93a0b3acd50f00719bd3281f4b7fb",
+  "editable_files": [
+    "src/map.cpp",
+    "recovery/tests/test_landmark_canyon_phase_contract_oct12i.py",
+    "recovery/tests/test_landmark_ridge_phase_contract_oct12i.py",
+    "recovery/tests/test_terrain_static_tables_oct12k.py"
+  ],
+  "evidence": [
+    "Pinned Canyon loads persistent table base0x006858D8 at0x005C7DFD and0x005C7E8E; pointer+4 loops end at0x00685908, comparisons0x005C7E80 and0x005C7F01. Its twelve scalar radius indices match the current initializer.",
+    "Pinned Ridge loads persistent table base0x00685908 at0x005C8299 and0x005C82FA; pointer+4 loops end at0x0068593C, comparisons0x005C82F2 and0x005C8375. Its thirteen scalar radius indices match the current initializer. AltTemplateRainy is independently bound at the next address0x0068593C.",
+    "Both windows are in original writable .data. Authorize two distinct source-owned process-lifetime uint32_t arrays and add-only source object bindings for these bounded initial windows after actual emitted-symbol evidence. Current bounded reads prove accessed windows, not complete encompassing allocations, original variable names, source constness, all writers or historical TU boundaries. Preserve these limitations explicitly; no inferred readonly storage or unknown writer removal.",
+    "Preserve both original function identities, all historical claims, values, two-pass phase ordering, masks, bounds and caller contracts. Adapt existing controls to extract actual source-owned definitions, retaining wrong-value, short-loop and phase-order damage controls. Verify compiled data and reference targets with existing package APIs under both compiler profiles; full build/link, mappings, references and claim continuity before reviewed integration. No automatic/game acceptance claim or extended spelling iterations."
+  ],
+  "intent": "Recover persistent Canyon and Ridge radius-index storage and its original bindings rather than recreating original data as function-local arrays.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6061232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6062416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "terrain-static-tables-oct12k"
+}
