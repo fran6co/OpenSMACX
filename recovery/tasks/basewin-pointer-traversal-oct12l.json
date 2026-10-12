@@ -1,0 +1,30 @@
+{
+  "author": "coordinator",
+  "base_revision": "f279d1cb887106b7fb43363089e3185b051a2f8a",
+  "editable_files": [
+    "src/basewin.cpp",
+    "recovery/tests/test_basewin_pointer_traversal_oct12l.py"
+  ],
+  "evidence": [
+    "Pinned prev0x0041A010-0x0041A15D and next0x0041A160-0x0041A2AD advance a Base record pointer by0x134 alongside candidate index, retaining selected/nearest pointer-and-ID pairs. src/base.h independently asserts sizeof(Base)==0x134. Current bodies repeatedly index Bases for these same records; recover typed pointer traversal rather than raw byte-offset arithmetic.",
+    "Preserve current faction/omniscient guard, ConsoleControlTurnActive ARROWUPKEEP path, initial set_base, case-insensitive ordering, equal-name tie behavior, faction filtering, nearest-versus-wrap choice, focusedBaseID assignment and zoom(selected,0). Recheck exact pinned dataflow before caching focused or candidate state; do not invent bounds guards, new fallback values, constness of underlying mutable rows or callback-visible reload changes.",
+    "This is a bounded original-dataflow recovery trial, not proof of a behavioral defect or promised matching improvement. No extended spelling search. Preserve all original identities/spans and historical claims; exactness is welcome when readily achieved, otherwise keep justified source work and explicit restoration obligations. No source-header or unrelated owner edits authorized.",
+    "Controls must compile extracted actual method bodies with bounded state/collaborators and test direction, wrap, ties, single-base, other-faction exclusion, denied faction, omniscient and upkeep paths with exact call/state order; negative controls reject reversed comparison, removed faction filtering and incorrect wrap choice. Full application build/link, scoped references/mappings/claims and historical family measurements before manual integration. Fixtures and filtered diagnostics are not whole runtime, linked preservation or automatic/game acceptance."
+  ],
+  "intent": "Recover the original paired Base record-pointer and candidate-index traversal in BaseWin previous/next selection without altering name ordering, guards or wrap behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4300816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4301152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basewin-pointer-traversal-oct12l"
+}
