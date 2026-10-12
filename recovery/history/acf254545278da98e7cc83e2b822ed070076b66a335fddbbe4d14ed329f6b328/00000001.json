@@ -1,0 +1,20 @@
+{
+  "event_id": "2926a6ab13d9dcbfbabcfc4f18e99d11e35cf293717074d2eb39e00ac7ac26eb",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_matrix3_consolidated_actual_source.py",
+      "recovery/tests/test_matrix3_value_results_oct12b.py"
+    ],
+    "evidence": [
+      "Fresh controlled aggregate_value deck passes replica/damage under both profiles without losing passing measurements. Authorize adoption of one aggregate-initialized Matrix3 result in add/multiply/scaled, preserving original initialization/arithmetic/alias order and all mappings/bindings/claims/roles; no header or constructor identity change. Explicitly authorize the two focused test files to replace obsolete memcpy damage anchors with a failing result-cell store mutant while retaining alias, arithmetic, identity and claim continuity controls. First profile remains4passes8misses and second3passes9misses; no new coverage ownership, byte claims or full acceptance. Require focused controls, independent review, fresh application build/link, mappings/references/claims and destination recheck before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "matrix3-aggregate-results-scope-oct12f",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:matrix3-constructed-results-oct12f"
+}
