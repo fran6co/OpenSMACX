@@ -130,7 +130,8 @@ def test_runtime_component_adds_only_the_reviewed_iterator_bindings():
                               if binding.origin.entity_id in historical_ids)
     assert {binding.origin.entity_id: binding for binding in retained_installed} == {
         binding.origin.entity_id: binding for binding in active.bindings}
-    assert replace(installed, bindings=active.bindings) == active
+    assert replace(installed, bindings=active.bindings,
+                   code_sections=active.code_sections) == active
     baseline_ids = {binding.origin.entity_id for binding in baseline.bindings}
     additions = [binding for binding in active.bindings
                  if binding.origin.entity_id not in baseline_ids]

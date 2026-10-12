@@ -52,6 +52,263 @@
 //     }
 //   ],
 //   "archive_sha256": "1ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b",
+//   "code_sections": [
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6574636,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6574874,
+//         "start": 6574636
+//       },
+//       "unit": "build/intel/mt_obj/exsup.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6575440,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6575487,
+//         "start": 6575440
+//       },
+//       "unit": "build/intel/mt_obj/chkstk.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6577600,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6577804,
+//         "start": 6577600
+//       },
+//       "unit": "build/intel/mt_obj/strchr.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6579152,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6579326,
+//         "start": 6579152
+//       },
+//       "unit": "../build/intel/mt_obj/sin.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6579328,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6579502,
+//         "start": 6579328
+//       },
+//       "unit": "../build/intel/mt_obj/cos.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6579504,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6579690,
+//         "start": 6579504
+//       },
+//       "unit": "../build/intel/mt_obj/sqrt.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6579792,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6579951,
+//         "start": 6579792
+//       },
+//       "unit": "../build/intel/mt_obj/atan.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6580864,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6581405,
+//         "start": 6580864
+//       },
+//       "unit": "../build/intel/mt_obj/pow.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6581744,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6581968,
+//         "start": 6581744
+//       },
+//       "unit": "build/intel/mt_obj/exsup3.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6585008,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6585211,
+//         "start": 6585008
+//       },
+//       "unit": "../build/intel/mt_obj/acos.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6590736,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6590812,
+//         "start": 6590736
+//       },
+//       "unit": "build/intel/mt_obj/lowhelpr.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6596112,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6596570,
+//         "start": 6596112
+//       },
+//       "unit": "../build/intel/mt_obj/87disp.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6596576,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6596972,
+//         "start": 6596576
+//       },
+//       "unit": "../build/intel/mt_obj/common.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved. The __87except relocation is resolved through an existing source binding; that reference does not establish complete relocation closure or original selection.",
+//       "origin": {
+//         "address": 6596976,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6597059,
+//         "start": 6596976
+//       },
+//       "unit": "../build/intel/mt_obj/genexcep.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6599264,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6599783,
+//         "start": 6599264
+//       },
+//       "unit": "../build/intel/mt_obj/87tran.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6610368,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6613835,
+//         "start": 6610368
+//       },
+//       "unit": "../build/intel/mt_obj/adj_fdiv.obj"
+//     },
+//     {
+//       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6618400,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6618608,
+//         "start": 6618400
+//       },
+//       "unit": "build/intel/mt_obj/stricmp.obj"
+//     }
+//   ],
 //   "component": {
 //     "component_id": "vc6-runtime",
 //     "delivery": "toolchain",

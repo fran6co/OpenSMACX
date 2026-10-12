@@ -49,7 +49,8 @@ def assert_installed_history(installed, historical):
     current = {identity(b): b for b in installed.bindings}
     assert len(current) == len(installed.bindings)
     assert all(current.get(identity(b)) == b for b in historical.bindings)
-    assert replace(installed, bindings=historical.bindings) == historical
+    assert replace(installed, bindings=historical.bindings,
+                   code_sections=historical.code_sections) == historical
 
 
 @pytest.fixture(scope="module")

@@ -19,6 +19,7 @@ from match_recovery.source import read_text
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "40e1077fe7333ae5860a543518a52fab43558c15"
+ADDITION = "7b8c10a83990bfbac2b2e315cd49bf53ec34df58"
 SOURCE = "src/vendor/vc6-runtime.recovery.h"
 IMAGE_SHA256 = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 ARCHIVE_SHA256 = "1ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b"
@@ -71,7 +72,8 @@ def inputs():
         assert image_path.is_file(), "explicit pinned image path unavailable"
     if not image_path.is_file() or not archive_path.is_file():
         pytest.skip("pinned original image or external LIBCMT archive unavailable")
-    manifest = parse_component((ROOT / SOURCE).read_text())
+    manifest = parse_component(subprocess.check_output(
+        ["git", "show", f"{ADDITION}:{SOURCE}"], cwd=ROOT, text=True))
     image, archive = image_path.read_bytes(), archive_path.read_bytes()
     assert hashlib.sha256(image).hexdigest() == IMAGE_SHA256
     assert hashlib.sha256(archive).hexdigest() == ARCHIVE_SHA256
@@ -117,7 +119,9 @@ def repin(manifest, image):
         bindings=tuple(replace(binding, origin=replace(binding.origin, image_sha256=digest))
                        for binding in manifest.bindings),
         data_sections=tuple(replace(binding, origin=replace(binding.origin, image_sha256=digest))
-                            for binding in manifest.data_sections))
+                            for binding in manifest.data_sections),
+        code_sections=tuple(replace(section, origin=replace(section.origin, image_sha256=digest))
+                            for section in manifest.code_sections))
 
 
 def without_additions(manifest):
@@ -136,13 +140,18 @@ def test_addition_preserves_immutable_244_binding_prefix_and_source_claims(input
     old = historical()
     assert len(old.bindings) == 244
     assert len(manifest.bindings) == 248
-    assert without_additions(manifest) == old
-    current_source = (ROOT / SOURCE).read_text()
+    assert replace(without_additions(manifest), code_sections=old.code_sections) == old
+    current_source = subprocess.check_output(
+        ["git", "show", f"{ADDITION}:{SOURCE}"], cwd=ROOT, text=True)
     previous_source = subprocess.check_output(
         ["git", "show", f"{BASE}:{SOURCE}"], cwd=ROOT, text=True)
     normalize = lambda text: [replace(row, line=1, region="")
                               for row in read_text(text, ROOT / SOURCE)]
     assert normalize(current_source) == normalize(previous_source)
+    installed = parse_component((ROOT / SOURCE).read_text())
+    assert installed.bindings[:len(manifest.bindings)] == manifest.bindings
+    installed_rows = normalize((ROOT / SOURCE).read_text())
+    assert all(row in installed_rows for row in normalize(current_source))
 
 
 def test_physical_members_catalogue_extents_and_native_reference_closure(inputs):

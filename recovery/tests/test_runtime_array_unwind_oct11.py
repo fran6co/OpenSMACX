@@ -16,6 +16,7 @@ from recovery.environment.wine import VC6_ROOT
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/vendor/vc6-runtime.recovery.h"
 BASE = "1a3e78615"
+ADDITION = "c30c6facc4dbb2873f47ccf9acc468c32b86774f"
 EXPECTED = {
     "??_N@YGXPAXIHP6EX0@Z1@Z": (0x645F8E, 0x646010, "build/intel/mt_obj/ehveccvb.obj", 1,
         "b4530a93f2d6505fb9ebb0146227d79b2f1f5c7bb3eefe4ec25fa9c5513b22cf"),
@@ -26,17 +27,19 @@ EXPECTED = {
 
 def test_existing_bindings_metadata_and_notes_preserved():
     before = subprocess.check_output(["git", "show", BASE + ":src/vendor/vc6-runtime.recovery.h"], cwd=ROOT, text=True)
-    after = SOURCE.read_text()
-    old, new = parse_component(before), parse_component(after)
+    published = subprocess.check_output(["git", "show", f"{ADDITION}:{SOURCE.relative_to(ROOT)}"], cwd=ROOT, text=True)
+    old, new = parse_component(before), parse_component(published)
     # Later bindings are separate discoveries, not changes to this step's evidence.
     owned = {b.symbol for b in old.bindings} | set(EXPECTED)
     new = replace(new, bindings=tuple(b for b in new.bindings if b.symbol in owned))
     assert new.bindings[:-2] == old.bindings
-    assert replace(new, bindings=old.bindings) == old
+    assert replace(new, bindings=old.bindings, code_sections=old.code_sections) == old
     assert {b.symbol: (b.origin.address, b.spans[0].end, b.unit) for b in new.bindings[-2:]} == {
         symbol: value[:3] for symbol, value in EXPECTED.items()}
+    installed = parse_component(SOURCE.read_text())
+    assert installed.bindings[:len(new.bindings)] == new.bindings
     for delimiter, index in (("// RECOVERY_COMPONENT_BEGIN v1", 0), ("// RECOVERY_COMPONENT_END", 1)):
-        assert before.split(delimiter)[index] == after.split(delimiter)[index]
+        assert before.split(delimiter)[index] == published.split(delimiter)[index]
 
 
 @pytest.fixture(scope="module")
@@ -108,6 +111,13 @@ def test_damage_never_passes(artifacts, symbol, damage):
         changed = bytearray(image)
         changed[physical] ^= 1
         image = bytes(changed)
+        manifest = replace(manifest, bindings=tuple(
+            replace(candidate, origin=Origin(hashlib.sha256(image).hexdigest(), "pe:va", candidate.origin.address))
+            for candidate in manifest.bindings), data_sections=tuple(
+            replace(candidate, origin=Origin(hashlib.sha256(image).hexdigest(), "pe:va", candidate.origin.address))
+            for candidate in manifest.data_sections), code_sections=tuple(
+            replace(candidate, origin=Origin(hashlib.sha256(image).hexdigest(), "pe:va", candidate.origin.address))
+            for candidate in manifest.code_sections))
         binding = replace(binding, origin=Origin(hashlib.sha256(image).hexdigest(), "pe:va", binding.origin.address))
     report = verify_toolchain(replace(manifest, bindings=(binding,), data_sections=()), image, archive)
     row = report["functions"][0]

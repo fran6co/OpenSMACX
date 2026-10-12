@@ -109,23 +109,41 @@ def test_only_six_bindings_added_with_all_previous_source_preserved():
     additions = tuple(b for b in after.bindings if b.origin.address in ADDRESSES)
     assert [(b.origin.address, b.spans, b.symbol, b.unit) for b in additions] == [
         (a, (Span(a, e),), s, unit(u)) for a, e, s, u, *_ in EXPECTED]
-    assert replace(after, bindings=tuple(b for b in after.bindings
-                   if b.origin.address not in ADDRESSES)) == before
+    historical_projection = replace(
+        after, bindings=tuple(b for b in after.bindings
+                             if b.origin.address not in ADDRESSES),
+        code_sections=before.code_sections)
+    assert historical_projection == before
+    assert parse_component(render_component(historical_projection)) == before
+    historical_render = render_component(replace(after, code_sections=before.code_sections))
+    current_render = render_component(after)
+    code_sections_key = '//   "code_sections": ['
+    assert historical_render.count(code_sections_key) == 0
+    assert current_render.count(code_sections_key) == 1
+    insertion = current_render.index(code_sections_key)
+    delta = len(current_render) - len(historical_render)
+    assert delta > 0
+    code_section_block = current_render[insertion:insertion + delta]
+    assert historical_render == current_render[:insertion] + current_render[insertion + delta:]
+    assert code_section_block and text.count(code_section_block) == 1
+    restored = text.replace(code_section_block, "", 1)
+    added_lines = [line for line in restored.splitlines()
+                   if any(f'"origin":"0x{address:08X}"' in line for address in ADDRESSES)]
+    assert len(added_lines) == len(EXPECTED)
+    for line in added_lines:
+        assert restored.count(line + "\n") == 1
+        restored = restored.replace(line + "\n", "", 1)
+    old_last = next(line for line in reversed(old.splitlines())
+                    if '"origin":' in line and '"unit":' in line)
+    assert restored.count(old_last + ",\n") == 1
+    restored = restored.replace(old_last + ",\n", old_last + "\n", 1)
+    assert restored == old
     assert [replace(r, line=1, region="") for r in read_text(text, ROOT / SOURCE)] == [
         replace(r, line=1, region="") for r in read_text(old, ROOT / SOURCE)]
-    # Exact original source, including imports and historical annotations, survives.
-    lines = [line for line in text.splitlines() if any(
-        '"origin":"0x%08X"' % a in line for a in ADDRESSES)]
-    assert len(lines) == len(EXPECTED)
-    for line in lines:
-        text = text.replace(line + "\n", "", 1)
-    last = next(line for line in reversed(old.splitlines())
-                if '"origin":' in line and '"unit":' in line)
-    text = text.replace(last + ",\n", last + "\n", 1)
-    assert text == old
     for b in additions:
         assert "final-link retention/allocation" in b.evidence
-        assert "runtime equivalence are unproved" in b.evidence
+        assert "runtime equivalence" in b.evidence and (
+            "remain unproved" in b.evidence or "are unproved" in b.evidence)
     intervals = sorted((s.start, s.end) for b in after.bindings for s in b.spans)
     assert all(end <= start for (_, end), (start, _) in zip(intervals, intervals[1:]))
 

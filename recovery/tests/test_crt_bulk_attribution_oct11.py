@@ -156,7 +156,8 @@ def test_only_expected_bindings_added():
         ["git", "show", ADDITION + ":" + COMPANION], cwd=ROOT, text=True)
     before, after = parse_component(old), parse_component(current)
     installed = parse_component((ROOT / COMPANION).read_text())
-    assert replace(installed, bindings=installed.bindings[:224]) == after
+    assert replace(installed, bindings=installed.bindings[:224],
+                   code_sections=after.code_sections) == after
     assert len(before.bindings) == 105 and len(after.bindings) == 224
     assert replace(after, bindings=tuple(b for b in after.bindings
                    if b.origin.address not in ADDRESSES)) == before

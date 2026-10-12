@@ -64,7 +64,8 @@ def test_preserves_source_and_previous_bindings():
         ["git", "show", ADDITION + ":" + COMPANION], cwd=ROOT, text=True)
     before, after = parse_component(old), parse_component(text)
     installed = parse_component((ROOT / COMPANION).read_text())
-    assert replace(installed, bindings=installed.bindings[:232]) == after
+    assert replace(installed, bindings=installed.bindings[:232],
+                   code_sections=after.code_sections) == after
     assert len(before.bindings) == 224 and len(after.bindings) == 232
     assert replace(after, bindings=after.bindings[:224]) == before
     assert [(b.origin.address, b.spans[0].end, b.symbol, b.unit)

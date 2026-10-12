@@ -38,7 +38,8 @@ def assert_installed_history(installed, historical):
     current = {identity(b): b for b in installed.bindings}
     assert len(current) == len(installed.bindings)
     assert all(current.get(identity(b)) == b for b in historical.bindings)
-    assert replace(installed, bindings=historical.bindings) == historical
+    assert replace(installed, bindings=historical.bindings,
+                   code_sections=historical.code_sections) == historical
 
 
 def without_codepage_helper(manifest):
@@ -192,7 +193,9 @@ def test_damaged_codepage_leaf_cannot_pass(artifacts, damage):
             bindings=tuple(replace(b, origin=Origin(pin, "pe:va", b.origin.address))
                            for b in manifest.bindings),
             data_sections=tuple(replace(d, origin=Origin(pin, "pe:va", d.origin.address))
-                                for d in manifest.data_sections))
+                                for d in manifest.data_sections),
+            code_sections=tuple(replace(section, origin=Origin(pin, "pe:va", section.origin.address))
+                                for section in manifest.code_sections))
     result = verify_toolchain(manifest, image, archive, import_bindings=read_imports(ROOT))
     row = next(r for r in result["functions"] if r["symbol"] == EXPECTED[2])
     assert row["result"] != "pass", row

@@ -11,11 +11,12 @@ from match_recovery.component_source import parse_component, render_component
 from match_recovery.coff_archive import CoffArchive
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.model import Span
-from test_crt_eight_entry_bindings_oct10 import inputs, verify, row, repin, raw_offset
+from test_crt_eight_entry_bindings_oct10 import inputs as eight_entry_inputs, verify, row, repin, raw_offset
 from test_crt_strict_frontier_oct11 import without_strict_frontier, source_without_strict_frontier
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = '86cbf7e2cdf108524130ba2200f62e7c29528c92'
+ADDITION = '50480d8ad5feb80faaad000e52ce069a468e260e'
 SOURCE = 'src/vendor/vc6-runtime.recovery.h'
 EXPECTED = (
     (0x645D1C, 0x645DA7, '_atol', 'atox', 1),
@@ -34,24 +35,37 @@ MEMBERS = {'atox': '1ef88177c1cc4517e658fdfaec788a2f47bccd7f56a04f957cd075ef51f5
 
 def without_atox_errno(manifest):
     manifest = without_strict_frontier(manifest)
-    tail = manifest.bindings[-len(EXPECTED):]
+    tail = tuple(binding for binding in manifest.bindings
+                 if binding.origin.address in {entry[0] for entry in EXPECTED})
     assert tuple((b.origin.address, b.spans[0].end, b.symbol, b.unit) for b in tail) == tuple(
         (a, e, s, 'build/intel/mt_obj/'+u+'.obj') for a,e,s,u,_ in EXPECTED)
     assert all(b.spans == (Span(a,e),) for b,(a,e,*_) in zip(tail,EXPECTED))
-    return replace(manifest, bindings=manifest.bindings[:-len(EXPECTED)])
+    return replace(manifest, bindings=tuple(binding for binding in manifest.bindings
+                                            if binding.origin.address not in {entry[0] for entry in EXPECTED}))
+
+
+@pytest.fixture(scope='module')
+def inputs(eight_entry_inputs):
+    """Use this task's immutable published checkpoint, not the later live component."""
+    _, image, archive, imports = eight_entry_inputs
+    checkpoint = parse_component(subprocess.check_output(
+        ['git', 'show', ADDITION + ':' + SOURCE], cwd=ROOT, text=True))
+    return checkpoint, image, archive, imports
 
 
 def test_exact_append_only_metadata_and_native_rendering():
     before = subprocess.check_output(['git','show',BASE+':'+SOURCE],cwd=ROOT,text=True)
-    text = source_without_strict_frontier((ROOT/SOURCE).read_text())
-    current, old = parse_component(text), parse_component(before)
-    assert without_atox_errno(current) == old
+    published = subprocess.check_output(['git','show',ADDITION+':'+SOURCE],cwd=ROOT,text=True)
+    old, current = parse_component(before), parse_component(published)
+    assert replace(without_atox_errno(current), code_sections=old.code_sections) == old
     assert parse_component(render_component(current)) == current
+    installed = parse_component((ROOT/SOURCE).read_text())
+    assert installed.bindings[:len(current.bindings)] == current.bindings
     old_last = next(l for l in reversed(before.splitlines()) if '"origin": "0x' in l)
     new_lines = [l for l in render_component(current).splitlines()
                  if any('"origin": "0x%08X"' % a in l for a,*_ in EXPECTED)]
     assert len(new_lines) == len(EXPECTED) and before.count(old_last+'\n') == 1
-    assert text == before.replace(old_last+'\n', old_last+',\n'+'\n'.join(new_lines)+'\n',1)
+    assert published == before.replace(old_last+'\n', old_last+',\n'+'\n'.join(new_lines)+'\n',1)
 
 
 def test_three_closed_rows_and_four_explicit_unknowns_preserve_prior_results(inputs):

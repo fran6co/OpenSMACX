@@ -49,7 +49,8 @@ def test_only_eight_runtime_bindings_added_without_changing_prior_source():
     current, prior = parse_component(text), parse_component(prior_text)
     assert without_eight_bindings(current) == prior
     installed = parse_component((ROOT / COMPANION).read_text())
-    assert replace(installed, bindings=installed.bindings[:len(current.bindings)]) == current
+    assert replace(installed, bindings=installed.bindings[:len(current.bindings)],
+                   code_sections=current.code_sections) == current
     assert parse_component(render_component(current)) == current
     added = [line for line in text.splitlines()
              if any('"origin": "0x%08X"' % a in line for a, _, _, _ in EXPECTED)]
@@ -117,7 +118,8 @@ def repin(manifest, image):
         return replace(o, image_sha256=digest)
     return replace(manifest,
                    bindings=tuple(replace(b, origin=origin(b.origin)) for b in manifest.bindings),
-                   data_sections=tuple(replace(b, origin=origin(b.origin)) for b in manifest.data_sections))
+                   data_sections=tuple(replace(b, origin=origin(b.origin)) for b in manifest.data_sections),
+                   code_sections=tuple(replace(b, origin=origin(b.origin)) for b in manifest.code_sections))
 
 
 def raw_offset(image, address):

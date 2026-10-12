@@ -10,12 +10,13 @@ from match_recovery.coff_archive import CoffArchive
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.model import Span
 from match_recovery.source import read_text
-from test_crt_eight_entry_bindings_oct10 import inputs, verify, row, repin, raw_offset
+from test_crt_eight_entry_bindings_oct10 import inputs as eight_entry_inputs, verify, row, repin, raw_offset
 from test_runtime_xtoa_pair_oct11 import without_xtoa_pair
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = "src/vendor/vc6-runtime.recovery.h"
 BASE = "ab4d03b7143c92a9278bf2816f6877a311c1aafb"
+ADDITION = "a6dd9e351123e69eaf5e1ad487a9a55dedb1d013"
 EXPECTED = (
     (0x64D3BF, 0x64D408, "__ZeroTail", "intrncvt", 2),
     (0x64D408, 0x64D45E, "__IncMan", "intrncvt", 4),
@@ -41,19 +42,28 @@ def baseline():
         ["git", "show", BASE + ":" + SOURCE], cwd=ROOT, text=True))
 
 
+@pytest.fixture(scope="module")
+def inputs(eight_entry_inputs):
+    """Use this task's immutable published checkpoint, not the later live component."""
+    _, image, archive, imports = eight_entry_inputs
+    checkpoint = parse_component(subprocess.check_output(
+        ["git", "show", ADDITION + ":" + SOURCE], cwd=ROOT, text=True))
+    return checkpoint, image, archive, imports
+
+
 def test_exact_addition_preserves_all_prior_metadata_and_original_claims():
-    text = (ROOT / SOURCE).read_text()
+    text = subprocess.check_output(["git", "show", ADDITION + ":" + SOURCE], cwd=ROOT, text=True)
     current, old = parse_component(text), baseline()
-    from test_runtime_atox_errno_oct11 import without_atox_errno
-    current = without_atox_errno(current)
-    current = without_xtoa_pair(current)
-    assert replace(current, bindings=current.bindings[:-12]) == old
+    assert replace(current, bindings=current.bindings[:-12],
+                   code_sections=old.code_sections) == old
     assert tuple((b.origin.address, b.spans[0].end, b.symbol,
                   b.unit) for b in current.bindings[-12:]) == tuple(
         (a, e, s, "../build/intel/mt_obj/" + u + ".obj") for a,e,s,u,_ in EXPECTED)
     prior = subprocess.check_output(["git", "show", BASE + ":" + SOURCE], cwd=ROOT, text=True)
     assert [replace(r, line=1, region="") for r in read_text(text, ROOT / SOURCE)] == [
         replace(r, line=1, region="") for r in read_text(prior, ROOT / SOURCE)]
+    installed = parse_component((ROOT / SOURCE).read_text())
+    assert installed.bindings[:len(current.bindings)] == current.bindings
 
 
 def test_physical_members_reference_closure_and_precise_prior_upgrades(inputs):

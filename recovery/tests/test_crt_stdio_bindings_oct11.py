@@ -48,12 +48,14 @@ def test_existing_bindings_claims_and_source_preserved():
                                    cwd=ROOT, text=True)
     manifest = parse_component(text)
     installed = parse_component((ROOT / COMPANION).read_text())
-    assert replace(installed, bindings=installed.bindings[:len(manifest.bindings)]) == manifest
+    assert replace(installed, bindings=installed.bindings[:len(manifest.bindings)],
+                   code_sections=manifest.code_sections) == manifest
     additions = tuple(b for b in manifest.bindings if b.origin.address in ADDRESSES)
     assert tuple((b.origin.address, b.spans[0].end, b.symbol, b.unit)
                  for b in additions) == tuple(item[:4] for item in EXPECTED)
+    old_manifest = parse_component(old)
     assert replace(manifest, bindings=tuple(b for b in manifest.bindings
-                   if b.origin.address not in ADDRESSES)) == parse_component(old)
+                   if b.origin.address not in ADDRESSES)) == old_manifest
     assert [replace(r, line=1, region="") for r in read_text(text, ROOT / COMPANION)] == [
         replace(r, line=1, region="") for r in read_text(old, ROOT / COMPANION)]
     added_lines = [line for line in text.splitlines()

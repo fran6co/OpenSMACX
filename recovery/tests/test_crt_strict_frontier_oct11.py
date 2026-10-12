@@ -48,7 +48,8 @@ def assert_installed_history(installed, historical):
     current = {identity(b): b for b in installed.bindings}
     assert len(current) == len(installed.bindings)
     assert all(current.get(identity(b)) == b for b in historical.bindings)
-    assert replace(installed, bindings=historical.bindings) == historical
+    assert replace(installed, bindings=historical.bindings,
+                   code_sections=historical.code_sections) == historical
 
 
 def previous():
@@ -170,7 +171,9 @@ def test_correspondence_damage_refuses_pass(artifacts, symbol, damage):
         bindings = tuple(replace(b, origin=Origin(pin, "pe:va", b.origin.address)) for b in bindings)
         manifest = replace(manifest, bindings=bindings, data_sections=tuple(
             replace(d, origin=Origin(pin, "pe:va", d.origin.address))
-            for d in manifest.data_sections))
+            for d in manifest.data_sections), code_sections=tuple(
+            replace(section, origin=Origin(pin, "pe:va", section.origin.address))
+            for section in manifest.code_sections))
     manifest = replace(manifest, bindings=bindings)
     report = verify_toolchain(manifest, image, archive, import_bindings=read_imports(ROOT))
     row = next(r for r in report["functions"] if r["symbol"] == symbol)

@@ -39,7 +39,8 @@ def inputs(current_inputs):
     assert installed.bindings[0].origin.image_sha256 == inherited.bindings[0].origin.image_sha256
     historical = parse_component(subprocess.check_output(
         ["git", "show", ADDITION + ":" + SOURCE], cwd=ROOT, text=True))
-    assert replace(installed, bindings=installed.bindings[:len(historical.bindings)]) == historical
+    assert replace(installed, bindings=installed.bindings[:len(historical.bindings)],
+                   code_sections=historical.code_sections) == historical
     return historical, image, archive, imports
 
 
