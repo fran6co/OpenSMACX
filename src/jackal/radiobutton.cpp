@@ -119,82 +119,13 @@ RadioButton::RadioButton() {
     unchecked_sprite_ = RadioButtonDefault1;
 }
 
-// Genuine destructor phase; virtual-base table staging belongs to VC6.
-/*
-// ORIGINAL: 0x00406A90 sub_406a90 0x00406A90-0x00406AE3 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:360abf0bcf225dda7b384e46e5c26fb7bd2a3bda:src/recovered/units/00406a90.cpp", "pinned:terranx_original:0x406a90", "source:src/jackal/radiobutton.cpp"], "reason": "Original stages RadioButton tables and vtordisps through the+18 virtual-base receiver then calls close. Real out-of-line destructor supplies this non-deleting phase; separate original406F60 owns full scalar deletion and virtual-base destruction. Constructor table correspondence identifies the class, not proximity alone. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
-// symbol    ??1RadioButton@@UAE@XZ
-*/
-// Historical seed findings: explicit vbtable and vtordisp staging reproduced
-// an83-byte fixed-address body; natural hierarchy retains the restoration obligation.
-RadioButton::~RadioButton() {
-    close();
-}
+// Historical non-deleting phase annotation; the former out-of-line model's
+// virtual-base table staging was compiler-owned in the recovered hierarchy.
 
-/*
-Purpose: Compiler-generated scalar deleting destructor for the out-of-line
-         ~RadioButton. Entered on GraphicWin at +0x18, it restores the
-         derived tables, closes the control, destroys Dialog and GraphicWin,
-         and conditionally deletes the complete object. The catalogue's int
-         is the ABI deleting flag, not an explicit C++ destructor parameter.
-// ORIGINAL: 0x00406F60 ??1RadioButton@@QAE@H@Z 0x00406F60-0x00406FE2 FILE BYTE_EXACT
-// symbol    ??_GRadioButton@@UAEPAXI@Z
-// Historical manual-teardown experiment, superseded by real destruction:
-// TRIED: MEASURED 3/39 agreeing, first divergence at instruction 2
-//            (matches through `push ebp; mov ebp,esp`, then this body loads
-//            the vbtable pointer a step earlier than the image's `push
-//            esi/edi` pair). No SEH family issue here - the image's own
-//            "frame" flag (not an EH one) is an ordinary ebp frame, which
-//            this body reproduces the opening of; the mismatch is plain
-//            register-allocation order in the vtable-store block.
-// size      130 bytes
-// prototype void (__thiscall ??1RadioButton@@QAE@H@Z)(RadioButton* this, int)
-// callers   0   call targets   4
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005D4DD0 0x00608E10 0x0060D1B0 0x0064557F
-Return Value: the complete RadioButton pointer, returned by generated code.
-*/
-
-/*
-Purpose: Compiler-generated deleting adjustor through RadioButton virtual
-         inheritance; tail-jumps to the scalar deleting destructor at 0x00406F60.
-// ORIGINAL: 0x00406F50 ??1thunk1_RadioButton@@QAE@H@Z 0x00406F50-0x00406F58 FILE BYTE_EXACT
-// symbol    ??_ERadioButton@@$4PPPPPPPM@A@AEPAXI@Z
-// size      8 bytes
-// prototype void (__thiscall ??1thunk1_RadioButton@@QAE@H@Z)(RadioButton* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-*/
-
-/*
-Purpose: Compiler-generated deleting adjustor through RadioButton virtual
-         inheritance; tail-jumps to the scalar deleting destructor at 0x00406F60.
-// ORIGINAL: 0x00407060 ??1thunk2_RadioButton@@QAE@H@Z 0x00407060-0x00407071 FILE BYTE_EXACT
-// symbol    ??_ERadioButton@@$4PPPPPLLI@EEE@AEPAXI@Z
-// size      17 bytes
-// prototype void (__thiscall ??1thunk2_RadioButton@@QAE@H@Z)(RadioButton* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-*/
-
-/*
-Purpose: Compiler-generated deleting adjustor through RadioButton virtual
-         inheritance; tail-jumps to the scalar deleting destructor at 0x00406F60.
-// ORIGINAL: 0x00407080 ??1thunk3_RadioButton@@QAE@H@Z 0x00407080-0x0040708E FILE BYTE_EXACT
-// symbol    ??_ERadioButton@@$4PPPPPPPM@KBI@AEPAXI@Z
-// size      14 bytes
-// prototype void (__thiscall ??1thunk3_RadioButton@@QAE@H@Z)(RadioButton* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-*/
-
+// Historical seed findings: the former out-of-line model used explicit
+// vbtable and vtordisp staging to reproduce an 83-byte fixed-address body.
+// The class-defined destructor now owns close(); compiler-generated phases
+// are emitted by real class users; the original phases are mapped in dialogs.cpp.
 /*
 Purpose: Reset the radio button to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach

@@ -103,10 +103,10 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   // The catalogue's @H@Z at 0x0060D0E0 describes VC6's hidden most-derived
   // flag, not a source parameter. The emitted symbol is mapped in the TU.
   RadioButton();
-  // The original deleting entry closes the control before destroying its
-  // virtual bases. VC6 owns their destruction, optional operator delete,
-  // and all three receiver adjustors; their image bindings live in the TU.
-  virtual ~RadioButton();
+  // The class-defined destructor body is the source of VC6's complete
+  // destruction phases: close the control, then let the compiler destroy
+  // virtual bases, optionally delete the object, and emit receiver adjustors.
+  virtual ~RadioButton() { close(); }
   uint32_t close();
 
  public:

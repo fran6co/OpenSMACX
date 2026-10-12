@@ -1361,3 +1361,79 @@ void Dialogs::on_redraw() {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed table address point 0x00669BD4 selects original deleting thunk 0x004072A0.", "Fresh baseline `dialogs.cpp.obj` table ??_7Dialogs@@6B@ first absolute relocation selects ??_EDialogs@@$4PPPPPPPM@KBI@AEPAXI@Z; that E COMDAT's terminal REL32 selects ??_GDialogs@@UAEPAXI@Z.", "The generated E COMDAT is a baseline expectation; re-read post-edit COFF/MAP/PE/PDB before treating ??_EDialogs@@$4PPPPPPPM@KBI@AEPAXI@Z as current."], "reason": "Bind this complete original adjustor identity to the genuine Dialogs class-view deleting entry selected by its constructor-installed table; refresh the emitted-symbol fact after the post-edit build."}
 // symbol    ??_EDialogs@@$4PPPPPPPM@KBI@AEPAXI@Z
 // kind      game
+
+// RadioButton lifetime phases emitted from the genuine class header by Dialogs.
+/*
+// ORIGINAL: 0x00406A90 sub_406a90 0x00406A90-0x00406AE3 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:RadioButton constructor60D0E0 installs its correlated GraphicWin/Dialog tables and virtual-base displacements; existing source class models those real bases.", "pinned:406A90 is the non-deleting table/close phase;406F60 closes, destroys Dialog/GraphicWin and conditionally deletes;406F50/407060/407080 adjust into that deleting phase.", "source:src/jackal/radiobutton.h defines the real destructor;src/dialogs.h uses RadioButton as a base, making its lifecycle a genuine class-user emission rather than an artificial emit anchor."], "reason": "Bind this original RadioButton lifetime phase to the real class-header destruction emitted by its genuine Dialogs user. The source-defined inline destructor closes the control; the compiler owns table transitions, virtual-base destruction, optional deletion and receiver adjustors. This current measurement host is not a claim of the original header spelling, historical translation unit or final-link selection."}
+// Historical out-of-line binding: v1 {"evidence": ["git:360abf0bcf225dda7b384e46e5c26fb7bd2a3bda:src/recovered/units/00406a90.cpp", "pinned:terranx_original:0x406a90", "source:src/jackal/radiobutton.cpp"], "reason": "Original stages RadioButton tables and vtordisps through the+18 virtual-base receiver then calls close. Real out-of-line destructor supplies this non-deleting phase; separate original406F60 owns full scalar deletion and virtual-base destruction. Constructor table correspondence identifies the class, not proximity alone. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
+// symbol    ??1RadioButton@@UAE@XZ
+*/
+
+/*
+Purpose: Compiler-generated scalar deleting destructor for the historical
+         out-of-line ~RadioButton model. Entered on GraphicWin at +0x18, it restores the
+         derived tables, closes the control, destroys Dialog and GraphicWin,
+         and conditionally deletes the complete object. The catalogue's int
+         is the ABI deleting flag, not an explicit C++ destructor parameter.
+// ORIGINAL: 0x00406F60 ??1RadioButton@@QAE@H@Z 0x00406F60-0x00406FE2 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:RadioButton constructor60D0E0 installs its correlated GraphicWin/Dialog tables and virtual-base displacements; existing source class models those real bases.", "pinned:406A90 is the non-deleting table/close phase;406F60 closes, destroys Dialog/GraphicWin and conditionally deletes;406F50/407060/407080 adjust into that deleting phase.", "source:src/jackal/radiobutton.h defines the real destructor;src/dialogs.h uses RadioButton as a base, making its lifecycle a genuine class-user emission rather than an artificial emit anchor."], "reason": "Bind this original RadioButton lifetime phase to the real class-header destruction emitted by its genuine Dialogs user. The source-defined inline destructor closes the control; the compiler owns table transitions, virtual-base destruction, optional deletion and receiver adjustors. This current measurement host is not a claim of the original header spelling, historical translation unit or final-link selection."}
+// symbol    ??_GRadioButton@@UAEPAXI@Z
+// Historical manual-teardown experiment, superseded by real destruction:
+// TRIED: MEASURED 3/39 agreeing, first divergence at instruction 2
+//            (matches through `push ebp; mov ebp,esp`, then this body loads
+//            the vbtable pointer a step earlier than the image's `push
+//            esi/edi` pair). No SEH family issue here - the image's own
+//            "frame" flag (not an EH one) is an ordinary ebp frame, which
+//            this body reproduces the opening of; the mismatch is plain
+//            register-allocation order in the vtable-store block.
+// size      130 bytes
+// prototype void (__thiscall ??1RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00608E10 0x0060D1B0 0x0064557F
+Return Value: the complete RadioButton pointer, returned by generated code.
+*/
+
+/*
+Purpose: Compiler-generated deleting adjustor through RadioButton virtual
+         inheritance; tail-jumps to the scalar deleting destructor at 0x00406F60.
+// ORIGINAL: 0x00406F50 ??1thunk1_RadioButton@@QAE@H@Z 0x00406F50-0x00406F58 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:RadioButton constructor60D0E0 installs its correlated GraphicWin/Dialog tables and virtual-base displacements; existing source class models those real bases.", "pinned:406A90 is the non-deleting table/close phase;406F60 closes, destroys Dialog/GraphicWin and conditionally deletes;406F50/407060/407080 adjust into that deleting phase.", "source:src/jackal/radiobutton.h defines the real destructor;src/dialogs.h uses RadioButton as a base, making its lifecycle a genuine class-user emission rather than an artificial emit anchor."], "reason": "Bind this original RadioButton lifetime phase to the real class-header destruction emitted by its genuine Dialogs user. The source-defined inline destructor closes the control; the compiler owns table transitions, virtual-base destruction, optional deletion and receiver adjustors. This current measurement host is not a claim of the original header spelling, historical translation unit or final-link selection."}
+// symbol    ??_ERadioButton@@$4PPPPPPPM@A@AEPAXI@Z
+// size      8 bytes
+// prototype void (__thiscall ??1thunk1_RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+*/
+
+/*
+Purpose: Compiler-generated deleting adjustor through RadioButton virtual
+         inheritance; tail-jumps to the scalar deleting destructor at 0x00406F60.
+// ORIGINAL: 0x00407060 ??1thunk2_RadioButton@@QAE@H@Z 0x00407060-0x00407071 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:RadioButton constructor60D0E0 installs its correlated GraphicWin/Dialog tables and virtual-base displacements; existing source class models those real bases.", "pinned:406A90 is the non-deleting table/close phase;406F60 closes, destroys Dialog/GraphicWin and conditionally deletes;406F50/407060/407080 adjust into that deleting phase.", "source:src/jackal/radiobutton.h defines the real destructor;src/dialogs.h uses RadioButton as a base, making its lifecycle a genuine class-user emission rather than an artificial emit anchor."], "reason": "Bind this original RadioButton lifetime phase to the real class-header destruction emitted by its genuine Dialogs user. The source-defined inline destructor closes the control; the compiler owns table transitions, virtual-base destruction, optional deletion and receiver adjustors. This current measurement host is not a claim of the original header spelling, historical translation unit or final-link selection."}
+// symbol    ??_ERadioButton@@$4PPPPPLLI@EEE@AEPAXI@Z
+// size      17 bytes
+// prototype void (__thiscall ??1thunk2_RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+*/
+
+/*
+Purpose: Compiler-generated deleting adjustor through RadioButton virtual
+         inheritance; tail-jumps to the scalar deleting destructor at 0x00406F60.
+// ORIGINAL: 0x00407080 ??1thunk3_RadioButton@@QAE@H@Z 0x00407080-0x0040708E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:RadioButton constructor60D0E0 installs its correlated GraphicWin/Dialog tables and virtual-base displacements; existing source class models those real bases.", "pinned:406A90 is the non-deleting table/close phase;406F60 closes, destroys Dialog/GraphicWin and conditionally deletes;406F50/407060/407080 adjust into that deleting phase.", "source:src/jackal/radiobutton.h defines the real destructor;src/dialogs.h uses RadioButton as a base, making its lifecycle a genuine class-user emission rather than an artificial emit anchor."], "reason": "Bind this original RadioButton lifetime phase to the real class-header destruction emitted by its genuine Dialogs user. The source-defined inline destructor closes the control; the compiler owns table transitions, virtual-base destruction, optional deletion and receiver adjustors. This current measurement host is not a claim of the original header spelling, historical translation unit or final-link selection."}
+// symbol    ??_ERadioButton@@$4PPPPPPPM@KBI@AEPAXI@Z
+// size      14 bytes
+// prototype void (__thiscall ??1thunk3_RadioButton@@QAE@H@Z)(RadioButton* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+*/
