@@ -1,0 +1,19 @@
+{
+  "event_id": "b9384e2f4f6203ce8056f1011df1a501b09f605c93a53516b902cfbf92e3cb11",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_font_internal_sharing_oct12g.py"
+    ],
+    "evidence": [
+      "Controlled paired physical probe passes full COFF replica signatures across five TUs/both profiles and independent header/CPP damage witnesses. All Fontcpp common code hashes, sizes and nonlocal references remain unchanged, including actual public helper bodies and internal inline consumers; no private-helper symbols or relocations are emitted. Sampled application callers now target public methods as the pinned original does. Authorize a real isolated C++ candidate with ordinary public complete Font close/width definitions in their mapped CPP positions and private nonvirtual complete implementation copies named release_resources/measure_bounded_width used only by the identified Font internal expansion phases. Preserve all ORIGINAL identities/spans/symbols/claims/history, body and field/API order, no field/vtable/ABI/flags/exports changes. Update only the two obsolete body-host facts and current explanatory prose to reflect actual CPP ownership; helper names are source reconstruction conveniences, never original functions or coverage. Native variants explicitly refuses protected body metadata migration; do not weaken its guard or claim automatic acceptance. Coordinator-reviewed manual integration requires actual-source cleanup/width/mutation controls including reentrancy ordering and clamp call counts, independent review, fresh build/link, whole header-user compile/layout/reference checks, touched historical measurements and missing-claim continuity0, followed by fresh destination checks. Preserve all remaining original caller/matching obligations and pending discoveries; outside-scope or full-game acceptance is not inferred."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f6ac50ff56993c3dd6d600acf772ea2308d7f61af50f740e49193e7a7ada4a3c",
+  "request_id": "font-coupled-source-candidate-oct12g",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:font-natural-inline-emission-oct12g"
+}
