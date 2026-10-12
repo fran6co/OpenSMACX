@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "53d435132dd96d4691dcbf4fc21665dbfb83407c",
+  "editable_files": [
+    "src/map.cpp",
+    "src/map.h",
+    "recovery/tests/test_coast_native_contract_oct12h.py"
+  ],
+  "evidence": [
+    "Pinned 0x0056B480-0x0056B5A9: the initial whose_territory gate returns zero if faction differs. Instructions 0x0056B4A6-0x0056B4DA read only point B's region once after this gate. The loop counter initialized at 0x0056B4BF starts at 1 and increments at 0x0056B58D through 8; success loads this index at 0x0056B5A1 and returns at 0x0056B5A8, while exhaustion returns zero at 0x0056B59C.",
+    "Pinned valid-neighbor short-circuit order is on_map, is_ocean, whose_territory, then a fresh point A region read at 0x0056B553-0x0056B57D compared with cached point B. Current map.cpp eagerly caches both regions and deliberately returns boolean 1. Restore only this function and its declaration's integer result contract; retain source-owned offsets, bounds and wrapping without adding safety fixes.",
+    "The current direct callers in enemy.cpp only test truthiness; their unchanged source requires regression/build checking, not edits. With a null output parameter, whose_territory reads state without calling base_find or writing Map. Conditional read ordering remains part of native fidelity even when a stable map yields equal results.",
+    "Preserve original markers, spans and history, including the older TRIED scheduling guess, qualified as historical because pinned instructions read region A after the territory call. No new claim or demotion is authorized. Actual-body controls may test all eight success indices, early rejection, skipped neighbors, ocean/territory/region short-circuiting and exhaustion, with behavior damage controls. Mocked tests do not prove game runtime. Require coordinator-reviewed build/link, scoped measurement, reference/identity continuity and fresh destination rechecks. The unchanged baseline census reports coast_or_border MISMATCH; this decision grants no automatic or full-game admission."
+  ],
+  "intent": "Restore the original coast_or_border neighbour-index result and conditional region-read sequence without changing original unsafe paths or unrelated map behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5682304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "coast-native-contract-oct12h"
+}
