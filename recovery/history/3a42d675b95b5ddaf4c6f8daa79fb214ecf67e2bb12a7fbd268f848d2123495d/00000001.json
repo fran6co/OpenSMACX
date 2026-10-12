@@ -1,0 +1,20 @@
+{
+  "event_id": "4ca8f4c13c1fc8f1ecbee345aec08316c5833a7c8f6f5c36da2905f5eb9de2e6",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/graphicwin_paint_owner_control.cpp",
+      "recovery/tests/test_paint_owner_wave_host.py"
+    ],
+    "evidence": [
+      "Pinned GraphicWin painter bottom and side placements at 5D65EF..5D65F5,5D667C..5D668C,5D671F..5D672A,5D6811..5D681B use signed native DIB height. Existing graphicwin_paint_owner_control.cpp asserts the opposite sign, so correct those bounded expected geometries against the original and adapt extraction only as necessary, preserving all behavioral coverage. No new source subjects, header/layout authority, weakened checks or baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "frame-painter-host-geometry-oct12",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:window-frame-painters-oct12"
+}
