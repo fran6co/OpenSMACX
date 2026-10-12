@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "task_id": "original-extent-closure-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "721cd581b9bbbbe9446fb22cf4780cd69c72b404",
+  "intent": "Restore eight existing source-owned original code extents from independently pinned epilogues and exception metadata. Use the package source writer; preserve every original identity, historical claim and body. Complete extents are stronger measurement obligations, not new implementation or acceptance claims.",
+  "subjects": [
+    {"address": 4228112, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6390736, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6391136, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 4435056, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 4661280, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 4956448, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6367280, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"},
+    {"address": 6377040, "address_space": "pe:va", "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"}
+  ],
+  "editable_files": [
+    "src/basewin.cpp", "src/caviar.cpp", "src/designwin.cpp", "src/messagewin.cpp",
+    "src/statuswin.cpp", "src/dialogs.cpp", "src/editbox.cpp",
+    "recovery/tests/test_original_extent_closure_oct12.py"
+  ],
+  "evidence": [
+    "Pinned complete epilogues: load_inverts 408410..40846B has branch408424 targeting RET40846A and POP ESI408469; Caviar::set_buffer 6183D0..618426 has complete RET4 at618423; Caviar rectangle operation618560..6185A0 has complete RET4 at61859D. Existing exclusive bounds truncate these instructions.",
+    "Pinned source-owned EH chains: DesignWin select_special43AC70 prolog43AC7B ->6546BB ->FuncInfo674980 ->unwindmap6749A0,64 actions,cold654410..6546C5; MessageWin destructor472020 prolog472025 ->655F19 ->675DA0/map675DC0,11 actions,cold655EA0..655F23; StatusWin destructor4BA120 prolog4BA125 ->659A55 ->678CC0/map678CE0,4 actions,cold659A20..659A5F.",
+    "Pinned constructor EH chains: Dialogs612830 prolog612832 ->6630C9 ->67FD68/map67FD88,6 actions,cold663060..6630D3; EditBox614E50 prolog614E52 ->663138 ->67FE18/map67FE38,1 action,cold663130..663142. Every original action-pointer cell has HIGHLOW relocation and bounded native decoding corroborates receiver/subobject cleanup targets. IDB hints agree with pinned bytes but do not independently establish ownership.",
+    "Source changes here are annotation extents and durable binding evidence only, rendered by installed match_recovery.source/binding_source APIs. Do not hand-edit markers, bank claims, demote historical obligations, invent independent cleanup functions, enlarge bounds with alignment or swallow unrelated entries. Generated/lifetime mismatches remain explicit restoration work. Actual C++ lifetime changes require a further evidence-backed scope decision and review.",
+    "Preserve all existing identities, body text, emitted symbols, modes and historical claims; verify new complete instruction bounds and physical parent/handler/metadata relationships, source integrity, claim continuity, scoped native measurements and application build/link before reviewed integration. No complete coverage, byte matching or autonomous acceptance is implied by this mapping repair."
+  ]
+}
