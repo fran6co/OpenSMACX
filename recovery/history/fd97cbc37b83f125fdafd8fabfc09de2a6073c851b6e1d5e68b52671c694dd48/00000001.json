@@ -1,0 +1,19 @@
+{
+  "event_id": "b47ca53007cc9cb72d0b4c125622aed37c9a069f9478fd3bb8fd5982a7c65604",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/netwin.h"
+    ],
+    "evidence": [
+      "Pinned47E11A..47E132 clamps answer+captured_first to2..7; correct only obsolete player_count_ answer-1 comment, preserving declarations/layout/API and original task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "netwin-player-count-comment-oct12",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netwin-scalar-pickers-oct12"
+}
