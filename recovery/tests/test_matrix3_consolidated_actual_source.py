@@ -269,9 +269,14 @@ def test_add_preserves_original_x87_operand_load_order() -> None:
                 candidate.index("other->cells[row * 3 + column] +") <
                 candidate.index("cells[row * 3 + column];"))
     assert has_original_order(body)
+    original_add = (
+        "other->cells[row * 3 + column] + cells[row * 3 + column];"
+    )
+    assert body.count(original_add) == 1
     reversed_body = body.replace(
-        "other->cells[row * 3 + column] +\n                                        cells[row * 3 + column]",
-        "cells[row * 3 + column] +\n                                        other->cells[row * 3 + column]",
+        original_add,
+        "cells[row * 3 + column] + other->cells[row * 3 + column];",
+        1,
     )
     assert reversed_body != body
     assert not has_original_order(reversed_body)
@@ -291,7 +296,7 @@ MUTANTS = (
      "mine[row * 3 + col] < other[row * 3 + col] || mine[row * 3 + col] > other[row * 3 + col]"),
     ("multiply", "other->cells[depth * 3 + column]", "other->cells[column * 3 + depth]"),
     ("multiply", "++depth;", "depth += 2;"),
-    ("multiply", "std::memcpy(result.cells, local, sizeof(local));", "std::memcpy(result.cells, local, sizeof(result.cells[0]));"),
+    ("multiply", "result.cells[row * 3 + column] = sum;", "result.cells[row * 3 + column] = 0.0f;"),
     ("transform", "m[1] * in[1]", "m[0] * in[1]"),
     ("scaled", "scale * cells[i]", "scale + cells[i]"),
 )

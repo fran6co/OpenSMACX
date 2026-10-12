@@ -76,10 +76,10 @@ void Matrix3::reset_identity() {
 }
 
 /*
-Purpose: Add another matrix into this one through an identity scratch
-         buffer, then publish the completed sum as a Matrix3 value.
+Purpose: Add another matrix into this one through an identity-initialized
+         Matrix3 result, then publish the completed sum as a value.
 
-         The identity fill of the scratch is fully overwritten by the sum
+         The identity fill of the result is fully overwritten by the sum
          - every one of its nine slots is stored before any read - but the
          original pays for it anyway, so it is kept rather than tidied
          away.
@@ -102,17 +102,15 @@ Return Value: the completed nine-float result value
 Status: Complete
 */
 Matrix3 Matrix3::add(const Matrix3 *other) {
-    float scratch[9] = {1.0f, 0.0f, 0.0f,
-                        0.0f, 1.0f, 0.0f,
-                        0.0f, 0.0f, 1.0f};
+    Matrix3 result = {{1.0f, 0.0f, 0.0f,
+                       0.0f, 1.0f, 0.0f,
+                       0.0f, 0.0f, 1.0f}};
     for (int row = 0; row < 3; ++row) {
         for (int column = 0; column < 3; ++column) {
-            scratch[row * 3 + column] = other->cells[row * 3 + column] +
-                                        cells[row * 3 + column];
+            result.cells[row * 3 + column] =
+                other->cells[row * 3 + column] + cells[row * 3 + column];
         }
     }
-    Matrix3 result;
-    std::memcpy(result.cells, scratch, sizeof(scratch));
     return result;
 }
 
@@ -309,30 +307,28 @@ Return Value: the completed nine-float result value
 Status: Complete
 */
 Matrix3 Matrix3::multiply(const Matrix3 *other) {
-    float local[9] = {
+    Matrix3 result = {{
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 1.0f
-    };
+    }};
     int row = 0;
     do {
         int column = 0;
         do {
-            local[row * 3 + column] = 0.0f;
-            float sum = local[row * 3 + column];
+            result.cells[row * 3 + column] = 0.0f;
+            float sum = result.cells[row * 3 + column];
             int depth = 0;
             do {
                 sum = cells[row * 3 + depth] *
                       other->cells[depth * 3 + column] + sum;
                 ++depth;
             } while (depth < 3);
-            local[row * 3 + column] = sum;
+            result.cells[row * 3 + column] = sum;
             ++column;
         } while (column < 3);
         ++row;
     } while (row < 3);
-    Matrix3 result;
-    std::memcpy(result.cells, local, sizeof(local));
     return result;
 }
 
@@ -414,15 +410,13 @@ Return Value: the completed nine-float result value
 Status: Complete
 */
 Matrix3 Matrix3::scaled(float scale) {
-    float tmp[9] = {
+    Matrix3 result = {{
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 1.0f
-    };
+    }};
     for (int i = 0; i < 9; ++i) {
-        tmp[i] = scale * cells[i];
+        result.cells[i] = scale * cells[i];
     }
-    Matrix3 result;
-    std::memcpy(result.cells, tmp, sizeof(tmp));
     return result;
 }

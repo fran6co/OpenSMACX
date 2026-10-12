@@ -1,9 +1,11 @@
 """Focused value-result contract and identity-continuity controls for Matrix3."""
 
 from pathlib import Path
+import os
 import re
 import shutil
 import subprocess
+import sys
 
 import pytest
 from match_recovery import binding_source
@@ -72,6 +74,7 @@ static bool same(const Matrix3 &matrix, const float *expected) {
     return true;
 }
 int main() {
+    int i;
     Matrix3 left;
     Matrix3 right;
     const float a[9] = {1,2,3,4,5,6,7,8,9};
@@ -79,7 +82,7 @@ int main() {
     const float sum[9] = {10,10,10,10,10,10,10,10,10};
     const float product[9] = {30,24,18,84,69,54,138,114,90};
     const float scaled[9] = {2,4,6,8,10,12,14,16,18};
-    for (int i = 0; i < 9; ++i) {
+    for (i = 0; i < 9; ++i) {
         left.cells[i] = a[i];
         right.cells[i] = descending[i];
     }
@@ -88,19 +91,19 @@ int main() {
     left = left.add(&right); // assignment target aliases the receiver
     if (!same(left, sum)) return 2;
 
-    for (int i = 0; i < 9; ++i) left.cells[i] = a[i];
+    for (i = 0; i < 9; ++i) left.cells[i] = a[i];
     separate = (left.*multiply_value_member)(&right);
     if (!same(separate, product)) return 3;
     left = left.multiply(&right); // assignment target aliases the receiver
     if (!same(left, product)) return 4;
 
-    for (int i = 0; i < 9; ++i) left.cells[i] = a[i];
+    for (i = 0; i < 9; ++i) left.cells[i] = a[i];
     separate = (left.*scaled_value_member)(2.0f);
     if (!same(separate, scaled)) return 5;
     left = left.scaled(2.0f); // assignment target aliases the receiver
     if (!same(left, scaled)) return 6;
 
-    for (int i = 0; i < 9; ++i) {
+    for (i = 0; i < 9; ++i) {
         left.cells[i] = a[i];
         right.cells[i] = a[i];
     }
@@ -335,8 +338,8 @@ def test_actual_source_value_results_and_alias_assignments(tmp_path, compiler_na
 @pytest.mark.parametrize(("method", "before", "after"), (
     ("add", "other->cells[row * 3 + column] +", "other->cells[row * 3 + column] -"),
     ("multiply", "other->cells[depth * 3 + column]", "other->cells[column * 3 + depth]"),
-    ("multiply", "std::memcpy(result.cells, local, sizeof(local));",
-     "std::memcpy(result.cells, local, sizeof(result.cells[0]));"),
+    ("multiply", "result.cells[row * 3 + column] = sum;",
+     "result.cells[row * 3 + column] = 0.0f;"),
     ("scaled", "scale * cells[i]", "scale + cells[i]"),
 ))
 def test_value_result_source_mutants_fail_host_controls(
@@ -348,3 +351,62 @@ def test_value_result_source_mutants_fail_host_controls(
     mutant = _replace_body(SOURCE.read_text(), method, before, after)
     result = _compile_and_run(mutant, compiler, tmp_path, f"mutant-{method}")
     assert result.returncode != 0, f"{method} mutation escaped value-result host control"
+
+
+@pytest.mark.parametrize("damage", [None, "zero_product_store"])
+def test_actual_value_results_and_aliases_on_vc6_both_configured_profiles(
+    tmp_path: Path, damage: str | None,
+) -> None:
+    """Bounded value-result/alias control, not x87 or whole-game proof."""
+    from match_recovery.measurement import Measurement
+    from match_recovery.processes import run_bounded
+    from match_recovery.source_inventory import image_pin
+    from recovery.environment.compile import compile_object
+    from recovery.environment.wine import VC6_ROOT, environment
+
+    if not os.environ.get("MATCH_RECOVERY_RESOURCE_LEASE"):
+        pytest.skip("native controls require a coordinator-owned compiler lease")
+    assert image_pin(ROOT) == "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    if not (VC6_ROOT / "BIN/CL.EXE").is_file() or shutil.which("wine32") is None:
+        pytest.skip("VC6 and Wine32 are required")
+
+    source_text = SOURCE.read_text()
+    definitions = []
+    for method in ("add", "multiply", "scaled"):
+        start = re.search(r"(?m)^Matrix3 Matrix3::" + method + r"\s*\(", source_text)
+        assert start is not None
+        _, closing = _body_span(source_text, method)
+        definition = source_text[start.start():closing + 1]
+        definitions.append(definition)
+    methods = HEADER.read_text() + "\n" + "\n".join(definitions)
+    if damage == "zero_product_store":
+        old = "result.cells[row * 3 + column] = sum;"
+        assert methods.count(old) == 1
+        methods = methods.replace(old,
+            "result.cells[row * 3 + column] = 0.0f;", 1)
+    harness = methods + "\n" + HARNESS
+
+    settings = Measurement.read(ROOT)
+    wrapper = ROOT / "recovery/environment/wine.py"
+    command = (sys.executable, str(wrapper), "--tool=cl", "/nologo")
+    for index, flags in enumerate(settings.flag_sets):
+        source = tmp_path / ("matrix3_values_%d.cpp" % index)
+        source.write_text(harness)
+        object_bytes = compile_object(
+            source, command, (*flags, *settings.layout_flags)
+        )
+        obj = tmp_path / ("matrix3_values_%d.obj" % index)
+        obj.write_bytes(object_bytes)
+        executable = tmp_path / ("matrix3_values_%d.exe" % index)
+        linked = run_bounded(
+            [sys.executable, str(wrapper), "--tool=link", "/nologo",
+             "/subsystem:console", "/incremental:no", "/out:" + str(executable),
+             str(obj), "kernel32.lib"], cwd=tmp_path, timeout=60,
+        )
+        assert linked.returncode == 0, (linked.stdout + linked.stderr).decode(errors="replace")
+        result = subprocess.run(
+            ["wine32", str(executable)], env=environment(),
+            capture_output=True, text=True, timeout=30,
+        )
+        expected = {None: 0, "zero_product_store": 3}[damage]
+        assert result.returncode == expected, result.stdout + result.stderr
