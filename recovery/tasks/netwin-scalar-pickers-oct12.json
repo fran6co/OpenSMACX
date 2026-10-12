@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "task_id": "netwin-scalar-pickers-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "7d0bb38a1766e4f3a5ebc00359bea9e9258910af",
+  "intent": "Recover all eight scalar lobby option pickers together through genuine PopMenu-owned dialog/base lifetime and original selection/cancellation/send ordering, preserving unsafe original packet bytes and source obligations.",
+  "subjects": [
+    {
+      "address": 4710416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4711232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4712000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4712752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4713568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4714384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4715200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4716016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_scalar_pickers_actual_source_oct12.py"
+  ],
+  "evidence": [
+    "Pinned full picker spans retain parent-owned cold lifetime regions. PopMenu already derives Popup and PullDown; original second base construction at receiver+537C is not an independent unused PullDown local. Seven detached current Dialogs locals are not the actual PopMenu dialog receiver. Use existing dialogs() owner; no header/layout guesses.",
+    "Original eight pickers send option state even when popup returns negative/cancelled; only state-byte update is conditional. Keep captured callback-sensitive values and source-owned options packet writes, original uninitialized reserved header bytes, original daemon/callback/lifetime ordering.",
+    "Original number selection uses selected index plus captured lower bound, clamped2..7, rather than answer-1. Global difficulty presents six difficulty items without extra default and stores AL directly; time likewise stores AL directly. Other four named option pickers and planet size retain their original default/index conversions. Planet-size iteration reloads count after each item callback.",
+    "Coordinator authorizes complete eight-body/shared-helper closure only; all existing mappings, full spans, historical claims, lessons and unrelated picker bodies must survive. New actual-source controls exercise selection/cancel, live reads, populated owner identity and lifetime ordering with executed damage mutants. Existing packet initialization and adjacent tests remain unchanged; baseline fixture failures remain failures.",
+    "No manual markers, symbol hints, byte claims, demotion or new compiler recipes during epoch. Fresh build/link and scoped native measurements, outside-scope comparison and independent actual-source review precede coordinator-reviewed integration. This bounded recovery is not automatic or full-game acceptance."
+  ]
+}
