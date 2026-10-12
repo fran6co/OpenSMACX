@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "671a9f75e",
+  "editable_files": [
+    "packages/match-recovery/src/match_recovery/source/asm.py",
+    "packages/match-recovery/tests/test_recording.py",
+    "packages/match-recovery/tests/source/test_asm.py",
+    "packages/match-recovery/README.md"
+  ],
+  "intent": "Close the demonstrated external-symbol primary-only legacy measurement/publication loophole for multi-span original identities; preserve all historical claims and strict supported binary verification.",
+  "evidence": [
+    "The original cleanup audit identifies 387 existing multi-span parent records and 61 historical byte claims; these claims are obligations, not proof of current complete-span matching. Legacy original_asm reads only the first span. External _coff_function_masked does not validate additional spans; compare_subject can return exact and recording can publish a claim despite unobserved disjoint cold code. The existing local/generated multi-span control refuses but does not cover external symbols.",
+    "First demonstrate the external case with a non-proprietary synthetic PE/COFF compiler-protocol control, primary matching but secondary different or unobserved. Then require explicit unmeasurable/refused evidence with exit3 and no publication or source mutation for unsupported full-span comparisons, including direct compare_subject use. Do not silently narrow spans, downgrade historical claims, alter source mappings, bank weaker tokens, add an alternate CLI, or weaken strict task binary comparison.",
+    "Keep single-span measurement/recording and native fragment support intact. Preserve diagnostic primary disassembly if it is explicitly non-claiming. Tests must show measure, record and historical check-matches cannot promote omitted spans, source identity/claim continuity is preserved, direct external comparison is protected, and ordinary positive controls still bank correctly. Implement the smallest evidence-backed guard rather than another acceptance framework; document the limitation accurately. Coordinator owns Git and integration; no native compiler needed for the synthetic control."
+  ]
+}
