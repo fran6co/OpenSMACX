@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task_id": "mapwin-base-label-gates-oct12",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "65f733e0c1a263eba2cc7102b3016ae9a3004da0",
+  "intent": "Restore the complete original base-name/landmark display gate in MapWin draw_base_names without changing original unsafe renderer behavior.",
+  "subjects": [
+    {
+      "address": 4619744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/tests/test_mapwin_base_objectives.py"
+  ],
+  "evidence": [
+    "Pinned467E4F/467E55/467E58 and467E5E/467E63/467E66 both disabled-display gates branch directly to4688C6 cleanup and return. Landmark loop4686D7/4686FA is unreachable when either gate disabled; current source guards base loop only and incorrectly continues landmarks.",
+    "Preserve initial override/turn/rules gate, draw_base_dest and saved clip restoration ordering. Extend existing actual-source controls to independently exercise both display gates with visible landmark and no label calls; execute damage cases. Keep all original identity, full span, historical claim/lessons and unrelated source unchanged.",
+    "No manual marker edits/byte claims/demotion or behavior improvements. Independent review, fresh build/link and scoped matching/outside-scope evidence precede coordinator manual integration; bounded checks do not prove whole-game acceptance."
+  ]
+}
