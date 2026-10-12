@@ -1,5 +1,6 @@
 """Actual packed shape walker; bounded controls, not complete renderer proof."""
 from pathlib import Path
+import os
 import shutil
 import subprocess
 
@@ -163,7 +164,13 @@ def run(tmp_path, text, succeeds):
         subprocess.run([compiler, "-std=c++11", "-O2", "-fsanitize=undefined",
                         "-fno-sanitize-recover=undefined", str(cpp), "-o", str(exe)],
                        check=True, capture_output=True, timeout=60)
-        result = subprocess.run([str(exe)], capture_output=True, timeout=30)
+        # Keep sanitizer checks and nonrecovering failures enabled, but do not
+        # let symbolization of an intentionally faulting mutant outlive it.
+        # Diagnostic decoration is not part of this behavioral control.
+        environment = {**os.environ, "UBSAN_OPTIONS":
+                       os.environ.get("UBSAN_OPTIONS", "") + ":symbolize=0"}
+        result = subprocess.run([str(exe)], capture_output=True, timeout=30,
+                                env=environment)
         assert (result.returncode == 0) == succeeds, result.stderr.decode()
 
 
