@@ -86,7 +86,7 @@
         "src/vendor"
       ],
       "ceilings": {
-        "duplicate global identities": 16,
+        "duplicate global identities": 0,
         "scaled class-pointer sum": 0
       },
       "counters": []

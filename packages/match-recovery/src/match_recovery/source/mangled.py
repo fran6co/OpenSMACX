@@ -91,6 +91,31 @@ _SPECIAL = {
 }
 
 
+# VC6 file-scope data in an unnamed namespace carries the source filename as
+# an opaque scope component. Keep every path/nonce character: this is name
+# reading, not the separate unchanged-replica identity normalization. Limit
+# this addition to ordinary data names and the observed global-data prefix;
+# E/H scalars and untemplated U/V names cover the evidenced data trailers.
+# Unnamed functions, classes and template name heads remain unsupported.
+_VC6_ANONYMOUS_DATA = re.compile(
+    r"\?(?P<name>[A-Za-z_]\w*)@"
+    r"(?P<scope>\?%(?:[A-Za-z]:)?[\\/]?"
+    r"(?:[A-Za-z_0-9.-]+[\\/])*[A-Za-z_0-9.-]+\.[A-Za-z_0-9]+)"
+    r"@@3(?:[EH]|[UV][A-Za-z_]\w*(?:@@|@1@))[ABCD]", re.ASCII)
+
+
+# The observed VC6 local class objects/arrays use an additional underscore,
+# a one-digit lexical block and an entire ordinary cdecl free-function name.
+# Recognize these data envelopes without interpreting their type or deriving
+# a C++ expression. Their prefix, block, overload and trailer all remain part
+# of the exact identity; generated locals and other enclosing forms refuse.
+_VC6_LOCAL_DATA = re.compile(
+    r"_\?[A-Za-z_]\w*@\?[1-9]\?"
+    r"(?P<function>\?[A-Za-z_]\w*@@YA[A-Za-z_0-9@]+Z)"
+    r"@4(?:PAV|V)[A-Za-z_]\w*@@A", re.ASCII)
+_LOCAL_SCOPE_HEAD = re.compile(r"^\?[A-Za-z_]\w*@\?[0-9]+\?", re.ASCII)
+
+
 def _components(text: str) -> list[str] | None:
     """The `@`-separated name pieces before the `@@` that closes them.
 
@@ -127,6 +152,16 @@ def qualified_name(mangled: str) -> str:
     `identifier`, and every caller reads it as "cannot tell".
     """
     mangled = (mangled or "").strip()
+    anonymous_data = _VC6_ANONYMOUS_DATA.fullmatch(mangled)
+    if anonymous_data is not None:
+        return anonymous_data["scope"] + "::" + anonymous_data["name"]
+    local_data = _VC6_LOCAL_DATA.fullmatch(mangled)
+    if local_data is not None and arity(local_data["function"]) is not None:
+        return mangled
+    if _LOCAL_SCOPE_HEAD.match(mangled):
+        # A missing underscore must not fall through to the ordinary scope
+        # reader, which would discard the enclosing overload and data trailer.
+        return ""
     if not mangled.startswith("?"):
         # `_WinMain@16` and `@thunk@16` are decoration, not mangling.
         return identifier(mangled)

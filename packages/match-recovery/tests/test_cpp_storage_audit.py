@@ -77,6 +77,105 @@ def test_compact_objects_and_legacy_aliases_share_identity(format, symbol):
     assert rows[0]["symbols"] == ["Alias", "Global"]
 
 
+def test_anonymous_object_and_distinct_alias_keep_the_full_scoped_identity():
+    counts, _, rows = findings({
+        "nested/unit.cc": "namespace {\n// RECOVERY_OBJECT: v1 0x12345678 ?Global@?%nested/unit.cc@@3HA\nint Global;\n}\n",
+        "other.hpp": "static int *const Alias = (int *)0x12345678;\n",
+    }, "msvc")
+    assert counts["duplicate global identities"] == 1
+    assert all(row["symbols"] == ["?%nested/unit.cc::Global", "Alias"] for row in rows)
+
+
+def test_same_leaf_in_distinct_anonymous_scopes_is_not_one_storage_identity():
+    sources = {
+        "left/unit.cc": "// RECOVERY_OBJECT: v1 0x12345678 ?Global@?%left/unit.cc@@3HA\nint Global;\n",
+        "right/unit.cc": "// RECOVERY_OBJECT: v1 0x23456789 ?Global@?%right/unit.cc@@3HA\nint Global;\n",
+        "aliases.hpp": "int Left; // 0x12345678\nint Right; // 0x23456789\n",
+    }
+    counts, _, rows = findings(sources, "msvc")
+    assert counts["duplicate global identities"] == 2
+    assert {tuple(row["symbols"]) for row in rows} == {
+        ("?%left/unit.cc::Global", "Left"), ("?%right/unit.cc::Global", "Right")}
+
+
+def test_redundant_address_comment_removal_retains_the_canonical_object():
+    from match_recovery.includes import COMMENTS_OR_STRINGS
+    from match_recovery.object_source import parse_objects
+    before = ("namespace {\n// RECOVERY_OBJECT: v1 0x12345678 ?Global@?%unit.cc@@3HA\n"
+              "int Global; // 0x12345678\n}\n")
+    after = before.replace(" // 0x12345678", "")
+    assert parse_objects(before, "unit.cc", PIN, address_space="custom:address") == parse_objects(
+        after, "unit.cc", PIN, address_space="custom:address")
+    assert COMMENTS_OR_STRINGS.sub("", before).split() == COMMENTS_OR_STRINGS.sub("", after).split()
+    counts, _, rows = findings({"unit.cc": after}, "msvc")
+    assert sum(counts.values()) == 0 and rows == []
+    damaged = after + "int Distinct; // 0x12345678\n"
+    counts, _, rows = findings({"unit.cc": damaged}, "msvc")
+    assert counts["duplicate global identities"] == 1
+    assert all(row["symbols"] == ["?%unit.cc::Global", "Distinct"] for row in rows)
+
+
+@pytest.mark.parametrize("second", [
+    "// RECOVERY_OBJECT: v1 0x23456789 ?Global@?%unit.cc@@3HA\n",
+    "// RECOVERY_OBJECT: v1 0x12345678 ?Other@?%other/unit.cc@@3HA\n",
+])
+def test_duplicate_anonymous_object_symbol_or_start_still_refuses(second):
+    with pytest.raises(ValueError, match="duplicate original object"):
+        findings({"unit.cc": "// RECOVERY_OBJECT: v1 0x12345678 ?Global@?%unit.cc@@3HA\nint Global;\n",
+                  "other/unit.cc": second + "int Other;\n"}, "msvc")
+
+
+@pytest.mark.parametrize("symbol", [
+    "?Global@?%@@3HA", "?Global@?%unit.cc@3HA",
+    "?Global@?%unit.cc@@3@@A", "?Global@?%unit.cc@@3?@@A",
+    "?Global@?%unit.cc@@3$@@A", "?Global@?%unit.cc@@30A",
+    "?Global@?%unit.cc@@3_NA", "?Global@?%unit.cc@@3DA",
+    "?Global@?%unit.cc@@3U@@A", "?Global@?%unit.cc@@3V?@@A",
+    "?Global@?%unit.cc@@3H@@A", "?Global@?%unit.cc@@3EPayload@@A",
+    "?Global@?%unit.cc@@3UPayload@2@A",
+    "?Global@?%unit.cc@@3U?$Payload@H@@A",
+    "?function@?%unit.cc@@YAHXZ", "??0Class@?%unit.cc@@QAE@XZ",
+    "??$Global@H@?%unit.cc@@3HA",
+])
+def test_unsupported_anonymous_object_evidence_still_refuses(symbol):
+    with pytest.raises(ValueError, match="cannot identify mapped object"):
+        findings({"unit.cc": f"// RECOVERY_OBJECT: v1 0x12345678 {symbol}\nint Global;\n"}, "msvc")
+
+
+def test_local_data_object_aliases_keep_prefix_block_overload_and_trailer():
+    symbols = ["_?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A",
+               "_?saved@?2??work@@YAHMH@Z@4VBuffer@@A"]
+    counts, _, rows = findings({
+        "unit.cc": (f"// RECOVERY_OBJECT: v1 0x12345678 {symbols[0]}\n"
+                    f"// RECOVERY_OBJECT: v1 0x23456789 {symbols[1]}\n"),
+        "aliases.hpp": "int First; // 0x12345678\nint Second; // 0x23456789\n",
+    }, "msvc")
+    assert counts["duplicate global identities"] == 2
+    assert {tuple(row["symbols"]) for row in rows} == {
+        ("First", symbols[0]), ("Second", symbols[1])}
+
+
+@pytest.mark.parametrize("duplicate", [
+    "// RECOVERY_OBJECT: v1 0x23456789 _?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A\n",
+    "// RECOVERY_OBJECT: v1 0x12345678 _?saved@?2??work@@YAHMH@Z@4VBuffer@@A\n",
+])
+def test_duplicate_local_data_symbol_or_start_still_refuses(duplicate):
+    with pytest.raises(ValueError, match="duplicate original object"):
+        findings({"unit.cc": "// RECOVERY_OBJECT: v1 0x12345678 _?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A\n",
+                  "other.cc": duplicate}, "msvc")
+
+
+@pytest.mark.parametrize("symbol", [
+    "?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A",
+    "_?saved@?1??work@@YAHHHH@Z",
+    "_?saved@?1??work@Class@@QAEHH@Z@4VBuffer@@A",
+    "_?saved@?1???$work@H@@YAHHHH@Z@4VBuffer@@A",
+])
+def test_unsupported_local_object_shapes_remain_audit_refusals(symbol):
+    with pytest.raises(ValueError, match="cannot identify mapped object"):
+        findings({"unit.cc": f"// RECOVERY_OBJECT: v1 0x12345678 {symbol}\n"}, "msvc")
+
+
 def test_same_global_declaration_and_definition_are_not_a_conflict():
     counts, _, rows = findings({"a.cc": "int Global; // 0x12345678\n", "a.hpp": "extern int Global; // 0x12345678\n"})
     assert sum(counts.values()) == 0 and rows == []

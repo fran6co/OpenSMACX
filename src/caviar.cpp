@@ -1528,7 +1528,7 @@ CaviarSceneRow *CaviarSceneMemory;  // 0x009B9100
 // destruction would bypass that observed guard; a Buffer member would also
 // be destroyed unconditionally after an early-returning owner destructor.
 // RECOVERY_OBJECT: v1 0x009B9104 ?CaviarSceneBuffersCleanupGuard@?%src/caviar.cpp@@3EA
-uint8_t CaviarSceneBuffersCleanupGuard;  // 0x009B9104
+uint8_t CaviarSceneBuffersCleanupGuard;
 
 // Private lifetime implementation, not a recovered original class name.
 // Each slot owns exactly one real Buffer, starting at offset zero. The
@@ -1571,7 +1571,7 @@ CaviarSceneBufferLifetime<2> CaviarSceneBufferB;  // 0x009B96B0
 // 0x009B9690..0x009B969C: the viewport rectangle accumulated by both render
 // entry points. The image clears it in left, right, bottom, top order.
 // RECOVERY_OBJECT: v1 0x009B9690 ?CaviarViewportState@?%src/caviar.cpp@@3UtagRECT@@A
-RECT CaviarViewportState;  // 0x009B9690
+RECT CaviarViewportState;
 
 // 0x009B9C38. Passed twice to vox_create_record, which reads it as the
 // colour-table source (0x1800 bytes for pixel size 1) and the shadow-table
@@ -1663,7 +1663,7 @@ static_assert(offsetof(CaviarSceneRecord, created_) == 0x40,
 #endif
 
 // RECOVERY_OBJECT: v1 0x009BB438 ?CaviarScene@?%src/caviar.cpp@@3UCaviarSceneRecord@1@A
-CaviarSceneRecord CaviarScene;  // 0x009BB438
+CaviarSceneRecord CaviarScene;
 
 
 } // namespace

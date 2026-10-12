@@ -80,3 +80,134 @@ def test_a_method_still_drops_its_return_type():
     assert arity("?on_mouse_move@Win@@QAEXHHIH@Z") == 4
     assert arity("?set_font@Buffer@@QAEHPAVFont@@000@Z") == 4
     assert arity("?close@Text@@QAEXXZ") == 0
+
+
+@pytest.mark.parametrize("path", [
+    "src/unit.cpp", "other/unit.cpp", "unit.cpp", "src/../unit.cpp",
+    "src/unit.cpp123", "src/unit.cpp456", r"C:\project\unit.cpp",
+])
+@pytest.mark.parametrize("encoding", ["EA", "HA", "UPayload@1@A", "VBuffer@@A"])
+def test_vc6_anonymous_data_keeps_the_entire_encoded_scope(path, encoding):
+    from match_recovery.source.mangled import qualified_name
+    assert qualified_name("?Global@?%" + path + "@@3" + encoding) == "?%" + path + "::Global"
+
+
+def test_vc6_anonymous_data_does_not_merge_path_or_nonce_spellings():
+    from match_recovery.source.mangled import qualified_name
+    paths = ["src/unit.cpp", "other/unit.cpp", "src/../unit.cpp",
+             "unit.cpp", "unit.cpp123", "unit.cpp456", r"src\unit.cpp"]
+    assert len({qualified_name("?Global@?%" + path + "@@3HA") for path in paths}) == len(paths)
+
+
+@pytest.mark.parametrize("symbol", [
+    "?Global@?%@@3HA", "?Global@?%unit@@3HA", "?Global@?%src/@@3HA",
+    "?Global@?%src/unit.cpp@3HA", "?Global@?%src/unit.cpp@@",
+    "?Global@?%src/unit.cpp@@3", "?Global@?%src/unit.cpp@@3A",
+    "?Global@?%src/unit.cpp@@3@@A", "?Global@?%src/unit.cpp@@3?@@A",
+    "?Global@?%src/unit.cpp@@3$@@A", "?Global@?%src/unit.cpp@@30A",
+    "?Global@?%src/unit.cpp@@3_NA", "?Global@?%src/unit.cpp@@3DA",
+    "?Global@?%src/unit.cpp@@3U@@A", "?Global@?%src/unit.cpp@@3V?@@A",
+    "?Global@?%src/unit.cpp@@3H@@A", "?Global@?%src/unit.cpp@@3EPayload@@A",
+    "?Global@?%src/unit.cpp@@3UPayload@2@A",
+    "?Global@?%src/unit.cpp@@3U?$Payload@H@@A",
+    "?Global@?%src/unit.cpp@@3HAjunk", "?Global@?%src/unit.cpp@@3H\nA",
+    "?Global@?%src/un it.cpp@@3HA", "?Global@?%src/unit%.cpp@@3HA",
+    "?Global@?%src/unit.cpp@Outer@@3HA",
+    "?Global@Inner@?%src/unit.cpp@@3HA",
+    "??$Global@H@?%src/unit.cpp@@3HA",
+    "?Global@?$Owner@H@?%src/unit.cpp@@3HA",
+    "?Global@?%src/unit.cpp@@2HA",
+])
+def test_unsupported_anonymous_data_shapes_still_have_no_qualified_name(symbol):
+    from match_recovery.source.mangled import qualified_name
+    assert qualified_name(symbol) == ""
+
+
+@pytest.mark.parametrize("symbol", [
+    "?function@?%src/unit.cpp@@YAHXZ",
+    "?method@Class@?%src/unit.cpp@@QAEXXZ",
+    "??0Class@?%src/unit.cpp@@QAE@XZ",
+    "??1Class@?%src/unit.cpp@@QAE@XZ",
+    "??_GClass@?%src/unit.cpp@@UAEPAXI@Z",
+    "??__EGlobal@?%src/unit.cpp@@YAXXZ",
+    "??0?$Owner@H@?%src/unit.cpp@@QAE@XZ",
+])
+def test_anonymous_function_class_and_template_eligibility_is_unchanged(symbol):
+    from match_recovery.function_witness import _expression
+    from match_recovery.ownership_source import class_hint
+    from match_recovery.source.mangled import qualified_name
+    assert qualified_name(symbol) == ""
+    assert class_hint(symbol) is None
+    with pytest.raises(ValueError):
+        _expression(symbol, "msvc")
+
+
+def test_recognized_anonymous_data_cannot_become_a_function_or_class_witness():
+    from match_recovery.function_witness import _expression
+    from match_recovery.ownership_source import class_hint
+    symbol = "?Global@?%src/unit.cpp@@3HA"
+    assert class_hint(symbol) is None
+    with pytest.raises(ValueError):
+        _expression(symbol, "msvc")
+
+
+@pytest.mark.parametrize("symbol", [
+    "_?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A",
+    "_?redrawn@?1??work@@YAHHHH@Z@4PAVBuffer@@A",
+    "_?animation@?1??work@@YAHHHH@Z@4VAnimation@@A",
+    "_?working@?1??work@@YAHHHH@Z@4VBuffer@@A",
+    "_?saved@?2??work@@YAHHHH@Z@4PAVBuffer@@A",
+    "_?saved@?1??work@@YAHMH@Z@4PAVBuffer@@A",
+])
+def test_vc6_local_data_retains_the_complete_encoded_identity(symbol):
+    from match_recovery.function_witness import _expression
+    from match_recovery.ownership_source import class_hint
+    from match_recovery.source.mangled import qualified_name
+    assert qualified_name(symbol) == symbol
+    assert class_hint(symbol) is None
+    with pytest.raises(ValueError):
+        _expression(symbol, "msvc")
+
+
+def test_local_data_block_overload_name_and_trailer_are_distinct():
+    from match_recovery.source.mangled import qualified_name
+    symbols = [
+        "_?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A",
+        "_?saved@?2??work@@YAHHHH@Z@4PAVBuffer@@A",
+        "_?saved@?1??work@@YAHMH@Z@4PAVBuffer@@A",
+        "_?saved@?1??other@@YAHHHH@Z@4PAVBuffer@@A",
+        "_?saved@?1??work@@YAHHHH@Z@4VBuffer@@A",
+        "_?saved@?1??work@@YAHHHH@Z@4PAVOther@@A",
+    ]
+    assert {qualified_name(symbol) for symbol in symbols} == set(symbols)
+
+
+@pytest.mark.parametrize("symbol", [
+    "?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A",  # missing exact prefix
+    "__?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A",
+    "_?saved@???work@@YAHHHH@Z@4PAVBuffer@@A",
+    "_?saved@?0??work@@YAHHHH@Z@4PAVBuffer@@A",
+    "_?saved@?01??work@@YAHHHH@Z@4PAVBuffer@@A",
+    "_?saved@?A@??work@@YAHHHH@Z@4PAVBuffer@@A",
+    "_?saved@?1??work@@YAHHHH@Z@3PAVBuffer@@A",
+    "_?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@",
+    "_?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@Aextra",
+    "_?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A\nextra",
+    "_?saved@?1??work@@YAHHHH@Z@4UBuffer@@A",
+    "_?saved@?1??work@@YAHHHH@Z@4HA",
+    "_?saved@?1??work@@YAHW@Z@4VBuffer@@A",  # unreadable enclosing signature
+    "_?saved@?1??work@@YAHHHH@Z",            # function, not local data
+    "_?saved@?1??work@Class@@QAEHH@Z@4VBuffer@@A",
+    "_?saved@?1???0Class@@QAE@XZ@4VBuffer@@A",
+    "_?saved@?1???$work@H@@YAHHHH@Z@4VBuffer@@A",
+    "_?saved@?1??work@@YAHHHH@Z@4V?$Owner@H@@A",
+    "_?$S1@?1??work@@YAHHHH@Z@4EA",        # generated guard, not ordinary local
+])
+def test_unsupported_local_prefix_block_function_and_data_forms_refuse(symbol):
+    from match_recovery.function_witness import _expression
+    from match_recovery.ownership_source import class_hint
+    from match_recovery.source.mangled import qualified_name
+    assert qualified_name(symbol) == ""
+    assert class_hint(symbol) is None
+    with pytest.raises(ValueError):
+        _expression(symbol, "msvc")
