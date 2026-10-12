@@ -1,0 +1,19 @@
+{
+  "event_id": "d3da4115bda551ee4f3f9fd748a0edeee5115ff88227f9f82610bdf2298c6999",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_line_layout_fidelity_oct12.py"
+    ],
+    "evidence": [
+      "Prior three-body Buffer transaction preservation freezes whole buffer.cpp against fdce370 despite later authorized writer recovery. Preserve that baseline and all existing behavioral/mutation/identity checks: use a narrowly reversible current writer migration bridge (exact body/spelling and damage sensitivity) or verify the actual historical completed transaction separately while checking current owner identities. Do not blanket-exempt bodies, reset baselines or weaken historical obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "text-link-prior-preservation-control-oct12",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:text-load-link-contracts-oct12"
+}
