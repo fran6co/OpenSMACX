@@ -121,7 +121,7 @@ def test_graphicwin_caption_callback_uses_typed_storage_and_safe_raw_view():
     assert "memcpy(&value, &field_A0C_, sizeof(value))" in accessor
     assert "menu.field_A0C_value()" in consumer
     assert "GraphicWinFieldA0CDefault = &def_caption_draw;" in producer
-    assert "field_A0C_(this, caption, buffer)" in _owner_body(SPECS["graphic"])
+    assert "field_A0C_(this, field_E0_, buffer1_)" in _owner_body(SPECS["graphic"])
     assert "call-list evidence in Git history" in source
 
 
@@ -178,12 +178,12 @@ def test_graphicwin_mutant_removing_later_quadrants_fails(tmp_path):
 def test_graphicwin_mutant_reversing_caption_callbacks_fails(tmp_path):
     spec = SPECS["graphic"]
     body = _owner_body(spec)
-    anchor = ("                field_A0C_(this, caption, buffer);\n"
-              "            }\n            on_draw_caption(caption, buffer);")
+    anchor = ("                field_A0C_(this, field_E0_, buffer1_);\n"
+              "            }\n            on_draw_caption(field_E0_, buffer1_);")
     assert body.count(anchor) == 1
     mutant = body.replace(anchor,
-        "            on_draw_caption(caption, buffer);\n"
-        "                field_A0C_(this, caption, buffer);\n            }", 1)
+        "            on_draw_caption(field_E0_, buffer1_);\n"
+        "                field_A0C_(this, field_E0_, buffer1_);\n            }", 1)
     assert _compile_and_run(tmp_path, spec, mutant).returncode != 0
 
 

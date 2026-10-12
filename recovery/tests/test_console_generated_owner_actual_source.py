@@ -6,6 +6,7 @@ COFF symbols.
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -17,7 +18,7 @@ from match_recovery.source import Mode, SourceRole, read_file
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/IMAGE_PIN").is_file())
-IMAGE = ROOT / ".opensmacx/game/terranx_original.exe"
+IMAGE = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 SPECS = (
     (0x0051DEF0, 31, "on_nc_mouse_move", 0x00510110,
@@ -117,11 +118,13 @@ def test_virtual_contracts_and_dispatch_callers_preserve_the_three_slot_apis():
     assert win_cpp.count("this->on_nc_left_up(x, y);") == 1
     assert win_cpp.count("on_nc_left_up(a, b);") == 1
     assert win_cpp.count("this->on_post_redraw_nc_buffer(buf, ") == 4
-    assert graphic_cpp.count("on_post_redraw_nc_buffer(buffer, ") == 4
+    for member, side in (("buffer1_", 0), ("buffer4_", 2),
+                         ("buffer3_", 3), ("buffer2_", 1)):
+        assert graphic_cpp.count(f"on_post_redraw_nc_buffer({member}, {side});") == 1
     assert not re.search(r"\bvslot_(31|34|60)\b", win_h + win_cpp + graphic_cpp)
     assert "virtual void on_post_redraw_nc_buffer(Buffer *, int side)" in graphic_mock
     assert '"HOOK", "CAP", "V0"' in graphic_mock
-    assert '"F4", "D3@0,-10", "D4@34,-11", "T8@5,-8:29,2", "V2"' in graphic_mock
+    assert '"F4", "D3@0,2", "D4@34,1", "T8@5,4:29,2", "V2"' in graphic_mock
 
 
 def test_constructor_addresspoint_and_original_slot_cells_select_these_thunks():

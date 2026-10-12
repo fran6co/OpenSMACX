@@ -467,116 +467,126 @@ void GraphicWin::on_redraw_nc(RECT *area, int side) {
     if (bottom_inset == -1) {
         bottom_inset = border_thickness_;
     }
-    const int client_width = client_rect_.right - client_rect_.left;
-    char *caption = field_E0_;
-
     // Quadrant 0: top caption/non-caption strip.
     if (buffer1_ != 0 && (side == -1 || side == 0)) {
-        Buffer *const buffer = buffer1_;
+        Buffer *buffer = buffer1_;
         buffer->fill(WinFillColour);
         if (top_left != 0) {
+            buffer = buffer1_;
             top_left->draw(buffer, top_left->transparent_index(), 0, 0, 1, 1);
         }
         if (top_right != 0) {
+            buffer = buffer1_;
             top_right->draw(buffer, top_right->transparent_index(),
                             buffer->pixel_width() - top_right->width(), 0, 1, 1);
         }
         if (top_edge != 0 && top_left != 0 && top_right != 0) {
+            buffer = buffer1_;
             buffer->tile(top_edge, 0, 0, top_left->width(), 0,
-                         client_width - top_right->width() - top_left->width(),
+                         (client_rect_.right - client_rect_.left) -
+                             top_right->width() - top_left->width(),
                          buffer->pixel_height());
         }
-        if (caption != 0 && (iFlags_ & 0x10) != 0) {
+        if (field_E0_ != 0 && (iFlags_ & 0x10) != 0) {
             if (field_A0C_ != 0) {
-                field_A0C_(this, caption, buffer);
+                field_A0C_(this, field_E0_, buffer1_);
             }
-            on_draw_caption(caption, buffer);
+            on_draw_caption(field_E0_, buffer1_);
         }
-        on_post_redraw_nc_buffer(buffer, 0);
+        on_post_redraw_nc_buffer(buffer1_, 0);
     }
 
     // Quadrant 2: bottom strip.
     if (buffer4_ != 0 && (side == -1 || side == 2)) {
-        Buffer *const buffer = buffer4_;
+        Buffer *buffer = buffer4_;
         buffer->fill(WinFillColour);
         if (frame_bottom_left_ != 0) {
+            buffer = buffer4_;
             frame_bottom_left_->draw(
                 buffer, frame_bottom_left_->transparent_index(), 0,
-                -(frame_bottom_left_->height() + buffer->pixel_height()), 1, 1);
+                buffer->pixel_height() - frame_bottom_left_->height(), 1, 1);
         }
         if (frame_bottom_right_ != 0) {
+            buffer = buffer4_;
             frame_bottom_right_->draw(
                 buffer, frame_bottom_right_->transparent_index(),
                 buffer->pixel_width() - frame_bottom_right_->width(),
-                -(frame_bottom_right_->height() + buffer->pixel_height()), 1, 1);
+                buffer->pixel_height() - frame_bottom_right_->height(), 1, 1);
         }
         if (frame_bottom_ != 0 && frame_bottom_left_ != 0 &&
             frame_bottom_right_ != 0) {
+            buffer = buffer4_;
             buffer->tile(
                 frame_bottom_, 0, 0, frame_bottom_left_->width(),
-                -(buffer->pixel_height() + frame_bottom_->height()),
+                buffer->pixel_height() - frame_bottom_->height(),
                 (buffer->pixel_width() - frame_bottom_right_->width()) -
                     frame_bottom_left_->width(),
                 frame_bottom_->height());
         }
-        on_post_redraw_nc_buffer(buffer, 2);
+        on_post_redraw_nc_buffer(buffer4_, 2);
     }
 
     // Quadrant 3: right strip.
     if (buffer3_ != 0 && (side == -1 || side == 3)) {
-        Buffer *const buffer = buffer3_;
+        Buffer *buffer = buffer3_;
         buffer->fill(WinFillColour);
         if (top_left != 0) {
+            buffer = buffer3_;
             top_left->draw(buffer, top_left->transparent_index(),
                            0, -top_inset, 1, 1);
         }
         if (frame_bottom_left_ != 0) {
+            buffer = buffer3_;
             frame_bottom_left_->draw(
                 buffer, frame_bottom_left_->transparent_index(), 0,
-                (bottom_inset - buffer->pixel_height()) -
+                (bottom_inset + buffer->pixel_height()) -
                     frame_bottom_left_->height(), 1, 1);
         }
         if (frame_left_ != 0 && top_left != 0 &&
             frame_bottom_left_ != 0) {
+            buffer = buffer3_;
             buffer->tile(
                 frame_left_, 0, 0, 0,
                 top_left->height() - top_inset,
                 border_thickness_,
-                (((bottom_inset - buffer->pixel_height()) -
+                (((bottom_inset + buffer->pixel_height()) -
                   frame_bottom_left_->height()) - top_left->height()) +
                     top_inset);
         }
-        on_post_redraw_nc_buffer(buffer, 3);
+        on_post_redraw_nc_buffer(buffer3_, 3);
     }
 
     // Quadrant 1: left strip.
     if (buffer2_ != 0 && (side == -1 || side == 1)) {
-        Buffer *const buffer = buffer2_;
+        Buffer *buffer = buffer2_;
         buffer->fill(WinFillColour);
         if (top_right != 0) {
+            buffer = buffer2_;
             top_right->draw(buffer, top_right->transparent_index(),
                             buffer->pixel_width() - top_right->width(),
                             -top_inset, 1, 1);
         }
         if (frame_bottom_right_ != 0) {
+            buffer = buffer2_;
             frame_bottom_right_->draw(
                 buffer, frame_bottom_right_->transparent_index(),
                 buffer->pixel_width() - frame_bottom_right_->width(),
-                (bottom_inset - buffer->pixel_height()) -
+                (bottom_inset + buffer->pixel_height()) -
                     frame_bottom_right_->height(), 1, 1);
         }
         if (frame_right_ != 0 && top_right != 0 &&
             frame_bottom_right_ != 0) {
+            buffer = buffer2_;
             buffer->tile(
                 frame_right_, 0, 0,
                 buffer->pixel_width() - frame_right_->width(),
                 top_right->height() - top_inset,
                 frame_right_->width(),
-                (((bottom_inset - buffer->pixel_height()) -
+                (((bottom_inset + buffer->pixel_height()) -
                   frame_bottom_right_->height()) - top_right->height()) +
                     top_inset);
         }
-        on_post_redraw_nc_buffer(buffer, 1);
+        on_post_redraw_nc_buffer(buffer2_, 1);
     }
 }
 

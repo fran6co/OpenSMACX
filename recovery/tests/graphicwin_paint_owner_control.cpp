@@ -141,9 +141,9 @@ static void full_paint_order_and_geometry() {
     win.on_redraw_nc(&area, 2);
     const char *expected[] = {
         "F1", "D1@0,0", "D2@34,0", "T5@4,0:30,5", "HOOK", "CAP", "V0",
-        "F4", "D3@0,-10", "D4@34,-11", "T8@5,-8:29,2", "V2",
-        "F3", "D1@0,-5", "D3@0,-17", "T6@0,-2:2,-15", "V3",
-        "F2", "D2@-4,-5", "D4@-4,-18", "T7@0,-2:2,-16", "V1"
+        "F4", "D3@0,2", "D4@34,1", "T8@5,4:29,2", "V2",
+        "F3", "D1@0,-5", "D3@0,23", "T6@0,-2:2,25", "V3",
+        "F2", "D2@-4,-5", "D4@-4,22", "T7@0,-2:2,24", "V1"
     };
     assert(events.size() == sizeof(expected) / sizeof(expected[0]));
     for (size_t i = 0; i < events.size(); ++i) {

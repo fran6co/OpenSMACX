@@ -8907,7 +8907,9 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 clip.bottom = area->bottom - savedTop;
             }
             if (IntersectRect(&clip, &clip, &outer)) {
+                buf = this->buffer1_;
                 buf->set_clip(&clip);
+                buf = this->buffer1_;
                 if (this->field_FC_ == 0) {
                     buf->fill(this->field_100_);
                 } else {
@@ -8916,6 +8918,7 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 {
                     RECT r; r.left = 0; r.top = 0; r.right = clientW; r.bottom = clientH;
                     for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf = this->buffer1_;
                         buf->box(&r, this->field_120_, this->field_124_);
                         r.left++; r.top++; r.right--; r.bottom--;
                     }
@@ -8923,17 +8926,24 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 {
                     RECT r; r.left = borderM1; r.top = capM1; r.right = outerW; r.bottom = outerH;
                     for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf = this->buffer1_;
                         buf->box(&r, this->field_124_, this->field_120_);
                         r.left--; r.top--; r.right++; r.bottom++;
                     }
                 }
                 if (this->field_E0_ != 0) {
-                    int w = clientW - capHeight;
-                    RECT r; r.left = 0; r.top = 0; r.right = w; r.bottom = capHeight;
+                    int inset = this->field_128_;
+                    RECT r; r.left = inset; r.top = inset;
+                    r.right = clientW - inset; r.bottom = capHeight - inset;
+                    buf = this->buffer1_;
                     buf->set_text_color(this->field_104_, this->field_108_, this->field_10C_, this->field_110_);
+                    buf = this->buffer1_;
                     buf->set_font(this->field_F8_, 0, 0, 0);
+                    buf = this->buffer1_;
                     buf->set_clip(&r);
+                    win_flags = this->iFlags_;
                     char *title = this->field_E0_;
+                    buf = this->buffer1_;
                     if ((win_flags & 0x10000) != 0) {
                         if (title != 0) {
                             unsigned int len = strlen(title);
@@ -8949,8 +8959,10 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                         buf->write_cent_l(title, &r, len);
                     }
                 }
+                buf = this->buffer1_;
                 buf->set_clip(&buf->rect2_);
             }
+            buf = this->buffer1_;
             this->on_post_redraw_nc_buffer(buf, 0);
         }
     }
@@ -8962,34 +8974,45 @@ void Win::on_redraw_nc(RECT * area, int flags) {
             RECT outer = buf->rect2_;
             RECT clip = outer;
             if (area != 0) {
+                int shiftY = (this->client_rect_.bottom - this->client_rect_.top)
+                             - bottomThick - savedTop;
                 clip.left = area->left - savedLeft;
-                clip.top = area->top + (capHeight - savedTop);
+                clip.top = area->top + shiftY;
                 clip.right = area->right - savedLeft;
-                clip.bottom = area->bottom + (capHeight - savedTop);
+                clip.bottom = area->bottom + shiftY;
             }
             if (IntersectRect(&clip, &clip, &outer)) {
+                buf = this->buffer4_;
                 buf->set_clip(&clip);
+                buf = this->buffer4_;
                 if (this->field_FC_ == 0) {
                     buf->fill(this->field_100_);
                 } else {
-                    buf->tile((Buffer *)this->field_FC_, 0, capHeight, 0, 0, clientW, clientH);
+                    buf->tile((Buffer *)this->field_FC_, 0, clientH - bottomThick, 0, 0, clientW, clientH);
                 }
                 {
-                    RECT r; r.left = 0; r.top = -capHeight; r.right = clientW; r.bottom = clientH - capHeight;
+                    int shiftY = (this->client_rect_.top - this->client_rect_.bottom) + bottomThick;
+                    RECT r; r.left = 0; r.top = shiftY; r.right = clientW; r.bottom = clientH + shiftY;
                     for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf = this->buffer4_;
                         buf->box(&r, this->field_120_, this->field_124_);
                         r.left++; r.top++; r.right--; r.bottom--;
                     }
                 }
                 {
-                    RECT r; r.left = borderM1 - capHeight; r.top = capM1 - capHeight; r.right = outerW; r.bottom = outerH;
+                    int shiftY = (this->client_rect_.top - this->client_rect_.bottom) + bottomThick;
+                    RECT r; r.left = borderM1; r.top = capM1 + shiftY;
+                    r.right = outerW; r.bottom = outerH + shiftY;
                     for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf = this->buffer4_;
                         buf->box(&r, this->field_124_, this->field_120_);
                         r.left--; r.top--; r.right++; r.bottom++;
                     }
                 }
+                buf = this->buffer4_;
                 buf->set_clip(&buf->rect2_);
             }
+            buf = this->buffer4_;
             this->on_post_redraw_nc_buffer(buf, 2);
         }
     }
@@ -9008,7 +9031,9 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 clip.bottom = area->bottom + shiftY;
             }
             if (IntersectRect(&clip, &clip, &outer)) {
+                buf = this->buffer3_;
                 buf->set_clip(&clip);
+                buf = this->buffer3_;
                 if (this->field_FC_ == 0) {
                     buf->fill(this->field_100_);
                 } else {
@@ -9017,19 +9042,24 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 {
                     RECT r; r.left = 0; r.top = -capHeight; r.right = clientW; r.bottom = clientH - capHeight;
                     for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf = this->buffer3_;
                         buf->box(&r, this->field_120_, this->field_124_);
                         r.left++; r.top++; r.right--; r.bottom--;
                     }
                 }
                 {
-                    RECT r; r.left = borderM1 - capHeight; r.top = capM1 - capHeight; r.right = outerW; r.bottom = outerH;
+                    RECT r; r.left = borderM1; r.top = capM1 - capHeight;
+                    r.right = outerW; r.bottom = outerH - capHeight;
                     for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf = this->buffer3_;
                         buf->box(&r, this->field_124_, this->field_120_);
                         r.left--; r.top--; r.right++; r.bottom++;
                     }
                 }
+                buf = this->buffer3_;
                 buf->set_clip(&buf->rect2_);
             }
+            buf = this->buffer3_;
             this->on_post_redraw_nc_buffer(buf, 3);
         }
     }
@@ -9048,7 +9078,9 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                 clip.bottom = area->bottom + (capHeight - savedTop);
             }
             if (IntersectRect(&clip, &clip, &outer)) {
+                buf = this->buffer2_;
                 buf->set_clip(&clip);
+                buf = this->buffer2_;
                 if (this->field_FC_ == 0) {
                     buf->fill(this->field_100_);
                 } else {
@@ -9060,23 +9092,28 @@ void Win::on_redraw_nc(RECT * area, int flags) {
                     RECT r;
                     r.left = loop1Left; r.top = negCap; r.right = clientW + loop1Left; r.bottom = clientH - capHeight;
                     for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf = this->buffer2_;
                         buf->box(&r, this->field_120_, this->field_124_);
                         r.left++; r.top++; r.right--; r.bottom--;
                     }
                 }
                 {
+                    int loop2Left = (this->client_rect_.left - this->client_rect_.right) + this->border_thickness_;
                     RECT r;
-                    r.left = loop1Left + (borderM1 - capHeight);
+                    r.left = loop2Left + borderM1;
                     r.top = capM1 - capHeight;
-                    r.right = outerW + loop1Left;
-                    r.bottom = outerH + loop1Left;
+                    r.right = outerW + loop2Left;
+                    r.bottom = outerH - capHeight;
                     for (int i = 0; i < (int)this->field_128_; i++) {
+                        buf = this->buffer2_;
                         buf->box(&r, this->field_124_, this->field_120_);
                         r.left--; r.top--; r.right++; r.bottom++;
                     }
                 }
+                buf = this->buffer2_;
                 buf->set_clip(&buf->rect2_);
             }
+            buf = this->buffer2_;
             this->on_post_redraw_nc_buffer(buf, 1);
         }
     }
