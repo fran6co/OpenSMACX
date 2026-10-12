@@ -4489,7 +4489,8 @@ int BaseWin::on_nc_hittest(int a1, int a2) {
 }
 
 /*
-// ORIGINAL: 0x00408410 ?load_inverts@@YAXXZ 0x00408410-0x00408469 FILE
+// ORIGINAL: 0x00408410 ?load_inverts@@YAXXZ 0x00408410-0x0040846B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x408424 branches to the RET at 0x40846A; POP ESI at 0x408469 and RET at 0x40846A establish exclusive end 0x40846B."], "reason": "The complete original operation includes its terminal POP ESI and RET, not alignment or a separate function."}
 // LEVER: the scaffold bound the four strings/counts it reads as anonymous
 // `int *const g_<address>` slots. All four are named things: 0x00682830 and
 // 0x00682824 hold the literals "BASENAME" and "INVERTLIST" (read with

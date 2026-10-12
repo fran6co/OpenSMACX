@@ -235,7 +235,8 @@ MessageWin::MessageWin() {
 Purpose: Tear the three plain members down in reverse declaration order
          (stringBox_, listBox_, font_), then the Sprite base - no explicit
          statement in the body, all of it automatic member teardown.
-// ORIGINAL: 0x00472020 ??1MessageWin@@QAE@XZ 0x00472020-0x00472184
+// ORIGINAL: 0x00472020 ??1MessageWin@@QAE@XZ 0x00472020-0x00472184;0x00655EA0-0x00655F23
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:prolog 0x472025 registers handler 0x655F19; FuncInfo 0x675DA0 and unwind map 0x675DC0 contain 11 HIGHLOW-backed actions in the completely decoded cold region 0x655EA0..0x655F23."], "reason": "The complete destructor mapping includes its original compiler-generated borrowed-frame cleanup actions and handler; real source-owned lifetime restoration remains required."}
 // size      356 bytes
 // prototype void (__thiscall ??1MessageWin@@QAE@XZ)(MessageWin* this)
 // callers   0   call targets   8

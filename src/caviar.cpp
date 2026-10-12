@@ -6191,7 +6191,8 @@ void *Caviar::clip_rect() {
 Purpose: Copy the created render record's clip bounds into a caller's array:
          {max_x, max_y, min_x + 1, min_y + 1}. A null array or a null record
          leaves the caller's memory alone.
-// ORIGINAL: 0x00618560 ?UNK14@Caviar@@QAEXH@Z 0x00618560-0x0061859F
+// ORIGINAL: 0x00618560 ?UNK14@Caviar@@QAEXH@Z 0x00618560-0x006185A0
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:the RET 4 instruction begins at 0x61859D and ends at 0x6185A0; the former exclusive bound cut that instruction."], "reason": "Retain the complete original rectangle operation, including all bytes of its callee-pop return."}
 // symbol    ?fill_clip_rect@Caviar@@QAEXH@Z
 // size      64 bytes
 // prototype void (__thiscall ?UNK14@Caviar@@QAEXH@Z)(Caviar* this, int)
@@ -6378,7 +6379,8 @@ Purpose: Point the renderer at a Buffer and reset the six channel bounds to
          their defaults {0, 0, 0xff, 0xff, 0x100, 0x100}. 7 means the
          renderer is not switched on (field_4_'s bit 0 is clear), 0x10 means
          the caller passed no Buffer.
-// ORIGINAL: 0x006183D0 ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z 0x006183D0-0x00618424 FILE
+// ORIGINAL: 0x006183D0 ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z 0x006183D0-0x00618426 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:the RET 4 instruction begins at 0x618423 and ends at 0x618426; the former exclusive bound cut that instruction."], "reason": "Retain the complete original set_buffer operation, including all bytes of its callee-pop return."}
 // symbol    ?set_buffer@Caviar@@QAEHPAVBuffer@@@Z
 // size      84 bytes
 // prototype int (__thiscall ?set_buffer@Caviar@@QAEHPAUBuffer@@@Z)(Caviar* this, Buffer*)

@@ -583,7 +583,8 @@ int EditBox::init_with_font(Font *font, int x, int y, int width,
 /*
 Purpose: Construct the GraphicWin base and trailing Time member, then publish
          the EditBox field defaults. C++ owns base/member lifetime and tables.
-// ORIGINAL: 0x00614E50 ??0EditBox@@QAE@XZ 0x00614E50-0x00614F2C BYTE_EXACT
+// ORIGINAL: 0x00614E50 ??0EditBox@@QAE@XZ 0x00614E50-0x00614F2C;0x00663130-0x00663142 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:prolog 0x614E52 registers handler 0x663138; FuncInfo 0x67FE18 and unwind map 0x67FE38 contain one HIGHLOW-backed action in the completely decoded cold region 0x663130..0x663142."], "reason": "Preserve the historical constructor claim while retaining its complete original partial-construction cleanup and handler; new generated-span equality is not assumed."}
 // symbol    ??0EditBox@@QAE@XZ
 // size      220 bytes
 // prototype void (__thiscall ??0EditBox@@QAE@XZ)(EditBox* this)

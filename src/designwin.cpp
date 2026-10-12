@@ -4622,7 +4622,8 @@ Purpose: The unit-special ability picker both select_special_N thunks tail
          store the pick into the prototype's two ability slots, rebuild the
          ability flag word, and repaint the panels.
 
-// ORIGINAL: 0x0043AC70 ?select_special@DesignWin@@QAEXH@Z 0x0043AC70-0x0043BDE9;0x00654410-0x00654416
+// ORIGINAL: 0x0043AC70 ?select_special@DesignWin@@QAEXH@Z 0x0043AC70-0x0043BDE9;0x00654410-0x006546C5
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:prolog 0x43AC7B registers handler 0x6546BB; handler selects FuncInfo 0x674980 and unwind map 0x6749A0 with 64 action rows.", "pinned:HIGHLOW-backed action pointers and complete action/handler decoding establish the cold region 0x654410..0x6546C5; its former six-byte prefix omitted the first tail jump and later cleanup paths."], "reason": "The original method owns its complete borrowed-frame exception-cleanup region; these actions are generated lifetime code, not independent callable C++ functions. Exact generated correspondence remains an obligation."}
 // size      5166 bytes
 // prototype void (__thiscall ?select_special@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   3   call targets   34

@@ -34,7 +34,8 @@ Status: Complete
 /*
 Purpose: Construct the dialog manager: the five vbtable pointers, the two
          virtual-base constructions, and the five base constructors.
-// ORIGINAL: 0x00612830 ??0Dialogs@@QAE@H@Z 0x00612830-0x00612AE0
+// ORIGINAL: 0x00612830 ??0Dialogs@@QAE@H@Z 0x00612830-0x00612AE0;0x00663060-0x006630D3
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:prolog 0x612832 registers handler 0x6630C9; FuncInfo 0x67FD68 and unwind map 0x67FD88 contain six HIGHLOW-backed actions in the completely decoded cold region 0x663060..0x6630D3."], "reason": "The constructor owns its partial-construction unwind actions and handler through the original exception metadata; retain their complete generated-lifetime matching obligation."}
 // symbol    ??0Dialogs@@QAE@XZ
 // size      688 bytes
 // prototype void (__thiscall ??0Dialogs@@QAE@H@Z)(Dialogs* this, int)
