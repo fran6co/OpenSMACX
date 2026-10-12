@@ -1,0 +1,19 @@
+{
+  "event_id": "08919728a7b62aa46e8fbdab596f5aea4f185724e07ceb95ecc34f7ac7ca0449",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_font_definition_visibility_oct12g.py"
+    ],
+    "evidence": [
+      "Physical review refines prior discovery: all common sampled function-section SHA/size and nonlocal relocation tuples agree; apparent changed sections are only compiler-local $L label-name churn. Attribute-only removal loses helper sections/exports without fixing current cross-TU inline expansion, which differs from original direct caller edges. Authorize one private atomic header+font.cpp overlay with ordinary public declarations and unchanged once-only out-of-line definitions visible to same-TU consumers, using unchanged flags/call sites. Inspect natural helper byte/reference output and original direct-vs-inline phases in the five sampled TUs before production adoption. Added focused test scope permits visibility/emission damage controls if later needed, not a production acceptance waiver. No inline ODR trick, no export/noinline/witness address anchor, no relaxed matching or new claims. Preserve original mappings, header-hosted provenance and historical restoration obligations; scope expansion for any caller source edits remains separate. This permission is diagnostic only, not implementation acceptance or original compiler-policy proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ae67c20abfd92cdd245429d533997097e015217467636eb34b134a8c1fbe9810",
+  "request_id": "font-definition-visibility-probe-oct12g",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:font-natural-inline-emission-oct12g"
+}
