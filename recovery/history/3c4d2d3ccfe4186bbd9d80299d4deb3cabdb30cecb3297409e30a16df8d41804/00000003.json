@@ -1,0 +1,17 @@
+{
+  "event_id": "824e5a55f8d581a46e366316d83a1a01344a959ea777d28e9d00d1fd2bb696c0",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "matrix3-native-unordered-discovery-oct12e",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Commit 73ddaad94 restores mapped equals634920 using indexed comparison; pinned x87 unordered/equal path and strict 85-byte comparator pass. Fresh candidate and destination checks: 47 actual-source host/native controls, application build/link, mappings5646, references, missing claims0, measurement634920 pass. Resolution is limited to masked quiet-NaN equality restoration and these controls; other eight Matrix3 misses, original class/extent/lifetime, signaling NaNs, unmasked exceptions/status, linked preservation and full-game acceptance remain unresolved."
+    ]
+  },
+  "previous_event": "f223426545e94257700eb956cfa4708a36749b9d44540783b123abbfb1e9aecd",
+  "request_id": "matrix3-native-unordered-resolution-oct12f",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:matrix3-current-controls-and-traversal-oct12e"
+}
