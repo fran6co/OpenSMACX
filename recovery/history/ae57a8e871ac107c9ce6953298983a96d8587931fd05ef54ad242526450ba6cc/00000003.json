@@ -1,0 +1,20 @@
+{
+  "event_id": "cafc628cbe5ed764bfb1df01ea536e124e8bd3623d4c426bd7c0e801710584d4",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_colony_production.py",
+      "recovery/tests/test_base_economy_accounting_oct12.py"
+    ],
+    "evidence": [
+      "Fresh native build/link,mappings,references,claim continuity passed frozen source724197fdeff7fbc043dee0ddc8264757a66ec5892995f78f86456ffcf0e1d644. Independent complete source review approved. Correct only full-production fixture PlayerData.ai_power, retained bitmask scratch helper signatures, draw_tile declaration and original-order assertions from pinned evidence; no blanket bypass or unrelated13baseline fixture repair. Economy BASE58563 scope guard keeps baseline and complete identities/history, reverses exactly the authorized19-definition production/growth/upkeep group against908fd through a guarded bridge with executed outside-body/identity/failed-restoration controls. No C++ or header edits, claim demotion, baseline reset or reinterpretation of native limitations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "795ad8e393a71bcc77083fd62ce637c0bf0ea50dca0fdedda6d305b2d42dbab3",
+  "request_id": "base-production-legacy-controls-oct12",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:base-production-growth-upkeep-oct12"
+}
