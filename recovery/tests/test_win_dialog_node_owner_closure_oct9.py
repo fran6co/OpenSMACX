@@ -215,7 +215,7 @@ static std::vector<void*> allocations; static int heap_calls, malloc_calls;
 static void *mem_get(std::size_t n) { ++malloc_calls; void *p=std::malloc(n==0x1c?sizeof(WinDialogNode):n);
   allocations.push_back(p); return p; }
 class Heap { public: Win *owner; bool mutate; void *get(std::size_t n); };
-class Win { public: WinNodeList list_; int register_in_parent(Win*); };
+class Win { public: WinNodeList list_; Win *win_parent_=0; int register_in_parent(Win*); };
 void *Heap::get(std::size_t n) { ++heap_calls; void *p=std::malloc(n==0x1c?sizeof(WinDialogNode):n);
   allocations.push_back(p); if(mutate) {owner->list_.allocator_=0; mutate=false;} return p; }
 int Win::register_in_parent(Win *parent_window) {

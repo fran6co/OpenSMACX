@@ -59,8 +59,7 @@ def actual_axis_body():
                             "int Win::init(int x, int y, int width, int height, char * caption,")
     start = init.index("    if ((this->iFlags_ & 4) != 0) {")
     end = init.index("    this->do_caption_buttons();", start)
-    body = init[start:end]
-    return body.replace("operator new(0x214C)", "test_scroll_alloc(0x214C)")
+    return init[start:end]
 
 
 def actual_close_scroll_body():
@@ -161,6 +160,17 @@ struct Win {
 };
 
 struct Scroll {
+    // Explicit nonthrowing host allocation models the configured VC6 null-new
+    // policy. The host stub's sizeof is not evidence of native Scroll's ABI.
+    static void *operator new(std::size_t size) noexcept {
+        return test_scroll_alloc(static_cast<unsigned int>(size));
+    }
+    static void operator delete(void *value) noexcept {
+        for (int i=0; i<allocated_count; ++i) {
+            if (allocated[i]==value) allocated[i]=0;
+        }
+        std::free(value);
+    }
     int id;
     bool track_destroy;
     int horizontal_calls;

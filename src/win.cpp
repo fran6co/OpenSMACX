@@ -8234,7 +8234,8 @@ int Win::init(int x, int y, int width, int height, char * caption,
     }
 
     if (parent != 0) {
-        if (parent->child_count_ == 150) {
+        // The original checks the freshly closed receiver, not its parent.
+        if (this->child_count_ == 150) {
             this->close();
             MessageBoxA(
                 0, WinMsgTooManyChildren, WinMsgIncreaseMaxChildren, 0);
@@ -8294,7 +8295,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
         this->client_rect_.bottom = posY + height;
         this->outer_rect_ = this->client_rect_;
         this->nonclient_to_client(&this->outer_rect_);
-        int dx = -this->outer_rect_.left;
+        int dx = -this->client_rect_.left;
         int dy = -this->client_rect_.top;
         this->outer_rect_.left += dx;
         this->outer_rect_.right += dx;
@@ -8307,9 +8308,9 @@ int Win::init(int x, int y, int width, int height, char * caption,
         this->outer_rect_.bottom = posY + height;
         if ((this->iSomeFlag_ & 2) != 0) {
             this->client_rect_ = this->outer_rect_;
-            this->client_to_nonclient(&this->outer_rect_);
+            this->client_to_nonclient(&this->client_rect_);
             int dx = -this->client_rect_.left;
-            int dy = -this->outer_rect_.top;
+            int dy = -this->client_rect_.top;
             this->outer_rect_.left += dx;
             this->outer_rect_.right += dx;
             this->outer_rect_.top += dy;
@@ -8333,6 +8334,8 @@ int Win::init(int x, int y, int width, int height, char * caption,
         if (mem != 0) {
             field_E0_[0] = 0;
             strcat(field_E0_, caption);
+        } else {
+            goto init_set_rects;
         }
     }
 
@@ -8346,6 +8349,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
         }
     }
 
+init_set_rects:
     this->set_rects();
 
     if (menu != 0) {
@@ -8358,7 +8362,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
 
     if ((this->iFlags_ & 0x10) != 0) {
         this->field_16C_ = this->caption_height_;
-    } else if ((this->iFlags_ & 0x20) != 0) {
+    } else if ((this->iFlags_ & 0x20) == 0) {
         this->field_16C_ = this->border_thickness_;
     }
     if ((this->iFlags_ & 0x400) != 0) {
@@ -8372,8 +8376,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
             this->scroll_horz_ = this->on_scroll_create();
         }
         if (this->scroll_horz_ == 0) {
-            void *raw = operator new(0x214C);
-            this->scroll_horz_ = (raw != 0) ? new (raw) Scroll() : 0;
+            this->scroll_horz_ = new Scroll();
             if (this->scroll_horz_ == 0) return 4;
             Scroll *sc = this->scroll_horz_;
             int top = ScrollDefaultThickness;
@@ -8382,7 +8385,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
                            ? (this->outer_rect_.right - this->outer_rect_.left) - top
                            : (this->outer_rect_.right - this->outer_rect_.left);
             sc->init_horz_nc(0, nc, arg2, this, -2);
-            sc->show(0);
+            this->scroll_horz_->show(0);
         }
     }
 
@@ -8391,8 +8394,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
             this->scroll_vert_ = this->on_scroll_create();
         }
         if (this->scroll_vert_ == 0) {
-            void *raw = operator new(0x214C);
-            this->scroll_vert_ = (raw != 0) ? new (raw) Scroll() : 0;
+            this->scroll_vert_ = new Scroll();
             if (this->scroll_vert_ == 0) return 4;
             Scroll *sc = this->scroll_vert_;
             int top = ScrollDefaultThickness;
@@ -8401,7 +8403,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
                            ? (this->outer_rect_.bottom - this->outer_rect_.top) - top
                            : (this->outer_rect_.bottom - this->outer_rect_.top);
             sc->init_vert_nc(nc, 0, arg2, this, -1);
-            sc->show(0);
+            this->scroll_vert_->show(0);
         }
     }
 
@@ -8409,35 +8411,39 @@ int Win::init(int x, int y, int width, int height, char * caption,
     WinCallbackWindow = this;
 
     unsigned int fl = this->iFlags_;
-    bool skipMenuList = (fl & 0x100000) != 0 || (fl & 0x200000) != 0 ||
+    bool skipMenuList = (fl & 0x100000) == 0 || (fl & 0x200000) != 0 ||
                          (this->iSomeFlag_ & 8) != 0 ||
-                         (((fl & 0x100000) == 0 && ((fl >> 16) & 0x10) != 0) && this->win_parent_ == 0);
+                         ((fl & 0x1000) != 0 && parent == 0);
 
-    if (!skipMenuList && this->win_parent_ != 0 &&
-        (this->win_parent_->iFlags_ & 0x1000) == 0) {
-        Win *parent_window = this->win_parent_;
+    // Keep the unchecked saved-parent access and the partially linked failure
+    // paths. Allocation callbacks can change the list's allocator and cursor.
+    if (!skipMenuList && (parent->iFlags_ & 0x1000) == 0) {
+        Win *parent_window = parent;
         int initCount = parent_window->list_.count_;
         if (initCount != 0) {
             WinDialogNode *newNode = parent_window->list_.allocator_
                 ? static_cast<WinDialogNode *>(parent_window->list_.allocator_->get(0x1C))
                 : static_cast<WinDialogNode *>(mem_get(0x1C));
-            WinDialogNode *head = parent_window->list_.head_;
-            WinDialogNode *prevOfHead = head->previous_;
-            prevOfHead->next_ = newNode;
-            if (newNode != 0) {
-                newNode->previous_ = prevOfHead;
-                newNode->next_ = head;
-                head->previous_ = newNode;
-                parent_window->list_.current_ = newNode;
-                newNode->focus_owner_ = this;
-                void *link = parent_window->list_.allocator_
-                    ? parent_window->list_.allocator_->get(4) : mem_get(4);
-                newNode->allocation_ = link;
-                if (link == 0) {
-                    return 0;
-                }
+            parent_window->list_.head_->previous_->next_ = newNode;
+            WinDialogNode *previous = parent_window->list_.head_->previous_;
+            WinDialogNode *node = previous->next_;
+            if (node == 0) {
+                goto init_registration_tail;
+            }
+            node->previous_ = previous;
+            previous->next_->next_ = parent_window->list_.head_;
+            parent_window->list_.head_->previous_ = previous->next_;
+            parent_window->list_.current_ = parent_window->list_.head_->previous_;
+            parent_window->list_.current_->focus_owner_ = this;
+            void *payload;
+            if (parent_window->list_.allocator_ != 0) {
+                payload = parent_window->list_.allocator_->get(4);
             } else {
-                return 0;
+                payload = mem_get(4);
+            }
+            parent_window->list_.current_->allocation_ = payload;
+            if (parent_window->list_.current_->allocation_ == 0) {
+                goto init_registration_tail;
             }
         } else {
             WinDialogNode *newNode = parent_window->list_.allocator_
@@ -8445,30 +8451,35 @@ int Win::init(int x, int y, int width, int height, char * caption,
                 : static_cast<WinDialogNode *>(mem_get(0x1C));
             parent_window->list_.head_ = newNode;
             if (newNode == 0) {
-                return 0;
+                goto init_registration_tail;
             }
             newNode->focus_owner_ = this;
-            newNode->next_ = newNode;
-            newNode->previous_ = newNode;
-            void *link = parent_window->list_.allocator_
-                ? parent_window->list_.allocator_->get(4) : mem_get(4);
-            newNode->allocation_ = link;
-            if (link == 0) {
-                return 0;
+            parent_window->list_.head_->next_ = parent_window->list_.head_;
+            parent_window->list_.head_->previous_ = parent_window->list_.head_;
+            void *payload;
+            if (parent_window->list_.allocator_ != 0) {
+                payload = parent_window->list_.allocator_->get(4);
+            } else {
+                payload = mem_get(4);
             }
-            parent_window->list_.current_ = newNode;
+            parent_window->list_.head_->allocation_ = payload;
+            if (parent_window->list_.head_->allocation_ == 0) {
+                goto init_registration_tail;
+            }
+            parent_window->list_.current_ = parent_window->list_.head_;
         }
 
-        int oldCount = parent_window->list_.count_;
-        parent_window->list_.tail_ = oldCount;
-        parent_window->list_.count_ = oldCount + 1;
+        parent_window->list_.tail_ = parent_window->list_.count_;
+        parent_window->list_.count_ = parent_window->list_.count_ + 1;
 
+init_registration_tail:
         int cnt = parent_window->list_.count_ - 1;
         if (cnt >= 0) {
             WinDialogNode *head = parent_window->list_.head_;
             parent_window->list_.tail_ = 0;
             parent_window->list_.current_ = head;
         }
+        win_parent_ = parent_window;
     }
 
     this->iSomeFlag_ |= 4;
@@ -10900,6 +10911,7 @@ void Win::close() {
             if (parent->list_.count_ == 0) {
                 parent->list_.head_ = 0;
             }
+            parent->list_.tail_ = parent->list_.count_ - 1;
         }
     }
 
@@ -10990,11 +11002,12 @@ void Win::close() {
     field_190_ = 0;
     cursor_handle_ = 0;
     field_19C_ = 0;
+    palette_seed_cache_ = 0;
     WinSharedHdc = 0;
     menu_ = 0;
 
     if (list_.head_ != 0) {
-        if ((list_.count_ != 0) && (0 < (int)list_.count_)) {
+        if (list_.allocator_ == 0 && (0 < (int)list_.count_)) {
             i = 0;
             do {
                 list_.current_ = list_.head_->next_;
@@ -11071,6 +11084,10 @@ void Win::close() {
     field_178_ = 1;
     field_17C_ = 1;
     field_180_ = 1;
+    cached_outer_rect_.left = 0;
+    cached_outer_rect_.top = 0;
+    cached_outer_rect_.right = 0;
+    cached_outer_rect_.bottom = 0;
     outer_rect_.left = 0;
     outer_rect_.top = 0;
     outer_rect_.right = 0;
