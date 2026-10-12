@@ -1,0 +1,23 @@
+{
+  "event_id": "cb5a28adb9d6f2a8f675a2b07f2f65b7ee38daac551696eb867eb74d6db2fce1",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize production_vehicle_notice and production_refresh_base_if_needed helpers within existing base_production original identity, without changing baseline or other owners. Pinned4F16F7 positive-offense artwork and4F1787 custom>=64 both use normal triad pictures, not native-life category; keep original unsafe/error paths. Pinned4F0FEE publishes saved selected ID to BaseComputedID689374 before resource passes4F0FF4..4F1008. Complete full-source/allocated controls and original mappings/claims preserved; no header or extra source files authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5179360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "complete-production-helper-closure-oct12",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:base-production-growth-upkeep-oct12"
+}
