@@ -1,0 +1,59 @@
+{
+  "author": "coordinator",
+  "base_revision": "2560e3d174cf280271e39e86040e1a2ee14531ee",
+  "editable_files": [
+    "src/buffer.h",
+    "src/buffer.cpp",
+    "src/jackal/palette.h",
+    "src/jackal/palette.cpp",
+    "src/dialog.h",
+    "src/dialog.cpp",
+    "recovery/tests/test_natural_outlined_emission_oct12e.py"
+  ],
+  "evidence": [
+    "Fresh source-preserving overlays under both profiles across Buffer, Palette, Dialog, Flic and Console preserve all sampled selected Buffer/Palette/dialog physical section bytes and relocation names. Actual constructors, vtables and source-owned member destruction retain natural users. Probe cache is disposable, not a claim or retained-selection proof.",
+    "Remove only declaration and definition MEASURED attributes for the three ordinary out-of-line bodies. Preserve virtuality, signatures, exact bodies, member/layout/storage relationships and all source identities/spans/symbol overrides and historical claims. Clarify the stale dialog comment: recovered popups_normal calls the helper in popup.cpp.",
+    "Coordinator-reviewed manual integration only after fresh build/link, mappings, references, claim continuity, available matching and independent review. Multi-span Buffer historical matching remains restoration debt; no omitted-cold claim, no weakened gates, no full-game/automatic acceptance or new coverage credit. Tests compare source code and historical mappings against the immutable baseline. No flags or global MEASURED macro changes."
+  ],
+  "intent": "Remove recovery-only exports from ordinary out-of-line Buffer/Palette destructors and the genuinely called dialog default helper, preserving all original recovery obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6124560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6124048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6284000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6331728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5801056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "natural-outlined-emission-oct12e"
+}
