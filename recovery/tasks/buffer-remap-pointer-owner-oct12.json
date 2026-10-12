@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "task_id": "buffer-remap-pointer-owner-oct12",
+  "intent": "Recover genuine Buffer remap-table pointer APIs across the two five-argument methods and their typed header/verification closure, preserving original behavior and historical byte obligations.",
+  "editable_files": [
+    "src/buffer.cpp",
+    "src/buffer.h",
+    "recovery/tests/test_buffer_remap_pointer_owner_oct12.py",
+    "recovery/tests/test_buffer_paint_recovery.py"
+  ],
+  "evidence": [
+    "Pinned Buffer5D8A30..5D8B1E and5D93C0..5D94AE forward fifth stack word unchanged to Sprite5E5833/5E8FF5. Complete Sprite decodes distinguish scalar transparency and x/y arithmetic from remap-table pointer installation and byte lookups at5E5A40/46/5E5AF0/5AF2 and5E9202/08/5E9289/8B/8D.",
+    "Current Sprite APIs already take unsigned char* tables; these two Buffer APIs retain int and reinterpret casts. Current product callers use typed Sprite or seven-argument Buffer overloads; no five-argument caller/member-pointer use found. Incomplete original decode/caller census is not proof of no indirect/runtime callers.",
+    "Preserve shared descriptor publication, signed lock-count branches, surface bypass, descriptor -1 fallback while forwarding original transparency, post-call clearing only pcBits_, and results. No compatibility int overload, lifetime/layout migration or added safety guards.",
+    "Only the existing paint shared-owner/ABI expectation may change: actual BufferSpriteOwner physical definition and relocations replace retired g_BUFFER_SPRITE expectation; keep one-owner/relocation checks. Unrelated baseline harness issues remain visible, not waived.",
+    "Actual declarations/bodies, full-width pointer identity, exact member-pointer signature, original pin controls, branch/order/cleanup and executed mutants precede independent review. Coordinator obtains emitted-symbol facts from fresh native evidence; never edit original identities or grant/demote claims. Existing BYTE_EXACT obligations remain, no prolonged spelling iteration."
+  ],
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "46a3d7771689f88454238c2359782d734a4ac10e",
+  "subjects": [
+    {
+      "address": 6130224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6132672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ]
+}
