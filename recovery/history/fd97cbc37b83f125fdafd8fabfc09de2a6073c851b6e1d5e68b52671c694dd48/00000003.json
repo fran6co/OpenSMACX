@@ -1,0 +1,23 @@
+{
+  "event_id": "f82907eb2a14944673fd5aefb8752d5f983faefd62b478f5e7fb2ed5221b147e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Renew complete47B760 caller editing permission: pinned switch47B8B7/47B8BA and selector47BB80..47BBE5 index18 target47B9A4 show gate-enabled unknown/negative/>100 rule positions join unchanged-options send, not return. Correct only default return to break and add full native table/actualsource controls; retain other behavior/mappings/original task baseline. This extends previous target-helper-only decision, not original identity set or acceptance proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4700000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4163bb92070cd9321fc1a0adba364b75272876b4e1a7dd4f34a3ea97c9f44cb5",
+  "request_id": "netwin-unknown-rule-send-oct12",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:netwin-scalar-pickers-oct12"
+}
