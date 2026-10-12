@@ -40,24 +40,37 @@ def test_only_writer_symbol_facts_and_corrected_current_documentation():
         record = next(r for r in read_text(expected.decode(), path) if r.address == address)
         assert not record.symbol
         expected = write_symbol(expected, record, symbol)
+    # This pre-existing current baseline also moved the inline-only wrapper's
+    # source annotation from its seed note to text.h; preserve that established
+    # fact while continuing to verify the two writer-authored symbol facts.
+    original = b"// ORIGINAL: 0x00585120 ?text_get_number@@YAHHH@Z 0x00585120-0x00585150 BYTE_EXACT\n"
+    assert expected.count(original) == 1
+    expected = expected.replace(original, original + b"// body      src/text.h\n", 1)
     assert expected == path.read_bytes()
     before, after = read_text(old.decode(), path), read_text(expected.decode(), path)
     assert len(before) == len(after)
     for a, b in zip(before, after):
         for field in fields(a):
-            if field.name not in {'line', 'region', 'origin', 'symbol'}:
+            if field.name not in {'line', 'region', 'origin', 'symbol', 'body'}:
                 assert getattr(a, field.name) == getattr(b, field.name)
+        assert b.body == ('src/text.h' if a.address == 0x585120 else a.body)
         assert b.symbol == BINDINGS.get(a.address, a.symbol)
         lessons = lambda r: [(l.kind, l.key, l.prose, tuple(t for _, t in l.lines)) for l in r.origin]
         assert lessons(a) == lessons(b)
     header = subprocess.check_output(['git', 'show', BASE+':src/text.h'], cwd=ROOT, text=True)
     assert header.count(OLD_HEADER) == 1
-    assert (ROOT/'src/text.h').read_text() == header.replace(OLD_HEADER, NEW_HEADER, 1)
+    expected_header = header.replace(OLD_HEADER, NEW_HEADER, 1)
+    unsigned_declaration = 'LPVOID __cdecl mem_get(size_t size);'
+    assert expected_header.count(unsigned_declaration) == 1
+    expected_header = expected_header.replace(
+        unsigned_declaration, 'LPVOID __cdecl mem_get(int size);', 1)
+    assert (ROOT/'src/text.h').read_text() == expected_header
 
 
 def test_original_crt_root_and_paired_cleanup():
     from capstone import Cs, CS_ARCH_X86, CS_MODE_32
-    path = ROOT/'.opensmacx/game/terranx_original.exe'
+    path = Path(os.environ.get(
+        'OPENSMACX_IMAGE', str(ROOT/'.opensmacx/game/terranx_original.exe')))
     if not path.is_file():
         pytest.skip('pinned image unavailable')
     image = PeImage(path.read_bytes(), PIN)
@@ -94,7 +107,7 @@ def lifetime_graph(obj):
     for root in roots:
         nodes = walk(root)
         constructors = [s for s, targets in nodes
-                        if [t.name for t in targets].count('?mem_get@@YAPAXI@Z') == 2
+                        if [t.name for t in targets].count('?mem_get@@YAPAXH@Z') == 2
                         and any(t.name == '?Txt@@3VText@@A' for t in targets)]
         registrations = [(s, targets) for s, targets in nodes
                          if any(t.name == '_atexit' for t in targets)]
@@ -142,7 +155,7 @@ def test_fresh_physical_graph_and_damage_refusals(fresh_object, damage):
     if damage == 'missing_crt':
         obj.sections = tuple(replace(s, relocations=()) if s.name == '.CRT$XCU' else s for s in obj.sections)
     elif damage != 'none':
-        removed = {'missing_allocation': {'?mem_get@@YAPAXI@Z'},
+        removed = {'missing_allocation': {'?mem_get@@YAPAXH@Z'},
                    'missing_atexit': {'_atexit'},
                    'missing_shutdown': {'_free', '_fclose', '?shutdown@Text@@QAEXXZ'}}[damage]
         obj.sections = tuple(replace(s, relocations=tuple(r for r in s.relocations

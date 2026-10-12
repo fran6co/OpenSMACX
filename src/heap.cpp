@@ -178,7 +178,8 @@ void Heap::squeeze(int UNUSED(toggle)) {
 /*
 Purpose: Initialize the class instance and allocate the requested memory size.
 // ORIGINAL: 0x005D4620 ?init@Heap@@QAE_NH@Z 0x005D4620-0x005D4675 BYTE_EXACT
-// symbol    ?init@Heap@@QAEHI@Z
+// RECOVERY_BINDING: v1 {"reason":"Use a full-width error result: the original returns EAX=1 on allocation failure and EAX=0 on success, and its callers test all of EAX. The catalogue bool decoration has no independent debug provenance and remains an unresolved historical identity, not authority to narrow the result to AL.","evidence":["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x005D465B/0x005D466F: full-EAX failure/success results","pinned:0x0060161E/0x00616912/0x005FE08C: original callers test EAX"]}
+// symbol    ?init@Heap@@QAEHH@Z
 // size      85 bytes
 // prototype bool (__thiscall ?init@Heap@@QAE_NH@Z)(Heap* this, int)
 // callers   7   call targets   2
@@ -188,7 +189,7 @@ Purpose: Initialize the class instance and allocate the requested memory size.
 Return Value: Was there an error? true/false
 Status: Complete
 */
-BOOL Heap::init(size_t req_size) {
+BOOL Heap::init(int req_size) {
     // shutdown()'S BODY, INLINED AND WHOLLY GUARDED: `osmx calls` names
     // 0x005D4510 and 0x00644EF2 (free) only, no call to 0x005D45B0
     // (Heap::shutdown) - and unlike shutdown() itself, the image's `je`
@@ -228,7 +229,7 @@ Purpose: Get the requested memory size. If there currently isn't enough memory t
 //        call sites instead of calling it - identical 0.943/15/104, so
 //        VC6 already folds say_num() the same way here. Reverted to the
 //        say_num() spelling as the more idiomatic match to its own lever.
-// symbol    ?get@Heap@@QAEPAXI@Z
+// symbol    ?get@Heap@@QAEPAXH@Z
 // size      331 bytes
 // prototype void* (__thiscall ?get@Heap@@QAEPAXH@Z)(Heap* this, int reqSize)
 // callers   17   call targets   5
@@ -239,8 +240,8 @@ Purpose: Get the requested memory size. If there currently isn't enough memory t
 Return Value: Memory pointer with address to requested size
 Status: Complete
 */
-LPVOID Heap::get(size_t req_size) {
-    while (static_cast<int>(free_size_) < static_cast<int>(req_size)) {
+LPVOID Heap::get(int req_size) {
+    while (static_cast<int>(free_size_) < req_size) {
         if (err_flags_ & 1) {
             return NULL; // error
         }
@@ -264,7 +265,7 @@ LPVOID Heap::get(size_t req_size) {
             say_num((int)free_size_);
             add_lf(StringTemp);
             strcat(StringTemp, "Requested size: ");
-            say_num((int)req_size);
+            say_num(req_size);
             MessageBoxA(NULL, StringTemp, "Heap Notice!!", MB_OK);
             exit(3);
         }

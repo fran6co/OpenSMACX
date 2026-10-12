@@ -54,8 +54,8 @@ class Heap {
   void reset();
   void shutdown();
   void squeeze(int UNUSED(toggle) toggle);
-  BOOL init(size_t req_size);
-  LPVOID get(size_t req_size);
+    BOOL init(int req_size);
+  LPVOID get(int req_size);
   // additional functions to assist with encapsulation
   size_t get_base_size() { return base_size_; } // Get base total memory size
   LPVOID get_base() { return base_; }   // Get base memory address pointer

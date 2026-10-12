@@ -223,9 +223,9 @@ Purpose: Set the button's bubble text.
 //   expands to the /Oi `repne scasb`/`rep movsd` sequence and this body grew
 //   past the image's 36 instructions. Same fix in set_name and init below.
 Return Value: Zero on success, non-zero on error
-Status: Complete with redirect for free to prevent hang/freeze. Incompatibility between older
-        version of free with newer SDK version of free CRT. Revisit once more of code is redirected
-        to dll.
+Status: Complete. Historical note: an earlier DLL/CRT migration recorded a
+        `free` compatibility concern; this recovered body follows the pinned
+        original path and uses the canonical `mem_get` allocator.
 */
 int BaseButton::set_bubble_text(LPCSTR input) {
     if (bubble_text_) {
@@ -234,7 +234,7 @@ int BaseButton::set_bubble_text(LPCSTR input) {
     }
     if (input) {
         size_t len = strlen(input) + 1;
-        LPSTR const allocated = (LPSTR)mem_get_old(len);
+        LPSTR const allocated = (LPSTR)mem_get(static_cast<int>(len));
         bubble_text_ = allocated;
         if (!allocated) {
             return 4;
@@ -278,9 +278,9 @@ Purpose: Set the button's name string.
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470
 Return Value: Zero on success, non-zero on error
-Status: Complete with redirect for free to prevent hang/freeze. Incompatibility between older
-        version of free with newer SDK version of free CRT. Revisit once more of code is redirected
-        to dll.
+Status: Complete. Historical note: an earlier DLL/CRT migration recorded a
+        `free` compatibility concern; this recovered body follows the pinned
+        original path and uses the canonical `mem_get` allocator.
 */
 int BaseButton::set_name(LPCSTR input) {
     if (name_) {
@@ -290,7 +290,7 @@ int BaseButton::set_name(LPCSTR input) {
     size_t len = 0;
     if (input) {
         len = strlen(input) + 1;
-        name_ = (LPSTR)mem_get_old(len);
+        name_ = (LPSTR)mem_get(static_cast<int>(len));
         if (!name_) {
             return 4;
         }
@@ -595,11 +595,11 @@ Return Value: No parent (3); name allocation failed (4); otherwise
               GraphicWin::init's own code, which is zero on success
 Status: Complete
 Verification note: the `return 4` arm is unreachable through the recovered
-         mem_get_old, which pops a message box and calls exit(4) rather than
+         mem_get, which pops a message box and calls exit(4) rather than
          answering null, exactly as the original 0x005D4510 does. The
          store-then-test order is transcribed from the bytes - 0x00607248
          stores, 0x0060724E tests - but no leaf fixture can drive that arm
-         without replacing mem_get_old itself, so it is unobserved by
+         without replacing mem_get itself, so it is unobserved by
          construction rather than by omission.
 Verification note: the eight arguments do NOT map straight through to
          GraphicWin::init. The name is not forwarded at all - a literal null
@@ -625,7 +625,7 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
         // name_ is overwritten without being freed first. The slot-0x168 close
         // above is what released and zeroed the previous string, and the
         // original relies on that instead of repeating set_name's guard.
-        LPSTR const allocated = static_cast<LPSTR>(mem_get_old(len));
+        LPSTR const allocated = static_cast<LPSTR>(mem_get(static_cast<int>(len)));
         name_ = allocated;
         if (!allocated) {
             return 4;

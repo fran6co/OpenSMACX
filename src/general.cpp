@@ -369,32 +369,20 @@ Status: Complete
 /*
 Purpose: Allocate memory with error checking.
 // ORIGINAL: 0x005D4510 ?mem_get@@YAPAXH@Z 0x005D4510-0x005D453C BYTE_EXACT
-// symbol    ?mem_get@@YAPAXI@Z
+// symbol    ?mem_get@@YAPAXH@Z
 // size      44 bytes
-// prototype void* (__cdecl ?mem_get@@YAPAXH@Z)(size_t size)
+// prototype void* (__cdecl ?mem_get@@YAPAXH@Z)(int size)
 // callers   88   call targets   2
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x00644DFF 0x006470A6
 // indirect  0x005D452E
 Return Value: Pointer to allocated memory
-Status: Complete with two versions of malloc to prevent crash. Incompatibility with newer SDK 
-        version of malloc CRT. Revisit once more code is redirected to dll.
+Status: Complete. Historical note: an earlier DLL/CRT migration used two
+        malloc wrappers to avoid a reported SDK incompatibility; the recovered
+        callers now use the canonical pinned int-sized mem_get contract.
 */
-LPVOID __cdecl mem_get_old(size_t size) {
-    LPVOID result = malloc(size);
-    if (!result) {
-        MessageBoxA(NULL,
-            "Windows has run out of virtual memory; the game will exit. "
-            "Recommendations: defragment your hard drive; use Control Panel "
-            "(System/Performance/Virtual Memory) to increase your virtual memory to at least 128MB",
-            "FATAL ERROR", MB_ICONWARNING);
-        exit(4);
-    }
-    return result;
-}
-
-LPVOID __cdecl mem_get(size_t size) {
+LPVOID __cdecl mem_get(int size) {
     LPVOID result = malloc(size);
     if (!result) {
         MessageBoxA(NULL,

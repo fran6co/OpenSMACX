@@ -137,7 +137,7 @@ def production_parts():
     )
     heap_reset = extract_body(heap_cpp, "void Heap::reset()")
     heap_destructor = extract_body(heap_cpp, "Heap::~Heap()")
-    heap_init = extract_body(heap_cpp, "BOOL Heap::init(size_t req_size)")
+    heap_init = extract_body(heap_cpp, "BOOL Heap::init(int req_size)")
     heap_reset = instrument_body(heap_reset, "++heap_reset_calls; record(50, this);")
     heap_destructor = instrument_body(
         heap_destructor, "++heap_destructor_calls; record(51, this);"
@@ -282,9 +282,9 @@ struct Heap {
   Heap() : err_flags_(0), base_(0), current_(0), base_size_(0), free_size_(0) {}
   ~Heap();
   void reset();
-  BOOL init(size_t req_size);
+  BOOL init(int req_size);
 };
-static void *mem_get(size_t size) { return std::malloc(size); }
+static void *mem_get(int size) { return std::malloc(static_cast<size_t>(size)); }
 HEAP_DESTRUCTOR
 HEAP_RESET
 HEAP_INIT

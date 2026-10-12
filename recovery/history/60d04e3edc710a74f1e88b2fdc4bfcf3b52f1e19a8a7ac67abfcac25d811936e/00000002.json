@@ -1,0 +1,17 @@
+{
+  "event_id": "9553261c09d10f86f08cb331f2c5ee698d246e0f063cf4a99cf5923677688597",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "allocator-init-return-register-oct13a",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/heap.cpp and src/heap.h retain BOOL Heap::init(int) to reproduce full-register success/failure and caller effects; keep ORIGINAL catalogue _NH identity and byte claim unchanged, current emitted HH alias pending fresh physical confirmation. Signed request interfaces and three canonical BaseButton calls remain. Original return-type/catalogue-name provenance is unresolved; no automatic or game acceptance."
+    ]
+  },
+  "previous_event": "ebf223365b4c39165dd04fc98e251b9d5e87598f5162f104ec0fabd915ed6037",
+  "request_id": "allocator-init-retain-full-width-oct13a",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:allocator-signed-contract-oct13a"
+}

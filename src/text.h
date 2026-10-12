@@ -27,7 +27,7 @@
 // defined in-class and calls it. Spelled identically to general.h's line, or
 // VC6 reports `C2373: redefinition; different type modifiers` on whichever
 // declaration it sees second.
-LPVOID __cdecl mem_get(size_t size);
+LPVOID __cdecl mem_get(int size);
 
 // DECLARED BEFORE THE CLASS so the `friend` inside it refers to this
 // namespace-scope function. VC6 injects a friend declared only in-class

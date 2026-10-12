@@ -16,7 +16,7 @@ acceptance are claimed. Legacy FlatButton default storage is a synthetic table;
 the existing default-colour alias is bound to its real DialogDefaults+5 relation
 in this fixture, not evidence of repaired product ownership. Callback mutations
 and a null allocator exercise caller ordering, not the real CRT's behavior
-(actual mem_get_old exits instead of returning null). No bodies are rewritten
+(actual canonical mem_get exits instead of returning null). No bodies are rewritten
 for the positive control. ASan/UBSan remain strict; sandbox LSan is disabled.
 """
 from pathlib import Path
@@ -102,7 +102,7 @@ def actual():
         one(c['gamma'], r'^Sprite \*PushButtonDefaults\[18\];'),
         one(h['dialog'], r'^extern uint32_t DialogDefaults\[37\];'),
         'uint32_t DialogDefaults[37];',
-        one(h['general'], r'^LPVOID __cdecl mem_get_old\(size_t size\);'),
+        one(h['general'], r'^LPVOID __cdecl mem_get\(int size\);'),
     ))
     for unit, cls in (('basebutton', 'BaseButton'), ('flatbutton', 'FlatButton'),
                       ('imagebutton', 'ImageButton'), ('gamma', 'PushButton')):
@@ -163,7 +163,7 @@ int expected_width=19,expected_height=-13;std::vector<void*> frees;
 char *last_allocation=nullptr;
 void fixture_free(void*p){frees.push_back(p);event('F');std::free(p);}
 char* text(const char*s){auto n=std::strlen(s)+1;auto p=static_cast<char*>(std::malloc(n));std::memcpy(p,s,n);return p;}
-LPVOID __cdecl mem_get_old(size_t size){require(size==6);event('A');
+LPVOID __cdecl mem_get(int size){require(size==6);event('A');
     if(allocation_fails)return nullptr;last_allocation=static_cast<char*>(std::malloc(size));
     std::memset(last_allocation,0x5a,size);return last_allocation;}
 GraphicWin::~GraphicWin(){event('D');}

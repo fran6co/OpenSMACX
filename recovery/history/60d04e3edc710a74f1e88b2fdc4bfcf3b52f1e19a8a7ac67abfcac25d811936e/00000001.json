@@ -1,0 +1,20 @@
+{
+  "event_id": "ebf223365b4c39165dd04fc98e251b9d5e87598f5162f104ec0fabd915ed6037",
+  "payload": {
+    "affects": [
+      "entity-f774af17bdc5c6f91de9e1ad4a448d3ab317cad927f129d0119acda85377906e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "allocator-init-return-register-oct13a",
+    "evidence": [
+      "Fresh both-profile VC6 bool(int) COFF probe emits xor al,al on success after storing a non-null allocation pointer from EAX; upper pointer bits remain. Pinned init5D4620 success clears EAX at5D466F, failure returns EAX1 at5D465B; mapped BasePop/Strings/TextIndex callers test full EAX. No original debug provenance independently validates catalogue _N."
+    ],
+    "hypothesis": "Recorded bool return spelling conflicts with pinned full-EAX success result and original full-EAX callers; retain a full-width current return contract while preserving the original identity.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "allocator-init-return-register-oct13a",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:allocator-signed-contract-oct13a"
+}
