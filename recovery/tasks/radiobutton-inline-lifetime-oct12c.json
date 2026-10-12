@@ -9,7 +9,9 @@
     "src/jackal/radiobutton.cpp",
     "src/jackal/radiobutton.h",
     "src/dialogs.cpp",
-    "recovery/tests/test_radiobutton_inline_lifetime_oct12c.py"
+    "recovery/tests/test_radiobutton_inline_lifetime_oct12c.py",
+    "recovery/tests/test_container_lifecycle_actual_source.py",
+    "recovery/tests/test_virtual_adjustor_owners_oct6.py"
   ],
   "subjects": [
     {
@@ -464,6 +466,7 @@
     }
   ],
   "evidence": [
+    "Coordinator authorizes test-only follow-up for actual inline header destruction and the five complete RadioButton phase bindings now hosted by Dialogs. Preserve fixed historical checkpoints, identity/history comparisons and behavioral mutants. The preexisting Dialogs::close 0x612960 extraction repair must receive its own exact empty-body/identity/span/claim guard, not a blanket extraction waiver. Original task baseline and all C++ scopes remain unchanged.",
     "Pinned RadioButton constructor/table/phase relationships are already source-owned. Original406A90 is83-byte non-deleting phase and406F60 is130-byte scalar deleting phase; three original deleting adjustors406F50/407060/407080 tail into the latter.",
     "One native source-preserving overlay defining virtual ~RadioButton(){close();} in the real class header reproduces all five original phases in the genuine Dialogs owner object:406A90 is BYTE_EXACT under both profiles;406F60 and all three adjustors are BYTE_EXACT under application profile1. Jackal RadioButton object loses separate406A90 and emits127-byte deleting body under profile0. This demonstrates current compiler-source emission, not original source/TU spelling or final-link retained selection.",
     "Move all five existing FILE mappings with complete identities/spans/claims/history into dialogs.cpp through the native source writer, where real class usage emits them. Header owns the actual C++ destructor body, not a stand-in or hand-installed table. Keep existing RadioButton layout, bases, fields, close behavior and all other implementations unchanged. No flag changes, demotions, artificial emit anchors, compatibility wrappers, original-address calls or assembly.",
