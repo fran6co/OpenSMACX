@@ -1,0 +1,48 @@
+{
+  "author": "coordinator",
+  "base_revision": "972001d8bd431f5b76d9cba53342c644f9d346c9",
+  "editable_files": [
+    "recovery/tests/test_random_wrap_contract_oct13f.py",
+    "src/random.cpp",
+    "src/random.h"
+  ],
+  "evidence": [
+    "Original get625770..6257A7 and free wrapper625810..62584F use signed CMP/JLE, XOR swap, wrapping SUB, 32-bit LCG/product, logical SHR16 and endpoint addition. Current cast(max-min) performs signed subtraction before conversion; convert both endpoints before unsigned subtraction. This preserves original machine behavior rather than introducing a gameplay fix. Preserve all original identities, claims, MEASURED attributes and compiler policies."
+  ],
+  "intent": "Express the pinned 32-bit wrapping endpoint subtraction in defined C++, preserving signed ordering, seed updates and the inlined free wrapper.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6445072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "random-wrap-contract-oct13f"
+}
