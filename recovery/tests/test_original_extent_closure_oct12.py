@@ -106,15 +106,18 @@ def source_pairs():
 
 
 def test_only_eight_extents_change_and_cpp_claims_identities_survive(source_pairs):
+    from test_caviar_record_api_typing_oct12 import assert_api_symbol_transition, restore_api_migration
     for relative, (before, current, old, new) in source_pairs.items():
-        assert cpp_tokens(current) == cpp_tokens(before), relative
+        compared = restore_api_migration(current) if relative == "src/caviar.cpp" else current
+        assert cpp_tokens(compared) == cpp_tokens(before), relative
         assert new.keys() == old.keys(), relative
         for address, row in new.items():
             previous = old[address]
             for field in fields(row):
-                if field.name not in {"line", "region", "origin", "image_spans"}:
+                if field.name not in {"line", "region", "origin", "image_spans", "symbol"}:
                     assert getattr(row, field.name) == getattr(previous, field.name), (
                         relative, hex(address), field.name)
+            assert_api_symbol_transition(address, previous.symbol, row.symbol)
             assert lesson_text(row) == lesson_text(previous)
             expected = EXTENTS[address][1] if address in EXTENTS else previous.image_spans
             assert row.image_spans == expected, (relative, hex(address))

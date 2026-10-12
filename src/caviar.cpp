@@ -2100,6 +2100,7 @@ static const float vox_threshold_seven = 7.0f;   // 0x00670FEC
 // 0x009B96A0..0x009B96AC. Named 2026-09-04 from the two bodies that fill it:
 // all four come off the created VoxRenderRecord's own clip fields
 // (+0x8/+0xc/+0x10/+0x14), the min edges incremented by one.
+// RECOVERY_OBJECT: v1 0x009B96A0 ?vox_clip_rect@@3PAIA
 uint32_t vox_clip_rect[4];     // 0x009B96A0
 // RECOVERY_OBJECT: v3 0x00698B70 0x00698B74 ?vox_blit_cursor@@3IA 0x0063B11C member ?CaviarBlitState@@3UCaviarBlitStateCandidate@@A destination_cursor_
 // RECOVERY_OBJECT: v3 0x00698B74 0x00698B78 ?vox_blit_row_bytes@@3IA 0x0063B072 member ?CaviarBlitState@@3UCaviarBlitStateCandidate@@A source_row_bytes_
@@ -2110,8 +2111,8 @@ CaviarBlitStateCandidate CaviarBlitState = {0, 0, 0};
 // declarations keep the call sites above them compiling; being same-file
 // definitions, the calls stay `call rel32` like the image.
 extern "C" void __cdecl vox_stage_error(const char *message);  // stage a message string
-extern "C" void __cdecl sub_63ad60(unsigned char *record);
-extern "C" char __cdecl sub_63f9b0(unsigned char *record);
+extern "C" void __cdecl sub_63ad60(VoxRenderRecord *record);
+extern "C" char __cdecl sub_63f9b0(VoxRenderRecord *record);
 
 // The CVR loader, homed below (0x006385D0..0x00638720, 0x00638CC0, 0x00638DE0,
 // 0x0063B072). Declarations first so the loader's own call graph - which is
@@ -2208,7 +2209,7 @@ int __cdecl vox_expand_palette(int fd, uint8_t *palette) {
 }
 
 // Defined at the foot of this file, promoted from its artifact.
-void __cdecl sub_63ae20(unsigned char *record);
+void __cdecl sub_63ae20(VoxRenderRecord *record);
 
 
 /*
@@ -2490,10 +2491,14 @@ VoxRenderRecord *__cdecl vox_create_record(
         return 0;
     }
 
+    // Original bound setup sign-extends each low word. The descriptor's
+    // full dwords still control the later row-table allocation path.
     record->draw_right_ =
-        static_cast<int>(static_cast<uint16_t>(setup_block->colour_width_)) - 1;
+        static_cast<int>(static_cast<int16_t>(static_cast<uint16_t>(
+            setup_block->colour_width_))) - 1;
     const int height_minus_1 =
-        static_cast<int>(static_cast<uint16_t>(setup_block->height_)) - 1;
+        static_cast<int>(static_cast<int16_t>(static_cast<uint16_t>(
+            setup_block->height_))) - 1;
     record->draw_bottom_ = height_minus_1;
     if (record->draw_right_ >= 0 && height_minus_1 >= 0) {
         record->draw_width_ = record->draw_right_ + 1;
@@ -2507,11 +2512,11 @@ VoxRenderRecord *__cdecl vox_create_record(
     case 1:
     case 2:
     case 4:
-        sub_63ad60((unsigned char *)record);
+        sub_63ad60(record);
         break;
     case 3:
     case 5:
-        sub_63ae20((unsigned char *)record);
+        sub_63ae20(record);
         break;
     default:
         vox_stage_error(vox_msg_cpu_unsupported);
@@ -2520,7 +2525,7 @@ VoxRenderRecord *__cdecl vox_create_record(
     record->ramp_a_ptr_ = 0;
     record->ramp_b_ptr_ = 0;
     if (setup_block->colour_width_ != 0 && setup_block->height_ != 0 &&
-        sub_63f9b0((unsigned char *)record) != 0) {
+        sub_63f9b0(record) != 0) {
         return 0;
     }
     vox_record_count += 1;
@@ -2531,14 +2536,13 @@ VoxRenderRecord *__cdecl vox_create_record(
 Purpose: Fill a render record's pixel-size dispatch slots for CPU ranks 3 and
          5, choosing the table set by the record's odd-alignment flag byte.
 // ORIGINAL: 0x0063AE20 sub_63ae20 0x0063AE20-0x0063AED2 BYTE_EXACT
-// symbol    ?sub_63ae20@@YAXPAE@Z
+// symbol    ?sub_63ae20@@YAXPAUVoxRenderRecord@@@Z
 // LEVER: switch(type){case 1: case 2: default:} reproduces the dec/je/dec/jne
 //        idiom; if/else-if compiled to cmp/jne instead (from the promoted
 //        artifact, measured BYTE_EXACT there).
 */
-void __cdecl sub_63ae20(unsigned char *record) {
-    VoxRenderRecord *const typed =
-        reinterpret_cast<VoxRenderRecord *>(record);
+void __cdecl sub_63ae20(VoxRenderRecord *record) {
+    VoxRenderRecord *const typed = record;
     const unsigned char type = typed->setup_block_->pixel_size_;
     caviar_install_record_kernels_candidate(
         typed, type, (typed->setup_id_ & 1u) != 0);
@@ -2623,9 +2627,8 @@ Purpose: Fill a render record's pixel-size dispatch slots for CPU ranks 1, 2
 // measured levers.
 Return Value: n/a
 */
-void __cdecl sub_63ad60(unsigned char *record) {
-    VoxRenderRecord *const typed =
-        reinterpret_cast<VoxRenderRecord *>(record);
+void __cdecl sub_63ad60(VoxRenderRecord *record) {
+    VoxRenderRecord *const typed = record;
     const unsigned char type = typed->setup_block_->pixel_size_;
     caviar_install_record_kernels_candidate(
         typed, type, (typed->setup_id_ & 1u) != 0);
@@ -2676,8 +2679,8 @@ Purpose: Allocate a render record's two per-entry ramps. Frees whatever the
 //        edi=base, ebx=step, ebp=scratch), only its placement differs.
 Return Value: 0 when both ramps are filled, 1 on failure.
 */
-extern "C" char __cdecl sub_63f9b0(unsigned char *record) {
-    VoxRenderRecord *const typed = reinterpret_cast<VoxRenderRecord *>(record);
+extern "C" char __cdecl sub_63f9b0(VoxRenderRecord *record) {
+    VoxRenderRecord *const typed = record;
     if (typed->ramp_a_ptr_ != 0) {
         vox_free_slot(typed->ramp_a_ptr_);
     }
@@ -6158,7 +6161,7 @@ extern "C" int __cdecl vox_read_dword(int fd, CvrRecord *record) {
 Purpose: Fill the engine's clip rectangle from the created render record and
          return its address, or null when no record has been created.
 // ORIGINAL: 0x00618520 ?UNK13@Caviar@@QAEXXZ 0x00618520-0x00618556 BYTE_EXACT
-// symbol    ?clip_rect@Caviar@@QAEPAXXZ
+// symbol    ?clip_rect@Caviar@@QAEPAIXZ
 // size      54 bytes
 // prototype void (__thiscall ?UNK13@Caviar@@QAEXXZ)(Caviar* this)
 // callers   3   call targets   0
@@ -6175,7 +6178,7 @@ Purpose: Fill the engine's clip rectangle from the created render record and
 // address in eax, so this tree spells the return type it really has.
 Return Value: the clip rectangle, or null.
 */
-void *Caviar::clip_rect() {
+uint32_t *Caviar::clip_rect() {
     VoxRenderRecord *record = CaviarScene.created_;
     if (record == 0) {
         return 0;
@@ -6193,7 +6196,7 @@ Purpose: Copy the created render record's clip bounds into a caller's array:
          leaves the caller's memory alone.
 // ORIGINAL: 0x00618560 ?UNK14@Caviar@@QAEXH@Z 0x00618560-0x006185A0
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:the RET 4 instruction begins at 0x61859D and ends at 0x6185A0; the former exclusive bound cut that instruction."], "reason": "Retain the complete original rectangle operation, including all bytes of its callee-pop return."}
-// symbol    ?fill_clip_rect@Caviar@@QAEXH@Z
+// symbol    ?fill_clip_rect@Caviar@@QAEXPAI@Z
 // size      64 bytes
 // prototype void (__thiscall ?UNK14@Caviar@@QAEXH@Z)(Caviar* this, int)
 // callers   1   call targets   0
@@ -6216,8 +6219,8 @@ Purpose: Copy the created render record's clip bounds into a caller's array:
 //        reaches it; /c /O2 /Gy /GR- /GX.
 Return Value: n/a
 */
-void Caviar::fill_clip_rect(int destination) {
-    int *out = (int *)destination;
+void Caviar::fill_clip_rect(uint32_t *destination) {
+    uint32_t *out = destination;
     if (out != 0) {
         if (CaviarScene.created_ != 0) {
             out[0] = CaviarScene.created_->primary_clip_.left_;

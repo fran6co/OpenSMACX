@@ -83,7 +83,7 @@ int main() {
     record.setup_block_ = &setup;
     memset(ramp_a_storage, 0, sizeof(ramp_a_storage));
     memset(ramp_b_storage, 0, sizeof(ramp_b_storage));
-    assert(sub_63f9b0(reinterpret_cast<unsigned char *>(&record)) == 0);
+    assert(sub_63f9b0(&record) == 0);
     assert(alloc_calls == 2 && requested[0] == 8 && requested[1] == 12);
     assert(record.ramp_a_ptr_ == ramp_a_storage);
     assert(record.ramp_b_ptr_ == ramp_b_storage);
@@ -97,7 +97,7 @@ int main() {
     memset(ramp_b_storage, 0xA5, sizeof(ramp_b_storage));
     setup.depth_buffer_ = 0;
     alloc_calls = 0; setup_mutation = 0;
-    assert(sub_63f9b0(reinterpret_cast<unsigned char *>(&record)) == 0);
+    assert(sub_63f9b0(&record) == 0);
     for (unsigned i = 0; i < sizeof(uint16_t *); ++i)
         assert(reinterpret_cast<unsigned char *>(ramp_a_storage)[i] == 0xA5);
     for (unsigned i = 0; i < sizeof(int32_t); ++i)
@@ -108,7 +108,7 @@ int main() {
     allocation_mode = 1; alloc_calls = 0;
     memset(CaviarOutputMessageWindow.message_, 0xCC,
            sizeof(CaviarOutputMessageWindow.message_));
-    assert(sub_63f9b0(reinterpret_cast<unsigned char *>(&record)) == 1);
+    assert(sub_63f9b0(&record) == 1);
     assert(alloc_calls == 2 && record.ramp_a_ptr_ == ramp_a_storage &&
            record.ramp_b_ptr_ == 0);
     assert(memcmp(CaviarOutputMessageWindow.message_,
@@ -119,12 +119,12 @@ int main() {
     // so even huge wrapped sizes are observed but never allocated.
     allocation_mode = 3; alloc_calls = 0; setup_mutation = 0;
     setup.height_ = -1;
-    assert(sub_63f9b0(reinterpret_cast<unsigned char *>(&record)) == 1);
+    assert(sub_63f9b0(&record) == 1);
     assert(alloc_calls == 2 && requested[0] == 0xFFFFFFFCUL &&
            requested[1] == 0xFFFFFFFCUL);
     alloc_calls = 0;
     setup.height_ = 0x40000000;
-    assert(sub_63f9b0(reinterpret_cast<unsigned char *>(&record)) == 1);
+    assert(sub_63f9b0(&record) == 1);
     assert(alloc_calls == 2 && requested[0] == 0 && requested[1] == 0);
     return 0;
 }
@@ -169,13 +169,13 @@ def test_actual_ramp_body_preserves_borrowed_descriptor_and_distinct_domains():
     assert "uint8_t callback_prefix_[offsetof(VoxIoCallbacks, seek)]" in output_view
     assert "uint32_t projection_words_[0x6B]" in output_view
     assert "memcpy(&callback" in source
-    body = extract(source, "extern \"C\" char __cdecl sub_63f9b0(unsigned char *record) {")
+    body = extract(source, "extern \"C\" char __cdecl sub_63f9b0(VoxRenderRecord *record) {")
     build_and_run(body)
 
 
 def test_ramp_controls_reject_mutated_base_and_second_allocation_flow():
     source = SOURCE.read_text()
-    body = extract(source, "extern \"C\" char __cdecl sub_63f9b0(unsigned char *record) {")
+    body = extract(source, "extern \"C\" char __cdecl sub_63f9b0(VoxRenderRecord *record) {")
     mutated = body.replace("if (base_bits == 0)", "if (base_bits != 0)", 1)
     assert mutated != body
     try:
@@ -187,7 +187,7 @@ def test_ramp_controls_reject_mutated_base_and_second_allocation_flow():
 
 def test_unsigned_wrapped_sizes_and_signed_shift_mutant():
     source = SOURCE.read_text()
-    body = extract(source, "extern \"C\" char __cdecl sub_63f9b0(unsigned char *record) {")
+    body = extract(source, "extern \"C\" char __cdecl sub_63f9b0(VoxRenderRecord *record) {")
     build_and_run(body)
     signed = body.replace(
         "static_cast<uint32_t>(\n            typed->setup_block_->height_) << 2",

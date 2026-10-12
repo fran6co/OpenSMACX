@@ -24,7 +24,8 @@ def test_original_identity_claim_and_symbol_continuity():
 
 
 def assert_caviar_owner_continuity(before):
-    """Allow only the observed CPU owner migration, not missing obligations."""
+    """Allow observed CPU ownership and exact typed-API symbol transitions."""
+    from test_caviar_record_api_typing_oct12 import assert_api_symbol_transition
     path = ROOT / "src/caviar.cpp"
     after = read_text(path.read_text(), path)
     cpu_path = ROOT / "src/caviar_cpu.cpp"
@@ -33,6 +34,17 @@ def assert_caviar_owner_continuity(before):
     assert len(by_address) == len(after) == len(before)
     for record in before:
         record = expected_recorded_tail(expected_extended_record(record))
+        # The independently verified Oct12 extent repair completed these two
+        # exact returns. Retain every other historical field and bound.
+        prior_extents = {
+            0x618560: (((0x618560, 0x61859F),), ((0x618560, 0x6185A0),)),
+            0x6183D0: (((0x6183D0, 0x618424),), ((0x6183D0, 0x618426),)),
+        }
+        if record.address in prior_extents:
+            from dataclasses import replace
+            previous, complete = prior_extents[record.address]
+            assert record.image_spans in (previous, complete)
+            record = replace(record, image_spans=complete)
         current = by_address[record.address]
         assert record.function_fragment == current.function_fragment
         if record.address == 0x63E860:
@@ -44,7 +56,7 @@ def assert_caviar_owner_continuity(before):
             assert current.symbol == "?vox_detect_cpu@@YAXXZ"
         else:
             assert _continuity_fields(record) == _continuity_fields(current)
-            assert record.symbol == current.symbol
+            assert_api_symbol_transition(record.address, record.symbol, current.symbol)
 
 
 def test_pinned_original_unordered_gates_and_relative_link():

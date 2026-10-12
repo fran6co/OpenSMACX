@@ -33,7 +33,7 @@ def program():
                        for field in ("draw_left_", "draw_top_", "draw_right_",
                                      "draw_bottom_", "draw_width_", "draw_height_"))
     assert initializer.index("record->draw_left_ =") < initializer.index("record->draw_top_ =")
-    consumer = extract(source, "void *Caviar::clip_rect()")
+    consumer = extract(source, "uint32_t *Caviar::clip_rect()")
     portions = []
     for name, signature, local in (
         ("scene_bounds", "int Caviar::render_scene(", "drawn"),
@@ -48,9 +48,7 @@ def program():
     fill = extract(source, "void Caviar::fill_clip_rect(")
     assert "if (out != 0)" in fill and "if (CaviarScene.created_ != 0)" in fill
     assert "VoxRenderRecord *record" not in fill  # alias-sensitive fresh loads
-    fill_stores = "\n".join(source_statement(fill, "out[%d] =" % index)
-                            for index in (0, 2, 1, 3))
-    portions.append("static void fill_bounds(int32_t *out) {\n" + fill_stores + "\n}\n")
+    portions.append(fill)
     return r'''#include <stdint.h>
 #include <stddef.h>
 #include <assert.h>
@@ -61,8 +59,11 @@ struct VOX_Matrix;
 struct CaviarSceneSetupDescriptorCandidate;
 ''' + declarations + r'''
 struct { VoxRenderRecord *created_; } CaviarScene;
-static int32_t vox_clip_rect[4];
-struct Caviar { void *clip_rect(); };
+static uint32_t vox_clip_rect[4];
+struct Caviar {
+    uint32_t *clip_rect();
+    void fill_clip_rect(uint32_t *destination);
+};
 struct RECT { int32_t left, top, right, bottom; };
 ''' + consumer + r'''
 static void initialize(VoxRenderRecord *record) {
@@ -87,6 +88,11 @@ int main() {
     Caviar owner;
     CaviarScene.created_ = 0;
     assert(owner.clip_rect() == 0);
+    uint32_t unchanged[4] = {11,22,33,44};
+    owner.fill_clip_rect(unchanged);
+    assert(unchanged[0] == 11 && unchanged[1] == 22 &&
+           unchanged[2] == 33 && unchanged[3] == 44);
+    owner.fill_clip_rect(0);
     CaviarScene.created_ = &record;
     record.primary_clip_.left_ = 0xFFFFFFF4U;
     record.primary_clip_.top_ = 0xFFFFFFF9U;
@@ -94,7 +100,7 @@ int main() {
     record.primary_clip_.bottom_ = 0x7FFFFFFFU;
     record.secondary_clip_.left_ = 77;
     assert(owner.clip_rect() == vox_clip_rect);
-    assert(vox_clip_rect[0] == -12 && vox_clip_rect[1] == -7);
+    assert(vox_clip_rect[0] == 0xFFFFFFF4U && vox_clip_rect[1] == 0xFFFFFFF9U);
     assert(vox_clip_rect[2] == 0);
     assert(static_cast<uint32_t>(vox_clip_rect[3]) == 0x80000000U);
     RECT scene = scene_bounds(&record);
@@ -103,9 +109,10 @@ int main() {
     assert(static_cast<uint32_t>(scene.bottom) == 0x80000000U);
     assert(primary.left == scene.left && primary.top == scene.top &&
            primary.right == scene.right && primary.bottom == scene.bottom);
-    int32_t out[4] = {0};
-    fill_bounds(out);
-    assert(out[0] == -12 && out[1] == -7 && out[2] == 0);
+    uint32_t out[4] = {0};
+    owner.fill_clip_rect(out);
+    owner.fill_clip_rect(0);
+    assert(out[0] == 0xFFFFFFF4U && out[1] == 0xFFFFFFF9U && out[2] == 0);
     assert(static_cast<uint32_t>(out[3]) == 0x80000000U);
     record.secondary_clip_.top_ = 88;
     record.secondary_clip_.right_ = record.secondary_clip_.bottom_ = 0xFFFFFFFFU;

@@ -568,8 +568,8 @@ class Caviar {
   // copy the same four values into a caller's array. The catalogue spells
   // the first `X` (void) but the body returns the rectangle's address in eax,
   // so the declaration says so.
-  void *clip_rect();
-  void fill_clip_rect(int destination);
+  uint32_t *clip_rect();
+  void fill_clip_rect(uint32_t *destination);
   // 0x00618430. Copies 0x100 bytes of shadow table into the created record.
   int set_shadow_table(unsigned char *table);
   // 0x006183D0. Rejects a draw with no Buffer and resets the six-int group.
