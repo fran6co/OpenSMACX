@@ -852,10 +852,9 @@ BOOL __cdecl get_there(int veh_id, int x_dst, int y_dst) {
 }
 
 /*
-Purpose: Determine whether point A is a coast or border tile. It seems that the point B check is
-         effectively disabled since usage of this function passes same coordinates for both points.
-         Modified return value to boolean rather than returning i. It is always treated as boolean
-         and makes a lot more sense than returning the iterator position.
+Purpose: Return the first neighboring tile index that satisfies the coast/border checks, or 0.
+         Earlier recovery prose treated the point-B comparison and integer result as unnecessary;
+         the pinned function reads both regions and returns the successful neighbor index.
 // ORIGINAL: 0x0056B480 ?coast_or_border@@YAHHHHHH@Z 0x0056B480-0x0056B5A9
 // size      297 bytes
 // prototype int (__cdecl ?coast_or_border@@YAHHHHHH@Z)(int xCoordPtA, int yCoordPtA, int xCoordPtB, int yCoordPtB, int factionID)
@@ -863,9 +862,11 @@ Purpose: Determine whether point A is a coast or border tile. It seems that the 
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x004E3EF0
-Return Value: Is point A considered a border or coast? true/false
+Return Value: First qualifying neighbor index (1..8), or zero if none qualifies.
 Status: Complete
 */
+// Historical TRIED hypothesis below is contradicted by the pinned assembly: it checks ownership
+// before rereading point A's region.
 // TRIED: best 7/110, 0.826 similar (best flag set /O2 /Gy /GR- /GX; call
 //            count already matches the image at 2, both to whose_territory).
 //            The remaining gap looks like the `region_a != region_b` OR-term
@@ -875,23 +876,22 @@ Status: Complete
 //            scored WORSE (0.780), so that is not the lever. Same
 //            xrange/on_map/is_ocean-loop register-scheduling plateau as the
 //            rest of this file otherwise. Not chased further.
-BOOL __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b, 
-                             int y_point_b, int faction_id) {
+int __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
+                            int y_point_b, int faction_id) {
     if ((int)faction_id != whose_territory(faction_id, x_point_a, y_point_a, NULL, false)) {
-        return false; // faction doesn't control point A
+        return 0; // faction doesn't control point A
     }
-    uint32_t region_a = region_at(x_point_a, y_point_a);
     uint32_t region_b = region_at(x_point_b, y_point_b);
-    for (uint32_t i = 1; i < 9; i++) {
+    for (int i = 1; i <= 8; i++) {
         int x_radius = xrange(x_point_a + RadiusOffsetX[i]);
         int y_radius = y_point_a + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && (is_ocean(x_radius, y_radius)
                 || whose_territory(faction_id, x_radius, y_radius, NULL, false) != (int)faction_id
-                || region_a != region_b)) { // not sure about reason for this
-            return true; // modified to boolean rather than returning i
+                || region_at(x_point_a, y_point_a) != region_b)) {
+            return i;
         }
     }
-    return false;
+    return 0;
 }
 
 
@@ -1989,14 +1989,20 @@ Purpose: Check if coordinates are considered near or on coast. Radius (excludes 
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     (none)
-Return Value: Is tile coast? true/false
+Return Value: Neighbor index 1..8 or 1..20, or 0 if no qualifying ocean neighbor is found.
 Status: Complete
 */
-BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius) {
-    uint32_t radius = is_base_radius ? 21 : 9;
-    for (uint32_t i = 1; i < radius; i++) {
+// Current restored contract: return the qualifying neighbor's index (1..8 or 1..20), or 0.
+int __cdecl is_coast(int x, int y, BOOL is_base_radius) {
+    int radius = is_base_radius ? 21 : 9;
+    int i = 1;
+    if (i >= radius) {
+        return 0;
+    }
+    int is_flat = MapIsFlat & 1;
+    for (; i < radius; i++) {
         int x_radius = x + RadiusOffsetX[i];
-        if (!(MapIsFlat & 1)) {
+        if (!is_flat) {
             if (x_radius < 0) {
                 x_radius += MapLongitudeBounds;
             } else if (x_radius >= (int)MapLongitudeBounds) {
@@ -2005,10 +2011,10 @@ BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius) {
         }
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
-            return true; // modified original that would return i, all calls check return as boolean
+            return i;
         }
     }
-    return false;
+    return 0;
 }
 
 /*

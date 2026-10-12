@@ -451,8 +451,8 @@ BOOL __cdecl transport_base(int base_id);
 BOOL __cdecl naval_base(int base_id);
 BOOL __cdecl convoy(int veh_id, int base_id);
 BOOL __cdecl get_there(int veh_id, int x_dst, int y_dst);
-BOOL __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
-                            int y_point_b, int faction_id);
+int __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
+                           int y_point_b, int faction_id);
 // INLINE, AND IN THE HEADER. The image has no `map_loc` - every caller
 // computes the tile address itself, because this is a helper the tree
 // invented to name what the original open-coded. Defined in a .cpp, VC6
@@ -482,7 +482,7 @@ void __cdecl site_radius(int x, int y, int UNUSED(unk_val) unk_val);
 int __cdecl new_landmark(int x, int y, LPCSTR name);
 BOOL __cdecl valid_landmark(int x, int y, int faction_id);
 void __cdecl kill_landmark(int x, int y);
-BOOL __cdecl is_coast(int x, int y, BOOL is_base_radius);
+int __cdecl is_coast(int x, int y, BOOL is_base_radius);
 void __cdecl rebuild_vehicle_bits();
 void __cdecl rebuild_base_bits();
 BOOL __cdecl is_known(int x, int y, int faction_id);
