@@ -1,0 +1,86 @@
+{
+  "author": "coordinator",
+  "base_revision": "98bd45478793064e2a7dc2565bca4725b20f8238",
+  "editable_files": [
+    "src/matrix3.cpp",
+    "recovery/tests/test_matrix3_host_control.py",
+    "recovery/tests/test_general_matrix_semantics_actual_source.py",
+    "recovery/tests/test_general_matrix_vc6_runtime_control.py",
+    "recovery/tests/test_matrix3_consolidated_actual_source.py",
+    "recovery/tests/test_matrix3_semantic_api.py",
+    "recovery/tests/test_matrix3_pointer_returns.py",
+    "recovery/tests/test_matrix3_value_results_oct12b.py"
+  ],
+  "evidence": [
+    "Fresh current census has3passes and9misses; historical claims persist, including equality restoration debt. No caller, full extent, constructor or product lifetime resolves the twelve scaffold mappings; retain all SCAFFOLD roles and source identity/spans/symbols/history. Matrix3 source name is provisional mathematics, not recovered original debug evidence or Jackal membership.",
+    "Only candidate production body edits are add_assign6347C0, subtract_assign6348F0 and scale_assign6348C0: typed independent float pointers increment within the nine observed cells with nested three-by-three countdowns, preserving increasing store order, operands, scalar reads and all bounded alias behavior. One native multi-candidate deck only; no pointer-to-integer deltas, raw addresses, class/member/signature/flags or return-ABI changes. Keep existing bodies if no readily supported improvement; no prolonged local matching pass or new claims except guarded native recording at a separate checkpoint.",
+    "Old Matrix3ReceiverView host controls now fail compilation/extraction after the existing typed source migration; newer actual-source numerical controls pass. Remove only redundant retired-name host controls after retaining their unique cancellation/rounding characterization in the consolidated current-source harness. Adapt the useful two-profile VC6/Wine boolean/alias controls to the real header and methods; retain positive and deliberately damaged paths. Use deterministic test-only memcpy NaN-bit rejection for the unordered damage variant, not an assumption about VC6 floating !=. Never add that rejection to production code. Keep signaling-NaN/unmasked/status/complete x87 limitations explicit.",
+    "Independent review and fresh build/link, source mappings/references/claim continuity plus actual-source host and leased native controls are required for manual integration. Preserve historical obligations and outside-scope source; no native automatic/full-game acceptance, ownership promotion or coverage credit is granted. Coordinator owns Git/compiler leases and fresh destination checks."
+  ],
+  "intent": "Restore live numerical source controls and try one bounded semantics-preserving typed-pointer traversal deck without inventing original Matrix3 ownership.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6506176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "matrix3-current-controls-and-traversal-oct12e"
+}
