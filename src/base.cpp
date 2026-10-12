@@ -8529,8 +8529,9 @@ Status: Complete
 */
 void __cdecl base_minerals() {
     uint32_t faction_id = BaseCurrent->faction_id_current;
-    BaseCurrent->mineral_intake_2 += BaseCurrentConvoyTo[RSC_MINERALS];
-    uint32_t mineral_bonus = (has_fac(FAC_QUANTUM_CONVERTER, BaseIDCurrentSelected, 0)
+    BaseCurrent->mineral_intake_2 = base_yield_add(BaseCurrent->mineral_intake_2,
+        base_yield_signed_bits(BaseCurrentConvoyTo[RSC_MINERALS]));
+    int mineral_bonus = (has_fac(FAC_QUANTUM_CONVERTER, BaseIDCurrentSelected, 0)
         || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 1 : 0;
     if (has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT, BaseIDCurrentSelected, 0)) {
         mineral_bonus++;
@@ -8544,23 +8545,29 @@ void __cdecl base_minerals() {
     if (has_project(SP_BULK_MATTER_TRANSMITTER, faction_id)) {
         mineral_bonus++;
     }
-    BaseCurrent->mineral_intake_2 = (BaseCurrent->mineral_intake_2 * (mineral_bonus + 2)) / 2;
-    BaseCurrent->mineral_consumption = BaseCurrentForcesMaintCost
-        + BaseCurrentConvoyFrom[RSC_MINERALS];
-    BaseCurrent->mineral_surplus = BaseCurrent->mineral_intake_2
-        - BaseCurrent->mineral_consumption;
+    BaseCurrent->mineral_intake_2 = base_yield_mul(
+        BaseCurrent->mineral_intake_2, mineral_bonus + 2) / 2;
+    BaseCurrent->mineral_consumption = base_yield_add(
+        base_yield_signed_bits(BaseCurrentForcesMaintCost),
+        base_yield_signed_bits(BaseCurrentConvoyFrom[RSC_MINERALS]));
+    BaseCurrent->mineral_surplus = base_yield_sub(BaseCurrent->mineral_intake_2,
+        BaseCurrent->mineral_consumption);
     BaseCurrent->mineral_inefficiency = 0; // ?
-    BaseCurrent->mineral_surplus -= BaseCurrent->mineral_inefficiency; // ?
+    BaseCurrent->mineral_surplus = base_yield_sub(BaseCurrent->mineral_surplus,
+        BaseCurrent->mineral_inefficiency); // ?
     BaseCurrent->mineral_surplus_final = BaseCurrent->mineral_surplus;
-    BaseCurrent->eco_damage /= 8;
-    int planet_eco_factor = PlayersData[faction_id].planet_ecology + 16;
+    // Native SAR rounds negative values down, not toward zero like /8.
+    const int raw_eco_damage = BaseCurrent->eco_damage;
+    BaseCurrent->eco_damage = raw_eco_damage >= 0 ? raw_eco_damage / 8
+        : -1 - (-1 - raw_eco_damage) / 8;
+    int planet_eco_factor = base_yield_add(PlayersData[faction_id].planet_ecology, 16);
     if (BaseCurrent->eco_damage > 0) {
         int planet_modifier = BaseCurrent->eco_damage;
         if (BaseCurrent->eco_damage >= planet_eco_factor) {
             planet_modifier = planet_eco_factor;
         }
-        planet_eco_factor -= planet_modifier;
-        BaseCurrent->eco_damage -= planet_modifier;
+        planet_eco_factor = base_yield_sub(planet_eco_factor, planet_modifier);
+        BaseCurrent->eco_damage = base_yield_sub(BaseCurrent->eco_damage, planet_modifier);
     }
     int eco_dmg_reduction = (has_fac(FAC_NANOREPLICATOR, BaseIDCurrentSelected, 0)
         || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 2 : 1;
@@ -8573,47 +8580,65 @@ void __cdecl base_minerals() {
     if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
         eco_dmg_reduction++;
     }
-    BaseCurrent->eco_damage += (BaseCurrent->mineral_intake_2 - planet_eco_factor
-        - range(PlayersData[faction_id].satellites_[1], 0, BaseCurrent->population_size))
-        / eco_dmg_reduction;
+    BaseCurrent->eco_damage = base_yield_add(BaseCurrent->eco_damage,
+        base_yield_sub(base_yield_sub(BaseCurrent->mineral_intake_2, planet_eco_factor),
+            range(base_yield_signed_bits(PlayersData[faction_id].satellites_[1]),
+                0, BaseCurrent->population_size)) / eco_dmg_reduction);
     if (is_human(faction_id)) {
-        BaseCurrent->eco_damage += ((PlayersData[faction_id].major_atrocities
-            + TectonicDetonationCount[faction_id]) * 5) / (range(MapSeaLevel, 0, 100)
-                / range(WorldBuilder.sea_level_rises, 1, 100) + eco_dmg_reduction);
+        BaseCurrent->eco_damage = base_yield_add(BaseCurrent->eco_damage,
+            base_yield_mul(PlayersData[faction_id].major_atrocities, 5)
+                / base_yield_add(range(MapSeaLevel, 0, 100)
+                    / range(base_yield_signed_bits(WorldBuilder.sea_level_rises), 1, 100),
+                    eco_dmg_reduction));
+    }
+    // The native pass tests the human mask and computes the divisor again;
+    // combining these two numerators changes even ordinary rounding.
+    if (is_human(faction_id)) {
+        BaseCurrent->eco_damage = base_yield_add(BaseCurrent->eco_damage,
+            base_yield_mul(base_yield_signed_bits(TectonicDetonationCount[faction_id]), 5)
+                / base_yield_add(range(MapSeaLevel, 0, 100)
+                    / range(base_yield_signed_bits(WorldBuilder.sea_level_rises), 1, 100),
+                    eco_dmg_reduction));
     }
     if (BaseCurrent->eco_damage < 0) {
         BaseCurrent->eco_damage = 0;
     }
     if (ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE) {
-        BaseCurrent->eco_damage *= 2;
+        BaseCurrent->eco_damage = base_yield_shift(BaseCurrent->eco_damage, 1);
     }
     if (GameDataStateStorage.fields_.game_state_ & STATE_PERIHELION_ACTIVE) {
-        BaseCurrent->eco_damage *= 2;
+        BaseCurrent->eco_damage = base_yield_shift(BaseCurrent->eco_damage, 1);
     }
-    uint32_t diff_factor;
+    int diff_factor;
     if (is_human(faction_id)) {
         int diff_lvl = PlayersData[faction_id].diff_level;
         diff_factor = !diff_lvl ? DLVL_TALENT
             : ((diff_lvl <= DLVL_LIBRARIAN) ? DLVL_LIBRARIAN : DLVL_TRANSCEND);
     } else {
-        diff_factor = range(6 - GameDataStateStorage.fields_.diff_level_current_, DLVL_SPECIALIST, DLVL_LIBRARIAN);
+        diff_factor = range(base_yield_sub(6, GameDataStateStorage.fields_.diff_level_current_),
+            DLVL_SPECIALIST, DLVL_LIBRARIAN);
     }
-    BaseCurrent->eco_damage = ((PlayersData[faction_id].tech_ranking
-        - PlayersData[faction_id].theory_of_everything)
-        * (3 - range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET], -3, 2))
-        // Native4EA140 INC keeps the low dword for the following IMUL;
-        // the signed Map rule may contain INT_MAX after metadata transport.
-        * (static_cast<uint32_t>(MapNativeLifeForms) + 1u)
-        * BaseCurrent->eco_damage * diff_factor) / 6;
-    BaseCurrent->eco_damage = (BaseCurrent->eco_damage + 50) / 100;
+    // Each native IMUL retains its low dword; the following /6 is signed.
+    // There is no second zero clamp after this possibly-negative scaling.
+    int scaled_damage = base_yield_mul(
+        base_yield_sub(PlayersData[faction_id].tech_ranking,
+            PlayersData[faction_id].theory_of_everything),
+        base_yield_sub(3, range(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET], -3, 2)));
+    // Native4EA140 INC keeps the low dword for the following IMUL;
+    // the signed Map rule may contain INT_MAX after metadata transport.
+    scaled_damage = base_yield_mul(scaled_damage, base_yield_add(MapNativeLifeForms, 1));
+    scaled_damage = base_yield_mul(scaled_damage, BaseCurrent->eco_damage);
+    scaled_damage = base_yield_mul(scaled_damage, diff_factor);
+    BaseCurrent->eco_damage = scaled_damage / 6;
+    BaseCurrent->eco_damage = base_yield_add(BaseCurrent->eco_damage, 50) / 100;
     int queue_id;
     if (has_project(SP_SPACE_ELEVATOR, faction_id) // orbital facilities double mineral prod rate
         && (queue_id = BaseCurrent->queue_production_id[0], queue_id == -FAC_SKY_HYDRO_LAB
             || queue_id == -FAC_NESSUS_MINING_STATION || queue_id == -FAC_ORBITAL_POWER_TRANS
             || queue_id == -FAC_ORBITAL_DEFENSE_POD)) {
-        BaseCurrent->mineral_intake_2 *= 2;
+        BaseCurrent->mineral_intake_2 = base_yield_shift(BaseCurrent->mineral_intake_2, 1);
         BaseCurrent->mineral_surplus = // doesn't update mineral_surplus_final?
-            BaseCurrent->mineral_intake_2 - BaseCurrent->mineral_consumption;
+            base_yield_sub(BaseCurrent->mineral_intake_2, BaseCurrent->mineral_consumption);
     }
 }
 
@@ -9202,7 +9227,7 @@ Status: Complete
 */
 int __cdecl fac_maint(int facility_id, int faction_id) {
     if (facility_id == FAC_COMMAND_CENTER) {
-        int diff_factor = (PlayersData[faction_id].diff_level + 1) / 2;
+        int diff_factor = base_yield_add(PlayersData[faction_id].diff_level, 1) / 2;
         int reactor = best_reactor(faction_id);
         if (reactor < 0 || diff_factor < 0) {
             return 0;
@@ -9218,7 +9243,7 @@ int __cdecl fac_maint(int facility_id, int faction_id) {
             return 0;
         }
     }
-    return Facility[facility_id].maint;
+    return base_yield_signed_bits(Facility[facility_id].maint);
 }
 
 /*
@@ -9248,10 +9273,10 @@ void __cdecl base_maint() {
     uint32_t faction_id = BaseCurrent->faction_id_current;
     for (int fac = 1; fac < FacilitySPStart; fac++) {
         if (has_fac_built(fac)) {
-            uint32_t maint = fac_maint(fac, faction_id);
+            int maint = fac_maint(fac, faction_id);
             if (has_project(SP_SELF_AWARE_COLONY, faction_id)) {
                 if (PlayersData[faction_id].flags & PFLAG_SELF_AWARE_COLONY_LOST_MAINT) {
-                    maint++; // attempt to even out maintenance costs from lossy integer division
+                    maint = base_yield_add(maint, 1); // retain the native carry and dword wrap
                 }
                 if (maint & 1) {
                     PlayersData[faction_id].flags |= PFLAG_SELF_AWARE_COLONY_LOST_MAINT;
@@ -9260,7 +9285,8 @@ void __cdecl base_maint() {
                 }
                 maint /= 2;
             }
-            PlayersData[faction_id].energy_reserves -= maint;
+            PlayersData[faction_id].energy_reserves = base_yield_sub(
+                PlayersData[faction_id].energy_reserves, maint);
             PlayersData[faction_id].maint_cost_total += maint;
             if (PlayersData[faction_id].energy_reserves < 0) {
                 if (PlayersData[faction_id].diff_level <= DLVL_SPECIALIST
@@ -9269,7 +9295,8 @@ void __cdecl base_maint() {
                 } else {
                     set_fac(fac, BaseIDCurrentSelected, false);
                     PlayersData[faction_id].energy_reserves
-                        = cost_factor(faction_id, RSC_MINERALS, -1) * Facility[fac].cost;
+                        = base_yield_mul(cost_factor(BaseCurrent->faction_id_current,
+                            RSC_MINERALS, -1), Facility[fac].cost);
                     parse_say(1, Facility[fac].name, -1, -1);
                     popb("POWERSHORT", 0x10000, 14, "genwarning_sm.pcx", NULL);
                 }

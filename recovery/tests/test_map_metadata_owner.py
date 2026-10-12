@@ -372,15 +372,17 @@ int main() { assert(apply(1)==''' + str(ordinary) + "); assert(apply(INT_MIN)=="
 
 @pytest.mark.parametrize("damage", [False, True])
 def test_actual_base_minerals_life_factor_expression(tmp_path, damage):
-    """Only the migrated factor/assignment, not whole base_minerals recovery."""
+    """Actual wrapped scale pipeline; the economy suite executes the whole body."""
+    from test_base_economy_accounting_oct12 import helpers
     compiler = shutil.which("c++")
     if not compiler:
         pytest.skip("host compiler unavailable")
     record = next(r for r in read_file(ROOT / "src/base.cpp") if r.address == 0x4E9CB0)
     body = definition(record.region, "void __cdecl base_minerals()")
-    expression = re.search(r"BaseCurrent->eco_damage = \(\(PlayersData\[faction_id\]\.tech_ranking.*? / 6;", body, re.S).group()
+    expression = re.search(r"int scaled_damage = .*?BaseCurrent->eco_damage = scaled_damage / 6;", body, re.S).group()
     if damage:
-        expression = expression.replace("(static_cast<uint32_t>(MapNativeLifeForms) + 1u)", "(MapNativeLifeForms + 1)")
+        assert expression.count("base_yield_add(MapNativeLifeForms, 1)") == 1
+        expression = expression.replace("base_yield_add(MapNativeLifeForms, 1)", "(MapNativeLifeForms + 1)")
     source = tmp_path / "life.cpp"
     source.write_text(r'''#include <cassert>
 #include <stdint.h>
@@ -391,14 +393,16 @@ struct Base { int eco_damage; } base;
 Base *BaseCurrent=&base;
 int MapNativeLifeForms;
 int range(int x,int low,int high) { return x<low?low:x>high?high:x; }
-void apply() { int faction_id=0; uint32_t diff_factor=1;
+''' + helpers() + r'''
+void apply() { int faction_id=0; int diff_factor=1;
 ''' + expression + r'''
 }
 int main() {
     PlayersData[0].tech_ranking=1; PlayersData[0].soc_effect_pending.values_[0]=2;
     MapNativeLifeForms=1; base.eco_damage=6; apply(); assert(base.eco_damage==2);
     MapNativeLifeForms=INT_MAX; base.eco_damage=1; apply();
-    assert(base.eco_damage==static_cast<int>(0x80000000u/6u));
+    // Pinned4EA150 is signed IMUL by2AAAAAAB, with the signed /6 correction.
+    assert(base.eco_damage==INT_MIN/6);
     MapNativeLifeForms=-1; base.eco_damage=6; apply(); assert(base.eco_damage==0);
 }
 ''')
