@@ -477,19 +477,23 @@ class Console : public MapWin {
   // never carry the most-derived flag - `guarded_teardowns.cpp`'s own
   // already-matching `->Console::~Console()` proves it, the same way it did
   // for MapWin's and PlanWin's.
-  // MEASURED IN-CLASS 2026-08-30, and the whole point of the member carve
-  // above: the image's 0x0051D9F0 is the BASE-object destructor
-  // (??_DConsole@@QAEXXZ - the complete ??1Console at 0x0051DDF0 calls it
+  // HISTORICAL MEASURED IN-CLASS 2026-08-30, and the whole point of the
+  // member carve above: the original image's 0x0051D9F0 was interpreted as
+  // the BASE-object destructor (??_DConsole@@QAEXXZ - the complete
+  // ??1Console at 0x0051DDF0 calls it
   // and then ??1GraphicWin on the vbase; the catalogue pinned the ??1 name
-  // on the base flavor). ??_DConsole's bytes are the EH frame, the two
+  // on the base flavor). In that original-image interpretation, ??_DConsole's
+  // bytes are the EH frame, the two
   // vtable/vtordisp re-stores on the vbase, the body's close(), the
   // compiler's member teardown in the reverse-declaration order of the
   // carve, and MapWin's own base teardown INLINED (clear(0) and MapWin's
   // members) - all of it compiler-emitted from these declarations once the
   // body is the one line below. Out-of-line in console.cpp it measured
   // MISMATCH with every teardown hand-spelled; declared here the funclet
-  // spans (0x0065D0E0-0x0065D220) come out of the same EH machinery.
-  MEASURED ~Console() { close(); }
+  // spans (0x0065D0E0-0x0065D220) came out of the same EH machinery in that
+  // historical measurement. The current declaration is an ordinary inline
+  // definition; that old result did not establish export-attribute necessity.
+  ~Console() { close(); }
   // 0x0051D7D0. Not declared before this landed, which is why the body
   // could only live in an artifact.
   void close();

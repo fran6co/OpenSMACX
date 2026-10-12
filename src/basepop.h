@@ -327,8 +327,9 @@ class BasePop : public GraphicWin {
   // DEFINED IN-CLASS, the ~FlatButton move, because the image INLINES this
   // destructor at the popup's destruction sites and CALLS it out of line 75
   // times - and only an in-class definition lets both happen.
-  // ??1BasePop@@QAE@XZ (0x004064D0, claimed in basepop.cpp) keeps being
-  // emitted out-of-line by the MEASURED storage class; the expansion is what
+  // ??1BasePop@@QAE@XZ (0x004064D0, claimed in basepop.cpp) is emitted in its
+  // natural owner translation unit through the real constructor/class-table
+  // users; no forced-export attribute is needed for that identity. The expansion is what
   // Caviar::init_class (0x006185A0) lays down at each of its early returns
   // and what sound_version_warning (0x004C9080) lays down at its one scope
   // exit. Out-of-line here those sites can only emit `call ??1BasePop`, and
@@ -342,7 +343,7 @@ class BasePop : public GraphicWin {
   // member declarations below, the same way ??1DipEdit is generated from
   // dipedit.h. An empty body produces the identical chain; the one call the
   // member list cannot produce is the image's opening `call ?close`.
-  MEASURED ~BasePop() { close(); }
+  ~BasePop() { close(); }
   void set_loc(int x, int y);
   // NetMsg preserves the original local-popup auto-hide value at +0x30AC.
   void set_auto_hide_value(uint32_t value) { field_30AC_ = value; }

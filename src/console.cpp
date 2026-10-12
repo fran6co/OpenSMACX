@@ -1223,14 +1223,17 @@ Purpose: Tear down the game console - its own Buffer/Time/Menu/Sprite
 // compiler-owned - the EH frame, the vtable/vtordisp re-stores on the
 // vbase, the member teardown of the GraphicWin/Buffer/Time/Menu/Sprite
 // members console.h now declares, and MapWin's own base teardown inlined
-// (clear(0) and MapWin's carved members). `MEASURED ~Console() { close();
-// }` in console.h emits THIS piece as the out-of-line COMDAT
-// ??_DConsole@@QAEXXZ (the base-object destructor; the catalogue's ??1
-// name sits on the base flavor - the true ??1Console complete destructor
-// is 0x0051DDF0, `lea esi,[ecx-0x23D94]` adjust, a call to this, then
+// (clear(0) and MapWin's carved members). Historically, the in-class
+// `~Console() { close(); }` was interpreted as the original image's
+// ??_DConsole@@QAEXXZ base-object phase (the catalogue's ??1 name sits on the
+// base flavor; the original complete ??1Console phase is 0x0051DDF0,
+// `lea esi,[ecx-0x23D94]` adjust, a call to this, then
 // ??1GraphicWin on the vbase, then the conditional operator delete, with
 // the deleting wrapper ??_GConsole at 0x0051DDE0 before it). The funclet
-// span 0x0065D0E0-0x0065D220 is that EH machinery's own.
+// span 0x0065D0E0-0x0065D220 is that historical EH phase's own. The current
+// natural owner-TU compiler symbol is ??1Console@@UAE@XZ, as recorded by the
+// unchanged source symbol override; this comment does not claim a current
+// ??_DConsole emission.
 //
 // TRIED (2026-08-30, after the carve): 30/123, 151 instructions against the
 //        image's 123, and every teardown element is present in the right

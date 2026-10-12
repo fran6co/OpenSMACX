@@ -74,7 +74,7 @@ def actual():
         parts[f'{unit}_decl'] = one(whole, r'(?:virtual )?void close\(\);')
         declarations.append(f'{unit.upper()}_CLOSE_DECL')
         if name == 'FlatButton':
-            parts['flat_dtor'] = braced(whole, 'MEASURED ~FlatButton()')
+            parts['flat_dtor'] = braced(whole, '~FlatButton()')
             declarations.append('FLAT_DTOR')
         else:
             declarations.append(one(whole, rf'~{name}\(\);'))

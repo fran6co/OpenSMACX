@@ -283,7 +283,7 @@ class MapWin : public virtual GraphicWin {
   // receiver. FarmMapWindow's registered exit then destroys that virtual base
   // separately. Genuine C++ supplies both stages for a complete MapWin, and
   // only the own part when destroying a MapWin base of Console/PlanWin.
-  MEASURED ~MapWin() { clear(0); }
+  ~MapWin() { clear(0); }
   int UNK1();
   void UNK3();
   // 0x0046FC80, homed from the archive. Walks RadiusRange/RadiusOffsetX/Y
