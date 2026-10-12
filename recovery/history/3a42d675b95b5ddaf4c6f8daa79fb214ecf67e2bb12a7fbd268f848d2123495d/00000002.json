@@ -1,0 +1,19 @@
+{
+  "event_id": "caa8cb5a603221eb20a078e588bacb567d3f39ed8a26472096b20f97616a7480",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_generated_owner_actual_source.py"
+    ],
+    "evidence": [
+      "Pinned GraphicWin post-redraw calls reload the appropriate source-owned buffer1_/buffer4_/buffer3_/buffer2_ after rendering and callbacks. Update the existing syntactic assertion to verify these four live-member receivers and quadrant order, preserving native pin assertions. Honor explicitly configured absolute OPENSMACX_IMAGE in isolated workers; verify pin and never substitute missing images. This is test integration only; no extra C++ subjects/layout changes or baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4ca8f4c13c1fc8f1ecbee345aec08316c5833a7c8f6f5c36da2905f5eb9de2e6",
+  "request_id": "frame-painter-live-buffer-controls-oct12",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:window-frame-painters-oct12"
+}
