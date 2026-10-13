@@ -213,8 +213,8 @@ def test_actual_three_renderers_use_typed_percent_owner_and_preserve_behavior(tm
     assert "static int *const PercentText" not in SOURCE
     assert "reinterpret_cast<char *>(PercentText)" not in SOURCE
     assert SOURCE.count("strcat(StringTemp, PercentText);") == 3
-    assert SOURCE.count("reinterpret_cast<ItoaFn>(_itoa)") == 11
-    assert "typedef char *(__cdecl *ItoaFn)(int, char *, int);" in SOURCE
+    assert "ItoaFn" not in SOURCE
+    assert "reinterpret_cast<ItoaFn>(_itoa)" not in SOURCE
     bodies = {name: actual_function(name) for name in (
         "draw_psych_alloc", "draw_economy_alloc", "draw_labs_alloc")}
     for body in bodies.values():

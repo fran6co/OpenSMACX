@@ -112,8 +112,11 @@ struct PlayerData { PendingPlayerEffect soc_effect_pending; };
 static PlayerData PlayersData[8];
 static char StringTemp[128];
 static char SocialWinButtonCountPlusText[]="+";
-static int _itoa(int v, char *s, int) { return std::sprintf(s,"%d",v); }
-typedef int (*ItoaFn)(int,char *,int);
+static char *_itoa(int v, char *s, int radix) {
+    if (radix != 10) std::abort();
+    std::sprintf(s,"%d",v);
+    return s;
+}
 BODY_ALLOC
 BODY_PAINT
 BODY_SHOW
@@ -148,12 +151,14 @@ int main() {
         button.field_A74_=flag?0:1;
         const int chosen_flag=flag;
         const int typed_index=(id-0x11)*9+chosen_flag*3;
-        panel.effectIcons_[typed_index].key=static_cast<unsigned char>(0x40+id+flag);
+        const unsigned char key = id==0x11 && flag==0 ? 0x80 :
+            (id==0x11 && flag==1 ? 0xff : static_cast<unsigned char>(0x40+id+flag));
+        panel.effectIcons_[typed_index].key=key;
         Sprite::drawn=nullptr;
         char label[]="label";
         if(panel.on_button_text_draw(&window,label,id)!=1) fail("valid paint id");
         if(Sprite::drawn != &panel.effectIcons_[typed_index]) fail("sprite receiver/index");
-        if(Sprite::drawn_key != panel.effectIcons_[typed_index].key) fail("transparent byte");
+        if(Sprite::drawn_key != key) fail("transparent byte preserves unsigned value");
         if(Sprite::drawn_buffer != static_cast<Buffer *>(&window)) fail("typed Buffer destination");
     }
     // Cover each original status short circuit and both remaining BaseButton

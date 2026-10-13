@@ -691,7 +691,6 @@ void SocialWin::bubble_me_elmo2(char *text, int x, int y) {
  *                    dword is se_alloc_labs, with the native 0x20CC PlayerData
  *                    stride (2099 dwords).
  */
-static int *const StringUpperSlot = (int *)0x0066931C;
 // Historical SocBaseIdProbe/Compare at 0x009A6568/0x009A6574 are
 // SecretProject.network_backbone/cloning_vats, not independent selectors.
 
@@ -883,8 +882,6 @@ void SocialWin::draw_social(int a1) {
 // consumed by the three allocation renderers.
 // RECOVERY_OBJECT: v1 0x00682EA0 _PercentText
 static const char PercentText[] = "%";
-
-typedef char *(__cdecl *ItoaFn)(int, char *, int);
 
 typedef void (__cdecl *SoundHookFn)(char *);
 
@@ -1844,7 +1841,7 @@ void SocialWin::draw_overview() {
             strcat(StringTemp, SocialWinOverviewPlusText);
         }
         char number[32];
-        reinterpret_cast<ItoaFn>(_itoa)(value, number, 10);
+        _itoa(value, number, 10);
         strcat(StringTemp, number);
         buffer->write_right_l(StringTemp, number_x, y, strlen(StringTemp));
 
@@ -2037,7 +2034,7 @@ int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id
         strcat(StringTemp, SocialWinButtonCountPlusText);
     }
     char number[80];
-    reinterpret_cast<ItoaFn>(_itoa)(current, number, 10);
+    _itoa(current, number, 10);
     strcat(StringTemp, number);
 
     rect.right -= 3;
@@ -2220,13 +2217,13 @@ void SocialWin::draw_mouseover() {
 
                 int magnitude = (v2 < 0) ? -v2 : v2;
                 char number[80];
-                reinterpret_cast<ItoaFn>(_itoa)(magnitude, number, 10);
+                _itoa(magnitude, number, 10);
                 strcat(StringTemp, number);
                 buf->write_l(StringTemp, &rect1, strlen(StringTemp));
 
                 int icon_row = i + (v2 >= 0 ? 2 : 1);
                 Sprite *icon = &effectIcons_[6 + icon_row];
-                unsigned char frame = reinterpret_cast<unsigned char *>(icon)[8];
+                unsigned char frame = icon->transparent_index();
                 icon->draw(buf, frame, rect1.left + 0x10, rect1.top, 1, 1);
 
                 StringTemp[0] = 0;
@@ -2325,7 +2322,7 @@ void SocialWin::draw_info() {
     strcat(StringTemp, label_get(0x3BF));
     strcat(StringTemp, SocialWinColonSpaceText);
     char number[80];
-    reinterpret_cast<ItoaFn>(_itoa)(NetIncomeGlobal, number, 10);
+    _itoa(NetIncomeGlobal, number, 10);
     strcat(StringTemp, number);
     buf->set_text_color(0xa0, -1, 1, 1);
     buf->write_l(StringTemp, text_left, text_y, strlen(StringTemp));
@@ -2335,7 +2332,7 @@ void SocialWin::draw_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(150));
     strcat(StringTemp, SocialWinColonSpaceText);
-    reinterpret_cast<ItoaFn>(_itoa)(BreakthroughTurnsGlobal, number, 10);
+    _itoa(BreakthroughTurnsGlobal, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(49));
@@ -2391,7 +2388,7 @@ scaled:
         if ((10 - PlayersData[factionID_].se_alloc_psych) - reserve < reserve) {
             int percent = shift_side * imbalance;
             int shown = (percent < 0) ? 0 : ((0x28 < percent) ? 0x28 : percent);
-            reinterpret_cast<ItoaFn>(_itoa)(-shown, number, 10);
+            _itoa(-shown, number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, SocialWinPercentSpaceTextA);
             strcat(StringTemp, label_get(60));
@@ -2400,7 +2397,7 @@ scaled:
                 strcat(StringTemp, SocialWinCommaSpaceText);
                 int percent2 = shift_side * imbalance * 2;
                 percent2 = (percent2 < 0) ? 0 : ((0x50 < percent2) ? 0x50 : percent2);
-                reinterpret_cast<ItoaFn>(_itoa)(-percent2, number, 10);
+                _itoa(-percent2, number, 10);
                 strcat(StringTemp, number);
                 strcat(StringTemp, SocialWinPercentSpaceTextB);
                 strcat(StringTemp, label_get(169));
@@ -2409,7 +2406,7 @@ scaled:
             if (reserve != 0) {
                 int percent = shift_side * imbalance * 2;
                 percent = (percent < 0) ? 0 : ((0x50 < percent) ? 0x50 : percent);
-                reinterpret_cast<ItoaFn>(_itoa)(-percent, number, 10);
+                _itoa(-percent, number, 10);
                 strcat(StringTemp, number);
                 strcat(StringTemp, SocialWinPercentSpaceTextC);
                 strcat(StringTemp, label_get(60));
@@ -2417,7 +2414,7 @@ scaled:
             }
             int percent = shift_side * imbalance;
             percent = (percent < 0) ? 0 : ((0x28 < percent) ? 0x28 : percent);
-            reinterpret_cast<ItoaFn>(_itoa)(-percent, number, 10);
+            _itoa(-percent, number, 10);
             strcat(StringTemp, number);
             strcat(StringTemp, SocialWinPercentSpaceTextD);
             strcat(StringTemp, label_get(169));
@@ -2434,7 +2431,7 @@ scaled:
         strcat(StringTemp, label_get(222));
         strcat(StringTemp, SocialWinColonSpaceText);
         strcat(StringTemp, SocialWinUpheavalPlusText);
-        reinterpret_cast<ItoaFn>(_itoa)(-upheaval, number, 10);
+        _itoa(-upheaval, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(230));
@@ -2444,7 +2441,7 @@ scaled:
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(221));
         strcat(StringTemp, SocialWinColonSpaceText);
-        reinterpret_cast<ItoaFn>(_itoa)(upheaval, number, 10);
+        _itoa(upheaval, number, 10);
         strcat(StringTemp, number);
         strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(230));
@@ -2665,8 +2662,7 @@ void SocialWin::init(int faction_id) {
     font8_.init(DefaultLargeFontFace, 0xe, 1);
     font9_.init(DefaultLargeFontFace, 0xe, 1);
 
-    if (*reinterpret_cast<int *>(
-            reinterpret_cast<char *>(&effectIcons_[0]) + 4) == 0) {
+    if (!effectIcons_[0].has_pixel_pointer()) {
         sheet.load_pcx(SocialWinPcxName, 0, 10, 0xec);
         Sprite *icon = effectIcons_;
         int row = 1;

@@ -1,0 +1,19 @@
+{
+  "event_id": "920c102f5d3308bb98c89dfcb67dc97a32a307c38c6e7cf5a2b8ab9b9d1fea4f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_social_alloc_text_owner_actual_source_oct9.py"
+    ],
+    "evidence": [
+      "The allocation-renderer test asserts that eleven unrelated CRT casts and the ItoaFn typedef remain in the complete SocialWin source. Their evidence-backed removal now fails this assertion. Update only those obsolete global expectations; preserve the actual allocation bodies, behavior harness and semantic damage controls. No production scope expansion or baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "socialwin-direct-crt-fixture-oct13t",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:socialwin-sprite-type-closure-oct13t"
+}

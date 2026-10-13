@@ -91,6 +91,8 @@ class Sprite {
            unsigned char *table);
   // Terrain painters pass the stored unsigned palette key to draw().
   unsigned char transparent_index() const { return cTransparentIndex_; }
+  // Presence only; it does not establish complete loading or lifetime.
+  bool has_pixel_pointer() const { return pcBits_ != 0; }
   int width() const { return iWidth_; }
   int height() const { return iHeight_; }
   // Pixel width before the displayed dimensions/scaling are applied (+0x10).
@@ -203,6 +205,7 @@ class Sprite {
   friend class BasePop;
   char *ppszFileName_;  // 0x0000 - heap copy of the source file's name;
                         // released with the CRT free
+  // RECOVERY_MEMBER: v1 Sprite pcBits_ 0x4 0x004B2740
   char *pcBits_;        // 0x0004 - the pixel block, same allocator
   // UNSIGNED, and this is measured not stylistic: the image reads the byte
   // as `xor eax,eax; mov al,[sprite+8]` at every site that passes it to
