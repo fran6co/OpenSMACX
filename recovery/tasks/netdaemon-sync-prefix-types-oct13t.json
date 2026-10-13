@@ -1,0 +1,33 @@
+{
+  "author": "coordinator",
+  "base_revision": "3b77ec58180dbf4822bb7af90b23468803530b1d",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_early_routes_oct12.py",
+    "recovery/tests/test_netdaemon_synch_host.py",
+    "recovery/tests/test_netdaemon_synch_dispatch.py",
+    "recovery/tests/test_netdaemon_sync_prefix_types_oct13t.py"
+  ],
+  "evidence": [
+    "Pinned receiver53624A..5362E4 calls synch532E00 and reloads request faction at5362C4 after sync/poll callbacks. Current sender netdaemon_sync_send_chunk writes flags16 at0,faction32 at4,sequence32 atC,inner opcode16 at10,chunk index16 at12,args32 at14/18/1C,payload at24. It deliberately leaves2..3,8..B,20..23 allocator contents untouched.",
+    "Define only the evidenced0x24 serialized header-prefix schema and borrowed per-field memcpy reader/writer, used by both existing sender and receiver. This is NOT MessageDataRecord, an original class, whole allocation/lifetime or initialized-hole claim. No full-record copy/construction, zero fill, length checks, bounds clamps or safety fixes.",
+    "Migrate raw field reads in netdaemon_process_sync_request and named sender header writes to the same schema. The two existing incoming chunk-index loads within synch may use its reader if exactly equivalent; preserve every callback-sensitive reload, argument signedness, store/capture order, pending-mask handling, payload copies and polling. Other packet families remain unchanged.",
+    "Keep Original markers/symbols/spans/claims and compiler flags intact. Actual-source dual-compiler receiver/sender controls must check unaligned fields,signed opcode/index,unwritten holes,callbacks and damage mutants. Native measurements/build, changed-TU identity continuity and physical compiler collateral review precede bounded manual integration; no game or linked preservation acceptance follows."
+  ],
+  "intent": "Recover the distinct synchronization wire prefix in its sender and receiver without inferring a complete packet allocation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5451264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-sync-prefix-types-oct13t"
+}

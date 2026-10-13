@@ -1,0 +1,49 @@
+{
+  "author": "coordinator",
+  "base_revision": "3b77ec58180dbf4822bb7af90b23468803530b1d",
+  "editable_files": [
+    "src/socialwin.cpp",
+    "src/sprite.h",
+    "recovery/tests/test_socialwin_sprite_type_closure_oct13t.py",
+    "recovery/tests/test_socialwin_typed_owner_actual_source.py",
+    "recovery/tests/test_socialwin_source_text_owner_oct9.py",
+    "recovery/tests/test_socialwin_runtime_owner_oct9.py"
+  ],
+  "evidence": [
+    "Sprite already declares pcBits_ pointer at4 and unsigned cTransparentIndex_ at8, with public transparent_index(). SocialWin::draw_mouseover4B1080 readsiconbyte8; SocialWin::init4B2740 tests effectIcons_[0] DWORD4 forzero. The actual effectIcons_[90] are declared Sprite objects; verify these accesses independently against pinned code before migration.",
+    "Use existing transparent_index() and a narrow nonvirtual const pointer-presence query for pcBits_ only if needed. No field/public-data/virtual/base/layout change or claim that pointer presence proves full initialization/lifetime. No new original-function identity for a recovered source API.",
+    "stdafx.h includes stdlib.h and this file already calls _itoa directly. Replace the local ItoaFn casts only after validating the real prototype; preserve all inputs/signs/radix and callback/body order. Remove unused StringUpperSlot: its only source occurrence is an obsolete alias to already-bound USER32CharUpperA IAT66931C, not an owned object.",
+    "Preserve original markers/claims/spans, original unsafe paths and exact arithmetic. No flags, assembly, invented hierarchy or matching-score hacks. Source-extracted GCC/Clang controls and native measures/build/layout/reference/collateral checks must support manual integration. Any dependent fixture/owner expansion requires coordinator decision before edits; historical obligations and unknown full-game preservation remain."
+  ],
+  "intent": "Recover SocialWin Sprite member access and real CRT calls instead of raw byte offsets and redundant function-pointer casts.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4916240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4921248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4919424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4914016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4925248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "socialwin-sprite-type-closure-oct13t"
+}
