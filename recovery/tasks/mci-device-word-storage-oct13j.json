@@ -1,0 +1,82 @@
+{
+  "author": "coordinator",
+  "base_revision": "959fcb7ccccc83722e84182647aa7cdebfd24523",
+  "editable_files": [
+    "src/alphamovie.h",
+    "src/alphamovie.cpp",
+    "recovery/tests/test_alpha_mci_owner_behavior.py",
+    "recovery/tests/test_mci_device_word_storage_oct13j.py"
+  ],
+  "evidence": [
+    "Pinned ctor5FFD8D, load600051, play600202, stop600276/6002CF and status6002F9 observe WORD storage at receiver+4, zero-extended for 32-bit SDK device arguments. Existing dword masks and constructor short alias are translation artifacts, not evidence of a semantic dword.",
+    "Represent +4 as uint16_t and +6..+7 as explicitly unknown untouched bytes. No observed +6 access establishes a semantic member. Preserve SDK-open low-word truncation, original failed-open state, command order/errors, repeated reads and close/stop differences; no safety fixes or blanket initialization.",
+    "Keep window+8, palette+10 and AlphaMovie embedded receiver+A14 unchanged. Only alphamovie.cpp uses the ID. General blit_frame and enclosing AlphaMovie lifecycle subjects are read-only verification closure, not authority to edit general.cpp, compiler policies or original spans/claims.",
+    "Use actual extracted C++ behavioral controls including sentinel preservation and failure paths, fresh native layout/body measurements and application build/link. Preserve historical obligations and compare affected emitted code before integration; unknown full extent/lifetime and linked/runtime acceptance remain unproved."
+  ],
+  "intent": "Recover the observed 16-bit MCI device field and untouched adjacent bytes without changing original error paths, lifetime or neighboring layout.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6290816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6290864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6291344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6291936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6292080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6292208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6292256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4211392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4210704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4210800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4211472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6292272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mci-device-word-storage-oct13j"
+}
