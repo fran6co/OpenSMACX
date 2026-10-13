@@ -121,16 +121,25 @@ def test_actual_setter_publishes_before_thread_window_callback(compiler_name, tm
         definition((ROOT / "src/win.cpp").read_text(), "Win::update_menus"))
     source = """
 #include <cassert>
-typedef int (*WNDENUMPROC)(void *, void *);
+#define __stdcall
+#define CALLBACK __stdcall
+struct HWND__ {};
+typedef HWND__ *HWND;
+typedef long LPARAM;
+typedef int BOOL;
+typedef BOOL (CALLBACK *WNDENUMPROC)(HWND, LPARAM);
 struct Font {};
 static Font *MenuDefaultFont;
 static Font *expected_font;
 static int phase;
-struct Win { static void update_menus(); static int adjust_menus(void *, void *) { return 1; } };
+struct Win {
+    static void update_menus();
+    static int __stdcall adjust_menus(HWND, LPARAM) { return 1; }
+};
 struct Menu { static void set_def_font(Font *); };
 static unsigned GetCurrentThreadId() { assert(phase==0 && MenuDefaultFont==expected_font); phase=1; return 37; }
-static int EnumThreadWindows(unsigned thread, WNDENUMPROC callback, int context) {
-    assert(phase==1 && thread==37 && callback==Win::adjust_menus && context==0);
+static BOOL EnumThreadWindows(unsigned thread, WNDENUMPROC callback, LPARAM context) {
+    assert(phase==1 && thread==37 && callback==&Win::adjust_menus && context==0);
     phase=2; return 0;
 }
 """

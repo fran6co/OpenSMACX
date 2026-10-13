@@ -5955,12 +5955,11 @@ typedef long (__stdcall *GetWindowLongProc)(void *, int);
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5F0520..5F0535 calls GetCurrentThreadId and EnumThreadWindows using source-owned Win::adjust_menus callback5F0540; terminal RET ends this callable body.", "Pinned5FAEE0..5FAEEE stores MenuDefaultFont then tail-jumps here at5FAEE9. Historical set_def_font mapping included this complete span; it now retains only its actual caller body and original byte obligation."], "reason": "Own the independent original thread-window menu update entry in its existing Win implementation, separating it from Menu::set_def_font without losing the historical combined extent."}
 // symbol    ?update_menus@Win@@SAXXZ
 void Win::update_menus() {
-    EnumThreadWindows(GetCurrentThreadId(),
-        reinterpret_cast<WNDENUMPROC>(Win::adjust_menus), 0);
+    EnumThreadWindows(GetCurrentThreadId(), Win::adjust_menus, 0);
 }
 
 // ORIGINAL: 0x005F0540 ?adjust_menus@Win@@QAGHPAX@Z 0x005F0540-0x005F0579 BYTE_EXACT
-// symbol    ?adjust_menus@Win@@SGHPAUHWND__@@PAX@Z
+// symbol    ?adjust_menus@Win@@SGHPAUHWND__@@J@Z
 // size      57 bytes
 // prototype int (__stdcall ?adjust_menus@Win@@QAGHPAX@Z)(HWND hWnd)
 // callers   0   call targets   0
@@ -5974,7 +5973,7 @@ void Win::update_menus() {
 // OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
 // and rewriting it in the tree's own style is a later phase. See README.md
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-int __stdcall Win::adjust_menus(HWND hwnd, void *unused) {
+int __stdcall Win::adjust_menus(HWND hwnd, LPARAM unused) {
     (void)unused;
     Win *obj = reinterpret_cast<Win *>(
         // 0x0066934C: the image calls `[0x66934c]` at 0x005F0548.

@@ -794,7 +794,7 @@ class Win : public AutoSound {
   // the body reads exactly that and passes it to GetWindowLongA while
   // ignoring the declared one at [esp+8]. As a static taking the HWND the
   // stack layout is identical and the window handle stops being `this`.
-  static int __stdcall adjust_menus(HWND hwnd, void *unused);
+  static int __stdcall adjust_menus(HWND hwnd, LPARAM unused);
   static void update_menus();
   void do_caption_buttons();
   int maximize();

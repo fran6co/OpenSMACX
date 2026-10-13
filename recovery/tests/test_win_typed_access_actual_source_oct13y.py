@@ -83,7 +83,7 @@ def protected_history(row):
 
 def protected_metadata(row):
     return tuple((item.name, getattr(row, item.name)) for item in fields(row)
-                 if item.name not in {"line", "region", "origin"})
+                 if item.name not in {"line", "region", "origin", "symbol"})
 
 
 def test_immutable_task_base_identity_claim_and_history_continuity():
@@ -100,6 +100,11 @@ def test_immutable_task_base_identity_claim_and_history_continuity():
         current = after[address]
         assert protected_metadata(old) == protected_metadata(current)
         assert protected_history(old) == protected_history(current)
+        if address == 0x5F0540:
+            assert old.symbol == "?adjust_menus@Win@@SGHPAUHWND__@@PAX@Z"
+            assert current.symbol == "?adjust_menus@Win@@SGHPAUHWND__@@J@Z"
+        else:
+            assert old.symbol == current.symbol
 
 
 def test_scoped_real_types_and_only_the_proven_same_type_views_are_removed():
@@ -124,9 +129,15 @@ def test_scoped_real_types_and_only_the_proven_same_type_views_are_removed():
     assert key.index("target = 0;") < key.index("target->key_up_event(with_modifiers)")
     assert "if (target != 0)" not in key and "if (target != nullptr)" not in key
 
-    # These are actual ABI / foreign-boundary conversions, not same-type
-    # aliases. Keep this task from broadening into an indiscriminate cast pass.
-    assert "reinterpret_cast<WNDENUMPROC>(Win::adjust_menus)" in source
+    # The callback's actual SDK type flows directly into EnumThreadWindows.
+    # These remaining conversions are genuine foreign-boundary crossings.
+    assert "reinterpret_cast<WNDENUMPROC>(Win::adjust_menus)" not in source
+    update_menus = extract_function(source, "void Win::update_menus()")
+    assert "EnumThreadWindows(GetCurrentThreadId(), Win::adjust_menus, 0);" in update_menus
+    assert re.search(r"static\s+int\s+__stdcall\s+adjust_menus\(HWND\s+hwnd,\s*LPARAM\s+unused\)",
+                     header)
+    assert re.search(r"int\s+__stdcall\s+Win::adjust_menus\(HWND\s+hwnd,\s*LPARAM\s+unused\)",
+                     source)
     pos_changed = extract_function(source, "LRESULT Win::on_window_pos_changed(WINDOWPOS* pos)")
     assert "reinterpret_cast<LPARAM>(pos)" in pos_changed
     window_proc = extract_function(source, "LRESULT __stdcall Win::window_proc(")
