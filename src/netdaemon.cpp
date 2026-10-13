@@ -4059,18 +4059,135 @@ static void netdaemon_process_message_marker_tail(NetDaemon &daemon,
 }
 
 
+// The synchronization packet's serialized header prefix is 0x24 bytes. It is
+// a field map over borrowed bytes, not the type or extent of the allocated
+// packet. In particular, the sender leaves +2..+3, +8..+0xB, and +0x20..+0x23
+// unwritten, so neither view constructs or copies a complete prefix object.
+struct SyncHeaderPrefix {
+    int16_t flags;
+    unsigned char unresolved_2[2];
+    uint32_t faction;
+    unsigned char unresolved_8[4];
+    uint32_t sequence;
+    int16_t opcode;
+    int16_t index;
+    int32_t argument_2;
+    int32_t argument_3;
+    int32_t argument_4;
+    unsigned char unresolved_20[4];
+};
+
+static_assert(sizeof(SyncHeaderPrefix) == 0x24,
+              "synchronization serialized header prefix width");
+static_assert(offsetof(SyncHeaderPrefix, flags) == 0x00,
+              "synchronization flags offset");
+static_assert(offsetof(SyncHeaderPrefix, unresolved_2) == 0x02,
+              "synchronization unwritten bytes 2..3 offset");
+static_assert(offsetof(SyncHeaderPrefix, faction) == 0x04,
+              "synchronization faction offset");
+static_assert(offsetof(SyncHeaderPrefix, unresolved_8) == 0x08,
+              "synchronization unwritten bytes 8..B offset");
+static_assert(offsetof(SyncHeaderPrefix, sequence) == 0x0C,
+              "synchronization sequence offset");
+static_assert(offsetof(SyncHeaderPrefix, opcode) == 0x10,
+              "synchronization inner opcode offset");
+static_assert(offsetof(SyncHeaderPrefix, index) == 0x12,
+              "synchronization signed chunk index offset");
+static_assert(offsetof(SyncHeaderPrefix, argument_2) == 0x14,
+              "synchronization argument 2 offset");
+static_assert(offsetof(SyncHeaderPrefix, argument_3) == 0x18,
+              "synchronization argument 3 offset");
+static_assert(offsetof(SyncHeaderPrefix, argument_4) == 0x1C,
+              "synchronization argument 4 offset");
+static_assert(offsetof(SyncHeaderPrefix, unresolved_20) == 0x20,
+              "synchronization unwritten bytes 20..23 offset");
+
+// Borrowed field-by-field views keep accesses valid for unaligned packet
+// addresses and leave every unwritten interval untouched.
+class SyncHeaderPrefixReader {
+public:
+    explicit SyncHeaderPrefixReader(const unsigned char *bytes) : bytes_(bytes) {}
+
+    int16_t flags() const {
+        int16_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, flags), sizeof value);
+        return value;
+    }
+    uint32_t faction() const {
+        uint32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, faction), sizeof value);
+        return value;
+    }
+    uint32_t sequence() const {
+        uint32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, sequence), sizeof value);
+        return value;
+    }
+    int16_t opcode() const {
+        int16_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, opcode), sizeof value);
+        return value;
+    }
+    int16_t index() const {
+        int16_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, index), sizeof value);
+        return value;
+    }
+    int32_t argument_2() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_2), sizeof value);
+        return value;
+    }
+    int32_t argument_3() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_3), sizeof value);
+        return value;
+    }
+    int32_t argument_4() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_4), sizeof value);
+        return value;
+    }
+
+private:
+    const unsigned char *bytes_;
+};
+
+class SyncHeaderPrefixWriter {
+public:
+    explicit SyncHeaderPrefixWriter(unsigned char *bytes) : bytes_(bytes) {}
+
+    void store_flags(int16_t value) { write(offsetof(SyncHeaderPrefix, flags), value); }
+    void store_faction(uint32_t value) { write(offsetof(SyncHeaderPrefix, faction), value); }
+    void store_sequence(uint32_t value) { write(offsetof(SyncHeaderPrefix, sequence), value); }
+    void store_opcode(int16_t value) { write(offsetof(SyncHeaderPrefix, opcode), value); }
+    void store_index(int16_t value) { write(offsetof(SyncHeaderPrefix, index), value); }
+    void store_argument_2(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_2), value); }
+    void store_argument_3(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_3), value); }
+    void store_argument_4(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_4), value); }
+
+private:
+    template <typename Value>
+    void write(size_t offset, Value value) {
+        std::memcpy(bytes_ + offset, &value, sizeof value);
+    }
+
+    unsigned char *bytes_;
+};
+
 static void netdaemon_process_sync_request(NetDaemon *daemon,
                                             unsigned char *message) {
-    const uint32_t sender = *reinterpret_cast<uint32_t *>(message + 4);
+    const SyncHeaderPrefixReader request(message);
+    const uint32_t sender = request.faction();
     uint32_t &pending = daemon->channels_[1].trailing_words_[1];
     const uint32_t old_pending = pending;
     pending |= static_cast<uint32_t>(1) << (sender & 0x1F);
 
     daemon->synch(
-        *reinterpret_cast<int16_t *>(message + 0x10),
-        *reinterpret_cast<int *>(message + 0x14),
-        *reinterpret_cast<int *>(message + 0x18),
-        *reinterpret_cast<int *>(message + 0x1C),
+        request.opcode(),
+        request.argument_2(),
+        request.argument_3(),
+        request.argument_4(),
         reinterpret_cast<char *>(message), 0, 0x2101);
 
     if (old_pending != 0) return;
@@ -4087,7 +4204,7 @@ static void netdaemon_process_sync_request(NetDaemon *daemon,
     }
 
     // Native 5362C4 reloads the request faction after synch/poll callbacks.
-    if (*reinterpret_cast<uint32_t *>(message + 4) ==
+    if (request.faction() ==
         static_cast<uint32_t>(ConsoleGlobal.faction_id_))
         daemon->channels_[1].trailing_words_[0] = 0;
 }
@@ -7405,20 +7522,21 @@ static void netdaemon_sync_send_chunk(NetDaemon &self, int16_t opcode,
     const uint32_t packet_length = static_cast<uint32_t>(payload_length) + 0x24u;
     char *packet = static_cast<char *>(mem_get(packet_length));
     uint8_t *bytes = reinterpret_cast<uint8_t *>(packet);
-    // Native writes only these header fields. +8..+0xB remain allocator
-    // contents; do not zero-fill them.
+    // Native writes only the named synchronization prefix fields; its
+    // unresolved byte intervals remain allocator contents.
     const uint32_t faction = NetDaemonSyncWire::current_faction();
     const uint32_t sequence = self.deletion_list_.sequence_bits();
     const int32_t wire_a2 = a2, wire_a3 = a3, wire_a4 = a4;
-    memcpy(bytes + 0x00, &flags, sizeof flags);
-    memcpy(bytes + 0x04, &faction, sizeof faction);
-    memcpy(bytes + 0x0C, &sequence, sizeof sequence);
-    memcpy(bytes + 0x10, &opcode, sizeof opcode);
+    SyncHeaderPrefixWriter prefix(bytes);
+    prefix.store_flags(flags);
+    prefix.store_faction(faction);
+    prefix.store_sequence(sequence);
+    prefix.store_opcode(opcode);
     const int16_t wire_index = static_cast<int16_t>(chunk_index);
-    memcpy(bytes + 0x12, &wire_index, sizeof wire_index);
-    memcpy(bytes + 0x14, &wire_a2, sizeof wire_a2);
-    memcpy(bytes + 0x18, &wire_a3, sizeof wire_a3);
-    memcpy(bytes + 0x1C, &wire_a4, sizeof wire_a4);
+    prefix.store_index(wire_index);
+    prefix.store_argument_2(wire_a2);
+    prefix.store_argument_3(wire_a3);
+    prefix.store_argument_4(wire_a4);
     if (!NetDaemonSyncWire::copy_out(opcode, a2, a3, a4,
             static_cast<uint32_t>(payload_size),
             static_cast<size_t>(source_offset), bytes + 0x24,
@@ -7546,8 +7664,9 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
     } else {
         // Native receives one packet/chunk per call. It reads the signed short
         // index, calls the display callback, then reloads packet fields/payload.
-        int16_t incoming_index;
-        memcpy(&incoming_index, packet + 0x12, sizeof incoming_index);
+        const SyncHeaderPrefixReader incoming(
+            reinterpret_cast<const unsigned char *>(packet));
+        const int16_t incoming_index = incoming.index();
         const int last_index = total_chunks - 1;
         const bool initial_is_last = incoming_index == last_index;
         // The diplomacy address arm overwrites the common count with 0x48
@@ -7595,8 +7714,8 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
                 static_cast<uint32_t>(current_length), map_capture,
                 diplomacy_wire)) return;
 
-        memcpy(&incoming_index, packet + 0x12, sizeof incoming_index);
-        if (incoming_index == last_index) {
+        const int16_t reloaded_index = incoming.index();
+        if (reloaded_index == last_index) {
             if (opcode == 0x12) // decimal 18
                 rebuild_vehicle_bits();
             else if (opcode == 0x14) // decimal 20

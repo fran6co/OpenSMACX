@@ -17,6 +17,7 @@ import pytest
 
 from test_netdaemon_synch_dispatch import _definition, _mask
 from test_caviar_draw_callbacks_actual_source import extract as _extract
+from test_netdaemon_sync_prefix_types_oct13t import _actual_prefix_source
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/netdaemon.cpp"
@@ -46,7 +47,8 @@ def declaration(text, name):
 
 def source_material():
     source = SOURCE.read_text()
-    wire = (_extract(source, "struct MessageDataRecord {") + ";\n" +
+    wire = (_actual_prefix_source() + "\n" +
+            _extract(source, "struct MessageDataRecord {") + ";\n" +
             _extract(source, "class MessageCommandView {") + ";\n")
     functions = "\n".join(_definition(source, r"static\s+(?:void|bool|int)\s+" + h, h)
                           for h in HELPERS)
@@ -125,6 +127,7 @@ static char PopupStartCaption[256];
 static Sprite portraits[8];
 static Sprite *FactionDiplomacyPortraits[8];
 static int last_log[3], last_send[6], last_num, diplo_sender, who_arg, name_arg;
+static int sync_args[7], sync_calls;
 static std::vector<int> parsed_factions, parsed_genders, parsed_pluralities;
 static int pop_wait() { return 0; }
 static int pop_expire() { return 0; }
@@ -200,7 +203,10 @@ struct NetDaemon : Net {
     int player_count_=0;
     struct Locks { int field_E8_=0; } locks_;
     uint32_t &network_message_count() { return channels_[1].trailing_words_[7]; }
-    void synch(int16_t,int,int,int,char*,int,int16_t) { event("synch"); }
+    void synch(int16_t opcode,int a2,int a3,int a4,char*,int outgoing,int16_t flags) {
+        sync_args[0]=opcode; sync_args[1]=a2; sync_args[2]=a3; sync_args[3]=a4;
+        sync_args[4]=outgoing; sync_args[5]=flags; ++sync_calls; event("synch");
+    }
     void process_message(char*,unsigned long,int) { event("process"); }
     char *get_player_name(unsigned long n) { name_arg=n; event("name"); return process_slots_[1].name_; }
     int who_2_pid(int n) { who_arg=n; event("who"); return n+100; }
@@ -229,6 +235,7 @@ static void reset() {
     TimeControl[0].event=4; TimeControl[1].event=7; TimeControl[2].event=11;
     std::memset(last_log,0,sizeof last_log); std::memset(last_send,0,sizeof last_send);
     std::memset(NetPeerTurnChecksums,0,sizeof NetPeerTurnChecksums);
+    std::memset(sync_args,0,sizeof sync_args); sync_calls=0;
 }
 static int position(const std::string &s) {
     for(size_t i=0;i<events.size();++i) if(events[i]==s) return static_cast<int>(i);
@@ -305,12 +312,38 @@ int main() {
     callback=[&](const std::string&s) { if(s=="draw") put(packet,0x10,6); };
     netdaemon_handle_client_done_upkeep(&receiver,packet,2); assert(last_log[0]==2 && last_log[1]==6 && last_log[2]==4);
     // The old-pending early return remains distinct from completion polling.
+    reset(); receiver=NetDaemon{}; put(packet,4,2); put(packet,0x10,-0x1234);
+    put(packet,0x14,-11); put(packet,0x18,22); put(packet,0x1C,-33);
+    receiver.channels_[1].trailing_words_[0]=55;
+    callback=[&](const std::string&s) {
+        if(s=="synch") {
+            assert(sync_args[0]==-0x1234 && sync_args[1]==-11 &&
+                   sync_args[2]==22 && sync_args[3]==-33 &&
+                   sync_args[4]==0 && sync_args[5]==0x2101);
+            put(packet,4,1); receiver.channels_[1].trailing_words_[1]=0;
+        }
+    };
+    netdaemon_process_sync_request(&receiver,packet);
+    assert(sync_calls==1 && receiver.channels_[1].trailing_words_[0]==0);
+    // The old-pending branch returns before the post-poll faction reload.
     reset(); receiver=NetDaemon{}; put(packet,4,2); receiver.channels_[1].trailing_words_[0]=55;
+    receiver.channels_[1].trailing_words_[1]=1;
     callback=[&](const std::string&s) { if(s=="synch") { put(packet,4,1); receiver.channels_[1].trailing_words_[1]=0; } };
-    netdaemon_process_sync_request(&receiver,packet); assert(receiver.channels_[1].trailing_words_[0]==0);
-    reset(); receiver=NetDaemon{}; put(packet,4,2); receiver.channels_[1].trailing_words_[0]=55; receiver.channels_[1].trailing_words_[1]=1;
-    callback=[&](const std::string&s) { if(s=="synch") { put(packet,4,1); receiver.channels_[1].trailing_words_[1]=0; } };
-    netdaemon_process_sync_request(&receiver,packet); assert(receiver.channels_[1].trailing_words_[0]==55);
+    netdaemon_process_sync_request(&receiver,packet);
+    assert(receiver.channels_[1].trailing_words_[0]==55);
+    // Polling callbacks can change the faction after synch; the final load
+    // must observe that current byte value, while the synch arguments stay
+    // those read before callbacks.
+    reset(); receiver=NetDaemon{}; put(packet,4,2); put(packet,0x10,0x1101);
+    put(packet,0x14,101); put(packet,0x18,202); put(packet,0x1C,303);
+    receiver.channels_[1].trailing_words_[0]=55;
+    callback=[&](const std::string&s) {
+        if(s=="synch") receiver.channels_[1].trailing_words_[1]=1;
+        if(s=="get") { put(packet,4,1); receiver.channels_[1].trailing_words_[1]=0; }
+    };
+    netdaemon_process_sync_request(&receiver,packet);
+    assert(sync_args[0]==0x1101 && sync_args[1]==101 && sync_args[2]==202 &&
+           sync_args[3]==303 && receiver.channels_[1].trailing_words_[0]==0);
 
     // Table F carries resolved sender for logs and transport sender for names.
     reset(); receiver=NetDaemon{}; netdaemon_handle_table_f(&receiver,0x4304,packet,1001,2);
@@ -449,7 +482,7 @@ def test_behavior_damage_controls(tmp_path, damage):
         "bonus_exit": ("if (PlayersData[faction_id].time_bonus_count <= 0) return true;", "if (false) return true;"),
         "global_host": ("if (NetDaemonNet.primary_state_.leading_words_[0] != 0) return;", "if (daemon->primary_state_.leading_words_[0] != 0) return;"),
         "portrait": ("popup.set_caller_picture(popup.picture_enabled() ? 0 : portrait);", "popup.set_caller_picture(portrait);"),
-        "completion_reload": ("if (*reinterpret_cast<uint32_t *>(message + 4) ==\n        static_cast<uint32_t>(ConsoleGlobal.faction_id_))", "if (sender == static_cast<uint32_t>(ConsoleGlobal.faction_id_))"),
+        "completion_reload": ("if (request.faction() ==\n        static_cast<uint32_t>(ConsoleGlobal.faction_id_))", "if (sender == static_cast<uint32_t>(ConsoleGlobal.faction_id_))"),
         "exec_reload": ("if (daemon->channels_[1].trailing_words_[2] != 0)", "if (remaining != 0)"),
         "server_ui_order": ('NetMsgPrimary.pop("SLOWPOKE", 5000, 0, 0);\n    MultiWindow.draw(0);', 'MultiWindow.draw(0);\n    NetMsgPrimary.pop("SLOWPOKE", 5000, 0, 0);'),
         "direct_sender": ('log_say("Received OPEN CHAN",\n                *reinterpret_cast<int *>(message + 4), 0, 0);\n        const int sender = *reinterpret_cast<int *>(message + 4);', 'const int sender = *reinterpret_cast<int *>(message + 4);\n        log_say("Received OPEN CHAN", sender, 0, 0);'),
@@ -472,6 +505,22 @@ def test_behavior_damage_controls(tmp_path, damage):
     functions = functions.replace(before, after, 1)
     result = compile_and_run(tmp_path, compiler, declarations, functions, state_fields, setter)
     assert result.returncode != 0, "control did not detect " + damage
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_sync_request_post_callback_faction_reload_damage(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip("host compiler unavailable")
+    declarations, functions, state_fields, setter = source_material()
+    before = ("if (request.faction() ==\n"
+              "        static_cast<uint32_t>(ConsoleGlobal.faction_id_))")
+    after = "if (sender == static_cast<uint32_t>(ConsoleGlobal.faction_id_))"
+    assert before in functions
+    damaged = functions.replace(before, after, 1)
+    result = compile_and_run(tmp_path, compiler, declarations, damaged, state_fields, setter)
+    assert result.returncode != 0, "captured request faction survived a callback reload control"
+    assert "Assertion" in result.stderr or "assertion" in result.stderr, result.stdout + result.stderr
 
 
 @pytest.mark.parametrize("eager_damage", [False, True])

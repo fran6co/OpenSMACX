@@ -7,6 +7,7 @@ import struct
 import subprocess
 
 import pytest
+from test_netdaemon_sync_prefix_types_oct13t import _actual_prefix_source
 
 
 HERE = Path(__file__).resolve()
@@ -164,7 +165,7 @@ def _compiler_names():
 
 
 def _compile_run(tmp_path, compiler, harness, inject):
-    source = harness.read_text()
+    source = "#include <cstring>\n" + harness.read_text()
     source = source.replace("/* SOURCE EXTRACTS */", inject)
     cpp = tmp_path / "source-rooted.cpp"
     exe = tmp_path / "source-rooted"
@@ -217,7 +218,7 @@ def _core_extract(net):
         _plain_definition(net, r"static\s+void\s+netdaemon_sync_send_chunk", "outgoing chunk sender"),
         _definition(net, r"void\s+NetDaemon::synch", "NetDaemon::synch"),
     ]
-    return struct, "\n\n".join(pieces[1:])
+    return _actual_prefix_source() + "\n" + struct, "\n\n".join(pieces[1:])
 
 
 def _owner_copy_extract(net):
