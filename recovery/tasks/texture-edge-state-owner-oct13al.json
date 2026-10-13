@@ -1,0 +1,30 @@
+{
+  "author": "coordinator",
+  "base_revision": "202000126fbfdb8e8dcdd0b9409d18fcf82cfa1d",
+  "editable_files": [
+    "src/texture.cpp",
+    "recovery/tests/test_texture_edge_state_oct13al.py"
+  ],
+  "evidence": [
+    "Positive pinned setup_edge624D80 and draw_trans2 row updates619FE2..61A000 and61A039..61A074 establish offsets: accumA+C/+0C +=deltaA/+14, accumB/+10 +=deltaB/+18, accumC/+1C +=deltaC/+20, fracAccum/+28 +=fracDelta/+2C; if fraction positive add extraDeltaC/+24 to accumC then subtract fracSub/+30 from fracAccum. Existing EdgeLocal wrongly updates offset30 by2C then subtracts28, and second edge swaps A/B delta operands.",
+    "Source scope is ONLY removal of obsolete EdgeLocal declaration and draw_trans2 implementation replacements with genuine existing EdgeScan records and established field names/recurrences, plus essential structural evidence note. Do not change setup_edge, other Texture bodies, header, global storage or flags. Preserve original unchecked indexing, stack initialization behavior, callback read order, floating-point computation and packed blend loop. No new bug fix, safety check, initializing unused fields or arithmetic normalization. The larger EdgeScan superset also supports Gouraud fields; these must remain uninitialized/unread in this nongouraud path.",
+    "Preserve all original mappings, historical claims, symbols and useful TRIED history. No manual claim stamps or demotion. Test actual final source setup and full draw body or literal extracted row recurrence with named evidence anchors; independent source-offset checks must connect extraction to actual body and prove outside-body changes limited. Include asymmetric A/B delta and fraction wrap/nonwrap, both edge refresh paths, original row/pixel behavior where feasible; old wrong recurrence mutations must compile and fail runtime controls.",
+    "Coordinator captures pinned baseline before author edits, isolated compiler lease and worktree, source/test separate authors. Fresh scoped measurements, full application compile/link, compiler collateral comparison, independent review, references and historical identity continuity before manual integration. Compiler equality is not linked selection, structure/runtime or full-game acceptance."
+  ],
+  "intent": "Recover transparent rasterizer scanline state through genuine EdgeScan records and pinned recurrences.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6397312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6442368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "texture-edge-state-owner-oct13al"
+}
