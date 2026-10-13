@@ -1,0 +1,19 @@
+{
+  "event_id": "828b54966eb070d64b3788562eb12750421f5b282b1ae5d449b8042c1a402364",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_event_hook_storage_oct9.py"
+    ],
+    "evidence": [
+      "Relevant existing Win event-hook host suite has two compile failures because its fixture still declares val_13_/val_24_ uintptr_t while production Win.h already declares Sound* and current actual dispatchers pass them as typed pointers. Authorize only aligning those fixture fields/reset assignment with existing production declarations; preserve all behavioral and damage-control assertions. No production/header or task-baseline change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "win-event-fixture-typed-pointer-scope-oct14",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-retired-dispatch-cleanup-oct14ax"
+}

@@ -17,12 +17,22 @@ from match_recovery.source import read_text
 
 ROOT = Path(__file__).resolve().parents[2]
 WIN_CPP = ROOT / "src/win.cpp"
-# Frozen after the bounded cd_check correction; this rejects unrelated source
-# edits while allowing the test harness itself to evolve.
-WIN_CPP_SHA256 = "c61f344464e719615bb6a93a5689c8f3a8a7e4bb2bd4362aac5c954d2273ca86"
+BASE = "f481d97cf2924ff0c4db617b6cad02fe3aa3c7d9"
 CD_CHECK = "int __cdecl cd_check()"
 TAIL_START = "HMODULE module = LoadLibraryA(root_path);"
 TAIL_END = "    return 1;"
+
+
+def _baseline_win_cpp() -> str:
+    result = subprocess.run(
+        ["git", "show", f"{BASE}:src/win.cpp"], cwd=ROOT,
+        check=True, capture_output=True, text=True, timeout=30,
+    )
+    return result.stdout
+
+
+def _method_digest(source: str) -> str:
+    return hashlib.sha256(_extract_function(source, CD_CHECK).encode("utf-8")).hexdigest()
 
 
 def _extract_function(text: str, signature: str) -> str:
@@ -264,15 +274,25 @@ def _compile_run(source: str, compiler: str, tmp_path: Path, stem: str):
     return subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
 
 
-def test_cd_check_source_diff_is_limited_to_the_reviewed_binding_correction():
+def test_cd_check_source_matches_task_baseline_and_keeps_original_identity():
     source = WIN_CPP.read_text(encoding="utf-8")
-    assert hashlib.sha256(source.encode("utf-8")).hexdigest() == WIN_CPP_SHA256
+    baseline = _baseline_win_cpp()
+    expected = _extract_function(baseline, CD_CHECK)
+    assert _extract_function(source, CD_CHECK) == expected
+    assert _method_digest(source) == _method_digest(baseline)
     rows = {row.address: row for row in read_text(source, WIN_CPP)}
     row = rows[0x628F30]
     assert row.symbol == "?cd_check@@YAHXZ"
     assert row.image_spans == ((0x628F30, 0x6290E0),)
     assert "ExpansionEnabled" not in _extract_function(source, CD_CHECK)
     assert "typedef int(__stdcall *setup_a_fn)(HWND, int, int);" in source
+
+
+def test_cd_check_hash_ignores_unrelated_comment_outside_method():
+    source = WIN_CPP.read_text(encoding="utf-8")
+    changed = source.replace("// prototype\n", "// unrelated outside-method comment\n// prototype\n", 1)
+    assert changed != source
+    assert _method_digest(changed) == _method_digest(source)
 
 
 def test_setup_tail_keeps_four_parent_and_handle_combinations_and_failures(

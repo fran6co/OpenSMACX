@@ -2118,12 +2118,6 @@ Purpose: Route a left button press - find the window under the pointer, ask
 Status: WIP
 */
 void Win::OnLButtonDown(HWND window, LONG dbl, int x, int y, WPARAM keys) {
-    static const size_t WinSlotHitTest = 0x12C;    // slot 75
-    static const size_t WinSlotLeftDown = 0x144;   // slot 81
-    typedef int (OriginalObject::*func_win_hit_test)(int, int);
-    typedef void (OriginalObject::*func_win_left_down)(LONG, int, int,
-                                                       WPARAM, int);
-
     Win *const target = get_mouse_window(&x, &y);
     if (target != nullptr) {
         if (WinMouseDirect != 0
@@ -2199,7 +2193,6 @@ void Win::OnLButtonDown(HWND window, LONG dbl, int x, int y, WPARAM keys) {
                 }
             }
         }
-        uint8_t *const vtable = *reinterpret_cast<uint8_t **>(target);
         target->on_l_button_down(dbl, x, y, keys, WinMouseDirect);
     }
     if (WinLeftDownHook != nullptr) {
@@ -9470,12 +9463,6 @@ void Win::nonclient_to_screen(int * x, int * y) {
 }
 
 // ===== homed from src/unrecovered/005eea90.cpp =====
-typedef void (__stdcall *VCall2Fn)(void *, int, char *, int);
-// RETURNS int: the body assigns `result = callback(a1, a2)`, which the
-// artifact's `void` spelling could not have compiled.
-typedef void (OriginalObject::*VCall0)();
-typedef void (OriginalObject::*VCall1)(int);
-
 // ORIGINAL: 0x005EEA90 ?key_click_event@Win@@QAEHHH@Z 0x005EEA90-0x005EEB81 FILE
 // provenance (retired seed): git:3cb99d43^:src/unrecovered/005eea90.cpp
 int Win::key_click_event(int key, int flags) {
@@ -9489,7 +9476,6 @@ int Win::key_click_event(int key, int flags) {
     }
 
     {
-        void *vtbl = *(void **)self;
         if (flags == 0x1b) {
             this->on_button_clicked(-2);
         } else if (flags == 0xd || flags == 0x1000d) {
@@ -9503,7 +9489,6 @@ int Win::key_click_event(int key, int flags) {
             target = list_.current_->focus_owner_;
         }
         if (flags == 9) {
-            void *tvtbl = *(void **)target;
             target->pass_dialog_focus();
         } else {
             if (target->key_click_event(key, flags) != 0) {
@@ -9518,13 +9503,10 @@ int Win::key_click_event(int key, int flags) {
     if (callback != 0) {
         result = callback(key, flags);
     }
-    void *vtbl2 = *(void **)self;
     int r2 = this->on_key_click(key, flags);
     Sound *child = val_14_;
     if (child != 0) {
-        void *cvtbl = *(void **)child;
         if (child->is_playing() == 0) {
-            void *cvtbl2 = *(void **)child;
             child->play();
         }
     }

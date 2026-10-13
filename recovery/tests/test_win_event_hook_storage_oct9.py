@@ -69,7 +69,7 @@ struct Win {
   Sound *val_8_=nullptr,*val_17_=nullptr,*val_26_=nullptr,*val_18_=nullptr,*val_27_=nullptr,
     *val_20_=nullptr,*val_22_=nullptr,*val_23_=nullptr,*val_25_=nullptr;
   Sound *val_10_=nullptr,*val_11_=nullptr,*val_12_=nullptr;
-  uintptr_t val_13_=0,val_24_=0;
+  Sound *val_13_=nullptr,*val_24_=nullptr;
   void dispatch_28(int,int,int); void dispatch_29(int,int,int);
   void dispatch_19(int,int,int); void dispatch_21(int,int,int);
   void dispatch_22(int,int,int); void dispatch_23(int,int,int);
@@ -101,7 +101,7 @@ int main(){
   w.val_26_=w.val_27_=&active;
   w.val_8_=&active;
   w.val_10_=w.val_11_=w.val_12_=&active;
-  w.val_13_=w.val_24_=reinterpret_cast<uintptr_t>(&active);
+  w.val_13_=w.val_24_=&active;
   struct Case { void (Win::*call)(int,int,int); const char *self; } cases[] = {
     {&Win::dispatch_28,"left2:11:-7"},{&Win::dispatch_29,"right2:11:-7"},
     {&Win::dispatch_19,"left:11:-7"},{&Win::dispatch_21,"leftup:11:-7"},
