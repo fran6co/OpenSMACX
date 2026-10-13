@@ -30,6 +30,8 @@ enum { NetTurnChecksumWords = 21, NetTurnChecksumPeerSlots = 8 };
 extern int NetTurnChecksums[NetTurnChecksumWords];
 extern int NetPeerTurnChecksums[NetTurnChecksumPeerSlots][NetTurnChecksumWords];
 
+struct NetChecksumReport;
+
  /*
   * NetDaemon class
   *
@@ -246,9 +248,9 @@ class NetDaemon : public AlphaNet {
   int end_of_event(int faction_id, int turn_value);
 
  public:
-  // 0x0052F8E0, homed from 0052f8e0.cpp. Writes the running game's checksum
-  // sequence into the caller's int array.
-  void game_checksum(int *results);
+  // 0x0052F8E0, homed from 0052f8e0.cpp. Writes the observed 47-word report:
+  // 21 common words and 26 diagnostics only when the debug popup is enabled.
+  void game_checksum(NetChecksumReport *results);
 
  public:
   // 0x0052F520, homed from 0052f520.cpp

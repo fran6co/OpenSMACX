@@ -1,0 +1,23 @@
+{
+  "event_id": "7cd73e13ba812c7a40f1acea4e61ebe58ec5d98c6654c253e9c793139ac5a054",
+  "payload": {
+    "affects": [
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-c46d88454f5459c23f8836f548a51a19e7f6832387f028ccf247914fd91373f7"
+    ],
+    "author": "coordinator",
+    "discovery_id": "checksum-interface-compiled-collateral-oct14",
+    "evidence": [
+      "Fresh full baseline build-s6g9wjiy and narrowed candidate build-31m6ugmw comparison: changed non-owner functions ?communicate@@YAXHHH@Z, ?load_interface@@YAXH@Z, ?goody_box@@YAHHH@Z. None carries a historical byte-exact token. The only added/removed symbol pair is the intended producer parameter-type decoration; original identity remains unchanged.",
+      "Earlier complete report-header exposure changed20 non-owner functions; forward declaration and consumer-only definition reduces this to3 without reverting the typed output contract. Existing source function bodies, globals and class layouts outside the authorised closure are unchanged. Source/host controls and complete compile/link pass; this is not independent linked-selection/runtime proof. Preserve original obligations and pending qualification."
+    ],
+    "hypothesis": "The new typed checksum interface changes compilation in three unchanged source functions even after restricting the report definition to its two consumers; retain their restoration effects rather than claiming full outside-scope preservation.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "checksum-interface-compiled-collateral-oct14",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-checksum-report-owner-oct13at"
+}

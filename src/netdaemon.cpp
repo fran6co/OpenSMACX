@@ -23,6 +23,7 @@
 #include <mmsystem.h>
 #include "original_seam.h"
 #include "netdaemon.h"
+#include "net_checksum_report.h"
 #include "log.h"  // log_say, source-owned at 0x006262F0
 #include "net_class.h"
 #include "lock.h"
@@ -1388,8 +1389,10 @@ void NetDaemon::send_rules() {
 
 
 // ORIGINAL: 0x0052F8E0 ?game_checksum@NetDaemon@@QAEXPAH@Z 0x0052F8E0-0x0053031E FILE
+// RECOVERY_BINDING: v1 {"evidence":["pinned:0x0052F8E0..0x0053031E and sole mapped caller 0x0051E760..0x0051F0A7", "src/net_checksum_report.h: observed 47-word output groups and offsets; 21-word common prefix, conditional 26-word diagnostic suffix", "The mapped caller leaves the report uninitialized, copies only its 0x54-byte prefix, and reads the diagnostic suffix even for the original type-4/debug-off path; preserve that behavior."],"reason":"Give the checksum producer and its mapped consumer a genuine typed output report while retaining the original function span, traversal and conditional initialization behavior; this is an observed output contract, not a recovered original type name or allocation claim."}
 // TRIED: full instruction-order transcription of all ~150 checksum() calls (verified offsets/strides/seed-chaining against raw disasm, not Ghidra scaling); diverges at insn #53, likely register-alloc (lea vs mov) in the bit_count loop or header prologue, not logic.
 // working copy - scaffold materialised by --work
+// symbol    ?game_checksum@NetDaemon@@QAEXPAUNetChecksumReport@@@Z
 // size      2622 bytes
 // prototype void (__thiscall ?game_checksum@NetDaemon@@QAEXPAH@Z)(NetDaemon* this, int*)
 // callers   1   call targets   2
@@ -1397,9 +1400,8 @@ void NetDaemon::send_rules() {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0050BA30 0x00539090
 
-void NetDaemon::game_checksum(int *results) {
+void NetDaemon::game_checksum(NetChecksumReport *results) {
     unsigned char cs;
-    int *out = results;
 
     cs = checksum((char *)&GameDataStateStorage.fields_.game_rules_, 4, 0);
     cs = checksum((char *)&GameDataStateStorage.fields_.vehicle_current_count_, 0x10, cs);
@@ -1416,7 +1418,7 @@ void NetDaemon::game_checksum(int *results) {
             cs = (unsigned char)(cs ^ al);
         }
     }
-    *out++ = cs;
+    results->common[0] = cs;
     cs = 0;
 
     {
@@ -1443,7 +1445,7 @@ void NetDaemon::game_checksum(int *results) {
             cs = checksum((char *)&player.integrity_blemishes, 4, cs);
         }
     }
-    *out++ = cs;
+    results->common[1] = cs;
     cs = 0;
 
     {
@@ -1465,7 +1467,7 @@ void NetDaemon::game_checksum(int *results) {
             } while (idxA < countA);
         }
     }
-    *out++ = cs;
+    results->common[2] = cs;
     cs = 0;
 
     {
@@ -1493,7 +1495,7 @@ void NetDaemon::game_checksum(int *results) {
             }
         }
     }
-    *out++ = cs;
+    results->common[3] = cs;
     cs = 0;
 
     {
@@ -1518,7 +1520,7 @@ void NetDaemon::game_checksum(int *results) {
             } while (idxC < countC);
         }
     }
-    *out++ = cs;
+    results->common[4] = cs;
     cs = 0;
 
     {
@@ -1547,15 +1549,17 @@ void NetDaemon::game_checksum(int *results) {
                     }
                 }
             }
-            *out++ = cs;
+            results->map_sections[k] = cs;
         }
     }
 
     if (BaseAtDebugPopupFlag != 0) {
         cs = checksum((char *)&GameDataStateStorage.fields_.game_rules_, 4, 0);
         cs = checksum((char *)&GameDataStateStorage.fields_.vehicle_current_count_, 0x10, cs);
-        *out++ = checksum((char *)&GameDataStateStorage.fields_.lock_masks_.enable_mask_, 2, cs);
-        *out++ = checksum((char *)&GameDataStateStorage.fields_.secret_project_, 0x100, 0);
+        results->diagnostic_aggregates[0] = checksum(
+            (char *)&GameDataStateStorage.fields_.lock_masks_.enable_mask_, 2, cs);
+        results->diagnostic_aggregates[1] = checksum(
+            (char *)&GameDataStateStorage.fields_.secret_project_, 0x100, 0);
         cs = 0;
 
         {
@@ -1568,7 +1572,7 @@ void NetDaemon::game_checksum(int *results) {
                 cs = (unsigned char)(cs ^ al);
             }
         }
-        *out++ = cs;
+        results->diagnostic_aggregates[2] = cs;
 
         {
             for (int faction = 1; faction < MaxPlayerNum; ++faction) {
@@ -1589,7 +1593,7 @@ void NetDaemon::game_checksum(int *results) {
                 cs = checksum((char *)player.diplo_spoke, 0x20, cs);
                 cs = checksum((char *)player.diplo_wrongs, 0x20, cs);
                 cs = checksum((char *)&player.integrity_blemishes, 4, cs);
-                *out++ = cs;
+                results->faction_values[faction - 1] = cs;
             }
         }
         cs = 0;
@@ -1604,7 +1608,7 @@ void NetDaemon::game_checksum(int *results) {
                 ++tile;
             }
         }
-        *out++ = cs;
+        results->map_values[0] = cs;
         cs = 0;
 
         {
@@ -1617,7 +1621,7 @@ void NetDaemon::game_checksum(int *results) {
                 ++tile;
             }
         }
-        *out++ = cs;
+        results->map_values[1] = cs;
         cs = 0;
 
         {
@@ -1630,7 +1634,7 @@ void NetDaemon::game_checksum(int *results) {
                 ++tile;
             }
         }
-        *out++ = cs;
+        results->map_values[2] = cs;
         cs = 0;
 
         {
@@ -1643,7 +1647,7 @@ void NetDaemon::game_checksum(int *results) {
                 ++tile;
             }
         }
-        *out++ = cs;
+        results->map_values[3] = cs;
         cs = 0;
 
         {
@@ -1656,7 +1660,7 @@ void NetDaemon::game_checksum(int *results) {
                 ++tile;
             }
         }
-        *out++ = cs;
+        results->map_values[4] = cs;
         cs = 0;
 
         {
@@ -1669,9 +1673,9 @@ void NetDaemon::game_checksum(int *results) {
                 ++tile;
             }
         }
-        *out++ = cs;
+        results->map_values[5] = cs;
 
-        *out++ = checksum((char *)&MapSizePlanet, 0x1c, 0);
+        results->map_values[6] = checksum((char *)&MapSizePlanet, 0x1c, 0);
 
         cs = 0;
         {
@@ -1698,7 +1702,7 @@ void NetDaemon::game_checksum(int *results) {
                         idxBb++;
                     } while (idxBb < countB2);
                 }
-                *out++ = cs;
+                results->vehicles_by_faction[idx2b] = cs;
             }
         }
 
@@ -1723,7 +1727,7 @@ void NetDaemon::game_checksum(int *results) {
                 } while (idxC2 < countC2);
             }
         }
-        *out++ = cs;
+        results->base_value = cs;
     }
 }
 

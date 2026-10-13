@@ -38,6 +38,7 @@
 #include "log.h"
 #include "lock.h"     // map_tile_bytes() - site_at/set_dirty walk its records
 #include "netdaemon.h"
+#include "net_checksum_report.h"
 #include "console.h"
 #include "netmsg.h"   // NetMsgPrimary - synch_display posts through it
 #include "mapwin.h"
@@ -7799,10 +7800,10 @@ void __cdecl do_checksums(int type) {
     // popup flag is set, appends the diagnostic values through slot 46.
     // Keep the tail uninitialized when the producer does not write it: the
     // original type-4 consumer still reads it; no deterministic value is established.
-    int checksums[47];
+    NetChecksumReport checksums;
     char text[256];
     char number[50];
-    NetDaemonNet.game_checksum(checksums);
+    NetDaemonNet.game_checksum(&checksums);
 
     log_say(" ", 0, 0, 0);
     if (type <= 4) {
@@ -7821,7 +7822,7 @@ void __cdecl do_checksums(int type) {
             break;
         case 4:
             log_say("Checksums at beginning of turn", GameDataStateStorage.fields_.turn_current_num_, 0, 0);
-            memcpy(NetTurnChecksums, checksums, 0x54);
+            memcpy(NetTurnChecksums, &checksums, 0x54);
             break;
         }
     }
@@ -7837,11 +7838,11 @@ void __cdecl do_checksums(int type) {
         default: label = "BASES checksum = "; break;
         }
         text[0] = '\0';
-        _itoa(checksums[common_index], number, 10);
+        _itoa(checksums.common[common_index], number, 10);
         strcat(text, number);
         strcat(text, " ");
         strcat(text, label);
-        log_say_hex(text, checksums[common_index], 0, 0);
+        log_say_hex(text, checksums.common[common_index], 0, 0);
     }
 
     log_say(" ", 0, 0, 0);
@@ -7854,11 +7855,11 @@ void __cdecl do_checksums(int type) {
         strcat(StringTemp, " = ");
 
         text[0] = '\0';
-        _itoa(checksums[section_index + 5], number, 10);
+        _itoa(checksums.map_sections[section_index], number, 10);
         strcat(text, number);
         strcat(text, " ");
         strcat(text, StringTemp);
-        log_say_hex(text, checksums[section_index + 5], 0, 0);
+        log_say_hex(text, checksums.map_sections[section_index], 0, 0);
     }
 
     int aggregate_index;
@@ -7870,11 +7871,11 @@ void __cdecl do_checksums(int type) {
         default: label = "Tech checksum = "; break;
         }
         text[0] = '\0';
-        _itoa(checksums[21 + aggregate_index], number, 10);
+        _itoa(checksums.diagnostic_aggregates[aggregate_index], number, 10);
         strcat(text, number);
         strcat(text, " ");
         strcat(text, label);
-        log_say_hex(text, checksums[21 + aggregate_index], 0, 0);
+        log_say_hex(text, checksums.diagnostic_aggregates[aggregate_index], 0, 0);
     }
 
     int player_index;
@@ -7883,11 +7884,11 @@ void __cdecl do_checksums(int type) {
         strcat(StringTemp, Players[player_index].adj_name_faction);
         strcat(StringTemp, " checksum = ");
         text[0] = '\0';
-        _itoa(checksums[24 + player_index - 1], number, 10);
+        _itoa(checksums.faction_values[player_index - 1], number, 10);
         strcat(text, number);
         strcat(text, " ");
         strcat(text, StringTemp);
-        log_say_hex(text, checksums[24 + player_index - 1], 0, 0);
+        log_say_hex(text, checksums.faction_values[player_index - 1], 0, 0);
     }
 
     int map_report_index;
@@ -7903,11 +7904,11 @@ void __cdecl do_checksums(int type) {
         default: label = "Params checksum = "; break;
         }
         text[0] = '\0';
-        _itoa(checksums[31 + map_report_index], number, 10);
+        _itoa(checksums.map_values[map_report_index], number, 10);
         strcat(text, number);
         strcat(text, " ");
         strcat(text, label);
-        log_say_hex(text, checksums[31 + map_report_index], 0, 0);
+        log_say_hex(text, checksums.map_values[map_report_index], 0, 0);
     }
 
     int vehicle_faction;
@@ -7916,18 +7917,18 @@ void __cdecl do_checksums(int type) {
         strcat(StringTemp, Players[vehicle_faction].adj_name_faction);
         strcat(StringTemp, " Vehicles checksum = ");
         text[0] = '\0';
-        _itoa(checksums[38 + vehicle_faction], number, 10);
+        _itoa(checksums.vehicles_by_faction[vehicle_faction], number, 10);
         strcat(text, number);
         strcat(text, " ");
         strcat(text, StringTemp);
-        log_say_hex(text, checksums[38 + vehicle_faction], 0, 0);
+        log_say_hex(text, checksums.vehicles_by_faction[vehicle_faction], 0, 0);
     }
 
     text[0] = '\0';
-    _itoa(checksums[46], number, 10);
+    _itoa(checksums.base_value, number, 10);
     strcat(text, number);
     strcat(text, " Bases checksum = ");
-    log_say_hex(text, checksums[46], 0, 0);
+    log_say_hex(text, checksums.base_value, 0, 0);
 }
 
 extern int TerraformTileFaction;

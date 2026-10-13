@@ -7,10 +7,14 @@ import pytest
 from match_recovery.source import read_text, write
 from test_net_hotseat_owner_actual_source_oct6 import extract_definition
 from test_console_typed_owner_members_oct10 import run_control
+from test_net_checksum_report_oct13at import (
+    BASE as REPORT_BASE, restore_report_migration, report_header,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "f21886f1e9606f78fe10f59774c07cc977e7b984"
-SIGNATURE = "void NetDaemon::game_checksum(int *results)"
+SIGNATURE = "void NetDaemon::game_checksum(NetChecksumReport *results)"
+OLD_SIGNATURE = "void NetDaemon::game_checksum(int *results)"
 
 
 def checksum_blocks(body):
@@ -27,8 +31,8 @@ def checksum_blocks(body):
 def restore_vehicle_base_checksum_migration(source):
     """Reverse only four authorized segments for earlier continuity controls."""
     old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
-    before = extract_definition(old, SIGNATURE)
-    after = extract_definition(source, SIGNATURE)
+    before = extract_definition(old, OLD_SIGNATURE)
+    after = extract_definition(source, OLD_SIGNATURE)
     restored = after
     for now, previous in zip(checksum_blocks(after), checksum_blocks(before)):
         assert restored.count(now) == 1
@@ -38,13 +42,9 @@ def restore_vehicle_base_checksum_migration(source):
 
 def test_only_four_segments_change_and_original_obligations_survive():
     path = ROOT / "src/netdaemon.cpp"
-    current = path.read_text()
-    from test_netdaemon_file_control_packets_oct10 import restore_file_control_packet_migration
-    current = restore_file_control_packet_migration(current)
-    from test_netdaemon_typed_map_checksum_oct10 import restore_map_checksum_migration
-    current = restore_map_checksum_migration(current)
-    old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
-    assert restore_vehicle_base_checksum_migration(current) == old
+    current = restore_report_migration(path.read_text())
+    old = subprocess.check_output(["git", "show", REPORT_BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
+    assert current == old
     rows = read_text(current, path)
     assert write(current, rows) == current
     prior = {r.address: r for r in read_text(old, path)}
@@ -56,24 +56,26 @@ def test_only_four_segments_change_and_original_obligations_survive():
         def lessons(r):
             return [(x.kind, x.key, x.prose, tuple(t for _, t in x.lines)) for x in r.origin]
         assert lessons(row) == lessons(prior[row.address])
-    normal, _, debug, _ = checksum_blocks(extract_definition(current, SIGNATURE))
+    normal, base, debug, debug_base = checksum_blocks(extract_definition(current, OLD_SIGNATURE))
     assert normal.index("int countB =") < normal.index("for (idx2")
     assert normal.index("countB =", normal.index("do {")) < normal.index("\n                    }", normal.index("do {"))
     assert debug.index("for (idx2b") < debug.index("int countB2 =")
     assert "}\n                        countB2 =" in debug
     assert "*(char *)&GameDataStateStorage" not in normal + debug
+    assert "facilities_built" in base and "facilities_built" in debug_base
 
 
 def control():
     declarations = "\n".join(extract_definition((ROOT / ("src/" + header)).read_text(), "struct " + name + " ") + ";"
                              for header, name in (("veh.h", "Veh"), ("base.h", "Base")))
-    blocks = checksum_blocks(extract_definition((ROOT / "src/netdaemon.cpp").read_text(), SIGNATURE))
+    blocks = producer_checksum_blocks(extract_definition((ROOT / "src/netdaemon.cpp").read_text(), SIGNATURE))
     program = r'''
 #include <cassert>
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
 #include <vector>
+REPORT_HEADER
 DECLARATIONS
 static_assert(sizeof(Veh)==0x34 && sizeof(Base)==0x134,"native strides");
 static_assert(offsetof(Veh,proto_id)==0xA && offsetof(Veh,unk_1)==0xC,"partial field");
@@ -99,10 +101,14 @@ static unsigned char observe(char *p,int n,unsigned char seed){
 }
 static unsigned char checksum(char *p,int n,unsigned char cs){return observe(p,n,cs);}
 static void actual_vehicle(bool debug,unsigned char &cs,int *&out){
- if(debug){DEBUG_VEHICLE}else{NORMAL_VEHICLE}
+ NetChecksumReport report;std::memset(&report,0,sizeof(report));NetChecksumReport *results=&report;
+ if(debug){DEBUG_VEHICLE;for(int i=0;i<8;++i)*out++=report.vehicles_by_faction[i];}
+ else{NORMAL_VEHICLE;*out++=report.common[3];cs=0;}
 }
 static void actual_base(bool debug,unsigned char &cs,int *&out){
- if(debug){DEBUG_BASE}else{NORMAL_BASE}
+ NetChecksumReport report;std::memset(&report,0,sizeof(report));NetChecksumReport *results=&report;
+ if(debug){cs=0;DEBUG_BASE;*out++=report.base_value;}
+ else{NORMAL_BASE;*out++=report.common[4];cs=0;}
 }
 // Independent original instruction ranges and loop schedules, not old source.
 static void original_vehicle(bool debug,unsigned char &cs,int *&out){
@@ -126,7 +132,8 @@ static void original_vehicle(bool debug,unsigned char &cs,int *&out){
  }
  if(!debug){*out++=cs;cs=0;}
 }
-static void original_base(unsigned char &cs,int *&out){
+static void original_base(bool debug,unsigned char &cs,int *&out){
+ if(debug)cs=0;
  int count=GameDataStateStorage.fields_.base_current_count_;
  const int offsets[]={0,0x3C,0x40,0x4C,0x50,0x78,0x84,0x8C};
  const int lengths[]={7,4,4,4,4,4,8,9};
@@ -151,7 +158,7 @@ int main(){
  for(unsigned trial=0;trial<3;++trial)for(bool debug:{false,true})for(bool vehicles:{false,true}){
   int expected[10],actual[10];for(int i=0;i<10;++i)expected[i]=actual[i]=-197;
   initialize(count,mode,trial);unsigned char cs=vehicles?0:17;int *out=expected+1;
-  if(vehicles)original_vehicle(debug,cs,out);else original_base(cs,out);
+  if(vehicles)original_vehicle(debug,cs,out);else original_base(debug,cs,out);
   const auto trace=events;const int written=out-(expected+1);const auto final_cs=cs;
   const int vehicle_count=GameDataStateStorage.fields_.vehicle_current_count_;
   const int base_count=GameDataStateStorage.fields_.base_current_count_;
@@ -166,7 +173,7 @@ int main(){
   assert(GameDataStateStorage.fields_.base_current_count_==base_count);
  }
 }
-'''.replace("DECLARATIONS", declarations)
+'''.replace("REPORT_HEADER", report_header()).replace("DECLARATIONS", declarations)
     for token, block in zip(("NORMAL_VEHICLE", "NORMAL_BASE", "DEBUG_VEHICLE", "DEBUG_BASE"), blocks):
         program = program.replace(token, block)
     return program
@@ -183,7 +190,7 @@ def test_actual_loops_ranges_outputs_full_counts_and_live_bounds(tmp_path, compi
         ("countC2 = GameDataStateStorage.fields_.base_current_count_;\n                    idxC2++;", "idxC2++;"),
         ("offsetof(Veh, proto_id), 3, cs", "offsetof(Veh, proto_id), 2, cs"),
         ("checksum((char *)base->facilities_built, 9, cs);\n                countC", "checksum((char *)base->facilities_built, 12, cs);\n                countC"),
-        ("                *out++ = cs;\n            }", "                *out = cs;\n            }"),
+        ("results->vehicles_by_faction[idx2b] = cs;", "results->vehicles_by_faction[idx2b] = 0;"),
     ):
         run_control(tmp_path, compiler, program, damage)
 
@@ -211,3 +218,20 @@ def test_original_counter_loads_backedges_and_debug_outputs():
     assert "0x53018b" in debug and "cmp eax, 8" in debug
     assert image.read(Span(0x530231, 0x530234)) == bytes.fromhex("83c704")
     assert image.read(Span(0x53023B, 0x53023E)) == bytes.fromhex("8957fc")
+
+
+def producer_checksum_blocks(body):
+    starts = (
+        "\n    {\n        int idx2;",
+        "\n    {\n        int countC =",
+        "\n        {\n            int idx2b;",
+        "\n        {\n            int countC2 =",
+    )
+    ends = (
+        "\n    {\n        int countC = GameDataStateStorage.fields_.base_current_count_;",
+        "\n    {\n        int rawVal = MapLatitudeBounds;",
+        "\n        cs = 0;",
+        "\n    }\n}",
+    )
+    return tuple(body[body.index(start):body.index(end, body.index(start))]
+                 for start, end in zip(starts, ends))

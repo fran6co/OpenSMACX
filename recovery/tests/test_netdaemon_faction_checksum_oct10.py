@@ -8,10 +8,14 @@ import pytest
 from match_recovery.source import read_text, write
 from test_net_hotseat_owner_actual_source_oct6 import extract_definition
 from test_console_typed_owner_members_oct10 import run_control
+from test_net_checksum_report_oct13at import (
+    BASE as REPORT_BASE, restore_report_migration, report_header,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "4f8119d85ccd3cc1e3082637a07729a7e5e6bff9"
-SIGNATURE = "void NetDaemon::game_checksum(int *results)"
+SIGNATURE = "void NetDaemon::game_checksum(NetChecksumReport *results)"
+OLD_SIGNATURE = "void NetDaemon::game_checksum(int *results)"
 OFFSETS = {
     "tech_accumulated": 0x3C8, "tech_id_researching": 0x3CC,
     "planet_ecology": 0x464, "energy_reserves": 0x220,
@@ -33,27 +37,31 @@ def faction_blocks(body, *, previous=False):
                  for start, end in zip(starts, ends))
 
 
+def faction_producer_blocks(body):
+    starts = (
+        "\n    {\n        // The original cursor",
+        "\n        {\n            for (int faction",
+    )
+    ends = (
+        "\n    {\n        int countA = MapArea;",
+        "\n        {\n            int cnt1 = MapArea;",
+    )
+    return tuple(body[body.index(start):body.index(end, body.index(start))]
+                 for start, end in zip(starts, ends))
+
+
 def test_only_two_walks_change_and_all_original_obligations_survive():
     path = ROOT / "src/netdaemon.cpp"
-    old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
-    current = path.read_text()
-    from test_netdaemon_file_control_packets_oct10 import restore_file_control_packet_migration
-    current = restore_file_control_packet_migration(current)
-    from test_netdaemon_typed_map_checksum_oct10 import restore_map_checksum_migration
-    current = restore_map_checksum_migration(current)
-    # Later authorized packet migration has its own whole-source continuity
-    # and actual-source controls; reverse only that bounded step here.
-    from test_netdaemon_typed_bulk_landmark_oct10 import restore_packet_migration
-    from test_netdaemon_vehicle_base_checksum_oct10 import restore_vehicle_base_checksum_migration
-    current = restore_vehicle_base_checksum_migration(current)
-    current = restore_packet_migration(current)
-    before = extract_definition(old, SIGNATURE)
-    after = extract_definition(current, SIGNATURE)
-    restored = after
-    for current_block, old_block in zip(faction_blocks(after), faction_blocks(before, previous=True)):
-        restored = restored.replace(current_block, old_block, 1)
-    assert restored == before
-    assert current.replace(after, before, 1) == old
+    old = subprocess.check_output(["git", "show", REPORT_BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
+    current = restore_report_migration(path.read_text())
+    assert current == old
+    before = extract_definition(old, OLD_SIGNATURE)
+    ordinary, debug = faction_blocks(before)
+    assert "Bases" not in debug
+    assert "(char *)Bases" not in ordinary
+    assert ordinary.index("masked1[idx4] =") < ordinary.index("masked2[idx4] =")
+    assert "PlayerData &player = PlayersData[faction];" in ordinary
+    assert "PlayerData &player = PlayersData[faction];" in debug
     rows = read_text(current, path)
     assert write(current, rows) == current
     prior = {r.address: r for r in read_text(old, path)}
@@ -66,12 +74,6 @@ def test_only_two_walks_change_and_all_original_obligations_survive():
         def lessons(r):
             return [(x.kind, x.key, x.prose, tuple(t for _, t in x.lines)) for x in r.origin]
         assert lessons(row) == lessons(previous)
-    ordinary, debug = faction_blocks(after)
-    assert "Bases" not in debug
-    assert "(char *)Bases" not in ordinary
-    assert ordinary.index("masked1[idx4] =") < ordinary.index("masked2[idx4] =")
-    assert "PlayerData &player = PlayersData[faction];" in ordinary
-    assert "PlayerData &player = PlayersData[faction];" in debug
 
 
 def control():
@@ -81,13 +83,14 @@ def control():
     bound = re.search(r"(?m)^static const int MaxPlayerNum = 8;", header)[0]
     assertions = "\n".join("static_assert(offsetof(PlayerData, %s)==%s, \"native anchor\");"
                            % (name, hex(offset)) for name, offset in OFFSETS.items())
-    ordinary, debug = faction_blocks(extract_definition((ROOT / "src/netdaemon.cpp").read_text(), SIGNATURE))
+    ordinary, debug = faction_producer_blocks(extract_definition((ROOT / "src/netdaemon.cpp").read_text(), SIGNATURE))
     return r'''
 #include <cassert>
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
 #include <vector>
+REPORT_HEADER
 typedef int32_t BOOL;
 DECLARATIONS
 BOUND
@@ -122,11 +125,16 @@ static unsigned char observe(char *p,int n,unsigned char seed){
 }
 static unsigned char checksum(char *p,int n,unsigned char seed){return observe(p,n,seed);}
 static void actual_ordinary(unsigned char &cs,int *&out){
+    NetChecksumReport report; std::memset(&report,0,sizeof(report));
+    NetChecksumReport *results=&report;
 ORDINARY
-    *out++=cs;cs=0;
+    *out++=report.common[1];cs=0;
 }
 static void actual_debug(unsigned char &cs,int *&out){
+    NetChecksumReport report; std::memset(&report,0,sizeof(report));
+    NetChecksumReport *results=&report;
 DEBUG
+    for(int i=0;i<7;++i)*out++=report.faction_values[i];
     cs=0;
 }
 // Independent original offset/range oracle; it has no host Bases allocation.
@@ -178,7 +186,7 @@ int main(){
         assert(events==trace); // Every original input byte, seed, range and order.
     }
 }
-'''.replace("DECLARATIONS", declarations).replace("BOUND", bound).replace(
+'''.replace("REPORT_HEADER", report_header()).replace("DECLARATIONS", declarations).replace("BOUND", bound).replace(
         "ASSERTIONS", assertions).replace("ORDINARY", ordinary).replace("DEBUG", debug)
 
 
@@ -196,7 +204,7 @@ def test_actual_loops_match_original_ranges_seeds_outputs_and_live_reads(tmp_pat
         ("checksum((char *)&player.tech_accumulated, 4, 0)", "checksum((char *)&player.tech_accumulated, 4, cs)"),
         ("offsetof(PlayerData, diplo_patience), 0x20, cs", "offsetof(PlayerData, diplo_patience), 8, cs"),
         ("checksum((char *)player.diplo_wrongs, 0x20, cs)", "checksum((char *)player.diplo_spoke, 0x20, cs)"),
-        ("*out++ = cs;", "*out = cs;"),
+        ("results->faction_values[faction - 1] = cs;", "results->faction_values[faction - 1] = 0;"),
     ):
         run_control(tmp_path, compiler, program, damage)
 

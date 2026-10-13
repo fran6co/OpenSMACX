@@ -7,10 +7,14 @@ import pytest
 from match_recovery.source import read_text, write
 from test_net_hotseat_owner_actual_source_oct6 import extract_definition
 from test_console_typed_owner_members_oct10 import run_control
+from test_net_checksum_report_oct13at import (
+    BASE as REPORT_BASE, restore_report_migration, report_header,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "4c969d3f1357050990cb92dd08883aa4871ee241"
-SIGNATURE = "void NetDaemon::game_checksum(int *results)"
+SIGNATURE = "void NetDaemon::game_checksum(NetChecksumReport *results)"
+OLD_SIGNATURE = "void NetDaemon::game_checksum(int *results)"
 
 
 def map_blocks(body):
@@ -25,8 +29,8 @@ def map_blocks(body):
 
 def restore_map_checksum_migration(source):
     old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
-    before = extract_definition(old, SIGNATURE)
-    after = extract_definition(source, SIGNATURE)
+    before = extract_definition(old, OLD_SIGNATURE)
+    after = extract_definition(source, OLD_SIGNATURE)
     restored = after
     for now, prior in zip(map_blocks(after), map_blocks(before)):
         assert restored.count(now) == 1
@@ -36,11 +40,9 @@ def restore_map_checksum_migration(source):
 
 def test_only_map_walks_change_and_all_bindings_survive():
     path = ROOT / "src/netdaemon.cpp"
-    source = path.read_text()
-    from test_netdaemon_file_control_packets_oct10 import restore_file_control_packet_migration
-    source = restore_file_control_packet_migration(source)
-    old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
-    assert restore_map_checksum_migration(source) == old
+    source = restore_report_migration(path.read_text())
+    old = subprocess.check_output(["git", "show", REPORT_BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
+    assert source == old
     rows = read_text(source, path)
     assert write(source, rows) == source
     previous = {r.address: r for r in read_text(old, path)}
@@ -52,7 +54,7 @@ def test_only_map_walks_change_and_all_bindings_survive():
         def lessons(r):
             return [(x.kind, x.key, x.prose, tuple(t for _, t in x.lines)) for x in r.origin]
         assert lessons(row) == lessons(previous[row.address])
-    main, strips, debug = map_blocks(extract_definition(source, SIGNATURE))
+    main, strips, debug = map_blocks(extract_definition(source, OLD_SIGNATURE))
     assert "map_tile_bytes" not in main + strips + debug
     assert main.count("Map *tile = MapTiles;") == 1
     assert debug.count("Map *tile = MapTiles;") == 6
@@ -61,13 +63,14 @@ def test_only_map_walks_change_and_all_bindings_survive():
 
 def control():
     declaration = extract_definition((ROOT / "src/map.h").read_text(), "struct Map ") + ";"
-    blocks = map_blocks(extract_definition((ROOT / "src/netdaemon.cpp").read_text(), SIGNATURE))
+    blocks = map_producer_blocks(extract_definition((ROOT / "src/netdaemon.cpp").read_text(), SIGNATURE))
     program = r'''
 #include <cassert>
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
 #include <vector>
+REPORT_HEADER
 DECLARATION
 static_assert(sizeof(Map)==0x2C,"native stride");
 static_assert(offsetof(Map,climate)==0 && offsetof(Map,region)==3,"native bytes");
@@ -94,7 +97,10 @@ static unsigned char observe(char *p,int n,unsigned char seed){
 }
 static unsigned char checksum(char *p,int n,unsigned char cs){return observe(p,n,cs);}
 static void actual(int mode,unsigned char &cs,int *&out){
- if(mode==0){MAIN}else if(mode==1){STRIPS}else{DEBUG}
+ NetChecksumReport report;std::memset(&report,0,sizeof(report));NetChecksumReport *results=&report;
+ if(mode==0){MAIN;*out++=report.common[2];cs=0;}
+ else if(mode==1){STRIPS;for(int i=0;i<16;++i)*out++=report.map_sections[i];}
+ else{DEBUG;for(int i=0;i<6;++i)*out++=report.map_values[i];}
 }
 // Native instruction byte ranges; no member expressions or actual-loop reuse.
 static void original(int mode,unsigned char &cs,int *&out){
@@ -152,10 +158,20 @@ int main(){
   assert(MapArea==last_area && MapTiles==last_pointer && MapLongitude==last_longitude);
  }
 }
-'''.replace("DECLARATION", declaration)
+'''.replace("REPORT_HEADER", report_header()).replace("DECLARATION", declaration)
     for token, block in zip(("MAIN", "STRIPS", "DEBUG"), blocks):
         program = program.replace(token, block)
     return program
+
+
+def map_producer_blocks(body):
+    anchors = (
+        ("\n    {\n        int countA = MapArea;", "\n    {\n        int idx2;"),
+        ("\n    {\n        int rawVal = MapLatitudeBounds;", "\n    if (BaseAtDebugPopupFlag"),
+        ("\n        {\n            int cnt1 = MapArea;", "\n        results->map_values[6] = checksum((char *)&MapSizePlanet"),
+    )
+    return tuple(body[body.index(start):body.index(end, body.index(start))]
+                 for start, end in anchors)
 
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))

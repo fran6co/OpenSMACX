@@ -4,6 +4,7 @@ import shutil
 import subprocess
 
 import pytest
+from test_net_checksum_report_oct13at import report_declaration
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,12 +14,13 @@ FIXTURE = r'''#include <cassert>
 #include <cstring>
 #include <string>
 #include <vector>
+REPORT_DECLARATION
 
 #define __cdecl
 
 class NetDaemon {
 public:
-    void game_checksum(int *results);
+    void game_checksum(NetChecksumReport *results);
 };
 
 extern NetDaemon NetDaemonNet;
@@ -29,6 +31,9 @@ enum { MaxPlayerNum = 8 };
 struct HostPlayer { char adj_name_faction[64]; };
 extern HostPlayer Players[MaxPlayerNum];
 extern char StringTemp[1032];
+struct HostGameFields { int turn_current_num_; };
+struct HostGameState { HostGameFields fields_; };
+extern HostGameState GameDataStateStorage;
 
 char *_itoa(int value, char *text, int radix);
 void log_say(const char *text, int value, int, int);
@@ -56,6 +61,7 @@ int BaseAtDebugPopupFlag;
 int TurnCurrentNum = 37;
 HostPlayer Players[MaxPlayerNum];
 char StringTemp[1032];
+HostGameState GameDataStateStorage;
 
 static int checksum_calls;
 static std::vector<int> hex_values;
@@ -64,15 +70,16 @@ static std::vector<std::string> scratch_at_hex_call;
 static std::vector<std::string> say_messages;
 static std::vector<int> say_values;
 
-void NetDaemon::game_checksum(int *results) {
+void NetDaemon::game_checksum(NetChecksumReport *results) {
     ++checksum_calls;
-    for (int index = 0; index < 21; ++index) {
-        results[index] = 0x100 + index;
-    }
+    for (int index = 0; index < 5; ++index) results->common[index] = 0x100 + index;
+    for (int index = 0; index < 16; ++index) results->map_sections[index] = 0x105 + index;
     if (BaseAtDebugPopupFlag != 0) {
-        for (int index = 21; index < 47; ++index) {
-            results[index] = 0x100 + index;
-        }
+        for (int index = 0; index < 3; ++index) results->diagnostic_aggregates[index] = 0x115 + index;
+        for (int index = 0; index < 7; ++index) results->faction_values[index] = 0x118 + index;
+        for (int index = 0; index < 7; ++index) results->map_values[index] = 0x11f + index;
+        for (int index = 0; index < 8; ++index) results->vehicles_by_faction[index] = 0x126 + index;
+        results->base_value = 0x12e;
     }
 }
 
@@ -102,6 +109,7 @@ static void clear_logs() {
 }
 
 int main() {
+    GameDataStateStorage.fields_.turn_current_num_ = TurnCurrentNum;
     for (int index = 0; index < MaxPlayerNum; ++index) {
         std::sprintf(Players[index].adj_name_faction, "Faction%d", index);
     }
@@ -126,18 +134,15 @@ int main() {
     assert(checksum_calls == 0);
     assert(hex_messages.empty());
 
-    int ordinary_results[47];
-    for (int index = 0; index < 47; ++index) ordinary_results[index] = -1;
-    NetDaemonNet.game_checksum(ordinary_results);
+    NetChecksumReport ordinary_results;
+    std::memset(&ordinary_results, 0x5a, sizeof(ordinary_results));
+    NetDaemonNet.game_checksum(&ordinary_results);
     assert(checksum_calls == 1);
-    for (int index = 0; index < 21; ++index) {
-        assert(ordinary_results[index] == 0x100 + index);
-    }
-    for (int index = 21; index < 47; ++index) {
-        assert(ordinary_results[index] == -1);
-    }
-    // The type-4 consumer reads/logs all 47 values even when this producer
-    // path writes only 21. Do not execute that indeterminate-tail case here.
+    for (int index = 0; index < 5; ++index) assert(ordinary_results.common[index] == 0x100 + index);
+    for (int index = 0; index < 16; ++index) assert(ordinary_results.map_sections[index] == 0x105 + index);
+    // This is caller poison only; no assertion gives native uninitialized bytes a value.
+    const unsigned char *ordinary_bytes=reinterpret_cast<const unsigned char *>(&ordinary_results);
+    for (int index=0x54;index<0xBC;++index) assert(ordinary_bytes[index]==0x5a);
 
     clear_logs();
     checksum_calls = 0;
@@ -236,7 +241,8 @@ def compile_and_run(compiler: str, tmp_path: Path, *, damaged: bool) -> None:
     assert fixture.count(MARKER) == 1
     cpp = tmp_path / f"actual_{compiler}_{'damage' if damaged else 'clean'}.cpp"
     binary = tmp_path / f"control_{compiler}_{'damage' if damaged else 'clean'}"
-    cpp.write_text(fixture.replace(MARKER, body))
+    cpp.write_text(fixture.replace("REPORT_DECLARATION", report_declaration())
+                   .replace(MARKER, body))
 
     flags = ["-std=c++98", "-Wall", "-Wextra", "-Werror", "-pedantic"]
     if damaged:
