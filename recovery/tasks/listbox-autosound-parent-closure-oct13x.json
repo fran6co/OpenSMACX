@@ -1,0 +1,80 @@
+{
+  "author": "coordinator",
+  "base_revision": "50b6ddaa5bfee574993adafcb8af94e602e77fbf",
+  "editable_files": [
+    "src/listbox.cpp",
+    "src/autosound.h",
+    "src/autosound.cpp",
+    "src/win.cpp",
+    "src/basebutton.cpp",
+    "recovery/tests/test_listbox_parent_notification_actual_source_oct13x.py",
+    "recovery/tests/test_autosound_sound_slots20_31_actual_source_oct13x.py",
+    "recovery/tests/test_listbox_scroll_interface_actual_source.py",
+    "recovery/tests/test_autosound_receiver_views.py",
+    "recovery/tests/test_autosound_three_sound_views_oct10.py"
+  ],
+  "evidence": [
+    "Full pinned ListBox scroll spans60CED0..60CF01 and60CF10..60CF4D plus double-click60C710..60C7BB and thunk60CFC0 resolve GraphicWin virtual base through vbtable{0,48,A60}. Adjusted receiver is Win view; computed-base+50/+7C are Win-relative98/C4 (iFlags_/win_parent_), not AutoSound50/7C. Root independently decoded all complete callback bodies. Correct both scroll guards/targets and four double-click parent reloads through real Win members.",
+    "Root full decode60C74B/4D branches directly to epilogue60C7B6 when the post-installed-callback parent is null. Current source only guards first notification and then dereferences null. Recover original full-block early return; preserve later unguarded parent reloads if subsequent callbacks clear it. Do not add new safety checks, cache parent across callbacks, alter selected-ID evaluation/call ordering or skip original Sound behavior.",
+    "AutoSound val20 actual consumers Win5F6550/5EE6B0 use Sound slots23/7 atWin+50; val31 genuine consumer BaseButton607A20 reads parent+7C then Sound slots23/7 at607A90/9B/A6. False ListBox uses were sole claimed mixed views. Recover Sound interface types for these two fields, raw default-word-to-pointer copies in the three lifecycle routines, typed Sound31 accessor and legitimate callers. Preserve98-byte layout,37 default slots/indices, zeroing and nonownership; no concrete provider, nonzero-pointer provenance or original debug-type spelling claim. Remove unused legacy_value_31 interface. Retarget wrong val31 member evidence fromListBox60C710 toBaseButton607A20; add bounded val20 evidence5F6550 and correct false dual-use comments.",
+    "Root full BaseButton607A20..607AF3 shows parent reload607A89 after WinOk/CancelHook, id reload607AB4 before group callback, and parent/id reload607AC4/CA after group/Sound callbacks before notification. Correct current overly broad cached parent/id lifetimes in this same ownership closure; preserve first WinCallbackWindow publication, callback guards, original unsafe paths, group result and final callback timing.",
+    "Separate source authors may edit ListBox CPP, AutoSound header/CPP, and Win/BaseButton CPP respectively; one test author owns all named tests. Only coordinator handles Git/compiler leases. Existing tests that assert false dual views must recover actual parent/member expectations while retaining historical continuity and meaningful behavior controls. New actual-body GCC/Clang fixtures distinguish AutoSound slots from Win flags/parent, preserve virtual-base relationships, test parent/ID mutation across callbacks, null-parent original exit, all lifecycle copies/reset and typed receiver calls. Compile-success named runtime98 mutants required; pin full native receiver/callback instruction witnesses independently.",
+    "Do not hand edit original identities/spans/symbols or exactness claims; preserve all history and restoration obligations. Fresh original measurements, unchanged-baseline compiler artifacts, complete build/link, source obligation continuity, source-layout evidence, references, outside compiler review and independent source review precede manual integration. No long spelling search, speculative unrelated class/global edits, bug fixes, baseline reset or full-game/automatic acceptance."
+  ],
+  "intent": "Correct the ListBox virtual-base parent/flag attribution and recover the actual AutoSound Sound interfaces and affected callback reload behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6344400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6344464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6342416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6251856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6219440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6322720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6470272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6470640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6471120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6470976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "listbox-autosound-parent-closure-oct13x"
+}
