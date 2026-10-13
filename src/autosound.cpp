@@ -61,7 +61,7 @@ AutoSound::AutoSound() {
     val_17_ = reinterpret_cast<Sound *>(AutoSoundDefaults[16]);
     val_18_ = reinterpret_cast<Sound *>(AutoSoundDefaults[17]);
     val_19_ = reinterpret_cast<Sound *>(AutoSoundDefaults[18]);
-    val_20_ = static_cast<int>(AutoSoundDefaults[19]);
+    val_20_ = reinterpret_cast<Sound *>(AutoSoundDefaults[19]);
     val_21_ = reinterpret_cast<Sound *>(AutoSoundDefaults[20]);
     val_22_ = reinterpret_cast<Sound *>(AutoSoundDefaults[21]);
     val_23_ = reinterpret_cast<Sound *>(AutoSoundDefaults[22]);
@@ -72,7 +72,7 @@ AutoSound::AutoSound() {
     val_28_ = reinterpret_cast<Sound *>(AutoSoundDefaults[27]);
     val_29_ = reinterpret_cast<Sound *>(AutoSoundDefaults[28]);
     val_30_ = reinterpret_cast<Sound *>(AutoSoundDefaults[29]);
-    val_31_ = reinterpret_cast<void *>(AutoSoundDefaults[30]);
+    val_31_ = reinterpret_cast<Sound *>(AutoSoundDefaults[30]);
     val_32_ = static_cast<int>(AutoSoundDefaults[31]);
     val_33_ = reinterpret_cast<Sound *>(AutoSoundDefaults[32]);
     event_window_ = reinterpret_cast<Sound *>(AutoSoundDefaults[33]);
@@ -120,7 +120,7 @@ void AutoSound::close() {
     val_17_ = reinterpret_cast<Sound *>(AutoSoundDefaults[16]);
     val_18_ = reinterpret_cast<Sound *>(AutoSoundDefaults[17]);
     val_19_ = reinterpret_cast<Sound *>(AutoSoundDefaults[18]);
-    val_20_ = static_cast<int>(AutoSoundDefaults[19]);
+    val_20_ = reinterpret_cast<Sound *>(AutoSoundDefaults[19]);
     val_21_ = reinterpret_cast<Sound *>(AutoSoundDefaults[20]);
     val_22_ = reinterpret_cast<Sound *>(AutoSoundDefaults[21]);
     val_23_ = reinterpret_cast<Sound *>(AutoSoundDefaults[22]);
@@ -131,7 +131,7 @@ void AutoSound::close() {
     val_28_ = reinterpret_cast<Sound *>(AutoSoundDefaults[27]);
     val_29_ = reinterpret_cast<Sound *>(AutoSoundDefaults[28]);
     val_30_ = reinterpret_cast<Sound *>(AutoSoundDefaults[29]);
-    val_31_ = reinterpret_cast<void *>(AutoSoundDefaults[30]);
+    val_31_ = reinterpret_cast<Sound *>(AutoSoundDefaults[30]);
     val_32_ = static_cast<int>(AutoSoundDefaults[31]);
     val_33_ = reinterpret_cast<Sound *>(AutoSoundDefaults[32]);
     event_window_ = reinterpret_cast<Sound *>(AutoSoundDefaults[33]);
@@ -177,7 +177,7 @@ void AutoSound::close2() {
     val_17_ = reinterpret_cast<Sound *>(AutoSoundDefaults[16]);
     val_18_ = reinterpret_cast<Sound *>(AutoSoundDefaults[17]);
     val_19_ = reinterpret_cast<Sound *>(AutoSoundDefaults[18]);
-    val_20_ = static_cast<int>(AutoSoundDefaults[19]);
+    val_20_ = reinterpret_cast<Sound *>(AutoSoundDefaults[19]);
     val_21_ = reinterpret_cast<Sound *>(AutoSoundDefaults[20]);
     val_22_ = reinterpret_cast<Sound *>(AutoSoundDefaults[21]);
     val_23_ = reinterpret_cast<Sound *>(AutoSoundDefaults[22]);
@@ -188,7 +188,7 @@ void AutoSound::close2() {
     val_28_ = reinterpret_cast<Sound *>(AutoSoundDefaults[27]);
     val_29_ = reinterpret_cast<Sound *>(AutoSoundDefaults[28]);
     val_30_ = reinterpret_cast<Sound *>(AutoSoundDefaults[29]);
-    val_31_ = reinterpret_cast<void *>(AutoSoundDefaults[30]);
+    val_31_ = reinterpret_cast<Sound *>(AutoSoundDefaults[30]);
     val_32_ = static_cast<int>(AutoSoundDefaults[31]);
     val_33_ = reinterpret_cast<Sound *>(AutoSoundDefaults[32]);
     event_window_ = reinterpret_cast<Sound *>(AutoSoundDefaults[33]);

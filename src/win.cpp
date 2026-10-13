@@ -6513,7 +6513,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                 }
             } else {
                 this->vslot_32(x, y);
-                Sound *child = reinterpret_cast<Sound *>(val_20_);
+                Sound *child = val_20_;
                 if (child != 0 && child->is_playing() == 0) {
                     child->play();
                 }
@@ -12113,7 +12113,7 @@ void Win::dispatch_19(int a, int b, int alternate) {
         }
     } else {
         vslot_32(a, b);
-        Sound *child = reinterpret_cast<Sound *>(val_20_);
+        Sound *child = val_20_;
         if (child != 0) {
             if (child->is_playing() == 0) {
                 child->play();

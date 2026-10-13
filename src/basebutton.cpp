@@ -835,21 +835,24 @@ void BaseButton::on_left_click(int, int) {
         WinPointerOwner4 = 0;
     }
 
-    Win *const parent = win_parent_;
-    WinCallbackWindow = parent;
+    WinCallbackWindow = win_parent_;
     if (field_AAC_ == 0) {
-        const int id = static_cast<int>(field_A78_);
-        if (id == -1) {
+        const int hook_id = static_cast<int>(field_A78_);
+        if (hook_id == -1) {
             if (WinOkHook != 0) WinOkHook();
-        } else if (id == -2) {
+        } else if (hook_id == -2) {
             if (WinCancelHook != 0) WinCancelHook();
         }
-        Sound *const owner = reinterpret_cast<Sound *>(parent->legacy_value_31());
+        Win *const sound_parent = win_parent_;
+        Sound *const owner = sound_parent->legacy_sound_31();
         if (owner != 0 && owner->is_playing() == 0) {
             owner->play();
         }
-        if (group_ == 0 || group_->button_click(id) != 0) {
-            parent->on_button_clicked(id);
+        const int group_id = static_cast<int>(field_A78_);
+        if (group_ == 0 || group_->button_click(group_id) != 0) {
+            Win *const notification_parent = win_parent_;
+            const int notification_id = static_cast<int>(field_A78_);
+            notification_parent->on_button_clicked(notification_id);
         }
     }
     if (field_AB0_ != 0) {

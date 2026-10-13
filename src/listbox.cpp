@@ -310,15 +310,15 @@ uint32_t ListBox::close() {
 // compiler's most-derived flag, then initializes the ListBox-owned fields.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 /*
-Purpose: Return the configured recipient's slot-8 value under the
-         original AutoSound flag and recipient guards.
+Purpose: Return the Win parent's slot-8 value when the original Win flag and
+         parent-link guards are set.
 */
 // ORIGINAL: 0x0060CED0 sub_60ced0 0x0060CED0-0x0060CF01 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "original code tests the 32-bit flag at +0x50 and nonnull recipient at +0x7C, then calls recipient Win slot 8 without arguments; AutoSound retains neutral storage and this callsite supplies the Win view", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 8", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
 // symbol    ?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@XZ
 Scroll *ListBox::on_scroll_create() {
-    if ((val_20_ & 0x40) != 0 && val_31_ != 0) {
-        return reinterpret_cast<Win *>(val_31_)->on_listbox_scroll_create();
+    if ((iFlags_ & 0x40) != 0 && win_parent_ != 0) {
+        return win_parent_->on_listbox_scroll_create();
     }
     return 0;
 }
@@ -328,11 +328,11 @@ Purpose: Forward the exact Scroll being removed through recipient slot 9
          under the original guards, otherwise return the argument.
 */
 // ORIGINAL: 0x0060CF10 sub_60cf10 0x0060CF10-0x0060CF4D FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "original code tests the 32-bit flag at +0x50 and nonnull recipient at +0x7C, then calls recipient Win slot 9 with the Scroll argument; AutoSound retains neutral storage and this callsite supplies the Win view", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 9 with the Scroll argument", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
 // symbol    ?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@PAV2@@Z
 Scroll *ListBox::on_scroll_delete(Scroll *scroll) {
-    if ((val_20_ & 0x40) != 0 && val_31_ != 0) {
-        return reinterpret_cast<Win *>(val_31_)->on_listbox_scroll_delete(scroll);
+    if ((iFlags_ & 0x40) != 0 && win_parent_ != 0) {
+        return win_parent_->on_listbox_scroll_delete(scroll);
     }
     return scroll;
 }
@@ -1350,12 +1350,12 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
 /*
 Purpose: Run the double-click notification: remember the hovered window,
          fire the installed callback with the selected id, then walk the
-         selected entry's notification chain (slots 56 and 55 of the target
-         window, then the child object's 23/7 pair) - and raise the click
-         guard's counter value through it.
+         ListBox's Win-parent notification chain (slots 56 and 55, then the
+         parent's child-object 23/7 pair), preserving the original null exit
+         and subsequent parent reloads.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h", "source:src/autosound.h", "source:src/win.h", "pinned 0x0060C710 reads AutoSound +0x7C for Win slots 56/55 and +0x94 for Sound slots 23/7"], "reason": "Recover ListBox double-click callbacks through typed GraphicWin and Dialog owners, with contextual Win and Sound receiver views over the distinct numbered AutoSound words. Preserve the retained seed's virtual-base adjustments and call order."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h", "source:src/autosound.h", "source:src/win.h", "pinned 0x0060C710 resolves the GraphicWin virtual base through vbtable {0,0x48,0xA60}; repeated vbtable adjustment reads Win-relative +0xC4 (win_parent_) for slots 56/55 and +0x94 on that parent for Sound slots 23/7", "pinned 0x0060C74B tests the reloaded parent and branches to the epilogue at 0x0060C7B6 when null; later callback paths reload the parent"], "reason": "Recover ListBox double-click callbacks through typed GraphicWin and Dialog owners, using the actual Win parent and preserving the original parent-null exit, reload positions, and call order."}
 // symbol    ?on_left_double_click@ListBox@@UAEXHH@Z
 // size      171 bytes
 // prototype void (__thiscall ?on_left_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -1365,7 +1365,7 @@ Purpose: Run the double-click notification: remember the hovered window,
 void ListBox::on_left_double_click(int, int) {
     GraphicWin *graphic = static_cast<GraphicWin *>(this);
     Dialog *dialog = static_cast<Dialog *>(this);
-    Win *target = reinterpret_cast<Win *>(graphic->legacy_value_31());
+    Win *target = graphic->parent_window();
     WinCallbackWindow = target;
 
     WinNotificationCallback callback = double_click_callback_;
@@ -1373,16 +1373,15 @@ void ListBox::on_left_double_click(int, int) {
         callback(dialog->get_selected_id());
     }
 
-    target = reinterpret_cast<Win *>(graphic->legacy_value_31());
-    if (target != 0) {
-        target->on_double_clicked(dialog->get_selected_id());
-    }
+    target = graphic->parent_window();
+    if (target == 0) return;
+    target->on_double_clicked(dialog->get_selected_id());
 
     const int guard = ListBoxClickGuard;
-    target = reinterpret_cast<Win *>(graphic->legacy_value_31());
+    target = graphic->parent_window();
     target->on_double_clicked(dialog->get_selected_id(), guard);
 
-    target = reinterpret_cast<Win *>(graphic->legacy_value_31());
+    target = graphic->parent_window();
     Sound *child = target->legacy_sound_37();
     if (child != 0) {
         if (child->is_playing() == 0) {

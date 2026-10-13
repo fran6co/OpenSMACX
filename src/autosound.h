@@ -38,9 +38,10 @@ class Sound;
  * FlatButton Sprite interpretation came from an erroneous Scroll setter:
  * native60569A..6056A6 writes FlatButton+AD4/+AD8/+ADC, not these words.
  * These three fields retain the evidenced Sound pointer interface; their
- * complete producer/ownership/lifetime contracts remain unresolved. Keep context-mixed
- * words neutral: val_20_ is both a ListBox flag word and a Win Sound receiver; val_31_
- * is a BaseButton Sound receiver and a ListBox Win notification target. The
+ * complete producer/ownership/lifetime contracts remain unresolved. The
+ * Win Sound receiver at +0x50 is val_20_; the ListBox flag is Win's separate
+ * +0x98 member. The BaseButton Sound receiver at +0x7C is val_31_; the
+ * ListBox notification target is Win's separate +0xC4 parent link. The
  * defaults block copies raw 32-bit values. Other meanings stay numbered
  * until their writers and use families are recovered. IDB independently
  * numbered the words identically (docs/recovery/idb-members.csv: val1..val37).
@@ -75,8 +76,9 @@ class AutoSound {
   // observed interface view, not an ownership or lifetime claim.
   Sound *legacy_sound_33() const { return val_33_; }
 
-  // BaseButton and ListBox use val_31_ through different receiver tables.
-  void *legacy_value_31() const { return val_31_; }
+  // BaseButton's pinned consumers use val_31_ through Sound slots 23 and 7.
+  // This establishes its receiver interface, not its provider or lifetime.
+  Sound *legacy_sound_31() const { return val_31_; }
   Sound *legacy_sound_36() const { return val_36_; }
   Sound *legacy_sound_37() const { return val_37_; }
   Sound *legacy_sound_28() const { return val_28_; }
@@ -126,7 +128,9 @@ class AutoSound {
   Sound *val_17_;
   Sound *val_18_;
   Sound *val_19_;
-  int val_20_;  // ListBox flags; Win dispatch Sound view at +0x50.
+  // Win dispatches through Sound slots 23/7 at +0x50.
+  // RECOVERY_MEMBER: v3 AutoSound val_20_ Sound* 0x50 0x005F6550
+  Sound *val_20_;
   Sound *val_21_;
   Sound *val_22_;
   Sound *val_23_;
@@ -137,9 +141,10 @@ class AutoSound {
   Sound *val_28_;
   Sound *val_29_;
   Sound *val_30_;
-  // BaseButton uses Sound slots 23/7; ListBox uses Win slots 56/55.
-  // RECOVERY_MEMBER: v3 AutoSound val_31_ void* 0x7C 0x0060C710
-  void *val_31_;
+  // BaseButton's receiver uses Sound slots 23/7; ListBox's parent link is
+  // the separate Win member at +0xC4.
+  // RECOVERY_MEMBER: v3 AutoSound val_31_ Sound* 0x7C 0x00607A20
+  Sound *val_31_;
   int val_32_;
   // Scroll uses Sound slots 23/7 at +0x84.
   // RECOVERY_MEMBER: v3 AutoSound val_33_ Sound* 0x84 0x006069A0
@@ -153,7 +158,8 @@ class AutoSound {
   // ListBox uses Sound slots 23/7 at this offset.
   // RECOVERY_MEMBER: v3 AutoSound val_36_ Sound* 0x90 0x0060A020
   Sound *val_36_;
-  // In ListBox double-click val_37_ is audio; val_31_ is the Win target.
+  // ListBox double-click reads this Sound receiver from its Win parent at
+  // +0x94; that parent is followed through Win's separate +0xC4 link.
   // RECOVERY_MEMBER: v3 AutoSound val_37_ Sound* 0x94 0x0060C710
   Sound *val_37_;
 };

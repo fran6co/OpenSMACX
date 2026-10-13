@@ -121,8 +121,10 @@ def test_slot_bindings_and_argument_order():
     assert "this->vslot_07();" not in win_cpp
     assert "virtual Scroll *on_scroll_create();" in list_h
     assert "virtual Scroll *on_scroll_delete(Scroll *scroll);" in list_h
-    assert "val_20_ & 0x40" in list_cpp and "reinterpret_cast<Win *>(val_31_)->on_listbox_scroll_create()" in list_cpp
-    assert "reinterpret_cast<Win *>(val_31_)->on_listbox_scroll_delete(scroll)" in list_cpp
+    assert "(iFlags_ & 0x40) != 0 && win_parent_ != 0" in list_cpp
+    assert "win_parent_->on_listbox_scroll_create()" in list_cpp
+    assert "win_parent_->on_listbox_scroll_delete(scroll)" in list_cpp
+    assert "val_20_" not in list_cpp and "val_31_" not in list_cpp
     assert "virtual Scroll *on_scroll_delete(Scroll *scroll);" in dialogs_h
     assert "virtual Scroll *on_scroll_create();" in dialogs_h
     assert "Scroll *Dialogs::on_scroll_delete(Scroll *scroll)" in dialogs_cpp
@@ -132,18 +134,80 @@ def test_slot_bindings_and_argument_order():
     assert "0x005EB774" in win_cpp and "scroll_horz_" in win_cpp
 
 
+SCROLL_HOST = r'''#include <cassert>
+#include <cstdint>
+struct Scroll {};
+struct Sound {};
+struct AutoSound { Sound *val_20_=nullptr; Sound *val_31_=nullptr; };
+struct Win : AutoSound {
+  uint32_t iFlags_=0;
+  Win *win_parent_=nullptr;
+  virtual Scroll *on_scroll_create() { return nullptr; }
+  virtual Scroll *on_scroll_delete(Scroll *s) { return s; }
+  virtual Scroll *on_listbox_scroll_create() { return nullptr; }
+  virtual Scroll *on_listbox_scroll_delete(Scroll *s) { return s; }
+};
+struct GraphicWin : Win {
+  Win *parent_window() const { return win_parent_; }
+};
+struct Dialog {};
+struct Recipient : Win {
+  int create_calls=0, delete_calls=0;
+  Scroll *last_scroll=nullptr, *create_result=nullptr, *delete_result=nullptr;
+  Scroll *on_listbox_scroll_create() override { ++create_calls; return create_result; }
+  Scroll *on_listbox_scroll_delete(Scroll *s) override {
+    ++delete_calls; last_scroll=s; return delete_result;
+  }
+};
+struct ListBox : virtual GraphicWin, virtual Dialog {
+  Scroll *on_scroll_create() override;
+  Scroll *on_scroll_delete(Scroll *scroll) override;
+};
+/* ACTUAL_LISTBOX_METHODS */
+int main() {
+  ListBox list; Recipient recipient; Scroll vertical, horizontal, created, replacement;
+  Sound decoy; list.val_20_=&decoy; list.val_31_=&decoy;
+  list.win_parent_=&recipient;
+  assert(list.on_scroll_create()==nullptr);
+  assert(list.on_scroll_delete(&vertical)==&vertical);
+  assert(recipient.create_calls==0 && recipient.delete_calls==0);
+
+  list.iFlags_=0x40; list.win_parent_=nullptr;
+  assert(list.on_scroll_create()==nullptr);
+  assert(list.on_scroll_delete(&horizontal)==&horizontal);
+  assert(recipient.create_calls==0 && recipient.delete_calls==0);
+
+  list.win_parent_=&recipient;
+  recipient.create_result=&created; recipient.delete_result=&replacement;
+  assert(list.on_scroll_create()==&created);
+  assert(list.on_scroll_delete(&vertical)==&replacement);
+  assert(recipient.create_calls==1 && recipient.delete_calls==1);
+  assert(recipient.last_scroll==&vertical);
+  recipient.delete_result=nullptr;
+  assert(list.on_scroll_delete(&horizontal)==nullptr);
+  assert(recipient.last_scroll==&horizontal);
+}
+'''
+
+
+def compile_scroll_host(tmp_path, compiler, methods, stem):
+    source = tmp_path / f"{stem}.cpp"
+    source.write_text(SCROLL_HOST.replace("/* ACTUAL_LISTBOX_METHODS */", methods))
+    binary = tmp_path / stem
+    subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+                    str(source), "-o", str(binary)], check=True,
+                   capture_output=True, text=True)
+    return subprocess.run([str(binary)], capture_output=True, text=True)
+
+
 def test_host_behavior_control_extracts_actual_listbox_bodies(tmp_path):
     compiler = shutil.which("c++") or shutil.which("g++") or shutil.which("clang++")
     if compiler is None:
         pytest.skip("no host C++ compiler available")
     sources = actual_sources()
     methods = actual_listbox_methods(sources)
-    (tmp_path / "actual_listbox_methods.inc").write_text(methods)
-    source = Path(__file__).with_name("listbox_scroll_host_control.cpp")
-    binary = tmp_path / "win_slot67_control"
-    subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
-                    "-I", str(tmp_path), str(source), "-o", str(binary)], check=True)
-    subprocess.run([str(binary)], check=True)
+    result = compile_scroll_host(tmp_path, compiler, methods, "win_slot67_control")
+    assert result.returncode == 0, result.stderr
 
 
 def test_listbox_mutations_are_exercised_against_extracted_bodies(tmp_path):
@@ -153,25 +217,21 @@ def test_listbox_mutations_are_exercised_against_extracted_bodies(tmp_path):
     original = actual_listbox_methods(actual_sources())
     mutants = (
         original.replace("0x40", "0x20"),
-        original.replace("&& val_31_ != 0", "", 1),
-        original.replace("on_listbox_scroll_delete(scroll)", "on_listbox_scroll_delete(nullptr)", 1),
+        original.replace("on_listbox_scroll_delete(scroll)",
+                         "on_listbox_scroll_delete(nullptr)", 1),
+        original.replace("return scroll;", "return nullptr;", 1),
     )
     assert all(mutant != original for mutant in mutants)
-    template = Path(__file__).with_name("listbox_scroll_host_control.cpp").read_text()
     for index, mutant in enumerate(mutants):
-        with (tmp_path / "actual_listbox_methods.inc").open("w") as out:
-            out.write(mutant)
         source = tmp_path / f"mutant_{index}.cpp"
-        source.write_text(template)
+        source.write_text(SCROLL_HOST.replace("/* ACTUAL_LISTBOX_METHODS */", mutant))
         binary = tmp_path / f"mutant_{index}"
-        built = subprocess.run(
-            [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
-             "-I", str(tmp_path), str(source), "-o", str(binary)],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-        )
+        built = subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+                                str(source), "-o", str(binary)],
+                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         assert built.returncode == 0, built.stderr
-        ran = subprocess.run([str(binary)], stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE, text=True)
+        ran = subprocess.run([str(binary)], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             text=True)
         assert ran.returncode != 0, f"mutant {index} unexpectedly passed"
 
 

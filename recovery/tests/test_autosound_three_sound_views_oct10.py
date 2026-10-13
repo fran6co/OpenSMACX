@@ -6,6 +6,7 @@ import subprocess
 
 import pytest
 from match_recovery.source import read_text
+from match_recovery.tasks import TaskStore
 from test_scroll_default_and_icon_owner_closure_oct9 import _definition
 from test_texture_raster_actual_source import _continuity_fields
 
@@ -14,14 +15,26 @@ BASE = "38f3563ec3e23a6d1e0b692161999bfd036388a7"
 
 
 def test_original_identity_claim_and_history_continuity():
+    task = TaskStore(ROOT).read("listbox-autosound-parent-closure-oct13x")
     for filename in ("autosound.cpp", "win.cpp"):
         path = ROOT / "src" / filename
         prior = subprocess.check_output(["git", "show", BASE + ":src/" + filename],
                                         cwd=ROOT, text=True)
-        before = {r.address: r for r in read_text(prior, path)}
+        historical = {r.address: r for r in read_text(prior, path)}
+        task_prior = subprocess.check_output(
+            ["git", "show", f"{task.base_revision}:src/{filename}"],
+            cwd=ROOT, text=True)
+        baseline = {r.address: r for r in read_text(task_prior, path)}
         after = {r.address: r for r in read_text(path.read_text(), path)}
-        assert set(before) == set(after)
-        for address, row in before.items():
+        # Keep the older continuity baseline meaningful while allowing rows
+        # already present in this task's immutable base. The task-base check
+        # below is exact, so this is not an open-ended addition allowlist.
+        assert set(historical) <= set(after)
+        for address, row in historical.items():
+            assert _continuity_fields(row) == _continuity_fields(after[address])
+            assert row.symbol == after[address].symbol
+        assert set(baseline) == set(after)
+        for address, row in baseline.items():
             assert _continuity_fields(row) == _continuity_fields(after[address])
             assert row.symbol == after[address].symbol
 
@@ -79,7 +92,11 @@ def test_only_supported_fields_change_view():
     for field, offset in ((10, "28"), (11, "2C"), (12, "30")):
         assert f"Sound *val_{field}_;" in header
         assert f"RECOVERY_MEMBER: v3 AutoSound val_{field}_ Sound* 0x{offset}" in header
-    assert "int val_20_;" in header
-    assert "void *val_31_;" in header
+    assert "Sound *val_20_;" in header
+    assert "RECOVERY_MEMBER: v3 AutoSound val_20_ Sound* 0x50 0x005F6550" in header
+    assert "Sound *val_31_;" in header
+    assert "RECOVERY_MEMBER: v3 AutoSound val_31_ Sound* 0x7C 0x00607A20" in header
+    assert "Sound *legacy_sound_31() const { return val_31_; }" in header
+    assert "legacy_value_31()" not in header
     defaults = (ROOT / "src/autosound.cpp").read_text()
     assert "uint32_t AutoSoundDefaults[37];" in defaults
