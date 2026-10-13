@@ -1,0 +1,33 @@
+{
+  "author": "coordinator",
+  "base_revision": "60f4793915344e356389f03e8abfd158eb3765f8",
+  "editable_files": [
+    "src/win.cpp",
+    "src/win.h",
+    "recovery/tests/test_win_menu_entry_ownership_oct11.py",
+    "recovery/tests/test_win_typed_access_actual_source_oct13y.py",
+    "recovery/tests/test_win_enumeration_callback_oct13ar.py"
+  ],
+  "evidence": [
+    "Pinned complete5F0520..5F0535 enumerator passes context0 and callback5F0540 to EnumThreadWindows with GetCurrentThreadId. Complete5F0540..5F0579 reads first stack word as HWND, never reads the second word, returns1 on both paths and ends ret8. Source uses GetWindowLongA GWL_USERDATA followed by existing Win::set_rects and Menu::adjust, with both original null gates.",
+    "SDK WNDENUMPROC requires BOOL CALLBACK(HWND,LPARAM); current static int stdcall(HWND,void*) needs an incompatible function-pointer cast. Authorize only second parameter to LPARAM, direct callback argument, existing emitted-symbol hint reconciliation after actual compiler evidence, and bounded essential rationale if necessary. Preserve historical ORIGINAL identity/spans/claims/prototype/history. No class layout changes, pointer-size assumptions beyond the pinned32bit ABI, guards, initialization or bug fixes.",
+    "Keep Menu::set_def_font ordering and call unchanged; update its extracted-body fixture to use the actual callback contract without weakening font-before-enumeration assertions. Replace the old task's cast-retention assertion with a proper typed-assignment boundary witness, keeping remaining layout, original-body and history checks intact. Add actual callback-body host tests with null userdata/menu paths, member dispatch ordering, nonzero return and observable compile-success damage controls.",
+    "Coordinator owns compiler/Git; isolated source and test workers freeze before measurement. Require independent review, scoped original measurements, full compile/link, physical outside-scope signature comparison and historical claim continuity for manual integration. Preserve justified work/restoration obligations on matching regression; no automatic/game acceptance claim. No unrelated raw vtable cleanup or header padding."
+  ],
+  "intent": "Recover the thread-window enumeration callback as a genuine SDK-compatible function pointer, preserving original behavior and historical exactness obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6227232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6227264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-enumeration-callback-owner-oct13ar"
+}
