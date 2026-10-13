@@ -1,0 +1,51 @@
+{
+  "author": "coordinator",
+  "base_revision": "3816c3f330d16a734d06f01235423a35720427a4",
+  "editable_files": [
+    "src/prefwin.cpp",
+    "recovery/tests/test_prefwin_volume_contract_oct13h.py",
+    "recovery/tests/test_prefwin_behavior.py",
+    "recovery/tests/test_prefwin_geometry.py"
+  ],
+  "evidence": [
+    "Pinned redraw_volume prepares its rectangle before the mode4 branch; both volume button helpers select the four IDs0x55..0x58 using bounded dispatch. Preserve invalid-ID no-op, label mapping and all side-effect order, without introducing signed subtraction overflow.",
+    "Pinned music-off path calls the pointed object virtual slot+8 with deleting flag1, clears FactionMusic, then clears the toggle. Verify existing genuine FactionAmbience/Sound destruction before changing lifetime code; no manual vtable or scalar-delete stand-in.",
+    "Display, on_button_clicked and on_redraw provide the bounded real caller closure. Measure private equivalent spellings before banking an edit. Preserve original spans, identities, all historical obligations and compiler policies; do not hand-edit ORIGINAL markers or claim tokens. Cross-class discoveries require coordinator expansion."
+  ],
+  "intent": "Restore faithful volume-control branch and rectangle preparation contracts with genuine owned controls and compiler-owned music destruction.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4790368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4790464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4790768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4782592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4789248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4791296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prefwin-volume-contract-oct13h"
+}
