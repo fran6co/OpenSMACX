@@ -1,0 +1,27 @@
+{
+  "author": "coordinator",
+  "base_revision": "4bd0b51959c5b4124ac62936ebc781b85a032989",
+  "editable_files": [
+    "src/selectpartwin.cpp",
+    "recovery/tests/test_selectpart_parent_surface_actual_source_oct13v.py",
+    "recovery/tests/test_design_part_picker_contract_oct11.py"
+  ],
+  "evidence": [
+    "Pinned434229/43422F capture height/width from71F778/71F774,434239 passes71F2B0parent,43423E negatesheight,43424F callsGraphicWin::init. Source-owned TutWinDesWindow is completeDesignWin71F2B0; directGraphicWin/Win front0 and Buffer444 plusDIB7C+biWidth4/biHeight8 prove these are its pixel_width/pixel_height, not WinScreen globals.",
+    "Current source substitutes WinScreenWidth/Height and selfparent. Recover the real source-owned TutWinDesWindow parent and capture its DIB dimensions beforeinit for the original frame computations. Original434293 reloads this own DIB width afterinit/fill for scroll x at4342AB; preserve that live own-width read, distinct from the captured parent width. Existing typed Buffer accessors suffice.",
+    "Do not change earlier screen-dependent grid/renderer computations, ignored init result, original overflow/error behavior, palette/selection/modal or callbacks. No new data definition, fixed address, layout/flag/ABI change or speculative PickTech edit: current PickTech already passes nullparent and the contrary stale-source finding was retracted.",
+    "Tests extract literal actual initialization/frame/scroll source and distinguish screen dimensions, captured parent DIB dimensions, parentidentity and callback-mutated own width. BothGCC/Clang success and compile-then-runtime98 damage controls required. Existing contract fixtures may repair only diagnosed stale full-file recipe expectations while retaining historical roundtrip/identity/pinned/behavior controls; no unrelatedproduction edits.",
+    "Preserve allOriginal markers/spans/symbols/claims, historical findings and task baselines. Fresh native measurements/build/link, protected mapping/reference continuity, compiler collateral and independent review precede manual integration; no full runtime/linked/game acceptance or new exactness asserted."
+  ],
+  "intent": "Recover the part picker parent relationship and the correct parent-owned DIB dimensions with the subsequent own-width reload.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4407152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "selectpart-parent-surface-oct13v"
+}
