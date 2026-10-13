@@ -1,0 +1,38 @@
+{
+  "author": "coordinator",
+  "base_revision": "4bd0b51959c5b4124ac62936ebc781b85a032989",
+  "editable_files": [
+    "src/jackal/radiobutton.cpp",
+    "src/jackal/checkbox.cpp",
+    "src/spritebox.cpp",
+    "recovery/tests/test_control_attach_init_errors_actual_source_oct13v.py"
+  ],
+  "evidence": [
+    "Pinned RadioButton60D299 call5D4EF0,60D29E testEAX,60D2A1 branch60D371 preserves nonzero EAX. CheckBox60E8A1 call,60E8A6 test,60E8A9 branch60E979 does the same. Current source ignores both integer results and runs color/font setup before returningzero.",
+    "Pinned SpriteBox6105EC call5D4EF0,6105F1 testEAX,6105F3 branch6108CB bypasses success-path6108C9 XOR EAX,EAX, then returns EAX unchanged. Current source instead returnszero on init failure. The earlier contrary interpretation was retracted after full epilogue decoding.",
+    "Change only these three init-result captures/early returns, using real int GraphicWin::init API and genuine existing virtual base relationships. Preserve nullparent3/nullHandleMain7, argumentorder, flags, coordinates, all success behavior and original quirks. RadioButton checks its dimensions result; CheckBox and SpriteBox ignore theirs. Do not normalize that difference, change geometry or add safety fixes.",
+    "Three source authors may work in distinct CPP files in this isolated task, plus one test author in the named test. Only coordinator runs Git/compiler leases. Actual literal-body GCC/Clang controls must distinguish init failure from success, signed nonzero errorvalues, setup suppression, callback-mutated colors/fonts and the different dimension-error paths. Mutants compile before named runtime failure.",
+    "Preserve every original identity, span, symbol, claim and historical TRIED note. Fresh native baseline/candidate measurements, build/link, protected mapping continuity, outside compiler review and independent source review precede coordinator-reviewed integration. No long spelling search, inferred extra scope, baseline reset or autonomous/full-game acceptance."
+  ],
+  "intent": "Recover original GraphicWin initialization error propagation in RadioButton, CheckBox and SpriteBox attachment.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6345200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6350848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6358336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "control-attach-init-errors-oct13v"
+}
