@@ -63,7 +63,7 @@ class Random {
           max ^= min;
           min ^= max;
       }
-      const uint32_t range = static_cast<uint32_t>(max - min);
+      const uint32_t range = static_cast<uint32_t>(max) - min;
       seed_ = seed_ * 0x19660D + 0x3C6EF35F;
       // A LOCAL MASK, NOT THE `LOWORD` MACRO. `LOWORD(seed_)` truncates to a
       // 16-bit rvalue and VC6 satisfies that by RE-READING the low word from
