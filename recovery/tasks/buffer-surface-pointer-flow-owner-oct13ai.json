@@ -1,0 +1,43 @@
+{
+  "author": "coordinator",
+  "base_revision": "221d2539e44d74f140ac8fa9bfbe35b37d52932d",
+  "editable_files": [
+    "src/buffer.cpp",
+    "recovery/tests/test_buffer_change_color_owner.py",
+    "recovery/tests/test_buffer_directdraw_owners.py",
+    "recovery/tests/test_buffer_surface_pointer_flow_oct13ai.py"
+  ],
+  "evidence": [
+    "Buffer header already declares locked_bits_/dib_bits_ LPVOID and surface_ IDirectDrawSurface*. CreateDIBSection passes &dib_bits_ at5D777A; DDSURFACEDESC lpSurface and DirectDraw Unlock use real void*storage. Adjacent recovered draw_dest5D8A30 and draw_multi_table_dest5D93C0 already store/test/pass this pointer directly. Four selected current bodies instead narrow pointers to int/uint32 and immediately reconstruct them for storage/null/Unlock, without numerical use at those sites. This is misleading source flow, not a newly inferred member type/layout.",
+    "Only edit four admitted body recipes: two-argument change_color5DE580 DIB local storage and locked assignment use captured LPVOID, descriptor local data uses captured LPVOID; retain exactly one explicit pointer-to-int conversion for numeric pixel_base and retain existing numeric address/stride/wrap behavior. Unlock captured data2 becomes LPVOID and passes directly. Six-arg change_color5E2070 DIB local bits becomes captured LPVOID and direct locked assignment. draw_dest5D8B20 and draw_multi_table_dest5D94B0 locals bits/cachedBits become captured LPVOID; Unlock receives cachedBits directly. Keep local snapshots rather than re-reading members in calls. No other casts, arithmetic or bodies may change.",
+    "Preserve every member load/store/order, null/error branch, lock counter/wrap operation, Surface Lock/Unlock callback ordering and arguments, rereads after callback, branch topology, raw pixel address arithmetic, sprite storage alias/liveness, original bugs and source function symbols. No pointer member/layout/header migration, branch elimination, new guard, modern safe fallback or cleanup of genuinely numeric/external ABI conversions. Original annotations/spans/history/claims remain exact.",
+    "Source author owns only buffer.cpp. Disjoint tests own two existing controls plus new strict immutable-base source guard verifying exactly authorized four-body pointer flow reversals and unchanged all-other source/metadata/history. Preserve low-address host bridge where the first color body uses genuine32bit numerical address arithmetic; strengthen direct-pointer storage/Unlock identity controls with sentinel/reentrant callbacks where reachable and compile-success mutants. Existing null-surface wrapper branch being ordinarily unreachable is not license to delete it or claim callback reachability.",
+    "Coordinator baseline first, then freeze all scope/packagePython during leased measurement/build epochs. Require fresh build/link, four original diagnostics/restoration, physical whole-application compiler comparison/collateral admission, references/claim continuity and independent actual source/test review before manual integration. Preserve justified source work and historical obligations through reviewed mismatches; never demote claims or weaken native gates. Full linked/runtime/game acceptance remains unproven."
+  ],
+  "intent": "Restore genuine pointer flow for Buffer storage and DirectDraw unlock, retaining numerical address arithmetic and all original lock semantics.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6153600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6168688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6130464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6132912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-surface-pointer-flow-owner-oct13ai"
+}
