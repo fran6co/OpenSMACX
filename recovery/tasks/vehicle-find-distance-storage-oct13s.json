@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "68be38040438ae6b8be5a337b32ca407bc9972a6",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_vehicle_find_distance_storage_oct13s.py"
+  ],
+  "evidence": [
+    "Pinned veh_find stores9999 to9B227C at5C0CBF and conditional best distance at5C0D9E. Full exact-reference scan finds these two writes only; returned vehicle IDs are used by mapped balance/go_timer/eliminate_player callers. Preserve both stores and all filtering/ties/wraparound/order quirks.",
+    "Replace the int*const address alias with a real mutable int object and bounded RECOVERY_OBJECT v2 observed4B window9B227C..9B2280 anchored5C0CB0. Establish startup bytes from pinned PE; names/allocation/unknown external readers and lifetime remain explicitly provisional. No invented header API or adjacent-object ownership.",
+    "Keep original markers/spans/symbols/claims and arithmetic/control flow intact. No volatile retention trick, safety fixes or compiler flag changes. Test actual veh_find source behavior/output for empty/filter/tie/wrap cases; fresh native data/measure/build and compiler collateral review precede manual integration."
+  ],
+  "intent": "Recover veh_find output distance as actual source-owned storage rather than an original-address pointer.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6032560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vehicle-find-distance-storage-oct13s"
+}

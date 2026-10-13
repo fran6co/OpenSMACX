@@ -1,0 +1,39 @@
+{
+  "author": "coordinator",
+  "base_revision": "68be38040438ae6b8be5a337b32ca407bc9972a6",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_early_routes_oct12.py",
+    "recovery/tests/test_netdaemon_waiting_mask_owner_oct9.py",
+    "recovery/tests/test_netdaemon_sender_identity_oct11.py",
+    "recovery/tests/test_netdaemon_wire_owner_oct11.py",
+    "recovery/tests/test_netdaemon_turn_packet_views_oct13s.py"
+  ],
+  "evidence": [
+    "MessageDataRecord is source-owned by message_data592EE0 with verified0x20 serialized window and unresolvedbytes2..3. Existing MessageCommandView already reads fields independently through memcpy without alignment/alias/full-record assumptions. Do not introduce a duplicate packet class or claim all received packets have that extent/lifetime.",
+    "Migrate only netdaemon_handle_server_turn_info (internal53511E,type1301), netdaemon_handle_server_lock_status (534E23..534FD9), netdaemon_handle_client_done_upkeep (536037,type2303), netdaemon_handle_withdraw_end_turn (53611D,type2302). These are internal process_message regions, not four new original functions. Reuse the existing view, moving its declaration earlier if needed; message_data and net_upkeep_phase producers are read-only measurement context.",
+    "Preserve every signed/unsigned access, repeated field read after logging/drawing callbacks, seed/wait-mask order, unchecked packet length/faction behavior and original unwritten bytes. No fields cached across callbacks, no full-record copy, no safety/behavior fixes, no headers/flags or Original/claim edits.",
+    "The sync-request packet has a different variable-length prefix and is OUTSIDE this edit scope. Existing actual-source mutation controls cover these receivers; update their extraction fixtures rather than weaken assertions, add real field/reload mutants and run relevant sender/view regressions. Native measurements/build, protected mapping continuity, outside compiler review and independent manual review remain required; no automatic/full-game acceptance follows."
+  ],
+  "intent": "Use the existing sender-backed borrowed packet view for turn and upkeep receivers, preserving per-callback reload semantics.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5410976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-turn-packet-views-oct13s"
+}
