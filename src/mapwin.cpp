@@ -2690,19 +2690,16 @@ void MapWin::on_lose_mouse_capture() {
 // tile's `bit2` dword - 0x1, 0x2 and 0x200 - and nothing else in the tree
 // names what those flags mean, so the names carry the selecting bit rather
 // than a guessed terrain class. 0x00685A24 and 0x00685B60 are in the file
-// image's .data and their bytes read as small signed deltas; the
+// image's .data and their bytes read as small signed deltas; AltLightBit2 is
+// the accessed member of the chosen landmark storage window below; the
 // third, 0x007F6750, is past the bytes the file carries and is zero until
 // something fills it.
-// The 49 declared direction rows select bytes0..112. These arrays own that
-// accessed window only; the original allocation bounds remain unproved.
+// The 49 declared direction rows select bytes0..112; original allocation
+// bounds remain unproved for these selected reads.
 // Initializers are pinned ignored derivatives, not runtime image aliases.
 // RECOVERY_OBJECT: v1 0x00685A24 _AltLightBit1
 static const signed char AltLightBit1[113] = {
 #include "terrain_point_light_bit1.inc"
-};
-// RECOVERY_OBJECT: v1 0x00685B60 _AltLightBit2
-static const signed char AltLightBit2[113] = {
-#include "terrain_point_light_bit2.inc"
 };
 // Keep loader-zero storage mutable: absence of observed direct writers is
 // not proof that computed or indirect writes never occur.
@@ -2899,33 +2896,85 @@ struct LandmarkTextureChoice {
 };
 static_assert(sizeof(LandmarkTextureChoice) == 2, "landmark pair stride");
 
-// The bounded read domain is 49 rows, not a claim about original allocator
-// metadata. Crater/Mesa enumerate 0..48 (5C5EBD/5C8113). Mount itself creates
-// nine codes, but explicit Mesa placement bypasses near_landmark at 5C7F50..67;
-// bit2_set preserves Mount's flag and code_set overwrites the shared code.
-// Overlapping row 48 is reachable, so Mount's sentinel tail must remain.
-// Monsoon overlap can retain these flags while publishing higher codes:
-// row 49 reaches the old alignment bytes, and row 119 another data owner.
-// The pinned renderer keeps native lower-bound checks but has no 49-row upper
-// bound at the landmark accesses (0x00464795..0x00464B62). Preserve the
-// negative-index skips and each pair's texture == -1 suppression. The source
-// tables retain their measured 49-row extents; behavior when larger native
-// indices reach adjacent storage remains unresolved and is not established by
-// these bounded source objects.
-// No direct writers or pointer escapes were found for these data ranges.
-// Irregular pair initializers are materialized only in ignored build context.
-// RECOVERY_OBJECT: v2 0x00685A98 0x00685AFA _MountPlanetTable 0x004632D0
-static const LandmarkTextureChoice MountPlanetTable[49] = {
+// The renderer's unchecked signed code-byte domain is 0..127. Monsoon can
+// preserve an existing landmark bit while replacing that code; the renderer
+// then reads through adjacent original bytes. This is a chosen C++ storage
+// window for those observed reads, not a claim that the image had one original
+// aggregate allocation or that its gap bytes had independent owners.
+struct TerrainLandmarkStorageWindow {
+    LandmarkTextureChoice mount_planet[49];
+    unsigned char gap_mount_mesa[2];
+    LandmarkTextureChoice sunny_mesa[49];
+    unsigned char gap_mesa_point_light[2];
+    signed char alt_light_bit2[113];
+    unsigned char gap_point_light_crater[3];
+    LandmarkTextureChoice garland_crater[49];
+    unsigned char gap_crater_ocean[114];
+    // Original 0x4645C4/CA reads each x/y pair; the 4x4 walk advances eight
+    // bytes at 0x4645E7 and ends at 0x464706. These are read-only texel
+    // coordinates in the pinned references.
+    Vert ocean_corner_uvs[16];
+};
+
+static_assert(offsetof(TerrainLandmarkStorageWindow, mount_planet) == 0x000 &&
+              offsetof(TerrainLandmarkStorageWindow, sunny_mesa) == 0x064 &&
+              offsetof(TerrainLandmarkStorageWindow, alt_light_bit2) == 0x0C8 &&
+              offsetof(TerrainLandmarkStorageWindow, garland_crater) == 0x13C &&
+              offsetof(TerrainLandmarkStorageWindow, ocean_corner_uvs) == 0x210 &&
+              sizeof(TerrainLandmarkStorageWindow) == 0x290,
+              "landmark storage window member offsets");
+
+// Existing object identities remain separate member mappings; the unknown
+// bytes between them are initialized from the pinned image in the ignored
+// configure-time cache.
+// RECOVERY_OBJECT: v3 0x00685A98 0x00685AFA _MountPlanetTable 0x004632D0 member ?TerrainLandmarkStorageWindowData@@3UTerrainLandmarkStorageWindow@@A mount_planet
+// RECOVERY_OBJECT: v3 0x00685AFC 0x00685B5E _SunnyMesaTable 0x004632D0 member ?TerrainLandmarkStorageWindowData@@3UTerrainLandmarkStorageWindow@@A sunny_mesa
+// RECOVERY_OBJECT: v3 0x00685B60 _AltLightBit2 member ?TerrainLandmarkStorageWindowData@@3UTerrainLandmarkStorageWindow@@A alt_light_bit2
+// RECOVERY_OBJECT: v3 0x00685BD4 0x00685C36 _GarlandCraterTable 0x004632D0 member ?TerrainLandmarkStorageWindowData@@3UTerrainLandmarkStorageWindow@@A garland_crater
+// RECOVERY_OBJECT: v3 0x00685CA8 0x00685D28 _OceanCornerUVs 0x004632D0 member ?TerrainLandmarkStorageWindowData@@3UTerrainLandmarkStorageWindow@@A ocean_corner_uvs
+TerrainLandmarkStorageWindow TerrainLandmarkStorageWindowData = {
+    {
 #include "terrain_mount_planet.inc"
-};
-// RECOVERY_OBJECT: v2 0x00685AFC 0x00685B5E _SunnyMesaTable 0x004632D0
-static const LandmarkTextureChoice SunnyMesaTable[49] = {
+    },
+    {
+#include "terrain_landmark_gap_mount_mesa.inc"
+    },
+    {
 #include "terrain_sunny_mesa.inc"
-};
-// RECOVERY_OBJECT: v2 0x00685BD4 0x00685C36 _GarlandCraterTable 0x004632D0
-static const LandmarkTextureChoice GarlandCraterTable[49] = {
+    },
+    {
+#include "terrain_landmark_gap_mesa_point_light.inc"
+    },
+    {
+#include "terrain_point_light_bit2.inc"
+    },
+    {
+#include "terrain_landmark_gap_point_light_crater.inc"
+    },
+    {
 #include "terrain_garland_crater.inc"
+    },
+    {
+#include "terrain_landmark_gap_crater_ocean.inc"
+    },
+    {
+        {27, 27}, {27, 55}, {0, 55}, {0, 0},
+        {27, 27}, {27, 0}, {55, 0}, {55, 55},
+        {27, 27}, {55, 27}, {55, 55}, {27, 55},
+        {27, 27}, {0, 27}, {0, 0}, {27, 0},
+    },
 };
+
+// Read one signed table byte through the complete chosen object's character
+// representation. The call remains at each original texture/rotation read;
+// no pair snapshot is taken across a draw callback.
+static inline int terrain_window_signed_byte(size_t offset) {
+    const unsigned char *const bytes =
+        reinterpret_cast<const unsigned char *>(
+            &TerrainLandmarkStorageWindowData);
+    const unsigned char value = bytes[offset];
+    return value < 0x80 ? value : static_cast<int>(value) - 0x100;
+}
 
 // OceanDetailShade is the shared load_cycling-owned table in game.cpp.
 // Unworked tiles use this separately owned scalar read at 464148 instead
@@ -2957,17 +3006,6 @@ static const Vert EdgeMidUVs[16] = {
     {28, 27}, {28, 0}, {55, 0}, {55, 27},
     {28, 28}, {55, 28}, {55, 55}, {28, 55},
     {27, 28}, {27, 55}, {0, 55}, {0, 28},
-};
-
-// Four ocean quads: 4645C4/CA read pairs, 4645E7 advances eight bytes,
-// and the four-by-four walk ends at 464706. No direct table writers occur
-// in the original references; these are texel coordinates, not pointers.
-// RECOVERY_OBJECT: v2 0x00685CA8 0x00685D28 _OceanCornerUVs 0x004632D0
-static const Vert OceanCornerUVs[16] = {
-    {27, 27}, {27, 55}, {0, 55}, {0, 0},
-    {27, 27}, {27, 0}, {55, 0}, {55, 55},
-    {27, 27}, {55, 27}, {55, 55}, {27, 55},
-    {27, 27}, {0, 27}, {0, 0}, {27, 0},
 };
 
 // 0x00684730 - the 53-entry coast-mask table draw_coast's remap comes from
@@ -3898,9 +3936,11 @@ LAB_0046441f:
                     vert->x = CornerOffsetX[corner][direction] * local_78 + a9;
                     vert->y = CornerOffsetY[corner][direction] * local_98 + a10;
                     uvs[sub].x =
-                        OceanCornerUVs[corner * 4 + sub].x;
+                        TerrainLandmarkStorageWindowData
+                            .ocean_corner_uvs[corner * 4 + sub].x;
                     uvs[sub].y =
-                        OceanCornerUVs[corner * 4 + sub].y;
+                        TerrainLandmarkStorageWindowData
+                            .ocean_corner_uvs[corner * 4 + sub].y;
                     shades[sub] =
                         OceanDetailShade[alt_get_ocean_detail(
                             a7, a8, corner, sub)];
@@ -3950,8 +3990,12 @@ landmark_chain:;
     iVar5 = local_94;
     if (local_18 == 0 || local_20 == 0) {
         if (local_70 == 0 && (local_34 & 2) != 0 && -1 < local_94 &&
-            MountPlanetTable[local_94].texture != -1) {
-            uVar12 = (uint32_t)MountPlanetTable[local_94].rotation;
+            terrain_window_signed_byte(
+                offsetof(TerrainLandmarkStorageWindow, mount_planet) +
+                static_cast<size_t>(local_94) * sizeof(LandmarkTextureChoice)) != -1) {
+            uVar12 = static_cast<uint32_t>(terrain_window_signed_byte(
+                offsetof(TerrainLandmarkStorageWindow, mount_planet) +
+                static_cast<size_t>(local_94) * sizeof(LandmarkTextureChoice) + 1));
             {
                 Vert quad[4];
                 int quad_z[4];
@@ -3980,12 +4024,16 @@ landmark_chain:;
             overlay_uv[3].x = 0;
             overlay_uv[3].y = 0x37;
             if (local_94 == 0) {
-                g_MOUNT_PLANET_TEXTURES[MountPlanetTable[local_94].texture]
+                g_MOUNT_PLANET_TEXTURES[terrain_window_signed_byte(
+                    offsetof(TerrainLandmarkStorageWindow, mount_planet) +
+                    static_cast<size_t>(local_94) * sizeof(LandmarkTextureChoice))]
                     .draw_color_key(
                         buffer, quad, 4,
                         overlay_uv);
             } else {
-                g_MOUNT_PLANET_TEXTURES[MountPlanetTable[local_94].texture]
+                g_MOUNT_PLANET_TEXTURES[terrain_window_signed_byte(
+                    offsetof(TerrainLandmarkStorageWindow, mount_planet) +
+                    static_cast<size_t>(local_94) * sizeof(LandmarkTextureChoice))]
                     .draw_trans(
                         buffer, quad, quad_z, 4,
                         overlay_uv);
@@ -3993,8 +4041,12 @@ landmark_chain:;
             }
         }
         if ((local_34 & 0x100) != 0 && local_70 == 0 && -1 < iVar5 &&
-            SunnyMesaTable[iVar5].texture != -1) {
-            uVar12 = (uint32_t)SunnyMesaTable[iVar5].rotation;
+            terrain_window_signed_byte(
+                offsetof(TerrainLandmarkStorageWindow, sunny_mesa) +
+                static_cast<size_t>(iVar5) * sizeof(LandmarkTextureChoice)) != -1) {
+            uVar12 = static_cast<uint32_t>(terrain_window_signed_byte(
+                offsetof(TerrainLandmarkStorageWindow, sunny_mesa) +
+                static_cast<size_t>(iVar5) * sizeof(LandmarkTextureChoice) + 1));
             {
                 Vert quad[4];
                 int quad_z[4];
@@ -4022,14 +4074,20 @@ landmark_chain:;
             overlay_uv[3].x = 0x37;
             overlay_uv[3].y = 0x37;
             overlay_uv[0].y = 0x37;
-            g_SUNNY_MESA_TEXTURES[SunnyMesaTable[iVar5].texture]
+            g_SUNNY_MESA_TEXTURES[terrain_window_signed_byte(
+                offsetof(TerrainLandmarkStorageWindow, sunny_mesa) +
+                static_cast<size_t>(iVar5) * sizeof(LandmarkTextureChoice))]
                 .draw_trans(buffer, quad, quad_z, 4,
                             overlay_uv);
             }
         }
         if ((local_34 & 1) != 0 && local_70 == 0 && -1 < iVar5 &&
-            GarlandCraterTable[iVar5].texture != -1) {
-            uVar12 = (uint32_t)GarlandCraterTable[iVar5].rotation;
+            terrain_window_signed_byte(
+                offsetof(TerrainLandmarkStorageWindow, garland_crater) +
+                static_cast<size_t>(iVar5) * sizeof(LandmarkTextureChoice)) != -1) {
+            uVar12 = static_cast<uint32_t>(terrain_window_signed_byte(
+                offsetof(TerrainLandmarkStorageWindow, garland_crater) +
+                static_cast<size_t>(iVar5) * sizeof(LandmarkTextureChoice) + 1));
             {
                 Vert quad[4];
                 int quad_z[4];
@@ -4057,7 +4115,9 @@ landmark_chain:;
             overlay_uv[3].x = 0x37;
             overlay_uv[3].y = 0x37;
             overlay_uv[0].y = 0x37;
-            g_GARLAND_CRATER_TEXTURES[GarlandCraterTable[iVar5].texture]
+            g_GARLAND_CRATER_TEXTURES[terrain_window_signed_byte(
+                offsetof(TerrainLandmarkStorageWindow, garland_crater) +
+                static_cast<size_t>(iVar5) * sizeof(LandmarkTextureChoice))]
                 .draw_trans(buffer, quad, quad_z, 4,
                             overlay_uv);
             }
@@ -7456,9 +7516,9 @@ void MapWin::compute_lighting_table() {
 // Fixed-slot bindings carried from 00470790.cpp
 // ORIGINAL: 0x00470790 ?get_point_light@MapWin@@QAEHHHH@Z 0x00470790-0x00470917 FILE
 // HOMED 2026-09-04 from the 0x00470790 artifact. 22/139 under /O2 /GX.
-// The scaffold's seven fixed globals all have names in this file now:
+// These original storage identities have named bindings here or in map.h:
 // g_00685684 = AltDirectionTable, g_00685A24/g_00685B60/g_007F6750 =
-// AltLightBit1/AltLightBit2/AltLightBit200, g_00685EA0/g_00685EE0 = the two
+// AltLightBit1/the window's alt_light_bit2/AltLightBit200; the two remaining
 // CornerOffset tables map.h defines, g_0094988C = MapIsFlat (map.h), and the
 // tile read is `*map_tiles`/`*MapRowStride`. Two spellings measured:
 // TRIED: `map_loc(a1, a2)->bit2` for the tile read - 6/139, and the image's
@@ -7493,7 +7553,7 @@ int MapWin::get_point_light(int x, int y, int corner) {
             }
         } else if (shade >= 0) {
             unsigned char idx = AltDirectionTable[corner + shade * 5];
-            localLight = AltLightBit2[idx];
+            localLight = TerrainLandmarkStorageWindowData.alt_light_bit2[idx];
         }
     } else if (shade >= 0) {
         unsigned char idx = AltDirectionTable[corner + shade * 5];

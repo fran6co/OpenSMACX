@@ -38,6 +38,24 @@ _LANDMARK_TABLES = {
     'terrain_garland_crater.inc': '_GarlandCraterTable',
 }
 
+_LANDMARK_GAPS = {
+    'terrain_landmark_gap_mount_mesa.inc': ('_MountPlanetTable', '_SunnyMesaTable', 2),
+    'terrain_landmark_gap_mesa_point_light.inc': ('_SunnyMesaTable', '_AltLightBit2', 2),
+    'terrain_landmark_gap_point_light_crater.inc': ('_AltLightBit2', '_GarlandCraterTable', 3),
+    'terrain_landmark_gap_crater_ocean.inc': ('_GarlandCraterTable', '_OceanCornerUVs', 0x72),
+}
+
+_LANDMARK_WINDOW_PARENT = (
+    '?TerrainLandmarkStorageWindowData@@3UTerrainLandmarkStorageWindow@@A')
+_POINT_LIGHT_ACCESS_WINDOW_SIZE = 113
+_LANDMARK_WINDOW_MEMBERS = (
+    ('_MountPlanetTable', 'mount_planet', 98, 0x000),
+    ('_SunnyMesaTable', 'sunny_mesa', 98, 0x064),
+    ('_AltLightBit2', 'alt_light_bit2', None, 0x0C8),
+    ('_GarlandCraterTable', 'garland_crater', 98, 0x13C),
+    ('_OceanCornerUVs', 'ocean_corner_uvs', 128, 0x210),
+)
+
 _ALTITUDE_TABLES = {
     'terrain_altitude_default.inc': '?AltNaturalDefault@@3PAIA',
     'terrain_altitude_contour.inc': '?AltContour@@3PAIA',
@@ -141,10 +159,99 @@ def terrain_landmark_initializer(root: Path, original: Path, output: Path) -> No
                          signed_pairs=True)
 
 
+def terrain_landmark_gap_initializer(root: Path, original: Path,
+                                      output: Path) -> None:
+    """Materialize only the four unnamed byte gaps in the chosen window.
+
+    These bytes preserve the observed pinned representation between existing
+    independently mapped objects. They do not create original object bounds or
+    ownership claims for the gaps or for the current aggregate.
+    """
+    entry = _LANDMARK_GAPS.get(output.name)
+    if entry is None:
+        raise ValueError('unknown terrain landmark gap initializer')
+    left_symbol, right_symbol, expected_size = entry
+    root = root.resolve()
+    original = original.resolve(strict=True)
+    output = output.absolute()
+    if (output.resolve() != output or output.name not in _LANDMARK_GAPS
+            or not output.is_relative_to(root / 'build')):
+        raise ValueError('terrain gap initializer must remain in ignored project build context')
+    if any(path.is_symlink() for path in (output, *output.parents)
+           if path.is_relative_to(root)):
+        raise ValueError('terrain gap initializer cannot use aliases')
+
+    pin = image_pin(root)
+    bindings = _landmark_window_bindings(root, pin)
+    by_symbol = {binding.symbol: binding for binding in bindings}
+    left = by_symbol[left_symbol]
+    right = by_symbol[right_symbol]
+    left_size = (left.span.end - left.span.start if left.span is not None
+                 else _POINT_LIGHT_ACCESS_WINDOW_SIZE)
+    start = left.origin.address + left_size
+    end = right.origin.address
+    size = end - start
+    if size != expected_size:
+        raise ValueError('terrain gap differs from the reviewed member layout')
+    original_bytes = original.read_bytes()
+    image = PeImage(original_bytes, pin)
+    span = Span(start, start + size)
+    values = image.read(span)
+    if image.read_initial(span) != values or image.absolute_sites(span):
+        raise ValueError('terrain gap bytes must be file-backed and relocation-free')
+    if any(flags & 0x20000000 for (region, _, _), flags in
+           zip(image.sections, image.section_flags)
+           if region.start <= span.start and span.end <= region.end):
+        raise ValueError('terrain gap bytes cannot come from executable storage')
+    text = ('// Generated from pinned bytes between mapped terrain objects; do not edit.\n'
+            + ', '.join(f'0x{value:02x}' for value in values) + ',\n')
+
+    if (original.read_bytes() != original_bytes or image_pin(root) != pin
+            or _landmark_window_bindings(root, pin) != bindings):
+        raise ValueError('terrain gap initializer inputs changed during generation')
+    artifact_parent(root, output.parent.relative_to(root).as_posix(),
+                    excluded_roots=('src', 'recovery', 'cmake'))
+    if output.exists() and (not output.is_file() or output.stat().st_nlink != 1):
+        raise ValueError('terrain gap initializer must be an unlinked regular file')
+    if not output.exists() or output.read_text() != text:
+        output.write_text(text)
+
+
+def _landmark_window_bindings(root: Path, pin: str):
+    """Read and validate the five existing identities backing the chosen view."""
+    objects = read_objects(root, pin)
+    bindings = []
+    base = None
+    for symbol, member, size, offset in _LANDMARK_WINDOW_MEMBERS:
+        matches = [binding for binding in objects
+                   if binding.unit == 'src/mapwin.cpp'
+                   and binding.symbol == symbol]
+        if len(matches) != 1:
+            raise ValueError(f'{symbol} requires one source-owned window member binding')
+        binding, = matches
+        if (binding.parent_symbol != _LANDMARK_WINDOW_PARENT
+                or binding.member_path != (member,)):
+            raise ValueError(f'{symbol} no longer binds the expected window member')
+        if size is None:
+            if binding.span is not None:
+                raise ValueError(f'{symbol} must retain its start-only identity')
+        else:
+            if binding.span is None or binding.span.end - binding.span.start != size:
+                raise ValueError(f'{symbol} requires its existing bounded extent')
+        if base is None:
+            base = binding.origin.address
+        if binding.origin.address - base != offset:
+            raise ValueError(f'{symbol} differs from the reviewed window member offset')
+        bindings.append(binding)
+    return tuple(bindings)
+
+
 def terrain_initializers(root: Path, original: Path, directory: Path) -> None:
     terrain_coast_initializer(root, original, directory / 'terrain_coast_remap.inc')
     for filename in _LANDMARK_TABLES:
         terrain_landmark_initializer(root, original, directory / filename)
+    for filename in _LANDMARK_GAPS:
+        terrain_landmark_gap_initializer(root, original, directory / filename)
     for filename in _ALTITUDE_TABLES:
         terrain_altitude_initializer(root, original, directory / filename)
     terrain_direction_initializer(root, original, directory / 'terrain_alt_direction.inc')

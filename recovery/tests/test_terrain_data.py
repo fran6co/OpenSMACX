@@ -321,35 +321,85 @@ def test_landmark_input_and_destination_refusals(tmp_path, hook, damage):
 
 
 def test_configured_terrain_generation_requires_every_bound_table(tmp_path, hook):
-    payload = PAYLOAD + PAIR_PAYLOAD * 3 + bytes(44 * 3 + 245 + 113 * 5)
-    raw = bytearray(data_image(payload))
-    raw_size = ((len(payload) + 511) // 512) * 512
-    raw.extend(bytes(512 + raw_size - len(raw)))
-    struct.pack_into('<I', raw, 0x180, raw_size)
-    struct.pack_into('<I', raw, 0x188, raw_size)
+    # Keep every reviewed generator input in one synthetic data section whose
+    # RVA covers the newly projected fixed-address gaps as well as the older
+    # configured tables. This is a source-bound fixture, not a claim about the
+    # pinned executable's aggregate allocation.
+    base_va = 0x685000
+    section_rva = base_va - 0x400000
+    payload_offset = 512
+    payload_size = 0x3000
+    payload = bytearray(payload_size)
+
+    def place(address, values):
+        start = address - base_va
+        payload[start:start + len(values)] = values
+
+    place(0x685A98, PAIR_PAYLOAD)
+    place(0x685AFC, PAIR_PAYLOAD)
+    place(0x685BD4, PAIR_PAYLOAD)
+    place(0x685B60, bytes((index * 19 + 5) & 0xFF for index in range(113)))
+    for _, address, size in (
+            ('mount_mesa', 0x685AFA, 2), ('mesa_point', 0x685B5E, 2),
+            ('point_crater', 0x685BD1, 3), ('crater_ocean', 0x685C36, 0x72)):
+        place(address, bytes(((address + i) * 7) & 0xFF for i in range(size)))
+    place(0x685CA8, bytes((index * 11 + 3) & 0xFF for index in range(128)))
+    place(0x685D28, PAYLOAD)
+    altitude_start = 0x686000
+    for index, symbol in enumerate(hook._ALTITUDE_TABLES.values()):
+        place(altitude_start + index * 44, bytes((index + i) & 0xFF for i in range(44)))
+    direction_start = altitude_start + 44 * 3
+    place(direction_start, bytes((i * 13 + 1) & 0xFF for i in range(245)))
+    bonus_start = direction_start + 245
+    for index, _ in enumerate(hook._LANDMARK_BONUS_TABLES.values()):
+        place(bonus_start + index * 113,
+              bytes((index * 23 + i) & 0xFF for i in range(113)))
+
+    raw = bytearray(data_image(bytes(4)))
+    raw.extend(bytes(payload_offset + payload_size - len(raw)))
+    struct.pack_into('<II', raw, 0x178 + 8, payload_size, section_rva)
+    struct.pack_into('<II', raw, 0x178 + 16, payload_size, payload_offset)
+    struct.pack_into('<I', raw, 0x178 + 36, 0xC0000040)
+    raw[payload_offset:payload_offset + payload_size] = payload
     root, original, output = project(tmp_path, bytes(raw))
+
     rows = ['struct LandmarkTextureChoice { signed char texture, rotation; };']
-    for index, (_, symbol) in enumerate(LANDMARKS):
-        start = 0x401000 + 53 + index * 98
-        rows.append(f'// RECOVERY_OBJECT: v2 0x{start:08X} 0x{start + 98:08X} {symbol} 0x00401000')
-        rows.append('static const LandmarkTextureChoice ' + symbol.lstrip('_') + '[49] = {};')
+    parent = '?TerrainLandmarkStorageWindowData@@3UTerrainLandmarkStorageWindow@@A'
+    for start, end, symbol, member in (
+            (0x685A98, 0x685AFA, '_MountPlanetTable', 'mount_planet'),
+            (0x685AFC, 0x685B5E, '_SunnyMesaTable', 'sunny_mesa'),
+            (0x685B60, None, '_AltLightBit2', 'alt_light_bit2'),
+            (0x685BD4, 0x685C36, '_GarlandCraterTable', 'garland_crater'),
+            (0x685CA8, 0x685D28, '_OceanCornerUVs', 'ocean_corner_uvs')):
+        if end is None:
+            rows.append(f'// RECOVERY_OBJECT: v3 0x{start:08X} {symbol} member {parent} {member}')
+        else:
+            rows.append(f'// RECOVERY_OBJECT: v3 0x{start:08X} 0x{end:08X} {symbol} 0x004632D0 member {parent} {member}')
+    rows.append('static const signed char TerrainLandmarkStorageWindowData[1] = {};')
     source = root / 'src/mapwin.cpp'
     source.write_text('\n'.join(rows) + '\n')
+    game_rows = [f'// RECOVERY_OBJECT: v2 0x00685D28 0x00685D5D _TerrainCoastRemapSource 0x004CF7C0',
+                 'static const unsigned char TerrainCoastRemapSource[53] = {};']
+    (root / 'src/game.cpp').write_text('\n'.join(game_rows) + '\n')
     altitude_rows = []
     for index, symbol in enumerate(hook._ALTITUDE_TABLES.values()):
-        start = 0x401000 + 53 + 3 * 98 + index * 44
+        start = altitude_start + index * 44
         altitude_rows.append(f'// RECOVERY_OBJECT: v2 0x{start:08X} '
                              f'0x{start + 44:08X} {symbol} 0x00401000')
-    start = 0x401000 + 53 + 3 * 98 + 44 * 3
+    start = direction_start
     altitude_rows.append(f'// RECOVERY_OBJECT: v2 0x{start:08X} '
                          f'0x{start + 245:08X} ?AltDirectionTable@@3QBEB 0x00401000')
     for index, symbol in enumerate(hook._LANDMARK_BONUS_TABLES.values()):
-        address = start + 245 + index * 113
+        address = bonus_start + index * 113
         altitude_rows.append(f'// RECOVERY_OBJECT: v1 0x{address:08X} {symbol}')
     (root / 'src/map.cpp').write_text('\n'.join(altitude_rows) + '\n')
     hook.terrain_initializers(root, original, output.parent)
     assert {path.name for path in output.parent.iterdir()} == {
         'terrain_coast_remap.inc', *(filename for filename, _ in LANDMARKS),
+        'terrain_landmark_gap_mount_mesa.inc',
+        'terrain_landmark_gap_mesa_point_light.inc',
+        'terrain_landmark_gap_point_light_crater.inc',
+        'terrain_landmark_gap_crater_ocean.inc',
         *hook._ALTITUDE_TABLES, 'terrain_alt_direction.inc',
         *hook._LANDMARK_BONUS_TABLES}
     source.write_text(source.read_text().replace('_GarlandCraterTable', '_OtherTable'))
