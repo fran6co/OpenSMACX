@@ -51,6 +51,10 @@ def test_original_identities_and_historical_obligations_are_unchanged():
         if address == 0x483420:
             old = replace(old, byte_exact=True, semantic=False)
         for field in fields(row):
+            if address == 0x481DA0 and field.name == "symbol":
+                assert old.symbol == "?fill_player@NetWin@@QAEXPAUNetWinLobbyRow@@H@Z"
+                assert row.symbol == "?fill_player@NetWin@@QAEXVNetWinLobbyRowView@@H@Z"
+                continue
             if field.name not in {"line", "region", "origin"}:
                 assert getattr(row, field.name) == getattr(old, field.name), (
                     hex(address), field.name)

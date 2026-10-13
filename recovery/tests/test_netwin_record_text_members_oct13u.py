@@ -5,6 +5,7 @@ import shutil
 import subprocess
 
 import pytest
+from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -117,14 +118,13 @@ FILL_RUNTIME = r"""
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
-RECORD_TYPE
-ROW_TYPE
+ACTUAL_TYPES
 static_assert(sizeof(NetWinFactionRecord) == 0x190, "record stride");
 static char *label_get(int) { return const_cast<char *>("fallback"); }
 class NetWin {
 public:
     NetWinFactionRecord *faction_records_;
-    void fill_player(NetWinLobbyRow *, int);
+    void fill_player(NetWinLobbyRowView, int);
 };
 FILL_BODY
 static int check(bool condition, const char *message) {
@@ -149,7 +149,7 @@ int main() {
     adjective_leader[0x7F] = 0;
     bytes[0x190 + 0x192] = 0xE7;
     NetWinLobbyRow player = {};
-    win.fill_player(&player, 1);
+    win.fill_player(NetWinLobbyRowView(player), 1);
     if (check(std::strcmp(player.adjective_faction_, "ObservedAdjective") == 0,
               "copied adjective from record +0x7A")) return 98;
     if (check(std::strcmp(player.leader_title_, "ObservedTitle") == 0,
@@ -178,14 +178,13 @@ def test_actual_fill_player_named_slots_and_compile_successful_damage_control(
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
-    record = _struct(HEADER, "NetWinFactionRecord") + ";"
-    row = _struct(HEADER, "NetWinLobbyRow") + ";"
+    types = installed_packet_declarations(("NetWinFactionRecord", "NetWinLobbyRow",
+                                           "NetWinLobbyRowView"))
     body = _definition(SOURCE, "void NetWin::fill_player(")
 
     def compile_and_run(method: str, expected_status: int, label: str,
                         expected_message: str | None = None) -> None:
-        harness = (FILL_RUNTIME.replace("RECORD_TYPE", record)
-                   .replace("ROW_TYPE", row).replace("FILL_BODY", method))
+        harness = FILL_RUNTIME.replace("ACTUAL_TYPES", types).replace("FILL_BODY", method)
         cpp = tmp_path / f"netwin-fill-{label}.cpp"
         exe = tmp_path / f"netwin-fill-{label}"
         cpp.write_text(harness)

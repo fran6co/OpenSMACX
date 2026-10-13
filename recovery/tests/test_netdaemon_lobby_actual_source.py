@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 
 from match_recovery.source import read_file
+from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -17,23 +18,9 @@ HELPER_TOKEN = "/* ACTUAL_HELPER */"
 HARNESS = r'''#include <cstdint>
 #include <cstring>
 #include <cstdio>
+#include <cstddef>
 
-struct NetWinLobbyRow {
-    uint8_t prefix_, ready_, field_2_;
-    int8_t faction_or_color_;
-    uint8_t field_4_;
-    char leader_name_[0x18];
-    char formal_faction_name_[0x28];
-    char noun_faction_[0x18];
-    char adjective_faction_[0x80];
-    char leader_title_[0x18];
-    char adjective_leader_[0x80];
-    uint8_t tail_[3];
-    uint32_t owner_;
-};
-static_assert(sizeof(NetWinLobbyRow) == 0x17C, "lobby row stride");
-struct NetWinFactionRecord { uint32_t prefix_, owner_; uint8_t tail_[0x188]; };
-static_assert(sizeof(NetWinFactionRecord) == 0x190, "faction stride");
+/* ACTUAL_PACKETS */
 struct ProcessSlot { uint32_t pid_; };
 struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
 struct ChannelState { uint32_t leading_words_[4]; union Payload { uint32_t flags_; void *pointer_; } payload_; uint32_t trailing_words_[10]; };
@@ -59,10 +46,12 @@ struct Session { unsigned int mode_ = 0; };
 struct Dialog {
     NetWinFactionRecord *faction_records_ = nullptr;
     int fills = 0, redraws = 0, last_faction = -99;
-    NetWinLobbyRow *last_row = nullptr;
-    void fill_player(NetWinLobbyRow *row, int f) {
-        ++fills; last_faction = f; last_row = row;
-        if (f == -1) std::strcpy(row->noun_faction_, "fallback");
+    unsigned char *last_row_bytes = nullptr;
+    void fill_player(NetWinLobbyRowView row, int f) {
+        ++fills; last_faction = f;
+        last_row_bytes = reinterpret_cast<unsigned char *>(row.noun_faction())
+                         - offsetof(NetWinLobbyRow, noun_faction_);
+        if (f == -1) std::strcpy(row.noun_faction(), "fallback");
     }
     void on_redraw() { ++redraws; }
 };
@@ -79,7 +68,7 @@ static void put16(unsigned char *p, unsigned int o, uint16_t x) {
 static void put32(unsigned char *p, uint32_t x) { std::memcpy(p, &x, 4); }
 static int fail(int n, const char *s) {
     std::fprintf(stderr, "actual-source lobby control %d: %s\n", n, s);
-    return n;
+    return 98;
 }
 static void reset(unsigned char *m, size_t n) {
     std::memset(m, 0, n);
@@ -87,7 +76,7 @@ static void reset(unsigned char *m, size_t n) {
     NetWinSessionData.mode_ = 0;
     NetWinDialog.fills = NetWinDialog.redraws = 0;
     NetWinDialog.last_faction = -99;
-    NetWinDialog.last_row = nullptr;
+    NetWinDialog.last_row_bytes = nullptr;
     NetDaemonNet = NetDaemon{};
     for (int i = 0; i < 8; ++i) NetDaemonNet.process_slots_[i].pid_ = 1000 + i;
     put32(m + 4, 2);
@@ -121,9 +110,10 @@ int main() {
     if (NetWinLobbyRows[2].faction_or_color_ != -1 ||
         NetWinLobbyRows[2].owner_ != 77)
         return fail(3, "-1 faction stores and owner+0x188");
-    if (NetWinDialog.last_row != reinterpret_cast<NetWinLobbyRow *>(m + 0x10) ||
+    if (NetWinDialog.last_row_bytes != m + 0x10 ||
         NetWinDialog.last_faction != -1 ||
-        std::strcmp(NetWinDialog.last_row->noun_faction_, "fallback") != 0)
+        std::strcmp(reinterpret_cast<char *>(m + 0x10 + offsetof(NetWinLobbyRow, noun_faction_)),
+                    "fallback") != 0)
         return fail(8, "fill_player receives and updates packet lobby row");
     if (NetDaemonNet.sent_messages != 1 || NetDaemonNet.sends != 0 ||
         NetWinDialog.redraws != 0)
@@ -189,9 +179,11 @@ def actual_helper_and_source() -> tuple[str, str]:
     return helper, source
 
 
-def compile_and_run(helper: str, compiler: str, expected_success: bool) -> None:
+def compile_and_run(helper: str, compiler: str, expected_success: bool,
+                    expected_failure: str = "") -> None:
     assert HARNESS.count(HELPER_TOKEN) == 1
-    program = HARNESS.replace(HELPER_TOKEN, helper)
+    program = HARNESS.replace("/* ACTUAL_PACKETS */", installed_packet_declarations())
+    program = program.replace(HELPER_TOKEN, helper)
     with tempfile.TemporaryDirectory(prefix="osmx-lobby-actual-") as tmp:
         cpp = Path(tmp) / "actual_lobby.cpp"
         exe = Path(tmp) / "actual_lobby"
@@ -200,8 +192,6 @@ def compile_and_run(helper: str, compiler: str, expected_success: bool) -> None:
             [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
              str(cpp), "-o", str(exe)], capture_output=True, text=True,
             check=False)
-        if not expected_success and built.returncode != 0:
-            return
         assert built.returncode == 0, built.stderr
         ran = subprocess.run([str(exe)], capture_output=True, text=True,
                              check=False)
@@ -209,7 +199,8 @@ def compile_and_run(helper: str, compiler: str, expected_success: bool) -> None:
             assert ran.returncode == 0, ran.stderr
             assert "actual-source session-lobby controls passed" in ran.stdout
         else:
-            assert ran.returncode != 0
+            assert ran.returncode == 98, ran.stdout + ran.stderr
+            assert expected_failure in ran.stderr, ran.stderr
 
 
 def test_real_mapping_spans_and_dispatcher_route_are_retained():
@@ -257,10 +248,17 @@ def test_actual_helper_mutants_fail_native_semantic_controls():
     mutants.append(helper.replace(
         "row_index <= NetDaemonNet.player_count_",
         "row_index < NetDaemonNet.player_count_", 1))
-    assert "std::memcpy(&NetWinLobbyRows[1], message + 0x10, 0xA64)" in helper
-    mutants.append(helper.replace("0xA64", "0x17C", 1))
+    full_copy = "std::memcpy(&NetWinLobbyRows[1], lobby.payload(), 0xA64)"
+    assert full_copy in helper
+    mutants.append(helper.replace(full_copy, full_copy.replace("0xA64", "0x17C"), 1))
     assert all(mutant != helper for mutant in mutants)
+    expected_failures = (
+        "control 3: -1 faction stores and owner+0x188",
+        "control 4: marked send skips notification/redraw",
+        "control 5: count=1 duplicate bound",
+        "control 6: sentinel 0xA64 copy",
+    )
     for compiler in ("g++", "clang++"):
         if shutil.which(compiler):
-            for mutant in mutants:
-                compile_and_run(mutant, compiler, False)
+            for mutant, expected in zip(mutants, expected_failures):
+                compile_and_run(mutant, compiler, False, expected)

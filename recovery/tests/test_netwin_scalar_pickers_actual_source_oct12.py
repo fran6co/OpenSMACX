@@ -14,6 +14,7 @@ import subprocess
 import pytest
 
 from test_netwin_owner_behavior import extract_function
+from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 from test_netdaemon_early_routes_oct12 import declaration, PIN
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -23,8 +24,8 @@ NAMES = ("num_players", "global_diff", "time", "planet_size", "ocean",
 
 def material():
     source = (ROOT / "src/netwin.cpp").read_text()
-    records = declaration((ROOT / "src/netwin.h").read_text(), "NetWinSessionOptionsState")
-    records += "\n" + declaration(source, "NetWinSessionOptionsPacket")
+    records = installed_packet_declarations(("NetWinSessionOptionsState",
+                                               "NetWinSessionOptionsPacket"))
     menu = extract_function((ROOT / "src/popmenu.h").read_text(), "class PopMenu : public Popup, public PullDown") + ";"
     accessor = extract_function((ROOT / "src/basepop.h").read_text(), "Dialogs &dialogs()")
     owner = (ROOT / "src/popmenu.cpp").read_text()

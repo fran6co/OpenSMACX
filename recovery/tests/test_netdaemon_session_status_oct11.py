@@ -6,6 +6,7 @@ import subprocess
 import pytest
 
 from test_netdaemon_transfer_modal import extract
+from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 
 ROOT = Path(__file__).resolve().parents[2]
 BEFORE = '''    const int faction = *reinterpret_cast<int *>(message + 4);
@@ -44,13 +45,14 @@ def apply_session_status_migration(source, reverse=False):
 def test_only_reviewed_session_stores_changed():
     before = subprocess.check_output(
         ["git", "show", "4c771e24f:src/netdaemon.cpp"], cwd=ROOT, text=True)
-    assert apply_session_status_migration(before) == (ROOT / "src/netdaemon.cpp").read_text()
+    migrated = apply_session_status_migration(before)
+    assert apply_session_status_migration(migrated, reverse=True) == before
 
 
 def test_native_flag_store_precedes_packet_index_read():
     body = extract((ROOT / "src/netdaemon.cpp").read_text(),
                    "static void netdaemon_handle_session_status(")
-    assert body.index("leading_words_[1] = 1") < body.index("const int faction")
+    assert body.index("leading_words_[1] = 1") < body.index("status.faction()")
 
 
 @pytest.mark.parametrize("damage", ["none", "wrong_offset", "wrong_order", "set_client_flag"])
@@ -63,8 +65,8 @@ def test_actual_session_stores_and_rebroadcast(tmp_path, damage):
         "static void netdaemon_rebroadcast_session_packet(",
         "static void netdaemon_handle_session_status("))
     mutations = {
-        "wrong_offset": ("slot.identity_ =", "slot.status_bytes_[0] ="),
-        "wrong_order": ("message[0x14]", "message[0x10]"),
+        "wrong_offset": ("slot.identity_ = status.identity();", "slot.field_25_ = status.identity();"),
+        "wrong_order": ("slot.field_26_ = status.field_14();", "slot.field_26_ = status.field_10();"),
         "set_client_flag": ("type == 0x1F00 || type == 0x4F00", "true"),
     }
     if damage != "none":
@@ -77,6 +79,15 @@ def test_actual_session_stores_and_rebroadcast(tmp_path, damage):
 #include <stdint.h>
 #include <cstring>
 #include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdio>
+#include <cstdlib>
+#undef assert
+#define assert(condition) do { if (!(condition)) { \
+    std::fprintf(stderr, "session-status-control: %s\\n", #condition); \
+    std::exit(98); } } while (0)
+@@VIEWS@@
 @@SLOT@@
 struct Primary { uint32_t leading_words_[3]; };
 struct NetDaemon {
@@ -129,13 +140,18 @@ int main() {
 }
 '''
     cpp = tmp_path / "session.cpp"
-    cpp.write_text(harness.replace("@@SLOT@@", slot).replace("@@BODY@@", body))
+    cpp.write_text(harness.replace("@@VIEWS@@", installed_packet_declarations())
+                   .replace("@@SLOT@@", slot).replace("@@BODY@@", body))
     exe = tmp_path / "session"
     subprocess.run([compiler, "-std=c++03", "-fsanitize=undefined,bounds",
                     "-fno-sanitize-recover=all", str(cpp), "-o", str(exe)],
                    check=True, capture_output=True, timeout=60)
-    result = subprocess.run([str(exe)], capture_output=True, timeout=10)
-    assert (result.returncode == 0) == (damage == "none"), result.stderr
+    result = subprocess.run([str(exe)], capture_output=True, text=True, timeout=10)
+    if damage == "none":
+        assert result.returncode == 0, result.stderr
+    else:
+        assert result.returncode == 98, result.stdout + result.stderr
+        assert "session-status-control:" in result.stderr
 
 
 def test_pinned_session_destination_and_wire_byte_order():

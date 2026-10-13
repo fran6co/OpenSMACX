@@ -5892,10 +5892,11 @@ static bool netdaemon_handle_client_lock_message(NetDaemon *daemon,
 static void netdaemon_rebroadcast_session_packet(NetDaemon *daemon,
                                                   char *message,
                                                   unsigned long message_size) {
-    unsigned short type = *reinterpret_cast<unsigned short *>(message);
+    const NetWinPacketView packet(message);
+    unsigned short type = packet.opcode();
     if ((type & 0x2000u) != 0) {
         type = static_cast<unsigned short>((type & 0xDFFFu) | 0x4000u);
-        *reinterpret_cast<unsigned short *>(message) = type;
+        packet.set_opcode(type);
         daemon->send_message(message, message_size, 0);
     }
 }
@@ -5903,16 +5904,17 @@ static void netdaemon_rebroadcast_session_packet(NetDaemon *daemon,
 static void netdaemon_handle_session_options(NetDaemon *daemon,
                                               char *message,
                                               unsigned long message_size) {
+    const NetWinPacketView packet(message);
     NetWinSessionOptions.receive_wire_block(
-        reinterpret_cast<const unsigned char *>(message + 0x10));
+        packet.payload());
     // Native 0x537C57 shares the unmarked redraw tail at 0x537CB4
     // with the session-data packet; the option block is already copied.
-    unsigned short type = *reinterpret_cast<unsigned short *>(message);
+    unsigned short type = packet.opcode();
     if ((type & 0x2000u) == 0) {
         NetWinDialog.on_redraw();
     } else {
         type = static_cast<unsigned short>((type & 0xDFFFu) | 0x4000u);
-        *reinterpret_cast<unsigned short *>(message) = type;
+        packet.set_opcode(type);
         daemon->send_message(message, message_size, 0);
     }
 }
@@ -5920,12 +5922,13 @@ static void netdaemon_handle_session_options(NetDaemon *daemon,
 static void netdaemon_handle_session_block(NetDaemon *daemon,
                                             char *message,
                                             unsigned long message_size) {
+    const NetWinPacketView packet(message);
     NetWinSessionData.receive_wire_block(
-        reinterpret_cast<const unsigned char *>(message + 0x10));
-    unsigned short type = *reinterpret_cast<unsigned short *>(message);
+        packet.payload());
+    unsigned short type = packet.opcode();
     if ((type & 0x2000u) != 0) {
         type = static_cast<unsigned short>((type & 0xDFFFu) | 0x4000u);
-        *reinterpret_cast<unsigned short *>(message) = type;
+        packet.set_opcode(type);
         daemon->send_message(message, message_size, 0);
     } else {
         NetWinDialog.on_redraw();
@@ -5936,17 +5939,18 @@ static void netdaemon_handle_session_status(NetDaemon *daemon,
                                              unsigned short type,
                                              char *message,
                                              unsigned long message_size) {
+    const NetWinSessionStatusView status(message);
     if (type == 0x1F00 || type == 0x4F00)
         daemon->primary_state_.leading_words_[1] = 1;
-    const int faction = *reinterpret_cast<int *>(message + 4);
+    const int faction = status.faction();
 
     // Native 0x537BF5/0x537BFE/0x537C07 write +0x790/+0x792/+0x791.
     // Slot base +0x76C makes these +0x24/+0x26/+0x25, not the +0x28
     // transfer-status region. Preserve the original unchecked row index.
     AlphaNetProcessSlot &slot = daemon->process_slots_[faction];
-    slot.identity_ = static_cast<int8_t>(message[0x18]);
-    slot.field_26_ = static_cast<uint8_t>(message[0x14]);
-    slot.field_25_ = static_cast<uint8_t>(message[0x10]);
+    slot.identity_ = status.identity();
+    slot.field_26_ = status.field_14();
+    slot.field_25_ = status.field_10();
     netdaemon_rebroadcast_session_packet(daemon, message, message_size);
 }
 
@@ -5958,17 +5962,19 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
                                            unsigned char *message,
                                            unsigned short type,
                                            unsigned long message_size) {
+    const NetWinPacketView packet(message);
+    const NetWinLobbyPacketView lobby(message);
     if (type == 0x1F04 || type == 0x4F04)
         daemon.primary_state_.leading_words_[1] = 1;
 
-    unsigned short &wire_type = *reinterpret_cast<unsigned short *>(message);
-    const uint32_t sender = *reinterpret_cast<uint32_t *>(message + 4);
+    const uint32_t sender = packet.selector();
     const uint32_t no_sender_sentinel = 0xFFFFFFFFu;
     const bool has_sender = sender != no_sender_sentinel;
 
+    const unsigned short wire_type = packet.opcode();
     if ((wire_type & 0x2000u) != 0) {
-        wire_type = static_cast<unsigned short>(
-            (wire_type & static_cast<unsigned short>(~0x2000u)) | 0x4000u);
+        packet.set_opcode(static_cast<unsigned short>(
+            (wire_type & static_cast<unsigned short>(~0x2000u)) | 0x4000u));
 
         if (!has_sender) {
             daemon.send_message(reinterpret_cast<char *>(message),
@@ -5985,14 +5991,12 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
 
         const unsigned int mode = NetWinSessionData.mode_;
         if (mode == 2 || mode == 3) {
-            const int faction = static_cast<int8_t>(message[0x13]);
+            const int faction = lobby.faction_or_color();
             if (faction != -1) {
                 const NetWinFactionRecord *const records =
-                    static_cast<const NetWinFactionRecord *>(
-                        NetWinDialog.faction_records_);
+                    NetWinDialog.faction_records_;
                 if (records[faction].owner_ != 0 &&
-                    records[faction].owner_ !=
-                        *reinterpret_cast<uint32_t *>(message + 0x188)) {
+                    records[faction].owner_ != lobby.owner()) {
                     return;
                 }
 
@@ -6010,18 +6014,18 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
             NetWinLobbyRows[sender].faction_or_color_ =
                 static_cast<int8_t>(faction);
             NetWinLobbyRows[sender].owner_ =
-                *reinterpret_cast<uint32_t *>(message + 0x188);
+                lobby.owner();
         }
 
         // This comparison runs for every non-sentinel sender, even when the
         // packet carries faction -1 or the dialog mode skipped selection.
         const int current_faction =
             NetWinLobbyRows[sender].faction_or_color_;
-        const int faction = static_cast<int8_t>(message[0x13]);
+        const int faction = lobby.faction_or_color();
         if (current_faction != faction ||
             previous_faction != current_faction) {
             NetWinDialog.fill_player(
-                reinterpret_cast<NetWinLobbyRow *>(message + 0x10), faction);
+                NetWinLobbyRowView(lobby.payload()), faction);
         }
 
         daemon.send_message(reinterpret_cast<char *>(message),
@@ -6033,12 +6037,12 @@ static void netdaemon_handle_session_lobby(NetDaemon &daemon,
     }
 
     if (!has_sender) {
-        std::memcpy(&NetWinLobbyRows[1], message + 0x10, 0xA64);
+        std::memcpy(&NetWinLobbyRows[1], lobby.payload(), 0xA64);
         NetWinDialog.on_redraw();
         return;
     }
 
-    std::memcpy(&NetWinLobbyRows[sender], message + 0x10,
+    std::memcpy(&NetWinLobbyRows[sender], lobby.payload(),
                 sizeof(NetWinLobbyRow));
     if (daemon.primary_state_.leading_words_[0] != 0) {
         const unsigned int tail_mode = NetWinSessionData.mode_;

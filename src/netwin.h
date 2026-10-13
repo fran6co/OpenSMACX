@@ -23,6 +23,7 @@
 #include "editbox.h"
 #include "checkbox.h"
 #include <cstddef>
+#include <cstring>
 
 // One original zero-filled .data object at 0x0090DB98. The second row begins
 // at 0x0090DD14; its seven-row suffix is the 0xA64-byte state payload.
@@ -59,6 +60,169 @@ static_assert(offsetof(NetWinLobbyRow, adjective_leader_) == 0xF5,
 static_assert(offsetof(NetWinLobbyRow, owner_) == 0x178, "lobby owner slot");
 extern NetWinLobbyRow NetWinLobbyRows[8]; // 0x0090DB98
 
+// Mutable borrowed access to one row-shaped byte region. This is used for
+// received packet payloads whose storage is not a constructed NetWinLobbyRow;
+// it performs no copy, initialization, or extent check.
+class NetWinLobbyRowView {
+public:
+  explicit NetWinLobbyRowView(unsigned char *bytes)
+      : bytes_(reinterpret_cast<char *>(bytes)) {}
+  explicit NetWinLobbyRowView(char *bytes)
+      : bytes_(bytes) {}
+  explicit NetWinLobbyRowView(NetWinLobbyRow &row)
+      : bytes_(reinterpret_cast<char *>(&row)) {}
+
+  char *leader_name() const {
+    return bytes_ + offsetof(NetWinLobbyRow, leader_name_);
+  }
+  char *formal_faction_name() const {
+    return bytes_ + offsetof(NetWinLobbyRow, formal_faction_name_);
+  }
+  char *noun_faction() const {
+    return bytes_ + offsetof(NetWinLobbyRow, noun_faction_);
+  }
+  char *adjective_faction() const {
+    return bytes_ + offsetof(NetWinLobbyRow, adjective_faction_);
+  }
+  char *leader_title() const {
+    return bytes_ + offsetof(NetWinLobbyRow, leader_title_);
+  }
+  char *adjective_leader() const {
+    return bytes_ + offsetof(NetWinLobbyRow, adjective_leader_);
+  }
+  void set_tail_0(uint8_t value) const {
+    std::memcpy(bytes_ + offsetof(NetWinLobbyRow, tail_), &value, sizeof(value));
+  }
+
+private:
+  char *bytes_;
+};
+static_assert(sizeof(NetWinLobbyRowView) == sizeof(void *),
+              "lobby row view is a borrowed pointer");
+
+// The first 16 bytes are common to lobby button/picker packets. Session-block
+// senders with only an opcode and reserved tail keep their distinct schema.
+struct NetWinLobbyPacketHeader {
+  uint8_t opcode_;
+  uint8_t flags_;
+  uint16_t field_2_;
+  int32_t slot_;
+  int32_t field_8_;
+  uint32_t field_C_;
+};
+static_assert(sizeof(NetWinLobbyPacketHeader) == 0x10,
+              "NetWin packet header size");
+static_assert(offsetof(NetWinLobbyPacketHeader, slot_) == 0x04,
+              "NetWin packet selector offset");
+static_assert(offsetof(NetWinLobbyPacketHeader, field_8_) == 0x08,
+              "NetWin packet field-eight offset");
+static_assert(offsetof(NetWinLobbyPacketHeader, field_C_) == 0x0C,
+              "NetWin packet field-c offset");
+
+struct NetWinLobbySinglePacket {
+  NetWinLobbyPacketHeader header_;
+  NetWinLobbyRow row_;
+};
+struct NetWinLobbyFullPacket {
+  NetWinLobbyPacketHeader header_;
+  NetWinLobbyRow rows_[7];
+};
+struct NetWinLobbyLeavePacket {
+  NetWinLobbyPacketHeader header_;
+  uint8_t trailing_[0x10];
+};
+static_assert(sizeof(NetWinLobbySinglePacket) == 0x18C,
+              "single lobby packet size");
+static_assert(offsetof(NetWinLobbySinglePacket, row_) == 0x10,
+              "single lobby payload offset");
+static_assert(sizeof(NetWinLobbyFullPacket) == 0xA74,
+              "full lobby packet size");
+static_assert(offsetof(NetWinLobbyFullPacket, rows_) == 0x10,
+              "full lobby payload offset");
+static_assert(sizeof(NetWinLobbyLeavePacket) == 0x20,
+              "leave lobby packet size");
+
+// Borrowed packet views deliberately describe only fields used by these
+// receivers. They do not claim a packet extent or validate short/malformed
+// messages; the native paths can read beyond their logical payload.
+class NetWinPacketView {
+public:
+  explicit NetWinPacketView(unsigned char *bytes) : bytes_(bytes) {}
+  explicit NetWinPacketView(char *bytes)
+      : bytes_(reinterpret_cast<unsigned char *>(bytes)) {}
+
+  uint16_t opcode() const {
+    uint16_t value;
+    std::memcpy(&value, bytes_ + offsetof(NetWinLobbyPacketHeader, opcode_), sizeof(value));
+    return value;
+  }
+  void set_opcode(uint16_t value) const {
+    std::memcpy(bytes_ + offsetof(NetWinLobbyPacketHeader, opcode_), &value, sizeof(value));
+  }
+  uint32_t selector() const {
+    uint32_t value;
+    std::memcpy(&value, bytes_ + offsetof(NetWinLobbyPacketHeader, slot_), sizeof(value));
+    return value;
+  }
+  unsigned char *payload() const {
+    return bytes_ + sizeof(NetWinLobbyPacketHeader);
+  }
+
+private:
+  unsigned char *bytes_;
+};
+static_assert(sizeof(NetWinPacketView) == sizeof(void *),
+              "packet view is a borrowed pointer");
+
+class NetWinLobbyPacketView {
+public:
+  explicit NetWinLobbyPacketView(unsigned char *bytes) : bytes_(bytes) {}
+  int8_t faction_or_color() const {
+    int8_t value;
+    std::memcpy(&value, bytes_ + sizeof(NetWinLobbyPacketHeader) +
+                              offsetof(NetWinLobbyRow, faction_or_color_), sizeof(value));
+    return value;
+  }
+  // Payload +0x178 is the existing row owner at packet +0x188, not an
+  // additional status word or packet extension.
+  uint32_t owner() const {
+    uint32_t value;
+    std::memcpy(&value, bytes_ + sizeof(NetWinLobbyPacketHeader) +
+                              offsetof(NetWinLobbyRow, owner_), sizeof(value));
+    return value;
+  }
+  unsigned char *payload() const {
+    return bytes_ + sizeof(NetWinLobbyPacketHeader);
+  }
+
+private:
+  unsigned char *bytes_;
+};
+static_assert(sizeof(NetWinLobbyPacketView) == sizeof(void *),
+              "lobby packet view is a borrowed pointer");
+
+// The status receiver has no known producer or extent. These narrow accessors
+// name only the fields observed in its native consumer; a short packet can
+// leave these reads in the receiver's existing scratch tail.
+class NetWinSessionStatusView {
+public:
+  explicit NetWinSessionStatusView(char *bytes)
+      : bytes_(reinterpret_cast<unsigned char *>(bytes)) {}
+  int faction() const {
+    int value;
+    std::memcpy(&value, bytes_ + 4, sizeof(value));
+    return value;
+  }
+  int8_t identity() const { return static_cast<int8_t>(bytes_[0x18]); }
+  uint8_t field_14() const { return bytes_[0x14]; }
+  uint8_t field_10() const { return bytes_[0x10]; }
+
+private:
+  unsigned char *bytes_;
+};
+static_assert(sizeof(NetWinSessionStatusView) == sizeof(void *),
+              "session status view is a borrowed pointer");
+
 // Only NetWin::exec constructs these stack-local rows. The passive wire/global
 // record above must not acquire this constructor or a dynamic initializer.
 // Composition names the observed payload, not an inferred class hierarchy.
@@ -93,6 +257,26 @@ static_assert(offsetof(NetWinLobbyRow, noun_faction_) +
                   sizeof(((NetWinLobbyRow *)0)->noun_faction_) <= sizeof(NetWinSessionBlock),
               "row-eight faction text is inside session storage");
 extern NetWinSessionBlock NetWinSessionData; // 0x0090E778, after the rows
+
+// send_session2_packet copies 90 dwords after a 16-byte prefix. It initializes
+// only opcode_; the reserved bytes remain untouched.
+struct NetWinSessionBlockPacket {
+  uint16_t opcode_;
+  uint8_t reserved_[0x0E];
+  NetWinSessionBlock session_;
+};
+struct NetWinSessionLobbyPacket {
+  NetWinLobbyPacketHeader header_;
+  NetWinSessionBlock session_;
+};
+static_assert(sizeof(NetWinSessionBlockPacket) == 0x178,
+              "session block packet size");
+static_assert(offsetof(NetWinSessionBlockPacket, session_) == 0x10,
+              "session block payload offset");
+static_assert(sizeof(NetWinSessionLobbyPacket) == 0x178,
+              "lobby session packet size");
+static_assert(offsetof(NetWinSessionLobbyPacket, session_) == 0x10,
+              "lobby session payload offset");
 struct NetWinSessionOptionsState {
   uint8_t status_;          // +0
   uint8_t player_count_;    // +1, pick_num_players clamps selected index + lower bound to 2..7
@@ -116,6 +300,19 @@ static_assert(sizeof(NetWinSessionOptionsState) == 0x18,
 static_assert(offsetof(NetWinSessionOptionsState, rule_bits_a_) == 0xC,
               "first session rule word");
 extern NetWinSessionOptionsState NetWinSessionOptions; // 0x0090E8E0
+
+// The pickers send the full 0x18-byte option state after a 16-byte prefix.
+// The pinned paths initialize only opcode/options; reserved header bytes stay
+// uninitialized. Other picker initialization remains a separate obligation.
+struct NetWinSessionOptionsPacket {
+  uint16_t opcode_;
+  uint8_t reserved_[0x0E];
+  NetWinSessionOptionsState options_;
+};
+static_assert(sizeof(NetWinSessionOptionsPacket) == 0x28,
+              "session options packet size");
+static_assert(offsetof(NetWinSessionOptionsPacket, options_) == 0x10,
+              "session options payload offset");
 
 // Setup synchronization shared with NetDaemon's added-player callback.
 void __cdecl send_all_player_packets(int target);
@@ -238,7 +435,7 @@ class NetWin : public GraphicWin {
   void UNK3();
   // 0x00481DA0. Copies one faction record's name/title block into the
   // lobby row carried in the packet, or just resets +0x45 for slot -1.
-  void fill_player(NetWinLobbyRow *lobby_row, int slot);
+  void fill_player(NetWinLobbyRowView lobby_row, int slot);
   // 0x00481E90. Seeds the seven base faction records of the static faction
   // table from the 0x59C-stride template records, and resets the trailing
   // eighth/ninth slot words.

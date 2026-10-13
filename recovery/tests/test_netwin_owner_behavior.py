@@ -12,6 +12,7 @@ import shutil
 import subprocess
 
 import pytest
+from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -90,9 +91,10 @@ def test_netwin_method_body(compiler_name, kind, signature, flags, tmp_path):
     if kind == 3:
         # Reuse the actual shared packet declarations, not a fixture-only layout.
         body = "\n".join(
-            extract_function(source, name) + ";"
-            for name in ("struct NetWinLobbyPacketHeader", "struct NetWinLobbySinglePacket")
-        ) + "\n" + extract_function(source, "static void *memcpy_call(") + "\n" + body
+            (installed_packet_declarations(("NetWinLobbyPacketHeader",
+                                            "NetWinLobbySinglePacket")),
+             extract_function(source, "static void *memcpy_call("), body)
+        )
     fixture = FIXTURE.read_text()
     marker = "/* NETWIN_BODY_INSERTION */"
     assert fixture.count(marker) == 3

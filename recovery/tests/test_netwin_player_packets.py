@@ -3,10 +3,8 @@
 This fixture stubs only UI, selection, and send boundaries. Actual POD
 declarations and method bodies are extracted from the product sources. The
 packet's reserved header words are intentionally not inspected: the source
-does not initialize them. On 64-bit hosts only the legacy pointer-to-int
-difficulty-name key is narrowed through intptr_t; the fake names are small
-integer-like pointer keys, modeling the original 32-bit address-as-key ABI.
-These are source behavior controls, not native ABI evidence.
+does not initialize them. These are source behavior controls, not native ABI
+evidence.
 """
 
 from __future__ import annotations
@@ -17,6 +15,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -48,29 +47,13 @@ def extract_braced(source: str, marker: str) -> str:
 
 
 def actual_declarations() -> str:
-    header = NETWIN_H.read_text(encoding="utf-8")
-    source = NETWIN_CPP.read_text(encoding="utf-8")
-    return "\n\n".join((
-        extract_braced(header, "struct NetWinLobbyRow"),
-        extract_braced(header, "struct NetWinSessionBlock"),
-        extract_braced(header, "struct NetWinFactionRecord"),
-        extract_braced(source, "struct NetWinLobbyPacketHeader"),
-        extract_braced(source, "struct NetWinLobbySinglePacket"),
-    ))
+    return installed_packet_declarations()
 
 
 def actual_methods() -> dict[str, str]:
     source = NETWIN_CPP.read_text(encoding="utf-8")
     faction = extract_braced(source, "void NetWin::pick_faction(int slot)")
     difficulty = extract_braced(source, "void NetWin::pick_diff(int slot)")
-    # Windows x86 allowed this legacy narrowing directly. Keep the extracted
-    # product body visible and change only this host-width adaptation; keys in
-    # the fixture are deliberately low, integer-like pointer values.
-    assert difficulty.count("reinterpret_cast<int>(NetWinDifficultyNames[index])") == 1
-    difficulty = difficulty.replace(
-        "reinterpret_cast<int>(NetWinDifficultyNames[index])",
-        "static_cast<int>(reinterpret_cast<intptr_t>(NetWinDifficultyNames[index]))",
-    )
     return {"faction": faction, "difficulty": difficulty}
 
 
@@ -79,6 +62,7 @@ HARNESS = r"""
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#include <cstring>
 
 @@ACTUAL_TYPES@@
 
@@ -117,9 +101,7 @@ static char g_default_label[] = "default";
 static char g_difficulty_labels[6][16] = {
     "diff0", "diff1", "diff2", "diff3", "diff4", "diff5"
 };
-static char *g_difficulty_name_keys[6];
-char **NetWinDifficultyNames = g_difficulty_name_keys;
-static char *g_string_table_result[6] = {
+static char *Difficulty[6] = {
     g_difficulty_labels[0], g_difficulty_labels[1], g_difficulty_labels[2],
     g_difficulty_labels[3], g_difficulty_labels[4], g_difficulty_labels[5]
 };
@@ -127,11 +109,13 @@ struct FakeStringTable {
     int calls;
     int ids[6];
     FakeStringTable() : calls(0) { memset(ids, 0, sizeof(ids)); }
-    char *get(int id) {
+    char *get(char *name) {
         assert(calls < 6);
-        ids[calls++] = id;
-        assert(id >= 0x100 && id < 0x106);
-        return g_string_table_result[id - 0x100];
+        int id = 0;
+        while (id < 6 && name != Difficulty[id]) ++id;
+        assert(id < 6);
+        ids[calls++] = 0x100 + id;
+        return name;
     }
 } StringTable;
 
@@ -181,6 +165,8 @@ static int pick_answer(NetWin &, PopMenu &menu) {
         g_last_item_ids[i] = menu.dialog_list.ids[i];
     return g_answer;
 }
+
+@@ACTUAL_HELPERS@@
 
 @@ACTUAL_METHODS@@
 
@@ -234,9 +220,6 @@ int main() {
     netwin.faction_records_ = records;
     g_player_count = 0;
     NetWinSessionData.mode_ = 0;
-    for (int i = 0; i < 6; ++i)
-        g_difficulty_name_keys[i] = reinterpret_cast<char *>(static_cast<intptr_t>(0x100 + i));
-
     NetWinLobbyRow original;
     fill_row(original, 0x31);
     NetWinLobbyRows[1] = original;
@@ -343,7 +326,10 @@ int main() {
 
 
 def fixture_source(methods: dict[str, str]) -> str:
+    source = NETWIN_CPP.read_text(encoding="utf-8")
+    helpers = extract_braced(source, "static void *memcpy_call(")
     return (HARNESS.replace("@@ACTUAL_TYPES@@", actual_declarations())
+            .replace("@@ACTUAL_HELPERS@@", helpers)
             .replace("@@ACTUAL_METHODS@@", "\n\n".join(methods.values())))
 
 
@@ -391,7 +377,8 @@ def test_defined_field_and_row_damage_controls(compiler: str) -> None:
         ("wrong chosen faction byte", "faction",
          "static_cast<int8_t>(chosen_faction)", "static_cast<int8_t>(chosen_faction + 1)"),
         ("omitted copied-row faction override", "faction",
-         "packet.row_.faction_or_color_ =\n            static_cast<int8_t>(chosen_faction);", "(void)chosen_faction;"),
+         "updated.faction_or_color_ = static_cast<int8_t>(chosen_faction);",
+         "(void)chosen_faction;"),
         ("failed to restore shared row", "faction",
          "NetWinLobbyRows[slot].faction_or_color_ = previous;", "(void)previous;"),
         ("wrong difficulty byte", "difficulty",

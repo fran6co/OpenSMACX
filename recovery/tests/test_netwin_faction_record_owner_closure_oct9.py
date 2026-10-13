@@ -9,6 +9,7 @@ import shutil
 import subprocess
 
 import pytest
+from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -108,7 +109,7 @@ def test_producer_and_all_record_consumers_use_typed_in_stride_fields():
     assert "return;" in producer  # preserve each original section-open failure
 
     fill = _definition(SOURCE, "void NetWin::fill_player(")
-    assert "void NetWin::fill_player(NetWinLobbyRow *lobby_row, int slot)" in fill
+    assert "void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot)" in fill
     assert "const NetWinFactionRecord &record = faction_records_[slot];" in fill
     assert "record.leader_name_" in fill
     assert "record.formal_faction_name_" in fill
@@ -117,12 +118,12 @@ def test_producer_and_all_record_consumers_use_typed_in_stride_fields():
     assert "record.leader_title_" in fill
     for field in ("leader_name_", "formal_faction_name_", "noun_faction_",
                   "adjective_faction_", "leader_title_", "adjective_leader_"):
-        assert f"lobby_row->{field}" in fill
-    assert "lobby_row->tail_[0]" in fill
+        assert f"lobby_row.{field[:-1]}()" in fill
+    assert "lobby_row.set_tail_0(" in fill
     assert "slot * 0x190" in fill
     assert "allocation_bytes[slot * 0x190 + 0x192]" in fill
-    assert "strcpy(lobby_row->adjective_faction_, record.adjective_faction_);" in fill
-    assert "strcpy(lobby_row->leader_title_, record.leader_title_);" in fill
+    assert "strcpy(lobby_row.adjective_faction(), record.adjective_faction_);" in fill
+    assert "strcpy(lobby_row.leader_title(), record.leader_title_);" in fill
     assert "memset(" not in producer
     read_faction = producer.index("read_faction(&player, 0)")
     assert "records = faction_records_;" in producer[read_faction:]
@@ -315,18 +316,17 @@ FILL_FIXTURE = r"""
 #include <cstdint>
 #include <cstring>
 #include <cstddef>
-RECORD_TYPE
+ACTUAL_TYPES
 static_assert(sizeof(NetWinFactionRecord) == 0x190, "record stride");
 static_assert(offsetof(NetWinFactionRecord, adjective_faction_) == 0x7A,
               "faction adjective slot");
 static_assert(offsetof(NetWinFactionRecord, leader_title_) == 0xFA,
               "leader title slot");
-ROW_TYPE
 static char *label_get(int) { return const_cast<char *>("fallback"); }
 class NetWin {
 public:
     NetWinFactionRecord *faction_records_;
-    void fill_player(NetWinLobbyRow *, int);
+    void fill_player(NetWinLobbyRowView, int);
 };
 FILL_BODY
 int run_control() {
@@ -344,7 +344,7 @@ int run_control() {
     adjective[0x7F] = 0;
     bytes[0x190 + 0x192] = 0xE7;
     NetWinLobbyRow player = {};
-    win.fill_player(&player, 1);
+    win.fill_player(NetWinLobbyRowView(player), 1);
     assert(std::strcmp(player.leader_name_, "leader") == 0);
     assert(std::strcmp(player.formal_faction_name_, "formal") == 0);
     assert(std::strcmp(player.noun_faction_, "noun") == 0);
@@ -355,9 +355,25 @@ int run_control() {
     assert(player.adjective_leader_[0x7F] == 0);
     assert(player.tail_[0] == 0xE7);
     std::strcpy(player.noun_faction_, "old");
-    win.fill_player(&player, -1);
+    win.fill_player(NetWinLobbyRowView(player), -1);
     assert(std::strcmp(player.noun_faction_, "fallback") == 0);
     assert(std::strcmp(player.leader_name_, "leader") == 0);
+
+    // A received row is still only bytes. The view points into the live
+    // packet payload and writes the observed row slots without constructing a
+    // NetWinLobbyRow over that storage or copying through a temporary.
+    char message[0x18C];
+    std::memset(message, 0xA9, sizeof message);
+    NetWinLobbyRowView received(message + 0x10);
+    assert(received.leader_name() == message + 0x10 + offsetof(NetWinLobbyRow, leader_name_));
+    assert(received.adjective_leader() == message + 0x10 + offsetof(NetWinLobbyRow, adjective_leader_));
+    win.fill_player(received, 1);
+    assert(std::strcmp(received.leader_name(), "leader") == 0);
+    assert(std::strcmp(received.formal_faction_name(), "formal") == 0);
+    assert(std::strcmp(received.adjective_leader(), adjective) == 0);
+    assert(static_cast<unsigned char>(message[0x10 + offsetof(NetWinLobbyRow, tail_)]) == 0xE7);
+    assert(static_cast<unsigned char>(message[0x10 + offsetof(NetWinLobbyRow, prefix_)]) == 0xA9);
+    assert(static_cast<unsigned char>(message[0x10 + offsetof(NetWinLobbyRow, owner_)]) == 0xA9);
     return 0;
 }
 int main() { return run_control(); }
@@ -372,15 +388,11 @@ def test_actual_fill_player_boundary_runtime_and_mutants(
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
     body = _definition(SOURCE, "void NetWin::fill_player(")
-    record = _struct(HEADER, "NetWinFactionRecord") + ";"
-
-    row = _struct(HEADER, "NetWinLobbyRow") + ";"
+    types = installed_packet_declarations(("NetWinFactionRecord", "NetWinLobbyRow",
+                                           "NetWinLobbyRowView"))
 
     def compile_run(method: str, expected: bool, label: str) -> None:
-        harness = FILL_FIXTURE.replace("RECORD_TYPE", record).replace(
-            "ROW_TYPE", row).replace(
-            "FILL_BODY", method
-        )
+        harness = FILL_FIXTURE.replace("ACTUAL_TYPES", types).replace("FILL_BODY", method)
         cpp = tmp_path / f"netwin-fill-{label}.cpp"
         exe = tmp_path / f"netwin-fill-{label}"
         cpp.write_text(harness)

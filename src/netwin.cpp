@@ -553,7 +553,7 @@ Purpose: Copy one faction record's name/title block into the lobby row
          re-reads just noun_faction_ through the string table, for the row
          the scenario file's own faction entry describes.
 // ORIGINAL: 0x00481DA0 ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z 0x00481DA0-0x00481E8D FILE
-// symbol    ?fill_player@NetWin@@QAEXPAUNetWinLobbyRow@@H@Z
+// symbol    ?fill_player@NetWin@@QAEXVNetWinLobbyRowView@@H@Z
 // size      237 bytes
 // prototype void (__thiscall ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z)(NetWin* this, PlayerData*, int)
 // callers   2   call targets   3
@@ -564,25 +564,25 @@ Purpose: Copy one faction record's name/title block into the lobby row
 Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
-void NetWin::fill_player(NetWinLobbyRow *lobby_row, int slot) {
+void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot) {
     if (slot == -1) {
-        lobby_row->noun_faction_[0] = 0;
-        strcat(lobby_row->noun_faction_,
+        lobby_row.noun_faction()[0] = 0;
+        strcat(lobby_row.noun_faction(),
                label_get(0xFE4 / 4));
         return;
     }
     const NetWinFactionRecord &record = faction_records_[slot];
-    strcpy(lobby_row->leader_name_, record.leader_name_);
-    strcpy(lobby_row->formal_faction_name_, record.formal_faction_name_);
-    strcpy(lobby_row->noun_faction_, record.noun_faction_);
-    strcpy(lobby_row->adjective_faction_, record.adjective_faction_);
-    strcpy(lobby_row->leader_title_, record.leader_title_);
+    strcpy(lobby_row.leader_name(), record.leader_name_);
+    strcpy(lobby_row.formal_faction_name(), record.formal_faction_name_);
+    strcpy(lobby_row.noun_faction(), record.noun_faction_);
+    strcpy(lobby_row.adjective_faction(), record.adjective_faction_);
+    strcpy(lobby_row.leader_title(), record.leader_title_);
     const unsigned char *const allocation_bytes =
         reinterpret_cast<const unsigned char *>(faction_records_);
-    strcpy(lobby_row->adjective_leader_,
+    strcpy(lobby_row.adjective_leader(),
            reinterpret_cast<const char *>(allocation_bytes + slot * 0x190
                                           + 0x112));
-    lobby_row->tail_[0] = allocation_bytes[slot * 0x190 + 0x192];
+    lobby_row.set_tail_0(allocation_bytes[slot * 0x190 + 0x192]);
 }
 
 // 0x0090E778 / 0x0090E79C - the two words beside the seven records
@@ -1693,36 +1693,6 @@ static int __cdecl pick_daemon_callback() {
     return NetWinDialog.modal_callback_daemon();
 }
 
-// The single-row picker packet shares the lobby button handler's wire header.
-struct NetWinLobbyPacketHeader {
-    uint8_t opcode_;
-    uint8_t flags_;
-    uint16_t field_2_;
-    int32_t slot_;
-    int32_t field_8_;
-    uint32_t field_C_;
-};
-static_assert(sizeof(NetWinLobbyPacketHeader) == 0x10,
-              "NetWin packet header size");
-struct NetWinLobbySinglePacket {
-    NetWinLobbyPacketHeader header_;
-    NetWinLobbyRow row_;
-};
-static_assert(sizeof(NetWinLobbySinglePacket) == 0x18C,
-              "single lobby packet size");
-
-// The pickers send the complete 0x18-byte ninth-slot state after a 16-byte
-// message header. The protocol leaves the intervening header words reserved;
-// the pinned pick_map paths assign only opcode/options and send those reserved
-// bytes uninitialized. Other picker initialization is a separate obligation.
-struct NetWinSessionOptionsPacket {
-    uint16_t opcode_;
-    uint8_t reserved_[0x0E];
-    NetWinSessionOptionsState options_;
-};
-static_assert(sizeof(NetWinSessionOptionsPacket) == 0x28,
-              "session options packet size");
-
 // The shared tail of the eight scalar pickers runs even on cancellation:
 // only the option-byte write is conditional. Native 47E137/47E426 and their
 // sibling joins resolve the local slot before copying the live options.
@@ -2201,15 +2171,7 @@ void NetWin::pick_map() {
         }
     }
 
-    struct PickMapLobbyFullPacket {
-        NetWinLobbyPacketHeader header_;
-        NetWinLobbyRow rows_[7];
-    };
-    struct PickMapLobbyLeavePacket {
-        NetWinLobbyPacketHeader header_;
-        uint8_t trailing_[0x10];
-    };
-    PickMapLobbyFullPacket assigned_packet;
+    NetWinLobbyFullPacket assigned_packet;
     for (int packet_row = 0; packet_row < 7; ++packet_row) {
         assigned_packet.rows_[packet_row] = NetWinLobbyRows[packet_row + 1];
     }
@@ -2223,10 +2185,7 @@ void NetWin::pick_map() {
 
     NetWinSessionData.mode_ = static_cast<uint32_t>(field_7728_);
     NetDaemonNet.pid_2_idx(NetWinPlayerId);
-    struct NetWinSessionPacket {
-        NetWinLobbyPacketHeader header_;
-        NetWinSessionBlock session_;
-    } session_packet;
+    NetWinSessionLobbyPacket session_packet;
     session_packet.header_.opcode_ = 0x03;
     session_packet.header_.flags_ = 0x2F;
     session_packet.session_ = NetWinSessionData;
@@ -2234,7 +2193,7 @@ void NetWin::pick_map() {
                            NetWinOtherPlayerId, 1);
 
     if (field_7728_ != 0) {
-        PickMapLobbyLeavePacket leave_packet;
+        NetWinLobbyLeavePacket leave_packet;
         leave_packet.header_.opcode_ = 0x0E;
         leave_packet.header_.flags_ = 0x2F;
         NetDaemonNet.Net::send(&leave_packet, sizeof(leave_packet),
@@ -3235,19 +3194,6 @@ NetWin::NetWin() {
     faction_records_copy_ = 0;
 }
 
-struct NetWinLobbyFullPacket {
-    NetWinLobbyPacketHeader header_;
-    NetWinLobbyRow rows_[7];
-};
-struct NetWinLobbyLeavePacket {
-    NetWinLobbyPacketHeader header_;
-    uint8_t trailing_[0x10];
-};
-static_assert(sizeof(NetWinLobbyFullPacket) == 0xA74,
-              "full lobby packet size");
-static_assert(sizeof(NetWinLobbyLeavePacket) == 0x20,
-              "leave lobby packet size");
-
 /*
 Purpose: Answer the multiplayer setup dialog's button click. Id -2 hangs up
          the session (store -1 into the dialog's +0x7614 slot) and every id
@@ -3556,18 +3502,6 @@ void __cdecl send_session_packet(int slot_id, int target) {
     }
     NetDaemonNet.Net::send(&packet, sizeof(packet), who, 1);
 }
-
-// The original sender copies 90 dwords after a 16-byte header. Only its
-// opcode word is initialized; reserved header bytes remain untouched.
-struct NetWinSessionBlockPacket {
-    uint16_t opcode_;
-    uint8_t reserved_[0x0E];
-    NetWinSessionBlock session_;
-};
-static_assert(sizeof(NetWinSessionBlockPacket) == 0x178,
-              "session block packet size");
-static_assert(offsetof(NetWinSessionBlockPacket, session_) == 0x10,
-              "session block payload offset");
 
 /*
 Purpose: Broadcast the session state blob: copy the 0x168-byte payload,

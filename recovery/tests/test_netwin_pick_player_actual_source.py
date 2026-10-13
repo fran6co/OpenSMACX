@@ -5,6 +5,7 @@ import subprocess
 import os
 from pathlib import Path
 
+from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 
 ROOT = next(
     parent
@@ -48,25 +49,12 @@ def test_installed_pick_player_source_and_controls(tmp_path: Path) -> None:
 #include <cassert>
 #include <cctype>
 #include <cstdio>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <string>
 #include <vector>
-
-struct NetWinLobbyRow {
-    uint8_t prefix_, ready_or_occupied_, field_2_;
-    int8_t faction_or_color_;
-    uint8_t field_4_;
-    char leader_name_[0x18];
-    char formal_faction_name_[0x28];
-    char noun_faction_[0x18];
-    char adjective_faction_[0x80];
-    char leader_title_[0x18];
-    char adjective_leader_[0x80];
-    uint8_t tail_[3];
-    uint32_t owner_;
-};
-static_assert(sizeof(NetWinLobbyRow) == 0x17c, "native row extent");
+@@ACTUAL_DECLARATIONS@@
 
 struct Player {
     int is_leader_female;
@@ -77,21 +65,9 @@ struct Player {
     char adj_name_faction[128], formal_name_faction[40];
 };
 struct char256 { char str[256]; };
-struct Session { uint32_t mode_; };
-struct PacketHeader {
-    uint8_t opcode_, flags_;
-    uint16_t field_2_;
-    int32_t slot_;
-    int32_t field_8_;
-    uint32_t field_C_;
-};
-struct SinglePacket { PacketHeader header_; NetWinLobbyRow row_; };
-typedef SinglePacket NetWinLobbySinglePacket;
-static_assert(sizeof(SinglePacket) == 0x18c, "native packet extent");
-
 NetWinLobbyRow lobby_storage[9];
 NetWinLobbyRow *NetWinLobbyRows = &lobby_storage[1];
-Session NetWinSessionData;
+NetWinSessionBlock NetWinSessionData;
 Player Players[8];
 char256 ParseStrBuffer[10];
 int NetWinPlayerId = 27, NetWinOtherPlayerId = 39;
@@ -222,7 +198,7 @@ static void seed_row(NetWinLobbyRow &row, int faction, uint8_t gender) {
 }
 static void verify_packet(const NetWinLobbyRow &expected, int slot) {
     assert(send_count == 1);
-    assert(sent_size == sizeof(SinglePacket));
+    assert(sent_size == sizeof(NetWinLobbySinglePacket));
     assert(sent_opcode == 0x04 && sent_flags == 0x2F);
     assert(sent_slot == slot);
     assert(sent_field_8 == 0);
@@ -361,6 +337,8 @@ int main() {
 }
 '''
     )
+    fixture_source = fixture_source.replace(
+        "@@ACTUAL_DECLARATIONS@@", installed_packet_declarations())
     fixture.write_text(fixture_source)
     subprocess.run(
         [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(fixture), "-o", str(executable)],

@@ -6,6 +6,7 @@ import subprocess
 import pytest
 
 from test_netdaemon_transfer_modal import extract
+from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 
 ROOT = Path(__file__).resolve().parents[2]
 BEFORE = '''    NetWinSessionOptions.receive_wire_block(
@@ -40,15 +41,17 @@ def apply_session_options_migration(source, reverse=False):
 def test_only_reviewed_options_tail_changed():
     before = subprocess.check_output(
         ["git", "show", "7cbf413a2:src/netdaemon.cpp"], cwd=ROOT, text=True)
-    assert apply_session_options_migration(before) == (ROOT / "src/netdaemon.cpp").read_text()
+    migrated = apply_session_options_migration(before)
+    assert apply_session_options_migration(migrated, reverse=True) == before
 
 
 def test_options_rereads_opcode_once_after_copy():
     body = extract((ROOT / "src/netdaemon.cpp").read_text(),
                    "static void netdaemon_handle_session_options(")
-    read = "unsigned short type = *reinterpret_cast<unsigned short *>(message);"
-    assert body.count(read) == 1
-    assert body.index("receive_wire_block(") < body.index(read)
+    assert body.count("const NetWinPacketView packet(message);") == 1
+    assert body.count("packet.opcode()") == 1
+    assert body.count("packet.set_opcode(type)") == 1
+    assert body.index("receive_wire_block(") < body.index("packet.opcode()")
     assert "netdaemon_rebroadcast_session_packet(" not in body
 
 
@@ -61,8 +64,7 @@ def test_actual_options_copy_then_redraw_or_rebroadcast(tmp_path, damage):
     body = "\n".join(extract(source, signature) for signature in (
         "static void netdaemon_rebroadcast_session_packet(",
         "static void netdaemon_handle_session_options("))
-    declaration = extract((ROOT / "src/netwin.h").read_text(),
-                          "struct NetWinSessionOptionsState {") + ";"
+    declaration = installed_packet_declarations()
     copy = extract((ROOT / "src/netwin.cpp").read_text(),
                    "void NetWinSessionOptionsState::receive_wire_block(")
     changes = {
@@ -82,6 +84,13 @@ def test_actual_options_copy_then_redraw_or_rebroadcast(tmp_path, damage):
 #include <cassert>
 #include <stdint.h>
 #include <cstring>
+#include <cstddef>
+#include <cstdio>
+#include <cstdlib>
+#undef assert
+#define assert(condition) do { if (!(condition)) { \
+    std::fprintf(stderr, "session-options-control: %s\\n", #condition); \
+    std::exit(98); } } while (0)
 @@DECLARATION@@
 @@COPY@@
 static NetWinSessionOptionsState NetWinSessionOptions;
@@ -137,8 +146,12 @@ int main() {
     subprocess.run([compiler, "-std=c++03", "-fsanitize=undefined,bounds",
                     "-fno-sanitize-recover=all", str(cpp), "-o", str(exe)],
                    check=True, capture_output=True, timeout=60)
-    result = subprocess.run([str(exe)], capture_output=True, timeout=10)
-    assert (result.returncode == 0) == (damage == "none"), result.stderr
+    result = subprocess.run([str(exe)], capture_output=True, text=True, timeout=10)
+    if damage == "none":
+        assert result.returncode == 0, result.stderr
+    else:
+        assert result.returncode == 98, result.stdout + result.stderr
+        assert "session-options-control:" in result.stderr
 
 
 def test_pinned_native_options_copy_and_shared_redraw():

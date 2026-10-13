@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 
 from test_netwin_owner_behavior import extract_function
+from test_net_hotseat_owner_actual_source_oct6 import installed_packet_declarations
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -45,3 +46,17 @@ def test_password_reuses_word_opcode_packet_without_widened_store():
     assert "packet.header_.field_8_ = 0;" in body
     assert "packet.header_.field_2_ =" not in body
     assert "packet.header_.field_C_ =" not in body
+
+
+def test_packet_types_are_the_canonical_header_declarations():
+    declarations = installed_packet_declarations()
+    for name in (
+        "NetWinLobbyPacketHeader", "NetWinLobbySinglePacket",
+        "NetWinLobbyFullPacket", "NetWinLobbyLeavePacket",
+        "NetWinSessionOptionsPacket", "NetWinSessionBlockPacket",
+        "NetWinSessionLobbyPacket",
+    ):
+        assert f"struct {name} {{" in declarations
+    source = (ROOT / "src/netwin.cpp").read_text()
+    assert "struct NetWinLobbyPacketHeader {" not in source
+    assert "struct NetWinLobbySinglePacket {" not in source

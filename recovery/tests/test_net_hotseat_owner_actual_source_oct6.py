@@ -52,7 +52,9 @@ def extract_definition(source: str, signature: str) -> str:
     start = masked.find(masked_signature)
     if start < 0 or masked.find(masked_signature, start + len(signature)) >= 0:
         raise AssertionError(f"expected one active installed definition: {signature}")
-    opening = masked.find("{", start + len(signature))
+    signature_opening = signature.find("{")
+    opening = (start + signature_opening if signature_opening >= 0
+               else masked.find("{", start + len(signature)))
     if opening < 0 or ";" in masked[start:opening]:
         raise AssertionError(f"signature is not an active definition: {signature}")
     depth = 0
@@ -86,21 +88,36 @@ def installed_sources() -> tuple[Path, dict[int, str], dict[int, object]]:
     return root, bodies, current_rows
 
 
-def installed_packet_declarations() -> str:
-    """Use the product's real payload/header types, not strided host stand-ins."""
+def installed_packet_declarations(names: tuple[str, ...] | None = None) -> str:
+    """Extract the canonical row, mutable view and packet shapes from netwin.h."""
     root = repository_root()
     header = (root / "src/netwin.h").read_text(encoding="utf-8")
-    source = (root / "src/netwin.cpp").read_text(encoding="utf-8")
+    declarations = (
+        ("struct", "NetWinLobbyRow"),
+        ("class", "NetWinLobbyRowView"),
+        ("struct", "NetWinSessionBlock"),
+        ("struct", "NetWinSessionOptionsState"),
+        ("struct", "NetWinFactionRecord"),
+        ("struct", "NetWinLobbyPacketHeader"),
+        ("struct", "NetWinLobbySinglePacket"),
+        ("struct", "NetWinLobbyFullPacket"),
+        ("struct", "NetWinLobbyLeavePacket"),
+        ("class", "NetWinPacketView"),
+        ("class", "NetWinLobbyPacketView"),
+        ("class", "NetWinSessionStatusView"),
+        ("struct", "NetWinSessionOptionsPacket"),
+        ("struct", "NetWinSessionBlockPacket"),
+        ("struct", "NetWinSessionLobbyPacket"),
+    )
+    if names is not None:
+        requested = set(names)
+        available = {name for _, name in declarations}
+        if requested - available:
+            raise AssertionError(f"unknown canonical NetWin declarations: {sorted(requested - available)}")
+        declarations = tuple(item for item in declarations if item[1] in requested)
     return "\n".join(
-        extract_definition(text, "struct " + name) + ";"
-        for text, names in (
-            (header, ("NetWinLobbyRow", "NetWinSessionBlock",
-                      "NetWinSessionOptionsState", "NetWinFactionRecord")),
-            (source, ("NetWinLobbyPacketHeader", "NetWinLobbyFullPacket",
-                      "NetWinLobbySinglePacket", "NetWinSessionOptionsPacket",
-                      "NetWinSessionBlockPacket")),
-        )
-        for name in names
+        extract_definition(header, f"{kind} {name} {{") + ";"
+        for kind, name in declarations
     )
 
 
