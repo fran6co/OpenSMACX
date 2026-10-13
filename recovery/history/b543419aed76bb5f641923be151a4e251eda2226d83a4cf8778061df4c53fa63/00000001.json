@@ -1,0 +1,22 @@
+{
+  "event_id": "904c9ca4910cb6b281e0a1b70ff2d7d716ab60e6955850cfc5ed5aef1dcebe4b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_message_data_actual_source.py",
+      "recovery/tests/test_netdaemon_turn_packet_views_oct13s.py"
+    ],
+    "evidence": [
+      "Candidate related-route tests expose one change-caused fixture assumption: old view asserts exactly six readers although this recovery correctly adds opcode and fourth payload readers. Qualify all eight field-sized readers, retaining no-full-record-copy and no-length-policy assertions.",
+      "Root reproduced sender host fixture compilation failure on unchanged c079/33ac master: product_bodies captures the unrelated receiver view along with sender record but fixture uses string.h and lacks std::memcpy. Bound sender fixture to actual MessageDataRecord plus its eight layout assertions, retaining all routing/result mutants; no production sender or harness behavior change.",
+      "No native epoch is live. This scope expansion authorizes only these two related fixtures; original c079 baseline and sender/receiver subjects remain immutable. Coordinator checkpoints and fast-forwards metadata only into dirty isolated worker; preserve source/test author changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "diplomacy-wire-fixture-closure-oct13z",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-diplomacy-wire-closure-oct13z"
+}
