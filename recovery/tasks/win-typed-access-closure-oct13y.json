@@ -1,0 +1,117 @@
+{
+  "author": "coordinator",
+  "base_revision": "82ca29fb11830b40b97cf503e04d589853ffce81",
+  "editable_files": [
+    "src/win.cpp",
+    "recovery/tests/test_win_typed_access_actual_source_oct13y.py"
+  ],
+  "evidence": [
+    "Read-only independent audits confirm current Win* parent/base/child/root/Z-order fields and slots, Sound* val13/24/25, HWND HandleMain/DDInit hwnd, HPALETTE PaletteInitialized and strict SDK HRGN aliases. Remove only genuinely same-static-type casts in these nineteen method scopes. Do not remove foreign GetWindowLong/userdata, message payload, cursor resource or callback calling-convention conversions; no global/header/container redesign.",
+    "Win::on_key5F5D10 local void* target erases the already typed WinDialogNode::focus_owner_ Win* field. Full original5F5D10..5F5F53 loads node+4 then dispatches Win slot100. Retain Win* locally and ordinary method call, preserving original iteration/reloads/virtual arguments and return behavior.",
+    "Win iFlags/iSomeFlag are uint32 fields at98/9C, with full-word producers and high-bit consumers. Original5F6550 tests low bits8/1/8 at5F65E9/5F665A/5F668A;5EEE70 tests4/8/10 at5EEE89/5EEEA1/5EEF20. On pinned little-endian x86 these are ordinary uint32 masks; replace six byte reinterpretation tests without caching reads across callbacks, pointer alias effects or arithmetic. Preserve current historical exact obligations and separate these edits from no-op pointer cleanup in review.",
+    "Root header/source inspection independently confirms Winparent/base, AutoSound Sound fields, Z-order/root Win pointers and typed focus node. Child array of150Win* and separate1C-byte WinDialogNode focus ring already match pinned producers/traversals; do not conflate them or change capacity/lifetimes.",
+    "Source author edits only win.cpp; test author only named new test. Coordinator owns Git/compiler leases. Preserve all original identities/spans/symbols/claims and historical notes. Tests retain immutable task-base metadata/history and cover actual flag-dependent bodies/typed focus boundaries as practical, with GCC/Clang and named compile-success runtime98 damage controls. Pure same-type alias removal can use reviewed semantic equivalence plus fresh compiler signatures; do not fabricate runtime/ABI proof.",
+    "Fresh baseline/candidate measurements, whole compile/link, original obligation/reference continuity, hash-qualified compiler collateral and independent review precede manual integration. Existing exact bodies5EE950/5EEE70/5F04E0 are restoration obligations; no grant/demotion or long spelling search. No unrelated behavior fix, unsafe-path normalization, scope change or full-game/automatic acceptance."
+  ],
+  "intent": "Clean recovered Win methods through proven member/owner/handle types, preserving original behavior and cheap byte matches.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6215104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6215808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6251456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6245040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6220432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6252304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6252672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6220112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6220272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6251856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6221424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6227536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6509840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6227168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6231168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6249472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6230128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6224208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6249744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-typed-access-closure-oct13y"
+}
