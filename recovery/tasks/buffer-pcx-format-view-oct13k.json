@@ -1,0 +1,52 @@
+{
+  "author": "coordinator",
+  "base_revision": "90ebbb62512a41d6021f268b95dad666efa2066b",
+  "editable_files": [
+    "src/buffer.cpp",
+    "recovery/tests/test_buffer_pcx_format_view_oct13k.py",
+    "recovery/tests/test_graphicwin_buffer_input.py"
+  ],
+  "evidence": [
+    "Pinned writer5DF590 initializes bytes0..3,40..41 and WORDs4,6,8,A,C,E,42,44,46,48, then copies the complete128-byte local. Ranges10..3F and4A..7F remain untouched. Readers5E2690/5E2480 independently copy/read the same layout. A local format view is supported, not proof of an original source type/name.",
+    "Declare a plain local format representation with independently checked offsets and128-byte extent; keep writer storage uninitialized, never aggregate-zero it. Preserve the existing exact arithmetic/truncation, all header writes and unwritten ranges, error paths, ignored errors, file/buffer lifecycle and reads. No bounds/validation hardening or predicate unification.",
+    "Memory reader has version<4 rejection only when Palette is nonnull; dimension reader checks only magic/encoding. Preserve asset-prefix strlen/read order, decoder semantics and all current original identities/spans/claims. Remove superseded private offset constants only when unused by the shared view.",
+    "Filename wrapper5D7DE0 and FameWin demote44AC10/try_to_add_me44A660 are read-only verification closure. No header, caller, compiler/build-policy or dependency changes are authorized. Expand discovered compiled impacts centrally without resetting this baseline.",
+    "Verify actual extracted C++ reader/writer operations, untouched-byte sentinels, layout/word truncation and discriminating damage controls, plus fresh native measurements, retained full build/link, source identities and independent review. Host format controls and masked matches are not complete runtime or linked acceptance."
+  ],
+  "intent": "Recover one observed128-byte PCX format view across Buffer readers and writer while preserving original untouched bytes, validation differences, truncation and lifecycle.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6157712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6170256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6169728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6127072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4500496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4499040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-pcx-format-view-oct13k"
+}
