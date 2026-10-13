@@ -131,9 +131,9 @@ void ProdPicker::draw_item(int item, int update) {
     set_clip(&cell);
     BoxSpriteParams *frame = &InterfaceBoxStyles[0];
     if (field_A774_ == static_cast<uint32_t>(item)) {
-        // The seed passes base+20 bytes for selected entries. This is the
-        // original overlapping view beginning at edge1_, not style [1].
-        frame = reinterpret_cast<BoxSpriteParams *>(&InterfaceBoxStyles[0].edge1_);
+        // Each table record is a complete 0x28-byte BoxSpriteParams; the
+        // original selects record 2 for the selected frame.
+        frame = &InterfaceBoxStyles[2];
     }
     box_sprite(&cell, frame);
     if (field_A818_ <= static_cast<uint32_t>(item)) return;
