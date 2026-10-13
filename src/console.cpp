@@ -2525,10 +2525,16 @@ char ConsoleStrVersionControlX[] = "VERSIONCONTROLX";  // 0x0068AA8C
 char ConsoleStrDesignated[] = "DESIGNATED";  // 0x00688E44
 // RECOVERY_OBJECT: v2 0x00688E50 0x00688E5D ?ConsoleStrUndesignated@@3PADA 0x004D7CF0
 char ConsoleStrUndesignated[] = "UNDESIGNATED";  // 0x00688E50
-// show_version reads two more .data slots that hold POINTERS to strings:
-// 0x00691870 -> "RELEASE 2.0" and 0x00691874 -> "20-Dec-1999".
-static int *const VersionReleaseTextSlot = (int *)0x00691870;
-static int *const VersionBuildDateSlot = (int *)0x00691874;
+// The pinned .data cells were mutable char* slots initialized to these
+// distinct writable text arrays; callers share the pointer objects.
+// RECOVERY_OBJECT: v2 0x00691B40 0x00691B4C ?ConsoleVersionReleaseText@@3PADA 0x00517180
+char ConsoleVersionReleaseText[] = "RELEASE 2.0";
+// RECOVERY_OBJECT: v2 0x00691B4C 0x00691B58 ?ConsoleVersionBuildDateText@@3PADA 0x00517180
+char ConsoleVersionBuildDateText[] = "20-Dec-1999";
+// RECOVERY_OBJECT: v2 0x00691870 0x00691874 ?ConsoleVersionRelease@@3PADA 0x00517180
+char *ConsoleVersionRelease = ConsoleVersionReleaseText;
+// RECOVERY_OBJECT: v2 0x00691874 0x00691878 ?ConsoleVersionBuildDate@@3PADA 0x00517180
+char *ConsoleVersionBuildDate = ConsoleVersionBuildDateText;
 
 typedef int (__cdecl *NullCallback)(void);
 
@@ -4667,18 +4673,16 @@ void Console::set_tech(int faction_id) {
 // calls     0x0048C0A0 0x00625EC0
 // PRESERVED UNIT - measured BYTE_EXACT.
 //
-// Homed 2026-09-04. The unit here measured NO_COMPILE, not MISMATCH: the
-// body only ever needed names this tree already had. The caption slot at
-// 0x00691B0C is ScriptPopupFile; older source exposed its address through the
-// ClimatePopupTitle facade, which this body no longer needs. The two parse_says inputs are
-// .data slots holding char* (0x00691870 -> "RELEASE 2.0", 0x00691874 ->
-// "20-Dec-1999"), and the two literals popp takes read straight out of the
-// image: "ac_logo_sm.pcx" at 0x0068AA7C, "VERSIONCONTROLX" at 0x0068AA8C.
+// Homed 2026-09-04. Its historical measurement was NO_COMPILE, not MISMATCH.
+// The original writable .data pointer slots at 0x00691870/74 and their
+// distinct text windows are now represented by shared source-owned objects.
+// The caption slot at 0x00691B0C is ScriptPopupFile; the two popp strings are
+// the existing source-owned arrays below.
 
 
 void Console::show_version() {
-    parse_says(0, (LPCSTR)*VersionReleaseTextSlot, -1, -1);
-    parse_says(1, (LPCSTR)*VersionBuildDateSlot, -1, -1);
+    parse_says(0, ConsoleVersionRelease, -1, -1);
+    parse_says(1, ConsoleVersionBuildDate, -1, -1);
     popp(ScriptPopupFile, ConsoleStrVersionControlX, 0, ConsoleStrAcLogoSm,
          (NullCallback)0);
 }
@@ -11036,10 +11040,10 @@ void Console::menu_proc(int command) {
             case 0x725: TutWinGlobal->set_tour_stage(6); TutWinGlobal->tour(); break;
             case 0x750: show_credits(); break;
             case 0x751:
-                parse_says(0, "RELEASE 2.0", -1, -1);
-                parse_says(1, "20-Dec-1999", -1, -1);
-                popp(ScriptPopupFile, "VERSIONCONTROLX",
-                     0, "ac_logo_sm.pcx", 0);
+                parse_says(0, ConsoleVersionRelease, -1, -1);
+                parse_says(1, ConsoleVersionBuildDate, -1, -1);
+                popp(ScriptPopupFile, ConsoleStrVersionControlX, 0,
+                     ConsoleStrAcLogoSm, (NullCallback)0);
                 break;
             case 0x800: chat(0); break;
             case 0x801: X_pop("VOICEOVERDATA", &pop_wait); break;
@@ -13324,6 +13328,14 @@ case 0x20053:
 case 0x20057: set_base_preferences(); break;
 case 0x20058: zoom(0x208, 0); go_reset(); break;
 case 0x2005A: zoom(0x207, 0); go_reset(); break;
+// The original 0x51AC11 comparison dispatches this exact raw event before
+// the later layout/key routing; after the popup, preserve the common tail.
+case 0x20073:
+    parse_says(0, ConsoleVersionRelease, -1, -1);
+    parse_says(1, ConsoleVersionBuildDate, -1, -1);
+    popp(ScriptPopupFile, ConsoleStrVersionControlX, 0,
+         ConsoleStrAcLogoSm, (NullCallback)0);
+    break;
 default:
     break;
 }

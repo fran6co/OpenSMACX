@@ -1,0 +1,19 @@
+{
+  "event_id": "a5b7691116d054a2ef4575a578c1c3eafd6a4b956c98d8f1dba44a75a5cc766a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_menu_behavior.py"
+    ],
+    "evidence": [
+      "The changed menu_proc now references real version pointer storage; its existing actual-source host fixture needs matching declarations, not a weakened assertion or restoration of fixed executable addresses."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "console-version-menu-fixture-oct13p",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-version-storage-oct13p"
+}

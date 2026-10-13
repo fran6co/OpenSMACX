@@ -31,6 +31,16 @@ def test_console_menu_dispatch():
     methods = "\n".join(body(source, signature) for signature in [
         "void Console::reset_turn_view()", "void Console::menu_proc(int",
         "void __cdecl Console::menu_daemon(int", "void Console::editor_kill_vehicles()"])
+    storage = []
+    for declaration in (
+        "char ConsoleVersionReleaseText[", "char ConsoleVersionBuildDateText[",
+        "char *ConsoleVersionRelease =", "char *ConsoleVersionBuildDate =",
+        "char ConsoleStrAcLogoSm[", "char ConsoleStrVersionControlX[",
+        "typedef int (__cdecl *NullCallback)",
+    ):
+        matches = [line for line in source.splitlines() if line.startswith(declaration)]
+        assert len(matches) == 1, "missing/ambiguous actual-source fixture input: " + declaration
+        storage.append(matches[0])
     prefix = r"""#include <cstddef>
 #include <cassert>
 #include <string>
@@ -209,6 +219,8 @@ void reset_state(){
     Trace.clear();
 }
 int main(){
+    reset_state(); ConsoleGlobal.menu_proc(0x751);
+    assert(count("parse_says")==2 && count("popp")==1);
     reset_state(); MapBaseDisplayOverride=0;
     ConsoleGlobal.menu_proc(0x59);
     assert(ConsoleNoMapOverrideLatch==1 && Trace.empty());
@@ -260,7 +272,7 @@ int main(){
     assert(Trace.size()==3 && Trace[0]=="undo" && Trace[1]=="veh_at" && Trace[2]=="stack_kill");
 }
 """
-    compile_run(prefix + "\n" + methods + "\n" + tests)
+    compile_run(prefix + "\n" + "\n".join(storage) + "\n" + methods + "\n" + tests)
 
 
 def test_netdaemon_reset_state_and_close_order():

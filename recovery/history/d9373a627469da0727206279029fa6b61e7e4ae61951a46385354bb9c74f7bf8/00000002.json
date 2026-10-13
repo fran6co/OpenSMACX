@@ -1,0 +1,33 @@
+{
+  "event_id": "2930d47330cc1e7501fa0bf9bed6b736955b9f0fd154575ccf7eb6d1b117e3bb",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh comparison of 16887 compiled signatures found real scheduler changes in give_hints/new_base/terraform: each swaps exactly two adjacent independent nonvolatile own-stack loads, with all remaining code bytes and relocations unchanged. Independent physical review confirms ordinary behavior is unchanged. Include all three identities for measurements/restoration; do not edit their source, waive their mismatches or describe outside-code as identical. No historical byte claims occur on these bodies; full linked/data/runtime preservation remains unknown."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5315504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5059696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a5b7691116d054a2ef4575a578c1c3eafd6a4b956c98d8f1dba44a75a5cc766a",
+  "request_id": "console-version-compiled-load-order-oct13p",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-version-storage-oct13p"
+}
