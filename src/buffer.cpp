@@ -4601,7 +4601,7 @@ Buffer g_BUFFER;
 // startup, and the matching destructors close them at exit.
 
 // ORIGINAL: 0x005D7B40 ?load_tga@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7B40-0x005D7C78;0x00662B92-0x00662BA7 FILE
-// TRIED: plain `Filemap fm;` with early returns has no SEH prologue at all; wrapping in try{}catch(...){throw;} recovers most of the /GX frame shape but still diverges at #0 push/mov - same wall as 0x005D7A30's Filemap-ctor SEH frame.
+// TRIED (historical, superseded by the pinned cleanup-only one-state evidence): plain `Filemap fm;` with early returns was measured without an SEH prologue; wrapping it in try{}catch(...){throw;} recovered most of the /GX frame shape but still diverged at #0 push/mov. Those obsolete catch-shape measurements do not justify a catch map here.
 // size      333 bytes
 // prototype 
 // callers   1   call targets   5
@@ -4610,38 +4610,34 @@ Buffer g_BUFFER;
 // calls     0x00628380 0x006283E0 0x00628430 0x006453E0 0x00645470
 // indirect  0x005D7C41
 int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
-    try {
-        Filemap fm;
-        if (a1 == 0) {
-            return 3;
-        }
-        char path[260];
-        path[0] = 0;
-        strcat(path, a1);
-        char *end = path + strlen(a1);
-        if (end != path) {
-            do {
-                if (*end == '.') {
-                    if (end != path) goto has_ext;
-                    break;
-                }
-                end--;
-            } while (end != path);
-        }
-        switch (Language) {
-            case 1: strcat(path, BufferExtTgf); break;
-            case 2: strcat(path, BufferExtTgg); break;
-            default: strcat(path, BufferExtTga); break;
-        }
-      has_ext:
-        if (fm.open_read(path, 1) == 0) {
-            return 6;
-        }
-        GetFileSize(fm.get_handle(), 0);
-        return 8;
-    } catch (...) {
-        throw;
+    Filemap fm;
+    if (a1 == 0) {
+        return 3;
     }
+    char path[260];
+    path[0] = 0;
+    strcat(path, a1);
+    char *end = path + strlen(a1);
+    if (end != path) {
+        do {
+            if (*end == '.') {
+                if (end != path) goto has_ext;
+                break;
+            }
+            end--;
+        } while (end != path);
+    }
+    switch (Language) {
+        case 1: strcat(path, BufferExtTgf); break;
+        case 2: strcat(path, BufferExtTgg); break;
+        default: strcat(path, BufferExtTga); break;
+    }
+  has_ext:
+    if (fm.open_read(path, 1) == 0) {
+        return 6;
+    }
+    GetFileSize(fm.get_handle(), 0);
+    return 8;
 }
 
 // ORIGINAL: 0x005E3193 ?box@Buffer@@QAEHHHHHHH@Z 0x005E3193-0x005E31FC FILE BYTE_EXACT
@@ -7458,7 +7454,7 @@ forward:
 }
 
 // ORIGINAL: 0x005D7CA0 ?load_bmp@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7CA0-0x005D7DD8;0x00662BA7-0x00662BBC FILE
-// TRIED: same load_tga/load_bmp/load_pcx SEH-frame family as 0x005D7A30 and 0x005D7B40; try{}catch(...){throw;} is the closest known shape and still diverges at #0 push/mov.
+// TRIED (historical, superseded by the pinned cleanup-only one-state evidence): this was grouped with the load_tga/load_bmp/load_pcx SEH-frame family at 0x005D7A30 and 0x005D7B40; try{}catch(...){throw;} was the closest measured shape and still diverged at #0 push/mov. The original has no catch map.
 // size      333 bytes
 // prototype 
 // callers   1   call targets   5
@@ -7467,38 +7463,34 @@ forward:
 // calls     0x00628380 0x006283E0 0x00628430 0x006453E0 0x00645470
 // indirect  0x005D7DA1
 int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
-    try {
-        Filemap fm;
-        if (a1 == 0) {
-            return 3;
-        }
-        char path[260];
-        path[0] = 0;
-        strcat(path, a1);
-        char *end = path + strlen(a1);
-        if (end != path) {
-            do {
-                if (*end == '.') {
-                    if (end != path) goto has_ext;
-                    break;
-                }
-                end--;
-            } while (end != path);
-        }
-        switch (Language) {
-            case 1: strcat(path, BufferExtBmf); break;
-            case 2: strcat(path, BufferExtBmg); break;
-            default: strcat(path, BufferExtBmp); break;
-        }
-      has_ext:
-        if (fm.open_read(path, 1) == 0) {
-            return 6;
-        }
-        GetFileSize(fm.get_handle(), 0);
-        return 8;
-    } catch (...) {
-        throw;
+    Filemap fm;
+    if (a1 == 0) {
+        return 3;
     }
+    char path[260];
+    path[0] = 0;
+    strcat(path, a1);
+    char *end = path + strlen(a1);
+    if (end != path) {
+        do {
+            if (*end == '.') {
+                if (end != path) goto has_ext;
+                break;
+            }
+            end--;
+        } while (end != path);
+    }
+    switch (Language) {
+        case 1: strcat(path, BufferExtBmf); break;
+        case 2: strcat(path, BufferExtBmg); break;
+        default: strcat(path, BufferExtBmp); break;
+    }
+  has_ext:
+    if (fm.open_read(path, 1) == 0) {
+        return 6;
+    }
+    GetFileSize(fm.get_handle(), 0);
+    return 8;
 }
 
 // ORIGINAL: 0x005D79C0 ?resize@Buffer@@QAEXHH@Z 0x005D79C0-0x005D7A05 FILE BYTE_EXACT
