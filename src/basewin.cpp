@@ -2909,7 +2909,7 @@ void BaseWin::soft_zoom(int base_id) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0041A920 ?zoom@BaseWin@@QAEXHH@Z 0x0041A920-0x0041AE40
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a920.cpp", "image:0x0041A920-0x0041AE40 sets base focus, recomputes, refreshes the interface, then waits on zoom_wait_pending_", "source:src/basewin.h:BaseWin::zoom_wait_pending_", "source:src/worldwin.cpp:WorldWin::click cancels the same zoom wait"], "reason": "Recover the base selection and display lifecycle through owned objects and typed state. The tutorial-message branches in the retained seed are still pending; preserve that seed and do not claim a byte match."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0041AA4B-0x0041AE03 restores the seven ordered tutorial gates, name parsing, popup/callout dispatch and shared rejoin before the original wait tail", "image:0x0041AA73-0x0041AA9C uses PlayersData[current].current_num_bases and tut_check(2); image:0x0041AB04-0x0041ABD1 uses Base::state/governor and tut_check2(0x10/0x20)", "image:0x0041ABF5-0x0041ACDA uses Base population/surplus, BaseCurrentForcesMaintCost, tut_check2(0x200/0x40), and the current Map tile climate", "image:0x0041AD0F-0x0041ADFE scans Bases[0..GameDataStateStorage.fields_.base_current_count_), tests the existing facilities_built bytes via bitmask, and dispatches the two Base inefficiency callouts", "source:src/base.h:Base,BaseCurrent", "source:src/faction.h:PlayerData::current_num_bases,PlayersData", "source:src/game_data_state_window.h:GameDataStateWindowFields::base_current_count_,GameDataStateStorage", "source:src/tutwin.h:TutWin::base_rect,tut_win,do_base,set_tour_stage,TutorialWindow", "source:src/general.h:parse_says,bitmask", "source:src/map.h:map_loc", "source:src/base.cpp:BaseCurrentForcesMaintCost"], "reason": "Recover the complete original zoom behavior through existing Base, PlayerData, game-data-state, tutorial, map, string-parsing, and base-window owners, retaining branch/callback order and the original wait tail."}
 void BaseWin::zoom(int base_id, int wait) {
     field_40B00_ = -1;
     TutorialWindow.reset();
@@ -2942,8 +2942,104 @@ void BaseWin::zoom(int base_id, int wait) {
     MainInterfaceGlobal.GraphicWin::redraw();
     field_1E670_ = 0;
 
-    // The original runs several tutorial-message branches here. Their
-    // rectangles, messages, and faction-state ownership still need recovery.
+    // Original 0x0041AA4B..0x0041AE02 tutorial checks publish stages and
+    // callouts through the existing Base/PlayerData/TutWin/Map owners. The
+    // text keys and rectangles below are those passed at the pinned callsites.
+    const int local_faction = ConsoleGlobal.faction_id_;
+    if (BaseCurrent->faction_id_current == local_faction
+        && PlayersData[local_faction].current_num_bases == 1
+        && tut_check(2) != 0) {
+        TutorialWindow.set_tour_stage(1);
+        parse_says(0, BaseCurrent->name_string, -1, -1);
+        int x;
+        int y;
+        TutorialWindow.base_rect(&rect8_, &x, &y);
+        MapWin *const primary = MapWinTable[0];
+        GraphicWin *const owner = primary != nullptr
+            ? static_cast<GraphicWin *>(primary) : nullptr;
+        TutorialWindow.tut_win(owner, "BASECONTROL", x, y, nullptr, 0x100,
+                               -1, -1);
+    } else if ((BaseCurrent->state & 2u) != 0 && tut_check2(0x10) != 0
+        && (BaseCurrent->governor & 0x80000040u) != 0x80000040u) {
+        TutorialWindow.set_tour_stage(6);
+        parse_says(0, BaseCurrent->name_string, -1, -1);
+        int x;
+        int y;
+        TutorialWindow.base_rect(&rect8_, &x, &y);
+        MapWin *const primary = MapWinTable[0];
+        GraphicWin *const owner = primary != nullptr
+            ? static_cast<GraphicWin *>(primary) : nullptr;
+        TutorialWindow.tut_win(owner, "DRONERIOTS", x, y, nullptr, 0x100,
+                               -1, -1);
+    } else if (BaseCurrent->nutrient_surplus < 0 && tut_check2(0x20) != 0
+        && BaseCurrent->specialist_total != 0
+        && (BaseCurrent->governor & 0x80000040u) != 0x80000040u) {
+        parse_says(0, BaseCurrent->name_string, -1, -1);
+        TutorialWindow.do_base(&rect1_, "LOWNUTRIENT", 0);
+    } else {
+        const int population_size = BaseCurrent->population_size;
+        const int mineral_surplus = BaseCurrent->mineral_surplus;
+        bool tutorial_popup_opened = false;
+        if (mineral_surplus < (population_size + 1) / 2
+            && static_cast<int32_t>(BaseCurrentForcesMaintCost) >= 1
+            && (population_size >= 4 || mineral_surplus <= 0)
+            && tut_check2(0x200) != 0) {
+            parse_says(0, BaseCurrent->name_string, -1, -1);
+            TutorialWindow.do_base(&expenses_help_rects_[2], "SUPPORT", 0);
+            tutorial_popup_opened = true;
+        }
+
+        if (!tutorial_popup_opened && BaseCurrent->mineral_surplus <= 1) {
+            const int population = BaseCurrent->population_size;
+            if (static_cast<int32_t>(BaseCurrentForcesMaintCost)
+                    < population / 2
+                && population >= 3 && tut_check2(0x40) != 0) {
+                parse_says(0, BaseCurrent->name_string, -1, -1);
+                const int tile_y = BaseCurrent->y;
+                const int tile_x = BaseCurrent->x;
+                const unsigned char climate = map_loc(tile_x, tile_y)->climate;
+                const char *const label = (climate & 0xE0) < 0x60
+                    ? "LOWMINERALS2" : "LOWMINERALS";
+                TutorialWindow.do_base(&expenses_help_rects_[2], label, 0);
+                tutorial_popup_opened = true;
+            }
+        }
+
+        if (!tutorial_popup_opened
+            && BaseCurrent->energy_inefficiency > BaseCurrent->energy_surplus
+            && (BaseCurrent->governor & 0x80000000u) == 0) {
+            bool matching_base_has_facility = false;
+            for (int index = 0;
+                 index < GameDataStateStorage.fields_.base_current_count_;
+                 ++index) {
+                if (Bases[index].faction_id_current
+                    != BaseCurrent->faction_id_current) {
+                    continue;
+                }
+                int facility_byte;
+                int facility_bit;
+                bitmask(base_id, &facility_byte, &facility_bit);
+                if ((Bases[index].facilities_built[facility_byte]
+                     & facility_bit) != 0) {
+                    matching_base_has_facility = true;
+                    break;
+                }
+            }
+
+            if (!matching_base_has_facility && tut_check2(0x400) != 0) {
+                parse_says(0, BaseCurrent->name_string, -1, -1);
+                draw_expenses(2);
+                TutorialWindow.do_base(&expenses_help_rects_[0],
+                                       "INEFFICIENCYHQ", 0);
+            } else if (tut_check2(0x80) != 0) {
+                parse_says(0, BaseCurrent->name_string, -1, -1);
+                draw_expenses(2);
+                TutorialWindow.do_base(&expenses_help_rects_[0],
+                                       "INEFFICIENCY", 0);
+            }
+        }
+    }
+
     if (wait != 0) {
         while (zoom_wait_pending_ && Win::is_visible() && !ExitTurnLoop) {
             if (IsMultiplayerNet) {

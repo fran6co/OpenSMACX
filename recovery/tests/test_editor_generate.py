@@ -32,18 +32,45 @@ def body():
     return braced(source, source.index("void Console::editor_generate() {"))
 
 
+def state_storage_declarations():
+    """Project the actual shared-state declaration and its real nested type."""
+    fields = (ROOT / "src/game_data_state_window.h").read_text()
+    base = (ROOT / "src/base.h").read_text()
+    declarations = []
+    for source, marker in (
+        (base, "struct BaseSecretProject {"),
+        (fields, "struct GameDataLockMaskBytes {"),
+        (fields, "union GameDataLockMaskView {"),
+        (fields, "struct GameDataStateWindowFields {"),
+        (fields, "struct GameDataStateWindow {"),
+    ):
+        declarations.append(braced(source, source.index(marker)) + ";")
+    storage_decl = re.search(
+        r"extern GameDataStateWindow GameDataStateStorage;", fields).group()
+    return "\n".join(declarations + [storage_decl])
+
+
+def map_storage_declarations():
+    """Use MapArea/MapTiles aliases over the actual MapStorage owner."""
+    header = (ROOT / "src/map.h").read_text()
+    declarations = [
+        "typedef int BOOL;",
+        re.search(r"static const int MaxLandmarkNum = \d+;", header).group(),
+        braced(header, header.index("struct Landmark {")) + ";",
+        braced(header, header.index("struct MapMetadataFields {")) + ";",
+        braced(header, header.index("struct MapStorageWindow {")) + ";",
+        re.search(r"extern MapStorageWindow MapStorage;", header).group(),
+    ]
+    aliases = [re.search(r"^#define " + name + r" .+$", header, re.MULTILINE).group()
+               for name in ("MapArea", "MapTiles")]
+    return "\n".join(declarations + ["MapStorageWindow MapStorage;"] + aliases)
+
+
 def harness(method):
     header = (ROOT / "src/map.h").read_text()
     record = braced(header, header.index("struct Map {")) + ";"
     constants = [re.search(r"\b" + name + r"\s*=\s*[^,]+,", header).group()
                  for name in ("BIT_BASE_IN_TILE", "BIT_VEH_IN_TILE")]
-    # Keep the production signedness of state/count globals explicit. Host
-    # int and uint32_t are required to have the original 32-bit widths below.
-    declarations = []
-    for unit, name in (("map.h", "MapArea"), ("game.h", "GameState"),
-                       ("veh.h", "VehCurrentCount"), ("base.h", "BaseCurrentCount")):
-        text = (ROOT / "src" / unit).read_text()
-        declarations.append(re.search(r"extern (?:uint32_t|int) " + name + r";", text).group()[7:])
     return r'''
         #include <cstdint>
         #include <cstddef>
@@ -52,10 +79,17 @@ def harness(method):
         #include <initializer_list>
         MAP_RECORD
         enum { TERRAIN_CONSTANTS };
-        GLOBAL_DECLARATIONS
+        MAP_STORAGE_DECLARATIONS
+        STATE_STORAGE_DECLARATIONS
         static_assert(sizeof(int) == 4 && sizeof(Map) == 44, "host widths");
+        static_assert(offsetof(GameDataStateWindowFields, game_state_) == 0x30,
+                      "actual shared state member");
+        static_assert(offsetof(GameDataStateWindowFields, vehicle_current_count_) == 0x38,
+                      "actual vehicle count member");
+        static_assert(offsetof(GameDataStateWindowFields, base_current_count_) == 0x3c,
+                      "actual base count member");
+        GameDataStateWindow GameDataStateStorage;
         static_assert(offsetof(Map, bit) == 8, "actual tile member");
-        Map *MapTiles;
         MAP_ACCESSOR
         void require(bool ok) { if (!ok) std::exit(42); }
         struct MapWin {
@@ -79,52 +113,57 @@ def harness(method):
         bool initially_set;
 
         void auto_undo() {
-            require(stage == 0 && GameState == 0x11223344u);
-            require(VehCurrentCount == 17 && BaseCurrentCount == 18);
+            require(stage == 0 && GameDataStateStorage.fields_.game_state_ == 0x11223344u);
+            require(GameDataStateStorage.fields_.vehicle_current_count_ == 17 &&
+                    GameDataStateStorage.fields_.base_current_count_ == 18);
             require(ConsoleGlobal.cursor_active_ == 19 && ConsoleGlobal.selected_vehicle_ == 20);
             require(ConsoleGlobal.field_23BF8_ == 21);
             stage = 1;
             // The body must acquire both the pointer and count AFTER undo.
             MapTiles = &records[1];
             MapArea = requested_count;
-            GameState = undo_state;
+            GameDataStateStorage.fields_.game_state_ = undo_state;
         }
         void MapWin::draw_map(int repaint) {
             require(stage == 1 && this == &first_window && repaint == 1);
             require(field_1DD98_ == static_cast<uint32_t>(-14));
             require(other_window.field_1DD98_ == 0x55667788u);
-            require(GameState == (undo_state | 4u));
-            require(VehCurrentCount == 0 && BaseCurrentCount == 0);
+            require(GameDataStateStorage.fields_.game_state_ == (undo_state | 4u));
+            require(GameDataStateStorage.fields_.vehicle_current_count_ == 0 &&
+                    GameDataStateStorage.fields_.base_current_count_ == 0);
             require(ConsoleGlobal.cursor_active_ == 0 && ConsoleGlobal.selected_vehicle_ == -1);
             require(ConsoleGlobal.field_23BF8_ == 0);
             // Includes every non-bit member and neighboring records before
             // and after the requested span, not just the touched flag words.
             require(std::memcmp(records, expected, sizeof(records)) == 0);
             stage = 2;
-            GameState = member_state;
+            GameDataStateStorage.fields_.game_state_ = member_state;
         }
         void world_build() {
-            require(stage == 2 && GameState == (member_state | 0x80u));
+            require(stage == 2 &&
+                    GameDataStateStorage.fields_.game_state_ == (member_state | 0x80u));
             stage = 3;
-            GameState = world_state;
+            GameDataStateStorage.fields_.game_state_ = world_state;
         }
         void draw_map(int repaint) {
             require(repaint == 1);
             if (free_calls++ == 0) {
-                require(stage == 3 && GameState == world_state);
+                require(stage == 3 &&
+                        GameDataStateStorage.fields_.game_state_ == world_state);
                 stage = 4;
-                GameState = first_draw_state;
+                GameDataStateStorage.fields_.game_state_ = first_draw_state;
             } else {
                 require(free_calls == 2 && !initially_set && stage == 4);
-                require(GameState == (first_draw_state & ~0x80u));
+                require(GameDataStateStorage.fields_.game_state_ ==
+                        (first_draw_state & ~0x80u));
                 stage = 5;
-                GameState = second_draw_state;
+                GameDataStateStorage.fields_.game_state_ = second_draw_state;
             }
         }
         void button_event(Button *receiver, bool shown, int argument) {
             require(stage == (initially_set ? 4 : 5));
             require(receiver == &MainInterfaceGlobal.flat_button_[2]);
-            require(GameState == final_state && argument == 0);
+            require(GameDataStateStorage.fields_.game_state_ == final_state && argument == 0);
             require(shown == ((final_state & 0xc0u) == 0xc0u));
             require(++button_calls == 1);
             stage = 6;
@@ -165,10 +204,11 @@ def harness(method):
                     other_window.field_1DD98_ = 0x55667788u;
                     for (auto &slot : MapWinTable) slot = &other_window;
                     MapWinTable[0] = &first_window;
-                    GameState = 0x11223344u;
+                    GameDataStateStorage.fields_.game_state_ = 0x11223344u;
                     MapArea = 0;
                     MapTiles = decoy;
-                    VehCurrentCount = 17; BaseCurrentCount = 18;
+                    GameDataStateStorage.fields_.vehicle_current_count_ = 17;
+                    GameDataStateStorage.fields_.base_current_count_ = 18;
                     ConsoleGlobal.cursor_active_ = 19;
                     ConsoleGlobal.selected_vehicle_ = 20;
                     ConsoleGlobal.field_23BF8_ = 21;
@@ -181,7 +221,7 @@ def harness(method):
                     console.editor_generate();
                     require(stage == 6 && button_calls == 1);
                     require(free_calls == (initially_set ? 1 : 2));
-                    require(GameState == final_state);
+                    require(GameDataStateStorage.fields_.game_state_ == final_state);
                     require(console.field_1DD98_ == 0xaabbccddu);
                     require(console.cursor_active_ == 0x13579u);
                     require(console.selected_vehicle_ == 73);
@@ -190,8 +230,9 @@ def harness(method):
                     for (unsigned i=0; i<sizeof(decoy); ++i) require(untouched[i] == 0x55);
                 }
         }
-    '''.replace("MAP_RECORD", record).replace("TERRAIN_CONSTANTS", "\n".join(constants)).replace(
-        "GLOBAL_DECLARATIONS", "\n".join(declarations)).replace(
+    '''.replace("MAP_RECORD", record).replace("MAP_STORAGE_DECLARATIONS",
+        map_storage_declarations()).replace("STATE_STORAGE_DECLARATIONS",
+        state_storage_declarations()).replace("TERRAIN_CONSTANTS", "\n".join(constants)).replace(
         "MAP_ACCESSOR", braced(header, header.index("inline Map *&map_tiles()"))).replace(
         "ACTUAL_METHOD", method)
 
@@ -223,10 +264,13 @@ def test_actual_editor_body_preserves_bounded_state_and_call_contract(tmp_path):
     ("MapWinTable[0]", "MapWinTable[1]", 2),
     ("::draw_map(1);", "draw_map(1);", 2),
     ("f2 &= ~0x80;", "f2 &= 0x7f;", 1),
-    ("int flags = GameState;", "int flags = undo_state;", 1),
-    ("int f2 = GameState;", "int f2 = flags;", 1),
+    ("int flags = GameDataStateStorage.fields_.game_state_;",
+     "int flags = undo_state;", 1),
+    ("int f2 = GameDataStateStorage.fields_.game_state_;",
+     "int f2 = flags;", 1),
     ("MainInterfaceGlobal.flat_button_[2]", "MainInterfaceGlobal.flat_button_[3]", 2),
-    ("static_cast<unsigned char>(GameState)", "static_cast<unsigned char>(flags)", 1),
+    ("static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_)",
+     "static_cast<unsigned char>(flags)", 1),
     (".show(0);", ".show(1);", 1),
     ("auto_undo();", "", 1),
     ("ConsoleGlobal.cursor_active_", "this->cursor_active_", 1),

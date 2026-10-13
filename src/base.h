@@ -639,7 +639,6 @@ extern RulesCitizen Citizen[MaxCitizenNum];         // 0x00946020
 extern Base Bases[MaxBaseNum];                      // 0x0097D040
 extern BaseSecretProject SecretProject;             // 0x009A6514
 extern int BaseIDCurrentSelected;
-extern int BaseCurrentCount;
 extern int BaseFindDist;
 extern Base *BaseCurrent;
 extern int CurrentFactionEnergyReserves;

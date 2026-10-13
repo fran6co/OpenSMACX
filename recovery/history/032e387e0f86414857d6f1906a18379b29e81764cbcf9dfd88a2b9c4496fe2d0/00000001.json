@@ -1,0 +1,19 @@
+{
+  "event_id": "a0f6d45e6f7dfbda5d7a2677b8e6d5b16cc2935ebc40a9c9b3279dcc3d9f5ba4",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/base.h"
+    ],
+    "evidence": [
+      "Native complete build failed on new BaseCurrentCount reference: original9A64CC is already source-owned GameDataStateStorage.fields_.base_current_count_, RECOVERY_OBJECTv3 src/game.cpp684. No live canonical source use of the obsolete extern remains. Authorize removing only stale externint declaration frombase.h, retaining member/objectidentity; do not introduce duplicatecounter or alter Base layout. Refreeze source/tests and remeasure/rebuild all affected output before manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "remove-stale-base-counter-declaration-oct13as",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:basewin-zoom-tutorial-owner-oct13as"
+}

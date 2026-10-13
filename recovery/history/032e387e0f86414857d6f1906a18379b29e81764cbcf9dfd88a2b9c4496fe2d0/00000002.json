@@ -1,0 +1,19 @@
+{
+  "event_id": "b7e4dd6816779ad8616be4dd87260e8171300478a36000a7dcaedac68f8f7b34",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_editor_generate.py"
+    ],
+    "evidence": [
+      "Removing stale extern BaseCurrentCount exposes an editor test still deriving count globals from retired declarations. Adapt this actual-source fixture to actual GameDataStateStorage member declaration/binding; preserve all state/callback/row/count ordering and regression oracles and sanitizer settings. Other demonstrably stale members may require actual storage fixture correction, not relaxed checks or invented globals. No Console production edits; independent test review and fresh host run required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a0f6d45e6f7dfbda5d7a2677b8e6d5b16cc2935ebc40a9c9b3279dcc3d9f5ba4",
+  "request_id": "editor-counter-storage-witness-oct13as",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:basewin-zoom-tutorial-owner-oct13as"
+}
