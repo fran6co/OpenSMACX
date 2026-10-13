@@ -1,0 +1,54 @@
+{
+  "author": "coordinator",
+  "base_revision": "fde3ebab5d25fe23e5b2ebfb641b6ad0e4049195",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_entity_fixup_actual_source_oct13aa.py",
+    "recovery/tests/test_netdaemon_sync_prefix_types_oct13t.py",
+    "recovery/tests/test_netdaemon_transfer_exits_oct11.py"
+  ],
+  "evidence": [
+    "Independent complete pinned534330..5343FC decode ends at the exact boundary with73instructions. Current ushort pointer arithmetic is numerically correct: +6/+8/+10 mean byteC/10/14, and index1C means byte38. This is a structural recovery, not a diagnosed offset/behavior bug. Preserve all opcode gates, signedness, callback-visible rereads, writes and return/drop behavior.",
+    "Ordinary entity commands2401..2406,2408,2413 share a proven narrow opcode/sequence/entity-ID prefix across message_veh18bytes, message_data20bytes and message_base2Cbytes. SequenceC is DeletionList conversion old-owner sequence, not faction. Base payload14 is text and must not be treated as an integer. No universal complete MessageDataRecord cast, packet snapshot, alignment assumption, initialization or malformed-length guard.",
+    "Vehicle synch2101/subopcode11 has existing SyncHeaderPrefix24bytes; argument2 at14 is the vehicle ID, payload starts24. Pinned35 and38 are exactly24+offsetof(Veh,order) and24+offsetof(Veh,waypoint_x[0]). Named field-sized byte reads/writes must retain order==1, signed nonnegative waypoint gating, low16 conversion result and clearing order only when stored result isFFFF. Do not copy/construct a complete Veh or infer payload/allocation beyond observed synchronization producer length30.",
+    "Reuse existing SyncHeaderPrefixReader/Writer and declaration rather than duplicate provisional header. Coordinator permits moving these unannotated declarations before fixup as needed while preserving every original marker order, span, symbol, historical claim and seed finding. Narrow producer-backed entity view and vehicle payload view may use memcpy/offsetof; no raw self/virtual table or executable-address surrogate. A justified idiomatic control-flow spelling may replace the old nested comparison artifact only with full original path evidence and tests.",
+    "Source author only netdaemon.cpp; test author the three named tests. Preserve source work and all historical obligations; no sender, DeletionList, Veh-header, forwarder or other-table behavior edits. Baseline/candidate measurement, complete fresh build/link, compiler collateral, original identity/reference continuity and independent review precede manual integration. Full process_message EH comparison remains unsupported; do not truncate/demote spans to pass.",
+    "Tests compile the actual current fixup body with a controlled converter and producer-backed declarations, including all recognized/unrecognized gates, conversion callback mutation, return/store order, unaligned storage and sentinel neighbor preservation. New damage controls must compile and fail by named98diagnostics, not crashes. Pin complete original fixup and actual producer/member witnesses. Maintain related prefix/forwarder tests without relaxing historical or current source obligations; no game/runtime/full-match proof."
+  ],
+  "intent": "Recover entity-command and synchronization vehicle fixup through proven serialized headers and Veh members, preserving deletion-sequence conversion and original forwarding behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5456688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5451264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-entity-fixup-closure-oct13aa"
+}
