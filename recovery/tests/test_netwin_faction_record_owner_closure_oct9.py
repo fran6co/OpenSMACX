@@ -82,6 +82,9 @@ def test_faction_record_arrays_have_typed_members_without_changing_stride():
         ("leader_name_", "0x22"),
         ("formal_faction_name_", "0x3A"),
         ("noun_faction_", "0x62"),
+        ("adjective_faction_", "0x7A"),
+        ("leader_title_", "0xFA"),
+        ("unresolved_112_", "0x112"),
     ):
         assert field in _struct(HEADER, "NetWinFactionRecord")
         assert offset in _struct(HEADER, "NetWinFactionRecord")
@@ -94,6 +97,10 @@ def test_producer_and_all_record_consumers_use_typed_in_stride_fields():
     assert "records[record_index].leader_name_" in producer
     assert "records[record_index].formal_faction_name_" in producer
     assert "records[record_index].noun_faction_" in producer
+    assert "records[record_index].adjective_faction_" in producer
+    assert "records[record_index].leader_title_" in producer
+    assert "strcpy(records[record_index].adjective_faction_," in producer
+    assert "strcpy(records[record_index].leader_title_," in producer
     assert "records[record_index].active_ = 1;" in producer
     assert "allocation_bytes + offset + 0x112" in producer
     assert "allocation_bytes[offset + 0x192]" in producer
@@ -106,12 +113,19 @@ def test_producer_and_all_record_consumers_use_typed_in_stride_fields():
     assert "record.leader_name_" in fill
     assert "record.formal_faction_name_" in fill
     assert "record.noun_faction_" in fill
+    assert "record.adjective_faction_" in fill
+    assert "record.leader_title_" in fill
     for field in ("leader_name_", "formal_faction_name_", "noun_faction_",
                   "adjective_faction_", "leader_title_", "adjective_leader_"):
         assert f"lobby_row->{field}" in fill
     assert "lobby_row->tail_[0]" in fill
     assert "slot * 0x190" in fill
     assert "allocation_bytes[slot * 0x190 + 0x192]" in fill
+    assert "strcpy(lobby_row->adjective_faction_, record.adjective_faction_);" in fill
+    assert "strcpy(lobby_row->leader_title_, record.leader_title_);" in fill
+    assert "memset(" not in producer
+    read_faction = producer.index("read_faction(&player, 0)")
+    assert "records = faction_records_;" in producer[read_faction:]
 
     assert "faction_records_[0].record_type_" in _definition(
         SOURCE, "void NetWin::draw_diffs()"
@@ -170,6 +184,7 @@ static const int NetWinSectionCustom = 5;
 static int NetWinPlayerId = 10, NetWinOtherPlayerId = 11;
 static int active_section, text_index, current_file, fail_factions;
 static int close_calls, read_calls;
+static unsigned last_allocation_size;
 static char current_item[32];
 static char *text_item() { return current_item; }
 static void text_get() {
@@ -193,7 +208,12 @@ static int text_open(int, int section) {
 }
 static int text_open(char *, char *) { current_file = 1; return 0; }
 static void text_close() { ++close_calls; current_file = 0; }
-static void *mem_get(unsigned size) { return std::malloc(size); }
+static void *mem_get(unsigned size) {
+    last_allocation_size = size;
+    void *memory = std::malloc(size);
+    std::memset(memory, 0xCC, size);
+    return memory;
+}
 static void memcpy_call(void *dst, const void *src, unsigned size) {
     std::memcpy(dst, src, size);
 }
@@ -224,6 +244,7 @@ int main() {
     assert(win.faction_records_ != nullptr && win.faction_records_copy_ != nullptr);
     assert(win.faction_records_[0].record_type_ == 7);
     assert(win.faction_records_[0].record_count_ == 14);
+    assert(last_allocation_size == 14 * 399 + 0x194);
     assert(win.faction_records_[0].active_ == 1 && win.faction_records_[13].active_ == 1);
     assert(win.faction_records_[0].color_ == 0xA7);
     assert(std::strcmp(win.faction_records_[0].filename_, "F0") == 0);
@@ -231,13 +252,18 @@ int main() {
     assert(std::strcmp(win.faction_records_[0].leader_name_, "FactionLeader") == 0);
     assert(std::strcmp(win.faction_records_[0].formal_faction_name_, "FormalName") == 0);
     assert(std::strcmp(win.faction_records_[0].noun_faction_, "Noun") == 0);
-    assert(std::strcmp(reinterpret_cast<char *>(win.faction_records_[0].data_after_noun_),
+    assert(std::strcmp(win.faction_records_[0].adjective_faction_,
                        "FactionAdjective") == 0);
-    assert(std::strcmp(reinterpret_cast<char *>(win.faction_records_[0].data_after_noun_) + 0x80,
+    assert(std::strcmp(win.faction_records_[0].leader_title_,
                        "LeaderTitle") == 0);
     const unsigned char *bytes = reinterpret_cast<const unsigned char *>(win.faction_records_);
+    assert(bytes[2] == 0xCC && bytes[3] == 0xCC); // original padding is not cleared
+    assert(bytes[0x193] == 0xCC); // gender store leaves the following byte untouched
     assert(bytes[0x192] == 0x60); // row-zero write aliases row one's +2 bytes
+    assert(bytes[0x112] == 'a' && bytes[0x191] == 0);
     assert(bytes[13 * 0x190 + 0x192] == 0x6D); // last-row spill stays allocated
+    assert(bytes[13 * 0x190 + 0x112] == 'n');
+    assert(bytes[13 * 0x190 + 0x191] == 0);
     assert(std::memcmp(win.faction_records_, win.faction_records_copy_,
                        14 * 399 + 0x194) == 0);
     assert(close_calls == 1 && read_calls == 14);
@@ -291,14 +317,12 @@ FILL_FIXTURE = r"""
 #include <cstddef>
 RECORD_TYPE
 static_assert(sizeof(NetWinFactionRecord) == 0x190, "record stride");
-static_assert(offsetof(NetWinFactionRecord, data_after_noun_) == 0x7A,
-              "opaque in-row tail");
+static_assert(offsetof(NetWinFactionRecord, adjective_faction_) == 0x7A,
+              "faction adjective slot");
+static_assert(offsetof(NetWinFactionRecord, leader_title_) == 0xFA,
+              "leader title slot");
 ROW_TYPE
-struct LabelState { char *strings_ptr; };
-static char label_bytes[0xFE8];
-static LabelState Labels = {label_bytes};
-struct Strings { char *get(int) { return const_cast<char *>("fallback"); } };
-static Strings StringTable;
+static char *label_get(int) { return const_cast<char *>("fallback"); }
 class NetWin {
 public:
     NetWinFactionRecord *faction_records_;
@@ -312,8 +336,8 @@ int run_control() {
     std::strcpy(records[1].leader_name_, "leader");
     std::strcpy(records[1].formal_faction_name_, "formal");
     std::strcpy(records[1].noun_faction_, "noun");
-    std::strcpy(reinterpret_cast<char *>(records[1].data_after_noun_), "adj-faction");
-    std::strcpy(reinterpret_cast<char *>(records[1].data_after_noun_) + 0x80, "title");
+    std::strcpy(records[1].adjective_faction_, "adj-faction");
+    std::strcpy(records[1].leader_title_, "title");
     unsigned char *bytes = reinterpret_cast<unsigned char *>(records);
     char *adjective = reinterpret_cast<char *>(bytes + 0x190 + 0x112);
     std::memset(adjective, 'x', 0x7F);

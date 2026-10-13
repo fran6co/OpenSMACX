@@ -1,0 +1,35 @@
+{
+  "event_id": "39111546aab4481a16c305e63ce0d0ca8687b96a29c415638925f3ccb72288e2",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "All NetWin function signatures remain identical after the field recovery. Of16887 compared function signatures only three source-unchanged Game functions differ; no functions added/removed. Preserve these as read-only affected original subjects, not edit permissions or a task baseline reset.",
+      "Independent physical COFF review compares named relocation targets, kinds and addends. load_interface retains149 relocation edges and2000B section; its geometry block retains the same source pairs and named destinations, with commutative additions/register scheduling and two independent border stores exchanged before any call. Later code shifts1B within unchanged section extent. end_of_game and save_game exchange the same ScenarioSave+10 and GameDataStateStorage+44 loads, retaining their sum and formatting consumer. Full details are ignored derived diagnostics, not acceptance proof.",
+      "No claim demotion, byte equality or linked/runtime/outside-scope preservation waiver. Current-body native results including table sender byte equality remain at baseline. Independent source+physical review and build support bounded coordinator-reviewed integration only."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0260bff7300f36e0df3c17a2690ba02798ac577a2f60fe6ce7d4c5b831655975",
+  "request_id": "netwin-record-game-compiler-collateral-oct13u",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netwin-record-text-members-oct13u"
+}

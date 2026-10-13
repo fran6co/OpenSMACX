@@ -157,7 +157,9 @@ struct NetWinFactionRecord {
   char leader_name_[0x18]; // +0x22..+0x39, copied by setup_faction_data
   char formal_faction_name_[0x28]; // +0x3A..+0x61, copied by setup_faction_data
   char noun_faction_[0x18]; // +0x62..+0x79, copied from Player::noun_faction
-  uint8_t data_after_noun_[0x116]; // +0x7A..+0x18F
+  char adjective_faction_[0x80]; // +0x7A..+0xF9
+  char leader_title_[0x18]; // +0xFA..+0x111
+  uint8_t unresolved_112_[0x7E]; // +0x112..+0x18F
 };
 static_assert(sizeof(NetWinFactionRecord) == 0x190,
               "faction record stride");
@@ -173,6 +175,12 @@ static_assert(offsetof(NetWinFactionRecord, formal_faction_name_) == 0x3A,
               "faction formal name offset");
 static_assert(offsetof(NetWinFactionRecord, noun_faction_) == 0x62,
               "faction noun offset");
+static_assert(offsetof(NetWinFactionRecord, adjective_faction_) == 0x7A,
+              "faction adjective offset");
+static_assert(offsetof(NetWinFactionRecord, leader_title_) == 0xFA,
+              "faction leader title offset");
+static_assert(offsetof(NetWinFactionRecord, unresolved_112_) == 0x112,
+              "faction unresolved suffix offset");
 static_assert(sizeof(((NetWinFactionRecord *)0)->noun_faction_) == 0x18,
               "faction noun extent");
 

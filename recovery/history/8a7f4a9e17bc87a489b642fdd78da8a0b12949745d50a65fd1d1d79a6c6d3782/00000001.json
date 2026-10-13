@@ -1,0 +1,20 @@
+{
+  "event_id": "0260bff7300f36e0df3c17a2690ba02798ac577a2f60fe6ce7d4c5b831655975",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/netwin_pick_map_host_control.cpp",
+      "recovery/tests/test_netwin_pick_map_behavior.py"
+    ],
+    "evidence": [
+      "The existing full actual pick_map host control passes unchanged master on both compilers but fails candidate compilation because its CPP fixture duplicates NetWinFactionRecord without the recovered named text members. Extract that actual declaration from the source-selected header instead of maintaining a stale test-only record; retain complete-body controls and strengthen roster text/spill controls. No production scope expansion or baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "netwin-whole-pick-map-fixture-oct13u",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netwin-record-text-members-oct13u"
+}

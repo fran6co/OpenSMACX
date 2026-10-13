@@ -364,11 +364,9 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
         strcpy(records[record_index].formal_faction_name_,
                player.formal_name_faction);
         strcpy(records[record_index].noun_faction_, player.noun_faction);
-        strcpy(reinterpret_cast<char *>(records[record_index].data_after_noun_),
+        strcpy(records[record_index].adjective_faction_,
                player.adj_name_faction);
-        strcpy(reinterpret_cast<char *>(records[record_index].data_after_noun_)
-                   + 0x80,
-               player.title_leader);
+        strcpy(records[record_index].leader_title_, player.title_leader);
 
         // The image copies the 0x80-byte adjective at +0x112 and then stores
         // the gender byte at +0x192. Both expressions cross the 0x190 row
@@ -577,10 +575,8 @@ void NetWin::fill_player(NetWinLobbyRow *lobby_row, int slot) {
     strcpy(lobby_row->leader_name_, record.leader_name_);
     strcpy(lobby_row->formal_faction_name_, record.formal_faction_name_);
     strcpy(lobby_row->noun_faction_, record.noun_faction_);
-    strcpy(lobby_row->adjective_faction_,
-           reinterpret_cast<const char *>(record.data_after_noun_));
-    strcpy(lobby_row->leader_title_,
-           reinterpret_cast<const char *>(record.data_after_noun_ + 0x80));
+    strcpy(lobby_row->adjective_faction_, record.adjective_faction_);
+    strcpy(lobby_row->leader_title_, record.leader_title_);
     const unsigned char *const allocation_bytes =
         reinterpret_cast<const unsigned char *>(faction_records_);
     strcpy(lobby_row->adjective_leader_,
@@ -2162,11 +2158,12 @@ void NetWin::pick_map() {
             strcpy(record.leader_name_, player.name_leader);
             strcpy(record.formal_faction_name_, player.formal_name_faction);
             strcpy(record.noun_faction_, player.noun_faction);
-            strcpy(reinterpret_cast<char *>(record.data_after_noun_),
-                   player.adj_name_faction);
-            strcpy(reinterpret_cast<char *>(record.data_after_noun_ + 0x80),
-                   player.title_leader);
-            strcpy(reinterpret_cast<char *>(record.data_after_noun_ + 0x98),
+            strcpy(record.adjective_faction_, player.adj_name_faction);
+            strcpy(record.leader_title_, player.title_leader);
+            unsigned char *const allocation_bytes =
+                reinterpret_cast<unsigned char *>(records);
+            strcpy(reinterpret_cast<char *>(allocation_bytes
+                                             + player_slot * 0x190 + 0x112),
                    player.adj_leader);
             records[player_slot + 1].field_2_[0] =
                 static_cast<uint8_t>(player.is_leader_female);

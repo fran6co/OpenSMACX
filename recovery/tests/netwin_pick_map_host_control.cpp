@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 
 struct NetWinSessionOptionsState {
@@ -25,14 +26,7 @@ struct NetWinLobbyRow {
     uint8_t tail_[3];
     uint32_t owner_;
 };
-struct NetWinFactionRecord {
-    uint8_t record_type_, record_count_, field_2_[2];
-    uint32_t owner_;
-    uint8_t color_, active_;
-    char filename_[0x18], leader_name_[0x18], formal_faction_name_[0x28];
-    char noun_faction_[0x18];
-    uint8_t data_after_noun_[0x116];
-};
+/* NETWIN_FACTION_RECORD_INSERTION */
 struct NetWinLobbyFullPacket {
     NetWinLobbyPacketHeader header_;
     NetWinLobbyRow rows_[7];
@@ -149,6 +143,13 @@ static const char *NetWinDefaultPcx = "faction.pcx";
 
 static void send_faction_data(int) { ++faction_sends; }
 
+#define CONTROL_REQUIRE(condition, message) do { \
+    if (!(condition)) { \
+        std::fprintf(stderr, "CONTROL FAILURE: %s\n", message); \
+        return 98; \
+    } \
+} while (0)
+
 /* NETWIN_PICK_MAP_BODY_INSERTION */
 
 static void reset_case() {
@@ -257,6 +258,49 @@ int main() {
         assert(published.rule_bits_a_ == 0x13572468u);
         assert(published.rule_bits_c_ == 0x10u);
         assert(published.rule_bits_b_ == 0x76543210u);
+    }
+    {
+        reset_case();
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x7F00u;
+        NetWin win;
+        NetWinFactionRecord scenario_records[10] = {};
+        win.faction_records_ = scenario_records;
+        win.field_7728_ = 2;
+        scripted_choice = 2;
+        std::strcpy(Players[1].name_leader, "RosterLeader");
+        std::strcpy(Players[1].formal_name_faction, "RosterFormal");
+        std::strcpy(Players[1].noun_faction, "RosterNoun");
+        std::strcpy(Players[1].adj_name_faction, "RosterAdjective");
+        std::strcpy(Players[1].title_leader, "RosterTitle");
+        std::memset(Players[1].adj_leader, 'q', sizeof(Players[1].adj_leader));
+        Players[1].adj_leader[0x7F] = 0;
+        Players[1].is_leader_female = 0x6E;
+        win.pick_map();
+        CONTROL_REQUIRE(std::strcmp(scenario_records[1].leader_name_,
+                                    "RosterLeader") == 0,
+                        "server roster preserves leader name");
+        CONTROL_REQUIRE(std::strcmp(scenario_records[1].formal_faction_name_,
+                                    "RosterFormal") == 0,
+                        "server roster preserves formal name");
+        CONTROL_REQUIRE(std::strcmp(scenario_records[1].noun_faction_,
+                                    "RosterNoun") == 0,
+                        "server roster preserves noun");
+        CONTROL_REQUIRE(std::strcmp(scenario_records[1].adjective_faction_,
+                                    "RosterAdjective") == 0,
+                        "server roster stores adjective in named +0x7A slot");
+        CONTROL_REQUIRE(std::strcmp(scenario_records[1].leader_title_,
+                                    "RosterTitle") == 0,
+                        "server roster stores title in named +0xFA slot");
+        CONTROL_REQUIRE(scenario_records[1].unresolved_112_[0] == 'q' &&
+                        scenario_records[1].unresolved_112_[0x7D] == 'q',
+                        "server roster copies leader adjective through unresolved tail");
+        CONTROL_REQUIRE(scenario_records[2].record_type_ == 'q' &&
+                        scenario_records[2].record_count_ == 0,
+                        "server leader adjective still spills two bytes across stride");
+        CONTROL_REQUIRE(scenario_records[2].field_2_[0] == 0x6E,
+                        "server gender byte still aliases next row at +0x192");
+        CONTROL_REQUIRE(faction_sends == 1,
+                        "completed server roster is sent once");
     }
     {
         reset_case();
