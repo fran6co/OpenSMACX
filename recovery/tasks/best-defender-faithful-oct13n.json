@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "1d90924ef7e25b5e8e3b45336ef44b35e86b0729",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_best_defender_faithful_oct13n.py"
+  ],
+  "evidence": [
+    "Pinned original5045CD..5045E2 skips a land defender only on ocean with negative base id; current source combines !ocean && base>=0 instead of the native alternatives.",
+    "Pinned5045E8..504613 reads attacker prototype/plan without the source negative-attacker bypass;504619..504640 invokes attacker can_arty after successful defender can_arty, without the source veh_id_atk truthiness bypass. Complete original function5044D0..504A9B must be reviewed before implementation.",
+    "Pinned50475F..504821 reloads defender prototype after battle_compute and computes reactor-derived power for health and divisor separately, then uses wrapped IMUL and signed IDIV and signed division by8. Current uint32_t power expression and cached pre-callback prototype require faithful review.",
+    "For attacker -1, original prototype read9527FE aliases the high representation word of source-owned Reactor[0].name_short, not an arbitrary substitute. Establish caller domain and preserve supported source-owned overlapping reads; more-negative/corrupt effects remain unresolved, not permission to clamp or normalize. No original-address forwarders, fabricated vtables or copied machine code.",
+    "Keep original identities/spans, ABI declarations and historical obligations. Only the mapped best_defender body and necessary narrowly scoped source-owned helpers may change; no battle_compute, battle_fight, compiler flags, unrelated body, table layout or public header changes. Return cross-owner/type discoveries for explicit expansion. Require actual-source behavior and damage controls, fresh measurements, build/link, outside-body compiler checks and coordinator review; no claim grant without guarded recording."
+  ],
+  "intent": "Recover the complete faithful best_defender branch, callback and signed arithmetic sequence; remove positively evidenced translation changes without adding safety fixes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5260496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "best-defender-faithful-oct13n"
+}
