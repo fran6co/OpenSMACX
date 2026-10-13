@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "54f51003c1af9509f4c2abffc163c63b26df4e1e",
+  "editable_files": [
+    "src/game.cpp",
+    "recovery/tests/test_sprite_sheet_receiver_oct13ap.py"
+  ],
+  "evidence": [
+    "Pinned complete113byte450FB0..451021 body uses first stack argument only as ECX at45100C for Sprite::extract5E39A0 call45101A; source Sprite::extract already owns the typed receiver API. Consumer contract only, not incoming producer, allocation extent, dynamic type hierarchy or lifetime proof.",
+    "Current definition has extern C cdecl and selected _extract_sheet_icon symbol, so replacing int sprite plus reinterpret_cast with Sprite* preserves the32bit argument slot and C linker identity. Current source search finds no other declaration/caller; lack of mapped callers is not complete executable reachability proof.",
+    "Authorize only receiver parameter int-to-Sprite* and direct sprite->extract call, plus one essential source note if necessary. Preserve complete original marker/symbol/span/history, all five argument order/slots, recolor guard and change_color call order, quadrant masks/offset arithmetic, shared Buffer identity and return result. No bug fixing, bounds/null guards, other prototypes, class/global/header/CMake/flag changes, hand claims or fabricated producers.",
+    "Actual extracted-body host controls must retain receiver/Buffer identity, recolor call ordering, offsets and result propagation, with observable compile-success damage controls. Host tests do not prove original target ABI, receiver lifetime or pixel output. Coordinator owns compiler/Git; source and test workers use isolated worktree and freeze before native matching/build epochs. Independent review plus complete compile/link, physical collateral and original identity preservation required for manual integration. No automatic/game acceptance."
+  ],
+  "intent": "Recover the sheet-icon helper receiver as a borrowed Sprite pointer without changing its C ABI or original behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4526000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sprite-sheet-receiver-owner-oct13ap"
+}
