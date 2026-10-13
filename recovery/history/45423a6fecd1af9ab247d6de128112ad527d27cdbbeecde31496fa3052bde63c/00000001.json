@@ -1,0 +1,44 @@
+{
+  "event_id": "a5e0c45670609f641bd901d2d1968295e1320085610b36a17cb1eefe2611e0ee",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh retained application COFF comparison observes fourteen changed signatures among16887, including AlphaMovie close/movie wrapper and three unchanged Console/faction bodies. Explicitly authorize physical investigation and fresh original measurements for those additional subjects; no source edits outside the original editable files.",
+      "Preserve original959fcb7cc baseline and every historical identity/claim. Signature changes are not presumed benign or accepted; inspect instruction/relocation effects before any coordinator integration. This permission does not grant runtime/linked-preservation acceptance or demotion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4211168,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4209632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5120000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5499728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "mci-device-word-compiled-closure-oct13j",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mci-device-word-storage-oct13j"
+}

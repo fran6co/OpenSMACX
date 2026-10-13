@@ -120,7 +120,7 @@ void MCIVideo::play() {
 
     MCI_DGV_WINDOW_PARMS windowParams = {0};
     windowParams.nCmdShow = SW_SHOW;
-    if (mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_WINDOW,
+    if (mciSendCommandA(mciId_, MCI_WINDOW,
                         MCI_DGV_WINDOW_STATE,
                         reinterpret_cast<DWORD_PTR>(&windowParams)) != 0) {
         return;
@@ -129,7 +129,7 @@ void MCIVideo::play() {
     MCI_PLAY_PARMS playParams = {0};
     playParams.dwCallback = static_cast<DWORD>(
         reinterpret_cast<UINT_PTR>(window_handle_) & 0xffff);
-    if (mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_PLAY,
+    if (mciSendCommandA(mciId_, MCI_PLAY,
                         MCI_NOTIFY, reinterpret_cast<DWORD_PTR>(&playParams)) != 0) {
         return;
     }
@@ -164,17 +164,17 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
                         reinterpret_cast<DWORD_PTR>(&openParams)) != 0) {
         return 1;
     }
-    mciId_ = (mciId_ & 0xffff0000u) | (openParams.wDeviceID & 0xffffu);
+    mciId_ = static_cast<uint16_t>(openParams.wDeviceID);
 
     MCI_DGV_STATUS_PARMS statusParams = {0};
     statusParams.dwItem = MCI_DGV_STATUS_HWND;
-    mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_STATUS,
+    mciSendCommandA(mciId_, MCI_STATUS,
                     MCI_STATUS_ITEM,
                     reinterpret_cast<DWORD_PTR>(&statusParams));
     window_handle_ = reinterpret_cast<HWND>(statusParams.dwReturn);
 
     statusParams.dwItem = MCI_DGV_STATUS_HPAL;
-    mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_STATUS,
+    mciSendCommandA(mciId_, MCI_STATUS,
                     MCI_STATUS_ITEM,
                     reinterpret_cast<DWORD_PTR>(&statusParams));
     palette_handle_ = reinterpret_cast<HPALETTE>(statusParams.dwReturn);
@@ -192,7 +192,7 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     palette_.reseed();
 
     MCI_DGV_WHERE_PARMS sourceParams = {0};
-    mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_WHERE,
+    mciSendCommandA(mciId_, MCI_WHERE,
                     MCI_DGV_WHERE_SOURCE,
                     reinterpret_cast<DWORD_PTR>(&sourceParams));
     const RECT sourceRect = sourceParams.rc;
@@ -204,7 +204,7 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     destinationParams.rc.top = sourceRect.top;
     destinationParams.rc.right = sourceRect.right * 2 - sourceRect.left;
     destinationParams.rc.bottom = sourceRect.bottom * 2 - sourceRect.top;
-    mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_PUT,
+    mciSendCommandA(mciId_, MCI_PUT,
                     MCI_DGV_RECT | MCI_DGV_PUT_DESTINATION,
                     reinterpret_cast<DWORD_PTR>(&destinationParams));
 
@@ -219,30 +219,28 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
 
 // ORIGINAL: 0x00600270 ?stop@MCIVideo@@QAEXXZ 0x00600270-0x006002EB FILE
 void MCIVideo::stop() {
-    const MCIDEVICEID deviceId = static_cast<MCIDEVICEID>(mciId_ & 0xffff);
-    if (deviceId != 0) {
+    if (mciId_ != 0) {
         MCI_DGV_WINDOW_PARMS windowParams = {0};
         MCI_GENERIC_PARMS stopParams = {0};
         MCI_GENERIC_PARMS closeParams = {0};
-        mciSendCommandA(deviceId, MCI_WINDOW, MCI_DGV_WINDOW_STATE,
+        mciSendCommandA(mciId_, MCI_WINDOW, MCI_DGV_WINDOW_STATE,
                        reinterpret_cast<DWORD_PTR>(&windowParams));
-        mciSendCommandA(deviceId, MCI_STOP, 0,
+        mciSendCommandA(mciId_, MCI_STOP, 0,
                        reinterpret_cast<DWORD_PTR>(&stopParams));
-        mciSendCommandA(deviceId, MCI_CLOSE, 0,
+        mciSendCommandA(mciId_, MCI_CLOSE, 0,
                        reinterpret_cast<DWORD_PTR>(&closeParams));
-        mciId_ &= 0xffff0000;
+        mciId_ = 0;
         ActiveVideoPlayer = 0;
         field_0_ &= ~1u;
     }
 }
 
-// Explicitly invoke the by-value Palette constructor; spelling this as a
-// new-expression adds an SEH frame that the original constructor does not have.
+// palette_ is an in-object member, so its one Palette constructor call occurs
+// before this body, matching the pinned call at 0x005FFD86.
 // ORIGINAL: 0x005FFD80 ??0MCIVideo@@QAE@XZ 0x005FFD80-0x005FFDA1
 // RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8bd32d532e5050a5aaadf011bcff4394b5:src/recovered/005ffd80.cpp", "source:src/alphamovie.h:MCIVideo"], "reason": "Bind the existing source-owned MCIVideo constructor to the image entry: it constructs palette_ at +0x10 and initializes the evidenced handle fields, matching the original constructor sequence."}
 MCIVideo::MCIVideo() {
-    palette_.Palette::Palette();
-    *reinterpret_cast<short *>(&mciId_) = 0;
+    mciId_ = 0;
     window_handle_ = 0;
     palette_handle_ = 0;
     target_window_ = 0;
@@ -526,23 +524,22 @@ void AlphaMovie::close() {
 // Stop and close the MCI device, clear the window/player state, and restore
 // wave output.
 void MCIVideo::close() {
-    const MCIDEVICEID deviceId = static_cast<MCIDEVICEID>(mciId_ & 0xffff);
-    if (deviceId != 0) {
+    if (mciId_ != 0) {
         MCI_DGV_WINDOW_PARMS windowParams = {0};
         MCI_GENERIC_PARMS stopParams = {0};
         MCI_GENERIC_PARMS closeParams = {0};
-        mciSendCommandA(deviceId, MCI_WINDOW, MCI_DGV_WINDOW_STATE,
+        mciSendCommandA(mciId_, MCI_WINDOW, MCI_DGV_WINDOW_STATE,
                        reinterpret_cast<DWORD_PTR>(&windowParams));
-        mciSendCommandA(deviceId, MCI_STOP, 0,
+        mciSendCommandA(mciId_, MCI_STOP, 0,
                        reinterpret_cast<DWORD_PTR>(&stopParams));
-        mciSendCommandA(deviceId, MCI_CLOSE, 0,
+        mciSendCommandA(mciId_, MCI_CLOSE, 0,
                        reinterpret_cast<DWORD_PTR>(&closeParams));
-        mciId_ &= 0xffff0000u;
+        mciId_ = 0;
         ActiveVideoPlayer = 0;
         field_0_ &= ~1u;
     }
 
-    mciId_ &= 0xffff0000u;
+    mciId_ = 0;
     window_handle_ = 0;
     palette_handle_ = 0;
     target_window_ = 0;
@@ -679,11 +676,11 @@ void AlphaMovie::UNK1() {
 }
 
 // ORIGINAL: 0x006002F0 ?status@MCIVideo@@QAEHXZ 0x006002F0-0x0060031F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["Pinned native 0x006002F0 reserves a 0x18-byte MCI_DGV_STATUS_PARMS local, stores 2 at local +8, loads the low word of MCIVideo+4 for the API device id, calls MCI_STATUS with MCI_STATUS_ITEM, then returns local +4.","src/alphamovie.h declares source-owned uint32_t mciId_ at +0x4; src/alphamovie.cpp includes the Windows SDK digitalv.h definition whose x86 MCI_DGV_STATUS_PARMS has dwReturn at +4 and dwItem at +8.","The transferred seed's kind='game' is catalogue-only metadata; the native source writer does not invent a BODY kind marker."],"reason":"Use the genuine SDK status structure and typed source member, preserving the observed low-word conversion, item, command flags, and return value."}
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native 0x006002F0 reserves a 0x18-byte MCI_DGV_STATUS_PARMS local, stores 2 at local +8, loads the WORD at MCIVideo+4 for the API device id, calls MCI_STATUS with MCI_STATUS_ITEM, then returns local +4.","src/alphamovie.h declares the 16-bit device ID at +0x4; src/alphamovie.cpp includes the Windows SDK digitalv.h definition whose x86 MCI_DGV_STATUS_PARMS has dwReturn at +4 and dwItem at +8.","The transferred seed's kind='game' is catalogue-only metadata; the native source writer does not invent a BODY kind marker."],"reason":"Use the genuine SDK status structure and typed source member, preserving the observed device-ID width, item, command flags, and return value."}
 int MCIVideo::status() {
     MCI_DGV_STATUS_PARMS params;
     params.dwItem = 2;
-    const MCIDEVICEID device_id = static_cast<unsigned short>(mciId_);
+    const MCIDEVICEID device_id = mciId_;
     mciSendCommandA(device_id, MCI_STATUS,
                     MCI_STATUS_ITEM,
                     reinterpret_cast<DWORD_PTR>(&params));

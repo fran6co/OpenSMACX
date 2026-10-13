@@ -93,7 +93,7 @@ def test_tracked_headers_witness_the_real_receivers_and_members():
     assert re.search(r"void\s+UNK1\s*\(\s*\)\s*;", alpha)
     assert re.search(r"class\s+MCIVideo", alpha)
     assert re.search(r"int\s+status\s*\(\s*\)\s*;", alpha)
-    assert re.search(r"uint32_t\s+mciId_\s*;\s*//\s*0x0*4", alpha)
+    assert re.search(r"uint16_t\s+mciId_\s*;\s*//\s*0x0*4", alpha)
     assert re.search(r"virtual\s+void\s+release_modal\s*\(\s*\)\s*;[^\n]*slot 58", win)
 
 
@@ -161,7 +161,7 @@ MCIERROR mciSendCommandA(MCIDEVICEID device, DWORD command,
   p->dwReturn=status_result;
   return api_result;
 }
-struct MCIVideo { uint32_t field_0_, mciId_; int status(); };
+struct MCIVideo { uint32_t field_0_; uint16_t mciId_; int status(); };
 // INSERT_MCI_STATUS
 int main() {
   MCIVideo video; video.mciId_=0x1234abcdu;
@@ -232,7 +232,8 @@ def test_actual_owner_bodies_compile_and_execute_cxx98(
     (
         ("movie", "movie_unk1", "release_modal();", "Win::release_modal();"),
         ("status", "mci_status", "params.dwItem = 2;", "params.dwItem = 1;"),
-        ("status", "mci_status", "static_cast<unsigned short>(mciId_)", "mciId_ >> 16"),
+        ("status", "mci_status", "const MCIDEVICEID device_id = mciId_;",
+         "const MCIDEVICEID device_id = 0;"),
         ("status", "mci_status", "return static_cast<int>(params.dwReturn);", "return 0;"),
         (
             "status", "mci_status",

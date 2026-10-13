@@ -49,11 +49,11 @@ class MCIVideo {
 
   // RECOVERY_MEMBER: v1 MCIVideo field_0_ 0x0 0x00600320
   uint32_t field_0_;  // 0x0
-  // The constructor only zeroes the LOW 16 bits at this offset
-  // (`mov word ptr [esi+4], ax`), not the whole dword, so `mciId_` is
-  // written through a 16-bit alias there rather than assigned directly -
-  // see MCIVideo::MCIVideo() in alphamovie.cpp.
-  uint32_t mciId_;  // 0x4
+  // The pinned ctor/load/play/stop/status paths access the device ID as a
+  // WORD at +4. No observed access gives +6..+7 a meaning; retain those bytes
+  // untouched rather than initializing or interpreting them.
+  uint16_t mciId_;  // 0x4
+  unsigned char unknown_6_[2];  // 0x6, observed only as untouched adjacent bytes
   // MCI_STATUS returns this handle; load, play, and blit_frame pass it to
   // window/GDI APIs. play also preserves the image's low-word MCI callback.
   HWND window_handle_;  // 0x8
