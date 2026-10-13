@@ -1,0 +1,27 @@
+{
+  "author": "coordinator",
+  "base_revision": "403f10be75b5884cb390443c7019b54cbc8ac127",
+  "editable_files": [
+    "src/win.cpp",
+    "recovery/tests/test_cd_setup_bindings_oct14av.py",
+    "recovery/tests/test_win_enumeration_callback_oct13ar.py"
+  ],
+  "evidence": [
+    "Fresh native pinned-image inspection of full628F30..6290E0:6290A2 reads9B8DD0,6290A7 pushes10018,6290AC tests that word,6290AE pushes0,6290B2/B8 loads/pushesHandleMain9B7B28 only when the first word is nonzero, else6290BB pushes0;6290BD calls dynamic DirectXSetupA with no caller cleanup. Existing source instead testsHandleMain and passesExpansionEnabled. Historical discovery control-sprite-defaults event71 records the same misbinding; current pin recheck establishes it remains live.",
+    "Existing source owns Win*BasePopDefaultField322C at9B8DD0 and HWNDHandleMain at9B7B28; producers and other consumers are already implemented. Authorize correcting only the guard, first argument and first provider parameter type toHWND, preserving remaining observed zero/flags arguments andstdcall three-word ABI. No speculative global/type/name, duplicate storage or original-address pointer. Unknown full SDK prototype remains an obligation; do not guess types of the two unchanged integer-word arguments from zero alone.",
+    "Preserve the original uninitialized find_handle seed/no-CD behavior, popup response comparisons/retry reads, lookup/version order, failure returns/leaks, ignored setup result, working-directory mutation/restoration andFreeLibrary ordering. No bounds/null fixes, zeroing or lifetime normalization. Preserve ORIGINAL/span/symbol/history/claims; optional adjacent essential binding rationale is permitted. Remove obsolete direct game.h dependency only if current names are supplied independently and complete compilation proves closure; no source padding/#line or other function edits.",
+    "Add actual-source controls for the setup tail's four independent parent-pointer/HWND combinations, typed first argument, flags/zero second argument, provider/result/failure and cleanup order, and observable compile-success misbinding mutations. Bounded tail tests do not choose a deterministic uninitialized no-CD value or prove whole-game/SDK-provider equivalence. Adapt old enumeration source protection to its actual mapped callback/caller regions and durable metadata, not an eternal whole-win.cpp freeze; retain every existing callback behavior/mutation oracle.",
+    "Coordinator owns Git/compiler. Independent source/test review, native target measure, complete build/link, scoped outside-source/compiler effects and historical claim continuity required for manual integration. Preserve discoveries/restoration on matching changes; no automatic linked-preservation or full-game acceptance claim."
+  ],
+  "intent": "Restore the install-media helper's original parent-window guard and DirectX setup HWND argument using existing genuine bindings.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6459184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-directx-setup-bindings-owner-oct14av"
+}
