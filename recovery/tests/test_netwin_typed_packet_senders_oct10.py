@@ -98,6 +98,9 @@ static_assert(sizeof(NetWinSessionOptionsPacket) == 0x28, "options");
 static_assert(offsetof(NetWinSessionOptionsPacket, options_) == 0x10, "options payload");
 static_assert(sizeof(NetWinSessionBlockPacket) == 0x178, "session");
 static_assert(offsetof(NetWinSessionBlockPacket, session_) == 0x10, "session payload");
+static_assert(sizeof(NetWinSessionBlock) == 0x168, "session wire block");
+static_assert(offsetof(NetWinSessionBlock, scenario_text_wire_tail_) == 0x24,
+              "scenario text is a named view in the opaque wire remainder");
 static std::vector<unsigned char> sent;
 static unsigned recipient, calls;
 struct Net {

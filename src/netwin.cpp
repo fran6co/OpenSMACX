@@ -588,7 +588,8 @@ void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot) {
 // 0x0090E778 / 0x0090E79C - the two words beside the seven records
 // config_players seeds: the eighth slot's dword and its mode byte.
 static unsigned int *const NetWinEighthSlotWord = &NetWinSessionData.mode_;
-static unsigned char *const NetWinScenarioText = &NetWinSessionData.state_[0x20];
+static char *const NetWinScenarioText =
+    NetWinSessionData.scenario_text_wire_tail_;
 
 // 0x0090E8E0 - the ninth slot's colour/mode prefix: 0xFF, the colour byte
 // read from 0x93D4B0, 2 - with the zeroed pair at +4/+5, the mode bytes 2 at
@@ -1030,7 +1031,7 @@ void NetWin::draw_session_info() {
                label_get(0x107C / 4));
     } else {
         strcat(StringTemp,
-               reinterpret_cast<const char *>(NetWinScenarioText));
+               NetWinScenarioText);
     }
     if (*NetWinEighthSlotWord == 1) {
         strcat(StringTemp, " ");
@@ -2026,7 +2027,7 @@ void NetWin::pick_map() {
             NetWinSessionOptions.difficulty_ =
                 static_cast<uint8_t>(DefaultPrefs.difficulty);
             NetWinSessionOptions.rule_bits_a_ = AlphaIniPrefs.rules;
-            NetWinSessionData.state_[0x20] = 0;
+            NetWinSessionData.scenario_text_wire_tail_[0] = 0;
             NetWinSessionOptions.status_ = 0xFF;
 
             NetDaemonNet.pid_2_idx(NetWinPlayerId);
@@ -2071,7 +2072,7 @@ void NetWin::pick_map() {
                     MapLongitudeBounds / 2);
                 NetWinSessionOptions.option_5_ =
                     static_cast<uint8_t>(MapLatitudeBounds);
-                NetWinSessionData.state_[0x20] = 0;
+                NetWinSessionData.scenario_text_wire_tail_[0] = 0;
 
                 char *scenario_name = strrchr(
                     loaded_file_path_, '\\');
@@ -2080,8 +2081,7 @@ void NetWin::pick_map() {
                 } else {
                     ++scenario_name;
                 }
-                strcpy(reinterpret_cast<char *>(NetWinScenarioText),
-                       scenario_name);
+                strcpy(NetWinScenarioText, scenario_name);
             }
 
             if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
@@ -3552,5 +3552,5 @@ Status: Complete
 */
 extern "C" void __cdecl sub_4e2450() {
     NetWinSessionData.mode_ = 0;
-    NetWinSessionData.state_[0x20] = 0;
+    NetWinSessionData.scenario_text_wire_tail_[0] = 0;
 }

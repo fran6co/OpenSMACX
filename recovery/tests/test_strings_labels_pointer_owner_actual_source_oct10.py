@@ -1,5 +1,6 @@
 """Host controls for pointer-typed Labels and Difficulty consumers."""
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -170,10 +171,12 @@ int main() {
 
 
 def _opponent_harness(fragment):
-    return r'''#include <assert.h>
+    harness = r'''#include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 typedef char *LPSTR;
+/* ACTUAL_NETWIN_ROW_AND_SESSION_DECLARATIONS */
 struct Label { LPSTR *strings_ptr; } Labels;
 LPSTR raw_title, localized_title, raw_fallback, localized_fallback;
 struct Strings {
@@ -188,8 +191,8 @@ struct Strings {
 } StringTable;
 LPSTR label_get(int slot) { return StringTable.get(Labels.strings_ptr[slot]); }
 struct SessionOptions { int option_4_; int option_5_; } NetWinSessionOptions;
-int scenario_text_value;
-int *NetWinScenarioText = &scenario_text_value;
+NetWinSessionBlock NetWinSessionData;
+char *NetWinScenarioText = NetWinSessionData.scenario_text_wire_tail_;
 char StringTemp[4096];
 char * _itoa(int value, char *buffer, int) {
   sprintf(buffer, "%d", value);
@@ -213,7 +216,7 @@ int main() {
   slots[(1 * 0x80 + 0x6614) / 4] = opponent1;
   slots[(31 * 0x80 + 0x6614) / 4] = opponent31;
   Labels.strings_ptr = slots;
-  scenario_text_value = 0;
+  NetWinSessionData.scenario_text_wire_tail_[0] = 0;
 
   opponent_case(0);
   assert(NetWinSessionOptions.option_4_ == 0);
@@ -250,7 +253,7 @@ int main() {
   assert(NetWinSessionOptions.option_4_ == 32);
   assert(strstr(StringTemp, "opponent 31") != 0);
 
-  scenario_text_value = 1;
+  NetWinSessionData.scenario_text_wire_tail_[0] = 1;
   StringTable.calls = 0;
   opponent_case(7);
   assert(strstr(StringTemp, "7 X") != 0);
@@ -258,6 +261,15 @@ int main() {
   return 0;
 }
 '''
+    header = (ROOT / "src/netwin.h").read_text(encoding="utf-8")
+    declarations = []
+    for name in ("NetWinLobbyRow", "NetWinSessionBlock"):
+        match = re.search(rf"struct {name} \{{.*?\n\}};", header, re.S)
+        assert match is not None, name
+        declarations.append(match.group())
+    return harness.replace(
+        "/* ACTUAL_NETWIN_ROW_AND_SESSION_DECLARATIONS */",
+        "\n".join(declarations))
 
 
 def _run(source, compiler):

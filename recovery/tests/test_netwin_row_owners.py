@@ -14,6 +14,7 @@ import pytest
 
 ROOT = next(p for p in Path(__file__).resolve().parents
             if (p / "src/netwin.cpp").is_file())
+SCENARIO_STORAGE_TASK_BASE = "75a020323f4ff637825807b3add2de540dd60a68"
 BASE = ROOT / "recovery/tests/test_netwin_owner_behavior.py"
 spec = importlib.util.spec_from_file_location("netwin_owner_extract", BASE)
 mod = importlib.util.module_from_spec(spec)
@@ -37,15 +38,18 @@ HARNESS = r'''
 #include <cctype>
 
 ACTUAL_ROW_DECLARATION
+ACTUAL_SESSION_BLOCK_DECLARATION
+typedef int BOOL;
+ACTUAL_PLAYER_DECLARATION
+static Player Players[8];
 static_assert(sizeof(NetWinLobbyRow)==0x17C, "row stride");
 static_assert(offsetof(NetWinLobbyRow, owner_)==0x178, "claim field");
 static_assert(offsetof(NetWinLobbyRow, faction_or_color_)==3, "mode byte");
 NetWinLobbyRow NetWinLobbyRows[8];
 
-struct NetWinSessionBlock { uint32_t mode_; uint8_t state_[0x164]; };
 NetWinSessionBlock NetWinSessionData;
 static unsigned int *NetWinEighthSlotWord=&NetWinSessionData.mode_;
-static unsigned char *NetWinScenarioText=&NetWinSessionData.state_[0x20];
+static char *NetWinScenarioText=NetWinSessionData.scenario_text_wire_tail_;
 struct Options {
     uint8_t status_, player_count_, difficulty_, time_control_;
     uint8_t option_4_, option_5_, planet_size_, ocean_coverage_;
@@ -54,14 +58,18 @@ struct Options {
 };
 Options NetWinSessionOptions;
 
-static unsigned char config_color=0xA5;
-static unsigned char *NetWinConfigColor=&config_color;
-static char template_storage[7*0x59C];
-static char *NetWinFactionTemplate=template_storage;
 alignas(int) static char label_storage[0xFE8];
 struct LabelBlock { char *strings_ptr; } Labels={label_storage};
-struct StringTableType { char *get(int) { return const_cast<char *>("localized-noun"); } };
-static StringTableType StringTable;
+struct StringTableType {
+    int calls=0;
+    char *get(int) {
+        NetWinSessionOptions.difficulty_=static_cast<uint8_t>(3+calls++);
+        return const_cast<char *>("localized-noun");
+    }
+} StringTable;
+static char *label_get(int slot) {
+    return Labels.strings_ptr != 0 ? StringTable.get(slot) : 0;
+}
 
 struct AlphaNetProcessSlot {
     char name_[0x20]; uint32_t pid_; int8_t identity_; uint8_t f25_,f26_; int8_t f27_;
@@ -72,6 +80,8 @@ static_assert(sizeof(AlphaNetProcessSlot)==0x19C, "process stride");
 struct AlphaNet { uint8_t prefix_[0x76C]; AlphaNetProcessSlot process_slots_[8]; };
 struct NetDaemon : AlphaNet {
     uint32_t last_lookup;
+    struct AllocationNode { uint32_t max_players_; } node;
+    const AllocationNode &allocation_node() const { return node; }
     char *get_player_name(uint32_t id) {
         last_lookup=id;
         static char result[32]; std::sprintf(result,"P%u",id); return result;
@@ -96,25 +106,26 @@ static void fail(const char *s) { std::fprintf(stderr,"FAIL: %s\n",s); std::exit
 int main() {
     NetWin win;
     std::memset(NetWinLobbyRows,0x5A,sizeof(NetWinLobbyRows));
-    for(int r=0;r<7;++r) {
-        char *rec=template_storage+r*0x59C;
-        char tag[16]; std::sprintf(tag,"L%d",r); std::strcpy(rec,tag);
-        std::sprintf(tag,"FORM%d",r); std::strcpy(rec+0x350,tag);
-        std::sprintf(tag,"ADJ%d",r); std::strcpy(rec+0x31C,tag);
-        std::sprintf(tag,"TITLE%d",r); std::strcpy(rec+0x18,tag);
-        std::sprintf(tag,"LEAD%d",r); std::strcpy(rec+0x30,tag);
-        rec[0xC]=static_cast<char>(0x40+r);
+    NetDaemonNet.node.max_players_=0xA5;
+    for(int r=1;r<=7;++r) {
+        std::sprintf(Players[r].name_leader,"L%d",r-1);
+        std::sprintf(Players[r].formal_name_faction,"FORM%d",r-1);
+        std::sprintf(Players[r].adj_name_faction,"ADJ%d",r-1);
+        std::sprintf(Players[r].title_leader,"TITLE%d",r-1);
+        std::sprintf(Players[r].adj_leader,"LEAD%d",r-1);
+        Players[r].is_leader_female=0x3F+r;
     }
     *reinterpret_cast<int *>(label_storage+0xFE4)=73;
     NetWinSessionData.mode_=0x12345678;
-    NetWinSessionData.state_[0x20]=0xEE;
+    NetWinSessionData.scenario_text_wire_tail_[0]=0xEE;
+    NetDaemonNet.node.max_players_=0xA5;
     win.config_players();
     if(NetWinLobbyRows[0].prefix_!=0x5A || NetWinLobbyRows[0].owner_!=0x5A5A5A5A)
         fail("config must not touch row zero");
     for(int r=1;r<=7;++r) {
         const NetWinLobbyRow &row=NetWinLobbyRows[r];
         char expected[16]; std::sprintf(expected,"L%d",r-1);
-        if(row.prefix_!=0xFF || row.ready_or_occupied_!=0 || row.field_2_!=2 ||
+        if(row.prefix_!=0xFF || row.ready_or_occupied_!=0 || row.field_2_!=r+1 ||
            static_cast<uint8_t>(row.faction_or_color_)!=0xFF || row.field_4_!=2)
             fail("typed prefix fields");
         if(std::strcmp(row.leader_name_,expected)!=0) fail("leader row mapping");
@@ -130,7 +141,9 @@ int main() {
         if(row.tail_[0]!=static_cast<uint8_t>(0x3F+r) || row.owner_!=0)
             fail("tail/owner byte lane");
     }
-    if(NetWinSessionData.mode_!=0 || NetWinSessionData.state_[0x20]!=0 ||
+    if(StringTable.calls!=7 || NetWinSessionOptions.difficulty_!=9)
+        fail("label callback mutations remain visible to later rows");
+    if(NetWinSessionData.mode_!=0 || NetWinSessionData.scenario_text_wire_tail_[0]!=0 ||
        NetWinSessionOptions.player_count_!=0xA5 || NetWinSessionOptions.status_!=0xFF)
         fail("existing neighboring session/options writes");
 
@@ -153,6 +166,13 @@ def test_extracted_config_players_and_new_chat(tmp_path, compiler_name):
     declaration=re.search(r"struct NetWinLobbyRow \{.*?\n\};", header, re.S)
     assert declaration is not None
     src=src.replace("ACTUAL_ROW_DECLARATION", declaration.group())
+    session_declaration=re.search(r"struct NetWinSessionBlock \{.*?\n\};", header, re.S)
+    assert session_declaration is not None
+    src=src.replace("ACTUAL_SESSION_BLOCK_DECLARATION", session_declaration.group())
+    player_header=(ROOT/"src/faction.h").read_text()
+    player_declaration=re.search(r"struct Player \{.*?\n\};", player_header, re.S)
+    assert player_declaration is not None
+    src=src.replace("ACTUAL_PLAYER_DECLARATION", player_declaration.group())
     for marker,body in parts().items(): src=src.replace(marker,body)
     cpp=tmp_path/"netwin-row-owner.cpp"; exe=tmp_path/"netwin-row-owner"
     cpp.write_text(src)
@@ -191,8 +211,9 @@ def test_original_overlay_and_stride_witnesses():
 
 def test_complete_painter_bodies_preserve_non_owner_operations():
     """Full source comparisons constrain ordering/branches, not native matching."""
-    before=subprocess.check_output(["git","show","0271c80d3:src/netwin.cpp"],
+    before=subprocess.check_output(["git","show",f"{SCENARIO_STORAGE_TASK_BASE}:src/netwin.cpp"],
                                    cwd=ROOT,text=True)
+    assert "&InterfaceBoxStyles[48 + ready]" in before
     after=(ROOT/"src/netwin.cpp").read_text()
     for name in ("draw_player_names", "draw_diffs", "draw_factions"):
         signature=f"void NetWin::{name}()"

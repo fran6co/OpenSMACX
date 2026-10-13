@@ -129,7 +129,7 @@ HOST = r'''#include <cassert>
 #define __fastcall
 struct ReplayBaseSite { int x, y, faction_id; };
 struct ReplayWin { ReplayBaseSite base_sites_[512]; void reset_base_sites(); };
-struct NetWinSessionBlock { uint32_t mode_; uint8_t state_[0x164]; };
+/* NETWIN_ROW_AND_SESSION_BLOCK_INSERTION */
 NetWinSessionBlock NetWinSessionData;
 int TileYieldRestricted;
 int ScrollDefaultThickness;
@@ -152,9 +152,10 @@ def _program(methods: dict[int, str], declaration: str,
         assert parts[damage].count(old) == 1
         parts[damage] = parts[damage].replace(old, "return value / step;", 1)
     elif damage == 0x004E2450:
-        old = "state_[0x20] = 0;"
+        old = "NetWinSessionData.scenario_text_wire_tail_[0] = 0;"
         assert parts[damage].count(old) == 1
-        parts[damage] = parts[damage].replace(old, "state_[0x21] = 0;", 1)
+        parts[damage] = parts[damage].replace(
+            old, "NetWinSessionData.scenario_text_wire_tail_[1] = 0;", 1)
     elif damage == 0x004E7DB0:
         old = "TileYieldRestricted = 0;"
         assert parts[damage].count(old) == 1
@@ -170,7 +171,13 @@ def _program(methods: dict[int, str], declaration: str,
             old, "dialogs_.Dialogs::item(BasePopItemMarkerText, 2)", 1)
     elif damage is not None:
         raise AssertionError(f"unknown behavior control {damage:#x}")
-    return HOST + declaration + "\n" + "\n".join(parts[a] for a in OWNERS) + r'''
+    header = (ROOT / "src/netwin.h").read_text(encoding="utf-8")
+    row_decl = re.search(r"struct NetWinLobbyRow \{.*?\n\};", header, re.S)
+    session_decl = re.search(r"struct NetWinSessionBlock \{.*?\n\};", header, re.S)
+    assert row_decl is not None and session_decl is not None
+    actual_declarations = row_decl.group() + "\n" + session_decl.group()
+    host = HOST.replace("/* NETWIN_ROW_AND_SESSION_BLOCK_INSERTION */", actual_declarations)
+    return host + declaration + "\n" + "\n".join(parts[a] for a in OWNERS) + r'''
 int main() {
   ReplayWin replay;
   for (int i=0;i<512;++i) replay.base_sites_[i]={i,i+1000,i+2000};
@@ -179,8 +186,8 @@ int main() {
   assert(communicate_round_down_multiple(127,25)==125);
   assert(communicate_round_down_multiple(-7,3)==-6);
   assert(communicate_round_down_multiple(-9,3)==-9);
-  NetWinSessionData.mode_=9; NetWinSessionData.state_[0x20]=8; NetWinSessionData.state_[0x21]=7;
-  sub_4e2450(); assert(NetWinSessionData.mode_==0 && NetWinSessionData.state_[0x20]==0 && NetWinSessionData.state_[0x21]==7);
+  NetWinSessionData.mode_=9; NetWinSessionData.scenario_text_wire_tail_[0]=8; NetWinSessionData.scenario_text_wire_tail_[1]=7;
+  sub_4e2450(); assert(NetWinSessionData.mode_==0 && NetWinSessionData.scenario_text_wire_tail_[0]==0 && NetWinSessionData.scenario_text_wire_tail_[1]==7);
   TileYieldRestricted=4; assert(sub_4e7db0()==0 && TileYieldRestricted==0);
   sub_6051c0(); assert(metric_seen==3 && ScrollDefaultThickness==13);
   BasePop popup; assert(popup.add_asterisk_item()==37 && popup.dialogs_.index==-2 && popup.dialogs_.text[0]=='*' && popup.dialogs_.text[1]=='\0');

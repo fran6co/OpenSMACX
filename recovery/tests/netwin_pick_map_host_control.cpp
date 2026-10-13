@@ -10,7 +10,6 @@ struct NetWinSessionOptionsState {
     uint8_t erosion_, native_life_, cloud_cover_, reserved_B_;
     uint32_t rule_bits_a_, rule_bits_b_, rule_bits_c_;
 };
-struct NetWinSessionBlock { uint32_t mode_; uint8_t state_[0x164]; };
 struct NetWinLobbyPacketHeader {
     uint8_t opcode_, flags_;
     uint16_t field_2_;
@@ -26,6 +25,7 @@ struct NetWinLobbyRow {
     uint8_t tail_[3];
     uint32_t owner_;
 };
+/* NETWIN_SESSION_BLOCK_INSERTION */
 /* NETWIN_FACTION_RECORD_INSERTION */
 struct NetWinLobbyFullPacket {
     NetWinLobbyPacketHeader header_;
@@ -40,10 +40,7 @@ struct NetWinSessionOptionsPacket {
     uint8_t reserved_[0x0E];
     NetWinSessionOptionsState options_;
 };
-struct NetWinSessionPacket {
-    NetWinLobbyPacketHeader header_;
-    NetWinSessionBlock session_;
-};
+/* NETWIN_SESSION_PACKET_INSERTION */
 
 struct PopMenu {
     struct Dialogs { void item(char *, int) {} } dialogs_;
@@ -136,8 +133,7 @@ static Player Players[8];
 static PlayerData PlayersData[8];
 static char string_temp[256];
 static char *StringTemp = string_temp;
-static char NetWinScenarioStorage[0x164];
-static char *NetWinScenarioText = NetWinScenarioStorage;
+static char *NetWinScenarioText = NetWinSessionData.scenario_text_wire_tail_;
 static const char *NetWinPcxSuffix = ".pcx";
 static const char *NetWinDefaultPcx = "faction.pcx";
 
@@ -162,8 +158,8 @@ static void reset_case() {
     NetWinSessionOptions = {};
     NetWinSessionOptions.rule_bits_b_ = 0x76543210u;
     NetWinSessionData = {};
-    NetWinSessionData.state_[0x20] = 0xA5;
-    NetWinScenarioStorage[0] = 0;
+    NetWinSessionData.scenario_text_wire_tail_[0] = 0xA5;
+    NetWinSessionData.scenario_text_wire_tail_[1] = 0xA6;
     GameDataLoadRequest = 0;
     GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x700u;
     netwin_rules_gate = 1;
@@ -176,7 +172,7 @@ int main() {
         scripted_choice = -1;
         win.pick_map();
         assert(NetDaemonNet.sends == 0 && NetDaemonNet.pid_calls == 0);
-        assert(NetWinSessionData.state_[0x20] == 0xA5);
+        assert(static_cast<unsigned char>(NetWinSessionData.scenario_text_wire_tail_[0]) == 0xA5);
     }
     {
         reset_case();
@@ -190,7 +186,8 @@ int main() {
         win.pick_map();
         assert(std::memcmp(source, destination, sizeof(source)) == 0);
         assert(win.field_7728_ == 0);
-        assert(NetWinSessionData.state_[0x20] == 0);
+        assert(NetWinSessionData.scenario_text_wire_tail_[0] == 0);
+        assert(static_cast<unsigned char>(NetWinSessionData.scenario_text_wire_tail_[1]) == 0xA6);
         assert(NetDaemonNet.sends == 3 && NetDaemonNet.pid_calls == 2);
         assert(faction_sends == 0);
         assert(NetDaemonNet.sizes[0] == 0x28 && NetDaemonNet.sizes[1] == 0xA74);
@@ -202,8 +199,8 @@ int main() {
         assert(early.rule_bits_a_ == 0xA5A55A5Au);
         assert(reinterpret_cast<NetWinSessionOptionsPacket *>(NetDaemonNet.payloads[0])->opcode_ == 0x2F02);
         assert(reinterpret_cast<NetWinLobbyFullPacket *>(NetDaemonNet.payloads[1])->header_.flags_ == 0x4F);
-        assert(reinterpret_cast<NetWinSessionPacket *>(NetDaemonNet.payloads[2])->header_.opcode_ == 3);
-        assert(reinterpret_cast<NetWinSessionPacket *>(NetDaemonNet.payloads[2])->header_.flags_ == 0x2F);
+        assert(reinterpret_cast<NetWinSessionLobbyPacket *>(NetDaemonNet.payloads[2])->header_.opcode_ == 3);
+        assert(reinterpret_cast<NetWinSessionLobbyPacket *>(NetDaemonNet.payloads[2])->header_.flags_ == 0x2F);
     }
     {
         reset_case();
@@ -213,7 +210,7 @@ int main() {
         assert(map_loads == 1 && game_loads == 0);
         assert(GameDataLoadRequest == 0);
         assert(NetDaemonNet.sends == 3);
-        assert(NetWinSessionData.state_[0x20] == 0xA5);
+        assert(static_cast<unsigned char>(NetWinSessionData.scenario_text_wire_tail_[0]) == 0xA5);
     }
     {
         reset_case();
@@ -247,8 +244,9 @@ int main() {
         win.pick_map();
         assert(game_loads == 1 && last_game_host == 1);
         assert(GameDataLoadRequest == 0);
-        assert(NetWinSessionData.state_[0x20] == 0);
-        assert(std::strcmp(NetWinScenarioStorage, "scenario.scn") == 0);
+        assert(NetWinSessionData.scenario_text_wire_tail_[0] == 's');
+        assert(NetWinSessionData.scenario_text_wire_tail_[1] == 'c');
+        assert(std::strcmp(NetWinScenarioText, "scenario.scn") == 0);
         assert(NetDaemonNet.sends == 4);
         const NetWinSessionOptionsState &published =
             reinterpret_cast<const NetWinSessionOptionsPacket *>(

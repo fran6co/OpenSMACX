@@ -90,6 +90,9 @@ def test_extracted_config_players_preserves_byte_and_player_array_behavior(
     row_decl = re.search(r"struct NetWinLobbyRow \{.*?\n\};",
                          (ROOT / "src/netwin.h").read_text(), re.S)
     assert row_decl
+    session_decl = re.search(r"struct NetWinSessionBlock \{.*?\n\};",
+                             (ROOT / "src/netwin.h").read_text(), re.S)
+    assert session_decl
     player_decl = re.search(r"struct Player \{.*?\n\};",
                             (ROOT / "src/faction.h").read_text(), re.S)
     assert player_decl
@@ -100,6 +103,7 @@ def test_extracted_config_players_preserves_byte_and_player_array_behavior(
 #include <cstring>
 #include <cstddef>
 ROW_DECL
+SESSION_DECL
 static NetWinLobbyRow NetWinLobbyRows[8];
 typedef int BOOL;
 ACTUAL_PLAYER_DECLARATION
@@ -112,19 +116,13 @@ static Player Players[8];
 struct NetAllocationNode { uint32_t max_players_; };
 struct Net { NetAllocationNode node; const NetAllocationNode &allocation_node() const { return node; } };
 static Net NetDaemonNet;
-static unsigned int eighth=0;
-static unsigned int *NetWinEighthSlotWord=&eighth;
-static unsigned char scenario=0;
-static unsigned char *NetWinScenarioText=&scenario;
+static NetWinSessionBlock NetWinSessionData;
+static unsigned int *NetWinEighthSlotWord=&NetWinSessionData.mode_;
+static char *NetWinScenarioText=NetWinSessionData.scenario_text_wire_tail_;
 struct Options { uint8_t status_, option_4_, option_5_, reserved_B_, player_count_, difficulty_, planet_size_, ocean_coverage_, erosion_, native_life_, cloud_cover_; };
 static Options NetWinSessionOptions;
 static char noun[]="localized noun";
-struct Strings { int calls=0; char *get(int) { NetWinSessionOptions.difficulty_=static_cast<uint8_t>(3+calls++); return noun; } };
-static Strings StringTable;
-static int label_value=1;
-struct LabelState { char *strings_ptr; };
-static char label_bytes[0xFE8];
-static LabelState Labels={label_bytes};
+static char *label_get(int) { return noun; }
 struct NetWin { void config_players(); };
 BODY_CONFIG
 int main() {
@@ -137,7 +135,6 @@ int main() {
         std::sprintf(Players[i].title_leader,"Title%d",i);
         std::sprintf(Players[i].adj_leader,"AdjLeader%d",i);
     }
-    std::memcpy(label_bytes+0xFE4,&label_value,sizeof(label_value));
     NetWin win;
     win.config_players();
     if (NetWinSessionOptions.player_count_!=0xA5) return 1;
@@ -155,12 +152,13 @@ int main() {
         std::sprintf(expected,"AdjLeader%d",i);
         if (std::strcmp(row.adjective_leader_,expected)) return 6;
         if (row.tail_[0]!=static_cast<unsigned char>(0x30+i)) return 7;
-        if (row.field_2_!=static_cast<unsigned char>(i+1)) return 8;
+        if (row.field_2_!=2) return 8;
     }
     return 0;
 }
 '''
     harness = harness.replace("ROW_DECL", row_decl.group())
+    harness = harness.replace("SESSION_DECL", session_decl.group())
     harness = harness.replace("ACTUAL_PLAYER_DECLARATION", player_decl.group())
     harness = harness.replace(
         "BODY_CONFIG", EXTRACT.extract_function(SOURCE, "void NetWin::config_players()")

@@ -20,6 +20,8 @@ HEADER_FILE = SOURCE_ROOT / "src" / "netwin.h"
 FIXTURE = Path(__file__).with_name("netwin_pick_map_host_control.cpp")
 MARKER = "/* NETWIN_PICK_MAP_BODY_INSERTION */"
 RECORD_MARKER = "/* NETWIN_FACTION_RECORD_INSERTION */"
+SESSION_BLOCK_MARKER = "/* NETWIN_SESSION_BLOCK_INSERTION */"
+SESSION_PACKET_MARKER = "/* NETWIN_SESSION_PACKET_INSERTION */"
 
 
 def extract_function(source: str, signature: str) -> str:
@@ -86,7 +88,16 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
     record = extract_function(
         HEADER_FILE.read_text(), "struct NetWinFactionRecord"
     ) + ";"
-    generated = fixture.replace(RECORD_MARKER, record).replace(MARKER, body)
+    session_block = extract_function(
+        HEADER_FILE.read_text(), "struct NetWinSessionBlock"
+    ) + ";"
+    session_packet = extract_function(
+        HEADER_FILE.read_text(), "struct NetWinSessionLobbyPacket"
+    ) + ";"
+    generated = (fixture.replace(RECORD_MARKER, record)
+                 .replace(SESSION_BLOCK_MARKER, session_block)
+                 .replace(SESSION_PACKET_MARKER, session_packet)
+                 .replace(MARKER, body))
     generated_path = tmp_path / "netwin_pick_map_host_control.cpp"
     generated_path.write_text(generated)
     executable = tmp_path / f"netwin-pick-map-{compiler_name}"
@@ -107,9 +118,10 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
         "record.adjective_faction_", "record.leader_title_", 1
     )
     assert damaged_body != body, "server roster mutation anchor must be present"
-    damaged_source = fixture.replace(RECORD_MARKER, record).replace(
-        MARKER, damaged_body
-    )
+    damaged_source = (fixture.replace(RECORD_MARKER, record)
+                      .replace(SESSION_BLOCK_MARKER, session_block)
+                      .replace(SESSION_PACKET_MARKER, session_packet)
+                      .replace(MARKER, damaged_body))
     damaged_path = tmp_path / "netwin_pick_map_damaged.cpp"
     damaged_path.write_text(damaged_source)
     damaged_executable = tmp_path / f"netwin-pick-map-damaged-{compiler_name}"

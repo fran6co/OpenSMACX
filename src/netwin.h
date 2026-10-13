@@ -238,7 +238,11 @@ static_assert(offsetof(NetWinConstructedLobbyRow, payload_) == 0,
 // is the mode tested by the setup dialog.
 struct NetWinSessionBlock {
   uint32_t mode_;
-  uint8_t state_[0x164];
+  uint8_t reserved_session_prefix_[0x20];
+  // The observed session storage interval from +0x24 to +0x167 is reused as
+  // scenario text. Its extent is a wire/storage remainder, not a proven
+  // filename capacity or bounded, terminated string allocation.
+  char scenario_text_wire_tail_[0x144];
   void receive_wire_block(const unsigned char *bytes);
 
   // The native missing-player tail addresses lobby row 8, which begins
@@ -248,6 +252,8 @@ struct NetWinSessionBlock {
   char *row8_noun_faction();
 };
 static_assert(sizeof(NetWinSessionBlock) == 0x168, "session block extent");
+static_assert(offsetof(NetWinSessionBlock, scenario_text_wire_tail_) == 0x24,
+              "scenario text begins at the observed session storage offset");
 static_assert(offsetof(NetWinLobbyRow, prefix_) < sizeof(NetWinSessionBlock),
               "row-eight prefix is inside session storage");
 static_assert(offsetof(NetWinLobbyRow, leader_name_) +

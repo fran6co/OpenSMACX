@@ -169,6 +169,25 @@ def _restore_netwin_cpp(current: str, baseline: str) -> str:
         "struct NetWinSessionPacket {\n        NetWinLobbyPacketHeader header_;\n        NetWinSessionBlock session_;\n    } session_packet;", "pick_map session packet")
     current = _replace_once(current, "NetWinLobbyLeavePacket leave_packet;",
         "PickMapLobbyLeavePacket leave_packet;", "pick_map leave packet")
+    current = _replace_once(
+        current,
+        "static char *const NetWinScenarioText =\n    NetWinSessionData.scenario_text_wire_tail_;",
+        "static unsigned char *const NetWinScenarioText = &NetWinSessionData.state_[0x20];",
+        "scenario storage alias")
+    current = _transform_function(current, "void NetWin::draw_session_info()", [
+        ("strcat(StringTemp,\n               NetWinScenarioText);",
+         "strcat(StringTemp,\n               reinterpret_cast<const char *>(NetWinScenarioText));")],
+        "draw session scenario text cast")
+    current = _transform_function(current, "void NetWin::pick_map()", [
+        ("NetWinSessionData.scenario_text_wire_tail_[0] = 0;",
+         "NetWinSessionData.state_[0x20] = 0;", 2),
+        ("strcpy(NetWinScenarioText, scenario_name);",
+         "strcpy(reinterpret_cast<char *>(NetWinScenarioText),\n                       scenario_name);")],
+        "pick map scenario storage")
+    current = _transform_function(current, 'extern "C" void __cdecl sub_4e2450()', [
+        ("NetWinSessionData.scenario_text_wire_tail_[0] = 0;",
+         "NetWinSessionData.state_[0x20] = 0;")],
+        "session reset scenario byte")
     current = _insert_historical_region(current, baseline,
         "struct NetWinLobbyFullPacket {", "/*\nPurpose: Answer the multiplayer setup dialog's button click.",
         "/*\nPurpose: Answer the multiplayer setup dialog's button click.",
@@ -243,6 +262,25 @@ LOBBY_HEADER_SCHEMA = (
 
 def _restore_netwin_header(current: str, baseline: str) -> str:
     current = current.replace("#include <cstring>\n", "", 1)
+    current_block = extract_definition(current, "struct NetWinSessionBlock {")
+    current_schema = """struct NetWinSessionBlock {
+  uint32_t mode_;
+  uint8_t reserved_session_prefix_[0x20];
+  char scenario_text_wire_tail_[0x144];
+  void receive_wire_block(const unsigned char *bytes);
+  void write_row8_prefix(uint8_t value);
+  char *row8_leader_name();
+  char *row8_noun_faction();
+}"""
+    assert _cpp_tokens(current_block) == _cpp_tokens(current_schema), (
+        "NetWinSessionBlock current schema", _cpp_tokens(current_block))
+    baseline_block = extract_definition(baseline, "struct NetWinSessionBlock {")
+    current = current.replace(current_block, baseline_block, 1)
+    current = _replace_once(
+        current,
+        'static_assert(offsetof(NetWinSessionBlock, scenario_text_wire_tail_) == 0x24,\n'
+        '              "scenario text begins at the observed session storage offset");\n',
+        "", "scenario tail offset assertion")
     current = _remove_added_region(current, "class NetWinLobbyRowView {",
         "// Only NetWin::exec constructs these stack-local rows.", WIRE_DECLARATIONS[:8])
     current = _remove_added_region(current, "// send_session2_packet copies 90 dwords after a 16-byte prefix.",
