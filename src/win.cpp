@@ -6465,7 +6465,7 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
     if (hitTest == 0 ||
         static_cast<GraphicWin *>(this)->Buffer::spot_.check(x, y, &idx, 0) < 0 ||
         static_cast<GraphicWin *>(this)->on_link_clicked(
-            idx, static_cast<char *>(static_cast<GraphicWin *>(this)->Buffer::owned_[idx])) != 0) {
+            idx, static_cast<GraphicWin *>(this)->Buffer::link_labels_[idx]) != 0) {
         this->left_down_event(x, y, from_parent);
     }
 }

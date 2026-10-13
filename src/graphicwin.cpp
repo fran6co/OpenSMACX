@@ -900,10 +900,9 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
 
     // The window's own Buffer keeps a back pointer to the window, written as
     // `mov [esi+0x448], esi` at 0x005D5012 - before the minimum-size
-    // computation, in the original's order. poOwner_ is Buffer's own member
-    // now that the base's fields are protected, so the store needs no offset
-    // and no cast.
-    poOwner_ = this;
+    // computation, in the original's order. This is Buffer's borrowed
+    // GraphicWin receiver slot, so the store needs no offset or cast.
+    graphic_owner_ = this;
     compute_min_size();
 
     if ((flags & 0x800) == 0) {
@@ -961,7 +960,7 @@ int GraphicWin::reinitialize(int a1, int a2, int width, int height,
 
     int result = Win::UNK1(a1, a2, width, height, a5, flags, a7, a8, a9);
     if (result == 0) {
-        poOwner_ = this;
+        graphic_owner_ = this;
         compute_min_size();
         if ((flags & 0x800) == 0) {
             Win::nonclient_to_client(&width, &height);

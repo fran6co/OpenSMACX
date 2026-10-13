@@ -47,7 +47,7 @@ def actual_source():
     out['LINK_DEFAULT'] = braced(header['graphicwin'], 'virtual int on_link_clicked(')
     out['PARENT_DECL'], = re.findall(r'^  Win \*win_parent_;', header['win'], re.M)
     out['WRITER_DECL'], = re.findall(r'^  int write_multi_font_raw_l\([^;]+;', header['buffer'], re.M)
-    out['BUFFER_FIELDS'] = '\n'.join(re.findall(r'^  (?:uint32_t (?:link_count_|write_font_slot_|markup_pending_|markup_enabled_)|Spot spot_|void \*owned_\[20\]|Font \*font[14]_);', header['buffer'], re.M))
+    out['BUFFER_FIELDS'] = '\n'.join(re.findall(r'^  (?:uint32_t (?:link_count_|write_font_slot_|markup_pending_|markup_enabled_)|Spot spot_|char \*link_labels_\[20\]|Font \*font[14]_);', header['buffer'], re.M))
     assert len(out['BUFFER_FIELDS'].splitlines()) == 8
     out['FONT_FIELDS'] = '\n'.join(re.findall(r'^  int (?:unk_1_|height_|line_height_);', header['font'], re.M))
     assert len(out['FONT_FIELDS'].splitlines()) == 3
@@ -99,8 +99,8 @@ class Buffer {
 public:
  BUFFER_FIELDS
  WRITER_DECL
- Buffer():link_count_(0),write_font_slot_(0),markup_pending_(0),markup_enabled_(0),font1_(nullptr),font4_(nullptr){for(auto &p:owned_)p=nullptr;}
- ~Buffer(){for(auto p:owned_)std::free(p);}
+ Buffer():link_count_(0),write_font_slot_(0),markup_pending_(0),markup_enabled_(0),font1_(nullptr),font4_(nullptr){for(auto &p:link_labels_)p=nullptr;}
+ ~Buffer(){for(auto p:link_labels_)std::free(p);}
  int write_raw_l(char *,int x,int,int count){require(count>=0);++raw_calls;return x+count;}
 };
 WIN_BASE public:
@@ -148,14 +148,14 @@ void click_tests(){
   own.spot_.result=hit;own.spot_.index=2;
   // Owned allocations remain real and distinct; none of these synthetic cells
   // are freed twice or formed outside the admitted original twenty-slot table.
-  for(int i=0;i<4;++i){own.owned_[i]=std::malloc(16);std::strcpy(static_cast<char*>(own.owned_[i]),old_text);}
-  own.spot_.on_check=[&]{std::strcpy(static_cast<char*>(own.owned_[2]),fresh);};
+  for(int i=0;i<4;++i){own.link_labels_[i]=static_cast<char *>(std::malloc(16));std::strcpy(own.link_labels_[i],old_text);}
+  own.spot_.on_check=[&]{std::strcpy(own.link_labels_[2],fresh);};
   own.click_suffix(11,-4,9);
   bool dispatch=enabled&&hit>=0;
   require(own.queries==1&&unrelated.queries==0&&unrelated.calls==0&&unrelated.spot_.checks==0);
   require(own.spot_.checks==enabled&&own.calls==int(dispatch));
   require(own.fallback_count==int(!dispatch||verdict!=0));
-  if(dispatch)require(own.last_id==2&&own.last_text==own.owned_[2]&&std::strcmp(own.last_text,"fresh")==0);
+  if(dispatch)require(own.last_id==2&&own.last_text==own.link_labels_[2]&&std::strcmp(own.last_text,"fresh")==0);
   if(enabled)require(own.spot_.last_x==11&&own.spot_.last_y==-4);
   if(own.fallback_count)require(own.fall_x==11&&own.fall_y==-4&&own.fall_dbl==9);
  }
@@ -179,13 +179,13 @@ void markup_tests(){
   char text[]="$LINK<A=17>/$LINK<BC=-4>";
   int old_alloc=allocations;require(own.write_multi_font_raw_l(text,10,30,std::strlen(text))==14);
   require(own.link_count_==2&&allocations-old_alloc==2&&own.spot_.regions.size()==2);
-  require(own.owned_[0]&&own.owned_[1]&&!own.owned_[2]);
-  require(std::strcmp(static_cast<char*>(own.owned_[0]),"17")==0&&std::strcmp(static_cast<char*>(own.owned_[1]),"-4")==0);
+  require(own.link_labels_[0]&&own.link_labels_[1]&&!own.link_labels_[2]);
+  require(std::strcmp(own.link_labels_[0],"17")==0&&std::strcmp(own.link_labels_[1],"-4")==0);
   int height=font_mode==0?7:font_mode==1?13:20;
   const Region &a=own.spot_.regions[0],&b=own.spot_.regions[1];
   require(a.id==0&&a.type==0&&a.x==10&&a.y==30&&a.w==1&&a.h==height);
   require(b.id==1&&b.type==0&&b.x==12&&b.y==30&&b.w==2&&b.h==height);
-  for(int id=0;id<2;++id){own.spot_.index=own.spot_.regions[id].id;own.click_suffix(0,0,0);require(own.last_id==id&&own.last_text==own.owned_[id]);}
+  for(int id=0;id<2;++id){own.spot_.index=own.spot_.regions[id].id;own.click_suffix(0,0,0);require(own.last_id==id&&own.last_text==own.link_labels_[id]);}
  }
  Receiver plain;char raw[]="$LINK<X=9>";int before=allocations;require(plain.write_multi_font_raw_l(raw,3,4,10)==13&&allocations==before&&plain.spot_.regions.empty());
  require(warnings==0);
@@ -203,9 +203,9 @@ MUTANTS = [
  ('rejected_value','STRING_BODY','return 1;','return 0;'),
  ('own_receiver','CLICK_BODY','static_cast<GraphicWin *>(this)->on_link_clicked','hitTest->on_link_clicked'),
  ('own_spot','CLICK_BODY','static_cast<GraphicWin *>(this)->Buffer::spot_','hitTest->Buffer::spot_'),
- ('own_text','CLICK_BODY','Buffer::owned_[idx]','Buffer::owned_[idx + 1]'),
+ ('own_text','CLICK_BODY','Buffer::link_labels_[idx]','Buffer::link_labels_[idx + 1]'),
  ('hit_boundary','CLICK_BODY','check(x, y, &idx, 0) < 0','check(x, y, &idx, 0) <= 0'),
- ('callback_result','CLICK_BODY','])) != 0','])) == 0'),
+ ('callback_result','CLICK_BODY','Buffer::link_labels_[idx]) != 0','Buffer::link_labels_[idx]) == 0'),
  ('fallback_args','CLICK_BODY','left_down_event(x, y, from_parent)','left_down_event(y, x, from_parent)'),
  ('network_gate','TECH_BODY','IsMultiplayerNet == 0','IsMultiplayerNet != 0'),
  ('success_return','TECH_BODY','return 0;','return 1;'),
@@ -213,7 +213,7 @@ MUTANTS = [
  ('modal_order','TECH_BODY','PendingTechnologyLink = atoi(link);\n        release_modal();','release_modal();\n        PendingTechnologyLink = atoi(link);'),
  ('no_modal','TECH_BODY','release_modal();','/* omitted */'),
  ('wrong_parse','TECH_BODY','atoi(link)','17'),
- ('producer_index','WRITER_BODY','owned_[link_count_ - 1] = kept;','owned_[link_count_] = kept;'),
+ ('producer_index','WRITER_BODY','link_labels_[link_count_ - 1] = kept;','link_labels_[link_count_] = kept;'),
  ('spot_index','WRITER_BODY','spot_.add(link_count_ - 1,','spot_.add(link_count_,'),
  ('font_fallback','WRITER_BODY','font4_ ? font4_ : font1_','font1_'),
  ('font_negative','WRITER_BODY','link_font->line_height_','link_font->height_'),
@@ -353,12 +353,12 @@ void whole_link_case(){
  Receiver own,unrelated;reset(own);own.answer=&unrelated;own.iFlags_=0x2000000;
  Font font{};font.unk_1_=-1;font.line_height_=6;own.font1_=&font;own.markup_enabled_=1;
  char markup[]="$LINK<A=29>";require(own.write_multi_font_raw_l(markup,1,2,std::strlen(markup))==2);
- require(own.spot_.regions.size()==1&&own.spot_.regions[0].id==0&&std::strcmp(static_cast<char*>(own.owned_[0]),"29")==0);
+ require(own.spot_.regions.size()==1&&own.spot_.regions[0].id==0&&std::strcmp(own.link_labels_[0],"29")==0);
  own.spot_.index=0;own.return_value=0;
  own.double_action=[&](int,int){require(WinPointerOwner1==&own);own.spot_.result=0;};
- own.spot_.on_check=[&]{void*replacement=std::malloc(8);std::strcpy(static_cast<char*>(replacement),"fresh");std::free(own.owned_[0]);own.owned_[0]=replacement;};
+ own.spot_.on_check=[&]{char *replacement=static_cast<char *>(std::malloc(8));std::strcpy(replacement,"fresh");std::free(own.link_labels_[0]);own.link_labels_[0]=replacement;};
  call(own,1,9,-6,99,0);require(events==std::vector<Event>({{28,10,9,-6}}));
- require(own.calls==1&&own.last_id==0&&own.last_text==own.owned_[0]&&std::strcmp(own.last_text,"fresh")==0);
+ require(own.calls==1&&own.last_id==0&&own.last_text==own.link_labels_[0]&&std::strcmp(own.last_text,"fresh")==0);
  require(own.fallback_count==0&&unrelated.calls==0&&unrelated.spot_.checks==0);
  own.return_value=-4;call(own,0,7,8,0,-2);require(own.fallback_count==1&&own.fall_dbl==-2);
 }
@@ -411,7 +411,7 @@ WHOLE_MUTATIONS = {
  'root_raise_disabled': ('(iFlags_ & 0x2000000) == 0', '(iFlags_ & 0x2000000) != 0'),
  'root_shift': ('*q = *(q - 1);', '*q = this;'),
  'no_zorder': ('this->update_zorder();', '/* missing zorder */'),
- 'no_focus': ('reinterpret_cast<Win *>(child)->set_dialog_focus(this);', '/* missing focus */'),
+ 'no_focus': ('child->set_dialog_focus(this);', '/* missing focus */'),
  'wrong_capture': ('WinPointerOwner1 = this;', 'WinPointerOwner2 = this;'),
  'no_sizing': ('WinSizingFlag = 1;', 'WinSizingFlag = 0;'),
  'missing_flag_bit': ('iFlags_ & 0x200200', 'iFlags_ & 0x200'),

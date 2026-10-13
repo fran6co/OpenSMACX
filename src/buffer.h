@@ -765,11 +765,11 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   friend int __cdecl polygon_dest(Buffer *, Vert *, int, unsigned char *);
   friend int __cdecl polygon_gouraud(Buffer *, Vert *, int *);
 
-  // 0x4. The window the surface belongs to - `GraphicWin::init` stores its
-  // `this` here before the minimum-size computation, and nothing recovered
-  // reads it. `void *` until a reader proves which base pointer the image
-  // stores; it was `uint32_t`, which needed a cast at the one store.
-  void *poOwner_;
+  // 0x4. Original init 0x005D5012 and reinitialize 0x005D51BF store their
+  // complete GraphicWin receiver here before the minimum-size computation.
+  // Borrowed only; no recovered reader or ownership/lifetime dependency is
+  // established.
+  GraphicWin *graphic_owner_;
   BufferWriteRawCallback field_8_;  // 0x0008
   BufferWriteStringsCallback field_C_;
   uint32_t field_10_;
@@ -881,30 +881,32 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   uint32_t stride_;
  private:
   /*
-   * 0x4AC. HOW MANY OF `owned_` ARE IN USE, and it is ONE-BASED:
+   * 0x4AC. HOW MANY OF `link_labels_` ARE IN USE, and it is ONE-BASED:
    * `write_multi_font_raw_l` increments it first and then stores through
-   * `[this + count * 4 + 0x4B8]`, which is `owned_[count - 1]`. Every read
+   * `[this + count * 4 + 0x4B8]`, which is `link_labels_[count - 1]`. Every read
    * of it is bounded against 20 - `cmp [this + 0x4ac], 0x14; jge` - which
    * is `OwnedAllocationCount`, so the two really are the same table.
    * `clear_links` zeroes it beside freeing all twenty.
    */
   uint32_t link_count_;
   Spot spot_;
-  // 0x4BC. TWENTY OWNED HEAP POINTERS - `Buffer::init` and `Buffer::close`
+  // 0x4BC. TWENTY OWNED LINK-LABEL STRINGS - `Buffer::init` and `Buffer::close`
   // both walk `for (20) { if (*p) { free(*p); *p = 0; } p += 4; }` from
   // 0x4BC, and the walk ends at 0x50C, exactly where `field_50C_` starts.
   //
-  // THEY HOLD LINK TEXT. `write_multi_font_raw_l` is the writer: for each
+  // THEY HOLD LINK TEXT. Pinned writer 0x005DCCA8..0x005DCD01 allocates,
+  // stores, copies and NUL-terminates each label; consumer 0x005F6523 reads
+  // the same slot before calling the click hook. `write_multi_font_raw_l` is
+  // the writer: for each
   // link it allocates `end - start + 1` bytes, stores the pointer at
-  // `owned_[link_count_ - 1]`, and copies the substring in. That is also
+  // `link_labels_[link_count_ - 1]`, and copies the substring in. That is also
   // what makes `clear_links` a pair of operations rather than two unrelated
   // ones - it reinitialises `spot_` to forty hit regions and frees these
   // twenty strings, which are the two halves of one link table. They are
   // still only ever reached through a walking pointer, never named
-  // individually, so
-  // the name says the one thing that is established: the buffer owns them
-  // and frees them.
-  void *owned_[20];
+  // individually; the writer NUL-terminates each copied label and the click
+  // callback receives it as `char *`. Buffer frees these strings.
+  char *link_labels_[20];
   uint32_t field_50C_;
   // 0x510. The WRITER's font slot, the counterpart of `font_slot_` for
   // `write_multi_font_raw_l`: same four values, kept apart because measuring

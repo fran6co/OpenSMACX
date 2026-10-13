@@ -178,7 +178,7 @@ void Buffer::line(int x1, int y1, int x2, int y2, int first_color,
 #define BUFFER_MIN(a, b) ((a) < (b) ? (a) : (b))
 
 
-// The `owned_` table's length, needed by the constructor as well as by
+// The `link_labels_` table's length, needed by the constructor as well as by
 // `init` and `close`, so it is declared ahead of all three.
 static const size_t OwnedAllocationCount = 20;
 
@@ -281,7 +281,7 @@ Buffer::Buffer() {
     // `spot_` is constructed ahead of this body by declaration order, and
     // the vtable store the image makes here is the compiler's, not source.
     for (size_t slot = 0; slot < OwnedAllocationCount; ++slot) {
-        owned_[slot] = nullptr;
+        link_labels_[slot] = nullptr;
     }
     palette_ = nullptr;
     field_C_ = 0;
@@ -338,7 +338,7 @@ Buffer::Buffer() {
     has_palette_ = 0;
     field_580_ = 0;
     clip_region_ = nullptr;
-    poOwner_ = 0;
+    graphic_owner_ = 0;
 
     // An 8-bit top-down DIB with a full 256-colour table and nothing drawn in
     // it yet; `Buffer::init` fills in the dimensions.
@@ -1057,9 +1057,9 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     spot_.init(0x28);
     link_count_ = 0;
     for (int slot = 0; slot < 20; ++slot) {
-        if (owned_[slot] != nullptr) {
-            free(owned_[slot]);
-            owned_[slot] = nullptr;
+        if (link_labels_[slot] != nullptr) {
+            free(link_labels_[slot]);
+            link_labels_[slot] = nullptr;
         }
     }
 
@@ -1807,11 +1807,11 @@ Status: Complete
 void Buffer::close() {
     // Twenty owned allocations released through the executable's allocator.
     // The member, not `this` plus 0x4BC: `Buffer::init` walks the same array
-    // and the extent is proved - see `owned_` in buffer.h.
+    // and the extent is proved - see `link_labels_` in buffer.h.
     for (size_t index = 0; index < OwnedAllocationCount; ++index) {
-        if (owned_[index] != nullptr) {
-            free(owned_[index]);
-            owned_[index] = nullptr;
+        if (link_labels_[index] != nullptr) {
+            free(link_labels_[index]);
+            link_labels_[index] = nullptr;
         }
     }
 
@@ -2981,9 +2981,9 @@ void Buffer::clear_links() {
     spot_.init(0x28);
     link_count_ = 0;
     for (size_t index = 0; index < OwnedAllocationCount; ++index) {
-        if (owned_[index] != nullptr) {
-            free(owned_[index]);
-            owned_[index] = nullptr;
+        if (link_labels_[index] != nullptr) {
+            free(link_labels_[index]);
+            link_labels_[index] = nullptr;
         }
     }
 }
@@ -3015,7 +3015,7 @@ PROMOTED FROM src/unrecovered/005dcae0.cpp, which reached every field through
 
 THE MEASURER'S TWIN. `text_width` walks the same markup and the same four
 fonts; this one draws it, and additionally OWNS THE LINK TABLE: `$LINK<`
-opens a region, `=` captures its label into `owned_[link_count_ - 1]`, and each
+opens a region, `=` captures its label into `link_labels_[link_count_ - 1]`, and each
 completed run is handed to `spot_` as a hit rectangle whose height comes from
 the link font - `unk_1_` when negative, `height_ + unk_1_` when not, which is
 the same reading `Win::flip` needs for its bubble.
@@ -3116,10 +3116,10 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
                 if (static_cast<int>(link_count_) < 20) {
                     const int label = static_cast<int>(close - text);
                     char *const kept = static_cast<char *>(mem_get(label + 1));
-                    owned_[link_count_ - 1] = kept;
-                    if (owned_[link_count_ - 1]) {
-                        memcpy(owned_[link_count_ - 1], text, label);
-                        static_cast<char *>(owned_[link_count_ - 1])[label] = '\0';
+                    link_labels_[link_count_ - 1] = kept;
+                    if (link_labels_[link_count_ - 1]) {
+                        memcpy(link_labels_[link_count_ - 1], text, label);
+                        link_labels_[link_count_ - 1][label] = '\0';
                     }
                 }
                 len += static_cast<int>(text - close) - 1;

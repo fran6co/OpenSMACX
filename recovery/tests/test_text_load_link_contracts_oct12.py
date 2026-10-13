@@ -52,20 +52,33 @@ def test_original_owner_identities_and_unchanged_contracts():
         signature = LOAD if address == 0x608980 else LINK
         marker = f"// ORIGINAL: 0x{address:08X} "
         assert source.count(marker) == baseline.count(marker) == 1
-        assert source[source.index(marker):source.index(signature)] == baseline[
+        envelope = source[source.index(marker):source.index(signature)]
+        if address == 0x5DCAE0:
+            envelope = envelope.replace('link_labels_', 'owned_')
+        assert envelope == baseline[
             baseline.index(marker):baseline.index(signature)]
         assert current.image_spans == spans
         assert "BODY GOES HERE" not in body(source, signature)
         # Full transaction restoration keeps the fixed task baseline and
         # proves no other source body or annotation changed in either TU.
-        assert source.replace(body(source, signature), body(baseline, signature), 1) == baseline
+        restored = source.replace(body(source, signature), body(baseline, signature), 1)
+        if address == 0x608980:
+            # This historical owner is still a complete transaction against
+            # its fixed task base.
+            assert restored == baseline
+        else:
+            # Later recovered Buffer owners are outside this historical
+            # transaction. Its restoration obligation is the complete local
+            # writer body; current whole-file token scope is checked against
+            # the separate immutable base for the typed-owner task.
+            assert body(restored, signature) == body(baseline, signature)
     bh = (ROOT / "src/buffer.h").read_text()
     assert one(bh, r'^  (uint32_t link_count_;)') == 'uint32_t link_count_;'
     writer = body((ROOT / "src/buffer.cpp").read_text(), LINK)
-    assert 'owned_[link_count_ - 1]' in writer  # no new unsafe-index guard
+    assert 'link_labels_[link_count_ - 1]' in writer  # no new unsafe-index guard
     assert writer.count('static_cast<int>(link_count_) < 20') == 3
     assert 'static_cast<int>(++link_count_) > 20' in writer
-    assert writer.count('owned_[link_count_ - 1]') == 4  # store plus three live reads
+    assert writer.count('link_labels_[link_count_ - 1]') == 4  # store plus three live reads
 
 
 def test_complete_pinned_bodies_and_storage_branch_evidence():
@@ -289,9 +302,9 @@ int owned_lookups;
 std::function<void(Buffer&,int,uint32_t)> owned_probe;
 std::function<void()> copy_probe;
 // Explicit host evaluation probes: no native callback/provider equivalence.
-static void *&observe_owned_slot(Buffer &b,uint32_t index) {
+static char *&observe_link_label_slot(Buffer &b,uint32_t index) {
   assert(index<20);++owned_lookups;
-  if(owned_probe)owned_probe(b,owned_lookups,index);return b.owned_[index];
+  if(owned_probe)owned_probe(b,owned_lookups,index);return b.link_labels_[index];
 }
 static void observed_copy(void *destination,const void *source,size_t size) {
   std::memcpy(destination,source,size);if(copy_probe)copy_probe();
@@ -399,7 +412,7 @@ static void check_row(Buffer &b,int index,int position,int x,int y,int width,int
   assert(row.rect.left==x && row.rect.top==y && row.rect.right==x+width && row.rect.bottom==y+height);
 }
 static void release_labels(Buffer &b) {
-  for(void *&p:b.owned_){free(p);p=nullptr;}
+  for(char *&p:b.link_labels_){free(p);p=nullptr;}
 }
 static void link_controls() {
   for(uint32_t before:{0U,18U,19U,20U,0x7ffffffeU,0x7fffffffU,0x80000000U,0xfffffffeU,0xffffffffU}) {
@@ -409,7 +422,7 @@ static void link_controls() {
     assert(warnings==(signed_after>20?1:0));
     assert(b.spot_.add_count_==(signed_after<20?1U:0U));
     if(signed_after<20)check_row(b,0,static_cast<int32_t>(after-1U),5,7,3,12);
-    for(void *p:b.owned_)assert(p==nullptr);
+    for(char *p:b.link_labels_)assert(p==nullptr);
     assert(b.write_font_slot_==3 && b.markup_pending_==1);
   }
   // Label allocation controls only use positive valid array indexes. Native
@@ -419,10 +432,10 @@ static void link_controls() {
     assert(draw(b,"$LINK<ab=label>tail")==11);
     assert(warnings==(before>=20?1:0));
     if(before<19) {
-      assert(std::strcmp(static_cast<char *>(b.owned_[before]),"label")==0);
+      assert(std::strcmp(b.link_labels_[before],"label")==0);
       assert(b.spot_.add_count_==1);check_row(b,0,int(before),5,7,2,12);
     } else {
-      for(void *p:b.owned_)assert(p==nullptr);
+      for(char *p:b.link_labels_)assert(p==nullptr);
       assert(b.spot_.add_count_==0);
     }
     assert(b.write_font_slot_==0 && b.markup_pending_==0);release_labels(b);
@@ -459,7 +472,7 @@ static void link_controls() {
   reset_links();Buffer allocation_failure{};setup(allocation_failure);
   fail_next_alloc=true;
   assert(draw(allocation_failure,"$LINK<ab=label>tail")==11);
-  assert(!fail_next_alloc && allocation_failure.owned_[0]==nullptr);
+  assert(!fail_next_alloc && allocation_failure.link_labels_[0]==nullptr);
   assert(allocation_failure.link_count_==1 && allocation_failure.spot_.add_count_==1);
   check_row(allocation_failure,0,0,5,7,2,12);
 #if OWNED_BOUNDARY_PROBES
@@ -468,8 +481,8 @@ static void link_controls() {
   reset_links();Buffer allocated{};setup(allocated);
   allocation_probe=[&](void *,size_t){allocated.link_count_=2;};
   assert(draw(allocated,"$LINK<ab=label>tail")==11);
-  assert(!allocated.owned_[0] && allocated.owned_[1]);
-  assert(std::strcmp(static_cast<char *>(allocated.owned_[1]),"label")==0);
+  assert(!allocated.link_labels_[0] && allocated.link_labels_[1]);
+  assert(std::strcmp(allocated.link_labels_[1],"label")==0);
   assert(owned_lookups==4);release_labels(allocated);
   // Getter instrumentation changes a valid owned pointer while evaluating
   // the nullcheck; the copy must evaluate the indexed pointer again.
@@ -478,22 +491,22 @@ static void link_controls() {
   char replacement[6];std::memset(replacement,'Q',sizeof(replacement));
   allocation_probe=[&](void *p,size_t n){original_allocation=p;std::memset(p,'A',n);};
   owned_probe=[&](Buffer &b,int reads,uint32_t index){
-    if(reads==2)b.owned_[index]=replacement;
+    if(reads==2)b.link_labels_[index]=replacement;
   };
   assert(draw(pointers,"$LINK<ab=label>tail")==11);
   assert(std::strcmp(replacement,"label")==0);
   assert(std::memcmp(original_allocation,"AAAAAA",6)==0);
-  pointers.owned_[0]=nullptr;free(original_allocation);
+  pointers.link_labels_[0]=nullptr;free(original_allocation);
   // Copy-boundary instrumentation changes count after memcpy. The NUL store
   // must reload both count and pointer rather than terminate the copied slot.
   reset_links();Buffer termination{};setup(termination);
   char terminal[6];std::memset(terminal,'Q',sizeof(terminal));
   allocation_probe=[&](void *p,size_t n){std::memset(p,'A',n);};
-  copy_probe=[&](){termination.link_count_=2;termination.owned_[1]=terminal;};
+  copy_probe=[&](){termination.link_count_=2;termination.link_labels_[1]=terminal;};
   assert(draw(termination,"$LINK<ab=label>tail")==11);
-  assert(std::memcmp(termination.owned_[0],"labelA",6)==0);
+  assert(std::memcmp(termination.link_labels_[0],"labelA",6)==0);
   assert(std::memcmp(terminal,"QQQQQ",5)==0 && terminal[5]==0);
-  termination.owned_[1]=nullptr;release_labels(termination);
+  termination.link_labels_[1]=nullptr;release_labels(termination);
 #endif
 }
 int main(){loader_controls();link_controls();}
@@ -534,7 +547,7 @@ def actual_source(instrument=True):
         "BUFFER_FIELDS": '\n'.join(one(bh, r'^  (' + p + r';)') for p in (
             r'uint32_t link_count_', r'uint32_t write_font_slot_', r'uint32_t markup_pending_',
             r'uint32_t markup_enabled_', r'Font \*font1_', r'Font \*font2_',
-            r'Font \*font3_', r'Font \*font4_', r'void \*owned_\[20\]', r'Spot spot_'))
+            r'Font \*font3_', r'Font \*font4_', r'char \*link_labels_\[20\]', r'Spot spot_'))
             + '\n',
         "LINK_API": one(bh, r'^  (int write_multi_font_raw_l\([^\n]+;)'),
         "CLEAR_API": one(bh, r'^  (void clear_links\(\);)'),
@@ -542,8 +555,8 @@ def actual_source(instrument=True):
         "LINK": body(bc, LINK),
     }
     if instrument:
-        parts['LINK'] = parts['LINK'].replace('owned_[link_count_ - 1]',
-            'observe_owned_slot(*this,link_count_ - 1)').replace('memcpy(', 'observed_copy(')
+        parts['LINK'] = parts['LINK'].replace('link_labels_[link_count_ - 1]',
+            'observe_link_label_slot(*this,link_count_ - 1)').replace('memcpy(', 'observed_copy(')
     source = PRELUDE
     source = '#define OWNED_BOUNDARY_PROBES ' + str(int(instrument)) + '\n' + source
     source = '#include <cstddef>\n' + one(bc, r'^(static const size_t OwnedAllocationCount = 20;)') + '\n' + source
@@ -595,10 +608,10 @@ MUTANTS = (
     ('twentieth-label', 'static_cast<int>(link_count_) < 20', 'static_cast<int>(link_count_) <= 20'),
     ('lost-wrap', '++link_count_', '(link_count_ == 0xffffffffU ? link_count_ : ++link_count_)'),
     ('link-font-fallback', 'font4_ ? font4_ : font1_', 'font1_'),
-    ('cached-label-nullcheck', 'if (observe_owned_slot(*this,link_count_ - 1))', 'if (kept)'),
-    ('cached-label-copy', 'observed_copy(observe_owned_slot(*this,link_count_ - 1), text, label);',
+    ('cached-label-nullcheck', 'if (observe_link_label_slot(*this,link_count_ - 1))', 'if (kept)'),
+    ('cached-label-copy', 'observed_copy(observe_link_label_slot(*this,link_count_ - 1), text, label);',
         'observed_copy(kept, text, label);'),
-    ('cached-label-terminator', "static_cast<char *>(observe_owned_slot(*this,link_count_ - 1))[label] = '\\0';",
+    ('cached-label-terminator', "observe_link_label_slot(*this,link_count_ - 1)[label] = '\\0';",
         "kept[label] = '\\0';"),
     ('live-count', 'if (write_font_slot_ == 3 && static_cast<int>(link_count_) < 20)',
         'if (write_font_slot_ == 3 && static_cast<int>(saved_count) < 20)'),

@@ -49,8 +49,10 @@ struct Win {
     }
 };
 
+class GraphicWin;
+
 struct Buffer {
-    void *poOwner_ = nullptr;
+    GraphicWin *graphic_owner_ = nullptr;
     int init_result = 0;
     int sync_result = 0;
     int init_width = 0;
@@ -95,7 +97,7 @@ public:
     }
     void compute_min_size() {
         events.push_back(ComputeEvent);
-        compute_saw_owner = poOwner_ == this;
+        compute_saw_owner = graphic_owner_ == this;
     }
     int reinitialize(int a1, int a2, int width, int height,
                      int a5, int flags, int a7, int a8, int a9);
@@ -129,7 +131,7 @@ int main() {
         ComputeEvent, NonclientEvent, BufferInitEvent, PaletteSyncEvent}));
     const int expected_args[9] = {11, 22, 100, 80, 55, 0, 77, 88, 99};
     for (int i = 0; i < 9; ++i) assert(window.stub_args[i] == expected_args[i]);
-    assert(window.poOwner_ == &window && window.compute_saw_owner);
+    assert(window.graphic_owner_ == &window && window.compute_saw_owner);
     assert(window.init_width == 90 && window.init_height == 60);
     assert(window.init_arg3 == 0 && window.init_arg4 == 0);
     assert(window.synced_palette == PaletteActive);
