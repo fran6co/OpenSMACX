@@ -1,0 +1,57 @@
+{
+  "author": "coordinator",
+  "base_revision": "3d9408b131c57ce5d8315d4ea58504ef67932c83",
+  "editable_files": [
+    "src/base.h",
+    "src/base.cpp",
+    "src/console.cpp",
+    "src/mapwin.cpp",
+    "recovery/tests/test_base_route_storage_oct13g.py",
+    "recovery/tests/test_mapwin_click_unsafe_routes.py",
+    "recovery/tests/test_mapwin_routes.py",
+    "recovery/tests/base_build_host_fixture.cpp",
+    "recovery/tests/fixtures/game_data_actual_host_control.cpp",
+    "recovery/tests/gameplay_picker_supply/supply_options.cpp"
+  ],
+  "evidence": [
+    "Pinned click 0x46DD67..0x46DD76 writes a signed word at Base+0x110+2*selected_triad with only a lower-bound test. Current Base route words occupy0x110/112/114, reserved word0x116, next member0x118, complete Base size0x134. A four-word accessed storage view does not claim an original four-triad domain or safety beyond the observed span.",
+    "Init and deletion remapping touch only route slots0..2; reserved slot3 remains untouched. Preserve Console and MapWin ternary/else fallback-to-air behavior. Preserve index3 reserved-word writes, negative selection no-write, and absence of an upper guard; do not normalize original unsafe paths.",
+    "Preserve all original identities, historical claims and useful discoveries. No source coverage promotion or exactness grant follows from replacing raw offset access. Verify affected bodies, Base storage layout, references, build/link and host mutation controls before coordinator integration."
+  ],
+  "intent": "Represent Base route slots and their adjacent reserved word as typed indexed storage, preserving all original normal and unchecked paths.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5131136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5132880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4642256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4618608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5312336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5071264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "base-route-storage-oct13g"
+}
