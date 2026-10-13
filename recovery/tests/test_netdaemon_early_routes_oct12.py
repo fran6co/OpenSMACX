@@ -47,9 +47,20 @@ def declaration(text, name):
 
 def source_material():
     source = SOURCE.read_text()
-    wire = (_actual_prefix_source() + "\n" +
-            _extract(source, "struct MessageDataRecord {") + ";\n" +
-            _extract(source, "class MessageCommandView {") + ";\n")
+    wire_parts = [_actual_prefix_source()]
+    for marker in (
+        "struct MessageVehicleRecord {", "struct MessageBaseTextRecord {",
+        "struct MessageDataRecord {", "class MessageCommandView {",
+        "class MessageCommonCommandPrefixView {", "class MessageVehicleView {",
+        "class MessageBaseTextView {", "struct MessageAcknowledgementPrefix {",
+        "class MessageAcknowledgementPrefixView {", "struct MessageEventPrefix {",
+        "class MessageEventPrefixView {", "struct MessageBigDataRecord {",
+        "class MessageBigDataView {", "struct MessageLockRecord {",
+        "class MessageLockView {",
+    ):
+        wire_parts.append(_extract(source, marker) + ";")
+    wire_parts.append(_extract(source, "static int netdaemon_read_unserialized_table_g_y("))
+    wire = "\n".join(wire_parts) + "\n"
     functions = "\n".join(_definition(source, r"static\s+(?:void|bool|int)\s+" + h, h)
                           for h in HELPERS)
     net = (ROOT / "src/netdaemon.h").read_text()
@@ -485,7 +496,7 @@ def test_behavior_damage_controls(tmp_path, damage):
         "completion_reload": ("if (request.faction() ==\n        static_cast<uint32_t>(ConsoleGlobal.faction_id_))", "if (sender == static_cast<uint32_t>(ConsoleGlobal.faction_id_))"),
         "exec_reload": ("if (daemon->channels_[1].trailing_words_[2] != 0)", "if (remaining != 0)"),
         "server_ui_order": ('NetMsgPrimary.pop("SLOWPOKE", 5000, 0, 0);\n    MultiWindow.draw(0);', 'MultiWindow.draw(0);\n    NetMsgPrimary.pop("SLOWPOKE", 5000, 0, 0);'),
-        "direct_sender": ('log_say("Received OPEN CHAN",\n                *reinterpret_cast<int *>(message + 4), 0, 0);\n        const int sender = *reinterpret_cast<int *>(message + 4);', 'const int sender = *reinterpret_cast<int *>(message + 4);\n        log_say("Received OPEN CHAN", sender, 0, 0);'),
+        "direct_sender": ('log_say("Received OPEN CHAN",\n                packet.faction(), 0, 0);\n        const int sender = packet.faction();', 'const int sender = packet.faction();\n        log_say("Received OPEN CHAN", sender, 0, 0);'),
         "table_sender": ('log_say("From Server: UPKEEP_BASE", sender_identity, 0, 0);', 'log_say("From Server: UPKEEP_BASE", 0, 0, 0);'),
         "grammar": ('GenderDefault = faction_data.is_leader_female;\n    PluralityDefault = 0;\n    parse_says(1,', 'parse_says(1,'),
         "local_clear": ('if (local_turn) TurnControlWord93A954 = 0;', 'if (false) TurnControlWord93A954 = 0;'),
@@ -496,8 +507,8 @@ def test_behavior_damage_controls(tmp_path, damage):
         "assigned_faction": ('Player &name_player = Players[\n            GameDataStateStorage.fields_.net_turn_faction_];', 'Player &name_player = Players[faction_id];'),
         "pending_recheck": ('if (CommlinkPending != 0) {\n                message_data(0x1504, sender, 0, 0, 0, 0);', 'if (true) {\n                message_data(0x1504, sender, 0, 0, 0, 0);'),
         "add_reply": ('case 0x1207:\n        log_say("From Server: ADD LOCK OK", 0, 0, 0);\n        daemon->channels_[0].leading_words_[2] = 1;', 'case 0x1207:\n        log_say("From Server: ADD LOCK OK", 0, 0, 0);\n        daemon->channels_[0].leading_words_[2] = 2;'),
-        "checksum_row_cache": ('for (int index = 0; index < NetTurnChecksumWords; ++index) {\n            const int faction = *reinterpret_cast<int *>(message + 4);', 'const int faction = *reinterpret_cast<int *>(message + 4);\n        for (int index = 0; index < NetTurnChecksumWords; ++index) {'),
-        "no_deal_preload": ('DiploWindow.set_offer_state(0, *reinterpret_cast<int *>(message + 0x14));\n        DiploWindow.set_offer_state(1, *reinterpret_cast<int *>(message + 0x10));', '{ const int first = *reinterpret_cast<int *>(message + 0x14);\n        const int second = *reinterpret_cast<int *>(message + 0x10);\n        DiploWindow.set_offer_state(0, first);\n        DiploWindow.set_offer_state(1, second); }'),
+        "checksum_row_cache": ('for (int index = 0; index < NetTurnChecksumWords; ++index) {\n            const int faction = big_data.faction();\n            const int value = big_data.data_word(index);', 'const int faction = big_data.faction();\n        for (int index = 0; index < NetTurnChecksumWords; ++index) {\n            const int value = big_data.data_word(index);'),
+        "no_deal_preload": ('DiploWindow.set_offer_state(0, packet.payload_14());\n        DiploWindow.set_offer_state(1, packet.payload_10());', '{ const int first = packet.payload_14();\n        const int second = packet.payload_10();\n        DiploWindow.set_offer_state(0, first);\n        DiploWindow.set_offer_state(1, second); }'),
         "no_deal_virtual_redraw": ('DiploWindow.GraphicWin::redraw();', 'DiploWindow.redraw();'),
     }
     before, after = mutations[damage]

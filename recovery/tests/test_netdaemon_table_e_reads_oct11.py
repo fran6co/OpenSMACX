@@ -31,8 +31,17 @@ def apply_table_e_read_migration(source):
     return apply_global_lock_signed_migration(source.replace(old, body, 1))
 
 
+def current_wire_types(source):
+    return "\n".join(extract(source, marker) + ";" for marker in (
+        "struct MessageDataRecord {", "class MessageCommandView {",
+        "struct MessageAcknowledgementPrefix {",
+        "class MessageAcknowledgementPrefixView {", "struct MessageLockRecord {",
+        "class MessageLockView {"))
+
+
 PREAMBLE = r'''
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <string>
@@ -131,35 +140,47 @@ def test_actual_table_e_callback_read_order(tmp_path, damage):
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
     body = extract(SOURCE.read_text(), "static bool netdaemon_process_table_e(")
-    sequence = "        const int sequence = *reinterpret_cast<int *>(message + 0x0C);"
+    sequence = "        const int sequence = packet.sequence();"
     lookup = "        (void)daemon.AlphaNet::who_2_idx(player_index);"
-    index = "        const int player_index = *reinterpret_cast<int *>(message + 0x10);"
+    index = "        const int player_index = packet.player_index();"
     changes = {
         "pre_log_index": (index, "        const int player_index = identity;"),
-        "post_lookup_index": (index+"\n"+lookup, "        (void)daemon.AlphaNet::who_2_idx(*reinterpret_cast<int *>(message + 0x10));\n"+index),
+        "post_lookup_index": (index, "        const int player_index = identity;"),
         "pre_lookup_sequence": (lookup+"\n"+sequence, sequence+"\n"+lookup),
-        "cached_add": ("daemon.locks_.add_lock(sender_identity,\n                *reinterpret_cast<int *>(message + 0x18),\n                *reinterpret_cast<int *>(message + 0x10),\n                *reinterpret_cast<int *>(message + 0x14))", "daemon.locks_.add_lock(sender_identity, cached_third, first, second)"),
+            "cached_add": ("daemon.locks_.add_lock(sender_identity,\n                packet.payload_18(), packet.payload_10(),\n                packet.payload_14())", "daemon.locks_.add_lock(sender_identity, cached_third, first, second)"),
     }
     if damage != "none":
         if damage == "cached_add":
-            declaration = "        const int second = *reinterpret_cast<int *>(message + 0x14);"
+            declaration = "        const int second = packet.payload_14();"
             assert body.count(declaration) == 1
-            body = body.replace(declaration, declaration + "\n        const int cached_third = *reinterpret_cast<int *>(message + 0x18);", 1)
+            body = body.replace(declaration, declaration + "\n        const int cached_third = packet.payload_18();", 1)
+            before, after = changes[damage]
+            before = before.replace("*reinterpret_cast<int *>(message + 0x18)", "packet.payload_18()")
+            before = before.replace("*reinterpret_cast<int *>(message + 0x10)", "packet.payload_10()")
+            before = before.replace("*reinterpret_cast<int *>(message + 0x14)", "packet.payload_14()")
+            changes[damage] = (before, after)
         before, after = changes[damage]
         assert body.count(before) == 1
         body = body.replace(before, after, 1)
     source = tmp_path / "table.cpp"
     binary = tmp_path / "table"
-    source.write_text(PREAMBLE + body + MAIN)
+    source.write_text(PREAMBLE + current_wire_types(SOURCE.read_text()) + body + MAIN)
     subprocess.run([compiler,"-std=c++11",str(source),"-o",str(binary)],
                    check=True,capture_output=True,timeout=60)
     result = subprocess.run([str(binary)],capture_output=True,timeout=10)
     assert (result.returncode == 0) == (damage == "none"), result.stderr
 
 
-def test_fixed_read_recipe_keeps_other_source_and_original_obligations():
+def test_historical_fixed_read_recipe_is_preserved_separately_from_current_source():
     old = subprocess.check_output(["git","show",BASE+":src/netdaemon.cpp"],cwd=ROOT,text=True)
-    assert apply_table_e_read_migration(old) == SOURCE.read_text()
+    migrated = apply_table_e_read_migration(old)
+    migrated_body = extract(migrated, "static bool netdaemon_process_table_e(")
+    assert "who_2_idx(player_index)" in migrated_body
+    assert "const int player_index = *reinterpret_cast<int *>(message + 0x10);" in migrated_body
+    assert "daemon.locks_.add_lock(sender_identity," in migrated_body
+    current_body = extract(SOURCE.read_text(), "static bool netdaemon_process_table_e(")
+    assert "packet.player_index()" in current_body and "packet.sequence()" in current_body
+    assert "packet.payload_18(), packet.payload_10()," in current_body
     with pytest.raises(AssertionError):
         apply_table_e_read_migration(old.replace("who_2_idx(identity)", "who_2_idx(0)"))
 

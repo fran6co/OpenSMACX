@@ -1763,15 +1763,38 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
 // to NetDaemon::send_message with NetBusyCount held for the duration. Only
 // the payload fields differ.
 //
-// The turn stamp is 0x0093E8BC, which is the daemon's own
-// lock_state_[0].dword_[0]: net_end_of_turn (0x00529F30) ends with
-// `++*0x0093E8BC`, once per turn, so the field counts turns for the whole
-// session. The stamp comes from the SDK timeGetTime import; its original
-// import-slot identity is bound beside the other audio clock consumers.
+// The sequence stamp is 0x0093E8BC, the current_owner field at offset 0x5A0
+// of NetDaemonNet.deletion_list_ (NetDaemonNet + 0x158C). The native
+// net_end_of_turn (0x00529F30) advances it once per turn. The stamp comes from
+// the SDK timeGetTime import; its original import-slot identity is bound
+// beside the other audio clock consumers.
 //
 // Payload parameters are named for the record offset they land at, which is
 // the one thing about them the bodies prove.
 // ---------------------------------------------------------------------------
+
+struct MessageVehicleRecord {
+    int16_t opcode_;
+    unsigned char unresolved_2_[2];
+    int32_t faction_;
+    uint32_t time_;
+    int32_t sequence_;
+    int32_t field_10_;
+    int32_t field_14_;
+};
+
+static_assert(sizeof(MessageVehicleRecord) == 0x18,
+              "vehicle message native transmitted extent");
+static_assert(offsetof(MessageVehicleRecord, faction_) == 0x04,
+              "vehicle message faction offset");
+static_assert(offsetof(MessageVehicleRecord, time_) == 0x08,
+              "vehicle message timestamp offset");
+static_assert(offsetof(MessageVehicleRecord, sequence_) == 0x0C,
+              "vehicle message sequence offset");
+static_assert(offsetof(MessageVehicleRecord, field_10_) == 0x10,
+              "vehicle message first payload offset");
+static_assert(offsetof(MessageVehicleRecord, field_14_) == 0x14,
+              "vehicle message second payload offset");
 
 // ORIGINAL: 0x00592E10 ?message_veh@@YAXHHHH@Z 0x00592E10-0x00592E70 BYTE_EXACT
 // size      96 bytes
@@ -1787,19 +1810,12 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
 //        SHAPE_EXACT to BYTE_EXACT.
 void __cdecl message_veh(int opcode, int payload_10, int payload_14,
                          int target) {
-    struct Message {
-        short opcode_;
-        int faction_;
-        unsigned long time_;
-        int turn_;
-        int field_10_;
-        int field_14_;
-    } message;
+    MessageVehicleRecord message;
 
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
-    message.turn_ = NetDaemonNet.deletion_list_.sequence_bits();
+    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
     message.field_10_ = payload_10;
     message.field_14_ = payload_14;
 
@@ -1809,6 +1825,29 @@ void __cdecl message_veh(int opcode, int payload_10, int payload_14,
     NetBusyCount--;
 }
 
+struct MessageBaseTextRecord {
+    int16_t opcode_;
+    unsigned char unresolved_2_[2];
+    int32_t faction_;
+    uint32_t time_;
+    int32_t sequence_;
+    int32_t payload_10_;
+    char text_[24];
+};
+
+static_assert(sizeof(MessageBaseTextRecord) == 0x2C,
+              "base text message native transmitted extent");
+static_assert(offsetof(MessageBaseTextRecord, faction_) == 0x04,
+              "base text message faction offset");
+static_assert(offsetof(MessageBaseTextRecord, time_) == 0x08,
+              "base text message timestamp offset");
+static_assert(offsetof(MessageBaseTextRecord, sequence_) == 0x0C,
+              "base text message sequence offset");
+static_assert(offsetof(MessageBaseTextRecord, payload_10_) == 0x10,
+              "base text message payload offset");
+static_assert(offsetof(MessageBaseTextRecord, text_) == 0x14,
+              "base text message text offset");
+
 // ORIGINAL: 0x00592E70 ?message_base@@YAXHHPADH@Z 0x00592E70-0x00592EDA BYTE_EXACT
 // size      106 bytes
 // prototype void (__cdecl ?message_base@@YAXHHPADH@Z)(int, int, char *, int)
@@ -1817,19 +1856,12 @@ void __cdecl message_veh(int opcode, int payload_10, int payload_14,
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00532940 0x00645460
 void __cdecl message_base(int opcode, int payload_10, char *text, int target) {
-    struct Message {
-        short opcode_;
-        int faction_;
-        unsigned long time_;
-        int turn_;
-        int payload_10_;
-        char text_[24];
-    } message;
+    MessageBaseTextRecord message;
 
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
-    message.turn_ = NetDaemonNet.deletion_list_.sequence_bits();
+    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
     message.payload_10_ = payload_10;
     strcpy(message.text_, text);
 
@@ -1916,11 +1948,168 @@ public:
         std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_18_), sizeof value);
         return value;
     }
+    int8_t payload_18_byte() const {
+        int8_t value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_18_), sizeof value);
+        return value;
+    }
     int payload_1C() const {
         int value;
         std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_1C_), sizeof value);
         return value;
     }
+private:
+    const unsigned char *bytes_;
+};
+
+// The 0x4406 vehicle and data producers share only the fields read by that
+// receiver arm. This view deliberately does not select either complete record.
+class MessageCommonCommandPrefixView {
+public:
+    explicit MessageCommonCommandPrefixView(const unsigned char *bytes) : bytes_(bytes) {}
+
+    int faction() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, faction_), sizeof value);
+        return value;
+    }
+    int timestamp_bits() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, timestamp_), sizeof value);
+        return value;
+    }
+    int payload_10() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_10_), sizeof value);
+        return value;
+    }
+    int payload_14() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_14_), sizeof value);
+        return value;
+    }
+
+private:
+    const unsigned char *bytes_;
+};
+
+class MessageVehicleView {
+public:
+    explicit MessageVehicleView(const unsigned char *bytes) : bytes_(bytes) {}
+
+    int faction() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageVehicleRecord, faction_), sizeof value);
+        return value;
+    }
+    int timestamp_bits() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageVehicleRecord, time_), sizeof value);
+        return value;
+    }
+    int payload_10() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageVehicleRecord, field_10_), sizeof value);
+        return value;
+    }
+    int payload_14() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageVehicleRecord, field_14_), sizeof value);
+        return value;
+    }
+
+private:
+    const unsigned char *bytes_;
+};
+
+class MessageBaseTextView {
+public:
+    explicit MessageBaseTextView(unsigned char *bytes) : bytes_(bytes) {}
+
+    int faction() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageBaseTextRecord, faction_), sizeof value);
+        return value;
+    }
+    int timestamp_bits() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageBaseTextRecord, time_), sizeof value);
+        return value;
+    }
+    int payload_10() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageBaseTextRecord, payload_10_), sizeof value);
+        return value;
+    }
+    char *text() const {
+        return reinterpret_cast<char *>(bytes_ + offsetof(MessageBaseTextRecord, text_));
+    }
+
+private:
+    unsigned char *bytes_;
+};
+
+// E2213 has only a consumer-backed sequence/player-index prefix; its producer
+// and any wider packet record remain unresolved.
+struct MessageAcknowledgementPrefix {
+    unsigned char unresolved_0_[0x0C];
+    int32_t sequence_;
+    int32_t player_index_;
+};
+
+static_assert(offsetof(MessageAcknowledgementPrefix, sequence_) == 0x0C,
+              "acknowledgement sequence offset");
+static_assert(offsetof(MessageAcknowledgementPrefix, player_index_) == 0x10,
+              "acknowledgement player-index offset");
+
+class MessageAcknowledgementPrefixView {
+public:
+    explicit MessageAcknowledgementPrefixView(const unsigned char *bytes)
+        : bytes_(bytes) {}
+
+    int32_t sequence() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(MessageAcknowledgementPrefix, sequence_), sizeof value);
+        return value;
+    }
+    int32_t player_index() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(MessageAcknowledgementPrefix, player_index_), sizeof value);
+        return value;
+    }
+
+private:
+    const unsigned char *bytes_;
+};
+
+// F4305/4306 support only these consumed fields, not a complete packet type.
+struct MessageEventPrefix {
+    unsigned char unresolved_0_[0x04];
+    int32_t faction_;
+    unsigned char unresolved_8_[0x08];
+    int32_t payload_10_;
+};
+
+static_assert(offsetof(MessageEventPrefix, faction_) == 0x04,
+              "event prefix faction offset");
+static_assert(offsetof(MessageEventPrefix, payload_10_) == 0x10,
+              "event prefix payload offset");
+
+class MessageEventPrefixView {
+public:
+    explicit MessageEventPrefixView(const unsigned char *bytes) : bytes_(bytes) {}
+
+    int faction() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageEventPrefix, faction_), sizeof value);
+        return value;
+    }
+    int payload_10() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageEventPrefix, payload_10_), sizeof value);
+        return value;
+    }
+
 private:
     const unsigned char *bytes_;
 };
@@ -1982,6 +2171,27 @@ static_assert(offsetof(MessageBigDataRecord, sequence_) == 0x0C,
               "bulk-data sequence word");
 static_assert(offsetof(MessageBigDataRecord, data_) == 0x10,
               "bulk-data thirty-two-word payload");
+
+class MessageBigDataView {
+public:
+    explicit MessageBigDataView(const unsigned char *bytes) : bytes_(bytes) {}
+
+    int faction() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageBigDataRecord, faction_), sizeof value);
+        return value;
+    }
+    int data_word(int index) const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageBigDataRecord, data_) +
+                              index * sizeof(int), sizeof value);
+        return value;
+    }
+
+private:
+    const unsigned char *bytes_;
+};
+
 static_assert(sizeof(MessageLandmarkRecord) == 0x40,
               "landmark native transmitted extent");
 static_assert(offsetof(MessageLandmarkRecord, faction_) == 0x04,
@@ -2088,6 +2298,65 @@ void __cdecl message_big_data(int opcode, int target, int *payload,
     NetBusyCount--;
 }
 
+struct MessageLockRecord {
+    int16_t opcode_;
+    unsigned char unresolved_2_[2];
+    int32_t faction_;
+    uint32_t time_;
+    int32_t sequence_;
+    int32_t field_10_;
+    int32_t field_14_;
+    int32_t field_18_;
+    int32_t field_1C_;
+    int32_t field_20_;
+    int32_t field_24_;
+};
+
+static_assert(sizeof(MessageLockRecord) == 0x28,
+              "lock message native transmitted extent");
+static_assert(offsetof(MessageLockRecord, faction_) == 0x04,
+              "lock message faction offset");
+static_assert(offsetof(MessageLockRecord, time_) == 0x08,
+              "lock message timestamp offset");
+static_assert(offsetof(MessageLockRecord, sequence_) == 0x0C,
+              "lock message sequence offset");
+static_assert(offsetof(MessageLockRecord, field_10_) == 0x10,
+              "lock message first payload offset");
+static_assert(offsetof(MessageLockRecord, field_14_) == 0x14,
+              "lock message second payload offset");
+static_assert(offsetof(MessageLockRecord, field_18_) == 0x18,
+              "lock message third payload offset");
+static_assert(offsetof(MessageLockRecord, field_1C_) == 0x1C,
+              "lock message fourth payload offset");
+static_assert(offsetof(MessageLockRecord, field_20_) == 0x20,
+              "lock message fifth payload offset");
+static_assert(offsetof(MessageLockRecord, field_24_) == 0x24,
+              "lock message sixth payload offset");
+
+class MessageLockView {
+public:
+    explicit MessageLockView(const unsigned char *bytes) : bytes_(bytes) {}
+
+    int payload_10() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_10_), sizeof value);
+        return value;
+    }
+    int payload_14() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_14_), sizeof value);
+        return value;
+    }
+    int payload_18() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_18_), sizeof value);
+        return value;
+    }
+
+private:
+    const unsigned char *bytes_;
+};
+
 // ORIGINAL: 0x00593090 ?message_lock@@YAXHHHHHHHH@Z 0x00593090-0x00593108 BYTE_EXACT
 // size      120 bytes
 // prototype void (__cdecl ?message_lock@@YAXHHHHHHHH@Z)(int, int, int, int, int, int, int, int)
@@ -2105,23 +2374,12 @@ void __cdecl message_big_data(int opcode, int target, int *payload,
 void __cdecl message_lock(int opcode, int target, int payload_10,
                           int payload_14, int payload_18, int payload_1C,
                           int payload_20, int send_target) {
-    struct Message {
-        short opcode_;
-        int faction_;
-        unsigned long time_;
-        int turn_;
-        int field_10_;
-        int field_14_;
-        int field_18_;
-        int field_1C_;
-        int field_20_;
-        int field_24_;
-    } message;
+    MessageLockRecord message;
 
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
-    message.turn_ = NetDaemonNet.deletion_list_.sequence_bits();
+    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
     message.field_10_ = payload_10;
     message.field_14_ = payload_14;
     message.field_18_ = target;
@@ -4662,6 +4920,7 @@ static void netdaemon_handle_withdraw_end_turn(NetDaemon *daemon,
 // 0x1303 UPKEEP INFO is a separate packet-selected wait-mask update below.
 static void netdaemon_complete_local_turn_wait(NetDaemon *daemon,
                                                 unsigned char *message) {
+    const MessageCommandView packet(message);
     const int faction = ConsoleGlobal.faction_id_;
     const uint32_t faction_bit =
         static_cast<uint32_t>(1) << (faction & 0x1F);
@@ -4672,8 +4931,7 @@ static void netdaemon_complete_local_turn_wait(NetDaemon *daemon,
         NetDaemonNet.primary_state_.leading_words_[0];
     if ((state & 2u) != 0 && waiting != 0xFF &&
         (((waiting & faction_bit) != 0) || assigned != 0) &&
-        *reinterpret_cast<int *>(message + 0x10) ==
-            GameDataStateStorage.fields_.turn_current_num_) {
+        packet.payload_10() == GameDataStateStorage.fields_.turn_current_num_) {
         NetDaemonNet.factions_waiting_mask() = waiting & ~faction_bit;
         NetDaemonNet.channels_[0].leading_words_[0] &= ~faction_bit;
         GameDataStateStorage.fields_.game_state_ = state & ~2u;
@@ -4684,13 +4942,11 @@ static void netdaemon_complete_local_turn_wait(NetDaemon *daemon,
 // 0x535048 is opcode 0x1303, "From Server: UPKEEP INFO".
 static void netdaemon_handle_server_upkeep_info(NetDaemon *daemon,
                                                  unsigned char *message) {
+    const MessageCommandView packet(message);
     log_say("From Server: UPKEEP INFO",
-            *reinterpret_cast<int *>(message + 0x10),
-            *reinterpret_cast<int *>(message + 0x14),
-            *reinterpret_cast<int *>(message + 0x18));
+            packet.payload_10(), packet.payload_14(), packet.payload_18());
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) return;
-    const unsigned int faction =
-        *reinterpret_cast<uint32_t *>(message + 0x10);
+    const unsigned int faction = static_cast<unsigned int>(packet.payload_10());
     daemon->channels_[0].leading_words_[1] |=
         static_cast<uint32_t>(1) << (faction & 0x1Fu);
     MultiWindow.draw(0);
@@ -4707,10 +4963,11 @@ static void netdaemon_handle_withdraw_approved(NetDaemon *daemon,
 // prelude, before its shared marker/Filemap/Popup tail.
 static bool netdaemon_handle_diplo_cd_message(unsigned short type,
                                                unsigned char *message) {
+    const MessageCommandView packet(message);
     switch (type) {
     case 0x1505: {
         log_say("Received CLOSE CHAN",
-                *reinterpret_cast<int *>(message + 4), 0, 0);
+                packet.faction(), 0, 0);
         if (CommlinkPending == 0) return true;
 
         DiploWindow.release_modal();
@@ -4718,11 +4975,11 @@ static bool netdaemon_handle_diplo_cd_message(unsigned short type,
         CommlinkPending = 0;
         if (language != 0) return true;
 
-        const int faction = *reinterpret_cast<int *>(message + 4);
+        const int faction = packet.faction();
         PluralityDefault = 0;
         GenderDefault = Players[faction].is_leader_female;
         parse_says(0, Players[faction].title_leader, -1, -1);
-        const int name_faction = *reinterpret_cast<int *>(message + 4);
+        const int name_faction = packet.faction();
         PluralityDefault = 0;
         GenderDefault = Players[name_faction].is_leader_female;
         parse_says(1, Players[name_faction].name_leader, -1, -1);
@@ -4731,67 +4988,61 @@ static bool netdaemon_handle_diplo_cd_message(unsigned short type,
     }
     case 0x1506:
         log_say("Received OPEN OFFER",
-                *reinterpret_cast<int *>(message + 4),
-                *reinterpret_cast<int *>(message + 0x10),
-                *reinterpret_cast<int *>(message + 0x14));
+                packet.faction(), packet.payload_10(), packet.payload_14());
         DiploWindow.add_offer(1,
-                              *reinterpret_cast<int *>(message + 0x10),
-                              *reinterpret_cast<int *>(message + 0x14));
+                              packet.payload_10(), packet.payload_14());
         DiploWindow.redraw();
         return true;
     case 0x1507:
         log_say("Received KILL OFFER",
-                *reinterpret_cast<int *>(message + 4),
-                *reinterpret_cast<int *>(message + 0x10), 0);
-        DiploWindow.kill_offer(*reinterpret_cast<int *>(message + 0x10), 1);
+                packet.faction(), packet.payload_10(), 0);
+        DiploWindow.kill_offer(packet.payload_10(), 1);
         DiploWindow.redraw();
         return true;
     case 0x1508:
         log_say("Received CLEAR OFFER",
-                *reinterpret_cast<int *>(message + 4), 0, 0);
+                packet.faction(), 0, 0);
         DiploWindow.receive_clear_offer();
         return true;
     case 0x1509:
         log_say("Received CHANNEL STATUS",
-                *reinterpret_cast<int *>(message + 4),
-                *reinterpret_cast<int *>(message + 0x10), 0);
-        DiploWindow.receive_channel_status(
-            *reinterpret_cast<int *>(message + 0x10));
+                packet.faction(), packet.payload_10(), 0);
+        DiploWindow.receive_channel_status(packet.payload_10());
         return true;
     case 0x150B:
         log_say("Received YES DEAL",
-                *reinterpret_cast<int *>(message + 4), 0, 0);
+                packet.faction(), 0, 0);
         DiploWindow.do_it();
         return true;
     case 0x150C:
         log_say("Received NO DEAL",
-                *reinterpret_cast<int *>(message + 4), 0, 0);
+                packet.faction(), 0, 0);
         // Native535A55 stores side0 before535A5B reads the second payload.
-        DiploWindow.set_offer_state(0, *reinterpret_cast<int *>(message + 0x14));
-        DiploWindow.set_offer_state(1, *reinterpret_cast<int *>(message + 0x10));
+        DiploWindow.set_offer_state(0, packet.payload_14());
+        DiploWindow.set_offer_state(1, packet.payload_10());
         DiploWindow.GraphicWin::redraw();
         return true;
     case 0x150D:
         log_say("Received DONE DEAL",
-                *reinterpret_cast<int *>(message + 4), 0, 0);
+                packet.faction(), 0, 0);
         DiploWindow.done_deal();
         return true;
     case 0x150E:
         log_say("Received DEMAND WITHDRAWAL",
-                *reinterpret_cast<int *>(message + 4), 0, 0);
+                packet.faction(), 0, 0);
         return true;
     case 0x150F: {
         log_say("Received VENDETTA WARNING",
-                *reinterpret_cast<int *>(message + 4), 0, 0);
-        const int faction = *reinterpret_cast<int *>(message + 4);
+                packet.faction(), 0, 0);
+        const int faction = packet.faction();
         PluralityDefault = 0;
         GenderDefault = Players[faction].is_leader_female;
         parse_says(0, Players[faction].title_leader, -1, -1);
-        const int name_faction = *reinterpret_cast<int *>(message + 4);
+        const int name_faction = packet.faction();
         PluralityDefault = 0;
         GenderDefault = Players[name_faction].is_leader_female;
         parse_says(1, Players[name_faction].name_leader, -1, -1);
-        const int noun_faction = *reinterpret_cast<int *>(message + 4);
+        const int noun_faction = packet.faction();
         GenderDefault = Players[noun_faction].noun_gender;
         PluralityDefault = Players[noun_faction].is_noun_plural;
         parse_says(2, Players[noun_faction].noun_faction, -1, -1);
@@ -4819,14 +5070,15 @@ static bool netdaemon_process_table_e(NetDaemon &daemon,
         return true;
 
     case 0x2213: {
-        const int identity = *reinterpret_cast<int *>(message + 0x10);
+        const MessageAcknowledgementPrefixView packet(message);
+        const int identity = packet.player_index();
         log_say("From Client: ACKNOWLEDGE", sender_identity, identity, 0);
 
         // The original performs this one-based lookup but discards EAX before
         // selecting the PlayerLock from the post-log packet word at +0x10.
-        const int player_index = *reinterpret_cast<int *>(message + 0x10);
+        const int player_index = packet.player_index();
         (void)daemon.AlphaNet::who_2_idx(player_index);
-        const int sequence = *reinterpret_cast<int *>(message + 0x0C);
+        const int sequence = packet.sequence();
 
         for (int table_index = 0; table_index < 24; ++table_index) {
             DeletionRecord &entry = daemon.deletion_list_.records_[table_index];
@@ -4871,22 +5123,22 @@ static bool netdaemon_process_table_e(NetDaemon &daemon,
         return true;
 
     case 0x2215: {
+        const MessageLockView packet(message);
         if (SpockHelpActive != 0 || TurnControlWord93A954 != 0) {
             log_say("(Sending: Lock failed -- REJECT)", 0, 0, 0);
             message_data(0x1208, sender_identity, 0, 0, 0, 0);
             return true;
         }
 
-        const int first = *reinterpret_cast<int *>(message + 0x10);
-        const int second = *reinterpret_cast<int *>(message + 0x14);
+        const int first = packet.payload_10();
+        const int second = packet.payload_14();
         log_say("From Client: ADD LOCK", sender_identity, first, second);
 
         // Stack push order at 0x535F64 passes slot, +0x18, +0x10, +0x14
         // to Lock::add_lock; preserve that non-obvious wire/ABI permutation.
         if (daemon.locks_.add_lock(sender_identity,
-                *reinterpret_cast<int *>(message + 0x18),
-                *reinterpret_cast<int *>(message + 0x10),
-                *reinterpret_cast<int *>(message + 0x14)) != 0) {
+                packet.payload_18(), packet.payload_10(),
+                packet.payload_14()) != 0) {
             log_say("(Sending: Add failed)", 0, 0, 0);
             message_data(0x1208, sender_identity, 0, 0, 0, 0);
         } else {
@@ -4916,6 +5168,9 @@ static bool netdaemon_process_table_e(NetDaemon &daemon,
 static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
                                      unsigned char *message, int sender_id,
                                      int sender_identity) {
+    const MessageEventPrefixView event(message);
+    const MessageBigDataView big_data(message);
+    const MessageCommandView packet(message);
     switch (type) {
     case 0x4304:
         log_say("From Server: UPKEEP_BASE", sender_identity, 0, 0);
@@ -4923,19 +5178,19 @@ static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
         return true;
 
     case 0x4305: {
-        const int incoming = *reinterpret_cast<int *>(message + 0x10);
+        const int incoming = event.payload_10();
         log_say("From Server: MSG_EVENTS", sender_identity, incoming, 0);
-        const int updated = *reinterpret_cast<int *>(message + 0x10);
+        const int updated = event.payload_10();
         if (static_cast<int32_t>(NetDaemonNet.network_message_count()) <= updated)
             NetDaemonNet.network_message_count() = static_cast<uint32_t>(updated);
         return true;
     }
 
     case 0x4306: {
-        const int event_value = *reinterpret_cast<int *>(message + 0x10);
+        const int event_value = event.payload_10();
         log_say("From Server: MSG_TIME_BONUS",
-                *reinterpret_cast<int *>(message + 4), event_value, 0);
-        const int faction_id = *reinterpret_cast<int *>(message + 4);
+                event.faction(), event_value, 0);
+        const int faction_id = event.faction();
         if (ConsoleControlTurnActive != 0) return true;
 
         if (PlayersData[faction_id].time_bonus_count <= 0) return true;
@@ -4962,9 +5217,8 @@ static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
     case 0x4307: {
         // Native536762 reloads the unchecked faction before every payload read.
         for (int index = 0; index < NetTurnChecksumWords; ++index) {
-            const int faction = *reinterpret_cast<int *>(message + 4);
-            const int value = *reinterpret_cast<int *>(
-                message + 0x10 + index * sizeof(int));
+            const int faction = big_data.faction();
+            const int value = big_data.data_word(index);
             NetPeerTurnChecksums[faction][index] = value;
         }
         return true;
@@ -4972,8 +5226,8 @@ static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
 
     case 0x4309: {
         log_say("From Server: NEXT PLAYER TURN",
-                *reinterpret_cast<int *>(message + 0x10), 0, 0);
-        const int faction_id = *reinterpret_cast<int *>(message + 0x10);
+                packet.payload_10(), 0, 0);
+        const int faction_id = packet.payload_10();
         GameDataStateStorage.fields_.net_turn_faction_ = faction_id;
         const bool local_turn = faction_id == ConsoleGlobal.faction_id_;
         if (local_turn) TurnControlWord93A954 = 0;
@@ -5016,17 +5270,29 @@ static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
     }
 }
 
+// The console 0x2417/0x2418 senders use message_veh592E10's 0x18-byte record
+// and route y as send_message's target argument. Pinned relay537F7A..537FC6
+// changes the opcode to 0x4417/0x4418 without extending that length. Receive
+// copies only declared bytes into uncleared NetGetScratch; receiver53695F..
+// 5369E3 nevertheless reads a dword at +0x18. Preserve this scratch-residue
+// read; it is not a serialized vehicle member or a server-added extension.
+static int netdaemon_read_unserialized_table_g_y(const unsigned char *message) {
+    int value;
+    std::memcpy(&value, message + 0x18, sizeof value);
+    return value;
+}
+
 // These Table G arms belong to the original process_message dispatcher, not
 // independent original functions. Its six holes join the shared forwarding
 // path; concrete arms retain their distinct native capture and tail routes.
-static int netdaemon_table_g_word(unsigned char *msg, int offset) {
-    return *reinterpret_cast<int *>(msg + offset);
-}
-
 static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
                                       unsigned short type,
                                       int entry_packet_faction,
                                       uint32_t entry_sequence) {
+    const MessageCommandView data(msg);
+    const MessageCommonCommandPrefixView common(msg);
+    const MessageVehicleView vehicle(msg);
+    const MessageBaseTextView base_text(msg);
     // These three native tails are intentionally distinct: the original
     // dispatch arms enter them at different addresses and 0x4411 bypasses
     // sequence/local-owner processing altogether.
@@ -5037,128 +5303,124 @@ static bool netdaemon_process_table_g(NetDaemon &daemon, unsigned char *msg,
 
     switch (type) {
     case 0x4405: {
-        log_say("From Server: SPECIAL TERRAFORM", netdaemon_table_g_word(msg, 4),
-                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
-        my_srand(netdaemon_table_g_word(msg, 8));
-        const int vehicle_id = netdaemon_table_g_word(msg, 0x10);
+        log_say("From Server: SPECIAL TERRAFORM", data.faction(),
+                data.payload_10(), data.payload_14());
+        my_srand(data.timestamp_bits());
+        const int vehicle_id = data.payload_10();
         const uint32_t order_word = static_cast<uint32_t>(
-            netdaemon_table_g_word(msg, 0x14)) - 4u;
+            data.payload_14()) - 4u;
         int32_t order;
         memcpy(&order, &order_word, sizeof order);
         action_terraform(vehicle_id, order, 1);
-        Vehs[vehicle_id].order = *reinterpret_cast<int8_t *>(msg + 0x18);
+        Vehs[vehicle_id].order = data.payload_18_byte();
         tail = TailDispatch;
         break;
     }
     case 0x4406:
-        log_say("From Server: DESTROY TERRAIN", netdaemon_table_g_word(msg, 4),
-                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
-        my_srand(netdaemon_table_g_word(msg, 8));
-        action_destroy(netdaemon_table_g_word(msg, 0x10),
-                       netdaemon_table_g_word(msg, 0x14), -1, -1);
+        log_say("From Server: DESTROY TERRAIN", common.faction(),
+                common.payload_10(), common.payload_14());
+        my_srand(common.timestamp_bits());
+        action_destroy(common.payload_10(), common.payload_14(), -1, -1);
         tail = TailSequence;
         break;
     case 0x4407:
-        log_say("From Server: KILL VEH", netdaemon_table_g_word(msg, 4),
-                netdaemon_table_g_word(msg, 0x10), 0);
-        my_srand(netdaemon_table_g_word(msg, 8));
-        if (netdaemon_table_g_word(msg, 0x14) != 0) {
-            action_destruct(netdaemon_table_g_word(msg, 0x10));
+        log_say("From Server: KILL VEH", vehicle.faction(),
+                vehicle.payload_10(), 0);
+        my_srand(vehicle.timestamp_bits());
+        if (vehicle.payload_14() != 0) {
+            action_destruct(vehicle.payload_10());
         } else {
-            kill(netdaemon_table_g_word(msg, 0x10));
+            kill(vehicle.payload_10());
         }
         tail = TailDispatch;
         break;
     case 0x4416:
-        log_say("From Server: GIVE VEH", netdaemon_table_g_word(msg, 4),
-                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
-        my_srand(netdaemon_table_g_word(msg, 8));
-        action_give(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        log_say("From Server: GIVE VEH", vehicle.faction(),
+                vehicle.payload_10(), vehicle.payload_14());
+        my_srand(vehicle.timestamp_bits());
+        action_give(vehicle.payload_10(), vehicle.payload_14());
         tail = TailSequence;
         break;
     case 0x4408:
         log_say("From Server: BUILD BASE",
-                reinterpret_cast<char *>(msg + 0x14), netdaemon_table_g_word(msg, 4),
-                netdaemon_table_g_word(msg, 0x10), 0);
-        my_srand(netdaemon_table_g_word(msg, 8));
-        action_build(netdaemon_table_g_word(msg, 0x10), reinterpret_cast<char *>(msg + 0x14));
+                base_text.text(), base_text.faction(), base_text.payload_10(), 0);
+        my_srand(base_text.timestamp_bits());
+        action_build(base_text.payload_10(), base_text.text());
         tail = TailSequence;
         break;
     case 0x4409: {
-        const int vehicle_id = netdaemon_table_g_word(msg, 0x10);
-        log_say("From Server: OBLIT", netdaemon_table_g_word(msg, 4),
-                vehicle_id, netdaemon_table_g_word(msg, 0x14));
-        my_srand(netdaemon_table_g_word(msg, 8));
-        action_oblit(vehicle_id, netdaemon_table_g_word(msg, 0x14));
+        const int vehicle_id = vehicle.payload_10();
+        log_say("From Server: OBLIT", vehicle.faction(),
+                vehicle_id, vehicle.payload_14());
+        my_srand(vehicle.timestamp_bits());
+        action_oblit(vehicle_id, vehicle.payload_14());
         log_say("Acknowledging OBLIT", 0, 0, 0);
         tail = TailSequence;
         break;
     }
     case 0x4410: {
-        const int vehicle_id = netdaemon_table_g_word(msg, 0x10);
-        log_say("From Server: GATE", netdaemon_table_g_word(msg, 4),
-                vehicle_id, netdaemon_table_g_word(msg, 0x14));
-        action_gate(vehicle_id, netdaemon_table_g_word(msg, 0x14));
+        const int vehicle_id = vehicle.payload_10();
+        log_say("From Server: GATE", vehicle.faction(),
+                vehicle_id, vehicle.payload_14());
+        action_gate(vehicle_id, vehicle.payload_14());
         log_say("Acknowledging GATE", 0, 0, 0);
         tail = TailSequence;
         break;
     }
     case 0x4411:
-        log_say("From Server: UPGRADE UNIT", netdaemon_table_g_word(msg, 4),
-                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
-        my_srand(netdaemon_table_g_word(msg, 8));
-        do_upgrade(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14),
-                   netdaemon_table_g_word(msg, 0x18));
+        log_say("From Server: UPGRADE UNIT", data.faction(),
+                data.payload_10(), data.payload_14());
+        my_srand(data.timestamp_bits());
+        do_upgrade(data.payload_10(), data.payload_14(), data.payload_18());
         tail = TailUpgrade;
         break;
     case 0x4412:
-        log_say("From Server: SATELLITE ATTACK", netdaemon_table_g_word(msg, 0x10),
-                netdaemon_table_g_word(msg, 0x14), netdaemon_table_g_word(msg, 0x18));
+        log_say("From Server: SATELLITE ATTACK", data.payload_10(),
+                data.payload_14(), data.payload_18());
         log_say("From Server: SMACX SAT ATTACK:  GSP Base Target",
-                netdaemon_table_g_word(msg, 0x1c), 0, 0);
-        my_srand(netdaemon_table_g_word(msg, 8));
-        action_sat_attack(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14),
-                          netdaemon_table_g_word(msg, 0x18), netdaemon_table_g_word(msg, 0x1c));
+                data.payload_1C(), 0, 0);
+        my_srand(data.timestamp_bits());
+        action_sat_attack(data.payload_10(), data.payload_14(),
+                          data.payload_18(), data.payload_1C());
         log_say("Acknowledging SATELLITE ATTACK", 0, 0, 0);
         tail = TailDispatch;
         break;
     case 0x4413:
-        log_say("From Server: DESTROY TERRAIN2", netdaemon_table_g_word(msg, 0x10),
-                netdaemon_table_g_word(msg, 0x14), netdaemon_table_g_word(msg, 0x18));
-        my_srand(netdaemon_table_g_word(msg, 8));
-        action_destroy(netdaemon_table_g_word(msg, 0x10), 0,
-                       netdaemon_table_g_word(msg, 0x14), netdaemon_table_g_word(msg, 0x18));
+        log_say("From Server: DESTROY TERRAIN2", data.payload_10(),
+                data.payload_14(), data.payload_18());
+        my_srand(data.timestamp_bits());
+        action_destroy(data.payload_10(), 0, data.payload_14(), data.payload_18());
         tail = TailSequence;
         break;
     case 0x4414:
-        log_say("From Server: NERVE STAPLE", netdaemon_table_g_word(msg, 0x10), 0, 0);
-        my_srand(netdaemon_table_g_word(msg, 8));
-        action_staple(netdaemon_table_g_word(msg, 0x10));
+        log_say("From Server: NERVE STAPLE", data.payload_10(), 0, 0);
+        my_srand(data.timestamp_bits());
+        action_staple(data.payload_10());
         log_say("Acknowledging NERVE STAPLE", 0, 0, 0);
         tail = TailSequence;
         break;
     case 0x4415:
-        log_say("From Server: RETIRE PROTO", netdaemon_table_g_word(msg, 4),
-                netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
-        my_srand(netdaemon_table_g_word(msg, 8));
-        retire_proto(netdaemon_table_g_word(msg, 0x10), netdaemon_table_g_word(msg, 0x14));
+        log_say("From Server: RETIRE PROTO", data.faction(),
+                data.payload_10(), data.payload_14());
+        my_srand(data.timestamp_bits());
+        retire_proto(data.payload_10(), data.payload_14());
         tail = TailSequence;
         break;
     case 0x4417: {
-        const int vehicle_id = netdaemon_table_g_word(msg, 0x10);
-        const int x = netdaemon_table_g_word(msg, 0x14);
-        const int y = netdaemon_table_g_word(msg, 0x18);
-        my_srand(netdaemon_table_g_word(msg, 8));
+        const int vehicle_id = vehicle.payload_10();
+        const int x = vehicle.payload_14();
+        const int y = netdaemon_read_unserialized_table_g_y(msg);
+        my_srand(vehicle.timestamp_bits());
         action_tectonic(vehicle_id, x, y);
         log_say("Acknowledging TECTONIC", entry_packet_faction, 0, 0);
         tail = TailDispatch;
         break;
     }
     case 0x4418: {
-        const int vehicle_id = netdaemon_table_g_word(msg, 0x10);
-        const int x = netdaemon_table_g_word(msg, 0x14);
-        const int y = netdaemon_table_g_word(msg, 0x18);
-        my_srand(netdaemon_table_g_word(msg, 8));
+        const int vehicle_id = vehicle.payload_10();
+        const int x = vehicle.payload_14();
+        const int y = netdaemon_read_unserialized_table_g_y(msg);
+        my_srand(vehicle.timestamp_bits());
         action_fungal(vehicle_id, x, y);
         log_say("Acknowledging FUNGAL", entry_packet_faction, 0, 0);
         tail = TailDispatch;
@@ -5435,11 +5697,12 @@ static int netdaemon_run_contact_prompt(Popup &popup, int faction_id) {
 static bool netdaemon_handle_direct_diplomacy_complete(
     NetDaemon &daemon, unsigned short type, unsigned char *message, Popup &popup,
     int &contact_response_mask) {
+    const MessageCommandView packet(message);
     switch (type) {
     case 0x1501: {
         log_say("Received OPEN CHAN",
-                *reinterpret_cast<int *>(message + 4), 0, 0);
-        const int sender = *reinterpret_cast<int *>(message + 4);
+                packet.faction(), 0, 0);
+        const int sender = packet.faction();
         const uint32_t sender_bit =
             1u << (static_cast<uint32_t>(sender) & 31u);
         if ((static_cast<uint32_t>(contact_response_mask) & sender_bit) != 0) {
@@ -5500,30 +5763,30 @@ static bool netdaemon_handle_direct_diplomacy_complete(
     }
     case 0x1502: {
         log_say("Received OPEN ACKNOWLEDGE",
-                *reinterpret_cast<int *>(message + 4), 0, 0);
+                packet.faction(), 0, 0);
         if (CommlinkPending != 0 &&
-            *reinterpret_cast<int *>(message + 4) != CommlinkFaction) {
-            message_data(0x1505, *reinterpret_cast<int *>(message + 4), 0, 0, 0, 0);
+            packet.faction() != CommlinkFaction) {
+            message_data(0x1505, packet.faction(), 0, 0, 0, 0);
             return true;
         }
         if (DiploWindow.is_visible() != 0) return true;
         message_data(0x2441, 0, ConsoleGlobal.faction_id_,
-                     *reinterpret_cast<int *>(message + 4), 8, 0);
-        diplo(ConsoleGlobal.faction_id_, *reinterpret_cast<int *>(message + 4));
+                     packet.faction(), 8, 0);
+        diplo(ConsoleGlobal.faction_id_, packet.faction());
         return true;
     }
     case 0x1503: {
         CommlinkPending = 0;
-        log_say("Received OPEN REFUSE", *reinterpret_cast<int *>(message + 4), 0, 0);
-        const int sender = *reinterpret_cast<int *>(message + 4);
+        log_say("Received OPEN REFUSE", packet.faction(), 0, 0);
+        const int sender = packet.faction();
         GenderDefault = Players[sender].is_leader_female;
         PluralityDefault = 0;
         parse_says(0, Players[sender].title_leader, -1, -1);
-        const int name_sender = *reinterpret_cast<int *>(message + 4);
+        const int name_sender = packet.faction();
         GenderDefault = Players[name_sender].is_leader_female;
         PluralityDefault = 0;
         parse_says(1, Players[name_sender].name_leader, -1, -1);
-        const int response = *reinterpret_cast<int *>(message + 0x10);
+        const int response = packet.payload_10();
         if (response == 0)
             NetMsgPrimary.pop("DIPLOREFUSE", 5000, 0, 0);
         else if (response == 1)
@@ -5532,16 +5795,16 @@ static bool netdaemon_handle_direct_diplomacy_complete(
     }
     case 0x1504: {
         CommlinkPending = 0;
-        log_say("Received OPEN BUSY", *reinterpret_cast<int *>(message + 4), 0, 0);
-        const int sender = *reinterpret_cast<int *>(message + 4);
+        log_say("Received OPEN BUSY", packet.faction(), 0, 0);
+        const int sender = packet.faction();
         GenderDefault = Players[sender].is_leader_female;
         PluralityDefault = 0;
         parse_says(0, Players[sender].title_leader, -1, -1);
-        const int name_sender = *reinterpret_cast<int *>(message + 4);
+        const int name_sender = packet.faction();
         GenderDefault = Players[name_sender].is_leader_female;
         PluralityDefault = 0;
         parse_says(1, Players[name_sender].name_leader, -1, -1);
-        const int response = *reinterpret_cast<int *>(message + 0x10);
+        const int response = packet.payload_10();
         if (response == 0)
             NetMsgPrimary.pop("DIPLOBUSY", 5000, 0, 0);
         else if (response == 1)
@@ -5549,8 +5812,8 @@ static bool netdaemon_handle_direct_diplomacy_complete(
         return true;
     }
     case 0x150A: {
-        log_say("Received MAYBE DEAL", *reinterpret_cast<int *>(message + 4), 0, 0);
-        DiploWindow.receive_maybe_deal(*reinterpret_cast<int *>(message + 4));
+        log_say("Received MAYBE DEAL", packet.faction(), 0, 0);
+        DiploWindow.receive_maybe_deal(packet.faction());
         return true;
     }
     default:

@@ -13,6 +13,19 @@ BASE="8deec1275"
 FIXTURE=Path(__file__).with_name("netdaemon-typed-storage-oct11.patch")
 
 
+def table_g_wire_types(source):
+    declarations = (
+        "struct MessageVehicleRecord {",
+        "struct MessageBaseTextRecord {",
+        "struct MessageDataRecord {",
+        "class MessageCommandView {",
+        "class MessageCommonCommandPrefixView {",
+        "class MessageVehicleView {",
+        "class MessageBaseTextView {",
+    )
+    return "\n".join(extract(source, marker) + ";" for marker in declarations)
+
+
 def hunks(relative):
     section=next(part for part in FIXTURE.read_text().split("diff --git ")[1:]
                  if part.startswith("a/"+relative+" b/"+relative+"\n"))
@@ -69,6 +82,7 @@ PREAMBLE=r'''
 #include <stdint.h>
 #include <cstring>
 #include <cstddef>
+@@WIRE_TYPES@@
 @@LOCK_STATE@@
 struct Primary { uint32_t leading_words_[3]; };
 struct Sequence { uint32_t value; void set_sequence_bits(uint32_t v) { value=v; } };
@@ -156,7 +170,8 @@ def test_actual_dispatch_uses_real_channel_members_and_full_pending_width(tmp_pa
     source=(ROOT/"src/netdaemon.cpp").read_text()
     body="\n".join(extract(source,s) for s in (
         "static void netdaemon_process_message_marker_tail(",
-        "static int netdaemon_table_g_word(","static bool netdaemon_process_table_g(",
+        "static int netdaemon_read_unserialized_table_g_y(",
+        "static bool netdaemon_process_table_g(",
         "static bool netdaemon_handle_lock_mask_residual("))
     changes={
         "wrong_local_word":("channels_[1].trailing_words_[2]","channels_[1].trailing_words_[1]"),
@@ -170,7 +185,8 @@ def test_actual_dispatch_uses_real_channel_members_and_full_pending_width(tmp_pa
     # assertions plus a fresh32-bit application build qualify the actual ABI.
     declaration=declaration.replace("int *vehicle_selection_follow;","uint32_t vehicle_selection_follow;")
     cpp=tmp_path/"storage.cpp"; exe=tmp_path/"storage"
-    cpp.write_text(PREAMBLE.replace("@@LOCK_STATE@@",declaration)+body+MAIN)
+    cpp.write_text(PREAMBLE.replace("@@WIRE_TYPES@@",table_g_wire_types(source))
+                   .replace("@@LOCK_STATE@@",declaration)+body+MAIN)
     subprocess.run([compiler,"-std=c++03","-fsanitize=undefined,bounds","-fno-sanitize-recover=all",str(cpp),"-o",str(exe)],check=True,capture_output=True,timeout=60)
     result=subprocess.run([str(exe)],capture_output=True,timeout=10)
     assert (result.returncode==0)==(damage=="none"),result.stderr
@@ -208,9 +224,22 @@ def test_pinned_native_channel_offsets_and_pending_width():
 
 G_CALLBACK_CONTROL = r'''
 #include <cassert>
+#include <cstdio>
+#include <cstdlib>
 #include <stdint.h>
 #include <cstring>
+#include <cstddef>
+@@WIRE_TYPES@@
 @@LOCK_STATE@@
+static const char *mutation_diagnostic = "@@MUTATION_DIAGNOSTIC@@";
+static void checked(bool condition) {
+    if (!condition) {
+        std::fprintf(stderr, "%s\n", mutation_diagnostic);
+        std::exit(98);
+    }
+}
+#undef assert
+#define assert(condition) checked(!!(condition))
 struct Primary { uint32_t leading_words_[3]; };
 struct Sequence { uint32_t value; void set_sequence_bits(uint32_t v) { value=v; } };
 struct NetDaemon { Primary primary_state_; LockStateEntry channels_[2]; Sequence deletion_list_; void route(char *); };
@@ -230,7 +259,10 @@ static void log_say(const char *text,int a,int,int) {
     if (!std::strncmp(text,"From Server:",12)) mutate(1);
     else if (!std::strncmp(text,"Acknowledging",13)) ack_faction=a;
 }
-static void log_say(const char *text,char *,int,int,int) { log_say(text,0,0,0); }
+static void log_say(const char *text,char *value,int,int,int) {
+    assert(value==reinterpret_cast<char *>(packet)+0x14);
+    log_say(text,0,0,0);
+}
 static void my_srand(int) { ++seeds; mutate(2); }
 static void call(int kind,int a,int b=0,int c=0,int d=0) {
     ++called; args[0]=a;args[1]=b;args[2]=c;args[3]=d;
@@ -319,7 +351,8 @@ def test_actual_table_g_native_routes_and_callback_captures(tmp_path, compiler):
     source=(ROOT/"src/netdaemon.cpp").read_text()
     body="\n".join(extract(source,s) for s in (
         "static void netdaemon_process_message_marker_tail(",
-        "static int netdaemon_table_g_word(", "static bool netdaemon_process_table_g("))
+        "static int netdaemon_read_unserialized_table_g_y(",
+        "static bool netdaemon_process_table_g("))
     process=extract(source,"void NetDaemon::process_message(")
     capture=process[process.index("    unsigned char *msg ="):process.index("\n\n    // Masked file-transfer")]
     start=process.index("    if (netdaemon_process_table_g(")
@@ -329,39 +362,63 @@ def test_actual_table_g_native_routes_and_callback_captures(tmp_path, compiler):
     body+="\nvoid NetDaemon::route(char *message) {\n"+capture+"\n"+process[start:stop]+"\nassert(false);\n}"
     declaration=extract((ROOT/"src/netdaemon.h").read_text(),"struct LockStateEntry {")+";"
     declaration=declaration.replace("int *vehicle_selection_follow;","uint32_t vehicle_selection_follow;")
-    def run(candidate):
+    def run(candidate, diagnostic="Table G control unexpectedly failed"):
         cpp=tmp_path/"g.cpp";exe=tmp_path/"g"
-        cpp.write_text(G_CALLBACK_CONTROL.replace("@@LOCK_STATE@@",declaration).replace("@@ACTUAL_SOURCE@@",candidate))
+        harness=(G_CALLBACK_CONTROL
+                 .replace("@@WIRE_TYPES@@",table_g_wire_types(source))
+                 .replace("@@LOCK_STATE@@",declaration)
+                 .replace("@@MUTATION_DIAGNOSTIC@@",diagnostic)
+                 .replace("@@ACTUAL_SOURCE@@",candidate))
+        cpp.write_text(harness)
         build=subprocess.run([compiler,"-std=c++03","-Wall","-Wextra","-Werror","-Wno-unused-function","-fsanitize=address,undefined",
                               str(cpp),"-o",str(exe)],capture_output=True,text=True,timeout=60)
         assert build.returncode==0,build.stderr
         return subprocess.run([str(exe)],capture_output=True,text=True,timeout=10,
                               env=dict(os.environ,ASAN_OPTIONS="detect_leaks=0"))
     result=run(body);assert result.returncode==0,result.stderr
-    for before,after in (
-        ("action_oblit(vehicle_id,", "action_give(vehicle_id,"),
-        ("case 0x4408:", "case 0x4408 + 1:"),
-        ("set_sequence_bits(entry_sequence)","set_sequence_bits(netdaemon_table_g_word(msg, 0x0c) + 0u * entry_sequence)"),
-        ("entry_packet_faction == ConsoleGlobal.faction_id_","netdaemon_table_g_word(msg, 4) == ConsoleGlobal.faction_id_"),
-        ("Vehs[vehicle_id].order", "Vehs[netdaemon_table_g_word(msg, 0x10)].order"),
-        ("action_tectonic(vehicle_id, x, y)","action_tectonic(netdaemon_table_g_word(msg, 0x10) + 0 * vehicle_id, x, y)"),
-        ("action_fungal(vehicle_id, x, y)","action_fungal(vehicle_id, netdaemon_table_g_word(msg, 0x14) + 0 * x, y)"),
-        ("Acknowledging TECTONIC\", entry_packet_faction", "Acknowledging TECTONIC\", 0"),
-        ("action_gate(vehicle_id,", "action_gate(netdaemon_table_g_word(msg, 0x10),"),
-        ("entry_packet_faction, entry_sequence))", "entry_sequence, entry_packet_faction))"),
-    ):
-        # Keep every damage control compiling; routing changes must fail at
-        # runtime, not through duplicate/missing switch labels or APIs.
-        if before=="case 0x4408:":
-            mutant=body.replace("case 0x4408:","case 0x440A:",1)
+    mutations=(
+        ("wrong_action", "action_oblit(vehicle_id,", "action_give(vehicle_id,"),
+        ("missing_arm", "case 0x4408:", "case 0x440A:"),
+        ("stale_sequence", "set_sequence_bits(entry_sequence)",
+         "set_sequence_bits(entry_sequence + 1)"),
+        ("live_tail_faction", "entry_packet_faction == ConsoleGlobal.faction_id_",
+         "vehicle.faction() == ConsoleGlobal.faction_id_"),
+        ("late_order_vehicle", "Vehs[vehicle_id].order",
+         "Vehs[data.payload_10()].order"),
+            ("late_tectonic_vehicle", "action_tectonic(vehicle_id, x, y)",
+             "action_tectonic(vehicle_id + 1, x, y)"),
+        ("late_fungal_x", "action_fungal(vehicle_id, x, y)",
+             "action_fungal(vehicle_id, x + 1, y)"),
+        ("wrong_ack_faction", "Acknowledging TECTONIC\", entry_packet_faction",
+         "Acknowledging TECTONIC\", vehicle.faction()"),
+        ("wrong_gate_field", "action_gate(vehicle_id, vehicle.payload_14())",
+         "action_gate(vehicle.payload_14(), vehicle.payload_14())"),
+        ("wrong_scratch_variant", "netdaemon_read_unserialized_table_g_y(msg)",
+         "vehicle.payload_14()"),
+        ("cached_common_prefix", "action_destroy(common.payload_10(), common.payload_14(), -1, -1)",
+         "action_destroy(1, common.payload_14(), -1, -1)"),
+        ("wrong_base_text_variant", "base_text.text(), base_text.faction()",
+         "reinterpret_cast<char *>(data.payload_14()), base_text.faction()"),
+        ("wrong_base_payload", "action_build(base_text.payload_10(), base_text.text())",
+         "action_build(data.payload_14(), base_text.text())"),
+    )
+    for label,before,after in mutations:
+        if label=="missing_arm":
+            mutant=body.replace(before,after,1)
         else:
-            assert before in body;mutant=body.replace(before,after)
-        damaged=run(mutant);assert damaged.returncode!=0,before
-    missing_store=body.replace("        tail = TailDispatch;\n        break;\n    case 0x4416:",
-        "        Vehs[netdaemon_table_g_word(msg, 0x10)].order = *reinterpret_cast<int8_t *>(msg + 0x18);\n"
-        "        tail = TailDispatch;\n        break;\n    case 0x4416:",1)
-    assert missing_store!=body
-    assert run(missing_store).returncode!=0
+            assert body.count(before)>=1,(label,before)
+            mutant=body.replace(before,after,1)
+        diagnostic=f"Table G mutant detected: {label}"
+        damaged=run(mutant,diagnostic)
+        assert damaged.returncode==98,(label,damaged.returncode,damaged.stderr)
+        assert damaged.stderr.strip()==diagnostic,(label,damaged.stderr)
+    wrong_send_captures=body.replace(
+        "netdaemon_process_table_g(*this, msg, type,\n                                  entry_packet_faction, entry_sequence)",
+        "netdaemon_process_table_g(*this, msg, type,\n                                  entry_sequence, entry_packet_faction)",1)
+    assert wrong_send_captures!=body
+    diagnostic="Table G mutant detected: swapped entry captures"
+    damaged=run(wrong_send_captures,diagnostic)
+    assert damaged.returncode==98 and damaged.stderr.strip()==diagnostic
 
 
 def test_pinned_complete_table_g_targets_captures_and_shared_default():
