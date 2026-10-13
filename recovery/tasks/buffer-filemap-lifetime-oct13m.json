@@ -1,0 +1,50 @@
+{
+  "author": "coordinator",
+  "base_revision": "4744d05114ef8565dc24f8f3eee87b5f17f00627",
+  "editable_files": [
+    "src/buffer.cpp",
+    "recovery/tests/test_buffer_filemap_lifetime_oct13m.py"
+  ],
+  "evidence": [
+    "Pinned 5D7B40/5D7CA0 register their cold+11 handlers and one-state cleanup-only FuncInfo, with no try-count/map; cleanup transfers to Filemap::~Filemap6283E0. Current catch/rethrow emits three-state96-byte metadata and a catch map absent from the original.",
+    "Keep lexical Filemap construction before null checks, original path/extension scan and localized suffixes, open_read(path,1), ignored GetFileSize result and returns3/6/8 with destructor on every exit. Pinned sole indirect calls5D7C41/5D7DA1 use KERNEL32 GetFileSize IAT669130; no missing decoder is inferred.",
+    "Remove only the artificial catch/rethrow and its superseded active justification; preserve historical TRIED seed findings as historical uncertainty, and preserve all original identities/spans/claims. No compiler policy, signatures, headers, Filemap implementation, safety guards or error-path normalization are authorized.",
+    "Plain lexical-lifetime emission must be measured freshly in both configured trials; old plain-local no-SEH observation remains a hint, not authority to retain an original-absent catch. Verify emitted registration/FuncInfo/cleanup, actual-source behavior controls, complete native bodies and affected wrapper claims, build/link, outside-function compiler preservation and independent review. Masked equality is not full linked/runtime acceptance."
+  ],
+  "intent": "Restore original cleanup-only Filemap lifetimes in Buffer filename TGA/BMP loaders; preserve normal paths and original quirks without forced catch/rethrow.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6126400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6126752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6126368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6126720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6456192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6456288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-filemap-lifetime-oct13m"
+}
