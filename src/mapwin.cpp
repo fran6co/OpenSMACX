@@ -6027,9 +6027,9 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
                 strcat(StringTemp, " ");
                 strcat(StringTemp, "(");
                 const int destination = triad == 0
-                    ? source.auto_forward_land_base_id
-                    : triad == 1 ? source.auto_forward_sea_base_id
-                                 : source.auto_forward_air_base_id;
+                    ? source.auto_forward_slots[Base::AutoForwardLand]
+                    : triad == 1 ? source.auto_forward_slots[Base::AutoForwardSea]
+                                 : source.auto_forward_slots[Base::AutoForwardAir];
                 say_base(StringTemp, destination);
                 strcat(StringTemp, ")");
                 popup.dialogs().item(StringTemp, triad);
@@ -6052,14 +6052,11 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
                             map_tile_bytes()[target_offset * 4 + 3];
                 }
                 if (valid) {
-                    static_assert(offsetof(Base, auto_forward_land_base_id) == 0x110 &&
-                                  offsetof(Base, padding_0) == 0x116,
+                    static_assert(offsetof(Base, auto_forward_slots) == 0x110 &&
+                                  offsetof(Base, talent_total) == 0x118,
                                   "base route slots and adjacent word layout");
-                    int16_t *route = reinterpret_cast<int16_t *>(
-                        reinterpret_cast<unsigned char *>(&Bases[editor_tool]) +
-                        offsetof(Base, auto_forward_land_base_id) +
-                        static_cast<size_t>(selected_triad) * sizeof(int16_t));
-                    *route = static_cast<int16_t>(destination);
+                    Bases[editor_tool].auto_forward_slots[selected_triad] =
+                        static_cast<int16_t>(destination);
                 } else {
                     parse_say(2, Triad[selected_triad], -1, -1);
                     NetMsgPrimary.pop("DESTNO", 0x1388, 0, nullptr);
@@ -6253,9 +6250,9 @@ void MapWin::draw_base_dest(int draw_type) {
                 continue;
             }
             const int destinations[3] = {
-                base.auto_forward_land_base_id,
-                base.auto_forward_sea_base_id,
-                base.auto_forward_air_base_id
+                base.auto_forward_slots[Base::AutoForwardLand],
+                base.auto_forward_slots[Base::AutoForwardSea],
+                base.auto_forward_slots[Base::AutoForwardAir]
             };
             for (int direction = 0; direction < 3; ++direction) {
                 const int destination_id = destinations[direction];

@@ -1451,8 +1451,9 @@ int __cdecl base_init(int faction_id, int x, int y) {
     base.governor = faction.base_governor_adv;
     base.minerals_accumulated = base.nutrients_accumulated = 0;
     base.nerve_staple_count = 0;
-    base.auto_forward_land_base_id = base.auto_forward_sea_base_id
-        = base.auto_forward_air_base_id = -1;
+    base.auto_forward_slots[Base::AutoForwardLand] =
+        base.auto_forward_slots[Base::AutoForwardSea] =
+        base.auto_forward_slots[Base::AutoForwardAir] = -1;
     base.queue_size = 0;
     base_first(base_id);
     if (GameDataStateStorage.fields_.turn_current_num_ == 0) {
@@ -1656,9 +1657,9 @@ void __cdecl base_kill(int base_id) {
         if (Vehs[vehicle].home_base_id > base_id) --Vehs[vehicle].home_base_id;
     int remaining;
     for (remaining = 0; remaining < GameDataStateStorage.fields_.base_current_count_; ++remaining) {
-        base_remap_reference(Bases[remaining].auto_forward_land_base_id, base_id);
-        base_remap_reference(Bases[remaining].auto_forward_sea_base_id, base_id);
-        base_remap_reference(Bases[remaining].auto_forward_air_base_id, base_id);
+        base_remap_reference(Bases[remaining].auto_forward_slots[Base::AutoForwardLand], base_id);
+        base_remap_reference(Bases[remaining].auto_forward_slots[Base::AutoForwardSea], base_id);
+        base_remap_reference(Bases[remaining].auto_forward_slots[Base::AutoForwardAir], base_id);
     }
     StringList &messages = InterfaceMessageWin.listBox_.item_list_;
     const int message_id = base_id | 0x40000000;

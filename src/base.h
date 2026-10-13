@@ -412,10 +412,21 @@ struct Base {
     int psych_total;
     int labs_total;
     int unk_10;
-    int16_t auto_forward_land_base_id;
-    int16_t auto_forward_sea_base_id;
-    int16_t auto_forward_air_base_id;
-    int16_t padding_0;
+    // The original row exposes a four-word storage span here, not evidence
+    // for a declared four-element route array: the first three words are the
+    // land/sea/air destinations and the fourth is reserved. The click handler
+    // directly indexes the span and can write slot 3 for an unexpected
+    // nonnegative dialog result, so keep that word in the typed view without
+    // initializing or remapping it as a route.
+    enum AutoForwardSlot {
+        AutoForwardLand = 0,
+        AutoForwardSea = 1,
+        AutoForwardAir = 2,
+        AutoForwardReserved = 3,
+        AutoForwardSlotCount = 4
+    };
+    // RECOVERY_MEMBER: v1 Base auto_forward_slots 0x110 0x0046D5D0
+    int16_t auto_forward_slots[AutoForwardSlotCount];
     // RECOVERY_MEMBER: v1 Base talent_total 0x118 0x004EA540
     int talent_total;
     // RECOVERY_MEMBER: v1 Base drone_total 0x11C 0x004EA540

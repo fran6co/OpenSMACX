@@ -337,7 +337,9 @@ def execute(tmp_path, harness, candidate, name):
 ROUTES = r'''
 #include <cassert>
 #include <cstdint>
-struct Base {int faction_id_current,x,y;int auto_forward_land_base_id,auto_forward_sea_base_id,auto_forward_air_base_id;};
+struct Base {enum AutoForwardSlot {AutoForwardLand,AutoForwardSea,
+    AutoForwardAir,AutoForwardReserved,AutoForwardSlotCount};
+    int faction_id_current,x,y;int auto_forward_slots[AutoForwardSlotCount];};
 struct Veh {int faction_id,proto_id,x,y,order;uint32_t state;unsigned char waypoint_count;short waypoint_x[4],waypoint_y[4];};
 Base Bases[2];Veh Vehs[2];struct GameDataStateFieldsProjection { int base_current_count_, vehicle_current_count_; };struct GameDataStateProjection { GameDataStateFieldsProjection fields_; } GameDataStateStorage;
 int MapIsFlat=1,MapLongitudeBounds=100;struct {int faction_id_;}ConsoleGlobal;

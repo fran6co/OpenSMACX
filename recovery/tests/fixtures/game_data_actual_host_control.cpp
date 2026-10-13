@@ -229,10 +229,7 @@ struct Base {
     int psych_total;
     int labs_total;
     int unk_10;
-    int16_t auto_forward_land_base_id;
-    int16_t auto_forward_sea_base_id;
-    int16_t auto_forward_air_base_id;
-    int16_t padding_0;
+    int16_t auto_forward_slots[4];
     int talent_total;
     int drone_total;
     int super_drone_total;

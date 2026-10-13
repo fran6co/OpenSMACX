@@ -7286,9 +7286,10 @@ void Console::ready() {
     if (!Vehs[selected_vehicle_].order && !(state & 0x200) &&
         (state & 0x1000200) != 0x1000200 && !(state & 0x4000) && base >= 0) {
         const int triad = Chassis[VehPrototypes[Vehs[selected_vehicle_].proto_id].chassis_id].triad;
-        const int destination = triad == 0 ? Bases[base].auto_forward_land_base_id
-            : triad == 1 ? Bases[base].auto_forward_sea_base_id
-                         : Bases[base].auto_forward_air_base_id;
+        const int destination = triad == 0
+            ? Bases[base].auto_forward_slots[Base::AutoForwardLand]
+            : triad == 1 ? Bases[base].auto_forward_slots[Base::AutoForwardSea]
+                         : Bases[base].auto_forward_slots[Base::AutoForwardAir];
         if (destination >= 0 && destination != base) {
             Vehs[selected_vehicle_].order = 24;
             Vehs[selected_vehicle_].waypoint_x[0] = Bases[destination].x;
@@ -7352,8 +7353,9 @@ void Console::go_to(int subject, int order, int grouped) {
         parse_says(0, base.name_string, -1, -1);
         popup.start(PopupStartCaption, "DESTTRIAD", -1, nullptr, 0x40, nullptr);
         for (int i = 0; i < 3; ++i) {
-            const int destination = i == 0 ? base.auto_forward_land_base_id
-                : i == 1 ? base.auto_forward_sea_base_id : base.auto_forward_air_base_id;
+            const int destination = i == 0 ? base.auto_forward_slots[Base::AutoForwardLand]
+                : i == 1 ? base.auto_forward_slots[Base::AutoForwardSea]
+                         : base.auto_forward_slots[Base::AutoForwardAir];
             strcpy(StringTemp, StringTable.get(Triad[i]));
             strcat(StringTemp, " (");
             say_base(StringTemp, destination);
@@ -7506,8 +7508,10 @@ void Console::go_to(int subject, int order, int grouped) {
             }
             popup.dialogs().item(StringTemp, id); ++count;
             int preferred = GoToLastSelection;
-            if (order == -1) preferred = forward_triad == 0 ? Bases[subject].auto_forward_land_base_id
-                : forward_triad == 1 ? Bases[subject].auto_forward_sea_base_id : Bases[subject].auto_forward_air_base_id;
+            if (order == -1) preferred = forward_triad == 0
+                ? Bases[subject].auto_forward_slots[Base::AutoForwardLand]
+                : forward_triad == 1 ? Bases[subject].auto_forward_slots[Base::AutoForwardSea]
+                                     : Bases[subject].auto_forward_slots[Base::AutoForwardAir];
             else if (order != -2 && preferred < 0) preferred = Vehs[subject].home_base_id;
             if (id == preferred) popup.set_value(id);
         }
@@ -7531,9 +7535,11 @@ void Console::go_to(int subject, int order, int grouped) {
                 TutWinBaseWindow.zoom(selected, 0);
         } else if (order == -1) {
             const short destination = static_cast<short>(selected == 9999 ? -1 : selected);
-            if (!forward_triad) Bases[subject].auto_forward_land_base_id = destination;
-            else if (forward_triad == 1) Bases[subject].auto_forward_sea_base_id = destination;
-            else Bases[subject].auto_forward_air_base_id = destination;
+            if (!forward_triad)
+                Bases[subject].auto_forward_slots[Base::AutoForwardLand] = destination;
+            else if (forward_triad == 1)
+                Bases[subject].auto_forward_slots[Base::AutoForwardSea] = destination;
+            else Bases[subject].auto_forward_slots[Base::AutoForwardAir] = destination;
             ::draw_map(1);
         } else if (order == -3) {
             if (Bases[selected].x != Vehs[subject].x || Bases[selected].y != Vehs[subject].y) {

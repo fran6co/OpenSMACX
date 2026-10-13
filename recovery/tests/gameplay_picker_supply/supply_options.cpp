@@ -26,7 +26,9 @@ struct VehPrototype { char veh_name[32]; uint32_t ability_flags;
     uint8_t chassis_id,weapon_id,armor_id,reactor_id,carry_capacity,cost,plan;
     int8_t unk1,obsolete_factions,combat_factions,icon_offset; uint8_t padding;
     uint16_t flags; int16_t preq_tech; };
-struct Base { int16_t x,y; uint8_t faction_id_current,faction_id_former;
+struct Base { enum AutoForwardSlot { AutoForwardLand, AutoForwardSea,
+    AutoForwardAir, AutoForwardReserved, AutoForwardSlotCount };
+    int16_t x,y; uint8_t faction_id_current,faction_id_former;
     int8_t population_size; uint8_t assimilation_turns_left,
     nerve_staple_turns_left,unk1,visibility,faction_pop_size_intel[8];
     char name_string[25]; int16_t unkx,unky; uint32_t state,event,governor;
@@ -40,8 +42,7 @@ struct Base { int16_t x,y; uint8_t faction_id_current,faction_id_former;
     mineral_inefficiency,energy_inefficiency,unused_inefficiency,
     nutrient_consumption,mineral_consumption,energy_consumption,
     unused_consumption,economy_total,psych_total,labs_total,unk10;
-    int16_t auto_forward_land_base_id,auto_forward_sea_base_id,
-    auto_forward_air_base_id,padding0; int talent_total,drone_total,
+    int16_t auto_forward_slots[AutoForwardSlotCount]; int talent_total,drone_total,
     super_drone_total,random_event_turns,nerve_staple_count,unk11,location;
 };
 // The product's nominal LPSTR carries a StringTable index here; keep the
