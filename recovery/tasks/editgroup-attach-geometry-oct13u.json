@@ -1,0 +1,31 @@
+{
+  "author": "coordinator",
+  "base_revision": "808e3c54924dbb9a5bc7c71f06cd3b5ea35617af",
+  "editable_files": [
+    "src/editgroup.cpp",
+    "src/editgroup.h",
+    "recovery/tests/test_editgroup_attach_actual_source_oct13u.py"
+  ],
+  "evidence": [
+    "Original attach611AF0..611F79 plus663047..66305C retains its complete identity; the current seed history explicitly calls the geometry best-effort. Audit complete pinned instruction/data flow before changing source, rather than treating historical comments or a match score as behavior proof.",
+    "Current EditGroup virtual GraphicWin/Dialog bases are genuine. Constructor611940,vbtable670A3C and complete Dialogs caller6128F5..612900 prove the relationship and the directF8 view. Do not flatten bases or invent vtables/raw self offsets to seek byte equality. Fixed-offset native base check failures are a representation limitation, not hierarchy evidence.",
+    "Edit only attach behavior and necessary truthful declaration documentation; calculate_dimensions612150 is a read-only upstream geometry subject, not permission to edit it. Preserve allocation/constructor-unwind, delete/init failures, unchecked array bounds, signed arithmetic, callback/mutation timing and child/control lifetime. No bug fixes or extended byte-spelling search. Return outside-owner findings for central scope expansion.",
+    "Extract actual source for GCC/Clang controls, callback and geometry cases and compile-then-runtime-fail mutants. Fresh native measurement/build/link, complete identity/claim continuity and independent review remain required for coordinator-reviewed integration. If source is already faithful, report positive evidence and no unnecessary rewrite."
+  ],
+  "intent": "Recover the original EditGroup attachment geometry and child initialization through its genuine virtual bases and control owners.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6363888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6365520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "editgroup-attach-geometry-oct13u"
+}

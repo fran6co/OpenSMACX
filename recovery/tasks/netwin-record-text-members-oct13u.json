@@ -1,0 +1,42 @@
+{
+  "author": "coordinator",
+  "base_revision": "808e3c54924dbb9a5bc7c71f06cd3b5ea35617af",
+  "editable_files": [
+    "src/netwin.h",
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_faction_record_owner_closure_oct9.py",
+    "recovery/tests/test_netwin_record_text_members_oct13u.py"
+  ],
+  "evidence": [
+    "Pinned setup_faction_data481FD0,fill_player481DA0,pick_map47D300 independently access faction adjective7A and leader titleFA; Player provides128B and24B text arrays. Recover these two observed slots as named char members, retaining190recordstride and unresolved112..18F byte storage. This does not establish complete original record allocation or safe string lengths.",
+    "The leader adjective at112 crosses the190row by2bytes and gender192 aliases nextrow+2. Preserve unbounded strcpy, reloads, loops and full-table copying. Do not introduce guards, zeroing, truncation, larger row stride or a false128B in-row leader adjective. Allocation remains count*399+194; retain its original quirks and uncertainty.",
+    "Source edit scope is the record declaration and corresponding named-slot accesses in setup_faction_data,fill_player,pick_map only. send_faction_data47B020 is a read-only affected clone/measurement subject. Other bodies,flags,Original markers,claims,symbols and spans remain intact. Dependent fixture expansion requires coordinator decision first.",
+    "Actual-source dual-compiler field,copy and cross-row damage controls plus fresh native measurement/layout/build/link, protected mapping continuity and independent review precede manual integration. Existing historical task baselines remain untouched. No autonomous/full-game acceptance follows."
+  ],
+  "intent": "Recover named faction adjective and leader title slots across the three record producers and consumers without repairing original cross-row writes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4726736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4726176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4707072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-record-text-members-oct13u"
+}
