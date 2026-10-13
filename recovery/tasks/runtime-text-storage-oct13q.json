@@ -1,0 +1,36 @@
+{
+  "author": "coordinator",
+  "base_revision": "41195ee2083ea15eca1b2511c8171996c5a0cba3",
+  "editable_files": [
+    "src/general.cpp",
+    "src/net_class.cpp",
+    "recovery/tests/test_runtime_text_storage_oct13q.py"
+  ],
+  "evidence": [
+    "Pinned enemy_veh579240..5794C8 passes direct text addresses68EAFC,68EB10,68EB28 to its logging calls; these are not pointer slots. Distinct writable terminated windows are68EAFC..68EB0F(19B),68EB10..68EB25(21B),68EB28..68EB36(14B), with no internal relocations. Existing literal consumers must preserve exact bytes, call order and arguments.",
+    "Pinned Net::join_service62E2A0..62E41C passes697578 directly to WinExec IAT669180 only on its original provider-GUID branch. The writable terminated text window697578..697585(13B) is mplaynow.exe, without internal relocations. Replace the current constant executable address with a char array, not an invented pointer slot.",
+    "No current source duplicate arrays were found. Keep original identities, spans and claims, all body branches and error behavior. Correct general.cpp's stale active assertion that enemy_move forwards to pending_bodies: its complete owner is src/enemy.cpp. Preserve meaningful historical notes.",
+    "Require fresh physical compiler-symbol/bounds/content/reference evidence for all four arrays, affected-body measurements, focused actual-source and regression controls, build/link, outside-body compiler comparison and coordinator review. Unsupported lifetime/link/runtime evidence remains unknown. No compiler flag changes, function API changes, broader AI/network rewrites, or manual original-marker/claim edits."
+  ],
+  "intent": "Recover source-owned writable character storage for enemy-AI log labels and the network Zone launcher; remove fixed original-address bindings without changing control flow.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5739072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5739792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6480544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "runtime-text-storage-oct13q"
+}
