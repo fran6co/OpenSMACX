@@ -44,18 +44,24 @@ def apply_typed_storage_migration(source,relative="src/netdaemon.cpp",reverse=Fa
 def test_only_reviewed_storage_changes_and_all_original_identities_survive(relative):
     before=subprocess.check_output(["git","show",BASE+":"+relative],cwd=ROOT,text=True)
     current=(ROOT/relative).read_text()
-    assert current==apply_typed_storage_migration(before,relative)
-    assert apply_typed_storage_migration(current,relative,True)==before
+    migrated=apply_typed_storage_migration(before,relative)
+    if relative == "src/netdaemon.h":
+        assert current == migrated
+    assert apply_typed_storage_migration(migrated,relative,True)==before
     assert "NetDaemonFileIndexRecord *file_index_records_;" in (ROOT/"src/netdaemon.h").read_text()
     from dataclasses import fields
     from match_recovery.source import read_text
     old={record.address:record for record in read_text(before,ROOT/relative)}
-    now={record.address:record for record in read_text(current,ROOT/relative)}
-    assert old.keys()==now.keys()
-    for address,record in now.items():
+    reviewed={record.address:record for record in read_text(migrated,ROOT/relative)}
+    assert old.keys()==reviewed.keys()
+    for address,record in reviewed.items():
         for field in fields(record):
             if field.name not in {"line","region","origin"}:
                 assert getattr(record,field.name)==getattr(old[address],field.name)
+        def lessons(item):
+            return [(lesson.kind,lesson.key,lesson.prose,
+                     tuple(line for _,line in lesson.lines)) for lesson in item.origin]
+        assert lessons(record)==lessons(old[address])
 
 
 PREAMBLE=r'''
@@ -590,11 +596,13 @@ int main() {
 @pytest.mark.parametrize("compiler", [c for c in ("g++", "clang++") if shutil.which(c)])
 def test_actual_table_h_routes_live_fields_grammar_and_in_owner_aliases(tmp_path,compiler):
     source=(ROOT/"src/netdaemon.cpp").read_text();header=(ROOT/"src/faction.h").read_text()
+    record=extract(source,"struct MessageDataRecord {")+";"
+    view=extract(source,"class MessageCommandView {")+";"
     declarations="\n".join(extract(header,"struct "+name+" {")+";" for name in ("SocialCategory","SocialEffect","Goal","Player","PlayerData"))
     declarations+="\n"+next(line for line in header.splitlines() if line=="static const int MaxPlayerNum = 8;")
     lock=extract((ROOT/"src/netdaemon.h").read_text(),"struct LockStateEntry {")+";"
     lock=lock.replace("int *vehicle_selection_follow;","uint32_t vehicle_selection_follow;")
-    body="\n".join(extract(source,s) for s in ("static void netdaemon_process_message_marker_tail(","static void netdaemon_table_h_add_energy(","static bool netdaemon_handle_table_h("))
+    body=record+"\n"+view+"\n"+"\n".join(extract(source,s) for s in ("static void netdaemon_process_message_marker_tail(","static void netdaemon_table_h_add_energy(","static bool netdaemon_handle_table_h("))
     process=extract(source,"void NetDaemon::process_message(");start=process.index("    if (netdaemon_handle_table_h(message))")
     stop=process.index("\n\n    if (netdaemon_handle_five_message_routes",start)
     body+="\nvoid NetDaemon::route(char *message) {\nunsigned char *msg=reinterpret_cast<unsigned char *>(message);\n"+process[start:stop]+"\nassert(false);\n}"
@@ -606,44 +614,44 @@ def test_actual_table_h_routes_live_fields_grammar_and_in_owner_aliases(tmp_path
         return subprocess.run([str(exe)],capture_output=True,text=True,timeout=10,env=dict(os.environ,ASAN_OPTIONS="detect_leaks=0"))
     result=run(body);assert result.returncode==0,result.stderr
     for before,after in (
-        ("treaty_on(*reinterpret_cast<int *>(message + 0x10),", "treaty_on(actor,"),
-        ("treaty_off(*reinterpret_cast<int *>(message + 0x10),", "treaty_off(actor,"),
-        ("set_treaty(*reinterpret_cast<int *>(message + 0x10),", "set_treaty(actor,"),
-        ("agenda_on(*reinterpret_cast<int *>(message + 0x10),", "agenda_on(actor,"),
-        ("agenda_off(*reinterpret_cast<int *>(message + 0x10),", "agenda_off(actor,"),
-        ("set_agenda(*reinterpret_cast<int *>(message + 0x10),", "set_agenda(actor,"),
-        ("trade_maps(*reinterpret_cast<int *>(message + 0x10),", "trade_maps(actor,"),
-        ("give_a_base(*reinterpret_cast<int *>(message + 0x10),", "give_a_base(actor,"),
-        ("do_withdrawal(*reinterpret_cast<int *>(message + 0x10),", "do_withdrawal(actor,"),
-        ("pact_ends(*reinterpret_cast<int *>(message + 0x10),", "pact_ends(actor,"),
-        ("tech_achieved(*reinterpret_cast<int *>(message + 0x10),", "tech_achieved(actor,"),
-        ("const int checked_actor = *reinterpret_cast<int *>(message + 0x10);", "const int checked_actor = actor;"),
-        ("const int noun_other = *reinterpret_cast<int *>(message + 0x14);", "const int noun_other = other;"),
-        ("const int announcement_flags = *reinterpret_cast<int *>(message + 0x18);", "const int announcement_flags = flags;"),
+        ("treaty_on(packet.payload_10(),", "treaty_on(actor,"),
+        ("treaty_off(packet.payload_10(),", "treaty_off(actor,"),
+        ("set_treaty(packet.payload_10(),", "set_treaty(actor,"),
+        ("agenda_on(packet.payload_10(),", "agenda_on(actor,"),
+        ("agenda_off(packet.payload_10(),", "agenda_off(actor,"),
+        ("set_agenda(packet.payload_10(),", "set_agenda(actor,"),
+        ("trade_maps(packet.payload_10(),", "trade_maps(actor,"),
+        ("give_a_base(packet.payload_10(),", "give_a_base(actor,"),
+        ("do_withdrawal(packet.payload_10(),", "do_withdrawal(actor,"),
+        ("pact_ends(packet.payload_10(),", "pact_ends(actor,"),
+        ("tech_achieved(packet.payload_10(),", "tech_achieved(actor,"),
+        ("const int checked_actor = packet.payload_10();", "const int checked_actor = actor;"),
+        ("const int noun_other = packet.payload_14();", "const int noun_other = other;"),
+        ("const int announcement_flags = packet.payload_18();", "const int announcement_flags = flags;"),
         ("(!(announcement_flags & 0x10000) || has_treaty(", "((announcement_flags & 0x10000) && has_treaty("),
-        ("const int current_actor = *reinterpret_cast<int *>(message + 0x10);", "const int current_actor = actor;"),
-        ("const int current_other = *reinterpret_cast<int *>(message + 0x18);", "const int current_other = other;"),
-        ("if (*reinterpret_cast<unsigned short *>(message) == 0x444C &&", "if (opcode == 0x444C &&"),
-        ("*reinterpret_cast<int *>(message + 0x18) == ConsoleGlobal.faction_id_", "recipient == ConsoleGlobal.faction_id_"),
-        ("const int announced_actor = *reinterpret_cast<int *>(message + 0x10);", "const int announced_actor = actor;"),
-        ("say_tech(StringTemp, *reinterpret_cast<int *>(message + 0x14), 0);", "say_tech(StringTemp, tech, 0);"),
+        ("const int current_actor = packet.payload_10();", "const int current_actor = actor;"),
+        ("const int current_other = packet.payload_18();", "const int current_other = other;"),
+        ("if (packet.opcode() == 0x444C &&", "if (opcode == 0x444C &&"),
+        ("packet.payload_18() == ConsoleGlobal.faction_id_", "recipient == ConsoleGlobal.faction_id_"),
+        ("const int announced_actor = packet.payload_10();", "const int announced_actor = actor;"),
+        ("say_tech(StringTemp, packet.payload_14(), 0);", "say_tech(StringTemp, tech, 0);"),
         ("log_say(\"Received CORNERING\"", "log_say_hex(\"Received CORNERING\""),
-        ("const int leader_actor = *reinterpret_cast<int *>(message + 0x10);", "const int leader_actor = actor;"),
+        ("const int leader_actor = packet.payload_10();", "const int leader_actor = actor;"),
         ("GenderDefault = Players[leader_actor].is_leader_female;", "GenderDefault = 0;"),
         ("GenderDefault = Players[name_actor].is_leader_female;", "(void)GenderDefault;"),
         (".adj_name_faction, -1, -1);", ".adj_name_faction + 4, -1, -1);"),
-        ("*reinterpret_cast<int *>(message + 0x14))));", "year)));"),
+        ("packet.payload_14())));", "year)));"),
         ("bits += static_cast<uint32_t>(delta);", "bits += static_cast<uint32_t>(delta) + 1u;"),
         ("netdaemon_process_message_marker_tail(*this, msg);", "(void)msg;"),
     ):
         assert before in body,before
         damaged=run(body.replace(before,after,1));assert damaged.returncode!=0,before
     early_other=body.replace("        if (current_actor != 0)",
-        "        const int current_other = *reinterpret_cast<int *>(message + 0x18);\n        if (current_actor != 0)",1)
-    early_other=early_other.replace("        const int current_other = *reinterpret_cast<int *>(message + 0x18);\n        if (current_other != 0)",
+        "        const int current_other = packet.payload_18();\n        if (current_actor != 0)",1)
+    early_other=early_other.replace("        const int current_other = packet.payload_18();\n        if (current_other != 0)",
         "        if (current_other != 0)",1)
     assert early_other!=body and run(early_other).returncode!=0
-    stale_loan=body.replace("PlayersData[*reinterpret_cast<int *>(message + 0x10)]\n            .loan_payment", "PlayersData[actor]\n            .loan_payment",1)
+    stale_loan=body.replace("PlayersData[packet.payload_10()]\n            .loan_payment", "PlayersData[actor]\n            .loan_payment",1)
     assert stale_loan!=body and run(stale_loan).returncode!=0
 
 

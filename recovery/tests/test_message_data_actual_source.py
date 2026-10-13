@@ -15,7 +15,9 @@ def product_bodies():
     rows = {r.address:r for r in read_file(path)}
     text = path.read_text()
     start = text.index('struct MessageDataRecord {')
-    end = text.index('// ORIGINAL:',start)
+    # Only the sender-owned record/layout assertions belong in this fixture.
+    # Receiver wire views are independently extracted by their own controls.
+    end = text.index('// Borrowed wire view',start)
     record = text[start:end]
     assert record.count('static_assert(') == 8
     lines = text.splitlines()

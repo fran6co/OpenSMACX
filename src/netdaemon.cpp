@@ -1872,12 +1872,20 @@ static_assert(offsetof(MessageDataRecord, payload_1C_) == 0x1C,
 
 // Borrowed wire view over the layout already owned by message_data's sender.
 // Read one field at a time: MOVE packets have only two payload words, while
-// AIRDROP/DOUBLE CROSS have three. Do not copy a full 32-byte record, impose
-// alignment, cache fields across calls, or initialize original unwritten bytes.
+// AIRDROP/DOUBLE CROSS have three, and diplomacy commands can use all four.
+// Do not copy a full 32-byte record, impose alignment, cache fields across
+// calls, or initialize original unwritten bytes.
 // This is a serialization boundary, not a claim about a new original class.
 class MessageCommandView {
 public:
     explicit MessageCommandView(const unsigned char *bytes) : bytes_(bytes) {}
+    explicit MessageCommandView(const char *bytes)
+        : bytes_(reinterpret_cast<const unsigned char *>(bytes)) {}
+    uint16_t opcode() const {
+        uint16_t value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, opcode_), sizeof value);
+        return value;
+    }
     int faction() const {
         int value;
         std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, faction_), sizeof value);
@@ -1906,6 +1914,11 @@ public:
     int payload_18() const {
         int value;
         std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_18_), sizeof value);
+        return value;
+    }
+    int payload_1C() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_1C_), sizeof value);
         return value;
     }
 private:
@@ -5118,49 +5131,45 @@ static void netdaemon_table_h_add_energy(int &energy, int delta) {
 }
 
 static bool netdaemon_handle_table_h(char *message) {
-    const unsigned short opcode =
-        *reinterpret_cast<const unsigned short *>(message);
+    const MessageCommandView packet(message);
+    const unsigned short opcode = packet.opcode();
     switch (opcode) {
     case 0x4441: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
-        const int flags = *reinterpret_cast<int *>(message + 0x18);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
+        const int flags = packet.payload_18();
         log_say_hex("Received TREATY ON", actor, other, flags);
-        treaty_on(*reinterpret_cast<int *>(message + 0x10),
-                  *reinterpret_cast<int *>(message + 0x14),
-                  *reinterpret_cast<int *>(message + 0x18));
+        treaty_on(packet.payload_10(), packet.payload_14(), packet.payload_18());
 
-        const int checked_actor = *reinterpret_cast<int *>(message + 0x10);
+        const int checked_actor = packet.payload_10();
         const int local_faction = ConsoleGlobal.faction_id_;
         if (checked_actor == local_faction ||
-            *reinterpret_cast<int *>(message + 0x14) == local_faction)
+            packet.payload_14() == local_faction)
             break;
         if (!spying(checked_actor) &&
-            !spying(*reinterpret_cast<int *>(message + 0x14)) &&
+            !spying(packet.payload_14()) &&
             (GameDataStateStorage.fields_.game_state_ & 0x80u) == 0)
             break;
 
-        const int noun_actor = *reinterpret_cast<int *>(message + 0x10);
+        const int noun_actor = packet.payload_10();
         GenderDefault = Players[noun_actor].noun_gender;
         PluralityDefault = Players[noun_actor].is_noun_plural;
         parse_says(0, Players[noun_actor].noun_faction, -1, -1);
-        const int noun_other = *reinterpret_cast<int *>(message + 0x14);
+        const int noun_other = packet.payload_14();
         GenderDefault = Players[noun_other].noun_gender;
         PluralityDefault = Players[noun_other].is_noun_plural;
         parse_says(1, Players[noun_other].noun_faction, -1, -1);
         parse_says(2, get_pact_hood(
-            *reinterpret_cast<int *>(message + 0x10),
-            *reinterpret_cast<int *>(message + 0x14)), -1, -1);
+            packet.payload_10(), packet.payload_14()), -1, -1);
 
-        const int announcement_flags = *reinterpret_cast<int *>(message + 0x18);
+        const int announcement_flags = packet.payload_18();
         if (announcement_flags & 1) {
             NetMsgPrimary.pop("ENEMIESTEAMUP2", 0, 0, 0);
         } else if (announcement_flags & 2) {
             NetMsgPrimary.pop("ENEMYTREATY", 0, 0, 0);
         } else if ((announcement_flags & 4) &&
                    (!(announcement_flags & 0x10000) || has_treaty(
-                       *reinterpret_cast<int *>(message + 0x10),
-                       *reinterpret_cast<int *>(message + 0x14), 0x10))) {
+                       packet.payload_10(), packet.payload_14(), 0x10))) {
             NetMsgPrimary.pop("ENEMYTRUCE", 0, 0, 0);
         } else if (announcement_flags & 0x10) {
             NetMsgPrimary.pop("ENEMYWAR", 0, 0, 0);
@@ -5168,169 +5177,152 @@ static bool netdaemon_handle_table_h(char *message) {
         break;
     }
     case 0x4442: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
-        const int flags = *reinterpret_cast<int *>(message + 0x18);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
+        const int flags = packet.payload_18();
         log_say_hex("Received TREATY OFF", actor, other, flags);
-        treaty_off(*reinterpret_cast<int *>(message + 0x10),
-                   *reinterpret_cast<int *>(message + 0x14),
-                   *reinterpret_cast<int *>(message + 0x18));
+        treaty_off(packet.payload_10(), packet.payload_14(), packet.payload_18());
         break;
     }
     case 0x4443: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
-        const int treaty = *reinterpret_cast<int *>(message + 0x18);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
+        const int treaty = packet.payload_18();
         log_say_hex("Received SET TREATY", actor, other, treaty);
-        set_treaty(*reinterpret_cast<int *>(message + 0x10),
-                   *reinterpret_cast<int *>(message + 0x14),
-                   *reinterpret_cast<int *>(message + 0x18),
-                   *reinterpret_cast<int *>(message + 0x1C));
+        set_treaty(packet.payload_10(), packet.payload_14(), packet.payload_18(),
+                   packet.payload_1C());
         break;
     }
     case 0x4444: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
-        const int agenda = *reinterpret_cast<int *>(message + 0x18);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
+        const int agenda = packet.payload_18();
         log_say_hex("Received AGENDA ON", actor, other, agenda);
-        agenda_on(*reinterpret_cast<int *>(message + 0x10),
-                  *reinterpret_cast<int *>(message + 0x14),
-                  *reinterpret_cast<int *>(message + 0x18));
+        agenda_on(packet.payload_10(), packet.payload_14(), packet.payload_18());
         break;
     }
     case 0x4445: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
-        const int agenda = *reinterpret_cast<int *>(message + 0x18);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
+        const int agenda = packet.payload_18();
         log_say_hex("Received AGENDA OFF", actor, other, agenda);
-        agenda_off(*reinterpret_cast<int *>(message + 0x10),
-                   *reinterpret_cast<int *>(message + 0x14),
-                   *reinterpret_cast<int *>(message + 0x18));
+        agenda_off(packet.payload_10(), packet.payload_14(), packet.payload_18());
         break;
     }
     case 0x4446: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
-        const int agenda = *reinterpret_cast<int *>(message + 0x18);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
+        const int agenda = packet.payload_18();
         log_say_hex("Received SET AGENDA", actor, other, agenda);
-        set_agenda(*reinterpret_cast<int *>(message + 0x10),
-                   *reinterpret_cast<int *>(message + 0x14),
-                   *reinterpret_cast<int *>(message + 0x18),
-                   *reinterpret_cast<int *>(message + 0x1C));
+        set_agenda(packet.payload_10(), packet.payload_14(), packet.payload_18(),
+                   packet.payload_1C());
         break;
     }
     case 0x4447: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int amount = *reinterpret_cast<int *>(message + 0x14);
-        const int other = *reinterpret_cast<int *>(message + 0x18);
+        const int actor = packet.payload_10();
+        const int amount = packet.payload_14();
+        const int other = packet.payload_18();
         log_say("Received ENERGY", actor, amount, other);
-        const int current_actor = *reinterpret_cast<int *>(message + 0x10);
+        const int current_actor = packet.payload_10();
         if (current_actor != 0)
             netdaemon_table_h_add_energy(PlayersData[current_actor].energy_reserves,
-                                         *reinterpret_cast<int *>(message + 0x14));
-        const int current_other = *reinterpret_cast<int *>(message + 0x18);
+                                         packet.payload_14());
+        const int current_other = packet.payload_18();
         if (current_other != 0)
             netdaemon_table_h_add_energy(PlayersData[current_other].energy_reserves,
-                                         *reinterpret_cast<int *>(message + 0x1C));
+                                         packet.payload_1C());
         break;
     }
     case 0x4448: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
         log_say("Received TRADE MAPS", actor, other, 0);
-        trade_maps(*reinterpret_cast<int *>(message + 0x10),
-                   *reinterpret_cast<int *>(message + 0x14));
+        trade_maps(packet.payload_10(), packet.payload_14());
         break;
     }
     case 0x4449: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
         log_say("Received CEDE BASE", actor, other, 0);
-        my_srand(*reinterpret_cast<int *>(message + 8));
-        give_a_base(*reinterpret_cast<int *>(message + 0x10),
-                    *reinterpret_cast<int *>(message + 0x14));
+        my_srand(packet.timestamp_bits());
+        give_a_base(packet.payload_10(), packet.payload_14());
         break;
     }
     case 0x444A: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
         log_say("Received WITHDRAWAL", actor, other, 0);
-        my_srand(*reinterpret_cast<int *>(message + 8));
-        do_withdrawal(*reinterpret_cast<int *>(message + 0x10),
-                      *reinterpret_cast<int *>(message + 0x14));
+        my_srand(packet.timestamp_bits());
+        do_withdrawal(packet.payload_10(), packet.payload_14());
         break;
     }
     case 0x444B:
     case 0x444C: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int tech = *reinterpret_cast<int *>(message + 0x14);
-        const int recipient = *reinterpret_cast<int *>(message + 0x18);
+        const int actor = packet.payload_10();
+        const int tech = packet.payload_14();
+        const int recipient = packet.payload_18();
         log_say("From Server: TECH", actor, tech, recipient);
-        my_srand(*reinterpret_cast<int *>(message + 8));
-        tech_achieved(*reinterpret_cast<int *>(message + 0x10),
-                      *reinterpret_cast<int *>(message + 0x14),
-                      *reinterpret_cast<int *>(message + 0x18), 0);
+        my_srand(packet.timestamp_bits());
+        tech_achieved(packet.payload_10(), packet.payload_14(),
+                      packet.payload_18(), 0);
 
         // The shared arm reloads opcode and recipient after tech_achieved.
-        if (*reinterpret_cast<unsigned short *>(message) == 0x444C &&
-            *reinterpret_cast<int *>(message + 0x18) == ConsoleGlobal.faction_id_) {
-            const int announced_actor = *reinterpret_cast<int *>(message + 0x10);
+        if (packet.opcode() == 0x444C &&
+            packet.payload_18() == ConsoleGlobal.faction_id_) {
+            const int announced_actor = packet.payload_10();
             GenderDefault = Players[announced_actor].noun_gender;
             PluralityDefault = Players[announced_actor].is_noun_plural;
             parse_says(0, Players[announced_actor].noun_faction, -1, -1);
             StringTemp[0] = 0;
-            say_tech(StringTemp, *reinterpret_cast<int *>(message + 0x14), 0);
+            say_tech(StringTemp, packet.payload_14(), 0);
             parse_says(1, StringTemp, -1, -1);
             NetMsgPrimary.pop("STOLETECH", 0, 0, 0);
         }
         break;
     }
     case 0x444D: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
         log_say("Received PACT ENDS", actor, other, 0);
-        my_srand(*reinterpret_cast<int *>(message + 8));
-        pact_ends(*reinterpret_cast<int *>(message + 0x10),
-                  *reinterpret_cast<int *>(message + 0x14));
+        my_srand(packet.timestamp_bits());
+        pact_ends(packet.payload_10(), packet.payload_14());
         break;
     }
     case 0x444E: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int other = *reinterpret_cast<int *>(message + 0x14);
-        const int balance = *reinterpret_cast<int *>(message + 0x18);
+        const int actor = packet.payload_10();
+        const int other = packet.payload_14();
+        const int balance = packet.payload_18();
         log_say("Received LOAN", actor, other, balance);
         // The pinned body performs both stores unconditionally and addresses
         // both fields in the p10 PlayerData row; preserve the unchecked access.
-        PlayersData[*reinterpret_cast<int *>(message + 0x10)]
-            .loan_balance[*reinterpret_cast<int *>(message + 0x14)] =
-                *reinterpret_cast<int *>(message + 0x18);
-        PlayersData[*reinterpret_cast<int *>(message + 0x10)]
-            .loan_payment[*reinterpret_cast<int *>(message + 0x14)] =
-                *reinterpret_cast<int *>(message + 0x1C);
+        PlayersData[packet.payload_10()]
+            .loan_balance[packet.payload_14()] = packet.payload_18();
+        PlayersData[packet.payload_10()]
+            .loan_payment[packet.payload_14()] = packet.payload_1C();
         break;
     }
     case 0x444F: {
-        const int actor = *reinterpret_cast<int *>(message + 0x10);
-        const int year = *reinterpret_cast<int *>(message + 0x14);
-        const int other = *reinterpret_cast<int *>(message + 0x18);
+        const int actor = packet.payload_10();
+        const int year = packet.payload_14();
+        const int other = packet.payload_18();
         log_say("Received CORNERING", actor, year, other);
-        const int leader_actor = *reinterpret_cast<int *>(message + 0x10);
+        const int leader_actor = packet.payload_10();
         if (leader_actor != ConsoleGlobal.faction_id_) {
             GenderDefault = Players[leader_actor].is_leader_female;
             PluralityDefault = 0;
             parse_says(0, Players[leader_actor].title_leader, -1, -1);
-            const int name_actor = *reinterpret_cast<int *>(message + 0x10);
+            const int name_actor = packet.payload_10();
             GenderDefault = Players[name_actor].is_leader_female;
             PluralityDefault = 0;
             parse_says(1, Players[name_actor].name_leader, -1, -1);
-            const int noun_actor = *reinterpret_cast<int *>(message + 0x10);
+            const int noun_actor = packet.payload_10();
             GenderDefault = Players[noun_actor].noun_gender;
             PluralityDefault = Players[noun_actor].is_noun_plural;
             parse_says(2, Players[noun_actor].noun_faction, -1, -1);
-            parse_says(3, Players[*reinterpret_cast<int *>(message + 0x10)]
+            parse_says(3, Players[packet.payload_10()]
                 .adj_name_faction, -1, -1);
             parse_num(0, static_cast<int>(game_year(
-                *reinterpret_cast<int *>(message + 0x14))));
+                packet.payload_14())));
             popp(ScriptPopupFile, "CORNERWARNING", 0, "econwin_sm.pcx", 0);
         }
         break;

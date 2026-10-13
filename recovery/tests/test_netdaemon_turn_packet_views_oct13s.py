@@ -257,9 +257,9 @@ def test_view_uses_actual_record_and_field_sized_memcpy_without_length_policy():
     record=extract(text,"struct MessageDataRecord {")
     _,view,_=source_product()
     assert "unresolved_2_[2]" in record
-    for offset in ("faction_","timestamp_","sequence_","payload_10_","payload_14_","payload_18_"):
+    for offset in ("opcode_","faction_","timestamp_","sequence_","payload_10_","payload_14_","payload_18_","payload_1C_"):
         assert f"offsetof(MessageDataRecord, {offset})" in view
-    assert view.count("std::memcpy(&value,")==6
+    assert view.count("std::memcpy(&value,")==8
     assert "memcpy(this" not in view and "sizeof(MessageDataRecord)" not in view
     for signature in HANDLERS:
         body=extract(text,signature)
