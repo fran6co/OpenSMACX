@@ -726,3 +726,57 @@ def test_a_folded_tail_belongs_to_no_single_body(tmp_path):
 
 def test_an_ordinary_span_is_not_refused(tmp_path):
     assert asm.span_refusal(record_in(tmp_path, MARKED), section_image(tmp_path)) is None
+
+
+def two_section_image(tmp_path, *, second_flags=0x60000020):
+    path = section_image(tmp_path)
+    data = bytearray(path.read_bytes())
+    struct.pack_into("<H", data, 0x86, 2)
+    struct.pack_into("<8sIIIIIIHHI", data, 0x178 + 40, b".cold", 0x1000, 0x2000,
+                     0x1000, 0x1200, 0, 0, 0, 0, second_flags)
+    path.write_bytes(data)
+    return path
+
+
+def test_shared_secondary_span_is_not_ignored(tmp_path):
+    row = record_in(tmp_path, MARKED)
+    row.image_spans += ((0x402000, 0x402015),)
+    assert asm.span_refusal(row, two_section_image(tmp_path),
+                            frozenset({row.image_spans[1]})) == asm.Tier.SHARED_TAIL
+
+
+def test_writable_executable_secondary_span_is_not_ignored(tmp_path):
+    row = record_in(tmp_path, MARKED)
+    row.image_spans += ((0x402000, 0x402015),)
+    assert asm.span_refusal(row, two_section_image(tmp_path, second_flags=0xE0000020)) == asm.Tier.REFUSED
+
+
+def test_writable_executable_refusal_precedes_other_shared_span(tmp_path):
+    row = record_in(tmp_path, MARKED)
+    row.image_spans += ((0x402000, 0x402015),)
+    assert asm.span_refusal(row, two_section_image(tmp_path, second_flags=0xE0000020),
+                            frozenset({row.image_spans[0]})) == asm.Tier.REFUSED
+
+
+def test_span_entering_writable_executable_section_is_refused(tmp_path):
+    row = record_in(tmp_path, MARKED)
+    row.image_spans = ((0x401FF0, 0x402015),)
+    assert asm.span_refusal(row, two_section_image(tmp_path, second_flags=0xE0000020)) == asm.Tier.REFUSED
+
+
+@pytest.mark.parametrize("spans", [
+    ((0x401000, 0x401000),),
+    ((0x401008, 0x401000),),
+    ((0x401000, 0x401008), (0x401004, 0x401010)),
+    ((0x401000, 0x401008), (0x401000, 0x401008)),
+])
+def test_invalid_or_self_overlapping_spans_are_refused(tmp_path, spans):
+    row = record_in(tmp_path, MARKED)
+    row.image_spans = spans
+    assert asm.span_refusal(row, section_image(tmp_path)) == asm.Tier.REFUSED
+
+
+def test_two_ordinary_disjoint_spans_are_not_preemptively_refused(tmp_path):
+    row = record_in(tmp_path, MARKED)
+    row.image_spans += ((0x402000, 0x402015),)
+    assert asm.span_refusal(row, two_section_image(tmp_path)) is None

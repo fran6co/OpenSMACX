@@ -1057,10 +1057,22 @@ def span_refusal(record: DecompilationState, exe: Path | str,
     """
     if not record.image_spans:
         return Tier.REFUSED
-    low, high = record.image_spans[0]
-    if rewrites_itself(exe, low):
+    spans = sorted(record.image_spans)
+    if (any(high <= low for low, high in spans)
+            or any(left[1] > right[0] for left, right in zip(spans, spans[1:]))):
         return Tier.REFUSED
-    if (low, high) in shared:
+    # A cold cleanup span is no less part of the function than its entry.
+    # Inspect every byte range, including a range that enters a writable
+    # executable section after starting in an ordinary section. A refusal
+    # takes precedence over a shared-tail diagnostic in another span.
+    writable_code = IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_WRITE
+    sections = _sections(Path(exe))
+    if any(low < section_high and section_low < high
+           and characteristics & writable_code == writable_code
+           for low, high in spans
+           for _name, section_low, section_high, characteristics in sections):
+        return Tier.REFUSED
+    if any(span in shared for span in spans):
         return Tier.SHARED_TAIL
     return None
 
