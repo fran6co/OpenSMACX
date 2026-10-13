@@ -47,8 +47,9 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   virtual void on_dialog_focus(int focus_id);
 
  public:
-  // 0x00611AF0, a pending_bodies forwarder.
-  int attach(GraphicWin * a1, int a2, int a3, int a4);
+  // 0x00611AF0 lays out the edit controls after initializing the GraphicWin
+  // view. The original uses field_54_ columns and field_58_ rows.
+  int attach(GraphicWin *parent, int x, int y, int flags);
 
  public:
   // The int in the catalogue is the compiler's hidden most-derived flag.

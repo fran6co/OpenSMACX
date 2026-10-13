@@ -518,50 +518,58 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
     Dialog::field_24_ = x;
     Dialog::field_28_ = y;
     if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
-    const int result = GraphicWin::init(x, flags, Dialog::field_5C_,
-                                        Dialog::field_60_, 0, y, parent, 0, 0);
+    const int result = GraphicWin::init(x, y, Dialog::field_5C_,
+                                        Dialog::field_60_, 0, flags, parent, 0, 0);
     if (result != 0) return result;
 
     Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
-    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
-    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    buffer->set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+                           Dialog::text_color_c_, Dialog::text_color_d_);
+    buffer->set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
+                            Dialog::text_color_2c_, Dialog::text_color_2d_);
+    buffer->set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
+                            Dialog::text_color_3c_, Dialog::text_color_3d_);
     buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
-    int child_y = static_cast<int>(Dialog::field_68_) -
-                  static_cast<int>(Dialog::field_44_);
-    int child_x = static_cast<int>(Dialog::field_44_) >> 1;
+    const int margin = static_cast<int>(Dialog::field_44_);
+    const int cell_height = static_cast<int>(Dialog::field_68_) - margin;
+    const int initial_top = margin >> 1;
+    const int initial_bottom = cell_height + initial_top;
+    const int base_left = static_cast<int>(Dialog::field_34_) + margin * 2 +
+                          label_width_;
+    const int base_right = static_cast<int>(Dialog::field_64_) +
+                           static_cast<int>(Dialog::field_34_);
     int index = 0;
-    for (int row = 0; row < static_cast<int>(Dialog::field_54_); ++row) {
-        const int cell_width = static_cast<int>(Dialog::field_64_);
-        const int label_width = static_cast<int>(Dialog::field_34_);
-        const int label_x = cell_width * row + label_width +
-                            static_cast<int>(Dialog::field_44_) * 2 + label_width_;
-        const int label_right = cell_width + label_width + cell_width * row;
-        for (int column = 0; column < static_cast<int>(Dialog::field_58_); ++column) {
+    for (int column = 0; column < static_cast<int>(Dialog::field_54_); ++column) {
+        const int column_offset =
+            column * static_cast<int>(Dialog::field_64_);
+        const int left = base_left + column_offset;
+        const int right = base_right + column_offset;
+        int top = initial_top;
+        int bottom = initial_bottom;
+        for (int row = 0; row < static_cast<int>(Dialog::field_58_); ++row) {
             if (boxes_[index] != 0) {
                 delete boxes_[index];
-                boxes_[index] = 0;
             }
             boxes_[index] = new EditBox();
             if (boxes_[index] == 0) return 4;
 
-            const int box_width = label_x - child_x;
-            const int box_height = label_right - child_y;
+            const int box_width = right - left;
+            const int box_height = bottom - top;
             const int box_result = boxes_[index]->init(
-                child_y, child_x, box_width, box_height, this, 1);
+                left, top, box_width, box_height, this, 1);
             if (box_result != 0) return box_result;
 
             if ((Dialog::field_20_ & 0x100000) != 0) {
                 boxes_[index]->field_B3C_ |= 2;
             }
             Buffer *const edit_buffer = static_cast<Buffer *>(boxes_[index]);
-            edit_buffer->set_text_color(text_color_a_, text_color_b_,
-                                        text_color_c_, text_color_d_);
-            edit_buffer->set_text_color2(text_color_2a_, text_color_2b_,
-                                         text_color_2c_, text_color_2d_);
-            edit_buffer->set_text_color3(text_color_3a_, text_color_3b_,
-                                         text_color_3c_, text_color_3d_);
+            edit_buffer->set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+                                        Dialog::text_color_c_, Dialog::text_color_d_);
+            edit_buffer->set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
+                                         Dialog::text_color_2c_, Dialog::text_color_2d_);
+            edit_buffer->set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
+                                         Dialog::text_color_3c_, Dialog::text_color_3d_);
             edit_buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
             boxes_[index]->field_B14_ = limits_[index];
             boxes_[index]->set_text(text_buffers_[index]);
@@ -575,8 +583,9 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
             boxes_[index]->redraw();
             boxes_[index]->show(0);
 
-            child_y += Dialog::field_68_;
-            child_x += Dialog::field_68_;
+            const int row_step = static_cast<int>(Dialog::field_68_);
+            top += row_step;
+            bottom += row_step;
             ++index;
         }
     }

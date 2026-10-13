@@ -1,0 +1,50 @@
+{
+  "event_id": "49bdaf79c358acd26c1987006a9190bf07ea4bd3d1353a9775d41f94061a725f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh16887-signature comparison changes intended attach and six source-unchanged functions, with no symbols added/removed. Record the latter as read-only affected measurement subjects, not permissions to edit their owners or reset task baseline.",
+      "Independent physical COFF review compares named relocation targets, kinds and addends for all six. new_base,communicate,gen_terrain_poly and goody_box differ only in independent adjacent own-stack loads; associated children remain identical. menu_proc exchanges the same named global loads/add operands while passing the same sum. load_interface retains the same sprite/geometry source addends, calculations and named store destinations with register scheduling and subsequent1B displacement. No linked retained-selection, runtime or whole-project preservation proof follows.",
+      "Corrected attach preserves original unchecked bounds, virtual bases, allocation/cleanup and callbacks;25 host tests and fresh build/link pass. Native attach measurement remains refused at baseline due unsupported original EH registration. Full original spans/claims/restoration obligations remain intact; no exactness or automatic acceptance granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5356656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "editgroup-attachment-compiler-collateral-oct13u",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:editgroup-attach-geometry-oct13u"
+}
