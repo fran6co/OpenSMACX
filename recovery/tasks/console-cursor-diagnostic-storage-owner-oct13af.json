@@ -1,0 +1,28 @@
+{
+  "author": "coordinator",
+  "base_revision": "44ca59b96f129c158e60e2cde7dee69a0925e49c",
+  "editable_files": [
+    "src/console.h",
+    "src/console.cpp",
+    "recovery/tests/test_console_cursor_storage.py",
+    "recovery/tests/test_console_cursor_diagnostic_source_oct13af.py"
+  ],
+  "evidence": [
+    "Pinned68A5D0..68A5E0 contains exactly Bad Cursor Move plus NUL in writable initialized data; cursor_next5109B0..510A59 pushes that address directly at5109DA to danger538F30. It is not a pointer-indirection slot. Source-own one mutable char array with the existing CursorNextDangerMsg1 name in Console cpp and declare it extern in Console header. Preserve literal extent16, distinct storage/address identity, original debug parity guard, call order, error-path behavior and all function-body tokens.",
+    "After fresh compiler observation, use native object_writer to add the corresponding compact bounded object binding for68A5D0..68A5E0 and evidence cursor_next5109B0 with the actually emitted array symbol. No original marker edits, invented BYTE_EXACT tokens, new run-log comments or pointer wrapper into the old image. Independent byte/caller evidence constrains initialized literal storage, not adjacency-based TU or arbitrary surrounding allocation.",
+    "The second diagnostic address939FF0 remains an unresolved writable zero-fill text view: all six known uses pass it read-only to danger; danger538F30 and parse_says625EC0 read as string source, popup default text is copied into EditGroup owned storage. Neither capacity nor potential relation to LandmarkDefaultName939FEC is proven. Do not replace it with an empty literal or one-byte synthetic owner, assert runtime emptiness, normalize debug behavior, or discard this structural discovery. Source comment must distinguish the recovered first object from unresolved second view.",
+    "Source author owns only Console h/cpp; disjoint test author owns the two test files. Keep the existing cursor-history/scalar/callback controls intact and add actual source declaration/definition plus actual cursor_next debug-path controls with the second argument as an explicit opaque host dependency. Verify first text, array pointer identity, original pre-normalization coordinates and danger-before-status order. Wrong text or argument-order mutants must compile and fail with named exit98 controls; retain exact immutable-base source tokens and all existing metadata/history except the one new object binding.",
+    "Coordinator baseline before edits; freeze scope/package Python during native epochs. Require fresh compiler evidence for array symbol, 16 initialized bytes and data-only non-constructor emission; fresh application build/link, scoped matching/restoration, source/identity/reference continuity and independent review before manual integration. Preserve historical cursor_next BYTE_EXACT even if already a current mismatch or if a justified ownership change temporarily regresses; only native record can bank a newly measured claim. Header/compiler collateral must be reviewed and admitted, not assumed absent. Full linked/game/runtime acceptance remains unproven."
+  ],
+  "intent": "Replace the verified cursor diagnostic executable-address string with genuine source-owned initialized text while preserving unknown sibling storage.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5310896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-cursor-diagnostic-storage-owner-oct13af"
+}
