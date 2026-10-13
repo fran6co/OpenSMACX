@@ -1,0 +1,34 @@
+{
+  "author": "coordinator",
+  "base_revision": "6407b17b00a1ccf75d5c59b309d1ecbc8e52d418",
+  "editable_files": [
+    "src/win.cpp",
+    "src/win.h",
+    "src/dialog.cpp",
+    "recovery/tests/test_prevwnd_actual_source.py",
+    "recovery/tests/prevwnd_harness.cpp",
+    "recovery/tests/test_ui_owner_behavior.py"
+  ],
+  "evidence": [
+    "Pinned5D5C50..5D5CEA branches only WM_SIZE/WM_SETCURSOR, uses four32bit stack arguments and ret16 on every path; Dialog609C4F..54 passes5D5C50 as CallWindowProcA callback. Win::window_proc5F0650 is already source-typed LRESULTstdcall(HWND,UINT,WPARAM,LPARAM) and registered directly in WNDCLASS. Windows SDK WNDPROC consumer establishes callback types; no fabricated class or calling-convention change.",
+    "Authorize free PrevWndFunc LRESULTstdcall(HWND,UINT,WPARAM,LPARAM), shared extern-C declaration in win.h, removal of Dialog local integer prototype, and redundant WNDPROC casts on PrevWndFunc and Win::window_proc. Keep _PrevWndFunc@16 symbol, four32bit slots, every ORIGINAL/span/claim/history and Dialog::UNK2 integer interface. No changes to other Win interfaces/layout/vtables, headers beyond this declaration, globals, compiler flags or CMake.",
+    "Preserve all original guards/null returns, message-specific GetWindowLongA reloads, signed size-word extraction, unsigned cursor-word extraction, cursor HWND bit identity, result and fallback parameter order. No null/bounds/safety or other bug fixes. Only correct the existing live binding sentence that incorrectly claims an original integer prototype, preserving remaining evidence and historical source identity; source annotation writer/parser discipline applies.",
+    "Actual-source host controls retain all size/cursor/null/fallback runtime and mutation assertions. Add direct WNDPROC assignment with no cast; target32bit ABI remains native compiler proof, not64bit host layout. Header declaration changes require fresh complete build/link and all-object function/data collateral review, not blanket function-scope exemption. Baseline beforeGO; isolated source/test writers, freeze during coordinator compiler epochs, independent review and destination checks. Manual integration only, no game/automatic acceptance."
+  ],
+  "intent": "Make the original free window prefilter a type-compatible WNDPROC with shared declaration and genuine API calls.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6118480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6331376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "windows-prefilter-abi-owner-oct13aq"
+}
