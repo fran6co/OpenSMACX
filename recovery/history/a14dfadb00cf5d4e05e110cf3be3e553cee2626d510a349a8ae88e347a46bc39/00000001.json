@@ -1,0 +1,25 @@
+{
+  "event_id": "4beeaca8e2ffa61f97e6635afd99a10198023e9f15b388337dedaa889222ab5c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Physical16887-signature comparison changes veh_find and the source-unchanged order_veh only; no functions added/removed. Retain order_veh as read-only affected measurement subject, not a source-edit permission.",
+      "order_veh retains18352B primary and21B child. Independent adjacent MOV loads of ebx from ownstack+20 and edi from ownstack+18 permute atoffset1EC1. Undoing only that8B permutation in an in-memory diagnostic yields complete native function_signature equality, including normalized relocation targets and child. Actual object files are untouched; this is not byte-exactness or a linked/runtime preservation waiver.",
+      "Keep original claims/spans/flags/base and unsupported EH-region obligations intact. Source-only changed-TU continuity retains175 mappings. Native data/window and build evidence describes compiled source, not original allocation/lifetime or full-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "vehicle-distance-order-collateral-oct13s",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:vehicle-find-distance-storage-oct13s"
+}

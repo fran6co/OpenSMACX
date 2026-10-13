@@ -9411,10 +9411,14 @@ void __cdecl stack_kill(int a1) {
 // RECOVERY_OBJECT: v2 0x00691DC0 0x00691DDB ?VehLogKillingVehicle@@3PADA 0x005C08C0
 char VehLogKillingVehicle[] = "Killing vehicle (v,who,v2)";
 
-// 0x009B227C, the slot veh_find reports its winning distance into. It sits in
-// the VehLiftX (0x009B2278) / VehDropLiftVehID (0x009B2280) run and is named by
-// what writes it - nothing else in the tree reads or writes it.
-int *const VehFindBestDist = (int *)0x009B227C;
+// 0x009B227C..0x009B2280 is veh_find's four-byte distance output. Its pinned
+// initial bytes are zero; the function resets it to 9999 at 0x005C0CBF and
+// stores the winning distance at 0x005C0D9E only when a vehicle qualifies. The
+// pinned reference scan identifies those two writes, while indirect readers,
+// aliases and the full allocation / lifetime remain unproved. Neighboring
+// storage is not part of this binding.
+// RECOVERY_OBJECT: v2 0x009B227C 0x009B2280 ?VehFindBestDist@@3HA 0x005C0CB0
+int VehFindBestDist = 0;
 
 // PlayersData owns both faction counters: total_mil_veh is the dword at +0x1058,
 // and proto_id_active is the byte row at +0x0858. veh_kill's native index
@@ -9698,7 +9702,7 @@ Status: MISMATCH.
 */
 int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
     int best_dist = 9999;
-    *VehFindBestDist = 9999;
+    VehFindBestDist = 9999;
     int best_idx = -1;
     int i = 0;
     if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
@@ -9723,7 +9727,7 @@ int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
             ++i;
         } while (i < GameDataStateStorage.fields_.vehicle_current_count_);
         if (best_idx >= 0) {
-            *VehFindBestDist = best_dist;
+            VehFindBestDist = best_dist;
         }
     }
     return best_idx;
