@@ -6759,13 +6759,13 @@ int Buffer::change_color(int a1, int a2) {
     int pixel_base;
     IDirectDrawSurface *const surface = surface_;
     if (!surface) {
-        const uint32_t storage = reinterpret_cast<uint32_t>(dib_bits_);
-        locked_bits_ = reinterpret_cast<void *>(storage);
+        LPVOID const storage = dib_bits_;
+        locked_bits_ = storage;
         if (!storage) {
             return 7;
         }
         surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
-        pixel_base = static_cast<int>(storage);
+        pixel_base = reinterpret_cast<int>(storage);
     } else {
         const uint32_t existing = reinterpret_cast<uint32_t>(locked_bits_);
         if (existing) {
@@ -6779,10 +6779,10 @@ int Buffer::change_color(int a1, int a2) {
             }
             surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
             uint32_t pitch = static_cast<uint32_t>(descriptor.lPitch);
-            uint32_t data = reinterpret_cast<uint32_t>(descriptor.lpSurface);
+            LPVOID const data = descriptor.lpSurface;
             stride_ = pitch;
-            locked_bits_ = reinterpret_cast<void *>(data);
-            pixel_base = static_cast<int>(data);
+            locked_bits_ = data;
+            pixel_base = reinterpret_cast<int>(data);
         }
     }
 
@@ -6815,9 +6815,9 @@ int Buffer::change_color(int a1, int a2) {
                 }
                 return 0;
             }
-            const uint32_t data2 = reinterpret_cast<uint32_t>(locked_bits_);
-            if (data2 != 0 && remaining <= 0) {
-                surface2->Unlock(reinterpret_cast<void *>(data2));
+            LPVOID const data2 = locked_bits_;
+            if (data2 != nullptr && remaining <= 0) {
+                surface2->Unlock(data2);
                 locked_bits_ = nullptr;
                 surface_lock_count_ = 0;
             }
@@ -6877,9 +6877,9 @@ int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) {
             locked_bits_ = descBuf.lpSurface;
         }
     } else {
-        uint32_t bits = reinterpret_cast<uint32_t>(dib_bits_);
-        locked_bits_ = reinterpret_cast<void *>(bits);
-        if (bits == 0) {
+        LPVOID const bits = dib_bits_;
+        locked_bits_ = bits;
+        if (bits == nullptr) {
             return 7;
         }
         surface_lock_count_++;
@@ -7338,8 +7338,8 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
         }
 
         locked_bits_ = dib_bits_;
-        int bits = reinterpret_cast<int>(locked_bits_);
-        if (bits != 0) {
+        LPVOID const bits = locked_bits_;
+        if (bits != nullptr) {
             ++surface_lock_count_;
         }
         BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
@@ -7363,11 +7363,11 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
         } else {
             int count = static_cast<int>(surface_lock_count_) - 1;
             surface_lock_count_ = count;
-            int cachedBits = reinterpret_cast<int>(locked_bits_);
-            if (cachedBits == 0 || count > 0) {
+            LPVOID const cachedBits = locked_bits_;
+            if (cachedBits == nullptr || count > 0) {
                 goto forward;
             }
-            surface->Unlock(reinterpret_cast<void *>(cachedBits));
+            surface->Unlock(cachedBits);
         }
         locked_bits_ = nullptr;
         surface_lock_count_ = 0;
@@ -7410,8 +7410,8 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
         }
 
         locked_bits_ = dib_bits_;
-        int bits = reinterpret_cast<int>(locked_bits_);
-        if (bits != 0) {
+        LPVOID const bits = locked_bits_;
+        if (bits != nullptr) {
             ++surface_lock_count_;
         }
         BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
@@ -7435,11 +7435,11 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
         } else {
             int count = static_cast<int>(surface_lock_count_) - 1;
             surface_lock_count_ = count;
-            int cachedBits = reinterpret_cast<int>(locked_bits_);
-            if (cachedBits == 0 || count > 0) {
+            LPVOID const cachedBits = locked_bits_;
+            if (cachedBits == nullptr || count > 0) {
                 goto forward;
             }
-            surface->Unlock(reinterpret_cast<void *>(cachedBits));
+            surface->Unlock(cachedBits);
         }
         locked_bits_ = nullptr;
         surface_lock_count_ = 0;

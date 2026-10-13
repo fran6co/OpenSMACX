@@ -5,6 +5,7 @@ descriptor size are bridged for the 64-bit host. COM calls are not rewritten. Th
 model the complete DirectDraw interface or claim VC6 object equivalence.
 """
 from pathlib import Path
+import os
 import shutil
 import subprocess
 import pytest
@@ -51,7 +52,11 @@ def actual_host_bodies():
 
     for body in (draw, multi):
         assert "IDirectDrawSurface *surface = surface_;" in body
-        assert "surface->Unlock(reinterpret_cast<void *>(cachedBits))" in body
+        assert "LPVOID const bits = locked_bits_;" in body
+        assert "LPVOID const cachedBits = locked_bits_;" in body
+        assert "surface->Unlock(cachedBits)" in body
+        assert "reinterpret_cast<int>(locked_bits_)" not in body
+        assert "reinterpret_cast<void *>(cachedBits)" not in body
         assert "UnlockFn" not in body
         assert body.index("if (surface_ == 0)") < body.index(
             "IDirectDrawSurface *surface = surface_")
@@ -73,12 +78,8 @@ def actual_host_bodies():
                           "description.dwSize = 0x6c;")
     draw = draw.replace("reinterpret_cast<int>(locked_bits_)",
         "static_cast<int>(reinterpret_cast<uintptr_t>(locked_bits_))")
-    draw = draw.replace("reinterpret_cast<void *>(cachedBits)",
-        "reinterpret_cast<void *>(static_cast<uintptr_t>(cachedBits))")
     multi = multi.replace("reinterpret_cast<int>(locked_bits_)",
         "static_cast<int>(reinterpret_cast<uintptr_t>(locked_bits_))")
-    multi = multi.replace("reinterpret_cast<void *>(cachedBits)",
-        "reinterpret_cast<void *>(static_cast<uintptr_t>(cachedBits))")
     return pixel, draw, multi
 
 
@@ -94,6 +95,7 @@ static void require(bool condition, const char *what) {
     if (!condition) { fprintf(stderr, "failed: %s\n", what); abort(); }
 }
 typedef uint32_t DWORD;
+typedef void *LPVOID;
 struct DDSURFACEDESC { DWORD dwSize; int32_t lPitch; void *lpSurface; };
 struct RECT { int left, top, right, bottom; };
 struct Header { int biWidth, biHeight; };
@@ -137,6 +139,10 @@ struct Sprite {
     }
 };
 static Sprite g_BUFFER_SPRITE = {};
+struct BufferSpriteOwnerAdapter {
+    Sprite &sprite() { return g_BUFFER_SPRITE; }
+};
+static BufferSpriteOwnerAdapter BufferSpriteOwner;
 static int WinFillColour = 13;
 struct Buffer {
     void *dib_bits_;
@@ -307,4 +313,8 @@ def test_typed_directdraw_actual_source_controls(tmp_path, compiler_name):
     subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
                     "-fsanitize=address,undefined", "-fno-omit-frame-pointer",
                     str(cpp), "-o", str(exe)], check=True)
-    subprocess.run([str(exe)], check=True)
+    # LSan's ptrace probe is unsupported in this isolated runner; retain ASan
+    # and UBSan runtime checks while disabling only leak-process inspection.
+    child_env = dict(os.environ)
+    child_env["ASAN_OPTIONS"] = "detect_leaks=0"
+    subprocess.run([str(exe)], check=True, env=child_env)

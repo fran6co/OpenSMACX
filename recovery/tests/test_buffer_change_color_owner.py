@@ -35,13 +35,32 @@ def actual_bodies():
         "int Buffer::change_color(int a1, int a2) {",
         "int Buffer::change_color(int a1, int a2, int a3, int a4, int a5, int a6) {")]
     assert "if (!IntersectRect(&rect, &rect1_, &rect))" in bodies[0]
-    for index, body in enumerate(bodies):
+    for body in bodies:
         assert "ordered[" not in body and "DDLockFn" not in body
-        # The native compiler targets 32-bit Windows. Keep its DWORD pointer
-        # values in low-address mappings for a 64-bit host control.
-        import re
-        bodies[index] = re.sub(r"reinterpret_cast<uint32_t>\(([^()]*)\)",
-            r"static_cast<uint32_t>(reinterpret_cast<uintptr_t>(\1))", body)
+    assert "LPVOID const storage = dib_bits_;" in bodies[0]
+    assert "locked_bits_ = storage;" in bodies[0]
+    assert "const uint32_t existing = reinterpret_cast<uint32_t>(locked_bits_);" in bodies[0]
+    assert "pixel_base = static_cast<int>(existing);" in bodies[0]
+    assert "LPVOID const data = descriptor.lpSurface;" in bodies[0]
+    assert "LPVOID const data2 = locked_bits_;" in bodies[0]
+    assert "surface2->Unlock(data2);" in bodies[0]
+    assert "reinterpret_cast<void *>(storage)" not in bodies[0]
+    assert "reinterpret_cast<uint32_t>(descriptor.lpSurface)" not in bodies[0]
+    assert "LPVOID const bits = dib_bits_;" in bodies[1]
+    assert "locked_bits_ = bits;" in bodies[1]
+    # Bridge only the pointer-to-int numeric pixel_base conversions. The
+    # low-address mapping below keeps those genuine 32-bit address operations
+    # meaningful on the 64-bit host; all storage/Unlock values stay LPVOID.
+    for index in range(len(bodies)):
+        bodies[index] = bodies[index].replace(
+            "reinterpret_cast<uint32_t>(locked_bits_)",
+            "static_cast<uint32_t>(reinterpret_cast<uintptr_t>(locked_bits_))",
+        )
+        for pointer_name in ("storage", "data"):
+            bodies[index] = bodies[index].replace(
+                f"reinterpret_cast<int>({pointer_name})",
+                f"static_cast<int>(reinterpret_cast<uintptr_t>({pointer_name}))",
+            )
     return bodies
 
 
@@ -60,6 +79,7 @@ static void require(bool value, const char *what) {
 }
 typedef unsigned char BYTE;
 typedef uint32_t DWORD;
+typedef void *LPVOID;
 struct RECT { int left, top, right, bottom; };
 struct DDPIXELFORMAT { uint32_t words[8]; };
 struct DDCOLORKEY { uint32_t low, high; };
@@ -96,6 +116,9 @@ static Event events[16];
 static int event_count;
 static int lock_result;
 static bool null_pixels;
+class IDirectDrawSurface;
+static IDirectDrawSurface **mutated_surface_slot;
+static IDirectDrawSurface *mutated_surface_value;
 static unsigned char *low_page(size_t bytes) {
     void *p = mmap(0, bytes, PROT_READ | PROT_WRITE,
                    MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, -1, 0);
@@ -119,6 +142,10 @@ public:
         require(desc->dwSize == 0x6c, "Lock dwSize initialized as original");
         desc->lPitch = pitch;
         desc->lpSurface = null_pixels ? 0 : pixels;
+        if (mutated_surface_slot != 0) {
+            *mutated_surface_slot = mutated_surface_value;
+            mutated_surface_slot = 0;
+        }
         return lock_result;
     }
     long Unlock(void *data) {
@@ -126,7 +153,10 @@ public:
         return 0;
     }
 };
-static void reset_events() { event_count = 0; lock_result = 0; null_pixels = false; }
+static void reset_events() {
+    event_count = 0; lock_result = 0; null_pixels = false;
+    mutated_surface_slot = 0; mutated_surface_value = 0;
+}
 
 class BufferA {
 public:
@@ -161,6 +191,7 @@ def host_source():
 int main() {
     unsigned char *pixel = low_page(4096);
     FakeSurface *surface = new (low_page(4096)) FakeSurface(pixel, 8);
+    FakeSurface *second_surface = new (low_page(4096)) FakeSurface(pixel, 12);
     pixel[0] = 7; pixel[1] = 8; pixel[8] = 7; pixel[9] = 9;
 
     // First overload: Lock error returns 7 before count/pixel changes.
@@ -183,6 +214,28 @@ int main() {
             events[1].arg0 == pixel, "two-arg Lock then Unlock");
     require(a.surface_lock_count_ == 0 && a.locked_bits_ == 0,
             "two-arg final lock fields");
+
+    // A Lock callback can change surface_; the product uses the captured
+    // first receiver for Lock, then re-reads surface_ for the later Unlock.
+    reset_events();
+    a.surface_ = surface; a.locked_bits_ = 0;
+    mutated_surface_slot = &a.surface_;
+    mutated_surface_value = second_surface;
+    require(a.change_color(7, 3) == 0, "two-arg callback receiver reload");
+    require(events[0].arg1 == 0 && event_count == 2 && events[1].kind == 2 &&
+            events[1].arg1 == second_surface && events[1].arg0 == pixel,
+            "Unlock uses the current surface and captured descriptor pointer");
+
+    // The DIB pointer is stored directly, while only pixel_base remains a
+    // genuine 32-bit numeric address in this host bridge.
+    BufferA dib_a = {};
+    dib_a.dib_bits_ = pixel; dib_a.rect1_ = RECT{0,0,2,2};
+    dib_a.dib_.bmiHeader = Header{2,-2}; dib_a.stride_ = 8;
+    pixel[0] = 7; reset_events();
+    require(dib_a.change_color(7, 6) == 0, "two-arg DIB storage path");
+    require(pixel[0] == 6 && dib_a.surface_lock_count_ == 0 &&
+            dib_a.locked_bits_ == 0 && event_count == 0,
+            "two-arg DIB direct storage and original cleanup");
 
     // Existing-lock path deliberately performs no COM calls and retains one
     // holder after this operation.
