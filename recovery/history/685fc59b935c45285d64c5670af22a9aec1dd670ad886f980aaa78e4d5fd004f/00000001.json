@@ -1,0 +1,21 @@
+{
+  "event_id": "b71d702a0793643ed12ab5afec2e7195aa3f9b464d9b61470fc892be24f44bb0",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_lighting_initialization.py",
+      "recovery/tests/test_terrain_shared_shades.py"
+    ],
+    "evidence": [
+      "Existing actual-source lighting fixtures still double the removed CornerLightTable fallback. Use the real new window declarations and actual AltLight storage while preserving original lifecycle/cache/alias and damage controls.",
+      "The initialization fixture also has a preexisting stale char* brighting_tile signature; current master declares TerrainCacheEntry*. Repair extraction to match its real source type without changing production code or weakening behavioral checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "corner-light-existing-fixtures-oct13r",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:corner-light-source-windows-oct13r"
+}

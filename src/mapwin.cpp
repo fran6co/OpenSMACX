@@ -2720,6 +2720,17 @@ static int OceanCornerShades[16];
 // RECOVERY_OBJECT: v2 0x007F6688 0x007F674C ?MapLightingTable@@3PACA 0x00470420
 signed char MapLightingTable[4 * 49];
 
+// These separate four-byte source windows cover the exceptional get_brighting
+// indices immediately before and after MapLightingTable. The pinned PE places
+// both inside the RW .data virtual-zero-fill tail, so their initial bytes are
+// zero. The windows establish only these observed access extents: they do not
+// identify original variables, a shared allocation, or permanent zero values.
+// No direct writer was found; indirect writers and aliases remain unresolved.
+// RECOVERY_OBJECT: v2 0x007F6684 0x007F6688 _MapLightingLeadingReadWindow 0x00470550
+static signed char MapLightingLeadingReadWindow[4];
+// RECOVERY_OBJECT: v2 0x007F674C 0x007F6750 _MapLightingTrailingReadWindow 0x00470550
+static signed char MapLightingTrailingReadWindow[4];
+
 static void fill_map_lighting_table() {
     for (int quadrant = 0; quadrant < 4; ++quadrant) {
         int index = 0;
@@ -2760,8 +2771,7 @@ static void fill_map_lighting_table() {
     }
 }
 
-// 0x007F6680 is the BIASED corner slope-light lookup base, not a proved
-// allocation start. get_brighting reads each corner as
+// get_brighting reads each corner from the biased base 0x007F6680 as
 //
 //     lea ebx, [eax*8] / sub ebx, eax            ; v * 7
 //     movsx ebx, byte ptr [ebx + eax + 0x7f6680] ; [v*7 + w]
@@ -2772,22 +2782,25 @@ static void fill_map_lighting_table() {
 // 0x7F66E2 and 0x7F6713, so the stride is 0x31 = 49 = 7*7 and this one base
 // serves all four.
 //
-// compute_lighting_table (470420) writes MapLightingTable at 7F6688..7F674C.
-// For v,w in 1..7, 7*v+w = 8+7*(v-1)+(w-1): this lookup addresses that
-// SAME generated table. The eight-byte bias does not prove another object.
-// get_alt (47037A..47039C) stores (sum_four_tiers-4*recipient_tier+4)&15;
-// the 1..7 domain needs all other corner tiers within one of the recipient.
-// Without that invariant, reads can reach the ocean-shade tail at 7F6680,
-// the four-byte gap before MapLightingTable, or beyond the generated table.
-// Keep those exceptional cache states visible; do not silently clamp them.
-static const signed char *const CornerLightTable = (const signed char *)0x007F6680;
+// Nibbles are not restricted to 1..7: preserve the complete 0..15 domain.
+// Index 0..3 aliases the final OceanCornerShades DWORD; 4..7 and 204..207
+// use the bounded startup-zero windows above; 8..203 address the generated
+// table; and 208..267 address AltLightBit200[0..59]. The windows are separate
+// source views, not a claim about an original aggregate or allocation.
+// PE zero-fill proves only their initial bytes; runtime aliases/writers remain
+// an obligation rather than an assumption that these values stay zero.
 
 static __forceinline signed char corner_light_value(int biased_index) {
-    const int generated_index = biased_index - 8;
-    if (biased_index >= 8 && biased_index < 8 + 4 * 49) {
-        return MapLightingTable[generated_index];
+    if (biased_index < 8) {
+        return MapLightingLeadingReadWindow[biased_index - 4];
     }
-    return CornerLightTable[biased_index];
+    if (biased_index < 8 + 4 * 49) {
+        return MapLightingTable[biased_index - 8];
+    }
+    if (biased_index < 208) {
+        return MapLightingTrailingReadWindow[biased_index - 204];
+    }
+    return AltLightBit200[biased_index - 208];
 }
 
 // 0x00685684 and the five tables behind it - THE ALTITUDE BONUS LOOKUP
@@ -3197,7 +3210,8 @@ Purpose: Render one map tile's terrain polygon stack - the base land or
 //            texture.h (the terrain Sprite/Texture band
 //            0x0075B098..0x007AD1B0, ~50 of them the +8
 //            `&name[k].cTransparentIndex_` companion of a named array);
-//            CornerOffsetX/Y, CornerLightTable, AltLightBit1/2/200 and
+//            CornerOffsetX/Y, the former CornerLightTable lookup (now
+//            bounded corner-light windows), AltLightBit1/2/200 and
 //            AltDirectionTable are bound in map.h and above in this file;
 //            the rest are the named bindings above. Its BLOCKED note's
 //            remaining unnamed .rdata/BSS list (684730, 685478..,
@@ -7405,10 +7419,10 @@ static __forceinline TerrainCacheEntry *brighting_tile(
 // ORIGINAL: 0x00470550 ?get_brighting@MapWin@@QAEHHHH@Z 0x00470550-0x00470776 FILE
 // RECOVERY_BINDING: v1 {"reason":"Read current lighting storage without adding lazy initialization or table writes to brightness lookup.","evidence":["Pinned470550..470776 calls get_alt four times and dispatches its lookup through470778;470704/47071D/470736/47074C read signed table bytes directly, without calling the initializer or quick_root.","mapwin_system_init at471030 owns the explicit compute_lighting_table call;470420..470536 owns the four49-byte table writes. Lookup before startup must retain the existing zero-initialized storage rather than generate values on demand."]}
 // HOMED 2026-09-04 from the 0x00470550 artifact. 16/202 in the tree. The
-// four absolute table constants 0x7F6680/0x7F66B1/0x7F66E2/0x7F6713 are
-// spelled as ONE binding, CornerLightTable, plus the stride 0x31 - the image's
-// four displacements are that base plus corner*0x31, and the scorer discounts
-// relocations so the single base reproduces the `[reg+reg+disp]` shape.
+// Historical note: the four absolute table constants 0x7F6680/0x7F66B1/
+// 0x7F66E2/0x7F6713 were formerly modeled as one raw CornerLightTable base
+// plus stride 0x31. The bounded source-owned views above now replace that
+// fallback while preserving the observed byte windows and aliases.
 // TRIED: chained-OR bounds check vs nested ifs, and caching `this` in a named local before the owned_==0 check - none change when the compiler spills `this` to [ebp-4] relative to the row/col bound-check jumps (MISMATCH #6 'push' vs 'mov'); not chased further. Switch-table index math (v1..v4 nibble packing, per-case table*7 stride) is a faithful transcription.
 // working copy - scaffold materialised by --work
 // size      550 bytes
@@ -7508,7 +7522,7 @@ int MapWin::get_brighting(int x, int y, int corner) {
 }
 
 // ORIGINAL: 0x00470420 ?compute_lighting_table@MapWin@@QAEXXZ 0x00470420-0x00470536
-// RECOVERY_BINDING: v1 {"evidence": ["The original 0x00470420..0x00470536 body fills four 49-byte tables using quick_root; its retired transcription remains in Git history", "src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and CornerLightTable consumer", "src/general.h: quick_root(int)"], "reason": "Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
+// RECOVERY_BINDING: v1 {"evidence": ["The original 0x00470420..0x00470536 body fills four 49-byte tables using quick_root; its retired transcription remains in Git history", "src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and corner_light_value/get_brighting consumers", "src/general.h: quick_root(int)"], "reason": "Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
 void MapWin::compute_lighting_table() {
     fill_map_lighting_table();
 }

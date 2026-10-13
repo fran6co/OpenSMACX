@@ -1,9 +1,9 @@
-"""Shared ocean-tail alias controls, not complete lighting/game verification.
+"""Shared ocean-tail and exceptional-window controls, not complete lighting/game verification.
 
 Extract the real owner, cache POD, typed addressing helper and complete get_brighting
 body and the real generated-table lookup helper. map_loc and get_alt are explicit
 service doubles. Table contents are independently seeded test data, not original
-initialization proof; CornerLightTable doubles the unresolved exceptional indices.
+initialization proof; the two four-byte windows are distinct source storage.
 Original 470704 selects signed bytes at 7F6680+7*v1+v2, overlapping the final
 DWORD of the sixteen-shade owner only for indices 0..3. Other cases start at
 49/98/147. Native layout, renderer publication, real get_alt and allocation
@@ -46,12 +46,16 @@ def actual_source():
         signatures.append(signature)
     tile_helper = braced(source, "static __forceinline TerrainCacheEntry *brighting_tile(")
     table, = re.findall(r"^signed char MapLightingTable\[4 \* 49\];", source, re.M)
+    alt_light, = re.findall(r"static signed char AltLightBit200\[113\];", source)
+    leading, = re.findall(r"static signed char MapLightingLeadingReadWindow\[4\];", source)
+    trailing, = re.findall(r"static signed char MapLightingTrailingReadWindow\[4\];", source)
     light_helper = braced(source, "static __forceinline signed char corner_light_value(int biased_index)")
     body = braced(source, "int MapWin::get_brighting(")
     assert "return owned + ((MapLongitudeBounds >> 1) * row + col_half);" in tile_helper
     assert "tile->brightness[corner]" in body
     assert "t->altitude_detail" in body
-    return "\n".join((pod, owner, table, "struct MapWin {", pointer,
+    return "\n".join((pod, owner, table, alt_light, leading, trailing,
+                      "struct MapWin {", pointer,
                       *signatures, "};", tile_helper, light_helper, body))
 
 
@@ -70,7 +74,6 @@ void check(bool ok,int line) {
 #define require(x) check((x),__LINE__)
 int MapLongitudeBounds=8,MapLatitudeBounds=4;
 signed char lighting[268];
-const signed char *CornerLightTable=lighting; // explicitly unrecovered service
 unsigned char terrain;
 int map_calls,alt_calls,mode,null_mask;
 int wanted[4],expected_x,expected_y;
@@ -93,6 +96,8 @@ int oracle(int corner,const int *v) {
         for(int j=0;j<index;++j)divisor*=256;
         return signed_byte((word/divisor)%256);
     }
+    // Independent expected bytes; reset publishes this pattern into each
+    // separate source window without reproducing the helper's dispatch here.
     return (index*37+13)%256-128;
 }
 int MapWin::get_alt(int x,int y,int corner) {
@@ -123,7 +128,12 @@ void reset(int x=2,int y=1) {
     for(int bank=0;bank<5;++bank)for(int cell=0;cell<40;++cell)
         for(int c=0;c<4;++c)banks[bank][cell].brightness[c]=255;
     for(int i=0;i<268;++i)lighting[i]=static_cast<signed char>((i*37+13)%256-128);
+    for(int i=0;i<4;++i) {
+        MapLightingLeadingReadWindow[i]=lighting[i+4];
+        MapLightingTrailingReadWindow[i]=lighting[i+204];
+    }
     for(int i=0;i<196;++i)MapLightingTable[i]=lighting[i+8];
+    for(int i=0;i<60;++i)AltLightBit200[i]=lighting[i+208];
     for(int i=0;i<16;++i)OceanCornerShades[i]=int(0x10203000u+unsigned(i));
     for(int i=0;i<4;++i)wanted[i]=0;
 }
@@ -264,4 +274,9 @@ def test_compiled_damage_rejected(tmp_path, before, after):
     actual = actual_source()
     assert before in actual
     result = run_host(tmp_path, actual.replace(before, after))
+    if before == "if (index < 4)" and after in ("if (index < 3)", "if (false)"):
+        assert result.returncode != 0 and (
+            "assertion line" in result.stderr or "runtime error: index" in result.stderr
+        ), result.stderr
+        return
     assert result.returncode == 98 and "assertion line" in result.stderr, result.stderr

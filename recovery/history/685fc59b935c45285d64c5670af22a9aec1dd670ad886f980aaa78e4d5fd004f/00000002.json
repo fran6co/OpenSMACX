@@ -1,0 +1,25 @@
+{
+  "event_id": "c8762ac66ea82b1e57e37d16882a1b4c2b374afbadcec05fbfe7f91d77bedfd6",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh retained baseline build-r51ftk1p vs candidate build-hjjhy0s3 compares16887 physical compiler signatures. Only get_brighting and the source-unchanged gen_terrain_poly differ; no functions added/removed. Explicitly retain gen_terrain_poly as a read-only affected measurement subject, not a body-edit permission.",
+      "Independent COFF/disassembly review finds renderer primary15232->15280B,555 relocation edges in each, unchanged external target/kind multiset except private labels, no new-window references and identical21B child. Additional stack-local reloads/layout changes do not prove CFG equivalence or linked/runtime preservation; those limitations remain obligations.",
+      "Fresh baseline/current renderer measurements both refuse the original cold-region extent; this is unknown, not exact or green. Preserve all original spans/claims and compiler flags, with no baseline reset, claim demotion, preservation waiver or full-acceptance assertion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b71d702a0793643ed12ab5afec2e7195aa3f9b464d9b61470fc892be24f44bb0",
+  "request_id": "corner-light-renderer-collateral-oct13r",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:corner-light-source-windows-oct13r"
+}

@@ -26,16 +26,19 @@ def actual_fragment():
     header = (ROOT / 'src/mapwin.h').read_text()
     table, = re.findall(r'signed char MapLightingTable\[4 \* 49\];', source)
     ocean, = re.findall(r'static int OceanCornerShades\[16\];', source)
+    alt_light, = re.findall(r'static signed char AltLightBit200\[113\];', source)
+    leading, = re.findall(r'static signed char MapLightingLeadingReadWindow\[4\];', source)
+    trailing, = re.findall(r'static signed char MapLightingTrailingReadWindow\[4\];', source)
     pod = braced(header, 'struct TerrainCacheEntry {') + ';'
     declarations = '\n'.join(
         re.search(r'\b(?:int|void) ' + name + r'\([^;{}]*\);', header).group()
         for name in ('get_alt', 'compute_lighting_table', 'get_brighting'))
     return '\n'.join((
-        pod, ocean, table,
+        pod, ocean, table, alt_light, leading, trailing,
         braced(source, 'static void fill_map_lighting_table()'),
         braced(source, 'static __forceinline signed char corner_light_value('),
         'struct MapWin { TerrainCacheEntry *owned_; ' + declarations + ' };',
-        braced(source, 'static __forceinline char *brighting_tile('),
+        braced(source, 'static __forceinline TerrainCacheEntry *brighting_tile('),
         braced(source, 'int MapWin::get_brighting('),
         braced(source, 'void MapWin::compute_lighting_table()'),
     ))
@@ -47,8 +50,6 @@ HARNESS = r'''
 #include <cstring>
 #define __forceinline inline
 int MapLongitudeBounds=8, MapLatitudeBounds=4;
-signed char CornerLightBytes[400];
-const signed char *CornerLightTable=CornerLightBytes; // unresolved lookup double
 unsigned char TerrainByte=0x60;
 int RootCalls=0;
 int quick_root(int n) { ++RootCalls; int r=0; while ((r+1)*(r+1)<=n) ++r; return r; }
@@ -67,13 +68,16 @@ int MapWin::get_alt(int x,int y,int corner) {
 int main() {
     MapWin w; w.owned_=cache;
     for(int i=0;i<196;++i) assert(MapLightingTable[i]==0);
+    for(int i=0;i<4;++i) {
+        assert(MapLightingLeadingReadWindow[i]==0);
+        assert(MapLightingTrailingReadWindow[i]==0);
+    }
     cache[5].brightness[1]=0xff;
     assert(w.get_brighting(2,1,1)==0 && RootCalls==0);
     for(int i=0;i<196;++i) assert(MapLightingTable[i]==0);
 
     cache[5].brightness[1]=0xff;
     for(int i=0;i<196;++i) MapLightingTable[i]=42;
-    for(int i=0;i<400;++i) CornerLightBytes[i]=17;
     const int before=MapLightingTable[58];
     int value=w.get_brighting(2,1,1);
     assert(value==before && RootCalls==0);
@@ -116,7 +120,7 @@ def test_lookup_preserves_current_table_until_explicit_compute(tmp_path, compile
 @pytest.mark.parametrize('compiler', ('g++', 'clang++'))
 def test_lazy_fill_damage_control(tmp_path, compiler):
     fragment = actual_fragment()
-    anchor = 'return MapLightingTable[generated_index];'
+    anchor = 'return MapLightingTable[biased_index - 8];'
     assert fragment.count(anchor) == 1
     mutant = fragment.replace(anchor, 'fill_map_lighting_table(); ' + anchor)
     result = run_control(tmp_path, compiler, mutant)
