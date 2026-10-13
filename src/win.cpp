@@ -2570,7 +2570,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                     case WM_ACTIVATE: {
                         const unsigned int active = LOWORD(wparam);
                         const unsigned int minimised = HIWORD(wparam);
-                        InvalidateRect(reinterpret_cast<HWND>(HandleMain),
+                        InvalidateRect(HandleMain,
                                        nullptr, FALSE);
                         if (active == 0) {
                             WinPointerOwner1 = nullptr;
@@ -2997,7 +2997,7 @@ int DDInit::init(int width, int height, int depth, int tgl) {
         surf_ = nullptr;
     }
     if (hwnd_ != nullptr) {
-        DestroyWindow(reinterpret_cast<HWND>(hwnd_));
+        DestroyWindow(hwnd_);
         hwnd_ = nullptr;
         UnregisterClassA(DDInitClassName, WinInstance);
     }
@@ -4603,7 +4603,7 @@ Status: Complete
 */
 void Win::close_class() {
     if (HandleMain) {
-        DestroyWindow(reinterpret_cast<HWND>(HandleMain));
+        DestroyWindow(HandleMain);
         HandleMain = nullptr;
     }
     ScreenBufferOwner.buffer().close();
@@ -6393,7 +6393,7 @@ skip_all:
 void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int from_parent) {
     Win *child = win_parent_;
     if (child != 0) {
-        reinterpret_cast<Win *>(child)->bring_child_to_top(this);
+        child->bring_child_to_top(this);
     } else if (this != nullptr &&
                (iFlags_ & 0x2000000) == 0) {
         int32_t idx = 0;
@@ -6427,7 +6427,7 @@ void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int fr
 
     child = win_parent_;
     if (child != 0) {
-        reinterpret_cast<Win *>(child)->set_dialog_focus(this);
+        child->set_dialog_focus(this);
     }
 
     if (from_parent == 0) {
@@ -6499,7 +6499,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
         r.bottom = outer_rect_.bottom - outer_rect_.top;
         if (in_box(x, y, &r) != 0 &&
             (iFlags_ & 0x200000) == 0 &&
-            (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 8) == 0) {
+            (iSomeFlag_ & 8) == 0) {
             if (dbl == 0) {
                 WinCallbackWindow = this;
                 WinMouseEventCallback cb = field_414_;
@@ -6521,13 +6521,13 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
         }
     }
 
-    if (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 1) {
+    if (iSomeFlag_ & 1) {
         Win *w = win_parent_;
         if (w != 0 && w->is_visible() == 0) {
             return;
         }
         if ((iFlags_ & 0x200000) == 0 &&
-            (*reinterpret_cast<uint8_t *>(&iSomeFlag_) & 8) == 0) {
+            (iSomeFlag_ & 8) == 0) {
             if (dbl == 0) {
                 WinCallbackWindow = this;
                 WinMouseEventCallback cb = field_41C_;
@@ -6694,17 +6694,17 @@ void Win::bring_to_top() {
 
         WinZOrderCount = 0;
         if (WinRootCount > 0) {
-            Win *highlighted = reinterpret_cast<Win *>(WinZOrderWindow);
+            Win *highlighted = WinZOrderWindow;
             Win **zslot = WinRootWindows;
             for (int j = 0; j < WinRootCount; j++) {
                 if (highlighted != 0 && highlighted == *zslot) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
-                Win *w = reinterpret_cast<Win *>(*zslot);
+                Win *w = *zslot;
                 if (w->iSomeFlag_ & 1) {
                     recurse_zorder(w);
-                    highlighted = reinterpret_cast<Win *>(WinZOrderWindow);
+                    highlighted = WinZOrderWindow;
                 }
                 zslot++;
             }
@@ -6738,17 +6738,17 @@ void Win::bring_to_top() {
 
     WinZOrderCount = 0;
     if (WinRootCount > 0) {
-        Win *highlighted = reinterpret_cast<Win *>(WinZOrderWindow);
+        Win *highlighted = WinZOrderWindow;
         Win **zslot = WinRootWindows;
         for (int j = 0; j < WinRootCount; j++) {
             if (highlighted != 0 && highlighted == *zslot) {
                 WinZOrderCount = 0;
                 WinZOrderFlag = 0;
             }
-            Win *w = reinterpret_cast<Win *>(*zslot);
+            Win *w = *zslot;
             if (w->iSomeFlag_ & 1) {
                 recurse_zorder(w);
-                highlighted = reinterpret_cast<Win *>(WinZOrderWindow);
+                highlighted = WinZOrderWindow;
             }
             zslot++;
         }
@@ -7563,10 +7563,10 @@ void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl) {
                 callback(x, y);
             }
             this->on_right_up(x, y);
-            related2 = reinterpret_cast<Sound *>(val_13_);
+            related2 = val_13_;
         } else {
             this->vslot_37(x, y);
-            related2 = reinterpret_cast<Sound *>(val_25_);
+            related2 = val_25_;
         }
         if (related2 != 0 && related2->is_playing() == 0) {
             related2->play();
@@ -8694,13 +8694,13 @@ int Win::center() {
     }
     local_4 = (top - bottom + WinScreenHeight) / 2;
     if (win_parent_ != 0) {
-        local_8 -= reinterpret_cast<Win *>(win_parent_)->client_rect_.left + reinterpret_cast<Win *>(win_parent_)->outer_rect_.left;
-        local_4 -= reinterpret_cast<Win *>(win_parent_)->client_rect_.top + reinterpret_cast<Win *>(win_parent_)->outer_rect_.top;
-        if ((reinterpret_cast<Win *>(win_parent_)->iFlags_ & 0x20) != 0 && reinterpret_cast<Win *>(win_parent_)->win_parent_ != 0) {
-            reinterpret_cast<Win *>(win_parent_)->win_parent_->screen_to_client(&local_8, &local_4);
-            if ((reinterpret_cast<Win *>(win_parent_)->iFlags_ & 0x8000) != 0) {
-                local_8 += reinterpret_cast<Win *>(win_parent_)->win_parent_->outer_rect_.left;
-                local_4 += reinterpret_cast<Win *>(win_parent_)->win_parent_->outer_rect_.top;
+        local_8 -= win_parent_->client_rect_.left + win_parent_->outer_rect_.left;
+        local_4 -= win_parent_->client_rect_.top + win_parent_->outer_rect_.top;
+        if ((win_parent_->iFlags_ & 0x20) != 0 && win_parent_->win_parent_ != 0) {
+            win_parent_->win_parent_->screen_to_client(&local_8, &local_4);
+            if ((win_parent_->iFlags_ & 0x8000) != 0) {
+                local_8 += win_parent_->win_parent_->outer_rect_.left;
+                local_4 += win_parent_->win_parent_->outer_rect_.top;
                 return move(local_8, local_4);
             }
         }
@@ -9320,7 +9320,7 @@ int Win::resize(int width, int height, int repaint) {
     }
 shared:
     this->set_rects();
-    if (reinterpret_cast<Win *>(poWinBase_) != this) {
+    if (poWinBase_ != this) {
         poWinBase_->resize(width, height, 0);
     }
     resize_event(outer_rect_.right - outer_rect_.left, outer_rect_.bottom - outer_rect_.top);
@@ -9417,10 +9417,10 @@ void Win::client_to_nonclient(int * points, int * count) {
     if (count == 0) {
         return;
     }
-    if (*reinterpret_cast<uint8_t *>(&iFlags_) & 4) {
+    if (iFlags_ & 4) {
         *count += ScrollDefaultThickness;
     }
-    if (*reinterpret_cast<uint8_t *>(&iFlags_) & 8) {
+    if (iFlags_ & 8) {
         *points += ScrollDefaultThickness;
     }
     uint32_t flags = iFlags_;
@@ -9443,7 +9443,7 @@ void Win::client_to_nonclient(int * points, int * count) {
             *count = (bottom_border_thickness_ - border_thickness_) + newval;
         }
     }
-    if (*reinterpret_cast<uint8_t *>(&iFlags_) & 0x10) {
+    if (iFlags_ & 0x10) {
         *count += caption_height_ - border_thickness_;
     }
     if (menu_ != 0) {
@@ -9502,7 +9502,7 @@ int Win::key_click_event(int key, int flags) {
         }
         if (flags == 9) {
             void *tvtbl = *(void **)target;
-            reinterpret_cast<Win *>(target)->pass_dialog_focus();
+            target->pass_dialog_focus();
         } else {
             if (target->key_click_event(key, flags) != 0) {
                 return 1;
@@ -10122,13 +10122,13 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
             return;
         }
         if (list_.count_ != 0) {
-            void *target;
+            Win *target;
             if (list_.head_ != 0) {
                 target = list_.current_->focus_owner_;
             } else {
                 target = 0;
             }
-            if (reinterpret_cast<Win *>(target)->key_up_event(with_modifiers) != 0) {
+            if (target->key_up_event(with_modifiers) != 0) {
                 return;
             }
         }
@@ -10443,7 +10443,7 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
             }
         } else {
             this->vslot_36(x, y);
-            Sound *child = reinterpret_cast<Sound *>(val_24_);
+            Sound *child = val_24_;
             if (child != 0) {
                 int r = child->is_playing();
                 if (r == 0) {
@@ -10529,7 +10529,7 @@ long Win::on_activate(unsigned int state, void * other, long minimized) {
             WinHdcRefCount = WinHdcRefCount + 1;
         }
         if (WinSharedHdc != 0) {
-            SelectPalette(WinSharedHdc, reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
+            SelectPalette(WinSharedHdc, PaletteInitialized, 0);
             RealizePalette(WinSharedHdc);
             WinHdcRefCount = WinHdcRefCount - 1;
             if (WinHdcRefCount == 0) {
@@ -10721,7 +10721,7 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     clip_rect.right = clip_left + clip_width;
     clip_rect.top = clip_top;
     clip_rect.bottom = clip_top + clip_height;
-    HRGN clip_region = reinterpret_cast<HRGN__ *>(CreateRectRgnIndirect(&clip_rect));
+    HRGN clip_region = CreateRectRgnIndirect(&clip_rect);
     if (clip_region == 0) {
         return;
     }
@@ -11319,7 +11319,7 @@ int __cdecl Win::OnQueryNewPalette(void * hwnd) {
         return 0;
     }
 
-    SelectPalette(hdc, reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
+    SelectPalette(hdc, PaletteInitialized, 0);
 
     RealizePalette(WinSharedHdc);
 
@@ -11414,7 +11414,7 @@ void Win::set_dialog_focus(Win * window) {
 
 long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
                              long minimized) {
-    InvalidateRect(reinterpret_cast<HWND>(HandleMain), 0, 0);
+    InvalidateRect(HandleMain, 0, 0);
     if (state != 0) {
       if (minimized == 0 && BufferDirectDraw == 0) {
         HDC hdc;
@@ -11435,7 +11435,7 @@ long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
             }
         }
         if (hdc != 0) {
-            SelectPalette(WinSharedHdc, reinterpret_cast<HPALETTE>(PaletteInitialized), 0);
+            SelectPalette(WinSharedHdc, PaletteInitialized, 0);
             RealizePalette(WinSharedHdc);
 
             WinHdcRefCount = WinHdcRefCount - 1;
@@ -12240,7 +12240,7 @@ void Win::dispatch_23(int x, int y, int alternate) {
         }
     } else {
         vslot_36(x, y);
-        Sound *child = reinterpret_cast<Sound *>(val_24_);
+        Sound *child = val_24_;
         if (child != 0 && child->is_playing() == 0) {
             child->play();
         }
@@ -12265,13 +12265,13 @@ void Win::dispatch_24(int x, int y, int alternate) {
             callback(x, y);
         }
         on_right_up(x, y);
-        Sound *child = reinterpret_cast<Sound *>(val_13_);
+        Sound *child = val_13_;
         if (child != 0 && child->is_playing() == 0) {
             child->play();
         }
     } else {
         vslot_37(x, y);
-        Sound *child = reinterpret_cast<Sound *>(val_25_);
+        Sound *child = val_25_;
         if (child != 0 && child->is_playing() == 0) {
             child->play();
         }
