@@ -1,0 +1,42 @@
+{
+  "event_id": "dff931a7baed13740613c5df0f64b92f1ae8479f2c7f5383ec8bf44a54c28f38",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Fresh retained physical compiler comparison observes game.cpp collateral in load_interface455610, end_of_game524870, save_game5A9EB0 and the generated random_events_cases::case6 helper. The helper is source implementation supporting original random_events51F2E0 through RandomEventsNativeCases::case6; it has no independent original mapping and acquires no fabricated one or independent source-body waiver. Admit that original owner plus the three mapped originals and unchanged game.cpp solely for verification.",
+      "Require game.cpp byte-identical to immutable taskbase75a020323. Preserve all four identity/history records and historical claims. Review physical compiler changes including the unannotated helper; compare baseline/current original diagnostics with an atomic old-netwin-header overlay, preserving EH/unsupported evidence. No source-body edits in game.cpp, nominal TU claims or automatic publication qualification. Scope admission does not establish the helper original boundary, linked selection or full preservation.",
+      "The corrected scenario clear must address the named member directly rather than introduce pointer-alias indirection. Retain the bounded storage interval and unknown filename capacity, live reads, first-byte-only clears, original unchecked behavior and complete360byte copies. Add unchanged-game and scope journal guards in the existing authorized new test."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5370592,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "session-scenario-header-game-collateral-oct13ah",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netwin-session-scenario-storage-owner-oct13ah"
+}
