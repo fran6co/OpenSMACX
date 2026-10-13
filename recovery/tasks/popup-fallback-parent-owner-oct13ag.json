@@ -1,0 +1,46 @@
+{
+  "author": "coordinator",
+  "base_revision": "c90e2c838259d5b0cbbb4991a8ddd573a154133a",
+  "editable_files": [
+    "src/basepop.h",
+    "src/basepop.cpp",
+    "src/popup.cpp",
+    "recovery/tests/test_basepop_owned_close_actual_source.py",
+    "recovery/tests/test_popup_dimensions_background.py",
+    "recovery/tests/popup_dimensions_background_harness.cpp",
+    "recovery/tests/test_popup_fallback_parent_owner_oct13ag.py"
+  ],
+  "evidence": [
+    "Current member at BasePop+322C is already Win*. Pinned exec602600 reads that slot at6027D0 and supplies it as the parent Win pointer to GraphicWin::init5D4EF0, selecting external_window_ instead when nonnull. BasePop ctor600860 clears/copies the default at6014A1; close600F00 republishes the same default. Popup::calculate_dimensions404B10 selects null or ConsoleGlobal via its GraphicWin-to-Win branch. Rename only field_322C_ to fallback_parent_window_ across these existing owners and remove reinterpret_cast<Win*> of the already identical Win* value in exec.",
+    "This is an evidence-backed descriptive role, not recovery of an original private identifier or a new hierarchy/layout claim. Preserve pointer type/offset/size, borrowed lifetime, all producer/reset stores, visibility/mode branches, external-window choice, GraphicWin-to-Win virtual-base adjustments and callback/global rereads. Leave source-bound BasePopDefaultField322C global identity/name unchanged; do not remove legitimate allocator, provider, cv or base-adjustment casts.",
+    "Preserve all ORIGINAL markers/spans/historical claims, current function symbols and existing binding/history comments. No added wrapper, global allocation, constructor, object annotation or nominal class/TU assignment. New strict immutable-base complete source token/history guard admits only this exact member identifier replacement and one redundant cast deletion across three files; all other source remains unchanged.",
+    "Source author owns only three C++ files; disjoint test author owns the four named tests/fixture. Update actual-source projected fields and existing Popup geometry/parent/reset assertions together. New controls exercise external-parent versus fallback selection and real borrowed parent identity, including null; preserve producer branch controls and native virtual-slot order tests. Never interpret a compile failure as a successful behavioral mutant. Host fixtures do not prove the original layout, callbacks or full runtime.",
+    "Coordinator baseline before edits; all scope/package Python frozen during native epochs. This existing test suite contains a direct native compiler test: run host-only controls separately, and acquire one resource_environment lease before any full compiler-backed suite; no standalone compile on another active prefix. Fresh build/link, matching/restoration, actual CodeView member type/offset if observed, compiler collateral, references/identity continuity and independent source/test review precede manual integration. Retain justified structural naming work and historical obligations through reviewed mismatches; no automatic demotion or gate weakening. Full linked/runtime/game acceptance remains unproven."
+  ],
+  "intent": "Name the genuine borrowed fallback parent window across BasePop lifecycle and Popup selection, removing its redundant same-type cast.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6293600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6295296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6301184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4213520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-fallback-parent-owner-oct13ag"
+}
