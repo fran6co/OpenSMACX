@@ -1,0 +1,39 @@
+{
+  "author": "coordinator",
+  "base_revision": "45686c6c02de5018cc73de5856c7064fba9ed9bc",
+  "editable_files": [
+    "src/movie_decoder_owner.h",
+    "src/movie_media_decoder.cpp",
+    "recovery/tests/test_movie_decoder_idct_source.py",
+    "recovery/tests/test_movie_media_idct_actual_source.py",
+    "recovery/tests/test_movie_idct_pointer_owner_oct13ae.py"
+  ],
+  "evidence": [
+    "Pinned sub_5cef8a5CEF8A..5CF11D stores genuine intermediate destination addresses9C302C..48 into9C3004 at5CEFA7..5CF03D, then row_base at5CF048; advances by output_pitch only between successive row calls5CF052..5CF111. sub_5ced1d5CED1D..5CEE80 loads shared cell as output pointer intoEDI5CEDF2/5CEE56. Current helper APIs already return and accept int*. Replace DWORD current_output_pointer_bits with int* current_output_pointer and direct getter/setter; preserve all call sites, callback/alias order and no new initialization.",
+    "Native32-bit pointer width is already explicitly constrained to DWORD; retain that assertion and 14C touched-window size. Add precise offsetof output pointer4 and following scratch8 assertions if needed. This is an observed access window, not an original class/allocation extent or source-library attribution. Do not invent a MediaRuntime relationship or new global allocation.",
+    "Keep all three original identities/spans/historical claims, hiddenESI channel obligations, x87 scratch representations and unsafe/error paths. Only member type/name and the two source-owned helper bodies change C++ behavior tokens; update obsolete explanatory pointer-bits comments, not run logs. Leave byte-pitch pointer arithmetic and unrelated casts unchanged unless evidence separately authorizes a larger closure.",
+    "Adapt existing host actual-source IDCT fixtures to a genuine int* field, using actual declaration projection where practical rather than a uintptr stand-in. Preserve arithmetic, alias, fullspan and final-row-pointer controls. New strict token/header/helper guard compares the frozen immutable task-base source, allowing only reviewed member/getter/setter/comment changes and preserving all original identity/history metadata. Compiled behavioral mutants must execute and fail for the named reason; host64 layout is not originalABI proof.",
+    "Source and test authors have disjoint edit ownership in one isolated coordinator-prepared worktree; coordinator owns all Git/native compiler leases. Baseline before edits; freeze task scope/package Python through each native epoch. Fresh build/link, selected matching, compiler collateral/reference/claim continuity and independent review precede manual integration; do not fabricate fullgame/linked/runtime acceptance."
+  ],
+  "intent": "Recover the genuine shared IDCT output pointer member instead of storing pointer bits in an integer cell.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6090013,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6090368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6090634,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "media-idct-output-pointer-owner-oct13ae"
+}
