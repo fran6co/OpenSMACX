@@ -138,7 +138,7 @@ def test_external_coff_subject_refuses_disjoint_original_spans(tmp_path):
         asm.compare_subject(record, "unused.exe", asm.Listing(code=b"\xC3", base=record.address))
 
 
-def test_compare_record_reports_multispan_refusal_without_trying_other_flags(tmp_path, monkeypatch):
+def test_compare_record_reports_multispan_refusal_after_all_unsupported_trials(tmp_path, monkeypatch):
     record = record_in(
         tmp_path,
         MARKED.replace("0x00401000-0x00401008",
@@ -152,7 +152,7 @@ def test_compare_record_reports_multispan_refusal_without_trying_other_flags(tmp
         compiler=lambda *args, **kwargs: (calls.append(args) or tiny_coff(b"\xC3", record.name)))
     assert result.verdict == "REFUSED"
     assert "one original image span" in result.diagnostic
-    assert len(calls) == 1
+    assert len(calls) == 2
 
 
 def test_coff_function_refuses_an_absent_symbol():

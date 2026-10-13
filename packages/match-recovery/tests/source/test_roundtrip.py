@@ -756,6 +756,7 @@ _STDLIB_ONLY = ("model", "grammar", "reader", "writer")
 # `calls` reads the operands capstone decoded, so it needs the same
 # dependency for the type constants and nothing else.
 _MAY_IMPORT = {"asm": frozenset({"capstone"}),
+               "eh_regions": frozenset({"capstone"}),
                "calls": frozenset({"capstone"})}
 
 

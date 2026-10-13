@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import difflib
 import functools
+import hashlib
 import re
 import shlex
 import struct
@@ -22,7 +23,8 @@ from pathlib import Path
 
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs, x86
 
-from ..pe_coff import Coff
+from ..pe_coff import Coff, PeImage
+from .eh_regions import bind_eh_regions
 from .model import DecompilationState, Tier
 
 @dataclass(frozen=True)
@@ -714,9 +716,22 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
     return code, frozenset(masked)
 
 
+@dataclass(frozen=True)
+class RegionCandidate:
+    """Unmeasured emitted regions; ownership still needs original-image proof."""
+    object_bytes: bytes = field(repr=False)
+    emitted_symbol: str
+    flags: str
+    mapping_identity: tuple
+
+
+def _mapping_identity(record: DecompilationState) -> tuple:
+    return record.path.resolve(), record.line, record.address, record.name, record.symbol, record.image_spans
+
+
 def compiled_asm(record: DecompilationState, command: list[str],
                  flags: str | tuple[str, ...] | list[str],
-                 source: Path | str | None = None, *, compiler) -> Listing:
+                 source: Path | str | None = None, *, compiler) -> Listing | RegionCandidate:
     """Compile through the caller's environment and select a mapped COFF body.
 
     `compiler(source, arguments, flags)` receives tuples of argument tokens,
@@ -754,7 +769,7 @@ def compiled_asm(record: DecompilationState, command: list[str],
 
 
 def subject_asm(obj: bytes, record: DecompilationState,
-                flags: str = "") -> Listing:
+                flags: str = "") -> Listing | RegionCandidate:
     """The record's own function, pulled out of an object already compiled.
 
     The half of `compiled_asm` that is not the compile, so that one object
@@ -763,6 +778,30 @@ def subject_asm(obj: bytes, record: DecompilationState,
     if not record.name:
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
+    if len(record.image_spans) > 1:
+        # This is only candidate selection, not a binding or a match. The
+        # original-image EH graph must independently join every region before
+        # compare_subject can compare any of them.
+        wanted = record.symbol or record.name
+        parsed = Coff(obj)
+        definitions = [item for item in parsed.symbols.values()
+                       if item.name == wanted and item.section > 0 and item.storage in (2, 3)]
+        if not definitions and not record.symbol:
+            wanted = "_" + record.name
+            definitions = [item for item in parsed.symbols.values()
+                           if item.name == wanted and item.section > 0 and item.storage in (2, 3)]
+        if len(definitions) != 1:
+            raise ValueError(f"{wanted}: expected one defined mapped symbol; "
+                             "the annotation is absent or ambiguous in this object")
+        try:
+            root = parsed.function(wanted)
+            if len(record.image_spans) != 2 or len(parsed.code_sections(root)) != 2:
+                raise ValueError("no unique root/associated-code pair")
+        except ValueError as error:
+            raise SpanComparisonRefused(
+                "complete function measurement requires one original image span "
+                "or a supported independently rooted EH region pair: " + str(error)) from error
+        return RegionCandidate(obj, wanted, flags, _mapping_identity(record))
     code, mask = _coff_function_masked(obj, record.name, record.symbol, spans=record.image_spans)
     return Listing(code=code, base=record.address, mask=mask, flags=flags)
 
@@ -1014,8 +1053,90 @@ def compare_asm(original: Listing, compiled: Listing) -> AsmComparison:
         flags=compiled.flags)
 
 
+def compare_regions(pairs: tuple[tuple[Listing, Listing], ...], *,
+                    alignments: tuple[int, ...] | None = None) -> AsmComparison:
+    """Compare every region; one missed or undecodable region cannot pass."""
+    if not pairs:
+        raise ValueError("region comparison requires at least one region")
+    alignments = (1,) * len(pairs) if alignments is None else alignments
+    if (len(alignments) != len(pairs)
+            or any(type(value) is not int or value < 1 or value & (value - 1)
+                   for value in alignments)):
+        raise ValueError("each region requires a positive power-of-two COFF alignment")
+    flags = {candidate.flags for _, candidate in pairs}
+    if len(flags) != 1:
+        raise ValueError("regions must come from the same compiler flag trial")
+    previous_end = None
+    for original, candidate in pairs:
+        if previous_end is not None and original.base < previous_end:
+            raise ValueError("original regions must be ordered and non-overlapping")
+        previous_end = original.base + len(original.code)
+        for listing in (original, candidate):
+            if not listing.code or listing.code_bytes is not None:
+                raise ValueError("region comparison requires nonempty complete code regions")
+            if any(offset < 0 or offset >= len(listing.code) for offset in listing.mask):
+                raise ValueError("region relocation mask exceeds its bytes")
+            if sum(instruction.size for instruction in listing.instructions) != len(listing.code):
+                return AsmComparison(verdict=Tier.REFUSED, flags=candidate.flags,
+                                     diagnostic=f"region at 0x{original.base:08X} is not fully decoded")
+    measured_pairs, fills = [], []
+    for (original, candidate), alignment in zip(pairs, alignments):
+        size = len(original.code)
+        tail = candidate.code[size:]
+        boundary = next((instruction for instruction in candidate.instructions
+                         if instruction.address + instruction.size == candidate.base + size), None)
+        # Only the exact physical COMDAT alignment envelope can be fill, and
+        # only beyond a terminated code boundary with no relocation field.
+        fill = (len(tail) if tail and len(candidate.code) == size + (-size % alignment)
+                and all(byte in (0x90, 0xCC) for byte in tail)
+                and not any(offset >= size for offset in candidate.mask)
+                and boundary is not None and boundary.mnemonic in ("ret", "retf", "jmp") else 0)
+        if fill:
+            candidate = replace(candidate, code=candidate.code[:size])
+        measured_pairs.append((original, candidate))
+        fills.append(fill)
+    results = tuple(compare_asm(original, candidate) for original, candidate in measured_pairs)
+    rank = {tier: index for index, tier in enumerate((Tier.BYTE_EXACT, Tier.SHAPE_EXACT,
+                                                     Tier.MNEMONIC_ONLY, Tier.MISMATCH))}
+    verdict = max((row.verdict for row in results), key=rank.__getitem__)
+    failed = next((index for index, row in enumerate(results) if row.verdict != Tier.BYTE_EXACT), None)
+    offset = sum(row.original_instructions for row in results[:failed]) if failed is not None else 0
+    first = results[failed] if failed is not None else None
+    weights = [max(row.original_instructions, row.compiled_instructions) for row in results]
+    constants, preceding, preceding_bytes, data_divergence = [], 0, 0, None
+    for region_index, row in enumerate(results):
+        constants.extend((index + preceding, *values) for index, *values in row.differing_constants)
+        preceding += row.original_instructions
+        if data_divergence is None and row.data_divergence is not None:
+            data_divergence = preceding_bytes + row.data_divergence
+        preceding_bytes += len(pairs[region_index][0].code)
+    allocation = [f"region 0x{pairs[index][0].base:08X}: {row.allocation_only}"
+                  for index, row in enumerate(results)
+                  if row.verdict != Tier.BYTE_EXACT and row.allocation_only]
+    return AsmComparison(
+        verdict=verdict,
+        compared_bytes=sum(row.compared_bytes for row in results),
+        masked_bytes=sum(row.masked_bytes for row in results),
+        original_instructions=sum(row.original_instructions for row in results),
+        compiled_instructions=sum(row.compiled_instructions for row in results),
+        matching_instructions=sum(row.matching_instructions for row in results),
+        mnemonic_similarity=sum(row.mnemonic_similarity * weight for row, weight in zip(results, weights)) / sum(weights),
+        first_divergence=(offset + first.first_divergence
+                          if first is not None and first.first_divergence is not None else None),
+        context=first.context if first is not None else ([], []),
+        differing_constants=tuple(constants),
+        data_bytes=sum(row.data_bytes for row in results),
+        data_divergence=data_divergence,
+        allocation_only="; ".join(allocation),
+        flags=next(iter(flags)),
+        diagnostic="; ".join(f"region 0x{original.base:08X}: {row.verdict}"
+                             + (f" ({fill} bytes of bounded COFF alignment fill)" if fill else "")
+                             for (original, _), row, fill in zip(pairs, results, fills)),
+    )
+
+
 def compare_subject(record: DecompilationState, exe: Path | str,
-                    compiled: Listing) -> AsmComparison:
+                    compiled: Listing | RegionCandidate) -> AsmComparison:
     """`compare_asm` with the image side aligned to the object's extent.
 
     THE OBJECT DECIDES HOW MUCH IMAGE TO READ, because only it knows how
@@ -1025,6 +1146,32 @@ def compare_subject(record: DecompilationState, exe: Path | str,
     pure comparison of two listings, which is what makes it testable
     without an image.
     """
+    if isinstance(compiled, RegionCandidate):
+        if compiled.mapping_identity != _mapping_identity(record):
+            raise SpanComparisonRefused("region candidate belongs to a different original mapping")
+        raw_image = _image_bytes(Path(exe))
+        # The native caller independently enforces its configured image pin.
+        # This parsed view reuses exactly the legacy comparison's image bytes;
+        # the digest here validates the parsed view, not an extra source claim.
+        image = PeImage(raw_image, hashlib.sha256(raw_image).hexdigest())
+        try:
+            bound = bind_eh_regions(compiled.object_bytes, compiled.emitted_symbol,
+                                    image, record.image_spans)
+            pairs = []
+            for region in bound:
+                low = region.original.start
+                original = Listing(image.read(region.original), low,
+                                   mask=frozenset(offset + byte
+                                       for offset in image.absolute_sites(region.original)
+                                       for byte in range(4)))
+                candidate = Listing(region.code, low,
+                                    mask=frozenset(item.offset + byte
+                                        for item in region.relocations for byte in range(4)),
+                                    flags=compiled.flags)
+                pairs.append((original, candidate))
+            return compare_regions(tuple(pairs), alignments=tuple(region.alignment for region in bound))
+        except ValueError as error:
+            raise SpanComparisonRefused("complete EH-region measurement refused: " + str(error)) from error
     if len(record.image_spans) != 1:
         raise SpanComparisonRefused(
             "complete function comparison requires one original image span")
@@ -1543,7 +1690,15 @@ def compare_source(record: DecompilationState, exe: Path | str,
                 continue
             break
         except SpanComparisonRefused as refused:
-            return AsmComparison(verdict=Tier.REFUSED, diagnostic=str(refused))
+            result = AsmComparison(verdict=Tier.REFUSED, diagnostic=str(refused),
+                                   flags=attempt if isinstance(attempt, str) else shlex.join(attempt))
+            if len(record.image_spans) != 2:
+                return result
+            # An unsupported candidate layout is a property of this flag
+            # trial, not proof that every compiler trial lacks the regions.
+            if best is None or _better(result, best):
+                best = result
+            continue
         except ValueError as absent:
             # A SUBJECT THAT ONE INVOCATION DOES NOT EMIT. An `inline`
             # function is folded into its callers under /O2 and emitted as
@@ -1556,7 +1711,13 @@ def compare_source(record: DecompilationState, exe: Path | str,
             # because that is the stale-fact case this must still catch.
             missing = missing or absent
             continue
-        result = compare_subject(record, exe, compiled)
+        try:
+            result = compare_subject(record, exe, compiled)
+        except SpanComparisonRefused as refused:
+            # Another trial may emit a supported EH layout. Never use a
+            # primary-only comparison as fallback when a region is unknown.
+            result = AsmComparison(verdict=Tier.REFUSED, flags=compiled.flags,
+                                   diagnostic=str(refused))
         # TIED ON TIER, DECIDED ON AGREEMENT. Every candidate is measured
         # against the same original, so the instruction counts compare
         # directly - and keeping the first of four MISMATCHes reports a

@@ -77,6 +77,16 @@ Neither evidence channel substitutes for the other.
 
 ## Non-callable function fragments
 
+A function's existing `ORIGINAL` marker may list disjoint image spans separated
+by semicolons. They remain one function identity, not independent source bodies.
+The masked measurement path currently supports a narrowly proven i386 EH
+primary/cold pair: explicit registration and exception-metadata references must
+join both original spans to an independent emitted function and its sole
+associated code child. It compares all declared bytes, not the enclosing address
+envelope. Other multi-span shapes remain refused. This is distinct from the
+terminal fragment relation below and does not prove strict reference targets,
+class ownership, runtime behavior or complete executable acceptance.
+
 A separately catalogued terminal span can belong to an existing source method
 instead of an independent function. Preserve both original identities, spans and
 historical claims; immediately after the child's `FILE` marker, record:

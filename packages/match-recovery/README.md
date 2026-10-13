@@ -3672,12 +3672,21 @@ structural acceptance. They neither choose project recipes nor stamp source.
 Flag trials may be native argument arrays or legacy strings. Native array tokens
 are passed unchanged; quoted display labels are never reparsed into arguments.
 
-The historical whole-function comparator and recorder require exactly one
-original image span. For a multi-span mapping, `measure` and `record` refuse
-the subject as incomplete evidence, and `check-matches` cannot verify its byte
-claim. This prevents a primary-span comparison from silently omitting disjoint
-cold code. `original_asm` may still be used to inspect the primary span, but
-that diagnostic is not a complete-function match or recordable claim. The
+The historical whole-function comparator supports one original image span, or
+a narrowly verified i386 C++-EH primary/cold pair. The latter requires one
+independent code COMDAT with exactly one associated 21-byte cleanup/handler
+child, complete frame registration, and matching ownership chains through the
+supported 40-byte `0x19930520` single-state exception metadata on both the PE
+and COFF sides. Section order, adjacency and generated label spelling do not
+bind a region. Every declared byte is compared independently; gaps are never
+read through. Only exact, relocation-free NOP/INT3 fill outside the declared
+extent, within the physical COFF alignment envelope after a terminated code
+boundary, can be omitted. Unsupported, ambiguous, shared or writable-executable
+regions refuse the complete subject; no primary-only fallback grants a claim.
+These remain historical relocation-masked claims, not proof of destructor or
+runtime target identity, EH runtime behavior, structure or linked acceptance.
+`original_asm` may still inspect only the primary span, but that diagnostic
+is not a complete-function match or recordable claim. The
 separate strict binary verifier can compare multiple spans only when fresh COFF
 evidence uniquely binds those spans to its supported one- or two-section code
 layout; this does not relax its other evidence requirements.
