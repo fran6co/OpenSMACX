@@ -1,0 +1,87 @@
+{
+  "author": "coordinator",
+  "base_revision": "1a5e6a4b274bd8b0dc44be3df7ae8128755f1b04",
+  "editable_files": [
+    "src/jackal/font.cpp",
+    "recovery/tests/test_font_metric_publication_oct13aj.py",
+    "recovery/tests/test_font_internal_sharing_oct12g.py"
+  ],
+  "evidence": [
+    "Fresh pinned619080..6190C6 unambiguously stores lineheight+0C at61908E, ascent+18 at619097, height+10 at6190A2, internalleading+14 at6190A5, descent+1C at6190A8 BEFORE GetStockObject call6190AB and SelectObject call6190B9. The push0D at6190A0 is argument setup, not the callback. Current Font::init618F40 incorrectly calls both callbacks before publishing internal_leading_ and descent_. Correct the whole metrics publication order and remove the unreachable duplicate SelectObject/return after the existing return. Preserve old TRIED history as history; add only essential current evidence distinguishing argument preparation from API call.",
+    "Source author edits only Font::init three-argument metric tail and optional cheap line_advance5E3650 body variant, never Font layout/header/other bodies. All five metric stores must precede both callbacks and follow pinned field-read/store ordering; preserve negative/zero/error/font-resource behavior, LOGFONT bytes, unbounded strcat, Delete/Remove/free rereads and HRESULT ignored paths. Existing signed line_advance selector and defined32bit unsigned-wrap addition must stay intact; no signed-overflow shortcut, eager read of an unselected member, volatile or fake addresses/registers. Limit spelling search to three batched overlays before banking any winner; if none improves retain existing accessor and pursue initializer behavior correction.",
+    "Fresh thirteen-function scout before task creation: ten BYTE_EXACT, initializer618F40 mismatch.9769230769, line_advance5E3650 mismatch.625 with historical byte obligation, line-break619370 mismatch.684073107. Preserve all ORIGINAL identity/spans, historical claims, live symbols and prior origin comments; only native recorder may bank a new claim. Header/classes/static globals stay unchanged. Preserve prior justified sharing/lifetimes even if exactness temporarily regresses; no automatic demotion.",
+    "Test author owns new actual-source metric publication controls and minimal existing internal-sharing adaptation only. Extract actual final initializer with real LOGFONT/TEXTMETRIC shapes and API spies. GetStockObject and SelectObject must observe all five published metrics; mutate the captured stack TEXTMETRIC after first callback and verify no delayed fresh member stores. Preserve acquisition/error/null teardown behavior and all existing sharing/wrapping callbacks/mutants. Wrong call-before-store source mutant must compile and fail named runtime98, not be accepted on compile failure. Strict immutable-base complete source/history guard admits only these two bodies/current-evidence comment and unreachable duplicate removal.",
+    "Coordinator baseline/overlays before source edits; isolated worktree and leased compiler resource. Freeze scope/packagePython during native epochs. Require full application compile/link,13scoped diagnostics/restoration and physical compiler comparison/collateral, independent C++/test review, source/reference/claim continuity before manual integration. Scoped equality is not full linked/runtime/game acceptance; preserve all unsupported evidence and obligations."
+  ],
+  "intent": "Restore original Font metric publication before GDI callbacks and recover cheap matching without sacrificing typed wrap semantics.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6174288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "font-metric-publication-owner-oct13aj"
+}
