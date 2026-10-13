@@ -1,0 +1,20 @@
+{
+  "event_id": "95d47bf9c6ab1b6ecb449801b255db5d596671b83e68f853d946e8041f8582a7",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/netdaemon.cpp"
+    ],
+    "evidence": [
+      "Source inspection: netdaemon_handle_withdraw_approved has no direct packet read; its existing netdaemon_complete_local_turn_wait helper owns the data-producer payload10 access for the1302 route. Include exactly that read and its pointer-only borrowed-view construction in the authorized packet consumer closure. Preserve matching-turn comparison, callback/order and every other helper operation.",
+      "This helper is existing source material of the already authorized original process_message534400, not a new original function. No new identity/file, task-baseline reset or unrelated source permission. Typed read may reuse MessageCommandView.payload_10; tests extend actual helper extraction and strict mechanical recipe."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "command-local-turn-wait-closure-oct13ac",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-command-wire-closure-oct13ac"
+}
