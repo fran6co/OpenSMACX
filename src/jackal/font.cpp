@@ -20,7 +20,13 @@
 #include "font.h"
 #include "general.h"
 
+// These three process-wide Font objects have independent, loader-zeroed identities.
+// Font::init_font_class publishes FontDefault/HDC and adjusts the shared count;
+// close_font_class clears the HDC/default pointer while preserving its signed
+// counter and failure behavior. Address adjacency does not prove an aggregate.
+// RECOVERY_OBJECT: v2 0x009BB488 0x009BB48C ?FontHDC@Font@@2PAUHDC__@@A 0x006195B0
 HDC Font::FontHDC;
+// RECOVERY_OBJECT: v2 0x009BB48C 0x009BB490 ?FontInitCount@Font@@2HA 0x006195B0
 int Font::FontInitCount;
 
 /*
@@ -629,6 +635,7 @@ Font::~Font() {
 // `close_font_class` clears it, and Buffer, Menu and PullDown fall back to
 // it - 42 references. Past `.data`'s stored bytes, so there is no
 // initialiser to preserve and a real object is the whole of it.
+// RECOVERY_OBJECT: v2 0x009BB484 0x009BB488 ?FontDefault@@3PAVFont@@A 0x006195B0
 Font *FontDefault;
 
 

@@ -56,7 +56,20 @@ def _assert_exact_source_delta(current: str, baseline: str) -> None:
     // GetStockObject is actually called at 0x006190AB and SelectObject at
     // 0x006190B9. The image publishes all five metrics before either call.
 """
+    shared_storage_note = """// These three process-wide Font objects have independent, loader-zeroed identities.
+// Font::init_font_class publishes FontDefault/HDC and adjusts the shared count;
+// close_font_class clears the HDC/default pointer while preserving its signed
+// counter and failure behavior. Address adjacency does not prove an aggregate.
+"""
+    object_markers = (
+        "// RECOVERY_OBJECT: v2 0x009BB488 0x009BB48C ?FontHDC@Font@@2PAUHDC__@@A 0x006195B0\n",
+        "// RECOVERY_OBJECT: v2 0x009BB48C 0x009BB490 ?FontInitCount@Font@@2HA 0x006195B0\n",
+        "// RECOVERY_OBJECT: v2 0x009BB484 0x009BB488 ?FontDefault@@3PAVFont@@A 0x006195B0\n",
+    )
     assert current.count(pinned_call_note) == 1
+    assert current.count(shared_storage_note) == 1
+    for marker in object_markers:
+        assert current.count(marker) == 1
     current_init = extract(current, "int Font::init(LPCSTR font_name, int height, int style)")
     old_init = extract(baseline, "int Font::init(LPCSTR font_name, int height, int style)")
     old_tail = """    int leading = tm.tmInternalLeading;
@@ -88,9 +101,12 @@ def _assert_exact_source_delta(current: str, baseline: str) -> None:
     current = current.replace(current_line, old_line, 1)
     assert _tokens(current) == _tokens(baseline), "only the two authorized body deltas"
     current_comments = current.replace(pinned_call_note, "", 1)
+    current_comments = current_comments.replace(shared_storage_note, "", 1)
+    for marker in object_markers:
+        current_comments = current_comments.replace(marker, "", 1)
     comments = lambda text: re.findall(r"//[^\n]*|/\*.*?\*/", text, re.S)
     assert comments(current_comments) == comments(baseline), (
-        "only the pinned-call evidence comment may be added")
+        "only the exact pinned-call and shared-storage notes/object markers may be added")
 
 
 INIT_FIXTURE = r"""
