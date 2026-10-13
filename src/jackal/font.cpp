@@ -48,8 +48,13 @@ Status: Complete
 */
 
 int Font::line_advance() const {
-    return unk_1_ < 0 ? line_height_ : static_cast<int32_t>(
-        static_cast<uint32_t>(height_) + static_cast<uint32_t>(unk_1_));
+    const int adjustment = unk_1_;
+    if (adjustment >= 0) {
+        const int height = height_;
+        return static_cast<int32_t>(static_cast<uint32_t>(height) +
+                                    static_cast<uint32_t>(adjustment));
+    }
+    return line_height_;
 }
 
 
@@ -197,14 +202,15 @@ int Font::init(LPCSTR font_name, int height, int style) {
     // and `mov [esi + 0x10], edx`) - 112/130 with SelectObject last,
     // 117/130 with it here. Everything else about the block is scheduling:
     // TRIED below.
+    // Pinned-call correction: 0x006190A0 pushes SYSTEM_FONT as argument setup;
+    // GetStockObject is actually called at 0x006190AB and SelectObject at
+    // 0x006190B9. The image publishes all five metrics before either call.
     int leading = tm.tmInternalLeading;
     line_height_ = tm.tmHeight + tm.tmExternalLeading;
     ascent_ = tm.tmAscent;
     height_ = ascent_ - leading;
-    SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
     internal_leading_ = leading;
     descent_ = tm.tmDescent;
-    return 0;
     SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));
     return 0;
 }
