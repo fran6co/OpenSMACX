@@ -7,6 +7,9 @@ import os
 import pytest
 
 from test_netdaemon_transfer_modal import extract
+from dataclasses import fields
+
+from match_recovery.source import read_text
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/netdaemon.cpp"
@@ -120,7 +123,19 @@ def apply_transfer_exit_migration(source):
 
 def test_fixed_exit_recipe_preserves_all_other_source_and_identities():
     old = subprocess.check_output(["git", "show", BASE + ":src/netdaemon.cpp"], cwd=ROOT, text=True)
-    assert apply_transfer_exit_migration(old) == SOURCE.read_text()
+    migrated = apply_transfer_exit_migration(old)
+    before_rows = {row.address: row for row in read_text(old, SOURCE)}
+    after_rows = {row.address: row for row in read_text(migrated, SOURCE)}
+    assert set(after_rows) == set(before_rows)
+    for address, before in before_rows.items():
+        after = after_rows[address]
+        for item in fields(before):
+            if item.name not in {"line", "region", "origin"}:
+                assert getattr(after, item.name) == getattr(before, item.name)
+        assert tuple((lesson.kind, lesson.key, lesson.prose,
+                      tuple(line for _, line in lesson.lines)) for lesson in after.origin) == \
+               tuple((lesson.kind, lesson.key, lesson.prose,
+                      tuple(line for _, line in lesson.lines)) for lesson in before.origin)
     with pytest.raises(AssertionError):
         apply_transfer_exit_migration(old.replace("if (records == 0) return true;", "if (records == 0) return false;"))
 
@@ -202,7 +217,7 @@ def test_native_transfer_band_bias_normal_client_exit_and_pending_relation():
     from capstone import Cs, CS_ARCH_X86, CS_MODE_32
     from match_recovery.model import Span
     from match_recovery.pe_coff import PeImage
-    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
     if not path.is_file():
         pytest.skip("pinned original unavailable")
     image = PeImage(path.read_bytes(), "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")

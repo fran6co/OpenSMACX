@@ -3329,6 +3329,211 @@ void NetDaemon::await_diplo(int opcode) {
 }
 
 
+// Entity command producers use a common narrow prefix even when their
+// complete records differ in size and payload type. This reader covers only
+// the opcode, deletion sequence and entity id consumed by fixup_message.
+struct EntityCommandPrefix {
+    uint16_t opcode_;
+    unsigned char unresolved_2_[2];
+    int32_t faction_;
+    uint32_t timestamp_;
+    int32_t sequence_;
+    int32_t entity_id_;
+};
+
+static_assert(offsetof(EntityCommandPrefix, opcode_) == 0x00,
+              "entity command opcode offset");
+static_assert(offsetof(EntityCommandPrefix, sequence_) == 0x0C,
+              "entity command deletion sequence offset");
+static_assert(offsetof(EntityCommandPrefix, entity_id_) == 0x10,
+              "entity command entity id offset");
+static_assert(sizeof(EntityCommandPrefix) == 0x14,
+              "entity command prefix width through entity id");
+
+class EntityCommandPrefixReader {
+public:
+    explicit EntityCommandPrefixReader(const char *bytes)
+        : bytes_(reinterpret_cast<const unsigned char *>(bytes)) {}
+
+    uint16_t opcode() const {
+        uint16_t value;
+        std::memcpy(&value, bytes_ + offsetof(EntityCommandPrefix, opcode_), sizeof value);
+        return value;
+    }
+    int32_t sequence() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(EntityCommandPrefix, sequence_), sizeof value);
+        return value;
+    }
+    int32_t entity_id() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(EntityCommandPrefix, entity_id_), sizeof value);
+        return value;
+    }
+
+private:
+    const unsigned char *bytes_;
+};
+
+class EntityCommandPrefixWriter {
+public:
+    explicit EntityCommandPrefixWriter(char *bytes)
+        : bytes_(reinterpret_cast<unsigned char *>(bytes)) {}
+
+    void store_entity_id(int32_t value) {
+        std::memcpy(bytes_ + offsetof(EntityCommandPrefix, entity_id_), &value, sizeof value);
+    }
+
+private:
+    unsigned char *bytes_;
+};
+
+// The synchronization packet's serialized header prefix is 0x24 bytes. It is
+// a field map over borrowed bytes, not the type or extent of the allocated
+// packet. In particular, the sender leaves +2..+3, +8..+0xB, and +0x20..+0x23
+// unwritten, so neither view constructs or copies a complete prefix object.
+struct SyncHeaderPrefix {
+    int16_t flags;
+    unsigned char unresolved_2[2];
+    uint32_t faction;
+    unsigned char unresolved_8[4];
+    uint32_t sequence;
+    int16_t opcode;
+    int16_t index;
+    int32_t argument_2;
+    int32_t argument_3;
+    int32_t argument_4;
+    unsigned char unresolved_20[4];
+};
+
+static_assert(sizeof(SyncHeaderPrefix) == 0x24,
+              "synchronization serialized header prefix width");
+static_assert(offsetof(SyncHeaderPrefix, flags) == 0x00,
+              "synchronization flags offset");
+static_assert(offsetof(SyncHeaderPrefix, unresolved_2) == 0x02,
+              "synchronization unwritten bytes 2..3 offset");
+static_assert(offsetof(SyncHeaderPrefix, faction) == 0x04,
+              "synchronization faction offset");
+static_assert(offsetof(SyncHeaderPrefix, unresolved_8) == 0x08,
+              "synchronization unwritten bytes 8..B offset");
+static_assert(offsetof(SyncHeaderPrefix, sequence) == 0x0C,
+              "synchronization sequence offset");
+static_assert(offsetof(SyncHeaderPrefix, opcode) == 0x10,
+              "synchronization inner opcode offset");
+static_assert(offsetof(SyncHeaderPrefix, index) == 0x12,
+              "synchronization signed chunk index offset");
+static_assert(offsetof(SyncHeaderPrefix, argument_2) == 0x14,
+              "synchronization argument 2 offset");
+static_assert(offsetof(SyncHeaderPrefix, argument_3) == 0x18,
+              "synchronization argument 3 offset");
+static_assert(offsetof(SyncHeaderPrefix, argument_4) == 0x1C,
+              "synchronization argument 4 offset");
+static_assert(offsetof(SyncHeaderPrefix, unresolved_20) == 0x20,
+              "synchronization unwritten bytes 20..23 offset");
+
+// Borrowed field-by-field views keep accesses valid for unaligned packet
+// addresses and leave every unwritten interval untouched.
+class SyncHeaderPrefixReader {
+public:
+    explicit SyncHeaderPrefixReader(const unsigned char *bytes) : bytes_(bytes) {}
+
+    int16_t flags() const {
+        int16_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, flags), sizeof value);
+        return value;
+    }
+    uint32_t faction() const {
+        uint32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, faction), sizeof value);
+        return value;
+    }
+    uint32_t sequence() const {
+        uint32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, sequence), sizeof value);
+        return value;
+    }
+    int32_t signed_sequence() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, sequence), sizeof value);
+        return value;
+    }
+    int16_t opcode() const {
+        int16_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, opcode), sizeof value);
+        return value;
+    }
+    int16_t index() const {
+        int16_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, index), sizeof value);
+        return value;
+    }
+    int32_t argument_2() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_2), sizeof value);
+        return value;
+    }
+    int32_t argument_3() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_3), sizeof value);
+        return value;
+    }
+    int32_t argument_4() const {
+        int32_t value;
+        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_4), sizeof value);
+        return value;
+    }
+
+private:
+    const unsigned char *bytes_;
+};
+
+class SyncHeaderPrefixWriter {
+public:
+    explicit SyncHeaderPrefixWriter(unsigned char *bytes) : bytes_(bytes) {}
+
+    void store_flags(int16_t value) { write(offsetof(SyncHeaderPrefix, flags), value); }
+    void store_faction(uint32_t value) { write(offsetof(SyncHeaderPrefix, faction), value); }
+    void store_sequence(uint32_t value) { write(offsetof(SyncHeaderPrefix, sequence), value); }
+    void store_opcode(int16_t value) { write(offsetof(SyncHeaderPrefix, opcode), value); }
+    void store_index(int16_t value) { write(offsetof(SyncHeaderPrefix, index), value); }
+    void store_argument_2(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_2), value); }
+    void store_argument_3(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_3), value); }
+    void store_argument_4(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_4), value); }
+
+private:
+    template <typename Value>
+    void write(size_t offset, Value value) {
+        std::memcpy(bytes_ + offset, &value, sizeof value);
+    }
+
+    unsigned char *bytes_;
+};
+
+class SyncVehiclePayloadView {
+public:
+    explicit SyncVehiclePayloadView(unsigned char *bytes) : bytes_(bytes) {}
+
+    int8_t order() const {
+        int8_t value;
+        std::memcpy(&value, bytes_ + sizeof(SyncHeaderPrefix) + offsetof(Veh, order), sizeof value);
+        return value;
+    }
+    int16_t waypoint_x() const {
+        int16_t value;
+        std::memcpy(&value, bytes_ + sizeof(SyncHeaderPrefix) + offsetof(Veh, waypoint_x), sizeof value);
+        return value;
+    }
+    void store_order(int8_t value) {
+        std::memcpy(bytes_ + sizeof(SyncHeaderPrefix) + offsetof(Veh, order), &value, sizeof value);
+    }
+    void store_waypoint_x(uint16_t value) {
+        std::memcpy(bytes_ + sizeof(SyncHeaderPrefix) + offsetof(Veh, waypoint_x), &value, sizeof value);
+    }
+
+private:
+    unsigned char *bytes_;
+};
+
 // ORIGINAL: 0x00534330 ?fixup_message@NetDaemon@@QAEHPAD@Z 0x00534330-0x005343FC FILE
 // TRIED: MISMATCH, closest at 212/204 bytes (mnemonic_similarity 0.87, 3 edit blocks). `goto fail;`/`fail:` in place of five scattered `return 0;` was needed to get VC6 to share ONE epilogue the way the original's disassembly jumps into a single shared block - plain early returns each got their own copy. `int code` (signed) not `unsigned short`/`unsigned int` reproduces the `cmp eax,CONST` 32-bit signed compares (jg/jge) the original uses, and writing the boundaries as `<= 0x2406`/`<= 0x2402` (not `< 0x2407`/`< 0x2403`) matches the exact `jg` vs `jge` original picked for each - the `x<N` vs `x<=N-1` lever. `DeletionList*` for `this+0x158c` inlined at each of the three call sites (not cached in an upfront local) matches the original computing it lazily, right before its first use. Remaining diff: the `code== 0x2403` arm compiles to `jne fail; jmp common` where the original does a single `je common`, and the `0x2408 || 0x2413` pair still compiles as two `cmp/je` where the original uses a `sub eax,0x2408; je; sub eax,0xb; jne` switch-lowering idiom - not chased further.
 // working copy - scaffold materialised by --work
@@ -3340,52 +3545,50 @@ void NetDaemon::await_diplo(int opcode) {
 // calls     0x0052DDC0
 
 int NetDaemon::fixup_message(char * message) {
-    unsigned short *msg = reinterpret_cast<unsigned short *>(message);
-    int code = *msg;
-    if (code <= 0x2406) {
-        if (code < 0x2404) {
-            if (code <= 0x2402) {
-                if (code < 0x2401) {
-                    if (code != 0x2101) {
-                        goto fail;
-                    }
-                    if (msg[8] != 0x11) {
-                        goto fail;
-                    }
-                    int r1 = deletion_list_.convert(*reinterpret_cast<int *>(msg + 10), *reinterpret_cast<int *>(msg + 6));
-                    *reinterpret_cast<int *>(msg + 10) = r1;
-                    if (*(reinterpret_cast<char *>(msg) + 0x35) != 1) {
-                        goto fail;
-                    }
-                    if (static_cast<short>(msg[0x1c]) < 0) {
-                        goto fail;
-                    }
-                    int r2 = deletion_list_.convert(static_cast<short>(msg[0x1c]), *reinterpret_cast<int *>(msg + 6));
-                    unsigned short r2s = static_cast<unsigned short>(r2);
-                    msg[0x1c] = r2s;
-                    if (r2s != 0xffff) {
-                        goto fail;
-                    }
-                    *(reinterpret_cast<char *>(msg) + 0x35) = 0;
-                    goto fail;
-                }
-            } else if (code != 0x2403) {
-                goto fail;
-            }
-        }
-    } else if (code != 0x2408 && code != 0x2413) {
-        goto fail;
+    const EntityCommandPrefixReader command(message);
+    const int code = command.opcode();
+    switch (code) {
+    case 0x2101: {
+        unsigned char *bytes = reinterpret_cast<unsigned char *>(message);
+        const SyncHeaderPrefixReader header(bytes);
+        if (header.opcode() != 0x11) return 0;
+
+        SyncHeaderPrefixWriter header_writer(bytes);
+        const int first = deletion_list_.convert(
+            header.argument_2(), header.signed_sequence());
+        header_writer.store_argument_2(first);
+
+        SyncVehiclePayloadView vehicle(bytes);
+        if (vehicle.order() != 1) return 0;
+        const int16_t waypoint = vehicle.waypoint_x();
+        if (waypoint < 0) return 0;
+
+        const int converted = deletion_list_.convert(
+            waypoint, header.signed_sequence());
+        const uint16_t converted_bits = static_cast<uint16_t>(converted);
+        vehicle.store_waypoint_x(converted_bits);
+        if (converted_bits != 0xFFFFu) return 0;
+
+        vehicle.store_order(0);
+        return 0;
     }
-    {
-        int r3 = deletion_list_.convert(*reinterpret_cast<int *>(msg + 8), *reinterpret_cast<int *>(msg + 6));
-        *reinterpret_cast<int *>(msg + 8) = r3;
-        if (r3 >= 0) {
-            goto fail;
-        }
-        return 1;
+    case 0x2401:
+    case 0x2402:
+    case 0x2403:
+    case 0x2404:
+    case 0x2405:
+    case 0x2406:
+    case 0x2408:
+    case 0x2413: {
+        const int converted = deletion_list_.convert(
+            command.entity_id(), command.sequence());
+        EntityCommandPrefixWriter command_writer(message);
+        command_writer.store_entity_id(converted);
+        return converted < 0;
     }
-fail:
-    return 0;
+    default:
+        return 0;
+    }
 }
 
 // File-transfer protocol state and storage, shared by the sender and receiver.
@@ -4071,122 +4274,6 @@ static void netdaemon_process_message_marker_tail(NetDaemon &daemon,
     }
 }
 
-
-// The synchronization packet's serialized header prefix is 0x24 bytes. It is
-// a field map over borrowed bytes, not the type or extent of the allocated
-// packet. In particular, the sender leaves +2..+3, +8..+0xB, and +0x20..+0x23
-// unwritten, so neither view constructs or copies a complete prefix object.
-struct SyncHeaderPrefix {
-    int16_t flags;
-    unsigned char unresolved_2[2];
-    uint32_t faction;
-    unsigned char unresolved_8[4];
-    uint32_t sequence;
-    int16_t opcode;
-    int16_t index;
-    int32_t argument_2;
-    int32_t argument_3;
-    int32_t argument_4;
-    unsigned char unresolved_20[4];
-};
-
-static_assert(sizeof(SyncHeaderPrefix) == 0x24,
-              "synchronization serialized header prefix width");
-static_assert(offsetof(SyncHeaderPrefix, flags) == 0x00,
-              "synchronization flags offset");
-static_assert(offsetof(SyncHeaderPrefix, unresolved_2) == 0x02,
-              "synchronization unwritten bytes 2..3 offset");
-static_assert(offsetof(SyncHeaderPrefix, faction) == 0x04,
-              "synchronization faction offset");
-static_assert(offsetof(SyncHeaderPrefix, unresolved_8) == 0x08,
-              "synchronization unwritten bytes 8..B offset");
-static_assert(offsetof(SyncHeaderPrefix, sequence) == 0x0C,
-              "synchronization sequence offset");
-static_assert(offsetof(SyncHeaderPrefix, opcode) == 0x10,
-              "synchronization inner opcode offset");
-static_assert(offsetof(SyncHeaderPrefix, index) == 0x12,
-              "synchronization signed chunk index offset");
-static_assert(offsetof(SyncHeaderPrefix, argument_2) == 0x14,
-              "synchronization argument 2 offset");
-static_assert(offsetof(SyncHeaderPrefix, argument_3) == 0x18,
-              "synchronization argument 3 offset");
-static_assert(offsetof(SyncHeaderPrefix, argument_4) == 0x1C,
-              "synchronization argument 4 offset");
-static_assert(offsetof(SyncHeaderPrefix, unresolved_20) == 0x20,
-              "synchronization unwritten bytes 20..23 offset");
-
-// Borrowed field-by-field views keep accesses valid for unaligned packet
-// addresses and leave every unwritten interval untouched.
-class SyncHeaderPrefixReader {
-public:
-    explicit SyncHeaderPrefixReader(const unsigned char *bytes) : bytes_(bytes) {}
-
-    int16_t flags() const {
-        int16_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, flags), sizeof value);
-        return value;
-    }
-    uint32_t faction() const {
-        uint32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, faction), sizeof value);
-        return value;
-    }
-    uint32_t sequence() const {
-        uint32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, sequence), sizeof value);
-        return value;
-    }
-    int16_t opcode() const {
-        int16_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, opcode), sizeof value);
-        return value;
-    }
-    int16_t index() const {
-        int16_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, index), sizeof value);
-        return value;
-    }
-    int32_t argument_2() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_2), sizeof value);
-        return value;
-    }
-    int32_t argument_3() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_3), sizeof value);
-        return value;
-    }
-    int32_t argument_4() const {
-        int32_t value;
-        std::memcpy(&value, bytes_ + offsetof(SyncHeaderPrefix, argument_4), sizeof value);
-        return value;
-    }
-
-private:
-    const unsigned char *bytes_;
-};
-
-class SyncHeaderPrefixWriter {
-public:
-    explicit SyncHeaderPrefixWriter(unsigned char *bytes) : bytes_(bytes) {}
-
-    void store_flags(int16_t value) { write(offsetof(SyncHeaderPrefix, flags), value); }
-    void store_faction(uint32_t value) { write(offsetof(SyncHeaderPrefix, faction), value); }
-    void store_sequence(uint32_t value) { write(offsetof(SyncHeaderPrefix, sequence), value); }
-    void store_opcode(int16_t value) { write(offsetof(SyncHeaderPrefix, opcode), value); }
-    void store_index(int16_t value) { write(offsetof(SyncHeaderPrefix, index), value); }
-    void store_argument_2(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_2), value); }
-    void store_argument_3(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_3), value); }
-    void store_argument_4(int32_t value) { write(offsetof(SyncHeaderPrefix, argument_4), value); }
-
-private:
-    template <typename Value>
-    void write(size_t offset, Value value) {
-        std::memcpy(bytes_ + offset, &value, sizeof value);
-    }
-
-    unsigned char *bytes_;
-};
 
 static void netdaemon_process_sync_request(NetDaemon *daemon,
                                             unsigned char *message) {
