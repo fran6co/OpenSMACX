@@ -1,0 +1,35 @@
+{
+  "author": "coordinator",
+  "base_revision": "d1bef5f9a487096f0afc87232de4ccb63df85a57",
+  "editable_files": [
+    "src/console.cpp",
+    "recovery/tests/test_console_version_storage_oct13p.py"
+  ],
+  "evidence": [
+    "Pinned691870 and691874 are separate writable4-byte pointer slots, with HIGHLOW relocation targets691B40 and691B4C. The pointed terminated windows691B40..691B4C and691B4C..691B58 are distinct12-byte strings with no internal relocation. Current int* constants dereference the old executable rather than source-owned storage.",
+    "Pinned show_version517180..5171C1, on_key_click5178C0..51B66F and menu_proc51BC70..51D23E read the same two slots before parse_says then popp. Source menu_proc duplicates literals. Review on_key_click delegation/guards before declaring a missing branch; only implement a missing consumer with positive CFG/key-condition evidence.",
+    "Define one pair of source-owned string pointer objects and distinct pointed arrays with physical compiler-backed object/reference bindings. Preserve mutable pointer-slot loads and source-owned ScriptPopupFile, ConsoleStrVersionControlX and ConsoleStrAcLogoSm; no copies of proprietary machine code, fixed-address forwarders, ABI changes or unrelated menu rewrites.",
+    "Keep all ORIGINAL identities/spans and show_version historical exactness obligation. Require independent source/evidence review, focused actual-source/damage controls, fresh body and data/reference checks, complete application build/link and outside-body compiler comparison. Unsupported multi-span or full-link proof remains unknown; native recording alone grants new measured claims."
+  ],
+  "intent": "Recover real source-owned Console version string pointer storage and its affected consumers, replacing fixed executable-address dereferences and duplicate representations while preserving original behavior and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5337472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5356656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5339328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-version-storage-oct13p"
+}
