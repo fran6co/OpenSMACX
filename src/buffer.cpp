@@ -662,37 +662,38 @@ uint32_t BufferField520Default = 1;
 // RECOVERY_OBJECT: v2 0x009B3A10 0x009B3A14 ?BufferFillRowGap@@3IA 0x005DFCD0
 uint32_t BufferFillRowGap;
 
-/*
-Purpose: Copy a region of another buffer into the same position in this one.
-// ORIGINAL: 0x005D95B0 ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D95B0-0x005D95D3 BYTE_EXACT
-// symbol    ?copy@Buffer@@QAEHPAV1@HHHH@Z
-// size      35 bytes
-// prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z)(Buffer* this, Buffer*, int, int, int, int)
-// callers   8   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005DFF00
-Return Value: whatever the full copy returns
-Status: Complete with temporary full-copy dependency
 
-The original is nothing but an argument shuffle onto the seven-argument copy:
-it pushes arg5, arg4, arg3, arg2, arg3, arg2, arg1, so the destination
-coordinates are handed over a second time as the source coordinates. That
-repetition is the whole content of this overload.
-*/
 namespace {
 
 // 0x00696BF8. Every PCX the game ships is prefixed with this and a NUL;
 // `load_pcx` steps over both when it finds them.
 const char PcxAssetPrefix[] = "monkey sweats on a tuesday";
 
-// A PCX header is 128 bytes, and the fields this decoder reads sit at fixed
-// offsets in it: magic, version, encoding, bits-per-pixel, the bounding box,
-// then planes and stride near the end.
+// The pinned PCX writer copies all 0x80 bytes after assigning only the named
+// fields below; retain the untouched palette and reserved byte ranges in this
+// local format view without asserting an original C++ type or owner.
+struct PcxHeaderView {
+    uint8_t manufacturer;
+    uint8_t version;
+    uint8_t encoding;
+    uint8_t bits_per_pixel;
+    uint16_t x_min;
+    uint16_t y_min;
+    uint16_t x_max;
+    uint16_t y_max;
+    uint16_t h_res;
+    uint16_t v_res;
+    uint8_t palette[48];
+    uint8_t reserved_40;
+    uint8_t planes;
+    uint16_t bytes_per_line;
+    uint16_t palette_type;
+    uint16_t screen_width;
+    uint16_t screen_height;
+    uint8_t reserved[54];
+};
+
 const size_t PcxHeaderSize = 0x80;
-const size_t PcxMagic = 0, PcxVersion = 1, PcxEncoding = 2, PcxBitsPerPixel = 3;
-const size_t PcxXMin = 4, PcxYMin = 6, PcxXMax = 8, PcxYMax = 10;
-const size_t PcxPlanes = 65, PcxBytesPerLine = 66;
 
 }  // namespace
 
@@ -776,25 +777,20 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         size -= static_cast<DWORD>(strlen(PcxAssetPrefix) + 1);
     }
 
-    BYTE header[PcxHeaderSize];
-    memcpy(header, data, sizeof(header));
-    if (header[PcxMagic] != 0x0A || header[PcxEncoding] != 1) {
+    PcxHeaderView header;
+    memcpy(&header, data, sizeof(header));
+    if (header.manufacturer != 0x0A || header.encoding != 1) {
         return 3;
     }
-    if (header[PcxVersion] < 4 && palette != nullptr) {
+    if (header.version < 4 && palette != nullptr) {
         return 3;
     }
 
-    uint16_t x_min, y_min, x_max, y_max, bytes_per_line;
-    memcpy(&x_min, header + PcxXMin, sizeof(x_min));
-    memcpy(&y_min, header + PcxYMin, sizeof(y_min));
-    memcpy(&x_max, header + PcxXMax, sizeof(x_max));
-    memcpy(&y_max, header + PcxYMax, sizeof(y_max));
-    memcpy(&bytes_per_line, header + PcxBytesPerLine, sizeof(bytes_per_line));
-    const int width = x_max - x_min + 1;
-    const int height = y_max - y_min + 1;
-    const int bits_per_pixel = header[PcxBitsPerPixel];
-    const int planes = header[PcxPlanes];
+    const int width = header.x_max - header.x_min + 1;
+    const int height = header.y_max - header.y_min + 1;
+    const int bits_per_pixel = header.bits_per_pixel;
+    const int planes = header.planes;
+    const uint16_t bytes_per_line = header.bytes_per_line;
 
     GraphicWin *const owner = get_graphic_win();
     const int sized = (owner == 0)
@@ -917,6 +913,24 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
     return 0;
 }
 
+/*
+Purpose: Copy a region of another buffer into the same position in this one.
+// ORIGINAL: 0x005D95B0 ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D95B0-0x005D95D3 BYTE_EXACT
+// symbol    ?copy@Buffer@@QAEHPAV1@HHHH@Z
+// size      35 bytes
+// prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z)(Buffer* this, Buffer*, int, int, int, int)
+// callers   8   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DFF00
+Return Value: whatever the full copy returns
+Status: Complete with temporary full-copy dependency
+
+The original is nothing but an argument shuffle onto the seven-argument copy:
+it pushes arg5, arg4, arg3, arg2, arg3, arg2, arg1, so the destination
+coordinates are handed over a second time as the source coordinates. That
+repetition is the whole content of this overload.
+*/
 int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width,
                  int height) {
     // Through a pointer-to-member since the blitter moved in-class into
@@ -1673,15 +1687,11 @@ int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
         content += prefix_length + 1;
     }
 
-    unsigned char header[0x80];
-    memcpy(header, content, sizeof(header));
-    if (header[0] == '\n' && header[2] == 1) {
-        const int xmin = header[4] | (header[5] << 8);
-        const int ymin = header[6] | (header[7] << 8);
-        const int xmax = header[8] | (header[9] << 8);
-        const int ymax = header[10] | (header[11] << 8);
-        *width = xmax - xmin + 1;
-        *height = ymax - ymin + 1;
+    PcxHeaderView header;
+    memcpy(&header, content, sizeof(header));
+    if (header.manufacturer == '\n' && header.encoding == 1) {
+        *width = header.x_max - header.x_min + 1;
+        *height = header.y_max - header.y_min + 1;
         map.close();
         return 0;
     }
@@ -7871,26 +7881,24 @@ int Buffer::write_pcx(char *filename) {
     unsigned char *view = static_cast<unsigned char *>(map.create(
         name, static_cast<uint32_t>(width * height * -2 + 0x80), 1));
     if (view != 0) {
-        unsigned char header[0x80];
-        header[0] = 10;  // the ZSoft manufacturer byte
-        header[1] = 5;   // version 3.0: a 256-entry palette follows
-        header[2] = 1;   // run-length encoded
-        header[3] = 8;   // eight bits per plane
-        *reinterpret_cast<short *>(header + 4) = 0;
-        *reinterpret_cast<short *>(header + 6) = 0;
-        *reinterpret_cast<short *>(header + 8) = static_cast<short>(width) - 1;
-        *reinterpret_cast<short *>(header + 0xA) =
-            -1 - static_cast<short>(height);
-        *reinterpret_cast<short *>(header + 0xC) = 0;
-        *reinterpret_cast<short *>(header + 0xE) = 0;
-        header[0x40] = 0;
-        header[0x41] = 1;
-        *reinterpret_cast<short *>(header + 0x42) =
-            static_cast<short>(stride_);
-        *reinterpret_cast<short *>(header + 0x44) = 0;
-        *reinterpret_cast<short *>(header + 0x46) = 0;
-        *reinterpret_cast<short *>(header + 0x48) = 0;
-        memcpy(view, header, 0x80);
+        PcxHeaderView header;
+        header.manufacturer = 10;  // the ZSoft manufacturer byte
+        header.version = 5;        // version 3.0: a 256-entry palette follows
+        header.encoding = 1;       // run-length encoded
+        header.bits_per_pixel = 8; // eight bits per plane
+        header.x_min = 0;
+        header.y_min = 0;
+        header.x_max = static_cast<short>(width) - 1;
+        header.y_max = -1 - static_cast<short>(height);
+        header.h_res = 0;
+        header.v_res = 0;
+        header.reserved_40 = 0;
+        header.planes = 1;
+        header.bytes_per_line = static_cast<short>(stride_);
+        header.palette_type = 0;
+        header.screen_width = 0;
+        header.screen_height = 0;
+        memcpy(view, &header, sizeof(header));
 
         const uint8_t *bits = static_cast<const uint8_t *>(locked_bits_);
         unsigned char *out = view + 0x80;

@@ -1,0 +1,24 @@
+{
+  "event_id": "9dccb3c4a9d62f529ac9593f6c232a81fe03591288af05505504a7121acd808c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Source5D95B0 copy annotation precedes the intervening private PCX declarations and5E2690 memory-reader annotation, while its actual copy body follows the reader. Relocate its complete existing annotation envelope intact beside that body using native source APIs; preserve every identity/span/claim and useful finding.",
+      "No copy implementation change or baseline reset is authorized. Verify reader body ownership and fresh copy measurement; source annotation integrity is not matching, linked preservation or runtime acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6133168,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "pcx-copy-annotation-placement-oct13k",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-pcx-format-view-oct13k"
+}
