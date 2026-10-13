@@ -1870,6 +1870,48 @@ static_assert(offsetof(MessageDataRecord, payload_18_) == 0x18,
 static_assert(offsetof(MessageDataRecord, payload_1C_) == 0x1C,
               "message_data fourth payload field offset");
 
+// Borrowed wire view over the layout already owned by message_data's sender.
+// Read one field at a time: MOVE packets have only two payload words, while
+// AIRDROP/DOUBLE CROSS have three. Do not copy a full 32-byte record, impose
+// alignment, cache fields across calls, or initialize original unwritten bytes.
+// This is a serialization boundary, not a claim about a new original class.
+class MessageCommandView {
+public:
+    explicit MessageCommandView(const unsigned char *bytes) : bytes_(bytes) {}
+    int faction() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, faction_), sizeof value);
+        return value;
+    }
+    int timestamp_bits() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, timestamp_), sizeof value);
+        return value;
+    }
+    uint32_t sequence() const {
+        uint32_t value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, sequence_), sizeof value);
+        return value;
+    }
+    int payload_10() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_10_), sizeof value);
+        return value;
+    }
+    int payload_14() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_14_), sizeof value);
+        return value;
+    }
+    int payload_18() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_18_), sizeof value);
+        return value;
+    }
+private:
+    const unsigned char *bytes_;
+};
+
 // ORIGINAL: 0x00592EE0 ?message_data@@YAXHHHHHH@Z 0x00592EE0-0x00592F4C
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned592EE0..592F4C: six int inputs, target is argument2; 32-byte local packet has unwritten bytes2..3. Call532940 then dec93F664 and epilogue preserve EAX.", "Pinned53111B caller and source NetDaemon::unlock_veh consume all32 result bits; other current callers discard them.", "Superseded source dead ends: nonvoid body without return failed VC6 C4716; returning NetBusyCount added a wrong load. Returning the actual lower Net::send result resolves both without register tricks.", "Fresh root private VC6 COFF probe observes current symbol ?message_data@@YAHHHHHHH@Z", "recovery/tasks/message-data-owner-oct5.json", "recovery/tests/test_message_data_actual_source.py"], "reason": "Replace the original-address forwarding wrapper with the complete typed automatic packet builder. Expose the send result already observed by unlock_veh without changing native routing, busy-count ordering or the two unwritten packet bytes. Current netdaemon.cpp home is family ownership, not asserted original TU ownership."}
 // symbol    ?message_data@@YAHHHHHHH@Z
@@ -4142,14 +4184,15 @@ static void netdaemon_handle_client_done_turn(NetDaemon *daemon,
 // behavior; return through process_message so its real local cleanup runs.
 static void netdaemon_handle_server_turn_info(NetDaemon *daemon,
                                                unsigned char *message) {
-    const int faction = *reinterpret_cast<int *>(message + 0x10);
-    const int acknowledged = *reinterpret_cast<int *>(message + 0x14);
-    const int turn = *reinterpret_cast<int *>(message + 0x18);
+    const MessageCommandView packet(message);
+    const int faction = packet.payload_10();
+    const int acknowledged = packet.payload_14();
+    const int turn = packet.payload_18();
     log_say("From Server: TURN INFO", faction, acknowledged, turn);
 
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) return;
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) return;
-    if (*reinterpret_cast<int *>(message + 0x18) !=
+    if (packet.payload_18() !=
         GameDataStateStorage.fields_.turn_current_num_) {
         MultiWindow.draw(0);
         return;
@@ -4157,9 +4200,9 @@ static void netdaemon_handle_server_turn_info(NetDaemon *daemon,
 
     const uint32_t faction_bit =
         static_cast<uint32_t>(1) <<
-        (*reinterpret_cast<uint32_t *>(message + 0x10) & 31u);
+        (static_cast<uint32_t>(packet.payload_10()) & 31u);
     uint32_t &turn_info = daemon->channels_[0].leading_words_[0];
-    if (*reinterpret_cast<int *>(message + 0x14) == 0) {
+    if (packet.payload_14() == 0) {
         turn_info &= ~faction_bit;
         MultiWindow.draw(0);
         return;
@@ -4216,9 +4259,10 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
                                                  unsigned short type,
                                                  unsigned char *message,
                                                  int sender_identity) {
+    const MessageCommandView packet(message);
     switch (type) {
     case 0x4301: {
-        my_srand(*reinterpret_cast<int *>(message + 8));
+        my_srand(packet.timestamp_bits());
         daemon->channels_[0].leading_words_[0] = 0xFF;
         daemon->primary_state_.trailing_words_[7] = 0xFF;
         MultiWindow.draw(0);
@@ -4234,19 +4278,18 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
         return;
     }
     case 0x4303: {
-        const int phase = *reinterpret_cast<int *>(message + 0x10);
-        const int turn = *reinterpret_cast<int *>(message + 0x14);
+        const int phase = packet.payload_10();
+        const int turn = packet.payload_14();
         log_say("From Server: NEXT UPKEEP", phase, turn, 0);
-        if (*reinterpret_cast<int *>(message + 0x10) != NetUpkeepPhase) {
+        if (packet.payload_10() != NetUpkeepPhase) {
             log_say("(Upkeep instruction for wrong phase!)",
-                    *reinterpret_cast<int *>(message + 0x10), NetUpkeepPhase, 0);
-        } else if (*reinterpret_cast<int *>(message + 0x14) !=
+                    packet.payload_10(), NetUpkeepPhase, 0);
+        } else if (packet.payload_14() !=
                    GameDataStateStorage.fields_.turn_current_num_) {
-            log_say("(Upkeep instruction for wrong turn!)",
-                    *reinterpret_cast<int *>(message + 0x14),
+            log_say("(Upkeep instruction for wrong turn!)", packet.payload_14(),
                     GameDataStateStorage.fields_.turn_current_num_, 0);
         }
-        my_srand(*reinterpret_cast<int *>(message + 8));
+        my_srand(packet.timestamp_bits());
         daemon->channels_[0].leading_words_[1] = 0xFF;
         daemon->primary_state_.trailing_words_[8] = 0xFF;
         MultiWindow.draw(0);
@@ -4299,7 +4342,7 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
         daemon->channels_[0].leading_words_[2] = 1;
         return;
     case 0x1240:
-        if (*reinterpret_cast<uint32_t *>(message + 0x10)) {
+        if (static_cast<uint32_t>(packet.payload_10())) {
             daemon->channels_[1].leading_words_[0] = 1;
             log_say("Received OPEN CHANNEL SUCCESS", 0, 0, 0);
         } else {
@@ -4331,15 +4374,16 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
 static void netdaemon_handle_client_done_upkeep(NetDaemon *daemon,
                                                  unsigned char *message,
                                                  int sender_identity) {
+    const MessageCommandView packet(message);
     const int sender = sender_identity;
     const uint32_t sender_bit = static_cast<uint32_t>(1) << (sender & 0x1F);
-    const int phase = *reinterpret_cast<int *>(message + 0x10);
+    const int phase = packet.payload_10();
 
     if (phase != NetUpkeepPhase) {
         log_say("(Upkeep acknowledgement for wrong phase!)",
                 phase, NetUpkeepPhase, 0);
     } else {
-        const int turn = *reinterpret_cast<int *>(message + 0x14);
+        const int turn = packet.payload_14();
         if (turn != GameDataStateStorage.fields_.turn_current_num_) {
             log_say("(Upkeep ack for wrong turn!)", turn,
                     GameDataStateStorage.fields_.turn_current_num_, 0);
@@ -4361,7 +4405,7 @@ static void netdaemon_handle_client_done_upkeep(NetDaemon *daemon,
     }
 
     log_say("From Client: DONE UPKEEP", sender,
-            *reinterpret_cast<int *>(message + 0x10),
+            packet.payload_10(),
             static_cast<int>(already_notified));
 }
 
@@ -4371,6 +4415,7 @@ static void netdaemon_handle_client_done_upkeep(NetDaemon *daemon,
 static void netdaemon_handle_withdraw_end_turn(NetDaemon *daemon,
                                                 unsigned char *message,
                                                 int sender_identity) {
+    const MessageCommandView packet(message);
     const int sender = sender_identity;
     const uint32_t sender_bit = static_cast<uint32_t>(1) << (sender & 0x1F);
     log_say("From Client: WITHDRAW END-OF-TURN", sender, 0, 0);
@@ -4380,7 +4425,7 @@ static void netdaemon_handle_withdraw_end_turn(NetDaemon *daemon,
     const uint32_t waiting = NetDaemonNet.factions_waiting_mask();
 
     if (waiting != 0xFF && (waiting & sender_bit) != 0 &&
-        *reinterpret_cast<int *>(message + 0x10) ==
+        packet.payload_10() ==
             GameDataStateStorage.fields_.turn_current_num_) {
         NetDaemonNet.factions_waiting_mask() = waiting & ~sender_bit;
         message_data(0x1302, sender,
@@ -5564,48 +5609,6 @@ static void netdaemon_process_local_player_completion(NetDaemon &daemon) {
         daemon.channels_[1].leading_words_[3] = 0;
     }
 }
-
-// Borrowed wire view over the layout already owned by message_data's sender.
-// Read one field at a time: MOVE packets have only two payload words, while
-// AIRDROP/DOUBLE CROSS have three. Do not copy a full 32-byte record, impose
-// alignment, cache fields across calls, or initialize original unwritten bytes.
-// This is a serialization boundary, not a claim about a new original class.
-class MessageCommandView {
-public:
-    explicit MessageCommandView(const unsigned char *bytes) : bytes_(bytes) {}
-    int faction() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, faction_), sizeof value);
-        return value;
-    }
-    int timestamp_bits() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, timestamp_), sizeof value);
-        return value;
-    }
-    uint32_t sequence() const {
-        uint32_t value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, sequence_), sizeof value);
-        return value;
-    }
-    int payload_10() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_10_), sizeof value);
-        return value;
-    }
-    int payload_14() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_14_), sizeof value);
-        return value;
-    }
-    int payload_18() const {
-        int value;
-        std::memcpy(&value, bytes_ + offsetof(MessageDataRecord, payload_18_), sizeof value);
-        return value;
-    }
-private:
-    const unsigned char *bytes_;
-};
 
 static bool netdaemon_handle_five_message_routes(
         NetDaemon &daemon, unsigned short type, unsigned char *message,

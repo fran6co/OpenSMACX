@@ -16,6 +16,7 @@ import subprocess
 import pytest
 
 from test_netdaemon_synch_dispatch import _definition, _mask
+from test_caviar_draw_callbacks_actual_source import extract as _extract
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/netdaemon.cpp"
@@ -45,6 +46,8 @@ def declaration(text, name):
 
 def source_material():
     source = SOURCE.read_text()
+    wire = (_extract(source, "struct MessageDataRecord {") + ";\n" +
+            _extract(source, "class MessageCommandView {") + ";\n")
     functions = "\n".join(_definition(source, r"static\s+(?:void|bool|int)\s+" + h, h)
                           for h in HELPERS)
     net = (ROOT / "src/netdaemon.h").read_text()
@@ -85,11 +88,12 @@ def source_material():
     assert "receive_no_deal" not in (ROOT / "src/diplowin.cpp").read_text()
     # These are actual private-owner scalar types and the actual inline setter;
     # the fixture's preceding storage below is not original layout evidence.
-    return declarations, functions, "\n".join(state_fields), setter
+    return wire + "\n" + declarations, functions, "\n".join(state_fields), setter
 
 
 PREAMBLE = r'''
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <functional>
@@ -452,7 +456,7 @@ def test_behavior_damage_controls(tmp_path, damage):
         "table_sender": ('log_say("From Server: UPKEEP_BASE", sender_identity, 0, 0);', 'log_say("From Server: UPKEEP_BASE", 0, 0, 0);'),
         "grammar": ('GenderDefault = faction_data.is_leader_female;\n    PluralityDefault = 0;\n    parse_says(1,', 'parse_says(1,'),
         "local_clear": ('if (local_turn) TurnControlWord93A954 = 0;', 'if (false) TurnControlWord93A954 = 0;'),
-        "phase_reload": ('log_say("From Client: DONE UPKEEP", sender,\n            *reinterpret_cast<int *>(message + 0x10),', 'log_say("From Client: DONE UPKEEP", sender, phase,'),
+        "phase_reload": ('log_say("From Client: DONE UPKEEP", sender,\n            packet.payload_10(),', 'log_say("From Client: DONE UPKEEP", sender, phase,'),
         "bonus_redraw": ('MultiWindow.GraphicWin::redraw();', 'MultiWindow.draw(0);'),
         "bonus_virtual_redraw": ('MultiWindow.GraphicWin::redraw();', 'MultiWindow.redraw();'),
         "bonus_selection": ('parse_num(0, TimeControl[\n            GameDataStateStorage.fields_.time_controls_selection_].event);', 'parse_num(0, TimeControl[selection].event);'),
@@ -482,11 +486,11 @@ def test_done_upkeep_conditional_cpp_evaluation(tmp_path, eager_damage):
     declarations, functions, state_fields, setter = source_material()
     body = _definition(SOURCE.read_text(), r"static\s+void\s+netdaemon_handle_client_done_upkeep", "done_upkeep")
     instrumented = body
-    read = "        const int turn = *reinterpret_cast<int *>(message + 0x14);"
+    read = "        const int turn = packet.payload_14();"
     assert instrumented.count(read)==1
     if eager_damage:
         instrumented = instrumented.replace(read, "", 1).replace("    if (phase != NetUpkeepPhase)", read.strip()+"\n    if (phase != NetUpkeepPhase)", 1)
-    instrumented = instrumented.replace("*reinterpret_cast<int *>(message + 0x14)", "observe_turn_read(message)")
+    instrumented = instrumented.replace("packet.payload_14()", "observe_turn_read(message)")
     functions = functions.replace(body, instrumented, 1)
     controls = r'''
     reset(); receiver=NetDaemon{}; put(packet,0x10,4); put(packet,0x14,9); turn_reads=0;

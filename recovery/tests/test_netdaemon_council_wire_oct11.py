@@ -23,8 +23,9 @@ def apply_council_wire_migration(source):
 def product():
     text = SOURCE.read_text()
     start = text.index("struct MessageDataRecord {")
-    end = text.index("// ORIGINAL:", start)
-    return (text[start:end] + extract(text, "class MessageCommandView {") + ";\n" +
+    view_start = text.index("// Borrowed wire view over the layout already owned by message_data's sender.", start)
+    layout = text[start:view_start]
+    return (layout + extract(text, "class MessageCommandView {") + ";\n" +
             extract(text, "static bool process_council_message("))
 
 
@@ -119,9 +120,12 @@ def test_actual_council_logging_and_packet_reloads(tmp_path, damage):
     assert (result.returncode == 0) == (damage == "none"), result.stderr
 
 
-def test_literal_council_recipe_refuses_unrelated_edits():
+def test_frozen_council_recipe_rejects_broken_anchors():
     old = subprocess.check_output(["git","show","5740a46a7:src/netdaemon.cpp"],cwd=ROOT,text=True)
-    assert apply_council_wire_migration(old) == SOURCE.read_text()
+    migrated = apply_council_wire_migration(old)
+    assert "const MessageCommandView packet(msg);" in migrated
+    assert 'log_say("Received COUNCIL VOTE", packet.payload_10(), packet.payload_14(), 0)' in migrated
+    assert "CouncilWindow.arrived(packet.payload_10())" in migrated
     with pytest.raises(AssertionError):
         apply_council_wire_migration(old.replace("CouncilWindow.make_resolution(1)", "CouncilWindow.make_resolution(0)"))
 

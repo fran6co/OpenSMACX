@@ -1,0 +1,20 @@
+{
+  "event_id": "3eef66e692848800f665249ef0f9b34a2db9aa12e68c34004e249ff2a7da2782",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_netdaemon_council_wire_oct11.py"
+    ],
+    "evidence": [
+      "Moving the existing MessageCommandView ahead of earlier turn receivers makes the adjacent actual-source council fixture include the same class twice through a broad source slice. Repair extraction to include each actual record/view once while retaining actual field/log/seed/reload and all behavior mutants; production council code remains unchanged.",
+      "Accumulated whole-file historical recipe assertions are separately diagnosed against unchanged master; they do not establish current semantic failure or permission to weaken live controls. Scope authorizes this adjacent fixture only."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "turn-packet-council-extraction-oct13s",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-turn-packet-views-oct13s"
+}

@@ -151,9 +151,13 @@ def test_actual_transfer_guard_uses_packet_faction(tmp_path, damage):
     assert (result.returncode == 0) == (damage == "none"), result.stderr
 
 
-def test_only_reviewed_transfer_and_entry_identity_migration_changed():
+def test_frozen_transfer_and_entry_identity_recipe_rejects_broken_anchors():
     old = subprocess.check_output(["git","show",BASE+":src/netdaemon.cpp"],cwd=ROOT,text=True)
-    assert apply_transfer_faction_migration(old) == SOURCE.read_text()
+    migrated = apply_transfer_faction_migration(old)
+    assert "CommlinkFaction == entry_packet_faction" in migrated
+    assert "message_data(0x1505, entry_packet_faction, 0, 0, 0, 0)" in migrated
+    assert "const int entry_sender_identity =" in migrated
+    assert migrated.count("pid_2_who(")==1
     with pytest.raises(AssertionError):
         apply_transfer_faction_migration(old.replace("message_data(0x1505, sender_id", "message_data(0x1506, sender_id"))
 

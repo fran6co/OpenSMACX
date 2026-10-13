@@ -6,6 +6,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from test_caviar_draw_callbacks_actual_source import extract
+
 import pytest
 
 
@@ -31,6 +33,8 @@ def test_wait_mask_owner_and_callback_sensitive_server_paths(tmp_path: Path) -> 
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
     cpp = (ROOT / "src/netdaemon.cpp").read_text()
+    wire = (extract(cpp, "struct MessageDataRecord {") + ";\n" +
+            extract(cpp, "class MessageCommandView {") + ";\n")
     withdraw = _body(cpp, "static void netdaemon_handle_withdraw_end_turn")
     approval = _body(cpp, "static void netdaemon_complete_local_turn_wait")
     reset = _body(cpp, "void NetDaemon::reset()")
@@ -46,6 +50,7 @@ def test_wait_mask_owner_and_callback_sensitive_server_paths(tmp_path: Path) -> 
 
     harness = r'''
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 struct Entry {
@@ -82,7 +87,7 @@ int message_data(int opcode,int,int,int,int,int) {
 void log_say(const char *,int,int,int) {
   if (log_mutation) NetDaemonNet.factions_waiting_mask() = (1u<<2) | (1u<<4);
 }
-'''+withdraw+"\n"+approval+"\n"+reset+r'''
+'''+wire+"\n"+withdraw+"\n"+approval+"\n"+reset+r'''
 int main() {
   unsigned char message[0x20] = {};
   *reinterpret_cast<int *>(message+0x10)=9;

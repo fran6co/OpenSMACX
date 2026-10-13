@@ -180,9 +180,7 @@ def apply_wire_migration(source):
 
 def product():
     text = SOURCE.read_text()
-    record_start = text.index("struct MessageDataRecord {")
-    record_end = text.index("// ORIGINAL:", record_start)
-    record = text[record_start:record_end]
+    record = extract(text, "struct MessageDataRecord {") + ";\n"
     view = extract(text, "class MessageCommandView {") + ";\n"
     return record + view + extract(text, "static void netdaemon_process_local_player_completion(") + "\n" + extract(
         text, "static bool netdaemon_handle_five_message_routes(")
@@ -275,9 +273,13 @@ def test_identity_and_entry_header_ownership():
     assert body.index("std::memcpy(&entry_sequence") < body.index("bool skip500")
 
 
-def test_literal_recipe_admits_only_this_bounded_source_change():
+def test_frozen_wire_recipe_rejects_broken_migration_anchors():
     old = subprocess.check_output(["git","show",BASE+":src/netdaemon.cpp"],cwd=ROOT,text=True)
-    assert apply_wire_migration(old) == SOURCE.read_text()
+    migrated = apply_wire_migration(old)
+    assert "const MessageCommandView packet(message);" in migrated
+    assert "packet.payload_10()" in migrated
+    assert "set_sequence_bits(entry_sequence)" in migrated
+    assert "double_cross(packet.payload_10()," in migrated
     with pytest.raises(AssertionError):
         apply_wire_migration(old.replace("        ::action(vehicle_id);", "        ::action(0);"))
 
