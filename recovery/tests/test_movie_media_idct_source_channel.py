@@ -10,6 +10,7 @@ import pytest
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src/movie_media_decoder.cpp").is_file())
 DECODER = ROOT / "src/movie_media_decoder.cpp"
+OWNER_HEADER = ROOT / "src/movie_decoder_owner.h"
 
 
 def definition(source: str, signature: str) -> str:
@@ -26,26 +27,45 @@ def definition(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated definition {signature}")
 
 
+def declaration(source: str, signature: str) -> str:
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    for end in range(opening, len(source)):
+        if source[end] == "{":
+            depth += 1
+        elif source[end] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start : end + 1]
+    raise AssertionError(f"unterminated actual declaration {signature}")
+
+
 def source_unit(mutant: str | None = None) -> str:
     decoder = DECODER.read_text(encoding="utf-8")
     signatures = (
         "static int *movie_media_idct_output_pointer()",
+        "static void movie_media_idct_set_output_pointer(int *value)",
         "static movie_decoder_idct::IdctConstants movie_media_idct_constants()",
         "void __cdecl sub_5ced1d(int *esi_ptr)",
     )
     bodies = [definition(decoder, signature) for signature in signatures]
+    idct_storage = declaration(
+        OWNER_HEADER.read_text(encoding="utf-8"), "struct MediaDecoderIdctStorage"
+    )
+    assert "int *current_output_pointer;" in idct_storage
     if mutant == "source_channel":
         needle = "reinterpret_cast<const int32_t *>(esi_ptr)"
-        assert needle in bodies[2]
-        bodies[2] = bodies[2].replace(
+        assert needle in bodies[3]
+        bodies[3] = bodies[3].replace(
             needle,
             "reinterpret_cast<const int32_t *>(esi_ptr ? movie_media_idct_output_pointer() : esi_ptr)",
             1,
         )
     elif mutant == "destination_stride":
         needle = "dst[row * 9] = transformed[row];"
-        assert bodies[2].count(needle) == 2
-        bodies[2] = bodies[2].replace(needle, "dst[row * 8] = transformed[row];")
+        assert bodies[3].count(needle) == 2
+        bodies[3] = bodies[3].replace(needle, "dst[row * 8] = transformed[row];")
 
     harness = r'''#include <cassert>
 #include <cstdint>
@@ -54,21 +74,10 @@ def source_unit(mutant: str | None = None) -> str:
 using BYTE = std::uint8_t;
 using DWORD = std::uint32_t;
 using LONG = std::int32_t;
-struct MediaDecoderIdctStorage {
-  DWORD output_pitch_bytes;
-  std::uintptr_t current_output_pointer_bits;
-  DWORD butterfly_fp_scratch_words[4];
-  DWORD constant_words[5];
-  int intermediate_words[72];
-};
+''' + idct_storage + ";" + r'''
 MediaDecoderIdctStorage movie_media_idct_storage = {};
 #include "movie_decoder_idct.h"
-''' + "\n".join(bodies[:2]) + r'''
-static void movie_media_idct_set_output_pointer(int *value) {
-  movie_media_idct_storage.current_output_pointer_bits =
-      reinterpret_cast<std::uintptr_t>(value);
-}
-''' + bodies[2] + r'''
+''' + "\n".join(bodies[:3]) + "\n" + bodies[3] + r'''
 int main() {
   int source[8] = {17, 0, 0, 0, 0, 0, 0, 0};
   int destination[72];

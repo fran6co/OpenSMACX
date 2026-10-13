@@ -29,10 +29,25 @@ def _body(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated actual C++ body: {signature}")
 
 
+def _declaration(source: str, signature: str) -> str:
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    for pos in range(opening, len(source)):
+        if source[pos] == "{":
+            depth += 1
+        elif source[pos] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start : pos + 1]
+    raise AssertionError(f"unterminated actual C++ declaration: {signature}")
+
+
 def _actual_unit(mutant: str | None = None) -> str:
     media = (SRC / "movie_media_decoder.cpp").read_text()
     shared = (SRC / "movie_decoder_idct.cpp").read_text()
     header = (SRC / "movie_decoder_idct.h").read_text()
+    owner_header = (SRC / "movie_decoder_owner.h").read_text()
     signatures = (
         "static int movie_media_signed32(DWORD value)",
         "static DWORD movie_media_int_bits(int value)",
@@ -48,6 +63,8 @@ def _actual_unit(mutant: str | None = None) -> str:
     helpers = "\n\n".join(_body(media, signature) for signature in signatures)
     row = _body(media, "void __cdecl sub_5cee80(int *src)")
     column = _body(media, "void __cdecl sub_5ced1d(int *esi_ptr)")
+    idct_storage = _declaration(owner_header, "struct MediaDecoderIdctStorage")
+    assert "int *current_output_pointer;" in idct_storage
     column = column.replace(
         "dst[row * 9] = transformed[row];",
         "movie_media_test_column_store(dst, row, transformed[row]);",
@@ -90,11 +107,7 @@ using BYTE=uint8_t; using DWORD=uint32_t; using LONG=int32_t;
 using __int64=long long;
 #define __cdecl
 struct MediaDecoderTableStorage { int32_t decoded_coefficient_words[64]; };
-struct MediaDecoderIdctStorage {
-  DWORD output_pitch_bytes; uintptr_t current_output_pointer_bits;
-  DWORD butterfly_fp_scratch_words[4]; DWORD constant_words[5];
-  int intermediate_words[72];
-};
+''' + idct_storage + ";" + r'''
 MediaDecoderTableStorage movie_media_decoder_tables={};
 MediaDecoderIdctStorage movie_media_idct_storage={};
 static int movie_media_test_column_store_order[8];

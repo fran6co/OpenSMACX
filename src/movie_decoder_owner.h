@@ -106,11 +106,12 @@ struct MediaDecoderStaticStorage {
 };
 extern MediaDecoderStaticStorage movie_media_decoder_static_storage;
 
-// Minimum shared IDCT scratch/control access window. Pointer representation
-// remains a source-owned 32-bit cell read and written through memcpy.
+// Minimum shared IDCT scratch/control access window. The output member is a
+// shared destination pointer; its observed slot is followed by the butterfly
+// scratch words and constants within this access window.
 struct MediaDecoderIdctStorage {
   DWORD output_pitch_bytes;
-  DWORD current_output_pointer_bits;
+  int *current_output_pointer;
   DWORD butterfly_fp_scratch_words[4];
   DWORD constant_words[5];
   int intermediate_words[72];
@@ -121,6 +122,10 @@ typedef char media_decoder_static_initializer_window_size_check[
     sizeof(MediaDecoderStaticStorage) == 0xee4 ? 1 : -1];
 typedef char media_decoder_idct_access_window_size_check[
     sizeof(MediaDecoderIdctStorage) == 0x14c ? 1 : -1];
+typedef char media_decoder_idct_output_pointer_offset_check[
+    offsetof(MediaDecoderIdctStorage, current_output_pointer) == 4 ? 1 : -1];
+typedef char media_decoder_idct_butterfly_scratch_offset_check[
+    offsetof(MediaDecoderIdctStorage, butterfly_fp_scratch_words) == 8 ? 1 : -1];
 typedef char media_decoder_pointer_slot_width_check[
     sizeof(void *) == sizeof(DWORD) ? 1 : -1];
 

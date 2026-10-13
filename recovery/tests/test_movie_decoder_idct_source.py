@@ -64,6 +64,20 @@ def _without_comments(source: str) -> str:
     return re.sub(r"/\*.*?\*/|//[^\n]*", "", source, flags=re.DOTALL)
 
 
+def _declaration(source: str, signature: str) -> str:
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    for index in range(opening, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start:index + 1]
+    raise AssertionError(f"unterminated declaration {signature}")
+
+
 def test_mapped_idct_bodies_compile_and_execute_from_product_owner(
     tmp_path: Path,
 ) -> None:
@@ -89,6 +103,8 @@ def test_mapped_idct_bodies_compile_and_execute_from_product_owner(
     owners = "\n\n".join(_function(decoder, signature) for signature in signatures)
     owner_header = (SRC / "movie_decoder_owner.h").read_text()
     assert "extern MediaDecoderTableStorage movie_media_decoder_tables;" in owner_header
+    idct_storage = _declaration(owner_header, "struct MediaDecoderIdctStorage")
+    assert "int *current_output_pointer;" in idct_storage
     source = r'''#include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -98,14 +114,7 @@ using DWORD = std::uint32_t;
 using LONG = std::int32_t;
 using __int64 = long long;
 struct MediaDecoderTableStorage { int32_t decoded_coefficient_words[64]; };
-struct MediaDecoderIdctStorage {
-  DWORD output_pitch_bytes;
-  // Host-only widening of the source's DWORD pointer representation.
-  std::uintptr_t current_output_pointer_bits;
-  DWORD butterfly_fp_scratch_words[4];
-  DWORD constant_words[5];
-  int intermediate_words[72];
-};
+''' + idct_storage + ";" + r'''
 MediaDecoderTableStorage movie_media_decoder_tables = {};
 MediaDecoderIdctStorage movie_media_idct_storage = {};
 #include "movie_decoder_idct.h"
@@ -126,10 +135,8 @@ int main() {
   std::memset(output, 0xa5, sizeof(output));
   sub_5cef8a(output, 16);
   assert(movie_media_idct_storage.output_pitch_bytes == 64);
-  BYTE *final_pointer = 0;
-  std::memcpy(&final_pointer,
-      &movie_media_idct_storage.current_output_pointer_bits, sizeof(final_pointer));
-  assert(final_pointer == output + 7 * 64);
+  assert(movie_media_idct_storage.current_output_pointer ==
+         reinterpret_cast<int *>(output) + 7 * 16);
   for (int row = 0; row != 8; ++row) {
     bool changed = false;
     for (int column = 0; column != 8; ++column)

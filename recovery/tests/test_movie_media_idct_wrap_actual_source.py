@@ -17,6 +17,7 @@ ROOT = next(
     if (parent / "src/movie_media_decoder.cpp").is_file()
 )
 DECODER = ROOT / "src/movie_media_decoder.cpp"
+OWNER_HEADER = ROOT / "src/movie_decoder_owner.h"
 
 
 def definition(source: str, signature: str) -> str:
@@ -32,6 +33,20 @@ def definition(source: str, signature: str) -> str:
             if depth == 0:
                 return source[start : end + 1]
     raise AssertionError(f"unterminated installed definition: {signature}")
+
+
+def declaration(source: str, signature: str) -> str:
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    for end in range(opening, len(source)):
+        if source[end] == "{":
+            depth += 1
+        elif source[end] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start : end + 1]
+    raise AssertionError(f"unterminated actual declaration: {signature}")
 
 
 SPECS = (
@@ -53,6 +68,10 @@ SPECS = (
 
 def host_source(source: str, mutation: str | None = None) -> str:
     bodies = [definition(source, signature) for signature in SPECS]
+    idct_storage = declaration(
+        OWNER_HEADER.read_text(encoding="utf-8"), "struct MediaDecoderIdctStorage"
+    )
+    assert "int *current_output_pointer;" in idct_storage
     if mutation == "add32_or":
         needle = "movie_media_int_bits(left) +\n                                 movie_media_int_bits(right)"
         assert bodies[6].count(needle) == 1
@@ -81,15 +100,7 @@ using BYTE = std::uint8_t;
 using DWORD = std::uint32_t;
 using LONG = std::int32_t;
 using __int64 = long long;
-struct MediaDecoderIdctStorage {
-  DWORD output_pitch_bytes;
-  // The product field is 32-bit. This host fixture widens only the pointer
-  // cell so the actual source helpers can safely store 64-bit host pointers.
-  std::uintptr_t current_output_pointer_bits;
-  DWORD butterfly_fp_scratch_words[4];
-  DWORD constant_words[5];
-  int intermediate_words[72];
-};
+''' + idct_storage + ";" + r'''
 struct MediaDecoderTableStorage { std::int32_t decoded_coefficient_words[64]; };
 MediaDecoderIdctStorage movie_media_idct_storage = {};
 MediaDecoderTableStorage movie_media_decoder_tables = {};

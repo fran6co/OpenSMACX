@@ -1319,16 +1319,11 @@ Purpose: One 8-point inverse DCT row, the butterfly half of the movie codec's
 */
 
 static int *movie_media_idct_output_pointer() {
-    int *result;
-    std::memcpy(&result,
-                &movie_media_idct_storage.current_output_pointer_bits,
-                sizeof(result));
-    return result;
+    return movie_media_idct_storage.current_output_pointer;
 }
 
 static void movie_media_idct_set_output_pointer(int *value) {
-    std::memcpy(&movie_media_idct_storage.current_output_pointer_bits,
-                &value, sizeof(value));
+    movie_media_idct_storage.current_output_pointer = value;
 }
 
 static float movie_media_idct_float_constant(int index) {
