@@ -1,0 +1,21 @@
+{
+  "event_id": "4d257cef396f3981e1ac2f5fadc6d7b09fc9f1124c8a0bfb1a4684a7f5c141a0",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_movie_media_idct_source_channel.py",
+      "recovery/tests/test_movie_media_idct_wrap_actual_source.py"
+    ],
+    "evidence": [
+      "Independent actual-source review finds two additional existing host fixtures extracting the modified real pointer getter/setter while fabricating a uintptr current_output_pointer_bits member. They now cannot compile; include both dependent fixtures in the same genuine pointer ownership closure.",
+      "Update to the actual MediaDecoderIdctStorage declaration and direct int* field without changing native C++ scope, original identities, baselines, arithmetic/alias/wrap/custom ESI channel controls or introducing a host ABI claim. Preserve original behavioral mutants and verify the entire five-file fixture set."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "idct-output-pointer-dependent-test-closure-oct13ae",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:media-idct-output-pointer-owner-oct13ae"
+}
