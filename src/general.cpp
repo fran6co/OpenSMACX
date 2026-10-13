@@ -4637,14 +4637,18 @@ void __cdecl sub_5ce6e3(unsigned char *codes, short *samples, int sample_total, 
 //
 // enemy_turn sweeps the vehicle table ten times, once per priority band, and
 // hands each of the faction's vehicles to enemy_veh; enemy_veh drives one
-// vehicle's move and reports whether the turn moved on. enemy_move (the
-// per-vehicle mover both of them reach) is still the image's own bytes and is
-// forwarded from pending_bodies.cpp.
+// vehicle's move and reports whether the turn moved on. enemy_move, the
+// per-vehicle mover both of them reach, now has its complete source owner in
+// src/enemy.cpp.
 // ---------------------------------------------------------------------------
 
-char *const LogEnemyVehicleDone = (char *)0x0068EAFC;    // "Enemy Vehicle DONE"
-char *const LogEnemyVehicleAction = (char *)0x0068EB10;  // "Enemy Vehicle ACTION"
-char *const LogEnemyVehicle = (char *)0x0068EB28;        // "Enemy Vehicle"
+// Original direct-address writable .data strings passed to the logging calls.
+// RECOVERY_OBJECT: v2 0x0068EAFC 0x0068EB0F ?LogEnemyVehicleDone@@3PADA 0x00579240
+char LogEnemyVehicleDone[] = "Enemy Vehicle DONE";
+// RECOVERY_OBJECT: v2 0x0068EB10 0x0068EB25 ?LogEnemyVehicleAction@@3PADA 0x00579240
+char LogEnemyVehicleAction[] = "Enemy Vehicle ACTION";
+// RECOVERY_OBJECT: v2 0x0068EB28 0x0068EB36 ?LogEnemyVehicle@@3PADA 0x00579240
+char LogEnemyVehicle[] = "Enemy Vehicle";
 
 // ORIGINAL: 0x00579240 ?enemy_veh@@YAHH@Z 0x00579240-0x005794C8
 // TRIED: `Veh *veh = &Vehs[veh_id]` - the image never materialises the array
