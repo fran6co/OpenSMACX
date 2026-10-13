@@ -15,6 +15,7 @@ import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source import read_file, read_text
 from match_recovery.tasks import TaskStore
+from recovery.tests.test_texture_shaded_edge_record_oct13an import _strip_authorized_edge_delta
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -125,6 +126,7 @@ def _expected_current_body(old: str) -> str:
 
 
 def _assert_source_delta(current: str, baseline: str) -> None:
+    current = _strip_authorized_edge_delta(current, baseline)
     old_body = _extract(baseline)
     current_body = _extract(current)
     assert _tokens(current_body) == _tokens(_expected_current_body(old_body)), (

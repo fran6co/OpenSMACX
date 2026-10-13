@@ -5176,6 +5176,10 @@ free_and_finish:
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x00624D80
 
+// STRUCTURAL EVIDENCE: setup_edge 0x624D80 writes through EdgeScan+0x30;
+// sub_61c630 reads untouched firstEdge+0x34 into scratch 0x9BB498 at 0x61C875/87B.
+// Preserve that indeterminate stack effect; its original value/pixel impact is unproved.
+
 // GENERATED SKELETON - tools/emit_translation_unit.py
 // subject: sub_61c630  at 0x0061C630  (1310 bytes)
 //
@@ -5235,63 +5239,63 @@ void Texture::sub_61c630(Buffer * bufIn, Vert * verts, Texture * texB, unsigned 
                     *blit_clip_bottom = destBase + stride * (*blit_clip_bottom);
                     *blit_clip_top = destBase + stride * (*blit_clip_top);
 
-                    int e1[15]; for (int z1 = 0; z1 < 15; z1++) e1[z1] = 0;
-                    int e2[15]; for (int z2 = 0; z2 < 15; z2++) e2[z2] = 0;
+                    EdgeScan e1;
+                    EdgeScan e2;
 
-                    e1[0] = -1;
-                    if (setup_edge(reinterpret_cast<EdgeScan *>(e1), minYIdx) != 0) {
-                        e2[0] = 1;
-                        if (setup_edge(reinterpret_cast<EdgeScan *>(e2), minYIdx) != 0 &&
+                    e1.f0 = -1;
+                    if (setup_edge(&e1, minYIdx) != 0) {
+                        e2.f0 = 1;
+                        if (setup_edge(&e2, minYIdx) != 0 &&
                             borrowed_ != 0 && texB->borrowed_ != 0) {
 
                             double du0 = 0.0, dv0 = 0.0, invWidth = 1.0;
-                            int stepCheck = (e2[7] - e1[7]) * 0x10000;
+                            int stepCheck = (e2.accumC - e1.accumC) * 0x10000;
                             if (stepCheck > 0) {
-                                dv0 = static_cast<double>(e2[4] - e1[4]);
-                                du0 = static_cast<double>(e2[3] - e1[3]);
+                                dv0 = static_cast<double>(e2.accumB - e1.accumB);
+                                du0 = static_cast<double>(e2.accumA - e1.accumA);
                                 invWidth = 1.0 / static_cast<double>(stepCheck);
                             }
 
                             if (*blit_row_offset < *blit_clip_bottom) {
                                 bool done = false;
                                 for (;;) {
-                                    *blit_slot_498 = e1[13];
-                                    *blit_slot_4f8 = e1[3];
-                                    *blit_slot_4c4 = e2[3];
-                                    *blit_slot_530 = e2[4];
-                                    *blit_slot_53c = e1[4];
-                                    *blit_span_right = e1[7];
-                                    *blit_span_left = e2[7];
+                                    *blit_slot_498 = e1.accumD;
+                                    *blit_slot_4f8 = e1.accumA;
+                                    *blit_slot_4c4 = e2.accumA;
+                                    *blit_slot_530 = e2.accumB;
+                                    *blit_slot_53c = e1.accumB;
+                                    *blit_span_right = e1.accumC;
+                                    *blit_span_left = e2.accumC;
 
-                                    e1[1] -= 1;
-                                    if (e1[1] == 0) {
-                                        if (setup_edge(reinterpret_cast<EdgeScan *>(e1), e1[2]) != 0) {
+                                    e1.counter -= 1;
+                                    if (e1.counter == 0) {
+                                        if (setup_edge(&e1, e1.id) != 0) {
                                             goto edge2_step;
                                         }
                                         done = true;
                                     } else {
-                                        e1[3] += e1[5];
-                                        e1[4] += e1[6];
-                                        e1[7] += e1[8];
-                                        e1[10] += e1[11];
-                                        if (e1[10] > 0) {
-                                            e1[7] += e1[9];
-                                            e1[10] -= e1[12];
+                                        e1.accumA += e1.deltaA;
+                                        e1.accumB += e1.deltaB;
+                                        e1.accumC += e1.deltaC;
+                                        e1.fracAccum += e1.fracDelta;
+                                        if (e1.fracAccum > 0) {
+                                            e1.accumC += e1.extraDeltaC;
+                                            e1.fracAccum -= e1.fracSub;
                                         }
                                     edge2_step:
-                                        e2[1] -= 1;
-                                        if (e2[1] == 0) {
-                                            if (setup_edge(reinterpret_cast<EdgeScan *>(e2), e2[2]) == 0) {
+                                        e2.counter -= 1;
+                                        if (e2.counter == 0) {
+                                            if (setup_edge(&e2, e2.id) == 0) {
                                                 done = true;
                                             }
                                         } else {
-                                            e2[3] += e2[5];
-                                            e2[7] += e2[8];
-                                            e2[4] += e2[6];
-                                            e2[10] += e2[11];
-                                            if (e2[10] > 0) {
-                                                e2[7] += e2[9];
-                                                e2[10] -= e2[12];
+                                            e2.accumA += e2.deltaA;
+                                            e2.accumC += e2.deltaC;
+                                            e2.accumB += e2.deltaB;
+                                            e2.fracAccum += e2.fracDelta;
+                                            if (e2.fracAccum > 0) {
+                                                e2.accumC += e2.extraDeltaC;
+                                                e2.fracAccum -= e2.fracSub;
                                             }
                                         }
                                     }
@@ -5302,10 +5306,10 @@ void Texture::sub_61c630(Buffer * bufIn, Vert * verts, Texture * texB, unsigned 
                                         *blit_slot_4c8 = static_cast<int>(dv0 * invWidth * scale);
                                     }
 
-                                    stepCheck = (e2[7] - e1[7]) * 0x10000;
+                                    stepCheck = (e2.accumC - e1.accumC) * 0x10000;
                                     if (stepCheck > 0) {
-                                        dv0 = static_cast<double>(e2[4] - e1[4]);
-                                        du0 = static_cast<double>(e2[3] - e1[3]);
+                                        dv0 = static_cast<double>(e2.accumB - e1.accumB);
+                                        du0 = static_cast<double>(e2.accumA - e1.accumA);
                                         invWidth = 1.0 / static_cast<double>(stepCheck);
                                     }
 
