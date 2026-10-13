@@ -844,7 +844,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     // THE PARENT AND THE STYLE WORD init is handed.
     Win *const parent = external_window_ != 0
                             ? external_window_
-                            : reinterpret_cast<Win *>(field_322C_);
+                            : fallback_parent_window_;
     int style = static_cast<int>(field_30A4_);
     if ((field_30A8_ & 0x20) != 0) {
         style |= 0x20;
@@ -2058,8 +2058,8 @@ BasePop::BasePop() {
     field_31AC_ = BasePopDefaultField31A0[3];
     field_31B0_ = BasePopDefaultField31B0[0];
     field_31B4_ = BasePopDefaultField31B0[1];
-    field_322C_ = 0;
-    field_322C_ = BasePopDefaultField322C;
+    fallback_parent_window_ = 0;
+    fallback_parent_window_ = BasePopDefaultField322C;
     external_window_ = BasePopDefaultLayout.external_window;
     default_loc_a_ = BasePopDefaultLayout.loc_x;
     default_loc_b_ = BasePopDefaultLayout.loc_y;
@@ -2270,7 +2270,7 @@ void BasePop::close() {
     field_31B4_ = BasePopDefaultField31B0[1];
     field_214C_ = BasePopDefaultField2148[1];
     field_2148_ = BasePopDefaultField2148[0];
-    field_322C_ = BasePopDefaultField322C;
+    fallback_parent_window_ = BasePopDefaultField322C;
     field_31A0_ = (uint8_t)BasePopDefaultField31A0[0];
 
     external_window_ = BasePopDefaultLayout.external_window;

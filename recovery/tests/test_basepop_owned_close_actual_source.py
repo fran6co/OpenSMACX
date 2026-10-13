@@ -100,7 +100,7 @@ BASEPOP_MEMBERS = (
     "button_color_2d_", "button_font3_", "button_color_3a_", "button_color_3b_",
     "button_color_3c_", "button_color_3d_", "field_31A4_", "field_31A8_",
     "field_31AC_", "field_31B0_", "field_31B4_", "field_214C_", "field_2148_",
-    "field_322C_", "field_31A0_", "field_317B_", "external_window_",
+    "fallback_parent_window_", "field_31A0_", "field_317B_", "external_window_",
     "default_loc_a_", "default_loc_b_", "dialog_width_", "dialog_height_", "heap_",
 )
 
@@ -507,7 +507,7 @@ static void verify_first_close(BasePop &pop, const void *ok, const void *cancel,
   assert(pop.field_31B4_ == BasePopDefaultField31B0[1]);
   assert(pop.field_2148_ == BasePopDefaultField2148[0]);
   assert(pop.field_214C_ == BasePopDefaultField2148[1]);
-  assert(pop.field_322C_ == BasePopDefaultField322C);
+  assert(pop.fallback_parent_window_ == BasePopDefaultField322C);
   assert(pop.external_window_ == &external_window);
   assert(pop.default_loc_a_ == 0x1234 && pop.default_loc_b_ == 0x2000);
   assert(pop.dialog_width_ == 301 && pop.dialog_height_ == 101);

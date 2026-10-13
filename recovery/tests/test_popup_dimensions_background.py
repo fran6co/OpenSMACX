@@ -75,6 +75,48 @@ def test_popup_dimensions_uses_existing_base_virtual_slot():
     assert "// symbol    " + EMITTED_NAME in record.region
 
 
+def test_popup_parent_fallback_selection_uses_actual_exec_expression(tmp_path):
+    """Exercise the exact parent-selection declaration extracted from exec."""
+    source = (ROOT / "src/basepop.cpp").read_text(encoding="utf-8")
+    exec_body = _definition(source, "int BasePop::exec(int flags, int (__cdecl *callback)())")
+    statements = re.findall(
+        r"(?m)^\s*Win \*const parent = external_window_ != 0\s*"
+        r"\? external_window_\s*:\s*fallback_parent_window_;\s*$",
+        exec_body,
+    )
+    assert len(statements) == 1, "exec must select attached parent or fallback member once"
+    selection = statements[0].strip()
+    fixture = r'''#include <cassert>
+struct Win { int tag; };
+struct ParentSelection {
+    Win *external_window_;
+    Win *fallback_parent_window_;
+    Win *selected() const {
+        PARENT_SELECTION
+        return parent;
+    }
+};
+int main() {
+    Win fallback = {1}, attached = {2};
+    ParentSelection p = {0, &fallback};
+    assert(p.selected() == &fallback);
+    p.external_window_ = &attached;
+    assert(p.selected() == &attached);
+    p.external_window_ = 0;
+    p.fallback_parent_window_ = 0;
+    assert(p.selected() == 0);
+}
+'''.replace("PARENT_SELECTION", selection)
+    for compiler_name in ("g++", "clang++"):
+        compiler = shutil.which(compiler_name)
+        if compiler is None:
+            continue
+        compiler_dir = tmp_path / compiler_name.replace("+", "p")
+        compiler_dir.mkdir()
+        result = compile_control(compiler_dir, compiler, fixture)
+        assert result.returncode == 0, result.stderr.decode(errors="replace")
+
+
 def test_native_and_compiled_basepop_popup_callback_order():
     """Physical original words and fresh compiler relocations, not mock slots."""
     from match_recovery.compiler import Compiler

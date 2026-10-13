@@ -79,7 +79,7 @@ struct BasePop : public GraphicWin {
     unsigned int field_21BC_;
     unsigned int field_21C0_;
     unsigned int field_21C4_;
-    Win *field_322C_;
+    Win *fallback_parent_window_;
     int dimension_result;
     int dimension_calls;
 
@@ -87,7 +87,7 @@ struct BasePop : public GraphicWin {
         field_30A4_(0), field_30A8_(0), field_30AC_(0), field_30D0_(0),
         field_30E0_(0), field_3104_(1), field_3108_(1), field_30C0_(0),
         field_30EC_(0), field_21B0_(0), field_21B4_(0), field_21B8_(0),
-        field_21BC_(0), field_21C0_(0), field_21C4_(0), field_322C_(0),
+        field_21BC_(0), field_21C0_(0), field_21C4_(0), fallback_parent_window_(0),
         dimension_result(0), dimension_calls(0) {}
     virtual int calculate_dimensions() {
         ++dimension_calls;
@@ -280,7 +280,7 @@ static void test_callback_modes_colors_and_layout() {
           "mode 6 clears flag 0x40 through GraphicWin and popup state");
     check(p.field_21B0_ == 0x13 && p.field_21B4_ == 0x15
           && p.field_21B8_ == 0x2f && p.field_21BC_ == 0x12
-          && p.field_322C_ == 0,
+          && p.fallback_parent_window_ == 0,
           "non-main-interface mode selects the small visible-state layout");
 
     test_reset();
@@ -330,7 +330,7 @@ static void test_visible_font_and_failure_paths() {
     p.calculate_dimensions();
     check(p.field_21B0_ == 0x21 && p.field_21B4_ == 0x43
           && p.field_21BC_ == 0x32
-          && p.field_322C_ == static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal)),
+          && p.fallback_parent_window_ == static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal)),
           "visible main interface selects the wide layout and Console window font owner");
     check(p.dimension_calls == 1,
           "normal path delegates once to BasePop dimension calculation");

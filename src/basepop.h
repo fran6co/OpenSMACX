@@ -711,7 +711,7 @@ class BasePop : public GraphicWin {
   // and exec (0x00602600) reads it as the 0x5D4EF0 init call's seventh
   // argument, whose type is `Win *`. Same typing argument field_A3C_ above
   // carries; the four bytes do not move.
-  Win *field_322C_;
+  Win *fallback_parent_window_;
   // THE TWO BUTTON-ROW HELPERS exec (0x00602600) runs at its three button
   // sites, DEFINED IN-CLASS because the image has all 33 stores inline at all
   // three - an out-of-line definition turns each site into a call the image

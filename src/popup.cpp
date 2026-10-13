@@ -3073,7 +3073,7 @@ int Popup::calculate_dimensions() {
         field_21B0_ = 10;
         field_21B4_ = 0xC;
         field_21BC_ = 0x12;
-        field_322C_ = nullptr;
+        fallback_parent_window_ = nullptr;
         if (mode == 6 || mode == 2) {
             field_21B0_ = 0x13;
             field_21B4_ = 0x15;
@@ -3083,7 +3083,7 @@ int Popup::calculate_dimensions() {
         field_21B0_ = 0x21;
         field_21B4_ = 0x43;
         field_21BC_ = WinScreenWidth == 800 ? 0x1E : 0x32;
-        field_322C_ = static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal));
+        fallback_parent_window_ = static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal));
     }
 
     field_21C4_ = 9;
