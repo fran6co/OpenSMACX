@@ -428,8 +428,9 @@ int RadioButton::attach(GraphicWin *parent, int x, int y, int flags) {
     Dialog::field_24_ = x;
     Dialog::field_28_ = y;
     if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
-    GraphicWin::init(x, y, Dialog::field_5C_, Dialog::field_60_, 0,
-                     flags, parent, 0, 0);
+    const int init_result = GraphicWin::init(
+        x, y, Dialog::field_5C_, Dialog::field_60_, 0, flags, parent, 0, 0);
+    if (init_result != 0) return init_result;
     Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
     buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
     buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);

@@ -422,7 +422,7 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
     if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
     const int init_result = GraphicWin::init(
         x, y, Dialog::field_5C_, Dialog::field_60_, 0, flags, parent, 0, 0);
-    if (init_result != 0) return 0;
+    if (init_result != 0) return init_result;
 
     spots_.init(static_cast<int>(list_.entry_count_));
     const int maximum_height = static_cast<int>(field_58_);
