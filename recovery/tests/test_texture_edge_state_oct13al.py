@@ -15,6 +15,9 @@ import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source import read_file, read_text
 from match_recovery.tasks import TaskStore
+from recovery.tests.texture_direct_storage_host import (
+    PRELUDE_MARKER, direct_storage_prelude, direct_storage_projection,
+)
 from recovery.tests.test_texture_shaded_edge_record_oct13an import _strip_authorized_edge_delta
 
 
@@ -127,7 +130,8 @@ def _expected_current_body(old: str) -> str:
 
 def _assert_source_delta(current: str, baseline: str) -> None:
     current = _strip_authorized_edge_delta(current, baseline)
-    old_body = _extract(baseline)
+    projected_baseline = direct_storage_projection(baseline)
+    old_body = _extract(projected_baseline)
     current_body = _extract(current)
     assert _tokens(current_body) == _tokens(_expected_current_body(old_body)), (
         "draw_trans2 must contain only the evidence-backed EdgeScan conversion")
@@ -154,7 +158,9 @@ def _assert_source_delta(current: str, baseline: str) -> None:
     assert baseline.count(edge_local + marker) == 1
     assert edge_local not in current
     current = current.replace(marker, edge_local + marker, 1)
-    assert _tokens(current) == _tokens(baseline), "only EdgeLocal removal and draw_trans2 delta"
+    assert _tokens(current) == _tokens(direct_storage_projection(baseline)), (
+        "only EdgeLocal removal, draw_trans2 delta, and the separately guarded "
+        "Texture direct-storage projection")
 
     structural = """// STRUCTURAL EVIDENCE: Pinned setup_edge 0x624D80 writes EdgeScan offsets
 // +0x28/+0x2c/+0x30 as fracAccum/fracDelta/fracSub; draw_trans2 row blocks
@@ -272,6 +278,9 @@ static void test_edge_recurrences() {
 
 def _translation_unit(body: str) -> str:
     fixture = FIXTURE.read_text(encoding="utf-8")
+    assert fixture.count(PRELUDE_MARKER) == 1
+    fixture = fixture.replace(PRELUDE_MARKER,
+                              direct_storage_prelude(SOURCE.read_text(encoding="utf-8")), 1)
     assert fixture.count(INSERTION) == 1
     assert fixture.count(SETUP_STUB) == 1
     fixture = fixture.replace(SETUP_STUB, SCRIPTED_SETUP, 1)

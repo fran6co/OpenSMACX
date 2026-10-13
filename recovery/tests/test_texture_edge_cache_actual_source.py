@@ -14,6 +14,7 @@ import subprocess
 import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from texture_direct_storage_host import PRELUDE_MARKER, direct_storage_prelude
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -105,6 +106,8 @@ def _translation_unit(source=None, header=None):
     for marker, body in actual.items():
         assert harness.count(marker) == 1
         harness = harness.replace(marker, body, 1)
+    assert harness.count(PRELUDE_MARKER) == 1
+    harness = harness.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
     return harness
 
 

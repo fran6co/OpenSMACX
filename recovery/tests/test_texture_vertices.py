@@ -34,6 +34,7 @@ import shutil
 import subprocess
 
 import pytest
+from texture_direct_storage_host import PRELUDE_MARKER, direct_storage_prelude
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -73,7 +74,8 @@ def vertex_scan():
 
 
 def scan_harness(declaration, scan):
-    return r'''
+    source = (ROOT / "src/texture.cpp").read_text()
+    harness = r'''
         #include <cstddef>
         #include <cstdint>
         #include <cstdio>
@@ -85,13 +87,13 @@ def scan_harness(declaration, scan):
             std::fprintf(stderr, "line %d: %s\n", __LINE__, #c); \
             std::exit(42); } } while (0)
         ACTUAL_VERTEX
+        // TEXTURE_DIRECT_STORAGE_PRELUDE
         struct Bounds { int left, top, right, bottom, first_top, first_bottom; };
         Bounds scan(Vert *a2, int requested_count) {
-            int count_slot = requested_count, bottom_slot = 91;
-            int *blit_vertex_count = &count_slot;
-            int *blit_max_y_index = &bottom_slot;
+            TextureRasterVertexCount = requested_count;
+            TextureRasterMaxYIndex = 91;
             ACTUAL_SCAN
-            return {minX, minY, maxX, maxY, topVert, bottom_slot};
+            return {minX, minY, maxX, maxY, topVert, TextureRasterMaxYIndex};
         }
         void check(Vert *vertices, int count, Bounds expected) {
             const Bounds actual = scan(vertices, count);
@@ -122,6 +124,8 @@ def scan_harness(declaration, scan):
             check(vertices, -1, {32767, 32767, -32765, -32765, 0, 91});
         }
     '''.replace("ACTUAL_VERTEX", declaration).replace("ACTUAL_SCAN", scan)
+    assert harness.count(PRELUDE_MARKER) == 1
+    return harness.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
 
 
 def run_host(tmp_path, source):
@@ -148,8 +152,8 @@ def test_actual_vertex_declaration_and_draw_scan(tmp_path):
     ("if (y < minY)", "if (y <= minY)"),
     ("if (maxY < y)", "if (maxY <= y)"),
     ("topVert = i;", "topVert = 0;"),
-    ("*blit_max_y_index = i;", "*blit_max_y_index = 0;"),
-    ("int count = *blit_vertex_count;", "int count = 4;"),
+    ("TextureRasterMaxYIndex = i;", "TextureRasterMaxYIndex = 0;"),
+    ("int count = TextureRasterVertexCount;", "int count = 4;"),
     ("int y = v->y;", "int y = v->x;"),
     ("int x = v->x;", "int x = v->y;"),
 ])
@@ -219,7 +223,8 @@ def raster_harness(methods):
                       -multiple - 1, -multiple, -multiple + 1,
                       2147483647, 2147483646, -2147483647, -2147483648):
             cases.append("{%d, %d, %d}" % (delta, width, x87_span_step_expected(delta, width)))
-    return r'''
+    source = (ROOT / "src/texture.cpp").read_text()
+    harness = r'''
         #include <cstdint>
         #include <cstdio>
         #include <cstdlib>
@@ -231,6 +236,7 @@ def raster_harness(methods):
             std::exit(42); } } while (0)
         ACTUAL_VERTEX
         ACTUAL_RECORDS
+        // TEXTURE_DIRECT_STORAGE_PRELUDE
         // Distinct symbolic fields let the double check the requested policy;
         // these are not a replacement implementation of the floating-point API.
         const unsigned _MCW_EM=0x003f, _MCW_PC=0x0300, _MCW_RC=0x0c00, _MCW_IC=0x1000;
@@ -247,8 +253,6 @@ def raster_harness(methods):
             }
             return 0;
         }
-        unsigned int TextureRasterKey;
-        int TextureRowPitchScratch;
         struct RECT { int32_t left, top, right, bottom; };
         static unsigned char output[16 * 14], expected[16 * 14], pixels[8 * 8];
         RECT lock_clip;
@@ -409,6 +413,8 @@ def raster_harness(methods):
     '''.replace("ACTUAL_VERTEX", vertex_declaration()).replace("ACTUAL_RECORDS", records).replace(
         "ACTUAL_FIELDS", "\n".join(fields)).replace("ACTUAL_BODIES", "\n".join(methods.values())).replace(
         "SLOPE_CASES", ",\n".join(cases))
+    assert harness.count(PRELUDE_MARKER) == 1
+    return harness.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
 
 
 def test_actual_color_key_raster_and_helpers(tmp_path):

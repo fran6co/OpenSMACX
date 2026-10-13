@@ -25,6 +25,8 @@ struct EdgeScan {
     int f0, counter, id, accumA, accumB, deltaA, deltaB, accumC, deltaC,
         extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
 };
+
+// TEXTURE_DIRECT_STORAGE_PRELUDE
 static const unsigned int _PC_24 = 1, _RC_CHOP = 2, _MCW_PC = 4, _MCW_RC = 8;
 static unsigned int current_fpu, release_fpu;
 static int control_calls;
@@ -50,14 +52,6 @@ struct Buffer {
         events_.push_back(3);
     }
 };
-static uintptr_t texture_pointer_address(const void *pointer) {
-    return reinterpret_cast<uintptr_t>(pointer);
-}
-static uintptr_t texture_pointer_offset(const void *base, uint32_t offset) {
-    return texture_pointer_address(base) +
-        static_cast<intptr_t>(static_cast<int32_t>(offset));
-}
-
 class Texture {
 public:
     unsigned char *pixels_;
@@ -74,79 +68,52 @@ public:
     void draw_trans(Buffer *, Vert *, int *, int, Vert *);
 };
 
-// The extracted body refers only to this mapped set of raster cells before
-// the stubbed edge setup returns zero. Definitions also keep the full method
-// well-typed, though the host checks make no claims about its inner rasterizer.
-static int TextureRowPitchScratch;
-static int cell_buffer_stride, cell_clip_bottom, cell_clip_left, cell_clip_right,
-    cell_clip_top, cell_colour_step, cell_light_accum_b, cell_light_pack_a,
-    cell_light_step_b, cell_max_y,
-    cell_row_offset, cell_slot_4d8, cell_slot_4e8,
-    cell_slot_55c, cell_texture_height,
-    cell_texture_width, cell_vertex_count, cell_light_threshold, cell_span_left,
-    cell_span_right, cell_slot_4c4, cell_slot_4c8, cell_slot_4ca,
-    cell_slot_494, cell_slot_498, cell_slot_4e4, cell_slot_4e6, cell_slot_4f8, cell_slot_4fa,
-    cell_slot_530, cell_slot_53c, cell_slot_53e, cell_dither,
-    cell_z_key;
-static void *cell_pixel_base, *cell_shade_table, *cell_texture_pixels;
-static const void *cell_remap_table;
-static uintptr_t cell_slot_558;
-static int *cell_z_values;
-static Vert *cell_edge_a;
-static Vert *cell_edge_b;
-static int *blit_buffer_stride = &cell_buffer_stride;
-static int *blit_clip_bottom = &cell_clip_bottom;
-static int *blit_clip_left = &cell_clip_left;
-static int *blit_clip_right = &cell_clip_right;
-static int *blit_clip_top = &cell_clip_top;
-static int *blit_colour_step = &cell_colour_step;
-static int *blit_light_accum_b = &cell_light_accum_b;
-static unsigned short *blit_light_pack_a = reinterpret_cast<unsigned short *>(&cell_light_pack_a);
-static int *blit_light_step_b = &cell_light_step_b;
-static int *blit_max_y_index = &cell_max_y;
-static void **blit_pixel_base = &cell_pixel_base;
-static const void **blit_remap_table = &cell_remap_table;
-static int *blit_row_offset = &cell_row_offset;
-static void **blit_shade_table = &cell_shade_table;
-static int *blit_slot_4d8 = &cell_slot_4d8;
-static int *blit_slot_4e8 = &cell_slot_4e8;
-static uintptr_t *blit_slot_558 = &cell_slot_558;
-static int *blit_slot_55c = &cell_slot_55c;
-static int *blit_texture_height = &cell_texture_height;
-static void **blit_texture_pixels = &cell_texture_pixels;
-static int *blit_texture_width = &cell_texture_width;
-static int *blit_vertex_count = &cell_vertex_count;
-static int **blit_z_values = &cell_z_values;
-static Vert **blit_edge_uvs_a = &cell_edge_a;
-static Vert **blit_edge_uvs_b = &cell_edge_b;
-static int *blit_light_threshold = &cell_light_threshold;
-static int *blit_light_threshold_2 = &cell_z_key;
-static int *blit_span_left = &cell_span_left;
-static int *blit_span_right = &cell_span_right;
-static int *blit_slot_4c4 = &cell_slot_4c4;
-static int *blit_slot_4c8 = &cell_slot_4c8;
-static unsigned char *blit_slot_4ca = reinterpret_cast<unsigned char *>(&cell_slot_4ca);
-static int *blit_slot_4e4 = &cell_slot_4e4;
-static unsigned char *blit_slot_4e6 = reinterpret_cast<unsigned char *>(&cell_slot_4e6);
-static int *blit_slot_4f8 = &cell_slot_4f8;
-static unsigned short *blit_slot_4fa = reinterpret_cast<unsigned short *>(&cell_slot_4fa);
-static int *blit_slot_530 = &cell_slot_530;
-static int *blit_slot_53c = &cell_slot_53c;
-static unsigned short *blit_slot_53e = reinterpret_cast<unsigned short *>(&cell_slot_53e);
-static int *blit_dither = &cell_dither;
-static int *blit_slot_494 = &cell_slot_494;
-static int *blit_slot_498 = &cell_slot_498;
+// Test names below are references to the injected source-owned raster cells.
+static int &cell_buffer_stride = TextureRasterBufferStride;
+static int &cell_clip_bottom = TextureRasterClipBottom;
+static int &cell_clip_left = TextureRasterClipLeft;
+static int &cell_clip_right = TextureRasterClipRight;
+static int &cell_clip_top = TextureRasterClipTop;
+static int &cell_colour_step = TextureRasterScratch4B8;
+static int &cell_light_accum_b = TextureRasterLightAccumB;
+static int &cell_light_step_b = TextureRasterLightStepB;
+static int &cell_max_y = TextureRasterMaxYIndex;
+static int &cell_row_offset = TextureRasterRowOffset;
+static int &cell_slot_4d8 = TextureRasterScratch4D8;
+static int &cell_slot_4e8 = TextureRasterSignedPitch;
+static int &cell_slot_55c = TextureRasterScratch55C;
+static int &cell_texture_height = TextureRasterTextureHeight;
+static int &cell_texture_width = TextureRasterTextureWidth;
+static int &cell_vertex_count = TextureRasterVertexCount;
+static int &cell_light_threshold = TextureRasterLightThreshold;
+static int &cell_span_left = TextureRasterSpanLeft;
+static int &cell_span_right = TextureRasterSpanRight;
+static int &cell_slot_4c4 = TextureRasterScratch4C4;
+static int &cell_slot_4c8 = TextureRasterScratch4C8.dword;
+static unsigned char &cell_slot_4ca = TextureRasterScratch4C8.bytes[2];
+static int &cell_slot_494 = TextureRasterScratch494;
+static int &cell_slot_498 = TextureRasterScratch498;
+static int &cell_slot_4e4 = TextureRasterScratch4E4.dword;
+static unsigned char &cell_slot_4e6 = TextureRasterScratch4E4.bytes[2];
+static int &cell_slot_4f8 = TextureRasterUAccumulator.dword;
+static unsigned short &cell_slot_4fa = TextureRasterUAccumulator.words.high_word;
+static int &cell_slot_530 = TextureRasterScratch530;
+static int &cell_slot_53c = TextureRasterVAccumulator.dword;
+static unsigned short &cell_slot_53e = TextureRasterVAccumulator.words.high_word;
+static int &cell_dither = TextureRasterDither;
+static unsigned int &cell_z_key = TextureRasterKey;
+static void *&cell_pixel_base = TextureRasterPixelBase;
+static void *&cell_shade_table = TextureRasterScratch554;
+static void *&cell_texture_pixels = TextureRasterScratch544;
+static const void *&cell_remap_table = TextureRasterScratch550;
+static uintptr_t &cell_slot_558 = TextureRasterShadeCursor;
+static int *&cell_z_values = TextureRasterZValues;
+static Vert *&cell_edge_a = TextureRasterEdgeVerticesA;
+static Vert *&cell_edge_b = TextureRasterEdgeVerticesB;
 static int TextureLightCeiling = 256;
 static int TextureLightFloor = -256;
-static int cell_slot_504, cell_slot_528;
-static int *blit_slot_504 = &cell_slot_504;
-static int *blit_slot_528 = &cell_slot_528;
-union TextureRasterRelocatedRowCell {
-    int *initial_target;
-    int value;
-};
-static TextureRasterRelocatedRowCell TextureRasterAlternateRowBase;
-static TextureRasterRelocatedRowCell TextureRasterAlternateRowNext;
+static int &cell_slot_504 = TextureRasterScratch504;
+static int &cell_slot_528 = TextureRasterScratch528;
 static void texture_reset_fpu();
 
 static int setup_calls;

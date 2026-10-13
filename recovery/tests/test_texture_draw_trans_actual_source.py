@@ -6,6 +6,7 @@ import subprocess
 import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from texture_direct_storage_host import direct_storage_prelude
 
 
 # Installed destination: recovery/tests/test_texture_draw_trans61c090_actual_source.py
@@ -85,6 +86,9 @@ def _actual_translation_unit(source: str, method: str | None = None) -> str:
     assert fixture.count(HELPER_INSERTION) == 1
     selected_method = _method_body(source) if method is None else method
     helpers = "\n\n".join(_definition(source, name) for name in HELPER_NAMES)
+    assert fixture.count("// TEXTURE_DIRECT_STORAGE_PRELUDE") == 1
+    fixture = fixture.replace("// TEXTURE_DIRECT_STORAGE_PRELUDE",
+                              direct_storage_prelude(source), 1)
     return (fixture.replace(HELPER_INSERTION, helpers, 1)
             .replace(METHOD_INSERTION, selected_method, 1))
 
@@ -172,7 +176,7 @@ def test_actual_draw_trans_runtime_controls_reject_mutated_behavior(
         old, new = "span_light, light_step, pixel_count, key)", \
             "span_light >> 8, light_step, pixel_count, key)"
     elif mutation == "left_clip":
-        old, new = "if (*blit_clip_right <= right_x)", "if (false)"
+        old, new = "if (TextureRasterClipRight <= right_x)", "if (false)"
     else:
         old, new = "if (!left_failed) {", "if (true) {"
     mutant = body.replace(old, new, 1)

@@ -13,6 +13,7 @@ import subprocess
 
 import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from texture_direct_storage_host import direct_storage_prelude
 
 ROOT = Path(__file__).resolve().parents[2]
 CPP_SOURCE = ROOT / "src/texture.cpp"
@@ -67,6 +68,7 @@ def extract_edgescan_declaration(header, name="EdgeScan"):
 FIXTURE = r'''#include <assert.h>
 #include <limits.h>
 #include <stdint.h>
+#include <string.h>
 
 #ifndef __cdecl
 #define __cdecl
@@ -82,16 +84,7 @@ public:
     static int setup_edge(EdgeScan *, int);
 };
 
-static int max_y_index;
-static int vertex_count;
-static Vert *uv_a_data;
-static Vert *uv_b_data;
-static int *z_data;
-int *blit_max_y_index = &max_y_index;
-int *blit_vertex_count = &vertex_count;
-Vert **blit_edge_uvs_a = &uv_a_data;
-Vert **blit_edge_uvs_b = &uv_b_data;
-int **blit_z_values = &z_data;
+// TEXTURE_DIRECT_STORAGE_PRELUDE
 
 // Host-only spelling of fixed_div's signed 16.16 quotient. Multiplication
 // avoids UB from shifting a negative signed numerator; product source remains
@@ -137,11 +130,11 @@ int main() {
     // [z0,y0,z1,y1,z2,y2]: 4-row edge with positive depth delta 21.
     Vert uv_b[3] = {{10, 0}, {31, 4}, {50, 8}};
     int z[3] = {100, 108, 116};
-    uv_a_data = uv_a;
-    uv_b_data = uv_b;
-    z_data = z;
-    vertex_count = 3;
-    max_y_index = 2;
+    TextureRasterEdgeVerticesA = uv_a;
+    TextureRasterEdgeVerticesB = uv_b;
+    TextureRasterZValues = z;
+    TextureRasterVertexCount = 3;
+    TextureRasterMaxYIndex = 2;
 
     EdgeScan edge;
     set_sentinels(edge);
@@ -194,7 +187,7 @@ int main() {
     assert(edge.accumD == 113 && edge.deltaD == 114);
 
     // Starting at the max-y vertex returns before touching any field.
-    max_y_index = 0;
+    TextureRasterMaxYIndex = 0;
     set_sentinels(edge);
     assert(Texture::setup_edge_gouraud(&edge, 0) == 0);
     assert_non_counter_fields_unchanged(edge);
@@ -205,7 +198,7 @@ int main() {
 
     // A zero-height walk visits the next vertices until max-y, writes only
     // counter, and leaves every other field untouched in both helpers.
-    max_y_index = 2;
+    TextureRasterMaxYIndex = 2;
     uv_b[0].y = uv_b[1].y = uv_b[2].y = 0;
     set_sentinels(edge);
     assert(Texture::setup_edge(&edge, 0) == 0);
@@ -302,8 +295,8 @@ int main() {
     uv_b[0].x = 10; uv_b[0].y = 0;
     uv_b[1].x = 31; uv_b[1].y = 4;
     uv_b[2].x = 50; uv_b[2].y = 8;
-    vertex_count = 3;
-    max_y_index = 2;
+    TextureRasterVertexCount = 3;
+    TextureRasterMaxYIndex = 2;
     for (int stepper = 0; stepper < 2; ++stepper) {
         edge.f0 = 1; edge.counter = 1; edge.id = 0;
         assert(steppers[stepper](&edge) == 1);
@@ -312,7 +305,7 @@ int main() {
 
     // The same callback paths return false when the endpoint already equals
     // max-y; only the stepper's initial counter decrement has taken effect.
-    max_y_index = 0;
+    TextureRasterMaxYIndex = 0;
     for (int stepper = 0; stepper < 2; ++stepper) {
         edge.f0 = 1; edge.counter = 1; edge.id = 0;
         edge.accumA = 303; edge.accumB = 304; edge.accumC = 307;
@@ -343,6 +336,8 @@ def host_source():
     return (FIXTURE.replace("// ACTUAL_EDGESCAN_DECLARATION", edge_scan)
             .replace("// ACTUAL_VERT_DECLARATION", extract_edgescan_declaration(
                 (HEADER_SOURCE.parent / "vert.h").read_text(), "Vert"))
+            .replace("// TEXTURE_DIRECT_STORAGE_PRELUDE",
+                     direct_storage_prelude(cpp), 1)
             .replace("// ACTUAL_EDGE_SCAN_METHODS", "\n\n".join(bodies[:2]))
             .replace("// ACTUAL_EDGE_STEP_HELPERS", "\n\n".join(bodies[2:])))
 
@@ -358,6 +353,7 @@ def test_actual_edgescan_owners_on_bounded_walk_and_sign_cases(
     cpp.write_text(host_source(), encoding="utf-8")
     subprocess.run(
         [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+         "-Wno-unused-function", "-Wno-unused-variable",
          "-fsanitize=address,undefined", "-fno-omit-frame-pointer",
          str(cpp), "-o", str(exe)],
         check=True,

@@ -1,8 +1,10 @@
 """Pointer-valued Texture raster scratch is exercised through the real owner."""
 from pathlib import Path
+import re
 import shutil
 
 import pytest
+from match_recovery.includes import COMMENTS_OR_STRINGS
 
 import test_texture_draw_coast_actual_source as coast_control
 
@@ -22,19 +24,17 @@ def test_mapped_pointer_cells_keep_original_storage_identity_and_width() -> None
         "static const void *TextureRasterScratch550;",
         "// RECOVERY_OBJECT: v1 0x009BB554 _TextureRasterScratch554\n"
         "static void *TextureRasterScratch554;",
-        "static void **const blit_pixel_base = &TextureRasterPixelBase;",
-        "static void **const blit_texture_pixels = &TextureRasterScratch544;",
-        "static const void **const blit_remap_table = &TextureRasterScratch550;",
-        "static void **const blit_shade_table = &TextureRasterScratch554;",
     )
     for declaration in required:
         assert declaration in source
     assert "TextureRasterScratch550;\n// RECOVERY_OBJECT" in source
-    assert "blit_remap_table[0] = a5;" in source
-    assert "blit_remap_table[0] = reinterpret_cast<uintptr_t>(a5);" not in source
-    assert "*blit_remap_table = reinterpret_cast<uintptr_t>(remap);" not in source
-    assert "texture_pointer_offset(*blit_remap_table, texel * 4)" in source
-    assert "(*blit_remap_table) = remap;" in source
+    assert "TextureRasterScratch550 = a5;" in source
+    assert "TextureRasterScratch550 = reinterpret_cast<uintptr_t>(a5);" not in source
+    assert "TextureRasterScratch550 = reinterpret_cast<uintptr_t>(remap);" not in source
+    assert "texture_pointer_offset(TextureRasterScratch550, texel * 4)" in source
+    assert "TextureRasterScratch550 = remap;" in source
+    code = COMMENTS_OR_STRINGS.sub(lambda match: re.sub(r"[^\n]", " ", match[0]), source)
+    assert "blit_remap_table" not in code
 
 
 def test_pinned_raster_table_cell_is_written_as_pointer_and_read_as_bytes_and_dwords() -> None:
@@ -43,6 +43,8 @@ def test_pinned_raster_table_cell_is_written_as_pointer_and_read_as_bytes_and_dw
     from match_recovery.pe_coff import PeImage
 
     image_path = ROOT / ".opensmacx/game/terranx_original.exe"
+    if not image_path.is_file():
+        image_path = ROOT.parents[2] / ".opensmacx/game/terranx_original.exe"
     if not image_path.is_file():
         pytest.skip("pinned original unavailable")
     image = PeImage(
@@ -70,19 +72,19 @@ def test_numeric_row_address_keeps_target_width_and_shade_owner_is_mutable() -> 
     row_setup = source.index("const uint32_t row_displacement =")
     row_setup_end = source.index("if (min_x >=", row_setup)
     row_code = source[row_setup:row_setup_end]
-    assert "static_cast<uint32_t>(*blit_buffer_stride) *" in row_code
+    assert "static_cast<uint32_t>(TextureRasterBufferStride) *" in row_code
     assert "static_cast<uint32_t>(min_y)" in row_code
     assert "static_cast<int>(static_cast<uint32_t>(" in row_code
     assert "texture_pointer_offset(data, row_displacement)" in row_code
-    assert "data + *blit_buffer_stride" not in row_code
+    assert "data + TextureRasterBufferStride" not in row_code
 
     shade = source.index("const unsigned char *shade_pixels =", source.index(
         "void Texture::sub_61cb50"))
     shade_end = source.index("if (shade_pixels == 0)", shade)
     shade_code = source[shade:shade_end]
     assert "shade->pixels_" in shade_code
-    assert "*blit_shade_table = shade->pixels_;" in shade_code
-    assert "*blit_shade_table = shade_pixels;" not in shade_code
+    assert "TextureRasterScratch554 = shade->pixels_;" in shade_code
+    assert "TextureRasterScratch554 = shade_pixels;" not in shade_code
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
@@ -101,11 +103,11 @@ def test_actual_coast_uses_distinct_live_pointer_cells_and_mutant_is_caught(
 
     # Both pointer cells are written from their real owners before source
     # traversal; aliasing them makes the host output oracle fail.
-    assert "blit_pixel_base[0] = a1->get_data();" in method
-    assert "blit_texture_pixels[0] = pixels_;" in method
+    assert "TextureRasterPixelBase = a1->get_data();" in method
+    assert "TextureRasterScratch544 = pixels_;" in method
     mutant = method.replace(
-        "blit_texture_pixels[0] = pixels_;",
-        "blit_texture_pixels[0] = a4->pixels_;",
+        "TextureRasterScratch544 = pixels_;",
+        "TextureRasterScratch544 = a4->pixels_;",
         1,
     )
     assert mutant != method

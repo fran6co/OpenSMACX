@@ -1,0 +1,20 @@
+{
+  "event_id": "8a6d75b10be7cc4fb9aee3531b8468b677b4507375d9a0e054db39ced03d195e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_keyed_light_owner_oct10.py",
+      "recovery/tests/test_texture_typed_vertex_context_oct10.py"
+    ],
+    "evidence": [
+      "Complete Texture suite terminal: 435 pass, 11 fail. Three keyed-light failures come from a custom builder omitting the production storage prelude; eight typed-vertex cases retain synthetic alias fixture cells and stale mutation anchors. Authorize only actual source-storage injection, equivalent direct-global publication/live callback and mutation bindings, and narrow unused-static-warning accommodations; retain all numerical runtime, overflow, source and damage assertions. No production-code, compiler, baseline or claim changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d8c9ff17d7229a7fff5bedeead21765527eba4aa2da62e427235813beb249e47",
+  "request_id": "texture-final-host-storage-closure-oct13ao",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-direct-global-storage-owner-oct13ao"
+}

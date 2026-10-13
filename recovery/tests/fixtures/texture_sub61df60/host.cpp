@@ -16,6 +16,8 @@ struct EdgeScan {
     int accumD, deltaD;
 };
 
+// TEXTURE_DIRECT_STORAGE_PRELUDE
+
 static unsigned char destination[256] __attribute__((aligned(65536)));
 static unsigned char source_page[65536] __attribute__((aligned(65536)));
 static unsigned char mask_page[65536] __attribute__((aligned(65536)));
@@ -24,56 +26,11 @@ static unsigned char remap_data[256];
 static Vert test_vertices[5];
 static Vert test_uv[5];
 static int test_light[5];
-static void *slot_pixel_base, *slot_pixels, *slot_shade;
-static int slot560, slot_height, slot_count;
-static unsigned char *slot564;
-static const void *slot_remap;
-static int slot_stride, slot_width, slot_clip_right, slot_clip_left;
-static int slot_clip_bottom, slot_clip_top, slot_max_y, slot_row, slot_4c4;
-static int slot_4f8, slot_530, slot_53c, slot_span_right, slot_span_left;
-static int slot_4e4, slot_4c8, slot_498;
-static int TextureRowPitchScratch;
 static int reset_calls, control_calls, free_calls, setup_calls;
-static void **blit_pixel_base = &slot_pixel_base;
-static int *blit_slot_560 = &slot560;
-static unsigned char **blit_slot_564 = &slot564;
-static Vert *edge_uvs_b_cell = 0;
-static Vert **blit_edge_uvs_b = &edge_uvs_b_cell;
-static int *z_values_cell = 0;
-static int **blit_z_values = &z_values_cell;
-static const void **blit_remap_table = &slot_remap;
-static void **blit_texture_pixels = &slot_pixels;
-static int *blit_texture_height = &slot_height;
-static Vert *edge_uvs_a_cell = 0;
-static Vert **blit_edge_uvs_a = &edge_uvs_a_cell;
-static int *blit_vertex_count = &slot_count;
-static int *blit_buffer_stride = &slot_stride;
-static int *blit_texture_width = &slot_width;
-static void **blit_shade_table = &slot_shade;
-static int *blit_clip_right = &slot_clip_right;
-static int *blit_clip_left = &slot_clip_left;
-static int *blit_clip_bottom = &slot_clip_bottom;
-static int *blit_clip_top = &slot_clip_top;
-static int *blit_max_y_index = &slot_max_y;
-static int *blit_row_offset = &slot_row;
-static int *blit_slot_4c4 = &slot_4c4;
-static int *blit_slot_4f8 = &slot_4f8;
-static int *blit_slot_530 = &slot_530;
-static int *blit_slot_53c = &slot_53c;
-static int *blit_span_right = &slot_span_right;
-static int *blit_span_left = &slot_span_left;
-static int *blit_slot_4e4 = &slot_4e4;
-static int *blit_slot_4c8 = &slot_4c8;
-static int *blit_slot_498 = &slot_498;
-static unsigned short light_pack_words[2] = {};
-static unsigned short *blit_light_pack_a = &light_pack_words[0];
 
 enum { _PC_24 = 1, _RC_CHOP = 2, _MCW_PC = 4, _MCW_RC = 8 };
 static int _control87(int, int) { ++control_calls; return 0; }
 static void texture_reset_fpu() { ++reset_calls; }
-static uintptr_t texture_pointer_address(const void *pointer) {
-    return reinterpret_cast<uintptr_t>(pointer);
-}
 static int fixed_div(int numerator, int denominator) {
     return static_cast<int>((static_cast<int64_t>(numerator) << 16) /
                             denominator);
@@ -152,7 +109,7 @@ static void test_dual_texture_modes_and_light() {
     assert(reset_calls == 2);
     assert(control_calls == 1);
     assert(setup_calls >= 2);
-    assert(slot_498 == (5 << 8));
+    assert(TextureRasterScratch498 == (5 << 8));
 }
 
 static void test_short_right_edge_refresh_changes_geometry() {
@@ -173,14 +130,14 @@ static void test_short_right_edge_refresh_changes_geometry() {
     Texture source(source_page), mask(mask_page);
     source.sub_61df60(&buffer, test_vertices, test_light, &mask, remap_data,
                       5, test_uv, 10, palette_data);
-    assert(slot564 == palette_data);
+    assert(TextureRasterPalette == palette_data);
     // The right edge refreshes from vertex 1 to vertex 2 before the third
     // visible row, extending its endpoint to x=4. Without that refresh the
     // stale x=3 endpoint leaves pixel 3 untouched on row 2.
     assert(destination[2 * 16 + 3] == 7);
     assert(destination[2 * 16 + 4] == 0x31);
     assert(setup_calls >= 3);
-    assert(slot_span_right == 0);
+    assert(TextureRasterSpanRight == 0);
 }
 
 static void test_row_gradient_uses_pending_previous_span() {
@@ -225,7 +182,7 @@ static void test_light_at_or_above_threshold_is_direct_add() {
                       4, test_uv, 4, palette_data);
     assert(destination[0] == 15);
     assert(destination[1] == 0x31);
-    assert(slot_498 == (5 << 8));
+    assert(TextureRasterScratch498 == (5 << 8));
 }
 
 static void test_signed_threshold_and_page_wrap() {
@@ -299,9 +256,9 @@ static void test_unsigned_clipped_light_and_scratch() {
     Texture source(source_page), mask(mask_page);
     source.sub_61df60(&buffer, test_vertices, test_light, &mask, remap_data,
                       4, test_uv, -1, palette_data);
-    assert(light_pack_words[0] == 0xff00u);
-    assert(slot_span_right == 1);
-    assert(slot_498 == 0x10000);
+    assert(TextureRasterLightPackA.low_word == 0xff00u);
+    assert(TextureRasterSpanRight == 1);
+    assert(TextureRasterScratch498 == 0x10000);
     assert(destination[0] == 0x31 && destination[1] == 10);
 }
 

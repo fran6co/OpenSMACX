@@ -8,11 +8,81 @@ from match_recovery.source import read_text
 from test_texture_sub61f0d0_actual_source import extract_method
 from test_texture_sub61f0d0_actual_source import translation_unit, build_and_run
 from test_texture_raster_actual_source import _continuity_fields
+from recovery.tests.texture_direct_storage_host import reverse_direct_storage_source
+from recovery.tests.test_texture_edge_state_oct13al import (
+    _expected_current_body as _expected_edge_state_body,
+    _tokens as _tokens,
+)
+from recovery.tests.test_texture_shaded_edge_record_oct13an import (
+    NOTE as SHADED_EDGE_NOTE,
+    _expected_current_body as _expected_shaded_edge_body,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "8e6691299"
 OLD_SYMBOL = "?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHIH@Z"
 NEW_SYMBOL = "?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPBXPBIPBEH@Z"
+DIRECT_STORAGE_BASE = "f14619684801a682ea985c4ddefda40757422964"
+DRAW_TRANS2_NOTE = """// STRUCTURAL EVIDENCE: Pinned setup_edge 0x624D80 writes EdgeScan offsets
+// +0x28/+0x2c/+0x30 as fracAccum/fracDelta/fracSub; draw_trans2 row blocks
+// 0x619FE2-0x61A000 and 0x61A039-0x61A074 confirm the matching DDA updates.
+// This supersedes the former local-overlay interpretation above.
+"""
+
+
+def project_prior_edge_scan_migrations(source, baseline):
+    """Reverse only the two already-reviewed EdgeScan changes for old snapshots."""
+    current_draw = extract_method(source, "int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3)")
+    old_draw = extract_method(baseline, "int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3)")
+    assert _tokens(current_draw) == _tokens(_expected_edge_state_body(old_draw)), (
+        "draw_trans2 must match only the pinned EdgeLocal-to-EdgeScan transition")
+    source = source.replace(current_draw, old_draw, 1)
+
+    marker = "// ORIGINAL: 0x00619D80 Texture::draw_trans2"
+    draw_signature = "int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3)"
+    current_marker = source.index(marker)
+    baseline_marker = baseline.index(marker)
+    current_sig = source.index(draw_signature, current_marker)
+    baseline_sig = baseline.index(draw_signature, baseline_marker)
+    current_draw_region = source[current_marker:current_sig]
+    baseline_draw_region = baseline[baseline_marker:baseline_sig]
+    draw_calls = "// calls     0x005E3373 0x005E34A3 0x00624D80\n"
+    assert baseline_draw_region.count(draw_calls) == 1
+    draw_note_at = baseline_draw_region.index(draw_calls) + len(draw_calls) + 1
+    assert baseline_draw_region[draw_note_at:draw_note_at + 1] == "\n"
+    expected_draw_region = (baseline_draw_region[:draw_note_at] + DRAW_TRANS2_NOTE +
+                            baseline_draw_region[draw_note_at:])
+    assert current_draw_region == expected_draw_region, (
+            "draw_trans2 annotation may differ only by its reviewed EdgeScan evidence note")
+    source = source[:current_marker] + baseline_draw_region + source[current_sig:]
+
+    edge_local_start = baseline.index("struct EdgeLocal {")
+    edge_local_end = baseline.index(marker, edge_local_start)
+    edge_local = baseline[edge_local_start:edge_local_end]
+    assert source.count(marker) == 1 and source.count("struct EdgeLocal {") == 0
+    source = source.replace(marker, edge_local + marker, 1)
+
+    current_shaded = extract_method(source, "void Texture::sub_61c630(Buffer * bufIn, Vert * verts, Texture * texB, unsigned char * shadeTable, int vertCount, Vert *edge_vertices)")
+    old_shaded = extract_method(baseline, "void Texture::sub_61c630(Buffer * bufIn, Vert * verts, Texture * texB, unsigned char * shadeTable, int vertCount, Vert *edge_vertices)")
+    assert _tokens(current_shaded) == _tokens(_expected_shaded_edge_body(old_shaded)), (
+        "sub_61c630 must match only the pinned zeroed-array-to-EdgeScan transition")
+    source = source.replace(current_shaded, old_shaded, 1)
+    shaded_marker = "// ORIGINAL: 0x0061C630 sub_61c630"
+    shaded_signature = "void Texture::sub_61c630(Buffer * bufIn, Vert * verts, Texture * texB, unsigned char * shadeTable, int vertCount, Vert *edge_vertices)"
+    current_marker = source.index(shaded_marker)
+    baseline_marker = baseline.index(shaded_marker)
+    current_sig = source.index(shaded_signature, current_marker)
+    baseline_sig = baseline.index(shaded_signature, baseline_marker)
+    current_region = source[current_marker:current_sig]
+    baseline_region = baseline[baseline_marker:baseline_sig]
+    generated = "// GENERATED SKELETON - tools/emit_translation_unit.py"
+    assert baseline_region.count(generated) == 1
+    expected_region = baseline_region.replace(
+        generated, SHADED_EDGE_NOTE + "\n" + generated, 1)
+    assert current_region == expected_region, (
+            "sub_61c630 annotation may differ only by its reviewed uninitialized-read evidence note")
+    source = source[:current_marker] + baseline_region + source[current_sig:]
+    return source
 
 
 def project_raster_pointer_cell_change(source):
@@ -115,9 +185,14 @@ def test_pointer_contract_changes_only_selected_body_and_symbol_bindings():
     expected=before.replace(old,body,1)
     assert expected.count(OLD_SYMBOL)==2
     expected=expected.replace(OLD_SYMBOL,NEW_SYMBOL)
-    # Project only the independently verified later palette-cell migration
-    # out of this earlier exact whole-source checkpoint.
-    restored=project_raster_pointer_cell_change(current)
+    # First reverse the exact alias-removal projection, then only the two
+    # separately reviewed EdgeScan migrations and the later pointer-cell move.
+    storage_base = subprocess.check_output(
+        ["git", "show", f"{DIRECT_STORAGE_BASE}:src/texture.cpp"],
+        cwd=ROOT, text=True)
+    restored = reverse_direct_storage_source(current, storage_base)
+    restored = project_raster_pointer_cell_change(restored)
+    restored = project_prior_edge_scan_migrations(restored, before)
     restored=restored.replace("static unsigned char *TextureRasterPalette;", "static int TextureRasterPalette;")
     restored=restored.replace("static unsigned char **const blit_slot_564 = &TextureRasterPalette;",
                               "static int *const blit_slot_564 = &TextureRasterPalette;")
@@ -138,6 +213,8 @@ def test_pinned_three_pointer_depths_and_lookup_byte_stride():
     import pytest
     path=ROOT/".opensmacx/game/terranx_original.exe"
     if not path.is_file():
+        path = ROOT.parents[2] / ".opensmacx/game/terranx_original.exe"
+    if not path.is_file():
         pytest.skip("pinned original unavailable")
     image=PeImage(path.read_bytes(),"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
     instructions={i.address:(i.mnemonic,i.op_str) for i in
@@ -154,6 +231,6 @@ def test_pinned_three_pointer_depths_and_lookup_byte_stride():
     # Original byte-add/carry address construction still lives in the raster
     # body; this input migration must not turn it into DWORD-index addressing.
     body=extract_method((ROOT/"src/texture.cpp").read_text())
-    assert body.count("CARRY1((byte)(*blit_slot_55c),*pbVar12)")==2
+    assert body.count("CARRY1((byte)(TextureRasterScratch55C),*pbVar12)")==2
     assert body.count("*piVar6 =")==0
-    assert "*blit_slot_55c" in body
+    assert "(TextureRasterScratch55C) = static_cast<uint32_t>(texture_pointer_address(lookup_bytes));" in body

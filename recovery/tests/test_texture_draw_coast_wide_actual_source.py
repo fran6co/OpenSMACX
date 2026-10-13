@@ -11,6 +11,7 @@ import subprocess
 import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source import Mode, read_file
+from texture_direct_storage_host import direct_storage_prelude
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src/texture.cpp").is_file())
 SOURCE = ROOT / "src/texture.cpp"
@@ -40,7 +41,7 @@ def _body(source: str) -> str:
 
 def _contract(body: str) -> None:
     required = (
-        "*blit_pixel_base = a1->get_data();\n        texture_reset_fpu();",
+        "TextureRasterPixelBase = a1->get_data();",
         "EdgeScan edge1;",
         "EdgeScan edge2;",
         "edge1.f0 = -1;",
@@ -65,23 +66,23 @@ def _contract(body: str) -> None:
         "dA = static_cast<long double>(edge2.accumA - edge1.accumA);",
         "dB = static_cast<long double>(edge2.accumB - edge1.accumB);",
         "dC = static_cast<long double>(edge2.accumD - edge1.accumD);",
-        "*blit_slot_4e4 = static_cast<int>(",
-        "*blit_slot_4c8 = static_cast<int>(",
-        "*blit_light_pack_a = static_cast<unsigned short>(",
+        "TextureRasterScratch4E4.dword = static_cast<int>(",
+        "TextureRasterScratch4C8.dword = static_cast<int>(",
+        "TextureRasterLightPackA.low_word = static_cast<unsigned short>(",
         "texture_draw_keyed_coast_fill_span(",
         "texture_draw_coast_span(",
         "TextureDrawSpanResult span_result;",
-        "span_result.packed_uv_sink = blit_slot_4a4;",
+        "span_result.packed_uv_sink = &(TextureRasterScratch4A4);",
         "span_result.preload_pixels =",
         "span_result.prefetched_source =\n                                            span_result.preload_pixels[base_source_offset];",
-        "*blit_slot_504 = reinterpret_cast<int>(src);",
-        "*blit_slot_558 = texture_pointer_address(src) + (texture_pointer_address(*blit_shade_table) - texture_pointer_address(*blit_texture_pixels));",
+        "TextureRasterScratch504 = reinterpret_cast<int>(src);",
+        "TextureRasterShadeCursor = texture_pointer_address(src) + (texture_pointer_address(TextureRasterScratch554) - texture_pointer_address(TextureRasterScratch544));",
         "texture_span_pixels(static_cast<short>(rightX) -",
         "_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);",
-        "if ((*blit_dither & 1) == 0)",
-        "const int row_light = *blit_slot_498;",
-        "*blit_slot_498 = row_light >> 8;",
-        "*blit_slot_504 = reinterpret_cast<int>(src);",
+        "if ((TextureRasterDither & 1) == 0)",
+        "const int row_light = TextureRasterScratch498;",
+        "TextureRasterScratch498 = row_light >> 8;",
+        "TextureRasterScratch504 = reinterpret_cast<int>(src);",
         "a1->free_data(1)",
         "epilogue_only:\n    texture_reset_fpu();\n    return;",
     )
@@ -89,12 +90,12 @@ def _contract(body: str) -> None:
     assert not missing, f"0x623F80 native owner evidence missing: {missing}"
     assert "int edge1[14]" not in body and "int edge2[14]" not in body
     assert "setup_edge_gouraud(&edge1, a8)" not in body
-    assert "reinterpret_cast<char *>(blit_slot_558) + texOff" not in body
+    assert "reinterpret_cast<char *>(&TextureRasterShadeCursor) + texOff" not in body
     assert "texOffHi" not in body and "texOffLo" not in body
     assert "a3 != 0 && a5 != 0 && a4 != 0" not in body
     assert "if (pixels_ != 0 && a3 != 0 && a5 != 0)" in body
     assert "reinterpret_cast<int *>(this)" not in body
-    assert "*blit_shade_table = a4->pixels_;" in body
+    assert "TextureRasterScratch554 = a4->pixels_;" in body
     assert body.count("edge2.accumC - edge1.accumC") == 2
     assert body.count("edge2.accumA - edge1.accumA") == 2
     assert body.count("edge2.accumB - edge1.accumB") == 2
@@ -102,10 +103,10 @@ def _contract(body: str) -> None:
     assert body.index("a1->get_data()") < body.index("texture_reset_fpu();")
     assert body.index("_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);") < body.index("long double invDx")
     assert body.index("a1->free_data(1)") < body.index("epilogue_only:\n    texture_reset_fpu();")
-    assert body.index("*blit_slot_504 = reinterpret_cast<int>(src);") < body.index("texture_draw_keyed_coast_fill_span(")
-    assert body.index("*blit_slot_504 = reinterpret_cast<int>(src);") < body.index("*blit_slot_558 = texture_pointer_address(src)")
-    assert body.index("*blit_slot_498 = row_light >> 8;") < body.index("TextureRasterAlternateRowNext.value =")
-    assert body.index("span_result.prefetched_source =") < body.index("if ((*blit_dither & 1) == 0)")
+    assert body.index("TextureRasterScratch504 = reinterpret_cast<int>(src);") < body.index("texture_draw_keyed_coast_fill_span(")
+    assert body.index("TextureRasterScratch504 = reinterpret_cast<int>(src);") < body.index("TextureRasterShadeCursor = texture_pointer_address(src)")
+    assert body.index("TextureRasterScratch498 = row_light >> 8;") < body.index("TextureRasterAlternateRowNext.value =")
+    assert body.index("span_result.prefetched_source =") < body.index("if ((TextureRasterDither & 1) == 0)")
 
 
 def test_actual_source_keeps_original_identity_and_full_owner_mapping() -> None:
@@ -150,8 +151,8 @@ def test_actual_kernels_keep_unconditional_volatile_next_source_loads() -> None:
         ("int minYIdx = a8;", "int minYIdx = a6;"),
         ("base_source_offset = texture_draw_source_index(",
          "base_source_offset = texture_draw_source_index_signed("),
-        ("*blit_slot_504 = reinterpret_cast<int>(src);",
-         "*blit_slot_504 = reinterpret_cast<int>(src + 1);"),
+        ("TextureRasterScratch504 = reinterpret_cast<int>(src);",
+         "TextureRasterScratch504 = reinterpret_cast<int>(src + 1);"),
         ("if (pixels_ != 0 && a3 != 0 && a5 != 0)",
          "if (pixels_ != 0 && a3 != 0 && a5 != 0 && a4 != 0)"),
         ("_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);",
@@ -228,6 +229,8 @@ def _translation_unit(
     source: str, body: str | None = None, coast_helper: str | None = None,
 ) -> str:
     fixture = FIXTURE.read_text(encoding="utf-8")
+    assert fixture.count("static int TextureRowPitchScratch;") <= 1
+    fixture = fixture.replace("static int TextureRowPitchScratch;", "", 1)
     helpers_by_name = {name: _definition(source, name) for name in HELPER_NAMES}
     if coast_helper is not None:
         helpers_by_name["texture_draw_coast_span"] = coast_helper
@@ -238,7 +241,9 @@ def _translation_unit(
     # scratch slots retain their explicit 32-bit bridge in this fixture.
     owner = re.sub(r"reinterpret_cast<int>\((a[2357]|src)\)",
                    r"ptr32(\1)", owner)
-    return (fixture.replace("// ACTUAL_RESULT_STRUCT", result_struct, 1)
+    return (fixture.replace("// TEXTURE_DIRECT_STORAGE_PRELUDE",
+                            direct_storage_prelude(source), 1)
+            .replace("// ACTUAL_RESULT_STRUCT", result_struct, 1)
             .replace("// ACTUAL_HELPERS", helpers, 1)
             .replace("// ACTUAL_METHOD", owner, 1))
 
@@ -272,15 +277,15 @@ def test_actual_installed_owner_executes_clipped_two_row_keyed_coast(
 @pytest.mark.parametrize(
     "old,new",
     (
-        ("static_cast<unsigned char>(*blit_slot_494), pixel_count,\n"
+        ("static_cast<unsigned char>(TextureRasterScratch494), pixel_count,\n"
          "                                                &span_result)",
-         "static_cast<unsigned char>(*blit_slot_494 + 1), pixel_count,\n"
+         "static_cast<unsigned char>(TextureRasterScratch494 + 1), pixel_count,\n"
          "                                                &span_result)"),
-        ("*blit_slot_4e4, *blit_slot_4c8, row_light,",
-         "*blit_slot_4e4, *blit_slot_4c8, row_light + 0x10000,"),
-        ("if ((*blit_dither & 1) == 0)", "if ((*blit_dither & 1) != 0)"),
-        ("if (*blit_span_right < *blit_clip_left)", "if (false)"),
-        ("span_result.packed_uv_sink = blit_slot_4a4;",
+        ("TextureRasterScratch4E4.dword, TextureRasterScratch4C8.dword, row_light,",
+         "TextureRasterScratch4E4.dword, TextureRasterScratch4C8.dword, row_light + 0x10000,"),
+        ("if ((TextureRasterDither & 1) == 0)", "if ((TextureRasterDither & 1) != 0)"),
+        ("if (TextureRasterSpanRight < TextureRasterClipLeft)", "if (false)"),
+        ("span_result.packed_uv_sink = &(TextureRasterScratch4A4);",
          "span_result.packed_uv_sink = 0;"),
     ),
 )

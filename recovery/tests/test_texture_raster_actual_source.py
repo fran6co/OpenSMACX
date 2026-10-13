@@ -17,6 +17,7 @@ import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source import Mode, read_text
+from texture_direct_storage_host import PRELUDE_MARKER, direct_storage_prelude
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -30,7 +31,6 @@ SOURCE_IDS = (
     (0x0061D090, "Texture::sub_61d090"),
 )
 HELPERS = (
-    ("static uintptr_t texture_pointer_offset(",),
     ("static unsigned int texture_raster_pixel_count(",),
     ("static uint32_t texture_raster_advance_light(",),
     ("static uint32_t texture_raster_skip_light(",),
@@ -163,7 +163,9 @@ def _translation_unit(source):
     actual = actual_installed_definitions(source)
     fixture = FIXTURE.read_text(encoding="utf-8")
     assert fixture.count(INSERTION) == 1
-    return fixture.replace(INSERTION, "\n\n".join(actual), 1)
+    assert fixture.count(PRELUDE_MARKER) == 1
+    return (fixture.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
+            .replace(INSERTION, "\n\n".join(actual), 1))
 
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))

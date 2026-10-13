@@ -13,18 +13,8 @@
 // ACTUAL_TEXTURESTORE_DECLARATION
 // ACTUAL_TEXTURESTORE_LIFETIME
 
-static int raster_max_y;
-static int raster_vertex_count;
-static int *const blit_max_y_index = &raster_max_y;
-static int *const blit_vertex_count = &raster_vertex_count;
-static Vert *raster_edge_a;
-static Vert *raster_edge_b;
-static int *raster_z_values;
-static Vert **const blit_edge_uvs_a = &raster_edge_a;
-static Vert **const blit_edge_uvs_b = &raster_edge_b;
-static Vert **const g2_009bb490 = &raster_edge_a;
-static Vert **const g2_009bb4f4 = &raster_edge_b;
-static int **const g2_009bb4fc = &raster_z_values;
+// TEXTURE_DIRECT_STORAGE_PRELUDE
+
 
 static int fixed_div(int numerator, int denominator) {
     return static_cast<int>((static_cast<int64_t>(numerator) * 65536) /
@@ -80,11 +70,11 @@ static Vert uv[3];
 static int lights[3];
 
 static void install_scene() {
-    raster_vertex_count = 3;
-    raster_max_y = 2;
-    raster_edge_a = uv;
-    raster_edge_b = geometry;
-    raster_z_values = lights;
+    TextureRasterVertexCount = 3;
+    TextureRasterMaxYIndex = 2;
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterEdgeVerticesB = geometry;
+    TextureRasterZValues = lights;
     geometry[0] = Vert{8, 0};
     geometry[1] = Vert{1, 4};
     geometry[2] = Vert{6, 8};

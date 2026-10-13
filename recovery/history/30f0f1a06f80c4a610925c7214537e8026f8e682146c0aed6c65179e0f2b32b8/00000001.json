@@ -1,0 +1,21 @@
+{
+  "event_id": "d8c9ff17d7229a7fff5bedeead21765527eba4aa2da62e427235813beb249e47",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_edge_cache_actual_source.py",
+      "recovery/tests/test_texture_raster_actual_source.py",
+      "recovery/tests/test_texture_sub61cb50_actual_source.py"
+    ],
+    "evidence": [
+      "The nine existing changed C++ fixtures have a direct-storage insertion seam; these three shared Python builders still omit the production prelude, leaving standalone controls and imported sibling controls disconnected or uncompilable. Authorize only literal production-storage injection, duplicate helper removal and equivalent direct-global mutation anchors; preserve all runtime and damage oracles. No source, compiler, baseline or assertion weakening authorization."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "texture-shared-host-builders-oct13ao",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-direct-global-storage-owner-oct13ao"
+}

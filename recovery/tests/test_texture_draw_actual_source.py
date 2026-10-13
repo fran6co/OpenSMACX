@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from texture_direct_storage_host import direct_storage_prelude
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -45,50 +46,9 @@ enum { _PC_24 = 1, _RC_CHOP = 2, _MCW_PC = 4, _MCW_RC = 8 };
 int _control87(int, int) { return 0; }
 const int TextureLightCeiling = 255;
 const int TextureLightFloor = 0;
-static void *slot_pixel_base, *slot_pixels;
-static int slot_threshold, slot_threshold_2, slot_494;
-static int slot_count, slot_stride;
-static int slot_width, slot_clip_right, slot_clip_left, slot_clip_bottom;
-static int slot_clip_top, slot_max_y, slot_row, slot_4e4, slot_4c8;
-static int slot_498, slot_4f8, slot_53c, slot_4c4, slot_530;
-static int slot_span_right, slot_span_left, slot_dither;
-static void **blit_pixel_base = &slot_pixel_base;
-static int *blit_light_threshold = &slot_threshold;
-static int *blit_light_threshold_2 = &slot_threshold_2;
-static int *blit_slot_494 = &slot_494;
-static Vert *edge_uvb_cell = 0;
-static Vert **blit_edge_uvs_b = &edge_uvb_cell;
-static Vert *edge_uva_cell = 0;
-static Vert **blit_edge_uvs_a = &edge_uva_cell;
-static int *blit_vertex_count = &slot_count;
-static int *z_cell = 0;
-static int **blit_z_values = &z_cell;
-static void **blit_texture_pixels = &slot_pixels;
-static int *blit_buffer_stride = &slot_stride;
-static int *blit_texture_width = &slot_width;
-static int *blit_clip_right = &slot_clip_right;
-static int *blit_clip_left = &slot_clip_left;
-static int *blit_clip_bottom = &slot_clip_bottom;
-static int *blit_clip_top = &slot_clip_top;
-static int *blit_max_y_index = &slot_max_y;
-static int *blit_row_offset = &slot_row;
-static int *blit_slot_4e4 = &slot_4e4;
-static int *blit_slot_4c8 = &slot_4c8;
-static unsigned short light_pack_words[2] = {};
-static unsigned short *blit_light_pack_a = &light_pack_words[0];
-static int *blit_slot_498 = &slot_498;
-static int *blit_slot_4f8 = &slot_4f8;
-static int *blit_slot_53c = &slot_53c;
-static int *blit_slot_4c4 = &slot_4c4;
-static int *blit_slot_530 = &slot_530;
-static int *blit_span_right = &slot_span_right;
-static int *blit_span_left = &slot_span_left;
-static int *blit_dither = &slot_dither;
+// TEXTURE_DIRECT_STORAGE_PRELUDE
 static int reset_calls = 0;
 static void texture_reset_fpu() { ++reset_calls; }
-static uintptr_t texture_pointer_address(const void *pointer) {
-  return reinterpret_cast<uintptr_t>(pointer);
-}
 static int texture_fixed(int value) {
   return static_cast<int>(static_cast<unsigned int>(value) << 16);
 }
@@ -256,21 +216,24 @@ def test_live_texture_draw_source_and_dda(compiler_name: str) -> None:
         r"void\s+Texture::draw\(Buffer\s*\*[^,]+,\s*Vert\s*\*[^,]+,\s*"
         r"int\s*\*[^,]+,\s*int\s+[^,]+,\s*Vert\s*\*[^,]+,\s*int\s+[^)]+\)\s*\{",
     )
-    assert "while (*blit_row_offset < *blit_clip_bottom)" in owner
-    assert "*blit_clip_top <= *blit_row_offset" in owner
+    assert "while (TextureRasterRowOffset < TextureRasterClipBottom)" in owner
+    assert "TextureRasterClipTop <= TextureRasterRowOffset" in owner
     assert "while (y < clip.bottom)" not in owner
     fill = owner.index("static_cast<unsigned char>(fill_color)")
     entry_reset = owner.index("texture_reset_fpu();")
-    args = owner.index("*blit_edge_uvs_b")
+    args = owner.index("TextureRasterEdgeVerticesB")
     assert fill < entry_reset < args
 
     with tempfile.TemporaryDirectory(prefix="texture-draw-live-source-") as temp:
         cpp = Path(temp) / "live.cpp"
         binary = Path(temp) / "live"
-        cpp.write_text(PREFIX + "\n" + helpers + "\n" + owner + "\n" + MAIN,
+        prelude = direct_storage_prelude(source)
+        prefix = PREFIX.replace("// TEXTURE_DIRECT_STORAGE_PRELUDE", prelude, 1)
+        cpp.write_text(prefix + "\n" + helpers + "\n" + owner + "\n" + MAIN,
                        encoding="utf-8")
         built = subprocess.run(
-            [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", "-no-pie",
+            [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+             "-Wno-unused-function", "-Wno-unused-variable", "-no-pie",
              str(cpp), "-o", str(binary)],
             text=True, capture_output=True, timeout=30,
         )

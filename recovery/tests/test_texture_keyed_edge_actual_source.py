@@ -319,10 +319,11 @@ def test_new_identity_boundary_and_owner_adapter() -> None:
     entry = _definition(source, "sub_61fa30")
     assert entry.startswith("void __cdecl sub_61fa30(")
     for token in (
-        "EdgeScan *left", "EdgeScan *right", "*blit_pixel_base",
-        "*blit_row_offset", "*blit_buffer_stride", "TextureRowPitchScratch",
-        "*blit_texture_pixels", "*blit_light_threshold", "blit_slot_4e8",
-        "blit_slot_51c", "blit_colour_step",
+        "EdgeScan *left", "EdgeScan *right", "TextureRasterPixelBase",
+        "TextureRasterRowOffset", "TextureRasterBufferStride", "TextureRowPitchScratch",
+        "TextureRasterScratch544", "TextureRasterLightThreshold",
+        "TextureRasterSignedPitch", "TextureRasterPackedStep",
+        "TextureRasterScratch4B8",
     ):
         assert token in entry
 

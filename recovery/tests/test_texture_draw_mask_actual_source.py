@@ -14,6 +14,7 @@ import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source import Mode, read_text
+from texture_direct_storage_host import direct_storage_prelude
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -70,31 +71,21 @@ def _continuity(record):
 
 def _actual_tu(source):
     definition = _definition(source, SIGNATURE)
-    helpers = "\n\n".join(
-        _definition(source, signature)
-        for signature in (
-            "static uintptr_t texture_pointer_address(",
-            "static uintptr_t texture_pointer_offset(",
-            "static void *texture_pointer_from_address(",
-        )
-    )
     fixture = FIXTURE.read_text(encoding="utf-8")
     assert fixture.count(INSERTION) == 1
-    return fixture.replace(INSERTION, helpers + "\n\n" + definition, 1), definition
+    assert fixture.count("// TEXTURE_DIRECT_STORAGE_PRELUDE") == 1
+    fixture = fixture.replace("// TEXTURE_DIRECT_STORAGE_PRELUDE",
+                              direct_storage_prelude(source), 1)
+    return fixture.replace(INSERTION, definition, 1), definition
 
 
 def _actual_method_fixture(source, definition):
-    helpers = "\n\n".join(
-        _definition(source, signature)
-        for signature in (
-            "static uintptr_t texture_pointer_address(",
-            "static uintptr_t texture_pointer_offset(",
-            "static void *texture_pointer_from_address(",
-        )
-    )
     fixture = FIXTURE.read_text(encoding="utf-8")
     assert fixture.count(INSERTION) == 1
-    return fixture.replace(INSERTION, helpers + "\n\n" + definition, 1)
+    assert fixture.count("// TEXTURE_DIRECT_STORAGE_PRELUDE") == 1
+    fixture = fixture.replace("// TEXTURE_DIRECT_STORAGE_PRELUDE",
+                              direct_storage_prelude(source), 1)
+    return fixture.replace(INSERTION, definition, 1)
 
 
 def test_identity_spans_claims_and_legacy_history_are_preserved():
@@ -119,7 +110,7 @@ def test_actual_installed_draw_mask_host_controls(compiler, tmp_path):
     translation_unit, definition = _actual_tu(source)
     assert "setup_edge_gouraud(&left_edge, min_y_index)" in definition
     assert "setup_edge_gouraud(&right_edge, min_y_index)" in definition
-    assert "*blit_max_y_index = i;" in definition
+    assert "TextureRasterMaxYIndex = i;" in definition
     assert "const unsigned char mapped = remap[texel];" in definition
     assert "pixels_ != 0" in definition
     assert "buffer->rect1_" in definition
@@ -177,9 +168,9 @@ def test_actual_method_phase_mutants_fail_source_controls(compiler, mutation,
     source = TEXTURE.read_text(encoding="utf-8")
     definition = _definition(source, SIGNATURE)
     if mutation == "gradient_phase":
-        wrong = "*blit_slot_4e4 = active_du;"
+        wrong = "TextureRasterScratch4E4.dword = active_du;"
         replacement = (
-            "*blit_slot_4e4 = texture_span_step("
+            "TextureRasterScratch4E4.dword = texture_span_step("
             "texture_difference(right_edge.accumA, left_edge.accumA), "
             "texture_difference(right_edge.accumC, left_edge.accumC));"
         )
@@ -189,8 +180,8 @@ def test_actual_method_phase_mutants_fail_source_controls(compiler, mutation,
     else:
         wrong = ("texture_span_pixels(\n"
                  "                                        texture_difference(right_x,\n"
-                 "                                                           *blit_span_right))")
-        replacement = "static_cast<unsigned int>(right_x - *blit_span_right)"
+                 "                                                           TextureRasterSpanRight))")
+        replacement = "static_cast<unsigned int>(right_x - TextureRasterSpanRight)"
     mutant = definition.replace(wrong, replacement, 1)
     assert mutant != definition
     translation_unit = _actual_method_fixture(source, mutant)

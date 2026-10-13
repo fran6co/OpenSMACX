@@ -15,6 +15,7 @@ import tempfile
 
 import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from texture_direct_storage_host import PRELUDE_MARKER, direct_storage_prelude
 from test_texture_draw_trans_actual_source import _definition
 
 
@@ -74,7 +75,9 @@ def translation_unit(method: str, draw_trans2: str | None = None,
         )
     assert fixture.count(HELPER_INSERTION) == 1
     helpers = "\n\n".join(_definition(source, name) for name in TRANS3_HELPERS)
-    return (fixture.replace(HELPER_INSERTION, helpers, 1)
+    assert fixture.count(PRELUDE_MARKER) == 1
+    return (fixture.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
+            .replace(HELPER_INSERTION, helpers, 1)
             .replace(INSERTION, method, 1)
             .replace(DRAW_TRANS2_INSERTION, draw_trans2, 1)
             .replace(DRAW_TRANS3_INSERTION, draw_trans3, 1))
@@ -90,7 +93,7 @@ def build_and_run(source: str, compiler_name: str, expect_success: bool) -> None
         cpp.write_text(source, encoding="utf-8")
         built = subprocess.run(
             [compiler, "-std=c++98", "-Wall", "-Wextra", "-Wno-unused-parameter",
-             "-Wno-unused-function", "-no-pie", str(cpp), "-o", str(binary)],
+             "-Wno-unused-variable", "-Wno-unused-function", "-no-pie", str(cpp), "-o", str(binary)],
             cwd=ROOT, capture_output=True, text=True, timeout=60,
         )
         assert built.returncode == 0, built.stdout + built.stderr
@@ -107,7 +110,7 @@ def test_actual_source_setup_bindings_and_release_control(compiler: str) -> None
     # The raw source must retain the redundant non-null RECT pointer test and
     # short-circuit order (shade table first, then rectangle pointer).
     assert "RECT *clip = &param_2->rect1_;" in body
-    assert "if (((texture_pointer_address(*blit_shade_table)) != 0) && (clip != 0))" in body
+    assert "if (((texture_pointer_address(TextureRasterScratch554)) != 0) && (clip != 0))" in body
     assert body.index("param_3 != 0") < body.index("param_2 == 0")
     build_and_run(translation_unit(body), compiler, expect_success=True)
 
@@ -121,8 +124,8 @@ def test_draw_trans2_and_draw_trans3_actual_source_controls(compiler: str) -> No
     method3 = extract_method(
         source, "int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a6)"
     )
-    assert "*blit_edge_uvs_a = corners_;" in method2
-    assert "*blit_edge_uvs_a = cornersAndMids_;" in method2
+    assert "TextureRasterEdgeVerticesA = corners_;" in method2
+    assert "TextureRasterEdgeVerticesA = cornersAndMids_;" in method2
     assert "RECT *clip = &a1->rect1_;" in method2
     assert "RECT *clip = &a1->rect1_;" in method3
     assert "if (a6 == -1)" in method3 and method3.index("if (a6 == -1)") < method3.index("a1->get_data()")
@@ -132,15 +135,15 @@ def test_draw_trans2_and_draw_trans3_actual_source_controls(compiler: str) -> No
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
 @pytest.mark.parametrize("method,old,new", (
-    (2, "*blit_edge_uvs_a = corners_;",
-     "*blit_edge_uvs_a = cornersAndMids_;"),
-    (2, "*blit_edge_uvs_a = cornersAndMids_;",
-     "*blit_edge_uvs_a = corners_;"),
+    (2, "TextureRasterEdgeVerticesA = corners_;",
+     "TextureRasterEdgeVerticesA = cornersAndMids_;"),
+    (2, "TextureRasterEdgeVerticesA = cornersAndMids_;",
+     "TextureRasterEdgeVerticesA = corners_;"),
     (2, "RECT *clip = &a1->rect1_;", "RECT *clip = &a1->rect2_;"),
-    (2, "*blit_texture_width = static_cast<int>(iWidth_);",
-     "*blit_texture_width = static_cast<int>(iHeight_);"),
+    (2, "TextureRasterTextureWidth = static_cast<int>(iWidth_);",
+     "TextureRasterTextureWidth = static_cast<int>(iHeight_);"),
     (3, "RECT *clip = &a1->rect1_;", "RECT *clip = &a1->rect2_;"),
-    (3, "*blit_texture_width = iWidth_;", "*blit_texture_width = iHeight_;"),
+    (3, "TextureRasterTextureWidth = iWidth_;", "TextureRasterTextureWidth = iHeight_;"),
 ))
 def test_trans_setup_controls_reject_wrong_members(
     compiler: str, method: int, old: str, new: str,
@@ -161,8 +164,8 @@ def test_trans_setup_controls_reject_wrong_members(
 @pytest.mark.parametrize(
     ("old", "new"),
     [
-        ("*blit_edge_uvs_a = corners_;", "*blit_edge_uvs_a = cornersAndMids_;"),
-        ("*blit_edge_uvs_a = cornersAndMids_;", "*blit_edge_uvs_a = corners_;"),
+        ("TextureRasterEdgeVerticesA = corners_;", "TextureRasterEdgeVerticesA = cornersAndMids_;"),
+        ("TextureRasterEdgeVerticesA = cornersAndMids_;", "TextureRasterEdgeVerticesA = corners_;"),
         ("RECT *clip = &param_2->rect1_;", "RECT *clip = &param_2->rect2_;"),
         ("static_cast<int>(iWidth_)", "static_cast<int>(iHeight_)"),
     ],
@@ -182,11 +185,11 @@ def test_actual_remap_cell_rejects_pointer_truncation(compiler: str) -> None:
     if sys.maxsize <= 0xffffffff:
         pytest.skip("pointer truncation control requires a 64-bit host")
     body = extract_method(SOURCE.read_text(encoding="utf-8"))
-    before = "(*blit_remap_table) = remap;"
+    before = "(TextureRasterScratch550) = remap;"
     assert body.count(before) == 1
     mutant = body.replace(
         before,
-        "(*blit_remap_table) = reinterpret_cast<const void *>(\n"
+        "(TextureRasterScratch550) = reinterpret_cast<const void *>(\n"
         "          static_cast<uint32_t>(texture_pointer_address(remap)));",
         1,
     )

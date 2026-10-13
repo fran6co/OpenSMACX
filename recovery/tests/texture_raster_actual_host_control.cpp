@@ -15,6 +15,8 @@ struct TextureStore {
     int next_record_;
     EdgeScan edges_[10];
 };
+
+// TEXTURE_DIRECT_STORAGE_PRELUDE
 class Buffer {
 public:
     RECT rect1_;
@@ -39,35 +41,7 @@ public:
     void sub_61d090(Buffer *, Vert *, int *, unsigned int);
 };
 
-static int slots[64];
-static void *pixel_base_cell;
-static void **blit_pixel_base = &pixel_base_cell;
-static int *blit_light_threshold = &slots[1];
-static int *blit_light_threshold_2 = &slots[2];
-static Vert *edge_uvs_b_cell = 0;
-static Vert **blit_edge_uvs_b = &edge_uvs_b_cell;
-static Vert *edge_uvs_a_cell = 0;
-static Vert **blit_edge_uvs_a = &edge_uvs_a_cell;
-static int *blit_vertex_count = &slots[5];
-static int *z_values_cell = 0;
-static int **blit_z_values = &z_values_cell;
-static void *texture_pixels_cell;
-static void **blit_texture_pixels = &texture_pixels_cell;
-static int *blit_buffer_stride = &slots[8];
-static int *blit_texture_width = &slots[9];
-static int *blit_texture_height = &slots[10];
-static int *blit_clip_right = &slots[11];
-static int *blit_clip_left = &slots[12];
-static int *blit_clip_bottom = &slots[13];
-static int *blit_clip_top = &slots[14];
-static int *blit_row_offset = &slots[15];
-static int *blit_max_y_index = &slots[16];
-static int TextureRowPitchScratch = 4;
-static unsigned int TextureRasterKey = 0;
 unsigned char *Buffer::active_data_ = 0;
-static uintptr_t texture_pointer_address(const void *pointer) {
-    return reinterpret_cast<uintptr_t>(pointer);
-}
 static int fpu_resets;
 static int edge_helper_calls;
 static TextureStore edge_cache_sentinel = {};
@@ -306,7 +280,8 @@ int main() {
     memcpy(affine_vertices, points, sizeof(points));
     memcpy(affine_uv, points, sizeof(points));
     texture.sub_620a10(&buffer, affine_vertices, 4, affine_uv, &out_cache);
-    assert(*blit_edge_uvs_b == affine_vertices && *blit_edge_uvs_a == affine_uv);
+    assert(TextureRasterEdgeVerticesB == affine_vertices &&
+           TextureRasterEdgeVerticesA == affine_uv);
     assert(buffer.frees_ == 1 && fpu_resets == 10);
     assert(out_cache.next_record_ == 0 && out_cache.flags_ == 1);
     for (int y = 0; y < 3; ++y) {

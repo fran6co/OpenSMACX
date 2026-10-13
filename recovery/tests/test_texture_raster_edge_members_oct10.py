@@ -19,6 +19,7 @@ import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source import read_text
 from test_texture_raster_actual_source import _continuity_fields
+from texture_direct_storage_host import PRELUDE_MARKER, direct_storage_prelude
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -32,11 +33,8 @@ FUNCTIONS = (
     ("void __cdecl sub_6202e0(", "sub_6202e0"),
     ("void __cdecl sub_620640(", "sub_620640"),
 )
-POINTER_HELPERS = (
-    "static uintptr_t texture_pointer_address(",
-    "static uintptr_t texture_pointer_offset(",
-)
 DECLARATION_SLOT = "// ACTUAL_EDGESCAN_DECLARATION"
+VERT_DECLARATION_SLOT = "// ACTUAL_VERT_DECLARATION"
 DEFINITIONS_SLOT = "// ACTUAL_RASTER_DEFINITIONS"
 
 FIXTURE = r'''#ifndef _GNU_SOURCE
@@ -56,38 +54,10 @@ FIXTURE = r'''#ifndef _GNU_SOURCE
 #endif
 
 // ACTUAL_EDGESCAN_DECLARATION
+// ACTUAL_VERT_DECLARATION
 static_assert(sizeof(EdgeScan) == 0x3c, "actual EdgeScan layout");
 
-static int clip_left_value, clip_right_value;
-static int *const blit_clip_left = &clip_left_value;
-static int *const blit_clip_right = &clip_right_value;
-static int light_accum_value, light_step_value;
-static int *const blit_light_accum_b = &light_accum_value;
-static int *const blit_light_step_b = &light_step_value;
-static unsigned short light_pack_value;
-static unsigned short *const blit_light_pack_a = &light_pack_value;
-static int signed_pitch_value, colour_step_value;
-static int *const blit_slot_4e8 = &signed_pitch_value;
-static int *const blit_colour_step = &colour_step_value;
-static void *pixel_base_value;
-static void **const blit_pixel_base = &pixel_base_value;
-static int row_offset_value, buffer_stride_value;
-static int *const blit_row_offset = &row_offset_value;
-static int *const blit_buffer_stride = &buffer_stride_value;
-static void *texture_pixels_value;
-static void **const blit_texture_pixels = &texture_pixels_value;
-static int TextureRowPitchScratch;
-static const void *remap_address_value;
-static const void **const blit_remap_table = &remap_address_value;
-static void *shade_table_value;
-static void **const blit_shade_table = &shade_table_value;
-static uintptr_t shade_cursor_storage;
-static uintptr_t *const blit_slot_558 = &shade_cursor_storage;
-static int shade_value;
-static int *const blit_slot_4d8 = &shade_value;
-static int dither_address_value;
-static int *const blit_slot_55c = &dither_address_value;
-
+// TEXTURE_DIRECT_STORAGE_PRELUDE
 // ACTUAL_RASTER_DEFINITIONS
 
 static unsigned char *low_arena(size_t size) {
@@ -132,23 +102,23 @@ static void setup_case(unsigned char *arena, EdgeScan **left_out,
     memset(destination, 0x77, 16);
     seed_records(*left, *right);
 
-    clip_left_value = 0;
-    clip_right_value = 2;
-    light_accum_value = 0;
-    light_step_value = 0;
-    light_pack_value = 0;
-    signed_pitch_value = 0;
-    colour_step_value = 0;
-    pixel_base_value = destination;
-    row_offset_value = 0;
-    buffer_stride_value = 8;
-    texture_pixels_value = source;
+    TextureRasterClipLeft = 0;
+    TextureRasterClipRight = 2;
+    TextureRasterLightAccumB = 0;
+    TextureRasterLightStepB = 0;
+    TextureRasterLightPackA.low_word = 0;
+    TextureRasterSignedPitch = 0;
+    TextureRasterPixelBase = destination;
+    TextureRasterRowOffset = 0;
+    TextureRasterBufferStride = 8;
+    TextureRasterScratch544 = source;
     TextureRowPitchScratch = 4;
-    remap_address_value = 0;
-    shade_table_value = 0;
-    shade_cursor_storage = 0;
-    shade_value = 0;
-    dither_address_value = 0;
+    TextureRasterScratch550 = 0;
+    TextureRasterScratch554 = 0;
+    TextureRasterShadeCursor = 0;
+    TextureRasterScratch4D8 = 0;
+    TextureRasterScratch55C = 0;
+    TextureRasterDither = 0;
 
     *left_out = left;
     *right_out = right;
@@ -194,7 +164,7 @@ int main() {
 
     setup_case(arena, &left, &right, &source, &destination);
     snapshot_records(*left, *right, left_bytes, right_bytes);
-    row_offset_value = static_cast<int>(reinterpret_cast<uintptr_t>(destination));
+    TextureRasterRowOffset = static_cast<int>(reinterpret_cast<uintptr_t>(destination));
     sub_61fe70(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
                static_cast<int>(reinterpret_cast<uintptr_t>(right)));
     assert_destination(destination, 50, 51);
@@ -206,8 +176,8 @@ int main() {
     int *remap = reinterpret_cast<int *>(arena + 0xc00);
     shade_table[9] = 3;
     remap[3] = 7;
-    shade_table_value = shade_table;
-    remap_address_value = remap;
+    TextureRasterScratch554 = shade_table;
+    TextureRasterScratch550 = remap;
     sub_6202e0(left, right);
     assert_destination(destination, 57, 58);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
@@ -221,9 +191,9 @@ int main() {
     shade_table[9] = 3;
     remap[3] = 7;
     dither[source[9]] = 1;
-    shade_table_value = shade_table;
-    remap_address_value = remap;
-    dither_address_value = static_cast<int>(reinterpret_cast<uintptr_t>(dither));
+    TextureRasterScratch554 = shade_table;
+    TextureRasterScratch550 = remap;
+    TextureRasterScratch55C = static_cast<int>(reinterpret_cast<uintptr_t>(dither));
     sub_620640(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
                static_cast<int>(reinterpret_cast<uintptr_t>(right)));
     assert_destination(destination, 57, 58);
@@ -232,44 +202,44 @@ int main() {
     // The first clip check returns before pixel writes; Gouraud entries still
     // publish both endpoint accumulators before reaching their clip gates.
     setup_case(arena, &left, &right, &source, &destination);
-    clip_left_value = 2;
-    clip_right_value = 4;
+    TextureRasterClipLeft = 2;
+    TextureRasterClipRight = 4;
     snapshot_records(*left, *right, left_bytes, right_bytes);
     sub_61f800(left, right);
     assert_destination(destination, 0x77, 0x77);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 
     setup_case(arena, &left, &right, &source, &destination);
-    clip_left_value = 2;
-    clip_right_value = 4;
-    row_offset_value = static_cast<int>(reinterpret_cast<uintptr_t>(destination));
+    TextureRasterClipLeft = 2;
+    TextureRasterClipRight = 4;
+    TextureRasterRowOffset = static_cast<int>(reinterpret_cast<uintptr_t>(destination));
     snapshot_records(*left, *right, left_bytes, right_bytes);
     sub_61fe70(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
                static_cast<int>(reinterpret_cast<uintptr_t>(right)));
     assert_destination(destination, 0x77, 0x77);
-    assert(light_accum_value == left->accumD);
-    assert(light_step_value == right->accumD);
+    assert(TextureRasterLightAccumB == left->accumD);
+    assert(TextureRasterLightStepB == right->accumD);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 
     setup_case(arena, &left, &right, &source, &destination);
-    clip_left_value = 2;
-    clip_right_value = 4;
+    TextureRasterClipLeft = 2;
+    TextureRasterClipRight = 4;
     snapshot_records(*left, *right, left_bytes, right_bytes);
     sub_6202e0(left, right);
     assert_destination(destination, 0x77, 0x77);
-    assert(light_accum_value == left->accumD);
-    assert(light_step_value == right->accumD);
+    assert(TextureRasterLightAccumB == left->accumD);
+    assert(TextureRasterLightStepB == right->accumD);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 
     setup_case(arena, &left, &right, &source, &destination);
-    clip_left_value = 2;
-    clip_right_value = 4;
+    TextureRasterClipLeft = 2;
+    TextureRasterClipRight = 4;
     snapshot_records(*left, *right, left_bytes, right_bytes);
     sub_620640(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
                static_cast<int>(reinterpret_cast<uintptr_t>(right)));
     assert_destination(destination, 0x77, 0x77);
-    assert(light_accum_value == left->accumD);
-    assert(light_step_value == right->accumD);
+    assert(TextureRasterLightAccumB == left->accumD);
+    assert(TextureRasterLightStepB == right->accumD);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 
     // Cover left skip and right clamp together without negative fixed-point
@@ -285,7 +255,7 @@ int main() {
     setup_case(arena, &left, &right, &source, &destination);
     left->accumC = -1;
     right->accumC = 4;
-    row_offset_value = static_cast<int>(reinterpret_cast<uintptr_t>(destination));
+    TextureRasterRowOffset = static_cast<int>(reinterpret_cast<uintptr_t>(destination));
     snapshot_records(*left, *right, left_bytes, right_bytes);
     sub_61fe70(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
                static_cast<int>(reinterpret_cast<uintptr_t>(right)));
@@ -299,8 +269,8 @@ int main() {
     remap = reinterpret_cast<int *>(arena + 0xc00);
     shade_table[9] = 3;
     remap[3] = 7;
-    shade_table_value = shade_table;
-    remap_address_value = remap;
+    TextureRasterScratch554 = shade_table;
+    TextureRasterScratch550 = remap;
     snapshot_records(*left, *right, left_bytes, right_bytes);
     sub_6202e0(left, right);
     assert_destination(destination, 6, 211);
@@ -316,9 +286,9 @@ int main() {
     shade_table[9] = 3;
     remap[3] = 7;
     dither[source[9]] = 1;
-    shade_table_value = shade_table;
-    remap_address_value = remap;
-    dither_address_value = static_cast<int>(reinterpret_cast<uintptr_t>(dither));
+    TextureRasterScratch554 = shade_table;
+    TextureRasterScratch550 = remap;
+    TextureRasterScratch55C = static_cast<int>(reinterpret_cast<uintptr_t>(dither));
     snapshot_records(*left, *right, left_bytes, right_bytes);
     sub_620640(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
                static_cast<int>(reinterpret_cast<uintptr_t>(right)));
@@ -378,9 +348,6 @@ def _extract_edgescan(source):
 
 def _definitions(source):
     definitions = [
-        _extract_definition(source, signature) for signature in POINTER_HELPERS
-    ]
-    definitions += [
         _extract_definition(source, signature) for signature, _ in FUNCTIONS
     ]
     return definitions
@@ -389,9 +356,16 @@ def _definitions(source):
 def _translation_unit(source):
     fixture = FIXTURE
     assert fixture.count(DECLARATION_SLOT) == 1
+    assert fixture.count(VERT_DECLARATION_SLOT) == 1
     assert fixture.count(DEFINITIONS_SLOT) == 1
     fixture = fixture.replace(DECLARATION_SLOT, _extract_edgescan(HEADER.read_text()), 1)
-    return fixture.replace(DEFINITIONS_SLOT, "\n\n".join(_definitions(source)), 1)
+    vert_header = (ROOT / "src/vert.h").read_text()
+    vert_declaration = re.search(r"\bstruct\s+Vert\s*\{.*?\};", vert_header, re.S)
+    assert vert_declaration
+    fixture = fixture.replace(VERT_DECLARATION_SLOT, vert_declaration.group(0), 1)
+    fixture = fixture.replace(DEFINITIONS_SLOT, "\n\n".join(_definitions(source)), 1)
+    assert fixture.count(PRELUDE_MARKER) == 1
+    return fixture.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
 
 
 def _mutate_member(source, function_names, member, replacement):
@@ -453,9 +427,9 @@ def test_dword_remap_stride_mutant_fails_actual_pixel_fixture(compiler, tmp_path
     if compiler_path is None:
         pytest.skip(f"{compiler} is unavailable")
     source = TEXTURE.read_text(encoding="utf-8")
-    before = "texture_pointer_offset(*blit_remap_table, texel * 4)"
+    before = "texture_pointer_offset(TextureRasterScratch550, texel * 4)"
     assert source.count(before) == 4
-    mutated = source.replace(before, "texture_pointer_offset(*blit_remap_table, texel)")
+    mutated = source.replace(before, "texture_pointer_offset(TextureRasterScratch550, texel)")
     ran = _compile_and_run(mutated, compiler_path, tmp_path,
                            f"mutant_dword_remap_stride_{compiler}")
     assert ran.returncode != 0, "byte-stride table mutant unexpectedly passed"

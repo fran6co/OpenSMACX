@@ -8,6 +8,7 @@ import subprocess
 import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from texture_direct_storage_host import PRELUDE_MARKER, direct_storage_prelude
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/texture.cpp").is_file())
@@ -69,7 +70,9 @@ def live_translation_unit() -> str:
     setup = definition(source, "Texture::setup_edge_gouraud")
     opening = setup.index("{") + 1
     setup = setup[:opening] + "\n  ++setup_calls;" + setup[opening:]
-    return (fixture.replace("/* ACTUAL_HELPERS */", helpers, 1)
+    assert fixture.count(PRELUDE_MARKER) == 1
+    return (fixture.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
+            .replace("/* ACTUAL_HELPERS */", helpers, 1)
             .replace("/* ACTUAL_SETUP */", setup, 1)
             .replace("/* ACTUAL_CANDIDATE */",
                             page_address + "\n\n" + owner, 1)
@@ -87,6 +90,7 @@ def test_live_owner_gcc_clang(tmp_path: Path) -> None:
         cpp.write_text(source, encoding="utf-8")
         built = subprocess.run(
             [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror",
+             "-Wno-unused-variable", "-Wno-unused-function",
              "-no-pie", str(cpp), "-o", str(exe)], cwd=ROOT,
             capture_output=True, text=True, timeout=60)
         assert built.returncode == 0, built.stdout + built.stderr
@@ -100,8 +104,8 @@ def test_live_owner_gcc_clang(tmp_path: Path) -> None:
     ("if (mask_texture->borrowed_ == 0) goto cleanup;", "if (false) goto cleanup;"),
     ("if (--right.counter == 0)", "if (false)"),
     ("du = pending_du;", "du = 0;"),
-    ("*blit_span_right = clipped_left;", "(void)clipped_left;"),
-    ("*blit_slot_498 = light >> 8;", "*blit_slot_498 = light;"),
+    ("TextureRasterSpanRight = clipped_left;", "(void)clipped_left;"),
+    ("TextureRasterScratch498 = light >> 8;", "TextureRasterScratch498 = light;"),
     ("static_cast<unsigned short>(light_step)) * skip", "static_cast<short>(light_step)) * skip"),
     ("| out[0];", "| base_texel;"),
 ])

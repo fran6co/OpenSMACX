@@ -6,6 +6,7 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from texture_direct_storage_host import direct_storage_prelude
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,8 +34,7 @@ def actual_parts() -> tuple[str, str, str, str]:
     assert source.count(signature) == 1, "mapped coast owner must have one definition"
     helper_start = source.index("static unsigned int texture_draw_source_step(")
     helper_end = source.index("static void texture_draw_keyed_lit_span(", helper_start)
-    helpers = (definition(source, "static uintptr_t texture_pointer_offset(") +
-               "\n" + source[helper_start:helper_end])
+    helpers = source[helper_start:helper_end]
     result_type = definition(source, "struct TextureDrawSpanResult") + ";"
     coast = definition(source, "static void texture_draw_coast_span(")
     owner_helpers = definition(source, "static int texture_coast_advance_edge(")
@@ -75,50 +75,10 @@ struct Buffer {
     void free_data(int n) { assert(n == 1); ++free_calls; }
 };
 
-static void *pixel_base_value, *texture_pixels_value, *coast_pixels_value;
-static const void *remap_value;
-static int vertex_count_value;
-static int buffer_stride_value, texture_width_value, max_y_index_value;
-static int row_offset_value, clip_left_value, clip_top_value, clip_right_value, clip_bottom_value;
-static int step_u_value, step_v_value;
-static int slot_498_value, slot_4f8_value, slot_4c4_value, slot_530_value;
-static int slot_4a4_value, slot_504_value;
-static uintptr_t slot_558_value;
-static int slot_53c_value, span_left_value, span_right_value;
-static void **blit_pixel_base = &pixel_base_value;
-static Vert *uv_vertices_cell = 0;
-static Vert **blit_edge_uvs_b = &uv_vertices_cell;
-static int *z_values_cell = 0;
-static int **blit_z_values = &z_values_cell;
-static const void **blit_remap_table = &remap_value;
-static void **blit_texture_pixels = &texture_pixels_value;
-static int TextureRowPitchScratch;
-static int texture_height_value, *blit_texture_height = &texture_height_value;
-static int *blit_vertex_count = &vertex_count_value;
-static Vert *uv_edge_cell = 0;
-static Vert **blit_edge_uvs_a = &uv_edge_cell;
-static int *blit_buffer_stride = &buffer_stride_value;
-static int *blit_texture_width = &texture_width_value;
-static void **blit_shade_table = &coast_pixels_value;
-static int *blit_max_y_index = &max_y_index_value;
-static int *blit_row_offset = &row_offset_value;
-static int *blit_clip_left = &clip_left_value, *blit_clip_top = &clip_top_value;
-static int *blit_clip_right = &clip_right_value, *blit_clip_bottom = &clip_bottom_value;
-static int *blit_slot_4e4 = &step_u_value, *blit_slot_4c8 = &step_v_value;
-static unsigned short light_pack_words[2] = {};
-static unsigned short *blit_light_pack_a = &light_pack_words[0];
-static int *blit_slot_498 = &slot_498_value, *blit_slot_4f8 = &slot_4f8_value;
-static int *blit_slot_4c4 = &slot_4c4_value, *blit_slot_530 = &slot_530_value;
-static int *blit_slot_53c = &slot_53c_value;
-static int *blit_slot_4a4 = &slot_4a4_value, *blit_slot_504 = &slot_504_value;
-static uintptr_t *blit_slot_558 = &slot_558_value;
-static int read_packed_uv_sink_for_mutation_control() { return *blit_slot_4a4; }
-static int *blit_span_left = &span_left_value, *blit_span_right = &span_right_value;
+// TEXTURE_DIRECT_STORAGE_PRELUDE
+static int read_packed_uv_sink_for_mutation_control() { return TextureRasterScratch4A4; }
 static int reset_calls;
 static int setup_calls;
-static uintptr_t texture_pointer_address(const void *pointer) {
-    return reinterpret_cast<uintptr_t>(pointer);
-}
 static unsigned int control_calls, control_value, control_mask;
 static void texture_reset_fpu() { ++reset_calls; }
 static void _control87(unsigned value, unsigned mask) {
@@ -141,7 +101,8 @@ static unsigned int texture_span_pixels(int delta) {
     return n - 1u < 0x8001u ? n : 1u;
 }
 
-""" + helper_text + "\n\n" + setup + "\n\n" + owner_helper + "\n\n" + method + r"""
+""".replace("// TEXTURE_DIRECT_STORAGE_PRELUDE",
+           direct_storage_prelude(SOURCE.read_text(encoding="utf-8")), 1) + helper_text + "\n\n" + setup + "\n\n" + owner_helper + "\n\n" + method + r"""
 
 static unsigned char *low_memory(size_t bytes) {
     void *p = mmap(0, bytes, PROT_READ | PROT_WRITE,
@@ -174,15 +135,16 @@ static void render_case(unsigned char mapped, unsigned char expected) {
     buffer.stride_ = 8; buffer.rect1_ = RECT{2, 2, 5, 4};
     buffer.data = canvas;
     buffer.free_calls = 0; reset_calls = 0; control_calls = 0;
-    slot_4a4_value = 0x13572468; slot_504_value = 0; slot_558_value = 0;
+    TextureRasterScratch4A4 = 0x13572468; TextureRasterScratch504 = 0;
+    TextureRasterShadeCursor = 0;
     texture.draw_coast(&buffer, vertices, light, &coast, remap, 3, uv);
     assert(buffer.free_calls == 1 && reset_calls == 2);
-    assert(texture_height_value == 8);
+    assert(TextureRasterTextureHeight == 8);
     assert(control_calls == 1 && control_value == (_PC_24 | _RC_CHOP) &&
            control_mask == (_MCW_PC | _MCW_RC));
-    assert(slot_4a4_value != 0x13572468);
-    assert(slot_504_value - static_cast<int>(reinterpret_cast<intptr_t>(base_pixels)) ==
-           static_cast<int>(slot_558_value - reinterpret_cast<uintptr_t>(coast_pixels)));
+    assert(TextureRasterScratch4A4 != 0x13572468);
+    assert(TextureRasterScratch504 - static_cast<int>(reinterpret_cast<intptr_t>(base_pixels)) ==
+           static_cast<int>(TextureRasterShadeCursor - reinterpret_cast<uintptr_t>(coast_pixels)));
     assert(canvas[2 * 8 + 2] == expected);
     assert(canvas[2 * 8 + 1] == 0x5a && canvas[2 * 8 + 5] == 0x5a);
     assert(canvas[1 * 8 + 2] == 0x5a && canvas[4 * 8 + 2] == 0x5a);
@@ -219,15 +181,16 @@ static void render_phase_case() {
     buffer.stride_ = 8; buffer.rect1_ = RECT{0, 0, 8, 4};
     buffer.data = canvas;
     buffer.free_calls = 0; reset_calls = 0; control_calls = 0;
-    slot_4a4_value = 0x13572468; slot_504_value = 0; slot_558_value = 0;
+    TextureRasterScratch4A4 = 0x13572468; TextureRasterScratch504 = 0;
+    TextureRasterShadeCursor = 0;
     texture.draw_coast(&buffer, vertices, light, &coast, remap, 4, uv);
     assert(buffer.free_calls == 1 && reset_calls == 2);
-    assert(texture_height_value == 8);
+    assert(TextureRasterTextureHeight == 8);
     assert(control_calls == 1 && control_value == (_PC_24 | _RC_CHOP) &&
            control_mask == (_MCW_PC | _MCW_RC));
-    assert(slot_4a4_value != 0x13572468);
-    assert(slot_504_value - static_cast<int>(reinterpret_cast<intptr_t>(base_pixels)) ==
-           static_cast<int>(slot_558_value - reinterpret_cast<uintptr_t>(coast_pixels)));
+    assert(TextureRasterScratch4A4 != 0x13572468);
+    assert(TextureRasterScratch504 - static_cast<int>(reinterpret_cast<intptr_t>(base_pixels)) ==
+           static_cast<int>(TextureRasterShadeCursor - reinterpret_cast<uintptr_t>(coast_pixels)));
     // Different edge U/V/light deltas make current-row versus next-row
     // gradient selection observable.
     assert(canvas[8 + 2] == 22);
@@ -260,16 +223,20 @@ static void render_initially_clipped_case() {
     buffer.stride_ = 8; buffer.rect1_ = RECT{0, 0, 8, 4};
     buffer.data = canvas;
     buffer.free_calls = 0; reset_calls = 0; setup_calls = 0; control_calls = 0;
-    slot_4a4_value = 0x13572468; slot_504_value = 0x24681357; slot_558_value = 0x35792468;
-    slot_4c4_value = 0x12345678; slot_4f8_value = 0x23456789;
+    TextureRasterScratch4A4 = 0x13572468; TextureRasterScratch504 = 0x24681357;
+    TextureRasterShadeCursor = 0x35792468;
+    TextureRasterScratch4C4 = 0x12345678;
+    TextureRasterUAccumulator.dword = 0x23456789;
     texture.draw_coast(&buffer, vertices, light, &coast, remap, 3, uv);
     assert(buffer.free_calls == 1 && reset_calls == 2);
     assert(setup_calls == 2);
     assert(control_calls == 1 && control_value == (_PC_24 | _RC_CHOP) &&
            control_mask == (_MCW_PC | _MCW_RC));
-    assert(slot_4a4_value == 0x13572468 && slot_504_value == 0x24681357 &&
-           slot_558_value == 0x35792468);
-    assert(slot_4c4_value == 0x12345678 && slot_4f8_value == 0x23456789);
+    assert(TextureRasterScratch4A4 == 0x13572468 &&
+           TextureRasterScratch504 == 0x24681357 &&
+           TextureRasterShadeCursor == 0x35792468);
+    assert(TextureRasterScratch4C4 == 0x12345678 &&
+           TextureRasterUAccumulator.dword == 0x23456789);
     for (int i = 0; i < 64; ++i) assert(canvas[i] == 0x5a);
     munmap(arena, 4096);
 }
@@ -292,7 +259,8 @@ def compile_and_run(compiler: str, text: str) -> subprocess.CompletedProcess[str
         cpp.write_text(text, encoding="utf-8")
         built = subprocess.run(
             [compiler, "-std=c++11", "-D_GNU_SOURCE", "-Wall", "-Wextra",
-             "-Werror", "-Wno-unused-function", str(cpp), "-o", str(exe)],
+             "-Werror", "-Wno-unused-function", "-Wno-unused-variable",
+             str(cpp), "-o", str(exe)],
             text=True, capture_output=True, timeout=30,
         )
         if built.returncode:
@@ -310,7 +278,7 @@ def test_actual_coast_body_clips_and_dispatches_mapping(compiler_name: str) -> N
     assert result.returncode == 0, result.stdout + result.stderr
 
     broken_method = method.replace(
-        "clipped_left = blit_clip_left[0]", "clipped_left = left_x", 1)
+        "clipped_left = TextureRasterClipLeft", "clipped_left = left_x", 1)
     assert broken_method != method
     mutant = compile_and_run(compiler, harness(helper, setup, owner_helper, broken_method))
     assert mutant.returncode != 0
@@ -329,7 +297,7 @@ def test_actual_coast_body_clips_and_dispatches_mapping(compiler_name: str) -> N
     assert phase_mutant.returncode != 0
     assert "Assertion" in phase_mutant.stderr
 
-    initial_guard = "    if (blit_row_offset[0] >= blit_clip_bottom[0]) break;\n"
+    initial_guard = "    if (TextureRasterRowOffset >= TextureRasterClipBottom) break;\n"
     assert method.count(initial_guard) == 1
     no_initial_guard = method.replace(initial_guard, "", 1)
     clipped_mutant = compile_and_run(compiler, harness(helper, setup, owner_helper, no_initial_guard))
@@ -337,7 +305,7 @@ def test_actual_coast_body_clips_and_dispatches_mapping(compiler_name: str) -> N
     assert "Assertion" in clipped_mutant.stderr
 
     no_packed_sink = method.replace(
-        "span_result.packed_uv_sink = blit_slot_4a4;",
+        "span_result.packed_uv_sink = &(TextureRasterScratch4A4);",
         "span_result.packed_uv_sink = 0;", 1)
     assert no_packed_sink != method
     scratch_mutant = compile_and_run(compiler, harness(helper, setup, owner_helper, no_packed_sink))

@@ -10,6 +10,8 @@ struct EdgeScan {
         extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
 };
 
+// TEXTURE_DIRECT_STORAGE_PRELUDE
+
 static unsigned char *surface;
 class Buffer {
 public:
@@ -29,35 +31,8 @@ public:
     void draw_trans(Buffer *, Vert *, int *, int, Vert *);
 };
 
-static int slots[64];
-static void *pixel_base_cell;
-static void **blit_pixel_base = &pixel_base_cell;
-static Vert *uv_a_cell = 0;
-static Vert **blit_edge_uvs_a = &uv_a_cell;
-static Vert *uv_b_cell = 0;
-static Vert **blit_edge_uvs_b = &uv_b_cell;
-static int *blit_vertex_count = &slots[3];
-static int *z_values_cell = 0;
-static int **blit_z_values = &z_values_cell;
-static void *texture_pixels_cell;
-static void **blit_texture_pixels = &texture_pixels_cell;
-static int *blit_buffer_stride = &slots[6];
-static int *blit_texture_width = &slots[7];
-static int *blit_clip_right = &slots[8];
-static int *blit_clip_left = &slots[9];
-static int *blit_clip_bottom = &slots[10];
-static int *blit_clip_top = &slots[11];
-static int *blit_max_y_index = &slots[12];
-static int *blit_row_offset = &slots[13];
-static int *blit_slot_4e4 = &slots[14];
-static int *blit_slot_4c8 = &slots[15];
-static unsigned short light_pack_words[2] = {};
-static unsigned short *blit_light_pack_a = &light_pack_words[0];
 static int TextureLightCeiling = 0x70000000;
 static int TextureLightFloor = -0x70000000;
-static int texture_raster_key;
-static int *blit_light_threshold_2 = &texture_raster_key;
-static int *blit_light_threshold = &slots[17];
 static int setup_calls;
 static int setup_indices[8];
 static int setup_directions[8];
@@ -89,9 +64,6 @@ static void edge_step(EdgeScan &edge) {
     edge.accumD += edge.deltaD;
 }
 static void texture_reset_fpu() { ++fpu_resets; }
-static uintptr_t texture_pointer_address(const void *pointer) {
-    return reinterpret_cast<uintptr_t>(pointer);
-}
 #define _PC_24 0x00020000
 #define _RC_CHOP 0x00000300
 #define _MCW_PC 0x00030000
@@ -103,8 +75,8 @@ int Texture::setup_edge_gouraud(EdgeScan *edge, int index) {
     assert(call < 8);
     setup_indices[call] = index;
     setup_directions[call] = edge->f0;
-    assert(*blit_max_y_index == 1);
-    assert(reinterpret_cast<int *>(*blit_z_values) != 0);
+    assert(TextureRasterMaxYIndex == 1);
+    assert(TextureRasterZValues != 0);
     if (call == 4) return 0; // left refresh failure suppresses right refresh
 
     edge->counter = 1;
@@ -160,9 +132,8 @@ int main() {
     static int zvals[3] = {0, 0, 0};
     static unsigned char storage[8 * 4];
     memset(storage, 77, sizeof(storage));
-    memset(slots, 0, sizeof(slots));
     surface = storage;
-    texture_raster_key = 99;
+    TextureRasterKey = 99;
     setup_calls = fpu_resets = 0;
 
     Buffer buffer = {};

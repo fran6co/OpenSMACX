@@ -7,6 +7,7 @@ import subprocess
 import pytest
 
 from test_texture_edge_cache_actual_source import _declaration, _definition
+from texture_direct_storage_host import PRELUDE_MARKER, direct_storage_prelude
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -21,11 +22,13 @@ def test_typed_context_retains_live_reload_order(tmp_path, compiler, mutation):
     source = (ROOT / "src/texture.cpp").read_text()
     body = _definition(source, "int __cdecl sub_620100(")
     if mutation == "stale_uv":
-        assert body.count("            tbl490 = *g2_009bb490;") == 2
-        body = body.replace("            tbl490 = *g2_009bb490;", "")
+        old = "            tbl490 = TextureRasterEdgeVerticesA;\n            edge->deltaB"
+        assert body.count(old) == 1
+        body = body.replace(old, "            edge->deltaB", 1)
     elif mutation == "stale_geometry":
-        assert body.count("            tbl4f4 = *g2_009bb4f4;") == 2
-        body = body.replace("            tbl4f4 = *g2_009bb4f4;", "")
+        old = "            tbl4f4 = TextureRasterEdgeVerticesB;\n            edge->accumC"
+        assert body.count(old) == 1
+        body = body.replace(old, "            edge->accumC", 1)
     elif mutation == "wrong_axis":
         assert "tbl490[idx].y" in body
         body = body.replace("tbl490[idx].y", "tbl490[idx].x", 1)
@@ -37,6 +40,7 @@ def test_typed_context_retains_live_reload_order(tmp_path, compiler, mutation):
 #include <cassert>
 #include <cstddef>
 #include <stdint.h>
+#include <string.h>
 #define __cdecl
 __DECLARATIONS__
 static_assert(sizeof(Vert) == 8, "original coordinate stride");
@@ -46,25 +50,23 @@ static Vert uv_before[3] = {{2, 3}, {10, 11}, {18, 19}};
 static Vert uv_after[3] = {{100, 200}, {20, 30}, {40, 50}};
 static Vert geometry_before[3] = {{8, 0}, {1, 4}, {6, 8}};
 static Vert geometry_after[3] = {{50, 0}, {70, 4}, {90, 8}};
-static Vert *uv = uv_before, *geometry = geometry_before;
 static int light[3] = {100, 108, 116};
-static int *light_values = light;
-static Vert **const g2_009bb490 = &uv;
-static Vert **const g2_009bb4f4 = &geometry;
-static int **const g2_009bb4fc = &light_values;
-static int count = 3, max_y = 2;
-static int *const blit_vertex_count = &count;
-static int *const blit_max_y_index = &max_y;
+// TEXTURE_DIRECT_STORAGE_PRELUDE
 static int divisions;
 static int fixed_div(int numerator, int denominator) {
     ++divisions;
-    if (divisions == 1) uv = uv_after;
-    if (divisions == 2) geometry = geometry_after;
+    if (divisions == 1) TextureRasterEdgeVerticesA = uv_after;
+    if (divisions == 2) TextureRasterEdgeVerticesB = geometry_after;
     return static_cast<int>((static_cast<int64_t>(numerator) * 65536) /
                             denominator);
 }
 __ACTUAL_BODY__
 int main() {
+    TextureRasterEdgeVerticesA = uv_before;
+    TextureRasterEdgeVerticesB = geometry_before;
+    TextureRasterZValues = light;
+    TextureRasterVertexCount = 3;
+    TextureRasterMaxYIndex = 2;
     EdgeScan edge = {};
     edge.f0 = 1;
     assert(sub_620100(&edge, 0) == 1);
@@ -74,15 +76,19 @@ int main() {
     assert(edge.deltaB == 27 * 65536 / 4);
     assert(edge.accumC == 50 && edge.deltaC == 5);
     assert(edge.accumD == 100 * 65536 && edge.deltaD == 2 * 65536);
-    assert(uv == uv_after && geometry == geometry_after);
+    assert(TextureRasterEdgeVerticesA == uv_after &&
+           TextureRasterEdgeVerticesB == geometry_after);
 }
 '''
+    assert harness.count(PRELUDE_MARKER) == 1
     harness = harness.replace("__DECLARATIONS__", declarations).replace(
+        PRELUDE_MARKER, direct_storage_prelude(source), 1).replace(
         "__ACTUAL_BODY__", body)
     cpp, binary = tmp_path / "live_vertices.cpp", tmp_path / "live_vertices"
     cpp.write_text(harness)
     compiled = subprocess.run(
-        [executable, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(cpp),
+        [executable, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+         "-Wno-unused-variable", "-Wno-unused-function", str(cpp),
          "-o", str(binary)], capture_output=True, text=True, timeout=30)
     assert compiled.returncode == 0, compiled.stdout + compiled.stderr
     result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)

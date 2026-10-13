@@ -158,15 +158,15 @@ def test_actual_renderer_rows_clipping_and_refresh_order(compiler: str) -> None:
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
 @pytest.mark.parametrize("old,new", (
     ("if (!done) {", "if (true) {"),
-    ("*blit_slot_4f8 = left.accumA;", "*blit_slot_4f8 = right.accumA;"),
-    ("*blit_slot_53c = left.accumB;", "*blit_slot_53c = right.accumA;"),
+    ("TextureRasterUAccumulator.dword = left.accumA;", "TextureRasterUAccumulator.dword = right.accumA;"),
+    ("TextureRasterVAccumulator.dword = left.accumB;", "TextureRasterVAccumulator.dword = right.accumD;"),
     ("const int width = pending_width >> 16;", "const int width = 1;"),
-    ("if ((*blit_dither & 1) != 0)", "if ((*blit_dither & 1) == 0)"),
-    ("if (*blit_span_right < *blit_clip_left)", "if (false)"),
-    ("if (end >= *blit_clip_right)", "if (false)"),
-    ("if (*blit_row_offset < *blit_clip_bottom)", "if (true)"),
-    ("if (*blit_clip_bottom <= *blit_row_offset) break;", "if (false) break;"),
-    ("if (*blit_clip_top <= *blit_row_offset &&", "if (true &&"),
+    ("if ((TextureRasterDither & 1) != 0)", "if ((TextureRasterDither & 1) == 0)"),
+    ("if (TextureRasterSpanRight < TextureRasterClipLeft)", "if (false)"),
+    ("if (end >= TextureRasterClipRight)", "if (false)"),
+    ("if (TextureRasterRowOffset < TextureRasterClipBottom)", "if (true)"),
+    ("if (TextureRasterClipBottom <= TextureRasterRowOffset) break;", "if (false) break;"),
+    ("if (TextureRasterClipTop <= TextureRasterRowOffset &&", "if (true &&"),
     ("_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);", "(void)0;"),
     ("texture_reset_fpu();", "(void)0;"),
 ))

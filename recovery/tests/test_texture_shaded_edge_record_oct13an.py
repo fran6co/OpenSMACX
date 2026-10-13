@@ -16,6 +16,10 @@ import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source import read_file, read_text
 from match_recovery.tasks import TaskStore
+from recovery.tests.texture_direct_storage_host import (
+    PRELUDE_MARKER, SIGNED_KEY_NOTE, direct_storage_prelude,
+    direct_storage_projection,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -100,7 +104,8 @@ def _expected_current_body(old_body: str) -> str:
 
 def _strip_authorized_edge_delta(current: str, baseline: str) -> str:
     """Check the exact sub_61c630 delta, then return source with it reversed."""
-    baseline_body = _extract(baseline)
+    projected_baseline = direct_storage_projection(baseline)
+    baseline_body = _extract(projected_baseline)
     current_body = _extract(current)
     assert _tokens(current_body) == _tokens(_expected_current_body(baseline_body)), (
         "sub_61c630 may only replace the two zeroed int arrays/casts/indexes "
@@ -108,7 +113,14 @@ def _strip_authorized_edge_delta(current: str, baseline: str) -> str:
     current = current.replace(current_body, baseline_body, 1)
     assert current.count(NOTE) == 1
     assert NOTE not in baseline
-    return current.replace(NOTE, "", 1)
+    current = current.replace(NOTE, "", 1)
+    # The direct-storage task replaces this pre-existing key-owner comment
+    # with a narrowly scoped structural note. Restore only that comment while
+    # this historical fixture checks its own note/body continuity.
+    old_key_comment = "// Existing TextureRasterKey remains the sole owner of the 0x9BB548 object."
+    assert baseline.count(old_key_comment) == 1
+    assert current.count(SIGNED_KEY_NOTE) == 1
+    return current.replace(SIGNED_KEY_NOTE, old_key_comment + "\n", 1)
 
 
 def _assert_actual_record_shape() -> str:
@@ -126,12 +138,9 @@ def _assert_actual_record_shape() -> str:
 def _translation_unit(body: str) -> str:
     fixture = FIXTURE.read_text(encoding="utf-8")
     fixture = fixture.replace("#include <cassert>", "#include <cassert>\n#include <cstdio>\n#include <cstdlib>", 1)
-    scale_anchor = "static int *blit_slot_498 = &cell_slot_498;"
-    assert fixture.count(scale_anchor) == 1
-    fixture = fixture.replace(
-        scale_anchor,
-        scale_anchor + "\nstatic float cell_scale_65536f = 1.0f;\nstatic float *blit_scale_65536f = &cell_scale_65536f;",
-        1)
+    assert fixture.count(PRELUDE_MARKER) == 1
+    fixture = fixture.replace(PRELUDE_MARKER,
+                              direct_storage_prelude(SOURCE.read_text(encoding="utf-8")), 1)
     assert fixture.count(METHOD_MARKER) == 1
     fixture = fixture.replace(METHOD_MARKER, body, 1)
 
@@ -277,9 +286,11 @@ def test_literal_sub_61c630_publishes_test_supplied_accum_d(compiler_name, tmp_p
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 @pytest.mark.parametrize(("old", "new", "name", "diagnostic"), (
-    ("*blit_slot_498 = e1.accumD;", "*blit_slot_498 = 0;",
+    ("TextureRasterScratch498 = e1.accumD;",
+     "TextureRasterScratch498 = 0;",
      "scratch-zero", "scratch 0x9BB498"),
-    ("*blit_slot_498 = e1.accumD;", "*blit_slot_498 = e1.deltaD;",
+    ("TextureRasterScratch498 = e1.accumD;",
+     "TextureRasterScratch498 = e1.deltaD;",
      "wrong-record-field", "scratch 0x9BB498"),
     ("setup_edge(&e1, e1.id)", "setup_edge(&e1, e1.counter)",
      "refresh-counter-not-id", "refresh uses live edge id"),
@@ -327,4 +338,5 @@ def test_task_base_source_delta_and_full_annotation_history():
                       tuple(line for _, line in item.lines)) for item in before.origin)
     assert "EdgeScan e1;" in _extract(current)
     assert "EdgeScan e2;" in _extract(current)
-    assert _tokens(_extract(restored)) == _tokens(_extract(baseline))
+    assert _tokens(_extract(restored)) == _tokens(
+        _extract(direct_storage_projection(baseline)))

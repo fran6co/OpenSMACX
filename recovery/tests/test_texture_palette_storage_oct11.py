@@ -9,6 +9,7 @@ import pytest
 
 from match_recovery.source import read_text
 from match_recovery.tasks import Task
+from recovery.tests.texture_direct_storage_host import reverse_direct_storage_source
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "268fb06faa36d40050b29eaa068b954e40a30615"
@@ -50,10 +51,10 @@ def test_actual_palette_publication_keeps_high_host_pointer(owner, compiler_name
             "    unsigned char high_palette[65536];\n"
             "    assert(reinterpret_cast<uintptr_t>(high_palette) > UINT32_MAX);\n"
             "    palette_data = high_palette;")
-    before = "*blit_slot_564 = palette;"
+    before = "TextureRasterPalette = palette;"
     assert source.count(before) == 1
     if damage:
-        source = source.replace(before, "*blit_slot_564 = reinterpret_cast<unsigned char *>("
+        source = source.replace(before, "TextureRasterPalette = reinterpret_cast<unsigned char *>("
             "static_cast<uintptr_t>(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(palette))));")
     cpp, binary = tmp_path / "control.cpp", tmp_path / "control"
     cpp.write_text(source)
@@ -72,10 +73,19 @@ def test_exact_bounded_storage_migration_and_identity_continuity():
     for old, new, count in EDITS:
         assert expected.count(old) == count
         expected = expected.replace(old, new)
-    # Keep this earlier palette checkpoint exact after projecting only the
-    # independently checked, later shared remap-pointer migration.
-    from test_texture_lookup_pointer_contract_oct11 import project_raster_pointer_cell_change
-    assert project_raster_pointer_cell_change(path.read_text()) == expected
+    # Project only the later, separately guarded direct-storage, remap-cell,
+    # and EdgeScan migrations back to this immutable palette checkpoint.
+    storage_base = subprocess.check_output(
+        ["git", "show", "f14619684801a682ea985c4ddefda40757422964:src/texture.cpp"],
+        text=True)
+    from test_texture_lookup_pointer_contract_oct11 import (
+        project_prior_edge_scan_migrations,
+        project_raster_pointer_cell_change,
+    )
+    restored = reverse_direct_storage_source(path.read_text(), storage_base)
+    restored = project_raster_pointer_cell_change(restored)
+    restored = project_prior_edge_scan_migrations(restored, before)
+    assert restored == expected
     from recovery.tests.test_texture_raster_actual_source import _continuity_fields
     assert [_continuity_fields(r) for r in read_text(before, path)] == [
         _continuity_fields(r) for r in read_text(expected, path)]
@@ -94,7 +104,10 @@ def test_pinned_palette_cell_producers_and_byte_lookup_consumers():
     from match_recovery.pe_coff import PeImage
     from match_recovery.model import Span
     from match_recovery.source_inventory import image_pin
-    image = PeImage((ROOT / ".opensmacx/game/terranx_original.exe").read_bytes(), image_pin(ROOT))
+    image_path = ROOT / ".opensmacx/game/terranx_original.exe"
+    if not image_path.is_file():
+        image_path = ROOT.parents[2] / ".opensmacx/game/terranx_original.exe"
+    image = PeImage(image_path.read_bytes(), image_pin(ROOT))
     instructions = {}
     for span in (Span(0x61DF60, 0x61E540), Span(0x61E540, 0x61EFA0)):
         instructions.update({i.address: (i.mnemonic, i.op_str) for i in

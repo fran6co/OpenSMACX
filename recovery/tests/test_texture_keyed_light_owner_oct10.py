@@ -8,6 +8,7 @@ import subprocess
 import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from recovery.tests.texture_direct_storage_host import PRELUDE_MARKER, direct_storage_prelude
 
 
 ROOT = next(
@@ -109,6 +110,8 @@ def _translation_unit(method: str | None = None,
         name: _existing_test._definition(source, name)
         for name in _existing_test.HELPER_NAMES
     }
+    assert fixture.count(PRELUDE_MARKER) == 1
+    fixture = fixture.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
     wrapper = helpers["texture_draw_keyed_lit_span"]
     anchor = "    texture_draw_lit_span_mode(destination, pixels, width, u, v, du, dv,"
     assert wrapper.count(anchor) == 1
@@ -131,7 +134,16 @@ def _translation_unit(method: str | None = None,
     fixture = fixture.replace(_existing_test.HELPER_INSERTION,
                               helper_source, 1)
     fixture = fixture.replace(_existing_test.METHOD_INSERTION, body, 1)
-    return _replace_main(fixture, FIXTURE.read_text(encoding="utf-8"))
+    main = FIXTURE.read_text(encoding="utf-8")
+    old_alias_reset = "    memset(slots, 0, sizeof(slots));\n"
+    old_key_store = "    texture_raster_key = 99;"
+    assert main.count(old_alias_reset) == 1
+    assert main.count(old_key_store) == 1
+    # The actual raster objects have static storage and begin zeroed in this
+    # fresh host process; retain the fixture's nonzero-key setup on that object.
+    main = main.replace(old_alias_reset, "", 1)
+    main = main.replace(old_key_store, "    TextureRasterKey = 99;", 1)
+    return _replace_main(fixture, main)
 
 
 def _compile_run(source: str, tmp_path: Path, stem: str,

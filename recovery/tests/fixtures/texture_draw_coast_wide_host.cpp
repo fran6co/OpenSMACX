@@ -26,79 +26,43 @@ struct EdgeScan {
 };
 static_assert(sizeof(EdgeScan) == 0x3c, "native EdgeScan width");
 
-static void *pixel_base;
-static int slot494;
-static int edge_uvs_a;
-static int slot498;
-static int buffer_stride;
-static int texture_width;
-static int texture_height;
-static int max_y_index;
-static int vertex_count;
-static int clip_left;
-static int clip_top;
-static int clip_right;
-static int clip_bottom;
-static int slot4c4, slot4c8, span_right, slot4e4, span_left;
-static int slot4a4, slot504;
-static int edge_uvs_b;
-static int z_values_address;
-static int slot4f8, slot530;
-static int row_offset;
-static int slot528, light_pack_a, slot53c;
-static void *texture_pixels;
-static const void *remap_table;
-static void *shade_table;
-static uintptr_t slot558;
-union TextureRasterRelocatedRowCell { int *initial_target; int value; };
-static int alternate_row_520, alternate_row_524;
-static TextureRasterRelocatedRowCell TextureRasterAlternateRowBase = { &alternate_row_520 };
-static TextureRasterRelocatedRowCell TextureRasterAlternateRowNext = { &alternate_row_524 };
-static int dither;
-static float scale_65536 = 65536.0f;
-static float scale_256 = 256.0f;
-static int TextureRowPitchScratch;
+// TEXTURE_DIRECT_STORAGE_PRELUDE
 
-static void **const blit_pixel_base = &pixel_base;
-static int *const blit_slot_494 = &slot494;
-static Vert *edge_uvs_a_cell = 0;
-static Vert **const blit_edge_uvs_a = &edge_uvs_a_cell;
-static int *const blit_slot_498 = &slot498;
-static int *const blit_buffer_stride = &buffer_stride;
-static int *const blit_texture_width = &texture_width;
-static int *const blit_texture_height = &texture_height;
-static int *const blit_max_y_index = &max_y_index;
-static int *const blit_vertex_count = &vertex_count;
-static int *const blit_clip_left = &clip_left;
-static int *const blit_clip_top = &clip_top;
-static int *const blit_clip_right = &clip_right;
-static int *const blit_clip_bottom = &clip_bottom;
-static int *const blit_slot_4c4 = &slot4c4;
-static int *const blit_slot_4c8 = &slot4c8;
-static int *const blit_span_right = &span_right;
-static int *const blit_slot_4e4 = &slot4e4;
-static int *const blit_span_left = &span_left;
-static Vert *edge_uvs_b_cell = 0;
-static Vert **const blit_edge_uvs_b = &edge_uvs_b_cell;
-static int *z_values_cell = 0;
-static int **const blit_z_values = &z_values_cell;
-static int *const blit_slot_4f8 = &slot4f8;
-static int *const blit_slot_530 = &slot530;
-static int *const blit_row_offset = &row_offset;
-static int *const blit_slot_528 = &slot528;
-static unsigned short light_pack_words[2] = {};
-static unsigned short *const blit_light_pack_a = &light_pack_words[0];
-static int *const blit_slot_53c = &slot53c;
-static void **const blit_texture_pixels = &texture_pixels;
-static const void **const blit_remap_table = &remap_table;
-static void **const blit_shade_table = &shade_table;
-static uintptr_t *const blit_slot_558 = &slot558;
-static int *const blit_slot_4a4 = &slot4a4;
-static int *const blit_slot_504 = &slot504;
-
-static int *const blit_dither = &dither;
-static float *const blit_scale_65536f = &scale_65536;
-static float *const blit_scale_256f = &scale_256;
+static void *&pixel_base = TextureRasterPixelBase;
+static int &slot494 = TextureRasterScratch494;
+static Vert *&edge_uvs_a = TextureRasterEdgeVerticesA;
+static int &slot498 = TextureRasterScratch498;
+static int &buffer_stride = TextureRasterBufferStride;
+static int &texture_width = TextureRasterTextureWidth;
+static int &texture_height = TextureRasterTextureHeight;
+static int &max_y_index = TextureRasterMaxYIndex;
+static int &vertex_count = TextureRasterVertexCount;
+static int &clip_left = TextureRasterClipLeft;
+static int &clip_top = TextureRasterClipTop;
+static int &clip_right = TextureRasterClipRight;
+static int &clip_bottom = TextureRasterClipBottom;
+static int &slot4c4 = TextureRasterScratch4C4;
+static int &slot4c8 = TextureRasterScratch4C8.dword;
+static int &span_right = TextureRasterSpanRight;
+static int &slot4e4 = TextureRasterScratch4E4.dword;
+static int &span_left = TextureRasterSpanLeft;
+static int &slot4a4 = TextureRasterScratch4A4;
+static int &slot504 = TextureRasterScratch504;
+static Vert *&edge_uvs_b = TextureRasterEdgeVerticesB;
+static int *&z_values_address = TextureRasterZValues;
+static int &slot4f8 = TextureRasterUAccumulator.dword;
+static int &slot530 = TextureRasterScratch530;
+static int &row_offset = TextureRasterRowOffset;
+static int &slot528 = TextureRasterScratch528;
+static unsigned short &light_pack_a = TextureRasterLightPackA.low_word;
+static int &slot53c = TextureRasterVAccumulator.dword;
+static void *&texture_pixels = TextureRasterScratch544;
+static const void *&remap_table = TextureRasterScratch550;
+static void *&shade_table = TextureRasterScratch554;
+static uintptr_t &slot558 = TextureRasterShadeCursor;
+static int &dither = TextureRasterDither;
+static const float &scale_65536 = TextureRasterScale65536;
+static const float &scale_256 = TextureRasterScale256;
 
 struct RECT { int left, top, right, bottom; };
 struct Buffer {
@@ -111,14 +75,6 @@ struct Buffer {
     unsigned char *get_data() { return pixels; }
     void free_data(int) { ++freed; }
 };
-
-static uintptr_t texture_pointer_address(const void *pointer) {
-    return reinterpret_cast<uintptr_t>(pointer);
-}
-static uintptr_t texture_pointer_offset(const void *base, uint32_t offset) {
-    return texture_pointer_address(base) +
-        static_cast<intptr_t>(static_cast<int32_t>(offset));
-}
 
 static int setup_calls;
 static int setup_selectors[16];
@@ -172,14 +128,18 @@ int Texture::setup_edge_gouraud(EdgeScan *edge, int selector) {
 
 static void reset_slots() {
     pixel_base = 0;
-    slot494 = edge_uvs_a = slot498 = buffer_stride = texture_width = 0;
+    slot494 = slot498 = buffer_stride = texture_width = 0;
     texture_height = max_y_index = vertex_count = clip_left = clip_top = 0;
     clip_right = clip_bottom = slot4c4 = slot4c8 = span_right = slot4e4 = 0;
-    span_left = edge_uvs_b = z_values_address = slot4f8 = slot530 = row_offset = slot528 = 0;
+    span_left = slot4f8 = slot530 = row_offset = slot528 = 0;
     light_pack_a = slot53c = 0;
     remap_table = 0;
     texture_pixels = shade_table = 0;
-    slot558 = slot4a4 = slot504 = dither = TextureRowPitchScratch = 0;
+    slot558 = slot4a4 = slot504 = dither = 0;
+    TextureRowPitchScratch = 0;
+    edge_uvs_a = 0;
+    edge_uvs_b = 0;
+    z_values_address = 0;
     setup_calls = 0;
     std::memset(setup_selectors, 0, sizeof setup_selectors);
 }

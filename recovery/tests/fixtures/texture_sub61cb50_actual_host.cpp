@@ -12,48 +12,10 @@ struct EdgeScan {
     int extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
 };
 
+// TEXTURE_DIRECT_STORAGE_PRELUDE
+
 static unsigned char destination_bytes[256];
-static void *slot_pixel_base, *slot_pixels, *slot_shade;
-static const void *slot_remap;
-static int slot_height, slot_count;
-static int slot_stride, slot_width, slot_clip_right, slot_clip_left;
-static int slot_clip_bottom, slot_clip_top, slot_max_y, slot_row, slot_du, slot_dv;
-static int slot_498, slot_4c4, slot_530, slot_4f8, slot_53c;
-static int slot_span_left, slot_span_right;
-
-static void **blit_pixel_base = &slot_pixel_base;
-static const void **blit_remap_table = &slot_remap;
-static Vert *uv_b_cell = 0;
-static Vert **blit_edge_uvs_b = &uv_b_cell;
-static void **blit_texture_pixels = &slot_pixels;
-static int *blit_texture_height = &slot_height;
-static int *blit_vertex_count = &slot_count;
-static Vert *uv_a_cell = 0;
-static Vert **blit_edge_uvs_a = &uv_a_cell;
-static int *blit_buffer_stride = &slot_stride;
-static int *blit_texture_width = &slot_width;
-static void **blit_shade_table = &slot_shade;
-static int *blit_clip_right = &slot_clip_right;
-static int *blit_clip_left = &slot_clip_left;
-static int *blit_clip_bottom = &slot_clip_bottom;
-static int *blit_clip_top = &slot_clip_top;
-static int *blit_max_y_index = &slot_max_y;
-static int *blit_row_offset = &slot_row;
-static int *blit_slot_4e4 = &slot_du;
-static int *blit_slot_4c8 = &slot_dv;
-static int *blit_slot_498 = &slot_498;
-static int *blit_slot_4c4 = &slot_4c4;
-static int *blit_slot_530 = &slot_530;
-static int *blit_slot_4f8 = &slot_4f8;
-static int *blit_slot_53c = &slot_53c;
-static int *blit_span_left = &slot_span_left;
-static int *blit_span_right = &slot_span_right;
-static int TextureRowPitchScratch;
 static int reset_calls, control_calls, fixed_div_calls;
-static uintptr_t texture_pointer_address(const void *pointer) {
-    return reinterpret_cast<uintptr_t>(pointer);
-}
-
 static void texture_reset_fpu() { ++reset_calls; }
 enum { _PC_24 = 1, _RC_CHOP = 2, _MCW_PC = 4, _MCW_RC = 8 };
 static int _control87(int, int) { ++control_calls; return 0; }
@@ -203,7 +165,7 @@ static void test_eight_points_and_expiry(Texture &receiver, Texture &shade,
     buffer.rect1_.left = 0; buffer.rect1_.top = 0;
     buffer.rect1_.right = 4; buffer.rect1_.bottom = 4;
     receiver.sub_61cb50(&buffer, screen, &shade, remap, 1);
-    assert(slot_count == 8 && buffer.free_calls == 1);
+    assert(TextureRasterVertexCount == 8 && buffer.free_calls == 1);
     assert(fixed_div_calls >= before + 8);
 }
 

@@ -4,6 +4,7 @@ import shutil
 import subprocess
 
 import pytest
+from texture_direct_storage_host import PRELUDE_MARKER, direct_storage_prelude
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
 
@@ -115,7 +116,9 @@ def _actual_translation_unit(method: str | None = None,
     )
     helper_source = "\n\n".join(selected_helpers[name] for name in HELPER_NAMES)
     selected_method = _braced(source, SIGNATURE) if method is None else method
+    assert fixture.count(PRELUDE_MARKER) == 1
     return (fixture.replace(DECLARATION_INSERTION, declarations, 1)
+            .replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
             .replace(HELPER_INSERTION, helper_source, 1)
             .replace(METHOD_INSERTION, selected_method, 1)
             .replace(MAIN_INSERTION, main, 1))
@@ -123,8 +126,21 @@ def _actual_translation_unit(method: str | None = None,
 
 MAIN = r'''
 static void reset_fixture() {
-    memset(slots, 0, sizeof(slots));
-    memset(light_pack_words, 0, sizeof(light_pack_words));
+    TextureRasterPixelBase = 0;
+    TextureRasterZValues = 0;
+    TextureRasterEdgeVerticesA = 0;
+    TextureRasterEdgeVerticesB = 0;
+    TextureRasterVertexCount = TextureRasterMaxYIndex = 0;
+    TextureRasterRowOffset = TextureRasterBufferStride = 0;
+    TextureRasterTextureWidth = TextureRasterTextureHeight = 0;
+    TextureRasterClipRight = TextureRasterClipLeft = 0;
+    TextureRasterClipBottom = TextureRasterClipTop = 0;
+    TextureRasterScratch4E4.dword = TextureRasterScratch4C8.dword = 0;
+    TextureRasterScratch4C4 = TextureRasterScratch530 = 0;
+    TextureRasterUAccumulator.dword = TextureRasterVAccumulator.dword = 0;
+    TextureRasterScratch498 = TextureRasterSpanLeft = TextureRasterSpanRight = 0;
+    TextureRasterLightPackA.low_word = 0;
+    TextureRasterKey = 91;
     memset(events, 0, sizeof(events));
     event_count = setup_calls = fpu_resets = control_calls = 0;
     fail_right_initial = 0;
@@ -133,7 +149,7 @@ static void reset_fixture() {
     capture_span_light = 0;
     span_light_observed_count = 0;
     memset(span_light_observed, 0, sizeof(span_light_observed));
-    blit_max_y_index[0] = -1;
+    TextureRasterMaxYIndex = -1;
 }
 
 static void check_wrap_aware_edge_step() {
@@ -364,7 +380,7 @@ def test_vertex_scan_uses_existing_extraction_shape() -> None:
     required = (
         "int minY = 0x7fff;", "int maxY = -0x7ffd;",
         "int maxX = static_cast<int>(0xffff8003u);", "int topVert = 0;",
-        "int minX = 0x7fff;", "int count = *blit_vertex_count;",
+        "int minX = 0x7fff;", "int count = TextureRasterVertexCount;",
         "Vert *v = a2;", "int y = v->y;", "if (y < minY)",
         "if (maxY < y)", "int x = v->x;", "if (minY < maxY)",
     )
@@ -425,7 +441,7 @@ def test_compiling_actual_source_mutants_are_rejected(
             "wrong_count": ("const int pixel_count = texture_span_pixels(\n"
                             "                                    texture_difference(clipped_right, clipped_left));",
                             "const int pixel_count = 1;"),
-            "right_clip": ("if (*blit_clip_right <= rightX)", "if (false)"),
+            "right_clip": ("if (TextureRasterClipRight <= rightX)", "if (false)"),
             "refresh_order": ("if (!left_failed) {", "if (true) {"),
         }
         old, new = substitutions[mutation]

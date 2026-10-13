@@ -9,6 +9,7 @@ import subprocess
 import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from texture_direct_storage_host import PRELUDE_MARKER, direct_storage_prelude
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -53,6 +54,7 @@ def _definition(source: str, name: str) -> str:
 
 def _translation_unit(source: str, refresh_helper: str | None = None) -> str:
     fixture = FIXTURE.read_text(encoding="utf-8")
+    assert fixture.count(PRELUDE_MARKER) == 1
     for marker in (HELPER_MARKER, SETUP_MARKER, OWNER_MARKER):
         assert fixture.count(marker) == 1
     helpers = _definition(source, "texture_span_step")
@@ -60,7 +62,8 @@ def _translation_unit(source: str, refresh_helper: str | None = None) -> str:
               _definition(source, "texture_sub61cb50_advance_edge"))
     setup = _definition(source, "Texture::setup_edge")
     owner = _definition(source, "Texture::sub_61cb50")
-    return (fixture.replace(HELPER_MARKER, helpers + "\n\n" + helper, 1)
+    return (fixture.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
+            .replace(HELPER_MARKER, helpers + "\n\n" + helper, 1)
             .replace(SETUP_MARKER, setup, 1)
             .replace(OWNER_MARKER, owner, 1))
 
@@ -74,7 +77,8 @@ def _compile_and_run(source: str, compiler_name: str, tmp_path: Path,
     exe = tmp_path / stem
     cpp.write_text(source, encoding="utf-8")
     built = subprocess.run(
-        [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror", "-no-pie",
+        [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror",
+         "-Wno-unused-variable", "-Wno-unused-function", "-no-pie",
          str(cpp), "-o", str(exe)], cwd=ROOT, capture_output=True,
         text=True, timeout=45,
     )

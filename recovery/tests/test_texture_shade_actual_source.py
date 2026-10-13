@@ -6,6 +6,7 @@ import subprocess
 
 import pytest
 from match_recovery.source import Mode, read_file
+from texture_direct_storage_host import direct_storage_prelude
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src/texture.cpp").is_file())
 SOURCE = ROOT / "src/texture.cpp"
@@ -48,6 +49,7 @@ def _member(source: str) -> str:
 
 PREAMBLE = r"""
 #include <cassert>
+#include <cstring>
 #include <stdint.h>
 """
 
@@ -56,6 +58,7 @@ OWNER_PREAMBLE = r"""
 #define _GNU_SOURCE
 #endif
 #include <cassert>
+#include <cstring>
 #include <stdint.h>
 #include <sys/mman.h>
 struct Vert { int x, y; };
@@ -104,45 +107,13 @@ public:
                 corners_(0), cornersAndMids_(0) {}
     void sub_61d990(Buffer *, Vert *, int *, Texture *, unsigned char *, int);
 };
-static int slot_values[32] = {0};
-#define SLOT(name, index) static int *const name = &slot_values[index]
-static int *z_values_cell = 0;
-static int **blit_z_values = &z_values_cell;
-static Vert *edge_uvs_b_cell = 0;
-static Vert **blit_edge_uvs_b = &edge_uvs_b_cell;
-static void *pixel_base_cell;
-static void **blit_pixel_base = &pixel_base_cell;
-static const void *remap_table_cell;
-static const void **const blit_remap_table = &remap_table_cell;
-static void *texture_pixels_cell;
-static void **blit_texture_pixels = &texture_pixels_cell;
-SLOT(blit_texture_height, 5);
-SLOT(blit_texture_width, 6);
-static Vert *edge_uvs_a_cell = 0;
-static Vert **blit_edge_uvs_a = &edge_uvs_a_cell;
-SLOT(blit_vertex_count, 8);
-SLOT(blit_buffer_stride, 9);
-static void *shade_table_cell;
-static void **blit_shade_table = &shade_table_cell;
-SLOT(blit_clip_right, 11);
-SLOT(blit_clip_left, 12); SLOT(blit_clip_bottom, 13); SLOT(blit_clip_top, 14);
-SLOT(blit_max_y_index, 15); SLOT(blit_row_offset, 16); SLOT(blit_slot_4c4, 17);
-SLOT(blit_slot_530, 18); SLOT(blit_span_left, 19); SLOT(blit_slot_4f8, 20);
-SLOT(blit_slot_53c, 21); SLOT(blit_span_right, 22); SLOT(blit_slot_498, 23);
-SLOT(blit_slot_4e4, 24); SLOT(blit_slot_4c8, 25);
-static unsigned short light_pack_words[2] = {};
-static unsigned short *blit_light_pack_a = &light_pack_words[0];
-#undef SLOT
-static int TextureRowPitchScratch = 0;
+// TEXTURE_DIRECT_STORAGE_PRELUDE
 static int texture_difference(int a, int b) {
     return static_cast<int>(static_cast<unsigned int>(a) -
                             static_cast<unsigned int>(b));
 }
 static int texture_span_step(int difference, int span) {
     return static_cast<int>((static_cast<int64_t>(difference) << 16) / span);
-}
-static uintptr_t texture_pointer_address(const void *pointer) {
-    return reinterpret_cast<uintptr_t>(pointer);
 }
 static unsigned short texture_light_step(int difference, int span) {
     return static_cast<unsigned short>((static_cast<int64_t>(difference) << 8) / span);
@@ -176,13 +147,13 @@ int main() {
     assert(setup_count == 2);
     assert(fpu_reset_count == 2);
     assert(fpu_control_count == 1);
-    assert(*blit_vertex_count == 4);
-    assert(*blit_row_offset == *blit_clip_bottom);
-    assert(*blit_clip_top == *blit_clip_bottom);
-    assert(*blit_z_values == z_values);
-    assert(*blit_slot_4e4 == 0x10000);
-    assert(*blit_slot_4c8 == 0);
-    assert(*blit_light_pack_a == 0x100);
+    assert(TextureRasterVertexCount == 4);
+    assert(TextureRasterRowOffset == TextureRasterClipBottom);
+    assert(TextureRasterClipTop == TextureRasterClipBottom);
+    assert(TextureRasterZValues == z_values);
+    assert(TextureRasterScratch4E4.dword == 0x10000);
+    assert(TextureRasterScratch4C8.dword == 0);
+    assert(TextureRasterLightPackA.low_word == 0x100);
     owner.sub_61d990(0, vertices, z_values, &shade, remap, 0);
     assert(fpu_reset_count == 3);
     assert(buffer.free_count == 1);
@@ -213,10 +184,10 @@ int main() {
     visible.rect1_.bottom = 2;
     owner.sub_61d990(&visible, vertices, z_values, &shade, remap_table, 0);
     assert(static_cast<unsigned char *>(output_page)[5] == 12);
-    assert(*blit_slot_4f8 == 0x30000);
-    assert(*blit_slot_53c == 0x10000);
-    assert(*blit_slot_498 == 0x100);
-    assert(*blit_span_right == 1);
+    assert(TextureRasterUAccumulator.dword == 0x30000);
+    assert(TextureRasterVAccumulator.dword == 0x10000);
+    assert(TextureRasterScratch498 == 0x100);
+    assert(TextureRasterSpanRight == 1);
     assert(visible.get_count == 1);
     assert(visible.free_count == 1);
     assert(munmap(output_page, 65536) == 0);
@@ -271,6 +242,9 @@ def _program(source: str) -> str:
 
 def _owner_program(source: str) -> str:
     pieces = [OWNER_PREAMBLE]
+    assert pieces[0].count("// TEXTURE_DIRECT_STORAGE_PRELUDE") == 1
+    pieces[0] = pieces[0].replace(
+        "// TEXTURE_DIRECT_STORAGE_PRELUDE", direct_storage_prelude(source), 1)
     pieces.extend(
         (_definition(source, "texture_raster_gradient_span_admitted"),
          _definition(source, "texture_span_pixels"),
@@ -285,7 +259,9 @@ def _run(program: str, tmp_path: Path, compiler: str) -> subprocess.CompletedPro
     binary_path = tmp_path / "texture_shade_host"
     source_path.write_text(program, encoding="utf-8")
     built = subprocess.run(
-        [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror", str(source_path), "-o", str(binary_path)],
+        [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror", "-Wno-unused-variable",
+         "-Wno-unused-function",
+         str(source_path), "-o", str(binary_path)],
         text=True,
         capture_output=True,
     )
@@ -297,7 +273,7 @@ def _assert_owner_shape(source: str, header: str) -> None:
     body = _member(source)
     assert "Texture *shade_texture, unsigned char *remap" in body
     assert "int *zvals" in body
-    assert "*blit_z_values = zvals;" in body
+    assert "TextureRasterZValues = zvals;" in body
     assert "wide_flag != 0 ? cornersAndMids_ : corners_" in body
     assert "wide_flag != 0 ? 8 : 4" in body
     acquired = body.index("buffer->get_data()")
@@ -316,14 +292,14 @@ def _assert_owner_shape(source: str, header: str) -> None:
         "texture_draw_shade_span(", body.index("const int clipped_span")
     )
     assert "else if (!texture_raster_step_gouraud(right, this))" in body
-    assert "*blit_slot_4c4 = right.accumA" in body
-    assert "*blit_span_right = left.accumC" in body
+    assert "TextureRasterScratch4C4 = right.accumA" in body
+    assert "TextureRasterSpanRight = left.accumC" in body
     span_begin = body.index("const int span = texture_difference(")
     gradient_store = body.index("texture_raster_gradient_span_admitted(span)", span_begin)
-    row_clip = body.index("if (*blit_clip_top <= *blit_row_offset", span_begin)
+    row_clip = body.index("if (TextureRasterClipTop <= TextureRasterRowOffset", span_begin)
     assert gradient_store < row_clip
-    assert "*blit_light_pack_a =" in body
-    assert body.index("*blit_slot_4f8 = u") < body.index("*blit_slot_498 = light >> 8")
+    assert "TextureRasterLightPackA.low_word =" in body
+    assert body.index("TextureRasterUAccumulator.dword = u") < body.index("TextureRasterScratch498 = light >> 8")
     assert "if (done) break;" in body
     assert "void sub_61d990(Buffer *buffer, Vert *vertArray, int *zvals, Texture *texB," in header
     assert "return 0;" not in body

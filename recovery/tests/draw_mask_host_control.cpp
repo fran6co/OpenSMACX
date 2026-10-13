@@ -11,6 +11,8 @@ struct EdgeScan {
         extraDeltaC, fracAccum, fracDelta, fracSub, accumD, deltaD;
 };
 
+// TEXTURE_DIRECT_STORAGE_PRELUDE
+
 static unsigned char *surface;
 class Buffer {
 public:
@@ -31,52 +33,6 @@ public:
                         Vert *);
 };
 
-static int slots[64];
-static Vert *edge_uvs_a_cell = 0;
-static Vert **blit_edge_uvs_a = &edge_uvs_a_cell;
-static int *blit_slot_498 = &slots[1];
-static int *blit_buffer_stride = &slots[2];
-static int *blit_slot_4a4 = &slots[3];
-static int *blit_texture_width = &slots[4];
-static int *blit_vertex_count = &slots[5];
-static int *blit_max_y_index = &slots[6];
-static int *blit_texture_height = &slots[7];
-static int *blit_slot_4c4 = &slots[8];
-static int *blit_slot_4c8 = &slots[9];
-static int *blit_span_right = &slots[10];
-static int *blit_clip_left = &slots[11];
-static int *blit_clip_top = &slots[12];
-static int *blit_slot_4e4 = &slots[13];
-static void *pixel_base_cell;
-static void **blit_pixel_base = &pixel_base_cell;
-static int *blit_span_left = &slots[15];
-static Vert *edge_uvs_b_cell = 0;
-static Vert **blit_edge_uvs_b = &edge_uvs_b_cell;
-static int *blit_slot_4f8 = &slots[17];
-static int *blit_slot_4fa = &slots[18];
-static int *z_values_cell = 0;
-static int **blit_z_values = &z_values_cell;
-static int *blit_row_offset = &slots[20];
-union TextureRasterRelocatedRowCell { int *initial_target; int value; };
-static int alternate_row_520, alternate_row_524;
-static TextureRasterRelocatedRowCell TextureRasterAlternateRowBase = { &alternate_row_520 };
-static TextureRasterRelocatedRowCell TextureRasterAlternateRowNext = { &alternate_row_524 };
-static int *blit_slot_528 = &slots[23];
-static int *blit_clip_right = &slots[24];
-static int *blit_clip_bottom = &slots[25];
-static void *texture_pixels_cell;
-static void **blit_texture_pixels = &texture_pixels_cell;
-static const void *remap_table_cell;
-static const void **blit_remap_table = &remap_table_cell;
-static int *blit_slot_530 = &slots[28];
-static int *blit_slot_534 = &slots[29];
-static int *blit_slot_538 = &slots[30];
-static int *blit_slot_53c = &slots[31];
-static unsigned char *palette_cell;
-static unsigned char **blit_slot_564 = &palette_cell;
-static unsigned short light_pack_words[2] = {};
-static unsigned short *blit_light_pack_a = &light_pack_words[0];
-static int TextureRowPitchScratch;
 static int ambient_z[4];
 static int edge_setup_calls;
 static int edge_indices[64];
@@ -135,8 +91,8 @@ int Texture::setup_edge_gouraud(EdgeScan *edge, int index) {
     edge_indices[edge_setup_calls] = index;
     edge_directions[edge_setup_calls] = edge->f0;
     ++edge_setup_calls;
-    assert(*blit_max_y_index == 2);
-    int *z = *blit_z_values;
+    assert(TextureRasterMaxYIndex == 2);
+    int *z = TextureRasterZValues;
     assert(z == ambient_z);
     (void)z[index]; // The untouched ambient pointer is consumed by setup.
     if (edge_mode == 4 && index != 0) {
@@ -145,7 +101,7 @@ int Texture::setup_edge_gouraud(EdgeScan *edge, int index) {
             edge->accumC = edge_refreshes == 1 ? 3 : 0;
             if (edge_refreshes == 2) edge->accumA = 0x18000;
             if (edge_refreshes == 3)
-                observed_gradient_before_row2 = *blit_slot_4e4;
+                observed_gradient_before_row2 = TextureRasterScratch4E4.dword;
         } else {
             edge->accumC = 2;
         }
@@ -181,11 +137,32 @@ int Texture::setup_edge_gouraud(EdgeScan *edge, int index) {
 }
 
 static void reset_case_state() {
-    memset(slots, 0, sizeof(slots));
-    pixel_base_cell = 0;
-    texture_pixels_cell = 0;
-    remap_table_cell = 0;
-    z_values_cell = ambient_z;
+    TextureRasterScratch498 = 0;
+    TextureRasterBufferStride = 0;
+    TextureRasterScratch4A4 = 0;
+    TextureRasterTextureWidth = 0;
+    TextureRasterVertexCount = 0;
+    TextureRasterMaxYIndex = 0;
+    TextureRasterTextureHeight = 0;
+    TextureRasterScratch4C4 = 0;
+    TextureRasterScratch4C8.dword = 0;
+    TextureRasterSpanRight = 0;
+    TextureRasterClipLeft = 0;
+    TextureRasterClipTop = 0;
+    TextureRasterScratch4E4.dword = 0;
+    TextureRasterSpanLeft = 0;
+    TextureRasterUAccumulator.dword = 0;
+    TextureRasterRowOffset = 0;
+    TextureRasterScratch528 = 0;
+    TextureRasterClipRight = 0;
+    TextureRasterClipBottom = 0;
+    TextureRasterScratch530 = 0;
+    TextureRasterVAccumulator.dword = 0;
+    TextureRasterLightPackA.low_word = 0;
+    TextureRasterPixelBase = 0;
+    TextureRasterScratch544 = 0;
+    TextureRasterScratch550 = 0;
+    TextureRasterZValues = ambient_z;
     edge_setup_calls = 0;
     edge_refreshes = 0;
     observed_gradient_before_row2 = 0;
@@ -219,7 +196,7 @@ int main() {
     for (int i = 0; i < 256; ++i)
         palette[768 + i] = static_cast<unsigned char>(i + 3);
     memset(ambient_z, 0, sizeof(ambient_z));
-    z_values_cell = ambient_z;
+    TextureRasterZValues = ambient_z;
     surface = storage;
     Buffer buffer = {};
     buffer.rect1_ = RECT{0, 0, 4, 4};
@@ -229,7 +206,7 @@ int main() {
     texture.iWidth_ = 4;
     texture.iHeight_ = 4;
     texture.draw_mask_dest(&buffer, vertices, remap, palette, 4, uv);
-    assert(palette_cell == palette);
+    assert(TextureRasterPalette == palette);
     assert(buffer.frees == 1);
     assert(fpu_reset_calls == 2 && rounding_control_calls == 1);
     assert(edge_setup_calls == 3);
@@ -287,7 +264,7 @@ int main() {
     assert(edge_setup_calls == 8);
     assert(observed_gradient_before_row2 == 0x10000);
     assert(storage[8] == 79 && storage[9] == 80);
-    assert(slots[13] == 0x8000);
+    assert(TextureRasterScratch4E4.dword == 0x8000);
 
     // The clipped endpoints collapse to zero pixels. The original packed
     // counter admits low16 difference zero as one pixel; a signed `x < end`

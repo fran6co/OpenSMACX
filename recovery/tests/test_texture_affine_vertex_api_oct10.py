@@ -7,8 +7,10 @@ import subprocess
 import pytest
 
 from match_recovery.source import read_text
-from test_texture_edge_cache_actual_source import _masked, _run
-from test_texture_raster_actual_source import _continuity_fields, _translation_unit
+from test_texture_edge_cache_actual_source import _masked, _translation_unit as _cache_translation_unit
+from test_texture_raster_actual_source import (
+    _continuity_fields, _translation_unit,
+)
 from test_texture_vertex_api_family_oct10 import SYMBOLS as FAMILY_SYMBOLS
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -74,7 +76,7 @@ def test_swapping_wrapper_vertex_arguments_fails_actual_source_control(tmp_path)
     old = "sub_620a10(a1, a2, a3, a4, a5);"
     assert source.count(old) == 1
     mutated = source.replace(old, "sub_620a10(a1, a4, a3, a2, a5);", 1)
-    result = _run(tmp_path, source=mutated)
+    result = _run_edge_cache_control(tmp_path, mutated)
     assert result.returncode != 0, "swapped vertex channels escaped wrapper control"
 
 
@@ -83,14 +85,35 @@ def test_wrong_shared_vertex_pointer_fails_actual_raster_control(tmp_path):
     if not compiler:
         pytest.skip("host compiler unavailable")
     source = (ROOT / "src/texture.cpp").read_text()
-    old = "*blit_edge_uvs_a = edge_vertices_arg;"
+    old = "TextureRasterEdgeVerticesA = edge_vertices_arg;"
     assert source.count(old) == 1
-    changed = source.replace(old, "*blit_edge_uvs_a = vertices_arg;", 1)
+    changed = source.replace(old, "TextureRasterEdgeVerticesA = vertices_arg;", 1)
     path, executable = tmp_path / "raster.cpp", tmp_path / "raster"
-    path.write_text(_translation_unit(changed))
+    translation_unit = _translation_unit(changed)
+    assert "// TEXTURE_DIRECT_STORAGE_PRELUDE" not in translation_unit
+    path.write_text(translation_unit)
     built = subprocess.run([compiler, "-std=c++11", "-Wno-unused-parameter",
                             str(path), "-o", str(executable)],
                            capture_output=True, text=True, timeout=30)
     assert built.returncode == 0, built.stderr
     result = subprocess.run([str(executable)], capture_output=True, timeout=30)
     assert result.returncode != 0, "wrong shared pointer escaped raster control"
+
+
+def _run_edge_cache_control(tmp_path, source):
+    compiler = shutil.which("clang++") or shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    translation_unit = _cache_translation_unit(source)
+    assert "// TEXTURE_DIRECT_STORAGE_PRELUDE" not in translation_unit
+    cpp = tmp_path / "edge_cache_actual.cpp"
+    binary = tmp_path / "edge_cache_actual"
+    cpp.write_text(translation_unit, encoding="utf-8")
+    built = subprocess.run(
+        [compiler, "-std=c++11", "-Wall", "-Wextra", "-Wno-unused-parameter",
+         str(cpp), "-o", str(binary)],
+        check=False, capture_output=True, text=True, timeout=45,
+    )
+    assert built.returncode == 0, built.stdout + built.stderr
+    return subprocess.run([str(binary)], check=False, capture_output=True,
+                          text=True, timeout=30)
