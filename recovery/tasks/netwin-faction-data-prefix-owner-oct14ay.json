@@ -1,0 +1,27 @@
+{
+  "author": "coordinator",
+  "base_revision": "095d4e2b5b907fbc3d6ce6e07aef2e705a515a5b",
+  "editable_files": [
+    "src/netwin.cpp",
+    "src/netwin.h",
+    "recovery/tests/test_netwin_faction_data_prefix_oct14ay.py",
+    "recovery/tests/test_net_hotseat_owner_actual_source_oct6.py",
+    "recovery/tests/test_packet_label_fidelity_oct11.py"
+  ],
+  "evidence": [
+    "Pinned complete span 0x47B020..0x47B0E1 writes only a 16-bit opcode 0x0F0D at +0, signed faction -1 at +4 and zero timestamp at +8; payload starts +0x10. MessageDataRecord and process_message corroborate shared prefix field positions; F0D must not be treated as lobby byte opcode/flags. Naming is a source interpretation, not proof of the original declaration or full packet extent.",
+    "Use a narrow faction-data prefix layout and char-pointer borrowed view with memcpy field writes into the original allocated storage. Do not construct or stage a full header, initialize allocator bytes +2..3/+C..F, add a flexible array, introduce raw original addresses, or change other packet families. Preserve fresh faction_records_ reload after mem_get, optional setup, count*399+0x1A4 allocation/count*399+0x194 copy, signed negative broadcast, slot PID, send order/flag, leaks and null/error behavior.",
+    "Preserve every original identity/span/symbol/claim and useful historical binding evidence. Tests extract actual source and schema, cover sentinel preservation and allocator-triggered source-pointer changes; compile-success mutants require exact semantic diagnostics, never arbitrary crash. Existing hotseat declaration extraction and packet-label fidelity fixtures need the new schema/view and the header-write order mutant must anchor the real setter rather than the retired cast. Preserve their previous assertions/pinned checks; do not mask memcpy before inline view declarations. Coordinator owns native compiler/worktree/Git; require build/link, immediate measurement, relevant regression tests, full physical function comparison and claim continuity plus reviewed manual integration. Preserve any temporary matching obligation without demotion; no automatic, runtime or whole-game acceptance."
+  ],
+  "intent": "Recover the faction-data serialization prefix as named wire fields and a borrowed byte view, preserving the original partial initialization and dynamic payload.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4698144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-faction-data-prefix-owner-oct14ay"
+}
