@@ -1,0 +1,66 @@
+{
+  "author": "coordinator",
+  "base_revision": "75a020323f4ff637825807b3add2de540dd60a68",
+  "editable_files": [
+    "src/netwin.h",
+    "src/netwin.cpp",
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netwin_session_scenario_storage_oct13ah.py",
+    "recovery/tests/test_netwin_row_owners.py",
+    "recovery/tests/netwin_pick_map_host_control.cpp",
+    "recovery/tests/test_netwin_pick_map_behavior.py",
+    "recovery/tests/test_strings_labels_pointer_owner_actual_source_oct10.py",
+    "recovery/tests/test_small_game_owner_closure.py",
+    "recovery/tests/test_netwin_session_assets_owner_oct9.py",
+    "recovery/tests/test_netwin_typed_packet_senders_oct10.py",
+    "recovery/tests/test_netdaemon_session_lobby_wire_actual_source_oct13ad.py"
+  ],
+  "evidence": [
+    "Existing source-owned NetWinSessionData90E778..90E8E0 is360byte BSS storage. Pinned sender47B2E0 and process_message534400 receiver537C7B copy5Adwords, preserving this whole interval. Current mode member occupies+0 and opaque state begins+4. Original config_players481E90 stores byte0 at481EA5 to90E79C; pick_map47D300 clears that byte at47D4BD/47D7F4 and passes same90E79C address at47D80D to the basename strcpy. draw_session_info480900 repeatedly rereads that byte and passes sameaddress at480D75 to concatenation. sub_4e2450 clears mode and only this first byte, leaving the adjacent tail untouched.",
+    "Split the existing opaque state interval into uint8_t reserved_session_prefix_[0x20] and char scenario_text_wire_tail_[0x144], with clear source rationale: this is the remainder of the observed serialized storage interval starting at block+24, not a recovered original filename capacity, complete field boundary, safe/NUL-termination guarantee or exclusive logical string allocation. Preserve sizeof168, modeoffset0, newtailoffset24 and every byte; existing global symbol/binding/span remain unchanged. Replace state_[20] accesses with tail[0], bind the existing local scenario alias directly as char*, and remove only the two redundant unsignedchar-to-char string casts. Do not alter other structures, source function symbols, raw borrowed row8 views or packet ingress.",
+    "Preserve all live rereads across calls, original basenames, unbounded strcpy behavior, firstbyte-only clears, post-NUL/wire bytes, whole-block publication/reception, row8 overlapping borrowed views, allocation and lifecycle. Never zero the tail, add bounds/length/NUL checks, snapshot the flag, fabricate initializer or change known original quirks. Netdaemon.cpp is admitted verification-only and must remain byte-identical to immutablebase.",
+    "Source author owns only netwin.h/cpp. Disjoint test author owns named tests/fixture and must preserve existing assertions, native witnesses and mutating callback controls. Replace stale fake block declarations with actual extracted current schema where practical. New controls verify exact bytes/offsets, firstbyte-only clearing with poisoned adjacent storage, all360byte sender/receiver copies, basename pointer identity and repeated UI reads. Preserve historical packet source guards by a narrow explicit reversal of this exact new storage delta, not by dropping old guards or accepting arbitrary changes. Immutable-base whole-source token/history guards admit only this storage declaration/alias/use change; all original annotations, object bindings and historical claims remain.",
+    "Coordinator measures immutablebaseline before edits; freeze all scope and packagePython during native epochs, lease compiler resources. Fresh build/link, original scoped matching/restoration, compiler CodeView size/memberoffsets and physical whole-application compiler collateral, reference/identity continuity and independent review precede manual integration. Header collateral must be admitted/reviewed rather than ignored. Preserve justified source work/historical obligations through reviewed matching regressions; no automatic claim demotion or weakened gates. Full linked/storage/runtime/game acceptance remains unproven."
+  ],
+  "intent": "Recover named scenario-text starting storage within the existing session wire owner, preserving opaque tail and original unchecked behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4726416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4720896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4707072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5121104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4699216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-session-scenario-storage-owner-oct13ah"
+}
