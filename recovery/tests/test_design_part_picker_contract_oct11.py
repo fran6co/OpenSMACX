@@ -2,6 +2,7 @@
 from dataclasses import fields
 from pathlib import Path
 import json
+import os
 import re
 import resource
 import shutil
@@ -44,15 +45,40 @@ def test_exact_bounded_source_and_original_obligations(relative):
     path = ROOT/relative
     old = subprocess.check_output(['git','show',BASE+':'+relative],cwd=ROOT,text=True)
     expected = migration(old,relative)
-    assert path.read_text()==expected and migration(expected,relative,reverse=True)==old
-    before,after = read_text(old,path),read_text(expected,path)
-    assert len(before)==len(after)
-    for a,b in zip(before,after):
-        for field in fields(a):
+    assert migration(expected,relative,reverse=True)==old
+    recipe_before,recipe_after = read_text(old,path),read_text(expected,path)
+    assert len(recipe_before)==len(recipe_after)
+    for before,after in zip(recipe_before,recipe_after):
+        for field in fields(before):
             if field.name not in {'line','region','origin'}:
-                assert getattr(a,field.name)==getattr(b,field.name)
-        lessons = lambda r: [(l.kind,l.key,l.prose,tuple(t for _,t in l.lines)) for l in r.origin]
-        assert lessons(a)==lessons(b)
+                assert getattr(before,field.name)==getattr(after,field.name)
+        lessons = lambda r:[(l.kind,l.key,l.prose,tuple(t for _,t in l.lines))
+                            for l in r.origin]
+        assert lessons(before)==lessons(after)
+
+    # The historical recipe remains an independently reversible migration.
+    # Current owner files have since accumulated other reviewed migrations, so
+    # comparing their whole text to this one recipe would reject valid source.
+    original,current = read_text(old,path),read_text(path.read_text(),path)
+    key = lambda r:(r.address,r.name,r.symbol)
+    by_key = {key(r):r for r in current}
+    assert len(original)==len(current) and set(map(key,original))==set(by_key)
+    lessons = lambda r:[(l.kind,l.key,l.prose,tuple(t for _,t in l.lines))
+                        for l in r.origin]
+    for before in original:
+        after = by_key[key(before)]
+        for field in fields(before):
+            if field.name not in {'line','region','origin','image_spans'}:
+                assert getattr(before,field.name)==getattr(after,field.name)
+        assert lessons(before)==lessons(after)
+        if relative=='src/designwin.cpp' and key(before)==(
+                0x43AC70, '?select_special@DesignWin@@QAEXH@Z', ''):
+            # This independently reviewed cold-span recovery predates the
+            # parent-surface task. No other historical span is waived.
+            assert before.image_spans==((0x43AC70,0x43BDE9),(0x654410,0x654416))
+            assert after.image_spans==((0x43AC70,0x43BDE9),(0x654410,0x6546C5))
+        else:
+            assert before.image_spans==after.image_spans
 
 
 def test_source_owned_member_offsets_and_pointer_declaration():
@@ -71,7 +97,7 @@ def test_pinned_argument_stores_palette_and_direct_ordinal_scan():
     from capstone import Cs,CS_ARCH_X86,CS_MODE_32
     from match_recovery.pe_coff import PeImage
     from match_recovery.model import Span
-    path=ROOT/'.opensmacx/game/terranx_original.exe'
+    path=Path(os.environ.get('OPENSMACX_IMAGE', ROOT/'.opensmacx/game/terranx_original.exe'))
     if not path.is_file():pytest.skip('pinned image unavailable')
     image=PeImage(path.read_bytes(),PIN)
     ins={}

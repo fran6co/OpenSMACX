@@ -107,16 +107,17 @@ int SelectPartWin::exec(int x, int y, int faction, int kind, int selected,
         &backdrop, TutWinBaseWindow.sprite6_.transparent_index(),
         0, 0, 1, 1);
 
-    const int width = WinScreenWidth;
-    const int height = WinScreenHeight;
+    const int width = TutWinDesWindow.pixel_width();
+    const int height = TutWinDesWindow.pixel_height();
     GraphicWin::init(0, 0, width, height, 0, 0x1000020,
-                     static_cast<Win *>(this), 0, 0);
+                     static_cast<Win *>(&TutWinDesWindow), 0, 0);
     GraphicWin::fill(9);
     RECT frame = {0x17, 0, width - 0x37, height};
     static_cast<Buffer *>(this)->box_sprite(&frame, &InterfaceBoxStyles[0]);
 
     if (field_2B74_ > 0x12) {
-        scroll_.init(width - 0x2b, 0x15, 0x18, 0xf6,
+        scroll_.init(static_cast<Buffer *>(this)->pixel_width() - 0x2b,
+                     0x15, 0x18, 0xf6,
                      static_cast<Win *>(this), 0, 1);
         scroll_.hide();
         field_2B60_ = 0;
