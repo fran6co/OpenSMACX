@@ -1,0 +1,37 @@
+{
+  "author": "coordinator",
+  "base_revision": "e05d10549f0f3149d17e1a6a83ecaa80d9da03c4",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "src/netdaemon.h",
+    "src/map.cpp",
+    "src/net_checksum_report.h",
+    "recovery/tests/test_netdaemon_faction_checksum_oct10.py",
+    "recovery/tests/test_netdaemon_typed_map_checksum_oct10.py",
+    "recovery/tests/test_netdaemon_vehicle_base_checksum_oct10.py",
+    "recovery/tests/test_turn_checksums_behavior.py",
+    "recovery/tests/test_net_checksum_report_oct13at.py"
+  ],
+  "evidence": [
+    "Pinned game_checksum52F8E0..53031E and sole mapped caller do_checksums51E760..51F0A7 agree on47 int words:5 common aggregates,16 map sections, conditional3 diagnostic aggregates,7 faction1..7 player values,7 map/parameter values,8 vehicle-faction values and1 base value. Producer writes only21 words when BaseAtDebugPopupFlag is0; type4 consumer still reads the unwritten diagnostic tail. Mapped caller discovery is not exhaustive external-call proof.",
+    "Authorize a distinct trivial NetChecksumReport with evidence-backed array/member groups and field/offset/sizeof assertions, typed producer interface and direct typed local consumer. It is the observed47word output contract, not a recovered original type name or general allocation claim. Preserve uninitialized local construction, conditional tail writes, signed int values, original checksum traversal/read reloads, masks/ranges and every formatting/logging call/order. Never iterate an int pointer across distinct struct members; name each producer destination/group and use only actual array indexing.",
+    "Keep separate NetTurnChecksums21word persistent/wire storage and all its bindings untouched. Copy exactly the original21word0x54byte prefix by valid object representation, never sizeof the47word report. Preserve original mapping identity/spans/history/claims while reconciling only the new emitted method-symbol hint after compiler evidence; no hand ORIGINAL edits, new byte claims, constructors, value initialization, safe guards or bug fixes.",
+    "Existing focused extracted-body tests must include the actual report declaration and preserve byte-hash/count/reload/mask/word-order oracles, including low-byte map bit2,32byte faction patience neighborhood and3byte vehicle proto range. Add producer/consumer layout and output/untouched-tail controls with observable damage mutants. Do not test native uninitialized tail as a chosen deterministic value. Coordinator owns Git/compiler; isolated source/test authors freeze before native measurements. Independent review, full compile/link, physical collateral and historical claim continuity required; no automatic/full-game acceptance."
+  ],
+  "intent": "Recover the shared game-checksum output contract as a genuine typed report across its producer and consumer without changing original conditional initialization or wire storage.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5437664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5367648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-checksum-report-owner-oct13at"
+}
