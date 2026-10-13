@@ -1,0 +1,89 @@
+{
+  "event_id": "45472f305e87abf8fc93fd90523926c7cee7cc11347591de04ca459e334e0922",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/base.cpp",
+      "src/console.cpp",
+      "src/designwin.cpp",
+      "src/faction.cpp",
+      "src/game.cpp",
+      "src/mapwin.cpp",
+      "src/socialwin.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Fresh retained whole-application COFF comparison observes twelve additional existing original functions affected by replacing the Console header pointer binding with an external real array, despite unchanged body/source files. Admit exactly these mapped identities and source units for shared-header collateral verification; source body changes remain prohibited. No added/removed emitted functions or constructor helper changes were observed.",
+      "The immutable baseline remains44ca59b96. Require all collateral source units equal that baseline byte-for-byte except Console cpp whose only array insertion is separately guarded; all function metadata/history must persist. Compare pinned-original diagnostics under an atomic immutable-old-header overlay versus current header, review actual retained physical differences, preserve unknown EH/ABI/runtime and any matching restoration obligations. Header-only source changes are not proof of compiler-output preservation.",
+      "The new diagnostic object has native16-byte CodeView extent and exact initialized-byte/reference proofs in both profiles. Aggregate native data checking still refuses complete graph qualification due existing unconfigured Win header shared-function owners; selected object pass does not waive that unknown or establish linked/game/runtime acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5203952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5293328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5356656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4415632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4538992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4925248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "console-diagnostic-header-physical-collateral-oct13af",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-cursor-diagnostic-storage-owner-oct13af"
+}
