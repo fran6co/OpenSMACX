@@ -1,0 +1,37 @@
+{
+  "author": "coordinator",
+  "base_revision": "b1684c290c5f4145438f98d2b5189e31f2f496c4",
+  "editable_files": [
+    "src/texture.cpp",
+    "recovery/tests/test_texture_shaded_edge_record_oct13an.py",
+    "recovery/tests/test_texture_edge_state_oct13al.py"
+  ],
+  "evidence": [
+    "Pinned sub_61c63061C630..61CB4E reserves84hex stackbytes, passes firstedge[ebp-78] to nongouraud setup_edge624D80, and publishes untouched firstedge+34/[ebp-44] to scratch9BB498 at61C875/87B. Fullbody has no direct write to that word, edge escapes only to four known setup_edge calls, and pinnedsetup writes only through+30. Current15word arrays zero allfields first, changing this published value. This evidence does NOT establish pixel-output impact or a specific original indeterminate value.",
+    "Use existing genuine EdgeScan locals in sub_61c630 only; initialize ONLYf0 before each setup. Convert all indexedfields to established names and pass actualrecordaddresses; remove fabricated zero loops and casts. Preserve all other guards, liveglobalread/callbackorder, per-row recurrences, packedpixelblend/FPU arithmetic, unchecked/error paths, unbounded behavior and currentmethodsignature. Do not change producer624D80, caller623F50, unrelatedTexturemethods, headers/globals/flags. No semanticnameinventing or longbyte-spelling search.",
+    "The original nongouraud producer leaves accumD+34 anddeltaD+38 untouched. Keep the source indeterminate-word effect explicit; do not initialize tozero, choose a convenient originalvalue, or label its compiler/runtime behavior proven. One concise essential evidence note beside the method may record the original publication and unresolvedstackeffect. All oldTRIED/history/functionmarkers/symbols/claims remain intact; native recorder alone may bankclaims.",
+    "New tests extract actual method andactualEdgeScan declaration, use a test-only deterministic setup spy to inject multiple arbitrary accumD values and observe scratchpublication, plus bothinitialsetup/refresh/recurrence paths wherefeasible. Such fixtures prove dataflow, not originalindeterminatevalue/pixel/nativeABI semantics. Native compiler evidence must confirm absence of synthetic arrayclearing and actual untouchedwordpublication; original-runtime equivalence remains obligation. Sourceguard admits exactindexed-to-member andzero-loop/cast removal only; setup/caller unchanged. Existing draw_trans2 test wholefileguard must minimally admit ONLYthis explicitlychecked siblingdelta/newnote, retaining its own body/history assertions, not arbitrary outsidechanges.",
+    "Separate isolated source/test authors; coordinator compilerbaseline beforeedits and independent review. Freeze scope/package duringnative epochs. Fresh applicationbuild/link, scoped diagnostics/restoration, physicalcompilercomparison/collateral, references andhistoricalidentitycontinuity required beforemanual integration. No linkedselection/fullgate/gameacceptance claim. Preserve sourcework/unknowns ifmeasurements regress; no claimdemotion or safetyfix."
+  ],
+  "intent": "Recover genuine shaded Texture EdgeScan locals without inventing original stack initialization.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6407728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6442368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6438736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "texture-shaded-edge-record-owner-oct13an"
+}
