@@ -4360,7 +4360,7 @@ char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
 //         &2 masks, `recolor` guards the two change_color calls. Nothing in
 //         the image ties them to a caller-side meaning.
 
-extern "C" int __cdecl extract_sheet_icon(int sprite, int sheet_x, int sheet_y,
+extern "C" int __cdecl extract_sheet_icon(Sprite *sprite, int sheet_x, int sheet_y,
                                          int quadrant, int recolor) {
     if (recolor != 0) {
         g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
@@ -4368,7 +4368,7 @@ extern "C" int __cdecl extract_sheet_icon(int sprite, int sheet_x, int sheet_y,
     }
     int off_x = (-static_cast<int>(((quadrant + 1) & 2) != 0) & 0x1d) + sheet_x;
     int off_y = (-static_cast<int>((quadrant & 2) != 0) & 0x1d) + sheet_y;
-    return reinterpret_cast<Sprite *>(sprite)->extract(
+    return sprite->extract(
         &g_PCX_PARSE_TEMP_BUFFER1, 0x109, off_x, off_y, 0x1c, 0x1c, 0);
 }
 
