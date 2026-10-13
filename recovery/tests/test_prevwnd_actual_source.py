@@ -69,7 +69,7 @@ def _mask_comments_strings(text):
 
 def _actual_definition():
     signature = re.compile(
-        r'extern\s+"C"\s+int\s+__stdcall\s+PrevWndFunc\s*\('
+        r'extern\s+"C"\s+LRESULT\s+__stdcall\s+PrevWndFunc\s*\('
     )
     matches = []
     for path in sorted(SOURCE_ROOT.glob("*.cpp")):
@@ -100,9 +100,14 @@ def _actual_definition():
     return path, body
 
 
-def _compile_run(tmp_path, compiler, source):
+def _compile_run(tmp_path, compiler, source, require_wndproc_assignment=False):
     fixture = FIXTURE.read_text()
     assert fixture.count("/* ACTUAL_SOURCE */") == 1
+    assignment = ""
+    if require_wndproc_assignment:
+        assert fixture.count("/* WNDPROC_ASSIGNMENT */") == 1
+        assignment = "WNDPROC installed = &PrevWndFunc;\n    assert(installed == &PrevWndFunc);"
+        fixture = fixture.replace("/* WNDPROC_ASSIGNMENT */", assignment, 1)
     cpp = tmp_path / "prevwnd_actual.cpp"
     exe = tmp_path / "prevwnd_actual"
     cpp.write_text(fixture.replace("/* ACTUAL_SOURCE */", source))
@@ -128,6 +133,15 @@ def test_actual_prevwindow_source_host_controls(tmp_path, compiler_name):
         pytest.skip(compiler_name + " unavailable")
     _, body = _actual_definition()
     _compile_run(tmp_path, compiler, body)
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_prevwindow_is_assignable_to_wndproc_without_cast(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    _, body = _actual_definition()
+    _compile_run(tmp_path, compiler, body, require_wndproc_assignment=True)
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))

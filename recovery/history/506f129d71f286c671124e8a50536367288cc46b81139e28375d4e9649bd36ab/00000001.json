@@ -1,0 +1,19 @@
+{
+  "event_id": "7532bb78af9ebd36af62e676467138debe89b4c32a10ef46b8ad771afa2f76fa",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/win_callbacks.h"
+    ],
+    "evidence": [
+      "The correct shared WNDPROC declaration is consumed only by win.cpp and dialog.cpp. Both placements in ubiquitous win.h caused eleven unrelated physical code changes in fresh builds; moving it to EOF did not resolve them, so typedef-line identity alone is not a proven cause. Authorize a dedicated win_callbacks.h SDK callback declaration included only by the two consumers, restoring win.h to its unchanged original contents. Preserve typed callback ABI and all earlier constraints, and update the existing test declaration witness to the dedicated header. Fresh complete compile/link and all-function collateral comparison remain required; do not discard justified typing or waive changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "window-callback-local-interface-oct13aq",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:windows-prefilter-abi-owner-oct13aq"
+}

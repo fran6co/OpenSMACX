@@ -72,6 +72,7 @@ def _extract_definition(source: str, signature: str) -> str:
 
 SOURCE_SIGNATURES = {
     "setup_ctor": ("src/setupwin.cpp", r"^\s*SetupWin::SetupWin\s*\(\s*\)"),
+    "setup_close": ("src/setupwin.cpp", r"^\s*void\s+SetupWin::close\s*\(\s*\)"),
     "setup_dtor": ("src/setupwin.cpp", r"^\s*SetupWin::~SetupWin\s*\(\s*\)"),
     "dialog_unk2": ("src/dialog.cpp", r"^\s*void\s+Dialog::UNK2\s*\("),
     "pass_focus": ("src/dialogs.cpp", r"^\s*void\s+Dialogs::pass_dialog_focus\s*\(\s*\)"),
@@ -85,6 +86,7 @@ SOURCE_SIGNATURES = {
 # these labels make failures auditable without rewriting any claim text here.
 MAPPED_ADDRESSES = {
     "setup_ctor": "0x4AD880",
+    "setup_close": "0x4AD9C0",
     "setup_dtor": "0x4AE790",
     "dialog_unk2": "0x609BF0",
     "pass_focus": "0x613180",
@@ -115,6 +117,9 @@ HEADER_WITNESSES = {
         r"bool\s+has_dialog_focus_flag\s*\(\s*\)\s*const",
         r"virtual\s+void\s+redraw\s*\(\s*\)",
         r"virtual\s+void\s+pass_dialog_focus\s*\(\s*\)",
+    ),
+    "src/win_callbacks.h": (
+        r'extern\s+"C"\s+LRESULT\s+__stdcall\s+PrevWndFunc\s*\(\s*HWND(?:\s+\w+)?\s*,\s*UINT(?:\s+\w+)?\s*,\s*WPARAM(?:\s+\w+)?\s*,\s*LPARAM(?:\s+\w+)?\s*\)\s*;',
     ),
     "src/graphicwin.h": (r"class\s+GraphicWin\s*:\s*public\s+Win\s*,\s*public\s+Buffer",),
     "src/flatbutton.h": (r"class\s+FlatButton\s*:\s*public\s+BaseButton",),
@@ -149,6 +154,24 @@ def test_host_relationships_match_tracked_class_and_lifetime_witnesses():
         header = (ROOT / relative).read_text(encoding="utf-8")
         for pattern in patterns:
             assert re.search(pattern, header), relative + " missing witness " + pattern
+
+
+def test_dialog_keeps_integer_entry_but_calls_typed_prev_window_callback():
+    dialog = (ROOT / "src/dialog.cpp").read_text(encoding="utf-8")
+    assert not re.search(r'extern\s+"C"\s+int\s+__stdcall\s+PrevWndFunc\s*\(', dialog)
+    assert '#include "win_callbacks.h"' in dialog
+    win_header = (ROOT / "src/win.h").read_text(encoding="utf-8")
+    assert "PrevWndFunc" not in win_header
+    callback_users = {
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / "src").rglob("*.cpp")
+        if '#include "win_callbacks.h"' in path.read_text(encoding="utf-8")
+    }
+    assert callback_users == {"src/win.cpp", "src/dialog.cpp"}
+    body = _extract_definition(
+        dialog, r"^\s*void\s+Dialog::UNK2\s*\(\s*int\s+window\s*,\s*int\s+message\s*,\s*int\s+wparam\s*,\s*int\s+lparam\s*\)")
+    assert "CallWindowProcA(&PrevWndFunc," in body
+    assert "reinterpret_cast<WNDPROC>(&PrevWndFunc)" not in body
 
 
 SETUP_DIALOG_HOST = r'''#include <cassert>
@@ -186,29 +209,34 @@ struct StringStruct : virtual StringAllocationBase {
   virtual ~StringStruct(){events.push_back(stringstruct_cleanup); events.push_back(stringstruct_dtor);}
 };
 struct StringList : StringStruct {
-  StringList(){events.push_back(list_ctor);}
+  void *head_; int current_position_;
+  StringList():head_(reinterpret_cast<void *>(1)),current_position_(0){events.push_back(list_ctor);}
+  void remove_all(){head_=0; events.push_back(list_remove);}
   ~StringList(){remove_all(); events.push_back(list_dtor);}
 };
 struct SetupWin : GraphicWin {
   uint32_t overlay_buffers_[3]; int row_count_, selected_row_, field_A14_, field_A18_;
   GraphicWin *opening_window_snapshot_; uint32_t menu_popup_; Buffer buffer_; Spot spot_; StringList field_FE0_;
-  SetupWin(); ~SetupWin();
+  SetupWin(); void close(); ~SetupWin();
 };
 typedef void *HWND; typedef intptr_t LONG_PTR; typedef unsigned int UINT;
-typedef intptr_t LPARAM; typedef uintptr_t WPARAM; typedef int LRESULT;
-typedef LRESULT (*WNDPROC)(HWND, UINT, WPARAM, LPARAM);
+typedef intptr_t LPARAM; typedef uintptr_t WPARAM; typedef intptr_t LRESULT;
+#define CALLBACK
+#define __stdcall
+typedef LRESULT (CALLBACK *WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 const UINT WM_SETFOCUS=7, WM_KILLFOCUS=8; const int GWL_USERDATA=-21;
 int prev_calls=0, child_calls=0, userdata_calls=0;
 HWND forwarded_window=0; UINT forwarded_message=0;
 WPARAM forwarded_wparam=0; LPARAM forwarded_lparam=0;
 HWND child_argument=0; bool child_result=false; Win *userdata_owner=0;
-LRESULT PrevWndFunc(HWND w, UINT m, WPARAM a, LPARAM l) { forwarded_window=w; forwarded_message=m; forwarded_wparam=a; forwarded_lparam=l; ++prev_calls; events.push_back(forward_event); return 0; }
+extern "C" LRESULT __stdcall PrevWndFunc(HWND w, UINT m, WPARAM a, LPARAM l) { forwarded_window=w; forwarded_message=m; forwarded_wparam=a; forwarded_lparam=l; ++prev_calls; events.push_back(forward_event); return 0; }
 bool IsChild(HWND, HWND child) { ++child_calls; child_argument=child; events.push_back(child_event); return child_result; }
 LONG_PTR GetWindowLongA(HWND, int) { ++userdata_calls; events.push_back(userdata_event); return reinterpret_cast<LONG_PTR>(userdata_owner); }
 LRESULT CallWindowProcA(WNDPROC p, HWND w, UINT m, WPARAM a, LPARAM l) { return p(w,m,a,l); }
 struct Dialog { void UNK2(int window, int message, int wparam, int lparam); };
 }
 // INSERT_SETUP_CTOR
+// INSERT_SETUP_CLOSE
 // INSERT_SETUP_DTOR
 // INSERT_DIALOG_UNK2
 int main() {
@@ -352,6 +380,7 @@ int main(){FlatButton b;Win p;b.set_rect(4,8,24,18);b.win_parent_=&p;b.bubble_te
 FIXTURES = {
     "setup_dialog": (SETUP_DIALOG_HOST, {
         "setup_ctor": "// INSERT_SETUP_CTOR",
+        "setup_close": "// INSERT_SETUP_CLOSE",
         "setup_dtor": "// INSERT_SETUP_DTOR",
         "dialog_unk2": "// INSERT_DIALOG_UNK2",
     }),
@@ -410,7 +439,7 @@ def test_actual_tracked_bodies_compile_and_execute_cxx98(
     "fixture_name,body_name,before,after",
     (
         ("setup_dialog", "setup_ctor", "row_count_ = 0;", "row_count_ = 1;"),
-        ("setup_dialog", "setup_dtor", "field_FE0_.remove_all();", ";"),
+        ("setup_dialog", "setup_close", "field_FE0_.remove_all();", ";"),
         ("setup_dialog", "dialog_unk2", "owner->redraw();", ";"),
         ("setup_dialog", "dialog_unk2", "static_cast<LONG_PTR>(wparam)", "static_cast<LONG_PTR>(lparam)"),
         ("dialogs", "pass_focus", "GraphicWin::pass_dialog_focus();", ";"),

@@ -16,10 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "win_callbacks.h"
 #include "original_seam.h"
 #include "dialog.h"
 #include "win.h"
-extern "C" int __stdcall PrevWndFunc(int, int, int, int);
 #include "stringstruct.h"
 
 // ORIGINAL: 0x00609970 ?UNK1@Dialog@@QAEXHH@Z 0x00609970-0x0060998A FILE BYTE_EXACT
@@ -945,7 +945,7 @@ void Dialog::UNK2(int window, int message, int wparam, int lparam) {
             }
         }
     }
-    CallWindowProcA(reinterpret_cast<WNDPROC>(&PrevWndFunc), hwnd, message,
+    CallWindowProcA(&PrevWndFunc, hwnd, message,
                     static_cast<WPARAM>(wparam), static_cast<LPARAM>(lparam));
 }
 

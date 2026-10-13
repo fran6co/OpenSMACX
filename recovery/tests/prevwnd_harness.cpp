@@ -54,6 +54,14 @@ LONG GetWindowLongA(HWND hwnd, int index) {
     return reinterpret_cast<intptr_t>(userdata_owner);
 }
 
+static WPARAM target_wparam(uint32_t bits) {
+    return static_cast<WPARAM>(bits);
+}
+
+static LPARAM target_lparam(uint32_t bits) {
+    return static_cast<LPARAM>(static_cast<int32_t>(bits));
+}
+
 LRESULT Win::window_proc(HWND, UINT, WPARAM, LPARAM) { return 0; }
 
 LRESULT CallWindowProcA(WNDPROC proc, HWND hwnd, UINT message,
@@ -68,13 +76,14 @@ LRESULT CallWindowProcA(WNDPROC proc, HWND hwnd, UINT message,
 /* ACTUAL_SOURCE */
 
 int main() {
+    /* WNDPROC_ASSIGNMENT */
     ProbeWin owner = {};
     HWND hwnd = reinterpret_cast<HWND>(static_cast<intptr_t>(0x1234));
 
     userdata_owner = &owner;
     userdata_reads.clear();
-    assert(PrevWndFunc(0x1234, 5, static_cast<int>(0xFFFFFFFFu),
-                       static_cast<int>(0xFFFF8000u)) == 0);
+    assert(PrevWndFunc(hwnd, 5, target_wparam(0xFFFFFFFFu),
+                       target_lparam(0xFFFF8000u)) == 0);
     assert(userdata_reads.size() == 1 && userdata_reads[0] == 0x1234);
     assert(owner.size_calls == 1 && owner.cursor_calls == 0);
     assert(owner.size_type == 0xFFFFFFFFu);
@@ -82,16 +91,16 @@ int main() {
     assert(fallback_calls == 0);
 
     userdata_reads.clear();
-    const int packed = static_cast<int>(0xFFFF8000u);
-    assert(PrevWndFunc(0x1234, 5, 0x80000001, packed) == 0);
+    const LPARAM packed = target_lparam(0xFFFF8000u);
+    assert(PrevWndFunc(hwnd, 5, target_wparam(0x80000001u), packed) == 0);
     assert(userdata_reads.size() == 1);
     assert(owner.size_calls == 2 && owner.size_type == 0x80000001u);
     assert(owner.width == -32768 && owner.height == -1);
 
     userdata_reads.clear();
-    const int cursor_bits = 0x12345678;
-    assert(PrevWndFunc(0x1234, 0x20, cursor_bits,
-                       static_cast<int>(0xABCD8001u)) == owner.result);
+    const WPARAM cursor_bits = target_wparam(0x12345678u);
+    assert(PrevWndFunc(hwnd, 0x20, cursor_bits,
+                       target_lparam(0xABCD8001u)) == owner.result);
     assert(userdata_reads.size() == 1);
     assert(owner.cursor_calls == 1);
     assert(reinterpret_cast<uintptr_t>(owner.cursor) == 0x12345678u);
@@ -100,20 +109,21 @@ int main() {
 
     userdata_reads.clear();
     userdata_owner = 0;
-    assert(PrevWndFunc(0x1234, 5, 0, 0) == 0);
+    assert(PrevWndFunc(hwnd, 5, target_wparam(0), target_lparam(0)) == 0);
     assert(userdata_reads.size() == 1 && fallback_calls == 0);
-    assert(PrevWndFunc(0x1234, 0x20, 0, 0) == 0);
+    assert(PrevWndFunc(hwnd, 0x20, target_wparam(0), target_lparam(0)) == 0);
     assert(userdata_reads.size() == 2 && fallback_calls == 0);
 
     userdata_owner = &owner;
     userdata_reads.clear();
-    const int arbitrary_lparam = static_cast<int>(0xFEDCBA98u);
-    assert(PrevWndFunc(0x1234, 0x777, 0x76543210,
+    const LPARAM arbitrary_lparam = target_lparam(0xFEDCBA98u);
+    const WPARAM arbitrary_wparam = target_wparam(0x76543210u);
+    assert(PrevWndFunc(hwnd, 0x777, arbitrary_wparam,
                        arbitrary_lparam) == fallback_result);
     assert(userdata_reads.empty());
     assert(fallback_calls == 1 && fallback_hwnd == hwnd);
-    assert(fallback_message == 0x777u && fallback_wparam == 0x76543210u);
-    assert(fallback_lparam == static_cast<LPARAM>(arbitrary_lparam));
+    assert(fallback_message == 0x777u && fallback_wparam == arbitrary_wparam);
+    assert(fallback_lparam == arbitrary_lparam);
 
     std::puts("PrevWndFunc actual-source controls passed");
 }

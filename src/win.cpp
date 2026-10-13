@@ -28,6 +28,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original5EB3B0..5EB3CF reads cleanup byte9B6E30, tests mask2, retains other bits while setting bit2 before complete Buffer destructor5D7410 with receiver9B7490. Existing drawing callback5EB370 uses mask1 of the same byte.", "Original consecutive CRT slots682678/68267C construct/register drawing then screen. Current same-TU definitions preserve registration and reverse atexit cleanup without dynamic reference globals or executable-address dispatch. Constructors do not reset the guard.", "Actual retained physical COFF observes _$E29 referring to the same guard and ScreenBufferOwner before direct qualified Buffer destructor. Startup closure references the real Buffer constructor and atexit registration. Source owner storage is offset-zero and aligned for current Buffer; original allocation bounds/names/TU remain unknown.", "Original9B74C0 is ScreenBuffer+30 rect2_, proved by pinned5EFED9push9B74C0/5EFEDEmovecx9B7490/5EFEE3call5D8000. Rendering restores clipping through Buffer::restore_clip, not duplicate RECT storage.", "No unmeasured claim is granted. Preserve all old claims and startup restoration; compiler constructor/unwind equality, complete linked preservation/data extent and game runtime fidelity remain obligations."], "reason": "Bind original ScreenBuffer guarded teardown to the actual compiler-generated callback of its source-owned shared Win lifetime."}
 // symbol    _$E29
 #include "stdafx.h"
+#include "win_callbacks.h"
 
 // Win constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
@@ -13265,12 +13266,12 @@ int __cdecl Win::display_action(int action) {
 Purpose: Pre-filter the owner window's messages before the shared window
          procedure sees them.
 // ORIGINAL: 0x005D5C50 PrevWndFunc 0x005D5C50-0x005D5CEA FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Historical seed git:117282ee:src/unrecovered/005d5c50.cpp retains original identity/spans.", "Pinned 5D5C50..5D5CEA handles WM_SIZE at Win virtual slot71 with signed low/high16-bit dimensions; WM_SETCURSOR uses slot85 with zero-extended words and returns its result.", "Win::on_size(unsigned int,int,int) and on_set_cursor(void*,unsigned int,unsigned int) are existing source-owned virtual slots71/85; Dialog::UNK2 calls this free WNDPROC through CallWindowProcA.", "GWL_USERDATA is the same genuine Win view used by the typed message adapters in win.cpp. Keep message-specific userdata lookup, null returns, original integer stdcall boundary, and Win::window_proc fallback."], "reason": "Recover the window pre-filter as a genuine free Win-owned Windows callback, using existing virtual methods instead of fabricated slot receiver types. Preserve original payload transforms, guards and result/fallback behavior; no new match claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["Historical seed git:117282ee:src/unrecovered/005d5c50.cpp retains original identity/spans.", "Pinned 5D5C50..5D5CEA handles WM_SIZE at Win virtual slot71 with signed low/high16-bit dimensions; WM_SETCURSOR uses slot85 with zero-extended words and returns its result.", "Win::on_size(unsigned int,int,int) and on_set_cursor(void*,unsigned int,unsigned int) are existing source-owned virtual slots71/85; Dialog::UNK2 calls this free WNDPROC through CallWindowProcA.", "GWL_USERDATA is the same genuine Win view used by the typed message adapters in win.cpp. Keep message-specific userdata lookup, null returns, the four-slot 32-bit stdcall WNDPROC boundary, and Win::window_proc fallback."], "reason": "Recover the window pre-filter as a genuine free Win-owned Windows callback, using existing virtual methods instead of fabricated slot receiver types. Preserve original payload transforms, guards and result/fallback behavior; no new match claim."}
 // symbol    _PrevWndFunc@16
 Status: Coverage transcription - unclaimed body
 */
-extern "C" int __stdcall PrevWndFunc(int window, int message, int wparam,
-                                     int lparam) {
+extern "C" LRESULT __stdcall PrevWndFunc(HWND window, UINT message,
+                                         WPARAM wparam, LPARAM lparam) {
     if (message == 5) {
         Win *const owner = reinterpret_cast<Win *>(
             GetWindowLongA((HWND)window, GWL_USERDATA));
@@ -13292,7 +13293,7 @@ extern "C" int __stdcall PrevWndFunc(int window, int message, int wparam,
         }
         return 0;
     }
-    return CallWindowProcA(reinterpret_cast<WNDPROC>(&Win::window_proc),
+    return CallWindowProcA(&Win::window_proc,
                            (HWND)window, (UINT)message, (WPARAM)wparam,
                            (LPARAM)lparam);
 }
