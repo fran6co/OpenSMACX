@@ -1,0 +1,61 @@
+{
+  "author": "coordinator",
+  "base_revision": "eef7695b48b16241ae0a7b5d4e786df666bd6254",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_early_routes_oct12.py",
+    "recovery/tests/test_netdaemon_table_e_reads_oct11.py",
+    "recovery/tests/test_netdaemon_typed_storage_oct11.py",
+    "recovery/tests/test_netdaemon_sender_identity_oct11.py",
+    "recovery/tests/test_netdaemon_transfer_exits_oct11.py",
+    "recovery/tests/test_netdaemon_project_actual_source.py",
+    "recovery/tests/test_message_data_actual_source.py",
+    "recovery/tests/test_netdaemon_command_wire_actual_source_oct13ac.py"
+  ],
+  "evidence": [
+    "Existing packet producers establish distinct vehicle18-byte, base-text2C-byte, data20-byte, lock28-byte and bulk90-byte records. Promote only the existing vehicle/base/lock automatic record definitions into shared file-scope declarations, with native offset/width assertions and uninitialized padding preserved. Keep producer assignments, argument permutation, counters, return effects and transmitted lengths exactly; do not expand any producer. Reuse MessageCommandView/MessageDataRecord and MessageBigDataRecord rather than duplicating them.",
+    "Replace only reads in netdaemon_process_table_e, netdaemon_handle_table_f, netdaemon_process_table_g, netdaemon_handle_diplo_cd_message, netdaemon_handle_direct_diplomacy_complete, netdaemon_handle_server_upkeep_info and netdaemon_handle_withdraw_approved. Remove netdaemon_table_g_word rather than disguising a generic offset reader. Source author owns netdaemon.cpp only; tests author owns listed tests. No entry-capture, relay, fixup, synchronization, lobby, other table or unrelated no-op cast changes.",
+    "E2215 uses the lock record: add_lock argument order is sender identity, payload18 target, payload10, payload14; logger captures two initial payloads but action rereads after it. E2213 producer remains unknown: only consumed player index10 and signed sequenceC are supported, not a full MessageData record. F4305/4306 have consumer-only fields, with no inferred complete producer. F4307 uses bulk data: read21 words from10, re-read unchecked faction4 each iteration; array capacity is32, not21. F4309 and all listed diplomacy/130x paths use verified data producers. Preserve logging/parsing/action alias effects and access times.",
+    "TableG: 4405/4411..4415 use data views; 4407/4409/4410/4416 use vehicle views; 4408 uses base text14, never an integer. 4406 has both vehicle18 and data20 producers: use only a named shared accessed prefix, no full-layout selection by opcode or invented length guard. Keep captured vehicle IDs/x/y before callbacks in4409/4410/4417/4418, byte18 order read after action in4405, fresh fields after callbacks elsewhere, entry_packet_faction/entry_sequence snapshots and all three native tails unchanged.",
+    "Critical original quirk: Console sends2417/2418 with message_veh(vehicle_id,entry_x,target=entry_y), so y is routing, not serialized. Pinned default relay537F7A..537FC6 changes opcode/sequence and forwards unchanged incoming length18; TableG53695F..5369E3 nevertheless reads dword18 as action y. Transport/FIFO copies only declared bytes into shared uncleared receive scratch. Keep this separate explicitly named unserialized receive-scratch read, NOT a MessageVehicleRecord member or full MessageData cast; preserve residue effects without adding initialization, bounds checks or a guessed server extension. This task does not alter Console or transport.",
+    "Each borrowed view reads one field with memcpy/offsetof without whole-record copy, alignment assumptions or snapshots across calls. Record declarations and accessed-prefix names require producer/consumer evidence; do not assign undocumented semantic meanings to generic payload slots. Keep literal API char/byte conversions at serialization boundaries rather than claiming all casts are defects.",
+    "Tests reuse actual E/F/G/diplomacy helper projections and callback mutation controls, extracting actual record/view declarations. Keep historical migration recipes/patches as frozen evidence and add strict whole-current-base source-token recipe plus complete annotation/identity/history continuity. Named compiled runtime98 damage controls cover wrong field/variant/cached reads; host allocated scratch can model the extra18 read but proves neither a serialized field nor native stale-value/runtime equivalence. Preserve precise scope disclaimers. Do not relax marker/span/claim obligations or label unknown EH comparison as passed.",
+    "Coordinator freezes complete task scope/package Python during native epochs. Baseline before edits; fresh candidate and destination build/link, scoped matches, compiler collateral, original identity/reference checks and independent review precede manual integration. Temporary justified matching regressions preserve all restoration obligations; no manual claim tokens or demotions. Full process_message complex cold/EH measurement, linked preservation and game/runtime acceptance remain unsupported; preserve full spans."
+  ],
+  "intent": "Recover remaining E/F/G and early diplomacy packet reads through proven command variants, keeping unknown producer fields and receive-scratch residue explicit.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5845136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-command-wire-closure-oct13ac"
+}
