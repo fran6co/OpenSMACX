@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "14c1a91785303a2e1062e15c655e31914072c475",
+  "editable_files": [
+    "src/multiwin.cpp",
+    "recovery/tests/test_multiwin_player_status_oct14aw.py"
+  ],
+  "evidence": [
+    "Fresh pinned native inspect478630..478BDB decodes all1451bytes. Independent fullbody review confirms missing icon selection47874D..47876D, aquatic treaty branch4788C1..478903, and multiplayer suffix478919..478B17. Preserve offline !IsMultiplayerNet branch478851 separately from multiplayer ConsoleControlTurnActive treaty gate478B17; do not conflate them.",
+    "Existing owners: MultiWindowContactStatusMask7FFF74; NetDaemonNet.channels_[1].trailing_words_[6]93E960 selects3 owned sprites; centering deliberately uses sprite0height regardless selectedvariant. Selectedchannel0.leading_words_[0/1] depends on ConsoleControlTurnActive93A938 before icon callbacks. Primary tail starts93E8C0, trailing_words_[4] is93E8E0, NOT93E8D0. Lockrecords NetDaemonNet.locks_.records_[faction] stride1C callPlayerLock::active58FFA0. NetUpkeepPhase93A93C is existing gameglobal, NOTControlTurnPhase9B2070. Preserve opaque field names without unsupported semantic renames.",
+    "Recover complete status branch/read/callback ordering using GameDataStateStorage net_turn_flags/net_turn_faction/game_state/lock_masks, ConsoleGlobal faction, primary/channelwords, locks and existing label_get/StringTable. Pinned punctuation686788/78C/790/794/798/79C/7A0 is *,(*),(+),(-),(*),(?),(@). Translated labels444/4 and42C/4 precede space and decimal NetUpkeepPhase as applicable. Treaty priority1,2,4,10; bit10 tests target Players[faction].rule_flags RFLAG_AQUATIC100, useslabelA1C/4 plusCharUpperA onlywhenaquatic, else358/4. Preserve callbacks and repeated live reads, especially recheck primary leading_words[0] afterPlayerLock::active.",
+    "Authorized closure onlyMultiWin CPP+newtest. Preserve original identity/span/symbol/history/claims and prior behavior; enrich current binding rationale while retaining superseded rationale evidence. No asm, imageaddresscalls, manually installedvtables, safetyguards, zeroing, initialized errorvalues or deliberatefixes. Faithful compiling complete function is priority; no prolonged byte-spellingiterations. Coordinator owns Git/compiler; isolated separate source/test workers freeze beforemeasure. Require actual-body host oracles+compile-success behavioral mutants, independent review, native measurement/fullbuild/link, collateral/reference/claimcontinuity; notautomatic/runtime/fullgameacceptance."
+  ],
+  "intent": "Complete the real MultiWin player-row painter including its status icons, aquatic treaty branch and multiplayer turn/lock suffix through existing typed owners.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4687408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "multiwin-player-status-owner-oct14aw"
+}
