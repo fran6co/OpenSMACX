@@ -107,12 +107,14 @@ def harness(methods):
         const unsigned MapWinTableSlots = 8;
         uint32_t MapIsFlat = 1;
         int MapLongitude = 256;
+        const int MapLongitudeBounds = 512;
         MapWin *console_map_win() { return &window; }
         struct Status { void set_loc(int, int); void redraw() { require(false); } } ConsoleStatusWin;
         struct Info { void change(int) { require(false); } } ConsoleInfoWin;
         struct Tutorial { void draw_arrow(); } tutorial;
         Tutorial *TutWinGlobal = &tutorial;
-        uint32_t GameState = 0;
+        struct GameDataStateStorage { struct { uint32_t game_state_; } fields_; };
+        GameDataStateStorage GameDataStateStorage = {};
         const uint32_t STATE_DEBUG_MODE = 0x100;
         const char *CursorNextDangerMsg1 = "first", *CursorNextDangerMsg2 = "second";
         void danger(const char *, const char *, int, int, int) { require(false); }

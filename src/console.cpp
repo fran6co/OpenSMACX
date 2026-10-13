@@ -2131,6 +2131,10 @@ void Console::close() {
 // a real int - the exact doubling Console(int) carried.
 // Absolute cursor loads at 0x00510A01..0x00510A19 address this object's
 // history members. The following stores instead use the method receiver.
+// Native 0x0068A5D0 is exactly the writable initialized text plus terminator;
+// this constant-initialized source array adds no global constructor.
+// RECOVERY_OBJECT: v2 0x0068A5D0 0x0068A5E0 ?CursorNextDangerMsg1@@3PADA 0x005109B0
+char CursorNextDangerMsg1[16] = "Bad Cursor Move";
 // RECOVERY_OBJECT: v1 0x009156B0 ?ConsoleGlobal@@3VConsole@@A
 Console ConsoleGlobal;
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====

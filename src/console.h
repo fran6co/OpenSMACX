@@ -741,9 +741,10 @@ void __cdecl flush_input();
 // process-wide object's initial zero storage.
 extern Console ConsoleGlobal;  // 0x009156B0, the process-wide Console
 
-// Two fixed-address strings cursor_next passes to danger() when a debug-mode
-// coordinate parity mismatch is detected. No established text.
-LPCSTR const CursorNextDangerMsg1 = (LPCSTR)0x0068A5D0;
+// Native 0x0068A5D0 is the mutable 16-byte `Bad Cursor Move` text object.
+// The sibling 0x00939FF0 remains an unresolved writable text view: do not
+// infer its contents, capacity, or ownership from its current consumers.
+extern char CursorNextDangerMsg1[16];
 LPCSTR const CursorNextDangerMsg2 = (LPCSTR)0x00939FF0;
 
 // The dword at 0x0093A938 is set while a turn is played out under program
