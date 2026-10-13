@@ -1,0 +1,85 @@
+{
+  "author": "coordinator",
+  "base_revision": "d8b1fa5792c3bc98771aac07f097b42c123e3b4d",
+  "editable_files": [
+    "src/netwin.h",
+    "src/netwin.cpp",
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_lobby_actual_source.py",
+    "recovery/tests/test_netdaemon_session_options_oct11.py",
+    "recovery/tests/test_netdaemon_session_status_oct11.py",
+    "recovery/tests/test_netdaemon_session_lobby_wire_actual_source_oct13ad.py",
+    "recovery/tests/test_netwin_typed_packet_senders_oct10.py",
+    "recovery/tests/test_netwin_player_packets.py",
+    "recovery/tests/test_netwin_editor_auth_actual_source_oct12.py",
+    "recovery/tests/test_netwin_owner_behavior.py",
+    "recovery/tests/test_netwin_lobby_click.py",
+    "recovery/tests/test_netwin_pick_player_actual_source.py",
+    "recovery/tests/test_netwin_packet_initialization.py",
+    "recovery/tests/test_netwin_scalar_pickers_actual_source_oct12.py",
+    "recovery/tests/test_netwin_faction_record_owner_closure_oct9.py",
+    "recovery/tests/test_netwin_record_text_members_oct13u.py",
+    "recovery/tests/test_net_hotseat_owner_actual_source_oct6.py"
+  ],
+  "evidence": [
+    "Pinned send_session_packet47B260..47B2DE emits28 bytes with six option dwords at10; receiver537C42..537C51 copies18 bytes into existing NetWinSessionOptions. send_session2_packet47B2E0..47B379 emits178 with5A session dwords at10; receiver537C7B..537C88 copies168 bytes into existing NetWinSessionData. Both initialize only opcode, not reserved header2..F. Promote existing packet declarations to netwin.h without new zero initialization, storage, copy extent, guard or producer store-order changes.",
+    "Lobby: existing NetWinLobbyPacketHeader16 bytes, SinglePacket18C and FullPacketA74 use actual NetWinLobbyRow17C. send_all_player_packets47B0F0 and exec482490/on_button_clicked47B450 emit seven-row suffixA64 at10; sub_47b1d047B1D0 and picker/button forms emit single row17C. Receiver537E96..537EAD fullcopy and537EBF..537EDD singlecopy match. Promote canonical existing structs, retain all header fields/padding/partial initialization, and replace equivalent local duplicate packet declarations with these canonical shapes only where field/store tokens are unchanged. Leave unrelated leave/notification packet shapes unless needed for header sharing.",
+    "Receiver payload188 is row10 plus offsetof(NetWinLobbyRow,owner_)178; payload13 is signed row.faction_or_color_3. Header slot4 is the row selector orFFFFFFFF sentinel, not transport sender identity. Preserve its captured bits, all unchecked slot/faction accesses, mode/row/owner live rereads, marked opcode rewrite/rebroadcast with unchanged incoming message_size, and source-selected copy widths. Do not choose full/single solely by opcode or validate malformed selector/length combinations: original branches by sentinel and may read stale scratch beyond logical packets.",
+    "The current lobby fill_player call reinterprets message+10 as an actual NetWinLobbyRow object. Replace this with a borrowed mutable NetWinLobbyRowView over bytes, whose char-field getters and byte tail writer use known offsetof schema and perform no copy/length check/constructor writes. Change the genuine NetWin::fill_player interface/body to this pointer-sized view value and its only current source caller together, preserving original thiscall two-word boundary subject to fresh compiler evidence. Source original481DA0 marker/identity/spans/history remain untouched; current symbol override may change to observed new mangling after native compilation, not a fabricated exact claim. Existing actual-object host callers can construct the view from their row representation at the serialization boundary. No wrapper into old executable or copy-in/copy-out temporary row.",
+    "fill_player preserves slot==-1 noun clear before label_get then strcat; otherwise five named strcpy calls, fresh faction_records_ allocation re-read for raw adjective+112 and byte+192 relative to stride190, then tail_[0] write. Preserve the known beyond-record source read and callback/alias effects, never normalize bounds, slot, capacities, gender data or string handling. Header/view scope is three listed source files only; no faction layout/allocator or unrelated cast sweeps.",
+    "1F00/2F00/4F00 status has no source producer. Pinned537BF5/FE/C07 shows int32 slot4 then signed byte18->process slot identity24, byte14->field26, byte10->field25. Support only those consumer-backed narrow fields and common opcode16 access; no full lobby/session record inference or packet capacity claim. Keep read/write ordering and rebroadcast opcode reread after updates. A possible short-packet scratch read remains unresolved, not a justified bug fix.",
+    "Source author owns three source files; disjoint test authors own receiver/new continuity tests versus existing NetWin producer/fill-player tests and shared test declaration extractor. Update extractors to canonical header definitions, not duplicate fixture-only packet schemas. Maintain frozen historical migration recipes and full current-base identity/history checks, permitting only independently measured fill_player current-symbol override. Whole-source token recipes strictly constrain admitted declaration shapes, body substitutions, all other source tokens and no extra code. Actual host callback/alias controls cover mutable wire row and actual object row, payload copies, sentinel/marked branches and narrow status widths with named compiled98 mutants. Host projections do not prove native ABI/unsafe-path/runtime or full game acceptance.",
+    "Coordinator baseline before edits; all scope/package Python frozen during native epochs. Fresh candidate/destination build/link, scoped matching, compiler symbol/ABI and collateral evidence, identity/reference continuity and independent review precede manual integration. Preserve all historical claims/restoration obligations through justified structural matching regressions. Full process_message EH, linked-preservation and game/runtime qualification remain unsupported; retain complete spans and never present unknown as green."
+  ],
+  "intent": "Share genuine session/lobby packet layouts across producers and consumers and recover mutable received-row access without fabricated object lifetime.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4726176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4727952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4699216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4707072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-session-lobby-wire-closure-oct13ad"
+}
