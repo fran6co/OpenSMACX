@@ -1,0 +1,68 @@
+{
+  "author": "coordinator",
+  "base_revision": "aa2c993d24d5c78af70ace427f396a4fe68291f3",
+  "editable_files": [
+    "src/buffer.h",
+    "src/buffer.cpp",
+    "src/graphicwin.cpp",
+    "src/win.cpp",
+    "recovery/tests/test_window_link_dispatch.py",
+    "recovery/tests/test_text_load_link_contracts_oct12.py",
+    "recovery/tests/test_buffer_line_layout_fidelity_oct12.py",
+    "recovery/tests/graphicwin_reinitialize_harness.cpp",
+    "recovery/tests/test_buffer_link_owner_types_oct13ab.py"
+  ],
+  "evidence": [
+    "Pinned write_multi_font_raw_l 5DCCA8..5DCD01 increments count, allocates label length plus one, stores at Buffer+4BC+4*(count-1), rereads the slot for null check/copy/termination. These are owned character strings, not opaque allocations. Win 5F6523 reads the same slot through GraphicWin Buffer base444 plus4BC and calls the existing char* link interface. Rename only Buffer owned_ to link_labels_ and type char*[20]; preserve four live slot evaluations, failure paths, counter timing, free paths and all capacities.",
+    "Pinned GraphicWin init5D5012 and reinitialize5D51BF store the complete GraphicWin this into Buffer+4. Rename only Buffer poOwner_ to graphic_owner_ and type GraphicWin*, using existing forward declaration. It is borrowed, not a deletion/lifetime dependency. Preserve existing constructor zero store and every initialization effect; no new checks or defaults.",
+    "Source author owns exactly four listed src files. Keep all original annotations, symbols, span order, historical claims and useful findings. Update essential live structural comments, but do not rewrite historical evidence. No unrelated no-op cast cleanup, pixel stride/wrap arithmetic, DirectDraw interface conversions, lifecycle changes, behavior fixes or signature changes.",
+    "Test author owns listed recovery tests, preserves historical source/recipe obligations and adds fresh complete base metadata/history continuity. Actual source link dispatch and allocator callbacks must still observe live count and slot rereads; change observer references to char*& as needed. Named damage controls must compile and fail deliberately rather than by crashes. Add producer-backed owner/string field evidence without claiming full game ABI/runtime acceptance.",
+    "Coordinator prepares isolated checkout, compiler baseline before authors edit, and freezes the entire scope during native measurement. Fresh build/link, scoped matching, emitted compiler collateral, layout evidence, identity/reference continuity and independent review precede manual integration. Preserve exact claims and restoration obligations; never demote or truncate to pass."
+  ],
+  "intent": "Recover Buffer owned link-label strings and borrowed GraphicWin owner through producer-backed member types and names.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6124048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6125168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6124656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6156176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6146784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6115056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6115568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6251456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-link-owner-types-oct13ab"
+}
