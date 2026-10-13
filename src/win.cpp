@@ -39,7 +39,7 @@
 typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "scroll.h"
 #include "win.h"
-#include "game.h"  // ExpansionEnabled, passed to the CD setup provider
+#include "game.h"
 #include "imagebutton.h"
 #include <cstring>
 #include "palette.h"
@@ -3769,9 +3769,11 @@ found:
     root_path[3] = 0; // SetCurrentDirectory wants the drive root, not the dll
     GetCurrentDirectoryA(260, saved_dir);
     SetCurrentDirectoryA(root_path);
-    typedef int(__stdcall *setup_a_fn)(int, int, int);
-    if (HandleMain != 0) {
-        (reinterpret_cast<setup_a_fn>(setup_a))(ExpansionEnabled, 0, 0x10018);
+    // The pinned helper gates the HWND argument on the published default Win,
+    // not on whether the process main-window handle has been created.
+    typedef int(__stdcall *setup_a_fn)(HWND, int, int);
+    if (BasePopDefaultField322C != 0) {
+        (reinterpret_cast<setup_a_fn>(setup_a))(HandleMain, 0, 0x10018);
     } else {
         (reinterpret_cast<setup_a_fn>(setup_a))(0, 0, 0x10018);
     }

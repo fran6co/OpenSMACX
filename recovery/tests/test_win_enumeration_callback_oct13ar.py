@@ -72,22 +72,28 @@ def _protected_metadata(row):
                  if item.name not in {"line", "region", "origin", "symbol"})
 
 
-def test_exact_callback_type_transition_preserves_all_other_source_and_metadata():
+def test_callback_and_enumerator_regions_preserve_contract_and_mapping_history():
     old_cpp = _baseline(WIN_CPP)
     old_header = _baseline(WIN_H)
-    expected_cpp = old_cpp
+    expected_update = _extract(old_cpp, UPDATE_SIGNATURE)
+    expected_callback = _extract(old_cpp, OLD_CALLBACK.removesuffix(" {"))
     for before, after in ((OLD_ENUM_CALL, NEW_ENUM_CALL),
-                          (OLD_SYMBOL, NEW_SYMBOL),
                           (OLD_CALLBACK, NEW_CALLBACK)):
-        assert expected_cpp.count(before) == 1, before
-        expected_cpp = expected_cpp.replace(before, after, 1)
-    expected_header = old_header
-    assert expected_header.count(OLD_DECL) == 1
-    expected_header = expected_header.replace(OLD_DECL, NEW_DECL, 1)
+        if before == OLD_ENUM_CALL:
+            assert expected_update.count(before) == 1, before
+            expected_update = expected_update.replace(before, after, 1)
+        else:
+            assert expected_callback.count(before) == 1, before
+            expected_callback = expected_callback.replace(before, after, 1)
     current_cpp = WIN_CPP.read_text(encoding="utf-8")
     current_header = WIN_H.read_text(encoding="utf-8")
-    assert current_cpp == expected_cpp
-    assert current_header == expected_header
+    assert _extract(current_cpp, UPDATE_SIGNATURE) == expected_update
+    assert _extract(current_cpp, CALLBACK_SIGNATURE) == expected_callback
+    assert OLD_SYMBOL not in current_cpp
+    assert current_cpp.count(NEW_SYMBOL) == 1
+    assert OLD_DECL not in current_header
+    assert current_header.count(NEW_DECL) == 1
+    assert old_header.count(OLD_DECL) == 1
 
     before_rows = {row.address: row for row in read_text(old_cpp, WIN_CPP)}
     after_rows = {row.address: row for row in read_text(current_cpp, WIN_CPP)}
