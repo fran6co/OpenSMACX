@@ -1,0 +1,37 @@
+{
+  "event_id": "4748473c6679833e2d8b2bc6a1808a4f98079b2ff5883f274f0a210fa227a1c6",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Fresh retained physical COFF comparison of the promoted NetWin header reaches game.cpp: load_interface455610, load_vehicles454270 and save_game5A9EB0 change instruction scheduling/register allocation despite byte-identical game.cpp source. Include these existing identities in affected verification ownership; no unrelated source cleanup, task-baseline reset or original marker edit.",
+      "Coordinator trace: load_interface reorders independent sprite geometry loads and equivalent adds/subtracts/publications; load_vehicles swaps adjacent stack-local register loads; save_game swaps two independent source-global loads before their commutative addition. Source text remains unchanged. Require fresh baseline/current original-body diagnostics using native compiler overlay of immutable task-base netwin.h, retain unknown EH/linked/runtime and existing matching obligations, and independently review the actual physical evidence. Do not assume header-only edits preserve emitted code.",
+      "Keep game.cpp exactly equal to the immutable task-base file in the source continuity guard. Any actual game behavior rewrite needs a separate evidence-backed scope decision; this admission is for shared-header collateral measurement and review only."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4538992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "lobby-shared-header-physical-game-closure-oct13ad",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netwin-session-lobby-wire-closure-oct13ad"
+}
