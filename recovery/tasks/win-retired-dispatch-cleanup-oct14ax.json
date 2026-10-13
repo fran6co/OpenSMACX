@@ -1,0 +1,30 @@
+{
+  "author": "coordinator",
+  "base_revision": "f481d97cf2924ff0c4db617b6cad02fe3aa3c7d9",
+  "editable_files": [
+    "src/win.cpp",
+    "recovery/tests/test_win_retired_dispatch_oct14ax.py",
+    "recovery/tests/test_cd_setup_bindings_oct14av.py"
+  ],
+  "evidence": [
+    "Current Win::OnLButtonDown uses named on_nc_hittest/on_left_down dispatch. WinSlotHitTest/WinSlotLeftDown and func_win_hit_test/func_win_left_down occur only in their unused declarations. key_click_event uses named on_button_clicked/pass_dialog_focus/key_click_event methods; VCall2Fn/VCall0/VCall1 and void-vtable locals are unused remnants. Verify compiled equality rather than treating removal as added function coverage.",
+    "Remove only dead aliases/constants and unused raw vtable locals (and self alias only if becomes unused). Preserve all control flow, methods, actual callbacks, original identities/spans/symbols/claims and useful history. Do not change Win.h/transitive includes or vendor OriginalObject ABI adapters without further owner evidence. DLL evidence supports different private provider types but shared void delegate storage remains intentionally erased; do not add incompatible provider-out casts or fabricated class layout.",
+    "Existing cd_setup test freezes whole win.cpp unnecessarily; scope its existing hash guard to actual cd_check method while preserving pinned original metadata, all four parent/HWND cases, cleanup/error paths and exact mutant oracles. New test verifies same compiled-source behavior after removing dead declarations and actual parsed identity/history continuity against task baseline. Coordinator owns native worktree/compiler/Git; require relevant tests, native measurements and full build/link, full physical comparison, claim continuity and reviewed manual integration; no byte claim grant/demotion or full acceptance."
+  ],
+  "intent": "Remove unused raw-vtable and OriginalObject scaffolding from Win handlers already implemented with genuine named virtual methods.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6234928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6220432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-retired-dispatch-cleanup-oct14ax"
+}
