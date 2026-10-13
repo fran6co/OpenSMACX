@@ -3217,22 +3217,6 @@ epilogue_only:
     return;
 }
 
-struct EdgeLocal {
-    int setupSentinel;
-    int counter;
-    int refreshIdx;
-    int accumA;
-    int accumB;
-    int stepA;
-    int stepB;
-    int accumC;
-    int stepC;
-    int stepCExtra;
-    int accumD;
-    int stepD;
-    int threshold;
-};
-
 // ORIGINAL: 0x00619D80 Texture::draw_trans2 0x00619D80-0x0061A23F FILE
 // RECOVERY_BINDING: v1 {"reason":"Recover the transparent rasterizer's geometry argument as the shared Vert coordinate-pair type.","evidence":["The pinned original publishes the argument into geometry pointer cell 0x9BB4F4, reads signed x/y at offsets0/4 and advances by8. Current typed edge setup consumes that same shared Vert pointer.","The historical decorated name was generated seed metadata, not original debug type evidence. No incoming producer is established; this binds the consumer contract, not original source spelling."]}
 // symbol    ?draw_trans2@Texture@@QAEHPAVBuffer@@PAUVert@@H@Z
@@ -3245,6 +3229,10 @@ struct EdgeLocal {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x00624D80
 
+// STRUCTURAL EVIDENCE: Pinned setup_edge 0x624D80 writes EdgeScan offsets
+// +0x28/+0x2c/+0x30 as fracAccum/fracDelta/fracSub; draw_trans2 row blocks
+// 0x619FE2-0x61A000 and 0x61A039-0x61A074 confirm the matching DDA updates.
+// This supersedes the former local-overlay interpretation above.
 
 int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
     *blit_pixel_base = a1->get_data();
@@ -3305,13 +3293,13 @@ int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
                 *blit_clip_bottom = (*blit_clip_bottom) * (*blit_buffer_stride) + (texture_pointer_address(*blit_pixel_base));
                 *blit_clip_top = (*blit_clip_top) * (*blit_buffer_stride) + (texture_pointer_address(*blit_pixel_base));
 
-                EdgeLocal leftEdge;
-                leftEdge.setupSentinel = -1;
-                int setupResult = this->setup_edge(reinterpret_cast<EdgeScan *>(&leftEdge), minYIdx);
+                EdgeScan leftEdge;
+                leftEdge.f0 = -1;
+                int setupResult = this->setup_edge(&leftEdge, minYIdx);
                 if (setupResult != 0) {
-                    EdgeLocal rightEdge;
-                    rightEdge.setupSentinel = 1;
-                    setupResult = this->setup_edge(reinterpret_cast<EdgeScan *>(&rightEdge), minYIdx);
+                    EdgeScan rightEdge;
+                    rightEdge.f0 = 1;
+                    setupResult = this->setup_edge(&rightEdge, minYIdx);
                     if (setupResult != 0 && this->borrowed_ != 0) {
                         double invDz = 1.0;
                         double duVal = 0.0;
@@ -3335,35 +3323,35 @@ int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
 
                                 leftEdge.counter--;
                                 if (leftEdge.counter == 0) {
-                                    int r = this->setup_edge(reinterpret_cast<EdgeScan *>(&leftEdge), leftEdge.refreshIdx);
+                                    int r = this->setup_edge(&leftEdge, leftEdge.id);
                                     if (r != 0) {
                                         goto rightEdgeStep;
                                     }
                                     done = true;
                                 } else {
-                                    leftEdge.accumA += leftEdge.stepA;
-                                    leftEdge.accumB += leftEdge.stepB;
-                                    leftEdge.accumC += leftEdge.stepC;
-                                    leftEdge.threshold += leftEdge.stepD;
-                                    if (leftEdge.threshold > 0) {
-                                        leftEdge.accumC += leftEdge.stepCExtra;
-                                        leftEdge.threshold -= leftEdge.accumD;
+                                    leftEdge.accumA += leftEdge.deltaA;
+                                    leftEdge.accumB += leftEdge.deltaB;
+                                    leftEdge.accumC += leftEdge.deltaC;
+                                    leftEdge.fracAccum += leftEdge.fracDelta;
+                                    if (leftEdge.fracAccum > 0) {
+                                        leftEdge.accumC += leftEdge.extraDeltaC;
+                                        leftEdge.fracAccum -= leftEdge.fracSub;
                                     }
                                 rightEdgeStep:
                                     rightEdge.counter--;
                                     if (rightEdge.counter == 0) {
-                                        int r = this->setup_edge(reinterpret_cast<EdgeScan *>(&rightEdge), rightEdge.refreshIdx);
+                                        int r = this->setup_edge(&rightEdge, rightEdge.id);
                                         if (r == 0) {
                                             done = true;
                                         }
                                     } else {
-                                        rightEdge.accumB += rightEdge.stepA;
-                                        rightEdge.accumA += rightEdge.stepB;
-                                        rightEdge.accumC += rightEdge.stepC;
-                                        rightEdge.threshold += rightEdge.stepD;
-                                        if (rightEdge.threshold > 0) {
-                                            rightEdge.accumC += rightEdge.stepCExtra;
-                                            rightEdge.threshold -= rightEdge.accumD;
+                                        rightEdge.accumA += rightEdge.deltaA;
+                                        rightEdge.accumB += rightEdge.deltaB;
+                                        rightEdge.accumC += rightEdge.deltaC;
+                                        rightEdge.fracAccum += rightEdge.fracDelta;
+                                        if (rightEdge.fracAccum > 0) {
+                                            rightEdge.accumC += rightEdge.extraDeltaC;
+                                            rightEdge.fracAccum -= rightEdge.fracSub;
                                         }
                                     }
                                 }
