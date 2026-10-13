@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "db838b165894e1b21875e6bc86ea7287db1bc391",
+  "editable_files": [
+    "src/prodpicker.cpp",
+    "recovery/tests/test_prodpicker_selected_style_actual_source_oct13w.py"
+  ],
+  "evidence": [
+    "Independent full pinned span decode confirms 492867 loads selected index,49286F compares item,492871 SETNE,492874 DEC,492878 AND2,49287B multiplies5,49287E multiplies8 and adds78D528,492885 pushes style pointer for492889 box_sprite. Thus unselected selects base, selected base+50=style2, never base+14=edge1.",
+    "Existing source-owned InterfaceBoxStyles is51 BoxSpriteParams records; sizeof28 and object78D528..78DD20, indexed loader and genuine box_sprite consumers agree. No global/layout/hierarchy changes are indicated. Correct the selection expression, replacing the wrong edge1 reinterpret_cast, and explicitly supersede its inaccurate overlap comment without deleting original findings.",
+    "Do not change icon/list signed-ID disagreement, grid geometry, callback ordering, bounds/error behavior or any other draw_item behavior. Keep all original markers, spans, symbols, claims and historical TRIED notes. Source and test authors may edit only their respective named files; coordinator owns Git/compiler resources.",
+    "Test extracts literal current selected-style phase and uses distinct complete records to verify selected/unselected pointer identity, signed and unsigned item comparisons, and callback consumption. Both GCC/Clang; wrong edge-member, wrong style index and reversed selection mutants must compile then fail at runtime. Pin original argument-selection sequence independently.",
+    "Fresh native baseline/candidate measurement and compile/link, protected source obligations, reference checks, outside compiler review and independent C++ review precede manual integration. No long byte spelling search, baseline reset, new exactness token, demotion or automatic/full-game acceptance."
+  ],
+  "intent": "Recover the genuine selected frame record in ProdPicker::draw_item, removing the erroneous overlapping-member reinterpretation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4794304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prodpicker-selected-style-oct13w"
+}
