@@ -1,0 +1,20 @@
+{
+  "event_id": "faa269eda4450056375d3b5cfe56c7829bc1d74645c301052f8d56edbb37d4f4",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/netdaemon.cpp"
+    ],
+    "evidence": [
+      "Name the three promoted vehicle/base/lock records network wordC sequence_ rather than obsolete turn_, changing only those three declarations and their producer field tokens while retaining types/store order/effects. All three already obtain it from NetDaemonNet.deletion_list_.sequence_bits(). NetDaemonNet original93CD90 plus proven DeletionList member158C plus current_owner_5A0 is exactly93E8BC (NetDaemon+1B2C). The existing Data record already calls its same word sequence_.",
+      "Correct the live family comment that incorrectly describes retired lock_state_[0].dword_[0] as the source owner. Use genuine DeletionList.current_owner_ and its network sequence API; net_end_of_turn529F30 advances this sequence. Preserve every ORIGINAL/symbol/span/claim and historical lesson. Do not rename other message families or change sequence wrap/conversions. New whole-source recipe and producer controls include exactly these member-label changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "95d47bf9c6ab1b6ecb449801b255db5d596671b83e68f853d946e8041f8582a7",
+  "request_id": "command-sequence-field-ownership-oct13ac",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netdaemon-command-wire-closure-oct13ac"
+}
