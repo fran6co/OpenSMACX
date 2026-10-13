@@ -1,0 +1,32 @@
+{
+  "author": "coordinator",
+  "base_revision": "6b3990cdc5738bda3f775c663f87406c820a0d7a",
+  "editable_files": [
+    "src/jackal/font.cpp",
+    "recovery/tests/test_font_shared_storage_oct13am.py",
+    "recovery/tests/test_font_metric_publication_oct13aj.py"
+  ],
+  "evidence": [
+    "Pinned FontDefault9BB484, FontHDC9BB488 and FontInitCount9BB48C are independent four-byte loader-zero objects. init_font_class6195B0 publishes default Font and CreateCompatibleDC result, increments signed count before failure without rollback; close_font_class619610 decrements count, conditionally DeleteDC and clears HDC/default. Other Font methods load same HDC. Preserve original failure and signed counter quirks; no behavior changes.",
+    "Fresh retained VC6 object build-n2brfi_6 exports FontDefault as ?FontDefault@@3PAVFont@@A at bss+8, FontHDC as ?FontHDC@Font@@2PAUHDC__@@A at bss+4, FontInitCount as ?FontInitCount@Font@@2HA at bss+0. Section auxiliary declares12bytes and initialized raw bytes are empty. Pinned VA order differs emitted symbol order; independent bindings are not an aggregate, allocation-order or linked-layout proof.",
+    "Source author may add only three bounded RECOVERY_OBJECT records using installed object_writer.write_object_bytes add-only snapshot/round-trip, directly before the existing independent definitions, with spans4bytes and original evidence anchor6195B0. Add one essential note explaining shared process-wide roles and independent original zero-filled identities; no declarations, bodies, headers, names, symbols, function annotations, historical claims or old comments change. Local publication uses apply_patch and verifies exact native writer output.",
+    "Tests parse the3exact records, prove all original function identities/history/tokens unchanged and bounded pin/evidence/4byte extents correct. Update prior Font metric strict comment guard minimally to admit exactly3markers and one exact essential note; never accept arbitrary comments or weaken prior2body recipe. Native check_data and realCOFF observations must validate selected definitions/storage independently; aggregate data graph unknown remains unknown, not pass. No host pointer layout asx86proof.",
+    "Separate isolated source/test authors; coordinator owns Git, resource leases and compiler. Freeze scope/package during epochs. Require fresh build/link, scoped measurements/restoration, actual physical object symbols/storage and compiler invariance, independent review, references and historical continuity before manual integration. This is load-bearing source mapping progress, not additional function coverage or full linked/runtime/game acceptance."
+  ],
+  "intent": "Bind three genuine process-wide Font storage objects independently to their original zero-filled dwords.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6395312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "font-shared-storage-owner-oct13am"
+}
