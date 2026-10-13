@@ -238,7 +238,7 @@ void MCIVideo::stop() {
 // palette_ is an in-object member, so its one Palette constructor call occurs
 // before this body, matching the pinned call at 0x005FFD86.
 // ORIGINAL: 0x005FFD80 ??0MCIVideo@@QAE@XZ 0x005FFD80-0x005FFDA1
-// RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8bd32d532e5050a5aaadf011bcff4394b5:src/recovered/005ffd80.cpp", "source:src/alphamovie.h:MCIVideo"], "reason": "Bind the existing source-owned MCIVideo constructor to the image entry: it constructs palette_ at +0x10 and initializes the evidenced handle fields, matching the original constructor sequence."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8bd32d532e5050a5aaadf011bcff4394b5:src/recovered/005ffd80.cpp", "Pinned 0x005FFD86 calls the Palette constructor once on this+0x10, then 0x005FFD8D zeroes only the device-ID WORD at +4.", "source:src/alphamovie.h declares palette_ as an in-object MCIVideo member, so natural member construction supplies that single Palette lifetime before this constructor body."], "reason": "Bind the original MCIVideo constructor to its source owner using natural Palette member construction and the observed low-WORD/device-handle initialization, without a duplicate explicit constructor call."}
 MCIVideo::MCIVideo() {
     mciId_ = 0;
     window_handle_ = 0;
