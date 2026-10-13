@@ -1,0 +1,58 @@
+{
+  "author": "coordinator",
+  "base_revision": "3816c3f330d16a734d06f01235423a35720427a4",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/terrain_data.py",
+    "recovery/tests/test_terrain_data.py",
+    "recovery/tests/test_mapwin_generation.py",
+    "recovery/tests/test_landmark_storage_window_oct13i.py"
+  ],
+  "evidence": [
+    "Pinned renderer loads signed pairs at685A98/685AFC/685BD4 from the nonnegative signed code-byte domain0..127, with no upper49 bound; original row119 crosses into independently mapped AltLightBit2, Crater and OceanCornerUVs storage.",
+    "Pinned world_monsoon5C6124..5C61D2 publishes indices0..120; radius119 is(-2,-8). bit2_set preserves prior feature bits and code_set preserves low24bits. Editor placement and visible climate chain support overlapping high-code reads; hidden/aliased writers and full runtime reachability remain unproved.",
+    "The five mapped members span Mount98,gap2,Mesa98,gap2,AltLight113,gap3,Crater98,gap114,Ocean128: one chosen656-byte source backing, not proof of an original aggregate/allocation or gap ownership. Retain four bounded data spans and AltLight start-only identity using native v3 member bindings. No duplicated snapshots, pointer-address aliases, fabricated original allocation, upper-bound guard or original span/claim edits.",
+    "Use existing pinned configure-time generation for ignored gap initializers. Byte access must address the complete backing representation, not step past individual array subobjects; preserve current named member consumers and effects. Producer/climate subjects are read-only evidence and measurement closure. No source outside authorized files, compiler flags, dependency definitions or task baselines may change without coordinator expansion."
+  ],
+  "intent": "Represent observed original landmark cross-object reads through one chosen typed source backing, preserving all five independent data identities and original unchecked behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4600528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4654992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6053616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5840304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5840384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5117136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6052400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "landmark-storage-window-oct13i"
+}
