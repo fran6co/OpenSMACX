@@ -1,0 +1,32 @@
+{
+  "author": "coordinator",
+  "base_revision": "c0790d76332187138ea7f273fd9948807908a6bf",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_typed_storage_oct11.py",
+    "recovery/tests/test_netdaemon_diplomacy_wire_actual_source_oct13z.py"
+  ],
+  "evidence": [
+    "Current MessageDataRecord defines the sender-owned 32-byte layout with opcode16, unwritten bytes2..3, faction4, timestamp8, sequenceC and four signed payload words10/14/18/1C. Existing MessageCommandView reads individual fields through memcpy without full-record copies or alignment requirements. Extend only the proven opcode16 and payload1C readers and a char-byte constructor boundary needed by tableH.",
+    "The fifteen tableH opcode arms4441..444F belong to process_message534400, not fifteen new original functions. Their current source repeatedly rereads packet fields across loggers, seed calls, treaty/agenda/actions, grammar/parser callbacks and between aliased PlayerData stores. Replace raw word views at the same read sites, preserving every branch, call order, live reread and opcode reload. No snapshotting, signedness/width change, length validation, bounds fix or normalization of original malformed/error paths.",
+    "Existing actual-source tableH tests cover all fifteen arms, callback mutations, post-tech opcode reload, energy wraparound and in-owner aliased packet data. Maintain those controls with extracted current record/view declarations and update only obsolete mutant spelling anchors, preserving historical migration recipes and current immutable c079 metadata/claim continuity. New controls must exercise narrow unaligned byte storage, per-field extents, fresh reads and named compile-success runtime98 mutants, without whole-game/ABI claims.",
+    "Source author owns only netdaemon.cpp; test author owns only the two named tests. Coordinator owns task decisions, worktree setup, Git and leased native compiler epochs. Baseline/candidate measurements, fresh complete compile/link, compiler collateral comparison, source identity/reference continuity and independent review precede manual integration. No new exactness claims or demotion; original startup/cold spans and pending linked/runtime obligations remain.",
+    "Scope excludes other process_message tables, headers, generic big/lobby/file packets, message_data sender initialization behavior and unrelated Win cleanup. Do not create a fabricated universal wire object or erase unresolved original types; this existing serialization boundary remains distinct from concrete C++ receiver ownership."
+  ],
+  "intent": "Recover table-H diplomacy wire accesses through the existing sender-owned record, retaining original live-field and alias semantics across all fifteen opcode arms.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5844704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-diplomacy-wire-closure-oct13z"
+}
