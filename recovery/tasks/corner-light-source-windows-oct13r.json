@@ -1,0 +1,41 @@
+{
+  "author": "coordinator",
+  "base_revision": "b7702d2e9eb349ea4b27102de235bd11b9e0fe69",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/tests/test_corner_light_source_windows_oct13r.py"
+  ],
+  "evidence": [
+    "Pinned get_brighting470550..470776 extracts four altitude-detail nibbles0..15, with callers selecting corners0..3. Per-corner biased bases0/49/98/147 plus7*v+w cover all indices0..267. Do not narrow to1..7, clamp nibbles or change early returns/callback order/cache writes.",
+    "Existing genuine storage covers indices0..3 (OceanCornerShades[15] bytes),8..203 (MapLightingTable196B) and208..267 (AltLightBit200[0..59]). Preserve the actual ocean-shade alias and mutable generated/direction tables; never duplicate them or create a larger fake aggregate/ninth object.",
+    "The two uncovered4-byte windows7F6684..7F6688 and7F674C..7F6750 are RW PE virtual-zero-fill bytes. Producer loops stop at their boundaries; bounded direct-reference/relocation scans found no writer. This proves startup zero, not permanent zero, original object names/extent/allocation or absence of indirect aliases/writers.",
+    "Two separate mutable signed-char[4] source access-window views can model these observed bytes legally. Bind only their4B observed initial windows anchored to get_brighting, with source-owned durable uncertainty notes and task obligations for unobserved writers/allocation topology. Do not promote unknown runtime/lifetime evidence to pass or invent a class relationship.",
+    "Change only the bounded lookup helper/storage declarations and stale active fixed-address justification; keep original function markers, symbols, spans, claims and all existing owner body behavior. Test all corner/nibble combinations, boundaries, signed bytes and mutable-after-init aliases; verify initial data, fresh measurements, build/link, compiled outside-body effects and independent review. No original-address fallback, new safety fix, compiler flag/API/header change or manual claim edit."
+  ],
+  "intent": "Replace the remaining original-image corner-light fallback with source-owned bounded byte views and existing real storage aliases, preserving full four-bit lookup behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4654416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4654992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4652656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4654112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "corner-light-source-windows-oct13r"
+}
