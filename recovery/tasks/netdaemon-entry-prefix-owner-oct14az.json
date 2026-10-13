@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "94a5ac6b4ee368f1ee639003a64de2e6eb8378f7",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_wire_owner_oct11.py",
+    "recovery/tests/test_netdaemon_entry_prefix_oct14az.py"
+  ],
+  "evidence": [
+    "Pinned process_message spans 0x534400..0x5388B9 and cold cleanup 0x65E0C2..0x65E442. Initial sequence read at534458, opcode at53445B, faction at53445E occur after sender identity resolution. Opcode reload at53456F follows possible message_data callback. Current source loads sequence/faction/opcode in different order and uses two ushort pointer type-puns; the existing MessageCommandView provides all three correctly sized memcpy reads.",
+    "Change only the entry sequence/opcode/faction reads and callback-side opcode reread to the existing borrowed MessageCommandView. Do not snapshot opcode across callbacks, rename or widen interfaces, invent new packet schema, edit the shared view, alter large dispatch body/lifetime/cleanup/error behavior, or change any original annotation/history. NetWin faction sender is a separate isolated scope; its additive header schema neither grants these edits nor changes this task baseline.",
+    "Update old raw-read fixture assertions to the actual source-owned view and add independently pinned load-order evidence plus actual-source entry-prefix semantic callback controls and compile-success mutants with exact diagnostics. Preserve all prior identity/header/skip500 checks. Coordinator owns Git/compiler/worktree and reviewed manual integration after native measurements, build/link, relevant regression checks, compiled comparison and claim continuity; temporary mismatch work stays retained without demotion. No linked/runtime/full-game acceptance."
+  ],
+  "intent": "Use the existing source-owned command wire view for entry header reads, preserving pinned load order and opcode reread across callbacks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-entry-prefix-owner-oct14az"
+}
