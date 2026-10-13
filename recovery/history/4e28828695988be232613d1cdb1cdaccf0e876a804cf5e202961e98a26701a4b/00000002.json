@@ -1,0 +1,22 @@
+{
+  "event_id": "b3cd22d849a5c7d0df619a7655453f0605266a9050eccd65987002c761476710",
+  "payload": {
+    "affects": [
+      "entity-89d393e26b13da9a04ed3c46a46c7b1ed620624410439a47c5b4356f93c852cd",
+      "entity-c1fd290099da8f4ebe8e6ea250ac1fda4ab3242d86df1c8419870628245555d8"
+    ],
+    "author": "coordinator",
+    "discovery_id": "checksum-destination-compiled-collateral-oct14",
+    "evidence": [
+      "Fresh master baseline build-tzdf7wu0 versus integrated build-rktd1lg6: draw_armor435400 and draw_vehicle436090 have different physical function signatures. Their source is unchanged and neither has a historical byte-exact token. communicate and load_interface remain different; goody_box is unchanged in this destination observation. Producer type-decoration pair and do_checksums changes remain the intended closure.",
+      "Master21 actual-source/pinned checksum controls, fresh compile/link, live-reference check and historical identity audit pass (5646 annotations,2863 claims,2864 requirements,0 missing). These establish bounded evidence, not linked-selection/storage/runtime equivalence or automatic/full-game acceptance. Keep worker and destination comparisons distinct; no baseline reset or claim demotion."
+    ],
+    "hypothesis": "Fresh integrated compilation changes two DesignWin bodies in addition to previously observed source-unchanged collateral; preserve this destination-specific evidence and pending restoration instead of asserting outside-scope preservation.",
+    "kind": "discovery"
+  },
+  "previous_event": "7cd73e13ba812c7a40f1acea4e61ebe58ec5d98c6654c253e9c793139ac5a054",
+  "request_id": "checksum-destination-compiled-collateral-oct14",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netdaemon-checksum-report-owner-oct13at"
+}
