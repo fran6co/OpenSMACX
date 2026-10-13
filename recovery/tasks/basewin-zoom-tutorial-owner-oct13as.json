@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "2580d1f8523e59f5f90cca35e6606962c6673049",
+  "editable_files": [
+    "src/basewin.cpp",
+    "recovery/tests/test_basewin_zoom_tutorial_oct13as.py"
+  ],
+  "evidence": [
+    "Current BaseWin::zoom explicitly skips tutorial-message branches between field_1E670_ reset and the preserved wait loop. Pinned complete original41A920..41AE40 executes omitted41AA4B..41ADFE and rejoins41AE03; verified mapped direct callers include24 application callers. A present nonempty function is not complete semantic coverage.",
+    "Recover the complete original faction/stage gates, tut_check/tut_check2 ordering, label parsing, Popup interactions, rectangles and TutWin::do_base through existing source-owned fields/storage/API. Trace each missing branch in the pinned original; external seeds are hints only. Preserve original initialization, error behavior, repeated reads and calls, network lock/unlock and wait-tail effects. No bounds fixes, zero initialization, speculative members, fixed-address views, assembly or placeholder substitutions.",
+    "Authorize BaseWin::zoom body and one bounded essential binding rationale update preserving original identity/spans/prototype/history/claims. Structural discoveries outside this scope must be reported for coordinator expansion, not ignored, guessed or edited secretly. Preserve existing implementation and complete omitted behavior rather than replacing the method with a seed or blanket safe return.",
+    "Add actual-source host controls for all recoverable tutorial branch families, gating/order/arguments/state publication and rejoining wait behavior, with observable compile-success damage controls. Pinned disassembly must support omitted paths. Preserve original quirks and explicitly unresolved effects. Coordinator owns Git/compiler; isolated source/test authors freeze before native measurement. Manual integration requires independent review, full compile/link, scoped measurement, physical collateral and historical claim continuity. No automatic or game acceptance claim."
+  ],
+  "intent": "Complete BaseWin zoom's omitted original tutorial branches through genuine existing tutorial, popup, faction and parsing owners.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4303136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basewin-zoom-tutorial-owner-oct13as"
+}
