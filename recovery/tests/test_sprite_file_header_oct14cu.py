@@ -125,7 +125,7 @@ public:
     int iSpriteWidth_, iSpriteHeight_, iSpriteWidth2_;
     int iWidth_, iHeight_, iLeftOffset_, iTopOffset_;
     unsigned char cTransparentIndex_;
-    char *pcBits_;
+    unsigned char *pcBits_;
     char *ppszFileName_;
     int fObj1Exists_;
     Sprite() : iSpriteWidth_(0), iSpriteHeight_(0), iSpriteWidth2_(0),
@@ -149,7 +149,7 @@ static void reset_filemap() {
 static void require(bool ok, const char *message) {
     if (!ok) fail(message);
 }
-static void initialize_sprite(Sprite &s, char *pixels) {
+static void initialize_sprite(Sprite &s, unsigned char *pixels) {
     s.iSpriteWidth_ = 3; s.iSpriteHeight_ = 2; s.iSpriteWidth2_ = 5;
     s.iWidth_ = 7; s.iHeight_ = 8; s.iLeftOffset_ = -2; s.iTopOffset_ = 4;
     s.cTransparentIndex_ = 9; s.pcBits_ = pixels;
@@ -160,7 +160,7 @@ static int save_success() {
     unsigned char pixels[32];
     int i;
     for (i = 0; i < 32; ++i) pixels[i] = (unsigned char)(i + 1);
-    Sprite s; initialize_sprite(s, (char *)pixels); expected_filename = filename;
+    Sprite s; initialize_sprite(s, pixels); expected_filename = filename;
     require(s.save(filename) == 0, "save success result changed");
     require(create_calls == 1 && last_requested_size == 50,
             "save allocation size is not width*height+0x2c");
@@ -204,7 +204,7 @@ static int save_early_returns() {
     require(create_calls == 0 && destructor_calls == 1 && close_calls == 0,
             "null-pixel save Filemap lifetime changed");
     reset_filemap(); expected_filename = filename; fail_create = 1;
-    char pixels[8] = {0}; Sprite no_mapping; initialize_sprite(no_mapping, pixels);
+    unsigned char pixels[8] = {0}; Sprite no_mapping; initialize_sprite(no_mapping, pixels);
     require(no_mapping.save(filename) == 4, "failed-create save result changed");
     require(create_calls == 1 && destructor_calls == 1 && close_calls == 0,
             "failed-create save Filemap lifetime changed");
@@ -228,7 +228,7 @@ static int load_borrowed_success() {
     for (i = 0; i < 32; ++i) pixels[i] = (unsigned char)(i + 1);
     reset_filemap(); expected_filename = filename;
     prepare_raw_load_fixture(pixels);
-    char borrowed[32]; memset(borrowed, 0x55, sizeof(borrowed));
+    unsigned char borrowed[32]; memset(borrowed, 0x55, sizeof(borrowed));
     Sprite target;
     target.pcBits_ = borrowed; target.fObj1Exists_ = 1;
     target.ppszFileName_ = (char *)std::malloc(16);
@@ -257,7 +257,7 @@ static int load_failed_open_cleanup() {
     reset_filemap();
     char filename[] = "missing.dat"; expected_filename = filename; fail_open = 1;
     Sprite target;
-    target.pcBits_ = (char *)std::malloc(16);
+    target.pcBits_ = (unsigned char *)std::malloc(16);
     target.ppszFileName_ = (char *)std::malloc(16);
     target.iSpriteWidth_ = 3; target.iSpriteHeight_ = 2; target.iSpriteWidth2_ = 5;
     target.iWidth_ = 7; target.iHeight_ = 8;

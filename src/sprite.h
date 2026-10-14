@@ -206,7 +206,9 @@ class Sprite {
   char *ppszFileName_;  // 0x0000 - heap copy of the source file's name;
                         // released with the CRT free
   // RECOVERY_MEMBER: v1 Sprite pcBits_ 0x4 0x004B2740
-  char *pcBits_;        // 0x0004 - the pixel block, same allocator
+  // Palette-index bytes, not string storage: draw/recolor consume unsigned
+  // pixels (5E5833/5EAD9F); allocator ownership is still fObj1Exists_.
+  unsigned char *pcBits_; // 0x0004 - the pixel block, same allocator
   // UNSIGNED, and this is measured not stylistic: the image reads the byte
   // as `xor eax,eax; mov al,[sprite+8]` at every site that passes it to
   // `Sprite::draw` as an int (0x005E2E07 here, 0x005EFF02 in Win::flip). A

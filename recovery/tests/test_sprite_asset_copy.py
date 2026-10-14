@@ -50,7 +50,7 @@ def actual():
         declarations.append(declaration)
     owner, = re.findall(r'^int SpriteMemoryUsed = 0;$', source, re.M)
     public, = re.findall(r'^extern int SpriteMemoryUsed;$', header, re.M)
-    allocator, = re.findall(r'^LPVOID __cdecl mem_get\(size_t size\);$',
+    allocator, = re.findall(r'^LPVOID __cdecl mem_get\(int size\);$',
                            (ROOT / 'src/general.h').read_text(), re.M)
     methods = {name: braced(source, signature) for name, signature in (
         ('close', 'void Sprite::close('),
@@ -74,7 +74,7 @@ typedef void *LPVOID;
 void check(bool ok,int line){if(!ok){std::fprintf(stderr,"assertion line %d scenario %d\n",line,0);std::exit(103);}}
 #define require(v) check((v),__LINE__)
 DECLARATIONS
-static_assert(std::is_same<decltype(Sprite::pcBits_),char*>::value,"pixel owner");
+static_assert(std::is_same<decltype(Sprite::pcBits_),unsigned char*>::value,"pixel owner");
 static_assert(std::is_same<decltype(Sprite::cTransparentIndex_),unsigned char>::value,"palette key");
 static_assert(std::is_same<decltype(Sprite::iSpriteWidth2_),int>::value,"signed stride");
 unsigned char source_pixels[256],alternate_pixels[256],old_pixels[256],new_pixels[512];
@@ -91,8 +91,8 @@ void asset_free(void *pointer){
   require(pointer==old_pixels || pointer==old_name || pointer==replacement_name || pointer==new_pixels);
   calls.push_back('F');frees.push_back(pointer);if(callback)callback('F');
 }
-LPVOID __cdecl mem_get(size_t size){
-  calls.push_back('A');requested=size;if(callback)callback('A');
+LPVOID __cdecl mem_get(int size){
+  calls.push_back('A');requested=static_cast<uint32_t>(size);if(callback)callback('A');
   return allocation_failure ? nullptr : new_pixels;
 }
 void *asset_memcpy(void *out,const void *in,size_t size){
@@ -116,11 +116,11 @@ std::vector<intptr_t> state(const Sprite&s){
 }
 void start(){
   source=Sprite{};destination=Sprite{};
-  source.ppszFileName_=source_name;source.pcBits_=reinterpret_cast<char*>(source_pixels);
+  source.ppszFileName_=source_name;source.pcBits_=source_pixels;
   source.cTransparentIndex_=241;source.pad1_=11;source.pad2_=12;source.pad3_=13;
   source.iSpriteWidth2_=5;source.iSpriteWidth_=3;source.iSpriteHeight_=3;
   source.iWidth_=91;source.iHeight_=92;source.iLeftOffset_=-4;source.iTopOffset_=8;source.fObj1Exists_=1;
-  destination.ppszFileName_=old_name;destination.pcBits_=reinterpret_cast<char*>(old_pixels);
+  destination.ppszFileName_=old_name;destination.pcBits_=old_pixels;
   destination.cTransparentIndex_=203;destination.pad1_=21;destination.pad2_=22;destination.pad3_=23;
   destination.iSpriteWidth2_=11;destination.iSpriteWidth_=7;destination.iSpriteHeight_=2;
   destination.iWidth_=81;destination.iHeight_=82;destination.iLeftOffset_=3;destination.iTopOffset_=-9;
@@ -148,7 +148,7 @@ void recolour(){
   // Offsets and displayed/source widths do not restrict the full pitch*height block.
   for(int total=0;total<=65;++total)for(int oldcolor : {0,7,255,263,-1})for(int newcolor : {0,31,287,-2}){
     start();source.iSpriteWidth2_=total;source.iSpriteHeight_=1;
-    source.pcBits_=reinterpret_cast<char*>(source_pixels+1);source.cTransparentIndex_=static_cast<unsigned char>(oldcolor);
+    source.pcBits_=source_pixels+1;source.cTransparentIndex_=static_cast<unsigned char>(oldcolor);
     unsigned char expected[sizeof source_pixels];std::memcpy(expected,source_pixels,sizeof expected);
     for(int i=0;i<total;++i)source_pixels[1+i]=expected[1+i]=static_cast<unsigned char>(i%3==0?oldcolor:i);
     if(total>=4)for(int i=0;i<total;++i)if(expected[1+i]==static_cast<unsigned char>(oldcolor))expected[1+i]=static_cast<unsigned char>(newcolor);
@@ -169,7 +169,7 @@ void copying(){
     start();destination.fObj1Exists_=borrowed;allocation_failure=fail;auto before=state(source);
     callback=[&](char kind){if(kind=='A'){
       cleared(destination);require(destination.cTransparentIndex_==203);
-      require(destination.pcBits_==(borrowed?reinterpret_cast<char*>(old_pixels):nullptr));
+      require(destination.pcBits_==(borrowed?old_pixels:nullptr));
       require(SpriteMemoryUsed==(borrowed?1000:986));
     }};
     require(source.copy(&destination)==(fail?4:0));callback=nullptr;
@@ -179,7 +179,7 @@ void copying(){
     require(requested==15&&SpriteMemoryUsed==(borrowed?1000:986)&&state(source)==before);
     if(fail){cleared(destination);require(destination.pcBits_==nullptr&&destination.cTransparentIndex_==203);}
     else{
-      equal_metadata(source,destination);require(destination.pcBits_==reinterpret_cast<char*>(new_pixels));
+      equal_metadata(source,destination);require(destination.pcBits_==new_pixels);
       require(copy_size==15&&copy_source==source_pixels&&copy_destination==new_pixels);
       for(int i=0;i<512;++i)require(new_pixels[i]==(i<15?source_pixels[i]:0xcc));
       destination.close();require(SpriteMemoryUsed==(borrowed?991:977));
@@ -191,12 +191,13 @@ void copying(){
     start();destination.pcBits_=nullptr;destination.ppszFileName_=nullptr;
     source.iSpriteWidth2_=stride;source.iSpriteHeight_=3;allocation_failure=true;
     require(source.copy(&destination)==4&&calls==std::vector<char>({'A'}));
-    require(requested==(stride==0?0u:0xfffffffdu)&&SpriteMemoryUsed==1000);
+    require(requested==(stride==0?0u:0xfffffffdu));
+    require(SpriteMemoryUsed==1000);
   }
   // Allocator boundary sees clean destination. Source dimensions/pointer may
   // change there, but the byte count was captured before that call.
   start();callback=[](char kind){if(kind=='A'){
-    cleared(destination);source.pcBits_=reinterpret_cast<char*>(alternate_pixels);
+    cleared(destination);source.pcBits_=alternate_pixels;
     source.iSpriteWidth2_=2;source.iSpriteHeight_=4;source.iSpriteWidth_=9;
     source.iWidth_=18;source.iHeight_=19;source.iLeftOffset_=20;source.iTopOffset_=-21;source.cTransparentIndex_=199;
   }};
@@ -209,13 +210,13 @@ void copying(){
     cleared(destination);require(destination.cTransparentIndex_==203);
     source.iSpriteWidth2_=17;source.iSpriteWidth_=18;source.iSpriteHeight_=19;
     source.iWidth_=20;source.iHeight_=21;source.iLeftOffset_=-22;source.iTopOffset_=23;source.cTransparentIndex_=24;
-    destination.pcBits_=reinterpret_cast<char*>(old_pixels);
+    destination.pcBits_=old_pixels;
   }};
   require(source.copy(&destination)==0);callback=nullptr;equal_metadata(source,destination);
-  require(destination.pcBits_==reinterpret_cast<char*>(old_pixels));
+  require(destination.pcBits_==old_pixels);
   // Pixel free precedes the filename read and all dimension resets.
   start();callback=[](char kind){if(kind=='F'&&frees.size()==1){
-    require(SpriteMemoryUsed==986&&destination.pcBits_==reinterpret_cast<char*>(old_pixels));
+    require(SpriteMemoryUsed==986&&destination.pcBits_==old_pixels);
     require(destination.iSpriteWidth_==7&&destination.iSpriteHeight_==2);
     destination.ppszFileName_=replacement_name;
     source.iSpriteWidth2_=4;source.iSpriteHeight_=2;
@@ -224,17 +225,17 @@ void copying(){
   require(frees==std::vector<void*>({old_pixels,replacement_name}));require(requested==8&&copy_size==8);
   // Self-copy closes itself first: it reaches a zero-byte allocation and
   // copies its own newly published block, not the former image.
-  start();source.ppszFileName_=old_name;source.pcBits_=reinterpret_cast<char*>(old_pixels);source.fObj1Exists_=0;
+  start();source.ppszFileName_=old_name;source.pcBits_=old_pixels;source.fObj1Exists_=0;
   require(source.copy(&source)==0);require(requested==0&&copy_size==0&&copy_source==new_pixels);
   require(calls==std::vector<char>({'F','F','A','C'}));cleared(source);
-  require(source.pcBits_==reinterpret_cast<char*>(new_pixels)&&source.cTransparentIndex_==241);
+  require(source.pcBits_==new_pixels&&source.cTransparentIndex_==241);
   require(SpriteMemoryUsed==991);
 }
 void close_controls(){
   for(int borrowed : {0,1,-1}){
     start();destination.fObj1Exists_=borrowed;destination.close();
     cleared(destination);require(destination.cTransparentIndex_==203);
-    require(destination.pcBits_==(borrowed?reinterpret_cast<char*>(old_pixels):nullptr));
+    require(destination.pcBits_==(borrowed?old_pixels:nullptr));
     require(SpriteMemoryUsed==(borrowed?1000:986));
     require(frees==(borrowed?std::vector<void*>{old_name}:std::vector<void*>{old_pixels,old_name}));
   }
@@ -303,10 +304,10 @@ def test_asset_damage_is_observed(tmp_path, method, before, after):
 def test_copy_read_timing_damage_is_observed(tmp_path, damage):
     declarations, methods = actual()
     copy = methods['copy']
-    anchor = 'char *pixels = static_cast<char *>(mem_get(size));'
+    anchor = 'unsigned char *pixels = static_cast<unsigned char *>(mem_get(size));'
     assert anchor in copy
     if damage == 'cached_pixels':
-        copy = copy.replace(anchor, 'char *cached = pcBits_;\n' + anchor)
+        copy = copy.replace(anchor, 'unsigned char *cached = pcBits_;\n' + anchor)
         copy = copy.replace('memcpy(pixels, pcBits_, size);', 'memcpy(pixels, cached, size);')
     elif damage == 'cached_metadata':
         copy = copy.replace(anchor, 'const Sprite cached = *this;\n' + anchor)

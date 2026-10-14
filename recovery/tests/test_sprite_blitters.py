@@ -72,7 +72,7 @@ struct Buffer {
     int draw(Buffer*,int,int,int,int,int);
 } destination, g_BUFFER;
 struct Sprite {
-    char *ppszFileName_, *pcBits_; unsigned char cTransparentIndex_;
+    char *ppszFileName_; unsigned char *pcBits_; unsigned char cTransparentIndex_;
     int iSpriteWidth2_,iSpriteWidth_,iSpriteHeight_,iWidth_,iHeight_,iLeftOffset_,iTopOffset_;
     int draw_mono(Buffer*,int,int,int,int);
     int draw_mono(Buffer*,int,int,int,int,int,int);
@@ -144,7 +144,7 @@ int main(int argc,char **argv) {
     check(argc==3); which=std::atoi(argv[1]); scenario=std::atoi(argv[2]);
     for(int i=0;i<1024;++i) { input[i]=static_cast<unsigned char>((i*7+3)%251); output[i]=expected[i]=static_cast<unsigned char>((i*11+17)%251); }
     for(int i=0;i<256;++i) remap[i]=static_cast<unsigned char>(255-i);
-    sprite={}; sprite.pcBits_=reinterpret_cast<char*>(input); sprite.cTransparentIndex_=66;
+    sprite={}; sprite.pcBits_=input; sprite.cTransparentIndex_=66;
     sprite.iSpriteWidth_=3; sprite.iSpriteHeight_=3; sprite.iSpriteWidth2_=5;
     destination.rect1_={3,2,5,4}; destination.stride_=16; destination.locked_bits_=output;
     int key=0x109,color=0x17B,x=2,y=1;
@@ -228,7 +228,7 @@ int main(int argc,char **argv) {
         SpriteScaleNumerator=2;sprite.iSpriteWidth_=2;sprite.iSpriteHeight_=1;sprite.iSpriteWidth2_=5;
         x=2;y=2; original_expected={2,2,6,4};destination.rect1_=clipped_expected={2,2,6,3};
         axis[0]={0,0,2,4,{2,2}};axis[1]={0,0,1,1,{1}};
-        sprite.pcBits_=reinterpret_cast<char*>(output+34);
+        sprite.pcBits_=output+34;
         output[34]=expected[34]=0;output[35]=expected[35]=9;
         // First expanded source pixel overwrites the next source byte;
         // the next source read must observe it, not a whole-row snapshot.

@@ -928,7 +928,7 @@ int Sprite::change_color(int old_color, int new_color) {
     }
     const unsigned char from = static_cast<unsigned char>(old_color);
     const unsigned char to = static_cast<unsigned char>(new_color);
-    unsigned char *pixels = reinterpret_cast<unsigned char *>(pcBits_);
+    unsigned char *pixels = pcBits_;
     for (unsigned int index = 0; index < size; ++index) {
         if (pixels[index] == from) {
             pixels[index] = to;
@@ -949,7 +949,7 @@ int Sprite::copy(Sprite *destination) {
     destination->close();
     const unsigned int size = static_cast<unsigned int>(iSpriteHeight_)
                            * static_cast<unsigned int>(iSpriteWidth2_);
-    char *pixels = static_cast<char *>(mem_get(size));
+    unsigned char *pixels = static_cast<unsigned char *>(mem_get(size));
     destination->pcBits_ = pixels;
     if (pixels == 0) {
         return 4;
@@ -1190,7 +1190,7 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
     const int source_pitch = iSpriteWidth2_;
     int destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
-        reinterpret_cast<const unsigned char *>(pcBits_);
+        pcBits_;
 
     if (SpriteScaleNumerator == SpriteScaleDenominator) {
         RECT original;
@@ -1206,7 +1206,7 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
         // Deliberate original asymmetry: the initial clipped top skip uses
         // logical width (+10), while subsequent rows advance by pitch (+C).
         const unsigned char *source_row =
-            reinterpret_cast<const unsigned char *>(pcBits_) +
+            pcBits_ +
             (clipped.left - original.left) +
             (clipped.top - original.top) * iSpriteWidth_;
         unsigned char *destination_row =
@@ -1361,7 +1361,7 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
     const int source_pitch = iSpriteWidth2_;
     int destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
-        reinterpret_cast<const unsigned char *>(pcBits_);
+        pcBits_;
 
     if (SpriteScaleNumerator == SpriteScaleDenominator) {
         RECT original;
@@ -1376,7 +1376,7 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
         }
         // The plain-color worker uses source pitch for the initial top clip.
         const unsigned char *source_row =
-            reinterpret_cast<const unsigned char *>(pcBits_) +
+            pcBits_ +
             (clipped.left - original.left) +
             (clipped.top - original.top) * source_pitch;
         unsigned char *destination_row =
@@ -1524,7 +1524,7 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
     const int source_pitch = iSpriteWidth2_;
     int destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
-        reinterpret_cast<const unsigned char *>(pcBits_);
+        pcBits_;
 
     if (SpriteScaleNumerator == SpriteScaleDenominator) {
         const int height = iSpriteHeight_;
@@ -1541,7 +1541,7 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
         }
         // Original rereads the member after IntersectRect in the unit path.
         const unsigned char *source_row =
-            reinterpret_cast<const unsigned char *>(pcBits_) +
+            pcBits_ +
             (clipped.left - original.left) +
             (clipped.top - original.top) * source_pitch;
         unsigned char *destination_row =
@@ -1695,7 +1695,7 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
     const int source_pitch = iSpriteWidth2_;
     int destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
-        reinterpret_cast<const unsigned char *>(pcBits_);
+        pcBits_;
 
     if (SpriteScaleNumerator == SpriteScaleDenominator) {
         RECT original;
@@ -1710,7 +1710,7 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
         }
         // The plain-color worker uses source pitch for the initial top clip.
         const unsigned char *source_row =
-            reinterpret_cast<const unsigned char *>(pcBits_) +
+            pcBits_ +
             (clipped.left - original.left) +
             (clipped.top - original.top) * source_pitch;
         unsigned char *destination_row =
@@ -1875,7 +1875,7 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y,
     const int source_pitch = iSpriteWidth2_;
     int destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
-        reinterpret_cast<const unsigned char *>(pcBits_);
+        pcBits_;
 
     if (SpriteScaleNumerator == SpriteScaleDenominator) {
         RECT original;
@@ -1890,7 +1890,7 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y,
         }
         // The plain worker uses source pitch for the initial top clip.
         const unsigned char *source_row =
-            reinterpret_cast<const unsigned char *>(pcBits_) +
+            pcBits_ +
             (clipped.left - original.left) +
             (clipped.top - original.top) * source_pitch;
         unsigned char *destination_row =
@@ -2080,7 +2080,7 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
     const int source_pitch = iSpriteWidth2_;
     int destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
-        reinterpret_cast<const unsigned char *>(pcBits_);
+        pcBits_;
 
     if (SpriteScaleNumerator == SpriteScaleDenominator) {
         RECT original;
@@ -2095,7 +2095,7 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
         }
         // The plain worker uses source pitch for the initial top clip.
         const unsigned char *source_row =
-            reinterpret_cast<const unsigned char *>(pcBits_) +
+            pcBits_ +
             (clipped.left - original.left) +
             (clipped.top - original.top) * source_pitch;
         unsigned char *destination_row =
@@ -2808,14 +2808,14 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         // else comes off the CRT as plain owned memory.
         pcBits_ = 0;
         if (heap != 0) {
-            pcBits_ = reinterpret_cast<char *>(heap->get_mem(iSpriteHeight_ * iSpriteWidth_));
+            pcBits_ = static_cast<unsigned char *>(heap->get_mem(iSpriteHeight_ * iSpriteWidth_));
             if (pcBits_ != 0) {
                 fObj1Exists_ = 1;
             }
         }
         do_sound();
         if (pcBits_ == 0) {
-            pcBits_ = static_cast<char *>(mem_get(iSpriteWidth_ * iSpriteHeight_));
+            pcBits_ = static_cast<unsigned char *>(mem_get(iSpriteWidth_ * iSpriteHeight_));
             if (pcBits_ == 0) {
                 if (ppszFileName_ != 0) {
                     free(ppszFileName_);
@@ -2836,7 +2836,7 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
         }
         SpriteMemoryUsed += iSpriteWidth_ * iSpriteHeight_;
         pixels = buffer->get_data(left + iLeftOffset_, top + iTopOffset_);
-        uint8_t *out = reinterpret_cast<uint8_t *>(pcBits_);
+        uint8_t *out = pcBits_;
         do_sound();
         for (rows = iSpriteHeight_; rows > 0; rows--) {
             memcpy(out, pixels, iSpriteWidth_);
@@ -2915,7 +2915,7 @@ int Sprite::create_blank(int width, int height, int depth) {
     iHeight_ = height;
     iTopOffset_ = 0;
     cTransparentIndex_ = static_cast<unsigned char>(depth);
-    pcBits_ = static_cast<char *>(mem_get(1));
+    pcBits_ = static_cast<unsigned char *>(mem_get(1));
     return pcBits_ ? 0 : 4;
 }
 
@@ -3858,7 +3858,7 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
     const int source_pitch = iSpriteWidth2_;
     int destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
-        reinterpret_cast<const unsigned char *>(pcBits_);
+        pcBits_;
 
     if (SpriteScaleNumerator == SpriteScaleDenominator) {
         RECT original;
@@ -3872,7 +3872,7 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
             return 0;
         }
         const unsigned char *source_row =
-            reinterpret_cast<const unsigned char *>(pcBits_) +
+            pcBits_ +
             (clipped.left - original.left) +
             (clipped.top - original.top) * source_pitch;
         unsigned char *destination_row =
@@ -4039,7 +4039,7 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
     const int source_pitch = iSpriteWidth2_;
     int destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
-        reinterpret_cast<const unsigned char *>(pcBits_);
+        pcBits_;
 
     if (SpriteScaleNumerator == SpriteScaleDenominator) {
         RECT original;
@@ -4053,7 +4053,7 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
             return 0;
         }
         const unsigned char *source_row =
-            reinterpret_cast<const unsigned char *>(pcBits_) +
+            pcBits_ +
             (clipped.left - original.left) +
             (clipped.top - original.top) * source_pitch;
         unsigned char *destination_row =

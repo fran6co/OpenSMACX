@@ -24,9 +24,22 @@ def test_all_sprite_identities_claims_and_symbols_remain_intact():
     assert [_continuity_fields(row) for row in before] == [
         _continuity_fields(row) for row in after
     ]
-    assert [(row.symbol, row.function_fragment) for row in before] == [
+    # The reviewed persistence recovery4e469b429 corrected the filename
+    # interface; ORIGINAL names/spans/claims above still retain that history.
+    # Keep this baseline fixed and admit only those two established emitted
+    # symbols, not arbitrary source renames or function-fragment changes.
+    persistence_symbols = {
+        0x005EAF8F: "?save@Sprite@@QAEHPBD@Z",
+        0x005EB0BF: "?load@Sprite@@QAEHPBD@Z",
+    }
+    assert [(persistence_symbols.get(row.address, row.symbol),
+             row.function_fragment) for row in before] == [
         (row.symbol, row.function_fragment) for row in after
     ]
+    header = (ROOT / "src/sprite.h").read_text()
+    for operation in ("save", "load"):
+        assert f"int {operation}(const char *filename);" in header
+        assert f"int Sprite::{operation}(const char *filename)" in SOURCE.read_text()
 
 
 def _probe(body):
@@ -40,7 +53,7 @@ def _probe(body):
 #include <new>
 #include <limits.h>
 int SpriteMemoryUsed;
-static char poison;
+static unsigned char poison;
 struct Sprite {
 ''' + fields + "\nSprite();\n};\n" + body + r'''
 union Storage { char bytes[sizeof(Sprite)]; void *alignment; };

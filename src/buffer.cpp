@@ -3636,7 +3636,7 @@ void Buffer::setup_buff_sprite(int colour) {
     if (bits != nullptr) {
         ++surface_lock_count_;
     }
-    BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(bits);
+    BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(bits);
     BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
     BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
     BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
@@ -7163,7 +7163,7 @@ int Buffer::draw_dest(Buffer *destination, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
         BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
         BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
         BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
@@ -7265,7 +7265,7 @@ int Buffer::draw_multi_table_dest(Buffer *destination, int transparent_in, int x
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
         BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
         BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
         BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
@@ -7342,7 +7342,7 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
         if (bits != nullptr) {
             ++surface_lock_count_;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
         BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
         BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
         BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
@@ -7414,7 +7414,7 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
         if (bits != nullptr) {
             ++surface_lock_count_;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
         BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
         BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
         BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
@@ -8182,7 +8182,7 @@ int Buffer::draw_unk2(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
         BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
         BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
         BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
@@ -8232,7 +8232,7 @@ int Buffer::draw(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
         BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
         BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
         BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
@@ -8281,7 +8281,7 @@ int Buffer::draw_dest_unk2(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
         BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
         BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
         BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
@@ -10309,7 +10309,7 @@ int Buffer::draw_dest_source(Buffer *source, int transparent_in, int x, int y,
         if (locked_bits_ != nullptr) {
             surface_lock_count_ = surface_lock_count_ + 1;
         }
-        BufferSpriteOwner.sprite().pcBits_ = static_cast<char *>(locked_bits_);
+        BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(locked_bits_);
         BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
         BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
         BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
