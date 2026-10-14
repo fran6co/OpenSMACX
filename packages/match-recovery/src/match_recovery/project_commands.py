@@ -19,6 +19,9 @@ def _progress(event):
 
 
 def register(commands):
+    quality = commands.add_parser("quality", help="Report per-mapping source investigation debt separately from byte matching")
+    quality.add_argument("--root", type=Path, default=Path.cwd())
+    quality.add_argument("--summary", action="store_true", help="Omit per-mapping findings")
     binding = commands.add_parser("bind", help="Add an explicitly bounded, unverified source identity; never bank matching or infer a body")
     binding.add_argument("address", type=lambda value: int(value, 0))
     binding.add_argument("--root", type=Path, default=Path.cwd())
@@ -260,6 +263,13 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
     if (configuration.keys() - {"schema_version", "source", "source_history", "compiler", "toolchain", "measurement", "audits", "build", "mappings", "gate", "preparation", "acceptance", "initializers", "layout", "references", "components"}
             or type(configuration.get("schema_version")) is not int or configuration["schema_version"] != 1):
         raise ValueError("invalid local project command configuration")
+    if arguments.get("command") == "quality":
+        from .source_quality import quality_report
+        output = quality_report(root)
+        if arguments.get("summary"):
+            output["functions"] = [{key: value for key, value in item.items() if key != "findings"}
+                                    for item in output["functions"]]
+        return 0, output
     if arguments.get("command") == "bind":
         from .binding import bind
         from .model import Span
