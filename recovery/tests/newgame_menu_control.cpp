@@ -763,6 +763,21 @@ static int wave_unloads;
 static int opening_change_calls;
 static int replace_opening_at;
 static GraphicWin replacement_window;
+static GraphicWin later_opening_window;
+static GraphicWin stale_opening_window;
+static GraphicWin **setup_snapshot_probe;
+static int check_first_publication_during_redraw;
+static int check_final_publication_at_menu;
+static int replace_opening_during_redraw;
+static GraphicWin *expected_first_publication;
+static GraphicWin *expected_final_publication;
+static char opening_filenames[8][40];
+static int opening_filename_count;
+
+static void semantic_failure(const char *message) {
+    std::fprintf(stderr, "SEMANTIC97: %s\n", message);
+    std::exit(97);
+}
 
 struct Popup {
     int value_;
@@ -776,8 +791,15 @@ struct Popup {
     void close() { ++popup_close_calls; event("popup.close"); }
 };
 struct SetupWin {
+    GraphicWin *opening_window_snapshot_;
+    SetupWin() : opening_window_snapshot_(opening_window()) {
+        setup_snapshot_probe = &opening_window_snapshot_;
+    }
     ~SetupWin() { close(); event("setup.destroy"); }
     int do_menu(Popup *, int, int) {
+        if (check_final_publication_at_menu &&
+            opening_window_snapshot_ != expected_final_publication)
+            semantic_failure("second opening snapshot publication missing");
         event("menu.popup");
         if (menu_at >= menu_count) return -1;
         return menu_values[menu_at++];
@@ -787,7 +809,11 @@ struct SetupWin {
         if (menu_at >= menu_count) return -1;
         return menu_values[menu_at++];
     }
-    void close() { ++setup_close_calls; event("setup.close"); }
+    void close() {
+        if (setup_snapshot_probe == &opening_window_snapshot_)
+            setup_snapshot_probe = 0;
+        ++setup_close_calls; event("setup.close");
+    }
 };
 struct Palette { int set() { event("palette.set"); return 0; } };
 static Palette g_PALETTE1;
@@ -845,8 +871,17 @@ static void reset_fixture() {
     map_wipe_calls = setup_game_calls = close_calls = popup_close_calls = 0;
     setup_close_calls = startup_wave_loads = wave_fades = wave_unloads = 0;
     opening_change_calls = replace_opening_at = 0;
+    opening_filename_count = 0;
+    setup_snapshot_probe = 0;
+    check_first_publication_during_redraw = 0;
+    check_final_publication_at_menu = 0;
+    replace_opening_during_redraw = 0;
+    expected_first_publication = expected_final_publication = 0;
+    memset(opening_filenames, 0, sizeof(opening_filenames));
     wave_playing = 0;
     replacement_window.updates = 0;
+    later_opening_window.updates = 0;
+    stale_opening_window.updates = 0;
     parsed_count = 0;
     mutate_narration = 0;
     objective_faction = objective_mask = -1;
@@ -860,7 +895,7 @@ static void reset_fixture() {
     GenderDefault = PluralityDefault = 0;
     GameState = GameRules = 0;
     DefaultPrefs.top_menu = 2;
-    AlphaIniPrefs.rules = 0;
+    AlphaIniPrefs.preferences = AlphaIniPrefs.rules = 0;
     all_map_count = 0;
     static int label_id = 7;
     Labels.strings_ptr = &label_id;
@@ -879,12 +914,26 @@ int __cdecl change_opening(char *filename) {
     std::strncat(text, filename, sizeof text - std::strlen(text) - 1);
     event(text);
     ++opening_change_calls;
+    if (opening_filename_count < 8) {
+        std::strncpy(opening_filenames[opening_filename_count], filename,
+                     sizeof(opening_filenames[opening_filename_count]) - 1);
+        ++opening_filename_count;
+    }
     if (replace_opening_at == opening_change_calls)
         OpeningWindow = &replacement_window;
     return 0;
 }
 static void close_opening() { ++close_calls; OpeningWindow = 0; }
-static void do_all_draws() { ++all_draws; event("all.draws"); }
+static void do_all_draws() {
+    ++all_draws;
+    if (all_draws == 2 && check_first_publication_during_redraw &&
+        (setup_snapshot_probe == 0 ||
+         *setup_snapshot_probe != expected_first_publication))
+        semantic_failure("first opening snapshot publication missing");
+    if (all_draws == 2 && replace_opening_during_redraw)
+        OpeningWindow = &later_opening_window;
+    event("all.draws");
+}
 static void prefs_load(int) { event("prefs.load"); }
 static void prefs_use() { event("prefs.use"); }
 static void prefs_save(int) { ++prefs_save_calls; event("prefs.save"); }
@@ -945,12 +994,15 @@ int main() {
     reset_fixture();
     GamePreferences = 0x800;
     wave_playing = 1;
+    AlphaIniPrefs.preferences = 0;
     AlphaIniPrefs.rules = 0x20000000u;
+    DialogDefaultStyle = 0xA1;
     menu_values[0] = 0; menu_count = 1; mapped_result = 0;
     check(top_menu(1) == 0, "map success result");
     check(startup_wave_loads == 0 && wave_fades == 1 && wave_unloads == 1,
           "mode-one audio cleanup uses live playing state");
-    check((DialogDefaultStyle & 4) != 0, "rules flag sets dialog style bit");
+    check(DialogDefaultStyle == 0xA5,
+          "preferences flag clear sets style bit while preserving other bits");
     check(all_map_count == 1 && all_map[0] == 0,
           "choice zero maps to ordinary map_menu mode");
 
@@ -961,6 +1013,54 @@ int main() {
     check(replacement_window.updates == 2 &&
           BasePopDefaultField322C == &replacement_window,
           "soft update and published owner reload the live opening slot");
+
+    reset_fixture();
+    replace_opening_at = 1;
+    check_first_publication_during_redraw = 1;
+    expected_first_publication = &replacement_window;
+    replace_opening_during_redraw = 1;
+    check_final_publication_at_menu = 1;
+    expected_final_publication = &later_opening_window;
+    menu_values[0] = -1; menu_count = 1;
+    check(top_menu(1) == 1, "two opening snapshots survive live-slot changes");
+    check(BasePopDefaultField322C == &later_opening_window,
+          "second presentation publishes current opening after redraw");
+
+    reset_fixture();
+    AlphaIniPrefs.preferences = 0x20000000u;
+    AlphaIniPrefs.rules = 0;
+    DialogDefaultStyle = 0xA5;
+    menu_values[0] = 0; menu_count = 1; mapped_result = 0;
+    check(top_menu(1) == 0, "preference-set map path completes");
+    check(DialogDefaultStyle == 0xA1,
+          "preferences flag set clears style bit and preserves other bits");
+
+    {
+        const int expansions[2] = {0, 1};
+        const int widths[2] = {800, 1024};
+        int expansion_index, width_index;
+        for (expansion_index = 0; expansion_index != 2; ++expansion_index) {
+            for (width_index = 0; width_index != 2; ++width_index) {
+                const char *expected;
+                reset_fixture();
+                ExpansionEnabled = expansions[expansion_index];
+                WinScreenWidth = widths[width_index];
+                menu_values[0] = 1; menu_values[1] = -1; menu_count = 2;
+                mapped_result = 1;
+                check(top_menu(0) == 1, "opening filename retry path returns cancel");
+                if (expansions[expansion_index])
+                    expected = widths[width_index] == 800 ? "xopeningb.pcx" : "xopeninga.pcx";
+                else
+                    expected = widths[width_index] == 800 ? "openingb.pcx" : "openinga.pcx";
+                check(opening_filename_count == 3,
+                      "initial presentation and retry produce three filenames");
+                check(std::strcmp(opening_filenames[0], expected) == 0 &&
+                      std::strcmp(opening_filenames[1], expected) == 0 &&
+                      std::strcmp(opening_filenames[2], expected) == 0,
+                      "expansion and width select the opening filename family");
+            }
+        }
+    }
 
     reset_fixture();
     menu_values[0] = 1; menu_values[1] = -1; menu_count = 2;

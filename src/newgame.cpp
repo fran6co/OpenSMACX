@@ -485,32 +485,30 @@ int __cdecl top_menu(int mode) {
         g_TOP_MENU_WAVE.load(const_cast<char *>("fx\\opening menu.wav"), 2);
         g_TOP_MENU_WAVE.play();
     }
-    {
-        unsigned char *const style =
-            reinterpret_cast<unsigned char *>(&DialogDefaultStyle);
-        if ((AlphaIniPrefs.rules & 0x20000000u) == 0)
-            *style = static_cast<unsigned char>(*style & 0xFB);
-        else
-            *style = static_cast<unsigned char>(*style | 4);
-    }
+    if ((AlphaIniPrefs.preferences & 0x20000000u) == 0)
+        DialogDefaultStyle |= 4;
+    else
+        DialogDefaultStyle &= ~4;
 
-    if (ExpansionEnabled == 0) {
-        top_menu_present_opening(WinScreenWidth == 0
+    if (ExpansionEnabled != 0) {
+        top_menu_present_opening(WinScreenWidth == 0x320
             ? "xopeningb.pcx" : "xopeninga.pcx");
     } else {
         top_menu_present_opening(WinScreenWidth == 0x320
             ? "openingb.pcx" : "openinga.pcx");
     }
+    setup.opening_window_snapshot_ = opening_window();
     TurnUpkeepPhase = 0;
 
 top_menu_redraw:
-    if (ExpansionEnabled == 0) {
+    if (ExpansionEnabled != 0) {
         top_menu_present_opening(WinScreenWidth == 0x320
             ? "xopeningb.pcx" : "xopeninga.pcx");
     } else {
         top_menu_present_opening(WinScreenWidth == 0x320
             ? "openingb.pcx" : "openinga.pcx");
     }
+    setup.opening_window_snapshot_ = opening_window();
     prefs_load(0);
     prefs_use();
 
