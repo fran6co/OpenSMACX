@@ -806,17 +806,16 @@ DWORD __cdecl sub_5d0d82(
 
   // The native row transforms write a 9-DWORD-spaced intermediate matrix;
   // the column transforms consume its columns and advance output by pitch.
+  // At 0x5D1049..0x5D104B three saved registers lower ESP by twelve bytes.
+  // Thus the subsequent ESP+0x0C/ESP+0x10C addresses are scratch+0/scratch+0x100,
+  // not offsets from the scratch allocation's original ESP.
   for (int row = 0; row != 8; ++row) {
-    BYTE *const local_storage_bytes =
-        reinterpret_cast<BYTE *>(local_storage_words);
-    sub_5d29e1(reinterpret_cast<int *>(local_storage_bytes + 0x0c + row * 0x20),
-               reinterpret_cast<int *>(local_storage_bytes + 0x10c + row * 4));
+    sub_5d29e1(reinterpret_cast<int *>(local_storage_words + row * 8),
+               reinterpret_cast<int *>(local_storage_words + 64 + row));
   }
   for (int column = 0; column != 8; ++column) {
-    BYTE *const local_storage_bytes =
-        reinterpret_cast<BYTE *>(local_storage_words);
     sub_5d2c0a(reinterpret_cast<int *>(destination + column * row_pitch_bytes),
-               reinterpret_cast<int *>(local_storage_bytes + 0x10c + column * 0x24));
+               reinterpret_cast<int *>(local_storage_words + 64 + column * 9));
   }
   return bit_position;
 }
