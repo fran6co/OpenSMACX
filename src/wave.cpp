@@ -585,7 +585,7 @@ int Wave::probe_device_chain(int) {
 /*
 Purpose: Set the reverb mix. The value is stored at 0x5C first, then the
          wrapped device is told through its vtable slot 0xE0.
-// ORIGINAL: 0x004C70A0 ?set_reverb_mix@Wave@@QAEHM@Z 0x004C70A0-0x004C70C6
+// ORIGINAL: 0x004C70A0 ?set_reverb_mix@Wave@@QAEHM@Z 0x004C70A0-0x004C70C6 BYTE_EXACT
 // symbol    ?set_reverb_mix@Wave@@UAEHM@Z
 // size      38 bytes
 // prototype int (__thiscall ?set_reverb_mix@Wave@@QAEHM@Z)(Wave* this, float)
@@ -1267,7 +1267,7 @@ Purpose: Load the wave from a caller-supplied filename. The guarded creation
          device answers the length through slot 0xC4 and then hears the
          stored volume, pitch, and the dword at 0x08 through its slots
          0x40, 0x98, and 0x44.
-// ORIGINAL: 0x004C6C20 ?load@Wave@@QAEHPBD@Z 0x004C6C20-0x004C6CD8
+// ORIGINAL: 0x004C6C20 ?load@Wave@@QAEHPBD@Z 0x004C6C20-0x004C6CD8 BYTE_EXACT
 // symbol    ?load@Wave@@UAEHPBD@Z
 // LEVER: `int attribs = 0;` declared BEFORE the device-create block (not
 //        after) - matches the image's `xor ebx, ebx` at function entry,
