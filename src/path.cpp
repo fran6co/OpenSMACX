@@ -1698,7 +1698,7 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
 /*
 // ORIGINAL: 0x0059A1B0 ??__EPaths@@YAXXZ 0x0059A1B0-0x0059A1BC FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/0059a1b0.cpp", "pinned:terranx_original lifecycle0x59a1b0", "source:src/path.cpp"], "reason": "Generated registration entry registers the actual Paths destructor. Original startup has no object-constructor call; natural static zero initialization replaces the unsupported explicit constructor. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
-// symbol    _$E20
+// symbol    _$E7
 */
 
 // Historical seed finding: Original calls atexit with59A1C0; it is registration, not the Path constructor.
@@ -1708,7 +1708,7 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
 /*
 // ORIGINAL: 0x0059A1C0 ??__FPaths@@YAXXZ 0x0059A1C0-0x0059A215 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/units/0059a1c0.cpp", "pinned:terranx_original lifecycle0x59a1c0", "source:src/path.cpp"], "reason": "Generated Paths destruction delegates the genuine inline Path shutdown lifecycle with original ordered pointer releases and null stores. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
-// symbol    _$E19
+// symbol    _$E6
 */
 
 // Historical seed finding: Native frees map_table_, x_table_, y_table_ in that order when nonnull, then zeros map_table_, y_table_, x_table_.

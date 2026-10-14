@@ -1,0 +1,23 @@
+{
+  "event_id": "bbff473bdfe4e9deb0a0d0ab1afed4b5af20e1307167301ff59561cc732ceb63",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/buffer.cpp",
+      "src/console.cpp",
+      "src/textindex.cpp",
+      "src/wave_device.cpp"
+    ],
+    "evidence": [
+      "Authorize native binding rationale cleanup in four existing owners: remove eight stale duplicated current-helper ordinals, leaving current compiler symbols solely in symbol facts. Remove redundant unclaimed status prose; native original markers retain the authoritative claims. Preserve pinned slots, receivers, original calls, ordering and all supported limitations.",
+      "For g_VEHDRAW_BUFFER alone, pinned4BF710/4BF730 spans prove ordinary construction/atexit registration and unconditional destructor tailcall. Correct the unsupported generic separate-global-guard implication; Buffer::close resource-state guards remain actual class behavior. No source body, original marker or historical lesson edit is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a7dd9d8a8d58ac291159dbefad95344890ba9be84523b568296578cf9d0dc8b4",
+  "request_id": "essential-binding-prose-cleanup-oct14hj",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:unused-cxx-runtime-startup-oct14gy"
+}

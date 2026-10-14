@@ -913,7 +913,7 @@ do_cleanup:
 // RECOVERY_OBJECT: v2 0x009403E0 0x0094575C ?ConfigFactionPreview@@3VPopup@@A 0x00589870
 // ORIGINAL: 0x00589870 sub_589870 0x00589870-0x00589886 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: original initializer 0x00589870-0x00589886 constructs the Popup stored at 0x009403E0 and registers original teardown 0x00589890.", "Source owner: newgame.cpp declares and uses the genuine Popup ConfigFactionPreview at 0x009403E0; the global, not a fixed-address reinterpretation, owns this lifetime.", "The emitted initializer _$E21 references ConfigFactionPreview and Popup's constructor, then registers _$E19 with atexit; _$E19 references the same global and Popup destructor.", "The archived seed's prior general.cpp placement and compiler-spelling trials are historical; the complete original mapping and claim remain live here for restoration measurement."], "reason": "Bind the original Preview startup constructor to the real global Popup in newgame.cpp and the compiler-emitted constructor/atexit lifetime pair. The prior fixed-address experiment is superseded by this typed owner."}
-// symbol    _$E21
+// symbol    _$E8
 // TRIED: homed into general.cpp (its real TU) 2026-09-03. Two source forms were
 // measured there and both are archived here verbatim:
 //   * as written (placement new + _atexit) it does not compile in the TU -
@@ -928,7 +928,7 @@ do_cleanup:
 Popup ConfigFactionPreview;
 // ORIGINAL: 0x00589890 sub_589890 0x00589890-0x0058989A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: original callback 0x00589890-0x0058989A destroys the Popup at 0x009403E0 registered by 0x00589870.", "Source owner: ConfigFactionPreview is the genuine Popup global declared and consumed by newgame.cpp; its lifetime is not independently owned by general.cpp.", "The emitted helper _$E19 references ConfigFactionPreview and Popup's destructor and is the callback registered by the same translation unit's _$E21 global initializer.", "The original identity, complete span and historical claim are preserved on the source-owned FILE mapping; the retired wrapper is not treated as independent recovered behavior."], "reason": "Bind the original ConfigFactionPreview teardown identity to the compiler-generated destructor callback of newgame.cpp's real Popup global, replacing the fixed-address wrapper in general.cpp."}
-// symbol    _$E19
+// symbol    _$E6
 // RECOVERY_OBJECT: v2 0x00945818 0x0094581C ?ConfigFactionDetailMode@@3HA 0x005898A0
 int ConfigFactionDetailMode;
 // The image uses this zero-filled byte string only as initial prompt text.

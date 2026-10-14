@@ -10,6 +10,7 @@
 #pragma once
 
 #include "vc6_compat.h"
+#include <stddef.h>
 #include <stdlib.h>
 #if !defined(_MSC_VER) || _MSC_VER > 1200
 #include <cstddef>

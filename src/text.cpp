@@ -320,7 +320,7 @@ int Text::item_hex() {
 Purpose: The reader every `.txt` the game parses goes through, and the two
          initialisers MSVC emits for it.
 // ORIGINAL: 0x005FD400 ??__ETxt@@YAXXZ 0x005FD400-0x005FD456
-// symbol    _$E21
+// symbol    _$E8
 // size      86 bytes
 // prototype 
 // callers   0   call targets   2
@@ -328,7 +328,7 @@ Purpose: The reader every `.txt` the game parses goes through, and the two
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x00645398
 // ORIGINAL: 0x005FD460 ??__FTxt@@YAXXZ 0x005FD460-0x005FD4B5
-// symbol    _$E19
+// symbol    _$E6
 // size      85 bytes
 // prototype 
 // callers   0   call targets   2

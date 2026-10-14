@@ -23,11 +23,11 @@
 
 // ORIGINAL: 0x005C97C0 ??__Eg_MULTIDEBUG@@YAXXZ 0x005C97C0-0x005C97D6 FILE
 // RECOVERY_BINDING: v1 {"reason":"The original relocated CRT entry constructs the static MultiDebug object and registers its complete teardown; bind the compiler's natural initializer, not a handwritten wrapper.","evidence":["git:24472a5a^:src/init_thunks.cpp","original:CRT slot 0x00682668 points to 0x005C97C0","original:0x005C97C0 constructs 0x009B22F0 and registers 0x005C97E0"]}
-// symbol    _$E21
+// symbol    _$E8
 
 // ORIGINAL: 0x005C97E0 ??__Fg_MULTIDEBUG@@YAXXZ 0x005C97E0-0x005C97EA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The static object's registered teardown tail-calls its complete destructor; the compiler-generated helper owns this lifetime.","evidence":["git:24472a5a^:src/atexit_thunks.cpp","original:0x005C97E0 passes 0x009B22F0 to the complete destructor at 0x005C9E00"]}
-// symbol    _$E19
+// symbol    _$E6
 
 // Original startup constructs MultiDebug here and registers its complete
 // destructor. The keyboard path accesses this object's inherited members.

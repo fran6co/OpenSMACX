@@ -38,8 +38,8 @@
  *    is `error C2039: 'printf' : is not a member of 'std'` - 1,862 of those
  *    across src/. Pulling the names in with `using` costs nothing and beats
  *    rewriting every call site, which would have to be rewritten back during
- *    modernisation. <vector>, <string> and <sstream> need no help; VC6's are
- *    old but they work.
+ *    modernisation. C++ library headers belong with their actual consumers;
+ *    unused stream/string headers can introduce static runtime initialization.
  *
  * 3. NO static_assert. The classic array-size trick gives the same
  *    compile-time failure, and these assertions matter more here than
@@ -57,7 +57,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <string>
 
 typedef unsigned int   uint32_t;
 typedef signed int     int32_t;
@@ -140,22 +139,6 @@ inline int strcpy_s(char *destination, const char *source) {
   return 0;
 }
 
-/*
- * std::to_string is C++11. VC6's <sstream> works, so this is the same
- * conversion the tree would have written by hand at the time.
- */
-namespace std {
-inline string to_string(int value) {
-  char text[32];
-  sprintf(text, "%d", value);
-  return string(text);
-}
-inline string to_string(unsigned int value) {
-  char text[32];
-  sprintf(text, "%u", value);
-  return string(text);
-}
-}  // namespace std
 inline int sprintf_s(char *destination, size_t, const char *format, ...) {
   va_list arguments;
   va_start(arguments, format);

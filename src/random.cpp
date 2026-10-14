@@ -81,7 +81,7 @@ Status: Complete
 Random Rand;   // 0x009BB568
 
 // ORIGINAL: 0x00625700 ??__ERand@@YAXXZ 0x00625700-0x00625716 FILE BYTE_EXACT
-// symbol    _$E17
+// symbol    _$E4
 // size      22 bytes
 // prototype 
 // callers   0   call targets   1
@@ -102,7 +102,7 @@ Random Rand;   // 0x009BB568
 // generated callees; restoration of the original combined body is pending.
 
 // ORIGINAL: 0x00625720 ??__FRand@@YAXXZ 0x00625720-0x0062572B FILE BYTE_EXACT
-// symbol    _$E15
+// symbol    _$E2
 // size      11 bytes
 // prototype 
 // callers   0   call targets   0

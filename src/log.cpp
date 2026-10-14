@@ -66,7 +66,7 @@ BOOL IsLoggingDisabled;  // 0x009BC004
 Log Logging("logfile.txt");  // 0x009BBFF8
 
 // ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B FILE BYTE_EXACT
-// symbol    _$E19
+// symbol    _$E6
 // size      107 bytes
 // prototype 
 // callers   0   call targets   6
@@ -88,7 +88,7 @@ Log Logging("logfile.txt");  // 0x009BBFF8
 // and atexit registration. Its original single-body byte obligation remains.
 
 // ORIGINAL: 0x00625F90 ??__FLogging@@YAXXZ 0x00625F90-0x00625FAD FILE BYTE_EXACT
-// symbol    _$E17
+// symbol    _$E4
 // size      29 bytes
 // prototype 
 // callers   0   call targets   1

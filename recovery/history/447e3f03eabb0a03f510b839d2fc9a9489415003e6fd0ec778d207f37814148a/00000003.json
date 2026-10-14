@@ -1,0 +1,20 @@
+{
+  "event_id": "a927d788812b4bd87bd89ad426508f14fa3751b7bcb7a285ab52d1e150454070",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/caviar_objects.cpp",
+      "src/sprite_objects.cpp"
+    ],
+    "evidence": [
+      "Fresh full-build physical graph pairing uses global references and registered callbacks, not numerical helper suffixes. Authorize only native symbol-fact updates for380 Sprite and198 Caviar lifetime identities; keep ORIGINAL markers, claims, declarations and order verbatim. Candidate measured raw COFF equals candidate full-build COFF for both owners; same-body/reference pairing is evidence for rebinding, not a new claim or runtime acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c6984a66b56dccbe3bad2fe6610f9cb8d0b7f0e653a2da3b82c14e930252cdda",
+  "request_id": "large-owner-physical-rebinding-oct14ha",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:unused-cxx-runtime-startup-oct14gy"
+}

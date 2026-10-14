@@ -49,12 +49,9 @@
 // compiler that shipped in 1998, and <random> is C++11 and is used nowhere in
 // this tree. Removed with the second compiler they existed for.
 #include <math.h>
-#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string>
 #include <windows.h>
-#include <vector>
 
 // THE LIBRARY ROUTINES ON THIS LINE ARE CALLS IN THE SHIPPED IMAGE, NOT
 // INTRINSICS, and one line here is the whole of reproducing that.

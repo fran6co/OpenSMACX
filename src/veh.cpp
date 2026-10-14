@@ -1530,7 +1530,7 @@ int __cdecl boom(int x, int y, int flags) {
     // compiler-owned rather than replayed through fixed image addresses.
 // ORIGINAL: 0x00505D60 ??__Eg_BOOM_BUFFERS2@@YAXXZ 0x00505D60-0x00505D77 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned original initializer 0x00504AA0 constructs and registers this object's matching teardown callback", "retained COFF build/recovery/builds/build-sep4rpby/CMakeFiles/OpenSMACX.dir/src/veh.cpp.obj: _$E19 physically relocates to _?original_screen_snapshots@?1??boom@@YAHHHH@Z@4PAVBuffer@@A", "retained MAP names veh.cpp.obj as the generated wrapper's physical contribution", "full original span, historical claim and seed lessons are retained; this mapping does not assert byte equality"], "reason": "Map the original BOOM atexit identity to the compiler-emitted destructor wrapper owned by the corresponding genuine function-local object."}
-// symbol    _$E19
+// symbol    _$E6
 // kind      game
 // TRIED: same wall as 0x00505D40 - the body calls the MSVC 'eh vector constructor iterator' at 0x006456E4, whose mangled name no forward declaration can reach. Needs a real global array with a non-trivial ctor and dtor.
 // TRIED: same wall as 0x00505D40 - the body calls the MSVC 'eh vector constructor iterator' at 0x006456E4, whose mangled name no forward declaration can reach. Needs a real global array with a non-trivial ctor and dtor.
@@ -1538,20 +1538,20 @@ int __cdecl boom(int x, int y, int flags) {
     static Buffer original_screen_snapshots[8];
 // ORIGINAL: 0x00505D40 ??__Eg_BOOM_BUFFERS1@@YAXXZ 0x00505D40-0x00505D57 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned original initializer 0x00504AA0 constructs and registers this object's matching teardown callback", "retained COFF build/recovery/builds/build-sep4rpby/CMakeFiles/OpenSMACX.dir/src/veh.cpp.obj: _$E20 physically relocates to _?redrawn_map_snapshots@?1??boom@@YAHHHH@Z@4PAVBuffer@@A", "retained MAP names veh.cpp.obj as the generated wrapper's physical contribution", "full original span, historical claim and seed lessons are retained; this mapping does not assert byte equality"], "reason": "Map the original BOOM atexit identity to the compiler-emitted destructor wrapper owned by the corresponding genuine function-local object."}
-// symbol    _$E20
+// symbol    _$E7
 // kind      game
 // TRIED: homed into general.cpp 2026-09-03 - does not compile: the body calls 0x006456E4, which is the MSVC 'eh vector constructor iterator' CRT helper (mangled ??_M@YGXPAXIHP6EX0@Z@Z). Its mangled name is compiler-generated, so a normal forward declaration cannot reach it; the faithful source form is a real global array of a class with a non-trivial ctor and dtor, which is a recovery design for the global-object pass, not a homing. Stays here.
 // RECOVERY_OBJECT: v2 0x0090F7E0 0x00912420 _?redrawn_map_snapshots@?1??boom@@YAHHHH@Z@4PAVBuffer@@A 0x00504AA0
     static Buffer redrawn_map_snapshots[8];
 // ORIGINAL: 0x00505D30 ??__Eg_BOOM_FLIC@@YAXXZ 0x00505D30-0x00505D3A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned original initializer 0x00504AA0 constructs and registers this object's matching teardown callback", "retained COFF build/recovery/builds/build-sep4rpby/CMakeFiles/OpenSMACX.dir/src/veh.cpp.obj: _$E21 physically relocates to _?animation@?1??boom@@YAHHHH@Z@4VFlic@@A", "retained MAP names veh.cpp.obj as the generated wrapper's physical contribution", "full original span, historical claim and seed lessons are retained; this mapping does not assert byte equality"], "reason": "Map the original BOOM atexit identity to the compiler-emitted destructor wrapper owned by the corresponding genuine function-local object."}
-// symbol    _$E21
+// symbol    _$E8
 // kind      game
 // RECOVERY_OBJECT: v2 0x0090EA68 0x0090F54C _?animation@?1??boom@@YAHHHH@Z@4VFlic@@A 0x00504AA0
     static Flic animation;
 // ORIGINAL: 0x00505D20 ??__Eg_BOOM_BUFFER1@@YAXXZ 0x00505D20-0x00505D2A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned original initializer 0x00504AA0 constructs and registers this object's matching teardown callback", "retained COFF build/recovery/builds/build-sep4rpby/CMakeFiles/OpenSMACX.dir/src/veh.cpp.obj: _$E22 physically relocates to _?working_buffer@?1??boom@@YAHHHH@Z@4VBuffer@@A", "retained MAP names veh.cpp.obj as the generated wrapper's physical contribution", "full original span, historical claim and seed lessons are retained; this mapping does not assert byte equality"], "reason": "Map the original BOOM atexit identity to the compiler-emitted destructor wrapper owned by the corresponding genuine function-local object."}
-// symbol    _$E22
+// symbol    _$E9
 // kind      game
 // RECOVERY_OBJECT: v2 0x00915068 0x009155F0 _?working_buffer@?1??boom@@YAHHHH@Z@4VBuffer@@A 0x00504AA0
     static Buffer working_buffer;

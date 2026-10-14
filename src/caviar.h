@@ -9,6 +9,8 @@
  */
 #pragma once
 
+#include <stddef.h>
+
 // caviar.cpp includes buffer.h; this forward declaration is only for the
 // renderer's own Buffer-taking members declared below.
 class Buffer;

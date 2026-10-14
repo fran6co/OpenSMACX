@@ -1,0 +1,20 @@
+{
+  "event_id": "c6984a66b56dccbe3bad2fe6610f9cb8d0b7f0e653a2da3b82c14e930252cdda",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/caviar.h",
+      "src/stringstruct.h"
+    ],
+    "evidence": [
+      "Complete candidate compiler diagnostics show offsetof missing in Caviar and StringStruct layout assertions after removing unused C++ headers. Authorize explicit stddef.h includes at these two actual consumers; preserve all types, assertions, layouts and original mappings. This is dependency repair, not assertion removal or behavioral change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "780315215907ce91f084661f1766aecf6681ce57cf7bae96ef6bf3aabd65c69f",
+  "request_id": "explicit-offset-dependencies-oct14gz",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:unused-cxx-runtime-startup-oct14gy"
+}

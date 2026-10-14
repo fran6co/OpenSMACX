@@ -1,0 +1,21 @@
+{
+  "event_id": "a7dd9d8a8d58ac291159dbefad95344890ba9be84523b568296578cf9d0dc8b4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/path.cpp",
+      "src/prefwin_geometry.cpp"
+    ],
+    "evidence": [
+      "Authorize native annotation-only symbol correction for26PrefWin geometry helpers and Paths initializer. Fresh paired configured compilation under both existing profiles yields27unique counterparts perprofile, with identical recursive body and full relocation identity, consistent symbols acrossprofiles, and verified captured source/object hashes. These helpers are absent under their measurement names in ordinary application COFF; do not invent a disappearance or alter recipes to hide it.",
+      "Preserve all original markers, historical claims, bodies and original ownership/linked restoration obligations. This is bounded compiler-local symbol preservation, not new byte claim publication or runtime acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9aac06ada16845af328e767a38c7b75695bb8cd57d1ad80092da380b359fd38e",
+  "request_id": "configured-helper-symbol-preservation-oct14hi",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:unused-cxx-runtime-startup-oct14gy"
+}
