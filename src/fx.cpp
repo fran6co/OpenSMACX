@@ -15,6 +15,64 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+/*
+Purpose: Tear down an Effect, which is a Wave and nothing more.
+// ORIGINAL: 0x004482C0 ??1Effect@@QAE@XZ 0x004482C0-0x004482C5 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x448290 array destruction and 0x4482A0 construction-unwind each pass0x4482C0 for97elements of0x6Cbytes; original0x4482C0..0x4482C5 is a direct tail toWave::~Wave at0x4C67C0.", "src/fx.h owns Effect effects_[97]; Effect adds initialization policy but no members or destructor work beyond its Wave base. Implicit destruction preserves the existing virtual hierarchy.", "Native compiler controls distinguish the empty user-defined destructor (derived vptr store plus base tail) from implicit destruction emitted inFX (base tail only). Original compiler command and complete linked/runtime preservation remain separate obligations."], "reason": "The real FX array owns the compiler-generated Effect complete destructor; retain its independent original identity without a handwritten forwarding body."}
+// symbol    ??1Effect@@UAE@XZ
+// CORRECTED from 0x004482C0-0x004482C4, which the artifact carried: the body
+//   is one `E9 rel32`, five bytes, and a four-byte span cannot decode a single
+//   instruction - `measure` read "0 of 0 instructions, 4 discounted as
+//   relocations", which is what a span one byte short looks like.
+// Implicit Effect destruction is owned by the FX array below. The original
+// FX teardown and construction unwind both select this five-byte tail
+// to Wave::~Wave. No additional derived destructor work is present.
+// The historical experiments below are superseded: removing the empty
+// user-defined destructor AND its declaration emits the direct base
+// tail in this owner with the consistent virtual Sound/Wave hierarchy.
+// A stale header is not required to explain the original lifetime.
+// TRIED 2026-08-30, post-virtualization sweep (the claim regressed when
+//   ~Sound went virtual): empty user dtor measures `mov [ecx],0; ret` - the
+//   base-dtor call is ELIDED outright; qualified `this->Wave::~Wave()` gives
+//   23 instructions of SEH frame + vptr store + TWO base calls; a no-user-
+//   dtor implicit compiles the dtor straight into the fx.cpp caller and the
+//   symbol disappears; `#pragma auto_inline(off)` on ~Wave changes nothing.
+//   Evidence for the class pass: the image's Sound vtable slot 2 holds
+//   ??_GSound (0x004C92D0, verified in the image), so ~Sound IS virtual and
+//   the catalogue's QAE spelling hides UAE - yet the original's ??1Effect
+//   still folds to a 5-byte tail-jmp, which our VC6 refuses for a virtual
+//   base dtor. Something about the original Effect model (a friend-side
+//   emission, a different TU split, or /GX flags) remains unmodelled.
+//   MEASURED 2026-08-30, VoiceTx class pass: the regression reproduces on the
+//   PRISTINE tree - `git checkout HEAD` of every file this pass touched and
+//   this body still measures 0/1 (`mov [ecx], <vtable>` + the jump) - so the
+//   red claim was inherited, not caused here. The structural reading the
+//   evidence supports: the shipped Effect.obj was compiled against a sound.h
+//   that did not yet have `virtual ~Sound` (a stale-TU build), which is why
+//   the SAME 12.00.8168 compiler both puts ??_GSound in slot 2 of every
+//   Sound-family vtable AND emits this storeless tail-jmp - the two shapes
+//   cannot come from one consistent header, and no source this tree can hold
+//   reproduces both. The model choice stands with the virtual ~Sound, because
+//   slot 2 is measured in the image's tables and ??1Effect is one 5-byte
+//   thorn; leave the claim red and the TRIED wall standing.
+// size      5 bytes
+// prototype void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C67C0
+//
+// PROMOTED from src/recovered/units/004482c0.cpp. The whole body is the tail
+// jump into `??1Wave@@QAE@XZ` that a trivial derived destructor emits, which
+// is why `class Effect : public Wave` is the fix and an empty inline stub is
+// not - that compiles to nothing at all.
+Return Value: n/a
+Status: Complete
+*/
+
+
+
+
+
 // ORIGINAL: 0x00448350 ??_GEffect@@UAEPAXI@Z 0x00448350-0x00448371 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical deleting-thunk source src/deleting_thunks.cpp; original full spans retained: 0x00448350-0x00448371", "Pinned class constructor ??0Effect@@QAE@XZ at 0x004482D0 stores original class/view table VA 0x66b7a4 at 0x004482D8 (mov dword ptr [esi], 0x66b7a4); the current genuine owner vftable ??_7Effect@@6B@ selects generated ??_GEffect@@UAEPAXI@Z in slot 2 (+0x8) through weak entry ??_EEffect@@UAEPAXI@Z (mode 2).", "Pinned ??_GEffect@@UAEPAXI@Z at 0x00448350 calls the source-mapped ??1Effect@@QAE@XZ at 0x004482C0, then tests byte ptr [ebp + 8], 1; je 0x44836a bypasses scalar delete when bit 0 is clear, while bit 0 set calls 0x0064557F; it save original this; call destructor; delete only when flags bit 0 is set; return saved this with ret 4.", "The real class lifetime is owned by src/fx.cpp; its compiler-emitted deleting symbol and vftable slot carry this original identity. Hand-written adapter bodies with live adjustor callers remain until those callers are independently qualified and transferred. The linked weak/COMDAT copy is not used to choose source ownership.", "the source writer preserves the historical mapping's exactness state (historical exactness obligation retained); current compiler extent is not asserted equal to the original span"], "reason": "Bind the original Effect scalar deleting-destructor identity to the actual compiler-emitted class deleting destructor in its genuine owner translation unit. The original constructor's pinned vptr store and the current owner's physical table slot identify this class/view; no callback/thunk body is hand-authored here."}
 // symbol    ??_GEffect@@UAEPAXI@Z

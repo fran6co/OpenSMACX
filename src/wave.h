@@ -164,11 +164,10 @@ class Wave : public Sound {
 
 // Effect has the genuine Wave base and no additional storage. Its original
 // destructor tail-calls Wave destruction; the FX bank owns 97 such objects
-// at the same 0x6C stride. The definitions and original identities live in
-// wave.cpp, with the bank's construction evidence in fx.cpp.
+// at the same 0x6C stride. FX owns the initialization policy and the implicit
+// lifetime mappings in fx.cpp; no user-defined destructor stage is needed.
 class Effect : public Wave {
  public:
-  ~Effect();
   void init(char *fname, long flags);  // original mangled parameter J
 };
 

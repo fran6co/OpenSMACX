@@ -1633,57 +1633,6 @@ Wave::~Wave() {
 }
 
 
-/*
-Purpose: Tear down an Effect, which is a Wave and nothing more.
-// ORIGINAL: 0x004482C0 ??1Effect@@QAE@XZ 0x004482C0-0x004482C5
-// symbol    ??1Effect@@UAE@XZ
-// CORRECTED from 0x004482C0-0x004482C4, which the artifact carried: the body
-//   is one `E9 rel32`, five bytes, and a four-byte span cannot decode a single
-//   instruction - `measure` read "0 of 0 instructions, 4 discounted as
-//   relocations", which is what a span one byte short looks like.
-// TRIED 2026-08-30, post-virtualization sweep (the claim regressed when
-//   ~Sound went virtual): empty user dtor measures `mov [ecx],0; ret` - the
-//   base-dtor call is ELIDED outright; qualified `this->Wave::~Wave()` gives
-//   23 instructions of SEH frame + vptr store + TWO base calls; a no-user-
-//   dtor implicit compiles the dtor straight into the fx.cpp caller and the
-//   symbol disappears; `#pragma auto_inline(off)` on ~Wave changes nothing.
-//   Evidence for the class pass: the image's Sound vtable slot 2 holds
-//   ??_GSound (0x004C92D0, verified in the image), so ~Sound IS virtual and
-//   the catalogue's QAE spelling hides UAE - yet the original's ??1Effect
-//   still folds to a 5-byte tail-jmp, which our VC6 refuses for a virtual
-//   base dtor. Something about the original Effect model (a friend-side
-//   emission, a different TU split, or /GX flags) remains unmodelled.
-//   MEASURED 2026-08-30, VoiceTx class pass: the regression reproduces on the
-//   PRISTINE tree - `git checkout HEAD` of every file this pass touched and
-//   this body still measures 0/1 (`mov [ecx], <vtable>` + the jump) - so the
-//   red claim was inherited, not caused here. The structural reading the
-//   evidence supports: the shipped Effect.obj was compiled against a sound.h
-//   that did not yet have `virtual ~Sound` (a stale-TU build), which is why
-//   the SAME 12.00.8168 compiler both puts ??_GSound in slot 2 of every
-//   Sound-family vtable AND emits this storeless tail-jmp - the two shapes
-//   cannot come from one consistent header, and no source this tree can hold
-//   reproduces both. The model choice stands with the virtual ~Sound, because
-//   slot 2 is measured in the image's tables and ??1Effect is one 5-byte
-//   thorn; leave the claim red and the TRIED wall standing.
-// size      5 bytes
-// prototype void (__thiscall ??1Effect@@QAE@XZ)(Effect* this)
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004C6920
-//
-// PROMOTED from src/recovered/units/004482c0.cpp. The whole body is the tail
-// jump into `??1Wave@@QAE@XZ` that a trivial derived destructor emits, which
-// is why `class Effect : public Wave` is the fix and an empty inline stub is
-// not - that compiles to nothing at all.
-Return Value: n/a
-Status: Complete
-*/
-
-
-Effect::~Effect() {
-}
-
-
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk
