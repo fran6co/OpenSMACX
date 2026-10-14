@@ -33,7 +33,7 @@ ARRAYS=("g_CURSOR_SPRITES","g_CITIZEN_LG_CURSOR_SPRITES","g_SPECIALIST_LG_CURSOR
 
 def actual_source():
     source=(ROOT/"src/game.cpp").read_text()
-    sprites=(ROOT/"src/sprite.cpp").read_text()
+    sprites=(ROOT/"src/sprite_objects.cpp").read_text()
     console=(ROOT/"src/console.cpp").read_text()
     declarations=[]
     for name in ARRAYS:

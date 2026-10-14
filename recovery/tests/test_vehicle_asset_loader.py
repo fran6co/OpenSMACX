@@ -40,12 +40,12 @@ def braced(source, signature):
 
 def actual_source():
     files = {name: (ROOT / "src" / name).read_text() for name in
-             ("game.cpp", "game.h", "sprite.cpp", "sprite.h", "buffer.cpp",
+             ("game.cpp", "game.h", "sprite.cpp", "sprite_objects.cpp", "sprite.h", "buffer.cpp",
               "buffer.h", "veh.h", "veh.cpp", "faction.h", "infowin.cpp",
               "infowin.h", "maininterface.cpp", "maininterface.h")}
     implementations = files["game.cpp"] + "\n" + files["sprite.cpp"]
     objects = "\n".join(files[name] for name in
-                        ("sprite.cpp", "infowin.cpp", "maininterface.cpp"))
+                        ("sprite.cpp", "sprite_objects.cpp", "infowin.cpp", "maininterface.cpp"))
     headers = "\n".join(value for name, value in files.items() if name.endswith(".h"))
     definitions = []
     for name in ASSETS:

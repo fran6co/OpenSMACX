@@ -244,6 +244,7 @@ set(OPENSMACX_SOURCES
     src/spot.cpp
     src/spying.cpp
     src/sprite.cpp
+    src/sprite_objects.cpp
     src/stdafx.cpp
     src/stringbox.cpp
     src/stringlist.cpp
