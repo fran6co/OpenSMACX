@@ -1,0 +1,19 @@
+{
+  "event_id": "d0155bd02090df3df33cb4cb313241edd18ee8e3edd6d6feb631028e950995eb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_datalink_selection_queue.py"
+    ],
+    "evidence": [
+      "Callback closure review identifies actual-source Datalink test driver and signature/mutation assertions as affected by the authorized char-buffer contract. Keep behavior and damage assertions; no production scope expansion or baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "formatter-callback-test-driver-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:formatter-text-contract-oct15"
+}

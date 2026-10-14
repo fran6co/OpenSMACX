@@ -162,7 +162,7 @@ def test_facility_suffix_identity_and_actual_consumers():
     assert "0x009A5888" not in code_only(map_cpp)
     assert "0x009A5888" not in code_only(datalink)
 
-    say = extract_function(map_cpp, "void __cdecl say_project(void *text, int project_id, int with_cost)")
+    say = extract_function(map_cpp, "void __cdecl say_project(char *output, int project_id, int with_cost)")
     cat = extract_function(datalink, "void Datalink::set_cat_project()")
     say_code = code_only(say)
     cat_code = code_only(cat)
@@ -183,7 +183,7 @@ def test_actual_formatter_and_datalink_bodies(compiler_name: str, tmp_path: Path
     root = root_dir()
     say = extract_function(
         (root / "src/map.cpp").read_text(),
-        "void __cdecl say_project(void *text, int project_id, int with_cost)")
+        "void __cdecl say_project(char *output, int project_id, int with_cost)")
     cat = extract_function(
         (root / "src/datalink.cpp").read_text(),
         "void Datalink::set_cat_project()")
@@ -210,7 +210,7 @@ def test_host_fixture_rejects_wrong_owner_mapping(
     root = root_dir()
     say = extract_function(
         (root / "src/map.cpp").read_text(),
-        "void __cdecl say_project(void *text, int project_id, int with_cost)")
+        "void __cdecl say_project(char *output, int project_id, int with_cost)")
     cat = extract_function(
         (root / "src/datalink.cpp").read_text(),
         "void Datalink::set_cat_project()")

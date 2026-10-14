@@ -6708,7 +6708,7 @@ Purpose: Write a secret project's name, and its cost bracket when asked.
 // TRIED: (as 00590990.cpp) the artifact's `strcat(StringTemp, ...)`,
 //        i.e. no append of StringTemp to the output - it is what the image
 //        does, and it is kept here.
-// symbol    ?say_project@@YAXPAXHH@Z
+// symbol    ?say_project@@YAXPADHH@Z
 // TRIED: 32/40. Everything left is evaluation order around the first
 //        `StringTable.get`: the image hoists the receiver
 //        (`mov ecx, 0x9b90d8`) to the top of the body, before the
@@ -6721,8 +6721,7 @@ Purpose: Write a secret project's name, and its cost bracket when asked.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl say_project(void *text, int project_id, int with_cost) {
-    char *output = static_cast<char *>(text);
+void __cdecl say_project(char *output, int project_id, int with_cost) {
     strcat(output, StringTable.get(Facility[FacilitySPStart + project_id].name));
     if (with_cost != 0) {
         strcat(output, " ");
@@ -6733,6 +6732,7 @@ void __cdecl say_project(void *text, int project_id, int with_cost) {
 }
 
 // ORIGINAL: 0x00590BA0 ?say_vehicles@@YAXPAXHH@Z 0x00590BA0-0x00590C14 FILE
+// symbol    ?say_vehicles@@YAXPADHH@Z
 // size      116 bytes
 // prototype 
 // callers   0   call targets   2
@@ -6792,15 +6792,14 @@ void __cdecl say_project(void *text, int project_id, int with_cost) {
 //    prologue), it had enough register pressure to do so. That is a
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
-void __cdecl say_vehicles(void *text, int chassis_id, int with_height) {
-    char *dst = reinterpret_cast<char *>(text);
-    strcat(dst, VehPrototypes[chassis_id].veh_name);
+void __cdecl say_vehicles(char *text, int chassis_id, int with_height) {
+    strcat(text, VehPrototypes[chassis_id].veh_name);
     if (with_height != 0) {
-        strcat(dst, " ");
-        strcat(dst, "(");
+        strcat(text, " ");
+        strcat(text, "(");
         strcat(StringTemp, label_get(0x314 / 4));
-        strcat(dst, StringTemp);
-        strcat(dst, ")");
+        strcat(text, StringTemp);
+        strcat(text, ")");
     }
 }
 

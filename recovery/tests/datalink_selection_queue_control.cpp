@@ -14,7 +14,7 @@ DatalinkSelectionQueue *active_queue;
 int callback_mode, init_mode;
 int selected_index = -1;
 
-void record_text(void *output, int value, int detail) {
+void record_text(char *output, int value, int detail) {
     assert(output == StringTemp);
     assert(StringTemp[0] == 0);
     values[callback_count] = value;
@@ -27,7 +27,7 @@ void record_text(void *output, int value, int detail) {
         active_queue->clear();
     }
 }
-#define FORMATTER(name) void name(void *output, int value, int detail) { record_text(output, value, detail); }
+#define FORMATTER(name) void name(char *output, int value, int detail) { record_text(output, value, detail); }
 FORMATTER(say_reactor)
 FORMATTER(say_weapon)
 FORMATTER(say_armor)

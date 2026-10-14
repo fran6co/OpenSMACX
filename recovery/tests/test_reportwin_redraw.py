@@ -503,8 +503,8 @@ void say_base(char *out,int id) {
     ++say_base_calls; std::strcat(out,"BASE"); char n[16];
     std::sprintf(n,"%d",id); std::strcat(out,n);
 }
-void say_facility(void *raw,int id,int) {
-    ++say_facility_calls; char *out=(char *)raw; std::strcat(out,"FAC"); char n[16];
+void say_facility(char *out,int id,int) {
+    ++say_facility_calls; std::strcat(out,"FAC"); char n[16];
     std::sprintf(n,"%d",id); std::strcat(out,n);
 }
 const char *label_get(int id) {

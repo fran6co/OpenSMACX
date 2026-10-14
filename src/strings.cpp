@@ -185,10 +185,10 @@ LPSTR Strings::get(LPSTR address) {
 // continuing the destination; that side effect is present in the original.
 // ORIGINAL: 0x00590510 ?say_reactor@@YAXPAXHH@Z 0x00590510-0x005905B5
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x00590510-0x005905B5;seed:src/unrecovered/00590510.cpp;source:src/veh.h:Reactor;source:src/strings.h:StringTable"], "reason": "This free formatter reads the real Reactor record and shared Strings and Labels objects, matching the original name, call ABI, and bounded body."}
+// symbol    ?say_reactor@@YAXPADHH@Z
 // TRIED: MISMATCH #4 push/mov, local buffer layout differs
 // TRIED: _itoa needs a real signature -> declared as itoa_impl (own name), since the scaffold's nullary _itoa can't be redeclared (C2733)
-void __cdecl say_reactor(void *output, int reactor_id, int with_detail) {
-    char *text = static_cast<char *>(output);
+void __cdecl say_reactor(char *text, int reactor_id, int with_detail) {
     strcat(text, StringTable.get(Reactor[reactor_id].name));
     if (with_detail != 0) {
         strcat(text, " ");
@@ -206,8 +206,8 @@ void __cdecl say_reactor(void *output, int reactor_id, int with_detail) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005905C0 ?say_weapon@@YAXPAXHH@Z 0x005905C0-0x005906EC
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x005905C0-0x005906EC;seed:src/recovered/units/005905c0.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels"], "reason": "This free formatter uses the established Weapon records and shared Strings and Labels objects with the original name, call ABI, and bounded body."}
-void __cdecl say_weapon(void *output, int weapon_id, int with_detail) {
-    char *text = static_cast<char *>(output);
+// symbol    ?say_weapon@@YAXPADHH@Z
+void __cdecl say_weapon(char *text, int weapon_id, int with_detail) {
     const RulesWeapon &weapon = Weapon[weapon_id];
     strcat(text, StringTable.get(weapon.name));
     if (with_detail != 0) {
@@ -239,8 +239,8 @@ void __cdecl say_weapon(void *output, int weapon_id, int with_detail) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005906F0 ?say_armor@@YAXPAXHH@Z 0x005906F0-0x005907F5
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x005906F0-0x005907F5;seed:src/recovered/units/005906f0.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels"], "reason": "This free formatter uses the established Armor records and shared Strings and Labels objects with the original name, call ABI, and bounded body."}
-void __cdecl say_armor(void *output, int armor_id, int with_detail) {
-    char *text = static_cast<char *>(output);
+// symbol    ?say_armor@@YAXPADHH@Z
+void __cdecl say_armor(char *text, int armor_id, int with_detail) {
     const RulesArmor &armor = Armor[armor_id];
     strcat(text, StringTable.get(armor.name));
     if (with_detail != 0) {
@@ -266,9 +266,9 @@ void __cdecl say_armor(void *output, int armor_id, int with_detail) {
 
 // ORIGINAL: 0x00590800 ?say_chassis@@YAXPAXHH@Z 0x00590800-0x0059090D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x00590800-0x0059090D;seed:src/recovered/units/00590800.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00590800.cpp"], "reason": "This free formatter uses the established Chassis records and shared Strings and Labels objects with the original name, call ABI, and bounded body. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// symbol    ?say_chassis@@YAXPADHH@Z
 // kind      game
-void __cdecl say_chassis(void *output, int chassis_id, int with_detail) {
-    char *text = static_cast<char *>(output);
+void __cdecl say_chassis(char *text, int chassis_id, int with_detail) {
     const RulesChassis &chassis = Chassis[chassis_id];
     strcat(text, StringTable.get(chassis.offsv_1_name));
     if (with_detail != 0) {
@@ -292,9 +292,9 @@ void __cdecl say_chassis(void *output, int chassis_id, int with_detail) {
 
 // ORIGINAL: 0x00590B30 ?say_techs@@YAXPAXHH@Z 0x00590B30-0x00590B9A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x00590B30-0x00590B9A;seed:src/recovered/units/00590b30.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00590b30.cpp"], "reason": "This free formatter uses the established Technology records and shared Strings and Labels objects with the original name, call ABI, and bounded body. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// symbol    ?say_techs@@YAXPADHH@Z
 // kind      game
-void __cdecl say_techs(void *output, int tech_id, int with_detail) {
-    char *text = static_cast<char *>(output);
+void __cdecl say_techs(char *text, int tech_id, int with_detail) {
     say_tech(text, tech_id, with_detail);
     if (with_detail != 0) {
         strcat(text, " ");
@@ -372,6 +372,7 @@ Purpose: Append a facility's name to a scratch text: the facility label from
 
 // ORIGINAL: 0x00590910 ?say_facility@@YAXPAXHH@Z 0x00590910-0x0059098E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["src/strings.h declares say_facility; strings.cpp owns StringTable and StringTemp and already includes alpha/technology data declarations.","The pinned label word at byte offset 0x26C is dword index 0x9B; existing label_get(0x9B) performs the same LPSTR-table lookup through Labels and StringTable.","The one-space/open/close strings are emitted as source-owned literals; each strcat stays in its original order."],"reason":"Move the existing free formatter into the real string-table owner, use its existing typed label_get for index 0x9B, and source-own the bounded literals without changing append order or StringTemp destination."}
+// symbol    ?say_facility@@YAXPADHH@Z
 // size      126 bytes
 // prototype void (__cdecl ?say_facility@@YAXPAXHH@Z)(int8* text, int32 facilityID, int32 withCost)
 // callers   1   call targets   2
@@ -393,16 +394,16 @@ Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
         the label walk is stated stepwise (say_ability/say_society, whose
         scratch borrows ECX, keep the fused form).
 */
-void __cdecl say_facility(void *text, int facility_id, int with_cost) {
+void __cdecl say_facility(char *text, int facility_id, int with_cost) {
     Strings *strings = &StringTable;
     LPSTR name = Facility[facility_id].name;
-    strcat(static_cast<char *>(text), strings->get(name));
+    strcat(text, strings->get(name));
     if (with_cost != 0) {
-        strcat(static_cast<char *>(text), " ");
-        strcat(static_cast<char *>(text), "(");
+        strcat(text, " ");
+        strcat(text, "(");
         char *detail = label_get(0x9B);
         strcat(StringTemp, detail);
-        strcat(static_cast<char *>(text), ")");
+        strcat(text, ")");
     }
 }
 
@@ -414,6 +415,7 @@ Purpose: Append an ability's name, and with the flag the " (" + detail +
 
 // ORIGINAL: 0x00590AA0 ?say_ability@@YAXPAXHH@Z 0x00590AA0-0x00590B22 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["src/strings.h declares say_ability; strings.cpp owns StringTable/StringTemp and includes veh.h for Ability.","The pinned label word at byte offset 0x290 is dword index 0xA4; existing label_get(0xA4) performs the same LPSTR-table lookup.","The one-space/open/close strings are emitted as source-owned literals in the original strcat order."],"reason":"Move the existing formatter beside StringTable and express the observed label index through label_get(0xA4); preserve call order, index/flag quirks, StringTemp destination and historical claim."}
+// symbol    ?say_ability@@YAXPADHH@Z
 // size      130 bytes
 // prototype void (__cdecl ?say_ability@@YAXPAXHH@Z)(int8* text, int32 abilityID, int32 withDetail)
 // callers   0   call targets   2
@@ -427,15 +429,15 @@ Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
         receiver materialized at the get, because the original needs ECX
         for the 7-int scale and loads StringTable after it.
 */
-void __cdecl say_ability(void *text, int ability_id, int with_detail) {
+void __cdecl say_ability(char *text, int ability_id, int with_detail) {
     char *s1 = StringTable.get(Ability[ability_id].name);
-    strcat(static_cast<char *>(text), s1);
+    strcat(text, s1);
     if (with_detail != 0) {
-        strcat(static_cast<char *>(text), " ");
-        strcat(static_cast<char *>(text), "(");
+        strcat(text, " ");
+        strcat(text, "(");
         char *detail = label_get(0xA4);
         strcat(StringTemp, detail);
-        strcat(static_cast<char *>(text), ")");
+        strcat(text, ")");
     }
 }
 
@@ -447,6 +449,7 @@ Purpose: Append a social category's name, and with the flag the " (" +
 
 // ORIGINAL: 0x00590A10 ?say_society@@YAXPAXHH@Z 0x00590A10-0x00590A93 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["src/strings.h declares say_society; strings.cpp owns StringTable/StringTemp; src/faction.h declares SocialCategories.","The pinned label word at byte offset 0x114 is dword index 0x45; existing label_get(0x45) performs the same LPSTR-table lookup.","The one-space/open/close strings are emitted as source-owned literals in the original strcat order."],"reason":"Move the existing formatter beside StringTable, use label_get(0x45), and include the actual faction table declaration; preserve call order, model flag and claim."}
+// symbol    ?say_society@@YAXPADHH@Z
 // size      131 bytes
 // prototype void (__cdecl ?say_society@@YAXPAXHH@Z)(int8* text, int32 societyID, int32 withModel)
 // callers   0   call targets   2
@@ -459,15 +462,15 @@ Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
         the marker above. Like say_ability the 0xD4 scale borrows ECX, so
         the receiver materializes at the get despite the hoisted local.
 */
-void __cdecl say_society(void *text, int society_id, int with_model) {
+void __cdecl say_society(char *text, int society_id, int with_model) {
     Strings *strings = &StringTable;
     LPSTR type = SocialCategories[society_id].type;
-    strcat(static_cast<char *>(text), strings->get(type));
+    strcat(text, strings->get(type));
     if (with_model != 0) {
-        strcat(static_cast<char *>(text), " ");
-        strcat(static_cast<char *>(text), "(");
+        strcat(text, " ");
+        strcat(text, "(");
         char *model = label_get(0x45);
         strcat(StringTemp, model);
-        strcat(static_cast<char *>(text), ")");
+        strcat(text, ")");
     }
 }

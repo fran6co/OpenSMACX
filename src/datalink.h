@@ -392,7 +392,7 @@ class DatalinkSelectionQueue {
 };
 
 typedef void (__cdecl *DatalinkHelpCallback)(int);
-typedef void (__cdecl *DatalinkTextCallback)(void *, int, int);
+typedef void (__cdecl *DatalinkTextCallback)(char *, int, int);
 
 struct DatalinkEntryCallbacks {
   DatalinkHelpCallback help;
@@ -401,7 +401,7 @@ struct DatalinkEntryCallbacks {
   void set_callbacks(DatalinkHelpCallback help_callback,
                      DatalinkTextCallback text_callback);
   void invoke_help(int value) const;
-  void invoke_text(void *output, int value, int extra) const;
+  void invoke_text(char *output, int value, int extra) const;
 };
 
 // Candidate lower-bound model: the native constructor writes through entry 10.

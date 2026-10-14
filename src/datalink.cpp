@@ -3751,7 +3751,7 @@ void Datalink::init() {
 
 // ORIGINAL: 0x00590CB0 sub_590cb0 0x00590CB0-0x00590CC2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00590CB0-0x00590CC2 stores the two incoming pointer words at receiver+0 and +4", "source:src/datalink.h DatalinkEntryCallbacks exposes help and append_text in those two word positions", "pinned:0x00590CD0/0x00590CF0 consumers dispatch through those same two fields"], "reason": "Own the two exact callback-pointer stores on the existing DatalinkEntryCallbacks value type; set_callbacks is an operation-derived current name, not a recovered original API name."}
-// symbol    ?set_callbacks@DatalinkEntryCallbacks@@QAEXP6AXH@ZP6AXPAXHH@Z@Z
+// symbol    ?set_callbacks@DatalinkEntryCallbacks@@QAEXP6AXH@ZP6AXPADHH@Z@Z
 // kind      game
 void DatalinkEntryCallbacks::set_callbacks(
     DatalinkHelpCallback help_callback,
@@ -3771,8 +3771,8 @@ void DatalinkEntryCallbacks::invoke_help(int value) const {
 
 // ORIGINAL: 0x00590CF0 sub_590cf0 0x00590CF0-0x00590D0F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:d3362d4a5fec8fef6555623f53e48513f4953148:src/recovered/00590cf0.cpp", "pinned:590CB0..590CC2 initializer;590CD0..590CE6 and590CF0..590D0F complete dispatch/stack cleanup", "source:src/datalink.h:DatalinkEntryCallbacks", "source:recovery/tests/test_datalink_callback_owner.py"], "reason": "Recover the complete guarded callback dispatch through the existing two-pointer row. Adjacent 590CB0 stores these fields at offsets0/4; the pinned member dispatches one or three stack arguments and skips null callbacks. Existing selection-entry direct dispatch remains unchanged. The native EAX survives the callback or is zero on the null path, but no observed direct call or stored pointer establishes a typed return contract; void source roles do not invent one. The old int-return scaffold interpretation remains historical; its BYTE claim and complete original span remain restoration obligations, not a fresh grant."}
-// symbol    ?invoke_text@DatalinkEntryCallbacks@@QBEXPAXHH@Z
-void DatalinkEntryCallbacks::invoke_text(void *output, int value, int extra) const {
+// symbol    ?invoke_text@DatalinkEntryCallbacks@@QBEXPADHH@Z
+void DatalinkEntryCallbacks::invoke_text(char *output, int value, int extra) const {
   if (append_text != 0) {
     append_text(output, value, extra);
   }

@@ -19,9 +19,9 @@ from match_recovery.source import read_text
 ROOT = Path(__file__).resolve().parents[2]
 ADDRESSES = (0x00590910, 0x00590AA0, 0x00590A10)
 SIGNATURES = (
-    "void __cdecl say_facility(void *text, int facility_id, int with_cost)",
-    "void __cdecl say_ability(void *text, int ability_id, int with_detail)",
-    "void __cdecl say_society(void *text, int society_id, int with_model)",
+    "void __cdecl say_facility(char *text, int facility_id, int with_cost)",
+    "void __cdecl say_ability(char *text, int ability_id, int with_detail)",
+    "void __cdecl say_society(char *text, int society_id, int with_model)",
 )
 
 
@@ -110,7 +110,9 @@ def cpp_source(projected: str, mutation: str | None = None) -> str:
         bodies[1] = bodies[1].replace("strcat(StringTemp, detail);",
                                       "strcat(static_cast<char *>(text), detail);", 1)
     elif mutation == "drop_space_literal":
-        bodies[2] = bodies[2].replace('text), " "', 'text), ""', 1)
+        before = 'strcat(text, " ");'
+        bodies[2] = bodies[2].replace(before, 'strcat(text, "");', 1)
+        assert before not in bodies[2]
     main = r'''
 int main() {
   char text[128];

@@ -79,10 +79,6 @@ void __cdecl draw_radius(int x, int y, int mode, int draw_type);
 int __cdecl break_treaty(int faction_id, int target_faction_id, int treaty);
 int __cdecl diplo_lock(int patience);
 void __cdecl diplo_unlock();
-// Original 0x00590910 is the real source-owned facility text formatter;
-// its void-pointer parameter is part of the emitted PAX symbol.
-void __cdecl say_facility(void *text, int facility_id, int with_cost);
-
 // Report page dispatch at 0x00496D35 uses the original table at 0x00496DE4:
 // 0 intel; 1 no drawer; 2 labs; 3 energy; 4 ops; 5 projects; 6 satellites;
 // 7 security; 8 score. The retired explicit-receiver helper shifted these
