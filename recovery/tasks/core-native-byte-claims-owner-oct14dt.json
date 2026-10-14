@@ -1,0 +1,61 @@
+{
+  "author": "coordinator",
+  "base_revision": "0e6b4b490aea7df0e4dc5ce7961eae3de4f129db",
+  "editable_files": [
+    "src/alpha.cpp",
+    "src/alphanet.cpp",
+    "src/movie_media.cpp",
+    "src/net_class.cpp",
+    "src/net_fifo.cpp",
+    "src/netdaemon.cpp",
+    "src/shared_word.cpp",
+    "recovery/tests/test_core_claim_continuity_oct14dt.py"
+  ],
+  "evidence": [
+    "Fresh configured native core-native-preflight-oct14do.json measures seven exact authored routines: prefs_use59E950, compare_session_guid5D4BB0, MediaRuntime5CBBC0, Net.close_game631B30, NetFifo.close633A50, netdaemon_inflate_buffer634330 and toggle_shared_word44C870. NetFifo destructor6339E0 mismatches and is explicitly excluded; retain its identity, body and restoration work unchanged.",
+    "Independent current-source review finds no generated scaffolds among these seven. Preserve prefs load-before-store sequencing, GUID unsigned field comparison and caller-backed binding, MediaRuntime provisional dimensions, DirectPlay allocation/error quirks, FIFO lock/drain/free ordering, inflate opaque uninitialized stack field and status-dependent output-size update, and the shared word's explicitly unknown semantic domain. No new original class/lifetime/data-layout claim follows from byte equality.",
+    "Native recorder alone changes source claims. No C++ body/header/prototype/flags/symbol/span/behavior change is authorized. Preserve TRIED/LEVER seed findings and all historical obligations. Existing semantic claims may strengthen to byte claims only through native recording, never demote or hand-edit markers.",
+    "Add a fixed0e6b4b490 lossless source continuity control for exactly seven native promotions; compare all5646 configured identities and unchanged metadata elsewhere. Require independent actual publication review, host controls, historical claim audit, references/mappings, fresh isolated and destination build/link and matching before coordinator-reviewed integration. Masked historical bytes are not strict references, linked preservation, runtime or full-game acceptance. Existing unrelated failures remain explicit, never waived."
+  ],
+  "intent": "Bank seven freshly measured authored core routines through the native recorder only, preserving all implementations, original quirks and provisional ownership evidence.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5892432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6114224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6077376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6495024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6502992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4507760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "core-native-byte-claims-owner-oct14dt"
+}
