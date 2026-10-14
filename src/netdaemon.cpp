@@ -2356,6 +2356,26 @@ public:
         std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_18_), sizeof value);
         return value;
     }
+    int payload_1C() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_1C_), sizeof value);
+        return value;
+    }
+    int payload_20() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_20_), sizeof value);
+        return value;
+    }
+    int payload_24() const {
+        int value;
+        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_24_), sizeof value);
+        return value;
+    }
+    unsigned char payload_18_byte() const {
+        unsigned char value;
+        std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_18_), sizeof value);
+        return value;
+    }
 
 private:
     const unsigned char *bytes_;
@@ -5834,8 +5854,9 @@ static bool netdaemon_handle_client_lock_message(NetDaemon *daemon,
                                                   int sender_identity) {
     const int sender = sender_identity;
     if (type == 0x2210) {
-        const int field_10 = *reinterpret_cast<int *>(message + 0x10);
-        const int field_14 = *reinterpret_cast<int *>(message + 0x14);
+        const MessageLockView packet(message);
+        const int field_14 = packet.payload_14();
+        const int field_10 = packet.payload_10();
         log_say("From Client: LOCK", sender, field_10, field_14);
 
         if ((SpockHelpActive != 0 || TurnControlWord93A954 != 0) &&
@@ -5850,13 +5871,15 @@ static bool netdaemon_handle_client_lock_message(NetDaemon *daemon,
             return true;
         }
 
+        const int payload_18 = packet.payload_18();
+        const int payload_10 = packet.payload_10();
+        const int payload_14 = packet.payload_14();
+        const int payload_24 = packet.payload_24();
+        const int payload_1C = packet.payload_1C();
+        const int payload_20 = packet.payload_20();
         const int result = daemon->locks_.lock(
-            sender, *reinterpret_cast<int *>(message + 0x18),
-            *reinterpret_cast<int *>(message + 0x10),
-            *reinterpret_cast<int *>(message + 0x14),
-            *reinterpret_cast<int *>(message + 0x24),
-            *reinterpret_cast<int *>(message + 0x1C),
-            *reinterpret_cast<int *>(message + 0x20));
+            sender, payload_18, payload_10, payload_14,
+            payload_24, payload_1C, payload_20);
         if (result != 0) {
             log_say("(Sending: Lock Failed)", 0, 0, 0);
             message_data(0x1202 +
@@ -5866,7 +5889,7 @@ static bool netdaemon_handle_client_lock_message(NetDaemon *daemon,
         }
 
         log_say("(Sending: Lock OK)", 0, 0, 0);
-        if ((*reinterpret_cast<unsigned char *>(message + 0x18) & 2u) != 0 &&
+        if ((packet.payload_18_byte() & 2u) != 0 &&
             daemon->locks_.check_global_2(sender) != 0) {
             message_data(0x2216, sender, 0, 0, 0, 0);
         } else {
@@ -6214,8 +6237,9 @@ static bool netdaemon_handle_lock_mask_residual(NetDaemon &daemon,
                                                  unsigned char *message,
                                                  int identity) {
     if (type == 0x8240) {
-        const int first = *reinterpret_cast<int *>(message + 0x10);
-        const int second = *reinterpret_cast<int *>(message + 0x14);
+        const MessageCommandView packet(message);
+        const int second = packet.payload_14();
+        const int first = packet.payload_10();
         const uint32_t mask =
             (uint32_t(1) << (static_cast<uint32_t>(first) & 31u)) |
             (uint32_t(1) << (static_cast<uint32_t>(second) & 31u));
@@ -6225,9 +6249,10 @@ static bool netdaemon_handle_lock_mask_residual(NetDaemon &daemon,
             daemon.channels_[0].trailing_words_[1 + identity] = mask;
             aggregate |= mask;
         }
+        const int log_first = packet.payload_10();
+        const int log_second = packet.payload_14();
         log_say("Received OPEN CHANNEL request", identity,
-                *reinterpret_cast<int *>(message + 0x10),
-                *reinterpret_cast<int *>(message + 0x14));
+                log_first, log_second);
         message_data(0x1240, identity, newly_acquired, 0, 0, 0);
         return true;
     }

@@ -19,6 +19,7 @@ SOURCE = ROOT / "src/netdaemon.cpp"
 HELPER = "netdaemon_handle_client_lock_message"
 
 HOST_PREAMBLE = r"""
+#include <cstddef>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -33,6 +34,7 @@ static std::vector<std::string> events;
 static int logged_sender = -1;
 static int logged_x=-1, logged_y=-1;
 static unsigned char *mutated_packet;
+static int mutate_lock_byte18_on_lock_ok;
 static int sent_type = -1, sent_target = -1, sends;
 static void log_say(const char *label, int a, int b, int c) {
     events.push_back(std::string("log:") + label);
@@ -45,6 +47,10 @@ static void log_say(const char *label, int a, int b, int c) {
             std::memcpy(mutated_packet+0x10,&x,4);
             std::memcpy(mutated_packet+0x14,&y,4);
         }
+    }
+    if (std::string(label)=="(Sending: Lock OK)" &&
+        mutate_lock_byte18_on_lock_ok && mutated_packet) {
+        mutated_packet[0x18] = 2;
     }
 }
 static void message_data(int type, int target, int, int, int, int) {
@@ -103,6 +109,20 @@ int main() {
     mutated_packet=nullptr;
     put32(packet,0x10,10); put32(packet,0x14,11);
 
+    // The one-byte payload18 test occurs after the Lock OK callback. Mutating
+    // that byte there must affect the following global-lock branch.
+    put32(packet,0x18,0);
+    mutated_packet=packet; mutate_lock_byte18_on_lock_ok=1;
+    NetDaemon fresh_byte18; fresh_byte18.locks_.global_result_=1;
+    sends=0; events.clear();
+    assert(netdaemon_handle_client_lock_message(&fresh_byte18,0x2210,packet,1));
+    assert(events.size()>=5 && events[2]=="log:(Sending: Lock OK)" &&
+           events[3]=="global2");
+    assert(packet[0x18]==2);
+    assert(fresh_byte18.locks_.global2_calls_==1);
+    assert(sent_type==0x2216 && sent_target==1);
+    mutate_lock_byte18_on_lock_ok=0; mutated_packet=nullptr;
+
     // Reverse the decoy: resolved remote identity must reject even though
     // the packet word claims the local faction.
     put32(packet, 0x04, 1);
@@ -159,10 +179,11 @@ int main() {
 """
 
 
-def extract_function(source, name):
-    match = re.search(r"static\s+bool\s+" + re.escape(name) + r"\s*\(", source)
-    assert match, f"missing actual source helper {name}"
-    opening = source.index("{", match.end())
+def extract_definition(source, marker):
+    start = source.find(marker)
+    assert start >= 0, f"missing actual source declaration {marker}"
+    opening = source.find("{", start)
+    assert opening >= 0, f"missing actual source body {marker}"
     depth = 0
     quote = None
     escaped = False
@@ -185,13 +206,26 @@ def extract_function(source, name):
         elif char == "{": depth += 1
         elif char == "}":
             depth -= 1
-            if depth == 0: return source[match.start():index + 1]
+            if depth == 0: return source[start:index + 1]
         index += 1
-    raise AssertionError("unterminated lock helper")
+    raise AssertionError("unterminated source definition: " + marker)
+
+
+def extract_function(source, name):
+    match = re.search(r"static\s+bool\s+" + re.escape(name) + r"\s*\(", source)
+    assert match, f"missing actual source helper {name}"
+    return extract_definition(
+        source,
+        match.group(0),
+    )
 
 
 def source_parts():
     text = SOURCE.read_text()
+    lock_types = "\n".join((
+        extract_definition(text, "struct MessageLockRecord {") + ";",
+        extract_definition(text, "class MessageLockView {") + ";",
+    ))
     helper = extract_function(text, HELPER)
     process_match = re.search(
         r"if\s*\(type\s*==\s*0x2210\s*\|\|\s*type\s*==\s*0x2211\)\s*\{"
@@ -199,13 +233,13 @@ def source_parts():
         text, re.S,
     )
     assert process_match, "missing actual 0x2210/0x2211 dispatcher call"
-    return text, helper, process_match.group("body")
+    return text, lock_types, helper, process_match.group("body")
 
 
-def compile_and_run(helper, compiler, directory, name):
+def compile_and_run(lock_types, helper, compiler, directory, name):
     source_path = directory / (name + ".cpp")
     binary = directory / name
-    source_path.write_text(HOST_PREAMBLE + "\n" + helper + "\n" + HOST_MAIN)
+    source_path.write_text(HOST_PREAMBLE + "\n" + lock_types + "\n" + helper + "\n" + HOST_MAIN)
     built = subprocess.run(
         [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
          str(source_path), "-o", str(binary)], capture_output=True, text=True,
@@ -215,7 +249,7 @@ def compile_and_run(helper, compiler, directory, name):
 
 
 def test_actual_dispatch_passes_resolved_identity_and_not_packet_word():
-    text, helper, route = source_parts()
+    text, lock_types, helper, route = source_parts()
     assert "// ORIGINAL: 0x00534400" in text
     assert "0x00534400-0x005388B9;0x0065E0C2-0x0065E442" in text
     assert re.search(
@@ -230,7 +264,7 @@ def test_actual_dispatch_passes_resolved_identity_and_not_packet_word():
 
 
 def test_actual_helper_controls_and_identity_mutation_under_gcc_and_clang():
-    _, helper, _ = source_parts()
+    _, lock_types, helper, _ = source_parts()
     compilers = [shutil.which("g++"), shutil.which("clang++")]
     assert all(compilers), "both GCC and Clang are required for this host control"
     mutant = helper.replace(
@@ -248,17 +282,29 @@ def test_actual_helper_controls_and_identity_mutation_under_gcc_and_clang():
         "missing_ready_reply": helper.replace(reply_tail, "        daemon->locks_.check_global();"),
         "failure_fallthrough": helper.replace(failure_tail, failure_tail.replace("            return true;\n", "")),
         "failure_global_check": helper.replace(failure_tail, failure_tail.replace("            return true;", "            daemon->locks_.check_global();\n            return true;")),
-        "cached_coordinates": helper.replace("            *reinterpret_cast<int *>(message + 0x10),\n            *reinterpret_cast<int *>(message + 0x14),", "            field_10, field_14,"),
-        "swapped_operands": helper.replace("            *reinterpret_cast<int *>(message + 0x24),\n            *reinterpret_cast<int *>(message + 0x1C),", "            *reinterpret_cast<int *>(message + 0x1C),\n            *reinterpret_cast<int *>(message + 0x24),"),
+        "cached_coordinates": helper.replace(
+            "const int payload_10 = packet.payload_10();",
+            "const int payload_10 = field_10;").replace(
+            "const int payload_14 = packet.payload_14();",
+            "const int payload_14 = field_14;"),
+        "swapped_operands": helper.replace(
+            "            payload_24, payload_1C, payload_20);",
+            "            payload_1C, payload_24, payload_20);"),
+        "cached_lock_byte18": helper.replace(
+            '        log_say("(Sending: Lock OK)", 0, 0, 0);\n'
+            '        if ((packet.payload_18_byte() & 2u) != 0 &&',
+            '        const unsigned char cached_byte18 = packet.payload_18_byte();\n'
+            '        log_say("(Sending: Lock OK)", 0, 0, 0);\n'
+            '        if ((cached_byte18 & 2u) != 0 &&'),
     }
     with tempfile.TemporaryDirectory(prefix="osmx-2210-identity-") as temporary:
         directory = Path(temporary)
         for number, compiler in enumerate(compilers):
-            good = compile_and_run(helper, compiler, directory, f"good_{number}")
+            good = compile_and_run(lock_types, helper, compiler, directory, f"good_{number}")
             assert good.returncode == 0, good.stdout + good.stderr
             for name, damaged in mutants.items():
                 assert damaged != helper
-                bad = compile_and_run(damaged, compiler, directory, f"{name}_{number}")
+                bad = compile_and_run(lock_types, damaged, compiler, directory, f"{name}_{number}")
                 assert bad.returncode != 0, name + " mutant escaped control"
 
 

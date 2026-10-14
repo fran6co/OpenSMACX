@@ -310,7 +310,11 @@ def _assert_constrained_new_declarations(source):
         "MessageLockView": ("const unsigned char *", [
             ("int", "payload_10", "MessageLockRecord", "field_10_", "int"),
             ("int", "payload_14", "MessageLockRecord", "field_14_", "int"),
-            ("int", "payload_18", "MessageLockRecord", "field_18_", "int")]),
+            ("int", "payload_18", "MessageLockRecord", "field_18_", "int"),
+            ("int", "payload_1C", "MessageLockRecord", "field_1C_", "int"),
+            ("int", "payload_20", "MessageLockRecord", "field_20_", "int"),
+            ("int", "payload_24", "MessageLockRecord", "field_24_", "int"),
+            ("unsigned char", "payload_18_byte", "MessageLockRecord", "field_18_", "unsigned char")]),
     }
     for name, (pointer_type, schema) in methods.items():
         if name == "MessageBaseTextView":
@@ -488,6 +492,9 @@ def test_new_view_methods_are_single_field_memcpy_accessors():
             "payload_10": ("MessageLockRecord", "field_10_"),
             "payload_14": ("MessageLockRecord", "field_14_"),
             "payload_18": ("MessageLockRecord", "field_18_"),
+            "payload_1C": ("MessageLockRecord", "field_1C_"),
+            "payload_20": ("MessageLockRecord", "field_20_"),
+            "payload_24": ("MessageLockRecord", "field_24_"),
         },
         "MessageAcknowledgementPrefixView": {
             "sequence": ("MessageAcknowledgementPrefix", "sequence_"),
@@ -526,6 +533,12 @@ def test_new_view_methods_are_single_field_memcpy_accessors():
     byte_method = extract(command, "int8_t payload_18_byte() const")
     assert "offsetof(MessageDataRecord, payload_18_)" in byte_method
     assert "std::memcpy(" in byte_method
+    lock = extract(source, "class MessageLockView {")
+    lock_byte = extract(lock, "unsigned char payload_18_byte() const")
+    assert _cpp_tokens(lock_byte) == _cpp_tokens(
+        "unsigned char payload_18_byte() const { unsigned char value; "
+        "std::memcpy(&value, bytes_ + offsetof(MessageLockRecord, field_18_), "
+        "sizeof value); return value; }")
     assert "explicit MessageCommandView(const unsigned char *bytes)" in command
     assert "explicit MessageCommandView(const char *bytes)" in command
     for class_name in ("MessageVehicleView", "MessageLockView",
@@ -568,6 +581,7 @@ int main() {
     put32(p, 12, values[2]); put32(p, 16, values[3]);
     put32(p, 20, values[4]); put32(p, 24, values[5]);
     put32(p, 28, values[6]); put32(p, 32, values[7]);
+    put32(p, 36, 0x65E6F708u);
     MessageCommandView command(p);
     read_count = 0;
     if (!require((uint32_t)command.faction() == values[0], "command-faction")) return 98;
@@ -593,6 +607,8 @@ int main() {
 
     put32(p, 0x10, values[7]); put32(p, 0x14, values[0]);
     put32(p, 0x18, values[5]);
+    put32(p, 0x1C, values[6]); put32(p, 0x20, values[7]);
+    put32(p, 0x24, 0x65E6F708u);
     MessageVehicleView vehicle(p);
     if (!require((uint32_t)vehicle.payload_10() == values[7] &&
                  (uint32_t)vehicle.payload_14() == values[0], "vehicle-fields")) return 98;
@@ -613,11 +629,17 @@ int main() {
     read_count = 0;
     if (!require((uint32_t)lock.payload_10() == values[7] &&
                  (uint32_t)lock.payload_14() == values[0] &&
-                 (uint32_t)lock.payload_18() == values[5], "lock-payloads")) return 98;
-    if (!require(read_count == 3 && read_offsets[0] == 0x10 &&
-                 read_offsets[1] == 0x14 && read_offsets[2] == 0x18 &&
-                 read_widths[0] == 4 && read_widths[1] == 4 && read_widths[2] == 4,
-                 "lock-one-field-extents")) return 98;
+                 (uint32_t)lock.payload_18() == values[5] &&
+                 (uint32_t)lock.payload_1C() == values[6] &&
+                 (uint32_t)lock.payload_20() == values[7] &&
+                 lock.payload_24() == 0x65E6F708 &&
+                 lock.payload_18_byte() == (unsigned char)values[5], "lock-payloads")) return 98;
+    const size_t lock_offsets[] = {0x10,0x14,0x18,0x1C,0x20,0x24,0x18};
+    const size_t lock_widths[] = {4,4,4,4,4,4,1};
+    if (!require(read_count == 7, "lock-one-field-extents")) return 98;
+    for (int i=0;i<7;++i) if (!require(read_offsets[i] == lock_offsets[i] &&
+                                        read_widths[i] == lock_widths[i],
+                                        "lock-one-field-extents")) return 98;
 
     // The original reads +0x18 from shared receive scratch although vehicle
     // sends only 0x18 bytes. This larger host allocation is a safe access-shape
@@ -677,6 +699,7 @@ def test_actual_borrowed_wire_views_unaligned_and_field_specific(tmp_path, compi
 @pytest.mark.parametrize("damage,expected", [
     ("wrong-command-offset", "command-wire: command-payload10"),
     ("wrong-lock-offset", "command-wire: lock-payloads"),
+    ("wrong-lock-byte-width", "command-wire: lock-one-field-extents"),
     ("normalized-scratch-y", "command-wire: unserialized-tail-value"),
 ])
 def test_named_compile_success_wire_damage_controls_98(tmp_path, damage, expected):
@@ -691,6 +714,11 @@ def test_named_compile_success_wire_damage_controls_98(tmp_path, damage, expecte
         "wrong-lock-offset": (
             "offsetof(MessageLockRecord, field_18_)",
             "offsetof(MessageLockRecord, field_14_)"),
+        "wrong-lock-byte-width": (
+            "unsigned char payload_18_byte() const {\n"
+            "        unsigned char value;\n",
+            "unsigned char payload_18_byte() const {\n"
+            "        int value;\n"),
         "normalized-scratch-y": ("message + 0x18", "message + 0x14"),
     }
     before, after = edits[damage]

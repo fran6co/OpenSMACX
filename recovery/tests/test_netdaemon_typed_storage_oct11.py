@@ -973,7 +973,8 @@ def test_actual_high_routes_guards_callbacks_owners_and_common_tail(tmp_path,com
         ("kill_landmark(packet.payload_10(), packet.payload_14())","kill_landmark(4, 6)"),
         ("find_landmark(packet.payload_10(), packet.payload_14(), 1)","find_landmark(4, 6, 1)"),
         ("if (packet.faction() == ConsoleGlobal.faction_id_)","if (3 == ConsoleGlobal.faction_id_)"),
-        ("                *reinterpret_cast<int *>(message + 0x14));", "                second);"),
+        ("const int log_second = packet.payload_14();",
+         "const int log_second = second;"),
     ):
         assert before in body
         assert run(body.replace(before,after)).returncode!=0,before
