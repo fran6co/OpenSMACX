@@ -300,12 +300,13 @@ def host_source(damage: str | None = None) -> str:
     nh = (ROOT / "src/net_class.h").read_text()
     sh = (ROOT / "src/sound.h").read_text()
     vh = (ROOT / "src/voice.h").read_text()
+    sound_abi = (ROOT / "src/soundx_sound_abi.h").read_text()
     ah = (ROOT / "src/stringstruct.h").read_text()
     declarations = [
         declaration(ah, "class StringAllocationBase {"),
         declaration(sh, "class SoundFadeState {"),
         declaration(sh, "class Sound :"),
-        declaration(vh, "class SoundDeviceInterface {"),
+        declaration(sound_abi, "class SoundDeviceInterface {"),
         declaration(vh, "class VoiceRxDeviceInterface :"),
         declaration(vh, "class VoiceRx :"),
         declaration(vh, "class VoiceTx :"),
@@ -337,10 +338,11 @@ def host_source(damage: str | None = None) -> str:
     ):
         stubs.append(default_virtuals(owner, declaration(header, anchor), omitted))
     device = []
-    for anchor in ("class SoundDeviceInterface {", "class VoiceRxDeviceInterface :"):
+    for header, anchor in ((sound_abi, "class SoundDeviceInterface {"),
+                           (vh, "class VoiceRxDeviceInterface :")):
         for return_type, name, args in re.findall(
             r"virtual\s+(\w+(?:\s*\*)?)\s*(\w+)\s*\(([^()]*)\)\s*=\s*0;",
-            uncomment(declaration(vh, anchor)),
+            uncomment(declaration(header, anchor)),
         ):
             if name in {"start", "stop", "get_nbuffers", "add_buffer", "is_playing"}:
                 continue

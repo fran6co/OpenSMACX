@@ -1031,12 +1031,12 @@ int Midi::unload() {
     int result = 0;
     if (device_ != nullptr) {
         if (is_playing() == 0) {
-            static_cast<MidiDelegate *>(device_)->slot005();
+            static_cast<MidiDelegate *>(device_)->unload();
             if (WaveDeviceReleaseGuard) {
                 SoundXOrdinal2DeleteSound()(device_);
             }
         } else {
-            result = static_cast<MidiDelegate *>(device_)->slot005();
+            result = static_cast<MidiDelegate *>(device_)->unload();
         }
         device_ = nullptr;
     }

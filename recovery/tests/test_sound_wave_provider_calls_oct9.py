@@ -113,8 +113,11 @@ def test_provider_interface_overloads_are_callable_without_adding_slots(compiler
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} is unavailable")
-    header = (ROOT / "src/voice.h").read_text()
-    declarations = header[header.index("class SoundDeviceInterface {"):]
+    sound_abi = (ROOT / "src/soundx_sound_abi.h").read_text()
+    voice = (ROOT / "src/voice.h").read_text()
+    declarations = sound_abi[sound_abi.index("class SoundDeviceInterface {"):]
+    declarations = declarations[:declarations.index("};") + 2]
+    declarations += "\n" + voice[voice.index("class WavePlaybackDeviceInterface :"):]
     declarations = declarations[:declarations.index("class VoiceRxDeviceInterface :")]
     harness = f'''#include <cstdint>
 struct Sound;

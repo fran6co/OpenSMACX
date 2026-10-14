@@ -1,0 +1,24 @@
+{
+  "event_id": "e242043813d289d358236797ddaa855a2f39c9d447eb8615880f527600dd0cc2",
+  "payload": {
+    "affects": [
+      "entity-5554466d8c28418d58f1cc741ad6b45db50d9dfdbdedb4c77bde449e65b07b0c",
+      "entity-ba2e8ee655af2cb42c48d600a97ab39e2a3dfb6660c4275eb80e5d5b66e5ef29"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "midi-cross-module-prefix-oct15",
+    "evidence": [
+      "Pinned game4C7CC0 replaces bit0 of receiver byte54 and recursively applies the operation to receiver pointer3C; Ambience::load4C8530 applies it to the mode5 provider before Sound::load. Preserve this original behavior, not a new safe policy.",
+      "Pinned SoundX SHAac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5 mode5 ctor100039C0 calls mode2 ctor1001B5E0 via stub100022A7 on unchangedthis, then installs10064000. Mode2 common initializer10029520 initializes byte54 and pointer3C. Factory initialization after construction must also be examined before asserting nested3C is null at the game call.",
+      "DLL ordinals1/2 are undecorated create_sound/delete_sound, so export names do not prove Sound pointer type. Other device factories expose decorated Wave_Device/Midi_Device pointer names, supporting investigation of common source-library definitions but not proving Sound/Midi type identity.",
+      "No source behavior change for this finding in the shared-prefix batch; retain it for a complete constructor/layout/lifetime and caller investigation rather than replacing the cast with an invented opaque layout."
+    ],
+    "hypothesis": "Investigate whether game Midi and SoundX provider classes share an original library base/type definition. The current cast from DLL storage to game Midi encodes real cross-module prefix accesses, but a shared layout alone neither proves nor disproves C++ type identity. The shared call-interface cleanup does not resolve that storage/lifetime question.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "midi-cross-module-prefix-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:midi-provider-prefix-oct15"
+}

@@ -1,0 +1,45 @@
+{
+  "event_id": "c1b2ddeed08441077f8300f98028bcf03410d8a8ea83e86318804400ba0e92d1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh full-build ordinary COFF comparison finds five changed bodies outside original audio scope: end_of_game, load_interface, net_upkeep, save_game and Net::choose_service. Their source files are unedited; retain original task baseline and historical obligations.",
+      "All five retain physical section size; decoded changes include independent load scheduling, addition operand/register choices and load_interface instruction scheduling. Local EH/string label renumbering affects other object signatures. These observations are not full semantic/linked-preservation proof.",
+      "Expand measurement/review scope before manual integration. Do not edit unrelated bodies to chase the collateral, weaken gates, drop claims or reset baseline. Require original matching review and physical reference-target review, retaining unresolved limitations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5410976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6491504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e242043813d289d358236797ddaa855a2f39c9d447eb8615880f527600dd0cc2",
+  "request_id": "midi-prefix-collateral-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:midi-provider-prefix-oct15"
+}

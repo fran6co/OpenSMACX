@@ -19,6 +19,7 @@
 
 #include "vc6_compat.h"
 #include "sound.h"
+#include "soundx_sound_abi.h"
 
 /* Midi and its delegate, recovered 2026-08-23 (see 2bbecdbd): the
  * declarations live here now, not in hypothesis_layouts.h - correct
@@ -61,41 +62,8 @@ struct ProgramCtrl;
 struct TrackCtrl;
 extern int MidiTracksetTransposition;
 
-class MidiDelegate {
+class MidiDelegate : public SoundDeviceInterface {
  public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual int slot005();  // the family's unload (Sound slot 5); unload wants its answer
-  virtual void slot006();
-  virtual int play();                                        // slot 0x1c
-  virtual void slot008();
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void set_volume(int volume);                      // slot 0x040
-  virtual void slot017();
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual void slot023();
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031();
-  virtual void slot032();
   virtual int set_track(uint8_t *, unsigned long);           // slot 0x84
   virtual int set_tempo(unsigned long);                      // slot 0x88
   virtual int mute_track(unsigned long);                     // slot 0x8c

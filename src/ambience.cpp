@@ -380,7 +380,7 @@ int Ambience::load(const char *filename) {
 // symbol    ?unload@Ambience@@UAEHXZ
 int Ambience::unload() {
     MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
-    if (delegate) delegate->slot005();
+    if (delegate) delegate->unload();
     detach();
     device_ = nullptr;
     flags_40_ &= ~1u;
