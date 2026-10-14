@@ -59,7 +59,10 @@ Status: Complete
 */
 void TextIndex::make_index(LPCSTR source_txt) {
     Filemap txt_file_map;
-    shutdown();
+    // Original 0x005FDFB9 calls the shared Heap cleanup at 0x005D4580
+    // before clearing the count; the embedded Heap remains alive.
+    heap_.reset();
+    section_count_ = 0;
     strcpy(file_name_, source_txt);
     if (!strchr(file_name_, '.')) {
         strcat(file_name_, ".txt"); // append extension if missing
