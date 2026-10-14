@@ -1,0 +1,277 @@
+{
+  "author": "coordinator",
+  "base_revision": "d6743d3a787e81124e44b7317f5656f9d6b6edcb",
+  "editable_files": [
+    "src/net_class.h",
+    "src/net_class.cpp",
+    "src/netdaemon.cpp",
+    "src/alphanet.cpp",
+    "src/multidebug.cpp",
+    "src/net_session_picker.cpp",
+    "src/netwin.h",
+    "src/netwin.cpp",
+    "src/newgame.cpp",
+    "recovery/tests/test_net_wire_record_owner_oct10.py",
+    "recovery/tests/test_net_receive_player_actual_source.py",
+    "recovery/tests/test_net_provider_guid_oct9.py",
+    "recovery/tests/test_net_insert_actual_control.py",
+    "recovery/tests/test_net_transport_queue_closure_oct12.py",
+    "recovery/tests/test_netwin_editor_auth_actual_source_oct12.py",
+    "recovery/tests/multidebug_paint_harness.cpp",
+    "recovery/tests/test_message_data_actual_source.py",
+    "recovery/tests/test_netwin_pick_player_actual_source.py",
+    "recovery/tests/test_netwin_lobby_click.py",
+    "recovery/tests/test_net_constructor_state_oct9.py",
+    "recovery/tests/netdaemon-send-files-harness.cpp",
+    "recovery/tests/test_net_session_receive_host.py",
+    "recovery/tests/newgame_menu_control.cpp",
+    "recovery/tests/netdaemon_owner_harness.cpp",
+    "recovery/tests/netdaemon-transfer-receive-harness.cpp",
+    "recovery/tests/test_netwin_faction_record_owner_closure_oct9.py",
+    "recovery/tests/test_net_hotseat_owner_actual_source_oct6.py",
+    "recovery/tests/test_net_polling_global_owner_actual_source_oct10.py",
+    "recovery/tests/test_netwin_scalar_pickers_actual_source_oct12.py",
+    "recovery/tests/net_transport_control.cpp",
+    "recovery/tests/netdaemon-transfer-modal-harness.cpp",
+    "recovery/tests/message_data_owner_host.cpp",
+    "recovery/tests/test_netwin_on_key_down_actual_source.py",
+    "recovery/tests/net-group-host-harness.cpp",
+    "recovery/tests/test_netwin_player_packets.py",
+    "recovery/tests/test_netdaemon_file_control_packets_oct10.py",
+    "recovery/tests/netwin_owner_host_control.cpp",
+    "recovery/tests/netwin_pick_map_host_control.cpp",
+    "recovery/tests/net_join_live_id_control.cpp",
+    "recovery/tests/test_netwin_faction_data_prefix_oct14ay.py",
+    "recovery/tests/test_net_polling_player_id_oct11.py",
+    "recovery/tests/test_net_join_live_id.py",
+    "recovery/tests/test_restored_net_behavior.py",
+    "recovery/tests/test_netwin_typed_packet_senders_oct10.py",
+    "recovery/tests/test_packet_label_fidelity_oct11.py",
+    "recovery/tests/netwin_exec_host_control.cpp",
+    "recovery/tests/test_net_system_message_owner_oct10.py",
+    "recovery/tests/test_net_player_id_ownership_oct14gf.py"
+  ],
+  "evidence": [
+    "Pinned setup_faction_data481FD0 reads93D4F0 at48200A and93D4F4 at48200F; pick_pass47C970 reads same addresses at47C9CE/47CEE6. NetDaemonNet begins93CD90, therefore exact offsets760/764. Net constructor62D6A0 zeros those fields at62D84A/62D850; close62E010 does so at62E02C/62E032. Separate NetWin globals cannot represent that shared original storage.",
+    "Pinned join_session62E540 passes this+760 via LEA at62E82A to CreatePlayer. enum_players630C80 host-flag path tests bit0 at630D3B and stores callback DPID to+764 at630D48. drop_player632350 replaces departed host at63260C. Supports local_player_id_ and host_player_id_ names. Preserve DPID/uint32_t types/layout and all error/initialization effects.",
+    "Rename both member fields consistently, provide public const typed accessors for derived/external readers, and remove NetWinPlayerId/NetWinOtherPlayerId definitions/declarations. Preserve bit-pattern conversions and explicit existing casts unless separately proven unnecessary. If external writes require protected mutation, preserve real state ownership rather than opening duplicate storage or discarding behavior; report scope discoveries.",
+    "Add native Net member offsets760/764 and v3 aliases at93D4F0/93D4F4 beside real NetDaemonNet mapping. Parent remains historically unbounded, no invented whole-object extent. Verify native object reader and fresh compiler offsets; no manual ORIGINAL/claim edits.",
+    "Review and update affected actual-source test fixtures, not archival patch files or unrelated protocol assumptions. Add regression demonstrating Net owner state is observed by NetWin consumers and cannot diverge into copies. Require build/link, original matching and claim continuity, physical outside-scope difference review. Structural correction is not a game acceptance or automatic byte restoration claim."
+  ],
+  "intent": "Recover the network local/host player IDs as genuine named Net members shared by NetWin and other consumers; eliminate duplicate globals with coordinated typed accessors and faithful state transitions.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6477472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6479888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6484880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6497104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6496480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6483616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6491264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6491008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6477296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6496912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6498272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6499760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6481216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6486176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6488192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5431648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5432176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5434688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5450048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5456688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5121760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6068512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6538048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4726736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4730256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4719472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4718976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4718288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4700000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4701168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4703536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4706112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4707072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4727952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4731664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4704624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4699216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5823280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "net-player-id-ownership-oct14gf"
+}
