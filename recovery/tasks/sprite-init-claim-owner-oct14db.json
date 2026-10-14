@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "17ea46e355fb8b781ac2a3f889f4efae437ce381",
+  "editable_files": [
+    "src/sprite.cpp",
+    "recovery/tests/test_sprite_constructor_typed_storage_oct10.py"
+  ],
+  "evidence": [
+    "Fresh frozen candidate and destination Sprite pixel-storage measurements both return exact for5E3890..5E3953. The body has genuine filename/pixel members and real allocator/free/string callees; full candidate/destination compile and link, source/evidence review and128host controls pass. This is an eligible measurement, not a claim until the native recorder independently recompiles and publishes.",
+    "Preserve all existing original names/spans and byte/semantic obligations. Recorder is the sole source marker writer. No C++ body, header, flag, baseline or behavior change is authorized. Adapt the fixed52f2 constructor continuity test for exactly this measured additional byte claim without weakening any old obligation, symbol, history or fragment assertion.",
+    "Fresh isolated preparation and exclusive compiler resource lease; retain record output and verify its one-line publication; actual-source tests, native claim-history audit, references and build/link required before manual integration and fresh destination checks. Do not label legacy local equality as strict-reference, linked, structure/runtime or full-game acceptance."
+  ],
+  "intent": "Bank the freshly measured exact Sprite init body only through the native recorder, without changing its implementation or original identity.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6174864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sprite-init-claim-owner-oct14db"
+}
