@@ -1,0 +1,25 @@
+{
+  "event_id": "60ae1a59f84c244ae974981a9e7eb04335bf6dc58267a94c390370ea027baa37",
+  "payload": {
+    "affects": [
+      "entity-4fc396863748adbe72a719162a2e2d478c9a57e5846e62cb8cf5a9c4fa123cd4",
+      "entity-6225d910e37e9c17670f8b7a20aa3ddc65f42a5b0731cee396baf1bc46b0d258",
+      "entity-9ce6e19ec58f8a07e651d0fbfc9723eaf701916c5de33f78527d9e8eac6bc7a7",
+      "entity-b2bd7dcbee608f4aa2c98af6a4eab5591739ce1c9e50b8bdb84636ab0d9b1595",
+      "entity-d1279913de740523db14d2641596634331716f3d0c70dc3fb650ec13d56d1413"
+    ],
+    "author": "coordinator",
+    "discovery_id": "console-shared-array-bindings-oct14ge",
+    "evidence": [
+      "Fresh strict matching variants have no differing offsets: editor_energy has only unresolved ParseNumTable; set_bombing_run only unresolved Bases.",
+      "Pinned parse_num625E34 compares index9 and uses signed JLE to indexed store625E43 at9BB598; no negative guard. base_init4E4B86 rejects count>=512 and admitted path addresses97D040 with134 stride. Existing source owns arrays in general.cpp and alpha.cpp; preserve declarations and unsafe behavior."
+    ],
+    "hypothesis": "Exact Console bodies lack source-owned identities for existing ParseNumTable and Bases arrays.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "console-shared-array-bindings-oct14ge",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-command-matching-oct14ge"
+}

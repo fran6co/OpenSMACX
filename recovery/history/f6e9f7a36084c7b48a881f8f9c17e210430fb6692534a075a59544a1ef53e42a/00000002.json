@@ -1,0 +1,31 @@
+{
+  "event_id": "af099f76f5d52fc5ea65c2284211d63873d08b0e9a908a22fab7abd5f0c2bedb",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/alpha.cpp",
+      "src/general.cpp"
+    ],
+    "evidence": [
+      "Authorize only source-owned array bindings and focused evidence controls, not runtime declaration changes. ParseNumTable ten dwords9BB598..9BB5C0; Bases512x134 at97D040..9A3840. Verify native overlap, initial data/compiled size, original guard/access evidence, unchanged compiled body signatures and original claims. Do not normalize negative parse indices or original error paths."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6446640,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5131136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "60ae1a59f84c244ae974981a9e7eb04335bf6dc58267a94c390370ea027baa37",
+  "request_id": "console-shared-array-scope-oct14ge",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-command-matching-oct14ge"
+}
