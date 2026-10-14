@@ -1,0 +1,122 @@
+{
+  "author": "coordinator",
+  "base_revision": "02ce9bac108e96c57f6bca085105ef0eb31039cb",
+  "editable_files": [
+    "src/movie_media_decoder.cpp",
+    "recovery/tests/test_movie_decoder_six_block_math_source.py",
+    "recovery/tests/test_movie_scratch_origin_actual_source_oct14fc.py"
+  ],
+  "evidence": [
+    "Pinned native inspect5D0D82 confirms allocation base B after pushECX,pushEDX,subESP300. LEAECX,[ESP] and zero/DC/coefficient writes use B. Before row calls at5D1049..104B pushESI,pushEBP,pushEDI lowers ESP by0C. LEA[ESP+0C] is therefore B, not B+0C; LEA[ESP+10C] is B+100, not B+10C. Column source uses the same lowered ESP. Normalize transient stack movement before assigning any source offsets.",
+    "Recover row source words+8r, row destination words+64+r and column source words+64+9c, replacing current erroneous plus-three-word windows. Preserve original eight calls/order, 0x300 local extent, coefficient initialization/index arithmetic, unchecked inputs, fill branch and byte-pitched output. Do not add initialization, bounds checks, improve original bugs, or silently change helper ABI.",
+    "Current DWORD scratch versus int transform-helper types remains a separate unresolved source representation obligation. This bounded recovery fixes proven geometry and removes byte-offset workspace aliases without claiming complete signed storage identity, custom-register ABI, exactness or runtime acceptance.",
+    "Native independent disassembly review confirms the original stack normalization. The existing host test currently writes coefficient3 and mistakenly treats it as first row value because it follows the shifted implementation. Correct that expectation to DC0 and independently require source[3] to retain the negative coefficient. Add actual-source controls for all row/column origins and mutants reintroducing each +3 shift; no weakened assertion or stub-based acceptance.",
+    "Review whole movie owner measurement closure. Require fresh isolated build/link, scoped matching, unchanged source identities/claims/history outside explicit body correction, independent review, post-integration checks. Preserve historical TRIED seed notes without editing ORIGINAL markers or hand granting claims; custom-register/full linked/runtime fidelity remains unfinished."
+  ],
+  "intent": "Restore the original movie coefficient workspace origin across row and column transforms; preserve complete decoder behavior, original identities and matching obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6091088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6091504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6105569,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6105888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6106122,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6098306,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6097579,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6100070,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6101058,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6100564,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6101552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6099576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6106736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6108592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6092231,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6092882,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6089225,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6090368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6090634,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6090013,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "movie-scratch-origin-owner-oct14fc"
+}
