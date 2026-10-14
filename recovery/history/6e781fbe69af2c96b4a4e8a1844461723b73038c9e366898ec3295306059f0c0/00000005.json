@@ -1,0 +1,19 @@
+{
+  "event_id": "7240bfc6dad988d2a0df76b52781db9c83eda6a35fa424960ead300daeed1e72",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_textindex_cleanup_order_oct14gk.py"
+    ],
+    "evidence": [
+      "Pinned5FDF9E..5FDFCA constructs Filemap, cleans live Heap via5D4580, clears count then copies filename. Existing Heap::reset represents that entry without ending lifetime. Native variant replica/damage controls pass with no lost passing measurements; add actual-source host call-order/error-path controls. Other Heap destructor target discrepancy remains unresolved; preserve original baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "680e4396bc206e77811e57f3b2ee7b9b692620bb3ae33e196e3b8fa971dc2db3",
+  "request_id": "textindex-cleanup-controls-oct14gk",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:textindex-record-recovery"
+}
