@@ -1,0 +1,50 @@
+{
+  "author": "coordinator",
+  "base_revision": "fc450f64daa008672e76de4070069b1e7faf9d80",
+  "editable_files": [
+    "src/sound.cpp",
+    "src/wave.cpp",
+    "src/graphicwin.cpp",
+    "src/jackal/filewin.cpp",
+    "recovery/tests/test_graphicwin_input_check_actual_source.py",
+    "recovery/tests/test_audio_ui_claim_continuity_oct14dn.py"
+  ],
+  "evidence": [
+    "Fresh native configured-flag measurement audio-ui-native-preflight-oct14dm.json returns exact for Sound::unload4C6440 (21/21), Wave::play4C6920 (54/54), Wave::unload4C6EA0 (24/24), GraphicWin::check_pcx_input_data5D5470 (11/11), FileWin::close613900 (40/40). Retained-build discovery alone was not accepted as measurement. Total150 instructions, no body edits required.",
+    "Real Sound/Wave base-derived declarations, typed external call interfaces and owned state/lifecycle APIs; FileWin uses genuine controls, Sprite owners and HWND; GraphicWin's actual original34-byte forwarding body adjusts to its existing Buffer base and calls the separately mapped typed input-data method. Provisional original names remain provisional; this is not a new owner/type claim or placeholder forwarder invented for coverage.",
+    "Recorder is the sole source marker writer. No function body, header, original name/span/current symbol, flags, baseline or behavior change. Preserve all seed findings/TRIED/LEVER history. Native promotion replaces two Wave semantic-only tokens with stronger byte claims; original instruction-shape obligations remain required and are satisfied by the stronger claim, not demoted or waived.",
+    "Keep existing GraphicWin transfer-test baseline and all field/symbol/history controls; change only the exact5D5470 expected byte flag after native publication. Add a fixedfc450f64d continuity control across the four hosts: only these five byte flags and the two native stronger-claim promotions may change; all bodies, marker identities, spans, symbols, lessons and other obligations must remain identical. Never type or edit an ORIGINAL marker or claim token by hand.",
+    "Isolated native preparation/compiler lease, independent C++/publication review, relevant actual-source controls, native claim audit, references, fresh build/link and destination recheck precede manual integration. Masked historical byte equality is not strict-reference, linked/lifetime/runtime or full-game acceptance. No recorder output may be replayed as publication authority."
+  ],
+  "intent": "Bank five freshly measured exact authored methods through the native recorder only, preserving genuine owners, implementations and historical restoration obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5006400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5007648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5009056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6116464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6371584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "audio-ui-native-byte-claims-owner-oct14dn"
+}
