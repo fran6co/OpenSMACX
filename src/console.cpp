@@ -4982,13 +4982,14 @@ void Console::editor_energy() {
         parse_says(0, Players[faction].adj_name_faction, -1, -1);
         // The prompt loop walks factions 1..7: each pass re-derives the
         // parser's gender default from that faction's leader record and feeds
-        // the faction label (Players[f].name_leader) plus its unk_48 value to
-        // the script parser.
+        // the faction label and that faction's current energy reserve to the
+        // script parser. The pinned loop starts at PlayersData[1] + 0x220
+        // (0x96ECCC) and advances by the 0x20CC faction-record stride.
         for (int loop_faction = 1; loop_faction < MaxPlayerNum; ++loop_faction) {
             GenderDefault = Players[loop_faction].is_leader_female;
             PluralityDefault = 0;
             parse_says(loop_faction, Players[loop_faction].name_leader, -1, -1);
-            parse_num(loop_faction, PlayersData[loop_faction].unk_48);
+            parse_num(loop_faction, PlayersData[loop_faction].energy_reserves);
         }
 
         const int answer = X_pop_ask_number(
