@@ -1,0 +1,24 @@
+{
+  "event_id": "1cbc7cae3bad2baa8cfff53c97aa9bf85d623038ff39a8a89bae8e96d6ea2601",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_math_net_transfer_owner_actual_source.py",
+      "recovery/tests/test_media_output_buffers_oct11.py",
+      "recovery/tests/test_media_present_descriptor_oct11.py",
+      "recovery/tests/test_movie_media_owner_actual_source.py",
+      "recovery/tests/test_net_fifo_live_head_oct12.py"
+    ],
+    "evidence": [
+      "Fresh native recorder published exactly seven marker-only claim promotions, all225 instructions exact. Existing selected master controls pass79 tests with one inherited CMake policy failure. Worker controls identify five new failures exclusively from historical test assumptions that close633A50, MediaRuntime5CBBC0 and inflate634330 never gain stronger claims.",
+      "Admit only these five historical test files to recognize exactly their applicable measured promotion, preserving fixed original baselines, all body/identity/history checks and mutation controls. A test-only lossless writer projection may restore only byte/semantic flags of the explicitly enumerated current task identity for historical comparison; it must assert the current stronger claim and have independent damage tests. No source marker writes, C++ edits, baseline reset, broad masking, unrelated failure fix or acceptance weakening authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "native-core-claim-test-guards-oct14du",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:core-native-byte-claims-owner-oct14dt"
+}
