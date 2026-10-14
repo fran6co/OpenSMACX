@@ -1,0 +1,17 @@
+{
+  "event_id": "ca3699f83ad6aaa38eb6c2e1873e2ad2a639d3a3e20093106a631a2487d5fe95",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "item-list-malformed-guards-oct14cc",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/setupwin.cpp draw_item in setupwin-item-text-owner-oct14ch restores original nonnegative admission, exact cursor traversal, first head-only lookup, unconditional string calls, preceding-byte truncation and independent second head/text lookup. Independent pinned/source review agrees;67 relevant host controls and fresh build/link pass. Null string probes do not prove native CRT fault behavior; matching remains0.052MISMATCH, full fidelity/runtime acceptance unproven. Historical source identities/claims unchanged."
+    ]
+  },
+  "previous_event": "d8c3d9a56edddf02d08a498a8c4862e9d751cec10385dff45d24692b8f4686ce",
+  "request_id": "item-list-original-sequence-restored-oct14ch",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:setupwin-draw-buffer-owner-oct14cc"
+}

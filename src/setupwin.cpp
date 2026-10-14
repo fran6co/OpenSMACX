@@ -478,23 +478,26 @@ int SetupWin::draw_item(int position, int selected) {
     row.left += 12;
     row.right += 4;
 
-    if (position >= 0 && item_texts_ != 0) {
+    if (position >= 0) {
         if (position < item_texts_->entry_count_) {
             item_texts_->current_ = item_texts_->head_;
-            for (int i = position; i > 0 && item_texts_->current_ != 0; --i) {
+            for (int i = position; i > 0; --i) {
                 item_texts_->current_ = item_texts_->current_->next;
             }
             item_texts_->current_position_ = position;
         }
-        StringStructEntry *entry = item_texts_->current_;
-        char *name = item_texts_->head_ != 0 && entry != 0 &&
-                     entry->string_payload() != 0 ? entry->string_payload()->text : 0;
+        char *name = item_texts_->head_ != 0
+            ? item_texts_->current_->string_payload()->text : 0;
+        CharUpperA(name);
+        char *pipe = strchr(name, '|');
+        if (pipe != 0) *pipe = ' ';
+        char *paren = strchr(name, '(');
+        if (paren != 0) paren[-1] = 0;
+
+        // The original re-reads the live list and label after string calls.
+        name = item_texts_->head_ != 0
+            ? item_texts_->current_->string_payload()->text : 0;
         if (name != 0) {
-            CharUpperA(name);
-            char *pipe = strchr(name, '|');
-            if (pipe != 0) *pipe = ' ';
-            char *paren = strchr(name, '(');
-            if (paren != 0 && paren > name) paren[-1] = 0;
             window_buffer->write_cent_l(name, &row, static_cast<int>(strlen(name)));
         }
     }
