@@ -41,7 +41,17 @@ def _replace_once(source, before, after):
 
 
 def _project_flic_cpp_to_structure_baseline(source):
+    source = _replace_once(source, "#include <cstring>\n", "")
     replacements = (
+        ("std::memcpy(dst, &word, sizeof(word));",
+         "*reinterpret_cast<uint16_t *>(dst) = word;", 1),
+        ("uint16_t pixel;\n"
+         "                                    std::memcpy(&pixel, src, sizeof(pixel));\n"
+         "                                    std::memcpy(out, &pixel, sizeof(pixel));",
+         "*reinterpret_cast<uint16_t *>(out) =\n"
+         "                                        *reinterpret_cast<uint16_t *>(src);", 1),
+        ("std::memcpy(out, &word, sizeof(word));",
+         "*reinterpret_cast<uint16_t *>(out) = word;", 1),
         ("decode_chunk(&chunk_.header_);", "decode_chunk(&chunk_);", 2),
         ("fseek(file_, chunk_.header_.size_, SEEK_CUR);",
          "fseek(file_, chunk_.size_, SEEK_CUR);", 1),
@@ -138,6 +148,12 @@ def test_flic_structural_projection_preserves_the_fixed_task_baseline():
 
 
 @pytest.mark.parametrize(("relative", "mutation"), [
+    ("src/flic.cpp", lambda s: s.replace("std::memcpy(dst, &word, sizeof(word));",
+                                         "std::memcpy(dst, &line_hdr, sizeof(word));", 1)),
+    ("src/flic.cpp", lambda s: s.replace("std::memcpy(&pixel, src, sizeof(pixel));",
+                                         "std::memcpy(&pixel, out, sizeof(pixel));", 1)),
+    ("src/flic.cpp", lambda s: s.replace("std::memcpy(out, &word, sizeof(word));",
+                                         "std::memcpy(out, &opcode, sizeof(word));", 1)),
     ("src/flic.cpp", lambda s: s.replace("DataChunk sub;", "DataChunk damaged;", 1)),
     ("src/flic.cpp", lambda s: s.replace("decode_chunk(&chunks->header_);",
                                          "decode_chunk(chunks);", 1)),
