@@ -1,0 +1,22 @@
+{
+  "event_id": "5785648bbdfa4a052c387a44c5bf45d8f0bc85d740b84d8c5fbe0370aff2c6af",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/net_fifo.cpp",
+      "src/net_fifo.h"
+    ],
+    "evidence": [
+      "Fresh full application object comparison of the in-class helper found seventeen changed outside-owner signatures, including substantial unresolved differences in enemy_move, load_interface and gen_terrain_poly. External relocation multisets alone do not establish preservation; the header-inline form is not approved for integration.",
+      "Admit the same private nonvirtual helper declaration in NetFifo with its ordinary explicitly inline definition in net_fifo.cpp before destructor/close. This retains typed shared cleanup while not exposing an executable helper definition to unrelated translation units. No ABI fields, original identities/claims, bug fixes, compiler flags or forced-inline controls change.",
+      "Require native constructor-layout and destructor-API damage controls, all thirteen function measurements, fresh build/link, actual-source lifetime tests, source identity continuity and a fresh outside-owner physical object comparison. Any remaining collateral changes remain review obligations, not inferred harmlessness. Keep original7a20029ed task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1b0a1f4b00ab8a5f2bb456a830ca05e781e443306a2d1852e0a877ddf336ddc9",
+  "request_id": "netfifo-tu-local-inline-cleanup-oct14ei",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:netfifo-destructor-recovery-owner-oct14eb"
+}

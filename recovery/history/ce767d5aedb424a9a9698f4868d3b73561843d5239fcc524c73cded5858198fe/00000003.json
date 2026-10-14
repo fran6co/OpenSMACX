@@ -1,0 +1,22 @@
+{
+  "event_id": "1b0a1f4b00ab8a5f2bb456a830ca05e781e443306a2d1852e0a877ddf336ddc9",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/net_fifo.cpp",
+      "src/net_fifo.h"
+    ],
+    "evidence": [
+      "Fresh pinned PE import parsing uniquely identifies KERNEL32.dll name:DeleteCriticalSection; the actual destructor COFF relocation is ordinary __imp__DeleteCriticalSection@4. Admit that source-owned SDK import identity in the NetFifo header, with no hardcoded address or dependency-version/linked-selection claim.",
+      "Correct the destructor RECOVERY_BINDING through native binding_source.render/parse: original 0x6339E0-0x633A42 contains an inline lock/drain/reset/unlock sequence followed by lock deletion, not an out-of-line close call. The shared private inline helper exactly reuses the existing close sequence; compiler spelling does not prove an original helper identity. Preserve ORIGINAL markers, claims, old useful evidence and immutable baseline.",
+      "Fresh component_targets may qualify the existing pinned LIBCMT free target for scoped reference diagnostics; never treat an annotation or cached target as qualification. Deeper dependency/internal references and complete linked selection remain unfinished. Require continuity controls to reverse precisely these metadata corrections along with the admitted implementation change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e0aa24a6669ed6f9ae463621c4c61a8b4c1b998f43bee7137df22275d20b5b3f",
+  "request_id": "netfifo-evidenced-reference-bindings-oct14eh",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:netfifo-destructor-recovery-owner-oct14eb"
+}
