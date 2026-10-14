@@ -4175,7 +4175,7 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
     return 0;
 }
 
-// ORIGINAL: 0x005E3890 ?init@Sprite@@QAEHPADHH@Z 0x005E3890-0x005E3953 FILE
+// ORIGINAL: 0x005E3890 ?init@Sprite@@QAEHPADHH@Z 0x005E3890-0x005E3953 FILE BYTE_EXACT
 // Re-target a live sprite at a new PCX file: release the previous pixel block
 // (charging its size back to SpriteMemoryUsed) and file name, clear the
 // geometry, copy the new name into heap storage, and store the requested

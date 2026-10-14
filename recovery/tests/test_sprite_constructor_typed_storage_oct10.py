@@ -1,4 +1,5 @@
 """Bounded actual constructor/member controls, not native layout proof."""
+from dataclasses import replace
 import re
 import shutil
 import subprocess
@@ -21,10 +22,16 @@ def test_all_sprite_identities_claims_and_symbols_remain_intact():
     ).stdout
     before, after = read_text(old, SOURCE), read_text(SOURCE.read_text(), SOURCE)
     assert len(before) == len(after) == 435
-    assert [_continuity_fields(row) for row in before] == [
+    # The native recorder measured init's 76/76 instructions after the reviewed
+    # unsigned pixel-storage recovery. Admit only that additional obligation;
+    # keep the fixed baseline and every other identity/history field intact.
+    assert sum(row.address == 0x005E3890 for row in before) == 1
+    assert [_continuity_fields(replace(row, byte_exact=True)
+                               if row.address == 0x005E3890 else row)
+            for row in before] == [
         _continuity_fields(row) for row in after
     ]
-    # The reviewed persistence recovery4e469b429 corrected the filename
+    # The reviewed persistence recovery 4e469b429 corrected the filename
     # interface; ORIGINAL names/spans/claims above still retain that history.
     # Keep this baseline fixed and admit only those two established emitted
     # symbols, not arbitrary source renames or function-fragment changes.
