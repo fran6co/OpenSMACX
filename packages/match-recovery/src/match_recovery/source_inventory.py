@@ -141,22 +141,30 @@ def _parser_key() -> str:
     return digest({"implementation": inputs, "python": sys.version})
 
 
+def _parse_cache_directory(root: Path) -> Path | None:
+    """Return the existing ignored disposable parse cache, if safely available."""
+    if os.environ.get("RECOVERY_PARSE_CACHE") == "off":
+        return None
+    root = root.resolve()
+    relative_cache = "build/recovery/parse_cache/"
+    ignored = subprocess.run(["git", "check-ignore", "-q", relative_cache],
+                             cwd=root, capture_output=True, check=False)
+    tracked = subprocess.run(["git", "ls-files", "--", relative_cache],
+                             cwd=root, capture_output=True, check=False)
+    path = root / relative_cache
+    if (ignored.returncode == 0 and tracked.returncode == 0 and not tracked.stdout
+            and path.resolve().is_relative_to(root)):
+        return path
+    return None
+
+
 def source_snapshot(root: Path, image: Path | None = None, *, allow_empty: bool = False) -> dict[str, Any]:
     if type(allow_empty) is not bool:
         raise ValueError("empty source selection policy must be a boolean")
     root = root.resolve()
     configuration = SourceConfiguration.read(root)
-    cache = None
-    if os.environ.get("RECOVERY_PARSE_CACHE") != "off":
-        # Read-only commands must not create committable derived artifacts.
-        relative_cache = "build/recovery/parse_cache/"
-        ignored = subprocess.run(["git", "check-ignore", "-q", relative_cache],
-                                 cwd=root, capture_output=True, check=False)
-        tracked = subprocess.run(["git", "ls-files", "--", relative_cache],
-                                 cwd=root, capture_output=True, check=False)
-        if (ignored.returncode == 0 and tracked.returncode == 0 and not tracked.stdout
-                and (root / relative_cache).resolve().is_relative_to(root)):
-            cache = root / relative_cache
+    # Read-only commands may write only to this ignored, untracked derived cache.
+    cache = _parse_cache_directory(root)
     parser_key = _parser_key() if cache is not None else None
     pin = image_pin(root, configuration)
     revision = _revision(root)

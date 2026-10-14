@@ -6,15 +6,45 @@ in source, not that current bytes, references or structure satisfy them.
 """
 
 from collections import defaultdict
+from dataclasses import asdict
+import hashlib
 from pathlib import Path
 import re
 
+from .memo import memoized
+from .source import read_text
 from .model import Origin, digest
 from .records import parse_json
-from .source import read_text
 from .source_config import SourceConfiguration
-from .source_history import HistoryConfiguration, git, source_versions
-from .source_inventory import source_snapshot, assert_snapshot_current
+from .source_history import HistoryConfiguration, SourceVersion, git, source_versions
+from .source_inventory import (_parse_cache_directory, _parser_key,
+                               source_snapshot, assert_snapshot_current)
+
+
+def _historical_claim_rows(root: Path, version: SourceVersion, pin: str,
+                           parser_key: str, projection_key: str,
+                           cache: Path | None) -> list[list[int | bool]]:
+    """Parse one immutable historical blob, caching rows but not obligations."""
+    path = root / version.path
+    identity = digest({
+        "blob": version.blob,
+        "content_sha256": hashlib.sha256(version.content).hexdigest(),
+        "path": version.path,
+        # reader.py has path-sensitive proved-store handling; preserve the exact
+        # path shape that read_text sees, even for deleted historical paths.
+        "resolved_path": str(path.resolve()),
+        "source_configuration": asdict(version.configuration),
+        "image_sha256": pin,
+        "parser": parser_key,
+        "claim_projection": projection_key,
+    })
+
+    def parse():
+        records = read_text(version.content.decode("utf-8", errors="replace"), path)
+        return {"rows": [[row.address, row.line, row.byte_exact, row.semantic]
+                         for row in records if row.byte_exact or row.semantic]}
+
+    return memoized(cache, identity, parse)["rows"]
 
 
 def _baseline(root: Path, head: str, history: HistoryConfiguration) -> str:
@@ -81,13 +111,20 @@ def check_claims(root: Path) -> dict:
     versions = source_versions(root, baseline, head, configuration=configuration,
                                history=history, image_sha256=pin)
     required, current = defaultdict(list), defaultdict(list)
+    # The cache contains only a pure projection of each historical blob. The
+    # complete history graph, configuration checks, provenance and final
+    # required/current sets are rebuilt on every invocation.
+    parse_cache = _parse_cache_directory(root)
+    parser_key = _parser_key()
+    projection_key = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     for version in versions:
-        for row in read_text(version.content.decode("utf-8", errors="replace"), root / version.path):
-            entity = Origin(pin, version.configuration.address_space, row.address)
-            for present, dimension in ((row.byte_exact, "bytes"), (row.semantic, "instruction_shape")):
+        for address, line, byte_exact, semantic in _historical_claim_rows(
+                root, version, pin, parser_key, projection_key, parse_cache):
+            entity = Origin(pin, version.configuration.address_space, address)
+            for present, dimension in ((byte_exact, "bytes"), (semantic, "instruction_shape")):
                 if present:
                     required[(entity.entity_id, dimension)].append({
-                        "address": row.address_hex, "path": version.path, "line": row.line,
+                        "address": f"0x{address:08X}", "path": version.path, "line": line,
                         "revision": version.revision, "blob": version.blob})
     claims = 0
     for row in snapshot["records"]:
