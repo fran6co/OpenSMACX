@@ -1,0 +1,27 @@
+{
+  "author": "coordinator",
+  "base_revision": "f84e60b1e556d0e8df9c5e09ccaef1b525ffdc59",
+  "editable_files": [
+    "src/newgame.cpp",
+    "recovery/tests/newgame_menu_control.cpp",
+    "recovery/tests/test_newgame_menu.py",
+    "recovery/tests/test_top_menu_opening_snapshot_oct14bm.py"
+  ],
+  "evidence": [
+    "Pinned58E3ED reads AlphaIniPrefs.preferences at94B464, not rules(+0xC); NOT/test20000000 thenOR4 if preferencebitclear, AND~4 ifset. Originalinitialexpansionenabled selects xopeningb/a.pcx; disabled selects openingb/a.pcx, with width320 selecting b in both families. Current field, polarity, family and one width predicate are mistranslated. Preserve unrelated style bits and callback timing; inspect retry literals independently before changing that path.",
+    "Original top_menu constructs SetupWin at stack ebp-0x16B0 then writes OpeningWindow into ebp-0xC70 at58E583 and58E6C3: difference0xA40 identifies declared opening_window_snapshot_. Both follow original presentation/callback sequences and reload the global; neither is a constructor replacement. Preserve original failure/null publication and retry timing.",
+    "Independent pinned audit confirmed ctor4AD985/4AD98B snapshots global945824 into this+A40 and do_menu_rightside4ADC1A checks that member, with null returning-1. Fresh corrected executable init-result GDB records system_init0/game_init0; menu-result GDB records top_menu1; the current top_menu never republishes the snapshot after window creation.",
+    "Preserve complete source mappings, claims, actual caller/global relationships and historical obligations. Tests must execute actual source and reject separately omitted first/second publications using callback-sensitive live-pointer replacement; update the existing SetupWin host double to model its real snapshot guard rather than invent a recovery. No safe fallback, global instead of member, bug fix or original-address dispatch. Full native build/link, scoped measurement, physical function comparison, relevant tests and independent review precede manual integration; full-game acceptance remains unfinished."
+  ],
+  "intent": "Restore original menu snapshot publications, preference-driven dialog style and opening filename selection through the genuine existing owners.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5825376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "top-menu-opening-snapshot-owner-oct14bm"
+}
