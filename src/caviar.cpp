@@ -1874,7 +1874,7 @@ int Caviar::init_class() {
 /*
 Purpose: The engine's allocation callback - return mem_get's pointer with
          the engine's unsigned-long size.
-// ORIGINAL: 0x00618E10 ?vx_malloc@Caviar@@SAXK@Z 0x00618E10-0x00618E1E
+// ORIGINAL: 0x00618E10 ?vx_malloc@Caviar@@SAXK@Z 0x00618E10-0x00618E1E BYTE_EXACT
 // symbol    ?vx_malloc@Caviar@@SAPAXK@Z
 // size      14 bytes
 // calls     0x005D4510
@@ -1957,7 +1957,7 @@ long Caviar::vx_seek(int fd, long offset, int origin) {
 
 /*
 Purpose: The engine's tell callback - the CRT's _tell.
-// ORIGINAL: 0x00618E90 ?vx_tell@Caviar@@SAXH@Z 0x00618E90-0x00618E9E
+// ORIGINAL: 0x00618E90 ?vx_tell@Caviar@@SAXH@Z 0x00618E90-0x00618E9E BYTE_EXACT
 // symbol    ?vx_tell@Caviar@@SAJH@Z
 // size      14 bytes
 // calls     0x00650220
@@ -6194,7 +6194,7 @@ uint32_t *Caviar::clip_rect() {
 Purpose: Copy the created render record's clip bounds into a caller's array:
          {max_x, max_y, min_x + 1, min_y + 1}. A null array or a null record
          leaves the caller's memory alone.
-// ORIGINAL: 0x00618560 ?UNK14@Caviar@@QAEXH@Z 0x00618560-0x006185A0
+// ORIGINAL: 0x00618560 ?UNK14@Caviar@@QAEXH@Z 0x00618560-0x006185A0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:the RET 4 instruction begins at 0x61859D and ends at 0x6185A0; the former exclusive bound cut that instruction."], "reason": "Retain the complete original rectangle operation, including all bytes of its callee-pop return."}
 // symbol    ?fill_clip_rect@Caviar@@QAEXPAI@Z
 // size      64 bytes
@@ -6333,7 +6333,7 @@ Purpose: The engine's per-object callback. Fills 0x1800 bytes of the handle's
          the shared monochrome source when bit 3 is on, the table the caller
          of render_with_colour_table handed over when bit 4 is on, otherwise
          this renderer's own entry for the instance the engine names.
-// ORIGINAL: 0x00618DA0 ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z 0x00618DA0-0x00618E06 SEMANTIC
+// ORIGINAL: 0x00618DA0 ?object_start@Caviar@@QAAXPAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAUVOX_Rect@@PAUVOX_Vect@@@Z 0x00618DA0-0x00618E06 BYTE_EXACT
 // symbol    ?object_start@Caviar@@SAXPAUVoxRenderRecord@@JPAUVOX_Vect@@PAUVOX_Matrix@@PAH1@Z
 //           (VC6 back-references the sixth argument - the same VOX_Vect as
 //           the third - to `1`; the catalogued name spells it out in full.)
