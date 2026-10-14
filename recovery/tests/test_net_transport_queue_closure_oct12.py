@@ -195,7 +195,7 @@ int SetEvent(HANDLE handle) {
     if (mutate_event_word) {
         mutate_event_word = false;
         reinterpret_cast<NetPacketEnvelope *>(active_packet)->type_flags_ = 0x104;
-        active->field_760_ = 77;
+        active->local_player_id_ = 77;
     }
     return 1;
 }
@@ -270,7 +270,7 @@ void JackalVoiceRx::clear() { assert(head_ == 0); }
 Net::Net() {
     memset(players_, 0, sizeof(players_));
     voice_flags_D8_ = 0; field_E4_ = 1; field_6DC_ = 0; field_6E4_ = 32;
-    field_6FC_ = 100; field_760_ = field_764_ = 99; poll_timeout_E0_ = 20000;
+    field_6FC_ = 100; local_player_id_ = host_player_id_ = 99; poll_timeout_E0_ = 20000;
     thread_info_.owner_ = this; thread_info_.buffer_ = 0; thread_info_.direct_play_ = &provider;
     thread_info_.thread_id_ = 9;
     for (int i = 0; i < 5; ++i) thread_info_.events_[i] = 10 + i;
@@ -677,14 +677,14 @@ static void player(Net &net, int row, DWORD id, const char *name) {
 static void removal_controls() {
     {
         Net net; reset(net); player(net, 0, 10, "ten"); player(net, 1, 11, "eleven");
-        net.field_760_ = 11; net.field_764_ = 99; net.field_6DC_ = 2;
+        net.local_player_id_ = 11; net.host_player_id_ = 99; net.field_6DC_ = 2;
         caption_choice = 1;
         assert(net.drop_player(10, 0) == 0);
         assert(captions.size() == 1 && captions[0] == "NET_OKTODROPHOST");
     }
     for (int answer : {-1, 0, 1, 2, 3}) {
         Net net; reset(net); player(net, 0, 10, "ten"); player(net, 1, 11, "eleven");
-        net.field_764_ = 100; net.field_6DC_ = 2; caption_choice = answer;
+        net.host_player_id_ = 100; net.field_6DC_ = 2; caption_choice = answer;
         assert(net.drop_player(10, 0) == (answer == 0 ? 1 : 0));
         assert(captions[0] == "NET_OKTODROPHOSTS");
         assert(captions.size() == (answer == 2 ? 2U : 1U));
@@ -703,9 +703,9 @@ static void removal_controls() {
     }
     {
         Net net; reset(net); player(net, 0, 10, "ten"); player(net, 1, 11, "eleven");
-        net.field_764_ = 10; net.field_6DC_ = 2;
+        net.host_player_id_ = 10; net.field_6DC_ = 2;
         assert(net.drop_player(10, 1) == 1);
-        assert(NetHostChangeSlot == 10 && net.field_764_ == 11 && callback_order == "HD");
+        assert(NetHostChangeSlot == 10 && net.host_player_id_ == 11 && callback_order == "HD");
         assert(sent.empty() && net.players_[0].field_0_ == 11);
     }
     for (int tolerance = 0; tolerance < 5; ++tolerance) {
@@ -798,7 +798,7 @@ DAMAGES = {
     "wrong_voice_stop_slot": ("voice->start();\n                            break;", "voice->stop();\n                            break;"),
     "nonwrapped_voice_load": ("const uint32_t queued_load = (net->field_6DC_ - 1U)\n                        * static_cast<uint32_t>(level);", "const uint32_t queued_load = (static_cast<int32_t>(net->field_6DC_) - 1) * level;"),
     "cached_keyed_unlink": ("head_ = head_->next_;", "head_ = cur->next_;"),
-    "drop_key_gate": ("field_760_ != field_764_ && field_760_ != players_[1].field_0_", "field_760_ != field_764_ && key != players_[1].field_0_"),
+    "drop_key_gate": ("local_player_id_ != host_player_id_ && local_player_id_ != players_[1].field_0_", "local_player_id_ != host_player_id_ && key != players_[1].field_0_"),
     "drop_negative_modal": ("if (answer != 2)", "if (answer == 1 || answer > 2)"),
     "drop_stale_row": ("index = 0;\n    while (index < 0x10 && players_[index].field_0_ != key) ++index;", "// stale original presence-check index retained"),
     "drop_wrong_notice": ("send_packet_type(&key, 4, 0, 0x80, 1);", "unsigned long wrong = 0; send_packet_type(&wrong, 4, 0, 0x80, 1);"),

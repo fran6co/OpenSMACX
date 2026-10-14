@@ -1,0 +1,17 @@
+{
+  "event_id": "994ce885e192bcb7403b849d3226af9593b9bb64a9c5f00a90e9aa1ae8f16123",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "net-inherited-member-discovery-oct14gf",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh candidate build-8o0kv8j2 compiles/links; native check_data confirms legacy ID aliases resolve through actual NetDaemon/AlphaNet/Net CodeView inheritance at offsets760/764, size4, bothflags. 149 targeted layout tests and independent fail-closed review pass. Native EH multi-action finding remains separately pending; this resolution grants no full-game or linked acceptance."
+    ]
+  },
+  "previous_event": "0ee3abfd689bc67c985f5bdd443704517b19ae9665f785ae7e1bb56819dd4bf4",
+  "request_id": "net-inherited-member-resolved-oct14gf",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:net-player-id-ownership-oct14gf"
+}

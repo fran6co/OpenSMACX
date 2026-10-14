@@ -78,8 +78,8 @@ class Net {
  public:
   NetFifo queue_10c_;
   DWORD field_6FC_, field_6E4_, field_6DC_;
-  DPID field_760_;
-  DWORD field_764_;
+  DPID local_player_id_;
+  DWORD host_player_id_;
   NetPlayer players_[16];
   int send_packet_type(void *packet, int size, DWORD target, int type, int flags) {
     assert(target == 0 && type == 0x10 && flags == 1);
@@ -114,7 +114,7 @@ class FakeDirectPlay : public IDirectPlay2 {
     assert(receive_calls < 4);
     from_values[receive_calls] = *from;
     flags_values[receive_calls] = flags;
-    assert(*to == active_net->field_760_ && *size == active_net->field_6E4_);
+    assert(*to == active_net->local_player_id_ && *size == active_net->field_6E4_);
     *from = 0xFEED;
     ++receive_calls;
     return receive_calls == 1 ? 0 : 7;
@@ -125,7 +125,7 @@ class FakeDirectPlay : public IDirectPlay2 {
     if (get_result != 0) return get_result;
     *static_cast<unsigned char *>(data) = input_data;
     // Model the original second read of Net+0x760 after this call.
-    active_net->field_760_ = 88;
+    active_net->local_player_id_ = 88;
     return 0;
   }
   HRESULT SetPlayerData(DPID player, void *data, DWORD size, DWORD flags) {
@@ -171,14 +171,14 @@ MAIN = r'''int main() {
   assert(net.read_queue_key_until_timeout(static_cast<int>(key_out), reinterpret_cast<int *>(&size_out)) == NetGetScratch);
   assert(net.queue_10c_.keyed_calls == 1 && static_cast<int>(size_out) == -3);
 
-  net.field_760_ = 77;
+  net.local_player_id_ = 77;
   net.field_6E4_ = 0x2000;
   net.receive_directplay_messages(7);
   assert(direct.receive_calls == 2);
   assert(direct.from_values[0] == 7 && direct.from_values[1] == 7);
   assert(direct.flags_values[0] == 6 && direct.flags_values[1] == 6);
 
-  net.field_760_ = 1; net.field_764_ = 1; net.field_6DC_ = 1;
+  net.local_player_id_ = 1; net.host_player_id_ = 1; net.field_6DC_ = 1;
   net.players_[0].field_0_ = 0x10203040;
   net.players_[0].flags_14_ = 0xA5;
   strcpy(net.players_[0].name_and_tail_, "Player");
@@ -191,18 +191,18 @@ MAIN = r'''int main() {
   assert(net.players_[0].name_and_tail_[0x1F] == 0);
   assert(*reinterpret_cast<uint32_t *>(sent_packet + 0x28) == 0xA5);
 
-  net.field_760_ = 77;
+  net.local_player_id_ = 77;
   direct.set_result = 0;
   assert(net.set_player_host_flag(1) == 0);
   assert(direct.get_player == 77 && direct.set_player == 88);
   assert(direct.set_data == 3 && direct.set_size == 1 && direct.set_flags == 2);
-  net.field_760_ = 77;
+  net.local_player_id_ = 77;
   direct.input_data = 3;
   direct.set_result = -1;
   assert(net.set_player_host_flag(0) == -1);
   assert(direct.set_data == 1);
 
-  net.field_760_ = 77;
+  net.local_player_id_ = 77;
   direct.get_result = -7;
   const int before_failed_get_set_calls = direct.set_calls;
   assert(net.set_player_host_flag(1) == -7);

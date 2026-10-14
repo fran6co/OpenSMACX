@@ -188,12 +188,41 @@ def _complete_udt(index, records, seen=frozenset()):
     if size <= 0 or (field and (not 0 <= field - 0x1000 < len(records)
                                 or records[field - 0x1000][0] != 0x1203)):
         raise ValueError("member path requires a complete direct field list")
-    members, member_types, _bases = _fields(records[field - 0x1000][1].data[2:]) if field else ({}, {}, [])
-    # A directly declared member has its own complete-object offset even if
-    # the owner also has bases. Never search those bases or infer an inherited
-    # member's placement: member_data_layout still requires a direct name at
-    # each path step and checks its full extent against that owning UDT.
-    return index, size, members, member_types
+    members, member_types, bases = _fields(records[field - 0x1000][1].data[2:]) if field else ({}, {}, [])
+    return index, size, members, member_types, bases
+
+
+def _lookup_udt_member(index, name, records, active=frozenset()):
+    """Resolve one direct or uniquely inherited nonvirtual member.
+
+    Base offsets and extents come only from the same standalone CodeView
+    stream. An unresolved base on a searched path prevents a uniqueness claim.
+    """
+    owner_type, owner_size, members, member_types, bases = _complete_udt(index, records)
+    if owner_type in active:
+        raise ValueError("cyclic CodeView base/member path")
+    if name in members and name in member_types:
+        offset, member_type = members[name], member_types[name]
+        extent = storage_size(member_type, records)
+        if offset < 0 or extent <= 0 or offset + extent > owner_size:
+            raise ValueError("CodeView member lies outside its owning UDT")
+        return offset, member_type
+
+    matches = []
+    next_active = active | {owner_type}
+    for base in bases:
+        if base["virtual"]:
+            raise ValueError("inherited member lookup cannot resolve a virtual base offset")
+        base_type, base_size, _, _, _ = _complete_udt(base["type_index"], records)
+        base_offset = base["offset"]
+        if base_offset < 0 or base_size <= 0 or base_offset + base_size > owner_size:
+            raise ValueError("CodeView base lies outside its owning UDT")
+        found = _lookup_udt_member(base_type, name, records, next_active)
+        if found is not None:
+            matches.append((base_offset + found[0], found[1]))
+    if len(matches) > 1:
+        raise ValueError("inherited CodeView member is ambiguous")
+    return matches[0] if matches else None
 
 
 def _integral_array_subscript(index, records, seen=frozenset()):
@@ -253,10 +282,11 @@ def _array_element_layout(index, records):
 
 
 def member_data_layout(obj, parent_symbol, member_path):
-    """Resolve named members and fixed array elements in the parent's CodeView UDT.
+    """Resolve direct/unique nonvirtual inherited members and fixed elements.
 
     The emitted parent remains a real COFF data definition. Offsets and extents
-    come only from its directly bound standalone CodeView records.
+    come only from its directly bound standalone CodeView records. Inherited
+    lookup refuses unresolved base graphs rather than guessing offsets.
     """
     if (not isinstance(member_path, tuple) or not member_path
             or any(not isinstance(part, str) or not (
@@ -291,20 +321,20 @@ def member_data_layout(obj, parent_symbol, member_path):
         match = _MEMBER_SEGMENT.fullmatch(part)
         assert match is not None
         name, raw_index = match.groups()
-        owner_type, owner_size, members, member_types = _complete_udt(current_type, records)
+        owner_type = _complete_udt(current_type, records)[0]
         if owner_type in visited_udts:
             raise ValueError("cyclic embedded CodeView member path")
         visited_udts.add(owner_type)
-        if name not in members or name not in member_types:
+        resolved = _lookup_udt_member(current_type, name, records)
+        if resolved is None:
             raise ValueError("named CodeView member is missing or ambiguous")
-        member_offset = members[name]
-        member_type = member_types[name]
+        member_offset, member_type = resolved
         extent = storage_size(member_type, records)
         normalized_member = _unqualified_type(member_type, records)
         if normalized_member in visited_udts:
             raise ValueError("cyclic embedded CodeView member type")
-        if extent <= 0 or member_offset < 0 or member_offset + extent > owner_size:
-            raise ValueError("CodeView member lies outside its owning UDT")
+        if extent <= 0:
+            raise ValueError("CodeView member has no measurable storage extent")
         selected_type, selected_size, selected_offset = member_type, extent, member_offset
         if raw_index is not None:
             element_type, array_size, element_size, element_count = _array_element_layout(

@@ -182,7 +182,6 @@ static const int NetWinSectionCustomCount = 2;
 static const int NetWinSectionFactions = 3;
 static const int NetWinSectionNewFactions = 4;
 static const int NetWinSectionCustom = 5;
-static int NetWinPlayerId = 10, NetWinOtherPlayerId = 11;
 static int active_section, text_index, current_file, fail_factions;
 static int close_calls, read_calls;
 static unsigned last_allocation_size;
@@ -238,6 +237,12 @@ struct NetWin {
     NetWinFactionRecord *faction_records_copy_ = nullptr;
     void setup_faction_data(MessageFactionData *);
 };
+struct NetDaemon {
+    uint32_t local_id_, host_id_;
+    NetDaemon() : local_id_(1), host_id_(1) {}
+    uint32_t local_player_id() const { return local_id_; }
+    uint32_t host_player_id() const { return host_id_; }
+} NetDaemonNet;
 SETUP_BODY
 int main() {
     NetWin win;

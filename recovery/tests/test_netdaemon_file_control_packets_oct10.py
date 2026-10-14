@@ -1,5 +1,6 @@
 """Native file-transfer producer/receiver offsets; not full-game acceptance."""
 from dataclasses import fields
+import os
 from pathlib import Path
 import subprocess
 
@@ -59,7 +60,7 @@ struct NetDaemonFileChunkPacket {
         memcpy(announce, &announce_type, sizeof announce_type);
         memcpy(announce + 2, &local_index, sizeof local_index);
         NetDaemonNet.Net::send(announce, 0x20,
-            static_cast<unsigned long>(field_764_), 1);
+            static_cast<unsigned long>(host_player_id_), 1);
 
         SaveNameBuffer[0] = '\0';
 """, r"""                                static_cast<int>(sender));
@@ -69,7 +70,7 @@ struct NetDaemonFileChunkPacket {
         announce.opcode = 0xF0F;
         announce.source_player = local_index;
         NetDaemonNet.Net::send(&announce, 0x20,
-            static_cast<unsigned long>(field_764_), 1);
+            static_cast<unsigned long>(host_player_id_), 1);
 
         SaveNameBuffer[0] = '\0';
 """),
@@ -180,7 +181,7 @@ def test_pinned_payload_offsets_and_advancing_chunk_file_index():
     from match_recovery.model import Span
     from match_recovery.source_inventory import image_pin
 
-    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
     if not path.exists():
         pytest.skip("pinned original unavailable")
     image = PeImage(path.read_bytes(), image_pin(ROOT))

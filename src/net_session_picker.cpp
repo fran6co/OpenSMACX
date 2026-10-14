@@ -375,7 +375,7 @@ int NetSessionPickerWin::start_refresh_timer() {
   refresh_player_list();
   set_modal(0, 0, 0);
   hide();
-  return net_->field_760_;
+  return net_->local_player_id();
 }
 
 // ORIGINAL: 0x0063C4E0 sub_63c4e0 0x0063C4E0-0x0063C4F6 FILE BYTE_EXACT

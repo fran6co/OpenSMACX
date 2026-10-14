@@ -41,7 +41,7 @@ def test_actual_message_packet_routing_and_return(tmp_path,compiler_name,mutatio
     bodies = product_bodies()
     replacements = {
         'return':('    return result;', '    (void)result; return NetBusyCount;'),
-        'server':('value = field_764_;', 'value = target;'),
+        'server':('value = host_player_id();', 'value = target;'),
         'payload':('message.payload_18_ = payload_18;',
                    '(void)payload_18; message.payload_18_ = payload_14;'),
         'offline':('return multiplayer;', 'return -1;'),

@@ -60,10 +60,9 @@ static std::vector<std::string> events;
 static std::function<void(const std::string&)> callback;
 static void event(const std::string&s) { events.push_back(s); if(callback)callback(s); }
 static int answer, dialog_count, pull_count, sends, player_count, NetWinPlanetSizeLabelCount;
-static int NetWinPlayerId=27, recipient_storage=39;
+static int recipient_storage=39;
 static bool trace_copy_reads=false;
 static int &destination() { if(trace_copy_reads)event("destination_read"); return recipient_storage; }
-#define NetWinOtherPlayerId destination()
 static int *NetWinPlayerCount=&player_count;
 static int rules_gate=1;
 static int *NetWinRulesGate=&rules_gate;
@@ -139,8 +138,11 @@ static void time_controls_dialog(Popup *popup) {
     for(int i=0;i<3;++i) popup->dialogs().item(label_get(i),i);
 }
 struct NetDaemon {
-    int pid_2_idx(int id) {
-        assert(id==NetWinPlayerId); event("identity"); trace_copy_reads=true; return 2;
+    uint32_t local_player_id_ = 27;
+    uint32_t local_player_id() const { return local_player_id_; }
+    uint32_t host_player_id() const { return static_cast<uint32_t>(destination()); }
+    int pid_2_idx(uint32_t id) {
+        assert(id==local_player_id()); event("identity"); trace_copy_reads=true; return 2;
     }
     void send(void *data,unsigned long size,int target,int flags) {
         assert(size==0x28 && flags==1); auto *p=static_cast<NetWinSessionOptionsPacket*>(data);
@@ -167,7 +169,7 @@ static void invoke(NetWin&w,int kind) {
 }
 static void reset(NetWin&w,int selected,int first=4) {
     callback={}; trace_copy_reads=false; events.clear(); visible.clear(); answer=selected; player_count=first;
-    NetWinPlanetSizeLabelCount=2; dialog_count=pull_count=sends=0; NetWinOtherPlayerId=39;
+    NetWinPlanetSizeLabelCount=2; dialog_count=pull_count=sends=0; recipient_storage=39;
     std::memset(&NetWinSessionOptions,0x5a,sizeof NetWinSessionOptions);
     std::memset(&sent_options,0,sizeof sent_options); sent_target=-1;
     for(int i=0;i<8;++i)std::sprintf(w.world_size_labels_[i],"world%d",i);
@@ -204,7 +206,7 @@ int main() {
             if(e=="modal") { player_count=7; NetWinSessionOptions.rule_bits_a_=0x11223344;
                 expected.rule_bits_a_=0x11223344; }
             if(e=="identity") { NetWinSessionOptions.rule_bits_b_=0x55667788;
-                expected.rule_bits_b_=0x55667788; NetWinOtherPlayerId=99; }
+                expected.rule_bits_b_=0x55667788; recipient_storage=99; }
         };
         if(selected>=0) {
             int added=static_cast<int>(static_cast<uint32_t>(selected)+4U);
@@ -250,7 +252,7 @@ int main() {
         else if(selected==100)expected.rule_bits_c_^=0x10;
         callback=[&](const std::string&e) {
             if(e=="identity") { expected.rule_bits_c_^=0x800;
-                NetWinSessionOptions.rule_bits_c_^=0x800; NetWinOtherPlayerId=99; }
+                NetWinSessionOptions.rule_bits_c_^=0x800; recipient_storage=99; }
         };
         rule_toggle(selected);
         assert(sends==1 && dialog_count==0 && pull_count==0 && sent_target==99);

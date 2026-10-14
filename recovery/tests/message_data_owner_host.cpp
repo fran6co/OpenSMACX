@@ -59,6 +59,9 @@ uint32_t timeGetTime() {
 
 class Net {
  public:
+    uint32_t host_player_id_;
+    uint32_t host_player_id() const { return host_player_id_; }
+    Net() : host_player_id_(0) {}
     int send(void *data, int length, unsigned long target, int flags) {
         ++fake_send_calls;
         fake_busy_at_send = NetBusyCount;
@@ -87,7 +90,6 @@ class AlphaNet {
 
 class NetDaemon : public Net, public AlphaNet {
  public:
-    int field_764_;
     FakeDeletionList deletion_list_;
     FakePrimaryState primary_state_;
     FakeLockState channels_[2];
@@ -114,7 +116,7 @@ int main() {
     memset(packet, 0, sizeof packet);
     fake_send_result = 0x13572468;
     IsMultiplayerNet = 1;
-    NetDaemonNet.field_764_ = 88;
+    NetDaemonNet.host_player_id_ = 88;
     NetDaemonNet.deletion_list_.current_owner_ = 0x11223344;
     NetDaemonNet.primary_state_.trailing_words_[0] = 1;
     ConsoleGlobal.faction_id_ = 7;

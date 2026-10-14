@@ -174,14 +174,14 @@ void MultiDebug::on_redraw() {
     char number[80];
     message[0] = 0;
     strcat(message, "Host ID: ");
-    _itoa(static_cast<int>(net_->field_764_), number, 10);
+    _itoa(static_cast<int>(net_->host_player_id()), number, 10);
     strcat(message, number);
     Buffer::write_l(message, 3, 3, strlen(message));
     int y = 3 + Buffer::text_line_height();
 
     message[0] = 0;
     strcat(message, "Local ID: ");
-    _itoa(static_cast<int>(net_->field_760_), number, 10);
+    _itoa(static_cast<int>(net_->local_player_id()), number, 10);
     strcat(message, number);
     Buffer::write_l(message, 3, y, strlen(message));
     y += (Buffer::text_line_height() * 3) / 2;

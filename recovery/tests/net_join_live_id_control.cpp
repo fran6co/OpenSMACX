@@ -90,22 +90,22 @@ struct Net {
   DWORD field_44_;
   DWORD voice_flags_D8_;
   DWORD field_6DC_;
-  DPID field_760_;
-  DWORD field_764_;
+  DPID local_player_id_;
+  DWORD host_player_id_;
   GUID *guid_6E8_;
   NetAllocationNode allocation_node_;
   NetThreadInfo thread_info_;
   DPID id_seen_by_add_player;
   int add_calls, close_calls, task_calls;
   Net()
-      : field_44_(5), voice_flags_D8_(0x10000), field_6DC_(1), field_760_(7),
-        field_764_(12), guid_6E8_(0), allocation_node_(), thread_info_(),
+      : field_44_(5), voice_flags_D8_(0x10000), field_6DC_(1), local_player_id_(7),
+        host_player_id_(12), guid_6E8_(0), allocation_node_(), thread_info_(),
         id_seen_by_add_player(0), add_calls(0), close_calls(0), task_calls(0) {}
   int join_session(NetAllocationNode *, char *, char *);
   int sub_632cc0(char *, int id, unsigned char) {
     ++add_calls;
     id_seen_by_add_player = static_cast<DPID>(id);
-    field_760_ = 99;
+    local_player_id_ = 99;
     return 0;
   }
   void close() { ++close_calls; }
@@ -114,7 +114,7 @@ struct Net {
 Net *Font::mutate_target = 0;
 Font::~Font() {
   --live;
-  if (mutate_target != 0) mutate_target->field_760_ = 123;
+  if (mutate_target != 0) mutate_target->local_player_id_ = 123;
 }
 void __cdecl net_receive_thread(void *) {}
 unsigned long _beginthread(void (__cdecl *)(void *), unsigned, void *) { return 1; }
@@ -138,10 +138,10 @@ int main() {
 
   const int result = net.join_session(&session, const_cast<char *>("Ari"),
                                       const_cast<char *>("pw"));
-  if (direct_play.created_id_address != &net.field_760_) return 31;
-  if (net.field_764_ != 88) return 32;
+  if (direct_play.created_id_address != &net.local_player_id_) return 31;
+  if (net.host_player_id_ != 88) return 32;
   if (net.add_calls != 1 || net.id_seen_by_add_player != 88) return 33;
-  if (net.field_760_ != 123 || result != 99) return 34;
+  if (net.local_player_id_ != 123 || result != 99) return 34;
   if (Font::live != 0 || direct_play.set_calls != 1) return 35;
   free(net.allocation_node_.session_name_);
   free(net.allocation_node_.password_);

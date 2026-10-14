@@ -113,12 +113,14 @@ struct Net {
   }
 };
 struct Daemon : Net {
+  uint32_t local_player_id_ = 0, host_player_id_ = 77;
+  uint32_t local_player_id() const { return local_player_id_; }
+  uint32_t host_player_id() const { return host_player_id_; }
   struct Slot { unsigned pid_; } process_slots_[8];
 } NetDaemonNet;
 NetWinLobbyRow NetWinLobbyRows[8];
 NetWinSessionOptionsState NetWinSessionOptions;
 NetWinSessionBlock NetWinSessionData;
-static int NetWinOtherPlayerId = 77;
 static unsigned gate;
 static unsigned *NetWinRulesGate = &gate;
 static void reset() { sent.clear(); calls = 0; recipient = 0; }

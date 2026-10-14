@@ -23,7 +23,7 @@ def broadcast_control():
     return prefix + record + "\n" + body + r'''
 int main(){
   for(int n: {0,1,2,16}) for(int length: {0,3,31,43}){
-    Net net{};net.field_760_=7;net.field_764_=7;net.field_6DC_=n;
+    Net net{};net.local_player_id_=7;net.host_player_id_=7;net.field_6DC_=n;
     sent_count=0;sent_size=0;
     for(int i=0;i!=16;++i){
       net.players_[i].field_0_=0x10203000+i;
@@ -47,7 +47,7 @@ int main(){
       for(int k=used+1;k!=32;++k)assert(sent_packet[base+4+k]==0xA5);
     }
     for(int k=4+n*40;k!=sent_size;++k)assert(sent_packet[k]==0xA5);
-    net.field_764_=8;net.broadcast_player_table();assert(sent_count==1);
+    net.host_player_id_=8;net.broadcast_player_table();assert(sent_count==1);
   }
 }
 '''
@@ -87,7 +87,7 @@ struct DirectPlay {
     }
 };
 static DirectPlay provider;static DirectPlay *NetDirectPlay=&provider;
-static DWORD field_E4_,voice_flags_D8_,field_760_=7;
+static DWORD field_E4_,voice_flags_D8_,local_player_id_=7;
 int prepare(unsigned char *packet,unsigned int flags,unsigned short type,const void *data,int size){
     int allocation_size=size+12;long target=9;
 PREFIX

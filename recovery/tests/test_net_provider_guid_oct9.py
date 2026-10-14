@@ -71,7 +71,7 @@ struct Player { uint32_t field_0_{}, field_4_{}, field_8_{}, field_C_{};
 struct Net {
   Voice voice_tx_; Thread thread_info_; Node allocation_node_; Rx jackal_voice_rx_;
   Queue queue_e8_, queue_10c_, queue_130_;
-  uint32_t poll_timeout_E0_{}, field_760_{}, field_764_{}, poll_time_DC_{}, field_6DC_{};
+  uint32_t poll_timeout_E0_{}, local_player_id_{}, host_player_id_{}, poll_time_DC_{}, field_6DC_{};
   void *buffer_6E0_{}; uint32_t field_6E4_{}, field_6FC_{}, voice_flags_D8_{};
   Player players_[16]{}; GUID service_provider_guid_;
   uint32_t field_E4_{}, voice_hotkey_48_{}, voice_hotkey_4c_{};

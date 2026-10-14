@@ -120,9 +120,6 @@ static int expected_setup;
 static int replace_table_after_allocation;
 static unsigned char *expected_payload;
 static unsigned event_trace[8], event_count;
-static int NetWinPlayerId = 7;
-static int NetWinOtherPlayerId = 7;
-
 struct NetWinDialogDouble {
   NetWinFactionRecord *faction_records_ = nullptr;
   NetWinFactionRecord *setup_records = nullptr;
@@ -140,6 +137,11 @@ struct SafeProcessSlots {
   Slot &operator[](int index) { return entries_[index + 8]; }
 } ;
 struct Net {
+  uint32_t local_value;
+  uint32_t host_value;
+  Net() : local_value(7), host_value(7) {}
+  uint32_t local_player_id() const { return local_value; }
+  uint32_t host_player_id() const { return host_value; }
   int send(char *data, unsigned size, unsigned pid, int flags) {
     require(data == reinterpret_cast<char *>(frame_storage), "send-frame");
     sent_size = size;
@@ -236,7 +238,8 @@ static void run_count_case(unsigned count, int slot, unsigned pid) {
   expected_payload = table_a;
   expected_allocation = count * 399u + 0x1A4u;
   expected_copy = count * 399u + 0x194u;
-  NetWinPlayerId = NetWinOtherPlayerId = 7;
+  NetDaemonNet.local_value = 7;
+  NetDaemonNet.host_value = 7;
   send_result = 0;
   send_faction_data(slot);
   require(setups == 0, "present-table-no-rebuild");
@@ -252,7 +255,8 @@ int main() {
   fill_table(table_a, 0x31, 1);
   NetWinDialog.faction_records_ = reinterpret_cast<NetWinFactionRecord *>(table_a);
   expected_payload = table_a;
-  NetWinPlayerId = 7; NetWinOtherPlayerId = 8;
+  NetDaemonNet.local_value = 7;
+  NetDaemonNet.host_value = 8;
   expected_allocation = 1 * 399u + 0x1A4u;
   expected_copy = 1 * 399u + 0x194u;
   send_faction_data(-1);
@@ -272,7 +276,8 @@ int main() {
   expected_payload = table_a;
   expected_allocation = 1 * 399u + 0x1A4u;
   expected_copy = 1 * 399u + 0x194u;
-  NetWinPlayerId = NetWinOtherPlayerId = 7;
+  NetDaemonNet.local_value = 7;
+  NetDaemonNet.host_value = 7;
   send_faction_data(0);
   require(setups == 1 && setup_argument == 0, "optional-rebuild");
   verify_frame(1, NetDaemonNet.process_slots_[0].pid_);
@@ -286,7 +291,8 @@ int main() {
   expected_allocation = 2 * 399u + 0x1A4u;
   expected_copy = 2 * 399u + 0x194u;
   replace_table_after_allocation = 1;
-  NetWinPlayerId = NetWinOtherPlayerId = 7;
+  NetDaemonNet.local_value = 7;
+  NetDaemonNet.host_value = 7;
   send_result = -1;  // Sender ignores this provider result.
   send_faction_data(1);
   require(setups == 0, "present-table-no-rebuild");
@@ -356,8 +362,8 @@ def test_compile_success_semantic_mutants_hit_exact_diagnostics(
     body = extract_definition(SOURCE.read_text(encoding="utf-8"), SIGNATURE)
     if case == "gate":
         mutant = _replace_once(body,
-            "if (NetWinPlayerId == NetWinOtherPlayerId)",
-            "if (NetWinPlayerId != NetWinOtherPlayerId)")
+            "if (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id())",
+            "if (NetDaemonNet.local_player_id() != NetDaemonNet.host_player_id())")
     elif case == "rebuild":
         mutant = _replace_once(body,
             "if (NetWinDialog.faction_records_ == 0)",

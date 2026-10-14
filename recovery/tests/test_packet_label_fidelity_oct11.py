@@ -56,12 +56,14 @@ def packet_fixture(body):
 """ + declarations + r"""
 static unsigned char frame_storage[4096];
 static unsigned allocations, copies, sends, setups, recipient, allocated_size;
-static int NetWinPlayerId = 1, NetWinOtherPlayerId = 1;
 struct Dialog {
   NetWinFactionRecord *faction_records_;
   void setup_faction_data(int v) { assert(v == 0); ++setups; }
 } NetWinDialog;
 struct Net {
+  uint32_t local_player_id_ = 1, host_player_id_ = 1;
+  uint32_t local_player_id() const { return local_player_id_; }
+  uint32_t host_player_id() const { return host_player_id_; }
   void send(void *p, unsigned n, unsigned to, int reliable) {
     assert(copies == 1 && p == frame_storage && n == allocated_size && reliable == 1);
     recipient = to; ++sends;
@@ -112,7 +114,7 @@ int main() {
   send_faction_data(3);
   assert(allocations == 1 && copies == 1 && sends == 1 && recipient == 99);
   allocations = copies = sends = 0;
-  NetWinOtherPlayerId = 2; send_faction_data(-1);
+  NetDaemonNet.host_player_id_ = 2; send_faction_data(-1);
   assert(allocations == 0 && copies == 0 && sends == 0);
 }
 """

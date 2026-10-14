@@ -109,7 +109,7 @@ private:
 
 class Net {
 public:
-    Net() : field_760_(0x111), field_764_(0x222), player_count_(1),
+    Net() : local_player_id_(0x111), host_player_id_(0x222), player_count_(1),
             get_calls_(0), sequence_(0) {
         memset(process_slots_, 0, sizeof(process_slots_));
         memset(&primary_state_, 0, sizeof(primary_state_));
@@ -118,7 +118,7 @@ public:
         process_slots_[1].pid_ = 0x222;
     }
     int pid_2_idx(unsigned long id) {
-        const int result = id == field_760_ ? 1 : 2;
+        const int result = id == local_player_id_ ? 1 : 2;
         producer_callback(4);
         return result;
     }
@@ -167,8 +167,8 @@ public:
     struct NetDaemonFileIndexRecord *file_index_records_;
     uint32_t field_1BE4_;
     AlphaNetProcessSlot process_slots_[8];
-    unsigned long field_760_;
-    unsigned long field_764_;
+    unsigned long local_player_id_;
+    unsigned long host_player_id_;
     int player_count_;
     int get_calls_;
     int sequence_;
@@ -566,7 +566,7 @@ static void test_receiver_methods_and_global_protocol_state() {
     NetDaemon client;
     g_active_daemon = &client;
     client.primary_state_.leading_words_[0] = 0;
-    client.field_764_ = 0x765;
+    client.host_player_id_ = 0x765;
     g_scenario = 5;
     if (client.send_files() != 1 || client.channels_[1].trailing_words_[9] != 0 ||
         NetDaemonNet.channels_[1].trailing_words_[9] != 1 ||

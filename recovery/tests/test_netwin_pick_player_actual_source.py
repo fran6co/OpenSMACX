@@ -70,7 +70,6 @@ NetWinLobbyRow *NetWinLobbyRows = &lobby_storage[1];
 NetWinSessionBlock NetWinSessionData;
 Player Players[8];
 char256 ParseStrBuffer[10];
-int NetWinPlayerId = 27, NetWinOtherPlayerId = 39;
 char PopupStartCaption[256] = "caption";
 int selected_slot = 2, modal_result = 0, modal_state = 0;
 char edited_gender[24] = "Male";
@@ -139,6 +138,10 @@ public:
     int input_poll_state() const { return modal_state; }
 };
 struct Net {
+    uint32_t local_player_id_, host_player_id_;
+    Net() : local_player_id_(27), host_player_id_(39) {}
+    uint32_t local_player_id() const { return local_player_id_; }
+    uint32_t host_player_id() const { return host_player_id_; }
     void send(void *data, unsigned long size, unsigned long recipient,
               int flag) {
         const unsigned char *bytes = static_cast<const unsigned char *>(data);
@@ -204,7 +207,7 @@ static void verify_packet(const NetWinLobbyRow &expected, int slot) {
     assert(sent_field_8 == 0);
     assert(sent_packet.size() == sizeof(NetWinLobbyRow));
     assert(std::memcmp(sent_packet.data(), &expected, sizeof(expected)) == 0);
-    assert(sent_recipient == NetWinOtherPlayerId && sent_flag == 1);
+    assert(static_cast<uint32_t>(sent_recipient) == NetDaemonNet.host_player_id_ && sent_flag == 1);
 }
 int main() {
     NetWin win;

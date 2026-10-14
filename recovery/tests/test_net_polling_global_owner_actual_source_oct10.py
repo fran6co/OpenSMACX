@@ -75,10 +75,10 @@ struct HarnessNet {
   NetPlayer players_[16];
   uint32_t poll_time_DC_;
   uint32_t voice_flags_D8_;
-  uint32_t field_760_, field_764_, poll_timeout_E0_;
+  uint32_t local_player_id_, host_player_id_, poll_timeout_E0_;
   int sends, drops, reenter;
-  HarnessNet() : poll_time_DC_(0), voice_flags_D8_(0), field_760_(0),
-      field_764_(0), poll_timeout_E0_(100), sends(0), drops(0), reenter(0) {
+  HarnessNet() : poll_time_DC_(0), voice_flags_D8_(0), local_player_id_(0),
+      host_player_id_(0), poll_timeout_E0_(100), sends(0), drops(0), reenter(0) {
     memset(players_, 0, sizeof(players_));
   }
   void send_packet_type(int, int, int, int, int);
@@ -115,8 +115,8 @@ int main() {
   // Branch 3: both leading rows stale; preserve the all-player drop and
   // timestamp both real row members with one post-drop clock read.
   HarnessNet both;
-  both.field_760_ = 77;
-  both.field_764_ = 88;
+  both.local_player_id_ = 77;
+  both.host_player_id_ = 88;
   both.voice_flags_D8_ = 0x40000;
   both.players_[0].stamp_10_ = 100;
   both.players_[1].stamp_10_ = 100;
@@ -133,8 +133,8 @@ int main() {
 
   // Equality with the unsigned timeout is not the early-return case.
   HarnessNet equal;
-  equal.field_760_ = 77;
-  equal.field_764_ = 88;
+  equal.local_player_id_ = 77;
+  equal.host_player_id_ = 88;
   equal.voice_flags_D8_ = 0x40000;
   equal.poll_timeout_E0_ = 100;
   equal.players_[0].stamp_10_ = fake_now - 100;
@@ -145,8 +145,8 @@ int main() {
 
   // The original branch-3 early return intentionally leaves ReapBusy set.
   HarnessNet stuck;
-  stuck.field_760_ = 77;
-  stuck.field_764_ = 88;
+  stuck.local_player_id_ = 77;
+  stuck.host_player_id_ = 88;
   stuck.voice_flags_D8_ = 0x40000;
   stuck.players_[0].stamp_10_ = 0;
   stuck.players_[1].stamp_10_ = 100;

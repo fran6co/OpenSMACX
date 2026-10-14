@@ -186,7 +186,12 @@ struct AlphaNetProcessSlot {
     uint8_t status_bytes_[0x174];
 };
 static_assert(sizeof(AlphaNetProcessSlot) == 0x19C, "process slot stride");
-struct NetDaemon { AlphaNetProcessSlot process_slots_[8]; };
+struct NetDaemon {
+    uint32_t local_player_id_ = 10, host_player_id_ = 11;
+    uint32_t local_player_id() const { return local_player_id_; }
+    uint32_t host_player_id() const { return host_player_id_; }
+    AlphaNetProcessSlot process_slots_[8];
+};
 struct NetWinSessionBlock { int mode_; };
 struct Player {
     int is_leader_female;
@@ -208,7 +213,6 @@ static NetDaemon NetDaemonNet;
 static NetWinSessionBlock NetWinSessionData;
 static Player Players[8];
 static PlayerData PlayersData[8];
-static int NetWinPlayerId, NetWinOtherPlayerId;
 static int faction_reads[8], modifier_calls[8], art_calls[8];
 static int flag_loads;
 
@@ -297,8 +301,8 @@ int main() {
     records[0].active_ = 0;
     records[1].active_ = 1;
     NetWinSessionData.mode_ = 2;
-    NetWinPlayerId = 10;
-    NetWinOtherPlayerId = 11;
+    NetDaemonNet.local_player_id_ = 10;
+    NetDaemonNet.host_player_id_ = 11;
     for (int seat = 0; seat < 8; ++seat) {
         NetWinLobbyRows[seat].faction_or_color_ = -1;
     }
@@ -323,8 +327,8 @@ int main() {
         strcpy(records[faction].filename_, "Faction");
     }
     NetWinSessionData.mode_ = 2;
-    NetWinPlayerId = 10;
-    NetWinOtherPlayerId = 11;
+    NetDaemonNet.local_player_id_ = 10;
+    NetDaemonNet.host_player_id_ = 11;
     NetWinLobbyRows[0].faction_or_color_ = 0;
     NetWinLobbyRows[1].faction_or_color_ = -2;
     for (int seat = 2; seat < 8; ++seat) {
@@ -392,6 +396,9 @@ private:
 };
 class Net {
 public:
+    uint32_t local_player_id_ = 11, host_player_id_ = 22;
+    uint32_t local_player_id() const { return local_player_id_; }
+    uint32_t host_player_id() const { return host_player_id_; }
     int sends;
     int length;
     int target;
@@ -417,8 +424,6 @@ public:
 
 static NetWinSessionBlock NetWinSessionData;
 static NetWinLobbyRow NetWinLobbyRows[8];
-static int NetWinPlayerId = 11;
-static int NetWinOtherPlayerId = 22;
 static NetDaemon NetDaemonNet;
 static char ScriptPopupFile[] = "SCRIPT";
 static char256 ParseStrBuffer[10];

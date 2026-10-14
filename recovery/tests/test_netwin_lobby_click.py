@@ -59,8 +59,6 @@ static_assert(offsetof(NetWinFactionRecord, owner_) == 4);
 NetWinLobbyRow NetWinLobbyRows[8] = {};
 NetWinSessionBlock NetWinSessionData = {};
 NetWinSessionOptionsState NetWinSessionOptions = {};
-int NetWinPlayerId = 7;
-int NetWinOtherPlayerId = 8;
 char *ScriptPopupFile = nullptr;
 int popup_result = 0;
 int popup_calls = 0;
@@ -69,6 +67,10 @@ int X_pop(char *, const char *, int) {
     return popup_result;
 }
 struct Net {
+    uint32_t local_player_id_, host_player_id_;
+    Net() : local_player_id_(7), host_player_id_(8) {}
+    uint32_t local_player_id() const { return local_player_id_; }
+    uint32_t host_player_id() const { return host_player_id_; }
     std::vector<uint8_t> sent;
     int recipient = -1;
     int send(const void *message, int length, int target, int) {
@@ -117,7 +119,7 @@ int main() {
     assert(std::memcmp(NetDaemonNet.sent.data() + 0x10,
                        &expected_row, sizeof(expected_row)) == 0);
     assert(NetWinLobbyRows[1].ready_or_occupied_ == 0);
-    assert(NetDaemonNet.recipient == NetWinOtherPlayerId);
+    assert(static_cast<uint32_t>(NetDaemonNet.recipient) == NetDaemonNet.host_player_id_);
 
     NetDaemonNet.primary_state_.leading_words_[0] = 1;
     NetWinSessionData.mode_ = 0;

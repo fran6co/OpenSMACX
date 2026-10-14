@@ -6,6 +6,7 @@ indeterminate reserved packet bytes; neither is executed or value-asserted.
 """
 
 from pathlib import Path
+import os
 
 import pytest
 
@@ -57,7 +58,7 @@ def test_player_index16_skips_initialization_then_keeps_shared_effects():
     assert "player.field_0_ = static_cast<uint32_t>(id);" in init
     assert "player.flags_14_ = flag;" in init
     assert "strcat(player.name_and_tail_, text);" in init
-    assert "field_764_ = static_cast<uint32_t>(id)" in init
+    assert "host_player_id_ = static_cast<uint32_t>(id)" in init
     assert "++field_6DC_;" in tail
     assert "broadcast_player_table();" in tail
     assert tail.index("broadcast_player_table();") < tail.index("on_player_added(")
@@ -68,7 +69,7 @@ def test_player_index16_skips_initialization_then_keeps_shared_effects():
 
 
 def test_pinned_player_index16_branch_and_callback_reread():
-    image = ROOT / ".opensmacx/game/terranx_original.exe"
+    image = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
     if not image.is_file():
         pytest.skip("pinned original image unavailable")
     from match_recovery.model import Span

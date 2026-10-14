@@ -413,8 +413,8 @@ Net::Net() {
     poll_timeout_E0_ = 0x4E20;
     NetDirectPlay = 0;
     field_6DC_ = 0;
-    field_760_ = 0;
-    field_764_ = 0;
+    local_player_id_ = 0;
+    host_player_id_ = 0;
     buffer_6E0_ = 0;
     field_6E4_ = 0;
     field_6FC_ = 0xC8;
@@ -474,8 +474,8 @@ void Net::close() {
     voice_tx_.unload();
 
     poll_timeout_E0_ = 0x4E20;
-    field_760_ = 0;
-    field_764_ = 0;
+    local_player_id_ = 0;
+    host_player_id_ = 0;
     poll_time_DC_ = 0;
     field_6DC_ = 0;
 
@@ -789,7 +789,7 @@ int Net::send_group_flagged(void *data, int size, long target,
     if ((type & 0xFFF0) == 0 &&
         ((static_cast<unsigned char>(voice_flags_D8_) & 1) != 0 ||
          (flags & 4) != 0)) {
-        const long host = static_cast<long>(field_760_);
+        const long host = static_cast<long>(local_player_id_);
         if (target == host) {
             queue_10c_.add(data, static_cast<unsigned long>(size),
                            static_cast<unsigned long>(host), 0,
@@ -825,7 +825,7 @@ int Net::send_group_flagged(void *data, int size, long target,
     if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
         header->type_flags_ = type;
         if (NetDirectPlay != 0 &&
-            NetDirectPlay->Send(field_760_, static_cast<DPID>(target),
+            NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
                                 reliable, packet,
                                 static_cast<DWORD>(allocation_size)) != 0) {
             free(packet);
@@ -881,7 +881,7 @@ int Net::send_group_flagged(void *data, int size, long target,
         for (int slot_index = 0; slot_index < 16; ++slot_index)
             base_time[slot_index] = now;
 
-        if (NetDirectPlay->Send(field_760_, static_cast<DPID>(target), 0,
+        if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target), 0,
                                 packet, static_cast<DWORD>(allocation_size)) != 0) {
             free(packet);
             return 0;
@@ -922,7 +922,7 @@ int Net::send_group_flagged(void *data, int size, long target,
                             const DWORD resend_id = peer.field_0_;
                             base_time[pending_index] = timeGetTime();
                             if (NetDirectPlay->Send(
-                                    field_760_, static_cast<DPID>(resend_id), 0,
+                                    local_player_id_, static_cast<DPID>(resend_id), 0,
                                     packet, static_cast<DWORD>(allocation_size)) != 0) {
                                 MessageBoxA(0, "Oh no!! Send failed!",
                                             "Message from the Net Underworld", 0);
@@ -977,7 +977,7 @@ int Net::send_group_flagged(void *data, int size, long target,
     }
 }
 
-// 0x009BE5FC, four dwords below ActiveNet: the outgoing field_764_ the host
+// 0x009BE5FC, four dwords below ActiveNet: the outgoing host_player_id_ the host
 // change publishes before the new host's id overwrites it.
 // RECOVERY_OBJECT: v2 0x009BE5FC 0x009BE600 ?NetHostChangeSlot@@3IA 0x00632350
 uint32_t NetHostChangeSlot;
@@ -1026,7 +1026,7 @@ int Net::drop_player(unsigned long key, int reason) {
     }
 
     if (reason == 0) {
-        if (field_760_ != field_764_ && field_760_ != players_[1].field_0_) {
+        if (local_player_id_ != host_player_id_ && local_player_id_ != players_[1].field_0_) {
             // The two hosts are named - the grammar slots 0 and 1 - and the
             // plural question asked.
             parse_says(0, get_player_name(players_[0].field_0_), -1, -1);
@@ -1065,7 +1065,7 @@ int Net::drop_player(unsigned long key, int reason) {
         }
         // Dropping the paired host or client: the caption names which side.
         parse_says(0, get_player_name(key), -1, -1);
-        char *caption = field_760_ == field_764_
+        char *caption = local_player_id_ == host_player_id_
             ? const_cast<char *>("NET_OKTODROPCLIENT")
             : const_cast<char *>("NET_OKTODROPHOST");
         int answer = pop_caption_value_title(
@@ -1115,9 +1115,9 @@ int Net::drop_player(unsigned long key, int reason) {
         }
     }
 
-    if (key == field_764_) {
-        NetHostChangeSlot = field_764_;
-        field_764_ = players_[0].field_0_;
+    if (key == host_player_id_) {
+        NetHostChangeSlot = host_player_id_;
+        host_player_id_ = players_[0].field_0_;
         on_host_changed();
     }
 
@@ -1254,14 +1254,14 @@ void Net::check_polling() {
     }
     NetReapBusy = 1;
     if ((voice_flags_D8_ & 0x40000) != 0) {
-        if (field_760_ == field_764_) {
+        if (local_player_id_ == host_player_id_) {
             // Every slot: a live player who is not the one the timer words
             // name and whose stamp is older than the threshold is cut, and a
             // successful cut stamps the time of the cut.
             int count = 0x10;
             do {
                 if (players_[0x10 - count].field_0_ != 0
-                    && players_[0x10 - count].field_0_ != field_760_
+                    && players_[0x10 - count].field_0_ != local_player_id_
                     && players_[0x10 - count].stamp_10_ != 0
                     && now() - players_[0x10 - count].stamp_10_
                            > poll_timeout_E0_
@@ -1274,7 +1274,7 @@ void Net::check_polling() {
             NetReapBusy = 0;
             return;
         }
-        if (field_760_ == players_[1].field_0_) {
+        if (local_player_id_ == players_[1].field_0_) {
             if (players_->stamp_10_ == 0) {
                 NetReapBusy = 0;
                 return;
@@ -1430,14 +1430,14 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
     check_polling();
 
     if ((voice_flags_D8_ & 1U) != 0 || (flags & 4) != 0) {
-        if (group_id == static_cast<long>(field_760_)) {
+        if (group_id == static_cast<long>(local_player_id_)) {
             queue_10c_.add(data, static_cast<unsigned long>(size),
-                           field_760_, 0, static_cast<unsigned long>(-1));
+                           local_player_id_, 0, static_cast<unsigned long>(-1));
             return static_cast<int>(field_E4_);
         }
         if (group_id == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(size),
-                           field_760_, 0, static_cast<unsigned long>(-1));
+                           local_player_id_, 0, static_cast<unsigned long>(-1));
             if (field_6DC_ < 2) return static_cast<int>(field_E4_);
         }
     }
@@ -1462,7 +1462,7 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
         const uint16_t packet_type = 1;
         memcpy(packet, &packet_type, sizeof packet_type);
         const HRESULT sent = NetDirectPlay->Send(
-            field_760_, static_cast<DPID>(group_id), reliable, packet,
+            local_player_id_, static_cast<DPID>(group_id), reliable, packet,
             static_cast<DWORD>(allocation_size));
         free(packet);
         return sent == 0 ? static_cast<int>(field_E4_) : 0;
@@ -1518,7 +1518,7 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
         }
 
         const HRESULT resent = NetDirectPlay->Send(
-            field_760_, static_cast<DPID>(group_id), 0, packet,
+            local_player_id_, static_cast<DPID>(group_id), 0, packet,
             static_cast<DWORD>(allocation_size));
         if (resent != 0) {
             free(packet);
@@ -1557,7 +1557,7 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
                         const unsigned long resend_id = player.field_0_;
                         base_time[index] = timeGetTime();
                         const HRESULT retried = NetDirectPlay->Send(
-                            field_760_, static_cast<DPID>(resend_id), 0, packet,
+                            local_player_id_, static_cast<DPID>(resend_id), 0, packet,
                             static_cast<DWORD>(allocation_size));
                         if (retried != 0) {
                             MessageBoxA(0, "Oh no!! Send failed!",
@@ -1702,7 +1702,7 @@ int Net::enum_players(unsigned long player_id, unsigned long, const DPNAME *name
            name->lpszLongNameA);
 
     if ((player_id & 1) != 0 && ActiveNet != 0) {
-        ActiveNet->field_764_ = original_id;
+        ActiveNet->host_player_id_ = original_id;
     }
 
     ++NetPlayerWriteIndex;
@@ -2685,7 +2685,7 @@ void Net::receive_directplay_messages(int player_id) {
             // The native loop restores the input player id before each call,
             // even though Receive writes through this same local.
             working_id = static_cast<DPID>(player_id);
-            DPID counterpart = field_760_;
+            DPID counterpart = local_player_id_;
             DWORD size = field_6E4_;
             const DWORD flags = (player_id != 0) ? 6 : 3;
             result = NetDirectPlay->Receive(
@@ -2722,7 +2722,7 @@ Return Value: n/a
 Status: Complete
 */
 void Net::broadcast_player_table() {
-    if (field_760_ == field_764_) {
+    if (local_player_id_ == host_player_id_) {
         const int count = static_cast<int>(field_6DC_);
         if (count != 0) {
             const unsigned int size = static_cast<unsigned int>(count) * 0x2C + 4;
@@ -2780,7 +2780,7 @@ Status: Complete
 int Net::set_player_host_flag(int is_host) {
     int result = 0;
     if (NetDirectPlay != 0) {
-        const DPID player = field_760_;
+        const DPID player = local_player_id_;
         unsigned char data = 0;
         DWORD size = 1;
         result = NetDirectPlay->GetPlayerData(player, &data, &size, 0);
@@ -2790,7 +2790,7 @@ int Net::set_player_host_flag(int is_host) {
             } else {
                 data = static_cast<unsigned char>(data & 0xFD);
             }
-            result = NetDirectPlay->SetPlayerData(field_760_, &data, 1, 2);
+            result = NetDirectPlay->SetPlayerData(local_player_id_, &data, 1, 2);
         }
     }
     return result;
@@ -2965,11 +2965,11 @@ int Net::sub_632cc0(char *text, int id, unsigned char flag) {
         player.flags_14_ = flag;
         player.name_and_tail_[0] = 0;
         strcat(player.name_and_tail_, text);
-        if ((flag & 1) != 0) field_764_ = static_cast<uint32_t>(id);
+        if ((flag & 1) != 0) host_player_id_ = static_cast<uint32_t>(id);
     }
 
     ++field_6DC_;
-    if (field_760_ == field_764_) broadcast_player_table();
+    if (local_player_id_ == host_player_id_) broadcast_player_table();
     if (index < 16) {
         NetPlayer &player = players_[index];
         on_player_added(player.name_and_tail_, player.field_0_);
@@ -3025,7 +3025,7 @@ int NetThreadInfo::internal_receive() {
     // the record's buffer member while filling the originally supplied block.
     unsigned char *const bytes = static_cast<unsigned char *>(buffer_);
     DWORD from = 0;
-    DWORD to = net->field_760_;
+    DWORD to = net->local_player_id_;
     DWORD size = net->field_6E4_;
     const HRESULT receive_result = direct_play_->Receive(
         &from, &to, 3, bytes, &size);
@@ -3184,7 +3184,7 @@ int NetThreadInfo::internal_receive() {
         }
         // Queue publication/event callbacks can alter the shared packet WORD.
         packet->type_flags_ = (packet->type_flags_ & 0xFFFB) | 2;
-        direct_play_->Send(net->field_760_, to, 0, bytes, 0x0C);
+        direct_play_->Send(net->local_player_id_, to, 0, bytes, 0x0C);
     }
     return 1;
 }
@@ -3290,7 +3290,7 @@ void Net::handle_sys_msg() {
         case 3:
             // Refresh one player's name: only while the two timer words name
             // the same target and the payload word agrees to re-read it.
-            if (field_760_ == field_764_) {
+            if (local_player_id_ == host_player_id_) {
                 const DPMSG_CREATEPLAYERORGROUP *const message =
                     reinterpret_cast<const DPMSG_CREATEPLAYERORGROUP *>(NetGetScratch);
                 if (message->dwPlayerType != 1) break;
@@ -3589,7 +3589,7 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
     _beginthread(&net_receive_thread, 0, &thread_info_);
 
     if (NetDirectPlay->CreatePlayer(
-            &field_760_, &player_descriptor, thread_info_.events_[2],
+            &local_player_id_, &player_descriptor, thread_info_.events_[2],
             &player_data, 1, 0)
         != DP_OK) {
         return 0;
@@ -3597,7 +3597,7 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
 
     const DWORD host_flag = voice_flags_D8_ & 0x10000;
     if (host_flag != 0) {
-        field_764_ = field_760_;
+        host_player_id_ = local_player_id_;
     }
     // The SDK callback can change the process-wide interface. The native
     // host descriptor update tests the live pointer after CreatePlayer.
@@ -3614,8 +3614,8 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
         }
     }
 
-    if (field_760_ == field_764_) {
-        sub_632cc0(player_name, static_cast<int>(field_760_),
+    if (local_player_id_ == host_player_id_) {
+        sub_632cc0(player_name, static_cast<int>(local_player_id_),
                    static_cast<unsigned char>(player_data & 0xFF));
     }
 
@@ -3664,7 +3664,7 @@ int Net::join_session(NetAllocationNode *session, char *player_name,
             return 0;
         }
     }
-    return static_cast<int>(field_760_);
+    return static_cast<int>(local_player_id_);
 }
 
 void *NetAllocationNode::operator new(size_t size, Heap *owner) throw() {
@@ -3967,14 +3967,14 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
     // The queue predicate consumes the original 32-bit argument. Only the
     // wire header is narrowed to WORD below.
     if ((packet_type & 0xFFF0) == 0 && (ack_requested & 4U) != 0) {
-        if (target == field_760_) {
+        if (target == local_player_id_) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
-                           field_760_, 0, 0xFFFFFFFFUL);
+                           local_player_id_, 0, 0xFFFFFFFFUL);
             return static_cast<int>(field_E4_);
         }
         if (target == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
-                           field_760_, 0, 0xFFFFFFFFUL);
+                           local_player_id_, 0, 0xFFFFFFFFUL);
             if (static_cast<int>(field_6DC_) < 2)
                 return static_cast<int>(field_E4_);
         }
@@ -3995,7 +3995,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
     if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
         memcpy(packet, &type, sizeof(type));
         if (NetDirectPlay == 0 ||
-            NetDirectPlay->Send(field_760_, static_cast<DPID>(target),
+            NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
                                 reliable, packet,
                                 static_cast<DWORD>(allocation_size)) != DP_OK) {
             free(packet);
@@ -4016,7 +4016,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
         int any_waiting = 0;
         for (index = 0; index < 16; ++index) {
             NetPlayer &peer = players_[index];
-            if (peer.field_0_ == 0 || peer.field_0_ == field_760_ ||
+            if (peer.field_0_ == 0 || peer.field_0_ == local_player_id_ ||
                 (((peer.flags_14_ & 2U) == 0) && (type & 0x10U) == 0)) {
                 peer.field_8_ = 0;
                 waiting[index] = 0;
@@ -4038,7 +4038,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
             }
             const DWORD first_tick = timeGetTime();
             for (index = 0; index < 16; ++index) sent_at[index] = first_tick;
-            if (NetDirectPlay->Send(field_760_, 0, 0, packet,
+            if (NetDirectPlay->Send(local_player_id_, 0, 0, packet,
                                     static_cast<DWORD>(allocation_size)) != DP_OK) {
                 MessageBoxA(0, "Oh no!! Send failed!",
                             "Message from the Net Underworld", 0);
@@ -4076,7 +4076,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
                             }
                             sent_at[index] = timeGetTime();
                             const DPID peer_id = static_cast<DPID>(peer.field_0_);
-                            if (NetDirectPlay->Send(field_760_, peer_id, 0,
+                            if (NetDirectPlay->Send(local_player_id_, peer_id, 0,
                                     packet, static_cast<DWORD>(allocation_size))
                                 != DP_OK) {
                                 MessageBoxA(0, "Oh no!! Send failed!",
@@ -4158,7 +4158,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
     DWORD sent_at = timeGetTime();
     // Native targeted send dereferences the live interface without a second
     // null guard after timeGetTime; a disappearing provider is not normalized.
-    if (NetDirectPlay->Send(field_760_,
+    if (NetDirectPlay->Send(local_player_id_,
             static_cast<DPID>(target), 0, packet,
             static_cast<DWORD>(allocation_size)) != DP_OK) {
         MessageBoxA(0, "Oh no!! Send failed!",
@@ -4195,7 +4195,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
                 }
                 sent_at = timeGetTime();
                 const DPID live_peer = static_cast<DPID>(peer.field_0_);
-                if (NetDirectPlay->Send(field_760_, live_peer, 0, packet,
+                if (NetDirectPlay->Send(local_player_id_, live_peer, 0, packet,
                         static_cast<DWORD>(allocation_size)) != DP_OK) {
                     MessageBoxA(0, "Oh no!! Send failed!",
                                 "Message from the Net Underworld", 0);
@@ -4227,7 +4227,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
             return 0;
         }
         sent_at = timeGetTime();
-        if (NetDirectPlay->Send(field_760_,
+        if (NetDirectPlay->Send(local_player_id_,
                 static_cast<DPID>(target), 0, packet,
                 static_cast<DWORD>(allocation_size)) != DP_OK) {
             MessageBoxA(0, "Oh no!! Send failed!",
@@ -4260,14 +4260,14 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
 
     if ((voice_flags_D8_ & 1U) != 0 ||
         (static_cast<unsigned int>(flags) & 4U) != 0) {
-        if (target == field_760_) {
+        if (target == local_player_id_) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
-                           field_760_, 0, 0xFFFFFFFFUL);
+                           local_player_id_, 0, 0xFFFFFFFFUL);
             return static_cast<int>(field_E4_);
         }
         if (target == 0) {
             queue_10c_.add(data, static_cast<unsigned long>(data_size),
-                           field_760_, 0, 0xFFFFFFFFUL);
+                           local_player_id_, 0, 0xFFFFFFFFUL);
             if (static_cast<int>(field_6DC_) < 2)
                 return static_cast<int>(field_E4_);
         }
@@ -4289,7 +4289,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
             free(packet);
             return 0;
         }
-        if (NetDirectPlay->Send(field_760_, static_cast<DPID>(target),
+        if (NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
                                 reliable, packet,
                                 static_cast<DWORD>(allocation_size)) != DP_OK) {
             MessageBoxA(0, "Oh no!! Send failed!",
@@ -4313,7 +4313,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
 
         for (index = 0; index < 16; ++index) {
             NetPlayer &peer = players_[index];
-            if (peer.field_0_ == 0 || peer.field_0_ == field_760_ ||
+            if (peer.field_0_ == 0 || peer.field_0_ == local_player_id_ ||
                 (peer.flags_14_ & 2U) == 0) {
                 peer.field_8_ = 0;
                 active[index] = 0;
@@ -4338,7 +4338,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
                 // sampled tick, including inactive rows.
                 retry_epoch[index] = first_tick;
             }
-            if (NetDirectPlay->Send(field_760_, 0, 0, packet,
+            if (NetDirectPlay->Send(local_player_id_, 0, 0, packet,
                                     static_cast<DWORD>(allocation_size)) != DP_OK) {
                 MessageBoxA(0, "Oh no!! Send failed!",
                             "Message from the Net Underworld", 0);
@@ -4377,7 +4377,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
                             }
                             retry_epoch[index] = timeGetTime();
                             const DPID peer_id = static_cast<DPID>(peer.field_0_);
-                            if (NetDirectPlay->Send(field_760_, peer_id, 0,
+                            if (NetDirectPlay->Send(local_player_id_, peer_id, 0,
                                     packet, static_cast<DWORD>(allocation_size))
                                 != DP_OK) {
                                 MessageBoxA(0, "Oh no!! Send failed!",
@@ -4455,7 +4455,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
 
     unsigned int wait_timeout = selected_rtt;
     unsigned int retry_epoch = timeGetTime();
-    if (NetDirectPlay == 0 || NetDirectPlay->Send(field_760_,
+    if (NetDirectPlay == 0 || NetDirectPlay->Send(local_player_id_,
             static_cast<DPID>(target), 0, packet,
             static_cast<DWORD>(allocation_size)) != DP_OK) {
         MessageBoxA(0, "Oh no!! Send failed!",
@@ -4493,7 +4493,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
                 }
                 retry_epoch = timeGetTime();
                 const DPID live_peer = static_cast<DPID>(peer.field_0_);
-                if (NetDirectPlay->Send(field_760_, live_peer, 0, packet,
+                if (NetDirectPlay->Send(local_player_id_, live_peer, 0, packet,
                         static_cast<DWORD>(allocation_size)) != DP_OK) {
                     MessageBoxA(0, "Oh no!! Send failed!",
                                 "Message from the Net Underworld", 0);
@@ -4525,7 +4525,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
             return 0;
         }
         retry_epoch = timeGetTime();
-        if (NetDirectPlay == 0 || NetDirectPlay->Send(field_760_,
+        if (NetDirectPlay == 0 || NetDirectPlay->Send(local_player_id_,
                 static_cast<DPID>(target), 0, packet,
                 static_cast<DWORD>(allocation_size)) != DP_OK) {
             MessageBoxA(0, "Oh no!! Send failed!",

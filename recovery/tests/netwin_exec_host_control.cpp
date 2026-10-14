@@ -168,6 +168,9 @@ struct NetWin : GraphicWin {
 static NetWin NetWinDialog;
 struct LockState { uint32_t leading_words_[4]; struct { uint32_t flags; } payload_; };
 struct NetDaemon {
+    uint32_t local_player_id_ = 10, host_player_id_ = 20;
+    uint32_t local_player_id() const { return local_player_id_; }
+    uint32_t host_player_id() const { return host_player_id_; }
     LockState channels_[2];
     struct Primary { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
     int initial_sends = 0, option_sends = 0;
@@ -200,7 +203,6 @@ struct NetDaemon {
     void close_game() { trace.push_back("close-game"); }
 };
 static NetDaemon NetDaemonNet;
-static int NetWinPlayerId = 10, NetWinOtherPlayerId = 20;
 static NetWinSessionOptionsState NetWinSessionOptions = {};
 static void do_task() {
     ++task_runs; trace.push_back("task");

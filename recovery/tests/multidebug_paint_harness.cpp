@@ -10,7 +10,7 @@ typedef unsigned char uint8_t;
 // LIVE_PLAYER
 struct Net {
     NetPlayer players_[16];
-    unsigned int field_760_, field_764_;
+    unsigned int local_player_id_, host_player_id_;
 };
 struct Buffer {
     void set_font(Font *, int, int, int);
@@ -83,8 +83,8 @@ void prepare(int empty) {
     draws = heights = setup_stage = expected_count = expected_heights = 0;
     window.net_ = &sessions[0];
     for (int s = 0; s < 17; ++s) {
-        sessions[s].field_764_ = static_cast<unsigned int>(-1 - s);
-        sessions[s].field_760_ = static_cast<unsigned int>(-100 - s);
+        sessions[s].host_player_id_ = static_cast<unsigned int>(-1 - s);
+        sessions[s].local_player_id_ = static_cast<unsigned int>(-100 - s);
         for (int player = 0; player < 16; ++player) {
             NetPlayer &p = sessions[s].players_[player];
             // Later draws can introduce the final slot. All intermediate

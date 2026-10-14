@@ -123,15 +123,19 @@ static NetWinLobbyRow NetWinLobbyRows[8];
 static NetWinSessionBlock NetWinSessionData;
 static int g_player_count;
 int *NetWinPlayerCount = &g_player_count;
-int NetWinOtherPlayerId = 0x1234;
 
 struct Net {
+    uint32_t local_player_id_;
+    uint32_t host_player_id_;
+    Net() : local_player_id_(0), host_player_id_(0x1234),
+            sends(0), length(0), target(0), flags(0) { memset(bytes, 0, sizeof(bytes)); }
+    uint32_t local_player_id() const { return local_player_id_; }
+    uint32_t host_player_id() const { return host_player_id_; }
     int sends;
     int length;
     unsigned long target;
     int flags;
     unsigned char bytes[0x18C];
-    Net() : sends(0), length(0), target(0), flags(0) { memset(bytes, 0, sizeof(bytes)); }
     int send(void *data, int size, unsigned long to, int send_flags) {
         assert(size == static_cast<int>(sizeof(NetWinLobbySinglePacket)));
         ++sends;
@@ -193,7 +197,7 @@ static void fill_row(NetWinLobbyRow &row, unsigned char seed) {
 static void assert_packet_header(int slot) {
     assert(NetDaemonNet.sends == 1);
     assert(NetDaemonNet.length == 0x18C);
-    assert(NetDaemonNet.target == static_cast<unsigned long>(NetWinOtherPlayerId));
+    assert(NetDaemonNet.target == static_cast<unsigned long>(NetDaemonNet.host_player_id_));
     assert(NetDaemonNet.flags == 1);
     assert(NetDaemonNet.bytes[0] == 0x04);
     assert(NetDaemonNet.bytes[1] == 0x2F);

@@ -81,12 +81,12 @@ public:
     uint32_t field_6E4_;
     uint32_t field_6DC_;
     uint32_t field_E4_;
-    uint32_t field_760_;
-    uint32_t field_764_;
+    uint32_t local_player_id_;
+    uint32_t host_player_id_;
     uint32_t voice_flags_D8_;
 
     Net() : field_6E4_(4096), field_6DC_(2), field_E4_(0),
-            field_760_(99), field_764_(99), voice_flags_D8_(0) {
+            local_player_id_(99), host_player_id_(99), voice_flags_D8_(0) {
         int i;
         thread_info_.events_[0] = reinterpret_cast<HANDLE>(1);
         thread_info_.events_[1] = reinterpret_cast<HANDLE>(2);

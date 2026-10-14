@@ -52,6 +52,9 @@ struct Buffer {
     int get_pixel(int, int) const { return 0x32; }
 };
 struct Net {
+    uint32_t local_player_id_ = 1, host_player_id_ = 2;
+    uint32_t local_player_id() const { return local_player_id_; }
+    uint32_t host_player_id() const { return host_player_id_; }
     int sends = 0;
     unsigned sizes[8] = {};
     uint8_t payloads[8][0xA74] = {};
@@ -125,8 +128,6 @@ static NetWinSessionOptionsState NetWinSessionOptions;
 static NetWinSessionBlock NetWinSessionData;
 static NetWinLobbyRow NetWinLobbyRows[8];
 static NetDaemon NetDaemonNet;
-static uint32_t NetWinPlayerId = 1;
-static int NetWinOtherPlayerId = 2;
 static int netwin_rules_gate = 1;
 static int *const NetWinRulesGate = &netwin_rules_gate;
 static Player Players[8];

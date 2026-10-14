@@ -66,7 +66,7 @@ struct NetPlayer {
 };
 struct Net {
   NetPlayer players_[16]{};
-  uint32_t field_6D4_ = 0, field_6DC_ = 0, field_760_ = 1, field_764_ = 2;
+  uint32_t field_6D4_ = 0, field_6DC_ = 0, local_player_id_ = 1, host_player_id_ = 2;
   void *guid_6E8_ = nullptr;
   JackalVoiceRx jackal_voice_rx_{};
   int callbacks = 0, broadcasts = 0;
@@ -109,10 +109,10 @@ int main() {
 
   // A second defined slot exercises the flag-controlled local-ID write and
   // conditional broadcast while continuing through callback and receiver.
-  net.field_760_ = 44;
+  net.local_player_id_ = 44;
   const int second = net.sub_632cc0(const_cast<char *>("other"), 44, 1);
   assert(second == 71 && net.players_[1].field_0_ == 44);
-  assert(net.players_[1].flags_14_ == 1 && net.field_764_ == 44);
+  assert(net.players_[1].flags_14_ == 1 && net.host_player_id_ == 44);
   assert(net.field_6DC_ == 2 && net.broadcasts == 1 && net.callbacks == 2);
   assert(net.jackal_voice_rx_.last_player_id == 44);
   assert(std::strcmp(net.callback_name, "other") == 0 && net.callback_id == 44);

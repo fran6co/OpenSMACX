@@ -67,7 +67,7 @@ static Player Players[8];
 static struct Text { char str[256]; } ParseStrBuffer[10];
 static char PopupStartCaption[]="caption", ScriptPopupFile[]="script";
 static char NetWinPasswordPromptInitialText,NetWinPasswordVerifyInitialText;
-static int NetWinPlayerId=27,NetWinOtherPlayerId=39,player_count=2;
+static int player_count=2;
 static int *NetWinPlayerCount=&player_count;
 static int local_slot=2,answer=0,poll_state=0,editor_result=0;
 static int popup_ctors,popup_dtors,pull_ctors,pull_dtors,sends,copies,identity_calls,ask_index;
@@ -182,6 +182,9 @@ static int X_pop_ask(const char *label,int value,char *initial,int(*poll)(),int 
 static void X_pop(const char *label,void *text) { assert(!text); event("pop:"+std::string(label)); }
 static void X_pop(char *file,const char *label,void *text) { assert(file==ScriptPopupFile && !text); event("pop:"+std::string(label)); }
 struct Net {
+    uint32_t local_player_id_ = 27, host_player_id_ = 39;
+    uint32_t local_player_id() const { return local_player_id_; }
+    uint32_t host_player_id() const { return host_player_id_; }
     void send(void *data,unsigned long size,int target,int flags) {
         assert(size==0x18c && flags==1); auto *p=static_cast<NetWinLobbySinglePacket*>(data);
         assert(p->header_.opcode_==4 && p->header_.flags_==0x2f && p->header_.field_8_==0);
@@ -189,7 +192,7 @@ struct Net {
     }
 };
 struct NetDaemon : Net {
-    int pid_2_idx(int id) { assert(id==NetWinPlayerId); ++identity_calls; event("identity"); return local_slot; }
+    int pid_2_idx(uint32_t id) { assert(id==local_player_id()); ++identity_calls; event("identity"); return local_slot; }
 } NetDaemonNet;
 struct NetWin {
     void *faction_records_;
@@ -223,7 +226,7 @@ static void reset(NetWin&w) {
         std::sprintf(table_a[i].noun_faction_,"a%d",i); std::sprintf(table_b[i].noun_faction_,"b%d",i);
     }
     w.faction_records_=table_a; NetWinSessionData.mode_=0; player_count=2;
-    local_slot=2; answer=0; editor_result=0; poll_state=0; NetWinOtherPlayerId=39;
+    local_slot=2; answer=0; editor_result=0; poll_state=0; NetDaemonNet.host_player_id_=39;
     popup_ctors=popup_dtors=pull_ctors=pull_dtors=sends=copies=identity_calls=ask_index=0;
     observe_owner=false; owner_accesses=0; ask_texts.clear(); ask_results.clear();
     std::memset(ParseStrBuffer,0,sizeof ParseStrBuffer); std::memset(Players,0,sizeof Players);
@@ -312,7 +315,7 @@ int main() {
     events.clear(); ask({"new"},{0});
     callback=[&](const std::string&e) {
         if(e=="identity")assert(NetWinLobbyRows[1].faction_or_color_==0);
-        if(e=="ask:ENTERPASSWORDFACTION") { w.faction_records_=table_b; NetWinOtherPlayerId=99; NetWinLobbyRows[1].faction_or_color_=6; }
+        if(e=="ask:ENTERPASSWORDFACTION") { w.faction_records_=table_b; NetDaemonNet.host_player_id_=99; NetWinLobbyRows[1].faction_or_color_=6; }
     };
     w.pick_faction(1); lifetime(2,1);
     assert(sends==1 && sent_slot==1 && sent_target==99 && sent_row.faction_or_color_==0);
@@ -422,8 +425,8 @@ MUTANTS=(
     ("verify_return_checked","pass","        X_pop_ask(\"VERIFYPASSWORD\", 0x50,\n                  &NetWinPasswordVerifyInitialText, nullptr, 0x800000);",
      "        if(X_pop_ask(\"VERIFYPASSWORD\", 0x50,\n                  &NetWinPasswordVerifyInitialText, nullptr, 0x800000)==-1)return 0;"),
     ("no_password_snapshot_slot_zero","pass","memcpy_call(&updated, &row, 0x17C);","if(slot>=1) memcpy_call(&updated, &row, 0x17C);"),
-    ("mode_before_identity","pass","    const int slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);\n    const bool faction_mode = NetWinSessionData.mode_ == 2 ||\n                              NetWinSessionData.mode_ == 3;",
-     "    const bool faction_mode = NetWinSessionData.mode_ == 2 ||\n                              NetWinSessionData.mode_ == 3;\n    const int slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);"),
+    ("mode_before_identity","pass","    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());\n    const bool faction_mode = NetWinSessionData.mode_ == 2 ||\n                              NetWinSessionData.mode_ == 3;",
+     "    const bool faction_mode = NetWinSessionData.mode_ == 2 ||\n                              NetWinSessionData.mode_ == 3;\n    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());"),
     ("negative_result_normalized","pass","nullptr, 0x800040) == -1)","nullptr, 0x800040) < 0)"),
     ("table_before_checksum","pass","if (records[faction].owner_ != entered_hash)","(void)records; if (checked_records[faction].owner_ != entered_hash)"),
     ("cached_default_lookup","player","strcpy(updated.leader_name_, label_get(0xFE4 / 4));",

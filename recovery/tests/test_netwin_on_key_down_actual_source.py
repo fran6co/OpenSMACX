@@ -107,6 +107,10 @@ struct FlatButton {
   void close() { record_event(EVENT_BUTTON_CLOSE); }
 };
 struct NetDaemon {
+  uint32_t local_player_id_, host_player_id_;
+  NetDaemon() : local_player_id_(17), host_player_id_(0) {}
+  uint32_t local_player_id() const { return local_player_id_; }
+  uint32_t host_player_id() const { return host_player_id_; }
   int pid_2_idx(int value) {
     observed_pid = value;
     record_event(EVENT_PID_TO_INDEX);
@@ -115,7 +119,6 @@ struct NetDaemon {
 };
 
 static NetDaemon NetDaemonNet;
-static int NetWinPlayerId = 17;
 
 static void message_chat(int type, int arg, char *text) {
   observed_message_type = type;

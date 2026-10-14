@@ -49,8 +49,8 @@ struct FakeQueue {
 };
 struct NetThreadInfo { HANDLE events_[5]; };
 struct Net {
-    uint32_t voice_flags_D8_, field_E4_, field_6DC_, field_6E4_, field_760_;
-    unsigned long field_764_;
+    uint32_t voice_flags_D8_, field_E4_, field_6DC_, field_6E4_, local_player_id_;
+    unsigned long host_player_id_;
     FakeQueue queue_10c_;
     NetPlayer players_[16];
     NetThreadInfo thread_info_;
@@ -156,7 +156,7 @@ int main() {
     Net net;
     std::memset(&net, 0, sizeof(net));
     net.field_6E4_ = 0x1000;
-    net.field_760_ = 0x77;
+    net.local_player_id_ = 0x77;
     net.thread_info_.events_[0] = reinterpret_cast<HANDLE>(1);
     net.thread_info_.events_[1] = reinterpret_cast<HANDLE>(2);
     char payload[12] = "hello";
@@ -213,7 +213,7 @@ int main() {
     NetPlayerTable = first_table;
     NetPlayerWriteIndex = 0;
     net.voice_flags_D8_ = 2;
-    net.field_764_ = 0;
+    net.host_player_id_ = 0;
     ActiveNet = &net;
     g_callback_table = callback_table;
     g_callback_index = 1;
@@ -229,6 +229,6 @@ int main() {
     assert(first_table[0].field_0_ == 0x12345678);
     assert(callback_table[1].flags_14_ == 3);
     assert(std::strcmp(callback_table[1].name_and_tail_, "Remote Player") == 0);
-    assert(net.field_764_ == 0x12345678 && NetPlayerWriteIndex == 2);
+    assert(net.host_player_id_ == 0x12345678 && NetPlayerWriteIndex == 2);
     std::puts("bounded actual-source Net group controls passed");
 }

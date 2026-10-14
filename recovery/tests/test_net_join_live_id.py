@@ -42,8 +42,8 @@ def test_net_join_uses_live_member_for_create_host_add_and_return_snapshot(compi
 
     # A minimal old-local mutant must be caught specifically by the CreatePlayer
     # output-address identity assertion (exit 31); do not trust result-only tests.
-    before = "    if (NetDirectPlay->CreatePlayer(\n            &field_760_,"
-    after = "    DPID player_id = field_760_;\n    if (NetDirectPlay->CreatePlayer(\n            &player_id,"
+    before = "    if (NetDirectPlay->CreatePlayer(\n            &local_player_id_,"
+    after = "    DPID player_id = local_player_id_;\n    if (NetDirectPlay->CreatePlayer(\n            &player_id,"
     assert body.count(before) == 1
     old_local_mutant = body.replace(before, after, 1)
 

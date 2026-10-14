@@ -1,6 +1,7 @@
 """Original polling ID selection; no timeout/error-path normalization."""
 from dataclasses import fields
 import json
+import os
 from pathlib import Path
 import resource
 import shutil
@@ -29,7 +30,7 @@ def migration(text, *, reverse=False):
 
 
 def restore_polling_player_id(text):
-    return migration(text, reverse=True) if 'if (field_760_ == players_[1].field_0_) {' in text else text
+    return migration(text, reverse=True) if 'if (local_player_id_ == players_[1].field_0_) {' in text else text
 
 
 def test_exact_bounded_source_and_historical_continuity():
@@ -53,7 +54,7 @@ def test_pinned_id_discriminator_and_original_timeout_drop_order():
     from capstone import Cs, CS_ARCH_X86, CS_MODE_32
     from match_recovery.model import Span
     from match_recovery.pe_coff import PeImage
-    path = ROOT / '.opensmacx/game/terranx_original.exe'
+    path = Path(os.environ.get('OPENSMACX_IMAGE', ROOT / '.opensmacx/game/terranx_original.exe'))
     if not path.is_file():
         pytest.skip('pinned image unavailable')
     image = PeImage(path.read_bytes(), '01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf')
@@ -82,12 +83,12 @@ CASES = r'''
   for (int mode = 0; mode < 6; ++mode) {
     NetReapBusy = NetKeepAliveBusy = 0;
     HarnessNet one;
-    one.field_760_ = mode == 5 ? 0 : 77;
-    one.field_764_ = 88;
+    one.local_player_id_ = mode == 5 ? 0 : 77;
+    one.host_player_id_ = 88;
     one.voice_flags_D8_ = 0x40000;
     one.poll_time_DC_ = fake_now - 3000;
     one.players_[0].field_0_ = mode == 4 ? 0 : 123;
-    one.players_[1].field_0_ = one.field_760_;
+    one.players_[1].field_0_ = one.local_player_id_;
     one.players_[1].stamp_10_ = 0;
     one.players_[0].stamp_10_ = mode == 1 ? 0 : fake_now - (mode == 2 ? 100 : 101);
     one.drop_result = mode == 3 ? 1 : 0;
@@ -105,7 +106,7 @@ CASES = r'''
   // Coincidental timestamp equality must not select the one-player arm.
   NetReapBusy = NetKeepAliveBusy = 0;
   HarnessNet coincident;
-  coincident.field_760_ = 77; coincident.field_764_ = 88;
+  coincident.local_player_id_ = 77; coincident.host_player_id_ = 88;
   coincident.voice_flags_D8_ = 0x40000;
   coincident.poll_time_DC_ = fake_now - 3000;
   coincident.players_[0].field_0_ = 123;
@@ -127,8 +128,8 @@ def test_actual_row_id_selection_and_failure_paths(tmp_path, compiler_name, dama
         pytest.skip('host compiler unavailable')
     player, polling, abort, _ = _actual_sources()
     mutations = {
-        'timestamp': ('field_760_ == players_[1].field_0_', 'field_760_ == players_[1].stamp_10_'),
-        'wrong_row': ('field_760_ == players_[1].field_0_', 'field_760_ == players_[0].field_0_'),
+        'timestamp': ('local_player_id_ == players_[1].field_0_', 'local_player_id_ == players_[1].stamp_10_'),
+        'wrong_row': ('local_player_id_ == players_[1].field_0_', 'local_player_id_ == players_[0].field_0_'),
         'timeout_equality': ('<= poll_timeout_E0_', '< poll_timeout_E0_'),
         'drop_target': ('drop_player(players_->field_0_, 0)', 'drop_player(players_[1].field_0_, 0)'),
     }

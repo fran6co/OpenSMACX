@@ -111,6 +111,77 @@ def owner_object(value=None, *, damage=None, duplicate_symbol=False, nested=Fals
     return obj, path
 
 
+def _field_list(entries):
+    raw = b""
+    for kind, *values in entries:
+        if kind == "member":
+            name, type_index, offset = values
+            encoded = name.encode("ascii")
+            raw += (struct.pack("<HHIH", 0x1405, 0, type_index, offset)
+                    + bytes([len(encoded)]) + encoded)
+        elif kind == "base":
+            type_index, offset = values
+            raw += struct.pack("<HHIH", 0x1400, 0, type_index, offset)
+        elif kind == "virtual_base":
+            type_index, = values
+            raw += struct.pack("<HHIIHH", 0x1401, 0, type_index, 0x74, 0, 0)
+        else:
+            raise AssertionError(kind)
+    return record(0x1203, raw)
+
+
+def _udt(field_index, member_count, size, name):
+    encoded = name.encode("ascii")
+    return record(0x1005, struct.pack("<HHIIIH", member_count, 0, field_index,
+                                      0, 0, size) + bytes([len(encoded)]) + encoded)
+
+
+def inherited_chain_object(*, parent_entries=None, parent_size=32,
+                           base_offset=8, middle_offset=6):
+    """Parent -> Middle -> Base, with one four-byte Base::value member."""
+    base_fields = _field_list([("member", "value", 0x74, 0)])
+    base = _udt(0x1000, 1, 4, "Base")
+    middle_fields = _field_list([("base", 0x1001, middle_offset)])
+    middle = _udt(0x1002, 1, 16, "Middle")
+    entries = [("base", 0x1003, base_offset)] if parent_entries is None else parent_entries
+    parent_fields = _field_list(entries)
+    parent = _udt(0x1004, len(entries), parent_size, "Parent")
+    types = base_fields + base + middle_fields + middle + parent_fields + parent
+    obj = Coff(__import__("test_object_data").data_fixture(
+        bytes(max(parent_size, 4)), type_index=0x1005, types=types))
+    obj.symbols[0] = replace(obj.symbols[0], name=PARENT)
+    return obj
+
+
+def two_base_owner_object(*, direct_member=False, incomplete=False, virtual=False,
+                          repeated=False, parent_size=32):
+    """Parent with independently encoded bases for ambiguity/refusal controls."""
+    member_fields = _field_list([("member", "value", 0x74, 0)])
+    member_type = _udt(0x1000, 1, 4, "Base")
+    second_fields = _field_list([("base", 0x1001, 0)])
+    second_type = _udt(0x1002, 1, 4, "Second")
+    if incomplete:
+        second_fields = record(0x1203, b"")
+        second_type = record(0x1005, struct.pack("<HHIIIH", 0, 0x80, 0, 0, 0, 0)
+                             + b"\x06Second")
+    entries = [("base", 0x1001, 0)]
+    if virtual:
+        entries.append(("virtual_base", 0x1001))
+    elif repeated:
+        entries.append(("base", 0x1001, 8))
+    else:
+        entries.append(("base", 0x1003, 8))
+    if direct_member:
+        entries.append(("member", "value", 0x74, 20))
+    parent_fields = _field_list(entries)
+    parent = _udt(0x1004, len(entries), parent_size, "Parent")
+    types = member_fields + member_type + second_fields + second_type + parent_fields + parent
+    obj = Coff(__import__("test_object_data").data_fixture(
+        bytes(max(parent_size, 4)), type_index=0x1005, types=types))
+    obj.symbols[0] = replace(obj.symbols[0], name=PARENT)
+    return obj
+
+
 def indexed_owner_object(value=None, *, array_size=88, element_type=0x1002,
                          subscript_type=0x75,
                          entry_forward=False, pointer_leaf=False):
@@ -253,14 +324,50 @@ def test_ambiguous_or_truncated_inherited_layout_stays_unknown_for_both_identiti
         assert [row["definition"] for row in reports] == ["unknown", "unknown"]
 
 
-def test_direct_member_lookup_never_walks_base_names_or_out_of_bounds_extents():
+def test_direct_and_inherited_member_lookup_preserves_extent_checks():
     obj, _ = owner_object(inherited=True)
     assert member_data_layout(obj, PARENT, ("child",))["member_offset"] == 4
-    with pytest.raises(ValueError, match="named CodeView member"):
-        member_data_layout(obj, PARENT, ("base_child",))
+    assert member_data_layout(obj, PARENT, ("base_child",))["member_offset"] == 0
     out_of_bounds, _ = owner_object(damage="out_of_parent")
     with pytest.raises(ValueError, match="outside its owning UDT"):
         member_data_layout(out_of_bounds, PARENT, ("child",))
+
+
+def test_inherited_member_uses_accumulated_nonzero_multilevel_base_offsets():
+    obj = inherited_chain_object(base_offset=8, middle_offset=6)
+    layout = member_data_layout(obj, PARENT, ("value",))
+    assert (layout["member_offset"], layout["offset"], layout["size"]) == (14, 14, 4)
+
+
+def test_direct_member_hides_same_named_inherited_and_virtual_members():
+    obj = two_base_owner_object(direct_member=True, virtual=True)
+    layout = member_data_layout(obj, PARENT, ("value",))
+    assert (layout["member_offset"], layout["size"]) == (20, 4)
+
+
+@pytest.mark.parametrize("obj,reason", [
+    (two_base_owner_object(), "ambiguous"),
+    (two_base_owner_object(repeated=True), "ambiguous"),
+    (two_base_owner_object(incomplete=True), "complete same-stream UDT"),
+    (two_base_owner_object(virtual=True), "virtual base offset"),
+    (inherited_chain_object(base_offset=20), "base lies outside"),
+])
+def test_inherited_lookup_refuses_ambiguous_incomplete_virtual_and_out_of_extent_bases(obj, reason):
+    with pytest.raises(ValueError, match=reason):
+        member_data_layout(obj, PARENT, ("value",))
+
+
+def test_inherited_lookup_refuses_cyclic_base_graphs():
+    parent_fields = _field_list([("base", 0x1003, 0)])
+    parent = _udt(0x1000, 1, 16, "Parent")
+    base_fields = _field_list([("base", 0x1001, 0)])
+    base = _udt(0x1002, 1, 16, "Base")
+    types = parent_fields + parent + base_fields + base
+    obj = Coff(__import__("test_object_data").data_fixture(
+        bytes(16), type_index=0x1001, types=types))
+    obj.symbols[0] = replace(obj.symbols[0], name=PARENT)
+    with pytest.raises(ValueError, match="cyclic"):
+        member_data_layout(obj, PARENT, ("missing",))
 
 
 def test_parent_binding_requires_same_unit_and_original_address_domain():

@@ -809,7 +809,7 @@ int __cdecl multiplayer_init(int startup_mode) {
         GameDataStateStorage.fields_.time_controls_selection_ = static_cast<uint8_t>(
             NetWinSessionOptions.time_control_);
         ConsoleGlobal.faction_id_ =
-            NetDaemonNet.pid_2_who(static_cast<unsigned long>(NetWinPlayerId));
+            NetDaemonNet.pid_2_who(static_cast<unsigned long>(NetDaemonNet.local_player_id()));
 
         if (NetWinSessionData.mode_ == 3) {
             GameDataStateStorage.fields_.game_state_ |= 0x10u;

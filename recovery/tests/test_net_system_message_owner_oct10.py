@@ -94,7 +94,7 @@ struct IDirectPlay2 {
 IDirectPlay2 *NetDirectPlay = 0;
 struct Net {
     NetFifo queue_130_;
-    DWORD field_760_ = 77, field_764_ = 77;
+    DWORD local_player_id_ = 77, host_player_id_ = 77;
     NetPlayer players_[16];
     std::vector<Addition> additions;
     std::vector<DPID> drops;
@@ -167,10 +167,10 @@ int main() {
     assert(failed.additions.size() == 1 && failed.additions[0].name == name);
     assert(failed.additions[0].flag == 0);
     const int calls = provider.calls;
-    Net gated; gated.field_764_ = 99;
+    Net gated; gated.host_player_id_ = 99;
     gated.queue_130_.add(create); gated.handle_sys_msg();
     create.dwPlayerType = 0;
-    gated.field_764_ = gated.field_760_;
+    gated.host_player_id_ = gated.local_player_id_;
     gated.queue_130_.add(create); gated.handle_sys_msg();
     assert(gated.additions.empty() && provider.calls == calls);
 
@@ -235,6 +235,9 @@ def _product() -> tuple[str, str]:
     response = text[start:text.index("// Original player insertion", start)]
     start = text.index("struct NetPacketEnvelope {")
     peer_types = text[start:text.index("static_assert(sizeof(NetPacketEnvelope)", start)]
+    start = text.index("struct NetPeerPlayerTableMessage {")
+    peer_types += "\n" + text[start:text.index(
+        "static_assert(sizeof(NetPeerPlayerTableMessage)", start)]
     record, = [r for r in read_file(ROOT / "src/net_class.cpp") if r.address == 0x632DB0]
     body = _definition(record.region, "void Net::handle_sys_msg()")
     return PREFIX + response + peer_types + HARNESS, body
@@ -252,7 +255,7 @@ def test_actual_dispatch_and_damage_controls(compiler: str, damage: str | None) 
         body = body.replace("message->count_ & 0xFF", "2")
     elif damage == "cached_id":
         body = body.replace("NetPlayerNameRecord.name_.lpszLongNameA, message->dpId,",
-                            "NetPlayerNameRecord.name_.lpszLongNameA, field_760_,")
+                            "NetPlayerNameRecord.name_.lpszLongNameA, local_player_id_,")
     elif damage == "failed_api":
         body, count = re.subn(
             r"NetDirectPlay->GetPlayerName\(message->dpId,\s*NetPlayerNameRecord.bytes_, &size\);",

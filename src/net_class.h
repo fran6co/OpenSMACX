@@ -358,6 +358,8 @@ class Net {
   // Borrowed view of the existing session node; ownership and layout remain
   // with Net.
   const NetAllocationNode &allocation_node() const { return allocation_node_; }
+  DPID local_player_id() const { return local_player_id_; }
+  uint32_t host_player_id() const { return host_player_id_; }
 
   // Original construction publishes the primary table at 0x0066EB04.
   // Six slots: original drop_player calls primary slot 5 at 0x00632612.
@@ -579,18 +581,15 @@ class Net {
   // Its list has a distinct allocation base at +0x750.
   // RECOVERY_MEMBER: v2 Net allocation_node_ NetAllocationNode 0x700 0x0062D6A0
   NetAllocationNode allocation_node_;  // 0x700
-  // 0x760 and 0x764 are the two words check_polling compares to decide
-  // whether the whole player table is stale or only a slice of it - close()
-  // zeroes both. AlphaNet owns the following player count and record array.
- protected:
-  // NetDaemon's player callbacks compare this inherited host ID directly.
-  // CreatePlayer writes this member directly; subsequent callbacks observe it.
-  DPID field_760_;           // 0x760
-  // Read by NetDaemon::send_message (netdaemon.cpp) as the substitution for
-  // an out-of-range target, so it is reachable from the derived class rather
-  // than a this-pun over the offset.
- public:
-  uint32_t field_764_;       // 0x764
+  // NetWin's old globals at 0x93D4F0/0x93D4F4 alias these same NetDaemonNet
+  // words. CreatePlayer supplies the local DPID at +0x760; the flagged player
+  // callback supplies the session host DPID at +0x764. close() clears both.
+  // AlphaNet owns the following player count and record array.
+ private:
+  // RECOVERY_MEMBER: v1 Net local_player_id_ 0x760 0x0062E540
+  DPID local_player_id_;     // 0x760
+  // RECOVERY_MEMBER: v1 Net host_player_id_ 0x764 0x00630C80
+  uint32_t host_player_id_;   // 0x764
 };
 
 static_assert(sizeof(Net) == 0x768, "Net ends before AlphaNet's player count");

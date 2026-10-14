@@ -173,7 +173,7 @@ int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20
 // ORIGINAL: 0x0052E160 ?on_player_added@NetDaemon@@UAEXPADK@Z 0x0052E160-0x0052E364
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned52E160..52E364 and52E370..52E8FD; retained recovered seeds are hints, not mandatory C++.", "The not-found delete tail still runs and decrements count. Slot8 identity/status bytes belong to the real ledger; lobby prefix/name writes are byte views wholly inside the existing168-byte session object. Keep both session object lifetimes and their original bindings.", "PlayerLock::active return controls notification; process identity offsets are not doubled. Two label_get calls remain independent, and prefix writes depend on live phase below2.", "Source-owned NextTurnReady, NetUpkeepPhase and NetHostChangeSlot replace private address aliases. Upkeep producer remains unfinished; ledger-derived lock index domain remains unproven.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; actual-source host damage controls and native compilation required", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/0052e160.cpp", "Historical seed spelling ?on_player_added@NetDaemon@@QAEXPADK@Z; current source mapping ?on_player_added@NetDaemon@@UAEXPADK@Z; emitted symbol ?on_player_added@NetDaemon@@UAEXPADK@Z."], "reason": "Recover the complete derived network player lifecycle callback through actual AlphaNet records, PlayerLock behavior, NetWin storage and shared turn state. Preserve its original identity and useful seed findings; no exact, runtime or full acceptance claim is implied. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 void NetDaemon::on_player_added(char *name, unsigned long id) {
-    const bool same_host = (field_760_ == field_764_);
+    const bool same_host = (local_player_id() == host_player_id());
     primary_state_.leading_words_[0] = same_host ? 1 : 0;
 
     if (player_count_ < 7 && primary_state_.trailing_words_[0] < 2) {
@@ -190,7 +190,7 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
         if (slot > 1) {
             bool duplicate_host = false;
             for (int prior = 1; prior < slot; ++prior) {
-                if (process_slots_[prior].pid_ == field_760_) {
+                if (process_slots_[prior].pid_ == local_player_id()) {
                     duplicate_host = true;
                 }
             }
@@ -376,7 +376,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     }
 
     --player_count_;
-    primary_state_.leading_words_[0] = (field_760_ == field_764_) ? 1 : 0;
+    primary_state_.leading_words_[0] = (local_player_id() == host_player_id()) ? 1 : 0;
 
     const uint8_t post_turn_bit = static_cast<uint8_t>(GameDataStateStorage.fields_.net_turn_flags_ & 0x10);
     const bool skip_after_delete =
@@ -423,7 +423,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
 
     int server_slot = 0;
     while (server_slot < 8 &&
-           process_slots_[server_slot].pid_ != field_764_) {
+           process_slots_[server_slot].pid_ != host_player_id()) {
         ++server_slot;
     }
     const char *server_name = server_slot < 8
@@ -905,6 +905,8 @@ uint32_t NetDaemon::unlock_veh() {
 // build's own startup instead.
 // RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A primary_state_.trailing_words_[7]
 // RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A channels_[1].trailing_words_[7]
+// RECOVERY_OBJECT: v3 0x0093D4F0 ?NetWinPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A local_player_id_
+// RECOVERY_OBJECT: v3 0x0093D4F4 ?NetWinOtherPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A host_player_id_
 // RECOVERY_OBJECT: v1 0x0093CD90 ?NetDaemonNet@@3VNetDaemon@@A
 NetDaemon NetDaemonNet;  // 0x0093CD90
 
@@ -2574,7 +2576,7 @@ void __cdecl message_chat(int opcode, int target, char *text) {
 // the time and sends, 0x8000 sends with a possibly-substituted player id,
 // 0xA000 adds a who_2_pid path that falls back to the same substitution, and
 // the default substitutes who_2_pid for any target but the local one. The
-// substitution's fallback is field_764_, the two words check_polling compares
+// substitution's fallback is host_player_id(), the two words check_polling compares
 // (see net_class.h); the turn counter it reads once into `counter` is
 // lock_state_[0].dword_[5].
 //
@@ -2599,7 +2601,7 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
         if (NetDaemonNet.primary_state_.trailing_words_[0] == 1) {
             value = target;
         } else {
-            value = field_764_;
+            value = host_player_id();
         }
         target = value;
         return Net::send(message, length, target, 1);
@@ -2615,7 +2617,7 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
         if (counter == 1) {
             value = target;
         } else {
-            value = field_764_;
+            value = host_player_id();
         }
         target = value;
         return Net::send(message, length, target, 1);
@@ -4115,7 +4117,7 @@ bool NetDaemon::process_file_transfer_message(char *message,
             netdaemon_transfer_read_u32(bytes + 0x0C);
 
         const int local_index = NetDaemonNet.pid_2_idx(
-            NetDaemonNet.field_760_);
+            NetDaemonNet.local_player_id());
         netdaemon_transfer_write_u16(bytes, 0xF08);
         netdaemon_transfer_write_i32(bytes + 4, local_index);
         send_message(message, 0x14, sender_id);
@@ -4139,7 +4141,7 @@ bool NetDaemon::process_file_transfer_message(char *message,
     if (type == 0xF07) { // decimal 3847: mode completion/advance
         if (local_is_host) return netdaemon_transfer_modal_cleanup(guard);
         NetDaemonTransferResetWord = -1;
-        const int local_index = NetDaemonNet.pid_2_idx(NetDaemonNet.field_760_);
+        const int local_index = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
         if (NetDaemonFileTransferCurrentFile < 0) {
             netdaemon_transfer_write_u16(bytes, 0xF0C);
             records = netdaemon_file_index_records();
@@ -4248,7 +4250,7 @@ bool NetDaemon::process_file_transfer_message(char *message,
                 netdaemon_transfer_read_u32(bytes + 0x0C) + 1U) {
                 netdaemon_transfer_write_u16(bytes, 0xF0C);
                 netdaemon_transfer_write_i32(bytes + 4, NetDaemonNet.pid_2_idx(
-                    NetDaemonNet.field_760_));
+                    NetDaemonNet.local_player_id()));
                 send_message(message, 0x20, sender_id);
                 records = netdaemon_file_index_records();
                 if (records != 0) {
@@ -4276,7 +4278,7 @@ int NetDaemon::send_files() {
     Filemap filemap;
     uint32_t send_mask = 0;
     int group_handle = 0;
-    const unsigned long local_player_id = NetDaemonNet.field_760_;
+    const unsigned long local_player_id = NetDaemonNet.local_player_id();
     NetDaemonNet.channels_[1].trailing_words_[9] = 0;
     const int local_index = NetDaemonNet.pid_2_idx(local_player_id);
     netdaemon_set_file_index_records(netdaemon_allocate_file_index_records());
@@ -4307,7 +4309,7 @@ int NetDaemon::send_files() {
         announce.opcode = 0xF0F;
         announce.source_player = local_index;
         Net::send(&announce, 0x20,
-            static_cast<unsigned long>(field_764_), 1);
+            static_cast<unsigned long>(host_player_id()), 1);
 
         SaveNameBuffer[0] = '\0';
         strcat(SaveNameBuffer, executable_path);

@@ -56,7 +56,7 @@ struct DeletionList {
 };
 class NetDaemonTransferModalCloseGuard;
 struct NetDaemonNetType {
-    uint32_t field_760_;
+    uint32_t local_player_id_;
     int pid_2_idx(uint32_t) { return 3; }
 } NetDaemonNet;
 struct NetDaemon {

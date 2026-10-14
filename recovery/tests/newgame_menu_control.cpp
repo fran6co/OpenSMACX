@@ -1247,6 +1247,8 @@ struct LockStateEntry {
 };
 struct MockLock { void clear() { events.push_back("lock-clear"); } };
 struct MockNetDaemon {
+    uint32_t local_player_id_;
+    uint32_t local_player_id() const { return local_player_id_; }
     int player_count_;
     AlphaNetProcessSlot process_slots_[9];
     struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
@@ -1328,7 +1330,6 @@ static uint32_t UnkBitfield1;
 static const char *AlphaxFileID = "ALPHAX";
 static uint32_t AltNatural[11], AltContour[11];
 static char StringTemp[1032];
-static int NetWinPlayerId;
 static int MockGameInitResult;
 static int multi_parsed_factions[8], multi_parse_count;
 static int multi_faction_after[4], multi_faction_mutations;
@@ -1399,7 +1400,7 @@ static void reset() {
     GameRules = GameState = NetTurnFlags = LockEnableMask = 0;
     DiffLevelCurrent = TimeControlsSelection = ControlTurnPhase = VehCurrentCount = 0;
     UnkBitfield1 = 0;
-    NetWinPlayerId = 17;
+    NetDaemonNet.local_player_id_ = 17;
     memset(multi_parsed_factions,0,sizeof(multi_parsed_factions));
     memset(multi_faction_after,0,sizeof(multi_faction_after));
     multi_parse_count=multi_faction_mutations=0;

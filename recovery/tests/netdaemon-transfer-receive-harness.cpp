@@ -33,7 +33,7 @@ static NetDaemonFileIndexRecord *netdaemon_file_index_records() { return rows; }
 static void netdaemon_set_file_index_records(NetDaemonFileIndexRecord *value) { rows=value; }
 static void *mem_get(int size) { void *storage=std::malloc(size_t(size)); if(storage) std::memset(storage,0xCD,size_t(size)); return storage; }
 struct NetDaemonNetType {
-    uint32_t field_760_;
+    uint32_t local_player_id_;
     int pid_2_idx(uint32_t) {
         if (mode==7 || mode==8) assert(NetDaemonTransferResetWord==-1);
         if (mode==8) { assert(rows!=0); NetDaemonFileTransferCurrentFile=-1; }

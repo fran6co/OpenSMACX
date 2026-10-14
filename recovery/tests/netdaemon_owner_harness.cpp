@@ -78,7 +78,7 @@ struct AlphaNetLedger {
     uint32_t max_players_;
 };
 struct Net {
-    uint32_t field_760_, field_764_;
+    uint32_t local_player_id_, host_player_id_;
     int send(void *, int, unsigned long, int);
 };
 struct AlphaNet : public Net {
@@ -229,8 +229,8 @@ static void setup_two_player_delete(NetDaemon &daemon, int lock_phase) {
     daemon.process_slots_[2].pid_ = 20;
     strcpy(daemon.process_slots_[2].name_, "departed");
     daemon.process_slots_[2].identity_ = 2;
-    daemon.field_760_ = 10;
-    daemon.field_764_ = 10;
+    daemon.local_player_id_ = 10;
+    daemon.host_player_id_ = 10;
     daemon.primary_state_.trailing_words_[0] = lock_phase;
     daemon.primary_state_.trailing_words_[4] = 1u << 2;
     daemon.channels_[0].trailing_words_[0] = 0xFF;
@@ -247,7 +247,7 @@ int main(int argc, char **argv) {
     if (strcmp(scenario, "added") == 0) {
         reset_daemon(daemon);
         daemon.player_count_ = 1;
-        daemon.field_760_ = daemon.field_764_ = 44;
+        daemon.local_player_id_ = daemon.host_player_id_ = 44;
         daemon.process_slots_[1].pid_ = 44;
         strcpy(daemon.process_slots_[1].name_, "host");
         daemon.process_slots_[1].identity_ = 1;
@@ -318,7 +318,7 @@ int main(int argc, char **argv) {
     } else if (strcmp(scenario, "delete_slot8_miss") == 0) {
         reset_daemon(daemon);
         daemon.player_count_ = 7;
-        daemon.field_760_ = 107; daemon.field_764_ = 107;
+        daemon.local_player_id_ = 107; daemon.host_player_id_ = 107;
         for (int slot = 1; slot <= 7; ++slot) {
             daemon.process_slots_[slot].pid_ = 100 + slot;
             daemon.process_slots_[slot].identity_ = static_cast<int8_t>(slot);

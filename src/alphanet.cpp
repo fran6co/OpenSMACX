@@ -712,7 +712,7 @@ int AlphaNet::create() {
     NetAllocationNode *session = NetDaemonNet.create_session(ParseStrBuffer[0].str, 7, 0);
     if (session == 0) return 0;
     if (NetDaemonNet.join_session(session, ParseStrBuffer[1].str, 0) == 0) return 0;
-    return NetDaemonNet.field_760_;
+    return NetDaemonNet.local_player_id();
 }
 
 int AlphaNet::join() {

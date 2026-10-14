@@ -69,8 +69,8 @@ struct Net {
   GUID service_provider_guid_;
   uint32_t field_6FC_;
   NetAllocationNode allocation_node_;
-  DWORD field_760_;
-  DWORD field_764_;
+  DWORD local_player_id_;
+  DWORD host_player_id_;
   Net();
 };
 static bool bytes_are(const void *object, size_t length, unsigned char value) {
@@ -93,7 +93,7 @@ MAIN = r'''int main() {
   assert(ActiveNet == net && NetDirectPlay == 0);
   assert(net->poll_time_DC_ == 0 && net->poll_timeout_E0_ == 0x4E20);
   assert(net->field_6DC_ == 0 && net->voice_flags_D8_ == 0 && net->field_E4_ == 1);
-  assert(net->field_760_ == 0 && net->field_764_ == 0);
+  assert(net->local_player_id_ == 0 && net->host_player_id_ == 0);
   assert(net->buffer_6E0_ == 0 && net->field_6E4_ == 0);
   assert(bytes_are(&net->service_provider_guid_, sizeof(net->service_provider_guid_), 0xA5));
   assert(net->field_6FC_ == 0xC8 && net->field_6D4_ == 0x64);
