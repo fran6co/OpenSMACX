@@ -40,6 +40,73 @@ def project(tmp_path):
     return root, task
 
 
+def test_trial_bindings_rebinds_reordered_originals(project, monkeypatch):
+    from match_recovery.measurement import Measurement
+    from match_recovery.ownership_source import project_view
+    from match_recovery.source import read_text
+    from match_recovery import variants
+
+    root, _ = project
+    path = root / "code/unit.cc"
+    first = "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001\n// symbol _f_before\nvoid f() {}\n"
+    second = "// ORIGINAL: 0x00401010 _g 0x00401010-0x00401011\n// symbol _g_before\nvoid g() {}\n"
+    original = (first + second).encode()
+    path.write_bytes(original)
+    proposed = (second.replace("_g_before", "_g_after") +
+                first.replace("_f_before", "_f_after")).encode()
+    view, snapshot = project_view(root)
+    selected = frozenset(e["entity_id"] for g in view["groups"] for e in g["entities"])
+    captured = {}
+    real_select = variants.select_bindings
+
+    def capture(rebound, *args, **kwargs):
+        for group in rebound["groups"]:
+            for entity in group["entities"]:
+                for row in entity["candidates"]:
+                    captured[entity["origin"]["address"]] = (row["symbol"], row["line"])
+        return real_select(rebound, *args, **kwargs)
+
+    monkeypatch.setattr(variants, "select_bindings", capture)
+    bindings, _, _, changes = variants._trial_bindings(
+        view, {"code/unit.cc": original}, {"code/unit.cc": proposed}, selected,
+        Measurement.read(root), snapshot["image_sha256"])
+    assert {row.origin.address: row.symbol for row in bindings} == {
+        0x401000: "_f_after", 0x401010: "_g_after"}
+    expected = {row.address: (row.symbol, row.line)
+                for row in read_text(proposed.decode(), path)}
+    assert captured == expected
+    assert {row["before"]: row["after"] for row in changes} == {
+        "_f_before": "_f_after", "_g_before": "_g_after"}
+    assert path.read_bytes() == original
+
+
+@pytest.mark.parametrize("damage", ["missing", "duplicate", "identity", "claim"])
+def test_trial_bindings_refuses_damaged_original_identity_sets(project, damage):
+    from match_recovery.measurement import Measurement
+    from match_recovery.ownership_source import project_view
+    from match_recovery.variants import _trial_bindings
+
+    root, _ = project
+    path = root / "code/unit.cc"
+    original = path.read_bytes()
+    proposed = original.decode()
+    if damage == "missing":
+        proposed = "void f() {}\n"
+    elif damage == "duplicate":
+        proposed += proposed
+    elif damage == "identity":
+        proposed = proposed.replace("0x00401000 _f", "0x00401010 _f")
+    else:
+        proposed = proposed.replace("0x00401001", "0x00401001 BYTE_EXACT")
+    view, snapshot = project_view(root)
+    selected = frozenset(e["entity_id"] for g in view["groups"] for e in g["entities"])
+    with pytest.raises(ValueError, match="original identity|original identities, spans or historical claims"):
+        _trial_bindings(view, {"code/unit.cc": original},
+                        {"code/unit.cc": proposed.encode()}, selected,
+                        Measurement.read(root), snapshot["image_sha256"])
+    assert path.read_bytes() == original
+
+
 def deck(project):
     root, task = project
     return {"schema_version": 2, "source": "code/unit.cc", "entity_id": task.subjects[0].entity_id,
