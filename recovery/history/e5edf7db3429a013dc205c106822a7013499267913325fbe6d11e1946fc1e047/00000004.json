@@ -1,0 +1,22 @@
+{
+  "event_id": "9c1c804deefbffdee44856ec5d8fc53a5ee673959cc5f8471b4cb52db21da0e6",
+  "payload": {
+    "affects": [
+      "entity-3f756baafdac74412b9b137e244294ed33eca4f71e2173f28f836f3dec785d42"
+    ],
+    "author": "coordinator",
+    "discovery_id": "battlewin-registry-element-discovery-oct14gc",
+    "evidence": [
+      "Native original init4219E0 stores ESI at0x7AE818 at instruction421B0D. Existing bounded InterfaceRegistry spans0x7AE7F0..0x7AE820; offset28 is array slot10.",
+      "Current BattleWinInitReceiver is separate pointer defined and assigned in battlewin.cpp, with no consumers. MainInterface clears real registry and SubInterface mode dispatch reads it. Source separation loses publication to slot10.",
+      "Need preserve old object identity while using genuine bare pointer array. Native v3 named-member paths may not support a root array subscript; inspect supported representation before edits, do not retain duplicate runtime storage or invent wrapper solely to satisfy annotation. Separate follow-up scope required; current worker remains on MultiWin."
+    ],
+    "hypothesis": "BattleWinInitReceiver duplicates InterfaceRegistry[10]; BattleWin init should publish this to the real registry slot, not separate storage.",
+    "kind": "discovery"
+  },
+  "previous_event": "fbf5ade6535c6abdba3a21ab1aa90a5c69594a08241e69d44e8b19c404b2f0cc",
+  "request_id": "battlewin-registry-element-discovery-oct14gc",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:shared-scalar-reference-bindings-oct14gc"
+}
