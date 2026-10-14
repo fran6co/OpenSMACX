@@ -1,0 +1,17 @@
+{
+  "event_id": "51a133cd84d0b4e04713a8e1570ef8ed28ef1e75ec2662f19ffc56b990c39b42",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "console-shared-array-bindings-oct14ge",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/general.cpp binds ParseNumTable[10] at 9BB598..9BB5C0; src/alpha.cpp binds Bases[512] at 97D040..9A3840. Fresh rebased build-brm5ap9o builds and links; both array definition and initial-content checks pass. All 16887 supported compiled function signatures equal master build-wq53dy0q; three compiler probes unsupported. Two focused tests pass. Strict editor_energy, set_bombing_run and parse_num pass; four remaining task subjects fail. Native recorder banked only the two new Console claims. No linked, runtime or full-project acceptance is claimed."
+    ]
+  },
+  "previous_event": "af099f76f5d52fc5ea65c2284211d63873d08b0e9a908a22fab7abd5f0c2bedb",
+  "request_id": "console-shared-array-incorporated-oct14ge",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:console-command-matching-oct14ge"
+}

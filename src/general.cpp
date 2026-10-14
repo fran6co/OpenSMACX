@@ -43,6 +43,7 @@ Filefind FilefindPath;  // 0x009B8198
 // Parse-family tables, zero initialized as in the original .data. Preserve
 // the ten-entry extents and existing symbol/type spellings.
 int ParseStrPlurality[10];  // 0x009BB570
+// RECOVERY_OBJECT: v2 0x009BB598 0x009BB5C0 ?ParseNumTable@@3PAHA 0x00625E30
 int ParseNumTable[10];      // 0x009BB598
 int ParseStrGender[10];     // 0x009BB5C0
 char256 ParseStrBuffer[10]; // 0x009BB5E8
@@ -460,6 +461,7 @@ Return Value: No errors (0); Error (3)
 Status: Complete
 */
 int __cdecl parse_num(int id, int value) {
+    // Preserve the pinned signed guard: negative IDs pass and index before slot 0.
     if (id > 9) {
         return 3;
     }

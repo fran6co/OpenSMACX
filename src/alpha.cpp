@@ -145,6 +145,9 @@ RulesTerraforming Terraforming[MaxTerrainNum];      // 0x00691878
 // RECOVERY_OBJECT: v1 0x009A4B68 ?Facility@@3PAURulesFacility@@A
 RulesFacility Facility[MaxFacilityNum];             // 0x009A4B68
 RulesCitizen Citizen[MaxCitizenNum];                // 0x00946020
+// The pinned add-base path rejects when BaseCurrentCount reaches 512
+// (0x004E4B80); Base is 0x134 bytes, so the bounded array ends at 0x009A3840.
+// RECOVERY_OBJECT: v2 0x0097D040 0x009A3840 ?Bases@@3PAUBase@@A 0x004E4B80
 Base Bases[MaxBaseNum];                             // 0x0097D040
 // Native base_project indexes 64 dwords at 0x009A6514; setup_game
 // resets all 64 to -1. The spying/social/energy selectors inside this

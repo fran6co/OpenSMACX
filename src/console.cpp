@@ -4962,7 +4962,7 @@ Status: Complete
 /*
 Purpose: Ask the energy priority for one faction and refresh it - seeding the
          parser's per-faction defaults while the prompt loop runs.
-// ORIGINAL: 0x004E0120 ?editor_energy@Console@@QAEXXZ 0x004E0120-0x004E020E FILE
+// ORIGINAL: 0x004E0120 ?editor_energy@Console@@QAEXXZ 0x004E0120-0x004E020E FILE BYTE_EXACT
 // TRIED (seed history): statement order for the two loop-body stores - the
 //        original interleaves `push edi` BETWEEN the two default stores
 //        (push -1,-1,esi; store; push edi; store; call) where this body's
@@ -6124,7 +6124,7 @@ void Console::editor_veh() {
 Purpose: Order one air unit on a bombing run against a tile: refuse unless the
          tile's base owner is at vendetta with us, lock the unit over the net,
          restate its order and resync.
-// ORIGINAL: 0x004D8CD0 ?set_bombing_run@Console@@QAEXHHH@Z 0x004D8CD0-0x004D8DBE FILE
+// ORIGINAL: 0x004D8CD0 ?set_bombing_run@Console@@QAEXHHH@Z 0x004D8CD0-0x004D8DBE FILE BYTE_EXACT
 // TRIED (seed history): computing the veh_id*0xd flag-slot index once vs
 //        re-indexing read+write - both compile; landed at MISMATCH (edit_count
 //        3, 97% mnemonic similarity) with the array-indexed form.
