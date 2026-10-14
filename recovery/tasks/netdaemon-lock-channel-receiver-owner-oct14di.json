@@ -1,0 +1,31 @@
+{
+  "author": "coordinator",
+  "base_revision": "6cbccf2ecb9b7c4295f1db09eb8f63a98644ef86",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_client_lock_identity_actual_source.py",
+    "recovery/tests/test_netdaemon_command_wire_actual_source_oct13ac.py",
+    "recovery/tests/test_netdaemon_typed_storage_oct11.py",
+    "recovery/tests/test_netdaemon_receiver_wire_views_oct14di.py"
+  ],
+  "evidence": [
+    "Existing MessageLockRecord is the 0x28-byte message_lock593090 producer layout with asserted payload offsets10..24 and deliberately unwritten bytes2..3. Existing MessageLockView already provides per-field memcpy reads; extend only payload1C,20,24 int accessors and an unsigned one-byte payload18 accessor. Do not invent a provider class, record lifetime or allocation bound.",
+    "Pinned process_message client-lock route535BDB loads14 then10 before From Client LOCK logging. Receiver must freshly read18,10,14,24,1C,20 at locks_.lock after the log callback, and reread only byte18 after lock and Lock OK log callbacks before deciding2216 versus1201. Keep sender_identity distinct from packet faction, all failure/reply/global-lock order and no original error-path normalization.",
+    "Pinned open-channel route537CE9 loads14 then10 before mask math; existing MessageDataRecord/MessageCommandView owns those payloads. Preserve masked32-bit shifts, channels_ alias writes and fresh10/14 reads at the later log call. Close-channel8241 is unchanged. Keep entry opcode snapshot and dispatcher opcode rereads unchanged.",
+    "Core edits are confined to the existing MessageLockView methods and two helper bodies netdaemon_handle_client_lock_message and netdaemon_handle_lock_mask_residual. Original process_message definition, all ORIGINAL/symbol/span/history, packet producer bodies, declarations, flags and task baselines stay unchanged. Producers message_lock/message_data/open_channel/close_channel/lock/add_lock are evidence-only scope, not writable functions. No new CLI/framework work.",
+    "Tests own only listed files. Preserve fixed historical baselines and all existing damage controls; adapt exact accessor declaration schemas, helper extraction prerequisites and mutation anchors only for these authorized reads. Add actual-source unaligned memcpy width/offset and callback/alias tests, including late byte18 mutation, without caching full packets or adding guards. Source/review evidence must acknowledge existing baseline failures rather than weakening or resetting them.",
+    "Unchanged-master baseline on067c19a54 in the three existing NetDaemon test files:29passed,4failed,1skipped. Failures: old entry_sequence declaration spelling, prior checksum emitted-symbol continuity, old whole-file token reconstruction, prior NetChecksumReport header declaration. Packet behavior controls pass. Do not label this baseline green or remove its assertions; unrelated checksum/header source is outside this task.",
+    "Independent review, fresh application build/link, relevant behavioral controls, exact identity/claim continuity, references and compiler collateral review precede coordinator-reviewed manual integration. process_message complex cold/EH measurement and full linked/runtime preservation may remain refused; unsupported evidence is not green. No new byte claim without native record; no historical demotion or scope/baseline reset. Preserve all original quirks."
+  ],
+  "intent": "Make established producer-backed lock/channel wire records govern their raw-offset receiver reads, preserving original callback-visible rereads, field widths, unchecked extents and unwritten bytes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-lock-channel-receiver-owner-oct14di"
+}
