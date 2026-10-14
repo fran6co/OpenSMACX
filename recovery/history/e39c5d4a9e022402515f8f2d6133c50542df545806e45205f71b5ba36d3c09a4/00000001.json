@@ -1,0 +1,20 @@
+{
+  "event_id": "2ee721fa2c6a84ae45daa40832b6f9ed4952578d8c3c3f098982f689ec00326b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_generated_owner_migrations_oct6.py",
+      "recovery/tests/test_wave_lifetime.py"
+    ],
+    "evidence": [
+      "Move Wave lifetime harness and physical stage checks to the new Sound host; preserve original pinned stage and damage controls. Review generated owner bindings against actual emission."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "audio-lifecycle-regression-tests",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:audio-lifecycle-ownership-oct14ig"
+}
