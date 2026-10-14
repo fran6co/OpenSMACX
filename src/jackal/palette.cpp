@@ -1879,10 +1879,9 @@ int Palette::get_nearest_palette_index(const HSV *query, const HSV *hsv_block,
 
 int Palette::create_table(unsigned char *table, int start, int count,
                           int brightness_boost) {
-    struct HSVLocal { double h; double s; double v; };
-    HSVLocal hsv[256];
-    HSVLocal local1;
-    HSVLocal *ref0;
+    HSV hsv[256];
+    HSV local1;
+    HSV *ref0;
     int i;
     int upper;
 
@@ -1903,7 +1902,7 @@ int Palette::create_table(unsigned char *table, int start, int count,
         table[i] = (unsigned char)i;
     }
     for (i = 0; i < 0x100; i++) {
-        RGB_to_HSV(&entries_[i], (HSV *)&hsv[i]);
+        RGB_to_HSV(&entries_[i], &hsv[i]);
     }
     ref0 = &hsv[0];
     for (i = start; i < upper; i++) {
@@ -1913,7 +1912,7 @@ int Palette::create_table(unsigned char *table, int start, int count,
         // three into one expression lets VC6 commute the two fmul operands.
         double scaled = (double)(brightness_boost + 100) * local1.v;
         local1.v = scaled * hsv_percent_scale;
-        table[i] = (unsigned char)get_nearest_palette_index((HSV *)&local1, (HSV *)ref0, 1);
+        table[i] = (unsigned char)get_nearest_palette_index(&local1, ref0, 1);
     }
     return 0;
 }
