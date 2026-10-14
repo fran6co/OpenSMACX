@@ -3,6 +3,8 @@
 #include <windows.h>
 #include <stdint.h>
 
+// RECOVERY_IMPORT: v1 __imp__DeleteCriticalSection@4 KERNEL32.dll name:DeleteCriticalSection
+
 /* 0x24 bytes, not the IDB's 0x10. TWO INDEPENDENT PROOFS FROM THE IMAGE:
    ??0Net builds three NetFifos at 0xE8, 0x10C and 0x130 (see src/net_class.h),
    spaced exactly 0x24 apart; and ??0NetFifo at 0x006339C0 ends

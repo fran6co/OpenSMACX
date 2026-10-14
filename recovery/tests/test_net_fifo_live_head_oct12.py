@@ -263,8 +263,10 @@ def restore_live_head(source: str) -> str:
     unrelated source and any mapping/claim/lesson changes still refuse.
     """
     from match_recovery.source import read_text
-    from test_core_claim_continuity_oct14dt import historical_core_claim_view
+    from test_core_claim_continuity_oct14dt import (
+        historical_core_claim_view, historical_netfifo_structure_view)
     source = historical_core_claim_view(source, "src/net_fifo.cpp")
+    source = historical_netfifo_structure_view(source, "src/net_fifo.cpp")
     task = json.loads((ROOT / "recovery/tasks/net-fifo-live-head-oct12.json").read_text())
     assert task["base_revision"] == "908fd8cdcd7db78475f500bb03c4f143560bdb98"
     assert {subject["address"] for subject in task["subjects"]} == {0x633F70, 0x634200}

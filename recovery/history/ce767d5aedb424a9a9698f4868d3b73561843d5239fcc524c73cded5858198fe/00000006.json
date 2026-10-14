@@ -1,0 +1,22 @@
+{
+  "event_id": "98916224c38a6f0a232fbc989a7d67a40bdceb20611b994e427bbeb0b57e2991",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/net_fifo.cpp",
+      "src/net_fifo.h"
+    ],
+    "evidence": [
+      "Explicit inline close reproduced the primary destructor but omitted the standalone close symbol and failed application linking: Net::close calls close on its three embedded queues. Never force retention or erase the existing exact close obligation.",
+      "Use the already measured direct typed lock/drain/reset/unlock sequence in the destructor before DeleteCriticalSection. Preserve the complete existing noninline close implementation, class declarations, original annotation order, identities, historical claims and useful notes. No speculative helper, flags, casts, old-image addresses, safety corrections or body placeholders. Source factoring in the original remains unproved.",
+      "The original first private deck demonstrated the direct body extent/bytes. Require fresh exact/reference qualification, all-owner measurement, actual-source lifetime and metadata continuity controls, build/link and physical outside-scope review before manual integration. Preserve prior experiment evidence and the immutable original task baseline; failed experiments are not publication evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a610b921e09827fe89b31a94d89874f37d6f3ffa174b28bf73869bf6632ad585",
+  "request_id": "netfifo-direct-typed-drain-oct14en",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:netfifo-destructor-recovery-owner-oct14eb"
+}

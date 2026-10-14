@@ -1,0 +1,22 @@
+{
+  "event_id": "a610b921e09827fe89b31a94d89874f37d6f3ffa174b28bf73869bf6632ad585",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/net_fifo.cpp",
+      "src/net_fifo.h"
+    ],
+    "evidence": [
+      "Both helper spellings reproduce the primary destructor bytes; fresh strict qualification verifies all five targets. However fresh application comparisons expose seventeen then nine unresolved outside-owner signatures from the shared-header changes. Neither candidate is admitted for integration.",
+      "Admit explicit ordinary inline definition of the already-existing public close method in net_fifo.cpp before its destructor, reusing the exact original typed drain body. Remove only the experimental helper declaration/definition and unnecessary stdlib header include; keep the new SDK import binding. Relocate the unchanged close annotation block losslessly through native variant validation. No new class members, ABI, flags, safety changes or ORIGINAL identity/claim edits.",
+      "Fresh damage controls must retain both constructor/close historical claims and verify the destructor API. Require complete family measurement, host cleanup controls, mapping/metadata continuity and fresh build/link/outside-scope review. This is recovery replanning from measured collateral effects, not discarding behavior or waiving preservation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5785648bbdfa4a052c387a44c5bf45d8f0bc85d740b84d8c5fbe0370aff2c6af",
+  "request_id": "netfifo-existing-close-inline-oct14el",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:netfifo-destructor-recovery-owner-oct14eb"
+}
