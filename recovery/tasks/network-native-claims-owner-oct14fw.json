@@ -1,0 +1,33 @@
+{
+  "author": "coordinator",
+  "base_revision": "1f9a3d29d4d6d04e64cf4be50a2acdd1b75f6685",
+  "editable_files": [
+    "src/net_class.cpp",
+    "recovery/tests/test_network_native_claims_oct14fw.py"
+  ],
+  "evidence": [
+    "Fresh current-owner native report build/recovery/network-owner-batch-oct14fw.json measured 92 unclaimed bodies in six compilation attempts; these three match. Source bindings identify ServiceProviderList and NetTextListBase constructors and a genuine VoiceRxAllocation virtual-base deleting adjustor.",
+    "Only native recover record may promote these three claims. No C++ body, name, span, symbol, layout, dependency, build policy, historical claim or finding edits. Require independent pinned/source review, scoped reference diagnostics, immutable-base native writer projection, fresh build/link and physical compiler preservation before manual integration. Unknown linked selection, runtime and full-game acceptance remain unknown."
+  ],
+  "intent": "Bank freshly measured genuine network constructor and compiler-generated adjustor claims after independent ownership/reference review, without changing C++.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4200032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4201344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6502192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "network-native-claims-owner-oct14fw"
+}
