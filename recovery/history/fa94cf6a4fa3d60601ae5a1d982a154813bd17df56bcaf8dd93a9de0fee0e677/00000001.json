@@ -1,0 +1,67 @@
+{
+  "event_id": "b25fbd406f073a7962ec9ab838cb4d052bceb2a9b34afb0bdbfdc477f1780f57",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/base.cpp",
+      "src/console.cpp",
+      "src/designwin.cpp",
+      "src/faction.cpp",
+      "src/game.cpp",
+      "src/mapwin.cpp"
+    ],
+    "evidence": [
+      "Fresh retained physical COFF comparison observes eight additional existing mapped functions in six unchanged translation units after the shared Sprite pixel-pointer retype. Admit precisely these identities and units for collateral measurement/review; their source bodies must remain byte-for-byte equal to the original task baseline. No source body edits are authorized by this impact admission.",
+      "All eight records currently carry neither byte nor semantic claims. All original identities/spans/history and later matching obligations still remain. Sample physical differences include commutative stack/global operand load reordering; gen_terrain_poly has broader register/scheduling and 16-byte section-size differences requiring bounded review. The unsigned-byte owner declaration is supported by actual pixel consumers; do not revert it solely to recover one local similarity score or reset the immutable task baseline.",
+      "Compiler signatures are not linked preservation or runtime proof. Require independent actual code-impact review, fresh expanded native measurement and destination build/link, tests, identity continuity and references before coordinator-reviewed manual integration; full automatic/game acceptance remains unproven."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5203952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4412416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4415632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "sprite-pixel-shared-header-impact-oct14cz",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:sprite-pixel-storage-owner-oct14cx"
+}
