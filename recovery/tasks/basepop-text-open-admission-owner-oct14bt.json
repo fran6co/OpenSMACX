@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "2a8f5038e20b5933ec1a11150a95cce61650d82b",
+  "editable_files": [
+    "src/basepop.cpp",
+    "recovery/tests/test_basepop_text_open_admission_oct14bt.py"
+  ],
+  "evidence": [
+    "Original BasePop::start calls text_open at 0x601CE8, tests EAX at 0x601CF0 and branches on zero to parsing at 0x601D03. Nonzero returns EBP at 0x601CF4..0x601D00; EBP was initialized to 1 at 0x601C03 and remains preserved. Text::open and text_open return zero on success and nonzero on errors in the pinned image and current source.",
+    "Current BasePop::start instead returns its successful init result zero when text_open succeeds and falls through to parsing when it fails. Restore the nonzero admission test and return 1 on open errors. Preserve init error propagation, flags 0x80 bypass, filename fallback, section validation, owner/callback ordering and every downstream parser operation. No new fallback, safety fix, claim or original-address dispatch.",
+    "Independent source/pinned audit confirmed this inversion while investigating the empty SetupWin menu and zero-height DIB failure. Caption routing is separately restored on master. Runtime observations do not establish captured popup locals or full game acceptance.",
+    "Execute the actual admission prefix with an explicitly substituted parser continuation if a bounded fixture is used; do not claim such a test validates the full parser. Cover successful admission, nonzero open errors, initial init failures, flags 0x80, default filename, null section and owner/override ordering. Compile-success mutants need exact semantic exit 97 diagnostics. Freeze source and tests before native build. Coordinator owns Git/compiler/runtime, requires fresh build/link, immediate measurement, compiler function comparison, references, claim continuity and manual review before integration. Preserve all source mappings and historical obligations."
+  ],
+  "intent": "Restore BasePop script admission and original open-error result so successful text opens enter parsing.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6298608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basepop-text-open-admission-owner-oct14bt"
+}
