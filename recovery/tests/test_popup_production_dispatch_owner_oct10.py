@@ -79,7 +79,7 @@ def test_full_actual_callback_and_compiling_wrong_event_mutant():
     source = SOURCE.read_text()
     actual = _materialize(source)
     # The adjacent input callback is a separate general-event path and stays so.
-    wave_source = (ROOT / "src" / "wave.cpp").read_text()
+    wave_source = (ROOT / "src" / "ambience.cpp").read_text()
     assert re.search(r"void\s+__cdecl\s+input_callback\s*\(\)\s*\{\s*if\s*\(FactionMusic\s*!=\s*0\)\s*FactionMusic->general\(\);", wave_source)
     with tempfile.TemporaryDirectory(prefix="popup-production-dispatch-") as temporary:
         directory = Path(temporary)

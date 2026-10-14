@@ -15,61 +15,61 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
-// ORIGINAL: 0x00402F10 _$E21 0x00402F10-0x00402F26 FILE
+// ORIGINAL: 0x00402F10 _$E21 0x00402F10-0x00402F26 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682004 selects init 0x00402F10, which registers exit callback 0x00402F30.", "Original init span 0x00402F10-0x00402F26 and exit span 0x00402F30-0x00402F3A are independently disassembled; both identify receiver 0x006A7090 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E21 via .CRT$XCU, relocating to g_ALPHAMENU_WAVE, Wave construction, paired local fini _$E19 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_ALPHAMENU_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E8
 // ORIGINAL: 0x00402F30 _$E19 0x00402F30-0x00402F3A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682004 selects init 0x00402F10, which registers exit callback 0x00402F30.", "Original init span 0x00402F10-0x00402F26 and exit span 0x00402F30-0x00402F3A are independently disassembled; both identify receiver 0x006A7090 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E21 via .CRT$XCU, relocating to g_ALPHAMENU_WAVE, Wave construction, paired local fini _$E19 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_ALPHAMENU_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E6
-// ORIGINAL: 0x00445450 _$E26 0x00445450-0x00445474 FILE
+// ORIGINAL: 0x00445450 _$E26 0x00445450-0x00445474 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x0068208C selects init 0x00445450, which registers exit callback 0x00445480.", "Original init span 0x00445450-0x00445474 and exit span 0x00445480-0x00445494 are independently disassembled; both identify receiver 0x0074C5F0 and Wave constructor/destructor 0x004C66E0/0x004C67C0. CPU bank vector helpers prove count45 and stride0x6C.", "Current wave.cpp physical COFF selects local STATIC init _$E26 via .CRT$XCU, relocating to g_CPU_WAVES, Wave construction, paired local fini _$E24 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_CPU_WAVES. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E13
 // ORIGINAL: 0x00445480 _$E24 0x00445480-0x00445494 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x0068208C selects init 0x00445450, which registers exit callback 0x00445480.", "Original init span 0x00445450-0x00445474 and exit span 0x00445480-0x00445494 are independently disassembled; both identify receiver 0x0074C5F0 and Wave constructor/destructor 0x004C66E0/0x004C67C0. CPU bank vector helpers prove count45 and stride0x6C.", "Current wave.cpp physical COFF selects local STATIC init _$E26 via .CRT$XCU, relocating to g_CPU_WAVES, Wave construction, paired local fini _$E24 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_CPU_WAVES. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E11
-// ORIGINAL: 0x00445500 _$E31 0x00445500-0x00445516 FILE
+// ORIGINAL: 0x00445500 _$E31 0x00445500-0x00445516 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682098 selects init 0x00445500, which registers exit callback 0x00445520.", "Original init span 0x00445500-0x00445516 and exit span 0x00445520-0x0044552A are independently disassembled; both identify receiver 0x00749C18 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E31 via .CRT$XCU, relocating to g_SCOOT_WAVE, Wave construction, paired local fini _$E29 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_SCOOT_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E18
 // ORIGINAL: 0x00445520 _$E29 0x00445520-0x0044552A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682098 selects init 0x00445500, which registers exit callback 0x00445520.", "Original init span 0x00445500-0x00445516 and exit span 0x00445520-0x0044552A are independently disassembled; both identify receiver 0x00749C18 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E31 via .CRT$XCU, relocating to g_SCOOT_WAVE, Wave construction, paired local fini _$E29 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_SCOOT_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E16
-// ORIGINAL: 0x00445530 _$E36 0x00445530-0x00445546 FILE
+// ORIGINAL: 0x00445530 _$E36 0x00445530-0x00445546 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x0068209C selects init 0x00445530, which registers exit callback 0x00445550.", "Original init span 0x00445530-0x00445546 and exit span 0x00445550-0x0044555A are independently disassembled; both identify receiver 0x0074D8F0 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E36 via .CRT$XCU, relocating to g_OK_WAVE, Wave construction, paired local fini _$E34 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_OK_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E23
 // ORIGINAL: 0x00445550 _$E34 0x00445550-0x0044555A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x0068209C selects init 0x00445530, which registers exit callback 0x00445550.", "Original init span 0x00445530-0x00445546 and exit span 0x00445550-0x0044555A are independently disassembled; both identify receiver 0x0074D8F0 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E36 via .CRT$XCU, relocating to g_OK_WAVE, Wave construction, paired local fini _$E34 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_OK_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E21
-// ORIGINAL: 0x00445560 _$E41 0x00445560-0x00445576 FILE
+// ORIGINAL: 0x00445560 _$E41 0x00445560-0x00445576 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x006820A0 selects init 0x00445560, which registers exit callback 0x00445580.", "Original init span 0x00445560-0x00445576 and exit span 0x00445580-0x0044558A are independently disassembled; both identify receiver 0x0074D9D0 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E41 via .CRT$XCU, relocating to g_PASSOVER_WAVE, Wave construction, paired local fini _$E39 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_PASSOVER_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E28
 // ORIGINAL: 0x00445580 _$E39 0x00445580-0x0044558A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x006820A0 selects init 0x00445560, which registers exit callback 0x00445580.", "Original init span 0x00445560-0x00445576 and exit span 0x00445580-0x0044558A are independently disassembled; both identify receiver 0x0074D9D0 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E41 via .CRT$XCU, relocating to g_PASSOVER_WAVE, Wave construction, paired local fini _$E39 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_PASSOVER_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E26
-// ORIGINAL: 0x00459590 _$E46 0x00459590-0x004595A6 FILE
+// ORIGINAL: 0x00459590 _$E46 0x00459590-0x004595A6 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682538 selects init 0x00459590, which registers exit callback 0x004595B0.", "Original init span 0x00459590-0x004595A6 and exit span 0x004595B0-0x004595BA are independently disassembled; both identify receiver 0x007D38B8 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E46 via .CRT$XCU, relocating to g_MAININTERFACE_WAVE, Wave construction, paired local fini _$E44 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_MAININTERFACE_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E33
 // ORIGINAL: 0x004595B0 _$E44 0x004595B0-0x004595BA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682538 selects init 0x00459590, which registers exit callback 0x004595B0.", "Original init span 0x00459590-0x004595A6 and exit span 0x004595B0-0x004595BA are independently disassembled; both identify receiver 0x007D38B8 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E46 via .CRT$XCU, relocating to g_MAININTERFACE_WAVE, Wave construction, paired local fini _$E44 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_MAININTERFACE_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E31
-// ORIGINAL: 0x00477E40 _$E51 0x00477E40-0x00477E56 FILE
+// ORIGINAL: 0x00477E40 _$E51 0x00477E40-0x00477E56 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682554 selects init 0x00477E40, which registers exit callback 0x00477E60.", "Original init span 0x00477E40-0x00477E56 and exit span 0x00477E60-0x00477E6A are independently disassembled; both identify receiver 0x007FFF00 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E51 via .CRT$XCU, relocating to g_MULTIWIN_WAVE, Wave construction, paired local fini _$E49 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_MULTIWIN_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E38
 // ORIGINAL: 0x00477E60 _$E49 0x00477E60-0x00477E6A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682554 selects init 0x00477E40, which registers exit callback 0x00477E60.", "Original init span 0x00477E40-0x00477E56 and exit span 0x00477E60-0x00477E6A are independently disassembled; both identify receiver 0x007FFF00 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E51 via .CRT$XCU, relocating to g_MULTIWIN_WAVE, Wave construction, paired local fini _$E49 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_MULTIWIN_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E36
-// ORIGINAL: 0x00584D00 _$E56 0x00584D00-0x00584D16 FILE
+// ORIGINAL: 0x00584D00 _$E56 0x00584D00-0x00584D16 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682644 selects init 0x00584D00, which registers exit callback 0x00584D20.", "Original init span 0x00584D00-0x00584D16 and exit span 0x00584D20-0x00584D2A are independently disassembled; both identify receiver 0x00945780 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E56 via .CRT$XCU, relocating to g_TOP_MENU_WAVE, Wave construction, paired local fini _$E54 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_TOP_MENU_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E43
 // ORIGINAL: 0x00584D20 _$E54 0x00584D20-0x00584D2A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682644 selects init 0x00584D00, which registers exit callback 0x00584D20.", "Original init span 0x00584D00-0x00584D16 and exit span 0x00584D20-0x00584D2A are independently disassembled; both identify receiver 0x00945780 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E56 via .CRT$XCU, relocating to g_TOP_MENU_WAVE, Wave construction, paired local fini _$E54 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_TOP_MENU_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E41
-// ORIGINAL: 0x005AE0F0 _$E61 0x005AE0F0-0x005AE106 FILE
+// ORIGINAL: 0x005AE0F0 _$E61 0x005AE0F0-0x005AE106 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682658 selects init 0x005AE0F0, which registers exit callback 0x005AE110.", "Original init span 0x005AE0F0-0x005AE106 and exit span 0x005AE110-0x005AE11A are independently disassembled; both identify receiver 0x00945E08 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E61 via .CRT$XCU, relocating to g_CRASH_LANDING_WAVE, Wave construction, paired local fini _$E59 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_CRASH_LANDING_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E48
 // ORIGINAL: 0x005AE110 _$E59 0x005AE110-0x005AE11A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x00682658 selects init 0x005AE0F0, which registers exit callback 0x005AE110.", "Original init span 0x005AE0F0-0x005AE106 and exit span 0x005AE110-0x005AE11A are independently disassembled; both identify receiver 0x00945E08 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E61 via .CRT$XCU, relocating to g_CRASH_LANDING_WAVE, Wave construction, paired local fini _$E59 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original exit operation to the genuine compiler-emitted lifetime of source-owned g_CRASH_LANDING_WAVE. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E46
-// ORIGINAL: 0x005B9C10 _$E66 0x005B9C10-0x005B9C26 FILE
+// ORIGINAL: 0x005B9C10 _$E66 0x005B9C10-0x005B9C26 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT dispatcher 0x00644DEC-0x00644DFB supplies [0x00682000,0x006826CC) to 0x00644ED8, which calls each non-null dword. Slot 0x0068265C selects init 0x005B9C10, which registers exit callback 0x005B9C30.", "Original init span 0x005B9C10-0x005B9C26 and exit span 0x005B9C30-0x005B9C3A are independently disassembled; both identify receiver 0x00945ED0 and Wave constructor/destructor 0x004C66E0/0x004C67C0.", "Current wave.cpp physical COFF selects local STATIC init _$E66 via .CRT$XCU, relocating to g_WAVE_GENERAL, Wave construction, paired local fini _$E64 and atexit; fini relocates to the same object and Wave destruction. Native comparator can select these physical local function symbols.", "Independent pin/COFF/source review supports individual lifetime ownership. These mappings do not establish complete global initialization order, linked retained selection, full data layout, original debug names or runtime acceptance."], "reason": "Bind the original startup operation to the genuine compiler-emitted lifetime of source-owned g_WAVE_GENERAL. The local symbol identifies current emitted code, not an original debug name; no callback body is authored."}
 // symbol    _$E53
 // ORIGINAL: 0x005B9C30 _$E64 0x005B9C30-0x005B9C3A FILE BYTE_EXACT
@@ -1684,79 +1684,6 @@ Effect::~Effect() {
 }
 
 
-/*
-Purpose: Initialise an Effect wave. Registers the Effect family's three
-         callbacks into the Win hook slots, resolves the filename against the
-         fx\\ directory (appending .wav when the name carries no extension),
-         and hands the resolved path and the adjusted mode to Wave::init. A
-         mode with neither bit 0 nor bit 7 gains bit 4 - the streamed-and-
-         looped combination - and a mode with neither bit 2 nor bit 7 runs the
-         wave's own vtable slot 0x8C once Wave::init returns.
-// ORIGINAL: 0x00445BB0 ?init@Effect@@QAEXPADJ@Z 0x00445BB0-0x00445CC6 FILE BYTE_EXACT
-// size      278 bytes
-// prototype void (__thiscall ?init@Effect@@QAEXPADJ@Z)(Effect* this, int8*, long)
-// callers   1   call targets   5
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004C69B0 0x00645470 0x00645598 0x00645646 0x00645DD0
-// indirect  0x00445CB9
-// LEVER: the three callback stores must be `#define`d constants, not const
-//   pointer variables - caviar.cpp's lever, re-measured here. A header-defined
-//   `const func_effect_callback X = (func_effect_callback)0xADDR;` compiles
-//   `mov eax, dword ptr [X]` + `mov [hook], eax` (87 instructions, 6/84);
-//   the macro folds the immediate (`mov dword ptr [hook], 0x4457c0`, 84/84
-//   instruction count, 79/84 agreeing).
-// LEVER: `if (file) { fclose } else { rebuild }` vs the image's arm order.
-//   The image falls THROUGH the fopen test into the rebuild and JUMPS to the
-//   fclose, so the guard is spelled `if (!file) { rebuild } else { fclose }`.
-// TRIED: the mode block ahead of the three stores (72/84), a separate
-//   `long mode` local for the adjusted flags (5/84), and the three stores in
-//   reverse order (79/84, but lower similarity). Best is stores, then the
-//   mode block, then the path build - the image's own order.
-// TRIED: /G6 (Pentium-Pro scheduling) on this body, 4/84 - the remaining 5
-//   instructions are the three hook stores interleaved into the push/test
-//   sequence where the image keeps them contiguous after `mov edi, ecx`.
-//   No source ordering tried moved them; scheduling plateau.
-// PROMOTED from src/recovered/units/00445bb0.cpp.
-Return Value: n/a
-Status: Complete
-*/
-void Effect::init(char *fname, long flags) {
-    WinMessageHook = input_callback;
-    WinOkHook = ok_callback;
-    WinButtonHoverHook = button_hover_callback;
-    if ((static_cast<uint8_t>(flags) & 0x81) == 0) {
-        flags |= 4;
-    }
-    char path[0x100];
-    path[0] = '\0';
-    // The literals the image pushes are its own data at 0x00683CA4 ("fx\\"),
-    // 0x00683CA8 and 0x00683CB4 (".wav" each) and 0x00683CB0 (the "rb" mode).
-    // A string literal pushes a relocated address on both sides, so the bytes
-    // agree with the image's fixed copies.
-    strcat(path, "fx\\");
-    strcat(path, fname);
-    if (!strchr(path, '.')) {
-        strcat(path, ".wav");
-    }
-    FILE *const file = fopen(path, "rb");
-    if (!file) {
-        // No such file under fx\\: rebuild the path from the raw argument,
-        // extension pass included, and let Wave::init report what it finds.
-        path[0] = '\0';
-        strcat(path, fname);
-        if (!strchr(path, '.')) {
-            strcat(path, ".wav");
-        }
-    } else {
-        fclose(file);
-    }
-    Wave::init(path, flags);
-    if ((static_cast<uint8_t>(flags) & 0x84) == 0) {
-        load();
-    }
-}
-
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk
@@ -1775,44 +1702,8 @@ Wave g_SCOOT_WAVE;  // 0x00749C18
 // RECOVERY_OBJECT: v1 0x0074D8F0 ?g_OK_WAVE@@3VWave@@A
 Wave g_OK_WAVE;  // 0x0074D8F0
 
-// The signed pitch cycle is loaded and stored as a dword by ok_callback.
-// This start binding does not infer the extent of neighboring audio storage.
-// RECOVERY_OBJECT: v1 0x0074DAA8 ?EffectOkPitch@@3HA
-int EffectOkPitch;
-
-// ORIGINAL: 0x00445650 ?ok_callback@@YAXXZ 0x00445650-0x0044569D BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bca75cb0:src/recovered/00445650.cpp", "image:original complete function instructions", "source:src/wave.cpp"], "reason": "Home the original behavioral dependency in its base/audio domain using typed state and existing named callees; retained seed provenance and original spans remain restoration evidence, not runtime acceptance."}
-void __cdecl ok_callback() {
-    g_OK_WAVE.Wave::set_pitch(EffectOkPitch);
-    g_OK_WAVE.Wave::play();
-    int pitch = EffectOkPitch;
-    if (pitch >= 0) {
-        pitch -= 300;
-    } else {
-        pitch += 200;
-    }
-    EffectOkPitch = pitch;
-    if (pitch <= -1200 || pitch >= 1200) {
-        EffectOkPitch = 0;
-    }
-}
-
-// The window procedure's callback delegates to the active faction ambience.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004457C0 ?input_callback@@YAXXZ 0x004457C0-0x004457D3 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004457c0.cpp original identity and complete 19-byte span", "image:0x004457C0-0x004457D3 null-test and virtual tail jump at offset 0x13C", "src/ambience.cpp FactionMusic at 0x0074DAA0; src/ambience.h FactionAmbience event slots75-89"], "reason": "Original nullary window-message callback consults the source-owned faction music pointer and tail-dispatches its genuine general event at virtual slot79; the compatible exact seed remains historical evidence, not current source acceptance."}
-void __cdecl input_callback() {
-    if (FactionMusic != 0) FactionMusic->general();
-}
-
 // RECOVERY_OBJECT: v1 0x0074D9D0 ?g_PASSOVER_WAVE@@3VWave@@A
 Wave g_PASSOVER_WAVE;  // 0x0074D9D0
-// The button hover hook plays the already-owned pass-over effect.
-// ORIGINAL: 0x004456A0 ?button_hover_callback@@YAXXZ 0x004456A0-0x004456AA FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00445BB0 Effect initializer publishes 0x004456A0 to hook 0x009B7AA0", "image:0x004456A0-0x004456AA complete MOV receiver 0x0074D9D0 and tail JMP 0x004C6920; NOP padding to independently mapped 0x004456B0", "src/flatbutton.cpp original 0x00608500 hover callback consumer; superseded seed retained in git:de91fffe", "src/wave.cpp g_PASSOVER_WAVE and Wave::play"], "reason": "Provisional behavior-derived name for the nullary button-hover sound callback installed by Effect initialization and consumed by FlatButton hover; its complete entry tail-calls play on the already-owned pass-over Wave, rather than embedding an executable address."}
-void __cdecl button_hover_callback() {
-    g_PASSOVER_WAVE.Wave::play();
-}
 // These start-only identities are witnessed by each pinned init and its
 // registered exit callback loading the same receiver for Wave construction
 // and destruction. They do not establish full bounds or startup ordering.

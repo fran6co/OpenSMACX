@@ -1,0 +1,20 @@
+{
+  "event_id": "1f03376ff8ae7b6324163106eb470d6aa310945375cb117a8bf305aac432e855",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_audio_ui_claim_continuity_oct14dn.py",
+      "recovery/tests/test_popup_production_dispatch_owner_oct10.py"
+    ],
+    "evidence": [
+      "Input callback lives in Ambience after the move; update the popup event distinction test without weakening its actual-source behavior mutant. Historical claim-only publication test must verify its historical commit rather than freezing every later source byte; retain live original identity/span/claim continuity checks and new exact-block ownership conservation tests."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "dependent-owner-tests",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:wave-effect-ownership-oct14id"
+}

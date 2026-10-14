@@ -1,0 +1,21 @@
+{
+  "event_id": "e89fd85ab1c976879035e587ad0f624eaf858dc65c37a47ddce109d9397d4d0b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/project.json",
+      "src/wave.cpp"
+    ],
+    "evidence": [
+      "Authorize Wave-only explicit /c /O2 /Gy /GR- /Oy- /GX /Ob2 comparison recipe after paired148-mapping evidence: ten initializer gains and zero verdict losses. Both frame preservation and inlining are required; earlier Ob2-only control was insufficient. Do not change build flags or other unit recipes. This is a measured reconstruction recipe, not proof of original flags or complete app byte fidelity.",
+      "Authorize native recording only for the ten freshly exact Wave initializer entries. Complete candidate application builds/links; native claim continuity3273requirements0missing and references633files0missing;8focusedtests pass. All bodies and Wave storage/lifetime order conserved. Keep full-game, linked-preservation and remaining21mismatch/5nonexact-unknown outcomes explicit."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a1a579e272980066ed39dcf2682e2f908d72d63f500ec7679492b17142dde192",
+  "request_id": "admit-frame-inline-recipe-and-record",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:wave-effect-ownership-oct14id"
+}

@@ -30,6 +30,7 @@
 // ORIGINAL: 0x004482D0 ??0Effect@@QAE@XZ 0x004482D0-0x004482E2 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original FX construction at0x004482A0 passes0x004482D0 as its per-element constructor for97elements of0x6Cbytes.", "Existing seedsrc/recovered/units/004482d0.cpp identifies span0x004482D0-0x004482E2; original instructions call Wave::Wave at0x004C66E0 then store the Effect virtual table at0x0066B7A4."], "reason": "Implicit Effect constructor emitted for the real FX Effect array; Wave base construction and derived virtual-table installation are compiler-owned."}
 #include "fx.h"
+#include "win.h"
 #include "basepop.h"
 #include "popup.h"
 #include "ambience.h"
@@ -496,4 +497,108 @@ void __cdecl ambience_veh(int vehicle) {
         g_FX.play(0x2E); return;
     }
     if (!g_FX.effect(0x38).is_playing()) g_FX.play(0x38);
+}
+
+/*
+Purpose: Initialise an Effect wave. Registers the Effect family's three
+         callbacks into the Win hook slots, resolves the filename against the
+         fx\\ directory (appending .wav when the name carries no extension),
+         and hands the resolved path and the adjusted mode to Wave::init. A
+         mode with neither bit 0 nor bit 7 gains bit 4 - the streamed-and-
+         looped combination - and a mode with neither bit 2 nor bit 7 runs the
+         wave's own vtable slot 0x8C once Wave::init returns.
+// ORIGINAL: 0x00445BB0 ?init@Effect@@QAEXPADJ@Z 0x00445BB0-0x00445CC6 FILE BYTE_EXACT
+// size      278 bytes
+// prototype void (__thiscall ?init@Effect@@QAEXPADJ@Z)(Effect* this, int8*, long)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C69B0 0x00645470 0x00645598 0x00645646 0x00645DD0
+// indirect  0x00445CB9
+// LEVER: the three callback stores must be `#define`d constants, not const
+//   pointer variables - caviar.cpp's lever, re-measured here. A header-defined
+//   `const func_effect_callback X = (func_effect_callback)0xADDR;` compiles
+//   `mov eax, dword ptr [X]` + `mov [hook], eax` (87 instructions, 6/84);
+//   the macro folds the immediate (`mov dword ptr [hook], 0x4457c0`, 84/84
+//   instruction count, 79/84 agreeing).
+// LEVER: `if (file) { fclose } else { rebuild }` vs the image's arm order.
+//   The image falls THROUGH the fopen test into the rebuild and JUMPS to the
+//   fclose, so the guard is spelled `if (!file) { rebuild } else { fclose }`.
+// TRIED: the mode block ahead of the three stores (72/84), a separate
+//   `long mode` local for the adjusted flags (5/84), and the three stores in
+//   reverse order (79/84, but lower similarity). Best is stores, then the
+//   mode block, then the path build - the image's own order.
+// TRIED: /G6 (Pentium-Pro scheduling) on this body, 4/84 - the remaining 5
+//   instructions are the three hook stores interleaved into the push/test
+//   sequence where the image keeps them contiguous after `mov edi, ecx`.
+//   No source ordering tried moved them; scheduling plateau.
+// PROMOTED from src/recovered/units/00445bb0.cpp.
+Return Value: n/a
+Status: Complete
+*/
+void Effect::init(char *fname, long flags) {
+    WinMessageHook = input_callback;
+    WinOkHook = ok_callback;
+    WinButtonHoverHook = button_hover_callback;
+    if ((static_cast<uint8_t>(flags) & 0x81) == 0) {
+        flags |= 4;
+    }
+    char path[0x100];
+    path[0] = '\0';
+    // The literals the image pushes are its own data at 0x00683CA4 ("fx\\"),
+    // 0x00683CA8 and 0x00683CB4 (".wav" each) and 0x00683CB0 (the "rb" mode).
+    // A string literal pushes a relocated address on both sides, so the bytes
+    // agree with the image's fixed copies.
+    strcat(path, "fx\\");
+    strcat(path, fname);
+    if (!strchr(path, '.')) {
+        strcat(path, ".wav");
+    }
+    FILE *const file = fopen(path, "rb");
+    if (!file) {
+        // No such file under fx\\: rebuild the path from the raw argument,
+        // extension pass included, and let Wave::init report what it finds.
+        path[0] = '\0';
+        strcat(path, fname);
+        if (!strchr(path, '.')) {
+            strcat(path, ".wav");
+        }
+    } else {
+        fclose(file);
+    }
+    Wave::init(path, flags);
+    if ((static_cast<uint8_t>(flags) & 0x84) == 0) {
+        load();
+    }
+}
+
+
+// The signed pitch cycle is loaded and stored as a dword by ok_callback.
+// This start binding does not infer the extent of neighboring audio storage.
+// RECOVERY_OBJECT: v1 0x0074DAA8 ?EffectOkPitch@@3HA
+int EffectOkPitch;
+
+// ORIGINAL: 0x00445650 ?ok_callback@@YAXXZ 0x00445650-0x0044569D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bca75cb0:src/recovered/00445650.cpp", "image:original complete function instructions", "source:src/wave.cpp"], "reason": "Home the original behavioral dependency in its base/audio domain using typed state and existing named callees; retained seed provenance and original spans remain restoration evidence, not runtime acceptance."}
+void __cdecl ok_callback() {
+    g_OK_WAVE.Wave::set_pitch(EffectOkPitch);
+    g_OK_WAVE.Wave::play();
+    int pitch = EffectOkPitch;
+    if (pitch >= 0) {
+        pitch -= 300;
+    } else {
+        pitch += 200;
+    }
+    EffectOkPitch = pitch;
+    if (pitch <= -1200 || pitch >= 1200) {
+        EffectOkPitch = 0;
+    }
+}
+
+
+// The button hover hook plays the already-owned pass-over effect.
+// ORIGINAL: 0x004456A0 ?button_hover_callback@@YAXXZ 0x004456A0-0x004456AA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00445BB0 Effect initializer publishes 0x004456A0 to hook 0x009B7AA0", "image:0x004456A0-0x004456AA complete MOV receiver 0x0074D9D0 and tail JMP 0x004C6920; NOP padding to independently mapped 0x004456B0", "src/flatbutton.cpp original 0x00608500 hover callback consumer; superseded seed retained in git:de91fffe", "src/wave.cpp g_PASSOVER_WAVE and Wave::play"], "reason": "Provisional behavior-derived name for the nullary button-hover sound callback installed by Effect initialization and consumed by FlatButton hover; its complete entry tail-calls play on the already-owned pass-over Wave, rather than embedding an executable address."}
+void __cdecl button_hover_callback() {
+    g_PASSOVER_WAVE.Wave::play();
 }

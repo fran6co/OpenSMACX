@@ -1,0 +1,17 @@
+{
+  "event_id": "b6902a93bc4202b81b28c206e1ec014dcd559e035318e8029fa02774101ea0d1",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "wave-frame-inline-profile",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "recovery/project.json explicitly scopes the combined recipe to src/wave.cpp; source ownership and148pairedcomparisons support use without any original identity or historical claim loss. Application flags unchanged; original recipe remains unproven."
+    ]
+  },
+  "previous_event": "e89fd85ab1c976879035e587ad0f624eaf858dc65c37a47ddce109d9397d4d0b",
+  "request_id": "incorporate-wave-profile",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:wave-effect-ownership-oct14id"
+}
