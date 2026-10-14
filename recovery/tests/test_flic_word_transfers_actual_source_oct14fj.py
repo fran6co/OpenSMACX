@@ -136,8 +136,8 @@ struct Buffer {
 struct Rect { int left, top, right, bottom; };
 struct Flic {
   uint32_t field_5A4_;
-  uint32_t field_59C_;
-  uint32_t field_5AC_, field_5B0_;
+  uint32_t decoded_width_;
+  uint32_t origin_x_, origin_y_;
   uint8_t field_0_;
   Buffer *buffer2_;
   Buffer buffer_;

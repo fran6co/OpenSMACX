@@ -78,16 +78,16 @@ Return Value: n/a
 Status: Complete
 */
 Flic::Flic() {
-    field_5AC_ = 0;
-    field_5B0_ = 0;
-    field_5B4_ = 0;
+    origin_x_ = 0;
+    origin_y_ = 0;
+    decoder_flags_ = 0;
     file_ = nullptr;
     frame_ = 0;
     buffer2_ = nullptr;
     field_0_ = 0;
     field_5A4_ = 0;
-    field_59C_ = 0;
-    field_5A0_ = 0;
+    decoded_width_ = 0;
+    decoded_height_ = 0;
 }
 
 /*
@@ -105,15 +105,15 @@ Status: Complete
 */
 void Flic::close() {
     FILE *file = file_;
-    field_5AC_ = 0;
-    field_5B0_ = 0;
-    field_5B4_ = 0;
+    origin_x_ = 0;
+    origin_y_ = 0;
+    decoder_flags_ = 0;
     frame_ = 0;
     buffer2_ = nullptr;
     field_0_ = 0;
     field_5A4_ = 0;
-    field_59C_ = 0;
-    field_5A0_ = 0;
+    decoded_width_ = 0;
+    decoded_height_ = 0;
     if (file) {
         fclose(file);
         file_ = nullptr;
@@ -307,15 +307,15 @@ Status: Complete
 int Flic::init(Buffer *buffer, char *file_name, int x, int y,
                int transparent) {
     FILE *file = file_;
-    field_5AC_ = 0;
-    field_5B0_ = 0;
-    field_5B4_ = 0;
+    origin_x_ = 0;
+    origin_y_ = 0;
+    decoder_flags_ = 0;
     frame_ = 0;
     buffer2_ = nullptr;
     field_0_ = 0;
     field_5A4_ = 0;
-    field_59C_ = 0;
-    field_5A0_ = 0;
+    decoded_width_ = 0;
+    decoded_height_ = 0;
     if (file) {
         fclose(file);
         file_ = nullptr;
@@ -327,8 +327,8 @@ int Flic::init(Buffer *buffer, char *file_name, int x, int y,
 
     palette_.init();
 
-    field_5AC_ = x;
-    field_5B0_ = y;
+    origin_x_ = x;
+    origin_y_ = y;
     buffer2_ = buffer;
 
     file_ = env_open(file_name, "rb");
@@ -343,9 +343,9 @@ int Flic::init(Buffer *buffer, char *file_name, int x, int y,
         return 0x18;
     }
 
-    field_59C_ = header_.width_;
-    field_5A0_ = header_.height_;
-    field_5B4_ |= 1;
+    decoded_width_ = header_.width_;
+    decoded_height_ = header_.height_;
+    decoder_flags_ |= 1;
 
     fseek(file_, header_.first_frame_, SEEK_SET);
     fread(&first_frame_, 0x10, 1, file_);
@@ -356,7 +356,7 @@ int Flic::init(Buffer *buffer, char *file_name, int x, int y,
 
     fseek(file_, header_.first_frame_, SEEK_SET);
 
-    buffer_.init(field_59C_, field_5A0_, 0, nullptr);
+    buffer_.init(decoded_width_, decoded_height_, 0, nullptr);
     buffer_.sync_to_palette(PaletteCurrent);
 
     // Through a pointer-to-member for the same measured reason as the
@@ -365,11 +365,11 @@ int Flic::init(Buffer *buffer, char *file_name, int x, int y,
     // against the image's 536) where the image makes the call.
     int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) =
         &Buffer::copy;
-    (buffer->*copy)(&buffer_, field_5AC_, field_5B0_, 0, 0, field_59C_,
-                    field_5A0_);
+    (buffer->*copy)(&buffer_, origin_x_, origin_y_, 0, 0, decoded_width_,
+                    decoded_height_);
 
     if (transparent) {
-        field_5B4_ |= 2;
+        decoder_flags_ |= 2;
     }
     return 0;
 }
@@ -391,15 +391,15 @@ Return Value: 0 frame decoded; 7 when no file is open; 0x10 when the
 Status: Complete
 */
 int Flic::decode_frame(int x, int y) {
-    if (!(field_5B4_ & 1)) {
+    if (!(decoder_flags_ & 1)) {
         return 7;
     }
     void *(Buffer::*get_data)() = &Buffer::get_data;
     if ((buffer2_->*get_data)() == 0) {
         return 0x10;
     }
-    field_5AC_ = x;
-    field_5B0_ = y;
+    origin_x_ = x;
+    origin_y_ = y;
     if (frame_ == header_.frames_) {
         fseek(file_, header_.second_frame_, SEEK_SET);
         frame_ = 0;
@@ -443,18 +443,18 @@ int Flic::UNK1(int x, int y) {
     // off eax; the retval constant sinks past the clear instead of
     // occupying eax first, which is what the image's interleaved
     // `mov eax,7` between copy and and would need.
-    field_5B4_ |= 2;
-    if (!(field_5B4_ & 1)) {
-        field_5B4_ &= ~2;
+    decoder_flags_ |= 2;
+    if (!(decoder_flags_ & 1)) {
+        decoder_flags_ &= ~2;
         return 7;
     }
     void *(Buffer::*get_data)() = &Buffer::get_data;
     if ((buffer2_->*get_data)() == 0) {
-        field_5B4_ &= ~2;
+        decoder_flags_ &= ~2;
         return 0x10;
     }
-    field_5AC_ = x;
-    field_5B0_ = y;
+    origin_x_ = x;
+    origin_y_ = y;
     if (frame_ == header_.frames_) {
         fseek(file_, header_.second_frame_, SEEK_SET);
         frame_ = 0;
@@ -462,7 +462,7 @@ int Flic::UNK1(int x, int y) {
     fread(&chunk_, 0x10, 1, file_);
     decode_chunk(&chunk_.header_);
     frame_++;
-    field_5B4_ &= ~2;
+    decoder_flags_ &= ~2;
     return 0;
 }
 
@@ -483,7 +483,7 @@ Return Value: 0 frame skipped; 7 when no file is open
 Status: Complete
 */
 int Flic::UNK2() {
-    if (!(field_5B4_ & 1)) {
+    if (!(decoder_flags_ & 1)) {
         return 7;
     }
     if (frame_ == header_.frames_) {
@@ -509,7 +509,7 @@ Return Value: 0 rewound; 7 when no file is open
 Status: Complete
 */
 int Flic::rewind() {
-    if (!(field_5B4_ & 1)) {
+    if (!(decoder_flags_ & 1)) {
         return 7;
     }
     fseek(file_, header_.first_frame_, SEEK_SET);
@@ -563,7 +563,7 @@ int Flic::UNK3(int target_frame) {
     void *(Buffer::*get_data)() = &Buffer::get_data;
     int target = target_frame % header_.frames_;
 
-    if (target < static_cast<int>(frame_) && (field_5B4_ & 1)) {
+    if (target < static_cast<int>(frame_) && (decoder_flags_ & 1)) {
         fseek(file_, header_.first_frame_, SEEK_SET);
         frame_ = 0;
     }
@@ -623,12 +623,12 @@ int Flic::UNK3(int target_frame) {
             // x/y captured before the guards and stored back once both
             // pass: the call may mutate *this, so the image carries the
             // members through registers around it (0x0062A432-0x0062A474).
-            int y = field_5B0_;
-            int x = field_5AC_;
-            if (field_5B4_ & 1) {
+            int y = origin_y_;
+            int x = origin_x_;
+            if (decoder_flags_ & 1) {
                 if ((buffer2_->*get_data)() != 0) {
-                    field_5AC_ = x;
-                    field_5B0_ = y;
+                    origin_x_ = x;
+                    origin_y_ = y;
                     if (frame_ == header_.frames_) {
                         fseek(file_, header_.second_frame_, SEEK_SET);
                         frame_ = 0;
@@ -691,7 +691,7 @@ Status: Complete
 */
 void Flic::decode_byte_run() {
     void *scratch = nullptr;
-    uint8_t *dst = buffer2_->get_data(field_5AC_, field_5B0_);
+    uint8_t *dst = buffer2_->get_data(origin_x_, origin_y_);
     if (field_5A4_ != 0) {
         scratch = mem_get(buffer2_->stride_);
         if (scratch == nullptr) {
@@ -699,19 +699,19 @@ void Flic::decode_byte_run() {
         }
     }
 
-    int y = field_5B0_;
-    int x = field_5AC_;
-    int height = field_5A0_;
-    int width = field_59C_;
+    int y = origin_y_;
+    int x = origin_x_;
+    int height = decoded_height_;
+    int width = decoded_width_;
     RECT *rect = &update_rect_;
     rect->left = x;
     rect->top = y;
     rect->right = x + width;
     rect->bottom = y + height;
 
-    for (int row = 0; row < static_cast<int>(field_5A0_); row++) {
+    for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
         uint8_t *row_dst = dst;
-        int remaining = field_59C_;
+        int remaining = decoded_width_;
         int8_t count;
         fread(&count, 1, 1, file_);
         while (remaining > 0) {
@@ -811,7 +811,7 @@ void Flic::decode_delta_flc() {
             return;
         }
     }
-    row = buffer2_->get_data(field_5AC_, field_5B0_);
+    row = buffer2_->get_data(origin_x_, origin_y_);
     fread(&num_lines, 2, 1, file_);
     min_touched = 0xffffffff;
     first_row = -1;
@@ -827,17 +827,17 @@ void Flic::decode_delta_flc() {
                 fread(&line_hdr, 2, 1, file_);
             }
             if (line_index == 0) {
-                uint8_t *base = buffer2_->get_data(field_5AC_, field_5B0_);
+                uint8_t *base = buffer2_->get_data(origin_x_, origin_y_);
                 first_row = static_cast<int>(row - base) /
                             static_cast<int>(buffer2_->stride_);
             }
             if (line_index == static_cast<int>(num_lines) - 1) {
-                uint8_t *base = buffer2_->get_data(field_5AC_, field_5B0_);
+                uint8_t *base = buffer2_->get_data(origin_x_, origin_y_);
                 last_row = static_cast<int>(row - base) /
                            static_cast<int>(buffer2_->stride_);
             }
             if (line_hdr & 0x8000) {
-                max_touched = field_59C_;
+                max_touched = decoded_width_;
                 row[max_touched - 1] =
                     static_cast<uint8_t>(static_cast<int8_t>(line_hdr) +
                                          static_cast<int8_t>(field_5A4_));
@@ -895,10 +895,10 @@ void Flic::decode_delta_flc() {
     if (work_buf != nullptr) {
         free(work_buf);
     }
-    update_rect_.left = field_5AC_ + min_touched;
-    update_rect_.top = field_5B0_ + first_row;
-    update_rect_.right = field_5AC_ + 1 + max_touched;
-    update_rect_.bottom = field_5B0_ + 1 + last_row;
+    update_rect_.left = origin_x_ + min_touched;
+    update_rect_.top = origin_y_ + first_row;
+    update_rect_.right = origin_x_ + 1 + max_touched;
+    update_rect_.bottom = origin_y_ + 1 + last_row;
 }
 
 /*
@@ -952,7 +952,7 @@ void Flic::fill() {
     // and reloads. Extended 2026-09-17 with fifteen disassembled local
     // /O2 compiles: two further anchor mechanisms exist, neither
     // combines the image's prologue loads with its x/y destinations. A
-    // fresh member read inside the sum (`rect->right = x + field_59C_`)
+    // fresh member read inside the sum (`rect->right = x + decoded_width_`)
     // keeps its load at the sum and anchors the add after both stores -
     // the y-sum's destination lands on eax, the image's register - but
     // the x-sum still accumulates into the fresh width register and
@@ -984,16 +984,16 @@ void Flic::fill() {
     // add placement carries to
     // decode_black_trans, decode_fli_copy and decode_fli_copy_trans,
     // which share this block.
-    int y = field_5B0_;
-    int x = field_5AC_;
-    int height = field_5A0_;
-    int width = field_59C_;
+    int y = origin_y_;
+    int x = origin_x_;
+    int height = decoded_height_;
+    int width = decoded_width_;
     RECT *rect = &update_rect_;
     rect->left = x;
     rect->top = y;
     rect->right = x + width;
     rect->bottom = y + height;
-    buffer2_->fill(field_5AC_, field_5B0_, field_59C_, field_5A0_, 0);
+    buffer2_->fill(origin_x_, origin_y_, decoded_width_, decoded_height_, 0);
 }
 
 /*
@@ -1027,25 +1027,25 @@ void Flic::decode_fli_copy() {
         }
     }
 
-    int y = field_5B0_;
-    int x = field_5AC_;
-    int height = field_5A0_;
-    int width = field_59C_;
+    int y = origin_y_;
+    int x = origin_x_;
+    int height = decoded_height_;
+    int width = decoded_width_;
     RECT *rect = &update_rect_;
     rect->left = x;
     rect->top = y;
     rect->right = x + width;
     rect->bottom = y + height;
 
-    uint8_t *dst = buffer2_->get_data(field_5AC_, field_5B0_);
+    uint8_t *dst = buffer2_->get_data(origin_x_, origin_y_);
 
-    for (int row = 0; row < static_cast<int>(field_5A0_); row++) {
+    for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
         if (field_5A4_ == 0) {
-            fread(dst, 1, field_59C_, file_);
+            fread(dst, 1, decoded_width_, file_);
         } else {
-            fread(scratch, 1, field_59C_, file_);
+            fread(scratch, 1, decoded_width_, file_);
             uint8_t *src = static_cast<uint8_t *>(scratch);
-            for (int i = 0; i < static_cast<int>(field_59C_); i++) {
+            for (int i = 0; i < static_cast<int>(decoded_width_); i++) {
                 dst[i] = static_cast<uint8_t>(src[i] + field_5A4_);
             }
         }
@@ -1146,7 +1146,7 @@ void Flic::decode_chunk(DataChunk *chunk) {
     int end = ftell(file_) + chunk->size_ - 6;
     int size = chunk->size_;
 
-    if (field_5B4_ & 2) {
+    if (decoder_flags_ & 2) {
         switch (chunk->type_) {
         case 7:
             decode_delta_flc_trans();
@@ -1155,10 +1155,10 @@ void Flic::decode_chunk(DataChunk *chunk) {
             decode_byte_run_trans();
             break;
         case 0xd: {
-            int y = field_5B0_;
-            int x = field_5AC_;
-            int height = field_5A0_;
-            int width = field_59C_;
+            int y = origin_y_;
+            int x = origin_x_;
+            int height = decoded_height_;
+            int width = decoded_width_;
             RECT *rect = &update_rect_;
             rect->left = x;
             rect->top = y;
@@ -1167,8 +1167,8 @@ void Flic::decode_chunk(DataChunk *chunk) {
             if (field_0_ != 0) {
                 int (Buffer::*copy)(Buffer *, int, int, int, int, int,
                                     int) = &Buffer::copy;
-                (buffer_.*copy)(buffer2_, 0, 0, field_5AC_, field_5B0_,
-                                field_59C_, field_5A0_);
+                (buffer_.*copy)(buffer2_, 0, 0, origin_x_, origin_y_,
+                                decoded_width_, decoded_height_);
             }
             break;
         }
@@ -1194,17 +1194,17 @@ skip:
             decode_byte_run();
             break;
         case 0xd: {
-            int y = field_5B0_;
-            int x = field_5AC_;
-            int height = field_5A0_;
-            int width = field_59C_;
+            int y = origin_y_;
+            int x = origin_x_;
+            int height = decoded_height_;
+            int width = decoded_width_;
             RECT *rect = &update_rect_;
             rect->left = x;
             rect->top = y;
             rect->right = x + width;
             rect->bottom = y + height;
-            buffer2_->fill(field_5AC_, field_5B0_, field_59C_,
-                           field_5A0_, 0);
+            buffer2_->fill(origin_x_, origin_y_, decoded_width_,
+                           decoded_height_, 0);
             break;
         }
         case 0x10:
@@ -1281,10 +1281,10 @@ void Flic::decode_byte_run_trans() {
         }
     }
 
-    int y = field_5B0_;
-    int x = field_5AC_;
-    int height = field_5A0_;
-    int width = field_59C_;
+    int y = origin_y_;
+    int x = origin_x_;
+    int height = decoded_height_;
+    int width = decoded_width_;
     RECT *rect = &update_rect_;
     rect->left = x;
     rect->top = y;
@@ -1292,14 +1292,14 @@ void Flic::decode_byte_run_trans() {
     rect->bottom = y + height;
 
     void *(Buffer::*get_data)() = &Buffer::get_data;
-    uint8_t *row_dst = buffer2_->get_data(field_5AC_, field_5B0_);
+    uint8_t *row_dst = buffer2_->get_data(origin_x_, origin_y_);
     uint8_t *row_src = static_cast<uint8_t *>((buffer_.*get_data)());
 
     uint8_t value;
     int row = 0;
-    if (static_cast<int>(field_5A0_) > 0) {
+    if (static_cast<int>(decoded_height_) > 0) {
         do {
-            int remaining = field_59C_;
+            int remaining = decoded_width_;
             unsigned count;
             fread(&count, 1, 1, file_);
             uint8_t *dst = row_dst;
@@ -1342,7 +1342,7 @@ void Flic::decode_byte_run_trans() {
             row_dst += buffer2_->stride_;
             row_src += buffer_.stride_;
             row++;
-        } while (row < static_cast<int>(field_5A0_));
+        } while (row < static_cast<int>(decoded_height_));
     }
 
     if (scratch != nullptr) {
@@ -1392,7 +1392,7 @@ void Flic::decode_delta_flc_trans() {
     uint8_t value;
     uint8_t run;
     uint16_t opcode;
-    uint8_t *dst = buffer2_->get_data(field_5AC_, field_5B0_);
+    uint8_t *dst = buffer2_->get_data(origin_x_, origin_y_);
     void *(Buffer::*get_data)() = &Buffer::get_data;
     uint8_t *src = static_cast<uint8_t *>((buffer_.*get_data)());
     int row;
@@ -1420,12 +1420,12 @@ void Flic::decode_delta_flc_trans() {
                 src += buffer_.stride_ * (skip & 0xffff);
             } while (true);
             if (row == 0) {
-                uint8_t *base = buffer2_->get_data(field_5AC_, field_5B0_);
+                uint8_t *base = buffer2_->get_data(origin_x_, origin_y_);
                 min_y = static_cast<int>(dst - base) /
                         static_cast<int>(buffer2_->stride_);
             }
             if (row == static_cast<int>(line_count) - 1) {
-                uint8_t *base = buffer2_->get_data(field_5AC_, field_5B0_);
+                uint8_t *base = buffer2_->get_data(origin_x_, origin_y_);
                 max_y = static_cast<int>(dst - base) /
                         static_cast<int>(buffer2_->stride_);
             }
@@ -1434,9 +1434,9 @@ void Flic::decode_delta_flc_trans() {
                     static_cast<uint8_t>(field_5A4_ +
                                          static_cast<int8_t>(opcode)));
                 if (last != static_cast<uint16_t>(field_0_)) {
-                    dst[field_59C_ - 1] = static_cast<uint8_t>(last);
+                    dst[decoded_width_ - 1] = static_cast<uint8_t>(last);
                 } else {
-                    dst[field_59C_ - 1] = src[field_59C_ - 1];
+                    dst[decoded_width_ - 1] = src[decoded_width_ - 1];
                 }
                 fread(&opcode, 2, 1, file_);
             }
@@ -1525,10 +1525,10 @@ void Flic::decode_delta_flc_trans() {
             row++;
         } while (row < static_cast<int>(line_count));
     }
-    update_rect_.left = field_5AC_ + min_x;
-    update_rect_.top = field_5B0_ + min_y;
-    update_rect_.right = field_5AC_ + 1 + max_x;
-    update_rect_.bottom = field_5B0_ + 1 + max_y;
+    update_rect_.left = origin_x_ + min_x;
+    update_rect_.top = origin_y_ + min_y;
+    update_rect_.right = origin_x_ + 1 + max_x;
+    update_rect_.bottom = origin_y_ + 1 + max_y;
 }
 
 /*
@@ -1545,10 +1545,10 @@ Return Value: n/a
 Status: Complete
 */
 void Flic::decode_black_trans() {
-    int y = field_5B0_;
-    int x = field_5AC_;
-    int height = field_5A0_;
-    int width = field_59C_;
+    int y = origin_y_;
+    int x = origin_x_;
+    int height = decoded_height_;
+    int width = decoded_width_;
     RECT *rect = &update_rect_;
     rect->left = x;
     rect->top = y;
@@ -1557,8 +1557,8 @@ void Flic::decode_black_trans() {
     if (field_0_ != 0) {
         int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) =
             &Buffer::copy;
-        (buffer_.*copy)(buffer2_, 0, 0, field_5AC_, field_5B0_, field_59C_,
-                        field_5A0_);
+        (buffer_.*copy)(buffer2_, 0, 0, origin_x_, origin_y_, decoded_width_,
+                        decoded_height_);
     }
 }
 
@@ -1578,10 +1578,10 @@ Return Value: n/a
 Status: Complete
 */
 void Flic::decode_fli_copy_trans() {
-    int y = field_5B0_;
-    int x = field_5AC_;
-    int height = field_5A0_;
-    int width = field_59C_;
+    int y = origin_y_;
+    int x = origin_x_;
+    int height = decoded_height_;
+    int width = decoded_width_;
     RECT *rect = &update_rect_;
     rect->left = x;
     rect->top = y;
@@ -1589,11 +1589,11 @@ void Flic::decode_fli_copy_trans() {
     rect->bottom = y + height;
 
     void *(Buffer::*get_data)() = &Buffer::get_data;
-    uint8_t *dst = buffer2_->get_data(field_5AC_, field_5B0_);
+    uint8_t *dst = buffer2_->get_data(origin_x_, origin_y_);
     uint8_t *src = static_cast<uint8_t *>((buffer_.*get_data)());
 
-    for (int row = 0; row < static_cast<int>(field_5A0_); row++) {
-        for (int i = 0; i < static_cast<int>(field_59C_); i++) {
+    for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
+        for (int i = 0; i < static_cast<int>(decoded_width_); i++) {
             uint8_t value;
             fread(&value, 1, 1, file_);
             value = static_cast<uint8_t>(value + field_5A4_);
@@ -1605,8 +1605,8 @@ void Flic::decode_fli_copy_trans() {
             dst++;
             src++;
         }
-        dst += buffer2_->stride_ - field_59C_;
-        src += buffer_.stride_ - field_59C_;
+        dst += buffer2_->stride_ - decoded_width_;
+        src += buffer_.stride_ - decoded_width_;
     }
 }
 
@@ -1625,11 +1625,11 @@ Return Value: n/a
 Status: Complete
 */
 void Flic::UNK9() {
-    if (buffer2_ && (field_5B4_ & 1)) {
+    if (buffer2_ && (decoder_flags_ & 1)) {
         int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) =
             &Buffer::copy;
-        (buffer2_->*copy)(&buffer_, field_5AC_, field_5B0_, 0, 0, field_59C_,
-                          field_5A0_);
+        (buffer2_->*copy)(&buffer_, origin_x_, origin_y_, 0, 0, decoded_width_,
+                          decoded_height_);
     }
 }
 

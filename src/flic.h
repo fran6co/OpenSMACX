@@ -112,12 +112,12 @@ class Flic {
   // Diplomacy animation methods decode at these stored coordinates and pass
   // the corresponding destination bounds to their owner window.
   int decode_stored_frame() {
-    return decode_frame(static_cast<int>(field_5AC_),
-                        static_cast<int>(field_5B0_));
+    return decode_frame(static_cast<int>(origin_x_),
+                        static_cast<int>(origin_y_));
   }
   RECT *update_rect() { return &update_rect_; }
-  int decoded_width() const { return static_cast<int>(field_59C_); }
-  int decoded_height() const { return static_cast<int>(field_5A0_); }
+  int decoded_width() const { return static_cast<int>(decoded_width_); }
+  int decoded_height() const { return static_cast<int>(decoded_height_); }
   int frame_count() const { return static_cast<int>(header_.frames_); }
   void set_animation_flags(uint8_t flags) { field_0_ = flags; }
   uint32_t header_interval() const { return header_.field_10_; }
@@ -128,15 +128,25 @@ class Flic {
   Buffer buffer_;    // 0x4
   // RECOVERY_MEMBER: v1 Flic update_rect_ 0x58C 0x0043F190
   RECT update_rect_;  // passed to GraphicWin::soft_update
-  uint32_t field_59C_;
-  uint32_t field_5A0_;
+  // init copies the 16-bit header dimensions here; fill and the decoders
+  // consume them as the destination buffer's dimensions. Original accesses
+  // are dword-wide; retain storage type without asserting original signedness.
+  // RECOVERY_MEMBER: v1 Flic decoded_width_ 0x59C 0x00629E50
+  uint32_t decoded_width_;
+  // RECOVERY_MEMBER: v1 Flic decoded_height_ 0x5A0 0x00629E50
+  uint32_t decoded_height_;
   uint32_t field_5A4_;
   Buffer *buffer2_;
-  // RECOVERY_MEMBER: v1 Flic field_5AC_ 0x5AC 0x0043F190
-  uint32_t field_5AC_;  // first stored Flic::decode_frame coordinate
-  // RECOVERY_MEMBER: v1 Flic field_5B0_ 0x5B0 0x0043F190
-  uint32_t field_5B0_;  // second stored Flic::decode_frame coordinate
-  uint32_t field_5B4_;
+  // init and decode_frame store their int x/y arguments here; decoder
+  // destinations and update rectangles read them back as the buffer origin.
+  // RECOVERY_MEMBER: v1 Flic origin_x_ 0x5AC 0x0043F190
+  uint32_t origin_x_;
+  // RECOVERY_MEMBER: v1 Flic origin_y_ 0x5B0 0x0043F190
+  uint32_t origin_y_;
+  // init clears this word and sets bit 0 after its header-magic check; its
+  // transparency argument controls bit 1. Keep the observed word storage.
+  // RECOVERY_MEMBER: v1 Flic decoder_flags_ 0x5B4 0x00629E50
+  uint32_t decoder_flags_;
   FILE *file_;
   // A REAL embedded Palette, not a pointer: the constructor
   // placement-constructs it (`lea ecx,[esi+0x5bc]; call ??0Palette@@QAE@XZ`)
