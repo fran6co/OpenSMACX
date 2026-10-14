@@ -53,6 +53,8 @@ def test_actual_receiver_packet_ui_and_completion_semantics(tmp_path, damage):
                    "static uint16_t netdaemon_transfer_read_u16(", "static uint32_t netdaemon_transfer_read_u32(",
                    "static int32_t netdaemon_transfer_read_i32(", "static void netdaemon_transfer_write_u16(",
                    "static void netdaemon_transfer_write_i32(",
+                   "class NetDaemonFileIndexPacketView {", "class NetDaemonFilePathPacketView {",
+                   "class NetDaemonFileControlPacketView {", "class NetDaemonFileChunkPacketView {",
                    "static bool netdaemon_transfer_modal_cleanup(",
                    "static void netdaemon_forward_default_message(", "bool NetDaemon::process_file_transfer_message("]
     body = "\n".join(extract(actual,s) + (";" if s.startswith("class ") else "") for s in definitions)
@@ -64,7 +66,7 @@ def test_actual_receiver_packet_ui_and_completion_semantics(tmp_path, damage):
         "global_count": ("int32_t rounded_size;", "NetDaemonFileTransferChunkCount=0; int32_t rounded_size;"),
         "compressed_extent": ("static_cast<unsigned int>(compressed_size)", "netdaemon_transfer_read_u32(bytes + 4)"),
         "fixed_send_length": ("send_message(message, static_cast<int>(message_size), sender_id);", "send_message(message, 0x20, sender_id);"),
-        "early_index": ("NetDaemonFileIndexRecord &record = records[bytes[0x10]];", "NetDaemonFileIndexRecord &record = records[file_index];"),
+        "early_index": ("NetDaemonFileIndexRecord &record = records[index_packet.file_index()];", "NetDaemonFileIndexRecord &record = records[file_index];"),
         "early_close": ("PopupModalState = 6;", "PopupModalState = 6; pop_close();"),
         "lost_progress_reload": ("--NetDaemonFileTransferProgress;", "NetDaemonFileTransferProgress=7;"),
         "missing_reset": ("        NetDaemonTransferResetWord = -1;", "        NetDaemonTransferResetWord = 0;"),
@@ -75,7 +77,14 @@ def test_actual_receiver_packet_ui_and_completion_semantics(tmp_path, damage):
         body = body.replace(before,after,1)
     template = Path(__file__).with_name("netdaemon-transfer-receive-harness.cpp").read_text()
     definition=next(line for line in actual.splitlines() if line.startswith("int NetDaemonTransferResetWord ="))
-    generated = template.replace("@@RECORD@@",extract(actual,"struct NetDaemonFileIndexRecord {")+";").replace("@@BODIES@@",body).replace("@@RESET_WORD@@",definition)
+    records = "\n".join(extract(actual, signature) + ";" for signature in (
+        "struct NetDaemonFileIndexRecord {", "struct NetDaemonFilePathPacket {",
+        "struct NetDaemonFileControlPacket {", "struct NetDaemonFileChunkPacket {"))
+    generated = template.replace("@@RECORD@@",records).replace("@@BODIES@@",body).replace("@@RESET_WORD@@",definition)
+    generated = generated.replace("    int pid_2_idx(uint32_t) {",
+                                  "    unsigned long local_player_id() { return local_player_id_; }\n"
+                                  "    int pid_2_idx(uint32_t) {")
+    generated = "#include <cstddef>\n" + generated
     cpp=tmp_path/"receive.cpp"; exe=tmp_path/"receive"
     cpp.write_text(generated)
     subprocess.run([compiler,"-std=c++03","-fsanitize=address,undefined","-fno-omit-frame-pointer",str(cpp),"-o",str(exe)], check=True,capture_output=True,timeout=60)

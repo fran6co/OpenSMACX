@@ -1,0 +1,21 @@
+{
+  "event_id": "89dee24f9cad46ecf2cb8fd2dd5584f8a5487ad18856d98148db07fc8f8ef5e6",
+  "payload": {
+    "affects": [
+      "entity-b825275a563a538a20817bae6dae36b4faf002ee34891fdc02c8dcbead97b0c5",
+      "entity-d6561b60a9fabeea4f4f2476e7d9e2a2becb7b9433e34d73d34bf94dcf490c84"
+    ],
+    "author": "coordinator",
+    "discovery_id": "transfer-eh-shapes-oct14gh",
+    "evidence": [
+      "Fresh baseline and candidate native measurements both refuse the fixed21-byte EH-region condition. send_files52ED40 original cold65E0B0..65E0C2 is18bytes, handler65E0B8, one unwind action and no try/IP maps. process_message534400 cold65E0C2..65E442 is896bytes, handler65E438,63 unwind rows with decreasing state chains and no try/IP maps. Preserve complete original spans and historical claims; no cropping or automatic acceptance. Native extension needs separate physical COFF ownership evidence and strict damage controls; source packet-view migration cannot waive this limitation."
+    ],
+    "hypothesis": "Complete source matching is blocked by unsupported original exception-cleanup shapes, not missing or malformed source spans.",
+    "kind": "discovery"
+  },
+  "previous_event": "aa4718622a73cb5fa532a483211742e958fedb80aac88a6e5e1369282612e784",
+  "request_id": "transfer-eh-shapes-oct14gh",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:netdaemon-transfer-views-oct14gh"
+}

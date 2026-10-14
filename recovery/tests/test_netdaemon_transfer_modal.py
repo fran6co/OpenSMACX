@@ -30,6 +30,15 @@ def source_texts():
 
 
 def compile_and_run(source: str, owner_source: str):
+    record_types = "\n".join(
+        extract(owner_source, signature) + ";"
+        for signature in (
+            "struct NetDaemonFileIndexRecord {",
+            "struct NetDaemonFilePathPacket {",
+            "struct NetDaemonFileControlPacket {",
+            "struct NetDaemonFileChunkPacket {",
+        )
+    )
     guard = extract(source, "class NetDaemonTransferModalCloseGuard {") + ";"
     helper = extract(source, "static bool netdaemon_transfer_modal_cleanup(")
     byte_helpers = "\n".join(
@@ -39,15 +48,32 @@ def compile_and_run(source: str, owner_source: str):
             "static uint32_t netdaemon_transfer_read_u32(",
             "static int32_t netdaemon_transfer_read_i32(",
             "static void netdaemon_transfer_write_u16(",
-            "static void netdaemon_transfer_write_i32(",
         ))
     record_allocator = extract(owner_source,
                                "static NetDaemonFileIndexRecord *netdaemon_allocate_file_index_records(")
+    packet_views = "\n".join(
+        extract(source, signature) + ";"
+        for signature in (
+            "class NetDaemonFileIndexPacketView {",
+            "class NetDaemonFilePathPacketView {",
+            "class NetDaemonFileControlPacketView {",
+            "class NetDaemonFileChunkPacketView {",
+        )
+    )
     body = extract(source, "bool NetDaemon::process_file_transfer_message(")
     generated = TEMPLATE.read_text().replace(
+        "struct NetDaemonFileIndexRecord {\n    uint32_t ready_flags;\n    uint32_t chunk_count;\n    uint32_t file_size;\n    char filename[260];\n};",
+        record_types,
+    ).replace(
+        "    uint32_t local_player_id_;\n    int pid_2_idx(uint32_t) { return 3; }",
+        "    uint32_t local_player_id_;\n    unsigned long local_player_id() { return local_player_id_; }\n"
+        "    int pid_2_idx(uint32_t) { return 3; }",
+    ).replace(
         "@@TRANSFER_CALLBACK_BODIES@@",
         guard + "\n" + record_allocator + "\n" + byte_helpers + "\n" +
+        packet_views + "\n" +
         helper + "\n" + extract(source, "static void netdaemon_forward_default_message(") + "\n" + body)
+    generated = "#include <cstddef>\n" + generated
     with tempfile.TemporaryDirectory(prefix="net-transfer-modal-") as scratch:
         cpp = Path(scratch) / "harness.cpp"
         exe = Path(scratch) / "harness"

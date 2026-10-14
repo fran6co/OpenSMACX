@@ -1,0 +1,19 @@
+{
+  "event_id": "aa4718622a73cb5fa532a483211742e958fedb80aac88a6e5e1369282612e784",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_netdaemon_transfer_modal.py"
+    ],
+    "evidence": [
+      "Authorize adding production packet/view extraction and cstddef to the modal actual-source harness; preserve all existing modal behavior and damage assertions unchanged. Distinguish pre-existing fixture failures from this receiver migration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bb3163b82320154c4d23386d1221b3e092d4b6d82934d15eb45ef6f700e4d662",
+  "request_id": "modal-view-fixture-scope-oct14gh",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netdaemon-transfer-views-oct14gh"
+}
