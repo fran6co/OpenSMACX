@@ -98,7 +98,9 @@ Vector Vector::normalize() {
     const float z = z_;
     const float y = y_;
     const float x = x_;
-    float length = static_cast<float>(sqrt((x * x + y * y) + z * z));
+    double length = sqrt((static_cast<double>(x) * x
+                        + static_cast<double>(y) * y)
+                        + static_cast<double>(z) * z);
     Vector result;
     if (length != length) {
         return *this;
@@ -106,7 +108,7 @@ Vector Vector::normalize() {
     if (length == 1.0f) {
         return *this;
     }
-    float reciprocal = 1.0f / length;
+    double reciprocal = 1.0f / length;
     result.x_ = static_cast<float>(reciprocal * x_);
     result.y_ = static_cast<float>(reciprocal * y_);
     result.z_ = static_cast<float>(reciprocal * z_);
