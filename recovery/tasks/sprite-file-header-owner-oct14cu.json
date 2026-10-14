@@ -1,0 +1,31 @@
+{
+  "author": "coordinator",
+  "base_revision": "43095b5a29e666ca718eea3cf0f109fc28ac119a",
+  "editable_files": [
+    "src/sprite.cpp",
+    "src/sprite.h",
+    "recovery/tests/test_sprite_file_header_oct14cu.py"
+  ],
+  "evidence": [
+    "Original5EAF8F..5EB0B2 and5EB0BF..5EB205 forward the single argument as Filemap create/open filename. Integer catalogue spellings are historical identities, not original type evidence. Recover a const char* source interface with explicit current emitted-symbol notes; retain ORIGINAL identities/spans unchanged. Search all source callers; any additional consumer or ambiguity requires coordinator scope expansion.",
+    "The file layout is six consecutive four-byte metadata words at00..17, transparency byte18, unaligned stride word19..1C, pixel payload1D. Allocation/save sizing adds2C to width*height but copied pixels use height*stride; preserve that original asymmetry and unchecked malformed-input effects, not a normalized format. Use an explicitly packed C++ disk view with verified size/offsets, not integer cursor casts.",
+    "Load closes old owned pixels and preserves borrowed pcBits; it never allocates new pixels before memcpy. Preserve original name cleanup, zero stores, result codes, explicit Filemap close and automatic destructor on every return. Host controls use valid sufficiently sized mapped storage and borrowed destination; do not invent guards or repair original null-destination behavior.",
+    "Coordinator-owned isolated worktree; actual-source tests, fresh build/link, immediate scoped measurement, source identity continuity and references, independent pinned review, compiled-function comparison and freshly verified manual integration. No new byte claims without native recorder; no full game/runtime/linked acceptance assertion."
+  ],
+  "intent": "Recover Sprite file persistence through typed filename pointers and an explicit packed on-disk header while preserving original allocation, ownership and malformed-path behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6205327,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6205631,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sprite-file-header-owner-oct14cu"
+}
