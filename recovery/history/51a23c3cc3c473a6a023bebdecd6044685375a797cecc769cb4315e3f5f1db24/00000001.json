@@ -1,0 +1,19 @@
+{
+  "event_id": "5c484d0b7ff92f54919262291ea937bd1ec59897809addbe0d73d74140bd1d4c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_flic_word_transfers_actual_source_oct14fj.py"
+    ],
+    "evidence": [
+      "The existing actual-source Flic fixture declares the same private members. Rename its fixture identifiers with the owner while preserving all behavior assertions and pinned instruction controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "flic-fixture-scope-oct14gb",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:flic-decoder-member-names-oct14gb"
+}
