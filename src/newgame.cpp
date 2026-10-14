@@ -460,7 +460,7 @@ static void top_menu_present_opening(const char *filename) {
     opening_window()->fill(0);
     change_opening(const_cast<char *>(filename));
     g_PALETTE1.set();
-    opening_window()->soft_update();
+    opening_window()->show(0);
     do_all_draws();
     BasePopDefaultField322C = opening_window();
 }
@@ -513,7 +513,7 @@ top_menu_redraw:
     prefs_use();
 
     edi = mode;
-    popup.start(PopupStartCaption, edi == 0 ? "HOTSEAT" : "TOPMENU",
+    popup.start(PopupStartCaption, edi == 0 ? "TOPMENU" : "HOTSEAT",
                 -1, 0, 0, 0);
     if (edi == 0) popup.set_value(static_cast<int>(DefaultPrefs.top_menu));
 

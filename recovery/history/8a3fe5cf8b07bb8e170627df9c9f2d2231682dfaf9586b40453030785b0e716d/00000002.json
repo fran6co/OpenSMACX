@@ -1,0 +1,17 @@
+{
+  "event_id": "a948c7858122c73f49566c9872fe5c8142eae3858ead3dd26f401acf0a0ca5d1",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "popup-section-routing-oct14bz",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/newgame.cpp top_menu now selects TOPMENU for mode0 and HOTSEAT otherwise, matching pinned58E6D6..58E6E2 and exact literal bytes. Native owner scope already includes original58E360 and this source file. Pending fresh tests/build/runtime verification does not establish acceptance."
+    ]
+  },
+  "previous_event": "d0c7284117a8855808fc669d79f19fd2e0168d6f7b594b0c2cc8a567b8bb2d2b",
+  "request_id": "popup-section-routing-incorporated-oct14bz",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:top-menu-opening-show-owner-oct14bx"
+}

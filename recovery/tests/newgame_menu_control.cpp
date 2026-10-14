@@ -658,19 +658,33 @@ int main() {
 #define __cdecl
 #endif
 
+static void event(const char *text);
+static void semantic_failure(const char *message);
 struct Win { virtual ~Win() {} };
 struct GraphicWin : Win {
     int id;
     int init_result;
     int fills;
     int updates;
-    GraphicWin() : id(++next_id), init_result(0), fills(0), updates(0) {}
+    int show_calls;
+    int visible;
+    GraphicWin() : id(++next_id), init_result(0), fills(0), updates(0),
+                   show_calls(0), visible(0) {}
     static int next_id;
     int init(int, int, int, int, char *, int, Win *, void *, void *) {
+        visible = 0;
+        event("window.init");
         return init_result;
     }
-    void fill(int) { ++fills; }
-    void soft_update() { ++updates; }
+    void fill(int) { ++fills; event("window.fill"); }
+    virtual void show(int flags) {
+        if (flags != 0)
+            semantic_failure("opening show flags were not zero");
+        ++show_calls;
+        visible = 1;
+        event("window.show");
+    }
+    void soft_update() { ++updates; event("window.soft_update"); }
 };
 int GraphicWin::next_id = 0;
 static GraphicWin *OpeningWindow = 0;
@@ -766,6 +780,9 @@ static GraphicWin replacement_window;
 static GraphicWin later_opening_window;
 static GraphicWin stale_opening_window;
 static GraphicWin **setup_snapshot_probe;
+static const char *expected_popup_title;
+static int popup_start_count;
+static int popup_set_value_count;
 static int check_first_publication_during_redraw;
 static int check_final_publication_at_menu;
 static int replace_opening_during_redraw;
@@ -784,10 +801,14 @@ struct Popup {
     int starts;
     Popup() : value_(0), starts(0) {}
     ~Popup() { close(); event("popup.destroy"); }
-    void start(char *, const char *, int, char *, int, GraphicWin *) {
+    void start(char *, const char *title, int, char *, int, GraphicWin *) {
+        if (expected_popup_title != 0 &&
+            std::strcmp(title, expected_popup_title) != 0)
+            semantic_failure("popup section does not match selected mode");
+        ++popup_start_count;
         ++starts; event("popup.start");
     }
-    void set_value(int value) { value_ = value; }
+    void set_value(int value) { ++popup_set_value_count; value_ = value; }
     void close() { ++popup_close_calls; event("popup.close"); }
 };
 struct SetupWin {
@@ -873,6 +894,8 @@ static void reset_fixture() {
     opening_change_calls = replace_opening_at = 0;
     opening_filename_count = 0;
     setup_snapshot_probe = 0;
+    expected_popup_title = 0;
+    popup_start_count = popup_set_value_count = 0;
     check_first_publication_during_redraw = 0;
     check_final_publication_at_menu = 0;
     replace_opening_during_redraw = 0;
@@ -882,6 +905,12 @@ static void reset_fixture() {
     replacement_window.updates = 0;
     later_opening_window.updates = 0;
     stale_opening_window.updates = 0;
+    replacement_window.show_calls = 0;
+    later_opening_window.show_calls = 0;
+    stale_opening_window.show_calls = 0;
+    replacement_window.visible = 0;
+    later_opening_window.visible = 0;
+    stale_opening_window.visible = 0;
     parsed_count = 0;
     mutate_narration = 0;
     objective_faction = objective_mask = -1;
@@ -908,6 +937,16 @@ static int event_index(const char *needle) {
         if (std::strcmp(events[i], needle) == 0) return i;
     return -1;
 }
+static int last_event_index(const char *needle) {
+    for (int i = event_count - 1; i >= 0; --i)
+        if (std::strcmp(events[i], needle) == 0) return i;
+    return -1;
+}
+static int last_opening_event_index() {
+    for (int i = event_count - 1; i >= 0; --i)
+        if (std::strncmp(events[i], "opening:", 8) == 0) return i;
+    return -1;
+}
 
 int __cdecl change_opening(char *filename) {
     char text[40] = "opening:";
@@ -926,6 +965,17 @@ int __cdecl change_opening(char *filename) {
 static void close_opening() { ++close_calls; OpeningWindow = 0; }
 static void do_all_draws() {
     ++all_draws;
+    if (OpeningWindow == 0 || OpeningWindow->visible == 0)
+        semantic_failure("opening window was not visible before draw");
+    {
+        const int fill_at = last_event_index("window.fill");
+        const int opening_at = last_opening_event_index();
+        const int palette_at = last_event_index("palette.set");
+        const int show_at = last_event_index("window.show");
+        if (!(fill_at >= 0 && fill_at < opening_at && opening_at < palette_at &&
+              palette_at < show_at && show_at < event_count))
+            semantic_failure("opening window was not shown before draw");
+    }
     if (all_draws == 2 && check_first_publication_during_redraw &&
         (setup_snapshot_probe == 0 ||
          *setup_snapshot_probe != expected_first_publication))
@@ -977,10 +1027,13 @@ static int X_pop(char *, const char *, int, char *, int, int (__cdecl *)()) { ev
 
 int main() {
     reset_fixture();
+    expected_popup_title = "TOPMENU";
     menu_values[0] = -1; menu_count = 1;
     check(top_menu(0) == 1, "menu cancel result");
     check(opening_change_calls == 2 && all_draws == 2,
           "native initial double opening presentation");
+    check(popup_start_count == 1 && popup_set_value_count == 1,
+          "zero mode uses TOPMENU and applies its default selection");
     check(popup_close_calls == 1 && setup_close_calls == 1,
           "automatic destructors close both locals exactly once");
     check(event_index("messages.clear") < event_index("prefs.load"),
@@ -992,6 +1045,7 @@ int main() {
           "reverse declaration-order destruction");
 
     reset_fixture();
+    expected_popup_title = "HOTSEAT";
     GamePreferences = 0x800;
     wave_playing = 1;
     AlphaIniPrefs.preferences = 0;
@@ -1005,14 +1059,18 @@ int main() {
           "preferences flag clear sets style bit while preserving other bits");
     check(all_map_count == 1 && all_map[0] == 0,
           "choice zero maps to ordinary map_menu mode");
+    check(popup_start_count == 1 && popup_set_value_count == 0,
+          "nonzero mode uses HOTSEAT without applying a default selection");
 
     reset_fixture();
     replace_opening_at = 1;
     menu_values[0] = -1; menu_count = 1;
     check(top_menu(1) == 1, "opening replacement callback fixture exits");
-    check(replacement_window.updates == 2 &&
+    check(replacement_window.show_calls == 2 &&
           BasePopDefaultField322C == &replacement_window,
-          "soft update and published owner reload the live opening slot");
+          "show and published owner reload the live opening slot");
+    check(replacement_window.visible && !stale_opening_window.visible,
+          "show targets the replacement published by change_opening");
 
     reset_fixture();
     replace_opening_at = 1;
@@ -1063,6 +1121,7 @@ int main() {
     }
 
     reset_fixture();
+    expected_popup_title = "TOPMENU";
     menu_values[0] = 1; menu_values[1] = -1; menu_count = 2;
     mapped_result = 1;
     check(top_menu(0) == 1, "retry then cancel result");
@@ -1070,6 +1129,8 @@ int main() {
           "choice one maps to quick-start mode");
     check(opening_change_calls == 3,
           "failed action retries with one opening presentation");
+    check(popup_start_count == 2 && popup_set_value_count == 2,
+          "retry retains TOPMENU section and reapplies only its default");
 
     reset_fixture();
     menu_values[0] = 2; menu_values[1] = 2; menu_count = 2;

@@ -1,0 +1,20 @@
+{
+  "event_id": "d0c7284117a8855808fc669d79f19fd2e0168d6f7b594b0c2cc8a567b8bb2d2b",
+  "payload": {
+    "affects": [
+      "entity-c17cc7a3e712cf8c6f3b972ab510a7002a883b36524579113f90719b35febf99"
+    ],
+    "author": "coordinator",
+    "discovery_id": "popup-section-routing-oct14bz",
+    "evidence": [
+      "Pinned 58E6D6 reloads mode; 58E6D9 selects HOTSEAT at68F988; 58E6DE..E2 replaces it with TOPMENU at68F990 when mode is zero. Both literal strings independently read from pinned PE. Preserve original start arguments, default selection on zero only, and all subsequent branch behavior. Paired startup after show restoration exposes HOTSEAT label in ordinary mode."
+    ],
+    "hypothesis": "The recovered top_menu popup section selector reverses the original mode-zero TOPMENU and nonzero HOTSEAT routing. Restore the original selector in the same already authorized top_menu owner scope before integration.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "popup-section-routing-oct14bz",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:top-menu-opening-show-owner-oct14bx"
+}
