@@ -71,7 +71,7 @@ def source_parts():
         "init": function_body(text, "void SocialWin::init("),
     }
     refs = {
-        "section": statement(bodies["overview"], "strcpy(section, SocialWinOverviewSocText)"),
+        "section": statement(bodies["overview"], "strcat(StringTemp, SocialWinOverviewSocText)"),
         "overview_plus": statement(bodies["overview"], "strcat(StringTemp, SocialWinOverviewPlusText)"),
         "count_plus": statement(bodies["button"], "strcat(StringTemp, SocialWinButtonCountPlusText)"),
         "minus": statement(bodies["mouseover"], "strcat(StringTemp, SocialWinMouseoverMinusText)"),
@@ -88,7 +88,7 @@ def source_parts():
     }
 
     assert "SocialWinEffects" not in text
-    assert "strcat(section, SocialEffects[effect].set1);" in bodies["overview"]
+    assert "strcat(StringTemp, SocialEffects[effect].set1);" in bodies["overview"]
     assert "static const char *const SocialOverviewSection = \"SOCIO\";" in text
     assert "(char *)0x006874" not in text
     assert "(char *)0x00682E90" not in text
@@ -104,10 +104,10 @@ DECLARATIONS
 static char StringTemp[256];
 static void fail(const char *message) { std::fprintf(stderr, "%s\n", message); std::exit(1); }
 static void run_actual_consumer_statements() {
-    char section[64] = {};
+    StringTemp[0] = 0;
     SECTION
-    std::strcat(section, "IAL");
-    if (std::strcmp(section, "SOCIAL") != 0) fail("overview SOC path prefix");
+    std::strcat(StringTemp, "IAL");
+    if (std::strcmp(StringTemp, "SOCIAL") != 0) fail("overview SOC path prefix");
 
     StringTemp[0] = 0;
     if (1) { OVERVIEW_PLUS }
@@ -196,7 +196,7 @@ def test_soc_path_content_mutant_is_detected(tmp_path, compiler):
     if compiler is None:
         pytest.skip("host C++ compiler required")
     declarations, refs = source_parts()
-    refs["section"] = "strcpy(section, SocialWinTutorialName);"
+    refs["section"] = "strcat(StringTemp, SocialWinTutorialName);"
     build, run = compile_run(tmp_path, compiler, fixture(declarations, refs))
     assert build.returncode == 0, build.stderr
     assert run is not None and run.returncode != 0

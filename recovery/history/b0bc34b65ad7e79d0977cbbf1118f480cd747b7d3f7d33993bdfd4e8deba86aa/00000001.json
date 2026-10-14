@@ -1,0 +1,19 @@
+{
+  "event_id": "01b02f575df87ec1ec4a19b9e4f6d68a3503c90161d18129a39cf57c491df799",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_socialwin_source_text_owner_oct9.py"
+    ],
+    "evidence": [
+      "Four source-text consumer tests assert the former local section buffer spelling. The pinned original instead clears StringTemp then concatenates the same source-owned SOC prefix and rule section there. Update extracted consumer and fixture to genuine shared buffer; preserve all array contents, distinct storage identities and existing mutation rejection. No unrelated typed-state assertions are waived."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "source-text-consumer-follows-original-global",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:social-overview-fidelity-oct14hz"
+}

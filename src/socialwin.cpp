@@ -1751,32 +1751,34 @@ void SocialWin::draw_overview() {
 
     RECT panel = tooltipEffects_;
     buffer->box_sprite(&panel, &InterfaceBoxStyles[3]);
-    RECT interior = {panel.left + 3, panel.top + 3,
-                     panel.right - 3, panel.bottom - 3};
-    buffer->box_sprite(&interior, &InterfaceBoxStyles[6]);
+    panel.left += 3;
+    panel.top += 3;
+    panel.right -= 3;
+    panel.bottom -= 3;
+    RECT title_rect = panel;
+    title_rect.bottom = title_rect.top + 20;
+    buffer->box_sprite(&title_rect, &InterfaceBoxStyles[6]);
 
     buffer->set_font(&font1_, 0, 0, 0);
     buffer->set_text_color(0x9f, -1, 1, 1);
 
     char *title = label_get(0x2e4);
     if (title != 0) {
-        buffer->write_cent_l(title, &interior, strlen(title));
+        buffer->write_cent_l(title, &title_rect, strlen(title));
     }
 
-    interior.top = panel.top + 0x1c;
-    RECT effects_area = {interior.left, interior.top,
-                         interior.right, interior.bottom};
-    buffer->box_sprite(&effects_area, &InterfaceBoxStyles[0]);
+    panel.top = title_rect.bottom + 2;
+    buffer->box_sprite(&panel, &InterfaceBoxStyles[0]);
     buffer->set_font(&font7_, 0, 0, 0);
 
-    int text_x = effects_area.left + 0x14;
-    int number_x = effects_area.left + 0xf;
-    int text_right = effects_area.right - 3;
-    int text_bottom = effects_area.bottom - 3;
-    const int available_width = text_right - text_x;
-    const SocialEffect &player_effect = PlayersData[factionID_].soc_effect_pending;
+    panel.left += 20;
+    const int number_x = panel.left - 5;
+    panel.right -= 3;
+    int row_pitch_cursor = panel.top;
+    const int available_width = panel.right - panel.left;
     char descriptions[MaxSocialEffectNum][256];
     int content_height = 0;
+    int last_description_length;
 
     text_open(AlphaxFileID, SocialOverviewSection);
 
@@ -1785,36 +1787,36 @@ void SocialWin::draw_overview() {
     // 0x009466B8 skip (three 0x68-byte records after SocialEffects).
     int effect;
     for (effect = 0; effect < MaxSocialEffectNum; ++effect) {
-        descriptions[effect][0] = 0;
         if (effect == 3) {
             continue;
         }
 
-        char section[64];
-        strcpy(section, SocialWinOverviewSocText);
-        strcat(section, SocialEffects[effect].set1);
-        if (text_open(0, section) != 0) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, SocialWinOverviewSocText);
+        strcat(StringTemp, SocialEffects[effect].set1);
+        if (text_open(0, StringTemp) != 0) {
             text_close();
             return;
         }
 
+        descriptions[effect][0] = 0;
         text_get();
         int row = text_item_number();
         strcpy(descriptions[effect], text_item());
         while (row < social_effect_value(socEffect_, effect)) {
-            char *line = text_get();
-            if (line == 0 || line[0] == 0) {
+            text_get();
+            if (strlen(TextBufferGetPtr) == 0) {
                 break;
             }
             row = text_item_number();
             strcpy(descriptions[effect], text_item());
         }
+        last_description_length = strlen(descriptions[effect]);
         content_height += buffer->wrap_height(descriptions[effect], available_width);
     }
     text_close();
 
-    int y = effects_area.top
-        + ((text_bottom - content_height) - effects_area.top) / 2;
+    panel.top += ((panel.bottom - content_height) - panel.top) / 2;
     for (effect = 0; effect < MaxSocialEffectNum; ++effect) {
         if (effect == 3) {
             continue;
@@ -1826,9 +1828,9 @@ void SocialWin::draw_overview() {
             if (effectMaximize_ == static_cast<uint32_t>(effect)) {
                 color = 0x9c;
             } else if (social_effect_value(socEffect_, effect)
-                       == social_effect_value(player_effect, effect)) {
+                       == social_effect_value(PlayersData[factionID_].soc_effect_pending, effect)) {
                 color = 0xa0;
-            } else if (social_effect_value(player_effect, effect)
+            } else if (social_effect_value(PlayersData[factionID_].soc_effect_pending, effect)
                        < social_effect_value(socEffect_, effect)) {
                 color = 0xfa;
             } else {
@@ -1842,19 +1844,24 @@ void SocialWin::draw_overview() {
         if (value > 0) {
             strcat(StringTemp, SocialWinOverviewPlusText);
         }
-        char number[32];
+        char number[80];
         _itoa(value, number, 10);
         strcat(StringTemp, number);
-        buffer->write_right_l(StringTemp, number_x, y, strlen(StringTemp));
+        buffer->set_font(&font7_, 0, 0, 0);
+        buffer->write_right_l(StringTemp, number_x, panel.top, strlen(StringTemp));
+        socEffectOrig_.values_[effect] =
+            PlayersData[factionID_].soc_effect_pending.values_[effect];
 
-        RECT description = {text_x, y, text_right, text_bottom};
-        y = buffer->wrap(descriptions[effect], &description);
-        // The original uses Font::line_height for negative entries and
-        // Font::height + value for nonnegative entries. Font currently only
-        // exposes line_advance(), so the typed path uses its configured height
-        // plus the effect adjustment; exact negative-row pitch remains open.
-        y += font7_.line_advance() - font7_.unk_1_
-            + (value > 0 ? value : 0);
+        // The original reuses the final parsed description's length for
+        // every row. Preserve this quirk, including skipping all wraps when
+        // that last description is empty.
+        if (last_description_length != 0) {
+            buffer->set_font(&font7_, 0, 0, 0);
+            panel.top = buffer->wrap(descriptions[effect], &panel);
+        }
+        // This separate native cursor does not replace the wrapping RECT's
+        // top. Its metric depends on Font state, never the social effect.
+        row_pitch_cursor += font7_.line_advance();
     }
 
     buffer->set_wrap_width(5);
