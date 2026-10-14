@@ -1,0 +1,142 @@
+{
+  "author": "coordinator",
+  "base_revision": "a7ad5cb7066e77b2648b086cb7bdd0d0cf99245d",
+  "editable_files": [
+    "src/flic.h",
+    "src/flic.cpp",
+    "recovery/tests/test_flic_chunk_prefix_actual_source_oct14et.py",
+    "recovery/tests/test_authored_media_claim_continuity_oct14ea.py"
+  ],
+  "evidence": [
+    "Pinned decode_chunk62ACD0 allocates eight local bytes, fread reads only six, and recursive call62AD18 passes that address. Count at+6 remains uninitialized on that path. Current anonymous eight-byte local is cast to sixteen-byte DataChunk: an extent/type mismatch. Preserve unchecked reads, unsigned count, redundant guards and nested-frame error behavior; no initialization or safety fix.",
+    "Admit an eight-byte DataChunk prefix retaining the decorated decoder signature and a separate sixteen-byte frame-storage aggregate for the three Flic members atAB4/AC4/AD4. Read sixteen bytes into the complete frame aggregate, then pass its header member to the decoder. Preserve complete Flic extentAE4, member offsets, field assignment/read widths and all24 original identities/claims/history. Scope is the full owner and changed references, not a cast-only patch.",
+    "Inspect UNK3 scan-local original physical extent independently before changing it: do not blindly shrink its existing sixteen-byte local. Preserve uninitialized frame_pos and all original failed-read/error paths. No new ORIGINAL spans or claims without native writer/recorder evidence; the decoder marker omits associated jump-table bytes and full-span matching remains unfinished.",
+    "Require actual-source prefix/frame extent and read/dispatch controls, native layout witnesses, all24 family measurements including12 historical exact obligations, fresh build/link, outside-scope review, source/claim/reference continuity and independent review. Narrowly adapt the previous media marker-only test through fixed-baseline structural projection; no baseline resets or weakened damage controls. Source factoring/names remain provisional where evidence is absent."
+  ],
+  "intent": "Recover the evidenced eight-byte decoder prefix and separate sixteen-byte frame storage throughout the genuine Flic owner, preserving original behavior and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6462816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4401056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6465296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6465312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6467392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6467984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "flic-chunk-prefix-owner-oct14et"
+}
