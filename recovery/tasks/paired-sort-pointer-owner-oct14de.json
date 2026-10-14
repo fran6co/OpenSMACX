@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "c7a89397488f209346cc3bbc5329d7489b5a0e81",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "src/general.cpp",
+    "recovery/tests/test_paired_sort_actual_source_oct14de.py"
+  ],
+  "evidence": [
+    "Pinned4D5F70..4D5FE6: arg0 is loaded into EDI at4D5F92; arg1 values supplies ESI=values+4. Compare adjacent signed ints, call swap(values current,next), then swap(parallel current,next), advance both cursors by4. This proves a parallel int-array pointer without needing a named application array or concrete caller.",
+    "Preserve original extern C cdecl _sub_4d5f70 identity, complete span, all historical claims and seed findings through package source APIs. Move the existing marker block losslessly; never hand-edit an ORIGINAL marker. general.cpp is a semantic source home, not an asserted original TU boundary. No header API is required absent callers/declarations.",
+    "No native direct/static caller establishes domain or reachability. No restrict/nonalias assumptions. Preserve sequential XOR swap behavior when arrays overlap or are identical, pass ordering and existing negative/zero/one count guards. Do not introduce bounds checks or normalize unsafe/error paths. Existing signed count-1 overflow and invalid array-address behavior remain restoration obligations, not safety claims.",
+    "Only the complete paired-sort body and its source home are authorized. No unrelated helper, hierarchy, flags, baseline or behavior changes. Implement int* parallel with adjacent pointer operations; independently review actual code and pinned trace. Test actual extracted source with valid distinct and overlapping arrays, duplicate values, reverse multi-pass ordering and count guards, using bounded damage controls. Require fresh build/link, scoped measure, identity/claim continuity and references before manual integration. Native historical equality is not strict-reference, linked preservation or full-game acceptance."
+  ],
+  "intent": "Recover the paired descending sort's genuine int-array contract and home the complete existing implementation with the generic sorting utilities, preserving original behavior and all source obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5070704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "paired-sort-pointer-owner-oct14de"
+}
