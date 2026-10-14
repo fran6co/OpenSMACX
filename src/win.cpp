@@ -11240,7 +11240,7 @@ void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
 
 // ===== homed from src/unrecovered/005f1070.cpp =====
 
-// ORIGINAL: 0x005F1070 ?OnQueryNewPalette@Win@@QAAHPAX@Z 0x005F1070-0x005F1141 FILE
+// ORIGINAL: 0x005F1070 ?OnQueryNewPalette@Win@@QAAHPAX@Z 0x005F1070-0x005F1141 FILE BYTE_EXACT
 // symbol    ?OnQueryNewPalette@Win@@SAHPAX@Z
 // TRIED: call directly through `(*reinterpret_cast<Fn*>(g_addr))(args)` at the call site instead of binding the function pointer to a named local first - the named local forced an extra reg-to-reg mov before the GetDC argument push. Also: these two "vtable" calls (slots 17/26) push the object pointer as an explicit stack arg with ecx holding the vtable pointer, not a real __thiscall dispatch, so plain `int*`/function-pointer casts matched where the VCall shim would not.
 // TRIED and NOT recovered (2026-08-25): this body was BYTE_EXACT while
@@ -12231,7 +12231,7 @@ void Win::dispatch_23(int x, int y, int alternate) {
     }
 }
 
-// ORIGINAL: 0x005EE9F0 sub_5ee9f0 0x005EE9F0-0x005EEA8E
+// ORIGINAL: 0x005EE9F0 sub_5ee9f0 0x005EE9F0-0x005EEA8E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:215c2e515022cafd8e44ccc77cd636a2b9b954e1:src/unrecovered/005ee9f0.cpp: original identity, complete span and historical receiver findings", "Win primary table66FDD0 slot23 selects404260 ret8; Sound table66E3C0 slots23/7 select4C64C0/4C6480", "Pinned Scroll60569A..6056A6 writes borrowed sprites to FlatButton+AD4/+AD8/+ADC, not AutoSound+30; the earlier mixed-Sprite rationale was based on an erroneous source setter", "recovery/tasks/win-sound-owner-oct5.json", "recovery/tests/test_win_sound_product_source.py"], "reason": "Recover complete Win coordinate dispatcher through its real primary/alternate virtual events and contextual Sound status/play receiver. The contextual Sound view is supported; complete producer and installed sound lifetime contracts remain unresolved. No Sprite interpretation follows from the corrected Scroll producer."}
 // symbol    ?dispatch_24@Win@@QAEXHHH@Z
 void Win::dispatch_24(int x, int y, int alternate) {

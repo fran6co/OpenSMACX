@@ -5,7 +5,7 @@ The immutable task-base comparison protects source identities and obligations;
 the two pinned PE-body digests independently anchor the low-byte consumers.
 Neither control proves the native Win layout or whole-game behavior.
 """
-from dataclasses import fields
+from dataclasses import fields, replace
 import hashlib
 import os
 from pathlib import Path
@@ -98,7 +98,14 @@ def test_immutable_task_base_identity_claim_and_history_continuity():
     assert set(after) == set(before)
     for address, old in before.items():
         current = after[address]
-        assert protected_metadata(old) == protected_metadata(current)
+        expected = old
+        if address in {0x5F1070, 0x5EE9F0}:
+            # Native recording in the later immutable claim-only task promotes
+            # precisely these two obligations; all other metadata stays fixed.
+            assert not old.byte_exact and not old.semantic
+            assert current.byte_exact and not current.semantic
+            expected = replace(old, byte_exact=True)
+        assert protected_metadata(expected) == protected_metadata(current)
         assert protected_history(old) == protected_history(current)
         if address == 0x5F0540:
             assert old.symbol == "?adjust_menus@Win@@SGHPAUHWND__@@PAX@Z"
