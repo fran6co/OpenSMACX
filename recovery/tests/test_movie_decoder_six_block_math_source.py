@@ -15,7 +15,7 @@ def test_pinned_outer_wrappers_capture_and_publish_bitstream_state_once() -> Non
     from capstone import Cs, CS_ARCH_X86, CS_MODE_32
     from capstone.x86 import (
         X86_OP_IMM, X86_OP_MEM, X86_OP_REG,
-        X86_REG_EBP, X86_REG_EDI, X86_REG_ESI,
+        X86_REG_EBP, X86_REG_EDI, X86_REG_ESI, X86_REG_ESP,
     )
     from match_recovery.model import Span
     from match_recovery.pe_coff import PeImage
@@ -92,6 +92,23 @@ def test_pinned_outer_wrappers_capture_and_publish_bitstream_state_once() -> Non
                     continue
                 assert operand.mem.disp != 0x200
                 assert operand.mem.disp != 0x204
+        if start == 0x5D0D82:
+            # Normalize the three saved registers before assigning local offsets.
+            saves = [instructions[a] for a in (0x5D1049, 0x5D104A, 0x5D104B)]
+            assert [i.mnemonic for i in saves] == ["push"] * 3
+            assert [i.operands[0].reg for i in saves] == [
+                X86_REG_ESI, X86_REG_EBP, X86_REG_EDI]
+            for address, register, displacement in (
+                (0x5D104C, X86_REG_ESI, 0x0C),
+                (0x5D1050, X86_REG_EDI, 0x10C),
+                (0x5D10DF, X86_REG_ESI, 0x10C),
+                (0x5D10F4, X86_REG_ESI, 0x130),
+                (0x5D1172, X86_REG_ESI, 0x208),
+            ):
+                insn = instructions[address]
+                assert insn.mnemonic == "lea"
+                assert reg_operand(insn, 0, register)
+                assert mem_operand(insn, 1, X86_REG_ESP, displacement)
 
 
 def _function(source: str, signature: str) -> str:
@@ -134,6 +151,12 @@ def test_actual_six_step_predictor_and_dct_bodies(tmp_path: Path) -> None:
         "void __cdecl sub_5d1a30(",
     )
     extracted = [_function(source_text, signature) for signature in signatures]
+    block_index = signatures.index("DWORD __cdecl sub_5d0d82(")
+    storage_decl = "  DWORD local_storage_words[0x300 / sizeof(DWORD)];"
+    assert extracted[block_index].count(storage_decl) == 1
+    extracted[block_index] = extracted[block_index].replace(
+        storage_decl, storage_decl + "\n  observed_local_storage = "
+        "reinterpret_cast<std::uintptr_t>(local_storage_words);", 1)
     reader = extracted[0]
     read_needle = "static DWORD movie_media_read_bits32(const BYTE *input, DWORD bit_position) {"
     assert reader.count(read_needle) == 1
@@ -178,8 +201,22 @@ static int row_calls;
 static int column_calls;
 static int converter_calls;
 static int first_row_value;
+static int first_row_coefficient_three;
+static std::uintptr_t observed_local_storage;
+static int transform_pointer_mismatches;
 extern "C" void __cdecl sub_5d29e1(int *source, int *destination) {
-  if (row_calls == 0) first_row_value = source[0];
+  const int row = row_calls % 8;
+  const std::uintptr_t source_offset =
+      reinterpret_cast<std::uintptr_t>(source) - observed_local_storage;
+  const std::uintptr_t destination_offset =
+      reinterpret_cast<std::uintptr_t>(destination) - observed_local_storage;
+  if (source_offset != static_cast<std::uintptr_t>(row * 8 * 4)
+      || destination_offset != static_cast<std::uintptr_t>((64 + row) * 4))
+    ++transform_pointer_mismatches;
+  if (row_calls == 0) {
+    first_row_value = source[0];
+    first_row_coefficient_three = source[3];
+  }
   if (mutate_input_on_transform && row_calls == 0) {
     active_context->compressed_input_200 = replacement_input;
     did_mutate_context_input = true;
@@ -189,6 +226,11 @@ extern "C" void __cdecl sub_5d29e1(int *source, int *destination) {
   for (int i = 0; i != 8; ++i) destination[i * 9] = source[0] + i;
 }
 extern "C" void __cdecl sub_5d2c0a(int *destination, int *source) {
+  const int column = column_calls % 8;
+  const std::uintptr_t source_offset =
+      reinterpret_cast<std::uintptr_t>(source) - observed_local_storage;
+  if (source_offset != static_cast<std::uintptr_t>((64 + column * 9) * 4))
+    ++transform_pointer_mismatches;
   ++column_calls;
   for (int i = 0; i != 8; ++i) destination[i] = source[0] + i;
 }
@@ -296,9 +338,14 @@ int main() {
       &ac_runtime, 0, ac_runtime.compressed_input_200, output, 64,
       0);
   assert(block_position == 1);
+  if (transform_pointer_mismatches != 0) {
+    std::fprintf(stderr, "FAIL: transform scratch pointer offset mismatch\n");
+    return 97;
+  }
   assert(ac_runtime.bit_position_204 == 77);
   assert(row_calls == 8 && column_calls == 8);
-  assert(first_row_value == -0x20000);
+  assert(first_row_value == 0);
+  assert(first_row_coefficient_three == -0x20000);
 
   MediaDecoderContext wrapper_runtime = {};
   wrapper_runtime.compressed_input_200 = zero_input;
@@ -466,7 +513,27 @@ int main() {
          "-pedantic", str(unit), "-o", str(binary)],
         check=True,
     )
-    subprocess.run([str(binary)], check=True)
+    baseline = subprocess.run([str(binary)], capture_output=True, text=True)
+    assert baseline.returncode == 0, baseline.stderr
+
+    # Compile-success mutants remain inside the scratch; require the intended
+    # diagnostic rather than accepting an unrelated crash as proof.
+    for index, (correct, shifted) in enumerate((
+        ("local_storage_words + row * 8", "local_storage_words + 3 + row * 8"),
+        ("local_storage_words + 64 + row", "local_storage_words + 67 + row"),
+        ("local_storage_words + 64 + column * 9",
+         "local_storage_words + 67 + column * 9"),
+    )):
+        assert unit_source.count(correct) == 1
+        mutant_unit = tmp_path / f"movie_decoder_pointer_mutant_{index}.cpp"
+        mutant_unit.write_text(unit_source.replace(correct, shifted, 1))
+        mutant_binary = tmp_path / f"movie_decoder_pointer_mutant_{index}"
+        subprocess.run(
+            [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+             "-pedantic", str(mutant_unit), "-o", str(mutant_binary)], check=True)
+        rejected = subprocess.run([str(mutant_binary)], capture_output=True, text=True)
+        assert rejected.returncode == 97
+        assert rejected.stderr == "FAIL: transform scratch pointer offset mismatch\n"
 
     mutants = (
         ("words[6 + run_position]", "words[7 + run_position]"),
