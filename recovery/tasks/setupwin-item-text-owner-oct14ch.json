@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "05a50aeff6dd1d14ebeb5053f75fc5f828c2cda8",
+  "editable_files": [
+    "src/setupwin.cpp",
+    "recovery/tests/test_setupwin_item_text_oct14ch.py"
+  ],
+  "evidence": [
+    "Native pending discovery item-list-malformed-guards-oct14cc and independent pinned draw_item4AE599..4AE647 review. For nonnegative position, original reads item_texts_ without null admission, resets/traverses exactly position links only if position<count and otherwise leaves stale cursor. It does not stop traversal on null current. First lookup checks only head before directly dereferencing current/payload/text. CharUpperA and both strchr calls are unconditional, even if head/text is null; a found parenthesis writes its preceding byte without a paren>name guard.",
+    "Original4AE616 reloads item_texts_ after string operations, then independently reads head/current/payload/text.4AE62C tests TEXT, not payload; head/text null skip output, current/payload null are not guarded. Recover that fresh lookup rather than reusing the transformed first pointer. Preserve the correctly recovered inherited Buffer, window/source/overlay owners, all coordinates, text colors, first transformation order and original identities/claims. No new safety fix or initialization policy.",
+    "Host controls extract actual body. Exercise first transformations, independent owner/cursor/payload/text replacements during the CharUpper stub, empty head/text call admission with explicitly substituted non-crashing string probes, valid preceding-byte parenthesis witness and stale-cursor behavior. Such stubs demonstrate source call order, not original CRT null-fault outcomes. Compile-success stale-text and added-guard mutants must fail97 specific diagnostics. Existing Buffer-owner and menu controls stay intact.",
+    "Coordinator-owned isolated worktree, frozen fresh build/link, immediate measurement, compiler-function comparison, reference and identity continuity checks, independent original/source review, manual integration and fresh destination checks. Full matching/runtime/linked-preservation acceptance remain unproven. Original bug-for-bug fidelity supersedes previous safety approvals."
+  ],
+  "intent": "Recover the original SetupWin item cursor and two-stage label lookup, including original malformed-input admissions and preceding-byte truncation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4908240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "setupwin-item-text-owner-oct14ch"
+}
