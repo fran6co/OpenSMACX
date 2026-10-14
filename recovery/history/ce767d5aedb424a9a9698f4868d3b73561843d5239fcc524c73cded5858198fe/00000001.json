@@ -1,0 +1,22 @@
+{
+  "event_id": "c4e4f2e41f6f4b26fcda6ab6c6963666c0a40fb59832ab18df8b77194134f4f8",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/variants.py",
+      "packages/match-recovery/tests/test_variants.py"
+    ],
+    "evidence": [
+      "Direct native _deck/_trial_bindings reproduction refuses the private source-order candidate solely because the thirteen unchanged annotated originals move in source order. No identity/span/mode/kind/body/claim/import/interpretation changes occur. This blocks the explicitly authorized genuine-C++ destructor visibility experiment before compilation.",
+      "Admit only a generic stable-identity alignment in the native variant validator and focused package regressions. Key records by address/catalogued name/complete spans; refuse duplicate keys on either side, mismatched sets or any changed existing protected fields. Preserve interpretation/component guards, symbol-rename task/control authorization and correct old-line to new-line rebinding. No project-specific dispatch, compiler flags, source marker edits or weaker acceptance.",
+      "Keep immutable7a20029ed task baseline, all thirteen original subjects and discovery/source work. Require focused/full variant tests and damage controls, independent review and actual native private deck measurement before applying any C++ candidate. The other prepared media worker is a disjoint immutable checkout; no edits to its package/source or baseline are authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "netfifo-source-order-validator-blocker-oct14ec",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netfifo-destructor-recovery-owner-oct14eb"
+}
