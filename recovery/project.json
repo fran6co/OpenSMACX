@@ -152,6 +152,9 @@
     "backend": "pe-coff-i386",
     "compiler_profile": "application",
     "unit_flag_sets": {
+      "src/sprite_objects.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+      },
       "src/jackal/jackal.cpp": [0],
       "src/jackal/palette.cpp": [0],
       "src/jackal/font.cpp": [0],

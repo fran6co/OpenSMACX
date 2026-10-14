@@ -1,0 +1,21 @@
+{
+  "event_id": "5506298e4672c5704abbfd9131b8d7ef32cded2649fe3280ce3dac1b32c3208c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/README.md",
+      "packages/match-recovery/src/match_recovery/measurement.py",
+      "packages/match-recovery/tests/test_unit_flag_sets.py"
+    ],
+    "evidence": [
+      "The verified Sprite object TU requires explicit /Ob2. Existing sparse unit policy can only select a global trial; adding a third global trial would change every unpinned TU. Authorize minimal generic explicit single-unit flag recipe support within unit_flag_sets, retaining default trials, strict canonical unit validation, fingerprints and cross-TU effective recipe consistency. This is a demonstrated recovery blocker, not new acceptance authority."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "aec13e26185135a3ede54abe36c0d91ca95e4dc10f36c126eb74a514b8681e0d",
+  "request_id": "sprite-isolated-unit-recipe-oct14go",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:sprite-static-object-identities-oct9"
+}

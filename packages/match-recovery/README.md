@@ -4032,12 +4032,15 @@ no application identity or branch name is required. Object annotations also use
 configured source selection/address spaces, independently of binary backend limits.
 
 An optional `measurement.unit_flag_sets` selects one global flag-set index for
-each evidence-backed translation unit, for example `{"src/library.cpp": [0]}`.
-Keys must name existing canonical project-relative source TUs; headers, aliases,
-missing units, boolean indices and multiple selections refuse. Unlisted units
-retain the global alternatives. This is a compiler-policy decision, not inferred
-library membership or permission to weaken historical restoration obligations.
-The policy participates in input fingerprints; prior reports cannot be replayed.
+each evidence-backed translation unit, for example `{"src/library.cpp": [0]}`, or
+one explicit literal recipe, for example `{"src/library.cpp": {"flags": ["/O2", "/Gy"]}}`.
+Explicit recipes contain only a nonempty `flags` array of nonempty string tokens;
+they do not add a global trial. Keys must name existing canonical
+project-relative source TUs; headers, aliases, missing units, boolean indices
+and multiple selections refuse. Unlisted units retain the global alternatives.
+This is a compiler-policy decision, not inferred library membership or
+permission to weaken historical restoration obligations. The policy participates
+in input fingerprints; prior reports cannot be replayed.
 
 Direct measurements and recording use that TU's selected profile. Dependency
 graphs apply each dependency's own selection, retaining the requesting profile
