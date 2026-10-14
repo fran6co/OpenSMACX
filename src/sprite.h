@@ -417,13 +417,6 @@ extern int SpriteCachedScaleDenominator;  // 0x00696D24, initially -1
 // four moods in each of two variants; alien citizens have one four-mood set.
 extern Sprite g_CURSOR_SPRITES[12];
 extern Sprite g_CITIZEN_LG_CURSOR_SPRITES[8];
-extern Sprite g_TECH_ICON_SPRITES[89];
-extern Sprite g_BATTLE_MIND_WORM_SPRITE;
-extern Sprite g_BATTLE_ISLE_DEEP_SPRITE;
-extern Sprite g_BATTLE_LOCUSTS_CHIRON_SPRITE;
-extern Sprite g_BATTLE_FUNGAL_TOWER_SPRITE;
-extern Sprite g_BATTLE_SPORE_LAUNCHER_SPRITE;
-extern Sprite g_BATTLE_SEALURK_SPRITE;
 extern Sprite g_SPECIALIST_LG_CURSOR_SPRITES[7];
 extern Sprite g_CITIZEN_SM_CURSOR_SPRITES[8];
 extern Sprite g_SPECIALIST_SM_CURSOR_SPRITES[7];

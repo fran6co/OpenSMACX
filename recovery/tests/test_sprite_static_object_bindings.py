@@ -62,11 +62,13 @@ def test_object_split_preserves_definitions_order_and_original_obligations():
     old = read_text(before, ROOT / "src/sprite.cpp")
     kept = read_text(implementation, ROOT / "src/sprite.cpp")
     moved = read_text(objects, ROOT / "src/sprite_objects.cpp")
-    identity = lambda row: (row.address, row.name, row.image_spans,
-                            row.byte_exact, row.semantic)
+    identity = lambda row: (row.address, row.name, row.image_spans, row.semantic)
     assert sorted(map(identity, old)) == sorted(map(identity, kept + moved))
-    assert len(moved) == 380
+    assert len(moved) == 381  # 380 lifetime helpers plus the natural inline destructor.
     previous = {row.address: row for row in old}
+    # Recording may add freshly measured obligations, never withdraw old ones.
+    for row in kept + moved:
+        assert not previous[row.address].byte_exact or row.byte_exact
     for row in kept:
         assert row.body == previous[row.address].body
 

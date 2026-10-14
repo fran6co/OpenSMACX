@@ -22,6 +22,14 @@
 #include "buffer.h"
 #include "graphicwin.h"
 #include "texture.h"
+// Application-owned assets loaded here; storage lives in sprite_objects.cpp.
+extern Sprite g_TECH_ICON_SPRITES[89];
+extern Sprite g_BATTLE_MIND_WORM_SPRITE;
+extern Sprite g_BATTLE_ISLE_DEEP_SPRITE;
+extern Sprite g_BATTLE_LOCUSTS_CHIRON_SPRITE;
+extern Sprite g_BATTLE_FUNGAL_TOWER_SPRITE;
+extern Sprite g_BATTLE_SPORE_LAUNCHER_SPRITE;
+extern Sprite g_BATTLE_SEALURK_SPRITE;
 // Independent DWORD geometry outputs from load_interface (0x455610).
 // At 455Bxx the original sums frame sprite bounds for the caption/border
 // and subtracts bottom sprite bounds. popups_normal copies these into the
@@ -2109,16 +2117,6 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
 // in-class body here fails the claim below. Measured, not assumed.
 // ---------------------------------------------------------------------------
 
-/*
-// ORIGINAL: 0x00406850 ??1Sprite@@QAE@XZ 0x00406850-0x00406855 BYTE_EXACT
-// body      src/sprite.h
-// size      5 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      thunk
-// flags     hidden;thunk;sp_ready;purged_ok
-// calls     (none)
-*/
 
 /*
 Purpose: Turn the sprite into a one-pixel placeholder of the given extent.
