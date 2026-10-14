@@ -464,10 +464,12 @@ int SetupWin::draw_item(int position, int selected) {
     spot_.get_rect(position, 0, &row);
     row.top += 31;
     row.bottom = row.top + 26;
-    buffer_.set_clip(&row);
-    buffer_.set_text_color(selected ? 0xCA : 0xCD, -1, 1, 1);
+    // Original +0x444 is the inherited display Buffer, not buffer_ at +0xA44.
+    Buffer *const window_buffer = this;
+    window_buffer->set_clip(&row);
+    window_buffer->set_text_color(selected ? 0xCA : 0xCD, -1, 1, 1);
 
-    buffer2_.copy(&buffer_, 0, 0, row.left - 15, row.top - 31,
+    buffer2_.copy(window_buffer, 0, 0, row.left - 15, row.top - 31,
                   buffer2_.dib_.bmiHeader.biWidth,
                   -buffer2_.dib_.bmiHeader.biHeight);
 
@@ -493,7 +495,7 @@ int SetupWin::draw_item(int position, int selected) {
             if (pipe != 0) *pipe = ' ';
             char *paren = strchr(name, '(');
             if (paren != 0 && paren > name) paren[-1] = 0;
-            buffer_.write_cent_l(name, &row, static_cast<int>(strlen(name)));
+            window_buffer->write_cent_l(name, &row, static_cast<int>(strlen(name)));
         }
     }
 
@@ -516,7 +518,7 @@ int SetupWin::draw_item(int position, int selected) {
             opening->soft_update(x, y, width, height);
         }
     }
-    buffer_.restore_clip();
+    window_buffer->restore_clip();
     return 0;
 }
 

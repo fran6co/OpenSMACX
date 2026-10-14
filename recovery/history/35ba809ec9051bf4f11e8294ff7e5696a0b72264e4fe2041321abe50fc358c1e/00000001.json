@@ -1,0 +1,20 @@
+{
+  "event_id": "d8c3d9a56edddf02d08a498a8c4862e9d751cec10385dff45d24692b8f4686ce",
+  "payload": {
+    "affects": [
+      "entity-ec601458d56a53d8e849bd75ad906189cc61e38a0c09b1215bcaa09e9bbf918f"
+    ],
+    "author": "coordinator",
+    "discovery_id": "item-list-malformed-guards-oct14cc",
+    "evidence": [
+      "Independent original/source audit4AE5A7..4AE62E: original dereferences the selected item_texts_ header before head check, dereferences current and payload before retrieving text, and invokes CharUpperA and strchr before later text-output admission. Current source adds item_texts_ !=0, entry !=0, string_payload !=0 and name !=0 admission checks. These predate the five Buffer-owner corrections; normal menu data is nonnull. Preserve the finding for original malformed-path recovery; no new fix/safety policy or full fidelity claim."
+    ],
+    "hypothesis": "Existing extra item-list/current-entry/payload guards and label-processing admission remain a malformed-state fidelity obligation, distinct from the restored inherited Buffer owner.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "item-list-malformed-guards-oct14cc",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:setupwin-draw-buffer-owner-oct14cc"
+}
