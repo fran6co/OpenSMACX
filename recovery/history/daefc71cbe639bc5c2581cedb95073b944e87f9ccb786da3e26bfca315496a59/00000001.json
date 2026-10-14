@@ -1,0 +1,21 @@
+{
+  "event_id": "ac0f7dc472dce553ad9323b121469d85a14f907a41ac03f37051e5e8a2e74f77",
+  "payload": {
+    "affects": [
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-inherited-member-discovery-oct14gf",
+    "evidence": [
+      "Native CodeView member_data_layout currently resolves only direct members. NetDaemonNet inherits local_player_id_ and host_player_id_ through AlphaNet and Net; real storage binding needs unique complete nonvirtual-base traversal with compiler offsets, not duplicate globals, guessed offsets or fake wrappers.",
+      "Authorize narrowly bounded native resolver support and adversarial tests: ambiguous inheritance, incomplete/virtual bases, cycles and out-of-bounds layouts refuse; direct-member behavior remains intact. No weakening of original reference or byte checks."
+    ],
+    "hypothesis": "Native CodeView member_data_layout currently resolves only direct members. NetDaemonNet inherits local_player_id_ and host_player_id_ through AlphaNet and Net; real storage binding needs unique complete nonvirtual-base traversal with compiler offsets, not duplicate globals, guessed offsets or fake wrappers.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "net-inherited-member-discovery-oct14gf",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:net-player-id-ownership-oct14gf"
+}

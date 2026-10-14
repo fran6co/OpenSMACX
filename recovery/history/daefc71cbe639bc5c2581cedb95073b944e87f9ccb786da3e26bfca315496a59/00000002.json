@@ -1,0 +1,22 @@
+{
+  "event_id": "7066a3e8dec970785cf20471119fb12ff1030dfd0bf38435c6f6e7f1e8bf0d30",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "docs/DECOMP_MAP.md",
+      "packages/match-recovery/src/match_recovery/codeview_data.py",
+      "packages/match-recovery/tests/test_member_object_binding.py"
+    ],
+    "evidence": [
+      "Native CodeView member_data_layout currently resolves only direct members. NetDaemonNet inherits local_player_id_ and host_player_id_ through AlphaNet and Net; real storage binding needs unique complete nonvirtual-base traversal with compiler offsets, not duplicate globals, guessed offsets or fake wrappers.",
+      "Authorize narrowly bounded native resolver support and adversarial tests: ambiguous inheritance, incomplete/virtual bases, cycles and out-of-bounds layouts refuse; direct-member behavior remains intact. No weakening of original reference or byte checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ac0f7dc472dce553ad9323b121469d85a14f907a41ac03f37051e5e8a2e74f77",
+  "request_id": "net-inherited-member-scope-oct14gf",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:net-player-id-ownership-oct14gf"
+}
