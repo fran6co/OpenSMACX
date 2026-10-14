@@ -1,5 +1,17 @@
 # Match recovery
 
+`recover quality --summary` reports advisory per-original source findings for
+casts, raw offsets, manual virtual dispatch and address-like literals. It keeps
+these investigation signals separate from historical byte claims and reports
+current exactness as unmeasured. A body without a unique resolved source region
+(including generated `FILE` mappings without a uniquely symbol-resolved C++
+definition) remains unreviewed; no clean status is inferred from the absence of
+pattern hits. Findings use source path and line coordinates. C-style cast-shaped
+expressions are conservative signals and may include parenthesized expressions.
+Casts at SDK or binary boundaries are signals to investigate, not automatic
+defects. This report is not a match check, quality score, gate, or structural
+review.
+
 An independently installable Python package with a standard-library-only core for
 structure-led matching decompilation. It does not register projects, import a
 project's Python code or bundle a game's adapters. Project integration is local
