@@ -1,0 +1,122 @@
+{
+  "author": "coordinator",
+  "base_revision": "54fc6378e9cb0c75adba900fa7c0f6e39aac8ca3",
+  "editable_files": [
+    "src/movie_media_decoder.cpp",
+    "recovery/tests/test_movie_decoder_six_block_math_source.py",
+    "recovery/tests/test_movie_signed_scratch_actual_source_oct14fg.py"
+  ],
+  "evidence": [
+    "Pinned5D0D82 low-dword coefficient products and stores have four-byte modular bit patterns. Mapped row/column helpers consume signed integer words through signed high-half products, signed double conversions and arithmetic shifts; their source int pointers and native dword widths agree. VC6 DWORD is unsigned long, not the corresponding unsigned type of int, so current DWORD-array/int-pointer aliases are not a sound C++ representation.",
+    "Use one uninitialized flat int[192] local (0x300 bytes), store dc and coefficient products through the existing movie_media_signed32 memcpy bit conversion, and pass direct typed int pointers at corrected row8r/intermediate64+r/column64+9c origins. Preserve source signature, helper APIs, call order and byte-pitched destination casts. This is an evidence-backed chosen storage representation, not proof of the original source typename.",
+    "Native row writes indices0,9,18,27,36,45,54,63 relative to its destination64+r; complete intermediate accessed window spans words64..134, not64..127. Keep the entire192-word allocation flat and uninitialized rather than splitting into subarrays or initializing slack. Preserve unchecked coefficient indices, including in-reservation spill into64..191. Indices>=192 remain native out-of-frame/C++ out-of-bounds obligations; no guard, clamp or claimed portable collateral corruption fidelity.",
+    "Require actual-source typed-storage controls, bit-preserving conversion tests including sign-bit/extreme values, retained all-row/column geometry mutants and existing six-block behavior controls. Adapt only literal extraction/mutation anchors necessary for the newly typed workspace, not expectations to hide a changed result.",
+    "Measure full20-mapping movie owner; build/link fresh; compare physical compiler output outside the edited body; preserve all source identities/claims/history; independent review and fresh destination checks. No automatic acceptance, new byte claim, original marker edit or custom-register ABI proof."
+  ],
+  "intent": "Recover a single correctly typed signed transform workspace preserving native coefficient bits and the normalized original row/column geometry.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6091088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6091504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6105569,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6105888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6106122,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6098306,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6097579,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6100070,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6101058,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6100564,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6101552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6099576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6106736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6108592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6092231,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6092882,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6089225,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6090368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6090634,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6090013,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "movie-signed-scratch-owner-oct14fg"
+}
