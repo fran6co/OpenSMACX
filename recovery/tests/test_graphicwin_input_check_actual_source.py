@@ -117,7 +117,7 @@ def test_identity_claims_and_complete_history_survive_transfer():
     assert helper.symbol == "?check_pcx_input_data@Buffer@@QAEHPAUPcxInputView@@HHH@Z"
     assert wrapper.name == "sub_5d5470"
     assert wrapper.image_spans == ((0x005D5470, 0x005D5492),)
-    assert wrapper.byte_exact is False and wrapper.semantic is False
+    assert wrapper.byte_exact is True and wrapper.semantic is False
     assert wrapper.symbol == "?check_pcx_input_data@GraphicWin@@QAEHPAUPcxInputView@@HHH@Z"
     assert helper.source_role is source.SourceRole.UNCLASSIFIED
     assert wrapper.source_role is source.SourceRole.UNCLASSIFIED

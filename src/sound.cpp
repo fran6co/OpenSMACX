@@ -683,7 +683,7 @@ Purpose: Release the loaded sound. The wrapped device, if any, is asked to
          result; the sound's own vtable slot 0x80 then runs UNCONDITIONALLY
          (Wave's override suppresses it by flag; the base does not), the
          device is forgotten, and the loaded bit at 0x40 is cleared.
-// ORIGINAL: 0x004C6440 ?unload@Sound@@QAEHXZ 0x004C6440-0x004C6472
+// ORIGINAL: 0x004C6440 ?unload@Sound@@QAEHXZ 0x004C6440-0x004C6472 BYTE_EXACT
 // symbol    ?unload@Sound@@UAEHXZ
 // size      50 bytes
 // prototype int (__thiscall ?unload@Sound@@QAEHXZ)(Sound* this)

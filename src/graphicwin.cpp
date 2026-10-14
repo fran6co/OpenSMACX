@@ -1630,7 +1630,7 @@ Purpose: Forward all four arguments to 005D7A10.
          checked: see its recovery above, which reads `[esp+4]` and nothing
          else.
 
-// ORIGINAL: 0x005D5470 sub_5d5470 0x005D5470-0x005D5492
+// ORIGINAL: 0x005D5470 sub_5d5470 0x005D5470-0x005D5492 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the status helper and its paired forwarding method in the existing genuine Buffer/GraphicWin owners; retain original results, stack arguments, mappings and historical obligations.","evidence":["Pinned 5D5470 preserves four stack arguments, adjusts ECX by +0x444 and directly calls 5D7A10.","The existing 5D54A0/5D54D0 GraphicWin wrapper family uses the same secondary Buffer base and four-word stack shape.","Buffer's mapped 5D7AE0 loader independently observes PcxInputView data at +0x0C; 5D7A10 tests only that field.","Source names are provisional descriptions; the three unused trailing machine words remain opaque int parameters, not inferred Palette or color semantics."]}
 // Historical project symbol: ?leaf_005d5470_redirect@@YIHPAX0PBXHHH@Z
 // symbol    ?check_pcx_input_data@GraphicWin@@QAEHPAUPcxInputView@@HHH@Z

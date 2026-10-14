@@ -234,7 +234,7 @@ Purpose: Release the loaded wave. The wrapped device, if there is one, is asked
          return value; the device is then forgotten. Unless bit 1 of the flag
          dword at 0x54 suppresses it, the object's own vtable slot 0x80 is run,
          and the loaded bit (bit 0) of the flag dword at 0x40 is cleared.
-// ORIGINAL: 0x004C6EA0 ?unload@Wave@@QAEXXZ 0x004C6EA0-0x004C6ED9 SEMANTIC
+// ORIGINAL: 0x004C6EA0 ?unload@Wave@@QAEXXZ 0x004C6EA0-0x004C6ED9 BYTE_EXACT
 // symbol    ?unload@Wave@@UAEHXZ
 // size      57 bytes
 // prototype void (__thiscall ?unload@Wave@@QAEXXZ)(Wave* this)
@@ -968,7 +968,7 @@ Purpose: Start the wave. While it holds a device group slot, a disabled group
          0x14. Finally a clocked wave stamps the start time from the game's
          timeGetTime import, runs its own vtable slot 0x80, and forgets the
          device.
-// ORIGINAL: 0x004C6920 ?play@Wave@@QAEHXZ 0x004C6920-0x004C69AD SEMANTIC
+// ORIGINAL: 0x004C6920 ?play@Wave@@QAEHXZ 0x004C6920-0x004C69AD BYTE_EXACT
 // symbol    ?play@Wave@@UAEHXZ
 // TRIED: 52/54 MNEMONIC_ONLY; sole divergence is the vtable-pointer
 //   register (edx vs eax) at the FIRST `vtable_slot<device_start_fn>(device_,

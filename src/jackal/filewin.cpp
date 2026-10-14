@@ -721,7 +721,7 @@ Purpose: Close the file dialog: close the two button strips, the edit box
          drop the selection word, and destroy the dialog's own window
          handle if one was created.
 
-// ORIGINAL: 0x00613900 ?close@FileWin@@QAEXXZ 0x00613900-0x006139AC FILE
+// ORIGINAL: 0x00613900 ?close@FileWin@@QAEXXZ 0x00613900-0x006139AC FILE BYTE_EXACT
 // size      172 bytes
 // prototype void (__thiscall ?close@FileWin@@QAEXXZ)(FileWin* this)
 // callers   5   call targets   4
