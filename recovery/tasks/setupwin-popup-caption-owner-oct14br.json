@@ -1,0 +1,27 @@
+{
+  "author": "coordinator",
+  "base_revision": "9a265fa42e867eeef1933df95c429ca69428f3d0",
+  "editable_files": [
+    "src/setupwin.cpp",
+    "recovery/tests/setupwin_rightside_harness.cpp",
+    "recovery/tests/test_setupwin_rightside_actual_source.py",
+    "recovery/tests/test_setupwin_caption_destination_oct14br.py"
+  ],
+  "evidence": [
+    "Pinned4ADCAC zeros localtitle[ebp-1B0];4ADCF2 loadsPopup+A48 caption;4ADD00 pushescaption and4ADD01/07 passthatlocal asstrcatdestination to645470 at4ADD08. Filenameis separateEBP+8. Currentpopupbranchappendscaptiontofilenameinsteadtoken; restoretoken whilepreservingoriginalunboundedcopy/nullguard.",
+    "The same localbyte is tested4ADE0C to add0x14-line_stride andincrementrowcount4ADE1C/1F, thenusedfortitlewidth/draw. PreserveoriginalsignedDIBheight, zero-row/nullcaption behavior, errorpaths, callbackreloads andlifetimes; nozeroheightguard/fallback.",
+    "OwnedcandidateCreateDIBSection failurecaptured size28 width354 height0 planes1 bpp8 clrUsed256 andSetupWin/GraphicWin callerchain in ignoredruntimecache menu-dib-failure-gdb-oct14bp. Thisdiagnosesremainingstartupwork, notproof ofcapturedcaption/rowlocals. Independentpin/sourceauditsconfirmdestinationdefect.",
+    "RepaironlystalehostfixtureinterfacesneededtoexecuteactualSetupbody; masterrightsidefixture5compilefailures predatecorrection. Preserveoldflow/lifetimeassertions, strengthenmutants toexactsemanticdiagnostics whereapplicable. Newactualsourcecontrols coverempty/nonempty/nullcaption, zero/nonzeroitems, unchangedfilename, titlegeometry/draw andwrongdestinationcompile-successmutant. FreezeALLsource/tests before nativebuild; coordinatorownsGit/compiler. Preserveallannotations/claims, requirefreshbuild/link, scopedmeasurement, physicalfunctioncomparison, relevanttests, references andclaimcontinuity plusreview beforemanualintegration. Nofullgameacceptanceclaim."
+  ],
+  "intent": "Recover popup caption publication into SetupWin's original local title buffer, including its title-row geometry and rendering effects.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4905840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "setupwin-popup-caption-owner-oct14br"
+}
