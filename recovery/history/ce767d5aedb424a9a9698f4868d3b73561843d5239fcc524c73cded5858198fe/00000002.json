@@ -1,0 +1,23 @@
+{
+  "event_id": "e0aa24a6669ed6f9ae463621c4c61a8b4c1b998f43bee7137df22275d20b5b3f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_netfifo_destructor_actual_source_oct14eb.py",
+      "src/net_fifo.cpp",
+      "src/net_fifo.h"
+    ],
+    "evidence": [
+      "Pinned destructor 0x6339E0-0x633A42 drains the typed queue under its critical section, resets tail/count, leaves the section, then deletes it. Current out-of-line close call emits 32 instead of 98 bytes. Private literal-drain candidate matches all 98 primary body bytes but leaves runtime/import references unknown; this is not acceptance.",
+      "Admit a private nonvirtual in-class inline drain_queue helper experiment in the already authorized NetFifo header and source, sharing the exact existing close statements with the destructor. No fields, bases, virtual methods, ABI, flags, force-inline attributes, safety fixes or original identities/claims change. Ordinary implicit inline is a compiler hypothesis, not proof the original had this helper.",
+      "Require separate destructor API and constructor header-layout damage controls, actual-source host lock/drain/lifetime checks, measurements of all thirteen original subjects, fresh application build/link and outside-scope review before integration. Correct contradictory destructor interpretation through the native annotation writer only after fresh evidence and separate scope admission. Preserve immutable7a20029ed baseline and all historical claims; no automatic/game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c4e4f2e41f6f4b26fcda6ab6c6963666c0a40fb59832ab18df8b77194134f4f8",
+  "request_id": "netfifo-inline-cleanup-experiment-oct14ef",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netfifo-destructor-recovery-owner-oct14eb"
+}
