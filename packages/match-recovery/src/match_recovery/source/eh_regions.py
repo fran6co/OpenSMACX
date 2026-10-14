@@ -27,8 +27,7 @@ _WRITE = 0x80000000
 _COMDAT = 0x00001000
 _FUNCINFO_MAGIC = 0x19930520
 _EH_BUNDLE_SIZE = 40
-_COLD_SIZE = 21
-_HANDLER_OFFSET = 11
+_COLD_SIZES = {18: 8, 21: 11}
 _EH_RUNTIME = "___CxxFrameHandler"
 
 _ENGINE = Cs(CS_ARCH_X86, CS_MODE_32)
@@ -48,6 +47,7 @@ class EHOwnershipEvidence:
     child_section: int
     func_info_section: int
     handler_offset: int
+    original_handler_offset: int
     cleanup_offset: int
     original_handler: int
     original_func_info: int
@@ -101,8 +101,8 @@ def _checked_spans(spans: tuple[tuple[int, int], ...]) -> tuple[Span, Span]:
     primary, cold = result
     if primary.start >= cold.start or primary.end > cold.start:
         raise ValueError("EH spans are reordered or overlap")
-    if cold.end - cold.start != _COLD_SIZE:
-        raise ValueError("cold EH region must have the independently bounded 21-byte extent")
+    if cold.end - cold.start not in _COLD_SIZES:
+        raise ValueError("cold EH region must use one of the two bounded VC6 extents")
     return primary, cold
 
 
@@ -172,12 +172,15 @@ def _exec_target(image: PeImage, target: int, *, outside: tuple[Span, ...]) -> N
 def _original_eh(image: PeImage, primary: Span, cold: Span):
     main = image.read(primary)
     cold_code = image.read(cold)
-    handler = cold.start + _HANDLER_OFFSET
+    handler_offset = cold.end - cold.start - 10
+    if _COLD_SIZES.get(cold.end - cold.start) != handler_offset:
+        raise ValueError("original cold EH region has an unsupported extent")
+    handler = cold.start + handler_offset
     _image_section(image, primary, code=True)
     _image_section(image, cold, code=True)
     _image_registration_edge(image, primary, main, handler)
 
-    clean = _decoded(cold_code[:_HANDLER_OFFSET], cold.start)
+    clean = _decoded(cold_code[:handler_offset], cold.start)
     if (len(clean) != 2 or clean[0].mnemonic != "lea"
             or len(clean[0].operands) != 2
             or clean[0].operands[0].type != x86.X86_OP_REG
@@ -185,6 +188,8 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
             or clean[0].operands[1].type != x86.X86_OP_MEM
             or clean[0].operands[1].mem.base != x86.X86_REG_EBP
             or clean[0].operands[1].mem.index != 0
+            or clean[0].size not in (3, 6)
+            or clean[0].encoding.disp_size != clean[0].size - 2
             or clean[1].mnemonic != "jmp"
             or len(clean[1].operands) != 1
             or clean[1].operands[0].type != x86.X86_OP_IMM):
@@ -192,7 +197,7 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
     cleanup_target = clean[1].operands[0].imm & 0xFFFFFFFF
     _exec_target(image, cleanup_target, outside=(primary, cold))
 
-    handler_code = cold_code[_HANDLER_OFFSET:]
+    handler_code = cold_code[handler_offset:]
     handler_ins = _decoded(handler_code, handler)
     if (len(handler_ins) != 2 or handler_ins[0].mnemonic != "mov"
             or len(handler_ins[0].operands) != 2
@@ -203,6 +208,9 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
             or len(handler_ins[1].operands) != 1
             or handler_ins[1].operands[0].type != x86.X86_OP_IMM):
         raise ValueError("original cold handler is not a FuncInfo runtime stub")
+    validated_offset, _destructor_offset, _info_offset, _runtime_offset = _cold_layout(cold_code)
+    if validated_offset != handler_offset:
+        raise ValueError("original cold region does not use a supported cleanup/handler encoding")
     func_info = handler_ins[0].operands[1].imm & 0xFFFFFFFF
     runtime_target = handler_ins[1].operands[0].imm & 0xFFFFFFFF
     _exec_target(image, runtime_target, outside=(primary, cold))
@@ -226,9 +234,9 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
         raise ValueError("original handler FuncInfo pointer lacks its exact HIGHLOW site")
     if image.absolute_sites(fi_span) != frozenset({8, 36}):
         raise ValueError("original FuncInfo has unexpected HIGHLOW sites in its full 40-byte bundle")
-    if image.absolute_sites(cold) != frozenset({12}):
+    if image.absolute_sites(cold) != frozenset({handler_offset + 1}):
         raise ValueError("original cold region has unexpected HIGHLOW sites outside the handler pointer")
-    return handler, func_info, cold.start, cleanup_target, runtime_target
+    return handler_offset, handler, func_info, cold.start, cleanup_target, runtime_target
 
 
 def _associated_root(obj: Coff, section: int, root: int) -> bool:
@@ -270,7 +278,38 @@ def _reloc_at(obj: Coff, section: int, offset: int, kind: RelocationKind) -> Sym
     return obj.symbols[rows[0][1]]
 
 
-def _object_push_edge(obj: Coff, root: Symbol, child: int) -> None:
+def _cold_layout(code: bytes) -> tuple[int, int, int, int]:
+    """Validate the two supported cold encodings and return key byte offsets."""
+    instructions = _decoded(code, 0)
+    if (len(instructions) != 4 or instructions[0].mnemonic != "lea"
+            or len(instructions[0].operands) != 2
+            or instructions[0].operands[0].type != x86.X86_OP_REG
+            or instructions[0].operands[0].reg != x86.X86_REG_ECX
+            or instructions[0].operands[1].type != x86.X86_OP_MEM
+            or instructions[0].operands[1].mem.base != x86.X86_REG_EBP
+            or instructions[0].operands[1].mem.index != 0
+            or instructions[0].size not in (3, 6)
+            or instructions[0].encoding.disp_size != instructions[0].size - 2
+            or instructions[1].mnemonic != "jmp"
+            or instructions[1].size != 5
+            or len(instructions[1].operands) != 1
+            or instructions[1].operands[0].type != x86.X86_OP_IMM
+            or instructions[2].mnemonic != "mov"
+            or instructions[2].size != 5
+            or len(instructions[2].operands) != 2
+            or instructions[2].operands[0].type != x86.X86_OP_REG
+            or instructions[2].operands[0].reg != x86.X86_REG_EAX
+            or instructions[2].operands[1].type != x86.X86_OP_IMM
+            or instructions[3].mnemonic != "jmp"
+            or instructions[3].size != 5
+            or len(instructions[3].operands) != 1
+            or instructions[3].operands[0].type != x86.X86_OP_IMM):
+        raise ValueError("EH child does not contain one supported cleanup then handler stub")
+    handler_offset = instructions[2].address
+    return handler_offset, instructions[1].address + 1, handler_offset + 1, handler_offset + 6
+
+
+def _object_push_edge(obj: Coff, root: Symbol, child: int, handler_offset: int) -> None:
     _section, code, relocations, _alignment = _relocations(obj, root.section)
     instructions = _decoded(code, 0)
     expected = _registration_push(instructions, 0)
@@ -281,50 +320,32 @@ def _object_push_edge(obj: Coff, root: Symbol, child: int) -> None:
         if item.kind is not RelocationKind.ABSOLUTE32:
             continue
         target = obj.symbols[int(item.target)]
-        if target.section == child and target.value == _HANDLER_OFFSET:
+        if target.section == child and target.value == handler_offset:
             addend, = struct.unpack_from("<I", code, item.offset)
             edges.append((item.offset, addend))
     if edges != [(expected, 0)]:
-        raise ValueError("COFF root lacks one exact relocated PUSH to child handler offset 11")
+        raise ValueError("COFF root lacks one exact relocated PUSH to child handler offset")
 
 
 def _object_child_and_info(obj: Coff, root: Symbol, child: int):
     child_section, child_code, child_relocs, child_alignment = _relocations(obj, child)
-    if len(child_code) != _COLD_SIZE:
-        raise ValueError("COFF EH child is not exactly 21 bounded bytes")
-    instructions = _decoded(child_code, 0)
-    if ([item.size for item in instructions] != [6, 5, 5, 5]
-            or instructions[0].mnemonic != "lea"
-            or instructions[0].operands[0].type != x86.X86_OP_REG
-            or instructions[0].operands[0].reg != x86.X86_REG_ECX
-            or instructions[0].operands[1].type != x86.X86_OP_MEM
-            or instructions[0].operands[1].mem.base != x86.X86_REG_EBP
-            or instructions[0].operands[1].mem.index != 0
-            or instructions[1].mnemonic != "jmp"
-            or len(instructions[1].operands) != 1
-            or instructions[1].operands[0].type != x86.X86_OP_IMM
-            or instructions[2].mnemonic != "mov"
-            or instructions[2].operands[0].type != x86.X86_OP_REG
-            or instructions[2].operands[0].reg != x86.X86_REG_EAX
-            or instructions[3].mnemonic != "jmp"
-            or len(instructions[3].operands) != 1
-            or instructions[3].operands[0].type != x86.X86_OP_IMM):
-        raise ValueError("COFF EH child does not contain cleanup then handler stubs")
-
-    expected_relocations = {7, 12, 17}
+    handler_offset, destructor_offset, info_offset, runtime_offset = _cold_layout(child_code)
+    if len(child_code) != handler_offset + 10:
+        raise ValueError("COFF EH child has an unsupported bounded extent")
+    expected_relocations = {destructor_offset, info_offset, runtime_offset}
     if {item.offset for item in child_relocs} != expected_relocations:
         raise ValueError("COFF EH child has missing or unaccounted relocations")
-    destructor = _reloc_at(obj, child, 7, RelocationKind.RELATIVE32)
+    destructor = _reloc_at(obj, child, destructor_offset, RelocationKind.RELATIVE32)
     if (destructor.section != 0 or destructor.storage != 2
             or not destructor.name.startswith("??1") or not destructor.type & 0x20):
         raise ValueError("COFF cleanup stub does not transfer to an external destructor")
-    func_info_symbol = _reloc_at(obj, child, 12, RelocationKind.ABSOLUTE32)
-    runtime = _reloc_at(obj, child, 17, RelocationKind.RELATIVE32)
+    func_info_symbol = _reloc_at(obj, child, info_offset, RelocationKind.ABSOLUTE32)
+    runtime = _reloc_at(obj, child, runtime_offset, RelocationKind.RELATIVE32)
     if (runtime.section != 0 or runtime.storage != 2
             or runtime.name != _EH_RUNTIME):
         raise ValueError("COFF handler stub does not transfer to the C++ EH runtime")
-    if (struct.unpack_from("<I", child_code, 7)[0] != 0
-            or struct.unpack_from("<I", child_code, 17)[0] != 0):
+    if (struct.unpack_from("<I", child_code, destructor_offset)[0] != 0
+            or struct.unpack_from("<I", child_code, runtime_offset)[0] != 0):
         raise ValueError("COFF cold branch has a nonzero destructor/runtime addend")
 
     data_section_number = func_info_symbol.section
@@ -378,7 +399,8 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int):
     if (unwind_symbol.section != data_section_number or unwind_symbol.value != 32
             or cleanup_symbol.section != child or cleanup_symbol.value != 0):
         raise ValueError("COFF unwind map does not own exactly the child cleanup entry")
-    return child_section, child_code, child_relocs, child_alignment, data_section_number, runtime.name
+    return (child_section, child_code, child_relocs, child_alignment,
+            data_section_number, runtime.name, handler_offset)
 
 
 def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeImage,
@@ -396,8 +418,9 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
     if type(original_image) is not PeImage:
         raise ValueError("EH binding requires a pinned parsed PE image")
     primary, cold = _checked_spans(spans)
-    original_handler, original_func_info, original_cleanup, _cleanup_target, original_runtime = \
-        _original_eh(original_image, primary, cold)
+    (original_handler_offset, original_handler, original_func_info,
+     original_cleanup, _cleanup_target, original_runtime) = _original_eh(
+         original_image, primary, cold)
 
     obj = Coff(raw_object)
     root = obj.function(emitted_symbol)
@@ -416,16 +439,21 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
     if not child_flags & _CODE or not child_flags & _EXECUTE or child_flags & _WRITE:
         raise ValueError("COFF EH child is not bounded executable code")
 
-    _object_push_edge(obj, root, child)
+    _child_section, child_code, _child_relocs, _child_alignment = _relocations(obj, child)
+    handler_offset, _destructor_offset, _info_offset, _runtime_offset = _cold_layout(child_code)
+    _object_push_edge(obj, root, child, handler_offset)
     (_child_section, child_code, child_relocs, child_alignment,
-     info_section, runtime_symbol) = _object_child_and_info(obj, root, child)
+     info_section, runtime_symbol, object_handler_offset) = _object_child_and_info(obj, root, child)
+    if handler_offset != object_handler_offset:
+        raise ValueError("COFF EH handler offset changed during ownership validation")
 
     root_section, root_code, root_relocs, root_alignment = _relocations(obj, root.section)
     evidence = EHOwnershipEvidence(
         root_section=root.section,
         child_section=child,
         func_info_section=info_section,
-        handler_offset=_HANDLER_OFFSET,
+        handler_offset=handler_offset,
+        original_handler_offset=original_handler_offset,
         cleanup_offset=0,
         original_handler=original_handler,
         original_func_info=original_func_info,

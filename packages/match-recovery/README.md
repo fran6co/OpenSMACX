@@ -3697,11 +3697,14 @@ are passed unchanged; quoted display labels are never reparsed into arguments.
 
 The historical whole-function comparator supports one original image span, or
 a narrowly verified i386 C++-EH primary/cold pair. The latter requires one
-independent code COMDAT with exactly one associated 21-byte cleanup/handler
-child, complete frame registration, and matching ownership chains through the
+independent code COMDAT with exactly one associated 18-byte or 21-byte
+cleanup/handler child (the validated disp8 or disp32 `lea` form), complete frame
+registration, and independently valid ownership chains through the
 supported 40-byte `0x19930520` single-state exception metadata on both the PE
-and COFF sides. Section order, adjacency and generated label spelling do not
-bind a region. Every declared byte is compared independently; gaps are never
+and COFF sides. The two sides may use different supported instruction lengths;
+binding proves ownership only, so ordinary byte comparison still reports a
+length/encoding mismatch. Section order, adjacency and generated label spelling do
+not bind a region. Every declared byte is compared independently; gaps are never
 read through. Only exact, relocation-free NOP/INT3 fill outside the declared
 extent, within the physical COFF alignment envelope after a terminated code
 boundary, can be omitted. Unsupported, ambiguous, shared or writable-executable

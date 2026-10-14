@@ -12,14 +12,15 @@ from match_recovery.source.model import Tier
 from test_eh_regions import ROOT, SPANS, _coff, _pe
 
 
-def fixture(tmp_path, *, image_damage=None):
+def fixture(tmp_path, *, image_damage=None, original_cold_size=21):
     path = tmp_path / "owner.cpp"
-    spans = ";".join(f"0x{low:08X}-0x{high:08X}" for low, high in SPANS)
+    original_spans = (SPANS[0], (SPANS[1][0], SPANS[1][0] + original_cold_size))
+    spans = ";".join(f"0x{low:08X}-0x{high:08X}" for low, high in original_spans)
     text = (f"// ORIGINAL: 0x{SPANS[0][0]:08X} owner {spans} FILE\n"
             f"// symbol {ROOT}\nvoid owner() {{}}\n")
     path.write_text(text)
     image = tmp_path / "original.exe"
-    image.write_bytes(_pe(damage=image_damage))
+    image.write_bytes(_pe(damage=image_damage, cold_size=original_cold_size))
     return read_text(text, path)[0], image
 
 
@@ -40,6 +41,20 @@ def test_complete_owned_regions_measure_exact_in_the_real_comparison_path(tmp_pa
     assert result.compared_bytes + result.masked_bytes == 43
     assert result.masked_bytes == 16
     assert "0x00401100" in result.diagnostic
+
+
+@pytest.mark.parametrize(("original_size", "object_size"), [(18, 18), (18, 21), (21, 18)])
+def test_compact_and_wide_forms_bind_independently_but_length_change_is_a_miss(
+        tmp_path, original_size, object_size):
+    row, image = fixture(tmp_path, original_cold_size=original_size)
+    candidate = subject_asm(_coff(cold_size=object_size), row, "trial")
+    assert isinstance(candidate, RegionCandidate)
+    result = compare_subject(row, image, candidate)
+    if original_size == object_size:
+        assert result.verdict == Tier.BYTE_EXACT
+    else:
+        assert result.verdict != Tier.BYTE_EXACT
+        assert result.verdict != Tier.REFUSED
 
 
 @pytest.mark.parametrize("region,offset,value", [(1, 21, 0xF8), (2, 2, 0xE0)])
