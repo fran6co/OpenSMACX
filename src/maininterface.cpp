@@ -80,6 +80,9 @@ int MainInterfaceEndTurnAnimation = 1;
 // is the actual secondary base at this+A14. Mixed derived interfaces are
 // registered as SubInterface, not falsely presented as IfaceRegistryEntry.
 // RECOVERY_OBJECT: v2 0x007AE7F0 0x007AE820 ?InterfaceRegistry@@3PAPAVSubInterface@@A 0x00459680
+// BattleWin::init publishes its interface in slot 10, not independent storage.
+// Retain the historical receiver-slot identity without claiming a new extent.
+// RECOVERY_OBJECT: v3 0x007AE818 ?BattleWinInitReceiver@@3PAVBattleWin@@A member ?InterfaceRegistry@@3PAPAVSubInterface@@A [10]
 SubInterface *InterfaceRegistry[12];
 void register_iface_mode(int slot, SubInterface *interface_entry) {
     InterfaceRegistry[slot] = interface_entry;

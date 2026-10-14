@@ -56,7 +56,13 @@ def _unique(records: Sequence[ObjectBinding]) -> None:
     if any(left.end > right.start for left, right in zip(spans, spans[1:])):
         raise ValueError("original object extents overlap")
     for row in records:
-        if any(span.start < row.origin.address < span.end for span in spans):
+        containing = [owner for owner in records if owner.span is not None
+                      and owner.span.start < row.origin.address < owner.span.end]
+        if containing and not (
+                row.span is None and row.parent_symbol is not None
+                and len(containing) == 1
+                and containing[0].unit == row.unit
+                and containing[0].symbol == row.parent_symbol):
             raise ValueError("object start lies inside another original object extent")
 
 

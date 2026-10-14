@@ -46,7 +46,9 @@ def test_actual_owner_geometry_and_temporary_lifetime(tmp_path):
     ('field_70_ = frame;', 'field_70_ = layout;'),
     ('field_4_ = 10;', 'field_4_ = 9;'),
     ('right2 + 3;', 'right2 + 4;'),
-    ('BattleWinInitReceiver = this;', 'BattleWinInitReceiver = 0;'),
+    ('InterfaceRegistry[10] = this;', 'InterfaceRegistry[10] = 0;'),
+    ('InterfaceRegistry[10] = this;', 'InterfaceRegistry[9] = this;'),
+    ('InterfaceRegistry[10] = this;', 'InterfaceRegistry[10] = this; InterfaceRegistry[11] = this;'),
 ])
 def test_controls_reject_lifetime_geometry_and_receiver_mutants(tmp_path, old, new):
     body = owner()
@@ -55,6 +57,9 @@ def test_controls_reject_lifetime_geometry_and_receiver_mutants(tmp_path, old, n
 
 
 def test_real_source_receiver_and_typed_rectangles():
+    implementation = (ROOT / 'src/battlewin.cpp').read_text()
+    assert 'BattleWinInitReceiver' not in implementation
+    assert 'InterfaceRegistry[10] = this;' in owner()
     source = (ROOT / 'src/game.cpp').read_text()
     assert 'g_BattleWin.init();' in source
     assert 'battlewin_init(static_cast<BattleWin *>(sub_interface_global()))' not in source
