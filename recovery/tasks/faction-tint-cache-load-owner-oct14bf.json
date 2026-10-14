@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "6d6bed0731bda74877b24810ec94f6e5f764faec",
+  "editable_files": [
+    "src/game.cpp",
+    "recovery/tests/test_ambience_colortables_source.py",
+    "recovery/tests/test_faction_tint_cache_load_oct14bf.py"
+  ],
+  "evidence": [
+    "Pinned original423390..423397 pushes size0x100, source cache+0x100 and destination BodyTintColorTables[faction]; stride0x1800. Original423511..423518 separately pushes0xC000 on the cache-write path; preserve that original quirk and cache size0xC100.",
+    "Fresh owned candidate runtime hardware watchpoint at MultiWindow.spot_.spots_0x6e3afc observes zero becoming0x48 inside linked colortables_init_faction rep movsd at482e7d. Actual crashing thread stack captures Spot destructor599cff called from MultiWin destructor40cd43. Evidence under ignored build/recovery/runtime-startup-oct14bc.4PGnzI; exact candidate hash asserted against retained build-bub8qg8x.",
+    "Correct only the mistranslated cache-load copy; preserve all mappings and claims, original lifetime/error behavior and remaining oversized cache-write obligation. Test actual source across all8 faction indices and sentinels with a compile-success oversized-copy mutant. Coordinator owns compiler/Git/worktree setup and fresh build/link, relevant measurements and reviewed manual integration; runtime counterexample is not full acceptance."
+  ],
+  "intent": "Restore the original 256-byte faction tint cache load without changing the original oversized cache write or cache file extent.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4337664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "faction-tint-cache-load-owner-oct14bf"
+}
