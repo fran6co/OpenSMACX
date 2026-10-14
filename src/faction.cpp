@@ -1666,7 +1666,7 @@ void __cdecl agenda_off(int faction_id, int faction_id_with, int agenda) {
 
 /*
 Purpose: Set or unset the diplomatic treaty for the specified faction with another faction.
-// ORIGINAL: 0x0055BB30 ?set_treaty@@YAXHHHH@Z 0x0055BB30-0x0055BB98
+// ORIGINAL: 0x0055BB30 ?set_treaty@@YAXHHHH@Z 0x0055BB30-0x0055BB98 BYTE_EXACT
 // LEVER: naming the diplo_treaties element's address in a local
 //            `uint32_t *treaty_slot` and reaching diplo_merc through it via
 //            `(char *)treaty_slot + (offsetof(diplo_merc)-offsetof(diplo_treaties))`
