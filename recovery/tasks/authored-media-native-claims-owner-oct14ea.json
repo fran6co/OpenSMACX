@@ -1,0 +1,42 @@
+{
+  "author": "coordinator",
+  "base_revision": "7a20029edfe4fb109e048bdcdce23f0e44cc0117",
+  "editable_files": [
+    "src/flic.cpp",
+    "src/video.cpp",
+    "src/cursor.cpp",
+    "recovery/tests/test_authored_media_claim_continuity_oct14ea.py"
+  ],
+  "evidence": [
+    "Fresh authored-media-preflight-oct14dz.json returns exact for Flic.init629E50 (160/160), Video.size_buffer637310 (49/49), VideoFrameQueue.peek63E7F0 (18/18) and Cursor constructor63B2D0 (7/7), total234instructions under normal primary recovery flags. Retained /Ob2 discovery was not used as measurement authority.",
+    "Independent source review confirms real typed Flic/Buffer/Palette, Video output/rectangle and embedded queue, queue nodes, and actual Cursor handle/sprite/hotspot members. Preserve provisional field/name meanings and original unsafe/error-path behavior; no class/lifetime/runtime closure is inferred from byte equality.",
+    "Native recorder alone writes claims. No C++ body/header/flags/span/symbol/original identity/seed-history edits authorized. Preserve historical obligations; only measured semantic-to-byte strengthening may change the old weaker flag.",
+    "Require fixed7a20029ed lossless continuity controls, independent publication review, source/identity/reference/history checks, fresh isolated build/link and destination rechecks before coordinator-reviewed manual integration. Existing unrelated failures remain explicit and unchanged. Masked bytes do not prove linked preservation, runtime or full-game acceptance."
+  ],
+  "intent": "Bank four freshly measured exact authored Flic, Video and Cursor methods through the native recorder only, without implementation or compiler-policy changes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6463056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6517520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6533840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6547440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "authored-media-native-claims-owner-oct14ea"
+}

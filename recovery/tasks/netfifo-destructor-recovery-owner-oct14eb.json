@@ -1,0 +1,89 @@
+{
+  "author": "coordinator",
+  "base_revision": "7a20029edfe4fb109e048bdcdce23f0e44cc0117",
+  "editable_files": [
+    "src/net_fifo.cpp",
+    "src/net_fifo.h",
+    "recovery/tests/test_netfifo_destructor_actual_source_oct14eb.py",
+    "recovery/tests/test_core_claim_continuity_oct14dt.py",
+    "recovery/tests/test_net_fifo_live_head_oct12.py",
+    "recovery/tests/test_net_fifo_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned6339E0-633A42 destructor executes EnterCriticalSection, original queue/payload free-and-reread loop, tail/count zeroing, LeaveCriticalSection and DeleteCriticalSection inline. Current native spelling calls close before its later definition and produces8 rather than43instructions. Existing close633A50 has a freshly recorded41/41byte claim; preserve it and all other class obligations.",
+    "Admit the whole genuine NetFifo ownership group for collateral measurements, not unrelated Net/NetDaemon bodies. First use native task variants: move the unchanged destructor definition below close to test source-order visibility; alternatively express the already evidenced drain statements in the genuine destructor body before lock destruction. No asm, copied bytes, force-inline pragma, invented external addresses, lifetime change, safety fix or flag changes. Decks are ignored candidates, never records.",
+    "Keep existing source/claims and all original cleanup quirks until a reviewed useful candidate is measured. Do not demote or erase historical obligations. If a justified source migration is chosen, narrowly bridge affected old test snapshots without resetting their fixed baselines or waiving damage checks. All other class bodies/header must remain unchanged unless new evidence and coordinator admission require them.",
+    "Require actual-source queue/destruction ordering controls and damage tests, independent C++ review, native collateral measurement and fresh build/link, all identity/reference/history checks and destination verification. Matching is not full class/runtime or game acceptance; preserve inconclusive evidence rather than guessing."
+  ],
+  "intent": "Recover the original NetFifo destructor queue-drain structure in genuine C++ without compiler-flag changes, preserving all class behavior, callers and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6502848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6502880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6502992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6503088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6503328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6503568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6503824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netfifo-destructor-recovery-owner-oct14eb"
+}
