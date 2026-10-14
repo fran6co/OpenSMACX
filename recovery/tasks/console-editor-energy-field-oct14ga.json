@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "265496021c6e3ea0bb2da38748145d5a1d0c5ac3",
+  "editable_files": [
+    "src/console.cpp",
+    "recovery/tests/test_console_editor_energy_field_oct14ga.py"
+  ],
+  "evidence": [
+    "Pinned 4E016E loads EBX=96ECCC; loop reads [EBX] for parse_num then advances20CC. PlayersData base96C9E0 plus faction1 stride20CC plus member220 equals96ECCC. Actual energy_reserves read/write later in same function agree. Current loop incorrectly reads unk_48.",
+    "Fresh reference-aware gameplay-interface-strict-oct14fy diagnostic fails PlayersData relocation79 in otherwise masked-exact /Oy- body; original mapping and claim ledger must remain unchanged. This is a recovery correction, not a deliberate original bug fix.",
+    "Coordinator authorizes only editor_energy body and its adjacent explanatory comment plus focused actual-source host regression tests. No other Console functions, headers, identities, symbols, flags, claims or data mappings change. Existing claim-only worker may finish its disjoint18 subjects; integration is serial and both diffs must be preserved.",
+    "Require host control with unequal faction energy and unk values, callback ordering/branches retained; native scoped byte/reference remeasurement, build/link, outside-body compiler comparison and coordinator review before integration. Reference unknowns and full-game acceptance remain unresolved."
+  ],
+  "intent": "Correct the editor energy parser loop to read the original faction energy field, preserving all other behavior and mappings.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5112096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-editor-energy-field-oct14ga"
+}
