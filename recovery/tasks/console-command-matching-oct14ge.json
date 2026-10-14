@@ -1,0 +1,45 @@
+{
+  "author": "coordinator",
+  "base_revision": "f8f953ecf35c8ed438d57f2613b1bbac5bf6a76d",
+  "editable_files": [
+    "src/console.cpp",
+    "recovery/tests/test_console_commands_matching_oct14ge.py"
+  ],
+  "evidence": [
+    "Fresh current-master native measurement at f8f953ecf: editor_energy4E0120 and set_bombing_run4D8CD0 masked exact; set_patrol4D7EE0 98.67%, go_home4D7DE0 95.71%, editor_clear_vehicles4E1300 97.44%. Reports are screening evidence, not strict reference proof or acceptance.",
+    "Source uses genuine PlayersData/MapStorage, Bases/Vehs, NetDaemonNet, MapWinTable and typed owner methods. No raw executable-address substitutions, casts, manual vtables or compiler hacks to raise matching scores. Act on new structural findings through scope expansion rather than hiding them.",
+    "Near misses include register/statement scheduling and pointer-table iteration; use native private variants with damage controls for a small batch of ordinary C++ spellings, not unbounded serial churn. Source statement reordering requires original observable effects preserved. Do not claim that a spelling change is a proven semantic bug fix.",
+    "Require fresh strict reference checks before banking the two apparent exact bodies, native record only, claim continuity, build/link, compiled outside-scope comparison and actual source review. Preserve unresolved references/matching and linked/runtime obligations."
+  ],
+  "intent": "Recover exact compiled forms of five genuine Console commands with faithful typed C++, verifying reference targets and preserving existing semantics and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5112096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5082320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5078752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5078496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5116672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-command-matching-oct14ge"
+}
