@@ -1,0 +1,155 @@
+{
+  "author": "coordinator",
+  "base_revision": "4e469b4297dadd6bc2ff99ef519566e2910ac0f8",
+  "editable_files": [
+    "src/sprite.h",
+    "src/sprite.cpp",
+    "src/buffer.cpp",
+    "recovery/tests/test_sprite_asset_copy.py",
+    "recovery/tests/test_sprite_blitters.py",
+    "recovery/tests/test_sprite_constructor_typed_storage_oct10.py",
+    "recovery/tests/test_sprite_file_header_oct14cu.py"
+  ],
+  "evidence": [
+    "Read-only control_buffer_ownership_audit_oct14 and current source search: Sprite pcBits_ at+4 is pixel storage, not a filename/string. Mapped change_color5EAD9F masks/reads/writes byte colors; draw kernels5E3E50/4B9A/5833/66A2/741C/9D44 operate on unsigned palette bytes and tables. No string-semantic consumer exists in source; cursor.cpp only null-tests the member. This supports unsigned-byte source storage, not a claim that stripped original private type spelling is proven.",
+    "Sprite extract5E39A0, copy5EAE4F and create_blank5EAF3F acquire pixels from void* allocations; TexHeap get_mem has void* contract. Correct allocation casts and repeated reinterpretcasts to direct typed pointer use. Buffer shared-Sprite publication borrows locked_bits_ and clears pcBits_ after drawing; correct all such producers together. Do not alter TexHeap allocation-arena base, filenames, packed file header, ownership flags, allocation accounting, callbacks or invalid/error-path admissions.",
+    "Adapt existing actual-source ownership/copy/blitter/constructor/file-header test fixture types and pointer publications without removing assertions, cases, witnesses or mutants. High unsigned-byte palette behavior and borrowed/owned lifetime remain required. Preserve Sprite size/member offsets and original symbol/spans/byte+semantic claims; no method signature change is intended.",
+    "Coordinator-owned isolated worktree, fresh build/link and scoped measurement; original identity/claim continuity and references; independent source/evidence review plus full compiler-signature comparison against current master. Preserve justified changes and restoration obligations if needed, but no demotion or fake acceptance. Coordinator-reviewed manual merge and fresh destination checks only; no claim of full runtime/linked or game acceptance."
+  ],
+  "intent": "Recover Sprite pixel storage as an unsigned-byte pointer across the producer/consumer closure, retaining original ownership, geometry, lifecycle and palette-byte effects.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6128272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6128480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6128832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6129232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6130224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6130464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6131184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6131680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6132176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6132672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6132912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6175136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6176336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6179738,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6182963,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6186658,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6190108,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6200644,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6204831,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6205007,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6205247,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6205327,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6205631,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sprite-pixel-storage-owner-oct14cx"
+}
