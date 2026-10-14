@@ -198,11 +198,24 @@ def _trial_bindings(view, originals, contents, selected, settings, pin, *, contr
                 or parse_components({path: baseline_text}) != parse_components({path: proposed_text})):
             raise ValueError("candidate deck cannot change recovery interpretations; checkpoint binding decisions first")
         baseline, proposed = read_text(baseline_text, path), read_text(proposed_text, path)
-        def identities(records):
-            return [tuple(getattr(row, field) for field in protected) for row in records]
-        if identities(baseline) != identities(proposed):
+        def identity_index(records):
+            indexed = {}
+            for row in records:
+                identity = (row.address, row.name, row.image_spans)
+                if identity in indexed:
+                    raise ValueError("candidate deck contains ambiguous duplicate original identity")
+                indexed[identity] = row
+            return indexed
+
+        baseline_by_identity = identity_index(baseline)
+        proposed_by_identity = identity_index(proposed)
+        if baseline_by_identity.keys() != proposed_by_identity.keys():
             raise ValueError("candidate deck cannot change original identities, spans or historical claims")
-        for old, new in zip(baseline, proposed):
+        for identity, old in baseline_by_identity.items():
+            new = proposed_by_identity[identity]
+            if tuple(getattr(old, field) for field in protected) != tuple(
+                    getattr(new, field) for field in protected):
+                raise ValueError("candidate deck cannot change original identities, spans or historical claims")
             old_symbol, new_symbol = old.symbol or old.name, new.symbol or new.name
             origin = Origin(pin, settings.source.address_space, old.address)
             if old_symbol != new_symbol:

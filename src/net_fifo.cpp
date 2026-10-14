@@ -3,10 +3,25 @@
 #include "net_fifo.h"
 #include "general.h"  // mem_get
 
-// ORIGINAL: 0x006339E0 ??1NetFifo@@QAE@XZ 0x006339E0-0x00633A42
-// RECOVERY_BINDING: v1 {"evidence": ["pinned span 0x006339E0-0x00633A42", "NetFifo is a 0x24-byte embedded member at Net+0xE8/+0x10C/+0x130", "the body invokes close() then DeleteCriticalSection(&lock_)"], "reason": "The original full destructor body now belongs to the real NetFifo owner; it calls close and destroys the queue lock."}
+// ORIGINAL: 0x006339E0 ??1NetFifo@@QAE@XZ 0x006339E0-0x00633A42 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned span 0x006339E0-0x00633A42", "NetFifo is a 0x24-byte embedded member at Net+0xE8/+0x10C/+0x130", "original instructions inline the same lock/drain/reset/unlock sequence as close before DeleteCriticalSection", "the typed destructor retains that sequence directly; the original instructions do not establish how the source factored the shared cleanup"], "reason": "The original full destructor belongs to the real NetFifo owner: it drains the queue under its lock, resets the queue, unlocks, then destroys the lock."}
 NetFifo::~NetFifo() {
-    close();
+
+  EnterCriticalSection(&lock_);
+  while (head_ != 0) {
+    NetFifoNode *next = head_->next_;
+    if (head_->data_ != 0) {
+      free(head_->data_);
+    }
+    head_->data_ = 0;
+    if (head_ != 0) {
+      free(head_);
+    }
+    head_ = next;
+  }
+  tail_ = 0;
+  count_ = 0;
+  LeaveCriticalSection(&lock_);
     DeleteCriticalSection(&lock_);
 }
 
