@@ -384,22 +384,31 @@ DIRECTIONS
 const int RadiusBaseX[9]={1,2,1,0,-1,-2,-1,0,0};
 const int RadiusBaseY[9]={-1,0,1,2,1,0,-1,-2,0};
 const int MapDirectionPermutation[9]={9,6,3,2,1,4,7,8,5};char StringTemp[256];
-char*_itoa(int n,char*p,int base){assert(base==10);std::sprintf(p,"%d",n);return p;}
+int require_scratch_itoa=0,mutate_cursor_after_first=0;
+char*_itoa(int n,char*p,int base){assert(base==10);if(require_scratch_itoa){assert(p!=StringTemp);assert(StringTemp[0]=='\0');}std::sprintf(p,"%d",n);return p;}
 int calls,xs[8],ys[8],digits[8];
 struct Buffer {
  void set_text_color(int a,int b,int c,int d){assert(a==255&&b==0&&c==1&&d==1);}
  void write_cent_l(Font*,const char*s,int x,int y,int width,int height,int n){
-  assert(width==24&&height==18&&n==1);xs[calls]=x;ys[calls]=y;digits[calls++]=s[0]-'0';}
+  assert(width==24&&height==18&&n==1);assert(s==StringTemp);xs[calls]=x;ys[calls]=y;digits[calls++]=s[0]-'0';
+  if(mutate_cursor_after_first&&calls==1)ConsoleGlobal.cursor_history_index_=1;}
 };
 struct MapWin:Buffer {int field_1DDB8_=18,field_1DDB4_=24;void draw_legend();
  void tile_to_pixel(int x,int y,int*px,int*py){*px=x;*py=y;}};
 BODY
 int main(){MapWin w;ConsoleGlobal.cursor_history_x_[0]=40;ConsoleGlobal.cursor_history_y_[0]=50;
- VehMoveDeltaX[0]=7;VehMoveDeltaY[0]=9;w.draw_legend();
+ VehMoveDeltaX[0]=7;VehMoveDeltaY[0]=9;std::strcpy(StringTemp,"stale");require_scratch_itoa=1;w.draw_legend();
  assert(calls==8&&xs[0]==47&&ys[0]==59&&digits[0]==9);
  for(int i=1;i<8;++i){assert(xs[i]==40+VehMoveDeltaX[i]);assert(ys[i]==50+VehMoveDeltaY[i]);assert(digits[i]==MapDirectionPermutation[i]);}
  calls=0;ConsoleGlobal.cursor_history_x_[0]=0;MapIsFlat=0;VehMoveDeltaX[0]=-1;
  w.draw_legend();assert(calls==8&&xs[0]==99);
+ calls=0;MapIsFlat=1;ConsoleGlobal.cursor_history_index_=0;
+ ConsoleGlobal.cursor_history_x_[0]=40;ConsoleGlobal.cursor_history_y_[0]=50;
+ ConsoleGlobal.cursor_history_x_[1]=70;ConsoleGlobal.cursor_history_y_[1]=80;
+ VehMoveDeltaX[0]=7;
+ mutate_cursor_after_first=1;w.draw_legend();mutate_cursor_after_first=0;
+ assert(calls==8&&xs[0]==47&&ys[0]==59);
+ assert(xs[1]==70+VehMoveDeltaX[1]&&ys[1]==80+VehMoveDeltaY[1]);
 }
 '''
 
@@ -420,10 +429,34 @@ def test_route_precedence_and_zero_waypoint_refresh(tmp_path):
 
 def test_legend_reads_live_delta_owners(tmp_path):
     # Original469787/4697AF read66EF50/66EF74, not immutable radius tables.
+    # The original also converts into an 80-byte stack buffer, clears and
+    # appends StringTemp, and reloads the cursor index at each loop head.
     candidate = body("void MapWin::draw_legend() {")
-    legend = LEGEND.replace("DIRECTIONS", actual_source()["DIRECTIONS"])
+    veh_cpp = (ROOT / "src/veh.cpp").read_text()
+    directions = "\n".join(re.findall(
+        r"^int VehMoveDelta[XY]\[9\] = \{[^}]+\};", veh_cpp, re.M))
+    assert directions
+    legend = LEGEND.replace("DIRECTIONS", directions)
     assert execute(tmp_path, legend, candidate, "legend") == 0
     damaged = candidate.replace("VehMoveDeltaX[direction]", "RadiusBaseX[direction]")
     damaged = damaged.replace("VehMoveDeltaY[direction]", "RadiusBaseY[direction]")
     assert damaged != candidate
     assert execute(tmp_path, legend, damaged, "wrong_owner") != 0
+
+    cached_cursor = candidate.replace(
+        "    for (int direction = 0; direction < 8; ++direction) {\n"
+        "        // Reloaded at the loop head in the original; drawing callbacks may\n"
+        "        // run before the next direction reads the cursor history again.\n"
+        "        const int cursor = ConsoleGlobal.cursor_history_index_;",
+        "    const int cursor = ConsoleGlobal.cursor_history_index_;\n"
+        "    for (int direction = 0; direction < 8; ++direction) {")
+    assert cached_cursor != candidate
+    assert execute(tmp_path, legend, cached_cursor, "cached_cursor") != 0
+
+    direct_global = candidate.replace(
+        "        StringTemp[0] = '\\0';\n"
+        "        _itoa(MapDirectionPermutation[direction], direction_text, 10);\n"
+        "        strcat(StringTemp, direction_text);",
+        "        _itoa(MapDirectionPermutation[direction], StringTemp, 10);")
+    assert direct_global != candidate
+    assert execute(tmp_path, legend, direct_global, "direct_global_itoa") != 0

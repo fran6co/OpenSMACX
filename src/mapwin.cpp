@@ -5918,9 +5918,14 @@ void MapWin::draw_legend() {
     legend_font.init(DefaultFontFace,
                      (static_cast<int>(field_1DDB8_) * 2) / 3, 1);
     Buffer *const canvas = static_cast<Buffer *>(this);
-    const int cursor = ConsoleGlobal.cursor_history_index_;
+    // The image's 0x90-byte local frame holds this 0x50-byte conversion
+    // buffer immediately before its 0x28-byte Font object (0x469746/0x46976d).
+    char direction_text[0x50];
 
     for (int direction = 0; direction < 8; ++direction) {
+        // Reloaded at the loop head in the original; drawing callbacks may
+        // run before the next direction reads the cursor history again.
+        const int cursor = ConsoleGlobal.cursor_history_index_;
         int tile_x = ConsoleGlobal.cursor_history_x_[cursor] +
                      VehMoveDeltaX[direction];
         const int tile_y = ConsoleGlobal.cursor_history_y_[cursor] +
@@ -5939,7 +5944,9 @@ void MapWin::draw_legend() {
         int pixel_x;
         int pixel_y;
         tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
-        _itoa(MapDirectionPermutation[direction], StringTemp, 10);
+        StringTemp[0] = '\0';
+        _itoa(MapDirectionPermutation[direction], direction_text, 10);
+        strcat(StringTemp, direction_text);
         canvas->set_text_color(0xFF, 0, 1, 1);
         canvas->write_cent_l(&legend_font, StringTemp, pixel_x, pixel_y,
                              static_cast<int>(field_1DDB4_),

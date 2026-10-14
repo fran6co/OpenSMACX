@@ -1,0 +1,19 @@
+{
+  "event_id": "5bb5791ba731b2681fba7eadb3521e4acbfc679f96921441d4645f8897136d44",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_routes.py"
+    ],
+    "evidence": [
+      "Pinned4697F5..469817 uses80-byte stack conversion storage, clears global StringTemp before itoa then appends. Loop backedge4698A2 reloads cursor at469781. Extend actual-source controls to detect destination/call-order and callback-time cursor changes, preserving original quirks and task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ec384fe9819f77652a88b0d96f740a72d7ebb3628c05e579ce2d9db28d2cbee0",
+  "request_id": "legend-storage-controls-oct14gl",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
