@@ -1,0 +1,38 @@
+{
+  "author": "coordinator",
+  "base_revision": "55ffcd24d38be4a48c148e6fea84d4b530a1f261",
+  "editable_files": [
+    "src/faction.cpp",
+    "src/general.cpp",
+    "src/popup.cpp",
+    "src/win.cpp",
+    "recovery/tests/test_shared_scalar_bindings_oct14gc.py"
+  ],
+  "evidence": [
+    "Pinned dword accesses bind DiploRedrawFlag 0x0074DA9C..0x0074DAA0 and MultiWindowOpen 0x007FE06C..0x007FE070 in treaty_on 0x0055B870; GenderDefault 0x009BBFEC..0x009BBFF0 and PluralityDefault 0x009BBFF0..0x009BBFF4 in pact_treaty 0x0055D190; PopupModalState 0x006A721C..0x006A7220 and WinScreenWidth 0x009B7B1C..0x009B7B20 in editor_set_brush 0x004E0EA0. Existing source declarations and retained VC6 link map establish separate int/BOOL storage and symbols ?Name@@3HA.",
+    "Independent consumers confirm MultiWindowOpen at 0x0045D251, GenderDefault at 0x00625E67, PluralityDefault at 0x00625E7C, PopupModalState at 0x00404BED and WinScreenWidth at 0x005F02D4. DiploRedrawFlag has four observed direct references within treaty_on, not a proven exhaustive caller set.",
+    "Pinned writable .data has raw-backed end 0x006A8000 and virtual end 0x009C21F8. PopupModalState has four raw-backed zero bytes; the other five are loader-zero-filled. All source objects currently zero-initialize. No overlapping source object bindings found. Add bounded v2 RECOVERY_OBJECT rows adjacent to definitions; preserve all ORIGINAL markers, declarations and behavior.",
+    "Require original pinned bytes/access controls, native compiler data definition/size/initial-value checks, fresh strict reference checks for three subjects, unchanged compiled bodies and build/link. Unknown unrelated references remain obligations; no new byte claims from annotations. Exclude Bases, tamper strings and Popup link-capacity repair from this task."
+  ],
+  "intent": "Bind six existing shared scalar globals to independently evidenced original storage without changing declarations, initializers, behavior or claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5617776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5624208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5115552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "shared-scalar-reference-bindings-oct14gc"
+}
