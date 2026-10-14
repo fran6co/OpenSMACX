@@ -37,6 +37,7 @@
 #include "stdafx.h"
 #include "flic.h"
 #include "general.h"  // mem_get, env_open
+#include <cstring>
 
 // Every decoder whose image CALLS the no-argument `Buffer::get_data`
 // (0x005E3373 in each call list: decode_frame, UNK1, UNK3 and the three
@@ -877,7 +878,7 @@ void Flic::decode_delta_flc() {
                              << 8) +
                             static_cast<uint8_t>(word + field_5A4_));
                         for (int i = 0; i < run_count; i++) {
-                            *reinterpret_cast<uint16_t *>(dst) = word;
+                            std::memcpy(dst, &word, sizeof(word));
                             dst += 2;
                         }
                     }
@@ -1483,8 +1484,9 @@ void Flic::decode_delta_flc_trans() {
                             if (static_cast<uint8_t>(word >> 8) ==
                                 field_0_) {
                                 for (int i = 0; i < run; i++) {
-                                    *reinterpret_cast<uint16_t *>(out) =
-                                        *reinterpret_cast<uint16_t *>(src);
+                                    uint16_t pixel;
+                                    std::memcpy(&pixel, src, sizeof(pixel));
+                                    std::memcpy(out, &pixel, sizeof(pixel));
                                     src += 2;
                                     out += 2;
                                 }
@@ -1507,7 +1509,7 @@ void Flic::decode_delta_flc_trans() {
                             }
                         } else {
                             for (int i = 0; i < run; i++) {
-                                *reinterpret_cast<uint16_t *>(out) = word;
+                                std::memcpy(out, &word, sizeof(word));
                                 out += 2;
                             }
                         }
