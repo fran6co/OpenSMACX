@@ -636,10 +636,11 @@ int Wave::set_reverb_mix(float mix) {
 /*
 Purpose: Ask the wrapped device, through its vtable slot 0xDC, whether the
          wave is 3D positioned.
-// ORIGINAL: 0x004C7250 ?is_3d@Wave@@QAEHXZ 0x004C7250-0x004C7262 SEMANTIC
-// symbol    ?is_3d@Wave@@UAEHXZ
+// ORIGINAL: 0x004C7250 ?is_3d@Wave@@QAEHXZ 0x004C7250-0x004C7262 BYTE_EXACT
+// symbol    ?is_3d@Wave@@UAE_NXZ
 // size      18 bytes
-// prototype int (__thiscall ?is_3d@Wave@@QAEHXZ)(Wave* this)
+// Historical catalog prototype (inferred, not original debug information):
+// int (__thiscall ?is_3d@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
@@ -648,14 +649,19 @@ Return Value: the device's answer, or 0 when no device is wrapped (the
               original defines only AL on that path; callers test the byte)
 Status: Complete
 */
-int Wave::is_3d() {
-    // TRIED: static_cast<unsigned char>(0), a local unsigned char, and a
-    // ternary all still compile the no-device path as `xor eax, eax` where
-    // the image narrows to `xor al, al`; MNEMONIC_ONLY plateau, 6/7 agreeing.
+bool Wave::is_3d() {
+    // Pinned 0x4C7250 returns AL zero or tail-calls provider slot 0xDC.
+    // SoundX's mode-1 table 0x10065738 selects 0x10021B90 through
+    // 0x1000245A: flags 0xCC bit 0x20 and 0xC8 bit 2 yield only zero/one.
+    // Model the predicate consistently at both ends; the wrapper defines AL
+    // on its null path, while this provider sets the complete EAX to zero/one.
+    // Unsigned char is also ABI-compatible; original source spelling is unknown.
+    // Historical TRIED: narrowing only the zero expression while retaining an
+    // int return did not change the function's return contract.
     if (device_) {
         return wave_playback_device(device_)->is_3d();
     }
-    return 0;
+    return false;
 }
 
 

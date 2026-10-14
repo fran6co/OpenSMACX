@@ -90,7 +90,7 @@ int Wave::set_position3d(float,float,float) { assert(false); return 0; }
 int Wave::set_xpos(float) { assert(false); return 0; }
 int Wave::set_ypos(float) { assert(false); return 0; }
 int Wave::set_zpos(float) { assert(false); return 0; }
-int Wave::is_3d() { assert(false); return 0; }
+bool Wave::is_3d() { assert(false); return false; }
 int Wave::set_reverb_mix(float) { assert(false); return 0; }
 
 class Wave_Device { public: int pull_from_group(Wave *); };

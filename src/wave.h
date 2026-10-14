@@ -148,7 +148,7 @@ class Wave : public Sound {
   virtual int set_xpos(float x);                    // 52
   virtual int set_ypos(float y);                    // 53
   virtual int set_zpos(float z);                    // 54
-  virtual int is_3d();                             // 55
+  virtual bool is_3d();                            // 55
   virtual int set_reverb_mix(float mix);            // 56
  private:
   // 0x54, a whole 32-bit field - see the withdrawal above. Bit 1 suppresses

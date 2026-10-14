@@ -77,7 +77,7 @@ class WavePlaybackDeviceInterface : public SoundDeviceInterface {
   virtual int set_xpos(float) = 0;                                // 52
   virtual int set_ypos(float) = 0;                                // 53
   virtual int set_zpos(float) = 0;                                // 54
-  virtual int is_3d() = 0;                                        // 55
+  virtual bool is_3d() = 0;                                       // 55
   virtual int set_reverb_mix(float) = 0;                          // 56
 };
 

@@ -45,7 +45,13 @@ def test_only_effect_lifetime_moves_and_its_identity_survives():
     expected = original('src/wave.h').replace('  ~Effect();\n','',1).replace(
         '// at the same 0x6C stride. The definitions and original identities live in\n// wave.cpp, with the bank\'s construction evidence in fx.cpp.',
         '// at the same 0x6C stride. FX owns the initialization policy and the implicit\n// lifetime mappings in fx.cpp; no user-defined destructor stage is needed.')
-    assert header == expected
+    published_header = subprocess.check_output(['git', 'show',
+        'df3f94c33d5d8bb167fcfddb7570312398c8ec24:src/wave.h'], cwd=ROOT, text=True)
+    assert published_header == expected
+    def effect_declaration(text):
+        start = text.index('class Effect : public Wave {')
+        return text[start:text.index('};', start) + 2]
+    assert effect_declaration(header) == effect_declaration(expected)
 
 
 def base_tail(obj):

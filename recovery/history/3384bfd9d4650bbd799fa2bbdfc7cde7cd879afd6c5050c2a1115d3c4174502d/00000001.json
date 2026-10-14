@@ -1,0 +1,19 @@
+{
+  "event_id": "24c91ddb15c2df32035ddc34f133722d29d5a5b4f302ca57995b1394d1089f99",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_effect_implicit_lifetime.py"
+    ],
+    "evidence": [
+      "Effect historical migration test compares the entire Wave header; preserve that conservation check at its publication, while checking current Effect declaration unchanged separately. Predicate return migration has independent current-source tests."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "predicate-effect-header-test",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:wave-predicate-contract-oct15"
+}
