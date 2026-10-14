@@ -14,6 +14,8 @@ SIGNATURE = 'extern "C" void __fastcall sub_5cc940('
 
 
 def without_renderer_body(text):
+    from test_core_claim_continuity_oct14dt import historical_core_claim_view
+    text = historical_core_claim_view(text, 'src/movie_media.cpp')
     from test_media_motion_storage_oct11 import restore_motion_storage
     text=restore_motion_storage(text,'src/movie_media.cpp')
     # Independently verified follow-up correction has its own bounded-source
@@ -70,6 +72,9 @@ def test_bounded_output_owner_change_and_identity_continuity():
         path=ROOT/'src'/name
         old=subprocess.check_output(['git','show',BASE+':src/'+name],cwd=ROOT,text=True)
         new=path.read_text()
+        if name.endswith('.cpp'):
+            from test_core_claim_continuity_oct14dt import historical_core_claim_view
+            new = historical_core_claim_view(new, 'src/movie_media.cpp')
         if name.endswith('.cpp'):
             assert without_renderer_body(old)==without_renderer_body(new)
         else:

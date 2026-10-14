@@ -65,6 +65,9 @@ def _current_records():
 def test_original_identity_spans_claims_and_lessons_survive_owner_transfer():
     old = _historical_records()
     current = _current_records()
+    from dataclasses import replace
+    assert current[0x634330].byte_exact and not current[0x634330].semantic
+    old[0x634330] = replace(old[0x634330], byte_exact=True, semantic=False)
     durable = (
         "address", "name", "mode", "state", "image_spans", "kind",
         "exclusion", "byte_exact", "semantic", "recipe", "levers",

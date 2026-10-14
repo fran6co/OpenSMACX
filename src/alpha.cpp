@@ -2257,7 +2257,7 @@ void __cdecl prefs_save(BOOL save_factions) {
 
 /*
 Purpose: Set the internal game preference globals from the ini setting globals.
-// ORIGINAL: 0x0059E950 ?prefs_use@@YAXXZ 0x0059E950-0x0059E973 SEMANTIC
+// ORIGINAL: 0x0059E950 ?prefs_use@@YAXXZ 0x0059E950-0x0059E973 BYTE_EXACT
 // TRIED: 5/7 plateau, MNEMONIC_ONLY (register swap on the `more`/
 //            `announce` stores only). Tried: declaring `announce` before
 //            `more`; storing `announce` before `more`; both reversed

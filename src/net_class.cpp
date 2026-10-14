@@ -2870,7 +2870,7 @@ void Net::set_polling(int flag) {
 Purpose: Close the joined session to further joins: read the session
          description back through the interface, light DPSESSION_JOINDISABLED
          in its flags dword, and store it again.
-// ORIGINAL: 0x00631B30 ?close_game@Net@@QAEXXZ 0x00631B30-0x00631B9A FILE
+// ORIGINAL: 0x00631B30 ?close_game@Net@@QAEXXZ 0x00631B30-0x00631B9A FILE BYTE_EXACT
 // size      106 bytes
 // prototype void (__thiscall ?close_game@Net@@QAEXXZ)(Net* this)
 // callers   1   call targets   2

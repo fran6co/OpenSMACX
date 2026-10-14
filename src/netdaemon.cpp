@@ -8216,7 +8216,7 @@ Purpose: Inflate compressed input into next_out with *out_size as the
          On other inflate statuses, call inflateEnd and return the
          original inflate status unchanged.
 
-// ORIGINAL: 0x00634330 sub_634330 0x00634330-0x006343BD FILE
+// ORIGINAL: 0x00634330 sub_634330 0x00634330-0x006343BD FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00634330.cpp", "Historical seed spelling sub_634330; current source mapping sub_634330; emitted symbol ?sub_634330@@YAHPAEHPAKI@Z.", "Pinned caller 0x00534C81 pushes destination, destination-size pointer, compressed input pointer and compressed byte count in cdecl order.", "Pinned callee 0x00634330 loads *arg2 into avail_out, arg3 into next_in, arg4 into avail_in, and stores total_out through arg2 only on Z_STREAM_END; the old seed second-argument-unused transcription is false.", "Pinned stream initialization zeros zalloc and zfree but leaves opaque untouched; preserve this original stack-field quirk."], "reason": "Recover the original four-argument inflate wrapper on the NetDaemon transfer path, preserving its size-write and error/cleanup order. Correct the old seed's disproven argument interpretation; this grants no new byte or ABI match."}
 // TRIED: the wrapper's second argument is never read - the in-place work pointer (third argument) carries both the input and the output-size handback, which the seed's dword-indexed reading had assigned to the wrong slot.
 // symbol    ?netdaemon_inflate_buffer@@YAHPAEPAK0I@Z

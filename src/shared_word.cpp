@@ -45,7 +45,7 @@ void set_shared_word(int value) {
 /*
 Purpose: sub_44c870 - arithmetic over 1 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0044C870 sub_44c870 0x0044C870-0x0044C878
+// ORIGINAL: 0x0044C870 sub_44c870 0x0044C870-0x0044C878 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:0x0044C870-0x0044C878 is the direct memory-form XOR `xor dword ptr [0x7591c4], 1; ret`", "pinned:terranx_original.exe:0x0044C860-0x0044C86D independently stores the caller-supplied dword at the same address", "pinned PE virtual .data section contains 0x007591C4; read_initial(0x007591C4..0x007591C8) is four zero bytes", "src/shared_word.cpp defines SharedWordValue and contains both paired source operations; no class or domain label is inferred"], "reason": "Own the original toggle operation beside the shared C++ word it mutates; use the same real storage as the original setter while leaving the state domain and callers unnamed."}
 // Historical note: these spelling tests predate the paired setter and
 // the parsed PE virtual zero-fill proof; retain their experiments, but

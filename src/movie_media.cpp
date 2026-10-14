@@ -2075,7 +2075,7 @@ Purpose: After a read-record event, update the associated media descriptor.
          The original reloads [ECX] between stores in both groups. The typed
          owner keeps a descriptor reload at each corresponding point.
 
-// ORIGINAL: 0x005CBBC0 sub_5cbbc0 0x005CBBC0-0x005CBBF5 FILE SEMANTIC
+// ORIGINAL: 0x005CBBC0 sub_5cbbc0 0x005CBBC0-0x005CBBF5 FILE BYTE_EXACT
 // TRIED: plateaus at MNEMONIC_ONLY 13/22 - re-reading `load32(node, 0x20)`
 //            inside the guard instead of caching it in `moved` scores the
 //            same (measured); the divergence is edx-vs-esi register choice

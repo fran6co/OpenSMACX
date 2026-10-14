@@ -553,7 +553,7 @@ void AlphaNetStringStruct::sort_sessions() {
 Purpose: Order three-way comparison of two fixed-shape name records: an
          unsigned word, two unsigned shorts and eight bytes, each field
          compared lexicographically.
-// ORIGINAL: 0x005D4BB0 sub_5d4bb0 0x005D4BB0-0x005D4C41 FILE
+// ORIGINAL: 0x005D4BB0 sub_5d4bb0 0x005D4BB0-0x005D4C41 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 5D4BB0-5D4C41 retains its two stack arguments, no calls, and unsigned comparisons: Data1 +0, Data2 +4, Data3 +6, then Data4 eight bytes at +8.", "Call chain 5D49D0 compares pointers to enumerated session instance GUID at payload +0xC; SDK session callback 630C30 and ledger insertion 5D4890 establish the GUID role. Field shape alone was insufficient to establish nominal identity.", "Native v3 objects independently emit compare_session_guid with stdcall GUID pointer arguments; this observes source emission, not original matching or complete owner acceptance."], "reason": "Recover the unsigned lexicographic GUID comparator used by the Alpha session-ledger selection pass."}
 // Historical superseded binding interpretation: {"evidence": ["Original5D4BB0..5D4C41; retired seed git:b18d3ac8:src/unrecovered/005d4bb0.cpp records the same identity and spans.", "The body reads only its two stack arguments and makes no calls; the field walks (word at +0, shorts at +4/+6, eight bytes at +8) are transcribed exactly as the seed measured them, with no record type invented for them."], "reason": "Coverage transcription of the unnamed record comparator as a stdcall free function; no names exist for the record fields, so the reads stay spelled by offset."}
 // symbol    ?compare_session_guid@@YGHPBU_GUID@@0@Z

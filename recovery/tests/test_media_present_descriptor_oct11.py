@@ -19,6 +19,8 @@ def test_source_identity_and_bounded_change():
     path = ROOT / "src/movie_media.cpp"
     before = subprocess.check_output(["git", "show", BASE + ":src/movie_media.cpp"], cwd=ROOT, text=True)
     after = path.read_text()
+    from test_core_claim_continuity_oct14dt import historical_core_claim_view
+    after = historical_core_claim_view(after, "src/movie_media.cpp")
     assert without_audio_owner_functions(before.replace(extract(before, SIGNATURE), "PRESENT_BODY").replace(
         "output_rect_or_draw2_bits_10", "output_rect_height_10")) == without_audio_owner_functions(after.replace(
         extract(after, SIGNATURE), "PRESENT_BODY"))

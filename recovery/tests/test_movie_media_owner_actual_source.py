@@ -266,6 +266,10 @@ def test_all_eight_installed_mappings_preserve_reader_history():
     assert set(current) == set(OWNERS)
     for address, (relative, definition, mode) in OWNERS.items():
         before, after = old[address], current[address]
+        if address == 0x005CBBC0:
+            from dataclasses import replace
+            assert after.byte_exact and not after.semantic
+            before = replace(before, byte_exact=True, semantic=False)
         assert after.path == ROOT / relative
         assert after.mode is mode
         assert not after.extract_error

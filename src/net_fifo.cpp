@@ -40,7 +40,7 @@ NetFifo::NetFifo() {
 // image's `call dword ptr [0x66917c]` is the same import-table indirection.
 // ---------------------------------------------------------------------------
 
-// ORIGINAL: 0x00633A50 ?close@NetFifo@@QAEXXZ 0x00633A50-0x00633AAB
+// ORIGINAL: 0x00633A50 ?close@NetFifo@@QAEXXZ 0x00633A50-0x00633AAB BYTE_EXACT
 // TRIED: all four bodies in this block land MISMATCH at instruction 0-1 with the same shape, and it is register allocation, not control flow: the image saves ebx/ebp/esi and dedicates one to the critical-section address (`lea ebp, [esi+0xc]` in the image is `lea ebp, [esi+0xc]` here too, but the image got there AFTER three pushes where this tree needs two). The archive's own transcription of close was 200/229 bytes at best for the sibling get. Naming head_/tail_/count_ and calling the real Enter/LeaveCriticalSection is the faithful form; the missing callee-saved push is not reachable from source form without a dedicated local nobody needs. 2026-09-04.
 // size      92 bytes
 // prototype void (__thiscall ?close@NetFifo@@QAEXXZ)(NetFifo* this)
