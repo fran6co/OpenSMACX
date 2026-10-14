@@ -155,16 +155,17 @@ HARNESS = r'''
 #include <utility>
 static void require(bool value) { if (!value) std::exit(42); }
 struct Buffer;
+using ColorTable = unsigned char[256];
 struct Surface { int Unlock(void *); };
 struct Dib { struct Header { int biWidth, biHeight; } bmiHeader; };
 struct Sprite {
-    char *pcBits_;
+    unsigned char *pcBits_;
     int iSpriteWidth2_, iSpriteWidth_, iSpriteHeight_, iWidth_, iHeight_;
     int iLeftOffset_, iTopOffset_;
     unsigned char cTransparentIndex_;
     int fObj1Exists_;
     int draw_dest(Buffer *, int, int, int, unsigned char *);
-    int draw_multi_table_dest(Buffer *, int, int, int, unsigned char *);
+    int draw_multi_table_dest(Buffer *, int, int, int, ColorTable *);
 };
 struct Buffer {
     void *locked_bits_, *dib_bits_;
@@ -179,9 +180,9 @@ static bool install_surface, replace_bits;
 static int accesses, unlocks, calls, seen_kind;
 static Buffer *seen_destination;
 static int seen_transparent, seen_x, seen_y;
-static unsigned char *seen_table;
+static const void *seen_table;
 static Sprite seen_sprite;
-static char replaced_pixel;
+static unsigned char replaced_pixel;
 struct SpriteDoubleOwner {
     Sprite value;
     Sprite &sprite() {
@@ -199,7 +200,7 @@ int Surface::Unlock(void *bits) {
     return 0;
 }
 static int observe(Sprite *sprite, int kind, Buffer *destination,
-                   int transparent, int x, int y, unsigned char *table) {
+                   int transparent, int x, int y, const void *table) {
     require(sprite == &BufferSpriteOwner.value);
     ++calls; seen_kind = kind; seen_destination = destination;
     seen_transparent = transparent; seen_x = x; seen_y = y; seen_table = table;
@@ -211,13 +212,14 @@ int Sprite::draw_dest(Buffer *d, int t, int x, int y, unsigned char *table) {
     return observe(this, 1, d, t, x, y, table);
 }
 int Sprite::draw_multi_table_dest(Buffer *d, int t, int x, int y,
-                                 unsigned char *table) {
+                                 ColorTable *table) {
     return observe(this, 2, d, t, x, y, table);
 }
 ACTUAL_BODIES
-using Remap = int (Buffer::*)(Buffer *, int, int, int, unsigned char *);
-static Remap plain = static_cast<Remap>(&Buffer::draw_dest);
-static Remap multi = static_cast<Remap>(&Buffer::draw_multi_table_dest);
+using PlainRemap = int (Buffer::*)(Buffer *, int, int, int, unsigned char *);
+using MultiRemap = int (Buffer::*)(Buffer *, int, int, int, ColorTable *);
+static PlainRemap plain = static_cast<PlainRemap>(&Buffer::draw_dest);
+static MultiRemap multi = static_cast<MultiRemap>(&Buffer::draw_multi_table_dest);
 template<class T, class = void> struct OldPlain : std::false_type {};
 template<class T> struct OldPlain<T, std::void_t<decltype(
     static_cast<int (T::*)(Buffer *, int, int, int, int)>(&T::draw_dest))>>
@@ -231,7 +233,8 @@ static_assert(!OldPlain<Buffer>::value && !OldMulti<Buffer>::value,
 static_assert(sizeof(void *) > sizeof(std::uint32_t), "full-width host control");
 static void route(int kind, bool existing_surface, bool have_bits, int count,
                   int transparent, bool reenter, bool replace, bool null_table) {
-    unsigned char pixels[16] = {}, table[65536] = {};
+    unsigned char pixels[16] = {};
+    ColorTable table[256] = {};
     require(reinterpret_cast<std::uintptr_t>(table) > UINT32_MAX);
     Buffer owner = {}, destination = {};
     source = &owner;
@@ -246,12 +249,16 @@ static void route(int kind, bool existing_surface, bool have_bits, int count,
     const Sprite before = BufferSpriteOwner.value;
     install_surface = reenter; replace_bits = replace;
     accesses = unlocks = calls = seen_kind = 0;
-    unsigned char *pointer = null_table ? nullptr : table;
-    const int result = (owner.*(kind == 1 ? plain : multi))(
-        &destination, transparent, -19, 23, pointer);
+    unsigned char *plain_pointer = null_table ? nullptr : &table[0][0];
+    ColorTable *multi_pointer = null_table ? nullptr : table;
+    const int result = kind == 1
+        ? (owner.*plain)(&destination, transparent, -19, 23, plain_pointer)
+        : (owner.*multi)(&destination, transparent, -19, 23, multi_pointer);
     require(result == 0x4230 + kind && calls == 1 && seen_kind == kind);
     require(seen_destination == &destination && seen_transparent == transparent);
-    require(seen_x == -19 && seen_y == 23 && seen_table == pointer);
+    require(seen_x == -19 && seen_y == 23 &&
+            seen_table == (kind == 1 ? static_cast<void *>(plain_pointer)
+                                     : static_cast<void *>(multi_pointer)));
     require(BufferSpriteOwner.value.pcBits_ == nullptr);
     require(BufferSpriteOwner.value.iSpriteWidth2_ == seen_sprite.iSpriteWidth2_);
     require(BufferSpriteOwner.value.iSpriteWidth_ == seen_sprite.iSpriteWidth_);
@@ -345,7 +352,7 @@ RUNTIME_DAMAGE = [
     ("destination, transparent_in, x, y, table)",
      "(static_cast<void>(destination), this), transparent_in, x, y, table)"),
     ("destination, transparent_in, x, y, table)",
-     "destination, transparent_in, x, y, reinterpret_cast<unsigned char *>(static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(table))))"),
+     "destination, transparent_in, x, y, reinterpret_cast<decltype(table)>(static_cast<std::uint32_t>(reinterpret_cast<std::uintptr_t>(table))))"),
     ("surface_lock_count_ = surface_lock_count_ + 1;", "/* missing increment */"),
     ("surface_lock_count_ = surface_lock_count_ - 1;", "surface_lock_count_ = surface_lock_count_ - 0;"),
     ("(int)surface_lock_count_ > 0", "static_cast<unsigned int>(surface_lock_count_) > 0"),
@@ -376,11 +383,12 @@ def test_executed_body_damage_is_rejected(tmp_path, compiler, name, old, new):
 def test_actual_declaration_damage_is_rejected(tmp_path, compiler, name, damage):
     declarations, bodies = actual_parts()
     declaration = declarations[name]
-    assert declaration.count("unsigned char *table") == 1
+    table_type = "unsigned char *table" if name == "draw_dest" else "ColorTable *table"
+    assert declaration.count(table_type) == 1
     if damage == "integer_last":
-        declarations[name] = declaration.replace("unsigned char *table", "int table")
+        declarations[name] = declaration.replace(table_type, "int table")
     elif damage == "integer_compatibility":
-        declarations[name] += "\n" + declaration.replace("unsigned char *table", "int table")
+        declarations[name] += "\n" + declaration.replace(table_type, "int table")
     else:
         declarations[name] = declaration.replace("int transparent", "unsigned char *transparent")
     result, _ = compile_host(tmp_path, compiler, declarations, bodies)

@@ -2369,7 +2369,7 @@ Purpose: Draw into a destination buffer through the multi-table worker with
          duration of the call. Byte for byte the same wrapper as draw_dest
          above.
 // ORIGINAL: 0x005E8FA5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E8FA5-0x005E8FF5 BYTE_EXACT
-// symbol    ?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHHHPAE@Z
+// symbol    ?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHHHPAY0BAA@E@Z
 // size      80 bytes
 // prototype int (__thiscall ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z)(Sprite* this, Buffer*, int, int, int, int, int, unsigned int8*)
 // callers   1   call targets   1
@@ -2379,7 +2379,7 @@ Purpose: Draw into a destination buffer through the multi-table worker with
 Status: Complete
 */
 int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x,
-                                  int y, unsigned char *bits) {
+                                  int y, ColorTable *bits) {
     const int saved_numerator = SpriteScaleNumerator;
     const int saved_denominator = SpriteScaleDenominator;
     SpriteScaleNumerator = x;
@@ -2530,8 +2530,10 @@ void __cdecl load_icons() {
 }
 
 // ORIGINAL: 0x005E8FF5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E8FF5-0x005E9D44 FILE
+// symbol    ?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHPAY0BAA@E@Z
 // draw_dest's 16-bit-table sibling: every drawn destination pixel samples the
-// 64K combined table at (source << 8) | destination, and the transparency key
+// 256-byte row selected by the source pixel at the destination pixel column,
+// and the transparency key
 // compares SIGNED (the image's `char` loads). The original's inner copy loop
 // is a hand-unrolled Duff's device that computes its own re-entry address at
 // runtime; this body keeps the guard clauses, the scale-ratio gate and the
@@ -2545,7 +2547,7 @@ void __cdecl load_icons() {
 // HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: pushf/popf around the unrolled copy
 // - semantic equivalence is the honest ceiling; the answer is not `__asm`.
 int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
-                                  int y, unsigned char *multi_table) {
+                                  int y, ColorTable *multi_table) {
     if (pcBits_ == 0 || destination == 0 || destination->get_data() == 0)
         return 3;
 
@@ -2592,8 +2594,8 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
             for (int column = 0; column < columns; ++column) {
                 if (static_cast<char>(source_row[column]) !=
                     static_cast<char>(transparent)) {
-                    destination_row[column] = multi_table[
-                        (source_row[column] << 8) | destination_row[column]];
+                    destination_row[column] =
+                        multi_table[source_row[column]][destination_row[column]];
                 }
             }
             if (row + 1 < rows) {
@@ -2653,7 +2655,7 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
             for (int column = 0; column < destination_columns; ++column) {
                 if (static_cast<char>(*source) != static_cast<char>(transparent)) {
                     destination_row[column] =
-                        multi_table[(*source << 8) | destination_row[column]];
+                        multi_table[*source][destination_row[column]];
                 }
                 if (column + 1 < destination_columns) source += columns[column];
             }
@@ -2691,7 +2693,7 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
                         for (int pixel = 0; pixel < columns[column]; ++pixel) {
                             unsigned char &target = destination_row[
                                 repeat * destination_pitch + output_column + pixel];
-                            target = multi_table[(pixel_value << 8) | target];
+                            target = multi_table[pixel_value][target];
                         }
                 }
                 output_column += columns[column];

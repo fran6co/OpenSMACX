@@ -29,7 +29,8 @@ static int g_popup_start = 0;
 static int g_draw = 1;
 static int g_smoke_draw = 0;
 static int g_smoke_transparency = -1;
-static unsigned char *g_smoke_table_pointer = 0;
+using ColorTable = unsigned char[256];
+static ColorTable *g_smoke_table_pointer = 0;
 static int g_explicit_popup_close = 0;
 static int g_explicit_flic_close = 0;
 static int g_flic_destructors = 0;
@@ -62,7 +63,7 @@ struct Buffer {
     g_last_pod_x = x; g_last_pod_y = y;
     return g_draw;
   }
-  int draw_multi_table_dest(Buffer *, int transparent, int, int, int, int, unsigned char *table) {
+  int draw_multi_table_dest(Buffer *, int transparent, int, int, int, int, ColorTable *table) {
     ++g_smoke_draw; g_smoke_transparency = transparent;
     g_smoke_table_pointer = table; return 1;
   }
@@ -195,7 +196,7 @@ int main(int argc, char **argv) {
   crash_landing(8);
   if (g_decodes != 120 || g_popup_start != 1 || g_base_unique != 1) return 5;
   if (g_smoke_draw != 60 || g_smoke_transparency != 0xff) return 6;
-  if (g_smoke_table_pointer != &ExplosionColorTables[12][0][0]) return 7;
+  if (g_smoke_table_pointer != ExplosionColorTables[12]) return 7;
   if (std::strcmp(Bases[0].name_string, "NEW NAME") != 0) return 8;
   const int map_draws_before_no_match = g_map_draw;
   VehCurrentCount = 0;

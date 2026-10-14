@@ -1,0 +1,64 @@
+{
+  "event_id": "9f6223b44d544c038a6e8e80f5728e36f225a62e10bd8cda5f155f831d94cd1f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh candidate and retained master builds each contain158ordinary objects. Sixteen same-named function sections differ in raw bytes, nine outside the existing scope. Source changes remain confined to reviewed row types/callers; include these collateral identities for native matching and COFF instruction/reference review before integration.",
+      "Most changed function sizes remain equal; gen_terrain_poly changes15232to15280bytes. Size equality/unchanged inputs alone do not establish semantic preservation. Retain source, original claims and unresolved evidence; do not reset baseline or change unrelated implementations to hide observations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5293328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5120000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5315504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5682608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5499728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6491504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "67d8f09fb1c97b8d9e18d708f92ac31b3d4ad1b54fb180b041a0bbae62cf4839",
+  "request_id": "color-table-physical-collateral-oct15",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:color-table-rows-oct15"
+}

@@ -17,6 +17,7 @@
  */
 #pragma once
 
+#include "jackal/color_table.h"
 #include "original_seam.h"
 #include "font.h"
 #include "spot.h"
@@ -510,9 +511,9 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int draw_dest_source(Buffer *source, int a, int b, int c, int d, int e,
                        unsigned char *bits);
   int draw_multi_table_dest(Buffer *destination, int transparent, int x, int y,
-                            unsigned char *table);
+                            ColorTable *table);
   int draw_multi_table_dest(Buffer *source, int a, int b, int c, int d, int e,
-                            unsigned char *bits);
+                            ColorTable *bits);
   int copy(Buffer *source, int src_x, int src_y, int src_w, int src_h,
            int dest_x, int dest_y, int dest_w, int dest_h);
   // Coordinate bounds are exclusive. The RECT overload additionally

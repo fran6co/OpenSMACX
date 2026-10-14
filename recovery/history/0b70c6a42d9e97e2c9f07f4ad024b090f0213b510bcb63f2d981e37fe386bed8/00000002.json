@@ -1,0 +1,25 @@
+{
+  "event_id": "67d8f09fb1c97b8d9e18d708f92ac31b3d4ad1b54fb180b041a0bbae62cf4839",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/design_panels_control.cpp",
+      "recovery/tests/fixtures/designwin_scratch_storage_host.hpp",
+      "recovery/tests/fixtures/vehicle_renderer_host.cpp.in",
+      "recovery/tests/test_design_panels.py",
+      "recovery/tests/test_designwin_scratch_owner_behavior.py",
+      "recovery/tests/test_vehicle_terrain_renderer_actual_source.py"
+    ],
+    "evidence": [
+      "Independent review located actual-source renderer fixture declarations still using byte-pointer multi-table APIs. Propagate the authorized row-pointer contract through fixtures and their extraction wrappers, retaining behavior assertions and deliberate mutations.",
+      "No new production scope, baseline reset, weakened acceptance or behavior changes authorized. Existing unrelated stale harness failures are recorded separately."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c482db668c9546a2735f931f5ca09cd49bd223837b63fb04da5cb8ab21005a18",
+  "request_id": "color-table-fixtures-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:color-table-rows-oct15"
+}

@@ -165,6 +165,7 @@ struct Buffer {
     }
 };
 
+using ColorTable = unsigned char[256];
 struct Caviar {
     void add_object(CaviarData *definition, int) { last_model_definition = definition; }
     void reset_objects() { note_event('R'); }
@@ -174,7 +175,7 @@ struct Caviar {
         note_event('V');
         ++render_calls; last_render_kind = 1; last_render_x = x; last_render_y = y;
     }
-    void render_multi_table_dest(Buffer *, int x, int y, int, unsigned char *, int) {
+    void render_multi_table_dest(Buffer *, int x, int y, int, ColorTable *, int) {
         note_event('V');
         ++multi_render_calls; last_render_kind = 2;
         last_render_x = x; last_render_y = y;

@@ -1866,7 +1866,7 @@ int __cdecl boom(int x, int y, int flags) {
                         destination, 0xff, saved_rectangles[slot].left,
                         saved_rectangles[slot].top,
                         draw_type * animation_height, frame_span << 4,
-                        ExplosionColorTables[faction_color_group[faction]][0]);
+                        ExplosionColorTables[faction_color_group[faction]]);
                 } else {
                     const int bank = (flags & 0x100) != 0 ? 3
                         : (flags & 0x80) != 0 ? 2
@@ -1882,7 +1882,7 @@ int __cdecl boom(int x, int y, int flags) {
                         destination, sprite.transparent_index(),
                         saved_rectangles[slot].left,
                         saved_rectangles[slot].top,
-                        ExplosionColorTables[table_row][0]);
+                        ExplosionColorTables[table_row]);
                 }
                 window->update(&saved_rectangles[slot], 0);
                 if (IsMultiplayerNet) break;
@@ -2463,7 +2463,7 @@ static void vehdraw_finish_frame(Buffer *buffer, int veh_id, int x, int y, int f
         vehdraw_construct_armor(Vehs[veh_id].faction_id, prototype.chassis_id,
                                prototype.weapon_id, 5, 1, &g_VEHDRAW_CAVIAR);
         g_VEHDRAW_CAVIAR.render_multi_table_dest(buffer, x, y, 24,
-            reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables), flags);
+            ArmorTransparentColorTables, flags);
     } else {
         g_VEHDRAW_CAVIAR.clear_buffers(0);
     }
@@ -2814,7 +2814,7 @@ void __cdecl vehdraw_unk1(Buffer *buffer, int vehicle_id, int x, int y,
         const unsigned int destination_flags = (original_flags >> 12) & 2;
         g_VEHDRAW_CAVIAR.render_multi_table_dest(
             buffer, x, y, 0x18,
-            reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables),
+            ArmorTransparentColorTables,
             destination_flags);
         return;
     }

@@ -7240,7 +7240,7 @@ int Buffer::check_pcx_input_data(PcxInputView *source, int, int, int) {
 // LEVER: same shape and same landing as draw_dest above - the descriptor is
 //        the Sprite at 0x009B3A50, the release is surface_->Unlock, and the
 //        byte-exact form needs no spelling beyond the tree's own members.
-// symbol    ?draw_multi_table_dest@Buffer@@QAEHPAV1@HHHPAE@Z
+// symbol    ?draw_multi_table_dest@Buffer@@QAEHPAV1@HHHPAY0BAA@E@Z
 //           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
 //           the back-reference `PAV1@` for the same type, so the fact names what
 //           this tree actually emits. Bytes are unchanged.
@@ -7252,12 +7252,12 @@ int Buffer::check_pcx_input_data(PcxInputView *source, int, int, int) {
 // calls     0x005E8FF5
 // indirect  0x005D9477
 // WAS-LEVER: same preamble as the other Buffer::draw_* siblings; the callee
-// (Sprite::draw_multi_table_dest) takes `unsigned char *` as its last
-// param where this function's own a5 is `int`, so the tail call casts it.
+// (Sprite::draw_multi_table_dest) receives a pointer to 256-byte rows; this
+// wrapper carries the row-pointer type through to its tail call.
 
 
 int Buffer::draw_multi_table_dest(Buffer *destination, int transparent_in, int x,
-                                  int y, unsigned char *table) {
+                                  int y, ColorTable *table) {
     int transparent = transparent_in;
     if (surface_ == 0) {
         if (transparent_in == -1) {
@@ -7388,7 +7388,7 @@ forward:
 //        the transparent index; WinFillColour read as the object it is),
 //        26/80 -> 35/80, still MISMATCH on the same four-byte block-size
 //        difference. Not chased further.
-// symbol    ?draw_multi_table_dest@Buffer@@QAEHPAV1@HHHHHPAE@Z
+// symbol    ?draw_multi_table_dest@Buffer@@QAEHPAV1@HHHHHPAY0BAA@E@Z
 //           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
 //           the back-reference `PAV1@` for the same type, so the fact names what
 //           this tree actually emits. Bytes are unchanged.
@@ -7404,7 +7404,7 @@ forward:
 // indirect  0x005D9567
 
 
-int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsigned char * a7) {
+int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, ColorTable * a7) {
     int transparentIndex = a2;
     if (surface_ == 0) {
         if (transparentIndex == -1) {

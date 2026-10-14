@@ -3001,7 +3001,7 @@ void DesignWin::draw_armor(int redraw) {
         const int center_y = designwin_panel_add(area.top, area.bottom) / 2;
         if (protoArmorType_ == 5) {
             caviar_.render_multi_table_dest(canvas, center_x, center_y, 24,
-                reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables), 6);
+                ArmorTransparentColorTables, 6);
         } else {
             caviar_.render(canvas, center_x, center_y, 6);
         }
@@ -3253,7 +3253,7 @@ void DesignWin::draw_vehicle(int redraw) {
                                     weapon_id, armor_id, 1, &caviar_);
             caviar_.render_multi_table_dest(
                 screen, cx, cy, 0x18,
-                reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables),
+                ArmorTransparentColorTables,
                 0x22);
         } else {
             caviar_.clear_buffers(0);

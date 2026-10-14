@@ -121,7 +121,7 @@ void Credits::exec() {
   graphicWin2_.init(30, WinScreenWidth == 800 ? 100 : 200,
                     400, 400, 0, 0x1000020, this, 0, 0);
   graphicWin2_.fill(9);
-  graphicWin2_.field_A4_ = FadeColorTables[0];
+  graphicWin2_.multi_color_tables_ = FadeColorTables;
   graphicWin2_.show(0);
 
   frame_count_ = 0;

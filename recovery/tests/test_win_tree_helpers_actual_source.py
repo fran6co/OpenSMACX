@@ -50,7 +50,8 @@ struct Buffer {
     int get_pixel(int x, int y);
 };
 struct Win {
-    unsigned int iFlags_, iSomeFlag_, field_A0_;
+    unsigned int iFlags_, iSomeFlag_;
+    unsigned char *color_table_;
     Win *poWinBase_, *win_parent_;
     Buffer *buffer1_, *buffer2_, *buffer3_, *buffer4_;
     int caption_height_, border_thickness_, bottom_border_thickness_;
@@ -58,7 +59,7 @@ struct Win {
     Win *children_[8];
     int child_count_, visible;
     GraphicWin *graphic_;
-    Win() : iFlags_(0), iSomeFlag_(0), field_A0_(0), poWinBase_(0),
+    Win() : iFlags_(0), iSomeFlag_(0), color_table_(0), poWinBase_(0),
             win_parent_(0), buffer1_(0), buffer2_(0), buffer3_(0), buffer4_(0),
             caption_height_(0), border_thickness_(0), bottom_border_thickness_(-1),
             outer_rect_(), client_rect_(), child_count_(0), visible(1), graphic_(0) {

@@ -95,6 +95,7 @@ static void vox_matrix_vector_mul(const float m[3][3], const float *v, float *ou
     for (int r = 0; r != 3; ++r) out[r] = m[r][0]*v[0] + m[r][1]*v[1] + m[r][2]*v[2];
 }
 
+using ColorTable = unsigned char[256];
 struct Caviar {
     VOX_Vect light, shadow, camera_origin;
     VOX_Matrix camera_matrix;
@@ -115,9 +116,9 @@ struct Caviar {
         if (render_callback_mode == 1) { Vehs[active_vehicle_id].proto_id = 1; Vehs[active_vehicle_id].faction_id = 6; }
     }
     void reset_objects() { ++resets; events.push_back("reset"); }
-    void render_multi_table_dest(Buffer *, int, int, int fill, unsigned char *bits, unsigned int f) {
+    void render_multi_table_dest(Buffer *, int, int, int fill, ColorTable *bits, unsigned int f) {
         ++multi_renders; last_fill = fill; destination_flags = f;
-        transparent_bytes = bits == reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables) ? 0x400 : -1;
+        transparent_bytes = bits == ArmorTransparentColorTables ? 0x400 : -1;
         events.push_back("multi_render");
     }
     void clear_buffers(int f) { ++clears; last_fill = f; events.push_back("clear"); }

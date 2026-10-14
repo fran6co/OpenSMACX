@@ -2412,7 +2412,7 @@ void ReportWin::exp_anim() {
         buffer1_.draw(canvas, 9, explosion_rect_.left, explosion_rect_.top);
         Sprite &frame = g_XI_BOOM_VEH_SPRITES[48 + field_F934_];
         frame.draw_multi_table_dest(canvas, frame.transparent_index(),
-            explosion_rect_.left, explosion_rect_.top, &ExplosionColorTables[1][0][0]);
+            explosion_rect_.left, explosion_rect_.top, ExplosionColorTables[1]);
         if (++field_F934_ >= 16) field_F91C_ = 1;
         update(&explosion_rect_, 0);
     }

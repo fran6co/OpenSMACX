@@ -47,13 +47,14 @@ def _paint_table_branches():
 HARNESS = r'''
 #include <cassert>
 using byte = unsigned char;
+using ColorTable = byte[256];
 static byte ShadowColorTable[256];
 static byte RedTintColorTable[256];
 static byte BlueTintColorTable[256];
-static byte FadeColorTables[8][256];
+static ColorTable FadeColorTables[8];
 struct Buffer {
     static int copy_calls, dest_calls, multi_calls, draw_calls;
-    static byte *received;
+    static const void *received;
     static int copy(Buffer *, int, int, int, int, int, int) {
         ++copy_calls; return 0;
     }
@@ -61,7 +62,7 @@ struct Buffer {
         ++dest_calls; received = table; return 0;
     }
     static int draw_multi_table_dest(Buffer *, int, int, int, int, int,
-                                     byte *table) {
+                                     ColorTable *table) {
         ++multi_calls; received = table; return 0;
     }
     static int draw(Buffer *, int, int, int, int, int) {
@@ -70,7 +71,7 @@ struct Buffer {
 };
 int Buffer::copy_calls, Buffer::dest_calls, Buffer::multi_calls,
     Buffer::draw_calls;
-byte *Buffer::received;
+const void *Buffer::received;
 static int ExpansionEnabled;
 struct Rect { int left, top, right, bottom; };
 static byte *multi_debug_source(byte *shadow_table) {
@@ -83,15 +84,15 @@ static byte *setup_menu_source() {
     field_A0_ = SETUP_WIN_RHS;
     return field_A0_;
 }
-static byte *credits_source() {
-    byte *field_A4_ = nullptr;
-    field_A4_ = CREDITS_RHS;
-    return field_A4_;
+static ColorTable *credits_source() {
+    ColorTable *multi_color_tables_ = nullptr;
+    multi_color_tables_ = CREDITS_RHS;
+    return multi_color_tables_;
 }
 struct PaintOwner {
     unsigned int iFlags_;
-    byte *field_A0_;
-    byte *field_A4_;
+    byte *color_table_;
+    ColorTable *multi_color_tables_;
     int WinFillColour;
     Rect outer_rect_;
     Buffer storage;
@@ -117,21 +118,19 @@ def test_actual_drawing_table_producers_and_paint_selection(tmp_path, compiler):
     setup = _read("setupwin.cpp")
     credits = _read("credits.cpp")
 
-    assert re.search(r"unsigned char\s*\*field_A0_\s*;", win_h)
-    assert re.search(r"unsigned char\s*\*field_A4_\s*;", win_h)
-    assert "reinterpret_cast<unsigned char *>(field_A0_)" not in graphic
-    assert "reinterpret_cast<unsigned char *>(field_A4_)" not in graphic
+    assert re.search(r"unsigned char\s*\*color_table_\s*;", win_h)
+    assert re.search(r"ColorTable\s*\*multi_color_tables_\s*;", win_h)
 
     multi_rhs = _assigned_rhs(
         multi, "int MultiDebug::init(Net *net, Win *window, unsigned char *shadow_table)",
-        "field_A0_")
+        "color_table_")
     setup_rhs = _assigned_rhs(
         setup, "int SetupWin::do_menu_rightside(char *filename, int flags)",
-        "field_A0_")
-    credits_rhs = _assigned_rhs(credits, "void Credits::exec()", "graphicWin2_.field_A4_")
+        "color_table_")
+    credits_rhs = _assigned_rhs(credits, "void Credits::exec()", "graphicWin2_.multi_color_tables_")
     assert multi_rhs == "shadow_table"
     assert setup_rhs == "ExpansionEnabled ? RedTintColorTable : BlueTintColorTable"
-    assert credits_rhs == "FadeColorTables[0]"
+    assert credits_rhs == "FadeColorTables"
 
     harness = (HARNESS.replace("MULTI_DEBUG_RHS", multi_rhs)
                .replace("SETUP_WIN_RHS", setup_rhs)
@@ -144,28 +143,28 @@ int main() {
     assert(setup_menu_source() == RedTintColorTable);
     ExpansionEnabled = 0;
     assert(setup_menu_source() == BlueTintColorTable);
-    assert(credits_source() == FadeColorTables[0]);
+    assert(credits_source() == FadeColorTables);
 
     PaintOwner owner{};
     owner.iFlags_ = 0x1000000;
     owner.outer_rect_ = {0, 0, 8, 9};
-    owner.field_A0_ = ShadowColorTable;
-    owner.field_A4_ = FadeColorTables[0];
+    owner.color_table_ = ShadowColorTable;
+    owner.multi_color_tables_ = FadeColorTables;
     owner.paint_tables();
     assert(Buffer::dest_calls == 1 && Buffer::multi_calls == 0);
     assert(Buffer::received == ShadowColorTable); // A0 has priority over A4.
 
-    owner.field_A0_ = nullptr;
+    owner.color_table_ = nullptr;
     owner.paint_tables();
     assert(Buffer::dest_calls == 1 && Buffer::multi_calls == 1);
-    assert(Buffer::received == FadeColorTables[0]);
+    assert(Buffer::received == FadeColorTables);
 
-    owner.field_A4_ = nullptr;
+    owner.multi_color_tables_ = nullptr;
     owner.paint_tables();
     assert(Buffer::draw_calls == 1); // Null table pointers keep the plain draw.
 
     owner.iFlags_ = 0;
-    owner.field_A0_ = ShadowColorTable;
+    owner.color_table_ = ShadowColorTable;
     owner.paint_tables();
     assert(Buffer::copy_calls == 1); // The ordinary copy branch remains first.
 }
@@ -175,9 +174,9 @@ int main() {
     close = _body(win_cpp, "void Win::close() {")
     mouse = _body(win_cpp, "Win *__cdecl get_mouse_window_recurse(")
     for body in (constructor, close):
-        assert re.search(r"field_A0_\s*=\s*0\s*;", body)
-        assert re.search(r"field_A4_\s*=\s*0\s*;", body)
-    assert "window->field_A0_ == 0" in mouse
+        assert re.search(r"color_table_\s*=\s*0\s*;", body)
+        assert re.search(r"multi_color_tables_\s*=\s*0\s*;", body)
+    assert "window->color_table_ == 0" in mouse
 
     source = tmp_path / "win_drawing_tables.cpp"
     source.write_text(harness + cases)

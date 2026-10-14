@@ -33,11 +33,12 @@ struct Buffer {
     void write_l(Font *, char *, int, int, int) {}
 };
 
+using ColorTable = unsigned char[256];
 struct Caviar {
     void set_scene_rotation(float, float, float) {}
     void set_scaling(float) {}
     void render(Buffer *, int x, int y, int) { ++Trace.render; Trace.x=x; Trace.y=y; }
-    void render_multi_table_dest(Buffer *, int x, int y, int, unsigned char *, int) {
+    void render_multi_table_dest(Buffer *, int x, int y, int, ColorTable *, int) {
         ++Trace.multi_render; Trace.multi_x=x; Trace.multi_y=y;
     }
     void reset_objects() {}
@@ -90,7 +91,7 @@ inline StringTableDouble StringTable{};
 inline ConsoleDouble ConsoleGlobal{};
 inline char StringTemp[4096]{};
 inline int TextColourTable[256]{};
-inline unsigned char ArmorTransparentColorTables[64]{};
+inline ColorTable ArmorTransparentColorTables[24]{};
 inline int MapWinCaptionScale=0, MapWinCaptionDivisor=1;
 
 struct DesignWin : Buffer {

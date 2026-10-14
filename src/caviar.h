@@ -10,6 +10,7 @@
 #pragma once
 
 #include <stddef.h>
+#include "jackal/color_table.h"
 
 // caviar.cpp includes buffer.h; this forward declaration is only for the
 // renderer's own Buffer-taking members declared below.
@@ -622,9 +623,9 @@ class Caviar {
   // the viewport's slice of the shared colour table.
   void clear_buffers(int fill);
   // 0x006171A0. Renders and blits the result into surface A as a multi-table
-  // destination; the bits pointer is the blit's source table.
+  // destination; the table rows are the blit's source remap table.
   void render_multi_table_dest(Buffer *buffer, int centre_x, int centre_y,
-                               int fill, unsigned char *bits, int flags);
+                               int fill, ColorTable *bits, int flags);
   void render_mono(Buffer *buffer, int centre_x, int centre_y, int colour,
                    int flags);
   int UNK4(int a1, int a2, int a3, int a4);

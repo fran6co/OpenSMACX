@@ -171,8 +171,8 @@ Win::Win() {
     poWinBase_ = this;
     child_count_ = 0;
     iSomeFlag_ = 0;
-    field_A0_ = 0;
-    field_A4_ = 0;
+    color_table_ = 0;
+    multi_color_tables_ = 0;
     iVertScaleDenom_ = 0;
     iVertScaleNum_ = 0;
     field_134_ = 0;
@@ -4133,7 +4133,7 @@ alt_path:
             Buffer *buf = static_cast<Buffer *>(slotResult);
             unsigned char pixel = (unsigned char)buf->get_pixel(*x, *y);
             if (pixel != static_cast<unsigned char>(WinFillColour)) {
-                if (window->field_A0_ == 0) {
+                if (window->color_table_ == 0) {
                     return window;
                 }
                 if (pixel != 0) {
@@ -11138,8 +11138,8 @@ void Win::close() {
     field_438_ = 0;
     field_1A0_ = 2;
     iSomeFlag_ = 0;
-    field_A0_ = 0;
-    field_A4_ = 0;
+    color_table_ = 0;
+    multi_color_tables_ = 0;
     child_count_ = 0;
 
     if (buffer1_ != 0) {

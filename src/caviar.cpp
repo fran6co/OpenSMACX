@@ -3056,7 +3056,7 @@ Purpose: Render a scene and blit it into the renderer's own surface as a
          coordinates into surface A, frees the draw's surface lock, fills
          surface A 9 again and clears the buffers the caller asks for.
 // ORIGINAL: 0x006171A0 ?render_multi_table_dest@Caviar@@QAEXPAUBuffer@@HHHPAEH@Z 0x006171A0-0x00617226
-// symbol    ?render_multi_table_dest@Caviar@@QAEXPAVBuffer@@HHHPAEH@Z
+// symbol    ?render_multi_table_dest@Caviar@@QAEXPAVBuffer@@HHHPAY0BAA@EH@Z
 //           (this tree spells Buffer a `class` and the image's own name spells
 //           it `U`, a struct - see the note on render_mono above.)
 // size      134 bytes
@@ -3086,7 +3086,7 @@ Return Value: n/a
 Status: Complete
 */
 void Caviar::render_multi_table_dest(Buffer *buffer, int centre_x, int centre_y,
-                                     int fill, unsigned char *bits, int flags) {
+                                     int fill, ColorTable *bits, int flags) {
     CaviarSceneBufferA.buffer().fill(fill);
     if (render(buffer, centre_x, centre_y, flags | 8) != 0) {
         return;

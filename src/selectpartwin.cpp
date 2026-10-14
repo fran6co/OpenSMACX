@@ -911,7 +911,7 @@ int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
         const int midX = (a2->right + a2->left) / 2;
         if (slot == 5) {
             cav2b9c->render_multi_table_dest(buf444, midX, midY, 0x18,
-                ArmorTransparentColorTables[0], 6);
+                ArmorTransparentColorTables, 6);
         } else {
             cav2b9c->render(buf444, midX, midY, 6);
         }

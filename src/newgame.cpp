@@ -1633,7 +1633,7 @@ void __cdecl crash_landing(int faction_id) {
         if (!fungus) {
             smoke_frame.draw_multi_table_dest(
                 &screen, 0xff, frame_rect.left, frame_rect.top, 1, 1,
-                &ExplosionColorTables[12][0][0]);
+                ExplosionColorTables[12]);
         }
 
         RECT damage_rect;

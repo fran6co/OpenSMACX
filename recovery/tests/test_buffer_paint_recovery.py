@@ -67,7 +67,7 @@ def test_draw_uses_one_real_sprite_and_correct_six_argument_entry(paint_objects)
                      symbol_at("src/buffer.cpp", 0x5D93C0)):
             assert shared in references(obj, name)
         for address, target in ((0x5D8A30, "?draw_dest@Sprite@@QAEHPAVBuffer@@HHHPAE@Z"),
-                                (0x5D93C0, "?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHPAE@Z")):
+                                (0x5D93C0, "?draw_multi_table_dest@Sprite@@QAEHPAVBuffer@@HHHPAY0BAA@E@Z")):
             assert target in references(obj, symbol_at("src/buffer.cpp", address))
     for unit, address in (("src/graphicwin.cpp", 0x5D5CF0), ("src/caviar.cpp", 0x617230)):
         for obj in paint_objects[unit]:

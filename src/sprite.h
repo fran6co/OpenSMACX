@@ -18,6 +18,7 @@
 #pragma once
 #include "stdafx.h"
 #include "original_seam.h"
+#include "jackal/color_table.h"
 
 class Buffer;  // forward declaration
 class GraphicWin;
@@ -117,9 +118,9 @@ class Sprite {
   int draw_dest_unk2(Buffer *buffer, int a, int b, int c, int x, int y,
                      unsigned char *bits);
   int draw_multi_table_dest(Buffer *buffer, int a, int b, int c,
-                            unsigned char *bits);
+                            ColorTable *bits);
   int draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x, int y,
-                            unsigned char *bits);
+                            ColorTable *bits);
   // Buffer's software drawing wrappers borrow the shared Sprite descriptor.
   // The catalogue's five-argument form takes the transparency key and the
   // remap table (`HHHPAE`), not four ints.

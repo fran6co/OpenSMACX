@@ -139,6 +139,7 @@ VOX_Vect VehDrawFacetNormals2[2401],VehDrawFacetNormals3[2401];
 VOX_Vect *tables[]={VehDrawFacetNormals0,VehDrawFacetNormals1,VehDrawFacetNormals2,VehDrawFacetNormals3};
 int VehDrawPositionX,VehDrawPositionY,VehDrawPositionVehicle;
 int MapWinCaptionScale,MapWinCaptionDivisor;
+using ColorTable = unsigned char[256];
 unsigned char ShadowColorTable[256],ArmorTransparentColorTables[24][256];
 struct Buffer { int tag; } destination;
 struct Console { int get_relative_alt(int,int,int); } ConsoleGlobal;
@@ -149,7 +150,7 @@ struct Caviar {
     void set_shadow_table(unsigned char *);
     void set_camera_direct(const VOX_Vect *,const VOX_Matrix *);
     void render(Buffer *,int,int,int);
-    void render_multi_table_dest(Buffer *,int,int,int,unsigned char *,int);
+    void render_multi_table_dest(Buffer *,int,int,int,ColorTable *,int);
     void clear_buffers(int);
 } g_VEHDRAW_CAVIAR;
 int scenario,chosen,frame_arg,zoom_arg,flags_arg,armor_case,scale_calls,final_scale;
@@ -313,10 +314,10 @@ void vehdraw_construct_armor(int faction,int chassis,int weapon,int armor,int tr
     events+='A'; check(renderer==&g_VEHDRAW_CAVIAR && renderer->field_13CC_==0);
     check(faction==6 && chassis==7 && weapon==3 && armor==5 && transparent==1);
 }
-void Caviar::render_multi_table_dest(Buffer *buffer,int x,int y,int count,unsigned char *table,int flags) {
+void Caviar::render_multi_table_dest(Buffer *buffer,int x,int y,int count,ColorTable *table,int flags) {
     events+='T'; const int offset=final_scale?75:-9;
     check(this==&g_VEHDRAW_CAVIAR && buffer==&destination && x==4+offset && y==7+offset);
-    check(count==24 && table==reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables));
+    check(count==24 && table==ArmorTransparentColorTables);
     check(flags==(scenario==2?(flags_arg>>12)&2:0));
 }
 void Caviar::clear_buffers(int fill) { events+='X'; check(this==&g_VEHDRAW_CAVIAR && fill==0); }

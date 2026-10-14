@@ -140,7 +140,7 @@ def test_actual_pointer_snapshots_and_unlock_identity_are_direct():
 
     for signature in (
         "int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsigned char * a7) {",
-        "int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsigned char * a7) {",
+        "int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, ColorTable * a7) {",
     ):
         start = source.index(signature)
         end = source.index("\n}", start) + 2

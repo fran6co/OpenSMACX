@@ -35,7 +35,7 @@ def actual_host_bodies():
     draw = body_after(
         "int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsigned char * a7)")
     multi = body_after(
-        "int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsigned char * a7)")
+        "int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, ColorTable * a7)")
 
     # Product COM dispatch and receiver ownership must already be typed.
     assert "IDirectDrawSurface *surface;" in pixel
@@ -106,6 +106,7 @@ public:
     virtual long STDMETHODCALLTYPE Unlock(void *) = 0;
 };
 struct Buffer;
+using ColorTable = unsigned char[256];
 struct Sprite {
     char *pcBits_;
     uint32_t iSpriteWidth2_, iSpriteWidth_, iSpriteHeight_;
@@ -116,6 +117,7 @@ struct Sprite {
     Buffer *seen_buffer;
     int args[5];
     unsigned char *table;
+    ColorTable *multi_table;
     char *seen_pc_bits;
     uint32_t seen_pitch, seen_width, seen_height, seen_transparent;
     void snapshot() {
@@ -131,11 +133,11 @@ struct Sprite {
         table=a7; return call_result;
     }
     int draw_multi_table_dest(Buffer *b, int a2, int a3, int a4, int a5,
-                              int a6, unsigned char *a7) {
+                              int a6, ColorTable *a7) {
         snapshot();
         call_kind = 2; seen_buffer = b;
         args[0]=a2; args[1]=a3; args[2]=a4; args[3]=a5; args[4]=a6;
-        table=a7; return call_result;
+        multi_table=a7; return call_result;
     }
 };
 static Sprite g_BUFFER_SPRITE = {};
@@ -153,7 +155,7 @@ struct Buffer {
     Dib dib_;
     int put_pixel(int,int,int);
     int draw_dest(Buffer *,int,int,int,int,int,unsigned char *);
-    int draw_multi_table_dest(Buffer *,int,int,int,int,int,unsigned char *);
+    int draw_multi_table_dest(Buffer *,int,int,int,int,int,ColorTable *);
 };
 static Buffer *lock_mutation_buffer;
 static IDirectDrawSurface *lock_mutation_target;
@@ -252,6 +254,7 @@ int main() {
 
     Buffer target = {};
     unsigned char table[4] = {1,2,3,4};
+    ColorTable multi_tables[2] = {};
     // A preexisting surface takes the untouched forward path; Sprite receives
     // exact arguments and the wrapper clears only pcBits_ after the call.
     reset_fake(); b.surface_=&first; b.dib_bits_=dib; b.locked_bits_=pixels;
@@ -275,12 +278,12 @@ int main() {
     reset_fake(); b.surface_=0; b.dib_bits_=dib; b.locked_bits_=pixels;
     b.surface_lock_count_=0; b.stride_=31; b.dib_.bmiHeader=Header{6,-3};
     g_BUFFER_SPRITE.call_result=0x4567;
-    require(b.draw_multi_table_dest(&target, -1, 8, 9, 10, 11, table)==0x4567,
+    require(b.draw_multi_table_dest(&target, -1, 8, 9, 10, 11, multi_tables)==0x4567,
             "multi-table draw result");
     require(g_BUFFER_SPRITE.call_kind==2 && g_BUFFER_SPRITE.seen_buffer==&target &&
             g_BUFFER_SPRITE.args[0]==-1 && g_BUFFER_SPRITE.args[1]==8 &&
             g_BUFFER_SPRITE.args[2]==9 && g_BUFFER_SPRITE.args[3]==10 &&
-            g_BUFFER_SPRITE.args[4]==11 && g_BUFFER_SPRITE.table==table,
+            g_BUFFER_SPRITE.args[4]==11 && g_BUFFER_SPRITE.multi_table==multi_tables,
             "multi-table exact Sprite arguments");
     require(g_BUFFER_SPRITE.iSpriteWidth2_==31 &&
             g_BUFFER_SPRITE.iSpriteWidth_==6 &&

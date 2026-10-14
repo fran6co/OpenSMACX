@@ -1396,12 +1396,12 @@ void GraphicWin::on_paint(RECT *area) {
             Buffer::copy(destination, 0, 0, x, y,
                          outer_rect_.right - outer_rect_.left,
                          outer_rect_.bottom - outer_rect_.top);
-        } else if (field_A0_ != 0) {
+        } else if (color_table_ != 0) {
             Buffer::draw_dest(destination, WinFillColour, x, y, 1, 1,
-                              field_A0_);
-        } else if (field_A4_ != 0) {
+                              color_table_);
+        } else if (multi_color_tables_ != 0) {
             Buffer::draw_multi_table_dest(destination, WinFillColour, x, y, 1, 1,
-                                          field_A4_);
+                                          multi_color_tables_);
         } else {
             Buffer::draw(destination, WinFillColour, x, y, 1, 1);
         }

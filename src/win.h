@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "jackal/color_table.h"
 #include "original_seam.h"
 #include "autosound.h"
 #include "buffer.h"
@@ -448,8 +449,8 @@ class Win : public AutoSound {
  protected:
   uint32_t iFlags_;         // 0x98, immediately after AutoSound's 0x98 bytes
   uint32_t iSomeFlag_;
-  unsigned char *field_A0_;
-  unsigned char *field_A4_;
+  unsigned char *color_table_;     // +0xA0, single-destination remap table
+  ColorTable *multi_color_tables_; // +0xA4, source/destination table rows
   // 0xA8. A `Win *`, not a word: `Win::construct` stores `this` here and
   // `Win::get_mouse_window` RETURNS it as the window that owns a position.
   // Nothing else in the tree reads it, so the `uint32_t` cost nothing until

@@ -19,7 +19,7 @@ def test_selectpartwin_uses_owned_palette_and_sprite_tables(tmp_path: Path) -> N
     assert "ArmorTransparentColorTables[24][256]" in game_header
     assert "g_VEH_SPRITES[152]" in sprite_header
     assert "// 0x007777A0" in sprite_header
-    assert "render_multi_table_dest(buf444, midX, midY, 0x18,\n                ArmorTransparentColorTables[0], 6)" in source
+    assert "render_multi_table_dest(buf444, midX, midY, 0x18,\n                ArmorTransparentColorTables, 6)" in source
     assert re.search(
         r"TutWinBaseWindow\.sprite6_\.draw\(\s*&backdrop,\s*"
         r"TutWinBaseWindow\.sprite6_\.transparent_index\(\),", source)

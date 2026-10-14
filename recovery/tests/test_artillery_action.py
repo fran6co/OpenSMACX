@@ -118,13 +118,14 @@ BOOM_HARNESS = r'''
 #include <vector>
 #define __cdecl
 struct RECT { int left, top, right, bottom; };
+using ColorTable = unsigned char[256];
 struct Buffer;
 struct CopyCall {
     Buffer *source;
     Buffer *destination;
     int sx, sy, dx, dy, width, height;
 };
-struct DrawCall { int sprite; unsigned char *table; };
+struct DrawCall { int sprite; ColorTable *table; };
 struct InitCall { Buffer *buffer; int width, height; };
 static std::vector<CopyCall> copies;
 static std::vector<DrawCall> sprite_draws;
@@ -146,7 +147,7 @@ struct Buffer {
     }
     void close() {}
     void set_clip(RECT *) {}
-    int draw_multi_table_dest(Buffer *, int, int, int, int, int, unsigned char *) {
+    int draw_multi_table_dest(Buffer *, int, int, int, int, int, ColorTable *) {
         return 0;
     }
 };
@@ -162,14 +163,13 @@ const int CHSI_MISSILE = 8, BSC_SPORE_LAUNCHER = 15;
 const int MaxWeaponNum = 26;
 int VehDrawSelection689F28, VehDrawSelection689F2C, VehDrawSuppressedVehicle;
 int BoomAnimationLevel;
-static unsigned char color_table_bytes[8];
-unsigned char *ExplosionColorTables[8][1];
+ColorTable ExplosionColorTables[13][16];
 struct Sprite {
     int index, sprite_width, sprite_height;
     int width() const { return sprite_width; }
     int height() const { return sprite_height; }
     int transparent_index() const { return 0xff; }
-    int draw_multi_table_dest(Buffer *, int, int, int, unsigned char *table) {
+    int draw_multi_table_dest(Buffer *, int, int, int, ColorTable *table) {
         sprite_draws.push_back(DrawCall{index,table}); return 0;
     }
 };
@@ -218,7 +218,7 @@ void reset_case() {
     copies.clear(); sprite_draws.clear(); inits.clear();
     for (int i=0;i<128;++i) fx_calls[i]=0;
     for (int i=0;i<8;++i) {
-        MapWinTable[i]=0; ExplosionColorTables[i][0]=&color_table_bytes[i];
+        MapWinTable[i]=0;
     }
     MapWinTable[0]=&window; window.map_window_buffer=true;
     window.field_1DD74_=1; window.field_1DDA8_=0;
@@ -261,20 +261,20 @@ int main() {
     assert(boom(4,5,2)==1);
     assert(!sprite_draws.empty());
     assert(sprite_draws[0].sprite>=48 && sprite_draws[0].sprite<64);
-    assert(sprite_draws[0].table==&color_table_bytes[6]); // bank 3 => row 6
+    assert(sprite_draws[0].table==ExplosionColorTables[6]); // bank 3 => table row 6
 
     reset_case(); Vehs[0].proto_id=3; VehPrototypes[3].reactor_id=2;
     assert(boom(4,5,2)==1);
     assert(!sprite_draws.empty());
     assert(sprite_draws[0].sprite>=16 && sprite_draws[0].sprite<32);
-    assert(sprite_draws[0].table==&color_table_bytes[0]); // other bank => row 0
+    assert(sprite_draws[0].table==ExplosionColorTables[0]); // other bank => row 0
 
     reset_case(); Vehs[1].proto_id=1; mutate_on_initial_fx=1;
     assert(boom(4,5,1)==1);
     assert(fx_calls[1]>0);
     assert(!sprite_draws.empty() && sprite_draws[0].sprite>=80 &&
            sprite_draws[0].sprite<96);
-    assert(sprite_draws[0].table==&color_table_bytes[5]); // callback-updated weapon 6
+    assert(sprite_draws[0].table==ExplosionColorTables[5]); // callback-updated weapon 6
 
     reset_case(); GameDataStateStorage.fields_.game_preferences_=0;
     assert(boom(4,5,0)==1); assert(non_input_calls==16*25);

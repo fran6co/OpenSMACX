@@ -118,7 +118,7 @@ int MultiDebug::init(Net *net, Win *window, unsigned char *shadow_table) {
         return result;
     }
     // The original third argument is the borrowed shadow color table.
-    field_A0_ = shadow_table;
+    color_table_ = shadow_table;
     font_.init("Times New Roman", 0xa, 0);
     fill(0);
     timer_.start(MultiDebug::timer_callback_daemon,

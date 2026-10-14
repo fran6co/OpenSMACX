@@ -1046,9 +1046,9 @@ void __cdecl colortables_init() {
     int explosion_weights[13][16];
     Buffer buffer;
     bool palette_changed = compare_palettes() != 0;
-    unsigned char *basic_tables[6] = {ShadowColorTable, SpotlightColorTable,
+    void *basic_tables[6] = {ShadowColorTable, SpotlightColorTable,
         ReddishColorTable, RedTintColorTable, BlueTintColorTable,
-        reinterpret_cast<unsigned char *>(FadeColorTables)};
+        FadeColorTables};
     const char *basic_names[6] = {"shadow.tmp", "spotlight.tmp", "reddish.tmp",
         "redtint.tmp", "bluetint.tmp", "fade.tmp"};
     const int basic_sizes[6] = {256, 256, 256, 256, 256, 2048};

@@ -494,7 +494,7 @@ void Datalink::draw_defense() {
         const int y = (illustration_rect_.top + illustration_rect_.bottom) / 2;
         if (armor_id == 5) {
             caviar_.render_multi_table_dest(static_cast<Buffer *>(this), x, y,
-                24, reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables), 6);
+                24, ArmorTransparentColorTables, 6);
         } else {
             caviar_.render(static_cast<Buffer *>(this), x, y, 6);
         }
