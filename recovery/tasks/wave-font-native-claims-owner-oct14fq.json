@@ -1,0 +1,35 @@
+{
+  "author": "coordinator",
+  "base_revision": "cfe9967126d59604c39bb76475662989e77f4d1b",
+  "editable_files": [
+    "src/wave.cpp",
+    "src/main.cpp",
+    "recovery/tests/test_wave_font_native_claims_oct14fq.py"
+  ],
+  "evidence": [
+    "Fresh root native reports parallel-frontier-live-oct14fo and lifetime-unclaimed-live-oct14fn match Wave set_reverb_mix15/15, load79/79 and g_JACKAL_FONT generated teardown2/2. Old cache hints are not the proof.",
+    "Independent pinned-body review preserves Wave store-before-dispatch, factory/admission/error paths, direct Sound::load and ordered fresh device callbacks. Original Wave vtable supports virtual interpretation despite historical QAE catalogue name. Font is a real global with source-owned constructor/destructor and CRT registration evidence, not a handwritten address stub.",
+    "Only native recover record may promote these three flags; do not edit C++ bodies, original identities/spans/symbols, globals, build/measurement policy, historical lessons or unsafe paths. Require immutable native writer projection and global claim continuity, fresh build/link, physical compiled preservation and independent review. Scoped byte equality is not strict reference, layout, linked or game acceptance."
+  ],
+  "intent": "Bank three freshly matching source-owned Wave bodies and generated global Font teardown without changing C++ behavior or generated-lifetime interpretation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5009568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5008416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4585792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "wave-font-native-claims-owner-oct14fq"
+}

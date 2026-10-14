@@ -1,0 +1,90 @@
+{
+  "author": "coordinator",
+  "base_revision": "cfe9967126d59604c39bb76475662989e77f4d1b",
+  "editable_files": [
+    "src/vector.cpp",
+    "recovery/tests/test_vector_normalize_precision_oct14fq.py"
+  ],
+  "evidence": [
+    "Pinned normalize634520..6345DD confirms ECX receiver, hidden class-value result, ret4 and12-byte Vector; no hierarchy/layout rewrite is justified.",
+    "Original loads z/y/x, accumulates squared length without intermediate float stores, passes double to sqrt646544, compares its x87 result directly to float1 at66AA34, branches on C3 for both equal and unordered, then keeps reciprocal precision until final float component stores. Current float length/reciprocal narrow prematurely.",
+    "Keep unchanged receiver, original branch/error/no-zero-guard behavior and complete spans. Use double length/reciprocal and final float component stores; test result construction placement with original lifetime instructions. Private variants only, no extended spelling chase. No new semantic name/global binding for pooled1.0 without ownership proof.",
+    "Only edit normalize and bounded actual-source tests; preserve all other Vector source and claims. Source/host precision checks are bounded; establish native disassembly/matching and build/link, physical outside preservation, and independent review before manual integration. Native record alone banks any exact body; no hand claim edits or demotions."
+  ],
+  "intent": "Restore the original normalize precision and unordered/unit/zero behavior within the real Vector owner; batch a bounded candidate deck and preserve all other Vector historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6455632,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6455680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6455728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6455776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vector-normalize-precision-owner-oct14fq"
+}
