@@ -1,0 +1,32 @@
+{
+  "author": "coordinator",
+  "base_revision": "203891c982dbba68a1f98f73afec58237581cf21",
+  "editable_files": [
+    "src/win.cpp",
+    "recovery/tests/test_win_typed_access_actual_source_oct13y.py",
+    "recovery/tests/test_win_palette_dispatch_claims_oct14fm.py"
+  ],
+  "evidence": [
+    "Native live root measurement at203891 reports both current reconstructed methods exact under /c /O2 /Gy /GR- /GX: OnQueryNewPalette5F1070 has61 instructions and dispatch_245EE9F0 has61. Cached previous measurements were starting hints only; retain fresh results and inspect original references before banking.",
+    "OnQueryNewPalette uses shared real WinSharedHdc/WinHdcRefCount, typed IDirectDrawSurface2 GetDC/ReleaseDC and standard SDK palette/DC APIs, preserving original refcount and return/error ordering. Earlier duplicate fixed-address storage was removed and stays removed. dispatch_24 uses actual Win fields/callbacks/virtual events and supported contextual Sound receiver views; complete Sound producer/lifetime proof remains unfinished.",
+    "Only installed recover record may write byte claim flags. Do not edit C++ bodies, names, original spans/symbols, compiler settings, callbacks, virtual slots, globals, historical notes or unsafe behavior. Claims are historical masked-byte obligations, not strict structure/runtime/full-game acceptance.",
+    "Require exact native writer projection from immutable task base for two promotions and metadata/history continuity for every mapping; narrowly teach the existing immutable Win-type test these two specific monotonic promotions with explicit old-false guards. No skipped unrelated identity/body/history checks, baseline resets or demotions.",
+    "Run fresh native strict task/reference diagnostics, scoped tests, fresh build/link, physical outside-body comparison and independent review before manual integration. Missing strict evidence remains unknown; native historical record is not acceptance. Recheck destination and remove only safely merged clean worker state."
+  ],
+  "intent": "Bank freshly measurable historical Win palette and coordinate-dispatch byte obligations without changing reconstructed C++ or weakening structural/lifetime obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6230128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6220272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-palette-dispatch-claims-owner-oct14fm"
+}
