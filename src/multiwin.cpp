@@ -490,7 +490,7 @@ void MultiWin::draw(int draw_type) {
   GraphicWin::fill(9);
 
   Buffer *canvas = static_cast<Buffer *>(this);
-  int y = (!IsMultiplayerNet || field_A24_)
+  int y = (!IsMultiplayerNet || panel_open_)
               ? 0 : sprite5_.height() * 7 + sprite7_.height() * 2;
   sprite3_.draw(canvas, sprite3_.transparent_index(), 0, y);
   y += sprite3_.height();
@@ -528,7 +528,7 @@ void MultiWin::draw(int draw_type) {
   const int saved_bottom = y + sprite5_.height();
   const int saved_right = dib_.bmiHeader.biWidth;
   bool drew_player = false;
-  if (!IsMultiplayerNet || field_A24_) {
+  if (!IsMultiplayerNet || panel_open_) {
     int row = 0;
     for (int faction = 1; faction < 8; ++faction) {
       if (faction == ConsoleGlobal.faction_id_) continue;
@@ -688,7 +688,7 @@ void MultiWin::on_button_clicked(int button_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479970.cpp; src/multiwin.h; src/faction.h; src/console.h; src/wave.cpp"], "reason": "The original show uses MultiWin's owned controls and GraphicWin buffer, the local Console faction, Player rule flags, process window animation state, and the source-owned wave, screen, visibility and frame-delay objects."}
 void MultiWin::show() {
   Buffer background;
-  if (IsMultiplayerNet == 0 && field_A24_ != 0) return;
+  if (IsMultiplayerNet == 0 && panel_open_ != 0) return;
 
   hovered_spot_ = -1;
   // The seed sets each button's Win visibility bit directly. Use the real
@@ -701,7 +701,7 @@ void MultiWin::show() {
 
   if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.play();
   MultiWindowVisibilityState = 2;
-  field_A24_ = 1;
+  panel_open_ = 1;
   MultiWindowRedrawSuppressed = 1;
   on_redraw();
   MultiWindowRedrawSuppressed = 0;
@@ -747,7 +747,7 @@ void MultiWin::show() {
 // symbol    ?hide@MultiWin@@UAEXXZ
 void MultiWin::hide() {
   Buffer background;
-  if (IsMultiplayerNet == 0 && field_A24_ == 0) return;
+  if (IsMultiplayerNet == 0 && panel_open_ == 0) return;
 
   if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.play();
   hovered_spot_ = -1;
@@ -802,7 +802,7 @@ void MultiWin::hide() {
   }
 
   if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.fade(50);
-  field_A24_ = 0;
+  panel_open_ = 0;
   if (IsMultiplayerNet == 0) {
     Win::hide();
   } else {
@@ -1049,7 +1049,7 @@ void MultiWin::init() {
         move_x = (WinScreenWidth + 0x400) / 2 - dib_.bmiHeader.biWidth;
     }
     Win::move(move_x, move_y);
-    field_A24_ = 0;
+    panel_open_ = 0;
     if (IsMultiplayerNet) Win::show(0);
 
     g_MULTIWIN_WAVE.init(const_cast<char *>("fx\\mmenu.wav"), 4);

@@ -423,6 +423,7 @@ char *PopupStartAltFile2 = PopupAlienOtherScriptName;    // 0x00691B24
 
 // 0x006A721C, the modal-popup flag every popup driver parks 6 in while its
 // popup runs and clears the moment exec comes back. See the note in popup.h.
+// RECOVERY_OBJECT: v2 0x006A721C 0x006A7220 ?PopupModalState@@3HA 0x004E0EA0
 int PopupModalState;  // 0x006A721C
 
 // The link handler's storage (popup.h has the role note). The image's copies

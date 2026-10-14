@@ -41,6 +41,7 @@ class MultiWin : public GraphicWin {
   void hide();
   void init();
   void UNK2();
+  unsigned int panel_open() const { return panel_open_; }
 
  private:
   // +0xA14..+0xA50: ordinary state. Several meanings remain unresolved.
@@ -48,7 +49,8 @@ class MultiWin : public GraphicWin {
   unsigned int field_A18_;
   unsigned int field_A1C_;
   unsigned int field_A20_;
-  unsigned int field_A24_;
+  // RECOVERY_MEMBER: v1 MultiWin panel_open_ 0xA24 0x00479970
+  unsigned int panel_open_;
   unsigned int field_A28_;
   unsigned int field_A2C_;
   unsigned int field_A30_;

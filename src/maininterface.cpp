@@ -618,7 +618,7 @@ void MainInterface::on_iface_button_clicked(int button) {
         } else ConsoleGlobal.alpha_menu_.show();
         return;
     case 1004:
-        if (MultiWindowOpen) MultiWindow.hide();
+        if (MultiWindow.panel_open()) MultiWindow.hide();
         else MultiWindow.show();
         return;
     default: return;

@@ -5083,7 +5083,7 @@ void Console::set_ai(int faction_id) {
 /*
 Purpose: Ask which terrain-improvement brush the scenario editor paints with
          and refresh the interface panes around the answer.
-// ORIGINAL: 0x004E0EA0 ?editor_set_brush@Console@@QAEXXZ 0x004E0EA0-0x004E0F22 FILE
+// ORIGINAL: 0x004E0EA0 ?editor_set_brush@Console@@QAEXXZ 0x004E0EA0-0x004E0F22 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["MainInterfaceGlobal original7AE820; header button_group_[4] begins1E878 with stride94. Element3 is7CD254, its selection field84 is7CD2D8, and the following MainInterface field1EAC8 is7CD2E8.", "Pinned MainInterface constructor45EF10 constructs four ButtonGroups at+1E878 with ctor62B7C0 and dtor4325B0; destructor45EB80 tears down that same owned array. Noncompact init populates group3 with brush buttons1036..1041.", "Pinned MainInterface init4596CD clears its+1EAC8 member; Console key517A0B/517A93 reads that same original cell. The former ConsoleModalState7CD2E8 symbol retains its unbounded identity as a member binding next to MainInterfaceGlobal."], "reason": "Use MainInterface's constructed editor button group and selection member rather than fixed original-address aliases, retaining dialog/redraw order, compact-view guard and conditional selection notification."}
 // size      130 bytes
 // prototype void (__thiscall ?editor_set_brush@Console@@QAEXXZ)(Console* this)
@@ -10883,7 +10883,7 @@ void Console::menu_proc(int command) {
             case 0x110: monument(0); break;
             case 0x111: hall_of_fame(0); break;
             case 0x113:
-                if (MultiWindowOpen == 0) MultiWindow.show();
+                if (MultiWindow.panel_open() == 0) MultiWindow.show();
                 else MultiWindow.hide();
                 break;
             case 0x114: corner_the_market(); break;
@@ -11635,7 +11635,7 @@ if (a2 == 0x91) {
         }
     }
     if (enter_space_handoff == false && a2 == 0x0D &&
-        (ConsoleGlobal.alpha_menu_.is_visible() != 0 || MultiWindowOpen != 0)) {
+        (ConsoleGlobal.alpha_menu_.is_visible() != 0 || MultiWindow.panel_open() != 0)) {
         enter_space_handoff = true;
     }
     if (enter_space_handoff != false) {
@@ -11645,7 +11645,7 @@ if (a2 == 0x91) {
         if (ConsoleGlobal.alpha_menu_.is_visible() != 0) {
             ConsoleGlobal.alpha_menu_.hide();
         }
-        if (MultiWindowOpen != 0) {
+        if (MultiWindow.panel_open() != 0) {
             MultiWindow.hide();
         }
         if (MainInterfaceGlobal.input_gate_state() != 0) {

@@ -92,7 +92,14 @@ struct InfoWin { void change(...) {} };
 struct TutWin { int reset() {Trace.push_back("tutorial_reset");return 0;} void tour() {} void set_tour_stage(int) {} };
 struct FlatButton { void hide() {} void show(int) {} };
 struct MainInterface { FlatButton flat_button_[42]; FlatButton &flat_button(int i) { return flat_button_[i]; } };
-struct MultiWin { void show() {} void hide() {} void on_button_clicked(...) {} };
+struct MultiWin {
+  unsigned int panel_open_;
+  MultiWin() : panel_open_(0) {}
+  unsigned int panel_open() const { return panel_open_; }
+  void show() { panel_open_=1; }
+  void hide() { panel_open_=0; }
+  void on_button_clicked(...) {}
+};
 struct Console : MapWin {
   void menu_proc(int);
   static void __cdecl menu_daemon(int);
@@ -132,7 +139,6 @@ struct Console : MapWin {
 
 int ConsoleNoMapOverrideLatch;
 int ConsoleControlTurnActive, IsMultiplayerNet, IsMultiplayerPBEM;
-int MultiWindowOpen;
 uint32_t MapBaseDisplayOverride, ExitTurnLoop, GameRestartQueued;
 uint32_t GameRules, GameState, GamePreferences, GameMorePreferences;
 uint32_t StatusFlags, LockEnableMask;
@@ -210,7 +216,7 @@ void reset_state(){
     MapBaseDisplayOverride=1; ExitTurnLoop=0; ConsoleNoMapOverrideLatch=0;
     IsMultiplayerNet=0; IsMultiplayerPBEM=0; ConsoleControlTurnActive=0;
     GameState=0; GameRules=0; GamePreferences=0; GameMorePreferences=0;
-    EditLock=0; MultiWindowOpen=0; PopupResponse=0; GameRestartQueued=0;
+    EditLock=0; MultiWindow=MultiWin(); PopupResponse=0; GameRestartQueued=0;
     LockEnableMask=0; PopupWriteCheckState=0; StatusFlags=0;
     map.cursor_resource_id_=0x7F00;
     for(int i=0;i!=8;++i) MapWinTable[i]=0;
@@ -219,6 +225,11 @@ void reset_state(){
     Trace.clear();
 }
 int main(){
+    reset_state(); assert(MultiWindow.panel_open()==0);
+    ConsoleGlobal.menu_proc(0x113); assert(MultiWindow.panel_open()==1);
+    ConsoleGlobal.menu_proc(0x113); assert(MultiWindow.panel_open()==0);
+    reset_state(); MultiWindow.show();
+    ConsoleGlobal.menu_proc(0x113); assert(MultiWindow.panel_open()==0);
     reset_state(); ConsoleGlobal.menu_proc(0x751);
     assert(count("parse_says")==2 && count("popp")==1);
     reset_state(); MapBaseDisplayOverride=0;

@@ -2449,6 +2449,9 @@ GraphicWin CoverWindow;  // 0x00937118
 // g_MULTIWIN_WAVE pointer at 0x007FFF00. The game object file emits
 // ?MultiWindow@@3VMultiWin@@A with real constructor/destructor references.
 // RECOVERY_OBJECT: v2 0x007FD648 0x007FFF00 ?MultiWindow@@3VMultiWin@@A 0x0047A590
+// This cell was misrepresented as standalone ?MultiWindowOpen; it is the
+// existing open-state member, retaining the image's loader-zero initial value.
+// RECOVERY_OBJECT: v3 0x007FE06C ?MultiWindowOpen@@3HA member ?MultiWindow@@3VMultiWin@@A panel_open_
 MultiWin MultiWindow;  // 0x007FD648
 
 // 0x00689218 - the DirectPlay application GUID the lobby check registers the
