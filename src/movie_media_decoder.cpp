@@ -740,14 +740,15 @@ extern "C" void __cdecl sub_5d2c0a(int *dst, int *src) {
 DWORD __cdecl sub_5d0d82(
     MediaDecoderContext *context, DWORD predictor_value, const BYTE *input,
     BYTE *destination, int row_pitch_bytes, DWORD bit_position) {
-  // Model the native 0x300-byte scratch as DWORD objects. The original writes
-  // coefficient words and later addresses the same frame as bytes; retaining
-  // a byte array plus DWORD type-punning would make the C++ translation rely
-  // on alignment and effective-type undefined behavior.
-  DWORD local_storage_words[0x300 / sizeof(DWORD)];
-  DWORD *const coefficients = local_storage_words;
+  // The transforms consume signed words. Retain the entire uninitialized
+  // native 0x300-byte reservation as one array, including unchecked indexed
+  // coefficient writes, and preserve producer bits through signed32 conversion.
+  // DWORD is unsigned long on VC6, not int's corresponding unsigned type.
+  int local_storage_words[0x300 / sizeof(int)];
+  static_assert(sizeof(int) == 4, "native transform words occupy four bytes");
+  int *const coefficients = local_storage_words;
   const DWORD dc = predictor_value * context->block_transform_weights[0];
-  coefficients[0] = dc;
+  coefficients[0] = movie_media_signed32(dc);
   for (int i = 1; i != 64; ++i) coefficients[i] = 0;
 
   const DWORD *const weights = context->block_transform_weights;
@@ -791,7 +792,8 @@ DWORD __cdecl sub_5d0d82(
 
     const DWORD coefficient_index =
         movie_media_coefficient_tables.words[6 + run_position];
-    coefficients[coefficient_index] = amplitude * weights[coefficient_index];
+    coefficients[coefficient_index] =
+        movie_media_signed32(amplitude * weights[coefficient_index]);
   }
   if (run_position == 0x3f) {
     const int fill_value = movie_media_sar17(dc);
@@ -810,12 +812,12 @@ DWORD __cdecl sub_5d0d82(
   // Thus the subsequent ESP+0x0C/ESP+0x10C addresses are scratch+0/scratch+0x100,
   // not offsets from the scratch allocation's original ESP.
   for (int row = 0; row != 8; ++row) {
-    sub_5d29e1(reinterpret_cast<int *>(local_storage_words + row * 8),
-               reinterpret_cast<int *>(local_storage_words + 64 + row));
+    sub_5d29e1(local_storage_words + row * 8,
+               local_storage_words + 64 + row);
   }
   for (int column = 0; column != 8; ++column) {
     sub_5d2c0a(reinterpret_cast<int *>(destination + column * row_pitch_bytes),
-               reinterpret_cast<int *>(local_storage_words + 64 + column * 9));
+               local_storage_words + 64 + column * 9);
   }
   return bit_position;
 }
