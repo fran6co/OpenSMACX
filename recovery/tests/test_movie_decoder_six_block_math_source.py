@@ -4,6 +4,8 @@ import shutil
 import subprocess
 from pathlib import Path
 import os
+import re
+import pytest
 
 
 ROOT = Path(__file__).resolve().parent
@@ -125,10 +127,12 @@ def _function(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated function {signature}")
 
 
-def test_actual_six_step_predictor_and_dct_bodies(tmp_path: Path) -> None:
-    compiler = shutil.which("g++") or shutil.which("clang++")
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_six_step_predictor_and_dct_bodies(
+        tmp_path: Path, compiler_name: str) -> None:
+    compiler = shutil.which(compiler_name)
     if compiler is None:
-        return
+        pytest.skip(f"{compiler_name} unavailable")
     source_text = (SRC / "movie_media_decoder.cpp").read_text()
     owner_header = (SRC / "movie_decoder_owner.h").read_text()
     byte_view = _function(owner_header, "struct MediaCoefficientPredictorViewLayout") + ";\n"
@@ -141,6 +145,7 @@ def test_actual_six_step_predictor_and_dct_bodies(tmp_path: Path) -> None:
         "static DWORD movie_media_decode_predictor_delta",
         "static DWORD movie_media_coefficient_entry",
         "static int movie_media_sar17",
+        "static int movie_media_signed32(",
         "DWORD __cdecl sub_5d0d82(",
         "DWORD __cdecl sub_5d0aab(",
         "void movie_media_decode_six_coefficient_blocks(",
@@ -152,11 +157,14 @@ def test_actual_six_step_predictor_and_dct_bodies(tmp_path: Path) -> None:
     )
     extracted = [_function(source_text, signature) for signature in signatures]
     block_index = signatures.index("DWORD __cdecl sub_5d0d82(")
-    storage_decl = "  DWORD local_storage_words[0x300 / sizeof(DWORD)];"
+    storage_decl = "  int local_storage_words[0x300 / sizeof(int)];"
     assert extracted[block_index].count(storage_decl) == 1
     extracted[block_index] = extracted[block_index].replace(
         storage_decl, storage_decl + "\n  observed_local_storage = "
-        "reinterpret_cast<std::uintptr_t>(local_storage_words);", 1)
+        "reinterpret_cast<std::uintptr_t>(local_storage_words);\n"
+        "  static_assert(sizeof(local_storage_words) == 0x300, \"scratch extent\");\n"
+        "  static_assert(std::is_same<decltype(local_storage_words), int[192]>::value, "
+        "\"signed scratch element type\");", 1)
     reader = extracted[0]
     read_needle = "static DWORD movie_media_read_bits32(const BYTE *input, DWORD bit_position) {"
     assert reader.count(read_needle) == 1
@@ -170,6 +178,7 @@ def test_actual_six_step_predictor_and_dct_bodies(tmp_path: Path) -> None:
     unit_source = r'''#include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <type_traits>
 #include <cstddef>
 #include <climits>
 #include <cstdio>
@@ -264,6 +273,10 @@ static void set_msb(BYTE *buffer, unsigned position, unsigned value,
 }
 
 int main() {
+  assert(movie_media_signed32(0x00000000u) == 0);
+  assert(movie_media_signed32(0x7fffffffu) == INT_MAX);
+  assert(movie_media_signed32(0x80000000u) == INT_MIN);
+  assert(movie_media_signed32(0xffffffffu) == -1);
   BYTE reader_input[24];
   for (int i = 0; i != 24; ++i)
     reader_input[i] = (BYTE)(i * 37 + 11);
@@ -515,6 +528,19 @@ int main() {
     )
     baseline = subprocess.run([str(binary)], capture_output=True, text=True)
     assert baseline.returncode == 0, baseline.stderr
+
+    # Restoring the old unsigned storage must fail the actual-array type
+    # control, not merely encounter an unrelated compiler error.
+    unsigned_unit = tmp_path / "movie_decoder_unsigned_workspace.cpp"
+    assert unit_source.count(storage_decl) == 1
+    unsigned_unit.write_text(unit_source.replace(
+        storage_decl, "  DWORD local_storage_words[0x300 / sizeof(DWORD)];", 1))
+    unsigned_result = subprocess.run(
+        [compiler, "-std=c++17", "-fsyntax-only", str(unsigned_unit)],
+        capture_output=True, text=True)
+    assert unsigned_result.returncode != 0
+    assert re.search(r"static assertion failed[^\n]*signed scratch element type",
+                     unsigned_result.stderr), unsigned_result.stderr
 
     # Compile-success mutants remain inside the scratch; require the intended
     # diagnostic rather than accepting an unrelated crash as proof.
