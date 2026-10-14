@@ -7,6 +7,7 @@ Host execution checks storage/dataflow contracts only, not target ABI layout.
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
 
@@ -103,6 +104,28 @@ def _cpp_tokens(source: str) -> list[str]:
             and not value.isspace()]
 
 
+def restore_asset_block_for_comparison(current: str, baseline: str, assets: str) -> str:
+    """Reassemble only the exact relocated globals for an old TU comparison.
+
+    This validates declaration/storage conservation, not linked startup order.
+    Native original-identity checks and the owner tests cover moved mappings.
+    """
+    start = "// ===== MANAGED GLOBALS - real objects, homed to their domain ====="
+    end = "// Shared Texture-owned storage"
+    assert baseline.count(start) == baseline.count(end) == 1
+    expected = baseline[baseline.index(start):baseline.index(end)]
+    assert current.count(start) == 0 and current.count(end) == 1
+    assert assets.count(start) == 1
+    assert _cpp_tokens(assets[:assets.index(start)]) == _cpp_tokens(
+        '#include "stdafx.h"\n#include "texture.h"\n'), (
+        "relocated asset owner contains unexpected code before its globals")
+    assert assets[assets.index(start):] == expected
+    definitions = r"(?m)^Texture g_\w+(?:\[\d+\])?;"
+    assert len(re.findall(definitions, assets)) == 20
+    assert not re.findall(definitions, current)
+    return current.replace(end, expected + end, 1)
+
+
 def reverse_direct_storage_source(current: str, baseline: str) -> str:
     """Validate the exact task projection and return its historical source form.
 
@@ -111,6 +134,9 @@ def reverse_direct_storage_source(current: str, baseline: str) -> str:
     sibling's narrowly authorized change, then call this helper.  Comments,
     annotations and task metadata remain under the caller's existing checks.
     """
+    if "// ===== MANAGED GLOBALS" not in current:
+        assets = (Path(__file__).resolve().parents[2] / "src/texture_objects.cpp").read_text()
+        current = restore_asset_block_for_comparison(current, baseline, assets)
     expected = direct_storage_projection(baseline)
     assert current.count(SIGNED_KEY_NOTE) == 1
     assert current.count(SIGNED_KEY_HELPER) == 1

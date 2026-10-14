@@ -152,6 +152,12 @@
     "backend": "pe-coff-i386",
     "compiler_profile": "application",
     "unit_flag_sets": {
+      "src/texture_objects.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+      },
+      "src/caviar_renderer_objects.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+      },
       "src/caviar_objects.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
       },

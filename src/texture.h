@@ -22,13 +22,13 @@
  /*
   * Texture class
   *
-  * Layout not established. The constructor and close agree on exactly four
-  * fields and touch nothing else: a pixel pointer at 0, two descriptors at 4
-  * and 8, and a borrowed flag at 0x6C. close frees the pixels only when that
-  * flag is clear, which is what marks it a flag rather than another
-  * descriptor - a borrowed texture is released without freeing. The object
-  * therefore reaches at least 0x70; that is a floor, not a size, and the
-  * storage below is what the canary seeds rather than a modelled layout.
+  * The original array lifetime helpers use a 0x70 stride; independently
+  * bounded radius globals have that same extent. The constructor clears
+  * the pixel pointer at 0, dimensions at 4 and 8, and borrowed flag at 0x6C.
+  * Raster accesses and extract identify the vertex arrays between them,
+  * as documented beside their declarations. close frees owned pixels;
+  * borrowed textures do not release their external storage. These field
+  * relationships support the layout below, not an original class-name claim.
   */
 // The rasteriser uses the shared polygon vertex declaration in vert.h.
 // The remaining types are reached only through pointers here.
@@ -293,8 +293,8 @@ static_assert(sizeof(Texture) == 0x70,
  * `load_terrain` (0x00451C50) extracts out of the terrain PCX sheets.
  * Declared here because the map renderer - gen_terrain_poly (0x004632D0) and
  * the gen_radius / gen_tile family - reaches them from another TU by absolute
- * address; the definitions and the stride comments live in texture.cpp beside
- * the extract calls that size them. Unlike the Sprite band there is no +8
+ * address; definitions and lifetime/stride evidence live in texture_objects.cpp.
+ * load_terrain owns extraction calls. Unlike the Sprite band there is no +8
  * companion read: a Texture carries no transparent index, so the renderer
  * passes the address of the object itself to every draw_* variant.
  */

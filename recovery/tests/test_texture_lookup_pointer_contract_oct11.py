@@ -1,5 +1,6 @@
 """Use-derived pointer contracts; no unseen shade class or raster proof."""
 from pathlib import Path
+from dataclasses import replace
 import re
 import subprocess
 import pytest
@@ -200,10 +201,20 @@ def test_pointer_contract_changes_only_selected_body_and_symbol_bindings():
                               "*blit_slot_564 = static_cast<int>(reinterpret_cast<intptr_t>(palette));")
     assert restored==expected
     prior={r.address:r for r in read_text(before,path)}
-    after={r.address:r for r in read_text(current,path)}
+    asset_path = ROOT / "src/texture_objects.cpp"
+    assets = read_text(asset_path.read_text(), asset_path)
+    rows = read_text(current,path) + assets
+    after={r.address:r for r in rows}
+    assert len(rows) == len(after), "original identities must have unique owners"
     assert set(prior)==set(after)
+    asset_addresses = {r.address for r in assets}
+    assert len(asset_addresses) == 40
     for address,record in prior.items():
-        assert _continuity_fields(record)==_continuity_fields(after[address])
+        actual = after[address]
+        if address in asset_addresses:
+            assert not record.byte_exact or actual.byte_exact
+            actual = replace(actual, byte_exact=record.byte_exact)
+        assert _continuity_fields(record)==_continuity_fields(actual)
 
 
 def test_pinned_three_pointer_depths_and_lookup_byte_stride():

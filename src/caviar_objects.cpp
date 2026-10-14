@@ -599,13 +599,6 @@
 // ORIGINAL: 0x0044E5D0 _$E519 0x0044E5D0-0x0044E5E4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x00682288 selects init 0x0044E5A0-0x0044E5C4, registering fini 0x0044E5D0-0x0044E5E4; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x00787E08; array count 5, stride 0xC, constructor/destructor 0x00616BC0/0x00456100, vector helpers 0x006457C2/0x006456E4.", "Physical COFF startup and registered-cleanup relocations identify this source-owned object. The adjacent symbol fact identifies this operation in src/caviar_objects.cpp; the genuine global definition and its declared class lifetime generate the code, not an authored callback.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_UNUSED_CAVIARDATA_VAR5; no callback body is authored."}
 // symbol    _$E487
-// ORIGINAL: 0x004BF6E0 _$E21 0x004BF6E0-0x004BF6F6 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x006825FC selects init 0x004BF6E0-0x004BF6F6, registering fini 0x004BF700-0x004BF70A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x008CC828; scalar Caviar constructor/destructor 0x00616DA0/0x00617020.", "Physical COFF startup and registered-cleanup relocations identify this source-owned object. The adjacent symbol fact identifies this operation in src/caviar_objects.cpp; the genuine global definition and its declared class lifetime generate the code, not an authored callback.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original startup operation to the genuine compiler-emitted lifetime of source-owned g_VEHDRAW_CAVIAR; no callback body is authored."}
-// symbol    _$E494
-// ORIGINAL: 0x004BF700 _$E19 0x004BF700-0x004BF70A FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x006825FC selects init 0x004BF6E0-0x004BF6F6, registering fini 0x004BF700-0x004BF70A; complete independent instruction decode establishes both ends.", "Both pinned operations identify storage 0x008CC828; scalar Caviar constructor/destructor 0x00616DA0/0x00617020.", "Physical COFF startup and registered-cleanup relocations identify this source-owned object. The adjacent symbol fact identifies this operation in src/caviar_objects.cpp; the genuine global definition and its declared class lifetime generate the code, not an authored callback.", "Current helper names are compiler-output interpretations, not original debug symbols. These individual bindings do not establish full initialization order, allocation extents, linked retained selection or runtime acceptance."], "reason": "Bind original exit operation to the genuine compiler-emitted lifetime of source-owned g_VEHDRAW_CAVIAR; no callback body is authored."}
-// symbol    _$E492
-
 #include "stdafx.h"
 #include "caviar.h"
 
@@ -811,12 +804,4 @@ CaviarData g_NI_CAVIARDATA;  // 0x007791C0
 CaviarData g_NLC_CAVIARDATA;  // 0x00779660
 // RECOVERY_OBJECT: v1 0x00787E08 ?g_UNUSED_CAVIARDATA_VAR5@@3PAUCaviarData@@A
 CaviarData g_UNUSED_CAVIARDATA_VAR5[5];  // 0x00787E08, 0xc stride
-
-// Original CRT slots 0x00682104..0x00682288 construct all 98 model-data
-// globals before the renderer at slot 0x006825FC. Preserve that relative
-// lifetime order here; this does not establish whole-game startup ordering.
-// turn_start addresses this renderer at 0x008CC828 and its light/shadow
-// vectors at +0x60/+0x6C. It is the existing C++ static owner, not an alias.
-// RECOVERY_OBJECT: v1 0x008CC828 ?g_VEHDRAW_CAVIAR@@3VCaviar@@A
-Caviar g_VEHDRAW_CAVIAR;
 

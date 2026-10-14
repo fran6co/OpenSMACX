@@ -234,6 +234,7 @@ set(OPENSMACX_SOURCES
     src/deletionlist.cpp
     src/lock.cpp
     src/texture.cpp
+    src/texture_objects.cpp
     src/menu.cpp
     src/interface_palette.cpp
     src/path.cpp
@@ -247,6 +248,7 @@ set(OPENSMACX_SOURCES
     src/spying.cpp
     src/sprite.cpp
     src/sprite_objects.cpp
+    src/caviar_renderer_objects.cpp
     src/stdafx.cpp
     src/stringbox.cpp
     src/stringlist.cpp

@@ -1,0 +1,19 @@
+{
+  "event_id": "6bcfd3245f706f185faf32bbadd29ecf645542ffae6f7e485012c22b4c0cda32",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_lookup_pointer_contract_oct11.py"
+    ],
+    "evidence": [
+      "The remaining newly failing pointer-history test now passes its exact reconstructed implementation projection but reads native identities only from old TU. Admit aggregation of actual moved owner records, refuse duplicates, retain every original field/history and historical exact obligation, permit only native-added exact claims for the forty transferred asset records. Method-only original checks remain exact. No recovery gate or baseline weakened."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2f3dfb5453d29191562cfe548e43bda985a94d4a961716a45b109ef90a6d4414",
+  "request_id": "pointer-history-native-owner-aggregation",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:texture-asset-ownership-oct14hr"
+}

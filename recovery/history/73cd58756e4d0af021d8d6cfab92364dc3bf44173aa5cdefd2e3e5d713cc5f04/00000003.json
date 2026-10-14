@@ -1,0 +1,19 @@
+{
+  "event_id": "b387c4573f781e3d1c57ae9bd2c4412488e835a1f8b6027ba01a22f86b26438f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/texture_direct_storage_host.py"
+    ],
+    "evidence": [
+      "Broad candidate475case sweep:464pass11fail. Re-run those11 on unchangedmaster:9fail2pass. Two newly failing historical source-projection controls assume all asset declarations remain in texture.cpp. Authorize a strictly checked reassembly of the exact moved20definition/storage block for these historical comparisons, with missing/reordered/duplicate-block damage controls. Do not waive claims or alter historical task baselines; retain unrelated pre-existing assertion failures."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "50d9ff85dcda3e6da34bf826554cdcb7f5455a425380cdcf930a6a4e89ee5ac3",
+  "request_id": "preserve-legacy-texture-projection-controls",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:texture-asset-ownership-oct14hr"
+}

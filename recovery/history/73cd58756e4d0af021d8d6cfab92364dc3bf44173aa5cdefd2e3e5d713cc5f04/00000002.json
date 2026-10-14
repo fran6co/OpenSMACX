@@ -1,0 +1,19 @@
+{
+  "event_id": "50d9ff85dcda3e6da34bf826554cdcb7f5455a425380cdcf930a6a4e89ee5ac3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/texture.h"
+    ],
+    "evidence": [
+      "Authorize comment-only ownership/layout evidence correction in texture.h: twenty globals now belong to texture_objects.cpp; independent array stride and radius boundaries support0x70 extent. Preserve all declarations and exact line count to avoid line-sensitive compiler typedef names. This adds no implementation scope or claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ea25eaf5fa86972e41d1ea54dd3eff4a6cda0353802831b7a9f2cc70c3e0f00e",
+  "request_id": "texture-owner-header-evidence",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-asset-ownership-oct14hr"
+}
