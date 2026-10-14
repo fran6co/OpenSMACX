@@ -140,13 +140,13 @@ class Sprite {
   // Copy this sprite's pixels/metadata into the destination, not vice versa.
   int copy(Sprite *destination);
   int change_color(int old_color, int new_color);
-  // The Filemap-backed persistence pair; the image spells the single
-  // parameter `int` and hands it to Filemap::create/open as the mapped file's
-  // name. load() parses into the EXISTING pixel block: its head is close()'s
+  // Filemap-backed persistence takes a filename pointer; the historical
+  // catalogue's integer parameter is not an original declaration.
+  // load() parses into the EXISTING pixel block: its head is close()'s
   // cleanup, so pcBits_ only survives it when fObj1Exists_ marks the pixels
-  // borrowed - that is the caller domain the 0x19-byte header parse runs in.
-  int save(int filename);
-  int load(int filename);
+  // borrowed. The packed header ends at byte 0x1D, after its stride word.
+  int save(const char *filename);
+  int load(const char *filename);
   // 0x005E3890, still FILE-only in src/unrecovered/005e3890.cpp. DECLARED
   // here because BasePop::start (0x00601BF0) calls it by name on the popup's
   // own `sprite_` - the access costs nothing and the definition stays where

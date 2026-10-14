@@ -2919,52 +2919,60 @@ int Sprite::create_blank(int width, int height, int depth) {
     return pcBits_ ? 0 : 4;
 }
 
+// File-format view, not a recovered runtime class. Original persistence
+// places stride immediately after the transparency byte, without padding.
+#pragma pack(push, 1)
+struct SpriteFileHeader {
+    int sprite_width;
+    int sprite_height;
+    int width;
+    int height;
+    int left_offset;
+    int top_offset;
+    unsigned char transparent_index;
+    int stride;
+};
+#pragma pack(pop)
+static_assert(sizeof(SpriteFileHeader) == 0x1D, "packed Sprite file header");
+
 // ORIGINAL: 0x005EAF8F ?save@Sprite@@QAEHH@Z 0x005EAF8F-0x005EB0B2;0x00662C30-0x00662C42
+// symbol    ?save@Sprite@@QAEHPBD@Z
 // Writes the sprite to a Filemap-mapped file: six metadata ints, the
 // transparency byte, the stride int - deliberately UNALIGNED, at offset
 // 0x19 (the image stores it with mov after the byte, no alignment padding) -
-// then the pixel block. The `0x2c` in the map size is the header the body
-// actually ends at, not the on-disk field order. The stack-local Filemap is
+// then the pixel block at 0x1D. The allocation adds 0x2C, independently of
+// this packed prefix and the height*stride copy count. The stack-local Filemap is
 // the image's SEH try/finally (0x00662C30/0x00662C38, __CxxFrameHandler):
 // every early return runs its destructor without an explicit close.
 // Calls 0x00628380 (ctor) 0x00628650 (create) 0x006287C0 (close)
 // 0x006283E0 (dtor) 0x00645930 (memcpy).
-int Sprite::save(int filename) {
+int Sprite::save(const char *filename) {
     Filemap fm;
     if (pcBits_ == 0) {
         return 7;
     }
-    char *map = static_cast<char *>(fm.create(
-        reinterpret_cast<LPCSTR>(filename),
+    SpriteFileHeader *header = static_cast<SpriteFileHeader *>(fm.create(
+        filename,
         static_cast<uint32_t>(iSpriteWidth_ * iSpriteHeight_ + 0x2c), 1));
-    if (map == 0) {
+    if (header == 0) {
         return 4;
     }
-    char *cursor = map;
-    *reinterpret_cast<int *>(cursor) = iSpriteWidth_;
-    cursor += 4;
-    *reinterpret_cast<int *>(cursor) = iSpriteHeight_;
-    cursor += 4;
-    *reinterpret_cast<int *>(cursor) = iWidth_;
-    cursor += 4;
-    *reinterpret_cast<int *>(cursor) = iHeight_;
-    cursor += 4;
-    *reinterpret_cast<int *>(cursor) = iLeftOffset_;
-    cursor += 4;
-    *reinterpret_cast<int *>(cursor) = iTopOffset_;
-    cursor += 4;
-    *cursor = static_cast<char>(cTransparentIndex_);
-    cursor += 1;
-    // The unaligned stride store the byte at 0x18 sets up.
-    *reinterpret_cast<int *>(cursor) = iSpriteWidth2_;
-    cursor += 4;
-    memcpy(cursor, pcBits_,
+    header->sprite_width = iSpriteWidth_;
+    header->sprite_height = iSpriteHeight_;
+    header->width = iWidth_;
+    header->height = iHeight_;
+    header->left_offset = iLeftOffset_;
+    header->top_offset = iTopOffset_;
+    header->transparent_index = static_cast<unsigned char>(cTransparentIndex_);
+    header->stride = iSpriteWidth2_;
+    memcpy(header + 1, pcBits_,
            static_cast<uint32_t>(iSpriteHeight_) * iSpriteWidth2_);
     fm.close();
     return 0;
 }
 
 // ORIGINAL: 0x005EB0BF ?load@Sprite@@QAEHH@Z 0x005EB0BF-0x005EB205;0x00662C42-0x00662C54
+// symbol    ?load@Sprite@@QAEHPBD@Z
 // close()'s cleanup as the head (borrowed pixels survive it, owned pixels
 // are released and charged back through 0x009B6618, the name is freed, and
 // like close() the transparency byte at 0x08 is not among the zero stores),
@@ -2974,7 +2982,7 @@ int Sprite::save(int filename) {
 // in the original and none is invented here. The unaligned stride read at
 // 0x19 mirrors save()'s store. Calls 0x00628380 (ctor) 0x00628540 (open)
 // 0x006283E0 (dtor) 0x006287C0 (close) 0x00644EF2 (free) 0x00645930 (memcpy).
-int Sprite::load(int filename) {
+int Sprite::load(const char *filename) {
     Filemap fm;
     if (fObj1Exists_ == 0 && pcBits_ != 0) {
         SpriteMemoryUsed = static_cast<int>(
@@ -3000,28 +3008,20 @@ int Sprite::load(int filename) {
     iLeftOffset_ = 0;
     iTopOffset_ = 0;
     fObj1Exists_ = 0;
-    const unsigned char *map = static_cast<const unsigned char *>(
-        fm.open(reinterpret_cast<LPCSTR>(filename), 1));
-    if (map == 0) {
+    const SpriteFileHeader *header = static_cast<const SpriteFileHeader *>(
+        fm.open(filename, 1));
+    if (header == 0) {
         return 6;
     }
-    iSpriteWidth_ = *reinterpret_cast<const int *>(map);
-    map += 4;
-    iSpriteHeight_ = *reinterpret_cast<const int *>(map);
-    map += 4;
-    iWidth_ = *reinterpret_cast<const int *>(map);
-    map += 4;
-    iHeight_ = *reinterpret_cast<const int *>(map);
-    map += 4;
-    iLeftOffset_ = *reinterpret_cast<const int *>(map);
-    map += 4;
-    iTopOffset_ = *reinterpret_cast<const int *>(map);
-    map += 4;
-    cTransparentIndex_ = *map;
-    map += 1;
-    iSpriteWidth2_ = *reinterpret_cast<const int *>(map);
-    map += 4;
-    memcpy(pcBits_, map,
+    iSpriteWidth_ = header->sprite_width;
+    iSpriteHeight_ = header->sprite_height;
+    iWidth_ = header->width;
+    iHeight_ = header->height;
+    iLeftOffset_ = header->left_offset;
+    iTopOffset_ = header->top_offset;
+    cTransparentIndex_ = header->transparent_index;
+    iSpriteWidth2_ = header->stride;
+    memcpy(pcBits_, header + 1,
            static_cast<uint32_t>(iSpriteWidth2_) * iSpriteHeight_);
     fm.close();
     return 0;
