@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "be406c5dee102cbfef1390cfe4efeea625e426d6",
+  "editable_files": [
+    "src/newgame.cpp",
+    "recovery/tests/newgame_menu_control.cpp",
+    "recovery/tests/test_top_menu_opening_show_oct14bx.py"
+  ],
+  "evidence": [
+    "Independent pinned-image audit: top_menu initial path 0x58E4C6..0x58E4CB and retry path 0x58E566..0x58E570 push zero and dispatch virtual slot 1 (+4), declared Win::show(int), before do_all_draws. Current top_menu_present_opening instead invokes soft_update, which cannot publish visibility for a hidden window.",
+    "Preserve fill/change_opening/palette ordering, window creation and failure behavior, fresh opening-window reloads, BasePop and SetupWin snapshots, all original identities and historical claims. No safety fix, new visibility policy or original-address dispatch. Tests must exercise the actual helper on initial and retry paths with an initially hidden window and reject a compile-success soft_update mutant.",
+    "Coordinator-reviewed manual recovery only: require independent original/source review, frozen fresh build/link, immediate measurement, compiler-function comparison, references and historical identity continuity. Paired bounded runtime previously shows original menu but candidate splash; observe again, not assumed full-game acceptance."
+  ],
+  "intent": "Restore the original virtual opening-window show(0) publication before drawing on initial and retry menu presentation paths.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5825376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "top-menu-opening-show-owner-oct14bx"
+}
