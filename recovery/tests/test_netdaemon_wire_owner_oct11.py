@@ -1,5 +1,6 @@
 """Actual dispatch controls for pinned sequence ownership and five routes."""
 from pathlib import Path
+import os
 import shutil
 import subprocess
 
@@ -267,10 +268,17 @@ def test_identity_and_entry_header_ownership():
         (_continuity_fields(r),r.symbol,r.function_fragment) for r in after]
     text = SOURCE.read_text()
     body = extract(text,"void NetDaemon::process_message(")
-    assert "std::memcpy(&entry_sequence, msg + 0x0C, sizeof entry_sequence);" in body
-    assert "std::memcpy(&entry_packet_faction, msg + 0x04, sizeof entry_packet_faction);" in body
+    assert "const MessageCommandView entry_packet(msg);" in body
+    assert "uint32_t entry_sequence = entry_packet.sequence();" in body
+    assert "unsigned short type = entry_packet.opcode();" in body
+    assert "int entry_packet_faction = entry_packet.faction();" in body
+    assert "type = entry_packet.opcode();" in body
     assert "*this, type, msg, entry_packet_faction, entry_sequence" in body
-    assert body.index("std::memcpy(&entry_sequence") < body.index("bool skip500")
+    assert body.index("pid_2_who(static_cast<unsigned long>(sender_id))") < body.index(
+        "const MessageCommandView entry_packet(msg)")
+    assert body.index("entry_packet.faction()") < body.index("bool skip500")
+    callback = body.index("message_data(0x1505, entry_packet_faction")
+    assert callback < body.index("\n    type = entry_packet.opcode();", callback)
 
 
 def test_frozen_wire_recipe_rejects_broken_migration_anchors():
@@ -288,21 +296,25 @@ def test_pinned_saved_header_skip_and_field_reload_anchors():
     from capstone import Cs, CS_ARCH_X86, CS_MODE_32
     from match_recovery.pe_coff import PeImage
     from match_recovery.model import Span
-    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    path = Path(os.environ.get("OPENSMACX_IMAGE",
+                               ROOT / ".opensmacx/game/terranx_original.exe"))
     if not path.is_file():
         pytest.skip("pinned original unavailable")
     image = PeImage(path.read_bytes(),
         "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
     cs = Cs(CS_ARCH_X86, CS_MODE_32)
     anchors = {}
-    for start, end in ((0x534453,0x534469),(0x536781,0x536827),
+    for start, end in ((0x534453,0x534469),(0x53456F,0x534572),(0x536781,0x536827),
                        (0x536835,0x536939),(0x536D0F,0x536D64)):
         anchors.update({i.address:(i.mnemonic,i.op_str) for i in cs.disasm(
             image.read(Span(start,end)),start)})
     expected = {
         0x534458:("mov","ecx, dword ptr [ebx + 0xc]"),
+        0x53445B:("mov","ax, word ptr [ebx]"),
+        0x53445E:("mov","edx, dword ptr [ebx + 4]"),
         0x534461:("mov","dword ptr [ebp - 0x10], ecx"),
         0x534466:("mov","dword ptr [ebp + 8], edx"),
+        0x53456F:("mov","cx, word ptr [ebx]"),
         0x5367CC:("jmp","0x5367f4"),
         0x5367E5:("mov","eax, dword ptr [ebx + 0x14]"),
         0x5367EC:("call","0x5947c0"),

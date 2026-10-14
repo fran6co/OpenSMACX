@@ -6528,11 +6528,10 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     unsigned char *msg = reinterpret_cast<unsigned char *>(message);
     // Pinned534458..534466 captures these original packet words before
     // dispatch. Transport message_size is never the sequence acknowledgement.
-    uint32_t entry_sequence;
-    int entry_packet_faction;
-    std::memcpy(&entry_sequence, msg + 0x0C, sizeof entry_sequence);
-    std::memcpy(&entry_packet_faction, msg + 0x04, sizeof entry_packet_faction);
-    unsigned short type = *reinterpret_cast<unsigned short *>(message);
+    const MessageCommandView entry_packet(msg);
+    uint32_t entry_sequence = entry_packet.sequence();
+    unsigned short type = entry_packet.opcode();
+    int entry_packet_faction = entry_packet.faction();
 
     // Masked file-transfer response band; 0x1501 bypasses interception.
     // Its commlink comparison and reply target use the captured packet faction.
@@ -6548,7 +6547,7 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
         message_data(0x1505, entry_packet_faction, 0, 0, 0, 0);
     }
 
-    type = *reinterpret_cast<unsigned short *>(message);
+    type = entry_packet.opcode();
 
     // File-transfer opcodes are handled by the complete source-owned routes below.
     if (type >= 0xF05 && type <= 0xF0F) {
