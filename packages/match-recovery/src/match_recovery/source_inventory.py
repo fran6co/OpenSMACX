@@ -142,10 +142,31 @@ def _parser_key() -> str:
 
 
 def _parse_cache_directory(root: Path) -> Path | None:
-    """Return the existing ignored disposable parse cache, if safely available."""
+    """Return the ignored local or explicitly shared disposable parse cache."""
     if os.environ.get("RECOVERY_PARSE_CACHE") == "off":
         return None
     root = root.resolve()
+    configured = os.environ.get("RECOVERY_PARSE_CACHE_DIR")
+    if configured is not None:
+        path = Path(configured)
+        if not path.is_absolute():
+            raise ValueError("RECOVERY_PARSE_CACHE_DIR must be an absolute path")
+        try:
+            resolved = path.resolve()
+        except (OSError, RuntimeError, ValueError) as error:
+            raise ValueError("RECOVERY_PARSE_CACHE_DIR is not a resolvable directory path") from error
+        if (resolved != path or resolved == Path(resolved.anchor)
+                or (resolved.exists() and not resolved.is_dir())):
+            raise ValueError("RECOVERY_PARSE_CACHE_DIR must be a canonical, non-root directory path")
+        if resolved.is_relative_to(root):
+            relative = resolved.relative_to(root).as_posix().rstrip("/") + "/"
+            ignored = subprocess.run(["git", "check-ignore", "-q", "--", relative],
+                                     cwd=root, capture_output=True, check=False)
+            tracked = subprocess.run(["git", "ls-files", "--", relative],
+                                     cwd=root, capture_output=True, check=False)
+            if ignored.returncode != 0 or tracked.returncode != 0 or tracked.stdout:
+                raise ValueError("RECOVERY_PARSE_CACHE_DIR inside the worktree must be ignored and untracked")
+        return resolved
     relative_cache = "build/recovery/parse_cache/"
     ignored = subprocess.run(["git", "check-ignore", "-q", relative_cache],
                              cwd=root, capture_output=True, check=False)

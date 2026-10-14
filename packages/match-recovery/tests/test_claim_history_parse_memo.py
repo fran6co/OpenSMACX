@@ -60,12 +60,41 @@ def enable_cache(root):
 
 
 def test_parse_cache_requires_ignored_untracked_storage(project, monkeypatch):
+    monkeypatch.delenv("RECOVERY_PARSE_CACHE_DIR", raising=False)
+    monkeypatch.delenv("RECOVERY_PARSE_CACHE", raising=False)
     assert source_inventory._parse_cache_directory(project) is None
     enable_cache(project)
     cache = source_inventory._parse_cache_directory(project)
     assert cache == project / "build/recovery/parse_cache"
     monkeypatch.setenv("RECOVERY_PARSE_CACHE", "off")
     assert source_inventory._parse_cache_directory(project) is None
+
+
+@pytest.mark.parametrize("value", ["relative/cache", "", "/"])
+def test_shared_parse_cache_requires_a_canonical_absolute_nonroot_directory(project, monkeypatch, value):
+    monkeypatch.delenv("RECOVERY_PARSE_CACHE", raising=False)
+    monkeypatch.setenv("RECOVERY_PARSE_CACHE_DIR", value)
+    with pytest.raises(ValueError, match="RECOVERY_PARSE_CACHE_DIR"):
+        source_inventory._parse_cache_directory(project)
+
+
+def test_explicit_shared_parse_cache_is_opt_in_and_off_wins(project, monkeypatch, tmp_path):
+    monkeypatch.delenv("RECOVERY_PARSE_CACHE", raising=False)
+    shared = tmp_path.parent / f"{tmp_path.name}-trusted-shared-cache"
+    monkeypatch.setenv("RECOVERY_PARSE_CACHE_DIR", str(shared))
+    assert source_inventory._parse_cache_directory(project) == shared
+    monkeypatch.setenv("RECOVERY_PARSE_CACHE", "off")
+    monkeypatch.setenv("RECOVERY_PARSE_CACHE_DIR", "not/absolute")
+    assert source_inventory._parse_cache_directory(project) is None
+
+
+def test_explicit_shared_parse_cache_rejects_unignored_worktree_storage(project, monkeypatch):
+    monkeypatch.delenv("RECOVERY_PARSE_CACHE", raising=False)
+    unsafe = project / "unsafe-cache"
+    unsafe.mkdir()
+    monkeypatch.setenv("RECOVERY_PARSE_CACHE_DIR", str(unsafe))
+    with pytest.raises(ValueError, match="ignored and untracked"):
+        source_inventory._parse_cache_directory(project)
 
 
 def test_parse_cache_is_content_path_configuration_and_parser_specific(project, monkeypatch):
@@ -106,7 +135,71 @@ def test_parse_cache_is_content_path_configuration_and_parser_specific(project, 
         project, version, pin, "3" * 64, projection, cache)
     claim_integrity._historical_claim_rows(
         project, version, pin, parser, "4" * 64, cache)
-    assert len(calls) == 7
+    claim_integrity._historical_claim_rows(
+        project, version, "5" * 64, parser, projection, cache)
+    assert len(calls) == 8
+
+
+def test_identical_historical_blob_reuses_explicit_cache_across_worktrees(project, monkeypatch, tmp_path):
+    monkeypatch.delenv("RECOVERY_PARSE_CACHE", raising=False)
+    shared = tmp_path.parent / f"{tmp_path.name}-trusted-shared-cache"
+    monkeypatch.setenv("RECOVERY_PARSE_CACHE_DIR", str(shared))
+    configuration = SourceConfiguration.read(project)
+    version = SourceVersion("a" * 40, "engine/first.cc", "b" * 40,
+                            FIRST.encode(), configuration)
+    calls = []
+    original = claim_integrity.read_text
+
+    def counted(text, path):
+        calls.append(str(path))
+        return original(text, path)
+
+    monkeypatch.setattr(claim_integrity, "read_text", counted)
+    first_cache = source_inventory._parse_cache_directory(project)
+    first = claim_integrity._historical_claim_rows(
+        project, version, "a" * 64, "1" * 64, "2" * 64, first_cache)
+    other_root = tmp_path / "other-worktree"
+    other_root.mkdir()
+    second_cache = source_inventory._parse_cache_directory(other_root)
+    second = claim_integrity._historical_claim_rows(
+        other_root, version, "a" * 64, "1" * 64, "2" * 64, second_cache)
+    assert first == second == [[0x10, 1, True, False]]
+    assert calls == [str(project / "engine/first.cc")]
+
+
+def test_shared_history_cache_distinguishes_proved_store_path_semantics(
+        project, monkeypatch, tmp_path):
+    monkeypatch.delenv("RECOVERY_PARSE_CACHE", raising=False)
+    shared = tmp_path.parent / f"{tmp_path.name}-trusted-shared-cache"
+    monkeypatch.setenv("RECOVERY_PARSE_CACHE_DIR", str(shared))
+    proved_root = tmp_path / "proved-worktree"
+    ordinary_root = tmp_path / "ordinary-worktree"
+    proved_root.mkdir()
+    ordinary_root.mkdir()
+    (proved_root / "recovered").mkdir()
+    (ordinary_root / "elsewhere").mkdir()
+    try:
+        (ordinary_root / "recovered").symlink_to(
+            ordinary_root / "elsewhere", target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"directory symlinks unavailable: {error}")
+    configuration = SourceConfiguration.read(project)
+    version = SourceVersion("a" * 40, "recovered/00000010.cpp", "b" * 40,
+                            FIRST.encode(), configuration)
+    calls = []
+    original = claim_integrity.read_text
+
+    def counted(text, path):
+        calls.append(str(path))
+        return original(text, path)
+
+    monkeypatch.setattr(claim_integrity, "read_text", counted)
+    cache = source_inventory._parse_cache_directory(project)
+    claim_integrity._historical_claim_rows(
+        proved_root, version, "a" * 64, "1" * 64, "2" * 64, cache)
+    claim_integrity._historical_claim_rows(
+        ordinary_root, version, "a" * 64, "1" * 64, "2" * 64, cache)
+    assert len(calls) == 2
 
 
 def test_cached_rows_are_defensive_corruption_recomputes_and_parse_errors_are_not_cached(

@@ -379,6 +379,17 @@ historical obligations and mapping conflicts. Body states derive from source
 text; an implemented or historically matching body is not completed recovery.
 Build membership and fresh compilation belong to the mapping/build checks.
 
+Historical-source parsing may use a disposable content-keyed cache beneath the
+ignored, untracked `build/recovery/parse_cache/` directory. By default that cache
+is checkout-local. Set `RECOVERY_PARSE_CACHE_DIR` to an absolute canonical
+directory to opt into a trusted shared local cache; a path inside the checkout
+must already be ignored and untracked. `RECOVERY_PARSE_CACHE=off` disables both
+cache modes and takes precedence over the directory setting. Cached rows are
+only parsed source data: each invocation still recomputes history, policy,
+image/pin and current-source verification. The cache is not verification
+evidence, an acceptance result, or authority, and should only be shared among
+trusted local processes.
+
 `recover inspect <address-or-symbol> [--in <source-file>]` shows the source
 mapping, extracted region and historical hints without a compiler. Add
 `--image <original>` for pinned, bounded disassembly of every declared span and

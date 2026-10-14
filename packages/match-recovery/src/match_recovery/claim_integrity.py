@@ -26,13 +26,15 @@ def _historical_claim_rows(root: Path, version: SourceVersion, pin: str,
                            cache: Path | None) -> list[list[int | bool]]:
     """Parse one immutable historical blob, caching rows but not obligations."""
     path = root / version.path
+    from .source.reader import _proved_store
     identity = digest({
         "blob": version.blob,
         "content_sha256": hashlib.sha256(version.content).hexdigest(),
         "path": version.path,
-        # reader.py has path-sensitive proved-store handling; preserve the exact
-        # path shape that read_text sees, even for deleted historical paths.
-        "resolved_path": str(path.resolve()),
+        # This is the only path-dependent parser behavior. Using its semantic
+        # value, rather than the worktree's absolute root, permits trusted
+        # cross-worktree cache reuse without conflating proved-store handling.
+        "proved_store": _proved_store(path),
         "source_configuration": asdict(version.configuration),
         "image_sha256": pin,
         "parser": parser_key,
