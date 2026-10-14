@@ -417,13 +417,9 @@ void BattleWin::pulse_timer() {
     time_.pulse(&teardown_00422ec0, 0, 0x1388, 5);
 }
 
-// Source-owned receiver slot; original complete allocation/lifetime unverified.
-// RECOVERY_OBJECT: v1 0x007AE818 ?BattleWinInitReceiver@@3PAVBattleWin@@A
-BattleWin *BattleWinInitReceiver = nullptr;
-
 // Superseded seed deleted; the seed path below is historical Git provenance.
 // ORIGINAL: 0x004219E0 ?init@BattleWin@@QAEXXZ 0x004219E0-0x00421B1F
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image 4219E0..421B1F complete instructions", "historical seed src/recovered/units/004219e0.cpp", "full owner/game/pending native overlay compiles; observed current symbols", "7AE818 zero initial DWORD; original full allocation/lifetime unverified"], "reason": "Complete genuine BattleWin initialization: source-owned singleton receiver, typed member rectangles, automatic Buffer lifetime and independent receiver slot; no executable-address dispatch."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image 4219E0..421B1F complete instructions", "historical seed src/recovered/units/004219e0.cpp", "421B0D stores the incoming receiver at 7AE818, slot 10 of InterfaceRegistry at 7AE7F0; BattleWin's SubInterface base is at offset zero"], "reason": "Initialize the genuine BattleWin owner, preserving rectangle arithmetic and automatic Buffer lifetime, then publish its typed interface pointer in the shared registry. The old independent receiver-slot interpretation was incorrect; its original identity is retained beside InterfaceRegistry."}
 // kind      game
 // symbol    ?init@BattleWin@@QAEXXZ
 void BattleWin::init() {
@@ -468,7 +464,7 @@ void BattleWin::init() {
     battle_rects_[3].right = frame.right - 4;
     battle_rects_[3].bottom = bottom2;
 
-    BattleWinInitReceiver = this;
+    InterfaceRegistry[10] = this;
 }
 
 // ORIGINAL: 0x00421B40 ?stop_timer@BattleWin@@QAEXXZ 0x00421B40-0x00421B48 BYTE_EXACT

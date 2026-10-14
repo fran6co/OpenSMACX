@@ -7,7 +7,7 @@ This observes compiler storage extent, not original extent or C++ lifetime.
 """
 
 from .codeview import Cursor, _fields, _type_records, _unqualified_type
-from .object_source import _MEMBER_SEGMENT
+from .object_source import _MEMBER_SEGMENT, _ROOT_ARRAY_SEGMENT
 
 
 def _class_record(leaf, record):
@@ -259,8 +259,10 @@ def member_data_layout(obj, parent_symbol, member_path):
     come only from its directly bound standalone CodeView records.
     """
     if (not isinstance(member_path, tuple) or not member_path
-            or any(not isinstance(part, str) or not _MEMBER_SEGMENT.fullmatch(part)
-                   for part in member_path)):
+            or any(not isinstance(part, str) or not (
+                _MEMBER_SEGMENT.fullmatch(part)
+                or (index == 0 and _ROOT_ARRAY_SEGMENT.fullmatch(part)))
+                   for index, part in enumerate(member_path))):
         raise ValueError("member path must contain names and canonical fixed indices")
     parent = data_layout(obj, parent_symbol)
     records = _type_records(obj)
@@ -268,7 +270,24 @@ def member_data_layout(obj, parent_symbol, member_path):
     relative = 0
     path_rows = []
     visited_udts = set()
-    for part in member_path:
+    selected_size = None
+    for path_index, part in enumerate(member_path):
+        root_index = _ROOT_ARRAY_SEGMENT.fullmatch(part)
+        if root_index is not None:
+            if path_index != 0:
+                raise ValueError("root array index is only valid as the first member path segment")
+            element_type, array_size, element_size, element_count = _array_element_layout(
+                current_type, records)
+            element_index = int(root_index.group(1), 10)
+            if element_index >= element_count:
+                raise ValueError("fixed member index lies outside CodeView array extent")
+            selected_size = element_size
+            relative += element_index * element_size
+            current_type = element_type
+            path_rows.append({"index": element_index, "offset": element_index * element_size,
+                              "size": element_size, "array_size": array_size,
+                              "element_size": element_size, "type_index": element_type})
+            continue
         match = _MEMBER_SEGMENT.fullmatch(part)
         assert match is not None
         name, raw_index = match.groups()
@@ -303,6 +322,8 @@ def member_data_layout(obj, parent_symbol, member_path):
                               "type_index": member_type})
         relative += selected_offset
         current_type = selected_type
+    if selected_size is None:
+        raise ValueError("member path did not select a storage element")
     if relative + selected_size > parent["size"]:
         raise ValueError("resolved member path lies outside parent storage")
     return {"symbol": parent_symbol, "source_name": parent["source_name"],

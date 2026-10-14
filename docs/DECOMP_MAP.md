@@ -140,8 +140,9 @@ parent object. The unbounded and bounded forms are:
 
 The old symbol, original start, optional exclusive end and evidence anchor retain
 their historical identity and obligations. `parent-symbol` names the current
-compiled COFF data definition; the dotted path names direct embedded CodeView
-members. A segment may select a fixed array element with canonical decimal
+compiled COFF data definition; the path names direct embedded CodeView
+members. A path may begin with one root-array index, or a named member segment
+may select a fixed array element with canonical decimal
 `[index]` syntax, for example `entries[0].words[7]`; the index is checked against
 the fresh `LF_ARRAY_ST` byte extent, element type and supported integral/enum
 subscript type in that owner object. Leading zeroes (except `[0]`), signs and
@@ -155,7 +156,8 @@ member owner; that collision would redirect old relocations. Unsupported, missin
 or ambiguous layout remains unknown.
 
 For a bounded v3 record, initial bytes are compared with exactly the resolved
-member slice. A relocation wholly inside that slice is rebased against the parent
+member slice. A root-array index selects pointer storage only; it never follows
+or dereferences that pointer. A relocation wholly inside that slice is rebased against the parent
 base and keeps its COFF addend; a relocation crossing the slice boundary or using
 an unsupported form does not borrow adjacent-member bytes and remains unknown.
 Object-reference scheduling recognizes both historical child IDs and current

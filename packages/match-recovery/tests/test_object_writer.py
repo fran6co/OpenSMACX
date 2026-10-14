@@ -188,6 +188,33 @@ def test_unbounded_start_cannot_overlap_an_independently_bounded_object():
                            path=PATH, pin=PIN, address_space=SPACE)
 
 
+def test_explicit_unbounded_member_start_may_be_inside_its_direct_parent_only():
+    parent_symbol = "?InterfaceRegistry@@3PAPAVSubInterface@@A"
+    parent_origin = Origin(PIN, SPACE, 0x007AE7F0)
+    parent = ObjectBinding(parent_origin, parent_symbol, PATH, 1,
+                           Span(0x007AE7F0, 0x007AE820), parent_origin)
+    child = ObjectBinding(Origin(PIN, SPACE, 0x007AE818),
+                          "?BattleWinInitReceiver@@3PAVBattleWin@@A", PATH, 2,
+                          parent_symbol=parent_symbol, member_path=("[10]",))
+    result = write_object_bytes(b"SubInterface *InterfaceRegistry[12];\nint x;\n",
+                                expected=(), additions=(parent, child), path=PATH,
+                                pin=PIN, address_space=SPACE)
+    parsed = current(result)
+    assert [(row.symbol, row.parent_symbol, row.member_path) for row in parsed] == [
+        (parent_symbol, None, ()), (child.symbol, parent_symbol, ("[10]",))]
+    assert parsed[1].span is None
+
+
+def test_member_inside_unrelated_parent_does_not_receive_overlap_exception():
+    owner = binding(0x007AE7F0, "_owner", 1, end=0x007AE820)
+    child = ObjectBinding(Origin(PIN, SPACE, 0x007AE818), "_old", PATH, 2,
+                          parent_symbol="_different_owner", member_path=("[10]",))
+    with pytest.raises(ValueError, match="inside another"):
+        write_object_bytes(b"int owner;\nint child;\n", expected=(),
+                           additions=(owner, child), path=PATH, pin=PIN,
+                           address_space=SPACE)
+
+
 @pytest.mark.parametrize("raw", [b'const char *s = R"(literal)";\n', b"\xef\xbb\xbfint x;\n"])
 def test_unsupported_lexical_forms_refuse(raw):
     with pytest.raises(ValueError):

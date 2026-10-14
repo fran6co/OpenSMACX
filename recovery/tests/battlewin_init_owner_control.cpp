@@ -27,14 +27,15 @@ struct MainInterface {
 };
 MainInterface MainInterfaceGlobal;
 
-struct BattleWin {
+struct SubInterface {};
+struct BattleWin : SubInterface {
     int field_4_;
     RECT battle_rects_[4];
     RECT field_70_;
     RECT field_90_;
     void init();
 };
-BattleWin *BattleWinInitReceiver = 0;
+SubInterface *InterfaceRegistry[12];
 
 /* ACTUAL OWNER BODY */
 
@@ -49,6 +50,8 @@ static void run_case(const RECT &layout, const RECT &frame,
     MainInterfaceGlobal.layout = layout;
     MainInterfaceGlobal.frame = frame;
     BattleWin window;
+    SubInterface sentinel;
+    for (int i = 0; i != 12; ++i) InterfaceRegistry[i] = &sentinel;
     window.field_4_ = -1;
     const int constructed_before = Buffer::constructed;
     const int destroyed_before = Buffer::destroyed;
@@ -63,7 +66,10 @@ static void run_case(const RECT &layout, const RECT &frame,
                           expected[i].top, expected[i].right,
                           expected[i].bottom));
     }
-    assert(BattleWinInitReceiver == &window);
+    assert(InterfaceRegistry[10] == &window);
+    for (int i = 0; i != 12; ++i) {
+        if (i != 10) assert(InterfaceRegistry[i] == &sentinel);
+    }
     assert(Buffer::constructed == constructed_before + 1);
     assert(Buffer::destroyed == destroyed_before + 1);
 }

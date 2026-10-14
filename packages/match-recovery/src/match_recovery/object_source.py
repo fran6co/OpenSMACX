@@ -22,13 +22,17 @@ MEMBER_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v3 (0x[0-9A-Fa-f]+) (0x[0-9A-F
 TARGET_UNBOUNDED = re.compile(r"// RECOVERY_OBJECT: v4 (0x[0-9A-Fa-f]+) (\S+) target (\S+)\s*")
 TARGET_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v4 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+) target (\S+)\s*")
 _MEMBER_SEGMENT = re.compile(r"([A-Za-z_][A-Za-z_0-9]*)(?:\[(0|[1-9][0-9]*)\])?\Z")
+_ROOT_ARRAY_SEGMENT = re.compile(r"\[(0|[1-9][0-9]*)\]\Z")
 
 
 def valid_member_path(member_path) -> bool:
-    """Accept direct member names and canonical, fixed nonnegative indices."""
-    return (isinstance(member_path, tuple) and bool(member_path)
-            and all(isinstance(part, str) and _MEMBER_SEGMENT.fullmatch(part)
-                    for part in member_path))
+    """Accept named members, with an optional canonical root-array index."""
+    if not isinstance(member_path, tuple) or not member_path:
+        return False
+    return all(isinstance(part, str) and (
+        _MEMBER_SEGMENT.fullmatch(part) is not None
+        or (index == 0 and _ROOT_ARRAY_SEGMENT.fullmatch(part) is not None)
+    ) for index, part in enumerate(member_path))
 
 
 @dataclass(frozen=True)

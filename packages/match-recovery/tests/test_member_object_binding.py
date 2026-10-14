@@ -143,6 +143,20 @@ def indexed_owner_object(value=None, *, array_size=88, element_type=0x1002,
     return obj
 
 
+def registry_array_object(value=None, *, array_size=48, element_type=0x1000,
+                          subscript_type=0x75):
+    """InterfaceRegistry-shaped root array of twelve near32 pointers."""
+    pointer = record(0x1002, struct.pack("<II", 0x74, 0xA))
+    array = record(0x1003, struct.pack("<IIH", element_type, subscript_type,
+                                      array_size) + b"\x11InterfaceRegistry")
+    types = pointer + array
+    value = bytes(array_size) if value is None else value
+    obj = Coff(__import__("test_object_data").data_fixture(
+        value, type_index=0x1001, types=types, definition=b"_reg"))
+    obj.symbols[0] = replace(obj.symbols[0], name="?InterfaceRegistry@@3PAPAVSubInterface@@A")
+    return obj
+
+
 def image_for(value, *, absolute=None):
     raw = data_image(value, absolute=absolute)
     pin = hashlib.sha256(raw).hexdigest()
@@ -322,6 +336,54 @@ def test_fixed_array_indices_use_codeview_stride_and_resolve_exact_member_addres
                    span=Span(0x401054, 0x401058), evidence=Origin(pin, "pe:va", 0x401054))
     row, = check_initial_data((item,), {UNIT: obj}, image, {PARENT: 0x401000})
     assert row["definition"] == "pass" and row["content"] == "pass"
+
+
+def test_root_array_registry_slot_resolves_from_codeview_and_keeps_parent_identity():
+    parent = "?InterfaceRegistry@@3PAPAVSubInterface@@A"
+    historical = "?BattleWinInitReceiver@@3PAVBattleWin@@A"
+    child = ObjectBinding(Origin(PIN, "pe:va", 0x7AE818), historical, UNIT, 1,
+                         parent_symbol=parent, member_path=("[10]",))
+    owner = ObjectBinding(Origin(PIN, "pe:va", 0x7AE7F0), parent, UNIT, 2,
+                          Span(0x7AE7F0, 0x7AE820),
+                          Origin(PIN, "pe:va", 0x7AE7F0))
+    obj = registry_array_object()
+    layout = member_data_layout(obj, parent, ("[10]",))
+    assert (layout["member_offset"], layout["offset"], layout["size"]) == (40, 40, 4)
+    targets, reports = object_targets((owner, child), {UNIT: obj})
+    assert targets[parent] == 0x7AE7F0
+    assert {row["symbol"]: row["definition"] for row in reports} == {
+        parent: "pass", historical: "pass"}
+
+
+@pytest.mark.parametrize("array_size,path", [(48, ("[12]",)), (46, ("[11]",))])
+def test_root_array_index_uses_declared_extent_and_refuses_out_of_bounds(array_size, path):
+    if path == ("[11]",):
+        # A partial twelve-element pointer array is malformed, not a smaller
+        # inferred array of eleven elements.
+        with pytest.raises(ValueError, match="array storage extent"):
+            member_data_layout(registry_array_object(array_size=array_size),
+                               "?InterfaceRegistry@@3PAPAVSubInterface@@A", path)
+    else:
+        with pytest.raises(ValueError, match="outside CodeView array extent"):
+            member_data_layout(registry_array_object(array_size=array_size),
+                               "?InterfaceRegistry@@3PAPAVSubInterface@@A", path)
+
+
+@pytest.mark.parametrize("path", [("[010]",), ("child", "[0]"), ("[-1]",)])
+def test_root_array_path_requires_canonical_index_only_at_first_segment(path):
+    with pytest.raises(ValueError, match="canonical fixed indices"):
+        ObjectBinding(Origin(PIN, "pe:va", 0x401000), "old", UNIT, 1,
+                      parent_symbol=PARENT, member_path=path)
+
+
+def test_root_array_pointer_element_is_selected_but_never_dereferenced():
+    parent = "?InterfaceRegistry@@3PAPAVSubInterface@@A"
+    obj = registry_array_object()
+    layout = member_data_layout(obj, parent, ("[10]",))
+    assert layout["size"] == 4
+    assert layout["type_index"] == 0x1000
+    with pytest.raises(ValueError):
+        member_data_layout(obj, parent, ("[10]", "field"))
 
 
 @pytest.mark.parametrize("path", [
