@@ -92,12 +92,15 @@ def installed_packet_declarations(names: tuple[str, ...] | None = None) -> str:
     """Extract the canonical row, mutable view and packet shapes from netwin.h."""
     root = repository_root()
     header = (root / "src/netwin.h").read_text(encoding="utf-8")
+    source = (root / "src/netwin.cpp").read_text(encoding="utf-8")
     declarations = (
         ("struct", "NetWinLobbyRow"),
         ("class", "NetWinLobbyRowView"),
         ("struct", "NetWinSessionBlock"),
         ("struct", "NetWinSessionOptionsState"),
         ("struct", "NetWinFactionRecord"),
+        ("struct", "NetWinFactionDataPrefix"),
+        ("class", "NetWinFactionDataPacketView"),
         ("struct", "NetWinLobbyPacketHeader"),
         ("struct", "NetWinLobbySinglePacket"),
         ("struct", "NetWinLobbyFullPacket"),
@@ -116,7 +119,9 @@ def installed_packet_declarations(names: tuple[str, ...] | None = None) -> str:
             raise AssertionError(f"unknown canonical NetWin declarations: {sorted(requested - available)}")
         declarations = tuple(item for item in declarations if item[1] in requested)
     return "\n".join(
-        extract_definition(header, f"{kind} {name} {{") + ";"
+        extract_definition(
+            source if name in {"NetWinFactionDataPrefix", "NetWinFactionDataPacketView"}
+            else header, f"{kind} {name} {{") + ";"
         for kind, name in declarations
     )
 

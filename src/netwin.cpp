@@ -46,6 +46,57 @@
 #include "xpops.h"     // x_pop_caption_label for lobby validation prompts
 #include <stdlib.h>      // _itoa
 
+// MessageDataRecord and NetDaemon::process_message establish these shared
+// packet-prefix positions. F0D leaves +2..3 and +C unwritten; this describes
+// only the 16-byte prefix, not the complete allocation or payload extent.
+struct NetWinFactionDataPrefix {
+    uint16_t opcode_;
+    uint8_t unresolved_2_[2];
+    int32_t faction_;
+    uint32_t timestamp_;
+    uint32_t sequence_;
+};
+static_assert(sizeof(NetWinFactionDataPrefix) == 0x10,
+              "faction-data packet prefix size");
+static_assert(offsetof(NetWinFactionDataPrefix, opcode_) == 0,
+              "faction-data packet opcode offset");
+static_assert(offsetof(NetWinFactionDataPrefix, unresolved_2_) == 2,
+              "faction-data packet unresolved bytes offset");
+static_assert(offsetof(NetWinFactionDataPrefix, faction_) == 4,
+              "faction-data packet faction offset");
+static_assert(offsetof(NetWinFactionDataPrefix, timestamp_) == 8,
+              "faction-data packet timestamp offset");
+static_assert(offsetof(NetWinFactionDataPrefix, sequence_) == 0x0C,
+              "faction-data packet sequence offset");
+
+// A borrowed byte view writes only the fields initialized by the F0D sender.
+// It does not construct the prefix or initialize its unresolved bytes.
+class NetWinFactionDataPacketView {
+public:
+    explicit NetWinFactionDataPacketView(char *bytes) : bytes_(bytes) {}
+
+    void set_opcode(uint16_t value) const {
+        std::memcpy(bytes_ + offsetof(NetWinFactionDataPrefix, opcode_), &value,
+                    sizeof(value));
+    }
+    void set_faction(int32_t value) const {
+        std::memcpy(bytes_ + offsetof(NetWinFactionDataPrefix, faction_), &value,
+                    sizeof(value));
+    }
+    void set_timestamp(uint32_t value) const {
+        std::memcpy(bytes_ + offsetof(NetWinFactionDataPrefix, timestamp_), &value,
+                    sizeof(value));
+    }
+    char *payload() const {
+        return bytes_ + sizeof(NetWinFactionDataPrefix);
+    }
+
+private:
+    char *bytes_;
+};
+static_assert(sizeof(NetWinFactionDataPacketView) == sizeof(void *),
+              "faction-data packet view is a borrowed pointer");
+
 // Compiler-generated non-EH array-constructor iterator for the stack-local
 // NetWinConstructedLobbyRow array. The original callback returns its receiver;
 // ordinary constructor/array controls reproduce both original bodies.
@@ -3370,10 +3421,12 @@ void __cdecl send_faction_data(int slot_id) {
         const int records = count * 133;
         const uint32_t size = records * 3 + 0x1A4;
         char *frame = static_cast<char *>(mem_get(size));
-        *reinterpret_cast<unsigned short *>(frame) = 0xF0D;
-        *reinterpret_cast<uint32_t *>(frame + 4) = 0xFFFFFFFF;
-        *reinterpret_cast<uint32_t *>(frame + 8) = 0;
-        memcpy(frame + 0x10, NetWinDialog.faction_records_, records * 3 + 0x194);
+        NetWinFactionDataPacketView packet(frame);
+        packet.set_opcode(0xF0D);
+        packet.set_faction(-1);
+        packet.set_timestamp(0);
+        memcpy(packet.payload(), NetWinDialog.faction_records_,
+               records * 3 + 0x194);
         if (slot_id < 0) {
             NetDaemonNet.Net::send(frame, size, 0, 1);
             return;
