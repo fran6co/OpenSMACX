@@ -1,0 +1,58 @@
+{
+  "event_id": "f979fd46592f8f6eb64ac031dcd6ccb80b51265f942325d4077b31d217727403",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent physical COFF comparison of build-pwo3tbgi to network candidate build-8o0kv8j2 identifies eight additional NetWin picker consumers changed by inlining migrated local/host ID reads. Include these genuine consumers in verification; do not dismiss them as generic header drift. Source remains within already-authorized netwin.cpp. Original task baseline and all claims retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4716016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4713568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4714384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4715200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4712752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4710416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4711232,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4712000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7066a3e8dec970785cf20471119fb12ff1030dfd0bf38435c6f6e7f1e8bf0d30",
+  "request_id": "net-inlined-picker-scope-oct14gf",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:net-player-id-ownership-oct14gf"
+}
