@@ -8704,7 +8704,7 @@ int Buffer::copy_scaled_to_window(Win *target, RECT *destination_rect,
     return 0;
 }
 
-// ORIGINAL: 0x005DAB90 sub_5dab90 0x005DAB90-0x005DAC65 FILE
+// ORIGINAL: 0x005DAB90 sub_5dab90 0x005DAB90-0x005DAC65 FILE BYTE_EXACT
 // symbol    ?set_dc_text_color@Buffer@@QAEXI@Z
 // TRIED: this is a real __thiscall Buffer member (ecx=this pervasively); slot001 (self+4) is a genuine virtual thiscall dispatch via the scaffold's VCall class, but slots at offset 0x44/0x68 on the secondary object (surface_) push that object as an explicit stack arg while ecx holds the vtable pointer - not a real thiscall, so those two use raw `int**`/function-pointer casts instead of VCall. locked_bits_/0x58/0x60/0x64/0x68/0x50C offsets match Buffer's known layout from the wrap_cent brief.
 // TRIED: tracking a single `iVar3` local mirroring ghidra's variable (should instead re-read *piVar1 fresh at the "iVar3 != 0" gate, since the original reloads memory there); several statement-order and branch-order permutations for the piVar2==0 vs *piVar1==0 arms, none reached better than ~0.81 mnemonic similarity.
