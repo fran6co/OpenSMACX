@@ -69,7 +69,7 @@ Purpose: Clear all four fields.
              mov [eax+4],ecx / ret
 
          The genuine constructor retains the original store order 0,+8,+C,+4.
-// ORIGINAL: 0x0063B2D0 ??0Cursor@@QAE@XZ 0x0063B2D0-0x0063B2E0
+// ORIGINAL: 0x0063B2D0 ??0Cursor@@QAE@XZ 0x0063B2D0-0x0063B2E0 BYTE_EXACT
 // symbol    ??0Cursor@@QAE@XZ
 // size      16 bytes
 // prototype Cursor* (__thiscall ??0Cursor@@QAE@XZ)(Cursor* this)

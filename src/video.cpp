@@ -293,7 +293,7 @@ int VideoFrameQueue::append(const unsigned char *source, int byte_count,
     return 0;
 }
 
-// ORIGINAL: 0x0063E7F0 sub_63e7f0 0x0063E7F0-0x0063E81C SEMANTIC
+// ORIGINAL: 0x0063E7F0 sub_63e7f0 0x0063E7F0-0x0063E81C BYTE_EXACT
 // symbol    ?peek@VideoFrameQueue@@QBEPAEPAHPAI@Z
 // TRIED: plateaus at MNEMONIC_ONLY 11/18 - eax/edx swap on the `first` branch (image keeps `first` in eax, node-reload in edx; this tree does the opposite). Caching the loaded front value in a named local, and `!=nullptr` vs bare pointer truthiness, both measured with no change - register allocation, not source shape.
 unsigned char *VideoFrameQueue::peek(int *next_frame_id,
@@ -795,7 +795,7 @@ finish:
 }
 
 
-// ORIGINAL: 0x00637310 Video_unk12 0x00637310-0x00637395 FILE
+// ORIGINAL: 0x00637310 Video_unk12 0x00637310-0x00637395 FILE BYTE_EXACT
 // symbol    ?size_buffer@Video@@QAEHHH@Z
 int Video::size_buffer(int width, int height) {
   if (decode_output_ != 0) {

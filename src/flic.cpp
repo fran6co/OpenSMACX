@@ -291,7 +291,7 @@ Purpose: Open a FLIC file and prepare the first frame: zero the per-file
          state, read and validate the 128-byte header, cache both ring
          frame headers, prime the embedded scratch buffer with the first
          frame and blit it to the destination at (x, y).
-// ORIGINAL: 0x00629E50 ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z 0x00629E50-0x0062A068
+// ORIGINAL: 0x00629E50 ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z 0x00629E50-0x0062A068 BYTE_EXACT
 // symbol    ?init@Flic@@QAEHPAVBuffer@@PADHHH@Z
 // size      536 bytes
 // prototype int (__thiscall ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z)(Flic* this, Buffer*, char*, int, int, int)
