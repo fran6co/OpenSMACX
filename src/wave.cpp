@@ -100,10 +100,6 @@ inline WavePlaybackDeviceInterface *wave_playback_device(void *device) {
 // The Windows multimedia clock is a system import, not storage in this build.
 // RECOVERY_IMPORT: v1 __imp__timeGetTime@0 WINMM.dll name:timeGetTime
 
-// Wave construction at 0x004C676E installs this table. Its derived slots
-// 33..56 are also present in Effect's table; inherited placeholders still
-// need recovery, so no complete-table acceptance is implied here.
-// RECOVERY_GENERATED: v1 vtable 0x0066E44C ? ??_7Wave@@6B@ 0x004C66E0
 
 // Historical seed catalog (inactive): // prior-original: 0x00448340 sub_448340 0x00448340-0x0044834F historical-byte-exact
 // Historical seed catalog (inactive): // symbol    ?Method@S_00448340@@QAEHXZ
@@ -1349,60 +1345,7 @@ int Wave::load(const char *fname) {
 
 
 
-/*
-Purpose: Build the inherited Sound/Fade state once, then initialize Wave's
-         own flags, pitch, reverb, timing and group state. Sound::set_type(1)
-         is a direct base-method call in the original. The compiler owns
-         construction tables and exception cleanup; the historical spelling
-         experiments below predate recovery of the fade base.
-// ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x004C8450-0x004C8457;0x00659EF4-0x00659F06
-// TRIED: 3/73 - the image carries an SEH unwind frame here (`push -1 /
-//            push 0x659efc / mov eax,fs:[0] / ...`), the same symptom as
-//            FlatButton::FlatButton() (flatbutton.cpp) and
-//            GraphicWin::~GraphicWin() (graphicwin.cpp): a real
-//            constructor calling something VC6 assumes can throw
-//            (`Sound::set_type`) alongside a non-trivial `~Wave()`
-//            (0x004C67C0, this file). Not attempted: this body already
-//            deliberately elides two intermediate vtable-install stages
-//            the image performs before the SEH frame, on the documented
-//            theory that a CRT memset between them makes both
-//            unobservable - reworking the frame risks that already-
-//            reasoned simplification for an uncertain payoff, given
-//            FlatButton's own SEH-frame recovery needed no vtable-stage
-//            changes and this body's does. Left as is.
-// size      239 bytes
-// prototype void (__thiscall ??0Wave@@QAE@XZ)(Wave* this)
-// callers   16   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004C61E0 0x006465F0
-// indirect  0x004C6762
-Return Value: n/a (the redirect answers the object pointer, as the original
-              does in eax)
-Status: Complete
-*/
-// LEVER: the image's call list is memset x3 + Sound::set_type - the region
-// loop and the two single-dword field clears (flags_40_, flags_54_) are all
-// real `call memset` in the image, not stores; writing them as memset() calls
-// (matching set_fname's own `memset(&flags_54_, 0, 4)` lever below) reaches
-// that count. Store order also follows the image: an early temporary vtable
-// write (0x66E444), then the region memset, then a SECOND temporary vtable
-// write (0x66E3C0) ahead of the pointer-field clears and the flags_40_
-// memset, then the FINAL vtable write (0x66E44C) ahead of the flags_54_
-// memset.
-Wave::Wave() {
-    // Sound and SoundFadeState construct their own fields exactly once.
-    // The original's `memset(this + 0x54, 0, 4)` at 0x004C6774 - same lever
-    // as set_fname's own `memset(&flags_54_, 0, 4)` below.
-    memset(&flags_54_, 0, sizeof(flags_54_));
-    flags_40_ |= 4;
-    Sound::set_type(1);
-    pitch_ = 0;
-    reverb_mix_ = 1.0f;
-    group_slot_ = 0x10;
-    ms_length_ = 0;
-    start_time_ = 0;
-}
+
 
 
 /*
@@ -1515,122 +1458,10 @@ void Wave::init(char *group_id, unsigned long flags) {
 }
 
 
-/*
-Purpose: The compiler-generated scalar deleting destructor: destroy the wave
-         and, when bit 0 of the mode argument asks for it, return the storage
-         to the game CRT heap.
-// ORIGINAL: 0x004C9300 ??_GWave@@UAEPAXI@Z 0x004C9300-0x004C9321 FILE BYTE_EXACT
-// symbol    ??_GWave@@UAEPAXI@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GWave@@UAEPAXI@Z)(Wave* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004C67C0 0x0064557F
-// LEVER: the qualified destructor call. ~Wave is virtual through ~Sound, so
-//        `self->~Wave()` dispatched through the live vtable
-//        (`mov eax,[esi]; call [eax+8]`) and dropped the frame pointer - 6 of
-//        14. `self->Wave::~Wave()` names the class and emits the direct
-//        `call` the image makes; 6/14 -> BYTE_EXACT 14/14.
-Return Value: the object pointer
-Status: Complete
-*/
-// The existing virtual destructor owns this compiler-generated entry.
 
 
-// The destructor's dependencies. pull_from_group is the Wave_Device method at
-// 0x004C5280 with its singleton receiver at 0x0090D978; the buffer free goes
-// to the game CRT's operator delete so the block returns to the heap that
-// allocated it; the release hook is an indirect call on the slot at 0x0090DB28
-// guarded by the dword at 0x0090DB7C; the chain end slots are the dwords the
-// unlink falls back to when a neighbour is null.
 
-/*
-Purpose: Destroy the wave. The original is a three-stage teardown of an
-         inlined hierarchy, republishing a vtable pointer at each stage: its
-         own (0x0066E44C) at entry, the base's (0x0066E3C0) midway, and the
-         ultimate base's (0x0066E444) on the way out. While the wave still
-         holds a device group slot it is pulled from its group; the filename
-         copy goes back to the game CRT heap; a chained wave unlinks itself
-         from the global wave chain; the wrapped device is put through the
-         release hook when the hook is live, then forgotten. The inlined base
-         destructor owns the later filename/device/chain cleanup. The real
-         Sound base performs that stage once, with Sound virtual dispatch
-         already active. The compiler owns the exception cleanup and final
-         SoundFadeState destruction; do not duplicate those stages here.
-// ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20
-// symbol    ??1Wave@@UAE@XZ
-// LEVER: plain member access, not the `Wave volatile *const self` view. The
-//        view predates the real `Sound` base: once the SEH frame is in the
-//        body for real, VC6 keeps every store anyway, and the volatile only
-//        blocked the hoist of the `flags_40_` read above the two null
-//        neighbour stores. 49/101 -> 58/101, instruction count 101/101.
-// WALL (unchanged, 2026-09-03): the ONLY four instructions left are the
-//        base-destructor stage - the image republishes the mid vtable
-//        (0x0066E3C0) at instruction 52, moves the SEH state to 1 at 54, and
-//        ends `mov [esi], 0x66e444`; this tree emits `mov ecx,esi /
-//        mov [ebp-4],-1 / call` - the OUT-OF-LINE base destructor call the
-//        `#pragma auto_inline(off)` below exists to keep. Inlining the base
-//        stage would break ~Effect's five-byte tail jump (see that marker and
-//        the ~Sound stale-TU note there). Not re-derived here.
-// TRIED: 0.888 similar, 2/101 agreeing - already a real destructor,
-//            and everything BUT the SEH prologue/epilogue is close; the
-//            gap is the missing unwind frame, matching Wave::Wave()'s own
-//            ceiling above (same file). The comment above claims the
-//            frame is "unreachable, so omitted", which is the SAME
-//            reasoning that write_l's own font1_ rebind note (buffer.cpp)
-//            turned out to be WRONG about elsewhere in this pass -
-//            flagged here rather than trusted, but not re-investigated:
-//            unlike FlatButton's destructor (flatbutton.cpp, where the
-//            fix was straightforward - just stop routing through a
-//            `destroy()` method), this is ALREADY a real destructor, has
-//            no base class to call into, and is wrapped in heavy
-//            `volatile` reads/writes throughout; reproducing the frame
-//            here would need isolating which of those is responsible,
-//            which this budget does not cover.
-// size      333 bytes
-// prototype 
-// callers   2   call targets   2
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004C5280 0x0064557F
-// indirect  0x004C6886
-Return Value: n/a
-Status: Complete
-*/
-Wave::~Wave() {
-    // Original 0x004C6856 changes to the Sound table before the release
-    // callback at 0x004C6886. Only the Wave stage belongs in this body;
-    // the automatic base destructor owns that transition and cleanup.
-    if (group_slot_ < 0x10) {
-        WaveDeviceGlobal.pull_from_group(this);
-    }
-    char *const block = fname_;
-    if (block) {
-        operator delete(block);
-    }
-    fname_ = nullptr;
-    if (flags_40_ & 2) {
-        // Unlink from the wave chain. The second neighbour is re-read after
-        // the first write because a neighbour pointer may alias this very
-        // object - the original re-reads it the same way.
-        Sound *const prev = chain_prev_;
-        if (prev) {
-            prev->chain_next_ = chain_next_;
-        } else {
-            SoundChainHead = chain_next_;
-        }
-        Sound *const next = chain_next_;
-        if (next) {
-            next->chain_prev_ = chain_prev_;
-        } else {
-            SoundChainTail = chain_prev_;
-        }
-        chain_next_ = nullptr;
-        chain_prev_ = nullptr;
-        flags_40_ &= ~2u;
-    }
-}
+
 
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====

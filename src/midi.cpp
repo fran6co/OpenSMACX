@@ -1130,27 +1130,7 @@ int Midi::get_attrib() { return 0; }
 // calls     (none)
 int Midi::set_attrib(unsigned long) { return 0x0B; }
 
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// Historical seed observations (not fresh measurements or acceptance):
-// `mov ecx, dword ptr[0x9bc074]`-free entry, but the body reads `[ecx+N]`
-// with no matching stack slot, so ecx is `this`, not a stack argument - the
-// contract's nullary `__cdecl` is wrong. This is a constructor: three
-// vtable installs in sequence, an SEH prologue (`fs:[0]`) with a 0x659f20
-// unwind handler that resets the vtable to the first-phase value, and a
-// span at 0x4c8450/0x659f20/0x659f28 that is PART of this same function
-// (the "spans" list is multi-range). The SEH frame is not modeled here -
-// see TRIED.
-// ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x004C8450-0x004C8457;0x00659F20-0x00659F32 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c75b0.cpp", "src/midi.h", "src/ambience.h"], "reason": "Original Sound-to-Midi constructor staging and byte54 state identify the genuine Midi owner. Historical seed mapping includes the already shared unwind helper; its overlap remains a restoration limitation, not a newly inferred independent function extent."}
-// symbol    ??0Midi@@QAE@XZ
-// TRIED: SHARED_TAIL - the 0x4c8450/0x659f20 unwind-handler span is COMDAT-folded with another function's handler, so no tier is reachable regardless of body. Left as a plain field-write transcription (no SEH frame modeled) for the next pass.
-Midi::Midi() {
-    memset(&field_54_, 0, 1);
-    volatile uint8_t &mode = field_54_;
-    volatile uint32_t &flags = flags_40_;
-    mode |= 1;
-    flags |= 8;
-}
+
 
 // Original4C7CC0: replace bit0 throughout the chained Midi objects.
 // ORIGINAL: 0x004C7CC0 sub_4c7cc0 0x004C7CC0-0x004C7CEA FILE BYTE_EXACT
@@ -1204,45 +1184,7 @@ int Midi::sub_4c8020(int a1) {
     return 0x14;
 }
 
-/*
-Purpose: Destroy an ambience. Its own stage frees the remembered filename
-         and releases the device through the guarded hook, clearing both
-         fields unconditionally; the compiler-appended ~Sound then repeats
-         the same teardown on the now-cleared fields (its frees no-op) and
-         unlinks from the global sound chain when the chained bit is set -
-         the image carries that Sound stage INLINED, which is why the old
-         transcription duplicated it by hand.
-// ORIGINAL: 0x004C7670 ??1Ambience@@QAE@XZ 0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
-// symbol    ??1Midi@@UAE@XZ
-// size      273 bytes
-// prototype void (__thiscall ??1Ambience@@QAE@XZ)(Ambience* this)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0064557F
-// indirect  0x004C76BE 0x004C76FA
-Return Value: n/a
-Status: Complete
-*/
-Midi::~Midi() {
-    // THE OWN STAGE ONLY: free the remembered filename and release the
-    // device through the guarded hook, clearing both unconditionally. The
-    // compiler appends ~Sound, whose stage repeats the same teardown on the
-    // now-cleared fields (so its frees no-op) and unlinks from the global
-    // sound chain when the chained bit sets - the work the image's ~Ambience
-    // carries INLINED. The vtable staging (0x66E538 -> 0x66E3C0 -> 0x66E444)
-    // is the compiler's now; AmbienceSoundView - Sound's own member layout
-    // under another name - is gone with the inheritance that made it
-    // redundant.
-    if (fname_) {
-        operator delete(fname_);
-    }
-    fname_ = nullptr;
-    if (device_ && WaveDeviceReleaseGuard) {
-        (SoundXOrdinal2DeleteSound())(device_);
-    }
-    device_ = nullptr;
-}
+
 
 // The pinned cascade is a Midi trackset operation. 0x00683C2C's image
 // initializer is -0x4B0; no wider allocation/lifetime is claimed here.

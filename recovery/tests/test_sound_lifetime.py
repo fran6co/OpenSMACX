@@ -68,7 +68,10 @@ def test_live_compiler_keeps_the_real_base_and_all_family_extents(family):
             assert any(operand.type == X86_OP_MEM and operand.mem.segment == X86_REG_FS
                        for op in decode(code) for operand in op.operands)
         assert ROOT_TABLE in references(obj, "??1Sound@@UAE@XZ")
-        assert references(objects["src/wave.cpp"], "??0Wave@@QAE@XZ").count("??0Sound@@QAE@XZ") == 1
+        wave = references(obj, "??0Wave@@QAE@XZ")
+        assert "??0Sound@@QAE@XZ" not in wave
+        assert [name for name in wave if name.startswith("??_7")] == [
+            ROOT_TABLE, "??_7Sound@@6B@", "??_7Wave@@6B@"]
 
 
 def test_root_slots_and_compiler_cleanup_keep_their_original_targets(family):
@@ -112,7 +115,7 @@ def run_constructor(tmp_path, monkeypatch):
         ("// LIVE_VOICE_DECLARATION", "src/voice.h", "class VoiceTx : public Sound {", "// The actual 32-bit product"),
         ("// LIVE_DEVICE_INTERFACE", "src/voice.h", "class SoundDeviceInterface {", "// The create_sound mode-1"),
         ("// LIVE_DEVICE_VIEW", "src/sound.cpp", "__forceinline SoundDeviceInterface *sound_device(", "}  // namespace\n\n/*\nPurpose: Ask the wrapped device whether it is playing"),
-        ("// LIVE_ROOT_FADE", "src/sound.cpp", "int SoundFadeState::set_fade(", "// Construct the Sound-owned fields")])
+        ("// LIVE_ROOT_FADE", "src/sound.cpp", "int SoundFadeState::set_fade(", "// Purpose: Return the next Sound")])
 
 
 def test_actual_constructor_sets_owned_state_and_leaves_uninitialized_delay_untouched(tmp_path, monkeypatch):

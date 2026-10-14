@@ -707,71 +707,7 @@ void GAmbience::eot() {
 
 
 
-/*
-Purpose: Build the ambience. The original constructs in four vtable stages -
-         0x0066E444 at 0x004C848A, 0x0066E3C0 at 0x004C84AC, 0x0066E538 at
-         0x004C84EF, then its own 0x0066E664 at 0x004C850F - but only CRT
-         memsets run between them, so the three intermediate installs are
-         unobservable and, like the registered SEH frame, are omitted, keeping
-         only the final Ambience publication. A device dispatch of the 0x3E8
-         default through slot 0 at 0x004C84DB is provably dead - the device
-         slot at 0x3C is zeroed at 0x004C84B8 and the memset in between covers
-         0x40..0x43 only, so the reload at 0x004C84D4 cannot see anything else
-         - and is omitted under the same policy. The net field state: full
-         volume, zeroed regions, a 1000ms default at 0x38, flag dword 8, flag
-         byte 1, and Sound::set_type run with type 5. Unlike Wave, whose 0x54
-         clear is four bytes wide, this one is a single byte, so 0x55..0x57
-         keep whatever the storage held - and nothing at or above 0x58 is
-         written at all, which is what pins the shared base's extent there.
-// ORIGINAL: 0x004C8460 ??0Ambience@@QAE@XZ 0x004C8460-0x004C852D;0x004C8450-0x004C8457;0x00659F4C-0x00659F5E
-// TRIED: dropping `volatile` off `object`/`bytes` measured 0/72
-//   agreeing both ways (the function diverges at instruction 0, the
-//   omitted SEH prologue, before reaching these stores), but it shrank
-//   the compiled body from 31 to 25 instructions - the optimiser folds
-//   the documented `object[0x40/4] |= 8` / `bytes[0x54] |= 1`
-//   read-modify-writes into plain immediate stores, which the
-//   Verification note above says the image does NOT do (it genuinely
-//   reloads at 0x004C84FA/0x004C84FC). Reverted; volatile is load-bearing
-//   here, not incidental.
-// symbol    ??0Ambience@@QAE@XZ
-// size      230 bytes
-// prototype void (__thiscall ??0Ambience@@QAE@XZ)(Ambience* this)
-// callers   7   call targets   2
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004C61E0 0x006465F0
-// indirect  0x004C84E2
-Return Value: n/a (the redirect answers the object pointer, as the original
-              does in eax)
-Status: Complete
-Verification note: 0x0066E664 has exactly one writer in the whole image, this
-         constructor, and no reader on the teardown path, which is why the
-         already-recovered ~Ambience at 0x004C7670 starts its descent one
-         stage lower at 0x0066E538. That is not a missing stage: 0x0066E664
-         differs from 0x0066E538 in three slots only - the deleting destructor
-         at 0x08, load at 0x10 and unload at 0x14 - and 0x004C7670 is the
-         base-level destructor, reached from both slot 0x08 of 0x0066E664 and
-         the global's ??__F thunk at 0x004455E0 without a vtable store of its
-         own, MSVC having elided a store that 0x004C7670 overwrites on its
-         first instruction. The two bodies are consistent.
-Verification note: the sweep leaves exactly two survivors and both are
-         equivalent mutants that no assertion can separate, because the
-         original's own shape makes them so. Widening the 0x0C..0x2F loop by
-         one iteration lands on 0x30, which the very next statement stores
-         zero to anyway; and seeding the 0x54 byte with 1 instead of 0 washes
-         out under the `|= 1` two statements later. Both are transcribed the
-         way the bytes read - a memset then a separate store, and a memset
-         then a read-modify-write - rather than folded into whatever would
-         make the sweep look cleaner.
-Verification note: the base-level constructor at 0x004C75B0 is byte-identical
-         to this one through the 0x0066E538 publication and then stops - it
-         neither publishes 0x0066E664 nor calls set_type. Recovering it later
-         must duplicate this shape rather than share a helper with it, or a
-         mutation sweep of either loses its signal.
-*/
-Ambience::Ambience() {
-    set_type(5);
-}
+
 
 
 /*

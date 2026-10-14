@@ -19,6 +19,7 @@
 
 #include "vc6_compat.h"
 #include <cstring>
+#include <new>
 
 // Provisional behavioral name for the original base published at 0x0066E444.
 // Sound construction initializes this prefix before installing its own table;
@@ -247,3 +248,41 @@ int __cdecl get_sound_version();
 int __cdecl release_sound();
 
 int __cdecl unload_active_sound_chain();
+
+// All derived translation units must see the same inline base teardown.
+// The canonical original identity and shared cleanup spans remain in sound.cpp.
+extern int WaveDeviceReleaseGuard;
+inline Sound::~Sound() {
+    // The original closes with the root table at 0x004C61C1 and has an
+    // exception cleanup at 0x004C8450. SoundFadeState owns both lifetime
+    // effects; do not install a table by hand or flatten this base to alter
+    // the destructor's code shape. Remaining hooks/chain globals still need
+    // independent recovery before the whole sound lifetime is accepted.
+    if (fname_) {
+        operator delete(fname_);
+        fname_ = nullptr;
+    }
+    if (device_) {
+        if (WaveDeviceReleaseGuard) {
+            (SoundXOrdinal2DeleteSound())(device_);
+        }
+        device_ = nullptr;
+    }
+    if (flags_40_ & 2) {
+        Sound *const prev = chain_prev_;
+        if (prev) {
+            prev->chain_next_ = chain_next_;
+        } else {
+            SoundChainHead = chain_next_;
+        }
+        Sound *const next = chain_next_;
+        if (next) {
+            next->chain_prev_ = chain_prev_;
+        } else {
+            SoundChainTail = chain_prev_;
+        }
+        chain_next_ = nullptr;
+        chain_prev_ = nullptr;
+        flags_40_ &= ~2u;
+    }
+}

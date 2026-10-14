@@ -328,6 +328,9 @@ add_subdirectory(src/jackal)
 # pointer; generic library bodies have independently measured profiles.
 set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# The co-located Sound-family lifetimes retain the original frame-based
+# cleanup/deleting entries. Release already supplies /Ob2 for base inlining.
+set_source_files_properties(src/sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp

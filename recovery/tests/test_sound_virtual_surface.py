@@ -36,7 +36,9 @@ def family():
         pytest.skip("VC6, Wine32 and pinned original image are required")
     settings = Measurement.read(ROOT)
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
-    trials = [{unit: Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
+    trials = [{unit: Coff(compiler(ROOT / unit, (),
+                   (settings.flags_for(unit)[0] if unit == "src/sound.cpp" else flags)
+                   + settings.layout_flags))
                for unit in ("src/sound.cpp", "src/wave.cpp", "src/fx.cpp")}
               for flags in settings.flag_sets]
     return compiler, settings, trials, PeImage(path.read_bytes(), image_pin(ROOT))
@@ -81,10 +83,10 @@ def test_restoring_old_setter_placeholder_breaks_table_contract(family):
     before = b"virtual int set_attrib(unsigned long attrib) = 0;"
     assert header.count(before) == 1
     for flags, objects in zip(settings.flag_sets, trials):
-        changed = Coff(compiler.overlay(ROOT / "src/wave.cpp", {
+        changed = Coff(compiler.overlay(ROOT / "src/sound.cpp", {
             "src/sound.h": header.replace(before, b"virtual void unk_slot27();")
         }, (), flags + settings.layout_flags))
-        table, = (r for r in observations({**objects, "src/wave.cpp": changed}, image)
+        table, = (r for r in observations({**objects, "src/sound.cpp": changed}, image)
                   if r["symbol"] == "??_7Wave@@6B@")
         assert table["diagnostic"]["entries"][27]["observation"] != "target_word_agrees"
 
@@ -162,10 +164,10 @@ def test_restoring_the_old_helper_name_reintroduces_the_wrong_override(family):
     assert all(overrides[unit] != source for unit, source in sources.items())
     for flags, pristine in zip(settings.flag_sets, trials):
         assert_inherited_slots(pristine, image)
-        obj = Coff(compiler.overlay(ROOT / "src/wave.cpp", overrides, (), flags + settings.layout_flags))
-        damaged = {**pristine, "src/wave.cpp": obj}
+        obj = Coff(compiler.overlay(ROOT / "src/sound.cpp", overrides, (), flags + settings.layout_flags))
+        damaged = {**pristine, "src/sound.cpp": obj}
         row, = (r for r in observations(damaged, image)
-                if r["symbol"] == "??_7Wave@@6B@" and r["unit"] == "src/wave.cpp")
+                if r["symbol"] == "??_7Wave@@6B@" and r["unit"] == "src/sound.cpp")
         entry = row["diagnostic"]["entries"][3]
         assert [r["symbol"] for r in entry["relocations"]] == ["?UNK1@Wave@@UAEHH@Z"]
         assert entry["observation"] != "target_word_agrees"

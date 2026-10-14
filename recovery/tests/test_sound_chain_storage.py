@@ -68,11 +68,11 @@ CHAIN_HANDLERS = [
     ("// LIVE_FADE_CONSTRUCTOR", "src/sound.cpp", 0x4C8410),
     ("// LIVE_ATTACH", "src/sound.cpp", 0x4C6370),
     ("// LIVE_DETACH", "src/sound.cpp", 0x4C63D0),
-    ("// LIVE_DESTRUCTOR", "src/sound.cpp", 0x4C6120),
     ("// LIVE_NEXT", "src/sound.cpp", 0x448310),
     ("// LIVE_PREV", "src/sound.cpp", 0x448320),
 ]
 CHAIN_DECLARATIONS = [
+    ("// LIVE_DESTRUCTOR", "src/sound.h", "inline Sound::~Sound() {", None),
     ("// LIVE_FADE_DECLARATION", "src/sound.h", "class SoundFadeState {", "// RECOVERY_MEMBER: v1 SoundFadeState volume_"),
     ("// LIVE_SOUND_DECLARATION", "src/sound.h", "class Sound : public SoundFadeState {", "// Two independent sources agree on 0x54"),
     ("// LIVE_CHAIN_STORAGE", "src/sound.cpp", "Sound *SoundChainHead;", "/*\nPurpose: Unknown; the legacy implementation is a constant return that returns 11."),

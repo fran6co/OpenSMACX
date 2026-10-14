@@ -25,7 +25,11 @@ def test_only_effect_lifetime_moves_and_its_identity_survives():
     before = original('src/wave.cpp')
     start = before.index('/*\nPurpose: Tear down an Effect, which is a Wave and nothing more.')
     end = before.index('// ===== MANAGED GLOBALS', start)
-    assert (ROOT/'src/wave.cpp').read_text() == before[:start] + before[end:]
+    # Audit this completed migration at its publication; the later audio
+    # lifecycle move has its own whole-block conservation control.
+    published = subprocess.check_output(['git', 'show',
+        'df3f94c33d5d8bb167fcfddb7570312398c8ec24:src/wave.cpp'], cwd=ROOT, text=True)
+    assert published == before[:start] + before[end:]
     current = (ROOT/'src/fx.cpp').read_text()
     start = current.index('/*\nPurpose: Tear down an Effect, which is a Wave and nothing more.')
     end = current.index('// ORIGINAL: 0x00448350', start)
