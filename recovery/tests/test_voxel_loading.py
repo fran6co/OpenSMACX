@@ -28,7 +28,7 @@ def sources():
 
 
 def actual_globals():
-    source = (ROOT / "src/caviar.cpp").read_text()
+    source = (ROOT / "src/caviar_objects.cpp").read_text()
     return re.findall(r"^CaviarData (\w+)(\[\d+\])?;", source, re.M)
 
 
@@ -46,6 +46,8 @@ HARNESS = r'''
 #define static_assert(...)
 HEADER
 #undef static_assert
+MODEL_CTOR
+INSTANCE_CTOR
 struct Fault {};
 void require(bool b) {if(!b) std::exit(42);}
 bool tracking=false;
@@ -99,7 +101,7 @@ void CaviarData::close() {
     require(names.find(this)==names.end());
     ++closes; record_=nullptr;
 }
-void __cdecl leaf_00628180_redirect(const float *a,const float *b,float *out) {
+void __cdecl vec3_subtract(const float *a,const float *b,float *out) {
     require(temp_loads>0 && temp_loads<=4);
     require(a==vectors[1].values && b==vectors[0].values);
     require(out==outputs[temp_loads-1]->values);
@@ -168,6 +170,10 @@ def compile_host(tmp_path, loader=None):
     body, setup = sources()
     header = (ROOT / "src/caviar.h").read_text()
     header = re.sub(r"^#.*$", "", header, flags=re.M)
+    data = (ROOT / "src/caviar_data.cpp").read_text()
+    model_ctor = braced(data, data.index("CaviarData::CaviarData()"))
+    renderer = (ROOT / "src/caviar.cpp").read_text()
+    instance_ctor = braced(renderer, renderer.index("VoxInstance::VoxInstance()"))
     declarations, registry = [], []
     for name, array in actual_globals():
         declarations.append("CaviarData " + name + array + ";")
@@ -178,7 +184,9 @@ def compile_host(tmp_path, loader=None):
         else:
             registry.append(f'names[&{name}]="{name}";')
     source = HARNESS
-    for token, value in (("HEADER", header), ("GLOBALS", "\n".join(declarations)),
+    for token, value in (("HEADER", header), ("MODEL_CTOR", model_ctor),
+                         ("INSTANCE_CTOR", instance_ctor),
+                         ("GLOBALS", "\n".join(declarations)),
                          ("REGISTRY", "\n".join(registry)), ("SETUP", setup),
                          ("LOADER", loader if loader is not None else body)):
         source = source.replace(token, value)
@@ -246,7 +254,7 @@ def test_pinned_manifest_and_arithmetic():
     code = instructions(0x451030, 0x451A09)
     assert code[-1].address + code[-1].size == 0x451A09
     addresses = {0x78E968: "g_VBP_CAVIARDATA"}
-    for name, count, start in re.findall(r"CaviarData (\w+)(?:\[(\d+)\])?;  // (0x[0-9A-Fa-f]+)", (ROOT / "src/caviar.cpp").read_text()):
+    for name, count, start in re.findall(r"CaviarData (\w+)(?:\[(\d+)\])?;  // (0x[0-9A-Fa-f]+)", (ROOT / "src/caviar_objects.cpp").read_text()):
         for n in range(int(count or 1)):
             addresses[int(start, 16) + n * 12] = name + (f"[{n}]" if count else "")
     manifest = []

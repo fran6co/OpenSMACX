@@ -22,10 +22,10 @@ def definition(text, signature):
 
 def test_actual_color_owner_declarations_and_bodies():
     header = (ROOT / "src/caviar.h").read_text()
-    caviar = (ROOT / "src/caviar.cpp").read_text()
+    caviar = (ROOT / "src/caviar_data.cpp").read_text()
     popup = (ROOT / "src/popup.cpp").read_text()
     declarations = definition(header, "struct CvrRecord {") + ";\n" + definition(header, "struct CaviarData {") + ";\n"
-    caviar_bodies = definition(caviar, "int CaviarData::apply_palette(") + "\n" + definition(caviar, "void CaviarData::release_palette_chunk(")
+    caviar_bodies = definition(caviar, "CaviarData::CaviarData()") + "\n" + definition(caviar, "int CaviarData::apply_palette(") + "\n" + definition(caviar, "void CaviarData::release_palette_chunk(")
     globals_ = []
     for name in ("PopupSavedLocX", "PopupSavedLocY"):
         declarations_ = [line.split("//", 1)[0] for line in popup.splitlines() if line.startswith("static int " + name + " =")]

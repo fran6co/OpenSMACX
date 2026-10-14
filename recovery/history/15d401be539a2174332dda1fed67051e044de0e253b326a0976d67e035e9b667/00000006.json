@@ -1,0 +1,20 @@
+{
+  "event_id": "1a99ddad62fdcd123c74be3a5b4f40d1b3f7778cc490a7d08bbc76b50d61059c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_lifetime.py",
+      "recovery/tests/test_color_owner_source.py"
+    ],
+    "evidence": [
+      "Existing actual-source fixtures extract CaviarData methods from caviar.cpp and constructor from header. Authorize path/extraction migration to the genuine caviar_data.cpp implementation family while preserving original behavior,all assertions and renderer/VoxInstance ownership. Keep inline destructor normal-versus-EH target semantics; do not force current inlining merely to satisfy extraction patterns."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e1d4a573e0c2a984c8326666272bbb85f0c475340be5010f396601480d788940",
+  "request_id": "caviar-data-test-paths-oct14gs",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}

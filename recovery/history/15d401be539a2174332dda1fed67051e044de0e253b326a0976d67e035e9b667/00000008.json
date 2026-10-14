@@ -1,0 +1,19 @@
+{
+  "event_id": "3d91882e2909146dc073865e07832b66ce18edbd0447c15ba708983b9f16063e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/project.json"
+    ],
+    "evidence": [
+      "Native grouped compiler experiment: hiding the complete CaviarData implementation family and using Ob2 on caviar.cpp changes100 previous misses to exact,with2 previous exact results lost (close_class618D20 andvox_read_dword6386B0). Authorize explicit recipe only for this TU; all other profiles unchanged. Coordinator permits retaining these scoped temporary matching regressions for the structural recovery while preserving historical claims/restoration obligations; this is not acceptance. SceneBuffer4BF6E0 remains oversized and unclaimed new results need physical target verification before recording."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "047ca72c329ef3fc3a5cf75f233e29c6fb50179593cb0dbeb1854f5793b3c914",
+  "request_id": "caviar-single-unit-recipe-oct14gt",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}

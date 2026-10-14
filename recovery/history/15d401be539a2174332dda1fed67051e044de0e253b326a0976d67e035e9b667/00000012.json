@@ -1,0 +1,20 @@
+{
+  "event_id": "a2725f260ed73ab1c9e89288baaa9a72a291b80c0d603f227424259e4ce138a2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_voxel_loading.py",
+      "src/caviar_objects.cpp"
+    ],
+    "evidence": [
+      "Separate application objects from Caviar/CaviarData implementation families. Restore caviar.cpp default measurement profiles and pinonlycaviar_objects.cpp toOb2 afterverification; never changeglobaltrials. NewassetTU beforeengineTU preservesoriginalrelativeasset/scene ordering. Sourceglobalidentity/claimcontinuity, nativeemittedsymbol binding,actual-source tests and freshfullbuild required. Preserve all previous work and obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d5a727733f166b79c405195e7df51f769d7aec8ccadc8ab3692cdb94f769e2eb",
+  "request_id": "caviar-application-object-owner-oct14gu",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}

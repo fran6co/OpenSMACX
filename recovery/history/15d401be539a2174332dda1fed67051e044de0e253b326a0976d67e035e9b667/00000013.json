@@ -1,0 +1,83 @@
+{
+  "event_id": "28784d1236b41a1db7e1450fb6d8b7b17015b9c622628a3a616a7028f0d2455e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/base.cpp",
+      "src/basewin.cpp",
+      "src/console.cpp",
+      "src/faction.cpp",
+      "src/game.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Admit eleven physically observed collateral function identities for measurement and review only. Their source files remain byte-for-byte equal to integration baseline69759b7d1; this admission does not authorize body edits or reset the immutable task baseline. None carries a historical byte or instruction-shape claim.",
+      "Retained full build comparison checks16686 physical signatures: zero missing;36 former forced CaviarData constructor replicas equal the canonical new definition. Twelve signatures differ, including the already-owned destructor. load_voxels now calls the real constructor as the pinned executable does at451050. Remaining ten bodies have unchanged call-target multisets; nine retain instruction counts and mnemonic sequences.",
+      "Manual action_airdrop predecessor review resolves the observed merged reload: early C9F/CA7 paths reload EBX from esp+14 and ESI from esp+30 in both bodies; later CD1/CEE paths already loaded EBX atCBA with no intervening write or stack adjustment. Work pathD40/D46 skips the reload block. This establishes the specific local dataflow equivalence, not whole-function or linked preservation.",
+      "Full candidate build/link and25 focused tests pass with2 skips. Physical199 Caviar lifetime/destructor observations match;645 lifecycle reference target/addend checks resolve. Full linked initialization order, retained selection, object extents and game/runtime acceptance remain unproven. Earlier close_class618D20 and vox_read_dword6386B0 experiment regressions are restored exact by keeping engine defaults and applyingOb2 only to the app-object TU."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5261984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5030752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5020416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5203952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4255984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5315504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5356656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4526128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a2725f260ed73ab1c9e89288baaa9a72a291b80c0d603f227424259e4ce138a2",
+  "request_id": "caviar-shared-header-collateral-oct14gx",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}

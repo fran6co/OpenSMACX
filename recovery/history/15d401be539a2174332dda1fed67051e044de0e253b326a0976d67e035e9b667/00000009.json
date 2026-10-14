@@ -1,0 +1,22 @@
+{
+  "event_id": "05c437927ddf2b6e221cc260beabd07a66c4b3d890d642239b45a0e884766fe9",
+  "payload": {
+    "affects": [
+      "entity-52111050d8d13fab7806bd4f3235014ade2b3b0d5b257ad7f248146b60b043b4",
+      "entity-845323693768ee85b7661ce3c2df288febbec3047297550e88dad0c87e75ebb4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "caviar-method-owner-matching-restoration-oct14gt",
+    "evidence": [
+      "Fresh configured-profile baseline union139 exact of326 mappedrecords; candidate Ob2 experiment237 exact,100gains and2losses. No source behavioral normalization is authorized. Diagnose inlining/call boundaries and restore these exact obligations after the structurally faithful owner is retained.",
+      "Scene cleanup4BF6E0 oversized candidate is a separate existing lifetime obligation,not one of these two baseline-exact regressions. Neither legacy matching nor this permission establishes linked/runtime equivalence."
+    ],
+    "hypothesis": "The genuine CaviarData implementation split plus owner recipe exposes matching restoration work in close_class and vox_read_dword; retain these bodies and historical claims rather than reverting ownership.",
+    "kind": "discovery"
+  },
+  "previous_event": "3d91882e2909146dc073865e07832b66ce18edbd0447c15ba708983b9f16063e",
+  "request_id": "caviar-method-owner-matching-restoration-oct14gt",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}

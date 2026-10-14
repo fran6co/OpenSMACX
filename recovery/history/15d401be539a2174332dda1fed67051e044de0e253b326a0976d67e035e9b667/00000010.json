@@ -1,0 +1,21 @@
+{
+  "event_id": "8647ee116833963c682bca5b38fb87167d2c6574f891d3d4ce6f5695ed3515b7",
+  "payload": {
+    "affects": [
+      "entity-4b2d51b626412a43b3a2eef306034a4de95e3a502ca2aae0d4714ab3926e0aab"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "caviar-renderer-fini-owner-correction-oct14gu",
+    "evidence": [
+      "Corrects the earlier scene-cleanup label in this task journal. Pinned immediate receiver is0x008CC828 and fresh COFF root/callback pairing selects ?g_VEHDRAW_CAVIAR@@3VCaviar@@A. Candidate Ob2 body exceeds the original explicit span and references receiver+0x754. This does not establish an undersized original span.",
+      "Physical diagnostic verifies197of198 ordinary CaviarData/Caviar lifetimes; this renderer finalizer remains refused. Excluded SceneBuffer lifetimes are separate. All existing ORIGINAL identity/spans/claims retained."
+    ],
+    "hypothesis": "Physical pairing identifies 0x4BF6E0 as the g_VEHDRAW_CAVIAR renderer finalizer,not a CaviarSceneBuffer finalizer. Preserve its original span and restore the generated cleanup shape; do not enlarge the original mapping to fit compiler output.",
+    "kind": "discovery"
+  },
+  "previous_event": "05c437927ddf2b6e221cc260beabd07a66c4b3d890d642239b45a0e884766fe9",
+  "request_id": "caviar-renderer-fini-owner-correction-oct14gu",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}

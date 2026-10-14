@@ -19,7 +19,6 @@ public:
 #define private public
 /* PRODUCT_DECLARATIONS */
 #undef private
-#undef nullptr
 #undef MEASURED
 
 static int palette_calls,first_seen,count_seen,seed_effects,palette_result=23;
@@ -48,6 +47,7 @@ static void controlled_free(void *allocation) {
 void CaviarData::close() { }
 #define free controlled_free
 /* PRODUCT_CAVIAR_BODIES */
+#undef nullptr
 #undef free
 /* PRODUCT_POPUP_BODIES */
 

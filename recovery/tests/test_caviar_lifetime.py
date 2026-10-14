@@ -21,16 +21,19 @@ PIN="01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
 def actual_source():
     text=(ROOT/"src/caviar.cpp").read_text()
+    model=(ROOT/"src/caviar_data.cpp").read_text()
     header=(ROOT/"src/caviar.h").read_text()
-    signatures={"model_close":"void CaviarData::close()",
+    signatures={"model_ctor":"CaviarData::CaviarData()",
+        "model_close":"void CaviarData::close()",
         "model_init":"int CaviarData::init(char *name)","renderer_ctor":"Caviar::Caviar()",
         "renderer_close":"void Caviar::close()",
         "renderer_init":"void Caviar::init()", "instance_ctor":"VoxInstance::VoxInstance()",
         "normalise":"void __cdecl vox_normalise_vector("}
+    sources={"model_ctor":model,"model_close":model,"model_init":model}
     return {"header":header,
             "model_dtor":braced(header,header.index("~CaviarData()")),
             "renderer_dtor":braced(header,header.index("~Caviar()")),
-            **{name:braced(text,re.search("^"+re.escape(signature),text,re.M).start()) for name,signature in signatures.items()}}
+            **{name:braced(sources.get(name,text),re.search("^"+re.escape(signature),sources.get(name,text),re.M).start()) for name,signature in signatures.items()}}
 
 
 def run_host(tmp_path,parts):

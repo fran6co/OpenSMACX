@@ -1,0 +1,22 @@
+{
+  "event_id": "d5a727733f166b79c405195e7df51f769d7aec8ccadc8ab3692cdb94f769e2eb",
+  "payload": {
+    "affects": [
+      "entity-4b2d51b626412a43b3a2eef306034a4de95e3a502ca2aae0d4714ab3926e0aab",
+      "entity-c851501c28e09c4e278b60b392c5bdb5f3f54498e81445631cd22a600ff7b679"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "caviar-renderer-init-direct-decode-oct14gu",
+    "evidence": [
+      "Original4BF6E0 movecx8CC828;call616DA0;push4BF700;call645398;popecx;ret. CandidateOb2 inlines200VoxInstance zeroing plusCaviar fields into that initializer. The span22bytes is independently correct; previous finalizer/scene labels in this journal were wrong.",
+      "Authorize a genuine application asset TU for98loadedmodel globals plusg_VEHDRAW_CAVIAR, preserving all99 declaration order and198original identity/span/claim/evidence blocks. Keep special scene-buffer lifecycle wrappers in engineowner. Place applicationassetTU beforecaviar.cpp so ordinary asset initializations remain beforeengine scene-buffer lifetimes; verify physical/linkedorder."
+    ],
+    "hypothesis": "Direct pinned instruction decode establishes4BF6E0 is renderer INITIALIZATION,not finalization. Its call to616DA0 and atexit registration4BF700 require separating application asset storage from the visible Caviar implementation.",
+    "kind": "discovery"
+  },
+  "previous_event": "8647ee116833963c682bca5b38fb87167d2c6574f891d3d4ce6f5695ed3515b7",
+  "request_id": "caviar-renderer-init-direct-decode-oct14gu",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}

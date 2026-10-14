@@ -1,0 +1,19 @@
+{
+  "event_id": "047ca72c329ef3fc3a5cf75f233e29c6fb50179593cb0dbeb1854f5793b3c914",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/color_owner_control.cpp"
+    ],
+    "evidence": [
+      "The C++98 fixture defines nullptr as0 only around header declarations. Moving the actual constructor body exposes that same unchanged spelling after its premature undef. Extend this existing compatibility macro through actual product body insertion; preserve assertions and product code."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1a99ddad62fdcd123c74be3a5b4f40d1b3f7778cc490a7d08bbc76b50d61059c",
+  "request_id": "caviar-color-fixture-compat-scope-oct14gs",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:caviar-netdaemon-lifetimes-oct10"
+}

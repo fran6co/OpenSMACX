@@ -488,7 +488,7 @@ struct CaviarData {
  public:
   // Loaded models have their own lifetime: original array initialization
   // supplies 0x616BC0 and destructor 0x456100 to the EH iterator.
-  MEASURED CaviarData() : field_0_(0), fileDescriptor_(0), record_(nullptr) { }
+  CaviarData();
   ~CaviarData() { close(); }
   void close();
   // 0x00616BD0. Loads a .cvr file into this slot: releases whatever record
