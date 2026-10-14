@@ -3326,8 +3326,8 @@ int BasePop::start(char *text_file, const char *text_label, int value,
             dialogs_.EditGroup::set_default(override_text, 0);
         }
         if (text_open(text_file != 0 ? text_file : (char *)PopupStartCaption,
-                      text_label) == 0) {
-            return result;
+                      text_label) != 0) {
+            return 1;
         }
 
       read_line:
