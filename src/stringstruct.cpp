@@ -531,59 +531,6 @@ int __cdecl def_caption_draw(GraphicWin *window, char *text, Buffer *canvas) {
     return canvas->set_clip(canvas_rect);
 }
 
-
-
-/*
-Purpose: Bubble-sort one int array descending while applying the identical
-         exchanges to a parallel array addressed relative to it.
-// ORIGINAL: 0x004D5F70 sub_4d5f70 0x004D5F70-0x004D5FE6 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4D5F70..4D5FE6; retired seed git:b18d3ac8:src/unrecovered/004d5f70.cpp records the same identity and spans.", "The sole callee 0x00628A50 is general.h's inline swap(int *, int *), declared in the header this TU already includes; the parallel array is reached by the same base-plus-index arithmetic the seed measured."], "reason": "Coverage transcription of the paired bubble sort with the in-tree swap; the parallel-array base stays an int because no owning array is named anywhere in the tree."}
-// symbol    _sub_4d5f70
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __cdecl sub_4d5f70(int parallel_base, int *values, int count) {
-    int limit = count - 1;
-    int swapped;
-    do {
-        swapped = 0;
-        if (limit < 1) {
-            return;
-        }
-        int *cursor = reinterpret_cast<int *>(parallel_base);
-        int *value = values;
-        int remaining = limit;
-        do {
-            int *next = value + 1;
-            if (*value < *next) {
-                swapped = 1;
-                swap(value, next);
-                swap(cursor, reinterpret_cast<int *>(
-                    parallel_base - reinterpret_cast<int>(values)
-                    + reinterpret_cast<int>(next)));
-            }
-            cursor = cursor + 1;
-            remaining = remaining - 1;
-            value = next;
-        } while (remaining != 0);
-    } while (swapped != 0);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*
 Purpose: The third pronoun fetcher beside game.cpp's get_his_her/get_him_her:
          pick the he/she label by the faction leader's gender, copy the string

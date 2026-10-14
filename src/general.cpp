@@ -1383,6 +1383,49 @@ void __cdecl my_srand(int reseed) {
     srand(reseed);
 }
 
+// Current structural interpretation supersedes the seed-history binding's
+// integer parallel-base rationale: pinned 4D5F92 loads arg0 as the parallel
+// cursor and 4D5F95 loads arg1 as the sorted values. The body advances both by
+// four bytes and passes adjacent int cells to swap(int *, int *).
+// This generic sorting utility is homed beside general helpers; this does not
+// assert an original translation-unit boundary or identify either array's
+// application-level owner. No direct native caller establishes such a domain.
+// The original integer address arithmetic's invalid-pointer/address-wrap
+// domain and 32-bit count-1 overflow behavior are not resolved by this typed
+// source contract. This is not an exactness or bug-fix claim.
+/*
+Purpose: Bubble-sort one int array descending while applying the identical
+         exchanges to a parallel array addressed relative to it.
+// ORIGINAL: 0x004D5F70 sub_4d5f70 0x004D5F70-0x004D5FE6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original4D5F70..4D5FE6; retired seed git:b18d3ac8:src/unrecovered/004d5f70.cpp records the same identity and spans.", "The sole callee 0x00628A50 is general.h's inline swap(int *, int *), declared in the header this TU already includes; the parallel array is reached by the same base-plus-index arithmetic the seed measured."], "reason": "Coverage transcription of the paired bubble sort with the in-tree swap; the parallel-array base stays an int because no owning array is named anywhere in the tree."}
+// symbol    _sub_4d5f70
+Status: Coverage transcription - unclaimed body
+*/
+extern "C" void __cdecl sub_4d5f70(int *parallel, int *values, int count) {
+    int limit = count - 1;
+    int swapped;
+    do {
+        swapped = 0;
+        if (limit < 1) {
+            return;
+        }
+        int *cursor = parallel;
+        int *value = values;
+        int remaining = limit;
+        do {
+            int *next = value + 1;
+            if (*value < *next) {
+                swapped = 1;
+                swap(value, next);
+                swap(cursor, cursor + 1);
+            }
+            cursor = cursor + 1;
+            remaining = remaining - 1;
+            value = next;
+        } while (remaining != 0);
+    } while (swapped != 0);
+}
+
 /*
 Purpose: Swap the values of two 32-bit variables. Added an additional check when swapping the same
          memory location.
