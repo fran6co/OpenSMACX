@@ -6035,7 +6035,7 @@ Purpose: The install tamper check's registry half: open the game's
          DirectPlay Applications key, read the "MVM" dword and the "MVB"
          string into the tamper slots, and close the key.
 
-// ORIGINAL: 0x0051E000 ?read_tamper@@YAXXZ 0x0051E000-0x0051E087
+// ORIGINAL: 0x0051E000 ?read_tamper@@YAXXZ 0x0051E000-0x0051E087 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 0x0051E000 full span", "game.cpp owns matching registry strings and storage"], "reason": "Home the original unguarded registry-read body beside its real shared tamper records and strings; retain ignored query statuses."}
 // size      135 bytes
 // prototype

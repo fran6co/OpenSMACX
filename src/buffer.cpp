@@ -8540,7 +8540,7 @@ int Buffer::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
     return result;
 }
 
-// ORIGINAL: 0x005D7A30 sub_5d7a30 0x005D7A30-0x005D7ADA;0x00662B80-0x00662B92 FILE
+// ORIGINAL: 0x005D7A30 sub_5d7a30 0x005D7A30-0x005D7ADA;0x00662B80-0x00662B92 FILE BYTE_EXACT
 // symbol    ?probe_image_file@Buffer@@QAEHPBDPAVPalette@@HH@Z
 // TRIED: plain local `Filemap fm;` with early returns (no SEH prologue at all, 90 vs 170 B). Wrapping in try{}catch(...){throw;} recovers most of the /GX frame shape (179 vs 170 B) but still diverges at #1 push/mov - same wall as 0x004C4BF0's WorldWin ctor.
 // Provisional name, original receiver unused. Ret10 and the actual first
