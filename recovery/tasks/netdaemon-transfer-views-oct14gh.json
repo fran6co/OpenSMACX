@@ -1,0 +1,29 @@
+{
+  "author": "coordinator",
+  "base_revision": "7647db3633c2a489a1627b8feef4bee3bf8e1b4e",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_transfer_views_oct14gh.py"
+  ],
+  "evidence": [
+    "Existing asserted NetDaemonFileIndexRecord, FilePathPacket, FileControlPacket and FileChunkPacket layouts are produced by send_files52ED40 and consumed by process_message534400 through process_file_transfer_message. F06/F08 byte index+10 differs from F0B dword index+8. F05 path+18, control source+4/state+8, chunk compressed size+4/index+8/sequence+C/payload+20 are supported producer/receiver relationships, not invented complete allocation extents.",
+    "Authorize narrowly typed borrowed field views using existing record offsetof anchors and byte-copy access, not cast network storage into live structs. Preserve all uninitialized bytes, signedness, unchecked indices, F0B length arithmetic and field reloads across reentrant sends/UI callbacks. Do not snapshot packet state, normalize errors or add bounds checks. Existing producer behavior and dispatcher unchanged; shared layout assertions may be added.",
+    "Coordinator manual review requires baseline/current measurement, actual-body host controls including reentrant mutation, fresh build/link, historical claim continuity and relevant references. Preserve all older task baselines and findings. New views alone establish neither original source spelling nor full runtime/linked acceptance. Request scope expansion for required existing-test changes before editing them."
+  ],
+  "intent": "Connect file-transfer receiver field accesses to the existing producer packet layouts without changing original effects, lifetime or callback-time rereads.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5434688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-transfer-views-oct14gh"
+}
