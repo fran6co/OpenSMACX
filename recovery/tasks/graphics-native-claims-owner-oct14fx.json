@@ -1,0 +1,45 @@
+{
+  "author": "coordinator",
+  "base_revision": "67421740d9a95637145b928ed432709fb7448432",
+  "editable_files": [
+    "src/buffer.cpp",
+    "src/caviar.cpp",
+    "recovery/tests/test_graphics_native_claims_oct14fx.py"
+  ],
+  "evidence": [
+    "Fresh graphics-owner-batch-oct14fw native report measures251current authored unclaimed bodies in8compileattempts; all5selected full spans match. Independent review confirms Buffer HDC lifetime/field effects, Caviar allocator/tell callback return values, alias-sensitive clip-bound stores and original six-argument cdecl object-start callback (caller cleans18hex bytes, callee plainret, incomingECX overwritten by global renderer).",
+    "Only native recover record may promote flags. Existing0x618DA0 instruction-shape obligation is strengthened, not dropped, by native byte promotion. No original identity, span, symbol, C++ body, structure, unsafe path, provider/configuration, historical finding or unrelated claim changes.",
+    "Require fresh strict reference diagnostics and independent source review; SDK/CRT import and dependency targets remain unresolved where evidence is missing. Historical masked byte claims do not resolve those UNKNOWNs. Require immutable-base native writer projection, claim continuity, fresh build/link, compiler preservation and destination checks for coordinator-reviewed merge; no automatic/full-game acceptance claim."
+  ],
+  "intent": "Bank five freshly measured source-owned Buffer/Caviar historical byte claims, preserving all C++ and existing matching obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6138768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6391136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "graphics-native-claims-owner-oct14fx"
+}
