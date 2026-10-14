@@ -97,16 +97,21 @@ def test_actual_setupwin_rightside_body(tmp_path):
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-@pytest.mark.parametrize("before,after", [
-    ("flic.close();\n        return -1;", "return -1;"),
-    ("            text_close();", "            /* text-close mutant */"),
-    ("        opening_window_snapshot_->restore_clip();", "        /* restore mutant */"),
+@pytest.mark.parametrize("before,after,diagnostic", [
+    ("flic.close();\n        return -1;", "return -1;",
+     "early return explicitly closes Flic"),
+    ("            text_close();", "            /* text-close mutant */",
+     "script text closes before menu window initialization"),
+    ("        opening_window_snapshot_->restore_clip();", "        /* restore mutant */",
+     "parent clip restoration precedes Flic cleanup"),
     ("selected_row_ = static_cast<uint32_t>(menu_popup_->value());",
-     "selected_row_ = 0;"),
+     "selected_row_ = 0;", "popup selection returns mapped dialog id"),
 ])
-def test_order_and_lifetime_mutants_are_detected(tmp_path, before, after):
+def test_order_and_lifetime_mutants_fail_with_specific_semantics(
+        tmp_path, before, after, diagnostic):
     body = actual_body()
     assert before in body
     mutant = body.replace(before, after, 1)
     result = run_host(tmp_path, mutant)
-    assert result.returncode != 0, (before, result.stdout, result.stderr)
+    assert result.returncode == 97, (before, result.stdout, result.stderr)
+    assert ("SEMANTIC97: " + diagnostic) in result.stderr

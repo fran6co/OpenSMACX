@@ -299,7 +299,7 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
             }
             const char *caption = menu_popup_->caption_text();
             if (caption != nullptr) {
-                strcat(filename, caption);
+                strcat(token, caption);
             }
         }
 
