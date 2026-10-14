@@ -750,6 +750,7 @@ HDC WinSharedHdc;          // 0x009B7B2C
 IDirectDrawSurface2 *DirectDrawSurface;  // 0x009BC498
 Win *WinModalStack[4];     // 0x009B6EF8
 HINSTANCE WinInstance;     // 0x009B7B14
+// RECOVERY_OBJECT: v2 0x009B7B1C 0x009B7B20 ?WinScreenWidth@@3HA 0x004E0EA0
 int WinScreenWidth;        // 0x009B7B1C
 int WinScreenHeight;       // 0x009B7B20
 Win *WinTrackingWindow;    // 0x009B7AAC

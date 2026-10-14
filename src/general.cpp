@@ -79,7 +79,9 @@ uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
 // at 0x009BBFEC and 0x009BBFF0 in the shipped image - REAL OBJECTS (zero at
 // load there, as here; see general.h for the conversion from the `static
 // T *const` bindings and the measurement behind it).
+// RECOVERY_OBJECT: v2 0x009BBFEC 0x009BBFF0 ?GenderDefault@@3HA 0x0055D190
 int GenderDefault;       // 0x009BBFEC
+// RECOVERY_OBJECT: v2 0x009BBFF0 0x009BBFF4 ?PluralityDefault@@3HA 0x0055D190
 BOOL PluralityDefault;   // 0x009BBFF0
 
 /*

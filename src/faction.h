@@ -646,11 +646,8 @@ extern int PopupDialogFactionID;
 // makes through this address, and the only ones any homed body or archive
 // transcription shows. Defined in faction.cpp.
 extern int DiploRedrawFlag;  // 0x0074DA9C
-// Nonzero while the multiplayer window is up. treaty_on redraws the window
-// only through this gate; the interface handler at 0x0045D170 reads it to
-// decide between MultiWindow::hide and MultiWindow::show. Defined in
-// faction.cpp.
-extern int MultiWindowOpen;  // 0x007FE06C
+// treaty_on and other interface callers observe MultiWin's +0xA24 open-state
+// field through MultiWindow.panel_open(); see its member binding in game.cpp.
 // The former fixed-address diplomacy views are fields of PlayersData.
 // Their pinned starts resolve as follows (all rows use the 0x20CC
 // PlayerData stride, 2099 dwords): 0x96C9F8 +0x18 diplo_treaties;

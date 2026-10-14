@@ -259,11 +259,12 @@ unsigned char WinFillColour=9;
 struct MainInterfaceFixture : Win {} MainInterfaceGlobal;
 
 struct MultiWin : GraphicWin {
-    uint32_t field_A4C_, field_A50_, field_A48_, field_A24_;
+    uint32_t field_A4C_, field_A50_, field_A48_, panel_open_;
     Font font1_, font2_; Spot spot_;
     Sprite sprites1_[3], sprites2_[3], sprite3_, sprite4_, sprite5_, sprite6_, sprite7_;
     FlatButton flat_button1_, flat_button2_;
-    MultiWin() : field_A4C_(1), field_A50_(1), field_A48_(1), field_A24_(1) {}
+    MultiWin() : field_A4C_(1), field_A50_(1), field_A48_(1), panel_open_(1) {}
+    unsigned int panel_open() const { return panel_open_; }
     void draw(int) {}
     void on_left_click(int, int);
     void on_right_click(int, int);
@@ -321,6 +322,7 @@ static void timer_constant(uint32_t t) {
 
 int main() {
     MultiWin win;
+    assert(win.panel_open()==1);
     reset_all(); win.spot_.rc=-1; win.on_left_click(0,0);
     assert(ConsoleInfoWin.resets==1&&ConsoleStatusWin.resets==1);
 
@@ -378,6 +380,7 @@ int main() {
 
     reset_all(); win=MultiWin(); WinScreenWidth=800; win.init();
     assert(win.init_calls==1&&win.fill_color==9&&win.sprite3_.height()==6&&win.move_x==800-0x8A);
+    assert(win.panel_open()==0);
     reset_all(); win=MultiWin(); IsMultiplayerNet=1; WinScreenWidth=1024; WinScreenHeight=768;
     ExpansionEnabled=1; ConsoleGlobal.faction_id_=2; Players[2].rule_flags=RFLAG_ALIEN; win.init();
     assert(win.flat_button2_.init_calls==1&&win.flat_button1_.init_calls==0&&win.shown==0);

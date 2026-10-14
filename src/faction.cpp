@@ -679,10 +679,9 @@ int DiploFocusY = -1;
 // is why suggest_plan writes it unconditionally rather than only on the paths
 // that go on to show one.
 int PopupDialogFactionID;  // 0x0093F7CC
-// The diplomacy flag word at 0x0074DA9C and the multiplayer-window gate at
-// 0x007FE06C, both declared in faction.h beside the writers that drive them.
+// The diplomacy flag word at 0x0074DA9C.
+// RECOVERY_OBJECT: v2 0x0074DA9C 0x0074DAA0 ?DiploRedrawFlag@@3HA 0x0055B870
 int DiploRedrawFlag;  // 0x0074DA9C
-int MultiWindowOpen;  // 0x007FE06C
 
 /*
 Purpose: Determine if the specified faction is a Progenitor alien faction (Caretakers / Usurpers).
@@ -1506,7 +1505,7 @@ Purpose: Set `treaty` in the diplomatic status word between two factions, both
          pact/treaty/truce zeroes both directions of the third status view and
          clears a block of status bits in both directions, and either faction
          being the local one asks for the multiplayer window to be redrawn.
-// ORIGINAL: 0x0055B870 ?treaty_on@@YAXHHH@Z 0x0055B870-0x0055BA76
+// ORIGINAL: 0x0055B870 ?treaty_on@@YAXHHH@Z 0x0055B870-0x0055BA76 BYTE_EXACT
 // LEVER: the local faction is a CACHED LOCAL, not a global read at each use -
 // `int local_faction = LocalFaction;` at entry plus two re-reads (after the
 // vendetta-table clearing, after the ambience call) is what puts the image's
@@ -1598,7 +1597,7 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
     index = faction_id;
     PlayersData[faction_id_with].diplo_treaties[index] |= treaty;
     if ((faction_id == local_faction || faction_id_with == local_faction)
-        && (treaty & 0x1f) && MultiWindowOpen) {
+        && (treaty & 0x1f) && MultiWindow.panel_open()) {
         MultiWindow.GraphicWin::redraw();
     }
 }

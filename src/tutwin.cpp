@@ -936,7 +936,7 @@ void TutWin::tour() {
                          MainInterfaceGlobal.menu_button_rect_, "TOURMENU")) {
             goto tour_cleanup;
         }
-        if (MultiWindowOpen == 0) MultiWindow.show();
+        if (MultiWindow.panel_open() == 0) MultiWindow.show();
         if (!tut_callout(*this, MainInterfaceGlobal,
                          MainInterfaceGlobal.multiplayer_button_rect_, "TOURCOMMLINK")) {
             goto tour_cleanup;
