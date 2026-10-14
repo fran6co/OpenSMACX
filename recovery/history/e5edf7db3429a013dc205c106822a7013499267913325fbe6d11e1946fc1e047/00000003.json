@@ -1,0 +1,20 @@
+{
+  "event_id": "fbf5ade6535c6abdba3a21ab1aa90a5c69594a08241e69d44e8b19c404b2f0cc",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_menu_behavior.py",
+      "recovery/tests/test_multiwin_contact.py"
+    ],
+    "evidence": [
+      "Actual-source Console menu fixture declares duplicate MultiWindowOpen and must model real MultiWin accessor/state; MultiWin contact fixture declares field_A24_ and extracts init, so update its member name with the real owner. Preserve existing behavioral assertions and add shared-state regression coverage."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5f314b9f698f9552eac3bf764f735fb1dcb36dca6717d6dd8baf0309964f5512",
+  "request_id": "multiwindow-dependent-fixtures-oct14gc",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:shared-scalar-reference-bindings-oct14gc"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "407d30f09503a55abd39f20e3aab9747828c8658587f8a9f2882dd30a94aba4b",
+  "payload": {
+    "affects": [
+      "entity-74c1f421618343699ed6696a58908436b0e75c821a7cb99acf0698fe9ec5d154"
+    ],
+    "author": "coordinator",
+    "discovery_id": "multiwindow-member-overlap-oct14gc",
+    "evidence": [
+      "Native candidate build rejected overlap: MultiWindow [0x007FD648,0x007FFF00) contains 0x007FE06C..0x007FE070 at offset0xA24. Existing unsigned int MultiWin::field_A24_ and class size0x28B8 agree.",
+      "Pinned show479970 accesses member at4799AB/479A2B; hide479C00 at479C3B/479F19; init479F90 clears at47A3C1. treaty_on55BA5E and MainInterface45D251 read same absolute address. Initial no-overlap review was incomplete; full configured object parser caught contradiction.",
+      "Scope must include game.cpp owning MultiWindow, multiwin.h/cpp member/accessor, faction.h/cpp duplicate declaration and callers tutwin.cpp/maininterface.cpp/console.cpp. Preserve claims and original behavior; add full-object overlap negative control. Do not weaken annotation bounds or abandon discovery."
+    ],
+    "hypothesis": "MultiWindowOpen duplicates MultiWindow.field_A24_ storage; recover one real owner and update callers, rather than adding an independent global binding.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "multiwindow-member-overlap-oct14gc",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:shared-scalar-reference-bindings-oct14gc"
+}
