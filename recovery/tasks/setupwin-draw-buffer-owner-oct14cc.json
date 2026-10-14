@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "1eac7cf6c9bcf579150d510248fe9a9a9a870c9b",
+  "editable_files": [
+    "src/setupwin.cpp",
+    "recovery/tests/test_setupwin_draw_buffer_oct14cc.py"
+  ],
+  "evidence": [
+    "Pinned SetupWin::draw_item4AE4D0..4AE757 computes its inherited Buffer at this+444 at4AE505. It uses that receiver for set_clip4AE51A, set_text_color4AE53A, copy destination4AE569, write_cent_l4AE642 and final restore_clip. Current source mistakenly uses the distinct member buffer_ at+A44 for all these operations, while do_menu_rightside initializes and fonts the inherited Buffer and closes buffer_. Independent original/source audit agrees.",
+    "Paired bounded runtime after original opening show and TOPMENU selector restoration displays seven correctly placed menu backgrounds but blank labels; original labels are present. Correcting the identified Buffer owner is faithful recovery, not a new font fallback or initialization policy. Keep member buffer_ lifetime unchanged, preserve original item traversal, string mutation, selection, overlay source/target, dimensions and remaining quirks; no invented original addresses or vtables.",
+    "Coordinator owns product edits, compiler/runtime and Git. Tests extract actual draw_item, distinguish inherited/auxiliary/source/overlay buffers, verify clip/color/copy/text/restoration ownership and use compile-success wrong-buffer mutants with semantic97 diagnostics. Require frozen fresh build/link, immediate measure, full compiler-function comparison, original identity/claim continuity, relevant regressions, references, independent review and fresh destination verification. No exactness or full-game acceptance inferred from host tests or startup screenshots."
+  ],
+  "intent": "Restore SetupWin item painting through its real inherited GraphicWin Buffer, not its distinct closed auxiliary buffer.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4908240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "setupwin-draw-buffer-owner-oct14cc"
+}
