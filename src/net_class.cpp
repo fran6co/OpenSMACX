@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00401660 ??0ServiceStruct@@QAE@H@Z 0x00401660-0x004016B8 FILE
+// ORIGINAL: 0x00401660 ??0ServiceStruct@@QAE@H@Z 0x00401660-0x004016B8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401660.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Original provider base tables6693D4/6693D0 and five cleared receiver fields; legacy ServiceStruct catalogue name is not payload ownership."}
 // symbol    ??0ServiceProviderList@@QAE@XZ
 // ORIGINAL: 0x004016C0 ?close@ServiceStruct@@QAEXXZ 0x004016C0-0x00401759 FILE BYTE_EXACT
@@ -258,7 +258,7 @@ void *allocate_voice_record(size_t size, Heap *owner) {
 // ORIGINAL: 0x006336D0 sub_6336d0 0x006336D0-0x00633711 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:01a84efe8fe7feece991db1a99114c60b7342c4f:src/recovered/006336d0.cpp; historical seed/source provenance (seed path is retired from the current working tree)", "pinned:0x670F48 primary table slot +8 at 0x670F50 selects 0x6336D0", "COFF:net_class.cpp.obj defines ??_GVoiceRxAllocation@@UAEPAXI@Z; primary vtable selects its weak-external spelling", "COFF weak-external mode 2 falls back to the class deleting destructor; retained map confirms linked same-address placement", "owner declaration:src/net_class.h:VoiceRxAllocation : VoiceRx, virtual StringAllocationBase", "strict full-span readback reports 64 emitted bytes versus 65 original bytes; this proposal does not claim exactness", "current-owner:src/net_class.cpp:0x006336D0; the live ORIGINAL marker retains name sub_6336d0, complete spans 0x006336D0-0x00633711, historical byte claim retained=True, historical semantic claim retained=False, and the complete parsed LEVER/TRIED/UNRECOVERABLE/DEFERRED lesson set (0/0/0/0); current binding is source navigation/provenance only, not a new claim or match result"], "reason": "The genuine VoiceRxAllocation virtual-base hierarchy emits this primary-table deleting destructor. Preserve the full 65-byte original identity and historical exact claim; current physical emission is 64 bytes, so byte restoration remains outstanding."}
 // symbol    ??_GVoiceRxAllocation@@UAEPAXI@Z
-// ORIGINAL: 0x00633730 sub_633730 0x00633730-0x00633738 FILE
+// ORIGINAL: 0x00633730 sub_633730 0x00633730-0x00633738 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:01a84efe8fe7feece991db1a99114c60b7342c4f:src/deleting_thunks.cpp; historical source-adapter mapping is superseded by the current owner; the source file may still exist, but this mapped entry is not the current owner", "pinned:0x670F44 entry zero selects 0x633730", "COFF:net_class.cpp.obj vtable ??_7VoiceRxAllocation@@6BStringAllocationBase@@@ selects exact generated symbol ??_EVoiceRxAllocation@@WFI@AEPAXI@Z", "COFF weak tail ??_EVoiceRxAllocation@@UAEPAXI@Z mode 2 falls back to ??_GVoiceRxAllocation@@UAEPAXI@Z; retained map confirms placement", "strict native reference-aware comparison passes complete original span 0x633730-0x633738", "current-owner:src/net_class.cpp:0x00633730; the live ORIGINAL marker retains name sub_633730, complete spans 0x00633730-0x00633738, historical byte claim retained=False, historical semantic claim retained=False, and the complete parsed LEVER/TRIED/UNRECOVERABLE/DEFERRED lesson set (0/0/0/0); current binding is source navigation/provenance only, not a new claim or match result"], "reason": "The compiler emits this StringAllocationBase virtual-base deleting adjustor from the genuine VoiceRxAllocation hierarchy; the old adapter is removed from product source in this proposal. The full eight-byte original extent/reference comparison passes."}
 // symbol    ??_EVoiceRxAllocation@@WFI@AEPAXI@Z
 // ORIGINAL: 0x00633720 j_VoiceRx__VoiceRx_dt 0x00633720-0x00633725 FILE BYTE_EXACT
@@ -3353,7 +3353,7 @@ void Net::handle_sys_msg() {
 Purpose: Construct the node's list block through its real C++ owner.
          The shared allocation virtual base captures the original heap owner;
          this constructor clears the five list words.
-// ORIGINAL: 0x00401B80 sub_401b80 0x00401B80-0x00401BD8 FILE
+// ORIGINAL: 0x00401B80 sub_401b80 0x00401B80-0x00401BD8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/recovered/units/00401b80.cpp"], "reason": "Retain the genuine source constructor, including natural inherited and virtual-base lifetime; superseded assembly scaffold is historical evidence, not another implementation."}
 // symbol    ??0NetTextListBase@@QAE@XZ
 // size      88 bytes
