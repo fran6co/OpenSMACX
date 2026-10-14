@@ -1,0 +1,41 @@
+{
+  "author": "coordinator",
+  "base_revision": "ac0b2e1dee7b63ef9e51bdd4a8b7830ec152f3d7",
+  "editable_files": [
+    "src/battlewin.cpp",
+    "src/maininterface.cpp",
+    "recovery/tests/test_battlewin_init_owner.py",
+    "recovery/tests/battlewin_init_owner_control.cpp",
+    "recovery/tests/test_battlewin_registry_storage_oct14gd.py",
+    "packages/match-recovery/src/match_recovery/object_source.py",
+    "packages/match-recovery/src/match_recovery/codeview_data.py",
+    "packages/match-recovery/src/match_recovery/object_writer.py",
+    "packages/match-recovery/tests/test_member_object_binding.py",
+    "packages/match-recovery/tests/test_array_layout.py",
+    "packages/match-recovery/tests/test_object_writer.py",
+    "packages/match-recovery/tests/test_data_check.py",
+    "docs/DECOMP_MAP.md"
+  ],
+  "evidence": [
+    "Native discovery battlewin-registry-element-discovery-oct14gc: original 421B0D stores incoming BattleWin this (ESI from ECX at4219EB) at7AE818. InterfaceRegistry bounded span7AE7F0..7AE820 comprises twelve 4-byte SubInterface pointers; slot10 is7AE818. BattleWin's SubInterface base is offset zero.",
+    "Remove duplicate runtime BattleWinInitReceiver storage and use InterfaceRegistry[10] = this with implicit base conversion. Retain old object identity as unbounded v3 member path [10] beside the genuine parent; no assertion of original child extent or current linked absolute address equality.",
+    "Extend existing native member-path support narrowly for first-segment canonical root-array indices, bounds and CodeView/COFF storage proof. Reject malformed indices, out-of-bounds arrays, pointer dereference, missing types and incompatible parent relationships. Keep unrelated overlap refusals. No project adapter or synthetic C++ wrapper.",
+    "Preserve all ORIGINAL mappings and matching obligations. Require baseline/candidate matching, compiled code delta inspection, native parent/child data resolution, build/link, claim continuity, focused actual-source lifecycle/geometry/registration tests plus damage controls. Automatic/full-game acceptance remains unproven."
+  ],
+  "intent": "Unify BattleWin registration with the real InterfaceRegistry array while preserving its historical object identity; support native root-array subobject bindings without synthetic C++ wrappers.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4332000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4560512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "battlewin-registry-storage-oct14gd"
+}
