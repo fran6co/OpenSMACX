@@ -6,10 +6,12 @@ import os
 from pathlib import Path
 import re
 import struct
+import subprocess
 
 from match_recovery.model import Span
 from match_recovery.object_source import parse_objects
 from match_recovery.pe_coff import PeImage
+from match_recovery.source import read_text
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -41,6 +43,36 @@ PAIRS = (
 )
 
 
+def test_object_split_preserves_definitions_order_and_original_obligations():
+    """Compare the entire move against its immutable pre-split source, not a count."""
+    before = subprocess.check_output(
+        ["git", "show", "e5e813abb85de1b6775cfa1a5ab759dd51a73241:src/sprite.cpp"],
+        cwd=ROOT, text=True,
+    )
+    implementation = (ROOT / "src/sprite.cpp").read_text()
+    objects = (ROOT / "src/sprite_objects.cpp").read_text()
+    definitions = r"^Sprite \w+(?:\[\d+\])?;[^\n]*$"
+    expected = re.findall(definitions, before, re.MULTILINE)
+    assert len(expected) == 190
+    assert re.findall(definitions, objects, re.MULTILINE) == expected
+    assert not re.findall(definitions, implementation, re.MULTILINE)
+    assert "Sprite::Sprite()" in implementation
+    assert "Sprite::Sprite()" not in objects
+
+    old = read_text(before, ROOT / "src/sprite.cpp")
+    kept = read_text(implementation, ROOT / "src/sprite.cpp")
+    moved = read_text(objects, ROOT / "src/sprite_objects.cpp")
+    identity = lambda row: (row.address, row.name, row.image_spans, row.semantic)
+    assert sorted(map(identity, old)) == sorted(map(identity, kept + moved))
+    assert len(moved) == 381  # 380 lifetime helpers plus the natural inline destructor.
+    previous = {row.address: row for row in old}
+    # Recording may add freshly measured obligations, never withdraw old ones.
+    for row in kept + moved:
+        assert not previous[row.address].byte_exact or row.byte_exact
+    for row in kept:
+        assert row.body == previous[row.address].body
+
+
 def pinned_image_path() -> Path:
     configured = os.environ.get("OPENSMACX_IMAGE")
     if configured:
@@ -62,7 +94,7 @@ def test_sprite_globals_keep_original_starts_and_paired_lifetimes() -> None:
     image_bytes = pinned_image_path().read_bytes()
     assert hashlib.sha256(image_bytes).hexdigest() == PIN
     image = PeImage(image_bytes, PIN)
-    source = (ROOT / "src/sprite.cpp").read_text(encoding="utf-8")
+    source = (ROOT / "src/sprite_objects.cpp").read_text(encoding="utf-8")
 
     documented = {
         tuple(int(value, 16) for value in match)
@@ -73,7 +105,7 @@ def test_sprite_globals_keep_original_starts_and_paired_lifetimes() -> None:
     }
     assert documented == {(init, obj, cleanup) for init, obj, cleanup, _ in PAIRS}
 
-    bindings = parse_objects(source, "src/sprite.cpp", PIN, address_space="pe:va")
+    bindings = parse_objects(source, "src/sprite_objects.cpp", PIN, address_space="pe:va")
     by_symbol = {binding.symbol: binding for binding in bindings}
     assert len(by_symbol) == len(bindings)
     for init, obj, cleanup, number in PAIRS:

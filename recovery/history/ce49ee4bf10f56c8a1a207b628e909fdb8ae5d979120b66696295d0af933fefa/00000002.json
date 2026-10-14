@@ -1,0 +1,21 @@
+{
+  "event_id": "1ee9fd87febe00fb11e12c9fdadd06acae36b320d18ec782ab95ae40df49b42b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_cursor_assets.py",
+      "recovery/tests/test_psych_display.py",
+      "recovery/tests/test_vehicle_asset_loader.py"
+    ],
+    "evidence": [
+      "Source dependency audit found these three tests read Sprite global definitions from the old implementation TU. Authorize path-only migration to the actual new object owner, preserving all behavioral assertions; no test weakening."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4f31d549796a906333bed857361796b50b3f088581555111070f56022da8b477",
+  "request_id": "sprite-object-storage-test-paths-oct14gn",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:sprite-static-object-identities-oct9"
+}

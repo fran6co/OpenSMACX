@@ -33,7 +33,7 @@ def braced(source,signature):
 def actual_source():
     cpp=(ROOT/"src/basewin.cpp").read_text()
     base=(ROOT/"src/base.h").read_text();faction=(ROOT/"src/faction.h").read_text()
-    sprite=(ROOT/"src/sprite.h").read_text();storage=(ROOT/"src/sprite.cpp").read_text()
+    sprite=(ROOT/"src/sprite.h").read_text();storage=(ROOT/"src/sprite_objects.cpp").read_text()
     declarations=[]
     for source,names in ((base,("Base",)),(faction,("SocialCategory","SocialEffect","Goal","Player","PlayerData"))):
         for name in names:declarations.append(braced(source,"struct "+name+" {")+";")

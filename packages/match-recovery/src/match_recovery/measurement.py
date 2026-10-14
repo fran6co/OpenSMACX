@@ -27,6 +27,7 @@ class Measurement:
     source: SourceConfiguration
     environment: tuple[str, ...]
     unit_flag_sets: tuple[tuple[str, tuple[int, ...]], ...] = ()
+    unit_explicit_flags: tuple[tuple[str, tuple[str, ...]], ...] = ()
 
     @classmethod
     def read(cls, root: Path):
@@ -96,9 +97,10 @@ class Measurement:
         if not isinstance(unit_flag_sets, dict):
             raise ValueError("measurement unit_flag_sets must be an object")
         normalized_units = []
+        normalized_explicit_flags = []
         folded_paths = set()
         source_roots = tuple(source.roots)
-        for path, indices in unit_flag_sets.items():
+        for path, selection in unit_flag_sets.items():
             relative_path(path)
             if (not any(Path(path).is_relative_to(name) for name in source_roots)
                     or Path(path).suffix not in value["unit_extensions"]
@@ -113,6 +115,17 @@ class Measurement:
             resolved_name = unit_path.resolve().relative_to(root.resolve()).as_posix()
             if unit_path.is_symlink() or resolved_name != path:
                 raise ValueError(f"unit_flag_sets path is not a canonical source file: {path}")
+            if isinstance(selection, dict):
+                if set(selection) != {"flags"}:
+                    raise ValueError(f"unit_flag_sets[{path!r}] explicit recipe must contain only flags")
+                flags = selection["flags"]
+                if not isinstance(flags, list) or not flags:
+                    raise ValueError(f"unit_flag_sets[{path!r}].flags must select a nonempty recipe")
+                for flag in flags:
+                    require_text(flag, "compiler flag")
+                normalized_explicit_flags.append((path, tuple(flags)))
+                continue
+            indices = selection
             if not isinstance(indices, list) or not indices:
                 raise ValueError(f"unit_flag_sets[{path!r}] must select at least one flag-set index")
             if len(indices) != 1:
@@ -124,11 +137,15 @@ class Measurement:
             normalized_units.append((path, tuple(indices)))
         return cls(value["backend"], value["compiler_profile"], flag_sets,
                    tuple(value["layout_flags"]), tuple(value["unit_extensions"]), inputs,
-                   tuple(sorted(roots)), source, tuple(sorted(environment)), tuple(sorted(normalized_units)))
+                   tuple(sorted(roots)), source, tuple(sorted(environment)),
+                   tuple(sorted(normalized_units)), tuple(sorted(normalized_explicit_flags)))
 
     def flags_for(self, path):
         """Return this TU's configured trials, or all global trials if unpinned."""
         name = Path(path).as_posix()
+        explicit = dict(self.unit_explicit_flags).get(name)
+        if explicit is not None:
+            return (explicit,)
         selected = dict(self.unit_flag_sets).get(name)
         return self.flag_sets if selected is None else tuple(self.flag_sets[index] for index in selected)
 
@@ -140,6 +157,9 @@ class Measurement:
     def effective_flags(self, path, requested):
         """Select a pinned TU profile or retain a requesting graph's profile."""
         name = Path(path).as_posix()
+        explicit = dict(self.unit_explicit_flags).get(name)
+        if explicit is not None:
+            return explicit
         selected = dict(self.unit_flag_sets).get(name)
         if selected is None:
             return tuple(requested)

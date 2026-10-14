@@ -19,8 +19,10 @@ def test_original_sprite_destructor_is_a_close_tail_call():
     raw = image.read(Span(0x406850, 0x406855))
     assert len(raw) == 5 and raw[0] == 0xE9
     assert 0x406855 + struct.unpack('<i', raw[1:])[0] == 0x5E3820
-    row, = (row for row in read_file(ROOT / 'src/sprite.cpp')
+    row, = (row for path in ('src/sprite.cpp', 'src/sprite_objects.cpp')
+            for row in read_file(ROOT / path)
             if row.address == 0x406850)
+    assert row.path == ROOT / 'src/sprite_objects.cpp'
     assert row.image_spans == ((0x406850, 0x406855),)
     assert row.body == 'src/sprite.h'
     header = (ROOT / row.body).read_text()

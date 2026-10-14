@@ -1,0 +1,19 @@
+{
+  "event_id": "aec13e26185135a3ede54abe36c0d91ca95e4dc10f36c126eb74a514b8681e0d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "Fresh implementation compile after object split exposed five application Sprite objects used in load_misc but previously visible only by same-TU definitions. Authorize their matching extern declarations beside existing Sprite object declarations, retaining exact sizes/types and storage; no layout or body changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1ee9fd87febe00fb11e12c9fdadd06acae36b320d18ec782ab95ae40df49b42b",
+  "request_id": "sprite-object-header-declarations-oct14gn",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:sprite-static-object-identities-oct9"
+}

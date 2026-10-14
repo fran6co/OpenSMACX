@@ -1,0 +1,19 @@
+{
+  "event_id": "fcf4f1b6223b81518749851f1a91c7f564b33991590ce37cef7b0f110e2c838a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_sprite_natural_destructor_oct13d.py"
+    ],
+    "evidence": [
+      "Physical COFF comparison shows the identical natural inline Sprite destructor now emitted by sprite_objects.cpp rather than sprite.cpp. Move its complete canonical annotation unchanged and update the existing pinned original-tail-call test to the real emitting TU; preserve historical obligations and header implementation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5506298e4672c5704abbfd9131b8d7ef32cded2649fe3280ce3dac1b32c3208c",
+  "request_id": "sprite-destructor-emission-owner-oct14gp",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:sprite-static-object-identities-oct9"
+}
