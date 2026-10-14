@@ -1,0 +1,29 @@
+{
+  "event_id": "0ee3abfd689bc67c985f5bdd443704517b19ae9665f785ae7e1bb56819dd4bf4",
+  "payload": {
+    "affects": [
+      "entity-2c51e905d293dcca4f38f371f43febc413a471ce70716be4d818cbcac4dedc5b",
+      "entity-437b24b5d4fc6e14818c8795bac46fc98dd3ad5376316f2bbe59a4e057c459f3",
+      "entity-6fded74d8e4de0b257e9c8f85a39ac2f9cb3bf9d806d2ed22a4db44b37cc5cf3",
+      "entity-8dabb8277986780b2d2de0a1298e7ecbe476e4f3bffb8a31892bbc1caf00ae13",
+      "entity-8f964c4b4283301e9a1fd65b3b9664e8b305081ff510d310922ba6118d9d26eb",
+      "entity-9954dbbbabafa636641b181e2b02ad2340876a124fdf9a0cf2c78de245e883ee",
+      "entity-e90f1dde58b226114caa940d4f593c56740ef94723800d43aeaa01f86330b083",
+      "entity-f64b31d958eaa89c3ee07e2789abb18f6137553bddd346b59f0982a5364b0311"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-picker-multi-action-eh-oct14gf",
+    "evidence": [
+      "Read-only pinned PE investigation: cold spans 47E010:656D9D-656E75,47E340:656E75-656F4D,47E640:656F4D-657025,47E930:657025-6570FD,47EC60:6570FD-6571D5,47EF90:6571D5-6572AD,47F2C0:6572AD-657385,47F5F0:657385-65745D. All length216, root registration PUSH targets cold.end-10 handler mov eax,FuncInfo;jmp644FD6.",
+      "FuncInfo magic19930520,max_state19,unwind map FuncInfo+20h; nineteen map entries with action pointers inside full cold region. Final11 bytes before handler are only one cleanup action, not the full EH region. PE relocation evidence reported at FuncInfo offsets8/36, nineteen unwind action pointers, cold offset207 for handler immediate.",
+      "source/eh_regions.py currently requires cold length21 and max_state1. Do not crop annotations, ignore EH, or invent smaller bounds to pass. Future native support must validate all action starts/targets, complete root/handler/FuncInfo/unwind relocation chains and original bounds, preserving existing strict single-action controls. No source or compiler changes authorized by this finding."
+    ],
+    "hypothesis": "Eight picker cold regions are valid 216-byte multi-cleanup EH regions. Native verifier only supports the 21-byte one-action case; preserve full source spans and add evidence-backed multi-action verification separately.",
+    "kind": "discovery"
+  },
+  "previous_event": "f979fd46592f8f6eb64ac031dcd6ccb80b51265f942325d4077b31d217727403",
+  "request_id": "net-picker-multi-action-eh-oct14gf",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:net-player-id-ownership-oct14gf"
+}
