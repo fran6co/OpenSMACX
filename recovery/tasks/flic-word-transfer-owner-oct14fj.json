@@ -1,0 +1,142 @@
+{
+  "author": "coordinator",
+  "base_revision": "fa80fc9f10ce75bcc0d07672cc53045a85b49980",
+  "editable_files": [
+    "src/flic.cpp",
+    "recovery/tests/test_flic_word_transfers_actual_source_oct14fj.py",
+    "recovery/tests/test_authored_media_claim_continuity_oct14ea.py"
+  ],
+  "evidence": [
+    "Pinned decode_delta_flc62A720..62AAE7 has16-bit store62AA24 and pointer+2. Transparent decoder62B190..62B5ED has16-bit store62B52C and load-before-store62B5CD/62B5D3 followed by+2 for both pointers. Byte skip counts, byte pixel accesses and actual Buffer pitches permit unaligned cursors; these instructions do not establish uint16 pixel arrays.",
+    "Use existing local uint16 word for two-byte fills via memcpy. For transparent paired copies, load two bytes into a separate local uint16 before storing them to out, preserving overlap ordering; do not use direct overlapping memcpy. Retain both Buffer roles, byte pointers/pitch, every skip/run/count/offset/transparent branch, original swapped-byte quirks, reads and update rectangles. No initialization of unread file state, guards or original bug fixes.",
+    "Keep the existing Flic pragma function(memset,memcpy) and compiler settings unchanged: other historically measured bulk decoders deliberately retain real CRT calls. New fixed-size copies may add calls and matching debt; do not change pragmas to conceal that. These two bodies have no historical exact claim. Preserve all24 identities and family historical obligations; no hand-edited marker, new spans or weaker claim.",
+    "Require pinned native transfer-width/order controls and host execution of actual source on odd byte addresses, repeated fill and paired-copy cases including overlap, byte order, palette offsets and transparency branches. Damage controls must detect reintroduced unaligned word punning and wrong load/store ordering without counting unrelated crashes as success.",
+    "Narrowly extend existing fixed-baseline Flic projection to reverse only these explicit transfers and any required cstring include; retain existing marker/schema/body damage controls. Measure full24-owner closure, build/link fresh, preserve all source identity/history, review physical outside-body changes and independently review actual C++. Post-integration checks remain required. Full runtime/fault behavior, original type spelling and eventual byte equality remain unproven."
+  ],
+  "intent": "Recover native two-byte Flic transfers into byte-addressed buffers without false uint16 object/alignment assumptions, preserving original decoder behavior and obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6462816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4401056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6465296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6465312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6467392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6467984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "flic-word-transfer-owner-oct14fj"
+}
