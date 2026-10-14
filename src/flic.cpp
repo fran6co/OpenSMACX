@@ -404,7 +404,7 @@ int Flic::decode_frame(int x, int y) {
         frame_ = 0;
     }
     fread(&chunk_, 0x10, 1, file_);
-    decode_chunk(&chunk_);
+    decode_chunk(&chunk_.header_);
     frame_++;
     return 0;
 }
@@ -459,7 +459,7 @@ int Flic::UNK1(int x, int y) {
         frame_ = 0;
     }
     fread(&chunk_, 0x10, 1, file_);
-    decode_chunk(&chunk_);
+    decode_chunk(&chunk_.header_);
     frame_++;
     field_5B4_ &= ~2;
     return 0;
@@ -489,7 +489,7 @@ int Flic::UNK2() {
         fseek(file_, header_.second_frame_, SEEK_SET);
         return 0;
     }
-    fseek(file_, chunk_.size_, SEEK_CUR);
+    fseek(file_, chunk_.header_.size_, SEEK_CUR);
     frame_++;
     return 0;
 }
@@ -581,20 +581,20 @@ int Flic::UNK3(int target_frame) {
     // The scan head, the forward loop's fread and its decode_chunk call
     // all take &chunk_: the image materializes that address once above
     // the scan guard (lea at 0x0062A379) and reuses the register.
-    DataChunk *chunks = &chunk_;
+    FlicFrameChunk *chunks = &chunk_;
 
     if (static_cast<int>(frame_) <= target) {
         do {
             frame_pos = ftell(file_);
             fread(chunks, 0x10, 1, file_);
-            long next_pos = chunk_.size_ + frame_pos;
-            int subchunks = chunk_.count_;
+            long next_pos = chunk_.header_.size_ + frame_pos;
+            int subchunks = chunk_.header_.count_;
 
             int decodable = 0;
             for (int i = 0; i < subchunks; i++) {
-                DataChunk sub;
+                FlicFrameChunk sub;
                 fread(&sub, 6, 1, file_);
-                if (sub.type_ == 7 || sub.type_ == 0xc) {
+                if (sub.header_.type_ == 7 || sub.header_.type_ == 0xc) {
                     decodable = 1;
                     break;
                 }
@@ -633,7 +633,7 @@ int Flic::UNK3(int target_frame) {
                         frame_ = 0;
                     }
                     fread(chunks, 0x10, 1, file_);
-                    decode_chunk(chunks);
+                    decode_chunk(&chunks->header_);
                     frame_++;
                 }
             }
@@ -1135,13 +1135,9 @@ void Flic::decode_chunk(DataChunk *chunk) {
         }
         int remaining = count;
         do {
-            struct {
-                uint32_t size_;
-                uint16_t type_;
-                uint16_t count_;
-            } sub;
+            DataChunk sub;
             fread(&sub, 6, 1, file_);
-            decode_chunk(reinterpret_cast<DataChunk *>(&sub));
+            decode_chunk(&sub);
         } while (--remaining != 0);
         return;
     }

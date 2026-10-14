@@ -27,11 +27,11 @@
  * wrap or rewind decision after that reads the two ring offsets. Only
  * the fields a body addresses are named; the rest stays padding.
  *
- * DataChunk is a chunk header: a 4-byte size that counts the 6 header
- * bytes themselves, a 2-byte type, and the 2-byte subchunk count a frame
- * ring (type 0xF1FA) carries. The struct is 16 bytes rather than 6
- * because frame headers are fetched 0x10 at a time (0x0062A070,
- * 0x0062A2C0); the tail is slack those fetches fill and nothing reads.
+ * DataChunk is the 8-byte decoder prefix: a 4-byte size that counts the 6
+ * on-disk header bytes themselves, a 2-byte type, and the word at +6 that
+ * a type-0xF1FA frame ring uses as its subchunk count. The recursive decoder
+ * also receives a six-byte subchunk read in an eight-byte stack slot; on
+ * that path count_ is deliberately left untouched by fread.
  */
 struct FliHeader {
     uint32_t size_;             // +0x00  size of the whole file
@@ -56,10 +56,19 @@ struct DataChunk {
     uint16_t type_;             // +0x04  0xF1FA frame ring, 7 delta, 0xD black,
                                 //       0xF byte run, 0x10 copy
     uint16_t count_;            // +0x06  subchunk count when type_ is 0xF1FA
+};
+
+static_assert(sizeof(DataChunk) == 0x8,
+              "the recursive decoder's stack prefix occupies eight bytes");
+
+// Frame headers are read as sixteen bytes. Keep their eight-byte decoder
+// prefix distinct from the unexamined trailing bytes of that file read.
+struct FlicFrameChunk {
+    DataChunk header_;          // +0x00  fields consumed by decode_chunk
     uint8_t slack_[8];          // +0x08  slack the 0x10-byte frame fetches fill
 };
 
-static_assert(sizeof(DataChunk) == 0x10,
+static_assert(sizeof(FlicFrameChunk) == 0x10,
               "frame headers are fetched sixteen bytes at a time");
 
  /*
@@ -142,9 +151,9 @@ class Flic {
   uint32_t frame_;           // 0xA10  frames decoded since the last wrap
   FliHeader header_;         // 0xA14  the 128-byte file header
   uint8_t field_A94_[0x20];  // 0xA94  no decoded body addresses this gap
-  DataChunk chunk_;          // 0xAB4  header of the frame chunk in flight
-  DataChunk first_frame_;    // 0xAC4  saved first-frame chunk header
-  DataChunk second_frame_;   // 0xAD4  saved loop-point chunk header
+  FlicFrameChunk chunk_;          // 0xAB4  frame bytes in flight
+  FlicFrameChunk first_frame_;    // 0xAC4  saved first-frame bytes
+  FlicFrameChunk second_frame_;   // 0xAD4  saved loop-point bytes
 };
 
 
