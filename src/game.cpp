@@ -831,7 +831,7 @@ void __cdecl colortables_init_faction(int faction_id) {
             memcpy(TerritoryColorTables[faction_id], table_view, 0x100);
             memcpy(BodyTintColorTables[faction_id],
                    static_cast<unsigned char *>(table_view) + 0x100,
-                   0xC000);
+                   0x100);
             tables_loaded = true;
         }
     }

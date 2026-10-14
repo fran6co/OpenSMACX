@@ -66,7 +66,7 @@ def test_real_color_cache_has_exact_native_extents_and_owned_palette():
         "cache_file.close(saved + 12)",
         "cache_file.create(StringTemp, 0xC100, 1)",
         "memcpy(TerritoryColorTables[faction_id], table_view, 0x100)",
-        "memcpy(BodyTintColorTables[faction_id],\n                   static_cast<unsigned char *>(table_view) + 0x100,\n                   0xC000)",
+        "memcpy(BodyTintColorTables[faction_id],\n                   static_cast<unsigned char *>(table_view) + 0x100,\n                   0x100)",
         "g_VBP_CAVIARDATA.record()->palette_ + 0x302",
         "if (table_view != nullptr && cache_file.get_size() >= 0xC100)",
         "values_view = cache_file.create(StringTemp, 0x80, 1)",
