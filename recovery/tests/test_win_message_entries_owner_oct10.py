@@ -12,7 +12,8 @@ import pytest
 from test_texture_sub61f0d0_actual_source import build_and_run
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / "src/win.h").is_file())
-NAMES = ("OnKey", "OnSysCommand", "OnQueryNewPalette", "OnActivate")
+NAMES = ("OnKey", "OnSysCommand", "OnQueryNewPalette", "OnActivate",
+         "OnPaint", "OnPaletteChanged")
 
 
 def unit(member=None):
@@ -37,17 +38,23 @@ DECLARATIONS
 typedef void (*KeyEntry)(void *, unsigned int, long, int, unsigned int);
 typedef void (*CommandEntry)(HWND, unsigned int, int, int);
 typedef int (*PaletteEntry)(void *);
-typedef long (*ActivationEntry)(void *, unsigned int, void *, long);
+typedef void (*ActivationEntry)(void *, unsigned int, void *, long);
+typedef void (*PaintEntry)(HWND);
+typedef void (*PaletteChangedEntry)(void *, void *);
 char probe(KeyEntry);
 char probe(CommandEntry);
 char probe(PaletteEntry);
 char probe(ActivationEntry);
+char probe(PaintEntry);
+char probe(PaletteChangedEntry);
 template<class T> long probe(T);
 int main() {
     assert(sizeof(probe(&Win::OnKey)) == sizeof(char));
     assert(sizeof(probe(&Win::OnSysCommand)) == sizeof(char));
     assert(sizeof(probe(&Win::OnQueryNewPalette)) == sizeof(char));
     assert(sizeof(probe(&Win::OnActivate)) == sizeof(char));
+    assert(sizeof(probe(&Win::OnPaint)) == sizeof(char));
+    assert(sizeof(probe(&Win::OnPaletteChanged)) == sizeof(char));
 }
 """.replace("DECLARATIONS", "\n".join(declarations))
 

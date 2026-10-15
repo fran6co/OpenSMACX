@@ -159,7 +159,7 @@ class Win : public AutoSound {
   // its argument at [esp+0x58] with no receiver below it - the same
   // argument-offset shift that made OnPaletteChanged, init_class and
   // set_display_mode statics above.
-  static bool __cdecl OnPaint(HWND hwnd);
+  static void __cdecl OnPaint(HWND hwnd);
   static int __cdecl display_action(int action);
 
  public:
@@ -192,7 +192,7 @@ class Win : public AutoSound {
   // receiver. A non-static `__cdecl` member still takes `this` on the
   // stack, which is exactly the four-byte argument-offset shift a
   // non-static declaration measured here.
-  static int __cdecl OnPaletteChanged(void * hwnd, void * lparam);
+  static void __cdecl OnPaletteChanged(void * hwnd, void * lparam);
 
  public:
   // homed from 005f54e0.cpp
@@ -874,7 +874,7 @@ class Win : public AutoSound {
   static int __cdecl OnQueryNewPalette(void * hwnd);
 
  public:
-  static long __cdecl OnActivate(void *hwnd, unsigned int state, void *other, long minimized);
+  static void __cdecl OnActivate(void *hwnd, unsigned int state, void *other, long minimized);
   void screen_to_client(RECT * rect);
 
  public:
