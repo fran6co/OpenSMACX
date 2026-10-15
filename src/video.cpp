@@ -46,7 +46,7 @@ VideoSoundState::~VideoSoundState() {
   VideoSoundDevice *const device =
       static_cast<VideoSoundDevice *>(device_);
   if (device != 0) {
-    device->destroy_device(1);
+    delete device;
     device_ = 0;
   }
   // Sound::~Sound then owns filename/device-release/chain teardown and the
@@ -74,7 +74,7 @@ int VideoSoundState::stop() {
 // LEVER: the g_0090db28 function pointer is __cdecl, not __stdcall - the original has `add esp,4` after that call; __stdcall dropped it and cost a MISMATCH at the trailing `add`/`jmp`.
 int VideoSoundState::release() {
   if (device_ != 0) {
-    if (static_cast<VideoSoundDevice *>(device_)->can_release() == 0) {
+    if (static_cast<VideoSoundDevice *>(device_)->is_playing() == 0) {
       if (WaveDeviceReleaseGuard) {
         (SoundXOrdinal2DeleteSound())(device_);
       }
