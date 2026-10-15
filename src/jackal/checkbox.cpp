@@ -477,9 +477,10 @@ int CheckBox::attach(GraphicWin *parent, int x, int y, int flags) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
-// TRIED: reusing one `char *b = self - 0x1c` for both the vtable-slot lookup and the null-check-then-adjust pattern collapses two distinct registers (edi and ebp in the original, which hold the same VALUE but are never merged) into one - the original keeps a separate register alive purely for the "cast-to-virtual-base" null check, this candidate CSEs it away. 69/84 mnemonics match, no stack spill (ternary over if/else avoided the local-int spill an earlier if/else form produced).
+// Historical superseded trial note: the earlier candidate used ID lookup/getter and Dialog::field_F0_ for row highlighting; its register-allocation observation does not describe the corrected direct-row implementation below.
+// TRIED (historical): reusing one `char *b = self - 0x1c` for both the vtable-slot lookup and the null-check-then-adjust pattern collapses two distinct registers (edi and ebp in the original, which hold the same VALUE but are never merged) into one - the original keeps a separate register alive purely for the "cast-to-virtual-base" null check, this candidate CSEs it away. 69/84 mnemonics match, no stack spill (ternary over if/else avoided the local-int spill an earlier if/else form produced).
 // ORIGINAL: 0x0060FAB0 ?on_redraw@CheckBox@@QAEXXZ 0x0060FAB0-0x0060FB8D FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060fab0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60fab0 complete control/data-access review and src/jackal/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060fab0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "pinned 0x60FAB0..0x60FB8C: ESI-0x18 is CheckBox::field_4_ highlight; selected mask is shifted by row EBX and ANDed with Dialog selected_position_; loop calls draw_item(row,mask,focus) without ID search", "host test compiles this actual body and rejects Dialog field_F0_ highlight and state-getter substitutions"], "reason": "The pinned row renderer directly tests the row bit and compares the row ordinal with CheckBox::field_4_; preserving that direct path avoids list cursor side effects absent from the original. Parent back-draw/fallback copy and the original full member identity remain retained."}
 // symbol    ?on_redraw@CheckBox@@UAEXXZ
 void CheckBox::on_redraw() {
     // Native60FAB0 retains this parent across back-draw and fallback copying.
@@ -495,37 +496,44 @@ void CheckBox::on_redraw() {
             -static_cast<int>(dib_.bmiHeader.biHeight));
     }
     for (int position = 0; position < Dialog::item_list_.entry_count_; ++position) {
-        const int id = Dialog::pos_to_id(position);
-        const int state = get_state_id(id);
+        const uint32_t mask = 1u << (static_cast<uint32_t>(position) & 31u);
+        const int state = static_cast<int>(Dialog::selected_position_ & mask);
         draw_item(position, state,
-                  Dialog::field_F0_ == static_cast<uint32_t>(position));
+                  field_4_ == static_cast<uint32_t>(position));
     }
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060F700 ?on_left_down@CheckBox@@QAEXHH@Z 0x0060F700-0x0060F8B0 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060f700.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60f700 complete control/data-access review and src/jackal/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060f700.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "pinned 0x60F700 geometry: field_64_+field_44_ width and field_68_+field_44_ height; 0x60F760/0x60F78A retain separate ID searches on the clear branch, while set branch calls set_state_id", "pinned 0x60F78D..0x60F80C compares pos_to_id(previous) with clicked ID, redraws old ordinal mask only on inequality, updates field_4_ only on that branch, and dispatches key_notification_callback_ at CheckBox front+8", "pinned post-callback walk re-finds ID; final draw uses fresh id_to_pos and current row mask", "actual-source host control covers duplicate IDs, callback list/state mutation, geometry and callback-cell mutants"], "reason": "Restore the original CheckBox receiver/member access and event order, including its repeated search, ID-based old-row decision, +8 callback and post-callback re-find. This is behavioral recovery of the caller path, not a change to class layout or a claim of byte identity."}
 // symbol    ?on_left_down@CheckBox@@UAEXHH@Z
 void CheckBox::on_left_down(int x, int y) {
     WinCallbackWindow = win_parent_;
-    const int columns = Dialog::field_4C_;
     const int rows = Dialog::field_58_;
-    const int cell_width = Dialog::field_48_ + Dialog::field_28_;
-    const int cell_height = Dialog::field_68_ + Dialog::field_28_;
+    const int cell_width = Dialog::field_64_ + Dialog::field_44_;
+    const int cell_height = Dialog::field_68_ + Dialog::field_44_;
     const int position = (x / cell_width) * rows + y / cell_height;
     const int id = Dialog::pos_to_id(position);
-    Dialog::item_list_.seek_id(id);
+    StringStruct &items = Dialog::item_list_;
+    items.seek_id(id);
+    const uint32_t clicked_mask = 1u << (static_cast<uint32_t>(items.current_position_) & 31u);
+    if ((Dialog::selected_position_ & clicked_mask) != 0) {
+        items.seek_id(id);
+        const uint32_t clear_mask = 1u << (static_cast<uint32_t>(items.current_position_) & 31u);
+        Dialog::selected_position_ &= ~clear_mask;
+    } else {
+        set_state_id(id, 1);
+    }
 
     const int previous = static_cast<int>(field_4_);
-    flip_state_id(id);
-    field_4_ = Dialog::id_to_pos(id);
-    if (previous != static_cast<int>(field_4_)) {
-        const int old_id = Dialog::pos_to_id(previous);
-        draw_item(previous, get_state_id(old_id), 0);
+    if (Dialog::pos_to_id(previous) != id) {
+        const uint32_t old_mask = 1u << (static_cast<uint32_t>(previous) & 31u);
+        draw_item(previous, static_cast<int>(Dialog::selected_position_ & old_mask), 0);
+        field_4_ = Dialog::id_to_pos(id);
     }
 
     const int selected = Dialog::selected_position_;
-    if (double_click_callback_ != 0) double_click_callback_(selected);
+    if (key_notification_callback_ != 0) key_notification_callback_(selected);
     // The original leaves the list cursor on the matching entry after the
     // callback, since callbacks may mutate the list and the cursor must be
     // re-found against its current contents.
@@ -538,7 +546,11 @@ void CheckBox::on_left_down(int x, int y) {
             ++Dialog::item_list_.current_position_;
         }
     }
-    draw_item(static_cast<int>(field_4_), get_state_id(id), 1);
+    const uint32_t current_mask = 1u << (static_cast<uint32_t>(items.current_position_) & 31u);
+    const int state_after_callback =
+        static_cast<int>(Dialog::selected_position_ & current_mask);
+    const int position_after_callback = Dialog::id_to_pos(id);
+    draw_item(position_after_callback, state_after_callback, 1);
     soft_update();
 }
 
