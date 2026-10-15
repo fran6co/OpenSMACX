@@ -582,10 +582,10 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int wrap_cent(char *text, int x_coord, int y_coord, int width,
                 int line_step);
   int wrap_right(Font *font, char *text, int x_coord, int y_coord, int width);
-  int wrap_right(Font *font, char *text, int len);
+  int wrap_right(Font *font, char *text, RECT *area);
   int wrap_right(Font *font, char *text, int x_coord, int len);
   int wrap_right(char *text, int x_coord, int y_coord, int width);
-  int wrap_right(char *text, int x_coord);
+  int wrap_right(char *text, RECT *area);
   int wrap_height(char *text, int width);
   int wrap_height_flying(char *text, int width);
   int wrap_height_flying(char *text);
