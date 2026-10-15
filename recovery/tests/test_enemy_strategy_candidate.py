@@ -14,6 +14,7 @@ from pathlib import Path
 
 ROOT = Path(os.environ.get("OPENSMACX_SOURCE_ROOT", Path(__file__).resolve().parents[2])).resolve()
 BODY = ROOT / "src/faction_strategy.cpp"
+LOCK_MASK_HEADER = ROOT / "src/game_data_state_window.h"
 
 
 STUBS = r'''
@@ -29,7 +30,7 @@ static const int AI_GOAL_COLONIZE=8, AI_GOAL_TERRAFORM_LAND=9;
 static const int AI_GOAL_PRIORITY_COMBAT=16, AI_GOAL_LANDING_SITE=41;
 static const uint32_t BIT_BASE_IN_TILE=1u;
 
-struct GameDataLockMaskView { uint32_t enable_mask_; };
+/*__PRODUCTION_LOCK_MASK_DECLARATIONS__*/
 struct GameDataStateWindowFields {
     uint32_t game_state_, game_preferences_; int diff_level_current_, turn_current_num_;
     int base_current_count_, vehicle_current_count_;
@@ -135,6 +136,19 @@ static inline void kill(int) {}
 static inline void veh_kill(int) { ++veh_kill_calls; }
 static inline void sleep(int) { ++sleep_calls; }
 '''
+
+
+def production_lock_mask_declarations() -> str:
+    header = LOCK_MASK_HEADER.read_text()
+    start = header.index("struct GameDataLockMaskBytes {")
+    end = header.index("};", header.index("union GameDataLockMaskView {", start)) + 2
+    return header[start:end]
+
+
+STUBS = STUBS.replace(
+    "/*__PRODUCTION_LOCK_MASK_DECLARATIONS__*/",
+    production_lock_mask_declarations(),
+)
 
 
 def extract_body(text: str) -> str:
