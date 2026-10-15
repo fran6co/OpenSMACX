@@ -17,6 +17,7 @@ FIXTURE = r'''// Durable, self-contained host control for the complete five-body
 
 #define __cdecl
 typedef unsigned int uint32_t;
+typedef unsigned char uint8_t;
 typedef unsigned int DWORD;
 typedef int BOOL;
 typedef const char *LPCSTR;
@@ -168,11 +169,10 @@ Console ConsoleGlobal;
 InfoWin ConsoleInfoWin, ConsoleStatusWin;
 Wave g_MULTIWIN_WAVE;
 Sprite *FactionDiplomacyPortraits[8] = {};
-// Minimal fixture projection of the real shared owner used by
-// commlink_attempt; this is a host model, not a native layout assertion.
-struct GameDataLockMasksFixture { uint32_t enable_mask_; };
+// @@LOCK_MASK_TYPES@@
+// Use the production byte/dword overlay for the shared lock masks.
 struct GameDataFieldsFixture {
-    GameDataLockMasksFixture lock_masks_;
+    GameDataLockMaskView lock_masks_;
     int sunspot_duration_;
     uint32_t game_state_;
 };
@@ -252,7 +252,7 @@ uint32_t timeGetTime() {
 int diplo_add(int a, int b) { return static_cast<int>(static_cast<uint32_t>(a)+static_cast<uint32_t>(b)); }
 bool is_alive(uint32_t faction) { return (alive_mask_for_ui & (1u<<faction))!=0; }
 BOOL is_human(uint32_t faction) {
-    return (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u<<faction)) != 0;
+    return (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u<<faction)) != 0;
 }
 char *label_get(int) { return const_cast<char *>("label"); }
 unsigned char WinFillColour=9;
@@ -435,6 +435,15 @@ def _actual_bodies():
         result.append(definition(ui if index < 3 else faction, signature))
     return result
 
+def _lock_mask_declarations():
+    header = (ROOT / "src/game_data_state_window.h").read_text(encoding="utf-8")
+    match = re.search(
+        r"struct GameDataLockMaskBytes\s*\{.*?\};\s*union GameDataLockMaskView\s*\{.*?\};",
+        header, re.DOTALL,
+    )
+    assert match, "production lock-mask byte/dword declarations missing"
+    return match.group(0)
+
 def _replace_once(text, old, new):
     assert text.count(old) == 1, old
     return text.replace(old, new, 1)
@@ -458,8 +467,8 @@ def test_five_actual_owners_and_native_dispatch_damage(compiler_name):
         (1, "PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction]",
             "PlayersData[faction].diplo_treaties[ConsoleGlobal.faction_id_]"),
         (3,
-         "(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu",
-         "GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu"),
+         "GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_",
+         "GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_"),
         (4, "treaty_off(faction_id_with, faction_id, 1);",
             "treaty_off(faction_id, faction_id_with, 1);"),
     ):
@@ -469,7 +478,7 @@ def test_five_actual_owners_and_native_dispatch_damage(compiler_name):
     with tempfile.TemporaryDirectory(prefix="osmx-multiwin-contact-") as temporary:
         source, binary = Path(temporary) / "control.cpp", Path(temporary) / "control"
         for variant_index, bodies in enumerate(variants):
-            text = FIXTURE
+            text = FIXTURE.replace("// @@LOCK_MASK_TYPES@@", _lock_mask_declarations())
             for index, body in enumerate(bodies):
                 text = _replace_once(text, "// @@ACTUAL_OWNER_" + str(index) + "@@", body)
             source.write_text(text)

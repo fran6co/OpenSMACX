@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 import shutil
 import subprocess
+import re
 
 import pytest
 
@@ -142,11 +143,12 @@ struct ReadWord {
   }
   void script(uint32_t a,uint32_t b) { sequence[0]=a; sequence[1]=b; sequence_count=2; reads=0; }
 };
+// @@LOCK_MASK_TYPES@@
 struct GameFields {
   ReadWord game_state_;
   uint32_t net_turn_flags_;
   int net_turn_faction_;
-  struct { uint32_t enable_mask_; } lock_masks_;
+  GameDataLockMaskView lock_masks_;
 } ;
 struct GameStorage { GameFields fields_; } GameDataStateStorage;
 struct LockStateEntry { uint32_t leading_words_[4], payload_, trailing_words_[10]; };
@@ -177,15 +179,27 @@ char *_itoa(int n,char *s,int radix) { (void)radix; ++itoa_calls; sprintf(s,"%d"
 '''
 
 
+def lock_mask_declarations() -> str:
+    header = (ROOT / "src/game_data_state_window.h").read_text(encoding="utf-8")
+    match = re.search(
+        r"struct GameDataLockMaskBytes\s*\{.*?\};\s*union GameDataLockMaskView\s*\{.*?\};",
+        header, re.DOTALL,
+    )
+    assert match, "production lock-mask byte/dword declarations missing"
+    return match.group(0)
+
+
 def compile_run(compiler: str, method: str, main: str, tmp_path: Path) -> subprocess.CompletedProcess[str]:
     compiler_path = shutil.which(compiler)
     if compiler_path is None:
         pytest.skip(compiler + " unavailable")
     source_path = tmp_path / (compiler.replace("+", "p") + ".cpp")
     binary_path = tmp_path / (compiler.replace("+", "p") + ".bin")
-    source_path.write_text(HOST + "\n" + method + "\n" + main, encoding="utf-8")
+    source_path.write_text(HOST.replace("// @@LOCK_MASK_TYPES@@", lock_mask_declarations()) +
+                           "\n" + method + "\n" + main, encoding="utf-8")
     built = subprocess.run(
-        [compiler_path, "-std=c++11", "-Wall", "-Wextra", "-Werror", "-pedantic", str(source_path), "-o", str(binary_path)],
+        [compiler_path, "-std=c++11", "-Wall", "-Wextra", "-Werror", "-pedantic",
+         str(source_path), "-o", str(binary_path)],
         capture_output=True, text=True, timeout=45,
     )
     assert built.returncode == 0, built.stdout + built.stderr

@@ -2086,7 +2086,7 @@ void NetWin::pick_map() {
                 }
                 if (is_host) {
                     const int scenario_factions = bit_count(
-                        static_cast<int>((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFEu));
+                        static_cast<int>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & 0xFEu));
                     if (scenario_factions < NetDaemonNet.player_count_) {
                         parse_num(scenario_factions, 0);
                         X_pop("TOOMANYFORSCENARIO", 0);
@@ -2129,7 +2129,7 @@ void NetWin::pick_map() {
             NetWinSessionOptions.difficulty_ =
                 static_cast<uint8_t>(GameDataStateStorage.fields_.diff_level_current_);
             NetWinSessionOptions.status_ =
-                static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
+                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
             NetWinSessionOptions.rule_bits_a_ = GameDataStateStorage.fields_.game_rules_;
 
             NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
@@ -2146,7 +2146,7 @@ void NetWin::pick_map() {
             static_cast<NetWinFactionRecord *>(faction_records_);
         records[0].record_count_ = 8;
         records[0].record_type_ = static_cast<uint8_t>(
-            bit_count(static_cast<int>((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFEu)));
+            bit_count(static_cast<int>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & 0xFEu)));
         records[0].active_ = 0;
 
         for (int player_slot = 1; player_slot < 8; ++player_slot) {

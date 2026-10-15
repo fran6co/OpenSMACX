@@ -116,7 +116,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
   const int text_right = row_bounds.right - 10;
   const unsigned int faction_bit = 1u << (faction_id & 31);
   if (IsMultiplayerNet &&
-      (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit)) {
+      (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)) {
     spot_.add(faction_id, 0, icon_left, row_bounds.top, row_height, row_height);
   }
   spot_.add(faction_id, 1, text_left, row_bounds.top,
@@ -126,7 +126,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
       ? NetDaemonNet.channels_[0].leading_words_[1]
       : NetDaemonNet.channels_[0].leading_words_[0];
   if (IsMultiplayerNet &&
-      (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit)) {
+      (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit)) {
     int icon_variant;
     if ((static_cast<uint32_t>(MultiWindowContactStatusMask) & faction_bit) != 0) {
       icon_variant = 1;
@@ -181,11 +181,11 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
               GameDataStateStorage.fields_.net_turn_faction_;
           if (net_turn_faction == faction_id) {
             strcat(StringTemp, "(*)");
-          } else if (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) {
+          } else if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
             strcat(StringTemp,
                    faction_id > net_turn_faction ? "(+)" : "(-)");
           }
-        } else if (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) {
+        } else if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
           if ((selected_turn_word & local_faction_bit) == 0 &&
               (GameDataStateStorage.fields_.game_state_ & 0x80) == 0) {
             // Original branch reaches the final-write path without a marker.
@@ -214,11 +214,11 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
               GameDataStateStorage.fields_.net_turn_faction_;
           if (net_turn_faction == faction_id) {
             strcat(StringTemp, "(*)");
-          } else if (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) {
+          } else if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
             strcat(StringTemp,
                    faction_id > net_turn_faction ? "(+)" : "(-)");
           }
-        } else if (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) {
+        } else if (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) {
           if ((selected_turn_word & local_faction_bit) == 0 &&
               (GameDataStateStorage.fields_.game_state_ & 0x80) == 0) {
             // Preserve the second live test from 0x478AB2.
@@ -533,11 +533,11 @@ void MultiWin::draw(int draw_type) {
     for (int faction = 1; faction < 8; ++faction) {
       if (faction == ConsoleGlobal.faction_id_) continue;
       const unsigned int mask = 1u << faction;
-      if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (mask << 8))) continue;
+      if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & mask)) continue;
       if (!(GameDataStateStorage.fields_.game_state_ & 0x80) &&
           !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 8) &&
           !(GameDataStateStorage.fields_.secret_project_.empath_guild() >= 0 && Bases[GameDataStateStorage.fields_.secret_project_.empath_guild()].faction_id_current == ConsoleGlobal.faction_id_) &&
-          !((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & mask) && auto_contact())) continue;
+          !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & mask && auto_contact())) continue;
 
       ++row;
       drew_player = true;
