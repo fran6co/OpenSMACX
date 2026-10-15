@@ -121,10 +121,9 @@ struct FakeStringTable {
 
 static NetWinLobbyRow NetWinLobbyRows[8];
 static NetWinSessionBlock NetWinSessionData;
-static int g_player_count;
-int *NetWinPlayerCount = &g_player_count;
 
 struct Net {
+    int player_count_;
     uint32_t local_player_id_;
     uint32_t host_player_id_;
     Net() : local_player_id_(0), host_player_id_(0x1234),
@@ -146,6 +145,7 @@ struct Net {
         return 1;
     }
 } NetDaemonNet;
+static int &g_player_count = NetDaemonNet.player_count_;
 
 class NetWin {
 public:

@@ -48,8 +48,6 @@ static_assert(offsetof(NetWinLobbyRow, faction_or_color_)==3, "mode byte");
 NetWinLobbyRow NetWinLobbyRows[8];
 
 NetWinSessionBlock NetWinSessionData;
-static unsigned int *NetWinEighthSlotWord=&NetWinSessionData.mode_;
-static char *NetWinScenarioText=NetWinSessionData.scenario_text_wire_tail_;
 struct Options {
     uint8_t status_, player_count_, difficulty_, time_control_;
     uint8_t option_4_, option_5_, planet_size_, ocean_coverage_;

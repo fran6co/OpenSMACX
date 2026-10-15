@@ -87,11 +87,41 @@ def _replace_once(source: str, before: str, after: str, label: str) -> str:
 
 
 def _restore_cpp(current: str, baseline: str) -> str:
-    current = _replace_once(
-        current,
-        "static char *const NetWinScenarioText =\n    NetWinSessionData.scenario_text_wire_tail_;",
-        "static unsigned char *const NetWinScenarioText = &NetWinSessionData.state_[0x20];",
-        "scenario alias")
+    # Reverse this task's owner-field migration before applying the historical
+    # scenario-storage reversal below. This is test-only reconstruction; the
+    # installed source retains direct typed member accesses.
+    current = current.replace("NetDaemonNet.player_count_", "*NetWinPlayerCount")
+    current = current.replace("NetWinSessionData.mode_", "*NetWinEighthSlotWord")
+    current = current.replace("NetWinSessionData.scenario_text_wire_tail_[0]",
+                              "*NetWinScenarioText")
+    current = current.replace("NetWinSessionData.scenario_text_wire_tail_",
+                              "NetWinScenarioText")
+    current = current.replace("NetWinSessionOptions.time_control_", "NetWinNinthSlot[3]")
+    for suffix, field in (("A", "rule_bits_a_"), ("B", "rule_bits_b_"),
+                          ("C", "rule_bits_c_")):
+        current = current.replace(f"NetWinSessionOptions.{field}",
+                                  f"*NetWinRuleBits{suffix}")
+    current = current.replace("NetDaemonNet.primary_state_.leading_words_[0]",
+                              "*NetWinRulesGate")
+    current = current.replace(
+        "// Original 0x0090DB98 begins the eight NetWinLobbyRows (0x17C stride).",
+        "static int *const NetWinPlayerCount = &NetDaemonNet.player_count_;\n\n"
+        "// Original 0x0090DB98 begins the eight NetWinLobbyRows (0x17C stride).")
+    current = current.replace(
+        "/*\nPurpose: Seed the seven base faction records of the static faction table.",
+        "static unsigned int *const NetWinEighthSlotWord = &NetWinSessionData.mode_;\n"
+        "static unsigned char *const NetWinScenarioText = &NetWinSessionData.state_[0x20];\n"
+        "static unsigned char *const NetWinNinthSlot =\n"
+        "    reinterpret_cast<unsigned char *>(&NetWinSessionOptions);\n\n"
+        "/*\nPurpose: Seed the seven base faction records of the static faction table.")
+    current = current.replace(
+        "// 0x0080A6F0 - the planet-size name count beside the fixed dialog",
+        "static unsigned int *const NetWinRuleBitsA = &NetWinSessionOptions.rule_bits_a_;\n"
+        "static unsigned int *const NetWinRuleBitsB = &NetWinSessionOptions.rule_bits_b_;\n"
+        "static unsigned int *const NetWinRuleBitsC = &NetWinSessionOptions.rule_bits_c_;\n"
+        "static unsigned int *const NetWinRulesGate =\n"
+        "    &NetDaemonNet.primary_state_.leading_words_[0];\n\n"
+        "// 0x0080A6F0 - the planet-size name count beside the fixed dialog")
     draw = _extract(current, "void NetWin::draw_session_info()")
     draw_new = "strcat(StringTemp,\n               NetWinScenarioText);"
     assert draw.count(draw_new) == 1
@@ -100,7 +130,7 @@ def _restore_cpp(current: str, baseline: str) -> str:
         "strcat(StringTemp,\n               reinterpret_cast<const char *>(NetWinScenarioText));"), 1)
 
     pick = _extract(current, "void NetWin::pick_map()")
-    clear = "NetWinSessionData.scenario_text_wire_tail_[0] = 0;"
+    clear = "*NetWinScenarioText = 0;"
     assert pick.count(clear) == 2
     assert pick.count("strcpy(NetWinScenarioText, scenario_name);") == 1
     pick = pick.replace(clear, "NetWinSessionData.state_[0x20] = 0;")
@@ -109,7 +139,7 @@ def _restore_cpp(current: str, baseline: str) -> str:
     current = current.replace(_extract(current, "void NetWin::pick_map()"), pick, 1)
 
     reset = _extract(current, 'extern "C" void __cdecl sub_4e2450()')
-    reset_clear = "NetWinSessionData.scenario_text_wire_tail_[0] = 0;"
+    reset_clear = "*NetWinScenarioText = 0;"
     assert reset.count(reset_clear) == 1
     current = current.replace(reset, reset.replace(
         reset_clear, "NetWinSessionData.state_[0x20] = 0;"), 1)
@@ -200,21 +230,21 @@ def test_actual_session_storage_shape_and_only_first_tail_byte_is_cleared():
     assert "char scenario_text_wire_tail_[0x144];" in header
     assert 'static_assert(sizeof(NetWinSessionBlock) == 0x168, "session block extent");' in header
     assert 'static_assert(offsetof(NetWinSessionBlock, scenario_text_wire_tail_) == 0x24,' in header
-    assert "static char *const NetWinScenarioText =" in source
+    assert "NetWinScenarioText" not in source
     clear = "NetWinSessionData.scenario_text_wire_tail_[0] = 0;"
-    assert source.count(clear) == 3
+    assert source.count(clear) == 4
     assert "state_[0x20]" not in source
-    assert "strcpy(NetWinScenarioText, scenario_name);" in source
-    assert "reinterpret_cast<char *>(NetWinScenarioText)" not in source
-    assert "reinterpret_cast<const char *>(NetWinScenarioText)" not in source
+    assert "strcpy(NetWinSessionData.scenario_text_wire_tail_, scenario_name);" in source
     # The argument pointer and condition are reevaluated at their original sites.
     draw = _extract(source, "void NetWin::draw_session_info()")
-    assert draw.count("*NetWinScenarioText") == 5
-    assert draw.count("strcat(StringTemp,\n               NetWinScenarioText);") == 1
+    assert draw.count("NetWinSessionData.scenario_text_wire_tail_[0]") == 5
+    assert draw.count("strcat(StringTemp,\n               NetWinSessionData.scenario_text_wire_tail_);") == 1
     assert "char *scenario_text" not in draw
     pick = _extract(source, "void NetWin::pick_map()")
     assert pick.count(clear) == 2
-    assert pick.index(clear) < pick.index("strcpy(NetWinScenarioText, scenario_name);")
+    assert pick.index(clear) < pick.index("strcpy(NetWinSessionData.scenario_text_wire_tail_, scenario_name);")
+    config = _extract(source, "void NetWin::config_players()")
+    assert config.count(clear) == 1
 
 
 RUNTIME = r'''#include <cstddef>

@@ -68,6 +68,7 @@ struct Net {
 struct NetDaemon : Net {
     int pid_calls = 0;
     int player_count_ = 3;
+    struct PrimaryState { uint32_t leading_words_[3] = {1, 0, 0}; } primary_state_;
     int pid_2_idx(uint32_t) { ++pid_calls; return 1; }
 };
 struct Player {
@@ -128,13 +129,10 @@ static NetWinSessionOptionsState NetWinSessionOptions;
 static NetWinSessionBlock NetWinSessionData;
 static NetWinLobbyRow NetWinLobbyRows[8];
 static NetDaemon NetDaemonNet;
-static int netwin_rules_gate = 1;
-static int *const NetWinRulesGate = &netwin_rules_gate;
 static Player Players[8];
 static PlayerData PlayersData[8];
 static char string_temp[256];
 static char *StringTemp = string_temp;
-static char *NetWinScenarioText = NetWinSessionData.scenario_text_wire_tail_;
 static const char *NetWinPcxSuffix = ".pcx";
 static const char *NetWinDefaultPcx = "faction.pcx";
 
@@ -163,7 +161,7 @@ static void reset_case() {
     NetWinSessionData.scenario_text_wire_tail_[1] = 0xA6;
     GameDataLoadRequest = 0;
     GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x700u;
-    netwin_rules_gate = 1;
+    NetDaemonNet.primary_state_.leading_words_[0] = 1;
 }
 
 int main() {
@@ -247,7 +245,7 @@ int main() {
         assert(GameDataLoadRequest == 0);
         assert(NetWinSessionData.scenario_text_wire_tail_[0] == 's');
         assert(NetWinSessionData.scenario_text_wire_tail_[1] == 'c');
-        assert(std::strcmp(NetWinScenarioText, "scenario.scn") == 0);
+        assert(std::strcmp(NetWinSessionData.scenario_text_wire_tail_, "scenario.scn") == 0);
         assert(NetDaemonNet.sends == 4);
         const NetWinSessionOptionsState &published =
             reinterpret_cast<const NetWinSessionOptionsPacket *>(

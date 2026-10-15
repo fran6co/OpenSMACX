@@ -67,8 +67,6 @@ static Player Players[8];
 static struct Text { char str[256]; } ParseStrBuffer[10];
 static char PopupStartCaption[]="caption", ScriptPopupFile[]="script";
 static char NetWinPasswordPromptInitialText,NetWinPasswordVerifyInitialText;
-static int player_count=2;
-static int *NetWinPlayerCount=&player_count;
 static int local_slot=2,answer=0,poll_state=0,editor_result=0;
 static int popup_ctors,popup_dtors,pull_ctors,pull_dtors,sends,copies,identity_calls,ask_index;
 static int sent_slot,sent_target;
@@ -192,8 +190,10 @@ struct Net {
     }
 };
 struct NetDaemon : Net {
+    int player_count_=2;
     int pid_2_idx(uint32_t id) { assert(id==local_player_id()); ++identity_calls; event("identity"); return local_slot; }
 } NetDaemonNet;
+static int &player_count=NetDaemonNet.player_count_;
 struct NetWin {
     void *faction_records_;
     void pick_player(); void pick_faction(int); int pick_pass(int);
@@ -414,7 +414,7 @@ MUTANTS=(
      "    NetWinFactionRecord *const records = static_cast<NetWinFactionRecord *>(faction_records_);\n    for (int faction = 0; faction < count; ++faction) {"),
     ("live_record_count","faction","faction < count;","faction < static_cast<NetWinFactionRecord *>(faction_records_)[0].record_count_;"),
     ("negative_count_normalized","faction","already_selected = player_count < 0;","already_selected = false;"),
-    ("missing_player_reload","faction","            player_count = *NetWinPlayerCount;",""),
+    ("missing_player_reload","faction","            player_count = NetDaemonNet.player_count_;",""),
     ("no_faction_snapshot_slot_zero","faction","memcpy_call(&updated, &NetWinLobbyRows[slot], 0x17C);","if(slot>=1) memcpy_call(&updated, &NetWinLobbyRows[slot], 0x17C);"),
     ("no_restore_faction","faction","NetWinLobbyRows[slot].faction_or_color_ = previous;","(void)previous;"),
     ("invalid_selection_normalized","faction","const int chosen_faction = pop_menu.get_selected_id() - 1;",

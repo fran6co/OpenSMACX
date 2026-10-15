@@ -42,14 +42,14 @@ using std::int8_t;
 #endif
 """ + structs + r"""
 NetWinLobbyRow NetWinLobbyRows[8] = {};
-int player_count = 3;
-int *const NetWinPlayerCount = &player_count;
+struct NetDaemon { int player_count_ = 3; } NetDaemonNet;
 struct NetWin {
     void *faction_records_ = nullptr;
     int get_player_color(int faction);
 };
 """ + body + r"""
 int main() {
+    NetDaemonNet.player_count_ = 3;
     NetWin win;
     assert(win.get_player_color(1) == 0);
     NetWinFactionRecord records[4] = {};

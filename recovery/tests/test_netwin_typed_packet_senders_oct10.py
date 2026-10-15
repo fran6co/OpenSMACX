@@ -117,12 +117,11 @@ struct Daemon : Net {
   uint32_t local_player_id() const { return local_player_id_; }
   uint32_t host_player_id() const { return host_player_id_; }
   struct Slot { unsigned pid_; } process_slots_[8];
+  struct PrimaryState { unsigned leading_words_[3]; } primary_state_ = {{1,0,0}};
 } NetDaemonNet;
 NetWinLobbyRow NetWinLobbyRows[8];
 NetWinSessionOptionsState NetWinSessionOptions;
 NetWinSessionBlock NetWinSessionData;
-static unsigned gate;
-static unsigned *NetWinRulesGate = &gate;
 static void reset() { sent.clear(); calls = 0; recipient = 0; }
 static unsigned word(unsigned at, unsigned width) {
   unsigned v = 0;
@@ -139,14 +138,14 @@ int main() {
     reinterpret_cast<unsigned char *>(&NetWinSessionOptions)[i] = (i * 9 + 17) & 255;
   for (unsigned i = 0; i < sizeof(NetWinSessionData); ++i)
     reinterpret_cast<unsigned char *>(&NetWinSessionData)[i] = (i * 11 + 19) & 255;
-  gate = 0; reset(); send_all_player_packets(-1); assert(calls == 0);
+  NetDaemonNet.primary_state_.leading_words_[0] = 0; reset(); send_all_player_packets(-1); assert(calls == 0);
   reset(); send_all_player_packets(-2);
   assert(calls == 1 && recipient == 0 && sent.size() == 0xA74 && word(0,2) == 0x4F04);
   assert(word(4,4) == 0xFFFFFFFFu && word(8,4) == 0);
   assert(!std::memcmp(sent.data()+0x10, &NetWinLobbyRows[1], 0xA64));
-  gate = 1; reset(); send_all_player_packets(-1);
+  NetDaemonNet.primary_state_.leading_words_[0] = 1; reset(); send_all_player_packets(-1);
   assert(calls == 1 && recipient == 0 && word(0,2) == 0x4F04);
-  gate = 0; reset(); send_all_player_packets(3);
+  NetDaemonNet.primary_state_.leading_words_[0] = 0; reset(); send_all_player_packets(3);
   assert(calls == 1 && recipient == 0x1203 && word(0,2) == 0x1F04);
   assert(!std::memcmp(sent.data()+0x10, &NetWinLobbyRows[1], 0xA64));
   unsigned char payload[0x17C];
