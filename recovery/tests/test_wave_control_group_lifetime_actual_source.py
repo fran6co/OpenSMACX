@@ -45,6 +45,10 @@ def test_wave_control_group_actual_member_lifetime(compiler_name: str, tmp_path:
 #define nullptr 0
 struct Wave {};
 struct WaveGroupNode { WaveGroupNode *prev, *next; Wave *wave; };
+struct WaveGroupList {
+    WaveGroupNode *head, *tail, *cursor;
+    unsigned int count;
+};
 static void *freed[8];
 static unsigned int freed_count;
 void operator delete(void *p) throw() {
@@ -55,8 +59,7 @@ struct WaveControlGroup {
     unsigned char enabled;
     unsigned char pad[3];
     unsigned int volume;
-    WaveGroupNode *head, *tail, *cursor;
-    unsigned int count;
+    WaveGroupList list_;
     WaveControlGroup();
     ~WaveControlGroup();
 };
@@ -73,13 +76,13 @@ static WaveGroupNode *node(Wave *wave, WaveGroupNode *prev, WaveGroupNode *next)
         WaveGroupNode *n1, *n2, *n3;
         {
             WaveControlGroup group;
-            assert(group.head == 0 && group.tail == 0 && group.cursor == 0);
-            assert(group.count == 0 && group.volume == 0x7f && group.enabled == 1);
+            assert(group.list_.head == 0 && group.list_.tail == 0 && group.list_.cursor == 0);
+            assert(group.list_.count == 0 && group.volume == 0x7f && group.enabled == 1);
             n3 = node(&b, 0, 0);
             n2 = node(&b, 0, n3);
             n1 = node(&a, 0, n2);
         n2->prev = n1; n3->prev = n2;
-        group.head = n1; group.tail = n3; group.cursor = &cursor; group.count = 3;
+        group.list_.head = n1; group.list_.tail = n3; group.list_.cursor = &cursor; group.list_.count = 3;
         }
         assert(freed_count == 3);
         assert(freed[0] == n1 && freed[1] == n2 && freed[2] == n3);
@@ -91,8 +94,8 @@ static WaveGroupNode *node(Wave *wave, WaveGroupNode *prev, WaveGroupNode *next)
     empty->prev = head; tail->prev = empty;
     {
         WaveControlGroup group;
-        group.head = head; group.tail = tail; group.count = 3;
-        group.cursor = &cursor;
+        group.list_.head = head; group.list_.tail = tail; group.list_.count = 3;
+        group.list_.cursor = &cursor;
     }
     // The historical null-wave break leaves the rest of the intrusive list
     // allocated; the host case releases that intentionally untouched suffix.

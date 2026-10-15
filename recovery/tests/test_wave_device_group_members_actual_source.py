@@ -56,14 +56,16 @@ struct WaveGroupList {{
 }};
 struct WaveControlGroup {{
   uint8_t enabled; uint8_t pad[3]; uint32_t volume;
-  WaveGroupNode *head; WaveGroupNode *tail; WaveGroupNode *cursor; uint32_t count;
+  WaveGroupList list_;
 }};
 struct OriginalObject {{
   int observed;
   void set(int value) {{ observed = value; }}
+  void set_volume(int value) {{ observed = value; }}
 }};
 template<class Method> Method vtable_slot(void *, int) {{ return &OriginalObject::set; }}
 #define ORIGINAL(pointer) static_cast<OriginalObject *>(pointer)
+static OriginalObject *wave_playback_device(OriginalObject *device) {{ return device; }}
 
 static bool fail_insert;
 static uint32_t slot_seen_by_insert;
@@ -120,7 +122,7 @@ static int test_pull_order_and_list_edges() {{
   WaveGroupNode *n2 = new WaveGroupNode{{n1, nullptr, &b}};
   WaveGroupNode *n3 = new WaveGroupNode{{n2, nullptr, &c}};
   n1->next = n2; n2->next = n3;
-  auto &g = d.groups_[0]; g.head = n1; g.tail = n3; g.cursor = n2; g.count = 3;
+  auto &g = d.groups_[0].list_; g.head = n1; g.tail = n3; g.cursor = n2; g.count = 3;
   if (d.pull_from_group(&b) != 0 || b.slot() != 16) return 3;
   if (g.head != n1 || n1->next != n3 || n3->prev != n1 || g.cursor != n3 || g.count != 2) return 4;
   if (d.pull_from_group(&absent) != 0 || absent.slot() != 16 || g.count != 2) return 5;
@@ -160,6 +162,7 @@ def test_actual_bodies_preserve_group_semantics() -> None:
     assert "friend class Wave;" in device_header
     assert "uint32_t group_slot_;" in wave_header
     assert "WaveControlGroup groups_[16];" in device_header
+    assert "WaveGroupList list_;" in device_header
     assert "WaveDevicePullFromGroup" not in wave_header
     assert "WaveDeviceGroupVolumes" not in wave_header
     for marker in (
