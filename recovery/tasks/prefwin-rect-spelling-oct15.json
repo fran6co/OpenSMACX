@@ -1,0 +1,29 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "812f47ec7018dddde7fcfe77e98b378a52274fa6",
+  "editable_files": [
+    "src/prefwin.cpp",
+    "recovery/tests/test_prefwin_volume_contract_oct13h.py"
+  ],
+  "evidence": [
+    "Fresh a94d153db census: redraw_option13/23 and redraw_volume26/28 matching instructions, equal original/compiled instruction counts and mnemonic sequences. This supports bounded local RECT spelling experiments, not a new behavior or type claim.",
+    "Pinned491810 geometry left/top/right/bottom and style18 call;491860 top-offset geometry must be evaluated before mode4 test and style9 call. Preserve all values, original quirks, existing annotations and unrelated methods.",
+    "Use native body-only candidate decks in ignored storage; no casts, volatile tricks, asm or ABI changes. Retain only evidence-supported idiomatic winners after full-TU and host controls, candidate/destination build-link and independent review. No automatic/full-game acceptance."
+  ],
+  "intent": "Restore original emission of PrefWin rectangle painters through bounded idiomatic source-form experiments, preserving geometry and read/call ordering.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4790288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4790368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prefwin-rect-spelling-oct15"
+}
