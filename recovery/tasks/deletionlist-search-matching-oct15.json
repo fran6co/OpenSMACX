@@ -1,0 +1,55 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "12eb8a7e4e78d2d384b05ce2190466352c3252f2",
+  "editable_files": [
+    "recovery/tests/test_deletionlist_search_oct15.py",
+    "src/deletionlist.cpp",
+    "src/deletionlist.h",
+    "src/stringstruct.cpp",
+    "src/stringstruct.h"
+  ],
+  "evidence": [
+    "Pinned52DD10..52DD4B walks24 DeletionRecord receivers at60-byte stride, caches byte enable mask, tests occupied then owner, returns first slot or-1. Pinned52DD50..52DDB5 contains search loop without direct call and reloads enable mask after byte acknowledgement store. Current source uses indexed search and a separately defined helper. Screen pointer-walk and ordinary inline source forms using unchanged flag policy; reject semantic changes, no volatile/assembly/original-address aliases. Inline emission and ownership require actual compiler and build checks, not source conjecture."
+  ],
+  "intent": "Bounded clean-source search restoration for the typed DeletionList record search and acknowledgement family; preserve original occupancy, first-match, mask reload and wraparound behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5430432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "deletionlist-search-matching-oct15"
+}
