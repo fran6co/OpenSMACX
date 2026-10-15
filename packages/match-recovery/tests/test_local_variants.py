@@ -9,6 +9,7 @@ from match_recovery.local_variants import measure_local_variants
 from match_recovery.model import Origin
 from match_recovery.tasks import Task, TaskStore
 from match_recovery import local_variants
+from match_recovery.source.reader import read_text
 from test_binary import coff_fixture, pe_fixture
 
 
@@ -226,3 +227,138 @@ def test_changed_source_during_lease_refuses_result(project):
     with pytest.raises(ValueError, match="inputs changed during the compiler lease"):
         run(project, compiler)
     assert len(compiler.calls) == 5  # Abort immediately after the changed candidate overlay.
+
+
+def test_mapped_overload_body_is_selected_by_exact_marker_interval(tmp_path):
+    source = tmp_path / "unit.cc"
+    text = ("// ORIGINAL: 0x00401000 _first 0x00401000-0x00401001\n"
+            "int Owner::fill(int x) { return x; }\n"
+            "/* a comment opened before the target marker\n"
+            "// ORIGINAL: 0x00401001 _target 0x00401001-0x00401002\n"
+            "*/\n"
+            "void Owner::fill(int color) {\n"
+            "  const char *sample = R\"tag(})tag\"; // } is not the close\n"
+            "  return;\n"
+            "}\n"
+            "// ORIGINAL: 0x00401002 _third 0x00401002-0x00401003\n"
+            "int Owner::fill(double x) { return 0; }\n")
+    records = read_text(text, source)
+    target = next(row for row in records if row.address == 0x401001)
+    markers = tuple(local_variants._marker_identity(row) for row in records)
+    body = local_variants._bound_function_body_bytes(text, "Owner::fill", source,
+                                                     target, markers)
+    assert text.encode()[body[0]:body[1]].startswith(b"{\n  const char")
+    assert text.encode()[body[0]:body[1]].endswith(b"  return;\n}")
+
+    good = text.replace("  return;", "  int changed = color;\n  return;").encode()
+    local_variants._check_body_only(text, body, "Owner::fill", [good],
+                                    source=source, target_record=target,
+                                    expected_markers=markers)
+
+    for changed in (
+        text.replace("return x;", "return x + 1;"),
+        text.replace("void Owner::fill(int color)", "int Owner::fill(int color)"),
+        text.replace("void Owner::fill(int color)",
+                     "void unrelated() {} void Owner::fill(int color)"),
+        text.replace("_target 0x00401001", "_other 0x00401001"),
+        text.replace("  return;", "  // ORIGINAL: 0x00401004 _fake 0x00401004-0x00401005\n  return;"),
+        text.replace("// ORIGINAL: 0x00401002", "void Owner::fill(char x) {}\n"
+                     "// ORIGINAL: 0x00401002"),
+        text.replace("void Owner::fill(int color) {\n"
+                     "  const char *sample = R\"tag(})tag\"; // } is not the close\n"
+                     "  return;\n}\n", "") +
+        "void Owner::fill(int color) { return; }\n",
+    ):
+        with pytest.raises(ValueError, match="selected function definition|only the selected function body"):
+            local_variants._check_body_only(text, body, "Owner::fill", [changed.encode()],
+                                            source=source, target_record=target,
+                                            expected_markers=markers)
+
+
+def test_local_body_screen_refuses_default_lambda_braces_in_signature(tmp_path):
+    source = tmp_path / "unit.cc"
+    text = ("// ORIGINAL: 0x00401000 _fill 0x00401000-0x00401001\n"
+            "void Owner::fill(int x = [] { return 1; }()) { return; }\n")
+    record, = read_text(text, source)
+    markers = (local_variants._marker_identity(record),)
+    with pytest.raises(ValueError, match="brace inside its signature"):
+        local_variants._bound_function_body_bytes(text, "Owner::fill", source,
+                                                  record, markers)
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_local_body_screen_refuses_physical_line_splicing_and_sibling_escape(tmp_path, newline):
+    source = tmp_path / "unit.cc"
+    text = newline.join((
+        "// ORIGINAL: 0x00401000 _target 0x00401000-0x00401001",
+        "void Owner::fill(int color) {",
+        "  // selected-body comment",
+        "  return;",
+        "}",
+        "// ORIGINAL: 0x00401001 _sibling 0x00401001-0x00401002",
+        "int Owner::fill(double color) { return 2; }",
+        ""))
+    records = read_text(text, source)
+    target = records[0]
+    markers = tuple(local_variants._marker_identity(row) for row in records)
+    body = local_variants._bound_function_body_bytes(text, "Owner::fill", source,
+                                                     target, markers)
+    # The physical continuation changes the compiler's comment boundary;
+    # a source-level brace walk must not treat a sibling as editable body.
+    sibling_escape = (text.replace("  // selected-body comment" + newline,
+                                   "  // selected-body comment \\" + newline)
+                      .replace("return 2;", "return 99;"))
+    with pytest.raises(ValueError, match="backslash-newline splicing"):
+        local_variants._check_body_only(text, body, "Owner::fill",
+                                        [sibling_escape.encode()], source=source,
+                                        target_record=target, expected_markers=markers)
+    with pytest.raises(ValueError, match="backslash-newline splicing"):
+        local_variants._bound_function_body_bytes(sibling_escape, "Owner::fill",
+                                                  source, target, markers)
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_local_screen_rejects_spliced_original_before_compilation(project, newline):
+    root, _task, deck = project
+    path = root / "code/unit.cc"
+    source = path.read_text().replace("\n", newline) + "// continued \\" + newline + "note" + newline
+    path.write_bytes(source.encode())
+    deck["files"]["code/unit.cc"]["source_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+    compiler = SyntheticCompiler(root)
+    with pytest.raises(ValueError, match="backslash-newline splicing"):
+        run(project, compiler, deck)
+    assert compiler.calls == []
+
+
+def test_local_screen_conservatively_refuses_spliced_macros():
+    with pytest.raises(ValueError, match="backslash-newline splicing"):
+        local_variants._reject_line_splicing("#define WIDTH \\  \n 42\n")
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_local_screen_refuses_reproduced_continued_comment_sibling_escape(tmp_path, newline):
+    source = tmp_path / "unit.cc"
+    text = newline.join((
+        "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001",
+        "void f() { //\\",
+        "{",
+        "}",
+        "void g() { return 1; }",
+        "//\\",
+        "}",
+        "// ORIGINAL: 0x00401001 _next 0x00401001-0x00401002",
+        ""))
+    candidate = text.replace("void g() { return 1; }", "void g() { return 2; }")
+    markers = read_text(text, source)
+    target = markers[0]
+    identities = tuple(local_variants._marker_identity(row) for row in markers)
+    # Without phase-two splicing the brace walk widens f's selected body
+    # across g, so the sibling-only edit would be misclassified as local.
+    widened = local_variants._function_body_bytes(text, "f", after_line=1, before_line=8)
+    assert b"void g()" in text.encode()[widened[0]:widened[1]]
+    with pytest.raises(ValueError, match="backslash-newline splicing"):
+        local_variants._bound_function_body_bytes(text, "f", source, target, identities)
+    with pytest.raises(ValueError, match="backslash-newline splicing"):
+        local_variants._check_body_only(text, widened, "f", [candidate.encode()],
+                                        source=source, target_record=target,
+                                        expected_markers=identities)

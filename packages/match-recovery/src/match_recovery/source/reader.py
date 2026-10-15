@@ -639,7 +639,8 @@ def read_text(text: str, path: Path | str) -> list[DecompilationState]:
     return _read_text(text, path)
 
 
-def function_line(source: Path | str, name: str) -> int:
+def function_line(source: Path | str, name: str, *, after_line: int | None = None,
+                  before_line: int | None = None) -> int:
     """The 1-based line of the DEFINITION of `name`.
 
     `source` is a path (it is read) or the text itself; `name` is the C++
@@ -649,8 +650,10 @@ def function_line(source: Path | str, name: str) -> int:
     matches inside a comment, a fact block, or a string literal. A
     candidate is a definition only when its parameter list closes and a
     body opens before anything else - declarations and call sites are
-    refused. Raises ValueError, listing the candidate lines, when zero or
-    several definitions match.
+    refused. Optional exclusive line bounds select a source-mapped region;
+    the lexical scan still begins at the start of the complete file. Raises
+    ValueError, listing the candidate lines, when zero or several definitions
+    match within those bounds.
     """
     if isinstance(source, Path):
         text = source.read_text(errors="ignore")
@@ -666,6 +669,11 @@ def function_line(source: Path | str, name: str) -> int:
             is_file = False
         text = as_path.read_text(errors="ignore") if is_file else source
 
+    if (after_line is not None and (type(after_line) is not int or after_line < 0)
+            or before_line is not None and (type(before_line) is not int or before_line < 1)
+            or after_line is not None and before_line is not None
+            and before_line <= after_line + 1):
+        raise ValueError("definition line bounds must enclose at least one line")
     pattern = re.compile(rf"(?<![\w:]){re.escape(name)}\s*\(")
     lines = text.splitlines()
     definitions = []
@@ -674,8 +682,11 @@ def function_line(source: Path | str, name: str) -> int:
         state = in_block
         code = _brace_delta(line, state)[3]
         in_block = _block_state_after(line, state)
-        if pattern.search(code) and _is_definition(lines, index, state, pattern):
-            definitions.append(index + 1)
+        if ((after_line is None or index + 1 > after_line)
+                and (before_line is None or index + 1 < before_line)):
+            for match in pattern.finditer(code):
+                if _is_definition(lines, index, state, match):
+                    definitions.append(index + 1)
 
     if len(definitions) != 1:
         raise ValueError(
@@ -685,7 +696,7 @@ def function_line(source: Path | str, name: str) -> int:
 
 
 def _is_definition(lines: list[str], start: int, state: bool,
-                   pattern: re.Pattern[str]) -> bool:
+                   match: re.Match[str]) -> bool:
     """The `name(` on line `start` opens a parameter list that closes and
     is followed by `{` - a definition, not a declaration or a call.
 
@@ -696,9 +707,6 @@ def _is_definition(lines: list[str], start: int, state: bool,
     expression - `if (name(x)) {` - is a call site.
     """
     code = _brace_delta(lines[start], state)[3]
-    match = pattern.search(code)
-    if match is None:
-        return False
     stream, depth, closed = code[match.end():], 1, False
     index, line_state = start, state
     while True:

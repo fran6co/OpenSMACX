@@ -19,6 +19,7 @@ from .ownership_source import project_view
 from .pe_coff import Coff, PeImage
 from .source.asm import AsmComparison, compare_unit, shared_spans
 from .source.mangled import qualified_name
+from .source.model import Mode
 from .source.reader import function_line, read_text
 from .source_selection import snapshot_mappings, selected_source_records
 from .source_inventory import image_pin
@@ -31,21 +32,38 @@ class _LeaseChanged(ValueError):
     """A measured input changed; abort without further compiler calls."""
 
 
-def _function_body_bytes(text: str, name: str) -> tuple[int, int]:
+_LINE_SPLICE = re.compile(r"\\[ \t\v\f]*(?:\r\n|\n|\r)")
+
+
+def _reject_line_splicing(text: str) -> None:
+    # Phase-two C/C++ splicing changes which physical lines are comments and
+    # definitions. The source lexer does not implement that preprocessor step.
+    if _LINE_SPLICE.search(text):
+        raise ValueError("local body screening does not support backslash-newline splicing")
+
+
+def _function_body_bytes(text: str, name: str, *, after_line: int | None = None,
+                         before_line: int | None = None) -> tuple[int, int]:
     """Return exact byte bounds of one C++ definition's braces.
 
     The lexical walk ignores comments, quoted literals, and raw strings so a
     brace in prose or data cannot enlarge the authorized edit window.
     """
-    line = function_line(text, name)
+    line = function_line(text, name, after_line=after_line, before_line=before_line)
     line_start = sum(len(part) for part in text.splitlines(keepends=True)[:line - 1])
+    definition_line = text.splitlines(keepends=True)[line - 1]
+    if definition_line.count(name) != 1 or "{" in definition_line.split(name, 1)[0]:
+        raise ValueError("target definition has an ambiguous same-line body boundary")
+    region_end = (len(text) if before_line is None else
+                  sum(len(part) for part in text.splitlines(keepends=True)[:before_line - 1]))
     state = "code"
     quote = ""
     raw_end = ""
     depth = 0
+    declarator_parens = 0
     opening = None
     index = 0
-    while index < len(text):
+    while index < region_end:
         char = text[index]
         following = text[index:index + 2]
         if state == "line":
@@ -94,8 +112,16 @@ def _function_body_bytes(text: str, name: str) -> tuple[int, int]:
                     state, index = "raw", paren + 1
                     continue
         if index >= line_start:
+            if opening is None and char == "(":
+                declarator_parens += 1
+            elif opening is None and char == ")":
+                declarator_parens -= 1
+                if declarator_parens < 0:
+                    raise ValueError("target definition has an ambiguous declarator")
             if char == "{":
                 if opening is None:
+                    if declarator_parens:
+                        raise ValueError("target definition has a brace inside its signature")
                     opening, depth = index, 1
                 else:
                     depth += 1
@@ -108,16 +134,51 @@ def _function_body_bytes(text: str, name: str) -> tuple[int, int]:
     raise ValueError("target definition has no balanced body")
 
 
+def _marker_identity(record) -> tuple:
+    return (record.address, record.name, record.symbol, record.image_spans,
+            record.mode, record.body)
+
+
+def _bound_function_body_bytes(text: str, name: str, source: Path,
+                               target_record, expected_markers: tuple) -> tuple[int, int]:
+    """Find one real definition inside its unchanged source mapping interval."""
+    _reject_line_splicing(text)
+    markers = read_text(text, source)
+    if tuple(_marker_identity(row) for row in markers) != expected_markers:
+        raise ValueError("local candidate changed source mapping identities")
+    selected = [index for index, row in enumerate(markers)
+                if row.address == target_record.address]
+    if len(selected) != 1:
+        raise ValueError("target source mapping is absent or ambiguous")
+    index, = selected
+    marker = markers[index]
+    if (marker.line != target_record.line or marker.mode not in (Mode.FILE, Mode.BODY)
+            or marker.body or _marker_identity(marker) != _marker_identity(target_record)):
+        raise ValueError("target definition is not in its exact product source mapping")
+    before_line = (markers[index + 1].line if index + 1 < len(markers)
+                   else len(text.splitlines()) + 1)
+    return _function_body_bytes(text, name, after_line=marker.line,
+                                before_line=before_line)
+
+
 def _check_body_only(original_text: str, original_body: tuple[int, int], name: str,
-                     replacement_sources) -> None:
+                     replacement_sources, *, source: Path, target_record,
+                     expected_markers: tuple) -> None:
     original = original_text.encode("utf-8")
     low, high = original_body
     prefix, suffix = original[:low], original[high:]
     for contents in replacement_sources:
         try:
             text = contents.decode("utf-8")
-            body = _function_body_bytes(text, name)
-        except (UnicodeDecodeError, ValueError) as error:
+        except UnicodeDecodeError as error:
+            raise ValueError("local candidates must preserve the selected function definition") from error
+        _reject_line_splicing(text)
+        try:
+            body = _bound_function_body_bytes(text, name, source, target_record,
+                                              expected_markers)
+        except ValueError as error:
+            if str(error) == "local candidate changed source mapping identities":
+                raise ValueError("local candidates may change only the selected function body") from error
             raise ValueError("local candidates must preserve the selected function definition") from error
         changed = contents[:body[0]] + contents[body[1]:]
         if changed != prefix + suffix:
@@ -189,6 +250,7 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
         original_text = original.decode("utf-8")
     except UnicodeDecodeError as error:
         raise ValueError("local screening requires UTF-8 product source") from error
+    _reject_line_splicing(original_text)
 
     view, view_snapshot = project_view(root)
     pin = view_snapshot["image_sha256"]
@@ -236,12 +298,16 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
         records.append(record)
     target_record = next(record for record in records
                          if record.address == target.origin.address)
+    expected_markers = tuple(_marker_identity(row) for row in read_text(original_text, source))
     function_names = [qualified_name(target.symbol), target_record.name]
     body = None
     body_error = None
+    body_name = None
     for name in dict.fromkeys(name for name in function_names if name):
         try:
-            body = _function_body_bytes(original_text, name)
+            body = _bound_function_body_bytes(original_text, name, source,
+                                              target_record, expected_markers)
+            body_name = name
             break
         except ValueError as error:
             body_error = error
@@ -255,21 +321,11 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
         if not isinstance(items, list) or not items or any(not isinstance(item, str) for item in items):
             raise ValueError("local replacement must match its exact-text anchor list")
     _check_replacement_text(replacement_sets)
-    body_name = None
-    for name in function_names:
-        if not name:
-            continue
-        try:
-            if _function_body_bytes(original_text, name) == body:
-                body_name = name
-                break
-        except ValueError:
-            continue
-    if body_name is None:
-        raise ValueError("cannot retain the selected function definition identity")
     replacement_sources = [damage_controls[source_name][1],
                             *(row[source_name] for row in candidates.values())]
-    _check_body_only(original_text, body, body_name, replacement_sources)
+    _check_body_only(original_text, body, body_name, replacement_sources,
+                     source=source, target_record=target_record,
+                     expected_markers=expected_markers)
 
     for path, (_entity, control) in damage_controls.items():
         rebound, _refused, _targets, changes = _trial_bindings(
