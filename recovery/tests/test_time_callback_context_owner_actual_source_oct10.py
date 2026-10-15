@@ -146,7 +146,8 @@ struct Time {
     void init(void (__cdecl *callback)(int, void*), int, void*, uint32_t, uint32_t);
     uint32_t start(void (__cdecl *callback)(int, void*), int, void*, uint32_t, uint32_t);
     uint32_t pulse(void (__cdecl *callback)(int, void*), int, void*, uint32_t, uint32_t);
-    void stop() { ++stop_count; id_event_ = 0; events.push_back(3); }
+    void stop_pending_events() { ++stop_count; id_event_ = 0; events.push_back(3); }
+    void stop() { stop_pending_events(); }
     void close_impl();
     void close();
 };

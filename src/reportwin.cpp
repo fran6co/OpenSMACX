@@ -2415,7 +2415,7 @@ void ReportWin::exp_anim() {
     canvas->set_clip(const_cast<RECT *>(&canvas->clip_rect()));
 }
 
-// ORIGINAL: 0x004989F0 ?on_group_clicked@ReportWin@@QAEXHHH@Z 0x004989F0-0x00498B06
+// ORIGINAL: 0x004989F0 ?on_group_clicked@ReportWin@@QAEXHHH@Z 0x004989F0-0x00498B06 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004989f0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ?on_group_clicked@ReportWin@@UAEXHHH@Z
 void ReportWin::on_group_clicked(int group, int, int state) {

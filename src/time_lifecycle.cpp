@@ -27,7 +27,7 @@
 // The retained TRIED notes below describe the former mixed-TU arrangement.
 
 inline void Time::close_impl() {
-    stop();
+    stop_pending_events();
     callback1_ = 0;
     oneshot_state_ = 0;
     callback2_ = 0;

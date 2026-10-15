@@ -222,7 +222,7 @@ void Time::init(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t 
     // IN THE IMAGE'S STORE ORDER at 0x006162AA: callback1_, then the four
     // zeroed fields out of declaration order (oneshot_state_, tick_posted_,
     // unk_2_, callback2_, cb_param2_), then the three arguments.
-    stop();
+    stop_pending_events();
     callback1_ = callback;
     oneshot_state_ = 0;
     tick_posted_ = 0;
@@ -252,7 +252,7 @@ void Time::init(void(__cdecl *callback)(int, void *), int param, void *param2, u
                 uint32_t res) {
     // IN THE IMAGE'S STORE ORDER at 0x0061631A, which is not the one-argument
     // overload's: the two callback fields come first here.
-    stop();
+    stop_pending_events();
     callback2_ = callback;
     cb_param2_ = param2;
     oneshot_state_ = 0;
@@ -301,10 +301,10 @@ Status: Complete
 uint32_t Time::start(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res) {
     // init() (0x00616260, BYTE_EXACT as its own out-of-line function) is
     // hand-inlined here: the image writes its whole body out at this call
-    // site (init() itself inlines stop(), whose flush_timer() call is the
+    // site (init() itself inlines the cancellation core, whose flush_timer() call is the
     // only one that survives), rather than calling 0x00616260. The store
     // ladder is this copy's own - see the LEVER above.
-    stop();
+    stop_pending_events();
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
@@ -363,10 +363,10 @@ uint32_t Time::start(void(__cdecl *callback)(int, void *), int param, void *para
                      uint32_t res) {
     // init() (the two-parameter-callback overload, BYTE_EXACT as its own
     // out-of-line function) is hand-inlined here: the image writes its whole
-    // body out at this call site (init() itself inlines stop(), whose
+    // body out at this call site (init() itself inlines the cancellation core, whose
     // flush_timer() call is the only one that survives), rather than calling
     // it as init(callback, param, param2, cnt, res).
-    stop();
+    stop_pending_events();
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
@@ -422,9 +422,9 @@ Status: Complete
 uint32_t Time::pulse(void(__cdecl *callback)(int), int param, uint32_t cnt, uint32_t res) {
     // init() (0x00616260, BYTE_EXACT as its own out-of-line function) is
     // hand-inlined here: the image writes its whole body out at this call
-    // site (init() itself inlines stop(), whose flush_timer() call is the
+    // site (init() itself inlines the cancellation core, whose flush_timer() call is the
     // only one that survives), rather than calling 0x00616260.
-    stop();
+    stop_pending_events();
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
@@ -488,7 +488,7 @@ uint32_t Time::pulse(void(__cdecl *callback)(int, void *), int param, void *para
     // init() (the two-parameter-callback overload, BYTE_EXACT as its own
     // out-of-line function) is hand-inlined here: the image writes its whole
     // body out at this call site, rather than calling it directly.
-    stop();
+    stop_pending_events();
     oneshot_state_ = 0;
     tick_posted_ = 0;
     unk_2_ = 0;
@@ -574,7 +574,7 @@ uint32_t Time::pulse() {
 /*
 Purpose: Stop an instance of the class.
 // ORIGINAL: 0x00616730 ?stop@Time@@QAEXXZ 0x00616730-0x00616772 BYTE_EXACT
-// body      src/time.h
+// body      src/time.cpp
 // size      66 bytes
 // prototype void (__thiscall ?stop@Time@@QAEXXZ)(Time* this)
 // callers   30   call targets   0
@@ -585,6 +585,10 @@ Purpose: Stop an instance of the class.
 Return Value: n/a
 Status: Complete
 */
+
+void Time::stop() {
+    stop_pending_events();
+}
 
 
 /*

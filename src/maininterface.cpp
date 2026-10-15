@@ -1216,7 +1216,7 @@ void MainInterface::restore_back(int a1) {
 
 
 /*
-// ORIGINAL: 0x0045C180 ?timer_callback_daemon@MainInterface@@QAEXH@Z 0x0045C180-0x0045C1F4 FILE
+// ORIGINAL: 0x0045C180 ?timer_callback_daemon@MainInterface@@QAEXH@Z 0x0045C180-0x0045C1F4 FILE BYTE_EXACT
 // TRIED: the scaffold bound the IAT slot as `static int *const g_00669328`
 // and dispatched through its own `UnionRectProc` typedef; the slot is
 // USER32!UnionRect (tools/iat_names.py), and windows.h already declares it, so
@@ -2519,7 +2519,7 @@ void MainInterface::on_scrolled(int a1, int a2) {
 
 
 /*
-// ORIGINAL: 0x0045C200 ?timer_callback_daemon@MainInterface@@QAAXHH@Z 0x0045C200-0x0045C273
+// ORIGINAL: 0x0045C200 ?timer_callback_daemon@MainInterface@@QAAXHH@Z 0x0045C200-0x0045C273 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: 0x45C200 reads callback parameters from [ebp+8]/[ebp+0xC], branches on mode 0/1, and accesses context+0x216F0,+0x25040,+0x25068,+0xDE0,+0xDF0", "src/maininterface.h declares MainInterface at the exact receiver layout, with alert_ at +0x216F0, time1_ at +0x25040, time2_ at +0x25068, and the corresponding RECT members at +0xDE0/+0xDF0", "MainInterface::init registers the free callback with borrowed this context for both embedded Time instances; mode 0/1 selects time1_/time2_", "neighboring mapped MainInterface::timer_callback_daemon(int) and set_alert(int) access the same genuine members; the callback remains a free two-argument __cdecl entry"], "reason": "Keep the exact free callback entry, express the borrowed context as the existing MainInterface owner, and use that owner's fields. The friend declaration grants only this callback access; it does not turn it into a member or alter registration/lifetime. The stripped catalogue spelling is not proof of the intended source type."}
 // symbol    ?main_interface_timer_callback@@YAXHPAX@Z
 // TRIED: both stack parameters are read directly ([ebp+8], [ebp+0xc]) with no

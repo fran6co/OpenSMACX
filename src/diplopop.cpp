@@ -739,7 +739,7 @@ void DiploPop::hide() {
     }
 }
 
-// ORIGINAL: 0x0043F0F0 ?close@DiploPop@@QAEXXZ 0x0043F0F0-0x0043F137 FILE
+// ORIGINAL: 0x0043F0F0 ?close@DiploPop@@QAEXXZ 0x0043F0F0-0x0043F137 FILE BYTE_EXACT
 // size      71 bytes
 // prototype void (__thiscall ?close@DiploPop@@QAEXXZ)(DiploPop* this)
 // callers   0   call targets   2
