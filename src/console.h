@@ -631,7 +631,9 @@ class Console : public MapWin {
   // RECOVERY_MEMBER: v1 Console field_23D10_ 0x23D10 0x0046F000
   uint32_t field_23D10_;  // 0x23D10
  private:
-  uint32_t field_23D14_;  // 0x23D14
+  // Signed vehicle/range latch: cursor_on stores its int veh_id, and
+  // selecting's pinned JL gate treats negative values as sentinels.
+  int32_t field_23D14_;  // 0x23D14
   uint32_t field_23D18_;  // 0x23D18
   uint32_t field_23D1C_;  // 0x23D1C
   uint8_t field_23D20_[0x4];  // 0x23D20

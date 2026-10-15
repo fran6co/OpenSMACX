@@ -2942,7 +2942,7 @@ int Console::selecting(int tile_x, int tile_y) {
     }
 
     bool forbidden = false;
-    if (selecting_signed(field_23D14_) >= 0) {
+    if (field_23D14_ >= 0) {
         const int vehicle = selected_vehicle_;
         const int vehicle_x = Vehs[vehicle].x;
         const int vehicle_y = Vehs[vehicle].y;
@@ -2955,7 +2955,7 @@ int Console::selecting(int tile_x, int tile_y) {
         // original SAR floors negative odd sums rather than truncating.
         const int distance = distance_sum >= 0 ? distance_sum / 2
                            : -1 - ((-1 - distance_sum) / 2);
-        forbidden = distance > selecting_signed(field_23D14_);
+        forbidden = distance > field_23D14_;
     }
     if (!forbidden && field_23D10_ == 8) {
         forbidden = valid_patrol(selected_vehicle_, tile_x, tile_y) == 0;
@@ -3682,7 +3682,7 @@ void Console::editor_clear_random() {
 // calls     0x005EC740 0x005FCA30
 
 void Console::cursor_on(int cursor_shape, int veh_id) {
-    field_23D14_ = static_cast<uint32_t>(veh_id);
+    field_23D14_ = veh_id;
     field_23D10_ = static_cast<uint32_t>(cursor_shape);
     for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         MapWin *const window = MapWinTable[slot];
@@ -7052,8 +7052,10 @@ void Console::cursor_key(int, int character, int) {
 // ORIGINAL: 0x00517060 ?use_time_bonus@Console@@QAEXXZ 0x00517060-0x00517173
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00517060.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::use_time_bonus() {
-    if (ConsoleControlTurnActive || !GameDataStateStorage.fields_.time_controls_selection_ || !IsMultiplayerNet) return;
+    if (ConsoleControlTurnActive) return;
     const int selection = GameDataStateStorage.fields_.time_controls_selection_;
+    if (!selection) return;
+    if (!IsMultiplayerNet) return;
     const int faction = ConsoleGlobal.faction_id_;
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && GameDataStateStorage.fields_.net_turn_faction_ != faction) {
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
