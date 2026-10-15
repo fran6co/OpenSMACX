@@ -22,17 +22,6 @@ def test_alphamenu_menu_init_population():
     else:
         raise AssertionError("unclosed AlphaMenu::menu_init")
     
-    # The product body uses the x86 StringTable key cast for pointers to strings
-    # already owned by StringTable. This 64-bit host shim substitutes stable test
-    # keys only at that ABI boundary; the calls/order and C++ body remain extracted.
-    body = body.replace(
-        "StringTable.get(reinterpret_cast<int>(Order[i + 4].order))",
-        "StringTable.get(i + 4)",
-    ).replace(
-        "StringTable.get((int)Terraforming[i].shortcuts)",
-        "StringTable.get(i)",
-    )
-    
     prefix = r"""
     #include <cassert>
     #include <cstdio>
@@ -56,6 +45,7 @@ def test_alphamenu_menu_init_population():
         std::snprintf(text, sizeof(text), "K%d", id);
         return text;
       }
+      char *get(const char *key) { return const_cast<char *>(key); }
     } StringTable;
     int read_rules_calls = 0;
     int read_rules(BOOL) { ++read_rules_calls; return 1; }
@@ -125,8 +115,8 @@ def test_alphamenu_menu_init_population():
       assert(menu.checks == 1 && menu.checked_id == -1 && menu.adjusted == 1);
       assert(menu.hidden.size() == (ironman ? 9u : 8u));
       if (ironman) assert(menu.hidden.back() == "0:90");
-      assert(menu.items[91] == "9:2304:K4|K0");
-      assert(menu.items[109] == "9:2322:K22|K18");
+      assert(menu.items[91] == "9:2304:order|shortcut");
+      assert(menu.items[109] == "9:2322:order|shortcut");
       assert(menu.items.back() == "7:1873:T188");
     }
     void open_failure_controls() {

@@ -37,17 +37,17 @@ def actual_fixture(tmp_path, *, damaged=None):
         body = extract_definition((ROOT / relative).read_text(), signature)
         if damaged == "cached":
             body = body.replace("PullDown **closing_slot = &entries_[selected_menu].pull_down;", "PullDown *closing_value = entries_[selected_menu].pull_down;")
-            body = body.replace("PullDown **closing_slot = &entries_[static_cast<int>(field_A24_)].pull_down;", "PullDown *closing_value = entries_[static_cast<int>(field_A24_)].pull_down;")
+            body = body.replace("PullDown **closing_slot = &entries_[field_A24_].pull_down;", "PullDown *closing_value = entries_[field_A24_].pull_down;")
             body = body.replace("*closing_slot", "closing_value")
             body = body.replace("PullDown **old_menu_slot = &entries_[current].pull_down;", "PullDown *old_menu_value = entries_[current].pull_down;").replace("*old_menu_slot", "old_menu_value")
         elif damaged == "recapture":
             body = body.replace("PullDown **closing_slot = &entries_[selected_menu].pull_down;", "")
-            body = body.replace("PullDown **closing_slot = &entries_[static_cast<int>(field_A24_)].pull_down;", "")
+            body = body.replace("PullDown **closing_slot = &entries_[field_A24_].pull_down;", "")
             body = body.replace("PullDown **old_menu_slot = &entries_[current].pull_down;", "")
-            body = body.replace("*closing_slot", "entries_[static_cast<int>(field_A24_)].pull_down")
-            body = body.replace("*old_menu_slot", "entries_[static_cast<int>(field_A24_)].pull_down")
+            body = body.replace("*closing_slot", "entries_[field_A24_].pull_down")
+            body = body.replace("*old_menu_slot", "entries_[field_A24_].pull_down")
         elif damaged == "mnemonic_index":
-            body = body.replace("entries_[static_cast<int>(field_A24_)].pull_down->show(point.x, point.y, 0)", "entries_[index].pull_down->show(point.x, point.y, 0)")
+            body = body.replace("entries_[field_A24_].pull_down->show(point.x, point.y, 0)", "entries_[index].pull_down->show(point.x, point.y, 0)")
         elif damaged == "before_draws" and signature == "int Menu::on_key_click(int, int key)":
             body = replace_once(body,
                 "do_all_draws();\n\n            const int item_index = (*closing_slot)->get_selected();",
@@ -84,7 +84,7 @@ static void scenario_close_key(int key) {
     AfterFlush=0; AfterTask=0;
 }
 static void scenario_mnemonic_live_show() {
-    Menu m; PullDown p[2]; hook_menu=&m; m.count_=2; m.field_A24_=0xffffffffu;
+    Menu m; PullDown p[2]; hook_menu=&m; m.count_=2; m.field_A24_=-1;
     char a[]="a", b[]="b"; m.entries_[0].mnemonic=a; m.entries_[1].mnemonic=b;
     m.entries_[0].pull_down=&p[0]; m.entries_[1].pull_down=&p[1];
     m.spot_.used=2; m.spot_.items[1].rect.left=20; m.spot_.items[1].rect.top=0;

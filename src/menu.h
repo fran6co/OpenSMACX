@@ -106,7 +106,7 @@ class Menu : public GraphicWin {
   int count_;
   uint32_t field_A1C_;  // 0x0a1c
   uint32_t field_A20_;
-  uint32_t field_A24_;
+  int field_A24_;  // selected entry index; -1 means no selected menu
   uint32_t field_A28_;
   Spot spot_;
   MenuEntry entries_[15];
