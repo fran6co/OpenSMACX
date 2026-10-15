@@ -61,9 +61,10 @@ static std::string last_popup_picture;
 
 static void event(const char *name) { events.push_back(name); }
 
-struct TutWin { void reset() { event("reset"); } };
-static TutWin tut_win;
-static TutWin *TutWinGlobal = &tut_win;
+struct TutWin;
+static TutWin *last_tutorial_receiver;
+struct TutWin { void reset() { last_tutorial_receiver = this; event("reset"); } };
+static TutWin TutorialWindow;
 
 struct FX {
     void fade(int value) { assert(value == 0x18); event("fade"); }
@@ -163,6 +164,7 @@ static void reset_state() {
     std::memset(StringTemp, 0, sizeof(StringTemp));
     events.clear(); item_ids.clear(); last_popup_label.clear();
     last_popup_picture.clear();
+    last_tutorial_receiver = 0;
     ProtoSortCount = 1; ProtoSortIds[0] = 0;
     GameDataStateStorage.fields_.game_state_ = 0x40; IsMultiplayerNet = 0;
     popup_answer = 0; popup_selection = 1;
@@ -181,6 +183,7 @@ static int test_ordering() {
     window.on_button_clicked(-2);
     assert(events.size() == 3);
     assert(events[0] == "reset" && events[1] == "release" && events[2] == "fade");
+    assert(last_tutorial_receiver == &TutorialWindow);
     reset_state();
     window.on_button_clicked(8);
     assert(events.size() == 3);

@@ -111,7 +111,7 @@
 #include "console.h"
 #include "planwin.h"   // PlanWindow is the complete MapWin-derived singleton.
 #include "diplopop.h"  // PlanWin receiver checks popup visibility.
-#include "tutwin.h"    // TutWinGlobal - draw_cursor ends on its draw_arrow
+#include "tutwin.h"    // TutorialWindow - draw_cursor ends on its draw_arrow
 #include "statuswin.h"
 #include "worldwin.h"
 #include "spritebox.h"
@@ -1323,7 +1323,7 @@ int MapWin::focus(int x_coord, int y_coord) {
 // ORIGINAL: 0x0046B1F0 ?set_center@MapWin@@QAEXHHH@Z 0x0046B1F0-0x0046B303
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046b1f0.cpp and original 0x0046B1F0-0x0046B303; Vehs+0xE is faction_id."], "reason": "Home map recentering with real receiver fields, destination vehicle state and redraw."}
 void MapWin::set_center(int x, int y, int draw_type) {
-    TutWinGlobal->reset();
+    TutorialWindow.reset();
     if ((x ^ y) & 1) {
         if (x & 1) {
             --x;
@@ -7317,7 +7317,7 @@ void __cdecl draw_cursor() {
             slot++;
         } while (slot < table + MapWinTableSlots);
     }
-    TutWinGlobal->draw_arrow();
+    TutorialWindow.draw_arrow();
 }
 
 // Fixed-slot bindings carried from 00462870.cpp

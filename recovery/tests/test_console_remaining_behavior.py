@@ -1465,7 +1465,7 @@ struct TutWin { bool blocked=false; int stages=0,maps=0;
     events.push_back(std::string("map:")+text+":"+std::to_string(x)+":"+std::to_string(y)+":"+
       std::to_string(pixel)+":"+std::to_string(forwarded)); return 0;
   }
-} Tutorial; TutWin *TutWinGlobal=&Tutorial;
+} TutorialWindow;
 int __cdecl tut_check(int mask) { events.push_back("check:"+std::to_string(mask)); return (TutMask&mask)!=0; }
 int __cdecl base_find(int x,int y,int faction) { assert(faction==1); events.push_back("find:"+std::to_string(x)+":"+std::to_string(y)); return BaseFound; }
 int __cdecl parse_says(int slot,const char *text,int,int) { events.push_back(std::string("parse:")+std::to_string(slot)+":"+text); return 0; }
@@ -1487,7 +1487,7 @@ static void reset() {
   for(auto &v:VehPrototypes) v=VehPrototype{};
   GameDataStateStorage.fields_.game_preferences_=PREF_BSC_TUTORIAL_MSGS; IsMultiplayerNet=0; GameDataStateStorage.fields_.turn_current_num_=1;
   GenderDefault=PluralityDefault=BaseFound=TutMask=PopupCalls=0;
-  Tutorial.blocked=false; Tutorial.stages=Tutorial.maps=0; ConsoleGlobal.focus_calls=0;
+  TutorialWindow.blocked=false; TutorialWindow.stages=TutorialWindow.maps=0; ConsoleGlobal.focus_calls=0;
   ConsoleGlobal.faction_id_=1; ConsoleGlobal.selected_vehicle_=0;
   ConsoleGlobal.cursor_history_index_=2; ConsoleGlobal.cursor_history_x_[2]=12;
   ConsoleGlobal.cursor_history_y_[2]=14; std::strcpy(Bases[0].name_string,"Alpha");
@@ -1495,7 +1495,7 @@ static void reset() {
 }
 int main() {
   reset(); TutMask=1; ConsoleGlobal.turn_hints();
-  assert(Tutorial.stages==1 && Tutorial.maps==1 &&
+  assert(TutorialWindow.stages==1 && TutorialWindow.maps==1 &&
          events[2]=="parse:0:Alpha" && events[3]=="parse:1:Scout" &&
          events[4]=="stage" && events[5]=="map:LANDFALL:12:14:-1:256");
   reset(); GameDataStateStorage.fields_.turn_current_num_=20; TutMask=0x100000; BaseFound=2;
@@ -1504,7 +1504,7 @@ int main() {
   ConsoleGlobal.turn_hints();
   assert(ConsoleGlobal.focus_calls==1 && PlayersData[1].last_turn_new_base==20 &&
          events.back()=="map:SECONDBASE:30:32:-4:0");
-  reset(); Tutorial.blocked=true; ConsoleGlobal.turn_hints(); assert(events.empty());
+  reset(); TutorialWindow.blocked=true; ConsoleGlobal.turn_hints(); assert(events.empty());
   reset(); GameDataStateStorage.fields_.turn_current_num_=30; TutMask=0x80; PlayersData[1].diplo_treaties[4]=0x18;
   std::strcpy(Players[4].title_leader,"Leader"); std::strcpy(Players[4].name_leader,"Morgan");
   std::strcpy(Players[4].noun_faction,"Faction");

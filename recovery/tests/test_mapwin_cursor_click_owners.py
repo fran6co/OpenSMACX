@@ -91,8 +91,7 @@ int MapLongitudeBounds=16;
 int MapLongitude=8; // distinct half-width row stride; never cursor seam width
 uint32_t MapIsFlat=0;
 int MapInputEnabled=0;
-struct Tutorial { int calls; void draw_arrow() { ++calls; } } tutorial;
-Tutorial *TutWinGlobal=&tutorial;
+struct Tutorial { int calls; void draw_arrow() { ++calls; } } TutorialWindow;
 
 MEMBER_CURSOR
 FREE_CURSOR
@@ -115,7 +114,7 @@ static void reset(MapWin &w) {
         ConsoleGlobal.cursor_history_y_[i]=0;
     }
     for (std::size_t i=0;i<MapWinTableSlots;++i) MapWinTable[i]=0;
-    tutorial.calls=0; MapIsFlat=0; MapLongitudeBounds=16; MapLongitude=8;
+    TutorialWindow.calls=0; MapIsFlat=0; MapLongitudeBounds=16; MapLongitude=8;
 }
 
 static void member_cursor_cases() {
@@ -173,13 +172,13 @@ static void free_cursor_cases() {
     CHECK(first.radius_calls==1 && first.radius_x==1);
     CHECK(second.radius_calls==1 && second.radius_x==42);
     CHECK(inactive.radius_calls==0);
-    CHECK(tutorial.calls==1);
+    CHECK(TutorialWindow.calls==1);
 
     // The survey early suppression still falls through to the tutorial arrow.
     ConsoleGlobal.survey_mode_=1;
     draw_cursor();
     CHECK(first.radius_calls==1 && second.radius_calls==1);
-    CHECK(tutorial.calls==2);
+    CHECK(TutorialWindow.calls==2);
 }
 
 static void click_cases() {
