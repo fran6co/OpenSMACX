@@ -1,0 +1,20 @@
+{
+  "event_id": "66b9b86a3c2f9ef7b4f4526c89dcf331447ff82ddbe789f48eee1394320cd7bf",
+  "payload": {
+    "affects": [
+      "entity-0fb937d5551262afbd4a640672f5535383041686d2a120205fbd5a9feb5ae681"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "draw-sat-table-original-stages",
+    "evidence": [
+      "Pinned draw_sat: F7B3 and F8EB clear StringTemp after color calls, not at loop entry; F8E6-F8F6 gates Facility41 on ExpansionEnabled and cursor4; F733 signed cursor<4 and F756 switch-default bypass; F863 indexes satellites directly. Fresh native inspect report at root build/recovery/reportwin-draw-sat-live-reads-inspect-oct15.json. No synchronous cursor mutation established; injected callback tests are controls, not runtime reentrancy proof."
+    ],
+    "hypothesis": "Recover the satellite-table loop original shared-text reset order, expansion-gated heading, signed color dispatch and direct satellite indexing together with live member reads; preserve invalid/error paths rather than normalizing them.",
+    "kind": "discovery"
+  },
+  "previous_event": "75c2a11c967190a07174fda230ab0a1d337b902d2539448f5ecea4d2908273dc",
+  "request_id": "draw-sat-table-original-stages",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:reportwin-satellite-cursor-oct15"
+}

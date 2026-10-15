@@ -3672,26 +3672,53 @@ void ReportWin::draw_sat() {
             report_work_rect_.bottom = rect1_.top + column_width;
             satellite_index_ = 0;
             while (satellite_index_ < (ExpansionEnabled ? 5 : 4)) {
-                const int kind = satellite_index_;
-                StringTemp[0] = 0;
                 if (!other) {
                     canvas.set_text_color(0xFF, -1, 1, 1);
-                    strcat(StringTemp, StringTable.get(Facility[kind == 4 ? 41 : 65 + kind].name));
+                    StringTemp[0] = 0;
+                    if (ExpansionEnabled && satellite_index_ == 4) {
+                        strcat(StringTemp, StringTable.get(Facility[41].name));
+                    } else {
+                        const int facility_index = satellite_index_;
+                        strcat(StringTemp, StringTable.get(Facility[65 + facility_index].name));
+                    }
                     canvas.wrap_cent(StringTemp, &report_work_rect_);
                 } else {
                     int elevators = 0;
                     for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base)
                         if (Bases[base].faction_id_current == other && has_fac(41, base, 0)) ++elevators;
-                    const bool nonzero = kind == 4 ? elevators != 0 : report_sat_count(PlayersData[other], kind) != 0;
+                    const int color_kind = satellite_index_;
+                    bool nonzero = false;
+                    if (color_kind < 4) {
+                        nonzero = PlayersData[other].satellites_[color_kind] != 0;
+                    } else if (color_kind == 4) {
+                        nonzero = elevators != 0;
+                    }
                     const int colors[5] = {0x98, 0xDF, 0x62, 0xF9, 0xFF};
-                    canvas.set_text_color(nonzero ? colors[kind] : 0xF8, -1, 1, 1);
-                    if (kind == 3) {
+                    switch (color_kind) {
+                        case 0:
+                        case 1:
+                        case 2:
+                        case 3:
+                        case 4:
+                            canvas.set_text_color(nonzero ? colors[color_kind] : 0xF8, -1, 1, 1);
+                            break;
+                        default:
+                            // The native switch default bypasses color setting when
+                            // the signed less-than-four satellite value is nonzero.
+                            if (!nonzero) canvas.set_text_color(0xF8, -1, 1, 1);
+                            break;
+                    }
+                    StringTemp[0] = 0;
+                    const int formatted_kind = satellite_index_;
+                    if (formatted_kind == 3) {
                         report_sat_number(PlayersData[other].satellites_[3] - PlayersData[other].sat_odp_deployed);
                         strcat(StringTemp, "/");
                     }
-                    report_sat_number(kind == 4 ? elevators : report_sat_count(PlayersData[other], kind));
+                    const int amount_kind = satellite_index_;
+                    report_sat_number(amount_kind == 4
+                        ? elevators : PlayersData[other].satellites_[amount_kind]);
                     canvas.write_cent_l(StringTemp, &report_work_rect_, strlen(StringTemp));
-                    spot_.add(kind, other, report_work_rect_.left, report_work_rect_.top,
+                    spot_.add(satellite_index_, other, report_work_rect_.left, report_work_rect_.top,
                         report_work_rect_.right - report_work_rect_.left,
                         report_work_rect_.bottom - report_work_rect_.top);
                 }
