@@ -1,0 +1,19 @@
+{
+  "event_id": "07c589aadf124299371c91b07d0c46e04cbe69e9f1a097d4c9c319f995973f7c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_application_link_recovery.py"
+    ],
+    "evidence": [
+      "The source-owned Scroll close emitted-symbol expectation in the application link test must track the authorized void contract (QAEI to QAEX), preserving its boundary assertion rather than disabling it. No additional source function scope or weakened gate."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "close-void-application-link-test-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:close-void-contract-oct15"
+}
