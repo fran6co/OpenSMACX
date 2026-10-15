@@ -170,7 +170,7 @@ extern int test_resource_yield_result[3],test_resource_yield_calls,
            test_resource_yield_args[5];
 extern int test_base_find_three_result,test_base_find_three_calls,
            test_base_find_three_args[3];
-extern int test_base_on_sea_result,test_base_on_sea_calls,test_base_on_sea_args[2];
+extern int test_base_on_sea_result,test_base_on_sea_calls,test_base_on_sea_args[128][2];
 extern int test_base_at_result,test_base_at_args[2],test_base_at_calls;
 extern const char *test_parse_says_text;
 extern int test_parse_says_calls;
@@ -184,6 +184,7 @@ extern int test_has_project_result,test_has_project_project,
 extern int test_get_there_result,test_get_there_calls,test_get_there_args[3];
 extern int test_speed_proto_result,test_speed_proto_proto;
 extern int test_path_find_result;
+extern int test_can_terraform_calls;
 int anything_at(int,int);
 int has_fac(int,int,int);
 int study_artifact(int);
@@ -310,9 +311,9 @@ inline int get_there(int vehicle,int x,int y) {
     return test_get_there_result;
 }
 inline int base_on_sea(int base_id,int region) {
+    test_base_on_sea_args[test_base_on_sea_calls][0]=base_id;
+    test_base_on_sea_args[test_base_on_sea_calls][1]=region;
     ++test_base_on_sea_calls;
-    test_base_on_sea_args[0]=base_id;
-    test_base_on_sea_args[1]=region;
     return test_base_on_sea_result;
 }
 inline int zoc_veh(int x,int y,int faction) {
@@ -528,7 +529,7 @@ int test_zoc_sea_result,test_zoc_sea_calls,test_zoc_sea_args[3];
 int test_has_tech_result,test_has_tech_tech,test_has_tech_faction;
 int test_can_convoy_result,test_can_convoy_calls,test_can_convoy_args[2];
 int test_bonus_at_result,test_bonus_at_calls,test_bonus_at_args[3];
-int test_base_on_sea_result,test_base_on_sea_calls,test_base_on_sea_args[2];
+int test_base_on_sea_result,test_base_on_sea_calls,test_base_on_sea_args[128][2];
 int test_base_at_result,test_base_at_args[2],test_base_at_calls;
 const char *test_parse_says_text;
 int test_parse_says_calls;
@@ -573,6 +574,7 @@ int anything_at(int x,int y) { return TestMap[y][x].territory; }
 
 // Bounded test doubles; this file is never included in the recovered owner.
 int test_base_find_three_args[3],test_base_find_three_calls,test_base_find_three_result;
+int test_can_terraform_calls,test_can_terraform_args[128][5];
 int test_has_project_faction,test_has_project_project,test_has_project_result;
 int test_resource_yield_result[3],test_resource_yield_calls,test_resource_yield_args[5];
 int reputation(int,int){return 0;}
@@ -589,7 +591,11 @@ int energy_yield(int,int,int,int,int){return 0;}
 int is_objective(int){return 0;}
 int port_to_port(int,int){return 0;}
 int port_to_coast(int,int){return 0;}
-int can_terraform(int,int,int,int,int){return 0;}
+int can_terraform(int faction,int x,int y,int mode,int base) {
+    int *args=test_can_terraform_args[test_can_terraform_calls++];
+    args[0]=faction;args[1]=x;args[2]=y;args[3]=mode;args[4]=base;
+    return 0;
+}
 int defense_value(int,int,int,int,int){return 0;}
 int terrain_avail(int,int,int){return 0;}
 int want_monolith(int){return 0;}
@@ -679,7 +685,62 @@ label_56ef2f:return 12;
 label_57708a:return 13;
 }
 
+static void test_base_cursor_30_region(int count) {
+    EnemyMoveFullFrame f = {};
+    reset_late(f);
+    f.local_24=0;f.local_38=0;f.local_48=2;f.local_40=1;
+    f.local_c=1;f.local_34=1;
+    GameDataStateStorage.fields_.base_current_count_=count;
+    test_base_on_sea_calls=0;test_base_on_sea_result=0;
+    for(int i=0;i<count;++i) {
+        Bases[i].faction_id_current=1;Bases[i].x=20+2*i;Bases[i].y=20+i;
+    }
+    /* ACTUAL_CURSOR_30_REGION */
+    assert(f.local_24==count);
+    assert(test_base_on_sea_calls==count);
+    for(int i=0;i<count;++i) {
+        assert(test_base_on_sea_args[i][0]==i);
+        assert(test_base_on_sea_args[i][1]==1);
+        assert(Bases[test_base_on_sea_args[i][0]].x==20+2*i);
+        assert(Bases[test_base_on_sea_args[i][0]].y==20+i);
+    }
+}
+
+static void test_base_cursor_44_region(int count) {
+    EnemyMoveFullFrame f = {};
+    reset_late(f);
+    f.local_24=0;f.local_40=1;f.local_c=1;
+    GameDataStateStorage.fields_.base_current_count_=count;
+    Vehs[0].order=0;
+    test_can_terraform_calls=0;
+    for(int i=0;i<count;++i) {
+        Bases[i].faction_id_current=1;Bases[i].x=20+2*i;Bases[i].y=20+i;
+    }
+    TestMap[20][10].climate=0x40;
+    TestMap[21][11].climate=0x40;
+    /* ACTUAL_CURSOR_44_REGION */
+    assert(f.local_24==count);
+    assert(test_can_terraform_calls==count*21);
+    for(int i=0;i<count*21;++i) {
+        const int base=i/21;
+        assert(test_can_terraform_args[i][0]==1);
+        assert(test_can_terraform_args[i][1]==20+2*base);
+        assert(test_can_terraform_args[i][2]==20+base);
+        assert(test_can_terraform_args[i][3]==0);
+        assert(test_can_terraform_args[i][4]==base);
+    }
+}
+
+static int base_cursor_region_control_main() {
+    for(int count=0;count<=2;++count) {
+        test_base_cursor_30_region(count);
+        test_base_cursor_44_region(count);
+    }
+    return 0;
+}
+
 int main() {
+    assert(base_cursor_region_control_main()==0);
     assert(late_scans_control_main()==0);
     EnemyMoveFullFrame f;
     reset_late(f);

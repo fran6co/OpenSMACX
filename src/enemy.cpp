@@ -28,9 +28,9 @@ struct EnemyMoveFullFrame {
     int local_64, local_60, local_5c, local_58, local_54, local_50;
     int local_4c;
     union { int local_48; const short *base_cursor_48; };
-    union { int local_44; const short *base_cursor_44; };
+    int local_44;
     int local_40, local_3c, local_38, local_34;
-    union { int local_30; const short *base_cursor_30; };
+    int local_30;
     unsigned int local_2c;
     int local_28, local_24, local_20, local_1c, local_18, local_14;
     int local_10, local_c, local_8, local_4;
@@ -2939,7 +2939,6 @@ label_56bf5f:
         f.local_24 = 0;
         if (GameDataStateStorage.fields_.base_current_count_ > 0) {
             int distance_scratch = f.local_38; // original uninitialized reaching read
-            f.base_cursor_30 = &Bases[0].x;
             do {
                 if (Bases[f.local_24].faction_id_current == f.local_c &&
                     (f.local_40 == 1 ? base_on_sea(f.local_24,f.local_34) != 0 :
@@ -2979,7 +2978,6 @@ label_56bf5f:
                     }
                 }
                 ++f.local_24;
-                f.base_cursor_30 += sizeof(Base)/sizeof(short);
             } while (f.local_24 < GameDataStateStorage.fields_.base_current_count_);
             f.local_38 = distance_scratch;
         }
@@ -4853,7 +4851,6 @@ label_572d66:
         f.local_28 = 0x98967f;
         f.local_24 = 0;
         if (GameDataStateStorage.fields_.base_current_count_ > 0) {
-            f.base_cursor_44 = &Bases[0].y;
             do {
                 if (Bases[f.local_24].faction_id_current == f.local_c &&
                     (!f.local_30 || f.local_24 == (Vehs[f.vehicle_id].home_base_id >= 0 ?
@@ -4899,7 +4896,6 @@ label_572d66:
                     } while (f.local_6c < 0x54);
                 }
                 ++f.local_24;
-                f.base_cursor_44 += sizeof(Base)/sizeof(short);
             } while (f.local_24 < GameDataStateStorage.fields_.base_current_count_);
         }
     }

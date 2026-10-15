@@ -1,10 +1,10 @@
 """Bounded host controls compile the current complete enemy movement owner.
 
 Only includes are removed for the typed host API doubles. The complete current
-product TU supplies every recovered helper and the real enemy_move body. Two
-additional bounded region adapters are extracted from that same current source;
-no retained recovery packet provides an implementation. These controls do not
-establish native ABI, byte equality, error-path outcomes, or full-game behavior.
+product TU supplies every recovered helper and the real enemy_move body. Bounded
+loop adapters are extracted from that same current source; no retained recovery
+packet provides an implementation. These controls do not establish native ABI,
+byte equality, error-path outcomes, or full-game behavior.
 """
 from hashlib import sha256
 from pathlib import Path
@@ -31,15 +31,85 @@ def actual_region(source, begin, end):
     return source[start:stop]
 
 
-def actual_unit():
+def _balanced_block(source, opening):
+    depth = 0
+    quote = None
+    escaped = False
+    line_comment = False
+    block_comment = False
+    index = opening
+    while index < len(source):
+        char = source[index]
+        following = source[index + 1] if index + 1 < len(source) else ""
+        if line_comment:
+            if char == "\n":
+                line_comment = False
+        elif block_comment:
+            if char == "*" and following == "/":
+                block_comment = False
+                index += 1
+        elif quote:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = None
+        elif char == "/" and following == "/":
+            line_comment = True
+            index += 1
+        elif char == "/" and following == "*":
+            block_comment = True
+            index += 1
+        elif char in ('"', "'"):
+            quote = char
+        elif char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return source[opening:index + 1]
+        index += 1
+    raise AssertionError("unclosed actual-source block")
+
+
+def actual_block_after_label(source, label, anchor):
+    label_anchor = "\nlabel_" + label + ":\n"
+    assert source.count(label_anchor) == 1
+    start = source.index(label_anchor) + len(label_anchor)
+    position = source.index(anchor, start)
+    opening = source.index("{", position)
+    return source[position:opening] + _balanced_block(source, opening)
+
+
+def actual_unit(cursor_mutation=None, cursor_record_mutation=None):
     source = PRODUCT.read_text()
     source = re.sub(r"(?m)^[ \t]*#include[^\n]*(?:\n|$)", "", source)
     assert "#include" not in source
     fixture = FIXTURE.read_text()
+    base_count = "if (GameDataStateStorage.fields_.base_current_count_ > 0)"
+    cursor_regions = {
+        "cursor30": actual_block_after_label(source, "56bf5f", base_count),
+        "cursor44": actual_block_after_label(source, "572d66", base_count),
+    }
+    if cursor_mutation:
+        region, = [key for key in cursor_regions if key == cursor_mutation]
+        code = cursor_regions[region]
+        old = "++f.local_24;"
+        assert code.count(old) == 1
+        cursor_regions[region] = code.replace(old, "f.local_24 += 2;", 1)
+    if cursor_record_mutation:
+        region = cursor_record_mutation
+        code = cursor_regions[region]
+        old = "Bases[f.local_24]"
+        assert code.count(old) >= 2
+        cursor_regions[region] = code.replace(old, "Bases[0]")
     replacements = {
         "/* ACTUAL_ENEMY_SOURCE */": source,
         "/* ACTUAL_LATE_SCANS */": actual_region(source, "56ed87", "570002"),
         "/* ACTUAL_FINAL_UPSTREAM */": actual_region(source, "56e507", "56ed87"),
+        "/* ACTUAL_CURSOR_30_REGION */": cursor_regions["cursor30"],
+        "/* ACTUAL_CURSOR_44_REGION */": cursor_regions["cursor44"],
     }
     for marker, implementation in replacements.items():
         assert fixture.count(marker) == 1
