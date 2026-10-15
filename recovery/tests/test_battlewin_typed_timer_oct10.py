@@ -64,7 +64,6 @@ struct BattleWin : SubInterface {
 };
 extern BattleWin g_BattleWin;
 extern MainInterface MainInterfaceGlobal;
-SubInterface *sub_interface_global();
 """
 
 
@@ -147,7 +146,6 @@ def test_typed_battlewin_callback_and_button_actual_bodies(compiler, mutation, t
     callback = extract_body(cpp, "void __cdecl teardown_00422ec0(")
     button = extract_body(cpp, "void BattleWin::on_iface_button_clicked(")
     pulse = extract_body(cpp, "void BattleWin::pulse_timer(")
-    helper = extract_body(cpp, "SubInterface *sub_interface_global()")
     assert "reinterpret_cast<SubInterface*>(this)" not in button
     assert "reinterpret_cast<void (__cdecl *)(int)>" not in pulse
     assert "time_.pulse(&teardown_00422ec0, 0, 0x1388, 5);" in pulse
@@ -162,7 +160,7 @@ def test_typed_battlewin_callback_and_button_actual_bodies(compiler, mutation, t
     elif mutation == "wrong_resolution":
         pulse = pulse.replace(", 0x1388, 5)", ", 0x1388, 6)")
     elif mutation == "wrong_global":
-        helper = helper.replace("&g_BattleWin", "&wrong_global")
+        callback = callback.replace("g_BattleWin", "wrong_global")
     elif mutation == "wrong_receiver":
         button = button.replace(
             "SubInterface::release_iface_mode()",
@@ -173,11 +171,8 @@ def test_typed_battlewin_callback_and_button_actual_bodies(compiler, mutation, t
         second = "MainInterfaceGlobal.MainInterface::on_iface_button_clicked(button_id);"
         button = button.replace(first + "\n    " + second, second + "\n    " + first)
 
-    prelude = PRELUDE.replace(
-        "SubInterface *sub_interface_global();",
-        "extern BattleWin wrong_global;\nSubInterface *sub_interface_global();",
-    )
-    translation_unit = "\n".join((prelude, GLOBALS, helper, callback, button, pulse, CONTROL))
+    prelude = PRELUDE
+    translation_unit = "\n".join((prelude, GLOBALS, callback, button, pulse, CONTROL))
     passed = compile_and_run(executable, tmp_path, translation_unit, mutation)
     assert passed == (mutation == "baseline")
 
