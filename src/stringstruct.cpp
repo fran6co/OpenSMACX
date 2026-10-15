@@ -960,11 +960,11 @@ void __cdecl net_not_my_turn() {
                 next_player_turn();
             } else {
                 const unsigned char bit = static_cast<unsigned char>(1u << (level & 31));
-                const unsigned char *const lock_bytes =
-                    reinterpret_cast<const unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-                if ((lock_bytes[0] & bit) == 0) {
+                const GameDataLockMaskBytes *const lock_bytes =
+                    &GameDataStateStorage.fields_.lock_masks_.bytes_;
+                if ((lock_bytes->human_mask_ & bit) == 0) {
                     next_player_turn();
-                } else if ((lock_bytes[1] & bit) == 0) {
+                } else if ((lock_bytes->alive_mask_ & bit) == 0) {
                     next_player_turn();
                 }
             }
