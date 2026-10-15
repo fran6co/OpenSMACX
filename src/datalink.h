@@ -44,14 +44,6 @@
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
-// Declared and deliberately NOT defined. parse_id writes only its first four
-// bytes, and nothing available says how large it is or what follows: the type
-// exists in the original's mangled name and in no analysis output here. An
-// incomplete type expresses exactly that - the parameter is this type, and
-// this translation unit knows nothing else about it - where inventing a
-// one-int struct would state a size the evidence does not support.
-struct DatalinkID;
-
 // RECOVERY_BASE: v1 Datalink GraphicWin 0x0 0x00428FC0
 // RECOVERY_BASE: v1 Datalink SubInterface 0xA14 0x00428FC0
 // Constructor installs this original interface table at the declared base.
@@ -73,7 +65,9 @@ class Datalink : public GraphicWin, public SubInterface {
   int UNK1(int a1, int a2);
   // 0x0042A0B0 parses a decimal topic id and writes its category and entry.
   void UNK2(char *text, int *category, int *entry);
-  void parse_id(int id, DatalinkID *out_id, int *out_remainder);
+  // The catalogue's DatalinkID spelling is reconstructed, not original-type
+  // proof. The pinned caller passes a scalar category output to exec(unsigned).
+  void parse_id(int id, uint32_t *out_category, int *out_remainder);
   // These three are catalogued ?UNK3@Datalink@@QAEXIH@Z,
   // ?UNK4@Datalink@@QAEXHH@Z and ?UNK5@Datalink@@QAEXXZ. The names
   // below are ours, from the measured behaviour; the catalogue names
