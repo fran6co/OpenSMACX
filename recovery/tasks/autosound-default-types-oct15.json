@@ -1,0 +1,154 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "44b6baea6d6ba9712c389b3b9d9fe99041b8ff1b",
+  "editable_files": [
+    "src/autosound.h",
+    "src/autosound.cpp",
+    "src/fx.cpp",
+    "recovery/tests/fx_initialization_harness.cpp",
+    "recovery/tests/test_autosound_defaults.py",
+    "recovery/tests/test_autosound_sound_slots20_31_actual_source_oct13x.py",
+    "recovery/tests/test_autosound_three_sound_views_oct10.py",
+    "recovery/tests/test_dialog_style_sound_receiver_owner_oct10.py",
+    "recovery/tests/test_fx_initialization.py",
+    "recovery/tests/test_remaining_game_leaf_owner_actual_source.py",
+    "recovery/tests/test_win_sound_product_source.py"
+  ],
+  "evidence": [
+    "Pinned original constructor62BA80, close62BBF0 and close262BDD0 copy all37 DWORDs from [9BC080,9BC114). Existing types identify four integer destinations (defaults indices0,3,4,31) and33 Sound pointer destinations. Preserve the original permutation: indices0,1,2,3 map to object val1,val3,val4,val2, not declaration order.",
+    "Only other source reference is FX::init445CD0 zeroing all148 bytes; loader zeros precede optional FX reset and static window construction. Typed defaults are inferred from consumers, not original type names, pointer ownership or lifetime. Do not turn mutable global defaults into a constant, add constructors, reorder copies, or normalize original behavior.",
+    "Use a plain typed defaults record with named fields in original global-storage order, common declaration for producer and consumers, direct typed assignments, and address-of record for FX memset. Preserve essential original extent/evidence mapping; update emitted object symbol via native object_source API after compiler confirms decoration. No hand-edited ORIGINAL markers or claims.",
+    "Adapt existing actual-body and object/reference controls to typed storage without weakening their wrong-offset, bound and data damage cases. Prove all37 original source offsets, emitted148-byte extent/zero data, and consumer relocations under both flag sets; preserve historical exactness obligations. Whole owning TUs, fresh build/link, claims/references and destination rechecks required. Full strict linked/runtime acceptance remains unproven."
+  ],
+  "intent": "Recover typed process-default storage from the three AutoSound consumers and FX zeroing producer, eliminating integer-to-pointer reconstruction casts.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6470272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6470640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6471120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6470976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6260288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6279856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4489920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4490064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4478352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4478384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4489936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4489888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4489872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4483728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4483760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4483792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4483824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4483856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4480208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4483584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4483424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4484368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4479920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4478544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4478624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "autosound-default-types-oct15"
+}
