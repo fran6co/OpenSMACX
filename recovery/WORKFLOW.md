@@ -815,7 +815,26 @@ two layout/body controls. Failed batches are split and recompiled independently;
 never treat a passing sibling as proof for the failed class. Compile-attempt
 counts include those retries, so compare actual reports when assessing throughput.
 
-After structure is established, compare a small deck of plausible source forms
+For bounded one-TU body-only exploration, first use the existing package API
+`match_recovery.source.asm.compare_unit` with a compiler callable routing immutable
+candidate bytes through `Compiler.overlay`. Keep the normal full translation unit,
+not an extracted standalone function. Reuse its compiled object for all selected
+mappings in that TU. This is an exploratory masked-byte diagnostic, not the strict
+reference-aware verifier: even a local exact result cannot bank a claim or establish
+reference targets, provider selection, preservation or acceptance. Do not use it to
+approve header, symbol, layout or cross-owner changes.
+
+The coordinator owns task/deck authorization, pinned image and source digests,
+and whole-input freshness snapshots taken inside the same compiler lease. Require
+physical unchanged-replica equality and a changed target-function damage witness
+under each flag trial; equal verdict labels alone are not controls. Resolve the
+exact COFF symbol from the native binding, not an optional legacy symbol field.
+Keep candidate bytes and derived timing/results ignored. A useful candidate still
+requires strict scoped checks and normal integration verification. Do not repeatedly
+run recursive dependency verification merely to reject an unpromising spelling.
+
+For strict reference-aware experiments after this initial screening, compare a
+small deck of plausible source forms
 with `uv run recover tasks variants <task> --image <image> --deck <ignored-json>`.
 The package README documents multi-file exact-text anchors, source digests and
 original entities. Header and dependent-body edits can be one atomic candidate;
