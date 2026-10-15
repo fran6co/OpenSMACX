@@ -681,6 +681,7 @@ void NetWin::config_players() {
 
     NetWinLobbyRow *row = &NetWinLobbyRows[1];
     Player *player = &Players[1];
+    int row_index = 1;
     do {
         row->owner_ = 0;
         row->prefix_ = 0xFF;
@@ -699,7 +700,8 @@ void NetWin::config_players() {
             &player->is_leader_female)[0];
         ++row;
         ++player;
-    } while (row < &NetWinLobbyRows[8]);
+        ++row_index;
+    } while (row_index < 8);
 }
 
 // Private recovered body for the native 0x00482D90 roster finalizer.
@@ -1295,7 +1297,7 @@ void NetWin::draw_player_names() {
     NetWinLobbyRow *lobby_row = &NetWinLobbyRows[1];
     AlphaNetProcessSlot *slot_record = NetDaemonNet.process_slots_ + 1;
     RECT *rects = &setup_rects_[6];
-    for (int row = 0; slot_record < NetDaemonNet.process_slots_ + 8;
+    for (int row = 0; row < 7;
          ++row, ++lobby_row, slot_record += 1) {
         if (NetWinSessionData.mode_ == 3 && faction_records_ != 0
             && row >= faction_records_[0].record_type_) {
@@ -1609,7 +1611,7 @@ void NetWin::draw_diffs() {
     Buffer *buffer = static_cast<Buffer *>(this);
     RECT *rect = &setup_rects_[20];
     NetWinLobbyRow *row = &NetWinLobbyRows[1];
-    for (int index = 0; row < &NetWinLobbyRows[8];
+    for (int index = 0; index < 7;
          ++index, ++row, ++rect) {
         if (NetWinSessionData.mode_ == 3 && faction_records_ != 0
             && index >= faction_records_[0].record_type_) {
@@ -1673,7 +1675,7 @@ void NetWin::draw_factions() {
     Buffer *buffer = static_cast<Buffer *>(this);
     RECT *rect = &setup_rects_[13];
     NetWinLobbyRow *row = &NetWinLobbyRows[1];
-    for (int index = 0; row < &NetWinLobbyRows[8];
+    for (int index = 0; index < 7;
          ++index, ++row, ++rect) {
         if (NetWinSessionData.mode_ == 3 && faction_records_ != 0
             && index >= faction_records_[0].record_type_) {
