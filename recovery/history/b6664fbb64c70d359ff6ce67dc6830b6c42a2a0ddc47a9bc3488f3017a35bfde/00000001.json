@@ -1,0 +1,20 @@
+{
+  "event_id": "09c04e51d1d038d3cf5f7d58672481bcba2244121090b5c84a2d417f7edea7be",
+  "payload": {
+    "affects": [
+      "entity-dbb0fd698c3dd436b3ae53f8bfb41e6ee9c8bbb3091daa314d73a9e553fde236"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "battle-compute-shared-sign-gates-oct15",
+    "evidence": [
+      "Two independent pinned CFG audits find attacker EBX loaded503C41 from [ebp+8], sign gates503C7A->503D1B and503D25/503DB7->5044A3, before downstream air-defense503F25..50407A and ship-port5043D0..5044A3. Source local guards do not reproduce full common-output exit. Do not merely remove later local guards; reconstruct dominating gates and output writes together. Nonartillery501DD5..501DE3 reads original attacker row before sign checking, so no uniformly safe negative-ID assumption. Source cached prototype/faction setup also needs full path comparison. Best_defender correction does not resolve this separate function finding."
+    ],
+    "hypothesis": "Recover original shared attacker-sign exit structure in battle_compute as a separate full-scope task",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "battle-compute-shared-sign-gates-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:best-defender-artillery-original-oct15"
+}

@@ -5055,11 +5055,10 @@ int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) 
     for (int i = top_veh_id; i >= 0; i = Vehs[i].next_veh_id_stack) {
         uint32_t proto_id_def = Vehs[i].proto_id;
         if ((get_proto_triad(proto_id_def) != TRIAD_LAND || !is_ocean_def && base_id_def >= 0)
-            // added veh_id_atk bounds check
-            && (veh_id_atk < 0 || VehPrototypes[Vehs[veh_id_atk].proto_id].plan != PLAN_INFO_WARFARE
+            && (VehPrototypes[Vehs[veh_id_atk].proto_id].plan != PLAN_INFO_WARFARE
                 || VehPrototypes[proto_id_def].plan == PLAN_INFO_WARFARE)) {
-            uint32_t combat_type = (can_arty(proto_id_def, true) && (veh_id_atk
-                || can_arty(Vehs[veh_id_atk].proto_id, true))) ? 2 : 0; // added bounds?
+            uint32_t combat_type = (can_arty(proto_id_def, true)
+                && can_arty(Vehs[veh_id_atk].proto_id, true)) ? 2 : 0;
             if (veh_id_atk >= 0 && get_triad(veh_id_atk) != TRIAD_AIR
                 && has_abil(proto_id_def, ABL_AIR_SUPERIORITY)
                 && !is_proto_missile(proto_id_def) && !is_missile(veh_id_atk)
