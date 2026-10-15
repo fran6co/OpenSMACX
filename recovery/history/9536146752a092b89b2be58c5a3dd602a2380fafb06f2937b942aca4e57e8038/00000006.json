@@ -1,0 +1,18 @@
+{
+  "event_id": "403ed37f937dd69dfcc6ad7bb063a72a2c0e1466cc7f8a0980d74bab6192183f",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "explicit-empty-kind4-route",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/dialogs.cpp now has five original dispatch orders and proven no-op kind4 returns. Down/leave/key order16,2,1,4,8; double16,2,1,8; redraw16,2,1,8,4 as final native instruction evidence requires. No layout/header/signature changes.",
+      "Final full63-row candidate:50BYTE_EXACT,10MISMATCH,1SHAPE_EXACT,2REFUSED; onlyfive intended rows changed from45exact baseline. Fresh build/link pass. Native record banks allfive in onecompile; existing claims retained. Fifteen targeted hosttests pass; unrelated Council fixture excluded. Physical153Dialogs/180WorldWin section audits preserve all outside target payloads/references; WorldWin only13private-label renames. Independent final original/table reference review still required for manual integration, no fullgame acceptance."
+    ]
+  },
+  "previous_event": "389c32f18b006cbdf1ff3b932c1aa8a912a7983f1d4d7a1db805b250cd50f1a7",
+  "request_id": "incorporate-kind4-original-paths",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:dialogs-routing-order-oct15"
+}
