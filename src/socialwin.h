@@ -177,8 +177,12 @@ class SocialWin : public GraphicWin, public SubInterface {
   // at sizeof(GraphicWin) == 0xA14 either way and no offset moves.
   uint32_t field_A1C_;  // 0xA1C
   Spot spot_;  // 0xA20
-  uint32_t field_A2C_;  // 0xA2C
-  uint32_t field_A30_;  // 0xA30
+  // RECOVERY_MEMBER: v1 SocialWin hover_selection_ 0xA2C 0x004B1FCD
+  // Signed mouse state: -2 faction power, -1 no selection, 0..15 model cells.
+  int hover_selection_;  // 0xA2C
+  // RECOVERY_MEMBER: v1 SocialWin effect_hover_button_id_ 0xA30 0x004B041E
+  // Retains the raw button id; the original passover bound is inclusive 0x1B.
+  int effect_hover_button_id_;  // 0xA30
   uint32_t field_A34_;  // 0xA34
   uint32_t field_A38_;  // 0xA38
   uint32_t field_A3C_;  // 0xA3C
@@ -380,7 +384,8 @@ class SocialWin : public GraphicWin, public SubInterface {
   uint32_t field_2C18_;  // 0x2C18
   uint32_t field_2C1C_;  // 0x2C1C
   uint32_t field_2C20_;  // 0x2C20
-  uint32_t effectMaximize_;  // 0x2C24
+  // RECOVERY_MEMBER: v1 SocialWin effectMaximize_ 0x2C24 0x004AF11E
+  int effectMaximize_;  // 0x2C24
 
   // Storage the image proves is here: its own methods reach 0x1F2F0.
   // Extent only - this class carries no size assertion, and the bound is a floor.
