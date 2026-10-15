@@ -1104,7 +1104,7 @@ void __cdecl base_doctors() {
     base = BaseCurrent;
 
     const unsigned int faction_bit = 1u << (static_cast<unsigned int>(faction) & 0x1Fu);
-    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
          & faction_bit) != 0
         && (base->governor & (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE))
             != (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE)) {
@@ -1113,7 +1113,7 @@ void __cdecl base_doctors() {
 
     int loop_counter = 1;
     for (;;) {
-        if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
              & faction_bit) != 0) {
             if ((base->governor & GOV_MANAGES_CITIZENS_SPECS) == 0) return;
             if ((base->governor & GOV_ACTIVE) == 0) return;
@@ -1219,8 +1219,7 @@ Status: Coverage transcription - unclaimed body; the seed
 void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied) {
     int mask = 1 << faction_id;
     if (((unsigned char)mask &
-         *reinterpret_cast<const unsigned char *>(
-             &GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) {
+         GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0) {
         const int count = GameDataStateStorage.fields_.base_current_count_;
         int i = 0;
         if (count > 0) {
@@ -1235,8 +1234,7 @@ void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied) {
                      (tiles[base->y * mult + (base->x >> 1)].bit & 2) == 0 ||
                      7 < (tiles[base->y * mult + (base->x >> 1)].val2 & 0xf)) &&
                     (((unsigned char)mask &
-                      *reinterpret_cast<const unsigned char *>(
-                          &GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0 ||
+                      GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0 ||
                      (BaseCurrent->state & 0x80000000) == 0)) {
                     base_reset(i, 0);
                     tiles = map_tiles();
@@ -5173,7 +5171,7 @@ void __cdecl base_change(int base_id, int production_id) {
     // base_lose_minerals already owns the matching classification and arithmetic.
     int loss = 0;
     if (Rules.retool_pct_pen_prod_chg
-        && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
             & (1u << base.faction_id_current))
         && base_making(base.production_id_last, base_id)
             != base_making(production_id, base_id)
@@ -5258,7 +5256,7 @@ void __cdecl base_change(int base_id, int production_id) {
 void __cdecl base_reset(int base_id, int force) {
     const uint8_t faction = Bases[base_id].faction_id_current;
     const uint8_t faction_bit = static_cast<uint8_t>(1u << faction);
-    const uint8_t active_mask = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    const uint8_t active_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
     uint32_t state = Bases[base_id].state;
 
     if ((faction_bit & active_mask) != 0
@@ -5311,7 +5309,7 @@ void __cdecl base_reset(int base_id, int force) {
     int production = base_build(base_id, 0, 0, 0);
     base_change(base_id, production);
 
-    const uint8_t current_active_mask = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    const uint8_t current_active_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
     if ((faction_bit & current_active_mask) == 0) return;
     if ((Bases[base_id].state & BSTATE_UNK_8000000000) == 0) return;
     if (location <= -0x46) return;
@@ -6709,7 +6707,7 @@ next_spread_tile:
         }
     }
 
-    if (((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction & 31))) != 0) || GameDataStateStorage.fields_.diff_level_current_ >= 4) {
+    if (((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << (faction & 31))) != 0) || GameDataStateStorage.fields_.diff_level_current_ >= 4) {
         GameDataStateStorage.fields_.ecology_event_accumulator_ = ecology_wrapped_add(GameDataStateStorage.fields_.ecology_event_accumulator_, 1);
         int warming = MapSeaLevel;
         if (warming < 0) warming = 0;
@@ -10542,7 +10540,7 @@ int __cdecl upgrade_cost(int faction_id, int proto_id_init, int proto_id_upg) {
 
 void __cdecl upgrade_any_prototypes(int faction_id) {
     UpgradePromptAnswered = 0;
-    if (((1 << faction_id) & (int)(unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_) == 0
+    if (((1 << faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0
         || (GameDataStateStorage.fields_.game_more_preferences_ & 0x100000) != 0) {
         int i = 0;
         do {
@@ -10839,7 +10837,7 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
         VehPrototypes[proto_id_old].flags &= 0xfe;
     }
 
-    if ((*(unsigned char *)&GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << faction_id)) != 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) != 0) {
         draw_map(1);
     }
     if (faction_id == ConsoleGlobal.faction_id_) {
@@ -13012,11 +13010,11 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
     const int cost = base_yield_mul(base_yield_mul(
         upgrade_cost(faction_id, proto_id_new, proto_id_old),
         PlayersData[faction_id].proto_id_active[proto_id_old]), 10);
-    if (cost == 0 && !(set_flag == 0 && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0)) {
+    if (cost == 0 && !(set_flag == 0 && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0)) {
         return 0;
     }
 
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
         const int ranking_factor = 8 - PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking;
         const int energy = PlayersData[faction_id].energy_reserves;
         int minerals = (base_yield_mul(GameDataStateStorage.fields_.diff_level_current_, cost) / 10)
@@ -13034,7 +13032,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
         const int threshold = upgrade_arithmetic_shift_three(base_yield_add(
             discount_energy, discount_energy < 0 ? 7 : 0));
         if (base_yield_sub(cost, minerals) <= threshold) {
-            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0 || !IsMultiplayerNet) {
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0 || !IsMultiplayerNet) {
                 do_upgrade(faction_id, proto_id_new, proto_id_old);
             } else {
                 message_data(0x2411, 0, faction_id, proto_id_new,
@@ -13125,7 +13123,7 @@ int __cdecl upgrade_prototype(int faction_id, int proto_id_new,
                 if (result > 1) UpgradePromptAnswered = 1;
             }
         }
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0 || !IsMultiplayerNet) {
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0 || !IsMultiplayerNet) {
             do_upgrade(faction_id, proto_id_new, proto_id_old);
         } else {
             message_data(0x2411, 0, faction_id, proto_id_new,

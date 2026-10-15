@@ -1234,7 +1234,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             faction_id, faction_id_with);
 
     const uint32_t faction_mask = 1u << (faction_id & 31);
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_mask) != 0) {
         ambience(0xC9);
     }
 
@@ -1287,7 +1287,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             const_cast<char *>(prototype.veh_name));
         if (proposed >= 0) {
             if (IsMultiplayerNet != 0 &&
-                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0) {
+                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_mask) != 0) {
                 VehPrototypes[proposed].obsolete_factions |= 1;
             } else {
                 prune_protos(faction_id, proposed, 0);
@@ -1344,7 +1344,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                 reactor_level, proposal_class, nullptr);
             if (proposed < 0) continue;
             if (IsMultiplayerNet != 0 &&
-                (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0) {
+                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_mask) != 0) {
                 VehPrototypes[proposed].obsolete_factions |= 1;
             } else {
                 prune_protos(faction_id, proposed, 0);
@@ -1360,7 +1360,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
 
     FirstProposedPrototype = -1;
     if (IsMultiplayerNet == 0) {
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0 &&
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_mask) != 0 &&
             (GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_AUTO_DESIGN_VEH) != 0) {
             const int first_proto = faction_id * MaxVehProtoFactionNum;
             for (int proto_id = first_proto;
@@ -1563,7 +1563,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             if ((static_cast<uint8_t>(prototype.flags) & faction_mask) == 0 &&
                 (prototype.flags & 0x100) != 0 &&
                 (IsMultiplayerNet == 0 ||
-                 (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) == 0)) {
+                 (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_mask) == 0)) {
                 upgrade_prototypes(faction_id, proto_id);
             }
         }
@@ -1772,7 +1772,7 @@ int __cdecl tech_advance(int faction) {
     if (IsMultiplayerNet == 0 || TurnUpkeepPhase != 1) {
         if (IsMultiplayerPBEM == 0 ||
             (((1 << faction) &
-              *reinterpret_cast<const unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) ||
+              GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0) ||
             faction == ConsoleGlobal.faction_id_) {
             selection = *researching;
             if (selection < 0) {
@@ -1784,7 +1784,7 @@ int __cdecl tech_advance(int faction) {
             *researching = -1;
             tech_achieved(faction, selection, 0, 0);
             if (((1 << faction) &
-                 *reinterpret_cast<const unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)) == 0) {
+                 GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) == 0) {
                 int saved_base = BaseIDCurrentSelected;
                 bases_reset(-1, faction, 0);
                 if (GameDataStateStorage.fields_.turn_current_num_ != 0 && saved_base >= 0 &&
