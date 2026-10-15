@@ -486,7 +486,7 @@ int Wave_Device::add_to_group(unsigned int group, Wave *wave) {
     if (group > 0xF || !wave) {
         return 0xA;
     }
-    reinterpret_cast<WaveGroupList *>(&groups_[group].head)->insert(wave);
+    groups_[group].list_.insert(wave);
     wave->group_slot_ = group;
     return 0;
 }
@@ -520,15 +520,11 @@ int Wave_Device::pull_from_group(Wave *a1) {
         return 0xA;
     }
     const uint32_t slot = a1->group_slot_;
-    // THE HEAD-RELATIVE VIEW, NOT THE WHOLE STRUCT. The image computes its
-    // group pointer straight to `&groups_[slot].head`
-    // (`lea esi, [ecx + eax*8 + 0x2c]`) and addresses head/tail/cursor/count
-    // at +0/+4/+8/+0xc from THAT; binding a `WaveControlGroup&` to the
-    // struct's own front computes the pointer 8 bytes earlier and every
-    // field store lands 8 bytes further out (+8/+0xc/+0x10/+0x14) than the
-    // image's.
-    WaveGroupList &group =
-        *reinterpret_cast<WaveGroupList *>(&groups_[slot].head);
+    // The image computes this receiver at group+8 (`lea esi, [ecx + eax*8
+    // + 0x2c]`), historically the address of head, then addresses
+    // head/tail/cursor/count at +0/+4/+8/+0xc from there. The typed `list_`
+    // member begins at the same receiver offset.
+    WaveGroupList &group = groups_[slot].list_;
     // ONE LOOP CONDITION, NOT A NESTED GUARD. The image tests `node` for
     // null on every iteration as PART of the loop condition (`test eax,eax;
     // je` shared by both the "list ran out" and "found" exits), then
@@ -1020,8 +1016,7 @@ int Wave_Device::set_group_volume(unsigned int a1, unsigned int a2) {
         return 0xA;
     }
     groups_[a1].volume = a2;
-    WaveGroupList &list =
-        *reinterpret_cast<WaveGroupList *>(&groups_[a1].head);
+    WaveGroupList &list = groups_[a1].list_;
     WaveGroupNode *const first = list.head;
     list.cursor = first;
     if (first) {
@@ -1091,8 +1086,7 @@ int Wave_Device::enable_group(unsigned int a1) {
     if (groups_[a1].enabled) {
         return 0;
     }
-    WaveGroupList &list =
-        *reinterpret_cast<WaveGroupList *>(&groups_[a1].head);
+    WaveGroupList &list = groups_[a1].list_;
     WaveGroupNode *const first = list.head;
     list.cursor = first;
     if (first) {
@@ -1150,8 +1144,7 @@ int Wave_Device::disable_group(unsigned int a1) {
     if (!groups_[a1].enabled) {
         return 0;
     }
-    WaveGroupList &list =
-        *reinterpret_cast<WaveGroupList *>(&groups_[a1].head);
+    WaveGroupList &list = groups_[a1].list_;
     WaveGroupNode *const first = list.head;
     list.cursor = first;
     if (first) {
@@ -1432,7 +1425,7 @@ int Wave_Device::release() {
 Purpose: Initialize one control group: clear head, tail, cursor and count,
          then set full volume and enable the group. Native4C54A0/4C54A7
          establish the last two stores; the old mapped wrapper omitted them.
-// ORIGINAL: 0x004C5490 ??0WaveControlGroup@@QAE@XZ 0x004C5490-0x004C54AB
+// ORIGINAL: 0x004C5490 ??0WaveControlGroup@@QAE@XZ 0x004C5490-0x004C54AB BYTE_EXACT
 // Historical project redirect symbol: ?wave_control_group_ctor_redirect@@YIXPAUWaveControlGroup@@PAX@Z
 // No candidate emitted symbol is asserted before fresh object inspection.
 // size      27 bytes
@@ -1445,10 +1438,10 @@ Return Value: n/a (the constructor ABI returns this in eax)
 Status: Complete
 */
 WaveControlGroup::WaveControlGroup() {
-    this->head = nullptr;
-    this->tail = nullptr;
-    this->cursor = nullptr;
-    this->count = 0;
+    this->list_.head = nullptr;
+    this->list_.tail = nullptr;
+    this->list_.cursor = nullptr;
+    this->list_.count = 0;
     this->volume = 0x7f;
     this->enabled = 1;
 }
@@ -1473,24 +1466,24 @@ Return Value: n/a
 Status: Complete
 */
 WaveControlGroup::~WaveControlGroup() {
-    WaveGroupNode *node = this->head;
+    WaveGroupNode *node = this->list_.head;
     while (node) {
         WaveGroupNode *const next = node->next;
         if (next) {
             next->prev = nullptr;
-            this->head = next;
+            this->list_.head = next;
         } else {
             // One statement: the tail clears first, the head second, the
             // original's store order.
-            this->head = (this->tail = nullptr);
+            this->list_.head = (this->list_.tail = nullptr);
         }
         Wave *const wave = node->wave;
         operator delete(node);
-        this->count -= 1;
+        this->list_.count -= 1;
         if (!wave) {
             break;
         }
-        node = this->head;
+        node = this->list_.head;
     }
 }
 

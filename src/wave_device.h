@@ -32,12 +32,16 @@ struct WaveGroupNode {
   Wave *wave;
 };
 
-// The view the list-insert helper takes: its receiver is the address of a
-// group's head field, so it sees the trailing four fields of WaveControlGroup.
+// The list subobject at WaveControlGroup+8, used by the group administrators
+// and by the list-insert helper.
 struct WaveGroupList {
+  // RECOVERY_MEMBER: v3 WaveGroupList head WaveGroupNode* 0x0 0x004C5BF0
   WaveGroupNode *head;
+  // RECOVERY_MEMBER: v3 WaveGroupList tail WaveGroupNode* 0x4 0x004C5BF0
   WaveGroupNode *tail;
+  // RECOVERY_MEMBER: v3 WaveGroupList cursor WaveGroupNode* 0x8 0x004C5490
   WaveGroupNode *cursor;
+  // RECOVERY_MEMBER: v1 WaveGroupList count 0xC 0x004C5B80
   uint32_t count;
 
   // 0x004C5BF0, the original typed list insertion operation.
@@ -51,14 +55,8 @@ struct WaveControlGroup {
   uint8_t pad[3];
   // RECOVERY_MEMBER: v1 WaveControlGroup volume 0x4 0x004C5490
   uint32_t volume;        // +0x04, the scale Wave::set_volume folds in
-  // RECOVERY_MEMBER: v3 WaveControlGroup head WaveGroupNode* 0x8 0x004C5B80
-  WaveGroupNode *head;    // +0x08
-  // RECOVERY_MEMBER: v3 WaveControlGroup tail WaveGroupNode* 0xC 0x004C5B80
-  WaveGroupNode *tail;    // +0x0C, updated only when the last node leaves
-  // RECOVERY_MEMBER: v3 WaveControlGroup cursor WaveGroupNode* 0x10 0x004C5490
-  WaveGroupNode *cursor;  // +0x10, the node after the last removal, or null
-  // RECOVERY_MEMBER: v1 WaveControlGroup count 0x14 0x004C5B80
-  uint32_t count;         // +0x14
+  // RECOVERY_MEMBER: v2 WaveControlGroup list_ WaveGroupList 0x8 0x004C5240
+  WaveGroupList list_;    // +0x08..+0x17
 
   // The actual element lifetime used by Wave_Device::groups_[16].
   WaveControlGroup();

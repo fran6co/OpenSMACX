@@ -105,10 +105,7 @@ struct WaveControlGroup {{
     uint8_t enabled;
     uint8_t pad[3];
     uint32_t volume;
-    WaveGroupNode *head;
-    WaveGroupNode *tail;
-    WaveGroupNode *cursor;
-    uint32_t count;
+    WaveGroupList list_;
 }};
 class Wave_Device {{
 public:
@@ -136,7 +133,7 @@ static int test_volume_bounds_and_live_cursor() {{
     n1.wave = &w1; n1.next = &n2; n2.wave = &w2; n2.next = &n3;
     n3.wave = &w3; n3.next = nullptr;
     d.groups_[0].volume = 99;
-    WaveGroupList *list = reinterpret_cast<WaveGroupList *>(&d.groups_[0].head);
+    WaveGroupList *list = &d.groups_[0].list_;
     list->head = &n1; list->tail = &n3; list->count = 3;
     h1.list = list; h1.mutate_cursor = true; h1.replacement_cursor = &n2;
     h1.group_volume = &d.groups_[0].volume;
@@ -166,7 +163,7 @@ static int test_enable_walk_and_post_store() {{
     n1.wave = &w1; n1.next = &n2; n2.wave = &w2; n2.next = &n3;
     n3.wave = &w3;
     d.groups_[0].enabled = 0;
-    WaveGroupList *list = reinterpret_cast<WaveGroupList *>(&d.groups_[0].head);
+    WaveGroupList *list = &d.groups_[0].list_;
     list->head = &n1; list->tail = &n3; list->count = 3;
     h1.enabled = &d.groups_[0].enabled; h1.enabled_seen = -1;
     h1.list = list; h1.mutate_cursor = true; h1.replacement_cursor = &n2;
@@ -191,7 +188,7 @@ static int test_disable_walk_and_post_store() {{
     w2.id = 8; w2.hook = nullptr;
     n1.wave = &w1; n1.next = &n2; n2.wave = &w2;
     d.groups_[0].enabled = 1;
-    WaveGroupList *list = reinterpret_cast<WaveGroupList *>(&d.groups_[0].head);
+    WaveGroupList *list = &d.groups_[0].list_;
     list->head = &n1; list->tail = &n2; list->count = 2;
     h1.enabled = &d.groups_[0].enabled; h1.enabled_seen = -1;
     h1.list = list;
