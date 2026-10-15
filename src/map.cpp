@@ -2260,7 +2260,7 @@ int __cdecl anything_at(int x, int y) {
 /*
 Purpose: Shutdown allocated map variables.
 // ORIGINAL: 0x00590E90 ?map_shutdown@@YAXXZ 0x00590E90-0x00590EC5 BYTE_EXACT
-// body      src/map.h
+// body      src/map.cpp
 // size      53 bytes
 // prototype 
 // callers   3   call targets   1
@@ -2271,13 +2271,21 @@ Purpose: Shutdown allocated map variables.
 //        exactly one call - the image inlines this whole body there. Moved to
 //        map.h as `MEASURED inline`; map_init's call site (already call_diff-clean)
 //        was unaffected.
+// PINNED CALL-SITE CORRECTION: map_init (0x00590ED0) also expands the frees
+// directly at 0x0059100B and 0x0059101D; neither inline consumer calls 0x590E90.
 Return Value: n/a
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+void __cdecl map_shutdown() {
+    if (map_tiles()) {
+        free(map_tiles());
+    }
+    if (MapAbstract()) {
+        free(MapAbstract());
+    }
+    map_tiles() = 0;
+    MapAbstract() = 0;
+}
 
 /*
 Purpose: Initialize map variables.
@@ -2326,7 +2334,7 @@ BOOL __cdecl map_init() {
             return false;
         }
     }
-    map_shutdown();
+    release_map_storage();
     return true;
 }
 
@@ -2428,7 +2436,7 @@ Return Value: Did an error occur? true/false
 Status: Complete
 */
 BOOL __cdecl map_read(FILE *map_file) {
-    map_shutdown();
+    release_map_storage();
     if (!fread(&MapStorage, 0xAA4, 1, map_file)) {
         return true;
     }

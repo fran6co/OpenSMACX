@@ -44,10 +44,12 @@ STATE IS NEVER WRITTEN. It is derived from the region on read, which is
 what makes the loop a test: the rewritten file must re-derive the same
 state from the same code.
 
-EXPLICIT SYMBOL FACT UPDATES use the separate pure ``write_symbol`` operation.
-Unlike the legacy marker writer, it requires a current complete reader snapshot
-and verifies that other annotations and lessons retain their interpretations.
-Its caller supplies compiler evidence, authorization and guarded publication.
+EXPLICIT SYMBOL, KIND AND BODY FACT UPDATES use separate pure operations.
+Unlike the legacy marker writer, they require a current complete reader
+snapshot and verify that other annotations and lessons retain their
+interpretations. ``write_body`` only replaces an existing body path; it does
+not invent a missing binding. Their caller supplies evidence, authorization
+and guarded publication.
 """
 
 from __future__ import annotations
@@ -59,6 +61,7 @@ from difflib import SequenceMatcher
 from pathlib import Path
 
 from .. import binding_source
+from ..components import relative_path
 from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
                       MARKER, NEXT_MARKER, SOURCE_ROLE_DIRECTIVE,
@@ -772,4 +775,98 @@ def write_kind(raw: bytes, record: DecompilationState, kind: str) -> bytes:
             for x in row.origin or ())
         if left != right or provenance(before) != provenance(after):
             raise ValueError("kind rewrite changed other source facts or lessons")
+    return result
+
+
+def write_body(raw: bytes, record: DecompilationState, body: str) -> bytes:
+    """Return source with one existing body-location fact path updated.
+
+    Unlike ``write``, this is an explicit guarded fact edit. It requires the
+    caller's complete current reader snapshot and edits only the body path
+    token; it never inserts a fact or changes the original identity, spans,
+    claim, lessons, or binding rationale.
+    """
+    if not isinstance(raw, bytes):
+        raise ValueError("body rewriting requires original source bytes")
+    if (not isinstance(body, str) or not body
+            or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in body)
+            or any(token in body for token in ("/*", "*/", "//", "??/"))):
+        raise ValueError("body path must be one annotation-safe relative path")
+    try:
+        relative_path(body)
+    except ValueError as error:
+        raise ValueError("body path must be one annotation-safe relative path") from error
+    if "/" not in body:
+        raise ValueError("body path must be one annotation-safe relative path")
+    encoded = body.encode("utf-8")
+    text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+    if re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
+        raise ValueError("unsupported source line separator")
+    logical_text = re.sub(r"(?:\\|\?\?/)[ \t]*\n", "", text)
+    if any(re.fullmatch(r'(?:u8|u|U|L)?R"', token.group())
+           for token in _SYMBOL_SOURCE_TOKENS.finditer(logical_text)):
+        raise ValueError("body rewriting does not support raw-string source")
+    macro_lines = _define_directive_lines(text)
+    lines = text.splitlines()
+    records = read_text(text, record.path)
+    selected = [i for i, row in enumerate(records) if row.line == record.line]
+    if len(selected) != 1 or asdict(records[selected[0]]) != asdict(record):
+        raise ValueError("source body update requires a current record snapshot")
+    define_prefix = re.compile(r"^[ \t]*#[ \t]*define\b")
+    if (record.line - 1 in macro_lines
+            or define_prefix.match(lines[record.line - 1])):
+        raise ValueError("body annotation is inside a #define directive")
+    bindings = binding_source.parse(text, records)
+    position = selected[0]
+    lines, source_lines = text.splitlines(), raw.splitlines(keepends=True)
+    if len(lines) != len(source_lines):
+        raise ValueError("unsupported source line separator")
+
+    facts = []
+    for offset, stripped in _fact_lines(lines, record.line - 1):
+        match = FACT_LINE.fullmatch(stripped)
+        if match and match.group(1) == "body":
+            value = match.group(2) or ""
+            try:
+                relative_path(value)
+            except ValueError as error:
+                raise ValueError("existing body fact is not one safe relative path") from error
+            if (len(value.split("/")) < 2
+                    or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in value)
+                    or any(token in value for token in ("/*", "*/", "//", "??/"))):
+                raise ValueError("existing body fact is not one safe relative path")
+            facts.append((offset, match, value))
+    if len(facts) != 1:
+        raise ValueError("body update requires exactly one existing body fact")
+    if (facts[0][0] in macro_lines
+            or define_prefix.match(lines[facts[0][0]])):
+        raise ValueError("body fact is inside a #define directive")
+
+    offset, match, old_value = facts[0]
+    line = source_lines[offset]
+    leading = len(line) - len(line.lstrip(b" \t"))
+    start = leading + match.start(2)
+    old = old_value.encode("utf-8")
+    if line[start:start + len(old)] != old:
+        raise ValueError("body fact cannot be rewritten byte-for-byte")
+    output = list(source_lines)
+    output[offset] = line[:start] + encoded + line[start + len(old):]
+    result = b"".join(output)
+    reread = read_text(result.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), record.path)
+    if len(reread) != len(records):
+        raise ValueError("body rewrite changed annotation coverage")
+    rebound = binding_source.parse(result.decode("utf-8", errors="replace"), reread)
+    if [bindings.get(row.line) for row in records] != [rebound.get(row.line) for row in reread]:
+        raise ValueError("body rewrite changed original binding rationale")
+    for i, (before, after) in enumerate(zip(records, reread)):
+        left, right = asdict(before), asdict(after)
+        left["body"] = body if i == position else before.body
+        for field in ("line", "region", "origin"):
+            left.pop(field)
+            right.pop(field)
+        provenance = lambda row: tuple(
+            (x.kind, x.key, x.prose, tuple(t for _, t in x.lines))
+            for x in row.origin or ())
+        if left != right or provenance(before) != provenance(after):
+            raise ValueError("body rewrite changed other source facts or lessons")
     return result

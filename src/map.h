@@ -910,12 +910,9 @@ MEASURED inline int __cdecl find_landmark(int x, int y, int radius_range_offset)
     return -1;
 }
 
-// MEASURED inline: map_read (0x00591130) call_diff'd FEWER by exactly one call -
-// the image inlines map_shutdown's whole body (two conditional `free()`s) at the
-// top of map_read, where this tree called it for real. map_init (0x00590ED0)
-// already call_diff-clean with map_shutdown as a real call there stayed clean
-// after this move too - `osmx check` is the proof, not this comment.
-MEASURED inline void __cdecl map_shutdown() {
+// map_init and map_read expand this storage cleanup in the image. The mapped
+// map_shutdown entry remains out-of-line for callers whose original code calls it.
+inline void __cdecl release_map_storage() {
     if (map_tiles()) {
         free(map_tiles());
     }
@@ -925,6 +922,8 @@ MEASURED inline void __cdecl map_shutdown() {
     map_tiles() = 0;
     MapAbstract() = 0;
 }
+
+MEASURED void __cdecl map_shutdown();
 
 void __cdecl alt_set(int x, int y, int altitude);
 void __cdecl delete_landmark(int x, int y);
