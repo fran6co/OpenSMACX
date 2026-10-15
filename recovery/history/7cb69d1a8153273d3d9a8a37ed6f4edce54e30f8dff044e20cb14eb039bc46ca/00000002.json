@@ -1,0 +1,17 @@
+{
+  "event_id": "08ef7bc6a1d6032d4aa684db08ae7cc51cbdd4cf2c93be82ff45ca1376ee96c4",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "prefwin-rect-deck-adoption-oct15",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator decision: retain existing faithful source unchanged. These measured candidates do not justify an edit or extended spelling iterations; the failed compiler trial remains unknown, not a measured miss. This rejects only adopting this bounded deck, not future evidence-backed recovery or the original matching obligations."
+    ]
+  },
+  "previous_event": "2c52b5336e4716645db122670805f6fe80ca8f7b719989314a4d9dccca8d7ead",
+  "request_id": "prefwin-rect-deck-not-adopted-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:prefwin-rect-spelling-oct15"
+}

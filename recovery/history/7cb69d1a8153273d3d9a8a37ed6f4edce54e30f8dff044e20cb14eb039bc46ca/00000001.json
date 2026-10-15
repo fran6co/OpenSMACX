@@ -1,0 +1,21 @@
+{
+  "event_id": "2c52b5336e4716645db122670805f6fe80ca8f7b719989314a4d9dccca8d7ead",
+  "payload": {
+    "affects": [
+      "entity-d9f3cb3ad6cb1e088d912cbac31fed1f028ca43663fde15ef7a09f85bd420d50",
+      "entity-e9de642e0565930a946e9e2533458a150504e89f9fdc741406f3a673738f1e16"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prefwin-rect-deck-adoption-oct15",
+    "evidence": [
+      "Native local deck screening: all redraw_option candidates compile identically to baseline under both configured flag sets. All scored redraw_volume candidates are worse; no supported winner. One aggregate candidate /Oy-default trial is unknown after a Wine preprocessing page fault; the /Oy- trial completed but worsened matching. Ignored reports build/recovery/prefwin-rect-local-results-oct15.json and prefwin-volume-rect-local-results-oct15.json retain full diagnostics."
+    ],
+    "hypothesis": "Adopt one of the six bounded ordinary RECT spellings to restore matching of the two PrefWin painters.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "prefwin-rect-deck-adoption-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:prefwin-rect-spelling-oct15"
+}
