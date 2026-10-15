@@ -249,7 +249,7 @@ Status: Complete
 int Dialogs::item(char *text, int index) {
     switch (kind_) {
         case 2:
-            return list_box_view().ListBox::item(text, index);
+            return ListBox::item(text, index);
         case 1:
         case 4:
         case 8:
@@ -486,7 +486,7 @@ Status: Complete
 void Dialogs::on_mousewheel(int a) {
     switch (kind_) {
         case 2:
-            list_box_view().ListBox::on_mousewheel(a);
+            ListBox::on_mousewheel(a);
             break;
         default:
             break;
@@ -576,16 +576,16 @@ Purpose: Route mouse move by the owned kind_ through qualified widget bases.
 void Dialogs::on_mouse_move(int a1, int a2) {
     switch (kind_) {
         case 16:
-            radio_button_view().RadioButton::on_mouse_move(a1, a2);
+            RadioButton::on_mouse_move(a1, a2);
             break;
         case 2:
-            list_box_view().ListBox::on_mouse_move(a1, a2);
+            ListBox::on_mouse_move(a1, a2);
             break;
         case 1:
-            check_box_view().CheckBox::on_mouse_move(a1, a2);
+            CheckBox::on_mouse_move(a1, a2);
             break;
         case 8:
-            sprite_box_view().SpriteBox::on_mouse_move(a1, a2);
+            SpriteBox::on_mouse_move(a1, a2);
             break;
         default:
             break;
@@ -662,7 +662,7 @@ Status: Complete
 */
 void Dialogs::on_left_click(int a, int b) {
     if (kind_ == 8) {
-        sprite_box_view().SpriteBox::on_left_click(a, b);
+        SpriteBox::on_left_click(a, b);
     }
 }
 
@@ -923,16 +923,16 @@ int Dialogs::calculate_dimensions() {
 void Dialogs::on_left_down(int x, int y) {
     switch (kind_) {
     case 1:
-        check_box_view().CheckBox::on_left_down(x, y);
+        CheckBox::on_left_down(x, y);
         break;
     case 2:
-        list_box_view().ListBox::on_left_down(x, y);
+        ListBox::on_left_down(x, y);
         break;
     case 8:
-        sprite_box_view().SpriteBox::on_left_down(x, y);
+        SpriteBox::on_left_down(x, y);
         break;
     case 16:
-        radio_button_view().RadioButton::on_left_down(x, y);
+        RadioButton::on_left_down(x, y);
         break;
     }
 }
@@ -943,16 +943,16 @@ void Dialogs::on_left_down(int x, int y) {
 void Dialogs::on_left_double_click(int x, int y) {
     switch (kind_) {
     case 1:
-        check_box_view().CheckBox::on_left_double_click(x, y);
+        CheckBox::on_left_double_click(x, y);
         break;
     case 2:
-        list_box_view().ListBox::on_left_double_click(x, y);
+        ListBox::on_left_double_click(x, y);
         break;
     case 8:
-        sprite_box_view().SpriteBox::on_left_double_click(x, y);
+        SpriteBox::on_left_double_click(x, y);
         break;
     case 16:
-        radio_button_view().RadioButton::on_left_double_click(x, y);
+        RadioButton::on_left_double_click(x, y);
         break;
     }
 }
@@ -963,16 +963,16 @@ void Dialogs::on_left_double_click(int x, int y) {
 void Dialogs::on_mouse_leave(int x, int y) {
     switch (kind_) {
     case 1:
-        check_box_view().CheckBox::on_mouse_leave(x, y);
+        CheckBox::on_mouse_leave(x, y);
         break;
     case 2:
-        list_box_view().ListBox::on_mouse_leave(x, y);
+        ListBox::on_mouse_leave(x, y);
         break;
     case 8:
-        sprite_box_view().SpriteBox::on_mouse_leave(x, y);
+        SpriteBox::on_mouse_leave(x, y);
         break;
     case 16:
-        radio_button_view().RadioButton::on_mouse_leave(x, y);
+        RadioButton::on_mouse_leave(x, y);
         break;
     }
 }
@@ -983,57 +983,57 @@ void Dialogs::on_mouse_leave(int x, int y) {
 int Dialogs::on_key_down(int key) {
     switch (kind_) {
     case 16:
-        return radio_button_view().RadioButton::on_key_down(key);
+        return RadioButton::on_key_down(key);
     case 2:
-        return list_box_view().ListBox::on_key_down(key);
+        return ListBox::on_key_down(key);
     case 1:
-        return check_box_view().CheckBox::on_key_down(key);
+        return CheckBox::on_key_down(key);
     case 8:
-        return sprite_box_view().SpriteBox::on_key_down(key);
+        return SpriteBox::on_key_down(key);
     default:
         return 0;
     }
     return 0;
 }
 
-// ORIGINAL: 0x006130E0 ?on_dialog_focus@Dialogs@@QAEXH@Z 0x006130E0-0x00613154
+// ORIGINAL: 0x006130E0 ?on_dialog_focus@Dialogs@@QAEXH@Z 0x006130E0-0x00613154 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x006130E0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_dialog_focus as a typed Dialogs kind dispatcher"}
 // symbol    ?on_dialog_focus@Dialogs@@UAEXH@Z
 void Dialogs::on_dialog_focus(int focus_id) {
     switch (kind_) {
     case 16:
-        radio_button_view().RadioButton::on_dialog_focus(focus_id);
+        RadioButton::on_dialog_focus(focus_id);
         break;
     case 2:
-        list_box_view().ListBox::on_dialog_focus(focus_id);
+        ListBox::on_dialog_focus(focus_id);
         break;
     case 1:
-        check_box_view().CheckBox::on_dialog_focus(focus_id);
+        CheckBox::on_dialog_focus(focus_id);
         break;
     case 8:
-        sprite_box_view().SpriteBox::on_dialog_focus(focus_id);
+        SpriteBox::on_dialog_focus(focus_id);
         break;
     case 4:
-        edit_group_view().EditGroup::on_dialog_focus(focus_id);
+        EditGroup::on_dialog_focus(focus_id);
         break;
     }
 }
 
-// ORIGINAL: 0x00612FE0 ?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z 0x00612FE0-0x006130AE
+// ORIGINAL: 0x00612FE0 ?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z 0x00612FE0-0x006130AE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612FE0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home attach as a typed Dialogs kind dispatcher"}
 // symbol    ?attach@Dialogs@@UAEHPAVGraphicWin@@HHH@Z
 int Dialogs::attach(GraphicWin *parent, int x, int y, int flags) {
     switch (kind_) {
     case 16:
-        return radio_button_view().RadioButton::attach(parent, x, y, flags);
+        return RadioButton::attach(parent, x, y, flags);
     case 2:
-        return list_box_view().ListBox::attach(parent, x, y, flags);
+        return ListBox::attach(parent, x, y, flags);
     case 1:
-        return check_box_view().CheckBox::attach(parent, x, y, flags);
+        return CheckBox::attach(parent, x, y, flags);
     case 8:
-        return sprite_box_view().SpriteBox::attach(parent, x, y, flags);
+        return SpriteBox::attach(parent, x, y, flags);
     case 4:
-        return edit_group_view().EditGroup::attach(parent, x, y, flags);
+        return EditGroup::attach(parent, x, y, flags);
     default:
         return 7;
     }
@@ -1047,15 +1047,15 @@ int Dialogs::attach(int kind, GraphicWin *parent, int x, int y, int flags) {
     kind_ = kind & 0x1f;
     switch (kind_) {
     case 16:
-        return radio_button_view().RadioButton::attach(parent, x, y, flags);
+        return RadioButton::attach(parent, x, y, flags);
     case 2:
-        return list_box_view().ListBox::attach(parent, x, y, flags);
+        return ListBox::attach(parent, x, y, flags);
     case 1:
-        return check_box_view().CheckBox::attach(parent, x, y, flags);
+        return CheckBox::attach(parent, x, y, flags);
     case 8:
-        return sprite_box_view().SpriteBox::attach(parent, x, y, flags);
+        return SpriteBox::attach(parent, x, y, flags);
     case 4:
-        return edit_group_view().EditGroup::attach(parent, x, y, flags);
+        return EditGroup::attach(parent, x, y, flags);
     default:
         return 3;
     }
@@ -1067,19 +1067,19 @@ int Dialogs::attach(int kind, GraphicWin *parent, int x, int y, int flags) {
 void Dialogs::on_redraw() {
     switch (kind_) {
     case 1:
-        check_box_view().CheckBox::on_redraw();
+        CheckBox::on_redraw();
         break;
     case 2:
-        list_box_view().ListBox::on_redraw();
+        ListBox::on_redraw();
         break;
     case 4:
-        edit_group_view().EditGroup::on_redraw();
+        EditGroup::on_redraw();
         break;
     case 8:
-        sprite_box_view().SpriteBox::on_redraw();
+        SpriteBox::on_redraw();
         break;
     case 16:
-        radio_button_view().RadioButton::on_redraw();
+        RadioButton::on_redraw();
         break;
     }
 }

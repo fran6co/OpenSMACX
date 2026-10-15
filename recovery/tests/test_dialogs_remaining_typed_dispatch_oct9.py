@@ -98,8 +98,6 @@ struct Dialogs : ListBox, RadioButton, CheckBox, SpriteBox, EditGroup {
     void setup_scroll(unsigned int flags, Win *parent) {
         iFlags_=flags; win_parent_=parent;
     }
-    ListBox &list_box_view() { return static_cast<ListBox &>(*this); }
-    SpriteBox &sprite_box_view() { return static_cast<SpriteBox &>(*this); }
     int item(char *, int);
     int get_num_items();
     void on_mousewheel(int);

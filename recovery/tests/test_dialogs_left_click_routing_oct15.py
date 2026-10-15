@@ -43,7 +43,6 @@ struct SpriteBox {
 struct DialogsMock : SpriteBox {
     int kind_;
     DialogsMock(): kind_(0) {}
-    SpriteBox &sprite_box_view() { return *this; }
     void on_left_click(int a, int b);
 };
 BODY_HERE

@@ -138,10 +138,10 @@ def test_dialogs_mouse_overrides_dispatch_through_shared_virtual_bases(tmp_path)
     source = (ROOT / "src/dialogs.cpp").read_text(encoding="utf-8")
     move_body = extract_definition(source, "void Dialogs::on_mouse_move(int a1, int a2)")
     up_body = extract_definition(source, "void Dialogs::on_left_up(int a, int b)")
-    assert "radio_button_view().RadioButton::on_mouse_move" in move_body
-    assert "list_box_view().ListBox::on_mouse_move" in move_body
-    assert "check_box_view().CheckBox::on_mouse_move" in move_body
-    assert "sprite_box_view().SpriteBox::on_mouse_move" in move_body
+    assert "RadioButton::on_mouse_move" in move_body
+    assert "ListBox::on_mouse_move" in move_body
+    assert "CheckBox::on_mouse_move" in move_body
+    assert "SpriteBox::on_mouse_move" in move_body
     assert "kind_ == 4" in up_body and "kind_ == 8" in up_body
     assert "SpriteBox::on_left_up" in up_body
 
@@ -178,11 +178,6 @@ class Dialogs : public ListBox, public RadioButton, public CheckBox,
                 public SpriteBox, public EditGroup {
  public:
   int kind_;
-  ListBox &list_box_view() { return static_cast<ListBox &>(*this); }
-  RadioButton &radio_button_view() { return static_cast<RadioButton &>(*this); }
-  CheckBox &check_box_view() { return static_cast<CheckBox &>(*this); }
-  SpriteBox &sprite_box_view() { return static_cast<SpriteBox &>(*this); }
-  EditGroup &edit_group_view() { return static_cast<EditGroup &>(*this); }
   void on_mouse_move(int,int);
   void on_left_up(int,int);
 };
@@ -247,8 +242,8 @@ def test_dialogs_unqualified_widget_dispatch_mutant_is_detected(tmp_path):
     source = (ROOT / "src/dialogs.cpp").read_text(encoding="utf-8")
     move_body = extract_definition(source, "void Dialogs::on_mouse_move(int a1, int a2)")
     up_body = extract_definition(source, "void Dialogs::on_left_up(int a, int b)")
-    mutant = move_body.replace("radio_button_view().RadioButton::on_mouse_move",
-                               "radio_button_view().on_mouse_move")
+    mutant = move_body.replace("RadioButton::on_mouse_move",
+                               "on_mouse_move")
     assert mutant != move_body
     # Keep this mutation control isolated: compilation/run must fail because the
     # unqualified virtual call re-enters Dialogs::on_mouse_move.
@@ -263,10 +258,6 @@ struct SpriteBox : virtual GraphicWin, virtual Dialog { void on_mouse_move(int,i
 struct EditGroup : virtual GraphicWin, virtual Dialog {};
 class Dialogs : public ListBox, public RadioButton, public CheckBox, public SpriteBox, public EditGroup {
  public: int kind_;
- ListBox &list_box_view(){return static_cast<ListBox&>(*this);}
- RadioButton &radio_button_view(){return static_cast<RadioButton&>(*this);}
- CheckBox &check_box_view(){return static_cast<CheckBox&>(*this);}
- SpriteBox &sprite_box_view(){return static_cast<SpriteBox&>(*this);}
  void on_mouse_move(int,int); void on_left_up(int,int);
 };
 // MOVE_BODY

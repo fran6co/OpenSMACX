@@ -149,16 +149,6 @@ class Dialogs : public ListBox,
   // RECOVERY_MEMBER: v1 Dialogs kind_ 0x180 0x00612970
   int32_t kind_;
 
- private:
-  // The archived dispatch bodies address these widget receivers by byte
-  // offsets. The real multiple-inheritance graph already names them; use
-  // C++ base conversions so the compiler follows the declared subobjects.
-  ListBox &list_box_view() { return static_cast<ListBox &>(*this); }
-  RadioButton &radio_button_view() { return static_cast<RadioButton &>(*this); }
-  CheckBox &check_box_view() { return static_cast<CheckBox &>(*this); }
-  SpriteBox &sprite_box_view() { return static_cast<SpriteBox &>(*this); }
-  EditGroup &edit_group_view() { return static_cast<EditGroup &>(*this); }
-
 };
 
 static_assert(sizeof(Dialogs) == 0xC94,
