@@ -115,8 +115,9 @@ static int bit_count(int value) {
 static void parse_num(int value, int) { ++parses; parse_value = value; }
 static void X_pop(const char *, int) { ++pops; }
 static int MapLongitudeBounds = 48, MapLatitudeBounds = 32;
+/* NETWIN_GAME_DATA_LOCK_MASK_INSERTION */
 struct GameDataFields {
-    struct { uint32_t enable_mask_; } lock_masks_;
+    GameDataLockMaskView lock_masks_;
     uint32_t net_turn_flags_, diff_level_current_, game_rules_, game_state_;
 };
 struct GameDataStorage { GameDataFields fields_; };
