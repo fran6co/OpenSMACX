@@ -2661,18 +2661,19 @@ void Datalink::set_cat_tech() {
     // The native cursor is Technology[0].preq_tech_2, and each step is one
     // complete RulesTechnology. Keep the encoded LPSTR name as an integer
     // handle for StringTable, just as the original pointer-sized word does.
-    for (int index = 0; index < 0x59; ++index) {
-        const RulesTechnology &record = Technology[index];
-        if (record.preq_tech_1 >= -1 && record.preq_tech_2 >= -1) {
+    int id = 140000;
+    const RulesTechnology *record = Technology;
+    for (; id - 140000 < 0x59; ++record, ++id) {
+        if (record->preq_tech_1 >= -1 && record->preq_tech_2 >= -1) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(record.name));
+            strcat(StringTemp, StringTable.get(record->name));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkTechIdSeparator);
                 char digits[0x54];
-                _itoa(index + 140000, digits, 10);
+                _itoa(id, digits, 10);
                 strcat(StringTemp, digits);
             }
-            listBox_.item(StringTemp, index + 140000);
+            listBox_.item(StringTemp, id);
         }
     }
 
@@ -2826,16 +2827,15 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_social() {
-    int category_index = 0;
-    for (int category = 120001; category < 120021;
-         category += 5, ++category_index) {
-        const RulesSocialCategory &row = SocialCategories[category_index];
-        listBox_.item(StringTable.get(row.type), category - 1);
+    int category = 120001;
+    const RulesSocialCategory *row = SocialCategories;
+    do {
+        listBox_.item(StringTable.get(row->type), category - 1);
 
         for (int choice = 0; choice < 4; ++choice) {
             int id = category + choice;
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(row.name[choice]));
+            strcat(StringTemp, StringTable.get(row->name[choice]));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkSocialIdSeparator);
                 char digits[80];
@@ -2844,7 +2844,9 @@ void Datalink::set_cat_social() {
             }
             listBox_.item(StringTemp, id);
         }
-    }
+        category += 5;
+        ++row;
+    } while (category < 120021);
 
     RECT rect = category_rect_;
     box_sprite(&rect, &InterfaceBoxStyles[6]);
