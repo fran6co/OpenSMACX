@@ -46,6 +46,7 @@
 #include "console.h"
 #include "datalink.h"
 #include "game.h"
+#include "messagewin.h"
 #include "interface_palette.h"
 #include "faction.h"  // spying() is owned by the faction API
 #include "netdaemon.h"
@@ -1078,8 +1079,10 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             strcat(StringTemp, digits);
             strcat(StringTemp, ")");
         }
+        screen->set_text_color(TextColourTable[12], TextColourTable[13], 1, 1);
         int line_y = screen->wrap_cent(&font3_, StringTemp, content_x,
                                        content_y + title_offset + 8, content_width);
+        screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
         if (vehicle.faction_id != 0 &&
             vehicle.faction_id != ConsoleGlobal.faction_id_) {
             StringTemp[0] = '\0';
@@ -1181,9 +1184,11 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 _itoa(maximum, digits, 10);
                 strcat(StringTemp, digits);
                 screen->set_text_color(0xfa, -1, 1, 1);
-                if ((vehicle.terraforming_turns != 0 &&
-                     chassis.range / 2 <= vehicle.terraforming_turns) ||
-                    (chassis.range == 1 && remaining <= movement / 2)) {
+                if (vehicle.terraforming_turns != 0 &&
+                    chassis.range / 2 <= vehicle.terraforming_turns) {
+                    screen->set_text_color(0xfb, -1, 1, 1);
+                }
+                if (chassis.range == 1 && remaining <= movement / 2) {
                     screen->set_text_color(0xfb, -1, 1, 1);
                 }
                 if (action_home(vehicle_id, -1) != 0) {
@@ -1192,6 +1197,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 screen->write_l(StringTemp, next_x, line_y, strlen(StringTemp));
                 line_y += font1_.line_advance();
             }
+            screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
             const int capacity = veh_cargo(vehicle_id);
             if (capacity != 0) {
                 char count_text[32];
@@ -1233,6 +1239,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             screen->write_l(StringTemp, next_x, line_y, strlen(StringTemp));
             line_y += font1_.line_advance();
         }
+        screen->set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
         if ((vehicle.state & VSTATE_DESIGNATE_DEFENDER) && known_orders) {
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0x1048 / 4));
@@ -1240,6 +1247,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             screen->write_l(StringTemp, content_x, line_y, strlen(StringTemp));
             line_y += font1_.line_advance();
         }
+        screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
         if (known_orders) {
             StringTemp[0] = '\0';
             say_orders(StringTemp, vehicle_id);
@@ -1281,11 +1289,13 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         UNK2();
     }
 
+    screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
     screen->restore_clip();
     if (base_id >= 0) {
         Base &base = Bases[base_id];
         base_draw(screen, base_id, sprite_x, content_y, -4, 0x40);
         base_draw(screen, base_id, sprite_x, content_y, 0, 0x1800);
+        screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
         screen->set_font(&font1_, 0, 0, 0);
         StringTemp[0] = '\0';
         strcat(StringTemp, base.name_string);
@@ -1346,6 +1356,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             }
         }
         const int owner_id = base.faction_id_current;
+        screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
         if (owner_id == ConsoleGlobal.faction_id_ ||
             (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) ||
             (PlayersData[ConsoleGlobal.faction_id_]
