@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "8f379446a13626e3ec007fd1ad0bf82c8e0b0993",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_battle_compute_tail_original_oct15.py"
+  ],
+  "evidence": [
+    "Pending battle-compute-shared-sign-gates-oct15 discovery: original 0x501DA0..0x5044C4. Coordinator full-span decode confirms 0x503C7A/7C sign gate skips first optional block to0x503D1B; psi bit test there branches to0x503DB7, while0x503D25/27 and0x503DB7/B9 negative paths both reach common outputs0x5044A3.",
+    "Common output block conditionally stores accumulated offense and defense then returns. Preserve pre-sign attacker reads at0x501DD5..0x501DE3 and all preceding behavior; no safety fix or early return that omits output stores. Map original tail ordering and current broad primary/else nesting before editing; do not simply remove isolated sign predicates.",
+    "Edit only actual battle_compute body and focused actual-source tests. Preserve source mappings, historical claims and all unrelated vehicle functions. Independent original-CFG review, host controls including negative-ID interior-array fixture and compiling runtime-failing mutants, whole vehicle TU measurements, application build/link, physical collateral review, claims and references required for bounded manual integration. No automatic/full-game acceptance implied."
+  ],
+  "intent": "Recover original shared attacker-sign tail control flow in battle_compute",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5250464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "battle-compute-tail-original-oct15"
+}
