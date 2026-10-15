@@ -4334,15 +4334,12 @@ void __cdecl world_climate() {
     random_reseed(timeGetTime());
 
     if (WorldClimateSkipTerrainClear == 0) {
-        MapWin **cursor = MapWinTable;
-        MapWin **const end = cursor + MapWinTableSlots;
-        do {
-            MapWin *const window = *cursor;
+        for (int slot = 0; slot < 8; ++slot) {
+            MapWin *const window = MapWinTable[slot];
             if (window->field_1DD74_ != 0) {
                 window->clear_terrain();
             }
-            ++cursor;
-        } while (cursor < end);
+        }
         WorldClimateWorldWin.clear_terrain();
     }
 
