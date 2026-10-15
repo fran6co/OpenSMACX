@@ -266,21 +266,21 @@ void Menu::on_left_down(int x, int y) {
     MenuSelection = -1;
     int new_index = 0;
     const int hit = spot_.check(x, y, &new_index, 0);
-    int current = static_cast<int>(field_A24_);
+    int current = field_A24_;
     if (hit == -1) {
         if (current == -1) return;
     } else if (current != new_index) {
         if (current != -1) {
             PullDown **old_menu_slot = &entries_[current].pull_down;
             (*old_menu_slot)->hide();
-            field_A24_ = 0xFFFFFFFFu;
+            field_A24_ = -1;
             MenuSelection = -1;
             redraw();
             flush_input();
             do_all_tasks(*old_menu_slot);
             do_all_tasks(this);
         }
-        field_A24_ = static_cast<unsigned int>(new_index);
+        field_A24_ = new_index;
         RECT spot_rect;
         spot_.get_rect_at(new_index, &spot_rect);
         x = spot_rect.left - text_width(MenuLeftDownMargin);
@@ -289,7 +289,7 @@ void Menu::on_left_down(int x, int y) {
         redraw();
         MenuPullDownInputOrigin = 0;
         on_adjust_pulldown_pos(&x, &y); // native Menu slot 94
-        entries_[static_cast<int>(field_A24_)].pull_down->show(x, y, 0);
+        entries_[field_A24_].pull_down->show(x, y, 0);
         return;
     } else if (current == -1) {
         // The native hit can name no menu despite a successful Spot::check.
@@ -300,7 +300,7 @@ void Menu::on_left_down(int x, int y) {
 
     PullDown **old_menu_slot = &entries_[current].pull_down;
     (*old_menu_slot)->hide();
-    field_A24_ = 0xFFFFFFFFu;
+    field_A24_ = -1;
     MenuSelection = -1;
     redraw();
     flush_input();
@@ -314,7 +314,7 @@ void Menu::on_left_down(int x, int y) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fbdb0.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?mouse_move@Menu@@QAEXHH@Z
 void Menu::mouse_move(int x, int y) {
-    if (static_cast<int>(field_A24_) == -1) return;
+    if (field_A24_ == -1) return;
     if (MenuLastMouseX == x && MenuLastMouseY == y) return;
     MenuLastMouseX = x;
     MenuLastMouseY = y;
@@ -325,11 +325,11 @@ void Menu::mouse_move(int x, int y) {
     ScreenToClient(HandleMain, &point);
     int new_index = 0;
     if (spot_.check(point.x, point.y, &new_index, 0) == -1 ||
-        static_cast<int>(field_A24_) == new_index || (field_A28_ & 1) != 0)
+        field_A24_ == new_index || (field_A28_ & 1) != 0)
         return;
 
-    entries_[static_cast<int>(field_A24_)].pull_down->hide();
-    field_A24_ = static_cast<unsigned int>(new_index);
+    entries_[field_A24_].pull_down->hide();
+    field_A24_ = new_index;
     RECT spot_rect;
     spot_.get_rect_at(new_index, &spot_rect);
     point.x = spot_rect.left - text_width(MenuMouseMoveMargin);
@@ -339,7 +339,7 @@ void Menu::mouse_move(int x, int y) {
     int left = point.x;
     int top = point.y;
     on_adjust_pulldown_pos(&left, &top); // native Menu slot 94
-    entries_[static_cast<int>(field_A24_)].pull_down->show(left, top, 0);
+    entries_[field_A24_].pull_down->show(left, top, 0);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -353,12 +353,12 @@ void Menu::mouse_move(int x, int y) {
 // reloads field_A24_ after flush/redraw at 5FC1F7. Keep the cell address, not
 // its current pointer value or field_A24_, across those reentrant boundaries.
 int Menu::on_key_click(int, int key) {
-    int selected_menu = static_cast<int>(field_A24_);
+    int selected_menu = field_A24_;
     const int no_menu = -1;
     if (selected_menu != no_menu && (key & 0xFFFBFFFF) == 0x12) {
         PullDown **closing_slot = &entries_[selected_menu].pull_down;
         (*closing_slot)->hide();
-        field_A24_ = 0xFFFFFFFFu;
+        field_A24_ = -1;
         MenuSelection = -1;
         redraw();
 
@@ -372,7 +372,7 @@ int Menu::on_key_click(int, int key) {
         if (key == 0x0D) {
             PullDown **closing_slot = &entries_[selected_menu].pull_down;
             (*closing_slot)->hide();
-            field_A24_ = 0xFFFFFFFFu;
+            field_A24_ = -1;
             MenuSelection = -1;
             redraw();
             flush_input();
@@ -400,7 +400,7 @@ int Menu::on_key_click(int, int key) {
         if (key == 0x1B) {
             PullDown **closing_slot = &entries_[selected_menu].pull_down;
             (*closing_slot)->hide();
-            field_A24_ = 0xFFFFFFFFu;
+            field_A24_ = -1;
             MenuSelection = -1;
             redraw();
             flush_input();
@@ -435,17 +435,17 @@ search_menu_mnemonics:
         if (!mnemonic) continue;
         if (*mnemonic != tolower(key) && *mnemonic != toupper(key)) continue;
 
-        if (static_cast<int>(field_A24_) != no_menu) {
-            PullDown **closing_slot = &entries_[static_cast<int>(field_A24_)].pull_down;
+        if (field_A24_ != no_menu) {
+            PullDown **closing_slot = &entries_[field_A24_].pull_down;
             (*closing_slot)->hide();
-            field_A24_ = 0xFFFFFFFFu;
+            field_A24_ = -1;
             MenuSelection = -1;
             redraw();
             flush_input();
             do_all_tasks(*closing_slot);
             do_all_tasks(this);
         }
-        field_A24_ = static_cast<unsigned int>(index);
+        field_A24_ = index;
         RECT rect;
         spot_.get_rect_at(index, &rect);
         POINT point;
@@ -455,7 +455,7 @@ search_menu_mnemonics:
         flush_input();
         redraw();
         MenuPullDownInputOrigin = 1;
-        entries_[static_cast<int>(field_A24_)].pull_down->show(point.x, point.y, 0);
+        entries_[field_A24_].pull_down->show(point.x, point.y, 0);
         return 1;
     }
     return 0;
@@ -491,7 +491,7 @@ void Menu::on_redraw() {
         RECT row = text_area;
         if ((entry.flags & 4) != 0) row.right = spot_rect.right;
         else row.left = spot_rect.left;
-        const bool selected = static_cast<int>(field_A24_) == index;
+        const bool selected = field_A24_ == index;
         int text_color;
         if (selected) {
             text_color = (entry.flags & 2) ? MenuDefaultColor1 : MenuDefaultColor2;
@@ -563,10 +563,10 @@ void Menu::set_def_font(Font *font) {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005FB830-0x005FB8D8"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
 // symbol    ?menu_event@Menu@@QAEXH@Z
 void Menu::menu_event(int id) {
-    if (field_A24_ != 0xFFFFFFFF) {
+    if (field_A24_ != -1) {
         MenuEntry &entry = entries_[field_A24_];
         entry.pull_down->hide();
-        field_A24_ = 0xFFFFFFFF;
+        field_A24_ = -1;
         MenuSelection = -1;
         redraw();
         flush_input();
@@ -631,7 +631,7 @@ Menu::Menu() {
     proc_ = nullptr;
     count_ = 0;
     field_A20_ = 0;
-    field_A24_ = 0xFFFFFFFF;
+    field_A24_ = -1;
     for (int i = 0; i < 15; i++) {
         entries_[i].text = nullptr;
         entries_[i].id = -1;
@@ -680,7 +680,7 @@ void Menu::UNK1() {
     proc_ = nullptr;
     count_ = 0;
     field_A20_ = 0;
-    field_A24_ = 0xFFFFFFFF;
+    field_A24_ = -1;
 }
 
 /*
@@ -1881,5 +1881,5 @@ Menu::~Menu() {
     proc_ = nullptr;
     count_ = 0;
     field_A20_ = 0;
-    field_A24_ = 0xFFFFFFFF;
+    field_A24_ = -1;
 }

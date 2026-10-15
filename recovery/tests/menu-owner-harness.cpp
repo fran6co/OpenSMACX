@@ -25,7 +25,7 @@ struct Sound {
 
 class Win {
 public:
-    explicit Win() : fill_color(0), text_color(0), writes(0), lines(0), redraws(0), hides(0), flushes(0), modal_releases(0), key_calls(0), last_key_input(-1), last_key(-1), win_parent_(0) { set_rect(0,0,200,100); }
+    explicit Win() : fill_color(0), text_color(0), writes(0), lines(0), selected_fills(0), redraws(0), hides(0), flushes(0), modal_releases(0), key_calls(0), last_key_input(-1), last_key(-1), win_parent_(0) { set_rect(0,0,200,100); }
     virtual ~Win() {}
     virtual void redraw() { ++redraws; }
     virtual void hide() { ++hides; }
@@ -39,9 +39,9 @@ public:
     Sound *event_window() { return &event_sound_; }
     void set_parent(Win *p) { win_parent_ = p; }
     void client_to_screen(int *, int *) {}
-    int fill_color, text_color, writes, lines;
+    int fill_color, text_color, writes, lines, selected_fills;
     void fill(int color) { fill_color = color; }
-    void fill(int, int, int, int, int color) { fill_color = color; selected_fill_text_color = text_color; }
+    void fill(int, int, int, int, int color) { fill_color = color; selected_fill_text_color = text_color; ++selected_fills; }
     int set_font(Font *, Font *, Font *, Font *) { return 0; }
     void set_text_color(int color, int, int, int) { text_color = color; }
     RECT clip_rect() const { return rect_; }
@@ -145,18 +145,18 @@ public:
     MenuProc proc_;
     int count_;
     unsigned int field_A1C_, field_A20_;
-    unsigned int field_A24_;
+    int field_A24_;
     unsigned int field_A28_;
     Spot spot_;
     MenuEntry entries_[15];
     int pxwidth, pxheight;
-    Menu() : proc_(0), count_(0), field_A1C_(0), field_A20_(0), field_A24_(0xffffffffu), field_A28_(0), pxwidth(200), pxheight(100) { std::memset(entries_, 0, sizeof(entries_)); for (int i=0;i<15;++i) entries_[i].id=-1; }
+    Menu() : proc_(0), count_(0), field_A1C_(0), field_A20_(0), field_A24_(-1), field_A28_(0), pxwidth(200), pxheight(100) { std::memset(entries_, 0, sizeof(entries_)); for (int i=0;i<15;++i) entries_[i].id=-1; }
     int pixel_width() const { return pxwidth; }
     int pixel_height() const { return pxheight; }
     int text_width(char *s) { return FontDefault->width(s); }
     int text_width(char *s, int n) { return FontDefault->width(s,n); }
     void on_adjust_pulldown_pos(int *, int *) {}
-    void hide_menus() { if (field_A24_ != 0xffffffffu) entries_[field_A24_].pull_down->hide(); field_A24_=0xffffffffu; }
+    void hide_menus() { if (field_A24_ != -1) entries_[field_A24_].pull_down->hide(); field_A24_=-1; }
     int add_menu(int, char *, int);
     int UNK10(int, char *);
     int init(Win *);
@@ -278,6 +278,28 @@ int main() {
     assert(m.fill_color == MenuDefaultSelectionColor);
     assert(m.selected_fill_text_color == MenuDefaultColor1);
     assert(m.writes == 3 && m.lines == 1);
+
+    // Run the extracted on_redraw body with the native no-selection sentinel,
+    // then each representable menu entry index. The selected-row fill is the
+    // observable branch controlled by field_A24_.
+    Menu selection;
+    selection.count_ = 15;
+    selection.spot_.used = 15;
+    for (int i = 0; i < 15; ++i) {
+        selection.entries_[i].flags = 1;
+        selection.spot_.items[i].rect.left = i * 10;
+        selection.spot_.items[i].rect.top = 0;
+        selection.spot_.items[i].rect.right = i * 10 + 8;
+        selection.spot_.items[i].rect.bottom = 10;
+    }
+    selection.field_A24_ = -1;
+    selection.on_redraw();
+    assert(selection.selected_fills == 0);
+    for (int i = 0; i < 15; ++i) {
+        selection.field_A24_ = i;
+        selection.on_redraw();
+        assert(selection.selected_fills == i + 1);
+    }
 
     PullDown pd;
     // Supply valid empty rows before selectively populating the keyboard fixture.
