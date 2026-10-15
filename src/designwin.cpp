@@ -390,8 +390,9 @@ void DesignWin::init() {
         lower_panel_end_rect_.right - lower_panel_end_rect_.left,
         lower_panel_end_rect_.bottom - lower_panel_end_rect_.top,
         static_cast<Win *>(this), 0);
+    const int current_prototype_id = static_cast<int>(protoID_);
     const int faction_bubble =
-        (VehPrototypes[prototype_id].flags & 0x80) != 0
+        (VehPrototypes[current_prototype_id].flags & 0x80) != 0
             ? 0xC64 : 0xC60;
     flatButtons_[8].set_bubble_text(label_get(faction_bubble / 4));
 
