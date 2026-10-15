@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6525cd68f9892ce01c2987e9d7165625649666e4",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_mask_members_oct15.py"
+  ],
+  "evidence": [
+    "Pinned on_player_deleted 0x52E443/44D loads and stores human byte, 0x52E49C/599 reads alive byte, 0x52E4AF/5AA/5DC reads human byte.",
+    "Pinned process_message 0x5351CD/1E3,0x5380A8/0BB and0x538140/156 read alive/human bytes; 0x535E20/28/6E/76/EC0 read human bytes. Preserve genuine dword accesses at0x535184/1A8,0x5380F3/11B and checksum byte views. Keep reload points and adjacent storage unchanged; inspect helper provenance before modifying a use."
+  ],
+  "intent": "Recover native byte read/write operations in NetDaemon player deletion and turn handlers",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5432176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-mask-members-oct15"
+}

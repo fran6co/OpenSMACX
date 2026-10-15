@@ -1,0 +1,60 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6525cd68f9892ce01c2987e9d7165625649666e4",
+  "editable_files": [
+    "src/basewin.cpp",
+    "src/mapwin.cpp",
+    "src/popup.cpp",
+    "recovery/tests/test_ui_mask_members_oct15.py"
+  ],
+  "evidence": [
+    "Pinned human-byte operations: 0x40A503,0x41A3FA,0x416003,0x41E590/5E1/688/6D8,0x466EDB,0x468015,0x48C699/0x48CB74.",
+    "POP3 at 0x405765 tests alive byte and at 0x40576D tests human byte with the same low-byte faction bit. Member-relative alive read must remove the old dword bit shift by eight. Preserve original live loads across calls, control order and unchecked paths; report broader dataflow discrepancies before editing them."
+  ],
+  "intent": "Recover named human/alive mask bytes in BaseWin, MapWin and popup UI consumers",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4235728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4301488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4284272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4318560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4615328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4619744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4216224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4769360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "ui-mask-members-oct15"
+}

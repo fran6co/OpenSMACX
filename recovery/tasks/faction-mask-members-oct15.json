@@ -1,0 +1,33 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6525cd68f9892ce01c2987e9d7165625649666e4",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/tests/test_faction_mask_members_oct15.py"
+  ],
+  "evidence": [
+    "Pinned social_set 0x5B46D1 loads human byte during its base loop. commlink_attempt reads alive byte at 0x558C80 and rereads human byte separately at 0x558E0E and 0x558F3D.",
+    "Pinned commlink_attempter 0x558A81 reads alive byte, then shifts by the faction index (not faction+8). Preserve masked x86 count behavior with the existing unsigned masked shift, using the member-relative bit index. No new guards or normalization."
+  ],
+  "intent": "Recover evidenced human/alive byte reads in social adoption and diplomacy contact gates",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5981696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5606496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5605856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "faction-mask-members-oct15"
+}
