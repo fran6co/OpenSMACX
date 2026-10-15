@@ -381,8 +381,11 @@ void UV2Player::show_post_movie_text() {
         text_close();
 
         ExtDirectDraw display;
-        // DirectDrawSurface2 extends DirectDrawSurface in the SDK; Buffer's
-        // borrowed surface API consumes the shared interface prefix.
+        // The SDK declares Surface2 separately, with the same Surface method
+        // prefix, not C++ inheritance. The original passes this borrowed
+        // Surface2 pointer unchanged to Buffer (4BF11D..4BF147); its borrowed
+        // path uses only shared slots. A QueryInterface here would change
+        // reference-count and failure behavior.
         display.surface = reinterpret_cast<IDirectDrawSurface *>(primary_surface_);
         display.clipper = clipper_;
         buffer_.init(0x280, 0x1E0, 4, &display);
