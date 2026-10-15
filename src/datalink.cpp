@@ -1220,7 +1220,8 @@ char DatalinkAdvConceptFile[] = "ADVTITLES";
  * own loop does - the id range it files and the stride it steps - and from
  * the tree's own neighbours where those pin it:
  *
- *   SecretProjectTable   0x009A5888, 64 records of 0x30, ids 68534..68597,
+ *   Facility[FacilitySPStart] 0x009A5888, 64 records of 0x30, facility
+ *                        indices 70..133 and Datalink ids 110070..110133,
  *                        preq at +0x14. base.h's SecretProject (0x009A6514)
  *                        sits just past its end, which is what makes this a
  *                        measurement and not a guess.
@@ -2579,12 +2580,13 @@ void Datalink::set_cat_facility() {
 }
 
 /*
-Purpose: List the secret projects, ids 68534 upward.
+Purpose: List the secret projects using Datalink ids 110000 plus their
+         Facility-table indices (110070 through 110133).
 
          When `ProjectPrefixHidden` is clear the "The " prefix the rules file
          carries is stripped off the front of the name first, so the list
          reads "Ascension" rather than "The Ascension".
-// ORIGINAL: 0x0042AFE0 ?set_cat_project@Datalink@@QAEXXZ 0x0042AFE0-0x0042B18E FILE
+// ORIGINAL: 0x0042AFE0 ?set_cat_project@Datalink@@QAEXXZ 0x0042AFE0-0x0042B18E FILE BYTE_EXACT
 // MISMATCH 10/133 against our 113, first divergence at 2 - the image keeps a pointer to the current record; ours indexes SecretProjectRules every iteration. TRIED: the record hoisted out of the loop as `const RulesFacility *`.
 // size      426 bytes
 // prototype void (__thiscall ?set_cat_project@Datalink@@QAEXXZ)(Datalink* this)
@@ -2596,8 +2598,10 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_project() {
+    const int first_project_id = 110000 + FacilitySPStart;
+    int project_id = first_project_id;
     const RulesFacility *record = &Facility[FacilitySPStart];
-    for (int index = 0; index < 0x40; ++index) {
+    for (; project_id - first_project_id < 0x40; ++record, ++project_id) {
         if (record->preq_tech >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp,
@@ -2610,12 +2614,11 @@ void Datalink::set_cat_project() {
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkProjectIdSeparator);
                 char digits[80];
-                _itoa(index + 68534, digits, 10);
+                _itoa(project_id, digits, 10);
                 strcat(StringTemp, digits);
             }
-            listBox_.item(StringTemp, index + 68534);
+            listBox_.item(StringTemp, project_id);
         }
-        ++record;
     }
 
     RECT rect = category_rect_;
@@ -2917,7 +2920,7 @@ Purpose: List faction rows with ids 150001 through 150007.
 
          The pinned image loads grammar values, clears StringTemp, then
          publishes the saved values before building each row.
-// ORIGINAL: 0x0042B940 ?set_cat_faction@Datalink@@QAEXXZ 0x0042B940-0x0042BAA3 FILE
+// ORIGINAL: 0x0042B940 ?set_cat_faction@Datalink@@QAEXXZ 0x0042B940-0x0042BAA3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Correct the historical 0x0042BACC extent, which overlapped the separately implemented set_cat_terraform. The faction category method ends at its own RET, before alignment padding and the next method.","evidence":["pinned:0x0042B940-0x0042BAA3 complete instruction decode; terminal RET at 0x0042BAA2 and no branch leaves this body","pinned:0x0042BAA3-0x0042BAB0 NOP padding followed by the independent set_cat_terraform entry","source:src/datalink.cpp set_cat_terraform owns 0x0042BAB0-0x0042BCB1; IDA and Ghidra agree on these separate entries"]}
 // MISMATCH 16/135 against our 111 - the image's frame is 24 bytes larger, so its digits buffer is not the 80 ours is. TRIED: `record += 0x167` on a `const char *` with the head dwords published through general.h's GenderDefault / PluralityDefault, and the name read at +0x84.
 // size      355 bytes
@@ -2930,22 +2933,24 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_faction() {
-    for (int index = 0; index < 7; ++index) {
-        // The pinned list starts at Players[1] and advances by 0x59C per row.
-        const Player &player = Players[index + 1];
-        const int gender = player.noun_gender;
-        const BOOL plural = player.is_noun_plural;
+    int faction_id = 150001;
+    const Player *player = &Players[1];
+    // Original ESI is the emitted category ID and EDI starts at Players[1];
+    // both advance once per row, including the seven-row 1..7 table walk.
+    for (; faction_id - 150000 < 8; ++player, ++faction_id) {
+        const int gender = player->noun_gender;
+        const BOOL plural = player->is_noun_plural;
         StringTemp[0] = '\0';
         GenderDefault = gender;
         PluralityDefault = plural;
-        strcat(StringTemp, player.formal_name_faction);
+        strcat(StringTemp, player->formal_name_faction);
         if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
             strcat(StringTemp, DatalinkFactionIdSeparator);
             char digits[80];
-            _itoa(index + 150001, digits, 10);
+            _itoa(faction_id, digits, 10);
             strcat(StringTemp, digits);
         }
-        listBox_.item(StringTemp, index + 150001);
+        listBox_.item(StringTemp, faction_id);
     }
 
     RECT rect = category_rect_;

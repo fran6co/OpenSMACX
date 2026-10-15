@@ -142,8 +142,12 @@ RulesReactor Reactor[5];
 RulesEntry Weapon[64]; int MaxWeaponNum=1;
 RulesEntry Armor[64]; int MaxArmorNum=1;
 RulesEntry Ability[64]; int MaxAbilityNum=1;
-struct RulesFacility { int preq_tech; int name; };
-RulesFacility Facility[64]; int FacilitySPStart=0;
+struct RulesFacility {
+  int name, effect, pad, cost, maint, preq_tech, free_tech;
+  int sp_ai_fight, sp_ai_growth, sp_ai_tech, sp_ai_wealth, sp_ai_power;
+};
+static_assert(sizeof(RulesFacility)==0x30, "actual facility stride");
+RulesFacility Facility[134]; int FacilitySPStart=70;
 int GenderDefault=0, PluralityDefault=0;
 static int name_storage[61];
 const int *TerraformNameBase=name_storage+1;
@@ -185,7 +189,7 @@ static void reset() {
   text_lines[1]=const_cast<char *>("Second concept");
   text_lines[2]=const_cast<char *>(""); text_lines[3]=0;
   std::memset(Facility,0,sizeof(Facility));
-  for(int i=0;i<64;++i) Facility[i].preq_tech=-2;
+  for(int i=0;i<134;++i) Facility[i].preq_tech=-2;
   std::memset(name_storage,0,sizeof(name_storage));
   std::memset(Technology,0,sizeof(Technology));
   std::memset(SocialCategories,0,sizeof(SocialCategories));
@@ -235,10 +239,10 @@ int main() {
   reset(); open_result=1; win.set_cat_adv_concept();
   assert(get_calls==0 && close_calls==0 && open_calls==1);
 
-  reset(); Facility[0].preq_tech=-1; Facility[0].name=5;
+  reset(); Facility[70].preq_tech=-1; Facility[70].name=5;
   win.set_cat_project();
-  assert(list.entries.size()==1 && list.entries[0].text=="Lighthouse|68534" &&
-         list.entries[0].id==68534);
+  assert(list.entries.size()==1 && list.entries[0].text=="Lighthouse|110070" &&
+         list.entries[0].id==110070);
   reset();
   Order[4].order=const_cast<char *>("Land action");
   Order[4].order_sea=const_cast<char *>("Sea action");
