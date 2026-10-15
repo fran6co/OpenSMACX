@@ -43,6 +43,9 @@ def test_scroll_actual_typed_owner_defaults_and_setters(tmp_path: Path) -> None:
 
     constructor = _definition(source_text, "Scroll::Scroll()")
     close = _definition(source_text, "uint32_t Scroll::close()")
+    static_record_start = header.index("struct ScrollCloseStaticDefaultsData {")
+    static_record_end = header.index("\n};", static_record_start) + 3
+    static_record = header[static_record_start:static_record_end]
     record_start = header.index("struct ScrollCloseDynamicDefaultsData {")
     record_end = header.index("\n};", record_start) + 3
     record = header[record_start:record_end]
@@ -50,16 +53,16 @@ def test_scroll_actual_typed_owner_defaults_and_setters(tmp_path: Path) -> None:
         line.strip()
         for line in popup_source.splitlines()
         if "ScrollCloseDynamicDefaults." in line
-        or "ScrollCloseStaticDefaults[" in line
+        or "ScrollCloseStaticDefaults." in line
         or "ScrollDefaultThickness =" in line
     )
     normal_setter = _definition(source_text, "void __cdecl scroll_normal()")
     small_setter = _definition(source_text, "void __cdecl scroll_small()")
     assert "ScrollCloseDynamicDefaults[" not in popup_source
     producer_order = [
-        "ScrollCloseStaticDefaults[8]", "ScrollCloseStaticDefaults[3]",
-        "ScrollCloseStaticDefaults[7]", "ScrollCloseStaticDefaults[5]",
-        "ScrollCloseStaticDefaults[6]",
+        "ScrollCloseStaticDefaults.bevel_thickness", "ScrollCloseStaticDefaults.border_color",
+        "ScrollCloseStaticDefaults.field_A64", "ScrollCloseStaticDefaults.field_A48",
+        "ScrollCloseStaticDefaults.color",
         "sprite_up[0]", "sprite_up[1]", "sprite_up[2]",
         "sprite_down[0]", "sprite_down[1]", "sprite_down[2]",
         "sprite_left[0]", "sprite_left[1]", "sprite_left[2]",
@@ -104,7 +107,8 @@ struct GraphicWin {
     Dib dib_{};
     uint32_t close() { close_order[close_count++] = 3; return 0xCAFE; }
 };
-uint32_t ScrollCloseStaticDefaults[11];
+''' + static_record + r'''
+ScrollCloseStaticDefaultsData ScrollCloseStaticDefaults;
 ''' + record + r'''
 ScrollCloseDynamicDefaultsData ScrollCloseDynamicDefaults;
 Sprite g_SCROLL_BAR_ARROW_ICON_SPRITES[12];
@@ -138,7 +142,8 @@ struct Scroll : GraphicWin {
 };
 ''' + constructor + "\n" + close + "\n" + triplet + "\n" + setters + "\n" + _definition(source_text, "static __forceinline void set_scroll_icon_defaults(") + "\n" + normal_setter + "\n" + small_setter + r'''
 int main() {
-    for (uint32_t i = 0; i < 11; ++i) ScrollCloseStaticDefaults[i] = 100 + i;
+    ScrollCloseStaticDefaults = ScrollCloseStaticDefaultsData{
+        100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110};
     Sprite defaults[12];
     ScrollCloseDynamicDefaults.flags = 200;
     ScrollCloseDynamicDefaults.position = 201;
@@ -250,11 +255,11 @@ int main() {
     assert(ScrollCloseDynamicDefaults.sprite_right[0] == &g_SCROLL_BAR_ARROW_ICON_SPRITES[9]);
     assert(ScrollCloseDynamicDefaults.sprite_down[0] == &g_SCROLL_BAR_ARROW_ICON_SPRITES[3]);
     assert(ScrollCloseDynamicDefaults.thumb == &g_SCROLL_BAR_FILLER_ICON_SPRITES);
-    assert(ScrollCloseStaticDefaults[8] == 0 &&
-           ScrollCloseStaticDefaults[3] == 0xFFFFFFFFu &&
-           ScrollCloseStaticDefaults[7] == 0x41 &&
-           ScrollCloseStaticDefaults[5] == 0x41 &&
-           ScrollCloseStaticDefaults[6] == 0x41);
+    assert(ScrollCloseStaticDefaults.bevel_thickness == 0 &&
+           ScrollCloseStaticDefaults.border_color == -1 &&
+           ScrollCloseStaticDefaults.field_A64 == 0x41 &&
+           ScrollCloseStaticDefaults.field_A48 == 0x41 &&
+           ScrollCloseStaticDefaults.color == 0x41);
     assert(ScrollDefaultThickness == 20);
     assert(before_left == &normal[6] && before_up == &normal[0]);
     assert(before_right == &normal[9] && before_down == &normal[3]);

@@ -34,12 +34,12 @@
 // RECOVERY_OBJECT: v1 0x009B8DD4 ?ScrollDefaultThickness@@3HA
 int ScrollDefaultThickness;  // 0x009B8DD4
 int ScrollNonClientInit;  // 0x009B8E24
-// The constructor/close index domain requires eleven words. Their initial
-// bytes are independently read from 0x697020..0x69704C; this does not claim
-// a complete original allocation boundary.
-// RECOVERY_OBJECT: v1 0x00697020 ?ScrollCloseStaticDefaults@@3PAIA
-uint32_t ScrollCloseStaticDefaults[11] = {2, 0xFFFFFFFF, 250, 0xFFFFFFFF,
-    100, 247, 247, 7, 2, 255, 248};
+// The constructor/close bodies observe eleven words from 0x697020 through
+// 0x69704B. This bounded record does not claim an original aggregate type or
+// complete allocation boundary.
+// RECOVERY_OBJECT: v4 0x00697020 ?ScrollCloseStaticDefaults@@3PAIA target ?ScrollCloseStaticDefaults@@3UScrollCloseStaticDefaultsData@@A
+ScrollCloseStaticDefaultsData ScrollCloseStaticDefaults = {
+    2, 0xFFFFFFFFU, 250, -1, 100, 247, 247, 7, 2, 255, 248};
 // RECOVERY_OBJECT: v4 0x009B8DE0 0x009B8E24 ?ScrollCloseDynamicDefaults@@3PAIA 0x006051D0 target ?ScrollCloseDynamicDefaults@@3UScrollCloseDynamicDefaultsData@@A
 // The historical mapping covers the accessed default window; +0x38 remains
 // an opaque word because the original constructor and close never read it.
@@ -260,31 +260,30 @@ Status: Complete
 Scroll::Scroll() {
     // Both vtable stores are the compiler's now that Buffer is a real base of
     // GraphicWin; it puts them where the image does.
-    uint32_t *const fixed = ScrollCloseStaticDefaults;
     ScrollCloseDynamicDefaultsData *const dynamic = &ScrollCloseDynamicDefaults;
 
     field_A14_ = dynamic->flags;
-    border_color_ = static_cast<int>(fixed[3]);
+    border_color_ = ScrollCloseStaticDefaults.border_color;
     range_reversed_ = 0;
     range_minimum_ = static_cast<int>(dynamic->position);
-    range_maximum_ = static_cast<int>(fixed[4]);
+    range_maximum_ = ScrollCloseStaticDefaults.range_maximum;
     position_ = static_cast<int>(dynamic->position);
-    field_A30_ = fixed[2];
+    field_A30_ = ScrollCloseStaticDefaults.field_A30;
     field_A3C_ = 0xFFFFFFFFU;
     field_A38_ = 0;
-    field_A34_ = fixed[1];
-    paging_ = static_cast<int>(fixed[0]);
+    field_A34_ = ScrollCloseStaticDefaults.field_A34;
+    paging_ = ScrollCloseStaticDefaults.paging;
     field_A44_ = 0;
     thumb_rect_.left = 0;
     thumb_rect_.top = 0;
     thumb_rect_.right = 0;
     thumb_rect_.bottom = 0;
-    field_A48_ = fixed[5];
-    color_ = fixed[6];
-    field_A64_ = static_cast<int>(fixed[7]);
-    bevel_thickness_ = fixed[8];
-    bevel_upper_ = fixed[9];
-    bevel_lower_ = fixed[10];
+    field_A48_ = ScrollCloseStaticDefaults.field_A48;
+    color_ = ScrollCloseStaticDefaults.color;
+    field_A64_ = ScrollCloseStaticDefaults.field_A64;
+    bevel_thickness_ = ScrollCloseStaticDefaults.bevel_thickness;
+    bevel_upper_ = ScrollCloseStaticDefaults.bevel_upper;
+    bevel_lower_ = ScrollCloseStaticDefaults.bevel_lower;
 
     for (int index = 0; index < 3; ++index) {
         sprite_left_[index] = dynamic->sprite_left[index];
@@ -371,31 +370,30 @@ Return Value: GraphicWin::close return residue
 Status: Complete; embedded FlatButton close redirects are source-owned
 */
 uint32_t Scroll::close() {
-    uint32_t *const fixed = ScrollCloseStaticDefaults;
     ScrollCloseDynamicDefaultsData *const dynamic = &ScrollCloseDynamicDefaults;
 
     field_A14_ = dynamic->flags;
-    border_color_ = static_cast<int>(fixed[3]);
+    border_color_ = ScrollCloseStaticDefaults.border_color;
     range_reversed_ = 0;
     range_minimum_ = static_cast<int>(dynamic->position);
-    range_maximum_ = static_cast<int>(fixed[4]);
+    range_maximum_ = ScrollCloseStaticDefaults.range_maximum;
     position_ = static_cast<int>(dynamic->position);
     field_A3C_ = 0xFFFFFFFFU;
     field_A38_ = 0;
-    field_A30_ = fixed[2];
-    field_A34_ = fixed[1];
-    paging_ = static_cast<int>(fixed[0]);
+    field_A30_ = ScrollCloseStaticDefaults.field_A30;
+    field_A34_ = ScrollCloseStaticDefaults.field_A34;
+    paging_ = ScrollCloseStaticDefaults.paging;
     field_A44_ = 0;
     thumb_rect_.left = 0;
     thumb_rect_.top = 0;
     thumb_rect_.right = 0;
     thumb_rect_.bottom = 0;
-    field_A48_ = fixed[5];
-    color_ = fixed[6];
-    field_A64_ = static_cast<int>(fixed[7]);
-    bevel_thickness_ = fixed[8];
-    bevel_upper_ = fixed[9];
-    bevel_lower_ = fixed[10];
+    field_A48_ = ScrollCloseStaticDefaults.field_A48;
+    color_ = ScrollCloseStaticDefaults.color;
+    field_A64_ = ScrollCloseStaticDefaults.field_A64;
+    bevel_thickness_ = ScrollCloseStaticDefaults.bevel_thickness;
+    bevel_upper_ = ScrollCloseStaticDefaults.bevel_upper;
+    bevel_lower_ = ScrollCloseStaticDefaults.bevel_lower;
 
     for (int index = 0; index < 3; ++index) {
         sprite_left_[index] = dynamic->sprite_left[index];

@@ -128,10 +128,25 @@ static_assert(sizeof(Scroll) == 0x214C,
 
 extern int ScrollDefaultThickness;
 extern int ScrollNonClientInit;
-// Defaults copied by close(). The static table contains eleven process
-// constants. The dynamic record retains an opaque word at +0x38, which the
-// original constructor and close do not access.
-extern uint32_t ScrollCloseStaticDefaults[11];
+// Defaults copied by construction and close(). These named fields represent
+// only the eleven observed words at 0x697020..0x69704B; they do not claim the
+// original aggregate type or its complete allocation boundary.
+struct ScrollCloseStaticDefaultsData {
+  int paging;
+  uint32_t field_A34;
+  uint32_t field_A30;
+  int border_color;
+  int range_maximum;
+  uint32_t field_A48;
+  uint32_t color;
+  int field_A64;
+  uint32_t bevel_thickness;
+  uint32_t bevel_upper;
+  uint32_t bevel_lower;
+};
+static_assert(sizeof(ScrollCloseStaticDefaultsData) == 11 * sizeof(uint32_t),
+              "Scroll defaults must retain the observed eleven-word window");
+extern ScrollCloseStaticDefaultsData ScrollCloseStaticDefaults;
 struct ScrollCloseDynamicDefaultsData {
   uint32_t flags;
   uint32_t position;
