@@ -477,9 +477,10 @@ int CheckBox::attach(GraphicWin *parent, int x, int y, int flags) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
-// TRIED: reusing one `char *b = self - 0x1c` for both the vtable-slot lookup and the null-check-then-adjust pattern collapses two distinct registers (edi and ebp in the original, which hold the same VALUE but are never merged) into one - the original keeps a separate register alive purely for the "cast-to-virtual-base" null check, this candidate CSEs it away. 69/84 mnemonics match, no stack spill (ternary over if/else avoided the local-int spill an earlier if/else form produced).
+// Historical superseded trial note: the earlier candidate used ID lookup/getter and Dialog::field_F0_ for row highlighting; its register-allocation observation does not describe the corrected direct-row implementation below.
+// TRIED (historical): reusing one `char *b = self - 0x1c` for both the vtable-slot lookup and the null-check-then-adjust pattern collapses two distinct registers (edi and ebp in the original, which hold the same VALUE but are never merged) into one - the original keeps a separate register alive purely for the "cast-to-virtual-base" null check, this candidate CSEs it away. 69/84 mnemonics match, no stack spill (ternary over if/else avoided the local-int spill an earlier if/else form produced).
 // ORIGINAL: 0x0060FAB0 ?on_redraw@CheckBox@@QAEXXZ 0x0060FAB0-0x0060FB8D FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060fab0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60fab0 complete control/data-access review and src/jackal/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060fab0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "pinned 0x60FAB0..0x60FB8C: ESI-0x18 is CheckBox::field_4_ highlight; selected mask is shifted by row EBX and ANDed with Dialog selected_position_; loop calls draw_item(row,mask,focus) without ID search", "host test compiles this actual body and rejects Dialog field_F0_ highlight and state-getter substitutions"], "reason": "The pinned row renderer directly tests the row bit and compares the row ordinal with CheckBox::field_4_; preserving that direct path avoids list cursor side effects absent from the original. Parent back-draw/fallback copy and the original full member identity remain retained."}
 // symbol    ?on_redraw@CheckBox@@UAEXXZ
 void CheckBox::on_redraw() {
     // Native60FAB0 retains this parent across back-draw and fallback copying.
@@ -495,37 +496,44 @@ void CheckBox::on_redraw() {
             -static_cast<int>(dib_.bmiHeader.biHeight));
     }
     for (int position = 0; position < Dialog::item_list_.entry_count_; ++position) {
-        const int id = Dialog::pos_to_id(position);
-        const int state = get_state_id(id);
+        const uint32_t mask = 1u << (static_cast<uint32_t>(position) & 31u);
+        const int state = static_cast<int>(Dialog::selected_position_ & mask);
         draw_item(position, state,
-                  Dialog::field_F0_ == static_cast<uint32_t>(position));
+                  field_4_ == static_cast<uint32_t>(position));
     }
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060F700 ?on_left_down@CheckBox@@QAEXHH@Z 0x0060F700-0x0060F8B0 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060f700.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60f700 complete control/data-access review and src/jackal/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060f700.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "pinned 0x60F700 geometry: field_64_+field_44_ width and field_68_+field_44_ height; 0x60F760/0x60F78A retain separate ID searches on the clear branch, while set branch calls set_state_id", "pinned 0x60F78D..0x60F80C compares pos_to_id(previous) with clicked ID, redraws old ordinal mask only on inequality, updates field_4_ only on that branch, and dispatches key_notification_callback_ at CheckBox front+8", "pinned post-callback walk re-finds ID; final draw uses fresh id_to_pos and current row mask", "actual-source host control covers duplicate IDs, callback list/state mutation, geometry and callback-cell mutants"], "reason": "Restore the original CheckBox receiver/member access and event order, including its repeated search, ID-based old-row decision, +8 callback and post-callback re-find. This is behavioral recovery of the caller path, not a change to class layout or a claim of byte identity."}
 // symbol    ?on_left_down@CheckBox@@UAEXHH@Z
 void CheckBox::on_left_down(int x, int y) {
     WinCallbackWindow = win_parent_;
-    const int columns = Dialog::field_4C_;
     const int rows = Dialog::field_58_;
-    const int cell_width = Dialog::field_48_ + Dialog::field_28_;
-    const int cell_height = Dialog::field_68_ + Dialog::field_28_;
+    const int cell_width = Dialog::field_64_ + Dialog::field_44_;
+    const int cell_height = Dialog::field_68_ + Dialog::field_44_;
     const int position = (x / cell_width) * rows + y / cell_height;
     const int id = Dialog::pos_to_id(position);
-    Dialog::item_list_.seek_id(id);
+    StringStruct &items = Dialog::item_list_;
+    items.seek_id(id);
+    const uint32_t clicked_mask = 1u << (static_cast<uint32_t>(items.current_position_) & 31u);
+    if ((Dialog::selected_position_ & clicked_mask) != 0) {
+        items.seek_id(id);
+        const uint32_t clear_mask = 1u << (static_cast<uint32_t>(items.current_position_) & 31u);
+        Dialog::selected_position_ &= ~clear_mask;
+    } else {
+        set_state_id(id, 1);
+    }
 
     const int previous = static_cast<int>(field_4_);
-    flip_state_id(id);
-    field_4_ = Dialog::id_to_pos(id);
-    if (previous != static_cast<int>(field_4_)) {
-        const int old_id = Dialog::pos_to_id(previous);
-        draw_item(previous, get_state_id(old_id), 0);
+    if (Dialog::pos_to_id(previous) != id) {
+        const uint32_t old_mask = 1u << (static_cast<uint32_t>(previous) & 31u);
+        draw_item(previous, static_cast<int>(Dialog::selected_position_ & old_mask), 0);
+        field_4_ = Dialog::id_to_pos(id);
     }
 
     const int selected = Dialog::selected_position_;
-    if (double_click_callback_ != 0) double_click_callback_(selected);
+    if (key_notification_callback_ != 0) key_notification_callback_(selected);
     // The original leaves the list cursor on the matching entry after the
     // callback, since callbacks may mutate the list and the cursor must be
     // re-found against its current contents.
@@ -538,7 +546,11 @@ void CheckBox::on_left_down(int x, int y) {
             ++Dialog::item_list_.current_position_;
         }
     }
-    draw_item(static_cast<int>(field_4_), get_state_id(id), 1);
+    const uint32_t current_mask = 1u << (static_cast<uint32_t>(items.current_position_) & 31u);
+    const int state_after_callback =
+        static_cast<int>(Dialog::selected_position_ & current_mask);
+    const int position_after_callback = Dialog::id_to_pos(id);
+    draw_item(position_after_callback, state_after_callback, 1);
     soft_update();
 }
 
@@ -778,7 +790,7 @@ Status: Complete
 Purpose: Move the group's selection to the control with `id`, then set or clear
          that control's bit in the shared state word.
 // ORIGINAL: 0x0060EB80 ?set_state_id@CheckBox@@QAEXHH@Z 0x0060EB80-0x0060EC0B FILE BYTE_EXACT
-// LEVER: PROMOTED out of src/unrecovered/0060eb80.cpp, whose claim proved the ARTIFACT reproduced while the shipped program contained nothing. Kept in the artifact's own spelling for now - it reaches the Dialog subobject through the vbtable by hand (`*(int *)(*(int *)this + 8)`), which is one of the shapes tools/compiler_work.py counts, and unpicking that is a class-model change rather than a promotion.
+// LEVER: PROMOTED Historical source promoted from src/unrecovered/0060eb80.cpp was an artifact with a hand-walked Dialog/vbtable receiver, not the product source model. The pinned setter has its own head-gated cursor traversal; this recovered body uses real inherited Dialog and StringStruct members while preserving that search and its cursor effects.
 // symbol    ?set_state_id@CheckBox@@QAEXHH@Z
 // size      139 bytes
 // kind      game
@@ -786,9 +798,18 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::set_state_id(int id, int value) {
-    Dialog::item_list_.seek_id(id);
+    StringStruct &items = Dialog::item_list_;
+    if (items.head_ != 0) {
+        items.current_position_ = 0;
+        items.current_ = items.head_;
+        for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
+            if (items.current_->id == id) break;
+            ++items.current_position_;
+            items.current_ = items.current_->next;
+        }
+    }
     const uint32_t mask =
-        1U << (static_cast<uint32_t>(Dialog::item_list_.current_position_) & 31U);
+        1U << (static_cast<uint32_t>(items.current_position_) & 31U);
     if (value != 0) {
         Dialog::selected_position_ |= mask;
     } else {
@@ -797,11 +818,48 @@ void CheckBox::set_state_id(int id, int value) {
 }
 
 // ORIGINAL: 0x0060EA10 ?flip_state_id@CheckBox@@QAEXH@Z 0x0060EA10-0x0060EB48
-// RECOVERY_BINDING: v1 {"evidence": ["The original 0x0060EA10 body searches the item list by id and toggles the bit indexed by the Dialog item-list current position; src/dialog.h exposes item_list_ and selected_position_; src/stringstruct.h documents seek_id cursor updates and return semantics."], "reason": "Recover CheckBox state toggling in the product class: seek_id updates the Dialog item-list cursor and selected_position_ is the shared state-bit word."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x0060EA10 performs one head-gated ID search, tests the selected bit at that resulting cursor, then performs a second head-gated search in each branch before clearing or setting the bit at the second resulting cursor. src/dialog.h exposes the actual item_list_ and selected_position_; src/stringstruct.h exposes typed list cursor/node members."], "reason": "Recover the original two-pass CheckBox toggle through genuine Dialog and StringStruct members, retaining its branch-specific repeated traversal and cursor effects rather than collapsing it to XOR."}
 void CheckBox::flip_state_id(int id) {
-    Dialog::item_list_.seek_id(id);
-    Dialog::selected_position_ ^=
-        1U << (static_cast<uint32_t>(Dialog::item_list_.current_position_) & 31U);
+    StringStruct &items = Dialog::item_list_;
+    if (items.head_ != 0) {
+        items.current_position_ = 0;
+        items.current_ = items.head_;
+        for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
+            if (items.current_->id == id) break;
+            ++items.current_position_;
+            items.current_ = items.current_->next;
+        }
+    }
+
+    const uint32_t first_mask =
+        1U << (static_cast<uint32_t>(items.current_position_) & 31U);
+    if ((Dialog::selected_position_ & first_mask) != 0) {
+        if (items.head_ != 0) {
+            items.current_position_ = 0;
+            items.current_ = items.head_;
+            for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
+                if (items.current_->id == id) break;
+                ++items.current_position_;
+                items.current_ = items.current_->next;
+            }
+        }
+        const uint32_t mask =
+            1U << (static_cast<uint32_t>(items.current_position_) & 31U);
+        Dialog::selected_position_ &= ~mask;
+    } else {
+        if (items.head_ != 0) {
+            items.current_position_ = 0;
+            items.current_ = items.head_;
+            for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
+                if (items.current_->id == id) break;
+                ++items.current_position_;
+                items.current_ = items.current_->next;
+            }
+        }
+        const uint32_t mask =
+            1U << (static_cast<uint32_t>(items.current_position_) & 31U);
+        Dialog::selected_position_ |= mask;
+    }
 }
 
 /*
@@ -810,13 +868,7 @@ Purpose: Read the shared state bit of the control with `id`: walk the item list
          nonzero when the box with this id is checked. set_state_id's read-side
          twin, and DipEdit::read_check's per-bit test.
 // ORIGINAL: 0x0060EC10 ?get_state_id@CheckBox@@QAEHH@Z 0x0060EC10-0x0060EC79 BYTE_EXACT
-// LEVER: PROMOTED out of src/unrecovered/0060ec10.cpp, whose claim proved the
-//         ARTIFACT reproduced while the shipped program contained nothing, and
-//         kept in that artifact's spelling, for the same reason set_state_id
-//         above is: it reaches the Dialog subobject through the vbtable by
-//         hand. The loop is the artifact's `for (idx = 0; idx < count;
-//         idx = idx + 1)` - its note records that the do-while phrasing
-//         compiled an extra `cmp;jge` ahead of the back-edge in all 11 tries.
+// LEVER: PROMOTED Historical source promoted from src/unrecovered/0060ec10.cpp was an artifact with a hand-walked Dialog/vbtable receiver, not the product source model. The pinned getter is count-gated, unlike the head gate in seek_id; its zero-count early exit leaves the cursor untouched. This recovered body keeps its own typed traversal and full mask return. Historical note: the counted-for loop spelling was retained after the do-while variant emitted an extra cmp;jge ahead of the back-edge in 11 trials; that compiler experiment is not source-structure evidence.
 // size      105 bytes
 // prototype int (__thiscall ?get_state_id@CheckBox@@QAEHH@Z)(CheckBox* this, int)
 // callers   6   call targets   0
@@ -827,9 +879,18 @@ Return Value: (1 << ordinal) & state word - nonzero when `id`'s box is checked
 Status: Complete
 */
 int CheckBox::get_state_id(int id) {
-    Dialog::item_list_.seek_id(id);
+    StringStruct &items = Dialog::item_list_;
+    if (items.entry_count_ != 0) {
+        items.current_position_ = 0;
+        items.current_ = items.head_;
+        for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
+            if (items.current_->id == id) break;
+            ++items.current_position_;
+            items.current_ = items.current_->next;
+        }
+    }
     const uint32_t mask =
-        1U << (static_cast<uint32_t>(Dialog::item_list_.current_position_) & 31U);
+        1U << (static_cast<uint32_t>(items.current_position_) & 31U);
     return static_cast<int>(Dialog::selected_position_ & mask);
 }
 
