@@ -1,0 +1,24 @@
+{
+  "event_id": "58826e505203e9a7b5ef02ac889d32102b8f3dc85431bc292c581d6d52b11c26",
+  "payload": {
+    "affects": [
+      "entity-121adabe47341cec1355a311c9dfb2422dc7e68e197e214e3bead5c38317a901",
+      "entity-6331850c191964236f4074b9f28d5e5be65b7bf33a2112e6c1a1ca58ce2c0e3a",
+      "entity-98d5ed0a8fa30104c9c1ae1bd26d6b56039f7e9b1e2327b720819fbf482adcdb",
+      "entity-dce6f94fe86bcbec30a1b9eb964a3539a32ebfbacdd55b7f6c6dd456d754b206"
+    ],
+    "author": "coordinator",
+    "discovery_id": "switch-order-instruction-match",
+    "evidence": [
+      "Pilot612C20 order16,2,1,8 aligns35/35 instructions under O2 but remains SHAPE_EXACT due to embedded data divergence at byte144. Reverse order aligns32/35. Both profile unchanged/damage controls pass. No BYTE_EXACT bank or source implementation; source remains frozen baseline.",
+      "Independent current/native target review proves original and candidate RadioButton receiver+5C then callee-18 both reach base+44. Apparent -12C versus -114 discrepancy compared RadioButton with reordered CheckBox block. Do not shift class layout. Next useful check is sparse switch table/default encoding, not a base-layout repair. Ignored evidence: build/recovery/dialogs-switch-order-results-oct15.json."
+    ],
+    "hypothesis": "Original switch-arm ordering recovers instruction layout, leaving the sparse dispatch table for bounded investigation.",
+    "kind": "discovery"
+  },
+  "previous_event": "041873cf3e921e5b4cfedd34e434dcead51a65b9adc6df94fdf748000626012e",
+  "request_id": "switch-order-instruction-match",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:dialogs-routing-order-oct15"
+}

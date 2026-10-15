@@ -1,0 +1,18 @@
+{
+  "event_id": "041873cf3e921e5b4cfedd34e434dcead51a65b9adc6df94fdf748000626012e",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "virtual-route-source-forms",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Do not implement tested forms. VC6 rejects RadioButton::Dialog::init qualification. Typed RadioButton reference first/all forms compile but emit 91 instructions versus original85 and current82 under O2; Oy- forms emit96. Existing package physical unchanged/damage controls passed under both profiles. No new exact result; no product source changed. This rejects these forms, not future evidence-backed hierarchy recovery.",
+      "Ignored evidence: build/recovery/dialogs-virtual-path-overlay-results-oct15.json and dialogs-virtual-path-overlay-typed-reference-results-oct15.json. Initial local-runner overload lookup refusal and overly literal replica-label comparison were diagnosed; package coff_replica comparison used for completed controls."
+    ]
+  },
+  "previous_event": "3fc259c642ea844fbb3ef2da078f826192cb78fa4b060d62484cc59d2897aa81",
+  "request_id": "reject-tested-virtual-route-forms",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:dialogs-routing-order-oct15"
+}

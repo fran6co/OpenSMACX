@@ -1,0 +1,20 @@
+{
+  "event_id": "3fc259c642ea844fbb3ef2da078f826192cb78fa4b060d62484cc59d2897aa81",
+  "payload": {
+    "affects": [
+      "entity-677acd5983d76bdd409cb29fb0346cb5f56bf4fb0da0df21b32a9f293255df6e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "virtual-route-source-forms",
+    "evidence": [
+      "Pinned initializer uses RadioButton vbtable+44; current source uses primary ListBox. Existing layout and virtual-base identity agree; this is a source-form hypothesis, not a layout defect."
+    ],
+    "hypothesis": "Force the shared Dialog lookup through RadioButton to recover the original initializer code generation.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "virtual-route-source-forms",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:dialogs-routing-order-oct15"
+}
