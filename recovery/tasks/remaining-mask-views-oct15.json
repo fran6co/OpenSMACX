@@ -1,0 +1,37 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2fd622285cc3427ee4759256278960f6721a966c",
+  "editable_files": [
+    "src/lock.cpp",
+    "src/probe.cpp",
+    "src/stringstruct.cpp",
+    "recovery/tests/test_mask_snapshot_views_oct15.py",
+    "recovery/tests/test_probe_actual_source_runtime.py"
+  ],
+  "evidence": [
+    "Independent pinned/source audit: any_locks5904A0 captures one dword to EBX and consumes low-byte and BH tests; current reinterpret_cast of local snapshot can use existing GameDataLockMaskView with the same one-load lifetime. Prior failed operand-swap experiments are not repeated.",
+    "Probe shared result stage5A2DCD captures two status bytes; its result-one choices helper reloads alive per eligible row before callbacks. net_not_my_turn529E70 reads status bytes after each net_tasks pump. Replace only raw byte views with established named members; do not hoist, merge or normalize these distinct reads.",
+    "Scope permits these bodies and probe result-one helper only, no faction.h dynamic-index helper or headers. Preserve original unsafe paths, branch/call ordering, all annotations/claims and unrelated functions. Add actual-source snapshot/callback controls, compare full-TU native results, review physical collateral and build/link before coordinator integration. No full-game or automatic acceptance."
+  ],
+  "intent": "Recover named mask-byte views while preserving one-load snapshots and callback-visible reload stages.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5833888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5894432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5414512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "remaining-mask-views-oct15"
+}
