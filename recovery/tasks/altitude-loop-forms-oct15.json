@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "e357b9cac2e7fedff21c5d8dad86967379b08e56",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/tests/test_map_all_altitude_owner_oct10.py"
+  ],
+  "evidence": [
+    "Pinned46FC30 resets five altitude bytes in each12-byte TerrainCacheEntry after null and signed-count gates. Current typed indexed source is32/35 instructions; retained build-rhkocyag confirms different counter/register allocation. Existing tests cover signed counts, null receiver storage, exact five-byte footprint and untouched fields.",
+    "Authorize three ordinary typed iteration forms only. Preserve MapArea rereads, null/signed gates, existing source identity, original behavior and all claims. No volatile, raw offsets, byte-pointer receiver casts or machine-code substitutes. Candidates are experiments, not acceptance; any adoption needs host controls, full-TU measurement, collateral review and build/link."
+  ],
+  "intent": "Screen bounded idiomatic terrain-cache altitude iteration forms against the pinned body; retain source unless a justified improvement survives review.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4652080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "altitude-loop-forms-oct15"
+}
