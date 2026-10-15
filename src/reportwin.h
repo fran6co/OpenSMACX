@@ -175,7 +175,10 @@ class ReportWin : public GraphicWin {
   uint32_t field_E26C_;  // 0xE26C
   uint32_t field_E270_;  // 0xE270
   Time time1_;  // 0xE274
-  uint32_t field_E29C_;  // 0xE29C
+  // RECOVERY_MEMBER: v1 ReportWin satellite_index_ 0xE29C 0x0049FE40
+  // Pinned draw_sat/sat_anim loop bounds use signed JL/JGE; this shared
+  // cursor is reset before the bounded 0..4 and 0..15 traversals.
+  int satellite_index_;  // 0xE29C
   uint32_t field_E2A0_;  // 0xE2A0
   uint32_t field_E2A4_;  // 0xE2A4
   uint32_t field_E2A8_;  // 0xE2A8

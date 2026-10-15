@@ -1,0 +1,20 @@
+{
+  "event_id": "75c2a11c967190a07174fda230ab0a1d337b902d2539448f5ecea4d2908273dc",
+  "payload": {
+    "affects": [
+      "entity-0fb937d5551262afbd4a640672f5535383041686d2a120205fbd5a9feb5ae681"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "draw-sat-shared-index-rereads",
+    "evidence": [
+      "Pinned49F8F6 compares the current E29C member after the5DACB0 call at49F8D0..49F8E1; current draw_sat uses const int kind=satellite_index_ across that call. Independent source review found no demonstrated callback mutator yet, so preserve as pending evidence rather than assume observable equivalence or erase the finding."
+    ],
+    "hypothesis": "draw_sat retains a pre-existing local kind snapshot across calls where the pinned original rereads the shared satellite index. Investigate producer/callback closure and restore those reads rather than treating the signedness fix as complete draw_sat recovery.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "draw-sat-shared-index-rereads",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:reportwin-satellite-cursor-oct15"
+}

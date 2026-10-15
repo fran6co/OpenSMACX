@@ -2317,7 +2317,7 @@ Purpose: Advance the satellite orbital overlay one tick: clear the orbit
          surface buffer, then fill one 2x2 marker per live satellite and
          publish the orbit rectangle.
 
-// ORIGINAL: 0x0049FE40 ?sat_anim@ReportWin@@QAEXXZ 0x0049FE40-0x0049FFB7 FILE
+// ORIGINAL: 0x0049FE40 ?sat_anim@ReportWin@@QAEXXZ 0x0049FE40-0x0049FFB7 FILE BYTE_EXACT
 // size      375 bytes
 // prototype void (__thiscall ?sat_anim@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   3   call targets   6
@@ -2327,7 +2327,7 @@ Purpose: Advance the satellite orbital overlay one tick: clear the orbit
 // Homed from src/recovered/units/0049fe40.cpp. The four float arrays live
 // in field_F938_'s storage (0xF938..0xFAB8): position pairs at 0xF938/
 // 0xF978, scratch results at 0xF9B8/0xF9F8, velocities at 0xFA38, the
-// live-satellite flags at 0xFA78; the loop cursor sits just before
+// live-satellite flags at 0xFA78; satellite_index_ sits just before
 // field_E2B0_ at 0xE29C. The 0xEE30 scalar is field_EE30_ (see the layout
 // note above: it is NOT the Flic, which starts at 0xEE34), and the frame
 // counters the decode reads are the Flic's own at 0xF3E0/0xF3E4.
@@ -2335,29 +2335,29 @@ Status: Coverage transcription - unclaimed body
 */
 void ReportWin::sat_anim() {
     fill(&satellite_rect_, 0x41);
-    field_E29C_ = 0;
+    satellite_index_ = 0;
     do {
-        int i = field_E29C_;
+        int i = satellite_index_;
         satellite_dx_[i] -= satellite_acceleration_[i] * satellite_x_[i];
-        i = field_E29C_;
+        i = satellite_index_;
         satellite_dy_[i] -= satellite_acceleration_[i] * satellite_y_[i];
-        i = field_E29C_;
+        i = satellite_index_;
         satellite_x_[i] += satellite_dx_[i] * field_EE30_;
-        i = field_E29C_;
+        i = satellite_index_;
         satellite_y_[i] += satellite_dy_[i] * field_EE30_;
-        ++field_E29C_;
-    } while (field_E29C_ < 16);
+        ++satellite_index_;
+    } while (satellite_index_ < 16);
     flic_.decode_stored_frame();
     buffer2_.draw(static_cast<Buffer *>(this), 9, field_E2A0_, field_E2A4_);
-    field_E29C_ = 0;
+    satellite_index_ = 0;
     do {
-        if (satellite_live_[field_E29C_] != 0) {
-            fill(static_cast<int>(satellite_x_[field_E29C_]) + field_E2A8_,
-                 static_cast<int>(satellite_y_[field_E29C_]) + field_E2AC_,
+        if (satellite_live_[satellite_index_] != 0) {
+            fill(static_cast<int>(satellite_x_[satellite_index_]) + field_E2A8_,
+                 static_cast<int>(satellite_y_[satellite_index_]) + field_E2AC_,
                  2, 2, 0xFF);
         }
-        ++field_E29C_;
-    } while (field_E29C_ < 16);
+        ++satellite_index_;
+    } while (satellite_index_ < 16);
     soft_update(&satellite_rect_);
 }
 
@@ -3670,9 +3670,9 @@ void ReportWin::draw_sat() {
             report_work_rect_.top = rect1_.top;
             report_work_rect_.right = rect1_.left + row_width;
             report_work_rect_.bottom = rect1_.top + column_width;
-            field_E29C_ = 0;
-            while (static_cast<int>(field_E29C_) < (ExpansionEnabled ? 5 : 4)) {
-                const int kind = field_E29C_;
+            satellite_index_ = 0;
+            while (satellite_index_ < (ExpansionEnabled ? 5 : 4)) {
+                const int kind = satellite_index_;
                 StringTemp[0] = 0;
                 if (!other) {
                     canvas.set_text_color(0xFF, -1, 1, 1);
@@ -3697,7 +3697,7 @@ void ReportWin::draw_sat() {
                 }
                 report_work_rect_.left += row_width;
                 report_work_rect_.right += row_width;
-                ++field_E29C_;
+                ++satellite_index_;
             }
             rect1_.top += column_width;
         }
@@ -3725,16 +3725,16 @@ void ReportWin::draw_sat() {
     field_F918_ = 0;
     // Original includes factions 1..7 (833..4198 dwords, exclusive endpoint).
     for (int other = 1; other < 8; ++other) {
-        field_E29C_ = 0;
-        while (field_E29C_ < 4) {
-            field_F918_ += report_sat_count(PlayersData[other], field_E29C_);
-            ++field_E29C_;
+        satellite_index_ = 0;
+        while (satellite_index_ < 4) {
+            field_F918_ += report_sat_count(PlayersData[other], satellite_index_);
+            ++satellite_index_;
         }
     }
     field_EE30_ = 0.02f;
-    field_E29C_ = 0;
-    while (field_E29C_ < 16) {
-        const int i = field_E29C_;
+    satellite_index_ = 0;
+    while (satellite_index_ < 16) {
+        const int i = satellite_index_;
         const int radius_x = static_cast<int>(field_59A4_) / 2 - 10;
         const int radius_y = radius_x;
         satellite_acceleration_[i] = static_cast<float>(sqrt(static_cast<double>(radius_x * radius_x * 2)));
@@ -3751,7 +3751,7 @@ void ReportWin::draw_sat() {
         satellite_dy_[i] = static_cast<float>(cos(static_cast<double>(speed) + phase_y) * speed * radius_y);
         satellite_acceleration_[i] = static_cast<float>(static_cast<double>(speed) * field_EE30_ * speed);
         satellite_live_[i] = i < static_cast<int>(field_F918_);
-        ++field_E29C_;
+        ++satellite_index_;
     }
     sat_anim();
     time2_.init(sat_anim_daemon, reinterpret_cast<int>(this), 4000, 5);
