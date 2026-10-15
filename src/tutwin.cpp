@@ -1099,23 +1099,28 @@ void TutWin::tour7() {
 
     RECT temporary;
 
-    temporary = (TutWinDesWindow.chassis_panel_rect_);
+    temporary = (TutWinDesWindow.component_panel_rects_[
+        DesignWin::component_panel_chassis]);
     des_rect(&temporary, &x, &y);
     if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
     "DESTOURCHAS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.weapon_panel_rect_);
+    temporary = (TutWinDesWindow.component_panel_rects_[
+        DesignWin::component_panel_weapon]);
     des_rect(&temporary, &x, &y);
     if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
     "DESTOURWEAP", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.armor_panel_rect_);
+    temporary = (TutWinDesWindow.component_panel_rects_[
+        DesignWin::component_panel_armor]);
     des_rect(&temporary, &x, &y);
     if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
     "DESTOURARM", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.reactor_panel_rect_);
+    temporary = (TutWinDesWindow.component_panel_rects_[
+        DesignWin::component_panel_reactor]);
     des_rect(&temporary, &x, &y);
     if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
     "DESTOURREACTOR", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.special_one_panel_rect_);
+    temporary = (TutWinDesWindow.component_panel_rects_[
+        DesignWin::component_panel_special_one]);
     des_rect(&temporary, &x, &y);
     if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
     "DESTOURABILITY", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
@@ -1143,7 +1148,7 @@ void TutWin::tour7() {
     iface_rect(&temporary, &x, &y);
     if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
     "DESTOURPRESETS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.lower_panel_rect_);
+    temporary = (TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_done]);
     des_rect(&temporary, &x, &y);
     if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
     "DESTOURDONE", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
@@ -1151,15 +1156,19 @@ void TutWin::tour7() {
     des_rect(&temporary, &x, &y);
     if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
     "DESTOURAPPLY", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    if (!do_des(&TutWinDesWindow.lower_panel_extra_rect_, "DESTOURRENAME", 2))
+    if (!do_des(&TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_rename],
+                "DESTOURRENAME", 2))
         goto tour7_cleanup;
-    if (!do_des(&TutWinDesWindow.field_BAC_rect_, "DESTOUROBS", 2))
+    if (!do_des(&TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_obsolete],
+                "DESTOUROBS", 2))
         goto tour7_cleanup;
-    if (!do_des(&TutWinDesWindow.field_BBC_rect_, "DESTOURUPGRADE", 2))
+    if (!do_des(&TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_upgrade],
+                "DESTOURUPGRADE", 2))
         goto tour7_cleanup;
     if (!do_des(&TutWinDesWindow.field_B4C_rect_, "DESTOURRETIRE", 2))
         goto tour7_cleanup;
-    do_des(&TutWinDesWindow.lower_panel_end_rect_, "DESTOURCANCEL", 2);
+    do_des(&TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_cancel],
+           "DESTOURCANCEL", 2);
 
 tour7_cleanup:
     if (!was_visible) {

@@ -84,19 +84,28 @@ def test_design_tour_routes_and_every_cancellation(tmp_path):
 struct RECT {int left,top,right,bottom;};
 struct GraphicWin{};struct MapWin:GraphicWin{};MapWin*MapWinTable[1];
 struct Console{int faction_id_;}ConsoleGlobal;
-struct Window {
+struct DesignWin {
+ enum ComponentPanelIndex { component_panel_chassis, component_panel_weapon,
+  component_panel_armor, component_panel_reactor, component_panel_special_one,
+  component_panel_special_two };
+ enum LowerPanelActionIndex { lower_panel_done, lower_panel_rename,
+  lower_panel_obsolete, lower_panel_upgrade, lower_panel_cancel };
  bool visible;int opens,closes;
- RECT chassis_panel_rect_{0xAAC},weapon_panel_rect_{0xABC},armor_panel_rect_{0xACC},
- reactor_panel_rect_{0xADC},special_one_panel_rect_{0xAEC},field_B2C_rect_{0xB2C},
+ RECT component_panel_rects_[6],field_B2C_rect_{0xB2C},
  field_B0C_rect_{0xB0C},field_CBC_rect_{0xCBC},caption_rect_{0xA6C},
- lower_panel_rect_{0xB8C},field_B5C_rect_{0xB5C},lower_panel_extra_rect_{0xB9C},
- field_BAC_rect_{0xBAC},field_BBC_rect_{0xBBC},field_B4C_rect_{0xB4C},
- lower_panel_end_rect_{0xBCC};
+ lower_panel_rows_[5],field_B5C_rect_{0xB5C},field_B4C_rect_{0xB4C};
  int field_B3C_=0xB3C,field_B40_=0,field_B44_=0,field_B48_=0;
+ DesignWin() : visible(true),opens(0),closes(0) {
+  component_panel_rects_[0].left=0xAAC; component_panel_rects_[1].left=0xABC;
+  component_panel_rects_[2].left=0xACC; component_panel_rects_[3].left=0xADC;
+  component_panel_rects_[4].left=0xAEC; component_panel_rects_[5].left=0xAFC;
+  for(int i=0;i<5;++i) lower_panel_rows_[i].left=0xB8C+i*0x10;
+ }
  int is_visible(){return visible;}
  void exec(int,int n){assert(n==-2);++opens;}
  void shut_that_badboy_down(){++closes;}
 }TutWinDesWindow;
+using Window = DesignWin;
 const char* labels[]={"DESTOURCHAS","DESTOURWEAP","DESTOURARM","DESTOURREACTOR",
  "DESTOURABILITY","DESTOURCOST","DESTOURSTATS","DESTOURBAR","DESTOURARROWS",
  "DESTOURPRESETS","DESTOURDONE","DESTOURAPPLY","DESTOURRENAME","DESTOUROBS",

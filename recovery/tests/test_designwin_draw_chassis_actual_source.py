@@ -114,11 +114,11 @@ inline char StringTemp[1032]{};
 inline char SpaceText[] = " ";
 inline const char BufferJoinSpace[] = " ";
 struct StringTableDouble {
-  char *get(int address) {
-    trace.events.push_back("get:" + std::to_string(address));
-    if (address == 0x2000) return const_cast<char *>("landcraft");
-    if (address == 0x3000) return const_cast<char *>("land");
-    if (address == 0x3004) return const_cast<char *>("unbounded");
+  char *get(char *address) {
+    trace.events.push_back("get:" + std::to_string(reinterpret_cast<uintptr_t>(address)));
+    if (address == reinterpret_cast<char *>(static_cast<uintptr_t>(0x2000))) return const_cast<char *>("landcraft");
+    if (address == reinterpret_cast<char *>(static_cast<uintptr_t>(0x3000))) return const_cast<char *>("land");
+    if (address == reinterpret_cast<char *>(static_cast<uintptr_t>(0x3004))) return const_cast<char *>("unbounded");
     return const_cast<char *>("unknown");
   }
 } StringTable;
@@ -140,7 +140,10 @@ void vehdraw_construct_chassis(int faction, int chassis, int weapon, int armor,
   trace.events.push_back("construct");
 }
 struct DesignWin : Buffer {
-  RECT chassis_panel_rect_{10, 20, 210, 180};
+  enum ComponentPanelIndex { component_panel_chassis, component_panel_weapon,
+    component_panel_armor, component_panel_reactor, component_panel_special_one,
+    component_panel_special_two };
+  RECT component_panel_rects_[6];
   Font font1_{-1, 9, 10}, font2_{-1, 14, 12};
   Buffer buffer_{};
   Caviar caviar_{};
@@ -171,6 +174,7 @@ def test_draw_chassis_actual_method_preserves_render_order_wrap_and_unchecked_tr
   TextColourTable[158]=158; TextColourTable[159]=159;
   TextColourTable[160]=160; TextColourTable[161]=161;
   DesignWin win;
+  win.component_panel_rects_[DesignWin::component_panel_chassis] = {10, 20, 210, 180};
   trace.width_result = argc > 1 ? 500 : 80;
   win.draw_chassis(0);
   assert(trace.font_text == "CHASSIS");
