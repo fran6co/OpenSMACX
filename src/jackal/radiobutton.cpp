@@ -113,7 +113,7 @@ RadioButton::RadioButton() {
     // VC6 owns virtual-base construction and derived table setup under its
     // hidden most-derived flag. The body initializes this class's own state.
 
-    field_C_ = 0;
+    selection_callback_ = 0;
     double_click_callback_ = 0;
     checked_sprite_ = RadioButtonDefault2;
     unchecked_sprite_ = RadioButtonDefault1;
@@ -158,7 +158,7 @@ void RadioButton::close() {
     // time exactly as the old hand walk did, so the embedded-in-Dialogs case
     // (whose vbtable names different offsets) still reaches the right
     // subobjects.
-    field_C_ = 0;
+    selection_callback_ = 0;
     double_click_callback_ = 0;
     checked_sprite_ = RadioButtonDefault2;
     unchecked_sprite_ = RadioButtonDefault1;
@@ -489,16 +489,19 @@ void RadioButton::on_left_down(int x, int y) {
         }
         first = 0;
         Dialog::item_list_.next_entry();
-        const int lines = Dialog::item_list_.current_ == 0 ||
-                          Dialog::item_list_.current_->payload == 0
-            ? 0 : static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_);
+        int lines = 0;
+        if (Dialog::item_list_.current_ != 0) {
+            StringStructPayload *const payload = Dialog::item_list_.head_ == 0
+                ? 0 : Dialog::item_list_.current_->string_payload();
+            lines = static_cast<int>(payload->field_8_);
+        }
         int item_height = Buffer::text_line_height() * lines;
-        const int minimum = static_cast<int>(Dialog::field_2C_ + Dialog::field_50_);
+        const int minimum = static_cast<int>(Dialog::field_68_ + Dialog::field_44_);
         if (minimum > item_height) item_height = minimum;
         remaining_y -= item_height;
     }
-    const int position = (x / static_cast<int>(Dialog::field_4C_ + Dialog::field_2C_)) *
-                         static_cast<int>(Dialog::field_40_) +
+    const int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
+                         static_cast<int>(Dialog::field_58_) +
                          Dialog::item_list_.current_position_;
 
     const int previous = Dialog::selected_position_;
@@ -511,7 +514,7 @@ void RadioButton::on_left_down(int x, int y) {
 
     draw_item(previous, 0);
     Dialog::selected_position_ = position;
-    if (double_click_callback_ != 0) double_click_callback_(position);
+    if (selection_callback_ != 0) selection_callback_(position);
     draw_item(position, 1);
     Dialog::field_F0_ = static_cast<uint32_t>(-1);
     soft_update();
@@ -535,16 +538,19 @@ void RadioButton::on_mouse_move(int x, int y) {
         }
         first = 0;
         Dialog::item_list_.next_entry();
-        const int lines = Dialog::item_list_.current_ == 0 ||
-                          Dialog::item_list_.current_->payload == 0
-            ? 0 : static_cast<int>(Dialog::item_list_.current_->string_payload()->field_8_);
+        int lines = 0;
+        if (Dialog::item_list_.current_ != 0) {
+            StringStructPayload *const payload = Dialog::item_list_.head_ == 0
+                ? 0 : Dialog::item_list_.current_->string_payload();
+            lines = static_cast<int>(payload->field_8_);
+        }
         int item_height = Buffer::text_line_height() * lines;
-        const int minimum = static_cast<int>(Dialog::field_2C_ + Dialog::field_50_);
+        const int minimum = static_cast<int>(Dialog::field_68_ + Dialog::field_44_);
         if (minimum > item_height) item_height = minimum;
         remaining_y -= item_height;
     }
-    const int position = (x / static_cast<int>(Dialog::field_4C_ + Dialog::field_2C_)) *
-                         static_cast<int>(Dialog::field_40_) +
+    const int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
+                         static_cast<int>(Dialog::field_58_) +
                          Dialog::item_list_.current_position_;
     if (position == Dialog::selected_position_ && Dialog::field_F0_ ==
         static_cast<uint32_t>(-1)) return;

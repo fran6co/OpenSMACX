@@ -118,7 +118,9 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   // RECOVERY_MEMBER: v3 RadioButton checked_sprite_ Sprite* 0x8 0x0060D750
   Sprite *checked_sprite_;
  private:
-  uint32_t field_C_;
+  // The original left-down path invokes this with the selected ordinal.
+  // RECOVERY_MEMBER: v1 RadioButton selection_callback_ 0xC 0x0060DFAD
+  WinNotificationCallback selection_callback_;
  public:
   // BasePop::calculate_dimensions installs its static notification here;
   // the radio entry invokes it with Dialog::get_selected_id().
