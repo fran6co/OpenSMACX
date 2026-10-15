@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "8e4b2d616a37485a193b1151efe16c981030d9c4",
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_pick_map_behavior.py",
+    "recovery/tests/netwin_pick_map_host_control.cpp"
+  ],
+  "evidence": [
+    "Pinned pick_map alive byte loads47D68F,47D842,47D8C0 support byte-member operands in existing count and status calculations. Keep FE mask and count order; no bug fixes or unchecked-path changes. Adapt actual-body host fixture to real union declarations."
+  ],
+  "intent": "Recover original mask byte members and faithful host controls",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4707072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-map-mask-members-oct15"
+}

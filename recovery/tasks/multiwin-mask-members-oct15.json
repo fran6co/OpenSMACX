@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "8e4b2d616a37485a193b1151efe16c981030d9c4",
+  "editable_files": [
+    "src/multiwin.cpp",
+    "recovery/tests/test_multiwin_player_status_oct14aw.py",
+    "recovery/tests/test_multiwin_contact.py"
+  ],
+  "evidence": [
+    "Pinned draw_player byte human tests at4786B9,47873C,478A81,478A9F; draw alive479563 and human4795BE. Preserve source read sites and callback timing. Adapt legacy host fixtures to source-owned union, including previously migrated commlink reads; retain all behavior and mutation checks."
+  ],
+  "intent": "Recover original mask byte members and faithful host controls",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4687408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4690736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "multiwin-mask-members-oct15"
+}
