@@ -278,8 +278,8 @@ def test_current_actual_media_bodies() -> None:
         ),
         ("if (read == 0) return -1;", "if (read == -1) return -1;"),
         (
-            "if (d.stream_gate_7c != 0)",
-            "if (d.stream_gate_7c == 0)",
+            "if (output_owner->stream_gate_7c != 0)",
+            "if (output_owner->stream_gate_7c == 0)",
         ),
         ("\"DDERR_ALREADYINITIALIZED\"", "\"DDERR_CHANGED\""),
         (

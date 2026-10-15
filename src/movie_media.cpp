@@ -203,7 +203,7 @@ static const char media_hresult_unknown[] = "Uknown Error Code";
 // kind      game
 extern "C" char *__fastcall sub_5cf120(int code) {
   for (unsigned int i = 0;
-       i != sizeof(media_hresult_texts) / sizeof(media_hresult_texts[0]);
+       i < sizeof(media_hresult_texts) / sizeof(media_hresult_texts[0]);
        ++i) {
     if (media_hresult_texts[i].result == code)
       return (char *)media_hresult_texts[i].text;
@@ -1833,17 +1833,26 @@ int MediaRuntime::create_playback_buffer() {
 // symbol    ?release_session_interfaces@MediaRuntime@@QAEHXZ
 // kind      game
 int MediaRuntime::release_session_interfaces() {
-  MediaDescriptor &d = *descriptor;
-  if ((d.flags & 0x00800000) != 0) {
-    if (release_optional_buffer != 0 &&
-        d.source_buffer_58 != 0) {
-      IDirectSoundBuffer *source_buffer = d.source_buffer_58;
-      source_buffer->Release();
-      d.source_buffer_58 = 0;
+  const DWORD descriptor_flags = descriptor->flags;
+  if ((descriptor_flags & 0x00800000) != 0) {
+    if (release_optional_buffer != 0) {
+      MediaDescriptor *source_owner = descriptor;
+      if (source_owner->source_buffer_58 != 0) {
+        IDirectSoundBuffer *source_buffer = source_owner->source_buffer_58;
+        source_buffer->Release();
+        // Native 5CE475 reloads runtime->descriptor after Release.
+        descriptor->source_buffer_58 = 0;
+      }
     }
-    if (release_sound_device != 0 && d.sound_device != 0) {
-      d.sound_device->Release();
-      d.sound_device = 0;
+    if (release_sound_device != 0) {
+      // This load follows the optional-buffer Release and therefore observes
+      // any descriptor replacement performed by that call.
+      MediaDescriptor *device_owner = descriptor;
+      if (device_owner->sound_device != 0) {
+        IDirectSound *sound_device = device_owner->sound_device;
+        sound_device->Release();
+        device_owner->sound_device = 0;
+      }
     }
   }
   return 0;
@@ -1853,10 +1862,12 @@ int MediaRuntime::release_session_interfaces() {
 // symbol    ?release_playback_buffer@MediaRuntime@@QAEHXZ
 // kind      game
 int MediaRuntime::release_playback_buffer() {
-  MediaDescriptor &d = *descriptor;
-  if (d.play_buffer != 0) {
-    d.play_buffer->Release();
-    d.play_buffer = 0;
+  MediaDescriptor *playback_owner = descriptor;
+  if (playback_owner->play_buffer != 0) {
+    IDirectSoundBuffer *playback_buffer = playback_owner->play_buffer;
+    playback_buffer->Release();
+    // Native 5CE632 reloads runtime->descriptor before the 5CE634 store.
+    descriptor->play_buffer = 0;
   }
   return 0;
 }
@@ -1865,13 +1876,16 @@ int MediaRuntime::release_playback_buffer() {
 // symbol    ?sub_5cae00@MediaRuntime@@QAEHXZ
 // kind      game
 int MediaRuntime::sub_5cae00() {
-  MediaDescriptor &d = *descriptor;
-  if ((d.flags & 0x00080000) == 0 && d.stream != 0)
-    mmioClose(d.stream, 0);
+  MediaDescriptor *stream_owner = descriptor;
+  if ((stream_owner->flags & 0x00080000) == 0 && stream_owner->stream != 0)
+    mmioClose(stream_owner->stream, 0);
   if (input_ring_base != 0) free(input_ring_base);
   if (decoded_ring_base != 0) free(decoded_ring_base);
   for (int i = 0; i != 24; ++i) read_records[i].payload = 0;
-  if (d.stream_gate_7c != 0)
+  // Native 5CAE58 reloads runtime->descriptor after close/free and record
+  // clearing; the gate is read from that current descriptor.
+  MediaDescriptor *output_owner = descriptor;
+  if (output_owner->stream_gate_7c != 0)
     for (int j = 0; j != 24; ++j) output_records[j].payload = 0;
   return 0;
 }
