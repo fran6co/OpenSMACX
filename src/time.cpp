@@ -830,6 +830,9 @@ Purpose: Plan-line timer tick: count the line counter down and repaint the
 //   sits between the counter store and the loop with the receiver loaded as
 //   an immediate; the two flag reads are plain (non-volatile) dwords off the
 //   window pointer, which VC6 keeps in ecx across the guards.
+// The pinned loop bounds 0x007D3C3C..0x007D3C5C and four-byte stride
+//   identify eight ordered slots. A signed index preserves the live table
+//   walk without converting its slot pointers to integers.
 // size      129 bytes
 // prototype
 // callers   0   call targets   3
@@ -858,15 +861,12 @@ void __cdecl line_timer(int a1) {
     // spelling suppresses the virtual call the shared name now implies.
     PlanWindow.PlanWin::on_redraw();
 
-    for (MapWin *const *slot = &MapWinTable[0];
-         reinterpret_cast<int32_t>(slot) <
-         reinterpret_cast<int32_t>(&MapWinTable[MapWinTableSlots]);
-         ++slot) {
-        MapWin *const window = *slot;
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
         if (window == nullptr) {
             continue;
         }
-        if (slot != &MapWinTable[0]) {
+        if (slot != 0) {
             const uint32_t active = window->field_1DD74_;
             if (active == 0) {
                 continue;
