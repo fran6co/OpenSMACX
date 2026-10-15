@@ -105,9 +105,11 @@ int Lock::any_locks() {
     if (field_E0_ != 0) {
         return 1;
     }
-    const uint32_t mask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
-    const uint32_t low_byte = mask & 0xFF;
-    const uint8_t second_byte = reinterpret_cast<const uint8_t *>(&mask)[1];
+    const GameDataLockMaskView mask = {
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_
+    };
+    const uint32_t low_byte = mask.enable_mask_ & 0xFF;
+    const uint8_t second_byte = mask.bytes_.alive_mask_;
     for (int index = 1; index < 8; ++index) {
         const uint32_t bit = 1u << index;
         if (!(bit & low_byte) || !(second_byte & bit)) {

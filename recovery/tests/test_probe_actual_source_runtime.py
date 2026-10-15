@@ -53,7 +53,16 @@ def compilers():
 
 
 def stubs():
-    return (HERE / "fixtures/probe_host_stubs.inc").read_text()
+    fixture = (HERE / "fixtures/probe_host_stubs.inc").read_text()
+    source_header = (repository_root() / "src/game_data_state_window.h").read_text()
+    declaration_start = source_header.index("struct GameDataLockMaskBytes {")
+    declaration_end = source_header.index("struct GameDataStateWindowFields {")
+    mask_declarations = source_header[declaration_start:declaration_end]
+    old_declaration = "struct GameDataLockMaskView { uint32_t enable_mask_; };"
+    assert fixture.count(old_declaration) == 1
+    # Keep the host fixture aligned with the production declaration instead of
+    # hand-copying a divergent one-member approximation of this union view.
+    return fixture.replace(old_declaration, mask_declarations)
 
 
 def compile_and_run(tmp_path, compiler, source, main, stem):

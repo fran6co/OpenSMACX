@@ -497,8 +497,8 @@ static int probe_native_result_one_choices(Popup &popup, int actor_faction_id,
         if ((PlayersData[actor_faction_id].diplo_treaties[faction_id] & 8u) == 0) {
             continue;
         }
-        const uint8_t alive = reinterpret_cast<const uint8_t *>(
-            &GameDataStateStorage.fields_.lock_masks_.enable_mask_)[1];
+        const uint8_t alive =
+            GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
         const uint8_t faction_bit = static_cast<uint8_t>(1u << faction_id);
         if ((alive & faction_bit) == 0) continue;
 
@@ -2779,9 +2779,9 @@ label_5a2dcd:
         // dispatcher entry; no-chooser selectors must not retain input mode.
         native_relationship_choice = 0;
         native_human_bits =
-            reinterpret_cast<const uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[0];
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
         native_alive_bits =
-            reinterpret_cast<const uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[1];
+            GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
         native_actor_bit = static_cast<uint8_t>(1u <<
             (static_cast<uint32_t>(actor_faction_id) & 31u));
         native_target_bit = static_cast<uint8_t>(1u <<
