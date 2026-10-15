@@ -57,11 +57,6 @@ struct EditGroup { OWNER_METHODS(EditGroup, 3, 103) };
 struct DialogsMock : ListBox, RadioButton, CheckBox, SpriteBox, EditGroup {
     int kind_;
     DialogsMock(): kind_(0) {}
-    RadioButton &radio_button_view() { return static_cast<RadioButton &>(*this); }
-    ListBox &list_box_view() { return static_cast<ListBox &>(*this); }
-    CheckBox &check_box_view() { return static_cast<CheckBox &>(*this); }
-    SpriteBox &sprite_box_view() { return static_cast<SpriteBox &>(*this); }
-    EditGroup &edit_group_view() { return static_cast<EditGroup &>(*this); }
     void on_dialog_focus(int focus_id);
     int attach(GraphicWin *parent, int x, int y, int flags);
 };
@@ -139,8 +134,8 @@ def test_sparse_dispatch_source_actual_routing_and_arguments(compiler, tmp_path)
     subprocess.run([str(binary)], check=True, timeout=30)
 
     wrong_route = SOURCE.replace(
-        "case 1:\n        check_box_view().CheckBox::on_dialog_focus(focus_id);",
-        "case 1:\n        radio_button_view().RadioButton::on_dialog_focus(focus_id);",
+        "case 1:\n        CheckBox::on_dialog_focus(focus_id);",
+        "case 1:\n        RadioButton::on_dialog_focus(focus_id);",
         1,
     )
     assert wrong_route != SOURCE
@@ -155,8 +150,8 @@ def test_sparse_dispatch_source_actual_routing_and_arguments(compiler, tmp_path)
     assert subprocess.run([str(wrong_binary)], timeout=30).returncode != 0
 
     wrong_attach_route = SOURCE.replace(
-        "case 1:\n        return check_box_view().CheckBox::attach(parent, x, y, flags);",
-        "case 1:\n        return radio_button_view().RadioButton::attach(parent, x, y, flags);",
+        "case 1:\n        return CheckBox::attach(parent, x, y, flags);",
+        "case 1:\n        return RadioButton::attach(parent, x, y, flags);",
         1,
     )
     assert wrong_attach_route != SOURCE
