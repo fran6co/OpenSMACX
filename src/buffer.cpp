@@ -5669,6 +5669,7 @@ int Buffer::wrap_right(Font * a1, char * a2, int a3, int a4, int a5) {
 }
 
 // ORIGINAL: 0x005DBCB0 ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z 0x005DBCB0-0x005DBCFF
+// symbol    ?wrap_right@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@@Z
 // size      79 bytes
 // prototype int (__thiscall ?wrap_right@Buffer@@QAEHPAVFont@@PADH@Z)(Buffer* this, Font*, int8*, int)
 // callers   0   call targets   1
@@ -5683,16 +5684,16 @@ int Buffer::wrap_right(Font * a1, char * a2, int a3, int a4, int a5) {
 // beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
 
 
-int Buffer::wrap_right(Font * a1, char * a2, int a3) {
+int Buffer::wrap_right(Font *font, char *text, RECT *area) {
     Font *savedFont = font1_;
     Font *savedFont2 = font2_;
     Font *savedFont3 = font3_;
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font != 0 && font->font_obj_ != 0) {
+        font1_ = font;
         font2_ = 0;
         font3_ = 0;
     }
-    int result = wrap_right(a2, a3);
+    int result = wrap_right(text, area);
     font1_ = savedFont;
     font2_ = savedFont2;
     font3_ = savedFont3;
@@ -6209,7 +6210,10 @@ int Buffer::wrap_height_flying(char *a1, int a2) {
 }
 
 // ORIGINAL: 0x005DDC90 ?wrap_right@Buffer@@QAEHPADH@Z 0x005DDC90-0x005DDD91 FILE
-// TRIED: `int *a2` second parameter - the mangled name is `PADH` (char*, int), not `PADPAH`, so the second argument really is `int` and the disassembly's [eax]/[eax+4]/[eax+8] reads are the body reinterpreting that int as an `int*` internally, not a real pointer parameter.
+// Earlier source inferred `int` from the imported `PADH` catalogue spelling;
+// that spelling is not authentic type evidence. The pinned body reads the
+// argument's left/top/right dwords as a rectangle, matching the RECT overloads.
+// symbol    ?wrap_right@Buffer@@QAEHPADPAUtagRECT@@@Z
 // size      257 bytes
 // prototype int (__thiscall ?wrap_right@Buffer@@QAEHPADH@Z)(Buffer* this, char*, int)
 // callers   1   call targets   3
@@ -6231,17 +6235,16 @@ int Buffer::wrap_height_flying(char *a1, int a2) {
 // emitter computes declarations; it does not carry lessons.
 
 
-int Buffer::wrap_right(char * a1, int a2) {
-    int *rec = reinterpret_cast<int *>(a2);
-    if (a1 != 0 && rec != 0) {
+int Buffer::wrap_right(char *text, RECT *area) {
+    if (text != 0 && area != 0) {
         BufferStrHeight = 0;
         int oldField10 = field_10_;
         field_18_ = 0;
         field_14_ = oldField10;
-        int start = rec[0];
-        int width = rec[2] - start;
-        int total = rec[1];
-        char *cur = a1;
+        int start = area->left;
+        int width = area->right - start;
+        int total = area->top;
+        char *cur = text;
         char *found;
         do {
             if (cur == 0) {
@@ -6280,7 +6283,7 @@ int Buffer::wrap_right(char * a1, int a2) {
         } while (found != 0);
         return total;
     }
-    return rec[1];
+    return area->top;
 }
 
 // ORIGINAL: 0x005DDF60 ?wrap_flying@Buffer@@QAEHPADHHH@Z 0x005DDF60-0x005DDFA6 BYTE_EXACT

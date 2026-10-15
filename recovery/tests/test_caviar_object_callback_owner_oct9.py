@@ -98,7 +98,7 @@ def test_actual_source_callback_identity_and_post_part_edge():
     assert ("callback(record, index, &position, &part,\n"
             "                     view->bounds_.values_, &context->light_vector_);") in draw
     assert "state_bytes" not in draw
-    assert "context->field_A4_" in draw
+    assert "context->shadow_enabled_" in draw
     assert "&context->light_vector_" in draw
     assert "if (VoxRenderRecord::PostPartCallback callback =" in draw
     # The post-part slot is read at the call site after drawing, rather than

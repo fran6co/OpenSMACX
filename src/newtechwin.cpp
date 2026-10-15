@@ -562,11 +562,10 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
         hide();
         do_all_draws();
         if (PendingTechnologyLink == -1) break;
-        uint32_t id_storage = 0;
+        uint32_t category_id = 0;
         int entry_id = 0;
-        DatalinkMain.parse_id(PendingTechnologyLink,
-            reinterpret_cast<DatalinkID *>(&id_storage), &entry_id);
-        DatalinkMain.exec(id_storage, entry_id);
+        DatalinkMain.parse_id(PendingTechnologyLink, &category_id, &entry_id);
+        DatalinkMain.exec(category_id, entry_id);
         PendingTechnologyLink = -1;
     } while (true);
 

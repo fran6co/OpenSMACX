@@ -118,10 +118,9 @@ struct ButtonGroup {
     void add(FlatButton *b) { members[add_count++]=b; }
     void set(int,int value) { selected=value; }
 };
-struct DatalinkID { uint32_t value; };
 struct Datalink {
     uint32_t parsed; int remainder;
-    void parse_id(int id,DatalinkID *out,int *tail) { ++trace.parse_calls; out->value=id/10000; *tail=id%10000; }
+    void parse_id(int id,uint32_t *out,int *tail) { ++trace.parse_calls; *out=static_cast<uint32_t>(id/10000); *tail=id%10000; }
     void exec(uint32_t id,int tail) { ++trace.datalink_calls; parsed=id; remainder=tail; }
     int trace_parse_calls() const { return 0; }
 } DatalinkMain;

@@ -1827,6 +1827,7 @@ Purpose: Split a combined id into its two halves - `id / 10000` into the first
 // ORIGINAL: 0x0042A040 ?parse_id@Datalink@@QAEXHPAUDatalinkID@@PAH@Z 0x0042A040-0x0042A076 BYTE_EXACT
 // size      54 bytes
 // prototype int (__thiscall ?parse_id@Datalink@@QAEXHPAUDatalinkID@@PAH@Z)(Datalink* this, int, DatalinkID*, int*)
+// symbol    ?parse_id@Datalink@@QAEXHPAIPAH@Z
 // callers   1   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1834,11 +1835,9 @@ Purpose: Split a combined id into its two halves - `id / 10000` into the first
 Return Value: n/a
 Status: Complete
 */
-void Datalink::parse_id(int id, DatalinkID *out_id, int *out_remainder) {
+void Datalink::parse_id(int id, uint32_t *out_category, int *out_remainder) {
     const int32_t quotient = id / 10000;
-    // Only the first four bytes of the DatalinkID are written; the type stays
-    // incomplete, so the store is expressed against its address.
-    *reinterpret_cast<int32_t *>(out_id) = quotient;
+    *out_category = static_cast<uint32_t>(quotient);
     *out_remainder = static_cast<int32_t>(
         static_cast<uint32_t>(id) - static_cast<uint32_t>(quotient) * 10000U);
 }

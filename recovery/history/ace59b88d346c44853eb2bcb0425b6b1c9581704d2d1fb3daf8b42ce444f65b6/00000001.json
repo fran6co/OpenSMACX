@@ -1,0 +1,19 @@
+{
+  "event_id": "1e8e1d3d1b30192431840acf3a930f4b9f922caaa305a56824f070456ab76d6f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_newtechwin_exec_behavior.py"
+    ],
+    "evidence": [
+      "Update the existing NewTechWin fixture scalar parse_id contract to match the evidence-backed API change, retaining all behavior assertions and mock arithmetic semantics."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "datalink-category-fixture-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:datalink-scalar-category-oct15"
+}

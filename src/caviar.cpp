@@ -3271,7 +3271,7 @@ float __cdecl vox_stage_scene(
              CaviarProjectionMinusOne);
     }
     scratch.projected_scale_ = camera->camera_.scaling *
-        context->field_90_ * scratch.perspective_factor_;
+        context->projection_scale_ * scratch.perspective_factor_;
     scratch.viewport_aspect_ =
         (camera->bounds_.lead_[4] - camera->bounds_.lead_[3]) /
         (camera->bounds_.lead_[2] - camera->bounds_.lead_[1]);
@@ -3287,10 +3287,12 @@ float __cdecl vox_stage_scene(
     const float half_height = static_cast<float>(setup->height_ >> 1) -
                               CaviarProjectionHalfPixel;
     scratch.camera_offset_.values[0] =
-        context->field_7C_ * context->field_90_ + context->field_88_ +
+        context->projection_offset_x_ * context->projection_scale_ +
+        context->screen_offset_x_ +
         half_width + scratch.camera_offset_.values[0] * scratch.projected_scale_;
     scratch.camera_offset_.values[1] =
-        context->field_80_ * context->field_90_ + context->field_8C_ +
+        context->projection_offset_y_ * context->projection_scale_ +
+        context->screen_offset_y_ +
         half_height + scratch.camera_offset_.values[1] * scratch.projected_scale_;
     scratch.camera_offset_.values[2] -= camera->bounds_.lead_[1];
 
@@ -3311,7 +3313,7 @@ float __cdecl vox_stage_scene(
         scratch.camera_offset_.values[2] =
             -(scratch.camera_offset_.values[2] * scratch.viewport_aspect_);
     }
-    scratch.camera_offset_.values[2] += context->field_84_ +
+    scratch.camera_offset_.values[2] += context->projection_offset_z_ +
         (((record->setup_id_ & 1) == 0)
             ? camera->bounds_.lead_[3]
             : camera->bounds_.lead_[4]);
@@ -3321,19 +3323,19 @@ float __cdecl vox_stage_scene(
     scratch.viewport_aspect_ =
         context->state_.scale_ * scratch.viewport_aspect_;
     scratch.part_clip_.left_ = caviar_projection_floor(
-        static_cast<float>(camera->bounds_.values_[0]) * context->field_90_);
+        static_cast<float>(camera->bounds_.values_[0]) * context->projection_scale_);
     scratch.part_clip_.top_ = caviar_projection_floor(
-        static_cast<float>(camera->bounds_.values_[1]) * context->field_90_);
+        static_cast<float>(camera->bounds_.values_[1]) * context->projection_scale_);
     scratch.part_clip_.right_ = caviar_projection_floor(
-        static_cast<float>(camera->bounds_.values_[4] + 1) * context->field_90_) + 1;
+        static_cast<float>(camera->bounds_.values_[4] + 1) * context->projection_scale_) + 1;
     scratch.part_clip_.bottom_ = caviar_projection_floor(
-        static_cast<float>(camera->bounds_.values_[5] + 1) * context->field_90_) + 1;
+        static_cast<float>(camera->bounds_.values_[5] + 1) * context->projection_scale_) + 1;
     scratch.part_clip_.width_ = scratch.part_clip_.left_ - 1 +
                                 scratch.part_clip_.right_;
     scratch.part_clip_.height_ = scratch.part_clip_.top_ - 1 +
                                  scratch.part_clip_.bottom_;
 
-    if (context->field_A4_ != 0 && setup->shadow_buffer_ != 0) {
+    if (context->shadow_enabled_ != 0 && setup->shadow_buffer_ != 0) {
         float &shadow_z = context->shadow_vector_.values[2];
         if (shadow_z <= CaviarProjectionNearNegativeEpsilon ||
             CaviarProjectionZero <= shadow_z) {
@@ -3356,10 +3358,10 @@ float __cdecl vox_stage_scene(
                               context->state_.scene_offset_.values,
                               scratch.shadow_centre_.values);
         scratch.shadow_centre_.values[0] +=
-            shadow_x * context->field_78_;
+            shadow_x * context->shadow_origin_adjustment_;
         scratch.shadow_centre_.values[1] +=
-            shadow_y * context->field_78_;
-        scratch.shadow_centre_.values[2] += context->field_78_;
+            shadow_y * context->shadow_origin_adjustment_;
+        scratch.shadow_centre_.values[2] += context->shadow_origin_adjustment_;
 
         float shadow_relative[3];
         vec3_subtract(scratch.shadow_centre_.values,
@@ -3377,8 +3379,8 @@ float __cdecl vox_stage_scene(
                               shadow_axes.values);
         const float shadow_projected_scale = context->state_.scale_ *
             camera->camera_.scaling * scratch.perspective_factor_;
-        const float shadow_x_scale = shadow_projected_scale * context->field_9C_;
-        const float shadow_y_scale = shadow_projected_scale * context->field_A0_;
+        const float shadow_x_scale = shadow_projected_scale * context->shadow_scale_x_;
+        const float shadow_y_scale = shadow_projected_scale * context->shadow_scale_y_;
         for (int axis = 0; axis != 3; ++axis) {
             scratch.shadow_matrix_.values[0][axis] =
                 shadow_axes.values[axis][0] * shadow_x_scale;
@@ -3386,10 +3388,12 @@ float __cdecl vox_stage_scene(
                 shadow_axes.values[axis][1] * shadow_y_scale;
         }
         scratch.shadow_centre_.values[0] =
-            context->field_7C_ * context->field_9C_ + context->field_94_ +
+            context->projection_offset_x_ * context->shadow_scale_x_ +
+            context->shadow_screen_offset_x_ +
             half_width + scratch.shadow_centre_.values[0] * shadow_x_scale;
         scratch.shadow_centre_.values[1] =
-            context->field_80_ * context->field_A0_ + context->field_98_ +
+            context->projection_offset_y_ * context->shadow_scale_y_ +
+            context->shadow_screen_offset_y_ +
             half_height + scratch.shadow_centre_.values[1] * shadow_y_scale;
 
         scratch.shadow_radius_x_ = static_cast<float>(_hypot(
@@ -3406,13 +3410,13 @@ float __cdecl vox_stage_scene(
         *output_b = scratch.shadow_radius_y_;
 
         scratch.shadow_clip_.left_ = caviar_projection_floor(
-            static_cast<float>(camera->bounds_.values_[0]) * context->field_9C_);
+            static_cast<float>(camera->bounds_.values_[0]) * context->shadow_scale_x_);
         scratch.shadow_clip_.top_ = caviar_projection_floor(
-            static_cast<float>(camera->bounds_.values_[1]) * context->field_A0_);
+            static_cast<float>(camera->bounds_.values_[1]) * context->shadow_scale_y_);
         scratch.shadow_clip_.right_ = caviar_projection_floor(
-            static_cast<float>(camera->bounds_.values_[4] + 1) * context->field_9C_) + 1;
+            static_cast<float>(camera->bounds_.values_[4] + 1) * context->shadow_scale_x_) + 1;
         scratch.shadow_clip_.bottom_ = caviar_projection_floor(
-            static_cast<float>(camera->bounds_.values_[5] + 1) * context->field_A0_) + 1;
+            static_cast<float>(camera->bounds_.values_[5] + 1) * context->shadow_scale_y_) + 1;
         scratch.shadow_clip_.width_ = scratch.shadow_clip_.left_ - 1 +
                                       scratch.shadow_clip_.right_;
         scratch.shadow_clip_.height_ = scratch.shadow_clip_.top_ - 1 +
@@ -3504,7 +3508,7 @@ void __cdecl vox_load_scene_view(
         }
 
 shadow_pass:
-        if (context->field_A4_ != 0 &&
+        if (context->shadow_enabled_ != 0 &&
             record->setup_block_->shadow_buffer_ != 0) {
             VOX_Vect shadow;
             vox_matrix_vector_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
@@ -4653,8 +4657,8 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
         callback();
     }
 
-    // The "keep the scene rectangle too" byte is the context's field_A4_.
-    const int want_shadow = context->field_A4_;
+    // The "keep the scene rectangle too" byte is the context's shadow_enabled_.
+    const int want_shadow = context->shadow_enabled_;
 
     for (int index = 0; index < state->instance_count_; ++index) {
         VoxInstance &instance = state->instances_[index];
@@ -4777,7 +4781,7 @@ Purpose: Draw the scene. Resets the six channel bounds to their defaults,
 //
 // The catalogue's second argument is the draw's flags: bit 0 is passed on to
 // clear_buffers, bit 1 says the colour table the draw filled is not to be
-// kept - which is why it lands in scene_context_.field_A4_, the byte init seeds with 1.
+// kept - which is why it lands in scene_context_.shadow_enabled_, the byte init seeds with 1.
 Return Value: 0, 7 when the renderer is switched off (field_4_'s bit 0 is
               clear), 0x10 on a null Buffer, and nothing further is drawn when
               no instance has been added.
@@ -4802,10 +4806,10 @@ int Caviar::render_scene(Buffer *buffer, int flags) {
     buffer_ = buffer;
     scene_context_.state_.instance_count_ = field_13CC_;
     scene_context_.state_.draw_flags_ = 1;
-    scene_context_.field_7C_ = 0;
-    scene_context_.field_80_ = 0;
-    scene_context_.field_84_ = 0;
-    scene_context_.field_A4_ = (flags & 2) != 0 ? 0 : 1;
+    scene_context_.projection_offset_x_ = 0;
+    scene_context_.projection_offset_y_ = 0;
+    scene_context_.projection_offset_z_ = 0;
+    scene_context_.shadow_enabled_ = (flags & 2) != 0 ? 0 : 1;
     CaviarScene.renderer_ = this;
     vox_draw_scene(CaviarScene.created_, &scene_context_, &camera_view_, 0);
     CaviarScene.renderer_ = 0;
@@ -5148,7 +5152,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     camera_view_.bounds_.values_[5] = 0x100;
     buffer_ = buffer;
     scene_context_.state_.draw_flags_ = 1;
-    scene_context_.field_A4_ = (flags & 2) != 0 ? 0 : 1;
+    scene_context_.shadow_enabled_ = (flags & 2) != 0 ? 0 : 1;
 
     int left = centre_x - 0x80;
     int top = centre_y - 0x80;
@@ -5200,7 +5204,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     covered.bottom = record->primary_clip_.bottom_ + 1;
     UnionRect(&CaviarViewportState, &covered, &CaviarViewportState);
 
-    if (scene_context_.field_A4_ != 0) {
+    if (scene_context_.shadow_enabled_ != 0) {
         RECT scene;
         scene.left = record->secondary_clip_.left_;
         scene.top = record->secondary_clip_.top_;
@@ -5208,7 +5212,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
         scene.bottom = record->secondary_clip_.bottom_ + 1;
         UnionRect(&CaviarScene.scene_rect_, &scene,
                   &CaviarScene.scene_rect_);
-        if (scene_context_.field_A4_ != 0) {
+        if (scene_context_.shadow_enabled_ != 0) {
             unsigned char *colour = static_cast<unsigned char *>(record->colour_table_);
             int mode;
             int origin_x;
@@ -5686,16 +5690,16 @@ void Caviar::init() {
     camera_view_.bounds_.values_[4] = 0x100;
     camera_view_.bounds_.values_[5] = 0x100;
 
-    scene_context_.field_7C_ = 0;
-    scene_context_.field_80_ = 0;
-    scene_context_.field_84_ = 0;
-    scene_context_.field_88_ = 0;
-    scene_context_.field_8C_ = 0;
-    scene_context_.field_90_ = 1.0f;
-    scene_context_.field_94_ = 0;
-    scene_context_.field_98_ = 0;
-    scene_context_.field_9C_ = 1.0f;
-    scene_context_.field_A0_ = 1.0f;
+    scene_context_.projection_offset_x_ = 0;
+    scene_context_.projection_offset_y_ = 0;
+    scene_context_.projection_offset_z_ = 0;
+    scene_context_.screen_offset_x_ = 0;
+    scene_context_.screen_offset_y_ = 0;
+    scene_context_.projection_scale_ = 1.0f;
+    scene_context_.shadow_screen_offset_x_ = 0;
+    scene_context_.shadow_screen_offset_y_ = 0;
+    scene_context_.shadow_scale_x_ = 1.0f;
+    scene_context_.shadow_scale_y_ = 1.0f;
 
     camera_view_.bounds_.lead_[0] = 0;
     camera_view_.bounds_.lead_[1] = negative_distance_limit;
@@ -5727,7 +5731,7 @@ void Caviar::init() {
     scene_context_.state_.scene_rotation_.values[2][0] = 0;
     scene_context_.state_.scene_rotation_.values[2][1] = 0;
     scene_context_.state_.scene_rotation_.values[2][2] = 1.0f;
-    scene_context_.field_78_ = 0;
+    scene_context_.shadow_origin_adjustment_ = 0;
 
     camera_view_.camera_.rotation.values[0][0] = 1.0f;
     camera_view_.camera_.rotation.values[1][1] = 1.0f;
@@ -5740,7 +5744,7 @@ void Caviar::init() {
     camera_view_.camera_.rotation.values[2][1] = 0;
 
 
-    scene_context_.field_A4_ = 1;
+    scene_context_.shadow_enabled_ = 1;
     scene_context_.shadow_vector_.values[2] = scene_context_.light_vector_.values[2];
     field_4_ |= 1;
 }
