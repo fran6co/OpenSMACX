@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7009ac891b75b0444635426f77102c69ae77d7e0",
+  "editable_files": [
+    "src/win.cpp"
+  ],
+  "evidence": [
+    "Current color-table checkpoint reports set_caption44/44 instructions across full133-byte span and OnKey56/56 across full151-byte span; neither has an existing historical byte claim. Native recording must freshly measure, not replay those reports.",
+    "Pinned set_caption targets free644EF2,strlen6453E0,mem_get5D4510,strcat645470,is_visible5F7E90 and on_nc_paint virtual+128 agree with source. Ret4 supports instance method plus one explicit argument. Source retains old-caption free/clear before allocation and failure exit before repaint.",
+    "Pinned OnKey overwrites ECX from focus9B7AE0 before use, consumes five explicit stack args and returns caller-clean. Existing win-message-entries-owner-oct10 audit and actual-body tests establish static cdecl callback; QAAX historical catalogue label is not authenticated original debug type evidence and is retained unchanged.",
+    "OnKey source uses original focus9B7AE0/modal9B8D7C/input9B7AC4/default9B7AEC/active9B7AC8/keyhook9B7A8C/messagehook9B7A88, visibility5F7E90 and inner on_key slot+138. Some globals have address comments rather than full object bindings; masked body claim does not prove strict linked-reference identity.",
+    "Only native recover record may publish claims. Preserve original markers except native-added claim tokens; inspect exact diff, rerun historical claim continuity and source references after integration. Source behavior and latest tested application inputs are unchanged; this does not establish strict reference, structural or game acceptance."
+  ],
+  "intent": "Freshly measure and natively record reviewed set_caption and static OnKey body claims without altering C++ behavior or original identities.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6217552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6231488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-reviewed-claims-oct15"
+}
