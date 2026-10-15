@@ -51,7 +51,7 @@ def test_listbox_constructs_virtual_bases_and_closes_derived_stage(control_objec
         ctor = references(obj, "??0ListBox@@QAE@XZ")
         assert ctor.count("??0GraphicWin@@QAE@XZ") == 1
         assert ctor.count("??0Dialog@@QAE@XZ") == 1
-        assert references(obj, "??1ListBox@@UAE@XZ").count("?close@ListBox@@QAEIXZ") == 1
+        assert references(obj, "??1ListBox@@UAE@XZ").count("?close@ListBox@@QAEXXZ") == 1
         assert not any(s.section > 0 and s.name == "?construct@ListBox@@QAEXH@Z"
                        for s in obj.symbols.values())
 

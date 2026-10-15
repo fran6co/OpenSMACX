@@ -256,18 +256,21 @@ Purpose: Close the ListBox: close its GraphicWin and Dialog virtual bases,
          the process defaults and re-arm Dialog::field_B4_.
 // ORIGINAL: 0x00609F20 ?close@ListBox@@QAEXXZ 0x00609F20-0x00609F9D BYTE_EXACT
 // LEVER: dropped `volatile` from the `object` alias and from the field_B4_ store: 35/37 -> BYTE_EXACT 37/37. The volatile was an ALIAS, not a store-keeper - every store here is to the live `this`, so VC6 keeps them all without it, and the only thing volatile bought was an ordering fence that stopped VC6 hoisting the vbtable load `mov ecx, [esi]` ahead of the `mov [esi + 0x14], edx` store the way the image does. Measured: volatile object + plain B4 store is still 35/37, so it is the object alias that costs the two instructions. Also measured and rejected, all while `volatile` was still in place: hoisting the vbtable pointer into a local between the 0x10 and 0x14 stores (35/37), hoisting it to the top of the store block (35/37), and hoisting the whole vbase displacement instead of the pointer (32/37) - scheduling, not spelling, was the difference.
-// symbol    ?close@ListBox@@QAEIXZ
+// symbol    ?close@ListBox@@QAEXXZ
 // size      125 bytes
 // prototype void (__thiscall ?close@ListBox@@QAEXXZ)(ListBox* this)
 // callers   35   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4E40 0x00608F50
-Return Value: EAX residue (constant 0). Declared void (?close@ListBox@@QAEXXZ);
-              modelled as uint32_t to preserve the residue like GraphicWin::close.
+Return Value: n/a
+SUPERSEDED: The former uint32_t source model preserved incidental EAX=0; the
+catalogued QAEX name is reconstructed and not signature proof. The pinned
+mapped-caller audit found 47 direct calls with no EAX consumer, no tail callers,
+and no raw absolute references, supporting the source-level void contract.
 The two base close methods are reusable source-owned operations.
 */
-uint32_t ListBox::close() {
+void ListBox::close() {
     // Base offsets come from the object's OWN vbtable, read at run time -
     // never the compile-time 0x48/0xA60 - so an embedded ListBox with a
     // different vbtable still reaches the correct subobjects (AGENTS.md
@@ -297,13 +300,12 @@ uint32_t ListBox::close() {
     // Dialog::field_B4_ = 1, re-arming it through the virtual base as a
     // plain member write.
     field_B4_ = 1;
-    field_30_ = 0;
-    field_34_ = 0;
-    field_38_ = 0;
+    draw_callback_ = 0;
+    write_callback_ = 0;
+    fill_callback_ = 0;
     selection_callback_ = 0;
     double_click_callback_ = 0;
     field_C_ = 0;
-    return 0;
 }
 
 // Original 609DB0 conditionally constructs GraphicWin and Dialog using the
@@ -351,9 +353,9 @@ ListBox::ListBox() {
     field_24_ = ListBoxDefault24;
     field_28_ = ListBoxCloseDynamicDefault;
     field_2C_ = ListBoxDefault2C;
-    field_30_ = 0;
-    field_34_ = 0;
-    field_38_ = 0;
+    draw_callback_ = 0;
+    write_callback_ = 0;
+    fill_callback_ = 0;
     selection_callback_ = 0;
     double_click_callback_ = 0;
     field_B4_ = 1;
@@ -408,13 +410,6 @@ Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
 Status: Complete
 */
 
-uint32_t ListBox::destroy() {
-    // Strip-all direction: the image's five derived-stage re-stores here are
-    // gone; the object runs on whatever its constructing chain installed.
-    return close();
-}
-
-
 /*
 Purpose: The ListBox derived destructor stage. VC6 enters this method on the
          GraphicWin controlling virtual base, recovers the class receiver,
@@ -428,7 +423,7 @@ Purpose: The ListBox derived destructor stage. VC6 enters this method on the
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00609F20
-Return Value: EAX residue (close()'s residue, constant 0).
+Return Value: n/a
 */
 ListBox::~ListBox() {
     close();
