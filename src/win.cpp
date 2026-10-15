@@ -10160,21 +10160,26 @@ void Win::on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
 // DUPLICATE `Win::resize_event` removed: two artifacts carried the same body.
 
 // ===== homed from src/unrecovered/005f2680.cpp =====
-// ORIGINAL: 0x005F2680 ?OnSysCommand@Win@@QAAHPAXIHH@Z 0x005F2680-0x005F26FF FILE
-// symbol    ?OnSysCommand@Win@@SAHPAUHWND__@@IHH@Z
+// ORIGINAL: 0x005F2680 ?OnSysCommand@Win@@QAAHPAXIHH@Z 0x005F2680-0x005F26FF FILE BYTE_EXACT
+// symbol    ?OnSysCommand@Win@@SAXPAUHWND__@@IHH@Z
 // provenance (retired seed): git:3cb99d43^:src/unrecovered/005f2680.cpp
-int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
-                              int y) {
+// VC6 WINDOWSX.H's Cls_OnSysCommand contract is void; HANDLE_WM_SYSCOMMAND
+// discards the callback result, and the pinned close path's void virtual call
+// leaves no deterministic EAX when no Sound child is present. Registration
+// provenance for this standalone identity remains unresolved.
+void __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
+                               int y) {
     Win *self = reinterpret_cast<Win *>(
         GetWindowLongA(hwnd, -0x15));
     if (self == 0) {
-        return 0;
+        return;
     }
     if (command != 0xf060) {
-        return DefWindowProcA(
+        DefWindowProcA(
             hwnd, 0x112, command,
             (static_cast<unsigned int>(static_cast<unsigned short>(y)) << 16)
                 | static_cast<unsigned short>(x));
+        return;
     }
     WinCallbackWindow = self;
     WinNullaryEventCallback cb = self->field_404_;
@@ -10188,7 +10193,6 @@ int __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
             child->play();
         }
     }
-    return 0;
 }
 
 // ORIGINAL: 0x005EF050 ?client_to_nonclient@Win@@QAEXPAURECT@@@Z 0x005EF050-0x005EF10D FILE

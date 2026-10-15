@@ -35,7 +35,7 @@ class Win { public:
 DECLARATIONS
 };
 typedef void (*KeyEntry)(void *, unsigned int, long, int, unsigned int);
-typedef int (*CommandEntry)(HWND, unsigned int, int, int);
+typedef void (*CommandEntry)(HWND, unsigned int, int, int);
 typedef int (*PaletteEntry)(void *);
 typedef long (*ActivationEntry)(void *, unsigned int, void *, long);
 char probe(KeyEntry);
