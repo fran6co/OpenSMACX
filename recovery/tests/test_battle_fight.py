@@ -441,3 +441,166 @@ def test_status_accessor_wrong_member_mutant_is_detected():
     fixture = ARTILLERY_FIXTURE.replace("/* ACTUAL_STATUS_SETTER */", mutated_setter)
     for compiler in _compilers():
         _compile_run(compiler, fixture, roll+cleanup+show+mode, ARTILLERY_MAIN, expected_run=None)
+
+
+def _selector_notice_call_labels(source: str):
+    calls = re.findall(
+        r"\bbattle_fight_emit_selector_notice_v1\s*\(([^;{}]*?)\)\s*;",
+        source, re.S,
+    )
+    assert len(calls) == 2, "expected both production selector-notice call sites"
+    labels = [tuple(re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"', call))
+              for call in calls]
+    assert all(len(call_labels) == 3 for call_labels in labels), (
+        "each production selector-notice call must supply three literal labels"
+    )
+    assert labels[0] == labels[1], "late-finish selector labels diverged"
+    return labels[0]
+
+
+SELECTOR_NOTICE_FIXTURE = r'''
+#include <assert.h>
+#include <string.h>
+#define __cdecl
+
+static char trace[16];
+static int trace_size;
+static int parse_count;
+static int popup_count;
+static int parse_slots[2];
+static const char *parse_values[2];
+static const char *popup_label;
+static const char *popup_target;
+
+static void record(char event) {
+    trace[trace_size++] = event;
+    trace[trace_size] = '\0';
+}
+
+static const char *get_adjective(int faction) {
+    record('A');
+    return faction == 4 ? "adjective-attacker" : "adjective-defender";
+}
+
+static const char *get_noun(int faction) {
+    record('N');
+    return faction == 4 ? "noun-attacker" : "noun-defender";
+}
+
+static int parse_says(int slot, const char *value, int gender, int plural) {
+    assert(parse_count < 2);
+    assert(gender == -1 && plural == -1);
+    record('P');
+    parse_slots[parse_count] = slot;
+    parse_values[parse_count] = value;
+    ++parse_count;
+    return 0;
+}
+
+struct NetMsg {
+    static void __cdecl pop(const char *label, const char *target) {
+        record('M');
+        ++popup_count;
+        popup_label = label;
+        popup_target = target;
+    }
+};
+
+'''
+
+
+SELECTOR_NOTICE_MAIN = r'''
+static const char *labels[3] = { /* ACTUAL_PRODUCTION_LABELS */ };
+
+static void reset_notice() {
+    trace_size = 0;
+    trace[0] = '\0';
+    parse_count = 0;
+    popup_count = 0;
+    popup_label = 0;
+    popup_target = 0;
+    parse_slots[0] = parse_slots[1] = -1;
+    parse_values[0] = parse_values[1] = 0;
+}
+
+static void check_notice(int selector,
+                         const char *expected_trace,
+                         const char *expected_first,
+                         const char *expected_second,
+                         const char *expected_label) {
+    reset_notice();
+    battle_fight_emit_selector_notice_v1(
+        selector, 4, 7, labels[0], labels[1], labels[2]);
+    assert(strcmp(trace, expected_trace) == 0);
+    assert(parse_count == 2);
+    assert(parse_slots[0] == 0 && parse_slots[1] == 1);
+    assert(strcmp(parse_values[0], expected_first) == 0);
+    assert(strcmp(parse_values[1], expected_second) == 0);
+    assert(popup_count == 1);
+    assert(strcmp(popup_label, expected_label) == 0);
+    assert(popup_target == 0);
+}
+
+int main() {
+    check_notice(1, "APNPM", "adjective-attacker", "noun-defender",
+                 "VENDETTAREPORT");
+    check_notice(2, "APNPM", "adjective-attacker", "noun-defender",
+                 "PACTATTACKED");
+    check_notice(3, "NPNPM", "noun-attacker", "noun-defender",
+                 "PACTATTACKING");
+
+    reset_notice();
+    battle_fight_emit_selector_notice_v1(0, 4, 7,
+        labels[0], labels[1], labels[2]);
+    assert(trace_size == 0 && parse_count == 0 && popup_count == 0);
+    return 0;
+}
+'''
+
+
+def _selector_notice_program(source: str, helper: str = None):
+    if helper is None:
+        helper = _extract_definition(source, "battle_fight_emit_selector_notice_v1")
+    labels = _selector_notice_call_labels(source)
+    label_initializer = ", ".join('"' + label + '"' for label in labels)
+    main = SELECTOR_NOTICE_MAIN.replace(
+        "/* ACTUAL_PRODUCTION_LABELS */", label_initializer
+    )
+    return helper, main
+
+
+def test_selector_notice_uses_native_substitutions_and_both_production_labels():
+    source = OWNER.read_text()
+    labels = _selector_notice_call_labels(source)
+    assert labels == ("VENDETTAREPORT", "PACTATTACKED", "PACTATTACKING")
+    helper, main = _selector_notice_program(source)
+    for compiler in _compilers():
+        _compile_run(compiler, SELECTOR_NOTICE_FIXTURE, helper, main)
+
+
+@pytest.mark.parametrize("mutation", ["wrong_noun", "swapped_labels", "wrong_target"])
+def test_selector_notice_damage_controls_detect_mutations(mutation):
+    source = OWNER.read_text()
+    helper = _extract_definition(source, "battle_fight_emit_selector_notice_v1")
+    if mutation == "wrong_noun":
+        correct = "parse_says(1, get_noun(defender_faction), -1, -1);"
+        assert helper.count(correct) == 3
+        helper = helper.replace(
+            correct,
+            "parse_says(1, get_adjective(defender_faction), -1, -1);",
+            1,
+        )
+    elif mutation == "swapped_labels":
+        correct = '"VENDETTAREPORT", "PACTATTACKED", "PACTATTACKING"'
+        swapped = '"PACTATTACKING", "PACTATTACKED", "VENDETTAREPORT"'
+        assert source.count(correct) == 2
+        source = source.replace(correct, swapped)
+    else:
+        correct = "NetMsg::pop(message, 0);"
+        assert helper.count(correct) == 1
+        helper = helper.replace(correct, 'NetMsg::pop(message, "wrong-target");')
+
+    helper, main = _selector_notice_program(source, helper)
+    for compiler in _compilers():
+        _compile_run(compiler, SELECTOR_NOTICE_FIXTURE, helper, main,
+                     expected_run=None)

@@ -25434,7 +25434,7 @@ static void battle_fight_emit_selector_notice_v1(
     switch (native_selector) {
     case 1:
         parse_says(0, get_adjective(attacker_faction), -1, -1);
-        parse_says(1, get_adjective(defender_faction), -1, -1);
+        parse_says(1, get_noun(defender_faction), -1, -1);
         message = selector_one_label;
         break;
     case 2:
@@ -25451,7 +25451,7 @@ static void battle_fight_emit_selector_notice_v1(
         return;
     }
 
-    NetMsgPrimary.pop(message, -5000, 0, 0);
+    NetMsg::pop(message, 0);
 }
 // Retained fragment: battle-final-tail-subagent/battle-fight-final-block-v5.cpp
 // Private typed reconstruction of native battle_fight 0x50B6F7..0x50B893.
@@ -25988,7 +25988,7 @@ static int battle_fight_late_finish_b2fa_v1(
     battle_fight_emit_selector_notice_v1(
         *frame.frame_minus_44,
         frame.attacker_faction, frame.defender_faction,
-        "PACTATTACKING", "PACTATTACKED", "VENDETTAREPORT");
+        "VENDETTAREPORT", "PACTATTACKED", "PACTATTACKING");
 
     return battle_fight_final_block_v5(
         *frame.direction_slot_plus_0c,
@@ -26352,7 +26352,7 @@ static int battle_fight_late_finish_b2fa_live_v1(
     battle_fight_emit_selector_notice_v1(
         *frame.frame_minus_44,
         frame.attacker_faction, frame.defender_faction,
-        "PACTATTACKING", "PACTATTACKED", "VENDETTAREPORT");
+        "VENDETTAREPORT", "PACTATTACKED", "PACTATTACKING");
 
     return battle_fight_final_block_v5(
         *frame.direction_slot_plus_0c,
