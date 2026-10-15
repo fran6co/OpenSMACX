@@ -1,0 +1,37 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "89089df7f720d7d7ea6bddbadd73c4fd4e38bac0",
+  "editable_files": [
+    "src/council.cpp",
+    "recovery/tests/test_call_council_owner_actual_source.py",
+    "recovery/tests/call_council_control.cpp",
+    "recovery/tests/test_wants_prop_behavior.py",
+    "recovery/tests/test_council_byte_read_stages_oct15.py"
+  ],
+  "evidence": [
+    "Pinned call_council byte sites52C9D9,52CE49,52CE7F,52CF26,52CF32,52CFF2,52D07E,52D0D7,52D1C5,52D249,52D368,52D406,52D444,52D57D,52D5C9,52D6D6,52D6EA,52D7DE; preserve genuine dword52CB19 argument read.",
+    "can_call_council human bytes52C6D5/52C72C/52C7DE/52C850; alive52C7A0 already named; preserve dword52C7FA. wants_prop bytes52AEDD/52AF25/52B3DF/52B4B8/52B4FD; preserve dwords52B250/52B378/52B437.",
+    "Use existing GameDataLockMaskView named byte fields only where original width and source stage agree. Verify exact per-site mapping, preserve callback snapshots/reloads, all original quirks, historical claims and unedited functions. Fixture repairs reuse production declarations without weakening original assertions. Native matching, fresh build/link, physical collateral review, claims/references and actual-source host controls required for manual integration; no automatic/full-game acceptance."
+  ],
+  "intent": "Recover original human/alive byte access stages in council logic while retaining genuine dword reads",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5425280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5424752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5418672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "council-byte-read-stages-oct15"
+}

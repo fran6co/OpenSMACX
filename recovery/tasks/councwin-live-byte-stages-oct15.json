@@ -1,0 +1,65 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "89089df7f720d7d7ea6bddbadd73c4fd4e38bac0",
+  "editable_files": [
+    "src/councwin.cpp",
+    "recovery/tests/test_councwin_owner_behavior.py",
+    "recovery/tests/councwin_owner_control_fixture.py",
+    "recovery/tests/test_council_selection_paths_oct11.py",
+    "recovery/tests/test_council_live_callback_controls.py",
+    "recovery/tests/test_councwin_retained_behavior.py",
+    "recovery/tests/test_councwin_live_byte_stages_oct15.py"
+  ],
+  "evidence": [
+    "on_left_click bytes425291/425723; candidate stale alive cache after selection must be checked against original fresh425723 read. Preserve dword snapshots425106/425385. make_resolution byte42446C but preserve dword424601.",
+    "init bytes4278F4/427946/427DF1/427EB1; precisely align initial tally versus candidate-stage reread before eligible at427EB1, with callback mutation controls. Preserve dwords427833/42785B. on_button_clicked bytes424A36/424B78; preserve dwords4248D1/424965/424B42.",
+    "on_key_click bytes425BBF/425CAF; draw_leader byte42634D but preserve dword42614C. set_vote42474A/4247BD and arrived4271F1 are whole-dword controls, not rewrite targets. Eight mapped subjects, six candidate edit functions; no blanket casts replacement.",
+    "Confirm all evidence using pinned full spans; use existing human/alive byte fields and preserve source read stages and original unsafe paths. No header or global changes. Reuse production byte declaration in stale fixtures, keep all existing scenarios/assertions, add actual callback freshness controls and runtime-failing mutants. Coordinator owns native compiler/Git. Require full-TU comparisons, build/link, physical collateral review and claims/references for manual integration; no automatic/full-game acceptance."
+  ],
+  "intent": "Recover CouncWin named byte access stages and original post-callback alive-mask rereads",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4345936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4342800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4354608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4343920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4348832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4349360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4343584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4354496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "councwin-live-byte-stages-oct15"
+}
