@@ -1,0 +1,20 @@
+{
+  "event_id": "155d1eb4c69c1b43f473a14d708edec1f37ac46f6b8f090ce30fbf12980b2213",
+  "payload": {
+    "affects": [
+      "entity-52ed022544770bbd76219d92074628700db9b1cb0a9bf41fd8b512290fc94e18"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "loop-deck-result",
+    "evidence": [
+      "Native local deck build/recovery/altitude-loop-results-oct15.json scored three forms under both profiles; all were MISMATCH at0/35 aligned instructions. Unchanged-replica and damage controls passed. No product source changed."
+    ],
+    "hypothesis": "Adopt a typed row or sample iteration form only if it improves matching without weakening the existing model.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "loop-deck-result",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:altitude-loop-forms-oct15"
+}

@@ -1,0 +1,17 @@
+{
+  "event_id": "e528ae7e8c200c3812d88552ceefb240383ebb2ef5d6cfea5d2fba4a0944bd1f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "loop-deck-result",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Retain current typed indexed owner. No variant improved matching; no claim granted or removed. Investigate shared structural contracts before further spelling trials."
+    ]
+  },
+  "previous_event": "155d1eb4c69c1b43f473a14d708edec1f37ac46f6b8f090ce30fbf12980b2213",
+  "request_id": "retain-indexed-owner",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:altitude-loop-forms-oct15"
+}
