@@ -267,6 +267,17 @@ int SpriteRasterSourceRowCount;
 int SpriteRasterDestinationPitch;
 // RECOVERY_OBJECT: v1 0x009B6070 ?SpriteRasterSourcePitch@@3HA
 int SpriteRasterSourcePitch;
+// The six later workers publish this cell only after both clipping helpers
+// succeed (for example 5E5FEC and 5EA499); rejected, unit and shrink paths
+// leave its prior value stale. The multi-table worker's [source][destination]
+// lookup (5E9803/9805) needs a distinct typed row view. This spelling preserves
+// both proven uses without claiming the original union declaration.
+union SpriteRasterRemapPointer {
+    unsigned char *single;
+    unsigned char (*multi)[256];
+};
+// RECOVERY_OBJECT: v1 0x009B3AC0 ?SpriteRasterRemapTable@@3TSpriteRasterRemapPointer@@A
+SpriteRasterRemapPointer SpriteRasterRemapTable;
 
 // ORIGINAL: 0x005EB20F ?fill_scaling_table@Sprite@@QAEXXZ 0x005EB20F-0x005EB294
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5EB20F..5EB294 divides larger by smaller scale operands, biases error by quotient parity, and fills9B3AD8 until9B4758. Integer error operations wrap32bits before signed branches; cache publication belongs to callers.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the shared800-entry scale-step table generator with its original quotient-parity phase."}
@@ -985,6 +996,7 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
             destination->free_data(1);
             return 0;
         }
+        SpriteRasterRemapTable.single = table;
         const unsigned char *source_row = scaled_source +
             (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits +
@@ -1000,7 +1012,7 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
                 if (pixel_value != key && pixel_value != 0) {
                     // Original four-row branch alone indexes with destination
                     // (5EA54D/5EA5A0/5EA5F3/5EA646). Preserve this quirk.
-                    const unsigned char mapped = table[repeats == 4
+                    const unsigned char mapped = SpriteRasterRemapTable.single[repeats == 4
                         ? destination_row[output_column] : pixel_value];
                     for (int repeat = 0; repeat < repeats; ++repeat)
                         for (int pixel = 0; pixel < columns[column]; ++pixel)
@@ -1175,6 +1187,7 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
             destination->free_data(1);
             return 0;
         }
+        SpriteRasterRemapTable.single = table;
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
@@ -1189,7 +1202,7 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
                     // Expanded zero pixels sample the first destination once,
                     // then replicate that result over the whole output block.
                     const unsigned char mapped = pixel_value == 0
-                        ? table[destination_row[output_column]] : pixel_value;
+                        ? SpriteRasterRemapTable.single[destination_row[output_column]] : pixel_value;
                     for (int repeat = 0; repeat < repeats; ++repeat)
                         for (int pixel = 0; pixel < columns[column]; ++pixel)
                             {
@@ -1380,6 +1393,7 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y,
             destination->free_data(1);
             return 0;
         }
+        SpriteRasterRemapTable.single = table;
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
@@ -1393,7 +1407,7 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y,
                     // Zero source pixels sample the first destination once,
                     // then replicate that result over the whole output block.
                     const unsigned char mapped =
-                        table[destination_row[output_column]];
+                        SpriteRasterRemapTable.single[destination_row[output_column]];
                     for (int repeat = 0; repeat < repeats; ++repeat)
                         for (int pixel = 0; pixel < columns[column]; ++pixel)
                             destination_row[
@@ -1601,6 +1615,7 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
             destination->free_data(1);
             return 0;
         }
+        SpriteRasterRemapTable.single = table;
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
@@ -1615,7 +1630,7 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
                     // Non-key source pixels sample the first destination
                     // once, then replicate that result over the whole block.
                     const unsigned char mapped =
-                        table[destination_row[output_column]];
+                        SpriteRasterRemapTable.single[destination_row[output_column]];
                     for (int repeat = 0; repeat < repeats; ++repeat)
                         for (int pixel = 0; pixel < columns[column]; ++pixel)
                             destination_row[
@@ -2847,6 +2862,7 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
             destination->free_data(1);
             return 0;
         }
+        SpriteRasterRemapTable.multi = multi_table;
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
@@ -2863,7 +2879,7 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
                         for (int pixel = 0; pixel < columns[column]; ++pixel) {
                             unsigned char &target = destination_row[
                                 repeat * destination_pitch + output_column + pixel];
-                            target = multi_table[pixel_value][target];
+                            target = SpriteRasterRemapTable.multi[pixel_value][target];
                         }
                 }
                 output_column += columns[column];
@@ -3041,6 +3057,7 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
             destination->free_data(1);
             return 0;
         }
+        SpriteRasterRemapTable.single = table;
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
@@ -3052,7 +3069,8 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
             for (int column = 0; column < source_columns; ++column) {
                 const unsigned char pixel_value = source_row[column];
                 if (pixel_value != key && pixel_value != 0) {
-                    const unsigned char mapped = table[pixel_value];
+                    const unsigned char mapped =
+                        SpriteRasterRemapTable.single[pixel_value];
                     for (int repeat = 0; repeat < repeats; ++repeat)
                         for (int pixel = 0; pixel < columns[column]; ++pixel) {
                             destination_row[

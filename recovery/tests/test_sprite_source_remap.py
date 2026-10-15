@@ -44,6 +44,14 @@ def actual(with_real_clippers=False):
         if depth == 0:
             body = source[start:end + 1]
             break
+    multi_signature = one(r"int Sprite::draw_multi_table_dest\(Buffer \*destination, int transparent, int x,\s*int y, ColorTable \*multi_table\)\s*\{", source)
+    multi_start = source.index(multi_signature)
+    multi_depth = 0
+    for multi_end in range(source.index("{", multi_start), len(source)):
+        multi_depth += (source[multi_end] == "{") - (source[multi_end] == "}")
+        if multi_depth == 0:
+            multi_body = source[multi_start:multi_end + 1]
+            break
     fields = "\n".join(one(r"^  (?:char \*|unsigned char \*|int |unsigned char )" + name + r";", header) for name in
         ("ppszFileName_", "pcBits_", "cTransparentIndex_", "iSpriteWidth2_", "iSpriteWidth_", "iSpriteHeight_",
          "iWidth_", "iHeight_", "iLeftOffset_", "iTopOffset_"))
@@ -59,6 +67,8 @@ def actual(with_real_clippers=False):
          "SpriteRasterDestinationRowCount", "SpriteRasterSourceRowCount",
          "SpriteRasterXTable", "SpriteRasterYTable",
          "SpriteRasterDestinationPitch", "SpriteRasterSourcePitch"))
+    remap_union = one(r"(?s)^union SpriteRasterRemapPointer \{.*?^\};\s*$", source)
+    remap_global = one(r"^SpriteRasterRemapPointer SpriteRasterRemapTable;\s*$", source)
     step_arrays = "\n".join(one(r"^int " + name + r"\[SpriteScalingTableCount\];", source) for name in
         ("SpriteScalingSteps", "SpriteClippedYSteps", "SpriteClippedXSteps"))
     table_count = one(r"^enum \{ SpriteScalingTableCount = \d+ \};$", header)
@@ -83,8 +93,8 @@ def actual(with_real_clippers=False):
         clipping = "\n".join(clippers)
     else:
         clipping = CLIPPING_STUBS
-    return {"BODY": body, "FIELDS": fields, "METHODS": methods,
-            "GLOBALS": globals_ + "\n" + table_count + "\n" + raster_cells + "\n" + step_arrays,
+    return {"BODY": body, "MULTIBODY": multi_body, "FIELDS": fields, "METHODS": methods,
+            "GLOBALS": globals_ + "\n" + table_count + "\n" + raster_cells + "\n" + remap_union + "\n" + remap_global + "\n" + step_arrays,
             "BUFFER_FIELDS": buffer_fields, "CLIPPERS": clipping}
 
 
@@ -97,11 +107,12 @@ HARNESS = r'''
 #include <string>
 #include <functional>
 using LPVOID=void*;
+typedef unsigned char ColorTable[256];
 void require_at(bool value,int line){if(!value){fprintf(stderr,"assertion line %d\n",line);std::_Exit(99);}}
 #define require(x) require_at((x),__LINE__)
 struct RECT {int32_t left,top,right,bottom;};
 struct Buffer {BUFFER_FIELDS void *get_data();void free_data(int);};
-struct Sprite {FIELDS METHODS};
+struct Sprite {FIELDS METHODS int draw_multi_table_dest(Buffer*,int,int,int,ColorTable*);};
 GLOBALS
 unsigned char memory[131072],expected[131072];
 const int SOURCE=0,ALTSOURCE=16384,TABLE=32768,OUTPUT=65536,ALTOUTPUT=98304;
@@ -127,6 +138,7 @@ int* axis(int index,bool expand,RECT*o,RECT*c,int*a,int*b,int*d,int*e){
 }
 // CLIPPING_IMPLEMENTATIONS
 BODY
+MULTIBODY
 void reset(){
  for(int i=0;i<131072;++i)memory[i]=expected[i]=static_cast<unsigned char>((i*17+23)%251);
  for(int i=0;i<256;++i)memory[TABLE+i]=expected[TABLE+i]=static_cast<unsigned char>((i*37+7)%256);
@@ -139,6 +151,7 @@ void reset(){
  SpriteRasterDestinationRowCount=-33;SpriteRasterSourceRowCount=-34;
  SpriteRasterXTable=stale_x;SpriteRasterYTable=stale_y;
  SpriteRasterDestinationPitch=-41;SpriteRasterSourcePitch=-42;
+ SpriteRasterRemapTable.single=memory+ALTSOURCE;
  for(int i=0;i<SpriteScalingTableCount;++i)SpriteScalingSteps[i]=SpriteClippedXSteps[i]=SpriteClippedYSteps[i]=0;
  events.clear();locks=1;unlocks=clip_calls=fail_axis=0;callback={};check_original=true;
  axes[0]={};axes[1]={};
@@ -147,13 +160,14 @@ void stale_cells(){
  require(SpriteRasterDestinationColumnCount==-31&&SpriteRasterSourceColumnCount==-32);
  require(SpriteRasterDestinationRowCount==-33&&SpriteRasterSourceRowCount==-34);
  require(SpriteRasterXTable==stale_x&&SpriteRasterYTable==stale_y);
+ require(SpriteRasterRemapTable.single==memory+ALTSOURCE);
 }
 void check_pitches(int source,int destination){
  require(SpriteRasterSourcePitch==source&&SpriteRasterDestinationPitch==destination);
 }
 void put(int index,int value){memory[index]=expected[index]=static_cast<unsigned char>(value);}
 void pixels(){for(int i=0;i<131072;++i)if(memory[i]!=expected[i]){fprintf(stderr,"pixel %d actual%d expected%d\n",i,memory[i],expected[i]);require(false);}}
-void done(int result,const char*trace,int code=0){require(result==code&&events==trace);require(unlocks==(strchr(trace,'U')?1:0));pixels();}
+void done(int result,const char*trace,int code=0){if(result!=code||events!=trace)fprintf(stderr,"done got result%d events%s expected%d %s\\n",result,events.c_str(),code,trace);require(result==code&&events==trace);require(unlocks==(strchr(trace,'U')?1:0));pixels();}
 // Independent sample coordinates: unit/shrink prefix-sum advances; every LUT
 // access is against the evolving expected arena, preserving all three aliases.
 void sample(int source,int destination,int table,int key){unsigned char value=expected[source];
@@ -192,6 +206,7 @@ int actual_clipper_integration(){
  require(SpriteRasterDestinationRowCount==0&&SpriteRasterSourceRowCount==4);
  require(SpriteRasterXTable==SpriteClippedXSteps);
  require(SpriteRasterYTable==SpriteClippedYSteps+3);check_pitches(12,64);
+ require(SpriteRasterRemapTable.single==memory+ALTSOURCE);
 
  reset();SpriteScaleNumerator=3;SpriteScaleDenominator=2;
  sprite.iSpriteWidth_=sprite.iSpriteHeight_=2;expected_original={0,0,3,3};
@@ -204,6 +219,7 @@ int actual_clipper_integration(){
  require(SpriteRasterDestinationRowCount==3&&SpriteRasterSourceRowCount==0);
  require(SpriteRasterXTable==SpriteClippedXSteps);
  require(SpriteRasterYTable==SpriteClippedYSteps+2);check_pitches(12,64);
+ require(SpriteRasterRemapTable.single==memory+TABLE);
  return 0;
 }
 void setup_expand(int count,int selector){
@@ -213,7 +229,30 @@ void setup_expand(int count,int selector){
  axes[1]={0,0,2,4,{selector,2}};
  for(int i=0;i<count;++i){put(SOURCE+i,i%3==0?0:i%3==1?9:47+i);put(SOURCE+12+i,31+i);}
 }
+int actual_multi_table_runtime(){
+ reset();SpriteScaleNumerator=2;SpriteScaleDenominator=1;
+ sprite.iSpriteWidth_=sprite.iSpriteHeight_=2;expected_original={0,0,4,4};
+ buffer.rect1_=expected_clipped=expected_original;
+ axes[0]={0,0,2,4,{2,2}};axes[1]={0,0,2,4,{2,2}};
+ unsigned char multi[256][256];
+ for(int value=0;value<256;++value)for(int target=0;target<256;++target)
+  multi[value][target]=static_cast<unsigned char>(value+target);
+ put(0,1);put(1,2);put(12,3);put(13,4);
+ for(int sy=0;sy<2;++sy)for(int sx=0;sx<2;++sx){
+  int value=memory[sy*12+sx];
+  for(int dy=0;dy<2;++dy)for(int dx=0;dx<2;++dx){
+   int at=OUTPUT+(sy*2+dy)*64+sx*2+dx;
+   expected[at]=multi[value][expected[at]];
+  }
+ }
+ int result=sprite.draw_multi_table_dest(&buffer,9,0,0,multi);
+ done(result,"LFIJXYU",1);
+ require(SpriteRasterRemapTable.multi==multi);
+ require(SpriteRasterSourceRowCount==0);
+ return 0;
+}
 int main(){
+ if(std::getenv("SPRITE_MULTI_RUNTIME")) return actual_multi_table_runtime();
  if(std::getenv("SPRITE_REAL_CLIPPERS")) return actual_clipper_integration();
  // Unit widths cover every unrolled tail; unequal display/source/pitch values.
  for(int width=1;width<=9;++width)for(int key : {0,9,0x109,-1})for(int clipped=0;clipped<2;++clipped){
@@ -227,7 +266,8 @@ int main(){
   RECT c=buffer.rect1_;
   require(SpriteRasterDestinationColumnCount==c.right-c.left && SpriteRasterDestinationRowCount==0);
   require(SpriteRasterSourceColumnCount==-32 && SpriteRasterSourceRowCount==-34);
-  require(SpriteRasterXTable==stale_x && SpriteRasterYTable==stale_y);check_pitches(12,64);}
+  require(SpriteRasterXTable==stale_x && SpriteRasterYTable==stale_y);
+  require(SpriteRasterRemapTable.single==memory+ALTSOURCE);check_pitches(12,64);}
  // Shrink source-width6 differs from pitch12; X high byte matters, Y doesn't.
  for(int high=0;high<2;++high)for(int key : {0,9,0x109}){
   reset();SpriteScaleNumerator=2;SpriteScaleDenominator=3;sprite.iSpriteWidth_=6;sprite.iSpriteHeight_=6;
@@ -237,13 +277,15 @@ int main(){
   shrink(14,OUTPUT+4*64+3,12,64,TABLE,key);done(paint(key),"LFIJXYU");
   require(SpriteRasterXTable==axes[0].steps && SpriteRasterYTable==axes[1].steps+2);
   require(SpriteRasterDestinationColumnCount==2 && SpriteRasterSourceColumnCount==axes[0].source_count);
-  require(SpriteRasterDestinationRowCount==0 && SpriteRasterSourceRowCount==3);check_pitches(12,64);}
+  require(SpriteRasterDestinationRowCount==0 && SpriteRasterSourceRowCount==3);
+  require(SpriteRasterRemapTable.single==memory+ALTSOURCE);check_pitches(12,64);}
  for(int selector : {0,1,2,3,4,5,255,257,258,259,260,261})for(int count=1;count<=7;++count){
   reset();setup_expand(count,selector);expand(0,OUTPUT+3*64+2,12,64,TABLE,9);done(paint(),"LFIJXYU");
   require(SpriteRasterXTable==axes[0].steps && SpriteRasterYTable==axes[1].steps+axes[1].source_count);
   require(SpriteRasterDestinationColumnCount==axes[0].destination_count);
   require(SpriteRasterSourceColumnCount==count);
-  require(SpriteRasterDestinationRowCount==4 && SpriteRasterSourceRowCount==0);check_pitches(12,64);}
+  require(SpriteRasterDestinationRowCount==4 && SpriteRasterSourceRowCount==0);
+  require(SpriteRasterRemapTable.single==memory+TABLE);check_pitches(12,64);}
  // Aliases are not snapshots. Unit table writes can change later table reads.
  for(int mode=0;mode<3;++mode){reset();sprite.iSpriteWidth_=4;sprite.iSpriteHeight_=1;expected_original={2,3,6,4};
   int table=TABLE,source=SOURCE,dst=OUTPUT+3*64+2;
@@ -291,6 +333,7 @@ int main(){
   else {require(SpriteRasterDestinationColumnCount==axes[0].destination_count&&
                 SpriteRasterSourceColumnCount==axes[0].source_count);
    require(SpriteRasterDestinationRowCount==-33&&SpriteRasterSourceRowCount==-34);}
+  require(SpriteRasterRemapTable.single==memory+ALTSOURCE);
   check_pitches(12,64);}
  for(int minaxis=0;minaxis<2;++minaxis){reset();SpriteScaleNumerator=2;SpriteScaleDenominator=3;expected_original={2,3,5,5};
   if(minaxis)SpriteMinimumScaledHeight=3;else SpriteMinimumScaledWidth=4;done(paint(),"LFIU");stale_cells();check_pitches(12,64);}
@@ -366,6 +409,11 @@ def test_actual_renderer_fill_and_all_clipping_methods(tmp_path):
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_actual_multi_table_union_view_and_pixels(tmp_path):
+    result = run(tmp_path, actual(), {"SPRITE_MULTI_RUNTIME": "1"})
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 DAMAGE = {
     "guard_return": ("return 3;", "return 0;"),
     "lock_polarity": ("destination->get_data() == 0", "destination->get_data() != 0"),
@@ -397,11 +445,13 @@ DAMAGE = {
     "scaled_new_base_pitch": ("original.top * destination_pitch", "original.top * static_cast<int>(destination->stride_)"),
     "coordinate_scaled": ("static_cast<double>(x) + static_cast<double>(iLeftOffset_) * SpriteScalingRatio", "(static_cast<double>(x) + iLeftOffset_) * SpriteScalingRatio"),
     "coordinate_partial_truncation": ("static_cast<double>(x) + static_cast<double>(iLeftOffset_) * SpriteScalingRatio", "static_cast<double>(x) + static_cast<int>(static_cast<double>(iLeftOffset_) * SpriteScalingRatio)"),
+    "remap_wrong_pointer": ("SpriteRasterRemapTable.single = table;", "SpriteRasterRemapTable.single = table + 1;"),
+    "remap_store_missing": ("SpriteRasterRemapTable.single = table;", "(void)table;"),
 }
 
 
 @pytest.mark.parametrize("damage", [*DAMAGE, "scaled_live_source", "scaled_live_destination", "second_clip_omitted", "cache_before_fill",
-                                    "lut_snapshot", "source_snapshot", "default_remap_per_pixel"])
+                                    "lut_snapshot", "source_snapshot", "default_remap_per_pixel", "remap_early_publish"])
 def test_source_remap_rejects_compiling_damage(tmp_path, damage):
     parts = actual()
     source = parts["BODY"]
@@ -437,6 +487,10 @@ def test_source_remap_rejects_compiling_damage(tmp_path, damage):
         assert source.count(good) == 2
         before, tail = source.rsplit(good, 1)
         source = before + bad + tail
+    elif damage == "remap_early_publish":
+        good = "SpriteRasterYTable = get_clipped_y_table_expand(&original, &clipped,"
+        assert source.count(good) == 1
+        source = source.replace(good, "SpriteRasterRemapTable.single = table;\n        " + good)
     else:
         good, bad = DAMAGE[damage]
         assert source.count(good) == 1, damage
