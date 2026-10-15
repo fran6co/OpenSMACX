@@ -74,12 +74,14 @@ void StringBox::on_scrolling(int code, int position) {
 
 // The owned StringList handles caret parsing and ID-zero insertion; a
 // successful insertion asks the box to re-fit its visible rows.
-// ORIGINAL: 0x00629750 ?add_special@StringBox@@QAEHPAD@Z 0x00629750-0x00629774
+// ORIGINAL: 0x00629750 ?add_special@StringBox@@QAEHPAD@Z 0x00629750-0x00629774 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/recovered/units/00629750.cpp", "src/stringlist.cpp StringList::add_special; src/stringstruct.h", "src/stringbox.h"], "reason": "Delegate caret-prefix parsing and ID-zero insertion to the owned StringList, then request row fitting after a successful insert."}
 int StringBox::add_special(char *text) {
-    if (stringList_.add_special(text) == 0) {
-        add_fixup();
+    const int result = stringList_.add_special(text);
+    if (result != 0) {
+        return result;
     }
+    add_fixup();
     return 0;
 }
 
