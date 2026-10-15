@@ -99,6 +99,10 @@ def test_actual_installed_config_game(tmp_path, name):
     ("if (picked < 0) return 1;", "if (picked < 0) return 0;"),
     ("mode == 2 && !(factions_status_byte(1) & (1u << i))",
      "mode == 2 && (factions_status_byte(1) & (1u << i))"),
+    ("GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =\n        static_cast<unsigned char>(human_mask);",
+     "GameDataStateStorage.fields_.lock_masks_.enable_mask_ =\n        static_cast<unsigned char>(human_mask);"),
+    ("GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =\n        static_cast<unsigned char>(human_mask);",
+     "GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ =\n        static_cast<unsigned char>(human_mask);"),
 ])
 def test_actual_config_game_damage_fails(tmp_path, old, new):
     compiler = shutil.which("g++")

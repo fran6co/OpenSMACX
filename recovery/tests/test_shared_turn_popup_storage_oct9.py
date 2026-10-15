@@ -59,7 +59,9 @@ SUPPORT = r'''#include <cassert>
 struct PrimaryState { uint32_t leading_words_[3]{}, flags_{}, trailing_words_[10]{}; };
 struct Net { PrimaryState primary_state_{}; };
 Net NetDaemonNet;
-struct Fields { int net_turn_flags_=0, net_turn_faction_=0, game_more_preferences_=0; struct { struct { uint32_t alive_mask_=0; } bytes_; uint32_t enable_mask_=0; } lock_masks_; };
+struct LockMaskBytes { uint8_t human_mask_, alive_mask_, unassigned_[2]; };
+union LockMaskView { uint32_t enable_mask_; LockMaskBytes bytes_; };
+struct Fields { int net_turn_flags_=0, net_turn_faction_=0, game_more_preferences_=0; LockMaskView lock_masks_; };
 struct GameState { Fields fields_; };
 GameState GameDataStateStorage;
 struct Console { int faction_id_=0; void set_ai(int); void on_key_ai_shortcut(); };
@@ -139,6 +141,18 @@ int main() {
   NetDaemonNet.primary_state_.leading_words_[0]=1;
   GameDataStateStorage.fields_.net_turn_faction_=7;
   assert(next_player_turn()==1 && NextTurnReady==1);
+
+  // The active human/alive bytes are the low two bytes of the same dword;
+  // unrelated upper bytes survive named-byte writes.
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_=0xA5C30604u;
+  GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_=0x02;
+  GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_=0x08;
+  assert(GameDataStateStorage.fields_.lock_masks_.enable_mask_==0xA5C30802u);
+  GameDataStateStorage.fields_.net_turn_faction_=0;
+  message_calls=0; NextTurnReady=0;
+  GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_=0x02;
+  GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_=0x02;
+  assert(next_player_turn()==0 && message_calls==1 && NextTurnReady==0);
 
   // set_ai zero-extends all four checkbox flags into the original dword
   // before the popup callback. The callback can replace the full dword;

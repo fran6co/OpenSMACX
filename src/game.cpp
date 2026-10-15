@@ -3687,8 +3687,8 @@ int __cdecl next_player_turn() {
     }
     int i = GameDataStateStorage.fields_.net_turn_faction_ + 1;
     if (i < 8) {
-        unsigned int hi_byte = *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_);
-        unsigned char lo_byte = *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+        unsigned int hi_byte = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
+        unsigned char lo_byte = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
         do {
             unsigned int bit = 1 << i;
             if ((bit & hi_byte) != 0 && (static_cast<unsigned char>(bit) & lo_byte) != 0) {
@@ -8299,10 +8299,11 @@ initialize_factions:
                 (data.flags | 0x200u) == 0xffffffffu &&
                 data.diff_level == -1) {
                 const unsigned int bit = 1u << faction;
-                uint8_t *const lock_bytes = reinterpret_cast<uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-                if ((lock_bytes[0] & bit) == 0 && (lock_bytes[1] & bit) == 0) {
+                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) == 0 &&
+                    (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) == 0) {
                     if (alien) announced_native_faction = true;
-                    lock_bytes[1] |= static_cast<uint8_t>(bit);
+                    GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ |=
+                        static_cast<uint8_t>(bit);
                     setup_player(faction, -0x11a, 0);
                 }
             }
@@ -11349,9 +11350,9 @@ void __cdecl net_control_turn() {
 
         if (ControlTurnPhase == 0) {
             const unsigned char alive =
-                reinterpret_cast<const unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[1];
+                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
             const unsigned char human =
-                reinterpret_cast<const unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[0];
+                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
             int faction = 1;
             GameDataStateStorage.fields_.net_turn_faction_ = 1;
             for (;;) {

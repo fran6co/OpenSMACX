@@ -1448,7 +1448,8 @@ pbem_selection:
     }
 pbem_commit:
     if (!IsMultiplayerPBEM) goto store_single_faction;
-    *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_) = static_cast<unsigned char>(human_mask);
+    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+        static_cast<unsigned char>(human_mask);
     selected = 1;
     for (; selected < 8; ++selected) if ((human_mask & 0xFF) & (1u << selected)) break;
     if (selected >= 8) selected = 1;
@@ -1457,7 +1458,7 @@ pbem_commit:
 
 store_single_faction:
     ConsoleGlobal.faction_id_ = selected;
-    *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_) =
+    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
         static_cast<unsigned char>(1u << (selected & 31));
 time_controls:
     if (IsMultiplayerNet) {
