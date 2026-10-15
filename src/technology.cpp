@@ -99,7 +99,7 @@ int __cdecl tech_selection(int faction) {
     const unsigned int faction_bit = 1u << (faction & 31);
     const bool network_human =
         IsMultiplayerNet != 0 &&
-        (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0;
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0;
 
     if (network_human && faction != ConsoleGlobal.faction_id_) {
         bool announced = false;
@@ -124,7 +124,7 @@ int __cdecl tech_selection(int faction) {
     const bool network_game = IsMultiplayerNet != 0;
     selected = result;
     if (network_game &&
-        (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
         synch_researching(faction);
         int stop = ExitTurnLoop;
         selected = -1;
@@ -1818,7 +1818,7 @@ void __cdecl tech_research(int faction, int points) {
 
     const uint32_t faction_mask = 1u << (faction & 31);
     bool double_points = false;
-    if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_mask) == 0
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_mask) == 0
         && climactic_battle() != 0) {
         double_points = true;
         if (faction > 0) {
@@ -1903,7 +1903,7 @@ after_research_multiplier:
 after_advance:
     if (player.tech_accumulated >= 0 && player.tech_id_researching < 0
         && TurnUpkeepPhase != 1
-        && ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_mask) == 0
+        && ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_mask) == 0
             || faction == ConsoleGlobal.faction_id_
             || IsMultiplayerPBEM == 0)) {
         player.tech_id_researching = tech_selection(faction);

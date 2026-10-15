@@ -3,11 +3,22 @@
 from pathlib import Path
 import shutil
 import subprocess
+import re
 
 import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def mask_declarations():
+    header = (ROOT / "src/game_data_state_window.h").read_text(encoding="utf-8")
+    match = re.search(
+        r"struct GameDataLockMaskBytes\s*\{.*?\};\s*union GameDataLockMaskView\s*\{.*?\};",
+        header, re.DOTALL,
+    )
+    assert match, "production lock-mask byte/dword declarations missing"
+    return match.group(0)
 
 
 def body():
@@ -75,11 +86,10 @@ struct RulesTerraforming { int name,name_sea,preq_tech,preq_tech_sea; uint32_t b
 struct RulesAbility { int name,preq_tech; } Ability[29];
 struct Continent { uint32_t tile_count,open_terrain,unk_3,pods,unk_5; uint8_t sea_coasts[8]; };
 Base Bases[512], *BaseCurrent; int BaseIDCurrentSelected;
-// Minimal host owner only; this does not model native offsets or allocation.
-struct HostGameDataLockMasks { uint32_t enable_mask_; };
+// @@MASK_TYPES@@
 struct HostGameDataFields {
   int base_current_count_;
-  HostGameDataLockMasks lock_masks_;
+  GameDataLockMaskView lock_masks_;
   uint32_t game_more_preferences_;
   uint32_t game_preferences_;
   int turn_current_num_;
@@ -441,7 +451,8 @@ def test_base_priority_flags_and_native_radius_scan(tmp_path):
     """
     cpp = tmp_path / "base_terraform.cpp"
     executable = tmp_path / "base_terraform"
-    cpp.write_text(HARNESS + "\n" + body() + "\nint main(){\n" + checks + "\nreturn 0;}\n")
+    harness = HARNESS.replace("// @@MASK_TYPES@@", mask_declarations())
+    cpp.write_text(harness + "\n" + body() + "\nint main(){\n" + checks + "\nreturn 0;}\n")
     compiled = subprocess.run([compiler, "-std=c++11", "-O1", "-fsanitize=undefined",
                                "-fno-sanitize-recover=undefined", str(cpp), "-o", str(executable)],
                               capture_output=True, text=True, timeout=30)

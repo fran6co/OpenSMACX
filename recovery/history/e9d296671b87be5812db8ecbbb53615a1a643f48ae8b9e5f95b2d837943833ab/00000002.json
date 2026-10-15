@@ -1,0 +1,17 @@
+{
+  "event_id": "d514fc2b085e6953753b7ae7a0207464db0daa257a1f2d425ca80476cb536fd0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "terraform-branch-mapping-correction-oct15",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/base.cpp now preserves pinned nonhuman population polarity and live BaseCurrent at 4ED522-4ED53A; reachable landing gate at 4EE9D6 rejects nonlocal humans OR clear game_preferences bit. Unreachable east scan not substituted. Coordinator independently decoded original, reviewed C++, reran 12 host tests including four compiling failing mutants and signed population boundaries. Fresh VC6 application build/link passes; 113 comparator identities/verdicts unchanged; physical 158-object audit confines payload changes to five authorized base functions, all non-target sections and relocations preserved after private-label normalization. This is bounded source recovery, not runtime or full-game acceptance."
+    ]
+  },
+  "previous_event": "fbbd62fed318515f06fe0752a1708b77bddd85d833cfa46271b04f1eefdfa6b4",
+  "request_id": "terraform-branch-mapping-incorporated-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:base-tech-mask-stages-oct15"
+}

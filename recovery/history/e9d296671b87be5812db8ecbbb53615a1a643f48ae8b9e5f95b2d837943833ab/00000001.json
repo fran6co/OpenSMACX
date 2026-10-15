@@ -1,0 +1,20 @@
+{
+  "event_id": "fbbd62fed318515f06fe0752a1708b77bddd85d833cfa46271b04f1eefdfa6b4",
+  "payload": {
+    "affects": [
+      "entity-1f1b772d0be02a809fdae505d8271bccf6e8e6f52a2691a27f407ca3ac226375"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terraform-branch-mapping-correction-oct15",
+    "evidence": [
+      "Independent pinned decode:4ED52F JNE4ED53A skips DEC4ED537 for human, so decrement requires !human and live BaseCurrent population>=4. Reachable landing human read is4EE9D6, rejects human if faction differs from Console OR game_preferences at9A6490 lacks20000. Existing game_more_preferences and AND condition are incorrect. Earlier task evidence misassociated4EEF0D: that is unreachable east scan behind always-taken4EED84, not current landing gate. Existing too_few_special_land_squares already represents EBP-54 rejection. No new safety fixes."
+    ],
+    "hypothesis": "Correct base_terraform population polarity and reachable landing gate mapping, preserving original behavior",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "terraform-branch-mapping-correction-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:base-tech-mask-stages-oct15"
+}
