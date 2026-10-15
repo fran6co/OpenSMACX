@@ -65,6 +65,7 @@ def test_native_adpcm_storage_layout_and_all_initial_bytes():
     from match_recovery.object_data import check_initial_data
     from match_recovery.pe_coff import PeImage
     from match_recovery.source_inventory import image_pin
+    from match_recovery.source import read_file
     from recovery.environment.wine import VC6_ROOT
     if not (VC6_ROOT / 'BIN/CL.EXE').is_file() or not shutil.which('wine32'):
         pytest.skip('VC6 and Wine32 required')
@@ -104,7 +105,10 @@ def test_native_adpcm_storage_layout_and_all_initial_bytes():
         helper = '?media_adpcm_delta@@YAHHI@Z'
         _, helper_relocs, _ = obj.subject(obj.function(helper))
         assert symbol in {obj.symbols[int(r.target)].name for r in helper_relocs}
-        for function in ('?sub_5ce640@@YAXHHHHPAH0@Z', '?sub_5ce6e3@@YAXPAEPAFHPAH2@Z'):
+        mono_record, = (row for row in read_file(ROOT / 'src/general.cpp')
+                        if row.address == 0x5CE640)
+        assert mono_record.symbol
+        for function in (mono_record.symbol, '?sub_5ce6e3@@YAXPAEPAFHPAH2@Z'):
             body, relocs, _ = obj.subject(obj.function(function))
             assert body
             targets = {obj.symbols[int(r.target)].name for r in relocs}

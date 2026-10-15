@@ -1,10 +1,8 @@
 """Actual-body controls for the two ADPCM decoders.
 
 This host projection retains the source decoder bodies and real table
-initializer. The older decoder's recovered ABI passes pointers as 32-bit ints;
-the harness widens only those two parameters to host pointers so tests can
-execute on a 64-bit host. This is not signature/ABI evidence or native-code
-verification.
+initializer, including the older decoder's declared pointer contract. It is
+behavioral host evidence, not native-code or game-acceptance verification.
 """
 from pathlib import Path
 import shutil
@@ -37,15 +35,6 @@ def projection(damage):
     helper = body("static int media_adpcm_delta(")
     decode_one = body("void __cdecl sub_5ce640(")
     decode_stereo = body("void __cdecl sub_5ce6e3(")
-
-    # The source ABI intentionally carries pointer parameters as int in this
-    # first helper. Widen just the host projection's pointer inputs; retain the
-    # function body and separately assert the production declaration remains.
-    decode_one = decode_one.replace(
-        "void __cdecl sub_5ce640(int first_sample, int codes, int samples,\n                        int sample_total, int *predictor, int *step_index)",
-        "void __cdecl sub_5ce640(int first_sample, unsigned char *codes, short *samples,\n                        int sample_total, int *predictor, int *step_index)",
-    )
-    assert "unsigned char *codes, short *samples" in decode_one
 
     if damage == "old_decoder_nibble_order":
         changed = decode_one.replace("nibble >>= 4;", "nibble &= 0xF;", 1)
@@ -205,5 +194,8 @@ def test_direct_state_members_replace_all_five_pointer_aliases():
     for name in ("AdpcmIndexAdjust", "AdpcmPredictorLeft", "AdpcmPredictorRight",
                  "AdpcmStepIndexLeft", "AdpcmStepIndexRight"):
         assert "*const " + name + " =" not in SOURCE
-    assert "void __cdecl sub_5ce640(int first_sample, int codes, int samples," in SOURCE
+    signature = ("void __cdecl sub_5ce640(int first_sample, unsigned char *codes, "
+                 "short *samples,\n                        int sample_total, int *predictor, int *step_index)")
+    assert signature in SOURCE
+    assert signature in HEADER
     assert "void __cdecl sub_5ce6e3(unsigned char *codes, short *samples," in SOURCE
