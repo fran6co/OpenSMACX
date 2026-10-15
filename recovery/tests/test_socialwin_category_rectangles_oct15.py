@@ -112,7 +112,7 @@ int first_seen_top=-1, later_seen_top=-1, redraws=0;
 struct SocialWin : Win {
   RECT categoryHeaders_[4], modelRects_[16], tooltipFactionPower_;
   int factionID_=3;
-  uint32_t field_A2C_=0xffffffffu;
+  int hover_selection_=-1;
   void on_mouse_move(int,int);
   void draw_mouseover(){++redraws;}
 };
@@ -143,10 +143,10 @@ int main() {
   win.on_mouse_move(1,2);
   assert(availability_calls==14 && in_box_calls==3);
   assert(first_seen_top==72 && later_seen_top==80);
-  assert(win.field_A2C_==11 && redraws==1 && Win::clears==2);
+  assert(win.hover_selection_==11 && redraws==1 && Win::clears==2);
   hit_first=0; hit_later=0; hit_power=1;
   win.on_mouse_move(1,2);
-  assert(win.field_A2C_==static_cast<uint32_t>(-2) && redraws==2);
+  assert(win.hover_selection_==-2 && redraws==2);
   return 0;
 }
 '''.replace("BODY", mouse_body)

@@ -319,13 +319,13 @@ void SocialWin::on_right_click(int x, int y) {
 }
 
 // ORIGINAL: 0x004B1FC0 ?on_mouse_leave@SocialWin@@QAEXHH@Z 0x004B1FC0-0x004B1FEC FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The 0x004B1FC0 body calls Win::clear_bubble_text twice, then checks the signed hover value at +0xA2C and redraws mouseover only while it is nonnegative.", "The sibling on_iface_mouse_leave already proves the double clear is intentional, and draw_mouseover uses field_A2C_ as its hover selection."], "reason": "Home the mouse-leave path through the existing hover member and typed Win service."}
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x004B1FC0 body calls Win::clear_bubble_text twice, then checks the signed hover value at +0xA2C and redraws mouseover only while it is nonnegative.", "The sibling on_iface_mouse_leave already proves the double clear is intentional, and draw_mouseover uses hover_selection_ as its hover selection."], "reason": "Home the mouse-leave path through the existing hover member and typed Win service."}
 // symbol    ?on_mouse_leave@SocialWin@@UAEXHH@Z
 void SocialWin::on_mouse_leave(int, int) {
     ::Win::clear_bubble_text();
     ::Win::clear_bubble_text();
-    if (static_cast<int>(field_A2C_) >= 0) {
-        field_A2C_ = 0xFFFFFFFFU;
+    if (hover_selection_ >= 0) {
+        hover_selection_ = -1;
         draw_mouseover();
     }
 }
@@ -341,9 +341,9 @@ void SocialWin::close() {
     }
     buttonGroup_.close();
     field_2C28_ = 0;
-    field_A2C_ = 0xFFFFFFFFU;
-    field_A30_ = 0xFFFFFFFFU;
-    effectMaximize_ = 0xFFFFFFFFU;
+    hover_selection_ = -1;
+    effect_hover_button_id_ = -1;
+    effectMaximize_ = -1;
 }
 
 
@@ -1522,7 +1522,7 @@ void SocialWin::maximize_effect(int effect_id) {
         ++group;
     }
     redraw();
-    effectMaximize_ = 0xFFFFFFFFU;
+    effectMaximize_ = -1;
 }
 
 /*
@@ -1669,7 +1669,7 @@ void SocialWin::on_group_clicked(int a1, int a2) {
         int model = a2 % 4;
         int category = a2 / 4;
         UNK1(category, model);
-        if (effectMaximize_ == 0xFFFFFFFFU && field_2C28_ == 0) {
+        if (effectMaximize_ == -1 && field_2C28_ == 0) {
             buttonGroup_.set(-1, 1);
             redraw();
         }
@@ -1693,20 +1693,20 @@ void SocialWin::on_group_clicked(int a1, int a2) {
 // calls     0x004B0410 0x004B1080 0x005FCBB0
 */
 void SocialWin::on_button_passover(int a1, int a2) {
-    if (a1 >= 0 && a1 < 0x10 && a2 != 0 && field_A2C_ != static_cast<uint32_t>(a1)) {
-        field_A2C_ = static_cast<uint32_t>(a1);
+    if (a1 >= 0 && a1 < 0x10 && a2 != 0 && hover_selection_ != a1) {
+        hover_selection_ = a1;
         draw_mouseover();
     }
     if (a1 >= 0x11 && a1 <= 0x1b) {
         if (a2 == 0) {
-            if (field_A30_ != 0xFFFFFFFFU) {
-                field_A30_ = 0xFFFFFFFFU;
+            if (effect_hover_button_id_ != -1) {
+                effect_hover_button_id_ = -1;
                 draw_overview();
                 do_all_draws();
                 return;
             }
-        } else if (field_A30_ != static_cast<uint32_t>(a1)) {
-            field_A30_ = static_cast<uint32_t>(a1);
+        } else if (effect_hover_button_id_ != a1) {
+            effect_hover_button_id_ = a1;
             draw_overview();
         }
     }
@@ -1719,7 +1719,7 @@ static const char *const SocialOverviewSection = "SOCIO";
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004B0410-0x004B089A draws the effects overview, skips the reserved fourth row, loads each SocialEffects section and repaints the selected/comparison rows", "source:src/socialwin.h: tooltipEffects_, effectMaximize_, socEffect_, font1_ and font7_ are the corresponding declared members", "source:src/faction.h: SocialEffect and RulesSocialEffect define the eleven live rows and their section names"], "reason": "Home the overview painter on the SocialWin-owned rectangles, effects, fonts and rules records; preserve its original identity while replacing the seed's opaque object accesses with the product model."}
 void SocialWin::draw_overview() {
     Buffer *buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
-    int selected = static_cast<int>(field_A30_);
+    int selected = effect_hover_button_id_;
     int selected_effect = -1;
     if (selected >= 0) {
         selected_effect = selected - 0x11;
@@ -1807,7 +1807,7 @@ void SocialWin::draw_overview() {
             buffer->set_text_color(0xff, -1, 1, 1);
         } else {
             int color;
-            if (effectMaximize_ == static_cast<uint32_t>(effect)) {
+            if (effectMaximize_ == effect) {
                 color = 0x9c;
             } else if (social_effect_value(socEffect_, effect)
                        == social_effect_value(PlayersData[factionID_].soc_effect_pending, effect)) {
@@ -1940,8 +1940,8 @@ void SocialWin::on_mouse_move(int a1, int a2) {
     if (in_box(a1, a2, &tooltipFactionPower_) != 0) {
         hover = -2;
     }
-    if (field_A2C_ != static_cast<uint32_t>(hover)) {
-        field_A2C_ = static_cast<uint32_t>(hover);
+    if (hover_selection_ != hover) {
+        hover_selection_ = hover;
         draw_mouseover();
     }
 }
@@ -2070,7 +2070,7 @@ void SocialWin::draw_mouseover() {
 
     buf->box_sprite(&rect2, &InterfaceBoxStyles[6]);
 
-    int mode = static_cast<int>(field_A2C_);
+    int mode = hover_selection_;
     int cat_idx = 0;
     int row_idx = 0;
 
@@ -2096,7 +2096,7 @@ void SocialWin::draw_mouseover() {
     rect1.top = rect2.bottom + 2;
     buf->box_sprite(&rect1, &InterfaceBoxStyles[0]);
 
-    if (field_A2C_ != 0xFFFFFFFFU) {
+    if (hover_selection_ != -1) {
         rect1.left += 3;
         rect1.right -= 3;
         rect1.top += 3;
@@ -2110,7 +2110,7 @@ void SocialWin::draw_mouseover() {
                 continue;
             }
             int v;
-            if (field_A2C_ == 0xFFFFFFFEU) {
+            if (hover_selection_ == -2) {
                 // Original 0x96CCB0 is PlayersData::soc_effect_base at +0x2D0;
                 // PlayerData rows have the measured 0x20CC stride.
                 v = PlayersData[self_faction].soc_effect_base.values_[i];
@@ -2177,7 +2177,7 @@ void SocialWin::draw_mouseover() {
                 }
 
                 int v2;
-                if (field_A2C_ == 0xFFFFFFFEU) {
+                if (hover_selection_ == -2) {
                     v2 = PlayersData[self_faction].soc_effect_base.values_[i];
                 } else {
                     v2 = SocialCategories[cat_idx].model_effect[row_idx].values_[i];
@@ -2495,10 +2495,10 @@ void SocialWin::init(int faction_id) {
     }
     buttonGroup_.close();
 
-    field_A2C_ = 0xFFFFFFFFU;
-    field_A30_ = 0xFFFFFFFFU;
+    hover_selection_ = -1;
+    effect_hover_button_id_ = -1;
     field_2C28_ = 0;
-    effectMaximize_ = 0xFFFFFFFFU;
+    effectMaximize_ = -1;
     // The interface-mode registry's own state: the SubInterface base pointer
     // and its mode field.
     InterfaceRegistry[2] = static_cast<SubInterface *>(this);
@@ -2951,8 +2951,8 @@ SocialWin::~SocialWin() {
         buttonGroups_[j].close();
     }
     buttonGroup_.close();
-    field_A2C_ = 0xFFFFFFFFU;
-    field_A30_ = 0xFFFFFFFFU;
+    hover_selection_ = -1;
+    effect_hover_button_id_ = -1;
     field_2C28_ = 0;
-    effectMaximize_ = 0xFFFFFFFFU;
+    effectMaximize_ = -1;
 }
