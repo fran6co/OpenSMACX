@@ -44,7 +44,7 @@ LONG GetWindowLongA(HWND, int) { return instance_result; }
 
 struct Box { int clips; void clip_ids(unsigned long) { ++clips; } };
 struct WinLike { int visible; int is_visible() const { return visible; } };
-struct Tut { int arrows; void draw_arrow() { ++arrows; } };
+struct Tut { int visible, arrows; int is_visible() const { return visible; } void draw_arrow() { ++arrows; } };
 struct Plan { int blinks; void blink() { ++blinks; } };
 struct MapWin {
     uint32_t field_1DD74_, field_1DD80_;
@@ -65,9 +65,8 @@ struct Console : MapWin {
 };
 struct MainInterface { Box string_box_; };
 
-WinLike TutWinBaseWindow, TutWinSocWindow, TutorialWindow;
-Tut TutObject;
-Tut *TutWinGlobal = &TutObject;
+WinLike TutWinBaseWindow, TutWinSocWindow;
+Tut TutorialWindow;
 Plan PlanWindow;
 MainInterface MainInterfaceGlobal;
 Console ConsoleGlobal;
@@ -107,7 +106,7 @@ int main(int argc, char **argv) {
     if (strcmp(mode, "tutorial") == 0) {
         TutWinBaseWindow.visible = 1;
         blink_timer(7);
-        return TutObject.arrows == 1 && PlanWindow.blinks == 0
+        return TutorialWindow.arrows == 1 && PlanWindow.blinks == 0
             && MainInterfaceGlobal.string_box_.clips == 0 ? 0 : 2;
     }
 

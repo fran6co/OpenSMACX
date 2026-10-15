@@ -111,8 +111,7 @@ def harness(methods):
         MapWin *console_map_win() { return &window; }
         struct Status { void set_loc(int, int); void redraw() { require(false); } } ConsoleStatusWin;
         struct Info { void change(int) { require(false); } } ConsoleInfoWin;
-        struct Tutorial { void draw_arrow(); } tutorial;
-        Tutorial *TutWinGlobal = &tutorial;
+        struct Tutorial { void draw_arrow(); } TutorialWindow;
         struct GameDataStateStorage { struct { uint32_t game_state_; } fields_; };
         GameDataStateStorage GameDataStateStorage = {};
         const uint32_t STATE_DEBUG_MODE = 0x100;

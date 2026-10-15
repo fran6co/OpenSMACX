@@ -187,14 +187,12 @@ extern SocialWin TutWinSocWindow;   // 0x008A6270
 extern DesignWin TutWinDesWindow;   // 0x0071F2B0
 extern int DesignTutorState;        // 0x0073396C
 
-// 0x008C6E68, the tutorial window itself, in the zero-initialised .data the
-// constructor fills in. A FIXED-ADDRESS BINDING, not an extern object: it
-// carries no storage of its own here, and TutWin has virtual bases, so a real
-// global of that type would need a constructor this tree does not model. The
-// const spelling folds the receiver to the immediate the image's
-// `mov ecx, 0x8c6e68` uses (draw_cursor is the reader).
+// 0x008C6E68, the tutorial window itself, is the real process-lifetime object
+// defined in tutwin.cpp. Its constructor and registered destructor are
+// compiler-owned there; source consumers use the object directly so ordinary
+// member calls retain C++ virtual/base conversions without a per-TU pointer
+// alias.
 extern TutWin TutorialWindow;
-TutWin *const TutWinGlobal = &TutorialWindow;
 
 
 // The shared tail of the four do_* helpers: 0x004BDFE0, still original.

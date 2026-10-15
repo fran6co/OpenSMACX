@@ -76,8 +76,7 @@ struct InfoWin { int field_A8_=9,redraw_phase=7;
   void clear_pending_timer() { field_A8_=0; events.push_back(1); }
 } ConsoleInfoWin;
 struct BaseWin { void cancel_zoom_wait() { events.push_back(0); } } TutWinBaseWindow;
-struct TutWin { void reset() { events.push_back(2); } } tutorial;
-TutWin *TutWinGlobal=&tutorial;
+struct TutWin { void reset() { events.push_back(2); } } TutorialWindow;
 struct StatusWin { void reset() { events.push_back(3); } } ConsoleStatusWin;
 struct FX { void play(int id) { assert(id==15); events.push_back(4); } } g_FX;
 struct Player { int is_leader_female=2,noun_gender=3,is_noun_plural=1;

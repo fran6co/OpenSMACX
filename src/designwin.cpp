@@ -56,7 +56,7 @@
 #include "general.h"
 #include "veh.h"
 #include "selectpartwin.h"
-#include "tutwin.h"     // TutWinGlobal - the tutorial popup every click dismisses
+#include "tutwin.h"     // TutorialWindow - the tutorial popup every click dismisses
 #include "alpha.h"      // Labels - the label-id block on_left_click reads
 #include "netdaemon.h"  // synch_proto, message_data, NetDaemonNet
 #include "xpops.h"      // x_pop_caption_label
@@ -828,7 +828,7 @@ void DesignWin::on_iface_group_clicked(int, int, int) {
 // TRIED: fresh-temporary destructor sequencing for the Popup/Scroll/ BasePop/Dialogs teardown tail (same technique as Console::editor_diff, 0x004DD6F0) instead of hand-replaying the SEH funclet's exact interleave - compiles, MISMATCH #10 push/mov, sim ~0.59 on the framed row.
 void DesignWin::on_button_clicked(int button_id) {
     Popup popup;
-    TutWinGlobal->reset();
+    TutorialWindow.reset();
 
     if (button_id == -2 || button_id == 8) {
         field_CDC_ = 0;
@@ -1395,7 +1395,7 @@ void DesignWin::on_iface_left_click(int a1, int a2) {
 // Labels.strings_ptr+0xCE8, and the bubble anchor is that map square pushed
 // through the main interface's client_to_screen.
 void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
-    TutWinGlobal->reset();
+    TutorialWindow.reset();
     int position;
     int type;
     if (spot1_.check(xCoord, yCoord, &position, &type) != -1 && position >= 0) {
@@ -2473,7 +2473,7 @@ int DesignWin::UNK2(int proto_id) {
     return protoAbilityFlags_ == proto.ability_flags;
 }
 
-// ORIGINAL: 0x00439960 ?on_left_click@DesignWin@@QAEXHH@Z 0x00439960-0x004399FA FILE
+// ORIGINAL: 0x00439960 ?on_left_click@DesignWin@@QAEXHH@Z 0x00439960-0x004399FA FILE BYTE_EXACT
 // symbol    ?on_left_click@DesignWin@@UAEXHH@Z
 // size      154 bytes
 // prototype void (__thiscall ?on_left_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int xCoord, int yCoord)
@@ -2485,7 +2485,7 @@ int DesignWin::UNK2(int proto_id) {
 // (spot2_) picks the component its type names; types 4 and 5 are the two
 // special-ability slots.
 void DesignWin::on_left_click(int xCoord, int yCoord) {
-    TutWinGlobal->reset();
+    TutorialWindow.reset();
     int position;
     int type;
     if (spot2_.check(xCoord, yCoord, &position, &type) != -1) {
@@ -2526,7 +2526,7 @@ void DesignWin::on_left_click(int xCoord, int yCoord) {
 // vtable's slot 44 (on_button_clicked) with 4/8/0x17/0x18; the first
 // argument forwards 6 or 7 the same way. Always answers 1.
 int DesignWin::on_key_click(int a1, int a2) {
-    TutWinGlobal->reset();
+    TutorialWindow.reset();
     switch (a2) {
     case 0x0D:
         on_button_clicked(4);

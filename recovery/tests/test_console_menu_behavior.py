@@ -90,6 +90,7 @@ struct MapWin : GraphicWin {
 struct StatusWin { void reset() {} void redraw(...) {} void set_loc(...) {} };
 struct InfoWin { void change(...) {} };
 struct TutWin { int reset() {Trace.push_back("tutorial_reset");return 0;} void tour() {} void set_tour_stage(int) {} };
+extern TutWin TutorialWindow;
 struct FlatButton { void hide() {} void show(int) {} };
 struct MainInterface { FlatButton flat_button_[42]; FlatButton &flat_button(int i) { return flat_button_[i]; } };
 struct MultiWin {
@@ -166,7 +167,6 @@ const std::size_t MapWinTableSlots=8;
 MultiWin MultiWindow;
 InfoWin ConsoleInfoWin;
 StatusWin ConsoleStatusWin;
-TutWin *TutWinGlobal;
 MainInterface MainInterfaceGlobal;
 MapWin WorldClimateWorldWin;
 Console ConsoleGlobal;
@@ -208,7 +208,7 @@ void stack_kill(int vehicle){assert(vehicle==17);Trace.push_back("stack_kill");}
 """
     tests = r"""
 MapWin map;
-TutWin tutorial;
+  TutWin TutorialWindow;
 NetMsg &message = NetMsgPrimary;
 void reset_state(){
     ConsoleGlobal=Console();
@@ -220,7 +220,7 @@ void reset_state(){
     LockEnableMask=0; PopupWriteCheckState=0; StatusFlags=0;
     map.cursor_resource_id_=0x7F00;
     for(int i=0;i!=8;++i) MapWinTable[i]=0;
-    MapWinTable[0]=&map; TutWinGlobal=&tutorial;
+    MapWinTable[0]=&map;
     ConsoleGlobal.selected_vehicle_=3;
     Trace.clear();
 }

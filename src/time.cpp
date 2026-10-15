@@ -22,7 +22,7 @@
 #include "console.h"     // ConsoleStatusWin
 #include "statuswin.h"   // StatusWin::set_title, on the object above
 #include "win.h"         // WinPointerOwner3/4
-#include "tutwin.h"        // TutWinBaseWindow, TutWinSocWindow
+#include "tutwin.h"        // TutWinBaseWindow, TutWinSocWindow, TutorialWindow
 #include "game.h"          // ExitTurnLoop, IsMultiplayerNet
 #include "map.h"           // WorldClimateSkipTerrainClear
 #include "planwin.h"       // PlanWin::on_redraw, MapWinTable
@@ -44,11 +44,11 @@ void __cdecl blink_timer(int a1) {
     if (TimerHoldFlag != 0) return;
 
     if (TutWinBaseWindow.is_visible() != 0) {
-        TutWinGlobal->draw_arrow();
+        TutorialWindow.draw_arrow();
         return;
     }
     if (TutWinSocWindow.is_visible() != 0) {
-        TutWinGlobal->draw_arrow();
+        TutorialWindow.draw_arrow();
         return;
     }
 

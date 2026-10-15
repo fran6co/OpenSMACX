@@ -71,8 +71,8 @@ struct Base {
     int faction_id_current, minerals_accumulated, queue_production_id[2];
     int queue_size; uint32_t state; char name_string[25];
 };
-struct RulesFacility { const char *name; int effect, pad, cost; };
-struct RulesTechnology { uint32_t flags; const char *name; char id[8]; int pad;
+struct RulesFacility { char *name; int effect, pad, cost; };
+struct RulesTechnology { uint32_t flags; char *name; char id[8]; int pad;
     int growth, tech, wealth, power, preq_tech_1, preq_tech_2; };
 struct Player {
     int is_leader_female;
@@ -87,6 +87,7 @@ struct NetMsg { void pop(const char *, int, int, const char *); };
 struct FX { void play(int); void fade(int); };
 struct InfoWin { void on_redraw(); };
 struct TutWin { int tut_map(const char *, int, int, int, int, int, int, int); };
+struct Label { char **strings_ptr; };
 char StringTemp[1032];
 
 Map MapTiles[5000];
@@ -116,8 +117,8 @@ MapWin *MapWinTable[8] = { &MainMapWin };
 NetMsg NetMsgPrimary;
 FX g_FX;
 InfoWin ConsoleInfoWin;
-TutWin TutWinObject;
-TutWin *TutWinGlobal = &TutWinObject;
+TutWin TutorialWindow;
+Label Labels;
 enum { TECH_FOSSIL = 38, TECH_BRAIN = 48, TECH_ORBITAL = 77 };
 
 
@@ -297,7 +298,7 @@ void alt_set_both(int x, int y, int) {
 }
 int wave_it(int) { return 0; }
 int ambience(int) { return 0; }
-int parse_say(int, int, int, int) { return 0; }
+int parse_say(int, char *, int, int) { return 0; }
 void clear() { StringTemp[0] = 0; }
 void says(const char *text) { strcat(StringTemp, text); }
 int parse_says(int selector, char *, int, int) {

@@ -85,7 +85,7 @@
 #include "netdaemon.h"  // synch_veh - the turn handlers resync vehicles
 
 #include "netmsg.h"  // NetMsgPrimary - the editor's ALREADYDONE/PROTECT* pops
-#include "tutwin.h"  // TutWinGlobal - survey2 raises the map tutorial on it
+#include "tutwin.h"  // TutorialWindow - survey2 raises the map tutorial on it
 #include "technology.h"  // has_tech - editor_tech and the tech orders gate on it
 #include "random.h"  // random - the editor's randomizer and the AI orders
 #include "alpha.h"  // AlphaIniPrefs - the toggles mirror the prefs into it
@@ -811,7 +811,7 @@ void Console::corner_the_market() { // 0x004E2000
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00511800; retained seed src/recovered/units/00511800.cpp", "Existing TutWin guard at8CC210 is member+53A8; stage8CC228 is+53C0. Typed global Console history, PlayerData prototype/base/population fields and diplomacy arrays replace seed address arithmetic. Caption pointer691B14 targets TUTOR691B8C.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
 void Console::turn_hints() { // 0x00511800
     if ((GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_TUTORIAL_MSGS) == 0 ||
-        IsMultiplayerNet != 0 || TutWinGlobal->tutorial_blocked()) {
+        IsMultiplayerNet != 0 || TutorialWindow.tutorial_blocked()) {
         return;
     }
 
@@ -829,8 +829,8 @@ void Console::turn_hints() { // 0x00511800
                 parse_says(1,
                            VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name,
                            -1, -1);
-                TutWinGlobal->set_tour_stage(0);
-                TutWinGlobal->tut_map("LANDFALL", history_x, history_y, -1,
+                TutorialWindow.set_tour_stage(0);
+                TutorialWindow.tut_map("LANDFALL", history_x, history_y, -1,
                                       nullptr, 0x100, -1, -1);
             }
         }
@@ -848,7 +848,7 @@ void Console::turn_hints() { // 0x00511800
             const int y = Bases[base_id].y;
             focus(x, y, faction_id);
             parse_says(0, Bases[base_id].name_string, -1, -1);
-            TutWinGlobal->tut_map("SECONDBASE", x, y, -2 - base_id,
+            TutorialWindow.tut_map("SECONDBASE", x, y, -2 - base_id,
                                   nullptr, 0, -1, -1);
             faction.last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
             second_base_tutorial_shown = true;
@@ -864,7 +864,7 @@ void Console::turn_hints() { // 0x00511800
                 if (base_id >= 0) {
                     const int x = Bases[base_id].x;
                     const int y = Bases[base_id].y;
-                    TutWinGlobal->tut_map("BUILDMORE", x, y, -2 - base_id,
+                    TutorialWindow.tut_map("BUILDMORE", x, y, -2 - base_id,
                                           nullptr, 0, -1, -1);
                     faction.last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
                 }
@@ -10708,7 +10708,7 @@ void Console::on_nc_left_up(int x, int y) {
 void Console::end_my_turn() {
     TutWinBaseWindow.cancel_zoom_wait();
     ConsoleInfoWin.clear_pending_timer();
-    TutWinGlobal->reset();
+    TutorialWindow.reset();
     ConsoleStatusWin.reset();
     g_FX.play(0xF);
 
@@ -10803,7 +10803,7 @@ void Console::menu_proc(int command) {
     }
     if (ExitTurnLoop != 0) return;
 
-    TutWinGlobal->reset();
+    TutorialWindow.reset();
     go_reset();
     field_23D10_ = 0;
 
@@ -11041,12 +11041,12 @@ void Console::menu_proc(int command) {
             case 0x70C: help_topic(0xB, 0); break;
             case 0x70D: help_topic(0xC, 0); break;
             case 0x70E: help_topic(0xF, 0); break;
-            case 0x720: TutWinGlobal->set_tour_stage(0); TutWinGlobal->tour(); break;
-            case 0x721: TutWinGlobal->set_tour_stage(3); TutWinGlobal->tour(); break;
-            case 0x722: TutWinGlobal->set_tour_stage(1); TutWinGlobal->tour(); break;
-            case 0x723: TutWinGlobal->set_tour_stage(5); TutWinGlobal->tour(); break;
-            case 0x724: TutWinGlobal->set_tour_stage(7); TutWinGlobal->tour(); break;
-            case 0x725: TutWinGlobal->set_tour_stage(6); TutWinGlobal->tour(); break;
+            case 0x720: TutorialWindow.set_tour_stage(0); TutorialWindow.tour(); break;
+            case 0x721: TutorialWindow.set_tour_stage(3); TutorialWindow.tour(); break;
+            case 0x722: TutorialWindow.set_tour_stage(1); TutorialWindow.tour(); break;
+            case 0x723: TutorialWindow.set_tour_stage(5); TutorialWindow.tour(); break;
+            case 0x724: TutorialWindow.set_tour_stage(7); TutorialWindow.tour(); break;
+            case 0x725: TutorialWindow.set_tour_stage(6); TutorialWindow.tour(); break;
             case 0x750: show_credits(); break;
             case 0x751:
                 parse_says(0, ConsoleVersionRelease, -1, -1);

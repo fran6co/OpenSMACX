@@ -38,8 +38,7 @@ int MapLongitudeBounds=16;
 uint32_t MapLongitude=8; // true half-width tile-row stride
 int MapIsFlat=0;
 struct ConsoleType {int survey_mode_,cursor_history_index_,cursor_history_y_[4],cursor_history_x_[4];} ConsoleGlobal;
-struct TutWinType {int calls;void draw_arrow(){++calls;}} tut_window;
-TutWinType *TutWinGlobal=&tut_window;
+struct TutWinType {int calls;void draw_arrow(){++calls;}} TutorialWindow;
 ACTUAL_BODY
 int main(){
     CHECK(MapLongitudeBounds==16 && MapLongitude==8);
@@ -54,19 +53,19 @@ int main(){
     ConsoleGlobal.cursor_history_x_[0]=1;
     draw_cursor();
     CHECK(first.calls==1 && first.last_x==1 && first.last_y==2);
-    CHECK(first.last_c==0 && first.last_d==2 && tut_window.calls==1);
+    CHECK(first.last_c==0 && first.last_d==2 && TutorialWindow.calls==1);
 
     // A negative viewport range makes the opposite subtract branch observable:
     // [−4,0), tile 15 wraps to −1 with the full width, not −7 with stride 8.
     first.calls=0; first.field_1DDA4_=-4; first.field_1DDD4_=0; first.field_1DDCC_=4;
     ConsoleGlobal.cursor_history_x_[0]=15;
     draw_cursor();
-    CHECK(first.calls==1 && tut_window.calls==2);
+    CHECK(first.calls==1 && TutorialWindow.calls==2);
 
     // Flat maps do not wrap, and arrow dispatch remains unconditional.
     first.calls=0; MapIsFlat=1; ConsoleGlobal.cursor_history_x_[0]=1;
     draw_cursor();
-    CHECK(first.calls==0 && tut_window.calls==3);
+    CHECK(first.calls==0 && TutorialWindow.calls==3);
     return 0;
 }
 '''

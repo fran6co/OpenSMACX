@@ -13142,7 +13142,7 @@ dispatch_event:
                 if (local) {
                     NetMsgPrimary.pop("GOODYQUAKE", -5000, 0, "quake_sm.pcx");
                     if (tut_check(0x800))
-                        TutWinGlobal->tut_map("TERRAFORM", x, y, -1,
+                        TutorialWindow.tut_map("TERRAFORM", x, y, -1,
                                               0, 0, -1, -1);
                 }
                 return 0;
