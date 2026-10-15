@@ -1,0 +1,24 @@
+{
+  "event_id": "a3b59c72c1af187caea94cd43c466f8e0dc28572f1c7e6d472adc46e1716d618",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Full pinned audit identifies eight omitted writes at4B4F47,4B4F83,4B574D,4B5B04,4B5BD8,4B5DDE,4B5EBD,4B6314. Restore their original argument values and branch placements, reloading after stateful drawing calls.4F47 usesTextColourTable12/13;5B04 uses existingMessageWinTextColor/MessageWinTextBackground owner declarations; remaining six use14/15. Include owner header rather than duplicate globals.",
+      "Current eleven explicit color calls plus eight omissions and one merged pair account for twenty original calls. Investigate that conditional pair against original ordering; preserve original behavior, not normalized final-color-only equivalence. Native original operands and actual-source mutation/state controls required. Existing restore_clip correctly targets Buffer rect2 and stays unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4934896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "authorize-full-active-color-flow",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:statuswin-active-drawing-state-oct15"
+}
