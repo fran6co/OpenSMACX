@@ -312,7 +312,7 @@ Status: Complete
 */
 void Dialogs::on_right_down(int a, int b) {
     if (kind_ == 8) {
-        sprite_box_view().SpriteBox::on_right_down(a, b);
+        SpriteBox::on_right_down(a, b);
     }
 }
 
@@ -335,7 +335,7 @@ Status: Complete
 */
 void Dialogs::on_right_double_click(int a, int b) {
     if (kind_ == 8) {
-        sprite_box_view().SpriteBox::on_right_double_click(a, b);
+        SpriteBox::on_right_double_click(a, b);
     }
 }
 
@@ -367,7 +367,7 @@ void Dialogs::on_left_up(int a, int b) {
         return;
     }
     if (kind_ == 8) {
-        sprite_box_view().SpriteBox::on_left_up(a, b);
+        SpriteBox::on_left_up(a, b);
     }
 }
 
@@ -390,7 +390,7 @@ Status: Complete
 */
 void Dialogs::on_right_up(int a, int b) {
     if (kind_ == 8) {
-        sprite_box_view().SpriteBox::on_right_up(a, b);
+        SpriteBox::on_right_up(a, b);
     }
 }
 
@@ -413,7 +413,7 @@ Status: Complete
 */
 void Dialogs::on_right_click(int a, int b) {
     if (kind_ == 8) {
-        sprite_box_view().SpriteBox::on_right_click(a, b);
+        SpriteBox::on_right_click(a, b);
     }
 }
 

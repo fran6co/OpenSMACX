@@ -1,0 +1,19 @@
+{
+  "event_id": "acfa229d2f0bffa010b4697775a864f7190dabe8766e46088013607b3afdfdf3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_key_event_hierarchy.py"
+    ],
+    "evidence": [
+      "Existing left-up shared-base host controls enforce intermediate helper spelling; permit adapting spelling and retaining all kind/receiver/argument/mutant assertions for direct qualified base calls. No C++ scope expansion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "left-up-actual-source-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:dialogs-direct-base-dispatch-oct15"
+}

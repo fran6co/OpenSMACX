@@ -22,7 +22,7 @@ def source_bodies():
         end = source.index("\n}\n", start) + 3
         body = source[start:end]
         assert "if (kind_ == 8)" in body
-        assert "sprite_box_view().SpriteBox::" + name in body
+        assert "SpriteBox::" + name in body
         assert "reinterpret_cast" not in body
         assert "memcpy" not in body
         bodies.append(body)

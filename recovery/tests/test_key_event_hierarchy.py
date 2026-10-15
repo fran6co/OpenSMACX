@@ -143,7 +143,7 @@ def test_dialogs_mouse_overrides_dispatch_through_shared_virtual_bases(tmp_path)
     assert "check_box_view().CheckBox::on_mouse_move" in move_body
     assert "sprite_box_view().SpriteBox::on_mouse_move" in move_body
     assert "kind_ == 4" in up_body and "kind_ == 8" in up_body
-    assert "sprite_box_view().SpriteBox::on_left_up" in up_body
+    assert "SpriteBox::on_left_up" in up_body
 
     fixture = r'''
 #include <cassert>
@@ -153,8 +153,12 @@ struct GraphicWin {
   virtual void on_left_up(int, int) {}
 };
 struct Dialog { virtual ~Dialog() {} };
-struct Call { int count, x, y; Call() : count(0), x(0), y(0) {}
-  void set(int a, int b) { ++count; x=a; y=b; } };
+struct Call { int count, x, y; const void *receiver;
+  Call() : count(0), x(0), y(0), receiver(0) {}
+  void set(int a, int b, const void *r=0) {
+    ++count; x=a; y=b; receiver=r;
+  }
+};
 struct ListBox : virtual GraphicWin, virtual Dialog {
   Call moved; void on_mouse_move(int x,int y) { moved.set(x,y); }
 };
@@ -167,7 +171,7 @@ struct CheckBox : virtual GraphicWin, virtual Dialog {
 struct SpriteBox : virtual GraphicWin, virtual Dialog {
   Call moved, left_up;
   void on_mouse_move(int x,int y) { moved.set(x,y); }
-  void on_left_up(int x,int y) { left_up.set(x,y); }
+  void on_left_up(int x,int y) { left_up.set(x,y,this); }
 };
 struct EditGroup : virtual GraphicWin, virtual Dialog {};
 class Dialogs : public ListBox, public RadioButton, public CheckBox,
@@ -215,7 +219,8 @@ int main() {
   assert(d.SpriteBox::left_up.count==0);
   d.kind_=8; shared->on_left_up(-31,212);
   assert(d.SpriteBox::left_up.count==1 && d.SpriteBox::left_up.x==-31 &&
-         d.SpriteBox::left_up.y==212);
+         d.SpriteBox::left_up.y==212 &&
+         d.SpriteBox::left_up.receiver==static_cast<SpriteBox *>(&d));
   d.kind_=2; shared->on_left_up(4,5);
   assert(d.SpriteBox::left_up.count==1);
 }
