@@ -1,0 +1,31 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d04af8517afa5694283f49c7e709090404bebf2a",
+  "editable_files": [
+    "src/datalink.cpp",
+    "src/datalink.h",
+    "src/newtechwin.cpp",
+    "recovery/tests/test_datalink_scalar_category_oct15.py"
+  ],
+  "evidence": [
+    "Pinned 0x42A040 writes a signed quotient dword at 0x42A057..5B and remainder at 0x42A068..70; it does not access an aggregate.",
+    "Pinned NewTechWin::exec 0x483F90 constructs separate scalar output addresses at 0x4847B7 and consumes their values as Datalink::exec topic/index at 0x4847C9.",
+    "The original-name catalogue is reconstructed and does not establish an authentic DatalinkID structure. Preserve signed division, remainder bit arithmetic, output write order, unchecked pointers and historical claims; use a scalar uint32_t category output consistent with its caller and exec API."
+  ],
+  "intent": "Recover the scalar category output shared by Datalink::parse_id and NewTechWin::exec without inventing an opaque DatalinkID object",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4366400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4734864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "datalink-scalar-category-oct15"
+}
