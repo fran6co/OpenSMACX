@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fbb5c77c64c5ba6ab802230ec0979b7cf56c98b8",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/tests/test_faction_human_byte_gates_oct15.py"
+  ],
+  "evidence": [
+    "Pinned original 0x50C36E tests byte [0x9A64E8], AL; 0x50C46E reloads that byte after tech_achieved and 0x50C47F tests DL, AL; 0x53E4F5 tests byte [0x9A64E8], AL after commlink_attempter.",
+    "src/game_data_state_window.h already declares human_mask_ as byte zero and alive_mask_ as byte one of GameDataLockMaskView. The current dword enable_mask_ operands incorrectly admit adjacent mask bits. Preserve all original identities, historical claims, unchecked shifts and dependent call ordering."
+  ],
+  "intent": "Recover original low-byte human-mask tests in technology acquisition and withdrawal demands, preserving callback reloads and original behavior",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5292864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5498048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "faction-human-byte-gates-oct15"
+}
