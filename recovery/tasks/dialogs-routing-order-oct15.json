@@ -1,0 +1,77 @@
+{
+  "author": "coordinator",
+  "base_revision": "9f8256c84e834675e12bc161ebc0f734f3d68db0",
+  "editable_files": [
+    "src/dialogs.cpp",
+    "recovery/tests/test_dialogs_sparse_dispatch_oct15.py",
+    "recovery/tests/test_dialogs_remaining_typed_dispatch_oct9.py",
+    "recovery/tests/test_dialogs_routing_order_oct15.py"
+  ],
+  "evidence": [
+    "Current direct-base family integrated and destination verified at 9f8256c84: 45 exact Dialogs rows, full build/link, tests, claims and references pass.",
+    "Independent physical review proves apparent 24-byte adjustment mismatch compares reordered CheckBox and RadioButton switch blocks. Original and compiled RadioButton path both receive complete+5C, callee subtracts18 to base+44. Constructor proves existing base layout; do not shift bases or alter signatures/virtual slots.",
+    "Original six init overloads initially reach shared Dialog through RadioButton vbtable at complete+44; compiled code uses primary ListBox vbtable. Both identify same virtual base. Test explicit typed base qualification as source-form hypothesis, not a proven layout defect.",
+    "Immutable body-only native variant screens with unchanged and damaged controls precede implementation. Preserve source markers/claims, original gates/arguments/returns/call order and unsafe paths; no bug fixes. Review full TU, native build/link and collateral before manual integration. No full-game acceptance claim."
+  ],
+  "intent": "Test original switch routing order and typed shared-virtual-base lookup paths; preserve actual class structure and behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6368288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6367968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "dialogs-routing-order-oct15"
+}
