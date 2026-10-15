@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "soundx_device_abi.h"
 
  /*
   * Sound device classes
@@ -139,6 +140,13 @@ static_assert(sizeof(Wave_In_Device) == 0x20,
 // evidence live beside their definitions; complete original extents are unknown.
 extern Midi_Device g_MIDI_DEVICE;
 extern Wave_In_Device g_WAVE_IN_DEVICE;
+
+inline SoundDeviceBase::~SoundDeviceBase() {
+    void *const device = device_14_;
+    if (device) {
+        SoundXDeviceAbi::release_device(device);
+    }
+}
 
 // SoundX ordinals 7..10 provide opaque MIDI and Wave-In provider callbacks;
 // their callable contracts are centralized beside the shared table in sound.h.

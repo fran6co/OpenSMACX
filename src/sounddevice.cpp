@@ -527,14 +527,6 @@ SoundDeviceBase::SoundDeviceBase() {
     volume_8_ = 0x7F;
 }
 
-SoundDeviceBase::~SoundDeviceBase() {
-    void *const device = device_14_;
-    if (device) {
-        SoundXDeviceAbi::release_device(device);
-    }
-}
-
-
 /*
 Purpose: Enable the wrapped device, if there is one, through vtable slot 0x54.
 // ORIGINAL: 0x004C5900 ?enable@Midi_Device@@QAEXXZ 0x004C5900-0x004C590F BYTE_EXACT

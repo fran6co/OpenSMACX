@@ -211,10 +211,11 @@ def test_actual_shared_fields_and_lifecycle_order_are_consistent():
                 f"{owner} duplicates shared {field_name}"
             )
 
+    sound_header = (ROOT / "src/sounddevice.h").read_text()
     sound_cpp = (ROOT / "src/sounddevice.cpp").read_text()
     wave_cpp = (ROOT / "src/wave_device.cpp").read_text()
     base_ctor = extract_braced(sound_cpp, sound_cpp.index("SoundDeviceBase::SoundDeviceBase()"))
-    base_dtor = extract_braced(sound_cpp, sound_cpp.index("SoundDeviceBase::~SoundDeviceBase()"))
+    base_dtor = extract_braced(sound_header, sound_header.index("inline SoundDeviceBase::~SoundDeviceBase()"))
     wave_ctor = extract_braced(wave_cpp, wave_cpp.index("Wave_Device::Wave_Device()"))
     wave_dtor = extract_braced(wave_cpp, wave_cpp.index("Wave_Device::~Wave_Device()"))
     for statement in (

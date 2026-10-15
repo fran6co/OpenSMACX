@@ -58,9 +58,10 @@ def body(source: str, signature: str) -> str:
 
 def production_bodies():
     sound = (ROOT / "src/sounddevice.cpp").read_text()
+    sound_header = (ROOT / "src/sounddevice.h").read_text()
     wave = (ROOT / "src/wave_device.cpp").read_text()
     return {
-        "base": body(sound, "SoundDeviceBase::~SoundDeviceBase()"),
+        "base": body(sound_header, "inline SoundDeviceBase::~SoundDeviceBase()"),
         "midi": body(sound, "int Midi_Device::release()"),
         "wave_in": body(sound, "int Wave_In_Device::release()"),
         "wave_in_delete": body(sound, "int Wave_In_Device::delete_device()"),
