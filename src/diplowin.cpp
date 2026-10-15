@@ -1967,9 +1967,7 @@ extern "C" void __cdecl sub_441040(int a1, int a2) {
                 f1 = node->id;
                 f2 = node->string_payload()->text;
             }
-            int idx = (a2 + a1 * 8) * 0x30;
-            StringList *entry = reinterpret_cast<StringList *>(
-                reinterpret_cast<char *>(&DiplomacyTranscriptLists[0][0]) + idx);
+            StringList *entry = &DiplomacyTranscriptLists[a1][a2];
             entry->pending_text_ = f2;
             entry->field_20_ = 0;
             entry->field_24_ = 0;
