@@ -1,0 +1,58 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6525cd68f9892ce01c2987e9d7165625649666e4",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_vehicle_mask_members_oct15.py"
+  ],
+  "evidence": [
+    "Pinned human-byte reads/tests at 0x57E264(name_proto),0x4CCED9(action_airdrop),0x5B92A4(stack_veh),0x50638D(promote),0x4CB4C3(action_go_to),0x4CDD76(shoot_it),0x4CF251(action_give) correspond to each sole source mask read.",
+    "Pinned goody_box at0x57CAC7 clears EDX,0x57CAD0 loads alive byte9A64E9 intoDL,and0x57CADB savesEDX. Recover live_players with existing alive member; leave adjacent human_players dword expression untouched pending provenance. Preserve existing shifts,callbackreloads,control and historicclaims."
+  ],
+  "intent": "Recover evidenced human/alive byte members in eight vehicle gameplay functions without changing independent wide operations",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5759040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5030752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6000352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5268144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5026576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5744224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5041632,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5036784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vehicle-mask-members-oct15"
+}
