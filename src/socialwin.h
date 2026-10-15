@@ -419,10 +419,12 @@ class SocialWin : public GraphicWin, public SubInterface {
   RECT tutRects1_[9];  // 0x1EFD0, 9 RECTs
   RECT tutRect1_;  // 0x1F060
   RECT tutRects2_[10];  // 0x1F070, 10 RECTs
-  // RECOVERY_MEMBER: v2 SocialWin tooltipSocEng_ tagRECT 0x1F110 0x004B1BC0
-  RECT tooltipSocEng_;
-  RECT tutRect4_;  // 0x1F120
-  RECT tutRects3_[18];  // 0x1F130, 18 RECTs
+  // The original advances four category headers by RECT stride, then indexes
+  // sixteen model cells from the following object boundary.
+  // RECOVERY_MEMBER: v4 SocialWin categoryHeaders_ tagRECT[4] 0x1F110 0x40 0x004B1BC0
+  RECT categoryHeaders_[4];
+  // RECOVERY_MEMBER: v4 SocialWin modelRects_ tagRECT[16] 0x1F150 0x100 0x004AF310
+  RECT modelRects_[16];
   // Interface receiver is this+A14; right-click tests these real rectangles
   // at receiver+1E84C/1E85C/1E86C/1E83C, in economy/labs/psych/effects order.
   // RECOVERY_MEMBER: v2 SocialWin tooltipEffects_ tagRECT 0x1F250 0x004B2220

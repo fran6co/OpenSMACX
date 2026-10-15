@@ -1,0 +1,27 @@
+{
+  "event_id": "b0961b0b5edba56e88f3289253f5358005048ed653264eb000b2282f9209c9f1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_socialwin_effect_walk_oct15.py"
+    ],
+    "evidence": [
+      "Pinned count-loop backedge4AF607/4AF60F and draw-loop4AF872/4AF87D compare against94B2F8, eleven dwords after94B2CC;94B2D8 skips index3, not loop termination.",
+      "Current source and storage fixture incorrectly stop both loops at row+3. Pinned4AF7F3..4AF825 uses >=94B2D8 for later-index sprite remapping; current >row+10 contradicts it. Preserve all original sign/owner/call effects; no original bug fixes.",
+      "Coordinator and independent reviewer confirmed instructions; complete effect-path audit and actual-source controls are required before integration. Keep rectangle recovery and expand affected owner work rather than ignoring discovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4911888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "04e0d8dd1e53c6812af8ccec86a64bd8eb327e8647ae8dd4bc902b8434949712",
+  "request_id": "social-effects-eleven-entry-scope-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:socialwin-category-rectangles-oct15"
+}

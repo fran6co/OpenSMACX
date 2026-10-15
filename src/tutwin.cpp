@@ -1183,7 +1183,7 @@ void TutWin::tour5() {
     }
 
 
-    temporary = (TutWinSocWindow.tutRect4_);
+    temporary = (TutWinSocWindow.categoryHeaders_[1]);
     soc_rect(&temporary, &x, &y);
     if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
     "SOCTOURMAIN", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;

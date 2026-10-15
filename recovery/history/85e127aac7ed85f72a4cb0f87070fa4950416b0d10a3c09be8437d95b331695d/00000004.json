@@ -1,0 +1,21 @@
+{
+  "event_id": "d90d9f52c8221f3eb0acb0754eff27ef95a0c62b86cc9150115cfea00748e736",
+  "payload": {
+    "affects": [
+      "entity-3514cdee4082977bd7a6588c8079da0e12fe5cce80fac140d7d4771df7747a54"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "social-effects-live-faction-discovery-oct15",
+    "evidence": [
+      "Pinned4AF437 reads this+CF4 for each society_avail call;4AF531/593 and rendering counterparts read it for each project-owner comparison.",
+      "Coordinator authorizes live-member reads in already-expanded draw_social scope; test mutation at real Sprite::draw boundary, not an invented getter callback. This restores original load timing without asserting actual gameplay reentrancy."
+    ],
+    "hypothesis": "draw_social caches faction at entry whereas original reloads it for each availability and project-owner comparison",
+    "kind": "discovery"
+  },
+  "previous_event": "7d78a14a605027a12436cad7df09e44c8ba6e0af43a6b7d513c7db79e7918111",
+  "request_id": "social-effects-live-faction-discovery-oct15",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:socialwin-category-rectangles-oct15"
+}
