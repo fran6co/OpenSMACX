@@ -149,7 +149,6 @@ struct Time {int id;Time():id(++next_time){}void close();
     ~Time(){if(observing)destroyed_times.push_back(id);event('d');}};
 DECLARATIONS
 OWNERS
-uint32_t *const BaseButtonDefaultTextColors=DialogDefaults+5;
 void __cdecl close_callback_probe(int) {}
 Sprite flat_default_sprites[81];
 Sprite push_default_sprites[36], push_seed_sprites[18];
@@ -370,7 +369,7 @@ DAMAGE = [
     ('base_init', 'return status;', 'return 0;'),
     ('base_init', 'style_flag ? 0x8000 : 0', 'style_flag & 0x8000'),
     ('base_init', 'field_A78_ = static_cast<uint32_t>(id);', 'field_A78_ = 0;'),
-    ('base_init', 'colors[3]', 'colors[1]'),
+    ('base_init', 'DialogDefaults[8]', 'DialogDefaults[6]'),
     ('base_init', 'BaseButtonDefaultFonts[2], nullptr', 'BaseButtonDefaultFonts[1], nullptr'),
     ('base_init', '    show(0);', '    Win::show(0);'),
     ('basebutton_close', 'GraphicWin::close();', ''),

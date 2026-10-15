@@ -1,0 +1,21 @@
+{
+  "event_id": "659bf56b86848d8919d643189a3efcf6b7ee866a3103365e0fb891ce114f6c5e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_basebutton_callable_slots_oct9.py",
+      "recovery/tests/test_button_close_dispatch.py"
+    ],
+    "evidence": [
+      "Color alias removal requires mutation control to target equivalent DialogDefaults[8] rather than removed colors[3]. Preserve wrong-slot rejection.",
+      "Coordinator independently reproduced five pre-existing callable-slots fixture failures on master: missing legacy_sound_31 on mock Win. Permit fixture API alignment to current source-owned sound access, preserving and rerunning behavior and negative controls; no production sound changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "update-color-mutation-and-stale-sound-fixture-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:basebutton-color-alias-oct15"
+}
