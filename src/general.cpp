@@ -3585,7 +3585,7 @@ static int media_adpcm_delta(int step_byte_offset, unsigned int nibble) {
 
 
 // ORIGINAL: 0x005CE640 sub_5ce640 0x005CE640-0x005CE6E3 FILE
-// symbol    ?sub_5ce640@@YAXHHHHPAH0@Z
+// symbol    ?sub_5ce640@@YAXHPAEPAFHPAH2@Z
 // size      163 bytes
 // prototype
 // callers   0   call targets   0
@@ -3609,7 +3609,7 @@ static int media_adpcm_delta(int step_byte_offset, unsigned int nibble) {
 // TRIED: byte-exactness is out of reach here - the image's fourth instruction
 // is `pushal` (0x60), which VC6 never emits for any C++ body; this is a
 // handwritten_asm finding, so the ceiling is semantic equivalence.
-void __cdecl sub_5ce640(int first_sample, int codes, int samples,
+void __cdecl sub_5ce640(int first_sample, unsigned char *codes, short *samples,
                         int sample_total, int *predictor, int *step_index) {
     int count;
     unsigned char *src;
@@ -3623,8 +3623,8 @@ void __cdecl sub_5ce640(int first_sample, int codes, int samples,
     sample_total += first_sample;
     step = *step_index;
     predicted = (short)*predictor;
-    src = (unsigned char *)codes;
-    dst = (short *)samples;
+    src = codes;
+    dst = samples;
 
     do {
         nibble = *src;
