@@ -51,7 +51,7 @@ class NetMsg : public Popup {
   // real NetMsg and the call a real member call.
   void pop(const char *label, int duration, int channel,
            const char *target);
-  void pop(const char *label, const char *target);
+  static void __cdecl pop(const char *label, const char *target);
 
  private:
   static void __cdecl timer_daemon(int token);
