@@ -661,21 +661,21 @@ void Menu::set_menu_proc(MenuProc proc) {
 // down its GraphicWin base. Menu::~Menu has the same entry ownership pattern;
 // keep this operation limited to the exact Menu fields the seed resets.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005FAE70 ?UNK1@Menu@@QAEXXZ 0x005FAE70-0x005FAED8
+// ORIGINAL: 0x005FAE70 ?UNK1@Menu@@QAEXXZ 0x005FAE70-0x005FAED8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fae70.cpp", "source:src/menu.h", "source:src/menu.cpp"], "reason": "Clear Menu-owned entry text, IDs, flags, mnemonics and PullDowns, then reset only the Menu scalar state that the retained seed clears; keep the GraphicWin base alive."}
 void Menu::UNK1() {
     for (int i = 0; i < 15; ++i) {
         if (entries_[i].text != nullptr) {
             free(entries_[i].text);
+            entries_[i].text = nullptr;
         }
-        entries_[i].text = nullptr;
         entries_[i].id = -1;
         entries_[i].flags = 0;
         entries_[i].mnemonic = nullptr;
         if (entries_[i].pull_down != nullptr) {
             delete entries_[i].pull_down;
+            entries_[i].pull_down = nullptr;
         }
-        entries_[i].pull_down = nullptr;
     }
     proc_ = nullptr;
     count_ = 0;
