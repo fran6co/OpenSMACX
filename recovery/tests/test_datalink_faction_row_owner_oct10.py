@@ -292,34 +292,38 @@ def test_actual_set_cat_faction_and_mutants(tmp_path, compiler_name):
     header = FACTION_HEADER.read_text()
     body = extract_body(source, r"void\s+Datalink::set_cat_faction\s*\(\s*\)")
     ordered_accesses = (
-        "const int gender = player.noun_gender;",
-        "const BOOL plural = player.is_noun_plural;",
+        "const int gender = player->noun_gender;",
+        "const BOOL plural = player->is_noun_plural;",
         "StringTemp[0] = '\\0';",
         "GenderDefault = gender;",
         "PluralityDefault = plural;",
     )
     positions = [body.index(fragment) for fragment in ordered_accesses]
     assert positions == sorted(positions), "pinned grammar load/clear/publish order changed"
-    assert "index < 7" in body, "pinned faction loop must emit exactly seven rows"
+    assert "int faction_id = 150001;" in body
+    assert "const Player *player = &Players[1];" in body
+    assert "faction_id - 150000 < 8; ++player, ++faction_id" in body, (
+        "pinned ID/record cursors must visit Players[1..7] exactly once")
     player_decl = actual_player_declaration(header)
     compile_and_run(tmp_path, compiler, body, player_decl, True, "actual")
 
     mutants = {
         "wrong_stride": replace_once(
-            body, "Players[index + 1]", "Players[index + 1 + index]"),
+            body, "++player, ++faction_id", "player += 2, ++faction_id"),
         "wrong_member": replace_once(
-            body, "player.formal_name_faction", "player.adj_name_faction"),
+            body, "player->formal_name_faction", "player->adj_name_faction"),
         "publish_order": replace_once(
             body,
             "GenderDefault = gender;\n        PluralityDefault = plural;",
             "PluralityDefault = plural;\n        GenderDefault = gender;"),
-        "extra_eighth_row": replace_once(body, "index < 7", "index < 8"),
+        "extra_eighth_row": replace_once(
+            body, "faction_id - 150000 < 8", "faction_id - 150000 < 9"),
         "publish_before_clear": replace_once(
             body, "StringTemp[0] = '\\0';\n        GenderDefault = gender;",
             "GenderDefault = gender;\n        StringTemp[0] = '\\0';"),
         "wrong_id": replace_once(
-            body, "listBox_.item(StringTemp, index + 150001)",
-            "listBox_.item(StringTemp, index + 150000)"),
+            body, "listBox_.item(StringTemp, faction_id)",
+            "listBox_.item(StringTemp, faction_id - 1)"),
     }
     for name, mutant in mutants.items():
         compile_and_run(tmp_path, compiler, mutant, player_decl, False, name)

@@ -127,18 +127,18 @@ int main() {
   GameDataStateStorage.fields_.game_state_=0;
   dl.set_cat_project();
   assert(dl.listBox_.ids.size()==3);
-  assert(dl.listBox_.ids[0]==68534 && dl.listBox_.texts[0]=="Alpha");
-  assert(dl.listBox_.ids[1]==68536 && dl.listBox_.texts[1]=="Beta");
-  assert(dl.listBox_.ids[2]==68597 && dl.listBox_.texts[2]=="Last");
+  assert(dl.listBox_.ids[0]==110070 && dl.listBox_.texts[0]=="Alpha");
+  assert(dl.listBox_.ids[1]==110072 && dl.listBox_.texts[1]=="Beta");
+  assert(dl.listBox_.ids[2]==110133 && dl.listBox_.texts[2]=="Last");
 
   Datalink with_ids = {};
   Language=1;
   GameDataStateStorage.fields_.game_state_=0x1000;
   with_ids.set_cat_project();
   assert(with_ids.listBox_.ids.size()==3);
-  assert(with_ids.listBox_.texts[0]=="The Alpha|68534");
-  assert(with_ids.listBox_.texts[1]=="Beta|68536");
-  assert(with_ids.listBox_.texts[2]=="Last|68597");
+  assert(with_ids.listBox_.texts[0]=="The Alpha|110070");
+  assert(with_ids.listBox_.texts[1]=="Beta|110072");
+  assert(with_ids.listBox_.texts[2]=="Last|110133");
   return 0;
 }
 '''
@@ -172,7 +172,10 @@ def test_facility_suffix_identity_and_actual_consumers():
     assert cat_code.count("record->name") == 1
     assert "&Facility[FacilitySPStart]" in cat_code
     assert "++record" in cat_code or "record++" in cat_code
-    assert "index < 0x40" in cat_code
+    assert "110000 + FacilitySPStart" in cat_code
+    assert "project_id - first_project_id < 0x40" in cat_code
+    assert "index < 0x40" not in cat_code
+    assert "68534" not in cat_code
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
@@ -200,7 +203,8 @@ def test_actual_formatter_and_datalink_bodies(compiler_name: str, tmp_path: Path
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 @pytest.mark.parametrize("damage", ("formatter_start", "datalink_start",
-                                     "datalink_stride", "datalink_preq"))
+                                     "datalink_stride", "datalink_preq",
+                                     "project_id_base"))
 def test_host_fixture_rejects_wrong_owner_mapping(
     compiler_name: str, damage: str, tmp_path: Path
 ):
@@ -224,8 +228,12 @@ def test_host_fixture_rejects_wrong_owner_mapping(
         cat = cat.replace(old, "&Facility[FacilitySPStart + 1]", 1)
         assert old not in cat
     elif damage == "datalink_stride":
-        old = "++record;"
-        cat = cat.replace(old, "/* lost row advance */", 1)
+        old = "++record, ++project_id"
+        cat = cat.replace(old, "++project_id", 1)
+        assert old not in cat
+    elif damage == "project_id_base":
+        old = "110000 + FacilitySPStart"
+        cat = cat.replace(old, "68534", 1)
         assert old not in cat
     else:
         old = "record->preq_tech >= -1"
