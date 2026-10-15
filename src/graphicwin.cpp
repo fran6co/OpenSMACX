@@ -134,7 +134,7 @@ Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
          owned interface when present.
 // ORIGINAL: 0x005D4E40 ?close@GraphicWin@@QAEXXZ 0x005D4E40-0x005D4EE6 SEMANTIC
 // TRIED: image calls both 0x5EB640 (Win::close) and 0x5D7470 (Buffer::close) directly with no null check - the null-checked `if (WinOriginalClose) (ORIGINAL(this)->*WinOriginalClose)();` form at the call site compiled an extra load/compare/branch/ indirect-call the image never has (0/37 agreeing, diverging at instruction 0). Moving the null check into `win_close_original` (a real function, so the call site is a direct E8) and calling the already-recovered `buffer_.close()` in place of the second seam fixed both calls at once.
-// symbol    ?close@GraphicWin@@QAEIXZ
+// symbol    ?close@GraphicWin@@QAEXXZ
 // size      166 bytes
 // prototype void (__thiscall ?close@GraphicWin@@QAEXXZ)(GraphicWin* this)
 // callers   66   call targets   2
@@ -142,12 +142,11 @@ Purpose: Close a GraphicWin by closing its Win base and Buffer subobject,
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D7470 0x005EB640
 // indirect  0x005D4EDB
-// notes     Runtime redirect installed by DllMain after byte-signature validation; calls the temporary original Win close dependency
-Return Value: field_A0C_ default when no interface is present; otherwise the
-              scalar-deleting virtual call's return residue
-Status: Source-owned base calls; explicit deleting-return contract below.
+// notes     Historical: runtime redirect installed by DllMain after byte-signature validation; current source owns the base calls
+Return Value: n/a
+Status: Source-owned base calls and owned-buffer deletion.
 */
-uint32_t GraphicWin::close() {
+void GraphicWin::close() {
     Win::close();
     Buffer::close();
 
@@ -176,21 +175,19 @@ uint32_t GraphicWin::close() {
     const GraphicWinCaptionDraw default_value = GraphicWinFieldA0CDefault;
     field_A0C_ = default_value;
     if (!release_target) {
-        return field_A0C_value();
+        return;
     }
 
-    // Original init allocates a Buffer (0x005D4FA6..0x005D4FD6). Its scalar
+    // Historical residue investigation (void contract supersedes it): the
+    // original init allocates a Buffer (0x005D4FA6..0x005D4FD6). Its scalar
     // deleting destructor at 0x005E3610 destroys/frees that allocation and
-    // returns the saved receiver at 0x005E3628. Capture that numeric return
-    // before genuine virtual deletion, then clear ownership after callbacks.
-    // Historical slot-spelling experiment, superseded by genuine deletion:
+    // returns the saved receiver at 0x005E3628. The old numeric-return
+    // preservation experiment is retired; this lifecycle method is void.
     // TRIED: inlining the `vtable_method<...>(...)` call directly into
     // the `->*` expression instead of naming it `deleting_destructor` first -
     // no change, still `eax` where the image has `edx` for this one slot.
-    const uint32_t result = reinterpret_cast<uint32_t>(release_target);
     delete release_target;
     owned_buffer_ = 0;
-    return result;
 }
 
 

@@ -175,18 +175,20 @@ Purpose: Reset the check box to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
 // ORIGINAL: 0x0060E7C0 ?close@CheckBox@@QAEIXZ 0x0060E7C0-0x0060E7F9 BYTE_EXACT
-// symbol    ?close@CheckBox@@QAEIXZ
+// symbol    ?close@CheckBox@@QAEXXZ
 // TRIED: the reconstructed signature `?close@CheckBox@@QAEXXZ`. The census
 //   names are RECONSTRUCTIONS - the image is stripped - and this one had the
 //   same method carrying two signatures across one hierarchy: Dialog::close and
 //   four derived close() returning void, GraphicWin::close and ListBox::close
 //   returning uint32_t. The original cannot have had that. Unified on
-//   `uint32_t` (the form two bodies were already tuned to, for the EAX
-//   residue) and on `virtual`, which is what the vtable slot these classes
-//   install by hand actually is - hence `UAEIXZ`.
+//   `uint32_t` and on `virtual`, based on the assumed EAX residue and a
+//   mistaken vtable interpretation. That hypothesis is superseded: this member is nonvirtual;
+//   physical caller audit found all 19 direct callers discard EAX. The source
+//   lifecycle contract is void; retain the original reset and close order.
 // LEVER: the vbtable is RE-READ for the second call, exactly as the destructor above it does. One cached `vbtable` local has to survive the first `close()`, so VC6 spends a callee-saved register and a `push edi` the image never makes: 5 of 20. Reading `[esi]` again for the GraphicWin call is 20 of 20. Reading it inline at BOTH sites scores the same 20 of 20, so the first read may stay a named local.
 // size      57 bytes
-// prototype uint32_t (__thiscall ?close@CheckBox@@QAEIXZ)(CheckBox* this)
+// prototype (historical reconstructed) uint32_t (__thiscall ?close@CheckBox@@QAEIXZ)(CheckBox* this)
+// source contract void; physical direct callers discard EAX
 // callers   13   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -194,7 +196,7 @@ Purpose: Reset the check box to its defaults, then close its dialog and
 Return Value: n/a
 Status: Complete
 */
-uint32_t CheckBox::close() {
+void CheckBox::close() {
     // The base offsets come from the object's own vbtable, read at run time,
     // not from where they sit in a most-derived CheckBox. When one is
     // embedded in a larger class - Dialogs holds a RadioButton at 0x44 - that
@@ -211,7 +213,7 @@ uint32_t CheckBox::close() {
     checked_sprite_ = CheckBoxDefault2;
     unchecked_sprite_ = CheckBoxDefault1;
     Dialog::close();
-    return GraphicWin::close();
+    GraphicWin::close();
 }
 
 // Seed identity: ?draw_item@CheckBox@@QAEXHHH@Z at 0x0060F030.

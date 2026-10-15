@@ -64,6 +64,7 @@ def actual_source():
         'WIN_FIELDS': '\n'.join(one(wh, r'^  uint32_t ' + name + r';') for name in
                                 ('iFlags_', 'field_134_', 'field_138_')),
         'GETTER': one(wh, r'^  virtual GraphicWin \*get_graphic_win\(\)[^\n]+').split('//')[0],
+        'GETTER_BODY': braced(wc, 'GraphicWin *Win::get_graphic_win()'),
         'FRAME_FIELDS': '\n'.join(re.findall(r'^  Sprite \*frame_\w+_;', gh, re.M)),
         'DECLARATIONS': '\n'.join(one(gh, pattern) for pattern in (
             r'^  static void(?: __cdecl)? load_all_nc_sprites_from_defs\(\);',
@@ -99,6 +100,7 @@ void redraw(){require(false);} void on_update(){require(false);}
 };
 @DEFAULT_OWNER@
 @REGISTRY@
+@GETTER_BODY@
 @SUM@
 @SETTER@
 @LOCAL@

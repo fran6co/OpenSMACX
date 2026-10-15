@@ -36,7 +36,7 @@ class Scroll : public GraphicWin {
   Scroll();
   ~Scroll();
 
-  uint32_t close();
+  void close();
   // 0x006054D0 is the primary initializer. The overloads that wrap it call
   // it BY NAME, so they emit the image's `call rel32` rather than the
   // `call [ptr]` a function-pointer seam compiles.

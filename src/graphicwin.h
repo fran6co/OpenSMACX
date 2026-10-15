@@ -157,7 +157,7 @@ class GraphicWin : public Win, public Buffer {
   // The original PullDown normal-cancel path reads this inherited word,
   // not an item before the array. Keep that storage owned by GraphicWin.
   uint32_t field_A0C_value() const;
-  uint32_t close();
+  void close();
   // 0x00589550, a 5-byte `jmp` to GraphicWin::close, homed into general.cpp.
   // A plain member: no virtual, so nothing adjusts the receiver and VC6 can
   // tail-jump it.

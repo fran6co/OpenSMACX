@@ -357,7 +357,7 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
 //   image's 71 exactly. The remaining 6-instruction gap is the induction
 //   variable and second-dispatch scheduling the TRIED above names;
 //   unaffected by this change.
-// symbol    ?close@Scroll@@QAEIXZ
+// symbol    ?close@Scroll@@QAEXXZ
 // size      350 bytes
 // prototype void (__thiscall ?close@Scroll@@QAEXXZ)(Scroll* this)
 // callers   136   call targets   1
@@ -365,11 +365,11 @@ Purpose: Reset Scroll-owned state from the process defaults, close the two
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4E40
 // indirect  0x006054AC 0x006054BE
-// notes     Runtime redirect installed by DllMain after byte-signature validation; retains two embedded FlatButton virtual-close dependencies and delegates to source-owned GraphicWin close
-Return Value: GraphicWin::close return residue
+// notes     Historical: runtime redirect installed by DllMain after byte-signature validation; current source retains both embedded FlatButton virtual-close dependencies and delegates to GraphicWin close
+Return Value: n/a
 Status: Complete; embedded FlatButton close redirects are source-owned
 */
-uint32_t Scroll::close() {
+void Scroll::close() {
     ScrollCloseDynamicDefaultsData *const dynamic = &ScrollCloseDynamicDefaults;
 
     field_A14_ = dynamic->flags;
@@ -408,7 +408,7 @@ uint32_t Scroll::close() {
 
     flat_button_left_.close();
     flat_button_right_.close();
-    return GraphicWin::close();
+    GraphicWin::close();
 }
 
 /*

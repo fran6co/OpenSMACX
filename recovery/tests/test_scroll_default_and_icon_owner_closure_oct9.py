@@ -42,7 +42,7 @@ def test_scroll_actual_typed_owner_defaults_and_setters(tmp_path: Path) -> None:
     assert "reinterpret_cast<uint32_t *>(this)" not in source_text
 
     constructor = _definition(source_text, "Scroll::Scroll()")
-    close = _definition(source_text, "uint32_t Scroll::close()")
+    close = _definition(source_text, "void Scroll::close()")
     static_record_start = header.index("struct ScrollCloseStaticDefaultsData {")
     static_record_end = header.index("\n};", static_record_start) + 3
     static_record = header[static_record_start:static_record_end]
@@ -105,7 +105,7 @@ struct FlatButton {
 };
 struct GraphicWin {
     Dib dib_{};
-    uint32_t close() { close_order[close_count++] = 3; return 0xCAFE; }
+    void close() { close_order[close_count++] = 3; }
 };
 ''' + static_record + r'''
 ScrollCloseStaticDefaultsData ScrollCloseStaticDefaults;
@@ -134,7 +134,7 @@ struct Scroll : GraphicWin {
     void (*field_2144_)(int,int) = nullptr;
     void (*field_2148_)(int,int) = nullptr;
     Scroll();
-    uint32_t close();
+    void close();
     void set_sprite_left(Sprite *, Sprite *, Sprite *);
     void set_sprite_right(Sprite *, Sprite *, Sprite *);
     void set_sprite_up(Sprite *, Sprite *, Sprite *);
@@ -209,7 +209,7 @@ int main() {
     value.field_2144_ = reinterpret_cast<void (*)(int,int)>(1);
     value.field_2148_ = reinterpret_cast<void (*)(int,int)>(2);
     close_count = 0;
-    assert(value.close() == 0xCAFE);
+    value.close();
     assert(close_count == 3 && close_order[0] == 1 && close_order[1] == 2 && close_order[2] == 3);
     assert(value.field_A14_ == 200 && value.border_color_ == 103 && value.range_reversed_ == 0);
     assert(value.range_minimum_ == 201 && value.range_maximum_ == 104 && value.position_ == 201);
@@ -223,7 +223,7 @@ int main() {
     value.field_A14_ = 0;
     value.sprite_left_[0] = nullptr;
     close_count = 0;
-    assert(value.close() == 0xCAFE);
+    value.close();
     assert(close_count == 3 && close_order[0] == 1 && close_order[1] == 2 && close_order[2] == 3);
     assert(value.field_A14_ == 200 && value.sprite_left_[0] == &defaults[0]);
     assert(value.field_A78_ == &background_default);

@@ -575,7 +575,7 @@ def test_popup_family_destroys_each_owned_subobject_once(compiled):
         assert not any("Original" in target for target in targets)
     for obj in compiled["src/scroll.cpp"]:
         targets = references(obj, symbol_at("src/scroll.cpp", 0x406E60))
-        assert targets.count("?close@Scroll@@QAEIXZ") == 1
+        assert targets.count("?close@Scroll@@QAEXXZ") == 1
         assert targets.count("??1GraphicWin@@UAE@XZ") == 1
         assert not any("?destroy@" in target or "Original" in target for target in targets)
 

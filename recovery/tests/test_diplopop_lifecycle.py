@@ -66,7 +66,7 @@ def actual():
         one(win, r'virtual void hide\(\);'),
         braced(win, 'virtual void on_button_clicked('), '};',
         'struct GraphicWin : Win { int id; GraphicWin(); ~GraphicWin();',
-        one(graphic, r'uint32_t close\(\);'), '};'))
+        one(graphic, r'void close\(\);'), '};'))
     owner = one(source, r'^DiploPop DiplomacyPopup;')
     return base_declarations, declarations, owner, methods
 
@@ -128,7 +128,7 @@ void inspect_poison(){
 void inspect_reset(){require(active->counterpart_faction_==-1&&active->field_20B0_==0&&active->field_2154_==1);}
 GraphicWin::GraphicWin():id(born('G',this)){}
 GraphicWin::~GraphicWin(){died('G',id,this);}
-uint32_t GraphicWin::close(){require(this==static_cast<GraphicWin*>(active));service('C');return 19;}
+void GraphicWin::close(){require(this==static_cast<GraphicWin*>(active));service('C');}
 int Win::is_visible(){require(this==static_cast<Win*>(active));service('V');return visible_result;}
 void Win::hide(){require(this==static_cast<Win*>(active));service('H');}
 void Win::show(int argument){require(this==static_cast<Win*>(active)&&argument==0);service('S');}

@@ -107,7 +107,7 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
   // destruction phases: close the control, then let the compiler destroy
   // virtual bases, optionally delete the object, and emit receiver adjustors.
   virtual ~RadioButton() { close(); }
-  uint32_t close();
+  void close();
 
  public:
   // draw_item selects +8 for a nonzero state argument and +4 for zero
