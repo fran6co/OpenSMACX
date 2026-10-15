@@ -34,6 +34,75 @@ def restore_audio_header(text):
     return text.replace(HEADER_AFTER, HEADER_BEFORE)
 
 
+def expect_movie_descriptor_reread_changes(text):
+    """Apply exact reviewed bodies/loop to the prior source projection."""
+    replacements = {
+        "int MediaRuntime::release_session_interfaces()": '''int MediaRuntime::release_session_interfaces() {
+  const DWORD descriptor_flags = descriptor->flags;
+  if ((descriptor_flags & 0x00800000) != 0) {
+    if (release_optional_buffer != 0) {
+      MediaDescriptor *source_owner = descriptor;
+      if (source_owner->source_buffer_58 != 0) {
+        IDirectSoundBuffer *source_buffer = source_owner->source_buffer_58;
+        source_buffer->Release();
+        // Native 5CE475 reloads runtime->descriptor after Release.
+        descriptor->source_buffer_58 = 0;
+      }
+    }
+    if (release_sound_device != 0) {
+      // This load follows the optional-buffer Release and therefore observes
+      // any descriptor replacement performed by that call.
+      MediaDescriptor *device_owner = descriptor;
+      if (device_owner->sound_device != 0) {
+        IDirectSound *sound_device = device_owner->sound_device;
+        sound_device->Release();
+        device_owner->sound_device = 0;
+      }
+    }
+  }
+  return 0;
+}''',
+        "int MediaRuntime::release_playback_buffer()": '''int MediaRuntime::release_playback_buffer() {
+  MediaDescriptor *playback_owner = descriptor;
+  if (playback_owner->play_buffer != 0) {
+    IDirectSoundBuffer *playback_buffer = playback_owner->play_buffer;
+    playback_buffer->Release();
+    // Native 5CE632 reloads runtime->descriptor before the 5CE634 store.
+    descriptor->play_buffer = 0;
+  }
+  return 0;
+}''',
+        "int MediaRuntime::sub_5cae00()": '''int MediaRuntime::sub_5cae00() {
+  MediaDescriptor *stream_owner = descriptor;
+  if ((stream_owner->flags & 0x00080000) == 0 && stream_owner->stream != 0)
+    mmioClose(stream_owner->stream, 0);
+  if (input_ring_base != 0) free(input_ring_base);
+  if (decoded_ring_base != 0) free(decoded_ring_base);
+  for (int i = 0; i != 24; ++i) read_records[i].payload = 0;
+  // Native 5CAE58 reloads runtime->descriptor after close/free and record
+  // clearing; the gate is read from that current descriptor.
+  MediaDescriptor *output_owner = descriptor;
+  if (output_owner->stream_gate_7c != 0)
+    for (int j = 0; j != 24; ++j) output_records[j].payload = 0;
+  return 0;
+}''',
+        'extern "C" char *__fastcall sub_5cf120(': '''extern "C" char *__fastcall sub_5cf120(int code) {
+  for (unsigned int i = 0;
+       i < sizeof(media_hresult_texts) / sizeof(media_hresult_texts[0]);
+       ++i) {
+    if (media_hresult_texts[i].result == code)
+      return (char *)media_hresult_texts[i].text;
+  }
+  return (char *)media_hresult_unknown;
+}''',
+    }
+    for signature, replacement in replacements.items():
+        old_body = definition(text, signature)
+        assert old_body != replacement
+        text = text.replace(old_body, replacement, 1)
+    return text
+
+
 def test_exact_owner_migration_and_original_identity_continuity():
     from match_recovery.source import read_text
     from test_texture_raster_actual_source import _continuity_fields
@@ -48,6 +117,14 @@ def test_exact_owner_migration_and_original_identity_continuity():
             after = restore_output_header(after)
         elif name == "uv2player.cpp":
             expected = before.replace("media_.unresolved_source_or_rate_58 = 0;", "media_.source_buffer_58 = 0;")
+            expected = expected.replace(
+                "// DirectDrawSurface2 extends DirectDrawSurface in the SDK; Buffer's\n"
+                "        // borrowed surface API consumes the shared interface prefix.",
+                "// The SDK declares Surface2 separately, with the same Surface method\n"
+                "        // prefix, not C++ inheritance. The original passes this borrowed\n"
+                "        // Surface2 pointer unchanged to Buffer (4BF11D..4BF147); its borrowed\n"
+                "        // path uses only shared slots. A QueryInterface here would change\n"
+                "        // reference-count and failure behavior.")
             # The separately bounded Wave interface migration now carries
             # this pointer through its producer instead of an integer cast.
             after = after.replace("media_.sound_device = WaveDeviceGlobal.get_ds();",
@@ -63,7 +140,8 @@ def test_exact_owner_migration_and_original_identity_continuity():
             expected = expected.replace("d.play_buffer->SetFrequency(d.source_buffer_58);", "d.play_buffer->SetFrequency(playback_frequency);")
         if name == "movie_media.cpp":
             from test_media_output_buffers_oct11 import without_renderer_body
-            assert without_renderer_body(expected) == without_renderer_body(after)
+            assert expect_movie_descriptor_reread_changes(
+                without_renderer_body(expected)) == without_renderer_body(after)
         else:
             assert expected == after
         assert [(_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(before, path)] == [
@@ -107,7 +185,7 @@ def test_native_distinct_receivers_and_frequency_producer():
     ("format.nAvgBytesPerSec = playback_frequency << 2;", "format.nAvgBytesPerSec = playback_frequency;"),
     ("d.play_buffer->SetFrequency(playback_frequency);", "d.play_buffer->SetFrequency(format.nSamplesPerSec);"),
     ("source_buffer->GetCaps(&source_caps);", "d.play_buffer->GetCaps(&source_caps);"),
-    ("source_buffer->Release();", "d.play_buffer->Release();"),
+    ("source_buffer->Release();", "source_owner->play_buffer->Release();"),
 ))
 def test_actual_source_rejects_owner_and_reload_regressions(old, new):
     result = build_and_run(((old, new),))

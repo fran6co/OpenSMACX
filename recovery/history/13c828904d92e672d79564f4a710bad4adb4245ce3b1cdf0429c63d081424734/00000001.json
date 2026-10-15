@@ -1,0 +1,20 @@
+{
+  "event_id": "5ec7170afa137a350d298fcd0ba92b075dadadb9936b01786c62faf34c3da668",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_media_audio_owner_oct11.py",
+      "recovery/tests/test_movie_media_behavior.py"
+    ],
+    "evidence": [
+      "Preserve prior audio-owner migration continuity while incorporating the explicitly authorized descriptor reload correction; replace stale mutation anchors with actual equivalent damaging controls, never drop them. Image-dependent native checks remain coordinator-only under an isolated compiler lease."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "descriptor-reread-test-continuity",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:movie-runtime-live-descriptor-oct15"
+}
