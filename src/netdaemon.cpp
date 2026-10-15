@@ -261,22 +261,22 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         const int player_id = player.identity_;
 
         if (primary_state_.trailing_words_[0] == 2) {
-            uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
-            humans = static_cast<uint8_t>(humans &
+            GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
+                static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
                 ~static_cast<uint8_t>(1u << (player_id & 31)));
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_ = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFFFF00u) | humans;
         }
         channels_[1].payload_.flags &= ~(1u << (player_id & 31));
 
         const bool turn_handoff = (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0;
         if (turn_handoff && primary_state_.leading_words_[0] != 0 &&
             GameDataStateStorage.fields_.net_turn_faction_ == player_id) {
-            const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
-            const uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+            const uint8_t alive =
+                GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
             bool informed = false;
             for (int next = player_id + 1; next < 8; ++next) {
                 const uint8_t bit = static_cast<uint8_t>(1u << (next & 31));
-                if ((alive & bit) != 0 && (humans & bit) != 0) {
+                if ((alive & bit) != 0 &&
+                    (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0) {
                     message_data(0x4309, 0, next, 0, 0, 0);
                     informed = true;
                     break;
@@ -316,12 +316,11 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         (turn_bit == 0 && primary_state_.leading_words_[0] != 0);
 
     if (!skip_lock_notify && primary_state_.trailing_words_[0] == 2) {
-        const uint8_t alive = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8);
-        const uint8_t humans = static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
         for (int faction = 1; faction < 8; ++faction) {
             const uint8_t bit = static_cast<uint8_t>(1u << (faction & 31));
             PlayerLock &candidate = locks_.records_[faction];
-            if ((alive & bit) == 0 || (humans & bit) == 0 ||
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) == 0 ||
+                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) == 0 ||
                 faction == player_id || candidate.active() == 0 ||
                 (candidate.active_ & 1) != 0) {
                 continue;
@@ -329,6 +328,8 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
 
             candidate.active_ = static_cast<uint8_t>(
                 candidate.active_ | static_cast<uint8_t>(1u << (slot & 31)));
+            const uint8_t humans =
+                GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
             if ((candidate.active_ & humans) == humans) {
                 log_say("SPECIAL Sending EXEC DONE to", faction, 0, 0);
                 message_data(0x1206, faction, 0, 0, 0, 0);
@@ -4725,14 +4726,13 @@ static void netdaemon_handle_client_done_turn(NetDaemon *daemon,
 
         int assigned_next_faction =
             GameDataStateStorage.fields_.net_turn_faction_ + 1;
-        const uint32_t alive =
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8;
-        const uint32_t humans =
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
+        const uint8_t alive =
+            GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
         while (assigned_next_faction < 8) {
             const uint32_t assigned_bit =
                 static_cast<uint32_t>(1) << (assigned_next_faction & 0x1F);
-            if ((alive & assigned_bit) != 0 && (humans & assigned_bit) != 0) break;
+            if ((alive & assigned_bit) != 0 &&
+                (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & assigned_bit) != 0) break;
             ++assigned_next_faction;
         }
         if (assigned_next_faction >= 8) {
@@ -4749,13 +4749,14 @@ static void netdaemon_handle_client_done_turn(NetDaemon *daemon,
     if (bit_count(static_cast<int>(outstanding)) != 1) return;
     if (bit_count(static_cast<int>(enabled)) <= 2) return;
 
-    const uint32_t alive =
-        GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8;
+    const uint8_t alive =
+        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
     int slowpoke_next_faction = 1;
     for (; slowpoke_next_faction < 8; ++slowpoke_next_faction) {
         const uint32_t slowpoke_bit =
             static_cast<uint32_t>(1) << (slowpoke_next_faction & 0x1F);
-        if ((alive & slowpoke_bit) != 0 && (enabled & slowpoke_bit) != 0 &&
+        if ((alive & slowpoke_bit) != 0 &&
+            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & slowpoke_bit) != 0 &&
             (turn_info & slowpoke_bit) == 0) break;
     }
     if (slowpoke_next_faction >= 8) return;
@@ -4822,12 +4823,13 @@ static void netdaemon_handle_server_turn_info(NetDaemon *daemon,
         return;
     }
 
-    const uint32_t alive =
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu;
+    const uint8_t alive =
+        GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
     int next_faction = 1;
     for (; next_faction < 8; ++next_faction) {
         const uint32_t bit = static_cast<uint32_t>(1) << next_faction;
-        if ((alive & bit) != 0 && (enabled & bit) != 0 &&
+        if ((alive & bit) != 0 &&
+            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit) != 0 &&
             (turn_info & bit) == 0) break;
     }
     if (next_faction >= 8) {
