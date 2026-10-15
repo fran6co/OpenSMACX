@@ -75,14 +75,14 @@ def _contract(body: str) -> None:
         "span_result.packed_uv_sink = &(TextureRasterScratch4A4);",
         "span_result.preload_pixels =",
         "span_result.prefetched_source =\n                                            span_result.preload_pixels[base_source_offset];",
-        "TextureRasterScratch504 = reinterpret_cast<int>(src);",
+        "TextureRasterScratch504 = reinterpret_cast<unsigned char *>(src);",
         "TextureRasterShadeCursor = texture_pointer_address(src) + (texture_pointer_address(TextureRasterScratch554) - texture_pointer_address(TextureRasterScratch544));",
         "texture_span_pixels(static_cast<short>(rightX) -",
         "_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);",
         "if ((TextureRasterDither & 1) == 0)",
         "const int row_light = TextureRasterScratch498;",
         "TextureRasterScratch498 = row_light >> 8;",
-        "TextureRasterScratch504 = reinterpret_cast<int>(src);",
+        "TextureRasterScratch504 = reinterpret_cast<unsigned char *>(src);",
         "a1->free_data(1)",
         "epilogue_only:\n    texture_reset_fpu();\n    return;",
     )
@@ -103,8 +103,8 @@ def _contract(body: str) -> None:
     assert body.index("a1->get_data()") < body.index("texture_reset_fpu();")
     assert body.index("_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);") < body.index("long double invDx")
     assert body.index("a1->free_data(1)") < body.index("epilogue_only:\n    texture_reset_fpu();")
-    assert body.index("TextureRasterScratch504 = reinterpret_cast<int>(src);") < body.index("texture_draw_keyed_coast_fill_span(")
-    assert body.index("TextureRasterScratch504 = reinterpret_cast<int>(src);") < body.index("TextureRasterShadeCursor = texture_pointer_address(src)")
+    assert body.index("TextureRasterScratch504 = reinterpret_cast<unsigned char *>(src);") < body.index("texture_draw_keyed_coast_fill_span(")
+    assert body.index("TextureRasterScratch504 = reinterpret_cast<unsigned char *>(src);") < body.index("TextureRasterShadeCursor = texture_pointer_address(src)")
     assert body.index("TextureRasterScratch498 = row_light >> 8;") < body.index("TextureRasterAlternateRowNext.value =")
     assert body.index("span_result.prefetched_source =") < body.index("if ((TextureRasterDither & 1) == 0)")
 
@@ -151,8 +151,8 @@ def test_actual_kernels_keep_unconditional_volatile_next_source_loads() -> None:
         ("int minYIdx = a8;", "int minYIdx = a6;"),
         ("base_source_offset = texture_draw_source_index(",
          "base_source_offset = texture_draw_source_index_signed("),
-        ("TextureRasterScratch504 = reinterpret_cast<int>(src);",
-         "TextureRasterScratch504 = reinterpret_cast<int>(src + 1);"),
+        ("TextureRasterScratch504 = reinterpret_cast<unsigned char *>(src);",
+         "TextureRasterScratch504 = reinterpret_cast<unsigned char *>(src + 1);"),
         ("if (pixels_ != 0 && a3 != 0 && a5 != 0)",
          "if (pixels_ != 0 && a3 != 0 && a5 != 0 && a4 != 0)"),
         ("_control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);",

@@ -47,7 +47,7 @@ static int &span_right = TextureRasterSpanRight;
 static int &slot4e4 = TextureRasterScratch4E4.dword;
 static int &span_left = TextureRasterSpanLeft;
 static int &slot4a4 = TextureRasterScratch4A4;
-static int &slot504 = TextureRasterScratch504;
+static unsigned char *&slot504 = TextureRasterScratch504;
 static Vert *&edge_uvs_b = TextureRasterEdgeVerticesB;
 static int *&z_values_address = TextureRasterZValues;
 static int &slot4f8 = TextureRasterUAccumulator.dword;
@@ -135,7 +135,8 @@ static void reset_slots() {
     light_pack_a = slot53c = 0;
     remap_table = 0;
     texture_pixels = shade_table = 0;
-    slot558 = slot4a4 = slot504 = dither = 0;
+    slot558 = slot4a4 = dither = 0;
+    slot504 = 0;
     TextureRowPitchScratch = 0;
     edge_uvs_a = 0;
     edge_uvs_b = 0;
@@ -193,7 +194,7 @@ int main() {
     assert(destination[10] == 23);  // next preload supplies base pixel 14, plus light
     assert(destination[8] == 0x7e && destination[11] == 0x7e);
     assert(destination[0] == 0x7e); // clipped mapped texel is not visited
-    assert(slot504 == ptr32(base_pixels + 9));
+    assert(slot504 == base_pixels + 9);
     assert(static_cast<unsigned int>(slot4a4) == 0x80000000u);
     assert(slot498 == 0x00000300);
     assert(buffer.freed == 1);

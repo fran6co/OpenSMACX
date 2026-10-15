@@ -56,6 +56,40 @@ def _baseline():
     ).decode("utf-8")
 
 
+def _reverse_scratch504_pointer_delta(source):
+    """Project the separately authorized pointer correction back to its old spelling."""
+    source = source.replace(
+        "// The pinned renderers reload this cell as the source base for byte loads.\n"
+        "// RECOVERY_OBJECT: v1 0x009BB504 _TextureRasterScratch504\n"
+        "static unsigned char *TextureRasterScratch504;",
+        "// RECOVERY_OBJECT: v1 0x009BB504 _TextureRasterScratch504\n"
+        "static int TextureRasterScratch504;",
+        1,
+    )
+    source = source.replace(
+        "TextureRasterScratch504 = static_cast<unsigned char *>(texture_pointer_from_address(\n"
+        "                static_cast<uint32_t>(static_cast<uint32_t>(texture_pointer_address(TextureRasterScratch544)) +\n"
+        "                    row_source_offset)));",
+        "TextureRasterScratch504 = static_cast<int>(\n"
+        "                static_cast<unsigned int>(texture_pointer_address(TextureRasterScratch544)) + row_source_offset);",
+        1,
+    )
+    source = source.replace(
+        "TextureRasterScratch504 = reinterpret_cast<unsigned char *>(src);",
+        "TextureRasterScratch504 = reinterpret_cast<int>(src);",
+        1,
+    )
+    source = source.replace(
+        "TextureRasterScratch504 = static_cast<unsigned char *>(texture_pointer_from_address(\n"
+        "                                        static_cast<uint32_t>(static_cast<uint32_t>(\n"
+        "                                            texture_pointer_address(TextureRasterScratch544)) + source_offset)));",
+        "TextureRasterScratch504 = static_cast<int>(static_cast<unsigned int>(\n"
+        "                                        texture_pointer_address(TextureRasterScratch544)) + source_offset);",
+        1,
+    )
+    return source
+
+
 def test_exact_53_alias_projection_preserves_entire_source_and_annotations():
     task = TaskStore(ROOT).read(TASK)
     assert task.base_revision == BASE
@@ -75,8 +109,9 @@ def test_exact_53_alias_projection_preserves_entire_source_and_annotations():
     assert current.count(SIGNED_KEY_NOTE) == 1
     assert current.count(SIGNED_KEY_HELPER) == 1
     from recovery.tests.texture_direct_storage_host import reverse_direct_storage_source
-    assert reverse_direct_storage_source(current, before) == before
-    assert _cpp_tokens(current) == _cpp_tokens(direct_storage_projection(before)), (
+    projected_current = _reverse_scratch504_pointer_delta(current)
+    assert reverse_direct_storage_source(projected_current, before) == before
+    assert _cpp_tokens(projected_current) == _cpp_tokens(direct_storage_projection(before)), (
         "source must be exactly the approved direct-global projection of the immutable base")
 
     # Preserve every pre-existing source comment/history item; only replace
@@ -107,8 +142,9 @@ HOST_MAIN = r"""
 static void require98(bool ok, const char *message) {
     if (!ok) { fprintf(stderr, "ASSERT98: %s\n", message); exit(98); }
 }
-static void mutate_raster_cell() { TextureRasterScratch504 = 0x31415926; }
-static int callback_then_read(void (*callback)()) {
+static unsigned char mutated_raster_byte;
+static void mutate_raster_cell() { TextureRasterScratch504 = &mutated_raster_byte; }
+static unsigned char *callback_then_read(void (*callback)()) {
     callback();
     return TextureRasterScratch504;
 }
@@ -154,7 +190,7 @@ int main() {
     actual_scratch498_copy(left);
     require98(memcmp(&TextureRasterScratch498, &source_bits, 4) == 0,
               "Scratch498 receives the full four-byte representation");
-    require98(callback_then_read(mutate_raster_cell) == 0x31415926,
+    require98(callback_then_read(mutate_raster_cell) == &mutated_raster_byte,
               "global is reread after callback mutation");
     return 0;
 }
@@ -231,9 +267,9 @@ def test_wrong_union_byte_mutant_compiles_but_fails_with_named_98(compiler, tmp_
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
 def test_cached_global_mutant_compiles_but_fails_after_callback(compiler, tmp_path):
     main = HOST_MAIN.replace(
-        "static int callback_then_read(void (*callback)()) {\n    callback();\n    return TextureRasterScratch504;\n}",
-        "static int callback_then_read(void (*callback)()) {\n"
-        "    const int cached = TextureRasterScratch504;\n"
+        "static unsigned char *callback_then_read(void (*callback)()) {\n    callback();\n    return TextureRasterScratch504;\n}",
+        "static unsigned char *callback_then_read(void (*callback)()) {\n"
+        "    unsigned char *cached = TextureRasterScratch504;\n"
         "    callback();\n    return cached;\n}", 1)
     assert main != HOST_MAIN
     result = _build_run(_translation_unit(SOURCE.read_text(encoding="utf-8"), main),

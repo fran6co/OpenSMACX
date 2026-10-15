@@ -112,7 +112,7 @@ static Vert *&cell_edge_a = TextureRasterEdgeVerticesA;
 static Vert *&cell_edge_b = TextureRasterEdgeVerticesB;
 static int TextureLightCeiling = 256;
 static int TextureLightFloor = -256;
-static int &cell_slot_504 = TextureRasterScratch504;
+static unsigned char *&cell_slot_504 = TextureRasterScratch504;
 static int &cell_slot_528 = TextureRasterScratch528;
 static void texture_reset_fpu();
 

@@ -884,8 +884,9 @@ static int TextureRasterScratch498;
 static int TextureRasterBufferStride;
 // RECOVERY_OBJECT: v1 0x009BB4A4 _TextureRasterScratch4A4
 static int TextureRasterScratch4A4;
+// The pinned renderers reload this cell as the source base for byte loads.
 // RECOVERY_OBJECT: v1 0x009BB504 _TextureRasterScratch504
-static int TextureRasterScratch504;
+static unsigned char *TextureRasterScratch504;
 // RECOVERY_OBJECT: v1 0x009BB4A8 _TextureRasterTextureWidth
 static int TextureRasterTextureWidth;
 // RECOVERY_OBJECT: v1 0x009BB4B0 _TextureRasterVertexCount
@@ -1185,8 +1186,9 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                 texture_difference(clipped_right, clipped_left));
             const unsigned int row_source_offset = texture_draw_source_index(
                 TextureRasterTextureWidth, u, v);
-            TextureRasterScratch504 = static_cast<int>(
-                static_cast<unsigned int>(texture_pointer_address(TextureRasterScratch544)) + row_source_offset);
+            TextureRasterScratch504 = static_cast<unsigned char *>(texture_pointer_from_address(
+                static_cast<uint32_t>(static_cast<uint32_t>(texture_pointer_address(TextureRasterScratch544)) +
+                    row_source_offset)));
             TextureRasterShadeCursor = texture_pointer_offset(TextureRasterScratch554, row_source_offset);
             TextureDrawSpanResult span_result;
             span_result.packed_uv_sink = &(TextureRasterScratch4A4);
@@ -2931,7 +2933,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                                         char *src = reinterpret_cast<char *>(
                                             texture_pointer_offset(TextureRasterScratch544,
                                                 base_source_offset));
-                                        TextureRasterScratch504 = reinterpret_cast<int>(src);
+                                        TextureRasterScratch504 = reinterpret_cast<unsigned char *>(src);
                                         TextureRasterShadeCursor = texture_pointer_address(src) + (texture_pointer_address(TextureRasterScratch554) - texture_pointer_address(TextureRasterScratch544));
                                         char *dst = reinterpret_cast<char *>(TextureRasterSpanRight + TextureRasterRowOffset);
                                         const int row_light = TextureRasterScratch498;
@@ -3375,8 +3377,9 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
                                     const int dv = TextureRasterScratch4C8.dword;
                                     const int width = TextureRasterTextureWidth;
                                     const unsigned int source_offset = texture_draw_source_index(width, u, v);
-                                    TextureRasterScratch504 = static_cast<int>(static_cast<unsigned int>(
-                                        texture_pointer_address(TextureRasterScratch544)) + source_offset);
+                                    TextureRasterScratch504 = static_cast<unsigned char *>(texture_pointer_from_address(
+                                        static_cast<uint32_t>(static_cast<uint32_t>(
+                                            texture_pointer_address(TextureRasterScratch544)) + source_offset)));
                                     TextureRasterScratch498 = light >> 8;
                                     const unsigned int source_step = texture_draw_source_step(du, dv, width);
                                     TextureRasterAlternateRowNext.value = static_cast<int>(source_step);

@@ -143,8 +143,8 @@ static void render_case(unsigned char mapped, unsigned char expected) {
     assert(control_calls == 1 && control_value == (_PC_24 | _RC_CHOP) &&
            control_mask == (_MCW_PC | _MCW_RC));
     assert(TextureRasterScratch4A4 != 0x13572468);
-    assert(TextureRasterScratch504 - static_cast<int>(reinterpret_cast<intptr_t>(base_pixels)) ==
-           static_cast<int>(TextureRasterShadeCursor - reinterpret_cast<uintptr_t>(coast_pixels)));
+    assert(static_cast<uintptr_t>(TextureRasterScratch504 - base_pixels) ==
+           TextureRasterShadeCursor - reinterpret_cast<uintptr_t>(coast_pixels));
     assert(canvas[2 * 8 + 2] == expected);
     assert(canvas[2 * 8 + 1] == 0x5a && canvas[2 * 8 + 5] == 0x5a);
     assert(canvas[1 * 8 + 2] == 0x5a && canvas[4 * 8 + 2] == 0x5a);
@@ -189,8 +189,8 @@ static void render_phase_case() {
     assert(control_calls == 1 && control_value == (_PC_24 | _RC_CHOP) &&
            control_mask == (_MCW_PC | _MCW_RC));
     assert(TextureRasterScratch4A4 != 0x13572468);
-    assert(TextureRasterScratch504 - static_cast<int>(reinterpret_cast<intptr_t>(base_pixels)) ==
-           static_cast<int>(TextureRasterShadeCursor - reinterpret_cast<uintptr_t>(coast_pixels)));
+    assert(static_cast<uintptr_t>(TextureRasterScratch504 - base_pixels) ==
+           TextureRasterShadeCursor - reinterpret_cast<uintptr_t>(coast_pixels));
     // Different edge U/V/light deltas make current-row versus next-row
     // gradient selection observable.
     assert(canvas[8 + 2] == 22);
@@ -223,7 +223,7 @@ static void render_initially_clipped_case() {
     buffer.stride_ = 8; buffer.rect1_ = RECT{0, 0, 8, 4};
     buffer.data = canvas;
     buffer.free_calls = 0; reset_calls = 0; setup_calls = 0; control_calls = 0;
-    TextureRasterScratch4A4 = 0x13572468; TextureRasterScratch504 = 0x24681357;
+    TextureRasterScratch4A4 = 0x13572468; TextureRasterScratch504 = reinterpret_cast<unsigned char *>(static_cast<uintptr_t>(0x24681357));
     TextureRasterShadeCursor = 0x35792468;
     TextureRasterScratch4C4 = 0x12345678;
     TextureRasterUAccumulator.dword = 0x23456789;
@@ -233,7 +233,7 @@ static void render_initially_clipped_case() {
     assert(control_calls == 1 && control_value == (_PC_24 | _RC_CHOP) &&
            control_mask == (_MCW_PC | _MCW_RC));
     assert(TextureRasterScratch4A4 == 0x13572468 &&
-           TextureRasterScratch504 == 0x24681357 &&
+           TextureRasterScratch504 == reinterpret_cast<unsigned char *>(static_cast<uintptr_t>(0x24681357)) &&
            TextureRasterShadeCursor == 0x35792468);
     assert(TextureRasterScratch4C4 == 0x12345678 &&
            TextureRasterUAccumulator.dword == 0x23456789);
