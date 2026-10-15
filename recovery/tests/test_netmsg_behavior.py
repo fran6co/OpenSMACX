@@ -39,11 +39,22 @@ def _source():
             body(netmsg, "void NetMsg::close()"),
             body(candidate, "NetMsg::~NetMsg()"),
             body(candidate, "void NetMsg::pop(const char *label, int duration, int channel,"),
-            body(candidate, "void NetMsg::pop(const char *label, const char *target)"),
+            body(candidate, "void __cdecl NetMsg::pop(const char *label, const char *target)"),
             body(popup, "void Popup::close()"),
             body(popup, "Popup::~Popup()"),
             body(time_lifecycle, "Time::~Time()"),
         ]
+    )
+    forwarded_body = "void NetMsg::pop(const char *label, int duration, int channel,\n                 const char *target) {"
+    assert forwarded_body in actual
+    actual = actual.replace(
+        forwarded_body,
+        forwarded_body + "\n    forward_receiver = this;\n"
+        "    forward_label = label;\n"
+        "    forward_duration = duration;\n"
+        "    forward_channel = channel;\n"
+        "    forward_target = target;",
+        1,
     )
     globals_text = "\n".join(re.search(pattern, candidate).group(0) for pattern in (r"NetMsg NetMsgPrimary\(4096, 8, 0\);", r"NetMsg NetMsgSecondary\(-5, 40, 1\);"))
     
@@ -81,6 +92,11 @@ def _source():
     static int ActiveIfaceIdStorage = 0;
     static int console_visible = 1;
     static const char *label_get(int) { return "OK"; }
+    static const void *forward_receiver = nullptr;
+    static const char *forward_label = nullptr;
+    static int forward_duration = 0;
+    static int forward_channel = -1;
+    static const char *forward_target = nullptr;
     
     struct Time {
       using Callback = void (__cdecl *)(int);
@@ -145,7 +161,7 @@ def _source():
       void close();
       bool is_active() const;
       void pop(const char *,int,int,const char *);
-      void pop(const char *,const char *);
+      static void __cdecl pop(const char *,const char *);
       static void __cdecl timer_daemon(int);
       int32_t field_5384_=0;
       uint32_t field_537C_=0, field_5380_=0;
@@ -164,6 +180,8 @@ def _source():
       base_init_calls=0; last_init_a=last_init_b=-1; last_loc_x=last_loc_y=-1;
       button_calls=0; button_text.clear(); full_start_result=0; local_start_result=0;
       dims_result=0; sprite_result=0;
+      forward_receiver=nullptr; forward_label=nullptr;
+      forward_duration=0; forward_channel=-1; forward_target=nullptr;
     }
     static int event_index(const char *name) {
       for (int i=0;i<(int)events.size();++i) if(events[i]==name) return i;
@@ -273,10 +291,20 @@ def _source():
       int pc=NetMsgPrimary.timer_.close_calls;
       NetMsgPrimary.close(); assert(NetMsgPrimary.timer_.close_calls==pc);
     
-      // The two-string wrapper sends the exact sentinel duration/channel/target
-      // to Primary regardless of the syntactic receiver.
-      reset_observations(); NetMsgSecondary.pop("wrapped","TGT");
+      // The static caller-clean wrapper forwards exact arguments and always
+      // selects Primary, even when called with Secondary object syntax.
+      reset_observations();
+      const char wrapped_label[] = "wrapped";
+      const char wrapped_target[] = "TGT";
+      NetMsgSecondary.pop(wrapped_label, wrapped_target);
+      assert(forward_receiver==&NetMsgPrimary && forward_receiver!=&NetMsgSecondary);
+      assert(forward_label==wrapped_label && forward_duration==-5000);
+      assert(forward_channel==0 && forward_target==wrapped_target);
       assert(last_start_flags==0 && exec_calls==1 && last_exec_field==1);
+
+      reset_observations(); NetMsgSecondary.pop(wrapped_label, nullptr);
+      assert(forward_receiver==&NetMsgPrimary && forward_label==wrapped_label);
+      assert(forward_duration==-5000 && forward_channel==0 && forward_target==nullptr);
     
       // Actual destructors: Time member teardown precedes the Popup base dtor;
       // Popup's own dtor closes once. This control intentionally stubs deeper
@@ -302,7 +330,10 @@ def _source():
     
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
-@pytest.mark.parametrize("mutation", ["none", "omit_saved_auto_hide", "wrong_timer_target", "skip_full_modal_reset"])
+@pytest.mark.parametrize("mutation", [
+    "none", "omit_saved_auto_hide", "wrong_timer_target", "skip_full_modal_reset",
+    "forward_to_secondary", "wrong_timeout", "wrong_style", "wrong_label", "drop_target",
+])
 def test_netmsg_actual_body_controls(tmp_path, compiler_name, mutation):
     compiler = shutil.which(compiler_name)
     if compiler is None:
@@ -312,6 +343,11 @@ def test_netmsg_actual_body_controls(tmp_path, compiler_name, mutation):
         "omit_saved_auto_hide": ("popup.set_auto_hide_value(active ? 1u : 0u);", ""),
         "wrong_timer_target": ("NetMsgSecondary.close();", "NetMsgPrimary.close();"),
         "skip_full_modal_reset": ("PopupModalState = 0;", "/* deliberate mutant: keep modal state */"),
+        "forward_to_secondary": ("NetMsgPrimary.pop(label, -5000, 0, target);", "NetMsgSecondary.pop(label, -5000, 0, target);"),
+        "wrong_timeout": ("NetMsgPrimary.pop(label, -5000, 0, target);", "NetMsgPrimary.pop(label, -4000, 0, target);"),
+        "wrong_style": ("NetMsgPrimary.pop(label, -5000, 0, target);", "NetMsgPrimary.pop(label, -5000, 1, target);"),
+        "wrong_label": ("NetMsgPrimary.pop(label, -5000, 0, target);", "NetMsgPrimary.pop(label + 1, -5000, 0, target);"),
+        "drop_target": ("NetMsgPrimary.pop(label, -5000, 0, target);", "NetMsgPrimary.pop(label, -5000, 0, target ? target + 1 : label);"),
     }
     if mutation != "none":
         old, new = replacements[mutation]
