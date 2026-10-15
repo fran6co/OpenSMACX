@@ -4536,7 +4536,7 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
     // computes, so these are assignments to the parameters' own locals.
     int index = turncoat_faction;
     if (!(PlayersData[faction_id].diplo_treaties[index] & 0x10)
-        && (static_cast<uint8_t>(1 << turncoat_faction) & factions_status_byte(0)) != 0) {
+        && (static_cast<uint8_t>(1 << turncoat_faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
         int index_with = turncoat_faction;
         if (PlayersData[faction_id_with].diplo_treaties[index_with] & 0x10) {
             if (great_satan(turncoat_faction, 0) == 0 && !(PlayersData[faction_id].diplo_treaties[index] & 0x20)) {
@@ -4901,7 +4901,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     if ((PlayersData[other].diplo_treaties[faction] & 0x20) && fight < 0) fight = diplo_sub(0, fight);
     int maximum_bases[7];
     for (int i = 0; i < 7; ++i) maximum_bases[i] = 1;
-    const uint8_t alive = factions_status_byte(1);
+    const uint8_t alive = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
     for (int allied_faction = 1; allied_faction < 8; ++allied_faction) {
         if (alive & diplo_bit(allied_faction)) {
             if ((PlayersData[faction].diplo_treaties[allied_faction] & 1) && !(PlayersData[allied_faction].diplo_treaties[faction] & 0x2000000)) ++DiploScratchFA54;
@@ -5069,7 +5069,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     DiploScratchFA4C = DiploScratchF7B8 = 0;
     if (!pact || !(PlayersData[other].diplo_treaties[faction] & 0x2000000)) {
         for (int ally = 1; ally < 8; ++ally) {
-            if ((factions_status_byte(1) & diplo_bit(ally)) && ally != faction && ally != other
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & diplo_bit(ally)) && ally != faction && ally != other
                 && (PlayersData[other].diplo_treaties[ally] & 0x10)
                 && (!(PlayersData[ally].diplo_treaties[faction] & 1) || !(PlayersData[ally].diplo_treaties[faction] & 0x2000000))
                 && ((PlayersData[faction].diplo_treaties[ally] & 1) || ((PlayersData[faction].diplo_treaties[ally] & 2) && fight > 0))) {
@@ -5139,12 +5139,12 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     for (int ally = 1; ally < 8; ++ally) {
         const uint32_t bit = diplo_bit(ally);
         uint32_t other_treaty = PlayersData[other].diplo_treaties[ally];
-        if (!(factions_status_byte(1) & bit) || ally == faction || ally == other || !(other_treaty & 8)) continue;
+        if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) || ally == faction || ally == other || !(other_treaty & 8)) continue;
         if (update && (PlayersData[faction].diplo_treaties[ally] & 0x10) && !(other_treaty & 0x10)
             && !(PlayersData[faction].diplo_treaties[ally] & 0x10000000)) DiploScratchF7D8 = ally;
         if (!(other_treaty & 1)) {
             if (!(other_treaty & 0x10)) {
-                if (update && !(factions_status_byte(0) & bit)) {
+                if (update && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit)) {
                     if (!(PlayersData[faction].diplo_treaties[ally] & 8)) {
                         if ((!DiploScratchFA38 || contiguous(faction, ally, 0, 0))
                             && ((PlayersData[other].diplo_treaties[ally] & 2) || !DiploScratchFA38)) DiploScratchFA38 = ally;
@@ -5159,7 +5159,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
                 if (!(FactionDiplomacyFlags[other] & 0x40)) {
                     if (!(faction_treaty & 0x10) && ((faction_treaty & 8) || (PlayersData[faction].diplo_treaties[other] & 1))
                         && (!(PlayersData[ally].diplo_treaties[faction] & 1) || !(PlayersData[ally].diplo_treaties[faction] & 0x2000000))) DiploScratchF7E8 = ally;
-                    else if (!DiploScratchF7E8 && update && !(faction_treaty & 8) && !(factions_status_byte(0) & bit)) {
+                    else if (!DiploScratchF7E8 && update && !(faction_treaty & 8) && !(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & bit)) {
                         if (strength < ally_strength || !wants_to_attack(other, ally, 0) || DiploScratchFA98) DiploScratchF7D4 = ally;
                     }
                 } else if ((faction_treaty & 0x18) == 8 && strength < ally_strength) DiploScratchF7E8 = ally;
@@ -7067,7 +7067,7 @@ void __cdecl allocate_energy(int faction_id) {
 
     // Human-only emergency notification path, intentionally distinct from
     // the social-allocation rebalance below.
-    if ((factions_status_byte(0) & faction_bit) != 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
         if (faction.diff_level <= 1 || faction_id != ConsoleGlobal.faction_id_
             || faction.pop_total <= 1 || faction.energy_reserves >= 100)
             return;
@@ -10822,7 +10822,7 @@ if (IsMultiplayerNet == 0 && (GameDataStateStorage.fields_.game_rules_ & 2) != 0
     for (communicate_late_score_other = 1;
          communicate_late_score_other < 8;
          ++communicate_late_score_other) {
-        if ((factions_status_byte(1) &
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
              static_cast<uint8_t>(1u << communicate_late_score_other)) == 0) {
             continue;
         }
@@ -15117,7 +15117,7 @@ void __cdecl wait_loop() {
             for (int other = 1; other < MaxPlayerNum; ++other) {
                 faction = ConsoleGlobal.faction_id_;
                 if (other != faction &&
-                    (factions_status_byte(0) &
+                    (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
                      static_cast<uint8_t>(1u << other)) == 0 &&
                     FactionDiplomacyFlags[other] != 0) {
                     log_say("Initiating diplomatic channel", faction, other, 0);
@@ -19593,7 +19593,7 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
         popup.dialogs().sprite(FactionDiplomacyPortraits[other_faction_id],
                                0, 0);
         for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
-            if ((factions_status_byte(1) & (1u << candidate)) != 0 &&
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << candidate)) != 0 &&
                 eligible(candidate)) {
                 StringTemp[0] = '\0';
                 GenderDefault = Players[candidate].is_leader_female;

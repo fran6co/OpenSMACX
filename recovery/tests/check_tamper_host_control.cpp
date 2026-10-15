@@ -27,10 +27,10 @@ static int TamperDialogFaction[8];
 static int TamperDialogValue[8];
 static TamperRecord TamperRegistryRecords[50];
 static int TamperRegistryCursor;
-static int TurnCurrentNum;
+struct GameDataStateWindow { struct Fields { union LockMasks { struct Bytes { uint8_t human_mask_, alive_mask_, unassigned_[2]; } bytes_; uint32_t enable_mask_; } lock_masks_; int turn_current_num_; } fields_; };
+static GameDataStateWindow GameDataStateStorage;
+static int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
 static int IsMultiplayerPBEM;
-static uint8_t status_bytes[4];
-static uint8_t factions_status_byte(int index) { return status_bytes[index]; }
 
 static char TamperReadApplicationKey[] =
     "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri";
@@ -132,7 +132,7 @@ static void reset_state() {
     memset(TamperRegistryRecords, 0, sizeof(TamperRegistryRecords));
     memset(TamperDialogFaction, 0, sizeof(TamperDialogFaction));
     memset(TamperDialogValue, 0, sizeof(TamperDialogValue));
-    memset(status_bytes, 0, sizeof(status_bytes));
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0;
     TamperState93A9AC = 7;
     TamperState93A9B0 = 9;
     TamperState93A9B4 = 11;
@@ -159,8 +159,8 @@ static void test_match_and_masked_notification() {
     TamperRecord &record = TamperRegistryRecords[3];
     record.field_0_ = 7; record.field_4_ = 9; record.field_8_ = 400;
     record.field_C_ = 2; record.count_ = 5; record.field_14_ = 11;
-    status_bytes[0] = (1u << 1) | (1u << 3) | (1u << 5) | (1u << 6);
-    status_bytes[1] = (1u << 3) | (1u << 5) | (1u << 6);
+    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = (1u << 1) | (1u << 3) | (1u << 5) | (1u << 6);
+    GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ = (1u << 3) | (1u << 5) | (1u << 6);
     query_write_cursor = false; // failed reads leave shared storage untouched
     check_tamper();
     assert(record.count_ == 6);

@@ -522,7 +522,7 @@ build_list:
 
   for (int faction = 1; faction < 8; ++faction) {
     if (field_5DA0_ != 2 ||
-        (factions_status_byte(1) & (1u << faction)) == 0) {
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << faction)) == 0) {
       StringTemp[0] = '\0';
       if (strcmp(Players[faction].formal_name_faction, "JENN282") != 0) {
         strcat(StringTemp, Players[faction].formal_name_faction);

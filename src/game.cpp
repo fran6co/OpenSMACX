@@ -6114,8 +6114,8 @@ void __cdecl check_tamper() {
         TamperRecord &record = TamperRegistryRecords[matching_index];
         ++record.count_;
         const int current_faction = ConsoleGlobal.faction_id_;
-        const uint8_t human_mask = factions_status_byte(0);
-        const uint8_t alive_mask = factions_status_byte(1);
+        const uint8_t human_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
+        const uint8_t alive_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
         for (int faction = 1; faction < MaxPlayerNum; ++faction) {
             if (faction != current_faction) {
                 const uint8_t bit = static_cast<uint8_t>(1u << (faction & 31));

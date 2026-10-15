@@ -26,7 +26,8 @@ char StringTemp[64];
 int IsMultiplayerNet;
 int ConsoleControlTurnActive;
 int UnkGlobal0093A934;
-uint32_t LockEnableMask;
+struct RuntimeGameDataState { struct Fields { union LockMasks { struct Bytes { uint8_t human_mask_, alive_mask_, unassigned_[2]; } bytes_; uint32_t enable_mask_; } lock_masks_; } fields_; } GameDataStateStorage;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 int FactionAfterFirstLog;
 int HumanMaskAfterFirstLog;
 int FactionAfterFirstOpen;
@@ -38,10 +39,6 @@ std::vector<int> OpenOthers;
 std::vector<int> CommunicatedFactions;
 std::vector<int> CommunicatedOthers;
 uint32_t FactionDiplomacyFlags[MaxPlayerNum];
-uint8_t factions_status_byte(int byte) {
-    return reinterpret_cast<uint8_t *>(&LockEnableMask)[byte];
-}
-
 struct NetDaemon {
     int OpenResult;
     uint32_t lock_state_[1][10];
@@ -74,7 +71,7 @@ void log_say(const char *message, int a, int b, int c) {
         FactionAfterFirstLog = 0;
     }
     if (HumanMaskAfterFirstLog >= 0) {
-        reinterpret_cast<uint8_t *>(&LockEnableMask)[0] =
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
             static_cast<uint8_t>(HumanMaskAfterFirstLog);
         HumanMaskAfterFirstLog = -1;
     }

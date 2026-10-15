@@ -34,7 +34,8 @@ struct Prototype {short preq_tech;};
 // Extended host rows permit a byte-width discriminator outside valid game IDs.
 PlayerData PlayersData[32];Player Players[32];Base Bases[4];Prototype VehPrototypes[2];Base *BaseCurrent;
 struct Console {int faction_id_;} ConsoleGlobal;
-unsigned int LockEnableMask;int TurnCurrentNum,BaseCurrentCount,CurrentFactionEnergyReserves;
+struct GameDataStateWindow { struct Fields { union LockMasks { struct Bytes { uint8_t human_mask_,alive_mask_,unassigned_[2]; } bytes_; uint32_t enable_mask_; } lock_masks_; int turn_current_num_,base_current_count_; } fields_; } GameDataStateStorage;
+uint32_t &LockEnableMask=GameDataStateStorage.fields_.lock_masks_.enable_mask_;int &TurnCurrentNum=GameDataStateStorage.fields_.turn_current_num_,&BaseCurrentCount=GameDataStateStorage.fields_.base_current_count_;int CurrentFactionEnergyReserves;
 const char *ScriptPopupFile="script";
 int set_calls,compute_calls,popup_calls,social_calls,cap_calls,first_cap_labs,project_owner,popup_result;
 int diplo_add(int a,int b){return static_cast<int>(static_cast<uint32_t>(a)+static_cast<uint32_t>(b));}
@@ -49,7 +50,6 @@ int has_project(int,int){return project_owner;}
 bool has_fac_built(int,int){return false;}
 int fac_maint(int,int){return 0;}
 int energy_limit(int faction){if(!cap_calls++)first_cap_labs=PlayersData[faction].se_alloc_labs;return 5;}
-uint8_t factions_status_byte(int index){return static_cast<uint8_t>(LockEnableMask>>(index*8));}
 BODY
 void reset(){
  memset(PlayersData,0,sizeof PlayersData);memset(Players,0,sizeof Players);memset(Bases,0,sizeof Bases);
@@ -94,7 +94,10 @@ def test_actual_allocator(compiler,damage,tmp_path):
         assert candidate.count(good)==1
         candidate=candidate.replace(good,'diplo_sub(faction.ai_tech, faction.ai_power), faction.ai_wealth);',1)
     elif damage=='human_width':
-        candidate=candidate.replace('factions_status_byte(0) & faction_bit','LockEnableMask & faction_bit',1)
+        old='GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit'
+        assert candidate.count(old)==1
+        candidate=candidate.replace(old,'LockEnableMask & faction_bit',1)
+        assert candidate != body()
     source=tmp_path/'allocator.cpp';binary=tmp_path/'allocator'
     source.write_text(HARNESS.replace('BODY',candidate))
     built=subprocess.run([executable,'-std=c++98','-Wall','-Wextra','-Werror',str(source),'-o',str(binary)],capture_output=True,text=True,timeout=60)

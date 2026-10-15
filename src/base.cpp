@@ -10993,7 +10993,7 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
             }
         }
     }
-    if (!(factions_status_byte(1) & (1u << (faction & 31)))) {
+    if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << (faction & 31)))) {
         items[7] = 0;
         items[8] = 0;
     }
@@ -13960,7 +13960,7 @@ bool production_project_events_tail(int owner, int project_id) {
                 const uint32_t recipient_treaties =
                     PlayersData[target].diplo_treaties[owner];
                 if ((recipient_treaties & DTREATY_HAVE_SURRENDERED) != 0) {
-                    const uint8_t human = factions_status_byte(0);
+                    const uint8_t human = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
                     if ((human & static_cast<uint8_t>(1u << target)) == 0) {
                         continue;
                     }

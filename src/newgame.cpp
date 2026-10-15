@@ -1122,7 +1122,7 @@ select_faction:
     if (use_expansion_picker) {
         PickWinGlobal.init(thumb_routine, mode, ConfigFactionDetailMode);
         for (int i = 1; i < 8; ++i) {
-            if (mode == 2 && !(factions_status_byte(1) & (1u << i))) continue;
+            if (mode == 2 && !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << i))) continue;
             StringTemp[0] = 0;
             if (strcmp(Players[i].filename, "JENN282") != 0) {
                 strcat(StringTemp, Players[i].formal_name_faction);
@@ -1222,7 +1222,7 @@ expansion_prompt:
     popup.start(PopupStartCaption, "FACTIONX", -1, 0, 0x40, 0);
     {
         for (int i = 1; i < 8; ++i) {
-            if (mode == 2 && !(factions_status_byte(1) & (1u << i))) continue;
+            if (mode == 2 && !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << i))) continue;
             StringTemp[0] = 0;
             strcat(StringTemp, Players[i].formal_name_faction);
             strcat(StringTemp, "|");

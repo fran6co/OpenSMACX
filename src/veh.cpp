@@ -3626,7 +3626,7 @@ void __cdecl monolith(int veh_id) {
     for (int site_faction = 1; site_faction < 8; ++site_faction)
         del_site(site_faction, 0, x, y, 0);
 
-    if ((factions_status_byte(0) &
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
          static_cast<uint8_t>(1u << (static_cast<unsigned>(faction) & 31u))) == 0) {
         bool add_monolith_sites = (veh.state & VSTATE_MONOLITH_UPGRADED) != 0;
         if (!add_monolith_sites) {

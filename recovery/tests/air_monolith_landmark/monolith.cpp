@@ -17,16 +17,17 @@ int callback_console_faction=-1;
 void on_ui_callback() { if(callback_console_faction>=0) ConsoleGlobal.faction_id_=callback_console_faction; }
 struct NetMsg { int calls,last_timeout; const char *last_label,*last_picture; NetMsg():calls(0),last_timeout(0),last_label(0),last_picture(0){} int pop(const char *label,int timeout,int,const char *picture){++calls;last_timeout=timeout;last_label=label;last_picture=picture;on_ui_callback();return 0;} };
 FX g_FX; NetMsg NetMsgPrimary;
-int IsMultiplayerNet=0,GameMorePreferences=0,GameState=0,TurnCurrentNum=1,LockEnableMask=0; int prefs=0,choice=0,skips=0,draws=0,del_count=0,site_count=0,site_ids[16],bit_calls=0,sync_calls=0,morale_calls=0,proto_after_morale=-1,morale_result=2,morale_after_first=-1;
+struct GameDataStateWindow { struct Fields { uint32_t game_more_preferences_,game_state_; int turn_current_num_; union LockMasks { struct Bytes { uint8_t human_mask_,alive_mask_,unassigned_[2]; } bytes_; uint32_t enable_mask_; } lock_masks_; } fields_; } GameDataStateStorage;
+int IsMultiplayerNet=0; uint32_t &GameMorePreferences=GameDataStateStorage.fields_.game_more_preferences_; uint32_t &GameState=GameDataStateStorage.fields_.game_state_; int &TurnCurrentNum=GameDataStateStorage.fields_.turn_current_num_; uint32_t &LockEnableMask=GameDataStateStorage.fields_.lock_masks_.enable_mask_; int prefs=0,choice=0,skips=0,draws=0,del_count=0,site_count=0,site_ids[16],bit_calls=0,sync_calls=0,morale_calls=0,proto_after_morale=-1,morale_result=2,morale_after_first=-1;
 char StringTemp[1032]; Char256 ParseStrBuffer[10]; int GenderDefault=0,PluralityDefault=0; char *ScriptPopupFile=(char*)"title";
 void del_site(int,int,int,int,int){++del_count;} void add_site(int id,int,int,int,int){site_ids[site_count++]=id;} void draw_tile(int,int,int){++draws;} void veh_skip(int){++skips;} int morale_veh(int,int,int){++morale_calls;if(proto_after_morale>=0)Vehs[0].proto_id=static_cast<int16_t>(proto_after_morale);if(morale_calls==2&&morale_after_first>=0)Vehs[0].morale=static_cast<uint8_t>(morale_after_first);return morale_result;} void prefs_save(int){++prefs;} int popp(const char*,const char*,int,const char*,int(__cdecl*)()){on_ui_callback();return choice;}
-Map *map_loc(int,int){return MapTiles;} void bit_set(int,int,int bit,int set){++bit_calls;if(set)tile.bit|=bit;else tile.bit&=~static_cast<uint32_t>(bit);} void synch_bit(int,int,int){++sync_calls;} void say_morale(int,char*,int){} void say_morale(int,int){} int parse_says(int,const char*,int,int){return 0;} char *CharLowerA(char *s){return s;} char *_itoa(int n,char *out,int){strcpy(out,n?"1":"0");return out;} uint8_t factions_status_byte(int){return static_cast<uint8_t>(LockEnableMask);}
+Map *map_loc(int,int){return MapTiles;} void bit_set(int,int,int bit,int set){++bit_calls;if(set)tile.bit|=bit;else tile.bit&=~static_cast<uint32_t>(bit);} void synch_bit(int,int,int){++sync_calls;} void say_morale(int,char*,int){} void say_morale(int,int){} int parse_says(int,const char*,int,int){return 0;} char *CharLowerA(char *s){return s;} char *_itoa(int n,char *out,int){strcpy(out,n?"1":"0");return out;}
 #include "actual.inc"
 static void reset(){
  memset(Vehs,0,sizeof Vehs); memset(VehPrototypes,0,sizeof VehPrototypes);
  memset(Weapon,0,sizeof Weapon); memset(&tile,0,sizeof tile);
  ConsoleGlobal.faction_id_=0;
- IsMultiplayerNet=GameMorePreferences=GameState=LockEnableMask=prefs=choice=skips=draws=del_count=site_count=bit_calls=sync_calls=morale_calls=0;
+ IsMultiplayerNet=GameMorePreferences=GameState=LockEnableMask=prefs=choice=skips=draws=del_count=site_count=bit_calls=sync_calls=morale_calls=0; TurnCurrentNum=1;
  memset(site_ids,0,sizeof site_ids);
  callback_console_faction=-1; proto_after_morale=-1; morale_result=2; morale_after_first=-1;
  Vehs[0].x=2; Vehs[0].y=1; Vehs[0].proto_id=0; Vehs[0].faction_id=0;
