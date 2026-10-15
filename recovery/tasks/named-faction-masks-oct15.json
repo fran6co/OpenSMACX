@@ -1,0 +1,121 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f02e71408ea394c6f146cc8b93578a72db6d7ecc",
+  "editable_files": [
+    "src/faction.h",
+    "src/faction.cpp",
+    "src/probe.cpp",
+    "src/game.cpp",
+    "src/pickwin.cpp",
+    "src/reportwin.cpp",
+    "src/base.cpp",
+    "src/newgame.cpp",
+    "src/veh.cpp",
+    "recovery/tests/air_monolith_landmark/monolith.cpp",
+    "recovery/tests/check_tamper_host_control.cpp",
+    "recovery/tests/communicate_owner_host_fixture.cpp",
+    "recovery/tests/fixtures/config_game_api.cpp",
+    "recovery/tests/fixtures/probe_host_stubs.inc",
+    "recovery/tests/pickwin_owner_host_control.cpp",
+    "recovery/tests/runtime_services/control.cpp",
+    "recovery/tests/test_allocate_energy_behavior.py",
+    "recovery/tests/test_base_yield.py",
+    "recovery/tests/test_config_game_actual_source.py",
+    "recovery/tests/test_diplomacy_actions_coverage.py",
+    "recovery/tests/test_air_monolith_landmark_behavior.py",
+    "recovery/tests/test_check_tamper_actual_body.py",
+    "recovery/tests/test_communicate_owner.py",
+    "recovery/tests/test_pickwin_owner_behavior.py",
+    "recovery/tests/test_runtime_services_behavior.py",
+    "recovery/tests/test_probe_actual_source_runtime.py",
+    "recovery/tests/test_mask_snapshot_views_oct15.py",
+    "recovery/tests/test_named_faction_masks_oct15.py"
+  ],
+  "evidence": [
+    "Native source reader verifies 15 original owner identities across eight direct caller TUs. All 22 direct production calls use literal index 0 or 1. Existing GameDataLockMaskBytes names human byte0 and alive byte1; the helper has no independent original identity.",
+    "Coordinator authorizes removing factions_status_byte and migrating all direct calls plus is_human/is_alive in faction.h. Preserve each live read or captured local, short-circuit order, unchecked shifts and original error paths. Do not change signatures, storage, layouts, annotations, historical claims or unrelated bodies.",
+    "Header effect closure requires full build/link, fresh affected TU measurement and physical object/reference review, including inline consumers console,council,diplowin,enemy,map,multiwin,path,technology,terraforming and all other changed contributions. Scope includes collateral verification, not unrelated source edits. New discoveries require coordinator expansion.",
+    "Host fixture edits must retain assertions/scenarios and model actual production mask storage. Run baseline tests before edits; add actual-source named-wrapper and read-timing controls. Manual reviewed integration only; no automatic or full-game acceptance claim."
+  ],
+  "intent": "Remove indexed raw mask-byte helper and use established named human/alive fields without changing read timing.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5624480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5482880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5400496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5570512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5370368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5567520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5894432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5366032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4758432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4858384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4854080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5950432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5176960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5807408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5742672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "named-faction-masks-oct15"
+}
