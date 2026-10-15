@@ -117,8 +117,6 @@ struct NetAllocationNode { uint32_t max_players_; };
 struct Net { NetAllocationNode node; const NetAllocationNode &allocation_node() const { return node; } };
 static Net NetDaemonNet;
 static NetWinSessionBlock NetWinSessionData;
-static unsigned int *NetWinEighthSlotWord=&NetWinSessionData.mode_;
-static char *NetWinScenarioText=NetWinSessionData.scenario_text_wire_tail_;
 struct Options { uint8_t status_, option_4_, option_5_, reserved_B_, player_count_, difficulty_, planet_size_, ocean_coverage_, erosion_, native_life_, cloud_cover_; };
 static Options NetWinSessionOptions;
 static char noun[]="localized noun";

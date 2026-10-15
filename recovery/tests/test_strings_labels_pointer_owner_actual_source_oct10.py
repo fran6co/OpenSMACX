@@ -63,7 +63,7 @@ def _actual_fragments():
     draw = _body(netwin_source, "void NetWin::draw_session_info()")
     opponent_start = draw.index("// ---- opponent difficulty ----")
     prefix_start = draw.index("StringTemp[0] = 0;", opponent_start)
-    branch_start = draw.index("if (*NetWinScenarioText == 0)", prefix_start)
+    branch_start = draw.index("if (NetWinSessionData.scenario_text_wire_tail_[0] == 0)", prefix_start)
     first_branch = _block(draw, branch_start)
     else_start = _mask(draw).index("else", branch_start + len(first_branch))
     else_branch = _block(draw, else_start)
@@ -192,7 +192,6 @@ struct Strings {
 LPSTR label_get(int slot) { return StringTable.get(Labels.strings_ptr[slot]); }
 struct SessionOptions { int option_4_; int option_5_; } NetWinSessionOptions;
 NetWinSessionBlock NetWinSessionData;
-char *NetWinScenarioText = NetWinSessionData.scenario_text_wire_tail_;
 char StringTemp[4096];
 char * _itoa(int value, char *buffer, int) {
   sprintf(buffer, "%d", value);

@@ -35,7 +35,7 @@ def material():
     # Complete actual case-1 tail, including its gate, selector and send join.
     # The parent spot/other cases are unchanged by this bounded caller change.
     click = extract_function(source, "void NetWin::on_left_click(int")
-    start = click.index("    case 1:\n        if (*NetWinRulesGate") + len("    case 1:\n")
+    start = click.index("    case 1:\n        if (NetDaemonNet.primary_state_.leading_words_[0]") + len("    case 1:\n")
     end = click.index("\n    case 2:\n        if (NetDaemonNet", start)
     methods["rule_toggle"] = "static void rule_toggle(int spot_position) {\n" + click[start:end] + "}\n"
     helpers = "\n".join(extract_function(source, name) for name in (
@@ -59,13 +59,10 @@ HARNESS = r'''
 static std::vector<std::string> events;
 static std::function<void(const std::string&)> callback;
 static void event(const std::string&s) { events.push_back(s); if(callback)callback(s); }
-static int answer, dialog_count, pull_count, sends, player_count, NetWinPlanetSizeLabelCount;
+static int answer, dialog_count, pull_count, sends, NetWinPlanetSizeLabelCount;
 static int recipient_storage=39;
 static bool trace_copy_reads=false;
 static int &destination() { if(trace_copy_reads)event("destination_read"); return recipient_storage; }
-static int *NetWinPlayerCount=&player_count;
-static int rules_gate=1;
-static int *NetWinRulesGate=&rules_gate;
 static char StringTemp[256];
 static int Difficulty[]={10,11,12,13,14,15};
 /* ACTUAL RECORDS */
@@ -138,6 +135,8 @@ static void time_controls_dialog(Popup *popup) {
     for(int i=0;i<3;++i) popup->dialogs().item(label_get(i),i);
 }
 struct NetDaemon {
+    int player_count_=4;
+    struct PrimaryState { uint32_t leading_words_[3]; } primary_state_ = {{1,0,0}};
     uint32_t local_player_id_ = 27;
     uint32_t local_player_id() const { return local_player_id_; }
     uint32_t host_player_id() const { return static_cast<uint32_t>(destination()); }
@@ -150,6 +149,8 @@ struct NetDaemon {
         trace_copy_reads=false; ++sends; event("send");
     }
 } NetDaemonNet;
+static int &player_count=NetDaemonNet.player_count_;
+static uint32_t &rules_gate=NetDaemonNet.primary_state_.leading_words_[0];
 class NetWin {
 public:
     char world_size_labels_[8][128];
@@ -302,8 +303,9 @@ MUTANTS = [
     ("diff_default", "global_diff", "Dialogs &dialogs = pop_menu.dialogs();", "Dialogs &dialogs = pop_menu.dialogs(); dialogs.item(label_get(0xFE4 / 4),0);"),
     ("diff_off_by_one", "global_diff", "static_cast<unsigned char>(answer)", "static_cast<unsigned char>(answer - 1)"),
     ("time_off_by_one", "time", "static_cast<unsigned char>(answer)", "static_cast<unsigned char>(answer - 1)"),
+    ("time_wrong_owner_field", "time", "NetWinSessionOptions.time_control_", "NetWinSessionOptions.option_4_"),
     ("number_old_result", "num_players", "static_cast<uint32_t>(first)", "static_cast<uint32_t>(-1)"),
-    ("number_live_first", "num_players", "static_cast<uint32_t>(first)", "static_cast<uint32_t>(*NetWinPlayerCount)"),
+    ("number_live_first", "num_players", "static_cast<uint32_t>(first)", "static_cast<uint32_t>(NetDaemonNet.player_count_)"),
     ("number_no_clamp", "num_players", "else if (count > 7) count = 7;", "else if (count > 7) count = count;"),
     ("number_no_lower_clamp", "num_players", "if (count < 2) count = 2;", "if (count < 2) count = count;"),
     ("cached_planet_count", "planet_size", "for (int index = 0; index < NetWinPlanetSizeLabelCount; ++index)", "int cached=NetWinPlanetSizeLabelCount; for (int index = 0; index < cached; ++index)"),
@@ -315,6 +317,7 @@ MUTANTS += [("default_"+n,n,"static_cast<unsigned char>(answer - 1)","static_cas
             for n in ("planet_size","ocean","erosion","native","clouds")]
 MUTANTS += [("rule_click_late_destination","rule_toggle","pick_send_state_with_captured_target();","pick_send_state();"),
             ("rule_click_wrong_toggle","rule_toggle","rule_bits_a_ ^= 0x800;","rule_bits_a_ ^= 0x400;"),
+            ("rule_click_wrong_gate_word", "rule_toggle", "NetDaemonNet.primary_state_.leading_words_[0]", "NetDaemonNet.primary_state_.leading_words_[1]"),
             ("rule_click_default_return","rule_toggle","default: break;","default: return;")]
 
 
