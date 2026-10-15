@@ -1,0 +1,22 @@
+{
+  "event_id": "7d78a14a605027a12436cad7df09e44c8ba6e0af43a6b7d513c7db79e7918111",
+  "payload": {
+    "affects": [
+      "entity-3514cdee4082977bd7a6588c8079da0e12fe5cce80fac140d7d4771df7747a54"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "social-effects-phase-position-discovery-oct15",
+    "evidence": [
+      "Pinned4AF754/4AF75E routes phase0 to4AF80B signed value>=2; phase1 value==1, phase2 negative via4AF77A then shared absolute-magnitude big/small dispatch.",
+      "EBX horizontal position initializes4AF64E/655 once before phase loop;4AF88D returns4AF66B without reset. Post-big-draw4AF7D8 reads fixed this+2C70, digit sprite0 source_width, not selected sprite.",
+      "Coordinator authorizes correction within already-expanded draw_social scope; extend independent actual-source controls to mixed signs/magnitudes, continuing positions, differing digit widths. Do not suppress big negative glyphs in phase2; shared4AF78Eabs comparison still draws them."
+    ],
+    "hypothesis": "draw_social duplicates large negative effects in phase0, resets horizontal position across phases, and advances by selected instead of fixed digit width",
+    "kind": "discovery"
+  },
+  "previous_event": "b0961b0b5edba56e88f3289253f5358005048ed653264eb000b2282f9209c9f1",
+  "request_id": "social-effects-phase-position-discovery-oct15",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:socialwin-category-rectangles-oct15"
+}

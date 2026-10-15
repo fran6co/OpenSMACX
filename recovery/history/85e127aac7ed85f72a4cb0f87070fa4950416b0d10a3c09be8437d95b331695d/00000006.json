@@ -1,0 +1,19 @@
+{
+  "event_id": "b1389ff34e73b84866e1a3a2932a42364b4b1353ff14aedb0c7bd30f2efb4b56",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "social-effects-phase-position-discovery-oct15",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/socialwin.cpp:draw_social restores eleven-entry walk skipping3, nine-sprite effect grouping, signed phase predicates, persistent phase cursor, fixed digit width and live faction reads.",
+      "recovery/tests/test_socialwin_effect_walk_oct15.py executes actual count/render loops and eight damaging variants; manual original-derived draw sequence and live callback case pass under GCC and Clang.",
+      "Fresh native candidate2 full build/link passes, scoped87 verdicts retain45exact, declared layout36observations pass, claims3360 and historicalrequirements3368 havezero missing. These are bounded recovery checks, not full-game or automatic acceptance."
+    ]
+  },
+  "previous_event": "da148f987476ce9ff43b14467acac59c9fc49026300eaed199de9bb330a3cc18",
+  "request_id": "social-effects-phase-position-discovery-oct15-incorporated",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:socialwin-category-rectangles-oct15"
+}

@@ -50,16 +50,24 @@ def live_parts():
     registry = "InterfaceRegistry[2] = static_cast<SubInterface *>(this);"
     tutorial = (
         "TutorialWindow.set_tour_stage(5);",
-        "TutorialWindow.soc_rect(&TutWinSocWindow.tooltipSocEng_, &out_a, &out_b);",
+        "TutorialWindow.soc_rect(&TutWinSocWindow.categoryHeaders_[0], &out_a, &out_b);",
     )
     assert registry in init
     assert all(statement in init for statement in tutorial)
     assert "PlayersData[factionID_].se_alloc_psych" in info
     assert "PlayersData[factionID_].se_alloc_labs" in info
     assert "SocialCategories[3].model_effect[1].values_" in draw_social
-    assert "while (p != social_effect_row + 3)" in draw_social
-    assert "while (p2 != social_effect_row + 3)" in draw_social
-    assert "if (p2 > social_effect_row + 10)" in draw_social
+    assert draw_social.count(
+        "for (int effect_index = 0; effect_index < MaxSocialEffectNum; ++effect_index)"
+    ) == 2
+    assert draw_social.count("if (effect_index != 3)") == 2
+    assert "if (icon_effect_index >= 3)" in draw_social
+    assert "6 + icon_effect_index * 9 + (v >= 1 ? 2 : 1)" in draw_social
+    assert "int drawX2 = drawX;\n        for (int phase = 0; phase < 3; phase++)" in draw_social
+    assert "draw = (v >= 2);" in draw_social
+    assert "draw = (v == 1);" in draw_social
+    assert "draw = (v < 0);" in draw_social
+    assert "1 + socEngModifierNums_[0].source_width()" in draw_social
     code = "\n".join(line for line in text.splitlines()
                        if not line.lstrip().startswith(("//", "*")))
     for old in ("SocialEffectTable[", "SocialEffectRow[", "SocialAllocTable[",
@@ -114,7 +122,8 @@ struct Tutorial {
 } TutorialWindow;
 struct SocialWinFixture : SubInterface {
     int factionID_ = 0;
-    RECT tooltipSocEng_{}, tooltipEconomy_{}, tooltipPsych_{}, tooltipLabs_;
+    RECT categoryHeaders_[4]{}, modelRects_[16]{};
+    RECT tooltipEconomy_{}, tooltipPsych_{}, tooltipLabs_;
     RECT tooltipEffects_{}, tutRect9_{};
     uint32_t economyAllocOrig_{}, psychAllocOrig_{}, labsAllocOrig_{};
     uint32_t economyAlloc3_{}, psychAlloc3_{}, labsAlloc3_{}, pendingAlloc_[3]{};
@@ -172,13 +181,13 @@ int main() {
     other.run_layout();
     check(other.tooltipEffects_.left == 7 && other.tooltipEffects_.right == 99);
 
-    other.tooltipSocEng_ = {100, 200, 300, 400};
-    TutWinSocWindow.tooltipSocEng_ = {11, 21, 31, 41};
+    other.categoryHeaders_[0] = {100, 200, 300, 400};
+    TutWinSocWindow.categoryHeaders_[0] = {11, 21, 31, 41};
     other.run_init_storage();
     check(InterfaceRegistry[2] == static_cast<SubInterface *>(&other));
     check(TutorialWindow.field_53C0_ == 5 && TutorialWindow.set_calls == 1);
-    check(TutorialWindow.seen == &TutWinSocWindow.tooltipSocEng_ &&
-          TutorialWindow.seen != &other.tooltipSocEng_);
+    check(TutorialWindow.seen == &TutWinSocWindow.categoryHeaders_[0] &&
+          TutorialWindow.seen != &other.categoryHeaders_[0]);
     check(TutorialWindow.rect_calls == 1 && TutorialWindow.seen != nullptr);
     return 0;
 }
@@ -202,7 +211,8 @@ def host_source(mutant=None):
         layout = layout.replace("MainInterfaceGlobal.right_frame_rect()",
                                 "MainInterfaceGlobal.info_panel_frame()")
     elif mutant == "receiver_relative_tutorial_rect":
-        rect = rect.replace("TutWinSocWindow.tooltipSocEng_", "tooltipSocEng_")
+        rect = rect.replace("TutWinSocWindow.categoryHeaders_[0]",
+                            "categoryHeaders_[0]")
 
     return (HARNESS.replace("__IMMUNE__", immune)
             .replace("__LAYOUT__", layout)

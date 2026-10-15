@@ -1,0 +1,22 @@
+{
+  "event_id": "04e0d8dd1e53c6812af8ccec86a64bd8eb327e8647ae8dd4bc902b8434949712",
+  "payload": {
+    "affects": [
+      "entity-3514cdee4082977bd7a6588c8079da0e12fe5cce80fac140d7d4771df7747a54"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "social-effects-eleven-entry-discovery-oct15",
+    "evidence": [
+      "Pinned count-loop backedge4AF607/4AF60F and draw-loop4AF872/4AF87D compare against94B2F8, eleven dwords after94B2CC;94B2D8 skips index3, not loop termination.",
+      "Current source and storage fixture incorrectly stop both loops at row+3. Pinned4AF7F3..4AF825 uses >=94B2D8 for later-index sprite remapping; current >row+10 contradicts it. Preserve all original sign/owner/call effects; no original bug fixes.",
+      "Coordinator and independent reviewer confirmed instructions; complete effect-path audit and actual-source controls are required before integration. Keep rectangle recovery and expand affected owner work rather than ignoring discovery."
+    ],
+    "hypothesis": "draw_social truncates both original eleven-entry effect passes and misroutes later small-icon indices",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "social-effects-eleven-entry-discovery-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:socialwin-category-rectangles-oct15"
+}
