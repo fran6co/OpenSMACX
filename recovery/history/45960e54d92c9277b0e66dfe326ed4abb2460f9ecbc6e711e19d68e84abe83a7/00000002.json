@@ -1,0 +1,18 @@
+{
+  "event_id": "b71a7d705e021f8ede41e724f46e6e778abaf103bb558df3561dea9eafd49efa",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "scroll-ordinary-assignment-deck-oct15",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject adoption of this deck, not the outstanding restoration obligations: all three candidates retain the same12/14 mismatch under /O2 and0/14 under /Oy-. Complete native local screening scored12compile attempts; no supported improvement. Source remains unchanged; no volatile/raw-vtable workaround authorized.",
+      "Ignored evidence build/recovery/scroll-setter-deck-oct15.json (SHA256 e4be64667e04d09948a72208bbe594250684ea351d169ffee61f6a833493f608) and scroll-setter-local-results-oct15.json. Existing actual-source setter host controls pass3tests. This experiment establishes neither strict references nor game acceptance."
+    ]
+  },
+  "previous_event": "74b7bd63989cd421446695cd35830989d4fa60f7531167a8b1e9aab221a742bc",
+  "request_id": "scroll-assignment-deck-not-adopted-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:scroll-setter-scheduling-oct15"
+}

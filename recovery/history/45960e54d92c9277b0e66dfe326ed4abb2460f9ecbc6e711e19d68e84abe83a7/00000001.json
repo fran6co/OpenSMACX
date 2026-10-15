@@ -1,0 +1,23 @@
+{
+  "event_id": "74b7bd63989cd421446695cd35830989d4fa60f7531167a8b1e9aab221a742bc",
+  "payload": {
+    "affects": [
+      "entity-22d6abf0bc879e149c787716a69c09913fd0ec19196ed7a14f6fd41d43b8093f",
+      "entity-42f31e6d4cff86134f04b1c8aaee41f4424884dd3c267e34fe3f3a4419b1da70",
+      "entity-bee5b4bf59d273f96100cc871b78a5e7f2f45521550bd57d8de8359267eba992",
+      "entity-c3a87afc3f0d7777b73bda809043ab3bd680b2d035104f5f1aa6d895a116458f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "scroll-ordinary-assignment-deck-oct15",
+    "evidence": [
+      "Pinned/object review identifies primary store versus LEA ordering, not a virtual dispatch defect. The bounded deck screens set_button_color using separate direct-parameter stores and primary-first chains with and without a local uint32 value."
+    ],
+    "hypothesis": "Adopt an ordinary assignment form only if it repairs the primary-store scheduling residual while retaining genuine virtual calls.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "scroll-ordinary-assignment-deck-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:scroll-setter-scheduling-oct15"
+}
