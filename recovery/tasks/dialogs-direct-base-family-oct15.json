@@ -1,0 +1,83 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "5d2421ed09abb96b6cebe68bfa9e789b605d720e",
+  "editable_files": [
+    "src/dialogs.cpp",
+    "src/dialogs.h",
+    "recovery/tests/test_dialogs_remaining_typed_dispatch_oct9.py",
+    "recovery/tests/test_key_event_hierarchy.py",
+    "recovery/tests/test_dialogs_sparse_dispatch_oct15.py",
+    "recovery/tests/test_dialogs_left_click_routing_oct15.py"
+  ],
+  "evidence": [
+    "Five-handler pilot e12396feb restored5historical BYTE_EXACT bodies through direct qualified SpriteBox calls; full63-row native measurement changed only those5, physical153-section review preserved other sections/targets, candidate and destination application build/link passed. Current helper materialization causes unnecessary complete-object/null/base conversion; preserve known graph, no raw offsets.",
+    "Remaining43 helper calls across item,mousewheel,mouse_move,left_click,left_down,left_double_click,mouse_leave,key_down,dialog_focus,two attach overloads,on_redraw target declared direct ListBox/RadioButton/CheckBox/SpriteBox/EditGroup bases. Replace only helper().Base::method with Base::method; retain arguments, gates, switch ordering/defaults, return behavior and all markers/claims.",
+    "Do not alter static_cast<Dialog&>(*this).Dialog::item: shared virtual-base route outside this batch. Remove five unused private helper definitions only after whole source caller search proves unused; no inheritance/layout/API changes. Adapt actual-source test anchors and mutation controls without weakening behavior/receiver assertions. Existing Council fixture failure is baseline unrelated, no fix authorized here. Whole-TU native measurements, generated thunk/reference collateral and fresh build/link required before manual integration."
+  ],
+  "intent": "Recover direct qualified widget-base dispatch across the remaining12 Dialogs functions, preserving all existing routing and receiver contracts.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6367856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6367968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6367600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "dialogs-direct-base-family-oct15"
+}
