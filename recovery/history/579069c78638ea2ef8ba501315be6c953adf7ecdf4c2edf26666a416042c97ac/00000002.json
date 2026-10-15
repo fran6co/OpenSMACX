@@ -1,0 +1,19 @@
+{
+  "event_id": "309ed15fa1dce3e5a92de07db5d67f9cf02f940c0b84bd5c66de06b7bcacf2a2",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/buffer.h"
+    ],
+    "evidence": [
+      "Authorize a private nonvirtual implementation-helper declaration for this family only; no field, layout, virtual slot or public signature changes. Native overlay evidence is recorded in the preceding discovery. Require full-TU and header-consumer collateral review, build/link and preserved historical setup restoration obligation before integration. No fake retention references, exports or flag changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "34d96f32dcf6432ddda8ffad5216380007f14ca8eca5702d894a8609be0a6aca",
+  "request_id": "buffer-private-inline-header-scope-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:buffer-sprite-setup-inline-oct15"
+}
