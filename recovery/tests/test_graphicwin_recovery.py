@@ -411,9 +411,9 @@ def test_system_close_assigns_the_callback_pointer_instead_of_overwriting_the_wi
 
     # The bad form also references the same symbol, but loads its pointer
     # and then overwrites the old window instead of assigning the global.
-    anchor = b"WinCallbackWindow = self;\n    Callback404 cb"
+    anchor = b"WinCallbackWindow = self;\n    WinNullaryEventCallback cb"
     assert source.count(anchor) == 1
-    damaged = source.replace(anchor, b"*reinterpret_cast<Win **>(WinCallbackWindow) = self;\n    Callback404 cb")
+    damaged = source.replace(anchor, b"*reinterpret_cast<Win **>(WinCallbackWindow) = self;\n    WinNullaryEventCallback cb")
     obj = Coff(compiler.overlay(path, {"src/win.cpp": damaged}, (), settings.flag_sets[0]))
     assert global_accesses(obj, callback, global_symbol) == [CS_AC_READ]
     assert path.read_bytes() == source

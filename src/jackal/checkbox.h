@@ -144,7 +144,7 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   // (NetWin::checkBox_'s embed included) goes through the one bare ctor
   // above.
   ~CheckBox();
-  uint32_t close();
+  void close();
   void UNK1(int pos);
   int UNK2(int pos);
   void set_state_pos(int pos, int state);

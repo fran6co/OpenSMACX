@@ -1,4 +1,4 @@
-"""Compile the live GraphicWin::close body against a focused C++98 host owner."""
+"""Exercise GraphicWin close side effects against a focused C++98 host owner."""
 from pathlib import Path
 import shutil
 import subprocess
@@ -26,7 +26,7 @@ def definition(text, signature):
 
 def live_definitions():
     source = SOURCE.read_text(encoding="utf-8")
-    close = definition(source, "uint32_t GraphicWin::close()")
+    close = definition(source, "void GraphicWin::close()")
     caption_result = definition(
         source, "uint32_t GraphicWin::field_A0C_value() const")
     return close, caption_result
@@ -38,9 +38,9 @@ def build_fixture(close, caption_result):
 #include <stdlib.h>
 #include <string.h>
 
-// The product target is 32-bit. uintptr_t substitutes for its uint32_t return
-// in this host control so a deleted object's saved numeric receiver fits on
-// 64-bit hosts too. This does not test the target ABI or 32-bit layout.
+// uintptr_t preserves the independently tested field_A0C_value getter's
+// pointer-sized representation in this host control; this tests neither the
+// product ABI nor 32-bit layout.
 #define uint32_t uintptr_t
 
 struct GraphicWin;
@@ -83,7 +83,7 @@ struct Buffer {
 
 struct GraphicWin : Win, Buffer {
     GraphicWin();
-    uintptr_t close();
+    void close();
     uintptr_t field_A0C_value() const;
 
     void (*field_A10_)();
@@ -185,9 +185,7 @@ int main() {
     mutate_owner_during_close = true;
     scalar_delete_count = 0;
 
-    const uintptr_t expected_result = reinterpret_cast<uintptr_t>(buffer_replacement);
-    const uintptr_t result = window.close();
-    assert(result == expected_result);
+    window.close();
     assert(event_count == 4);
     assert(events[0] == 'W' && events[1] == 'B');
     assert(events[2] == '3' && events[3] == 'b');
@@ -197,14 +195,14 @@ int main() {
     assert(window.owned_buffer_ == 0);
     assert_reset(window);
 
-    // With no separately owned Buffer, reset still runs and returns the
-    // default caption callback's stored pointer value.
+    // With no separately owned Buffer, reset still runs and the independent
+    // field_A0C_value getter still exposes the default callback's stored value.
     event_count = 0;
     mutate_owner_during_close = false;
     window.field_A0C_ = &alternate_caption_draw;
-    const uintptr_t null_result = window.close();
+    window.close();
     assert(event_count == 2 && events[0] == 'W' && events[1] == 'B');
-    assert(null_result == window.field_A0C_value());
+    assert(window.field_A0C_value() == reinterpret_cast<uintptr_t>(GraphicWinFieldA0CDefault));
     assert(window.owned_buffer_ == 0);
     assert_reset(window);
     assert(scalar_delete_count == 1);
@@ -232,10 +230,6 @@ def mutations(close):
     before = "    Win::close();\n    Buffer::close();"
     after = "    Buffer::close();\n    Win::close();"
     cases["wrong_base_order"] = close.replace(before, after, 1)
-
-    before = "    const uint32_t result = reinterpret_cast<uint32_t>(release_target);"
-    after = "    const uint32_t result = 0;"
-    cases["wrong_return"] = close.replace(before, after, 1)
 
     before = "    Win::close();\n    Buffer::close();"
     after = "    Buffer *const release_target = owned_buffer_;\n"
@@ -277,7 +271,7 @@ def test_live_graphicwin_close_full_lifetime(compiler_name, tmp_path):
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
 @pytest.mark.parametrize("mutation", [
     "qualified_destructor", "early_clear", "wrong_base_order",
-    "wrong_return", "stale_owner_capture",
+    "stale_owner_capture",
 ])
 def test_live_graphicwin_close_rejects_lifetime_mutations(
         compiler_name, mutation, tmp_path):

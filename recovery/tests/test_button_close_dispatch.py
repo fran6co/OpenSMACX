@@ -63,7 +63,7 @@ def actual():
         '\n'.join(one(h['buffer'], rf'(?:int|void) {name}\([^;]+;') for name in
                   ('set_font', 'set_text_color', 'set_text_color2', 'set_text_color3')), '};',
         one(h['graphicwin'], r'^class GraphicWin :[^\n]+\{') + ' public:',
-        'virtual ~GraphicWin();', one(h['graphicwin'], r'uint32_t close\(\);'),
+        'virtual ~GraphicWin();', one(h['graphicwin'], r'void close\(\);'),
         one(h['graphicwin'], r'int init\(int x, int y,[^;]+;'), '};',
     ]
     for name, unit in (('BaseButton', 'basebutton'), ('FlatButton', 'flatbutton'),
@@ -166,7 +166,7 @@ LPVOID __cdecl mem_get(int size){require(size==6);event('A');
     if(allocation_fails)return nullptr;last_allocation=static_cast<char*>(std::malloc(size));
     std::memset(last_allocation,0x5a,size);return last_allocation;}
 GraphicWin::~GraphicWin(){event('D');}
-uint32_t GraphicWin::close(){require(!observing||this==static_cast<GraphicWin*>(active));event('G');return 77;}
+void GraphicWin::close(){require(!observing||this==static_cast<GraphicWin*>(active));event('G');}
 int GraphicWin::init(int x,int y,int w,int h,LPSTR caption,int style,Win*owner,Menu*menu,BorderSizing*border){
     require(this==static_cast<GraphicWin*>(active));
     require(x==-7&&y==11&&w==expected_width&&h==expected_height);

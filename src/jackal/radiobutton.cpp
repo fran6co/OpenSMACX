@@ -131,18 +131,20 @@ Purpose: Reset the radio button to its defaults, then close its dialog and
          graphic base. Both calls resolve through the vbtable, so they reach
          the Dialog and the virtual base rather than the object itself.
 // ORIGINAL: 0x0060D1B0 ?close@RadioButton@@QAEIXZ 0x0060D1B0-0x0060D1E6 BYTE_EXACT
-// symbol    ?close@RadioButton@@QAEIXZ
+// symbol    ?close@RadioButton@@QAEXXZ
 // TRIED: the reconstructed signature `?close@CheckBox@@QAEXXZ`. The census
 //   names are RECONSTRUCTIONS - the image is stripped - and this one had the
 //   same method carrying two signatures across one hierarchy: Dialog::close and
 //   four derived close() returning void, GraphicWin::close and ListBox::close
 //   returning uint32_t. The original cannot have had that. Unified on
-//   `uint32_t` (the form two bodies were already tuned to, for the EAX
-//   residue) and on `virtual`, which is what the vtable slot these classes
-//   install by hand actually is - hence `UAEIXZ`.
+//   `uint32_t` and on `virtual`, based on the assumed EAX residue and a
+//   mistaken vtable interpretation. That hypothesis is superseded: this member is nonvirtual;
+//   physical caller audit found all 21 direct callers discard EAX. The source
+//   lifecycle contract is void; retain the original reset and close order.
 // LEVER: reread-vbtable the image reads `[esi]` TWICE, once per base call (0x0060D1B5 and 0x0060D1D8). Holding it in a `const int32_t *const vbtable` local made VC6 keep it live across the first call, which costs a callee-saved edi and a push/pop pair the image never emits: 5 of 19 with the cache, BYTE_EXACT 19/19 reading it inline at both uses.
 // size      54 bytes
-// prototype uint32_t (__thiscall ?close@RadioButton@@QAEIXZ)(RadioButton* this)
+// prototype (historical reconstructed) uint32_t (__thiscall ?close@RadioButton@@QAEIXZ)(RadioButton* this)
+// source contract void; physical direct callers discard EAX
 // callers   21   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -150,7 +152,7 @@ Purpose: Reset the radio button to its defaults, then close its dialog and
 Return Value: n/a
 Status: Complete
 */
-uint32_t RadioButton::close() {
+void RadioButton::close() {
     // The base calls go through the runtime vbtable either way - the
     // compiler's own dispatch for a virtual-base member call reads it at run
     // time exactly as the old hand walk did, so the embedded-in-Dialogs case
@@ -161,7 +163,7 @@ uint32_t RadioButton::close() {
     checked_sprite_ = RadioButtonDefault2;
     unchecked_sprite_ = RadioButtonDefault1;
     Dialog::close();
-    return GraphicWin::close();
+    GraphicWin::close();
 }
 
 // Seed identity: ?draw_item@RadioButton@@QAEXHH@Z at 0x0060D750.
