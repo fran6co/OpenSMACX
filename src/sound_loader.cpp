@@ -90,7 +90,6 @@ int __cdecl load_sound_dll() {
         }
         void **procs = SoundDllProcs;
         void **slot = procs;
-        void **procs_end = procs + 11;
         int index = 0;
         do {
             void *proc = reinterpret_cast<void *>(GetProcAddress(
@@ -111,7 +110,7 @@ int __cdecl load_sound_dll() {
             }
             ++slot;
             ++index;
-        } while ((int)slot < (int)procs_end);
+        } while (index < 11);
 
         unsigned int version;
         if (SoundDllModule == 0) {

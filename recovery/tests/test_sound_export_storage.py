@@ -106,6 +106,7 @@ def test_actual_loader_populates_rebinds_and_clears_the_actual_role_accessors(tm
     ("src/sound.h", "reinterpret_cast<SoundXDeleteSoundProc>(SoundDllProcs[1])", "reinterpret_cast<SoundXDeleteSoundProc>(SoundDllProcs[0])"),
     ("src/sound.h", "reinterpret_cast<SoundXCreateSoundProc>(SoundDllProcs[0])", "reinterpret_cast<SoundXCreateSoundProc>(SoundDllProcs[1])"),
     ("src/sound_loader.cpp", "i < 0xb", "i < 0xa"),
+    ("src/sound_loader.cpp", "index < 11", "index < 10"),
     ("src/sound_loader.cpp", "*slot = proc;", "if (index != 0) *slot = proc;"),
 ])
 def test_loader_role_contract_rejects_wrong_slots_or_incomplete_storage(tmp_path, monkeypatch, unit, before, after):
