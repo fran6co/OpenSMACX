@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "9ff2c9227a3367ac280373424a6a77a847e1d2c2",
+  "editable_files": [
+    "src/enemy.cpp",
+    "recovery/tests/test_enemy_move_product_source.py",
+    "recovery/tests/fixtures/enemy_move_full_body.cpp",
+    "recovery/tests/test_enemy_base_cursor_ownership_oct15.py"
+  ],
+  "evidence": [
+    "Current EnemyMoveFullFrame unions local_30/base_cursor_30, local_44/base_cursor_44 and local_48/base_cursor_48 retain pointer bookkeeping while actual accesses use Bases[index]. Original cursor traversals must remain as equivalent indexed reads, never be erased with the aliases.",
+    "Pinned local_30 cursor is replaced by scalar order at0x56C37C before reuse; local_48 subsequent scalar reads follow stores0x56CE00/0x56E088; local_44 recommendation has later native scalar store0x5730E7, while the no-base early return bypasses its consumers. Confirm all affected current-source continuations before deleting writes.",
+    "Change only pointer union arms and cursor initialization/increments, retaining scalar fields, all scalar stores, indexed accesses, branches and loop bounds. No initialization of formerly uninitialized state, normalization of error paths, public API changes or historical annotation edits.",
+    "Actual complete-owner host controls plus extracted loops at56BF5F,56C35D,56E9AA,572D66 must cover zero/one/multiple bases and observable traversal/order outputs. Replace fixture pointer-residue assertion with real callback/output evidence; mutants skipping entries must fail. Host tests are not all-path or native ABI proof.",
+    "Coordinator obtains fresh owner baseline, candidate measurements, physical collateral review, full compile/link, identity/reference continuity and independent review before manual integration. Preserve all discoveries and matching obligations."
+  ],
+  "intent": "Remove redundant Base traversal cursor aliases from enemy_move after proving scalar reuse and preserving the indexed traversal behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5682608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "enemy-base-cursor-ownership-oct15"
+}
