@@ -4796,22 +4796,28 @@ void Buffer::dotted_vline(int x, int y1, int y2, int color) {
     free_data(1);
 }
 
-// ORIGINAL: 0x005E3283 ?dotted_box@Buffer@@QAEHHHHHH@Z 0x005E3283-0x005E32E4 FILE
+// ORIGINAL: 0x005E3283 ?dotted_box@Buffer@@QAEHHHHHH@Z 0x005E3283-0x005E32E4 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["pinned:0x005E3283-0x005E32E4: four line-helper calls followed by bare pops and ret 0x14, with no deliberate EAX result","catalogue:QAEH/prototype spelling is reconstructed and is not authentic original symbol evidence","callers:pinned direct-call scan found none; indirect callers remain unverified"],"reason":"Express the coordinate drawing operation's evidence-supported void source contract rather than inventing a zero result; retain the reconstructed ORIGINAL identity and the distinct RECT overload status contract."}
+// symbol    ?dotted_box@Buffer@@QAEXHHHHH@Z
 // TRIED: nothing beyond the direct four-call transcription; diverges at #44 (pop vs xor), near the epilogue
 // working copy - scaffold materialised by --work
 // size      97 bytes
 // prototype int (__thiscall ?dotted_box@Buffer@@QAEHHHHHH@Z)(Buffer* this, int, int, int, int, int)
+// Source contract: void. The catalogue prototype and QAEH identity above are
+// reconstructed history, not an authentic original symbol record. The pinned
+// body ends after the fourth void line-helper call with only register pops and
+// ret 0x14; it does not establish a result. No direct original call was found,
+// and indirect use remains unverified.
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005E1D70 0x005E1EF0
 
-int Buffer::dotted_box(int a1, int a2, int a3, int a4, int a5) {
-    dotted_hline(a1 + 1, a3, a2, a5);
-    dotted_hline(a1, a3 - 1, a4, a5);
-    dotted_vline(a1, a2, a4 - 1, a5);
-    dotted_vline(a3, a2 + 1, a4, a5);
-    return 0;
+void Buffer::dotted_box(int left, int top, int right, int bottom, int color) {
+    dotted_hline(left + 1, right, top, color);
+    dotted_hline(left, right - 1, bottom, color);
+    dotted_vline(left, top, bottom - 1, color);
+    dotted_vline(right, top + 1, bottom, color);
 }
 
 // ORIGINAL: 0x005E32F3 ?dotted_box@Buffer@@QAEHPAURECT@@H@Z 0x005E32F3-0x005E3370 FILE

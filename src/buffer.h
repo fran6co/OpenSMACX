@@ -527,7 +527,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int write_strings(StringList *strings, int left, int top, int width,
                     int height);
   void box(int left, int top, int right, int bottom, int color1, int color2);
-  int dotted_box(int left, int top, int right, int bottom, int color);
+  void dotted_box(int left, int top, int right, int bottom, int color);
   int dotted_box(RECT *area, int color);
   void dotted_hline(int x1, int x2, int y, int color);
   void dotted_vline(int x, int y1, int y2, int color);
