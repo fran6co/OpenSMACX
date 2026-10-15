@@ -17,7 +17,7 @@ def _body(source, signature):
             return source[start:end + 1]
     raise AssertionError("unterminated OnSysCommand body")
 
-BODY = _body((ROOT / "src/win.cpp").read_text(), "int __cdecl Win::OnSysCommand(")
+BODY = _body((ROOT / "src/win.cpp").read_text(), "void __cdecl Win::OnSysCommand(")
 
 HARNESS = r'''
 #include <cassert>
@@ -30,8 +30,9 @@ using LONG = intptr_t;
 std::vector<char> events;
 struct Sound {
     int playing;
+    int play_result;
     int is_playing() { events.push_back('s'); return playing; }
-    void play() { events.push_back('p'); }
+    int play() { events.push_back('p'); return play_result; }
 };
 struct AutoSound { protected: Sound *val_6_; };
 struct Win : AutoSound {
@@ -39,7 +40,7 @@ struct Win : AutoSound {
     int close_calls;
     void set_sound(Sound *sound) { val_6_ = sound; }
     void on_sys_close() { ++close_calls; events.push_back('c'); }
-    static int __cdecl OnSysCommand(HWND, unsigned, int, int);
+    static void __cdecl OnSysCommand(HWND, unsigned, int, int);
 };
 Win *WinCallbackWindow;
 Win *lookup;
@@ -51,24 +52,25 @@ void hook() { events.push_back('h'); }
 CASES = r'''
 int main() {
     Win win = {};
-    Sound sound = {0};
+    Sound sound = {0, 17};
     win.set_sound(&sound);
     win.field_404_ = hook;
     lookup = &win;
     events.clear();
-    assert(Win::OnSysCommand(nullptr, 0xf060, 11, 12) == 0);
+    Win::OnSysCommand(nullptr, 0xf060, 11, 12);
     assert(WinCallbackWindow == &win && win.close_calls == 1);
     assert(events == std::vector<char>({'h', 'c', 's', 'p'}));
     events.clear(); sound.playing = 1;
-    assert(Win::OnSysCommand(nullptr, 0xf060, 0, 0) == 0);
+    Win::OnSysCommand(nullptr, 0xf060, 0, 0);
     assert(events == std::vector<char>({'h', 'c', 's'}));
     events.clear(); win.set_sound(nullptr);
-    assert(Win::OnSysCommand(nullptr, 0xf060, 0, 0) == 0);
+    Win::OnSysCommand(nullptr, 0xf060, 0, 0);
     assert(events == std::vector<char>({'h', 'c'}));
     lookup = nullptr; events.clear();
-    assert(Win::OnSysCommand(nullptr, 0xf060, 0, 0) == 0 && events.empty());
+    Win::OnSysCommand(nullptr, 0xf060, 0, 0);
+    assert(events.empty());
     lookup = &win; events.clear();
-    assert(Win::OnSysCommand(nullptr, 0xf020, 0x1234, 0x5678) == 73);
+    Win::OnSysCommand(nullptr, 0xf020, 0x1234, 0x5678);
     assert(events == std::vector<char>({'d'}));
 }
 '''

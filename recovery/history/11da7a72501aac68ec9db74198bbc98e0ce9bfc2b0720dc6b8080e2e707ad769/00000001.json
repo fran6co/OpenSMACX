@@ -1,0 +1,27 @@
+{
+  "event_id": "cab14a00a3a3238c72afa9cf8ee42c949e1ed7e725ea29524f8b3c7bc1170e7e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.h"
+    ],
+    "evidence": [
+      "Correct initial task assumption: pinned5F26E0 calls void on_sys_close, then5F26E3 loads Sound intoESI, notEAX. Nullsound retains arbitrary void-callback EAX; do not manufacture0 or reinterpret it as a meaningful result. Earlier child-result-return hypothesis is superseded, not an accepted originalcontract.",
+      "Original VC6 SDK INCLUDE/WINDOWSX.H753..757 specifies void Cls_OnSysCommand(HWND,UINT,int,int), HANDLE discards result and yields0L, FORWARD casts DefWindowProc resultvoid. Pinnedfourarguments and0x112packing plus void publish_callback_window5EE460 close/sound twin support void sourcecontract; original registration/provenance remains unknown.",
+      "Authorize win.h declaration and actual void handler body, preserve all callbacks/ordering/packing. Use native source writer to update emitted symbol after physicalcompiler verification, preserving original catalogue identity/claims. Tests assert void signature and effects/forwarded arguments, not arbitrary EAX, with incorrectforced-int and droppedcallback controls. Complete Win measurement and freshbuild/collateral required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6235776,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "recover-void-system-command-contract",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-system-close-result-oct15"
+}

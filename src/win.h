@@ -863,7 +863,7 @@ class Win : public AutoSound {
  public:
   static void __cdecl OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan);
   static void OnLButtonUp(void *hwnd, int x, int y, unsigned int keys);
-  static int __cdecl OnSysCommand(HWND hwnd, unsigned int command, int x, int y);
+  static void __cdecl OnSysCommand(HWND hwnd, unsigned int command, int x, int y);
   void paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left, int clip_top, int clip_width, int clip_height, int unused8);
   void update_window_to_buffer(Buffer * buffer);
 
