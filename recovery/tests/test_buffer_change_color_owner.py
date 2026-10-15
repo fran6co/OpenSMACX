@@ -37,30 +37,18 @@ def actual_bodies():
     assert "if (!IntersectRect(&rect, &rect1_, &rect))" in bodies[0]
     for body in bodies:
         assert "ordered[" not in body and "DDLockFn" not in body
-    assert "LPVOID const storage = dib_bits_;" in bodies[0]
+    assert "char *const storage = static_cast<char *>(dib_bits_);" in bodies[0]
     assert "locked_bits_ = storage;" in bodies[0]
-    assert "const uint32_t existing = reinterpret_cast<uint32_t>(locked_bits_);" in bodies[0]
-    assert "pixel_base = static_cast<int>(existing);" in bodies[0]
-    assert "LPVOID const data = descriptor.lpSurface;" in bodies[0]
+    assert "LPVOID const existing = locked_bits_;" in bodies[0]
+    assert "pixel_base = static_cast<char *>(existing);" in bodies[0]
+    assert "char *const data = static_cast<char *>(descriptor.lpSurface);" in bodies[0]
+    assert "char *pixel_base;" in bodies[0]
+    assert "reinterpret_cast<int>(storage)" not in bodies[0]
+    assert "reinterpret_cast<uint32_t>(locked_bits_)" not in bodies[0]
     assert "LPVOID const data2 = locked_bits_;" in bodies[0]
     assert "surface2->Unlock(data2);" in bodies[0]
-    assert "reinterpret_cast<void *>(storage)" not in bodies[0]
-    assert "reinterpret_cast<uint32_t>(descriptor.lpSurface)" not in bodies[0]
     assert "LPVOID const bits = dib_bits_;" in bodies[1]
     assert "locked_bits_ = bits;" in bodies[1]
-    # Bridge only the pointer-to-int numeric pixel_base conversions. The
-    # low-address mapping below keeps those genuine 32-bit address operations
-    # meaningful on the 64-bit host; all storage/Unlock values stay LPVOID.
-    for index in range(len(bodies)):
-        bodies[index] = bodies[index].replace(
-            "reinterpret_cast<uint32_t>(locked_bits_)",
-            "static_cast<uint32_t>(reinterpret_cast<uintptr_t>(locked_bits_))",
-        )
-        for pointer_name in ("storage", "data"):
-            bodies[index] = bodies[index].replace(
-                f"reinterpret_cast<int>({pointer_name})",
-                f"static_cast<int>(reinterpret_cast<uintptr_t>({pointer_name}))",
-            )
     return bodies
 
 
@@ -226,8 +214,7 @@ int main() {
             events[1].arg1 == second_surface && events[1].arg0 == pixel,
             "Unlock uses the current surface and captured descriptor pointer");
 
-    // The DIB pointer is stored directly, while only pixel_base remains a
-    // genuine 32-bit numeric address in this host bridge.
+    // The DIB pointer remains typed through destination calculation.
     BufferA dib_a = {};
     dib_a.dib_bits_ = pixel; dib_a.rect1_ = RECT{0,0,2,2};
     dib_a.dib_.bmiHeader = Header{2,-2}; dib_a.stride_ = 8;

@@ -2448,10 +2448,10 @@ Status: Coverage transcription of the retained seed (src/unrecovered/005e07a0.cp
 
 int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
     IDirectDrawSurface *const surface = surface_;
-    void *locked;
+    unsigned char *locked;
 
     if (surface == 0) {
-        locked = dib_bits_;  // dib_bits_
+        locked = static_cast<unsigned char *>(dib_bits_);  // dib_bits_
         locked_bits_ = locked;  // locked_bits_
         if (locked == 0) {
             return 0;
@@ -2470,11 +2470,11 @@ int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
         surface_lock_count_ += 1;
         stride_ =
             lock_desc.lPitch;  // stride_
-        locked = lock_desc.lpSurface;
+        locked = static_cast<unsigned char *>(lock_desc.lpSurface);
         locked_bits_ = locked;
     } else {
         surface_lock_count_ += 1;
-        locked = locked_bits_;
+        locked = static_cast<unsigned char *>(locked_bits_);
     }
 
     if (locked != 0) {
@@ -2511,8 +2511,7 @@ int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
                 row_step = -stride;
             }
 
-            unsigned char *dest = reinterpret_cast<unsigned char *>(
-                stride * y1 + reinterpret_cast<int>(locked) + x1);
+            unsigned char *dest = locked + stride * y1 + x1;
 
             if (height < run) {
                 if (height >= 0) {
@@ -6332,7 +6331,7 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
   DDSURFACEDESC description;
   IDirectDrawSurface *surface;
 
-  int cur = reinterpret_cast<int>(dib_bits_);
+  void *cur = dib_bits_;
   if (cur == 0 && surface_ == 0) {
     return 7;
   }
@@ -6351,12 +6350,12 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
 
   surface = surface_;
   if (surface == 0) {
-    locked_bits_ = (void *)cur;
+    locked_bits_ = cur;
     if (cur == 0) {
       goto after_write;
     }
     surface_lock_count_ = surface_lock_count_ + 1;
-    local_48 = (char *)cur;
+    local_48 = static_cast<char *>(cur);
   } else if (locked_bits_ == 0) {
     description.dwSize = sizeof(description);
     result = surface->Lock(nullptr, &description, 1, nullptr);
@@ -6366,14 +6365,15 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
     stride_ = description.lPitch;
     surface_lock_count_ = surface_lock_count_ + 1;
     locked_bits_ = description.lpSurface;
-    local_48 = (char *)locked_bits_;
+    local_48 = static_cast<char *>(locked_bits_);
   } else {
     surface_lock_count_ = surface_lock_count_ + 1;
-    local_48 = (char *)locked_bits_;
+    local_48 = static_cast<char *>(locked_bits_);
   }
 
   if (local_48 != 0) {
-    unsigned char *p = (unsigned char *)(stride_ * a2 + local_48 + a1);
+    const int row_offset = static_cast<int>(stride_ * a2);
+    char *p = local_48 + row_offset + a1;
     if (p != 0) {
       *p = (unsigned char)a3;
     }
@@ -6764,21 +6764,21 @@ int Buffer::change_color(int a1, int a2) {
         return 7;
     }
 
-    int pixel_base;
+    char *pixel_base;
     IDirectDrawSurface *const surface = surface_;
     if (!surface) {
-        LPVOID const storage = dib_bits_;
+        char *const storage = static_cast<char *>(dib_bits_);
         locked_bits_ = storage;
         if (!storage) {
             return 7;
         }
         surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
-        pixel_base = reinterpret_cast<int>(storage);
+        pixel_base = storage;
     } else {
-        const uint32_t existing = reinterpret_cast<uint32_t>(locked_bits_);
-        if (existing) {
+        LPVOID const existing = locked_bits_;
+        if (existing != nullptr) {
             surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
-            pixel_base = static_cast<int>(existing);
+            pixel_base = static_cast<char *>(existing);
         } else {
             DDSURFACEDESC descriptor;
             descriptor.dwSize = 0x6C;
@@ -6787,16 +6787,15 @@ int Buffer::change_color(int a1, int a2) {
             }
             surface_lock_count_ = static_cast<int32_t>(static_cast<uint32_t>(surface_lock_count_) + 1u);
             uint32_t pitch = static_cast<uint32_t>(descriptor.lPitch);
-            LPVOID const data = descriptor.lpSurface;
+            char *const data = static_cast<char *>(descriptor.lpSurface);
             stride_ = pitch;
             locked_bits_ = data;
-            pixel_base = reinterpret_cast<int>(data);
+            pixel_base = data;
         }
     }
 
-    if (pixel_base != 0) {
-        char *dest = reinterpret_cast<char *>(
-            static_cast<int32_t>(stride_) * rect.top + pixel_base + rect.left);
+    if (pixel_base != nullptr) {
+        char *dest = pixel_base + static_cast<int32_t>(stride_) * rect.top + rect.left;
         if (dest != 0) {
             int32_t row_width = rect.right - rect.left;
             int32_t row_count = rect.bottom - rect.top;
