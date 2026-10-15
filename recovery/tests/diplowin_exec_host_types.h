@@ -74,7 +74,10 @@ struct Win {
   virtual int set_modal(int, int (__cdecl *)(), Win *) { DiploControlEvents.add(20); return 0; }
 };
 struct GraphicWin : Win, Buffer {
-  int init(int, int, int, int, char *, int, Win *, void *, void *) {
+  int init_left, init_top, init_width, init_height;
+  GraphicWin() : init_left(0), init_top(0), init_width(0), init_height(0) {}
+  int init(int left, int top, int width, int height, char *, int, Win *, void *, void *) {
+    init_left = left; init_top = top; init_width = width; init_height = height;
     DiploControlEvents.add(1); return 0;
   }
   void fill(int) { DiploControlEvents.add(2); }
@@ -112,7 +115,9 @@ struct FlatButton : GraphicWin {
 };
 struct MainInterface : GraphicWin {
   RECT main_rect, right_rect, lower_rect;
-  int panel_height() const { return 220; }
+  int panel_height_value;
+  MainInterface() : panel_height_value(220) {}
+  int panel_height() const { return panel_height_value; }
   const RECT &main_frame_rect() const { return main_rect; }
   const RECT &right_frame_rect() const { return right_rect; }
   const RECT &main_layout_rect() const { return rect1_; }

@@ -1,0 +1,22 @@
+{
+  "event_id": "3e89d9d1dbf52c19312b6d24dd7bf3f43d7d533219049e0ca77332b7c1efe36b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/diplowin_exec_host_control.cpp",
+      "recovery/tests/diplowin_exec_host_types.h",
+      "recovery/tests/test_diplowin_exec_behavior.py"
+    ],
+    "evidence": [
+      "Independent pinned 0x443F58-0x4444FB review confirms existing geometry; add full literal RECT oracles and three source damage controls without changing product behavior.",
+      "Bounded offer spelling deck completed: no exact winner; preserve existing product and historical obligations. Geometry verification covers already authorized DiploWin exec identity."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "geometry-oracle-authorization-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:diplowin-offer-state-matching-oct15"
+}
