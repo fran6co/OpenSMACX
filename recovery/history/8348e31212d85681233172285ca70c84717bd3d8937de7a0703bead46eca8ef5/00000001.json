@@ -1,0 +1,20 @@
+{
+  "event_id": "2268e9294f5232b3eab3a3964fffc5a1a43847a43ce7a55914f3897118e45c27",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_checkbox_state_callers_oct15.py"
+    ],
+    "evidence": [
+      "Independent physical review found concrete source caller dependencies: pinned60FAB0 on_redraw derives state from row ordinal without ID searches/cursor writes. Current caller invokes get_state_id via pos_to_id, and changed getter inlines cursor updates. Pinned60F700 toggle does first ID search/read then branch-specific second search/clear or calls set_state_id for set path; current preseek plus newtwo-passflip adds thirdsearch. Expand authorized source changes to these two methods and their binding/explanation evidence in already-owned checkbox.cpp; no headers or otherclasses.",
+      "Recover complete original caller control/dataflow including exact searches/lookup/callback order, old/current row direct mask calculation, callback-induced list mutation refind, stale/empty/negative cursor behavior and genuine soft_update/draw references. Verify original full spans rather than merely remove one call. Add actual-source caller behavior and code-mutation controls; preserve all ORIGINAL identities/history and matchingobligations. Existing taskbaseline stays40de49270 despite branch rebase on32ef54cc4. Native39owner/build and independent physical review required anew; prior three-method candidate remains evidence, not final acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "checkbox-state-caller-closure-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:checkbox-state-traversal-oct15"
+}
