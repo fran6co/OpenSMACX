@@ -2296,8 +2296,8 @@ void __cdecl POP3(const char *section, const char *unused, int recipient,
     } else if (recipient < 1) {
         for (int faction = 1; faction < 8; ++faction) {
             const unsigned int faction_mask = 1u << faction;
-            const int alive = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (faction_mask << 8)) != 0;
-            const int human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0;
+            const int alive = (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & faction_mask) != 0;
+            const int human = (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_mask) != 0;
             if (alive && human && y >= 0 && y < MapLatitudeBounds &&
                 x >= 0 && x < MapLongitudeBounds) {
                 StringList &pending = MessageWinDeferredBaseMessages[faction];
@@ -3419,7 +3419,7 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
     const int faction = BaseCurrent->faction_id_current;
     const uint8_t faction_bit = static_cast<uint8_t>(1u << faction);
 
-    if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
         return 0;
     }
     if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_1) != 0 && (GameDataStateStorage.fields_.game_state_ & STATE_UNK_8) == 0) {

@@ -258,7 +258,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
     int gendered_form = (reactor_id - 1 ^ faction_id) & 1;
     const VehPrototype &named_prototype = VehPrototypes[prototype_id];
     if (named_prototype.unk_1 == 10
-        && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction_id & 0x1f))) == 0
+        && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << (faction_id & 0x1f))) == 0
         && chassis.speed > 1) {
         has_gendered_name_branch = true;
     } else if (weapon_rating <= chassis.speed
@@ -3564,7 +3564,7 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     } else if (faction != Bases[base_here].faction_id_current &&
                (PlayersData[faction].diplo_treaties[Bases[base_here].faction_id_current] & 1U) == 0) {
         const int previous_owner = Bases[base_here].faction_id_current;
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << faction)) == 0) veh_skip(veh_id);
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1U << faction)) == 0) veh_skip(veh_id);
         GameDataStateStorage.fields_.vehicle_selection_follow_limit_ = veh_id;
         vehicle.dmg_incurred = 0;
         act_of_aggression(faction, previous_owner);
@@ -7397,7 +7397,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
                 uint32_t unit_faction = Vehs[i].faction_id;
                 BOOL both_unk_200 = ((Vehs[veh_id].state & VSTATE_UNK_200)
                                      && (Vehs[i].state & VSTATE_UNK_200));
-                if (accept && (((1 << unit_faction) & GameDataStateStorage.fields_.lock_masks_.enable_mask_)) && !both_unk_200) {
+                if (accept && (((1 << unit_faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) && !both_unk_200) {
                     accept = (Vehs[i].order == ORDER_SENTRY_BOARD)
                         ? (Vehs[i].waypoint_x[0] < 0) : is_open_ocean;
                 } else if (accept) {
@@ -9989,7 +9989,7 @@ void __cdecl promote(int veh_id) {
     if (Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_) {
         return;
     }
-    if (!((1 << Vehs[veh_id].faction_id) & GameDataStateStorage.fields_.lock_masks_.enable_mask_)) {
+    if (!((1 << Vehs[veh_id].faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
         return;
     }
     if (morale_before == morale_veh(veh_id, 1, 0)) {
@@ -10696,7 +10696,7 @@ void __cdecl action_go_to(int veh_id) {
                 }
             }
 
-            if (!(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << Vehs[veh_id].faction_id))
+            if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << Vehs[veh_id].faction_id))
                 && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].cargo != 0) {
                 Map *tile = map_tiles()
                     + ((Vehs[veh_id].x >> 1) + Vehs[veh_id].y * MapLongitude);
@@ -13426,7 +13426,7 @@ dispatch_event:
                 if (gift_roll == 0) {
                   const int other = rand() % 7 + 1;
                   const uint32_t other_bit = 1u << other;
-                  const uint32_t live_players = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu;
+                  const uint32_t live_players = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
                   const uint32_t human_players = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFu;
                   const int disallowed_human_pair =
                       !(human_players & (1u << faction_id))
@@ -13915,7 +13915,7 @@ void __cdecl action_give(int vehicle_id, int faction_id) {
         if (base_id >= 0) {
             parse_says(4, Bases[base_id].name_string, -1, -1);
             if (Language != 0
-                || (GameDataStateStorage.fields_.lock_masks_.enable_mask_
+                || (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_
                     & (1u << (original_owner & 0x1f))) != 0) {
                 // The seed tests Language (0x009BC054), not the network
                 // mode; this key is the pinned NUL string at 0x006882AC.
@@ -14294,7 +14294,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
     bool failed_prompt_dismissed = false;
     if (result == 0) {
         if (IsMultiplayerNet == 0
-            && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (defender & 0x1f))) != 0) {
+            && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << (defender & 0x1f))) != 0) {
             if (defender == ConsoleGlobal.faction_id_) {
                 parse_num(0, static_cast<int>(defending_faction.satellites_[3]));
                 const int base_id = base_find(x, y);

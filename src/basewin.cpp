@@ -178,7 +178,7 @@ void BaseWin::farm_click(int x, int y, int) {
         if (available) --BaseCurrent->specialist_total;
         else {
             int fight, growth, tech, wealth, power;
-            if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & (1u << faction))
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction))
                 && (BaseCurrent->governor & 0x80000000u)) {
                 growth = (BaseCurrent->governor >> 24) & 1;
                 tech = (BaseCurrent->governor >> 25) & 1;
@@ -1091,7 +1091,7 @@ void BaseWin::rename() {
     strcpy(BaseCurrent->name_string, ParseStrBuffer[0].str);
     if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_) {
         const int former = BaseCurrent->faction_id_former;
-        if (former != ConsoleGlobal.faction_id_ && !((1 << former) & GameDataStateStorage.fields_.lock_masks_.enable_mask_)
+        if (former != ConsoleGlobal.faction_id_ && !((1 << former) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)
             && !IsMultiplayerNet) {
             cause_friction(former, ConsoleGlobal.faction_id_, 3);
             const uint32_t treaty = PlayersData[BaseCurrent->faction_id_former]
@@ -2156,7 +2156,7 @@ void BaseWin::gov_on(int priorities) {
     } else {
         BaseCurrent->governor |= GOV_ACTIVE;
     }
-    if (((unsigned char)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << BaseCurrent->faction_id_current)) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << BaseCurrent->faction_id_current)) == 0) {
         BaseCurrent->governor &= ~GOV_ACTIVE;
     }
     BaseCurrent->governor &= ~GOV_UNK_40000000;
@@ -4997,38 +4997,61 @@ void BaseWin::on_redraw() {
 // PlayersData[faction].ai_growth/ai_tech/ai_wealth/ai_power: each index step
 // is 2099 dwords, the established 0x20CC-byte PlayerData stride.
 void BaseWin::update_gov_buttons() {
-    const Base &base = *BaseCurrent;
-    const int faction = base.faction_id_current;
-    const unsigned int governor = base.governor;
-    const bool human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction)) != 0;
+    const int faction = BaseCurrent->faction_id_current;
+    const unsigned int initial_governor = BaseCurrent->governor;
+    flatButtons_[8].set((initial_governor & GOV_ACTIVE) != 0);
 
-    flatButtons_[8].set((governor & GOV_ACTIVE) != 0);
-
-    const bool explore_priority = human
-        ? (governor & (GOV_ACTIVE | GOV_PRIORITY_EXPLORE)) ==
-              (GOV_ACTIVE | GOV_PRIORITY_EXPLORE)
-        : PlayersData[faction].ai_growth != 0;
+    // Each following decision reloads the human byte and, on the human path,
+    // the current base's governor after the prior button cleanup redraw.
+    bool explore_priority;
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+         (1u << faction)) != 0) {
+        const unsigned int governor = BaseCurrent->governor;
+        explore_priority =
+            (governor & (GOV_ACTIVE | GOV_PRIORITY_EXPLORE)) ==
+            (GOV_ACTIVE | GOV_PRIORITY_EXPLORE);
+    } else {
+        explore_priority = PlayersData[faction].ai_growth != 0;
+    }
     flatButtons_[4].set(explore_priority);
     if (!explore_priority) flatButtons_[4].clear_auxiliary_state_for_disabled_button();
 
-    const bool discover_priority = human
-        ? (governor & (GOV_ACTIVE | GOV_PRIORITY_DISCOVER)) ==
-              (GOV_ACTIVE | GOV_PRIORITY_DISCOVER)
-        : PlayersData[faction].ai_tech != 0;
+    bool discover_priority;
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+         (1u << faction)) != 0) {
+        const unsigned int governor = BaseCurrent->governor;
+        discover_priority =
+            (governor & (GOV_ACTIVE | GOV_PRIORITY_DISCOVER)) ==
+            (GOV_ACTIVE | GOV_PRIORITY_DISCOVER);
+    } else {
+        discover_priority = PlayersData[faction].ai_tech != 0;
+    }
     flatButtons_[5].set(discover_priority);
     if (!discover_priority) flatButtons_[5].clear_auxiliary_state_for_disabled_button();
 
-    const bool build_priority = human
-        ? (governor & (GOV_ACTIVE | GOV_PRIORITY_BUILD)) ==
-              (GOV_ACTIVE | GOV_PRIORITY_BUILD)
-        : PlayersData[faction].ai_wealth != 0;
+    bool build_priority;
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+         (1u << faction)) != 0) {
+        const unsigned int governor = BaseCurrent->governor;
+        build_priority =
+            (governor & (GOV_ACTIVE | GOV_PRIORITY_BUILD)) ==
+            (GOV_ACTIVE | GOV_PRIORITY_BUILD);
+    } else {
+        build_priority = PlayersData[faction].ai_wealth != 0;
+    }
     flatButtons_[6].set(build_priority);
     if (!build_priority) flatButtons_[6].clear_auxiliary_state_for_disabled_button();
 
-    const bool conquer_priority = human
-        ? (governor & (GOV_ACTIVE | GOV_PRIORITY_CONQUER)) ==
-              (GOV_ACTIVE | GOV_PRIORITY_CONQUER)
-        : PlayersData[faction].ai_power != 0;
+    bool conquer_priority;
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+         (1u << faction)) != 0) {
+        const unsigned int governor = BaseCurrent->governor;
+        conquer_priority =
+            (governor & (GOV_ACTIVE | GOV_PRIORITY_CONQUER)) ==
+            (GOV_ACTIVE | GOV_PRIORITY_CONQUER);
+    } else {
+        conquer_priority = PlayersData[faction].ai_power != 0;
+    }
     flatButtons_[7].set(conquer_priority);
     if (!conquer_priority) flatButtons_[7].clear_auxiliary_state_for_disabled_button();
 }

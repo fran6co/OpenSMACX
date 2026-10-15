@@ -2308,7 +2308,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
     draw_state = 3;
     if (Vehs[ConsoleGlobal.selected_vehicle_].x == tile_x &&
         Vehs[ConsoleGlobal.selected_vehicle_].y == tile_y &&
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1U << Vehs[ConsoleGlobal.selected_vehicle_].faction_id)) != 0 &&
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1U << Vehs[ConsoleGlobal.selected_vehicle_].faction_id)) != 0 &&
         veh_selectable(ConsoleGlobal.selected_vehicle_) != 0 &&
         (Vehs[ConsoleGlobal.selected_vehicle_].state & 0x4200U) == 0) {
         target = ConsoleGlobal.selected_vehicle_;
@@ -5309,7 +5309,7 @@ void MapWin::draw_base_names() {
                                    InfoFactionShadowColors[base.faction_id_current],
                                    1, 1);
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000U) != 0 &&
-                (omniscient || (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0)) {
+                (omniscient || (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0)) {
                 const PlayerData &owner_data =
                     PlayersData[base.faction_id_current];
                 if (base.x == owner_data.x_target &&
