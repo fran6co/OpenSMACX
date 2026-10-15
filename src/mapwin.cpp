@@ -2735,46 +2735,6 @@ static signed char MapLightingLeadingReadWindow[4];
 // RECOVERY_OBJECT: v2 0x007F674C 0x007F6750 _MapLightingTrailingReadWindow 0x00470550
 static signed char MapLightingTrailingReadWindow[4];
 
-static void fill_map_lighting_table() {
-    for (int quadrant = 0; quadrant < 4; ++quadrant) {
-        int index = 0;
-        for (int row = -3; row <= 3; ++row) {
-            for (int column = -3; column <= 3; ++column) {
-                int x;
-                int y;
-                switch (quadrant) {
-                case 0:
-                    x = row;
-                    y = column;
-                    break;
-                case 1:
-                    x = -column;
-                    y = row;
-                    break;
-                case 2:
-                    x = -row;
-                    y = -column;
-                    break;
-                default:
-                    x = column;
-                    y = -row;
-                    break;
-                }
-                x *= 100;
-                y *= 100;
-                const int root = quick_root(x * x + y * y);
-                int light = -3 * (x + y);
-                if (root != 0) {
-                    light /= root;
-                }
-                MapLightingTable[quadrant * 49 + index] =
-                    static_cast<signed char>(light);
-                ++index;
-            }
-        }
-    }
-}
-
 // get_brighting reads each corner from the biased base 0x007F6680 as
 //
 //     lea ebx, [eax*8] / sub ebx, eax            ; v * 7
@@ -7535,7 +7495,43 @@ int MapWin::get_brighting(int x, int y, int corner) {
 // ORIGINAL: 0x00470420 ?compute_lighting_table@MapWin@@QAEXXZ 0x00470420-0x00470536
 // RECOVERY_BINDING: v1 {"evidence": ["The original 0x00470420..0x00470536 body fills four 49-byte tables using quick_root; its retired transcription remains in Git history", "src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and corner_light_value/get_brighting consumers", "src/general.h: quick_root(int)"], "reason": "Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
 void MapWin::compute_lighting_table() {
-    fill_map_lighting_table();
+    for (int quadrant = 0; quadrant < 4; ++quadrant) {
+        int index = 0;
+        for (int row = -3; row <= 3; ++row) {
+            for (int column = -3; column <= 3; ++column) {
+                int x;
+                int y;
+                switch (quadrant) {
+                case 0:
+                    x = row;
+                    y = column;
+                    break;
+                case 1:
+                    x = -column;
+                    y = row;
+                    break;
+                case 2:
+                    x = -row;
+                    y = -column;
+                    break;
+                default:
+                    x = column;
+                    y = -row;
+                    break;
+                }
+                x *= 100;
+                y *= 100;
+                const int root = quick_root(x * x + y * y);
+                int light = -3 * (x + y);
+                if (root != 0) {
+                    light /= root;
+                }
+                MapLightingTable[quadrant * 49 + index] =
+                    static_cast<signed char>(light);
+                ++index;
+            }
+        }
+    }
 }
 
 // Fixed-slot bindings carried from 00470790.cpp
