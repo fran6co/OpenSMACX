@@ -635,9 +635,8 @@ Scroll *Dialogs::on_scroll_delete(Scroll *scroll) {
 }
 
 /*
-Purpose: Forward a left click to the embedded sprite box for every dialog
-         kind in the pinned case map (1 through 7 and 9 through 16), to the
-         SpriteBox base.
+Purpose: Forward a left click to the embedded SpriteBox only for kind 8;
+         other kinds and out-of-range selectors are no-ops.
 // ORIGINAL: 0x00612E80 ?on_left_click@Dialogs@@QAEXHH@Z 0x00612E80-0x00612EB0 SEMANTIC
 // symbol    ?on_left_click@Dialogs@@UAEXHH@Z
 // size      48 bytes
@@ -646,24 +645,24 @@ Purpose: Forward a left click to the embedded sprite box for every dialog
 // kind      game
 // calls     0x00611060
 //
-// PROMOTED out of the archived verification unit for this address, which proved the sixteen-case
-// switch against the image's own jump-table and case-map bytes.
-// MEASURED SHAPE_EXACT 14/14, 1.000 similar: every in-span byte agrees
-// modulo relocations (the case-map address, the jmp-table address and the
-// call to SpriteBox::on_left_click). The 24 bytes past the span - the image's
-// inline case map and jump table - differ only because this tree's /Gy object
-// puts them in their own comdat elsewhere instead of inline after the
-// function; that is section placement, not source form. The artifact's own
-// BYTE_EXACT came from a single-function unit where the tables landed inline.
+// HISTORICAL ARCHIVE NOTE: the archived verification unit reported a
+// sixteen-case switch and MEASURED SHAPE_EXACT 14/14, 1.000 similarity: every
+// in-span byte agreed modulo relocations (the case-map address, jump-table
+// address and SpriteBox::on_left_click call). It observed that the 24 bytes
+// past the span—the image's inline case map and jump table—differed because
+// this tree's /Gy object placed them in a separate comdat rather than inline
+// after the function; the artifact's BYTE_EXACT measurement came from a
+// single-function unit where those tables landed inline. That archived
+// sixteen-case routing interpretation is superseded: direct decoding of the
+// pinned selector table at 0x612EBC, indexed by kind-1, reaches the SpriteBox
+// block only for kind 8; every other in-range kind reaches the default return.
+// The old shape and section-placement observations do not establish routing.
 Return Value: n/a
 Status: Complete
 */
 void Dialogs::on_left_click(int a, int b) {
-    switch (kind_) {
-    case 1: case 2: case 3: case 4: case 5: case 6: case 7:
-    case 9: case 10: case 11: case 12: case 13: case 14: case 15: case 16:
+    if (kind_ == 8) {
         sprite_box_view().SpriteBox::on_left_click(a, b);
-        break;
     }
 }
 

@@ -135,7 +135,9 @@ int main() {
     for (int kind=0; kind<=16; ++kind) {
         const int previous=events.left_calls;
         d.kind_=kind; d.on_left_click(kind*3, -kind*5);
-        if (kind>=1 && kind<=7 || kind>=9 && kind<=16) {
+        // Pinned 0x612EBC selector table routes only kind 8 to SpriteBox.
+        // The retired seed inverted this domain; do not preserve that error.
+        if (kind==8) {
             assert(events.left_calls==previous+1);
             assert(events.left_receiver==static_cast<SpriteBox *>(&d));
             assert(events.left_a==kind*3 && events.left_b==-kind*5);
