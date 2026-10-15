@@ -359,14 +359,8 @@ int Flic::init(Buffer *buffer, char *file_name, int x, int y,
     buffer_.init(decoded_width_, decoded_height_, 0, nullptr);
     buffer_.sync_to_palette(PaletteCurrent);
 
-    // Through a pointer-to-member for the same measured reason as the
-    // `get_data` sites: copy's body is in-class in buffer.h now, and a
-    // plain call let VC6 fold the whole blitter into init (1344 bytes
-    // against the image's 536) where the image makes the call.
-    int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) =
-        &Buffer::copy;
-    (buffer->*copy)(&buffer_, origin_x_, origin_y_, 0, 0, decoded_width_,
-                    decoded_height_);
+    buffer->copy(&buffer_, origin_x_, origin_y_, 0, 0, decoded_width_,
+                 decoded_height_);
 
     if (transparent) {
         decoder_flags_ |= 2;
@@ -1165,10 +1159,8 @@ void Flic::decode_chunk(DataChunk *chunk) {
             rect->right = x + width;
             rect->bottom = y + height;
             if (field_0_ != 0) {
-                int (Buffer::*copy)(Buffer *, int, int, int, int, int,
-                                    int) = &Buffer::copy;
-                (buffer_.*copy)(buffer2_, 0, 0, origin_x_, origin_y_,
-                                decoded_width_, decoded_height_);
+                buffer_.copy(buffer2_, 0, 0, origin_x_, origin_y_,
+                             decoded_width_, decoded_height_);
             }
             break;
         }
@@ -1555,10 +1547,8 @@ void Flic::decode_black_trans() {
     rect->right = x + width;
     rect->bottom = y + height;
     if (field_0_ != 0) {
-        int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) =
-            &Buffer::copy;
-        (buffer_.*copy)(buffer2_, 0, 0, origin_x_, origin_y_, decoded_width_,
-                        decoded_height_);
+        buffer_.copy(buffer2_, 0, 0, origin_x_, origin_y_, decoded_width_,
+                     decoded_height_);
     }
 }
 
@@ -1626,10 +1616,8 @@ Status: Complete
 */
 void Flic::UNK9() {
     if (buffer2_ && (decoder_flags_ & 1)) {
-        int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) =
-            &Buffer::copy;
-        (buffer2_->*copy)(&buffer_, origin_x_, origin_y_, 0, 0, decoded_width_,
-                          decoded_height_);
+        buffer2_->copy(&buffer_, origin_x_, origin_y_, 0, 0, decoded_width_,
+                       decoded_height_);
     }
 }
 

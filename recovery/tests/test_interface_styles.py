@@ -25,7 +25,7 @@ POPUPS = ("TOP_LEFT", "TOP_MID", "TOP_RIGHT", "MID_LEFT", "MID_RIGHT",
 SPRITES = (tuple("g_IFACE_BOX_SPRITES" + str(n) for n in range(1, 9)) +
            ("g_IFACE_LOCK_SPRITES", "g_IFACE_GREEN_RIGHT_ARROW_SPRITE",
             "g_IFACE_MP_COMBO_ARROW_SPRITES", "g_IFACE_TECH_TREE_ARROW_SPRITES",
-            "g_NEWTECHWIN_SPRITES") +
+            ) +
            tuple("g_IFACE_STD_POPUPS_" + name + "_SPRITE" for name in POPUPS))
 
 
@@ -74,8 +74,8 @@ def actual_source():
                     r"  void close\(\);"):
         method, = re.findall(pattern, bh)
         methods.append(method)
-    copy, = re.findall(r"  MEASURED int copy\(Buffer \*buffer, int xCoord, int yCoord, int wx, int wy,\s*int width, int height\) \{", bh)
-    methods.append(copy.removesuffix(" {") + ";")
+    copy, = re.findall(r"  MEASURED int copy\(Buffer \*buffer, int xCoord, int yCoord, int wx, int wy,\s*int width, int height\);", bh)
+    methods.append(copy)
     return {
         "INTERFACES": "struct Sprite {" + extract + "};\nstruct Buffer {" + "\n".join(methods) + "};",
         "PARAMS": braced(bh, "struct BoxSpriteParams {") + ";",

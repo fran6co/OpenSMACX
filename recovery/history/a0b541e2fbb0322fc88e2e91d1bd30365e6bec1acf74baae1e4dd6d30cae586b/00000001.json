@@ -1,0 +1,19 @@
+{
+  "event_id": "e92a5d5fe74786ac816c173feaffab6c5d44307768725a056fad0919a23d4cbc",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_interface_styles.py"
+    ],
+    "evidence": [
+      "Existing test extracts7arg Buffer::copy definition from buffer.h. Authorize only updating extraction to the genuine moved source owner while preserving test scenarios/assertions; do not weaken expectations or replace actual source with a stub."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "copy-owner-test-extraction-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-copy-call-boundary-oct15"
+}
