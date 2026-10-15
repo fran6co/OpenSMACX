@@ -1,0 +1,19 @@
+{
+  "event_id": "91201c9c27b33b841701a9c315edb1eaa734ebdbd883c673ad8a59435316560f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_sound_wave_provider_calls_oct9.py"
+    ],
+    "evidence": [
+      "Related source contract still explicitly requires two raw captured-vtable calls. Replace that obsolete assertion with absence of raw dispatch and get_attrib -> typed set_attrib -> attach sequencing; actual-body behavior controls accompany it."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "wave-created-provider-test-contract-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:wave-created-provider-oct15"
+}

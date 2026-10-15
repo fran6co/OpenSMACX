@@ -89,9 +89,12 @@
 #include "ambience.h"
 
 namespace {
-// Historical LEVER/TRIED comments below record manual slot-dispatch codegen;
-// those spellings are superseded by typed provider calls except at the two
-// captured-vtable operations retained with their original snapshot semantics.
+// SoundX mode-1 constructor10028750 clears its child at+3C; factory helper
+// 10028B70 only replaces the filename. Its getter10035A30->10028F40 therefore
+// has no nested callback on the newly-created paths in dyna_load/init.
+// The original captures the provider vptr before get_attrib and rereads the
+// receiver afterward; the typed calls preserve behavior for this pinned
+// read-only getter, not arbitrary replacement/reentrant provider DLLs.
 inline WavePlaybackDeviceInterface *wave_playback_device(void *device) {
     return static_cast<WavePlaybackDeviceInterface *>(device);
 }
@@ -1218,10 +1221,9 @@ int Wave::reload() {
 /*
 Purpose: Load the wave from in-memory data. Refuses (0xC) when a device is
          already wrapped; otherwise the guarded creation hook builds one from
-         the data pointer. The device's vtable is captured BEFORE the wave's
-         own slot 0x70 composes the attribute mask - the original dispatches
-         the following slot 0x6C through that captured table on the re-read
-         device - and the wave's own slot 0x7C finishes.
+         the data pointer. The wave's own slot 0x70 composes the attribute
+         mask, which is sent to the created provider through its typed setter;
+         attach follows that setter.
 // ORIGINAL: 0x004C6BB0 ?dyna_load@Wave@@QAEHPAD@Z 0x004C6BB0-0x004C6C1A
 // size      106 bytes
 // prototype int (__thiscall ?dyna_load@Wave@@QAEHPAD@Z)(Wave* this, int8*)
@@ -1262,16 +1264,9 @@ int Wave::dyna_load(char *fname) {
         }
         const int created = (SoundXOrdinal1CreateSound())(&device_, fname, 1);
         if (created == 0) {
-            // The device vtable is captured HERE, before the wave's own
-            // slot 0x70 composes the attribute mask; the following 0x6C
-            // dispatch runs through this captured table on the re-read
-            // device, not a freshly re-derived one.
-            uint8_t *const device_vtable =
-                *reinterpret_cast<uint8_t **>(device_);
             const int attribs = get_attrib();
-            typedef void (OriginalObject::*device_attrib_fn)(int attribs);
-            (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(
-                device_vtable + 0x6C)))(attribs);
+            wave_playback_device(device_)->set_attrib(
+                static_cast<unsigned long>(attribs));
             attach();
         }
         return created;
@@ -1361,10 +1356,11 @@ Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
          nothing. The resolved path replaces the remembered filename on the
          game heap and the 0x54 flag dword is cleared. A streaming wave marks
          flag bit 1 and, with no device yet and a live creation hook, builds
-         one from the resolved path - capturing the device vtable before its
-         own slot 0x70 composes the attribute mask, like dyna_load - then
-         hands the RAW mode mask to whatever device exists through its slot
-         0x6C. The mode bits then fold onto the flag dword as in set_attrib
+         one from the resolved path - the wave's slot 0x70 composes an
+         attribute mask and the typed provider setter applies it, like
+         dyna_load - then hands the RAW mode mask to whatever device exists
+         through its typed setter. The mode bits then fold onto the flag dword
+         as in set_attrib
          (bit 4 suppressed for streaming waves, bit 8 unsuppressed here), and
          bit 1 of the mode runs the wave's own vtable slot 0x48 with 1.
 // ORIGINAL: 0x004C69B0 ?init@Wave@@QAEXPADK@Z 0x004C69B0-0x004C6AD5
@@ -1426,16 +1422,9 @@ void Wave::init(char *group_id, unsigned long flags) {
         if (!device_ && WaveDeviceReleaseGuard) {
             const int created = (SoundXOrdinal1CreateSound())(&device_, resolved, 1);
             if (!created) {
-                // The device vtable is captured HERE, before the wave's own
-                // slot 0x70 composes the attribute mask; the following 0x6C
-                // dispatch runs through this captured table on the re-read
-                // device, not a freshly re-derived one - as in dyna_load.
-                uint8_t *const device_vtable =
-                    *reinterpret_cast<uint8_t **>(device_);
                 const int attribs = get_attrib();
-                typedef void (OriginalObject::*device_attrib_fn)(int attribs);
-                (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(
-                    device_vtable + 0x6C)))(attribs);
+                wave_playback_device(device_)->set_attrib(
+                    static_cast<unsigned long>(attribs));
                 attach();
             }
         }
