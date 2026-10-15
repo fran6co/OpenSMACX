@@ -1,0 +1,26 @@
+{
+  "event_id": "7f0a940c66e3f1149208b3450171dee45984ea35793a72b3e846cce92850e749",
+  "payload": {
+    "affects": [
+      "entity-121adabe47341cec1355a311c9dfb2422dc7e68e197e214e3bead5c38317a901",
+      "entity-6331850c191964236f4074b9f28d5e5be65b7bf33a2112e6c1a1ca58ce2c0e3a",
+      "entity-94687df138a7e90be71008ec9555587ec54f28910608a81b91e92e3f0bbf5092",
+      "entity-98d5ed0a8fa30104c9c1ae1bd26d6b56039f7e9b1e2327b720819fbf482adcdb",
+      "entity-dce6f94fe86bcbec30a1b9eb964a3539a32ebfbacdd55b7f6c6dd456d754b206"
+    ],
+    "author": "coordinator",
+    "discovery_id": "explicit-empty-kind4-route",
+    "evidence": [
+      "Pinned independent table audit: down/leave/key use six-entry tables with explicitkind4 entry2 and ordinarydefault entry5 sharing return target; key returnszero. Doubleclick has five entries and no separatekind4. Redraw six entries includes real EditGroup kind4 target612450. Do not add kind4 to doubleclick.",
+      "Controlled pilot612C20 originalorder16,2,1,4,8 plus explicitkind4 return or qualified inheritedempty handler both BYTE_EXACT35/35 including table under O2; unchanged/damage controls pass both profiles. Plain break optimizes away and remains SHAPE. Prefer explicit return: original no-op proven, original source spelling unknown. Source fixtures must exercise kind4/default separately and preserve all real receiver routes.",
+      "Proceed with isolated five-handler implementation: ordering16,2,1,8 for doubleclick;16,2,1,4,8 for down/leave/key/redraw; explicitreturn for down/leave kind4, return0 for keykind4, existingEditGroup callredraw. No ABI/layout/signature/claim modifications. FullTU/build, test controls and references required before integration."
+    ],
+    "hypothesis": "Recover explicit kind4 return paths and original switch ordering, preserving the real base graph.",
+    "kind": "discovery"
+  },
+  "previous_event": "58826e505203e9a7b5ef02ac889d32102b8f3dc85431bc292c581d6d52b11c26",
+  "request_id": "explicit-empty-kind4-route",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:dialogs-routing-order-oct15"
+}
