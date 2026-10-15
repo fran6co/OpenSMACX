@@ -1,0 +1,62 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "9ca30f32e86f0028f73f9d58261edab800697a12",
+  "editable_files": [
+    "recovery/tests/test_sound_export_storage.py",
+    "src/sound_loader.cpp"
+  ],
+  "evidence": [
+    "Pinned4C5E85..4C5EAE initializes 90DB24, increments slot by4 and ordinal index by1, stops at90DB50 viaJL. Source owns11-pointer SoundDllProcsTable. Existing actual-source controls verify all11 ordinals and each missing-export failure with cleanup. Local loop-bound cleanup only; no DLL version/provider verification or ABI changes."
+  ],
+  "intent": "Recover ordinal export-table traversal with an ordinary signed count instead of pointer-to-int comparisons; preserve all loading and failure behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5004688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5004880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sound-loader-loop-oct15"
+}
