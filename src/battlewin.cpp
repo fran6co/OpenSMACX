@@ -364,11 +364,6 @@ Status: Complete
 // RECOVERY_OBJECT: v1 0x006EEED8 ?g_BattleWin@@3VBattleWin@@A
 BattleWin g_BattleWin;  // 0x006EEED8
 
-// The original fixed receiver at 0x006EEED8 is the source-owned BattleWin
-// object above, whose primary SubInterface base begins at offset zero.
-SubInterface *sub_interface_global() {
-    return &g_BattleWin;
-}
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk
@@ -392,7 +387,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_00422eb0() {
-    sub_interface_global()->release_iface_mode();
+    g_BattleWin.release_iface_mode();
 }
 /*
 Purpose: ?timer_callback_daemon@BattleWin@@QAAXH@Z - run 1 (ORIGINAL(s)->*teardown)() on fixed globals,
@@ -410,7 +405,7 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl teardown_00422ec0(int) {
-    sub_interface_global()->release_iface_mode();
+    g_BattleWin.release_iface_mode();
 }
 
 // ORIGINAL: 0x00421B20 ?pulse_timer@BattleWin@@QAEXXZ 0x00421B20-0x00421B37 BYTE_EXACT

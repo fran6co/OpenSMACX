@@ -140,12 +140,6 @@ void say_orders(int veh_id);
 // statuswin.cpp so the int form can call it by name.
 void say_orders(char *text, int veh_id);
 
-// The process-wide SubInterface view is BattleWin's real global object.
-// Defined by its owner in battlewin.cpp to keep this header's dependency
-// direction acyclic.
-SubInterface *sub_interface_global();
-
-
 // The process-wide status/layout initialization bits at original 0x00939ED8.
 // InfoWin sets bit 4, WorldWin bit 8, and StatusWin bit 0x20. This is real
 // source storage, not a pointer back into the retired executable image.

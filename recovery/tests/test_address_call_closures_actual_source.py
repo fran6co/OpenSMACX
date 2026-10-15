@@ -52,13 +52,13 @@ def test_fixed_window_receivers_are_named_source_objects() -> None:
     datalink_source = (root / "src/datalink.cpp").read_text()
     cat = function_body(datalink_source, "void Datalink::set_cat(")
 
-    assert "SubInterface *sub_interface_global();" in status_header
+    assert "sub_interface_global" not in status_header
     assert '#include "original_seam.h"' not in status_header
     assert "reinterpret_cast<SubInterface *>(0x006EEED8)" not in status_header
     assert "BattleWin g_BattleWin;  // 0x006EEED8" in battle_source
-    assert "SubInterface *sub_interface_global() {\n    return &g_BattleWin;\n}" in battle_source
-    assert battle_source.count("sub_interface_global()->release_iface_mode();") == 2
-    assert status_source.count("sub_interface_global()->release_iface_mode();") == 2
+    assert "sub_interface_global" not in battle_source
+    assert battle_source.count("g_BattleWin.release_iface_mode();") == 2
+    assert status_source.count("g_BattleWin.release_iface_mode();") == 2
     assert cat.count("ReportWinGlobal.reset();") == 2
     assert "reinterpret_cast<ReportWin *>(0x876478)" not in cat
     assert "ReportWin ReportWinGlobal;  // 0x00876478" in (root / "src/reportwin.cpp").read_text()

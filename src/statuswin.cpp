@@ -326,7 +326,7 @@ Status: Complete
 void StatusWin::reset() {
     if (field_15D4_) {
         field_15D4_ = 0;
-        sub_interface_global()->release_iface_mode();
+        g_BattleWin.release_iface_mode();
     }
 }
 
@@ -1407,7 +1407,7 @@ void StatusWin::on_left_click(int x, int y) {
         ConsoleInfoWin.reset();
         if (field_15D4_ != 0) {
             field_15D4_ = 0;
-            sub_interface_global()->release_iface_mode();
+            g_BattleWin.release_iface_mode();
         }
         TutWinBaseWindow.cancel_zoom_wait();
 
