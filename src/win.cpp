@@ -5366,7 +5366,7 @@ int Win::on_nc_hittest(int x, int y) {
 }
 
 // ORIGINAL: 0x005F1150 ?OnPaletteChanged@Win@@QAAHPAXPAX@Z 0x005F1150-0x005F122B FILE BYTE_EXACT
-// symbol    ?OnPaletteChanged@Win@@SAHPAX0@Z
+// symbol    ?OnPaletteChanged@Win@@SAXPAX0@Z
 // LEVER: the same `WinHdcRefCount`/`WinSharedHdc`/`DirectDrawSurface` globals
 // and `DirectDrawSurface->GetDC/ReleaseDC` idiom `Win::get_hdc`/`release_hdc`
 // already use (both are BYTE_EXACT), plus `BufferDirectDraw` and
@@ -5374,19 +5374,19 @@ int Win::on_nc_hittest(int x, int y) {
 // `SelectPalette`/`RealizePalette`/`GetDC`/`ReleaseDC` calls in place of the
 // six `g_`-named function-pointer bindings - every one compiles to the same
 // `call dword ptr [import]` or `call [vtable+N]` the image emits.
-// `xor eax,eax` anywhere), so despite the `int` in the mangled name the body
-// never manufactures a return value except at the one distinct early `ret`
-// (0x5F120C), where returning the vtable slot's own `long` result reproduces
-// the "value already sitting in eax" shape instead of adding one.
+// WINDOWSX.H declares Cls_OnPaletteChanged void and its handler macro returns
+// zero independently of the callback. The pinned body likewise has bare
+// returns after both cleanup paths; its incidental EAX is not a callback value.
+// Registration provenance is not independently established by this evidence.
 // size      219 bytes
-// prototype int (__cdecl ?OnPaletteChanged@Win@@QAAHPAXPAX@Z)(HWND hWnd, LPARAM lParam)
+// historical catalogue prototype: int (__cdecl ?OnPaletteChanged@Win@@QAAHPAXPAX@Z)(HWND hWnd, LPARAM lParam)
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005F1194 0x005F11A5 0x005F11CC 0x005F11D9 0x005F11FF 0x005F121A
 
-int __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
+void __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
     if (hwnd != lparam && BufferDirectDraw == nullptr) {
         if (WinHdcRefCount != 0) {
             ++WinHdcRefCount;
@@ -5407,9 +5407,9 @@ int __cdecl Win::OnPaletteChanged(void * hwnd, void * lparam) {
             --WinHdcRefCount;
             if (WinHdcRefCount == 0) {
                 if (DirectDrawSurface != nullptr) {
-                    long result = DirectDrawSurface->ReleaseDC(WinSharedHdc);
+                    DirectDrawSurface->ReleaseDC(WinSharedHdc);
                     WinSharedHdc = nullptr;
-                    return static_cast<int>(result);
+                    return;
                 }
                 ReleaseDC(HandleMain, WinSharedHdc);
                 WinSharedHdc = nullptr;
@@ -5739,26 +5739,19 @@ typedef HDC (__stdcall *BeginPaintProc)(void *, PAINTSTRUCT *);
 typedef int (__stdcall *EndPaintProc)(void *, const PAINTSTRUCT *);
 
 // ORIGINAL: 0x005F1340 ?OnPaint@Win@@QAA_NPAUHWND__@@@Z 0x005F1340-0x005F13A2 FILE BYTE_EXACT
-// symbol    ?OnPaint@Win@@SA_NPAUHWND__@@@Z
+// symbol    ?OnPaint@Win@@SAXPAUHWND__@@@Z
 // LEVER: STATIC, plus the body wrapped in `if (BeginPaint(...) != 0) { ... }`
 //   with NO return statement. Both read off the bytes:
 //   static - the image reads hwnd at [esp+0x58], where a non-static __cdecl
 //   member's `this` sits, so a member spelling costs 4 bytes of argument
 //   offset through the whole body.
-//   no return - the image's `je` targets the shared epilogue directly and
-//   eax is never materialised: the failure path returns BeginPaint's own 0
-//   and the success path returns EndPaint's BOOL. Any `return expr;` in a
-//   bool function forces `xor al,al` or `neg/sbb/neg`, so the source had
-//   none.
-// BUG IN THE ORIGINAL: this is a `bool` function with no return statement,
-//   so its result is whatever eax happens to hold - BeginPaint's 0 or
-//   EndPaint's BOOL. It happens to be a sane bool in both cases, which is
-//   presumably why nobody noticed. Left exactly as shipped; the surrounding
-//   `#pragma warning(disable: 4716)` pair is what lets VC6 compile it at
-//   all, because C4716 is issued as an error.
+// WINDOWSX.H declares Cls_OnPaint void; HANDLE_WM_PAINT discards its result.
+// The pinned body also shares a bare epilogue on BeginPaint failure/success;
+// EAX residue is not part of this callback's source contract. Registration
+// provenance is not independently established by this SDK evidence.
 // working copy - scaffold materialised by --work
 // size      98 bytes
-// prototype bool (__cdecl ?OnPaint@Win@@QAA_NPAUHWND__@@@Z)(HWND hWnd)
+// historical catalogue prototype: bool (__cdecl ?OnPaint@Win@@QAA_NPAUHWND__@@@Z)(HWND hWnd)
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -5766,8 +5759,7 @@ typedef int (__stdcall *EndPaintProc)(void *, const PAINTSTRUCT *);
 // indirect  0x005F134E 0x005F1397
 
 
-#pragma warning(disable: 4716)
-bool __cdecl Win::OnPaint(HWND hwnd) {
+void __cdecl Win::OnPaint(HWND hwnd) {
     PAINTSTRUCT ps;
     // 0x006692B8. The image calls `[0x6692b8]` at 0x005F134E; the
     // file-scope `g` this used to read is SetCursorPos.
@@ -5782,7 +5774,6 @@ bool __cdecl Win::OnPaint(HWND hwnd) {
         EndPaint(hwnd, &ps);
     }
 }
-#pragma warning(default: 4716)
 
 
 
@@ -11397,11 +11388,15 @@ void Win::set_dialog_focus(Win * window) {
 
 // ORIGINAL: 0x005F1480 ?OnActivate@Win@@QAAJPAXIPAXJ@Z 0x005F1480-0x005F15B6 FILE
 // kind game
-// symbol    ?OnActivate@Win@@SAJPAXI0J@Z
+// symbol    ?OnActivate@Win@@SAXPAXI0J@Z
+// WINDOWSX.H declares Cls_OnActivate void and its message macro returns zero
+// independently of the handler. The pinned body forwards WM_ACTIVATE to
+// DefWindowProcA then returns through a bare epilogue; its EAX is not a
+// callback value. Registration provenance is not independently established.
 // TRIED: testing `a2 == 0` first (zero-set branch as the `if`) compiled to `test;jne`; testing `a2 != 0` first (zero-set branch as the `else`) matches the original's `test;je` polarity. Landed at MISMATCH #42 (up from #10) - same HDC acquire/release idiom as 0x5EF1E0's sub_5ef1e0.
 // ===== homed from src/unrecovered/005f1480.cpp =====
 
-long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
+void __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
                              long minimized) {
     InvalidateRect(HandleMain, 0, 0);
     if (state != 0) {
@@ -11444,7 +11439,7 @@ long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = nullptr;
     }
-    return DefWindowProcA(reinterpret_cast<HWND__ *>(hwnd), 6, (static_cast<unsigned int>(minimized) << 16) | (state & 0xffff),reinterpret_cast<long>(other));
+    DefWindowProcA(reinterpret_cast<HWND__ *>(hwnd), 6, (static_cast<unsigned int>(minimized) << 16) | (state & 0xffff),reinterpret_cast<long>(other));
 }
 
 // ===== homed from src/unrecovered/005ecf20.cpp =====

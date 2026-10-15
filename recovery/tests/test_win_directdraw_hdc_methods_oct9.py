@@ -30,7 +30,7 @@ def extract_body(source: str, signature: str) -> str:
 SIGNATURES = (
     "void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,",
     "void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6)",
-    "long __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,",
+    "void __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,",
 )
 
 PRELUDE = r"""
@@ -91,7 +91,7 @@ struct Win {
     int palette_seed_cache_;
     void window_line_raw(int, int, int, int, int, int, unsigned int);
     void sub_5ef1e0(int, int, int, int, void *, int);
-    long OnActivate(void *, unsigned int, void *, long);
+    void OnActivate(void *, unsigned int, void *, long);
 };
 static HDC GetDC(HWND) {
     ++gdi_get_calls;
@@ -108,14 +108,24 @@ static int LineTo(HDC, int, int) { ++draw_calls; return 1; }
 static int DeleteObject(HGDIOBJ) { ++draw_calls; return 1; }
 static int SelectPalette(HDC, HPALETTE, int) { ++palette_calls; return 1; }
 static int RealizePalette(HDC) { ++realize_calls; return 1; }
-static int InvalidateRect(HWND, void *, int) { return 1; }
-static long DefWindowProcA(HWND, unsigned int, unsigned long, long) { return 0x55; }
+static int invalidate_calls;
+static HWND forwarded_hwnd;
+static unsigned int forwarded_message;
+static unsigned long forwarded_wparam;
+static long forwarded_lparam;
+static int InvalidateRect(HWND, void *, int) { ++invalidate_calls; return 1; }
+static long DefWindowProcA(HWND hwnd, unsigned int message, unsigned long wparam, long lparam) {
+    forwarded_hwnd = hwnd; forwarded_message = message;
+    forwarded_wparam = wparam; forwarded_lparam = lparam; return 0x55;
+}
 static void reset() {
     WinHdcRefCount = 0; WinSharedHdc = 0; HandleMain = reinterpret_cast<HWND>(&hdc_token);
     DirectDrawSurface = &surface_a; BufferDirectDraw = 0;
     WinPointerOwner1 = WinPointerOwner2 = &hdc_token;
     get_calls[0] = get_calls[1] = release_calls[0] = release_calls[1] = 0;
     gdi_get_calls = gdi_release_calls = palette_calls = realize_calls = draw_calls = 0;
+    invalidate_calls = 0; forwarded_hwnd = 0; forwarded_message = 0;
+    forwarded_wparam = 0; forwarded_lparam = 0;
     mutate_global_on_acquire = false; surface_after_acquire = 0;
     supplied_hdc = reinterpret_cast<HDC>(&hdc_token); received_hdc = 0;
     fail_acquire = 0; palette_active.seed_ = 7;
@@ -141,18 +151,29 @@ int main() {
 
     // DirectDraw null output preserves the early return and zero count.
     reset(); fail_acquire = 1;
-    assert(win.OnActivate(HandleMain, 1, 0, 0) == 0x55);
+    win.OnActivate(HandleMain, 1, 0, 0);
     assert(get_calls[0] == 1 && palette_calls == 0 && realize_calls == 0);
     assert(WinHdcRefCount == 0 && release_calls[0] == 0);
+    assert(invalidate_calls == 1 && forwarded_hwnd == HandleMain);
+    assert(forwarded_message == 6 && forwarded_wparam == 1 && forwarded_lparam == 0);
 
     // No surface at acquisition selects GDI. A callback then installs the
     // DirectDraw surface, which is re-read and used for final release.
     reset(); DirectDrawSurface = 0;
     mutate_global_on_acquire = true; surface_after_acquire = &surface_b;
-    assert(win.OnActivate(HandleMain, 1, 0, 0) == 0x55);
+    win.OnActivate(HandleMain, 1, 0, 0);
     assert(gdi_get_calls == 1 && get_calls[0] == 0);
     assert(release_calls[1] == 1 && gdi_release_calls == 0);
     assert(received_hdc == supplied_hdc && WinHdcRefCount == 0 && !WinSharedHdc);
+    assert(invalidate_calls == 1 && forwarded_message == 6);
+
+    // Deactivation clears both pointer owners and forwards the original
+    // packed WM_ACTIVATE parameters; DefWindowProc's result is discarded.
+    reset();
+    win.OnActivate(HandleMain, 0, reinterpret_cast<void *>(0x1234), 1);
+    assert(!WinPointerOwner1 && !WinPointerOwner2 && invalidate_calls == 1);
+    assert(forwarded_hwnd == HandleMain && forwarded_message == 6);
+    assert(forwarded_wparam == 0x10000 && forwarded_lparam == 0x1234);
 
     // When callbacks leave the global null, the original fallback release is
     // retained even if acquisition used DirectDraw.
