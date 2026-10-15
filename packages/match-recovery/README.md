@@ -17,6 +17,32 @@ structure-led matching decompilation. It does not register projects, import a
 project's Python code or bundle a game's adapters. Project integration is local
 configuration plus commands exchanging JSON. Those commands can use any language.
 
+## Advisory recovery acceleration
+
+- `recover prioritize <targets...> --reference <target> --image <image>` measures
+  explicit exemplars freshly and ranks original-opcode similarity across owners.
+  Repeat `--reference`; `--all` replaces explicit candidate targets. Returned
+  contexts are bounded and fingerprinted. Masked matching is not strict exactness
+  or evidence that an exemplar's types/behavior can be copied.
+- `recover tasks variants <task> --image <image> --deck <deck> --local` screens
+  authorized single-TU body-only variants using full-TU compilation, unchanged
+  replica and target-damage controls. It reuses each object for neighboring task
+  mappings. Missing neighbors remain unknown. This serial exploratory route
+  excludes header/signature/binding changes and never grants claims or acceptance.
+  Use the existing strict variant/check commands before publishing a winner.
+- `recover triage --report <report>` classifies strict comparison rows, existing
+  candidate-deck reports or explicit `{ "original": ..., "candidate": ... }`
+  compiled-diagnostic pairs. Clues and missing evidence are advisory, not diagnoses.
+- `recover throughput --observations <json>` summarizes explicit
+  `original_identities`, `before`, `after` and optional `implementation_before`,
+  `implementation_after`, `timings`, `attempts`. The `match_recovery.throughput`
+  API defines the fingerprinted observation schema and a `source_measurement_batch`
+  adapter. Genuine coverage, masked matches, strict matches and scaffold counts
+  remain separate; absent timings never produce invented rates.
+
+Keep derived reports ignored. These commands neither schedule workers nor alter
+the existing task permissions, publication requirements or acceptance boundary.
+
 ## Explicit installed framework runtime
 
 `recover runtime inspect --python /absolute/venv/bin/python` describes an existing

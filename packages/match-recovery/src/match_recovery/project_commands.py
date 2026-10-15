@@ -19,6 +19,20 @@ def _progress(event):
 
 
 def register(commands):
+    throughput = commands.add_parser("throughput", help="Summarize paired observations and timings; never verifies or banks recovery")
+    throughput.add_argument("--root", type=Path, default=Path.cwd())
+    throughput.add_argument("--observations", type=Path, required=True, help="Ignored JSON with explicit identity denominator, before/after observations and optional timings")
+    prioritize = commands.add_parser("prioritize", help="Rank owner batches using freshly measured source examples; advisory, not acceptance")
+    prioritize.add_argument("targets", nargs="*")
+    prioritize.add_argument("--all", dest="all_candidates", action="store_true", help="Inspect all mapped candidates; omitted and excluded entries remain reported")
+    prioritize.add_argument("--reference", dest="reference_targets", action="append", required=True, help="Explicit exemplar target to measure freshly; repeat for multiple examples")
+    prioritize.add_argument("--root", type=Path, default=Path.cwd())
+    prioritize.add_argument("--image", type=Path, required=True)
+    prioritize.add_argument("--limit", type=int, default=50)
+    prioritize.add_argument("--top-k", type=int, default=5)
+    triage = commands.add_parser("triage", help="Classify observed mismatch clues from a native report; advisory only")
+    triage.add_argument("--root", type=Path, default=Path.cwd())
+    triage.add_argument("--report", type=Path, required=True)
     quality = commands.add_parser("quality", help="Report per-mapping source investigation debt separately from byte matching")
     quality.add_argument("--root", type=Path, default=Path.cwd())
     quality.add_argument("--summary", action="store_true", help="Omit per-mapping findings")
@@ -193,6 +207,7 @@ def register(commands):
     variants.add_argument("--deck", type=Path, required=True, help="Exact-text replacements with current source digest and a damage control")
     variants.add_argument("--jobs", type=int, default=1, help="Compiler concurrency; must fit the project's isolated compiler capacity")
     variants.add_argument("--compiled-diagnostics", action="store_true", help="Bounded target-only unlinked COFF listings from the existing trial objects; not verification")
+    variants.add_argument("--local", action="store_true", help="Screen single-TU body variants without recursive provider compilation; masked-byte diagnostics only, never acceptance")
     discovery = task_actions.add_parser("discover")
     discovery.add_argument("task")
     discovery.add_argument("--root", type=Path, default=Path.cwd())
@@ -281,6 +296,28 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             spans.append(Span(*(int(part, 0) for part in parts)))
         return 0, bind(root, image=arguments["image"], spans=spans, mode=arguments.get("mode", "body"),
                        **{key: arguments[key] for key in ("address", "name", "source", "line", "source_sha256", "reason", "evidence")})
+    if arguments.get("command") == "throughput":
+        from .throughput import throughput_report
+        path = Path(arguments["observations"])
+        value = read_json(path if path.is_absolute() else root / path)
+        required = {"original_identities", "before", "after"}
+        allowed = required | {"implementation_before", "implementation_after", "timings", "attempts"}
+        if not isinstance(value, dict) or not required <= value.keys() or value.keys() - allowed:
+            raise ValueError("throughput requires explicit paired observations, identities and optional timing/attempt evidence")
+        return 0, throughput_report(**value)
+    if arguments.get("command") == "triage":
+        from .mismatch_triage import triage_report
+        path = Path(arguments["report"])
+        return 0, triage_report(read_json(path if path.is_absolute() else root / path))
+    if arguments.get("command") == "prioritize":
+        from .recovery_examples import recommend_examples
+        targets = arguments.get("targets", [])
+        all_candidates = arguments.get("all_candidates", False)
+        if bool(targets) == bool(all_candidates):
+            raise ValueError("prioritize requires explicit targets or --all, not both")
+        return 0, recommend_examples(root, Path(arguments["image"]), targets, arguments["reference_targets"],
+                                     limit=arguments.get("limit", 50), top_k=arguments.get("top_k", 5),
+                                     all_candidates=all_candidates)
     if arguments.get("command") == "measure":
         from .source_measure import measure_source
         output = measure_source(root, arguments["targets"], image=arguments["image"],
@@ -452,6 +489,12 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
             from .variants import measure_variants
             paths = {name: Path(arguments[name]) for name in ("image", "deck")}
             paths = {name: path if path.is_absolute() else root / path for name, path in paths.items()}
+            if arguments.get("local", False):
+                if arguments.get("jobs", 1) != 1 or arguments.get("compiled_diagnostics", False):
+                    raise ValueError("local variant screening requires --jobs 1 and does not support --compiled-diagnostics")
+                from .local_variants import measure_local_variants
+                output = measure_local_variants(root, arguments["task"], paths["image"], read_json(paths["deck"]))
+                return (0 if output["status"] == "scored" else 3), output
             output = measure_variants(root, arguments["task"], paths["image"], read_json(paths["deck"]),
                                       jobs=arguments.get("jobs", 1), compiled_diagnostics=arguments.get("compiled_diagnostics", False))
             return (0 if output["status"] == "scored" else 3), output

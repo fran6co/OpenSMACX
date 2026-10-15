@@ -14,6 +14,7 @@ the claimants.
 
 from __future__ import annotations
 
+import errno
 import re
 from pathlib import Path
 
@@ -653,9 +654,17 @@ def function_line(source: Path | str, name: str) -> int:
     """
     if isinstance(source, Path):
         text = source.read_text(errors="ignore")
+    elif "\n" in source or "\r" in source:
+        text = source
     else:
         as_path = Path(source)
-        text = as_path.read_text(errors="ignore") if as_path.is_file() else source
+        try:
+            is_file = as_path.is_file()
+        except OSError as error:
+            if error.errno != errno.ENAMETOOLONG:
+                raise
+            is_file = False
+        text = as_path.read_text(errors="ignore") if is_file else source
 
     pattern = re.compile(rf"(?<![\w:]){re.escape(name)}\s*\(")
     lines = text.splitlines()

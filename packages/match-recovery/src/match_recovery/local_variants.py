@@ -308,8 +308,7 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
             if not baseline_raw:
                 raise ValueError("compiler returned no baseline object")
             baseline_obj = Coff(baseline_raw)
-            for binding in task_bindings:
-                baseline_obj.function(binding.symbol)
+            baseline_obj.function(target.symbol)
             fresh()
         except (OSError, ValueError) as error:
             if isinstance(error, _LeaseChanged):
@@ -324,8 +323,7 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
                     raise ValueError("overlay returned no unchanged replica")
                 if object_signature(Coff(baseline_raw)) != object_signature(Coff(replica_raw)):
                     raise ValueError("physical unchanged-source replica differs from direct compile")
-                for binding in task_bindings:
-                    Coff(replica_raw).function(binding.symbol)
+                Coff(replica_raw).function(target.symbol)
                 row["controls"]["unchanged_replica"] = {"result": Result.PASS.value}
             except (OSError, ValueError) as error:
                 if isinstance(error, _LeaseChanged):
@@ -372,8 +370,7 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
                                       "diagnostic": error} for record in records],
                         "compile_attempts": 0}
             try:
-                for binding in task_bindings:
-                    Coff(raw).function(binding.symbol)
+                Coff(raw).function(target.symbol)
                 measured = compare_unit(records, image_path, source, (), (flags,), shared,
                                         compiler=lambda *_args: raw)
                 return {"results": _comparison_rows(measured),

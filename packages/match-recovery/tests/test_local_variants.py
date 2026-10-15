@@ -152,6 +152,34 @@ def test_refuses_missing_target_and_wrong_native_coff_symbol(project):
         assert all(candidate["result"] == "unknown" for candidate in trial["candidates"].values())
 
 
+def test_unavailable_task_neighbor_does_not_block_selected_target_scoring(project):
+    root, task, deck = project
+    source_path = root / "code/unit.cc"
+    source = source_path.read_text() + (
+        "// ORIGINAL: 0x00401001 _missing 0x00401001-0x00401002\n"
+        "int _missing() { return 42; }\n")
+    source_path.write_text(source)
+    neighbor = Origin(task.subjects[0].image_sha256, "pe:va", 0x401001)
+    expanded = Task(task.task_id, task.target, task.author, task.intent,
+                    task.base_revision, (*task.subjects, neighbor),
+                    task.editable_files, task.evidence)
+    (root / "recovery/tasks/local.json").write_text(json.dumps(expanded.to_dict()))
+    deck["files"]["code/unit.cc"]["source_sha256"] = hashlib.sha256(
+        source_path.read_bytes()).hexdigest()
+
+    report = run(project, SyntheticCompiler(root), deck)
+    for trial in report["flag_trials"]:
+        assert trial["controls"]["unchanged_replica"]["result"] == "pass"
+        assert trial["controls"]["damage"]["result"] == "pass"
+        for measurements, target_result in (
+                (trial["baseline"], "pass"),
+                (trial["candidates"]["same"]["measurements"], "pass"),
+                (trial["candidates"]["different"]["measurements"], "fail")):
+            by_address = {row["address"]: row for row in measurements}
+            assert by_address["0x00401000"]["result"] == target_result
+            assert by_address["0x00401001"]["result"] == "unknown"
+
+
 def test_refuses_non_body_and_preprocessor_edits(project):
     root, _task, deck = project
     outside = json.loads(json.dumps(deck))

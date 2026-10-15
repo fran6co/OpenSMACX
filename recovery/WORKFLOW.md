@@ -815,7 +815,16 @@ two layout/body controls. Failed batches are split and recompiled independently;
 never treat a passing sibling as proof for the failed class. Compile-attempt
 counts include those retries, so compare actual reports when assessing throughput.
 
-For bounded one-TU body-only exploration, first use the existing package API
+For bounded one-TU body-only exploration, use
+`uv run recover tasks variants <task> --image <image> --deck <ignored-json> --local`.
+This screens the same authorized deck without recursive provider compilation.
+It supports one TU, body-only edits and serial compilation; header/signature/
+annotation changes and `--compiled-diagnostics` require the strict route below.
+Missing neighboring bodies remain unknown rather than preventing scoring of a
+present target. Read the controls and individual rows even when the overall
+report is incomplete. No result from this screen banks or restores a claim.
+
+For programmatic exploration, the existing package API
 `match_recovery.source.asm.compare_unit` with a compiler callable routing immutable
 candidate bytes through `Compiler.overlay`. Keep the normal full translation unit,
 not an extracted standalone function. Reuse its compiled object for all selected
@@ -863,6 +872,32 @@ recovery interpretations stay fixed during a deck. Change those only at a
 reviewed checkpoint, never as a way to improve a candidate score.
 A plateau is a resumable finding, not an exclusion. Never fabricate code or
 relax a check to bank a result.
+
+### Reuse examples and measure throughput
+
+`uv run recover prioritize <targets...> --reference <target> --image <image>`
+freshly measures the explicitly selected exemplars and ranks candidates by
+original opcode similarity, spreading recommendations across ownership groups.
+Repeat `--reference` for several examples; use `--all` instead of target selectors
+for a bounded whole-source survey. The returned source excerpts and fingerprints
+are transient context, not a new ledger. Similarity is a hint, not evidence that
+types, lifetimes or behavior can be copied. Masked-exact exemplars are explicitly
+not strict reference-aware matches; stale, scaffold and unavailable examples
+cannot qualify as freshly verified examples.
+
+`uv run recover triage --report <ignored-native-report.json>` classifies observed
+mismatch clues without changing the report's verification result. Missing or
+truncated instruction/relocation evidence stays unknown; a suggested cause is
+not a diagnosis or permission to change behavior.
+
+Use `uv run recover throughput --observations <ignored-observations.json>` for
+paired, fingerprinted measurements with an explicit original-identity denominator.
+Report genuine implementation gains, masked matching and strict exactness
+separately, together with worker time and compile attempts when observed. Do not
+infer speed from commits or candidate scores. Bound repeated attempts with the
+same source/toolchain/hypothesis; a plateau becomes an investigation or a different
+owner batch, not another identical spelling sweep. No throughput report proves
+acceptance or authorizes publication.
 
 When an extent failure hides the useful instruction differences, add
 `--compiled-diagnostics` to the same native variant command. It reuses that run's
