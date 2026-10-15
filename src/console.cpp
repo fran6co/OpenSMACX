@@ -1843,7 +1843,7 @@ void Console::zoom(int zoom_command, int window_index) {
         }
         window->draw_map(1);
     }
-    WorldClimateWorldWin.redraw();
+    WorldClimateWorldWin.GraphicWin::redraw();
 }
 
 
@@ -2893,7 +2893,7 @@ void Console::editor_clear() {
     Paths.init();
     map_wipe();
     draw_map(1);
-    WorldClimateWorldWin.redraw();
+    WorldClimateWorldWin.GraphicWin::redraw();
 }
 
 // ORIGINAL: 0x004E0210 ?editor_date@Console@@QAEXXZ 0x004E0210-0x004E0282

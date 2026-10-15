@@ -90,7 +90,7 @@ def _path_projection(*, restore_explicit_ctor: bool = False, mutate_free_order: 
     return block
 
 
-def _path_harness(block: str) -> str:
+def _path_harness(block: str, mapped_shutdown: str) -> str:
     return r"""
 #include <stdint.h>
 #include <stddef.h>
@@ -100,7 +100,7 @@ static void* freed[8];
 static int free_count;
 static void tracked_free(void* value) { freed[free_count++] = value; }
 #define free tracked_free
-""" + block + ";\n" + r"""
+""" + block + ";\n" + mapped_shutdown.replace("nullptr", "0") + r"""
 #undef free
 struct PathTestAccess {
   static bool zero(const Path& p) {
@@ -133,24 +133,29 @@ int main() {
 def test_path_zero_bss_shutdown_order_and_mutation_controls(tmp_path: Path, host_compiler: str) -> None:
     path_cpp = (ROOT / "src/path.cpp").read_text(encoding="utf-8")
     assert len(re.findall(r"^Path\s+Paths\s*;", path_cpp, re.MULTILINE)) == 1
-    _mapped_record("src/path.cpp", 0x0059A1B0, "??__EPaths@@YAXXZ", (0x0059A1B0, 0x0059A1BC), "_$E20", True)
-    _mapped_record("src/path.cpp", 0x0059A1C0, "??__FPaths@@YAXXZ", (0x0059A1C0, 0x0059A215), "_$E19", True)
+    _mapped_record("src/path.cpp", 0x0059A1B0, "??__EPaths@@YAXXZ", (0x0059A1B0, 0x0059A1BC), "_$E7", True)
+    _mapped_record("src/path.cpp", 0x0059A1C0, "??__FPaths@@YAXXZ", (0x0059A1C0, 0x0059A215), "_$E6", True)
     assert "free(map_table_)" in (ROOT / "src/path.h").read_text(encoding="utf-8")
     assert "free(x_table_)" in (ROOT / "src/path.h").read_text(encoding="utf-8")
     assert "free(y_table_)" in (ROOT / "src/path.h").read_text(encoding="utf-8")
 
-    baseline = _compile_and_run(tmp_path / "path-good", _path_harness(_path_projection()), host_compiler)
+    mapped_shutdown = _balanced_block(path_cpp, "void Path::shutdown()")
+    baseline = _compile_and_run(
+        tmp_path / "path-good", _path_harness(_path_projection(), mapped_shutdown), host_compiler)
     assert baseline.returncode == 0, baseline.stdout + baseline.stderr
 
     ctor_mutant = _compile_and_run(
         tmp_path / "path-ctor-mutant",
-        _path_harness(_path_projection(restore_explicit_ctor=True)), host_compiler,
+        _path_harness(_path_projection(restore_explicit_ctor=True), mapped_shutdown), host_compiler,
     )
     assert ctor_mutant.returncode != 0, "restoring unsupported unk_=5 ctor must fail zero-BSS control"
 
     free_mutant = _compile_and_run(
         tmp_path / "path-free-mutant",
-        _path_harness(_path_projection(mutate_free_order=True)), host_compiler,
+        _path_harness(
+            _path_projection(mutate_free_order=True),
+            mapped_shutdown.replace("free(map_table_);", "free(x_table_);", 1)),
+        host_compiler,
     )
     assert free_mutant.returncode != 0, "mutating native map/x/y release order must fail control"
 

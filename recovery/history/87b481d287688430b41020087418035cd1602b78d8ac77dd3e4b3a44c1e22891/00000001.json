@@ -1,0 +1,21 @@
+{
+  "event_id": "fc5d70a818e7d502d305f7a11aee8bc050e71c6f6fd572daf37bb3b5894c75dd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/source/__init__.py",
+      "packages/match-recovery/src/match_recovery/source/writer.py",
+      "packages/match-recovery/tests/source/test_body_writer.py"
+    ],
+    "evidence": [
+      "The source API has guarded symbol/kind writers but no body-binding writer. Moving mapped cleanup definitions from headers requires truthful body facts; add a narrowly guarded existing-body-path update with complete current snapshot and preservation checks, then use it for these two migrations. No new CLI or adapter."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "body-fact-writer-blocker-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-path-cleanup-dispatch-oct15"
+}

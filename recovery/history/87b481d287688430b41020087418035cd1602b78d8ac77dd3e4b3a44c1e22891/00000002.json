@@ -1,0 +1,23 @@
+{
+  "event_id": "87a0d761a8adab3e06e8ef52ed0cc5ec18b6ab1b236d94e6410227469bd25868",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Review caught an accidental extra qualified redraw in Console::zoom. Coordinator independently decoded original5153CC loadingECX8E9F60 and5153D1 directcall5D5A70, matching the editor_clear directGraphicWin redraw contract. Explicitly retain this evidence-backed caller correction; add actualsource and pinned directcall control. Zoom is already measured among200Console identities, comparison unchanged; no widened runtime or matching claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5329104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "fc5d70a818e7d502d305f7a11aee8bc050e71c6f6fd572daf37bb3b5894c75dd",
+  "request_id": "qualify-evidenced-zoom-redraw-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:map-path-cleanup-dispatch-oct15"
+}

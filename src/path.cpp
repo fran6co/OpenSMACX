@@ -85,7 +85,7 @@ Return Value: n/a
 Status: Complete
 */
 void Path::init() {
-    shutdown();
+    release_storage();
     clear_destination();
     map_table_ = (int *)mem_get(MapArea * 4);
     x_table_ = (int16_t *)mem_get(MapArea * 2);
@@ -96,7 +96,7 @@ void Path::init() {
 /*
  Purpose: Shutdown an instance of the class.
 // ORIGINAL: 0x0059A2D0 ?shutdown@Path@@QAEXXZ 0x0059A2D0-0x0059A318 BYTE_EXACT
-// body      src/path.h
+// body      src/path.cpp
 // size      72 bytes
 // prototype void (__thiscall ?shutdown@Path@@QAEXXZ)(Path* this)
 // callers   1   call targets   1
@@ -106,6 +106,21 @@ void Path::init() {
  Return Value: n/a
  Status: Complete
 */
+void Path::shutdown() {
+    if (map_table_) {
+        free(map_table_);
+    }
+    if (x_table_) {
+        free(x_table_);
+    }
+    if (y_table_) {
+        free(y_table_);
+    }
+    // IMAGE ORDER: y_table_ is nulled before x_table_.
+    map_table_ = nullptr;
+    y_table_ = nullptr;
+    x_table_ = nullptr;
+}
 
 
 /*
