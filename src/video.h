@@ -4,6 +4,7 @@
 #define OPENSMACX_VIDEO_H
 #include "stdafx.h"
 #include "sound.h"
+#include "soundx_sound_abi.h"
 #include "palette.h"
 #include "buffer.h"
 #include "graphicwin.h"
@@ -15,46 +16,16 @@
 #include <cstdlib>
 #include <cstring>
 
-// The wrapped sound-DLL device is an external polymorphic component. These
-// pure virtual declarations preserve its actual slot order; there is no
-// hand-authored vtable object and this interface is never instantiated.
-// Unknown slots are reserved declarations only, based on native offsets used
-// by the wrappers below. The calls in this proposal use only evidenced slots.
-class VideoSoundDevice {
+// The wrapped SoundX object is an external Sound ABI object followed by
+// Video's observed extension; the DLL owns its construction and destruction.
+// Pinned mode 4 factory 0x10008070 allocates 0xE8 bytes; its constructor chain
+// 0x10001316 -> 0x10005060 -> 0x100011F4 -> 0x1002A520 stages root and Sound
+// tables at unadjusted this before table 0x10064168. Slot 2's wrapper
+// 0x10005BF0 calls 0x100022B6, tests the flags argument and conditionally
+// frees the object. This supports a shared external prefix, not nominal game
+// class identity.
+class VideoSoundDevice : public SoundDeviceInterface {
 public:
-  virtual void reserved_00() = 0;
-  virtual void reserved_01() = 0;
-  virtual int destroy_device(int mode) = 0;                         // slot 2
-  virtual void reserved_03() = 0;
-  virtual void reserved_04() = 0;
-  virtual void reserved_05() = 0;
-  virtual void reserved_06() = 0;
-  virtual void reserved_07() = 0;
-  virtual int stop() = 0;                                           // slot 8
-  virtual void reserved_09() = 0;
-  virtual void reserved_10() = 0;
-  virtual void reserved_11() = 0;
-  virtual void reserved_12() = 0;
-  virtual void reserved_13() = 0;
-  virtual int release() = 0;                                        // slot 14
-  virtual void reserved_15() = 0;
-  virtual void reserved_16() = 0;
-  virtual void reserved_17() = 0;
-  virtual void reserved_18() = 0;
-  virtual void reserved_19() = 0;
-  virtual void reserved_20() = 0;
-  virtual void reserved_21() = 0;
-  virtual void reserved_22() = 0;
-  virtual int can_release() = 0;                                    // slot 23
-  virtual void reserved_24() = 0;
-  virtual void reserved_25() = 0;
-  virtual void reserved_26() = 0;
-  virtual void reserved_27() = 0;
-  virtual void reserved_28() = 0;
-  virtual void reserved_29() = 0;
-  virtual void reserved_30() = 0;
-  virtual void reserved_31() = 0;
-  virtual void reserved_32() = 0;
   virtual int configure_streams(const void *audio_stream,
                                 const void *video_stream,
                                 const void *audio_format,
