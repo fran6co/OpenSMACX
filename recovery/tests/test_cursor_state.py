@@ -65,11 +65,11 @@ struct Console {
 ACTUAL_BOUND
 MapWin *MapWinTable[MapWinTableSlots];MapWin windows[10];
 struct Event{char kind;int id,a,b;Sprite *sprite;};std::vector<Event> seen;
-int replace_slot,replace_id,activate_on_pump,hotspot_shape,change_mode_on_pump;
+int replace_source_slot,replace_slot,replace_id,activate_on_pump,hotspot_shape,change_mode_on_pump;
 uint32_t expected_mode,expected_vehicle;
 void callback(MapWin *window){
     require(console.field_23D10_==expected_mode && console.field_23D14_==expected_vehicle);
-    if(replace_slot>=0){require(MapWinTable[replace_slot]==window);MapWinTable[replace_slot]=&windows[replace_id];replace_slot=-1;}
+    if(replace_slot>=0){if(replace_source_slot>=0)require(MapWinTable[replace_source_slot]==window);MapWinTable[replace_slot]=&windows[replace_id];replace_slot=replace_source_slot=-1;}
     if(hotspot_shape>=0){CursorHotspotX[hotspot_shape]+=100;CursorHotspotY[hotspot_shape]+=200;}
 }
 int Win::set_cursor(Sprite *sprite,int x,int y){
@@ -95,7 +95,7 @@ void reset(){
     for(size_t i=0;i<MapWinTableSlots;++i)MapWinTable[i]=nullptr;
     for(int i=0;i<12;++i){g_CURSOR_SPRITES[i].id=i;CursorHotspotX[i]=10+i;CursorHotspotY[i]=30+i;}
     console.field_23D10_=expected_mode=71;console.field_23D14_=expected_vehicle=73;
-    replace_slot=-1;replace_id=9;activate_on_pump=hotspot_shape=change_mode_on_pump=-1;seen.clear();
+    replace_source_slot=replace_slot=-1;replace_id=9;activate_on_pump=hotspot_shape=change_mode_on_pump=-1;seen.clear();
 }
 void expect(size_t index,char kind,int id){require(index<seen.size() && seen[index].kind==kind && seen[index].id==id);}
 void run_on(bool vehicle){if(vehicle){expected_mode=4;expected_vehicle=uint32_t(-7);console.cursor_on(4,-7);}else console.cursor_on(4);}
@@ -112,6 +112,12 @@ void on_controls(){
         reset();MapWinTable[0]=&windows[0];replace_slot=0;run_on(overload);
         require(MapWinTable[0]==&windows[9] && windows[0].cursor_sprite_==&g_CURSOR_SPRITES[4] && windows[9].cursor_sprite_==nullptr);
         require(seen.size()==2);expect(0,'S',0);expect(1,'P',-1);
+        reset();MapWinTable[0]=&windows[0];MapWinTable[2]=&windows[2];
+        windows[2].field_1DD74_=windows[9].field_1DD74_=1;
+        replace_source_slot=0;replace_slot=2;replace_id=9;run_on(overload);
+        require(MapWinTable[2]==&windows[9]);
+        require(seen.size()==3);expect(0,'S',0);expect(1,'S',9);expect(2,'P',-1);
+        require(windows[2].cursor_sprite_==nullptr && windows[9].cursor_sprite_==&g_CURSOR_SPRITES[4]);
     }
 }
 int run_off(bool selected,uint32_t mode){console.field_23D10_=mode;expected_mode=0;if(selected)return console.selected();console.cursor_off();return -1;}
@@ -160,10 +166,10 @@ def test_actual_console_cursor_state(tmp_path):
 
 
 MUTANTS=[
-    ("primary-active-bypass","slot == 0 || window->field_1DD74_ != 0","window->field_1DD74_ != 0"),
-    ("inactive-filter","slot == 0 || window->field_1DD74_ != 0","true"),
-    ("last-slot","slot < static_cast<int>(MapWinTableSlots)","slot < static_cast<int>(MapWinTableSlots) - 1"),
-    ("sprite-cached-writeback","window->cursor_sprite_ = sprite;","MapWinTable[slot]->cursor_sprite_ = sprite;"),
+    ("primary-active-bypass","slot == MapWinTable || window->field_1DD74_ != 0","window->field_1DD74_ != 0"),
+    ("inactive-filter","slot == MapWinTable || window->field_1DD74_ != 0","true"),
+    ("last-slot","slot < MapWinTable + MapWinTableSlots","slot < MapWinTable + MapWinTableSlots - 1"),
+    ("sprite-cached-writeback","window->cursor_sprite_ = sprite;","(*slot)->cursor_sprite_ = sprite;"),
     ("resource-cached-writeback","window->cursor_resource_id_ = 0x7f00;","MapWinTable[slot]->cursor_resource_id_ = 0x7f00;"),
     ("flags-live-slot","const uint32_t flags = MapWinTable[slot]->field_1DD70_;","const uint32_t flags = window->field_1DD70_;"),
     ("draw-live-slot","MapWinTable[slot]->draw_map(1);","window->draw_map(1);"),

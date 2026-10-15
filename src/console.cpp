@@ -2858,12 +2858,12 @@ void Console::editor_clear_vehicles() {
     const int initial_area = static_cast<int>(MapArea);
     Map *tile = MapTiles;
     GameDataStateStorage.fields_.game_state_ |= 4;
-    int count = 0;
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
     if (initial_area > 0) {
+        int count = 0;
         do {
             tile->bit &= 0xfffffffcU;
             for (int i = 0; i < 7; ++i) {
@@ -3031,9 +3031,10 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 void Console::cursor_on(int cursor_shape) {
     // The original assumes cursor_shape names one of the twelve loaded
     // cursor sprites; neither it nor the hotspot lookup adds a bounds guard.
-    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
+    for (MapWin **slot = MapWinTable;
+         slot < MapWinTable + MapWinTableSlots; ++slot) {
+        MapWin *const window = *slot;
+        if (window != nullptr && (slot == MapWinTable || window->field_1DD74_ != 0)) {
             Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
             if (window->cursor_sprite_ != sprite) {
                 window->GraphicWin::set_cursor(sprite,
@@ -3684,9 +3685,10 @@ void Console::editor_clear_random() {
 void Console::cursor_on(int cursor_shape, int veh_id) {
     field_23D14_ = static_cast<uint32_t>(veh_id);
     field_23D10_ = static_cast<uint32_t>(cursor_shape);
-    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
+    for (MapWin **slot = MapWinTable;
+         slot < MapWinTable + MapWinTableSlots; ++slot) {
+        MapWin *const window = *slot;
+        if (window != nullptr && (slot == MapWinTable || window->field_1DD74_ != 0)) {
             Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
             if (window->cursor_sprite_ != sprite) {
                 window->GraphicWin::set_cursor(sprite,
@@ -7052,8 +7054,10 @@ void Console::cursor_key(int, int character, int) {
 // ORIGINAL: 0x00517060 ?use_time_bonus@Console@@QAEXXZ 0x00517060-0x00517173
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00517060.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::use_time_bonus() {
-    if (ConsoleControlTurnActive || !GameDataStateStorage.fields_.time_controls_selection_ || !IsMultiplayerNet) return;
+    if (ConsoleControlTurnActive) return;
     const int selection = GameDataStateStorage.fields_.time_controls_selection_;
+    if (!selection) return;
+    if (!IsMultiplayerNet) return;
     const int faction = ConsoleGlobal.faction_id_;
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && GameDataStateStorage.fields_.net_turn_faction_ != faction) {
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
