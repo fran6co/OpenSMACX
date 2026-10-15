@@ -1794,7 +1794,7 @@ Purpose: The topic-panel selection callback. The image:
 
          0x59AC/0x59B0 remember (id, kind): the field pair this class
          declares past flatButtons1_.
-// ORIGINAL: 0x0049D490 ?on_selected@ReportWin@@QAEXHH@Z 0x0049D490-0x0049D535 FILE
+// ORIGINAL: 0x0049D490 ?on_selected@ReportWin@@QAEXHH@Z 0x0049D490-0x0049D535 FILE BYTE_EXACT
 // symbol    ?on_selected@ReportWin@@UAEXHH@Z
 // size      165 bytes
 // prototype void (__thiscall ?on_selected@ReportWin@@QAEXHH@Z)(ReportWin* this, int, int)
@@ -1811,7 +1811,7 @@ void ReportWin::on_selected(int selection_id, int) {
         ReportIfGlobal.listBox1_.set_selected_pos(-1, 1);
         ReportIfGlobal.listBox2_.set_selected_id(selection_id);
     } else {
-        if (selection_id > 0x5F5E0FD) {
+        if (selection_id >= 0x5F5E0FE) {
             listBox_.set_selected_id(99999999);
             return;
         }
