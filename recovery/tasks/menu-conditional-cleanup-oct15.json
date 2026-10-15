@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ab1eb0e539d84c92dd67b066eab396a4f7e7d453",
+  "editable_files": [
+    "src/menu.cpp",
+    "recovery/tests/test_menu_conditional_cleanup_oct15.py"
+  ],
+  "evidence": [
+    "Pinned5FAE70: JZ5FAE94 skips both free and text-cell clear5FAE92; JZ5FAEB1 skips both deleting virtual call5FAEAC and pull_down clear5FAEAE. Current source unconditionally clears both cells. Move only those two assignments into their existing nonnull blocks; retain actual free/delete and field reset order, all15rows, scalar resets and untouched members.",
+    "Existing signed-selection tests do not observe pointer writes. Add actual-source host controls with test-only tracked slots and destruction-time observations; retain null and populated cases and mutations detecting unconditional writes/skipped cleanup/reordering. No header/layout/API or original annotation changes; native whole Menu TU comparison and fresh build/link before manual integration."
+  ],
+  "intent": "Restore the original conditional pointer clearing in Menu entry cleanup and verify all15 rows and callback-visible ordering.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6270576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "menu-conditional-cleanup-oct15"
+}
