@@ -1,0 +1,19 @@
+{
+  "event_id": "ab38febc4228e26cd193155742cf2152de9f9bd66d656566a690bd284f9c4d21",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_dialogs_remaining_typed_dispatch_oct9.py"
+    ],
+    "evidence": [
+      "Broader actual-source test explicitly expects kinds1..7,9..16 to dispatch leftclick, reproducing the disproven seed inversion. Pinned selector-table independently proves onlykind8, so correct expected domain while preserving receiver/argument/noop assertions and add explicit rationale."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "correct-inverted-legacy-control-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:dialogs-left-click-routing-oct15"
+}
