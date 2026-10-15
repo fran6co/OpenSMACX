@@ -65,7 +65,41 @@ KERNELS_FUNCTIONS = (
     "static void __cdecl caviar_part_s2o_clipped_candidate(",
     "static void caviar_shadow_kernel_candidate(",
     "static void __cdecl caviar_shadow_clipped_callback_candidate(",
-    "static void caviar_install_record_kernels_candidate(",
+)
+DISPATCHERS = (
+    "void __cdecl sub_63ad60(VoxRenderRecord *record) {",
+    "void __cdecl sub_63ae20(VoxRenderRecord *record) {",
+)
+CALLBACK_DECLARATIONS = (
+    "void __cdecl caviar_original_666fd0(\n"
+    "    int32_t, int32_t, uint32_t, const uint8_t *, int32_t);",
+    "void __cdecl caviar_original_666a80(\n"
+    "    int32_t, int32_t, const int32_t *, uint32_t,\n"
+    "    const uint8_t *, int32_t);",
+    "void __cdecl caviar_original_6647f0(\n"
+    "    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);",
+    "void __cdecl caviar_original_664000(\n"
+    "    int32_t, int32_t, int32_t, const int32_t *, uint32_t,\n"
+    "    const uint8_t *, int32_t);",
+    "void __cdecl caviar_original_665640(\n"
+    "    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);",
+    "void __cdecl caviar_original_664e50(\n"
+    "    int32_t, int32_t, int32_t, const int32_t *, uint32_t,\n"
+    "    const uint8_t *, int32_t);",
+    "void __cdecl caviar_original_666440(\n"
+    "    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);",
+    "void __cdecl caviar_original_665ca0(\n"
+    "    int32_t, int32_t, int32_t, const int32_t *, uint32_t,\n"
+    "    const uint8_t *, int32_t);",
+    "void __cdecl caviar_original_667b20(\n"
+    "    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);",
+    "void __cdecl caviar_original_667380(\n"
+    "    int32_t, int32_t, int32_t, const int32_t *, uint32_t,\n"
+    "    const uint8_t *, int32_t);",
+    "void __cdecl caviar_original_63aee0();",
+    "void __cdecl caviar_original_63af00();",
+    "void __cdecl caviar_original_63af20();",
+    "void __cdecl caviar_original_63af40();",
 )
 CALLBACKS = (
     "void __cdecl caviar_original_666fd0(", "void __cdecl caviar_original_666a80(",
@@ -140,6 +174,7 @@ def assembled(trace=False, mutant=None):
     definitions = [extract_definition(kernels, sig) for sig in KERNELS_FUNCTIONS]
     definitions += [extract_definition(product, sig) for sig in CALLBACKS]
     definitions += [extract_definition(product, sig) for sig in SETUP_CALLBACKS]
+    definitions += [extract_definition(product, sig) for sig in DISPATCHERS]
     if trace:
         definitions += [
             "static int setup_trace[4]; static int setup_trace_count;\n" +
@@ -170,6 +205,16 @@ def compile_run(compiler, source, expected):
         assert built.returncode == 0, built.stdout + built.stderr
         result = subprocess.run([str(exe)], check=False)
         assert (result.returncode == 0) == expected, (result.returncode, expected)
+
+
+def test_dispatcher_callback_declarations_precede_actual_entrypoints():
+    product = PRODUCT.read_text()
+    dispatcher_offsets = [product.find(signature) for signature in DISPATCHERS]
+    assert all(offset >= 0 for offset in dispatcher_offsets)
+    for declaration in CALLBACK_DECLARATIONS:
+        declaration_offset = product.find(declaration)
+        assert declaration_offset >= 0, f"missing typed callback declaration: {declaration}"
+        assert all(declaration_offset < offset for offset in dispatcher_offsets), declaration
 
 
 def test_actual_setup_helpers_and_all_depth_profiles_gcc_clang():

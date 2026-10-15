@@ -65,7 +65,10 @@ typedef void (__cdecl *PartClipped)(int32_t,int32_t,int32_t,const int32_t*,uint3
 typedef void (__cdecl *ShadowContained)(int32_t,int32_t,uint32_t,const uint8_t*,int32_t);
 typedef void (__cdecl *ShadowClipped)(int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t);
 typedef void (__cdecl *SetupCallback)();
+struct CaviarSceneSetupDescriptorCandidate { uint8_t pixel_size_; };
 struct VoxRenderRecord {
+  uint32_t setup_id_;
+  CaviarSceneSetupDescriptorCandidate *setup_block_;
   PartContained part_contained_; PartClipped part_clipped_;
   ShadowContained shadow_contained_; ShadowClipped shadow_clipped_;
   SetupCallback setup_callback_;
@@ -157,7 +160,10 @@ KERNEL_FUNCTIONS = (
     "static void __cdecl caviar_part_s2o_clipped_candidate(",
     "static void caviar_shadow_kernel_candidate(",
     "static void __cdecl caviar_shadow_clipped_callback_candidate(",
-    "static void caviar_install_record_kernels_candidate(",
+)
+DISPATCHERS = (
+    "void __cdecl sub_63ad60(VoxRenderRecord *record) {",
+    "void __cdecl sub_63ae20(VoxRenderRecord *record) {",
 )
 ORIGINAL_FUNCTIONS = (
     "void __cdecl caviar_original_666fd0(",
@@ -234,7 +240,11 @@ int main() {
       VoxRenderRecord record = {};
       // The pinned 0x63E950 record dispatch selects one of the eight part
       // entry roots listed in the module evidence note.
-      caviar_install_record_kernels_candidate(&record, (uint8_t)size, odd);
+      CaviarSceneSetupDescriptorCandidate setup = {(uint8_t)size};
+      record.setup_id_ = (uint32_t)odd;
+      record.setup_block_ = &setup;
+      if ((size + odd) & 1) sub_63ad60(&record);
+      else sub_63ae20(&record);
       assert(record.part_contained_ != 0 && record.part_clipped_ != 0);
       /* CHECK_SETUP_CALLBACK */
       // Original slot -> extracted source wrapper -> actual profile body.
@@ -301,6 +311,7 @@ int main() {
 def assembled(kernels: str, product: str) -> str:
     defs = [extract_definition(kernels, sig) for sig in KERNEL_FUNCTIONS]
     defs += [extract_definition(product, sig) for sig in ORIGINAL_FUNCTIONS]
+    defs += [extract_definition(product, sig) for sig in DISPATCHERS]
     setup_asserts = []
     for signature, size, odd, _helper in SETUP_ORIGINALS:
         defs.append(extract_definition(product, signature))
