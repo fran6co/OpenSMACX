@@ -31,8 +31,15 @@ def braced(text, start):
     raise AssertionError("unclosed product body")
 
 
-def product():
+def product(damage=None):
     source = clean((ROOT / "src/sprite.cpp").read_text())
+    if damage is not None:
+        name, old, new = damage
+        match = re.search(r"^(?:void|int\s*\*)\s*Sprite::" + name + r"\([^;{]*\)\s*\{", source, re.M)
+        assert match
+        body = braced(source, match.start())
+        assert body.count(old) == 1
+        source = source[:match.start()] + body.replace(old, new, 1) + source[match.start() + len(body):]
     header = clean((ROOT / "src/sprite.h").read_text())
     enum, = re.findall(r"enum\s*\{\s*SpriteScalingTableCount\s*=\s*\d+\s*\};", header)
     globals_ = re.findall(r"^(?:int|float) Sprite(?:ScaleNumerator|ScaleDenominator|CachedScaleNumerator|"
@@ -45,11 +52,10 @@ def product():
     for name in names:
         match, = re.findall(r"(?:void|int\s*\*)\s*" + name + r"\([^;{}]*\);", header)
         declarations.append(match)
-    matches = re.finditer(r"^(?:static int \*sprite_clip_(?:expand|shrink)|"
-        r"(?:void|int \*)\s*Sprite::(?:fill_scaling_table|get_clipped_[xy]_table_(?:expand|shrink)))"
+    matches = re.finditer(r"^(?:void|int \*)\s*Sprite::(?:fill_scaling_table|get_clipped_[xy]_table_(?:expand|shrink))"
         r"\([^;{]*\)\s*\{", source, re.M)
     bodies = [braced(source, m.start()) for m in matches]
-    assert len(bodies) == 7
+    assert len(bodies) == 5
     return enum + "\n" + "\n".join(globals_) + "\nclass Sprite { public: unsigned char guard[44];\n" + \
         "\n".join(declarations) + "\n};\n" + "\n".join(bodies)
 
@@ -97,7 +103,9 @@ HARNESS = r"""
 #include <cstdlib>
 #include <vector>
 #include <numeric>
-struct RECT { long left,top,right,bottom; };
+// Win32 RECT coordinates are signed 32-bit LONGs; int* output alias cases
+// below are therefore type-correct for this host harness.
+struct RECT { int left,top,right,bottom; };
 void check_at(bool condition,int line) {
     if(!condition) { std::fprintf(stderr,"behavior assertion line %d\n",line); std::exit(91); }
 }
@@ -166,6 +174,58 @@ void clipping(bool y,bool expand,int skip,int length,bool alias=false) {
     for(int i=0;i<800;++i) check(other[i]==-91);
     guards();
 }
+void reversed_shrink(bool y) {
+    RECT full={0,0,100,100};
+    RECT rect=y?RECT{0,2,1,-1}:RECT{2,0,-1,1};
+    for(int i=0;i<800;++i) SpriteClippedXSteps[i]=SpriteClippedYSteps[i]=-91;
+    int a=-11,b=-12,c=-13,d=-14;
+    int *result=clip(y,false,&full,&rect,&a,&b,&c,&d);
+    int *table=y?SpriteClippedYSteps:SpriteClippedXSteps;
+    check(result==table);
+    check(a==2 && b==SpriteScalingSteps[0]+SpriteScalingSteps[1]);
+    check(c==-3 && d==0);
+    for(int i=0;i<800;++i) check(table[i]==-91);
+    guards();
+}
+void reversed_partial_head_expand(bool y) {
+    fill(2,1,{2});
+    RECT full={0,0,100,100};
+    RECT rect=y?RECT{0,1,1,0}:RECT{1,0,0,1};
+    for(int i=0;i<800;++i) SpriteClippedXSteps[i]=SpriteClippedYSteps[i]=-91;
+    int source_skip=-11,destination_skip=-12,source_count=-13,destination_count=-14;
+    int *result=clip(y,true,&full,&rect,&source_skip,&destination_skip,
+                     &source_count,&destination_count);
+    int *table=y?SpriteClippedYSteps:SpriteClippedXSteps;
+    check(result==table);
+    check(source_skip==0 && destination_skip==1);
+    check(source_count==1 && destination_count==-1);
+    // This original partial-head path's output[-1] lands on table[0]. Avoid
+    // skip=0 with negative extent: that path can address before the table.
+    check(table[0]==-1);
+    for(int i=1;i<800;++i) check(table[i]==-91);
+    guards();
+}
+void zero_extent_alias(bool y,bool expand) {
+    RECT full={0,0,100,100};
+    RECT rect=y?RECT{0,4,1,4}:RECT{4,0,4,1};
+    int *table=y?SpriteClippedYSteps:SpriteClippedXSteps;
+    table[0]=-73;
+    int *result=clip(y,expand,&full,&rect,&table[0],&table[0],&table[0],&table[0]);
+    check(result==0 && table[0]==-73);
+    guards();
+}
+void rect_output_alias_reads_before_writes() {
+    fill(5,2,{2,3});
+    RECT full={0,0,100,100}, rect={1,0,4,1};
+    int destination_skip=-12,source_count=-13,destination_count=-14;
+    int *result=sprite.get_clipped_x_table_expand(&full,&rect,&rect.left,
+        &destination_skip,&source_count,&destination_count);
+    check(result==SpriteClippedXSteps);
+    // Fetch both rectangle-derived inputs before source_skip overwrites left.
+    check(rect.left==0 && destination_skip==1 && source_count==2 && destination_count==3);
+    check(SpriteClippedXSteps[0]==1 && SpriteClippedXSteps[1]==2);
+    guards();
+}
 int main() {
     std::memset(sprite.guard,0xA7,sizeof(sprite.guard));
     check(SpriteScaleNumerator==1 && SpriteScaleDenominator==1);
@@ -193,6 +253,14 @@ int main() {
         clipping(y,expand,2,7,true);
         fill(1,1,{1}); clipping(y,expand,0,800); clipping(y,expand,799,1);
     }
+    fill(5,2,{2,3});
+    for(int y=0;y<2;++y) {
+        reversed_shrink(y);
+        reversed_partial_head_expand(y);
+        zero_extent_alias(y,true);
+        zero_extent_alias(y,false);
+    }
+    rect_output_alias_reads_before_writes();
     // Output accumulator aliases a clipped-table entry: every += must reload
     // after the table write, not use a cached sum.
     fill(5,2,{2,3});
@@ -220,20 +288,19 @@ def test_actual_scaling_bodies(tmp_path):
     assert result.returncode == 0, result.stdout+result.stderr
 
 
-@pytest.mark.parametrize("old,new", [
-    ("static_cast<uint32_t>(larger));", "static_cast<uint32_t>(smaller));"),
-    ("if (error > 0)", "if (error >= 0)"),
-    ("i < SpriteScalingTableCount", "i < SpriteScalingTableCount - 1"),
-    ("--index;", "index -= 0;"),
-    ("if (extent < 0) output[-1] += extent;", "if (extent < 0) output[-1] -= extent;"),
-    ("*source_skip += SpriteScalingSteps[index];", "*source_skip += 1;"),
-    ("table[i] = step;\n        *source_count += step;", "*source_count += step;\n        table[i] = step;"),
-    ("destination_skip, source_skip, destination_count, source_count, SpriteClippedYSteps);",
-     "destination_skip, source_skip, destination_count, source_count, SpriteClippedXSteps);"),
+@pytest.mark.parametrize("method,old,new", [
+    ("fill_scaling_table", "static_cast<uint32_t>(larger));", "static_cast<uint32_t>(smaller));"),
+    ("fill_scaling_table", "if (error > 0)", "if (error >= 0)"),
+    ("fill_scaling_table", "i < SpriteScalingTableCount", "i < SpriteScalingTableCount - 1"),
+    ("get_clipped_x_table_expand", "--index;", "index -= 0;"),
+    ("get_clipped_x_table_expand", "if (extent < 0) output[-1] += extent;", "if (extent < 0) output[-1] -= extent;"),
+    ("get_clipped_x_table_shrink", "*source_skip += SpriteScalingSteps[index];", "*source_skip += 1;"),
+    ("get_clipped_x_table_shrink", "SpriteClippedXSteps[i] = step;\n        *source_count += step;", "*source_count += step;\n        SpriteClippedXSteps[i] = step;"),
+    ("get_clipped_y_table_shrink", "return SpriteClippedYSteps;", "return SpriteClippedXSteps;"),
 ])
-def test_scaling_damage(tmp_path,old,new):
-    body=product(); assert body.count(old)==1
-    result=run(tmp_path,body.replace(old,new))
+def test_scaling_damage(tmp_path,method,old,new):
+    body=product((method,old,new))
+    result=run(tmp_path,body)
     assert result.returncode == 91, result.stdout+result.stderr
 
 
@@ -245,3 +312,20 @@ def test_signed_fill_overflow_damage(tmp_path):
     # Here sanitizer rejection is specifically the property under test. The
     # intact body passes the same literal large-input expectations above.
     assert result.returncode != 0 and "signed integer overflow" in result.stderr
+
+def test_nonpositive_extent_safety_mutation(tmp_path):
+    old = "if (extent == 0) return 0;"
+    for method in ("get_clipped_x_table_expand", "get_clipped_x_table_shrink"):
+        body = product((method, old, "if (extent <= 0) return 0;"))
+        # Negative shrink and partial-head negative expansion retain the
+        # original behavior; reject this safety-normalization mutant.
+        result = run(tmp_path, body)
+        assert result.returncode == 91, result.stdout+result.stderr
+
+def test_zero_extent_write_mutation(tmp_path):
+    old = "if (extent == 0) return 0;"
+    changed = "if (extent == 0) { *destination_count = extent; return 0; }"
+    for method in ("get_clipped_x_table_expand", "get_clipped_x_table_shrink"):
+        body = product((method, old, changed))
+        result = run(tmp_path, body)
+        assert result.returncode == 91, result.stdout+result.stderr

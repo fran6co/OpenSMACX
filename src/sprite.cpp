@@ -284,35 +284,35 @@ void Sprite::fill_scaling_table() {
     }
 }
 
-// Intersected, nonempty rectangles and accesses within the 800-step bank are
-// caller preconditions. The original helpers do not clamp oversized requests.
-// Expansion maps each input pixel/row to a run of output pixels/rows; the
-// clipped head and tail may shorten those runs. Output stores retain order
-// even when a caller supplies aliased output pointers.
-static int *sprite_clip_expand(int skip, int extent, int *source_skip,
-    int *destination_skip, int *source_count, int *destination_count, int *table) {
+// ORIGINAL: 0x005EAB0F ?get_clipped_x_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAB0F-0x005EABB7
+// RECOVERY_BINDING: v1 {"evidence": ["Original returns9B53EC and caller5E5244 consumes EAX as an int-table pointer. It clips partial first/last runs and reports source and destination extents, retaining ordered alias-visible output stores.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the actual X run table."}
+// symbol    ?get_clipped_x_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+// Capture rectangle-derived values before writes; the caller can alias
+// source_skip with a RECT coordinate.
+int *Sprite::get_clipped_x_table_expand(RECT *full, RECT *clipped, int *source_skip,
+    int *destination_skip, int *source_count, int *destination_count) {
+    const int skip = clipped->left - full->left;
+    int extent = clipped->right - clipped->left;
     if (extent == 0) return 0;
     *destination_count = extent;
     *destination_skip = skip;
     int index = 0;
-    while (skip > 0) {
-        skip -= SpriteScalingSteps[index];
-        ++index;
-    }
+    int adjusted_skip = skip;
+    while (adjusted_skip > 0) { adjusted_skip -= SpriteScalingSteps[index]; ++index; }
     const int *input = SpriteScalingSteps + index;
     int count;
     int *output;
-    if (skip < 0) {
-        const int remaining = -skip;
+    if (adjusted_skip < 0) {
+        const int remaining = -adjusted_skip;
         extent -= remaining;
         --index;
-        table[0] = remaining;
+        SpriteClippedXSteps[0] = remaining;
         *source_skip = index;
-        output = table + 1;
+        output = SpriteClippedXSteps + 1;
         count = 1;
     } else {
         *source_skip = index;
-        output = table;
+        output = SpriteClippedXSteps;
         count = 0;
     }
     while (extent > 0) {
@@ -323,13 +323,60 @@ static int *sprite_clip_expand(int skip, int extent, int *source_skip,
     }
     if (extent < 0) output[-1] += extent;
     *source_count = count;
-    return table;
+    return SpriteClippedXSteps;
 }
 
-// Shrink entries are source advances per output pixel/row. Unlike expansion,
-// the first and third output arguments are in destination coordinates.
-static int *sprite_clip_shrink(int skip, int extent, int *destination_skip,
-    int *source_skip, int *destination_count, int *source_count, int *table) {
+// ORIGINAL: 0x005EABBF ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EABBF-0x005EAC69
+// RECOVERY_BINDING: v1 {"evidence": ["Original returns9B4760 and caller5E5285 consumes EAX as an int-table pointer. Top/bottom coordinate counterpart of5EAB0F with its own scratch table.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the independent Y run table."}
+// symbol    ?get_clipped_y_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+// Preserve the X routine's ordered stores and partial head/tail handling for
+// the independent Y scratch table.
+int *Sprite::get_clipped_y_table_expand(RECT *full, RECT *clipped, int *source_skip,
+    int *destination_skip, int *source_count, int *destination_count) {
+    const int skip = clipped->top - full->top;
+    int extent = clipped->bottom - clipped->top;
+    if (extent == 0) return 0;
+    *destination_count = extent;
+    *destination_skip = skip;
+    int index = 0;
+    int adjusted_skip = skip;
+    while (adjusted_skip > 0) { adjusted_skip -= SpriteScalingSteps[index]; ++index; }
+    const int *input = SpriteScalingSteps + index;
+    int count;
+    int *output;
+    if (adjusted_skip < 0) {
+        const int remaining = -adjusted_skip;
+        extent -= remaining;
+        --index;
+        SpriteClippedYSteps[0] = remaining;
+        *source_skip = index;
+        output = SpriteClippedYSteps + 1;
+        count = 1;
+    } else {
+        *source_skip = index;
+        output = SpriteClippedYSteps;
+        count = 0;
+    }
+    while (extent > 0) {
+        const int step = *input++;
+        *output++ = step;
+        extent -= step;
+        ++count;
+    }
+    if (extent < 0) output[-1] += extent;
+    *source_count = count;
+    return SpriteClippedYSteps;
+}
+
+// ORIGINAL: 0x005EAC6F ?get_clipped_x_table_shrink@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAC6F-0x005EACFB
+// RECOVERY_BINDING: v1 {"evidence": ["Original computes source prefix skip and total source advances from9B3AD8; returned9B53EC is consumed as a pointer by5E503C. Output roles differ from expansion and retain alias-visible writes.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover shrinking X clipping using actual source-advance entries."}
+// symbol    ?get_clipped_x_table_shrink@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+// The zero-extent return precedes output writes; nonpositive extents retain
+// the original signed loop behavior.
+int *Sprite::get_clipped_x_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
+    int *source_skip, int *destination_count, int *source_count) {
+    const int skip = clipped->left - full->left;
+    const int extent = clipped->right - clipped->left;
     if (extent == 0) return 0;
     *destination_skip = skip;
     *destination_count = extent;
@@ -342,46 +389,36 @@ static int *sprite_clip_shrink(int skip, int extent, int *destination_skip,
     *source_count = 0;
     for (int i = 0; i < extent; ++i) {
         const int step = SpriteScalingSteps[index + i];
-        table[i] = step;
+        SpriteClippedXSteps[i] = step;
         *source_count += step;
     }
-    return table;
-}
-
-// ORIGINAL: 0x005EAB0F ?get_clipped_x_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAB0F-0x005EABB7
-// RECOVERY_BINDING: v1 {"evidence": ["Original returns9B53EC and caller5E5244 consumes EAX as an int-table pointer. It clips partial first/last runs and reports source and destination extents, retaining ordered alias-visible output stores.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the actual X run table."}
-// symbol    ?get_clipped_x_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
-int *Sprite::get_clipped_x_table_expand(RECT *full, RECT *clipped, int *source_skip,
-    int *destination_skip, int *source_count, int *destination_count) {
-    return sprite_clip_expand(clipped->left - full->left, clipped->right - clipped->left,
-        source_skip, destination_skip, source_count, destination_count, SpriteClippedXSteps);
-}
-
-// ORIGINAL: 0x005EABBF ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EABBF-0x005EAC69
-// RECOVERY_BINDING: v1 {"evidence": ["Original returns9B4760 and caller5E5285 consumes EAX as an int-table pointer. Top/bottom coordinate counterpart of5EAB0F with its own scratch table.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the independent Y run table."}
-// symbol    ?get_clipped_y_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
-int *Sprite::get_clipped_y_table_expand(RECT *full, RECT *clipped, int *source_skip,
-    int *destination_skip, int *source_count, int *destination_count) {
-    return sprite_clip_expand(clipped->top - full->top, clipped->bottom - clipped->top,
-        source_skip, destination_skip, source_count, destination_count, SpriteClippedYSteps);
-}
-
-// ORIGINAL: 0x005EAC6F ?get_clipped_x_table_shrink@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAC6F-0x005EACFB
-// RECOVERY_BINDING: v1 {"evidence": ["Original computes source prefix skip and total source advances from9B3AD8; returned9B53EC is consumed as a pointer by5E503C. Output roles differ from expansion and retain alias-visible writes.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover shrinking X clipping using actual source-advance entries."}
-// symbol    ?get_clipped_x_table_shrink@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
-int *Sprite::get_clipped_x_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
-    int *source_skip, int *destination_count, int *source_count) {
-    return sprite_clip_shrink(clipped->left - full->left, clipped->right - clipped->left,
-        destination_skip, source_skip, destination_count, source_count, SpriteClippedXSteps);
+    return SpriteClippedXSteps;
 }
 
 // ORIGINAL: 0x005EACFF ?get_clipped_y_table_shrink@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EACFF-0x005EAD8D
 // RECOVERY_BINDING: v1 {"evidence": ["Original top/bottom counterpart of5EAC6F returns9B4760. Callers read one int entry per row but pixel kernels explicitly consume its low byte.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover shrinking Y clipping with an independent source-advance table."}
 // symbol    ?get_clipped_y_table_shrink@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+// Keep the same no-write zero-extent return and signed iteration as X.
 int *Sprite::get_clipped_y_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
     int *source_skip, int *destination_count, int *source_count) {
-    return sprite_clip_shrink(clipped->top - full->top, clipped->bottom - clipped->top,
-        destination_skip, source_skip, destination_count, source_count, SpriteClippedYSteps);
+    const int skip = clipped->top - full->top;
+    const int extent = clipped->bottom - clipped->top;
+    if (extent == 0) return 0;
+    *destination_skip = skip;
+    *destination_count = extent;
+    *source_skip = 0;
+    int index = 0;
+    while (index < skip) {
+        *source_skip += SpriteScalingSteps[index];
+        ++index;
+    }
+    *source_count = 0;
+    for (int i = 0; i < extent; ++i) {
+        const int step = SpriteScalingSteps[index + i];
+        SpriteClippedYSteps[i] = step;
+        *source_count += step;
+    }
+    return SpriteClippedYSteps;
 }
 
 // The blitters own per-draw cursors and pitches locally; only scale decisions
