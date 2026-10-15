@@ -56,7 +56,8 @@ def test_native_cleanup_lowering_is_not_repeated_manually() -> None:
 
 def test_original_proposal_gate_and_uninitialized_stack_obligation() -> None:
     body = _actual_body()
-    assert "if ((GameRules & 8) == 0 || (GameState & 1) != 0" in body
+    assert "if ((GameDataStateStorage.fields_.game_rules_ & 8) == 0 || " \
+           "(GameDataStateStorage.fields_.game_state_ & 1) != 0" in body
     assert "proposed_target_priority:" not in body
     # The seed initializes s14 only after proposal 1 passes its gates. Keep
     # that residue obligation visible; do not invent a clean default here.
@@ -86,7 +87,8 @@ def _compile_and_run(body, expect_success=True) -> None:
                 "-o",
                 str(executable),
             ]
-            subprocess.run(command, cwd=ROOT, check=True, capture_output=True, text=True)
+            built = subprocess.run(command, cwd=ROOT, capture_output=True, text=True)
+            assert built.returncode == 0, built.stdout + built.stderr
             result = subprocess.run([str(executable)], cwd=ROOT, capture_output=True, timeout=10)
             assert (result.returncode == 0) is expect_success, result.stderr.decode()
 
@@ -100,9 +102,21 @@ def test_post_modal_mask_mutant_is_rejected():
     anchor = "    if (alternate_selection != 0 && selected_item == 1)"
     assert body.count(anchor) == 1
     prefix, suffix = body.split(anchor)
-    assert "static_cast<unsigned char>(LockEnableMask)" in suffix
-    suffix = suffix.replace("static_cast<unsigned char>(LockEnableMask)", "human_mask")
+    member = "GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_"
+    assert member in suffix
+    suffix = suffix.replace(member, "human_mask")
     _compile_and_run(prefix + anchor + suffix, expect_success=False)
+
+
+def test_initial_human_predicate_uses_only_the_human_byte():
+    body = _actual_body()
+    member = "GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_"
+    assert body.count(member) >= 1
+    # The extracted-source harness sets human byte +0 to zero and adjacent
+    # alive byte +1 to one for faction 8. A dword read wrongly admits it.
+    _compile_and_run(body)
+    damaged = body.replace(member, "GameDataStateStorage.fields_.lock_masks_.enable_mask_", 1)
+    _compile_and_run(damaged, expect_success=False)
 
 
 def test_manual_extra_cleanup_mutant_is_rejected():

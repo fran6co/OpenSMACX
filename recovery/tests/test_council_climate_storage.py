@@ -27,7 +27,13 @@ def test_climate_step_threshold_direction_and_callback_reads(tmp_path):
 #include <string>
 #include <vector>
 #define __cdecl
-int ClimateRiseStep, ClimateRiseLimit, ClimateRiseAccum, ClimateSeaLevelDelta;
+struct BaseSecretProject { int project_base[64]; int empath_guild() const { return -1; } };
+#include "@@GAME_DATA_HEADER@@"
+GameDataStateWindow GameDataStateStorage;
+int &ClimateRiseStep = GameDataStateStorage.fields_.climate_rise_step_;
+int &ClimateRiseLimit = GameDataStateStorage.fields_.climate_rise_limit_;
+int &ClimateRiseAccum = GameDataStateStorage.fields_.climate_rise_accum_;
+int &ClimateSeaLevelDelta = GameDataStateStorage.fields_.climate_sea_level_delta_;
 int MapSeaLevel;
 bool ChangeState;
 char Script[]="SCRIPT", UpdatedScript[]="UPDATED";
@@ -75,6 +81,7 @@ int main() {
     assert(Events.back()=="SEARISING"); // Saved sign, freshly read popup file.
 }
 '''
+    harness = harness.replace("@@GAME_DATA_HEADER@@", str(Path(__file__).resolve().parents[2] / "src/game_data_state_window.h"))
     unit = tmp_path / "climate.cpp"
     unit.write_text(harness)
     executable = tmp_path / "climate"

@@ -40,6 +40,8 @@ HARNESS = r'''
 #include <cassert>
 #include <cstring>
 #define __cdecl
+struct BaseSecretProject { uint8_t bytes_[0x100]; };
+#include "@@GAME_DATA_HEADER@@"
 const int MaxPlayerNum = 8;
 const int PROP_SALVAGE_UNITY_CORE = 2;
 const int PROP_GLOBAL_TRADE_PACT = 3;
@@ -123,20 +125,7 @@ struct Map {
 struct RulesWorldbuilder { uint32_t sea_level_rises; };
 Player Players[MaxPlayerNum] = {};
 int ExpansionEnabled = 0;
-struct GameDataLockMaskView { uint32_t enable_mask_; };
-struct GameDataStateFields {
-    GameDataLockMaskView lock_masks_;
-    int governor_faction_;
-    uint32_t ranking_faction_id_unk1_;
-    uint32_t faction_rankings_[MaxPlayerNum];
-    uint32_t game_rules_;
-    int turn_current_num_;
-    int base_current_count_;
-};
-struct GameDataStateWindowStub {
-    GameDataStateFields fields_;
-    GameDataStateWindowStub() : fields_{} { fields_.governor_faction_ = -1; }
-} GameDataStateStorage;
+GameDataStateWindow GameDataStateStorage;
 int IsMultiplayerNet = 0;
 Base Bases[512] = {};
 Map map_storage[256] = {};
@@ -180,7 +169,9 @@ int bit_count(int value) {
 
 
 def compile_and_run(body: str) -> None:
-    program = HARNESS + "\n" + ARITHMETIC_HELPERS + "\n" + body + r'''
+    harness = HARNESS.replace(
+        "@@GAME_DATA_HEADER@@", str(ROOT / "src/game_data_state_window.h"))
+    program = harness + "\n" + ARITHMETIC_HELPERS + "\n" + body + r'''
 int main() {
     std::memset(PlayersData, 0, sizeof(PlayersData));
     PlayersData[1].ai_power = 1;
@@ -551,6 +542,13 @@ int main() {
     assert(wants_prop(0, 11, 0) == 0);
     assert(wants_prop(0, -1, 0) == 0);
     assert(wants_prop(0, 10, 0) == -9);
+
+    // For proposal zero, only alive byte +1 determines whether option 1 is
+    // eligible. A human bit in neighboring byte +0 must not admit it.
+    std::memset(PlayersData, 0, sizeof(PlayersData));
+    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 1u << 1;
+    GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ = 0;
+    assert(wants_prop(1, 0, 1) == -9);
     return 0;
 }
 '''
@@ -559,7 +557,8 @@ int main() {
         executable = Path(tmp) / "wants_prop"
         source.write_text(program)
         subprocess.run(
-            ["g++", "-std=c++11", "-Wall", "-Wextra", "-Werror", "-Wno-unused-parameter", str(source), "-o", str(executable)],
+            ["g++", "-std=c++11", "-Wall", "-Wextra", "-Werror", "-Wno-unused-parameter",
+             str(source), "-o", str(executable)],
             check=True,
         )
         subprocess.run([str(executable)], check=True)
@@ -567,6 +566,19 @@ int main() {
 
 def test_native_proposal_scoring_phases():
     compile_and_run(BODY)
+
+
+def test_adjacent_human_byte_cannot_make_a_faction_alive():
+    anchor = "GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_"
+    assert BODY.count(anchor) >= 1
+    damaged = BODY.replace(
+        anchor,
+        "GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_",
+        1,
+    )
+    with pytest.raises(subprocess.CalledProcessError) as rejected:
+        compile_and_run(damaged)
+    assert rejected.value.returncode != 0
 
 
 def test_controls_reject_stale_callback_state():

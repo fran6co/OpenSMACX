@@ -108,6 +108,9 @@ struct PlayerData {
     int sanction_turns, council_call_turn;
 };
 struct RulesProposal { char *name; };
+struct BaseSecretProject { int project_base[64]; int empath_guild() const { return -1; } };
+#include "@@GAME_DATA_HEADER@@"
+GameDataStateWindow GameDataStateStorage;
 struct CouncWin {
     uint32_t field_A1C_, field_A20_;
     int init_arg0, init_arg1;
@@ -121,14 +124,21 @@ struct NetMessage {
 } NetMsgPrimary;
 static Player Players[8]; static PlayerData PlayersData[8];
 static RulesProposal Proposal[11];
-static int CouncilResolutionCount[11], CouncilLastResolutionTurn[11];
+static int (&CouncilResolutionCount)[11] = GameDataStateStorage.fields_.council_resolution_count_;
+static int (&CouncilLastResolutionTurn)[11] = GameDataStateStorage.fields_.council_last_resolution_turn_;
 static Sprite *FactionDiplomacyPortraits[8];
 static char StringTemp[256]; static char *ScriptPopupFile=(char*)"SCRIPT";
-static int GovernorFaction, TurnCurrentNum, GameState, CouncilPbemGate;
-static int IsMultiplayerPBEM, IsMultiplayerNet, SunspotDuration;
-static int ExpansionEnabled, GameRules, DiffLevelCurrent;
+static int &GovernorFaction = GameDataStateStorage.fields_.governor_faction_;
+static int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
+static uint32_t &GameState = GameDataStateStorage.fields_.game_state_;
+static int CouncilPbemGate;
+static int IsMultiplayerPBEM, IsMultiplayerNet;
+static int &SunspotDuration = GameDataStateStorage.fields_.sunspot_duration_;
+static int ExpansionEnabled;
+static uint32_t &GameRules = GameDataStateStorage.fields_.game_rules_;
+static int &DiffLevelCurrent = GameDataStateStorage.fields_.diff_level_current_;
 static int GenderDefault, PluralityDefault;
-static uint32_t LockEnableMask;
+static uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 static int CauseFrictionMode, GreatSatanMode, ParseCount, ParseNumOrder;
 static char ParseKind[32]; static int ParseSlot[32], ParseGender[32], ParsePlural[32];
 static const char *ParseText[32]; static int ParseValue[32];
@@ -141,8 +151,8 @@ static int __cdecl parse_says(int slot,const char *text,int,int) {
     int i=ParseCount++; ParseKind[i]='S'; ParseSlot[i]=slot; ParseText[i]=text;
     ParseGender[i]=GenderDefault; ParsePlural[i]=PluralityDefault; return 0;
 }
-static int __cdecl parse_say(int slot,int value,int,int) {
-    int i=ParseCount++; ParseKind[i]='s'; ParseSlot[i]=slot; ParseValue[i]=value;
+static int __cdecl parse_say(int slot,char *text,int,int) {
+    int i=ParseCount++; ParseKind[i]='s'; ParseSlot[i]=slot; ParseValue[i]=(int)(intptr_t)text;
     ParseGender[i]=GenderDefault; ParsePlural[i]=PluralityDefault; return 0;
 }
 static int __cdecl popp(const char *,const char *,int,const char *,int(__cdecl *)()) { return 0; }
@@ -168,7 +178,8 @@ def compile_run(tmp_path, bodies, main, compiler):
     if executable is None: pytest.skip(compiler + " is unavailable")
     source = tmp_path / (compiler + ".cpp")
     binary = tmp_path / compiler
-    source.write_text(FIXTURE + "\n" + "\n".join(bodies) +
+    fixture = FIXTURE.replace("@@GAME_DATA_HEADER@@", str(ROOT / "src/game_data_state_window.h"))
+    source.write_text(fixture + "\n" + "\n".join(bodies) +
                       "\nint main(){\n" + main + "\n}\n")
     subprocess.run([executable, "-std=c++98", "-w", str(source), "-o", str(binary)],
                    check=True, capture_output=True, text=True)

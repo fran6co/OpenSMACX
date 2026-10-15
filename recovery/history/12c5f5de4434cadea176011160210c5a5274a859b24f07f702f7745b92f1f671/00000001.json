@@ -1,0 +1,21 @@
+{
+  "event_id": "75bd60f3e237be2f6866de18c828932af20e6c77b65e7d9673902a240b5a7ce7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_council_action_behavior.py",
+      "recovery/tests/test_council_atrocity_product_source.py",
+      "recovery/tests/test_council_climate_storage.py"
+    ],
+    "evidence": [
+      "Coordinator baseline reproduced eight host compile failures before this candidate. Read-only independent diagnosis establishes stale detached globals instead of production GameDataStateWindow and parse_say pointer API drift. Authorize fixture-only repairs using the production header and exact old scenario aliases; retain every scenario and assertion, no C++ edits or behavior changes. These are test declaration repairs, not added production subject scope or relaxed proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "council-host-fixture-ownership-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:council-byte-read-stages-oct15"
+}

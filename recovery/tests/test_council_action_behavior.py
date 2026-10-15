@@ -53,12 +53,22 @@ constexpr uint32_t DTREATY_PACT=1, DTREATY_VENDETTA=0x10, DTREATY_HAVE_SURRENDER
 constexpr uint32_t DAGENDA_FIGHT_TO_DEATH=8, DAGENDA_DIPLO_PERMANENT=0x2000;
 struct Player { int is_leader_female; char title_leader[32], name_leader[32], noun_faction[32]; int noun_gender, is_noun_plural, rule_flags; };
 struct PlayerData { uint32_t flags; uint32_t diplo_treaties[8]; int diplo_agenda[8]; int energy_reserves; };
+struct BaseSecretProject { int project_base[64]; int empath_guild() const { return -1; } };
+#include "@@GAME_DATA_HEADER@@"
+GameDataStateWindow GameDataStateStorage;
 struct { int sea_level_rises; } WorldBuilder;
 struct Console { int faction_id_; void update_data(int); };
 Player Players[MaxPlayerNum]; PlayerData PlayersData[MaxPlayerNum]; Console ConsoleGlobal;
-int CouncilResolutionCount[MaxProposalNum], CouncilLastResolutionTurn[MaxProposalNum];
-int TurnCurrentNum, EndgameExitReason, ClimateRiseStep, ClimateRiseLimit, ClimateRiseAccum, ClimateSeaLevelDelta;
-int MapSeaLevelCouncil, GameState; uint32_t GameRules, alive_mask; BOOL IsMultiplayerNet;
+int (&CouncilResolutionCount)[MaxProposalNum] = GameDataStateStorage.fields_.council_resolution_count_;
+int (&CouncilLastResolutionTurn)[MaxProposalNum] = GameDataStateStorage.fields_.council_last_resolution_turn_;
+int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
+int EndgameExitReason;
+int &ClimateRiseStep = GameDataStateStorage.fields_.climate_rise_step_;
+int &ClimateRiseLimit = GameDataStateStorage.fields_.climate_rise_limit_;
+int &ClimateRiseAccum = GameDataStateStorage.fields_.climate_rise_accum_;
+int &ClimateSeaLevelDelta = GameDataStateStorage.fields_.climate_sea_level_delta_;
+int MapSeaLevelCouncil; uint32_t &GameState = GameDataStateStorage.fields_.game_state_;
+uint32_t &GameRules = GameDataStateStorage.fields_.game_rules_; uint32_t alive_mask; BOOL IsMultiplayerNet;
 int GenderDefault, PluralityDefault, popup_result, scenario, treaty_mutations, agenda_mutations;
 char *ScriptPopupFile=(char*)"SCRIPT";
 struct Event { std::string kind, a, b; int x, y; };
@@ -146,7 +156,8 @@ def test_council_action_actual_body_controls(tmp_path):
     compiler = shutil.which("g++")
     if compiler is None:
         pytest.skip("host C++ compiler is unavailable")
-    source = HARNESS.replace("// SOURCE", actual_definitions())
+    source = HARNESS.replace("@@GAME_DATA_HEADER@@", str(ROOT / "src/game_data_state_window.h"))
+    source = source.replace("// SOURCE", actual_definitions())
     source = source.replace("#include <cstring>", "#include <cstring>\n#include <cstdio>")
     cpp = tmp_path / "council_action.cpp"
     exe = tmp_path / "council_action"
