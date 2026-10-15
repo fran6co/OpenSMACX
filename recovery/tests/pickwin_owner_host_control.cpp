@@ -36,6 +36,7 @@ struct Trace {
   std::vector<std::array<LONG, 4>> extract_rectangles;
   std::vector<std::array<int, 5>> extract_xy;
 } trace;
+struct GameDataStateWindow { struct Fields { union LockMasks { struct Bytes { uint8_t human_mask_, alive_mask_, unassigned_[2]; } bytes_; uint32_t enable_mask_; } lock_masks_; } fields_; } GameDataStateStorage;
 
 static void note(const char *s) { trace.calls.push_back(s); }
 int InterfaceBoxStyles[51];
@@ -103,7 +104,6 @@ void read_faction(int id) {
   std::strcpy(Players[id].desc_name_faction, (std::string("Desc") + std::to_string(id)).c_str());
   note("read_faction");
 }
-unsigned char factions_status_byte(int) { return static_cast<unsigned char>(trace.mode_status); }
 
 struct Buffer {
   Buffer() { note("buffer_ctor"); }
@@ -406,7 +406,7 @@ int main() {
 
   // Mode 2 filters exactly the faction-status bits; it does not change the
   // text or selection callback contract.
-  reset_trace(); trace.mode_status = 1 << 2;
+  reset_trace(); GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ = 1 << 2;
   buttons.field_5DA0_ = 2;
   buttons.on_button_clicked(0x102);
   assert(trace.list_item_calls == 6);

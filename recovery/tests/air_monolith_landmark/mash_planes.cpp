@@ -9,12 +9,13 @@ struct Veh { int16_t x,y; uint32_t state; uint16_t flags; int16_t proto_id; uint
 struct VehPrototype { char veh_name[32]; uint32_t ability_flags; uint8_t chassis_id,weapon_id,armor_id,reactor_id,carry_capacity,cost,plan; int8_t unk_1; uint8_t obsolete_factions; int8_t combat_factions,icon_offset,padding; uint16_t flags; int16_t preq_tech; };
 struct RulesChassis { char bytes[0x49]; uint8_t triad,range; };
 struct Map { uint8_t climate,contour; uint16_t val2; uint8_t region,visibility,val3,unk_1; uint32_t bit; };
+struct GameDataStateWindow { struct Fields { int vehicle_current_count_; } fields_; } GameDataStateStorage;
 struct Veh Vehs[8];
 struct VehPrototype VehPrototypes[8];
 int mutate_proto_on_focus = -1;
 void mutate_focus_proto() { if (mutate_proto_on_focus >= 0) Vehs[0].proto_id = static_cast<int16_t>(mutate_proto_on_focus); }
 struct Console { Console() : focus_calls(0),last_x(0),last_y(0),last_faction(0),faction_id_(0) {} int focus(int x,int y,int faction) { ++focus_calls; last_x=x; last_y=y; last_faction=faction; mutate_focus_proto(); return 0; } int focus_calls,last_x,last_y,last_faction,faction_id_; };
-int VehCurrentCount=0; RulesChassis Chassis[8]; Map tile; uint32_t MapIsFlat=1,MapLongitude=4,MapLongitudeBounds=8,MapLatitudeBounds=4; int speed_value=5; Console ConsoleGlobal; int kills=0,booms=0,draws=0,stacks=0;
+int &VehCurrentCount=GameDataStateStorage.fields_.vehicle_current_count_; RulesChassis Chassis[8]; Map tile; uint32_t MapIsFlat=1,MapLongitude=4,MapLongitudeBounds=8,MapLatitudeBounds=4; int speed_value=5; Console ConsoleGlobal; int kills=0,booms=0,draws=0,stacks=0;
 Map *map_loc(int x,int y) { assert(x>=0&&x<8&&y>=0&&y<4); return &tile; }
 int speed(int,bool) { return speed_value; }
 int stack_check(int,int,int,int,int) { ++stacks; return 0; }

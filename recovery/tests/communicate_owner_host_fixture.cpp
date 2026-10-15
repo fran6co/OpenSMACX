@@ -204,7 +204,7 @@ int x_pops_caption_value(char *caption, const char *label, int value,
     g_caption_popup_callback = callback;
     return g_popup;
 }
-int parse_say(int, int, int, int) { ++g_parse_say_calls; return 0; }
+int parse_say(int, char *, int, int) { ++g_parse_say_calls; return 0; }
 int parse_says(int, const char *, int, int) {
     ++g_parse_says_calls;
     return 0;
@@ -221,15 +221,11 @@ int has_tech(int, int) { return 0; }
 int has_project(int, int) { return 0; }
 int wants_to_attack(...) { return 0; }
 int contiguous(...) { return 0; }
-int factions_status_byte(int index) {
-    return reinterpret_cast<const uint8_t *>(
-        &GameDataStateStorage.fields_.lock_masks_.enable_mask_)[index];
-}
 int is_human(int faction) {
-    return factions_status_byte(0) & (1u << faction);
+    return GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction);
 }
 int is_alive(int faction) {
-    return factions_status_byte(1) & (1u << faction);
+    return GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << faction);
 }
 char *get_title(...) { return (char *)"title"; }
 char *get_name(...) { return (char *)"name"; }

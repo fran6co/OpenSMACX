@@ -1041,18 +1041,13 @@ char *__cdecl get_adjective_insult_faction(int faction_id);
 char *__cdecl get_insult_leader(int faction_id);
 
 // INLINE: the image has no is_human - it open-codes what this names.
-inline uint8_t __cdecl factions_status_byte(int index) {
-    // the image's FactionsStatus byte view of the LockEnableMask dword
-    return reinterpret_cast<const uint8_t *>(&GameDataStateStorage.fields_.lock_masks_.enable_mask_)[index];
-}
-
 inline BOOL __cdecl is_human(uint32_t faction_id) {
-    return factions_status_byte(0) & (1u << faction_id);
+    return GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction_id);
 }
 
 // INLINE: the image has no is_alive - it open-codes what this names.
 inline BOOL __cdecl is_alive(uint32_t faction_id) {
-    return factions_status_byte(1) & (1u << faction_id);
+    return GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << faction_id);
 }
 
 inline BOOL __cdecl is_alien_faction(uint32_t faction_id) {

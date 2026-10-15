@@ -1,0 +1,24 @@
+{
+  "event_id": "4b20b100700c44aca1c6d55f3fe016d3afb588feccec35c83e6d0e4554e75b1f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator source review corrects nearest-annotation misattribution: base.cpp13963 is inside production_project_events_tail, not upgrade_prototype. Helper comment identifies original0x4F2F61..0x4F33D2, within base_production4F07E0 span, and its only caller is base_production at base.cpp14350.",
+      "Authorize named human byte substitution only within this helper, preserving local snapshot and mon_winning_trans callback sequencing. Existing WIP is retained; no source annotations or task baseline reset. Original upgrade_prototype remains in recorded scope but must not be edited as a substitute. Full base TU already included in baseline measurement; include helper physical output in candidate review."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5179360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "base-production-tail-owner-correction-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:named-faction-masks-oct15"
+}

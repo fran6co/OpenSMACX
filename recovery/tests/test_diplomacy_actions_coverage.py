@@ -57,7 +57,7 @@ def _strip_old_storage_declarations(source: str) -> str:
 
 def host_fixture(source: str) -> str:
     """Add a narrow typed owner and rewrite fixture setup to the owner fields."""
-    if "GameDataStateStorage" in source or "struct GameDataStateWindowFields" in source:
+    if re.search(r"\bGameDataStateWindow\s+GameDataStateStorage\b", source) or "struct GameDataStateWindowFields" in source:
         raise RuntimeError("fixture already has a game-data owner; review manually")
     source = _strip_old_storage_declarations(source)
     source, project_count = re.subn(
@@ -739,7 +739,7 @@ struct Player { int is_leader_female; char title_leader[24], name_leader[24],
     adj_name_faction[24]; } Players[8];
 struct Data { uint32_t diplo_treaties[8], diplo_agenda[8]; int loan_balance[8],
     loan_payment[8], energy_reserves; char diplo_patience[8]; } PlayersData[8];
-struct ProposalRecord { int preq_tech; const char *name, *description; };
+struct ProposalRecord { int preq_tech; char *name, *description; };
 ProposalRecord Proposal[MaxProposalNum];
 int CouncilResolutionCount[10];
 int PopupDialogFactionID, DiplomacyProposalMode, DiploScratchFA34,
@@ -779,7 +779,6 @@ void buy_council_vote(int a,int b,int choice,int count) {
 }
 int has_tech(int,int faction) { assert(faction>=0&&faction<8); return 1; }
 int eligible(int faction) { return faction>=0&&faction<8 && (eligible_mask&(1<<faction)); }
-unsigned int factions_status_byte(int n) { assert(n==1); return 0xff; }
 int parse_says(int slot,char *s,int a,int b) {
     assert(slot>=0&&slot<=1&&s&&a==-1&&b==-1); ++parse_count; return 0;
 }
@@ -811,7 +810,7 @@ int X_pops(const char *key,int flags,Sprite *sprite,int(*cb)()) {
 }
 int x_pops_minimal(const char *,Sprite *,int(*)()) { return 0; }
 char *get_pact_hood(int,int) { return Players[1].adj_name_faction; }
-struct StringTableType { const char *get(int) { return "label"; } } StringTable;
+struct StringTableType { char *get(char *) { return (char *)"label"; } } StringTable;
 struct Dialogs {
     void sprite(Sprite *s,char *text,int n) { assert(s==FactionDiplomacyPortraits[2]&&!text&&!n); }
     void item(char *,int id) {
@@ -853,6 +852,7 @@ void reset() {
     DiploScratchFAD0=DiploScratchFAD4=DiploScratchFA5C=DiploScratchFA7C=0;
     GenderDefault=PluralityDefault=IsMultiplayerNet=DiploFriction=0;
     GameState=0; GameRules=8; DiplomacyMapTransferChanged=0;
+    GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ = 0xff;
     proposal_menu_result=menu_calls=popup_constructs=popup_destroys=0;
     pact_calls=treaty_calls=attack_calls=energy_calls=tech_calls=threat_calls=0;
     gift_calls=swap_calls=vote_calls=map_calls=map_order=modal_order=0;

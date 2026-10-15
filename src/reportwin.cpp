@@ -3118,7 +3118,7 @@ void ReportWin::draw_intel() {
     for (int faction = 1; faction < 8; ++faction) {
         const unsigned int flags = PlayersData[subject].diplo_treaties[faction];
         if (faction == subject || !(flags & 8) ||
-            !(factions_status_byte(1) & (1 << faction)) ||
+            !(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << faction)) ||
             (!informed && faction != viewer && !(PlayersData[viewer].diplo_treaties[faction] & 1))) continue;
         StringTemp[0] = 0;
         if (flags & 0x10) {
@@ -3311,10 +3311,10 @@ void ReportWin::draw_score() {
             report_topic_line(canvas, rect1_, rect1_.left);
             rect1_.top += field_E268_ * 2;
             for (int other = 1; other < 8; ++other) {
-                if (!(factions_status_byte(1) & (1 << other)) || other == faction) continue;
+                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1 << other)) || other == faction) continue;
                 const int target = ScenarioSave.objective_req_victory ? ScenarioSave.objective_req_victory : most;
                 if (num_objectives(other, GameDataStateStorage.fields_.game_rules_ & 0x1000) < target) continue;
-                if (!(factions_status_byte(0) & (1 << other)) && (GameDataStateStorage.fields_.game_rules_ & 0x80000)) continue;
+                if (!(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << other)) && (GameDataStateStorage.fields_.game_rules_ & 0x80000)) continue;
                 const char *section = outcome > 1 ? "DRAWSTRING" : outcome ? "WINSTRING2" : "WINSTRING";
                 if (X_text_open(ScriptPopupFile, section)) break;
                 text_get();

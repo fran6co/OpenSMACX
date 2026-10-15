@@ -167,7 +167,6 @@ extern int PopupModalActive, MapSetupStatus;
 extern int GenderDefault, PluralityDefault;
 extern int TamperState93A9AC, TamperState93A9B0, TamperState93A9B4;
 char *label_get(int);
-unsigned char factions_status_byte(int);
 int bit_count(int);
 int default_rules();
 int x_pop_short(const char *, int, int (*)());
@@ -267,7 +266,6 @@ char *label_get(int i) {
     strcpy(labels[i], n.str().c_str());
     return labels[i];
 }
-unsigned char factions_status_byte(int n) { return (LockEnableMask >> (8 * n)) & 255; }
 int bit_count(int n) { int count = 0; for (unsigned int v = n; v; v >>= 1) count += v & 1; return count; }
 int default_rules() { event("default_rules"); return 0x42; }
 int x_pop_short(const char *label, int, int (*)()) { int r = answer(label); if (r >= 0) PopupWriteCheckState = 0x12355; return r; }

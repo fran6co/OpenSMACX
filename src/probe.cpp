@@ -1953,7 +1953,7 @@ label_5a2574:
         if (!native_fallback_marker &&
             (native_pair_treaty & 0x30u) != 0 &&
             PlayersData[target_faction_id].diff_level <= 2 &&
-            (factions_status_byte(0) &
+            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
              (1u << (static_cast<uint32_t>(target_faction_id) & 31u))) == 0 &&
             PlayersData[target_faction_id].soc_effect_temp.values_[SocialEffect::PROBE] < 3) {
             action_result = 6;

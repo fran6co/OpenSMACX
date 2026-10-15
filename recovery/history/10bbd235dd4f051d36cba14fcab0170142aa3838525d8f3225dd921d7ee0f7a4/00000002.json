@@ -1,0 +1,19 @@
+{
+  "event_id": "0bfb165cd7e374d576ce48d756da20ec8d34454c62be983b15fb1df4758f4a78",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/air_monolith_landmark/mash_planes.cpp"
+    ],
+    "evidence": [
+      "Independent root baseline reproduces28fixture compile failures:22air-monolith and6communicate. Candidate same28 after named-mask changes. Authorize test-only mash_planes owner storage declaration and alias repair so existing actual-source cases can run; no product body changes or assertions removed. Existing scope already covers monolith fixture and communicate parse_say API repair. Preserve all scenarios/mutations and correct production field/signature types."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4b20b100700c44aca1c6d55f3fe016d3afb588feccec35c83e6d0e4554e75b1f",
+  "request_id": "mask-fixture-residual-closure-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:named-faction-masks-oct15"
+}

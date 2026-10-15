@@ -69,7 +69,6 @@ def actual_source():
     for signature in ("MEASURED inline BOOL __cdecl on_map(","MEASURED inline int __cdecl xrange("):
         helpers.insert(0,braced(headers["map.h"],signature))
     helpers.insert(0,braced(headers["faction.h"],"inline BOOL __cdecl is_human("))
-    helpers.insert(0,braced(headers["faction.h"],"inline uint8_t __cdecl factions_status_byte("))
     helpers.append(braced(headers["general.h"],"MEASURED inline int __cdecl range("))
     helpers.append(braced(headers["base.h"],"static __forceinline int has_fac_built_call("))
     helpers.append(braced(base,"void __cdecl base_nutrient()"))
