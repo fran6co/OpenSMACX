@@ -9,6 +9,7 @@
 #include <vector>
 
 #define __cdecl
+typedef const char *LPSTR;
 
 static std::vector<std::string> events;
 static int popup_selection;
@@ -47,6 +48,12 @@ static const int PROP_REINSTATE_UN_CHARTER = 9;
 static const unsigned int RFLAG_ALIEN = 0x80;
 static const unsigned int DTREATY_PACT = 1;
 
+struct BaseSecretProject {
+    unsigned char bytes_[0x100];
+    int empath_guild() const { return -1; }
+};
+#include "../../src/game_data_state_window.h"
+GameDataStateWindow GameDataStateStorage;
 struct Player { unsigned int rule_flags; };
 struct PlayerData {
     int ranking;
@@ -69,7 +76,7 @@ struct Scroll {
     void close() { events.push_back("scroll.close"); }
     ~Scroll() { events.push_back("scroll.dtor"); close(); }
 };
-static unsigned int LockEnableMask;
+static unsigned int &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 struct Popup {
     Scroll scroll_;
     Dialogs dialogs_;
@@ -94,7 +101,8 @@ struct Sprite {
 };
 struct Buffer { static int get_pcx_dimensions(const char *, int *w, int *h) { *w=32; *h=32; events.push_back("dimensions"); return 0; } };
 struct Strings {
-    char *get(int id) {
+    char *get(const char *text) {
+        const int id = static_cast<int>(reinterpret_cast<intptr_t>(text));
         static char names[MaxProposalNum][24];
         static char descriptions[MaxProposalNum][24];
         if (id >= 100 && id < 100 + MaxProposalNum) {
@@ -124,24 +132,30 @@ static RulesType Rules;
 static ConsoleType ConsoleGlobal;
 static Strings StringTable;
 static NetMsg NetMsgPrimary;
-static int CouncilResolutionCount[MaxProposalNum];
-static int CouncilLastResolutionTurn[MaxProposalNum];
+static int (&CouncilResolutionCount)[MaxProposalNum] =
+    GameDataStateStorage.fields_.council_resolution_count_;
+static int (&CouncilLastResolutionTurn)[MaxProposalNum] =
+    GameDataStateStorage.fields_.council_last_resolution_turn_;
 static int CouncilPendingMessageArgs[3];
-static int GovernorFaction;
+static int &GovernorFaction = GameDataStateStorage.fields_.governor_faction_;
 static int ExpansionEnabled;
 static int ConsoleControlTurnActive;
 static int IsMultiplayerNet;
-static int TurnCurrentNum;
-static unsigned int GameState;
-static unsigned int GameRules;
-static unsigned int NetTurnFlags;
-static int NetTurnFaction;
+static int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
+static unsigned int &GameState = GameDataStateStorage.fields_.game_state_;
+static unsigned int &GameRules = GameDataStateStorage.fields_.game_rules_;
+static unsigned int &NetTurnFlags = GameDataStateStorage.fields_.net_turn_flags_;
+static int &NetTurnFaction = GameDataStateStorage.fields_.net_turn_faction_;
 static int TurnRedrawPending;
 static int ExitTurnLoop;
 static char PopupStartCaption[256];
 static char StringTemp[1032];
 
-static int can_call_council(int, int) { return call_can_council; }
+static int calls_to_can_call_council;
+static int can_call_council(int, int) {
+    ++calls_to_can_call_council;
+    return call_can_council;
+}
 static int council_votes(int faction) { return vote_values[faction]; }
 static int council_get_vote(int, int, int) { return -1; }
 static int wants_prop(int, int proposal, int target) { return wants_values[target][proposal]; }
@@ -169,6 +183,8 @@ static void reset_state() {
     call_can_council = 1; popup_selection = 0; council_lock_result = 0;
     council_exit_turn = 1; redraw_pending_after_wait = 0;
     popup_exec_mask_after = -1;
+    calls_to_can_call_council = 0;
+    std::memset(&GameDataStateStorage, 0, sizeof GameDataStateStorage);
     std::memset(Players, 0, sizeof Players);
     std::memset(PlayersData, 0, sizeof PlayersData);
     std::memset(CouncilResolutionCount, 0, sizeof CouncilResolutionCount);
@@ -335,6 +351,18 @@ static void test_council_call_half_delay_and_resolution_cooldown() {
     assert(popped_messages[0] == "COUNCILRECENTPROP");
 }
 
+static void test_human_byte_does_not_include_adjacent_alive_byte() {
+    reset_state();
+    ConsoleControlTurnActive = 1;
+    ConsoleGlobal.faction_id_ = 8;
+    LockEnableMask = 0x00000100u;
+    call_can_council = 0;
+    call_council(8);
+    // Native reads byte +0 for this predicate. The adjacent alive bit at +1
+    // must not short-circuit the later admission helper.
+    assert(calls_to_can_call_council == 1);
+}
+
 int main() {
     test_early_guard_constructs_then_destroys();
     test_can_call_announcement_and_refusal();
@@ -344,5 +372,6 @@ int main() {
     test_live_mask_reload_after_modal_events();
     test_proposal_one_uses_overwritten_game_state_value();
     test_council_call_half_delay_and_resolution_cooldown();
+    test_human_byte_does_not_include_adjacent_alive_byte();
     return 0;
 }

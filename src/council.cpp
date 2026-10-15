@@ -126,7 +126,7 @@ void __cdecl call_council(int faction_id) {
     }
 
     if (ConsoleControlTurnActive != 0) {
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << faction_id)) != 0 || IsMultiplayerNet) {
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) != 0 || IsMultiplayerNet) {
             return;
         }
     }
@@ -138,7 +138,7 @@ void __cdecl call_council(int faction_id) {
     }
 
     faction_bit = 1 << faction_id;
-    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    human_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
     if ((human_mask & faction_bit) == 0 && GameDataStateStorage.fields_.governor_faction_ > 0
             && ((GameDataStateStorage.fields_.turn_current_num_ + faction_id * 2) & 0xF) != 0) {
         return;
@@ -229,8 +229,8 @@ governor_proposal:
     larger_vote_counts = 0;
     for (target = 1; target < MaxPlayerNum; ++target) {
         if (faction_id != target
-                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)
-                    & (1 << target)) != 0
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+                    (1 << target)) != 0
                 && council_votes(target) > candidate) {
             ++larger_vote_counts;
         }
@@ -241,18 +241,18 @@ governor_proposal:
     goto governor_vote_rule;
 
 governor_candidate_counted:
-    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    human_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
     if ((faction_bit & human_mask) == 0 && GameDataStateStorage.fields_.governor_faction_ > 0) {
         goto proposal_next;
     }
 governor_vote_rule:
     local_faction = GameDataStateStorage.fields_.governor_faction_;
-    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    human_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
     if (local_faction == faction_id
             && (human_mask & faction_bit) == 0) {
         goto proposal_next;
     }
-    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    human_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
     if ((human_mask & faction_bit) != 0) {
         goto proposal_render;
     }
@@ -290,7 +290,7 @@ governor_tally:
     if (local_faction <= 0) {
         goto proposal_render;
     }
-    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    human_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
     if ((human_mask & (1 << local_faction)) != 0) {
         goto proposal_render;
     }
@@ -309,8 +309,8 @@ supreme_leader_proposal:
     larger_vote_counts = 0;
     for (target = 1; target < MaxPlayerNum; ++target) {
         if (faction_id != target
-                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)
-                    & (1 << target)) != 0
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+                    (1 << target)) != 0
                 && council_votes(target) > candidate) {
             ++larger_vote_counts;
         }
@@ -321,8 +321,8 @@ supreme_leader_proposal:
     alternate_selection = 0;
     for (candidate = 1; candidate < MaxPlayerNum; ++candidate) {
         if ((Players[candidate].rule_flags & RFLAG_ALIEN) != 0
-                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)
-                    & (1 << candidate)) != 0) {
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+                    (1 << candidate)) != 0) {
             alternate_selection = 1;
         }
     }
@@ -377,7 +377,7 @@ proposal_render:
     // Source fields named unk_29/unk_30 are independently anchored at
     // PlayerData+0x400/+0x42C.  Their meanings remain provisional: this is the
     // original nonzero-entry/vote scan, expressed through those real arrays.
-    human_mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    human_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
     if ((human_mask & faction_bit) != 0) {
         goto proposal_next;
     }
@@ -397,8 +397,8 @@ proposal_render:
     larger_vote_counts = 0;
     for (candidate = 1; candidate < MaxPlayerNum; ++candidate) {
         if (target != candidate
-                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)
-                    & (1 << candidate)) != 0
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+                    (1 << candidate)) != 0
                 && council_votes(candidate) > candidate_votes) {
             ++larger_vote_counts;
         }
@@ -420,8 +420,8 @@ no_vote_option:
             larger_vote_counts = 0;
             for (target = 1; target < MaxPlayerNum; ++target) {
                 if (candidate != target
-                        && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8)
-                            & (1 << target)) != 0
+                        && (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
+                            (1 << target)) != 0
                         && council_votes(target) > candidate_votes) {
                     ++larger_vote_counts;
                 }
@@ -464,7 +464,7 @@ proposal_next:
     if (rendered_count == 0) {
         return;
     }
-    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
         selected_item = popup.exec(0, 0);
     } else {
         selected_item = last_proposal;
@@ -472,7 +472,7 @@ proposal_next:
 
     if (alternate_selection != 0 && selected_item == 1) {
         if (faction_id == ConsoleGlobal.faction_id_
-                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
             NetMsgPrimary.pop("NOTWHILEALIENSLIVE", 0xFFFFEC78, 0,
                               "council_sm.pcx");
         }
@@ -486,7 +486,7 @@ proposal_next:
     council_delay = static_cast<int>(Rules.min_turns_councils);
     if (selected_item != 0) {
         if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0
-                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
             goto proposal_resolved;
         }
         if (GameDataStateStorage.fields_.governor_faction_ == faction_id) {
@@ -498,7 +498,7 @@ proposal_next:
             goto proposal_resolved;
         }
         if (faction_id == ConsoleGlobal.faction_id_
-                && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
+                && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
             parse_num(0, game_year(PlayersData[faction_id].council_call_turn));
             parse_num(1, council_delay);
             parse_num(2, council_delay / 2);
@@ -514,11 +514,11 @@ proposal_resolved:
         goto council_resolution;
     }
     if ((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0
-            && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
+            && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
         goto council_resolution;
     }
     if (faction_id == ConsoleGlobal.faction_id_
-            && (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) != 0) {
+            && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
         parse_num(0, game_year(last_resolution_turn));
         parse_num(1, council_delay);
         NetMsgPrimary.pop("COUNCILRECENTPROP", 0xFFFFEC78, 0,
@@ -531,7 +531,7 @@ council_resolution:
         council(faction_id, selected_item, last_selected_faction);
         return;
     }
-    if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
         CouncilPendingMessageArgs[0] = faction_id;
         CouncilPendingMessageArgs[1] = selected_item;
         CouncilPendingMessageArgs[2] = last_selected_faction;
@@ -597,7 +597,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
     if (GameDataStateStorage.fields_.sunspot_duration_ > 0) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             ((1 << (faction_id & 0x1F)) &
-             static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0) {
+             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
             NetMsgPrimary.pop(CouncilSunspotLabel, 0xffffec78, 0,
                              CouncilSunspotPcx);
         }
@@ -607,7 +607,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
     if (IsMultiplayerPBEM != 0 && CouncilPbemGate != 0) {
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
             ((1 << (faction_id & 0x1F)) &
-             static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0) {
+             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
             NetMsgPrimary.pop(CouncilPbemLabel, 0xffffec78, 0,
                              static_cast<const char *>(0));
         }
@@ -627,7 +627,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
         for (;;) {
             if ((*rec & 0x80) == 0) {
                 const unsigned int bit_i = 1u << (i & 0x1F);
-                if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_) &
+                if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
                      static_cast<unsigned char>(bit_i)) != 0 &&
                     i != faction_id) {
                     if ((PlayersData[faction_id].diplo_treaties[i] & 0x8000008) == 0) {
@@ -635,7 +635,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
                         if ((static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_) & 0x80) !=
                             0) {
                             const unsigned int bit_a1 = 1u << (faction_id & 0x1F);
-                            if ((static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+                            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
                                  bit_a1) != 0) {
                                 if (faction_id == ConsoleGlobal.faction_id_) {
                                     check_more = false;
@@ -670,7 +670,7 @@ int __cdecl can_call_council(int faction_id, int announce) {
         return 1;
     blocked:
         if (announce != 0 && faction_id == ConsoleGlobal.faction_id_ &&
-            (static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
              (1 << (faction_id & 0x1F))) != 0) {
             NetMsgPrimary.pop(CouncilBlockedLabel, 0xffffec78, 0,
                              CouncilBlockedPcx);
@@ -800,7 +800,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
         // expansion/alien filter, then rejects options below two or more
         // living factions by council votes. The live-byte mask is byte 1
         // of LockEnableMask, matching the native read at 0x009A64E9.
-        const uint32_t living = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu;
+        const uint32_t living = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
         if ((living & (1u << option)) == 0) {
             return -9;
         }
@@ -813,7 +813,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
         int factions_above_option = 0;
         for (int other = 1; other < MaxPlayerNum; ++other) {
             if (other == option ||
-                (((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu) & (1u << other)) == 0) {
+                (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << other)) == 0) {
                 continue;
             }
             if (council_votes(other) > option_votes) {
@@ -1016,7 +1016,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
                 return score >= 1 ? score : 1;
             }
             --score;
-            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << option)) == 0) {
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << option)) == 0) {
                 score /= 2;
             }
         }
@@ -1094,7 +1094,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
     }
 
     case PROP_UNITE_SUPREME_LEADER: {
-        const uint32_t living = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu;
+        const uint32_t living = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
         if ((living & (1u << option)) == 0) {
             return -9;
         }
@@ -1107,7 +1107,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
         int higher_vote_factions = 0;
         for (int other = 1; other < MaxPlayerNum; ++other) {
             if (other == option ||
-                (((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu) & (1u << other)) == 0) {
+                (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << other)) == 0) {
                 continue;
             }
             if (council_votes(other) > option_votes) {
