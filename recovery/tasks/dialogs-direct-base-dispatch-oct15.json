@@ -1,0 +1,43 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "9e150af5efbd414b6d5659c818e74d733476b842",
+  "editable_files": [
+    "src/dialogs.cpp",
+    "recovery/tests/test_dialogs_right_event_owner_oct9.py"
+  ],
+  "evidence": [
+    "Pinned612ED0 compares kind at receiver-8 then adjusts receiver by-8C and calls611240. Current build-rhkocyag emits complete-object conversion/null branch before base conversion through sprite_box_view(). Existing five-base hierarchy and generated adjustor bindings independently support SpriteBox ownership; do not change layout, virtual slots or base declarations.",
+    "Screen direct SpriteBox::on_right_down(a,b), then the four sibling handlers only if supported. Preserve all kind gates, dead kind4 left-up branch, argument order, qualified dispatch, historical mappings/claims and generated thunk obligations. No raw offsets, casts, asm or safety fixes. Require actual-source host tests, full Dialogs measurements and collateral/build/link review before integration."
+  ],
+  "intent": "Use genuine qualified base calls without intermediate receiver-view helpers in five Dialogs event handlers, subject to native screening and full affected-owner verification.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6368976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "dialogs-direct-base-dispatch-oct15"
+}
