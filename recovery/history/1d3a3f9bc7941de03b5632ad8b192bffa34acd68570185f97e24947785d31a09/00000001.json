@@ -1,0 +1,20 @@
+{
+  "event_id": "c221f86544065de805fd1fd865d7089299eefdec5cd8ae1ee0ed65f4a02a9cbc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/popup_producers/popb-host.cpp",
+      "recovery/tests/test_popup_dialog_producer_actual_source.py"
+    ],
+    "evidence": [
+      "Integrated byte-member recovery exposes old dword-only host fixture and mutation anchor; baseline9pass master8fail. Update actual mask declaration inputs and preserve all behavior/damage controls; no C++ production edits."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "legacy-popup-mask-fixture-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:ui-mask-members-oct15"
+}

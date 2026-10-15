@@ -6,6 +6,7 @@ test has no dependency on the private body fragments or seed files.
 """
 
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -123,6 +124,15 @@ def _compile_fixture(owner: str, body: str) -> subprocess.CompletedProcess[str]:
     compiler = shutil.which("g++") or shutil.which("clang++")
     assert compiler, "host control requires g++ or clang++"
     fixture = (PACKET / spec["fixture"]).read_text(encoding="utf-8")
+    if owner == "popb":
+        declarations = re.search(
+            r"struct GameDataLockMaskBytes\s*\{.*?\n\};\s*"
+            r"union GameDataLockMaskView\s*\{.*?\n\};",
+            (ROOT / "src/game_data_state_window.h").read_text(), re.S,
+        )
+        assert declarations
+        assert fixture.count("/*__ACTUAL_MASK_DECLARATIONS__*/") == 1
+        fixture = fixture.replace("/*__ACTUAL_MASK_DECLARATIONS__*/", declarations.group(0))
     slot = spec["slot"]
     assert fixture.count(slot) == 1
     with tempfile.TemporaryDirectory(prefix="osmx-popup-actual-source-") as directory:
@@ -157,7 +167,7 @@ def test_popm_actual_source_arguments_result_and_exception_cleanup():
     ),
     (
         "early faction gate",
-        "if ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) & faction_bit) == 0) {",
+        "if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {",
         "if (false) {",
     ),
     (

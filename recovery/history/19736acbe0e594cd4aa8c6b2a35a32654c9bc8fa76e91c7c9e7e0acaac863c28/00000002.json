@@ -1,0 +1,20 @@
+{
+  "event_id": "a665b2ed35609c6998f59c7f0d30515df3958f506f68855730763bf46cbb20db",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/netdaemon_owner_harness.cpp",
+      "recovery/tests/test_netdaemon_owner.py"
+    ],
+    "evidence": [
+      "Owner harness also adds missing-bytes member errors after migration, masked by existing missing local/host-player accessor stubs. Inject actual source union declarations without changing unrelated fixture behavior or claiming baseline failures fixed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "216d89baa6f8f8d9f9c0004d5fc3c1a3b056f6be5e6c0390cb2330879c2858a3",
+  "request_id": "legacy-owner-mask-fixture-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netdaemon-mask-members-oct15"
+}

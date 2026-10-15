@@ -4,6 +4,7 @@ The host fixture deliberately passes misaligned storage and mutates packets
 from callbacks. It covers C++ field evaluation only, not the VC6 ABI or game.
 """
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -48,11 +49,11 @@ struct Player {
     char title_leader[16]={}, name_leader[16]={}, noun_faction[16]={};
 };
 struct ProcessSlot { int identity_=0; char name_[16]={}; };
-struct LockMasks { uint32_t enable_mask_=0; };
+/* ACTUAL LOCK MASKS */
 struct GameFields {
     uint32_t net_turn_flags_=0;
     int turn_current_num_=9;
-    LockMasks lock_masks_{};
+    GameDataLockMaskView lock_masks_{};
     uint32_t game_state_=0;
 };
 struct { GameFields fields_{}; } GameDataStateStorage;
@@ -219,7 +220,13 @@ def compile_and_run(tmp_path: Path, compiler_name: str,
             after="packet_turn ==\n            GameDataStateStorage.fields_.turn_current_num_"
             assert bodies.count(before)==1
             bodies=bodies.replace(before,after,1)
-    cpp=PREAMBLE.replace("/* ACTUAL MESSAGE RECORD */",record).replace(
+    masks = re.search(
+        r"struct GameDataLockMaskBytes\s*\{.*?\n\};\s*"
+        r"union GameDataLockMaskView\s*\{.*?\n\};",
+        (ROOT / "src/game_data_state_window.h").read_text(), re.S,
+    )
+    assert masks
+    cpp=PREAMBLE.replace("/* ACTUAL LOCK MASKS */", masks.group(0)).replace("/* ACTUAL MESSAGE RECORD */",record).replace(
         "/* ACTUAL MESSAGE VIEW */",view).replace(
         "/* ACTUAL HANDLERS */",bodies)+MAIN
     source=tmp_path/"turn_packets.cpp"

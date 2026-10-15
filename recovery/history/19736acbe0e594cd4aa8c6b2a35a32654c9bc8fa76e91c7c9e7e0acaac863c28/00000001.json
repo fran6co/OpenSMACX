@@ -1,0 +1,19 @@
+{
+  "event_id": "216d89baa6f8f8d9f9c0004d5fc3c1a3b056f6be5e6c0390cb2330879c2858a3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_netdaemon_turn_packet_views_oct13s.py"
+    ],
+    "evidence": [
+      "Integrated byte member reads expose old dword-only turn packet fixture: ten new compile failures relative to baseline. Update host fixture to source-owned mask byte declarations while preserving callback mutants and unrelated baseline failures; no production edits."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "legacy-turn-mask-fixture-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-mask-members-oct15"
+}

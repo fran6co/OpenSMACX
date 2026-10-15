@@ -132,6 +132,14 @@ def run(tmp_path, product, scenario, flags=()):
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
     template = Path(__file__).with_name("netdaemon_owner_harness.cpp").read_text()
+    masks = re.search(
+        r"struct GameDataLockMaskBytes\s*\{.*?\n\};\s*"
+        r"union GameDataLockMaskView\s*\{.*?\n\};",
+        (ROOT / "src/game_data_state_window.h").read_text(), re.S,
+    )
+    assert masks
+    assert template.count("/* ACTUAL LOCK MASKS */") == 1
+    template = template.replace("/* ACTUAL LOCK MASKS */", masks.group(0))
     cpp, exe = tmp_path / "owner.cpp", tmp_path / "owner"
     cpp.write_text(template.replace("/* PRODUCT */", product))
     command = [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",

@@ -114,7 +114,7 @@ struct Console {
 
 // Minimal host projection of the actual nested GameDataStateStorage owner.
 // The tested function reads these same member paths in src/game_data_state_window.h.
-union GameDataLockMaskView { uint32_t enable_mask_; };
+/*__ACTUAL_MASK_DECLARATIONS__*/
 struct GameDataStateWindowFields {
     uint32_t game_more_preferences_;
     uint32_t game_warnings_;

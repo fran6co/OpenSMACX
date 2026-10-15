@@ -138,10 +138,10 @@ ConsoleType ConsoleGlobal;
 ParseStrType ParseStrBuffer[1];
 // Narrow behavioral double: only fields accessed by the extracted methods.
 // It models the current field path, not the complete owner layout or ABI.
-struct GameDataLockMasksHostDouble { uint32_t enable_mask_; };
+/* ACTUAL LOCK MASKS */
 struct GameDataFieldsHostDouble {
     int turn_control_duration_milliseconds_;
-    GameDataLockMasksHostDouble lock_masks_;
+    GameDataLockMaskView lock_masks_;
     uint32_t net_turn_flags_;
     int net_turn_faction_;
     int turn_current_num_;
