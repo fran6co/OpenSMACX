@@ -1,0 +1,63 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ecd4330e9091dcc8047fddf4797f5a023ea9ec69",
+  "editable_files": [
+    "recovery/tests/test_line_timer_loop_oct15.py",
+    "src/time.cpp",
+    "src/time.h"
+  ],
+  "evidence": [
+    "Pinned 50EEC4..50EEFD traverses eight four-byte slots from 7D3C3C to exclusive7D3C5C with signed JL; slot0 alone bypasses active flag. Actual mapwin source binds that eight-entry table. Guard order, direct PlanWin redraw and per-slot live reads must remain unchanged. Bounded source cleanup, no behavior fixes or changed compiler policy."
+  ],
+  "intent": "Recover line_timer as an ordinary bounded signed-index loop without pointer-integer casts; preserve original callback ordering, live table reads and historical claim.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5299600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5302848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5303856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5303936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5304080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5304144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5305296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5305408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "line-timer-loop-oct15"
+}
