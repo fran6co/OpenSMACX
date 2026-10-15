@@ -2,10 +2,21 @@
 from pathlib import Path
 import shutil
 import subprocess
+import re
 import pytest
 from match_recovery.source import read_file
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def mask_type_declarations() -> str:
+    header = (ROOT / "src/game_data_state_window.h").read_text(encoding="utf-8")
+    match = re.search(
+        r"struct GameDataLockMaskBytes\s*\{.*?\};\s*union GameDataLockMaskView\s*\{.*?\};",
+        header, re.DOTALL,
+    )
+    assert match, "production lock-mask byte/dword declarations missing"
+    return match.group(0)
 
 SUPPORT = r"""
 #include <cassert>
@@ -61,16 +72,20 @@ struct SocialEffect {
 };
 struct PlayerData { SocialEffect soc_effect_pending; int ai_fight; };
 
+// @@MASK_TYPES@@
+
 Base *BaseCurrent;
 Base Bases[MaxPlayerNum];
 Veh Vehs[32];
 VehPrototype VehPrototypes[32];
 PlayerData PlayersData[MaxPlayerNum];
-uint32_t LockEnableMask;
+struct HostGameDataFields { GameDataLockMaskView lock_masks_; int vehicle_current_count_; };
+struct HostGameDataStorage { HostGameDataFields fields_; } GameDataStateStorage;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+int &VehCurrentCount = GameDataStateStorage.fields_.vehicle_current_count_;
 uint32_t MapIsFlat = 1;
 uint32_t MapLongitude = 32;
 int MapLongitudeBounds = 64;
-int VehCurrentCount;
 int BaseIDCurrentSelected;
 uint32_t BaseCurrentForcesMaintCost;
 int killed_vehicle = -1;
@@ -216,8 +231,11 @@ BASE_RESEARCH = r"""
 #define __cdecl
 #endif
 const unsigned int RULES_SCN_NO_TECH_ADVANCES = 0x04000000u;
-unsigned int GameRules = 0;
-int TurnCurrentNum = 0;
+// @@MASK_TYPES@@
+struct HostGameDataFields { GameDataLockMaskView lock_masks_; uint32_t game_rules_; int turn_current_num_; };
+struct HostGameDataStorage { HostGameDataFields fields_; } GameDataStateStorage = {};
+uint32_t &GameRules = GameDataStateStorage.fields_.game_rules_;
+int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
 struct Base { int faction_id_current, labs_total; uint8_t facilities_built[12]; };
 struct SocialEffect {
     enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
@@ -322,11 +340,14 @@ struct PlayerData { uint32_t flags; int tech_accumulated, tech_id_researching, t
 struct Console { int faction_id_; };
 RulesFacility Facility[134] = {};
 RulesTechnology Technology[89] = {};
-uint8_t GameTechAchieved[89] = {};
 Player Players[16] = {};
 PlayerData PlayersData[16] = {};
 Console ConsoleGlobal = {};
-uint32_t LockEnableMask = 0;
+// @@MASK_TYPES@@
+struct HostGameDataFields { GameDataLockMaskView lock_masks_; uint8_t game_tech_achieved_[89]; };
+struct HostGameDataStorage { HostGameDataFields fields_; } GameDataStateStorage = {};
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+uint8_t (&GameTechAchieved)[89] = GameDataStateStorage.fields_.game_tech_achieved_;
 int IsMultiplayerNet = 0, IsMultiplayerPBEM = 0, TurnUpkeepPhase = 1;
 int tech_rate_value = 10, tech_advance_value = -1, selection_value = -1;
 int climactic_value = 1, selection_calls;
@@ -416,12 +437,25 @@ Player Players[MaxPlayerNum];
 PlayerData PlayersData[MaxPlayerNum];
 VehPrototype VehPrototypes[128];
 RulesFacility Facility[134];
-Projects SecretProject;
-uint32_t LockEnableMask;
+// @@MASK_TYPES@@
+struct HostGameDataFields {
+    GameDataLockMaskView lock_masks_;
+    int turn_current_num_, diff_level_current_, ranking_faction_id_unk1_, sunspot_duration_;
+    uint32_t game_state_;
+    Projects secret_project_;
+    HostGameDataFields() : turn_current_num_(0), diff_level_current_(2),
+        ranking_faction_id_unk1_(0), sunspot_duration_(0), game_state_(0), secret_project_() {}
+};
+struct HostGameDataStorage { HostGameDataFields fields_; } GameDataStateStorage;
+int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
+int &DiffLevelCurrent = GameDataStateStorage.fields_.diff_level_current_;
+int &RankingFactionIDUnk1 = GameDataStateStorage.fields_.ranking_faction_id_unk1_;
+int &SunspotDuration = GameDataStateStorage.fields_.sunspot_duration_;
+uint32_t &GameState = GameDataStateStorage.fields_.game_state_;
+Projects &SecretProject = GameDataStateStorage.fields_.secret_project_;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 uint32_t MapIsFlat = 1, MapLongitude = 32;
-int MapLongitudeBounds = 64, DiffLevelCurrent = 2, TurnCurrentNum = 0;
-int RankingFactionIDUnk1, SunspotDuration;
-uint32_t GameState;
+int MapLongitudeBounds = 64;
 int BaseIDCurrentSelected;
 Map tile;
 char popup_title[] = "TITLE";
@@ -464,7 +498,7 @@ int __cdecl base_project(int) { return project_state; }
 int __cdecl parse_says(int, char *name, int, int) {
     ++parsed_names; last_parsed_name = name; return 0;
 }
-int __cdecl parse_say(int, int, int, int) { ++parse_say_calls; return 0; }
+int __cdecl parse_say(int, const char *, int, int) { ++parse_say_calls; return 0; }
 int __cdecl popp(const char *, const char *, int, const char *, void *) {
     ++popup_calls; return 0;
 }
@@ -749,7 +783,8 @@ def test_actual_colony_support_research(compiler, unit, address, harness, prefix
     assert "PENDING_BODY" not in records[0].region
     operations = ("signed_bits", "add", "sub", "mul") if prefix == "base_yield" else ("signed_bits", "add", "mul")
     helpers = "\n".join(helper(source, prefix + "_" + name) for name in operations)
-    control = harness.replace("HELPERS", helpers).replace("BODY", records[0].region)
+    control = harness.replace("// @@MASK_TYPES@@", mask_type_declarations()).replace(
+        "HELPERS", helpers).replace("BODY", records[0].region)
     control_path = tmp_path / "control.cpp"
     control_path.write_text(control)
     binary = tmp_path / "control"

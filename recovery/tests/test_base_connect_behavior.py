@@ -7,11 +7,22 @@ base, path, and territory doubles. They are not full pathfinding or ABI proof.
 from pathlib import Path
 import shutil
 import subprocess
+import re
 
 import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def mask_declarations():
+    header = (ROOT / "src/game_data_state_window.h").read_text(encoding="utf-8")
+    match = re.search(
+        r"struct GameDataLockMaskBytes\s*\{.*?\};\s*union GameDataLockMaskView\s*\{.*?\};",
+        header, re.DOTALL,
+    )
+    assert match, "production lock-mask byte/dword declarations missing"
+    return match.group(0)
 
 
 def body():
@@ -51,11 +62,10 @@ struct RulesBasic { int tech_build_roads_fungus; } Rules;
 struct RulesTerraforming { int name,name_sea,preq_tech,preq_tech_sea; uint32_t bit,bit_incompatible; int rate,shortcuts; };
 RulesTerraforming Terraforming[20];
 Base Bases[512]; Base *BaseCurrent; int BaseIDCurrentSelected;
-// Minimal host owner only; this does not model native offsets or allocation.
-struct HostGameDataLockMasks { uint32_t enable_mask_; };
+// @@MASK_TYPES@@
 struct HostGameDataFields {
   int base_current_count_;
-  HostGameDataLockMasks lock_masks_;
+  GameDataLockMaskView lock_masks_;
   uint32_t game_more_preferences_;
 };
 struct HostGameDataStorage { HostGameDataFields fields_; };
@@ -157,7 +167,7 @@ def test_base_connection_routes_and_sensor_fallback(tmp_path):
     path_calls=goals=sensor_calls=0;
     assert(base_connect(3)==1 && path_calls==1 && sensor_calls==1);
     """
-    source = HARNESS + "\n" + body() + "\nint main(){\n" + checks + "\nreturn 0;}\n"
+    source = HARNESS.replace("// @@MASK_TYPES@@", mask_declarations()) + "\n" + body() + "\nint main(){\n" + checks + "\nreturn 0;}\n"
     cpp = tmp_path / "base_connect.cpp"
     executable = tmp_path / "base_connect"
     cpp.write_text(source)

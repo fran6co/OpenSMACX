@@ -6808,7 +6808,7 @@ void __cdecl base_hurry() {
     Base *current_base = BaseCurrent;
     const int faction = current_base->faction_id_current;
     const uint32_t faction_bit = 1u << faction;
-    const bool is_human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0;
+    const bool is_human = (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0;
 
     if (is_human
         && ((current_base->governor & GOV_MAY_HURRY_PRODUCTION) == 0
@@ -6917,7 +6917,7 @@ void __cdecl base_hurry() {
                 const int remaining_cost =
                     base_yield_sub(scaled_cost, current_base->minerals_accumulated);
                 const int human_factor =
-                    (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0 ? 2 : 0;
+                    (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0 ? 2 : 0;
                 const int available = base_yield_mul(remaining_cost, human_factor);
                 const int reserves = PlayersData[faction].energy_reserves;
                 const int wrapped_three_quarters = base_yield_mul(reserves, 3);
@@ -6938,7 +6938,7 @@ void __cdecl base_hurry() {
             if (other != faction
                 && (PlayersData[faction].diplo_treaties[other] & 0x40030u) != 0
                 && (PlayersData[other].region_total_bases[other] != 0
-                    || (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << other)) != 0)) {
+                    || (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << other)) != 0)) {
                 hurry_amount = PlayersData[faction].energy_reserves / 10;
             }
         }
@@ -7022,7 +7022,7 @@ void __cdecl base_hurry() {
                 base_yield_add(current_base->minerals_accumulated, bought_turns);
 
             int energy_change;
-            if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0) {
+            if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0) {
                 energy_change = 0;
             } else {
                 const int ranking = PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].ranking;
@@ -7037,7 +7037,7 @@ void __cdecl base_hurry() {
         }
     }
 
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0
         || facility_index < FacilitySPStart) {
         return;
     }
@@ -7127,7 +7127,7 @@ void __cdecl base_check_support() {
             continue;
         }
 
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) == 0) {
             if (plan == PLAN_COLONIZATION) {
                 vehicle.state &= ~VSTATE_REQUIRES_SUPPORT;
                 if (!has_abil(prototype_id, ABL_CLEAN_REACTOR)) {
@@ -7149,7 +7149,7 @@ void __cdecl base_check_support() {
         kill(selected_vehicle);
     }
 
-    const bool is_human = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit) != 0;
+    const bool is_human = (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0;
     const uint32_t governor = BaseCurrent->governor;
     const bool state_allows_riot_check = !is_human
         || ((governor & GOV_MANAGES_CITIZENS_SPECS) != 0
@@ -7184,7 +7184,7 @@ void __cdecl base_check_support() {
             continue;
         }
 
-        if (is_human
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_bit) != 0
             && ((vehicle.state & VSTATE_UNK_200) == 0
                 || (vehicle.state & 0x01000200u) == 0x01000200u
                 || ((vehicle.state & 0x02000200u) == 0x02000200u
@@ -11837,13 +11837,13 @@ int __cdecl base_connect(int priority) {
     int destination_y = source_y;
     if (best_y < 0 || best_y >= MapLatitudeBounds || best_x < 0 ||
         best_x >= MapLongitudeBounds) {
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction & 0x1F))) != 0 &&
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << (faction & 0x1F))) != 0 &&
             (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AUTO_FORMER_BUILD_SENSORS) == 0)
             return 0;
         if (Paths.sensors(faction, &destination_x, &destination_y) != 0) return 0;
     } else {
         if (found_connection &&
-            ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (faction & 0x1F))) == 0 ||
+            ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << (faction & 0x1F))) == 0 ||
              (GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AUTO_FORMER_BUILD_SENSORS) != 0)) {
             int sensor_x;
             int sensor_y;
@@ -11888,8 +11888,9 @@ void __cdecl base_terraform(int force_improve) {
     Base &base = *BaseCurrent;
     const int faction = base.faction_id_current;
     const uint32_t faction_bit = 1u << (faction & 0x1F);
-    // The native tests only the low byte of the mask at both use sites.
-    const bool human = (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+    // The initial low-byte read selects the priority branch; later stages
+    // reload the mask independently, matching the pinned branch sequence.
+    const bool human = (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
                         static_cast<uint8_t>(faction_bit)) != 0;
 
     int growth_priority = 0;
@@ -12146,10 +12147,14 @@ void __cdecl base_terraform(int force_improve) {
     const int high_edge_square_count = (radius_score_count > 14 ? 1 : 0) +
                                        (radius_score_count > 25 ? 1 : 0);
 
-    // The native population adjustment uses the same low-byte human test as
-    // the priority branch above.  It is applied after the complete 21-square
-    // aggregate, before any individual candidate is scored.
-    if (human && base.population_size > 3) --nearest_open_square_count;
+    // At 4ED522-4ED53A the native code tests the live human byte and skips the
+    // decrement when it is set; the remaining path rereads BaseCurrent and
+    // decrements only at population >= 4.
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+         static_cast<uint8_t>(faction_bit)) == 0 &&
+        BaseCurrent->population_size > 3) {
+        --nearest_open_square_count;
+    }
 
     int best_action_score = 0;
     int best_action_radius = -1;
@@ -12283,7 +12288,7 @@ void __cdecl base_terraform(int force_improve) {
         const bool fungus_technology = has_tech(
             Rules.tech_improve_fungus_sqr, faction) != 0;
         const bool human_sensor_policy =
-            (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
              static_cast<uint8_t>(faction_bit)) != 0 &&
             (GameDataStateStorage.fields_.game_more_preferences_ & 0x20u) == 0;
         const bool sensor_site_allowed = sensor_count == 0 && sensor == 0 &&
@@ -12391,7 +12396,7 @@ void __cdecl base_terraform(int force_improve) {
             } else if ((flags & BIT_ROAD) == 0 && (mine_or_bore ||
                        (flags & BIT_THERMAL_BORE) != 0)) {
                 const bool suppress_mine_action =
-                    (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+                    (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
                      static_cast<uint8_t>(faction_bit)) != 0 &&
                     (GameDataStateStorage.fields_.game_more_preferences_ & 0x00400000u) != 0;
                 if (!suppress_mine_action && score > best_action_score) {
@@ -12535,7 +12540,7 @@ void __cdecl base_terraform(int force_improve) {
                                        faction)
         ? 2 : 1;
     const bool allow_connection_goal =
-        (static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
          static_cast<uint8_t>(faction_bit)) == 0 ||
         (GameDataStateStorage.fields_.game_more_preferences_ & 0x00400000u) == 0;
     if (best_action_radius < 1) {
@@ -12624,7 +12629,7 @@ void __cdecl base_terraform(int force_improve) {
     }
     const bool thermal_goal_allowed = thermal_site_allowed &&
         terrain_avail(TERRA_THERMAL_BORE, FALSE, faction) != 0 &&
-        ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+        ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
           static_cast<uint8_t>(faction_bit)) == 0 ||
          (faction == ConsoleGlobal.faction_id_ &&
           (GameDataStateStorage.fields_.game_preferences_ & 0x02000000u) != 0));
@@ -12655,7 +12660,7 @@ void __cdecl base_terraform(int force_improve) {
     }
     const bool condenser_goal_allowed = condenser_site_allowed &&
         terrain_avail(TERRA_CONDENSER, FALSE, faction) != 0 &&
-        ((static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) &
+        ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
           static_cast<uint8_t>(faction_bit)) == 0 ||
          (faction == ConsoleGlobal.faction_id_ &&
           (GameDataStateStorage.fields_.game_preferences_ & 0x02000000u) != 0));
@@ -12672,11 +12677,16 @@ void __cdecl base_terraform(int force_improve) {
             add_goal(faction, AI_GOAL_CONDENSER, 1, best_condenser_x,
                      best_condenser_y, BaseIDCurrentSelected);
         } else {
+            // The reachable original landing gate at 4EE9D6 rejects a human
+            // faction when it is not local OR the 0x20000 game-preference bit
+            // is clear; the later east-side gate is unreachable.
             const bool landing_site_rejected =
                 (high_edge_square_count != 0 && energy_need < 3) ||
                 best_landing_score < 1 ||
-                (human && faction != ConsoleGlobal.faction_id_ &&
-                 (GameDataStateStorage.fields_.game_more_preferences_ & 0x00020000u) == 0) ||
+                ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
+                  static_cast<uint8_t>(faction_bit)) != 0 &&
+                 (faction != ConsoleGlobal.faction_id_ ||
+                  (GameDataStateStorage.fields_.game_preferences_ & 0x00020000u) == 0)) ||
                 terrain_avail(16, FALSE, faction) == 0;
             if (!landing_site_rejected)
                 add_goal(faction, AI_GOAL_LANDING_SITE, 1, best_landing_x,
@@ -14640,7 +14650,7 @@ void __cdecl base_drones() {
         }
 
         faction_id = base->faction_id_current;
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction_id)) == 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction_id)) == 0) {
             base_reset(BaseIDCurrentSelected, 0);
             base = BaseCurrent;
         }
