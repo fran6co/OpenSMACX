@@ -23,35 +23,35 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0PlanWin@@QAE@H@Z at 0x0048BCD0 stores the PlanWin view table at 0066D2AC.", "Pinned view slot +0x38 contains original thunk VA 0048BF90.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x5e4; its tail reaches 0046F880 (?on_sys_close@MapWin@@QAEXXZ).", "The original tail target ?on_sys_close@MapWin@@QAEXXZ is source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp; the PlanWin class-view entry is owned by src/planwin.cpp."], "reason": "Bind the original receiver-adjustor identity to the typed callback source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp through the compiler-generated PlanWin class-view entry owned by src/planwin.cpp; no adapter body or vtable is authored."}
 // symbol    ?on_sys_close@MapWin@@$4PPPPPPPM@FOE@AEXXZ
 // kind game
-// ORIGINAL: 0x0048BFB0 ?on_left_click@thunk5_MapWin@@QAEXHH@Z 0x0048BFB0-0x0048BFBE FILE
+// ORIGINAL: 0x0048BFB0 ?on_left_click@thunk5_MapWin@@QAEXHH@Z 0x0048BFB0-0x0048BFBE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0PlanWin@@QAE@H@Z at 0x0048BCD0 stores the PlanWin view table at 0066D2AC.", "Pinned view slot +0x4C contains original thunk VA 0048BFB0.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x5e4; its tail reaches 0046EBA0 (?on_left_click@MapWin@@QAEXHH@Z).", "The original tail target ?on_left_click@MapWin@@QAEXHH@Z is source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp; the PlanWin class-view entry is owned by src/planwin.cpp."], "reason": "Bind the original receiver-adjustor identity to the typed callback source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp through the compiler-generated PlanWin class-view entry owned by src/planwin.cpp; no adapter body or vtable is authored."}
 // symbol    ?on_left_click@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
 // kind game
-// ORIGINAL: 0x0048BFC0 ?on_left_down@thunk5_MapWin@@QAEXHH@Z 0x0048BFC0-0x0048BFCE FILE
+// ORIGINAL: 0x0048BFC0 ?on_left_down@thunk5_MapWin@@QAEXHH@Z 0x0048BFC0-0x0048BFCE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0PlanWin@@QAE@H@Z at 0x0048BCD0 stores the PlanWin view table at 0066D2AC.", "Pinned view slot +0x50 contains original thunk VA 0048BFC0.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x5e4; its tail reaches 0046ED30 (?on_left_down@MapWin@@QAEXHH@Z).", "The original tail target ?on_left_down@MapWin@@QAEXHH@Z is source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp; the PlanWin class-view entry is owned by src/planwin.cpp."], "reason": "Bind the original receiver-adjustor identity to the typed callback source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp through the compiler-generated PlanWin class-view entry owned by src/planwin.cpp; no adapter body or vtable is authored."}
 // symbol    ?on_left_down@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
 // kind game
-// ORIGINAL: 0x0048BFD0 ?on_left_up@thunk5_MapWin@@QAEXHH@Z 0x0048BFD0-0x0048BFDE FILE
+// ORIGINAL: 0x0048BFD0 ?on_left_up@thunk5_MapWin@@QAEXHH@Z 0x0048BFD0-0x0048BFDE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0PlanWin@@QAE@H@Z at 0x0048BCD0 stores the PlanWin view table at 0066D2AC.", "Pinned view slot +0x54 contains original thunk VA 0048BFD0.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x5e4; its tail reaches 0046EFF0 (?on_left_up@MapWin@@QAEXHH@Z).", "The original tail target ?on_left_up@MapWin@@QAEXHH@Z is source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp; the PlanWin class-view entry is owned by src/planwin.cpp."], "reason": "Bind the original receiver-adjustor identity to the typed callback source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp through the compiler-generated PlanWin class-view entry owned by src/planwin.cpp; no adapter body or vtable is authored."}
 // symbol    ?on_left_up@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
 // kind game
-// ORIGINAL: 0x0048BFE0 ?on_right_click@thunk5_MapWin@@QAEXHH@Z 0x0048BFE0-0x0048BFEE FILE
+// ORIGINAL: 0x0048BFE0 ?on_right_click@thunk5_MapWin@@QAEXHH@Z 0x0048BFE0-0x0048BFEE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0PlanWin@@QAE@H@Z at 0x0048BCD0 stores the PlanWin view table at 0066D2AC.", "Pinned view slot +0x58 contains original thunk VA 0048BFE0.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x5e4; its tail reaches 0046EBE0 (?on_right_click@MapWin@@QAEXHH@Z).", "The original tail target ?on_right_click@MapWin@@QAEXHH@Z is source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp; the PlanWin class-view entry is owned by src/planwin.cpp."], "reason": "Bind the original receiver-adjustor identity to the typed callback source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp through the compiler-generated PlanWin class-view entry owned by src/planwin.cpp; no adapter body or vtable is authored."}
 // symbol    ?on_right_click@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
 // kind game
-// ORIGINAL: 0x0048BFF0 ?on_right_down@thunk5_MapWin@@QAEXHH@Z 0x0048BFF0-0x0048BFFE FILE
+// ORIGINAL: 0x0048BFF0 ?on_right_down@thunk5_MapWin@@QAEXHH@Z 0x0048BFF0-0x0048BFFE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0PlanWin@@QAE@H@Z at 0x0048BCD0 stores the PlanWin view table at 0066D2AC.", "Pinned view slot +0x5C contains original thunk VA 0048BFF0.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x5e4; its tail reaches 0046EC10 (?on_right_down@MapWin@@QAEXHH@Z).", "The original tail target ?on_right_down@MapWin@@QAEXHH@Z is source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp; the PlanWin class-view entry is owned by src/planwin.cpp."], "reason": "Bind the original receiver-adjustor identity to the typed callback source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp through the compiler-generated PlanWin class-view entry owned by src/planwin.cpp; no adapter body or vtable is authored."}
 // symbol    ?on_right_down@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
 // kind game
-// ORIGINAL: 0x0048C000 ?on_left_double_click@thunk5_MapWin@@QAEXHH@Z 0x0048C000-0x0048C00E FILE
+// ORIGINAL: 0x0048C000 ?on_left_double_click@thunk5_MapWin@@QAEXHH@Z 0x0048C000-0x0048C00E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0PlanWin@@QAE@H@Z at 0x0048BCD0 stores the PlanWin view table at 0066D2AC.", "Pinned view slot +0x70 contains original thunk VA 0048C000.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x5e4; its tail reaches 0046EBD0 (?on_left_double_click@MapWin@@QAEXHH@Z).", "The original tail target ?on_left_double_click@MapWin@@QAEXHH@Z is source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp; the PlanWin class-view entry is owned by src/planwin.cpp."], "reason": "Bind the original receiver-adjustor identity to the typed callback source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp through the compiler-generated PlanWin class-view entry owned by src/planwin.cpp; no adapter body or vtable is authored."}
 // symbol    ?on_left_double_click@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
 // kind game
-// ORIGINAL: 0x0048C020 ?on_button_clicked@thunk5_MapWin@@QAEXH@Z 0x0048C020-0x0048C02E FILE
+// ORIGINAL: 0x0048C020 ?on_button_clicked@thunk5_MapWin@@QAEXH@Z 0x0048C020-0x0048C02E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0PlanWin@@QAE@H@Z at 0x0048BCD0 stores the PlanWin view table at 0066D2AC.", "Pinned view slot +0xB0 contains original thunk VA 0048C020.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x5e4; its tail reaches 0046F8C0 (?on_button_clicked@MapWin@@QAEXH@Z).", "The original tail target ?on_button_clicked@MapWin@@QAEXH@Z is source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp; the PlanWin class-view entry is owned by src/planwin.cpp."], "reason": "Bind the original receiver-adjustor identity to the typed callback source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp through the compiler-generated PlanWin class-view entry owned by src/planwin.cpp; no adapter body or vtable is authored."}
 // symbol    ?on_button_clicked@MapWin@@$4PPPPPPPM@FOE@AEXH@Z
 // kind game
-// ORIGINAL: 0x0048C030 ?on_nc_hittest@thunk5_MapWin@@QAEXHH@Z 0x0048C030-0x0048C03E FILE
+// ORIGINAL: 0x0048C030 ?on_nc_hittest@thunk5_MapWin@@QAEXHH@Z 0x0048C030-0x0048C03E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor ??0PlanWin@@QAE@H@Z at 0x0048BCD0 stores the PlanWin view table at 0066D2AC.", "Pinned view slot +0x12C contains original thunk VA 0048C030.", "Original full-span receiver adjustment is sub ecx, dword ptr [ecx - 4]; sub ecx, 0x5e4; its tail reaches 0046F660 (?on_nc_hittest@MapWin@@QAEXHH@Z).", "The original tail target ?on_nc_hittest@MapWin@@QAEXHH@Z is source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp; the PlanWin class-view entry is owned by src/planwin.cpp."], "reason": "Bind the original receiver-adjustor identity to the typed callback source-mapped in /home/fran6co/code/OpenSMACX/src/mapwin.cpp through the compiler-generated PlanWin class-view entry owned by src/planwin.cpp; no adapter body or vtable is authored."}
 // symbol    ?on_nc_hittest@MapWin@@$4PPPPPPPM@FOE@AEHHH@Z
 // kind game
@@ -589,7 +589,7 @@ void PlanWin::close() {
 
 /*
 Purpose: Toggle the plan window's blink phase and redraw, when blinking is on.
-// ORIGINAL: 0x0048BC20 ?blink@PlanWin@@QAEXXZ 0x0048BC20-0x0048BC4B
+// ORIGINAL: 0x0048BC20 ?blink@PlanWin@@QAEXXZ 0x0048BC20-0x0048BC4B BYTE_EXACT
 // size      43 bytes
 // prototype void (__thiscall ?blink@PlanWin@@QAEXXZ)(PlanWin* this)
 // callers   1   call targets   0
@@ -685,7 +685,7 @@ Status: Complete
 // The C++ compiler owns the scalar deleting destructor below. Do not
 // add a hand-written deleting wrapper or explicit destructor cascade.
 // Current source ownership is not original TU or COMDAT-selection proof.
-// ORIGINAL: 0x0048BF10 ??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z 0x0048BF10-0x0048BF18 FILE
+// ORIGINAL: 0x0048BF10 ??_GPlanWin@@$4PPPPPPPM@A@AEPAXI@Z 0x0048BF10-0x0048BF18 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned terranx_original.exe: PlanWin constructor 0x0048BCD0 installs vbtable 0x0066D414, builds virtual GraphicWin at +0x22050, and stores its vtordisp immediately before that subobject at 0x0048BD5D", "pinned terranx_original.exe: 0x0048BF10 executes sub ecx,[ecx-4] and tail-jumps to 0x0048BF20; the target tears down PlanWin plus virtual GraphicWin and tests deletion flag bit 0", "source:src/planwin.h PlanWin derives from MapWin; source:src/mapwin.h MapWin virtually derives from GraphicWin and declares the real virtual destructor", "current native PlanWin object, Win-view vtable, link map and PDB-derived public symbols qualify the generated vtordisp thunk and scalar alias", "historical seed finding: earlier handwritten adapter had the same receiver arithmetic; its initial operator-delete interpretation was corrected to the scalar-deleting thunk"], "reason": "The real PlanWin/MapWin virtual-GraphicWin lifetime emits this vtordisp deleting entry. The original thunk reads the dword at receiver-4 and forwards to the scalar PlanWin deleting body; the compiler-generated PlanWin Win-view thunk now owns that adjustment."}
 // symbol    ??_EPlanWin@@$4PPPPPPPM@A@AEPAXI@Z
 // kind      game
@@ -693,7 +693,7 @@ Status: Complete
 // ORIGINAL: 0x0048BF20 ??_GPlanWin@@UAEPAXI@Z 0x0048BF20-0x0048BF56 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/0048bf20.cpp", "task:window-generated-deletion-owners", "Pinned entry receives the PlanWin virtual GraphicWin subobject at complete-object+0x22050; own-part destructor, virtual-base destructor and conditional delete are separate native stages.", "Fresh emitted code and receiver/target controls remain required. Duplicate COMDAT emission does not establish historical translation-unit placement or retained link selection."], "reason": "The existing real class lifetime generates this deleting entry; bind compiler-owned code rather than transcribing receiver arithmetic or invoking member/base destructors twice."}
 
-// ORIGINAL: 0x0048C010 ?on_nc_left_down@thunk5_MapWin@@QAEXHH@Z 0x0048C010-0x0048C01E FILE
+// ORIGINAL: 0x0048C010 ?on_nc_left_down@thunk5_MapWin@@QAEXHH@Z 0x0048C010-0x0048C01E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor span at 0x0048BCD0 stores table 0x0066D2AC; exact cell 0x0066D330 is 0x0048C010.", "The complete original thunk bytes at 0x0048C010 tail to pinned target 0x0046F700.", "Fresh full build build-fpcqf1x8: ??_7PlanWin@@6BWin@@@+0x84 COFF relocation selects ?on_nc_left_down@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z; thunk bytes and its unique relative tail relocation target ?on_nc_left_down@MapWin@@UAEXHH@Z.", "The owner compile receipt inputs were unchanged and match current files at proposal emission; selected output is observed in the fresh MAP/PE but this proposal does not claim complete link-preservation acceptance.", "Historical source kind `game`, original identity/name, complete span, and parsed claims/lessons are checked unchanged after native-writer readback."], "reason": "The pinned PlanWin constructor at 0x0048BCD0 installs the ??_7PlanWin@@6BWin@@@ address point; its exact slot cell at +0x84 selects original identity 0x0048C010. The fresh full-build owner COFF vftable relocation selects the compiler-generated thunk ?on_nc_left_down@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z, whose unique physical relative tail targets ?on_nc_left_down@MapWin@@UAEXHH@Z. The original marker name and complete source history remain attached to this FILE identity."}
 // kind      game
 // symbol    ?on_nc_left_down@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
@@ -716,7 +716,7 @@ Status: Complete
  * [ARCHIVE] Status: Complete
  * [ARCHIVE] * /
  */
-// ORIGINAL: 0x0048C040 ??_Gthunk2_PlanWin@@UAEPAXI@Z 0x0048C040-0x0048C051 FILE
+// ORIGINAL: 0x0048C040 ??_Gthunk2_PlanWin@@UAEPAXI@Z 0x0048C040-0x0048C051 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: constructor-installed class-view slot 0 selects the complete original scalar deleting adjustor at 0x0048C040.", "The retained terminal artifact set at build/recovery/builds/build-8b7ms_6y recorded ??_EPlanWin@@$4PPPPPLLI@EEE@AEPAXI@Z in the actual planwin.cpp COFF view-table relocation; its adjustment prefix is byte-identical to the pinned thunk.", "That build's selected linked MAP/PE cell and PDB XFIXUP resolve the generated entry to ??_GPlanWin@@UAEPAXI@Z at 0x0053D730; the physical COFF E primary is a per-class weak fallback to its G primary (search mode 2).", "That linked primary tests mode bit 0, conditionally calls ??3@YAXPAX@Z, returns the saved object pointer in EAX, and uses ret 4.", "The original identity, spans, catalog purpose, source kind, claim state and formal lessons are retained; this binding is not a new byte claim."], "reason": "Bind the preserved scalar deleting-adjustor identity to the compiler-emitted class-view entry whose actual per-class E-to-G fallback and linked G body preserve the original receiver adjustment, deletion-flag contract, object return and stack cleanup."}
 // symbol    ??_EPlanWin@@$4PPPPPLLI@EEE@AEPAXI@Z
 // kind      game

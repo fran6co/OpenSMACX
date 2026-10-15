@@ -32,19 +32,19 @@
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; retained spans [['0x0060CF50', '0x0060CF58']]", "mapped constructor ??0ListBox@@QAE@H@Z directly stores table 0x0067041C", "pinned win slot 0x30 contains original thunk VA 0x0060CF50", "original tail target 0x0060C350 is ?on_redraw@ListBox@@UAEXXZ; current emitted thunk preserves receiver arithmetic and relocates to that same method", "source owner emits ?on_redraw@ListBox@@$4PPPPPPPM@A@AEXXZ in ??_7ListBox@@6BWin@@@ at the proven view/slot", "identity, original extent, claims and lessons retained; fresh native compile/binding review required"], "reason": "Bind the original ordinary virtual-adjustor identity to the compiler-emitted class/view adjustor selected by both the pinned constructor-installed vftable slot and exact-current owner-object relocation. The original wrapper, slot and receiver view remain distinct; no thunk body is hand-authored."}
 // symbol    ?on_redraw@ListBox@@$4PPPPPPPM@A@AEXXZ
 // kind      game
-// ORIGINAL: 0x0060CF70 ?on_mouse_move@thunk1_ListBox@@QAEXHH@Z 0x0060CF70-0x0060CF78 FILE
+// ORIGINAL: 0x0060CF70 ?on_mouse_move@thunk1_ListBox@@QAEXHH@Z 0x0060CF70-0x0060CF78 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; retained spans [['0x0060CF70', '0x0060CF78']]", "mapped constructor ??0ListBox@@QAE@H@Z directly stores table 0x0067041C", "pinned win slot 0x44 contains original thunk VA 0x0060CF70", "original tail target 0x0060CBC0 is ?on_mouse_move@ListBox@@UAEXHH@Z; current emitted thunk preserves receiver arithmetic and relocates to that same method", "source owner emits ?on_mouse_move@ListBox@@$4PPPPPPPM@A@AEXHH@Z in ??_7ListBox@@6BWin@@@ at the proven view/slot", "identity, original extent, claims and lessons retained; fresh native compile/binding review required"], "reason": "Bind the original ordinary virtual-adjustor identity to the compiler-emitted class/view adjustor selected by both the pinned constructor-installed vftable slot and exact-current owner-object relocation. The original wrapper, slot and receiver view remain distinct; no thunk body is hand-authored."}
 // symbol    ?on_mouse_move@ListBox@@$4PPPPPPPM@A@AEXHH@Z
 // kind      game
-// ORIGINAL: 0x0060CF90 ?on_left_down@thunk1_ListBox@@QAEXHH@Z 0x0060CF90-0x0060CF98 FILE
+// ORIGINAL: 0x0060CF90 ?on_left_down@thunk1_ListBox@@QAEXHH@Z 0x0060CF90-0x0060CF98 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; retained spans [['0x0060CF90', '0x0060CF98']]", "mapped constructor ??0ListBox@@QAE@H@Z directly stores table 0x0067041C", "pinned win slot 0x50 contains original thunk VA 0x0060CF90", "original tail target 0x0060AA60 is ?on_left_down@ListBox@@UAEXHH@Z; current emitted thunk preserves receiver arithmetic and relocates to that same method", "source owner emits ?on_left_down@ListBox@@$4PPPPPPPM@A@AEXHH@Z in ??_7ListBox@@6BWin@@@ at the proven view/slot", "identity, original extent, claims and lessons retained; fresh native compile/binding review required"], "reason": "Bind the original ordinary virtual-adjustor identity to the compiler-emitted class/view adjustor selected by both the pinned constructor-installed vftable slot and exact-current owner-object relocation. The original wrapper, slot and receiver view remain distinct; no thunk body is hand-authored."}
 // symbol    ?on_left_down@ListBox@@$4PPPPPPPM@A@AEXHH@Z
 // kind      game
-// ORIGINAL: 0x0060CFA0 ?on_right_down@thunk1_ListBox@@QAEXHH@Z 0x0060CFA0-0x0060CFA8 FILE
+// ORIGINAL: 0x0060CFA0 ?on_right_down@thunk1_ListBox@@QAEXHH@Z 0x0060CFA0-0x0060CFA8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; retained spans [['0x0060CFA0', '0x0060CFA8']]", "mapped constructor ??0ListBox@@QAE@H@Z directly stores table 0x0067041C", "pinned win slot 0x5C contains original thunk VA 0x0060CFA0", "original tail target 0x0060AA20 is ?on_right_down@ListBox@@UAEXHH@Z; current emitted thunk preserves receiver arithmetic and relocates to that same method", "source owner emits ?on_right_down@ListBox@@$4PPPPPPPM@A@AEXHH@Z in ??_7ListBox@@6BWin@@@ at the proven view/slot", "identity, original extent, claims and lessons retained; fresh native compile/binding review required"], "reason": "Bind the original ordinary virtual-adjustor identity to the compiler-emitted class/view adjustor selected by both the pinned constructor-installed vftable slot and exact-current owner-object relocation. The original wrapper, slot and receiver view remain distinct; no thunk body is hand-authored."}
 // symbol    ?on_right_down@ListBox@@$4PPPPPPPM@A@AEXHH@Z
 // kind      game
-// ORIGINAL: 0x0060CFC0 ?on_left_double_click@thunk1_ListBox@@QAEXHH@Z 0x0060CFC0-0x0060CFC8 FILE
+// ORIGINAL: 0x0060CFC0 ?on_left_double_click@thunk1_ListBox@@QAEXHH@Z 0x0060CFC0-0x0060CFC8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; retained spans [['0x0060CFC0', '0x0060CFC8']]", "mapped constructor ??0ListBox@@QAE@H@Z directly stores table 0x0067041C", "pinned win slot 0x70 contains original thunk VA 0x0060CFC0", "original tail target 0x0060C710 is ?on_left_double_click@ListBox@@UAEXHH@Z; current emitted thunk preserves receiver arithmetic and relocates to that same method", "source owner emits ?on_left_double_click@ListBox@@$4PPPPPPPM@A@AEXHH@Z in ??_7ListBox@@6BWin@@@ at the proven view/slot", "identity, original extent, claims and lessons retained; fresh native compile/binding review required"], "reason": "Bind the original ordinary virtual-adjustor identity to the compiler-emitted class/view adjustor selected by both the pinned constructor-installed vftable slot and exact-current owner-object relocation. The original wrapper, slot and receiver view remain distinct; no thunk body is hand-authored."}
 // symbol    ?on_left_double_click@ListBox@@$4PPPPPPPM@A@AEXHH@Z
 // kind      game
@@ -545,7 +545,7 @@ Purpose: Report a right press: raise the click guard, forward (a1, a2) through
 /*
 Purpose: Report a right press: raise the click guard, forward (a1, a2) through
          GraphicWin vtable slot 20, drop the guard.
-// ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52
+// ORIGINAL: 0x0060AA20 ?on_right_down@ListBox@@QAEXHH@Z 0x0060AA20-0x0060AA52 BYTE_EXACT
 // symbol    ?on_right_down@ListBox@@UAEXHH@Z
 // TRIED 2026-09-03: re-dumped the divergence. The 3 instructions the image
 // has and this tree does not are entirely the entered-receiver walk
@@ -596,7 +596,7 @@ void ListBox::on_right_down(int a1, int a2) {
 /*
 Purpose: Forward a vertical-scroll (code, pos) through GraphicWin vtable
          slot 49.
-// ORIGINAL: 0x0060C6A0 ?on_scrolled@ListBox@@QAEXHH@Z 0x0060C6A0-0x0060C6C1
+// ORIGINAL: 0x0060C6A0 ?on_scrolled@ListBox@@QAEXHH@Z 0x0060C6A0-0x0060C6C1 BYTE_EXACT
 // symbol    ?on_scrolled@ListBox@@UAEXHH@Z
 // TRIED: byte-exact on promotion, same entered-adjusted receiver as
 //   on_right_down above; no guard on this one.
@@ -620,7 +620,7 @@ void ListBox::on_scrolled(int code, int pos) {
 /*
 Purpose: Report a right double click: raise the click guard, forward (a1, a2)
          through GraphicWin vtable slot 28, drop the guard.
-// ORIGINAL: 0x0060C6D0 ?on_right_double_click@ListBox@@QAEXHH@Z 0x0060C6D0-0x0060C702
+// ORIGINAL: 0x0060C6D0 ?on_right_double_click@ListBox@@QAEXHH@Z 0x0060C6D0-0x0060C702 BYTE_EXACT
 // symbol    ?on_right_double_click@ListBox@@UAEXHH@Z
 // TRIED: byte-exact on promotion, same entered-adjusted receiver as
 //   on_right_down above.
@@ -1797,12 +1797,12 @@ void ListBox::on_redraw() {
     ListBoxDrawOffset = visible_count;
 }
 
-// ORIGINAL: 0x0060CF60 ?on_mousewheel@thunk1_ListBox@@QAEXH@Z 0x0060CF60-0x0060CF68 FILE
+// ORIGINAL: 0x0060CF60 ?on_mousewheel@thunk1_ListBox@@QAEXH@Z 0x0060CF60-0x0060CF68 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor 0x00609DB0 installs Win view 0x0067041C; slot +0x3C points to original identity 0x0060CF60", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/listbox.cpp.obj has matching source-input closure and physical table relocation to ?on_mousewheel@ListBox@@$4PPPPPPPM@A@AEXH@Z", "retained COFF ?on_mousewheel@ListBox@@$4PPPPPPPM@A@AEXH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_mousewheel@ListBox@@UAEXH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The ListBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x3C; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to ListBox::on_mousewheel. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
 // kind      game
 // symbol    ?on_mousewheel@ListBox@@$4PPPPPPPM@A@AEXH@Z
 
-// ORIGINAL: 0x0060CFB0 ?on_key_down@thunk1_ListBox@@QAEXH@Z 0x0060CFB0-0x0060CFB8 FILE
+// ORIGINAL: 0x0060CFB0 ?on_key_down@thunk1_ListBox@@QAEXH@Z 0x0060CFB0-0x0060CFB8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor 0x00609DB0 installs Win view 0x0067041C; slot +0x68 points to original identity 0x0060CFB0", "retained build/recovery/builds/build-rosw1myy: build/recovery/builds/build-rosw1myy/CMakeFiles/OpenSMACX.dir/src/listbox.cpp.obj has matching source-input closure and physical table relocation to ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z", "retained COFF ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z has the 8-byte vtordisp subtraction shape and tail relocation to real method symbol ?on_key_down@ListBox@@UAEHH@Z", "the exact legacy kind fact `game` is copied verbatim from the source envelope and parser-read back; it is existing catalogue classification, not a newly granted kind", "this evidence establishes a current owner-TU/compiler-thunk correspondence only; no fresh build, linked retained-table selection, body-byte match, or whole-game acceptance is claimed"], "reason": "The ListBox Win-view constructor-installed table selects this original receiver adjustor at byte offset 0x68; the retained owner COFF physically emits the corresponding compiler vtordisp thunk and its relocation tails to ListBox::on_key_down. This FILE marker remains with the actual class owner TU; it does not prove final linked table selection or full acceptance."}
 // kind      game
 // symbol    ?on_key_down@ListBox@@$4PPPPPPPM@A@AEHH@Z
@@ -1983,17 +1983,17 @@ int ListBox::UNK2(char *text) {
     return result;
 }
 
-// ORIGINAL: 0x0060CFD0 ?on_right_double_click@thunk1_ListBox@@QAEXHH@Z 0x0060CFD0-0x0060CFD8 FILE
+// ORIGINAL: 0x0060CFD0 ?on_right_double_click@thunk1_ListBox@@QAEXHH@Z 0x0060CFD0-0x0060CFD8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor span contains the store of table 0x0067041C; the pinned dword at 0x00670490 is 0x0060CFD0.", "The original 8-byte receiver thunk at 0x0060CFD0 tail-jumps to 0x0060C6D0, mapped as ?on_right_double_click@ListBox@@QAEXHH@Z in this class owner.", "The actual class owner is src/listbox.cpp; its current owner object vftable relocation at byte offset 0x74 names the generated thunk, whose terminal relocation targets ?on_right_double_click@ListBox@@UAEXHH@Z.", "The source identity retains its exact historical kind fact `game`; its full original spans, claims, lessons, and findings are checked unchanged by the writer readback."], "reason": "The pinned ListBox constructor at 0x00609DB0 installs its Win view at 0x0067041C; the original slot cell at +0x74 selects this full identity. The real ListBox virtual member and owner-TU vftable are already source-owned; current owner COFF evidence binds this FILE identity to the compiler-emitted receiver adjustor tailing to ?on_right_double_click@ListBox@@UAEXHH@Z."}
 // kind      game
 // symbol    ?on_right_double_click@ListBox@@$4PPPPPPPM@A@AEXHH@Z
 
-// ORIGINAL: 0x0060CFE0 ?on_scrolled@thunk1_ListBox@@QAEXHH@Z 0x0060CFE0-0x0060CFE8 FILE
+// ORIGINAL: 0x0060CFE0 ?on_scrolled@thunk1_ListBox@@QAEXHH@Z 0x0060CFE0-0x0060CFE8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor span contains the store of table 0x0067041C; the pinned dword at 0x006704DC is 0x0060CFE0.", "The original 8-byte receiver thunk at 0x0060CFE0 tail-jumps to 0x0060C6A0, mapped as ?on_scrolled@ListBox@@QAEXHH@Z in this class owner.", "The actual class owner is src/listbox.cpp; its current owner object vftable relocation at byte offset 0xC0 names the generated thunk, whose terminal relocation targets ?on_scrolled@ListBox@@UAEXHH@Z.", "The source identity retains its exact historical kind fact `game`; its full original spans, claims, lessons, and findings are checked unchanged by the writer readback."], "reason": "The pinned ListBox constructor at 0x00609DB0 installs its Win view at 0x0067041C; the original slot cell at +0xC0 selects this full identity. The real ListBox virtual member and owner-TU vftable are already source-owned; current owner COFF evidence binds this FILE identity to the compiler-emitted receiver adjustor tailing to ?on_scrolled@ListBox@@UAEXHH@Z."}
 // kind      game
 // symbol    ?on_scrolled@ListBox@@$4PPPPPPPM@A@AEXHH@Z
 
-// ORIGINAL: 0x0060CFF0 ?on_scrolling@thunk1_ListBox@@QAEXHH@Z 0x0060CFF0-0x0060CFF8 FILE
+// ORIGINAL: 0x0060CFF0 ?on_scrolling@thunk1_ListBox@@QAEXHH@Z 0x0060CFF0-0x0060CFF8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor span contains the store of table 0x0067041C; the pinned dword at 0x006704E0 is 0x0060CFF0.", "The original 8-byte receiver thunk at 0x0060CFF0 tail-jumps to 0x0060C5D0, mapped as ?on_scrolling@ListBox@@QAEXHH@Z in this class owner.", "The actual class owner is src/listbox.cpp; its current owner object vftable relocation at byte offset 0xC4 names the generated thunk, whose terminal relocation targets ?on_scrolling@ListBox@@UAEXHH@Z.", "The source identity retains its exact historical kind fact `game`; its full original spans, claims, lessons, and findings are checked unchanged by the writer readback."], "reason": "The pinned ListBox constructor at 0x00609DB0 installs its Win view at 0x0067041C; the original slot cell at +0xC4 selects this full identity. The real ListBox virtual member and owner-TU vftable are already source-owned; current owner COFF evidence binds this FILE identity to the compiler-emitted receiver adjustor tailing to ?on_scrolling@ListBox@@UAEXHH@Z."}
 // kind      game
 // symbol    ?on_scrolling@ListBox@@$4PPPPPPPM@A@AEXHH@Z
