@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d24a6149ce0ef7d05701ab21f2e919f3058f07b8",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_best_defender_artillery_original_oct15.py"
+  ],
+  "evidence": [
+    "Coordinator independently decoded pinned full5044D0..504A9B span. At5045E8..504613 attacker row/prototype and info-warfare admission are unconditional on attacker sign. At50461C defender can_arty then504636 attacker can_arty must both pass before504642 assigns2; only50464B..4D later tests attacker sign.",
+    "Current best_defender introduces veh_id_atk<0 bypass of candidate plan and veh_id_atk truthiness shortcut in artillery gate, allowing any nonzero attacker ID to skip its can_arty call. Restore original predicates, preserving all other source and identities. No new guard or bug fix.",
+    "New bounded actual-source controls must distinguish two peer capabilities, verify short-circuit call order/count, negative attacker backing without host out-of-bounds, and reject compiling mutants restoring each old shortcut. Original invalid memory remains unspecified; a bounded backing test is not proof of runtime safety.",
+    "battle_compute guards are under separate read-only audit, not authorized edits. Coordinator owns native compiler/Git/integration."
+  ],
+  "intent": "Restore original defender candidate and two-sided artillery admission",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5260496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "best-defender-artillery-original-oct15"
+}

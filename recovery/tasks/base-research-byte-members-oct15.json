@@ -1,0 +1,74 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d24a6149ce0ef7d05701ab21f2e919f3058f07b8",
+  "editable_files": [
+    "src/base.cpp",
+    "src/technology.cpp",
+    "recovery/tests/test_base_doctors_actual_source.py",
+    "recovery/tests/fixtures/base_doctors_host_harness.cpp",
+    "recovery/tests/test_tech_achieved_behavior.py",
+    "recovery/tests/test_base_research_byte_members_oct15.py"
+  ],
+  "evidence": [
+    "Pinned full-span Capstone decode: base_doctors 4F5F30 human byte4F60F7; bases_reset4E6300 bytes4E630E/4E63B3; base_change4E5A60 byte4E5AF6; base_reset4E5FE0 bytes4E5FFE/4E61DC; base_ecology4F67F0 bytes4F705A/4F752D.",
+    "Pinned upgrade_any_prototypes4F0650 byte4F0663; do_upgrade4EFB50 byte4EFD12; upgrade_prototype4EFE80 bytes4EFEDF/4EFEFE/4F02E9; tech_achieved5BB000 bytes5BB0EE/5BB37D/5BB5E6/5BB69A/5BBDE6; tech_advance5BE530 bytes5BE5A7/5BE611. No dword9A64E8 operands in these spans.",
+    "Replace only proven low-byte source accesses with GameDataLockMaskView.bytes_.human_mask_; preserve original shifts, callback read stages, branching, historical claims and unrelated function/helper bodies. Record.region may contain following unannotated bodies: use actual signature/braces, not annotation-region-wide substitutions.",
+    "Existing host fixtures may be stale after earlier GameData owner migrations. Reuse production mask declarations, preserve scenario values and all assertions. Add actual-source lane controls with compiling runtime-failing mutants; no source-shape tests presented as full behavior proof. Coordinator owns native compiler, Git and integration."
+  ],
+  "intent": "Recover named human-byte accesses in ten base management and technology functions",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5201712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5137152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5134944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5136352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5203952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5178960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5176144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5176960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6008832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6022448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "base-research-byte-members-oct15"
+}
