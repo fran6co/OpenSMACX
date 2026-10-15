@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "479d451723f51fa9015e3eb55c08c2480aaef5f6",
+  "editable_files": [
+    "src/faction_strategy.cpp",
+    "recovery/tests/test_enemy_strategy_candidate.py",
+    "recovery/tests/test_enemy_strategy_region_enemy.py",
+    "recovery/tests/test_enemy_strategy_goal_types.py",
+    "recovery/tests/test_enemy_strategy_foreign_plan9.py",
+    "recovery/tests/test_enemy_strategy_basefind_dist.py",
+    "recovery/tests/test_enemy_strategy_site_scan.py",
+    "recovery/tests/test_enemy_strategy_mask_members_oct15.py"
+  ],
+  "evidence": [
+    "Pinned enemy_strategy561080..564888 reads human byte at5615D9/56191B/561C45/561D4D/561FFB/562C29/562FA9/563095/56349E/5634F7/563B7B/564834. Match each original site to existing source gate and replace operand only; preserve shifts, loops, callback timing, quirks and unsafe paths.",
+    "Original56269A mov ebx,dword[9A64E8] followed by FF mask is genuine. Retain source human_turn_bit dword snapshot around line609. Do not blanket replace13uses.",
+    "Use actual-source fixture/byte-lane controls; preserve all existing tests, mutation controls and historical claims. Baseline related AI tests pass."
+  ],
+  "intent": "Recover twelve original human-byte accesses in AI strategy without weakening its genuine dword operation",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5640320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "enemy-strategy-mask-members-oct15"
+}

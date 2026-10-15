@@ -1,0 +1,60 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "479d451723f51fa9015e3eb55c08c2480aaef5f6",
+  "editable_files": [
+    "src/base.cpp",
+    "src/technology.cpp",
+    "recovery/tests/test_base_colony_economy.py",
+    "recovery/tests/test_base_connect_behavior.py",
+    "recovery/tests/test_base_terraform_behavior.py",
+    "recovery/tests/test_base_mask_stages_oct15.py"
+  ],
+  "evidence": [
+    "base_hurry byte sites4F3FFF/4F43A1/4F451D/4F4702/4F474F; base_connect4EC9C6/4ECB1C; base_drones4F5EF4. Preserve separate live reads and original unchecked paths.",
+    "base_check_support reads human byte4F4A12,4F4B46 and per-vehicle4F4C47 after filters; replace cached is_human at later vehicle filter with original-stage read. No intervening mask writer established; this is read-stage restoration, not a claimed observed callback bug.",
+    "base_terraform byte sites4ECC04/4ED522/4EDA99/4EE2C3/4EE777/4EE96A/4EE9D6/4EEB3D/4EEC71/4EEF0D. Restore cached initial-human reuse to distinct byte reads at post-aggregate population stage4ED522 and late landing gate4EEF0D; map existing other stages before changing and preserve loop read placement.",
+    "tech_selection byte gates5BE3A1/5BE4D6 before/after tech_pick; tech_research5BE954/5BEB43 before climactic_battle/after advances. No blanket conversion outside subjects.",
+    "Baseline affected host suite has8pre-existing base_colony_economy failures and16passes. Update authorized fixture projections to actual source-owned mask declarations, real current parser signatures and source storage; preserve inputs/assertions/damage controls. Do not modify production outside scoped functions."
+  ],
+  "intent": "Recover original human-byte members and read stages in base management and research",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5193696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5161968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5201120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5195824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5164016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6022016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6023488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "base-tech-mask-stages-oct15"
+}
