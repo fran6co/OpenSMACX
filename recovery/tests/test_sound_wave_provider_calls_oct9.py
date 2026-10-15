@@ -167,7 +167,8 @@ def test_wave_calls_use_named_provider_methods_with_null_guards():
     code = re.sub(r"/\*.*?\*/|//[^\n]*", "", source, flags=re.S)
     assert "vtable_slot<" not in code and "vtable_method<" not in code
     assert "original_slot<" not in code
-    assert code.count("device_vtable + 0x6C") == 2
+    assert "device_vtable" not in code
+    assert "OriginalObject" not in code
     checks = {
         "int Wave::set_pitch(int a1)": ("if (device_)", "->set_pitch(pitch)"),
         "int Wave::get_device_description(char *a1, int a2, int a3)": (
@@ -181,8 +182,8 @@ def test_wave_calls_use_named_provider_methods_with_null_guards():
         assert positions == sorted(positions), signature
     for signature in ("int Wave::dyna_load(char *fname)", "void Wave::init(char *group_id, unsigned long flags)"):
         body = function_body(code, signature)
-        assert body.index("device_vtable =") < body.index("get_attrib()")
-        assert body.index("get_attrib()") < body.index("device_vtable + 0x6C")
+        assert body.index("get_attrib()") < body.index("->set_attrib(")
+        assert body.index("->set_attrib(") < body.index("attach();")
 
 
 def test_opt_in_vc6_probe_maps_all_provider_methods_to_slots():
