@@ -41,7 +41,7 @@ def actual():
         if depth == 0:
             body = source[start:end + 1]
             break
-    fields = "\n".join(one(r"^  (?:char \*|int |unsigned char )" + name + r";", header) for name in
+    fields = "\n".join(one(r"^  (?:char \*|unsigned char \*|int |unsigned char )" + name + r";", header) for name in
         ("ppszFileName_", "pcBits_", "cTransparentIndex_", "iSpriteWidth2_", "iSpriteWidth_", "iSpriteHeight_",
          "iWidth_", "iHeight_", "iLeftOffset_", "iTopOffset_"))
     methods = one(r"  int draw\(Buffer \*destination, int transparent, int x, int y,\s*unsigned char \*table\);", header)
@@ -102,7 +102,7 @@ BODY
 void reset(){
  for(int i=0;i<131072;++i)memory[i]=expected[i]=static_cast<unsigned char>((i*17+23)%251);
  for(int i=0;i<256;++i)memory[TABLE+i]=expected[TABLE+i]=static_cast<unsigned char>((i*37+7)%256);
- sprite={};sprite.pcBits_=reinterpret_cast<char*>(memory+SOURCE);sprite.ppszFileName_=const_cast<char*>("must-not-load.pcx");
+ sprite={};sprite.pcBits_=memory+SOURCE;sprite.ppszFileName_=const_cast<char*>("must-not-load.pcx");
  sprite.iSpriteWidth2_=12;sprite.iSpriteWidth_=5;sprite.iSpriteHeight_=3;
  buffer={};buffer.rect1_={0,0,64,64};buffer.stride_=64;buffer.locked_bits_=memory+OUTPUT;
  SpriteScaleNumerator=SpriteScaleDenominator=1;SpriteCachedScaleNumerator=SpriteCachedScaleDenominator=-1;
@@ -167,7 +167,7 @@ int main(){
  for(int mode=0;mode<3;++mode){reset();sprite.iSpriteWidth_=4;sprite.iSpriteHeight_=1;expected_original={2,3,6,4};
   int table=TABLE,source=SOURCE,dst=OUTPUT+3*64+2;
   if(mode==0){table=dst;put(SOURCE,1);put(SOURCE+1,0);put(dst+1,72);}
-  if(mode==1){source=dst-1;sprite.pcBits_=reinterpret_cast<char*>(memory+source);put(source,47);}
+  if(mode==1){source=dst-1;sprite.pcBits_=memory+source;put(source,47);}
   if(mode==2){table=SOURCE;put(SOURCE,2);put(SOURCE+1,1);put(SOURCE+2,91);}
   unit(source,dst,4,1,12,64,table,9);done(paint(9,2,3,table),"LIU");}
  for(int alias=0;alias<3;++alias){
@@ -175,7 +175,7 @@ int main(){
   expected_original={2,3,6,7};buffer.rect1_={2,3,4,5};
   axes[0]={0,0,3,2,{1,2}};axes[1]={0,0,3,2,{1,2}};
   int source=SOURCE,table=TABLE,dst=OUTPUT+3*64+2;put(SOURCE,1);put(SOURCE+1,0);
-  if(alias==0){source=dst-1;sprite.pcBits_=reinterpret_cast<char*>(memory+source);put(source,47);}
+  if(alias==0){source=dst-1;sprite.pcBits_=memory+source;put(source,47);}
   if(alias==1){table=dst;put(dst,2);put(dst+1,71);}
   if(alias==2){table=SOURCE;put(SOURCE+1,2);put(SOURCE+2,91);}
   shrink(source,dst,12,64,table,9);done(paint(9,2,3,table),"LFIJXYU");}
@@ -183,7 +183,7 @@ int main(){
   reset();setup_expand(3,repeats);int table=TABLE,source=SOURCE,dst=OUTPUT+3*64+2;
   // Force non-key values in every block, with mapping changing later input.
   put(SOURCE,1);put(SOURCE+1,2);put(SOURCE+2,3);
-  if(alias==0){source=dst-1;sprite.pcBits_=reinterpret_cast<char*>(memory+source);put(source,47);}
+  if(alias==0){source=dst-1;sprite.pcBits_=memory+source;put(source,47);}
   if(alias==1){table=dst;put(dst,2);put(dst+1,71);put(dst+2,99);}
   if(alias==2){table=SOURCE;put(SOURCE+1,27);put(SOURCE+2,91);}
   expand(source,dst,12,64,table,9);done(paint(9,2,3,table),"LFIJXYU");}
@@ -214,12 +214,12 @@ int main(){
  // Unit pcBits is loaded after clipping; pitch captured before. Acquisition
  // changes are observed, then clip changes only the live pointer/lockedbits.
  reset();expected_original={2,3,7,6};callback=[&](char c){if(c=='L')buffer.stride_=80;
-  if(c=='I'){sprite.pcBits_=reinterpret_cast<char*>(memory+ALTSOURCE);sprite.iSpriteWidth2_=33;buffer.stride_=96;buffer.locked_bits_=memory+ALTOUTPUT;}};
+  if(c=='I'){sprite.pcBits_=memory+ALTSOURCE;sprite.iSpriteWidth2_=33;buffer.stride_=96;buffer.locked_bits_=memory+ALTOUTPUT;}};
  unit(ALTSOURCE,ALTOUTPUT+3*80+2,5,3,12,80,TABLE,9);done(paint(),"LIU");
  // Scaled first-pixel base uses old pitch64, traversal uses fresh80. Source
  // stays preclip, locked pixel owner is sampled after first but before second.
- reset();setup_expand(3,2);callback=[&](char c){if(c=='I'){sprite.pcBits_=reinterpret_cast<char*>(memory+ALTSOURCE);buffer.stride_=80;buffer.locked_bits_=memory+ALTOUTPUT;}
-  if(c=='J'){sprite.pcBits_=reinterpret_cast<char*>(memory+TABLE);buffer.stride_=96;buffer.locked_bits_=memory+OUTPUT;}};
+ reset();setup_expand(3,2);callback=[&](char c){if(c=='I'){sprite.pcBits_=memory+ALTSOURCE;buffer.stride_=80;buffer.locked_bits_=memory+ALTOUTPUT;}
+  if(c=='J'){sprite.pcBits_=memory+TABLE;buffer.stride_=96;buffer.locked_bits_=memory+OUTPUT;}};
  expand(0,ALTOUTPUT+3*64+2,12,80,TABLE,9);done(paint(),"LFIJXYU");
  // The first intersection is discarded; a changed clip must reach both
  // helpers through the second call. Snapshotting its first result is wrong.
@@ -269,7 +269,7 @@ DAMAGE = {
     "unit_zero_skip": ("if (source_row[column] != key)", "if (source_row[column] != key && source_row[column] != 0)"),
     "unit_wrong_lut_operand": ("table[source_row[column]]", "table[destination_row[column]]"),
     "unit_source_skip_pitch": ("(clipped.top - original.top) * source_pitch", "(clipped.top - original.top) * iSpriteWidth_"),
-    "unit_stale_source": ("reinterpret_cast<const unsigned char *>(pcBits_) +", "scaled_source +"),
+    "unit_stale_source": ("pcBits_ +\n            (clipped.left - original.left)", "scaled_source +\n            (clipped.left - original.left)"),
     "unit_live_pitch": ("clipped.top * destination_pitch", "clipped.top * static_cast<int>(destination->stride_)"),
     "shrink_zero_skip": ("if (*source != key)", "if (*source != key && *source != 0)"),
     "shrink_wrong_lut_operand": ("table[*source]", "table[destination_row[column]]"),
@@ -319,7 +319,7 @@ def test_source_remap_rejects_compiling_damage(tmp_path, damage):
         assert source.count(good) == 1
         injected = ("unsigned char copied_table[256]; std::memcpy(copied_table, table, 256); table = copied_table;"
                     if damage == "lut_snapshot" else
-                    "unsigned char copied_source[4096]; std::memcpy(copied_source, pcBits_, 4096); pcBits_ = reinterpret_cast<char *>(copied_source);")
+                    "unsigned char copied_source[4096]; std::memcpy(copied_source, pcBits_, 4096); pcBits_ = copied_source;")
         source = source.replace(good, injected + "\n" + good)
     elif damage == "default_remap_per_pixel":
         good = "destination_row[repeat * destination_pitch + output_column + pixel] = mapped;"
