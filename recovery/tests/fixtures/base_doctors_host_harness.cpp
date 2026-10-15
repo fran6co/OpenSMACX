@@ -67,8 +67,9 @@ struct BaseSecretProject {
     int project_base[64];
     int &operator[](int project) { return project_base[project]; }
 };
+/* EXTRACTED_GAME_DATA_LOCK_MASK_TYPES */
 struct GameDataFields {
-    struct { uint32_t enable_mask_; } lock_masks_;
+    GameDataLockMaskView lock_masks_;
     BaseSecretProject secret_project_;
 };
 struct GameDataWindow { GameDataFields fields_; };

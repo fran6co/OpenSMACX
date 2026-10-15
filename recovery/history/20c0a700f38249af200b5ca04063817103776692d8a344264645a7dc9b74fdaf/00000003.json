@@ -1,0 +1,17 @@
+{
+  "event_id": "1ce1e5af90b093d430c04be79a677ed61a198a2ac028c0b924c357be3dbc50fa",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "base-members-compiled-collateral-oct15",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator and independent reviewer inspected retained base.cpp COFF objects from build-ur4x3ldt and build-ztr7h0_n. capture_base source unchanged: normalized instructions isolate split EBX stack reloads, independent EDI load ordering and terminal padding; 445 ordered relocation target/kind identities unchanged. Baseline143f load moves to candidate1443/14a2, baseline150e to1516/1575: each arm defines EBX before consumers, with no intervening call/store on moved segment; candidate15eb/15ef reverses independent stack loads. base_growth unchanged source: independent stack loads reverse, and section729..739 reorders ordinary nonvolatile BaseIDCurrentSelected/MapStorage reads with no intervening call/store. Manual bounded scheduling review supports this integration, NOT byte preservation, full formal equivalence, linked preservation, runtime or automatic acceptance. Historical claims retained; all113 scoped comparison rows unchanged; candidate build/link and15 host tests pass. Remaining full-game and linked-preservation obligations remain unresolved."
+    ]
+  },
+  "previous_event": "5c34e6687b7efd1a15ec90dae5fb0dd264f0f51599325df12039e3f4f02ac33f",
+  "request_id": "base-members-collateral-reviewed-oct15",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:base-research-byte-members-oct15"
+}

@@ -3,11 +3,22 @@
 from pathlib import Path
 import shutil
 import subprocess
+import re
 
 import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _mask_declarations():
+    header = (ROOT / "src/game_data_state_window.h").read_text()
+    match = re.search(
+        r"struct GameDataLockMaskBytes\s*\{.*?\};\s*union GameDataLockMaskView\s*\{.*?\};",
+        header, re.DOTALL,
+    )
+    assert match, "production lock-mask declarations missing"
+    return match.group(0)
 
 
 def actual_body(signature="void __cdecl tech_achieved("):
@@ -30,6 +41,7 @@ def run_host(tmp_path, body):
         #include <cstdint>
         #include <cstring>
         #include <cstdio>
+        /* EXTRACTED_GAME_DATA_LOCK_MASK_TYPES */
         #define __cdecl
         constexpr int MaxReactorNum = 4;
         constexpr int MaxVehProtoFactionNum = 64;
@@ -43,6 +55,9 @@ def run_host(tmp_path, body):
         constexpr int FacilitySPStart = 70;
         constexpr int FAC_PLANETARY_DATALINKS = 11;
         constexpr int FALSE = 0;
+        typedef char *LPSTR;
+        LPSTR TechnologyHelpEntryName = nullptr;
+        int TechnologyHelpEntryKind = -1;
         int popup_destructions = 0, popup_inits = 0, popup_starts = 0,
             popup_strings = 0, popup_width = 0, popup_flags = 0;
         char popup_file[32] = {}, popup_caption[128] = {};
@@ -71,7 +86,8 @@ def run_host(tmp_path, body):
         const char *popp_caption = nullptr, *popp_label = nullptr,
                    *popp_picture = nullptr;
         const char *xpop_label = nullptr;
-        int parse_say_ids[8] = {}, parse_say_inputs[8] = {}, parse_say_calls = 0;
+        int parse_say_ids[8] = {}, parse_say_calls = 0;
+        const char *parse_say_inputs[8] = {};
         struct GraphicWin;
         struct Sprite { int identity = 0; };
         Sprite g_TECH_ICON_SPRITES[89];
@@ -217,7 +233,7 @@ def run_host(tmp_path, body):
 
  int &voice_of_planet() { return voice_of_planet_; }
  const int &voice_of_planet() const { return voice_of_planet_; }
-} SecretProject;
+        };
         RulesTechnology Technology[89];
         struct RulesAbility { const char *name = nullptr; int16_t preq_tech = -1; };
         RulesAbility Ability[29];
@@ -230,16 +246,31 @@ def run_host(tmp_path, body):
         Map *map_tiles() { return Maps; }
         uint32_t MapArea = 0;
         Base Bases[8];
-        int BaseCurrentCount = 0;
         VehPrototype VehPrototypes[512];
         RulesReactor Reactor[4];
-        uint32_t LockEnableMask = 0;
-        int TurnCurrentNum = 0, TechAchievedGate = 0;
-        int GamePreferences = 0, FirstProposedPrototype = -1;
+        struct TestGameDataFields {
+          GameDataLockMaskView lock_masks_;
+          uint32_t game_preferences_;
+          uint8_t game_tech_achieved_[89];
+          int turn_current_num_;
+          int base_current_count_;
+          TestSecretProject secret_project_;
+          int governor_faction_ = -1;
+        };
+        struct TestGameDataStorage { TestGameDataFields fields_; };
+        TestGameDataStorage GameDataStateStorage{};
+        TestSecretProject &SecretProject = GameDataStateStorage.fields_.secret_project_;
+        int &BaseCurrentCount = GameDataStateStorage.fields_.base_current_count_;
+        int &GovernorFaction = GameDataStateStorage.fields_.governor_faction_;
+        uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+        int &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
+        int TechAchievedGate = 0;
+        uint32_t &GamePreferences = GameDataStateStorage.fields_.game_preferences_;
+        int FirstProposedPrototype = -1;
         constexpr int PREF_BSC_AUTO_DESIGN_VEH = 0x4000;
-        uint8_t GameTechAchieved[89] = {};
+        uint8_t (&GameTechAchieved)[89] = GameDataStateStorage.fields_.game_tech_achieved_;
         int IsMultiplayerNet = 0;
-        int ExpansionEnabled = 1, GovernorFaction = -1;
+        int ExpansionEnabled = 1;
         int DiplomacyActive = 0, CommlinkPending = 0, TurnRedrawPending = 0;
         int UnkBitfield1 = 0;
         WorldWin WorldClimateWorldWin;
@@ -257,8 +288,9 @@ def run_host(tmp_path, body):
         int label_offset_seen = -1, label_lookup_count = 0;
         const char *parsed_noun = nullptr;
         int own_gender_seen = -1, own_plural_seen = -1;
-        int parsed_say_id = -1, parsed_say_input = -1, tech_popup_calls = 0;
-        int map_notice_tech = -1;
+        int parsed_say_id = -1, tech_popup_calls = 0;
+        const char *parsed_say_input = nullptr;
+        const char *map_notice_tech = nullptr;
         int social_avail_calls = 0, social_avail_category = -1,
             social_avail_model = -1, social_avail_faction = -1,
             social_avail_result = 1, social_popup_calls = 0,
@@ -299,7 +331,7 @@ def run_host(tmp_path, body):
           }
           if (mutate_local_after_design) ConsoleGlobal.faction_id_ = 0;
         }
-        int parse_say(int id, int input, int, int) {
+        int parse_say(int id, const char *input, int, int) {
           parsed_say_id = id;
           parsed_say_input = input;
           if (parse_say_calls < 8) {
@@ -503,8 +535,7 @@ def run_host(tmp_path, body):
           if (tech_popup_calls != 1 ||
               parse_say_calls != parse_before_reactor + 3 ||
               parse_say_ids[parse_before_reactor] != 0 ||
-              parse_say_inputs[parse_before_reactor] != static_cast<int>(
-                  reinterpret_cast<intptr_t>(reactor_tier_three))) return 17;
+              parse_say_inputs[parse_before_reactor] != reactor_tier_three) return 17;
           if (popup_inits != 1 || popup_starts != 2 || popup_width != 0x1f4 ||
               popup_flags != 0x80 || popup_strings != 3 ||
               std::strcmp(popup_file, "BLURBSX") != 0 ||
@@ -550,8 +581,7 @@ def run_host(tmp_path, body):
           if (netmsg_calls != 2 || netmsg_duration != 0x1388 ||
               netmsg_channel != 0 || netmsg_target != nullptr ||
               std::strcmp(netmsg_label, "TECHOBTAINED") != 0 ||
-              parsed_say_id != 0 || parsed_say_input != static_cast<int>(
-                  reinterpret_cast<intptr_t>(Technology[10].name)) ||
+              parsed_say_id != 0 || parsed_say_input != Technology[10].name ||
               newtech_calls != newtech_calls_before_modal) return 24;
           DiplomacyActive = 0;
           CommlinkPending = 1;
@@ -593,11 +623,9 @@ def run_host(tmp_path, body):
               netmsg_duration != -5000 || netmsg_channel != 0 ||
               parse_say_calls != parse_before_ability + 2 ||
               parse_say_ids[parse_before_ability] != 0 ||
-              parse_say_inputs[parse_before_ability] != static_cast<int>(
-                  reinterpret_cast<intptr_t>(tech_twelve)) ||
+              parse_say_inputs[parse_before_ability] != tech_twelve ||
               parse_say_ids[parse_before_ability + 1] != 1 ||
-              parse_say_inputs[parse_before_ability + 1] != static_cast<int>(
-                  reinterpret_cast<intptr_t>(ability_name))) return 26;
+              parse_say_inputs[parse_before_ability + 1] != ability_name) return 26;
           Players[2].faction_bonus_count = 4;
           Players[2].faction_bonus_id[3] = RULE_FREEFAC;
           Players[2].faction_bonus_val1[3] = 5;
@@ -770,8 +798,7 @@ def run_host(tmp_path, body):
               Bases[0].visibility != 2 ||
               Bases[0].faction_pop_size_intel[0] != 0xA5 ||
               Bases[0].faction_pop_size_intel[1] != 7 ||
-              map_notice_tech != static_cast<int>(reinterpret_cast<intptr_t>(
-                  Technology[22].name)) ||
+              map_notice_tech != Technology[22].name ||
               popp_calls != popup_map_before + 1 ||
               std::strcmp(popp_caption, "SCRIPT") != 0 ||
               std::strcmp(popp_label, "SEEMAP2") != 0 || popp_flags != 0 ||
@@ -896,7 +923,8 @@ def run_host(tmp_path, body):
           tech_achieved(2, 4, 0, 0);
           if (proposed_faction != -1) return 55;
         }
-    '''.replace("BODY", body)
+    '''.replace("BODY", body).replace(
+        "/* EXTRACTED_GAME_DATA_LOCK_MASK_TYPES */", _mask_declarations())
     cpp = tmp_path / "tech_achieved.cpp"
     exe = tmp_path / "tech_achieved"
     cpp.write_text(source)

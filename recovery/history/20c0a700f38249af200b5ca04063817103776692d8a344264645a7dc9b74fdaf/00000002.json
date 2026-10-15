@@ -1,0 +1,28 @@
+{
+  "event_id": "5c34e6687b7efd1a15ec90dae5fb0dd264f0f51599325df12039e3f4f02ac33f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Expand review scope to unedited base_growth and capture_base physical compiler collateral. Preserve original task baseline and historical claims; no additional source edits authorized by this review decision. These bodies are already included in the113-row full-TU measurements. Independent and coordinator COFF tracing identifies local load scheduling; no linked or automatic preservation waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5173696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5293328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7d50edae5adfac4616cb03090d3a9c09e4f27d99c7072d7733c7014e5825d3fd",
+  "request_id": "base-members-collateral-scope-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:base-research-byte-members-oct15"
+}

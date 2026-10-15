@@ -1,0 +1,21 @@
+{
+  "event_id": "7d50edae5adfac4616cb03090d3a9c09e4f27d99c7072d7733c7014e5825d3fd",
+  "payload": {
+    "affects": [
+      "entity-e8d4ef7bc4bb5beda673f1f99722dfe57412b635123309a98476a4d0a9111a96",
+      "entity-fa9c794b568108252e79ecdd1f80e2a0b79b0aa34fd4e3f12abfb5be7fc2e97a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "base-members-compiled-collateral-oct15",
+    "evidence": [
+      "Retained baseline build report audio-lifecycle-build-base-ai-mask-stages-destination-oct15 vs candidate audio-lifecycle-build-base-research-byte-members-candidate-oct15:158objects no added/missing. Unedited capture_base0x50C510 has7120B body1620differing offsets445relocations same target multiset; base_growth0x4EF1C0 has2944B body18differing offsets169relocations same target multiset. Changes not cleared merely by identical source or113unchanged measurement rows. Strict391section map after independently verifying four compiler named-label stem/section/value/class identities isolates collateral to these two beyond edited targets; further CFG/instruction review required. Independent physical review in progress; no outside-scope or full-game acceptance claimed."
+    ],
+    "hypothesis": "Qualify compiled capture_base and base_growth collateral before integrating byte-member recovery",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "base-members-compiled-collateral-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:base-research-byte-members-oct15"
+}

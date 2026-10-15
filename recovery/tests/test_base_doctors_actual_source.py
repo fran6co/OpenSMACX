@@ -1,6 +1,7 @@
 """Host-only actual-source controls for the pinned base_doctors owner."""
 from pathlib import Path
 import os
+import re
 import shutil
 import subprocess
 
@@ -45,12 +46,24 @@ def _actual_owner_closure():
     return helpers, body
 
 
+def _mask_declarations():
+    header = (ROOT / "src/game_data_state_window.h").read_text()
+    match = re.search(
+        r"struct GameDataLockMaskBytes\s*\{.*?\};\s*union GameDataLockMaskView\s*\{.*?\};",
+        header, re.DOTALL,
+    )
+    assert match, "production lock-mask declarations missing"
+    return match.group(0)
+
+
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 def test_actual_owner_preserves_riot_matrix_and_warning_paths(tmp_path, compiler_name):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
     fixture = HARNESS.read_text()
+    assert fixture.count("/* EXTRACTED_GAME_DATA_LOCK_MASK_TYPES */") == 1
+    fixture = fixture.replace("/* EXTRACTED_GAME_DATA_LOCK_MASK_TYPES */", _mask_declarations())
     helpers, body = _actual_owner_closure()
     assert fixture.count("/* EXTRACTED_BASE_DOCTORS_HELPERS */") == 1
     assert fixture.count("/* EXTRACTED_BASE_DOCTORS_BODY */") == 1
@@ -62,7 +75,8 @@ def test_actual_owner_preserves_riot_matrix_and_warning_paths(tmp_path, compiler
     built = subprocess.run(
         (compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
          "-fsanitize=address,undefined", "-fno-sanitize-recover=all",
-         str(cpp), "-o", str(exe)), capture_output=True, text=True, timeout=60)
+         str(cpp), "-o", str(exe)),
+        capture_output=True, text=True, timeout=60)
     assert built.returncode == 0, built.stderr
     host_env = os.environ.copy()
     host_env["ASAN_OPTIONS"] = "detect_leaks=0"
