@@ -9324,7 +9324,7 @@ shared:
     return 0;
 }
 
-// ORIGINAL: 0x005EDF50 ?set_caption@Win@@QAEXPAD@Z 0x005EDF50-0x005EDFD5 FILE
+// ORIGINAL: 0x005EDF50 ?set_caption@Win@@QAEXPAD@Z 0x005EDF50-0x005EDFD5 FILE BYTE_EXACT
 // kind game
 // ===== homed from src/unrecovered/005edf50.cpp =====
 
@@ -10456,7 +10456,7 @@ void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
     }
 }
 
-// ORIGINAL: 0x005F15C0 ?OnKey@Win@@QAAXPAXIJHI@Z 0x005F15C0-0x005F1657 FILE
+// ORIGINAL: 0x005F15C0 ?OnKey@Win@@QAAXPAXIJHI@Z 0x005F15C0-0x005F1657 FILE BYTE_EXACT
 // symbol    ?OnKey@Win@@SAXPAXIJHI@Z
 // kind game
 // TRIED: MISMATCH #1 test/push at the ternary-vs-if for the first global select; body verified structurally correct otherwise
