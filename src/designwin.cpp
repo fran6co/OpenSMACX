@@ -203,23 +203,28 @@ void DesignWin::init() {
     int column;
 
     SetRect(&vehicle_panel_rect_, 0x8C, 9, 0x1C3, 0x140);
-    SetRect(&chassis_panel_rect_, 0x1E, 7, 0x81, 0x5C);
-    SetRect(&weapon_panel_rect_, 0x1E, 0x65, 0x81, 0xBA);
-    SetRect(&armor_panel_rect_, 0x1E, 0xC3, 0x81, 0x118);
-    SetRect(&reactor_panel_rect_, 0x1CE, 7, 0x231, 0x5C);
-    SetRect(&special_one_panel_rect_, 0x1CE, 0x65, 0x231, 0xBA);
-    SetRect(&special_two_panel_rect_, 0x1CE, 0xC3, 0x231, 0x118);
+    SetRect(&component_panel_rects_[component_panel_chassis],
+            0x1E, 7, 0x81, 0x5C);
+    SetRect(&component_panel_rects_[component_panel_weapon],
+            0x1E, 0x65, 0x81, 0xBA);
+    SetRect(&component_panel_rects_[component_panel_armor],
+            0x1E, 0xC3, 0x81, 0x118);
+    SetRect(&component_panel_rects_[component_panel_reactor],
+            0x1CE, 7, 0x231, 0x5C);
+    SetRect(&component_panel_rects_[component_panel_special_one],
+            0x1CE, 0x65, 0x231, 0xBA);
+    SetRect(&component_panel_rects_[component_panel_special_two],
+            0x1CE, 0xC3, 0x231, 0x118);
 
     spot1_.init(0x40);
     spot2_.init(6);
-    RECT *component_rects[6] = {
-        &chassis_panel_rect_, &weapon_panel_rect_, &armor_panel_rect_,
-        &reactor_panel_rect_, &special_one_panel_rect_, &special_two_panel_rect_
-    };
     for (i = 0; i < 6; ++i) {
-        spot2_.add(i, i, component_rects[i]->left, component_rects[i]->top,
-                   component_rects[i]->right - component_rects[i]->left,
-                   component_rects[i]->bottom - component_rects[i]->top);
+        spot2_.add(i, i, component_panel_rects_[i].left,
+                   component_panel_rects_[i].top,
+                   component_panel_rects_[i].right -
+                       component_panel_rects_[i].left,
+                   component_panel_rects_[i].bottom -
+                       component_panel_rects_[i].top);
     }
 
     // The vehicle preview uses the same light direction as the game renderer.
@@ -298,31 +303,29 @@ void DesignWin::init() {
 
     // Five lower-panel rows retain the original unusual coordinate ordering;
     // drawing and button setup consume the exact same four stored integers.
-    RECT *const rows[5] = {&lower_panel_rect_, &lower_panel_extra_rect_,
-        &field_BAC_rect_, &field_BBC_rect_, &lower_panel_end_rect_};
     int left = buffer_working_rect()->left + 0x1B;
     const int right_limit = buffer_working_rect()->right - 0x3B;
     const int bottom = buffer_working_rect()->bottom - 0x14;
     const int top = bottom - 0x14;
     int edge = (right_limit - left + 3) / 5 - 3 + left;
     for (row = 0; row < 5; ++row) {
-        rows[row]->left = left;
-        rows[row]->top = top;
-        rows[row]->right = edge;
-        rows[row]->bottom = bottom;
+        lower_panel_rows_[row].left = left;
+        lower_panel_rows_[row].top = top;
+        lower_panel_rows_[row].right = edge;
+        lower_panel_rows_[row].bottom = bottom;
         const int step = edge - left + 3;
         left += step;
         edge += step;
     }
     const int last_step = edge - left + 3;
-    field_B5C_rect_ = lower_panel_rect_;
+    field_B5C_rect_ = lower_panel_rows_[lower_panel_done];
     const int vertical_delta = top - bottom - 6;
     field_B5C_rect_.top += vertical_delta;
     field_B5C_rect_.bottom += vertical_delta;
     field_B6C_rect_ = field_B5C_rect_;
     field_B6C_rect_.left += last_step;
     field_B6C_rect_.right += last_step;
-    field_B4C_rect_ = lower_panel_end_rect_;
+    field_B4C_rect_ = lower_panel_rows_[lower_panel_cancel];
     field_B4C_rect_.top += vertical_delta;
     field_B4C_rect_.bottom += vertical_delta;
     field_B7C_rect_ = field_B4C_rect_;
@@ -367,17 +370,27 @@ void DesignWin::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xBD0 / 4));
     CharUpperA(StringTemp);
-    flatButtons_[6].init(StringTemp, 6, field_BAC_rect_.left,
-        field_BAC_rect_.top, field_BAC_rect_.right - field_BAC_rect_.left,
-        field_BAC_rect_.bottom - field_BAC_rect_.top, static_cast<Win *>(this), 0);
+    flatButtons_[6].init(StringTemp, 6,
+        lower_panel_rows_[lower_panel_obsolete].left,
+        lower_panel_rows_[lower_panel_obsolete].top,
+        lower_panel_rows_[lower_panel_obsolete].right -
+            lower_panel_rows_[lower_panel_obsolete].left,
+        lower_panel_rows_[lower_panel_obsolete].bottom -
+            lower_panel_rows_[lower_panel_obsolete].top,
+        static_cast<Win *>(this), 0);
     flatButtons_[6].set_bubble_text(label_get(0xC58 / 4));
 
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0xBD4 / 4));
     CharUpperA(StringTemp);
-    flatButtons_[7].init(StringTemp, 7, field_BBC_rect_.left,
-        field_BBC_rect_.top, field_BBC_rect_.right - field_BBC_rect_.left,
-        field_BBC_rect_.bottom - field_BBC_rect_.top, static_cast<Win *>(this), 0);
+    flatButtons_[7].init(StringTemp, 7,
+        lower_panel_rows_[lower_panel_upgrade].left,
+        lower_panel_rows_[lower_panel_upgrade].top,
+        lower_panel_rows_[lower_panel_upgrade].right -
+            lower_panel_rows_[lower_panel_upgrade].left,
+        lower_panel_rows_[lower_panel_upgrade].bottom -
+            lower_panel_rows_[lower_panel_upgrade].top,
+        static_cast<Win *>(this), 0);
     flatButtons_[7].set_bubble_text(label_get(0xC5C / 4));
 
     const int prototype_id = static_cast<int>(protoID_);
@@ -385,10 +398,13 @@ void DesignWin::init() {
     strcat(StringTemp, label_get((VehPrototypes[prototype_id].flags & 0x80)
                                  ? 0x864 / 4 : 0x198 / 4));
     if (Language != 2) CharUpperA(StringTemp);
-    flatButtons_[8].init(StringTemp, 8, lower_panel_end_rect_.left,
-        lower_panel_end_rect_.top,
-        lower_panel_end_rect_.right - lower_panel_end_rect_.left,
-        lower_panel_end_rect_.bottom - lower_panel_end_rect_.top,
+    flatButtons_[8].init(StringTemp, 8,
+        lower_panel_rows_[lower_panel_cancel].left,
+        lower_panel_rows_[lower_panel_cancel].top,
+        lower_panel_rows_[lower_panel_cancel].right -
+            lower_panel_rows_[lower_panel_cancel].left,
+        lower_panel_rows_[lower_panel_cancel].bottom -
+            lower_panel_rows_[lower_panel_cancel].top,
         static_cast<Win *>(this), 0);
     const int current_prototype_id = static_cast<int>(protoID_);
     const int faction_bubble =
@@ -399,14 +415,21 @@ void DesignWin::init() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(0x438 / 4));
     CharUpperA(StringTemp);
-    flatButtons_[4].init(StringTemp, 4, lower_panel_rect_.left,
-        lower_panel_rect_.top, lower_panel_rect_.right - lower_panel_rect_.left,
-        lower_panel_rect_.bottom - lower_panel_rect_.top, static_cast<Win *>(this), 0);
+    flatButtons_[4].init(StringTemp, 4, lower_panel_rows_[lower_panel_done].left,
+        lower_panel_rows_[lower_panel_done].top,
+        lower_panel_rows_[lower_panel_done].right -
+            lower_panel_rows_[lower_panel_done].left,
+        lower_panel_rows_[lower_panel_done].bottom -
+            lower_panel_rows_[lower_panel_done].top,
+        static_cast<Win *>(this), 0);
     flatButtons_[4].set_bubble_text(label_get(0xC50 / 4));
-    flatButtons_[5].init(StringTemp, 5, lower_panel_extra_rect_.left,
-        lower_panel_extra_rect_.top,
-        lower_panel_extra_rect_.right - lower_panel_extra_rect_.left,
-        lower_panel_extra_rect_.bottom - lower_panel_extra_rect_.top,
+    flatButtons_[5].init(StringTemp, 5,
+        lower_panel_rows_[lower_panel_rename].left,
+        lower_panel_rows_[lower_panel_rename].top,
+        lower_panel_rows_[lower_panel_rename].right -
+            lower_panel_rows_[lower_panel_rename].left,
+        lower_panel_rows_[lower_panel_rename].bottom -
+            lower_panel_rows_[lower_panel_rename].top,
         static_cast<Win *>(this), 0);
     flatButtons_[5].set_bubble_text(label_get(0xC54 / 4));
 
@@ -490,8 +513,9 @@ void DesignWin::on_redraw() {
     draw_stack();
     draw_flash();
     Buffer::set_clip(buffer_working_rect());
-    UnionRect(&caption, &lower_panel_end_rect_, &lower_panel_rect_);
-    UnionRect(&caption, &caption, &lower_panel_extra_rect_);
+    UnionRect(&caption, &lower_panel_rows_[lower_panel_cancel],
+              &lower_panel_rows_[lower_panel_done]);
+    UnionRect(&caption, &caption, &lower_panel_rows_[lower_panel_rename]);
     caption.left -= 3;
     caption.top -= 3;
     caption.right += 3;
@@ -2749,7 +2773,7 @@ void DesignWin::suggest_abil(int ability) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:434BC0..434F36", "historical seed git:20b88b523:src/recovered/units/00434bc0.cpp preserves the full renderer, palette sequence, imported uppercase call, title/name wrap branch, unchecked triad lookup and exact 0x90 chassis stride", "src/designwin.h:chassis_panel_rect_, component fields, font1_/font2_, caviar_; src/veh.h:RulesChassis/Chassis/Triad; src/interface_palette.cpp:TextColourTable; src/strings.h:StringTemp/StringTable"], "reason": "Restore the complete chassis editor panel through the real DesignWin, Caviar, RulesChassis, string and palette owners. Preserve native callback order, line geometry, width-dependent wrapping and unchecked localized triad indexing; retain the original identity and span without a new byte claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:434BC0..434F36", "historical seed git:20b88b523:src/recovered/units/00434bc0.cpp preserves the full renderer, palette sequence, imported uppercase call, title/name wrap branch, unchecked triad lookup and exact 0x90 chassis stride", "src/designwin.h:component_panel_rects_[component_panel_chassis], component fields, font1_/font2_, caviar_; src/veh.h:RulesChassis/Chassis/Triad; src/interface_palette.cpp:TextColourTable; src/strings.h:StringTemp/StringTable"], "reason": "Restore the complete chassis editor panel through the real DesignWin, Caviar, RulesChassis, string and palette owners. Preserve native callback order, line geometry, width-dependent wrapping and unchecked localized triad indexing; retain the original identity and span without a new byte claim."}
 static int designwin_panel_signed(uint32_t bits);
 static int designwin_panel_add(int left, int right);
 static int designwin_panel_subtract(int left, int right);
@@ -2760,7 +2784,7 @@ extern int TextColourTable[195];
 void DesignWin::draw_chassis(int redraw) {
     (void)redraw;
     Buffer *const canvas = static_cast<Buffer *>(this);
-    RECT rect = chassis_panel_rect_;
+    RECT rect = component_panel_rects_[component_panel_chassis];
     canvas->set_clip(&rect);
     buffer_.copy(canvas, &rect);
 
@@ -2879,7 +2903,7 @@ static void designwin_panel_append_label(char *output, int label_id) {
 void DesignWin::draw_weapon(int redraw) {
     (void)redraw;
     Buffer *const canvas = static_cast<Buffer *>(this);
-    RECT area = weapon_panel_rect_;
+    RECT area = component_panel_rects_[component_panel_weapon];
     canvas->set_clip(&area);
     buffer_.copy(canvas, &area);
 
@@ -2914,8 +2938,9 @@ void DesignWin::draw_weapon(int redraw) {
         caviar_.set_scaling(mode < 3 ? 0.15f
             : (mode == 9 ? 0.06f : 0.08f));
     }
-    const int center_x = designwin_panel_add(weapon_panel_rect_.left, weapon_panel_rect_.right) / 2;
-    const int center_y = designwin_panel_add(weapon_panel_rect_.top, weapon_panel_rect_.bottom) / 2;
+    const RECT &weapon_panel = component_panel_rects_[component_panel_weapon];
+    const int center_x = designwin_panel_add(weapon_panel.left, weapon_panel.right) / 2;
+    const int center_y = designwin_panel_add(weapon_panel.top, weapon_panel.bottom) / 2;
     caviar_.set_scene_rotation(0.5233333706855774f, 0.0f, 0.0f);
     caviar_.render(canvas, center_x, center_y, 6);
 
@@ -2973,7 +2998,7 @@ void DesignWin::draw_weapon(int redraw) {
 void DesignWin::draw_armor(int redraw) {
     (void)redraw;
     Buffer *const canvas = static_cast<Buffer *>(this);
-    RECT area = armor_panel_rect_;
+    RECT area = component_panel_rects_[component_panel_armor];
     canvas->set_clip(&area);
     buffer_.copy(canvas, &area);
 
@@ -3057,7 +3082,7 @@ void DesignWin::draw_armor(int redraw) {
 void DesignWin::draw_reactor(int redraw) {
     (void)redraw;
     Buffer *const canvas = static_cast<Buffer *>(this);
-    RECT area = reactor_panel_rect_;
+    RECT area = component_panel_rects_[component_panel_reactor];
     canvas->set_clip(&area);
     buffer_.copy(canvas, &area);
 
@@ -3115,7 +3140,7 @@ void DesignWin::draw_reactor(int redraw) {
 void DesignWin::draw_special_1(int redraw) {
     (void)redraw;
     Buffer *canvas = static_cast<Buffer *>(this);
-    RECT area = special_one_panel_rect_;
+    RECT area = component_panel_rects_[component_panel_special_one];
     canvas->set_clip(&area);
     buffer_.copy(canvas, &area);
 
@@ -3163,7 +3188,7 @@ void DesignWin::draw_special_1(int redraw) {
 void DesignWin::draw_special_2(int redraw) {
     (void)redraw;
     Buffer *canvas = static_cast<Buffer *>(this);
-    RECT area = special_two_panel_rect_;
+    RECT area = component_panel_rects_[component_panel_special_two];
     canvas->set_clip(&area);
     buffer_.copy(canvas, &area);
 

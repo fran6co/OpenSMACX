@@ -6,15 +6,18 @@
 #include <stdlib.h>
 
 struct RECT { int left, top, right, bottom; };
-struct Font { int unk_1_, line_height_, height_; int width(const char *s) const { return (int)strlen(s) * 8; } };
-struct RulesWeapon { const char *name; const char *name_short; int8_t offense_rating;
+struct Font { int unk_1_, line_height_, height_;
+    int line_height() const { return line_height_; }
+    int pixel_height() const { return height_; }
+    int width(const char *s) const { return (int)strlen(s) * 8; } };
+struct RulesWeapon { char *name; char *name_short; int8_t offense_rating;
     int8_t icon; uint8_t mode, cost; int16_t preq_tech, padding; };
-struct RulesArmor { const char *name; const char *name_short; int8_t defense_rating;
+struct RulesArmor { char *name; char *name_short; int8_t defense_rating;
     uint8_t mode, cost, padding1; int16_t preq_tech, padding2; };
-struct RulesReactor { const char *name; const char *name_short;
+struct RulesReactor { char *name; char *name_short;
     int16_t preq_tech; uint16_t power; };
 struct VehPrototype { int chassis_id, weapon_id, armor_id, reactor_id; uint32_t ability_flags; uint16_t flags; char veh_name[32]; };
-struct RulesChassis { const char *name; };
+struct RulesChassis { char *name; };
 struct CaviarData {};
 CaviarData g_VW00_CAVIARDATA;
 static CaviarData *last_model_definition;
@@ -60,7 +63,7 @@ static char label_text[256];
 static unsigned char ArmorTransparentColorTables[24][256];
 int TextColourTable[195];
 
-struct Strings { char *get(int); };
+struct Strings { char *get(char *); };
 static Strings StringTable;
 static char event_log[128];
 
@@ -165,7 +168,7 @@ struct Buffer {
     }
 };
 
-using ColorTable = unsigned char[256];
+typedef unsigned char ColorTable[256];
 struct Caviar {
     void add_object(CaviarData *definition, int) { last_model_definition = definition; }
     void reset_objects() { note_event('R'); }
@@ -183,7 +186,10 @@ struct Caviar {
 };
 
 struct DesignWin : Buffer {
-    RECT weapon_panel_rect_, armor_panel_rect_, reactor_panel_rect_, vehicle_panel_rect_;
+    enum ComponentPanelIndex { component_panel_chassis, component_panel_weapon,
+        component_panel_armor, component_panel_reactor, component_panel_special_one,
+        component_panel_special_two };
+    RECT component_panel_rects_[6], vehicle_panel_rect_;
     Buffer buffer_;
     Font font1_, font2_;
     Caviar caviar_;
@@ -224,24 +230,9 @@ static void mutate_detail_selection(int id) {
         selection_during_detail_label = 0;
     }
 }
-char *Strings::get(int id) {
+char *Strings::get(char *text) {
     note_event('S');
-    for (int index = 0; index < 26; ++index) {
-        if (Weapon[index].name != 0 && id == static_cast<int>(
-                reinterpret_cast<uintptr_t>(Weapon[index].name)))
-            return const_cast<char *>(Weapon[index].name);
-    }
-    for (int index = 0; index < 14; ++index) {
-        if (Armor[index].name != 0 && id == static_cast<int>(
-                reinterpret_cast<uintptr_t>(Armor[index].name)))
-            return const_cast<char *>(Armor[index].name);
-    }
-    for (int index = 0; index < 4; ++index) {
-        if (Reactor[index].name != 0 && id == static_cast<int>(
-                reinterpret_cast<uintptr_t>(Reactor[index].name)))
-            return const_cast<char *>(Reactor[index].name);
-    }
-    return label_text;
+    return text;
 }
 static int vehdraw_construct_weapon(int faction, int chassis, int weapon, Caviar *) {
     note_event('c'); ++weapon_construct_calls; last_weapon = weapon;
@@ -250,7 +241,7 @@ static int vehdraw_construct_weapon(int faction, int chassis, int weapon, Caviar
     if (mutate_weapon_mode_in_constructor) Weapon[weapon].mode = 9;
     if (selection_after_constructor) {
         active_window->protoWeaponType_ = selection_after_constructor;
-        active_window->weapon_panel_rect_.right = 200;
+        active_window->component_panel_rects_[DesignWin::component_panel_weapon].right = 200;
     }
     if (mutate_palette_in_constructor) TextColourTable[160] = 4242;
     return 0;
@@ -308,9 +299,9 @@ static void initialize(DesignWin &window) {
     DesignAutoBuildActive = 0;
     ConsoleGlobal.faction_id_ = 7;
     for (int i = 0; i < 195; ++i) TextColourTable[i] = 1000 + i;
-    window.weapon_panel_rect_ = rect(0, 0, 100, 100);
-    window.armor_panel_rect_ = rect(0, 0, 100, 100);
-    window.reactor_panel_rect_ = rect(0, 0, 100, 100);
+    window.component_panel_rects_[DesignWin::component_panel_weapon] = rect(0, 0, 100, 100);
+    window.component_panel_rects_[DesignWin::component_panel_armor] = rect(0, 0, 100, 100);
+    window.component_panel_rects_[DesignWin::component_panel_reactor] = rect(0, 0, 100, 100);
     window.vehicle_panel_rect_ = rect(0, 0, 200, 140);
     window.font1_.unk_1_ = -1; window.font1_.line_height_ = 12; window.font1_.height_ = 10;
     window.font2_.unk_1_ = -1; window.font2_.line_height_ = 14; window.font2_.height_ = 12;
@@ -319,8 +310,10 @@ static void initialize(DesignWin &window) {
     window.protoAbilityFlags_ = 0x8000; window.protoReactorType_ = 2;
     window.protoAbilityID1_ = 4; window.protoAbilityID2_ = 8;
     window.prototype_name_[0] = '\0';
+    Weapon[0].name = "unarmed";
     Weapon[2].name = "laser"; Weapon[2].offense_rating = 4; Weapon[2].mode = 1; Weapon[2].cost = 6;
     Weapon[3].name = "missile"; Weapon[3].offense_rating = 12; Weapon[3].mode = 9; Weapon[3].cost = 8;
+    Weapon[21].name = "alien weapon";
     Armor[0].name = "none"; Armor[0].defense_rating = 0; Armor[0].padding1 = 0;
     Armor[5].name = "silksteel"; Armor[5].defense_rating = 3;
     Armor[5].mode = 1; Armor[5].padding1 = 1;
@@ -383,12 +376,12 @@ int main() {
             last_wrap_rect.bottom == 72);
     require(last_write_rect.top == 88 && last_write_rect.bottom == 98);
 
-    initialize(window); window.weapon_panel_rect_ = rect(-4, -6, 1, 1);
+    initialize(window); window.component_panel_rects_[DesignWin::component_panel_weapon] = rect(-4, -6, 1, 1);
     window.draw_weapon(0);
     require(last_render_x == -1 && last_render_y == -2);
 
     initialize(window);
-    window.weapon_panel_rect_ = rect(2147483647, 0, 2147483647, 100);
+    window.component_panel_rects_[DesignWin::component_panel_weapon] = rect(2147483647, 0, 2147483647, 100);
     window.draw_weapon(0);
     require(last_render_x == -1);
 

@@ -43,13 +43,17 @@ struct FlatButton {
   int set_bubble_text(char *text);
 };
 struct DesignWin : Win {
+  enum LowerPanelActionIndex { lower_panel_done, lower_panel_rename,
+      lower_panel_obsolete, lower_panel_upgrade, lower_panel_cancel };
   unsigned int protoID_;
-  RECT lower_panel_end_rect_;
+  RECT lower_panel_rows_[5];
   FlatButton flatButtons_[9];
   void run();
   explicit DesignWin(int selected) : protoID_(selected) {
-    lower_panel_end_rect_.left=10; lower_panel_end_rect_.top=20;
-    lower_panel_end_rect_.right=90; lower_panel_end_rect_.bottom=80;
+    lower_panel_rows_[lower_panel_cancel].left=10;
+    lower_panel_rows_[lower_panel_cancel].top=20;
+    lower_panel_rows_[lower_panel_cancel].right=90;
+    lower_panel_rows_[lower_panel_cancel].bottom=80;
     for (int i=0;i<9;++i) flatButtons_[i].owner=this;
   }
 };

@@ -53,6 +53,24 @@ int __cdecl design_workshop(int faction_id, int mode);
 // RECOVERY_GENERATED: v1 vtable 0x0066B0F4 ? ??_7DesignWin@@6B@ 0x00434480
 class DesignWin : public GraphicWin, public SubInterface {
  public:
+  // Index meanings are descriptive source names inferred from the consuming
+  // panels/tutorial labels, not claims about original debug enum names.
+  enum ComponentPanelIndex {
+    component_panel_chassis = 0,
+    component_panel_weapon = 1,
+    component_panel_armor = 2,
+    component_panel_reactor = 3,
+    component_panel_special_one = 4,
+    component_panel_special_two = 5
+  };
+  enum LowerPanelActionIndex {
+    lower_panel_done = 0,
+    lower_panel_rename = 1,
+    lower_panel_obsolete = 2,
+    lower_panel_upgrade = 3,
+    lower_panel_cancel = 4
+  };
+
   // homed from 0043e960.cpp
   void shut_that_badboy_down();
 
@@ -240,23 +258,12 @@ class DesignWin : public GraphicWin, public SubInterface {
   uint32_t field_A88_;  // 0xA88
   // RECOVERY_MEMBER: v2 DesignWin frame_rect_ tagRECT 0xA8C 0x004379A0
   RECT frame_rect_;  // 0xA8C
-  // init assigns each rectangle as four consecutive coordinates; the panel
-  // methods consume the same groups with set_clip/copy. The vehicle rectangle
-  // is used by draw_vehicle; the next six are the component panel clips.
+  // init assigns and iterates these six adjacent RECTs in component order;
+  // drawing and Spot::add consume the same array rows.
   // RECOVERY_MEMBER: v2 DesignWin vehicle_panel_rect_ tagRECT 0xA9C 0x00436090
   RECT vehicle_panel_rect_;  // 0xA9C
-  // RECOVERY_MEMBER: v2 DesignWin chassis_panel_rect_ tagRECT 0xAAC 0x00434BC0
-  RECT chassis_panel_rect_;  // 0xAAC
-  // RECOVERY_MEMBER: v2 DesignWin weapon_panel_rect_ tagRECT 0xABC 0x00434F40
-  RECT weapon_panel_rect_;  // 0xABC
-  // RECOVERY_MEMBER: v2 DesignWin armor_panel_rect_ tagRECT 0xACC 0x00435400
-  RECT armor_panel_rect_;  // 0xACC
-  // RECOVERY_MEMBER: v2 DesignWin reactor_panel_rect_ tagRECT 0xADC 0x00435800
-  RECT reactor_panel_rect_;  // 0xADC
-  // RECOVERY_MEMBER: v2 DesignWin special_one_panel_rect_ tagRECT 0xAEC 0x00435B30
-  RECT special_one_panel_rect_;  // 0xAEC
-  // RECOVERY_MEMBER: v2 DesignWin special_two_panel_rect_ tagRECT 0xAFC 0x00435DE0
-  RECT special_two_panel_rect_;  // 0xAFC
+  // RECOVERY_MEMBER: v4 DesignWin component_panel_rects_ tagRECT[6] 0xAAC 0x60 0x0043C270
+  RECT component_panel_rects_[6];  // 0xAAC..0xB0B
   // Each four-word group is passed by address as RECT in TutWin::tour7:
   // 0x71FDBC to iface_rect (0x4BB17D), and draw_stack consumes the same
   // rectangle as its clipped/tiled panel.
@@ -276,26 +283,17 @@ class DesignWin : public GraphicWin, public SubInterface {
   // Passed as RECT* to do_des at 0x4BB343 (original address 0x71FDFC).
   // RECOVERY_MEMBER: v2 DesignWin field_B4C_rect_ tagRECT 0xB4C 0x004BAF20
   RECT field_B4C_rect_;  // 0xB4C
-  // init passes each four-word group as a RECT to its button setup;
-  // the groups retain their original object offsets.
   // RECOVERY_MEMBER: v2 DesignWin field_B5C_rect_ tagRECT 0xB5C 0x0043C270
   RECT field_B5C_rect_;  // 0xB5C
   // RECOVERY_MEMBER: v2 DesignWin field_B6C_rect_ tagRECT 0xB6C 0x0043C270
   RECT field_B6C_rect_;  // 0xB6C
   // RECOVERY_MEMBER: v2 DesignWin field_B7C_rect_ tagRECT 0xB7C 0x0043C270
   RECT field_B7C_rect_;  // 0xB7C
-  // The lower component-group border is the union of these three panels.
-  // RECOVERY_MEMBER: v2 DesignWin lower_panel_rect_ tagRECT 0xB8C 0x004379A0
-  RECT lower_panel_rect_;  // 0xB8C
-  // RECOVERY_MEMBER: v2 DesignWin lower_panel_extra_rect_ tagRECT 0xB9C 0x004379A0
-  RECT lower_panel_extra_rect_;  // 0xB9C
-  // Passed as RECT* to do_des at 0x4BB315 and 0x4BB32C, respectively.
-  // RECOVERY_MEMBER: v2 DesignWin field_BAC_rect_ tagRECT 0xBAC 0x004BAF20
-  RECT field_BAC_rect_;  // 0xBAC
-  // RECOVERY_MEMBER: v2 DesignWin field_BBC_rect_ tagRECT 0xBBC 0x004BAF20
-  RECT field_BBC_rect_;  // 0xBBC
-  // RECOVERY_MEMBER: v2 DesignWin lower_panel_end_rect_ tagRECT 0xBCC 0x004379A0
-  RECT lower_panel_end_rect_;  // 0xBCC
+  // init fills these five adjacent action rows and button setup consumes them
+  // in the order grounded by the Done/Rename/Obsolete/Upgrade/Cancel labels.
+  // RECOVERY_MEMBER: v4 DesignWin lower_panel_rows_ tagRECT[5] 0xB8C 0x50 0x0043C270
+  RECT lower_panel_rows_[5];  // 0xB8C..0xBDB
+  // Apply and Retire use separate copied rectangles, outside lower_panel_rows_.
   uint32_t field_BDC_;  // 0xBDC
   uint32_t field_BE0_;  // 0xBE0
   uint32_t field_BE4_;  // 0xBE4

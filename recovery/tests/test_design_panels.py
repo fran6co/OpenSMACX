@@ -10,13 +10,27 @@ import pytest
 from recovery.tests.test_pact_ascent import ROOT, definition
 
 
+def _exact_definition(source, signature):
+    # Helpers have forward declarations before draw_chassis and definitions
+    # afterward. Select the final exact spelling so extraction starts at the
+    # definition, not at the next function body.
+    start = source.rindex(signature)
+    return definition(source[start:], re.escape(signature))
+
+
 def actual_control():
     source = (ROOT / "src/designwin.cpp").read_text()
     names = ["designwin_panel_signed", "designwin_panel_add",
              "designwin_panel_subtract", "designwin_panel_font_height",
              "designwin_panel_append_number", "designwin_panel_append_label"]
-    blocks = [definition(source, r"static (?:int|void) " + name + r"\(")
-              for name in names]
+    blocks = [_exact_definition(source, {
+        "designwin_panel_signed": "static int designwin_panel_signed(uint32_t bits)",
+        "designwin_panel_add": "static int designwin_panel_add(int left, int right)",
+        "designwin_panel_subtract": "static int designwin_panel_subtract(int left, int right)",
+        "designwin_panel_font_height": "static int designwin_panel_font_height(int extra, int line_height, int height)",
+        "designwin_panel_append_number": "static void designwin_panel_append_number(char *output, int value)",
+        "designwin_panel_append_label": "static void designwin_panel_append_label(char *output, int label_id)",
+    }[name]) for name in names]
     for name in ("weapon", "armor", "reactor"):
         blocks.append(definition(source, re.escape("void DesignWin::draw_" + name + "(")))
     fixture = Path(__file__).with_name("design_panels_control.cpp").read_text()
@@ -39,10 +53,10 @@ def test_actual_component_panels_and_damage(compiler_name):
                                      "CaviarData local; caviar_.add_object(&local, 0);", 1),
         "cached_selection": actual.replace("const int mode = Weapon[protoWeaponType_].mode;",
                                           "const int mode = Weapon[weapon_id].mode;", 1),
-        "wrong_center": actual.replace("designwin_panel_add(weapon_panel_rect_.left, weapon_panel_rect_.right)",
+        "wrong_center": actual.replace("designwin_panel_add(weapon_panel.left, weapon_panel.right)",
                                       "designwin_panel_add(area.left, area.right)", 1),
-        "unsigned_center": actual.replace("designwin_panel_add(weapon_panel_rect_.left, weapon_panel_rect_.right) / 2",
-                                         "static_cast<unsigned>(designwin_panel_add(weapon_panel_rect_.left, weapon_panel_rect_.right)) / 2", 1),
+        "unsigned_center": actual.replace("designwin_panel_add(weapon_panel.left, weapon_panel.right) / 2",
+                                         "static_cast<unsigned>(designwin_panel_add(weapon_panel.left, weapon_panel.right)) / 2", 1),
         "wrong_chassis": actual.replace("? -1 : static_cast<int>(protoChassisType_);",
                                        "? 0 : static_cast<int>(protoChassisType_);", 1),
         "uppercase_detail": actual.replace("canvas->write_cent_l(StringTemp, &detail,",
