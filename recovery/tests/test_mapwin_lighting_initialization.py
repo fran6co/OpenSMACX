@@ -35,7 +35,6 @@ def actual_fragment():
         for name in ('get_alt', 'compute_lighting_table', 'get_brighting'))
     return '\n'.join((
         pod, ocean, table, alt_light, leading, trailing,
-        braced(source, 'static void fill_map_lighting_table()'),
         braced(source, 'static __forceinline signed char corner_light_value('),
         'struct MapWin { TerrainCacheEntry *owned_; ' + declarations + ' };',
         braced(source, 'static __forceinline TerrainCacheEntry *brighting_tile('),
@@ -120,8 +119,8 @@ def test_lookup_preserves_current_table_until_explicit_compute(tmp_path, compile
 @pytest.mark.parametrize('compiler', ('g++', 'clang++'))
 def test_lazy_fill_damage_control(tmp_path, compiler):
     fragment = actual_fragment()
-    anchor = 'return MapLightingTable[biased_index - 8];'
+    anchor = 'int row = y;'
     assert fragment.count(anchor) == 1
-    mutant = fragment.replace(anchor, 'fill_map_lighting_table(); ' + anchor)
+    mutant = fragment.replace(anchor, anchor + '\n    compute_lighting_table();')
     result = run_control(tmp_path, compiler, mutant)
     assert result.returncode != 0, 'added lookup-time table writes passed'
