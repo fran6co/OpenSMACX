@@ -1,0 +1,19 @@
+{
+  "event_id": "31429f9efe5994db0479439a8ba4711be63236a33f4042f69aa6fe49f5520408",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_listbox_remaining_behavior.py"
+    ],
+    "evidence": [
+      "Broader ListBox host run has61pass and1pre-existing compile failure reproduced untouched master40de49270: Dialogs key-result fixture models former embedded views, but actual recovered dispatcher invokes real base methods. Update fixture to inherit the same four widget bases and seed their results by explicit base qualification; preserve all result assertions and add missing kind4 zero case. No production behavior change or weakened check."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1b487b63ef3c694029990a648805b3870f6fa687a3fc2bbc752a87e2873285bd",
+  "request_id": "listbox-dialogs-host-fixture-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:listbox-void-contract-oct15"
+}

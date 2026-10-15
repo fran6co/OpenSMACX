@@ -1,0 +1,20 @@
+{
+  "event_id": "1b487b63ef3c694029990a648805b3870f6fa687a3fc2bbc752a87e2873285bd",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_listbox_callback_reset_oct15.py"
+    ],
+    "evidence": [
+      "Coordinator expands body changes to correct constructor and close own callback initialization. Pinned constructor 609E7F/609E85/609E88 and close609F89/609F8C/609F8F write unadjusted receiver+30/+34/+38. Existing own typed draw/write/fill callbacks occupy those offsets; stale field_30_/34_/38_ instead resolve inherited Dialog storage through vbtable, confirmed by fresh compiled divergence. Correct all six unqualified writes; keep other explicitly Dialog-qualified accesses unchanged. Preserve original body order, mappings and claims; no layout change.",
+      "Add actual-source host regression checking callback slots cleared and inherited Dialog sentinel fields unmodified, with deliberate old-name mutations rejected. Native layout/lifetime controls and all owner measurements plus full build and physical collateral review still required. Void-only successful candidate remains retained as intermediate evidence, not final acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "listbox-own-callback-reset-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:listbox-void-contract-oct15"
+}

@@ -9,7 +9,7 @@
  */
 #include "stdafx.h"
 #include "dialogs.h"
-#include "listbox.h"      // ListBox::destroy (source-owned)
+#include "listbox.h"
 #include "spritebox.h"    // the SpriteBox handlers this dispatches to
 #include "radiobutton.h"  // RadioButton::close (source-owned)
 #include "worldwin.h"

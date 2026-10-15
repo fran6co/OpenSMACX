@@ -82,31 +82,25 @@ struct RadioButton { int result; int on_key_down(int key) { assert(key == 7); re
 struct ListBox { int result; int on_key_down(int key) { assert(key == 7); return result; } };
 struct CheckBox { int result; int on_key_down(int key) { assert(key == 7); return result; } };
 struct SpriteBox { int result; int on_key_down(int key) { assert(key == 7); return result; } };
-struct Dialogs {
+struct Dialogs : RadioButton, ListBox, CheckBox, SpriteBox {
     int kind_;
-    RadioButton radio;
-    ListBox list;
-    CheckBox check;
-    SpriteBox sprite;
-    RadioButton &radio_button_view() { return radio; }
-    ListBox &list_box_view() { return list; }
-    CheckBox &check_box_view() { return check; }
-    SpriteBox &sprite_box_view() { return sprite; }
     int on_key_down(int key);
 };
 BODY
 int main() {
     Dialogs dialog;
-    dialog.kind_ = 2; dialog.list.result = 1;
+    dialog.kind_ = 2; dialog.ListBox::result = 1;
     assert(dialog.on_key_down(7) == 1);
-    dialog.list.result = 0;
+    dialog.ListBox::result = 0;
     assert(dialog.on_key_down(7) == 0);
-    dialog.kind_ = 16; dialog.radio.result = 3;
+    dialog.kind_ = 16; dialog.RadioButton::result = 3;
     assert(dialog.on_key_down(7) == 3);
-    dialog.kind_ = 1; dialog.check.result = -1;
+    dialog.kind_ = 1; dialog.CheckBox::result = -1;
     assert(dialog.on_key_down(7) == -1);
-    dialog.kind_ = 8; dialog.sprite.result = 5;
+    dialog.kind_ = 8; dialog.SpriteBox::result = 5;
     assert(dialog.on_key_down(7) == 5);
+    dialog.kind_ = 4;
+    assert(dialog.on_key_down(7) == 0);
     dialog.kind_ = 99;
     assert(dialog.on_key_down(7) == 0);
 }

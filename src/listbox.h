@@ -63,7 +63,7 @@
   * dwords, retaining `sizeof(GraphicWin) == 0xA14`. GraphicWin and Dialog now
   * declare real virtual functions; that historical blocker is resolved.
   * This mirrors CheckBox (src/jackal/checkbox.h), whose
-  * vbtable {0,0x1C,0xA34} has the identical shape. close()/destroy() resolve
+  * vbtable {0,0x1C,0xA34} has the identical shape. close() resolves
   * both base subobjects through the runtime vbtable, never through these
   * compile-time offsets, so an embedded ListBox with a different vbtable still
   * reaches the right subobjects (the RadioButton-crash rule in AGENTS.md).
@@ -256,11 +256,7 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // Win-view scroll callbacks: slots 6 and 7 in ListBox's real interface.
   virtual Scroll *on_scroll_create();
   virtual Scroll *on_scroll_delete(Scroll *scroll);
-  // close() and destroy() are void in the mangled names but are modelled as
-  // uint32_t to preserve the EAX residue (both leave EAX = 0), as GraphicWin
-  // and Scroll do for their teardown pair.
-  uint32_t close();
-  uint32_t destroy();
+  void close();
   void on_dialog_focus(int);
 
  private:
