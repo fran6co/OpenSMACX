@@ -389,31 +389,47 @@ static_assert(sizeof(VoxSceneState) == 0x48,
 
 #pragma pack(push, 1)
 struct CaviarSceneContext {
-  VoxSceneState state_;       // Caviar+0x18, engine's existing scene prefix
+  // Context-relative offsets start at Caviar+0x18, so context+0x00..0x8C
+  // correspond to Caviar+0x18..0xA4. Projection role names below describe
+  // observed equations, not asserted original spellings.
+  VoxSceneState state_;       // context+0x00
   // RECOVERY_MEMBER: v2 CaviarSceneContext light_vector_ VOX_Vect 0x48 0x00616DE0
-  VOX_Vect light_vector_;     // Caviar+0x60
+  VOX_Vect light_vector_;     // context+0x48
   // RECOVERY_MEMBER: v2 CaviarSceneContext shadow_vector_ VOX_Vect 0x54 0x006181D0
-  VOX_Vect shadow_vector_;    // Caviar+0x6C
-  float field_78_;            // native scene projection scalar
-  float field_7C_;
-  float field_80_;
-  float field_84_;
-  float field_88_;
-  float field_8C_;
-  float field_90_;
-  float field_94_;
-  float field_98_;
-  float field_9C_;
-  float field_A0_;
-  uint8_t field_A4_;
+  VOX_Vect shadow_vector_;    // context+0x54
+  // RECOVERY_MEMBER: v1 CaviarSceneContext shadow_origin_adjustment_ 0x60 0x006396A0
+  float shadow_origin_adjustment_;  // context+0x60
+  // RECOVERY_MEMBER: v1 CaviarSceneContext projection_offset_x_ 0x64 0x006396A0
+  float projection_offset_x_;       // context+0x64
+  // RECOVERY_MEMBER: v1 CaviarSceneContext projection_offset_y_ 0x68 0x006396A0
+  float projection_offset_y_;       // context+0x68
+  // RECOVERY_MEMBER: v1 CaviarSceneContext projection_offset_z_ 0x6C 0x006396A0
+  float projection_offset_z_;       // context+0x6C
+  // RECOVERY_MEMBER: v1 CaviarSceneContext screen_offset_x_ 0x70 0x006396A0
+  float screen_offset_x_;           // context+0x70
+  // RECOVERY_MEMBER: v1 CaviarSceneContext screen_offset_y_ 0x74 0x006396A0
+  float screen_offset_y_;           // context+0x74
+  // RECOVERY_MEMBER: v1 CaviarSceneContext projection_scale_ 0x78 0x006396A0
+  float projection_scale_;          // context+0x78
+  // RECOVERY_MEMBER: v1 CaviarSceneContext shadow_screen_offset_x_ 0x7C 0x006396A0
+  float shadow_screen_offset_x_;    // context+0x7C
+  // RECOVERY_MEMBER: v1 CaviarSceneContext shadow_screen_offset_y_ 0x80 0x006396A0
+  float shadow_screen_offset_y_;    // context+0x80
+  // RECOVERY_MEMBER: v1 CaviarSceneContext shadow_scale_x_ 0x84 0x006396A0
+  float shadow_scale_x_;           // context+0x84
+  // RECOVERY_MEMBER: v1 CaviarSceneContext shadow_scale_y_ 0x88 0x006396A0
+  float shadow_scale_y_;           // context+0x88
+  // RECOVERY_MEMBER: v1 CaviarSceneContext shadow_enabled_ 0x8C 0x006396A0
+  // Also controls preservation of the scene rectangle in vox_draw_scene.
+  uint8_t shadow_enabled_;         // context+0x8C
 };
 #pragma pack(pop)
 static_assert(sizeof(CaviarSceneContext) == 0x8D,
               "Caviar scene context occupies +0x18 through +0xA4");
 static_assert(offsetof(CaviarSceneContext, state_) == 0x00,
               "engine state prefix starts at the context pointer");
-static_assert(offsetof(CaviarSceneContext, field_A4_) == 0x8C,
-              "scene-state draw byte remains at Caviar+0xA4");
+static_assert(offsetof(CaviarSceneContext, shadow_enabled_) == 0x8C,
+              "scene-state draw byte remains at context+0x8C");
 
 struct VoxCameraBlock {
   CaviarCamera camera_;         // +0x00, Caviar::camera_ at 0xA5
@@ -639,7 +655,7 @@ class Caviar {
   void set_scene_rotation(float x, float y, float z);
   // ProdPicker::exec writes this existing one-byte state immediately after
   // initialization; keep the byte private while exposing that observed store.
-  void set_field_A4(int value) { scene_context_.field_A4_ = static_cast<uint8_t>(value); }
+  void set_field_A4(int value) { scene_context_.shadow_enabled_ = static_cast<uint8_t>(value); }
   VOX_Vect &light_vector() { return scene_context_.light_vector_; }
   VOX_Vect &shadow_vector() { return scene_context_.shadow_vector_; }
   // 0x00618DA0. The engine's per-object callback: fills the handle's colour

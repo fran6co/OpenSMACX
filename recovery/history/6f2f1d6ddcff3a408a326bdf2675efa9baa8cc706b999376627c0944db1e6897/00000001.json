@@ -1,0 +1,19 @@
+{
+  "event_id": "e87187622cd4939ddb39a5bcacb30bb5c94b0e906fe83aa0174f17a6de96e06f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_stage_flag_oct11.py"
+    ],
+    "evidence": [
+      "The original_pointer_test imports a historical vox_stage_scene body with old member names; rename only those imported member tokens to current context roles so the same wrong flag-provenance body compiles and fails at runtime. Preserve original defect and all assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "caviar-stage-mutant-member-names-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-scene-context-members-oct15"
+}

@@ -1,5 +1,6 @@
 """Pinned record-flag recovery controls; not complete renderer runtime proof."""
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -12,6 +13,28 @@ from test_caviar_scene_product_source import FUNCTIONS, FIXTURE, extract_definit
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "3e9c57dbfe23c1163ef50a4f6c610609b52603bb"
+CONTEXT_MEMBER_NAMES = {
+    "field_78_": "shadow_origin_adjustment_",
+    "field_7C_": "projection_offset_x_",
+    "field_80_": "projection_offset_y_",
+    "field_84_": "projection_offset_z_",
+    "field_88_": "screen_offset_x_",
+    "field_8C_": "screen_offset_y_",
+    "field_90_": "projection_scale_",
+    "field_94_": "shadow_screen_offset_x_",
+    "field_98_": "shadow_screen_offset_y_",
+    "field_9C_": "shadow_scale_x_",
+    "field_A0_": "shadow_scale_y_",
+    "field_A4_": "shadow_enabled_",
+}
+
+
+def current_context_member_names(body):
+    # The historical body remains the damage source; adapt only its context
+    # spelling to today's fixture in one pass so replacements cannot collide.
+    return re.sub(
+        r"\b(?:" + "|".join(map(re.escape, CONTEXT_MEMBER_NAMES)) + r")\b",
+        lambda match: CONTEXT_MEMBER_NAMES[match.group(0)], body)
 
 
 def test_original_identity_claims_symbols_and_history_preserved():
@@ -29,6 +52,7 @@ def test_flag_provenance_and_polarity_damage_is_rejected(damage):
         old = subprocess.check_output(["git", "show", BASE + ":src/caviar.cpp"],
                                       cwd=ROOT, text=True)
         damaged = extract_definition(old, "vox_stage_scene")
+        damaged = current_context_member_names(damaged)
     else:
         old = "(record->setup_id_ & 1) == 0"
         assert actual.count(old) == 2

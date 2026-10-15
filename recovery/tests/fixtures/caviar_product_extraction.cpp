@@ -70,9 +70,11 @@ struct CaviarSceneContext {
     VoxSceneState state_;
     VOX_Vect light_vector_;
     VOX_Vect shadow_vector_;
-    float field_78_, field_7C_, field_80_, field_84_, field_88_;
-    float field_8C_, field_90_, field_94_, field_98_, field_9C_, field_A0_;
-    uint8_t field_A4_;
+    float shadow_origin_adjustment_, projection_offset_x_, projection_offset_y_;
+    float projection_offset_z_, screen_offset_x_, screen_offset_y_;
+    float projection_scale_, shadow_screen_offset_x_, shadow_screen_offset_y_;
+    float shadow_scale_x_, shadow_scale_y_;
+    uint8_t shadow_enabled_;
 };
 struct CaviarCamera { VOX_Vect position; VOX_Matrix rotation; float scaling; };
 struct CaviarChannelBounds {
@@ -214,10 +216,10 @@ static void test_stage_scene_alias_and_shadow_z() {
     context.state_.instances_ = &instance;
     context.state_.instance_steps_ = &step;
     context.state_.scale_ = 1.0f;
-    context.field_90_ = 1.0f;
-    context.field_A4_ = 1;
-    context.field_78_ = 2.0f;
-    context.field_9C_ = context.field_A0_ = 1.0f;
+    context.projection_scale_ = 1.0f;
+    context.shadow_enabled_ = 1;
+    context.shadow_origin_adjustment_ = 2.0f;
+    context.shadow_scale_x_ = context.shadow_scale_y_ = 1.0f;
     context.shadow_vector_.values[0] = 2.0f;
     context.shadow_vector_.values[1] = 3.0f;
     context.shadow_vector_.values[2] = 0.0f;
