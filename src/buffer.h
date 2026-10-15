@@ -216,6 +216,8 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // -1 means "the fill colour": the body substitutes WinFillColour.
   void setup_buff_sprite(int colour);
   static void release_buff_sprite();
+ private:
+  void prepare_shared_sprite(int colour);
 
  public:
   // homed from 005dd300.cpp

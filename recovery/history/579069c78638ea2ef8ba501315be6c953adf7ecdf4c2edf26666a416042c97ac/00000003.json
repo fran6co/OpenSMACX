@@ -1,0 +1,22 @@
+{
+  "event_id": "b3a332defbbfa3b3eb78f5b05583cd0bfd1e47a1fea6b412346a80c0c3703b15",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "buffer-shared-inline-evidence-oct15",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/buffer.cpp now owns private inline prepare_shared_sprite with the unchanged typed setup behavior; src/buffer.h declares it private and nonvirtual. The mapped public setup and release endpoints remain emitted. Eight draw callers inline setup and clear borrowed pcBits after their Sprite call; other callers are unchanged.",
+      "Coordinator explicitly permits the bounded temporary matching regression of setup5D8290 (65 rather than64 instructions) for this shared factoring. Its historical exact claim remains intact and is a restoration obligation, not current proof. No other claim is demoted; no retention reference, export hack, flag, field, virtual slot or public ABI change was introduced.",
+      "Native recorder freshly banks8 drawing bodies5D8930,5D8840,5D8740,5D8EE0,5D90D0,5D92C0,5D8C20,5D8D00, using1compile and7reuses. All170Buffer mappings measured;8newexact and the declared setup regression. Fresh853collateral mappings across7TUs retain every prior verdict. Ignored evidence reports buffer-inline-record-oct15.json and audio-lifecycle-buffer-inline-family-candidate-oct15.json.",
+      "Candidate full application build/link passes; source references636files/0missing and historical continuity3372claims/3380requirements/0missing pass. Actual-source GCC/Clang tests pass4 cases including compile-success runtime-failing mutations for normalization, forwarding, early pixel-pointer clear and wrong receiver. These are bounded host observations, not game runtime proof.",
+      "Independent relocation-aware review resolves14 outside-Buffer instruction changes: base2,console1,designwin1,faction2,game4,socialwin1,veh3. Reordered independent reads, equivalent scalar sums/stores and name_proto local branch/load cleanup preserve reviewed dataflow and targets. Native whole-link preservation and full-project acceptance remain unproven; this is coordinator-reviewed recovery integration only.",
+      "Coordinator explicitly admits the two compiler-generated relocation rewires in existing Buffer draw5D8370 and5D84C0: byte-identical bodies now call prepare_shared_sprite rather than setup_buff_sprite after the compiler expands the public forwarding layer. Both methods belong to the authorized Buffer subject group. Review confirms equivalent helper behavior, retained public endpoint, and no other unexpected Buffer payload/reference differences. This is not unchanged-reference preservation. Fresh application output also emits one208-byte private helper COMDAT; public setup contains its inlined body, not an emitted forwarding call. Additional emitted helper code is disclosed, not claimed as a new original identity or full executable equality."
+    ]
+  },
+  "previous_event": "309ed15fa1dce3e5a92de07db5d67f9cf02f940c0b84bd5c66de06b7bcacf2a2",
+  "request_id": "buffer-shared-inline-incorporated-oct15",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:buffer-sprite-setup-inline-oct15"
+}

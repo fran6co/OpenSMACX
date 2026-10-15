@@ -3604,22 +3604,7 @@ static_assert(offsetof(BufferSpriteLifetime, storage_) == 0,
               "shared blit Sprite starts at its owner identity");
 extern BufferSpriteLifetime BufferSpriteOwner;
 
-// ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE BYTE_EXACT
-// LEVER: NAMED MEMBERS AND THE REAL INTERFACE. This was `*(int *)((char *)this
-//        + 0x50)` for every field and a hand-rolled `((DDUnlockFn)vtbl[0x20])
-//        (field58, owner)` for the release - 14/64 (0.571). Written through
-//        `locked_bits_`, `dib_bits_`, `stride_`, `dib_.bmiHeader.biWidth`,
-//        `-dib_.bmiHeader.biHeight` and `surface_->Unlock(locked_bits_)`
-//        exactly as the BYTE_EXACT `get_pixel` spells them: 60/64 (0.986).
-// size      204 bytes
-// prototype void (__thiscall ?setup_buff_sprite@Buffer@@QAEXH@Z)(Buffer* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x005D834B
-
-void Buffer::setup_buff_sprite(int colour) {
+inline void Buffer::prepare_shared_sprite(int colour) {
     if (surface_ != nullptr) {
         return;
     }
@@ -3663,6 +3648,25 @@ void Buffer::setup_buff_sprite(int colour) {
         locked_bits_ = nullptr;
         surface_lock_count_ = 0;
     }
+}
+
+// ORIGINAL: 0x005D8290 ?setup_buff_sprite@Buffer@@QAEXH@Z 0x005D8290-0x005D835C FILE BYTE_EXACT
+// LEVER: NAMED MEMBERS AND THE REAL INTERFACE. This was `*(int *)((char *)this
+//        + 0x50)` for every field and a hand-rolled `((DDUnlockFn)vtbl[0x20])
+//        (field58, owner)` for the release - 14/64 (0.571). Written through
+//        `locked_bits_`, `dib_bits_`, `stride_`, `dib_.bmiHeader.biWidth`,
+//        `-dib_.bmiHeader.biHeight` and `surface_->Unlock(locked_bits_)`
+//        exactly as the BYTE_EXACT `get_pixel` spells them: 60/64 (0.986).
+// size      204 bytes
+// prototype void (__thiscall ?setup_buff_sprite@Buffer@@QAEXH@Z)(Buffer* this, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005D834B
+
+void Buffer::setup_buff_sprite(int colour) {
+    prepare_shared_sprite(colour);
 }
 
 /*
@@ -3720,19 +3724,19 @@ int Buffer::draw(Buffer *destination, int index, int x, int y,
     return result;
 }
 
-// ORIGINAL: 0x005D8930 ?draw_mono@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005D8930-0x005D8A28
+// ORIGINAL: 0x005D8930 ?draw_mono@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005D8930-0x005D8A28 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned248-byte wrapper receives destination then transparency, not a transparent destination pointer. Existing setup_buff_sprite owns the descriptor preamble; forwards all seven arguments to5E3E00, clears the borrowed pixel pointer and returns its result.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover Buffer mono drawing through its actual borrowed Sprite descriptor."}
 // symbol    ?draw_mono@Buffer@@QAEHPAV1@HHHHHH@Z
 int Buffer::draw_mono(Buffer *destination, int transparent, int x, int y,
                       int colour, int numerator, int denominator) {
-    setup_buff_sprite(transparent);
+    prepare_shared_sprite(transparent);
     int result = BufferSpriteOwner.sprite().draw_mono(
         destination, transparent, x, y, colour, numerator, denominator);
-    release_buff_sprite();
+    BufferSpriteOwner.sprite().pcBits_ = 0;
     return result;
 }
 
-// ORIGINAL: 0x005D8840 ?draw_mono@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D8840-0x005D892E
+// ORIGINAL: 0x005D8840 ?draw_mono@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D8840-0x005D892E BYTE_EXACT
 // symbol    ?draw_mono@Buffer@@QAEHPAV1@HHHH@Z
 //           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
 //           the back-reference `PAV1@` for the same type, so the fact names what
@@ -3751,9 +3755,9 @@ int Buffer::draw_mono(Buffer *destination, int transparent, int x, int y,
 // member at 0x005E3E50.
 int Buffer::draw_mono(Buffer *target, int transparent, int x, int y,
                       int colour) {
-    setup_buff_sprite(transparent);
+    prepare_shared_sprite(transparent);
     int result = BufferSpriteOwner.sprite().draw_mono(target, transparent, x, y, colour);
-    release_buff_sprite();
+    BufferSpriteOwner.sprite().pcBits_ = 0;
     return result;
 }
 
@@ -8494,57 +8498,57 @@ extern const char BufferCenteredSpace[] = " ";
 #include "filemap.h"
 #include "palette.h"
 
-// ORIGINAL: 0x005D8740 sub_5d8740 0x005D8740-0x005D8838 FILE
+// ORIGINAL: 0x005D8740 sub_5d8740 0x005D8740-0x005D8838 FILE BYTE_EXACT
 // symbol    ?draw_unk2@Buffer@@QAEHPAV1@HHHHHH@Z
 // TRIED: register-copy-before-store for the two lock-count decrements (`int c=X-1; store; if(c>0)`) matches Ghidra's shape but VC6 collapses the redundant `mov eax,ecx` copy the original keeps for the NULL-surface arm; best reached is 97.5% mnemonic similarity, diverging only in that micro reg-alloc order (#41 mov vs cmp). __fastcall(self, unused-edx, 7 stack ints) instead of the given __stdcall(a1..a7): `mov esi, ecx` with no matching stack slot is a receiver, not a stack arg.
 // Sprite5E4ADA receives the genuine destination Buffer pointer and six integers.
 int Buffer::draw_unk2(Buffer *destination, int transparent, int x, int y,
                       int numerator, int denominator, int table) {
-    setup_buff_sprite(transparent);
+    prepare_shared_sprite(transparent);
     int result = BufferSpriteOwner.sprite().draw_noop(destination, transparent, x, y,
                                           numerator, denominator, table);
-    release_buff_sprite();
+    BufferSpriteOwner.sprite().pcBits_ = 0;
     return result;
 }
 
-// ORIGINAL: 0x005D8EE0 ?draw_dest_source@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D8EE0-0x005D8FD8 FILE
+// ORIGINAL: 0x005D8EE0 ?draw_dest_source@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D8EE0-0x005D8FD8 FILE BYTE_EXACT
 // symbol    ?draw_dest_source@Buffer@@QAEHPAV1@HHHHHPAE@Z
 // TRIED: same shape as 0x005D8740/0x005D8930/0x005D8B20 - see 0x005D8740's note for what the stdcall-Unlock and opaque-field access forms rule out.
 // TRIED: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
 int Buffer::draw_dest_source(Buffer *destination, int transparent, int x, int y,
                              int numerator, int denominator,
                              unsigned char *table) {
-    setup_buff_sprite(transparent);
+    prepare_shared_sprite(transparent);
     int result = BufferSpriteOwner.sprite().draw_dest_source(destination, transparent, x, y,
                                                   numerator, denominator, table);
-    release_buff_sprite();
+    BufferSpriteOwner.sprite().pcBits_ = 0;
     return result;
 }
 
-// ORIGINAL: 0x005D90D0 sub_5d90d0 0x005D90D0-0x005D91C8 FILE
+// ORIGINAL: 0x005D90D0 sub_5d90d0 0x005D90D0-0x005D91C8 FILE BYTE_EXACT
 // symbol    ?draw@Buffer@@QAEHPAV1@HHHHHPAE@Z
 // TRIED: same shape as 0x005D8740 (no mangled name either) - __fastcall (self, unused-edx, 7 stack ints) instead of the given __stdcall (a1..a7): `mov esi, ecx` with no matching stack slot is a receiver. See 0x005D8740's note for the stdcall-Unlock function-pointer form.
 // TRIED: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
 int Buffer::draw(Buffer *destination, int transparent, int x, int y,
                   int numerator, int denominator, unsigned char *table) {
-    setup_buff_sprite(transparent);
+    prepare_shared_sprite(transparent);
     int result = BufferSpriteOwner.sprite().draw(destination, transparent, x, y,
                                       numerator, denominator, table);
-    release_buff_sprite();
+    BufferSpriteOwner.sprite().pcBits_ = 0;
     return result;
 }
 
-// ORIGINAL: 0x005D92C0 sub_5d92c0 0x005D92C0-0x005D93B8 FILE
+// ORIGINAL: 0x005D92C0 sub_5d92c0 0x005D92C0-0x005D93B8 FILE BYTE_EXACT
 // symbol    ?draw_dest_unk2@Buffer@@QAEHPAV1@HHHHHPAE@Z
 // TRIED: same shape as 0x005D8740/0x005D90D0 - see 0x005D8740's note for the stdcall-Unlock form and the __fastcall(self, unused-edx, 7 stack ints) signature override.
 // TRIED: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
 int Buffer::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
                            int numerator, int denominator,
                            unsigned char *table) {
-    setup_buff_sprite(transparent);
+    prepare_shared_sprite(transparent);
     int result = BufferSpriteOwner.sprite().draw_dest_unk2(destination, transparent, x, y,
                                                numerator, denominator, table);
-    release_buff_sprite();
+    BufferSpriteOwner.sprite().pcBits_ = 0;
     return result;
 }
 
@@ -10117,7 +10121,7 @@ int Buffer::gouraud(Vert *vertices, int *lights, int count, int mode,
 /*
 Purpose: Publish the unit draw state and draw one unit sprite through the
          shared surface sprite, releasing the actor when its countdown ends.
-// ORIGINAL: 0x005D8C20 sub_5d8c20 0x005D8C20-0x005D8D00 FILE
+// ORIGINAL: 0x005D8C20 sub_5d8c20 0x005D8C20-0x005D8D00 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5D8C20 fields50/54/58/6C/80/84/4A8 are Buffer locked/DIB pixels, DirectDraw surface, lock count, DIB dimensions and stride.", "Original9B3A54..78 are members of g_BUFFER_SPRITE; surface slot80 is DirectDraw Unlock, not an actor stop hook.", "Original5D8CF0 forwards four stack arguments to genuine Sprite5E66A2;5D8CF5 clears the borrowed pixels AFTER that call."], "reason": "Rehome the four-argument shared-Sprite wrapper to the real Buffer receiver, correcting the former actor/fixed-alias interpretation."}
 // symbol    ?draw_dest_unk1@Buffer@@QAEXPAV1@HHPAE@Z
 // SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5D8C20..5D8D00; retired seed git:117282ee:src/unrecovered/005d8c20.cpp records the same identity and spans with its register-order TRIED note kept below.", "The shared surface sprite is buffer.cpp's g_BUFFER_SPRITE (0x009B3A50) and the published draw-state block is its 0x9B3A54..0x9B3A78 neighbour, with the transparency byte 0x00696D14; the actor countdown fields are the seed's 0x50/0x58/0x6C walks.", "The slot-0x80 dispatch is the actor's own stop hook (stdcall through vtbl+0x80), exactly as the seed calls it."], "reason": "Coverage transcription of the four-argument unit draw wrapper with the state publish and countdown walks kept at the measured order."}
@@ -10125,9 +10129,9 @@ Status: Coverage transcription - unclaimed body
 */
 void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
                             unsigned char *table) {
-    setup_buff_sprite(-1);
+    prepare_shared_sprite(-1);
     BufferSpriteOwner.sprite().draw_dest_unk1(destination, x, y, table);
-    release_buff_sprite();
+    BufferSpriteOwner.sprite().pcBits_ = 0;
 }
 
 // Existing original5D8D00..5D8DEA: same physical owner/order, six stack
@@ -10135,7 +10139,7 @@ void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
 /*
 Purpose: Publish the unit draw state and draw one unit sprite with the
          extended arguments, releasing the actor when its countdown ends.
-// ORIGINAL: 0x005D8D00 sub_5d8d00 0x005D8D00-0x005D8DEA FILE
+// ORIGINAL: 0x005D8D00 sub_5d8d00 0x005D8D00-0x005D8DEA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5D8D00 has the same real Buffer and shared Sprite member closure as5D8C20, not a distinct actor/state object.", "Original5D8DDA forwards six stack arguments to genuine Sprite5E73CC;5D8DDF clears the borrowed pixels AFTER that call."], "reason": "Rehome the six-argument shared-Sprite wrapper to the real Buffer receiver and genuine descriptor lifetime."}
 // symbol    ?draw_dest_unk1@Buffer@@QAEXPAV1@HHHHPAE@Z
 // SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5D8D00..5D8DEA; retired seed git:117282ee:src/unrecovered/005d8d00.cpp records the same identity and spans with its shared TRIED note kept below.", "Same published block and actor fields as sub_5d8c20 above; the trailing two arguments ride straight through to sprite.h's six-argument draw_dest_unk1 exactly as the seed forwards them."], "reason": "Coverage transcription of the six-argument unit draw wrapper beside its four-argument twin."}
@@ -10144,10 +10148,10 @@ Status: Coverage transcription - unclaimed body
 void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
                             int numerator, int denominator,
                             unsigned char *table) {
-    setup_buff_sprite(-1);
+    prepare_shared_sprite(-1);
     BufferSpriteOwner.sprite().draw_dest_unk1(destination, x, y,
                                   numerator, denominator, table);
-    release_buff_sprite();
+    BufferSpriteOwner.sprite().pcBits_ = 0;
 }
 
 
