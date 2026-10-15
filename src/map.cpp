@@ -1185,7 +1185,8 @@ Status: Complete
 void __cdecl site_set(int x, int y, int site) {
     // Through a pointer to the field; see `code_set` for why.
     uint8_t *const field = &map_loc(x, y)->val2;
-    *field = static_cast<uint8_t>((*field & 0x0F) | (site << 4));
+    const uint8_t site_byte = static_cast<uint8_t>(site);
+    *field = static_cast<uint8_t>((*field & 0x0F) | (site_byte << 4));
 }
 
 /*
@@ -1366,7 +1367,8 @@ void __cdecl rocky_set(int x, int y, int rocky) {
     Map *tile = map_loc(x, y);
     uint8_t *const field = &tile->val3;
     uint8_t masked = *field & 0x3F;
-    *field = masked | (rocky << 6);
+    const uint8_t rocky_byte = static_cast<uint8_t>(rocky);
+    *field = static_cast<uint8_t>(masked | (rocky_byte << 6));
     tile->bit2 |= 0x400000; // TODO: identify value
     UnkBitfield1 |= 1; // TODO: identify variable + value
 }
@@ -1479,7 +1481,7 @@ void __cdecl code_set(int x, int y, int code) {
     // and reading and writing `tile->bit2` twice puts the 0xc on the `mov`
     // instead. Taking `&tile->bit2` once is what produces the image's lea.
     uint32_t *const field = &map_loc(x, y)->bit2;
-    *field = (*field & 0xFFFFFF) | (code << 24);
+    *field = (*field & 0xFFFFFF) | (static_cast<uint32_t>(code) << 24);
     UnkBitfield1 |= 4; // TODO: identify variable + value
 }
 

@@ -569,3 +569,152 @@ def test_actual_draw_sat_controls_reject_the_old_entry_cached_cursor(tmp_path):
     compiled, ran = _compile_and_run_draw_sat(tmp_path, compiler, mutant, DRAW_SAT_MUTATION_MAIN)
     assert compiled.returncode == 0, compiled.stderr
     assert ran is not None and ran.returncode != 0
+
+
+def _actual_on_selected_source() -> str:
+    source = (ROOT / "src/reportwin.cpp").read_text()
+    body = _extract_body(source, "void ReportWin::on_selected(int selection_id, int)")
+    assert "selection_id >= 0x5F5E0FE" in body
+    return body
+
+
+ON_SELECTED_FIXTURE = r"""
+#include <climits>
+#include <cstdio>
+
+struct Event { int kind, first, second; };
+static Event events[16];
+static int event_count = 0;
+static int failures = 0;
+static void record(int kind, int first, int second) {
+    if (event_count < 16) events[event_count] = {kind, first, second};
+    ++event_count;
+}
+static void check(bool condition, const char *message) {
+    if (!condition) { std::fprintf(stderr, "failed: %s\n", message); ++failures; }
+}
+
+struct ListBoxStub {
+    int tag;
+    explicit ListBoxStub(int value = 0) : tag(value) {}
+    void set_selected_pos(int position, int mode) {
+        record(tag == 1 ? 1 : 3, position, mode);
+    }
+    void set_selected_id(int id) { record(tag == 1 ? 2 : tag == 2 ? 4 : 5, id, 0); }
+};
+struct ReportIfStub {
+    ListBoxStub listBox1_, listBox2_;
+    ReportIfStub() : listBox1_(1), listBox2_(2) {}
+};
+static ReportIfStub ReportIfGlobal;
+
+struct ReportWin {
+    int field_59AC_, field_59B0_;
+    ListBoxStub listBox_;
+    ReportWin() : field_59AC_(0), field_59B0_(0), listBox_(3) {}
+    void on_selected(int selection_id, int ignored);
+    void reset() { record(6, 0, 0); }
+    void draw_energy() { record(7, 0, 0); }
+    void soft_update() { record(8, 0, 0); }
+};
+
+static void clear_events() { event_count = 0; }
+static void expect_event(int index, int kind, int first, int second) {
+    check(index < event_count, "expected event exists");
+    if (index < event_count) {
+        check(events[index].kind == kind && events[index].first == first
+                  && events[index].second == second,
+              "call order and arguments match");
+    }
+}
+static void verify_selection(int id, int branch) {
+    clear_events();
+    ReportWin window;
+    window.field_59AC_ = 12345;
+    window.field_59B0_ = 77;
+    window.on_selected(id, 123);
+    if (branch == 0) {
+        check(window.field_59AC_ == id && window.field_59B0_ == 0,
+              "ordinary selection stores the id and kind zero");
+        check(event_count == 5, "ordinary selection updates lists then redraws");
+        expect_event(0, 1, -1, 1);
+        expect_event(1, 4, id, 0);
+        expect_event(2, 6, 0, 0);
+        expect_event(3, 7, 0, 0);
+        expect_event(4, 8, 0, 0);
+    } else if (branch == 1) {
+        check(window.field_59AC_ == id - 0x400 && window.field_59B0_ == 1,
+              "report selection stores offset id and kind one");
+        check(event_count == 5, "report selection updates lists then redraws");
+        expect_event(0, 2, id, 0);
+        expect_event(1, 3, -1, 1);
+        expect_event(2, 6, 0, 0);
+        expect_event(3, 7, 0, 0);
+        expect_event(4, 8, 0, 0);
+    } else {
+        check(window.field_59AC_ == 12345 && window.field_59B0_ == 77,
+              "sentinel selection leaves remembered fields untouched");
+        check(event_count == 1, "sentinel returns without reset or redraw");
+        expect_event(0, 5, 99999999, 0);
+    }
+}
+"""
+
+
+ON_SELECTED_MAIN = r"""
+int main() {
+    verify_selection(INT_MIN, 0);
+    verify_selection(-1, 0);
+    verify_selection(0, 0);
+    verify_selection(1023, 0);
+    verify_selection(1024, 1);
+    verify_selection(99999997, 1);
+    verify_selection(99999998, 2);
+    verify_selection(99999999, 2);
+    verify_selection(INT_MAX, 2);
+    return failures == 0 ? 0 : 1;
+}
+"""
+
+
+def _compile_and_run_on_selected(tmp_path, compiler, body, main_source):
+    cpp = tmp_path / f"on-selected-{Path(compiler).name}.cpp"
+    executable = tmp_path / f"on-selected-{Path(compiler).name}"
+    cpp.write_text(ON_SELECTED_FIXTURE + "\n" + body + "\n" + main_source)
+    compiled = subprocess.run(
+        [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(cpp), "-o", str(executable)],
+        text=True,
+        capture_output=True,
+    )
+    ran = subprocess.run([str(executable)], text=True, capture_output=True) if compiled.returncode == 0 else None
+    return compiled, ran
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_on_selected_preserves_original_boundary_and_call_order(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} is not installed")
+    compiled, ran = _compile_and_run_on_selected(
+        tmp_path, compiler, _actual_on_selected_source(), ON_SELECTED_MAIN
+    )
+    assert compiled.returncode == 0, compiled.stderr
+    assert ran is not None and ran.returncode == 0, ran.stderr if ran else "not run"
+
+
+def test_actual_on_selected_boundary_control_rejects_wrong_threshold(tmp_path):
+    compiler = shutil.which("g++") or shutil.which("clang++")
+    if compiler is None:
+        pytest.skip("host C++ compiler required for source damage control")
+    body = _actual_on_selected_source()
+    mutant = body.replace("selection_id >= 0x5F5E0FE", "selection_id > 0x5F5E0FE", 1)
+    assert mutant != body
+    main = r"""
+int main() {
+    verify_selection(99999998, 2);
+    return failures == 0 ? 0 : 1;
+}
+"""
+    compiled, ran = _compile_and_run_on_selected(tmp_path, compiler, mutant, main)
+    assert compiled.returncode == 0, compiled.stderr
+    assert ran is not None and ran.returncode != 0
