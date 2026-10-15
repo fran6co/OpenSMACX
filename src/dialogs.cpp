@@ -917,67 +917,71 @@ int Dialogs::calculate_dimensions() {
 // different receiver seen by the old bodies (the GraphicWin view is +0x188);
 // this source implementation begins with a proper Dialogs receiver, reads
 // kind_ and lets qualified base calls perform the compiler-known adjustment.
-// ORIGINAL: 0x00612C20 ?on_left_down@Dialogs@@QAEXHH@Z 0x00612C20-0x00612C98
+// ORIGINAL: 0x00612C20 ?on_left_down@Dialogs@@QAEXHH@Z 0x00612C20-0x00612C98 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612C20 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_left_down as a typed Dialogs kind dispatcher"}
 // symbol    ?on_left_down@Dialogs@@UAEXHH@Z
 void Dialogs::on_left_down(int x, int y) {
     switch (kind_) {
-    case 1:
-        CheckBox::on_left_down(x, y);
+    case 16:
+        RadioButton::on_left_down(x, y);
         break;
     case 2:
         ListBox::on_left_down(x, y);
         break;
+    case 1:
+        CheckBox::on_left_down(x, y);
+        break;
+    case 4:
+        return;
     case 8:
         SpriteBox::on_left_down(x, y);
-        break;
-    case 16:
-        RadioButton::on_left_down(x, y);
         break;
     }
 }
 
-// ORIGINAL: 0x00612D60 ?on_left_double_click@Dialogs@@QAEXHH@Z 0x00612D60-0x00612DD8
+// ORIGINAL: 0x00612D60 ?on_left_double_click@Dialogs@@QAEXHH@Z 0x00612D60-0x00612DD8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612D60 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_left_double_click as a typed Dialogs kind dispatcher"}
 // symbol    ?on_left_double_click@Dialogs@@UAEXHH@Z
 void Dialogs::on_left_double_click(int x, int y) {
     switch (kind_) {
-    case 1:
-        CheckBox::on_left_double_click(x, y);
+    case 16:
+        RadioButton::on_left_double_click(x, y);
         break;
     case 2:
         ListBox::on_left_double_click(x, y);
         break;
+    case 1:
+        CheckBox::on_left_double_click(x, y);
+        break;
     case 8:
         SpriteBox::on_left_double_click(x, y);
-        break;
-    case 16:
-        RadioButton::on_left_double_click(x, y);
         break;
     }
 }
 
-// ORIGINAL: 0x00612AE0 ?on_mouse_leave@Dialogs@@QAEXHH@Z 0x00612AE0-0x00612B58
+// ORIGINAL: 0x00612AE0 ?on_mouse_leave@Dialogs@@QAEXHH@Z 0x00612AE0-0x00612B58 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612AE0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_mouse_leave as a typed Dialogs kind dispatcher"}
 // symbol    ?on_mouse_leave@Dialogs@@UAEXHH@Z
 void Dialogs::on_mouse_leave(int x, int y) {
     switch (kind_) {
-    case 1:
-        CheckBox::on_mouse_leave(x, y);
+    case 16:
+        RadioButton::on_mouse_leave(x, y);
         break;
     case 2:
         ListBox::on_mouse_leave(x, y);
         break;
+    case 1:
+        CheckBox::on_mouse_leave(x, y);
+        break;
+    case 4:
+        return;
     case 8:
         SpriteBox::on_mouse_leave(x, y);
-        break;
-    case 16:
-        RadioButton::on_mouse_leave(x, y);
         break;
     }
 }
 
-// ORIGINAL: 0x00612CC0 ?on_key_down@Dialogs@@QAEHH@Z 0x00612CC0-0x00612D29
+// ORIGINAL: 0x00612CC0 ?on_key_down@Dialogs@@QAEHH@Z 0x00612CC0-0x00612D29 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612CC0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_key_down as a typed Dialogs kind dispatcher"}
 // symbol    ?on_key_down@Dialogs@@UAEHH@Z
 int Dialogs::on_key_down(int key) {
@@ -988,6 +992,8 @@ int Dialogs::on_key_down(int key) {
         return ListBox::on_key_down(key);
     case 1:
         return CheckBox::on_key_down(key);
+    case 4:
+        return 0;
     case 8:
         return SpriteBox::on_key_down(key);
     default:
@@ -1061,25 +1067,25 @@ int Dialogs::attach(int kind, GraphicWin *parent, int x, int y, int flags) {
     }
 }
 
-// ORIGINAL: 0x00612E00 ?on_redraw@Dialogs@@QAEXXZ 0x00612E00-0x00612E4D
+// ORIGINAL: 0x00612E00 ?on_redraw@Dialogs@@QAEXXZ 0x00612E00-0x00612E4D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00612E00 reads the selector from the shared GraphicWin receiver's -8 location, corresponding to Dialogs::kind_ at complete-object +0x180.","The retained seed's direct tail targets identify cases 1/2/4/8/16 as CheckBox/ListBox/EditGroup/SpriteBox/RadioButton::on_redraw. The five typed base views are already declared by Dialogs."],"reason":"Home the redraw kind dispatcher through its named selector and declared widget base subobjects."}
 // symbol    ?on_redraw@Dialogs@@UAEXXZ
 void Dialogs::on_redraw() {
     switch (kind_) {
-    case 1:
-        CheckBox::on_redraw();
+    case 16:
+        RadioButton::on_redraw();
         break;
     case 2:
         ListBox::on_redraw();
         break;
-    case 4:
-        EditGroup::on_redraw();
+    case 1:
+        CheckBox::on_redraw();
         break;
     case 8:
         SpriteBox::on_redraw();
         break;
-    case 16:
-        RadioButton::on_redraw();
+    case 4:
+        EditGroup::on_redraw();
         break;
     }
 }
