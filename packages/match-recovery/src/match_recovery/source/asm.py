@@ -21,7 +21,7 @@ from dataclasses import dataclass, field, replace
 from enum import Enum
 from pathlib import Path
 
-from capstone import CS_ARCH_X86, CS_MODE_32, Cs, x86
+from capstone import CS_ARCH_X86, CS_MODE_32, CS_GRP_CALL, CS_GRP_JUMP, Cs, x86
 
 from ..pe_coff import Coff, PeImage
 from .eh_regions import bind_eh_regions
@@ -1083,14 +1083,37 @@ def compare_regions(pairs: tuple[tuple[Listing, Listing], ...], *,
     for (original, candidate), alignment in zip(pairs, alignments):
         size = len(original.code)
         tail = candidate.code[size:]
-        boundary = next((instruction for instruction in candidate.instructions
-                         if instruction.address + instruction.size == candidate.base + size), None)
+        # The mapped image span can itself include padding after the final
+        # instruction (for example, one NOP after RET). Preserve and compare
+        # every such mapped byte; only the *additional* physical COMDAT
+        # envelope may be omitted. Require a terminating instruction before
+        # the mapped boundary and padding only from its end through the
+        # candidate's aligned end, so a NOP at the mapped boundary is not
+        # mistaken for evidence that the function ended there.
+        executable_end = None
+        for instruction in candidate.instructions:
+            end = instruction.address + instruction.size
+            if (end <= candidate.base + size
+                    and instruction.mnemonic in ("ret", "retf", "jmp")):
+                executable_end = end - candidate.base
+        suffix_is_fill = (executable_end is not None
+                          and all(byte in (0x90, 0xCC)
+                                  for byte in candidate.code[executable_end:]))
+        omitted_start = candidate.base + size
+        omitted_end = candidate.base + len(candidate.code)
+        branch_into_fill = any(
+            (instruction.group(CS_GRP_CALL) or instruction.group(CS_GRP_JUMP))
+            and instruction.operands
+            and instruction.operands[0].type == x86.X86_OP_IMM
+            and omitted_start <= (instruction.operands[0].imm & 0xFFFFFFFF) < omitted_end
+            for instruction in candidate.instructions)
         # Only the exact physical COMDAT alignment envelope can be fill, and
-        # only beyond a terminated code boundary with no relocation field.
+        # only after a terminated body with no relocation field in the tail
+        # and no decoded direct control-flow edge into the omitted bytes.
         fill = (len(tail) if tail and len(candidate.code) == size + (-size % alignment)
                 and all(byte in (0x90, 0xCC) for byte in tail)
                 and not any(offset >= size for offset in candidate.mask)
-                and boundary is not None and boundary.mnemonic in ("ret", "retf", "jmp") else 0)
+                and suffix_is_fill and not branch_into_fill else 0)
         if fill:
             candidate = replace(candidate, code=candidate.code[:size])
         measured_pairs.append((original, candidate))
