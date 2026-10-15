@@ -254,11 +254,11 @@ void __cdecl popups_normal() {
     ListBoxDefault10 = 0x41;
     EditBoxDefaultB24 = PopupThemeSurfaceColor;
     EditBoxDefaultB20 = 0;
-    ScrollCloseStaticDefaults[8] = 0;
-    ScrollCloseStaticDefaults[3] = static_cast<uint32_t>(-1);
-    ScrollCloseStaticDefaults[7] = 0x41;
-    ScrollCloseStaticDefaults[5] = 0x41;
-    ScrollCloseStaticDefaults[6] = 0x41;
+    ScrollCloseStaticDefaults.bevel_thickness = 0;
+    ScrollCloseStaticDefaults.border_color = -1;
+    ScrollCloseStaticDefaults.field_A64 = 0x41;
+    ScrollCloseStaticDefaults.field_A48 = 0x41;
+    ScrollCloseStaticDefaults.color = 0x41;
     ScrollCloseDynamicDefaults.sprite_up[0] = &g_SCROLL_BAR_ARROW_ICON_SPRITES[0];
     ScrollCloseDynamicDefaults.sprite_up[1] = &g_SCROLL_BAR_ARROW_ICON_SPRITES[1];
     ScrollCloseDynamicDefaults.sprite_up[2] = &g_SCROLL_BAR_ARROW_ICON_SPRITES[2];
