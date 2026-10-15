@@ -2756,14 +2756,14 @@ int NetWin::modal_callback() {
     if (field_7614_ == 0) {
         field_7618_ = 1;
         if (NetDaemonNet.player_count_ >= 1) {
-            char *record = reinterpret_cast<char *>(&NetWinLobbyRows[1].ready_or_occupied_);
+            NetWinLobbyRow *record = &NetWinLobbyRows[1];
             int index = 1;
             do {
-                if (*record == 0) {
+                if (record->ready_or_occupied_ == 0) {
                     field_7618_ = 0;
                 }
                 index++;
-                record += 0x17C;
+                ++record;
             } while (index <= NetDaemonNet.player_count_);
         }
         if (field_7618_ != 0) {
@@ -2809,12 +2809,12 @@ int __cdecl NetWin::modal_callback_daemon() {
     int count = NetDaemonNet.player_count_;
     if (count >= 1) {
         int all_used = 1;
-        char *record = reinterpret_cast<char *>(&NetWinLobbyRows[1].ready_or_occupied_);
+        NetWinLobbyRow *record = &NetWinLobbyRows[1];
         do {
-            if (*record == 0) {
+            if (record->ready_or_occupied_ == 0) {
                 all_used = 0;
             }
-            record += 0x17C;
+            ++record;
         } while (--count != 0);
         NetWinDialog.field_7618_ = all_used;
         if (all_used == 0) {

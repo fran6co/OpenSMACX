@@ -15615,7 +15615,7 @@ void __cdecl faction_upkeep(int faction_id) {
         auto_save();
     }
 }
-// ORIGINAL: 0x0050C340 ?steal_tech@@YAHHHH@Z 0x0050C340-0x0050C4AF
+// ORIGINAL: 0x0050C340 ?steal_tech@@YAHHHH@Z 0x0050C340-0x0050C4AF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x0050C340..0x0050C4AF: local acquisition, multiplayer return, notification and base-reset branches.","source:src/faction.h Player/PlayerData and canonical technology/network APIs; source:src/base.h Base reset API."],"reason":"Recover the complete technology acquisition path in the faction owner using real player, technology, network and base-reset APIs; retain seed lessons and original span without claiming a current byte match."}
 // TRIED: writing the tech-flag bit test with an intermediate `and` result (rather than folding into the `if`'s condition) adds an extra `mov`; a ternary for the message-name select lowers to `neg/sbb/and` instead of the original's `mov`/`test`/`je` overwrite. Landed body: 0.976 mnemonic similarity, first divergence at #17 (one extra `mov`, one `lea` vs `add` in the tech-preference-table address computation), not chased further.
 int __cdecl steal_tech(int faction_id, int faction_id_with,
@@ -15625,7 +15625,7 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
     }
 
     if (IsMultiplayerNet != 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << faction_id)) != 0 &&
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) != 0 &&
         faction_id != ConsoleGlobal.faction_id_) {
         return 0;
     }
@@ -15658,7 +15658,7 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
 
     tech_achieved(faction_id, cost, faction_id_with, 0);
 
-    if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1 << faction_id)) == 0 && cost != 9999) {
+    if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1 << faction_id)) == 0 && cost != 9999) {
         bases_reset(-1, faction_id, 0);
     }
     return cost == 9999;
@@ -15745,7 +15745,7 @@ void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
     DiplomacyMapTransferChanged = 1;
     return;
 }
-// ORIGINAL: 0x0053E4C0 ?demands_withdrawal@@YAXHH@Z 0x0053E4C0-0x0053E5B6
+// ORIGINAL: 0x0053E4C0 ?demands_withdrawal@@YAXHH@Z 0x0053E4C0-0x0053E5B6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x0053E4C0..0x0053E5B6: commlink callback precedes multiplayer human gate, demand result and perihelion dialogue.","source:src/faction.h and source:src/netdaemon.h typed dependency declarations."],"reason":"Recover the withdrawal-demand caller with the original callback/gate order and typed result topics; retain the original extent while its two callees are recovered as complete neighboring bodies."}
 // TRIED: `(byte)(1 << (a2 & 0x1f))` (explicit mask before the shift, mnemonic similarity 0.896, 8 edit blocks - the mask compiles to a spurious `and` the original does not have, since `shl` already masks its count to 5 bits at the hardware level) vs. plain `(byte)(1 << a2)` (0.945, 2 edit blocks). Also: if/else-if chain over the 0/1/2 result vs. `switch` - the original lowers the three-way dispatch as a decrement chain (`sub eax,0 / je / dec / je / dec / jne`), which only the `switch` form reproduces. Landed the switch form. Neither reached BYTE_EXACT; first remaining divergence is at the record-base multiply by 0x59c (#35, `shl` vs `mov`).
 void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
@@ -15754,7 +15754,7 @@ void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
         return;
     }
     if (IsMultiplayerNet != 0 &&
-        (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction_id_with)) != 0) {
+        (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction_id_with)) != 0) {
         return;
     }
 
