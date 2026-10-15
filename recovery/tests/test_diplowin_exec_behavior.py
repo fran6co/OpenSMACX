@@ -111,3 +111,49 @@ def test_diplowin_exec_and_transcript_bodies(compiler_name, tmp_path):
         [str(executable)], capture_output=True, text=True, timeout=30, check=False
     )
     assert ran.returncode == 0, ran.stdout + ran.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+@pytest.mark.parametrize("old,new", [
+    ("const int window_left = (WinScreenWidth - 0x320) / 2;",
+     "const int window_left = WinScreenWidth >= 0x320 ? (WinScreenWidth - 0x320) / 2 : (WinScreenWidth - 0x321) / 2;"),
+    ("rect_F4C_.left += 3;", "rect_F4C_.left += 2;"),
+    ("button_rects_[7].top = window_height - 0x4C;",
+     "button_rects_[7].top = window_height - 0x4B;"),
+])
+def test_diplowin_geometry_oracle_rejects_mutants(
+        compiler_name, old, new, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} is unavailable")
+    diplowin_path = SOURCE_ROOT / "src" / "diplowin.cpp"
+    diplowin = diplowin_path.read_text()
+    signatures = (
+        "static RECT inset_rect(RECT value, int left, int top, int right, int bottom)",
+        "void __cdecl DiploWin::string_callback(int faction_id, int unused)",
+        "void DiploWin::exec(int faction_id, int faction_id_with)",
+    )
+    methods = [extract_function(diplowin, signature) for signature in signatures]
+    assert methods[-1].count(old) == 1
+    methods[-1] = methods[-1].replace(old, new, 1)
+    generated = FIXTURE.read_text()
+    marker = "/* DIPLOWIN_EXEC_FUNCTIONS */"
+    assert generated.count(marker) == 1
+    generated = generated.replace(marker, "\n\n".join(methods))
+    transcript = extract_function(
+        diplowin, 'extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with)'
+    )
+    transcript_marker = "/* DIPLOWIN_TRANSCRIPT_FUNCTION */"
+    assert generated.count(transcript_marker) == 1
+    generated = generated.replace(transcript_marker, transcript)
+    generated_path = tmp_path / "mutant.cpp"
+    generated_path.write_text(generated)
+    executable = tmp_path / "mutant"
+    built = subprocess.run(
+        [compiler, "-std=c++98", "-Wall", "-Wextra", "-I", str(FIXTURE.parent),
+         str(generated_path), "-o", str(executable)],
+        capture_output=True, text=True, timeout=30, check=False)
+    assert built.returncode == 0, built.stdout + built.stderr
+    ran = subprocess.run([str(executable)], capture_output=True, text=True,
+                         timeout=30, check=False)
+    assert ran.returncode != 0
