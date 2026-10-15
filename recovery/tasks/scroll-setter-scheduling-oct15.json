@@ -1,0 +1,39 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f9e3fdfeed7a9a215505fe12f3affd23484c5bed",
+  "editable_files": [
+    "src/scroll.cpp",
+    "recovery/tests/test_scroll_void_mutators_actual_source_oct9.py"
+  ],
+  "evidence": [
+    "Fresh pinned/object review of build-sfr5nhsj Scroll setters: all four current bodies have14instructions; LEA ECX,[ESI+AAC] occurs before primary-member store while original stores first. Both genuine child redraw virtual calls already match. Historical raw-dispatch LEVER notes are not current evidence.",
+    "History inspection found no ordinary chained-assignment or direct-parameter experiment. Authorize a bounded source-form deck, first screening set_button_color then apply any supported common form to all four and measure. Preserve primary/left/right values before redraw, original void signatures, ordinary virtual calls, mappings, claims and all unrelated behavior.",
+    "No volatile qualifiers, vtable helpers, asm, or byte copies. If no winner keep source unchanged and retain experiment result as decision. Any adopted candidate requires actual-source callback controls, full Scroll TU comparison, build/link and collateral review; manual integration only, no full-game acceptance."
+  ],
+  "intent": "Test ordinary member assignment forms to restore four Scroll setter matches without raw dispatch or volatile workarounds.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6314512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "scroll-setter-scheduling-oct15"
+}
