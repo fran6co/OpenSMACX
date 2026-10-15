@@ -82,8 +82,10 @@ class MidiDelegate : public SoundDeviceInterface {
   virtual int set_track_ctrl(TrackCtrl *);                   // slot 0xc0
   virtual int get_ntracks();                                 // slot 0xc4
   virtual int reset();                                       // slot 0xc8
-  virtual void slot051();
-  virtual void slot052();
+  virtual int init(char *, unsigned long);                   // slot 0xcc
+  // Keep the inherited filename overload visible alongside the no-arg form.
+  using SoundDeviceInterface::load;
+  virtual int load();                                        // slot 0xd0
   virtual int get_time(unsigned long);                       // slot 0xd4
   virtual int map_patch(char *, unsigned long);              // slot 0xd8
   virtual int slot055(char *, unsigned long, unsigned long);  // slot 0xdc

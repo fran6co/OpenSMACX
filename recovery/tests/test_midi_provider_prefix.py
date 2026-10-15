@@ -45,6 +45,45 @@ def test_pinned_ambience_provider_constructs_midi_prefix():
     assert midi[5] == ambience[5] == 0x10001046
 
 
+def test_pinned_midi_provider_init_and_load_slot_contracts():
+    """Mode-2 provider slots 51/52 retain the game's MIDI call contracts."""
+    from hashlib import sha256
+    import struct
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+
+    image_path = Path(os.environ.get('OPENSMACX_IMAGE', ROOT / '.opensmacx/game/terranx_original.exe'))
+    dll = image_path.with_name('soundx.dll')
+    if not dll.is_file():
+        pytest.skip('pinned SoundX dependency unavailable')
+    raw = dll.read_bytes()
+    digest = sha256(raw).hexdigest()
+    assert digest == 'ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5'
+    image = PeImage(raw, digest)
+    # Mode-2 table slots 51/52 are exactly +0xCC/+0xD0.
+    slots = struct.unpack('<2I', image.read(Span(0x10064860, 0x10064868)))
+    assert slots == (0x10001186, 0x1000134D)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    thunk51 = [(i.mnemonic, i.op_str) for i in decoder.disasm(
+        image.read(Span(0x10001186, 0x1000118B)), 0x10001186)]
+    thunk52 = [(i.mnemonic, i.op_str) for i in decoder.disasm(
+        image.read(Span(0x1000134D, 0x10001352)), 0x1000134D)]
+    assert thunk51 == [('jmp', '0x10029bc0')]
+    assert thunk52 == [('jmp', '0x10029d20')]
+
+    init = list(decoder.disasm(image.read(Span(0x10029BC0, 0x10029C15)), 0x10029BC0))
+    assert any(i.mnemonic == 'mov' and i.op_str == 'edi, dword ptr [ebp + 8]' for i in init)
+    assert any(i.mnemonic == 'mov' and i.op_str == 'dword ptr [esi + 0x4c], 0' for i in init)
+    assert any(i.mnemonic == 'add' and i.op_str == 'esi, 0x54' for i in init)
+    assert any(i.mnemonic == 'ret' and i.op_str == '8' for i in init)
+
+    load = list(decoder.disasm(image.read(Span(0x10029D20, 0x10029D58)), 0x10029D20))
+    assert any(i.mnemonic == 'mov' and i.op_str == 'esi, dword ptr [edi + 0x4c]' for i in load)
+    assert any(i.mnemonic == 'mov' and i.op_str == 'ecx, dword ptr [edi + 0x3c]' for i in load)
+    assert any(i.mnemonic == 'ret' and i.op_str == '' for i in load)
+
+
 def test_midi_delegate_inherits_sound_prefix_and_retains_all_extension_slots():
     header = (ROOT / "src/midi.h").read_text()
     block = header.split("class MidiDelegate : public SoundDeviceInterface {", 1)[1]
@@ -82,6 +121,9 @@ int call_inherited_time(MidiDelegate *p) {{
 }}
 int call_midi_time(MidiDelegate *p) {{ return p->get_time(1UL); }}
 int call_inherited_unload(MidiDelegate *p) {{ return p->unload(); }}
+int call_filename_load(MidiDelegate *p) {{ return p->load("x"); }}
+int call_noarg_load(MidiDelegate *p) {{ return p->load(); }}
+int call_midi_init(MidiDelegate *p) {{ return p->init("x", 0UL); }}
 ''')
     import subprocess
     subprocess.run([compiler_name, "-std=c++11", "-c", str(source), "-o", str(tmp_path / "midi_prefix.o")], check=True)
@@ -92,7 +134,7 @@ VC6_CALLS = (
     "static_cast<SoundDeviceInterface *>(p)->set_fade_interval(1UL)",
     "delete static_cast<SoundDeviceInterface *>(p)",
     "static_cast<SoundDeviceInterface *>(p)->UNK1(1)",
-    'static_cast<SoundDeviceInterface *>(p)->load("x")',
+    'p->load("x")',
     "static_cast<SoundDeviceInterface *>(p)->unload()",
     "static_cast<SoundDeviceInterface *>(p)->play(1U)",
     "static_cast<SoundDeviceInterface *>(p)->play()",
@@ -139,8 +181,8 @@ VC6_CALLS = (
     "p->set_track_ctrl(static_cast<TrackCtrl *>(0))",
     "p->get_ntracks()",
     "p->reset()",
-    "p->slot051()",
-    "p->slot052()",
+    "p->init(static_cast<char *>(0), 0UL)",
+    "p->load()",
     "p->get_time(1UL)",
     "p->map_patch(static_cast<char *>(0), 1UL)",
     "p->slot055(static_cast<char *>(0), 1UL, 2UL)",
