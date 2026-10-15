@@ -46,13 +46,13 @@ std::vector<std::string> events;
 void check(bool ok, int line) { if (!ok) { std::fprintf(stderr,"line %d events:",line); for (const auto &event : events) std::fprintf(stderr," %s",event.c_str()); std::fprintf(stderr,"\n"); std::exit(71); } }
 #define CHECK(v) check((v),__LINE__)
 void log_id(const char *name, int id) { events.push_back(std::string(name)+":"+std::to_string(id)); }
-struct Sound { int is_playing() { events.push_back("sound-check"); return 1; } void play(){events.push_back("sound-play");} };
+struct Sound { int is_playing() { events.push_back("sound-check"); return 1; } int play(){events.push_back("sound-play"); return 0;} };
 struct Win {
   Sound *sound28=0, *sound30=0, *sound31=0;
   void clear_bubble_text(){events.push_back("clear-bubble");}
   Sound *legacy_sound_28(){events.push_back("sound28");return sound28;}
   Sound *legacy_sound_30(){events.push_back("sound30");return sound30;}
-  void *legacy_value_31(){events.push_back("sound31");return sound31;}
+  Sound *legacy_sound_31(){events.push_back("sound31");return sound31;}
   int on_button_pressed(int id){log_id("v41",id);return 1;}
   int vslot_43(int id){log_id("v43",id);return 1;}
   void on_button_clicked(int id){log_id("parent-click",id);}

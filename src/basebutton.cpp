@@ -324,10 +324,10 @@ Purpose: Set the primary default text colours shared by every button.
 Status: Complete
 */
 void BaseButton::set_def_text_color(int color1, int color2, int color3, int color4) {
-    BaseButtonDefaultTextColors[(0 * 0xC + 0 * 4) / 4] = static_cast<uint32_t>(color1);
-    BaseButtonDefaultTextColors[(1 * 0xC + 0 * 4) / 4] = static_cast<uint32_t>(color2);
-    BaseButtonDefaultTextColors[(2 * 0xC + 0 * 4) / 4] = static_cast<uint32_t>(color3);
-    BaseButtonDefaultTextColors[(3 * 0xC + 0 * 4) / 4] = static_cast<uint32_t>(color4);
+    DialogDefaults[5] = static_cast<uint32_t>(color1);
+    DialogDefaults[8] = static_cast<uint32_t>(color2);
+    DialogDefaults[11] = static_cast<uint32_t>(color3);
+    DialogDefaults[14] = static_cast<uint32_t>(color4);
 }
 
 /*
@@ -343,10 +343,10 @@ Purpose: Set the secondary default text colours shared by every button.
 Status: Complete
 */
 void BaseButton::set_def_text_color2(int color1, int color2, int color3, int color4) {
-    BaseButtonDefaultTextColors[(0 * 0xC + 1 * 4) / 4] = static_cast<uint32_t>(color1);
-    BaseButtonDefaultTextColors[(1 * 0xC + 1 * 4) / 4] = static_cast<uint32_t>(color2);
-    BaseButtonDefaultTextColors[(2 * 0xC + 1 * 4) / 4] = static_cast<uint32_t>(color3);
-    BaseButtonDefaultTextColors[(3 * 0xC + 1 * 4) / 4] = static_cast<uint32_t>(color4);
+    DialogDefaults[6] = static_cast<uint32_t>(color1);
+    DialogDefaults[9] = static_cast<uint32_t>(color2);
+    DialogDefaults[12] = static_cast<uint32_t>(color3);
+    DialogDefaults[15] = static_cast<uint32_t>(color4);
 }
 
 /*
@@ -362,10 +362,10 @@ Purpose: Set the tertiary default text colours shared by every button.
 Status: Complete
 */
 void BaseButton::set_def_text_color3(int color1, int color2, int color3, int color4) {
-    BaseButtonDefaultTextColors[(0 * 0xC + 2 * 4) / 4] = static_cast<uint32_t>(color1);
-    BaseButtonDefaultTextColors[(1 * 0xC + 2 * 4) / 4] = static_cast<uint32_t>(color2);
-    BaseButtonDefaultTextColors[(2 * 0xC + 2 * 4) / 4] = static_cast<uint32_t>(color3);
-    BaseButtonDefaultTextColors[(3 * 0xC + 2 * 4) / 4] = static_cast<uint32_t>(color4);
+    DialogDefaults[7] = static_cast<uint32_t>(color1);
+    DialogDefaults[10] = static_cast<uint32_t>(color2);
+    DialogDefaults[13] = static_cast<uint32_t>(color3);
+    DialogDefaults[16] = static_cast<uint32_t>(color4);
 }
 
 /*
@@ -657,16 +657,15 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
     // 0x00697078 and 0x00697084. The table is read here rather than cached at
     // construction, so a set_def_text_color issued between construct and init
     // is the one that lands.
-    const uint32_t *const colors = BaseButtonDefaultTextColors;
     Buffer::set_text_color(
-        static_cast<int>(colors[0]), static_cast<int>(colors[3]),
-        static_cast<int>(colors[6]), static_cast<int>(colors[9]));
+        static_cast<int>(DialogDefaults[5]), static_cast<int>(DialogDefaults[8]),
+        static_cast<int>(DialogDefaults[11]), static_cast<int>(DialogDefaults[14]));
     Buffer::set_text_color2(
-        static_cast<int>(colors[1]), static_cast<int>(colors[4]),
-        static_cast<int>(colors[7]), static_cast<int>(colors[10]));
+        static_cast<int>(DialogDefaults[6]), static_cast<int>(DialogDefaults[9]),
+        static_cast<int>(DialogDefaults[12]), static_cast<int>(DialogDefaults[15]));
     Buffer::set_text_color3(
-        static_cast<int>(colors[2]), static_cast<int>(colors[5]),
-        static_cast<int>(colors[8]), static_cast<int>(colors[11]));
+        static_cast<int>(DialogDefaults[7]), static_cast<int>(DialogDefaults[10]),
+        static_cast<int>(DialogDefaults[13]), static_cast<int>(DialogDefaults[16]));
 
     // The fourth font slot is a literal null pushed at 0x00607335, not a
     // fourth default. set_font's result is discarded, so an uninitialised
