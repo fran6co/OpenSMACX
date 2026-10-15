@@ -75,6 +75,78 @@ def test_only_exact_bounded_coff_alignment_fill_can_be_omitted():
     assert "1 bytes of bounded COFF alignment fill" in result.diagnostic
 
 
+def test_bounded_alignment_fill_after_padding_inside_mapped_span():
+    # The original extent is 115 bytes, including a mapped NOP after RET.
+    # The physical COMDAT is 128 bytes; only its 13 extra NOPs are fill.
+    original = b"\x90" * 113 + b"\xc3\x90"
+    candidate = original + b"\x90" * 13
+    assert len(original) == 115 and len(candidate) == 128
+    result = compare_regions((pair(original, candidate),), alignments=(16,))
+    assert result.verdict == Tier.BYTE_EXACT
+    assert result.compared_bytes == 115
+    assert result.original_instructions == result.matching_instructions == 115
+    assert "13 bytes of bounded COFF alignment fill" in result.diagnostic
+
+
+def test_mapped_padding_byte_mismatch_is_not_trimmed_as_alignment_fill():
+    original = b"\x90" * 113 + b"\xc3\x90"
+    candidate = b"\x90" * 113 + b"\xc3\xcc" + b"\x90" * 13
+    result = compare_regions((pair(original, candidate),), alignments=(16,))
+    assert result.verdict != Tier.BYTE_EXACT
+    assert result.compared_bytes == len(original)
+
+
+@pytest.mark.parametrize("damage,alignment,mask", [
+    (b"\xf8", 16, frozenset()),       # non-fill byte in the extra tail
+    (b"\x90", 8, frozenset()),        # candidate is not the 8-byte envelope
+    (b"\x90", 16, frozenset({115})),  # relocation owns the omitted suffix
+])
+def test_mapped_padding_case_rejects_unbounded_tail(damage, alignment, mask):
+    original = b"\x90" * 113 + b"\xc3\x90"
+    candidate = original + b"\x90" * 13
+    if damage != b"\x90":
+        candidate = candidate[:115] + damage + candidate[116:]
+    candidate_listing = Listing(candidate, 0x401000, mask, flags="trial")
+    result = compare_regions(((Listing(original, 0x401000), candidate_listing),),
+                             alignments=(alignment,))
+    assert result.verdict != Tier.BYTE_EXACT
+
+
+def test_mapped_padding_case_requires_terminator():
+    original = b"\x90" * 115
+    candidate = original + b"\x90" * 13
+    result = compare_regions((pair(original, candidate),), alignments=(16,))
+    assert result.verdict != Tier.BYTE_EXACT
+
+
+def test_mapped_padding_case_rejects_live_instruction_after_terminator():
+    original = b"\x90" * 111 + b"\xc3\xcc\x40"
+    candidate = original + b"\x90" * 14
+    result = compare_regions((pair(original, candidate),), alignments=(16,))
+    assert result.verdict != Tier.BYTE_EXACT
+
+
+@pytest.mark.parametrize("original", [
+    b"\xeb\x01\xc3",                         # short JMP -> first omitted byte
+    b"\x74\x01\xc3",                         # short Jcc -> first omitted byte
+    b"\xe9\x01\0\0\0\xc3",                 # near JMP -> first omitted byte
+    b"\x0f\x84\x01\0\0\0\xc3",             # near Jcc -> first omitted byte
+    b"\xe8\x01\0\0\0\xc3",                 # direct CALL -> first omitted byte
+])
+def test_direct_control_flow_into_alignment_suffix_prevents_omission(original):
+    candidate = original + b"\x90" * (16 - len(original))
+    result = compare_regions((pair(original, candidate),), alignments=(16,))
+    assert result.verdict != Tier.BYTE_EXACT
+
+
+def test_direct_branch_to_mapped_code_does_not_block_bounded_alignment_fill():
+    original = b"\xeb\x00\xc3"
+    candidate = original + b"\x90" * 13
+    result = compare_regions((pair(original, candidate),), alignments=(16,))
+    assert result.verdict == Tier.BYTE_EXACT
+    assert "13 bytes of bounded COFF alignment fill" in result.diagnostic
+
+
 @pytest.mark.parametrize("code,alignment", [
     (b"\x90\x90\xc3\xf8", 4),
     (b"\x90\x90\xc3\xcc\xcc\xcc\xcc\xcc", 4),
