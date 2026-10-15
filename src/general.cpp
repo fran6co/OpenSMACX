@@ -3560,7 +3560,6 @@ MediaAdpcmStorage MediaAdpcmTables = {
 #undef MEDIA_ADPCM_ROW
 #undef MEDIA_ADPCM_MAG
 
-static int *const AdpcmIndexAdjust = MediaAdpcmTables.index_adjust;
 // THE REST OF THE IMA ADPCM DECODER'S STATE, and the delta table. All four
 // state words are zero in the shipped .data (they are decoder state, not
 // data), so the evidence for the names is the arithmetic:
@@ -3569,16 +3568,12 @@ static int *const AdpcmIndexAdjust = MediaAdpcmTables.index_adjust;
 //     are clamped to [-32768, 32767] and written back as the two halves of
 //     the caller's dword. That is a stereo predictor pair.
 //   * 0x00694E1C and 0x00694E20 do the same with the second dword, are
-//     adjusted by AdpcmIndexAdjust and clamped to [0, 0x1600] = [0, 88 * 64],
+//     adjusted by the eight-word index table and clamped to
+//     [0, 0x1600] = [0, 88 * 64],
 //     the IMA step index. That is the matching step-index pair.
 //   * 0x006937B4 is indexed `(nibble * 4) + step_index`, i.e. [code][index],
 //     and its first row reads 0,1,3,4,7,8,10,11 - exactly step 7 split by the
 //     three magnitude bits of an IMA nibble. 89 rows of 16 dwords.
-static int *const AdpcmPredictorLeft = &MediaAdpcmTables.predictor_left;
-static int *const AdpcmPredictorRight = &MediaAdpcmTables.predictor_right;
-static int *const AdpcmStepIndexLeft = &MediaAdpcmTables.step_index_left;
-static int *const AdpcmStepIndexRight = &MediaAdpcmTables.step_index_right;
-
 // Preserve the native byte-offset interpretation, including unaligned input
 // offsets, without an unaligned int dereference. This is not a bounds waiver.
 static int media_adpcm_delta(int step_byte_offset, unsigned int nibble) {
@@ -3649,7 +3644,7 @@ void __cdecl sub_5ce640(int first_sample, int codes, int samples,
         dst++;
         count++;
         nibble &= 7;
-        step += AdpcmIndexAdjust[nibble];
+        step += MediaAdpcmTables.index_adjust[nibble];
         if (step > 0x1600) {
             step = 0x1600;
         } else if (step < 0) {
@@ -4627,56 +4622,56 @@ void __cdecl sub_5d2536(int *coefficient_row, int *selector_pair,
 
 void __cdecl sub_5ce6e3(unsigned char *codes, short *samples, int sample_total, int *predictor_pair, int *step_index_pair) {
     int iVar2 = 0;
-    *AdpcmStepIndexLeft = (int)(short)*step_index_pair;
-    *AdpcmStepIndexRight = (int)(short)(*reinterpret_cast<unsigned int *>(step_index_pair) >> 16);
-    *AdpcmPredictorLeft = (int)(short)*predictor_pair;
-    *AdpcmPredictorRight = (int)(short)(*reinterpret_cast<unsigned int *>(predictor_pair) >> 16);
+    MediaAdpcmTables.step_index_left = (int)(short)*step_index_pair;
+    MediaAdpcmTables.step_index_right = (int)(short)(*reinterpret_cast<unsigned int *>(step_index_pair) >> 16);
+    MediaAdpcmTables.predictor_left = (int)(short)*predictor_pair;
+    MediaAdpcmTables.predictor_right = (int)(short)(*reinterpret_cast<unsigned int *>(predictor_pair) >> 16);
     do {
         unsigned char bVar1 = *codes;
-        *AdpcmPredictorLeft += media_adpcm_delta(*AdpcmStepIndexLeft, bVar1 >> 4);
-        if (*AdpcmPredictorLeft < 0x8000) {
-            if (*AdpcmPredictorLeft < -0x8000) {
-                *AdpcmPredictorLeft = -0x8000;
+        MediaAdpcmTables.predictor_left += media_adpcm_delta(MediaAdpcmTables.step_index_left, bVar1 >> 4);
+        if (MediaAdpcmTables.predictor_left < 0x8000) {
+            if (MediaAdpcmTables.predictor_left < -0x8000) {
+                MediaAdpcmTables.predictor_left = -0x8000;
             }
         } else {
-            *AdpcmPredictorLeft = 0x7fff;
+            MediaAdpcmTables.predictor_left = 0x7fff;
         }
         *reinterpret_cast<short *>(reinterpret_cast<char *>(samples) + iVar2 * 4) =
-            static_cast<short>(*AdpcmPredictorLeft);
-        *AdpcmStepIndexLeft = *AdpcmStepIndexLeft + *reinterpret_cast<int *>(
-            reinterpret_cast<char *>(AdpcmIndexAdjust) + ((bVar1 >> 4) & 7) * 4);
-        if (*AdpcmStepIndexLeft < 0x1601) {
-            if (*AdpcmStepIndexLeft < 0) {
-                *AdpcmStepIndexLeft = 0;
+            static_cast<short>(MediaAdpcmTables.predictor_left);
+        MediaAdpcmTables.step_index_left += MediaAdpcmTables.index_adjust[(bVar1 >> 4) & 7];
+        if (MediaAdpcmTables.step_index_left < 0x1601) {
+            if (MediaAdpcmTables.step_index_left < 0) {
+                MediaAdpcmTables.step_index_left = 0;
             }
         } else {
-            *AdpcmStepIndexLeft = 0x1600;
+            MediaAdpcmTables.step_index_left = 0x1600;
         }
         bVar1 = *codes;
-        *AdpcmPredictorRight += media_adpcm_delta(*AdpcmStepIndexRight, bVar1 & 0x0f);
-        if (*AdpcmPredictorRight < 0x8000) {
-            if (*AdpcmPredictorRight < -0x8000) {
-                *AdpcmPredictorRight = -0x8000;
+        MediaAdpcmTables.predictor_right += media_adpcm_delta(MediaAdpcmTables.step_index_right, bVar1 & 0x0f);
+        if (MediaAdpcmTables.predictor_right < 0x8000) {
+            if (MediaAdpcmTables.predictor_right < -0x8000) {
+                MediaAdpcmTables.predictor_right = -0x8000;
             }
         } else {
-            *AdpcmPredictorRight = 0x7fff;
+            MediaAdpcmTables.predictor_right = 0x7fff;
         }
         *reinterpret_cast<short *>(reinterpret_cast<char *>(samples) + 2 + iVar2 * 4) =
-            static_cast<short>(*AdpcmPredictorRight);
-        *AdpcmStepIndexRight = *AdpcmStepIndexRight + *reinterpret_cast<int *>(
-            reinterpret_cast<char *>(AdpcmIndexAdjust) + (bVar1 & 0x07) * 4);
-        if (*AdpcmStepIndexRight < 0x1601) {
-            if (*AdpcmStepIndexRight < 0) {
-                *AdpcmStepIndexRight = 0;
+            static_cast<short>(MediaAdpcmTables.predictor_right);
+        MediaAdpcmTables.step_index_right += MediaAdpcmTables.index_adjust[bVar1 & 0x07];
+        if (MediaAdpcmTables.step_index_right < 0x1601) {
+            if (MediaAdpcmTables.step_index_right < 0) {
+                MediaAdpcmTables.step_index_right = 0;
             }
         } else {
-            *AdpcmStepIndexRight = 0x1600;
+            MediaAdpcmTables.step_index_right = 0x1600;
         }
         iVar2 = iVar2 + 1;
         codes = codes + 1;
     } while (iVar2 < sample_total);
-    *predictor_pair = ((*AdpcmPredictorRight & 0xffff) << 16) | (*AdpcmPredictorLeft & 0xffff);
-    *step_index_pair = ((*AdpcmStepIndexRight & 0xffff) << 16) | (*AdpcmStepIndexLeft & 0xffff);
+    *predictor_pair = ((MediaAdpcmTables.predictor_right & 0xffff) << 16) |
+                      (MediaAdpcmTables.predictor_left & 0xffff);
+    *step_index_pair = ((MediaAdpcmTables.step_index_right & 0xffff) << 16) |
+                       (MediaAdpcmTables.step_index_left & 0xffff);
 }
 
 // ---------------------------------------------------------------------------
