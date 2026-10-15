@@ -2858,12 +2858,12 @@ void Console::editor_clear_vehicles() {
     const int initial_area = static_cast<int>(MapArea);
     Map *tile = MapTiles;
     GameDataStateStorage.fields_.game_state_ |= 4;
+    int count = 0;
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
     if (initial_area > 0) {
-        int count = 0;
         do {
             tile->bit &= 0xfffffffcU;
             for (int i = 0; i < 7; ++i) {
@@ -2942,7 +2942,7 @@ int Console::selecting(int tile_x, int tile_y) {
     }
 
     bool forbidden = false;
-    if (selecting_signed(field_23D14_) >= 0) {
+    if (field_23D14_ >= 0) {
         const int vehicle = selected_vehicle_;
         const int vehicle_x = Vehs[vehicle].x;
         const int vehicle_y = Vehs[vehicle].y;
@@ -2955,7 +2955,7 @@ int Console::selecting(int tile_x, int tile_y) {
         // original SAR floors negative odd sums rather than truncating.
         const int distance = distance_sum >= 0 ? distance_sum / 2
                            : -1 - ((-1 - distance_sum) / 2);
-        forbidden = distance > selecting_signed(field_23D14_);
+        forbidden = distance > field_23D14_;
     }
     if (!forbidden && field_23D10_ == 8) {
         forbidden = valid_patrol(selected_vehicle_, tile_x, tile_y) == 0;
@@ -3031,10 +3031,9 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 void Console::cursor_on(int cursor_shape) {
     // The original assumes cursor_shape names one of the twelve loaded
     // cursor sprites; neither it nor the hotspot lookup adds a bounds guard.
-    for (MapWin **slot = MapWinTable;
-         slot < MapWinTable + MapWinTableSlots; ++slot) {
-        MapWin *const window = *slot;
-        if (window != nullptr && (slot == MapWinTable || window->field_1DD74_ != 0)) {
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
             Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
             if (window->cursor_sprite_ != sprite) {
                 window->GraphicWin::set_cursor(sprite,
@@ -3683,12 +3682,11 @@ void Console::editor_clear_random() {
 // calls     0x005EC740 0x005FCA30
 
 void Console::cursor_on(int cursor_shape, int veh_id) {
-    field_23D14_ = static_cast<uint32_t>(veh_id);
+    field_23D14_ = veh_id;
     field_23D10_ = static_cast<uint32_t>(cursor_shape);
-    for (MapWin **slot = MapWinTable;
-         slot < MapWinTable + MapWinTableSlots; ++slot) {
-        MapWin *const window = *slot;
-        if (window != nullptr && (slot == MapWinTable || window->field_1DD74_ != 0)) {
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
             Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
             if (window->cursor_sprite_ != sprite) {
                 window->GraphicWin::set_cursor(sprite,

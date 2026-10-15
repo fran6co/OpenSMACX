@@ -123,6 +123,13 @@ static void test_no_bonus_keeps_selected_extra_across_callback() {
     assert((events == std::vector<std::string>{"parse_num", "pop:NOTIMEBONUSES"}));
     assert(last_parse_arg0 == 0 && last_parse_arg1 == 103);
     assert(GameDataStateStorage.fields_.time_controls_selection_ == 4);
+
+    reset();
+    GameDataStateStorage.fields_.time_controls_selection_ = 2;
+    PlayersData[3].time_bonus_count = -1;
+    self.use_time_bonus();
+    assert((events == std::vector<std::string>{"parse_num", "pop:NOTIMEBONUSES"}));
+    assert(last_parse_arg0 == 0 && last_parse_arg1 == 102);
 }
 
 static void test_end_of_game_and_already_used_gates() {

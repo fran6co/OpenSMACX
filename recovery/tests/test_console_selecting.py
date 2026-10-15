@@ -60,9 +60,11 @@ def actual_source():
     parts["SPRITES"], = re.findall(r"^extern Sprite g_CURSOR_SPRITES\[12\];", h["sprite"], re.M)
     parts["SPRITES"] = parts["SPRITES"].removeprefix("extern ")
     globals_ = []
-    for name in ("MapLongitude", "MapLongitudeBounds", "MapIsFlat"):
-        declaration, = re.findall(r"^extern (?:int|uint32_t|BOOL) " + name + r";", h["map"], re.M)
-        globals_.append(declaration.removeprefix("extern "))
+    declaration, = re.findall(r"^extern uint32_t MapLongitude;", h["map"], re.M)
+    globals_.append(declaration.removeprefix("extern "))
+    # The other two names are source macros into MapStorage metadata, so the
+    # host fixture supplies same-width independent words for their semantics.
+    globals_.extend(("int MapLongitudeBounds;", "BOOL MapIsFlat;"))
     for name in ("CursorHotspotX", "CursorHotspotY"):
         definition, = re.findall(r"^int " + name + r"\[12\] = \{0\};", source, re.M)
         globals_.append(definition)
@@ -126,7 +128,7 @@ HELPER
 BODY
 void reset(){
     seen.clear();scenario=0;patrol_result=1;expected_vehicle=1;expected_x=10;expected_y=10;
-    console.field_23D10_=2;console.field_23D14_=0xffffffffU;console.selected_vehicle_=1;
+    console.field_23D10_=2;console.field_23D14_=-1;console.selected_vehicle_=1;
     std::memset(Vehs,0,sizeof(Vehs));Vehs[1].x=4;Vehs[1].y=6;
     MapLongitudeBounds=64;MapLongitude=32;MapIsFlat=0;
     for(size_t i=0;i<MapWinTableSlots;++i)MapWinTable[i]=nullptr;
@@ -145,7 +147,8 @@ void early_controls(){
     for(int mode=0;mode<2;++mode){reset();console.field_23D10_=mode;console.field_23D14_=0;console.selected_vehicle_=-1;
         require(choose()==mode&&seen.empty());}
     reset();console.selected_vehicle_=-1;one_window();require(choose()==1);event(0,'S',0,2);event(1,'P',-1);
-    reset();console.field_23D14_=0x80000000U;console.selected_vehicle_=-1;one_window();require(choose()==1);event(0,'S',0,2);
+    reset();console.field_23D14_=(-2147483647 - 1);console.selected_vehicle_=-1;one_window();require(choose()==1);event(0,'S',0,2);
+    reset();console.field_23D14_=(-2147483647 - 1);console.selected_vehicle_=1;one_window();require(choose()==1);event(0,'S',0,2);
 }
 void range_controls(){
     // Independent original geometry: (absX wrapped at stored HALF width +
@@ -223,7 +226,7 @@ MUTATIONS = [
     ("mode0_wrong_result", "if (initial_mode == 0) {\n        return 0;", "if (initial_mode == 0) {\n        return 1;"),
     ("mode1_not_early", "if (initial_mode == 1)", "if (false)"),
     ("mode0_not_early", "if (initial_mode == 0)", "if (false)"),
-    ("unsigned_range_gate", "selecting_signed(field_23D14_) >= 0", "field_23D14_ >= 0"),
+    ("unsigned_range_gate", "field_23D14_ >= 0", "static_cast<uint32_t>(field_23D14_) >= 0U"),
     ("x_absolute_value", "abs(tile_x - vehicle_x)", "(tile_x - vehicle_x)"),
     ("y_absolute_value", "abs(tile_y - vehicle_y)", "(tile_y - vehicle_y)"),
     ("full_instead_of_half_width", "dx > selecting_signed(MapLongitude)", "dx > MapLongitudeBounds"),
@@ -232,7 +235,7 @@ MUTATIONS = [
     ("flat_boolean_instead_of_bit", "(MapIsFlat & 1) == 0", "MapIsFlat == 0"),
     ("wrong_wrap_subtraction", "dx = MapLongitudeBounds - dx", "dx = dx - MapLongitudeBounds"),
     ("distance_scaling", "distance_sum / 2", "distance_sum / 4"),
-    ("range_equality_refused", "distance > selecting_signed(field_23D14_)", "distance >= selecting_signed(field_23D14_)"),
+    ("range_equality_refused", "distance > field_23D14_", "distance >= field_23D14_"),
     ("patrol_after_range_refusal", "!forbidden && field_23D10_ == 8", "field_23D10_ == 8"),
     ("patrol_receiver_argument", "valid_patrol(selected_vehicle_,", "valid_patrol(selected_vehicle_ + 1,"),
     ("patrol_result", "valid_patrol(selected_vehicle_, tile_x, tile_y) == 0", "valid_patrol(selected_vehicle_, tile_x, tile_y) != 0"),
@@ -263,4 +266,11 @@ def test_selecting_damage_controls(tmp_path, name, old, new):
     if name == "table_cached_before_callbacks":
         parts["BODY"] = parts["BODY"].replace("window = MapWinTable[slot]", "window = snapshot[slot]")
     result = run_host(tmp_path, parts)
+    if name == "unsigned_range_gate":
+        assert result.returncode != 0 and (
+            result.returncode == 94
+            or "AddressSanitizer" in result.stderr
+            or "runtime error:" in result.stderr
+        ), (name, result.stderr)
+        return
     assert result.returncode == 94 and "assertion line" in result.stderr, (name, result.stderr)

@@ -1,0 +1,20 @@
+{
+  "event_id": "f70e5b3560bad5e543e6d8fcf14bb51beaf3f201114e0a37618d4eed3f3d7733",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_selecting.py",
+      "src/console.h"
+    ],
+    "evidence": [
+      "Pinned5105C0 reads member23D14 and tests signed negative at5105E2..5105EA and signed distance limit510652..510654; producer510490 stores int argument unchanged. Recover int32_t field without changing layout or original negative sentinel behavior. Keep mode23D10 and unrelated signed-conversion helpers unchanged. Preserve historical byte obligations and the prior tested spelling trial in branch history."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "console-signed-radius-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-clean-matching-oct15"
+}

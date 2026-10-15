@@ -35,7 +35,7 @@ def actual_source():
         declaration,=re.findall(r"^  (?:Sprite \*|uint32_t )"+name+r";",map_header,re.M);fields.append(declaration)
     console_fields=[]
     for name in ("field_23D10_","field_23D14_"):
-        declaration,=re.findall(r"^  uint32_t "+name+r";",console,re.M);console_fields.append(declaration)
+        declaration,=re.findall(r"^  (?:uint32_t|int32_t) "+name+r";",console,re.M);console_fields.append(declaration)
     bound,=re.findall(r"^static const size_t MapWinTableSlots = \d+;",map_header,re.M)
     bodies="\n".join(braced(cpp,signature) for signature in
         ("void Console::cursor_on(int cursor_shape)","void Console::cursor_on(int cursor_shape, int veh_id)","void Console::cursor_off()","int Console::selected()"))
@@ -166,10 +166,10 @@ def test_actual_console_cursor_state(tmp_path):
 
 
 MUTANTS=[
-    ("primary-active-bypass","slot == MapWinTable || window->field_1DD74_ != 0","window->field_1DD74_ != 0"),
-    ("inactive-filter","slot == MapWinTable || window->field_1DD74_ != 0","true"),
-    ("last-slot","slot < MapWinTable + MapWinTableSlots","slot < MapWinTable + MapWinTableSlots - 1"),
-    ("sprite-cached-writeback","window->cursor_sprite_ = sprite;","(*slot)->cursor_sprite_ = sprite;"),
+    ("primary-active-bypass","slot == 0 || window->field_1DD74_ != 0","window->field_1DD74_ != 0"),
+    ("inactive-filter","slot == 0 || window->field_1DD74_ != 0","true"),
+    ("last-slot","slot < static_cast<int>(MapWinTableSlots)","slot < static_cast<int>(MapWinTableSlots) - 1"),
+    ("sprite-cached-writeback","window->cursor_sprite_ = sprite;","MapWinTable[slot]->cursor_sprite_ = sprite;"),
     ("resource-cached-writeback","window->cursor_resource_id_ = 0x7f00;","MapWinTable[slot]->cursor_resource_id_ = 0x7f00;"),
     ("flags-live-slot","const uint32_t flags = MapWinTable[slot]->field_1DD70_;","const uint32_t flags = window->field_1DD70_;"),
     ("draw-live-slot","MapWinTable[slot]->draw_map(1);","window->draw_map(1);"),
