@@ -1,0 +1,19 @@
+{
+  "event_id": "f946377c9b8cbd45de3539327a8d010a0cc0d674e6236466fa9d3fb461426a52",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/autosound_defaults.h"
+    ],
+    "evidence": [
+      "Physical full build finds declaration-induced scheduling changes in unrelated TUs because autosound.h is widely included. Typed defaults are only consumed in autosound.cpp and fx.cpp; isolate their shared record declaration in autosound_defaults.h and include it only in those owners, preserving all behavior, bounds and source identities. Adapt existing scoped tests to read this owning header."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "isolate-default-record-declaration-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:autosound-default-types-oct15"
+}

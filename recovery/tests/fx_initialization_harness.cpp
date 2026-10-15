@@ -4,6 +4,7 @@
 #include <string.h>
 typedef unsigned int uint32_t;
 class Sound;
+// LIVE_DEFAULTS_DECLARATION
 void observe(const char *, Sound *, const char *, int);
 int call_result;
 class Sound {
@@ -35,7 +36,11 @@ typedef void (__cdecl *BasePopConfigCallback)(BasePopTextBlock *, int);
 void __cdecl popup_wave_callback(BasePopTextBlock *, int) { assert(false); }
 BasePopConfigCallback BasePopDefaultField3094;
 struct PopupDefaults { uint32_t before, words[70], after; } popup_defaults;
-struct AudioDefaults { uint32_t before, words[37], after; } audio_defaults;
+struct AudioDefaults {
+  uint32_t before;
+  AutoSoundDefaultsBlock words;
+  uint32_t after;
+} audio_defaults;
 #define BasePopDefaultBlock2E64 popup_defaults.words
 #define AutoSoundDefaults audio_defaults.words
 
@@ -73,8 +78,10 @@ void observe(const char *op, Sound *sound, const char *name, int value) {
     // Independent original block contents, not the candidate constant itself.
     BasePopTextBlock block = {"", -1, 127, 50, 0, 0};
     assert(!memcmp(BasePopDefaultBlock2E64, &block, sizeof(block)));
-    for (int i = 0; i < 37; ++i)
-        assert(AutoSoundDefaults[i] == (call.reset ? 0 : 0xabababab));
+    const unsigned char *audio_bytes =
+        reinterpret_cast<const unsigned char *>(&AutoSoundDefaults);
+    for (unsigned int i = 0; i < sizeof(AutoSoundDefaults); ++i)
+        assert(audio_bytes[i] == (call.reset ? 0 : 0xab));
     assert(popup_defaults.before == 0xabababab && popup_defaults.after == 0xabababab);
     assert(audio_defaults.before == 0xabababab && audio_defaults.after == 0xabababab);
 }

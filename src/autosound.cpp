@@ -17,13 +17,15 @@
  */
 #include "stdafx.h"
 #include "autosound.h"
+#include "autosound_defaults.h"
 
-// Constructor, close and close2 read 37 mutable words at [9BC080,9BC114).
+// Constructor, close and close2 read typed defaults occupying
+// [9BC080,9BC114) in the original 37-word global order.
 // The loader supplies initial zeros; FX::init (0x00445CD0) also clears all
 // 37 words, but is optional and does not precede static window construction.
-// The source-owned FX initializer resets this same array.
-// RECOVERY_OBJECT: v2 0x009BC080 0x009BC114 ?AutoSoundDefaults@@3PAIA 0x0062BA80
-uint32_t AutoSoundDefaults[37];
+// The source-owned FX initializer resets this same typed record.
+// RECOVERY_OBJECT: v4 0x009BC080 0x009BC114 ?AutoSoundDefaults@@3PAIA 0x0062BA80 target ?AutoSoundDefaults@@3UAutoSoundDefaultsBlock@@A
+AutoSoundDefaultsBlock AutoSoundDefaults;
 
 
 /*
@@ -42,43 +44,45 @@ Purpose: Construct an AutoSound by installing its virtual table and copying
 Status: Complete
 */
 AutoSound::AutoSound() {
-    val_1_ = static_cast<int>(AutoSoundDefaults[0]);
-    val_3_ = reinterpret_cast<Sound *>(AutoSoundDefaults[1]);
-    val_4_ = reinterpret_cast<Sound *>(AutoSoundDefaults[2]);
-    val_2_ = static_cast<int>(AutoSoundDefaults[3]);
-    val_5_ = static_cast<int>(AutoSoundDefaults[4]);
-    val_6_ = reinterpret_cast<Sound *>(AutoSoundDefaults[5]);
-    val_7_ = reinterpret_cast<Sound *>(AutoSoundDefaults[6]);
-    val_8_ = reinterpret_cast<Sound *>(AutoSoundDefaults[7]);
-    val_9_ = reinterpret_cast<Sound *>(AutoSoundDefaults[8]);
-    val_10_ = reinterpret_cast<Sound *>(AutoSoundDefaults[9]);
-    val_11_ = reinterpret_cast<Sound *>(AutoSoundDefaults[10]);
-    val_12_ = reinterpret_cast<Sound *>(AutoSoundDefaults[11]);
-    val_13_ = reinterpret_cast<Sound *>(AutoSoundDefaults[12]);
-    val_14_ = reinterpret_cast<Sound *>(AutoSoundDefaults[13]);
-    val_15_ = reinterpret_cast<Sound *>(AutoSoundDefaults[14]);
-    val_16_ = reinterpret_cast<Sound *>(AutoSoundDefaults[15]);
-    val_17_ = reinterpret_cast<Sound *>(AutoSoundDefaults[16]);
-    val_18_ = reinterpret_cast<Sound *>(AutoSoundDefaults[17]);
-    val_19_ = reinterpret_cast<Sound *>(AutoSoundDefaults[18]);
-    val_20_ = reinterpret_cast<Sound *>(AutoSoundDefaults[19]);
-    val_21_ = reinterpret_cast<Sound *>(AutoSoundDefaults[20]);
-    val_22_ = reinterpret_cast<Sound *>(AutoSoundDefaults[21]);
-    val_23_ = reinterpret_cast<Sound *>(AutoSoundDefaults[22]);
-    val_24_ = reinterpret_cast<Sound *>(AutoSoundDefaults[23]);
-    val_25_ = reinterpret_cast<Sound *>(AutoSoundDefaults[24]);
-    val_26_ = reinterpret_cast<Sound *>(AutoSoundDefaults[25]);
-    val_27_ = reinterpret_cast<Sound *>(AutoSoundDefaults[26]);
-    val_28_ = reinterpret_cast<Sound *>(AutoSoundDefaults[27]);
-    val_29_ = reinterpret_cast<Sound *>(AutoSoundDefaults[28]);
-    val_30_ = reinterpret_cast<Sound *>(AutoSoundDefaults[29]);
-    val_31_ = reinterpret_cast<Sound *>(AutoSoundDefaults[30]);
-    val_32_ = static_cast<int>(AutoSoundDefaults[31]);
-    val_33_ = reinterpret_cast<Sound *>(AutoSoundDefaults[32]);
-    event_window_ = reinterpret_cast<Sound *>(AutoSoundDefaults[33]);
-    val_35_ = reinterpret_cast<Sound *>(AutoSoundDefaults[34]);
-    val_36_ = reinterpret_cast<Sound *>(AutoSoundDefaults[35]);
-    val_37_ = reinterpret_cast<Sound *>(AutoSoundDefaults[36]);
+    // Keep the original global-slot permutation: offsets 0,4,8,12,16 map
+    // to object fields 4,12,16,8,20 respectively.
+    val_1_ = AutoSoundDefaults.val_1_;
+    val_3_ = AutoSoundDefaults.val_3_;
+    val_4_ = AutoSoundDefaults.val_4_;
+    val_2_ = AutoSoundDefaults.val_2_;
+    val_5_ = AutoSoundDefaults.val_5_;
+    val_6_ = AutoSoundDefaults.val_6_;
+    val_7_ = AutoSoundDefaults.val_7_;
+    val_8_ = AutoSoundDefaults.val_8_;
+    val_9_ = AutoSoundDefaults.val_9_;
+    val_10_ = AutoSoundDefaults.val_10_;
+    val_11_ = AutoSoundDefaults.val_11_;
+    val_12_ = AutoSoundDefaults.val_12_;
+    val_13_ = AutoSoundDefaults.val_13_;
+    val_14_ = AutoSoundDefaults.val_14_;
+    val_15_ = AutoSoundDefaults.val_15_;
+    val_16_ = AutoSoundDefaults.val_16_;
+    val_17_ = AutoSoundDefaults.val_17_;
+    val_18_ = AutoSoundDefaults.val_18_;
+    val_19_ = AutoSoundDefaults.val_19_;
+    val_20_ = AutoSoundDefaults.val_20_;
+    val_21_ = AutoSoundDefaults.val_21_;
+    val_22_ = AutoSoundDefaults.val_22_;
+    val_23_ = AutoSoundDefaults.val_23_;
+    val_24_ = AutoSoundDefaults.val_24_;
+    val_25_ = AutoSoundDefaults.val_25_;
+    val_26_ = AutoSoundDefaults.val_26_;
+    val_27_ = AutoSoundDefaults.val_27_;
+    val_28_ = AutoSoundDefaults.val_28_;
+    val_29_ = AutoSoundDefaults.val_29_;
+    val_30_ = AutoSoundDefaults.val_30_;
+    val_31_ = AutoSoundDefaults.val_31_;
+    val_32_ = AutoSoundDefaults.val_32_;
+    val_33_ = AutoSoundDefaults.val_33_;
+    event_window_ = AutoSoundDefaults.event_window_;
+    val_35_ = AutoSoundDefaults.val_35_;
+    val_36_ = AutoSoundDefaults.val_36_;
+    val_37_ = AutoSoundDefaults.val_37_;
 }
 
 
@@ -101,43 +105,43 @@ void AutoSound::close() {
     // Spelled out, NOT a loop - the same finding init() already carries.
     // VC6 keeps the 33-element tail as an address-stepping loop and never
     // unrolls it; the image is 333 bytes of straight-line load/store pairs.
-    val_1_ = static_cast<int>(AutoSoundDefaults[0]);
-    val_3_ = reinterpret_cast<Sound *>(AutoSoundDefaults[1]);
-    val_4_ = reinterpret_cast<Sound *>(AutoSoundDefaults[2]);
-    val_2_ = static_cast<int>(AutoSoundDefaults[3]);
-    val_5_ = static_cast<int>(AutoSoundDefaults[4]);
-    val_6_ = reinterpret_cast<Sound *>(AutoSoundDefaults[5]);
-    val_7_ = reinterpret_cast<Sound *>(AutoSoundDefaults[6]);
-    val_8_ = reinterpret_cast<Sound *>(AutoSoundDefaults[7]);
-    val_9_ = reinterpret_cast<Sound *>(AutoSoundDefaults[8]);
-    val_10_ = reinterpret_cast<Sound *>(AutoSoundDefaults[9]);
-    val_11_ = reinterpret_cast<Sound *>(AutoSoundDefaults[10]);
-    val_12_ = reinterpret_cast<Sound *>(AutoSoundDefaults[11]);
-    val_13_ = reinterpret_cast<Sound *>(AutoSoundDefaults[12]);
-    val_14_ = reinterpret_cast<Sound *>(AutoSoundDefaults[13]);
-    val_15_ = reinterpret_cast<Sound *>(AutoSoundDefaults[14]);
-    val_16_ = reinterpret_cast<Sound *>(AutoSoundDefaults[15]);
-    val_17_ = reinterpret_cast<Sound *>(AutoSoundDefaults[16]);
-    val_18_ = reinterpret_cast<Sound *>(AutoSoundDefaults[17]);
-    val_19_ = reinterpret_cast<Sound *>(AutoSoundDefaults[18]);
-    val_20_ = reinterpret_cast<Sound *>(AutoSoundDefaults[19]);
-    val_21_ = reinterpret_cast<Sound *>(AutoSoundDefaults[20]);
-    val_22_ = reinterpret_cast<Sound *>(AutoSoundDefaults[21]);
-    val_23_ = reinterpret_cast<Sound *>(AutoSoundDefaults[22]);
-    val_24_ = reinterpret_cast<Sound *>(AutoSoundDefaults[23]);
-    val_25_ = reinterpret_cast<Sound *>(AutoSoundDefaults[24]);
-    val_26_ = reinterpret_cast<Sound *>(AutoSoundDefaults[25]);
-    val_27_ = reinterpret_cast<Sound *>(AutoSoundDefaults[26]);
-    val_28_ = reinterpret_cast<Sound *>(AutoSoundDefaults[27]);
-    val_29_ = reinterpret_cast<Sound *>(AutoSoundDefaults[28]);
-    val_30_ = reinterpret_cast<Sound *>(AutoSoundDefaults[29]);
-    val_31_ = reinterpret_cast<Sound *>(AutoSoundDefaults[30]);
-    val_32_ = static_cast<int>(AutoSoundDefaults[31]);
-    val_33_ = reinterpret_cast<Sound *>(AutoSoundDefaults[32]);
-    event_window_ = reinterpret_cast<Sound *>(AutoSoundDefaults[33]);
-    val_35_ = reinterpret_cast<Sound *>(AutoSoundDefaults[34]);
-    val_36_ = reinterpret_cast<Sound *>(AutoSoundDefaults[35]);
-    val_37_ = reinterpret_cast<Sound *>(AutoSoundDefaults[36]);
+    val_1_ = AutoSoundDefaults.val_1_;
+    val_3_ = AutoSoundDefaults.val_3_;
+    val_4_ = AutoSoundDefaults.val_4_;
+    val_2_ = AutoSoundDefaults.val_2_;
+    val_5_ = AutoSoundDefaults.val_5_;
+    val_6_ = AutoSoundDefaults.val_6_;
+    val_7_ = AutoSoundDefaults.val_7_;
+    val_8_ = AutoSoundDefaults.val_8_;
+    val_9_ = AutoSoundDefaults.val_9_;
+    val_10_ = AutoSoundDefaults.val_10_;
+    val_11_ = AutoSoundDefaults.val_11_;
+    val_12_ = AutoSoundDefaults.val_12_;
+    val_13_ = AutoSoundDefaults.val_13_;
+    val_14_ = AutoSoundDefaults.val_14_;
+    val_15_ = AutoSoundDefaults.val_15_;
+    val_16_ = AutoSoundDefaults.val_16_;
+    val_17_ = AutoSoundDefaults.val_17_;
+    val_18_ = AutoSoundDefaults.val_18_;
+    val_19_ = AutoSoundDefaults.val_19_;
+    val_20_ = AutoSoundDefaults.val_20_;
+    val_21_ = AutoSoundDefaults.val_21_;
+    val_22_ = AutoSoundDefaults.val_22_;
+    val_23_ = AutoSoundDefaults.val_23_;
+    val_24_ = AutoSoundDefaults.val_24_;
+    val_25_ = AutoSoundDefaults.val_25_;
+    val_26_ = AutoSoundDefaults.val_26_;
+    val_27_ = AutoSoundDefaults.val_27_;
+    val_28_ = AutoSoundDefaults.val_28_;
+    val_29_ = AutoSoundDefaults.val_29_;
+    val_30_ = AutoSoundDefaults.val_30_;
+    val_31_ = AutoSoundDefaults.val_31_;
+    val_32_ = AutoSoundDefaults.val_32_;
+    val_33_ = AutoSoundDefaults.val_33_;
+    event_window_ = AutoSoundDefaults.event_window_;
+    val_35_ = AutoSoundDefaults.val_35_;
+    val_36_ = AutoSoundDefaults.val_36_;
+    val_37_ = AutoSoundDefaults.val_37_;
 }
 
 
@@ -158,43 +162,43 @@ Status: Complete
 */
 void AutoSound::close2() {
     // Spelled out, NOT a loop - see close() above.
-    val_1_ = static_cast<int>(AutoSoundDefaults[0]);
-    val_2_ = static_cast<int>(AutoSoundDefaults[3]);
-    val_3_ = reinterpret_cast<Sound *>(AutoSoundDefaults[1]);
-    val_4_ = reinterpret_cast<Sound *>(AutoSoundDefaults[2]);
-    val_5_ = static_cast<int>(AutoSoundDefaults[4]);
-    val_6_ = reinterpret_cast<Sound *>(AutoSoundDefaults[5]);
-    val_7_ = reinterpret_cast<Sound *>(AutoSoundDefaults[6]);
-    val_8_ = reinterpret_cast<Sound *>(AutoSoundDefaults[7]);
-    val_9_ = reinterpret_cast<Sound *>(AutoSoundDefaults[8]);
-    val_10_ = reinterpret_cast<Sound *>(AutoSoundDefaults[9]);
-    val_11_ = reinterpret_cast<Sound *>(AutoSoundDefaults[10]);
-    val_12_ = reinterpret_cast<Sound *>(AutoSoundDefaults[11]);
-    val_13_ = reinterpret_cast<Sound *>(AutoSoundDefaults[12]);
-    val_14_ = reinterpret_cast<Sound *>(AutoSoundDefaults[13]);
-    val_15_ = reinterpret_cast<Sound *>(AutoSoundDefaults[14]);
-    val_16_ = reinterpret_cast<Sound *>(AutoSoundDefaults[15]);
-    val_17_ = reinterpret_cast<Sound *>(AutoSoundDefaults[16]);
-    val_18_ = reinterpret_cast<Sound *>(AutoSoundDefaults[17]);
-    val_19_ = reinterpret_cast<Sound *>(AutoSoundDefaults[18]);
-    val_20_ = reinterpret_cast<Sound *>(AutoSoundDefaults[19]);
-    val_21_ = reinterpret_cast<Sound *>(AutoSoundDefaults[20]);
-    val_22_ = reinterpret_cast<Sound *>(AutoSoundDefaults[21]);
-    val_23_ = reinterpret_cast<Sound *>(AutoSoundDefaults[22]);
-    val_24_ = reinterpret_cast<Sound *>(AutoSoundDefaults[23]);
-    val_25_ = reinterpret_cast<Sound *>(AutoSoundDefaults[24]);
-    val_26_ = reinterpret_cast<Sound *>(AutoSoundDefaults[25]);
-    val_27_ = reinterpret_cast<Sound *>(AutoSoundDefaults[26]);
-    val_28_ = reinterpret_cast<Sound *>(AutoSoundDefaults[27]);
-    val_29_ = reinterpret_cast<Sound *>(AutoSoundDefaults[28]);
-    val_30_ = reinterpret_cast<Sound *>(AutoSoundDefaults[29]);
-    val_31_ = reinterpret_cast<Sound *>(AutoSoundDefaults[30]);
-    val_32_ = static_cast<int>(AutoSoundDefaults[31]);
-    val_33_ = reinterpret_cast<Sound *>(AutoSoundDefaults[32]);
-    event_window_ = reinterpret_cast<Sound *>(AutoSoundDefaults[33]);
-    val_35_ = reinterpret_cast<Sound *>(AutoSoundDefaults[34]);
-    val_36_ = reinterpret_cast<Sound *>(AutoSoundDefaults[35]);
-    val_37_ = reinterpret_cast<Sound *>(AutoSoundDefaults[36]);
+    val_1_ = AutoSoundDefaults.val_1_;
+    val_2_ = AutoSoundDefaults.val_2_;
+    val_3_ = AutoSoundDefaults.val_3_;
+    val_4_ = AutoSoundDefaults.val_4_;
+    val_5_ = AutoSoundDefaults.val_5_;
+    val_6_ = AutoSoundDefaults.val_6_;
+    val_7_ = AutoSoundDefaults.val_7_;
+    val_8_ = AutoSoundDefaults.val_8_;
+    val_9_ = AutoSoundDefaults.val_9_;
+    val_10_ = AutoSoundDefaults.val_10_;
+    val_11_ = AutoSoundDefaults.val_11_;
+    val_12_ = AutoSoundDefaults.val_12_;
+    val_13_ = AutoSoundDefaults.val_13_;
+    val_14_ = AutoSoundDefaults.val_14_;
+    val_15_ = AutoSoundDefaults.val_15_;
+    val_16_ = AutoSoundDefaults.val_16_;
+    val_17_ = AutoSoundDefaults.val_17_;
+    val_18_ = AutoSoundDefaults.val_18_;
+    val_19_ = AutoSoundDefaults.val_19_;
+    val_20_ = AutoSoundDefaults.val_20_;
+    val_21_ = AutoSoundDefaults.val_21_;
+    val_22_ = AutoSoundDefaults.val_22_;
+    val_23_ = AutoSoundDefaults.val_23_;
+    val_24_ = AutoSoundDefaults.val_24_;
+    val_25_ = AutoSoundDefaults.val_25_;
+    val_26_ = AutoSoundDefaults.val_26_;
+    val_27_ = AutoSoundDefaults.val_27_;
+    val_28_ = AutoSoundDefaults.val_28_;
+    val_29_ = AutoSoundDefaults.val_29_;
+    val_30_ = AutoSoundDefaults.val_30_;
+    val_31_ = AutoSoundDefaults.val_31_;
+    val_32_ = AutoSoundDefaults.val_32_;
+    val_33_ = AutoSoundDefaults.val_33_;
+    event_window_ = AutoSoundDefaults.event_window_;
+    val_35_ = AutoSoundDefaults.val_35_;
+    val_36_ = AutoSoundDefaults.val_36_;
+    val_37_ = AutoSoundDefaults.val_37_;
 }
 
 

@@ -98,9 +98,9 @@ public:
     void (*field_424_)(int, int);
     void (*field_428_)(int, int);
     Sound *val_12_;
-    void *val_13_;
-    void *val_24_;
-    void *val_25_;
+    Sound *val_13_;
+    Sound *val_24_;
+    Sound *val_25_;
 };
 
 __BODY_23__
@@ -210,7 +210,14 @@ def test_mixed_autosound_words_keep_neutral_storage_and_sound_views():
     assert re.search(r"Sound\s*\*\s*val_13_\s*;", header)
     assert re.search(r"Sound\s*\*\s*val_24_\s*;", header)
     assert re.search(r"Sound\s*\*\s*val_25_\s*;", header)
-    assert re.search(r"int\s+val_20_\s*;", header)
+    auto = header[header.index("class AutoSound {"):]
+    assert re.search(r"Sound\s*\*\s*val_20_\s*;", auto)
+    defaults = (ROOT / "src" / "autosound_defaults.h").read_text()
+    assert "struct AutoSoundDefaultsBlock" in defaults
+    assert re.search(r"int\s+val_1_;", defaults)
+    assert re.search(r"int\s+val_2_;", defaults)
+    assert re.search(r"int\s+val_5_;", defaults)
+    assert re.search(r"int\s+val_32_;", defaults)
     assert 'static_assert(sizeof(AutoSound) == 0x98' in header
 
 
@@ -221,9 +228,8 @@ def test_autosound_lifecycle_keeps_the_same_default_and_zero_stores():
         body = function_text(source, signature)
         for field, index in (("val_12_", 11), ("val_13_", 12),
                              ("val_24_", 23), ("val_25_", 24)):
-            value_type = "Sound"
             assert re.search(
-                rf"{field}\s*=\s*reinterpret_cast<{value_type}\s*\*>\(AutoSoundDefaults\[{index}\]\)",
+            rf"{field}\s*=\s*AutoSoundDefaults\.{field}",
                 body,
             ), f"{signature} must preserve {field} default word {index}"
     init_body = function_text(source, "void AutoSound::init()")

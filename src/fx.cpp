@@ -88,6 +88,8 @@ Status: Complete
 // ORIGINAL: 0x004482D0 ??0Effect@@QAE@XZ 0x004482D0-0x004482E2 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original FX construction at0x004482A0 passes0x004482D0 as its per-element constructor for97elements of0x6Cbytes.", "Existing seedsrc/recovered/units/004482d0.cpp identifies span0x004482D0-0x004482E2; original instructions call Wave::Wave at0x004C66E0 then store the Effect virtual table at0x0066B7A4."], "reason": "Implicit Effect constructor emitted for the real FX Effect array; Wave base construction and derived virtual-table installation are compiler-owned."}
 #include "fx.h"
+#include "autosound_defaults.h"
+#include "autosound.h"
 #include "win.h"
 #include "basepop.h"
 #include "popup.h"
@@ -201,7 +203,6 @@ void FX::engine_pitch(int pitch) {
 
 // FX publishes these existing owners; they are defined in their domain TUs.
 extern uint32_t BasePopDefaultBlock2E64[70];
-extern uint32_t AutoSoundDefaults[37];
 extern Wave g_OK_WAVE, g_ALPHAMENU_WAVE, g_SCOOT_WAVE, g_PASSOVER_WAVE;
 extern Wave g_MENU_UP_WAVE, g_MENU_DOWN_WAVE;
 
@@ -314,7 +315,7 @@ void FX::init() {
     WaveDeviceGlobal.add_to_group(1, &effects_[95]);
     effects_[96].init("isle of the deep.wav", 0xC0);
     WaveDeviceGlobal.add_to_group(1, &effects_[96]);
-    memset(AutoSoundDefaults, 0, sizeof(AutoSoundDefaults));
+    memset(&AutoSoundDefaults, 0, sizeof(AutoSoundDefaults));
 
     g_CPU_WAVES[0].Wave::init("fx\\CPU pod recovered.wav", 0x80);
     g_CPU_WAVES[1].Wave::init("fx\\CPU data pod recovered.wav", 0x80);

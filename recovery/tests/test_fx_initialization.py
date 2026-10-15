@@ -180,6 +180,7 @@ def test_actual_initializer_follows_original_call_and_publication_sequence(origi
     monkeypatch.setattr(Path, "read_text", supplied)
     run_recovered_harness(tmp_path, monkeypatch, "fx_initialization_harness.cpp", [
         ("// LIVE_INITIALIZER", UNIT, 0x445CD0)], declarations=[
+        ("// LIVE_DEFAULTS_DECLARATION", "src/autosound_defaults.h", "struct AutoSoundDefaultsBlock {", "\n\nextern AutoSoundDefaultsBlock"),
         ("// LIVE_TEXT_BLOCK", "src/basepop.h", "struct BasePopTextBlock {", "static_assert(sizeof(BasePopTextBlock)"),
         ("// LIVE_FX_DECLARATION", "src/fx.h", "class FX {", "static_assert(sizeof(FX)"),
         ("// LIVE_DEFAULT_VALUE", UNIT, "const BasePopTextBlock FxPopupSoundDefaults", "// Initialize the effect")])
@@ -216,6 +217,8 @@ def test_compiled_initializer_uses_real_owners_and_one_virtual_pitch_call(origin
     settings = Measurement.read(ROOT)
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
     binding, = (b for b in read_objects(ROOT, image_pin(ROOT)) if b.symbol == "_FxPopupSoundDefaults")
+    defaults, = (b for b in read_objects(ROOT, image_pin(ROOT))
+                 if b.symbol == "?AutoSoundDefaults@@3PAIA")
     assert binding.span == Span(0x683AD8, 0x683BF0) and binding.evidence.address == 0x445CD0
     for flags in settings.flag_sets:
         obj = Coff(compiler(ROOT / UNIT, (), flags + settings.layout_flags))
@@ -228,7 +231,7 @@ def test_compiled_initializer_uses_real_owners_and_one_virtual_pitch_call(origin
         assert section.data[constant.value:constant.value + 280] == original.read(binding.span)
         targets = references(obj, SYMBOL)
         assert {"?g_CPU_WAVES@@3PAVWave@@A", "?g_OK_WAVE@@3VWave@@A",
-                "?WaveDeviceGlobal@@3VWave_Device@@A", "?AutoSoundDefaults@@3PAIA",
+                "?WaveDeviceGlobal@@3VWave_Device@@A", defaults.emitted_symbol,
                 "?BasePopDefaultBlock2E64@@3PAIA", "?popup_wave_callback@@YAXPAUBasePopTextBlock@@H@Z"} <= set(targets)
         assert not any("pending" in target.lower() or "Original" in target or "vtable_slot" in target for target in targets)
         code, _, _ = obj.subject(obj.function(SYMBOL))
