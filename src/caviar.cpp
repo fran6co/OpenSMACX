@@ -34,10 +34,6 @@
 #include <new>
 #include <stddef.h>
 
-// Forward declaration: the record dispatchers precede the retained kernel
-// definition in this translation unit.
-static void caviar_install_record_kernels_candidate(
-    VoxRenderRecord *, uint8_t, int);
 void __cdecl caviar_original_666fd0(
     int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
 
@@ -1647,6 +1643,36 @@ VoxRenderRecord *__cdecl vox_create_record(
     return record;
 }
 
+// The dispatchers install these typed callback identities before their
+// definitions later in this translation unit.
+void __cdecl caviar_original_6647f0(
+    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
+void __cdecl caviar_original_664000(
+    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
+    const uint8_t *, int32_t);
+void __cdecl caviar_original_665640(
+    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
+void __cdecl caviar_original_664e50(
+    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
+    const uint8_t *, int32_t);
+void __cdecl caviar_original_666440(
+    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
+void __cdecl caviar_original_665ca0(
+    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
+    const uint8_t *, int32_t);
+void __cdecl caviar_original_667b20(
+    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
+void __cdecl caviar_original_667380(
+    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
+    const uint8_t *, int32_t);
+void __cdecl caviar_original_666a80(
+    int32_t, int32_t, const int32_t *, uint32_t,
+    const uint8_t *, int32_t);
+void __cdecl caviar_original_63aee0();
+void __cdecl caviar_original_63af00();
+void __cdecl caviar_original_63af20();
+void __cdecl caviar_original_63af40();
+
 /*
 Purpose: Fill a render record's pixel-size dispatch slots for CPU ranks 3 and
          5, choosing the table set by the record's odd-alignment flag byte.
@@ -1659,8 +1685,36 @@ Purpose: Fill a render record's pixel-size dispatch slots for CPU ranks 3 and
 void __cdecl sub_63ae20(VoxRenderRecord *record) {
     VoxRenderRecord *const typed = record;
     const unsigned char type = typed->setup_block_->pixel_size_;
-    caviar_install_record_kernels_candidate(
-        typed, type, (typed->setup_id_ & 1u) != 0);
+
+    switch (type) {
+    case 1:
+        if ((static_cast<unsigned char>(typed->setup_id_) & 1u) != 0) {
+            typed->part_contained_ = &caviar_original_665640;
+            typed->part_clipped_ = &caviar_original_664e50;
+            typed->setup_callback_ = &caviar_original_63af40;
+        } else {
+            typed->part_contained_ = &caviar_original_6647f0;
+            typed->part_clipped_ = &caviar_original_664000;
+            typed->setup_callback_ = &caviar_original_63af00;
+        }
+        break;
+    case 2:
+        if ((static_cast<unsigned char>(typed->setup_id_) & 1u) != 0) {
+            typed->part_contained_ = &caviar_original_667b20;
+            typed->part_clipped_ = &caviar_original_667380;
+            typed->setup_callback_ = &caviar_original_63af20;
+        } else {
+            typed->part_contained_ = &caviar_original_666440;
+            typed->part_clipped_ = &caviar_original_665ca0;
+            typed->setup_callback_ = &caviar_original_63aee0;
+        }
+        break;
+    default:
+        break;
+    }
+
+    typed->shadow_contained_ = &caviar_original_666fd0;
+    typed->shadow_clipped_ = &caviar_original_666a80;
 }
 
 /*
@@ -1745,8 +1799,36 @@ Return Value: n/a
 void __cdecl sub_63ad60(VoxRenderRecord *record) {
     VoxRenderRecord *const typed = record;
     const unsigned char type = typed->setup_block_->pixel_size_;
-    caviar_install_record_kernels_candidate(
-        typed, type, (typed->setup_id_ & 1u) != 0);
+
+    switch (type) {
+    case 1:
+        if ((static_cast<unsigned char>(typed->setup_id_) & 1u) != 0) {
+            typed->part_contained_ = &caviar_original_665640;
+            typed->part_clipped_ = &caviar_original_664e50;
+            typed->setup_callback_ = &caviar_original_63af40;
+        } else {
+            typed->part_contained_ = &caviar_original_6647f0;
+            typed->part_clipped_ = &caviar_original_664000;
+            typed->setup_callback_ = &caviar_original_63af00;
+        }
+        break;
+    case 2:
+        if ((static_cast<unsigned char>(typed->setup_id_) & 1u) != 0) {
+            typed->part_contained_ = &caviar_original_667b20;
+            typed->part_clipped_ = &caviar_original_667380;
+            typed->setup_callback_ = &caviar_original_63af20;
+        } else {
+            typed->part_contained_ = &caviar_original_666440;
+            typed->part_clipped_ = &caviar_original_665ca0;
+            typed->setup_callback_ = &caviar_original_63aee0;
+        }
+        break;
+    default:
+        break;
+    }
+
+    typed->shadow_contained_ = &caviar_original_666fd0;
+    typed->shadow_clipped_ = &caviar_original_666a80;
 }
 
 /*
@@ -4099,34 +4181,6 @@ void __cdecl caviar_build_projection_tables() {
 }
 
 
-void __cdecl caviar_original_6647f0(
-    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
-void __cdecl caviar_original_664000(
-    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
-    const uint8_t *, int32_t);
-void __cdecl caviar_original_665640(
-    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
-void __cdecl caviar_original_664e50(
-    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
-    const uint8_t *, int32_t);
-void __cdecl caviar_original_666440(
-    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
-void __cdecl caviar_original_665ca0(
-    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
-    const uint8_t *, int32_t);
-void __cdecl caviar_original_667b20(
-    int32_t, int32_t, int32_t, uint32_t, const uint8_t *, int32_t);
-void __cdecl caviar_original_667380(
-    int32_t, int32_t, int32_t, const int32_t *, uint32_t,
-    const uint8_t *, int32_t);
-void __cdecl caviar_original_666a80(
-    int32_t, int32_t, const int32_t *, uint32_t,
-    const uint8_t *, int32_t);
-
-void __cdecl caviar_original_63aee0();
-void __cdecl caviar_original_63af00();
-void __cdecl caviar_original_63af20();
-void __cdecl caviar_original_63af40();
 void __cdecl caviar_original_666989();
 void __cdecl caviar_original_66638f();
 void __cdecl caviar_original_6646fb();
@@ -4155,7 +4209,7 @@ void __cdecl caviar_original_666fd0(
 // SEED HISTORY: former direct-call order 0x00666989 -> 0x0066638F -> 0x00666F68. The shared 0x66731C-0x667375 secondary body is retained on this identity; its self-modifying immediate stores are replaced by typed prepared state.
 OPENSMACX_NOINLINE
 // ORIGINAL: 0x0063AEE0 sub_63aee0 0x0063AEE0-0x0063AEF4;0x0066731C-0x00667375
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene calls the record setup callback before the instance walk", "source:src/caviar_raster_kernels.inc:caviar_install_record_kernels_candidate selects the mode-specific callback", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The mode-specific wrapper delegates to the existing typed prepared-state callback; the shared original secondary span remains on this mapping."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_create_record selects this record dispatcher by CPU rank", "source:src/caviar.cpp:sub_63ad60/sub_63ae20 directly install the mode-specific callback slots", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The pinned record dispatchers select the typed callback, which binds prepared state before the instance walk; the shared original secondary span remains on this mapping."}
 // symbol    ?caviar_original_63aee0@@YAXXZ
 // TRIED: `int` return (no eax set before final ret, changed to `void`); address range carries a _SELFMOD (copy-protection) span, so the harness's authoritative check REFUSES any body here regardless of content - MISMATCH is the best obtainable signal via --dir.
 // kind      game
@@ -4167,7 +4221,7 @@ void __cdecl caviar_original_63aee0() {
 // SEED HISTORY: former direct-call order 0x00664D51 -> 0x006646FB -> 0x00666F68. The shared 0x66731C-0x667375 secondary body is retained on this identity; its self-modifying immediate stores are replaced by typed prepared state.
 OPENSMACX_NOINLINE
 // ORIGINAL: 0x0063AF00 sub_63af00 0x0063AF00-0x0063AF14;0x0066731C-0x00667375
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene calls the record setup callback before the instance walk", "source:src/caviar_raster_kernels.inc:caviar_install_record_kernels_candidate selects the mode-specific callback", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The mode-specific wrapper delegates to the existing typed prepared-state callback; the shared original secondary span remains on this mapping."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_create_record selects this record dispatcher by CPU rank", "source:src/caviar.cpp:sub_63ad60/sub_63ae20 directly install the mode-specific callback slots", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The pinned record dispatchers select the typed callback, which binds prepared state before the instance walk; the shared original secondary span remains on this mapping."}
 // symbol    ?caviar_original_63af00@@YAXXZ
 // TRIED: nothing to rule out on tier - REFUSED here is unconditional (SELFMOD span), verified with a `return 0;` stub scoring MISMATCH while the correct tail-call form scores REFUSED.
 // kind      game
@@ -4179,7 +4233,7 @@ void __cdecl caviar_original_63af00() {
 // SEED HISTORY: former direct-call order 0x00668069 -> 0x00667A6F -> 0x00666F68. The shared 0x66731C-0x667375 secondary body is retained on this identity; its self-modifying immediate stores are replaced by typed prepared state.
 OPENSMACX_NOINLINE
 // ORIGINAL: 0x0063AF20 sub_63af20 0x0063AF20-0x0063AF34;0x0066731C-0x00667375
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene calls the record setup callback before the instance walk", "source:src/caviar_raster_kernels.inc:caviar_install_record_kernels_candidate selects the mode-specific callback", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The mode-specific wrapper delegates to the existing typed prepared-state callback; the shared original secondary span remains on this mapping."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_create_record selects this record dispatcher by CPU rank", "source:src/caviar.cpp:sub_63ad60/sub_63ae20 directly install the mode-specific callback slots", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The pinned record dispatchers select the typed callback, which binds prepared state before the instance walk; the shared original secondary span remains on this mapping."}
 // symbol    ?caviar_original_63af20@@YAXXZ
 // kind      game
 void __cdecl caviar_original_63af20() {
@@ -4190,7 +4244,7 @@ void __cdecl caviar_original_63af20() {
 // SEED HISTORY: former direct-call order 0x00665BA1 -> 0x0066554B -> 0x00666F68. The shared 0x66731C-0x667375 secondary body is retained on this identity; its self-modifying immediate stores are replaced by typed prepared state.
 OPENSMACX_NOINLINE
 // ORIGINAL: 0x0063AF40 sub_63af40 0x0063AF40-0x0063AF54;0x0066731C-0x00667375
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_draw_scene calls the record setup callback before the instance walk", "source:src/caviar_raster_kernels.inc:caviar_install_record_kernels_candidate selects the mode-specific callback", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The mode-specific wrapper delegates to the existing typed prepared-state callback; the shared original secondary span remains on this mapping."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "source:src/caviar.cpp:vox_create_record selects this record dispatcher by CPU rank", "source:src/caviar.cpp:sub_63ad60/sub_63ae20 directly install the mode-specific callback slots", "source:src/caviar_raster_kernels.inc:caviar_prepare_kernel_bindings_candidate publishes typed current inputs and lane bases", "source:src/caviar_raster_kernels.inc:caviar_part_output_bases_candidate and caviar_shadow_output_bases_candidate compute destinations without executable-page writes", "docs/recovery/ida9-functions.csv:shared secondary range 0x0066731C-0x00667375 is retained by the four historical setup records"], "reason": "Own the renderer's zero-argument setup callback in the configured Caviar TU. The pinned record dispatchers select the typed callback, which binds prepared state before the instance walk; the shared original secondary span remains on this mapping."}
 // symbol    ?caviar_original_63af40@@YAXXZ
 // TRIED: straight-line body after the 3 calls. The original's own tail is a `jmp` into a block shared with another caller (spans two disjoint ranges); inlining it here compiles to `mov` straight-through instead of the shared-tail `jmp`.
 // kind      game

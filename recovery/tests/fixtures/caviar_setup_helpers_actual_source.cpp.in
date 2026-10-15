@@ -77,7 +77,10 @@ typedef void (__cdecl *PartClipped)(int32_t,int32_t,int32_t,const int32_t*,uint3
 typedef void (__cdecl *ShadowContained)(int32_t,int32_t,uint32_t,const uint8_t*,int32_t);
 typedef void (__cdecl *ShadowClipped)(int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t);
 typedef void (__cdecl *SetupCallback)();
+struct CaviarSceneSetupDescriptorCandidate { uint8_t pixel_size_; };
 struct VoxRenderRecord {
+  uint32_t setup_id_;
+  CaviarSceneSetupDescriptorCandidate *setup_block_;
   PartContained part_contained_; PartClipped part_clipped_;
   ShadowContained shadow_contained_; ShadowClipped shadow_clipped_;
   SetupCallback setup_callback_;
@@ -99,6 +102,8 @@ void __cdecl caviar_original_6646fb(); void __cdecl caviar_original_664d51();
 void __cdecl caviar_original_668069(); void __cdecl caviar_original_667a6f();
 void __cdecl caviar_original_665ba1(); void __cdecl caviar_original_66554b();
 void __cdecl caviar_original_666f68();
+void __cdecl sub_63ad60(VoxRenderRecord *record);
+void __cdecl sub_63ae20(VoxRenderRecord *record);
 
 /* ACTUAL_CAVIAR_DEFINITIONS */
 
@@ -161,11 +166,26 @@ int main() {
   return 0;
 }
 #else
-static void exercise_mode(int size, int odd, SetupCallback expected_setup) {
+static void exercise_mode(int size, int odd, SetupCallback expected_setup,
+                          PartContained expected_part,
+                          PartClipped expected_clip,
+                          void (__cdecl *first_dispatcher)(VoxRenderRecord *),
+                          void (__cdecl *second_dispatcher)(VoxRenderRecord *)) {
   reset_mode(size,odd);
   VoxRenderRecord record = {};
-  caviar_install_record_kernels_candidate(&record,(uint8_t)size,odd);
+  CaviarSceneSetupDescriptorCandidate setup = {(uint8_t)size};
+  record.setup_id_ = (uint32_t)odd;
+  record.setup_block_ = &setup;
+  first_dispatcher(&record);
   assert(record.setup_callback_ == expected_setup);
+  assert(record.part_contained_ == expected_part);
+  assert(record.part_clipped_ == expected_clip);
+  assert(record.shadow_contained_ == &caviar_original_666fd0);
+  assert(record.shadow_clipped_ == &caviar_original_666a80);
+  second_dispatcher(&record);
+  assert(record.setup_callback_ == expected_setup);
+  assert(record.part_contained_ == expected_part);
+  assert(record.part_clipped_ == expected_clip);
   record.setup_callback_();
   assert(caviar_prepared_kernel_bindings_candidate.depth_rows_ == depth_rows);
   assert(caviar_prepared_kernel_bindings_candidate.colour_lane_base_[0] == descriptor_colour);
@@ -195,10 +215,35 @@ static void exercise_mode(int size, int odd, SetupCallback expected_setup) {
   assert(decoy_colour[2]==0 && decoy_shadow[1]==0);
 }
 int main() {
-  exercise_mode(1,0,&caviar_original_63af00);
-  exercise_mode(1,1,&caviar_original_63af40);
-  exercise_mode(2,0,&caviar_original_63aee0);
-  exercise_mode(2,1,&caviar_original_63af20);
+  exercise_mode(1,0,&caviar_original_63af00,&caviar_original_6647f0,
+                &caviar_original_664000,&sub_63ad60,&sub_63ae20);
+  exercise_mode(1,1,&caviar_original_63af40,&caviar_original_665640,
+                &caviar_original_664e50,&sub_63ad60,&sub_63ae20);
+  exercise_mode(2,0,&caviar_original_63aee0,&caviar_original_666440,
+                &caviar_original_665ca0,&sub_63ad60,&sub_63ae20);
+  exercise_mode(2,1,&caviar_original_63af20,&caviar_original_667b20,
+                &caviar_original_667380,&sub_63ad60,&sub_63ae20);
+
+  const uint8_t unsupported_sizes[] = {0,3,255};
+  for (unsigned i=0; i<sizeof(unsupported_sizes); ++i) {
+    CaviarSceneSetupDescriptorCandidate unsupported = {unsupported_sizes[i]};
+    VoxRenderRecord record = {};
+    record.setup_id_ = 1;
+    record.setup_block_ = &unsupported;
+    record.part_contained_ = &caviar_original_6647f0;
+    record.part_clipped_ = &caviar_original_664000;
+    record.setup_callback_ = &caviar_original_63af00;
+    sub_63ad60(&record);
+    assert(record.part_contained_ == &caviar_original_6647f0);
+    assert(record.part_clipped_ == &caviar_original_664000);
+    assert(record.setup_callback_ == &caviar_original_63af00);
+    assert(record.shadow_contained_ == &caviar_original_666fd0);
+    assert(record.shadow_clipped_ == &caviar_original_666a80);
+    sub_63ae20(&record);
+    assert(record.part_contained_ == &caviar_original_6647f0);
+    assert(record.part_clipped_ == &caviar_original_664000);
+    assert(record.setup_callback_ == &caviar_original_63af00);
+  }
   return 0;
 }
 #endif

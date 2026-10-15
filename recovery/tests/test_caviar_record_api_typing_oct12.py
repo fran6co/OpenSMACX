@@ -86,7 +86,22 @@ def test_only_authorized_api_and_bounds_changes_against_retained_baseline():
     for relative in ("src/caviar.cpp", "src/caviar.h"):
         old = subprocess.check_output(["git", "show", f"{BASE}:{relative}"], cwd=ROOT, text=True)
         current = (ROOT / relative).read_text()
-        assert code_tokens(restore_api_migration(current, relative)) == code_tokens(old)
+        current = restore_api_migration(current, relative)
+        if relative == "src/caviar.cpp":
+            # The separately authorized dispatcher migration replaces only
+            # these two bodies and removes their obsolete helper declaration.
+            # Their actual definitions are executed by the dispatcher host
+            # controls below; all surrounding source tokens remain compared.
+            for signature in (
+                "void __cdecl sub_63ad60(unsigned char *record) {",
+                "void __cdecl sub_63ae20(unsigned char *record) {",
+            ):
+                current = replace_exact(current, extract(current, signature), signature + ";")
+                old = replace_exact(old, extract(old, signature), signature + ";")
+            old = old.replace(
+                "static void caviar_install_record_kernels_candidate(\n"
+                "    VoxRenderRecord *, uint8_t, int);", "", 1)
+        assert code_tokens(current) == code_tokens(old)
     path = ROOT / "src/caviar.cpp"
     before = {r.address: r for r in read_text(old_cpp(), path)}
     current = {r.address: r for r in read_text(path.read_text(), path)}
@@ -94,8 +109,13 @@ def test_only_authorized_api_and_bounds_changes_against_retained_baseline():
     for address, record in current.items():
         prior = before[address]
         for field in fields(record):
-            if field.name not in {"line", "region", "origin", "symbol"}:
+            if field.name not in {"line", "region", "origin", "symbol", "binding_evidence"}:
                 assert getattr(record, field.name) == getattr(prior, field.name), (hex(address), field.name)
+            if field.name == "binding_evidence":
+                if address in (0x63AEE0, 0x63AF00, 0x63AF20, 0x63AF40):
+                    assert "sub_63ad60/sub_63ae20 directly install" in str(record.binding_evidence)
+                else:
+                    assert record.binding_evidence == prior.binding_evidence, hex(address)
         assert_api_symbol_transition(address, prior.symbol, record.symbol)
         def lessons(row):
             return [(x.kind, x.key, x.prose, tuple(t for _, t in x.lines)) for x in row.origin or ()]
@@ -153,7 +173,7 @@ FACTORY_BOUNDARIES = r'''
 // Native requests remain 0x80; the host double returns a host-sized record.
 static VoxRenderRecord storage;
 static unsigned char colours[0x3000], shadows[0x20000];
-static unsigned alloc_count, free_count, install_count, ramp_count, error_count;
+static unsigned alloc_count, free_count, ramp_count, error_count;
 static char events[16];
 static unsigned event_count;
 static void event(char code) { assert(event_count<15); events[event_count++]=code; events[event_count]=0; }
@@ -186,17 +206,44 @@ static void vox_free_slot(void *pointer) {
     event('F');
     ++free_count;
 }
-static void caviar_install_record_kernels_candidate(VoxRenderRecord *record,
-                                                   uint8_t size, int odd) {
-    assert(record==&storage && record->setup_block_->pixel_size_==size);
-    assert(odd==(int)(record->setup_id_&1U));
-    event('I');
-    ++install_count;
-}
+void __cdecl caviar_original_666fd0(int32_t,int32_t,uint32_t,const uint8_t*,int32_t) {}
+void __cdecl caviar_original_666a80(int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t) {}
+void __cdecl caviar_original_6647f0(int32_t,int32_t,int32_t,uint32_t,const uint8_t*,int32_t) {}
+void __cdecl caviar_original_664000(int32_t,int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t) {}
+void __cdecl caviar_original_665640(int32_t,int32_t,int32_t,uint32_t,const uint8_t*,int32_t) {}
+void __cdecl caviar_original_664e50(int32_t,int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t) {}
+void __cdecl caviar_original_666440(int32_t,int32_t,int32_t,uint32_t,const uint8_t*,int32_t) {}
+void __cdecl caviar_original_665ca0(int32_t,int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t) {}
+void __cdecl caviar_original_667b20(int32_t,int32_t,int32_t,uint32_t,const uint8_t*,int32_t) {}
+void __cdecl caviar_original_667380(int32_t,int32_t,int32_t,const int32_t*,uint32_t,const uint8_t*,int32_t) {}
+void __cdecl caviar_original_63aee0() {}
+void __cdecl caviar_original_63af00() {}
+void __cdecl caviar_original_63af20() {}
+void __cdecl caviar_original_63af40() {}
 extern "C" void __cdecl sub_63ad60(VoxRenderRecord *record);
 void __cdecl sub_63ae20(VoxRenderRecord *record);
 extern "C" char __cdecl sub_63f9b0(VoxRenderRecord *record) {
     assert(record==&storage);
+    assert(record->shadow_contained_==&caviar_original_666fd0);
+    assert(record->shadow_clipped_==&caviar_original_666a80);
+    if (record->setup_block_->pixel_size_==1 && (record->setup_id_&1U)) {
+        assert(record->part_contained_==&caviar_original_665640);
+        assert(record->part_clipped_==&caviar_original_664e50);
+        assert(record->setup_callback_==&caviar_original_63af40);
+    } else if (record->setup_block_->pixel_size_==1) {
+        assert(record->part_contained_==&caviar_original_6647f0);
+        assert(record->part_clipped_==&caviar_original_664000);
+        assert(record->setup_callback_==&caviar_original_63af00);
+    } else if (record->setup_block_->pixel_size_==2 && (record->setup_id_&1U)) {
+        assert(record->part_contained_==&caviar_original_667b20);
+        assert(record->part_clipped_==&caviar_original_667380);
+        assert(record->setup_callback_==&caviar_original_63af20);
+    } else {
+        assert(record->setup_block_->pixel_size_==2);
+        assert(record->part_contained_==&caviar_original_666440);
+        assert(record->part_clipped_==&caviar_original_665ca0);
+        assert(record->setup_callback_==&caviar_original_63aee0);
+    }
     event('R');
     ++ramp_count;
     ramp_width=record->setup_block_->colour_width_;
@@ -204,11 +251,16 @@ extern "C" char __cdecl sub_63f9b0(VoxRenderRecord *record) {
     return (char)ramp_failure;
 }
 static void reset() {
-    alloc_count=free_count=install_count=ramp_count=error_count=0;
+    alloc_count=free_count=ramp_count=error_count=0;
     fail_allocation=0; ramp_failure=0; last_error=0;
     event_count=0; events[0]=0;
     vox_record_count=17; CaviarVoxelAlgoFlag=1;
     memset(&storage,0xA5,sizeof(storage));
+    storage.part_contained_=&caviar_original_665640;
+    storage.part_clipped_=&caviar_original_664e50;
+    storage.shadow_contained_=&caviar_original_666fd0;
+    storage.shadow_clipped_=&caviar_original_666a80;
+    storage.setup_callback_=&caviar_original_63af40;
     memset(colours,0,sizeof(colours)); memset(shadows,0,sizeof(shadows));
 }
 '''
@@ -236,19 +288,29 @@ int main() {
         assert(record->setup_id_==3 && record->setup_size_code_==1);
         assert(record->draw_right_==cases[i].right && record->draw_bottom_==cases[i].bottom);
         assert(record->draw_width_==cases[i].extent_x && record->draw_height_==cases[i].extent_y);
-        assert(ramp_count==cases[i].ramps && install_count==1);
+        assert(ramp_count==cases[i].ramps);
+        assert(record->shadow_contained_==&caviar_original_666fd0);
+        assert(record->shadow_clipped_==&caviar_original_666a80);
+        assert(record->part_contained_==&caviar_original_665640);
+        assert(record->part_clipped_==&caviar_original_664e50);
+        assert(record->setup_callback_==&caviar_original_63af40);
         if (ramp_count) assert(ramp_width==cases[i].width && ramp_height==cases[i].height);
         assert(alloc_count==2 && requests[1]==0x1800 && free_count==0 && error_count==0);
         assert(vox_record_count==18 && memcmp(colours,input,0x1800)==0);
-        assert(strcmp(events,cases[i].ramps ? "AAIR" : "AAI")==0);
+        assert(strcmp(events,cases[i].ramps ? "AAR" : "AA")==0);
     }
     setup.colour_width_=setup.height_=2;
     for (int rank=1;rank<=5;++rank) {
         reset(); CaviarVoxelAlgoFlag=rank;
         assert(vox_create_record(2,input,shadow_input,&setup,7)==&storage);
-        assert(install_count==1 && ramp_count==1 && alloc_count==3 && requests[2]==0x100);
+        assert(ramp_count==1 && alloc_count==3 && requests[2]==0x100);
+        assert(storage.part_contained_==&caviar_original_6647f0);
+        assert(storage.part_clipped_==&caviar_original_664000);
+        assert(storage.setup_callback_==&caviar_original_63af00);
+        assert(storage.shadow_contained_==&caviar_original_666fd0);
+        assert(storage.shadow_clipped_==&caviar_original_666a80);
         assert(memcmp(shadows,shadow_input,0x100)==0);
-        assert(strcmp(events,"AAAIR")==0);
+        assert(strcmp(events,"AAAR")==0);
     }
     reset(); setup.pixel_size_=2;
     assert(vox_create_record(0,input,shadow_input,&setup,2)==&storage);
@@ -272,11 +334,16 @@ int main() {
     assert(strcmp(events,"AE")==0);
     reset(); setup.pixel_size_=1; CaviarVoxelAlgoFlag=6;
     assert(vox_create_record(0,input,0,&setup,0)==0);
-    assert(alloc_count==2 && free_count==0 && install_count==0 && last_error==vox_msg_cpu_unsupported);
+    assert(alloc_count==2 && free_count==0 && last_error==vox_msg_cpu_unsupported);
+    // Factory zero-initialization occurs, but unsupported rank exits before
+    // either real dispatcher can install any slot.
+    assert(storage.part_contained_==0 && storage.part_clipped_==0);
+    assert(storage.shadow_contained_==0 && storage.shadow_clipped_==0);
+    assert(storage.setup_callback_==0);
     assert(strcmp(events,"AAE")==0);
     reset(); ramp_failure=1; assert(vox_create_record(0,input,0,&setup,0)==0);
     assert(alloc_count==2 && free_count==0 && ramp_count==1 && error_count==0 && vox_record_count==17);
-    assert(strcmp(events,"AAIR")==0);
+    assert(strcmp(events,"AAR")==0);
     // The two installer functions retain distinct identities and linkage.
     void (__cdecl *a)(VoxRenderRecord *)=&sub_63ad60;
     void (__cdecl *b)(VoxRenderRecord *)=&sub_63ae20;

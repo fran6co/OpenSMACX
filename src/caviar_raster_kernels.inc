@@ -742,35 +742,6 @@ static void __cdecl caviar_shadow_clipped_callback_candidate(
     caviar_shadow_kernel_candidate(1, x, y, rectangle, count, stream, flags);
 }
 
-static void caviar_install_record_kernels_candidate(
-    VoxRenderRecord *record, uint8_t size_code, int odd) {
-    VoxRenderRecord *const slots = record;
-    slots->shadow_contained_ = &caviar_original_666fd0;
-    slots->shadow_clipped_ = &caviar_original_666a80;
-
-    if (size_code == 1) {
-        if (odd) {
-            slots->part_contained_ = &caviar_original_665640;
-            slots->part_clipped_ = &caviar_original_664e50;
-            slots->setup_callback_ = &caviar_original_63af40;
-        } else {
-            slots->part_contained_ = &caviar_original_6647f0;
-            slots->part_clipped_ = &caviar_original_664000;
-            slots->setup_callback_ = &caviar_original_63af00;
-        }
-    } else if (size_code == 2) {
-        if (odd) {
-            slots->part_contained_ = &caviar_original_667b20;
-            slots->part_clipped_ = &caviar_original_667380;
-            slots->setup_callback_ = &caviar_original_63af20;
-        } else {
-            slots->part_contained_ = &caviar_original_666440;
-            slots->part_clipped_ = &caviar_original_665ca0;
-            slots->setup_callback_ = &caviar_original_63aee0;
-        }
-    }
-}
-
 // Complete callbacks live under their original mappings in caviar.cpp;
 // shared projection and raster helpers remain here.
 // These callbacks are distinct protocols: parts carry three projected
