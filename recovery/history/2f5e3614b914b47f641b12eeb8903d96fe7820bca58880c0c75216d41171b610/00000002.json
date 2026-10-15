@@ -1,0 +1,22 @@
+{
+  "event_id": "5ea889e3a755d2fa85357872eafe24b89f31934ca340604bbef5a8aefc6549ee",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/battlewin.cpp",
+      "src/flatbutton.cpp",
+      "src/maininterface.cpp",
+      "src/reportwin.cpp"
+    ],
+    "evidence": [
+      "Fresh native991-subject timer candidate comparison preserved507 exact functions and gained421B40,43F0F0,608660,45C180,45C200,4989F0;29 native/host regression controls and fresh application build/link pass. These callers already belong to task subjects. Authorize only native recorder updates for these new exact callers, no unrelated implementation edits; preserve claims and original findings. Compiled collateral and destination review remain required before manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "65e8ea999632c66fe59a82c285c8bf091b12087b8fed1545e39a16ac501bc72c",
+  "request_id": "authorize-new-exact-stop-callers-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:time-stop-call-boundaries-oct15"
+}

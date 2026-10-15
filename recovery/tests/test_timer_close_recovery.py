@@ -109,8 +109,11 @@ def test_lifecycle_and_all_emitted_stop_timers_copies_match_targets(timer_object
         imports, _ = import_targets(read_imports(ROOT), units, image)
         targets[symbol_at("src/time.cpp", 0x5FD370)] = 0x5FD370
         targets["?close@Time@@QAEXXZ"] = 0x616780
-        for address in (0x616200, 0x616780):
-            result, = check_objects([binding("src/time_lifecycle.cpp", address)], units, image,
+        targets["?stop@Time@@QAEXXZ"] = 0x616730
+        for unit, address in (("src/time.cpp", 0x616730),
+                              ("src/time_lifecycle.cpp", 0x616200),
+                              ("src/time_lifecycle.cpp", 0x616780)):
+            result, = check_objects([binding(unit, address)], units, image,
                                      external_targets=targets, import_targets=imports)
             assert result["boundary"] == result["bytes"] == result["references"] == "pass", result
         stop = binding("src/time.cpp", 0x50F440)
@@ -143,14 +146,10 @@ def test_editbox_strict_call_target_rejects_calling_stop_instead_of_close(timer_
         assert verify()["result"] == "pass"
         # Use an out-of-line wrong callee so the control changes the target,
         # not the instruction count through expansion of the inline stop body.
-        damaged_header = (ROOT / "src/time.h").read_bytes()
-        begin = damaged_header.index(b"  MEASURED void stop()")
-        end = damaged_header.index(b"  void close();", begin)
-        damaged_header = damaged_header[:begin] + b"  void stop();\n" + damaged_header[end:]
         damaged_source = replace_editbox_close_with_stop(before, editbox_close)
-        units["src/editbox.cpp"] = Coff(compiler.overlay(source, {
-            "src/editbox.cpp": damaged_source,
-            "src/time.h": damaged_header}, (), flags + settings.layout_flags))
+        units["src/editbox.cpp"] = Coff(compiler.overlay(
+            source, {"src/editbox.cpp": damaged_source}, (),
+            flags + settings.layout_flags))
         bad = verify()
         assert bad["boundary"] == "pass"
         assert bad["bytes"] == bad["references"] == bad["result"] == "fail", bad
@@ -160,6 +159,7 @@ def test_editbox_strict_call_target_rejects_calling_stop_instead_of_close(timer_
 def test_live_timer_close_and_destructor_share_ordered_cleanup(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "timer_close_harness.cpp", [
         ("// LIVE_CTOR", "src/time.cpp", 0x6161D0),
+        ("// LIVE_STOP", "src/time.cpp", 0x616730),
         ("// LIVE_CLOSE", "src/time_lifecycle.cpp", 0x616780),
         ("// LIVE_DTOR", "src/time_lifecycle.cpp", 0x616200)], declarations=[
         ("// LIVE_DECL", "src/time.h", "class Time {", "#if defined(_M_IX86)"),

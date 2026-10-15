@@ -22,8 +22,9 @@
 // them to exist: `SetTimer` cannot do one-shot, so it is emulated.
 // WHAT THE IN-CLASS BODIES BELOW REACH FOR. `flush_timer` is declared at
 // the foot of this header and `HandleMain` in win.h, both of them after
-// the point `Time::stop` needs them - and `stop` has to be in-class,
-// because the image inlines it into `close` and `close` into `~Time`. A
+// the point the inline cancellation core needs them. The public mapped
+// `Time::stop` entry remains out-of-line, while internal lifecycle callers
+// use that core directly so their original inline expansion is retained. A
 // second declaration is safe: the compiler rejects one that disagrees.
 void __cdecl flush_timer();
 extern HWND HandleMain;
@@ -65,24 +66,10 @@ class Time {
   bool has_timer() const { return id_event_ != 0; }
   uint32_t start();
   uint32_t pulse();
-  // Visible to the lifecycle TU: both close and the destructor contain
-  // the original stop logic, while unrelated TUs call close out of line.
-  MEASURED void stop() {         // 00616730
-    // HOISTED, as the image has it: the flush test is read BEFORE the
-    // kill block, not after.
-    const int had_flush = ~oneshot_state_ & TimeOneShot;
-    if (id_event_) {
-      if (count_ < 50) {
-        timeKillEvent(id_event_);
-      } else {
-        KillTimer(HandleMain, id_event_);
-      }
-      id_event_ = 0;
-    }
-    if (had_flush) {
-      flush_timer();
-    }
-  }
+  // The mapped public stop entry is a direct-call boundary for external TUs.
+  // The inline core below preserves the original cancellation logic in the
+  // timer setup and lifecycle callers that historically expanded it.
+  MEASURED void stop(); // 00616730
   void close(); // 00616780; implementation owned by time_lifecycle.cpp
   void set_modal();     // 00616860
   void release_modal(); // 00616870
@@ -106,6 +93,24 @@ class Time {
  private:
   // Shared by close and destruction; defined only in the lifecycle TU.
   inline void close_impl();
+
+  // Original stop body, kept inline for Time's internal setup/teardown paths.
+  void stop_pending_events() {
+    // HOISTED, as the image has it: the flush test is read BEFORE the
+    // kill block, not after.
+    const int had_flush = ~oneshot_state_ & TimeOneShot;
+    if (id_event_) {
+      if (count_ < 50) {
+        timeKillEvent(id_event_);
+      } else {
+        KillTimer(HandleMain, id_event_);
+      }
+      id_event_ = 0;
+    }
+    if (had_flush) {
+      flush_timer();
+    }
+  }
 
   // ONE-SHOT EMULATION FOR THE `SetTimer` PATH, and nothing more general
   // than that. `timeSetEvent` has `TIME_ONESHOT` and `TIME_PERIODIC` and

@@ -23,6 +23,7 @@ int KillTimer(HWND, UINT_PTR);
 #undef private
 // LIVE_HELPER
 // LIVE_CTOR
+// LIVE_STOP
 // LIVE_CLOSE
 // LIVE_DTOR
 
@@ -86,6 +87,39 @@ int main() {
                 timer.oneshot_state_ = TimeOneShot;
                 expected_flush = 0;
             }
+        }
+    }
+    for (int one_shot = 0; one_shot != 2; ++one_shot) {
+        for (int mode = 0; mode != 4; ++mode) {
+            Time timer;
+            active = &timer;
+            timer.oneshot_state_ = one_shot;
+            timer.id_event_ = mode ? 17 : 0;
+            timer.count_ = mode == 1 ? 49 : mode == 3 ? 0x80000000U : 50;
+            timer.callback1_ = callback1;
+            timer.callback2_ = callback2;
+            timer.cb_param2_ = &timer;
+            timer.cb_param1_ = 42;
+            timer.resolution_ = 71;
+            timer.tick_posted_ = 19;
+            timer.unk_2_ = -1;
+            expected_flush = !one_shot;
+            count = 0;
+
+            timer.stop();
+
+            assert(count == (mode != 0) + !one_shot);
+            if (mode) assert(calls[0] == (mode == 1 ? 1 : 2));
+            if (!one_shot) assert(calls[count - 1] == 3);
+            assert(timer.id_event_ == 0);
+            assert(timer.callback1_ == callback1 && timer.callback2_ == callback2);
+            assert(timer.cb_param2_ == &timer);
+            assert(timer.cb_param1_ == (!one_shot ? 99 : 42));
+            assert(timer.resolution_ == 71);
+            assert(timer.tick_posted_ == (!one_shot ? 27 : 19));
+
+            timer.oneshot_state_ = TimeOneShot;
+            expected_flush = 0;
         }
     }
     return 0;

@@ -1,0 +1,19 @@
+{
+  "event_id": "65e8ea999632c66fe59a82c285c8bf091b12087b8fed1545e39a16ac501bc72c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/timer_close_harness.cpp"
+    ],
+    "evidence": [
+      "Coordinator reviewed preserved worker diff: existing actual-source Time lifecycle harness needs direct public stop scenarios to verify cancellation/flush ordering and preservation of non-lifecycle fields; authorize this test dependency without additional C++ scope or relaxed assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "authorize-actual-stop-harness-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:time-stop-call-boundaries-oct15"
+}
