@@ -45,6 +45,7 @@ def test_actual_lifecycle_copies_independent_defaults_and_resets(tmp_path, wrong
     if not compiler:
         pytest.skip("host compiler unavailable")
     header = (ROOT / "src/autosound.h").read_text()
+    defaults_header = (ROOT / "src/autosound_defaults.h").read_text()
     # The host exercises methods, not 32-bit layout; native controls own ABI.
     header = re.sub(r"^#pragma once.*$", "", header, flags=re.M)
     header = re.sub(r'static_assert\(sizeof\(AutoSound\) == 0x98,\s*"[^"]*"\);', "", header)
@@ -53,25 +54,28 @@ def test_actual_lifecycle_copies_independent_defaults_and_resets(tmp_path, wrong
         "AutoSound::AutoSound()", "void AutoSound::close()",
         "void AutoSound::close2()", "void AutoSound::init()"))
     if wrong_default:
-        bodies = bodies.replace("AutoSoundDefaults[10]", "AutoSoundDefaults[9]")
+        bodies = bodies.replace("AutoSoundDefaults.val_11_", "AutoSoundDefaults.val_10_")
     source = """
 #include <stdint.h>
 #include <cassert>
 #define MEASURED
 struct Sound {};
-uint32_t AutoSoundDefaults[37] = {};
-""" + header + "\n" + bodies + """
+""" + header + "\n" + defaults_header + "\nAutoSoundDefaultsBlock AutoSoundDefaults = {};\n" + bodies + """
+static Sound *expected_10, *expected_11, *expected_12;
 struct Observed : AutoSound {
   void check_defaults() {
-    assert(reinterpret_cast<uintptr_t>(val_10_) == 0x1010);
-    assert(reinterpret_cast<uintptr_t>(val_11_) == 0x2020);
-    assert(reinterpret_cast<uintptr_t>(val_12_) == 0x3030);
+    assert(val_10_ == expected_10);
+    assert(val_11_ == expected_11);
+    assert(val_12_ == expected_12);
   }
   void check_zero() { assert(!val_10_ && !val_11_ && !val_12_); }
 };
 int main() {
-  AutoSoundDefaults[9]=0x1010; AutoSoundDefaults[10]=0x2020;
-  AutoSoundDefaults[11]=0x3030;
+  Sound sound_10, sound_11, sound_12;
+  expected_10 = &sound_10; expected_11 = &sound_11; expected_12 = &sound_12;
+  AutoSoundDefaults.val_10_=&sound_10;
+  AutoSoundDefaults.val_11_=&sound_11;
+  AutoSoundDefaults.val_12_=&sound_12;
   Observed record; record.check_defaults();
   record.init(); record.check_zero();
   record.close(); record.check_defaults();
@@ -99,4 +103,4 @@ def test_only_supported_fields_change_view():
     assert "Sound *legacy_sound_31() const { return val_31_; }" in header
     assert "legacy_value_31()" not in header
     defaults = (ROOT / "src/autosound.cpp").read_text()
-    assert "uint32_t AutoSoundDefaults[37];" in defaults
+    assert "AutoSoundDefaultsBlock AutoSoundDefaults;" in defaults

@@ -23,9 +23,11 @@ class Sound;
  /*
   * AutoSound - the PROCESS SETTINGS RECORD, embedded at offset 0 of every
   * window (class Win : public AutoSound). 37 words behind one vfptr; the
-  * constructor copies them wholesale from AutoSoundDefaults[37], the
-  * mutable block at [0x009BC080,0x009BC114). Loader zero-initialization
-  * supplies its initial values; FX::init optionally resets them later.
+  * constructor copies them wholesale from AutoSoundDefaults, the mutable
+  * 37-field record at [0x009BC080,0x009BC114). Its typed fields follow original
+  * global-word order, including the 1,3,4,2 leading permutation. Loader
+  * zero-initialization supplies initial values; FX::init optionally resets
+  * them later.
   *
  * FIELD MAP (offset = 0x04 + 4*(N-1)). The recovered Win, Scroll, Menu,
  * ListBox and BaseButton paths use numbered values through Sound's nullary
@@ -42,7 +44,8 @@ class Sound;
  * Win Sound receiver at +0x50 is val_20_; the ListBox flag is Win's separate
  * +0x98 member. The BaseButton Sound receiver at +0x7C is val_31_; the
  * ListBox notification target is Win's separate +0xC4 parent link. The
- * defaults block copies raw 32-bit values. Other meanings stay numbered
+ * defaults record uses the same destination types; this establishes no
+ * ownership or lifetime for non-null Sound values. Other meanings stay numbered
  * until their writers and use families are recovered. IDB independently
  * numbered the words identically (docs/recovery/idb-members.csv: val1..val37).
   */

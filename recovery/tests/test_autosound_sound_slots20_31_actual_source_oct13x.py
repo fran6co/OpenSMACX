@@ -22,6 +22,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 AUTO_SOURCE = ROOT / "src/autosound.cpp"
 AUTO_HEADER = ROOT / "src/autosound.h"
+DEFAULTS_HEADER = ROOT / "src/autosound_defaults.h"
 BUTTON_SOURCE = ROOT / "src/basebutton.cpp"
 WIN_SOURCE = ROOT / "src/win.cpp"
 
@@ -69,6 +70,7 @@ COPY_MAP = (
 
 def auto_members() -> str:
     header = AUTO_HEADER.read_text(encoding="utf-8")
+    header = header[header.index("class AutoSound {"):]
     declarations = re.findall(
         r"^\s*(int|Sound\s*\*)\s*(val_\d+_|event_window_);\s*(?://.*)?$",
         header, flags=re.M,
@@ -81,6 +83,19 @@ def auto_members() -> str:
     assert "static_assert(sizeof(AutoSound) == 0x98" in header
     # The host probe intentionally does not compile that 32-bit ABI assertion.
     return "\n".join(f"  {kind} {name};" for kind, name in declarations)
+
+
+def defaults_members() -> str:
+    header = DEFAULTS_HEADER.read_text(encoding="utf-8")
+    match = re.search(r"struct AutoSoundDefaultsBlock\s*\{.*?^\};", header,
+                      flags=re.S | re.M)
+    assert match
+    declarations = re.findall(
+        r"^\s*(int|Sound\s*\*)\s*(val_\d+_|event_window_);\s*(?://.*)?$",
+        match.group(), flags=re.M)
+    assert tuple((name, kind) for kind, name in declarations) == tuple(
+        (field, kind) for field, _, kind in COPY_MAP)
+    return match.group()
 
 
 def lifecycle_bodies() -> str:
@@ -107,9 +122,13 @@ def lifecycle_mutants() -> list[tuple[str, str]]:
     bodies = lifecycle_bodies()
     constructor = extract_definition(bodies, "AutoSoundProbe::AutoSoundProbe()")
     mutants = []
-    for slot in range(37):
-        old = f"AutoSoundDefaults[{slot}]"
-        wrong = f"AutoSoundDefaults[{(slot + 1) % 37}]"
+    fields = [field for field, _, _ in COPY_MAP]
+    for slot, field in enumerate(fields):
+        old = f"AutoSoundDefaults.{field}"
+        kind = COPY_MAP[slot][2]
+        candidates = [name for name, _, other_kind in COPY_MAP if other_kind == kind]
+        wrong_field = candidates[(candidates.index(field) + 1) % len(candidates)]
+        wrong = f"AutoSoundDefaults.{wrong_field}"
         assert constructor.count(old) == 1
         changed = constructor.replace(old, wrong, 1)
         mutants.append((f"wrong_default_slot_{slot:02d}",
@@ -132,7 +151,8 @@ static void fail(const char *expression) {
 struct Sound {};
 // Host-width words allow literal integer-to-pointer casts to compile here.
 // Values are opaque sentinels, compared only; no fabricated address is called.
-uintptr_t AutoSoundDefaults[37];
+/* DEFAULTS_DECLARATION */
+AutoSoundDefaultsBlock AutoSoundDefaults;
 class AutoSoundProbe {
 public:
 /* AUTO_MEMBERS */
@@ -150,12 +170,12 @@ static void check_zero(const AutoSoundProbe &object) {
 /* ZERO_CHECKS */
 }
 int main() {
-  for (int slot = 0; slot < 37; ++slot)
-    AutoSoundDefaults[slot] = static_cast<uintptr_t>(0x1100 + slot * 0x101);
+  Sound sound_values[37];
+/* SET_DEFAULTS */
   AutoSoundProbe object;
   check_defaults(object);
-  CHECK(reinterpret_cast<uintptr_t>(object.legacy_sound_20()) == AutoSoundDefaults[19]);
-  CHECK(reinterpret_cast<uintptr_t>(object.legacy_sound_31()) == AutoSoundDefaults[30]);
+  CHECK(object.legacy_sound_20() == AutoSoundDefaults.val_20_);
+  CHECK(object.legacy_sound_31() == AutoSoundDefaults.val_31_);
   object.init(); check_zero(object);
   object.close(); check_defaults(object);
   object.init(); check_zero(object);
@@ -170,16 +190,25 @@ def lifecycle_source(mutant: tuple[str, str] | None = None) -> str:
     zeroes = []
     for field, index, kind in COPY_MAP:
         if kind == "int":
-            fields.append(f"  CHECK(object.{field} == static_cast<int>(AutoSoundDefaults[{index}]));")
+            fields.append(f"  CHECK(object.{field} == AutoSoundDefaults.{field});")
             zeroes.append(f"  CHECK(object.{field} == 0);")
         else:
-            fields.append(f"  CHECK(reinterpret_cast<uintptr_t>(object.{field}) == AutoSoundDefaults[{index}]);")
+            fields.append(f"  CHECK(object.{field} == AutoSoundDefaults.{field});")
             zeroes.append(f"  CHECK(object.{field} == nullptr);")
     source = LIFECYCLE_HARNESS.replace("/* CONTROL_NAME */", name)
     source = source.replace("/* AUTO_MEMBERS */", auto_members())
+    source = source.replace("/* DEFAULTS_DECLARATION */", defaults_members())
     source = source.replace("/* LIFECYCLE_BODIES */", bodies)
     source = source.replace("/* DEFAULT_CHECKS */", "\n".join(fields))
     source = source.replace("/* ZERO_CHECKS */", "\n".join(zeroes))
+    setters = []
+    for field, index, kind in COPY_MAP:
+        value = f"static_cast<uintptr_t>(0x1100 + {index} * 0x101)"
+        if kind == "int":
+            setters.append(f"  AutoSoundDefaults.{field} = static_cast<int>({value});")
+        else:
+            setters.append(f"  AutoSoundDefaults.{field} = &sound_values[{index}];")
+    source = source.replace("/* SET_DEFAULTS */", "\n".join(setters))
     assert "/* " not in source
     return source
 
@@ -297,7 +326,6 @@ struct Sound {
   int is_playing() { ++status_calls; return playing; }
   void play() { ++play_calls; if (on_play) on_play(this); }
 };
-uintptr_t AutoSoundDefaults[37];
 class AutoSoundProbe {
 public:
 /* AUTO_MEMBERS */

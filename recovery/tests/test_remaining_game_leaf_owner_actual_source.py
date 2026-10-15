@@ -93,8 +93,7 @@ def test_popup_and_action_data_sources_are_real_owners():
 
     autosound = (ROOT / "src/autosound.cpp").read_text()
     autosound_header = (ROOT / "src/autosound.h").read_text()
-    assert autosound.count(
-        "val_35_ = reinterpret_cast<Sound *>(AutoSoundDefaults[34]);") == 3
+    assert autosound.count("val_35_ = AutoSoundDefaults.val_35_;") == 3
     assert "val_35_ = 0;" in autosound
     assert "RECOVERY_MEMBER: v3 AutoSound val_35_ Sound* 0x8C 0x005F2830" in autosound_header
 

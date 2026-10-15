@@ -94,25 +94,44 @@ def test_storage_extent_and_initial_values_reject_compiled_damage(compiled, orig
     binding = defaults_binding()
     path = ROOT / UNIT
     source = path.read_bytes()
-    declaration = b"uint32_t AutoSoundDefaults[37];"
+    declaration = b"AutoSoundDefaultsBlock AutoSoundDefaults;"
     assert source.count(declaration) == 1
+    header_path = ROOT / "src/autosound_defaults.h"
+    header = header_path.read_bytes()
+    block_tail = (b"  Sound *val_33_;\n  Sound *event_window_;\n  Sound *val_35_;\n"
+                  b"  Sound *val_36_;\n  Sound *val_37_;\n};")
+    assert header.count(block_tail) == 1
+    block_start = header.index(b"struct AutoSoundDefaultsBlock {")
+    block_end = header.index(b"};", block_start) + 2
+    block = header[block_start:block_end]
 
     def check(obj):
-        row, = check_initial_data([binding], {UNIT: obj}, original, {})
+        units = {UNIT: obj}
+        targets, definitions = object_targets([binding], units)
+        assert definitions[0]["definition"] == "pass", definitions
+        row, = check_initial_data([binding], units, original, targets)
         return row
 
     for flags, obj in zip(settings.flag_sets, objects):
         row = check(obj)
         assert row["content"] == row["proof"]["boundary"] == "pass"
         assert row["compiler_storage"]["size"] == 148
-        for replacement, proof in (
-                (b"uint32_t AutoSoundDefaults[33];", "boundary"),
-                (b"uint32_t AutoSoundDefaults[38];", "boundary"),
-                (b"uint32_t AutoSoundDefaults[37] = {1};", "bytes")):
-            damaged = Coff(compiler.overlay(path, {UNIT: source.replace(declaration, replacement)},
+        small_block = block.replace(block_tail, b"  union { Sound *val_33_; Sound *event_window_; "
+                                     b"Sound *val_35_; Sound *val_36_; Sound *val_37_; };\n};")
+        large_block = block.replace(b"  Sound *val_37_;\n};",
+                                    b"  Sound *val_37_;\n  uint32_t extra_;\n};")
+        layout_assert = b'static_assert(sizeof(void *) != 4 || sizeof(AutoSoundDefaultsBlock) == 0x94,\n              "AutoSound defaults must occupy the original 37-word block");'
+        for altered_block, proof in ((small_block, "boundary"), (large_block, "boundary")):
+            damaged_header = header.replace(block, altered_block).replace(layout_assert, b"")
+            damaged = Coff(compiler.overlay(path, {"src/autosound_defaults.h": damaged_header},
                                             (), flags + settings.layout_flags))
             bad = check(damaged)
             assert bad["content"] == bad["proof"][proof] == "fail"
+        nonzero = Coff(compiler.overlay(path, {
+            UNIT: source.replace(declaration, b"AutoSoundDefaultsBlock AutoSoundDefaults = {1};")},
+            (), flags + settings.layout_flags))
+        bad = check(nonzero)
+        assert bad["content"] == bad["proof"]["bytes"] == "fail"
     assert path.read_bytes() == source
 
 
@@ -137,7 +156,7 @@ def test_consumers_match_actual_targets_and_reject_wrong_tail(compiled, original
         instructions = list(decoder.disasm(code, 0))
         values = []
         for relocation in relocations:
-            if obj.symbols[int(relocation.target)].name != SYMBOL:
+            if obj.symbols[int(relocation.target)].name != defaults.emitted_symbol:
                 continue
             op, = (op for op in instructions
                    if op.address <= relocation.offset < op.address + op.size)
@@ -149,7 +168,7 @@ def test_consumers_match_actual_targets_and_reject_wrong_tail(compiled, original
 
     path = ROOT / UNIT
     source = path.read_bytes()
-    assignment = b"val_37_ = reinterpret_cast<Sound *>(AutoSoundDefaults[36]);"
+    assignment = b"val_37_ = AutoSoundDefaults.val_37_;"
     assert source.count(assignment) == 3
     for flags, obj in zip(settings.flag_sets, objects):
         assert offsets(obj) == list(range(0, 148, 4))
@@ -159,7 +178,7 @@ def test_consumers_match_actual_targets_and_reject_wrong_tail(compiled, original
         # The constructor also stores its compiler-generated vftable. Its
         # defaults loads are covered here without inventing a table binding.
         damaged = Coff(compiler.overlay(path, {UNIT: source.replace(
-            assignment, b"val_37_ = reinterpret_cast<Sound *>(AutoSoundDefaults[35]);")},
+            assignment, b"val_37_ = AutoSoundDefaults.val_36_;")},
             (), flags + settings.layout_flags))
         assert offsets(damaged) != list(range(0, 148, 4))
         if address != 0x62BA80:

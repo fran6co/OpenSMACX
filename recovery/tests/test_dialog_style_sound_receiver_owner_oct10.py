@@ -32,7 +32,8 @@ HOST = r"""
 #include <cassert>
 #include <stdint.h>
 struct Sound { int value; };
-static uintptr_t AutoSoundDefaults[37];
+struct AutoSoundDefaultsBlock { Sound *val_8_; };
+static AutoSoundDefaultsBlock AutoSoundDefaults;
 class AutoSound {
 protected:
     // SOUND_DECLARATION
@@ -65,7 +66,7 @@ static int WinScreenWidth=1200;
 // SETTERS
 int main() {
     Sound sound={8}; BasePop p;
-    AutoSoundDefaults[7]=reinterpret_cast<uintptr_t>(&sound);
+    AutoSoundDefaults.val_8_=&sound;
     p.copy_word(); assert(p.sound()==&sound);
     p.dialogs_.field_20_=0xABCDEF00u;
     p.dialogs_.set_style_bit_0(1); p.dialogs_.set_style_bit_1(1);
@@ -84,13 +85,14 @@ int main() {
     p.external_window_=0; p.dialogs_.field_20_=0xABCDEF00u;
     p.geometry_branch(); assert(p.dialogs_.field_20_==0xABCDEF00u);
     p.reset_word(); assert(p.sound()==0);
-    AutoSoundDefaults[7]=0; p.copy_word(); assert(p.sound()==0);
+    AutoSoundDefaults.val_8_=0; p.copy_word(); assert(p.sound()==0);
 }
 """
 
 
 def unit(damage=None):
     header = (ROOT / "src/autosound.h").read_text()
+    header = header[header.index("class AutoSound {"):]
     declarations = re.findall(r"^\s*(Sound \*val_8_;)", header, re.M)
     assert len(declarations) == 1
     auto = (ROOT / "src/autosound.cpp").read_text()
