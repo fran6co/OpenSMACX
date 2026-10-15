@@ -43,7 +43,10 @@ struct Player { uint32_t rule_flags=0; };
 struct PlayerData { int unk_29[32]={}; int unk_30[32]={}; };
 static Player Players[MaxPlayerNum];
 static PlayerData PlayersData[MaxPlayerNum];
-static uint32_t LockEnableMask;
+struct GameDataLockMaskBytes { uint8_t human_mask_, alive_mask_, unused_[2]; };
+union GameDataLockMaskView { uint32_t enable_mask_; GameDataLockMaskBytes bytes_; };
+static GameDataLockMaskView LockMasks;
+#define LockEnableMask LockMasks.enable_mask_
 static int GovernorFaction;
 static int TurnCurrentNum;
 static int IsMultiplayerNet;
@@ -55,13 +58,13 @@ static int CouncilLastResolutionTurn[32];
 // Test-only owner view: scalar scenario inputs and callback writes remain
 // aliases of the fields read by the unmodified current production methods.
 struct GameDataFieldsDouble {
-    struct LockMasksDouble { uint32_t &enable_mask_; } lock_masks_;
+    GameDataLockMaskView &lock_masks_;
     int &governor_faction_;
     int &turn_current_num_;
     int (&council_last_resolution_turn_)[32];
 };
 struct GameDataStorageDouble { GameDataFieldsDouble fields_; } GameDataStateStorage = {
-    {{LockEnableMask}, GovernorFaction, TurnCurrentNum, CouncilLastResolutionTurn}
+    {LockMasks, GovernorFaction, TurnCurrentNum, CouncilLastResolutionTurn}
 };
 struct ConsoleGlobalDouble { int faction_id_=0; };
 static ConsoleGlobalDouble ConsoleGlobal;

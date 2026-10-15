@@ -4,6 +4,7 @@ These host tests check UI call order and the state read after owned callbacks;
 they do not claim original ABI, renderer behavior, or game acceptance.
 """
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -31,11 +32,40 @@ def extract_function(source: str, signature: str) -> str:
 def adapt_body(body: str) -> str:
     """Bind current typed owner expressions to the fixture's scalar doubles."""
     return (body
-        .replace("GameDataStateStorage.fields_.lock_masks_.enable_mask_", "LockEnableMask")
+        .replace("GameDataStateStorage.fields_.lock_masks_", "LockMasks")
         .replace("GameDataStateStorage.fields_.governor_faction_", "GovernorFaction")
         .replace("GameDataStateStorage.fields_.turn_current_num_", "TurnCurrentNum")
         .replace("GameDataStateStorage.fields_.game_more_preferences_", "GameMorePreferences")
         .replace("GameDataStateStorage.fields_.council_last_resolution_turn_[proposal]", "CouncilLastResolutionTurn[proposal]"))
+
+
+def adapt_harness(harness: str) -> str:
+    """Use the production mask union in host fixtures while retaining their scalar alias."""
+    combined = "uint32_t LockEnableMask = 0, GameMorePreferences = 0;"
+    if combined in harness:
+        return harness.replace(
+            combined,
+            "struct GameDataLockMaskBytes { uint8_t human_mask_, alive_mask_, unused_[2]; };\n"
+            "union GameDataLockMaskView { uint32_t enable_mask_; GameDataLockMaskBytes bytes_; };\n"
+            "GameDataLockMaskView LockMasks{};\n"
+            "#define LockEnableMask LockMasks.enable_mask_\n"
+            "uint32_t GameMorePreferences = 0;",
+        )
+    declaration = r"uint32_t LockEnableMask(?:\s*=\s*([^;]+))?;"
+    matches = list(re.finditer(declaration, harness))
+    if not matches:
+        return harness
+    assert len(matches) == 1, f"expected one LockEnableMask declaration, got {len(matches)}"
+    initial = matches[0].group(1)
+    initializer = f" = {{ {initial} }}" if initial is not None else "{}"
+    owner = (
+        "struct GameDataLockMaskBytes { uint8_t human_mask_, alive_mask_, unused_[2]; };\n"
+        "union GameDataLockMaskView { uint32_t enable_mask_; GameDataLockMaskBytes bytes_; };\n"
+        f"GameDataLockMaskView LockMasks{initializer};\n"
+        "#define LockEnableMask LockMasks.enable_mask_"
+    )
+    harness = harness[:matches[0].start()] + owner + harness[matches[0].end():]
+    return harness
 
 
 REDRAW_HARNESS = r"""
@@ -128,7 +158,7 @@ def test_on_redraw_uses_live_typed_owner_state_and_preserves_draw_order(tmp_path
         pytest.skip("host C++ compiler unavailable")
     body = adapt_body(extract_function(SOURCE.read_text(), "void CouncWin::on_redraw()"))
     body = body.replace("CharUpperA", "uppercase")
-    harness = REDRAW_HARNESS.replace("BODY", body)
+    harness = adapt_harness(REDRAW_HARNESS.replace("BODY", body))
     executable = tmp_path / "councwin-redraw"
     built = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-x", "c++", "-", "-o", str(executable)],
@@ -199,7 +229,7 @@ def test_set_vote_rereads_lock_masks_after_ai_vote_callbacks(tmp_path):
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
     body = adapt_body(extract_function(SOURCE.read_text(), "void CouncWin::set_vote(int faction_id, int vote)"))
-    harness = SET_VOTE_HARNESS.replace("BODY", body)
+    harness = adapt_harness(SET_VOTE_HARNESS.replace("BODY", body))
     executable = tmp_path / "councwin-set-vote"
     built = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-x", "c++", "-", "-o", str(executable)],
@@ -275,7 +305,7 @@ def test_on_key_click_fills_from_live_lock_state_and_closes_in_native_order(tmp_
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
     body = adapt_body(extract_function(SOURCE.read_text(), "int CouncWin::on_key_click(int, int key)"))
-    harness = KEY_HARNESS.replace("BODY", body)
+    harness = adapt_harness(KEY_HARNESS.replace("BODY", body))
     executable = tmp_path / "councwin-key-click"
     built = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-x", "c++", "-", "-o", str(executable)],
@@ -388,7 +418,7 @@ def test_draw_info_counts_votes_from_live_typed_faction_records(tmp_path):
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
     body = adapt_body(extract_function(SOURCE.read_text(), "void CouncWin::draw_info()"))
-    harness = DRAW_INFO_HARNESS.replace("BODY", body)
+    harness = adapt_harness(DRAW_INFO_HARNESS.replace("BODY", body))
     executable = tmp_path / "councwin-draw-info"
     built = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-x", "c++", "-", "-o", str(executable)],
@@ -470,7 +500,7 @@ def test_make_resolution_retains_tally_only_and_resolution_side_effect_order(tmp
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
     body = adapt_body(extract_function(SOURCE.read_text(), "int CouncWin::make_resolution(int resolve)"))
-    harness = RESOLUTION_HARNESS.replace("BODY", body)
+    harness = adapt_harness(RESOLUTION_HARNESS.replace("BODY", body))
     executable = tmp_path / "councwin-resolution"
     built = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-x", "c++", "-", "-o", str(executable)],
@@ -508,12 +538,19 @@ int GovernorFaction = 3, TurnRedrawPending = 0, CouncilDialogActive = 0;
 int CouncilPbemGate = 0;
 int GenderDefault = 0, PluralityDefault = 0;
 int eligible_candidate = -1, eligible_calls = 0, ai_vote_override = -1;
+int mutate_alive_on_eligible_faction = -1;
+uint8_t alive_mask_after_eligible = 0;
 int split_ai_votes = 0, vote_weight_override = -1;
 int popup_result = 1, mutate_scratch_after_popup = 0;
 int friction_after_diplomacy_check = -1, invalid_tech_result = 0;
 int eligible(int faction) {
   events.push_back("eligible:" + std::to_string(faction));
   ++eligible_calls;
+  if (faction == mutate_alive_on_eligible_faction) {
+    LockEnableMask = (LockEnableMask & ~0x0000ff00u) |
+                     (static_cast<uint32_t>(alive_mask_after_eligible) << 8);
+    mutate_alive_on_eligible_faction = -1;
+  }
   return eligible_calls == 1 ? 0 : faction == eligible_candidate;
 }
 void diplomacy_check(int faction, int other, int update) {
@@ -822,6 +859,30 @@ int main() {
     assert(event.find("xpop:") != 0);
   }
   assert(analyzed_without_offer);
+
+  // Candidate eligibility is a live stage: candidate 1's callback clears
+  // candidate 2's alive bit, which the next native byte load must observe.
+  events.clear();
+  eligible_calls = 0;
+  eligible_candidate = 2;
+  mutate_alive_on_eligible_faction = 1;
+  alive_mask_after_eligible = 1u << 1;
+  IsMultiplayerNet = 0;
+  IsMultiplayerPBEM = 0;
+  CouncilPbemGate = 0;
+  ConsoleGlobal.faction_id_ = 0;
+  PlayersData[0].diff_level = 1;
+  LockEnableMask = (1u << 1) | (1u << 2) | (1u << 9) | (1u << 10);
+  CouncWin live_byte;
+  live_byte.init(0, 0);
+  bool checked_candidate_one = false;
+  bool checked_candidate_two = false;
+  for (const std::string &event : events) {
+    checked_candidate_one |= event == "eligible:1";
+    checked_candidate_two |= event == "eligible:2";
+  }
+  assert(checked_candidate_one && !checked_candidate_two);
+  assert(mutate_alive_on_eligible_faction == -1);
 }
 """
 
@@ -833,7 +894,7 @@ def test_init_builds_typed_council_controls_and_restores_shared_windows(tmp_path
     source = SOURCE.read_text()
     body = adapt_body(extract_function(source, "void CouncWin::init(int proposal, int faction_id)"))
     helper = extract_function(source, "static void set_council_rect(")
-    harness = INIT_HARNESS.replace("BODY", helper + "\n" + body)
+    harness = adapt_harness(INIT_HARNESS.replace("BODY", helper + "\n" + body))
     executable = tmp_path / "councwin-init"
     built = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-x", "c++", "-", "-o", str(executable)],
@@ -970,7 +1031,7 @@ def test_on_button_clicked_uses_typed_popup_vote_and_key_dispatch(tmp_path):
         "int vslot_25(int, int key) { assert(key == 13); events.push_back(\"keypress\"); return 1; }\n"
         "int on_key_click(int, int key) { assert(key == 13); events.push_back(\"keypress\"); return 1; }",
     )
-    harness = fixture.replace("BODY", body)
+    harness = adapt_harness(fixture.replace("BODY", body))
     executable = tmp_path / "councwin-button-click"
     built = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-x", "c++", "-", "-o", str(executable)],
@@ -1002,6 +1063,10 @@ char PopupStartCaption[256];
 std::vector<std::string> events;
 int prompt_result = 0;
 int mutate_after_prompt = 0;
+int mutate_alive_after_prompt = 0;
+uint8_t alive_mask_after_prompt = 0;
+int mutate_alive_after_eligible_faction = -1;
+uint8_t alive_mask_after_eligible = 0;
 int mutate_local_after_prompt = -1;
 int mutate_local_on_channel = -1;
 int mutate_local_on_buy = -1;
@@ -1043,7 +1108,14 @@ struct NetDaemon {
     return 0;
   }
 } NetDaemonNet;
-int eligible(int) { return 1; }
+int eligible(int faction) {
+  if (faction == mutate_alive_after_eligible_faction) {
+    LockEnableMask = (LockEnableMask & ~0x0000ff00u) |
+                     (static_cast<uint32_t>(alive_mask_after_eligible) << 8);
+    mutate_alive_after_eligible_faction = -1;
+  }
+  return 1;
+}
 int pop_wait() { return 0; }
 int X_pop(const char *label, int (*)()) {
   events.push_back(std::string("xpop:") + label);
@@ -1051,6 +1123,11 @@ int X_pop(const char *label, int (*)()) {
     LockEnableMask |= 1u << 2;
     if (arrived_mask) *arrived_mask = 0x6;
     mutate_after_prompt = 0;
+  }
+  if (mutate_alive_after_prompt) {
+    LockEnableMask = (LockEnableMask & ~0x0000ff00u) |
+                     (static_cast<uint32_t>(alive_mask_after_prompt) << 8);
+    mutate_alive_after_prompt = 0;
   }
   if (mutate_local_after_prompt >= 0) {
     ConsoleGlobal.faction_id_ = mutate_local_after_prompt;
@@ -1076,7 +1153,8 @@ void diplomacy_ends(int actor, int) {
   last_diplomacy_actor = actor;
   events.push_back("diplomacy-end");
 }
-struct Dialogs { void item(char *, int) { events.push_back("item"); } };
+std::vector<int> government_option_ids;
+struct Dialogs { void item(char *, int id) { events.push_back("item"); government_option_ids.push_back(id); } };
 struct Popup {
   Dialogs options;
   void close() { events.push_back("close"); }
@@ -1176,6 +1254,26 @@ int main() {
   assert(last_channel_actor == 3); // reload after vote-selection prompt
   assert(last_buy_actor == 4); // reload after open_channel callback
   assert(last_diplomacy_actor == 5); // reload after purchase callback
+
+  // A target alive at the early gate can be eliminated by the vote prompt.
+  // The later native byte read at 0x425723 must use that changed state.
+  events.clear();
+  IsMultiplayerNet = 0;
+  ConsoleGlobal.faction_id_ = 1;
+  LockEnableMask = (1u << 1) | (1u << 10);
+  win.spot_.faction = 2;
+  PlayersData[2].unk_29[0] = 0;
+  prompt_result = 1;
+  mutate_alive_after_prompt = 1;
+  alive_mask_after_prompt = 0;
+  win.on_left_click(0, 0);
+  bool eliminated_notice = false;
+  bool bought_vote = false;
+  for (const std::string &event : events) {
+    eliminated_notice |= event == "pop:ELIMINATED";
+    bought_vote |= event.find("buy:") == 0;
+  }
+  assert(eliminated_notice && !bought_vote);
 }
 """
 
@@ -1189,7 +1287,7 @@ def test_on_left_click_routes_hit_treaty_duplicate_and_vote_paths(tmp_path):
         "NetMsg *NetMsgPopup = &net_msg;",
         "NetMsg *NetMsgPopup = &net_msg; NetMsg NetMsgPrimary;",
     )
-    harness = fixture.replace("BODY", body)
+    harness = adapt_harness(fixture.replace("BODY", body))
     executable = tmp_path / "councwin-left-click"
     built = subprocess.run(
         [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-x", "c++", "-", "-o", str(executable)],
