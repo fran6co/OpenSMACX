@@ -1,0 +1,20 @@
+{
+  "event_id": "1feea80c60e90b50d03a9dcb4e91d1742d8ad9a41d514501da212a365bf7d8c0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/config_game_api.cpp",
+      "recovery/tests/test_config_game_actual_source.py"
+    ],
+    "evidence": [
+      "Actual config_game extraction fixture exposes only a DWORD; add its existing named byte view and preservation controls alongside the source migration. No extra product scope or relaxed assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "config-game-byte-fixture-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:game-mask-fields-oct15"
+}

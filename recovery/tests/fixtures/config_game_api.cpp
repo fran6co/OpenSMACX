@@ -129,6 +129,7 @@ public:
 class Strings {
 public:
     char *get(int id);
+    char *get(const char *key);
 };
 extern Player Players[8];
 extern FactionArt FactionsArt[8];
@@ -151,7 +152,8 @@ extern Font *PopupMenuFont, *PopupMenuBoldFont, *PopupMenuItalicFont;
 struct ConfigGameHostStateFields {
     uint32_t game_rules_, game_state_, game_more_preferences_;
     int diff_level_current_, vehicle_current_count_, time_controls_selection_;
-    struct LockMasks { uint32_t enable_mask_; } lock_masks_;
+    struct LockMaskBytes { unsigned char human_mask_, alive_mask_, unassigned_[2]; };
+    union LockMasks { uint32_t enable_mask_; LockMaskBytes bytes_; } lock_masks_;
 };
 struct ConfigGameHostStateWindow { ConfigGameHostStateFields fields_; };
 extern ConfigGameHostStateWindow GameDataStateStorage;
@@ -256,6 +258,7 @@ int BasePop::exec(int, int (*)()) {
     return r;
 }
 char *Strings::get(int) { static char text[] = "difficulty"; return text; }
+char *Strings::get(const char *) { static char text[] = "difficulty"; return text; }
 char *label_get(int i) {
     static char labels[1024][32];
     if (i == 0xB88 / 4) { strcpy(labels[i], "Male"); return labels[i]; }
@@ -381,6 +384,7 @@ int main() {
     menu_start(); replies.push_back(Reply("PICKER", 3)); replies.push_back(Reply("NAME", 0));
     replies.push_back(Reply("HOTSEATADD1", 0));
     assert(config_game(0) == 0); done(); assert((LockEnableMask & 255) == 8);
+    assert((LockEnableMask & 0xFFFFFF00u) == 0xDEADFF00u);
     assert(seen("multi.open") && seen("parse.string") && seen("tamper.clear"));
     assert(TamperState93A9AC == 133 && TamperState93A9B4 == 0);
 
