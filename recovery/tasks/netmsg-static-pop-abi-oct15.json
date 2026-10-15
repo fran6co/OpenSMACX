@@ -1,0 +1,64 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "769e5fef124a88ec86f033e3c7ce741df9c8c55b",
+  "editable_files": [
+    "recovery/tests/test_netmsg_behavior.py",
+    "recovery/tests/test_netmsg_static_pop_oct15.py",
+    "src/netmsg.cpp",
+    "src/netmsg.h"
+  ],
+  "evidence": [
+    "Pinned 0x50B9E0 reads label at ebp+8 and target at ebp+12 and ends plain RET; all24 original calls pass two arguments and caller-clean. Fresh VC6 control confirms nonstatic cdecl adds hidden stack this and shifts args; static cdecl alone among tested member forms reproduces two-stack-argument shape. Current thiscall emits RET8. Original probe and battle_fight callers establish ABI; missing battle_fight path remains separate recovery obligation, not resolved by wrapper correction."
+  ],
+  "intent": "Recover the proven caller-clean two-argument NetMsg primary dispatch as a static cdecl overload, preserving receiver-owned four-argument implementation and original behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4696016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4696064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4696160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4696208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4697328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4697456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4697504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5290464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netmsg-static-pop-abi-oct15"
+}
