@@ -1,0 +1,21 @@
+{
+  "event_id": "b25d94daa211f18665d5cf35085c6043a4fcc245dbf579e8a855ef8947a930b3",
+  "payload": {
+    "affects": [
+      "entity-3cff0d33efae06d43b40455c0f961f0b865e41e15809beb0ff5f0b3b1ab77475",
+      "entity-65315c7337fd25c02c3affc99b5d2b7dd891c021661cd7902808385ef0926cef"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "battle-tail-compiled-collateral-oct15",
+    "evidence": [
+      "Native whole-vehicle175row comparison preserves all verdicts but unedited planet_busting500B60 changes440to438instructions. Fresh ordinary Release build passes; gross158objects noadd/miss differs onlyveh/map. Strict map349sections proves labelrenames only, no code/reloc changes. Strictveh comparator with onlybattle_compute authorized refuses action_terraform section575 non-target payload. Measurement and ordinary profiles differ; same source or coarse verdicts are not preservation proof. Bounded physical instruction/CFG/reference review pending; no outside-scope, linked, runtime or automatic acceptance asserted."
+    ],
+    "hypothesis": "Review unedited compiler collateral under both measurement and ordinary Release profiles before manual integration",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "battle-tail-compiled-collateral-oct15",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:battle-compute-tail-original-oct15"
+}

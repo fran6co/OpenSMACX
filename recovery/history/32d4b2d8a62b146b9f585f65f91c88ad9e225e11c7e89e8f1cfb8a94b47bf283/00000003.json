@@ -1,0 +1,17 @@
+{
+  "event_id": "8eb66e797f001fb55b31fd4f009007e45757cdf332b252d0998f8d2a4159da0c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "battle-tail-compiled-collateral-oct15",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Independent and coordinator Release COFF review:158objects noadd/miss; map349sections code/relocs identical,13private-labelrenames. veh612sections only battle_compute and action_terraform payloads differ; terraform3216B/228relocs with eightbyte changes consistently permuting stacklocals24/28 at1F0/1F6,2DF..2F7,332/336; all operations/branches/references preserved under that mapping. battle_compute extraVehs relocation matches restored pre-sign rowload. Separate fresh exact measurement-profile objects /c /O2 /Gy /GR- /Oy- /GX show planet1392B/92relocs each, ordered target identities unchanged; x argument EDI initialized364, baseline header400 reload and postloop4DD replaced by candidate latch4C9 reload. No write to EBP+C, initial EDI callee-saved; first/backedge/exit values preserved; signed loop branch and counter unchanged. This explains profile layout/instruction delta, NOT byteidentity. All175verdicts preserved including59EXACT;30hosttests and candidate build/link, claims/references pass. Manual bounded CFG/object review only; no formal profile equivalence, linked retention, runtime, automatic or full-game acceptance."
+    ]
+  },
+  "previous_event": "4ac5049e17651c0d329d9ba23e5ee32ccf5b3c3929711cf0b9fe5e26d4e189da",
+  "request_id": "battle-tail-collateral-reviewed-oct15",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:battle-compute-tail-original-oct15"
+}

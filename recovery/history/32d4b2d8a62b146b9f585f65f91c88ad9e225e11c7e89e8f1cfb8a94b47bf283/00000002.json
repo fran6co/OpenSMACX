@@ -1,0 +1,28 @@
+{
+  "event_id": "4ac5049e17651c0d329d9ba23e5ee32ccf5b3c3929711cf0b9fe5e26d4e189da",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Expand review scope for unedited action_terraform Release local-slot permutation and planet_busting measurement-profile loop-load scheduling. Original baseline and all historical obligations retained; no additional body edits. Both are already measured in175-rowTU comparison. This is bounded manual review, not waiver of linked preservation or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5020416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5245792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b25d94daa211f18665d5cf35085c6043a4fcc245dbf579e8a855ef8947a930b3",
+  "request_id": "battle-tail-collateral-scope-oct15",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:battle-compute-tail-original-oct15"
+}
