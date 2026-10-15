@@ -2,9 +2,11 @@
 
 Pinned mono5E3E00/5E3E50, draw5E4B9A and dest5E5833 determine the
 expectations. Scaling callees are explicit boundary doubles with independently
-chosen small tables: these tests do not prove the helpers, native ABI, x87
-precision, rendering-device behavior, original shared-scratch reentrancy or
-whole-game correctness. Product extraction is mandatory once transplanted.
+chosen small tables; shared count/pointer/pitch cells are extracted from source
+and checked across successful, partial, and stale-state paths. This remains a
+bounded three-renderer host control, not proof for the other five kernels,
+native ABI, x87 precision, rendering-device behavior, shared-scratch
+reentrancy, or whole-game correctness.
 """
 from pathlib import Path
 import re
@@ -39,7 +41,14 @@ def live_bodies():
     dest = [body for body in definitions(source, "draw_dest")
             if body[:body.index("{")].count(",") == 4]
     assert len(mono) == 2 and len(plain) == len(dest) == 1
-    return "\n".join(mono + plain + dest)
+    raster_cells = []
+    for name in ("SpriteRasterDestinationColumnCount", "SpriteRasterSourceColumnCount",
+                 "SpriteRasterDestinationRowCount", "SpriteRasterSourceRowCount",
+                 "SpriteRasterXTable", "SpriteRasterYTable",
+                 "SpriteRasterDestinationPitch", "SpriteRasterSourcePitch"):
+        match, = re.findall(r"^(?:int\s+|int\s*\*\s*)" + name + r";\s*$", source, re.M)
+        raster_cells.append(match)
+    return "\n".join(raster_cells + mono + plain + dest)
 
 
 HARNESS = r'''
@@ -49,7 +58,8 @@ HARNESS = r'''
 #include <cstring>
 #include <string>
 #include <cstdio>
-void check(bool c) { if (!c) std::exit(91); }
+void check_at(bool c,int line) { if (!c) { std::fprintf(stderr,"check line %d\\n",line); std::exit(91); } }
+#define check(c) check_at((c),__LINE__)
 struct RECT { int32_t left, top, right, bottom; };
 bool same(RECT a, RECT b) { return a.left==b.left && a.top==b.top && a.right==b.right && a.bottom==b.bottom; }
 int SpriteScaleNumerator=1, SpriteScaleDenominator=1;
@@ -147,6 +157,11 @@ int main(int argc,char **argv) {
     sprite={}; sprite.pcBits_=input; sprite.cTransparentIndex_=66;
     sprite.iSpriteWidth_=3; sprite.iSpriteHeight_=3; sprite.iSpriteWidth2_=5;
     destination.rect1_={3,2,5,4}; destination.stride_=16; destination.locked_bits_=output;
+    int stale_x[8]={},stale_y[8]={};
+    SpriteRasterDestinationColumnCount=-31; SpriteRasterSourceColumnCount=-32;
+    SpriteRasterDestinationRowCount=-33; SpriteRasterSourceRowCount=-34;
+    SpriteRasterXTable=stale_x; SpriteRasterYTable=stale_y;
+    SpriteRasterDestinationPitch=-41; SpriteRasterSourcePitch=-42;
     int key=0x109,color=0x17B,x=2,y=1;
     Buffer *to=&destination;
     std::string want="LIU"; int result=0;
@@ -200,7 +215,11 @@ int main(int argc,char **argv) {
     } else if(scenario==15) {
         check(which==0);lock_result=0;SpriteScaleNumerator=7;SpriteScaleDenominator=8;
         check(sprite.draw_mono(&destination,key,x,y,color,2,3)==3);
-        check(SpriteScaleNumerator==7 && SpriteScaleDenominator==8 && events=="L");return 0;
+        check(SpriteScaleNumerator==7 && SpriteScaleDenominator==8 && events=="L");
+        check(SpriteRasterDestinationColumnCount==-31 && SpriteRasterSourceColumnCount==-32);
+        check(SpriteRasterDestinationRowCount==-33 && SpriteRasterSourceRowCount==-34);
+        check(SpriteRasterXTable==stale_x && SpriteRasterYTable==stale_y);
+        check(SpriteRasterDestinationPitch==-41 && SpriteRasterSourcePitch==-42);return 0;
     } else if(scenario==16 || scenario==17 || scenario==18) {
         SpriteScaleNumerator=2;SpriteScaleDenominator=3;
         original_expected={2,1,4,3};destination.rect1_=clipped_expected=original_expected;
@@ -243,6 +262,40 @@ int main(int argc,char **argv) {
     check(!std::memcmp(source_before,input,sizeof input));
     if(scenario==7) check(SpriteCachedScaleNumerator==-1 && SpriteCachedScaleDenominator==-1 && SpriteScalingRatio==5);
     if(events.find('F')!=std::string::npos) check(SpriteCachedScaleNumerator==SpriteScaleNumerator && SpriteCachedScaleDenominator==SpriteScaleDenominator);
+    if(scenario==0) {
+        check(SpriteRasterDestinationColumnCount==2 && SpriteRasterDestinationRowCount==(which==2?0:2));
+        check(SpriteRasterSourceColumnCount==-32 && SpriteRasterSourceRowCount==-34);
+        check(SpriteRasterXTable==stale_x && SpriteRasterYTable==stale_y);
+        check(SpriteRasterDestinationPitch==16 && SpriteRasterSourcePitch==5);
+    } else if(scenario==14 || scenario==7 || scenario==16) {
+        check(SpriteRasterDestinationColumnCount==-31 && SpriteRasterSourceColumnCount==-32);
+        check(SpriteRasterDestinationRowCount==-33 && SpriteRasterSourceRowCount==-34);
+        check(SpriteRasterXTable==stale_x && SpriteRasterYTable==stale_y);
+        check(SpriteRasterDestinationPitch==(scenario==7? -41:16));
+        check(SpriteRasterSourcePitch==(scenario==7? -42:5));
+    } else if(scenario==17) {
+        check(SpriteRasterXTable==nullptr && SpriteRasterYTable==stale_y);
+        check(SpriteRasterDestinationColumnCount==-31 && SpriteRasterSourceColumnCount==-32);
+        check(SpriteRasterDestinationRowCount==-33 && SpriteRasterSourceRowCount==-34);
+        check(SpriteRasterDestinationPitch==16 && SpriteRasterSourcePitch==5);
+    } else if(scenario==18) {
+        check(SpriteRasterXTable==axis[0].steps && SpriteRasterYTable==nullptr);
+        check(SpriteRasterDestinationColumnCount==axis[0].destination_count);
+        check(SpriteRasterSourceColumnCount==axis[0].source_count);
+        check(SpriteRasterDestinationRowCount==-33 && SpriteRasterSourceRowCount==-34);
+        check(SpriteRasterDestinationPitch==16 && SpriteRasterSourcePitch==5);
+    } else if((scenario>=1 && scenario<=4) || scenario==8 || scenario==20 ||
+              scenario==21 || scenario==22 || scenario==5 || scenario==6 || scenario==19) {
+        const bool expanding=SpriteScaleNumerator>=SpriteScaleDenominator;
+        check(SpriteRasterXTable==axis[0].steps);
+        check(SpriteRasterYTable==axis[1].steps +
+              (expanding ? axis[1].source_count : axis[1].destination_count));
+        check(SpriteRasterDestinationColumnCount==axis[0].destination_count);
+        check(SpriteRasterSourceColumnCount==axis[0].source_count);
+        check(SpriteRasterDestinationRowCount==(expanding ? axis[1].destination_count : 0));
+        check(SpriteRasterSourceRowCount==(expanding ? 0 : axis[1].source_count));
+        check(SpriteRasterDestinationPitch==16 && SpriteRasterSourcePitch==((scenario==5 || scenario==6 || scenario==19)?8:5));
+    }
     return 0;
 }
 '''
@@ -282,7 +335,8 @@ def test_live_blitter_paths(executable, kind, scenario):
     ("destination->free_data(1);", "/* dropped release */", 0, 0),
     ("SpriteScalingRatio > 4.0", "SpriteScalingRatio >= 4.0", 0, 4),
     ("(clipped.top - original.top) * iSpriteWidth_", "(clipped.top - original.top) * source_pitch", 0, 0),
-    ("static_cast<unsigned char>(rows[row])", "rows[row]", 0, 6),
+    ("const unsigned char row_selector =\n                static_cast<unsigned char>(*SpriteRasterYTable++);",
+     "const int row_selector = *SpriteRasterYTable++;", 0, 6),
     ("source_row[column] != key", "true", 0, 2),
     ("saved_denominator;", "saved_numerator;", 0, 15),
     ("g_BUFFER.close();", "/* missing close */", 0, 10),

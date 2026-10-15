@@ -238,15 +238,35 @@ int SpriteMinimumScaledWidth;
 // RECOVERY_OBJECT: v2 0x009B6620 0x009B6624 ?SpriteMinimumScaledHeight@@3HA 0x005E3E50
 int SpriteMinimumScaledHeight;
 
-// The fill ends at 0x9B4758; that address is a separate blitter scalar,
-// not another table. The clipping buffers end at independently used colour
-// and pointer storage (0x9B53E0 and 0x9B606C), respectively.
+// Scaling ratios, clipping tables, and renderer clip state are distinct shared
+// cells. The eight renderers share these counts, returned-table cursors and
+// pitches. For example, 5E4DC6/4DD2 publish unit-clipped dimensions; 5E503C
+// stores the X table before its null test, 5E51C5 advances the Y cursor, and
+// 5E580D consumes the expansion source-row count. Early returns do not clear
+// prior state. These cells start in the image's zero-filled data tail, not
+// per-call zeroed storage. Other row-tail/dispatch scratch remains unresolved.
+// RECOVERY_OBJECT: v1 0x009B3AB8 ?SpriteRasterYTable@@3PAHA
+int *SpriteRasterYTable;
+// RECOVERY_OBJECT: v1 0x009B3AD4 ?SpriteRasterDestinationColumnCount@@3HA
+int SpriteRasterDestinationColumnCount;
 // RECOVERY_OBJECT: v2 0x009B3AD8 0x009B4758 ?SpriteScalingSteps@@3PAHA 0x005EB20F
 int SpriteScalingSteps[SpriteScalingTableCount];
+// RECOVERY_OBJECT: v1 0x009B475C ?SpriteRasterSourceColumnCount@@3HA
+int SpriteRasterSourceColumnCount;
 // RECOVERY_OBJECT: v2 0x009B4760 0x009B53E0 ?SpriteClippedYSteps@@3PAHA 0x005EABBF
 int SpriteClippedYSteps[SpriteScalingTableCount];
+// RECOVERY_OBJECT: v1 0x009B53E8 ?SpriteRasterDestinationRowCount@@3HA
+int SpriteRasterDestinationRowCount;
 // RECOVERY_OBJECT: v2 0x009B53EC 0x009B606C ?SpriteClippedXSteps@@3PAHA 0x005EAB0F
 int SpriteClippedXSteps[SpriteScalingTableCount];
+// RECOVERY_OBJECT: v1 0x009B606C ?SpriteRasterXTable@@3PAHA
+int *SpriteRasterXTable;
+// RECOVERY_OBJECT: v1 0x009B6074 ?SpriteRasterSourceRowCount@@3HA
+int SpriteRasterSourceRowCount;
+// RECOVERY_OBJECT: v1 0x009B3AC8 ?SpriteRasterDestinationPitch@@3HA
+int SpriteRasterDestinationPitch;
+// RECOVERY_OBJECT: v1 0x009B6070 ?SpriteRasterSourcePitch@@3HA
+int SpriteRasterSourcePitch;
 
 // ORIGINAL: 0x005EB20F ?fill_scaling_table@Sprite@@QAEXXZ 0x005EB20F-0x005EB294
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5EB20F..5EB294 divides larger by smaller scale operands, biases error by quotient parity, and fills9B3AD8 until9B4758. Integer error operations wrap32bits before signed branches; cache publication belongs to callers.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the shared800-entry scale-step table generator with its original quotient-parity phase."}
@@ -421,9 +441,9 @@ int *Sprite::get_clipped_y_table_shrink(RECT *full, RECT *clipped, int *destinat
     return SpriteClippedYSteps;
 }
 
-// The blitters own per-draw cursors and pitches locally; only scale decisions
-// and their reusable lookup tables are shared. Pixel loops preserve source
-// order, including overlapping source/destination and expansion replication.
+// Clip skips and transient pixel cursors are local, but counts, table cursors
+// and pitches use the shared storage above. Pixel loops preserve source order,
+// including overlapping source/destination and expansion replication.
 // ORIGINAL: 0x005E3E00 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHHHH@Z 0x005E3E00-0x005E3E50 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5E3E00 saves696D18/1C, substitutes final two parameters, calls5E3E50 with destination/key/x/y/color, restores denominator then numerator and returns result. Retain the claimed same-span seed and its restoration obligation; this binding is not a new claim.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the genuine mono scaling overload rather than changing global layout or copying an opaque seed class."}
 // symbol    ?draw_mono@Sprite@@QAEHPAVBuffer@@HHHHHH@Z
@@ -440,7 +460,7 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
 }
 
 // ORIGINAL: 0x005E3E50 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHH@Z 0x005E3E50-0x005E4ADA
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned3210-byte worker loads file-backed sprites through9B6080; software paths cover1:1, shrinking and expansion. Initial unscaled top skip uses logical width while subsequent rows use pitch. Scaled origins truncate coordinate+offset*ratio, not scaled coordinates. Preserve final free_data and source-byte/run ordering; local loop scratch replaces assembler scratch, not shared scale owners.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the monochrome sprite blitter through actual Sprite storage, Buffer locking and scale tables."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned3210-byte worker loads file-backed sprites through9B6080; software paths cover1:1, shrinking and expansion. Initial unscaled top skip uses logical width while subsequent rows use pitch. Scaled origins truncate coordinate+offset*ratio, not scaled coordinates. Preserve final free_data and source-byte/run ordering; shared clip counts, table cursors and pitches retain their original storage while transient pixel cursors remain local.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the monochrome sprite blitter through actual Sprite storage, Buffer locking and scale tables."}
 // symbol    ?draw_mono@Sprite@@QAEHPAVBuffer@@HHHH@Z
 int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
                       int color) {
@@ -472,8 +492,10 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
 
     const unsigned char fill = static_cast<unsigned char>(color);
     const unsigned char key = static_cast<unsigned char>(transparent);
-    const int source_pitch = iSpriteWidth2_;
-    int destination_pitch = static_cast<int>(destination->stride_);
+    int &source_pitch = SpriteRasterSourcePitch;
+    source_pitch = iSpriteWidth2_;
+    int &destination_pitch = SpriteRasterDestinationPitch;
+    destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
         pcBits_;
 
@@ -497,8 +519,10 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
         unsigned char *destination_row =
             static_cast<unsigned char *>(destination->locked_bits_) +
             clipped.left + clipped.top * destination_pitch;
-        const int columns = clipped.right - clipped.left;
         const int rows = clipped.bottom - clipped.top;
+        SpriteRasterDestinationRowCount = rows;
+        const int columns = clipped.right - clipped.left;
+        SpriteRasterDestinationColumnCount = columns;
         for (int row = 0; row < rows; ++row) {
             for (int column = 0; column < columns; ++column) {
                 if (source_row[column] != key)
@@ -536,7 +560,10 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
     const int base_offset = original.left + original.top * destination_pitch;
     destination_pitch = static_cast<int>(destination->stride_);
     int source_x, source_y, destination_x, destination_y;
-    int source_columns, source_rows, destination_columns, destination_rows;
+    int &source_columns = SpriteRasterSourceColumnCount;
+    int &source_rows = SpriteRasterSourceRowCount;
+    int &destination_columns = SpriteRasterDestinationColumnCount;
+    int &destination_rows = SpriteRasterDestinationRowCount;
 
     if (SpriteScaleNumerator < SpriteScaleDenominator) {
         if (original.right - original.left < SpriteMinimumScaledWidth ||
@@ -545,22 +572,23 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
             return 0;
         }
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_shrink(&original, &clipped,
             &destination_x, &source_x, &destination_columns, &source_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_shrink(&original, &clipped,
             &destination_y, &source_y, &destination_rows, &source_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < destination_rows; ++row) {
+        do {
+            int *const columns = SpriteRasterXTable;
             const unsigned char *source = source_row;
             for (int column = 0; column < destination_columns; ++column) {
                 if (*source != key) destination_row[column] = fill;
@@ -568,30 +596,35 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
             }
             // MOV DL,[row_table]; ADD row_table,4 at5E4477..447C.
             // Nonzero low-byte row skips are the finite original domain.
-            if (row + 1 < destination_rows) {
-                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+            const unsigned char row_selector =
+                static_cast<unsigned char>(*SpriteRasterYTable++);
+            if (destination_rows != 1) {
+                source_row += source_pitch * row_selector;
                 destination_row += destination_pitch;
             }
-        }
+            destination_rows = static_cast<int>(
+                static_cast<uint32_t>(destination_rows) - 1u);
+        } while (destination_rows != 0);
     } else {
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_expand(&original, &clipped,
             &source_x, &destination_x, &source_columns, &destination_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_expand(&original, &clipped,
             &source_y, &destination_y, &source_rows, &destination_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < source_rows; ++row) {
-            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+        do {
+            const unsigned char selector = static_cast<unsigned char>(*SpriteRasterYTable++);
+            int *const columns = SpriteRasterXTable;
             const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
             int output_column = 0;
             for (int column = 0; column < source_columns; ++column) {
@@ -602,11 +635,13 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
                 }
                 output_column += columns[column];
             }
-            if (row + 1 < source_rows) {
+            if (source_rows != 1) {
                 source_row += source_pitch;
                 destination_row += repeats * destination_pitch;
             }
-        }
+            source_rows = static_cast<int>(
+                static_cast<uint32_t>(source_rows) - 1u);
+        } while (source_rows != 0);
     }
     destination->free_data(1);
     return 0;
@@ -643,8 +678,10 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
     }
 
     const unsigned char key = static_cast<unsigned char>(transparent);
-    const int source_pitch = iSpriteWidth2_;
-    int destination_pitch = static_cast<int>(destination->stride_);
+    int &source_pitch = SpriteRasterSourcePitch;
+    source_pitch = iSpriteWidth2_;
+    int &destination_pitch = SpriteRasterDestinationPitch;
+    destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
         pcBits_;
 
@@ -667,8 +704,10 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
         unsigned char *destination_row =
             static_cast<unsigned char *>(destination->locked_bits_) +
             clipped.left + clipped.top * destination_pitch;
-        const int columns = clipped.right - clipped.left;
         const int rows = clipped.bottom - clipped.top;
+        SpriteRasterDestinationRowCount = rows;
+        const int columns = clipped.right - clipped.left;
+        SpriteRasterDestinationColumnCount = columns;
         for (int row = 0; row < rows; ++row) {
             for (int column = 0; column < columns; ++column) {
                 if (source_row[column] != key)
@@ -706,7 +745,10 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
     const int base_offset = original.left + original.top * destination_pitch;
     destination_pitch = static_cast<int>(destination->stride_);
     int source_x, source_y, destination_x, destination_y;
-    int source_columns, source_rows, destination_columns, destination_rows;
+    int &source_columns = SpriteRasterSourceColumnCount;
+    int &source_rows = SpriteRasterSourceRowCount;
+    int &destination_columns = SpriteRasterDestinationColumnCount;
+    int &destination_rows = SpriteRasterDestinationRowCount;
 
     if (SpriteScaleNumerator < SpriteScaleDenominator) {
         if (original.right - original.left < SpriteMinimumScaledWidth ||
@@ -715,22 +757,23 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
             return 0;
         }
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_shrink(&original, &clipped,
             &destination_x, &source_x, &destination_columns, &source_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_shrink(&original, &clipped,
             &destination_y, &source_y, &destination_rows, &source_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < destination_rows; ++row) {
+        do {
+            int *const columns = SpriteRasterXTable;
             const unsigned char *source = source_row;
             for (int column = 0; column < destination_columns; ++column) {
                 if (*source != key) destination_row[column] = *source;
@@ -738,30 +781,35 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
             }
             // MOV DL,[row_table]; ADD row_table,4 at5E4477..447C.
             // Nonzero low-byte row skips are the finite original domain.
-            if (row + 1 < destination_rows) {
-                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+            const unsigned char row_selector =
+                static_cast<unsigned char>(*SpriteRasterYTable++);
+            if (destination_rows != 1) {
+                source_row += source_pitch * row_selector;
                 destination_row += destination_pitch;
             }
-        }
+            destination_rows = static_cast<int>(
+                static_cast<uint32_t>(destination_rows) - 1u);
+        } while (destination_rows != 0);
     } else {
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_expand(&original, &clipped,
             &source_x, &destination_x, &source_columns, &destination_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_expand(&original, &clipped,
             &source_y, &destination_y, &source_rows, &destination_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < source_rows; ++row) {
-            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+        do {
+            const unsigned char selector = static_cast<unsigned char>(*SpriteRasterYTable++);
+            int *const columns = SpriteRasterXTable;
             const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
             int output_column = 0;
             for (int column = 0; column < source_columns; ++column) {
@@ -773,11 +821,13 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
                 }
                 output_column += columns[column];
             }
-            if (row + 1 < source_rows) {
+            if (source_rows != 1) {
                 source_row += source_pitch;
                 destination_row += repeats * destination_pitch;
             }
-        }
+            source_rows = static_cast<int>(
+                static_cast<uint32_t>(source_rows) - 1u);
+        } while (source_rows != 0);
     }
     destination->free_data(1);
     return 0;
@@ -806,8 +856,10 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
     }
 
     const unsigned char key = static_cast<unsigned char>(transparent);
-    const int source_pitch = iSpriteWidth2_;
-    int destination_pitch = static_cast<int>(destination->stride_);
+    int &source_pitch = SpriteRasterSourcePitch;
+    source_pitch = iSpriteWidth2_;
+    int &destination_pitch = SpriteRasterDestinationPitch;
+    destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
         pcBits_;
 
@@ -832,18 +884,22 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
         unsigned char *destination_row =
             static_cast<unsigned char *>(destination->locked_bits_) +
             clipped.left + clipped.top * destination_pitch;
+        int &rows = SpriteRasterDestinationRowCount;
+        rows = clipped.bottom - clipped.top;
         const int columns = clipped.right - clipped.left;
-        const int rows = clipped.bottom - clipped.top;
-        for (int row = 0; row < rows; ++row) {
+        SpriteRasterDestinationColumnCount = columns;
+        do {
             for (int column = 0; column < columns; ++column) {
                 if (source_row[column] != key)
                     destination_row[column] = table[source_row[column]];
             }
-            if (row + 1 < rows) {
+            if (rows != 1) {
                 source_row += source_pitch;
                 destination_row += destination_pitch;
             }
-        }
+            rows = static_cast<int>(
+                static_cast<uint32_t>(rows) - 1u);
+        } while (rows != 0);
         destination->free_data(1);
         return 0;
     }
@@ -871,7 +927,10 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
     const int base_offset = original.left + original.top * destination_pitch;
     destination_pitch = static_cast<int>(destination->stride_);
     int source_x, source_y, destination_x, destination_y;
-    int source_columns, source_rows, destination_columns, destination_rows;
+    int &source_columns = SpriteRasterSourceColumnCount;
+    int &source_rows = SpriteRasterSourceRowCount;
+    int &destination_columns = SpriteRasterDestinationColumnCount;
+    int &destination_rows = SpriteRasterDestinationRowCount;
 
     if (SpriteScaleNumerator < SpriteScaleDenominator) {
         if (original.right - original.left < SpriteMinimumScaledWidth ||
@@ -880,15 +939,15 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
             return 0;
         }
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_shrink(&original, &clipped,
             &destination_x, &source_x, &destination_columns, &source_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_shrink(&original, &clipped,
             &destination_y, &source_y, &destination_rows, &source_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
@@ -896,28 +955,33 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
             (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits +
             (base_offset + destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < destination_rows; ++row) {
+        do {
+            int *const columns = SpriteRasterXTable;
             const unsigned char *source = source_row;
             for (int column = 0; column < destination_columns; ++column) {
                 if (*source != key) destination_row[column] = table[*source];
                 if (column + 1 < destination_columns) source += columns[column];
             }
-            if (row + 1 < destination_rows) {
-                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+            const unsigned char row_selector =
+                static_cast<unsigned char>(*SpriteRasterYTable++);
+            if (destination_rows != 1) {
+                source_row += source_pitch * row_selector;
                 destination_row += destination_pitch;
             }
-        }
+            destination_rows = static_cast<int>(
+                static_cast<uint32_t>(destination_rows) - 1u);
+        } while (destination_rows != 0);
     } else {
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_expand(&original, &clipped,
             &source_x, &destination_x, &source_columns, &destination_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_expand(&original, &clipped,
             &source_y, &destination_y, &source_rows, &destination_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
@@ -925,8 +989,9 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
             (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits +
             (base_offset + destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < source_rows; ++row) {
-            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+        do {
+            const unsigned char selector = static_cast<unsigned char>(*SpriteRasterYTable++);
+            int *const columns = SpriteRasterXTable;
             const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
             int output_column = 0;
             for (int column = 0; column < source_columns; ++column) {
@@ -943,11 +1008,13 @@ int Sprite::draw(Buffer *destination, int transparent, int x, int y,
                 }
                 output_column += columns[column];
             }
-            if (row + 1 < source_rows) {
+            if (source_rows != 1) {
                 source_row += source_pitch;
                 destination_row += repeats * destination_pitch;
             }
-        }
+            source_rows = static_cast<int>(
+                static_cast<uint32_t>(source_rows) - 1u);
+        } while (source_rows != 0);
     }
     destination->free_data(1);
     return 0;
@@ -977,8 +1044,10 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
     }
 
     const unsigned char key = static_cast<unsigned char>(transparent);
-    const int source_pitch = iSpriteWidth2_;
-    int destination_pitch = static_cast<int>(destination->stride_);
+    int &source_pitch = SpriteRasterSourcePitch;
+    source_pitch = iSpriteWidth2_;
+    int &destination_pitch = SpriteRasterDestinationPitch;
+    destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
         pcBits_;
 
@@ -1001,19 +1070,23 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
         unsigned char *destination_row =
             static_cast<unsigned char *>(destination->locked_bits_) +
             clipped.left + clipped.top * destination_pitch;
+        int &rows = SpriteRasterDestinationRowCount;
+        rows = clipped.bottom - clipped.top;
         const int columns = clipped.right - clipped.left;
-        const int rows = clipped.bottom - clipped.top;
-        for (int row = 0; row < rows; ++row) {
+        SpriteRasterDestinationColumnCount = columns;
+        do {
             for (int column = 0; column < columns; ++column) {
                 if (source_row[column] != key)
                     destination_row[column] = source_row[column] == 0
                         ? table[destination_row[column]] : source_row[column];
             }
-            if (row + 1 < rows) {
+            if (rows != 1) {
                 source_row += source_pitch;
                 destination_row += destination_pitch;
             }
-        }
+            rows = static_cast<int>(
+                static_cast<uint32_t>(rows) - 1u);
+        } while (rows != 0);
         destination->free_data(1);
         return 0;
     }
@@ -1041,7 +1114,10 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
     const int base_offset = original.left + original.top * destination_pitch;
     destination_pitch = static_cast<int>(destination->stride_);
     int source_x, source_y, destination_x, destination_y;
-    int source_columns, source_rows, destination_columns, destination_rows;
+    int &source_columns = SpriteRasterSourceColumnCount;
+    int &source_rows = SpriteRasterSourceRowCount;
+    int &destination_columns = SpriteRasterDestinationColumnCount;
+    int &destination_rows = SpriteRasterDestinationRowCount;
 
     if (SpriteScaleNumerator < SpriteScaleDenominator) {
         if (original.right - original.left < SpriteMinimumScaledWidth ||
@@ -1050,22 +1126,23 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
             return 0;
         }
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_shrink(&original, &clipped,
             &destination_x, &source_x, &destination_columns, &source_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_shrink(&original, &clipped,
             &destination_y, &source_y, &destination_rows, &source_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < destination_rows; ++row) {
+        do {
+            int *const columns = SpriteRasterXTable;
             const unsigned char *source = source_row;
             for (int column = 0; column < destination_columns; ++column) {
                 if (*source != key)
@@ -1075,30 +1152,35 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
             }
             // MOV DL,[row_table]; ADD row_table,4 at5E4477..447C.
             // Nonzero low-byte row skips are the finite original domain.
-            if (row + 1 < destination_rows) {
-                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+            const unsigned char row_selector =
+                static_cast<unsigned char>(*SpriteRasterYTable++);
+            if (destination_rows != 1) {
+                source_row += source_pitch * row_selector;
                 destination_row += destination_pitch;
             }
-        }
+            destination_rows = static_cast<int>(
+                static_cast<uint32_t>(destination_rows) - 1u);
+        } while (destination_rows != 0);
     } else {
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_expand(&original, &clipped,
             &source_x, &destination_x, &source_columns, &destination_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_expand(&original, &clipped,
             &source_y, &destination_y, &source_rows, &destination_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < source_rows; ++row) {
-            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+        do {
+            const unsigned char selector = static_cast<unsigned char>(*SpriteRasterYTable++);
+            int *const columns = SpriteRasterXTable;
             const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
             int output_column = 0;
             for (int column = 0; column < source_columns; ++column) {
@@ -1118,11 +1200,13 @@ int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
                 }
                 output_column += columns[column];
             }
-            if (row + 1 < source_rows) {
+            if (source_rows != 1) {
                 source_row += source_pitch;
                 destination_row += repeats * destination_pitch;
             }
-        }
+            source_rows = static_cast<int>(
+                static_cast<uint32_t>(source_rows) - 1u);
+        } while (source_rows != 0);
     }
     destination->free_data(1);
     return 0;
@@ -1157,8 +1241,10 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y,
         SpriteCachedScaleDenominator = SpriteScaleDenominator;
     }
 
-    const int source_pitch = iSpriteWidth2_;
-    int destination_pitch = static_cast<int>(destination->stride_);
+    int &source_pitch = SpriteRasterSourcePitch;
+    source_pitch = iSpriteWidth2_;
+    int &destination_pitch = SpriteRasterDestinationPitch;
+    destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
         pcBits_;
 
@@ -1181,19 +1267,23 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y,
         unsigned char *destination_row =
             static_cast<unsigned char *>(destination->locked_bits_) +
             clipped.left + clipped.top * destination_pitch;
+        int &rows = SpriteRasterDestinationRowCount;
+        rows = clipped.bottom - clipped.top;
         const int columns = clipped.right - clipped.left;
-        const int rows = clipped.bottom - clipped.top;
-        for (int row = 0; row < rows; ++row) {
+        SpriteRasterDestinationColumnCount = columns;
+        do {
             for (int column = 0; column < columns; ++column) {
                 if (source_row[column] == 0)
                     destination_row[column] =
                         table[destination_row[column]];
             }
-            if (row + 1 < rows) {
+            if (rows != 1) {
                 source_row += source_pitch;
                 destination_row += destination_pitch;
             }
-        }
+            rows = static_cast<int>(
+                static_cast<uint32_t>(rows) - 1u);
+        } while (rows != 0);
         destination->free_data(1);
         return 0;
     }
@@ -1221,7 +1311,10 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y,
     const int base_offset = original.left + original.top * destination_pitch;
     destination_pitch = static_cast<int>(destination->stride_);
     int source_x, source_y, destination_x, destination_y;
-    int source_columns, source_rows, destination_columns, destination_rows;
+    int &source_columns = SpriteRasterSourceColumnCount;
+    int &source_rows = SpriteRasterSourceRowCount;
+    int &destination_columns = SpriteRasterDestinationColumnCount;
+    int &destination_rows = SpriteRasterDestinationRowCount;
 
     if (SpriteScaleNumerator < SpriteScaleDenominator) {
         if (original.right - original.left < SpriteMinimumScaledWidth ||
@@ -1230,22 +1323,23 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y,
             return 0;
         }
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_shrink(&original, &clipped,
             &destination_x, &source_x, &destination_columns, &source_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_shrink(&original, &clipped,
             &destination_y, &source_y, &destination_rows, &source_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < destination_rows; ++row) {
+        do {
+            int *const columns = SpriteRasterXTable;
             const unsigned char *source = source_row;
             unsigned char *destination = destination_row;
             for (int column = 0; column < destination_columns; ++column) {
@@ -1261,32 +1355,37 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y,
             // residual: pitch * selector - source_columns is what the two
             // image steps add up to.
             // Nonzero low-byte row skips are the finite original domain.
-            if (row + 1 < destination_rows) {
+            const unsigned char row_selector =
+                static_cast<unsigned char>(*SpriteRasterYTable++);
+            if (destination_rows != 1) {
                 source_row += static_cast<int>(
-                    static_cast<unsigned char>(rows[row])) * source_pitch
+                    row_selector) * source_pitch
                     - source_columns;
                 destination_row += destination_pitch;
             }
-        }
+            destination_rows = static_cast<int>(
+                static_cast<uint32_t>(destination_rows) - 1u);
+        } while (destination_rows != 0);
     } else {
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_expand(&original, &clipped,
             &source_x, &destination_x, &source_columns, &destination_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_expand(&original, &clipped,
             &source_y, &destination_y, &source_rows, &destination_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < source_rows; ++row) {
-            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+        do {
+            const unsigned char selector = static_cast<unsigned char>(*SpriteRasterYTable++);
+            int *const columns = SpriteRasterXTable;
             const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
             int output_column = 0;
             for (int column = 0; column < source_columns; ++column) {
@@ -1303,11 +1402,13 @@ int Sprite::draw_dest_unk1(Buffer *destination, int x, int y,
                 }
                 output_column += columns[column];
             }
-            if (row + 1 < source_rows) {
+            if (source_rows != 1) {
                 source_row += source_pitch;
                 destination_row += repeats * destination_pitch;
             }
-        }
+            source_rows = static_cast<int>(
+                static_cast<uint32_t>(source_rows) - 1u);
+        } while (source_rows != 0);
     }
     destination->free_data(1);
     return 0;
@@ -1362,8 +1463,10 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
     }
 
     const unsigned char key = static_cast<unsigned char>(transparent);
-    const int source_pitch = iSpriteWidth2_;
-    int destination_pitch = static_cast<int>(destination->stride_);
+    int &source_pitch = SpriteRasterSourcePitch;
+    source_pitch = iSpriteWidth2_;
+    int &destination_pitch = SpriteRasterDestinationPitch;
+    destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
         pcBits_;
 
@@ -1386,19 +1489,23 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
         unsigned char *destination_row =
             static_cast<unsigned char *>(destination->locked_bits_) +
             clipped.left + clipped.top * destination_pitch;
+        int &rows = SpriteRasterDestinationRowCount;
+        rows = clipped.bottom - clipped.top;
         const int columns = clipped.right - clipped.left;
-        const int rows = clipped.bottom - clipped.top;
-        for (int row = 0; row < rows; ++row) {
+        SpriteRasterDestinationColumnCount = columns;
+        do {
             for (int column = 0; column < columns; ++column) {
                 if (source_row[column] != key)
                     destination_row[column] =
                         table[destination_row[column]];
             }
-            if (row + 1 < rows) {
+            if (rows != 1) {
                 source_row += source_pitch;
                 destination_row += destination_pitch;
             }
-        }
+            rows = static_cast<int>(
+                static_cast<uint32_t>(rows) - 1u);
+        } while (rows != 0);
         destination->free_data(1);
         return 0;
     }
@@ -1426,7 +1533,10 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
     const int base_offset = original.left + original.top * destination_pitch;
     destination_pitch = static_cast<int>(destination->stride_);
     int source_x, source_y, destination_x, destination_y;
-    int source_columns, source_rows, destination_columns, destination_rows;
+    int &source_columns = SpriteRasterSourceColumnCount;
+    int &source_rows = SpriteRasterSourceRowCount;
+    int &destination_columns = SpriteRasterDestinationColumnCount;
+    int &destination_rows = SpriteRasterDestinationRowCount;
 
     if (SpriteScaleNumerator < SpriteScaleDenominator) {
         if (original.right - original.left < SpriteMinimumScaledWidth ||
@@ -1435,22 +1545,23 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
             return 0;
         }
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_shrink(&original, &clipped,
             &destination_x, &source_x, &destination_columns, &source_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_shrink(&original, &clipped,
             &destination_y, &source_y, &destination_rows, &source_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < destination_rows; ++row) {
+        do {
+            int *const columns = SpriteRasterXTable;
             const unsigned char *source = source_row;
             unsigned char *destination = destination_row;
             for (int column = 0; column < destination_columns; ++column) {
@@ -1465,32 +1576,37 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
             // steps pitch*(selector-1) plus the (pitch - source_columns)
             // residual, which is pitch * selector - source_columns together.
             // Nonzero low-byte row skips are the finite original domain.
-            if (row + 1 < destination_rows) {
+            const unsigned char row_selector =
+                static_cast<unsigned char>(*SpriteRasterYTable++);
+            if (destination_rows != 1) {
                 source_row += static_cast<int>(
-                    static_cast<unsigned char>(rows[row])) * source_pitch
+                    row_selector) * source_pitch
                     - source_columns;
                 destination_row += destination_pitch;
             }
-        }
+            destination_rows = static_cast<int>(
+                static_cast<uint32_t>(destination_rows) - 1u);
+        } while (destination_rows != 0);
     } else {
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_expand(&original, &clipped,
             &source_x, &destination_x, &source_columns, &destination_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_expand(&original, &clipped,
             &source_y, &destination_y, &source_rows, &destination_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < source_rows; ++row) {
-            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+        do {
+            const unsigned char selector = static_cast<unsigned char>(*SpriteRasterYTable++);
+            int *const columns = SpriteRasterXTable;
             const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
             int output_column = 0;
             for (int column = 0; column < source_columns; ++column) {
@@ -1508,11 +1624,13 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
                 }
                 output_column += columns[column];
             }
-            if (row + 1 < source_rows) {
+            if (source_rows != 1) {
                 source_row += source_pitch;
                 destination_row += repeats * destination_pitch;
             }
-        }
+            source_rows = static_cast<int>(
+                static_cast<uint32_t>(source_rows) - 1u);
+        } while (source_rows != 0);
     }
     destination->free_data(1);
     return 0;
@@ -2602,8 +2720,10 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
         SpriteCachedScaleDenominator = SpriteScaleDenominator;
     }
 
-    const int source_pitch = iSpriteWidth2_;
-    int destination_pitch = static_cast<int>(destination->stride_);
+    int &source_pitch = SpriteRasterSourcePitch;
+    source_pitch = iSpriteWidth2_;
+    int &destination_pitch = SpriteRasterDestinationPitch;
+    destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
         pcBits_;
 
@@ -2625,9 +2745,11 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
         unsigned char *destination_row =
             static_cast<unsigned char *>(destination->locked_bits_) +
             clipped.left + clipped.top * destination_pitch;
+        int &rows = SpriteRasterDestinationRowCount;
+        rows = clipped.bottom - clipped.top;
         const int columns = clipped.right - clipped.left;
-        const int rows = clipped.bottom - clipped.top;
-        for (int row = 0; row < rows; ++row) {
+        SpriteRasterDestinationColumnCount = columns;
+        do {
             for (int column = 0; column < columns; ++column) {
                 if (static_cast<char>(source_row[column]) !=
                     static_cast<char>(transparent)) {
@@ -2635,11 +2757,13 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
                         multi_table[source_row[column]][destination_row[column]];
                 }
             }
-            if (row + 1 < rows) {
+            if (rows != 1) {
                 source_row += source_pitch;
                 destination_row += destination_pitch;
             }
-        }
+            rows = static_cast<int>(
+                static_cast<uint32_t>(rows) - 1u);
+        } while (rows != 0);
         destination->free_data(1);
         return 1;
     }
@@ -2663,7 +2787,10 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
     const int base_offset = original.left + original.top * destination_pitch;
     destination_pitch = static_cast<int>(destination->stride_);
     int source_x, source_y, destination_x, destination_y;
-    int source_columns, source_rows, destination_columns, destination_rows;
+    int &source_columns = SpriteRasterSourceColumnCount;
+    int &source_rows = SpriteRasterSourceRowCount;
+    int &destination_columns = SpriteRasterDestinationColumnCount;
+    int &destination_rows = SpriteRasterDestinationRowCount;
 
     if (SpriteScaleNumerator < SpriteScaleDenominator) {
         if (original.right - original.left < SpriteMinimumScaledWidth ||
@@ -2672,22 +2799,23 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
             return 0;
         }
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_shrink(&original, &clipped,
             &destination_x, &source_x, &destination_columns, &source_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_shrink(&original, &clipped,
             &destination_y, &source_y, &destination_rows, &source_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < destination_rows; ++row) {
+        do {
+            int *const columns = SpriteRasterXTable;
             const unsigned char *source = source_row;
             for (int column = 0; column < destination_columns; ++column) {
                 if (static_cast<char>(*source) != static_cast<char>(transparent)) {
@@ -2696,30 +2824,35 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
                 }
                 if (column + 1 < destination_columns) source += columns[column];
             }
-            if (row + 1 < destination_rows) {
-                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+            const unsigned char row_selector =
+                static_cast<unsigned char>(*SpriteRasterYTable++);
+            if (destination_rows != 1) {
+                source_row += source_pitch * row_selector;
                 destination_row += destination_pitch;
             }
-        }
+            destination_rows = static_cast<int>(
+                static_cast<uint32_t>(destination_rows) - 1u);
+        } while (destination_rows != 0);
     } else {
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_expand(&original, &clipped,
             &source_x, &destination_x, &source_columns, &destination_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_expand(&original, &clipped,
             &source_y, &destination_y, &source_rows, &destination_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < source_rows; ++row) {
-            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+        do {
+            const unsigned char selector = static_cast<unsigned char>(*SpriteRasterYTable++);
+            int *const columns = SpriteRasterXTable;
             const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
             int output_column = 0;
             for (int column = 0; column < source_columns; ++column) {
@@ -2735,11 +2868,13 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
                 }
                 output_column += columns[column];
             }
-            if (row + 1 < source_rows) {
+            if (source_rows != 1) {
                 source_row += source_pitch;
                 destination_row += repeats * destination_pitch;
             }
-        }
+            source_rows = static_cast<int>(
+                static_cast<uint32_t>(source_rows) - 1u);
+        } while (source_rows != 0);
     }
     destination->free_data(1);
     return 1;
@@ -2783,8 +2918,10 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
     }
 
     const unsigned char key = static_cast<unsigned char>(transparent);
-    const int source_pitch = iSpriteWidth2_;
-    int destination_pitch = static_cast<int>(destination->stride_);
+    int &source_pitch = SpriteRasterSourcePitch;
+    source_pitch = iSpriteWidth2_;
+    int &destination_pitch = SpriteRasterDestinationPitch;
+    destination_pitch = static_cast<int>(destination->stride_);
     const unsigned char *const scaled_source =
         pcBits_;
 
@@ -2806,19 +2943,23 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
         unsigned char *destination_row =
             static_cast<unsigned char *>(destination->locked_bits_) +
             clipped.left + clipped.top * destination_pitch;
+        int &rows = SpriteRasterDestinationRowCount;
+        rows = clipped.bottom - clipped.top;
         const int columns = clipped.right - clipped.left;
-        const int rows = clipped.bottom - clipped.top;
-        for (int row = 0; row < rows; ++row) {
+        SpriteRasterDestinationColumnCount = columns;
+        do {
             for (int column = 0; column < columns; ++column) {
                 const unsigned char source = source_row[column];
                 if (source != key && source != 0)
                     destination_row[column] = table[destination_row[column]];
             }
-            if (row + 1 < rows) {
+            if (rows != 1) {
                 source_row += source_pitch;
                 destination_row += destination_pitch;
             }
-        }
+            rows = static_cast<int>(
+                static_cast<uint32_t>(rows) - 1u);
+        } while (rows != 0);
         destination->free_data(1);
         return 0;
     }
@@ -2842,7 +2983,10 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
     const int base_offset = original.left + original.top * destination_pitch;
     destination_pitch = static_cast<int>(destination->stride_);
     int source_x, source_y, destination_x, destination_y;
-    int source_columns, source_rows, destination_columns, destination_rows;
+    int &source_columns = SpriteRasterSourceColumnCount;
+    int &source_rows = SpriteRasterSourceRowCount;
+    int &destination_columns = SpriteRasterDestinationColumnCount;
+    int &destination_rows = SpriteRasterDestinationRowCount;
 
     if (SpriteScaleNumerator < SpriteScaleDenominator) {
         if (original.right - original.left < SpriteMinimumScaledWidth ||
@@ -2851,52 +2995,58 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
             return 0;
         }
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_shrink(&original, &clipped,
             &destination_x, &source_x, &destination_columns, &source_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_shrink(&original, &clipped,
             &destination_y, &source_y, &destination_rows, &source_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < destination_rows; ++row) {
+        do {
+            int *const columns = SpriteRasterXTable;
             const unsigned char *source = source_row;
             for (int column = 0; column < destination_columns; ++column) {
                 if (*source != key && *source != 0)
                     destination_row[column] = table[*source];
                 if (column + 1 < destination_columns) source += columns[column];
             }
-            if (row + 1 < destination_rows) {
-                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+            const unsigned char row_selector =
+                static_cast<unsigned char>(*SpriteRasterYTable++);
+            if (destination_rows != 1) {
+                source_row += source_pitch * row_selector;
                 destination_row += destination_pitch;
             }
-        }
+            destination_rows = static_cast<int>(
+                static_cast<uint32_t>(destination_rows) - 1u);
+        } while (destination_rows != 0);
     } else {
         IntersectRect(&clipped, &original, &destination->rect1_);
-        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+        SpriteRasterXTable = get_clipped_x_table_expand(&original, &clipped,
             &source_x, &destination_x, &source_columns, &destination_columns);
-        if (columns == 0) {
+        if (SpriteRasterXTable == 0) {
             destination->free_data(1);
             return 0;
         }
-        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+        SpriteRasterYTable = get_clipped_y_table_expand(&original, &clipped,
             &source_y, &destination_y, &source_rows, &destination_rows);
-        if (rows == 0) {
+        if (SpriteRasterYTable == 0) {
             destination->free_data(1);
             return 0;
         }
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
-        for (int row = 0; row < source_rows; ++row) {
-            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+        do {
+            const unsigned char selector = static_cast<unsigned char>(*SpriteRasterYTable++);
+            int *const columns = SpriteRasterXTable;
             const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
             int output_column = 0;
             for (int column = 0; column < source_columns; ++column) {
@@ -2912,11 +3062,13 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
                 }
                 output_column += columns[column];
             }
-            if (row + 1 < source_rows) {
+            if (source_rows != 1) {
                 source_row += source_pitch;
                 destination_row += repeats * destination_pitch;
             }
-        }
+            source_rows = static_cast<int>(
+                static_cast<uint32_t>(source_rows) - 1u);
+        } while (source_rows != 0);
     }
     destination->free_data(1);
     return 0;
