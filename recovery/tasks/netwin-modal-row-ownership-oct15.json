@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "0ee9bdd4e18fda0f3d354fec4548322f487d8784",
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_modal_rows_oct15.py"
+  ],
+  "evidence": [
+    "Pinned 0x4831E5 and 0x483295 initialize scans at 0x90DD15, the ready_or_occupied_ byte of NetWinLobbyRows[1]; both advance 0x17C, the existing source row size.",
+    "The receiver callback reloads player_count_ while the fixed daemon callback decrements a snapshot. Preserve each loop contract, receive drain, redraw callbacks and exit decisions. No bounds guard or packet changes."
+  ],
+  "intent": "Recover typed lobby-row iteration in both NetWin modal callbacks while preserving live versus snapshotted player counts and original unchecked traversal",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4731280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4731456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-modal-row-ownership-oct15"
+}
