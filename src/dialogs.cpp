@@ -1002,19 +1002,19 @@ int Dialogs::on_key_down(int key) {
 // symbol    ?on_dialog_focus@Dialogs@@UAEXH@Z
 void Dialogs::on_dialog_focus(int focus_id) {
     switch (kind_) {
-    case 1: case 6: case 11:
+    case 16:
         radio_button_view().RadioButton::on_dialog_focus(focus_id);
         break;
-    case 2: case 7: case 12:
+    case 2:
         list_box_view().ListBox::on_dialog_focus(focus_id);
         break;
-    case 3: case 8: case 13:
+    case 1:
         check_box_view().CheckBox::on_dialog_focus(focus_id);
         break;
-    case 4: case 9: case 14:
+    case 8:
         sprite_box_view().SpriteBox::on_dialog_focus(focus_id);
         break;
-    case 5: case 10: case 15: case 16:
+    case 4:
         edit_group_view().EditGroup::on_dialog_focus(focus_id);
         break;
     }
@@ -1025,15 +1025,15 @@ void Dialogs::on_dialog_focus(int focus_id) {
 // symbol    ?attach@Dialogs@@UAEHPAVGraphicWin@@HHH@Z
 int Dialogs::attach(GraphicWin *parent, int x, int y, int flags) {
     switch (kind_) {
-    case 1: case 2: case 3:
+    case 16:
         return radio_button_view().RadioButton::attach(parent, x, y, flags);
-    case 4: case 5: case 6:
+    case 2:
         return list_box_view().ListBox::attach(parent, x, y, flags);
-    case 7: case 8: case 9:
+    case 1:
         return check_box_view().CheckBox::attach(parent, x, y, flags);
-    case 10: case 11: case 12:
+    case 8:
         return sprite_box_view().SpriteBox::attach(parent, x, y, flags);
-    case 13: case 14: case 15: case 16:
+    case 4:
         return edit_group_view().EditGroup::attach(parent, x, y, flags);
     default:
         return 7;
