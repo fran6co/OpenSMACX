@@ -14615,7 +14615,7 @@ void __cdecl commlink_attempt(int target_faction) {
     const int local_faction = ConsoleGlobal.faction_id_;
     if (local_faction == target_faction) return;
 
-    const uint32_t alive_mask = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu;
+    const uint32_t alive_mask = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
     const uint32_t target_bit =
         1u << (static_cast<uint32_t>(target_faction) & 31u);
     if ((alive_mask & target_bit) == 0) return;
@@ -14656,7 +14656,7 @@ void __cdecl commlink_attempt(int target_faction) {
     if (commlink_attempter(local_faction, target_faction) != 0) return;
 
     if (IsMultiplayerNet != 0) {
-        if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & target_bit) != 0) {
+        if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & target_bit) != 0) {
             CommlinkPending = 1;
             CommlinkFaction = target_faction;
             message_data(0x1501, target_faction, local_faction, target_faction,
@@ -14686,7 +14686,7 @@ void __cdecl commlink_attempt(int target_faction) {
         }
     }
 
-    if (IsMultiplayerPBEM != 0 && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & target_bit) != 0) {
+    if (IsMultiplayerPBEM != 0 && (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & target_bit) != 0) {
         diplo(local_faction, target_faction);
         return;
     }
@@ -15697,7 +15697,7 @@ void __cdecl social_set(int faction_id) {
         }
 
         if (IsMultiplayerNet == 0 &&
-            (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction_id)) != 0) {
+            (GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & (1u << faction_id)) != 0) {
             set_base(base_id);
             base_compute(1);
         }
@@ -15798,7 +15798,7 @@ int __cdecl commlink_attempter(int faction_id, int contact_flags) {
         PluralityDefault = Players[other].is_noun_plural;
         parse_says(2, Players[other].noun_faction, -1, -1);
         NetMsgPrimary.pop(
-            (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << ((other + 8) & 31))) != 0
+            (GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << (other & 31))) != 0
                 ? "NOTMETYET" : "ERADICATED",
             5000, 0, NULL);
         return 1;
