@@ -1046,169 +1046,167 @@ Purpose: Recompute the list's layout metrics from the Dialog entry list: the
 // prototype int (__thiscall ?calculate_dimensions@ListBox@@QAEHXZ)(ListBox* this)
 // calls     0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DC790 0x005DCAB0
 */
+// Pinned 0x0060A33E/0x0060A355 reacquire the Buffer/Dialog virtual-base
+// paths on either side of text_width; keep those conversions at their uses
+// rather than holding adjusted base references across that call.
 int ListBox::calculate_dimensions() {
-    Dialog &dialog = *this;
-    GraphicWin &graphic = *this;
-    Buffer &buffer = graphic;
-    StringList &entries = dialog.item_list_;
-
-    if (entries.entry_count_ == 0) return 7;
+    if (Dialog::item_list_.entry_count_ == 0) return 7;
     field_C_ = 0;
 
-    buffer.set_text_color(dialog.text_color_a_, dialog.text_color_b_,
-                          dialog.text_color_c_, dialog.text_color_d_);
-    buffer.set_text_color2(dialog.text_color_2a_, dialog.text_color_2b_,
-                           dialog.text_color_2c_, dialog.text_color_2d_);
-    buffer.set_text_color3(dialog.text_color_3a_, dialog.text_color_3b_,
-                           dialog.text_color_3c_, dialog.text_color_3d_);
-    buffer.set_font(dialog.font1_, dialog.font2_, dialog.font3_, 0);
+    Buffer::set_text_color(Dialog::text_color_a_, Dialog::text_color_b_,
+                          Dialog::text_color_c_, Dialog::text_color_d_);
+    Buffer::set_text_color2(Dialog::text_color_2a_, Dialog::text_color_2b_,
+                           Dialog::text_color_2c_, Dialog::text_color_2d_);
+    Buffer::set_text_color3(Dialog::text_color_3a_, Dialog::text_color_3b_,
+                           Dialog::text_color_3c_, Dialog::text_color_3d_);
+    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
-    int visible_rows = static_cast<int>(dialog.field_50_);
-    int rows = entries.entry_count_;
+    int visible_rows = static_cast<int>(Dialog::field_50_);
+    int rows = Dialog::item_list_.entry_count_;
     if (visible_rows <= rows) rows = visible_rows;
-    dialog.row_count_ = rows;
+    Dialog::row_count_ = rows;
 
     int max_width = 0;
     int n = 0;
-    if (entries.entry_count_ > 0) {
+    if (Dialog::item_list_.entry_count_ > 0) {
         do {
             char *name;
-            StringStructEntry *head = entries.head_;
+            StringStructEntry *head = Dialog::item_list_.head_;
             if (head != 0) {
-                entries.current_ = entries.current_->next;
-                entries.current_position_ = static_cast<int32_t>(
-                    static_cast<uint32_t>(entries.current_position_) + 1u);
-                if (entries.current_position_ == entries.entry_count_)
-                    entries.current_position_ = 0;
+                Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
+                Dialog::item_list_.current_position_ = static_cast<int32_t>(
+                    static_cast<uint32_t>(Dialog::item_list_.current_position_) + 1u);
+                if (Dialog::item_list_.current_position_ == Dialog::item_list_.entry_count_)
+                    Dialog::item_list_.current_position_ = 0;
             }
-            if (entries.current_ == 0) {
+            if (Dialog::item_list_.current_ == 0) {
                 name = 0;
-            } else if (head == 0) {
-                // Preserve the pinned malformed-list absolute [4] read.
-                name = *reinterpret_cast<char **>(4);
             } else {
-                name = entries.current_->string_payload()->text;
+                // Retain the original null-payload text read when head is null.
+                StringStructPayload *payload = head == 0
+                    ? 0 : Dialog::item_list_.current_->string_payload();
+                name = payload->text;
             }
-            int width = buffer.text_width(name);
+            int width = Buffer::text_width(name);
             if (max_width < width) max_width = width;
             ++n;
-        } while (n < entries.entry_count_);
+        } while (n < Dialog::item_list_.entry_count_);
         if (max_width != 0) goto have_width;
     }
-    max_width = static_cast<int>(dialog.field_2C_);
+    max_width = static_cast<int>(Dialog::field_2C_);
 
 have_width:
     // Use unsigned intermediates for the original x86 dword wraparound.
-    dialog.field_64_ = dialog.field_44_ + 2u + field_2C_ * 2u
-                     + dialog.field_34_ + static_cast<uint32_t>(max_width);
-    if (static_cast<int32_t>(dialog.field_48_) == -1)
-        dialog.field_68_ = static_cast<uint32_t>(buffer.text_line_height())
-                         + dialog.field_44_;
+    Dialog::field_64_ = Dialog::field_44_ + 2u + field_2C_ * 2u
+                     + Dialog::field_34_ + static_cast<uint32_t>(max_width);
+    if (static_cast<int32_t>(Dialog::field_48_) == -1)
+        Dialog::field_68_ = static_cast<uint32_t>(Buffer::text_line_height())
+                         + Dialog::field_44_;
     else
-        dialog.field_68_ = dialog.field_48_;
+        Dialog::field_68_ = Dialog::field_48_;
 
     int tmp;
-    if ((dialog.field_20_ & 2) == 0
-        || (tmp = static_cast<int>(dialog.field_2C_), tmp == 0)) {
-        int divisor = static_cast<int>(dialog.field_4C_);
+    if ((Dialog::field_20_ & 2) == 0
+        || (tmp = static_cast<int>(Dialog::field_2C_), tmp == 0)) {
+        int divisor = static_cast<int>(Dialog::field_4C_);
         if (divisor == 1) {
-            uint32_t width_bits = dialog.field_64_ + dialog.field_40_ * 2u;
+            uint32_t width_bits = Dialog::field_64_ + Dialog::field_40_ * 2u;
             int width = static_cast<int32_t>(width_bits);
-            int min_width = static_cast<int32_t>(dialog.field_2C_);
+            int min_width = static_cast<int32_t>(Dialog::field_2C_);
             if (width < min_width) width = min_width;
-            dialog.field_5C_ = static_cast<uint32_t>(width);
-            dialog.field_64_ = dialog.field_5C_ - dialog.field_40_ * 2u;
+            Dialog::field_5C_ = static_cast<uint32_t>(width);
+            Dialog::field_64_ = Dialog::field_5C_ - Dialog::field_40_ * 2u;
         } else {
-            uint32_t numerator = dialog.field_5C_ - dialog.field_40_ * 2u
-                               + dialog.field_44_;
-            dialog.field_64_ = static_cast<uint32_t>(
+            uint32_t numerator = Dialog::field_5C_ - Dialog::field_40_ * 2u
+                               + Dialog::field_44_;
+            Dialog::field_64_ = static_cast<uint32_t>(
                 static_cast<int32_t>(numerator) / divisor)
-                - dialog.field_44_;
-            uint32_t width_bits = (dialog.field_64_ + dialog.field_44_)
-                                * dialog.field_4C_
-                                + dialog.field_40_ * 2u - dialog.field_44_;
+                - Dialog::field_44_;
+            uint32_t width_bits = (Dialog::field_64_ + Dialog::field_44_)
+                                * Dialog::field_4C_
+                                + Dialog::field_40_ * 2u - Dialog::field_44_;
             int width = static_cast<int32_t>(width_bits);
-            int min_width = static_cast<int32_t>(dialog.field_2C_);
+            int min_width = static_cast<int32_t>(Dialog::field_2C_);
             if (width < min_width) width = min_width;
-            dialog.field_5C_ = static_cast<uint32_t>(width);
+            Dialog::field_5C_ = static_cast<uint32_t>(width);
         }
-        dialog.column_count_ = dialog.field_4C_;
+        Dialog::column_count_ = Dialog::field_4C_;
     } else {
-        dialog.field_5C_ = static_cast<uint32_t>(tmp);
-        dialog.column_count_ = dialog.field_4C_;
-        if (dialog.column_count_ == 1)
-            dialog.field_64_ = dialog.field_5C_ - dialog.field_40_ * 2u;
+        Dialog::field_5C_ = static_cast<uint32_t>(tmp);
+        Dialog::column_count_ = Dialog::field_4C_;
+        if (Dialog::column_count_ == 1)
+            Dialog::field_64_ = Dialog::field_5C_ - Dialog::field_40_ * 2u;
         else
-            dialog.field_64_ -= dialog.field_44_;
+            Dialog::field_64_ -= Dialog::field_44_;
     }
 
-    if ((dialog.field_20_ & 1) == 0
-        || (tmp = static_cast<int>(dialog.field_30_), tmp == 0)) {
-        dialog.field_60_ = static_cast<uint32_t>(dialog.field_68_)
-                         * static_cast<uint32_t>(dialog.row_count_)
-                         - dialog.field_44_ + dialog.field_3C_
-                         + dialog.field_38_;
+    if ((Dialog::field_20_ & 1) == 0
+        || (tmp = static_cast<int>(Dialog::field_30_), tmp == 0)) {
+        Dialog::field_60_ = static_cast<uint32_t>(Dialog::field_68_)
+                         * static_cast<uint32_t>(Dialog::row_count_)
+                         - Dialog::field_44_ + Dialog::field_3C_
+                         + Dialog::field_38_;
     } else {
-        dialog.field_60_ = static_cast<uint32_t>(tmp);
-        uint32_t rows_numerator = dialog.field_60_ - dialog.field_3C_
-                                - dialog.field_38_ + dialog.field_44_;
-        dialog.row_count_ = static_cast<int32_t>(rows_numerator)
-                          / static_cast<int32_t>(dialog.field_68_);
+        Dialog::field_60_ = static_cast<uint32_t>(tmp);
+        uint32_t rows_numerator = Dialog::field_60_ - Dialog::field_3C_
+                                - Dialog::field_38_ + Dialog::field_44_;
+        Dialog::row_count_ = static_cast<int32_t>(rows_numerator)
+                          / static_cast<int32_t>(Dialog::field_68_);
         if ((iFlags_ & 0x40) == 0) {
-            int columns = dialog.column_count_;
-            uint32_t product = static_cast<uint32_t>(dialog.row_count_)
-                             * static_cast<uint32_t>(dialog.column_count_);
+            int columns = Dialog::column_count_;
+            uint32_t product = static_cast<uint32_t>(Dialog::row_count_)
+                             * static_cast<uint32_t>(Dialog::column_count_);
             if (static_cast<int32_t>(product) < static_cast<int32_t>(field_20_)) {
                 if (columns < 2) {
-                    dialog.field_5C_ = static_cast<uint32_t>(dialog.field_2C_)
+                    Dialog::field_5C_ = static_cast<uint32_t>(Dialog::field_2C_)
                                      - static_cast<uint32_t>(ScrollDefaultThickness);
-                    dialog.column_count_ = 1;
+                    Dialog::column_count_ = 1;
                 } else {
-                    dialog.field_60_ = static_cast<uint32_t>(dialog.field_30_)
+                    Dialog::field_60_ = static_cast<uint32_t>(Dialog::field_30_)
                                      - static_cast<uint32_t>(ScrollDefaultThickness);
-                    dialog.row_count_ = static_cast<int32_t>(dialog.field_60_)
-                                      / static_cast<int32_t>(dialog.field_68_);
+                    Dialog::row_count_ = static_cast<int32_t>(Dialog::field_60_)
+                                      / static_cast<int32_t>(Dialog::field_68_);
                 }
             }
         }
     }
 
-    dialog.field_68_ -= dialog.field_44_;
-    int margin = static_cast<int32_t>(dialog.field_44_);
-    uint32_t height_numerator = dialog.field_60_ - dialog.field_3C_
-                              - dialog.field_38_ + dialog.field_44_;
-    uint32_t height_denominator = dialog.field_68_ + dialog.field_44_;
-    if (static_cast<int32_t>(entries.entry_count_)
+    Dialog::field_68_ -= Dialog::field_44_;
+    int margin = static_cast<int32_t>(Dialog::field_44_);
+    uint32_t height_numerator = Dialog::field_60_ - Dialog::field_3C_
+                              - Dialog::field_38_ + Dialog::field_44_;
+    uint32_t height_denominator = Dialog::field_68_ + Dialog::field_44_;
+    if (static_cast<int32_t>(Dialog::item_list_.entry_count_)
         <= static_cast<int32_t>(height_numerator)
            / static_cast<int32_t>(height_denominator)) {
-        if ((dialog.field_20_ & 2) == 0) {
-            dialog.field_64_ = dialog.field_5C_ - dialog.field_40_ * 2u;
+        if ((Dialog::field_20_ & 2) == 0) {
+            Dialog::field_64_ = Dialog::field_5C_ - Dialog::field_40_ * 2u;
         } else {
-            uint32_t width_numerator = dialog.field_5C_
-                                     - dialog.field_40_ * 2u
+            uint32_t width_numerator = Dialog::field_5C_
+                                     - Dialog::field_40_ * 2u
                                      + static_cast<uint32_t>(margin);
-            dialog.field_64_ = static_cast<uint32_t>(
+            Dialog::field_64_ = static_cast<uint32_t>(
                 static_cast<int32_t>(width_numerator)
-                / dialog.column_count_)
+                / Dialog::column_count_)
                 - static_cast<uint32_t>(margin);
         }
     }
 
-    uint32_t total_bits = static_cast<uint32_t>(dialog.row_count_)
-                        * static_cast<uint32_t>(dialog.column_count_);
+    uint32_t total_bits = static_cast<uint32_t>(Dialog::row_count_)
+                        * static_cast<uint32_t>(Dialog::column_count_);
     field_1C_ = total_bits;
     int total = static_cast<int32_t>(total_bits);
     if (total < static_cast<int32_t>(field_20_)) {
-        if (1 < dialog.column_count_) {
+        if (1 < Dialog::column_count_) {
             if ((iFlags_ & 0x40) == 0)
-                dialog.field_60_ += ScrollDefaultThickness;
+                Dialog::field_60_ += ScrollDefaultThickness;
             field_C_ |= 1;
             return 0;
         }
         if ((iFlags_ & 0x40) == 0)
-            dialog.field_5C_ += ScrollDefaultThickness;
-        if ((dialog.field_20_ & 2) != 0)
-            dialog.field_64_ -= ScrollDefaultThickness / dialog.column_count_;
+            Dialog::field_5C_ += ScrollDefaultThickness;
+        if ((Dialog::field_20_ & 2) != 0)
+            Dialog::field_64_ -= ScrollDefaultThickness / Dialog::column_count_;
         field_C_ |= 2;
     }
     return 0;
@@ -1900,22 +1898,13 @@ Purpose: Find the list entry whose text case-insensitively matches the given
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00644F3A 0x0064FD20
-Status: Coverage transcription - body rehomed from the retired seed
-        (src/unrecovered/0060c7d0.cpp), freshly measured MISMATCH (divergence
-        #1, similarity 0.86, 109 compiled vs 119 original instructions - the
-        remaining gap is this spelling caching the entry count in a local
-        where the original re-reads dlg+0xcc at each use). The cursor
-        walk is the recovered Dialog::get_selected_id shape on the same
-        item_list_ fields seen through ListBox's vbtable displacement, with
-        raw dlg offsets per the landed ListBox::calculate_dimensions above;
-        the advance target compares the PRE-search cursor, and the search
-        arm keeps the original's head==0 read through address 4. The callees
-        are the image's real abs (0x00644F3A) and _strcmpi (0x0064FD20),
-        called through the public CRT names per the map.cpp treaty.
+The saved pre-search position is restored through StringStruct::seek_pos.
+Its negative-distance guard runs after resetting current to head and retains
+both original abs calls. Dialog's virtual-base path is reacquired after the
+string comparison; a malformed list still reads a null payload's text field.
 */
 int ListBox::UNK2(char *text) {
-    StringList &items = Dialog::item_list_;
-    if (items.entry_count_ == 0) {
+    if (Dialog::item_list_.entry_count_ == 0) {
         return -1;
     }
     if (text == 0) {
@@ -1923,10 +1912,11 @@ int ListBox::UNK2(char *text) {
     }
 
     int result = -1;
-    int position = items.current_position_;
+    int position = Dialog::item_list_.current_position_;
     int n = 0;
-    if (items.entry_count_ > 0) {
+    if (Dialog::item_list_.entry_count_ > 0) {
         do {
+            StringList &items = Dialog::item_list_;
             StringStructEntry *head = items.head_;
             if (head != 0) {
                 StringStructEntry *current = items.current_;
@@ -1941,43 +1931,21 @@ int ListBox::UNK2(char *text) {
             char *name;
             if (items.current_ == 0) {
                 name = 0;
-            } else if (head == 0) {
-                name = *reinterpret_cast<char **>(4);
             } else {
-                name = items.current_->string_payload()->text;
+                // Retain the original null-payload text read when head is null.
+                StringStructPayload *payload = head == 0
+                    ? 0 : items.current_->string_payload();
+                name = payload->text;
             }
             if (_strcmpi(name, text) == 0) {
-                result = items.current_position_;
+                result = Dialog::item_list_.current_position_;
                 break;
             }
             ++n;
-        } while (n < items.entry_count_);
+        } while (n < Dialog::item_list_.entry_count_);
     }
 
-    // Keep the original count reloads and negative-distance CRT calls.
-    if (position <= items.entry_count_ - 1) {
-        items.current_ = items.head_;
-        if (position < 0) {
-            if (abs(position) > items.entry_count_) {
-                return result;
-            }
-            int distance = abs(position);
-            while (distance > 0) {
-                StringStructEntry *current = items.current_;
-                items.current_ = current->previous;
-                distance--;
-            }
-            position += items.entry_count_;
-        } else {
-            int distance = position;
-            while (distance > 0) {
-                StringStructEntry *current = items.current_;
-                items.current_ = current->next;
-                distance--;
-            }
-        }
-        items.current_position_ = position;
-    }
+    Dialog::item_list_.seek_pos(position);
     return result;
 }
 
