@@ -88,6 +88,21 @@ def test_baseline_and_current_residuals_use_identical_per_unit_profiles(project)
         "code/caller.cc": [["optimize"], ["debug"]], "code/owner.cc": [["debug"]]}
 
 
+def test_context_binding_keeps_marker_host_body_and_emission_unit_separate(project):
+    from match_recovery.preservation import _bindings
+    from match_recovery.source_config import SourceConfiguration
+
+    raw = ("// ORIGINAL: 0x00401000 _f 0x00401000-0x00401006\n"
+           "// body code/model.h\n"
+           "// compile_context code/caller.cc\n").encode()
+    rows = _bindings(project, {"code/owner.cc": raw}, SourceConfiguration.read(project), "a" * 64)
+    row, = rows[next(iter(rows))]
+    assert row["unit"] == "code/caller.cc"
+    assert row["marker_host"] == "code/owner.cc"
+    assert row["body"] == "code/model.h"
+    assert row["context"] == "code/caller.cc"
+
+
 @pytest.mark.parametrize("anchor,expected", [("0x00401000", "pass"), ("0x00401010", "fail")])
 def test_bounded_object_annotation_scope_follows_its_evidence_anchor(project, anchor, expected):
     header = project / "code/model.h"

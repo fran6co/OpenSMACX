@@ -75,7 +75,8 @@ def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = F
                                     component=(component_owners.get((row["path"], row["entity_id"])) or (None,))[0],
                                     owner_hint_basis="source_symbol" if emitted else "catalogued_symbol",
                                     catalogued_owner_hint=catalogued,
-                                    function_fragment=row.get("function_fragment")))
+                                    function_fragment=row.get("function_fragment"),
+                                    context_path=row.get("context_path", "")))
     for annotation, manifest in component_entries(snapshot):
         for binding in manifest.bindings:
             if (binding.origin.image_sha256 != snapshot["image_sha256"]

@@ -193,6 +193,8 @@ class DecompilationState:
                                  # for the 199 pieces defined in a header the
                                  # claim and the body cannot share a file -
                                  # this is the pointer between them.
+    context: str = ""            # optional project-relative translation unit
+                                 # that emits an inline/in-class definition.
     kind: str = ""               # what the catalogue calls the piece:
                                  # `game` (5,575 of them), `library` (331 -
                                  # the statically linked CRT and zlib) or

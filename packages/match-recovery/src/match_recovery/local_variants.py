@@ -298,6 +298,8 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
         records.append(record)
     target_record = next(record for record in records
                          if record.address == target.origin.address)
+    if any(record.context for record in records):
+        raise ValueError("local variant screening does not yet support source context mappings")
     expected_markers = tuple(_marker_identity(row) for row in read_text(original_text, source))
     function_names = [qualified_name(target.symbol), target_record.name]
     body = None

@@ -8,12 +8,13 @@ currently satisfied before investigating a structural regression.
 from collections import Counter, defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict
-from hashlib import file_digest
+from hashlib import file_digest, sha256
 from pathlib import Path
 
 from .compiler import Compiler
 from .measurement import Measurement
 from .model import digest
+from .records import read_json
 from .source import State
 from .source.asm import (AsmComparison, compare_unit, resolve_fragment_pairs,
                          shared_spans)
@@ -21,7 +22,7 @@ from .source.model import Tier
 from .source_history import git
 from .source_inventory import image_pin, source_snapshot
 from .source_selection import (select_records, snapshot_mappings,
-                               selected_source_records)
+                               selected_source_records, compilation_context)
 from .component_original_routing import (component_claim_result, component_function_observations,
                                          component_record_identity_candidates,
                                          exact_component_record_bindings)
@@ -50,10 +51,17 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
             actual = file_digest(stream, "sha256").hexdigest()
         if actual != image_pin(root, settings.source):
             raise ValueError("measurement requires the configured pinned original image")
+        project = read_json(root / "recovery/project.json")
+        mapping = project.get("mappings", {})
+        database = (settings.source.path(root, mapping["compile_commands"])
+                    if isinstance(mapping, dict) and isinstance(mapping.get("compile_commands"), str)
+                    else None)
         snapshot = settings.snapshot(root, {
             "head": git(root, "rev-parse", "HEAD").decode().strip(),
             "image": {"path": str(image), "sha256": actual},
-            "targets": list(targets), "host": in_file})
+            "targets": list(targets), "host": in_file,
+            "compilation_database": (sha256(database.read_bytes()).hexdigest()
+                                      if database is not None else None)})
         if any(value is None for value in snapshot["inputs"].values()):
             raise ValueError("declared measurement input is missing")
         for name in (*settings.source.roots, *settings.input_roots):
@@ -107,19 +115,23 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
             unavailable.append((record, "fragment has no unambiguous same-TU parent support"))
         elif owner is not None:
             component_selected[(relative, record.line)] = (record, owner)
-        elif record.path.suffix not in settings.unit_extensions:
+        elif compilation_context(root, record, settings).suffix not in settings.unit_extensions:
             unavailable.append((record, "mapping host is not a configured translation unit"))
         elif record.state is State.PLACEHOLDER:
             unavailable.append((record, "unfinished source placeholder; matching an empty body is not recovery"))
         else:
-            groups[record.path].append(record)
+            unit_path = compilation_context(root, record, settings)
+            group_key = (unit_path, record.path)
+            groups[group_key].append(record)
             pair = pair_by_record.get(key)
-            if pair is not None and pair not in pairs_by_path[record.path]:
-                pairs_by_path[record.path].append(pair)
+            if pair is not None and pair not in pairs_by_path[group_key]:
+                pairs_by_path[group_key].append(pair)
     shared = shared_spans(mappings)
-    work = [(root, settings.compiler_profile, path, rows, image, settings.flags_for(path.relative_to(root).as_posix()), shared,
-             tuple(pairs_by_path[path]))
-            for path, rows in sorted(groups.items())]
+    work = [(root, settings.compiler_profile, context_path, rows, image,
+             settings.flags_for(context_path.relative_to(root).as_posix()), shared,
+             tuple(pairs_by_path[group_key]))
+            for group_key, rows in sorted(groups.items())
+            for context_path, _marker_path in (group_key,)]
     if inputs() != before:
         raise ValueError("measurement inputs changed before compilation")
     if jobs == 1 or len(work) < 2:
@@ -145,6 +157,7 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
     for record, value in results:
         row = {"address": record.address_hex, "path": record.path.relative_to(root).as_posix(),
                "line": record.line, "name": record.name, "symbol": record.symbol or record.name,
+               "compile_context": record.context or None,
                "historical_byte_obligation": record.byte_exact, "historical_shape_obligation": record.semantic,
                "source_state": record.state.value}
         if isinstance(value, str):
@@ -194,8 +207,10 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
             "ready_for_collection": False, "persisted": False,
             "selected": len(selected), "counts": dict(counts),
             "measurements": sorted(rows, key=lambda row: (row["path"], row["line"])),
-            "translation_units": len(units),
-            "unit_flag_sets": settings.witness_grid(path.relative_to(root).as_posix() for path in groups),
+            "translation_units": len({context_path for context_path, _marker_path in groups}),
+            "measurement_groups": len(units),
+            "unit_flag_sets": settings.witness_grid(context_path.relative_to(root).as_posix()
+                                                    for context_path, _marker_path in groups),
             "compile_attempts": sum(unit.compile_attempts for unit in units),
             "component_checks": component_checks,
             "reused_attempts": sum(unit.reused_attempts for unit in units), "input_fingerprint": digest(before),

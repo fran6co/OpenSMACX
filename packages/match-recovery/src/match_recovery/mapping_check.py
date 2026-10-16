@@ -19,7 +19,8 @@ from .source_inventory import source_snapshot, assert_snapshot_current
 from .component_original_routing import exact_component_record_bindings
 
 
-RULES = ("ambiguous_source", "unbuilt_host", "seed_build_input", "claimed_forwarder", "body_reference")
+RULES = ("ambiguous_source", "unbuilt_host", "seed_build_input", "claimed_forwarder", "body_reference",
+         "context_reference")
 _LITERAL = re.compile(
     r'//[^\n]*|/\*[\s\S]*?\*/|(?:u8|u|U|L)?R"(?P<delimiter>[^\s()\\]{0,16})'
     r'\([\s\S]*?\)(?P=delimiter)"|"(?:\\[\s\S]|[^"\\])*"|\'(?:\\[\s\S]|[^\'\\])*\'')
@@ -116,6 +117,8 @@ def check_mappings(root: Path) -> dict:
     if SourceConfiguration.from_dict(snapshot["source_configuration"]) != source:
         raise ValueError("source configuration changed during mapping check")
     units, external = build_units(root, database_bytes)
+    measurement = project.get("measurement", {})
+    unit_extensions = measurement.get("unit_extensions", []) if isinstance(measurement, dict) else []
     records = snapshot["records"]
     component_owners = exact_component_record_bindings(snapshot)
     by_entity, by_file = defaultdict(list), defaultdict(list)
@@ -128,6 +131,26 @@ def check_mappings(root: Path) -> dict:
     # request to search ancestors until some same-named file happens to exist.
     # Keep the old lexical name witness, without calling it a definition proof.
     body_references = []
+    for record in records:
+        name = record.get("context_path", "")
+        if not name:
+            continue
+        row = {"path": record["path"], "line": record["line"], "context_path": name}
+        try:
+            target = source.path(root, name)
+        except ValueError as error:
+            findings.append({"rule": "context_reference", **row, "reason": str(error)})
+            continue
+        if (not target.is_file() or target.is_symlink()
+                or target.resolve().relative_to(root).as_posix() != name):
+            findings.append({"rule": "context_reference", **row,
+                             "reason": "context must name an existing canonical non-symlink source file"})
+        elif (not any(Path(name).is_relative_to(directory) for directory in source.roots)
+              or Path(name).suffix not in unit_extensions
+              or Path(name).suffix in source.interface_extensions
+              or source.is_seed(name) or name not in units):
+            findings.append({"rule": "context_reference", **row,
+                             "reason": "context must name a configured product translation unit with a compilation recipe"})
     for record in records:
         name = record["body_path"]
         if not name:

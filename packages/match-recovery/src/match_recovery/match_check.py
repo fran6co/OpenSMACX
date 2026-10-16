@@ -16,7 +16,8 @@ from .mapping_check import build_units
 from .measurement import Measurement
 from .model import digest
 from .records import read_json
-from .source_selection import snapshot_mappings, selected_source_records
+from .source_selection import (snapshot_mappings, selected_source_records,
+                               compilation_context)
 from .source.asm import (AsmComparison, compare_unit, resolve_fragment_pairs,
                          shared_spans)
 from .source.model import Tier
@@ -48,7 +49,9 @@ def _observation(root, record, observed, *, built, source):
            "line": record.line, "name": record.name, "symbol": record.symbol or record.name,
            "byte_obligation": record.byte_exact, "shape_obligation": record.semantic}
     row["seed"] = source.is_seed(row["path"])
-    row["built"] = row["path"] in built
+    unit_path = record.context or row["path"]
+    row["compile_context"] = record.context or None
+    row["built"] = unit_path in built
     if record.function_fragment is not None and isinstance(observed, str):
         detail = observed
         row.update(verdict="UNMEASURED_FRAGMENT",
@@ -133,7 +136,9 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
     for record in records:
         claimed = record.byte_exact or record.semantic
         name = record.path.relative_to(root).as_posix()
-        if not claimed and not (name in built and record.name and record.image_spans):
+        context = compilation_context(root, record, settings)
+        unit_name = context.relative_to(root).as_posix()
+        if not claimed and not (unit_name in built and record.name and record.image_spans):
             continue
         eligible.append(record)
     component_candidates = component_record_identity_candidates(source_index)
@@ -169,19 +174,23 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
             unsupported.append(row)
         elif owner is not None:
             component_selected[(name, record.line)] = (record, owner)
-        elif record.path.suffix not in settings.unit_extensions:
+        elif compilation_context(root, record, settings).suffix not in settings.unit_extensions:
             row = _observation(root, record, "mapping host is not a configured translation unit",
                                built=built, source=settings.source)
             row["result"] = "unknown" if (record.byte_exact or record.semantic) else None
             unsupported.append(row)
         else:
-            groups[record.path].append(record)
+            unit_path = compilation_context(root, record, settings)
+            group_key = (unit_path, record.path)
+            groups[group_key].append(record)
             pair = pair_by_record.get(record_key)
-            if pair is not None and pair not in pairs_by_path[record.path]:
-                pairs_by_path[record.path].append(pair)
-    work = [(root, settings.compiler_profile, path, group, image, settings.flags_for(path.relative_to(root).as_posix()), shared,
-             tuple(pairs_by_path[path]))
-            for path, group in sorted(groups.items())]
+            if pair is not None and pair not in pairs_by_path[group_key]:
+                pairs_by_path[group_key].append(pair)
+    work = [(root, settings.compiler_profile, unit_path, group, image,
+             settings.flags_for(unit_path.relative_to(root).as_posix()), shared,
+             tuple(pairs_by_path[group_key]))
+            for group_key, group in sorted(groups.items())
+            for unit_path, _marker_path in (group_key,)]
     if inputs() != before:
         raise ValueError("match inputs changed before compilation")
     if jobs == 1 or len(work) < 2:
@@ -257,8 +266,11 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
         "near_miss": [row for row in unclaimed if row["verdict"] != "BYTE_EXACT"
                       and 0 < row.get("original_instructions", 0) - row.get("matching_instructions", 0) <= 3],
         "allocation_only": [row for row in unclaimed if row["verdict"] != "BYTE_EXACT" and row.get("allocation_only")],
-        "measurements": rows, "translation_units": len(groups),
-        "unit_flag_sets": settings.witness_grid(path.relative_to(root).as_posix() for path in groups),
+        "measurements": rows,
+        "translation_units": len({unit_path for unit_path, _marker_path in groups}),
+        "measurement_groups": len(groups),
+        "unit_flag_sets": settings.witness_grid(unit_path.relative_to(root).as_posix()
+                                                for unit_path, _marker_path in groups),
         "unsupported_hosts": unsupported,
         "component_checks": component_checks,
         "compile_attempts": sum(unit.compile_attempts for unit in measurements),

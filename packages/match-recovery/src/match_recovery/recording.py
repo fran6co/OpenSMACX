@@ -15,13 +15,13 @@ from .compiler import Compiler
 from .components import relative_path
 from .measurement import Measurement
 from .model import digest, require_text
-from .records import parse_json_value
+from .records import parse_json_value, read_json
 from .source import read_file
 from .source.asm import compare_unit, shared_spans
 from .source.recording import record_claims
 from .source_history import git
 from .source_inventory import image_pin
-from .source_selection import select_records
+from .source_selection import select_records, compilation_context
 
 
 def _unit(job):
@@ -59,11 +59,18 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
             actual = hashlib.file_digest(stream, "sha256").hexdigest()
         if actual != image_pin(root, settings.source):
             raise ValueError("recording requires the configured pinned original image")
+        project = read_json(root / "recovery/project.json")
+        mapping = project.get("mappings", {})
+        database = (settings.source.path(root, mapping["compile_commands"])
+                    if isinstance(mapping, dict) and isinstance(mapping.get("compile_commands"), str)
+                    else None)
         snapshot = settings.snapshot(root, {
             "head": git(root, "rev-parse", "HEAD").decode().strip(),
             "image": {"path": str(image), "sha256": actual},
             "arguments_file": (hashlib.sha256(arguments_path.read_bytes()).hexdigest()
-                               if arguments_path is not None else None)})
+                               if arguments_path is not None else None),
+            "compilation_database": (hashlib.sha256(database.read_bytes()).hexdigest()
+                                     if database is not None else None)})
         snapshot["configuration"]["resolved_inputs"] = {
             name: str((root / name).resolve()) for name in snapshot["inputs"]}
         return snapshot
@@ -113,10 +120,13 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
     shared = shared_spans(records)
     groups = {}
     for row in selected:
-        groups.setdefault(row.path, []).append(row)
-    work = [(root, settings.compiler_profile, path, group, image, arguments,
-             settings.flags_for(path.relative_to(root).as_posix()), shared)
-            for path, group in groups.items()]
+        unit_path = compilation_context(root, row, settings)
+        if unit_path.suffix not in settings.unit_extensions:
+            raise ValueError("selected mapping context is not a configured translation unit")
+        groups.setdefault((unit_path, row.path), []).append(row)
+    work = [(root, settings.compiler_profile, unit_path, group, image, arguments,
+             settings.flags_for(unit_path.relative_to(root).as_posix()), shared)
+            for (unit_path, _marker_path), group in groups.items()]
     measurements = []
 
     def validate():
@@ -153,8 +163,10 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
         "regressed": [location(row) for row, _ in publication.regressed],
         "updated": [location(row) for row in publication.updated],
         "changed_files": [path.relative_to(root).as_posix() for path in publication.changed_files],
-        "translation_units": len(measurements),
-        "unit_flag_sets": settings.witness_grid(path.relative_to(root).as_posix() for path in groups),
+        "translation_units": len({unit_path for unit_path, _marker_path in groups}),
+        "measurement_groups": len(measurements),
+        "unit_flag_sets": settings.witness_grid(unit_path.relative_to(root).as_posix()
+                                                for unit_path, _marker_path in groups),
         "compile_attempts": sum(unit.compile_attempts for unit in measurements),
         "reused_attempts": sum(unit.reused_attempts for unit in measurements),
         "input_fingerprint": digest(initial)}

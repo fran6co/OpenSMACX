@@ -49,16 +49,18 @@ SYMBOL = "_parent"
 UNIT = Path("src/fixture.cpp")
 
 
-def source(*, relation=True):
-    text = (
-        "// ORIGINAL: 0x00401000 parent 0x00401000-0x00401001 FILE\n"
-        "// symbol    _parent\n"
-        "// ORIGINAL: 0x00401001 tail 0x00401001-0x00401002 FILE BYTE_EXACT\n"
-    )
+def source(*, relation=True, parent_context="", child_context=""):
+    text = "// ORIGINAL: 0x00401000 parent 0x00401000-0x00401001 FILE\n"
+    if parent_context:
+        text += f"// compile_context {parent_context}\n"
+    text += "// symbol    _parent\n"
+    text += "// ORIGINAL: 0x00401001 tail 0x00401001-0x00401002 FILE BYTE_EXACT\n"
     if relation:
         text += ('// RECOVERY_FRAGMENT: v1 {"parent_address":"0x00401000",'
                  '"parent_symbol":"_parent","reason":"terminal tail is owned by parent",'
                  '"evidence":["pinned:adjacent-tail"]}\n')
+    if child_context:
+        text += f"// compile_context {child_context}\n"
     return text
 
 
@@ -71,6 +73,28 @@ def test_reader_retains_distinct_child_identity_claim_and_typed_parent_relation(
     assert child.function_fragment == FunctionFragmentRelation(
         PARENT, SYMBOL, "terminal tail is owned by parent", ("pinned:adjacent-tail",))
     assert parent.function_fragment is None
+
+
+@pytest.mark.parametrize(("parent_context", "child_context"), [
+    ("", "src/other.cpp"),
+    ("src/other.cpp", "src/fixture.cpp"),
+    ("engine/src/fixture.cpp", "other/src/fixture.cpp"),
+    ("src/fixture.cpp", ""),
+])
+def test_fragment_pair_refuses_different_compile_context_metadata(parent_context, child_context):
+    rows = read_text(source(parent_context=parent_context,
+                            child_context=child_context), UNIT)
+    child = rows[1]
+    pairs, refused = resolve_fragment_pairs(rows, [child])
+    assert not pairs
+    assert (child.path.resolve(), child.address, child.line) in refused
+
+
+def test_fragment_pair_accepts_equal_explicit_compile_contexts():
+    rows = read_text(source(parent_context="src/emitter.cpp",
+                            child_context="src/emitter.cpp"), UNIT)
+    pairs, refused = resolve_fragment_pairs(rows, [rows[1]])
+    assert len(pairs) == 1 and not refused
 
 
 @pytest.mark.parametrize("bad", [
@@ -315,6 +339,24 @@ def test_selected_child_creates_parent_support_not_child_callable_binding():
     assert support == {parent_id}
     assert fragments[0].origin.address == CHILD
     assert fragments[0].parent_entity_id == parent_id
+
+
+@pytest.mark.parametrize("context_endpoint", ["child", "parent"])
+def test_strict_fragment_binding_refuses_context_in_either_endpoint(context_endpoint):
+    view, parent_id, child_id = fragment_view()
+    if context_endpoint == "child":
+        entity_id = child_id
+    else:
+        entity_id = parent_id
+    entity = next(row for row in view["groups"][0]["entities"]
+                  if row["entity_id"] == entity_id)
+    entity["candidates"][0]["context_path"] = "src/emitter.cpp"
+    selected = frozenset({entity_id})
+    bindings, _initial_refused, _externals = select_bindings(view, selected)
+    expanded, fragments, support, refused = select_fragment_bindings(view, selected, bindings)
+    assert not expanded and not fragments and not support
+    assert any(row["entity_id"] == entity_id and "compile_context" in row["reason"]
+               for row in refused)
 
 
 def test_selected_parent_expands_to_complete_relation_extent_without_selecting_child():

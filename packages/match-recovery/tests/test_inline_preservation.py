@@ -35,6 +35,11 @@ def inline_project(project):
     (project / "code/owner.cc").write_text(
         '// ORIGINAL: 0x00401000 _f 0x00401000-0x00401006\n// body code/model.h\n#include "model.h"\n')
     (project / "code/model.h").write_text("inline int _f() { return 1; }\n")
+    caller = project / "code/caller.cc"
+    caller.write_text(caller.read_text().replace(
+        "// ORIGINAL: 0x00401010 _h 0x00401010-0x00401016 BYTE_EXACT\n",
+        "// ORIGINAL: 0x00401010 _h 0x00401010-0x00401016 BYTE_EXACT\n"
+        "// compile_context code/caller.cc\n"))
     git(project, "add", ".")
     git(project, "commit", "-m", "Source-owned header body")
     task = Task("inline-owner", "portable", "coordinator", "Recover inline function",
@@ -99,10 +104,30 @@ def test_verified_header_copies_can_change_without_duplicate_original_bindings(i
     report = check(inline_project)
     assert report["result"] == "pass"
     caller = next(row for row in report["units"] if row["unit"] == "code/caller.cc")
-    assert {row["version"] for row in caller["inline_ownership"]} == {"baseline", "current"}
-    assert all(row["result"] == "pass" for row in caller["inline_ownership"])
+    assert {row["version"] for row in caller.get("inline_ownership", [])} == {"baseline", "current"}, caller
+    assert all(row["result"] == "pass" for row in caller.get("inline_ownership", [])), caller
     assert len(caller["baseline_scoped_functions"]) == len(caller["current_scoped_functions"]) == 1
     assert not report["ready_for_collection"]
+
+
+def test_context_mapping_is_explicitly_refused_by_native_preservation(inline_project):
+    owner = inline_project / "code/owner.cc"
+    owner.write_text(owner.read_text().replace(
+        "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401006\n",
+        "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401006\n"
+        "// compile_context code/caller.cc\n"))
+    with pytest.raises(ValueError, match="compile_context mappings in selected marker hosts"):
+        check_preservation(inline_project, "inline-owner", compiler=InlineCompiler(inline_project))
+
+
+def test_unselected_context_host_remains_outside_protected_and_edits_refuse(inline_project):
+    report = check(inline_project)
+    assert report["result"] == "pass"
+    caller_path = inline_project / "code/caller.cc"
+    caller_path.write_text(caller_path.read_text().replace(
+        "// compile_context code/caller.cc", "// compile_context code/owner.cc"))
+    report = check(inline_project)
+    assert report["result"] == "fail" and report["outside_binding_changes"]
 
 
 def test_inline_attribution_does_not_waive_changed_outside_caller(inline_project):

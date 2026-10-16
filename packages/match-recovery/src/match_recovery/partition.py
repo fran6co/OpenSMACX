@@ -25,6 +25,7 @@ class Candidate:
     owner_hint_basis: str = "supplied"
     catalogued_owner_hint: str | None = None
     function_fragment: dict | None = None
+    context_path: str = ""
 
     def __post_init__(self):
         relative_path(self.path)
@@ -32,6 +33,8 @@ class Candidate:
             raise ValueError("invalid source candidate location")
         if self.owner_hint is not None:
             require_text(self.owner_hint, "owner hint")
+        if self.context_path:
+            relative_path(self.context_path)
         if self.catalogued_owner_hint is not None:
             require_text(self.catalogued_owner_hint, "catalogued owner hint")
         if self.owner_hint_basis not in ("supplied", "catalogued_symbol", "source_symbol"):

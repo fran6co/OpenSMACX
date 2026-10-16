@@ -11,6 +11,38 @@ from .source import read_text
 from .source.mangled import identifier, qualified_name
 
 
+def compilation_context(root, record, settings):
+    """Resolve a mapping's configured emitting TU, or reject unsafe context facts."""
+    if not record.context:
+        return record.path
+    name = record.context
+    relative_path(name)
+    path = settings.source.path(root, name)
+    if (not any(Path(name).is_relative_to(source_root) for source_root in settings.source.roots)
+            or Path(name).suffix not in settings.unit_extensions
+            or Path(name).suffix in settings.source.interface_extensions
+            or settings.source.is_seed(name)):
+        raise ValueError(f"source context is not a configured product translation unit: {name}")
+    if not path.is_file() or path.is_symlink():
+        raise ValueError(f"source context is missing or symlinked: {name}")
+    if path.resolve().relative_to(root.resolve()).as_posix() != name:
+        raise ValueError(f"source context is not a canonical project-relative path: {name}")
+    if not settings.flags_for(name):
+        raise ValueError(f"source context has no configured compiler recipe: {name}")
+    from .records import read_json
+    from .compilation_database import entries
+    project = read_json(root / "recovery/project.json")
+    mappings = project.get("mappings")
+    if not isinstance(mappings, dict) or "compile_commands" not in mappings:
+        raise ValueError("source context requires a configured compilation database")
+    database = settings.source.path(root, mappings["compile_commands"])
+    matches = [entry.file for entry in entries(database.read_bytes(), root)
+               if entry.file == path]
+    if len(matches) != 1:
+        raise ValueError(f"source context does not have one unique compilation-database recipe: {name}")
+    return path
+
+
 @dataclass(frozen=True)
 class SnapshotMapping:
     """Selection/edge metadata, deliberately not a parsed source body or verdict."""
@@ -21,6 +53,7 @@ class SnapshotMapping:
     name: str
     symbol: str
     image_spans: tuple[tuple[int, int], ...]
+    context: str = ""
     function_fragment: dict | None = None
 
     @property
@@ -47,7 +80,7 @@ def snapshot_mappings(root, snapshot):
         records.append(SnapshotMapping(fact["origin"]["address"], hosts[name], fact["line"],
                                        fact["catalogued_symbol"], fact["emitted_symbol_hint"],
                                        tuple(tuple(pair) for pair in fact["spans"]),
-                                       fact.get("function_fragment")))
+                                       fact.get("context_path", ""), fact.get("function_fragment")))
     return records
 
 
@@ -73,6 +106,7 @@ def selected_source_records(root, snapshot, selected_mappings):
         record = parsed[mapping.path].get(mapping.line)
         if record is None or SnapshotMapping(record.address, record.path, record.line, record.name,
                                              record.symbol or record.name, record.image_spans,
+                                             record.context,
                                              ({"parent_address": record.function_fragment.parent_address,
                                                "parent_symbol": record.function_fragment.parent_symbol,
                                                "reason": record.function_fragment.reason,
