@@ -3,7 +3,9 @@
 from dataclasses import replace
 import json
 from pathlib import Path
+import shutil
 import subprocess
+from importlib.machinery import PathFinder
 
 import pytest
 
@@ -238,6 +240,169 @@ def test_cached_rows_are_defensive_corruption_recomputes_and_parse_errors_are_no
     monkeypatch.setattr(claim_integrity, "read_text", counted)
     assert claim_integrity._historical_claim_rows(*args) == [[0x10, 1, True, False]]
     assert len(calls) == 4
+
+
+def parser_fixture(root):
+    files = {
+        "__init__.py": "from . import source\n",
+        "source/__init__.py": "from . import grammar, mangled, model, reader, writer\n",
+        "source/reader.py": (
+            "from .grammar import PATTERN\nfrom .model import Record\n"
+            "from ..records import parse_json_value\n"),
+        "source/grammar.py": "PATTERN = 'first'\n",
+        "source/model.py": "class Record: pass\n",
+        "source/writer.py": "from .model import Record\n",
+        "source/mangled.py": "VALUE = 1\n",
+        "records.py": "from .model import canonical\ndef parse_json_value(x): return x\n",
+        "binding_source.py": "from .records import parse_json\n",
+        "memo.py": "from .model import digest\n",
+        "model.py": "def canonical(x): return x\ndef digest(x): return x\n",
+        "source_inventory.py": "from .source_config import Config\nfrom . import binding_source\n",
+        "source_config.py": "from .model import Config\n",
+        "source/eh_regions.py": "UNRELATED = 1\n",
+        "source/asm.py": "UNRELATED = 2\n",
+    }
+    for name, content in files.items():
+        path = root / "match_recovery" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+    return root / "match_recovery"
+
+
+def parser_snapshot(package_root):
+    inputs, mode = source_inventory._parser_implementation_inputs(
+        package_root, source_inventory._PARSER_ROOTS)
+    return source_inventory.digest({"inputs": inputs, "mode": mode})
+
+
+def test_installed_parser_closure_tracks_real_dependencies_only(tmp_path):
+    import match_recovery
+
+    original = Path(match_recovery.__file__).resolve().parent
+    package = tmp_path / "match_recovery"
+    shutil.copytree(original, package)
+    inputs, mode = source_inventory._parser_implementation_inputs(
+        package, source_inventory._PARSER_ROOTS)
+    assert mode == "local_import_closure"
+    assert "package/source_inventory.py" in inputs
+    assert "package/source_config.py" in inputs
+    assert "package/source/reader.py" in inputs
+    assert "package/source/grammar.py" in inputs
+    assert "package/source/model.py" in inputs
+    assert "package/records.py" in inputs
+    assert not any(name.endswith(("/eh_regions.py", "/asm.py")) for name in inputs)
+
+    before_unrelated = parser_snapshot(package)
+    for name in ("source/eh_regions.py", "source/asm.py"):
+        path = package / name
+        path.write_text(path.read_text() + "\n# unrelated implementation change\n")
+    assert parser_snapshot(package) == before_unrelated
+
+    for name in ("source/reader.py", "source/grammar.py", "source/model.py",
+                 "records.py", "source_inventory.py", "source_config.py"):
+        before = parser_snapshot(package)
+        path = package / name
+        path.write_text(path.read_text() + "\n# dependency fingerprint control\n")
+        assert parser_snapshot(package) != before, name
+
+
+def test_parser_key_uses_local_import_closure_and_tracks_parser_dependencies(tmp_path):
+    package = parser_fixture(tmp_path / "installed")
+    inputs, mode = source_inventory._parser_implementation_inputs(
+        package, source_inventory._PARSER_ROOTS)
+    assert mode == "local_import_closure"
+    assert "package/source/reader.py" in inputs
+    assert "package/source/grammar.py" in inputs
+    assert "package/source/model.py" in inputs
+    assert "package/records.py" in inputs
+    assert "package/source/eh_regions.py" not in inputs
+    assert "package/source/asm.py" not in inputs
+
+    for name in ("source/reader.py", "source/grammar.py", "source/model.py", "records.py",
+                 "source_inventory.py", "source_config.py"):
+        before = parser_snapshot(package)
+        path = package / name
+        path.write_text(path.read_text() + "# changed parser dependency\n")
+        assert parser_snapshot(package) != before, name
+
+
+@pytest.mark.parametrize("statement", [
+    "from . import extra",
+    "from .extra import parse",
+    "from match_recovery.source import extra",
+    "import match_recovery.source.extra",
+])
+def test_new_local_import_is_discovered_without_persistent_graph(tmp_path, statement):
+    package = parser_fixture(tmp_path / "installed")
+    reader = package / "source/reader.py"
+    before = parser_snapshot(package)
+    reader.write_text(reader.read_text() + "\n" + statement + "\n")
+    (package / "source/extra.py").write_text("VALUE = 1\n")
+    inputs, mode = source_inventory._parser_implementation_inputs(
+        package, source_inventory._PARSER_ROOTS)
+    assert mode == "local_import_closure"
+    assert "package/source/extra.py" in inputs
+    assert parser_snapshot(package) != before
+
+
+def test_nested_import_closure_includes_intermediate_package_initializers(tmp_path):
+    package = parser_fixture(tmp_path / "installed")
+    reader = package / "source/reader.py"
+    reader.write_text(reader.read_text() + "\nfrom .plugins import parser\n")
+    (package / "source/plugins").mkdir()
+    (package / "source/plugins/__init__.py").write_text("from . import parser\n")
+    (package / "source/plugins/parser.py").write_text("VALUE = 1\n")
+    inputs, mode = source_inventory._parser_implementation_inputs(
+        package, source_inventory._PARSER_ROOTS)
+    assert mode == "local_import_closure"
+    assert "package/source/plugins/__init__.py" in inputs
+    assert "package/source/plugins/parser.py" in inputs
+
+
+def test_package_initializer_collision_matches_python_import_precedence(tmp_path):
+    package = parser_fixture(tmp_path / "installed")
+    (package / "source.py").write_text("WRONG_MODULE = True\n")
+    spec = PathFinder.find_spec("source", [str(package)])
+    assert spec is not None
+    assert spec.origin == str(package / "source/__init__.py")
+
+    inputs, mode = source_inventory._parser_implementation_inputs(
+        package, source_inventory._PARSER_ROOTS)
+    assert mode == "local_import_closure"
+    assert "package/source/__init__.py" in inputs
+    assert "package/source.py" not in inputs
+    before = parser_snapshot(package)
+    (package / "source.py").write_text("WRONG_MODULE = False\n")
+    assert parser_snapshot(package) == before
+    initializer = package / "source/__init__.py"
+    initializer.write_text(initializer.read_text() + "\n# actual imported package\n")
+    assert parser_snapshot(package) != before
+
+
+def test_unresolved_or_dynamic_import_falls_back_and_new_package_files_invalidate(tmp_path):
+    package = parser_fixture(tmp_path / "installed")
+    reader = package / "source/reader.py"
+    reader.write_text(reader.read_text() + "\nfrom .missing import parse\n")
+    before = parser_snapshot(package)
+    inputs, mode = source_inventory._parser_implementation_inputs(
+        package, source_inventory._PARSER_ROOTS)
+    assert mode == "full_package_fallback"
+    (package / "source/new_plugin.py").write_text("VALUE = 1\n")
+    assert parser_snapshot(package) != before
+
+    reader.write_text(reader.read_text().replace(
+        "from .missing import parse", "import importlib\nplugin = importlib.import_module('x')"))
+    dynamic_inputs, dynamic_mode = source_inventory._parser_implementation_inputs(
+        package, source_inventory._PARSER_ROOTS)
+    assert dynamic_mode == "full_package_fallback"
+    assert "package/source/new_plugin.py" in dynamic_inputs
+
+    for snippet in ("loader = __import__\nloader('x')",
+                    "import importlib as il\nloader = il.import_module\nloader('x')"):
+        reader.write_text(reader.read_text() + "\n" + snippet + "\n")
+        _, alias_mode = source_inventory._parser_implementation_inputs(
+            package, source_inventory._PARSER_ROOTS)
+        assert alias_mode == "full_package_fallback"
 
 
 def test_warm_cache_still_checks_full_merge_history_and_policy_refusals(project, monkeypatch):
