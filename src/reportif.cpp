@@ -1454,7 +1454,8 @@ void __cdecl report_labs() {
     int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 2;
     if (IfaceIdToSlotStorage[active_iface] != 5) {
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(2, ReportIfGlobal.report_faction_id(), 0);
     }
@@ -1467,7 +1468,8 @@ void __cdecl report_energy() {
     int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 3;
     if (IfaceIdToSlotStorage[active_iface] != 5) {
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(3, ReportIfGlobal.report_faction_id(), 0);
     }
@@ -1480,7 +1482,8 @@ void __cdecl report_ops() {
     int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 4;
     if (IfaceIdToSlotStorage[active_iface] != 5) {
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(4, ReportIfGlobal.report_faction_id(), 0);
     }
@@ -1495,7 +1498,8 @@ void __cdecl report_projects() {
     int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 5;
     if (IfaceIdToSlotStorage[active_iface] != 5) {
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(5, ReportIfGlobal.report_faction_id(), 0);
     }
@@ -1508,7 +1512,8 @@ void __cdecl report_sat() {
     int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 6;
     if (IfaceIdToSlotStorage[active_iface] != 5) {
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(6, ReportIfGlobal.report_faction_id(), 0);
     }
@@ -1521,7 +1526,8 @@ void __cdecl report_security() {
     int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 7;
     if (IfaceIdToSlotStorage[active_iface] != 5) {
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(7, ReportIfGlobal.report_faction_id(), 0);
     }
@@ -1534,7 +1540,8 @@ void __cdecl report_score(int) {
     int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 8;
     if (IfaceIdToSlotStorage[active_iface] != 5) {
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(8, ReportIfGlobal.report_faction_id(), 0);
     }
