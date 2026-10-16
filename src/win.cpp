@@ -12292,7 +12292,7 @@ int __cdecl pump_key_message() {
     MSG message;
     do_video();
     check_net();
-    if (!PeekMessageA(&message, nullptr, WM_KEYDOWN, WM_SYSDEADCHAR, PM_REMOVE))
+    if (!PeekMessageA(&message, nullptr, WM_KEYDOWN, WM_KEYLAST, PM_REMOVE))
         return 0;
     TranslateMessage(&message);
     DispatchMessageA(&message);
@@ -12308,7 +12308,7 @@ void __cdecl pump_all_key_messages() {
     for (;;) {
         do_video();
         check_net();
-        if (!PeekMessageA(&message, nullptr, WM_KEYDOWN, WM_SYSDEADCHAR, PM_REMOVE))
+        if (!PeekMessageA(&message, nullptr, WM_KEYDOWN, WM_KEYLAST, PM_REMOVE))
             break;
         TranslateMessage(&message);
         DispatchMessageA(&message);

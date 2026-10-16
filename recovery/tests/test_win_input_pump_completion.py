@@ -25,7 +25,10 @@ def test_complete_win_input_pump_family():
 #include <vector>
 #include <string>
 #define __cdecl
-const unsigned WM_KEYDOWN=0x100, WM_SYSDEADCHAR=0x108, WM_MOUSEMOVE=0x200;
+// Values from the configured VC6 WINUSER.H; the inclusive endpoint is not
+// WM_SYSDEADCHAR. Keep the fixture independent of the implementation's name.
+const unsigned WM_KEYDOWN=0x100, WM_SYSDEADCHAR=0x107, WM_KEYLAST=0x108;
+const unsigned WM_MOUSEMOVE=0x200;
 const unsigned WM_LBUTTONDOWN=0x201, WM_LBUTTONUP=0x202;
 const unsigned WM_RBUTTONDOWN=0x204, WM_RBUTTONUP=0x205, WM_MBUTTONDBLCLK=0x209;
 const unsigned WM_USER=0x400, PM_REMOVE=1;
@@ -65,6 +68,8 @@ int main() {
     reset(); post(0x109); post(0x108); assert(pump_key_message()==1);
     assert(trace()=="VCPTD" && Queue.size()==1 && Queue[0].message==0x109 && MsgStatus==77);
     reset(); pump_all_key_messages(); assert(trace()=="VCPN" && MsgStatus==99);
+    reset(); post(0x109); post(0x108); pump_all_key_messages();
+    assert(trace()=="VCPTDVCPN" && Queue.size()==1 && Queue[0].message==0x109);
     reset(); post(0x100); Reentrant=true; pump_all_key_messages();
     assert(trace()=="VCPTDVCPTDVCPN" && Queue.empty() && MsgStatus==77);
     reset(); post(0x201); assert(pump_mouse_move_message()==0); assert(trace()=="P" && Queue.size()==1);
