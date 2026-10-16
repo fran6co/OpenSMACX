@@ -1,0 +1,41 @@
+{
+  "author": "coordinator",
+  "base_revision": "990d332ff5fb4b5fd7a9570ed692023cc2037ae2",
+  "editable_files": [
+    "src/reportif.cpp",
+    "src/reportwin.cpp",
+    "src/basewin.cpp"
+  ],
+  "evidence": [
+    "Pinned ReportIf::on_iface_left_click4A5FB1, on_iface_button_clicked4A6C1D/4A6CAE and ReportWin::on_key_click498418 dispatch ReportWinGlobal.set_modal through Win slot57/0xE4. Retained current COFF instead has direct Win::set_modal relocations. Use ordinary Win reference only at these calls and preserve arguments, ordering and branches.",
+    "Pinned BaseWin::garrison_click40BA03 dispatches TutWinBaseWindow redraw through slot62/0xF8. Current source TutWinBaseWindow.redraw emits direct GraphicWin::redraw. Alter only that proven call; nearby MainInterfaceGlobal redraw and this redraw have separate direct/virtual evidence and must remain unchanged.",
+    "Recent seven-command recovery established native Win reference calls retain original slot57 shape under both configured flag sets. This supports a candidate but does not grant matches to these larger bodies.",
+    "Only the four mapped bodies are authorized; no global class layout changes or manual vtables. Preserve all source identities, claims and findings. Measure all three touched TUs, build/link, verify references/claims and physical collateral, review before manual integration. Existing host tests may be reused where relevant; pinned and physical evidence remain primary."
+  ],
+  "intent": "Restore four evidenced virtual dispatch boundaries on existing window globals through ordinary Win references.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4874048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4875056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4817536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4239680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "window-global-virtual-dispatch-oct16"
+}
