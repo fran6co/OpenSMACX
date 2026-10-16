@@ -1868,15 +1868,15 @@ Menu::~Menu() {
     for (int i = 0; i < 15; i++) {
         if (entries_[i].text != nullptr) {
             free(entries_[i].text);
+            entries_[i].text = nullptr;
         }
-        entries_[i].text = nullptr;
         entries_[i].id = -1;
         entries_[i].flags = 0;
         entries_[i].mnemonic = nullptr;
         if (entries_[i].pull_down != nullptr) {
             delete entries_[i].pull_down;
+            entries_[i].pull_down = nullptr;
         }
-        entries_[i].pull_down = nullptr;
     }
     proc_ = nullptr;
     count_ = 0;
