@@ -5173,7 +5173,7 @@ int Buffer::wrap_cent(char * a1, int a2, int a3, int a4) {
         } else {
             BufferStrHeight = 0;
             unsigned int len = strlen(cur);
-            next = reinterpret_cast<char *>(find_line_break_l(cur, &width, len));
+            next = find_line_break_l(cur, &width, len);
             if (next != 0) {
                 write_cent_l(cur, a2, total, a4, next - cur);
             } else {
@@ -5252,8 +5252,7 @@ int Buffer::wrap_cent(char * text, RECT * rect) {
         } else {
             BufferStrHeight = 0;
             unsigned int fullLen = strlen(str);
-            nextStr = reinterpret_cast<char *>(
-                find_line_break_l(str, &lineWidth, static_cast<int>(fullLen)));
+            nextStr = find_line_break_l(str, &lineWidth, static_cast<int>(fullLen));
             if (nextStr != 0) {
                 write_cent_l(str, left, yPos, width,
                              static_cast<int>(nextStr - str));
@@ -5316,7 +5315,7 @@ int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5) {
             if (str != 0) {
                 BufferStrHeight = 0;
                 unsigned int len = strlen(str);
-                breakPos = reinterpret_cast<char *>(find_line_break_l(str, &outParam, len));
+                breakPos = find_line_break_l(str, &outParam, len);
                 int lineLen;
                 if (breakPos == 0) {
                     lineLen = strlen(str);
@@ -5383,7 +5382,7 @@ int Buffer::wrap_cent(Font *a1, char *a2, int a3, int a4, int a5, int a6) {
             } else {
                 BufferStrHeight = 0;
                 unsigned int len = strlen(str);
-                brk = reinterpret_cast<char *>(find_line_break_l(str, &wrapWidth, len));
+                brk = find_line_break_l(str, &wrapWidth, len);
                 if (brk == 0) {
                     len = strlen(str);
                 } else {
@@ -5427,7 +5426,7 @@ int Buffer::wrap_height(char * a1, int a2) {
     do {
         int len = strlen(str);
         int lineWidth = width;
-        str = reinterpret_cast<char *>(find_line_break_l(str, &lineWidth, len));
+        str = find_line_break_l(str, &lineWidth, len);
         BufferStrHeight = 0;
         if (font1_ == 0) {
             font1_ = FontDefault;
@@ -6337,7 +6336,7 @@ int Buffer::wrap_right(char *text, RECT *area) {
                 BufferStrHeight = 0;
                 int localWidth = width;
                 unsigned int len = strlen(cur);
-                found = reinterpret_cast<char *>(find_line_break_l(cur, &localWidth, (int)len));
+                found = find_line_break_l(cur, &localWidth, (int)len);
                 int segLen;
                 if (found == 0) {
                     segLen = (int)strlen(cur);
@@ -6394,7 +6393,7 @@ int Buffer::wrap_flying(char *a1, int a2, int a3, int a4) {
     BufferFlyingY = a3;
     BufferFlyingWidth = a4;
     markup_pending_ = 0;
-    *reinterpret_cast<uint8_t *>(BufferFlyingText) = 0;
+    BufferFlyingText[0] = 0;
     return wrap_flying(a1);
 }
 
@@ -6517,7 +6516,7 @@ int Buffer::wrap_right(char * a1, int a2, int a3, int a4) {
             int len;
             BufferStrHeight = 0;
             unsigned int slen = strlen(text);
-            brk = reinterpret_cast<char *>(find_line_break_l(text, &a3, slen));
+            brk = find_line_break_l(text, &a3, slen);
             if (brk == 0) {
                 len = strlen(text);
             } else {
@@ -6580,8 +6579,7 @@ int Buffer::wrap(char * a1, RECT * a2) {
             } else {
                 BufferStrHeight = 0;
                 int breakPos = width;
-                nextStr = reinterpret_cast<char *>(
-                    this->find_line_break_l(str, &breakPos, static_cast<int>(strlen(str))));
+                nextStr = this->find_line_break_l(str, &breakPos, static_cast<int>(strlen(str)));
 
                 Font *font = font1_;
                 bool hasFont = (font != 0) && (font->font_obj_ != 0);
@@ -7144,7 +7142,7 @@ int Buffer::wrap(char * a1, int a2, int a3, int a4) {
         } else {
             BufferStrHeight = 0;
             unsigned int len = strlen(cur);
-            char *brk = reinterpret_cast<char *>(find_line_break_l(cur, &wrapLen, (int)len));
+            char *brk = find_line_break_l(cur, &wrapLen, (int)len);
             nextLine = brk;
             if (brk == 0) {
                 unsigned int len2 = strlen(cur);
