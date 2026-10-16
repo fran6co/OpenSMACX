@@ -1,0 +1,42 @@
+{
+  "author": "coordinator",
+  "base_revision": "5d7b5ce193267749821798b808cf6fa76901b5e4",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "src/stringlist.cpp",
+    "src/general.cpp"
+  ],
+  "evidence": [
+    "Fresh configured StringStruct marker-host measurements lack remove_all and destructor symbols under both historical flag trials. Both bodies are explicitly defined in stringstruct.h; StringList's destructor has the same header-owned, cross-TU emission issue.",
+    "Current physical COFF and MAP select the three unchanged decorated bodies from alphanet.cpp. A separate fresh configured alphanet-context diagnostic measures remove_all exact (50 instructions), while StringStruct destructor remains a miss. Full Release /Ob2 emission is distinct from configured measurement flags and is not a stale-report proof.",
+    "Existing extern C __fastcall sub_5d2d20 is physically defined as @sub_5d2d20@20 in general.cpp.obj, consistent with its source declaration and two-register/three-stack-word ABI; its missing symbol fact currently prevents normal comparison. Preserve the catalogue identity and original span, and use native write_symbol.",
+    "Use guarded native write_context for the three header-owned current witnesses, only after generic package support has passed checks. Context is a current measurement witness, not evidence of original TU ownership or final linker selection. Preserve all original markers, spans, symbols, historical claims and lessons.",
+    "No C++ body, signature, compiler policy, dependency or task baseline changes. Recheck public native measure/record and current historical match routing, full build/link, physical collateral, source claim continuity and live references. Strict task/restoration or preservation refusal remains visible; no automatic or game acceptance claim."
+  ],
+  "intent": "Bind current measurement emitting-TU witnesses for three header-defined StringStruct/StringList bodies and the emitted fastcall spelling for an existing General decoder, without changing C++ behavior or original identities.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4204912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4198496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4220608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6106400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mapped-emission-context-witnesses-oct16"
+}
