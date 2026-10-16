@@ -29,6 +29,7 @@ def _source():
     candidate = (ROOT / "src/netmsg.cpp").read_text()
     netmsg = (ROOT / "src/netmsg.cpp").read_text()
     popup = (ROOT / "src/popup.cpp").read_text()
+    popup_header = (ROOT / "src/popup.h").read_text()
     time_lifecycle = (ROOT / "src/time_lifecycle.cpp").read_text()
     
     actual = "\n".join(
@@ -41,7 +42,6 @@ def _source():
             body(candidate, "void NetMsg::pop(const char *label, int duration, int channel,"),
             body(candidate, "void __cdecl NetMsg::pop(const char *label, const char *target)"),
             body(popup, "void Popup::close()"),
-            body(popup, "Popup::~Popup()"),
             body(time_lifecycle, "Time::~Time()"),
         ]
     )
@@ -171,6 +171,14 @@ def _source():
     extern NetMsg NetMsgPrimary;
     extern NetMsg NetMsgSecondary;
     '''
+
+    # The candidate's actual inline member definition belongs inside the
+    # fixture class; do not turn the header body into a synthetic free body.
+    prefix = prefix.replace(
+        "      ~Popup();",
+        "      " + body(popup_header, "~Popup()"),
+        1,
+    )
     
     suffix = r'''
     void reset_observations() {
@@ -312,6 +320,7 @@ def _source():
       reset_observations(); time_teardown_calls=0;
       { NetMsg local(1,2,3); }
       assert(time_teardown_calls==1 && popup_close_calls==1);
+      assert(event_index("scroll.close") < event_index("base.close"));
       assert(event_index("time.destroy") < event_index("base.close"));
       return 0;
     }

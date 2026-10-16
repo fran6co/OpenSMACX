@@ -34,7 +34,7 @@ class Scroll : public GraphicWin {
   // 0x006051D0. Defined in scroll.cpp, alongside close() which resets the
   // same fields from the same two process-default tables.
   Scroll();
-  ~Scroll();
+  ~Scroll() { close(); }
 
   void close();
   // 0x006054D0 is the primary initializer. The overloads that wrap it call

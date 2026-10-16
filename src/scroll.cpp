@@ -1938,7 +1938,7 @@ void Scroll::on_left_click(int, int) {
 Purpose: Destroy a Scroll: run close, destroy the embedded right then left
          FlatButtons, and finish with the GraphicWin base teardown through
          ordinary C++ destruction, including exception cleanup.
-// ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE BYTE_EXACT
+// ORIGINAL: 0x00406E60 ??1Scroll@@QAE@XZ 0x00406E60-0x00406F1A;0x00650BB0-0x00650BEE FILE BYTE_EXACT
 // symbol    ??1Scroll@@UAE@XZ
 // size      248 bytes
 // prototype void (__thiscall ??1Scroll@@QAE@XZ)(Scroll* this)
@@ -1948,11 +1948,6 @@ Purpose: Destroy a Scroll: run close, destroy the embedded right then left
 // calls     0x005D4DD0 0x00605370 0x00607040 0x00607DA0
 Return Value: n/a
 */
-Scroll::~Scroll() {
-    close();
-}
-
-
 /*
 Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and, when bit 0 of the mode asks, free the storage to the

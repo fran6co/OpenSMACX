@@ -56,6 +56,14 @@ def references(obj, symbol):
     return [obj.symbols[int(row.target)].name for row in relocations]
 
 
+def call_targets(obj, symbol):
+    code, relocations, _ = obj.subject(obj.function(symbol))
+    targets = {row.offset: obj.symbols[int(row.target)].name for row in relocations}
+    return [targets.get(instruction.address + 1)
+            for instruction in Cs(CS_ARCH_X86, CS_MODE_32).disasm(code, 0)
+            if instruction.mnemonic == "call"]
+
+
 @pytest.mark.parametrize("unit,address", [
     ("src/base.cpp", 0x4EB560), ("src/base.cpp", 0x4E80B0),
     ("src/base.cpp", 0x4F5F30), ("src/base.cpp", 0x4E5FE0),
@@ -556,28 +564,75 @@ def test_popup_family_destroys_each_owned_subobject_once(compiled):
     popup_destructor = symbol_at("src/popup.cpp", 0x406C00)
     menu_destructor = symbol_at("src/popmenu.cpp", 0x421400)
     pull_destructor = symbol_at("src/pulldown.cpp", 0x5F88A0)
-    for obj in compiled["src/popmenu.cpp"]:
-        targets = references(obj, menu_destructor)
-        assert targets.count(pull_destructor) == 1
-        assert targets.count(popup_destructor) == 1
+    popup_close = "?close@Popup@@QAEXXZ"
+    scroll_destructor = symbol_at("src/scroll.cpp", 0x406E60)
+    popup_close_body = ["?close@Scroll@@QAEXXZ", "?close@BasePop@@QAEXXZ"]
+    scroll_cleanup = ["?close@Scroll@@QAEXXZ", "?close@FlatButton@@UAEXXZ",
+                      "??1BaseButton@@UAE@XZ", "?close@FlatButton@@UAEXXZ",
+                      "??1BaseButton@@UAE@XZ", "??1GraphicWin@@UAE@XZ"]
+    popup_cleanup = [
+        "?close@Scroll@@QAEXXZ", "?close@BasePop@@QAEXXZ",
+        *scroll_cleanup, "?close@BasePop@@QAEXXZ", "??1Spot@@QAE@XZ",
+        "??1Dialogs@@UAE@XZ", "??1Dialog@@UAE@XZ", "??1GraphicWin@@UAE@XZ",
+        "??1StringList@@UAE@XZ", "??1StringAllocationBase@@UAE@XZ",
+        "??1StringList@@UAE@XZ", "??1StringAllocationBase@@UAE@XZ",
+        "?close@Sprite@@QAEXXZ", "?close@FlatButton@@UAEXXZ",
+        "??1BaseButton@@UAE@XZ", "?close@FlatButton@@UAEXXZ",
+        "??1BaseButton@@UAE@XZ", "??1Heap@@QAE@XZ", "??1GraphicWin@@UAE@XZ",
+    ]
+
+    def expand_verified(targets, symbol, body):
+        return [item for target in targets for item in (body if target == symbol else [target])]
+
     for obj in compiled["src/popup.cpp"]:
-        targets = references(obj, popup_destructor)
-        assert targets.count(symbol_at("src/scroll.cpp", 0x406E60)) == 1
+        assert call_targets(obj, popup_close) == popup_close_body
+    for obj in compiled["src/scroll.cpp"]:
+        assert call_targets(obj, scroll_destructor) == scroll_cleanup
+        refs = references(obj, scroll_destructor)
+        for vftable in ("??_7Scroll@@6BWin@@@", "??_7Scroll@@6BBuffer@@@",
+                        "??_7FlatButton@@6BWin@@@", "??_7FlatButton@@6BBuffer@@@"):
+            assert vftable in refs
+
+    menu_cleanup = [pull_destructor, popup_close, *popup_cleanup[2:]]
+    for obj in compiled["src/popmenu.cpp"]:
+        targets = call_targets(obj, menu_destructor)
+        # Original PopMenu teardown calls Popup::close, not Popup::~Popup.
+        targets = expand_verified(targets, scroll_destructor, scroll_cleanup)
+        assert targets == menu_cleanup
+        assert targets.count(pull_destructor) == 1
+        assert targets.count(popup_close) == 1
+        assert popup_destructor not in targets
+        refs = references(obj, menu_destructor)
+        assert "??_7PopMenu@@6BWin@@Popup@@@" in refs
+        assert "??_7PopMenu@@6BWin@@PullDown@@@" in refs
+    for obj in compiled["src/console.cpp"]:
+        calls = call_targets(obj, symbol_at("src/console.cpp", 0x4DFAD0))
+        # Both original editor paths retain the Popup::close helper boundary.
+        assert calls.count(popup_close) == 2
+    for obj in compiled["src/popup.cpp"]:
+        targets = call_targets(obj, popup_destructor)
+        targets = expand_verified(targets, popup_close, popup_close_body)
+        targets = expand_verified(targets, scroll_destructor, scroll_cleanup)
+        assert targets == popup_cleanup
+        refs = references(obj, popup_destructor)
+        for vftable in ("??_7Popup@@6BWin@@@", "??_7Popup@@6BBuffer@@@",
+                        "??_7Scroll@@6BWin@@@", "??_7Scroll@@6BBuffer@@@",
+                        "??_7FlatButton@@6BWin@@@", "??_7BasePop@@6BWin@@@"):
+            assert vftable in refs
         base_destructor = symbol_at("src/basepop.cpp", 0x4064D0)
         if base_destructor in targets:
             assert targets.count(base_destructor) == 1
         else:
-            # BasePop's in-class destructor expands here. Check its close
-            # and two uniquely owned members, not a nonexistent call edge.
-            assert targets.count("?close@BasePop@@QAEXXZ") == 1
+            # BasePop's in-class destructor expands in addition to Popup.close.
+            assert targets.count("?close@BasePop@@QAEXXZ") == 2
             assert targets.count("??1Spot@@QAE@XZ") == 1
             assert targets.count("??1Heap@@QAE@XZ") == 1
-        assert not any("Original" in target for target in targets)
+        assert not any("Original" in target for target in refs)
     for obj in compiled["src/scroll.cpp"]:
-        targets = references(obj, symbol_at("src/scroll.cpp", 0x406E60))
-        assert targets.count("?close@Scroll@@QAEXXZ") == 1
-        assert targets.count("??1GraphicWin@@UAE@XZ") == 1
-        assert not any("?destroy@" in target or "Original" in target for target in targets)
+        targets = call_targets(obj, scroll_destructor)
+        assert targets == scroll_cleanup
+        refs = references(obj, scroll_destructor)
+        assert not any("?destroy@" in target or "Original" in target for target in refs)
 
 
 def test_base_computation_owns_its_shared_state_and_orders_resource_passes(compiled):

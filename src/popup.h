@@ -77,9 +77,9 @@ class Popup : public BasePop {
   static BasePop *alloc();
 
   Popup();
-  // Closes the popup, then destroys its Scroll member and BasePop base.
-  // The standalone original entry is 0x00406C00.
-  ~Popup();
+  // Close before destroying Scroll and BasePop. The original expands close
+  // in the standalone destructor but retains the helper call in its callers.
+  ~Popup() { close(); }
   void close();
   // Provisional name for original 0x00559000; no added virtual slot.
   int set_picture(Sprite *picture, int mode, char *text);

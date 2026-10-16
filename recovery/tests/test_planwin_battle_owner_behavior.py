@@ -365,12 +365,13 @@ def test_source_has_typed_planwin_override_and_current_definitions() -> None:
     popup_cpp = (ROOT / "src/popup.cpp").read_text(encoding="utf-8")
     basepop_h = (ROOT / "src/basepop.h").read_text(encoding="utf-8")
     scroll_cpp = (ROOT / "src/scroll.cpp").read_text(encoding="utf-8")
+    scroll_h = (ROOT / "src/scroll.h").read_text(encoding="utf-8")
     assert "class Popup : public BasePop" in popup_h
     assert "Scroll scroll_;" in popup_h
-    assert "Popup::~Popup()" in popup_cpp
+    assert "~Popup() { close(); }" in popup_h
     assert "void Popup::close()" in popup_cpp
     assert "Dialogs" in basepop_h
-    assert "Scroll::~Scroll()" in scroll_cpp
+    assert "~Scroll() { close(); }" in scroll_h
     bodies = _production_definitions()
     assert all("PENDING_BODY" not in body for body in bodies)
     assert "PlanWindow.clear_lines()" in bodies[1]

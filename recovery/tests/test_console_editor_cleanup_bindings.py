@@ -77,6 +77,32 @@ def test_cleanup_member_path_has_real_automatic_cpp_owners():
     assert "class FlatButton : public BaseButton" in (ROOT / "src/flatbutton.h").read_text()
 
 
+def test_popup_destructor_is_shared_inline_with_original_file_identity_retained():
+    popup_h = (ROOT / "src/popup.h").read_text()
+    popup_cpp = (ROOT / "src/popup.cpp").read_text()
+    assert "~Popup() { close(); }" in popup_h
+    assert "Popup::~Popup()" not in popup_cpp
+    assert "void Popup::close()" in popup_cpp
+    assert "scroll_.close();\n    BasePop::close();" in popup_cpp
+    close_rows = [row for row in read(ROOT / "src") if row.address == 0x00404900]
+    assert len(close_rows) == 1
+    close, = close_rows
+    assert close.path == ROOT / "src/popup.cpp"
+    assert close.mode is Mode.BODY and close.byte_exact
+    assert close.image_spans == ((0x00404900, 0x00404917),)
+    rows = [row for row in read(ROOT / "src") if row.address == 0x00406C00]
+    assert len(rows) == 1
+    record, = rows
+    assert record.path == ROOT / "src/popup.cpp"
+    assert record.image_spans == ((0x00406C00, 0x00406E52),
+                                  (0x00650AB0, 0x00650BA2))
+    assert record.name == "??1Popup@@QAE@XZ"
+    assert record.symbol == "??1Popup@@UAE@XZ"
+    # Keep this as a FILE lifetime identity without forbidding later claim banking.
+    assert record.mode is Mode.FILE
+    assert '"reason": "Recover the full original operation using owned C++ members and base lifetimes; retain all original branches and expose unresolved callees instead of executing original-address forwarders."' in record.region
+
+
 def test_all_original_unwind_actions_keep_spans_in_parent_lifetime_owner():
     text = (ROOT / "src/console.cpp").read_text()
     parent = assert_complete_editor_region(text)

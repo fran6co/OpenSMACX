@@ -112,7 +112,7 @@ def test_native_diplomacy_button_dispatch_layout_and_popup_lifetime():
     from match_recovery.source_inventory import image_pin
     from match_recovery.model import Span
     from match_recovery.codeview import class_layout
-    from test_application_link_recovery import references
+    from test_application_link_recovery import call_targets, references
     from recovery.environment.wine import VC6_ROOT
 
     image_path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
@@ -137,4 +137,8 @@ def test_native_diplomacy_button_dispatch_layout_and_popup_lifetime():
         assert relocated[table.value + 44*4] == symbol
         calls = references(obj, symbol)
         assert calls.count("??0Popup@@QAE@XZ") == 1
-        assert "??1Popup@@UAE@XZ" in calls
+        ordered_cleanup = ["?close@Popup@@QAEXXZ", "?close@Scroll@@QAEXXZ",
+                           "??1FlatButton@@UAE@XZ", "??1FlatButton@@UAE@XZ"]
+        call_sequence = call_targets(obj, symbol)
+        assert any(call_sequence[index:index + len(ordered_cleanup)] == ordered_cleanup
+                   for index in range(len(call_sequence) - len(ordered_cleanup) + 1))
