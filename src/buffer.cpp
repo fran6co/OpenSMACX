@@ -4686,6 +4686,7 @@ Buffer g_BUFFER;
 // startup, and the matching destructors close them at exit.
 
 // ORIGINAL: 0x005D7B40 ?load_tga@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7B40-0x005D7C78;0x00662B92-0x00662BA7 FILE
+// symbol    ?load_tga@Buffer@@SGHPBDPAVPalette@@HH@Z
 // TRIED (historical, superseded by the pinned cleanup-only one-state evidence): plain `Filemap fm;` with early returns was measured without an SEH prologue; wrapping it in try{}catch(...){throw;} recovered most of the /GX frame shape but still diverged at #0 push/mov. Those obsolete catch-shape measurements do not justify a catch map here.
 // size      333 bytes
 // prototype 
@@ -7546,6 +7547,7 @@ forward:
 }
 
 // ORIGINAL: 0x005D7CA0 ?load_bmp@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7CA0-0x005D7DD8;0x00662BA7-0x00662BBC FILE
+// symbol    ?load_bmp@Buffer@@SGHPBDPAVPalette@@HH@Z
 // TRIED (historical, superseded by the pinned cleanup-only one-state evidence): this was grouped with the load_tga/load_bmp/load_pcx SEH-frame family at 0x005D7A30 and 0x005D7B40; try{}catch(...){throw;} was the closest measured shape and still diverged at #0 push/mov. The original has no catch map.
 // size      333 bytes
 // prototype 
@@ -7609,6 +7611,7 @@ void Buffer::resize(int width, int height) {
 
 // ORIGINAL: 0x005D7B20 ?load_tga@Buffer@@QAGHPBD@Z 0x005D7B20-0x005D7B36 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005d7b20.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// symbol    ?load_tga@Buffer@@SGHPBD@Z
 // size      22 bytes
 // prototype int (__stdcall ?load_tga@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
 // callers   0   call targets   1
@@ -7624,6 +7627,7 @@ int __stdcall Buffer::load_tga(const char *filename) {
 
 // ORIGINAL: 0x005D7C80 ?load_bmp@Buffer@@QAGHPBD@Z 0x005D7C80-0x005D7C96 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005d7c80.cpp"], "reason": "Retain the existing source implementation and complete original mapping. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// symbol    ?load_bmp@Buffer@@SGHPBD@Z
 // size      22 bytes
 // prototype int (__stdcall ?load_bmp@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
 // callers   0   call targets   1

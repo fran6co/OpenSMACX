@@ -199,12 +199,16 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int pixel_width() const { return dib_.bmiHeader.biWidth; }
   // A top-down DIB stores the visible height as a negative biHeight.
   int pixel_height() const { return -dib_.bmiHeader.biHeight; }
-  // homed from 005d7b40.cpp
-  int __stdcall load_tga(const char * a1, Palette * a2, int a3, int a4);
+  // The pinned 5D7B20/5D7B40 entries use one/four explicit stack arguments;
+  // the full loader overwrites ECX for its local Filemap before any receiver
+  // read. Keep these receiver-free in this source model. The historical QAG
+  // identities do not distinguish a static operation from a member with an
+  // unused ECX receiver, so static here is not a provenance claim.
+  static int __stdcall load_tga(const char * a1, Palette * a2, int a3, int a4);
   // 0x005D7B20 - `?load_tga@Buffer@@QAGHPBD@Z`, the one-argument overload:
   // forwards to the four-argument loader above with no palette and the full
-  // 256-entry colour count. __stdcall like the loader pair (QAG, not QAE).
-  int __stdcall load_tga(const char *filename);
+  // 256-entry colour count.
+  static int __stdcall load_tga(const char *filename);
 
  public:
   // Blit this buffer into a window's client area. Called by the homed
@@ -486,13 +490,13 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int draw(Buffer *destination, int index, int x, int y, int numerator, int denominator);
   int draw_mono(Buffer *destination, int transparent, int x, int y,
                 int colour, int numerator, int denominator);
-  // __STDCALL, like load_tga: the image's name is QAG, not QAE, so the
-  // loader pair was declared with the explicit convention.
-  int __stdcall load_bmp(const char *filename, Palette *palette, int a3,
-                         int a4);
+  // As with TGA, the pinned BMP wrappers use only explicit stack arguments;
+  // the original identity does not resolve static versus unused-ECX member.
+  static int __stdcall load_bmp(const char *filename, Palette *palette, int a3,
+                                int a4);
   // 0x005D7C80 - `?load_bmp@Buffer@@QAGHPBD@Z`, the one-argument overload:
   // the same forwarder shape as the one-argument load_tga above.
-  int __stdcall load_bmp(const char *filename);
+  static int __stdcall load_bmp(const char *filename);
   // OVERLOAD BLOCK, homed from the archive in the buffer homing pass. The
   // catalogue's own prototypes; each body lives beside its marker in
   // buffer.cpp. The five-int `draw` above is the six-argument form the
