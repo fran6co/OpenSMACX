@@ -62,9 +62,14 @@ struct SelectPartWin {
     int drawn[32] = {};
     int selected[32] = {};
     int draw_count = 0;
+    bool mutate_selection_on_draw = false;
+    int selection_after_draw = 0;
     int draw_part(int index, int select) {
         drawn[draw_count] = index;
         selected[draw_count++] = select;
+        if (select && mutate_selection_on_draw) {
+            field_2B80_ = selection_after_draw;
+        }
         return 1;
     }
     void redraw() { ++redraws; }
@@ -82,6 +87,19 @@ SelectPartWin *WinPointerOwner3 = nullptr;
 SelectPartWin *WinPointerOwner4 = nullptr;
 """ + methods + r"""
 int main() {
+    SelectPartWin mutated;
+    mutated.mutate_selection_on_draw = true;
+    mutated.selection_after_draw = 7;
+    mutated.on_mouse_move(5, 5);
+    assert(mutated.draw_count == 2);
+    assert(mutated.drawn[0] == 0 && mutated.selected[0] == 1);
+    assert(mutated.drawn[1] == 7 && mutated.selected[1] == 0);
+    assert(mutated.field_2B80_ == 0);
+    SelectPartWin cleared;
+    cleared.mutate_selection_on_draw = true;
+    cleared.selection_after_draw = -1;
+    cleared.on_mouse_move(5, 5);
+    assert(cleared.draw_count == 1 && cleared.field_2B80_ == 0);
     SelectPartWin win;
     // The first argument is not the key; only the second selects Escape.
     assert(win.on_key_click(27, 0) == 1);
@@ -144,3 +162,22 @@ int main() {
         check=True,
     )
     subprocess.run([str(binary)], check=True)
+    # The original reloads this+0x2B80 after drawing the new selection.
+    # Reintroducing a pre-call snapshot must fail the mutation cases above.
+    mutant = harness.replace(
+        "void SelectPartWin::on_mouse_move(int x, int y) {",
+        "void SelectPartWin::on_mouse_move(int x, int y) {\n"
+        "    const int cached_selection = field_2B80_;",
+    ).replace(
+        "if (field_2B80_ >= 0) {\n                draw_part(field_2B80_, 0);",
+        "if (cached_selection >= 0) {\n                draw_part(cached_selection, 0);",
+    )
+    assert mutant != harness
+    mutant_source = tmp_path / "selectpart_cached.cpp"
+    mutant_binary = tmp_path / "selectpart_cached"
+    mutant_source.write_text(mutant)
+    subprocess.run(
+        ["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror",
+         str(mutant_source), "-o", str(mutant_binary)], check=True,
+    )
+    assert subprocess.run([str(mutant_binary)], capture_output=True).returncode != 0
