@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "39db2b4abe41ee7764119d1ac0cf3c7fade8ad28",
+  "editable_files": [
+    "src/alphamenu.cpp",
+    "recovery/tests/test_alphamenu_mouse_move_oct16.py"
+  ],
+  "evidence": [
+    "Pinned 0x00403550 passes LEA [EBP+0xC], the writable by-value y parameter, as Spot::check's result pointer, then reloads the mutated slot for MenuSelection on hit. Current source uses an independent int position copy with equivalent values but different stack shape.",
+    "The pre-check Menu::on_mouse_move call consumes the original y before mutation; after the check only the selected position is consumed. Keep every hit/miss callback and capture-global transition in the original order, including alias-sensitive rechecks after callbacks.",
+    "Authorize one native local body-only candidate with unchanged-replica and changed-function controls under both configured flag sets. Existing branch-polarity experiments do not establish failure of this distinct parameter-slot hypothesis. No header, signature, source binding or compiler policy change.",
+    "If the screen yields no useful matching or structural improvement, retain its ignored evidence without speculative source churn. If it succeeds, require actual-source behavior/damage tests, full-TU comparison and fresh build/link, physical outside-function checks, claim continuity and references before coordinator-reviewed integration. Only native recover record may bank an exact claim; no full-game acceptance claim."
+  ],
+  "intent": "Screen the original-backed writable y parameter in AlphaMenu mouse movement, removing its needless copy only if faithful and useful; preserve all capture and callback behavior and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4207952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alphamenu-writable-y-oct16"
+}
