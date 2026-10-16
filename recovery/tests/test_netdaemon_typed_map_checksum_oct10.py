@@ -42,6 +42,10 @@ def restore_map_checksum_migration(source):
 def test_only_map_walks_change_and_all_bindings_survive():
     path = ROOT / "src/netdaemon.cpp"
     source = restore_report_migration(path.read_text())
+    current_stride = "Map *tile = MapTiles + MapLongitude * recIdx;"
+    previous_stride = "Map *tile = MapTiles + static_cast<int>(MapLongitude) * recIdx;"
+    assert source.count(current_stride) == 1
+    source = source.replace(current_stride, previous_stride, 1)
     old = subprocess.check_output(["git", "show", REPORT_BASE + ":src/netdaemon.cpp"], cwd=ROOT).decode()
     assert source == old
     rows = read_text(source, path)
@@ -79,7 +83,7 @@ static_assert(offsetof(Map,bit)==8 && offsetof(Map,contour)==1,"native bytes");
 static_assert(offsetof(Map,territory)==7 && offsetof(Map,bit2)==0xC,"native bytes");
 static Map storage[2][2048];static Map *MapTiles;
 static int MapArea;
-static uint32_t MapLongitude;
+static int MapLongitude;
 static int MapLatitudeBounds,MapLongitudeBounds;
 struct Event{int length;unsigned char seed,result;std::vector<unsigned char> bytes;
  bool operator==(const Event &e)const{return length==e.length && seed==e.seed && result==e.result && bytes==e.bytes;}};
@@ -185,7 +189,7 @@ def test_actual_map_walks_match_ranges_pointer_captures_and_strip_edges(tmp_path
         ("countA = MapArea;\n                ++tile;", "++tile;"),
         ("cnt2 = MapArea;\n                ++tile;", "++tile;"),
         ("++tile;\n                idxA++;", "tile = MapTiles + idxA + 1;\n                idxA++;"),
-        ("Map *tile = MapTiles + static_cast<int>(MapLongitude) * recIdx;", "Map *tile = MapTiles + static_cast<int>(MapLongitude) * k * div;"),
+        ("Map *tile = MapTiles + MapLongitude * recIdx;", "Map *tile = MapTiles + MapLongitude * k * div;"),
         ("checksum((char *)&tile->territory, 1, cs);\n                        ++tile;", "checksum((char *)&tile->visibility, 1, cs);\n                        ++tile;"),
     ):
         run_control(tmp_path, compiler, program, damage)

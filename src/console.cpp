@@ -2947,7 +2947,7 @@ int Console::selecting(int tile_x, int tile_y) {
         const int vehicle_x = Vehs[vehicle].x;
         const int vehicle_y = Vehs[vehicle].y;
         int dx = abs(tile_x - vehicle_x);
-        if ((MapIsFlat & 1) == 0 && dx > selecting_signed(MapLongitude)) {
+        if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
             dx = MapLongitudeBounds - dx;
         }
         const int distance_sum = dx + abs(tile_y - vehicle_y);

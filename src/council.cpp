@@ -1335,7 +1335,7 @@ int __cdecl wants_prop(int faction, int proposal, int option) {
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             const Base &base = Bases[base_id];
             const Map &tile = map_tiles()[(base.x >> 1) +
-                                          base.y * static_cast<int>(MapLongitude)];
+                                          base.y * MapLongitude];
             const int altitude = tile.climate & 0xE0;
             int terrain_weight = 0;
             const int depth = wants_prop_signed_difference(

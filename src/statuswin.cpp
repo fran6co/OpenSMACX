@@ -1580,7 +1580,7 @@ void __cdecl say_orders(char *text, int veh_id) {
         return;
     }
 
-    const int tile_index = vehicle.y * static_cast<int>(MapLongitude)
+    const int tile_index = vehicle.y * MapLongitude
                         + (vehicle.x >> 1);
     const uint8_t altitude = MapTiles[tile_index].climate & 0xE0;
     const int terrain_row = altitude < 0x60 ? 1 : 0;

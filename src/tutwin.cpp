@@ -614,7 +614,7 @@ void TutWin::tour() {
         neighbor_y = cursor_y + VehMoveDeltaY[candidate_direction];
         if (neighbor_y >= 0 && neighbor_y < MapLatitudeBounds &&
             neighbor_x >= 0 && neighbor_x < MapLongitudeBounds) {
-            tile = MapTiles + static_cast<int>(MapLongitude) * neighbor_y +
+            tile = MapTiles + MapLongitude * neighbor_y +
                    (neighbor_x >> 1);
             terrain_value = tile->climate & 0xE0;
             if ((terrain_value < 0x61 ||
@@ -752,7 +752,7 @@ void TutWin::tour() {
             if (neighbor_y < 0 || neighbor_y >= MapLatitudeBounds || neighbor_x < 0 ||
                 neighbor_x >= MapLongitudeBounds) continue;
 
-            tile = MapTiles + static_cast<int>(MapLongitude) * neighbor_y + (neighbor_x >> 1);
+            tile = MapTiles + MapLongitude * neighbor_y + (neighbor_x >> 1);
             terrain_value = tile->climate & 0xE0;
             if ((terrain_value >= 0x61 && map_window->field_1DDA8_ + 2 <=
                      (neighbor_y - (tile->climate >> 5)) + 3) ||
@@ -797,7 +797,7 @@ void TutWin::tour() {
             if (score == 0) score = bonus_at(neighbor_x, neighbor_y, 0);
             saved_score = (score != 0 || (tile->bit & 0x2000) != 0) ? 1 : 0;
             fungus_yield = crop_yield(local_player, -1, neighbor_x, neighbor_y, 0);
-            tile = MapTiles + static_cast<int>(MapLongitude) * neighbor_y + (neighbor_x >> 1);
+            tile = MapTiles + MapLongitude * neighbor_y + (neighbor_x >> 1);
             const unsigned int tile_bits = tile->bit;
             const int elevation = (tile_bits & 0x80) != 0;
             const int fungus = ((tile_bits & 0x20) != 0 && (tile->climate & 0xE0) < 0x40);
@@ -813,7 +813,7 @@ void TutWin::tour() {
                 if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds || adjacent_x < 0 ||
                     adjacent_x >= MapLongitudeBounds) continue;
                 const unsigned int adjacent_climate =
-                    (MapTiles + static_cast<int>(MapLongitude) * adjacent_y +
+                    (MapTiles + MapLongitude * adjacent_y +
                      (adjacent_x >> 1))->climate & 0xE0;
                 if (adjacent_climate > 0x5F) {
                     if ((tile->climate & 0xE0) < adjacent_climate) {

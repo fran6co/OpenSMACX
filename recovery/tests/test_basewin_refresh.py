@@ -57,7 +57,7 @@ def actual():
         one(base, r'^extern int BaseIDCurrentSelected;'),
         one(base, r'^void __cdecl base_compute\(int force\);'),
         one(map_h, r'^extern int MapLongitudeBounds;'),
-        one(map_h, r'^extern uint32_t MapLongitude;'),
+        one(map_h, r'^extern int MapLongitude;'),
         one(map_h, r'^extern BOOL MapIsFlat;'),
         'struct Win { public:',
         one(win, r'\buint32_t iSomeFlag_;'),
@@ -110,7 +110,7 @@ static_assert(offsetof(Base,x)==0&&offsetof(Base,y)==2,"actual coordinate fields
 Base Bases[MaxBaseNum];
 int BaseIDCurrentSelected=3;
 int MapLongitudeBounds=100;
-uint32_t MapLongitude=50;
+int MapLongitude=50;
 BOOL MapIsFlat=0;
 MainInterface MainInterfaceGlobal;
 std::vector<char> events;

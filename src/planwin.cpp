@@ -365,7 +365,7 @@ extern "C" void __cdecl sub_54dc90(int base_id) {
 static bool planwin_base_known_to_faction(const Base &base, int faction) {
     if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) return true;
     if ((PlayersData[faction].flags & PFLAG_MAP_REVEALED) == 0) {
-        const int tile_index = base.y * static_cast<int>(MapLongitude)
+        const int tile_index = base.y * MapLongitude
                              + base.x / 2;
         if ((MapTiles[tile_index].visibility & (1U << (faction & 31))) == 0)
             return false;

@@ -1210,7 +1210,7 @@ int __cdecl tech_rate(int faction_id) {
     if (Players[faction_id].rule_techcost != 100) {
         discovery_rate = discovery_rate * Players[faction_id].rule_techcost / 100;
     }
-    int cost = (discovery_rate * static_cast<int>(MapAreaSqRoot)) / 56;
+    int cost = (discovery_rate * MapAreaSqRoot) / 56;
     if (tech_stagnation) {
         cost += cost / 2; // Slower Rate of Research Discoveries
     }

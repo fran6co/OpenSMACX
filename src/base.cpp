@@ -3120,7 +3120,7 @@ label_4fad22:
         case 6:
           v8 = naval_base(BaseIDCurrentSelected);
           if (v8) {
-            v9 = (int)(((-(uint32_t)(v144 != 1) & 0xffffff80) + 0x100) * v9 * 0x38) / (int)MapAreaSqRoot;
+            v9 = (int)(((-(uint32_t)(v144 != 1) & 0xffffff80) + 0x100) * v9 * 0x38) / MapAreaSqRoot;
             if (regional_plan == 7)
               v9 = (int)(v9 * 2) / 3;
             if (has_fac_built(0x1c))
@@ -8827,7 +8827,7 @@ void __cdecl base_psych() {
     const int efficiency = PlayersData[faction].soc_effect_pending.values_[SocialEffect::EFFICIENCY];
     int bureaucracy = base_yield_mul(base_yield_mul(base_yield_add(content, 2),
         base_yield_add(efficiency < 0 ? 0 : efficiency, 4)),
-        base_yield_signed_bits(MapAreaSqRoot)) / 56 / 2;
+        MapAreaSqRoot) / 56 / 2;
     if (bureaucracy != 0) {
         const int population = BaseCurrent->population_size;
         const int count = base_yield_signed_bits(PlayersData[faction].current_num_bases);

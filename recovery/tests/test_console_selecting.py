@@ -60,7 +60,7 @@ def actual_source():
     parts["SPRITES"], = re.findall(r"^extern Sprite g_CURSOR_SPRITES\[12\];", h["sprite"], re.M)
     parts["SPRITES"] = parts["SPRITES"].removeprefix("extern ")
     globals_ = []
-    declaration, = re.findall(r"^extern uint32_t MapLongitude;", h["map"], re.M)
+    declaration, = re.findall(r"^extern int MapLongitude;", h["map"], re.M)
     globals_.append(declaration.removeprefix("extern "))
     # The other two names are source macros into MapStorage metadata, so the
     # host fixture supplies same-width independent words for their semantics.
@@ -229,9 +229,9 @@ MUTATIONS = [
     ("unsigned_range_gate", "field_23D14_ >= 0", "static_cast<uint32_t>(field_23D14_) >= 0U"),
     ("x_absolute_value", "abs(tile_x - vehicle_x)", "(tile_x - vehicle_x)"),
     ("y_absolute_value", "abs(tile_y - vehicle_y)", "(tile_y - vehicle_y)"),
-    ("full_instead_of_half_width", "dx > selecting_signed(MapLongitude)", "dx > MapLongitudeBounds"),
-    ("half_width_equality", "dx > selecting_signed(MapLongitude)", "dx >= selecting_signed(MapLongitude)"),
-    ("derived_instead_of_stored_half", "dx > selecting_signed(MapLongitude)", "dx > MapLongitudeBounds / 2"),
+    ("full_instead_of_half_width", "dx > MapLongitude", "dx > MapLongitudeBounds"),
+    ("half_width_equality", "dx > MapLongitude", "dx >= MapLongitude"),
+    ("derived_instead_of_stored_half", "dx > MapLongitude", "dx > MapLongitudeBounds / 2"),
     ("flat_boolean_instead_of_bit", "(MapIsFlat & 1) == 0", "MapIsFlat == 0"),
     ("wrong_wrap_subtraction", "dx = MapLongitudeBounds - dx", "dx = dx - MapLongitudeBounds"),
     ("distance_scaling", "distance_sum / 2", "distance_sum / 4"),

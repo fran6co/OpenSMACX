@@ -737,11 +737,9 @@ void __cdecl psych_check(int faction_id, int *drones, int *talents) {
     // `lea ecx,[eax+2]` for drones + 2 is not source-reachable either way -
     // kept because it reads better than the nested ternary inline did.
     int weight = (efficiency < 0 ? 0 : efficiency) + 4;
-    // MapAreaSqRoot is declared uint32_t in map.h; the image multiplies it as
-    // a SIGNED value (imul/sar all the way through the /56), so the signedness
-    // has to be recovered here or VC6 emits mul/shr and the whole /56 //2
-    // tail changes shape. Same cast technology.cpp's cost model makes.
-    *talents = ((drones_val + 2) * weight * static_cast<int>(MapAreaSqRoot)) / 56 / 2;
+    // The former signed cast is now supplied by the shared signed root owner;
+    // the historical LEVER above records the earlier owner state.
+    *talents = ((drones_val + 2) * weight * MapAreaSqRoot) / 56 / 2;
 }
 
 /*
@@ -5464,11 +5462,11 @@ search:
                 || (!(definition.rule_flags & 0x100) && (tile->val3 & 0xc0) > 0x40)) goto search;
             int separation = lifecycle_is_fresh(conqueror) ? 6 : 12;
             spacing_relaxation = attempts / 64;
-            if (separation * static_cast<int>(MapAreaSqRoot) / 56 > BaseFindDist
+            if (separation * MapAreaSqRoot / 56 > BaseFindDist
                 || altitude >= 0xa0 || ((tile->bit & 3) && (tile->val2 & 15) <= 7)
                 || y <= 1 || y >= MapLatitudeBounds - 2
                 || 12 - attempts / 80 > area_quality
-                || (16 - spacing_relaxation) * static_cast<int>(MapAreaSqRoot) / 56 > BaseFindDist
+                || (16 - spacing_relaxation) * MapAreaSqRoot / 56 > BaseFindDist
                 || (lifecycle_is_fresh(conqueror) && attempts <= 899 && 36 - spacing_relaxation > Continents[region].tile_count)) goto search;
             if (!(definition.rule_flags & 0x100)) {
                 int handicap = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction)) ? (6 - GameDataStateStorage.fields_.diff_level_current_) * 8 : 8;

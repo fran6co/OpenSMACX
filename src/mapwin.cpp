@@ -1755,7 +1755,7 @@ int map_dest_half(int value) {
 
 int map_dest_distance(int x1, int y1, int x2, int y2) {
     int dx = map_dest_abs(mapwin_dest_sub(x1, x2));
-    if ((MapIsFlat & 1) == 0 && dx > map_dest_signed(MapLongitude)) {
+    if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
         dx = mapwin_dest_sub(MapLongitudeBounds, dx);
     }
     return mapwin_dest_add(dx, map_dest_abs(mapwin_dest_sub(y1, y2)));

@@ -1542,7 +1542,7 @@ void NetDaemon::game_checksum(NetChecksumReport *results) {
             {
                 int innerCount = (MapLongitudeBounds >> 1) * div;
                 if (div != 0 && innerCount > 0) {
-                    Map *tile = MapTiles + static_cast<int>(MapLongitude) * recIdx;
+                    Map *tile = MapTiles + MapLongitude * recIdx;
                     int idxE;
                     for (idxE = 0; idxE < innerCount; ++idxE) {
                         cs = checksum((char *)&tile->climate, 1, cs);

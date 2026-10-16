@@ -313,7 +313,7 @@ struct MapMetadataFields {
     int sea_level_council_;                    // +0x010
     // Signed tile count: pinned consumers use signed guards, loops and IDIV.
     int area_;                                 // +0x014
-    uint32_t area_sq_root_;                    // +0x018
+    int area_sq_root_;                         // +0x018
     BOOL is_flat_;                            // +0x01C
     int landmark_count_;                      // +0x020
     Landmark landmarks_[MaxLandmarkNum];       // +0x024, 64 * 40 bytes
@@ -410,7 +410,7 @@ extern int WorldBuildVal1; // TODO: more descriptive variable name
 
 extern Continent Continents[MaxContinentNum];  // 0x009AA730
 extern RulesNatural Natural[MaxNaturalNum];    // 0x0094ADE0
-extern uint32_t MapLongitude; // halve of MapLongitudeBounds
+extern int MapLongitude; // signed half-width tile-row stride
 extern uint32_t AltNatural[11];
 // The table AltNatural is RESET from, immediately above it in .data and the
 // same 11 ints: world_build's first statement copies all eleven over

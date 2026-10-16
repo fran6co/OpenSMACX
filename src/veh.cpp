@@ -1347,7 +1347,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
                     near_x <= -1 || near_x >= MapLongitudeBounds) continue;
 
                 int dx = abs(near_x - x);
-                if (!(MapIsFlat & 1) && MapLongitude < static_cast<uint32_t>(dx))
+                if (!(MapIsFlat & 1) && MapLongitude < dx)
                     dx = MapLongitudeBounds - dx;
                 const int dy = abs(near_y - effect_y);
                 if (((dy + dx) & ~1) >= 5) continue;
@@ -7293,7 +7293,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
             // halves x with an arithmetic shift, so map_loc()'s uint32_t parameter would send a
             // negative x roughly a gigabyte away. Same for the two other unguarded reads below.
             const Map *tile = &map_tiles()[(Vehs[veh_id].x >> 1)
-                + Vehs[veh_id].y * (int)MapLongitude];
+                + Vehs[veh_id].y * MapLongitude];
             // The original also compares the masked nibble against 0, which is vacuous.
             if ((tile->bit & BIT_BASE_IN_TILE) && (tile->val2 & 0xF) < MaxPlayerNum) {
                 return veh_drop(veh_lift(veh_id), -2, -2);
@@ -7368,7 +7368,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
                 accept = true;
                 if (subject_is_air) {
                     const Map *tile = &map_tiles()[(Vehs[veh_id].x >> 1)
-                        + Vehs[veh_id].y * (int)MapLongitude];
+                        + Vehs[veh_id].y * MapLongitude];
                     uint32_t owner = tile->val2 & 0xF;
                     // Note the > 0 here: unlike the two other owner tests, faction 0 is rejected.
                     if (!((tile->bit & BIT_BASE_IN_TILE) && owner < MaxPlayerNum && owner > 0)
@@ -7385,7 +7385,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
                 } else if (accept) {
                     if (Vehs[i].state & VSTATE_UNK_40000) {
                         const Map *tile = &map_tiles()[(Vehs[i].x >> 1)
-                            + Vehs[i].y * (int)MapLongitude];
+                            + Vehs[i].y * MapLongitude];
                         accept = ((Vehs[i].state & VSTATE_UNK_20000)
                                   && PlayersData[unit_faction].region_base_plan[tile->region]
                                          == PLAN_NAVAL_TRANSPORT);
@@ -9661,7 +9661,7 @@ int __cdecl veh_find(int x, int y, int faction_id, int skip_veh_id) {
             if ((faction_id < 0 || Vehs[i].faction_id == (unsigned)faction_id) &&
                 i != skip_veh_id) {
                 int d1 = abs(x - Vehs[i].x);
-                if (!(MapIsFlat & 1) && d1 > (int)MapLongitude) {
+                if (!(MapIsFlat & 1) && d1 > MapLongitude) {
                     d1 = MapLongitudeBounds - d1;
                 }
                 const int d2 = abs(y - Vehs[i].y);
@@ -11453,7 +11453,7 @@ void __cdecl sub_500380(int faction_id, int x, int y) {
             continue;
         }
         int dx = abs(x - Vehs[i].x);
-        if (!(MapIsFlat & 1) && dx > (int)MapLongitude) {
+        if (!(MapIsFlat & 1) && dx > MapLongitude) {
             dx = MapLongitudeBounds - dx;
         }
         const int dy = abs(y - Vehs[i].y);
@@ -15320,7 +15320,7 @@ int __cdecl veh_init(int prototype, int faction, int x, int y) {
         base_find(x, y, other_faction, region, -1, -1);
         int dx = veh_init_abs32(veh_init_sub32(
             x, PlayersData[faction].x_target));
-        if (!(MapIsFlat & 1) && static_cast<int>(MapLongitude) < dx) {
+        if (!(MapIsFlat & 1) && MapLongitude < dx) {
             dx = veh_init_sub32(static_cast<int>(MapLongitudeBounds), dx);
         }
         const int dy = veh_init_abs32(veh_init_sub32(
@@ -15537,7 +15537,7 @@ static bool air_power_region_target_score(int faction_id,
                                              int &best_distance) {
     int dx = abs(*target_x - candidate_x);
     if ((MapIsFlat & 1) == 0
-        && static_cast<int>(MapLongitude) < dx)
+        && MapLongitude < dx)
         dx = static_cast<int>(MapLongitudeBounds) - dx;
     const int dy = abs(*target_y - candidate_y);
     const int distance = (dx + dy) >> 1;
@@ -15624,7 +15624,7 @@ static bool air_power_ordinary_candidate_scan(
                         || candidate_plan == PLAN_NAVAL_TRANSPORT)) {
                     int dx = abs(*target_x - x);
                     if ((MapIsFlat & 1) == 0
-                        && static_cast<int>(MapLongitude) < dx)
+                        && MapLongitude < dx)
                         dx = static_cast<int>(MapLongitudeBounds) - dx;
                     const int dy = abs(*target_y - y);
                     const int distance = (dx + dy) >> 1;
@@ -15649,7 +15649,7 @@ static bool air_power_ordinary_candidate_scan(
             if (base_id < 0) goto target_filter;
             int dx = abs(x - Bases[base_id].x);
             if ((MapIsFlat & 1) == 0
-                && static_cast<int>(MapLongitude) < dx)
+                && MapLongitude < dx)
                 dx = static_cast<int>(MapLongitudeBounds) - dx;
             const int dy = abs(y - Bases[base_id].y);
             if (((dx + dy) & ~1) > 4) goto target_filter;
@@ -15782,7 +15782,7 @@ static bool air_power_ordinary_post_loop(
 
                     int dx = abs(selected_x - base.x);
                     if ((MapIsFlat & 1) == 0
-                        && static_cast<int>(MapLongitude) < dx)
+                        && MapLongitude < dx)
                         dx = static_cast<int>(MapLongitudeBounds) - dx;
                     const int dy = abs(selected_y - base.y);
                     const int distance = (dx + dy) >> 1;
@@ -16036,7 +16036,7 @@ air_power_bombing_v2_scored_base:
 
             int x_distance = abs(*target_x - base.x);
             if ((MapIsFlat & 1) == 0
-                && MapLongitude < static_cast<uint32_t>(x_distance))
+                && MapLongitude < x_distance)
                 x_distance = MapLongitudeBounds - x_distance;
             const int y_distance = abs(*target_y - base.y);
             int travel_limit = attack_range / 2;
@@ -16057,7 +16057,7 @@ air_power_bombing_v2_scored_base:
             && best_base_x >= 0 && best_base_x < MapLongitudeBounds) {
             int x_distance = abs(*target_x - best_base_x);
             if ((MapIsFlat & 1) == 0
-                && MapLongitude < static_cast<uint32_t>(x_distance))
+                && MapLongitude < x_distance)
                 x_distance = MapLongitudeBounds - x_distance;
             const int y_distance = abs(*target_y - best_base_y);
             if (attack_range / 2 < ((x_distance + y_distance) >> 1)) {
@@ -16072,7 +16072,7 @@ air_power_bombing_v2_scored_base:
                         continue;
                     int distance_x = abs(best_base_x - base.x);
                     if ((MapIsFlat & 1) == 0
-                        && MapLongitude < static_cast<uint32_t>(distance_x))
+                        && MapLongitude < distance_x)
                         distance_x = MapLongitudeBounds - distance_x;
                     const int distance_y = abs(best_base_y - base.y);
                     const int distance = (distance_x + distance_y) >> 1;
@@ -16213,7 +16213,7 @@ static bool air_power_relocation(int vehicle_id, int *target_x,
         if (base.faction_id_current != faction_id) continue;
         int dx = abs(*target_x - base.x);
         if ((MapIsFlat & 1) == 0
-            && static_cast<int>(MapLongitude) < dx)
+            && MapLongitude < dx)
             dx = static_cast<int>(MapLongitudeBounds) - dx;
         const int dy = abs(*target_y - base.y);
         const int distance = (dx + dy) >> 1;
@@ -17210,7 +17210,7 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
         parse_says(3, Bases[nearest_base].name_string, -1, -1);
 
         const int dx = abs(Bases[nearest_base].x - x);
-        const int wrapped_dx = (!(MapIsFlat & 1) && dx > static_cast<int>(MapLongitude))
+        const int wrapped_dx = (!(MapIsFlat & 1) && dx > MapLongitude)
             ? MapLongitudeBounds - dx : dx;
         const int dy = abs(Bases[nearest_base].y - y);
         const char *const sound = (((dy + wrapped_dx) >> 1) <= bust_level)
@@ -18739,7 +18739,7 @@ int __cdecl alien_move(int veh_id) {
                 bool too_far = false;
                 if (base_id >= 0) {
                     int dx = abs(next_x - target_x);
-                    if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude)) {
+                    if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
                         dx = MapLongitudeBounds - dx;
                     }
                     const int dy = abs(next_y - target_y);
@@ -18800,7 +18800,7 @@ int __cdecl alien_move(int veh_id) {
         const int waypoint_y = vehicle.waypoint_y[0];
         if ((map_loc(waypoint_x, waypoint_y)->climate & 0xe0u) < 0x60) return 0;
         int dx = abs(x - waypoint_x);
-        if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude)) {
+        if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
             dx = MapLongitudeBounds - dx;
         }
         if (((abs(y - waypoint_y) + dx) & ~1) > 2) return 0;
@@ -18863,7 +18863,7 @@ int __cdecl alien_move(int veh_id) {
                         score += stack_check(occupant, 4, -1, -1, -1);
                     }
                     int dx = abs(x - candidate_x);
-                    if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude)) {
+                    if ((MapIsFlat & 1) == 0 && dx > MapLongitude) {
                         dx = MapLongitudeBounds - dx;
                     }
                     if (((abs(y - candidate_y) + dx) >> 1) > Rules.artillery_max_rng && score > 1) score = 1;
@@ -18883,7 +18883,7 @@ int __cdecl alien_move(int veh_id) {
             }
             const int target_y = y + RadiusOffsetY[best_offset];
             int dx = abs(x - target_x);
-            if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude)) dx = MapLongitudeBounds - dx;
+            if ((MapIsFlat & 1) == 0 && dx > MapLongitude) dx = MapLongitudeBounds - dx;
             if (((abs(y - target_y) + dx) >> 1) <= Rules.artillery_max_rng) {
                 Map *target = map_loc(target_x, target_y);
                 if ((target->bit & 3u) == 0 || (target->val2 & 0x0f) > 7) {
@@ -26918,7 +26918,7 @@ int __cdecl can_convoy(int x, int y) {
         do {
             const int base_y = base->y;
             int dx = abs(x - base->x);
-            if (((MapIsFlat & 1) == 0) && static_cast<int>(MapLongitude) < dx) {
+            if (((MapIsFlat & 1) == 0) && MapLongitude < dx) {
                 dx = MapLongitudeBounds - dx;
             }
             int dy = abs(y - base_y);

@@ -71,7 +71,7 @@ def test_actual_nutrient_bonus_body_in_host_fixture(tmp_path):
         "};",
         "static Map tiles[32];",
         "Map *map_tiles() { return tiles; }",
-        "uint32_t MapLongitude = 4;",
+        "int MapLongitude = 4;",
         "extern const int MapTerrainBonusYieldRow5FirstWord = 0;",
         "extern const int MapTerrainBonusYieldRow6FirstWord = 0;",
         body,
