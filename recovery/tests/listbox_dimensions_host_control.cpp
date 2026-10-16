@@ -1,12 +1,18 @@
 #include <assert.h>
+#include <stddef.h>
 #include <stdint.h>
 
 struct Font { int tag; };
-struct Payload { char *text; };
+#pragma pack(push, 4)
+struct StringStructPayload { uint32_t header; char *text; };
+#pragma pack(pop)
+typedef StringStructPayload Payload;
+typedef char payload_text_is_at_plus_4[
+    offsetof(StringStructPayload, text) == 4 ? 1 : -1];
 struct Entry {
     Entry *next;
-    Payload *payload;
-    Payload *string_payload() { return payload; }
+    StringStructPayload *payload;
+    StringStructPayload *string_payload() { return payload; }
 };
 typedef Entry StringStructEntry;
 struct StringList {
@@ -120,8 +126,22 @@ static void setup(ListBox &x, Entry &a, Entry &b, Payload *pa, Payload *pb) {
     x.color_calls=0; x.font_calls=0;
 }
 
-int main() {
+int main(int argc, char **) {
     ScrollDefaultThickness=5;
+    if (argc > 1) {
+        ListBox malformed;
+        Entry entry;
+        Payload payload;
+        char name[] = "entry";
+        setup(malformed, entry, entry, &payload, &payload);
+        payload.text = name;
+        malformed.item_list_.head_ = 0;
+        malformed.item_list_.current_ = &entry;
+        malformed.item_list_.entry_count_ = 1;
+        malformed.item_list_.current_position_ = 0;
+        malformed.calculate_dimensions();
+        return 0; // reaching here loses the pinned malformed-state fault
+    }
     ListBox empty;
     empty.item_list_.entry_count_=0;
     empty.field_C_=77;
@@ -129,7 +149,7 @@ int main() {
     assert(empty.field_C_==77);
 
     Entry a,b; Payload pa,pb; char one[]="one", two[]="two";
-    pa.text=one; pb.text=two;
+    pa.header=pb.header=0; pa.text=one; pb.text=two;
     ListBox x;
     setup(x,a,b,&pa,&pb);
     Font f1,f2,f3; x.font1_=&f1; x.font2_=&f2; x.font3_=&f3;

@@ -210,19 +210,30 @@ def _method_sources(mutant: str | None = None) -> dict[int, str]:
         old = "set_selected_pos(-1, 1);"
         assert text.count(old) == 1
         methods[0x00609FA0] = text.replace(old, "set_selected_pos(0, 1);", 1)
-    elif mutant == "safe-address4":
+    elif mutant == "safe-null-payload":
         text = methods[0x0060C7D0]
-        old = "name = *reinterpret_cast<char **>(4);"
+        old = "name = payload->text;"
         assert text.count(old) == 1
-        methods[0x0060C7D0] = text.replace(old, "name = 0;", 1)
+        methods[0x0060C7D0] = text.replace(
+            old, "name = payload == 0 ? 0 : payload->text;", 1)
     return methods
 
 
 HOST = r'''#include <cassert>
 #include <cctype>
+#include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <vector>
+
+#ifndef __cdecl
+#define __cdecl
+#endif
+#ifndef MEASURED
+#define MEASURED
+#endif
+typedef int (__cdecl *AbsFnT)(int);
 
 static int _strcmpi(const char *left, const char *right) {
     if (!left || !right) return left == right ? 0 : (left ? 1 : -1);
@@ -235,7 +246,11 @@ static int _strcmpi(const char *left, const char *right) {
     }
 }
 
-struct StringStructPayload { char *text; };
+#pragma pack(push, 4)
+struct StringStructPayload { uint32_t header; char *text; };
+#pragma pack(pop)
+static_assert(offsetof(StringStructPayload, text) == 4,
+              "payload text must remain at the pinned +4 offset");
 struct StringStructEntry {
     int id;
     StringStructPayload *payload;
@@ -243,12 +258,15 @@ struct StringStructEntry {
     StringStructEntry *previous;
     StringStructPayload *string_payload() { return payload; }
 };
-struct StringList {
+struct StringStruct {
     StringStructEntry *head_;
     StringStructEntry *current_;
     int entry_count_;
     int current_position_;
+    int seek_pos(int a1);
 };
+typedef StringStruct StringList;
+/* PRODUCT_SEEK_POS */
 struct Dialog { StringList item_list_; };
 struct Win {
     static std::vector<int> down;
@@ -283,12 +301,12 @@ int main(int argc, char **) {
     if (argc > 1) {
         ListBox box{};
         char entry_text[] = "entry";
-        StringStructPayload payload{entry_text};
+        StringStructPayload payload{0, entry_text};
         StringStructEntry entry{1, &payload, &entry, &entry};
         box.item_list_ = {0, &entry, 1, 0};
         char query[] = "entry";
         box.UNK2(query);
-        return 0; // reaching here means the pinned address-4 fault was lost
+        return 0; // reaching here means the pinned malformed-payload fault was lost
     }
     {
         ListBox box{};
@@ -318,7 +336,7 @@ int main(int argc, char **) {
     {
         ListBox box{};
         char alpha[] = "Alpha", beta[] = "Beta", gamma[] = "Gamma";
-        StringStructPayload pa{alpha}, pb{beta}, pg{gamma};
+        StringStructPayload pa{0, alpha}, pb{0, beta}, pg{0, gamma};
         StringStructEntry a{1, &pa, 0, 0}, b{2, &pb, 0, 0}, c{3, &pg, 0, 0};
         wire(a, b, c);
         box.item_list_ = {&a, &a, 3, 0};
@@ -336,15 +354,30 @@ int main(int argc, char **) {
         box.item_list_.current_position_ = 7;
         assert(box.UNK2(absent) == -1);
         assert(box.item_list_.current_position_ == 10);
+
+        // A too-negative restore first resets current_ to head_, then refuses
+        // because abs(position) exceeds the three-entry count. The three
+        // failed-search iterations advance -7 to -4; seek_pos leaves that
+        // position untouched while retaining its head reset.
+        box.item_list_.current_ = &b;
+        box.item_list_.current_position_ = -7;
+        assert(box.UNK2(absent) == -1);
+        assert(box.item_list_.current_ == &a);
+        assert(box.item_list_.current_position_ == -4);
+
         assert(box.UNK2(0) == -1);
-        assert(box.item_list_.current_position_ == 10);
+        assert(box.item_list_.current_position_ == -4);
     }
 }
 '''
 
 
 def _compile(tmp: Path, compiler: str, methods: dict[int, str]) -> Path:
-    source = HOST.replace("__METHODS__", "\n\n".join(methods[a] for a in IDENTITIES))
+    header = (ROOT / "src/stringstruct.h").read_text(encoding="utf-8")
+    seek_pos = _extract_active(
+        header, "MEASURED inline int StringStruct::seek_pos(int a1) {")
+    source = HOST.replace("/* PRODUCT_SEEK_POS */", seek_pos)
+    source = source.replace("__METHODS__", "\n\n".join(methods[a] for a in IDENTITIES))
     cpp = tmp / "listbox_owner_control.cpp"
     exe = tmp / "listbox_owner_control"
     cpp.write_text(source, encoding="utf-8")
@@ -368,15 +401,15 @@ def test_installed_listbox_methods_preserve_history_and_behavior():
             normal = subprocess.run([str(exe)], cwd=tmp, text=True,
                                     capture_output=True, timeout=15)
             assert normal.returncode == 0, normal.stdout + normal.stderr
-            fault = subprocess.run([str(exe), "address4"], cwd=tmp, text=True,
+            fault = subprocess.run([str(exe), "malformed-null-payload"], cwd=tmp, text=True,
                                    capture_output=True, timeout=15)
             if os.name == "posix":
                 assert fault.returncode == -signal.SIGSEGV, (
-                    "the malformed head-null/current-nonnull [4] read did not "
+                    "the malformed head-null/current-nonnull payload did not "
                     f"fault as pinned; return={fault.returncode}, stderr={fault.stderr}"
                 )
             else:
-                assert fault.returncode != 0, "address-4 malformed state unexpectedly returned"
+                assert fault.returncode != 0, "malformed null payload unexpectedly returned"
 
 
 @pytest.mark.parametrize("mutant", ("case-sensitive", "wheel-direction", "miss-selection"))
@@ -396,18 +429,18 @@ def test_installed_method_mutations_fail_behavior(mutant: str):
             )
 
 
-def test_address4_fault_control_detects_a_safety_normalization():
-    methods = _method_sources("safe-address4")
+def test_fault_control_detects_removal_of_typed_payload_read():
+    methods = _method_sources("safe-null-payload")
     compiler = shutil.which("g++") or shutil.which("clang++")
     assert compiler
-    with tempfile.TemporaryDirectory(prefix="listbox-address4-mutant-") as tmp_name:
+    with tempfile.TemporaryDirectory(prefix="listbox-payload-mutant-") as tmp_name:
         tmp = Path(tmp_name)
         exe = _compile(tmp, compiler, methods)
-        result = subprocess.run([str(exe), "address4"], cwd=tmp, text=True,
+        result = subprocess.run([str(exe), "malformed-null-payload"], cwd=tmp, text=True,
                                 capture_output=True, timeout=15)
         assert result.returncode == 0, (
-            "safe-fallback mutation should return normally and thereby expose "
-            "loss of the pinned address-4 fault"
+            "removing the typed payload member read should return normally "
+            "and expose loss of the pinned malformed-state fault"
         )
 
 
@@ -418,7 +451,7 @@ def test_comments_and_literals_cannot_stand_in_for_active_methods():
     decoys += 'const char *decoy = "void ListBox::UNK2(char *text) { return 0; }";\n'
     with_decoys = source + decoys
     actual = _extract_active(with_decoys, IDENTITIES[0x0060C7D0])
-    assert "items.current_->string_payload()->text" in actual
+    assert "string_payload()" in actual and "payload->text" in actual
     hidden = source.replace(
         IDENTITIES[0x0060C7D0],
         "/* " + IDENTITIES[0x0060C7D0] + " */",
@@ -430,11 +463,9 @@ def test_comments_and_literals_cannot_stand_in_for_active_methods():
 
 def test_current_source_contains_typed_owner_paths_and_preserves_fault_branch():
     source, _ = _current_source_and_records()
-    assert "StringList &items = Dialog::item_list_;" in source
-    assert "items.current_->string_payload()->text" in source
+    methods = "\n".join(_extract_active(source, IDENTITIES[address]) for address in IDENTITIES)
+    assert "string_payload()" in methods and "payload->text" in methods
     assert "Win::on_mousewheel_down(1);" in source
     assert "Win::on_mousewheel_up(1);" in source
-    assert "name = *reinterpret_cast<char **>(4);" in source
-    assert "vbt[2]" not in "\n".join(
-        _extract_active(source, IDENTITIES[address]) for address in IDENTITIES
-    )
+    assert "reinterpret_cast<char **>" not in methods
+    assert "vbt[2]" not in methods

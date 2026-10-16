@@ -1,12 +1,13 @@
-"""Host controls for the product ListBox::calculate_dimensions definition.
+"""Host controls for product ListBox definitions, including the pinned fault.
 
-The complete definition is extracted from src/listbox.cpp on every run. These
-controls exercise ordinary well-formed list/layout branches only; the pinned
-malformed head-null/current-nonnull absolute [4] read is asserted present but
-is intentionally never executed by a host process.
+The complete definitions are extracted from src/listbox.cpp on every run. A
+malformed null-payload state is executed in a subprocess so its preserved
+unchecked fault can be distinguished from a normalized safe path.
 """
 from pathlib import Path
 import re
+import os
+import signal
 import shutil
 import subprocess
 
@@ -52,7 +53,8 @@ def build(tmp_path: Path) -> Path:
 
 
 def run_body(tmp_path: Path, body: str, compiler: str, stem: str,
-             item_body: str | None = None) -> subprocess.CompletedProcess:
+             item_body: str | None = None,
+             args: tuple[str, ...] = ()) -> subprocess.CompletedProcess:
     harness = FIXTURE.read_text(encoding="utf-8")
     marker = "/* PRODUCT_DEFINITION */"
     assert harness.count(marker) == 1
@@ -65,7 +67,8 @@ def run_body(tmp_path: Path, body: str, compiler: str, stem: str,
     subprocess.run([compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror",
                     str(cpp), "-o", str(exe)], check=True,
                    capture_output=True, text=True, timeout=30)
-    return subprocess.run([str(exe)], capture_output=True, text=True, timeout=30)
+    return subprocess.run([str(exe), *args], capture_output=True, text=True,
+                          timeout=30)
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
@@ -82,24 +85,67 @@ def test_actual_dimensions_source(compiler_name, tmp_path):
                    text=True, timeout=30)
 
 
-def test_product_keeps_malformed_path_but_host_control_does_not_execute_it():
+def test_product_uses_typed_payload_read_for_malformed_null_path():
     body = extract_definition((ROOT / "src/listbox.cpp").read_text(encoding="utf-8"))
-    assert "reinterpret_cast<char **>(4)" in body or "reinterpret_cast<char **>(0x4)" in body
-    assert "entries.head_ == 0" in body or "head == 0" in body
-    # Host fixture's well-formed lists always supply a nonnull head.
+    assert "reinterpret_cast<char **>" not in body
+    assert "string_payload()" in body and "payload->text" in body
+    assert "head == 0" in body or "head != 0" in body
+    # The malformed branch is exercised as a subprocess fault control below.
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_dimensions_preserves_malformed_null_payload_fault(compiler_name, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(f"{compiler_name} unavailable")
+    source = build(tmp_path)
+    binary = tmp_path / f"dimensions-malformed-{compiler_name}"
+    subprocess.run([compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror",
+                    str(source), "-o", str(binary)], check=True,
+                   capture_output=True, text=True, timeout=30)
+    result = subprocess.run([str(binary), "malformed-null-payload"],
+                            capture_output=True, text=True, timeout=30)
+    if os.name == "posix":
+        assert result.returncode == -signal.SIGSEGV, (
+            "malformed head-null/current-nonnull payload did not retain the "
+            f"pinned null-dereference fault: return={result.returncode}, "
+            f"stderr={result.stderr}"
+        )
+    else:
+        assert result.returncode != 0, "malformed null payload unexpectedly returned"
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_safety_normalized_payload_mutant_returns_normally(compiler_name, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(f"{compiler_name} unavailable")
+    body = extract_definition((ROOT / "src/listbox.cpp").read_text(encoding="utf-8"))
+    safe, count = re.subn(
+        r"name\s*=\s*payload->text\s*;",
+        "name = payload == 0 ? 0 : payload->text;", body, count=1)
+    assert count == 1, "typed payload read anchor disappeared"
+    result = run_body(tmp_path, safe, compiler, f"dimensions-safe-{compiler_name}",
+                      args=("malformed-null-payload",))
+    assert result.returncode == 0, (
+        "safe null-payload counterfactual should return with initialized layout; "
+        f"return={result.returncode}, stderr={result.stderr}"
+    )
 
 
 def test_damage_controls_reject_wrong_layout_slots():
     body = extract_definition((ROOT / "src/listbox.cpp").read_text(encoding="utf-8"))
     # The pinned font loads are Dialog +0x70/+0x74/+0x78, not +0xAC/+0xB0/+0xB4.
-    assert "dialog.font1_" in body and "dialog.font2_" in body and "dialog.font3_" in body
-    assert "field_2C_" in body and "entries.current_position_" in body
+    assert all(field in body for field in ("font1_", "font2_", "font3_"))
+    assert "field_2C_" in body and "current_position_" in body
     assert "WinFlag" not in body  # retain the original raw 0x40 condition
     # Correct circular behavior is source-owned by the list fields and next
     # link; replacing it with a safe helper can silently suppress the malformed
     # pinned path and cursor side effects.
-    assert "entries.current_position_" in body
-    assert "entries.current_->next" in body or "current + 0xc" in body
+    assert "current_position_" in body
+    assert "->next" in body
+    assert "string_payload()" in body and "payload->text" in body
+    assert "reinterpret_cast<char **>" not in body
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
@@ -110,28 +156,37 @@ def test_behavioral_damage_control_detects_wrong_color_binding(compiler_name, tm
     body = extract_definition((ROOT / "src/listbox.cpp").read_text(encoding="utf-8"))
     good = run_body(tmp_path, body, compiler, "dimensions-good")
     assert good.returncode == 0, good.stderr
-    damaged = body.replace("dialog.text_color_b_", "dialog.text_color_a_")
-    assert damaged != body, "damage anchor disappeared: color argument mapping"
+    pattern = r"(?<![A-Za-z0-9_])(?:dialog\s*\.\s*|Dialog\s*::\s*)?text_color_b_(?![A-Za-z0-9_])"
+    damaged, count = re.subn(pattern, lambda match: match[0].replace(
+        "text_color_b_", "text_color_a_"), body, count=1)
+    assert count == 1, "damage anchor disappeared: color argument mapping"
     bad = run_body(tmp_path, damaged, compiler, "dimensions-damaged")
     assert bad.returncode != 0, "behavioral control failed to detect changed color slot"
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-@pytest.mark.parametrize("old,new", (
-    ("dialog.font2_", "dialog.font1_"),
-    ("ScrollDefaultThickness / dialog.column_count_",
-     "ScrollDefaultThickness / (dialog.column_count_ + 1)"),
-))
+@pytest.mark.parametrize("mutation", ("font", "signed_division"))
 def test_behavioral_damage_controls_detect_font_and_signed_division(
-        compiler_name, tmp_path, old, new):
+        compiler_name, tmp_path, mutation):
     compiler = shutil.which(compiler_name)
     if not compiler:
         pytest.skip(f"{compiler_name} unavailable")
     body = extract_definition((ROOT / "src/listbox.cpp").read_text(encoding="utf-8"))
-    assert old in body
+    if mutation == "font":
+        pattern = r"(?<![A-Za-z0-9_])(?:dialog\s*\.\s*|Dialog\s*::\s*)?font2_(?![A-Za-z0-9_])"
+        damaged, count = re.subn(pattern, lambda match: match[0].replace(
+            "font2_", "font1_"), body, count=1)
+    else:
+        pattern = (r"ScrollDefaultThickness\s*/\s*"
+                   r"((?:dialog\s*\.\s*|Dialog\s*::\s*)?column_count_)")
+        damaged, count = re.subn(
+            pattern,
+            lambda match: "ScrollDefaultThickness / (" + match[1] + " + 1)",
+            body, count=1)
+    assert count == 1, f"{mutation} damage anchor disappeared"
     good = run_body(tmp_path, body, compiler, "good")
     assert good.returncode == 0, good.stderr
-    bad = run_body(tmp_path, body.replace(old, new), compiler, "damaged")
+    bad = run_body(tmp_path, damaged, compiler, "damaged")
     assert bad.returncode != 0, "damaged font or signed division escaped the control"
 
 
