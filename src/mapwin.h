@@ -597,57 +597,5 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int wider_radius,
 void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
                             int second_y_coord, int wider_radius, int redraw_flags);
 
-MEASURED inline void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
-    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-        // Re-read every iteration, as `mov ecx, dword ptr [esi]` at 0x0046AF51
-        // does: a callee that rewrites the table is seen by later slots.
-        MapWin *const window = MapWinTable[slot];
-        // 0x0046AF53 test / 0x0046AF55 je - the null test comes first, so an
-        // empty slot 0 draws nothing despite the exemption below.
-        if (window == nullptr) {
-            continue;
-        }
-        // 0x0046AF57 `cmp esi, 0x7d3c3c` / 0x0046AF5D je. The cursor only ever
-        // walks forward from the table base, so comparing it against that base
-        // is exactly "is this slot index 0?" - the primary map window is
-        // exempt from the activity gate.
-        if (slot != 0) {
-            const uint32_t active =
-                static_cast<const volatile MapWin *>(window)->field_1DD74_;
-            if (active == 0) {
-                continue;
-            }
-        }
-        // 0x0046AF71: __thiscall on the slot value still live in ECX, with the
-        // pushes at 0x0046AF6C..0x0046AF70 giving the stack order
-        // (x_coord, y_coord, 0, draw_type) - the pushes run right to left, so
-        // the last one (`push eax`, [ebp+8]) is the first stack argument. The
-        // literal 0 is this function's discriminator; see draw_tiles.
-        // THE METHOD, not the seam directly - the image's own call site is
-        // `call 0x46a2a0`, a direct rel32; the free `draw_radius` (mapwin.cpp)
-        // is the worked example of the same lever.
-        window->draw_radius(x_coord, y_coord, 0, draw_type);
-    }
-}
-
-MEASURED inline void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type) {
-    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-        // 0x0046B151, mirroring 0x0046AF51.
-        MapWin *const window = MapWinTable[slot];
-        // 0x0046B153 test / 0x0046B155 je.
-        if (window == nullptr) {
-            continue;
-        }
-        // 0x0046B157 `cmp esi, 0x7d3c3c` / 0x0046B15D je.
-        if (slot != 0) {
-            const uint32_t active =
-                static_cast<const volatile MapWin *>(window)->field_1DD74_;
-            if (active == 0) {
-                continue;
-            }
-        }
-        // 0x0046B171, with `push 1` at 0x0046B16D supplying the radius.
-        // THE METHOD, not the seam directly - same lever as draw_tile above.
-        window->draw_radius(x_coord, y_coord, 1, draw_type);
-    }
-}
+void __cdecl draw_tile(int x_coord, int y_coord, int draw_type);
+void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type);

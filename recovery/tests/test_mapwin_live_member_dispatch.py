@@ -1,17 +1,26 @@
-"""Actual inline broadcasters: member gates and callback-visible table changes."""
+"""Actual global broadcasters: member gates and callback-visible table changes."""
 
+import os
 from pathlib import Path
+import re
 import subprocess
 
 import pytest
+from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+from match_recovery.model import Span
+from match_recovery.pe_coff import PeImage
+from match_recovery.source import read_file
+from match_recovery.source_inventory import image_pin
 
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 def broadcaster(name):
-    text = (ROOT / "src/mapwin.h").read_text()
-    start = text.index(f"MEASURED inline void __cdecl {name}(")
+    text = (ROOT / "src/mapwin.cpp").read_text()
+    match = re.search(r"^void __cdecl " + name + r"\([^;{}]*\)\s*\{", text, re.M)
+    assert match, name
+    start = match.start()
     brace = text.index("{", start)
     depth = 0
     for end in range(brace, len(text)):
@@ -19,6 +28,39 @@ def broadcaster(name):
         if depth == 0:
             return text[start:end + 1]
     raise AssertionError("unterminated broadcaster")
+
+
+def test_global_broadcasters_are_declared_in_header_and_owned_by_mapwin_cpp():
+    header = (ROOT / "src/mapwin.h").read_text()
+    source = (ROOT / "src/mapwin.cpp").read_text()
+    for name, address in (("draw_tile", "0x0046AF40"), ("draw_tiles", "0x0046B140")):
+        assert f"void __cdecl {name}(int x_coord, int y_coord, int draw_type);" in header
+        assert f"MEASURED inline void __cdecl {name}(" not in header
+        marker = source.index(f"// ORIGINAL: {address} ?{name}@@YAXHHH@Z")
+        body = source.index(f"void __cdecl {name}(", marker)
+        assert body > marker
+        assert broadcaster(name).startswith(f"void __cdecl {name}(")
+
+
+def test_pinned_broadcaster_entries_dispatch_through_mapwin_radius():
+    image_path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not image_path.is_file():
+        pytest.skip("pinned original required")
+    image = PeImage(image_path.read_bytes(), image_pin(ROOT))
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    records = {row.address: row for row in read_file(ROOT / "src/mapwin.cpp")}
+    for entry, pc in ((0x0046AF40, 0x0046AF71), (0x0046B140, 0x0046B171)):
+        record = records[entry]
+        spans = record.image_spans
+        assert spans
+        instructions = {
+            instruction.address: instruction
+            for start, end in spans
+            for instruction in decoder.disasm(image.read(Span(start, end)), start)
+        }
+        assert any(start <= pc < end for start, end in spans)
+        assert instructions[pc].mnemonic == "call"
+        assert instructions[pc].op_str == "0x46a2a0"
 
 
 PREFIX = r'''
