@@ -1,0 +1,49 @@
+{
+  "author": "coordinator",
+  "base_revision": "1f52310aca6e37a9e2a2d7e11a5b39f3dc7818ba",
+  "editable_files": [
+    "src/dialogs.cpp",
+    "recovery/tests/test_dialogs_init_base_paths_oct17.py"
+  ],
+  "evidence": [
+    "Pinned originals613320,613400,6134A0,613530,613610,6136B0 obtain shared Dialog through RadioButton+44 after its close, ListBox+0 after its close, CheckBox+58 after its close, then SpriteBox::init+70, then EditGroup+F8 after its close. Current unqualified Dialog calls use the primary path; no new members/layout are needed.",
+    "All six preserve corresponding Dialog overload arguments and stop on the first nonzero initializer result. C++98 actual-source controls must verify event order, forwarding, shared virtual-base identity and each failure stage, with damage controls. Host behavior cannot prove VC6 vbtable receiver routing.",
+    "Screen at most three ordinary typed qualification/reference forms in one native deck before reconsidering; do not use raw receiver arithmetic, fabricated vtables, volatile or assembly. Keep every original identity/span/claim and preserve all other compiled bodies; independently review final native effects, fresh build/link and continuity before manual integration. No header/compiler flag change or bug fix."
+  ],
+  "intent": "Recover the six Dialogs initializer overloads through the original control-specific virtual Dialog paths, preserving shared-base identity, call order, arguments and early returns.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6370080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6370992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "dialogs-init-base-paths-oct17"
+}
