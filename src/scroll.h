@@ -58,7 +58,7 @@ class Scroll : public GraphicWin {
   void set_sprite_right(Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
   void set_sprite_up(Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
   void set_sprite_down(Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
-  uint32_t set_pos(int position);
+  void set_pos(int position);
   int position() const { return position_; }
   int paging() const { return paging_; }
   void set_paging(int value) { paging_ = value; }

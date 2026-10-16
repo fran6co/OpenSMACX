@@ -1201,7 +1201,7 @@ Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 //   add uses the other register), loads the `position` argument one slot
 //   earlier (`[esp+4]` before the `push esi`, against the image's `[esp+8]`
 //   after it), and names the vtable pointer eax against the image's edx.
-// symbol    ?set_pos@Scroll@@QAEIH@Z
+// symbol    ?set_pos@Scroll@@QAEXH@Z
 // size      106 bytes
 // prototype void (__thiscall ?set_pos@Scroll@@QAEXH@Z)(Scroll* this, int position)
 // callers   17   call targets   0
@@ -1212,15 +1212,12 @@ Purpose: Clamp, optionally reverse, and redraw the scrollbar position.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-// C4716: same reason as set_range above - the image's `ret 4` never sets EAX
-// on the no-parent path, it just falls through to the shared epilogue with
-// EAX still zero from the `test`. C4715 is the same fact seen from the other
-// side: the early `return 0U;` is the only `return`, and the image's own
-// null path leaves EAX zero the same way (the `test` it came from), so the
-// compiler is right and so is the transcription.
-#pragma warning(push)
-#pragma warning(disable : 4716 4715)
-uint32_t Scroll::set_pos(int position) {
+// Original 0x00605D20 branches from the null-parent test to the common
+// epilogue at 0x00605D87; the non-null path stores the clamped position,
+// publishes WinCallbackWindow at 0x00605D2B, and redraws via the indirect
+// call at 0x00605D80. Mapped callers discard EAX; no result contract is
+// established here, and caller coverage is bounded to recovered edges.
+void Scroll::set_pos(int position) {
     ::Win *const parent = win_parent_;
     if (parent != nullptr) {
         WinCallbackWindow = parent;
@@ -1248,7 +1245,6 @@ uint32_t Scroll::set_pos(int position) {
         redraw();
     }
 }
-#pragma warning(pop)
 
 /*
 Purpose: Compute and publish the scrollbar thumb rectangle.

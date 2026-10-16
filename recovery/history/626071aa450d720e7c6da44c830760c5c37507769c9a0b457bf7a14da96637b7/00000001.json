@@ -1,0 +1,20 @@
+{
+  "event_id": "fa41afc5e8413477dec25d52a7dd235df76cb6915153408759d52906e92c64e1",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_scroll_arrow_sprite_destination_oct10.py",
+      "recovery/tests/test_scroll_notification_live_state_oct11.py"
+    ],
+    "evidence": [
+      "Both continuity tests fail unchanged master at the already reviewed close uint32-to-void contract 186b4ea82. Permit only explicit address-and-old/new-symbol migrations for close and this set_pos change; keep all original identity, spans, claims and seed-history comparisons. Allow pinned-image environment so isolated workers do not skip controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "repair-scroll-contract-continuity-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:scroll-position-contract-oct16"
+}

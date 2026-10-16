@@ -1,5 +1,6 @@
 """Original arrow-sprite producer destination, not full Scroll acceptance."""
 from pathlib import Path
+import os
 import shutil
 import subprocess
 
@@ -53,7 +54,7 @@ def test_pinned_both_button_receivers_write_the_redraw_triplet():
     from match_recovery.pe_coff import PeImage
     from match_recovery.model import Span
     from match_recovery.source_inventory import image_pin
-    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    path = Path(os.environ.get("OPENSMACX_IMAGE", str(ROOT / ".opensmacx/game/terranx_original.exe")))
     if not path.exists():
         pytest.skip("pinned original unavailable")
     image = PeImage(path.read_bytes(), image_pin(ROOT))
@@ -78,7 +79,17 @@ def test_original_identities_claims_and_seed_history_survive():
         assert set(before) | additions == set(after)
         for address, row in before.items():
             assert _continuity_fields(row) == _continuity_fields(after[address])
-            assert row.symbol == after[address].symbol
+            # Reviewed void contracts: close (186b4ea82) and set_pos.
+            # Original identities/claims above remain unchanged; no other
+            # emitted-symbol migration is allowed by this historical control.
+            migrations = {
+                0x605370: ("?close@Scroll@@QAEIXZ", "?close@Scroll@@QAEXXZ"),
+                0x605D20: ("?set_pos@Scroll@@QAEIH@Z", "?set_pos@Scroll@@QAEXH@Z"),
+            }
+            if filename == "scroll.cpp" and address in migrations:
+                assert (row.symbol, after[address].symbol) == migrations[address]
+            else:
+                assert row.symbol == after[address].symbol
 
 
 def test_producer_and_redraw_share_the_real_sprite_run():

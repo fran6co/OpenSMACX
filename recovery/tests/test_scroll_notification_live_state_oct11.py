@@ -4,6 +4,7 @@ Host controls do not establish Win32 ABI, matching, or full-game acceptance.
 The pre-change source and intentional damages must fail the same oracle.
 """
 from pathlib import Path
+import os
 import shutil
 import subprocess
 
@@ -222,7 +223,16 @@ def test_original_identities_claims_and_symbols_retained():
     assert before.keys() == after.keys()
     for address, row in before.items():
         assert _continuity_fields(row) == _continuity_fields(after[address])
-        assert row.symbol == after[address].symbol
+        # Only the reviewed void close (186b4ea82) and set_pos contracts
+        # change emitted symbols; their original identities remain intact.
+        migrations = {
+            0x605370: ("?close@Scroll@@QAEIXZ", "?close@Scroll@@QAEXXZ"),
+            0x605D20: ("?set_pos@Scroll@@QAEIH@Z", "?set_pos@Scroll@@QAEXH@Z"),
+        }
+        if address in migrations:
+            assert (row.symbol, after[address].symbol) == migrations[address]
+        else:
+            assert row.symbol == after[address].symbol
 
 
 def test_pinned_delta_gates_signed_bound_and_live_sound_parent():
@@ -230,7 +240,7 @@ def test_pinned_delta_gates_signed_bound_and_live_sound_parent():
     from match_recovery.pe_coff import PeImage
     from match_recovery.model import Span
     from match_recovery.source_inventory import image_pin
-    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    path = Path(os.environ.get("OPENSMACX_IMAGE", str(ROOT / ".opensmacx/game/terranx_original.exe")))
     if not path.exists():
         pytest.skip("pinned original unavailable")
     image = PeImage(path.read_bytes(), image_pin(ROOT))
