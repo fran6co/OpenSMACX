@@ -11,6 +11,64 @@ from test_win_zorder_pointer_flow_oct10 import extract
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def set_patrol_control():
+    body = extract((ROOT / "src/console.cpp").read_text(), "void Console::set_patrol(int veh_id)")
+    assert "reinterpret_cast" not in body
+    return r'''
+#include <cassert>
+#include <vector>
+struct Vehicle { int waypoint_count; } Vehs[2];
+struct MapWin {
+    int id, field_1DD70_, field_1DD74_;
+    void draw_base_dest(int);
+};
+MapWin *MapWinTable[8], *replacement;
+std::vector<int> calls;
+struct Console {
+    int field_23D10_;
+    void set_patrol(int);
+    void cursor_off() { calls.push_back(-1); }
+    void cursor_on(int mode, int arg) {
+        assert(mode == 8 && arg == -1); calls.push_back(-2);
+    }
+} ConsoleGlobal;
+void MapWin::draw_base_dest(int arg) {
+    assert(arg == 1 && (field_1DD70_ & 0x400000));
+    calls.push_back(id);
+    if (id == 0) MapWinTable[3] = replacement;
+}
+BODY
+int main() {
+    MapWin windows[8], other = {8, 0x40, 1};
+    replacement = &other;
+    for (int i = 0; i < 8; ++i) {
+        windows[i] = MapWin{i, 0x40, 1}; MapWinTable[i] = &windows[i];
+    }
+    windows[0].field_1DD74_ = 0;
+    windows[2].field_1DD74_ = 0; MapWinTable[1] = 0;
+    Console local = {8}; Vehs[0].waypoint_count = 4; Vehs[1].waypoint_count = 5;
+    local.set_patrol(1);
+    assert(Vehs[1].waypoint_count == 0 && Vehs[0].waypoint_count == 4);
+    assert((calls == std::vector<int>{-1}));
+    calls.clear(); local.field_23D10_ = 0; Vehs[1].waypoint_count = 7;
+    local.set_patrol(1);
+    assert(Vehs[1].waypoint_count == 0);
+    assert((calls == std::vector<int>{0, 8, 4, 5, 6, 7, -2}));
+    assert(windows[2].field_1DD70_ == 0x40 && windows[3].field_1DD70_ == 0x40);
+    assert(windows[7].field_1DD70_ == 0x400040 && other.field_1DD70_ == 0x400040);
+}
+'''.replace("BODY", body)
+
+
+@pytest.mark.parametrize("compiler", ("g++", "clang++"))
+@pytest.mark.parametrize("damage", (None,
+    ("slot == 0 ||", "false ||"),
+    ("waypoint_count = 0;", "waypoint_count = 1;"),
+    ("slot < 8", "slot < 7")))
+def test_actual_set_patrol_slot_walk(tmp_path, compiler, damage):
+    run_control(tmp_path, compiler, set_patrol_control(), damage)
+
+
 def run_control(tmp_path, compiler, program, damage):
     executable = shutil.which(compiler)
     if executable is None:
@@ -74,9 +132,9 @@ int main(){
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
 @pytest.mark.parametrize("damage", (None,
-    ("p == MapWinTable ||", "false ||"),
+    ("slot == 0 ||", "false ||"),
     ("int mask = first->field_1DD70_ & 0x400000;", "int mask = 0;"),
-    ("p = p + 1;", "p = p + 2;")))
+    ("++slot", "slot += 2")))
 def test_actual_typed_patrol_walk(tmp_path, compiler, damage):
     run_control(tmp_path, compiler, patrol_control(), damage)
 

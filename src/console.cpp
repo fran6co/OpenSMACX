@@ -3087,7 +3087,7 @@ int Console::selected() {
     return selected_mode;
 }
 
-// ORIGINAL: 0x00515EF0 ?toggle_patrol@Console@@QAEXXZ 0x00515EF0-0x00515F70 FILE
+// ORIGINAL: 0x00515EF0 ?toggle_patrol@Console@@QAEXXZ 0x00515EF0-0x00515F70 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      128 bytes
 // prototype void (__thiscall ?toggle_patrol@Console@@QAEXXZ)(Console* this)
@@ -3099,21 +3099,18 @@ int Console::selected() {
 void Console::toggle_patrol() {
     MapWin *const first = MapWinTable[0];
     int mask = first->field_1DD70_ & 0x400000;
-    MapWin **p = MapWinTable;
-    do {
-        MapWin *const window = *p;
-        if (window != nullptr && (p == MapWinTable ||
-                                 window->field_1DD74_ != 0)) {
+    for (int slot = 0; slot < 8; ++slot) {
+        if (MapWinTable[slot] != 0 &&
+            (slot == 0 || MapWinTable[slot]->field_1DD74_ != 0)) {
             if (mask == 0) {
-                window->field_1DD70_ |= 0x400000;
-                window->draw_base_dest(1);
+                MapWinTable[slot]->field_1DD70_ |= 0x400000;
+                MapWinTable[slot]->draw_base_dest(1);
             } else {
-                window->field_1DD70_ &= 0xffbfffff;
-                window->draw_map(1);
+                MapWinTable[slot]->field_1DD70_ &= 0xffbfffff;
+                MapWinTable[slot]->draw_map(1);
             }
         }
-        p = p + 1;
-    } while (p < MapWinTable + MapWinTableSlots);
+    }
 }
 
 // ORIGINAL: 0x00516970 ?menu_simple@Console@@QAEXXZ 0x00516970-0x005169A1 FILE BYTE_EXACT
@@ -5007,7 +5004,7 @@ void Console::editor_energy() {
 /*
 Purpose: Clear one vehicle's waypoint run and switch every live map window to
          the patrol cursor.
-// ORIGINAL: 0x004D7EE0 ?set_patrol@Console@@QAEXH@Z 0x004D7EE0-0x004D7F5F FILE
+// ORIGINAL: 0x004D7EE0 ?set_patrol@Console@@QAEXH@Z 0x004D7EE0-0x004D7F5F FILE BYTE_EXACT
 // TRIED (seed history): reached SHAPE_EXACT in the seed - same 38 mnemonics;
 //        remaining diffs are embedded constants (reload `*p` for the
 //        draw_base_dest call instead of reusing the cached window local, and
@@ -5028,11 +5025,11 @@ void Console::set_patrol(int veh_id) {
     // The image walks the MapWinTable slot pointers from 0x007D3C3C to the
     // exclusive 0x007D3C5C end: the primary window always repaints, slots
     // 1..7 only when field_1DD74_ says they hold a live view.
-    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-        MapWin *const window = MapWinTable[slot];
-        if (window != 0 && (slot == 0 || window->field_1DD74_ != 0)) {
-            window->field_1DD70_ |= 0x400000;
-            window->draw_base_dest(1);
+    for (int slot = 0; slot < 8; ++slot) {
+        if (MapWinTable[slot] != 0 &&
+            (slot == 0 || MapWinTable[slot]->field_1DD74_ != 0)) {
+            MapWinTable[slot]->field_1DD70_ |= 0x400000;
+            MapWinTable[slot]->draw_base_dest(1);
         }
     }
     ConsoleGlobal.cursor_on(8, -1);

@@ -1,0 +1,19 @@
+{
+  "event_id": "a0e70454a284f76547cb9c4f6bcec60bbb2edc6c07ac72a81baedd1f4608433a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_typed_owner_members_oct10.py"
+    ],
+    "evidence": [
+      "Add actual-source set_patrol controls alongside existing toggle_patrol tests: primary special case, inactive/null slots, callback mutation of future slots, waypoint reset and cursor-off early return. Host doubles do not establish native ABI or original runtime."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "set-patrol-behavior-controls-oct16",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-patrol-slot-walk-oct16"
+}
