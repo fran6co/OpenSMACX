@@ -1,0 +1,41 @@
+{
+  "author": "coordinator",
+  "base_revision": "a84584447b9d48fb0b799466f3583b8e60eb462e",
+  "editable_files": [
+    "src/caviar.cpp",
+    "recovery/tests/test_caviar_colour_source_binding_oct16.py"
+  ],
+  "evidence": [
+    "Original render_mono 0x00617620 passes 0x009B9C38 and length 0x1800 to memset; object_start 0x00618DA0 copies exactly this window under bit 3. The existing source already implements both operations; the unrecovered-writer comment is stale.",
+    "Original init_class passes this address twice to vox_create_record as colour/shadow input. The 0x1800 source backing window ends at independently mapped CaviarScene 0x009BB438, without implying the allocation provenance or a complete original type.",
+    "Pinned PE read_initial verifies 6144 zero bytes and no absolute relocation in [0x009B9C38,0x009BB438). These are loader-initial virtual zero-fill, not raw file-backed bytes or later runtime state.",
+    "Retained physical COFF defines the existing TU-private symbol ?CaviarColourSource@?%src/caviar.cpp@@3PAEA. Add the reviewed binding only with the native object writer; fresh check-data must verify CodeView extent and initial storage under both configured flag trials.",
+    "Preserve C++ declarations, bodies, all original spans, historical claims and original error paths. Add actual-source and pinned-reference damage controls. Require build/link, scoped measurement identity, physical collateral, claim continuity and live references before coordinator-reviewed integration. This does not establish full-game or native autonomous acceptance."
+  ],
+  "intent": "Bind the existing Caviar monochrome palette backing storage and preserve its recovered producer/consumer relationship in source, without changing behavior or claiming new function coverage.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6387232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6391200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6525888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "caviar-colour-source-binding-oct16"
+}
