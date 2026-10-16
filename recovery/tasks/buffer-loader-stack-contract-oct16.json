@@ -1,0 +1,42 @@
+{
+  "author": "coordinator",
+  "base_revision": "773434ef89cb0f00c68dec36c0f725e00dda3df8",
+  "editable_files": [
+    "src/buffer.cpp",
+    "src/buffer.h",
+    "recovery/tests/test_buffer_loader_stack_contract.py"
+  ],
+  "evidence": [
+    "Pinned one-argument wrappers 5D7B20/5D7C80 read filename at entry ESP+4, push four explicit arguments and return4. Current nonstatic stdcall bodies additionally load a stack receiver and consume8, contradicting that protocol.",
+    "Pinned four-argument bodies5D7B40/5D7CA0 overwrite ECX for local Filemap without saving incoming ECX, read the first explicit argument at its expected stack position and return16. Neither body uses a Buffer receiver. Existing source uses no receiver fields. Preserve path-extension scan, Filemap lifetime, ignored GetFileSize result and return3/6/8 behavior exactly.",
+    "Current source has no callers beyond the two wrappers; verify compiler references and whole application after header changes. Existing Buffer::probe_pcx is a static stdcall utility precedent, not original ownership proof. Static stdcall versus unused-this thiscall cannot be uniquely resolved from absent callers; document the chosen receiver-free representation and residual provenance uncertainty.",
+    "Change only these declarations/definitions, their explicit emitted-symbol facts via native source writer, evidence comments and listed actual-source/ABI tests. Never edit ORIGINAL markers or claim tokens manually. Preserve imported QAG historical identities. Establish emitted SG symbols with fresh physical COFF evidence before publication.",
+    "Fresh whole Buffer translation-unit measurements, full application build/link, physical collateral, claims/references and independent review precede manual integration. Native record alone may restore historical claims; unknown EH/reference/linked/runtime evidence stays unknown. No acceptance weakening or behavior fixes."
+  ],
+  "intent": "Correct the four TGA/BMP utility entry stack contracts without introducing a receiver argument; retain all original identities, claims and exact behavior. Use static stdcall methods as the current source organization, not proof of original class/static provenance.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6126368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6126400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6126720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6126752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-loader-stack-contract-oct16"
+}
