@@ -1144,7 +1144,8 @@ have_width:
 
     if ((dialog.field_20_ & 1) == 0
         || (tmp = static_cast<int>(dialog.field_30_), tmp == 0)) {
-        dialog.field_60_ = dialog.field_68_ * dialog.row_count_
+        dialog.field_60_ = static_cast<uint32_t>(dialog.field_68_)
+                         * static_cast<uint32_t>(dialog.row_count_)
                          - dialog.field_44_ + dialog.field_3C_
                          + dialog.field_38_;
     } else {
@@ -1159,10 +1160,12 @@ have_width:
                              * static_cast<uint32_t>(dialog.column_count_);
             if (static_cast<int32_t>(product) < static_cast<int32_t>(field_20_)) {
                 if (columns < 2) {
-                    dialog.field_5C_ = dialog.field_2C_ - ScrollDefaultThickness;
+                    dialog.field_5C_ = static_cast<uint32_t>(dialog.field_2C_)
+                                     - static_cast<uint32_t>(ScrollDefaultThickness);
                     dialog.column_count_ = 1;
                 } else {
-                    dialog.field_60_ = dialog.field_30_ - ScrollDefaultThickness;
+                    dialog.field_60_ = static_cast<uint32_t>(dialog.field_30_)
+                                     - static_cast<uint32_t>(ScrollDefaultThickness);
                     dialog.row_count_ = static_cast<int32_t>(dialog.field_60_)
                                       / static_cast<int32_t>(dialog.field_68_);
                 }

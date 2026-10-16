@@ -513,16 +513,22 @@ int SpriteBox::calculate_dimensions() {
     dialog.field_60_ = buffer->text_line_height();
     int row_height = static_cast<int>(field_58_);
     if (row_height < static_cast<int>(dialog.field_60_)) row_height = dialog.field_60_;
-    dialog.field_68_ = dialog.field_44_ + row_height;
-    dialog.field_64_ = static_cast<int>(field_5C_)
-                       + dialog.field_40_ * 2 + static_cast<int>(field_54_);
+    const uint32_t cell_height_bits = static_cast<uint32_t>(dialog.field_44_)
+                                    + static_cast<uint32_t>(row_height);
+    dialog.field_68_ = static_cast<int32_t>(cell_height_bits);
+    const uint32_t cell_width_bits = field_5C_
+                                   + static_cast<uint32_t>(dialog.field_40_) * 2u
+                                   + field_54_;
+    dialog.field_64_ = static_cast<int32_t>(cell_width_bits);
     dialog.row_count_ = dialog.field_50_;
     if (dialog.row_count_ > list_.entry_count_) dialog.row_count_ = list_.entry_count_;
     if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
         dialog.field_60_ = dialog.field_30_;
         dialog.row_count_ = dialog.field_30_ / dialog.field_68_;
     } else {
-        dialog.field_60_ = dialog.field_68_ * dialog.row_count_ + dialog.field_44_;
+        dialog.field_60_ = static_cast<uint32_t>(dialog.field_68_)
+                         * static_cast<uint32_t>(dialog.row_count_)
+                         + dialog.field_44_;
     }
     if ((dialog.field_20_ & 2) != 0 && dialog.field_2C_ != 0) {
         dialog.column_count_ = dialog.field_2C_ / dialog.field_64_;
@@ -532,7 +538,11 @@ int SpriteBox::calculate_dimensions() {
                                 + static_cast<uint32_t>(list_.entry_count_);
         int rows = static_cast<int32_t>(rows_numerator) / dialog.row_count_;
         dialog.column_count_ = rows;
-        int height = (dialog.field_68_ + dialog.field_44_) * rows - dialog.field_44_;
+        const uint32_t height_bits = (static_cast<uint32_t>(dialog.field_68_)
+                                    + dialog.field_44_)
+                                   * static_cast<uint32_t>(rows)
+                                   - dialog.field_44_;
+        int height = static_cast<int32_t>(height_bits);
         if (height < dialog.field_2C_) height = dialog.field_2C_;
         dialog.field_5C_ = height;
     }

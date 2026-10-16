@@ -269,8 +269,8 @@ int Dialog::init(int left, int top, int right, int bottom, int heap_size) {
 
     field_24_ = static_cast<uint32_t>(left);
     field_28_ = static_cast<uint32_t>(top);
-    field_2C_ = static_cast<uint32_t>(right);
-    field_30_ = static_cast<uint32_t>(bottom);
+    field_2C_ = right;
+    field_30_ = bottom;
     field_20_ |= 3U;
     field_1C_ = static_cast<uint32_t>(heap_size);
 
@@ -306,8 +306,8 @@ int Dialog::init(RECT *rect, Heap *heap) {
 
     field_24_ = static_cast<uint32_t>(left);
     field_28_ = static_cast<uint32_t>(top);
-    field_2C_ = static_cast<uint32_t>(width);
-    field_30_ = static_cast<uint32_t>(height);
+    field_2C_ = width;
+    field_30_ = height;
     field_20_ |= 3U;
     heap_ptr_ = heap;
 

@@ -479,7 +479,9 @@ int EditGroup::calculate_dimensions() {
         if (label_width_ < measured_label) label_width_ = measured_label;
         const int measured_edit = buffer->text_width(text_buffers_[i]);
         if (edit_width_ < measured_edit) {
-            edit_width_ = measured_edit + dialog.field_40_ * 2;
+            const uint32_t edit_width_bits = static_cast<uint32_t>(measured_edit)
+                                           + static_cast<uint32_t>(dialog.field_40_) * 2u;
+            edit_width_ = static_cast<int32_t>(edit_width_bits);
         }
     }
 
@@ -490,7 +492,9 @@ int EditGroup::calculate_dimensions() {
     dialog.field_68_ = buffer->text_line_height() + dialog.field_44_;
 
     if ((dialog.field_20_ & 2) == 0 || dialog.field_2C_ == 0) {
-        int width = dialog.field_64_ * dialog.field_4C_;
+        uint32_t width_bits = static_cast<uint32_t>(dialog.field_64_)
+                            * static_cast<uint32_t>(dialog.field_4C_);
+        int width = static_cast<int32_t>(width_bits);
         if (width < dialog.field_2C_) width = dialog.field_2C_;
         dialog.field_5C_ = width;
         dialog.field_64_ = width / dialog.field_4C_;
@@ -503,7 +507,9 @@ int EditGroup::calculate_dimensions() {
         dialog.field_60_ = dialog.field_30_;
         dialog.row_count_ = dialog.field_30_ / dialog.field_68_;
     } else {
-        dialog.field_60_ = dialog.field_68_ * dialog.row_count_ + dialog.field_44_;
+        dialog.field_60_ = static_cast<uint32_t>(dialog.field_68_)
+                         * static_cast<uint32_t>(dialog.row_count_)
+                         + dialog.field_44_;
     }
     return 0;
 }

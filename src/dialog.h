@@ -195,15 +195,18 @@ class Dialog {
   uint32_t field_20_;
   uint32_t field_24_;
   uint32_t field_28_;
-  uint32_t field_2C_;
-  uint32_t field_30_;
+  // These shared dimensions and spacing/count operands are signed in the
+  // recovered control arithmetic. The original SpriteBox and RadioButton
+  // sizing bodies use signed IDIV with +0x2c/+0x30/+0x40/+0x4c/+0x64/+0x68.
+  int field_2C_;
+  int field_30_;
   uint32_t field_34_;
   uint32_t field_38_;
   uint32_t field_3C_;
-  uint32_t field_40_;
+  int field_40_;
   uint32_t field_44_;
   uint32_t field_48_;
-  uint32_t field_4C_;
+  int field_4C_;
   uint32_t field_50_;
   // Grid dimensions: +0x54 is the signed column count and +0x58 the signed
   // row count. The pinned control handlers compare these with signed branches
@@ -215,8 +218,8 @@ class Dialog {
   int row_count_;
   uint32_t field_5C_;
   uint32_t field_60_;
-  uint32_t field_64_;
-  uint32_t field_68_;
+  int field_64_;
+  int field_68_;
   uint32_t field_6C_;
   Font *font1_;
   Font *font2_;
