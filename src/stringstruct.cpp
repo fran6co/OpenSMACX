@@ -617,7 +617,10 @@ Status: Coverage transcription - unclaimed body
 // facility tables are sprite.cpp's g_TECH_ICON_SPRITES (0x00759E28, 0x2c
 // stride); each Sprite owns its transparency byte at +8 (first 0x00759E30).
 
-extern "C" void __cdecl tech_wizard_unk2(int canvas, int index, int odd,
+// The pinned first stack word is adjusted by the GraphicWin-to-Buffer base
+// offset when non-null. Caller provenance is incomplete: this type reflects
+// the observed +0x444 base view, not proof of the original source class.
+extern "C" void __cdecl tech_wizard_unk2(GraphicWin *canvas, int index, int odd,
                                          int base_x, int base_y, int base_bottom) {
     if (index < 0x59) {
         const int size = MapWinCaptionScale;
@@ -650,8 +653,8 @@ extern "C" void __cdecl tech_wizard_unk2(int canvas, int index, int odd,
         }
 
         Buffer *const target = (canvas != 0)
-            ? reinterpret_cast<Buffer *>(canvas + 0x444)
-            : reinterpret_cast<Buffer *>(0);
+            ? static_cast<Buffer *>(canvas)
+            : 0;
 
         const int entry = index * 11;
         const int sprite_index = (entry * 4) / 0x2C;
