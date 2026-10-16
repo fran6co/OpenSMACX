@@ -12964,7 +12964,7 @@ case 0x30071:
         const int faction = ConsoleGlobal.faction_id_;
         int granted_count = 0;
         for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
-            if (has_tech_call(tech_id, faction) != 0) continue;
+            if (has_tech(tech_id, faction) != 0) continue;
             if (Technology[tech_id].preq_tech_1 < TechNone) continue;
             if (Technology[tech_id].preq_tech_2 < TechNone) continue;
 

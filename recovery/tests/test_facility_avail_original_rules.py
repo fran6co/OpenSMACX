@@ -1,6 +1,6 @@
 """Whole-body host controls for the recovered facility_avail rules.
 
-The complete function is extracted from src/base.cpp. Only boundary calls are
+The complete function is extracted from src/technology_queries.cpp. Only boundary calls are
 redirected to trace doubles; the function body is not transformed. These are selected-path host controls, not native ABI or game-runtime proof.
 """
 
@@ -16,7 +16,7 @@ from match_recovery.binding_source import parse as parse_bindings
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/base.cpp"
+SOURCE = ROOT / "src/technology_queries.cpp"
 BASE_H = ROOT / "src/base.h"
 
 HARNESS = r"""

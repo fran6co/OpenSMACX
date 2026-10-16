@@ -315,12 +315,12 @@ static ProbeTechnologyScan probe_scan_technology_flags(int actor_faction_id,
     for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
         const uint32_t flags = Technology[tech_id].flags;
         if ((flags & 0x10u) != 0 &&
-            has_tech_call(tech_id, actor_faction_id)) {
+            has_tech(tech_id, actor_faction_id)) {
             result.known_flag_10 = 1;
         }
         if ((flags & 0x20u) != 0) {
             ++result.flag_20_entries;
-            if (has_tech_call(tech_id, target_faction_id)) {
+            if (has_tech(tech_id, target_faction_id)) {
                 ++result.known_flag_20_entries;
             }
         }

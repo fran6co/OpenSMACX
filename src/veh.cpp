@@ -3291,7 +3291,7 @@ int __cdecl drop_range(int faction_id) {
     // has_project()'s own shape, ternary and BOOL result included: the
     // negated `base_id < 0 || owner != faction_id` form compiled a bare
     // `je` where the image materialises the comparison with `sete al` first.
-    if (!has_tech_call(Rules.tech_orb_insert_sans_spc_elev, faction_id)) { // default 'Graviton Theory'
+    if (!has_tech(Rules.tech_orb_insert_sans_spc_elev, faction_id)) { // default 'Graviton Theory'
         int base_id = GameDataStateStorage.fields_.secret_project_[SP_SPACE_ELEVATOR];
         BOOL has_orb_insert = (base_id < 0) ? false
             : (Bases[base_id].faction_id_current == faction_id);
@@ -5964,7 +5964,7 @@ Status: Complete
 */
 uint32_t __cdecl best_reactor(int faction_id) {
     for (int i = MaxReactorNum - 1; i >= 0; i--) {
-        if (has_tech_call(Reactor[i].preq_tech, faction_id)) {
+        if (has_tech(Reactor[i].preq_tech, faction_id)) {
             return i + 1;
         }
     }
@@ -6000,7 +6000,7 @@ int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk) {
     int best_speed = 0;
     int chassis_id = -1;
     for (int i = 0; i < MaxChassisNum; i++) {
-        if (has_tech_call(Chassis[i].preq_tech, faction_id) && (triad_chk < 0
+        if (has_tech(Chassis[i].preq_tech, faction_id) && (triad_chk < 0
             || Chassis[i].triad == triad_chk) && (!Chassis[i].missile || speed_chk == -1)) {
             int speed_compare = 1;
             // The image reaches the best_speed check below through ONE shared block, from
@@ -6071,7 +6071,7 @@ int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode) {
     int best_offense = -1;
     int weapon_id = 0;
     for (int i = 0; i < MaxWeaponNum; i++) {
-        if (has_tech_call(Weapon[i].preq_tech, faction_id)) {
+        if (has_tech(Weapon[i].preq_tech, faction_id)) {
             if (condition < 0) {
                 if (Weapon[i].mode == -condition) {
                     weapon_id = i;
@@ -6126,7 +6126,7 @@ int __cdecl armor_budget(int faction_id, int max_cost) {
     int best_defense = -1;
     int armor_id = 0;
     for (int i = 0; i < MaxArmorNum; i++) {
-        if (has_tech_call(Armor[i].preq_tech, faction_id) && Armor[i].cost <= max_cost
+        if (has_tech(Armor[i].preq_tech, faction_id) && Armor[i].cost <= max_cost
             && Armor[i].defense_rating >= 0) { // excludes PSI
             int defense_compare;
             if (faction_id >= 0 && !ExpansionEnabled && i > 9) {
@@ -6609,7 +6609,7 @@ int __cdecl get_plan(int faction_id, int plan) {
         if (VehPrototypes[proto_id].flags & PROTO_ACTIVE
             && !(VehPrototypes[proto_id].obsolete_factions & (1 << faction_id))
             && (proto_id >= MaxVehProtoFactionNum
-                || has_tech_call(VehPrototypes[proto_id].preq_tech, faction_id))
+                || has_tech(VehPrototypes[proto_id].preq_tech, faction_id))
             && VehPrototypes[proto_id].plan == plan) {
             return proto_id;
         }
@@ -7590,120 +7590,6 @@ int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3) {
     return retn_val;
 }
 
-/*
-Purpose: Check to see whether provided faction and base can build a specific prototype. Checks are
-         included to prevent SMACX specific units from being built in SMAC mode.
-// ORIGINAL: 0x005BA910 ?veh_avail@@YAHHHH@Z 0x005BA910-0x005BAB39 BYTE_EXACT
-// LEVER: WRONG CALLEE - is_port(base_id, false) hand-inlined to
-//   is_coast(Bases[base_id].x, Bases[base_id].y, false); the image never calls is_port.
-//   Split every `||`-combined early return (PROTO_ACTIVE/obsolete_factions, and the
-//   whole 18-way !ExpansionEnabled SMAC-mode block) into sequential `if (...) return
-//   false;` statements - the image gives each condition its own duplicated epilogue
-//   rather than sharing one merged branch. The ability_flags checks are bitwise
-//   (`abil_flag & ABL_X`), not equality - the image emits `test`, not `cmp`. Together
-//   0.538 -> 0.996 similar; TRIED: the last ~6-instruction gap is register
-//   allocation inside has_tech()/is_coast()'s own inlined bodies (shared MEASURED
-//   inline helpers) - did not chase further to avoid touching their other callers.
-// size      553 bytes
-// prototype int (__cdecl ?veh_avail@@YAHHHH@Z)(int protoID, int factionID, int baseID)
-// callers   7   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004E49D0
-Return Value: Is unit available to faction/base? true/false
-Status: Complete
-*/
-BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
-    // The image gives PROTO_ACTIVE and obsolete_factions separate early returns, each
-    // with its own epilogue, rather than one merged `||` - reproduced as sequential ifs.
-    if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)) {
-        return false;
-    }
-    if (VehPrototypes[proto_id].obsolete_factions & (1 << faction_id)) {
-        return false;
-    }
-    if (proto_id < MaxVehProtoFactionNum) {
-        if (!has_tech(VehPrototypes[proto_id].preq_tech, faction_id)) {
-            return false;
-        }
-    }
-    if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION
-        && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_COLONY_PODS) {
-        return false;
-    }
-    // is_port(), hand-inlined - the image calls is_coast() directly here, not is_port().
-    if (base_id >= 0 && get_proto_triad(proto_id) == TRIAD_SEA
-        && !is_coast(Bases[base_id].x, Bases[base_id].y, false)) {
-        return false;
-    }
-    // The image splits this whole SMAC-mode block into eighteen separate early
-    // returns, each with its own epilogue, rather than one merged `||` chain -
-    // reproduced as sequential ifs. The ability_flags checks are bitwise (`test`
-    // against a single flag bit), not equality - `abil_flag == ABL_X` would only
-    // fire for a unit with exactly that one ability and nothing else.
-    if (!ExpansionEnabled) {
-        if (VehPrototypes[proto_id].armor_id > ARM_PSI_DEFENSE) {
-            return false;
-        }
-        uint8_t weap_id = VehPrototypes[proto_id].weapon_id;
-        if (weap_id == WPN_RESONANCE_LASER) {
-            return false;
-        }
-        if (weap_id == WPN_RESONANCE_BOLT) {
-            return false;
-        }
-        if (weap_id == WPN_STRING_DISRUPTOR) {
-            return false;
-        }
-        if (weap_id == WPN_TECTONIC_PAYLOAD) {
-            return false;
-        }
-        if (weap_id == WPN_FUNGAL_PAYLOAD) {
-            return false;
-        }
-        uint32_t abil_flag = VehPrototypes[proto_id].ability_flags;
-        if (abil_flag & ABL_SOPORIFIC_GAS) {
-            return false;
-        }
-        if (abil_flag & ABL_DISSOCIATIVE_WAVE) {
-            return false;
-        }
-        if (abil_flag & ABL_MARINE_DETACHMENT) {
-            return false;
-        }
-        if (abil_flag & ABL_FUEL_NANOCELLS) {
-            return false;
-        }
-        if (abil_flag & ABL_ALGO_ENHANCEMENT) {
-            return false;
-        }
-        if (proto_id == BSC_SEALURK) {
-            return false;
-        }
-        if (proto_id == BSC_SPORE_LAUNCHER) {
-            return false;
-        }
-        if (proto_id == BSC_BATTLE_OGRE_MK1) {
-            return false;
-        }
-        if (proto_id == BSC_BATTLE_OGRE_MK2) {
-            return false;
-        }
-        if (proto_id == BSC_BATTLE_OGRE_MK3) {
-            return false;
-        }
-        if (proto_id == BSC_FUNGAL_TOWER) {
-            return false;
-        }
-        if (proto_id == BSC_UNITY_MINING_LASER) {
-            return false;
-        }
-    }
-    if (proto_id < MaxVehProtoFactionNum) {
-        return true;
-    }
-    return (proto_id / MaxVehProtoFactionNum) == faction_id;
-}
 
 /*
 Purpose: Determine whether a faction wants the specified prototype based on the faction's current
@@ -10526,14 +10412,14 @@ void __cdecl add_abil(int *ability_flags, int ability, int faction_id) {
         ++bit;
     }
 
-    if (has_tech_call(Ability[bit].preq_tech, faction_id) == 0) {
+    if (has_tech(Ability[bit].preq_tech, faction_id) == 0) {
         return;
     }
 
     // A faction bonus of id 0x0F grants one ability free; refuse a second.
     for (int i = 0; i < Players[faction_id].faction_bonus_count; ++i) {
         if (Players[faction_id].faction_bonus_id[i] == 0x0F
-            && has_tech_call(Ability[Players[faction_id].faction_bonus_val1[i]].preq_tech,
+            && has_tech(Ability[Players[faction_id].faction_bonus_val1[i]].preq_tech,
                              faction_id) != 0
             && bit == Players[faction_id].faction_bonus_val1[i]) {
             return;
@@ -10722,8 +10608,8 @@ void __cdecl action_road_to(int veh_id) {
         net_flag = IsMultiplayerNet;
     } else {
         if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= ALT_BIT_SHORE_LINE
-            && !has_tech_call(Rules.tech_build_roads_fungus, owner)
-            && has_tech_call(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, owner)) {
+            && !has_tech(Rules.tech_build_roads_fungus, owner)
+            && has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, owner)) {
             if (!(tile->bit & BIT_BASE_IN_TILE) || (tile->val2 & 0xf) > 7) {
                 if (IsMultiplayerNet == 0
                     || ConsoleControlTurnActive != 0) {
@@ -10741,7 +10627,7 @@ void __cdecl action_road_to(int veh_id) {
         }
 
         if ((tile->bit & BIT_FUNGUS) == 0 || altitude < ALT_BIT_SHORE_LINE
-            || has_tech_call(Rules.tech_build_roads_fungus, owner)) {
+            || has_tech(Rules.tech_build_roads_fungus, owner)) {
             if (!(tile->bit & BIT_BASE_IN_TILE) || (tile->val2 & 0xf) > 7) {
                 if (!(tile->bit & BIT_ROAD)) {
                     if (IsMultiplayerNet == 0
@@ -10758,7 +10644,7 @@ void __cdecl action_road_to(int veh_id) {
                 }
                 if (Vehs[veh_id].order == ORDER_MAGTUBE_TO
                     && !(tile->bit & BIT_MAGTUBE)
-                    && has_tech_call(Terraforming[TERRA_MAGTUBE].preq_tech, owner)) {
+                    && has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, owner)) {
                     if (IsMultiplayerNet == 0
                         || ConsoleControlTurnActive != 0) {
                         action_terraform(veh_id, ORDER_ROAD, 1);
@@ -10799,7 +10685,7 @@ void __cdecl action_road_to(int veh_id) {
             return;
         }
 
-        const int min_speed = has_tech_call(Rules.tech_build_roads_fungus, owner)
+        const int min_speed = has_tech(Rules.tech_build_roads_fungus, owner)
             ? 0 : 0x10;
         const int found = Paths.find(x, y, goal_x, goal_y, 0, -1, min_speed, -1);
         net_flag = IsMultiplayerNet;
@@ -10943,7 +10829,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
 
     if (action == TERRA_ROAD) {
         if (tile->bit & BIT_ROAD) {
-            if (has_tech_call(not_ocean != 0
+            if (has_tech(not_ocean != 0
                                   ? Terraforming[TERRA_MAGTUBE].preq_tech_sea
                                   : Terraforming[TERRA_MAGTUBE].preq_tech,
                               faction)) {
@@ -10952,7 +10838,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
         }
     } else if (action == TERRA_FARM && (tile->bit & BIT_FARM) != 0
                && (tile->climate & 0xE0) > 0x5F) {
-        if (has_tech_call(not_ocean != 0
+        if (has_tech(not_ocean != 0
                               ? Terraforming[TERRA_FARM].preq_tech_sea
                               : Terraforming[TERRA_FARM].preq_tech,
                           faction)) {
@@ -11419,7 +11305,7 @@ Status: MISMATCH.
 */
 void __cdecl sub_500380(int faction_id, int x, int y) {
     bool anywhere;
-    if (has_tech_call(Rules.tech_orb_insert_sans_spc_elev, faction_id)) {
+    if (has_tech(Rules.tech_orb_insert_sans_spc_elev, faction_id)) {
         anywhere = true;
     } else if (GameDataStateStorage.fields_.secret_project_.space_elevator() >= 0) {
         anywhere = Bases[GameDataStateStorage.fields_.secret_project_.space_elevator()].faction_id_current

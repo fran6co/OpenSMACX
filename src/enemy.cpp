@@ -2915,7 +2915,7 @@ label_56bf5f:
     {
         const RulesTerraforming &remove = Terraforming[TERRA_REMOVE_FUNGUS];
         const int tech = f.local_40 == 1 ? remove.preq_tech_sea : remove.preq_tech;
-        if (!has_tech_call(tech,f.local_c) &&
+        if (!has_tech(tech,f.local_c) &&
             !has_abil(Vehs[f.vehicle_id].proto_id,0x2000) &&
             Vehs[f.vehicle_id].order_auto_type == 6) {
             Vehs[f.vehicle_id].order = 0;

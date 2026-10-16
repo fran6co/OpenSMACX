@@ -1741,12 +1741,12 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
         if (!(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
             && (GameDataStateStorage.fields_.game_rules_ & RULES_BLIND_RESEARCH)) {
             if (ReportWinGlobal.shared_research_focus() >= 0 && ReportWinGlobal.shared_research_focus() <= 0x59
-                && has_tech_call(ReportWinGlobal.shared_research_focus(), faction_id)) {
+                && has_tech(ReportWinGlobal.shared_research_focus(), faction_id)) {
                 next_focus = ReportWinGlobal.shared_research_focus();
             } else {
                 next_focus = ReportWinGlobal.shared_research_focus();
                 for (int tech_id = 0; tech_id < 0x59; ++tech_id) {
-                    if (has_tech_call(tech_id, faction_id)) {
+                    if (has_tech(tech_id, faction_id)) {
                         next_focus = tech_id;
                         break;
                     }
