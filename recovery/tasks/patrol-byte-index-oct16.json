@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "0f5d724769d954720a9424d2f00698c79aec3265",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_patrol_byte_index.py"
+  ],
+  "evidence": [
+    "Original4CDA8E reloads waypoint_count byte;4CDA94 increments DL;4CDA96 stores it;4CDAA3 zero-extends before next-x store4CDAAB. Following y store likewise reloads byte. Current count+1 expression promotes old count to int and does not narrow index at wrap.",
+    "valid_patrol4CD6A0 does not inspect waypoint_count or enforce capacity. This does not prove that repeated appends can safely reach255: preceding out-of-bounds writes remain original unsafe behavior. Preserve them rather than adding bounds checks.",
+    "Use incremented waypoint_count for endpoint x just as y. Preserve all other expressions, annotations and behavior. Actual-source controls may use instrumented array proxies to observe index sequence without invoking host out-of-bounds UB; explicitly distinguish that from actual vehicle memory behavior.",
+    "Full vehicle TU measurements, build/link, references and historical claims plus independent review required before bounded manual integration. No full-game acceptance claim or handwritten byte claim."
+  ],
+  "intent": "Preserve the pinned byte-width increment when selecting the next patrol endpoint, without repairing unchecked original waypoint accesses.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5036592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "patrol-byte-index-oct16"
+}
