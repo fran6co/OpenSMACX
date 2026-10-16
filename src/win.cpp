@@ -10223,7 +10223,7 @@ void Win::client_to_nonclient(RECT * rect) {
 
 // ===== homed from src/unrecovered/005eef60.cpp =====
 
-// ORIGINAL: 0x005EEF60 ?nonclient_to_client@Win@@QAEXPAH0@Z 0x005EEF60-0x005EF050 FILE
+// ORIGINAL: 0x005EEF60 ?nonclient_to_client@Win@@QAEXPAH0@Z 0x005EEF60-0x005EF050 FILE BYTE_EXACT
 // symbol    ?nonclient_to_client@Win@@QAEXPAH0@Z
 // Original mapping restored from git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005eef60.cpp
 void Win::nonclient_to_client(int * x, int * y) {
