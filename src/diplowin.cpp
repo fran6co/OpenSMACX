@@ -1614,9 +1614,9 @@ void DiploWin::on_button_clicked(int button_id) {
 
         const bool counterpart_has_tech = has_tech(tech, faction_id_with_);
         StringTemp[0] = 0;
-        if (!counterpart_has_tech) strcat(StringTemp, "*");
+        if (counterpart_has_tech) strcat(StringTemp, "*");
         say_tech(StringTemp, tech, 1);
-        if (Language == 0 && !counterpart_has_tech)
+        if (Language == 0 && counterpart_has_tech)
           strcat(StringTemp, " (already has)");
         dialogs.item(StringTemp, tech);
         ++line_count;

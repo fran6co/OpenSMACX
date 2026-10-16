@@ -1,0 +1,19 @@
+{
+  "event_id": "5c547b30994b95a478cac4f2716b0bf5fd35e85f10a813a73a09aeb0ab43f5de",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/diplo_button_owner_harness.cpp"
+    ],
+    "evidence": [
+      "Existing actual-source host control composes the method into this separate C++ harness. Its former expectations encode the inverted marker defect; authorize correction and ownership/language/filter matrix with independent mutation controls. Preserve the worker edits; no additional product scope."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "diplo-marker-existing-host-harness",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:diplo-tech-markers-oct16"
+}

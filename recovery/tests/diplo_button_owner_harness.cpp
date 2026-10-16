@@ -372,6 +372,7 @@ static void controls_header_literals_and_popup_return() {
   DiploWin window;
   reset_controls(window);
   selected_tech[0][7] = 1;
+  selected_tech[1][7] = 1;
   Language = 0;
   popup_exec_result = -1;
   window.on_button_clicked(5);
@@ -381,14 +382,32 @@ static void controls_header_literals_and_popup_return() {
   assert(window.offer_count_[0] == 0);  // canceled popup must not add an offer
   assert(popup_exec_count == 1 && popup_destruct_count == 1);
 
-  reset_controls(window);
-  selected_tech[0][7] = 1;
-  selected_tech[1][7] = 1;
-  popup_exec_result = -1;
-  window.on_button_clicked(5);
-  assert(dialog_rows.size() == 2 && dialog_rows[0].find("7:TECH7") == 0);
-  assert(dialog_rows[0].find("*") == std::string::npos);
-  assert(dialog_rows[0].find("already has") == std::string::npos);
+  for (int counterpart_has = 0; counterpart_has != 2; ++counterpart_has) {
+    for (int language = 0; language != 2; ++language) {
+      reset_controls(window);
+      selected_tech[0][7] = 1;
+      selected_tech[0][8] = 0;  // source does not own this technology
+      selected_tech[1][7] = counterpart_has;
+      selected_tech[1][8] = 1;
+      Language = language;
+      popup_exec_result = -1;
+      window.on_button_clicked(5);
+      assert(dialog_rows.size() == 2);  // tech 7 plus the end-treaties row
+      assert(dialog_rows[0].find("7:") == 0);
+      assert(dialog_rows[0].find("8:") != 0);
+      if (counterpart_has) {
+        assert(dialog_rows[0].find("7:*TECH7") == 0);
+        if (language == 0)
+          assert(dialog_rows[0].find(" (already has)") != std::string::npos);
+        else
+          assert(dialog_rows[0].find(" (already has)") == std::string::npos);
+      } else {
+        assert(dialog_rows[0].find("7:TECH7") == 0);
+        assert(dialog_rows[0].find("*") == std::string::npos);
+        assert(dialog_rows[0].find("already has") == std::string::npos);
+      }
+    }
+  }
 
   reset_controls(window);
   selected_tech[0][7] = 1;
@@ -422,6 +441,15 @@ static void controls_header_literals_and_popup_return() {
   assert(popup_start_count == 1 && popup_exec_count == 0);
   assert(popup_construct_count == 1 && popup_destruct_count == 1 &&
          popup_close_count == 1);
+
+  reset_controls(window);
+  selected_tech[0][7] = 1;
+  window.offer_count_[0] = 1;
+  window.offer_type_[0][0] = 0;
+  window.offer_value_[0][0] = 7;
+  window.on_button_clicked(5);
+  assert(dialog_rows.size() == 1);
+  assert(dialog_rows[0].find("7:") != 0);  // already offered on our side
 }
 
 static void controls_automatic_offer_receiver_and_energy_return() {
