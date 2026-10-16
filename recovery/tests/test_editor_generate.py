@@ -302,7 +302,6 @@ def random_editor_harness(methods):
         struct Console {
             void editor_randomize();
             void editor_clear_random();
-            void draw_map(int);
         };
         void require(bool ok) { if (!ok) std::exit(42); }
         void auto_undo() {
@@ -314,7 +313,7 @@ def random_editor_harness(methods):
             ++random_calls;
             return 123;
         }
-        void Console::draw_map(int repaint) {
+        void draw_map(int repaint) {
             require(stage++ == 1 && repaint == 1);
             require(std::memcmp(tiles, expected, sizeof(tiles)) == 0);
             auto bytes = reinterpret_cast<unsigned char *>(decoy);

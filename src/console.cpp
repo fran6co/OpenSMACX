@@ -3646,9 +3646,10 @@ void Console::editor_clear_random() {
         ::draw_map(1);
         return;
     }
+    const int initial_area = MapArea;
+    Map *tile = MapTiles;
     MapRandSeed = 0;
-    if (MapArea > 0) {
-        Map *tile = map_tiles();
+    if (initial_area > 0) {
         int i = 0;
         do {
             uint32_t v = tile->bit;
