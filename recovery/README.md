@@ -415,6 +415,14 @@ donor; malformed/conflicting recipes cannot silently borrow another file's flags
 The compiler-neutral database reader is in the package and is also used by the
 mapping check. Full acceptance remains separate.
 
+The runtime companion can declare size-free public entries in a complete ordinary
+COFF code contribution. The pinned `strcat.obj` contribution binds `_strcpy` and
+`_strcat` this way: only fresh whole-section bytes/references and the exact external
+function inventory qualify scoped caller targets. The historical `_strcpy`
+function-extent interpretation remains unresolved. Entry targets neither invent
+independent function sizes nor prove original archive selection, final-link
+retention, runtime equivalence or application-function recovery.
+
 The native recorder and gate use the package's shared per-TU measurement
 engine. Pass a family's addresses together: the recorder groups them by source
 host, compiles each requested flag set once and reports actual compile/reuse

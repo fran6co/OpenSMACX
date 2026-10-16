@@ -106,12 +106,48 @@ def _code_section_preflight(manifest, objects, image, errors):
                "span": {"start": item.span.start, "end": item.span.end},
                "result": Result.UNKNOWN, "boundary": Result.UNKNOWN,
                "bytes": Result.UNKNOWN, "references": Result.UNKNOWN,
-               "callable": False, "link_target": False}
+               "callable": False, "link_target": False,
+               "entries": [{"symbol": anchor.name, "offset": anchor.offset,
+                            "address": None, "result": Result.UNKNOWN,
+                            "callable": False, "scoped_reference_target": False,
+                            "link_target": False, "function_extent": Result.UNKNOWN}
+                           for anchor in item.entries]}
+        if item.entries:
+            row["entry_inventory"] = Result.UNKNOWN
         obj = objects.get(item.unit)
         try:
             if obj is None:
                 raise ValueError(errors.get(item.unit, "archive member was not read"))
             section = _ordinary_code_section(obj, item)
+            if item.entries:
+                try:
+                    actual = [symbol for symbol in obj.symbols.values()
+                              if symbol.section == item.section and symbol.storage == 2]
+                    if any((symbol.type & 0x30) != 0x20 for symbol in actual):
+                        raise ValueError("code contribution defines an external non-function symbol")
+                    if len({symbol.name for symbol in actual}) != len(actual):
+                        raise ValueError("code contribution has duplicate external function symbol names")
+                    expected = {anchor.name: anchor for anchor in item.entries}
+                    if {symbol.name for symbol in actual} != set(expected) or len(actual) != len(expected):
+                        raise ValueError("COFF external function inventory differs from explicit code-entry anchors")
+                    for anchor in item.entries:
+                        all_named = [symbol for symbol in obj.symbols.values()
+                                     if symbol.name == anchor.name]
+                        if len(all_named) != 1:
+                            raise ValueError(f"COFF code entry {anchor.name!r} is not unique across its member")
+                        symbol = all_named[0]
+                        if (symbol.section != item.section or symbol.storage != 2
+                                or (symbol.type & 0x30) != 0x20):
+                            raise ValueError(f"COFF code entry {anchor.name!r} is not a defined external function in its section")
+                        anchor = expected[symbol.name]
+                        if symbol.value != anchor.offset or not 0 <= symbol.value < len(section.data):
+                            raise ValueError(f"COFF code entry {symbol.name!r} differs from its section-relative anchor")
+                    row["entry_inventory"] = Result.PASS
+                except ValueError as error:
+                    row["entry_inventory"] = Result.FAIL
+                    row["entry_reason"] = str(error)
+                    for entry in row["entries"]:
+                        entry.update(result=Result.FAIL, reason=str(error))
             mapped = [(index, region, flags) for index, (region, _, _) in enumerate(image.sections)
                       if region.start <= item.span.start and item.span.end <= region.end
                       for flags in (image.section_flags[index],)]
@@ -166,7 +202,11 @@ def _source_function_bases(manifest, objects, function_rows):
 def _code_section_targets(manifest, objects, section_bases, function_rows, import_rows, absolute_rows):
     function_addresses = {}
     for row in function_rows:
-        if row.get("boundary") == Result.PASS and row.get("bytes") != Result.FAIL:
+        if (row.get("result") != Result.FAIL and row.get("boundary") == Result.PASS
+                and row.get("bytes") in (Result.PASS, Result.UNKNOWN)
+                and (row.get("bytes") == Result.PASS
+                     or row.get("differing_offsets") == [])
+                and row.get("references") in (Result.PASS, Result.UNKNOWN)):
             function_addresses.setdefault(row["symbol"], []).append(int(row["address"], 16))
     import_addresses = {}
     for row in import_rows:
@@ -200,7 +240,7 @@ def _code_section_targets(manifest, objects, section_bases, function_rows, impor
 
 
 def _verify_code_section_references(manifest, objects, image, rows, bases, function_rows,
-                                    import_rows, absolute_rows):
+                                    import_rows, absolute_rows, archive_result):
     targets_by_member = _code_section_targets(manifest, objects, bases, function_rows,
                                               import_rows, absolute_rows)
     for item, row in zip(manifest.code_sections, rows, strict=True):
@@ -223,6 +263,24 @@ def _verify_code_section_references(manifest, objects, image, rows, bases, funct
             row.pop("reason", None)
         except ValueError as error:
             row.update(result=Result.UNKNOWN, reason=str(error))
+    for item, row in zip(manifest.code_sections, rows, strict=True):
+        parent_pass = (archive_result == Result.PASS and row.get("boundary") == Result.PASS
+                       and row.get("bytes") == Result.PASS
+                       and row.get("references") == Result.PASS
+                       and row.get("result") == Result.PASS
+                       and row.get("entry_inventory") == Result.PASS)
+        if parent_pass:
+            for entry in row["entries"]:
+                entry.update(address=item.span.start + entry["offset"], result=Result.PASS,
+                             callable=True, scoped_reference_target=True, link_target=False,
+                             function_extent=Result.UNKNOWN)
+        elif row.get("entry_inventory") == Result.FAIL:
+            continue
+        else:
+            for entry in row["entries"]:
+                entry.update(result=Result.UNKNOWN, callable=False,
+                             scoped_reference_target=False, link_target=False,
+                             function_extent=Result.UNKNOWN)
     return rows
 
 
@@ -330,10 +388,11 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
         qualified_bases[key] = base
     code_rows = _verify_code_section_references(manifest, objects, image, code_rows,
                                                 qualified_bases, rows, checked_imports,
-                                                absolute_rows)
+                                                absolute_rows, archive_result)
     outcomes = ({row["result"] for row in rows} | {archive_result}
                 | {row["result"] for row in absolute_rows} | {row["result"] for row in data_rows}
-                | {row["result"] for row in code_rows})
+                | {row["result"] for row in code_rows}
+                | {entry["result"] for row in code_rows for entry in row.get("entries", [])})
     required_rows = bool(rows or data_rows or code_rows)
     overall = (Result.FAIL if Result.FAIL in outcomes else Result.UNKNOWN
                if Result.UNKNOWN in outcomes or not required_rows else Result.PASS)
@@ -345,6 +404,8 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
             "counts": dict(sorted(Counter(row["result"] for row in rows).items())),
             "data_section_counts": dict(sorted(Counter(row["result"] for row in data_rows).items())),
             "code_section_counts": dict(sorted(Counter(row["result"] for row in code_rows).items())),
+            "code_entry_counts": dict(sorted(Counter(entry["result"] for row in code_rows
+                                                       for entry in row.get("entries", [])).items())),
             "selected_members": members, "member_errors": errors,
             "member_reads": len(members) if archive_result == Result.PASS else 0, "compile_attempts": 0,
             "unresolved_symbols": sorted({relocation["symbol"] for row in rows + code_rows

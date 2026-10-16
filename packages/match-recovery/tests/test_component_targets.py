@@ -52,9 +52,13 @@ def _project(tmp_path, manifest, archive_path, image):
     (tmp_path / "src/vendor/test.recovery.h").write_text(header)
     config = {"image_pin": "src/IMAGE_PIN", "address_space": "pe:va",
               "seed_roots": ["src/unrecovered"], "symbol_format": "msvc"}
-    (tmp_path / "recovery/project.json").write_text(
-        json.dumps({"schema_version": 1, "components": {"toolchain_archives": {"runtime": str(archive_path)}}}))
+    (tmp_path / "recovery/project.json").write_text(json.dumps({
+        "schema_version": 1,
+        "source": {"image_pin": "src/IMAGE_PIN", "address_space": "pe:va",
+                   "roots": ["src"], "seed_roots": ["src/unrecovered"]},
+        "components": {"toolchain_archives": {"runtime": str(archive_path)}}}))
     snapshot = {"image_sha256": hashlib.sha256(image).hexdigest(), "source_configuration": config,
+                "records": [],
                 "files": {"src/vendor/test.recovery.h":
                           {"content_base64": base64.b64encode(header.encode()).decode()}}}
     return snapshot
@@ -106,12 +110,19 @@ def test_failed_extent_rows_never_publish(tmp_path, monkeypatch, dependency):
     archive.write_bytes(raw)
     snapshot = _project(tmp_path, manifest, archive, image)
     from match_recovery.model import Result
-    def stub(unused_manifest, unused_image, unused_raw):
+    def stub(unused_manifest, unused_image, unused_raw, *, import_bindings=()):
         return {"result": Result.FAIL, "archive": {"result": Result.PASS},
                 "functions": [
-                    {"symbol": "_ok", "result": Result.PASS, "address": "0x00401000"},
-                    {"symbol": "_deep", "result": Result.UNKNOWN, "address": "0x00401006"},
-                    {"symbol": "_wrong", "result": Result.FAIL, "address": "0x00401010"}]}
+                    {"symbol": "_ok", "result": Result.PASS, "boundary": Result.PASS,
+                     "bytes": Result.PASS, "references": Result.PASS, "address": "0x00401000"},
+                    {"symbol": "_deep", "result": Result.UNKNOWN, "boundary": Result.PASS,
+                     "bytes": Result.UNKNOWN, "differing_offsets": [],
+                     "references": Result.UNKNOWN, "address": "0x00401006"},
+                    {"symbol": "_wrong", "result": Result.FAIL, "boundary": Result.PASS,
+                     "bytes": Result.FAIL, "references": Result.FAIL, "address": "0x00401010"},
+                    {"symbol": "_aggregate_failure", "result": Result.FAIL,
+                     "boundary": Result.PASS, "bytes": Result.PASS,
+                     "references": Result.PASS, "address": "0x00401020"}]}
     monkeypatch.setattr(module, "verify_toolchain", stub)
     targets, reports = component_targets(tmp_path, snapshot, image)
     assert targets == {"_ok": 0x401000, "_deep": 0x401006}
