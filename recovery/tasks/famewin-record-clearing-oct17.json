@@ -1,0 +1,45 @@
+{
+  "author": "coordinator",
+  "base_revision": "7ac1c9c473177da835cf3649be4a1e93f6a74138",
+  "editable_files": [
+    "src/famewin.cpp",
+    "recovery/tests/test_halloffame_io_owner.py",
+    "recovery/tests/test_hall_of_fame_entry.py"
+  ],
+  "evidence": [
+    "Pinned originals44AF70,44AF90,44B000,44B070 and44AE50 repeat an inner ECX=5 byte-clear loop at record stride0x8C, restarting that count until a signed end comparison against9A4B64. Existing HallOfFameRecord proves present offset0, stride0x8C,35records and0x1324byte storage.",
+    "Pinned44AE50 clears inline on open miss and write failure, but calls44AF70 on read failure. Preserve original I/O ordering, mode stores, incomplete read effects, close behavior and return results. No array/header/global/compiler policy change or safety normalization.",
+    "The historical signed-integer pointer/end spelling is known seed evidence, not permission to restore fixed addresses or casts solely for matching. Screen at most three ordinary typed loop forms together, retain all historical identities/spans/claims, run existing actual-source/damage controls and full-TU collateral measurements before a reviewed build/link/integration checkpoint. Stop this hypothesis if only unsigned/signed pointer encoding remains unsupported."
+  ],
+  "intent": "Restore the hall-of-fame family's original grouped present-byte clearing and call-versus-inline failure topology using its existing typed records, without prolonged matching search or behavior fixes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4501072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4501360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4501392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4501504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4501616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "famewin-record-clearing-oct17"
+}
