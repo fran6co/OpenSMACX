@@ -398,7 +398,7 @@ Purpose: Return the current StringList text, or null when the list is empty.
 //            whole chase and every guard-clause / named-link / walking-
 //            pointer spelling still routes the middle link through ecx.
 // symbol    ?current_text@StringList@@QAEPADXZ
-// body      src/stringstruct.h
+// body      src/stringstruct.cpp
 // size      20 bytes
 // prototype
 // callers   2   call targets   0
@@ -408,11 +408,14 @@ Purpose: Return the current StringList text, or null when the list is empty.
 Return Value: mutable text, or null when head_ is null
 Status: Complete
 */
-// Header-visible inline definition in stringstruct.h. current_text is a
-// provisional descriptive name, not a recovered original spelling. Original
-// Buffer::write_strings/height callers (0x005DB3C4, 0x005DB00E) pass their
-// StringList receiver in ECX and consume the result as text. The head guard
-// and current-entry chase also occur inline in CheckBox/RadioButton drawing.
+char *StringList::current_text() {
+    return head_ != 0 ? current_->string_payload()->text : 0;
+}
+
+// current_text is a provisional descriptive name, not a recovered original
+// spelling. Its six original Buffer callers use this out-of-line boundary;
+// CheckBox/RadioButton and other drawing/selection owners retain the same
+// guarded field chase inline at their original sites.
 
 // ===========================================================================
 // Coverage-first transcriptions (wave 1, journal 137/138). Each entry below

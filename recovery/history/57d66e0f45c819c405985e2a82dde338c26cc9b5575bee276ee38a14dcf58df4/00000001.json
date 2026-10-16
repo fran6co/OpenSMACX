@@ -1,0 +1,23 @@
+{
+  "event_id": "d72e5c6f65a153833379129789ff05fe162414b8c12c4351278baf259b7950c9",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_stringlist_text_boundary.py",
+      "src/editgroup.cpp"
+    ],
+    "evidence": [
+      "Independent pinned audit corrects earlier worker guard inference: Diplo444B33 tests EDX loaded from list head747BD8 at444B06, not current747BDC. Preserve head guard.",
+      "EditGroup612508..53D initializes cursor at head and walks to tail;6125B3 advances circular current per row. Existing seek_pos(index) restarts traversal and loses original cursor effects. Act on this discovery in the already authorized owner, preserving mapped identity.",
+      "EditGroup6125CA guards current;6125CE tests head. With nonnull current and null head,6125D7 sets EAX zero then6125D9 reads[EAX+4]. Preserve that original invalid path, not a safe combined null guard. Tests must distinguish cursor sequencing and guard ordering without claiming host UB proves original runtime.",
+      "Other inline head/current/payload witnesses: SpriteBox610FFB..61100A; Datalink42C3AF..3B9 and42C71F..729; AlphaSave407E1A..32. No new data types, layouts or address wrappers authorized. Main baseline remains frozen while isolated source work proceeds."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "inline-guard-and-editgroup-iterator-evidence-oct16",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:stringlist-text-call-boundaries-oct16"
+}

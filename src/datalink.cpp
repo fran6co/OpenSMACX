@@ -1012,7 +1012,8 @@ void Datalink::draw_concept() {
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
     listBox_.item_list_.seek_id(history_[0]);
-    strcat(StringTemp, listBox_.item_list_.current_text());
+    strcat(StringTemp, listBox_.item_list_.head_ != 0
+        ? listBox_.item_list_.current_->string_payload()->text : 0);
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     StringTemp[0] = 0;
@@ -1035,7 +1036,8 @@ void Datalink::draw_adv_concept() {
     set_text_color(0xE0, -1, 1, 1);
     StringTemp[0] = 0;
     listBox_.item_list_.seek_id(history_[0] + 10000);
-    strcat(StringTemp, listBox_.item_list_.current_text());
+    strcat(StringTemp, listBox_.item_list_.head_ != 0
+        ? listBox_.item_list_.current_->string_payload()->text : 0);
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     StringTemp[0] = 0;

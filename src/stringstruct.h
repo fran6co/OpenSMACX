@@ -316,9 +316,7 @@ class StringList : public StringStruct {
 
   // Provisional name: 0x005E3630 returns the current StringList text.
   // Its original Buffer callers pass this list in ECX and consume a char*.
-  char *current_text() {
-    return head_ != 0 ? current_->string_payload()->text : 0;
-  }
+  char *current_text();
 
   // Sort the circular list by payload text, retaining each ID with its
   // payload. The int argument is unused by the original implementation.

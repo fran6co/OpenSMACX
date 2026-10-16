@@ -1,4 +1,4 @@
-// Pytest inserts actual draw bodies and the actual inline text accessor.
+// Pytest inserts actual draw bodies.
 // Surrounding UI/list services are scripted doubles: this tests body dataflow,
 // not production class layout, complete list semantics or game acceptance.
 #include <assert.h>
@@ -23,7 +23,6 @@ struct List {
     }
     void next_entry() { ++advances; }
     Payload *current_entry() { return current_->payload; }
-    // LIVE_ACCESSOR
 };
 struct Font { int descent_; };
 struct Buffer;

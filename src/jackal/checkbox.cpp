@@ -314,16 +314,19 @@ void CheckBox::draw_item(int position, int state, int) {
     area.left += Dialog::field_34_;
     if (Dialog::item_list_.head_ != 0 &&
         Dialog::item_list_.current_->string_payload()->field_8_ == 1) {
-        char *text = Dialog::item_list_.current_text();
+        char *text = Dialog::item_list_.head_ != 0
+            ? Dialog::item_list_.current_->string_payload()->text : 0;
         char *separator = strchr(text, '|');
         if (separator == 0) {
-            text = Dialog::item_list_.current_text();
+            text = Dialog::item_list_.head_ != 0
+                ? Dialog::item_list_.current_->string_payload()->text : 0;
             if (text != 0) {
                 Buffer::write_l(text, &area, strlen(text));
             }
         } else {
             *separator = 0;
-            text = Dialog::item_list_.current_text();
+            text = Dialog::item_list_.head_ != 0
+                ? Dialog::item_list_.current_->string_payload()->text : 0;
             if (text != 0) {
                 Buffer::write_l(text, &area, strlen(text));
             }
@@ -334,14 +337,17 @@ void CheckBox::draw_item(int position, int state, int) {
             }
         }
     } else {
-        char *text = Dialog::item_list_.current_text();
+        char *text = Dialog::item_list_.head_ != 0
+            ? Dialog::item_list_.current_->string_payload()->text : 0;
         char *separator = strchr(text, '|');
         if (separator == 0) {
-            text = Dialog::item_list_.current_text();
+            text = Dialog::item_list_.head_ != 0
+                ? Dialog::item_list_.current_->string_payload()->text : 0;
             Buffer::wrap(text, &area);
         } else {
             *separator = 0;
-            text = Dialog::item_list_.current_text();
+            text = Dialog::item_list_.head_ != 0
+                ? Dialog::item_list_.current_->string_payload()->text : 0;
             Buffer::wrap(text, &area);
             *separator = '|';
             ++separator;

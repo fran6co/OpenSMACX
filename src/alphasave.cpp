@@ -307,7 +307,8 @@ void AlphaSave::hide_save_window() {
 void AlphaSave::on_selected(int) {
     Dialog &dialog = file_win_.list_box();
     dialog.item_list_.seek_pos(dialog.selected_position_);
-    file_win_.edit_box().set_text(dialog.item_list_.current_text());
+    file_win_.edit_box().set_text(dialog.item_list_.head_ != 0
+        ? dialog.item_list_.current_->string_payload()->text : 0);
     file_win_.edit_box().select_all_text();
     file_win_.edit_box().redraw();
     file_win_.edit_box().redraw();

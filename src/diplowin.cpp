@@ -419,7 +419,8 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
       if (source_index < 0)
         continue;
       source.seek_pos(source_index);
-      destination.pending_text_ = source.current_text();
+      destination.pending_text_ = source.head_ != 0
+          ? source.current_->string_payload()->text : 0;
       destination.field_20_ = 0;
       destination.field_24_ = 0;
       destination.add(source.current_id());

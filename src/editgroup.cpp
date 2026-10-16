@@ -600,40 +600,63 @@ void EditGroup::on_redraw() {
     Win *const parent = win_parent_;
     if (parent == 0) return;
     WinCallbackWindow = parent;
-    const int handled = parent->on_dialog_back_draw(
-        static_cast<GraphicWin *>(this));
-    if (handled == 0) {
-        static_cast<GraphicWin *>(parent)->copy(
-            this, Dialog::field_24_, Dialog::field_28_, 0, 0,
-            static_cast<int>(dib_.bmiHeader.biWidth),
-            -static_cast<int>(dib_.bmiHeader.biHeight));
-    }
+    static_cast<GraphicWin *>(parent)->copy(
+        this, Dialog::field_24_, Dialog::field_28_, 0, 0,
+        static_cast<int>(dib_.bmiHeader.biWidth),
+        -static_cast<int>(dib_.bmiHeader.biHeight));
 
-    const int columns = static_cast<int>(Dialog::field_54_);
-    const int rows = static_cast<int>(Dialog::field_58_);
-    int index = 0;
-    for (int column = 0; column < columns; ++column) {
-        for (int row = 0; row < rows && index < item_list_.entry_count_; ++row) {
-            if (item_list_.seek_pos(index)) {
-                RECT label_area;
-                label_area.left = column * static_cast<int>(Dialog::field_64_) +
-                                  static_cast<int>(Dialog::field_40_);
-                label_area.top = row * (static_cast<int>(Dialog::field_68_) +
-                                        static_cast<int>(Dialog::field_44_)) +
-                                 (static_cast<int>(Dialog::field_44_) >> 1);
-                label_area.right = label_area.left + label_width_;
-                label_area.bottom = label_area.top + Dialog::field_68_;
-                char *const label = item_list_.current_text();
+    const int base_left = static_cast<int>(Dialog::field_34_) +
+                          static_cast<int>(Dialog::field_40_);
+    const int base_top = static_cast<int>(Dialog::field_44_) >> 1;
+    const int base_right = base_left + static_cast<int>(Dialog::field_64_);
+    const int base_bottom = static_cast<int>(Dialog::field_68_) -
+                            static_cast<int>(Dialog::field_44_) + base_top;
+
+    item_list_.seek_pos(-1);
+
+    int column = 0;
+    while (column < static_cast<int>(Dialog::field_54_)) {
+        RECT label_area;
+        label_area.left = base_left;
+        label_area.top = base_top;
+        label_area.right = base_right;
+        label_area.bottom = base_bottom;
+        const int column_offset =
+            column * static_cast<int>(Dialog::field_64_);
+        label_area.left += column_offset;
+        label_area.right += column_offset;
+
+        int row = 0;
+        while (row < static_cast<int>(Dialog::field_58_)) {
+            StringStructEntry *const head = item_list_.head_;
+            if (head != 0) {
+                const int count = item_list_.entry_count_;
+                item_list_.current_ = item_list_.current_->next;
+                ++item_list_.current_position_;
+                if (item_list_.current_position_ == count) {
+                    item_list_.current_position_ = 0;
+                }
+            }
+
+            if (item_list_.current_ != 0) {
+                StringStructPayload *const payload =
+                    head != 0 ? item_list_.current_->string_payload() : 0;
+                // The original reads payload->text even when head is null.
+                // Keep that unsafe path rather than normalizing the list state.
+                char *const label = payload->text;
                 if (label != 0) {
                     static_cast<Buffer *>(static_cast<GraphicWin *>(this))->write_l(
                         label, &label_area, strlen(label));
                 }
             }
-            if (boxes_[index] != 0) boxes_[index]->on_redraw();
-            ++index;
+
+            const int row_step = static_cast<int>(Dialog::field_68_);
+            label_area.top += row_step;
+            label_area.bottom += row_step;
+            ++row;
         }
+        ++column;
     }
-    soft_update();
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

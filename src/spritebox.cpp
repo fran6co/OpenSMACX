@@ -608,7 +608,8 @@ void SpriteBox::draw_item(int position) {
         }
     }
 
-    char *const label = Dialog::item_list_.current_text();
+    char *const label = Dialog::item_list_.head_ != 0
+        ? Dialog::item_list_.current_->string_payload()->text : 0;
     if (label != 0) {
         static_cast<Buffer *>(static_cast<GraphicWin *>(this))->write_l(
             label, &area, strlen(label));

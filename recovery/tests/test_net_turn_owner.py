@@ -39,7 +39,8 @@ def test_native_turn_bodies_use_real_owner_dependencies_and_layout():
     from match_recovery.object_source import read_objects
     from match_recovery.object_data import check_initial_data
     from recovery.environment.wine import VC6_ROOT
-    original = ROOT / '.opensmacx/game/terranx_original.exe'
+    original = Path(os.environ.get('OPENSMACX_IMAGE',
+                                   ROOT / '.opensmacx/game/terranx_original.exe'))
     if not original.is_file() or not (VC6_ROOT / 'BIN/CL.EXE').is_file() or not shutil.which('wine32'):
         pytest.skip('pinned image, VC6 and Wine32 required')
     image = PeImage(original.read_bytes(), image_pin(ROOT))
@@ -94,15 +95,17 @@ def test_native_turn_bodies_use_real_owner_dependencies_and_layout():
         old = Coff(compiler.overlay(ROOT / 'src/game.cpp', baseline_inputs, (),
                                    flags + settings.layout_flags))
         assert function_signature(old, '?mon_enemy_destroyed@@YAXHH@Z') == function_signature(obj, '?mon_enemy_destroyed@@YAXHH@Z')
-        # The stale StringList semantic symbol is unmeasurable before and
-        # after this batch. Missing emission is not a pass or a demotion.
+        # The historical header-only inline did not emit this semantic
+        # identity in its owner TU. The migrated ordinary owner now must emit
+        # it; this does not claim the old source name was independently proven.
         string_old_inputs = {unit: subprocess.check_output(['git', 'show', BASE + ':' + unit], cwd=ROOT)
-                             for unit in ('src/stringstruct.cpp', 'src/game.h')}
+                             for unit in ('src/stringstruct.cpp', 'src/stringstruct.h', 'src/game.h')}
         current_strings = Coff(compiler(ROOT / 'src/stringstruct.cpp', (), flags))
         old_strings = Coff(compiler.overlay(ROOT / 'src/stringstruct.cpp', string_old_inputs, (), flags))
         missing = '?current_text@StringList@@QAEPADXZ'
-        for strings in (current_strings, old_strings):
-            assert not any(s.name == missing and s.section > 0 for s in strings.symbols.values())
+        assert not any(s.name == missing and s.section > 0 for s in old_strings.symbols.values())
+        assert sum(s.name == missing and s.section > 0
+                   for s in current_strings.symbols.values()) == 1
 
 
 HARNESS = ROOT / "recovery/tests/net_turn_harness.cpp"

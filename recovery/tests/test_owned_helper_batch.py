@@ -51,7 +51,9 @@ def test_native_helpers_use_real_owner_objects_and_sdk():
     from recovery.environment.wine import VC6_ROOT
     if not (VC6_ROOT / 'BIN/CL.EXE').is_file() or not shutil.which('wine32'):
         pytest.skip('VC6 and Wine32 required')
-    image = PeImage((ROOT / '.opensmacx/game/terranx_original.exe').read_bytes(), image_pin(ROOT))
+    image_path = Path(os.environ.get('OPENSMACX_IMAGE',
+                                     ROOT / '.opensmacx/game/terranx_original.exe'))
+    image = PeImage(image_path.read_bytes(), image_pin(ROOT))
     assert image.read_initial(Span(0x945AEC, 0x945AF0)) == bytes(4)
     binding, = (b for b in read_objects(ROOT, image_pin(ROOT)) if b.origin.address == 0x945AEC)
     assert binding.symbol == '?StoredScaleAdjustment@@3HA' and binding.span is None
@@ -76,15 +78,18 @@ def test_native_helpers_use_real_owner_objects_and_sdk():
         # Fresh code/external-reference equality is bounded COFF evidence,
         # not retained linked-image or whole-object preservation.
         headers = {unit: subprocess.check_output(['git','show',BASE+':'+unit],cwd=ROOT)
-                   for unit in ('src/game.h','src/general.h','src/statuswin.h','src/maininterface.h')}
+                   for unit in ('src/game.h','src/general.h','src/statuswin.h','src/maininterface.h',
+                                'src/stringstruct.h')}
         old_status_inputs = {**headers, 'src/statuswin.cpp': subprocess.check_output(['git','show',BASE+':src/statuswin.cpp'],cwd=ROOT)}
         old_status = Coff(compiler.overlay(ROOT / 'src/statuswin.cpp',old_status_inputs,(),flags))
         assert function_signature(old_status,'?arrow_right@StatusWin@@QAEXXZ') == function_signature(objects['src/statuswin.cpp'],'?arrow_right@StatusWin@@QAEXXZ')
         old_string_inputs = {**headers, 'src/stringstruct.cpp': subprocess.check_output(['git','show',BASE+':src/stringstruct.cpp'],cwd=ROOT)}
         old_strings = Coff(compiler.overlay(ROOT / 'src/stringstruct.cpp',old_string_inputs,(),flags))
-        for strings in (old_strings,objects['src/stringstruct.cpp']):
-            assert not any(s.name == '?current_text@StringList@@QAEPADXZ' and s.section > 0
-                           for s in strings.symbols.values())
+        text_symbol = '?current_text@StringList@@QAEPADXZ'
+        assert not any(s.name == text_symbol and s.section > 0
+                       for s in old_strings.symbols.values())
+        assert sum(s.name == text_symbol and s.section > 0
+                   for s in objects['src/stringstruct.cpp'].symbols.values()) == 1
 
 
 def _run(directory, bodies, compiler):
