@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "task_id": "window-global-virtual-dispatch-oct16",
+  "candidate_revision": "7423d2bace02e70ca8d365965a249a79eb7d16f6",
+  "decision": "Authorize coordinator-reviewed manual integration with bounded compiler scheduling collateral.",
+  "affected_unedited_original": "0x004A0260",
+  "rationale": [
+    "Independent source/pinned review confirms five virtual call-site corrections across the four authorized function bodies.",
+    "Independent physical review allows the two independent nonvolatile stack reloads in sat_attack to exchange order. Their destination registers, loaded slots, subsequent instructions, control flow and reference targets are retained. No source change to sat_attack is authorized by this decision.",
+    "Historical claims and restoration obligations remain intact. This decision grants no byte claim, native automatic acceptance, full linked preservation or runtime equivalence. Fresh destination compilation and review remain required."
+  ],
+  "evidence": [
+    "git:7423d2bace02e70ca8d365965a249a79eb7d16f6",
+    "ignored:build/recovery/audio-lifecycle-window-global-virtual-dispatch-corrected-candidate-oct16.json",
+    "ignored:build/recovery/audio-lifecycle-build-window-global-virtual-dispatch-corrected-candidate-oct16.json"
+  ]
+}
