@@ -7730,7 +7730,9 @@ void MapWin::calculate_dimensions() {
     int32_t f73_ = field_1DDCC_;
     int32_t bVal = field_1DD9C_;
     int32_t panXinit = bVal - f73_;
-    uint8_t wrapFlag = *reinterpret_cast<uint8_t *>(&MapIsFlat);
+    // Preserve this source snapshot; the pinned later reload at 0x462C32 is
+    // an unresolved read-order obligation for this function.
+    uint8_t wrapFlag = static_cast<uint8_t>(MapIsFlat);
     int32_t panX;
     if ((wrapFlag & 1) == 0) {
         int32_t screenW = MapLongitudeBounds;

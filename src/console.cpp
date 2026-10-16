@@ -4580,7 +4580,7 @@ void Console::editor_fast() {
     if (flag80 != 0) {
         GameDataStateStorage.fields_.game_state_ = GameDataStateStorage.fields_.game_state_ | 0x80;
     }
-    unsigned char al = *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.game_state_);
+    unsigned char al = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
     if ((al & 0x80) != 0 && (al & 0x40) != 0) {
         MainInterfaceGlobal.flat_button_[2].show(0);
     } else {
@@ -4883,7 +4883,7 @@ void __cdecl auto_play_callback(int) {
     AutoPlayCounter = AutoPlayCounter + 1;
     if (AutoPlayCounter > 100) {
         if (WinModalDepth == 0) {
-            unsigned char state = *reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.game_state_);
+            unsigned char state = static_cast<unsigned char>(GameDataStateStorage.fields_.game_state_);
             if ((state & 2) != 0) {
                 ConsoleGlobal.end_my_turn();
                 AutoPlayCounter = 0;
