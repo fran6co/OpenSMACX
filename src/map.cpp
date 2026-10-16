@@ -1004,62 +1004,6 @@ int __cdecl elev_at(int x, int y) {
 }
 
 /*
-Purpose: Calculate the natural altitude of the specified tile.
-// ORIGINAL: 0x005918A0 ?alt_natural@@YAHHH@Z 0x005918A0-0x005918EF
-// body      src/map.h
-// TRIED: same index-fold plateau as alt_at/alt_detail_at - the inlined
-//            map_loc(x,y)->contour read (via alt_detail_at) schedules the
-//            width-load/imul/shift with ecx/eax swapped from the image's
-//            allocation; best 4/28 (0.618) across all flag sets, default
-//            flags give 3/28 (0.793 similar, MISMATCH). Not chased further.
-// size      79 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain tops)
-Status: Complete
-*/
-// BODY IN map.h, as `MEASURED inline`: the image calls it as a real function
-// from world_linearize_contours but inlines it in alt_set_both, and a .cpp
-// definition can only ever be one of those.
-
-/*
-Purpose: Set both the altitude and natural altitude for the specified tile. The altitude_natural
-         parameter can be between 0 to 9.
-// ORIGINAL: 0x005918F0 ?alt_set_both@@YAXHHH@Z 0x005918F0-0x005919C0
-// LEVER: call_diff had this 3-calls-vs-2 (MORE): `alt_natural` moved to
-//   `MEASURED inline` in map.h (image calls it for real from
-//   world_linearize_contours but inlines it here) and the `rnd()` call
-//   replaced with its own body, since a cross-TU call can never inline.
-//   0.513 -> 0.843 similar. TRIED beyond that: `Map*`/pointer hoists for
-//   AltNatural[altitude_natural] (no change); rewriting alt_natural's
-//   `while (cond && natural) natural--;` as a decrement-then-clamp loop to
-//   chase the image's pointer-walk shape (made both worse, 0.843->0.817).
-// size      208 bytes
-// prototype void (__cdecl ?alt_set_both@@YAXHHH@Z)(int xCoord, int yCoord, int altitude)
-// callers   2   call targets   2
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00591290 0x0064601D
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl alt_set_both(int x, int y, int altitude_natural) {
-    alt_set(x, y, altitude_natural);
-    if (alt_natural(x, y) != altitude_natural) {
-        // `rnd()`'s own body, written out: it is a real function used
-        // elsewhere (general.cpp), so a cross-TU call to it cannot inline -
-        // the image's `call 0x0064601D` is straight to the CRT `rand`.
-        uint32_t *const base = &AltNatural[altitude_natural];
-        int bounds = base[1] - base[0];
-        int roll = (bounds - 1 > 0) ? rand() % bounds : 0;
-        alt_put_detail(x, y, (uint8_t)(base[0] + MapSeaLevel + roll));
-    }
-}
-
-/*
 Purpose: Get the bit shifted (down) altitude of the specified tile.
 // ORIGINAL: 0x00500150 ?alt_at@@YAHHH@Z 0x00500150-0x0050017B
 // body      src/map.h
@@ -1118,32 +1062,6 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
-
-
-/*
-Purpose: Set the altitude details for the specified tile.
-// ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288 SEMANTIC
-// body      src/map.h
-// TRIED: shared plateau with region_set (identical shape). Image loads
-//            the byte parameter into cl BEFORE loading map_tiles(); the
-//            compiler always loads map_tiles() first regardless of source
-//            order. Tried: a cast-only local, a `Map *tile = map_loc(x,y);`
-//            temp before the store, both no-op - same 11/14 MNEMONIC_ONLY,
-//            same swapped pair of loads.
-// size      40 bytes
-// prototype void (__cdecl ?alt_put_detail@@YAXHHH@Z)(int xCoord, int yCoord, int detail)
-// callers   5   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-
 
 
 /*
@@ -4360,8 +4278,8 @@ void __cdecl world_climate() {
 
 /*
 Purpose: Set the default altitude details for the specified tile.
-// ORIGINAL: 0x005C58C0 ?world_alt_put_detail@@YAXHH@Z 0x005C58C0-0x005C58DB
-// body      src/map.h
+// ORIGINAL: 0x005C58C0 ?world_alt_put_detail@@YAXHH@Z 0x005C58C0-0x005C58DB BYTE_EXACT
+// body      src/map.cpp
 // size      27 bytes
 // prototype void (__cdecl ?world_alt_put_detail@@YAXHH@Z)(int xCoord, int yCoord)
 // callers   0   call targets   1
@@ -4371,6 +4289,9 @@ Purpose: Set the default altitude details for the specified tile.
 Return Value: n/a
 Status: Complete
 */
+void __cdecl world_alt_put_detail(int x, int y) {
+    alt_put_detail(x, y, AltNatural[3]);
+}
 
 /*
 Purpose: Set up the world polar caps.
@@ -4381,12 +4302,13 @@ Purpose: Set up the world polar caps.
 //            (-1, MapLatitudeBounds-1), wrapping to the far column, and every
 //            pair was one tile out. `x + 1` is also what makes this
 //            BYTE_EXACT.
-// LEVER: three call-shape fixes, 1/128 -> BYTE_EXACT 128/128. (1) The six
-//            pole writes go through the non-inline forwarder
-//            `alt_put_detail_call` (bottom of this file): the image calls
-//            alt_put_detail (0x00591260) for real and call_diff named the
-//            inlined `world_alt_put_detail` a WRONG CALLEE; the header
-//            inline definition folds those six sites away. (2) The four
+// LEVER: three call-shape fixes, 1/128 -> BYTE_EXACT 128/128. (1) A prior
+//            workaround sent the six pole writes through a non-inline
+//            `alt_put_detail_call` forwarder to force the original direct
+//            calls to alt_put_detail (0x00591260); call_diff had named the
+//            inlined `world_alt_put_detail` a WRONG CALLEE. The current
+//            source-order experiment uses ordinary direct calls before the
+//            one alt_put_detail definition instead. (2) The four
 //            random columns are `rnd(MapLongitudeBounds / 2, NULL)` written
 //            out as its own body (guard clause + `rand() % seed`) - the
 //            image calls rand() directly, never rnd(), and it computes the
@@ -4410,11 +4332,12 @@ Status: Complete - testing
 */
 void __cdecl world_polar_caps() {
     // world_alt_put_detail(x, y) written out at every site: the image calls
-    // alt_put_detail (0x00591260) directly from all six - `call_diff` names
-    // the wrapper as a WRONG CALLEE - and calls rand() rather than rnd().
+    // alt_put_detail (0x00591260) directly from all six - historical
+    // `call_diff` called the inlined `world_alt_put_detail` a WRONG CALLEE -
+    // and calls rand() rather than rnd().
     for (int x = 0; x < MapLongitudeBounds; x += 2) {
-        alt_put_detail_call(x, 0, AltNatural[3]);
-        alt_put_detail_call(x + 1, MapLatitudeBounds - 1, AltNatural[3]);
+        alt_put_detail(x, 0, AltNatural[3]);
+        alt_put_detail(x + 1, MapLatitudeBounds - 1, AltNatural[3]);
     }
     for (int i = 0; i < MapLongitudeBounds / 16; i++) {
         // rnd(MapLongitude, NULL)'s own body (0x00579770): the image has no
@@ -4426,28 +4349,28 @@ void __cdecl world_polar_caps() {
         } else {
             x_rand = rand() % seed;
         }
-        alt_put_detail_call(x_rand * 2, 0, AltNatural[3]);
+        alt_put_detail(x_rand * 2, 0, AltNatural[3]);
         seed = MapLongitudeBounds / 2;
         if (seed - 1 <= 0) {
             x_rand = 0;
         } else {
             x_rand = rand() % seed;
         }
-        alt_put_detail_call(x_rand * 2 + 1, 1, AltNatural[3]);
+        alt_put_detail(x_rand * 2 + 1, 1, AltNatural[3]);
         seed = MapLongitudeBounds / 2;
         if (seed - 1 <= 0) {
             x_rand = 0;
         } else {
             x_rand = rand() % seed;
         }
-        alt_put_detail_call(x_rand * 2 + 1, MapLatitudeBounds - 1, AltNatural[3]);
+        alt_put_detail(x_rand * 2 + 1, MapLatitudeBounds - 1, AltNatural[3]);
         seed = MapLongitudeBounds / 2;
         if (seed - 1 <= 0) {
             x_rand = 0;
         } else {
             x_rand = rand() % seed;
         }
-        alt_put_detail_call(x_rand * 2, MapLatitudeBounds - 2, AltNatural[3]);
+        alt_put_detail(x_rand * 2, MapLatitudeBounds - 2, AltNatural[3]);
     }
 }
 
@@ -6178,14 +6101,6 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
     }
     return detail;
 }
-
-// Non-inline forwarder to `alt_put_detail` (map.h): world_polar_caps
-// (0x005C58E0) is where the image makes six real `call 0x591260`s, and an
-// inline definition in the header gets those six sites folded away instead.
-void __cdecl alt_put_detail_call(int x, int y, int detail) {
-    alt_put_detail(x, y, detail);
-}
-
 
 // Homed from src/map_color.cpp (2026-09-02): its leaf-test isolation
 // rationale died with the leaf suite, the same retirement that freed
@@ -8768,4 +8683,89 @@ int __cdecl action_build(int veh_id, char *base_name) {
 
     veh_skip(veh_id);
     return base_id;
+}
+
+/*
+Purpose: Calculate the natural altitude of the specified tile.
+// ORIGINAL: 0x005918A0 ?alt_natural@@YAHHH@Z 0x005918A0-0x005918EF
+// body      src/map.cpp
+// TRIED: same index-fold plateau as alt_at/alt_detail_at - the inlined
+//            map_loc(x,y)->contour read (via alt_detail_at) schedules the
+//            width-load/imul/shift with ecx/eax swapped from the image's
+//            allocation; best 4/28 (0.618) across all flag sets, default
+//            flags give 3/28 (0.793 similar, MISMATCH). Not chased further.
+// size      79 bytes
+// prototype
+// callers   1   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain tops)
+Status: Complete
+*/
+int __cdecl alt_natural(int x, int y) {
+    uint32_t contour = alt_detail_at(x, y) - MapSeaLevel;
+    uint32_t natural = ALT_3_LEVELS_ABOVE_SEA;
+    while (contour < AltNatural[natural] && natural) {
+        natural--;
+    }
+    return natural;
+}
+
+/*
+Purpose: Set the altitude details for the specified tile.
+// ORIGINAL: 0x00591260 ?alt_put_detail@@YAXHHH@Z 0x00591260-0x00591288 BYTE_EXACT
+// body      src/map.cpp
+// TRIED: shared plateau with region_set (identical shape). Image loads
+//            the byte parameter into cl BEFORE loading map_tiles(); the
+//            compiler always loads map_tiles() first regardless of source
+//            order. Tried: a cast-only local, a `Map *tile = map_loc(x,y);`
+//            temp before the store, both no-op - same 11/14 MNEMONIC_ONLY,
+//            same swapped pair of loads.
+// size      40 bytes
+// prototype void (__cdecl ?alt_put_detail@@YAXHHH@Z)(int xCoord, int yCoord, int detail)
+// callers   5   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl alt_put_detail(int x, int y, int detail) {
+    map_loc(x, y)->contour = detail;
+}
+
+/*
+Purpose: Set both the altitude and natural altitude for the specified tile. The altitude_natural
+         parameter can be between 0 to 9.
+// ORIGINAL: 0x005918F0 ?alt_set_both@@YAXHHH@Z 0x005918F0-0x005919C0
+// LEVER: historical call_diff work found the image calls `alt_natural`
+//   from world_linearize_contours but inlines its scan here; putting the
+//   sole definition before this setter and after direct callers now expresses
+//   that boundary with ordinary source order. The `rnd()` call was replaced
+//   with its own body, since a cross-TU call can never inline. 0.513 -> 0.843
+//   similar. TRIED beyond that: `Map*`/pointer hoists for
+//   AltNatural[altitude_natural] (no change); rewriting alt_natural's
+//   `while (cond && natural) natural--;` as a decrement-then-clamp loop to
+//   chase the image's pointer-walk shape (made both worse, 0.843->0.817).
+// size      208 bytes
+// prototype void (__cdecl ?alt_set_both@@YAXHHH@Z)(int xCoord, int yCoord, int altitude)
+// callers   2   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00591290 0x0064601D
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl alt_set_both(int x, int y, int altitude_natural) {
+    alt_set(x, y, altitude_natural);
+    if (alt_natural(x, y) != altitude_natural) {
+        // `rnd()`'s own body, written out: it is a real function used
+        // elsewhere (general.cpp), so a cross-TU call to it cannot inline -
+        // the image's `call 0x0064601D` is straight to the CRT `rand`.
+        uint32_t *const base = &AltNatural[altitude_natural];
+        int bounds = base[1] - base[0];
+        int roll = (bounds - 1 > 0) ? rand() % bounds : 0;
+        alt_put_detail(x, y, (uint8_t)(base[0] + MapSeaLevel + roll));
+    }
 }

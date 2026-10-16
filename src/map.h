@@ -437,7 +437,9 @@ int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point
 // before that line was extended (2026-09-03) - VC6 refuses to let a TU
 // define the intrinsic (C2169), so the forwarder was the only source
 // spelling that reached a call.
-void __cdecl alt_put_detail_call(int x, int y, int detail);
+void __cdecl alt_put_detail(int x, int y, int detail);
+int __cdecl alt_natural(int x, int y);
+void __cdecl world_alt_put_detail(int x, int y);
 BOOL __cdecl sea_coast(int region_dst, int region_src);
 int __cdecl sea_coasts(int region_src);
 BOOL __cdecl base_on_sea(int base_id, int region_sea);
@@ -614,19 +616,6 @@ MEASURED inline int __cdecl alt_detail_at(int x, int y) {
     return map_loc(x, y)->contour;
 }
 
-MEASURED inline void __cdecl alt_put_detail(int x, int y, int detail) {
-    map_loc(x, y)->contour = detail;
-}
-
-MEASURED inline int __cdecl alt_natural(int x, int y) {
-    uint32_t contour = alt_detail_at(x, y) - MapSeaLevel;
-    uint32_t natural = ALT_3_LEVELS_ABOVE_SEA;
-    while (contour < AltNatural[natural] && natural) {
-        natural--;
-    }
-    return natural;
-}
-
 MEASURED inline int __cdecl region_at(int x, int y) {
     return map_loc(x, y)->region;
 }
@@ -754,13 +743,6 @@ inline int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int 
 
 MEASURED inline BOOL __cdecl is_ocean(int x, int y) {
     return altitude_at(x, y) < ALT_BIT_SHORE_LINE;
-}
-
-// Nothing in the image calls world_alt_put_detail: `inline_candidates` found no
-// direct edge to it anywhere in the shipped bytes, so every caller has
-// it written out. `MEASURED` keeps the standalone body measurable.
-MEASURED inline void __cdecl world_alt_put_detail(int x, int y) {
-    alt_put_detail(x, y, (uint8_t)AltNatural[3]);
 }
 
 MEASURED inline int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {

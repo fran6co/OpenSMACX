@@ -1,0 +1,25 @@
+{
+  "event_id": "c3f4d8f1e156c6b32bb7d11ca62f97db8a1bad63f205fb797b152691203c97e8",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/project.json",
+      "src/map_altitude.cpp"
+    ],
+    "evidence": [
+      "First candidate native map comparison gains world_alt_put_detail exact without exact losses, but Release physical review disproves lexical-order call-boundary control: same-TU /Ob2 inlines alt_put_detail into all five world callers and alt_natural into linearize.",
+      "Place the genuine alt_natural5918A0, alt_put_detail591260 and alt_set_both5918F0 implementations together in map_altitude.cpp. The world algorithms remain in map.cpp and call these source owners across the TU boundary; alt_set_both retains same-TU visibility of both helpers. This is semantic grouping plus compiler evidence, not proof of the original TU partition.",
+      "Preserve current bodies and original identities, recorded claims and all prior findings. Keep world_alt_put_detail in map.cpp passing the pinned full dword. No wrappers, duplicated helpers, noinline pragmas, forced exports or behavior fixes.",
+      "Add only this owner to CMake. A unit-scoped /Ob2 measurement recipe for the new owner is permitted when measured to preserve the original inline exception; keep existing global flags and all other unit recipes unchanged. No baseline reset.",
+      "Require fresh preparation after CMake changes, original direct call census including world_alt_set and all five world setters, inline-exception inspection, full affected measurements, related behavior tests, build/link and physical collateral review before coordinator integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "terrain-altitude-owner-oct16",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:terrain-helper-boundaries-oct16"
+}
