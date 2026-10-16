@@ -899,6 +899,36 @@ same source/toolchain/hypothesis; a plateau becomes an investigation or a differ
 owner batch, not another identical spelling sweep. No throughput report proves
 acceptance or authorizes publication.
 
+### Fast recovery queue
+
+Keep independent owner batches moving in parallel while a structural batch is
+being verified. Start with cheap, read-only triage against the pinned original
+and current source: classify a candidate as missing behavior, a shared structural
+defect, a small matching miss, or an exhausted spelling experiment. Consult the
+existing findings and tried variants before allocating compiler time. A high
+similarity score alone does not make a candidate cheap or structurally sound.
+
+For small body-only matching misses, screen at most three evidence-backed
+spellings in one local variant deck before reconsidering the hypothesis. Do not
+add volatile accesses, raw casts, fixed addresses or fake dispatch solely to
+force instruction scheduling. Preserve useful discoveries and move to another
+owner when that bounded screen yields no progress; return with new evidence,
+not the same deck. Structural changes use the broader verification route.
+
+Group related corrections under their real owner and compile each affected TU
+once per required flag trial, measuring its selected functions from that object.
+Run cheap actual-source tests before native compilation. After source freeze,
+perform the fresh build/link and relevant preservation/reference/layout checks
+at the batch checkpoint, then recheck after integration. Avoid repeating a broad
+strict task sweep for every speculative spelling. This changes the order and
+granularity of exploration, not recording or integration requirements. Header,
+inlining and shared-layout changes require investigation of collateral output;
+an unchanged neighboring function count is not preservation evidence.
+
+Keep pending compilations within the provisioned compiler leases, independent
+of the number of triage workers. Report landed function gains and observed
+compile attempts separately from candidates inspected or workers launched.
+
 When an extent failure hides the useful instruction differences, add
 `--compiled-diagnostics` to the same native variant command. It reuses that run's
 compiled objects and shows bounded, unlinked listings for the primary target;
