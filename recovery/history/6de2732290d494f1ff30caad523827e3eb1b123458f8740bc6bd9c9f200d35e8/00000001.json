@@ -1,0 +1,26 @@
+{
+  "event_id": "0c6068eac2b3ba6308ab64ac6d543349d0150c9c197b79a5b5264a40276a77dc",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/console.cpp",
+      "src/enemy.cpp",
+      "src/faction.cpp",
+      "src/map.cpp",
+      "src/probe.cpp",
+      "src/reportif.cpp"
+    ],
+    "evidence": [
+      "Live source search confirms six additional files contain has_tech_call expressions. Their measurement subjects are already in the technology.h affected closure; editable-file authority was incomplete.",
+      "Authorize only routing those existing wrapper calls to canonical has_tech and correcting directly related obsolete comments. Preserve arguments, evaluation order, behavior and historical annotations. No compatibility wrapper, unrelated body rewrite, claim demotion or baseline reset.",
+      "Task retains full original affected measurements and physical call-target checks, build/link, claim/reference checks before reviewed integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "technology-real-wrapper-callers-oct16",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:technology-query-boundaries-oct16"
+}

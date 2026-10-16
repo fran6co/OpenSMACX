@@ -1,0 +1,20 @@
+{
+  "event_id": "46ccb0874fe8f5e71d3f84ba80521e24ab779c4c268ef78a7228d06221be5a12",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_facility_avail_original_rules.py"
+    ],
+    "evidence": [
+      "Existing facility_avail whole-body and damage controls extract0x5BA0E0 frombase.cpp; candidate moves the intact mapped body totechnology_queries.cpp. Baseline passes, candidate extractor cannot locate identity.",
+      "Authorize only source-extractor path and explanatory docstring update; preserve all scenarios, mutation controls, compiler settings and assertions. No baseline reset or behavior weakening."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0c6068eac2b3ba6308ab64ac6d543349d0150c9c197b79a5b5264a40276a77dc",
+  "request_id": "technology-facility-test-owner-oct16",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:technology-query-boundaries-oct16"
+}

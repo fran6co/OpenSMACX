@@ -253,11 +253,9 @@ MEASURED inline BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, 
         || tech_is_preq(preq_tech_id, Technology[parent_tech_id].preq_tech_2, range - 1);
 }
 
-// BODY IN technology.h, as `MEASURED inline` (marker stays in
-// technology.cpp): `__forceinline` in the .cpp only satisfies inlining
-// within that one translation unit - callers elsewhere (e.g. facility_avail
-// in base.cpp) got a real out-of-line call, where the image open-codes the
-// whole preq_tech walk at every one of its 109 call sites.
+// Historical placement: this body was `MEASURED inline` in technology.h.
+// It now has one ordinary definition in technology_queries.cpp, alongside
+// the six prerequisite-query consumers that the image expands inline.
 //
 // LEVER (2026-09-03, 32/46 -> BYTE_EXACT 46/46): the preq reads are SUBSCRIPTS
 //   off the array and not a `RulesTechnology *tech = &Technology[tech_id]`
@@ -270,41 +268,8 @@ MEASURED inline BOOL __cdecl tech_is_preq(int preq_tech_id, int parent_tech_id, 
 //   once and kept in esi across the third test, and preq_tech_2 is read from
 //   memory a second time. The same lever took tech_avail (which inlines this
 //   body three times) to BYTE_EXACT 130/130.
-MEASURED inline BOOL __cdecl has_tech(int tech_id, int faction_id) {
-    if (faction_id <= 0) {
-        return false;
-    }
-    if (tech_id == TechNone) {
-        return true;
-    }
-    if (tech_id < 0 || tech_id >= (MaxTechnologyNum - 1)) { // excludes 'Transcendent Thought'
-        return false;
-    }
-    // These are SUBSCRIPTS and not a `RulesTechnology *tech = &Technology[tech_id]`
-    // local: the image computes `44 * tech_id` once into a register and folds the
-    // array base into both displacements - `[eax + 0x94f37c]`, `[eax + 0x94f380]` -
-    // which only happens when the field is named off the array. A pointer local
-    // materialises the address and the base ends up inside the lea chain instead.
-    // `preq_1` is read once and held (the image keeps it in esi across the third
-    // test); preq_tech_2 is read from memory a second time.
-    int preq_1 = Technology[tech_id].preq_tech_1;
-    if (preq_1 < TechNone) {
-        // "none, disable" ; valid #TECH preq_tech entry
-        return false;
-    }
-    if (Technology[tech_id].preq_tech_2 < TechNone && preq_1 != TechNone) {
-        return false;
-    }
-    return ((1 << faction_id) & GameDataStateStorage.fields_.game_tech_achieved_[tech_id]) != 0;
-}
-
-// Non-inline forwarder to `has_tech` above: best_specialist (base.cpp) needs
-// a real `call 0x5b9f20` the way the image emits there, unlike most of
-// has_tech's other 108 call sites, which genuinely inline the whole
-// preq_tech walk. The E8 target is a relocation on both sides and is
-// discounted, so this symbol's own name costs nothing - same idiom as
-// general.h's bitmask_call.
-BOOL __cdecl has_tech_call(int tech_id, int faction_id);
+// Canonical out-of-line prerequisite query, owned by technology_queries.cpp.
+BOOL __cdecl has_tech(int tech_id, int faction_id);
 
 // Owns an automatic PickTech window; historical signature is mutable char*.
 int __cdecl tech_pick(int faction, int mode, int count, char *section);

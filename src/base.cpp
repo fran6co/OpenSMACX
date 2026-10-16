@@ -5983,7 +5983,7 @@ uint32_t  __cdecl best_specialist() {
     uint32_t citizen_id = 0;
     Base *base_current = BaseCurrent;
     for (int i = 0; i < MaxSpecialistNum; i++) {
-        BOOL known = has_tech_call(Citizen[i].preq_tech, base_current->faction_id_current);
+        BOOL known = has_tech(Citizen[i].preq_tech, base_current->faction_id_current);
         base_current = BaseCurrent;
         if (known) {
             uint32_t bonus = Citizen[i].psych_bonus * 3;
@@ -10206,132 +10206,6 @@ BOOL __cdecl redundant(int facility_id, int faction_id) {
     return false;
 }
 
-/*
-Purpose: Determine if the provided faction can build a specific facility or Secret Project in the
-         specified base. Checks are included to prevent SMACX specific facilities from being built
-         in SMAC mode.
-// ORIGINAL: 0x005BA0E0 ?facility_avail@@YAHHHHH@Z 0x005BA0E0-0x005BA90A
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x5BA123-0x5BA138 early Ascent102 branch checks Voice slot and victory bit0x800 before filename normalization", "pinned:0x5BA1E2-0x5BA23B clears StringTemp9B86A0, strcat Player.filename+4, CharUpperA import66931C, strcmp CARETAKE literal6916E4; rejects IDs101/102", "pinned:0x5BA749-0x5BA7A5 Sphere23 checks Garden12 built/queued; complete span5BA0E0-5BA90A has no reciprocal Garden gate"], "reason": "Preserve original asymmetric Garden/Sphere availability, early Ascent project/rule return and shared filename normalization before late Caretaker rejection. No symmetric restriction or Caretaker Ascent fix is introduced. Full native matching and runtime behavior remain obligations."}
-// size      2090 bytes
-// prototype int (__cdecl ?facility_avail@@YAHHHHH@Z)(int facilityID, int factionID, int baseID, int queueCount)
-// callers   5   call targets   6
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00421670 0x004E49D0 0x004F80D0 0x0050BA00 0x00645470 0x00645660
-// indirect  0x005BA213
-// LEVER: has_tech's body moved from technology.cpp to the end of
-//        technology.h, and ascending's from base.cpp to the end of base.h,
-//        both as `MEASURED inline` - both already had their own bodies
-//        (`__forceinline` for has_tech, a plain out-of-line BYTE_EXACT
-//        function for ascending), but neither satisfied inlining for a
-//        caller in a DIFFERENT translation unit, and the image open-codes
-//        both of them here (has_tech's whole preq_tech walk, and
-//        ascending's single base_project() != SP_Unbuilt compare). Best
-//        similarity 0.137, agreeing instructions 20->25 of 742. The ten
-//        `call 0x50ba00` (bitmask) sites the image keeps are the documented
-//        systemic has_fac_built(literal,...) folding, TRIED on has_fac
-//        base.cpp:104, and are not fixable from this site.
-Return Value: Is facility or Secret Project available to faction, base and game mode? true/false
-Status: Complete
-*/
-BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
-                            int queue_count) {
-    // initial checks
-    if (!facility_id || (facility_id == FAC_SKUNKWORKS && GameDataStateStorage.fields_.diff_level_current_ <= DLVL_SPECIALIST)
-        || (facility_id >= FAC_HUMAN_GENOME_PROJ && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_BUILDING_SP)) {
-        return false; // Skunkworks removed if there are no prototype costs
-    }
-    if (facility_id == FAC_ASCENT_TO_TRANSCENDENCE) { // at top since anyone can build it
-        return ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE;
-    }
-    if (!has_tech(Facility[facility_id].preq_tech, faction_id)) { // Check tech for facility + SP
-        return false;
-    }
-    // Secret Project availability
-    if (!ExpansionEnabled && (facility_id == FAC_MANIFOLD_HARMONICS
-        || facility_id == FAC_NETHACK_TERMINUS || facility_id == FAC_CLOUDBASE_ACADEMY
-        || facility_id == FAC_PLANETARY_ENERGY_GRID)) {
-        return false;
-    }
-    // The original normalizes the filename in shared scratch storage here;
-    // the early Ascent return above bypasses this later Caretaker check.
-    StringTemp[0] = 0;
-    strcat(StringTemp, Players[faction_id].filename);
-    CharUpperA(StringTemp);
-    if (!strcmp(StringTemp, "CARETAKE")
-        && (facility_id == FAC_VOICE_OF_PLANET
-            || facility_id == FAC_ASCENT_TO_TRANSCENDENCE)) {
-        return false;
-    }
-    if (facility_id >= FAC_HUMAN_GENOME_PROJ) {
-        return base_project(facility_id - FAC_HUMAN_GENOME_PROJ) == SP_Unbuilt;
-    }
-    // Facility availability
-    if (base_id < 0) {
-        return true;
-    }
-    if (has_fac(facility_id, base_id, queue_count)) {
-        return false; // already built or in queue
-    }
-    if (redundant(facility_id, faction_id)) {
-        return false; // has SP that counts as facility
-    }
-    switch (facility_id) { // consolidated into switch to improve readability and performance
-      case FAC_RECYCLING_TANKS:
-        return !has_fac(FAC_PRESSURE_DOME, base_id, queue_count); // count as Recycling Tank, skip
-      case FAC_TACHYON_FIELD:
-        return has_fac(FAC_PERIMETER_DEFENSE, base_id, queue_count)
-            || has_project(SP_CITIZENS_DEFENSE_FORCE, faction_id); // Cumulative
-      case FAC_SKUNKWORKS:
-        return !(Players[faction_id].rule_flags & RFLAG_FREEPROTO); // no prototype costs? skip
-      case FAC_HOLOGRAM_THEATRE:
-        return has_fac(FAC_RECREATION_COMMONS, base_id, queue_count) // not documented in manual
-            && !has_project(SP_VIRTUAL_WORLD, faction_id); // Network Nodes replaces Theater
-      case FAC_HYBRID_FOREST:
-        return has_fac(FAC_TREE_FARM, base_id, queue_count); // Cumulative
-      case FAC_QUANTUM_LAB:
-        return has_fac(FAC_FUSION_LAB, base_id, queue_count); // Cumulative
-      case FAC_NANOHOSPITAL:
-        return has_fac(FAC_RESEARCH_HOSPITAL, base_id, queue_count); // Cumulative
-      case FAC_PUNISHMENT_SPHERE:
-        return !has_fac(FAC_PARADISE_GARDEN, base_id, queue_count); // antithetical
-      case FAC_NANOREPLICATOR:
-        return has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT, base_id, queue_count) // Cumulative
-            || has_fac(FAC_GENEJACK_FACTORY, base_id, queue_count);
-      case FAC_HABITATION_DOME:
-        return has_fac(FAC_HAB_COMPLEX, base_id, queue_count); // must have Complex
-      case FAC_TEMPLE_OF_PLANET:
-        return has_fac(FAC_CENTAURI_PRESERVE, base_id, queue_count); // must have Preserve
-      case FAC_QUANTUM_CONVERTER:
-        return has_fac(FAC_ROBOTIC_ASSEMBLY_PLANT, base_id, queue_count); // Cumulative
-      case FAC_NAVAL_YARD:
-        return is_coast(Bases[base_id].x, Bases[base_id].y, false); // needs ocean
-      case FAC_AQUAFARM:
-      case FAC_SUBSEA_TRUNKLINE:
-      case FAC_THERMOCLINE_TRANSDUCER:
-        return ExpansionEnabled && is_coast(Bases[base_id].x, Bases[base_id].y, false);
-      case FAC_COVERT_OPS_CENTER:
-      case FAC_BROOD_PIT:
-      case FAC_FLECHETTE_DEFENSE_SYS:
-        return ExpansionEnabled;
-      case FAC_GEOSYNC_SURVEY_POD: // SMACX only & must have Aerospace Complex
-        return ExpansionEnabled && (has_fac(FAC_AEROSPACE_COMPLEX, base_id, queue_count)
-            || has_project(SP_CLOUDBASE_ACADEMY, faction_id)
-            || has_project(SP_SPACE_ELEVATOR, faction_id));
-      case FAC_SKY_HYDRO_LAB:
-      case FAC_NESSUS_MINING_STATION:
-      case FAC_ORBITAL_POWER_TRANS:
-      case FAC_ORBITAL_DEFENSE_POD:  // must have Aerospace Complex
-        return has_fac(FAC_AEROSPACE_COMPLEX, base_id, queue_count)
-            || has_project(SP_CLOUDBASE_ACADEMY, faction_id)
-            || has_project(SP_SPACE_ELEVATOR, faction_id);
-      case FAC_SUBSPACE_GENERATOR: // Progenitor factions only
-        return is_alien_faction(faction_id);
-      default:
-        break;
-    }
-    return true;
-}
 
 /*
 Purpose: To assist with locating a facility based on a name rather than using hardcoded offsets.
@@ -14785,7 +14659,7 @@ after_popup:
                     const int bonus_id = player.faction_bonus_id[k];
                     const int bonus_value = player.faction_bonus_val1[k];
                     if (bonus_id == 2 ||
-                        (bonus_id == 12 && has_tech_call(
+                        (bonus_id == 12 && has_tech(
                             Facility[bonus_value].preq_tech, faction_id))) {
                         if (spec_type == bonus_value) {
                             blocked = true;
@@ -15006,7 +14880,7 @@ after_popup:
                             const int bonus_id = player.faction_bonus_id[k];
                             const int bonus_value = player.faction_bonus_val1[k];
                             if (bonus_id == 2 ||
-                                (bonus_id == 12 && has_tech_call(
+                                (bonus_id == 12 && has_tech(
                                     Facility[bonus_value].preq_tech, faction_id))) {
                                 int facility_id = bonus_value;
                                 if (facility_id < 1) facility_id = 1;

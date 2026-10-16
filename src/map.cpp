@@ -6885,7 +6885,7 @@ void __cdecl proto_sort(int faction_id) {
         int key;
         if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)
             || (proto_id < MaxVehProtoFactionNum
-                && !has_tech_call(VehPrototypes[proto_id].preq_tech, faction_id))) {
+                && !has_tech(VehPrototypes[proto_id].preq_tech, faction_id))) {
             if (proto_id < MaxVehProtoFactionNum) {
                 key = 999999999;
             } else {
@@ -6926,7 +6926,7 @@ void __cdecl proto_sort_2(int faction_id) {
         if (available && prototype_id < MaxVehProtoFactionNum) {
             available = Weapon[prototype.weapon_id].offense_rating >= 0
                 && prototype_id != 15
-                && has_tech_call(prototype.preq_tech, faction_id);
+                && has_tech(prototype.preq_tech, faction_id);
         }
         if (!available) {
             if (prototype_id < MaxVehProtoFactionNum) {

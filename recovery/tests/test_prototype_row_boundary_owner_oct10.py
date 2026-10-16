@@ -61,9 +61,9 @@ def test_make_proto_row_63_and_64_against_actual_body(tmp_path, compiler_name):
     body = actual_function(source, "make_proto")
 
     # Adjacent get_plan is an unchanged control: its faction-specific test
-    # intentionally starts at >=64 and uses the typed has_tech_call path.
+    # intentionally starts at >=64 and uses the typed has_tech path.
     plan = actual_function(source, "get_plan")
-    assert "proto_id >= MaxVehProtoFactionNum\n                || has_tech_call" in plan
+    assert "proto_id >= MaxVehProtoFactionNum\n                || has_tech" in plan
     assert "proto_id_loop < MaxVehProtoFactionNum" in body
     assert "proto_id_loop >= MaxVehProtoFactionNum" in body
 

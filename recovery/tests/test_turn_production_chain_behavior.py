@@ -103,7 +103,7 @@ void enemy_diplomacy(int);
 void enemy_strategy(int);
 void social_ai(int, int, int, int, int, SocialCategory *);
 int corner_market(int);
-int has_tech_call(int, int);
+int has_tech(int, int);
 int parse_says(int, const char *, int, int);
 int parse_num(int, int);
 uint32_t game_year(int);
@@ -181,7 +181,7 @@ int corner_market(int) {
     ++corner_market_calls;
     return value;
 }
-int has_tech_call(int, int) { return has_tech_result; }
+int has_tech(int, int) { return has_tech_result; }
 int parse_says(int, const char *, int, int) { ++parse_says_calls; return 0; }
 int parse_num(int, int) { ++parse_num_calls; return 0; }
 uint32_t game_year(int) { return 2100; }
@@ -1049,7 +1049,7 @@ inline BOOL is_alien_faction(uint32_t faction) {
 
 void __cdecl draw_tile(int x, int y, int draw_type);
 void __cdecl base_reset(int base_id, int force);
-BOOL __cdecl has_tech_call(int tech_id, int faction_id);
+BOOL __cdecl has_tech(int tech_id, int faction_id);
 void __cdecl parse_say(int id, int input, int gender, int plurality);
 void __cdecl parse_says(int id, LPCSTR input, int gender, int plurality);
 int __cdecl popb(LPCSTR label, int x, int y, LPCSTR image, Sprite *callback);
@@ -1175,7 +1175,7 @@ void __cdecl draw_tile(int, int, int) {
     }
 }
 void __cdecl base_reset(int, int) { ++reset_calls; }
-BOOL __cdecl has_tech_call(int tech_id, int faction_id) {
+BOOL __cdecl has_tech(int tech_id, int faction_id) {
     ++tech_calls;
     tech_last_id = tech_id;
     tech_last_faction = faction_id;

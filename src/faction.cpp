@@ -992,10 +992,10 @@ uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
             // three of these sites (0x00539DC2/0x00539DE3/0x00539DF7) rather
             // than open-coding the preq walk, so this is a best_specialist
             // caller, not one of the 108 genuine inline sites.
-            if ((has_tech_call(proposal_preq, faction_id)
+            if ((has_tech(proposal_preq, faction_id)
                 || (proposal_preq >= 0
-                    && (has_tech_call(Technology[proposal_preq].preq_tech_1, faction_id)
-                    || has_tech_call(Technology[proposal_preq].preq_tech_2, faction_id))))
+                    && (has_tech(Technology[proposal_preq].preq_tech_1, faction_id)
+                    || has_tech(Technology[proposal_preq].preq_tech_2, faction_id))))
                 && votes * 2 >= votes_total && (!faction_id_ret || player == faction_id)) {
                 faction_id_ret = player;
             }
@@ -1053,8 +1053,8 @@ BOOL __cdecl climactic_battle() {
         for (int player = 1; player < MaxPlayerNum; player++) {
             // has_tech_call: the image CALLS 0x005B9F20 here (see the calls
             // line) rather than open-coding the preq walk.
-            if (is_human(player) && (has_tech_call(Facility[FAC_PSI_GATE].preq_tech, player)
-                || has_tech_call(Facility[FAC_VOICE_OF_PLANET].preq_tech, player))) {
+            if (is_human(player) && (has_tech(Facility[FAC_PSI_GATE].preq_tech, player)
+                || has_tech(Facility[FAC_VOICE_OF_PLANET].preq_tech, player))) {
                 return true; // Human controlled player has tech to build PSI Gates or VoP
             }
         }
@@ -2583,7 +2583,7 @@ void __cdecl see_map_check() {
             // from here (0x005A9718) and technology.h's MEASURED inline was
             // open-coded into this body.
             if (Technology[tech_id].flags & TFLAG_REVEALS_MAP
-                && has_tech_call(tech_id, faction_id)) {
+                && has_tech(tech_id, faction_id)) {
                 PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
             }
         }
@@ -2715,7 +2715,7 @@ void __cdecl rankings(int apply_ranks) {
             for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
                 // has_tech_call: the image CALLS 0x005B9F20 twice from here
                 // (0x005AC779 / 0x005AC823) rather than open-coding the walk.
-                if (has_tech_call(tech_id, faction_id)) {
+                if (has_tech(tech_id, faction_id)) {
                     score += (tech_id < MaxTechnologyNum)
                         ? Technology[tech_id].growth_value + Technology[tech_id].tech_value
                             + Technology[tech_id].wealth_value + Technology[tech_id].power_value
@@ -3061,7 +3061,7 @@ BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id) {
     // has_tech_call, not has_tech: the image CALLS 0x005B9F20 once from here
     // (0x005B477B) and technology.h's MEASURED inline was open-coded into
     // this body.
-    return has_tech_call(SocialCategories[soc_category].preq_tech[soc_model], faction_id);
+    return has_tech(SocialCategories[soc_category].preq_tech[soc_model], faction_id);
 }
 
 /*
@@ -3214,7 +3214,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                     // has_tech_call: the image CALLS 0x005B9F20 once here
                     // (0x005B4AA1, see the calls line) instead of open-coding
                     // the preq walk inside this loop.
-                    || !has_tech_call(SocialCategories[j].preq_tech[model], faction_id)) {
+                    || !has_tech(SocialCategories[j].preq_tech[model], faction_id)) {
                     invalid_combination = true;
                     break;
                 }
@@ -3684,7 +3684,7 @@ void __cdecl enemy_capabilities(int faction_id) {
     // MEASURED inline) agrees with the image on 133 of 210 instructions
     // where plain /O2 manages 33.
     for (int i = 0; i < MaxWeaponNum; i++) {
-        if (has_tech_call(Weapon[i].preq_tech, faction_id) && Weapon[i].offense_rating < 99) {
+        if (has_tech(Weapon[i].preq_tech, faction_id) && Weapon[i].offense_rating < 99) {
             int weap_val = weap_strat(i, faction_id);
             if (Weapon[i].offense_rating < 0 && weap_val
                 >= PlayersData[faction_id].best_psi_offense) {
@@ -3699,7 +3699,7 @@ void __cdecl enemy_capabilities(int faction_id) {
         ? arm_strat(ARM_PSI_DEFENSE, faction_id) : 0;
     PlayersData[faction_id].best_armor_value = 1;
     for (i = 0; i < MaxArmorNum; i++) {
-        if (has_tech_call(Armor[i].preq_tech, faction_id)) {
+        if (has_tech(Armor[i].preq_tech, faction_id)) {
             int arm_val = arm_strat(i, faction_id);
             if (Armor[i].defense_rating < 0 && arm_val >= PlayersData[faction_id].best_psi_defense) {
                 PlayersData[faction_id].best_psi_defense = arm_val;
@@ -3711,7 +3711,7 @@ void __cdecl enemy_capabilities(int faction_id) {
     }
     PlayersData[faction_id].best_land_speed = 1;
     for (i = 0; i < MaxChassisNum; i++) {
-        if (has_tech_call(Chassis[i].preq_tech, faction_id) && Chassis[i].triad == TRIAD_LAND) {
+        if (has_tech(Chassis[i].preq_tech, faction_id) && Chassis[i].triad == TRIAD_LAND) {
             if (Chassis[i].speed >= PlayersData[faction_id].best_land_speed) {
                 PlayersData[faction_id].best_land_speed = Chassis[i].speed;
             }
@@ -8847,9 +8847,9 @@ for (communicate_secondary_tech_scan = 0;
      communicate_secondary_tech_scan < 0x59;
      ++communicate_secondary_tech_scan) {
     const int candidate = communicate_secondary_tech_scan;
-    if (has_tech_call(candidate, DiploScratchFA38) == 0 &&
-        has_tech_call(candidate, faction_id) == 0 &&
-        has_tech_call(candidate, peer_id) == 0) {
+    if (has_tech(candidate, DiploScratchFA38) == 0 &&
+        has_tech(candidate, faction_id) == 0 &&
+        has_tech(candidate, peer_id) == 0) {
         const int value = tech_val(candidate, faction_id, TRUE);
         if (value > communicate_secondary_best_tech_value) {
             communicate_secondary_best_tech_value = value;
@@ -15533,7 +15533,7 @@ void __cdecl faction_upkeep(int faction_id) {
         if (!is_human((uint32_t)faction_id)) {
             const int amount = corner_market(faction_id);
             if (amount < faction_data.energy_reserves &&
-                has_tech_call(Rules.tech_economic_victory, faction_id) &&
+                has_tech(Rules.tech_economic_victory, faction_id) &&
                 (GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_ECONOMIC) != 0) {
                 faction_data.corner_market_turn = upkeep_wrap_add(
                     GameDataStateStorage.fields_.turn_current_num_, (int)Rules.turns_corner_gbl_energy_mrkt);

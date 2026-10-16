@@ -171,40 +171,6 @@ int __cdecl contribution(int veh_id, int terraform_id) {
     return rate;
 }
 
-/*
-Purpose: Check to see whether the specified faction can construct a specific terrain enhancement.
-// ORIGINAL: 0x005BAB40 ?terrain_avail@@YAHHHH@Z 0x005BAB40-0x005BAC13
-// size      211 bytes
-// prototype int (__cdecl ?terrain_avail@@YAHHHH@Z)(int terraformID, BOOL isSea, int factionID)
-// callers   5   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-// TRIED: the base-address split for `&Terraforming[terraform_id]
-//        .preq_tech + is_sea` - the image computes `(is_sea + id*8)` as an
-//        INDEX first, then a separate `[index*4 + 0x691880]` load; this
-//        tree's `lea` folds the base INTO the index before the implied
-//        `*4` (0x1a4620*4 == 0x691880, so it is the same address, just
-//        computed with the constant added before the scale rather than
-//        after). Tried the equivalent `reinterpret_cast<int*>(...)
-//        [is_sea]` array-subscript spelling - VC6 canonicalises both to
-//        the identical folded `lea`. Not a source-shape question found
-//        this pass; best 3/86.
-Return Value: Is terrain enhancement available to faction? true/false
-Status: Complete
-*/
-BOOL __cdecl terrain_avail(int terraform_id, BOOL is_sea, int faction_id) {
-    int preq_tech = *(&Terraforming[terraform_id].preq_tech + is_sea);
-    if (preq_tech < TechNone || ((terraform_id == TERRA_RAISE_LAND
-        || terraform_id == TERRA_LOWER_LAND) && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_TERRAFORMING)) {
-        return false;
-    }
-    if (terraform_id >= TERRA_CONDENSER && terraform_id <= TERRA_LEVEL_TERRAIN
-        && has_project(SP_WEATHER_PARADIGM, faction_id)) {
-        return true;
-    }
-    return has_tech(preq_tech, faction_id);
-}
 
 /*
 Purpose: Wrap an x coordinate on a round map, as can_terraform() wraps it.
