@@ -49,26 +49,14 @@ int __cdecl steal_energy(int base_id) {
         : ((energy * Bases[base_id].population_size) / (PlayersData[faction_id].pop_total + 1));
 }
 
-// An out-of-line `vector_dist` for mind_control's one call site. The lesson
-// this was measured from is the LEVER line on the 0x0059EA80 marker below,
-// which is the only place `decomp.reader` looks.
-#pragma auto_inline(off)
-int __cdecl vector_dist_call(int x_distance, int y_distance) {
-    return vector_dist(x_distance, y_distance);
-}
-#pragma auto_inline(on)
-
 /*
 Purpose: Calculate the cost for the faction to be able to mind control the specified base. The 3rd
          parameter determines if this cost is for cornering the market (true) or via probe (false).
 // ORIGINAL: 0x0059EA80 ?mind_control@@YAHHHH@Z 0x0059EA80-0x0059EE42
-// LEVER: `#pragma auto_inline(off)` AROUND A PLAIN FORWARDER IN THIS FILE is how
-//   a `MEASURED inline` helper is called out of line at ONE site. VC6 6.0 has no
-//   `__declspec(noinline)` and the tree had recorded that as a hard ceiling; the
-//   pragma does the same job, and it needs nothing outside the caller's own
-//   translation unit. `map.h` marks `vector_dist` `MEASURED inline` because the
-//   image both CALLS it (0x004F8090) and writes it out at 0x005A5910 - and it
-//   CALLS it here, at 0x0059EB60. MEASURED: the direct-call multiset went from 13
+// Historical LEVER: a local forwarder once forced an out-of-line
+//   `vector_dist` call here while the helper remained inline in map.h. The
+//   canonical definition now lives in map.cpp and this caller uses it directly.
+//   MEASURED: the direct-call multiset went from 13
 //   (nine game calls plus FOUR `_abs`, because the inlined vector_dist brought its
 //   own two) to the image's exact 12 - three `bitmask`, `has_fac`, three
 //   `stack_check`, `stack_fix`, `veh_at`, `vector_dist`, two `_abs`. Similarity
@@ -126,7 +114,7 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
         if (Bases[i].faction_id_current == target_faction_id && has_fac(FAC_HEADQUARTERS, i, 0)) {
             int dx = x_dist(target_x, Bases[i].x);
             int dy = abs(target_y - Bases[i].y);
-            cost = vector_dist_call(dx, dy);
+            cost = vector_dist(dx, dy);
             break;
         }
     }

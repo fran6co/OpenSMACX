@@ -117,6 +117,7 @@ target_compile_options(zlib PRIVATE /W0)
 
 set(OPENSMACX_SOURCES
     src/alpha.cpp
+    src/labels.cpp
     src/alphasave.cpp
     src/faction_strategy.cpp
     src/factionprofilewin.cpp

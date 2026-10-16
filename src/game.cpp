@@ -2753,22 +2753,6 @@ void __cdecl close_opening() {
     }
 }
 
-// Out-of-line forwarders for game_close and game_reload: the image CALLS
-// stop_timers (0x0050F440) and labels_shutdown (0x006169D0) at both sites, and
-// both helpers are `MEASURED inline` in time.h and alpha.h, so at /O2 the
-// optimiser folds them - and the Time::close runs and the Labels free that
-// they carry - straight into the caller. `#pragma auto_inline(off)` is what
-// VC6 6.0 has instead of `__declspec(noinline)`; see repair_phase's three
-// forwarders below for the same device.
-#pragma auto_inline(off)
-static void __cdecl stop_timers_call() {
-    stop_timers();
-}
-static void __cdecl labels_shutdown_call() {
-    labels_shutdown();
-}
-#pragma auto_inline(on)
-
 /*
 Purpose: Shut the game state down: timers, label strings, then the string
          table. The mode parameter is read by none of it.
@@ -2783,20 +2767,14 @@ Purpose: Shut the game state down: timers, label strings, then the string
 //   so the receiver folds to `mov ecx, 0x9b90d8`; the image's closing `jmp`
 //   into Strings::shutdown comes free from the call being the last statement
 //   of a void function, and the discarded int result costs nothing.
-// LEVER (2026-09-03, pair normalisation): `stop_timers_call` and
-//   `labels_shutdown_call`, not the helpers directly - the image CALLS
-//   0x0050F440 and 0x006169D0 here and both are `MEASURED inline` in time.h
-//   and alpha.h, so at /O2 the optimiser folded them (and the Time::close runs
-//   and the Labels free they carry) straight into this 4-instruction body,
-//   which became 67. Same-TU forwarders under `#pragma auto_inline(off)`, the
-//   device repair_phase's three helpers already use; game_reload shares them.
-//   0 of 4 -> 4 of 4.
+// Historical LEVER (2026-09-03): temporary stop_timers_call and
+//   labels_shutdown_call forwarders once restored these call boundaries.
 Return Value: n/a
 Status: Complete
 */
 void __cdecl game_close(int mode) {
-    stop_timers_call();
-    labels_shutdown_call();
+    stop_timers();
+    labels_shutdown();
     StringTable.shutdown();
 }
 
@@ -3240,8 +3218,8 @@ int __cdecl game_reload(int mode, int reload) {
         MultiWindow.GraphicWin::close();
         MainInterfaceGlobal.Win::hide();
     }
-    stop_timers_call();
-    labels_shutdown_call();
+    stop_timers();
+    labels_shutdown();
     StringTable.shutdown();
     if (game_init(1, reload) != 0) {
         return 1;

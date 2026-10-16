@@ -678,26 +678,11 @@ MEASURED inline int __cdecl x_dist(int x_point_a, int x_point_b) {
     return dist;
 }
 
-// MEASURED inline: real out-of-line function AT 0x004F8090 (BYTE_EXACT,
-// callers 5) and ALSO inlined whole at the 4-arg vector_dist's call site
-// (0x005A5910) - a .cpp definition can only ever be one of those.
-MEASURED inline int __cdecl vector_dist(int x_distance, int y_distance) {
-    x_distance = abs(x_distance);
-    y_distance = abs(y_distance);
-    int largest = x_distance;
-    if (x_distance <= y_distance) {
-        largest = y_distance;
-    }
-    int smallest = x_distance;
-    if (x_distance >= y_distance) {
-        smallest = y_distance;
-    }
-    // `>> 1`, NOT `/ 2`. Both operands are `abs()` results, so nothing here is
-    // ever negative and the two mean the same - but signed `/ 2` makes VC6 emit
-    // the round-toward-zero fixup (`cdq; sub eax, edx`) before each `sar`, and
-    // the image has neither. Two instructions per divide, four here.
-    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
-}
+// Pinned evidence: the image calls this overload from five caller functions,
+// while the four-argument overload at 0x005A5910 contains its arithmetic
+// inline. Its canonical definition is in map.cpp before that overload so the
+// compiler's same-translation-unit visibility can be measured.
+int __cdecl vector_dist(int x_distance, int y_distance);
 
 MEASURED inline uint8_t __cdecl abstract_at(int x, int y) {
     return (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)];

@@ -936,7 +936,7 @@ void __cdecl start_timers() {
 /*
 Purpose: Stop global timers.
 // ORIGINAL: 0x0050F440 ?stop_timers@@YAXXZ 0x0050F440-0x0050F45E BYTE_EXACT
-// body      src/time.h
+// body      src/time.cpp
 // size      30 bytes
 // prototype 
 // callers   6   call targets   1
@@ -946,12 +946,8 @@ Purpose: Stop global timers.
 Return Value: n/a
 Status: Complete
 */
-// BODY IN time.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-// Historical experiment below: stop_timers now calls Time::close directly;
-// its implementation is hidden in the separate timer lifecycle TU.
+// Historical: an inline definition plus a third-TU forwarder once matched
+// selected caller boundaries. The canonical implementation now lives here.
 // LEVER: the `time_close_call` forwarder (declared in time.h, defined in
 //   flatbutton.cpp). 0 of 6 agreeing, 90 instructions against the image's 6,
 //   because close()'s in-class body was expanded at all three sites - the
@@ -964,7 +960,14 @@ Status: Complete
 //   this unit still able to see it and changed nothing here. A forwarder
 //   whose body lives in a THIRD unit breaks the symmetry: this COMDAT emits
 //   the real `call`, and the two game.cpp sites are unchanged by it (35 of
-//   135 and 19 of 44 agreeing, before and after). 6 of 6, BYTE_EXACT.
+//   135 and 19 of 44 agreeing, before and after). Historical result: 6 of 6,
+//   BYTE_EXACT.
+void __cdecl stop_timers() {
+    Blink2Timer.close();
+    BlinkTimer.close();
+    LineTimer.close();
+    // missing MP TurnTimer. TODO: In future determine if timer should be closed on stop
+}
 
 
 /*

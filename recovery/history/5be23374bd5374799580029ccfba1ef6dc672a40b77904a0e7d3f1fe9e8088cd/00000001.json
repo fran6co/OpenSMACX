@@ -1,0 +1,25 @@
+{
+  "event_id": "2825d94a9126e10822366654b742271fa5859e5ebeefbfa9420cc2d075ae9904",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/project.json",
+      "src/labels.cpp"
+    ],
+    "evidence": [
+      "Coordinator scope expansion: move Labels storage and unchanged labels_shutdown/labels_init pair into semantic src/labels.cpp owner. Existing alpha.h declarations/type remain shared API. This is coherent source ownership, not proof of historical TU or Jackal membership.",
+      "Fresh 4473 mapping comparison has only labels_init exactness regression after ordinary helper externalization. Diagnostic alpha /Ob2 alone restores labels_init and retains all31 verdicts, but other Alpha bodies require differing frame-pointer settings. Do not pin whole mixed Alpha TU or expand global trials.",
+      "Authorize only new labels.cpp explicit measurement recipe /c /O2 /Gy /GR- /GX /Ob2, matching both label lifecycle bodies and the existing Release inlining setting. This narrowly supersedes initial no-flag-change task restriction; ordinary CMake optimization policy stays unchanged.",
+      "Preserve original labels bodies, identity/spans/claims and object mapping via native source writer. Add CMake source, update affected focused tests; fresh native prepare only after source freezes, then build/link and native pair/Alpha measurements. No bug fixes, wrappers or compiler overrides for other TUs.",
+      "Current vector_dist obligation corrected: pinned full-span census proves21 direct edges, not initial task prose29. Candidate restores direct targets but leaves four previously inlined Base uses out-of-line; source semantics unchanged, matching remains unresolved. Exact edge evidence in ignored helper-call-boundaries-oct16.json; no inferred original TU solution."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "label-lifecycle-owner-oct16",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:canonical-helper-boundaries-oct16"
+}

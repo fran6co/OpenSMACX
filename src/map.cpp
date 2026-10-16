@@ -390,7 +390,7 @@ Purpose: Take the absolute distance between two points as parameters to calculat
          radiate. This is mainly used to determine proximity or how far away the two points are from
          each other in a rough circle shape (see RadiusOffsetX[]/RadiusOffsetY[]).
 // ORIGINAL: 0x004F8090 ?vector_dist@@YAHHH@Z 0x004F8090-0x004F80CB BYTE_EXACT
-// body      src/map.h
+// body      src/map.cpp
 // LEVER: the two `abs()` stay real calls (image: `call _abs` 0x00644F3A
 //            twice) because stdafx.h's project-wide `#pragma function` line
 //            names abs - /Oi would otherwise expand it inline at every site.
@@ -405,21 +405,34 @@ Purpose: Take the absolute distance between two points as parameters to calculat
 Return Value: Distance radius
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image has it as a real function
-// at ITS OWN 5 call sites AND inlines it whole at the 4-arg vector_dist's
-// call site (0x005A5910) - a .cpp definition can only ever be one of those.
+// Historical: an inline header body and an abs_call forwarder were tried to
+// reproduce the mixed call/inlining shape. The canonical body is now in this
+// translation unit; visibility to the overload below remains a measurement
+// question.
+int __cdecl vector_dist(int x_distance, int y_distance) {
+    x_distance = abs(x_distance);
+    y_distance = abs(y_distance);
+    int largest = x_distance;
+    if (x_distance <= y_distance) {
+        largest = y_distance;
+    }
+    int smallest = x_distance;
+    if (x_distance >= y_distance) {
+        smallest = y_distance;
+    }
+    // Preserve `>> 1`, not `/ 2`; the original arithmetic shift semantics are
+    // part of the recovered expression, including INT_MIN/overflow cases.
+    return largest - ((((y_distance + x_distance) >> 1) - smallest + 1) >> 1);
+}
 
 /*
 Purpose: Take two points and calculate how far out they radiate. This is mainly used to determine
          proximity or how far away the two points are from each other in a rough circle shape.
 // ORIGINAL: 0x005A5910 ?vector_dist@@YAHHHHH@Z 0x005A5910-0x005A5987
-// LEVER: `osmx calls` showed 4 abs() calls, 0 game calls in the image; the
-//        2-arg `vector_dist` (0x004F8090) was declared/defined out-of-line
-//        only, so calling it here compiled a real local call. Moved it to
-//        map.h as `MEASURED inline` (same idiom as the many single-field
-//        setters in this file) - it stays a real out-of-line BYTE_EXACT
-//        function at its own 5 call sites AND inlines whole here, matching
-//        the image's call count exactly.
+// Historical LEVER: inlining the two-argument overload here removed the
+//        original function call from this body. The overload now has an
+//        ordinary map.cpp definition above; same-translation-unit visibility
+//        is retained for measurement rather than forcing a call boundary.
 // TRIED: `__forceinline` instead of `inline` - identical score, so the
 //            call-count fix, not the inlining strength, was the lever.
 //            Remaining gap (14/50 raw, 0.929 similar, best of every flag

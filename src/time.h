@@ -191,9 +191,4 @@ void __cdecl go_reset();
 // Cooperative elapsed-time wait; redraw and non-input work still run.
 void __cdecl clock_wait(int milliseconds);
 
-MEASURED inline void __cdecl stop_timers() {
-    Blink2Timer.close();
-    BlinkTimer.close();
-    LineTimer.close();
-    // missing MP TurnTimer. TODO: In future determine if timer should be closed on stop
-}
+void __cdecl stop_timers();

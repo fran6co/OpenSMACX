@@ -739,7 +739,7 @@ extern LPCSTR ScriptTxtID;
 // In the shipped binary each address below is zero-initialised data
 // (image_data.py: past the bytes the file carries) that read_rules() and
 // read_basic_rules() fill from ALPHAX.TXT/SCRIPT.TXT. Defined in alpha.cpp.
-extern Label Labels;                                        // 0x009B90F8
+extern Label Labels;  // 0x009B90F8; storage and lifecycle owned by labels.cpp
 extern RulesResourceinfo ResourceInfo[MaxResourceInfoNum];  // 0x00945F50
 extern RulesTimeControl TimeControl[MaxTimeControlNum];     // 0x0094F1B8
 extern RulesResource Resource[MaxResourceNum];              // 0x00946158
@@ -788,13 +788,7 @@ MEASURED inline uint32_t __cdecl default_warn() {
         | WARN_STOP_NEW_FAC_BUILT; // 0x3C3A9
 }
 
-MEASURED inline void __cdecl labels_shutdown() {
-    if (Labels.strings_ptr) {
-        free(Labels.strings_ptr);
-        Labels.strings_ptr = 0;
-    }
-    Labels.count = 0;
-}
+void __cdecl labels_shutdown();
 
 MEASURED inline void __cdecl set_language(int language) {
     Language = language;

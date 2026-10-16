@@ -80,11 +80,6 @@ LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
 // They were typed-pointer bindings into the image's address space until
 // converted to the objects themselves; the folded absolute addressing of
 // every use site is unchanged, the immediate now a relocation.
-// labels_shutdown (0x006169D0) and labels_init (0x00616A00) address the
-// struct in place: `mov eax, dword ptr [0x9B90F8]` (strings_ptr) and
-// `mov dword ptr [0x9B90FC], 0` (count).
-// RECOVERY_OBJECT: v1 0x009B90F8 ?Labels@@3ULabel@@A
-Label Labels;                                       // 0x009B90F8
 RulesResourceinfo ResourceInfo[MaxResourceInfoNum]; // 0x00945F50
 RulesTimeControl TimeControl[MaxTimeControlNum];    // 0x0094F1B8
 RulesResource Resource[MaxResourceNum];             // 0x00946158
@@ -1905,8 +1900,6 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
-
-
 /*
 Purpose: Get the default value for the rule related preferences.
 // ORIGINAL: 0x0059DB30 ?default_rules@@YAHXZ 0x0059DB30-0x0059DB36 BYTE_EXACT
@@ -2288,59 +2281,6 @@ void __cdecl prefs_use() {
     GameDataStateStorage.fields_.game_more_preferences_ = more;
     GameDataStateStorage.fields_.game_warnings_ = announce;
 }
-
-/*
-Purpose: Parse the #LABELS section inside the labels.txt file.
-// ORIGINAL: 0x00616A00 ?labels_init@@YAHXZ 0x00616A00-0x00616A93 BYTE_EXACT
-// LEVER: `Labels` as a typed-pointer binding plateaued at 40/45 - every source
-// form computed `count*4` via `lea` before the store. Converting it to the real
-// object (defined above) let VC6 fold `shl eax,2` into the store exactly as the
-// image does. (Promoted from TRIED when the body matched, 2026-08-29.)
-// size      147 bytes
-// prototype 
-// callers   3   call targets   7
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D4510 0x005FD530 0x005FD550 0x005FD570 0x005FD5E0 0x005FD740 0x00644EF2
-Return Value: Was there an error? true/false
-Status: Complete
-*/
-BOOL __cdecl labels_init() {
-    labels_shutdown();
-    if (text_open("labels", "labels")) {
-        return true;
-    }
-    text_get();
-    Labels.count = text_item_number();
-    Labels.strings_ptr = (LPSTR *)mem_get(Labels.count * 4);
-    if (!Labels.strings_ptr) {
-        return true;
-    }
-    for (int i = 0; i < Labels.count; i++) {
-        Labels.strings_ptr[i] = text_string();
-    }
-    text_close();
-    return false;
-}
-
-/*
-Purpose: Shutdown or reset the labels global variable.
-// ORIGINAL: 0x006169D0 ?labels_shutdown@@YAXXZ 0x006169D0-0x006169F7 BYTE_EXACT
-// body      src/alpha.h
-// size      39 bytes
-// prototype 
-// callers   4   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00644EF2
-Return Value: n/a
-Status: Complete
-*/
-// BODY IN alpha.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-
 
 /*
 Purpose: Set the game's language.
