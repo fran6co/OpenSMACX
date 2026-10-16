@@ -7062,7 +7062,8 @@ void BaseWin::garrison_click(int vehicle_id, int x, int y, int right) {
         if (TutWinBaseWindow.is_visible()) {
             set_base(static_cast<int>(TutWinBaseWindow.focusedBaseID_));
             base_compute(1);
-            TutWinBaseWindow.redraw();
+            Win &tutorial_window = TutWinBaseWindow;
+            tutorial_window.redraw();
             MainInterfaceGlobal.redraw();
         }
         TutWinBaseWindow.draw_garrison(1);
