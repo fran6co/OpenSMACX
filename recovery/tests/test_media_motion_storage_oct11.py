@@ -5,6 +5,7 @@ import subprocess
 
 import pytest
 from match_recovery.source import read_text
+from match_recovery.layout_source import parse_members
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "8f65307007e7ba275ae9b4e42c78a42f1095cdd3"
@@ -29,6 +30,7 @@ def migration(text, relative, *, reverse=False):
 
 def restore_motion_storage(text, relative):
     from test_media_stereo_state_owner_oct11 import restore_stereo_state
+    text = project_motion_index_fact(text, relative)
     if relative in ("src/movie_media.cpp", "src/movie_media.h"):
         text = restore_stereo_state(text, relative)
     # Earlier migration controls compare their own immutable checkpoints.
@@ -37,12 +39,41 @@ def restore_motion_storage(text, relative):
     return migration(text, relative, reverse=True) if present in text else text
 
 
+def project_motion_index_fact(text, relative):
+    """Project only this task's member fact and matching teardown spelling."""
+    if relative == "src/movie_media.h":
+        current = (
+            "  // Four-byte indices for rounded 4x4 output blocks: 5D3980 produces unsigned\n"
+            "  // words and 5D4448 consumes their bits with signed comparisons. Descriptive\n"
+            "  // recovered name; no original debug name or codec provenance is implied.\n"
+            "  // RECOVERY_MEMBER: v1 MediaRuntime motion_block_indices 0x640 0x005D3DF0\n"
+            "  unsigned int *motion_block_indices;             // +640; freed with free\n"
+        )
+        old = "  BYTE *owned_heap_640;                           // +640; freed with free\n"
+        assert text.count(current) == 1
+        text = text.replace(current, old, 1)
+        check = (
+            "typedef char media_motion_block_indices_offset_check[\n"
+            "    offsetof(MediaRuntime, motion_block_indices) == 0x640 ? 1 : -1];\n"
+        )
+        assert text.count(check) == 1
+        text = text.replace(check, "", 1)
+    elif relative == "src/movie_media.cpp":
+        current = "if (motion_block_indices != 0) { free(motion_block_indices); motion_block_indices = 0; }"
+        old = "if (owned_heap_640 != 0) { free(owned_heap_640); owned_heap_640 = 0; }"
+        if current in text:
+            assert text.count(current) == 1
+            text = text.replace(current, old, 1)
+    return text
+
+
 @pytest.mark.parametrize("relative", FILES)
 def test_bounded_source_and_identity_claim_continuity(relative):
     path = ROOT / relative
     old = subprocess.check_output(["git", "show", BASE + ":" + relative], cwd=ROOT, text=True)
     from test_media_stereo_state_owner_oct11 import restore_stereo_state
     new = path.read_text()
+    new = project_motion_index_fact(new, relative)
     if relative in ("src/movie_media.cpp", "src/movie_media.h"):
         new = restore_stereo_state(new, relative)
     assert migration(old, relative) == new
@@ -59,6 +90,11 @@ def test_bounded_source_and_identity_claim_continuity(relative):
 
 def test_storage_types_and_remaining_casts():
     header = (ROOT / "src/movie_media.h").read_text()
+    assert "unsigned int *motion_block_indices;" in header
+    (member,) = [row for row in parse_members(
+        header, "src/movie_media.h", "a" * 64, address_space="pe:va"
+    ) if row.class_name == "MediaRuntime" and row.member == "motion_block_indices"]
+    assert member.offset == 0x640 and member.evidence.address == 0x5D3DF0
     assert "int *motion_row_offsets;" in header
     assert "MediaMotionCoordinate *motion_coordinates;" in header
     assert "int *motion_pixel_offsets;" in header
@@ -69,7 +105,11 @@ def test_storage_types_and_remaining_casts():
             assert "owned_heap_" + offset not in text
     source = (ROOT / "src/general.cpp").read_text()
     assert "row_offsets[iVar13 + coordinate.y] + coordinate.x" in source
+    assert "const unsigned int *index_words" in source
+    assert "memcpy(&idx, index_words, sizeof(idx));" in source
     assert "memcpy(&component, &uVar9, sizeof(component));" in source
+    assert "reinterpret_cast<unsigned int *>(runtime->motion_block_indices)" not in source
+    assert "reinterpret_cast<int *>(runtime->motion_block_indices)" not in source
 
 
 def test_pinned_array_strides_signed_unpack_and_block_rows():

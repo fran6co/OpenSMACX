@@ -1,0 +1,19 @@
+{
+  "event_id": "32f959f452ec8f1f508386d84eedb8de4e4eab8cbfc43220ded54e15e071e1d1",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "motion-index-allocation-signed-division",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/general.cpp::sub_5d3df0 transfers aligned allocation_size bits to signed int, divides by16, then converts to DWORD before the wrapped<<2. Original first three requests, allocation/free order, failure continuation and callbacks remain unchanged. Independent native/mathematical review covers every aligned32bit input includingINTMIN.",
+      "Actual-source fail-all allocator controls cover zero, ordinary and high-bit areas80000000,FFFFFFF0 and parser-reachable FFFF8000; all four requested sizes and failure state are checked without huge host allocations. Restoring the previous logical formula is rejected. Final fresh138mapping comparison preserves all62prior exact results, supported native640offset/660extent/neighbor layout passes both trials, fresh application builds/links and all176objects differ only in the2authorized allocator/copy bodies with unchanged callee destination multisets.",
+      "Source incorporation only, not automatic, full linked, complete primitive CodeView type, codec/runtime or game acceptance. Six independently reproduced earlier whole-file source-history assertions remain failing and are not waived or hidden."
+    ]
+  },
+  "previous_event": "b34b4ccb27cd32f039f4ea40c1fdf9d161d707947b1ce624bcdc1c938a14fa8c",
+  "request_id": "restore-original-motion-index-allocation",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:media-motion-indices-oct17"
+}

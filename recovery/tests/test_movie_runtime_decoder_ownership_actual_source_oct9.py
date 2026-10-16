@@ -6,6 +6,8 @@ import shutil
 import subprocess
 import tempfile
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERAL = ROOT / "src/general.cpp"
@@ -115,7 +117,8 @@ struct MediaRuntime {
   DWORD decoder_packet_value_620, decoder_packet_value_624;
   DWORD decoder_packet_value_628, decoder_packet_value_62c;
   int decoder_capacity_630, decoder_capacity_634;
-  BYTE *owned_heap_638, *owned_heap_63c, *owned_heap_640;
+  BYTE *owned_heap_638, *owned_heap_63c;
+  unsigned int *motion_block_indices;
   int *motion_row_offsets;
   MediaDecodedPixelBlock4x4 *decoded_pixel_blocks;
   MediaMotionCoordinate *motion_coordinates;
@@ -129,7 +132,7 @@ static void *freed_addresses[32];
 static void *tracked_malloc(std::size_t size) {
   allocation_sizes[allocation_calls] = size;
   ++allocation_calls;
-  if (allocation_calls == fail_allocation_call) return 0;
+  if (fail_allocation_call == -1 || allocation_calls == fail_allocation_call) return 0;
   return std::malloc(size);
 }
 static void tracked_free(void *address) {
@@ -173,14 +176,14 @@ int main() {
          row_steps[7] == 6);
   assert(reinterpret_cast<std::uintptr_t>(runtime.owned_heap_638) > 0xffffffffu);
   std::free(runtime.owned_heap_638); std::free(runtime.owned_heap_63c);
-  std::free(runtime.owned_heap_640); std::free(runtime.motion_row_offsets);
+  std::free(runtime.motion_block_indices); std::free(runtime.motion_row_offsets);
 
   BYTE *old_638 = static_cast<BYTE *>(std::malloc(4));
   BYTE *old_63c = static_cast<BYTE *>(std::malloc(4));
-  BYTE *old_640 = static_cast<BYTE *>(std::malloc(4));
+  unsigned int *old_640 = static_cast<unsigned int *>(std::malloc(4));
   int *old_644 = static_cast<int *>(std::malloc(4));
   runtime.owned_heap_638 = old_638; runtime.owned_heap_63c = old_63c;
-  runtime.owned_heap_640 = old_640; runtime.motion_row_offsets = old_644;
+  runtime.motion_block_indices = old_640; runtime.motion_row_offsets = old_644;
   allocation_calls = free_calls = 0; fail_allocation_call = 2;
   assert(sub_5d3df0(&runtime, frame) == 0);
   assert(free_calls == 4 && freed_addresses[0] == old_638 &&
@@ -188,9 +191,9 @@ int main() {
          freed_addresses[3] == old_640);
   assert(allocation_calls == 4 && runtime.owned_heap_638 != 0 &&
          runtime.owned_heap_63c == 0 && runtime.motion_row_offsets != 0 &&
-         runtime.owned_heap_640 != 0);
+         runtime.motion_block_indices != 0);
   std::free(runtime.owned_heap_638); std::free(runtime.motion_row_offsets);
-  std::free(runtime.owned_heap_640);
+  std::free(runtime.motion_block_indices);
 
   descriptor.pixel_format.red_bits = 5;
   descriptor.pixel_format.green_bits = 6;
@@ -249,7 +252,7 @@ int main() {
   assert(decoded[0] == 0x7edcba98u);
   sub_5d439f(decoded, reinterpret_cast<BYTE *>(compressed_words), 4, 1);
 
-  int motion_indices[2] = {0, 1}; int motion_offsets[2] = {0, 0};
+  unsigned int motion_indices[2] = {0, 1}; int motion_offsets[2] = {0, 0};
   BYTE previous[32], current[32] = {};
   MediaDecodedPixelBlock4x4 block;
   for (int i = 0; i < 32; ++i) previous[i] = static_cast<BYTE>(i + 1);
@@ -271,7 +274,7 @@ int main() {
   BYTE motion_frame[128] = {};
   allocation_calls = free_calls = 0; fail_allocation_call = 0;
   assert(sub_5d3df0(&motion, motion_frame) == 1);
-  int *motion_indices_word = reinterpret_cast<int *>(motion.owned_heap_640);
+  unsigned int *motion_indices_word = motion.motion_block_indices;
   *motion_indices_word = 2; // Choose raw block, not the previous-frame branch.
   BYTE motion_packet_storage[128] = {};
   BYTE *motion_packet = motion_packet_storage + 2;
@@ -290,6 +293,10 @@ int main() {
   const DWORD packed_pixels = 0x1b1b1b1b;
   memcpy(motion_packet + 40, &packed_pixels, sizeof(packed_pixels));
   assert(sub_5d3980(&motion, motion_packet) == 1);
+  // The packet's zero bit width skips index production.  The prior word is
+  // nevertheless consumed unchanged and selects decoded block zero.
+  assert(motion.motion_block_indices[0] == 2u);
+  assert(memcmp(motion.owned_heap_638, motion_packet + 20, 16) == 0);
   assert(motion.motion_coordinates[0].x == -1 && motion.motion_coordinates[0].y == 1);
   assert(motion.motion_coordinates[1].x == 2 && motion.motion_coordinates[1].y == -1);
   assert(motion.motion_pixel_offsets[0] == 3 && motion.motion_pixel_offsets[1] == -2);
@@ -298,7 +305,7 @@ int main() {
     assert(motion.decoded_pixel_blocks[1].pixels[i] ==
            motion_packet[36 + ((packed_pixels >> ((15 - i) * 2)) & 3)]);
   std::free(motion.owned_heap_638); std::free(motion.owned_heap_63c);
-  std::free(motion.owned_heap_640); std::free(motion.motion_row_offsets);
+  std::free(motion.motion_block_indices); std::free(motion.motion_row_offsets);
   std::free(motion.motion_coordinates); std::free(motion.motion_pixel_offsets);
   std::free(motion.decoded_pixel_blocks);
 
@@ -309,12 +316,13 @@ int main() {
   video.descriptor = &video_descriptor;
   BYTE *frame_a = static_cast<BYTE *>(std::malloc(16));
   BYTE *frame_b = static_cast<BYTE *>(std::malloc(16));
-  BYTE *scratch = static_cast<BYTE *>(std::malloc(4));
+  unsigned int *scratch = static_cast<unsigned int *>(std::malloc(4));
   int *rows = static_cast<int *>(std::malloc(64));
   for (int i = 0; i < 16; ++i) frame_a[i] = static_cast<BYTE>(i + 10);
   memset(frame_b, 0, 16); memset(scratch, 0, 4); memset(rows, 0, 64);
   video.owned_heap_638 = frame_a; video.owned_heap_63c = frame_b;
-  video.owned_heap_640 = scratch; video.motion_row_offsets = rows;
+  video.motion_block_indices = scratch;
+  video.motion_row_offsets = rows;
   BYTE packet_storage[128] = {}; BYTE *packet = packet_storage + 2;
   unsigned short fields[4] = {1, 1, 0, 8};
   memcpy(packet, fields, sizeof(fields));
@@ -345,7 +353,7 @@ int main() {
   assert(video.decoded_pixel_blocks == 0 && video.decoder_capacity_634 == 2 &&
          allocation_calls == 1 && allocation_sizes[0] == 32);
   std::free(video.owned_heap_638); std::free(video.owned_heap_63c);
-  std::free(video.owned_heap_640); std::free(video.motion_row_offsets);
+  std::free(video.motion_block_indices); std::free(video.motion_row_offsets);
   std::free(video.motion_coordinates); std::free(video.motion_pixel_offsets);
 }
 '''
@@ -407,3 +415,89 @@ int main() {
 }
 '''
     _compile_run(tmp_path, unit, "caller_dispatch")
+
+
+def _allocator_unit(general: str) -> str:
+    body = _definition(general, "int __fastcall sub_5d3df0(")
+    return r'''#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#define __fastcall
+typedef unsigned int DWORD;
+typedef unsigned char BYTE;
+struct MediaDescriptor { DWORD output_width_64, output_height_60; };
+struct MediaRuntime {
+  MediaDescriptor *descriptor;
+  DWORD unresolved_word_61c;
+  BYTE *owned_heap_638, *owned_heap_63c;
+  unsigned int *motion_block_indices;
+  int *motion_row_offsets;
+};
+static int allocation_calls, free_calls, callback_calls, fail_allocation_call;
+static std::size_t allocation_sizes[8];
+static void *tracked_malloc(std::size_t size) {
+  allocation_sizes[allocation_calls++] = size;
+  if (fail_allocation_call == -1 || allocation_calls == fail_allocation_call) return 0;
+  return std::malloc(size);
+}
+static void tracked_free(void *p) { ++free_calls; std::free(p); }
+static int sub_5d427c(unsigned short *, unsigned char *, int) {
+  ++callback_calls; return 0;
+}
+#define malloc tracked_malloc
+#define free tracked_free
+''' + body + r'''
+#undef malloc
+#undef free
+static void check_dimensions(DWORD width, DWORD height, DWORD area,
+                             DWORD row_bytes, DWORD index_bytes) {
+  MediaDescriptor descriptor = {};
+  descriptor.output_width_64 = width;
+  descriptor.output_height_60 = height;
+  MediaRuntime runtime = {};
+  runtime.descriptor = &descriptor;
+  BYTE frame[8] = {};
+  allocation_calls = free_calls = callback_calls = 0;
+  fail_allocation_call = -1;
+  assert(sub_5d3df0(&runtime, frame) == 0);
+  assert(allocation_calls == 4);
+  assert(allocation_sizes[0] == area && allocation_sizes[1] == area);
+  assert(allocation_sizes[2] == row_bytes && allocation_sizes[3] == index_bytes);
+  assert(runtime.owned_heap_638 == 0 && runtime.owned_heap_63c == 0 &&
+         runtime.motion_row_offsets == 0 && runtime.motion_block_indices == 0);
+  assert(free_calls == 0 && callback_calls == 0);
+}
+int main() {
+  check_dimensions(3u, 5u, 16u, 40u, 4u);
+  check_dimensions(0u, 0u, 0u, 0u, 0u);
+  check_dimensions(2u, 0x40000000u, 0x80000000u, 0u, 0xe0000000u);
+  check_dimensions(0xfffffff0u, 1u, 0xfffffff0u, 8u, 0xfffffffcu);
+  check_dimensions(1u, 0xffff8000u, 0xffff8000u, 0xfffc0000u, 0xffffe000u);
+}
+'''
+
+
+def test_actual_allocator_signed_division_sizes_for_zero_and_high_bit_dimensions(
+    tmp_path: Path,
+) -> None:
+    _compile_run(tmp_path, _allocator_unit(GENERAL.read_text()), "signed_allocator")
+
+
+def test_logical_rounded_word_count_mutation_is_detected(tmp_path: Path) -> None:
+    general = GENERAL.read_text()
+    signed_size = (
+        "  int signed_allocation_size;\n"
+        "  memcpy(&signed_allocation_size, &allocation_size, sizeof(signed_allocation_size));\n"
+        "  runtime->motion_block_indices = static_cast<unsigned int *>(\n"
+        "      malloc(static_cast<DWORD>(signed_allocation_size / 16) << 2));"
+    )
+    logical_size = (
+        "  runtime->motion_block_indices = static_cast<unsigned int *>(\n"
+        "      malloc(((allocation_size + 0x0fu) >> 4) << 2));"
+    )
+    assert general.count(signed_size) == 1
+    mutated = general.replace(signed_size, logical_size, 1)
+    with pytest.raises(subprocess.CalledProcessError):
+        _compile_run(tmp_path, _allocator_unit(mutated), "logical_allocator_mutation")
