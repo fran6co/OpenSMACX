@@ -3723,11 +3723,20 @@ are passed unchanged; quoted display labels are never reparsed into arguments.
 
 The historical whole-function comparator supports one original image span, or
 a narrowly verified i386 C++-EH primary/cold pair. The latter requires one
-independent code COMDAT with exactly one associated 18-byte or 21-byte
-cleanup/handler child (the validated disp8 or disp32 `lea` form), complete frame
-registration, and independently valid ownership chains through the
-supported 40-byte `0x19930520` single-state exception metadata on both the PE
-and COFF sides. The two sides may use different supported instruction lengths;
+independent code COMDAT with exactly one associated cleanup/handler child,
+complete frame registration, and independently valid ownership chains through
+`0x19930520` exception metadata on both the PE and COFF sides. Supported forms
+are the 18-byte or 21-byte single-action child (disp8 or disp32 `lea`, with a
+40-byte single-state metadata bundle), and a bounded 32-byte two-action child
+(`mov ecx,[ebp+disp8]; jmp`, then `mov ecx,[ebp+disp8]; add ecx,imm32; jmp`,
+then the handler, with an exact 48-byte two-state bundle). The two-action map
+must independently identify both cleanup starts and its state transitions;
+all pointer/branch relocations and addends are checked. Its first cleanup
+targets an undefined external destructor. The second may target an undefined
+external destructor or a separately bounded, independent local `??_D` helper;
+defined ordinary destructors and other cleanup forms remain unsupported.
+Original and compiled action inventories are recorded independently.
+The two sides may use different supported instruction lengths or action counts;
 binding proves ownership only, so ordinary byte comparison still reports a
 length/encoding mismatch. Section order, adjacency and generated label spelling do
 not bind a region. Every declared byte is compared independently; gaps are never
