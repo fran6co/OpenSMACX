@@ -7284,6 +7284,8 @@ Purpose: Board the eligible units stacked with the specified transport or carrie
          the subject already sits on a faction-owned base.
 // ORIGINAL: 0x005B8EE0 ?stack_veh@@YAHHH@Z 0x005B8EE0-0x005B950F
 // TRIED: by 1 (17 vs image's 16) - two `veh_top(veh_id)` calls (the mode-0 refresh loop and the per-pass boarding loop's start index) hand-inlined, matching stack_fix's precedent, and `sleep(i)` forced to a real call via a new `sleep_call` forwarder in veh.h/veh.cpp (its only other reference is the inline body - under /O2 `sleep(i)` folds to 3 field writes, but the image calls it for real at this one site). call_diff now agrees (0 disagreeing, was MORE by 1). This is a 472-instruction function; the remaining gap is per-branch register/scheduling noise not chased further at this budget.
+// SUPERSEDED: sleep now has a separate ordinary mapped owner in
+// vehicle_orders.cpp; stack_veh calls it directly.
 // size      1583 bytes
 // prototype int (__cdecl ?stack_veh@@YAHHH@Z)(int vehID, int)
 // callers   10   call targets   7
@@ -7424,7 +7426,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
                 }
             }
             if (accept && !(!mode && (Vehs[i].state & VSTATE_UNK_1))) {
-                sleep_call(i);
+                sleep(i);
                 Vehs[i].waypoint_x[0] = (int16_t)veh_id;
                 if (mode) {
                     veh_drop(veh_lift(i), -2, -2);
@@ -7993,29 +7995,6 @@ int __cdecl veh_drop(int veh_id, int x, int y) {
     return veh_id;
 }
 
-/*
-Purpose: Set the unit's status to sentry/board.
-// ORIGINAL: 0x005C01A0 ?sleep@@YAXH@Z 0x005C01A0-0x005C01CA BYTE_EXACT
-// size      42 bytes
-// prototype void (__cdecl ?sleep@@YAXH@Z)(int vehID)
-// callers   8   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-
-// See veh.h: a real, out-of-line forwarder so stack_veh's one call site gets
-// an actual `call` where `sleep(i)` directly would inline away under /O2.
-void __cdecl sleep_call(int veh_id) {
-    sleep(veh_id);
-}
-
 // See veh.h: a real, out-of-line forwarder so veh_cost's one call site gets
 // an actual `call` where `base_cost(proto_id)` directly would inline away
 // under /O2.
@@ -8538,7 +8517,7 @@ Purpose: Calculate the specified prototype's overall cost to build. Optional out
 //      confirmed the image has no call to 0x005C17D0 here, it open-codes
 //      the free-proto/difficulty/triad switch directly;
 //  (2) a real out-of-line `base_cost_call` forwarder (veh.h/veh.cpp,
-//      `sleep_call`'s own idiom) for the ONE call site where the image
+//      following the historical `sleep_call` workaround) for the ONE call site where the image
 //      keeps `base_cost` (0x005A5D00, "callers 1") as a genuine `call`
 //      rather than the inline every other site gets - `base_cost(proto_id)`
 //      written directly folded away under /O2, exposing the inner

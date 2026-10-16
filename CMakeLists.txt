@@ -263,6 +263,7 @@ set(OPENSMACX_SOURCES
     src/time_lifecycle.cpp
     src/enemy.cpp
     src/veh.cpp
+    src/vehicle_orders.cpp
     src/vector.cpp
     src/win.cpp
     src/win_reparent.cpp

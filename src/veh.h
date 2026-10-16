@@ -787,10 +787,8 @@ int __cdecl speed_proto(int proto_id);
 int __cdecl valid_patrol(int veh_id, int x, int y);
 int __cdecl speed(int veh_id, BOOL skip_morale);
 int __cdecl veh_cargo(int veh_id);
-// A REAL, out-of-line forwarder to the `MEASURED inline sleep()` below - its
-// one caller (stack_veh, 0x005B8EE0) is a genuine `call` in the image, not
-// the folded field writes every other spot gets from `sleep` inlining.
-void __cdecl sleep_call(int veh_id);
+// Mapped standalone operation; defined in vehicle_orders.cpp.
+void __cdecl sleep(int veh_id);
 // A REAL, out-of-line forwarder to the `MEASURED inline base_cost()` below -
 // its one caller (veh_cost, 0x005C1850) is a genuine `call` in the image
 // (0x005A5D00, "callers 1"), where `base_cost(proto_id)` written directly
@@ -857,12 +855,6 @@ MEASURED inline void __cdecl go_to(int veh_id, char type, int x, int y) {
     if (VehPrototypes[Vehs[veh_id].proto_id].plan == PLAN_COLONIZATION) {
         Vehs[veh_id].terraforming_turns = 0;
     }
-}
-
-MEASURED inline void __cdecl sleep(int veh_id) {
-    Vehs[veh_id].order = ORDER_SENTRY_BOARD;
-    Vehs[veh_id].waypoint_x[0] = -1;
-    Vehs[veh_id].waypoint_y[0] = 0;
 }
 
 MEASURED inline void __cdecl veh_skip(int veh_id) {
