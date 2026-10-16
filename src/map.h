@@ -707,9 +707,7 @@ MEASURED inline uint8_t __cdecl abstract_at(int x, int y) {
     return (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)];
 }
 
-MEASURED inline void __cdecl abstract_set(int x, int y, uint8_t region) {
-    (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)] = region;
-}
+void __cdecl abstract_set(int x, int y, uint8_t region);
 
 MEASURED inline int __cdecl radius_move(int x_radius_off, int y_radius_off, int range) {
     for (int i = 0; i < range; i++) {

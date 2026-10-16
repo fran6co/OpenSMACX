@@ -28,13 +28,6 @@
 
 Path Paths;                                              // 0x00945B00
 
-// Same lever again, for `abstract_set` (map.h): make_abstract (0x0059C200) is
-// the image's only `call 0x00591230`, and this tree was expanding the inline
-// there - `osmx calls 0x0059C200` reported one image call and none here.
-void __cdecl abstract_set_call(int x, int y, uint8_t region) {
-    abstract_set(x, y, region);
-}
-
 // `memset` is a REAL CALL in this file's image bodies - init (0x0059A220),
 // find (0x0059A530) and sensors (0x0059CCA0) all reach the image's
 // 0x006465F0 - and /O2 implies /Oi, whose intrinsic would expand every one
@@ -1112,13 +1105,9 @@ int Path::move(int veh_id, int faction_id) {
 /*
  Purpose: Populate the abstract map with the radial region value.
 // ORIGINAL: 0x0059C200 ?make_abstract@Path@@QAEXXZ 0x0059C200-0x0059C33F
-// LEVER: `abstract_set_call` - the image's ONE call here is a real
-//   `call 0x00591230` at 0x0059C2F6, and this tree was expanding the
-//   `MEASURED inline` abstract_set in its place. A non-inline forwarder (same
-//   lever as general.h's bitmask_call, defined at the top of this file) took
-//   this body from 11/112 and a frame one dword short of the image's
-//   `sub esp,0x1c` to 18/112 with the frame and the instruction count both
-//   matching - the missing slot WAS the expanded callee's spill.
+// HISTORICAL LEVER (superseded): `abstract_set_call` restored an apparent
+//   call and frame shape when abstract_set was still header-inline. The real
+//   mapped owner now provides the original call boundary directly.
 // LEVER: the two abstract cursors are SIGNED, and the bounds are read as
 //   `(int)`. `uint32_t` against `uint32_t MapAbstractLatBounds` gives `jbe`
 //   where the image closes the loop `jle`; `MapAbstractLongBounds` is already
@@ -1130,8 +1119,9 @@ int Path::move(int veh_id, int faction_id) {
 //   the loop. Those reads live in map.h, which this batch does not own - the
 //   same wall zoc_path records below.
 // TRIED: the divergence is at instruction 2 and it is the FRAME SIZE - the image reserves `sub esp, 0x1c` where this body reserves 0x18, one dword short. Four source shapes measured with tools/try_spellings.py and ALL FOUR compile identically to what is committed, 11/112: hoisting `x * 5` and `y * 5` into their own locals, splitting the `on_map && !is_ocean` guard into nested ifs, both together, and signed loop counters. VC6 emits the same code for every one, so the extra slot is not this body's to allocate - it belongs to one of the four `MEASURED inline` callees here (xrange, on_map, is_ocean, region_at) spilling where ours does not. SUPERSEDED 2026-09-03: the missing slot was the expanded abstract_set's spill, and
-//   `abstract_set_call` (LEVER above) freed it. The four spellings above are still
-//   measured-equal to each other, just no longer to the image.
+//   `abstract_set_call` (historical lever above) appeared to free it. The four
+//   spellings above remain measured-equal to each other; that frame attribution
+//   was specific to the removed header-inline topology.
 // size      319 bytes
 // prototype void (__thiscall ?make_abstract@Path@@QAEXXZ)(Path* this)
 // callers   1   call targets   1
@@ -1153,7 +1143,7 @@ void Path::make_abstract() {
                     break;
                 }
             }
-            abstract_set_call(x, y, region);
+            abstract_set(x, y, region);
         }
     }
 }

@@ -2548,7 +2548,7 @@ Status: Complete
 /*
 Purpose: Set the region value for the specified tile.
 // ORIGINAL: 0x00591230 ?abstract_set@@YAXHHE@Z 0x00591230-0x00591253 SEMANTIC
-// body      src/map.h
+// body      src/map.cpp
 // TRIED: same plateau as abstract_at/alt_at. Image computes a row
 //            pointer (base + y*(bounds>>1)) explicitly, then indexes it by
 //            x>>1 in the final SIB store; VC6 -O2 always pre-sums the two
@@ -2565,10 +2565,9 @@ Purpose: Set the region value for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+void __cdecl abstract_set(int x, int y, uint8_t region) {
+    (MapAbstract())[(x >> 1) + y * (MapAbstractLongBounds >> 1)] = region;
+}
 
 
 /*
