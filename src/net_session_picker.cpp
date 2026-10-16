@@ -156,7 +156,7 @@ void NetSessionPickerWin::draw_frame() {
 
 // ORIGINAL: 0x0063C9D0 sub_63c9d0 0x0063C9D0-0x0063CA98 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
-// symbol    ?vslot_14@NetSessionPickerWin@@UAEXXZ
+// symbol    ?on_redraw@NetSessionPickerWin@@UAEXXZ
 // TRIED: signature __cdecl(void) -> __thiscall member (ecx=this throughout, plain `ret`, class-member wrapper like other anonymous subs). sub_63caa0 called via the scaffold's existing nullary __cdecl decl though the original passes ecx=this too - can't redeclare it (C2733), so that one call is known to diverge. First divergence #0 push/mov, 210 vs 200 B.
 void NetSessionPickerWin::on_redraw() {
   // These bytes are the pinned UI literals at 0x698C88 and 0x698C9C. Keep

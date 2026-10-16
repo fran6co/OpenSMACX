@@ -621,6 +621,7 @@ void SpriteBox::draw_item(int position) {
 // TRIED: `this` is offset by TWO different constants for two different base sub-objects (this-0x7c for Spot::check, this-0x8c for the SpriteBox proper, whose field_0_ IS *(this-0x8c)); modelled with raw char*-adjusted casts rather than real inheritance. `a2` is an in/out param aliased via `&a2` into check(). Gets to instruction 25 of ~90 before diverging on push/mov ordering around the `push ebp; push esi` callee-save point.
 // ORIGINAL: 0x00611060 ?on_left_click@SpriteBox@@QAEXHH@Z 0x00611060-0x0061114A FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00611060.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611060 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_left_click@SpriteBox@@UAEXHH@Z
 void SpriteBox::on_left_click(int x, int y) {
     int item_id = 0;
     if (spots_.check(x, y, &item_id, 0) == -1) return;
@@ -649,6 +650,7 @@ void SpriteBox::on_left_click(int x, int y) {
 
 // ORIGINAL: 0x00611400 ?on_key_down@SpriteBox@@QAEHH@Z 0x00611400-0x00611580 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00611400.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611400 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_key_down@SpriteBox@@UAEHH@Z
 // TRIED: none confirmed byte-exact; MISMATCH #0 - the switch/jump-table data at 0x00611580/0x00611594 (byte remap + pointer table) is not in the given disassembly, so the a1==0x26/0x25/0x28/0x27/ 0x24/0x22 case values are a guess. The four handler BODIES (offsets -0x8c/-0x58/-0x38/-0x34/+0x60/+4/+8/+0xfc) are transcribed directly from the bytes.
 int SpriteBox::on_key_down(int key) {
     const int count = list_.entry_count_;
