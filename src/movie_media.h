@@ -281,7 +281,11 @@ struct MediaRuntime {
   int decoder_capacity_634;                        // +634; signed 5D3980 capacity comparison
   BYTE *owned_heap_638;                           // +638; freed with free
   BYTE *owned_heap_63c;                           // +63c; freed with free
-  BYTE *owned_heap_640;                           // +640; freed with free
+  // Four-byte indices for rounded 4x4 output blocks: 5D3980 produces unsigned
+  // words and 5D4448 consumes their bits with signed comparisons. Descriptive
+  // recovered name; no original debug name or codec provenance is implied.
+  // RECOVERY_MEMBER: v1 MediaRuntime motion_block_indices 0x640 0x005D3DF0
+  unsigned int *motion_block_indices;             // +640; freed with free
   int *motion_row_offsets;                       // +644; 2*height signed entries, starts at -width*height
   MediaDecodedPixelBlock4x4 *decoded_pixel_blocks; // +648; decoder_capacity_634 blocks
   MediaMotionCoordinate *motion_coordinates;     // +64c; decoder_capacity_630 pairs
@@ -321,6 +325,8 @@ typedef char media_conversion_blend_low_offset_check[
     offsetof(MediaConversionTableStorage, blend_low) == 0x37ec ? 1 : -1];
 typedef char media_runtime_extent_check[
     sizeof(MediaRuntime) == 0x660 ? 1 : -1];
+typedef char media_motion_block_indices_offset_check[
+    offsetof(MediaRuntime, motion_block_indices) == 0x640 ? 1 : -1];
 typedef char media_runtime_decoder_state_offsets_check[
     offsetof(MediaRuntime, decoder_context_3f8) == 0x3f8 &&
     offsetof(MediaRuntime, decoder_context_3f8) +

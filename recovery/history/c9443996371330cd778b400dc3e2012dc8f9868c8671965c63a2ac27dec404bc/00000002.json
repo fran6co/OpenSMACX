@@ -1,0 +1,27 @@
+{
+  "event_id": "b34b4ccb27cd32f039f4ea40c1fdf9d161d707947b1ce624bcdc1c938a14fa8c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_movie_runtime_decoder_ownership_actual_source_oct9.py",
+      "src/general.cpp"
+    ],
+    "evidence": [
+      "Explicitly amend the earlier no-allocation-arithmetic-change restriction for this already scoped allocator only. Native5D3EA7-5D3EB2 establishes signed division by16 of the already aligned area and a wrapped32bit leftshiftby2, not the current logical unsigned division. This is restoration of original error-path behavior, not validation or a safety fix. Keep original task baseline and all identities/claims.",
+      "Transfer the aligned DWORD bit pattern into int with memcpy, perform defined signed /16, convert the quotient back to DWORD before <<2. Do not change first/second frame allocation sizes, third row-table request, malloc/free order, null handling, dimensions, sample callback or initialization. Test raw high-bit areas, zero and ordinary dimensions with an actual-source malloc observer that returns null for every allocation, avoiding huge buffers. Require fresh native measurements/layout/build and independent review; do not call the previous pointer-trial reports acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6110704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "634838876624d505a206919ed2d8b60a4d2001129acc5c1af6fc3258b5c40e37",
+  "request_id": "restore-motion-index-signed-allocation",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:media-motion-indices-oct17"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "634838876624d505a206919ed2d8b60a4d2001129acc5c1af6fc3258b5c40e37",
+  "payload": {
+    "affects": [
+      "entity-e34d30e32bf0a153de6c2d78f356e5555320162074ab2a8038a2755285f91f30"
+    ],
+    "author": "coordinator",
+    "discovery_id": "motion-index-allocation-signed-division",
+    "evidence": [
+      "Independent pinned5D3EA7-5D3EB2 instruction audit observes CDQ,AND EDX,0xF,ADD EAX,EDX,SAR EAX,4,SHL EAX,2; current5D3DF0 source uses ((allocation_size+0x0F)>>4)<<2 with DWORD logical right shift. Normal nonnegative aligned dimensions agree; malformed/high-bit dimensions may request different malloc sizes. This is a restoration obligation, not authorization to validate, clamp or normalize dimensions.",
+      "The present pointer/row migration deliberately leaves allocation arithmetic and failure order unchanged under its committed scope. Retain this finding pending a separately reviewed correction with full raw32bit/dimension, allocation-failure and behavior controls; do not claim complete5D3DF0 parity or codec acceptance."
+    ],
+    "hypothesis": "The preexisting motion-index allocation formula uses a logical unsigned division where the original applies signed division rounding before its wrapped left shift for high-bit aligned image areas.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "motion-index-allocation-signed-division",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:media-motion-indices-oct17"
+}

@@ -319,7 +319,7 @@ void __fastcall sub_5d4020(MediaRuntime *runtime, unsigned char *dest,
                            unsigned char *unusedStackArg, int destStride);
 extern "C" void __cdecl sub_5d439f(unsigned int *scratch_words,
                         const unsigned char *compressed, int count, int width);
-extern "C" void __cdecl sub_5d4448(int *motion_indices, unsigned char *previous_frame,
+extern "C" void __cdecl sub_5d4448(const unsigned int *index_words, unsigned char *previous_frame,
                         unsigned char *current_frame, int run_limit,
                         int *motion_offsets, MediaDecodedPixelBlock4x4 *block_scratch,
                         int pitch, int run_count, int height_groups);

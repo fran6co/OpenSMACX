@@ -1902,7 +1902,7 @@ void MediaRuntime::sub_5cc710() {
     if (owned_heap_638 != 0) { free(owned_heap_638); owned_heap_638 = 0; }
     if (owned_heap_63c != 0) { free(owned_heap_63c); owned_heap_63c = 0; }
     if (motion_row_offsets != 0) { free(motion_row_offsets); motion_row_offsets = 0; }
-    if (owned_heap_640 != 0) { free(owned_heap_640); owned_heap_640 = 0; }
+    if (motion_block_indices != 0) { free(motion_block_indices); motion_block_indices = 0; }
 
     if (queue_record_kind == 2 && output_handle_candidate != 0)
       output_handle_candidate = (DWORD)update_overlay(0);

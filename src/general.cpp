@@ -3115,49 +3115,19 @@ label_5d4352:
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_5d439f  at 0x005D439F  (169 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-typedef int int32_t;
-typedef unsigned int uint32_t;
-typedef short int16_t;
-typedef unsigned short uint16_t;
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-typedef int int32;
-typedef unsigned int uint32;
-typedef short int16;
-typedef unsigned short uint16;
-// `char`, NOT `signed char`. They are distinct MSVC types and mangle
-// differently - D against C - and the catalogue's `int8` means the first:
-// counted over every catalogued mangled name, `PAD` appears 508 times and
-// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
-// symbol no target object holds. `int8_t` keeps its C meaning below; neither
-// catalogue ever uses it.
-typedef char int8;
-typedef unsigned char uint8;
-// IDA guessed int __cdecl(int,int,int,int); the tail never sets eax, so the
-// real return type is void, and evidence (only [esp+N] reads, no ecx use)
-// backs the __cdecl free-function shape with 4 stack ints.
+// The producer writes unsigned 32-bit index words; the native consumer
+// interprets their stored bit patterns as signed indices.
+// The old integer-only prototype was a disassembler guess. Callers pass two
+// buffers and two counts in four dword stack slots, with no ecx receiver;
+// the tail supplies no return value.
 static unsigned int media_rotate_right_32(unsigned int value, unsigned int count) {
     count &= 0x1fu;
     return (value >> count) | (value << ((0u - count) & 0x1fu));
 }
 
-extern "C" void __cdecl sub_5d439f(unsigned int *a1,
+extern "C" void __cdecl sub_5d439f(unsigned int *index_words,
                                     const unsigned char *compressed,
-                                    int a3, int a4) {
+                                    int word_count, int bit_width) {
     unsigned int bitpos;
     unsigned int mask;
     unsigned char width;
@@ -3165,36 +3135,36 @@ extern "C" void __cdecl sub_5d439f(unsigned int *a1,
     unsigned int word;
 
     bitpos = 0;
-    width = (unsigned char)a4;
+    width = (unsigned char)bit_width;
     mask = (1u << (width & 0x1f)) - 1u;
-    while (a3 > 3) {
+    while (word_count > 3) {
         shift = (unsigned char)bitpos & 7;
         memcpy(&word, compressed + (bitpos >> 3), sizeof(word));
         word = media_rotate_right_32(word, shift);
-        *a1 = word & mask;
-        a1[1] = media_rotate_right_32(word, width) & mask;
+        *index_words = word & mask;
+        index_words[1] = media_rotate_right_32(word, width) & mask;
 
         const unsigned int second_bitpos = bitpos +
-                                           static_cast<unsigned int>(a4) * 2u;
+                                           static_cast<unsigned int>(bit_width) * 2u;
         shift = static_cast<unsigned char>(second_bitpos) & 7;
         memcpy(&word, compressed + (second_bitpos >> 3), sizeof(word));
         word = media_rotate_right_32(word, shift);
-        a1[2] = word & mask;
-        a1[3] = media_rotate_right_32(word, width) & mask;
+        index_words[2] = word & mask;
+        index_words[3] = media_rotate_right_32(word, width) & mask;
 
-        a1 += 4;
-        bitpos += static_cast<unsigned int>(a4) * 4u;
-        a3 -= 4;
+        index_words += 4;
+        bitpos += static_cast<unsigned int>(bit_width) * 4u;
+        word_count -= 4;
     }
-    if (a3 - 4 > -4) {
+    if (word_count - 4 > -4) {
         do {
-            a3--;
+            word_count--;
             shift = (unsigned char)bitpos & 7;
             memcpy(&word, compressed + (bitpos >> 3), sizeof(word));
-            *a1 = media_rotate_right_32(word, shift) & mask;
-            bitpos += static_cast<unsigned int>(a4);
-            a1++;
-        } while (a3 > 0);
+            *index_words = media_rotate_right_32(word, shift) & mask;
+            bitpos += static_cast<unsigned int>(bit_width);
+            index_words++;
+        } while (word_count > 0);
     }
 }
 
@@ -3209,40 +3179,10 @@ extern "C" void __cdecl sub_5d439f(unsigned int *a1,
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_5d4448  at 0x005D4448  (180 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-typedef int int32_t;
-typedef unsigned int uint32_t;
-typedef short int16_t;
-typedef unsigned short uint16_t;
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-typedef int int32;
-typedef unsigned int uint32;
-typedef short int16;
-typedef unsigned short uint16;
-// `char`, NOT `signed char`. They are distinct MSVC types and mangle
-// differently - D against C - and the catalogue's `int8` means the first:
-// counted over every catalogued mangled name, `PAD` appears 508 times and
-// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
-// symbol no target object holds. `int8_t` keeps its C meaning below; neither
-// catalogue ever uses it.
-typedef char int8;
-typedef unsigned char uint8;
+// The unsigned index allocation is consumed as signed native indices; memcpy
+// preserves the bit patterns and signed comparisons without aligned typed loads.
 extern "C" void __cdecl sub_5d4448(
-    int *motion_indices, unsigned char *previous_frame,
+    const unsigned int *index_words, unsigned char *previous_frame,
     unsigned char *current_frame, int run_limit, int *motion_offsets,
     MediaDecodedPixelBlock4x4 *block_scratch, int pitch, int run_count,
     int height_groups)
@@ -3254,46 +3194,56 @@ extern "C" void __cdecl sub_5d4448(
                              reinterpret_cast<uintptr_t>(current_frame);
     const unsigned int stride = static_cast<unsigned int>(pitch);
     const unsigned int stride3 = stride * 3u;
-    int *src = motion_indices;
     unsigned char *dst = current_frame;
     int count;
 
     do {
         count = saved_count;
         for (;;) {
-            int idx = *src;
-            src += 1;
+            int idx;
+            memcpy(&idx, index_words, sizeof(idx));
+            index_words += 1;
             if (idx < run_limit) {
                 do {
                     const uintptr_t entry = base_c +
                         reinterpret_cast<uintptr_t>(dst) +
                         static_cast<intptr_t>(motion_offsets[idx]);
-                    *reinterpret_cast<int *>(dst) =
-                        *reinterpret_cast<const int *>(entry);
-                    *reinterpret_cast<int *>(dst + stride) =
-                        *reinterpret_cast<const int *>(entry + stride);
-                    *reinterpret_cast<int *>(dst + stride * 2u) =
-                        *reinterpret_cast<const int *>(entry + stride * 2u);
-                    *reinterpret_cast<int *>(dst + stride3) =
-                        *reinterpret_cast<const int *>(entry + stride3);
+                    const unsigned char *source =
+                        reinterpret_cast<const unsigned char *>(entry);
+                    unsigned int row_word;
+                    memcpy(&row_word, source, sizeof(row_word));
+                    memcpy(dst, &row_word, sizeof(row_word));
+                    memcpy(&row_word, source + stride, sizeof(row_word));
+                    memcpy(dst + stride, &row_word, sizeof(row_word));
+                    memcpy(&row_word, source + stride * 2u, sizeof(row_word));
+                    memcpy(dst + stride * 2u, &row_word, sizeof(row_word));
+                    memcpy(&row_word, source + stride3, sizeof(row_word));
+                    memcpy(dst + stride3, &row_word, sizeof(row_word));
                     dst += 4;
                     count -= 1;
                     if (count <= 0) goto end_of_run;
-                    idx = *src;
-                    src += 1;
+                    memcpy(&idx, index_words, sizeof(idx));
+                    index_words += 1;
                 } while (idx < run_limit);
             }
             {
                 const uintptr_t entry2 = base8 +
-                    static_cast<intptr_t>(idx) * 16;
-                *reinterpret_cast<int *>(dst) =
-                    *reinterpret_cast<const int *>(entry2);
-                *reinterpret_cast<int *>(dst + stride) =
-                    *reinterpret_cast<const int *>(entry2 + 4);
-                *reinterpret_cast<int *>(dst + stride * 2u) =
-                    *reinterpret_cast<const int *>(entry2 + 8);
-                *reinterpret_cast<int *>(dst + stride3) =
-                    *reinterpret_cast<const int *>(entry2 + 0xc);
+                    (static_cast<uintptr_t>(idx) << 4);
+                const MediaDecodedPixelBlock4x4 *block =
+                    reinterpret_cast<const MediaDecodedPixelBlock4x4 *>(entry2);
+                const unsigned char *source_row = block->pixels + 0;
+                unsigned int row_word;
+                memcpy(&row_word, source_row, sizeof(row_word));
+                memcpy(dst, &row_word, sizeof(row_word));
+                source_row = block->pixels + 4;
+                memcpy(&row_word, source_row, sizeof(row_word));
+                memcpy(dst + stride, &row_word, sizeof(row_word));
+                source_row = block->pixels + 8;
+                memcpy(&row_word, source_row, sizeof(row_word));
+                memcpy(dst + stride * 2u, &row_word, sizeof(row_word));
+                source_row = block->pixels + 12;
+                memcpy(&row_word, source_row, sizeof(row_word));
+                memcpy(dst + stride3, &row_word, sizeof(row_word));
                 dst += 4;
                 count -= 1;
             }
@@ -3727,20 +3677,24 @@ int __fastcall sub_5d3df0(MediaRuntime *runtime, unsigned char *frame_base) {
     free(runtime->motion_row_offsets);
     runtime->motion_row_offsets = 0;
   }
-  if (runtime->owned_heap_640 != 0) {
-    free(runtime->owned_heap_640);
-    runtime->owned_heap_640 = 0;
+  if (runtime->motion_block_indices != 0) {
+    free(runtime->motion_block_indices);
+    runtime->motion_block_indices = 0;
   }
 
   runtime->owned_heap_638 = static_cast<unsigned char *>(malloc(allocation_size));
   runtime->owned_heap_63c = static_cast<unsigned char *>(malloc(allocation_size));
   runtime->motion_row_offsets = static_cast<int *>(
       malloc(static_cast<DWORD>(height) << 3));
-  runtime->owned_heap_640 = static_cast<unsigned char *>(
-      malloc(((allocation_size + 0x0fu) >> 4) << 2));
+  // Native 5D3EA7..5D3EB2 divides the aligned area as signed, then wraps
+  // the index-word byte count at 32 bits, including high-bit dimensions.
+  int signed_allocation_size;
+  memcpy(&signed_allocation_size, &allocation_size, sizeof(signed_allocation_size));
+  runtime->motion_block_indices = static_cast<unsigned int *>(
+      malloc(static_cast<DWORD>(signed_allocation_size / 16) << 2));
 
   if (runtime->owned_heap_638 != 0 && runtime->owned_heap_63c != 0 &&
-      runtime->motion_row_offsets != 0 && runtime->owned_heap_640 != 0) {
+      runtime->motion_row_offsets != 0 && runtime->motion_block_indices != 0) {
     const int stride = height;
     DWORD value_bits = 0u - pixel_count_bits;
     DWORD index = 0;
@@ -4442,7 +4396,7 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
         uVar3 = (static_cast<unsigned int>(output_width) *
                  static_cast<unsigned int>(output_height)) >> 4;
         if ((uVar6 * uVar3 + 0x1f & 0xffffffe0) != 0) {
-            sub_5d439f(reinterpret_cast<unsigned int *>(runtime->owned_heap_640),
+            sub_5d439f(runtime->motion_block_indices,
                        puVar14 + uVar5 * 8, static_cast<int>(uVar3),
                        static_cast<int>(uVar6));
         }
@@ -4450,7 +4404,7 @@ int __fastcall sub_5d3980(MediaRuntime *runtime, unsigned char *packet) {
         const DWORD final_height = runtime->descriptor->output_height_60;
         int final_pitch;
         memcpy(&final_pitch, &final_width, sizeof(final_pitch));
-        sub_5d4448(reinterpret_cast<int *>(runtime->owned_heap_640),
+        sub_5d4448(runtime->motion_block_indices,
                    runtime->owned_heap_63c, runtime->owned_heap_638,
                    static_cast<int>(runtime->decoder_packet_value_620),
                    runtime->motion_pixel_offsets,
