@@ -261,6 +261,7 @@ extern "C" int __cdecl string_struct_seek_id_source(StringStruct *self, int id) 
 Purpose: Release every entry in the list, notifying the owner about each
          payload before destroying the payload and its entry.
 // ORIGINAL: 0x00402970 StringStruct::remove_all 0x00402970-0x004029E3 FILE BYTE_EXACT
+// compile_context src/alphanet.cpp
 // symbol    ?remove_all@StringStruct@@QAEXXZ
 // body      src/stringstruct.h
 // size      115 bytes
@@ -301,6 +302,7 @@ Purpose: Destroy the StringStruct subobject, releasing entries under the base
          hooks. The original receiver is its allocation-tracking virtual base;
          the compiler, not a handwritten close wrapper, owns that adjustment.
 // ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9 FILE BYTE_EXACT
+// compile_context src/alphanet.cpp
 // symbol    ??1StringStruct@@UAE@XZ
 // body      src/stringstruct.h
 // size      153 bytes
