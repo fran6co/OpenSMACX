@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "afe61c7778905c335f69ae6633b7a744c87c171b",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "recovery/tests/test_shared_ui_members.py"
+  ],
+  "evidence": [
+    "Pinned5BE2A0 uses six cdecl stack words. Its firstword is tested fornull before adding444 and passing the adjusted receiver to Sprite::draw(Buffer*,...). GraphicWin's source and native layout establish Win primarybase and Buffer at+444.",
+    "Current source integer canvas plus reinterpret_cast<Buffer*>(canvas+444) manually models that base relationship. Use GraphicWin* and static_cast<Buffer*> with explicitnull bypass; preserve C linkage, calling convention, six32bit argument slots, scaling/globalreads and spriteindices.",
+    "No productiondeclaration/call or matchingcallbacktypedef was found; mapped directcall scanisbounded and doesnotprove absenceofindirectcallers or original sourceclassname. Do not inventcaller/interfaceownership.",
+    "Extend existing extracted-body sharedUItest with actual nonnullGraphicWin baseconversion receiver and nullforwarding; preserve existing scaling/sprite tests. Scopeonlythisfunctionandtestfixture. WholeStringStructmeasurements,build/link,physicalcollateral,claims/references,independentreview before manualintegration. No newmatch or acceptanceclaim by sourcechange."
+  ],
+  "intent": "Represent the wizard painter canvas as the existing GraphicWin pointer and derive its Buffer base with ordinary C++ conversion.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6021792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "wizard-canvas-base-view-oct16"
+}
