@@ -20713,7 +20713,7 @@ static void order_veh_combat_and_turn_prelude(
             if (native_local_30_nonzero && ConsoleGlobal.vehicle_order_ui_state() == 0) {
                 delay = 100;
             }
-            sleep(delay);
+            clock_wait(delay);
         }
     }
 }
