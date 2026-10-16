@@ -2855,7 +2855,7 @@ void Console::editor_reset_faction() {
 
 void Console::editor_clear_vehicles() {
     auto_undo();
-    const int initial_area = static_cast<int>(MapArea);
+    const int initial_area = MapArea;
     Map *tile = MapTiles;
     GameDataStateStorage.fields_.game_state_ |= 4;
     int count = 0;
@@ -2871,7 +2871,7 @@ void Console::editor_clear_vehicles() {
             }
             ++count;
             ++tile;
-        } while (count < static_cast<int>(MapArea));
+        } while (count < MapArea);
     }
     reset_territory();
     ::draw_map(1);
@@ -3509,7 +3509,7 @@ void Console::editor_generate() {
             i++;
             tile->bit &= ~(BIT_BASE_IN_TILE | BIT_VEH_IN_TILE);
             ++tile;
-        } while (i < static_cast<int>(MapArea));
+        } while (i < MapArea);
     }
 
     ConsoleGlobal.field_23BF8_ = 0;
@@ -3545,7 +3545,7 @@ void Console::editor_generate() {
 
 // Fixed-slot bindings carried from 004e1190.cpp
 
-// ORIGINAL: 0x004E1190 ?editor_randomize@Console@@QAEXXZ 0x004E1190-0x004E11F7 FILE
+// ORIGINAL: 0x004E1190 ?editor_randomize@Console@@QAEXXZ 0x004E1190-0x004E11F7 FILE BYTE_EXACT
 // size      103 bytes
 // prototype void (__thiscall ?editor_randomize@Console@@QAEXXZ)(Console* this)
 // callers   1   call targets   3
@@ -3929,12 +3929,10 @@ void Console::editor_fungus() {
         }
         if (confirmed != 0) {
             // MapArea is NOT cached: the image reads [0x949884] for the guard
-            // and again at 0x004E1463 on every outer iteration.
-            // MapArea is NOT cached: the image reads [0x949884] for the guard
             // and again at 0x004E1463 on every outer iteration. Both compares
-            // are SIGNED in the image (`jle` at 0x004E142C, `jl` at the tail),
-            // so the read goes through an int cast - uint32_t compiles jbe.
-            if (static_cast<int>(MapArea) > 0) {
+            // are signed (`jle` at 0x004E142C, `jl` at the tail); the shared
+            // MapArea member is now represented as int.
+            if (MapArea > 0) {
                 Map *tile = map_tiles();
                 int i = 0;
                 do {
@@ -3946,7 +3944,7 @@ void Console::editor_fungus() {
                     } while (faction_id_ < 8);
                     i++;
                     tile++;
-                } while (i < static_cast<int>(MapArea));
+                } while (i < MapArea);
             }
         }
         uint32_t saved = MapNativeLifeForms;
@@ -4446,7 +4444,7 @@ void Console::editor_clear_terrain() {
     // clears the rocky/lock/using channels of tile->bit in one go.
     Map *tile = map_tiles();
     int i = 0;
-    for (; i < static_cast<int>(MapArea); i++, tile++) {
+    for (; i < MapArea; i++, tile++) {
         tile->bit &= 0x420347A3u;
         uint32_t *dst = &tile->bit_visible[0];
         int j = 7;
@@ -4572,7 +4570,7 @@ void Console::editor_fast() {
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
     GameDataStateStorage.fields_.game_state_ = state;
-    for (int i = 0; i < static_cast<int>(MapArea); i++) {
+    for (int i = 0; i < MapArea; i++) {
         base[i].bit &= 0xfffffffc;
     }
     unsigned int flag80 = GameDataStateStorage.fields_.game_state_ & 0x80;

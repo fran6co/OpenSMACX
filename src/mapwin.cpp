@@ -6804,7 +6804,7 @@ void MapWin::init_dummy() {
         free(owned_);
         owned_ = 0;
     }
-    owned_ = static_cast<TerrainCacheEntry *>(mem_get((MapArea + MapArea * 2) << 2));
+    owned_ = static_cast<TerrainCacheEntry *>(mem_get(MapArea * sizeof(*owned_)));
     count = MapArea;
     if (count > 0) {
         i = 0;
@@ -6818,7 +6818,7 @@ void MapWin::init_dummy() {
             owned_[i].terrain_bits = 0;
             owned_[i].terrain_bits |= map_tiles()[0].climate & 0xD0;
             i++;
-        } while (i < static_cast<int32_t>(MapArea));
+        } while (i < MapArea);
     }
 }
 
@@ -7091,8 +7091,8 @@ void __cdecl terrain_fixup(MapWin * window) {
             free(window->owned_);
             window->owned_ = 0;
         }
-        window->owned_ = static_cast<TerrainCacheEntry *>(mem_get(MapArea * 0xc));
-        if (static_cast<int32_t>(MapArea) > 0) {
+        window->owned_ = static_cast<TerrainCacheEntry *>(mem_get(MapArea * sizeof(*window->owned_)));
+        if (MapArea > 0) {
             do {
                 int j = 0;
                 do {
@@ -7108,7 +7108,7 @@ void __cdecl terrain_fixup(MapWin * window) {
                 const unsigned char first_climate = map_tiles()[0].climate;
                 window->owned_[count2].terrain_bits |= first_climate & 0xd0;
                 count2 = count2 + 1;
-            } while (count2 < static_cast<int32_t>(MapArea));
+            } while (count2 < MapArea);
         }
     }
 }
@@ -7122,7 +7122,7 @@ void __cdecl terrain_fixup(MapWin * window) {
 // symbol    ?clear_all_altitude@MapWin@@QAEXXZ
 void MapWin::clear_all_altitude() {
     if (owned_ != 0) {
-        for (int tile = 0; tile < static_cast<int>(MapArea); ++tile) {
+        for (int tile = 0; tile < MapArea; ++tile) {
             for (int sample = 0; sample < 5; ++sample) {
                 owned_[tile].altitude[sample] = -1;
             }
@@ -7239,7 +7239,7 @@ void MapWin::UNK8(int x, int y, int radius) {
 // terrain/detail fields remain untouched.
 void MapWin::UNK7() {
     if (owned_ != 0) {
-        for (int i = 0; i < static_cast<int>(MapArea); ++i) {
+        for (int i = 0; i < MapArea; ++i) {
             for (int j = 0; j < 4; ++j) {
                 owned_[i].brightness[j] = 0xFF;
             }
@@ -7789,7 +7789,7 @@ void MapWin::calculate_dimensions() {
     if (field_1DD6C_ != field_1EEC4_) {
         field_1EEC4_ = field_1DD6C_;
         if (owned_ != 0) {
-            cache_area = static_cast<int32_t>(MapArea);
+            cache_area = MapArea;
             if (cache_area > 0) {
                 int32_t ia = 0;
                 do {
@@ -7797,14 +7797,14 @@ void MapWin::calculate_dimensions() {
                         owned_[ia].altitude[ja] = static_cast<signed char>(0xff);
                     }
                     ++ia;
-                    cache_area = static_cast<int32_t>(MapArea);
+                    cache_area = MapArea;
                 } while (ia < cache_area);
             }
         } else {
-            cache_area = static_cast<int32_t>(MapArea);
+            cache_area = MapArea;
         }
     } else {
-        cache_area = static_cast<int32_t>(MapArea);
+        cache_area = MapArea;
     }
 
     if (field_1DD98_ != field_1EEC0_) {
@@ -7816,7 +7816,7 @@ void MapWin::calculate_dimensions() {
                         owned_[ib].brightness[jb] = static_cast<unsigned char>(0xff);
                     }
                     ++ib;
-                    cache_area = static_cast<int32_t>(MapArea);
+                    cache_area = MapArea;
                 } while (ib < cache_area);
             }
             if (owned_ != 0 && cache_area > 0) {
@@ -7826,7 +7826,7 @@ void MapWin::calculate_dimensions() {
                         owned_[ic].altitude[jc] = static_cast<signed char>(0xff);
                     }
                     ++ic;
-                    cache_area = static_cast<int32_t>(MapArea);
+                    cache_area = MapArea;
                 } while (ic < cache_area);
             }
         }
@@ -8421,13 +8421,13 @@ void MapWin::on_nc_left_down(int x_coord, int y_coord) {
 
 void MapWin::clear_terrain() {
     if (owned_ != 0) {
-        for (int entry = 0; entry < static_cast<int32_t>(MapArea); ++entry) {
+        for (int entry = 0; entry < MapArea; ++entry) {
             for (int corner = 0; corner < 4; ++corner) {
                 owned_[entry].brightness[corner] = 0xFF;
             }
         }
         if (owned_ != 0) {
-            for (int altitude_entry = 0; altitude_entry < static_cast<int32_t>(MapArea);
+            for (int altitude_entry = 0; altitude_entry < MapArea;
                  ++altitude_entry) {
                 for (int slot = 0; slot < 5; ++slot) {
                     owned_[altitude_entry].altitude[slot] = -1;

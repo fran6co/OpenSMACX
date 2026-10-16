@@ -4659,7 +4659,7 @@ void __cdecl balance() {
             const int low = dx > dy ? dy : dx;
             const int diagonal = (((dx + dy) >> 1) - low + 1) >> 1;
             const int score = ((high - diagonal) * 25 * 128) /
-                              static_cast<int>(MapArea);
+                              MapArea;
             if (score < nearest_score) nearest_score = score;
         }
 
@@ -6324,9 +6324,9 @@ int __cdecl load_map_daemon(char *path) {
                     GameDataStateStorage.fields_.base_current_count_ = 0;
                     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
                     // Native5A9D58/5A9D73 use signed JLE/JL tests on the
-                    // loaded area word, even though its shared owner is unsigned.
+                    // shared signed map-area word.
                     for (int map_tile_index = 0;
-                         map_tile_index < static_cast<int>(MapArea);
+                         map_tile_index < MapArea;
                          ++map_tile_index) {
                         MapTiles[map_tile_index].visibility = 0;
                         MapTiles[map_tile_index].bit &= ~3U;
@@ -7862,7 +7862,7 @@ static bool alien_tile_vehicle_visible(int vehicle_id, int faction) {
 // TRIED: near-literal transcription of Ghidra (reliable here, no unaff_* registers, all callees are free functions except MapWin::focus and NetMsg::pop, whose `this` (g_007d3c3c, g_00805338) came from raw disasm since Ghidra drops it); the CONCAT31(...)&0xffffffdf idiom simplified to (uVar13|uVar14)& 0xffffffdf since uVar14's low byte is always 0. Diverges at insn #3 (xor vs mov), likely register-zeroing choice.
 void __cdecl alien_fauna() {
     bool final_spore_launcher_spawned = false;
-    int spread_rounds = static_cast<int>(MapArea) /
+    int spread_rounds = MapArea /
         (((GameDataStateStorage.fields_.turn_current_num_ + ((GameDataStateStorage.fields_.turn_current_num_ >> 31) & 3)) >> 2) + 0x20);
 
     for (int attempt = 0; attempt < spread_rounds; ++attempt) {

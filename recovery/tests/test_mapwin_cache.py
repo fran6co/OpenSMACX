@@ -60,7 +60,8 @@ void check(bool ok,int line){if(!ok){std::fprintf(stderr,"assertion line %d\n",l
 #define require(x) check((x),__LINE__)
 ACTUAL_POD
 ACTUAL_TABLES
-uint32_t MapArea,MapLongitude;
+int32_t MapArea;
+uint32_t MapLongitude;
 int MapLongitudeBounds;
 struct MapWin {
     ACTUAL_POINTER
@@ -97,7 +98,7 @@ int main(){
     require(std::is_standard_layout<TerrainCacheEntry>::value && std::is_trivial<TerrainCacheEntry>::value);
     ACTUAL_FIELD_CHECKS
     MapWin window={backing+centre};
-    for(uint32_t count : {0u,1u,2u,7u,31u,0xffffffffu,0x80000000u}){
+    for(int32_t count : {0,1,2,7,31,-1,(-2147483647-1)}){
         poison();MapArea=count;
         if(count<32)expect_clear(count);
         window.clear_terrain();unchanged();
@@ -189,8 +190,8 @@ def test_radius_cache_damage_is_observed(tmp_path, before, after):
 
 
 @pytest.mark.parametrize("before,after", [
-    ("entry < static_cast<int32_t>(MapArea)", "entry + 1 < static_cast<int32_t>(MapArea)"),
-    ("altitude_entry < static_cast<int32_t>(MapArea)", "altitude_entry + 1 < static_cast<int32_t>(MapArea)"),
+    ("entry < MapArea", "entry + 1 < MapArea"),
+    ("altitude_entry < MapArea", "altitude_entry + 1 < MapArea"),
     ("owned_[entry].brightness[corner]", "owned_[entry * 2].brightness[corner]"),
     ("owned_[altitude_entry].altitude[slot]", "owned_[altitude_entry * 2].altitude[slot]"),
     ("slot < 5", "slot < 4"),
@@ -203,7 +204,7 @@ def test_radius_cache_damage_is_observed(tmp_path, before, after):
     ("if (owned_ != 0)", "if (true)"),
     ("owned_[entry].brightness[corner]",
      "(*reinterpret_cast<TerrainCacheEntry **>(owned_))[entry].brightness[corner]"),
-    ("for (int entry = 0; entry < static_cast<int32_t>(MapArea);",
+    ("for (int entry = 0; entry < MapArea;",
      "for (int entry = 0; static_cast<uint32_t>(entry) < MapArea;"),
 ])
 def test_full_cache_damage_is_observed(tmp_path, before, after):

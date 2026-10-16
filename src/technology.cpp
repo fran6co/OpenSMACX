@@ -1245,7 +1245,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         PlayersData[faction_id_with].traded_maps |=
             PlayersData[faction_id].traded_maps;
 
-        for (uint32_t tile_id = 0; tile_id < MapArea; ++tile_id) {
+        for (int tile_id = 0; tile_id < MapArea; ++tile_id) {
             Map &tile = map_tiles()[tile_id];
             if ((tile.visibility & (1u << faction_id_with)) == 0) continue;
             tile.visibility |= static_cast<uint8_t>(faction_mask);
@@ -1594,7 +1594,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     if ((Technology[tech_id].flags & TFLAG_REVEALS_MAP) != 0 &&
         (PlayersData[faction_id].flags & 0x200) == 0) {
         Map *tile = map_tiles();
-        for (uint32_t tile_id = 0; tile_id < MapArea; ++tile_id, ++tile) {
+        for (int tile_id = 0; tile_id < MapArea; ++tile_id, ++tile) {
             tile->visibility |= static_cast<uint8_t>(faction_mask);
             if (faction_id != 0) {
                 tile->bit_visible[faction_id - 1] = tile->bit;

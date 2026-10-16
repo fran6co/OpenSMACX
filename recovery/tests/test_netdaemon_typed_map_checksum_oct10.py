@@ -1,5 +1,6 @@
 """Actual Map declaration and tile walks; bounded controls, not game acceptance."""
 from dataclasses import fields
+import os
 from pathlib import Path
 import subprocess
 
@@ -77,7 +78,8 @@ static_assert(offsetof(Map,climate)==0 && offsetof(Map,region)==3,"native bytes"
 static_assert(offsetof(Map,bit)==8 && offsetof(Map,contour)==1,"native bytes");
 static_assert(offsetof(Map,territory)==7 && offsetof(Map,bit2)==0xC,"native bytes");
 static Map storage[2][2048];static Map *MapTiles;
-static uint32_t MapArea,MapLongitude;
+static int MapArea;
+static uint32_t MapLongitude;
 static int MapLatitudeBounds,MapLongitudeBounds;
 struct Event{int length;unsigned char seed,result;std::vector<unsigned char> bytes;
  bool operator==(const Event &e)const{return length==e.length && seed==e.seed && result==e.result && bytes==e.bytes;}};
@@ -193,7 +195,8 @@ def test_original_separate_map_pointer_captures_are_pinned():
     from match_recovery.pe_coff import PeImage
     from match_recovery.model import Span
     from match_recovery.source_inventory import image_pin
-    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    path = Path(os.environ.get(
+        "OPENSMACX_IMAGE", str(ROOT / ".opensmacx/game/terranx_original.exe")))
     if not path.exists():
         pytest.skip("pinned original unavailable")
     image = PeImage(path.read_bytes(), image_pin(ROOT))

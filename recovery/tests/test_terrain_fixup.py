@@ -44,7 +44,7 @@ HARNESS = r"""
 ACTUAL_CACHE
 ACTUAL_MAP
 
-uint32_t MapArea=3;
+int MapArea=3;
 Map *MapTiles=0;
 inline Map *&map_tiles() { return MapTiles; }
 struct MapWin { TerrainCacheEntry *owned_; };
@@ -116,7 +116,7 @@ int main() {
 
     // High-bit MapArea wraps allocation bytes to zero but is signed-negative
     // at the original JLE, so it must not enter even one do-while record.
-    MapArea=0x80000000u;
+    MapArea=(-2147483647 - 1);
     terrain_fixup(&window);
     assert(allocation_calls==3 && allocation_bytes==0);
     for (int byte=0;byte<12;++byte)
@@ -151,7 +151,7 @@ def test_actual_terrain_fixup_fields_and_paths(compiler_name, tmp_path):
 
 
 @pytest.mark.parametrize("before,after",[
-    ("if (static_cast<int32_t>(MapArea) > 0)","if (MapArea > 0)"),
+    ("if (MapArea > 0)","if (static_cast<uint32_t>(MapArea) > 0)"),
     ("brightness[j - 1] = 0xff;",
      "altitude[j - 1] = static_cast<signed char>(0xff);"),
     ("altitude[j - 1] = static_cast<signed char>(0xff);",
@@ -171,8 +171,8 @@ def test_terrain_fixup_mutants_are_observed(compiler_name,tmp_path,before,after)
 
 def test_signed_guards_live_maparea_reload_and_write_order():
     _cache,_map_pod,body=actual_inputs()
-    assert "if (static_cast<int32_t>(MapArea) > 0)" in body
-    assert "while (count2 < static_cast<int32_t>(MapArea));" in body
+    assert "if (MapArea > 0)" in body
+    assert "while (count2 < MapArea);" in body
     order=(
         "brightness[j - 1] = 0xff;",
         "altitude[j - 1] = static_cast<signed char>(0xff);",
@@ -180,7 +180,7 @@ def test_signed_guards_live_maparea_reload_and_write_order():
         "const unsigned char first_climate = map_tiles()[0].climate;",
         "terrain_bits |= first_climate & 0xd0;",
         "count2 = count2 + 1;",
-        "while (count2 < static_cast<int32_t>(MapArea));",
+        "while (count2 < MapArea);",
     )
     positions=[body.index(item) for item in order]
     assert positions==sorted(positions)

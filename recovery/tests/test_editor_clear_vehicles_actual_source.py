@@ -42,7 +42,8 @@ def _installed_sources() -> tuple[str, str]:
     )
     assert "Map *tile = MapTiles" in body, "expected the owner-backed Map snapshot"
     assert "tile->bit" in body and "tile->bit_visible" in body
-    assert "static_cast<int>(MapArea)" in body, "signed MapArea behavior must be explicit"
+    assert "const int initial_area = MapArea;" in body
+    assert "count < MapArea" in body, "signed MapArea behavior must use the shared signed count"
     assert "++tile" in body or "tile++" in body, "typed iteration must advance Map records"
     assert "sizeof(Map)" not in body, "walk should use the typed Map pointer"
     return map_decl, f"void Console::editor_clear_vehicles() {body}"
@@ -50,6 +51,7 @@ def _installed_sources() -> tuple[str, str]:
 
 HARNESS = r'''
 #include <cassert>
+#include <climits>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -62,7 +64,7 @@ static_assert(offsetof(Map, bit2) == 12, "Map::bit2 offset");
 static_assert(offsetof(Map, bit_visible) == 16, "Map::bit_visible offset");
 
 Map *MapTiles = nullptr;
-uint32_t MapArea = 0;
+int MapArea = 0;
 struct GameFields { uint32_t game_state_; int vehicle_current_count_; int base_current_count_; };
 struct GameStorage { GameFields fields_; };
 GameStorage GameDataStateStorage{};
@@ -71,7 +73,7 @@ ConsoleFields ConsoleGlobal{};
 
 static std::vector<int> events;
 static Map *undo_tiles = nullptr;
-static uint32_t undo_area = 0;
+static int undo_area = 0;
 static uint32_t reset_bits[8]{};
 static uint32_t draw_bits[8]{};
 static int reset_vehicle_count = 0, reset_base_count = 0, reset_cursor = 0, reset_selected = 0;
@@ -89,7 +91,7 @@ void draw_map(int value) {
     draw_cursor = ConsoleGlobal.cursor_active_;
     draw_selected = ConsoleGlobal.selected_vehicle_;
     if (MapArea <= 8 && MapTiles) {
-        for (uint32_t i = 0; i < MapArea; ++i) draw_bits[i] = MapTiles[i].bit;
+        for (int i = 0; i < MapArea; ++i) draw_bits[i] = MapTiles[i].bit;
     }
 }
 
@@ -108,7 +110,7 @@ struct Console {
         reset_selected = ConsoleGlobal.selected_vehicle_;
         reset_tiles = MapTiles;
         if (MapArea <= 8 && MapTiles) {
-            for (uint32_t i = 0; i < MapArea; ++i) reset_bits[i] = MapTiles[i].bit;
+            for (int i = 0; i < MapArea; ++i) reset_bits[i] = MapTiles[i].bit;
         }
     }
     void editor_clear_vehicles();
@@ -188,7 +190,7 @@ static void test_auto_undo_snapshot_and_full_records() {
 
 static void test_empty_and_signed_high_bit_bounds() {
     Map one = make_tile(0xFFFFFFFF, 0x1234, 8);
-    for (uint32_t area : {0u, 0x80000000u}) {
+    for (int area : {0, INT_MIN}) {
         MapTiles = &one; MapArea = area;
         undo_tiles = &one; undo_area = area;
         const Map before = one;

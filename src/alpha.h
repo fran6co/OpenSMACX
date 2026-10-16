@@ -673,32 +673,32 @@ struct RulesWorldbuilder { // Alpha(x).txt
     // #WORLDBUILDER: Continent size ratios #1
     // Original bounds: n/a
     // Default value: 3
-    uint32_t cont_size_ratio1;
+    int cont_size_ratio1;
 
     // #WORLDBUILDER: Continent size ratios #2
     // Original bounds: n/a
     // Default value: 6
-    uint32_t cont_size_ratio2;
+    int cont_size_ratio2;
 
     // #WORLDBUILDER: Continent size ratios #3
     // Original bounds: n/a
     // Default value: 12
-    uint32_t cont_size_ratio3;
+    int cont_size_ratio3;
 
     // #WORLDBUILDER: Continent size ratios #4
     // Original bounds: n/a
     // Default value: 18
-    uint32_t cont_size_ratio4;
+    int cont_size_ratio4;
 
     // #WORLDBUILDER: Continent size ratios #5
     // Original bounds: n/a
     // Default value: 24
-    uint32_t cont_size_ratio5;
+    int cont_size_ratio5;
 
     // #WORLDBUILDER: Higher # increases island count
     // Original bounds: 1 to 500
     // Default value: 36
-    uint32_t islands;
+    int islands;
 };
 
 struct AlphaIniPref {

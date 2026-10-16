@@ -67,6 +67,7 @@ def extract_function(source: str, signature: str) -> str:
 
 FIXTURE_PREFIX = r'''
 #include <stdint.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -80,7 +81,7 @@ struct RulesWorldbuilder {
     uint32_t hills;
     int peaks;
 };
-struct Continent { uint32_t tile_count; uint8_t padding[0x18]; };
+struct Continent { int tile_count; uint8_t padding[0x18]; };
 struct PathFixture { void continents(); };
 struct Fractal { void init(); int sample(int, int); };
 
@@ -93,7 +94,7 @@ const int RadiusOffsetX[25] = {
 const int RadiusOffsetY[25] = {
     0,-1,0,1,2,1,0,-1,-2,-2,2,2,-2,-3,-1,1,3,3,1,-1,-3,0,0,4,-4
 };
-extern uint32_t MapArea;
+extern int MapArea;
 extern uint32_t MapLongitude;
 extern int MapLongitudeBounds;
 extern int MapLatitudeBounds;
@@ -116,7 +117,7 @@ void world_shorelines();
 
 FIXTURE_SUFFIX = r'''
 static Map Tiles[15];
-uint32_t MapArea = 15;
+int MapArea = 15;
 uint32_t MapLongitude = 3;
 int MapLongitudeBounds = 6;
 int MapLatitudeBounds = 5;
@@ -248,6 +249,21 @@ int main() {
         failures += fail("altitude-two edge neighbors retain bounded scan behavior", 0);
     if (Tiles[6].contour != 32)
         failures += fail("altitude-two lower-row edge retains bounded scan behavior", 6);
+
+    // Native signed compare follows a wrapping dword sum of signed continent
+    // counts. INT_MAX + 1 is INT_MIN, so a zero threshold must not activate
+    // the local_1c coast adjustment for the centre tile.
+    reset(2, 50, 50);
+    AltNatural[3] = 0;
+    Tiles[4].climate = 0x60;
+    Tiles[4].region = 1;
+    Tiles[8].climate = 0x60;
+    Tiles[8].region = 2;
+    Continents[1].tile_count = INT_MAX;
+    Continents[2].tile_count = 1;
+    world_erosion();
+    if (Tiles[7].contour != 31)
+        failures += fail("signed wrapping neighbor-count sum keeps coast adjustment clear", 7);
 
     if (failures != 0)
         return 1;

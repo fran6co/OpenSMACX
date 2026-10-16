@@ -64,7 +64,8 @@ void check(bool ok,int line){if(!ok){fprintf(stderr,"assertion line %d\n",line);
 #define require(x) check((x),__LINE__)
 ACTUAL_POD
 ACTUAL_TABLES
-uint32_t MapArea,MapLongitude=8;
+int32_t MapArea;
+uint32_t MapLongitude=8;
 int MapLongitudeBounds=16,MapLatitudeBounds=16,MapIsFlat;
 struct MapWin {
     ACTUAL_POINTER
@@ -155,7 +156,7 @@ int main(){
     // A high-bit MapArea converts to negative int in the original signed loop
     // comparison; a pointer that would fault on any write makes the boundary
     // observable without allocating a huge cache.
-    MapArea=0x80000000u;
+    MapArea=(-2147483647-1);
     window.owned_=reinterpret_cast<TerrainCacheEntry *>(static_cast<uintptr_t>(1));
     window.UNK7();
     window.owned_=backing+centre;

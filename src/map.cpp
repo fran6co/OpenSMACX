@@ -231,9 +231,9 @@ uint32_t MapTileFlagClearMask = 0x00288050;  // 0x006919EC, defined here
 // `sizeof(int) * MaxPlayerNum` bytes, which is what the extent is.
 int MapBaseSubmergedCount[8];  // 0x009B2290
 int MapBaseIdClosestSubmergedVeh[8];  // 0x009B22BC
-uint32_t BrushVal1;  // 0x009B22B0
+int BrushVal1;  // 0x009B22B0
 uint32_t BrushVal2;  // 0x009B22B8
-uint32_t WorldBuildVal1;  // 0x009B22B4
+int WorldBuildVal1;  // 0x009B22B4
 
 // RECOVERY_OBJECT: v1 0x0068FAF0 ?MapLongitude@@3IA
 uint32_t MapLongitude = 1;  // half-width tile-row stride; original default is 1
@@ -2371,7 +2371,7 @@ void __cdecl map_wipe() {
     MapLandmarkCount = 0;
     MapRandSeed = random(0, 0x7FFF) + 1;
     Map *tile = map_tiles();
-    for (int i = 0; i < (int)MapArea; ++i, ++tile) {
+    for (int i = 0; i < MapArea; ++i, ++tile) {
         tile->climate = ALT_BIT_OCEAN;
         tile->contour = 20;
         tile->val2 = 0xF;
@@ -2482,7 +2482,7 @@ void __cdecl map_resample(int width, int height) {
     MapSeaLevel = 0;
     MapRandSeed = random(0, 0x7fff) + 1;
     Map *new_tiles = map_tiles();
-    for (int i = 0; i < static_cast<int>(MapArea); ++i) {
+    for (int i = 0; i < MapArea; ++i) {
         Map *tile = new_tiles + i;
         tile->climate = ALT_BIT_OCEAN;
         tile->contour = 20;
@@ -3281,7 +3281,7 @@ Status: Complete - testing
 */
 void __cdecl build_continent(int size) {
     Map *tile = map_tiles();
-    for (uint32_t i = 0; i < MapArea; i++) {
+    for (int i = 0; i < MapArea; i++) {
         tile->region = 0;
         tile++;
     }
@@ -3306,7 +3306,7 @@ void __cdecl build_continent(int size) {
         }
     } while (count++ < 100 && alt_at(x, y) >= ALT_BIT_SHORE_LINE);
     if (alt_at(x, y) < ALT_BIT_SHORE_LINE) {
-        uint32_t ratio = (size * 3200) / MapArea;
+        int ratio = (size * 3200) / MapArea;
         if (ratio > WorldBuilder.cont_size_ratio5 || BrushVal1 >= WorldBuildVal1) {
             radius /= 4;
             if (BrushVal1 >= WorldBuildVal1 && ratio > WorldBuilder.cont_size_ratio5) {
@@ -3428,9 +3428,7 @@ void __cdecl world_riverbeds() {
     Map *tile = map_tiles();
     // Native5C3697..36B6 retains this loaded area for the signed clearing
     // loop and the low-dword target product; a high-bit area skips clearing.
-    uint32_t area_bits = MapArea;
-    int area;
-    memcpy(&area, &area_bits, sizeof(area));
+    int area = MapArea;
     int i;
     for (i = 0; i < area; i++) {
         tile->bit &= ~(BIT_RIVERBED);
@@ -3445,7 +3443,7 @@ void __cdecl world_riverbeds() {
     uint32_t target_bits = (4u - static_cast<uint32_t>(MapOceanCoverage)) * rain_bits;
     int target;
     memcpy(&target, &target_bits, sizeof(target));
-    uint32_t scaled_bits = area_bits * static_cast<uint32_t>(target / 3);
+    uint32_t scaled_bits = static_cast<uint32_t>(area) * static_cast<uint32_t>(target / 3);
     int scaled;
     memcpy(&scaled, &scaled_bits, sizeof(scaled));
     int max_riverbeds = scaled / 3200;
@@ -3928,8 +3926,9 @@ void __cdecl world_analysis() {
         }
         do_all_non_input();
     }
-    for (i = 0; i < MapArea; i++) {
-        map_tiles()[i].val2 &= 0xF; // clear map sites
+    int area_index;
+    for (area_index = 0; area_index < MapArea; area_index++) {
+        map_tiles()[area_index].val2 &= 0xF; // clear map sites
     }
 }
 
@@ -7129,7 +7128,7 @@ Purpose: Carve rivers. Every land tile is tried as a source in turn: the
 */
 void __cdecl world_rivers() {
     // Every tile: forget that a river ran through it.
-    for (int i = 0; i < static_cast<int>(MapArea); ++i) {
+    for (int i = 0; i < MapArea; ++i) {
         map_tiles()[i].bit &= 0xfffffd7f;
     }
 
@@ -7146,7 +7145,7 @@ void __cdecl world_rivers() {
                 }
 
                 // A fresh source: forget every earlier river's path first.
-                for (int i = 0; i < static_cast<int>(MapArea); ++i) {
+                for (int i = 0; i < MapArea; ++i) {
                     map_tiles()[i].bit2 &= 0xff7fffff;
                 }
 
@@ -7384,7 +7383,7 @@ void __cdecl world_rivers() {
                 }
 
                 // Every tile this river crossed is now a river tile.
-                for (int crossed = 0; crossed < static_cast<int>(MapArea);
+                for (int crossed = 0; crossed < MapArea;
                      ++crossed) {
                     if ((map_tiles()[crossed].bit2 & 0x800000) != 0) {
                         map_tiles()[crossed].bit |= 0x80;
@@ -7396,7 +7395,7 @@ void __cdecl world_rivers() {
         } while (y_coord < MapLatitudeBounds);
     }
 
-    for (int swept = 0; swept < static_cast<int>(MapArea); ++swept) {
+    for (int swept = 0; swept < MapArea; ++swept) {
         map_tiles()[swept].bit2 &= 0xff7fffff;
     }
 }
@@ -7431,7 +7430,7 @@ void __cdecl world_erosion() {
     int world_scale = 1;
     if (MapLandCoverage == 1) {
         map_scale = quick_root(0xC80);
-        world_scale = quick_root(static_cast<int>(MapArea));
+        world_scale = quick_root(MapArea);
     }
 
     int pass;
@@ -7512,9 +7511,17 @@ void __cdecl world_erosion() {
                             if (region < 0) {
                                 region = next_region;
                             } else if (region != next_region) {
-                                if (static_cast<int>(MapArea * 0x32 / 0xC80)
-                                    <= Continents[region].tile_count
-                                     + Continents[next_region].tile_count)
+                                uint32_t scaled_area_bits =
+                                    static_cast<uint32_t>(MapArea) * 0x32u;
+                                int scaled_area;
+                                memcpy(&scaled_area, &scaled_area_bits, sizeof(scaled_area));
+                                uint32_t neighboring_tiles_bits =
+                                    static_cast<uint32_t>(Continents[region].tile_count)
+                                  + static_cast<uint32_t>(Continents[next_region].tile_count);
+                                int neighboring_tiles;
+                                memcpy(&neighboring_tiles, &neighboring_tiles_bits,
+                                       sizeof(neighboring_tiles));
+                                if (scaled_area / 0xC80 <= neighboring_tiles)
                                     local_1c = 1;
                                 if (Continents[region].tile_count
                                     < Continents[next_region].tile_count)
@@ -7693,10 +7700,19 @@ void __cdecl world_build() {
         map_wipe();
 
         MapIsFlat = 0;
-        int land_target = (2u - static_cast<uint32_t>(MapOceanCoverage)) * WorldBuilder.land_mod
-                          + WorldBuilder.land_base;
-        land_target = land_target * MapArea / 3200;
-        int island_target = WorldBuilder.islands * MapArea / 3200;
+        uint32_t land_base_bits = (2u - static_cast<uint32_t>(MapOceanCoverage))
+                                  * WorldBuilder.land_mod + WorldBuilder.land_base;
+        int land_target;
+        memcpy(&land_target, &land_base_bits, sizeof(land_target));
+        uint32_t land_target_bits = static_cast<uint32_t>(land_target)
+                                    * static_cast<uint32_t>(MapArea);
+        memcpy(&land_target, &land_target_bits, sizeof(land_target));
+        land_target /= 3200;
+        uint32_t island_target_bits = static_cast<uint32_t>(WorldBuilder.islands)
+                                      * static_cast<uint32_t>(MapArea);
+        int island_target;
+        memcpy(&island_target, &island_target_bits, sizeof(island_target));
+        island_target /= 3200;
         BrushVal1 = 0;
         WorldBuildVal1 = land_target;
 
@@ -7706,17 +7722,25 @@ void __cdecl world_build() {
         }
 
         int builds = 0;
-        while ((BrushVal1 < WorldBuildVal1 || continent_count < island_target)
-               && builds < 100) {
-            builds++;
+        while (BrushVal1 < WorldBuildVal1 || continent_count < island_target) {
+            // The original increments and checks this before calling build_continent;
+            // attempt 100 exits, so at most 99 builds are issued.
+            if (++builds >= 100) {
+                break;
+            }
             continent_count++;
             build_continent(continent_count);
         }
 
         if (MapErosiveForces >= 1) {
-            int hills = (static_cast<uint32_t>(MapErosiveForces) - 1u) * WorldBuilder.hills_mod
-                        + WorldBuilder.hills_base;
-            hills = hills * MapArea / 3200;
+            uint32_t hills_base_bits = (static_cast<uint32_t>(MapErosiveForces) - 1u)
+                                       * WorldBuilder.hills_mod + WorldBuilder.hills_base;
+            int hills;
+            memcpy(&hills, &hills_base_bits, sizeof(hills));
+            uint32_t hills_bits = static_cast<uint32_t>(hills)
+                                  * static_cast<uint32_t>(MapArea);
+            memcpy(&hills, &hills_bits, sizeof(hills));
+            hills /= 3200;
             if (MapOceanCoverage == 2) {
                 hills = hills / 2;
             }
@@ -8140,7 +8164,7 @@ void __cdecl world_rainfall() {
     TerraformDrownedBaseId = -1;
     TerraformTileFaction = -1;
     int i;
-    for (i = 0; i < static_cast<int>(MapArea); ++i)
+    for (i = 0; i < MapArea; ++i)
         MapTiles[i].unk_1 = 0;
 
     int y;

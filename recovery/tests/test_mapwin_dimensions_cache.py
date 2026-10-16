@@ -50,7 +50,7 @@ HARNESS = r'''#include <stdint.h>
 void require(bool ok,int line){if(!ok){fprintf(stderr,"line %d\n",line);exit(91);}}
 #define CHECK(x) require((x),__LINE__)
 ACTUAL_POD
-uint32_t MapArea;
+int32_t MapArea;
 struct MapWin {
     TerrainCacheEntry *owned_;
     int32_t field_1DD6C_, field_1EEC4_;
@@ -101,7 +101,7 @@ int main(){
     MapArea=0; invalidate(&w); CHECK(memcmp(cells,expected,sizeof cells)==0);
     w.owned_=reinterpret_cast<TerrainCacheEntry *>(static_cast<uintptr_t>(1));
     w.field_1DD6C_=11; w.field_1DD98_=14;
-    MapArea=0x80000000u; invalidate(&w);
+    MapArea=(-2147483647-1); invalidate(&w);
     w.owned_=cells;
     return 0;
 }
@@ -137,7 +137,7 @@ def test_actual_invalidation_body_and_typed_fields(tmp_path):
     assert "reinterpret_cast<char *>(owned_)" not in block
     # The original has an initial count test and reloads after each row in all
     # three passes. Keep these explicit; a single saved bound is not equivalent.
-    assert len(re.findall(r"cache_area\s*=\s*static_cast<int32_t>\(MapArea\)", block)) == 6
+    assert len(re.findall(r"cache_area\s*=\s*MapArea", block)) == 6
     assert body.index("field_1EEC0_ = field_1DD98_;") < body.index("font_a_.init(")
     result = run_host(tmp_path, pod, block)
     assert result.returncode == 0, result.stderr
@@ -148,7 +148,7 @@ def test_snapshot_bound_mutation_removes_required_live_reads():
     # A common but incorrect rewrite hoists one bound and reuses it. Mutation
     # control protects the live count reload contract without faking callbacks
     # or introducing a data race into the host fixture.
-    mutant = re.sub(r"cache_area\s*=\s*static_cast<int32_t>\(MapArea\);",
+    mutant = re.sub(r"cache_area\s*=\s*MapArea;",
                     "cache_area = 3;", block)
     assert mutant != block
-    assert len(re.findall(r"cache_area\s*=\s*static_cast<int32_t>\(MapArea\)", mutant)) == 0
+    assert len(re.findall(r"cache_area\s*=\s*MapArea", mutant)) == 0

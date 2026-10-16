@@ -35,12 +35,11 @@ def test_altitude_reset_preserves_other_fields_and_signed_count(compiler_name, d
     elif damage == "zero_fill":
         body = body.replace("altitude[sample] = -1", "altitude[sample] = 0", 1)
     elif damage == "extra_row":
-        body = body.replace("tile < static_cast<int>(MapArea)",
-                            "tile <= static_cast<int>(MapArea)", 1)
+        body = body.replace("tile < MapArea", "tile <= MapArea", 1)
     elif damage == "missing_null_gate":
         body = body.replace("if (owned_ != 0)", "if (true)", 1)
     prefix = "#include <assert.h>\n#include <string.h>\n" + record + r'''
-unsigned int MapArea;
+int MapArea;
 struct MapWin {
     TerrainCacheEntry *owned_;
     void clear_all_altitude();
@@ -53,7 +52,7 @@ int main() {
     memcpy(before, cells, sizeof cells);
     MapWin win;
     win.owned_ = cells;
-    unsigned int empty_counts[] = {0, 0x80000000u, 0xffffffffu};
+    int empty_counts[] = {0, (-2147483647 - 1), -1};
     for (int i = 0; i < 3; ++i) {
         MapArea = empty_counts[i];
         win.clear_all_altitude();

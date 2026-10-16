@@ -79,7 +79,7 @@ static RulesChassis Chassis[32];
 struct GameDataFields { int base_current_count_; int vehicle_current_count_; };
 struct GameDataState { GameDataFields fields_; };
 static GameDataState GameDataStateStorage;
-static uint32_t MapArea;
+static int MapArea;
 static uint32_t MapLongitude;
 static int MapLongitudeBounds;
 static int MapLatitudeBounds;

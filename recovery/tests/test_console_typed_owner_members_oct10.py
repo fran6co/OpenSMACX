@@ -93,7 +93,7 @@ RECORD
 static_assert(sizeof(Map)==44,"actual record stride");
 static Map tiles[3],unused[3];
 static Map *MapTiles;
-static uint32_t MapArea;
+static int MapArea;
 static Map *&map_tiles(){return MapTiles;}
 struct {struct {uint32_t game_state_;int vehicle_current_count_,base_current_count_;} fields_;} GameDataStateStorage;
 static int stage,shown,hidden;
@@ -109,7 +109,7 @@ int main(){
     for(int n=-1;n!=4;++n){
         memset(tiles,0xAA,sizeof tiles);memset(unused,0xCC,sizeof unused);
         for(auto &tile:tiles)tile.bit=0xFFFFFFFF;
-        MapArea=static_cast<uint32_t>(n);MapTiles=unused;
+        MapArea=n;MapTiles=unused;
         for(int flag=0;flag!=2;++flag){
             for(auto &tile:tiles)tile.bit=0xFFFFFFFF;
             stage=shown=hidden=0;

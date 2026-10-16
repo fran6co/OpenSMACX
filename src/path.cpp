@@ -70,10 +70,10 @@ Status: Complete
 void Path::init() {
     release_storage();
     clear_destination();
-    map_table_ = (int *)mem_get(MapArea * 4);
-    x_table_ = (int16_t *)mem_get(MapArea * 2);
-    y_table_ = (int16_t *)mem_get(MapArea * 2);
-    memset(map_table_, 0, MapArea * 4);
+    map_table_ = (int *)mem_get(MapArea * sizeof(*map_table_));
+    x_table_ = (int16_t *)mem_get(MapArea * sizeof(*x_table_));
+    y_table_ = (int16_t *)mem_get(MapArea * sizeof(*y_table_));
+    memset(map_table_, 0, MapArea * sizeof(*map_table_));
 }
 
 /*
@@ -413,7 +413,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
         && unk1 == unk_ && faction_id == faction_id_2_;
     if (!(cache_valid && map_table_[((int)MapLongitudeBounds >> 1) * y_src + (x_src >> 1)] != 0)) {
         if (!cache_valid) {
-            memset(map_table_, 0, MapArea * 4);
+            memset(map_table_, 0, MapArea * sizeof(*map_table_));
             unk_ = unk1;
             x_dst_ = x_dst;
             y_dst_ = y_dst;
@@ -432,7 +432,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
         do {
             int x_cur = x_table_[index2_];
             int y_cur = y_table_[index2_++];
-            if (index2_ == (int)MapArea) {
+            if (index2_ == MapArea) {
                 index2_ = 0;
             }
             if (IsMultiplayerNet && (index2_ & 0x3f) == 0) {
@@ -711,7 +711,7 @@ int Path::find(int x_src, int y_src, int x_dst, int y_dst, int proto_id, int fac
                             || y_table_[j] != y_next)) {
                         j++;
                     }
-                    if (j == index1_ && index1_ < (int)MapArea) {
+                    if (j == index1_ && index1_ < MapArea) {
                         x_table_[index1_] = (int16_t)x_next;
                         y_table_[index1_] = (int16_t)y_next;
                         index1_++;
@@ -1181,7 +1181,7 @@ void Path::merge(int region_old, int region_new) {
     // IMAGE ORDER: the pointer step comes FIRST in the increment clause - that
     // is what puts `add eax, 0x2c` ahead of `inc ecx` at the back edge of the
     // image's loop, and `i++, tiles++` is the reverse. BYTE_EXACT on it.
-    for (int i = 0; i < (int)MapArea; tiles++, i++) {
+    for (int i = 0; i < MapArea; tiles++, i++) {
         if (tiles->region == region_old) {
             tiles->region = (uint8_t)region_new;
         }
@@ -1395,7 +1395,7 @@ void Path::continents() {
     int land_region = 0;
     int ocean_region = 64;
     Map *tiles = map_tiles();
-    for (int i = 0; i < (int)MapArea; tiles++, i++) {
+    for (int i = 0; i < MapArea; tiles++, i++) {
         tiles->region = 0;
     }
     int y_south_pole = MapLatitudeBounds - 1;
@@ -1559,7 +1559,7 @@ void Path::continents() {
 
 BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
     BOOL has_sensor = true;
-    ZeroMemory(map_table_, MapArea * 4);
+    ZeroMemory(map_table_, MapArea * sizeof(*map_table_));
     clear_destination();
     int x_search = *x_sensor;
     int y_search = *y_sensor;

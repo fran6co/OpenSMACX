@@ -43,7 +43,7 @@ static_assert(sizeof(Map) == 0x2c, "fixture Map stride");
 static Map *MapTiles;
 static Map *map_tiles() { return MapTiles; }
 static int MapLatitudeBounds, MapLongitudeBounds, MapLongitude;
-static uint32_t MapArea;
+static int MapArea;
 static Map alternate_storage[1];
 static Map *alternate_map = alternate_storage;
 static int terrain_clear_calls, map_draw_calls;

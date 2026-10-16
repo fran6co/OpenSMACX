@@ -6265,7 +6265,7 @@ void __cdecl trade_maps(int faction_id, int other_faction_id) {
 
     const uint8_t mask_a = static_cast<uint8_t>(1u << (faction_id & 31));
     const uint8_t mask_b = static_cast<uint8_t>(1u << (other_faction_id & 31));
-    for (int tile_id = 0; tile_id < static_cast<int>(MapArea); ++tile_id) {
+    for (int tile_id = 0; tile_id < MapArea; ++tile_id) {
         Map &tile = MapTiles[tile_id];
         const uint8_t visible_to = static_cast<uint8_t>(tile.visibility);
         if ((visible_to & mask_a) == 0) {
@@ -18759,7 +18759,7 @@ int __cdecl contiguous(int faction_id1, int faction_id2, int region,
         }
     }
 
-    for (uint32_t fill_idx = 0; fill_idx < MapArea; ++fill_idx) {
+    for (int fill_idx = 0; fill_idx < MapArea; ++fill_idx) {
         map_tiles()[fill_idx].unk_1 = 0;
     }
 

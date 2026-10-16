@@ -129,6 +129,7 @@ def test_actual_owner_and_complete_world_build(tmp_path):
     ("if (count > threshold)", "if (unk_val > threshold_bits)"),
     ("uint32_t orbit_bound_bits = static_cast<uint32_t>(MapPlanetaryOrbit) + 1u;",
      "uint32_t orbit_bound_bits = static_cast<uint32_t>(MapPlanetaryOrbit);"),
+    ("if (++builds >= 100)", "if (++builds > 100)"),
 ])
 def test_compiling_world_build_damage_is_detected(tmp_path, damage):
     assert run_control(tmp_path, damage).returncode != 0
@@ -274,9 +275,9 @@ SUBTRACTION_READERS = [
     ("map.cpp", 0x5C3440, "void __cdecl world_fungus()",
      r"int fungus_level = .*?;", "fungus_level", "static_cast<uint32_t>(MapNativeLifeForms) - 1u", "MapNativeLifeForms - 1", 0, "INT_MAX"),
     ("map.cpp", 0x5C86E0, "void __cdecl world_build()",
-     r"int land_target = .*?;", "land_target", "2u - static_cast<uint32_t>(MapOceanCoverage)", "2 - MapOceanCoverage", 1, "INT_MIN+2"),
+     r"uint32_t land_base_bits = .*?;", "land_base_bits", "2u - static_cast<uint32_t>(MapOceanCoverage)", "2 - MapOceanCoverage", 1, "INT_MIN+2"),
     ("map.cpp", 0x5C86E0, "void __cdecl world_build()",
-     r"int hills = .*?;", "hills", "static_cast<uint32_t>(MapErosiveForces) - 1u", "MapErosiveForces - 1", 0, "INT_MAX"),
+     r"uint32_t hills_base_bits = .*?;", "hills_base_bits", "static_cast<uint32_t>(MapErosiveForces) - 1u", "MapErosiveForces - 1", 0, "INT_MAX"),
     *[("newgame.cpp", address, signature,
        r"uint32_t land_bits = .*?memcpy\(&MapLandCoverage, &land_bits, sizeof\(MapLandCoverage\)\);",
        "MapLandCoverage", "2u - static_cast<uint32_t>(MapOceanCoverage)", "2 - MapOceanCoverage", 1, "INT_MIN+2")

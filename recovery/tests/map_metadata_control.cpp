@@ -8,6 +8,7 @@ typedef int BOOL;
 struct Map { uint32_t bit; };
 static int draws[7], draw_count, draw_cursor, wipes, invalid;
 static int expected_rules[7];
+static Map attempt_tiles[3200];
 static int controlled_rand() {
     if (draw_cursor >= draw_count) { invalid = 1; return 0; }
     return draws[draw_cursor++];
@@ -22,7 +23,8 @@ static int VehMoveDeltaX[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 static int VehMoveDeltaY[8];
 static int paint_x[3], paint_calls;
 static void draw_map(int) {}
-static void build_continent(int) {}
+static int continent_build_calls;
+static void build_continent(int) { ++continent_build_calls; }
 static void build_hills(int) {}
 static void world_erosion() {}
 static void world_polar_caps() {}
@@ -72,9 +74,12 @@ static int AltNatural[11], AltNaturalDefault[11];
 static int WorldClimateRedrawRequest, WorldClimateSkipTerritoryReset;
 static int WorldClimateSkipTerrainClear = 1;
 static int ExpansionEnabled;
-static uint32_t BrushVal1, BrushVal2, WorldBuildVal1;
+static int BrushVal1, WorldBuildVal1;
+static uint32_t BrushVal2;
 static struct {
-    uint32_t land_mod, land_base, islands, hills_mod, hills_base;
+    uint32_t land_mod, land_base;
+    int islands;
+    uint32_t hills_mod, hills_base;
     uint32_t rivers_base, rivers_rain_mod, solar_energy, thermal_band, thermal_deviance, global_warming;
 } WorldBuilder;
 static struct { struct { uint32_t game_state_; } fields_; } GameDataStateStorage;
@@ -132,6 +137,19 @@ int main() {
         memcmp(MapStorage.metadata_.planet_rules_, nonnegative, sizeof(nonnegative))) return 2;
     if (sizeof(MapMetadataFields) != 0xA9C || sizeof(MapStorage.metadata_.planet_rules_) != 28)
         return 3;
+
+    // The pinned preincrement stops before call 100: a required target larger
+    // than the budget receives exactly 99 continent builds.
+    MapArea = 3200;
+    MapTiles = attempt_tiles;
+    WorldBuilder.islands = 500;
+    WorldBuilder.rivers_base = WorldBuilder.rivers_rain_mod = 0;
+    MapOceanCoverage = 1;
+    continent_build_calls = 0;
+    world_build();
+    if (continent_build_calls != 99) return 10;
+    MapArea = 0;
+    invalid = 0;
 
     // 50000 squared has its sign bit set in the native low dword. A second
     // identical direction therefore passes the signed threshold and becomes0.

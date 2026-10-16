@@ -13309,7 +13309,7 @@ bool production_reveal_faction(int faction_id) {
     if ((player_data.flags & PFLAG_MAP_REVEALED) != 0) return false;
 
     const uint8_t faction_mask = static_cast<uint8_t>(1u << faction_id);
-    const int tile_count = base_yield_signed_bits(MapArea);
+    const int tile_count = MapArea;
     for (int tile_index = 0; tile_index < tile_count; ++tile_index) {
         Map &tile = MapTiles[tile_index];
         tile.visibility |= faction_mask;
@@ -13410,7 +13410,7 @@ void production_voice_of_planet_spread(int &offset_attempt) {
 
     // The separate global pass makes MapArea/10 attempts, including skipped
     // occupied or out-of-bounds coordinates, and does not test territory.
-    const int attempts = base_yield_signed_bits(MapArea) / 10;
+    const int attempts = MapArea / 10;
     for (int attempt = 0; attempt < attempts; ++attempt) {
         const int width = static_cast<int>(MapLongitudeBounds);
         int x = width <= 1 ? 0 : rand() % width;

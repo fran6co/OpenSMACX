@@ -292,7 +292,7 @@ void __cdecl replay_base(int type, int x, int y, int faction_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005AD560-0x005AD607 clears Map::bit bit zero over MapArea, then walks 512 twelve-byte records at ReplayWin+0xA20", "The original writes Bases with 0x134 stride, storing x/y/faction/population before bit_set, owner_set and reset_territory; src/unrecovered/005ad560.cpp preserves the seed"], "reason": "Rebuild bases from typed replay-owned records into the real Base array and map, without self-offset arithmetic or fixed executable addresses."}
 void ReplayWin::make_bases() {
     GameDataStateStorage.fields_.base_current_count_ = 0;
-    for (int tile = 0; tile < static_cast<int>(MapArea); ++tile) {
+    for (int tile = 0; tile < MapArea; ++tile) {
         map_tiles()[tile].bit &= ~1u;
     }
     for (int site_id = 0; site_id < 512; ++site_id) {

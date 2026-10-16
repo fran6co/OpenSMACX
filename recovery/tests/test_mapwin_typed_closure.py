@@ -61,7 +61,8 @@ ACTUAL_CACHE
 ACTUAL_MAP
 
 int MapLongitudeBounds=8, MapLatitudeBounds=6;
-uint32_t MapLongitude=4, MapArea=24;
+uint32_t MapLongitude=4;
+int MapArea=24;
 int MapIsFlat=1;
 Map *MapTiles=0;
 inline Map *&map_tiles() { return MapTiles; }
@@ -153,7 +154,7 @@ int main() {
     }
     free(w.owned_);
     w.owned_=0;
-    MapArea=0x80000000u;
+    MapArea=(-2147483647-1);
     w.init_dummy();
     assert(allocation_size==0); // allocation expression wraps before signed compare
     free(w.owned_);

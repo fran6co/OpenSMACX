@@ -311,7 +311,8 @@ struct MapMetadataFields {
     uint32_t rand_seed_;                       // +0x008
     int sea_level_;                           // +0x00C
     int sea_level_council_;                    // +0x010
-    uint32_t area_;                            // +0x014
+    // Signed tile count: pinned consumers use signed guards, loops and IDIV.
+    int area_;                                 // +0x014
     uint32_t area_sq_root_;                    // +0x018
     BOOL is_flat_;                            // +0x01C
     int landmark_count_;                      // +0x020
@@ -403,9 +404,9 @@ inline uint8_t *&MapAbstract() { return MapAbstractTiles; }
 void __cdecl map_resample(int width, int height);
 extern int MapBaseSubmergedCount[8];
 extern int MapBaseIdClosestSubmergedVeh[8];
-extern uint32_t BrushVal1; // TODO: more descriptive variable name
+extern int BrushVal1; // TODO: more descriptive variable name
 extern uint32_t BrushVal2; // TODO: more descriptive variable name
-extern uint32_t WorldBuildVal1; // TODO: more descriptive variable name
+extern int WorldBuildVal1; // TODO: more descriptive variable name
 
 extern Continent Continents[MaxContinentNum];  // 0x009AA730
 extern RulesNatural Natural[MaxNaturalNum];    // 0x0094ADE0

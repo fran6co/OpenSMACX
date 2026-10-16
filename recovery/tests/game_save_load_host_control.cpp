@@ -68,7 +68,7 @@ static MainInterfaceStub MainInterfaceGlobal;
 static ConsoleStub ConsoleGlobal;
 static MapWin *MapWinTable[8];
 static const size_t MapWinTableSlots = 8;
-static unsigned int MapArea = 2;
+static int MapArea = 2;
 static Map MapStorage[2], *MapTiles = MapStorage;
 static uint32_t AltContour[11], AltNatural[11];
 static PathStub Paths;
@@ -184,7 +184,7 @@ int main() {
 
     // Native loader uses signed tests: an invalid negative area skips the
     // tile walk rather than treating the word as billions of unsigned tiles.
-    MapArea = 0xFFFFFFFFu;
+    MapArea = -1;
     MapTiles[0].visibility = 0xA5;
     MapTiles[0].bit = 0x1234567Bu;
     assert(load_map_daemon((char *)"map.mp") == 0);

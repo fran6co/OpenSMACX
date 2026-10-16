@@ -30,7 +30,7 @@ struct Map {
 };
 static Map tiles[4];
 static int MapSeaLevel, MapSeaLevelCouncil, MapLandmarkCount, MapRandSeed;
-static unsigned int MapArea;
+static int MapArea;
 static int random_calls;
 static int random(int low, int high) {
     assert(low == 0 && high == 0x7fff);

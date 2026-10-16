@@ -244,7 +244,7 @@ def run_host(tmp_path, body):
         RulesSocialCategory SocialCategories[4];
         Map Maps[8];
         Map *map_tiles() { return Maps; }
-        uint32_t MapArea = 0;
+        int MapArea = 0;
         Base Bases[8];
         VehPrototype VehPrototypes[512];
         RulesReactor Reactor[4];
