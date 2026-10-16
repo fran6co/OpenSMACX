@@ -307,6 +307,33 @@
 //         "start": 6618400
 //       },
 //       "unit": "build/intel/mt_obj/stricmp.obj"
+//     },
+//     {
+//       "entries": [
+//         {
+//           "evidence": "The unique external function symbol _strcpy is at section-relative offset 0 in the complete pinned strcat.obj contribution; preserve the historical 16-byte binding as an unresolved independent-extent interpretation.",
+//           "name": "_strcpy",
+//           "offset": 0
+//         },
+//         {
+//           "evidence": "The unique external function symbol _strcat is at section-relative offset 16 in the complete pinned strcat.obj contribution. The original entry scans the destination terminator before copying the source; no independent function extent is inferred.",
+//           "name": "_strcat",
+//           "offset": 16
+//         }
+//       ],
+//       "evidence": "Pinned LIBCMT archive member strcat.obj has one complete 240-byte ordinary executable contribution, identical to original 0x00645460-0x00645550 with no COFF relocations or original HIGHLOW sites. Its two external function symbols identify entries, not independent extents; strcpy shares downstream code. Archive selection, linked allocation and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6575200,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6575440,
+//         "start": 6575200
+//       },
+//       "unit": "build/intel/mt_obj/strcat.obj"
 //     }
 //   ],
 //   "component": {
