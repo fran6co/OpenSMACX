@@ -7,6 +7,7 @@ fresh-mapwin-cohort/manifest.json (packet 95d55fd9cf6d31fdaa39ec92c7252e7f009d5f
 from functools import lru_cache
 from pathlib import Path
 import subprocess
+from types import SimpleNamespace
 
 import pytest
 from match_recovery import binding_source
@@ -86,7 +87,7 @@ VIEWS = (
                     "nc_hittest"),
     },
     {
-        "name": "Console Win view", "owner": "src/mapwin.cpp", "tag": "CDCI",
+        "name": "Console Win view", "owner": "src/console.cpp", "tag": "CDCI",
         "table": "??_7Console@@6BWin@@@", "table_va": 0x0066EC18,
         "constructor": "??0Console@@QAE@H@Z", "constructor_va": 0x0050F460,
         "methods": ("map_redraw", "left_click", "left_down", "left_up", "right_click",
@@ -106,13 +107,18 @@ def emitted_symbol(target_symbol, tag, method):
     return f"{owner_and_name}@@$4PPPPPPPM@{tag}@{tail}"
 
 
+def claims_preserved(prior, current):
+    return ((not prior.byte_exact or current.byte_exact)
+            and (not prior.semantic or current.semantic))
+
+
 def test_cohort_addresses_match_the_28_manifest_rows():
     assert not (ROOT / "src/adjustor_thunks.cpp").exists()
     assert not (ROOT / "src/adjustor_thunks.h").exists()
     assert len(MAPWIN_MIGRATED_ADDRESSES) == 28
     all_current = {
         row.address: row
-        for owner in ("src/mapwin.cpp", "src/planwin.cpp")
+        for owner in ("src/mapwin.cpp", "src/planwin.cpp", "src/console.cpp")
         for row in read_file(ROOT / owner)
     }
     found = set()
@@ -156,6 +162,20 @@ def test_migrated_rows_retain_original_identity_claims_and_history(view):
         prior = old[current.address]
         assert current.mode is Mode.FILE
         assert _is_migrated_adapter(prior.symbol)
-        for field in ("name", "image_spans", "byte_exact", "semantic", "kind",
-                      "levers", "ruled_out", "unrecoverable", "deferred"):
+        for field in ("name", "image_spans", "kind", "levers", "ruled_out",
+                      "unrecoverable", "deferred"):
             assert getattr(current, field) == getattr(prior, field), (hex(current.address), field)
+        assert claims_preserved(prior, current), hex(current.address)
+
+
+@pytest.mark.parametrize(
+    "prior,current",
+    (
+        (SimpleNamespace(byte_exact=True, semantic=False),
+         SimpleNamespace(byte_exact=False, semantic=False)),
+        (SimpleNamespace(byte_exact=True, semantic=True),
+         SimpleNamespace(byte_exact=True, semantic=False)),
+    ),
+)
+def test_claim_preservation_rejects_withdrawal(prior, current):
+    assert not claims_preserved(prior, current)
