@@ -1,0 +1,28 @@
+{
+  "author": "coordinator",
+  "base_revision": "a06ea14778aa0af9368790577ce2594cd6fbb637",
+  "editable_files": [
+    "src/selectpartwin.cpp"
+  ],
+  "evidence": [
+    "Existing original bindings identify primary virtual slots17 and21 at433820 and433940; adjacent actual definitions are on_mouse_move and on_left_up.",
+    "Fresh retained master build-v_j9l6q8 defines ?on_mouse_move@SelectPartWin@@UAEXHH@Z and ?on_left_up@SelectPartWin@@UAEXHH@Z in selectpartwin.cpp.obj. Historical catalogue names differ and lack explicit symbol facts, preventing measurement.",
+    "Only native write_symbol updates authorized; do not rename methods, alter code, spans, original markers or claims. Measure both functions and verify source/claim continuity. Annotation changes are not new implementation coverage or acceptance."
+  ],
+  "intent": "Bind two existing SelectPartWin implementations to their actual emitted symbols, preserving original identities and all source behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4405280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4405568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "selectpart-symbol-bindings-oct16"
+}
