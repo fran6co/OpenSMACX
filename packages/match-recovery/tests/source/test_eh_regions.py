@@ -16,6 +16,7 @@ BASE = 0x00400000
 ROOT = "?recover@Owner@@QAEHXZ"
 SPANS = ((BASE + 0x1000, BASE + 0x1016),
          (BASE + 0x1100, BASE + 0x1115))
+TWO_SPANS = (SPANS[0], (BASE + 0x1100, BASE + 0x1120))
 
 
 def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False):
@@ -35,26 +36,36 @@ def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False):
     text[14:21] = b"\x64\x89\x25\0\0\0\0"
     text[21] = 0xC3
     handler_offset = cold_size - 10
-    lea = (b"\x8d\x4d\xf0" if handler_offset == 8
-           else b"\x8d\x8d\xf0\xff\xff\xff")
-    clean_jump = 0x100 + len(lea)
-    jump_size = 2 if short_cleanup_jump else 5
-    handler_start = clean_jump + jump_size
-    text[0x100:0x100 + len(lea)] = lea
-    if short_cleanup_jump:
-        text[clean_jump] = 0xEB
-        struct.pack_into("<b", text, clean_jump + 1,
-                         cleanup_target - (cold + handler_start - 0x100))
-        text[cleanup_target - (BASE + 0x1000)] = 0xC3
+    if cold_size == 32:
+        text[0x100:0x116] = bytes.fromhex(
+            "8b 4d f0 e9 00 00 00 00 8b 4d f0 81 c1 4c 14 00 00 e9 00 00 00 00")
+        struct.pack_into("<i", text, 0x104, (BASE + 0x11F0) - (cold + 8))
+        struct.pack_into("<i", text, 0x112, (BASE + 0x11E0) - (cold + 22))
+        text[0x116] = 0xB8
+        struct.pack_into("<I", text, 0x117, func_info)
+        text[0x11B] = 0xE9
+        struct.pack_into("<i", text, 0x11C, handler_target - (cold + cold_size))
     else:
-        text[clean_jump] = 0xE9
-        struct.pack_into("<i", text, clean_jump + 1,
-                         cleanup_target - (cold + handler_start - 0x100))
-    text[handler_start] = 0xB8
-    struct.pack_into("<I", text, handler_start + 1, func_info)
-    text[handler_start + 5] = 0xE9
-    struct.pack_into("<i", text, handler_start + 6,
-                     handler_target - (cold + cold_size))
+        lea = (b"\x8d\x4d\xf0" if handler_offset == 8
+               else b"\x8d\x8d\xf0\xff\xff\xff")
+        clean_jump = 0x100 + len(lea)
+        jump_size = 2 if short_cleanup_jump else 5
+        handler_start = clean_jump + jump_size
+        text[0x100:0x100 + len(lea)] = lea
+        if short_cleanup_jump:
+            text[clean_jump] = 0xEB
+            struct.pack_into("<b", text, clean_jump + 1,
+                             cleanup_target - (cold + handler_start - 0x100))
+            text[cleanup_target - (BASE + 0x1000)] = 0xC3
+        else:
+            text[clean_jump] = 0xE9
+            struct.pack_into("<i", text, clean_jump + 1,
+                             cleanup_target - (cold + handler_start - 0x100))
+        text[handler_start] = 0xB8
+        struct.pack_into("<I", text, handler_start + 1, func_info)
+        text[handler_start + 5] = 0xE9
+        struct.pack_into("<i", text, handler_start + 6,
+                         handler_target - (cold + cold_size))
     text[0x11F0 - 0x1000] = 0xC3
     text[0x11F8 - 0x1000] = 0xC3
 
@@ -71,19 +82,33 @@ def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False):
     if damage == "original_bad_registration_fs_write":
         text[14] = 0x90
 
-    info = bytearray(40)
-    struct.pack_into("<8I", info, 0, 0x19930520, 1, func_info + 32,
+    info = bytearray(48 if cold_size == 32 else 40)
+    struct.pack_into("<8I", info, 0, 0x19930520, 2 if cold_size == 32 else 1, func_info + 32,
                      0, 0, 0, 0, 0)
     struct.pack_into("<I", info, 32, 0xFFFFFFFF)
     struct.pack_into("<I", info, 36, cold)
+    if cold_size == 32:
+        struct.pack_into("<II", info, 40, 0, cold + 8)
     if damage == "original_funcinfo_magic":
         struct.pack_into("<I", info, 0, 0)
     if damage == "original_unwind_action":
         struct.pack_into("<I", info, 36, cold + 1)
+    if damage == "original_second_map_wrong_state":
+        struct.pack_into("<I", info, 40, 2)
+    if damage == "original_second_map_wrong_action":
+        struct.pack_into("<I", info, 44, cold + 7)
+    if damage == "original_second_map_duplicate_action":
+        struct.pack_into("<I", info, 44, cold)
+    if damage == "original_wrong_state_count":
+        struct.pack_into("<I", info, 4, 3)
+    if damage == "original_second_action_shape":
+        text[0x10B] = 0x83
+    if damage == "original_second_action_jump":
+        text[0x111] = 0xEB
 
     reloc_entries = {
         0x1000: [0x3003, 0x3100 + handler_offset + 1],
-        0x2000: [0x3008, 0x3024],
+        0x2000: [0x3008, 0x3024] + ([0x302C] if cold_size == 32 else []),
     }
     if damage == "original_missing_root_reloc":
         reloc_entries[0x1000].remove(0x3003)
@@ -95,6 +120,14 @@ def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False):
         reloc_entries[0x2000].remove(0x3024)
     if damage == "original_extra_funcinfo_reloc":
         reloc_entries[0x2000].append(0x3004)
+    if damage == "original_missing_second_cleanup_reloc":
+        reloc_entries[0x2000].remove(0x302C)
+    if damage == "original_extra_second_cleanup_reloc":
+        reloc_entries[0x2000].append(0x3028)
+    if damage == "original_missing_second_map_reloc":
+        reloc_entries[0x2000].remove(0x302C)
+    if damage == "original_extra_second_map_reloc":
+        reloc_entries[0x2000].append(0x3028)
     if damage == "original_extra_cold_reloc":
         reloc_entries[0x1000].append(0x3100)
     reloc = bytearray()
@@ -141,12 +174,29 @@ def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False):
 def _coff(*, damage=None, cold_size=21):
     """Build a root, one supported-size associative child, and EH data."""
     handler_offset = cold_size - 10
-    lea = (bytes.fromhex("8d 4d f0") if handler_offset == 8
-           else bytes.fromhex("8d 8d f0 ff ff ff"))
-    child_data = lea + b"\xe9\0\0\0\0\xb8\0\0\0\0\xe9\0\0\0\0"
+    if cold_size == 32:
+        child_data = bytes.fromhex(
+            "8b 4d f0 e9 00 00 00 00 8b 4d f0 81 c1 4c 14 00 00 e9 00 00 00 00"
+            "b8 00 00 00 00 e9 00 00 00 00")
+        lea_size = 3
+        destructor_offsets = (4, 18)
+    else:
+        lea = (bytes.fromhex("8d 4d f0") if handler_offset == 8
+               else bytes.fromhex("8d 8d f0 ff ff ff"))
+        child_data = lea + b"\xe9\0\0\0\0\xb8\0\0\0\0\xe9\0\0\0\0"
+        lea_size = len(lea)
+        destructor_offsets = (lea_size + 1,)
     if damage == "wrong_child_lea":
         child_data = b"\x8d\x0d" + child_data[2:]
-    destructor_offset = len(lea) + 1
+    if damage == "second_action_shape" and cold_size == 32:
+        child_data = bytearray(child_data)
+        child_data[11] = 0x83
+        child_data = bytes(child_data)
+    if damage == "second_action_jump" and cold_size == 32:
+        child_data = bytearray(child_data)
+        child_data[17] = 0xEB
+        child_data = bytes(child_data)
+    destructor_offset = destructor_offsets[0]
     info_offset = handler_offset + 1
     runtime_offset = handler_offset + 6
     sections = [
@@ -155,9 +205,23 @@ def _coff(*, damage=None, cold_size=21):
         {"name": ".text$x",
          "data": child_data,
          "flags": 0x60501020, "selection": 5, "parent": 1},
-        {"name": ".xdata$x", "data": _eh_data(damage),
+        {"name": ".xdata$x", "data": _eh_data(damage, two_actions=cold_size == 32),
          "flags": 0x40401040, "selection": 5, "parent": 1},
     ]
+    if cold_size == 32:
+        sections.append({"name": ".text$l", "data": b"\xc3",
+                         "flags": 0x60501020, "selection": 2, "parent": 0})
+        if damage == "local_target_writable":
+            sections[3]["flags"] |= 0x80000000
+        if damage == "local_target_root_owned":
+            sections[3]["parent"] = 1
+            sections[3]["selection"] = 5
+        if damage == "local_target_executable_debug_child":
+            sections.append({"name": ".debug$F", "data": b"\xc3",
+                             "flags": 0x60501020, "selection": 5, "parent": 4})
+        if damage in {"local_target_debug_child", "local_target_debug_child_and_cold_reference"}:
+            sections.append({"name": ".debug$F", "data": bytes(4),
+                             "flags": 0x40401040, "selection": 5, "parent": 4})
     if damage == "truncated_child":
         sections[1]["data"] = child_data[:-1]
     if damage == "extra_code_child":
@@ -207,21 +271,54 @@ def _coff(*, damage=None, cold_size=21):
     add_symbol("info", "$Tinfo", 0, 3, 0, 6 if damage == "bad_info_storage" else 3)
     add_symbol("unwind", "$Tunwind", 32, 3, 0, 6)
     add_symbol("destructor", "??1Thing@@QAE@XZ", 0, 0, 0x20, 2)
+    if cold_size == 32:
+        external_second = damage in {
+            "second_external_destructor", "second_external_wrong_name",
+            "second_external_nonzero_value", "second_external_nonfunction",
+        }
+        if damage == "second_external_wrong_name":
+            local_name = "??_DLocal@@QAEXXZ"
+        elif external_second:
+            local_name = "??1Time@@QAE@XZ"
+        else:
+            local_name = "?WrongLocal@@QAEXXZ" if damage == "local_target_wrong_name" else "??_DLocal@@QAEXXZ"
+        local_type = 0 if damage in {"local_target_not_function", "second_external_nonfunction"} else 0x20
+        local_section = (0 if external_second else
+                         1 if damage == "local_target_root_owned" else 4)
+        local_value = 1 if damage == "second_external_nonzero_value" else 0
+        if damage == "second_external_defined":
+            local_name = "??1Time@@QAE@XZ"
+        add_symbol("local_destructor", local_name, local_value, local_section, local_type, 2)
+        if damage == "local_target_overlapping_owner":
+            add_symbol("local_duplicate", "??_DSecond@@QAEXXZ", 0, 4, 0x20, 2)
+        if damage == "local_target_overlapping_static_owner":
+            add_symbol("local_static_duplicate", "?Static@@YAXXZ", 0, 4, 0x20, 3)
     add_symbol("runtime", "___CxxFrameHandler", 0, 0, 0, 2)
     if damage == "handler_offset":
         # A separate local target avoids relying on a generated label spelling.
         add_symbol("wrong_handler", "$Lwrong", 10, 2, 0, 6)
 
     root_relocs = [(3, "handler" if damage != "handler_offset" else "wrong_handler", 6)]
-    child_relocs = [(destructor_offset, "destructor", 20),
-                    (info_offset, "info", 6), (runtime_offset, "runtime", 20)]
+    child_relocs = [(destructor_offset, "destructor", 20)]
+    if cold_size == 32:
+        child_relocs.append((destructor_offsets[1], "local_destructor", 20))
+    child_relocs.extend([(info_offset, "info", 6), (runtime_offset, "runtime", 20)])
     data_relocs = [(8, "unwind", 6), (36, "cleanup", 6)]
+    if cold_size == 32:
+        cleanup2_value = (0 if damage == "second_map_duplicate_action" else
+                          4 if damage == "second_map_wrong_target_offset" else 8)
+        add_symbol("cleanup2", "$Lcleanup2", cleanup2_value, 2, 0, 6)
+        data_relocs.append((44, "cleanup2", 6))
     if damage == "missing_root_edge":
         root_relocs.clear()
     if damage == "missing_info_edge":
         child_relocs = [item for item in child_relocs if item[0] != info_offset]
     if damage == "missing_destructor_edge":
         child_relocs = [item for item in child_relocs if item[0] != destructor_offset]
+    if damage == "missing_second_action_relocation":
+        child_relocs = [item for item in child_relocs if item[0] != 18]
+    if damage == "extra_second_action_relocation":
+        child_relocs.append((1, "local_destructor", 20))
     if damage == "missing_runtime_edge":
         child_relocs = [item for item in child_relocs if item[0] != runtime_offset]
     if damage == "extra_child_relocation":
@@ -243,12 +340,25 @@ def _coff(*, damage=None, cold_size=21):
         sections[1]["data"] = bytearray(sections[1]["data"])
         offset = destructor_offset if damage == "nonzero_relative_addend" else runtime_offset
         struct.pack_into("<I", sections[1]["data"], offset, 1)
+    if damage == "local_target_nonzero_addend":
+        sections[1]["data"] = bytearray(sections[1]["data"])
+        struct.pack_into("<I", sections[1]["data"], 18, 1)
+    if damage == "local_target_references_root":
+        sections[3]["data"] = bytes.fromhex("e8 00 00 00 00 c3")
+        sections[3]["relocs"] = [(1, "root", 20)]
+    if damage == "local_target_debug_child_and_cold_reference":
+        sections[3]["data"] = bytes.fromhex("e8 00 00 00 00 c3")
+        sections[3]["relocs"] = [(1, "handler", 20)]
+    if damage == "local_target_overlapping_relocations":
+        sections[3]["relocs"] = [(1, "root", 20), (2, "root", 20)]
+    if damage == "local_target_out_of_bounds_relocation":
+        sections[3]["relocs"] = [(3, "root", 20)]
 
     sections[0]["relocs"] = root_relocs
     sections[1]["relocs"] = child_relocs
     sections[2]["relocs"] = data_relocs
     if len(sections) > 3:
-        sections[3]["relocs"] = []
+        sections[3].setdefault("relocs", [])
     if len(sections) > 4:
         sections[4]["relocs"] = []
     if len(sections) > 5:
@@ -295,9 +405,10 @@ def _coff(*, damage=None, cold_size=21):
     return bytes(content)
 
 
-def _eh_data(damage):
-    data = bytearray(40)
-    struct.pack_into("<8I", data, 0, 0x19930520, 1, 0, 0, 0, 0, 0, 0)
+def _eh_data(damage, *, two_actions=False):
+    data = bytearray(48 if two_actions else 40)
+    struct.pack_into("<8I", data, 0, 0x19930520, 2 if two_actions else 1,
+                     0, 0, 0, 0, 0, 0)
     struct.pack_into("<I", data, 32, 0xFFFFFFFF)
     if damage == "bad_info_magic":
         struct.pack_into("<I", data, 0, 0)
@@ -305,6 +416,18 @@ def _eh_data(damage):
         struct.pack_into("<I", data, 4, 2)
     if damage == "bad_unwind_state":
         struct.pack_into("<I", data, 32, 0)
+    if two_actions:
+        struct.pack_into("<II", data, 40, 0, 0)
+        if damage == "second_map_wrong_state":
+            struct.pack_into("<I", data, 40, 2)
+        if damage == "second_map_wrong_action":
+            struct.pack_into("<I", data, 44, 7)
+        if damage == "second_map_nonzero_addend":
+            struct.pack_into("<I", data, 44, 1)
+        if damage == "second_map_duplicate_action":
+            struct.pack_into("<I", data, 44, 0)
+        if damage == "wrong_state_count":
+            struct.pack_into("<I", data, 4, 3)
     return bytes(data)
 
 
@@ -325,7 +448,7 @@ def _bind(*, object_damage=None, image_damage=None, spans=SPANS,
     original_size = (spans[1][1] - spans[1][0]
                      if type(spans) is tuple and len(spans) == 2
                      and type(spans[1]) is tuple and len(spans[1]) == 2
-                     and spans[1][1] - spans[1][0] in (18, 21) else 21)
+                     and spans[1][1] - spans[1][0] in (18, 21, 32) else 21)
     image_data = _pe(damage=image_damage, cold_size=original_size)
     image = PeImage(image_data, hashlib.sha256(image_data).hexdigest())
     return bind_eh_regions(_coff(damage=object_damage, cold_size=object_cold_size), ROOT, image, spans)
@@ -345,6 +468,66 @@ def test_binds_only_the_root_and_its_proven_cleanup_handler_bundle():
     assert (cold.ownership.original_handler, cold.ownership.original_cleanup,
             cold.ownership.handler_offset, cold.ownership.cleanup_offset) == (
                 SPANS[1][0] + 11, SPANS[1][0], 11, 0)
+
+
+@pytest.mark.parametrize("metadata", [None, "local_target_debug_child"])
+def test_binds_two_action_funcinfo_map_and_exposes_both_actions(metadata):
+    root, cold = _bind(spans=TWO_SPANS, object_cold_size=32, object_damage=metadata)
+    assert root.ownership.cleanup_offsets == (0, 8)
+    assert root.ownership.original_cleanups == (TWO_SPANS[1][0], TWO_SPANS[1][0] + 8)
+    assert root.ownership.original_cleanup == TWO_SPANS[1][0]
+    assert root.ownership.original_cleanup_targets == (BASE + 0x11F0, BASE + 0x11E0)
+    assert cold.ownership.handler_offset == 22
+    assert cold.code[:22] == bytes.fromhex(
+        "8b 4d f0 e9 00 00 00 00 8b 4d f0 81 c1 4c 14 00 00 e9 00 00 00 00")
+
+
+def test_binds_second_action_to_undefined_external_destructor():
+    root, cold = _bind(spans=TWO_SPANS, object_cold_size=32,
+                       object_damage="second_external_destructor")
+    assert root.ownership.cleanup_offsets == (0, 8)
+    assert cold.ownership.original_cleanups == (TWO_SPANS[1][0], TWO_SPANS[1][0] + 8)
+
+
+def test_original_action_inventory_is_independent_of_compiled_action_inventory():
+    root, cold = _bind(spans=TWO_SPANS, object_cold_size=21)
+    assert root.ownership.original_cleanups == (TWO_SPANS[1][0], TWO_SPANS[1][0] + 8)
+    assert root.ownership.original_cleanup_targets == (BASE + 0x11F0, BASE + 0x11E0)
+    assert root.ownership.cleanup_offsets == (0,)
+    assert len(cold.code) == 21
+
+
+@pytest.mark.parametrize("damage", [
+    "second_map_wrong_state", "second_map_wrong_action", "second_map_duplicate_action",
+    "second_map_wrong_target_offset", "second_map_nonzero_addend",
+    "wrong_state_count", "missing_second_action_relocation",
+    "extra_second_action_relocation", "second_action_shape", "second_action_jump",
+    "original_second_map_wrong_state", "original_second_map_wrong_action",
+    "original_second_map_duplicate_action", "original_wrong_state_count",
+    "original_second_action_shape", "original_second_action_jump",
+    "local_target_nonzero_addend", "local_target_wrong_name", "local_target_not_function",
+    "local_target_overlapping_owner", "local_target_writable", "local_target_root_owned",
+    "local_target_overlapping_static_owner", "local_target_executable_debug_child",
+    "local_target_references_root",
+    "local_target_debug_child_and_cold_reference",
+    "local_target_overlapping_relocations", "local_target_out_of_bounds_relocation",
+    "bad_registration_sentinel", "bad_registration_fs_read", "bad_registration_fs_write",
+    "second_external_wrong_name", "second_external_nonzero_value",
+    "second_external_nonfunction", "second_external_defined",
+])
+def test_refuses_damaged_two_action_ownership_graph(damage):
+    with pytest.raises(ValueError):
+        _bind(spans=TWO_SPANS, object_cold_size=32,
+              object_damage=damage if not damage.startswith("original_") else None,
+              image_damage=damage if damage.startswith("original_") else None)
+
+
+@pytest.mark.parametrize("damage", [
+    "original_missing_second_cleanup_reloc", "original_extra_second_cleanup_reloc",
+])
+def test_refuses_missing_or_extra_original_second_action_relocations(damage):
+    with pytest.raises(ValueError):
+        _bind(spans=TWO_SPANS, object_cold_size=32, image_damage=damage)
 
 
 @pytest.mark.parametrize(("original_size", "object_size"), [(18, 18), (18, 21), (21, 18)])
