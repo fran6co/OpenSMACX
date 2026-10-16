@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "task_id": "media-motion-indices-oct17",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Recover the existing motion-index word array across allocation, packet production, signed raster consumption and teardown; use the already recovered pixel-block type for ordered row reads.",
+  "base_revision": "5e5dd149b8146859c6854e4505f6db4b520adee1",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6110704},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6112159},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6109568},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6112328},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6080272}
+  ],
+  "editable_files": [
+    "src/general.cpp",
+    "src/general.h",
+    "src/movie_media.cpp",
+    "src/movie_media.h",
+    "recovery/tests/test_movie_runtime_decoder_ownership_actual_source_oct9.py",
+    "recovery/tests/test_media_motion_storage_oct11.py",
+    "recovery/tests/test_media_motion_indices_oct17.py"
+  ],
+  "evidence": [
+    "Pinned5D3DF0 allocates four bytes per rounded sixteen-pixel output block into runtime+640. Pinned5D3980 passes that same field to5D439F then5D4448;5D439F writes consecutive unsigned32bit words,5D4448 loads dwords and compares signed against run_limit. Pinned5CC710 releases the same field. All source uses were audited; unsigned int *motion_block_indices is a descriptive recovered name/type, not an original debug name or complete class/codec provenance.",
+    "Keep producer masks and x86 shift/rotate widths0,31,32 exactly. Width32 yields a zero mask, not a negative produced index. Preserve signed consumption even for retained/uninitialized scratch when decoding is skipped: load the unsigned word bit pattern into int through memcpy before the signed comparisons. Remove the two caller reinterpret_casts; do not introduce a replacement cast adapter.",
+    "5D3980 allocates/copies/expands complete sixteen-byte MediaDecodedPixelBlock4x4 records;5D4448 reads offsets0,4,8,12 in sequence. Use that existing pixels member and four ordered word-load/row-store pairs. Preserve the flat address formulas where needed for separate frame allocations and unchecked signed indices; do not introduce cross-allocation pointer subtraction, whole-block staging, overlapping memcpy, extra checks, normalization or initialization. Zero/negative run counts and height still follow original do/while behavior.",
+    "Keep all identities, spans, historical claims and LEVER/TRIED findings. Remove only obsolete generated-tool boilerplate adjacent to the touched helper, not useful history. No ABI, class extent, allocation size/failure order, frame swapping, caller behavior, compiler policy or project/package CLI changes. Add a native source member-offset expectation for the existing640slot, and verify actual32bit compiler layout and full-TU collateral measurements.",
+    "Baseline focused media tests reproduce six older whole-file history-equality failures caused by already integrated unrelated changes. Do not hide or reset them. Adapt the actual-source harness to the proven pointer type, add signed-index/overlap/run-order damage controls, and project only this reviewed pointer declaration and teardown spelling out of earlier header/history fixtures so no previously passing control regresses. Require scoped behavior, native continuity, fresh build/link and destination checks before coordinator-reviewed integration; no automatic, linked-preservation, codec or game acceptance claim."
+  ]
+}
