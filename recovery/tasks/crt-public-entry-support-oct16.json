@@ -1,0 +1,37 @@
+{
+  "author": "coordinator",
+  "base_revision": "f93fe40011b297324956a9dd90fbe6fd3caee8d2",
+  "editable_files": [
+    "packages/match-recovery/src/match_recovery/components.py",
+    "packages/match-recovery/src/match_recovery/component_binary.py",
+    "packages/match-recovery/src/match_recovery/component_targets.py",
+    "packages/match-recovery/src/match_recovery/component_source.py",
+    "packages/match-recovery/src/match_recovery/ownership_source.py",
+    "packages/match-recovery/tests/test_toolchain_code_sections.py",
+    "packages/match-recovery/tests/test_component_targets.py",
+    "packages/match-recovery/tests/test_toolchain_public_entries.py",
+    "packages/match-recovery/README.md",
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_public_entries_oct16.py",
+    "recovery/README.md"
+  ],
+  "evidence": [
+    "Pinned LIBCMT archive SHA256 1ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b uniquely contains build/intel/mt_obj/strcat.obj. Its complete 240-byte ordinary .text section matches original 0x00645460..0x00645550 exactly, without COFF or PE relocations. Defined external function symbols place _strcpy at section offset zero and _strcat at 0x10.",
+    "COFF does not declare independent function sizes here, and strcpy shares downstream code. Preserve the existing strcpy function interpretation and all original identities/spans/evidence; add explicit section-relative named entry anchors, not a fabricated 224-byte strcat function binding. Limit intentional function/section overlap to the same pinned member and matching explicit entry within its parent contribution; unrelated overlap remains invalid.",
+    "Only a fresh passing complete parent section plus exact unique external-function symbol inventory/offsets can qualify entry targets. Missing, duplicate, misplaced, static/data, out-of-range or corrupt anchors; archive/section/byte/relocation failure or unknown parent references publish no entry targets. Do not infer targets from original operands or weaken COMDAT product or linked verifiers.",
+    "Tighten the directly affected component target exporter: function rows with unknown or failed boundary evidence must not publish merely because the aggregate row was not FAIL. Preserve supported unknown deep-callee reference behavior only with measured passing boundary and nonrelocation bytes; add actual malformed-member controls as well as synthetic stubs.",
+    "Expose size-free component ownership hints without duplicate candidates or fabricated function extents. Keep entries separate from function/application counts; original linker selection, linked target proof, structure/runtime and full-game acceptance remain unknown. Reject contradictory component/product/name ownership rather than overwrite targets.",
+    "Generic library APIs and public CLI remain project-agnostic. No new ad hoc CLI or project compiler/environment changes. Independent damage tests, source-reader/history regression tests and real pinned archive/image controls precede source migration; then recheck public scoped references, build/link, claim/mapping continuity and destination verification. Coordinator owns source migration, Git and compiler leases."
+  ],
+  "intent": "Verify explicit size-free public entries in whole pinned ordinary COFF contributions, then bind the proven strcpy/strcat contribution without rewriting runtime code or inventing independent function extents.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6575200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "crt-public-entry-support-oct16"
+}
