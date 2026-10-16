@@ -3180,7 +3180,7 @@ extern "C" void __cdecl sub_5d439f(unsigned int *index_words,
 // calls     (none)
 
 // The unsigned index allocation is consumed as signed native indices; memcpy
-// preserves the bit patterns and signed comparisons without aligned typed loads.
+// preserves the original bit patterns and signed comparisons without aligned typed loads.
 extern "C" void __cdecl sub_5d4448(
     const unsigned int *index_words, unsigned char *previous_frame,
     unsigned char *current_frame, int run_limit, int *motion_offsets,
