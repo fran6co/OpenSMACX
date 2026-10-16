@@ -45,7 +45,8 @@ def live_bodies():
     for name in ("SpriteRasterDestinationColumnCount", "SpriteRasterSourceColumnCount",
                  "SpriteRasterDestinationRowCount", "SpriteRasterSourceRowCount",
                  "SpriteRasterXTable", "SpriteRasterYTable",
-                 "SpriteRasterDestinationPitch", "SpriteRasterSourcePitch"):
+                 "SpriteRasterDestinationPitch", "SpriteRasterSourcePitch",
+                 "SpriteRasterSourceRowTail", "SpriteRasterDestinationRowTail"):
         match, = re.findall(r"^(?:int\s+|int\s*\*\s*)" + name + r";\s*$", source, re.M)
         raster_cells.append(match)
     remap_union, = re.findall(r"(?s)^union SpriteRasterRemapPointer \{.*?^\};\s*$", source, re.M)
@@ -165,6 +166,7 @@ int main(int argc,char **argv) {
     SpriteRasterDestinationRowCount=-33; SpriteRasterSourceRowCount=-34;
     SpriteRasterXTable=stale_x; SpriteRasterYTable=stale_y;
     SpriteRasterDestinationPitch=-41; SpriteRasterSourcePitch=-42;
+    SpriteRasterSourceRowTail=-51; SpriteRasterDestinationRowTail=-52;
     SpriteRasterRemapTable.single=input;
     int key=0x109,color=0x17B,x=2,y=1;
     Buffer *to=&destination;
@@ -223,7 +225,8 @@ int main(int argc,char **argv) {
         check(SpriteRasterDestinationColumnCount==-31 && SpriteRasterSourceColumnCount==-32);
         check(SpriteRasterDestinationRowCount==-33 && SpriteRasterSourceRowCount==-34);
         check(SpriteRasterXTable==stale_x && SpriteRasterYTable==stale_y);
-        check(SpriteRasterDestinationPitch==-41 && SpriteRasterSourcePitch==-42);return 0;
+        check(SpriteRasterDestinationPitch==-41 && SpriteRasterSourcePitch==-42);
+        check(SpriteRasterSourceRowTail==-51 && SpriteRasterDestinationRowTail==-52);return 0;
     } else if(scenario==16 || scenario==17 || scenario==18) {
         SpriteScaleNumerator=2;SpriteScaleDenominator=3;
         original_expected={2,1,4,3};destination.rect1_=clipped_expected=original_expected;
@@ -272,6 +275,7 @@ int main(int argc,char **argv) {
         check(SpriteRasterXTable==stale_x && SpriteRasterYTable==stale_y);
         check(SpriteRasterDestinationPitch==16 && SpriteRasterSourcePitch==5);
         check(SpriteRasterRemapTable.single==input);
+        check(SpriteRasterSourceRowTail==3 && SpriteRasterDestinationRowTail==14);
     } else if(scenario==14 || scenario==7 || scenario==16) {
         check(SpriteRasterDestinationColumnCount==-31 && SpriteRasterSourceColumnCount==-32);
         check(SpriteRasterDestinationRowCount==-33 && SpriteRasterSourceRowCount==-34);
@@ -279,12 +283,14 @@ int main(int argc,char **argv) {
         check(SpriteRasterDestinationPitch==(scenario==7? -41:16));
         check(SpriteRasterSourcePitch==(scenario==7? -42:5));
         check(SpriteRasterRemapTable.single==input);
+        check(SpriteRasterSourceRowTail==-51 && SpriteRasterDestinationRowTail==-52);
     } else if(scenario==17) {
         check(SpriteRasterXTable==nullptr && SpriteRasterYTable==stale_y);
         check(SpriteRasterDestinationColumnCount==-31 && SpriteRasterSourceColumnCount==-32);
         check(SpriteRasterDestinationRowCount==-33 && SpriteRasterSourceRowCount==-34);
         check(SpriteRasterDestinationPitch==16 && SpriteRasterSourcePitch==5);
         check(SpriteRasterRemapTable.single==input);
+        check(SpriteRasterSourceRowTail==-51 && SpriteRasterDestinationRowTail==-52);
     } else if(scenario==18) {
         check(SpriteRasterXTable==axis[0].steps && SpriteRasterYTable==nullptr);
         check(SpriteRasterDestinationColumnCount==axis[0].destination_count);
@@ -292,6 +298,7 @@ int main(int argc,char **argv) {
         check(SpriteRasterDestinationRowCount==-33 && SpriteRasterSourceRowCount==-34);
         check(SpriteRasterDestinationPitch==16 && SpriteRasterSourcePitch==5);
         check(SpriteRasterRemapTable.single==input);
+        check(SpriteRasterSourceRowTail==-51 && SpriteRasterDestinationRowTail==-52);
     } else if((scenario>=1 && scenario<=4) || scenario==8 || scenario==20 ||
               scenario==21 || scenario==22 || scenario==5 || scenario==6 || scenario==19) {
         const bool expanding=SpriteScaleNumerator>=SpriteScaleDenominator;
@@ -304,7 +311,11 @@ int main(int argc,char **argv) {
         check(SpriteRasterSourceRowCount==(expanding ? 0 : axis[1].source_count));
         check(SpriteRasterDestinationPitch==16 && SpriteRasterSourcePitch==((scenario==5 || scenario==6 || scenario==19)?8:5));
         check(SpriteRasterRemapTable.single==(which==2 && expanding?remap:input));
+        check(SpriteRasterSourceRowTail==SpriteRasterSourcePitch-axis[0].source_count);
+        check(SpriteRasterDestinationRowTail==SpriteRasterDestinationPitch-axis[0].destination_count);
     }
+    if(scenario==9 || scenario==10 || scenario==11 || scenario==12 || scenario==13)
+        check(SpriteRasterSourceRowTail==-51 && SpriteRasterDestinationRowTail==-52);
     return 0;
 }
 '''

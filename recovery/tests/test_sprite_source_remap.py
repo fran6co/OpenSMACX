@@ -52,10 +52,26 @@ def actual(with_real_clippers=False):
         if multi_depth == 0:
             multi_body = source[multi_start:multi_end + 1]
             break
+    shrink_bodies = {}
+    for key, pattern in (
+        ("UNK1BODY", r"int Sprite::draw_dest_unk1\(Buffer \*destination, int x, int y,\s*unsigned char \*table\)\s*\{"),
+        ("SOURCEBODY", r"int Sprite::draw_dest_source\(Buffer \*destination, int transparent, int x, int y,\s*unsigned char \*table\)\s*\{"),
+    ):
+        method_signature = one(pattern, source)
+        method_start = source.index(method_signature)
+        opening = source.index("{", method_start)
+        depth = 0
+        for method_end in range(opening, len(source)):
+            depth += (source[method_end] == "{") - (source[method_end] == "}")
+            if depth == 0:
+                shrink_bodies[key] = source[method_start:method_end + 1]
+                break
     fields = "\n".join(one(r"^  (?:char \*|unsigned char \*|int |unsigned char )" + name + r";", header) for name in
         ("ppszFileName_", "pcBits_", "cTransparentIndex_", "iSpriteWidth2_", "iSpriteWidth_", "iSpriteHeight_",
          "iWidth_", "iHeight_", "iLeftOffset_", "iTopOffset_"))
     methods = one(r"  int draw\(Buffer \*destination, int transparent, int x, int y,\s*unsigned char \*table\);", header)
+    methods += "\n" + one(r"  int draw_dest_unk1\(Buffer \*destination, int x, int y,\s*unsigned char \*table\);", header)
+    methods += "\n" + one(r"  int draw_dest_source\(Buffer \*buffer, int transparent, int x, int y,\s*unsigned char \*table\);", header)
     for name in ("fill_scaling_table", "get_clipped_x_table_shrink", "get_clipped_y_table_shrink",
                  "get_clipped_x_table_expand", "get_clipped_y_table_expand"):
         methods += "\n" + one(r"  (?:void|int \*)\s*" + name + r"\([^;]*\);", header)
@@ -66,7 +82,8 @@ def actual(with_real_clippers=False):
         ("SpriteRasterDestinationColumnCount", "SpriteRasterSourceColumnCount",
          "SpriteRasterDestinationRowCount", "SpriteRasterSourceRowCount",
          "SpriteRasterXTable", "SpriteRasterYTable",
-         "SpriteRasterDestinationPitch", "SpriteRasterSourcePitch"))
+         "SpriteRasterDestinationPitch", "SpriteRasterSourcePitch",
+         "SpriteRasterSourceRowTail", "SpriteRasterDestinationRowTail"))
     remap_union = one(r"(?s)^union SpriteRasterRemapPointer \{.*?^\};\s*$", source)
     remap_global = one(r"^SpriteRasterRemapPointer SpriteRasterRemapTable;\s*$", source)
     step_arrays = "\n".join(one(r"^int " + name + r"\[SpriteScalingTableCount\];", source) for name in
@@ -93,7 +110,7 @@ def actual(with_real_clippers=False):
         clipping = "\n".join(clippers)
     else:
         clipping = CLIPPING_STUBS
-    return {"BODY": body, "MULTIBODY": multi_body, "FIELDS": fields, "METHODS": methods,
+    return {"BODY": body, "MULTIBODY": multi_body, **shrink_bodies, "FIELDS": fields, "METHODS": methods,
             "GLOBALS": globals_ + "\n" + table_count + "\n" + raster_cells + "\n" + remap_union + "\n" + remap_global + "\n" + step_arrays,
             "BUFFER_FIELDS": buffer_fields, "CLIPPERS": clipping}
 
@@ -139,6 +156,8 @@ int* axis(int index,bool expand,RECT*o,RECT*c,int*a,int*b,int*d,int*e){
 // CLIPPING_IMPLEMENTATIONS
 BODY
 MULTIBODY
+UNK1BODY
+SOURCEBODY
 void reset(){
  for(int i=0;i<131072;++i)memory[i]=expected[i]=static_cast<unsigned char>((i*17+23)%251);
  for(int i=0;i<256;++i)memory[TABLE+i]=expected[TABLE+i]=static_cast<unsigned char>((i*37+7)%256);
@@ -151,6 +170,7 @@ void reset(){
  SpriteRasterDestinationRowCount=-33;SpriteRasterSourceRowCount=-34;
  SpriteRasterXTable=stale_x;SpriteRasterYTable=stale_y;
  SpriteRasterDestinationPitch=-41;SpriteRasterSourcePitch=-42;
+ SpriteRasterSourceRowTail=-51;SpriteRasterDestinationRowTail=-52;
  SpriteRasterRemapTable.single=memory+ALTSOURCE;
  for(int i=0;i<SpriteScalingTableCount;++i)SpriteScalingSteps[i]=SpriteClippedXSteps[i]=SpriteClippedYSteps[i]=0;
  events.clear();locks=1;unlocks=clip_calls=fail_axis=0;callback={};check_original=true;
@@ -161,9 +181,13 @@ void stale_cells(){
  require(SpriteRasterDestinationRowCount==-33&&SpriteRasterSourceRowCount==-34);
  require(SpriteRasterXTable==stale_x&&SpriteRasterYTable==stale_y);
  require(SpriteRasterRemapTable.single==memory+ALTSOURCE);
+ require(SpriteRasterSourceRowTail==-51&&SpriteRasterDestinationRowTail==-52);
 }
 void check_pitches(int source,int destination){
  require(SpriteRasterSourcePitch==source&&SpriteRasterDestinationPitch==destination);
+}
+void check_tails(int source,int destination){
+ require(SpriteRasterSourceRowTail==source&&SpriteRasterDestinationRowTail==destination);
 }
 void put(int index,int value){memory[index]=expected[index]=static_cast<unsigned char>(value);}
 void pixels(){for(int i=0;i<131072;++i)if(memory[i]!=expected[i]){fprintf(stderr,"pixel %d actual%d expected%d\n",i,memory[i],expected[i]);require(false);}}
@@ -207,6 +231,7 @@ int actual_clipper_integration(){
  require(SpriteRasterXTable==SpriteClippedXSteps);
  require(SpriteRasterYTable==SpriteClippedYSteps+3);check_pitches(12,64);
  require(SpriteRasterRemapTable.single==memory+ALTSOURCE);
+ check_tails(12-4,64-3);
 
  reset();SpriteScaleNumerator=3;SpriteScaleDenominator=2;
  sprite.iSpriteWidth_=sprite.iSpriteHeight_=2;expected_original={0,0,3,3};
@@ -220,6 +245,7 @@ int actual_clipper_integration(){
  require(SpriteRasterXTable==SpriteClippedXSteps);
  require(SpriteRasterYTable==SpriteClippedYSteps+2);check_pitches(12,64);
  require(SpriteRasterRemapTable.single==memory+TABLE);
+ check_tails(12-2,64-3);
  return 0;
 }
 void setup_expand(int count,int selector){
@@ -249,9 +275,34 @@ int actual_multi_table_runtime(){
  done(result,"LFIJXYU",1);
  require(SpriteRasterRemapTable.multi==multi);
  require(SpriteRasterSourceRowCount==0);
+ check_tails(12-axes[0].source_count,64-axes[0].destination_count);
+ return 0;
+}
+int shrink_cursor_runtime(int which){
+ reset();
+ SpriteScaleNumerator=2;SpriteScaleDenominator=3;
+ SpriteCachedScaleNumerator=2;SpriteCachedScaleDenominator=3;
+ SpriteScalingRatio=static_cast<float>(2.0/3.0);
+ sprite.iSpriteWidth_=6;sprite.iSpriteHeight_=6;sprite.iSpriteWidth2_=8;
+ expected_original=expected_clipped={0,0,4,4};buffer.rect1_=expected_original;buffer.stride_=16;
+ axes[0]={0,0,3,2,{1,2}};
+ axes[1]={0,0,3,2,{2,1}};
+ if(which==1){put(0,3);put(1,4);put(13,7);put(14,8);put(16,0);put(17,0);
+  for(int i=0;i<2;++i){int at=OUTPUT+16+i;expected[at]=memory[TABLE+memory[at]];}}
+ else {put(0,0);put(1,0);put(13,0);put(14,0);put(16,47);put(17,48);
+  expected[OUTPUT+16]=memory[TABLE+memory[OUTPUT+16]];
+  expected[OUTPUT+17]=memory[TABLE+memory[OUTPUT+17]];}
+ const int result=which==1 ? sprite.draw_dest_unk1(&buffer,0,0,memory+TABLE)
+                           : sprite.draw_dest_source(&buffer,0,0,0,memory+TABLE);
+ require(result==0&&events=="LIJXYU");
+ require(SpriteRasterSourceRowTail==5&&SpriteRasterDestinationRowTail==14);
+ require(memory[OUTPUT+16]==expected[OUTPUT+16]&&memory[OUTPUT+17]==expected[OUTPUT+17]);
+ pixels();
  return 0;
 }
 int main(){
+ if(std::getenv("SPRITE_SHRINK_CURSOR_RUNTIME"))
+  return shrink_cursor_runtime(std::atoi(std::getenv("SPRITE_SHRINK_CURSOR_RUNTIME")));
  if(std::getenv("SPRITE_MULTI_RUNTIME")) return actual_multi_table_runtime();
  if(std::getenv("SPRITE_REAL_CLIPPERS")) return actual_clipper_integration();
  // Unit widths cover every unrolled tail; unequal display/source/pitch values.
@@ -267,7 +318,8 @@ int main(){
   require(SpriteRasterDestinationColumnCount==c.right-c.left && SpriteRasterDestinationRowCount==0);
   require(SpriteRasterSourceColumnCount==-32 && SpriteRasterSourceRowCount==-34);
   require(SpriteRasterXTable==stale_x && SpriteRasterYTable==stale_y);
-  require(SpriteRasterRemapTable.single==memory+ALTSOURCE);check_pitches(12,64);}
+  require(SpriteRasterRemapTable.single==memory+ALTSOURCE);check_pitches(12,64);
+  check_tails(12-(c.right-c.left),64-(c.right-c.left));}
  // Shrink source-width6 differs from pitch12; X high byte matters, Y doesn't.
  for(int high=0;high<2;++high)for(int key : {0,9,0x109}){
   reset();SpriteScaleNumerator=2;SpriteScaleDenominator=3;sprite.iSpriteWidth_=6;sprite.iSpriteHeight_=6;
@@ -278,21 +330,24 @@ int main(){
   require(SpriteRasterXTable==axes[0].steps && SpriteRasterYTable==axes[1].steps+2);
   require(SpriteRasterDestinationColumnCount==2 && SpriteRasterSourceColumnCount==axes[0].source_count);
   require(SpriteRasterDestinationRowCount==0 && SpriteRasterSourceRowCount==3);
-  require(SpriteRasterRemapTable.single==memory+ALTSOURCE);check_pitches(12,64);}
+  require(SpriteRasterRemapTable.single==memory+ALTSOURCE);check_pitches(12,64);
+  check_tails(12-axes[0].source_count,64-axes[0].destination_count);}
  for(int selector : {0,1,2,3,4,5,255,257,258,259,260,261})for(int count=1;count<=7;++count){
   reset();setup_expand(count,selector);expand(0,OUTPUT+3*64+2,12,64,TABLE,9);done(paint(),"LFIJXYU");
   require(SpriteRasterXTable==axes[0].steps && SpriteRasterYTable==axes[1].steps+axes[1].source_count);
   require(SpriteRasterDestinationColumnCount==axes[0].destination_count);
   require(SpriteRasterSourceColumnCount==count);
   require(SpriteRasterDestinationRowCount==4 && SpriteRasterSourceRowCount==0);
-  require(SpriteRasterRemapTable.single==memory+TABLE);check_pitches(12,64);}
+  require(SpriteRasterRemapTable.single==memory+TABLE);check_pitches(12,64);
+  check_tails(12-axes[0].source_count,64-axes[0].destination_count);}
  // Aliases are not snapshots. Unit table writes can change later table reads.
  for(int mode=0;mode<3;++mode){reset();sprite.iSpriteWidth_=4;sprite.iSpriteHeight_=1;expected_original={2,3,6,4};
   int table=TABLE,source=SOURCE,dst=OUTPUT+3*64+2;
   if(mode==0){table=dst;put(SOURCE,1);put(SOURCE+1,0);put(dst+1,72);}
   if(mode==1){source=dst-1;sprite.pcBits_=memory+source;put(source,47);}
   if(mode==2){table=SOURCE;put(SOURCE,2);put(SOURCE+1,1);put(SOURCE+2,91);}
-  unit(source,dst,4,1,12,64,table,9);done(paint(9,2,3,table),"LIU");}
+  unit(source,dst,4,1,12,64,table,9);done(paint(9,2,3,table),"LIU");
+  check_tails(12-4,64-4);}
  for(int alias=0;alias<3;++alias){
   reset();SpriteScaleNumerator=2;SpriteScaleDenominator=3;sprite.iSpriteWidth_=6;sprite.iSpriteHeight_=6;
   expected_original={2,3,6,7};buffer.rect1_={2,3,4,5};
@@ -301,7 +356,8 @@ int main(){
   if(alias==0){source=dst-1;sprite.pcBits_=memory+source;put(source,47);}
   if(alias==1){table=dst;put(dst,2);put(dst+1,71);}
   if(alias==2){table=SOURCE;put(SOURCE+1,2);put(SOURCE+2,91);}
-  shrink(source,dst,12,64,table,9);done(paint(9,2,3,table),"LFIJXYU");}
+  shrink(source,dst,12,64,table,9);done(paint(9,2,3,table),"LFIJXYU");
+  check_tails(12-axes[0].source_count,64-axes[0].destination_count);}
  for(int repeats : {1,2,3,4,5})for(int alias=0;alias<3;++alias){
   reset();setup_expand(3,repeats);int table=TABLE,source=SOURCE,dst=OUTPUT+3*64+2;
   // Force non-key values in every block, with mapping changing later input.
@@ -309,13 +365,15 @@ int main(){
   if(alias==0){source=dst-1;sprite.pcBits_=memory+source;put(source,47);}
   if(alias==1){table=dst;put(dst,2);put(dst+1,71);put(dst+2,99);}
   if(alias==2){table=SOURCE;put(SOURCE+1,27);put(SOURCE+2,91);}
-  expand(source,dst,12,64,table,9);done(paint(9,2,3,table),"LFIJXYU");}
+  expand(source,dst,12,64,table,9);done(paint(9,2,3,table),"LFIJXYU");
+  check_tails(12-axes[0].source_count,64-axes[0].destination_count);}
  // Real clipped expansion: partial runs with both nonzero source and
  // destination skips, not a coordinate-normalized worker-only example.
  reset();SpriteScaleNumerator=2;sprite.iSpriteWidth_=4;sprite.iSpriteHeight_=3;
  expected_original={2,3,10,9};buffer.rect1_={5,6,9,9};
  axes[0]={1,3,3,4,{1,2,1}};axes[1]={1,3,2,3,{1,2}};
  expand(13,OUTPUT+6*64+5,12,64,TABLE,9);done(paint(),"LFIJXYU");
+ check_tails(12-axes[0].source_count,64-axes[0].destination_count);
  // Guard/return matrix: filename is always nonnull yet no file API exists.
  reset();sprite.pcBits_=nullptr;done(paint(),"",3);stale_cells();
  reset();require(sprite.draw(nullptr,9,2,3,memory+TABLE)==3&&events.empty());pixels();stale_cells();
@@ -347,21 +405,24 @@ int main(){
  // changes are observed, then clip changes only the live pointer/lockedbits.
  reset();expected_original={2,3,7,6};callback=[&](char c){if(c=='L')buffer.stride_=80;
   if(c=='I'){sprite.pcBits_=memory+ALTSOURCE;sprite.iSpriteWidth2_=33;buffer.stride_=96;buffer.locked_bits_=memory+ALTOUTPUT;}};
- unit(ALTSOURCE,ALTOUTPUT+3*80+2,5,3,12,80,TABLE,9);done(paint(),"LIU");check_pitches(12,80);
+ unit(ALTSOURCE,ALTOUTPUT+3*80+2,5,3,12,80,TABLE,9);done(paint(),"LIU");check_pitches(12,80);check_tails(7,75);
  // Scaled first-pixel base uses old pitch64, traversal uses fresh80. Source
  // stays preclip, locked pixel owner is sampled after first but before second.
  reset();setup_expand(3,2);callback=[&](char c){if(c=='I'){sprite.pcBits_=memory+ALTSOURCE;buffer.stride_=80;buffer.locked_bits_=memory+ALTOUTPUT;}
   if(c=='J'){sprite.pcBits_=memory+TABLE;buffer.stride_=96;buffer.locked_bits_=memory+OUTPUT;}};
  expand(0,ALTOUTPUT+3*64+2,12,80,TABLE,9);done(paint(),"LFIJXYU");check_pitches(12,80);
+ check_tails(12-axes[0].source_count,80-axes[0].destination_count);
  // The first intersection is discarded; a changed clip must reach both
  // helpers through the second call. Snapshotting its first result is wrong.
  reset();SpriteScaleNumerator=2;SpriteScaleDenominator=3;sprite.iSpriteWidth_=sprite.iSpriteHeight_=6;
  expected_original={2,3,6,7};buffer.rect1_=expected_original;axes[0]={2,1,3,2,{1,2}};axes[1]={2,1,3,2,{1,2}};
  callback=[&](char c){if(c=='I'){buffer.rect1_={3,4,5,6};expected_clipped=buffer.rect1_;}};
  shrink(26,OUTPUT+4*64+3,12,64,TABLE,9);done(paint(),"LFIJXYU");check_pitches(12,64);
+ check_tails(12-axes[0].source_count,64-axes[0].destination_count);
  // Fill may publish scale operands: cache stores reload them afterward.
  reset();setup_expand(3,2);callback=[&](char c){if(c=='F'){SpriteScaleNumerator=7;SpriteScaleDenominator=4;}};
  expand(0,OUTPUT+3*64+2,12,64,TABLE,9);done(paint(),"LFIJXYU");
+ check_tails(12-axes[0].source_count,64-axes[0].destination_count);
  require(SpriteCachedScaleNumerator==7&&SpriteCachedScaleDenominator==4&&SpriteScalingRatio==2);check_pitches(12,64);
  // Fractional offset addition rounds the whole signed coordinate toward zero.
  reset();SpriteScaleNumerator=3;SpriteScaleDenominator=2;sprite.iSpriteWidth_=sprite.iSpriteHeight_=2;
@@ -414,6 +475,25 @@ def test_actual_multi_table_union_view_and_pixels(tmp_path):
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+@pytest.mark.parametrize("which", [1, 2], ids=["draw_dest_unk1", "draw_dest_source"])
+def test_shrink_row_origin_consumes_x_span_and_y_skip(tmp_path, which):
+    result = run(tmp_path, actual(), {"SPRITE_SHRINK_CURSOR_RUNTIME": str(which)})
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("body,which", [("UNK1BODY", 1), ("SOURCEBODY", 2)])
+def test_shrink_row_origin_rejects_dropped_x_span(tmp_path, body, which):
+    parts = actual()
+    branch_start = parts[body].index("if (SpriteScaleNumerator < SpriteScaleDenominator)")
+    branch_end = parts[body].index("    } else {", branch_start)
+    shrink = parts[body][branch_start:branch_end]
+    good = "source_row += static_cast<int>(source_advance +"
+    assert shrink.count(good) == 1
+    parts[body] = parts[body][:branch_start] + shrink.replace(good, "source_row += static_cast<int>(0u +", 1) + parts[body][branch_end:]
+    result = run(tmp_path, parts, {"SPRITE_SHRINK_CURSOR_RUNTIME": str(which)})
+    assert result.returncode == 99 and "assertion line" in result.stderr, result.stdout + result.stderr
+
+
 DAMAGE = {
     "guard_return": ("return 3;", "return 0;"),
     "lock_polarity": ("destination->get_data() == 0", "destination->get_data() != 0"),
@@ -426,7 +506,7 @@ DAMAGE = {
     "unit_live_pitch": ("clipped.top * destination_pitch", "clipped.top * static_cast<int>(destination->stride_)"),
     "shrink_zero_skip": ("if (*source != key)", "if (*source != key && *source != 0)"),
     "shrink_wrong_lut_operand": ("table[*source]", "table[destination_row[column]]"),
-    "shrink_x_lowbyte": ("source += columns[column];", "source += static_cast<unsigned char>(columns[column]);"),
+    "shrink_x_lowbyte": ("const int source_step = columns[column];", "const int source_step = static_cast<unsigned char>(columns[column]);"),
     "shrink_y_fullint": ("const unsigned char row_selector =\n                static_cast<unsigned char>(*SpriteRasterYTable++);",
                          "const int row_selector = *SpriteRasterYTable++;"),
     "expansion_zero_written": ("pixel_value != key && pixel_value != 0", "pixel_value != key"),
@@ -436,7 +516,8 @@ DAMAGE = {
                              "const int selector = *SpriteRasterYTable++;"),
     "selector_default_three": ("selector == 3 ? 3 : 4", "selector == 3 ? 3 : 3"),
     "selector_five_rows": ("selector == 3 ? 3 : 4", "selector == 3 ? 3 : selector == 5 ? 5 : 4"),
-    "row_origin": ("destination_row += repeats * destination_pitch;", "destination_row += destination_pitch;"),
+    "row_origin": ("destination_row += static_cast<int>(\n                    static_cast<uint32_t>(output_column) +\n                    (static_cast<uint32_t>(repeats) - 1u) *\n                        static_cast<uint32_t>(destination_pitch) +\n                    static_cast<uint32_t>(SpriteRasterDestinationRowTail));",
+                   "destination_row += destination_pitch;"),
     "minimum_width_equal": ("original.right - original.left < SpriteMinimumScaledWidth", "original.right - original.left <= SpriteMinimumScaledWidth"),
     "minimum_height_equal": ("original.bottom - original.top < SpriteMinimumScaledHeight", "original.bottom - original.top <= SpriteMinimumScaledHeight"),
     "ratio_cap": ("SpriteScalingRatio > 4.0", "SpriteScalingRatio > 5.0"),
@@ -497,4 +578,7 @@ def test_source_remap_rejects_compiling_damage(tmp_path, damage):
         source = source.replace(good, bad)
     parts["BODY"] = source
     result = run(tmp_path, parts)
-    assert result.returncode == 99 and "assertion line" in result.stderr, result.stdout + result.stderr
+    if damage == "shrink_x_lowbyte" and result.returncode == 1:
+        assert "AddressSanitizer" in result.stderr, result.stdout + result.stderr
+    else:
+        assert result.returncode == 99 and "assertion line" in result.stderr, result.stdout + result.stderr

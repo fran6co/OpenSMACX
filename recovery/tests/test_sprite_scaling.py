@@ -86,6 +86,32 @@ def test_original_scaling_and_table_evidence():
     assert decode(0x5E52EB,0x5E52F1) == [("mov", "dword ptr [0x9b4758], edx")]
     assert decode(0x5E3F80,0x5E3F86) == [("mov", "dword ptr [0x9b53e0], edx")]
     assert decode(0x5E503C,0x5E5041) == [("mov", "dword ptr [0x9b606c], eax")]
+    # Row-tail operands are path-specific: unit subtracts destination width
+    # from both pitches; scaled walkers subtract full source width on source.
+    assert decode(0x5E40A1,0x5E40B3) == [
+        ("mov","ecx, dword ptr [0x9b6070]"),
+        ("sub","ecx, dword ptr [0x9b3ad4]"),
+        ("mov","dword ptr [0x9b3abc], ecx")]
+    assert decode(0x5E40B3,0x5E40C5) == [
+        ("mov","edx, dword ptr [0x9b3ac8]"),
+        ("sub","edx, dword ptr [0x9b3ad4]"),
+        ("mov","dword ptr [0x9b3acc], edx")]
+    assert decode(0x5E4363,0x5E4373) == [
+        ("mov","eax, dword ptr [0x9b3ac8]"),
+        ("sub","eax, dword ptr [0x9b3ad4]"),
+        ("mov","dword ptr [0x9b3acc], eax")]
+    assert decode(0x5E4373,0x5E4385) == [
+        ("mov","ecx, dword ptr [0x9b6070]"),
+        ("sub","ecx, dword ptr [0x9b475c]"),
+        ("mov","dword ptr [0x9b3abc], ecx")]
+    assert decode(0x5E4572,0x5E4584) == [
+        ("mov","ecx, dword ptr [0x9b3ac8]"),
+        ("sub","ecx, dword ptr [0x9b3ad4]"),
+        ("mov","dword ptr [0x9b3acc], ecx")]
+    assert decode(0x5E45A9,0x5E45BB) == [
+        ("mov","edx, dword ptr [0x9b6070]"),
+        ("sub","edx, dword ptr [0x9b475c]"),
+        ("mov","dword ptr [0x9b3abc], edx")]
     for lo, hi in [(0x9B3AD8,0x9B4758),(0x9B4760,0x9B53E0),(0x9B53EC,0x9B606C)]:
         assert hi-lo == 800*4 and image.read_initial(Span(lo,hi)) == bytes(800*4)
     assert image.read_initial(Span(0x696D18,0x696D28)) == bytes.fromhex("0100000001000000ffffffffffffffff")
