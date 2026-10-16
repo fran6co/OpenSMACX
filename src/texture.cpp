@@ -1760,9 +1760,9 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
     TextureRasterBufferStride = a1->stride_;
     TextureRasterTextureWidth = static_cast<int>(iWidth_);
 
-    // Preserve the native derived-pointer check after get_data and the fixed
-    // argument slots have been published; it is not a null-buffer guard.
-    if (reinterpret_cast<char *>(a1) + 0x20 != 0) {
+    // Preserve the native address-of-clip-member check after get_data and the
+    // fixed argument slots have been published; it is not a null-buffer guard.
+    if (&a1->rect1_ != nullptr) {
         for (int light_index = 0; light_index < a4; ++light_index) {
             int value = a3[light_index];
             if (TextureLightCeiling <= value) value = TextureLightCeiling;
@@ -2021,9 +2021,9 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
     TextureRasterBufferStride = static_cast<int>(buffer->stride_);
     TextureRasterTextureWidth = static_cast<int>(iWidth_);
 
-    // Preserve the native derived-pointer check: it follows get_data and is
-    // therefore not a null-buffer guard.
-    if (reinterpret_cast<char *>(buffer) + 0x20 != 0) {
+    // Preserve the native address-of-clip-member check: it follows get_data
+    // and is therefore not a null-buffer guard.
+    if (&buffer->rect1_ != nullptr) {
         for (int light_index = 0; light_index < count; ++light_index) {
             int value = zvals[light_index];
             if (TextureLightCeiling <= value) value = TextureLightCeiling;
