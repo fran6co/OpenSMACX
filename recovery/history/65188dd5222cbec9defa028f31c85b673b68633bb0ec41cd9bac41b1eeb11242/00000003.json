@@ -1,0 +1,24 @@
+{
+  "event_id": "d10c90a738e8b579ae56ea576efd2dd89128dafc25ebde127e3862a89e805e91",
+  "payload": {
+    "affects": [
+      "entity-012d20f643a6fcf2299210de5c483abe9c5fff1e7efcbefb1d2700604d876f08",
+      "entity-0fe8c098faa79b5c6bedf4bc49b9f58d0d8325227fe54a0dfc9d9849604c2869",
+      "entity-588d3a36150a33ce1bcca5bf105c3f374b43e0be814e3ba5250294af9ef7a43e",
+      "entity-7f7751396552c8718725490bcab344df2755eb7052b678206f8db433fb555e9a",
+      "entity-f35739e0ea9658650bfe3678ebcfa36a312781b828ad664e014324ff804d1e20"
+    ],
+    "author": "coordinator",
+    "discovery_id": "real-remove-all-inline-boundary-oct16",
+    "evidence": [
+      "Pinned402A10 directly calls402970; candidate scalar deleting body instead calls private clear_list_entries. Original Dialog retains remove_all call and three indirect cleanup calls, while standalone dtors have three/six indirect calls. A direct call does not rule out a visible inline definition or ordinary out-of-line emission."
+    ],
+    "hypothesis": "The private clear_list_entries stand-in changes an original direct call target. Test sharing the real remove_all inline definition instead, retaining its callable identity and letting ordinary compiler decisions choose expansion.",
+    "kind": "discovery"
+  },
+  "previous_event": "5a41831968af2f4ae009c4078a7636625d5675aefd3fe4bf99340ae99811f803",
+  "request_id": "real-remove-all-inline-boundary-oct16",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:stringlist-teardown-visibility-oct16"
+}

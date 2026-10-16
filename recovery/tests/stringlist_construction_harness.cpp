@@ -1,4 +1,4 @@
-// Pytest injects actual node/list declarations, construction, add and clearing.
+// Pytest injects actual node/list declarations, construction and add bodies.
 // Allocators and fatal reporting are doubles; this is not a full-game oracle.
 #include <assert.h>
 #include <stddef.h>
@@ -54,6 +54,7 @@ int MessageBoxA(void *window, const char *text, const char *caption, unsigned fl
 void test_exit(int code) { assert(code == 3 && notices == 1); throw code; }
 
 // LIVE_ALLOCATION_BASE
+// LIVE_PAYLOAD_BASE
 // LIVE_OWNER_PUBLICATION
 #define free release
 // LIVE_PAYLOAD
@@ -68,11 +69,8 @@ const StringStructPayload *StringStructEntry::string_payload() const {
 #undef free
 // LIVE_LIST_BASE
 // LIVE_CONSTRUCTOR
-// LIVE_CLEANUP_HELPER
 int StringStruct::on_insert(void *) { return 0; }
 void StringStruct::on_remove(void *) {}
-// LIVE_BASE_DESTRUCTOR
-// LIVE_CLEAR
 #define exit test_exit
 // LIVE_NODE_ALLOCATION
 // LIVE_ADD

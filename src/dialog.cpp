@@ -981,7 +981,7 @@ int Dialog::init() {
     }
 
     // The same inlined teardown the image repeats between its decisions -
-    // see clear_list_entries in stringstruct.cpp for the shared shape.
+    // see StringStruct::remove_all in stringstruct.h for the shared shape.
     if (list->head_ != 0) {
         int index = 0;
         if (0 < list->entry_count_) {
@@ -1077,7 +1077,7 @@ Purpose: Dialog's one-int init: reset the live dialog through close(), store
          Dialog's own Heap as its allocator (or clear the allocator when no
          size is given). The entry-list teardown between the decisions is the
          same walk StringStruct::remove_all performs, inlined the way the
-         image inlines it (see clear_list_entries in stringstruct.cpp and the
+         image inlines it (see StringStruct::remove_all in stringstruct.h and the
          sibling Dialog::init overloads above).
 
 // ORIGINAL: 0x006095F0 ?init@Dialog@@QAEHH@Z 0x006095F0-0x00609730 FILE

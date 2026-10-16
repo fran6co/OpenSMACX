@@ -1881,7 +1881,7 @@ Purpose: Clear the hot-seat chat log: walk the eight 0x30-byte records at
          slot and each node's own scalar-deleting slot - then clear the
          record's head, count and trailing words.
 
-// ORIGINAL: 0x00440F80 ?clear_hotseat_chat@@YAXXZ 0x00440F80-0x00441033 FILE
+// ORIGINAL: 0x00440F80 ?clear_hotseat_chat@@YAXXZ 0x00440F80-0x00441033 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["diplowin.cpp owns the genuine DiplomacyTranscriptLists[8][8] StringList array whose first head is 0x00737CE0 (+8); game.cpp is its direct caller.", "StringStruct::remove_all performs the same count-reloaded on_remove/payload-delete/entry-delete traversal. For a nonempty head it also resets head/count/position; the source body then preserves the original unconditional position and allocator clears while leaving current_ untouched."], "reason": "Move this global cleanup beside its actual 64-list owner and use StringList::remove_all rather than a hand-indexed vtable thunk; keep the empty-head conditional and all per-record resets."}
 // TRIED: member-fn-pointer+union thunk for the two vtable-adjusted "release" calls; raw pointer cast over fixed globals for record base/bound (address itself does read-modify-write via `rec += 0xc`). First divergence is #11 lea vs je.
 // size      179 bytes

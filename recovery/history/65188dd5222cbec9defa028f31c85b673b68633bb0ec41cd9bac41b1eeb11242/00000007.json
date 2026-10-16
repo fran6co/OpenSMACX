@@ -1,0 +1,18 @@
+{
+  "event_id": "086e4dfa3422fc4bd99da92ff537a2df5a0b80489997e8ade1d2140bb5cf55ad",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "real-remove-all-inline-boundary-oct16",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/stringstruct.h now owns the real inline StringStruct::remove_all walk and both destructor stages; src/stringstruct.cpp and src/stringlist.cpp preserve canonical identity/spans/claims and body-path facts. The invented private entry-walk helper is removed without changing its algorithm.",
+      "The original scalar deleting entry calls the real remove_all API; ordinary candidate emission now retains that API target. Incorporation resolves the source-ownership discovery, not original inlining, canonical-host emission, EH equivalence, linked preservation, or historical restoration obligations. No compiler flag, forced-export or noinline change is authorized by this decision."
+    ]
+  },
+  "previous_event": "572814680b72f3fab8b78aead74f03b0fd7222c10b19f37eace64752f2364e92",
+  "request_id": "incorporate-real-inline-list-walk-oct16",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:stringlist-teardown-visibility-oct16"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "0df5616699b0fcdfe0952873da4b4c626253554e43f1094445b221d6a6dc0283",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/stringlist.cpp",
+      "src/stringstruct.cpp",
+      "src/stringstruct.h"
+    ],
+    "evidence": [
+      "Coordinator authorizes second staged experiment, replacing first-stage procedural requirement to keep remove_all defined out of line: move its unchanged entry walk into the actual public inline remove_all method, delete private stand-in, and make both destructor bodies call remove_all then reset cursor. Retain existing original identity/spans/claims using native mapping writer. No forced export/noinline/flag changes; natural emission and direct target equality must be verified. Allocation-base destructor remains out of line. This is permission to investigate, not a resolution or acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d10c90a738e8b579ae56ea576efd2dd89128dafc25ebde127e3862a89e805e91",
+  "request_id": "authorize-real-remove-all-inline-variant-oct16",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:stringlist-teardown-visibility-oct16"
+}

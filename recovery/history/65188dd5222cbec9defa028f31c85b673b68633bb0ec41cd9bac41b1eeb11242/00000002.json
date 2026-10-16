@@ -1,0 +1,22 @@
+{
+  "event_id": "5a41831968af2f4ae009c4078a7636625d5675aefd3fe4bf99340ae99811f803",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_container_lifecycle_actual_source.py",
+      "recovery/tests/test_messagewin_newtech_startup_arrays.py",
+      "recovery/tests/test_spritelist_base_lifetime.py",
+      "recovery/tests/test_startup_lifecycle_controls.py"
+    ],
+    "evidence": [
+      "Read-only test audit found these actual-source fixtures extract StringStruct/StringList destructors from cpp or require declaration-only headers. Authorize updates to obtain real inline definitions and preserve existing lifetime assertions and mutation controls. Do not waive generated cleanup verification or alter product caller scope."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "932418865302b4f57b7e7110e32ce09d48eb946033e52a3f255a5276dc3f61b8",
+  "request_id": "dependent-inline-lifetime-tests-oct16",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:stringlist-teardown-visibility-oct16"
+}

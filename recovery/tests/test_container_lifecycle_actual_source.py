@@ -46,6 +46,7 @@ def _fixture(cleanup: str, string_dtor: str, radio_close: str,
 #include <cstddef>
 #include <cstdlib>
 typedef unsigned int uint32_t;
+typedef void (*WinNotificationCallback)(int);
 static int frees;
 static void *last_freed;
 static void tracked_free(void *p) { ++frees; last_freed = p; std::free(p); }
@@ -68,12 +69,14 @@ static int close_order[2], close_count;
 static int default_one, default_two;
 static int *RadioButtonDefault1 = &default_one;
 static int *RadioButtonDefault2 = &default_two;
+static void radio_callback(int) {}
 struct Dialog { virtual ~Dialog() {} void close() { close_order[close_count++] = 1; } };
 struct GraphicWin { virtual ~GraphicWin() {} void close() { close_order[close_count++] = 2; } };
 struct RadioButton : public virtual GraphicWin, public virtual Dialog {
-  uint32_t field_C_; int *double_click_callback_;
+  WinNotificationCallback selection_callback_; int *double_click_callback_;
   int *checked_sprite_; int *unchecked_sprite_;
-  RadioButton() : field_C_(7), double_click_callback_(reinterpret_cast<int *>(1)),
+  RadioButton() : selection_callback_(&radio_callback),
+    double_click_callback_(reinterpret_cast<int *>(1)),
     checked_sprite_(0), unchecked_sprite_(0) {}
   void close();
   virtual ~RadioButton() """ + radio_dtor + r"""
@@ -111,7 +114,7 @@ int main() {
   {
     RadioButton radio;
     radio.close();
-    if (radio.field_C_ != 0 || radio.double_click_callback_ != 0 ||
+    if (radio.selection_callback_ != 0 || radio.double_click_callback_ != 0 ||
         radio.checked_sprite_ != RadioButtonDefault2 ||
         radio.unchecked_sprite_ != RadioButtonDefault1) return 15;
     if (close_count != 2 || close_order[0] != 1 || close_order[1] != 2) return 16;
@@ -167,7 +170,7 @@ def test_transported_lifecycle_identities_and_distinct_radio_deleting_entry():
 
 def test_actual_cleanup_and_stringlist_destructor_bodies_reject_mutants(tmp_path: Path, compiler: str):
     cleanup = _body("src/net_class.cpp", "void cleanup_failed_net_construction(void *memory)")
-    string_dtor = _body("src/stringlist.cpp", "StringList::~StringList()")
+    string_dtor = _body("src/stringstruct.h", "~StringList()")
     close = _body("src/jackal/radiobutton.cpp", "void RadioButton::close()")
     radio_dtor = _body("src/jackal/radiobutton.h", "virtual ~RadioButton()")
     good = _run(tmp_path / "good", compiler, _fixture(cleanup, string_dtor, close, radio_dtor))

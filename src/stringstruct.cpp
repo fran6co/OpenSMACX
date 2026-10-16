@@ -155,43 +155,6 @@ int StringStruct::add(int id) {
     return 0;
 }
 
-namespace {
-// Share the original entry walk without making the public remove_all symbol
-// inline-only. Destructors select their own stage's hooks before this walk;
-// each still clears its position even when the empty-head guard returns here.
-inline void clear_list_entries(StringStruct *self) {
-    if (!self->head_) {
-        return;
-    }
-    // The original initializes its index before testing the entry count.
-    int index = 0;
-    if (self->entry_count_ > 0) {
-        do {
-            StringStructEntry *const entry = self->head_;
-            self->current_ = entry->next;
-            ListPayloadBase *const payload = entry->payload;
-            self->on_remove(payload);
-            delete payload;
-            self->head_->payload = nullptr;
-            delete self->head_;
-            ++index;
-            self->head_ = self->current_;
-            // The loop bound is re-read every iteration, so a visitor that
-            // changes the count changes how far the walk goes.
-        } while (index < self->entry_count_);
-    }
-    self->head_ = nullptr;
-    self->current_position_ = 0;
-    self->entry_count_ = 0;
-}
-
-inline void finish_list_teardown(StringStruct *self) {
-    clear_list_entries(self);
-    self->current_position_ = 0;
-}
-}
-
-
 /*
 Purpose: Return the current string-list item ID.
 // ORIGINAL: 0x00401640 ?current_id@StringStruct@@QAEHXZ 0x00401640-0x00401651 BYTE_EXACT
@@ -297,8 +260,9 @@ extern "C" int __cdecl string_struct_seek_id_source(StringStruct *self, int id) 
 /*
 Purpose: Release every entry in the list, notifying the owner about each
          payload before destroying the payload and its entry.
-// ORIGINAL: 0x00402970 StringStruct::remove_all 0x00402970-0x004029E3 BYTE_EXACT
+// ORIGINAL: 0x00402970 StringStruct::remove_all 0x00402970-0x004029E3 FILE BYTE_EXACT
 // symbol    ?remove_all@StringStruct@@QAEXXZ
+// body      src/stringstruct.h
 // size      115 bytes
 // prototype 
 // callers   79   call targets   0
@@ -328,14 +292,6 @@ Purpose: Release every entry in the list, notifying the owner about each
 //            rebuilding reports the identical 2 against 0.
 Status: Complete
 */
-// The definition is private to this translation unit, while BasePop and
-// Datalink call the public declaration. It must provide an out-of-line symbol;
-// an inline definition here is not available to those translation units.
-void StringStruct::remove_all() {
-    clear_list_entries(this);
-}
-
-
 // StringStructVtable / StringStructVirtualBaseVtable (0x006693A4/0x006693A0)
 // are gone with the hand close chain - the compiler emits both tables from
 // the declarations, and nothing names them any more.
@@ -344,8 +300,9 @@ void StringStruct::remove_all() {
 Purpose: Destroy the StringStruct subobject, releasing entries under the base
          hooks. The original receiver is its allocation-tracking virtual base;
          the compiler, not a handwritten close wrapper, owns that adjustment.
-// ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9 BYTE_EXACT
+// ORIGINAL: 0x00401060 ?close@StringStruct@@QAEXXZ 0x00401060-0x004010F9 FILE BYTE_EXACT
 // symbol    ??1StringStruct@@UAE@XZ
+// body      src/stringstruct.h
 // size      153 bytes
 // prototype void (__thiscall ?close@StringStruct@@QAEXXZ)(StringStruct* this)
 // callers   25   call targets   0
@@ -394,10 +351,6 @@ Status: Genuine destructor; original inlining and strict matching remain unprove
 // Original 4066C0's EH cleanup adjusts its saved virtual-base receiver by -0xC
 // and jumps to 401060. The emitted base destructor makes the remaining -0x1C
 // adjustment and stages the two base tables itself, as in the original body.
-StringStruct::~StringStruct() {
-    finish_list_teardown(this);
-}
-
 // StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable
 // (0x006698C4/0x006698C0), close_with_tables, and
 // string_struct_derived_close_redirect are gone. The redirect's own marker

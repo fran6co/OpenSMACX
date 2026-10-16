@@ -113,15 +113,14 @@ def installed_bodies(root):
     assert row.path == root / "src/spritebox.cpp"
     assert row.image_spans == ((0x611730, 0x6117C3),)
 
-    string_body = (root / "src/stringstruct.cpp").read_text()
+    string_body = ((root / "src/stringstruct.h").read_text() + "\n"
+                   + string_source)
     sprite_body = sprite_source
     required = (
-        (string_body, "int StringStruct::on_insert(void *)"),
-        (string_body, "void StringStruct::on_remove(void *)"),
-        (string_body, "inline void clear_list_entries(StringStruct *self)"),
-        (string_body, "inline void finish_list_teardown(StringStruct *self)"),
-        (string_body, "void StringStruct::remove_all()"),
-        (string_body, "StringStruct::~StringStruct()"),
+        ((root / "src/stringstruct.cpp").read_text(), "int StringStruct::on_insert(void *)"),
+        ((root / "src/stringstruct.cpp").read_text(), "void StringStruct::on_remove(void *)"),
+        (string_body, "void remove_all() {"),
+        (string_body, "~StringStruct()"),
         (sprite_body, "int SpriteList::on_insert(void *raw_payload)"),
         (sprite_body, "void SpriteList::on_remove(void *raw_payload)"),
         (sprite_body, "void SpriteList::close()"),
@@ -130,11 +129,22 @@ def installed_bodies(root):
         (sprite_body, "void SpriteBox::close()"),
         (sprite_body, "SpriteBox::~SpriteBox()"),
     )
-    bodies = "\n\n".join(extract_definition(src, sig) for src, sig in required)
+    extracted = []
+    for src, sig in required:
+        body = extract_definition(src, sig)
+        if sig == "void remove_all() {":
+            body = body.replace("void remove_all()", "void StringStruct::remove_all()", 1)
+        elif sig == "~StringStruct()":
+            body = body.replace("~StringStruct()", "StringStruct::~StringStruct()", 1)
+        extracted.append(body)
+    bodies = "\n\n".join(extracted)
     return header, string_body, sprite_body, bodies, base_dtor
 
 
-def fixture_source(root, bodies, string_source):
+def fixture_source(root, bodies, string_source, base_dtor=None):
+    if base_dtor is None:
+        base_dtor = extract_definition(
+            (root / "src/spritebox.cpp").read_text(), "SpriteListBase::~SpriteListBase()")
     fixture_path = root / "recovery/tests/sprite_list_lifecycle_control.cpp"
     fixture = fixture_path.read_text()
     header = (root / "src/spritebox.h").read_text()
@@ -170,17 +180,16 @@ def fixture_source(root, bodies, string_source):
     # Behavior-only probes around actual extracted bodies: require the
     # intermediate stage to empty the ring before StringStruct destruction,
     # and observe member destruction order without changing product behavior.
-    string_dtor = extract_definition(string_source, "StringStruct::~StringStruct()")
-    instrumented_dtor = string_dtor.replace(
-        "finish_list_teardown(this);",
-        "assert(head_ == 0); // lifecycle ordering probe\n"
-        "    finish_list_teardown(this);", 1)
-    bodies = bodies.replace(string_dtor, instrumented_dtor, 1)
-    remove_all = extract_definition(string_source, "void StringStruct::remove_all()")
+    instrumented_dtor = base_dtor.replace(
+        "remove_all();",
+        "remove_all();\n    assert(head_ == 0); // lifecycle ordering probe", 1)
+    bodies = bodies.replace(base_dtor, instrumented_dtor, 1)
+    remove_all = extract_definition(string_source, "void remove_all() {")
+    remove_all = remove_all.replace("void remove_all()", "void StringStruct::remove_all()", 1)
     instrumented_remove_all = remove_all.replace(
-        "clear_list_entries(this);",
+        "if (!head_) {",
         "++remove_all_calls;\n    if (track_box) remove_all_order = ++lifetime_order;\n"
-        "    clear_list_entries(this);", 1)
+        "    if (!head_) {", 1)
     bodies = bodies.replace(remove_all, instrumented_remove_all, 1)
     bodies += "\nSpot::~Spot() { if (track_box) spot_destroy_order = ++lifetime_order; }\n"
 
@@ -215,7 +224,7 @@ def compile_and_run(source, compiler, expected_success):
 def test_intermediate_owner_and_actual_cleanup_source():
     root = repo_root()
     _, string_source, _, bodies, base_dtor = installed_bodies(root)
-    source = fixture_source(root, bodies, string_source)
+    source = fixture_source(root, bodies, string_source, base_dtor)
     # Assert this is using an installed body, not a test-authored replacement.
     assert base_dtor in bodies
     for compiler in ("g++", "clang++"):
@@ -226,10 +235,14 @@ def test_intermediate_owner_and_actual_cleanup_source():
 def test_omitting_installed_intermediate_cleanup_fails(compiler):
     root = repo_root()
     _, string_source, _, bodies, base_dtor = installed_bodies(root)
-    source = fixture_source(root, bodies, string_source)
-    mutated_dtor = base_dtor.replace("remove_all();", "/* omitted cleanup */", 1)
-    assert mutated_dtor != base_dtor
-    compile_and_run(source.replace(base_dtor, mutated_dtor, 1), compiler, False)
+    source = fixture_source(root, bodies, string_source, base_dtor)
+    instrumented_dtor = base_dtor.replace(
+        "remove_all();",
+        "remove_all();\n    assert(head_ == 0); // lifecycle ordering probe", 1)
+    mutated_dtor = instrumented_dtor.replace(
+        "remove_all();", "/* omitted cleanup */", 1)
+    assert instrumented_dtor != base_dtor and mutated_dtor != instrumented_dtor
+    compile_and_run(source.replace(instrumented_dtor, mutated_dtor, 1), compiler, False)
 
 
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
@@ -237,8 +250,8 @@ def test_dispatching_intermediate_clear_to_sprite_hook_fails(compiler):
     root = repo_root()
     _, string_source, _, bodies, _ = installed_bodies(root)
     source = fixture_source(root, bodies, string_source)
-    old = "self->on_remove(payload);"
-    mutant = "static_cast<SpriteList *>(self)->SpriteList::on_remove(payload);"
+    old = "on_remove(payload);"
+    mutant = "static_cast<SpriteList *>(this)->SpriteList::on_remove(payload);"
     assert old in source
     compile_and_run(source.replace(old, mutant, 1), compiler, False)
 
@@ -248,7 +261,7 @@ def test_original_entry_count_walk_truncation_is_detected(compiler):
     root = repo_root()
     _, string_source, _, bodies, _ = installed_bodies(root)
     source = fixture_source(root, bodies, string_source)
-    old = "} while (index < self->entry_count_);"
+    old = "} while (index < entry_count_);"
     assert old in bodies
     compile_and_run(source.replace(old, "} while (index < 0);", 1), compiler, False)
 

@@ -1,0 +1,19 @@
+{
+  "event_id": "90963cc746f6f6d5b019cc64a29fe50e2ce5d2a8d9e238ae3777c1fd5ab5497c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/dialog.cpp"
+    ],
+    "evidence": [
+      "Independent source review found two current explanatory comments pointing to removed clear_list_entries in stringstruct.cpp. Authorize comment-only correction to the real inline StringStruct::remove_all in stringstruct.h; no Dialog body or original mapping changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0df5616699b0fcdfe0952873da4b4c626253554e43f1094445b221d6a6dc0283",
+  "request_id": "refresh-dialog-inline-walk-comments-oct16",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:stringlist-teardown-visibility-oct16"
+}

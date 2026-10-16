@@ -1,5 +1,6 @@
 // Pytest inserts the current source declarations and hook bodies.
-// Allocation and outer destruction are doubles; this is not list-lifetime proof.
+// Allocation remains a double; the extracted shared header owns real empty-list
+// destructor stages while these checks focus on hook and allocation behavior.
 #include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 typedef unsigned int uint32_t;
 typedef char *LPSTR; // SDK mutable string pointer used by the live declaration.
 #define MEASURED
+#define nullptr 0 // Same VC6 compatibility spelling as the product build.
 
 int allocations, fail_at, frees, heap_calls;
 void *blocks[16];
@@ -33,6 +35,7 @@ struct Heap { void *get(size_t size) { ++heap_calls; return allocate(size); } };
 Heap *StringAllocationHeap;
 void *mem_get(size_t size) { return allocate(size); }
 // LIVE_ALLOCATION_BASE
+// LIVE_PAYLOAD_BASE
 StringAllocationBase::~StringAllocationBase() { StringAllocationHeap = allocation_owner_; }
 // LIVE_PAYLOAD
 struct SpriteStruct;
@@ -46,9 +49,6 @@ const StringStructPayload *StringStructEntry::string_payload() const {
 // LIVE_LIST_BASE
 // LIVE_LIST
 // LIVE_CONSTRUCTOR
-// Full outer destruction remains a separate recovery obligation.
-StringStruct::~StringStruct() {}
-StringList::~StringList() {}
 int StringStruct::on_insert(void *) { return 0; }
 void StringStruct::on_remove(void *) {}
 #define free release

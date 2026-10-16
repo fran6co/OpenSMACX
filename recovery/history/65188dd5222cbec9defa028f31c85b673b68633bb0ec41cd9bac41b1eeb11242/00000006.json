@@ -1,0 +1,22 @@
+{
+  "event_id": "572814680b72f3fab8b78aead74f03b0fd7222c10b19f37eace64752f2364e92",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_hotseat_owner_actual_source_oct6.py",
+      "recovery/tests/test_player_message_state_behavior.py",
+      "src/diplowin.cpp",
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Full4347-subject same-policy measurement found new exact caller bodies440F80,51E3C0,51E480 after inline remove_all recovery. Authorize recorder-only claim publication in their existing owners; no product body changes. Adapt bounded existing behavior fixtures to actual inline source/API if needed without weakening original state/deletion/order checks; retained seed history remains."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "90963cc746f6f6d5b019cc64a29fe50e2ce5d2a8d9e238ae3777c1fd5ab5497c",
+  "request_id": "verify-bank-inline-cleanup-callers-oct16",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:stringlist-teardown-visibility-oct16"
+}

@@ -144,10 +144,10 @@ def test_messagewin_pending_list_array_has_real_ctor_and_reverse_cleanup(
 
     _mapped_record("src/messagewin.cpp", 0x0051DF80,
                    "sub_51df80", (0x0051DF80, 0x0051DFA4),
-                   "_$E26", False)
+                   "_$E13", False)
     _mapped_record("src/messagewin.cpp", 0x0051DFB0,
                    "sub_51dfb0", (0x0051DFB0, 0x0051DFC4),
-                   "_$E24", True)
+                   "_$E11", True)
     objects = [row for row in read_objects(ROOT, image_pin(ROOT))
                if row.origin.address == 0x0093A7B0]
     assert len(objects) == 1
@@ -161,11 +161,12 @@ def test_messagewin_pending_list_array_has_real_ctor_and_reverse_cleanup(
         assert image.read_initial(Span(0x0093A7B0, 0x0093A930)) == bytes(0x180)
 
     base = (ROOT / "src/stringstruct.cpp").read_text(encoding="utf-8")
-    derived = (ROOT / "src/stringlist.cpp").read_text(encoding="utf-8")
+    shared = (ROOT / "src/stringstruct.h").read_text(encoding="utf-8")
     ctor_body = _body(base, "StringStruct::StringStruct()")
-    dtor_body = _body(derived, "StringList::~StringList()")
-    assert "StringList::~StringList()" in derived
-    assert "finish_list_teardown(this);" in _body(base, "StringStruct::~StringStruct()")
+    dtor_body = _body(shared, "~StringList()")
+    assert "~StringList() {" in shared
+    base_dtor = _body(shared, "~StringStruct()")
+    assert "remove_all();" in base_dtor and "current_position_ = 0;" in base_dtor
 
     good = _messagewin_probe(ctor_body, dtor_body)
     result = _compile_run(tmp_path / "messagewin-good", host_compiler, good)
@@ -276,7 +277,7 @@ def test_newtech_sprite_array_real_global_constructor_and_exit_cleanup(
 
     _mapped_record("src/newtechwin.cpp", 0x004838B0,
                    "??__Fg_NEWTECHWIN_SPRITES@@YAXXZ", (0x004838B0, 0x004838D8),
-                   "_$E24", False)
+                   "_$E11", False)
     assert not (ROOT / "src/recovered/units/004838b0.cpp").exists()
     objects = [row for row in read_objects(ROOT, image_pin(ROOT))
                if row.origin.address == 0x00822610]

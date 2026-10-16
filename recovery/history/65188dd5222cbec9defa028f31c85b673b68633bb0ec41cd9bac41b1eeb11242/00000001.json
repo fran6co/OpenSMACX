@@ -1,0 +1,19 @@
+{
+  "event_id": "932418865302b4f57b7e7110e32ce09d48eb946033e52a3f255a5276dc3f61b8",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/stringlist_hooks_harness.cpp"
+    ],
+    "evidence": [
+      "Existing hooks harness lines50-51 defines empty StringStruct/StringList destructor doubles, conflicting with real inline destructors injected through full live declarations. Authorize replacing conflicting doubles with actual header lifetimes and any necessary genuine test fixture cleanup; preserve hook and allocation controls. No product scope expansion or proof waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "inline-destructor-hook-fixture-oct16",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:stringlist-teardown-visibility-oct16"
+}

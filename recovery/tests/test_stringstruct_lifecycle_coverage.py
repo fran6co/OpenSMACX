@@ -14,7 +14,8 @@ def test_actual_stringstruct_construction_and_deletion(tmp_path, compiler_name):
     header = (ROOT / 'src/stringstruct.h').read_text()
     declarations = []
     for start, end in (
-        ('class StringAllocationBase {', '// REAL VIRTUAL INHERITANCE, like StringStructPayload'),
+        ('class StringAllocationBase {', 'class ListPayloadBase :'),
+        ('class ListPayloadBase :', 'struct StringStructEntry :'),
         ('struct StringStructEntry :', 'static_assert(sizeof(StringStructEntry)'),
         ('class StringStructPayload :', 'static_assert(sizeof(StringStructPayload)'),
         ('class StringStruct :', 'static_assert(sizeof(StringStruct)')):
@@ -22,31 +23,27 @@ def test_actual_stringstruct_construction_and_deletion(tmp_path, compiler_name):
         declarations.append(header[begin:header.index(end, begin)])
     source = (ROOT / 'src/stringstruct.cpp').read_text()
     constructor = definition(source, r'StringStruct::StringStruct\(\)')
-    destructor = definition(source, r'StringStruct::~StringStruct\(\)')
     publication = definition(source, r'StringAllocationBase::~StringAllocationBase\(\)')
     prefix = '''#include <cassert>
 #include <cstdlib>
 #include <cstddef>
 #include <new>
 typedef unsigned int uint32_t;
+#define nullptr 0
 #define MEASURED
 class Heap {};
 class StringStructPayload;
 struct SpriteStruct;
 struct StringStructEntry;
 static Heap *StringAllocationHeap;
-static int releases, teardowns;
+static int releases;
 static void controlled_free(void *p) { ++releases; std::free(p); }
 #define free controlled_free
 '''
     suffix = '''
 #undef free
-// This control isolates the actual construction/deletion boundary. The full
-// entry walk is separately exercised by the native list-lifetime harness.
-static void finish_list_teardown(StringStruct *p) {
-  assert(!p->head_ && !p->current_ && !p->entry_count_);
-  assert(!p->current_position_ && !p->allocator_); ++teardowns;
-}
+// The shared header contains the actual inline teardown stages; the full
+// populated-list walk is separately exercised by the lifetime harness.
 @@BODIES@@
 int StringStruct::on_insert(void *) { return 0; }
 void StringStruct::on_remove(void *) {}
@@ -62,7 +59,7 @@ int main() {
     assert(!StringAllocationHeap);
     StringAllocationBase *base=p;
     delete base;
-    assert(teardowns == owned+1 && releases == 1);
+    assert(releases == 1);
     assert(!StringAllocationHeap);
     if (owned) std::free(storage);
   }
@@ -76,7 +73,7 @@ int main() {
         mutations['wrong_' + field] = constructor.replace(store, field + ' = ' + value + ';')
     for name, body in mutations.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(prefix + '\n'.join(declarations) + suffix.replace('@@BODIES@@', '\n'.join((body, destructor, publication))))
+        cpp.write_text(prefix + '\n'.join(declarations) + suffix.replace('@@BODIES@@', '\n'.join((body, publication))))
         build = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined', '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)], capture_output=True, text=True, timeout=45)
         assert build.returncode == 0, build.stderr
         run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)

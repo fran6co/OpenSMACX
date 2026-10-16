@@ -227,8 +227,8 @@ def test_transcript_array_ctor_dtor_vector_order_and_mutation_controls(tmp_path:
     assert declaration, "real typed transcript array declaration must remain source-owned"
     rows, cols = map(int, declaration.groups())
     assert (rows, cols) == (8, 8), "native helper evidence is for exactly 64 elements"
-    _mapped_record("src/diplowin.cpp", 0x00440F30, "sub_440f30", (0x00440F30, 0x00440F54), "_$E26", True)
-    _mapped_record("src/diplowin.cpp", 0x00440F60, "sub_440f60", (0x00440F60, 0x00440F74), "_$E24", True)
+    _mapped_record("src/diplowin.cpp", 0x00440F30, "sub_440f30", (0x00440F30, 0x00440F54), "_$E13", True)
+    _mapped_record("src/diplowin.cpp", 0x00440F60, "sub_440f60", (0x00440F60, 0x00440F74), "_$E11", True)
     _mapped_record("src/diplowin.cpp", 0x004450B0, "sub_4450b0", (0x004450B0, 0x0044511C), "??0StringList@@QAE@XZ", False)
     objects = [row for row in read_objects(ROOT, image_pin(ROOT)) if row.origin.address == 0x00737CD8]
     assert len(objects) == 1
@@ -237,13 +237,13 @@ def test_transcript_array_ctor_dtor_vector_order_and_mutation_controls(tmp_path:
     assert "StringList : public StringStruct" in header
     string_list = _balanced_block(header, "class StringList : public StringStruct {")
     assert not re.search(r"^\s*StringList\s*\(\s*\)\s*;", string_list, re.MULTILINE), "source must keep implicit derived construction"
-    assert "~StringList();" in header
+    assert "~StringList() {" in string_list
     assert "StringList::StringList(" not in list_impl + impl
-    assert "remove_all();" in _source_body(list_impl, "StringList::~StringList()")
-    assert "current_position_ = 0;" in _source_body(list_impl, "StringList::~StringList()")
+    assert "remove_all();" in _source_body(header, "~StringList()")
+    assert "current_position_ = 0;" in _source_body(header, "~StringList()")
 
     ctor = _source_body(impl, "StringStruct::StringStruct()")
-    dtor = _source_body(list_impl, "StringList::~StringList()")
+    dtor = _source_body(header, "~StringList()")
     baseline_source = _transcript_fixture(rows, cols, ctor, dtor)
     baseline = _compile_and_run(tmp_path / "transcript-good", baseline_source, host_compiler)
     assert baseline.returncode == 0, baseline.stdout + baseline.stderr
@@ -271,8 +271,8 @@ def test_transcript_array_ctor_dtor_vector_order_and_mutation_controls(tmp_path:
 
 def test_grouped_timer_declaration_compiler_order_and_object_marker_mutation(tmp_path: Path, host_compiler: str) -> None:
     time_cpp = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
-    _mapped_record("src/console.cpp", 0x0050E9B0, "sub_50e9b0", (0x0050E9B0, 0x0050E9EE), "_$E21", True)
-    _mapped_record("src/console.cpp", 0x0050E9F0, "sub_50e9f0", (0x0050E9F0, 0x0050EA22), "_$E19", True)
+    _mapped_record("src/console.cpp", 0x0050E9B0, "sub_50e9b0", (0x0050E9B0, 0x0050E9EE), "_$E18", True)
+    _mapped_record("src/console.cpp", 0x0050E9F0, "sub_50e9f0", (0x0050E9F0, 0x0050EA22), "_$E16", True)
     expected_names = ["BlinkTimer", "Blink2Timer", "LineTimer", "GoTimer", "TurnTimer"]
     assert "Time ConsoleTimer;" in time_cpp
     grouped = re.search(r"Time\s+BlinkTimer,(.*?)TurnTimer\s*;", time_cpp, re.DOTALL)

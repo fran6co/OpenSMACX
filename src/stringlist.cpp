@@ -211,11 +211,10 @@ int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existing,
     }
 }
 
-// Derived cleanup uses virtual remove_all() before the base destructor changes
-// dispatch, then restores the cursor position even when the list was empty.
-// ORIGINAL: 0x004066C0 ??1StringList@@UAE@XZ 0x004066C0-0x00406818;0x00650980-0x00650995
+// Derived cleanup invokes the shared entry walk before the base destructor
+// changes dispatch, then restores the cursor position even when the list was
+// empty. remove_all() itself is nonvirtual; on_remove() supplies the virtual
+// payload-cleanup hook.
+// ORIGINAL: 0x004066C0 ??1StringList@@UAE@XZ 0x004066C0-0x00406818;0x00650980-0x00650995 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Original 4066C0 installs derived tables6698C4/6698C0 and clears entries before switching to base tables6693A4/6693A0; primary removal slot selects the text-cleanup hook during the derived stage. Implicit base-only cleanup cannot preserve that lifecycle.", "Original bounds4066C0-406818 and650980-650995 retained in 7eb1b2b0 parent src/stringstruct.cpp. Support code650980 adjusts the saved virtual-base receiver by -0xC before jumping to StringStruct base teardown401060. These are original identity/ownership interpretations, not a matching claim."], "reason": "Restore the original two-stage StringList destructor identity to its real C++ destructor, including its historical EH support span."}
-StringList::~StringList() {
-    remove_all();
-    current_position_ = 0;
-}
+// body      src/stringstruct.h

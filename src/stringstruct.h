@@ -228,8 +228,11 @@ class StringStruct : public virtual StringAllocationBase {
   // The compiler stages the base tables before this cleanup. StringList's
   // destructor owns the earlier derived stage, where its text-removal hook
   // must still be active. These are real C++ destructor transitions, not
-  // hand-written table installs. Out of line in stringstruct.cpp.
-  ~StringStruct();
+  // hand-written table installs.
+  ~StringStruct() {
+    remove_all();
+    current_position_ = 0;
+  }
   MEASURED int seek_pos(int a1);
   int current_id();
   // Both return the entry's payload node - StringStructPayload, whose +4 is
@@ -240,7 +243,31 @@ class StringStruct : public virtual StringAllocationBase {
   StringStructPayload *current_entry();
   MEASURED StringStructPayload *next_entry();
   int seek_id(int id);
-  void remove_all();
+  void remove_all() {
+    if (!head_) {
+      return;
+    }
+    // The original initializes its index before testing the entry count.
+    int index = 0;
+    if (entry_count_ > 0) {
+      do {
+        StringStructEntry *const entry = head_;
+        current_ = entry->next;
+        ListPayloadBase *const payload = entry->payload;
+        on_remove(payload);
+        delete payload;
+        head_->payload = nullptr;
+        delete head_;
+        ++index;
+        head_ = current_;
+        // The loop bound is re-read every iteration, so a visitor that
+        // changes the count changes how far the walk goes.
+      } while (index < entry_count_);
+    }
+    head_ = nullptr;
+    current_position_ = 0;
+    entry_count_ = 0;
+  }
   // 0x00401100 appends an entry and payload, then invokes the insertion hook.
   // Allocation failures retain the original partially updated list state.
   int add(int id);
@@ -265,6 +292,7 @@ class StringStruct : public virtual StringAllocationBase {
   Heap *allocator_;              // 0x18
   // 0x1C..0x24 is the virtual base: its vtable slot (compiler-managed) and
   // the inherited allocation_owner_.
+
 };
 
 static_assert(sizeof(StringStruct) == 0x24,
@@ -274,7 +302,10 @@ class StringList : public StringStruct {
  public:
   // 0x004066C0 removes entries while StringList's text hook is still active,
   // before the compiler enters StringStruct's base cleanup stage.
-  ~StringList();
+  ~StringList() {
+    remove_all();
+    current_position_ = 0;
+  }
   // Original primary slots name 0x006086F0 and 0x00608770. BasePop's
   // constructor (0x00600860) installs this table in both embedded lists;
   // the next table at 0x006698CC belongs to BasePop's Buffer subobject.

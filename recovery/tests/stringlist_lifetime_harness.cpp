@@ -1,4 +1,4 @@
-// Actual node declarations, allocation-base destructor and remove_all are
+// Actual node declarations, allocation-base destructor and shared list walk are
 // inserted by pytest. Allocator tracking is a double, not StringStruct::add.
 #include <assert.h>
 #include <stddef.h>
@@ -44,6 +44,7 @@ void operator delete(void *memory) { release(memory); }
 
 #define free release
 // LIVE_ALLOCATION_BASE
+// LIVE_PAYLOAD_BASE
 #undef free
 // LIVE_OWNER_PUBLICATION
 #define free release
@@ -60,7 +61,6 @@ const StringStructPayload *StringStructEntry::string_payload() const {
 // LIVE_LIST_BASE
 // LIVE_LIST
 // LIVE_CONSTRUCTOR
-// LIVE_CLEANUP_HELPER
 int StringStruct::on_insert(void *) { return 0; }
 void StringStruct::on_remove(void *) {}
 int StringList::on_insert(void *) { return 0; }
@@ -68,9 +68,6 @@ int StringList::on_insert(void *) { return 0; }
 // LIVE_TEXT_RELEASE
 // LIVE_REMOVE
 #undef free
-// LIVE_BASE_DESTRUCTOR
-// LIVE_DERIVED_DESTRUCTOR
-// LIVE_CLEAR
 
 // Deduce T from an argument: VC6 mis-selects the explicit specialization in
 // nested calls when the template type appears only in the return type.

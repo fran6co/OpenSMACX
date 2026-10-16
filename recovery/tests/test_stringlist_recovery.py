@@ -73,6 +73,9 @@ def test_complete_destructor_is_generated_and_destroys_virtual_base(objects):
     record, = (r for r in read_file(ROOT / "src/dialog.cpp") if r.address == 0x406820)
     assert record.mode is Mode.FILE
     for obj in objects["src/dialog.cpp"]:
+        # Current COFF retains two genuine destructor calls in this generated
+        # helper. The original inlines the allocation-base tail, so these
+        # boundaries are a current-source control, not an exact-match claim.
         assert references(obj, record.symbol) == [
             "??1StringList@@UAE@XZ", "??1StringAllocationBase@@UAE@XZ"]
         code, _, _ = obj.subject(obj.function(record.symbol))
@@ -135,7 +138,8 @@ def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypat
         ("// LIVE_TEXT_RELEASE", "src/stringlist.cpp", "namespace {\ninline void release_text",
          "// ORIGINAL: 0x006086F0"),
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
-         "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
+         "class ListPayloadBase :"),
+        ("// LIVE_PAYLOAD_BASE", "src/stringstruct.h", "class ListPayloadBase :", "struct StringStructEntry :"),
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
@@ -146,10 +150,10 @@ def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypat
 
 def test_actual_node_lifetime_uses_complete_allocations_and_heap_ownership(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "stringlist_lifetime_harness.cpp", [
-        ("// LIVE_CLEAR", "src/stringstruct.cpp", 0x402970),
         ("// LIVE_REMOVE", "src/stringlist.cpp", 0x608770)], declarations=[
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
-         "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
+         "class ListPayloadBase :"),
+        ("// LIVE_PAYLOAD_BASE", "src/stringstruct.h", "class ListPayloadBase :", "struct StringStructEntry :"),
         ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
          "// ORIGINAL: 0x00401000"),
         ("// LIVE_CONSTRUCTOR", "src/stringstruct.cpp", "StringStruct::StringStruct() {",
@@ -158,22 +162,17 @@ def test_actual_node_lifetime_uses_complete_allocations_and_heap_ownership(tmp_p
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
         ("// LIVE_LIST", "src/stringstruct.h", "class StringList :", "static_assert(sizeof(StringList)"),
-        ("// LIVE_CLEANUP_HELPER", "src/stringstruct.cpp", "namespace {\n// Share the original entry walk",
-         "/*\nPurpose: Return the current string-list item ID."),
         ("// LIVE_TEXT_RELEASE", "src/stringlist.cpp", "namespace {\ninline void release_text",
          "// ORIGINAL: 0x006086F0"),
-        ("// LIVE_BASE_DESTRUCTOR", "src/stringstruct.cpp", "StringStruct::~StringStruct() {",
-         "// StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable"),
-        ("// LIVE_DERIVED_DESTRUCTOR", "src/stringlist.cpp", "StringList::~StringList() {",
-         None)])
+        ])
 
 
 def test_actual_construction_preserves_allocator_and_partial_failure_contracts(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "stringlist_construction_harness.cpp", [
-        ("// LIVE_ADD", "src/stringstruct.cpp", 0x401100),
-        ("// LIVE_CLEAR", "src/stringstruct.cpp", 0x402970)], declarations=[
+        ("// LIVE_ADD", "src/stringstruct.cpp", 0x401100)], declarations=[
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
-         "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
+         "class ListPayloadBase :"),
+        ("// LIVE_PAYLOAD_BASE", "src/stringstruct.h", "class ListPayloadBase :", "struct StringStructEntry :"),
         ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
          "// ORIGINAL: 0x00401000"),
         ("// LIVE_CONSTRUCTOR", "src/stringstruct.cpp", "StringStruct::StringStruct() {",
@@ -181,9 +180,5 @@ def test_actual_construction_preserves_allocator_and_partial_failure_contracts(t
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
-        ("// LIVE_CLEANUP_HELPER", "src/stringstruct.cpp", "namespace {\n// Share the original entry walk",
-         "/*\nPurpose: Return the current string-list item ID."),
-        ("// LIVE_BASE_DESTRUCTOR", "src/stringstruct.cpp", "StringStruct::~StringStruct() {",
-         "// StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable"),
         ("// LIVE_NODE_ALLOCATION", "src/stringstruct.cpp", "namespace {\n// 0x00401100 selects",
          "// Append before the circular head.")])

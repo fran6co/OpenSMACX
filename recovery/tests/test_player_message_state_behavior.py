@@ -18,7 +18,7 @@ import pytest
 HERE = pathlib.Path(__file__).resolve().parent
 SOURCE_ROOT = pathlib.Path(os.environ.get("OPENSMACX_SOURCE_ROOT", HERE.parents[1]))
 GAME_CPP = SOURCE_ROOT / "src" / "game.cpp"
-STRINGSTRUCT_CPP = SOURCE_ROOT / "src" / "stringstruct.cpp"
+STRINGSTRUCT_H = SOURCE_ROOT / "src" / "stringstruct.h"
 STRINGLIST_CPP = SOURCE_ROOT / "src" / "stringlist.cpp"
 
 
@@ -38,7 +38,7 @@ def extract_braced(source, marker):
 
 def actual_source_bodies():
     game = GAME_CPP.read_text()
-    stringstruct = STRINGSTRUCT_CPP.read_text()
+    stringstruct = STRINGSTRUCT_H.read_text()
     stringlist = STRINGLIST_CPP.read_text()
     markers = (
         "void __cdecl clear_all_player_messages(",
@@ -46,11 +46,11 @@ def actual_source_bodies():
         "int __cdecl display_player_messages(",
     )
     bodies = "\n".join(extract_braced(game, marker) for marker in markers)
-    removal = extract_braced(stringstruct, "inline void clear_list_entries(")
-    removal += "\n" + extract_braced(stringstruct, "void StringStruct::remove_all()")
+    removal = extract_braced(stringstruct, "void remove_all()")
+    removal = removal.replace("void remove_all()", "void StringStruct::remove_all()", 1)
     hooks = extract_braced(stringlist, "inline void release_text(char *text)")
     hooks += "\n" + extract_braced(
-        stringlist, "void StringList::on_remove(StringStructPayload *payload)"
+        stringlist, "void StringList::on_remove(void *raw_payload)"
     )
     return bodies, removal, hooks
 
@@ -61,13 +61,13 @@ def make_control_source():
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <new>
 #include <string>
 #include <vector>
 #define nullptr 0
 #define __cdecl
 const int MaxPlayerNum = 8;
 static std::vector<std::string> events;
-static int active_faction = -1;
 static int removed[8] = {0,0,0,0,0,0,0,0};
 static int wins_seen[8][32];
 static int losses_seen[8][32];
@@ -77,31 +77,48 @@ int MessageWinMessageCount = 0;
 struct Heap {};
 struct StringStructPayload;
 static void payload_destroyed(StringStructPayload *payload);
-struct StringStructPayload {
+struct ListPayloadBase { virtual ~ListPayloadBase() { } };
+struct StringStructPayload : ListPayloadBase {
     char *text;
     int field_8_, field_C_;
-    ~StringStructPayload() { payload_destroyed(this); }
+    virtual ~StringStructPayload() { payload_destroyed(this); }
     static void operator delete(void *) { }
 };
-static void payload_destroyed(StringStructPayload *payload) {
-    if (active_faction >= 0 && active_faction < 8) {
-        const int i = removed[active_faction]++;
-        if (i < 32) {
-            wins_seen[active_faction][i] = FactionTurnCombatWins[active_faction];
-            losses_seen[active_faction][i] = FactionTurnCombatLosses[active_faction];
-        }
-        assert(payload->text == 0); // source StringList::on_remove precedes delete
-    }
-}
 struct StringStructEntry {
     int id;
-    StringStructPayload *payload;
+    ListPayloadBase *payload;
     StringStructEntry *next, *previous;
+    StringStructPayload *string_payload() {
+        return static_cast<StringStructPayload *>(payload);
+    }
     static void operator delete(void *) { }
 };
+static StringStructEntry entries[8][4];
+union PayloadStorage {
+    void *alignment; // The fixture payload contains only pointers and ints.
+    unsigned char bytes[sizeof(StringStructPayload)];
+};
+static PayloadStorage payload_storage[8][4];
+static StringStructPayload *payloads[8][4];
+static void payload_destroyed(StringStructPayload *payload) {
+    for (int faction = 0; faction < 8; ++faction) {
+        for (int i = 0; i < 4; ++i) {
+            if (payloads[faction][i] == payload) {
+                const int removed_index = removed[faction]++;
+                if (removed_index < 32) {
+                    wins_seen[faction][removed_index] = FactionTurnCombatWins[faction];
+                    losses_seen[faction][removed_index] = FactionTurnCombatLosses[faction];
+                }
+                assert(payload->text == 0); // actual virtual hook precedes node destruction
+                return;
+            }
+        }
+    }
+    assert(false);
+}
 class StringStruct {
 public:
-    virtual void on_remove(StringStructPayload *) { }
+    virtual void on_remove(void *) { }
     StringStructEntry *head_, *current_;
     int entry_count_, current_position_;
     Heap *allocator_;
@@ -112,7 +129,10 @@ class StringList : public StringStruct {
 public:
     int test_faction;
     StringList() : test_faction(-1) { }
-    virtual void on_remove(StringStructPayload *payload);
+    virtual void on_remove(void *payload);
+    // Fixture-only call observer; the real shared StringStruct walk remains
+    // the extracted body below, and this adds no production cleanup logic.
+    void remove_all() { events.push_back("remove"); StringStruct::remove_all(); }
     int seek_pos(int position) {
         if (position > entry_count_ - 1) return 0;
         current_ = head_;
@@ -125,12 +145,6 @@ public:
             current_position_ = position;
         }
         return 1;
-    }
-    void remove_all() {
-        active_faction = test_faction;
-        events.push_back("remove");
-        StringStruct::remove_all();
-        active_faction = -1;
     }
 };
 StringList MessageWinDeferredBaseMessages[8];
@@ -164,8 +178,6 @@ struct MessageWinDouble {
 };
 MessageWinDouble InterfaceMessageWin;
 ''' + removal + "\n" + hooks + "\n" + bodies + r'''
-static StringStructEntry entries[8][4];
-static StringStructPayload payloads[8][4];
 static char *copy_text(const char *s) {
     const size_t n = strlen(s) + 1;
     char *p = (char *)malloc(n); assert(p); memcpy(p, s, n); return p;
@@ -177,7 +189,8 @@ static void build_list(int faction, int count) {
     if (count <= 0) return;
     for (int i = 0; i < count; ++i) {
         StringStructEntry &entry = entries[faction][i];
-        StringStructPayload &payload = payloads[faction][i];
+        StringStructPayload &payload = *new (payload_storage[faction][i].bytes) StringStructPayload;
+        payloads[faction][i] = &payload;
         entry.id = 0x20 + i; payload.text = copy_text(i == 0 ? "first-text" : "later-text");
         payload.field_8_ = payload.field_C_ = 0; entry.payload = &payload;
         entry.next = &entries[faction][(i + 1) % count];
@@ -220,6 +233,7 @@ int main() {
     clear_player_messages(5);
     assert(empty.entry_count_ == 1 && empty.current_position_ == 0 && empty.allocator_ == 0);
     assert(removed[5] == 0 && FactionTurnCombatWins[5] == 0 && FactionTurnCombatLosses[5] == 0);
+    assert(events.size() == 1 && events[0] == "remove"); // empty remove_all call still precedes caller resets
 
     clear_observations(); build_list(6, 1); MessageWinDeferredBaseMessages[6].entry_count_ = -2;
     clear_player_messages(6);
@@ -258,6 +272,7 @@ def test_actual_source_message_state_bodies(compiler):
         cpp = pathlib.Path(temp) / "control.cpp"
         binary = pathlib.Path(temp) / "control"
         cpp.write_text(source)
-        subprocess.run([compiler_path, "-std=c++98", "-Wall", "-Wextra", str(cpp), "-o", str(binary)],
-                       check=True, capture_output=True, text=True, timeout=30)
+        build = subprocess.run([compiler_path, "-std=c++98", "-Wall", "-Wextra", str(cpp), "-o", str(binary)],
+                               capture_output=True, text=True, timeout=30)
+        assert build.returncode == 0, build.stderr
         subprocess.run([str(binary)], check=True, timeout=30)
