@@ -29,10 +29,13 @@ def test_actual_console_capture_release_and_end_turn(tmp_path):
     source = (ROOT / "src/console.cpp").read_text()
     handlers = "\n".join(_body(source, signature) for signature in (
         "void Console::on_nc_left_up", "void Console::end_my_turn"))
+    swap_source = (ROOT / "src/general.cpp").read_text()
+    swap_body = _body(swap_source, "void __cdecl swap(int *var1, int *var2)")
     harness = r'''
 #include <cassert>
 #include <cstdint>
 #include <vector>
+#define __cdecl
 struct Rect { int left, top, right, bottom; };
 struct Update { int x,y,w,h; };
 std::vector<Update> updates;
@@ -49,7 +52,7 @@ struct Console : MapWin {
   int edit_lock() { return locked; }
   int ready_search(int) { return next_ready; }
   int locked=0, next_ready=-1, faction_id_=1, cursor_active_=0;
-  uint32_t field_23D80_=100,field_23D84_=200,field_23D88_=300,field_23D8C_=400;
+  int field_23D80_=100,field_23D84_=200,field_23D88_=300,field_23D8C_=400;
   Rect client_rect_{0,10,500,410},outer_rect_{0,0,500,420};
   int border_thickness_=4,bottom_border_thickness_=2,caption_height_=20;
   struct { struct { int biWidth=640,biHeight=-480; } bmiHeader; } dib_;
@@ -99,24 +102,31 @@ int message_data(int code,int,int turn,int,int,int) { assert(code==0x2302 && tur
 int ready=0,pop_result=1,pop_calls=0;
 int veh_ready(int) { return ready; }
 int X_pop(const char *caption,int(*)()) { assert(caption[0]=='R'); ++pop_calls; return pop_result; }
+''' + swap_body + r'''
 ''' + handlers + r'''
 int main() {
   Console window;
   WinPointerOwner3=&window; WinPointerOwner4=&window;
-  window.field_23D88_=0xFFFFFFFFu;
+  window.field_23D88_=-1;
   window.on_nc_left_up(70,50);
   assert(!WinPointerOwner3 && !WinPointerOwner4 && events.size()==1 && events[0]==9);
   assert(window.field_23D88_==72 && window.field_23D8C_==400);
   assert(updates.size()==2 && updates[0].x==0 && updates[0].y==30 && updates[0].w==640 && updates[0].h==1);
   assert(updates[1].x==20 && updates[1].y==0 && updates[1].w==1 && updates[1].h==480);
-  window.field_23D88_=window.field_23D8C_=0xFFFFFFFFu;
+  window.field_23D88_=window.field_23D8C_=-1;
   window.on_nc_left_up(70,50);
-  assert(window.field_23D88_==0xFFFFFFFFu && window.field_23D8C_==72);
-  window.field_23D80_=0xFFFFFFFFu; window.field_23D84_=100;
-  window.field_23D88_=window.field_23D8C_=0xFFFFFFFFu;
+  assert(window.field_23D88_==-1 && window.field_23D8C_==72);
+  window.field_23D80_=-1; window.field_23D84_=100;
+  window.field_23D88_=window.field_23D8C_=-1;
   window.on_nc_left_up(70,50);
   assert(window.field_23D80_==66 && window.field_23D84_==100);
-  assert(window.field_23D88_==0xFFFFFFFFu && window.field_23D8C_==0xFFFFFFFFu);
+  assert(window.field_23D88_==-1 && window.field_23D8C_==-1);
+  // Signed coordinates are ordered numerically before the original XOR swap.
+  window.field_23D88_=-2; window.field_23D8C_=-8;
+  window.field_23D80_=-9; window.field_23D84_=-3;
+  window.on_nc_left_up(70,50);
+  assert(window.field_23D88_==-8 && window.field_23D8C_==-2);
+  assert(window.field_23D80_==-9 && window.field_23D84_==-3);
   events.clear(); window.end_my_turn();
   assert(events==std::vector<int>({0,1,2,3,4}));
   assert(ConsoleInfoWin.field_A8_==0 && ConsoleInfoWin.redraw_phase==7);

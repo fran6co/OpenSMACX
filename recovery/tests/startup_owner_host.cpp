@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdint.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -103,13 +104,13 @@ public:
 };
 
 struct LoggedBound {
-    unsigned int value;
-    LoggedBound &operator=(unsigned int next) {
+    int value;
+    LoggedBound &operator=(int next) {
         value = next;
-        char text[64]; sprintf(text, "left-bound:%u", next); event(text);
+        char text[64]; sprintf(text, "left-bound:%d", next); event(text);
         return *this;
     }
-    operator unsigned int() const { return value; }
+    operator int() const { return value; }
 };
 
 class Console : public Win {
@@ -119,9 +120,9 @@ public:
     Dib dib_;
     int faction_id_;
     LoggedBound field_23D80_;
-    unsigned int field_23D84_;
-    unsigned int field_23D88_;
-    unsigned int field_23D8C_;
+    int field_23D84_;
+    int field_23D88_;
+    int field_23D8C_;
 };
 
 class TestWindow : public Win {

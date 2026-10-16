@@ -1,0 +1,33 @@
+{
+  "event_id": "2458b4d48b3baee9882a9514b5f34c3d77f236e5bbf7b5e505a3fc0b16b227e4",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/console.h",
+      "src/game.cpp",
+      "src/time.cpp"
+    ],
+    "evidence": [
+      "Independent pinned producer/consumer review: desktop_init 58EE60 computes signed rectangle coordinates including -10-height; Console compares signed coordinates, uses -1 drag sentinel, and passes member addresses to integer swap at 5100E3/5100F9. Authorize signed int members at 23D80/84/88/8C and coherent callers; preserve original modulo arithmetic, sentinels, mappings and claims. No alias casts or new unsigned swap overload.",
+      "go_to numeric and alphabetical sorts are alternative branches, not two sequential passes. Numeric swaps score first at4D7086 then IDs at4D70A0; alphabetical IDs at4D7108. Restore original branches and changed-flag iteration from pinned CFG; preserve comparison polarity."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5828192,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5302848,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "17ac959fbda2d375a16da91681392a685c8dbfe05edaedfbd1fcecb52bc2f01e",
+  "request_id": "signed-console-splitter-coordinates",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:integer-swap-owner-oct16"
+}

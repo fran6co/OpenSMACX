@@ -1,0 +1,25 @@
+{
+  "event_id": "d28c383be0b14ee5fc78b0f3b0f3c4cee9c1f6162e7addcb488a3ccc3328d917",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/diplowin_exec_host_control.cpp",
+      "recovery/tests/diplowin_exec_host_types.h",
+      "recovery/tests/monuwin_host_fixture.inc",
+      "recovery/tests/test_diplowin_exec_behavior.py",
+      "recovery/tests/test_monuwin_behavior.py",
+      "src/diplowin.cpp",
+      "src/monuwin.cpp"
+    ],
+    "evidence": [
+      "Pinned direct calls at444AE2 in DiploWin::exec and47618F in MonuWin::on_redraw correspond to current hand-expanded temporary swaps. Restore direct source-owned integer swap calls preserving existing conditional dataflow, distinct argument addresses and original behavior. Existing mapped subjects belong to original caller closure. Diplo original parameter-slot mutation vs current member-derived local copies remains a separate fidelity obligation; do not claim whole-body equivalence from this local correction."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "688920db379ad8c3150fd10fcb01371d2e7de02f0f4703cd3fafb820e8969917",
+  "request_id": "remaining-cross-unit-swap-callers",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:integer-swap-owner-oct16"
+}

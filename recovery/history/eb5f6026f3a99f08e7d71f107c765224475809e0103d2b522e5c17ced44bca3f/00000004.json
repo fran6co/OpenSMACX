@@ -1,0 +1,53 @@
+{
+  "event_id": "fc24f2d4dca30e39a49e9b125a5fe48a5e8e9b584712868d8b3f82332941f326",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Complete the explicitly authorized signed-member producer/consumer closure: Console hit-test, drag initiation, drag motion, and compiler-generated virtual adjustors. Same four member bindings and source files; no unrelated scope or behavior fixes. Preserve each historical identity and measure the complete Console TU."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5305984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5307152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5308688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5365568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5365504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5365488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5365520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0875453cab2ce6517c7231f5d0f45ee36eeb7059677fca9c16b049269cff439c",
+  "request_id": "signed-splitter-producer-consumer-subjects",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:integer-swap-owner-oct16"
+}

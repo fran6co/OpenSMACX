@@ -166,8 +166,6 @@ extern OfferResetCell OfferResetCells[8][8];
 extern StringList DiplomacyTranscriptLists[8][8];
 extern int HistoryStageCalls, MessageDataCalls, MessageDataOpcode, MessageDataTarget;
 extern int DiploOffersDirty;
-inline void swap(int *left, int *right) { int value = *left; *left = *right; *right = value; }
-
 inline char *label_get(int) { return const_cast<char *>("mock"); }
 inline Font *find_font(int, int) { static Font f; return &f; }
 inline int bit_count(int value) { int n = 0; while (value) { n += value & 1; value >>= 1; } return n; }

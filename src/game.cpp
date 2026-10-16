@@ -2940,20 +2940,24 @@ int __cdecl desktop_init(int fresh) {
     // Keep both native stores: the first value is immediately replaced.
     ConsoleGlobal.field_23D80_ = 10;
     const RECT &menu_client = ConsoleGlobal.alpha_menu_.client_rect();
-    ConsoleGlobal.field_23D80_ = static_cast<unsigned int>(
-        (menu_client.right - menu_client.left) + 10);
+    ConsoleGlobal.field_23D80_ = static_cast<int>(
+        static_cast<uint32_t>(menu_client.right) -
+        static_cast<uint32_t>(menu_client.left) + 10u);
 
-    ConsoleGlobal.field_23D84_ = static_cast<unsigned int>(
-        static_cast<int>(ConsoleGlobal.dib_.bmiHeader.biWidth) - 10);
+    ConsoleGlobal.field_23D84_ = static_cast<int>(
+        static_cast<uint32_t>(ConsoleGlobal.dib_.bmiHeader.biWidth) - 10u);
     if (IsMultiplayerNet != 0) {
         const RECT &multi_client = MultiWindow.client_rect();
-        ConsoleGlobal.field_23D84_ += static_cast<unsigned int>(
-            multi_client.left - multi_client.right);
+        ConsoleGlobal.field_23D84_ = static_cast<int>(
+            static_cast<uint32_t>(ConsoleGlobal.field_23D84_) +
+            static_cast<uint32_t>(multi_client.left) -
+            static_cast<uint32_t>(multi_client.right));
     }
 
     ConsoleGlobal.field_23D88_ = 10;
-    ConsoleGlobal.field_23D8C_ = static_cast<unsigned int>(
-        -10 - static_cast<int>(ConsoleGlobal.dib_.bmiHeader.biHeight));
+    ConsoleGlobal.field_23D8C_ = static_cast<int>(
+        static_cast<uint32_t>(-10) -
+        static_cast<uint32_t>(ConsoleGlobal.dib_.bmiHeader.biHeight));
 
     if (GameDataStateStorage.fields_.turn_current_num_ != 0) {
         draw_map(1);

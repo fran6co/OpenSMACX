@@ -1,0 +1,22 @@
+{
+  "event_id": "0875453cab2ce6517c7231f5d0f45ee36eeb7059677fca9c16b049269cff439c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_close_actual_source.py",
+      "recovery/tests/test_console_scenario_behavior.py",
+      "recovery/tests/test_console_typed_owner_members_oct10.py",
+      "recovery/tests/test_startup_actual_source.py"
+    ],
+    "evidence": [
+      "Update actual-source host fixture member types and extracted prerequisites to match the signed Console coordinate migration, without weakening behavior assertions. Full-span independent decode corrects preceding evidence: first score-swap CALL is 4D708B; 4D7086 is mov edi,1. Preserve that pinned call-site assertion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2458b4d48b3baee9882a9514b5f34c3d77f236e5bbf7b5e505a3fc0b16b227e4",
+  "request_id": "signed-splitter-host-controls",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:integer-swap-owner-oct16"
+}

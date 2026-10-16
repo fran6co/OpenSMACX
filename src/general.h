@@ -182,11 +182,7 @@ MEASURED inline void __cdecl swap(uint8_t *var1, uint8_t *var2) {
     *var1 ^= *var2;
 }
 
-MEASURED inline void __cdecl swap(int *var1, int *var2) {
-    *var1 ^= *var2;
-    *var2 ^= *var1;
-    *var1 ^= *var2;
-}
+void __cdecl swap(int *var1, int *var2);
 
 MEASURED inline void __cdecl bitmask(int input, int *offset, int *mask) {
     *offset = input / 8;

@@ -632,14 +632,8 @@ Purpose: Set the signed scrollbar range and redraw it at the lower endpoint.
 // LEVER: replaced the cached-vtable-bits/redraw_from_vtable(__asm helper)
 //   tail with the inline read_volatile_bits/original_slot<func_noarg_virtual>
 //   dispatch 0x00605A10 uses - 15/24 to 17/24 agreeing (best flags /Ob0).
-// LEVER (2026-09-03): `range_swap_call`, a file-local forwarder over
-//   general.h's MEASURED inline `swap(int *, int *)`. The image CALLS
-//   0x00628A50 here and the open-coded helper compiled the XOR swap in
-//   place, which also rescheduled the `range_minimum_`/`range_maximum_`/
-//   `position_` stores into an XOR-chain the image does not have. With the
-//   call the body is the image's own 24 and the tail dispatch needed no
-//   further work. 24 of 24, BYTE_EXACT. The "swap defect above" note is
-//   superseded - this was that defect.
+// The ordinary integer swap declaration resolves to its mapped owner in
+// general.cpp, matching the original call at 0x006059DD.
 //   The "swap defect" line above is superseded by the 2026-09-03 LEVER.
 // symbol    ?set_range@Scroll@@QAEXHH@Z
 // size      93 bytes
@@ -656,21 +650,12 @@ Status: Complete
 // API: each original body ends after redraw without defining EAX, so a
 // non-void C++ signature required suppressing C4716. The source API is void.
 
-// Non-inline forwarder over general.h's MEASURED inline `swap(int *, int *)`.
-// The image CALLS 0x00628A50 from set_range (0x006059B0); the in-class
-// expansion compiled the XOR swap in place and moved the three field stores
-// after it. File-local, so no other swap site can see it - the rest of the
-// tree's 30-odd callers genuinely inline the helper.
-static void __cdecl range_swap_call(int *var1, int *var2) {
-    swap(var1, var2);
-}
-
 void Scroll::set_range(int minimum, int maximum) {
     if (minimum < maximum) {
         range_reversed_ = 0U;
     } else {
         range_reversed_ = 1U;
-        range_swap_call(&minimum, &maximum);
+        swap(&minimum, &maximum);
     }
     range_minimum_ = minimum;
     position_ = minimum;

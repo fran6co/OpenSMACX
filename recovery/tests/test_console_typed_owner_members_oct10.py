@@ -170,7 +170,7 @@ static int ConsoleDragLineX,ConsoleDragLineY,updates,lines;
 struct GraphicWin {void update(int,int,int,int,void *){++updates;}};
 struct Console:GraphicWin {
     Sprite sprite_a_{20,70},sprite_b_{80,30};
-    uint32_t field_23D80_=5,field_23D84_=60,field_23D88_=40,field_23D8C_=90;
+    int field_23D80_=5,field_23D84_=60,field_23D88_=40,field_23D8C_=90;
     int border_thickness_=2,bottom_border_thickness_=3,caption_height_=4;
     RECT client_rect_{0,0,200,160},outer_rect_{0,0,200,160};
     struct {struct {int biWidth=200,biHeight=-160;} bmiHeader;} dib_;
@@ -183,14 +183,19 @@ BODY
 int main(){
     for(int slot=0;slot!=4;++slot)for(int upper=0;upper!=2;++upper){
         Console console;
-        uint32_t *slots[]={&console.field_23D80_,&console.field_23D84_,&console.field_23D88_,&console.field_23D8C_};
-        *slots[slot]=0xFFFFFFFF;updates=lines=0;
+        int *slots[]={&console.field_23D80_,&console.field_23D84_,&console.field_23D88_,&console.field_23D8C_};
+        *slots[slot]=-1;updates=lines=0;
         console.on_nc_mouse_move(upper?1000:-200,upper?1000:-200);
-        assert(updates==2 && lines==2 && *slots[slot]==0xFFFFFFFF);
+        assert(updates==2 && lines==2 && *slots[slot]==-1);
         if(slot<2){assert(ConsoleDragLineX==(upper?186:10) && ConsoleDragLineY==40);}
         else {assert(ConsoleDragLineY==(upper?138:15) && ConsoleDragLineX==(slot==2?5:60));}
     }
     Console idle;updates=lines=0;idle.on_nc_mouse_move(10,20);assert(!updates && !lines);
+    Console signed_values;
+    signed_values.field_23D80_=-17;signed_values.field_23D84_=-19;
+    signed_values.field_23D88_=-23;signed_values.field_23D8C_=-29;updates=lines=0;
+    signed_values.on_nc_mouse_move(40,50);
+    assert(updates==0 && lines==0);
 }
 '''.replace("GETTERS", getters).replace("BODY", body)
 
@@ -201,3 +206,21 @@ int main(){
     ("sprite_b_.height()", "sprite_b_.width()")))
 def test_actual_splitter_member_geometry(tmp_path, compiler, damage):
     run_control(tmp_path, compiler, splitter_control(), damage)
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_splitter_extreme_coordinates_keep_unsigned_intermediates(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    program = splitter_control().replace("#include <cassert>", "#include <cassert>\n#include <climits>")
+    extreme_case = "    Console extremes;\n    extremes.field_23D80_=extremes.field_23D84_=-1;\n    extremes.field_23D88_=extremes.field_23D8C_=-1;\n    updates=lines=0;\n    extremes.on_nc_mouse_move(INT_MIN,INT_MIN);\n    assert(updates>0);\n"
+    assert program.count("    Console signed_values;") == 1
+    program = program.replace("    Console signed_values;", extreme_case + "    Console signed_values;")
+    cpp = tmp_path / "splitter_extremes.cpp"
+    binary = tmp_path / "splitter_extremes"
+    cpp.write_text(program)
+    built = subprocess.run([compiler, "-std=c++11", "-O0", "-fsanitize=undefined", str(cpp), "-o", str(binary)], capture_output=True, text=True)
+    assert built.returncode == 0, built.stderr
+    result = subprocess.run([str(binary)], capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr

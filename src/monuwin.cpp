@@ -1025,9 +1025,7 @@ void MonuWin::on_redraw() {
         if (order[i - 1] == -1 ||
             monuments.records_[order[i - 1]].year_ >
             monuments.records_[order[j]].year_) {
-          const int displaced = order[i - 1];
-          order[i - 1] = order[j];
-          order[j] = displaced;
+          swap(&order[i - 1], &order[j]);
         }
       }
     }

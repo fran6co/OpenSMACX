@@ -118,6 +118,9 @@ def projection(mutation=None):
     declaration = braced(header, "class MonuWin : public GraphicWin {", True)
     methods = "\n\n".join(braced(cpp, marker) for marker in METHODS)
     assert len(re.findall(r"(?m)^(?:\w+ )?MonuWin::", methods)) == 9
+    swap_body = braced((ROOT / "src/general.cpp").read_text(),
+                       "void __cdecl swap(int *var1, int *var2)")
+    methods = swap_body + "\n\n" + methods
     if mutation:
         methods = damage(methods, mutation)
     game = (ROOT / "src/game.h").read_text()

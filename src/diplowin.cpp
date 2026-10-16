@@ -409,9 +409,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
     int low_faction = faction_id_;
     int high_faction = faction_id_with_;
     if (low_faction > high_faction) {
-      const int temporary = low_faction;
-      low_faction = high_faction;
-      high_faction = temporary;
+      swap(&low_faction, &high_faction);
     }
     StringList &destination =
         DiplomacyTranscriptLists[low_faction][high_faction];

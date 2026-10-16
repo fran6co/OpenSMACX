@@ -647,10 +647,10 @@ class Console : public MapWin {
   // in the order destruction reverses.
   Sprite sprite_b_;  // 0x23D28
   Sprite sprite_a_;  // 0x23D54
-  uint32_t field_23D80_;  // 0x23D80
-  uint32_t field_23D84_;  // 0x23D84
-  uint32_t field_23D88_;  // 0x23D88
-  uint32_t field_23D8C_;  // 0x23D8C
+  int field_23D80_;  // 0x23D80 horizontal splitter X, -1 when armed
+  int field_23D84_;  // 0x23D84 horizontal splitter X, -1 when armed
+  int field_23D88_;  // 0x23D88 vertical splitter Y, -1 when armed
+  int field_23D8C_;  // 0x23D8C vertical splitter Y, -1 when armed
   // The vtordisp for the virtual base at 0x23D94 USED to be declared here,
   // because nothing in the chain spelled `virtual` and VC6 emits one only
   // where a virtual base's virtuals are overridden. Win declares its 88

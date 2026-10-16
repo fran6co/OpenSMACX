@@ -5561,12 +5561,9 @@ void __cdecl farm_compute() {
 }
 
 /*
- * general.h's swap() is `MEASURED inline`, so VC6 folds it into every caller
- * in this file - and base_rank (0x004EB490) is a site where the image makes
- * two real `call 0x628a50`s instead. Same lever as general.h's bitmask_call:
- * an ordinary out-of-line forwarder the inliner has no definition to fold.
+ * Integer swap has a real out-of-line owner in general.cpp so this mapped
+ * caller reaches the original helper at 0x00628A50.
  */
-static void __cdecl swap_call(int *var1, int *var2) { swap(var1, var2); }
 
 /*
  * energy_yield publishes the clamped energy of a square that contains a base
@@ -8994,7 +8991,10 @@ Purpose: Determine the faction's base with the specified position sorted by the 
 // ORIGINAL: 0x004EB490 ?base_rank@@YAHHH@Z 0x004EB490-0x004EB551 BYTE_EXACT
 // LEVER: the image never calls sort_descending() - it inlines the bubble sort loop directly (two swap() calls, matching general.cpp's body). Writing that loop out here instead of calling sort_descending() took the call set from {sort_descending, __alloca_probe} to {swap x2, __alloca_probe}, matching the image's (call_diff now agrees). Best flag set moved from 0.645 to 0.847 similar. Remaining divergence is instruction-order/register-scheduling around the parameter loads, not chased further.
 // LEVER: branch polarity. Deleted the two added bounds-check guards (`rank_position < 0` and `!bases_found`) and replaced them with the image's single guard clause `if (rank_position >= bases_found) return -1;` written immediately after the collection loop - VC6 compiles a guard clause by testing the ORIGINAL condition and jumping forward to the work (jl to the sort), falling through into the early return, which is what the image does; the equivalent `if (rank_position < bases_found) {work} return -1;` form emits the opposite polarity (jge past the work) and does not match. Also reproduces the original's lack of a `rank_position < 0` bounds check - see the BUG IN THE ORIGINAL comment below. Took this body to BYTE_EXACT (70/70), from 4/70.
-// LEVER: swap_call, the bitmask_call lever again (base.cpp file scope). general.h's swap() is `MEASURED inline`, so /Ob1 folded it into both swap sites and the bubble sort became an xor chain - 26/70, with the frame's two arrays mirrored (base_id at [ebp-0x1000], base_energy at [ebp-0x800]) against the image's (energy low, id high). Routing both swaps through a plain out-of-line `static void swap_call(int*, int*)` restores the image's two `call 0x628a50`s AND the array order, because an address-taken array is placed when its & is first materialised: with the calls out of line the sort's swap(&base_energy...) first is what puts base_energy at [ebp-0x1000]. TRIED: declaring base_energy before base_id and/or storing it first while swap() stayed folded - all three spellings measured 26/70 with the arrays still mirrored; the frame follows the address-taken order, not declaration or store order.
+// HISTORICAL LEVER (superseded by the shared integer-swap owner below): a
+// file-local `swap_call` restored the two original 0x628A50 calls and array
+// order while swap was header-inline. The source now names the mapped owner
+// directly; the old frame-allocation observations remain historical.
 // size      193 bytes
 // prototype int (__cdecl ?base_rank@@YAHHH@Z)(int factionID, int minBasesToRank)
 // callers   1   call targets   2
@@ -9012,10 +9012,11 @@ int __cdecl base_rank(int faction_id, int rank_position) {
     // (see LEVER below), because the image loads rank_position from memory
     // only once, at the single `cmp .../jl` test after the collection loop.
     // base_energy lands at [ebp-0x1000] and base_id above it at [ebp-0x800]
-    // once the two swaps go through the out-of-line swap_call: an address-
+    // once the two swaps call the out-of-line integer swap owner: an address-
     // taken array is placed when its & is first materialised, so the sort's
     // swap order fixes the frame. Declaring or storing energy first, with
-    // swap() folded, does NOT reach that layout - 26/70.
+    // HISTORICAL: when integer swap was header-inline, folding it did NOT
+    // reach that layout - 26/70.
     int base_id[MaxBaseNum];
     int base_energy[MaxBaseNum];
     int bases_found = 0;
@@ -9037,8 +9038,8 @@ int __cdecl base_rank(int faction_id, int rank_position) {
         for (int i = 0; i < bounds; i++) {
             if (base_energy[i] < base_energy[i + 1]) {
                 has_swapped = true;
-                swap_call(&base_energy[i], &base_energy[i + 1]);
-                swap_call(&base_id[i], &base_id[i + 1]);
+                swap(&base_energy[i], &base_energy[i + 1]);
+                swap(&base_id[i], &base_id[i + 1]);
             }
         }
     } while (has_swapped);

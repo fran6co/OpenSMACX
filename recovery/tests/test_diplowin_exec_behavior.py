@@ -84,6 +84,11 @@ def test_diplowin_exec_and_transcript_bodies(compiler_name, tmp_path):
             "void DiploWin::exec(int faction_id, int faction_id_with)",
         )
     )
+    swap_body = extract_function(
+        (SOURCE_ROOT / "src" / "general.cpp").read_text(),
+        "void __cdecl swap(int *var1, int *var2)",
+    )
+    methods = swap_body + "\n\n" + methods
     transcript = extract_function(
         diplowin, 'extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with)'
     )
@@ -134,6 +139,10 @@ def test_diplowin_geometry_oracle_rejects_mutants(
         "void DiploWin::exec(int faction_id, int faction_id_with)",
     )
     methods = [extract_function(diplowin, signature) for signature in signatures]
+    methods.insert(0, extract_function(
+        (SOURCE_ROOT / "src" / "general.cpp").read_text(),
+        "void __cdecl swap(int *var1, int *var2)",
+    ))
     assert methods[-1].count(old) == 1
     methods[-1] = methods[-1].replace(old, new, 1)
     generated = FIXTURE.read_text()

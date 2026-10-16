@@ -62,8 +62,8 @@ struct Console {
     uint32_t survey_mode_, field_23C04_, field_23BFC_, field_23BF8_;
     int32_t cursor_history_index_;
     int32_t cursor_history_x_[32], cursor_history_y_[32];
-    uint32_t field_23D10_, field_23D18_, field_23D88_, field_23D80_;
-    uint32_t field_23D8C_, field_23D84_;
+    uint32_t field_23D10_, field_23D18_;
+    int field_23D88_, field_23D80_, field_23D8C_, field_23D84_;
     GraphicWin graphic_win_;
     Buffer buffer_;
     Time time_;

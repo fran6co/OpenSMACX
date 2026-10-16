@@ -31,9 +31,10 @@ def test_actual_startup_order_geometry_lifetime_and_mutants(tmp_path,compiler_na
     body=product_bodies()
     replacements={
         'font':('MainInterfaceGlobal.tertiary_font()', 'MainInterfaceGlobal.secondary_font()'),
-        'multiplayer_width':('multi_client.left - multi_client.right','multi_client.right - multi_client.left'),
-        'height':('-10 - static_cast<int>(ConsoleGlobal.dib_.bmiHeader.biHeight)',
-                  '-10 + static_cast<int>(ConsoleGlobal.dib_.bmiHeader.biHeight)'),
+        'multiplayer_width':('static_cast<uint32_t>(multi_client.left) -\n            static_cast<uint32_t>(multi_client.right)',
+                             'static_cast<uint32_t>(multi_client.right) -\n            static_cast<uint32_t>(multi_client.left)'),
+        'height':('static_cast<uint32_t>(-10) -\n        static_cast<uint32_t>(ConsoleGlobal.dib_.bmiHeader.biHeight)',
+                  'static_cast<uint32_t>(-10) +\n        static_cast<uint32_t>(ConsoleGlobal.dib_.bmiHeader.biHeight)'),
         'initial_store':('ConsoleGlobal.field_23D80_ = 10;', ''),
     }
     if mutation!='none':

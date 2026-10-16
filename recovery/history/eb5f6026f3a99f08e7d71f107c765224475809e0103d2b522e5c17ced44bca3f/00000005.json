@@ -1,0 +1,19 @@
+{
+  "event_id": "688920db379ad8c3150fd10fcb01371d2e7de02f0f4703cd3fafb820e8969917",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/startup_owner_host.cpp"
+    ],
+    "evidence": [
+      "Include the existing startup host fixture dependency needed to compile actual desktop_init source with uint32_t modular intermediates and signed Console splitter members. Retain existing behavior assertions; candidate full build and 52 targeted host tests pass. No application scope expansion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fc24f2d4dca30e39a49e9b125a5fe48a5e8e9b584712868d8b3f82332941f326",
+  "request_id": "startup-host-fixture-dependency",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:integer-swap-owner-oct16"
+}

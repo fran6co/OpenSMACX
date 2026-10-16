@@ -6588,8 +6588,8 @@ int Console::on_nc_hittest(int x_coord, int y_coord) {
     // The original exits with EAX=1 while any split line is armed.  The
     // archived unit's catalogued void prototype was therefore incomplete;
     // the virtual slot and the product declaration both return int.
-    if (field_23D80_ == 0xFFFFFFFFu || field_23D84_ == 0xFFFFFFFFu ||
-        field_23D88_ == 0xFFFFFFFFu || field_23D8C_ == 0xFFFFFFFFu) {
+    if (field_23D80_ == -1 || field_23D84_ == -1 ||
+        field_23D88_ == -1 || field_23D8C_ == -1) {
         return 1;
     }
 
@@ -6764,9 +6764,9 @@ void Console::on_nc_left_down(int x_coord, int y_coord) {
         }
 
         if (left_reach < right_reach) {
-            field_23D88_ = 0xFFFFFFFFu;
+            field_23D88_ = -1;
         } else {
-            field_23D8C_ = 0xFFFFFFFFu;
+            field_23D8C_ = -1;
         }
 
         if (WinPointerOwner4 == 0) {
@@ -6790,9 +6790,9 @@ void Console::on_nc_left_down(int x_coord, int y_coord) {
                                                       : -to_bottom_slot;
 
         if (dist_top < dist_bottom) {
-            field_23D80_ = 0xFFFFFFFFu;
+            field_23D80_ = -1;
         } else {
-            field_23D84_ = 0xFFFFFFFFu;
+            field_23D84_ = -1;
         }
 
         if (WinPointerOwner4 == 0) {
@@ -6835,46 +6835,46 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
     const int track_height = sprite_a_.width();
     const int track_width = sprite_b_.height();
 
-    if (field_23D80_ == 0xFFFFFFFFu) {
+    if (field_23D80_ == -1) {
         const int half = track_height / 2;
-        field_23D80_ =
-            static_cast<uint32_t>(x_coord - border_thickness_);
-        if (static_cast<int>(field_23D80_) < half) {
-            field_23D80_ = static_cast<uint32_t>(half);
+        field_23D80_ = static_cast<int>(static_cast<uint32_t>(x_coord) -
+                                        static_cast<uint32_t>(border_thickness_));
+        if (field_23D80_ < half) {
+            field_23D80_ = half;
         }
         const int limit = client_rect_.right - client_rect_.left -
                           border_thickness_ * 2 - half;
-        if (static_cast<int>(field_23D80_) > limit) {
-            field_23D80_ = static_cast<uint32_t>(limit);
+        if (field_23D80_ > limit) {
+            field_23D80_ = limit;
         }
-        line_x = static_cast<int>(field_23D80_);
-        line_y = static_cast<int>(field_23D88_);
+        line_x = field_23D80_;
+        line_y = field_23D88_;
         redraw_nc_buffer(2);
-        field_23D80_ = 0xFFFFFFFFu;
+        field_23D80_ = -1;
         update_nc_buffer(2);
-    } else if (field_23D84_ == 0xFFFFFFFFu) {
+    } else if (field_23D84_ == -1) {
         const int half = track_height / 2;
-        field_23D84_ =
-            static_cast<uint32_t>(x_coord - border_thickness_);
-        if (static_cast<int>(field_23D84_) < half) {
-            field_23D84_ = static_cast<uint32_t>(half);
+        field_23D84_ = static_cast<int>(static_cast<uint32_t>(x_coord) -
+                                        static_cast<uint32_t>(border_thickness_));
+        if (field_23D84_ < half) {
+            field_23D84_ = half;
         }
         const int limit = client_rect_.right - client_rect_.left -
                           border_thickness_ * 2 - half;
-        if (static_cast<int>(field_23D84_) > limit) {
-            field_23D84_ = static_cast<uint32_t>(limit);
+        if (field_23D84_ > limit) {
+            field_23D84_ = limit;
         }
-        line_x = static_cast<int>(field_23D84_);
-        line_y = static_cast<int>(field_23D88_);
+        line_x = field_23D84_;
+        line_y = field_23D88_;
         redraw_nc_buffer(2);
-        field_23D84_ = 0xFFFFFFFFu;
+        field_23D84_ = -1;
         update_nc_buffer(2);
     } else {
         line_x = x_coord;
         line_y = x_coord;
     }
 
-    if (field_23D88_ == 0xFFFFFFFFu) {
+    if (field_23D88_ == -1) {
         const int bottom_border = (bottom_border_thickness_ >= 0)
             ? bottom_border_thickness_ : border_thickness_;
         const int extent = client_rect_.top - caption_height_ -
@@ -6882,21 +6882,22 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
                            outer_rect_.bottom + caption_height_ +
                            bottom_border;
         const int half = track_width / 2;
-        field_23D88_ = static_cast<uint32_t>(extent + y_coord);
-        if (static_cast<int>(field_23D88_) < half) {
-            field_23D88_ = static_cast<uint32_t>(half);
+        field_23D88_ = static_cast<int>(static_cast<uint32_t>(extent) +
+                                        static_cast<uint32_t>(y_coord));
+        if (field_23D88_ < half) {
+            field_23D88_ = half;
         }
         const int limit = client_rect_.bottom - client_rect_.top -
                           caption_height_ - bottom_border - half;
-        if (static_cast<int>(field_23D88_) > limit) {
-            field_23D88_ = static_cast<uint32_t>(limit);
+        if (field_23D88_ > limit) {
+            field_23D88_ = limit;
         }
-        line_x = static_cast<int>(field_23D80_);
-        line_y = static_cast<int>(field_23D88_);
+        line_x = field_23D80_;
+        line_y = field_23D88_;
         redraw_nc_buffer(1);
-        field_23D88_ = 0xFFFFFFFFu;
+        field_23D88_ = -1;
         update_nc_buffer(1);
-    } else if (field_23D8C_ == 0xFFFFFFFFu) {
+    } else if (field_23D8C_ == -1) {
         const int bottom_border = (bottom_border_thickness_ >= 0)
             ? bottom_border_thickness_ : border_thickness_;
         const int extent = client_rect_.top - caption_height_ -
@@ -6904,24 +6905,25 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
                            outer_rect_.bottom + caption_height_ +
                            bottom_border;
         const int half = track_width / 2;
-        field_23D8C_ = static_cast<uint32_t>(extent + y_coord);
-        if (static_cast<int>(field_23D8C_) < half) {
-            field_23D8C_ = static_cast<uint32_t>(half);
+        field_23D8C_ = static_cast<int>(static_cast<uint32_t>(extent) +
+                                        static_cast<uint32_t>(y_coord));
+        if (field_23D8C_ < half) {
+            field_23D8C_ = half;
         }
         const int limit = client_rect_.bottom - client_rect_.top -
                           caption_height_ - bottom_border - half;
-        if (static_cast<int>(field_23D8C_) > limit) {
-            field_23D8C_ = static_cast<uint32_t>(limit);
+        if (field_23D8C_ > limit) {
+            field_23D8C_ = limit;
         }
-        line_x = static_cast<int>(field_23D84_);
-        line_y = static_cast<int>(field_23D8C_);
+        line_x = field_23D84_;
+        line_y = field_23D8C_;
         redraw_nc_buffer(1);
-        field_23D8C_ = 0xFFFFFFFFu;
+        field_23D8C_ = -1;
         update_nc_buffer(1);
     }
 
-    if (field_23D80_ != 0xFFFFFFFFu && field_23D84_ != 0xFFFFFFFFu &&
-        field_23D88_ != 0xFFFFFFFFu && field_23D8C_ != 0xFFFFFFFFu) {
+    if (field_23D80_ != -1 && field_23D84_ != -1 &&
+        field_23D88_ != -1 && field_23D8C_ != -1) {
         return;
     }
 
@@ -7459,11 +7461,31 @@ void Console::go_to(int subject, int order, int grouped) {
             if (sorting == 1) scores[i] = Bases[i].population_size;
             else if (sorting == 2) scores[i] = -console_destination_distance(source_x, source_y, Bases[i].x, Bases[i].y);
         }
-        for (int pass = 0; pass < GameDataStateStorage.fields_.base_current_count_; ++pass) for (int j = 0; j < GameDataStateStorage.fields_.base_current_count_ - pass - 1; ++j) {
-            if (sorting ? scores[j] < scores[j + 1] : _stricmp(Bases[ids[j]].name_string, Bases[ids[j + 1]].name_string) > 0) {
-                const int id = ids[j]; ids[j] = ids[j + 1]; ids[j + 1] = id;
-                if (sorting) { const int score = scores[j]; scores[j] = scores[j + 1]; scores[j + 1] = score; }
-            }
+        if (sorting) {
+            const int bounds = GameDataStateStorage.fields_.base_current_count_ - 1;
+            int changed;
+            do {
+                changed = 0;
+                for (int j = 0; j < bounds; ++j) {
+                    if (scores[j] < scores[j + 1]) {
+                        changed = 1;
+                        swap(&scores[j], &scores[j + 1]);
+                        swap(&ids[j], &ids[j + 1]);
+                    }
+                }
+            } while (changed != 0);
+        } else {
+            int changed;
+            do {
+                changed = 0;
+                for (int j = 0; j < GameDataStateStorage.fields_.base_current_count_ - 1; ++j) {
+                    if (_stricmp(Bases[ids[j]].name_string,
+                                 Bases[ids[j + 1]].name_string) > 0) {
+                        changed = 1;
+                        swap(&ids[j], &ids[j + 1]);
+                    }
+                }
+            } while (changed != 0);
         }
         for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
             const int id = ids[candidate]; Base &base = Bases[id];
@@ -10654,9 +10676,9 @@ void Console::on_nc_left_up(int x, int y) {
         WinPointerOwner4 = nullptr;
     }
 
-    const uint32_t dragging = 0xFFFFFFFFu;
+    const int dragging = -1;
     if (field_23D80_ == dragging || field_23D84_ == dragging) {
-        uint32_t *const target = field_23D80_ == dragging
+        int *const target = field_23D80_ == dragging
             ? &field_23D80_ : &field_23D84_;
         const int half = sprite_a_.width() / 2;
         int position = x - border_thickness_;
@@ -10664,12 +10686,12 @@ void Console::on_nc_left_up(int x, int y) {
         const int limit = client_rect_.right - client_rect_.left -
                           border_thickness_ * 2 - half;
         if (position > limit) position = limit;
-        *target = static_cast<uint32_t>(position);
+        *target = position;
         update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
         update(ConsoleDragLineX, 0, 1,
                -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
     } else if (field_23D88_ == dragging || field_23D8C_ == dragging) {
-        uint32_t *const target = field_23D88_ == dragging
+        int *const target = field_23D88_ == dragging
             ? &field_23D88_ : &field_23D8C_;
         const int bottom_border = bottom_border_thickness_ >= 0
             ? bottom_border_thickness_ : border_thickness_;
@@ -10681,23 +10703,17 @@ void Console::on_nc_left_up(int x, int y) {
         const int limit = client_rect_.bottom - client_rect_.top -
                           caption_height_ - bottom_border - half;
         if (position > limit) position = limit;
-        *target = static_cast<uint32_t>(position);
+        *target = position;
         update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
         update(ConsoleDragLineX, 0, 1,
                -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
     }
 
-    if (static_cast<int32_t>(field_23D88_) >
-        static_cast<int32_t>(field_23D8C_)) {
-        const uint32_t value = field_23D88_;
-        field_23D88_ = field_23D8C_;
-        field_23D8C_ = value;
+    if (field_23D88_ > field_23D8C_) {
+        swap(&field_23D88_, &field_23D8C_);
     }
-    if (static_cast<int32_t>(field_23D80_) >
-        static_cast<int32_t>(field_23D84_)) {
-        const uint32_t value = field_23D80_;
-        field_23D80_ = field_23D84_;
-        field_23D84_ = value;
+    if (field_23D80_ > field_23D84_) {
+        swap(&field_23D80_, &field_23D84_);
     }
 }
 

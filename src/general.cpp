@@ -367,8 +367,6 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
-
-
 /*
 Purpose: Allocate memory with error checking.
 // ORIGINAL: 0x005D4510 ?mem_get@@YAPAXH@Z 0x005D4510-0x005D453C BYTE_EXACT
@@ -1401,7 +1399,7 @@ void __cdecl my_srand(int reseed) {
 Purpose: Bubble-sort one int array descending while applying the identical
          exchanges to a parallel array addressed relative to it.
 // ORIGINAL: 0x004D5F70 sub_4d5f70 0x004D5F70-0x004D5FE6 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4D5F70..4D5FE6; retired seed git:b18d3ac8:src/unrecovered/004d5f70.cpp records the same identity and spans.", "The sole callee 0x00628A50 is general.h's inline swap(int *, int *), declared in the header this TU already includes; the parallel array is reached by the same base-plus-index arithmetic the seed measured."], "reason": "Coverage transcription of the paired bubble sort with the in-tree swap; the parallel-array base stays an int because no owning array is named anywhere in the tree."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4D5F70..4D5FE6; retired seed git:b18d3ac8:src/unrecovered/004d5f70.cpp records the same identity and spans.", "The pinned body calls integer swap at 0x628A50; the typed declaration and implementation are owned by general.h/general.cpp.", "The parallel array is reached by the same base-plus-index arithmetic the seed measured."], "reason": "Coverage transcription of the paired bubble sort with the source-owned integer swap; the parallel-array base stays an int because no owning array is named anywhere in the tree."}
 // symbol    _sub_4d5f70
 Status: Coverage transcription - unclaimed body
 */
@@ -1431,13 +1429,13 @@ extern "C" void __cdecl sub_4d5f70(int *parallel, int *values, int count) {
 }
 
 /*
-Purpose: Swap the values of two 32-bit variables. Added an additional check when swapping the same
-         memory location.
+Purpose: Swap two 32-bit variables with the original XOR sequence; if both
+         pointers alias, the sequence produces zero.
 // ORIGINAL: 0x00628A50 ?swap@@YAXPAHPAH@Z 0x00628A50-0x00628A73 BYTE_EXACT
-// body      src/general.h
+// body      src/general.cpp
 // symbol    ?swap@@YAXPAH0@Z
 // size      35 bytes
-// prototype 
+// prototype void (__cdecl ?swap@@YAXPAHPAH@Z)(int*, int*)
 // callers   14   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
@@ -1445,10 +1443,14 @@ Purpose: Swap the values of two 32-bit variables. Added an additional check when
 Return Value: n/a
 Status: Complete
 */
-// BODY IN general.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// Integer swap's source owner is out of line here; the byte overload stays
+// inline in general.h. This is a source ownership decision, not proof of the
+// original translation-unit boundary.
+void __cdecl swap(int *var1, int *var2) {
+    *var1 ^= *var2;
+    *var2 ^= *var1;
+    *var1 ^= *var2;
+}
 
 
 /*
