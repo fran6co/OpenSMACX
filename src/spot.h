@@ -70,8 +70,9 @@ class Spot {
       int position;
   } *spots_;
   // RECOVERY_MEMBER: v1 Spot max_count_ 0x4 0x005FA8A0
-  uint32_t max_count_;  // 0x0004; Spot::init stores count at this+4
-  uint32_t add_count_;
+  int max_count_;  // 0x0004; Spot::init stores its signed count at this+4
+  // RECOVERY_MEMBER: v1 Spot add_count_ 0x8 0x005FA900
+  int add_count_;  // 0x0008; pinned mapped methods use signed count branches
 };
 
 #if defined(_M_IX86) || defined(__i386__)

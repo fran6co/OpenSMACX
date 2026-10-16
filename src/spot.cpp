@@ -70,7 +70,7 @@ Return Value: n/a
 Status: Complete
 */
 void Spot::replace(int position, int type, int left, int top, int length, int width) {
-    for (int i = 0; i < static_cast<int>(add_count_); i++) {
+    for (int i = 0; i < add_count_; i++) {
         SpotInternal *const spot = &spots_[i];
         if (spot->position == position && spot->type == type) {
             spot->rect.left = left;
@@ -98,8 +98,8 @@ Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
 int Spot::add(int position, int type, int left, int top, int length, int width) {
-    const int index = static_cast<int>(add_count_);
-    if (index >= static_cast<int>(max_count_)) {
+    const int index = add_count_;
+    if (index >= max_count_) {
         return -1;
     }
     add_count_ = index + 1;
@@ -136,11 +136,11 @@ Return Value: n/a
 Status: Complete
 */
 void Spot::kill_pos(int position) {
-    if (position < 0 || position >= static_cast<int>(add_count_)) {
+    if (position < 0 || position >= add_count_) {
         return;
     }
-    if (position < static_cast<int>(add_count_) - 1) {
-        for (int i = position; i < static_cast<int>(add_count_) - 1; i++) {
+    if (position < add_count_ - 1) {
+        for (int i = position; i < add_count_ - 1; i++) {
             spots_[i] = spots_[i + 1];
         }
     }
@@ -165,10 +165,11 @@ Return Value: n/a
 Status: Complete
 */
 void Spot::kill_specific(int position, int type) {
-    for (int i = add_count_ - 1; i >= 0; i--) {
+    // Keep the original modulo-2^32 reverse start when count is INT_MIN.
+    for (int i = static_cast<int>(static_cast<uint32_t>(add_count_) - 1u); i >= 0; i--) {
         if (spots_[i].position == position && spots_[i].type == type) {
-            if (i >= 0 && i < static_cast<int>(add_count_)) {
-                for (int j = i; j < static_cast<int>(add_count_) - 1; j++) {
+            if (i >= 0 && i < add_count_) {
+                for (int j = i; j < add_count_ - 1; j++) {
                     spots_[j] = spots_[j + 1];
                 }
                 add_count_--;
@@ -190,10 +191,10 @@ Return Value: n/a
 Status: Complete
 */
 void Spot::kill_type(int type) {
-    for (int i = static_cast<int>(add_count_) - 1; i >= 0; i--) {
+    for (int i = add_count_ - 1; i >= 0; i--) {
         if (spots_[i].type == type) {
-            if (i >= 0 && i < static_cast<int>(add_count_)) {
-                for (int j = i; j < static_cast<int>(add_count_) - 1; j++) {
+            if (i >= 0 && i < add_count_) {
+                for (int j = i; j < add_count_ - 1; j++) {
                     spots_[j] = spots_[j + 1];
                 }
                 add_count_--;
@@ -216,7 +217,7 @@ Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
 int Spot::check(int x, int y, int *spot_pos, int *spot_type) {
-    int i = static_cast<int>(add_count_) - 1;
+    int i = add_count_ - 1;
     if (i < 0) {
         return -1;
     }
@@ -253,7 +254,7 @@ Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
 int Spot::check(int x, int y, int *spot_pos, int *spot_type, RECT *spot_rect) {
-    int i = static_cast<int>(add_count_) - 1;
+    int i = add_count_ - 1;
     if (i < 0) {
         return -1;
     }
@@ -292,7 +293,9 @@ Return Value: Spot position on success otherwise -1 on error
 Status: Complete
 */
 int Spot::get_rect(int position, int type, RECT *spot_rect) {
-    int offset = add_count_ - 1;
+    // This source expression historically subtracts in the 32-bit unsigned
+    // domain before converting back to int; retain INT_MIN wrap behavior.
+    int offset = static_cast<int>(static_cast<uint32_t>(add_count_) - 1u);
     if (offset < 0) {
         return -1;
     }
@@ -358,23 +361,3 @@ Spot::~Spot() {
 // calls     (none)
 // notes     Staged hybrid export redirect calls the source-owned method
 */
-
-
-// Mirrors the recovered Spot::init (src/spot.cpp) for builds that link this
-// minimal Spot support rather than the full implementation - recovery-leaf-tests
-// needs it because Buffer::clear_links calls init.
-//
-// Guarded, because the annotated recovery lives in spot.cpp and every build that
-// links both had two strong definitions of it. The DLL only tolerated that
-// through -Wl,--allow-multiple-definition, which left the choice of body to link
-// order rather than to anything deliberate.
-#if defined(OPENSMACX_SPOT_MINIMAL_INIT)
-void Spot::init(uint32_t count) {
-    shutdown();
-    spots_ = reinterpret_cast<SpotInternal *>(mem_get(count * sizeof(SpotInternal)));
-    if (spots_) {
-        max_count_ = count;
-        add_count_ = 0;
-    }
-}
-#endif
