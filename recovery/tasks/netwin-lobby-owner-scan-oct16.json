@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "4ebf1b1f9e89d7f49d5977b8a00f49102e6c4233",
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_row_owners.py",
+    "recovery/tests/test_netwin_lobby_owner_scan_oct16.py"
+  ],
+  "evidence": [
+    "Original draw_session_info 0x00480900 scans the owner dword at 0x0090DE8C, the second 0x17C-byte row's +0x178 owner; original 0x00481823..0x00481833 compares that dword and advances by 0x17C until the live signed player count. The source owns this same table as NetWinLobbyRows and proves row extent/member offset independently.",
+    "Current source casts &NetWinLobbyRows[1].owner_ to unsigned long* and adds 0x5F dwords. Replace only that bounded scan with const NetWinLobbyRow* starting at row1, named owner_ access and ordinary row increment. Preserve every count reload, zero-owner exclusion, early exit and connected tally. Do not clamp the original scan or invent producer/allocation/lifetime claims.",
+    "Add actual-source extracted scan controls and executable damage cases, including zero/negative counts, matching first/last rows and skipped row0. Adapt the old source-spelling assertion to enforce the real row/member relation rather than preserve the obsolete cast. Preserve all original mappings, complete spans, historical claims and unrelated tests.",
+    "Require full-TU before/after measurements, fresh build/link, strict physical collateral review, claim continuity, live references and destination recheck before coordinator-reviewed manual integration. No full-game or autonomous acceptance claim; this is source quality/structure recovery, not an increase in function count."
+  ],
+  "intent": "Recover the lobby-owner scan through the already established NetWinLobbyRow owner member and row stride, eliminating its raw dword pointer cast and magic 0x5F increment without changing the original uncapped scan or matching obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4720896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-lobby-owner-scan-oct16"
+}
