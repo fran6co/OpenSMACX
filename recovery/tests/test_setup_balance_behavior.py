@@ -1,5 +1,6 @@
 """Host controls for the actual balance initializer body."""
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -8,6 +9,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SIGNATURE = "void __cdecl balance() {"
+CONTINENT_PLACEHOLDER = "CONTINENT_DECLARATION"
 
 
 def source_body() -> str:
@@ -25,11 +27,30 @@ def source_body() -> str:
     raise AssertionError("unterminated balance body")
 
 
+def continent_declaration() -> str:
+    header = (ROOT / "src/map.h").read_text()
+    match = re.search(r"\bstruct\s+Continent\s*\{", header)
+    assert match, "Continent declaration missing from src/map.h"
+    opening = header.index("{", match.start())
+    depth = 0
+    for end in range(opening, len(header)):
+        depth += (header[end] == "{") - (header[end] == "}")
+        if depth == 0:
+            assert header[end + 1] == ";"
+            declaration = header[match.start():end + 2]
+            assert "int tile_count;" in declaration
+            return declaration
+    raise AssertionError("unterminated Continent declaration")
+
+
 HARNESS = r"""
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #define __cdecl
+#include "game_data_state_host.h"
+GameDataStateWindow GameDataStateStorage = {};
 enum { MaxPlayerNum=8, BIT_RIVER=0x80, RFLAG_AQUATIC=0x100 };
 struct Map { uint8_t climate, contour, val2, region, visibility, val3, unk_1, territory;
              uint32_t bit, bit2, bit_visible[7]; };
@@ -44,7 +65,7 @@ struct Veh { int16_t x,y; uint32_t state; uint16_t flags; int16_t proto_id,unk_1
 struct VehPrototype { char name[32]; uint32_t ability_flags; uint8_t chassis_id,weapon_id,
   armor_id,reactor_id,carry_capacity,cost,plan; int8_t unk_1; uint8_t obsolete_factions;
   int8_t combat_factions,icon_offset,padding; uint16_t flags; int16_t preq_tech; };
-struct Continent { uint32_t tile_count,open_terrain,unk_3,pods,unk_5; uint8_t sea_coasts[8]; };
+CONTINENT_DECLARATION
 Player Players[8]; Veh Vehs[2049]; VehPrototype VehPrototypes[128];
 Continent Continents[129]; Map tiles[5000]; Map *MapTiles=tiles;
 int MapLongitudeBounds=100, MapLatitudeBounds=100, MapIsFlat=1;
@@ -76,7 +97,8 @@ int main() {
   Vehs[11].x=60; Vehs[11].y=60; Vehs[11].faction_id=2;
   for (int i=0;i<5000;++i) tiles[i]=Map();
   map_loc(30,30)->region=1; map_loc(60,60)->region=2;
-  Continents[1].open_terrain=1; Continents[2].open_terrain=1000;
+  Continents[1].tile_count=32; Continents[1].open_terrain=512;
+  Continents[2].tile_count=225; Continents[2].open_terrain=0;
   goody_result=1;
   rand_values[0]=0; rand_values[1]=15; rand_count=2;
   balance();
@@ -94,7 +116,8 @@ int main() {
   // A faction carrying the original 0x100 rule bit skips veh_init, while an
   // otherwise identical faction creates a defender and links no fabricated
   // unit state from the return slot.
-  find_count=init_calls=bit_calls=rand_index=0; DiffLevelCurrent=4;
+  find_count=init_calls=bit_calls=rand_index=0;
+  GameDataStateStorage.fields_.diff_level_current_=4;
   Players[1].rule_flags=0x100;
   balance();
   assert(init_calls==0);
@@ -102,15 +125,93 @@ int main() {
   Players[1].rule_flags=0;
   balance();
   assert(init_calls>0 && init_faction[0]==1 && Vehs[2048].next_veh_id_stack==-1);
+
+  // The first formula changes at tile_count 32 -> 33 while the /64 component
+  // remains one. Distinct open_terrain values make a wrong first read visible.
+  memset(Players,0,sizeof(Players)); memset(Vehs,0,sizeof(Vehs));
+  memset(Continents,0,sizeof(Continents)); memset(MapTiles,0,sizeof(tiles));
+  GameDataStateStorage.fields_.diff_level_current_=0;
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_=0;
+  for(int i=0;i<8;++i)find_result[i]=-1;
+  find_result[1]=10; find_result[2]=11;
+  Vehs[10].x=30; Vehs[10].y=30; Vehs[11].x=60; Vehs[11].y=60;
+  map_loc(30,30)->region=1; map_loc(60,60)->region=2;
+  Continents[1].tile_count=32; Continents[2].tile_count=33;
+  Continents[1].open_terrain=0; Continents[2].open_terrain=0;
+  find_count=init_calls=bit_calls=rand_index=rand_count=0; goody_result=0;
+  balance();
+  assert(bit_calls==1);
+
+  // The second formula changes at tile_count 0 -> 1 while /32 stays one.
+  // Matching open_terrain values distinguish the wrong second read.
+  memset(Players,0,sizeof(Players)); memset(Vehs,0,sizeof(Vehs));
+  memset(Continents,0,sizeof(Continents)); memset(MapTiles,0,sizeof(tiles));
+  GameDataStateStorage.fields_.diff_level_current_=0;
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_=0;
+  for(int i=0;i<8;++i)find_result[i]=-1;
+  find_result[1]=10; find_result[2]=11;
+  Vehs[10].x=30; Vehs[10].y=30; Vehs[11].x=60; Vehs[11].y=60;
+  map_loc(30,30)->region=1; map_loc(60,60)->region=2;
+  Continents[1].tile_count=0; Continents[2].tile_count=1;
+  Continents[1].open_terrain=0; Continents[2].open_terrain=0;
+  find_count=init_calls=bit_calls=rand_index=rand_count=0;
+  balance();
+  assert(bit_calls==1);
+
+  // Negative signed input covers the lower clamp in each formula. The two
+  // wrong-field mutations collapse the correct three-placement deficit.
+  memset(Players,0,sizeof(Players)); memset(Vehs,0,sizeof(Vehs));
+  memset(Continents,0,sizeof(Continents)); memset(MapTiles,0,sizeof(tiles));
+  GameDataStateStorage.fields_.diff_level_current_=0;
+  GameDataStateStorage.fields_.lock_masks_.enable_mask_=0;
+  for(int i=0;i<8;++i)find_result[i]=-1;
+  find_result[1]=10; find_result[2]=11;
+  Vehs[10].x=30; Vehs[10].y=30; Vehs[11].x=60; Vehs[11].y=60;
+  map_loc(30,30)->region=1; map_loc(60,60)->region=2;
+  Continents[1].tile_count=-128; Continents[2].tile_count=128;
+  Continents[1].open_terrain=128; Continents[2].open_terrain=0;
+  find_count=init_calls=bit_calls=rand_index=rand_count=0;
+  balance();
+  assert(bit_calls==2);
 }
 """
 
 
 @pytest.mark.skipif(not shutil.which("g++"), reason="host C++ compiler unavailable")
 def test_balance_actual_body(tmp_path: Path) -> None:
-    program = HARNESS.replace("BODY", source_body())
+    program = HARNESS.replace("BODY", source_body()).replace(
+        CONTINENT_PLACEHOLDER, continent_declaration())
+    host_state = ROOT / "recovery/tests/vehicle_gameplay_six/game_data_state_host.h"
+    (tmp_path / host_state.name).write_bytes(host_state.read_bytes())
     source = tmp_path / "balance.cpp"
     binary = tmp_path / "balance"
     source.write_text(program)
     subprocess.run(["g++", "-std=c++11", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(binary)], check=True)
     subprocess.run([str(binary)], check=True)
+
+
+def run_body(tmp_path: Path, body: str) -> subprocess.CompletedProcess:
+    program = HARNESS.replace("BODY", body).replace(
+        CONTINENT_PLACEHOLDER, continent_declaration())
+    host_state = ROOT / "recovery/tests/vehicle_gameplay_six/game_data_state_host.h"
+    (tmp_path / host_state.name).write_bytes(host_state.read_bytes())
+    source = tmp_path / "balance.cpp"
+    binary = tmp_path / "balance"
+    source.write_text(program)
+    subprocess.run(["g++", "-std=c++11", "-Wall", "-Wextra", "-Werror",
+                    str(source), "-o", str(binary)], check=True)
+    return subprocess.run([str(binary)], capture_output=True, text=True)
+
+
+@pytest.mark.skipif(not shutil.which("g++"), reason="host C++ compiler unavailable")
+@pytest.mark.parametrize(("before", "after"), [
+    ("Continents[region].tile_count + 31", "Continents[region].open_terrain + 31"),
+    ("Continents[region].tile_count + 63", "Continents[region].open_terrain + 63"),
+])
+def test_balance_wrong_continent_score_field_mutations_fail(tmp_path: Path,
+                                                             before: str,
+                                                             after: str) -> None:
+    body = source_body()
+    assert body.count(before) == 1
+    result = run_body(tmp_path, body.replace(before, after, 1))
+    assert result.returncode != 0

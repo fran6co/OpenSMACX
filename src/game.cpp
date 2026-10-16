@@ -4662,7 +4662,7 @@ void __cdecl balance() {
         if (nearest_score < 1000) {
             nearest_score = nearest_score / 5 - 3;
         } else {
-            int terrain_score = (static_cast<int>(Continents[region].open_terrain) + 31) / 32;
+            int terrain_score = (Continents[region].tile_count + 31) / 32;
             if (terrain_score < 1) terrain_score = 1;
             else if (terrain_score > 8) terrain_score = 8;
             nearest_score = terrain_score;
@@ -4699,7 +4699,7 @@ void __cdecl balance() {
             }
         }
 
-        int terrain_component = (static_cast<int>(Continents[region].open_terrain) + 63) / 64;
+        int terrain_component = (Continents[region].tile_count + 63) / 64;
         if (terrain_component < 0) terrain_component = 0;
         else if (terrain_component > 3) terrain_component = 3;
         const int total = nearest_score + adjacent_bonus + terrain_component;
