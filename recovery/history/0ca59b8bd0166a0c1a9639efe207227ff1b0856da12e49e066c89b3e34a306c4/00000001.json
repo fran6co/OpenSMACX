@@ -1,0 +1,22 @@
+{
+  "event_id": "209470ce308d8264cdbef9f26f9b59048737030543714135d16f516823f35c15",
+  "payload": {
+    "affects": [
+      "entity-db9f2a18e4c9c668eeedb85db8b9e305c6bb2362a4f45224d2c34b4896e727b0",
+      "entity-dc2bcef8e5a39483c865c087597c9b5ac4aa297b4329773e279fcf84a001160b"
+    ],
+    "author": "coordinator",
+    "discovery_id": "unbound-halloffame-storage",
+    "evidence": [
+      "Fresh candidate Release strict checks resolve no original target for both named globals. src/alpha.cpp defines the genuine source storage but has no RECOVERY_OBJECT annotations for them.",
+      "Pinned44AF70 clears35presentbytes at9A3840 with8Cstride, ending9A4B64;44AF90/44B000/44B070 transfer the0x1324byte block and write the32-bit mode at759194. Existing header asserts35records,8Cstride,1324extent. Add only source bindings; no storage/type/initializer or compiler changes."
+    ],
+    "hypothesis": "The existing HallOfFameRecords and HallOfFameIOMode definitions need source-owned original bindings; informal address comments cannot qualify their strict references.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "unbound-halloffame-storage",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:famewin-record-clearing-oct17"
+}
