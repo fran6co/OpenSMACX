@@ -56,6 +56,7 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                 if item["component"] is not None:
                     reserved[item["symbol"]].add(entity["origin"]["address"])
             if (candidate is not None and candidate["component"] is None
+                    and not candidate.get("context_path")
                     and candidate.get("function_fragment") is None):
                 # Exact source spelling only. Ambiguous external names are
                 # removed below; static definitions never become external COFF
@@ -72,6 +73,8 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                 reason = "requires one unambiguous product definition; seeds are not production source"
             elif candidate["component"] is not None:
                 reason = "dependency binding: use component verification, not application recovery"
+            elif candidate.get("context_path"):
+                reason = "strict application measurement does not yet support compile_context mappings"
             if reason is None:
                 try:
                     bindings.append(FunctionBinding(Origin(**entity["origin"]),
@@ -130,6 +133,8 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
     relation_rows = []
     untrusted_relation_children = set()
     component_relation_children = set()
+    context_relation_children = set()
+    context_parent_ids = set()
     for child_id, entity in entities.items():
         current = [row for row in entity["candidates"] if not row["seed"]]
         relations = [row for row in entity["candidates"]
@@ -137,6 +142,9 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
         if relations and (len(current) != 1 or entity["conflicts"]):
             untrusted_relation_children.add(child_id)
         for candidate in relations:
+            if candidate.get("context_path"):
+                untrusted_relation_children.add(child_id)
+                context_relation_children.add(child_id)
             if candidate.get("component") is not None:
                 # A fragment identity cannot bypass the separate component
                 # verifier or become a callable dependency binding.
@@ -157,8 +165,12 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
         qualified = []
         for parent_id, parent in potential:
             current = [row for row in parent["candidates"] if not row["seed"]]
+            if len(current) == 1 and current[0].get("context_path"):
+                context_relation_children.add(child_id)
+                context_parent_ids.add(parent_id)
             if (not parent["conflicts"] and len(current) == 1
                     and current[0].get("function_fragment") is None
+                    and not current[0].get("context_path")
                     and current[0]["path"] == candidate["path"]
                     and current[0]["symbol"] == relation.get("parent_symbol")
                     and current[0]["component"] is None):
@@ -177,7 +189,9 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
         ambiguous_parent_ids.update(parent_ids)
         if child_id in selected:
             refused.append({"entity_id": child_id, "result": Result.UNKNOWN,
-                            "reason": ("component-owned mapping cannot be a non-callable fragment"
+                            "reason": ("compile_context fragment mappings are unsupported by strict application measurement"
+                                       if child_id in context_relation_children else
+                                       "component-owned mapping cannot be a non-callable fragment"
                                        if child_id in component_relation_children else
                                        "multiple fragment relations claim one parent extent"),
                             "fragment": True})
@@ -190,7 +204,9 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
     for child_id in ambiguous_relations:
         if child_id in selected and child_id not in refused_ids:
             refused.append({"entity_id": child_id, "result": Result.UNKNOWN,
-                            "reason": ("component-owned mapping cannot be a non-callable fragment"
+                            "reason": ("compile_context fragment mappings are unsupported by strict application measurement"
+                                       if child_id in context_relation_children else
+                                       "component-owned mapping cannot be a non-callable fragment"
                                        if child_id in component_relation_children else
                                        "fragment relation has an ambiguous or conflicted parent"),
                             "fragment": True})
@@ -198,7 +214,9 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
     for parent_id in ambiguous_parent_ids:
         if parent_id in selected and parent_id not in refused_ids:
             refused.append({"entity_id": parent_id, "result": Result.UNKNOWN,
-                            "reason": "fragment parent has conflicting source candidates",
+                            "reason": ("compile_context fragment mappings are unsupported by strict application measurement"
+                                       if parent_id in context_parent_ids else
+                                       "fragment parent has conflicting source candidates"),
                             "fragment_parent": True})
             refused_ids.add(parent_id)
     for parent_id in ambiguous_parent_ids:

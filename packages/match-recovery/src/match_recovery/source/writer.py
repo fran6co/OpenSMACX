@@ -870,3 +870,93 @@ def write_body(raw: bytes, record: DecompilationState, body: str) -> bytes:
         if left != right or provenance(before) != provenance(after):
             raise ValueError("body rewrite changed other source facts or lessons")
     return result
+
+
+def write_context(raw: bytes, record: DecompilationState, context: str) -> bytes:
+    """Set/insert one emitting-TU fact while preserving every other annotation."""
+    if not isinstance(raw, bytes):
+        raise ValueError("context rewriting requires original source bytes")
+    if (not isinstance(context, str) or not context
+            or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in context)
+            or any(token in context for token in ("/*", "*/", "//", "??/"))):
+        raise ValueError("context path must be one annotation-safe relative path")
+    try:
+        relative_path(context)
+    except ValueError as error:
+        raise ValueError("context path must be one annotation-safe relative path") from error
+    text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+    if re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
+        raise ValueError("unsupported source line separator")
+    logical_text = re.sub(r"(?:\\|\?\?/)[ \t]*\n", "", text)
+    if any(re.fullmatch(r'(?:u8|u|U|L)?R"', token.group())
+           for token in _SYMBOL_SOURCE_TOKENS.finditer(logical_text)):
+        raise ValueError("context rewriting does not support raw-string source")
+    lines = text.splitlines()
+    records = read_text(text, record.path)
+    selected = [i for i, row in enumerate(records) if row.line == record.line]
+    if len(selected) != 1 or asdict(records[selected[0]]) != asdict(record):
+        raise ValueError("source context update requires a current record snapshot")
+    bindings = binding_source.parse(text, records)
+    source_lines = raw.splitlines(keepends=True)
+    if len(lines) != len(source_lines):
+        raise ValueError("unsupported source line separator")
+    macro_lines = _define_directive_lines(text)
+    if record.line - 1 in macro_lines:
+        raise ValueError("context annotation is inside a #define directive")
+    facts = []
+    for offset, stripped in _fact_lines(lines, record.line - 1):
+        match = FACT_LINE.fullmatch(stripped)
+        if match and match.group(1) == "compile_context":
+            value = match.group(2) or ""
+            try:
+                relative_path(value)
+            except ValueError as error:
+                raise ValueError("existing context fact is not one safe relative path") from error
+            if (any(c.isspace() for c in value)
+                    or any(token in value for token in ("/*", "*/", "//", "??/"))):
+                raise ValueError("existing context fact is not one safe relative path")
+            facts.append((offset, match, value))
+    if len(facts) > 1:
+        raise ValueError("ambiguous duplicate source context facts")
+    if facts and (facts[0][0] in macro_lines or facts[0][2] != record.context):
+        raise ValueError("source context fact is stale or inside a #define directive")
+    output = list(source_lines)
+    encoded = context.encode("utf-8")
+    if facts:
+        offset, match, old_value = facts[0]
+        line = source_lines[offset]
+        leading = len(line) - len(line.lstrip(b" \t"))
+        start = leading + match.start(2)
+        old = old_value.encode("utf-8")
+        if line[start:start + len(old)] != old:
+            raise ValueError("context fact cannot be rewritten byte-for-byte")
+        output[offset] = line[:start] + encoded + line[start + len(old):]
+    else:
+        index = record.line - 1
+        line = source_lines[index]
+        newline = b"\r\n" if line.endswith(b"\r\n") else b"\r" if line.endswith(b"\r") else b"\n"
+        if record.line in bindings:
+            index += 1
+            line = source_lines[index]
+        if not line.endswith((b"\n", b"\r")):
+            output[index] += newline
+        output.insert(index + 1, b"// compile_context " + encoded + newline)
+    result = b"".join(output)
+    reread = read_text(result.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), record.path)
+    if len(reread) != len(records):
+        raise ValueError("context rewrite changed annotation coverage")
+    rebound = binding_source.parse(result.decode("utf-8", errors="replace"), reread)
+    if [bindings.get(row.line) for row in records] != [rebound.get(row.line) for row in reread]:
+        raise ValueError("context rewrite changed original binding rationale")
+    for index, (before, after) in enumerate(zip(records, reread)):
+        left, right = asdict(before), asdict(after)
+        left["context"] = context if index == selected[0] else before.context
+        for field in ("line", "region", "origin"):
+            left.pop(field)
+            right.pop(field)
+        provenance = lambda row: tuple(
+            (item.kind, item.key, item.prose, tuple(line for _, line in item.lines))
+            for item in row.origin or ())
+        if left != right or provenance(before) != provenance(after):
+            raise ValueError("context rewrite changed other source facts or lessons")
+    return result

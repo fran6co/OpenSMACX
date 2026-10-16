@@ -188,7 +188,7 @@ _MANGLED_BASE = re.compile(r"^\?\?(?:_[A-Za-z]|[0-9A-Za-z])([A-Za-z_]\w*)@"
 # to sit in a `.cpp` because that is what a reader globs and a compiler
 # compiles. Without it the claim points at a file with no body in it.
 FACT_LINE = re.compile(
-    r"^(?://|\*) (name|size|spans|symbol|body|prototype|callers|kind|flags"
+    r"^(?://|\*) (name|size|spans|symbol|body|compile_context|prototype|callers|kind|flags"
     r"|calls|notes|indirect)"
     r"(?: +(.*?))?\s*$")
 

@@ -45,6 +45,27 @@ def test_native_check_is_readonly_and_has_no_compiler_dependency(project):
     assert before == {path: (path.read_bytes(), path.stat().st_mtime_ns) for path in project.rglob("*") if path.is_file()}
 
 
+def test_context_mapping_requires_a_built_product_tu(project):
+    host = project / "engine/current/widget.cc"
+    host.write_text(MARKER.replace("BYTE_EXACT", "BYTE_EXACT\n// compile_context engine/emitter.cc"))
+    emitter = project / "engine/emitter.cc"
+    emitter.write_text("int emit() { return 0; }\n")
+    database = project / "build/compilation.json"
+    rows = json.loads(database.read_text())
+    rows.append({"file": "emitter.cc", "directory": "engine", "arguments": ["compiler-not-run", "-c", "emitter.cc"]})
+    database.write_text(json.dumps(rows))
+    config_path = project / "recovery/project.json"
+    config = json.loads(config_path.read_text())
+    config["measurement"] = {"unit_extensions": [".cc"]}
+    config_path.write_text(json.dumps(config))
+    assert mappings.check_mappings(project)["result"] == "pass"
+
+    host.write_text(MARKER.replace("BYTE_EXACT", "BYTE_EXACT\n// compile_context engine/unbuilt.cc"))
+    report = mappings.check_mappings(project)
+    assert report["result"] == "fail"
+    assert any(row["rule"] == "context_reference" for row in report["findings"])
+
+
 def test_same_basename_does_not_hide_two_source_candidates(project):
     (project / "engine/seeds/widget.cc").write_text(MARKER)
     report = mappings.check_mappings(project)

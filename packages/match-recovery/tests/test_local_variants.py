@@ -108,6 +108,20 @@ def test_local_screen_reuses_each_full_tu_object_and_never_accepts(project):
         b"// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001\nint _f() { return 0; }\n")
 
 
+def test_local_screen_explicitly_refuses_an_emitting_context(project):
+    root, _task, deck = project
+    source = root / "code/unit.cc"
+    text = source.read_text().replace(
+        "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001",
+        "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001\n// compile_context code/emitter.cc")
+    source.write_text(text)
+    deck["files"]["code/unit.cc"]["source_sha256"] = hashlib.sha256(source.read_bytes()).hexdigest()
+    compiler = SyntheticCompiler(root)
+    with pytest.raises(ValueError, match="does not yet support compile_context"):
+        run(project, compiler, deck)
+    assert not compiler.calls
+
+
 def test_comparison_uses_one_trial_per_complete_flag_tuple(project, monkeypatch):
     trials = []
     real_compare = local_variants.compare_unit

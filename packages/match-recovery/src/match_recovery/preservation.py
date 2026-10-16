@@ -49,8 +49,10 @@ def _bindings(root, files, source, pin):
             continue
         for record in read_text(raw.decode("utf-8", errors="replace"), root / name):
             entity = Origin(pin, source.address_space, record.address).entity_id
-            rows[entity].append({"unit": name, "symbol": record.symbol or record.name,
+            rows[entity].append({"unit": record.context or name, "marker_host": name,
+                                 "symbol": record.symbol or record.name,
                                  "spans": record.image_spans, "body": record.body,
+                                 "context": record.context,
                                  "byte_obligation": record.byte_exact, "shape_obligation": record.semantic})
         for item in parse_shared(raw.decode("utf-8", errors="replace"), name, pin, address_space=source.address_space):
             # Shared methods have distinct preservation identities, while the
@@ -275,6 +277,13 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
     if re.findall(rb"^sha256\s+([0-9a-f]{64})\s*$", git(root, "cat-file", "blob", entry[2]), re.MULTILINE) != [pin.encode()]:
         raise ValueError("preservation baseline original pin is missing or different")
     old_bindings, new_bindings = _bindings(root, baseline, settings.source, pin), _bindings(root, current, settings.source, pin)
+    selected_hosts = {row["marker_host"] for bindings in (old_bindings, new_bindings)
+                      for entity, rows in bindings.items() if entity in selected
+                      for row in rows}
+    if any(row.get("context") and row.get("marker_host") in selected_hosts
+           for rows in (old_bindings, new_bindings) for bindings in rows.values()
+           for row in bindings):
+        raise ValueError("native preservation does not yet support compile_context mappings in selected marker hosts")
     binding_changes = [{"entity_id": key, "baseline": old_bindings.get(key, []), "current": new_bindings.get(key, [])}
                        for key in sorted((old_bindings.keys() | new_bindings.keys()) - selected)
                        if old_bindings.get(key) != new_bindings.get(key)

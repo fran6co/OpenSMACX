@@ -432,6 +432,21 @@ shared-span and caller checks; selected identities must agree with their capture
 source. Normal live-input checks remain mandatory. No measurement result is
 cached or accepted from the inventory.
 
+An optional `// compile_context src/emitter.cpp` fact names the configured translation
+unit that emits an inline or in-class definition when the original marker must
+remain in another canonical source host. Selection and `--in` continue to use
+that marker host; measure, record and match checks compile the context TU with
+its configured flags. Context must be an existing canonical product TU with a
+compilation-database recipe. It is source metadata only and provides no claim,
+linked-selection or acceptance evidence. Strict task/restoration application
+verification refuses context mappings rather than score them under the
+marker-host recipe. Native preservation conservatively refuses a context
+mapping in any selected marker host (including fragment closure), while
+unchanged mappings in unrelated hosts remain outside-protected and edits to
+those mappings fail the outside-binding check. Selected-host support still
+needs dedicated current body-damage witnesses. The guarded source writer is
+`match_recovery.source.write_context`.
+
 `recover measure <addresses-or-symbols> --image <original> [--in <source-file>]`
 measures current spellings without publication. Subjects sharing a TU reuse the
 same configured compiler trials. `--jobs` controls TU concurrency, bounded by the

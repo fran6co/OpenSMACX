@@ -75,6 +75,33 @@ explains the coordinator decision. Request hashes, impact counts, permission
 checks and compiler-run diagnostics belong to the latter, not the source comment.
 Neither evidence channel substitutes for the other.
 
+## Emitting translation-unit context
+
+A mapping whose original marker stays in one canonical source file but whose
+body is not emitted by the marker host's configured measurement recipe may
+carry an adjacent `// compile_context src/emitter.cpp` fact. This names the
+current measurement compilation witness, not original-TU ownership or an
+assertion that no other recipe can emit the body. `body` continues to name the
+definition source; `context` names the compilation unit used for current
+measurement and matching. The marker host remains the selection key for
+`--in`, address and symbol lookup. Context must be a canonical, existing,
+non-seed product translation unit with a configured source extension and
+compilation-database recipe. The reader checks only path syntax; project-aware
+checks establish that configuration.
+
+Context records no match claim and grants no linker selection or acceptance
+evidence. Historical measure/record/check-matches route through it; strict
+task/restoration application verification refuses context mappings rather
+than score the marker host. Native preservation refuses a context mapping in
+any selected marker host, including fragment closure; unchanged context facts
+in unrelated hosts remain outside-protected and edits to them fail the outside
+binding check. Selected-host support needs dedicated current per-version and
+per-flag body damage witnesses. The guarded writer is
+`match_recovery.source.write_context`; it preserves original identities,
+claims and lessons. Both ends of a
+`RECOVERY_FRAGMENT` relation must declare the same `compile_context` metadata;
+the resolver does not infer equivalence from an implicit host or path suffix.
+
 ## Non-callable function fragments
 
 A function's existing `ORIGINAL` marker may list disjoint image spans separated

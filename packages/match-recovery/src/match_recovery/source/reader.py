@@ -17,6 +17,7 @@ from __future__ import annotations
 import errno
 import re
 from pathlib import Path
+from pathlib import PurePosixPath
 
 from .grammar import (DEFINITION_HEAD, DEFINITION_KEYWORDS,
                       EXCLUSION_TOKEN, FACT_LINE, LESSON_CONTINUED,
@@ -850,13 +851,14 @@ def _read_text(text: str, path: Path | str,
         emitted = _token_fact(lines, index, "symbol", in_block=in_block)
         catalogued_kind = _token_fact(lines, index, "kind", in_block=in_block)
         defined_in = _token_fact(lines, index, "body", in_block=in_block)
+        context = _token_fact(lines, index, "compile_context", in_block=in_block)
         if keyword == "FILE":
             region = text
             found.append(DecompilationState(
                 address=address, mode=Mode.FILE,
                 state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, name=name, image_spans=spans, region=region,
-                symbol=emitted, kind=catalogued_kind, body=defined_in, recipe=Recipe.VERBATIM,
+                symbol=emitted, kind=catalogued_kind, body=defined_in, context=context, recipe=Recipe.VERBATIM,
                 byte_exact=matched, semantic=semantic,
                 levers=found_levers,
                 ruled_out=found_ruled, unrecoverable=found_dead,
@@ -867,7 +869,7 @@ def _read_text(text: str, path: Path | str,
             found.append(DecompilationState(
                 address=address, mode=Mode.BODY, state=State.EXCLUDED,
                 path=_abs(path), line=index + 1, name=name, image_spans=spans,
-                symbol=emitted, kind=catalogued_kind, body=defined_in,
+                symbol=emitted, kind=catalogued_kind, body=defined_in, context=context,
                 exclusion=_exclusion_citation(rest), byte_exact=matched,
                 semantic=semantic,
                 levers=found_levers, ruled_out=found_ruled,
@@ -894,7 +896,7 @@ def _read_text(text: str, path: Path | str,
                 address=address, mode=Mode.BODY,
                 state=_state_of(region, ""), path=_abs(path),
                 line=index + 1, name=name, image_spans=spans, region=region,
-                symbol=emitted, kind=catalogued_kind, body=defined_in, extract_error=error, recipe=recipe,
+                symbol=emitted, kind=catalogued_kind, body=defined_in, context=context, extract_error=error, recipe=recipe,
                 byte_exact=matched, semantic=semantic,
                 levers=found_levers, ruled_out=found_ruled,
                 unrecoverable=found_dead, deferred=found_later,
@@ -966,10 +968,21 @@ def _token_fact(lines: list[str], index: int, key: str, *, in_block: bool | None
     the lessons come from, so a fact belonging to the NEXT annotation cannot
     be picked up.
     """
+    context_values = []
     for _, stripped in _fact_lines(lines, index, in_block=in_block):
         match = FACT_LINE.match(stripped)
         if match and match.group(1) == key:
             value = (match.group(2) or "").strip()
+            if key == "compile_context":
+                if (not value or any(char.isspace() or ord(char) < 32
+                                     or ord(char) == 127 for char in value)):
+                    raise ValueError("compile_context fact must name one canonical project-relative path")
+                path = PurePosixPath(value)
+                if (path.is_absolute() or value != path.as_posix() or "\\" in value or ":" in value
+                        or any(part in ("", ".", "..") for part in path.parts)):
+                    raise ValueError("compile_context fact must be a canonical project-relative path")
+                context_values.append(value)
+                continue
             # THE VALUE IS ONE TOKEN. Wrapped prose is re-flowed onto lines
             # that begin `// ` plus a word, and `symbol` is a word people
             # write - `src/` carries 2,037 lines that start `// symbol ` and
@@ -989,6 +1002,10 @@ def _token_fact(lines: list[str], index: int, key: str, *, in_block: bool | None
             if key == "body" and "/" not in value:
                 return ""
             return value
+    if key == "compile_context":
+        if len(context_values) > 1:
+            raise ValueError("duplicate compile_context facts under one ORIGINAL marker")
+        return context_values[0] if context_values else ""
     return ""
 
 

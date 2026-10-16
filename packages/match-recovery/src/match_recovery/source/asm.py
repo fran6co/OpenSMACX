@@ -1325,6 +1325,10 @@ def resolve_fragment_pairs(records, selected, *, component_keys=frozenset(),
         valid = (len(address_candidates) == 1 and len(parents) == 1
                  and not is_seed(parents[0])
                  and parents[0].path.resolve() == child.path.resolve()
+                 # Fragment endpoints must use the same explicit context
+                 # metadata. Do not infer equality from suffixes or from an
+                 # explicit path that happens to resemble the marker host.
+                 and child.context == parents[0].context
                  and parents[0].function_fragment is None
                  and len(parents[0].image_spans) == 1
                  and len(child.image_spans) == 1
