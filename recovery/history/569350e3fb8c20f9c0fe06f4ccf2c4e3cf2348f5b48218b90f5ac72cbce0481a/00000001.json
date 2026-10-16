@@ -1,0 +1,25 @@
+{
+  "event_id": "528ba25141593926ae5b282408d9d419231d8026ee3b3a39ad451b4c52e6236d",
+  "payload": {
+    "affects": [
+      "entity-41fc068180dcbf9621873c5e5cf1babc42657355ba8f28f9be695dd712e10b26",
+      "entity-49be1ea823b1f33ebb37966b5f281d587dd1e1c71d56bf687e570b79c329abc2",
+      "entity-677acd5983d76bdd409cb29fb0346cb5f56bf4fb0da0df21b32a9f293255df6e",
+      "entity-803619a6db9f84a8a7529ebce3df36890c67e094ff888869cb8d8143f2612dc5",
+      "entity-a555ad54a9befc66e035fc473cf7649638f2e5bd19623457c508afcf925f0b1d",
+      "entity-ff5e0c79d068c379b7587ce4f71c0857369a697c5531ca43f830e1366e9631f1"
+    ],
+    "author": "coordinator",
+    "discovery_id": "control-path-without-api-change",
+    "evidence": [
+      "Pinned six initializer families route shared Dialog through RadioButton/ListBox/CheckBox/EditGroup after each close. Both complete virtual bases and their name lookup must be considered; C++ source equivalence alone does not prove VC6 receiver path."
+    ],
+    "hypothesis": "The pinned per-control virtual Dialog paths can be recovered with a bounded explicit base qualification/reference conversion while keeping the existing control API.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "control-path-without-api-change",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:dialogs-init-base-paths-oct17"
+}

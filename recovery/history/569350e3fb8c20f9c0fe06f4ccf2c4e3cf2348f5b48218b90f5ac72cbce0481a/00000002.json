@@ -1,0 +1,18 @@
+{
+  "event_id": "5ba2f7eabbfca61c744eaa0dd148c30e51a996fbee9dad76f443c08edf77f6d7",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "control-path-without-api-change",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator decision: retain the current semantically coherent shared-virtual-base source rather than install unsupported or null-guard-heavy route spellings. Native rejected nested Dialog qualification, and simple Control::init is ambiguous because both GraphicWin and Dialog declare init. Real typed conversions compile but do not recover the pinned output. No new initializer wrappers, using declarations, layouts, gates or claims are authorized by these observations.",
+      "Preserve the original per-control path observation and all six original matching obligations for future evidence-backed API/caller investigation. This rejects these bounded source proposals, not the original disassembly or eventual recovery requirement. Reproducible native trials are cached under build/recovery/dialogs-init-base-paths-oct17-*-screen.json, not acceptance receipts."
+    ]
+  },
+  "previous_event": "528ba25141593926ae5b282408d9d419231d8026ee3b3a39ad451b4c52e6236d",
+  "request_id": "reject-unproven-route-rewrite",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:dialogs-init-base-paths-oct17"
+}
