@@ -654,36 +654,46 @@ void SpriteBox::on_left_click(int x, int y) {
 // TRIED: none confirmed byte-exact; MISMATCH #0 - the switch/jump-table data at 0x00611580/0x00611594 (byte remap + pointer table) is not in the given disassembly, so the a1==0x26/0x25/0x28/0x27/ 0x24/0x22 case values are a guess. The four handler BODIES (offsets -0x8c/-0x58/-0x38/-0x34/+0x60/+4/+8/+0xfc) are transcribed directly from the bytes.
 int SpriteBox::on_key_down(int key) {
     const int count = list_.entry_count_;
-    if (count <= 0) return 0;
     const int old_position = Dialog::selected_position_;
     int next_position = old_position;
     switch (key) {
     case VK_LEFT:
     case VK_NUMPAD4:
-        if (next_position > 0) --next_position;
-        else return 1;
+        if (Dialog::field_54_ == 1
+            || next_position < static_cast<int>(Dialog::field_58_)) return 1;
+        next_position -= static_cast<int>(Dialog::field_58_);
         break;
     case VK_UP:
     case VK_NUMPAD8:
-        if (next_position + 1 < count) ++next_position;
-        else return 1;
+        if (next_position == 0) return 1;
+        --next_position;
         break;
     case VK_RIGHT:
     case VK_NUMPAD6:
-        if (Dialog::field_58_ > static_cast<uint32_t>(next_position)) return 1;
-        next_position -= static_cast<int>(Dialog::field_58_);
+        if (Dialog::field_54_ == 1) return 1;
+        {
+            const uint32_t last_row_start_bits =
+                (Dialog::field_54_ - 1u) * Dialog::field_58_;
+            const int last_row_start = static_cast<int32_t>(last_row_start_bits);
+            if (next_position >= last_row_start) return 1;
+        }
+        next_position += static_cast<int>(Dialog::field_58_);
+        Dialog::selected_position_ = next_position;
+        if (Dialog::selected_position_ > count - 1) {
+            Dialog::selected_position_ = old_position;
+            return 1;
+        }
         break;
     case VK_DOWN:
     case VK_NUMPAD2:
-        if (next_position + static_cast<int>(Dialog::field_58_) >= count) return 1;
-        next_position += static_cast<int>(Dialog::field_58_);
+        if (next_position == count - 1) return 1;
+        ++next_position;
         break;
     default: return 0;
     }
-    if (next_position == old_position) return 1;
-    draw_item(old_position);
     Dialog::selected_position_ = next_position;
-    draw_item(next_position);
+    draw_item(old_position);
+    draw_item(Dialog::selected_position_);
     on_update();
     return 1;
 }
