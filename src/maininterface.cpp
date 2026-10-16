@@ -594,7 +594,7 @@ void MainInterface::on_status(int active) {
     }
 }
 
-// ORIGINAL: 0x0045D170 ?on_iface_button_clicked@MainInterface@@QAEXH@Z 0x0045D170-0x0045D271 FILE
+// ORIGINAL: 0x0045D170 ?on_iface_button_clicked@MainInterface@@QAEXH@Z 0x0045D170-0x0045D271 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045d170.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 // symbol    ?on_iface_button_clicked@MainInterface@@UAEXH@Z
 void MainInterface::on_iface_button_clicked(int button) {

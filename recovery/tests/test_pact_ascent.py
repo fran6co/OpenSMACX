@@ -61,8 +61,13 @@ def definition(text, signature):
 
 
 def turn_upkeep_ascent(source):
-    start = source.index("if (TurnCurrentNum == 0x4b &&", source.index("void __cdecl turn_upkeep()"))
-    end = source.index("if ((TurnCurrentNum & 3) == 1)", start)
+    start = source.index(
+        "if (GameDataStateStorage.fields_.turn_current_num_ == 0x4b &&",
+        source.index("void __cdecl turn_upkeep()"),
+    )
+    end = source.index(
+        "if ((GameDataStateStorage.fields_.turn_current_num_ & 3) == 1)", start
+    )
     return "void turn_upkeep_ascent_control() {\n" + source[start:end] + "\n}"
 
 

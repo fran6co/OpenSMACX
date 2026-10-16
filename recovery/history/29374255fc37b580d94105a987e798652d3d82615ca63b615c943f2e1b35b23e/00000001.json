@@ -1,0 +1,20 @@
+{
+  "event_id": "cdc49c0fd38b2f488558df71ba0b283c7135a9fb21dc98e945a101ccd891a4fd",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/pact_ascent_control.cpp",
+      "recovery/tests/test_pact_ascent.py"
+    ],
+    "evidence": [
+      "Baseline host suite fails because extractor/fixture still name retired TurnCurrentNum; current actual source uses GameDataStateStorage.fields_.turn_current_num_. Restore actual-source behavioral observation without changing product behavior or weakening damage controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "restore-typed-turn-owner-host-test",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:typed-owner-exact-candidates-oct16"
+}

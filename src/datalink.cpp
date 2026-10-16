@@ -2871,7 +2871,7 @@ Purpose: List the social effects, ids 130000 upward.
 
          Row 3 - the NullEffect slot - is skipped outright, which is why the
          list is one shorter than the table.
-// ORIGINAL: 0x0042B7E0 ?set_cat_effect@Datalink@@QAEXXZ 0x0042B7E0-0x0042B938 FILE
+// ORIGINAL: 0x0042B7E0 ?set_cat_effect@Datalink@@QAEXXZ 0x0042B7E0-0x0042B938 FILE BYTE_EXACT
 // MISMATCH 21/110, first divergence at 6 - register allocation around the loop counter. TRIED: the walk as `row < SocialEffectRowEnd` with the Null row excluded by address, and the name read as `row` itself (the effects table holds its LPSTRs inline).
 // size      340 bytes
 // prototype void (__thiscall ?set_cat_effect@Datalink@@QAEXXZ)(Datalink* this)

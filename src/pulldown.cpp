@@ -1236,7 +1236,7 @@ void PullDown::hide() {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x005F8800 ??0PullDown@@QAE@XZ 0x005F8800-0x005F8893
+// ORIGINAL: 0x005F8800 ??0PullDown@@QAE@XZ 0x005F8800-0x005F8893 BYTE_EXACT
 // size      147 bytes
 // prototype void (__thiscall ??0PullDown@@QAE@XZ)(PullDown* this)
 // callers   26   call targets   1
@@ -1332,7 +1332,7 @@ void PullDown::on_right_up(int x, int y) {
     on_left_up(x, y);
 }
 
-// ORIGINAL: 0x005F93C0 ?on_left_down@PullDown@@QAEXHH@Z 0x005F93C0-0x005F945B FILE
+// ORIGINAL: 0x005F93C0 ?on_left_down@PullDown@@QAEXHH@Z 0x005F93C0-0x005F945B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5F93C0..5F945B; retired seed git:117282ee:src/unrecovered/005f93c0.cpp records the same identity and spans.", "Pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: PullDown constructor 0x5F8800 stores vftable 0x66FF40; its slot-20 cell 0x66FF90 contains 0x5F93C0 and slot-21 cell 0x66FF94 contains 0x5F9480.", "Pinned Menu constructor 0x5FAC94 stores vftable 0x6700B0; Menu slot-20 cell 0x670100 contains 0x5FBC20, matching PullDown's outside-click virtual call through +0x50.", "The typed owner declarations are Win::on_left_down/on_left_up, GraphicWin::buffer_working_rect (returning Buffer rect2_ at +0x474), Win::outer_rect (RECT at +0x13C), and Menu::on_left_down; PullDown already owns item_count_, selected_, menu_, PullDownDefaultFont and PullDownItem[64].", "Pinned 0x5F93C0..0x5F945B reads rect2_ +0x474; outside path calls PullDown slot 2, flush_input, do_all_tasks(this), then reads menu_ +0xF30, clears selected_ +0xF28, and calls Menu slot 20 with outer-RECT deltas plus click coordinates."], "reason": "Move the original outside-click handler into PullDown's real Win slot-20 override; preserve its hide/flush/tasks/menu-coordinate sequence."}
 // symbol    ?on_left_down@PullDown@@UAEXHH@Z
 void PullDown::on_left_down(int x, int y) {

@@ -39,6 +39,8 @@ typedef char PlayerDataStride[(sizeof(PlayerData) == 0x20cc) ? 1 : -1];
 
 struct FacilityRecord { int preq_tech; };
 struct ConsoleRecord { int faction_id_; };
+struct GameDataStateFields { int turn_current_num_; };
+struct GameDataState { GameDataStateFields fields_; };
 struct NetMessage {
     int calls;
     const char *label;
@@ -58,8 +60,8 @@ Player Players[MaxPlayerNum];
 PlayerData PlayersData[MaxPlayerNum];
 FacilityRecord Facility[32];
 ConsoleRecord ConsoleGlobal;
+GameDataState GameDataStateStorage;
 NetMessage NetMsgPrimary;
-int TurnCurrentNum;
 int GenderDefault;
 BOOL PluralityDefault;
 char ScriptPopupTitleText[] = "CLIMATE";
@@ -212,7 +214,7 @@ static void check_pact_treaty() {
 static void set_ascent_case(int year, int faction) {
     initialize_players();
     reset_observations();
-    TurnCurrentNum = year;
+    GameDataStateStorage.fields_.turn_current_num_ = year;
     ConsoleGlobal.faction_id_ = faction;
     Facility[FAC_BIOLOGY_LAB].preq_tech = 33;
     Players[faction].is_leader_female = 1;

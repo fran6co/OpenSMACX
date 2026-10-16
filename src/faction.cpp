@@ -14767,7 +14767,7 @@ void __cdecl renounce_pact(int faction_id, int faction_id_with) {
     NetDaemonNet.unlock();
 }
 
-// ORIGINAL: 0x0055D190 ?pact_treaty@@YAXHH@Z 0x0055D190-0x0055D293
+// ORIGINAL: 0x0055D190 ?pact_treaty@@YAXHH@Z 0x0055D190-0x0055D293 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:pact-ascent-owner", "pinned:0x0055D190 original complete span; Player59C fields and real NetMsgPrimary/ConsoleGlobal owners.", "pinned:68E62C PACTTREATY, ASCENT and asctran_sm.pcx text inputs; source literals, never original-image calls.", "pinned:525F08..52600E same turn_upkeep ascent path; plural0, leader gender and console-faction reload after parser; bit2000 unnamed, not PFLAG_MAP_REVEALED200.", "historical seed:src/recovered/units/0055d190.cpp complete mapping/findings retained.", "recovery/tests/test_pact_ascent.py actual-source callback/damage controls, not native layout or runtime acceptance."], "reason": "Recover the complete announcement/turn-flow function using real source-owned players, console, parser state and callbacks. Retain original identity/spans and seed findings; live faction reloads and grammar come from full pinned instructions. No byte or game acceptance claim."}
 void __cdecl pact_treaty(int faction_id, int faction_id_with) {
     PluralityDefault = 0;
