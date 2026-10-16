@@ -696,7 +696,7 @@ void DiploPop::draw_hq() {
     StringTemp[0] = 0;
     while (base_id < GameDataStateStorage.fields_.base_current_count_) {
         if (Bases[base_id].faction_id_current == counterpart_faction_
-            && has_fac_built_call(FAC_HEADQUARTERS, base_id)) break;
+            && has_fac_built(FAC_HEADQUARTERS, base_id)) break;
         ++base_id;
     }
 

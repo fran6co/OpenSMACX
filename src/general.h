@@ -184,18 +184,9 @@ MEASURED inline void __cdecl swap(uint8_t *var1, uint8_t *var2) {
 
 void __cdecl swap(int *var1, int *var2);
 
-MEASURED inline void __cdecl bitmask(int input, int *offset, int *mask) {
-    *offset = input / 8;
-    *mask = 1 << (input & 7);
-}
-
-// Non-inline forwarder to `bitmask` above: a handful of call sites in
-// base.cpp (cost_factor, pop_goal, num_objectives) need a real
-// `call 0x50ba00` the way the image emits there, unlike the rest of
-// bitmask's 103 callers, most of which genuinely inline it. The E8 target
-// is a relocation on both sides and is discounted, so this symbol's own
-// name costs nothing.
-void __cdecl bitmask_call(int input, int *offset, int *mask);
+// Original callers use this shared utility directly; retain its signed
+// truncating division and ordered out-parameter writes in general.cpp.
+void __cdecl bitmask(int input, int *offset, int *mask);
 
 MEASURED inline int __cdecl btoi(LPCSTR str) {
     int result = 0;

@@ -66,7 +66,7 @@ static int has_tech(int tech, int faction) {
     assert(faction >= 0 && faction < 8);
     return 1;
 }
-static int has_fac_built_call(int facility, int base_id) {
+static int has_fac_built(int facility, int base_id) {
     assert(facility == FAC_CHILDREN_CRECHE);
     return (Bases[base_id].facilities_built[0] & (1u << facility)) != 0;
 }

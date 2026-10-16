@@ -464,7 +464,7 @@ Status: Complete
 */
 BOOL __cdecl sea_coast(int region_dst, int region_src) {
     int mask;
-    bitmask_call(region_src & RegionBounds, &region_src, &mask);
+    bitmask(region_src & RegionBounds, &region_src, &mask);
     return (Continents[region_dst].sea_coasts[region_src] & mask) != 0;
 }
 
@@ -490,7 +490,7 @@ int __cdecl sea_coasts(int region_src) {
         // calling 0x0050DDC0.
         int offset;
         int mask;
-        bitmask_call(region_src & RegionBounds, &offset, &mask);
+        bitmask(region_src & RegionBounds, &offset, &mask);
         if ((Continents[i].sea_coasts[offset] & mask) != 0) {
             sea_coast_count++;
         }
@@ -624,7 +624,7 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
             // rather than calling 0x0050DDC0.
             int offset;
             int mask;
-            bitmask_call(region_at(x_radius, y_radius) & RegionBounds, &offset, &mask);
+            bitmask(region_at(x_radius, y_radius) & RegionBounds, &offset, &mask);
             if ((Continents[region].sea_coasts[offset] & mask) != 0) {
                 return true;
             }
@@ -708,7 +708,7 @@ BOOL __cdecl transport_base(int base_id) {
     for (int i = 1; i < RegionBounds; i++) {
         int offset;
         int mask;
-        bitmask_call(region & RegionBounds, &offset, &mask);
+        bitmask(region & RegionBounds, &offset, &mask);
         if ((Continents[i].sea_coasts[offset] & mask) != 0) {
             sea_coast_count++;
         }
@@ -8355,7 +8355,7 @@ void __cdecl alt_set(int x, int y, int altitude) {
                 WorldClimateSkipTerritoryReset == 0 && becomes_water) {
                 const int base_id = base_at(x, y);
                 if (base_id >= 0 &&
-                    !has_fac_built_call(FAC_PRESSURE_DOME, base_id)) {
+                    !has_fac_built(FAC_PRESSURE_DOME, base_id)) {
                     Base &base = Bases[base_id];
                     const int faction_id = base.faction_id_current;
 

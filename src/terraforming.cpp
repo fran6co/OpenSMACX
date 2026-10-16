@@ -372,10 +372,10 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         // `has_fac_built_call` (base.h) is for. Plain `has_fac_built` inlines
         // `MEASURED inline bitmask` and this body then makes 26 calls against
         // the image's 28.
-        if (has_fac_built_call(FAC_TREE_FARM, base_id)) {
+        if (has_fac_built(FAC_TREE_FARM, base_id)) {
             forest_value++;
         }
-        if (has_fac_built_call(FAC_HYBRID_FOREST, base_id)) {
+        if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
             forest_value += 2;
         }
     }

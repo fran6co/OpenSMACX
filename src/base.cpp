@@ -5634,7 +5634,7 @@ BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count) {
     if (facility_id >= FacilityRepStart) {
         return false;
     }
-    BOOL is_built = has_fac_built_call(facility_id, base_id);
+    BOOL is_built = has_fac_built(facility_id, base_id);
     if (is_built || !queue_count) {
         return is_built;
     }
@@ -6173,11 +6173,10 @@ void __cdecl base_mark(int base_id) {
     }
 }
 
-// has_fac_built_call(), open-coded with a REAL bitmask() call via
-// `bitmask_call` (general.h) rather than the folded shift/and `MEASURED
-// inline bitmask` gives everywhere else, MOVED TO base.h (still `static
-// __forceinline`, one copy per TU) so breed_mod there can reach it too -
-// see the LEVER note at breed_mod's definition.
+// HISTORICAL: this duplicated has_fac_built predicate was moved to base.h
+// as `has_fac_built_call` so breed_mod could reach the adapter. The current
+// two-argument has_fac_built directly calls the shared out-of-line bitmask;
+// the distinct one-argument guarded overload remains below.
 
 /*
 Purpose: Calculate the cost factor for the specified faction and resource type. Optional base param.
@@ -6249,7 +6248,7 @@ int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
     } else { // nutrient
         int growth_factor = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::GROWTH];
         if (base_id >= 0) {
-            if (has_fac_built_call(FAC_CHILDREN_CRECHE, base_id)) {
+            if (has_fac_built(FAC_CHILDREN_CRECHE, base_id)) {
                 growth_factor += 2; // +2 on growth scale
             }
             if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
@@ -6298,7 +6297,7 @@ Status: Complete
 */
 int __cdecl base_making(int production_id, int base_id) {
     int retool = Rules.retool_strictness;
-    if (has_fac_built_call(FAC_SKUNKWORKS, base_id) // has Skunkworks
+    if (has_fac_built(FAC_SKUNKWORKS, base_id) // has Skunkworks
         && retool >= 1) { // don't override if retool strictness is already set to always free (0)
         retool = 1; // Skunkworks or FREEPROTO + prerequisite tech > 'Free in Category'
     }
@@ -6306,7 +6305,7 @@ int __cdecl base_making(int production_id, int base_id) {
         int queue_id = Bases[base_id].queue_production_id[0]; // current production item
         if (queue_id < 0) { // non-Veh
             queue_id = -queue_id;
-            if (queue_id < FacilityRepStart && has_fac_built_call(queue_id, base_id)) {
+            if (queue_id < FacilityRepStart && has_fac_built(queue_id, base_id)) {
                 return -1; // facility completed outside normal process, no retool penalty to change
             }
         }
@@ -7300,7 +7299,7 @@ void __cdecl set_fac(int facility_id, int base_id, BOOL set) {
     // holds the offset both subscripts below read. A separate `int offset`
     // local lands at [ebp-4] instead and pushes mask out of the frame -
     // measured 3/32 against 32/32 for this spelling.
-    bitmask_call(facility_id, &facility_id, &mask);
+    bitmask(facility_id, &facility_id, &mask);
     if (set) {
         Bases[base_id].facilities_built[facility_id] |= mask;
     } else {
@@ -7332,7 +7331,7 @@ BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id) {
     // offset out-param is this function's own facility_id slot, dead after
     // the call. The cast is the uint32_t parameter the mangled name fixes
     // (?has_fac_announced@@YAHII@Z), not a pun of this.
-    bitmask_call(facility_id, (int *)&facility_id, &mask);
+    bitmask(facility_id, (int *)&facility_id, &mask);
     return (PlayersData[faction_id].facility_announced[facility_id] & mask) != 0;
 }
 
@@ -7356,7 +7355,7 @@ void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL s
     // set_fac's parameter-slot reuse again - the image's offset out-param is
     // this facility_id slot itself. The cast is the uint32_t the mangled
     // name (?set_fac_announced@@YAXIIH@Z) fixes, not a pun of this.
-    bitmask_call(facility_id, (int *)&facility_id, &mask);
+    bitmask(facility_id, (int *)&facility_id, &mask);
     if (set) {
         PlayersData[faction_id].facility_announced[facility_id] |= mask;
     } else {
@@ -7444,22 +7443,22 @@ Status: Complete
 int __cdecl morale_mod(int base_id, int faction_id, int triad) {
     uint32_t morale_modifier = 0;
     if (triad == TRIAD_LAND) {
-        if (has_fac_built_call(FAC_COMMAND_CENTER, base_id)
+        if (has_fac_built(FAC_COMMAND_CENTER, base_id)
             || has_project(SP_COMMAND_NEXUS, faction_id)) {
             morale_modifier = 2;
         }
     } else if (triad == TRIAD_SEA) {
-        if (has_fac_built_call(FAC_NAVAL_YARD, base_id)
+        if (has_fac_built(FAC_NAVAL_YARD, base_id)
             || has_project(SP_MARITIME_CONTROL_CENTER, faction_id)) {
             morale_modifier = 2;
         }
     } else if (triad == TRIAD_AIR) {
-        if (has_fac_built_call(FAC_AEROSPACE_COMPLEX, base_id)
+        if (has_fac_built(FAC_AEROSPACE_COMPLEX, base_id)
             || has_project(SP_CLOUDBASE_ACADEMY, faction_id)) {
             morale_modifier = 2;
         }
     }
-    if (has_fac_built_call(FAC_BIOENHANCEMENT_CENTER, base_id)
+    if (has_fac_built(FAC_BIOENHANCEMENT_CENTER, base_id)
         || has_project(SP_CYBORG_FACTORY, faction_id)) {
         morale_modifier += 2;
     }
@@ -7647,8 +7646,8 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
         if (base_id < 0) {
             return crop; // the original returns here rather than reaching the tail
         }
-        if (has_fac_built_call(FAC_RECYCLING_TANKS, base_id)
-            || has_fac_built_call(FAC_PRESSURE_DOME, base_id)) {
+        if (has_fac_built(FAC_RECYCLING_TANKS, base_id)
+            || has_fac_built(FAC_PRESSURE_DOME, base_id)) {
             crop += ResourceInfo[RSCINFO_RECYCLING_TANKS].nutrients;
         }
     } else if (bit & BIT_THERMAL_BORE) {
@@ -7694,7 +7693,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                     // Legacy: unguarded for base_id < 0, exactly as 0x004E7150.
                     // Bases[(uint32_t)-1] and Bases[-1] are the same address on
                     // 32-bit x86, so this reproduces the original's read.
-                    if (has_fac_built_call(FAC_AQUAFARM, (uint32_t)base_id)) {
+                    if (has_fac_built(FAC_AQUAFARM, (uint32_t)base_id)) {
                         crop++;
                     }
                 }
@@ -7708,10 +7707,10 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                 crop += ResourceInfo[RSCINFO_BONUS_SQ].nutrients;
             }
             if (base_id >= 0) {
-                if (has_fac_built_call(FAC_HYBRID_FOREST, base_id)) {
+                if (has_fac_built(FAC_HYBRID_FOREST, base_id)) {
                     crop++;
                 }
-                if (has_fac_built_call(FAC_TREE_FARM, base_id)) {
+                if (has_fac_built(FAC_TREE_FARM, base_id)) {
                     crop++;
                 }
             }
@@ -7840,8 +7839,8 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
         if (base_id < 0) {
             return mineral; // the original returns here rather than reaching the tail
         }
-        if (has_fac_built_call(FAC_RECYCLING_TANKS, base_id)
-            || has_fac_built_call(FAC_PRESSURE_DOME, base_id)) {
+        if (has_fac_built(FAC_RECYCLING_TANKS, base_id)
+            || has_fac_built(FAC_PRESSURE_DOME, base_id)) {
             mineral += ResourceInfo[RSCINFO_RECYCLING_TANKS].minerals;
         }
     } else if (bit & BIT_MONOLITH) {
@@ -7891,7 +7890,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
                     mineral++;
                 }
                 // Legacy: unguarded for base_id < 0, exactly as 0x004E765F.
-                if (has_fac_built_call(FAC_SUBSEA_TRUNKLINE, (uint32_t)base_id)) {
+                if (has_fac_built(FAC_SUBSEA_TRUNKLINE, (uint32_t)base_id)) {
                     mineral++;
                 }
             }
@@ -8015,13 +8014,13 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         energy = ResourceInfo[RSCINFO_BASE_SQ].energy;
         // Legacy: read BEFORE the base_id sign check at 0x004E7896, so a base_id
         // of -1 reads one Base entry below the array, exactly as the original.
-        if (has_fac_built_call(FAC_HEADQUARTERS, (uint32_t)base_id)) {
+        if (has_fac_built(FAC_HEADQUARTERS, (uint32_t)base_id)) {
             energy++;
         }
         int golden_age = 0;
         if (base_id >= 0) {
-            if (has_fac_built_call(FAC_RECYCLING_TANKS, base_id)
-                || has_fac_built_call(FAC_PRESSURE_DOME, base_id)) {
+            if (has_fac_built(FAC_RECYCLING_TANKS, base_id)
+                || has_fac_built(FAC_PRESSURE_DOME, base_id)) {
                 energy += ResourceInfo[RSCINFO_RECYCLING_TANKS].energy;
             }
             if (Bases[base_id].state & BSTATE_GOLDEN_AGE_ACTIVE) {
@@ -8033,7 +8032,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         if (economy < 0) {
             // The original asks for Headquarters again here rather than reusing
             // the answer above.
-            if (!has_fac_built_call(FAC_HEADQUARTERS, (uint32_t)base_id)
+            if (!has_fac_built(FAC_HEADQUARTERS, (uint32_t)base_id)
                 || economy < -1
                 || PlayersData[faction_id].current_num_bases == 1u) {
                 economy++;
@@ -8082,7 +8081,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
             if ((bit & BIT_SOLAR_TIDAL) || assume_improved) {
                 energy += ResourceInfo[RSCINFO_IMPROVED_SEA].energy;
                 // Legacy: unguarded for base_id < 0, exactly as 0x004E7B19.
-                if (has_fac_built_call(FAC_THERMOCLINE_TRANSDUCER,
+                if (has_fac_built(FAC_THERMOCLINE_TRANSDUCER,
                                   (uint32_t)base_id)) {
                     energy++;
                 }
@@ -8093,7 +8092,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
         }
     } else if (bit & BIT_FOREST) {
         energy = ResourceInfo[RSCINFO_FOREST_SQ].energy;
-        if (base_id >= 0 && has_fac_built_call(FAC_HYBRID_FOREST, base_id)) {
+        if (base_id >= 0 && has_fac_built(FAC_HYBRID_FOREST, base_id)) {
             energy++;
         }
     } else {
@@ -8419,7 +8418,7 @@ void __cdecl base_support() {
         }
         (BaseCurrentVehPacifismCount)++;
         int police = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]
-            + (has_fac_built_call(FAC_BROOD_PIT, BaseIDCurrentSelected) ? 2 : 0);
+            + (has_fac_built(FAC_BROOD_PIT, BaseIDCurrentSelected) ? 2 : 0);
         if (police == -3) {
             veh->state |= (BaseCurrentVehPacifismCount == 1) ? VSTATE_PACIFISM_FREE_SKIP
                                                               : VSTATE_PACIFISM_DRONE;
@@ -8463,7 +8462,7 @@ Status: Complete
 void __cdecl base_nutrient() {
     uint32_t faction_id = BaseCurrent->faction_id_current;
     BaseCurrentGrowthRate = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::GROWTH];
-    if (has_fac_built_call(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected)) {
+    if (has_fac_built(FAC_CHILDREN_CRECHE, BaseIDCurrentSelected)) {
         BaseCurrentGrowthRate = base_yield_add(BaseCurrentGrowthRate, 2); // +2 on growth scale
     }
     if (BaseCurrent->state & BSTATE_GOLDEN_AGE_ACTIVE) {
@@ -8566,10 +8565,10 @@ void __cdecl base_minerals() {
     }
     int eco_dmg_reduction = (has_fac(FAC_NANOREPLICATOR, BaseIDCurrentSelected, 0)
         || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 2 : 1;
-    if (has_fac_built_call(FAC_CENTAURI_PRESERVE, BaseIDCurrentSelected)) {
+    if (has_fac_built(FAC_CENTAURI_PRESERVE, BaseIDCurrentSelected)) {
         eco_dmg_reduction++;
     }
-    if (has_fac_built_call(FAC_TEMPLE_OF_PLANET, BaseIDCurrentSelected)) {
+    if (has_fac_built(FAC_TEMPLE_OF_PLANET, BaseIDCurrentSelected)) {
         eco_dmg_reduction++;
     }
     if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
@@ -8679,7 +8678,7 @@ uint32_t __cdecl black_market(int energy) {
     uint32_t faction_id = BaseCurrent->faction_id_current;
     int dist_hq = 999;
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) { // modified version of vulnerable()
-        if (Bases[i].faction_id_current == faction_id && has_fac_built_call(FAC_HEADQUARTERS, i)) {
+        if (Bases[i].faction_id_current == faction_id && has_fac_built(FAC_HEADQUARTERS, i)) {
             // Open-coded vector_dist(x,y,a,b): the image calls abs() four
             // times, never vector_dist itself - see base_find (0x004E3D50)
             // for the same expansion. (BaseCurrent())->x/y are re-read here,
@@ -9070,11 +9069,11 @@ int __cdecl pop_goal_fac(int base_id) {
     uint32_t limit_mod = has_project(SP_ASCETIC_VIRTUES, faction_id) ? 2 : 0;
     int pop = Bases[base_id].population_size - limit_mod + Players[faction_id].rule_population;
     if (pop >= (int)Rules.pop_limit_sans_hab_complex
-        && !has_fac_built_call(FAC_HAB_COMPLEX, base_id)) {
+        && !has_fac_built(FAC_HAB_COMPLEX, base_id)) {
         return FAC_HAB_COMPLEX;
     }
     if (pop >= (int)Rules.pop_limit_sans_hab_dome
-        && !has_fac_built_call(FAC_HABITATION_DOME, base_id)) {
+        && !has_fac_built(FAC_HABITATION_DOME, base_id)) {
         return FAC_HABITATION_DOME;
     }
     return 0; // Pop hasn't reached capacity or Base already has Hab Complex and Dome
@@ -9107,14 +9106,14 @@ int __cdecl pop_goal(int base_id) {
     if (goal <= 6) {
         goal = 6;
     }
-    if (!has_fac_built_call(FAC_HAB_COMPLEX, base_id)) {
+    if (!has_fac_built(FAC_HAB_COMPLEX, base_id)) {
         int compare = Rules.pop_limit_sans_hab_complex - Players[faction_id].rule_population
             + limit_mod;
         if (goal >= compare) {
             goal = compare;
         }
     }
-    if (!has_fac_built_call(FAC_HABITATION_DOME, base_id)) {
+    if (!has_fac_built(FAC_HABITATION_DOME, base_id)) {
         int compare = Rules.pop_limit_sans_hab_dome - Players[faction_id].rule_population
             + limit_mod;
         if (goal >= compare) {
@@ -9772,7 +9771,7 @@ int __cdecl garrison_check(int base_id) {
         }
     }
     int garrison = (sp_count + 2) / 3 + (Bases[base_id].population_size + 1) / 4 + 1;
-    if (has_fac_built_call(FAC_HEADQUARTERS, base_id) || bit_at(x, y) & BIT_UNK_40000000
+    if (has_fac_built(FAC_HEADQUARTERS, base_id) || bit_at(x, y) & BIT_UNK_40000000
         || is_objective(base_id)) {
         garrison++;
     }
@@ -9866,7 +9865,7 @@ Status: Complete
 int __cdecl vulnerable(int faction_id, int x, int y) {
     int dist = 12; // default value for no bases or no HQ
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        if (Bases[i].faction_id_current == faction_id && has_fac_built_call(FAC_HEADQUARTERS, i)) {
+        if (Bases[i].faction_id_current == faction_id && has_fac_built(FAC_HEADQUARTERS, i)) {
             // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the
             // image calls abs() four times, never vector_dist itself - see
             // del_site (0x00579E70) and base_find(x,y) (0x004E3B80) for the
@@ -9926,7 +9925,7 @@ BOOL __cdecl is_objective(int base_id) {
         // (its `cmp eax, 0x41 / jge` IS has_fac's `facility_id >=
         // FacilityRepStart` guard) rather than calling has_fac out of line.
         if ((int)GameDataStateStorage.fields_.scenario_victory_facility_ < FacilityRepStart
-            && has_fac_built_call(GameDataStateStorage.fields_.scenario_victory_facility_, base_id)) {
+            && has_fac_built(GameDataStateStorage.fields_.scenario_victory_facility_, base_id)) {
             return true;
         }
     }
@@ -13451,7 +13450,7 @@ int production_vehicle_morale(int selected_base_id, int owner,
         morale = morale_mod(selected_base_id, owner,
                             Chassis[prototype.chassis_id].triad);
         if (prototype.weapon_id == 21) {
-            if (has_fac_built_call(FAC_COVERT_OPS_CENTER, BaseIDCurrentSelected)) morale = base_yield_add(morale, 2);
+            if (has_fac_built(FAC_COVERT_OPS_CENTER, BaseIDCurrentSelected)) morale = base_yield_add(morale, 2);
             if (has_project(SP_NETHACK_TERMINUS, owner)) morale = base_yield_add(morale, 1);
         }
         if (has_abil(prototype_id, ABL_TRAINED)) morale = base_yield_add(morale, 1);
@@ -14955,7 +14954,7 @@ after_popup:
                          rival_base < GameDataStateStorage.fields_.base_current_count_; ++rival_base) {
                         if (Bases[rival_base].faction_id_current == faction_id) continue;
                         int population_weight = Bases[rival_base].population_size;
-                        bitmask_call(1, &offset, &mask);
+                        bitmask(1, &offset, &mask);
                         if ((Bases[rival_base].facilities_built[offset] & mask) != 0)
                             population_weight *= 2;
                         if (population_weight > best_population_weight) {
@@ -15012,7 +15011,7 @@ after_popup:
                                 int facility_id = bonus_value;
                                 if (facility_id < 1) facility_id = 1;
                                 if (facility_id > 0x45) facility_id = 0x45;
-                                bitmask_call(facility_id, &offset, &mask);
+                                bitmask(facility_id, &offset, &mask);
                                 Bases[BaseIDCurrentSelected].facilities_built[offset] |=
                                     static_cast<uint8_t>(mask);
                             }

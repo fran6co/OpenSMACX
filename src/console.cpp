@@ -12971,7 +12971,7 @@ case 0x30071:
 
             int bit_offset;
             int bit_mask;
-            bitmask_call(tech_id, &bit_offset, &bit_mask);
+            bitmask(tech_id, &bit_offset, &bit_mask);
             GameDataStateStorage.fields_.game_tech_achieved_[tech_id] = static_cast<uint8_t>(
                 GameDataStateStorage.fields_.game_tech_achieved_[tech_id] | (1u << faction));
             ++PlayersData[faction].tech_ranking;

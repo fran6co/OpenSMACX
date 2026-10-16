@@ -111,7 +111,6 @@ static int base_at(int, int) { return test_base_id; }
 static int has_fac_built(int facility, int) {
     return facility == FAC_HEADQUARTERS && test_headquarters_built;
 }
-static int has_fac_built_call(int, int) { return 0; }
 static int range(int v, int lo, int hi) {
     return v < lo ? lo : (v > hi ? hi : v);
 }

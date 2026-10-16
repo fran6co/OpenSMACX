@@ -3484,7 +3484,7 @@ int __cdecl popb(LPCSTR text_label, int warning_mask, int sound_id,
         if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_8) != 0 && BaseCurrent->population_size > 1) {
             int facility_offset;
             int facility_mask;
-            bitmask_call(0x23, &facility_offset, &facility_mask);
+            bitmask(0x23, &facility_offset, &facility_mask);
             const bool has_psi_facility =
                 (Bases[BaseIDCurrentSelected].facilities_built[facility_offset]
                  & static_cast<uint8_t>(facility_mask)) != 0;

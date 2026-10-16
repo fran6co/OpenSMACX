@@ -70,7 +70,7 @@ def actual_source():
         helpers.insert(0,braced(headers["map.h"],signature))
     helpers.insert(0,braced(headers["faction.h"],"inline BOOL __cdecl is_human("))
     helpers.append(braced(headers["general.h"],"MEASURED inline int __cdecl range("))
-    helpers.append(braced(headers["base.h"],"static __forceinline int has_fac_built_call("))
+    helpers.append(braced(headers["base.h"],"inline int __cdecl has_fac_built(int facility_id, int base_id)"))
     helpers.append(braced(base,"void __cdecl base_nutrient()"))
     dispatcher=braced(base,"int __cdecl resource_yield(int rsc_type")
     return "\n".join(declarations),"\n".join(helpers),dispatcher,braced(base,"void __cdecl base_yield()")
@@ -133,12 +133,11 @@ BOOL has_tech(int tech,int faction){
     ++tech_calls;return known[tech];
 }
 BOOL has_tech_call(int tech,int faction){return has_tech(tech,faction);}
+int bit_count(int value){++bit_count_calls;counted_values.push_back(value);uint32_t bits=value;int count=0;while(bits){count+=bits&1;bits>>=1;}return count;}
 void bitmask(int input,int *offset,int *mask){
-    facility_calls.push_back(input);*offset=input/8;*mask=1<<(input%8);
+    facility_calls.push_back(input);*offset=input/8;*mask=1<<(input&7);
     if(switch_on_facility && input==29){switch_on_facility=0;BaseCurrent=&Bases[1];BaseIDCurrentSelected=1;}
 }
-void bitmask_call(int input,int *offset,int *mask){bitmask(input,offset,mask);}
-int bit_count(int value){++bit_count_calls;counted_values.push_back(value);uint32_t bits=value;int count=0;while(bits){count+=bits&1;bits>>=1;}return count;}
 int position_at(int x,int y){
     const int offsets[21][2]={{0,0},{1,-1},{2,0},{1,1},{0,2},{-1,1},{-2,0},{-1,-1},{0,-2},
       {2,-2},{2,2},{-2,2},{-2,-2},{1,-3},{3,-1},{3,1},{1,3},{-1,3},{-3,1},{-3,-1},{-1,-3}};

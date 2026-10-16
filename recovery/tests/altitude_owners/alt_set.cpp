@@ -99,7 +99,7 @@ void event(int n) { Events[EventCount++] = n; }
 Map *map_loc(int, int) { return &Tile; }
 void delete_landmark(int, int) { event(1); }
 int base_at(int, int) { event(2); return BaseAtResult; }
-int has_fac_built_call(int facility, int base) {
+int has_fac_built(int facility, int base) {
     if (facility != FAC_PRESSURE_DOME || base != BaseAtResult) return -9;
     event(3); return FacilityBuiltResult;
 }

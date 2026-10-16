@@ -34,8 +34,8 @@ def test_actual_announcement_storage_and_helpers(tmp_path, compiler):
     base = (ROOT / 'src/base.cpp').read_text()
     getter = definition(base, 'BOOL __cdecl has_fac_announced(')
     setter = definition(base, 'void __cdecl set_fac_announced(')
-    general = (ROOT / 'src/general.h').read_text()
-    mask = definition(general, 'MEASURED inline void __cdecl bitmask(')
+    general = (ROOT / 'src/general.cpp').read_text()
+    mask = definition(general, 'void __cdecl bitmask(')
     faction = (ROOT / 'src/faction.cpp').read_text()
     reset_start = faction.index('        for (int announced = 0;')
     reset_end = faction.index('        for (int satellite = 0;', reset_start)
@@ -54,7 +54,6 @@ FIELDS
 };
 PlayerData PlayersData[8];
 MASK
-void bitmask_call(int input, int *offset, int *mask) { bitmask(input, offset, mask); }
 GETTER
 SETTER
 void reset(PlayerData &p) {

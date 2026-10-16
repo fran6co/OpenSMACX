@@ -44,7 +44,7 @@ PlayerData PlayersData[8];
 uint32_t BaseCurrentConvoyTo[4], BaseCurrentConvoyFrom[4];
 RuleData Rules;
 int BaseCurrentGrowthRate, BaseIDCurrentSelected, BaseUpkeepStage;
-int has_fac_built_call(int facility, int base_id) {
+int has_fac_built(int facility, int base_id) {
   if (facility != FAC_CHILDREN_CRECHE || base_id != BaseIDCurrentSelected) return 0;
   return (bases[base_id].facilities_built[facility >> 3]
       & (1u << (facility & 7))) != 0;

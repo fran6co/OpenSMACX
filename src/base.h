@@ -18,7 +18,7 @@
 #pragma once
 void __cdecl action_staple(int base_id);
 
-#include "general.h"  // bitmask, which has_fac_built below inlines
+#include "general.h"  // bitmask, which has_fac_built below calls
 
 class Buffer;
 
@@ -779,7 +779,7 @@ MEASURED inline BOOL __cdecl has_project(int project_id, int faction_id) {
     return (base_id < 0) ? false : (Bases[base_id].faction_id_current == faction_id);
 }
 
-inline bool __cdecl has_fac_built(int facility_id, int base_id) {
+inline int __cdecl has_fac_built(int facility_id, int base_id) {
     int offset;
     int mask;
     bitmask(facility_id, &offset, &mask);
@@ -789,17 +789,6 @@ inline bool __cdecl has_fac_built(int facility_id, int base_id) {
 inline bool __cdecl has_fac_built(int facility_id) {
     int base_id = BaseIDCurrentSelected;
     return (facility_id >= FacilityRepStart) ? false : has_fac_built(facility_id, base_id);
-}
-
-// has_fac_built(), open-coded with a REAL bitmask() call via `bitmask_call`
-// (general.h) rather than the folded shift/and `MEASURED inline bitmask`
-// gives everywhere else - moved here (from base.cpp, where the marker note
-// for it still lives) so breed_mod below can reach it too.
-static __forceinline int has_fac_built_call(int facility_id, int base_id) {
-    int offset;
-    int mask;
-    bitmask_call(facility_id, &offset, &mask);
-    return (Bases[base_id].facilities_built[offset] & mask) != 0;
 }
 
 // BODY IN base.h, as `MEASURED inline` (marker stays in base.cpp): worm_mod
@@ -822,6 +811,9 @@ static __forceinline int has_fac_built_call(int facility_id, int base_id) {
 // this pass's list and not a recorded match, so this is not a tracked
 // regression, but a future pass on worm_mod needs to know the source of
 // its drop is here, not there).
+// Current source has no `has_fac_built_call` adapter: its int-returning
+// two-argument has_fac_built calls the shared out-of-line bitmask directly.
+// The adapter above was a recovery source spelling, not an original identity.
 MEASURED inline int __cdecl breed_mod(int base_id, int faction_id) {
     uint32_t lifecycle_modifier = has_project(SP_XENOEMPATYH_DOME, faction_id) ? 1 : 0;
     if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
@@ -830,16 +822,16 @@ MEASURED inline int __cdecl breed_mod(int base_id, int faction_id) {
     if (has_project(SP_VOICE_OF_PLANET, faction_id)) {
         lifecycle_modifier++;
     }
-    if (has_fac_built_call(FAC_CENTAURI_PRESERVE, base_id)) {
+    if (has_fac_built(FAC_CENTAURI_PRESERVE, base_id)) {
         lifecycle_modifier++;
     }
-    if (has_fac_built_call(FAC_TEMPLE_OF_PLANET, base_id)) {
+    if (has_fac_built(FAC_TEMPLE_OF_PLANET, base_id)) {
         lifecycle_modifier++;
     }
-    if (has_fac_built_call(FAC_BIOLOGY_LAB, base_id)) {
+    if (has_fac_built(FAC_BIOLOGY_LAB, base_id)) {
         lifecycle_modifier++;
     }
-    if (has_fac_built_call(FAC_BIOENHANCEMENT_CENTER, base_id)
+    if (has_fac_built(FAC_BIOENHANCEMENT_CENTER, base_id)
         || has_project(SP_CYBORG_FACTORY, faction_id)) {
         lifecycle_modifier++;
     }

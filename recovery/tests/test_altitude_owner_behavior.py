@@ -42,7 +42,7 @@ def test_actual_source_transitions(tmp_path, compiler, case):
 
 @pytest.mark.parametrize("compiler", COMPILERS)
 @pytest.mark.parametrize("case,before,after", [
-    ("alt_set", "!has_fac_built_call(FAC_PRESSURE_DOME, base_id)", "has_fac_built_call(FAC_PRESSURE_DOME, base_id)"),
+    ("alt_set", "!has_fac_built(FAC_PRESSURE_DOME, base_id)", "has_fac_built(FAC_PRESSURE_DOME, base_id)"),
     ("delete_landmark", "if (old_flags == 0)", "if (old_flags != 0)"),
     ("delete_landmark", "window->field_1DD74_ != 0", "window->field_1DD74_ == 0"),
     ("delete_landmark", "AltBonusFlat[digits[i]] = 0", "AltBonusOcean[digits[i]] = 0"),

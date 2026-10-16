@@ -3069,11 +3069,11 @@ void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_nativ
                         morale_active++;
                     } while (morale_active < 0);
                 }
-                if(has_fac_built_call(FAC_BROOD_PIT, base_id) && proto_id < MaxVehProtoFactionNum
+                if(has_fac_built(FAC_BROOD_PIT, base_id) && proto_id < MaxVehProtoFactionNum
                     && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) {
                     VehMoraleModifierCount++;
                 }
-            } else if (morale < 6 && has_fac_built_call(FAC_BROOD_PIT, base_id)
+            } else if (morale < 6 && has_fac_built(FAC_BROOD_PIT, base_id)
                 && proto_id < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)) {
                 VehMoraleModifierCount++;
@@ -4298,11 +4298,11 @@ int __cdecl get_basic_offense(int veh_id_atk, int veh_id_def, int psi_combat_typ
             // fallthrough, a brood pit check ALSO runs, but only as a bare
             // `morale++` - the full range()/cap adjustment below it belongs
             // only to the crèche-false (`else if`) arm.
-            if (has_fac_built_call(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
+            if (has_fac_built(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(proto_id_atk) < 0 || proto_id_atk == BSC_SPORE_LAUNCHER)) {
                 morale++;
             }
-        } else if (has_fac_built_call(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
+        } else if (has_fac_built(FAC_BROOD_PIT, base_id_atk) && proto_id_atk < MaxVehProtoFactionNum
             && (get_proto_offense_rating(proto_id_atk) < 0 || proto_id_atk == BSC_SPORE_LAUNCHER)) {
             morale++;
             int morale_active = range(PlayersData[faction_id_atk].soc_effect_active.values_[SocialEffect::MORALE], -4, 4);
@@ -4382,12 +4382,12 @@ int __cdecl get_basic_defense(int veh_id_def, int veh_id_atk, int psi_combat_typ
             // above for the disassembly evidence: the crèche-true fallthrough
             // only bumps morale by 1 for a brood pit, the full range()/cap
             // adjustment belongs to the crèche-false arm only.
-            if (has_fac_built_call(FAC_BROOD_PIT, base_id_def)
+            if (has_fac_built(FAC_BROOD_PIT, base_id_def)
                 &&  proto_id_def < MaxVehProtoFactionNum
                 && (get_proto_offense_rating(proto_id_def) < 0 || proto_id_def == BSC_SPORE_LAUNCHER)) {
                 morale++;
             }
-        } else if (has_fac_built_call(FAC_BROOD_PIT, base_id_def)
+        } else if (has_fac_built(FAC_BROOD_PIT, base_id_def)
             &&  proto_id_def < MaxVehProtoFactionNum
             && (get_proto_offense_rating(proto_id_def) < 0 || proto_id_def == BSC_SPORE_LAUNCHER)) {
             morale++;
@@ -8218,7 +8218,7 @@ int __cdecl morale_veh(int veh_id, BOOL check_drone_riot, int faction_id_vs_nati
     }
     int home_base_id = Vehs[veh_id].home_base_id;
     if (home_base_id >= 0) { // home base countering negative effects
-        if (has_fac_built_call(FAC_CHILDREN_CRECHE, home_base_id) && morale_modifier < 0) {
+        if (has_fac_built(FAC_CHILDREN_CRECHE, home_base_id) && morale_modifier < 0) {
             morale_modifier /= 2;
         }
         if (has_fac_built(FAC_BROOD_PIT, home_base_id) && proto_id < MaxVehProtoFactionNum
@@ -8526,7 +8526,7 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
     // (0x005C1890) has none. Reproduced.
     if (proto_id < MaxVehProtoFactionNum
         && (get_proto_offense_rating(proto_id) < 0 || proto_id == BSC_SPORE_LAUNCHER)
-        && has_fac_built_call(FAC_BROOD_PIT, base_id)) {
+        && has_fac_built(FAC_BROOD_PIT, base_id)) {
         cost = (cost * 3) / 4; // Decrease the cost of alien units by 25%
     }
     if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION && base_id >= 0) {
@@ -8562,7 +8562,7 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
         // FAC_SKUNKWORKS check - not short-circuited behind it the way a
         // `cond ? 0 : (factor * base_cost(...) + 50) / 100` ternary would.
         proto_cost_first = (factor * base_cost(proto_id) + 50) / 100;
-        if (base_id >= 0 && has_fac_built_call(FAC_SKUNKWORKS, base_id)) {
+        if (base_id >= 0 && has_fac_built(FAC_SKUNKWORKS, base_id)) {
             proto_cost_first = 0;
         }
         cost += proto_cost_first;

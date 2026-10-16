@@ -53,7 +53,6 @@ int morale_alien(int, int) { return 0; }
 int has_project(int, int) { return 0; }
 int has_tech(int, int) { return 0; }
 int8_t get_proto_offense_rating(int) { return 1; }
-int has_fac_built_call(int, int) { return 0; }
 int has_fac_built(int, int) { return 0; }
 
 ACTUAL_FUNCTION

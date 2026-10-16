@@ -156,7 +156,7 @@ char *label_get(int index) {
     static char labels[4][16] = {"zero", "one", "two", "three"};
     return labels[index & 3];
 }
-void bitmask_call(int, int *offset, int *mask) {
+void bitmask(int, int *offset, int *mask) {
     ++bitmask_call_count;
     *offset = 0;
     *mask = 1;

@@ -118,8 +118,7 @@ static int is_human(uint32_t faction) {
     if (drop_human_after_first && human_reads==1) GameDataStateStorage.fields_.lock_masks_.enable_mask_=0;
     return result;
 }
-static void bitmask_call(int id,int *offset,int *mask) { *offset=id/8; *mask=1<<(id&7); }
-static void bitmask(int id,int *offset,int *mask) { bitmask_call(id,offset,mask); }
+static void bitmask(int id,int *offset,int *mask) { *offset=id/8; *mask=1<<(id&7); }
 static int has_fac(int id,int base_id,int queue) {
     assert(queue==0); facility_calls[facility_call_count++]=id;
     if (switch_base_on_facility && facility_call_count==switch_base_on_facility) BaseCurrent=&Bases[1];
@@ -283,9 +282,9 @@ def program():
     general = (ROOT / "src/general.h").read_text()
     queries = "\n".join(definition(header, sig) for sig in (
         "MEASURED inline int __cdecl base_project(", "MEASURED inline BOOL __cdecl has_project(",
-        "inline bool __cdecl has_fac_built(int facility_id, int base_id)",
+        "inline int __cdecl has_fac_built(int facility_id, int base_id)",
         "inline bool __cdecl has_fac_built(int facility_id)",
-        "static __forceinline int has_fac_built_call(", "MEASURED inline BOOL __cdecl ascending("))
+        "MEASURED inline BOOL __cdecl ascending("))
     queries = queries.replace("__forceinline", "inline")
     bodies = "\n".join(definition(source, sig) for _, sig in SUBJECTS.values())
     return declarations() + helpers() + "\n" + PROVIDERS + queries + "\n" + definition(general, "MEASURED inline int __cdecl range(") + "\n" + bodies + "\n" + MAIN

@@ -2249,7 +2249,7 @@ void __cdecl repair_phase(int faction_id) {
                     facility_id = FAC_COMMAND_CENTER;
                     project_id = SP_COMMAND_NEXUS;
                 }
-                if (has_fac_built_call(facility_id, base_id) || has_project(project_id, faction_id)) {
+                if (has_fac_built(facility_id, base_id) || has_project(project_id, faction_id)) {
                     repair_rate = Vehs[veh_id].dmg_incurred;
                 }
             }
@@ -4800,7 +4800,7 @@ int __cdecl generators(int faction_id, int *count_out) {
         int index = 0;
         do {
             if (Bases[index].faction_id_current == faction_id
-                && has_fac_built_call(0x28, index)) {
+                && has_fac_built(0x28, index)) {
                 if (Bases[index].population_size
                     < static_cast<int>(Rules.size_base_subspace_gen)) {
                     if (count_out != 0) {
@@ -9647,7 +9647,7 @@ static void random_events_cases_19_21(int event_kind, int faction_id,
         if (!has_tech(Facility[FAC_CHILDREN_CRECHE].preq_tech, faction_id))
             break;
 
-        const bool has_creche = has_fac_built_call(FAC_CHILDREN_CRECHE,
+        const bool has_creche = has_fac_built(FAC_CHILDREN_CRECHE,
                                                    selected_base_id) != 0;
         if (has_creche) {
             int population_increments = 0;

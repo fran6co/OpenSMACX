@@ -1039,7 +1039,7 @@ extern Console ConsoleGlobal;
 extern MapWin *MapWinTable[8];
 
 inline void bitmask(int input, int *offset, int *mask) {
-    *offset = input >> 3;
+    *offset = input / 8;
     *mask = 1 << (input & 7);
 }
 inline Map *map_loc(int x, int y) { return &MapTiles[(x >> 1) + y * MapLongitude]; }
@@ -1049,7 +1049,6 @@ inline BOOL is_alien_faction(uint32_t faction) {
 
 void __cdecl draw_tile(int x, int y, int draw_type);
 void __cdecl base_reset(int base_id, int force);
-void __cdecl bitmask_call(int input, int *offset, int *mask);
 BOOL __cdecl has_tech_call(int tech_id, int faction_id);
 void __cdecl parse_say(int id, int input, int gender, int plurality);
 void __cdecl parse_says(int id, LPCSTR input, int gender, int plurality);
@@ -1176,9 +1175,6 @@ void __cdecl draw_tile(int, int, int) {
     }
 }
 void __cdecl base_reset(int, int) { ++reset_calls; }
-void __cdecl bitmask_call(int input, int *offset, int *mask) {
-    bitmask(input, offset, mask);
-}
 BOOL __cdecl has_tech_call(int tech_id, int faction_id) {
     ++tech_calls;
     tech_last_id = tech_id;

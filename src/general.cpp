@@ -1629,16 +1629,13 @@ Purpose: Calculate the offset and bitmask for the specified input.
 Return Value: n/a
 Status: Complete
 */
-// BODY IN general.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-
-// Non-inline forwarder for the OTHER callers - cost_factor, pop_goal,
-// num_objectives (base.cpp) - where the image genuinely emits
-// `call 0x50ba00` rather than folding bitmask's shift/and in place.
-void __cdecl bitmask_call(int input, int *offset, int *mask) {
-    bitmask(input, offset, mask);
+// Pinned 0x50BA00..0x50BA27 performs signed /8, then writes offset before
+// the mask. The by-value input preserves callers that alias an out slot.
+// Original mapped callers use this shared utility; the older header-inline
+// policy was not supported by positive inline evidence.
+void __cdecl bitmask(int input, int *offset, int *mask) {
+    *offset = input / 8;
+    *mask = 1 << (input & 7);
 }
 
 

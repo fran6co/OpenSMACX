@@ -1472,7 +1472,7 @@ void Path::continents() {
                         if (region_rad >= MaxRegionLandNum) {
                             int offset;
                             int mask;
-                            bitmask_call(region_rad - MaxRegionLandNum, &offset, &mask);
+                            bitmask(region_rad - MaxRegionLandNum, &offset, &mask);
                             Continents[region].sea_coasts[offset] |= mask;
                             i += 2 - (i & 1);
                         }

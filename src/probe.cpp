@@ -136,13 +136,13 @@ int __cdecl mind_control(int base_id, int faction_id, BOOL is_corner_market) {
         }
         cost = 1;
     }
-    if (has_fac_built_call(FAC_GENEJACK_FACTORY, base_id)) {
+    if (has_fac_built(FAC_GENEJACK_FACTORY, base_id)) {
         cost *= 2;
     }
-    if (has_fac_built_call(FAC_CHILDREN_CRECHE, base_id)) {
+    if (has_fac_built(FAC_CHILDREN_CRECHE, base_id)) {
         cost /= 2; // Reduces base's vulnerability to enemy mind control
     }
-    if (has_fac_built_call(FAC_PUNISHMENT_SPHERE, base_id)) {
+    if (has_fac_built(FAC_PUNISHMENT_SPHERE, base_id)) {
         cost /= 2;
     }
     if (Bases[base_id].nerve_staple_turns_left) {
@@ -242,7 +242,7 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
         // for loss_rate - it never caches it in a shared local, and each use
         // makes its own real has_fac_built() call (via has_fac_built_call's
         // bitmask() E8, matching the image's two `call 0x50ba00` sites).
-        int prb_defense = ((base_id + 1) != 0 && has_fac_built_call(FAC_COVERT_OPS_CENTER, base_id))
+        int prb_defense = ((base_id + 1) != 0 && has_fac_built(FAC_COVERT_OPS_CENTER, base_id))
             ? 2 : 0;
         prb_defense = range(PlayersData[ProbeTargetFactionID].soc_effect_active.values_[SocialEffect::PROBE]
             + prb_defense, -2, 0);
@@ -257,7 +257,7 @@ int __cdecl success_rates(int id, int morale, int diff_modifier, int base_id) {
         say_num(success_rate);
         strcat(StringTemp, "%");
 
-        int prb_defense_2 = ((base_id + 1) != 0 && has_fac_built_call(FAC_COVERT_OPS_CENTER, base_id))
+        int prb_defense_2 = ((base_id + 1) != 0 && has_fac_built(FAC_COVERT_OPS_CENTER, base_id))
             ? 2 : 0;
         prb_defense_2 = range(PlayersData[ProbeTargetFactionID].soc_effect_active.values_[SocialEffect::PROBE]
             + prb_defense_2, -2, 0);

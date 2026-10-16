@@ -56,7 +56,7 @@ def actual_source():
         for name in names:
             declaration,=re.findall(r"^(?:BOOL|int) __cdecl "+name+r"\([^;]+\);",headers[filename],re.M)
             declarations.append(declaration)
-    declarations.append(re.search(r"MEASURED inline void __cdecl bitmask\([^)]*\)",headers["general.h"]).group().replace("MEASURED inline ","")+";")
+    declarations.append("void __cdecl bitmask(int input, int *offset, int *mask);")
     helpers=[]
     for name in ("signed_bits","add","sub","mul","has_facility"):
         signature=re.search(r"^(?:int|bool) base_yield_"+name+r"\(",source,re.M)

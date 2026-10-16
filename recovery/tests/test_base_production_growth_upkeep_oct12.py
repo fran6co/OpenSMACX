@@ -519,8 +519,7 @@ static int popup_flags,cache_expected=-1;static const char *popup_picture;
 static int finish_switch,finish_result=1,IsMultiplayerNet,UpgradePromptAnswered;
 static char order[32];static unsigned order_count;
 static void event(char c){assert(order_count<31);order[order_count++]=c;order[order_count]=0;}
-static void bitmask_call(int id,int*offset,int*mask){*offset=id>>3;*mask=1<<(id&7);}
-static void bitmask(int id,int*offset,int*mask){bitmask_call(id,offset,mask);}
+static void bitmask(int id,int*offset,int*mask){*offset=id/8;*mask=1<<(id&7);}
 static int has_fac(int id,int selected,int){return (Bases[selected].facilities_built[id>>3]&(1u<<(id&7)))!=0;}
 static int morale_mod(int,int,int){if(morale_switch)BaseIDCurrentSelected=1;return ordinary_morale;}
 static int has_abil(int id,int mask){return (VehPrototypes[id].ability_flags&mask)!=0;}
@@ -613,7 +612,7 @@ def helper_program():
     declarations_="\n".join(definition(veh,sig)+";" for sig in ("struct RulesWeapon {","struct RulesChassis {","struct VehPrototype {","enum VehMorale {","enum VehTriad {","enum VehAbilitiesBitfield {"))
     declarations_+=definition(base,"enum BaseStateBitfield {")+";"
     constants="\n".join(re.search(r"^static const int "+name+r" = [^;]+;",veh,re.M)[0] for name in ("MaxVehProtoNum","MaxVehProtoFactionNum"))
-    queries="\n".join(definition(base,sig) for sig in ("MEASURED inline int __cdecl base_project(","MEASURED inline BOOL __cdecl has_project(","static __forceinline int has_fac_built_call("))
+    queries="\n".join(definition(base,sig) for sig in ("MEASURED inline int __cdecl base_project(","MEASURED inline BOOL __cdecl has_project(","inline int __cdecl has_fac_built(int facility_id, int base_id)"))
     queries=queries.replace("__forceinline","inline")
     return (passive_common()+declarations_+constants+HELPER_PROVIDERS+queries
             +helper(src,"production_wrapped_multiply")
@@ -632,7 +631,7 @@ def test_production_helper_runtime_damage_controls(tmp_path,damage):
     text=helper_program()
     changes={
         "allocation_cutoff":("prototype_id < MaxVehProtoFactionNum\n        &&", "prototype_id < MaxVehProtoNum\n        &&"),
-        "wrong_spy_base":("has_fac_built_call(FAC_COVERT_OPS_CENTER, BaseIDCurrentSelected)","has_fac_built_call(FAC_COVERT_OPS_CENTER, selected_base_id)"),
+        "wrong_spy_base":("has_fac_built(FAC_COVERT_OPS_CENTER, BaseIDCurrentSelected)","has_fac_built(FAC_COVERT_OPS_CENTER, selected_base_id)"),
         "unwrapped_morale":("    morale = base_yield_add(morale, 1);\n    if (morale <", "    ++morale;\n    if (morale <"),
         "wrong_notice_mask":("(warnings & 0x2000u)","(warnings & 0x20000000u)"),
         "native_custom_image":("prototype_id < MaxVehProtoFactionNum && native_life","prototype_id >= 64 || native_life"),

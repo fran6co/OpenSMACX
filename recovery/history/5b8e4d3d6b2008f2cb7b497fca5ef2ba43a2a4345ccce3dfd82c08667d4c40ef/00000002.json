@@ -1,0 +1,31 @@
+{
+  "event_id": "b83a69a99524b333206bfd8ee05d2f168bd0e75e3843bf543287682d8de5ff1b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/altitude_owners/alt_set.cpp",
+      "recovery/tests/fixtures/popup_producers/popb-host.cpp",
+      "recovery/tests/random_events/cases_19_21.cpp",
+      "recovery/tests/test_altitude_owner_behavior.py",
+      "recovery/tests/test_base_economy_accounting_oct12.py",
+      "recovery/tests/test_base_nutrient_contract_oct11.py",
+      "recovery/tests/test_base_production_growth_upkeep_oct12.py",
+      "recovery/tests/test_base_psych.py",
+      "recovery/tests/test_base_yield.py",
+      "recovery/tests/test_facility_announcements.py",
+      "recovery/tests/test_get_basic_defense_original.py",
+      "recovery/tests/test_morale_veh_original_drone_clamp.py",
+      "recovery/tests/test_turn_production_chain_behavior.py"
+    ],
+    "evidence": [
+      "Update existing host/source controls that extract the relocated bitmask body or name retired forwarding wrappers. Retain behavioral assertions and actual-source extraction; preserve negative input, aliasing and ordered stores. Do not replace real source with fixture imitations or loosen expected original behavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bd7594e9c09e87c83e8c6c647240796285a6f89695864e2d08ddfaa313cafec2",
+  "request_id": "bitmask-helper-host-fixture-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:bitmask-owner-oct16"
+}
