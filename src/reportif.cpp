@@ -600,7 +600,10 @@ void ReportIf::on_iface_button_clicked(int button) {
         ReportIfGlobal.field_8_ = button;
         if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5)
             ReportIfGlobal.report(button, ReportIfGlobal.report_faction_id_, 0);
-        else ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        else {
+            Win &modal_window = ReportWinGlobal;
+            modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        }
     }
 }
 
@@ -1608,7 +1611,8 @@ void ReportIf::on_iface_left_click(int x_coord, int y_coord) {
     field_8_ = 7;
 
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 5) {
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
         return;
     }
 

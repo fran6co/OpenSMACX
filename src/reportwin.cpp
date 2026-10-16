@@ -1909,7 +1909,8 @@ int ReportWin::on_key_click(int, int code) {
                                   ReportIfGlobal.report_faction_id(), 0);
             return 1;
         }
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
         return 1;
     }
 
@@ -1965,7 +1966,8 @@ int ReportWin::on_key_click(int, int code) {
                                   ReportIfGlobal.report_faction_id(), 0);
             return 1;
         }
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
         return 1;
     }
 
