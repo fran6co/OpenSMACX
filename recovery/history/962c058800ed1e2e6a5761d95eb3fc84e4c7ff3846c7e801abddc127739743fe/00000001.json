@@ -1,0 +1,28 @@
+{
+  "event_id": "9e5d503e2b7c38a6e98c191d72ba6593d52ab63fa953646f16d21f96ab04837d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Source group includes only uncategorized methods; explicitly include original save613D50 and load613F60 identities whose real method bodies are the intended repair."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6372688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6373216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "include-original-modal-bodies",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:filewin-dialog-boundaries-oct16"
+}

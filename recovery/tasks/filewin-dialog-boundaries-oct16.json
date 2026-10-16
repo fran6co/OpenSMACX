@@ -1,0 +1,49 @@
+{
+  "author": "coordinator",
+  "base_revision": "2437446b02e2277d2998a241b30645586434ca23",
+  "editable_files": [
+    "recovery/tests/test_filewin_dialog_boundaries.py",
+    "recovery/tests/test_filewin_load_contract_behavior.py",
+    "src/jackal/filewin.cpp",
+    "src/jackal/filewin.h"
+  ],
+  "evidence": [
+    "Original save613D50-613F5C and load613F60-614133 are complete independent bodies; current source methods forward to a bool-parametric helper; AlphaSave direct callsites407A5F and407BBF target original methods; verify full bodies before implementation."
+  ],
+  "intent": "Restore complete original save and load method bodies instead of synthetic run_file_dialog forwarding while preserving original behavior, mappings and claims",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6371216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6371248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6371280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6371312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6371344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6371376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "filewin-dialog-boundaries-oct16"
+}
