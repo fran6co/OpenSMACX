@@ -1,5 +1,5 @@
 // Live receiver declarations, cleanup and allocation-owner publication are
-// inserted by pytest. Sound is a collaborator double, not a recovered factory.
+// inserted by pytest. VoiceRx is a collaborator double, not a recovered factory.
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,13 +11,17 @@ void *nodes[3], *payloads[3];
 int node_frees[3], payload_frees[3], destroyed[3], hooks[3];
 int hook_count, destruction_count;
 
-void operator delete(void *memory) {
+void observe_complete_release(void *memory) {
     if (!memory) return;
     for (int i = 0; i < 3; ++i) {
         if (memory == nodes[i]) ++node_frees[i];
         if (memory == payloads[i]) ++payload_frees[i];
     }
-    free(memory);
+    ::free(memory);
+}
+
+void operator delete(void *memory) {
+    observe_complete_release(memory);
 }
 
 class Sound {
@@ -26,9 +30,16 @@ class Sound {
     virtual void unused_slot() {}
     virtual ~Sound() {}
 };
+class VoiceRx : public Sound {
+ public:
+    virtual ~VoiceRx() {}
+};
 
+#define free observe_complete_release
 // LIVE_ALLOCATION_BASE
+#undef free
 // LIVE_OWNER_PUBLICATION
+// LIVE_VOICE_RX_ALLOCATION
 #define private public
 // LIVE_RECEIVER_DECLARATIONS
 #undef private
@@ -48,7 +59,7 @@ void observe_removal(JackalVoiceRx *receiver, void *payload) {
 int JackalVoiceRx::on_insert(void *) { return 0; }
 void JackalVoiceRx::on_remove(void *payload) { observe_removal(this, payload); }
 
-struct Payload : Sound {
+struct Payload : VoiceRxAllocation {
     int index;
     Payload(int value) : index(value) {}
     ~Payload() {
@@ -237,7 +248,8 @@ int main() {
         assert(entry[i]->allocation_owner_ == (i == 1 ? &pool : 0));
         entry[i]->id_ = i;
         payloads[i] = i < 2 ? new Payload(i) : 0;
-        entry[i]->payload_ = static_cast<Sound *>(static_cast<Payload *>(payloads[i]));
+        entry[i]->payload_ = static_cast<VoiceRxAllocation *>(
+            static_cast<Payload *>(payloads[i]));
     }
     for (int j = 0; j < 3; ++j) {
         entry[j]->next_ = entry[(j + 1) % 3];
@@ -273,7 +285,8 @@ int main() {
         nodes[0] = malloc(sizeof(VoiceReceiverEntry));
         VoiceReceiverEntry *last = ::new (nodes[0]) VoiceReceiverEntry;
         payloads[0] = new Payload(0);
-        last->payload_ = static_cast<Payload *>(payloads[0]);
+        last->payload_ = static_cast<VoiceRxAllocation *>(
+            static_cast<Payload *>(payloads[0]));
         last->next_ = last->previous_ = last;
         automatic.head_ = last;
         automatic.count_ = 1;

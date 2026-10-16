@@ -1,0 +1,19 @@
+{
+  "event_id": "5ee09091d799d942db45c881fce3842aa22d5403edf18bcae48bc20001fd84bf",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_application_link_recovery.py"
+    ],
+    "evidence": [
+      "Baseline and candidate reproduce identical eleven legacy link-test failures. Authorize only bounded extraction repairs for session-ledger cleanup helper and receiver scratch storage in this test module; retain real body assertions and do not weaken unrelated checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "network-list-fixture-boundaries-oct16",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:network-list-cleanup-visibility-oct16"
+}

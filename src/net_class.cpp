@@ -3811,28 +3811,6 @@ int NetTextListBase::on_insert(Payload *) { return 0; }
 
 void NetTextListBase::on_remove(Payload *) { }
 
-void NetTextListBase::remove_all() {
-    if (head_ != 0) {
-        int index = 0;
-        if (entry_count_ > 0) {
-            do {
-                current_ = head_->next;
-                Payload *const payload = head_->payload;
-                on_remove(payload);
-                delete payload;
-                // Reload head after the callback and payload destructor.
-                head_->payload = 0;
-                delete head_;
-                head_ = current_;
-                ++index;
-            } while (index < entry_count_); // native re-reads the count
-        }
-        head_ = 0;
-        current_position_ = 0;
-        entry_count_ = 0;
-    }
-}
-
 void NetUnk72C::on_remove(Payload *payload) {
     if (allocator_ == 0) {
         if (payload->text != 0) {

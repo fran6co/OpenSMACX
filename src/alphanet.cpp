@@ -88,24 +88,6 @@ namespace {
 // Source-only typed algorithms shared by genuine list owners. They own no
 // executable identity. Each instantiated body/reference requires measurement;
 // sharing source does not prove the original compiler folded any particular pair.
-template<class List> inline void clear_owned_list(List *list) {
-    if (list->head_ != 0) {
-        for (int removed = 0; removed < list->entry_count_; ++removed) {
-            list->current_ = list->head_->next_;
-            typename List::Payload *payload = list->head_->payload_;
-            list->on_remove(payload);
-            delete payload;
-            // These are intentionally RE-READS after callback and destruction.
-            list->head_->payload_ = 0;
-            delete list->head_;
-            list->head_ = list->current_;
-        }
-        list->head_ = 0;
-        list->current_position_ = 0;
-        list->entry_count_ = 0;
-    }
-}
-
 template<class List, class Node> inline Node *allocate_owned_node(List *list, Node *) {
     Heap *const explicit_owner = list->allocator_;
     if (explicit_owner != 0) return new(explicit_owner) Node;
@@ -614,8 +596,6 @@ void reset_net_lobby_rows() {
         NetWinLobbyRows[row].field_4_ = 2;
     }
 }
-
-void AlphaNetStringStruct::remove_all() { clear_owned_list(this); }
 
 int AlphaNetStringStruct::seek_pos(int position) { return seek_owned_list(this, position); }
 

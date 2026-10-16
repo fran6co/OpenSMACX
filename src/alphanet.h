@@ -72,7 +72,23 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
   typedef NetAllocationNode Payload;
   int add(int id);
   void sort_sessions();
-  void remove_all();
+  void remove_all() {
+    if (head_ != 0) {
+      for (int removed = 0; removed < entry_count_; ++removed) {
+        current_ = head_->next_;
+        Payload *payload = head_->payload_;
+        on_remove(payload);
+        delete payload;
+        // Preserve the post-callback/post-destruction member reloads.
+        head_->payload_ = 0;
+        delete head_;
+        head_ = current_;
+      }
+      head_ = 0;
+      current_position_ = 0;
+      entry_count_ = 0;
+    }
+  }
   int seek_pos(int position);
   NetAllocationNode *next_entry();
   AlphaNetLedgerEntry *head_;     // +0x08 - the five the constructor zeroes

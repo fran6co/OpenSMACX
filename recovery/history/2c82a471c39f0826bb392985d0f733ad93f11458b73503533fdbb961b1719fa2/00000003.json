@@ -1,0 +1,19 @@
+{
+  "event_id": "85eb2c659f22fa2e1e24f4b9bc517078ad53f68611dd9e4f7179958e64d9af55",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/receiver_cleanup_harness.cpp"
+    ],
+    "evidence": [
+      "The repaired extraction reveals the pre-existing receiver fixture still supplies Sound payloads although current product owns VoiceRxAllocation. Authorize extracting the genuine VoiceRxAllocation wrapper, a clearly labeled VoiceRx collaborator double, and typed fixture payload inheritance/assignment. Retain real receiver cleanup, allocation-base capture/publication, deletion order/free ownership assertions and queue tests; no product changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b95f61f5ef7d19fbc5dceb8a455c866f7f1dfcdd51c25c7aff172e2cd4700c2b",
+  "request_id": "network-list-receiver-typed-fixture-oct16",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:network-list-cleanup-visibility-oct16"
+}

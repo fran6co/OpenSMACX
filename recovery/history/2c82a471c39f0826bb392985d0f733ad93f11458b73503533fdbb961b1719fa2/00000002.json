@@ -1,0 +1,19 @@
+{
+  "event_id": "b95f61f5ef7d19fbc5dceb8a455c866f7f1dfcdd51c25c7aff172e2cd4700c2b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_application_link_recovery.py"
+    ],
+    "evidence": [
+      "After the initial boundary repairs the ledger fixture passes. Receiver fixture exposes further pre-existing extraction errors: allocation destructor slice includes StringStruct constructor, and queue declaration slice excludes closing members/brace. Authorize completing extraction boundaries within that same receiver test only, preserving all actual-body behavior checks and no product edits."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5ee09091d799d942db45c881fce3842aa22d5403edf18bcae48bc20001fd84bf",
+  "request_id": "network-list-receiver-fixture-complete-oct16",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:network-list-cleanup-visibility-oct16"
+}
