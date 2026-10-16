@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "4b8ea6db4d379d45b9c4d6c913ccbdb873b4c2e3",
+  "editable_files": [
+    "src/selectpartwin.cpp",
+    "recovery/tests/test_selectpartwin_navigation.py"
+  ],
+  "evidence": [
+    "Pinned4338CF calls draw_part(next,1);4338DA reloads this+2B80 and4338E0 tests it before4338E9 draw_part(current,0). Current source reuses old captured before the draw call.",
+    "Replace cached selection uses with the actual member reads matching original; keep arithmetic, branch conditions, callback order, final stores and original mappings. Test draw-time selection mutation and ordinary navigation; no deliberate behavior fix.",
+    "Require focused tests with a stale-value damage control, fresh original comparison, full build/link and claim continuity. Preserve historical obligations; no automatic/full-game acceptance claim."
+  ],
+  "intent": "Restore original selected-index reload after draw_part in SelectPartWin pointer feedback.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4405280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "selectpart-feedback-reload-oct16"
+}
