@@ -1,0 +1,20 @@
+{
+  "event_id": "a24fb9f55f8716c30fcc9455d04f8cdc3cb19478f6806d03418c07739a49fe26",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_generated_owner_native_symbols.py",
+      "recovery/tests/test_mapwin_adjustor_owner_history_oct6.py"
+    ],
+    "evidence": [
+      "Read-only review identified existing history-host assertion and physical Console-generated symbol tests that must move with the bindings; preserve original identity equality assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "include-existing-owner-and-physical-tests",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-mapwin-adjustor-host-oct16"
+}
