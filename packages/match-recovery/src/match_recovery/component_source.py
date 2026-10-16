@@ -126,6 +126,49 @@ def parse_component_entries(sources: dict[str, str]) -> list[tuple[str, Componen
     entities = [binding.origin.entity_id for manifest in manifests for binding in manifest.bindings]
     if len(entities) != len(set(entities)):
         raise ValueError("original binding owned by multiple components")
+    entry_rows = [(manifest.component.component_id, manifest, section, anchor,
+                   section.span.start + anchor.offset)
+                  for manifest in manifests if isinstance(manifest, ToolchainManifest)
+                  for section in manifest.code_sections for anchor in section.entries]
+    if len({(section.origin.image_sha256, section.origin.address_space, address)
+            for _, manifest, section, _anchor, address in entry_rows}) != len(entry_rows):
+        raise ValueError("duplicate original code-entry identity")
+    target_owners = {}
+    for manifest in manifests:
+        names = [binding.symbol for binding in manifest.bindings]
+        if isinstance(manifest, ToolchainManifest):
+            names.extend(item.symbol for item in manifest.absolute_symbols)
+            names.extend(anchor.name for section in manifest.code_sections for anchor in section.entries)
+        for name in names:
+            previous = target_owners.setdefault(name, manifest.component.component_id)
+            if previous != manifest.component.component_id:
+                raise ValueError("component target symbol is declared by multiple components")
+    entry_names = {}
+    for component_id, manifest, section, anchor, address in entry_rows:
+        owner = (component_id, manifest, section, anchor, address)
+        if anchor.name in entry_names and entry_names[anchor.name][0] != component_id:
+            raise ValueError("code-entry symbol is declared by multiple components")
+        entry_names[anchor.name] = owner
+        origin = (section.origin.image_sha256, section.origin.address_space, address)
+        for other_manifest in manifests:
+            for binding in other_manifest.bindings:
+                binding_origin = (binding.origin.image_sha256, binding.origin.address_space,
+                                  binding.origin.address)
+                if binding.symbol == anchor.name and not (
+                        other_manifest.component.component_id == component_id
+                        and binding.unit == section.unit and binding_origin == origin
+                        and all(section.span.start <= span.start < span.end <= section.span.end
+                                for span in binding.spans)):
+                    raise ValueError("code-entry symbol conflicts with a component function binding")
+                if binding_origin == origin and not (
+                        other_manifest.component.component_id == component_id
+                        and binding.unit == section.unit and binding.symbol == anchor.name
+                        and all(section.span.start <= span.start < span.end <= section.span.end
+                                for span in binding.spans)):
+                    raise ValueError("code-entry identity conflicts with a component function binding")
+            if isinstance(other_manifest, ToolchainManifest) and any(
+                    item.symbol == anchor.name for item in other_manifest.absolute_symbols):
+                raise ValueError("code-entry symbol conflicts with a component absolute binding")
     return entries
 
 

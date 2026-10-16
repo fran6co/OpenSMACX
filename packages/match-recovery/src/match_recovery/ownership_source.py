@@ -9,7 +9,7 @@ from pathlib import Path
 import re
 
 from match_recovery.component_source import parse_component_entries
-from match_recovery.components import VendorManifest
+from match_recovery.components import ToolchainManifest, VendorManifest
 from match_recovery.includes import include_graph
 from match_recovery.model import Origin, Span
 from match_recovery.partition import Candidate, partition, select_group
@@ -91,6 +91,50 @@ def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = F
                                         (manifest.source_root + "/" + binding.unit
                                          if isinstance(manifest, VendorManifest) else annotation), 1, False,
                                         binding.symbol, component=manifest.component.component_id))
+        if isinstance(manifest, ToolchainManifest):
+            declared_function_entries = {
+                (binding.unit, binding.symbol, binding.origin.image_sha256, binding.origin.address)
+                for binding in manifest.bindings}
+            records_by_entity = {}
+            for record in snapshot["records"]:
+                records_by_entity.setdefault(record["entity_id"], []).append(record)
+            for section in manifest.code_sections:
+                for anchor in section.entries:
+                    if (section.origin.image_sha256 != snapshot["image_sha256"]
+                            or section.origin.address_space != configuration.address_space):
+                        raise ValueError("component code entries refer to a different original image/address space")
+                    origin = Origin(section.origin.image_sha256, section.origin.address_space,
+                                    section.span.start + anchor.offset)
+                    if (section.unit, anchor.name, origin.image_sha256, origin.address) in declared_function_entries:
+                        # The existing function binding already owns this exact
+                        # original identity; do not add a duplicate partition candidate.
+                        continue
+                    matching_records = records_by_entity.get(origin.entity_id, ())
+                    existing_component = False
+                    duplicate_legacy = False
+                    for record in matching_records:
+                        key = (record["path"], record["entity_id"])
+                        names = {record.get("emitted_symbol_hint"), record.get("catalogued_symbol")}
+                        if record.get("candidate_kind") == "legacy_seed":
+                            # Historical seeds are retained as context, not a
+                            # competing current owner for a component entry.
+                            duplicate_legacy = duplicate_legacy or anchor.name in names
+                            continue
+                        owner = component_owners.get(key)
+                        if owner is not None:
+                            if (owner[0] == manifest.component.component_id
+                                    and owner[2].symbol == anchor.name
+                                    and owner[2].unit == section.unit):
+                                existing_component = True
+                                continue
+                            raise ValueError("code-entry component owner conflicts with a different component binding")
+                        if names or record.get("candidate_kind") == "source":
+                            raise ValueError("code-entry component owner conflicts with a product source mapping")
+                    if existing_component or duplicate_legacy:
+                        continue
+                    candidates.append(Candidate(origin, (), annotation, 1, False,
+                                                anchor.name,
+                                                component=manifest.component.component_id))
     return partition(candidates), snapshot
 
 

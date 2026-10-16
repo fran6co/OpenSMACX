@@ -3361,6 +3361,18 @@ Reports keep `code_sections` and `code_section_counts` separate from function
 counts, with `callable` and `link_target` false. A passing contribution is not
 provider-selection, linked-preservation, application-function or runtime proof.
 
+An optional section `entries` array records explicit public entry anchors by
+`name`, section-relative `offset`, and `evidence`; it never records a function
+size. The verifier requires the exact unique inventory of defined external
+function symbols and matching offsets, then qualifies an entry only after the
+whole parent contribution, its references, and archive pin pass. Passing entries
+are callable scoped-reference targets, but do not prove original/current linker
+selection (`link_target` remains false), independent function extent, or
+application coverage. They do not participate in the COMDAT-only linked
+verifier and this version does not resolve cycles among new entries within a
+component. Legacy code-section rows without `entries` keep their old serialized
+form.
+
 The companion uses one `image` pin/address space and hexadecimal binding spans.
 It contains no archive location, extracted objects, derived per-member hashes,
 compiler flags or current verdicts. Supply the installed library location locally:

@@ -411,23 +411,73 @@ class ToolchainManifest:
         section_ids = {item.origin.entity_id for item in section_rows}
         if len(section_ids) != len(section_rows):
             raise ValueError("duplicate toolchain section identity")
+        entry_symbols = {}
+        for section in self.code_sections:
+            for anchor in section.entries:
+                if anchor.name in entry_symbols:
+                    raise ValueError("toolchain code-entry symbols must be unique")
+                entry_symbols[anchor.name] = (section, anchor)
+        if set(entry_symbols) & {item.symbol for item in self.absolute_symbols}:
+            raise ValueError("toolchain code-entry symbols cannot also be absolute bindings")
+        overlap_bindings = {}
+        for binding in self.bindings:
+            anchored = entry_symbols.get(binding.symbol)
+            if anchored is None:
+                continue
+            section, anchor = anchored
+            if (binding.unit == section.unit and binding.origin.image_sha256 == section.origin.image_sha256
+                    and binding.origin.address_space == section.origin.address_space
+                    and binding.origin.address == section.span.start + anchor.offset
+                    and all(section.span.start <= span.start < span.end <= section.span.end
+                            for span in binding.spans)):
+                overlap_bindings[binding.origin.entity_id] = (binding, section, anchor)
+            else:
+                raise ValueError("toolchain function and code-entry symbol declarations conflict")
         if identities & section_ids:
-            raise ValueError("one original identity cannot be both a function and a section")
+            for identity in identities & section_ids:
+                binding = next(item for item in self.bindings if item.origin.entity_id == identity)
+                section = next(item for item in section_rows if item.origin.entity_id == identity)
+                if (not isinstance(section, ToolchainCodeSectionBinding)
+                        or overlap_bindings.get(identity, (None, None, None))[0] != binding
+                        or overlap_bindings[identity][1] != section):
+                    raise ValueError("one original identity cannot be both a function and a section")
         origins = [item.origin for item in self.bindings] + [item.origin for item in section_rows]
         if any(origin.address_space != "pe:va" for origin in origins):
             raise ValueError("toolchain bindings require PE virtual addresses")
         if len({origin.image_sha256 for origin in origins}) != 1:
             raise ValueError("toolchain bindings must refer to one pinned image")
-        spans = [span for item in self.bindings for span in item.spans]
-        spans.extend(item.span for item in section_rows)
-        ordered_spans = sorted(spans)
-        if any(left.end > right.start for left, right in zip(ordered_spans, ordered_spans[1:])):
-            raise ValueError("toolchain function/data-section spans overlap")
+        spans = [(span, "binding", item, None) for item in self.bindings for span in item.spans]
+        spans.extend((item.span, "section", item, None) for item in section_rows)
+        for index, (left, left_kind, left_owner, _) in enumerate(spans):
+            for right, right_kind, right_owner, _ in spans[index + 1:]:
+                if left.end <= right.start or right.end <= left.start:
+                    continue
+                if left_kind == right_kind == "binding" and left_owner == right_owner:
+                    continue
+                allowed = False
+                if left_kind == "binding" and right_kind == "section":
+                    binding, section = left_owner, right_owner
+                elif left_kind == "section" and right_kind == "binding":
+                    binding, section = right_owner, left_owner
+                else:
+                    binding = section = None
+                if binding is not None and isinstance(section, ToolchainCodeSectionBinding):
+                    relation = overlap_bindings.get(binding.origin.entity_id)
+                    allowed = (relation is not None and relation[0] == binding
+                               and relation[1] == section and section.span.start <= left.start
+                               and left.end <= section.span.end and section.span.start <= right.start
+                               and right.end <= section.span.end)
+                if not allowed:
+                    raise ValueError("toolchain function/data-section spans overlap")
 
     def to_dict(self) -> dict:
         data = asdict(self)
         if not self.code_sections:
             data.pop("code_sections")
+        else:
+            for row, item in zip(data["code_sections"], self.code_sections, strict=True):
+                if not item.entries:
+                    row.pop("entries")
         return {"schema_version": 1, "kind": "toolchain_component", **data}
 
     @classmethod
@@ -477,12 +527,17 @@ class ToolchainManifest:
                                item["section_name"], origin, span, symbols, item["evidence"]))
         code_sections = []
         for item in _list(value.get("code_sections", []), "code_sections"):
-            _fields(item, {"unit", "section", "section_name", "origin", "span", "evidence"},
-                    "code-section binding")
+            fields = {"unit", "section", "section_name", "origin", "span", "evidence", "entries"}
+            if (not isinstance(item, dict) or set(item) - fields
+                    or not fields - {"entries"} <= set(item)):
+                raise ValueError("invalid code-section binding fields")
             origin = Origin(**_fields(item["origin"], {"image_sha256", "address_space", "address"}, "origin"))
             span = Span(**_fields(item["span"], {"start", "end"}, "code-section span"))
+            entries = tuple(CodeEntryAnchor(**_fields(anchor, {"name", "offset", "evidence"},
+                                                       "code-entry anchor"))
+                            for anchor in _list(item.get("entries", []), "code-section entries"))
             code_sections.append(ToolchainCodeSectionBinding(item["unit"], item["section"],
-                                item["section_name"], origin, span, item["evidence"]))
+                                item["section_name"], origin, span, item["evidence"], entries))
         return cls(owner, value["archive_sha256"], value["license_evidence"], tuple(bindings),
                    tuple(absolutes), tuple(data_sections), tuple(code_sections))
 
@@ -553,6 +608,20 @@ class ToolchainDataSectionBinding:
 
 
 @dataclass(frozen=True)
+class CodeEntryAnchor:
+    """Named entry location inside a verified contribution; deliberately no extent."""
+    name: str
+    offset: int
+    evidence: str
+
+    def __post_init__(self):
+        require_text(self.name, "code-entry symbol")
+        if type(self.offset) is not int or self.offset < 0:
+            raise ValueError("code-entry offset must be a nonnegative integer")
+        require_text(self.evidence, "code-entry evidence")
+
+
+@dataclass(frozen=True)
 class ToolchainCodeSectionBinding:
     """One whole ordinary executable COFF contribution, not a function entry."""
     unit: str
@@ -561,6 +630,7 @@ class ToolchainCodeSectionBinding:
     origin: Origin
     span: Span
     evidence: str
+    entries: tuple[CodeEntryAnchor, ...] = ()
 
     def __post_init__(self):
         archive_member_identity(self.unit)
@@ -571,6 +641,15 @@ class ToolchainCodeSectionBinding:
         if (self.origin.address_space != "pe:va" or self.span.start != self.origin.address
                 or self.span.end <= self.span.start):
             raise ValueError("code-section binding requires a nonempty original PE span")
+        if not isinstance(self.entries, tuple) or any(not isinstance(item, CodeEntryAnchor)
+                                                       for item in self.entries):
+            raise ValueError("code-section entries must be an immutable tuple of typed anchors")
+        if len({item.name for item in self.entries}) != len(self.entries):
+            raise ValueError("code-entry names must be unique within a contribution")
+        if len({item.offset for item in self.entries}) != len(self.entries):
+            raise ValueError("code-entry offsets must be unique within a contribution")
+        if any(item.offset >= self.span.end - self.span.start for item in self.entries):
+            raise ValueError("code-entry offset is outside the contribution span")
 
 
 def source_integrity(root: Path, manifest: VendorManifest, archive: Path | None = None) -> dict:
