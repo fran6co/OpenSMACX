@@ -125,7 +125,9 @@ uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009
 // hof_save/hof_load transfer this complete zero-initialized 0x1324-byte
 // block, and FameWin indexes it in 0x8C-byte records. The original address
 // is evidence of identity, not a pointer used by the product build.
+// RECOVERY_OBJECT: v2 0x009A3840 0x009A4B64 ?HallOfFameRecords@@3PAUHallOfFameRecord@@A 0x0044AF70
 HallOfFameRecord HallOfFameRecords[HallOfFameRecordCount];  // 0x009A3840
+// RECOVERY_OBJECT: v2 0x00759194 0x00759198 ?HallOfFameIOMode@@3HA 0x0044AF90
 int HallOfFameIOMode;  // 0x00759194
 // MapFilePath at 0x0094A2BC is MapStorage.metadata_.file_path_ (map.cpp).
 // read_tech walks the array from `mov esi, 0x94F360` (&Technology[0].id,

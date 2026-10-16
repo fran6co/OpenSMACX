@@ -1,0 +1,23 @@
+{
+  "event_id": "90357f1c9b98cda9f636cc02c0779ce732a70e87d0a4ba721b41a00a863a1942",
+  "payload": {
+    "affects": [
+      "entity-2a1dc5df3c30a85f5227a2290c0a606e7f2418d773e2366e82d9792e06f49217",
+      "entity-d039f3412aa34287c64e1d839b4e32f17eba5756eae7acb21f6cb2b04c4d1b85",
+      "entity-dfae810afd7b8926a26cc3bc15e7213a01feee7369b6bc053fc0f0f785f0088a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "halloffame-literal-target-identity",
+    "evidence": [
+      "Fresh actual Release strict checks leave compiler-artifact filename/mode-string references unknown. Source uses one pooled COFF filename symbol; pinned save/load observations identify separate original hallfame.jhh copies at684610 and684624, with rb at684620.",
+      "Do not invent distinct arrays, string bindings, historical translation-unit boundaries or compiler flag changes merely to make the checker resolve. Keep existing source behavior and all matching obligations; investigate allocation/provenance in the subsequent full-reference matching pass. Manual source checkpoint is not full strict/link/runtime acceptance."
+    ],
+    "hypothesis": "Original save/load filename literals may require distinct allocation/TU or pooling interpretation; identical string content does not establish their individual original target identities.",
+    "kind": "discovery"
+  },
+  "previous_event": "59631e4fcd4d27113f92b7b4bba3ea29728a7e7ba083fd0ce415d856e885090b",
+  "request_id": "halloffame-literal-target-identity",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:famewin-record-clearing-oct17"
+}

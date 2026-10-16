@@ -40,9 +40,11 @@ static char FameWinWideCaption[4];
 // kind      game
 // symbol    ?clear_hall_of_fame@@YAXXZ
 void __cdecl clear_hall_of_fame() {
-  for (int record = 0; record < HallOfFameRecordCount; ++record) {
-    HallOfFameRecords[record].present = 0;
-  }
+    for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
+        for (int rank = 0; rank < 5; ++rank) {
+            HallOfFameRecords[group * 5 + rank].present = 0;
+        }
+    }
 }
 
 // ORIGINAL: 0x0044AE50 ?hall_of_fame@@YAXH@Z 0x0044AE50-0x0044AF6D BYTE_EXACT
@@ -51,7 +53,11 @@ void __cdecl clear_hall_of_fame() {
 void __cdecl hall_of_fame(int add_current_player) {
   FILE *file = fopen("hallfame.jhh", "rb");
   if (file == 0) {
-    clear_hall_of_fame();
+    for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
+        for (int rank = 0; rank < 5; ++rank) {
+            HallOfFameRecords[group * 5 + rank].present = 0;
+        }
+    }
   } else {
     HallOfFameIOMode = 0;
     if (fread(HallOfFameRecords, sizeof(HallOfFameRecords), 1, file) == 0) {
@@ -69,7 +75,11 @@ void __cdecl hall_of_fame(int add_current_player) {
   if (file != 0) {
     HallOfFameIOMode = 1;
     if (fwrite(HallOfFameRecords, sizeof(HallOfFameRecords), 1, file) == 0) {
-      clear_hall_of_fame();
+        for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
+            for (int rank = 0; rank < 5; ++rank) {
+                HallOfFameRecords[group * 5 + rank].present = 0;
+            }
+        }
     }
     fclose(file);
   }
@@ -88,11 +98,11 @@ Purpose: Hall-of-fame I/O: store the read/write mode, then transfer the
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0064603F 0x00646178
-Status: Structural migration to source-owned HallOfFameRecords and
-        HallOfFameIOMode. The historical byte claim remains an obligation;
-        this current spelling measures MISMATCH. The image's 0x0064603F and
-        0x00646178 are CRT fwrite/fread wrappers.
 */
+// The pinned 0x0064603F/0x00646178 targets are CRT fwrite/fread wrappers.
+// The retained LEVER describes the seed's integer-address spelling; this
+// typed loop expresses the fixed 35-record table as seven groups of five.
+// symbol    _sub_44af90
 extern "C" int __cdecl sub_44af90(FILE *a1, int a2) {
     HallOfFameIOMode = a2;
     int result;
@@ -104,8 +114,10 @@ extern "C" int __cdecl sub_44af90(FILE *a1, int a2) {
             fread(HallOfFameRecords, sizeof(HallOfFameRecords), 1, a1));
     }
     if (result == 0) {
-        for (int i = 0; i < HallOfFameRecordCount; ++i) {
-            HallOfFameRecords[i].present = 0;
+        for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
+            for (int rank = 0; rank < 5; ++rank) {
+                HallOfFameRecords[group * 5 + rank].present = 0;
+            }
         }
     }
     return 0;
@@ -123,12 +135,9 @@ Purpose: Hall-of-fame save: open hallfame.jhh for writing, set the I/O mode,
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00645598 0x00645646 0x0064603F
-Status: Structural migration to source-owned hall-of-fame storage. The
-        historical byte claim remains an obligation; current spelling
-        measures MISMATCH. The image's fopen is 0x00645646 and fclose is
-        0x00645598; the pinned .data bytes at 0x00684610 spell
-        "hallfame.jhh", correcting the previous product filename.
 */
+// The pinned fopen/fclose targets are 0x00645646/0x00645598; the data at
+// 0x00684610 spells "hallfame.jhh", not the former product filename.
 int __cdecl hof_save() {
     FILE *file = fopen("hallfame.jhh", "wb");
     if (file == 0) {
@@ -138,8 +147,10 @@ int __cdecl hof_save() {
     int written = static_cast<int>(
         fwrite(HallOfFameRecords, sizeof(HallOfFameRecords), 1, file));
     if (written == 0) {
-        for (int i = 0; i < HallOfFameRecordCount; ++i) {
-            HallOfFameRecords[i].present = 0;
+        for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
+            for (int rank = 0; rank < 5; ++rank) {
+                HallOfFameRecords[group * 5 + rank].present = 0;
+            }
         }
     }
     fclose(file);
@@ -158,16 +169,15 @@ Purpose: Hall-of-fame load: open hallfame.jhh for reading, clear entry-present
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00645598 0x00645646 0x00646178
-Status: Structural migration to source-owned hall-of-fame storage. The
-        historical byte claim remains an obligation; current spelling
-        measures MISMATCH. The pinned .data bytes at 0x00684620/24 are
-        "rb"/"hallfame.jhh".
 */
+// Pinned data at 0x00684620/0x00684624 is "rb"/"hallfame.jhh".
 int __cdecl hof_load() {
     FILE *f = fopen("hallfame.jhh", "rb");
     if (f == 0) {
-        for (int i = 0; i < HallOfFameRecordCount; ++i) {
-            HallOfFameRecords[i].present = 0;
+        for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
+            for (int rank = 0; rank < 5; ++rank) {
+                HallOfFameRecords[group * 5 + rank].present = 0;
+            }
         }
         return 1;
     }
@@ -175,8 +185,10 @@ int __cdecl hof_load() {
     int n = static_cast<int>(
         fread(HallOfFameRecords, sizeof(HallOfFameRecords), 1, f));
     if (n == 0) {
-        for (int i = 0; i < HallOfFameRecordCount; ++i) {
-            HallOfFameRecords[i].present = 0;
+        for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
+            for (int rank = 0; rank < 5; ++rank) {
+                HallOfFameRecords[group * 5 + rank].present = 0;
+            }
         }
     }
     fclose(f);

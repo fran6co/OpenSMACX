@@ -1,0 +1,18 @@
+{
+  "event_id": "59631e4fcd4d27113f92b7b4bba3ea29728a7e7ba083fd0ce415d856e885090b",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "unbound-halloffame-storage",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/alpha.cpp now records the two existing genuine definitions with bounded original identities and witnesses; no type/storage/initializer/code change. Native parser tests enforce exact symbols, owner, extents and witness addresses. Actual compiled alpha.cpp COFF independently defines both names as data.",
+      "Pinned clear35x8C and fread/fwrite1324 observations establish the table window;32-bit mode writes establish the scalar window. Object/global linked allocation, whole-runtime and game acceptance remain separate; fresh native object/reference checks still report unsupported dimensions honestly."
+    ]
+  },
+  "previous_event": "f612315e0f035e7e2b63e6302770ab85f39a8ec77ebb1f278f1a454cb37cc26d",
+  "request_id": "source-owned-halloffame-storage",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:famewin-record-clearing-oct17"
+}

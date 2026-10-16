@@ -1,0 +1,30 @@
+{
+  "event_id": "f612315e0f035e7e2b63e6302770ab85f39a8ec77ebb1f278f1a454cb37cc26d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/alpha.cpp"
+    ],
+    "evidence": [
+      "Coordinator expands the existing five-function owner closure to bind its two already-defined globals in alpha.cpp. Preserve all original function identities, historical obligations and physical code/data; verify native object extents/initial data and remeasure scoped references before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 10106944,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7704980,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "209470ce308d8264cdbef9f26f9b59048737030543714135d16f516823f35c15",
+  "request_id": "bind-existing-halloffame-storage",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:famewin-record-clearing-oct17"
+}

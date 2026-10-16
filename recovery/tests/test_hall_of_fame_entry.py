@@ -36,8 +36,12 @@ def test_hall_of_fame_entry_preserves_io_modal_and_failure_order(tmp_path):
 #include <vector>
 #define __cdecl
 #include "halloffame.h"
+static_assert(HallOfFameRecordCount == 35, "pinned record count changed");
+static_assert(HallOfFameRecordCount == 7 * 5, "pinned 7-by-5 record domain changed");
+static_assert(offsetof(HallOfFameRecord, present) == 0, "present byte moved");
 HallOfFameRecord HallOfFameRecords[HallOfFameRecordCount];
 int HallOfFameIOMode;
+unsigned char original_records[sizeof(HallOfFameRecords)];
 std::vector<std::string> events;
 bool read_open, write_open, read_ok, write_ok;
 int init_result, adds, closes, selected_faction;
@@ -84,10 +88,20 @@ void reset() {
   init_result=adds=closes=0; selected_faction=-1;
   HallOfFameIOMode=7; ConsoleGlobal.faction_id_=3;
   for (auto &record:HallOfFameRecords) { record={}; record.present=1; record.year=2222; }
+  std::memcpy(original_records, HallOfFameRecords, sizeof(HallOfFameRecords));
 }
 void check_presence(int value) {
-  for (const auto &record:HallOfFameRecords) {
-    assert(record.present==value && record.year==2222);
+  const unsigned char *actual = reinterpret_cast<const unsigned char *>(HallOfFameRecords);
+  for (int group=0; group<7; ++group) {
+    for (int rank=0; rank<5; ++rank) {
+      const int record=group*5+rank;
+      assert(HallOfFameRecords[record].present==value);
+      assert(HallOfFameRecords[record].year==2222);
+      for (int offset=1; offset<static_cast<int>(sizeof(HallOfFameRecord)); ++offset) {
+        assert(actual[record*sizeof(HallOfFameRecord)+offset] ==
+               original_records[record*sizeof(HallOfFameRecord)+offset]);
+      }
+    }
   }
 }
 int main() {
