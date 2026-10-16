@@ -68,7 +68,9 @@ def _opcode_tokens(listing) -> tuple[str, ...]:
     """Return API-valid mnemonic tokens while preserving x86 RET pop width."""
     tokens = []
     for instruction in listing.instructions:
-        mnemonic = instruction.mnemonic.lower()
+        # Capstone includes x86 prefixes in the mnemonic (e.g. `rep stosd`).
+        # Preserve them in one token rather than discarding repeat/lock semantics.
+        mnemonic = "_".join(instruction.mnemonic.lower().split())
         operand = instruction.op_str.strip()
         # match_recovery.similarity accepts normalized mnemonic-like tokens,
         # not whole disassembly lines. Encode `ret 4` distinctly as `ret_4`.
@@ -253,7 +255,7 @@ def recommend_examples(
                                    "seed_alternatives": sum(row["candidate_kind"] != "source" for row in facts)})
         # Keep the number of retained candidates explicit when the ranker limit
         # is lower than the source pool. Do not silently claim full coverage.
-        selected.sort(key=lambda row: (row.path.as_posix(), row.line, row.address))
+        selected_mappings.sort(key=lambda row: (row.path.as_posix(), row.line, row.address))
         candidate_universe_size = len(selected_mappings)
     else:
         candidate_universe_size = len(targets)

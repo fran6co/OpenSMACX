@@ -225,6 +225,33 @@ def test_freshly_measured_reference_uses_pinned_opcodes_and_masks_only(monkeypat
     json.dumps(result)
 
 
+def test_opcode_tokens_preserve_x86_prefixes_and_return_width():
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.similarity import normalize_opcodes
+
+    instructions = tuple(Cs(CS_ARCH_X86, CS_MODE_32).disasm(
+        bytes.fromhex("f3ab f2ae f00108 c20400 c3"), 0x401000))
+    tokens = recovery_examples._opcode_tokens(SimpleNamespace(instructions=instructions))
+    assert tokens == ("rep_stosd", "repne_scasb", "lock_add", "ret_4", "ret")
+    assert normalize_opcodes(tokens) == tokens
+
+
+def test_all_candidates_ranks_full_pool_before_return_limit(monkeypatch, tmp_path):
+    root, image, measured, calls, measure = _install_fakes(monkeypatch, tmp_path)
+    result = recovery_examples.recommend_examples(
+        root, image, reference_targets=["reference"], all_candidates=True,
+        limit=1, measure_source=measure)
+
+    assert [row.candidate_id for row in calls["candidates"]] == ["candidate", "reference"]
+    assert measured == [(["0x00401010"], image)]
+    assert result["candidate_universe_size"] == 2
+    assert result["candidate_pool_size"] == 2
+    assert result["returned_count"] == 1
+    assert result["omitted_count"] == 1
+    assert result["advisory_only"] is True
+    assert result["acceptance_established"] is False
+
+
 def test_scaffold_candidate_remains_investigable_but_cannot_be_reference(monkeypatch, tmp_path):
     root, image, measured, calls, measure = _install_fakes(
         monkeypatch, tmp_path, candidate_role="scaffold")
