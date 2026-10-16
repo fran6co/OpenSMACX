@@ -84,14 +84,14 @@ struct GraphicWin : Win, Buffer {
 };
 struct Dialog {
   uint32_t field_20_,field_24_,field_28_,field_34_,field_40_,field_44_;
-  uint32_t field_54_,field_58_,field_5C_,field_60_,field_64_,field_68_,field_6C_;
+  int column_count_,row_count_,field_5C_,field_60_,field_64_,field_68_,field_6C_;
   Font *font1_,*font2_,*font3_;
   uint32_t text_color_a_,text_color_b_,text_color_c_,text_color_d_;
   uint32_t text_color_2a_,text_color_2b_,text_color_2c_,text_color_2d_;
   uint32_t text_color_3a_,text_color_3b_,text_color_3c_,text_color_3d_;
   uint32_t field_AC_,field_B0_,field_B4_;
   Dialog() : field_20_(0),field_24_(0),field_28_(0),field_34_(0),field_40_(0),field_44_(0),
-    field_54_(0),field_58_(0),field_5C_(0),field_60_(0),field_64_(0),field_68_(0),field_6C_(0),
+    column_count_(0),row_count_(0),field_5C_(0),field_60_(0),field_64_(0),field_68_(0),field_6C_(0),
     font1_(0),font2_(0),font3_(0),text_color_a_(11),text_color_b_(12),text_color_c_(13),text_color_d_(14),
     text_color_2a_(21),text_color_2b_(22),text_color_2c_(23),text_color_2d_(24),
     text_color_3a_(31),text_color_3b_(32),text_color_3c_(33),text_color_3d_(34),field_AC_(51),field_B0_(52),field_B4_(53) {}
@@ -121,14 +121,14 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   int calculate_dimensions() {
     events.push_back(1); ++callback_count;
     Dialog::field_34_=7; Dialog::field_40_=41; Dialog::field_44_=6;
-    Dialog::field_54_=dimensions_columns; Dialog::field_58_=dimensions_rows; Dialog::field_5C_=211; Dialog::field_60_=127; Dialog::field_64_=dimensions_cell_width; Dialog::field_68_=dimensions_cell_height; Dialog::field_6C_=61;
+    Dialog::column_count_=dimensions_columns; Dialog::row_count_=dimensions_rows; Dialog::field_5C_=211; Dialog::field_60_=127; Dialog::field_64_=dimensions_cell_width; Dialog::field_68_=dimensions_cell_height; Dialog::field_6C_=61;
     return dimension_result;
   }
   int attach(GraphicWin *parent,int x,int y,int flags);
 };
 static EditGroup *callback_group;
 static void mutate_geometry_from_show(int id) {
-  if(id==0){callback_group->Dialog::field_54_=3;callback_group->Dialog::field_58_=3;callback_group->Dialog::field_64_=47;callback_group->Dialog::field_68_=19;}
+  if(id==0){callback_group->Dialog::column_count_=3;callback_group->Dialog::row_count_=3;callback_group->Dialog::field_64_=47;callback_group->Dialog::field_68_=19;}
   if(id==1)callback_group->Dialog::field_68_=23;
   if(id==3){callback_group->Dialog::field_64_=53;callback_group->Dialog::field_68_=29;}
   if(id==4)callback_group->Dialog::field_68_=31;
@@ -139,7 +139,7 @@ static void init_group(EditGroup &g) {
   dimensions_columns=2;dimensions_rows=3;dimensions_cell_width=31;dimensions_cell_height=15;
   dimension_result=0;parent_init_result=0;
   static Font f1={1},f2={2},f3={3}; g.Dialog::font1_=&f1;g.Dialog::font2_=&f2;g.Dialog::font3_=&f3;
-  g.Dialog::field_20_=0x100000; g.Dialog::field_44_=6; g.Dialog::field_54_=2;g.Dialog::field_58_=3;
+  g.Dialog::field_20_=0x100000; g.Dialog::field_44_=6; g.Dialog::column_count_=2;g.Dialog::row_count_=3;
   for(int i=0;i<10;++i){g.limits_[i]=70+i;g.text_buffers_[i]=(i%2)?(char*)"seed":0;}
 }
 static void cases() {
@@ -232,8 +232,8 @@ def test_compiling_mutants_fail_at_named_runtime_controls():
     mutations = (
         ("flags-order", ("GraphicWin::init(x, y, Dialog::field_5C_",
                           "GraphicWin::init(x, flags, Dialog::field_5C_"), "parent-init-xywh-flags"),
-        ("row-column", ("column < static_cast<int>(Dialog::field_54_)",
-                         "column < static_cast<int>(Dialog::field_58_)"), "row-column-count"),
+        ("row-column", ("column < Dialog::column_count_",
+                         "column < Dialog::row_count_"), "row-column-count"),
         ("omit-show", ("boxes_[index]->show(0);", "/* mutant omitted show */"), "child-lifecycle"),
         ("omit-text", ("boxes_[index]->set_text(text_buffers_[index]);",
                         "/* mutant omitted set_text */"), "child-text-values"),

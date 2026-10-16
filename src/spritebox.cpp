@@ -432,7 +432,7 @@ int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
     int left = 0;
     int horizontal_extent = static_cast<int>(field_54_);
     int position = 0;
-    for (int column = 0; column < static_cast<int>(Dialog::field_54_); ++column) {
+    for (int column = 0; column < Dialog::column_count_; ++column) {
         for (int row = 0; row < static_cast<int>(Dialog::field_4C_); ++row) {
             if (position >= static_cast<int>(list_.entry_count_)) break;
             if (list_.seek_pos(position)) {
@@ -516,20 +516,22 @@ int SpriteBox::calculate_dimensions() {
     dialog.field_68_ = dialog.field_44_ + row_height;
     dialog.field_64_ = static_cast<int>(field_5C_)
                        + dialog.field_40_ * 2 + static_cast<int>(field_54_);
-    dialog.field_58_ = dialog.field_50_;
-    if (dialog.field_58_ > list_.entry_count_) dialog.field_58_ = list_.entry_count_;
+    dialog.row_count_ = dialog.field_50_;
+    if (dialog.row_count_ > list_.entry_count_) dialog.row_count_ = list_.entry_count_;
     if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
         dialog.field_60_ = dialog.field_30_;
-        dialog.field_58_ = dialog.field_30_ / dialog.field_68_;
+        dialog.row_count_ = dialog.field_30_ / dialog.field_68_;
     } else {
-        dialog.field_60_ = dialog.field_68_ * dialog.field_58_ + dialog.field_44_;
+        dialog.field_60_ = dialog.field_68_ * dialog.row_count_ + dialog.field_44_;
     }
     if ((dialog.field_20_ & 2) != 0 && dialog.field_2C_ != 0) {
-        dialog.field_54_ = dialog.field_2C_ / dialog.field_64_;
+        dialog.column_count_ = dialog.field_2C_ / dialog.field_64_;
         dialog.field_5C_ = dialog.field_2C_;
     } else {
-        int rows = (dialog.field_58_ - 1 + list_.entry_count_) / dialog.field_58_;
-        dialog.field_54_ = rows;
+        uint32_t rows_numerator = static_cast<uint32_t>(dialog.row_count_) - 1u
+                                + static_cast<uint32_t>(list_.entry_count_);
+        int rows = static_cast<int32_t>(rows_numerator) / dialog.row_count_;
+        dialog.column_count_ = rows;
         int height = (dialog.field_68_ + dialog.field_44_) * rows - dialog.field_44_;
         if (height < dialog.field_2C_) height = dialog.field_2C_;
         dialog.field_5C_ = height;
@@ -543,7 +545,7 @@ int SpriteBox::calculate_dimensions() {
 void SpriteBox::draw_item(int position) {
     Win *const parent = win_parent_;
     if (parent == 0) return;
-    const int columns = static_cast<int>(Dialog::field_58_);
+    const int columns = Dialog::row_count_;
     const int column = position / columns;
     const int row = position % columns;
     int x = (static_cast<int>(Dialog::field_64_) +
@@ -560,52 +562,62 @@ void SpriteBox::draw_item(int position) {
     const int item_id = list_.current_ == 0 ? 0 : list_.current_->id;
 
     RECT area;
-    area.left = static_cast<int>(field_54_) + y + 4;
-    area.top = x;
-    area.right = static_cast<int>(Dialog::field_64_) + y;
-    area.bottom = static_cast<int>(Dialog::field_68_) + x;
+    area.left = static_cast<int>(field_54_) + x + 4;
+    area.top = y;
+    area.right = static_cast<int>(Dialog::field_64_) + x;
+    area.bottom = static_cast<int>(Dialog::field_68_) + y;
 
     GraphicWin *const parent_graphic = static_cast<GraphicWin *>(parent);
     Buffer *const parent_buffer = static_cast<Buffer *>(parent_graphic);
     Buffer *const control_buffer = static_cast<Buffer *>(
         static_cast<GraphicWin *>(this));
     Buffer *const buffer = control_buffer;
-    control_buffer->copy(parent_buffer, Dialog::field_24_ + y,
-                         Dialog::field_28_ + x, y, x,
-                         Dialog::field_64_, Dialog::field_68_);
+    parent_buffer->copy(control_buffer, Dialog::field_24_ + x,
+                        Dialog::field_28_ + y, x, y,
+                        Dialog::field_64_, Dialog::field_68_);
 
-    if (sprite != 0) {
-        const int scale_numerator = static_cast<int>(field_1C_);
-        const int scale_denominator = static_cast<int>(field_20_);
-        const int sprite_height = sprite->height() * scale_numerator / scale_denominator;
-        const int sprite_width = sprite->width() * scale_numerator / scale_denominator;
-        int sprite_y = x + (static_cast<int>(Dialog::field_68_) - sprite_height) / 2;
-        int sprite_x = y + (static_cast<int>(field_54_) - sprite_width) / 2;
-        if (redraw_callback_ == 0) {
-            sprite->draw(static_cast<Buffer *>(static_cast<GraphicWin *>(this)),
-                         sprite->transparent_index(), sprite_x, sprite_y,
-                         scale_numerator, scale_denominator);
-        } else {
-            SpriteScaleNumerator = scale_numerator;
-            SpriteScaleDenominator = scale_denominator;
-            redraw_callback_(sprite, static_cast<GraphicWin *>(this), item_id,
-                            sprite_x, sprite_y);
-            buffer->set_text_color(text_color_a_, text_color_b_,
-                                   text_color_c_, text_color_d_);
-            buffer->set_text_color2(text_color_2a_, text_color_2b_,
-                                    text_color_2c_, text_color_2d_);
-            buffer->set_text_color3(text_color_3a_, text_color_3b_,
-                                    text_color_3c_, text_color_3d_);
-            buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
-        }
+    const int scale_numerator = static_cast<int>(field_1C_);
+    const int scale_denominator = static_cast<int>(field_20_);
+    const int sprite_height = sprite->height() * scale_numerator / scale_denominator;
+    const int sprite_width = sprite->width() * scale_numerator / scale_denominator;
+    int sprite_x = x + (static_cast<int>(field_54_) - sprite_width) / 2;
+    int sprite_y = y + (static_cast<int>(Dialog::field_68_) - sprite_height) / 2;
+    if (redraw_callback_ == 0) {
+        sprite->draw(static_cast<Buffer *>(static_cast<GraphicWin *>(this)),
+                     sprite->transparent_index(), sprite_x, sprite_y,
+                     scale_numerator, scale_denominator);
+    } else {
+        SpriteScaleNumerator = scale_numerator;
+        SpriteScaleDenominator = scale_denominator;
+        redraw_callback_(sprite, static_cast<GraphicWin *>(this), item_id,
+                        sprite_x, sprite_y);
+        buffer->set_text_color(text_color_a_, text_color_b_,
+                               text_color_c_, text_color_d_);
+        buffer->set_text_color2(text_color_2a_, text_color_2b_,
+                                text_color_2c_, text_color_2d_);
+        buffer->set_text_color3(text_color_3a_, text_color_3b_,
+                                text_color_3c_, text_color_3d_);
+        buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    }
 
-        if (Dialog::selected_position_ == position && field_4_ != 0) {
-            ++sprite_y;
-            static_cast<Buffer *>(static_cast<GraphicWin *>(this))->box(
-                sprite_x, sprite_y, sprite_x + sprite_width - 1,
-                static_cast<int>(Dialog::field_68_) + sprite_y - 3,
-                static_cast<int>(field_8_), static_cast<int>(field_8_));
-        }
+    if (Dialog::selected_position_ == position && field_4_ != 0) {
+        SpriteStruct *const outline_payload = list_.current_ == 0
+            ? 0 : list_.current_->sprite_payload();
+        Sprite *const outline_sprite = outline_payload == 0
+            ? 0 : outline_payload->sprite_;
+        const int outline_scale_numerator = static_cast<int>(field_1C_);
+        const int outline_scale_denominator = static_cast<int>(field_20_);
+        const int outline_height = outline_sprite->height()
+                                 * outline_scale_numerator / outline_scale_denominator;
+        const int outline_width = outline_sprite->width()
+                                * outline_scale_numerator / outline_scale_denominator;
+        int outline_x = x + (static_cast<int>(field_54_) - outline_width) / 2;
+        int outline_y = y + (static_cast<int>(Dialog::field_68_) - outline_height) / 2;
+        ++outline_y;
+        static_cast<Buffer *>(static_cast<GraphicWin *>(this))->box(
+            outline_x, outline_y, outline_x + outline_width - 1,
+            static_cast<int>(Dialog::field_68_) + outline_y - 3,
+            static_cast<int>(field_8_), static_cast<int>(field_8_));
     }
 
     char *const label = Dialog::item_list_.head_ != 0
@@ -659,9 +671,9 @@ int SpriteBox::on_key_down(int key) {
     switch (key) {
     case VK_LEFT:
     case VK_NUMPAD4:
-        if (Dialog::field_54_ == 1
-            || next_position < static_cast<int>(Dialog::field_58_)) return 1;
-        next_position -= static_cast<int>(Dialog::field_58_);
+        if (Dialog::column_count_ == 1
+            || next_position < Dialog::row_count_) return 1;
+        next_position -= Dialog::row_count_;
         break;
     case VK_UP:
     case VK_NUMPAD8:
@@ -670,14 +682,14 @@ int SpriteBox::on_key_down(int key) {
         break;
     case VK_RIGHT:
     case VK_NUMPAD6:
-        if (Dialog::field_54_ == 1) return 1;
+        if (Dialog::column_count_ == 1) return 1;
         {
             const uint32_t last_row_start_bits =
-                (Dialog::field_54_ - 1u) * Dialog::field_58_;
+                (Dialog::column_count_ - 1u) * Dialog::row_count_;
             const int last_row_start = static_cast<int32_t>(last_row_start_bits);
             if (next_position >= last_row_start) return 1;
         }
-        next_position += static_cast<int>(Dialog::field_58_);
+        next_position += Dialog::row_count_;
         Dialog::selected_position_ = next_position;
         if (Dialog::selected_position_ > count - 1) {
             Dialog::selected_position_ = old_position;

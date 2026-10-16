@@ -89,10 +89,11 @@ struct StringList { int entry_count_; };
 struct Dialog {
     StringList item_list_;
     int selected_position_;
-    uint32_t field_24_, field_28_, field_54_, field_58_;
+    uint32_t field_24_, field_28_;
+    int column_count_, row_count_;
     int selected_id_calls_;
     Dialog() : selected_position_(0), field_24_(12), field_28_(13),
-        field_54_(2), field_58_(3), selected_id_calls_(0) {
+        column_count_(2), row_count_(3), selected_id_calls_(0) {
         item_list_.entry_count_ = 6;
     }
     int get_selected_id() {

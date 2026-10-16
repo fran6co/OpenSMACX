@@ -77,9 +77,9 @@ void check_defaults(Dialog &dialog) {
     assert(dialog.field_B0_ == DialogFieldB0Default);
     assert(dialog.field_B4_ == DialogFieldB4Default);
     assert(dialog.field_B8_ == DialogFieldB8Default);
-    uint32_t Dialog::*zero_fields[] = {
+    int Dialog::*zero_fields[] = {
         &Dialog::field_24_, &Dialog::field_28_, &Dialog::field_38_,
-        &Dialog::field_3C_, &Dialog::field_54_, &Dialog::field_58_,
+        &Dialog::field_3C_, &Dialog::column_count_, &Dialog::row_count_,
         &Dialog::field_5C_, &Dialog::field_60_, &Dialog::field_64_,
         &Dialog::field_68_};
     for (int i = 0; i < 10; ++i) assert(dialog.*zero_fields[i] == 0);

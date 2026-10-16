@@ -446,9 +446,9 @@ int EditGroup::calculate_dimensions() {
     buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
     buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
-    dialog.field_58_ = dialog.item_list_.entry_count_;
-    if (dialog.field_58_ > dialog.field_50_) {
-        dialog.field_58_ = dialog.field_50_;
+    dialog.row_count_ = dialog.item_list_.entry_count_;
+    if (dialog.row_count_ > dialog.field_50_) {
+        dialog.row_count_ = dialog.field_50_;
     }
     dialog.item_list_.current_ = dialog.item_list_.head_;
     if (dialog.item_list_.entry_count_ > 0) {
@@ -494,16 +494,16 @@ int EditGroup::calculate_dimensions() {
         if (width < dialog.field_2C_) width = dialog.field_2C_;
         dialog.field_5C_ = width;
         dialog.field_64_ = width / dialog.field_4C_;
-        dialog.field_54_ = dialog.field_4C_;
+        dialog.column_count_ = dialog.field_4C_;
     } else {
         dialog.field_5C_ = dialog.field_2C_;
-        dialog.field_54_ = dialog.field_2C_ / dialog.field_64_;
+        dialog.column_count_ = dialog.field_2C_ / dialog.field_64_;
     }
     if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
         dialog.field_60_ = dialog.field_30_;
-        dialog.field_58_ = dialog.field_30_ / dialog.field_68_;
+        dialog.row_count_ = dialog.field_30_ / dialog.field_68_;
     } else {
-        dialog.field_60_ = dialog.field_68_ * dialog.field_58_ + dialog.field_44_;
+        dialog.field_60_ = dialog.field_68_ * dialog.row_count_ + dialog.field_44_;
     }
     return 0;
 }
@@ -540,14 +540,14 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
     const int base_right = static_cast<int>(Dialog::field_64_) +
                            static_cast<int>(Dialog::field_34_);
     int index = 0;
-    for (int column = 0; column < static_cast<int>(Dialog::field_54_); ++column) {
+    for (int column = 0; column < Dialog::column_count_; ++column) {
         const int column_offset =
             column * static_cast<int>(Dialog::field_64_);
         const int left = base_left + column_offset;
         const int right = base_right + column_offset;
         int top = initial_top;
         int bottom = initial_bottom;
-        for (int row = 0; row < static_cast<int>(Dialog::field_58_); ++row) {
+        for (int row = 0; row < Dialog::row_count_; ++row) {
             if (boxes_[index] != 0) {
                 delete boxes_[index];
             }
@@ -615,7 +615,7 @@ void EditGroup::on_redraw() {
     item_list_.seek_pos(-1);
 
     int column = 0;
-    while (column < static_cast<int>(Dialog::field_54_)) {
+    while (column < Dialog::column_count_) {
         RECT label_area;
         label_area.left = base_left;
         label_area.top = base_top;
@@ -627,7 +627,7 @@ void EditGroup::on_redraw() {
         label_area.right += column_offset;
 
         int row = 0;
-        while (row < static_cast<int>(Dialog::field_58_)) {
+        while (row < Dialog::row_count_) {
             StringStructEntry *const head = item_list_.head_;
             if (head != 0) {
                 const int count = item_list_.entry_count_;
