@@ -6139,10 +6139,9 @@ Purpose: TBD
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00579E70 0x00591B50 0x00591C10 0x00591D60
-// LEVER: two changes. (1) the BIT_BASE_RADIUS site now calls the new
-//        `bit_set_call` non-inline forwarder (map.h/map.cpp) instead of the
-//        `MEASURED inline bit_set` every other caller uses, matching the
-//        image's real `call 0x591D60` here. (2) the radius loop bound is
+// LEVER: two changes. (1) the BIT_BASE_RADIUS site directly calls the mapped
+//        out-of-line `bit_set` owner at 0x591D60, matching the image's real
+//        call here without a synthetic forwarding layer. (2) the radius loop bound is
 //        the literal `49` (image `cmp ebx, 0xc4`, a byte-offset stride)
 //        instead of `RadiusRange[3]`, which the compiler had to reload from
 //        the global every iteration and which blocked the walking-byte-
@@ -6163,7 +6162,7 @@ void __cdecl base_mark(int base_id) {
         y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             if (i < 21) {
-                bit_set_call(x_radius, y_radius, BIT_BASE_RADIUS, true);
+                bit_set(x_radius, y_radius, BIT_BASE_RADIUS, true);
                 using_set(x_radius, y_radius, faction_id); // rolled this into one conditional check
             } else {
                 site_set(x_radius, y_radius, 0);
@@ -13402,8 +13401,8 @@ void production_voice_of_planet_spread(int &offset_attempt) {
                 && (tile->val2 & 0x0f) < 8) {
                 continue;
             }
-            bit_set_call(x_coord, y_coord, BIT_FUNGUS, TRUE);
-            bit_set_call(x_coord, y_coord, MapTileFlagClearMask, FALSE);
+            bit_set(x_coord, y_coord, BIT_FUNGUS, TRUE);
+            bit_set(x_coord, y_coord, MapTileFlagClearMask, FALSE);
             synch_bit(x_coord, y_coord, ConsoleGlobal.faction_id_);
             draw_tile(x_coord, y_coord, 2);
         }
@@ -13423,8 +13422,8 @@ void production_voice_of_planet_spread(int &offset_attempt) {
             || x < 0 || x >= static_cast<int>(MapLongitudeBounds)) continue;
         const Map &tile = *map_loc(x, y);
         if ((tile.bit & BIT_BASE_IN_TILE) != 0 && (tile.val2 & 0x0f) < 8) continue;
-        bit_set_call(x, y, BIT_FUNGUS, TRUE);
-        bit_set_call(x, y, MapTileFlagClearMask, FALSE);
+        bit_set(x, y, BIT_FUNGUS, TRUE);
+        bit_set(x, y, MapTileFlagClearMask, FALSE);
         synch_bit(x, y, ConsoleGlobal.faction_id_);
         draw_tile(x, y, 2);
     }

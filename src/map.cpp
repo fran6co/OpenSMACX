@@ -6168,19 +6168,9 @@ int __cdecl alt_get_ocean_detail(int x, int y, int corner, int point) {
     return detail;
 }
 
-// Non-inline forwarder to `bit_set` (map.h): base_mark (base.cpp) is the one
-// call site where the image emits a real `call 0x591D60` for BIT_BASE_RADIUS
-// rather than inlining the bit test/set that every other caller gets. The
-// E8 target is a relocation on both sides and is discounted, so this
-// symbol's own name costs nothing.
-void __cdecl bit_set_call(int x, int y, int bit, BOOL set) {
-    bit_set(x, y, bit, set);
-}
-
-// Non-inline forwarder to `alt_put_detail` (map.h), for the same reason as
-// `bit_set_call` above: world_polar_caps (0x005C58E0) is where the image makes
-// six real `call 0x591260`s, and an inline definition in the header gets those
-// six sites folded away instead.
+// Non-inline forwarder to `alt_put_detail` (map.h): world_polar_caps
+// (0x005C58E0) is where the image makes six real `call 0x591260`s, and an
+// inline definition in the header gets those six sites folded away instead.
 void __cdecl alt_put_detail_call(int x, int y, int detail) {
     alt_put_detail(x, y, detail);
 }

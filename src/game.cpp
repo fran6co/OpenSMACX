@@ -9740,7 +9740,7 @@ static void random_events_cases_19_21(int event_kind, int faction_id,
                 }
             }
 
-            bit_set_call(x, y, BIT_FARM, 0);
+            bit_set(x, y, BIT_FARM, 0);
             synch_bit(x, y, faction_id);
             // Native increments an address cursor but never uses it: seven
             // writes target this same Map.bit2 word at +0x0C.
@@ -9809,7 +9809,7 @@ static void random_events_cases_19_21(int event_kind, int faction_id,
                 }
             }
 
-            bit_set_call(x, y, BIT_MINE, 0);
+            bit_set(x, y, BIT_MINE, 0);
             synch_bit(x, y, faction_id);
             // The native cursor arithmetic again writes the same bit2 word
             // seven times; it does not advance through faction visibility.

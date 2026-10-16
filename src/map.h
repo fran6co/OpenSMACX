@@ -436,11 +436,6 @@ int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point
 // before that line was extended (2026-09-03) - VC6 refuses to let a TU
 // define the intrinsic (C2169), so the forwarder was the only source
 // spelling that reached a call.
-// Non-inline forwarder to `bit_set` below: base_mark (base.cpp) is the one
-// call site where the image emits a real `call 0x591D60` rather than
-// inlining the bit test/set - every other bit_set() caller genuinely
-// inlines it, so `bit_set` itself stays `MEASURED inline`.
-void __cdecl bit_set_call(int x, int y, int bit, BOOL set);
 void __cdecl alt_put_detail_call(int x, int y, int detail);
 BOOL __cdecl sea_coast(int region_dst, int region_src);
 int __cdecl sea_coasts(int region_src);
