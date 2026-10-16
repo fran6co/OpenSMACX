@@ -5469,7 +5469,7 @@ search:
                 || y <= 1 || y >= MapLatitudeBounds - 2
                 || 12 - attempts / 80 > area_quality
                 || (16 - spacing_relaxation) * static_cast<int>(MapAreaSqRoot) / 56 > BaseFindDist
-                || (lifecycle_is_fresh(conqueror) && attempts <= 899 && 36 - spacing_relaxation > static_cast<int>(Continents[region].tile_count))) goto search;
+                || (lifecycle_is_fresh(conqueror) && attempts <= 899 && 36 - spacing_relaxation > Continents[region].tile_count)) goto search;
             if (!(definition.rule_flags & 0x100)) {
                 int handicap = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction)) ? (6 - GameDataStateStorage.fields_.diff_level_current_) * 8 : 8;
                 // Native5B1CEB LEA/5B1CF5 IMUL preserve low-dword arithmetic.
@@ -5478,9 +5478,9 @@ search:
                     < 24 + handicap - GameDataStateStorage.fields_.turn_current_num_ / 16 - attempts / 16) goto search;
             }
             int difficulty = (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction)) ? GameDataStateStorage.fields_.diff_level_current_ : 3;
-            if ((5 - difficulty) * 48 - GameDataStateStorage.fields_.turn_current_num_ / 16 - attempts / 4 > static_cast<int>(Continents[region].tile_count)
+            if ((5 - difficulty) * 48 - GameDataStateStorage.fields_.turn_current_num_ / 16 - attempts / 4 > Continents[region].tile_count
                 || (occupied && conqueror != -282
-                    && 64 - spacing_relaxation > static_cast<int>(Continents[region].tile_count) / (bit_count(occupied) + 1))) goto search;
+                    && 64 - spacing_relaxation > Continents[region].tile_count / (bit_count(occupied) + 1))) goto search;
             int quality = (tile->bit & 0x1000) ? 0 : tile->val2 >> 4;
             if (!(tile->bit & 0x1000) && !quality) {
                 quality = world_site(x, y, 0);
@@ -5636,7 +5636,7 @@ respawn:
         if (definition.rule_flags & 0x100) { p.flags_ext |= 4; p.flags |= 0x8000000; }
         if (definition.rule_flags & 0x80) { p.flags_ext |= 0x10; p.flags |= 0x10000000; }
         if (!strcmp(StringTemp, "DRONE")) p.flags_ext = (p.flags_ext & ~8u) | 2;
-        if (static_cast<int>(Continents[region].tile_count) < 250 && rand() % 3 == 0) p.flags_ext |= 4;
+        if (Continents[region].tile_count < 250 && rand() % 3 == 0) p.flags_ext |= 4;
         if (p.ai_fight >= 0 && rand() % 4 == 0) p.flags_ext |= 0x10;
         if (rand() % 6 == 0) p.flags_ext |= 2;
         if (rand() % 6 == 0) p.flags_ext |= 1;
@@ -5651,8 +5651,8 @@ respawn:
             if (rand() % 2 == 0) p.flags |= 0x2000000;
         }
         if (p.ai_power || p.ai_fight > 0) {
-            if (static_cast<int>(Continents[region].tile_count) > 399 && rand() % 4 == 0) p.flags |= 0x4000000;
-            if (rand() % (static_cast<int>(Continents[region].tile_count) > 250 ? 6 : 4) == 0) p.flags |= 0x8000000;
+            if (Continents[region].tile_count > 399 && rand() % 4 == 0) p.flags |= 0x4000000;
+            if (rand() % (Continents[region].tile_count > 250 ? 6 : 4) == 0) p.flags |= 0x8000000;
             if (rand() % 4 == 0) p.flags |= 0x10000000;
         }
     }
@@ -5717,18 +5717,18 @@ respawn:
         }
         int coast = is_coast(x, y, 0);
         if (coast && (GameDataStateStorage.fields_.diff_level_current_ > 1 || IsMultiplayerNet
-            || static_cast<int>(Continents[region].tile_count) < 33)) {
+            || Continents[region].tile_count < 33)) {
             // Both naval tests reuse the original coast-direction index.
             region = map_loc(x, y)->region;
             if (IsMultiplayerNet
-                && static_cast<int>(Continents[region].tile_count) / (bit_count(occupied) + 1) < 76
+                && Continents[region].tile_count / (bit_count(occupied) + 1) < 76
                 && (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & lifecycle_faction_mask(faction))) {
                 int vessel = veh_init(0xd, faction, lifecycle_wrap_x(x + RadiusOffsetX[coast]), y + RadiusOffsetY[coast]);
                 Vehs[vessel].morale = 2;
                 veh_demote(vessel);
                 Vehs[vessel].home_base_id = -1;
             }
-            if (static_cast<int>(Continents[region].tile_count) / (bit_count(occupied) + 1) < 51) {
+            if (Continents[region].tile_count / (bit_count(occupied) + 1) < 51) {
                 int vessel2 = veh_init(0xd, faction, lifecycle_wrap_x(x + RadiusOffsetX[coast]), y + RadiusOffsetY[coast]);
                 Vehs[vessel2].morale = 2;
                 veh_demote(vessel2);

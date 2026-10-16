@@ -1323,7 +1323,7 @@ void Path::continent(int x, int y, int region) {
     Continents[region].tile_count = 0;
     index1_ = 0; 
     index2_ = 0;
-    uint32_t fresh_water_count = 0;
+    int fresh_water_count = 0;
     x_table_[index1_] = (int16_t)x;
     y_table_[index1_++] = (int16_t)y;
     region_set_call(x, y, region);
@@ -1443,7 +1443,7 @@ void Path::continents() {
                 }
                 continent(x, y, region_current);
                 if (region_current == region_max) {
-                    uint32_t tiles = Continents[region_current].tile_count;
+                    int tiles = Continents[region_current].tile_count;
                     int search_region = -1;
                     for (int i = region_min; i < region_max; i++) {
                         if (Continents[i].tile_count < tiles) {

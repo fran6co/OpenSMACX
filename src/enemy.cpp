@@ -902,7 +902,7 @@ static SeaScoringExit enemy_move_sea_scoring(SeaScoringState &s) {
         s.target_region = 1;
         s.scratch58 = 0;
         for (int r = 1; r < 64; ++r, s.scratch58 += 4, ++s.target_region) {
-            const int tiles = (int)Continents[r].tile_count;
+            const int tiles = Continents[r].tile_count;
             if (tiles < 10 || player.region_total_bases[r] ||
                 !on_map(s.coast_x[r], s.coast_y[r])) continue;
             int enemies = 0;
@@ -1811,8 +1811,8 @@ static StrategicActionExit enemy_move_strategic_actions(StrategicActionState &s)
             v.order=18;return STRATEGIC_JOIN_578F46;}
         if(!s.low_altitude&&!s.special_mode&&
             !((unsigned char)s.faction_mask&GameDataStateStorage.fields_.lock_masks_.enable_mask_)&&terrain_avail(16,0,s.faction)&&
-            ((int)Continents[s.region].tile_count<=49||
-             ((int)Continents[s.region].tile_count<=149&&BaseFindDist>=4))&&
+            (Continents[s.region].tile_count<=49||
+             (Continents[s.region].tile_count<=149&&BaseFindDist>=4))&&
             s.unfiltered_distance>=2&&(map_loc(s.x,s.y)->climate&0xe0)<=0xbf){
             bool high=false;
             for(int pos=0;pos<49;++pos){
@@ -2078,7 +2078,7 @@ struct NonseaState {
 static NonseaExit enemy_move_nonsea(NonseaState &s,
     NonseaEntry entry = NONSEA_ENTRY_5741CF) {
     if (entry == NONSEA_ENTRY_5741CF && s.region_plan >= 3 &&
-        (int)Continents[s.region].tile_count <= (int)PlayersData[s.faction].unk_79[s.region] &&
+        Continents[s.region].tile_count <= (int)PlayersData[s.faction].unk_79[s.region] &&
         s.plan <= 3 && !s.triad && Vehs[s.vehicle].order != 0x18 &&
         !s.low_altitude) {
         if (coast_or_border(s.x,s.y,s.x,s.y,s.faction)) {

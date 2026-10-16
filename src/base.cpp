@@ -2794,7 +2794,7 @@ label_4fa54b:
         }
         else if ((((regional_plan == 7) || (v158)) || ((uint16_t)((uint16_t)(uint8_t)(PlayersData[faction_id].region_total_bases[region]) * 2 + 2) <= (uint16_t)(PlayersData[faction_id].region_total_combat_vehs[region]))) && (v5 = (int16_t)(Bases[BaseIDCurrentSelected].y), v6 = Bases[BaseIDCurrentSelected].x, is_coast((int)v6,(int)v5,0))) {
           v18 = base_coast(BaseIDCurrentSelected);
-          if ((((v18 & 0x3f) != 0x3f) && (v18 & 0x3f)) && (((2 <= sea_coasts(v18) || (v158)) || ((v161 != 7 && (0x30 <= (int)Continents[v18].tile_count)))))) {
+          if ((((v18 & 0x3f) != 0x3f) && (v18 & 0x3f)) && (((2 <= sea_coasts(v18) || (v158)) || ((v161 != 7 && (0x30 <= Continents[v18].tile_count)))))) {
             v166 = plan_count_1[v161 * 3 + 1] + plan_count_3[v161 * 3 + 1] * 2;
             if ((regional_plan != 7) && (!v158)) {
               if (regional_plan == 2)
@@ -3018,7 +3018,7 @@ label_4fac9f:
             else {
               if ((prototype_count_2[v75]) || (prototype_count_0[v75])) goto label_4fac9f;
 label_4fabb2:
-              v11 = (int)(Continents[region].tile_count + 199) / 200;
+              v11 = (int)((uint32_t)Continents[region].tile_count + 199u) / 200;
             }
             v16 = prototype_count_2[v75];
             if ((v11 < v16 + prototype_count_0[v75] * 2) && (regional_plan != 8))
@@ -12019,7 +12019,7 @@ void __cdecl base_terraform(int force_improve) {
     // action scoring and preserves the original early-exit behavior.
     int ocean_tile_count = 0;
     int expansion_region = -1;
-    uint32_t expansion_region_size = 0;
+    int expansion_region_size = 0;
     int expansion_score = 0;
     int expansion_x = -1;
     int expansion_y = -1;

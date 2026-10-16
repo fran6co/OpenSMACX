@@ -4994,10 +4994,10 @@ void __cdecl world_fresh(int x, int y) {
             return;
         }
     } else {
-        uint32_t tile_search = 0;
+        int tile_search = 0;
         int region_search = -1;
         for (uint32_t i = MaxLandmarkNum; i < MaxContinentNum; i++) {
-            uint32_t tile_count = Continents[i].tile_count;
+            int tile_count = Continents[i].tile_count;
             if (tile_count >= 3 && tile_count <= 32 && tile_count >= tile_search) {
                 tile_search = tile_count;
                 region_search = i;
@@ -7526,8 +7526,8 @@ void __cdecl world_erosion() {
                                 region = next_region;
                             } else if (region != next_region) {
                                 if (static_cast<int>(MapArea * 0x32 / 0xC80)
-                                    <= static_cast<int>(Continents[region].tile_count)
-                                     + static_cast<int>(Continents[next_region].tile_count))
+                                    <= Continents[region].tile_count
+                                     + Continents[next_region].tile_count)
                                     local_1c = 1;
                                 if (Continents[region].tile_count
                                     < Continents[next_region].tile_count)

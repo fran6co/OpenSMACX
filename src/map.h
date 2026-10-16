@@ -205,7 +205,7 @@ struct Landmark {
 };
 
 struct Continent {
-    uint32_t tile_count; // count of tiles in region
+    int tile_count; // signed: original uses signed division and ordering comparisons
     uint32_t open_terrain; // count of non-rocky, non-fungus tiles (only 1 movement point to travel)
     uint32_t unk_3; // highest world_site value (0-15)
     uint32_t pods; // current count of supply and unity pods in region

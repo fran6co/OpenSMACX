@@ -955,7 +955,7 @@ void __cdecl enemy_strategy(int faction_id) {
                  && (GameDataStateStorage.fields_.game_preferences_ & 0x00020000u) != 0))
             && own_bases != 0
             && (region_plan == 7
-                || (region_plan == 8 && Continents[region].tile_count < 0x96u)))) {
+                || (region_plan == 8 && Continents[region].tile_count < 0x96)))) {
             // Native 0x56310D..0x563433 scans every matching abstract
             // cell. For each outer neighbor direction, a same-region
             // neighbor subtracts one; otherwise it adds two and independently
@@ -1052,7 +1052,7 @@ void __cdecl enemy_strategy(int faction_id) {
                                 continue;
                             }
                             cell_score += 6;
-                            if (Continents[region].tile_count >= 0x28u) {
+                            if (Continents[region].tile_count >= 0x28) {
                                 cell_score += 2;
                             }
                             cell_site_x = edge_x;
