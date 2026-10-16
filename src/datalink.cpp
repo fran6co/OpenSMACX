@@ -364,7 +364,6 @@ void Datalink::draw_chassis() {
         detail_box_.show(0);
     }
     soft_update(&description_rect_);
-    description.remove_all();
 }
 // ORIGINAL: 0x0042DEF0 ?draw_reactor@Datalink@@QAEXXZ 0x0042DEF0-0x0042E2D3;0x0065377A-0x006537AE
 // RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/recovered/units/0042def0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
@@ -463,7 +462,6 @@ void Datalink::draw_weapon() {
     set_text_color_hyper(0x96, -1, 1, 1);
     write_strings(&description, left, description_rect_.top + 6,
                   description_rect_.right - 6 - left, 0);
-    description.remove_all();
     StringTemp[0] = 0;
     strcat(StringTemp, "WEAPONDESC");
     datalink_vehicle_append_number(id); // 0x42E711 loads saved weapon id.
