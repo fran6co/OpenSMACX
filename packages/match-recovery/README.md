@@ -3729,7 +3729,12 @@ complete frame registration, and independently valid ownership chains through
 are the 18-byte or 21-byte single-action child (disp8 or disp32 `lea`, with a
 40-byte single-state metadata bundle), and a bounded 32-byte two-action child
 (`mov ecx,[ebp+disp8]; jmp`, then `mov ecx,[ebp+disp8]; add ecx,imm32; jmp`,
-then the handler, with an exact 48-byte two-state bundle). The two-action map
+then the handler, with an exact 48-byte two-state bundle). Two contiguous
+`lea ecx,[ebp+disp]; jmp` actions are also supported in 26-, 29- or 32-byte
+children with that two-state bundle. Original map entries partition the actions;
+compiled action boundaries are decoded independently and checked against their
+own map relocations. This remains a bounded extension within annotated cold
+extents, not discovery of arbitrary cleanup graphs. The two-action map
 must independently identify both cleanup starts and its state transitions;
 all pointer/branch relocations and addends are checked. Its first cleanup
 targets an undefined external destructor. The second may target an undefined

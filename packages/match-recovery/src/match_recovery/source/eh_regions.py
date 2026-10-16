@@ -27,7 +27,7 @@ _WRITE = 0x80000000
 _COMDAT = 0x00001000
 _FUNCINFO_MAGIC = 0x19930520
 _EH_BUNDLE_SIZE = 40
-_COLD_SIZES = {18: 8, 21: 11, 32: 22}
+_COLD_SIZES = {18: 8, 21: 11, 26: 16, 29: 19, 32: 22}
 _EH_RUNTIME = "___CxxFrameHandler"
 
 _ENGINE = Cs(CS_ARCH_X86, CS_MODE_32)
@@ -172,6 +172,32 @@ def _exec_target(image: PeImage, target: int, *, outside: tuple[Span, ...]) -> N
     _image_section(image, Span(target, target + 1), code=True)
 
 
+def _frame_cleanup_jump(instructions) -> bool:
+    """Recognize one complete LEA frame-address setup and long cleanup jump."""
+    return (len(instructions) == 2
+            and instructions[0].mnemonic == "lea"
+            and len(instructions[0].operands) == 2
+            and instructions[0].operands[0].type == x86.X86_OP_REG
+            and instructions[0].operands[0].reg == x86.X86_REG_ECX
+            and instructions[0].operands[0].size == 4
+            and instructions[0].operands[1].type == x86.X86_OP_MEM
+            and instructions[0].operands[1].mem.base == x86.X86_REG_EBP
+            and instructions[0].operands[1].mem.index == 0
+            and instructions[0].operands[1].mem.segment == 0
+            and instructions[0].operands[1].size == 4
+            and instructions[0].size in (3, 6)
+            and instructions[0].bytes[:2] == (b"\x8d\x4d" if instructions[0].size == 3
+                                               else b"\x8d\x8d")
+            and instructions[0].encoding.disp_size == instructions[0].size - 2
+            and instructions[1].mnemonic == "jmp"
+            and instructions[1].size == 5
+            and instructions[1].bytes[0] == 0xE9
+            and len(instructions[1].operands) == 1
+            and instructions[1].operands[0].type == x86.X86_OP_IMM
+            and instructions[1].encoding.imm_offset == 1
+            and instructions[1].encoding.imm_size == 4)
+
+
 def _original_eh(image: PeImage, primary: Span, cold: Span):
     main = image.read(primary)
     cold_code = image.read(cold)
@@ -183,84 +209,35 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
     _image_section(image, cold, code=True)
     _image_registration_edge(image, primary, main, handler)
 
-    clean = _decoded(cold_code[:handler_offset], cold.start)
-    two_actions = cold.end - cold.start == 32
-    if two_actions:
-        if len(clean) != 5:
-            raise ValueError("original unwind map does not bound two complete cleanup actions")
-        first, second = clean[0:2], clean[2:5]
-        if (first[0].mnemonic != "mov" or first[0].size != 3
-                or first[0].operands[0].type != x86.X86_OP_REG
-                or first[0].operands[0].reg != x86.X86_REG_ECX
-                or first[0].operands[1].type != x86.X86_OP_MEM
-                or first[0].operands[1].mem.base != x86.X86_REG_EBP
-                or first[0].operands[1].mem.index != 0
-                or first[0].operands[1].mem.segment != 0
-                or first[0].operands[1].size != 4
-                or first[0].encoding.disp_size != 1
-                or first[1].mnemonic != "jmp" or first[1].size != 5
-                or len(first[1].operands) != 1
-                or first[1].operands[0].type != x86.X86_OP_IMM
-                or second[0].mnemonic != "mov" or second[0].size != 3
-                or second[0].operands[0].type != x86.X86_OP_REG
-                or second[0].operands[0].reg != x86.X86_REG_ECX
-                or second[0].operands[1].type != x86.X86_OP_MEM
-                or second[0].operands[1].mem.base != x86.X86_REG_EBP
-                or second[0].operands[1].mem.index != 0
-                or second[0].operands[1].mem.segment != 0
-                or second[0].operands[1].size != 4
-                or second[0].encoding.disp_size != 1
-                or second[1].mnemonic != "add" or second[1].size != 6
-                or second[1].operands[0].type != x86.X86_OP_REG
-                or second[1].operands[0].reg != x86.X86_REG_ECX
-                or second[1].operands[1].type != x86.X86_OP_IMM
-                or second[1].encoding.imm_size != 4
-                or clean[4].address != cold.start + 17
-                or clean[4].mnemonic != "jmp" or clean[4].size != 5):
-            raise ValueError("original unwind actions are not the bounded two-cleanup VC6 form")
-        if (clean[0].address != cold.start or clean[2].address != cold.start + 8
-                or clean[4].mnemonic != "jmp" or clean[4].size != 5):
-            raise ValueError("original unwind actions have gaps or overlapping map boundaries")
-        cleanup_targets = (clean[1].operands[0].imm & 0xFFFFFFFF,
-                           clean[4].operands[0].imm & 0xFFFFFFFF)
-        for target in cleanup_targets:
-            _exec_target(image, target, outside=(primary, cold))
-    elif (len(clean) != 2 or clean[0].mnemonic != "lea"
-            or len(clean[0].operands) != 2
-            or clean[0].operands[0].type != x86.X86_OP_REG
-            or clean[0].operands[0].reg != x86.X86_REG_ECX
-            or clean[0].operands[1].type != x86.X86_OP_MEM
-            or clean[0].operands[1].mem.base != x86.X86_REG_EBP
-            or clean[0].operands[1].mem.index != 0
-            or clean[0].size not in (3, 6)
-            or clean[0].encoding.disp_size != clean[0].size - 2
-            or clean[1].mnemonic != "jmp"
-            or len(clean[1].operands) != 1
-            or clean[1].operands[0].type != x86.X86_OP_IMM):
-        raise ValueError("original unwind action is not a bounded frame cleanup stub")
-    if not two_actions:
-        cleanup_targets = (clean[1].operands[0].imm & 0xFFFFFFFF,)
-        _exec_target(image, cleanup_targets[0], outside=(primary, cold))
-
     handler_code = cold_code[handler_offset:]
     handler_ins = _decoded(handler_code, handler)
     if (len(handler_ins) != 2 or handler_ins[0].mnemonic != "mov"
+            or handler_ins[0].size != 5
+            or handler_ins[0].bytes[0] != 0xB8
+            or handler_ins[0].encoding.imm_offset != 1
+            or handler_ins[0].encoding.imm_size != 4
             or len(handler_ins[0].operands) != 2
             or handler_ins[0].operands[0].type != x86.X86_OP_REG
             or handler_ins[0].operands[0].reg != x86.X86_REG_EAX
             or handler_ins[0].operands[1].type != x86.X86_OP_IMM
             or handler_ins[1].mnemonic != "jmp"
+            or handler_ins[1].size != 5
+            or handler_ins[1].bytes[0] != 0xE9
+            or handler_ins[1].encoding.imm_offset != 1
+            or handler_ins[1].encoding.imm_size != 4
             or len(handler_ins[1].operands) != 1
             or handler_ins[1].operands[0].type != x86.X86_OP_IMM):
         raise ValueError("original cold handler is not a FuncInfo runtime stub")
-    if not two_actions:
-        validated_offset, _destructor_offset, _info_offset, _runtime_offset = _cold_layout(cold_code)
-        if validated_offset != handler_offset:
-            raise ValueError("original cold region does not use a supported cleanup/handler encoding")
     func_info = handler_ins[0].operands[1].imm & 0xFFFFFFFF
     runtime_target = handler_ins[1].operands[0].imm & 0xFFFFFFFF
     _exec_target(image, runtime_target, outside=(primary, cold))
 
+    header = image.read(Span(func_info, func_info + _EH_BUNDLE_SIZE))
+    header_fields = struct.unpack("<10I", header)
+    max_state = header_fields[1]
+    if max_state not in (1, 2):
+        raise ValueError("original FuncInfo has an unsupported cleanup state count")
+    two_actions = max_state == 2
     fi_span = Span(func_info, func_info + (_EH_BUNDLE_SIZE + 8 if two_actions else _EH_BUNDLE_SIZE))
     _image_section(image, fi_span, code=False)
     fi_data = image.read(fi_span)
@@ -274,9 +251,55 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
         raise ValueError("original FuncInfo is not a supported bounded cleanup layout")
     map_span = Span(unwind_map, unwind_map + (16 if two_actions else 8))
     map_data = image.read(map_span)
-    if two_actions:
-        if struct.unpack("<4I", map_data) != (0xFFFFFFFF, cold.start, 0, cold.start + 8):
-            raise ValueError("original two-action unwind map does not uniquely bound both cleanups")
+    action_map = struct.unpack("<4I" if two_actions else "<2I", map_data)
+    if (action_map[0] != 0xFFFFFFFF or action_map[1] != cold.start
+            or (two_actions and action_map[2] != 0)):
+        raise ValueError("original unwind map has unsupported states or first action")
+    original_action_starts = ((cold.start, action_map[3]) if two_actions
+                              else (cold.start,))
+    if (two_actions and (action_map[3] <= cold.start
+                         or action_map[3] >= handler
+                         or action_map[3] - cold.start not in (8, 11))):
+        raise ValueError("original two-action map does not bound a supported contiguous action chain")
+    cleanup_targets = []
+    boundaries = (*original_action_starts, handler)
+    for start, end in zip(boundaries, boundaries[1:]):
+        action = _decoded(image.read(Span(start, end)), start)
+        if _frame_cleanup_jump(action):
+            target = action[1].operands[0].imm & 0xFFFFFFFF
+        elif (two_actions and len(action) == 2 and action[0].mnemonic == "mov"
+              and action[0].size == 3 and action[0].operands[0].type == x86.X86_OP_REG
+              and action[0].operands[0].reg == x86.X86_REG_ECX
+              and action[0].operands[1].type == x86.X86_OP_MEM
+              and action[0].operands[1].mem.base == x86.X86_REG_EBP
+              and action[0].operands[1].mem.index == 0
+              and action[0].operands[1].mem.segment == 0
+              and action[0].operands[1].size == 4 and action[0].encoding.disp_size == 1
+              and action[1].mnemonic == "jmp" and action[1].size == 5
+              and len(action[1].operands) == 1
+              and action[1].operands[0].type == x86.X86_OP_IMM):
+            target = action[1].operands[0].imm & 0xFFFFFFFF
+        elif (two_actions and len(action) == 3 and action[0].mnemonic == "mov"
+              and action[0].size == 3 and action[0].operands[0].type == x86.X86_OP_REG
+              and action[0].operands[0].reg == x86.X86_REG_ECX
+              and action[0].operands[1].type == x86.X86_OP_MEM
+              and action[0].operands[1].mem.base == x86.X86_REG_EBP
+              and action[0].operands[1].mem.index == 0
+              and action[0].operands[1].mem.segment == 0
+              and action[0].operands[1].size == 4 and action[0].encoding.disp_size == 1
+              and action[1].mnemonic == "add" and action[1].size == 6
+              and action[1].operands[0].type == x86.X86_OP_REG
+              and action[1].operands[0].reg == x86.X86_REG_ECX
+              and action[1].operands[1].type == x86.X86_OP_IMM
+              and action[1].encoding.imm_size == 4
+              and action[2].mnemonic == "jmp" and action[2].size == 5
+              and len(action[2].operands) == 1
+              and action[2].operands[0].type == x86.X86_OP_IMM):
+            target = action[2].operands[0].imm & 0xFFFFFFFF
+        else:
+            raise ValueError("original unwind map does not bound supported frame cleanup actions")
+        cleanup_targets.append(target)
+        _exec_target(image, target, outside=(primary, cold))
     if image.absolute_sites(Span(func_info, func_info + 12)) != frozenset({8}):
         raise ValueError("original FuncInfo unwind-map pointer lacks its exact HIGHLOW site")
     if image.absolute_sites(map_span) != frozenset({4, 12} if two_actions else {4}):
@@ -287,8 +310,7 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
         raise ValueError("original FuncInfo has unexpected HIGHLOW sites in its bounded bundle")
     if image.absolute_sites(cold) != frozenset({handler_offset + 1}):
         raise ValueError("original cold region has unexpected HIGHLOW sites outside the handler pointer")
-    original_action_starts = (cold.start, cold.start + 8) if two_actions else (cold.start,)
-    return (handler_offset, handler, func_info, cold.start, cleanup_targets,
+    return (handler_offset, handler, func_info, cold.start, tuple(cleanup_targets),
             runtime_target, original_action_starts)
 
 
@@ -367,9 +389,37 @@ def _validate_local_destructor(obj: Coff, symbol: Symbol, root: int, child: int)
     _decoded(code, 0)
 
 
-def _cold_layout(code: bytes) -> tuple[int, tuple[int, ...], int, int]:
+def _cold_layout(code: bytes) -> tuple[int, tuple[int, ...], int, int, tuple[int, ...]]:
     """Validate supported bounded cold encodings and return key byte offsets."""
     instructions = _decoded(code, 0)
+    if len(code) in (26, 29, 32) and len(instructions) == 6:
+        first = instructions[:2]
+        second = instructions[2:4]
+        if (_frame_cleanup_jump(first) and _frame_cleanup_jump(second)
+                and instructions[4].mnemonic == "mov"
+                and len(instructions[4].operands) == 2
+                and instructions[4].operands[0].type == x86.X86_OP_REG
+                and instructions[4].operands[0].reg == x86.X86_REG_EAX
+                and instructions[4].operands[1].type == x86.X86_OP_IMM
+                and instructions[4].size == 5
+                and instructions[4].bytes[0] == 0xB8
+                and instructions[4].encoding.imm_offset == 1
+                and instructions[4].encoding.imm_size == 4
+                and instructions[5].mnemonic == "jmp"
+                and instructions[5].size == 5
+                and instructions[5].bytes[0] == 0xE9
+                and instructions[5].encoding.imm_offset == 1
+                and instructions[5].encoding.imm_size == 4
+                and len(instructions[5].operands) == 1
+                and instructions[5].operands[0].type == x86.X86_OP_IMM):
+            handler_offset = instructions[4].address
+            starts = (0, instructions[2].address)
+            if handler_offset != len(code) - 10 or starts[1] not in (8, 11):
+                raise ValueError("EH child has gaps or unsupported two-action boundaries")
+            return (handler_offset,
+                    (instructions[1].address + instructions[1].encoding.imm_offset,
+                     instructions[3].address + instructions[3].encoding.imm_offset),
+                    handler_offset + 1, handler_offset + 6, starts)
     if len(code) == 32:
         if (len(instructions) != 7
                 or instructions[0].mnemonic != "mov"
@@ -411,7 +461,7 @@ def _cold_layout(code: bytes) -> tuple[int, tuple[int, ...], int, int]:
                 or instructions[5].operands[1].type != x86.X86_OP_IMM
                 or instructions[6].operands[0].type != x86.X86_OP_IMM):
             raise ValueError("EH child does not contain two supported cleanup actions then handler")
-        return 22, (4, 18), 23, 28
+        return 22, (4, 18), 23, 28, (0, 8)
     if (len(instructions) != 4 or instructions[0].mnemonic != "lea"
             or len(instructions[0].operands) != 2
             or instructions[0].operands[0].type != x86.X86_OP_REG
@@ -437,7 +487,7 @@ def _cold_layout(code: bytes) -> tuple[int, tuple[int, ...], int, int]:
             or instructions[3].operands[0].type != x86.X86_OP_IMM):
         raise ValueError("EH child does not contain one supported cleanup then handler stub")
     handler_offset = instructions[2].address
-    return handler_offset, (instructions[1].address + 1,), handler_offset + 1, handler_offset + 6
+    return handler_offset, (instructions[1].address + 1,), handler_offset + 1, handler_offset + 6, (0,)
 
 
 def _object_push_edge(obj: Coff, root: Symbol, child: int, handler_offset: int) -> None:
@@ -460,7 +510,7 @@ def _object_push_edge(obj: Coff, root: Symbol, child: int, handler_offset: int) 
 
 def _object_child_and_info(obj: Coff, root: Symbol, child: int):
     child_section, child_code, child_relocs, child_alignment = _relocations(obj, child)
-    handler_offset, destructor_offsets, info_offset, runtime_offset = _cold_layout(child_code)
+    handler_offset, destructor_offsets, info_offset, runtime_offset, action_starts = _cold_layout(child_code)
     if len(child_code) != handler_offset + 10:
         raise ValueError("COFF EH child has an unsupported bounded extent")
     expected_relocations = {*destructor_offsets, info_offset, runtime_offset}
@@ -481,6 +531,8 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int):
             else:
                 _validate_local_destructor(obj, destructor, root.section, child)
     func_info_symbol = _reloc_at(obj, child, info_offset, RelocationKind.ABSOLUTE32)
+    if struct.unpack_from("<I", child_code, info_offset)[0] != 0:
+        raise ValueError("COFF handler FuncInfo pointer has a nonzero addend")
     runtime = _reloc_at(obj, child, runtime_offset, RelocationKind.RELATIVE32)
     if (runtime.section != 0 or runtime.storage != 2
             or runtime.name != _EH_RUNTIME):
@@ -498,7 +550,7 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int):
         raise ValueError("COFF FuncInfo is not an associated root-owned data section")
     data_section = obj.sections[data_section_number - 1]
     data_flags = data_section.flags
-    two_actions = len(child_code) == 32
+    two_actions = len(destructor_offsets) == 2
     if (len(data_section.data) != (_EH_BUNDLE_SIZE + 8 if two_actions else _EH_BUNDLE_SIZE)
             or data_section.flags & (_CODE | _EXECUTE | _WRITE)
             or not data_flags & _INITIALIZED_DATA or not data_flags & _READ
@@ -550,10 +602,11 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int):
     if (unwind_symbol.section != data_section_number or unwind_symbol.value != 32
             or cleanup_symbols[0].section != child or cleanup_symbols[0].value != 0
             or (two_actions and (cleanup_symbols[1].section != child
-                                 or cleanup_symbols[1].value != 8))):
+                                 or cleanup_symbols[1].value != action_starts[1]))):
         raise ValueError("COFF unwind map does not own exactly the child cleanup entry")
     return (child_section, child_code, child_relocs, child_alignment,
-            data_section_number, runtime.name, handler_offset, destructor_offsets)
+            data_section_number, runtime.name, handler_offset, destructor_offsets,
+            action_starts)
 
 
 def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeImage,
@@ -594,11 +647,11 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
         raise ValueError("COFF EH child is not bounded executable code")
 
     _child_section, child_code, _child_relocs, _child_alignment = _relocations(obj, child)
-    handler_offset, _destructor_offset, _info_offset, _runtime_offset = _cold_layout(child_code)
+    handler_offset, _destructor_offset, _info_offset, _runtime_offset, _action_starts = _cold_layout(child_code)
     _object_push_edge(obj, root, child, handler_offset)
     (_child_section, child_code, child_relocs, child_alignment,
      info_section, runtime_symbol, object_handler_offset,
-     destructor_offsets) = _object_child_and_info(obj, root, child)
+     destructor_offsets, compiled_action_starts) = _object_child_and_info(obj, root, child)
     if handler_offset != object_handler_offset:
         raise ValueError("COFF EH handler offset changed during ownership validation")
 
@@ -613,7 +666,7 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
         original_handler=original_handler,
         original_func_info=original_func_info,
         original_cleanup=original_cleanup,
-        cleanup_offsets=(0, 8) if len(destructor_offsets) == 2 else (0,),
+        cleanup_offsets=compiled_action_starts,
         original_cleanups=original_action_starts,
         original_cleanup_targets=original_cleanup_targets,
         original_runtime_target=original_runtime,
