@@ -1286,8 +1286,7 @@ Return Value: the embedded CheckBox's state word
 Status: Complete
 */
 uint32_t BasePop::read_check() {
-    return static_cast<uint32_t>(
-        static_cast<const CheckBox &>(dialogs_).Dialog::selected_position_);
+    return dialogs_.CheckBox::state_word();
 }
 
 /*

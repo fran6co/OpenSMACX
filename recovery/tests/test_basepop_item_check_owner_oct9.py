@@ -10,6 +10,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/basepop.cpp"
+CHECKBOX = ROOT / "src/jackal/checkbox.h"
 
 
 def definition(source: str, signature: str) -> str:
@@ -34,8 +35,14 @@ HARNESS = r"""
 struct Dialog {
     int selected_position_ = 0;
 };
-struct CheckBox : virtual Dialog {};
-struct Dialogs : CheckBox {
+struct ListBox : virtual Dialog { int list_state = 17; };
+struct RadioButton : virtual Dialog { int radio_state = 29; };
+struct CheckBox : virtual Dialog {
+    /* STATE_BODY */
+};
+struct SpriteBox : virtual Dialog {};
+struct EditGroup : virtual Dialog {};
+struct Dialogs : ListBox, RadioButton, CheckBox, SpriteBox, EditGroup {
     char *last_text = nullptr;
     int last_index = 0;
     int result = 0;
@@ -78,15 +85,15 @@ def program() -> str:
     source = SOURCE.read_text()
     item = definition(source, "int BasePop::item(char *text, int index)")
     check = definition(source, "uint32_t BasePop::read_check()")
+    state = definition(CHECKBOX.read_text(), "unsigned int state_word() const")
     assert "dialogs_.Dialogs::item(text, index)" in item
     assert "reinterpret_cast" not in item
-    assert "static_cast<const CheckBox &>(dialogs_)" in check
-    assert ".Dialog::selected_position_" in check
-    assert "static_cast<uint32_t>" in check
-    assert "reinterpret_cast" not in check
+    assert "dialogs_.CheckBox::state_word()" in check
+    assert "return Dialog::selected_position_;" in state
+    assert "cast" not in check + state
     return HARNESS.replace("/* ITEM_BODY */", item).replace(
         "/* CHECK_BODY */", check
-    )
+    ).replace("/* STATE_BODY */", state)
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
