@@ -1,0 +1,23 @@
+{
+  "event_id": "dcb8a809a18e8638bd47376f87018e8a2ef07b90386fb4290f410c0b0dd6fc75",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Physical build review shows the same equality operand reversal inlined into MediaRuntime::sub_5cb6c0 error logging. Both changed sections retain size; all other object code/data/relocations unchanged. Include caller obligation and review its branch use."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6076096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "inlined-hresult-caller",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:movie-hresult-order-oct16"
+}

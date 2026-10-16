@@ -205,7 +205,7 @@ extern "C" char *__fastcall sub_5cf120(int code) {
   for (unsigned int i = 0;
        i < sizeof(media_hresult_texts) / sizeof(media_hresult_texts[0]);
        ++i) {
-    if (media_hresult_texts[i].result == code)
+    if (code == media_hresult_texts[i].result)
       return (char *)media_hresult_texts[i].text;
   }
   return (char *)media_hresult_unknown;
