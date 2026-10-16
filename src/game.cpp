@@ -2007,16 +2007,13 @@ void __cdecl say_year(LPSTR output) {
     strcat(output, year);
 }
 
-// Out-of-line forwarders for repair_phase's three helpers that the image
-// CALLS and this tree would otherwise fold in. See the LEVER on the
-// 0x00526030 marker below; `#pragma auto_inline(off)` is what VC6 6.0 has
-// instead of `__declspec(noinline)`.
+// Out-of-line forwarder for repair_phase's breed_mod helper, which the image
+// calls and this tree would otherwise fold in. The redraw now calls the
+// source-owned draw_tile boundary directly. VC6 6.0 uses this pragma instead
+// of `__declspec(noinline)` for the remaining forwarder.
 #pragma auto_inline(off)
 static int __cdecl breed_mod_call(int base_id, int faction_id) {
     return breed_mod(base_id, faction_id);
-}
-static void __cdecl draw_tile_call(int x, int y, int flags) {
-    draw_tile(x, y, flags);
 }
 #pragma auto_inline(on)
 
@@ -2024,7 +2021,8 @@ static void __cdecl draw_tile_call(int x, int y, int flags) {
 Purpose: Run the repair phase for the specified faction: reset the per-turn unit state, heal every
          damaged unit by its reactor-weighted repair rate, and redraw the tiles the units stand on.
 // ORIGINAL: 0x00526030 ?repair_phase@@YAXH@Z 0x00526030-0x005267A9
-// LEVER: 2/572 and 0.125 similar -> 59/572 and 0.299 similar, and the direct-call
+// HISTORICAL LEVER (pre-removal; the wrapper-based measurements below no longer
+// describe current source): 2/572 and 0.125 similar -> 59/572 and 0.299 similar, and the direct-call
 //   multiset went from 11 to the image's exact 8. Four measured changes.
 //   (1) THREE helpers this tree folded in that the image CALLS: `breed_mod`
 //   (0x004E65C0) and `draw_tile` (0x0046AF40) are both `MEASURED inline`, and
@@ -2340,7 +2338,7 @@ void __cdecl repair_phase(int faction_id) {
             && !(Vehs[veh_id].visibility & (1 << ConsoleGlobal.faction_id_))) {
             continue;
         }
-        draw_tile_call(x, y, -1);
+        draw_tile(x, y, -1);
     }
     do_all_draws();
 }
