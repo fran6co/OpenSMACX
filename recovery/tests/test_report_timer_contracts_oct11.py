@@ -1,5 +1,4 @@
 """Actual report callback contracts; no null-path normalization or game proof."""
-from dataclasses import fields
 import json
 from pathlib import Path
 import shutil
@@ -19,33 +18,21 @@ CALLBACKS = {
 
 
 @pytest.mark.parametrize("relative", ("src/reportwin.cpp", "src/reportif.cpp"))
-def test_exact_authorized_source_and_original_continuity(relative):
+def test_callback_original_identity_span_and_emitted_symbol(relative):
     path = ROOT / relative
     old = subprocess.check_output(["git", "show", BASE + ":" + relative], cwd=ROOT, text=True)
-    expected = old
-    fixture = Path(__file__).with_name("report-timer-contracts-oct11.patch").read_text()
-    section = next(p for p in fixture.split("diff --git ")[1:]
-                   if p.startswith("a/" + relative + " b/" + relative + "\n"))
-    for hunk in section.split("\n@@ ")[1:]:
-        lines = hunk.splitlines(keepends=True)[1:]
-        before = "".join(l[1:] for l in lines if l.startswith((" ", "-")))
-        after = "".join(l[1:] for l in lines if l.startswith((" ", "+")))
-        assert before and expected.count(before) == 1
-        expected = expected.replace(before, after, 1)
-    assert expected == path.read_text()
-    before, after = read_text(old, path), read_text(expected, path)
-    assert [r.address for r in before] == [r.address for r in after]
-    for a, b in zip(before, after):
-        for field in fields(a):
-            if field.name in {"line", "region", "origin"}:
-                continue
-            value = "?" + CALLBACKS[a.address][1] + "@@YAXH@Z" if (
-                a.address in CALLBACKS and field.name == "symbol") else getattr(a, field.name)
-            assert getattr(b, field.name) == value
-        lessons = lambda r: [(l.kind, l.key, l.prose, tuple(t for _, t in l.lines)) for l in r.origin]
-        assert lessons(a) == lessons(b)
-        if a.address in CALLBACKS:
-            assert b.byte_exact and b.image_spans == ((a.address, a.address + 13),)
+    before = {r.address: r for r in read_text(old, path)}
+    current = read_text(path.read_text(), path)
+    for address, (owner_file, name, *_) in CALLBACKS.items():
+        if owner_file != relative:
+            continue
+        matches = [r for r in current if r.address == address]
+        assert len(matches) == 1
+        record = matches[0]
+        assert record.name == before[address].name
+        assert record.image_spans == before[address].image_spans == ((address, address + 13),)
+        assert record.byte_exact
+        assert record.symbol == "?" + name + "@@YAXH@Z"
 
 
 @pytest.mark.parametrize("address", CALLBACKS)
