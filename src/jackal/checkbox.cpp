@@ -254,10 +254,20 @@ void CheckBox::draw_item(int position, int state, int) {
     const int column = position / columns;
     const int column_width = Dialog::field_64_;
     const int cell_height = Dialog::field_44_;
-    const int x = (column_width + cell_height) * column + Dialog::field_40_;
-    const int y = (cell_height >> 1) + extra_height +
-                  (position - column * columns) *
-                      (Dialog::field_68_ + cell_height);
+    const uint32_t x_bits = (static_cast<uint32_t>(column_width)
+                           + static_cast<uint32_t>(cell_height))
+                          * static_cast<uint32_t>(column)
+                          + static_cast<uint32_t>(Dialog::field_40_);
+    const int x = static_cast<int32_t>(x_bits);
+    const uint32_t row_step = static_cast<uint32_t>(Dialog::field_68_)
+                            + static_cast<uint32_t>(cell_height);
+    const uint32_t row_position = static_cast<uint32_t>(position)
+                                - static_cast<uint32_t>(column)
+                                  * static_cast<uint32_t>(columns);
+    const uint32_t y_bits = (static_cast<uint32_t>(cell_height >> 1)
+                           + static_cast<uint32_t>(extra_height))
+                          + row_position * row_step;
+    const int y = static_cast<int32_t>(y_bits);
     if (!Dialog::item_list_.seek_pos(position)) {
         return;
     }
@@ -275,12 +285,14 @@ void CheckBox::draw_item(int position, int state, int) {
 
     const int original_x = x;
     const int original_y = y;
-    const int original_bottom = y + item_height;
+    const int original_bottom = static_cast<int32_t>(
+        static_cast<uint32_t>(y) + static_cast<uint32_t>(item_height));
 
     RECT area;
     area.left = x;
     area.top = y;
-    area.right = x + Dialog::field_64_;
+    area.right = static_cast<int32_t>(static_cast<uint32_t>(x)
+                                    + static_cast<uint32_t>(Dialog::field_64_));
     area.bottom = original_bottom;
 
     const int callback_state = state != 0
@@ -436,15 +448,28 @@ int CheckBox::calculate_dimensions() {
 
     if ((dialog.field_20_ & 2) != 0 && dialog.field_2C_ != 0) {
         dialog.field_5C_ = dialog.field_2C_;
-        dialog.field_64_ = (dialog.field_2C_ - dialog.field_40_ * 2)
-                           / dialog.field_4C_ - dialog.field_44_;
+        const uint32_t width_numerator_bits = static_cast<uint32_t>(dialog.field_2C_)
+                                            - static_cast<uint32_t>(dialog.field_40_) * 2u;
+        const int32_t width_numerator = static_cast<int32_t>(width_numerator_bits);
+        const uint32_t cell_width_bits = static_cast<uint32_t>(
+            width_numerator / dialog.field_4C_) - dialog.field_44_;
+        dialog.field_64_ = static_cast<int32_t>(cell_width_bits);
     } else {
-        int width = dialog.field_64_ * dialog.field_4C_ + dialog.field_40_ * 2;
-        const int minimum = dialog.field_2C_ + dialog.field_40_ * 2;
+        const uint32_t width_bits = static_cast<uint32_t>(dialog.field_64_)
+                                  * static_cast<uint32_t>(dialog.field_4C_)
+                                  + static_cast<uint32_t>(dialog.field_40_) * 2u;
+        int width = static_cast<int32_t>(width_bits);
+        const uint32_t minimum_bits = static_cast<uint32_t>(dialog.field_2C_)
+                                    + static_cast<uint32_t>(dialog.field_40_) * 2u;
+        const int minimum = static_cast<int32_t>(minimum_bits);
         if (width < minimum) width = minimum;
         dialog.field_5C_ = width;
-        dialog.field_64_ = (width - dialog.field_40_ * 2) / dialog.field_4C_
-                           - dialog.field_44_;
+        const uint32_t width_numerator_bits = static_cast<uint32_t>(width)
+                                            - static_cast<uint32_t>(dialog.field_40_) * 2u;
+        const int32_t width_numerator = static_cast<int32_t>(width_numerator_bits);
+        const uint32_t cell_width_bits = static_cast<uint32_t>(
+            width_numerator / dialog.field_4C_) - dialog.field_44_;
+        dialog.field_64_ = static_cast<int32_t>(cell_width_bits);
         dialog.field_5C_ -= dialog.field_44_;
     }
     dialog.column_count_ = dialog.field_4C_;
@@ -452,7 +477,9 @@ int CheckBox::calculate_dimensions() {
         dialog.field_60_ = dialog.field_30_;
         dialog.row_count_ = dialog.field_30_ / dialog.field_68_;
     } else {
-        dialog.field_60_ = (dialog.field_68_ + dialog.field_44_) * dialog.row_count_;
+        dialog.field_60_ = (static_cast<uint32_t>(dialog.field_68_)
+                          + dialog.field_44_)
+                         * static_cast<uint32_t>(dialog.row_count_);
     }
     return 0;
 }

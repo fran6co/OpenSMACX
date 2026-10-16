@@ -1,0 +1,22 @@
+{
+  "event_id": "d5df1ff6a3327eec5909a479ad0df71370300cc36ac4eb282c1b8c9abb91d338",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/dialog.cpp",
+      "src/editgroup.cpp",
+      "src/jackal/checkbox.cpp",
+      "src/listbox.cpp"
+    ],
+    "evidence": [
+      "Six shared signed field declarations affect consumer integer promotions; preserve evidenced low32 products/numerators across all six already-scoped owners, including EditGroup field64*field4C and field68*row_count. Remove obsolete unsigned assignment casts only when byte-neutral and semantically justified."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fd7460272ba8dd87d1b3282b23c18fa3613c38ba20196dd2707f88dee0ea8fd9",
+  "request_id": "signed-dimension-consumer-arithmetic",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:dialog-signed-dimensions-oct16"
+}
