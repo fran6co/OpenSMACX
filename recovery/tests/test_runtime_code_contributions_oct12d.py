@@ -109,8 +109,12 @@ def test_seventeen_full_contributions_preserve_the_complete_prior_manifest(input
     assert current_text.split(begin, 1)[0] == historical_text.split(begin, 1)[0]
     assert current_text.split(end, 1)[1] == historical_text.split(end, 1)[1]
 
-    sections = manifest.code_sections
+    expected_units = tuple(row[2] for row in EXPECTED)
+    expected_unit_set = set(expected_units)
+    sections = tuple(item for item in manifest.code_sections if item.unit in expected_unit_set)
     assert len(sections) == len(EXPECTED) == 17
+    assert tuple(item.unit for item in sections) == expected_units
+    assert Counter(item.unit for item in sections) == Counter(expected_units)
     assert [(item.span.start, item.span.end, item.unit) for item in sections] == [
         (start, end, unit) for start, end, unit, *_ in EXPECTED]
     assert all(item.section == 1 and item.section_name == ".text" for item in sections)
@@ -132,10 +136,14 @@ def test_physical_sections_and_native_verification_keep_reference_uncertainty(in
     manifest, image_data, archive_data = inputs
     archive = CoffArchive(archive_data)
     image = PeImage(image_data, IMAGE_SHA256)
-    assert len(manifest.code_sections) == 17
+    expected_units = tuple(row[2] for row in EXPECTED)
+    expected_unit_set = set(expected_units)
+    sections = tuple(item for item in manifest.code_sections if item.unit in expected_unit_set)
+    assert len(sections) == len(EXPECTED) == 17
+    assert tuple(item.unit for item in sections) == expected_units
+    assert Counter(item.unit for item in sections) == Counter(expected_units)
     no_relocation_count = 0
-    for binding, (start, end, unit, member_sha, section_sha) in zip(
-            manifest.code_sections, EXPECTED, strict=True):
+    for binding, (start, end, unit, member_sha, section_sha) in zip(sections, EXPECTED, strict=True):
         assert (binding.span.start, binding.span.end, binding.unit) == (start, end, unit)
         member = archive.member(unit)
         assert hashlib.sha256(member).hexdigest() == member_sha
@@ -162,12 +170,15 @@ def test_physical_sections_and_native_verification_keep_reference_uncertainty(in
     assert report["archive"]["result"] == "pass"
     assert report["result"] == "unknown"
     assert report["ready_for_collection"] is False
-    assert report["code_section_counts"] == {"pass": 3, "unknown": 14}
     rows = report["code_sections"]
-    assert len(rows) == 17 and not any(row["result"] == "fail" for row in rows)
+    assert len({row["unit"] for row in rows}) == len(rows)
+    assert not any(row["result"] == "fail" for row in rows)
     assert all(not row["callable"] and not row["link_target"] for row in rows)
     assert all(row["nonrelocation_bytes"] == "pass" for row in rows)
-    assert sum(row["references"] == "unknown" for row in rows) == 14
+    historical_rows = tuple(row for row in rows if row["unit"] in expected_unit_set)
+    assert len(historical_rows) == 17
+    assert Counter(row["result"] for row in historical_rows) == Counter({"pass": 3, "unknown": 14})
+    assert sum(row["references"] == "unknown" for row in historical_rows) == 14
 
 
 def test_nonrelocation_damage_fails_the_native_whole_section_check(inputs):

@@ -96,7 +96,11 @@
 //         "end": 6577804,
 //         "start": 6577600
 //       },
-//       "unit": "build/intel/mt_obj/strchr.obj"
+//       "unit": "build/intel/mt_obj/strchr.obj",
+//       "entries": [
+//         {"name": "_strchr", "offset": 16, "evidence": "Unique defined external function symbol in the pinned complete strchr.obj contribution; no independent function extent is inferred."},
+//         {"name": "___from_strstr_to_strchr", "offset": 22, "evidence": "Unique defined external function symbol in the same pinned complete strchr.obj contribution; shared-tail entry only, no independent function extent is inferred."}
+//       ]
 //     },
 //     {
 //       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
@@ -261,7 +265,11 @@
 //         "end": 6597059,
 //         "start": 6596976
 //       },
-//       "unit": "../build/intel/mt_obj/genexcep.obj"
+//       "unit": "../build/intel/mt_obj/genexcep.obj",
+//       "entries": [
+//         {"name": "__startTwoArgErrorHandling", "offset": 0, "evidence": "Unique defined external function symbol in the pinned complete genexcep.obj contribution; no independent function extent is inferred."},
+//         {"name": "__startOneArgErrorHandling", "offset": 23, "evidence": "Unique defined external function symbol in the same pinned complete genexcep.obj contribution; no independent function extent is inferred."}
+//       ]
 //     },
 //     {
 //       "evidence": "Pinned VC6-era multithreaded LIBCMT contribution: the whole ordinary code section corresponds to this original image range outside relocation operands. Section membership is dependency provenance only, not a callable identity, original body boundary, or per-symbol extent. Original archive-member selection, complete relocation-target closure, final-link retention/allocation, original runtime version, and runtime equivalence remain unproved.",
