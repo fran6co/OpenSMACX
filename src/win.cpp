@@ -10253,7 +10253,7 @@ void Win::nonclient_to_client(int * x, int * y) {
         }
     }
     if ((iFlags_ & 0x10) != 0) {
-        *y += caption_height_ - border_thickness_;
+        *y += border_thickness_ - caption_height_;
     }
     if (menu_ != 0) {
         *y -= menu_->requested_height();
