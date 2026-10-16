@@ -4,6 +4,7 @@ import shutil
 import subprocess
 
 import pytest
+from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 from match_recovery.source import Mode, read_file
 from match_recovery.model import Span
 from match_recovery.object_source import parse_objects
@@ -45,6 +46,29 @@ def test_distinct_start_only_token_bindings_match_pinned_strings() -> None:
             # A short NUL-terminated read is not full allocation evidence.
             assert row.span is None and row.evidence is None
             assert original.read(Span(row.origin.address, row.origin.address + 4)).split(b"\0", 1)[0] == text.encode("ascii")
+
+
+def test_original_prototype_reset_is_byte_mask_on_word_flags() -> None:
+    pin = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    image = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not image.is_file():
+        pytest.skip("pinned original unavailable for access-width evidence")
+    original = PeImage(image.read_bytes(), pin)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    instructions = list(decoder.disasm(original.read(Span(0x52A980, 0x52A9A5)), 0x52A980))
+    assert sum(i.size for i in instructions) == 37
+    by_address = {i.address: (i.mnemonic, i.op_str) for i in instructions}
+    assert by_address[0x52A988] == ("and", "byte ptr [eax], 0xfe")
+    assert by_address[0x52A98B] == ("mov", "byte ptr [eax - 2], cl")
+    # Independent whole-function decode: the same member has true word users,
+    # including a mask spanning both bytes. Do not split its type just to match.
+    prototype_rows = [r for r in read_file(ROOT / "src/veh.cpp") if r.address == 0x57F4B0]
+    assert len(prototype_rows) == 1
+    spans = prototype_rows[0].image_spans
+    decoded = [i for span in spans for i in decoder.disasm(
+        original.read(Span(*span)), span[0])]
+    cross_byte = next(i for i in decoded if i.address == 0x57F680)
+    assert (cross_byte.mnemonic, cross_byte.op_str) == ("or", "word ptr [edi + 0x9ab898], 0x104")
 
 
 def braced_definition(source: str, signature: str) -> str:
@@ -211,10 +235,10 @@ def test_actual_mapped_identities_and_token_address_evidence() -> None:
     assert "no shared original allocation/pooling is established" in source
 
     reset_body = actual_body("sub_52a980")
+    assert "reinterpret_cast" not in reset_body
+    assert "memcpy" not in reset_body
     ordered_prototype_writes = [
-        reset_body.index("memcpy(&flags_and_preq_tech"),
-        reset_body.index("flags_and_preq_tech &= ~uint32_t(1)"),
-        reset_body.index("memcpy(prototype_bytes + offsetof(VehPrototype, flags)"),
+        reset_body.index("prototype.flags &= ~uint16_t(1)"),
         reset_body.index("prototype.icon_offset = -1"),
         reset_body.index("vehicle_current_count_ = 0"),
         reset_body.index("base_current_count_ = 0"),
@@ -232,7 +256,7 @@ def test_actual_mapped_identities_and_token_address_evidence() -> None:
 
 
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
-def test_actual_prototype_reset_keeps_full_window_and_all_512_rows(compiler, tmp_path):
+def test_actual_prototype_reset_preserves_other_bytes_and_all_512_rows(compiler, tmp_path):
     reset = actual_body("sub_52a980")
     program = HARNESS + reset + r'''
 int main() {
@@ -244,13 +268,7 @@ int main() {
         std::memcpy(&VehPrototypes[i].preq_tech, &tech_bits, sizeof(tech_bits));
         VehPrototypes[i].icon_offset = static_cast<int8_t>(i & 0x7F);
         std::memcpy(expected[i], &VehPrototypes[i], sizeof(VehPrototype));
-        uint32_t expected_flags_and_tech;
-        std::memcpy(&expected_flags_and_tech,
-                    expected[i] + offsetof(VehPrototype, flags),
-                    sizeof(expected_flags_and_tech));
-        expected_flags_and_tech &= ~uint32_t(1);
-        std::memcpy(expected[i] + offsetof(VehPrototype, flags),
-                    &expected_flags_and_tech, sizeof(expected_flags_and_tech));
+        expected[i][offsetof(VehPrototype, flags)] &= 0xFE;
         expected[i][offsetof(VehPrototype, icon_offset)] = 0xFF;
     }
     GameDataStateStorage.fields_.vehicle_current_count_ = 1234;

@@ -3541,21 +3541,13 @@ void __cdecl climactic_changes() {
 // Historical candidate note: the const-pointer spelling reproduced the old
 // fixed-address encoding; it is not the current typed-object implementation.
 int __cdecl sub_52a980() {
-    // The original DWORD read/modify/write at prototype +0x30 spans flags
-    // and the adjacent preq_tech word. Keep that full object-representation
-    // window; a flags-only store would narrow the original access.
+    // Original 52A988 clears only bit 0 of the low flags byte; neither the
+    // high flags byte nor preq_tech changes. Other users (57F680: word OR
+    // 0x104) establish the shared 16-bit flags member. Keep that owner/type;
+    // reproducing this particular byte-width operation remains an obligation.
     for (int prototype_id = 0; prototype_id < MaxVehProtoNum; ++prototype_id) {
         VehPrototype &prototype = VehPrototypes[prototype_id];
-        uint32_t flags_and_preq_tech;
-        unsigned char *const prototype_bytes =
-            reinterpret_cast<unsigned char *>(&prototype);
-        memcpy(&flags_and_preq_tech,
-               prototype_bytes + offsetof(VehPrototype, flags),
-               sizeof(flags_and_preq_tech));
-        flags_and_preq_tech &= ~uint32_t(1);
-        memcpy(prototype_bytes + offsetof(VehPrototype, flags),
-               &flags_and_preq_tech,
-               sizeof(flags_and_preq_tech));
+        prototype.flags &= ~uint16_t(1);
         prototype.icon_offset = -1;
     }
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
