@@ -1,0 +1,22 @@
+{
+  "event_id": "cb0abf715202a7c5e6fb5f04a08c86b14d7c2cb03cac6c41c10d7b432c95baf9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_control_draw_recovery.py",
+      "recovery/tests/test_dialog_close_recovery.py",
+      "recovery/tests/test_listbox_rendering_actual_source.py",
+      "recovery/tests/test_spritebox_draw_coordinates_oct16.py"
+    ],
+    "evidence": [
+      "Authorize remaining actual-source test module anchors for shared count rename, plus coupled SpriteBox draw_item coordinate and copy-direction correction in already authorized src/spritebox.cpp. Independent and coordinator original610C7A..610ECA review proves field58 rows, EBX horizontal, EDI vertical; original parent Buffer reads into SpriteBox Buffer, whereas current source reverses receiver/destination and both axes. Preserve original failure/lifetime behavior, no new safety guards; all findings and baseline retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "eda6dd461e0106c59ed6a35e8c6d68545453925a4b5902e16350fed340704d85",
+  "request_id": "shared-grid-test-and-draw-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:dialog-signed-grid-counts-oct16"
+}

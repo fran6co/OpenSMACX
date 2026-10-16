@@ -25,7 +25,8 @@ struct StringList {
 struct Dialog {
     uint32_t field_20_, field_24_, field_28_, field_2C_, field_30_;
     uint32_t field_34_, field_38_, field_3C_, field_40_, field_44_;
-    uint32_t field_48_, field_4C_, field_50_, field_54_, field_58_;
+    uint32_t field_48_, field_4C_, field_50_;
+    int column_count_, row_count_;
     uint32_t field_5C_, field_60_, field_64_, field_68_;
     Font *font1_, *font2_, *font3_;
     uint32_t text_color_a_, text_color_2a_, text_color_3a_;
@@ -105,7 +106,7 @@ static void setup(ListBox &x, Entry &a, Entry &b, Payload *pa, Payload *pb) {
     d.field_20_=2; d.field_24_=d.field_28_=0; d.field_2C_=3;
     d.field_30_=0; d.field_34_=2; d.field_38_=1; d.field_3C_=1;
     d.field_40_=1; d.field_44_=1; d.field_48_=10; d.field_4C_=1;
-    d.field_50_=2; d.field_54_=1; d.field_58_=0; d.field_5C_=30;
+    d.field_50_=2; d.column_count_=1; d.row_count_=0; d.field_5C_=30;
     d.field_60_=20; d.field_64_=0; d.field_68_=0;
     x.font1_=0; x.font2_=0; x.font3_=0;
     x.text_color_a_=11; x.text_color_b_=12; x.text_color_c_=13; x.text_color_d_=14;
@@ -156,22 +157,23 @@ int main() {
     static_cast<Dialog &>(x).field_20_=0;
     x.field_2C_=20;
     x.calculate_dimensions();
-    assert(static_cast<Dialog &>(x).field_54_==1);
+    assert(static_cast<Dialog &>(x).column_count_==1);
     assert(static_cast<int32_t>(static_cast<Dialog &>(x).field_5C_)>=20);
 
     // Fixed height/columns with signed vertical overflow and the no-adjust flag.
     setup(x,a,b,&pa,&pb);
     x.field_20_=3; x.field_30_=1; x.field_4C_=2; x.field_50_=1;
-    x.field_58_=1; x.field_68_=2; x.iFlags_=0;
+    x.row_count_=1; x.field_68_=2; x.iFlags_=0;
     assert(x.calculate_dimensions()==0);
     assert(x.field_C_==1 && x.field_60_==16);
 
     // The 0x40 flag suppresses the global adjustment while retaining capacity.
     setup(x,a,b,&pa,&pb);
     x.field_20_=3; x.field_30_=1; x.field_4C_=2; x.field_50_=1;
-    x.field_58_=1; x.field_68_=2; x.iFlags_=0x40;
+    x.row_count_=1; x.field_68_=2; x.iFlags_=0x40;
     assert(x.calculate_dimensions()==0);
-    assert(x.field_1C_==x.field_54_*x.field_58_);
+    assert(x.field_1C_==static_cast<uint32_t>(x.column_count_)
+                         * static_cast<uint32_t>(x.row_count_));
     assert(x.field_C_==1 && x.field_60_==11);
 
     // Null text returns before measuring, height accumulation or insertion.

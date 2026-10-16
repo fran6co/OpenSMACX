@@ -119,8 +119,8 @@ def test_behavioral_damage_control_detects_wrong_color_binding(compiler_name, tm
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 @pytest.mark.parametrize("old,new", (
     ("dialog.font2_", "dialog.font1_"),
-    ("ScrollDefaultThickness / static_cast<int32_t>(dialog.field_54_)",
-     "ScrollDefaultThickness / dialog.field_54_"),
+    ("ScrollDefaultThickness / dialog.column_count_",
+     "ScrollDefaultThickness / (dialog.column_count_ + 1)"),
 ))
 def test_behavioral_damage_controls_detect_font_and_signed_division(
         compiler_name, tmp_path, old, new):

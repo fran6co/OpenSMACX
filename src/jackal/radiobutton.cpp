@@ -200,7 +200,7 @@ void RadioButton::draw_item(int position, int state) {
         }
     }
 
-    const int columns = Dialog::field_58_;
+    const int columns = Dialog::row_count_;
     const int column = position / columns;
     const int column_width = Dialog::field_64_;
     const int cell_height = Dialog::field_44_;
@@ -356,16 +356,18 @@ int RadioButton::calculate_dimensions() {
         dialog.field_68_ = dialog.field_48_;
     }
 
-    dialog.field_58_ = dialog.field_50_;
-    if (dialog.field_58_ > dialog.item_list_.entry_count_) {
-        dialog.field_58_ = dialog.item_list_.entry_count_;
+    dialog.row_count_ = dialog.field_50_;
+    if (dialog.row_count_ > dialog.item_list_.entry_count_) {
+        dialog.row_count_ = dialog.item_list_.entry_count_;
     }
-    if (dialog.field_58_ < dialog.item_list_.entry_count_) {
-        const int columns = dialog.item_list_.entry_count_ / dialog.field_58_ + 1;
+    if (dialog.row_count_ < dialog.item_list_.entry_count_) {
+        const int columns = dialog.item_list_.entry_count_ / dialog.row_count_ + 1;
         dialog.field_4C_ = columns;
-        dialog.field_58_ = dialog.item_list_.entry_count_ / columns;
-        if (columns * dialog.field_58_ < dialog.item_list_.entry_count_) {
-            ++dialog.field_58_;
+        dialog.row_count_ = dialog.item_list_.entry_count_ / columns;
+        uint32_t product = static_cast<uint32_t>(columns)
+                         * static_cast<uint32_t>(dialog.row_count_);
+        if (static_cast<int32_t>(product) < dialog.item_list_.entry_count_) {
+            ++dialog.row_count_;
         }
     }
 
@@ -412,12 +414,12 @@ int RadioButton::calculate_dimensions() {
         dialog.field_64_ = (dialog.field_2C_ - dialog.field_40_ * 2)
                            / dialog.field_4C_ - dialog.field_44_;
     }
-    dialog.field_54_ = dialog.field_4C_;
+    dialog.column_count_ = dialog.field_4C_;
     if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
         dialog.field_60_ = dialog.field_30_;
-        dialog.field_58_ = dialog.field_30_ / dialog.field_68_;
+        dialog.row_count_ = dialog.field_30_ / dialog.field_68_;
     } else {
-        dialog.field_60_ = (dialog.field_68_ + dialog.field_44_) * dialog.field_58_;
+        dialog.field_60_ = (dialog.field_68_ + dialog.field_44_) * dialog.row_count_;
     }
     return 0;
 }
@@ -507,7 +509,7 @@ void RadioButton::on_left_down(int x, int y) {
         remaining_y -= item_height;
     }
     const int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
-                         static_cast<int>(Dialog::field_58_) +
+                         Dialog::row_count_ +
                          Dialog::item_list_.current_position_;
 
     const int previous = Dialog::selected_position_;
@@ -556,7 +558,7 @@ void RadioButton::on_mouse_move(int x, int y) {
         remaining_y -= item_height;
     }
     const int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
-                         static_cast<int>(Dialog::field_58_) +
+                         Dialog::row_count_ +
                          Dialog::item_list_.current_position_;
     if (position == Dialog::selected_position_ && Dialog::field_F0_ ==
         static_cast<uint32_t>(-1)) return;
@@ -768,7 +770,7 @@ Purpose: A radio button key press: publish the parent window as the callback
 //         the GraphicWin subobject, runtime vbtable for the Dialog fields);
 //         the seed guessed its switch labels from a range check, and the
 //         jump tables pinned the real keys: VK_LEFT/NUMPAD4 pages forward by
-//         field_58_ columns, VK_UP/NUMPAD8 steps back one, VK_RIGHT/NUMPAD6
+//         row_count_ rows, VK_UP/NUMPAD8 steps back one, VK_RIGHT/NUMPAD6
 //         pages back, VK_DOWN/NUMPAD2 steps forward one.
 Status: Source-owned member body; behavior retained, exactness not measured
 */
@@ -779,10 +781,10 @@ int RadioButton::on_key_down(int key) {
     switch (key) {
     case 0x25:
     case 0x64: {
-        int position = previous + static_cast<int>(Dialog::field_58_);
+        int position = previous + Dialog::row_count_;
         selected_position_ = static_cast<uint32_t>(position);
         if (position >= Dialog::item_list_.entry_count_) {
-            position -= static_cast<int>(Dialog::field_58_);
+            position -= Dialog::row_count_;
             selected_position_ = static_cast<uint32_t>(position);
         }
         break;
@@ -798,10 +800,10 @@ int RadioButton::on_key_down(int key) {
     }
     case 0x27:
     case 0x66: {
-        int position = previous - static_cast<int>(Dialog::field_58_);
+        int position = previous - Dialog::row_count_;
         selected_position_ = static_cast<uint32_t>(position);
         if (position < 0) {
-            position += static_cast<int>(Dialog::field_58_);
+            position += Dialog::row_count_;
             selected_position_ = static_cast<uint32_t>(position);
         }
         break;

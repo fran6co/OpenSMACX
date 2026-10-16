@@ -250,7 +250,7 @@ void CheckBox::draw_item(int position, int state, int) {
         }
     }
 
-    const int columns = Dialog::field_58_;
+    const int columns = Dialog::row_count_;
     const int column = position / columns;
     const int column_width = Dialog::field_64_;
     const int cell_height = Dialog::field_44_;
@@ -411,7 +411,7 @@ int CheckBox::calculate_dimensions() {
         dialog.field_68_ = dialog.field_48_;
     }
 
-    dialog.field_58_ = dialog.item_list_.entry_count_;
+    dialog.row_count_ = dialog.item_list_.entry_count_;
     int max_text_width = 0;
     for (int i = 0; i < dialog.item_list_.entry_count_; ++i) {
         if (dialog.item_list_.head_ != 0) {
@@ -447,12 +447,12 @@ int CheckBox::calculate_dimensions() {
                            - dialog.field_44_;
         dialog.field_5C_ -= dialog.field_44_;
     }
-    dialog.field_54_ = dialog.field_4C_;
+    dialog.column_count_ = dialog.field_4C_;
     if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
         dialog.field_60_ = dialog.field_30_;
-        dialog.field_58_ = dialog.field_30_ / dialog.field_68_;
+        dialog.row_count_ = dialog.field_30_ / dialog.field_68_;
     } else {
-        dialog.field_60_ = (dialog.field_68_ + dialog.field_44_) * dialog.field_58_;
+        dialog.field_60_ = (dialog.field_68_ + dialog.field_44_) * dialog.row_count_;
     }
     return 0;
 }
@@ -515,7 +515,7 @@ void CheckBox::on_redraw() {
 // symbol    ?on_left_down@CheckBox@@UAEXHH@Z
 void CheckBox::on_left_down(int x, int y) {
     WinCallbackWindow = win_parent_;
-    const int rows = Dialog::field_58_;
+    const int rows = Dialog::row_count_;
     const int cell_width = Dialog::field_64_ + Dialog::field_44_;
     const int cell_height = Dialog::field_68_ + Dialog::field_44_;
     const int position = (x / cell_width) * rows + y / cell_height;
@@ -1013,12 +1013,12 @@ Purpose: A check box key press: publish the parent window as the callback
 // TRIED (seed): the entry convention and field walks - the body is entered on
 //         the GraphicWin subobject and reaches CheckBox's own start as
 //         `this-0x1c`; the count and column fields ride the runtime vbtable
-//         (entry_count_ and field_58_ through the Dialog base) while the bit
+//         (entry_count_ and row_count_ through the Dialog base) while the bit
 //         index (field_4_), the callback (field_8_) and the state word ride
 //         direct fields; the real virtual entry lets the compiler supply the
 //         adjustments. The seed guessed its switch labels from a range check;
 //         the jump tables pinned the real keys: VK_SPACE toggles the row's
-//         bit, VK_LEFT/NUMPAD4 and VK_RIGHT/NUMPAD6 page by field_58_ columns,
+//         bit, VK_LEFT/NUMPAD4 and VK_RIGHT/NUMPAD6 page by row_count_ rows,
 //         VK_UP/NUMPAD8 and VK_DOWN/NUMPAD2 step one row.
 Status: Source-owned member body; behavior retained, exactness not measured
 */
@@ -1041,10 +1041,10 @@ int CheckBox::on_key_down(int key) {
     case 0x25:
     case 0x64: {
         int position = static_cast<int>(field_4_) +
-                       static_cast<int>(Dialog::field_58_);
+                       Dialog::row_count_;
         field_4_ = static_cast<uint32_t>(position);
         if (position >= Dialog::item_list_.entry_count_) {
-            position -= static_cast<int>(Dialog::field_58_);
+            position -= Dialog::row_count_;
             field_4_ = static_cast<uint32_t>(position);
         }
         break;
@@ -1061,10 +1061,10 @@ int CheckBox::on_key_down(int key) {
     case 0x27:
     case 0x66: {
         int position = static_cast<int>(field_4_) -
-                       static_cast<int>(Dialog::field_58_);
+                       Dialog::row_count_;
         field_4_ = static_cast<uint32_t>(position);
         if (position < 0) {
-            position += static_cast<int>(Dialog::field_58_);
+            position += Dialog::row_count_;
             field_4_ = static_cast<uint32_t>(position);
         }
         break;
@@ -1111,7 +1111,7 @@ Purpose: A check box mouse move: locate the row under the cursor from the
 // TRIED (forwarder): the entry convention and field walks are the sibling
 //         on_key_down's - the seed's outer/base pointers were the runtime
 //         vbtable walk the compiler now owns; the hover field is Dialog's
-//         field_F0_ and the geometry fields are field_44_/field_58_/
+//         field_F0_ and the geometry fields are field_44_/row_count_/
 //         field_64_/field_68_, the same quartet draw_item places rows with.
 Status: Source-owned member body; behavior retained, exactness not measured
 */
@@ -1123,7 +1123,7 @@ void CheckBox::on_mouse_move(int x_coord, int y_coord) {
     // Native60FBD3..60FBE7 divides each coordinate first, then multiplies
     // the x quotient by the row count. IMUL/ADD retain 32-bit wrapping.
     const uint32_t position = static_cast<uint32_t>(x_coord / cell_width)
-                              * Dialog::field_58_
+                              * Dialog::row_count_
                               + static_cast<uint32_t>(y_coord / cell_height);
     if (((1u << (position & 31u)) & selected_position_) != 0) {
         // Native60FC00 skips redraw when the selected hover is already clear.

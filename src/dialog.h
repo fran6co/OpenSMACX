@@ -205,8 +205,14 @@ class Dialog {
   uint32_t field_48_;
   uint32_t field_4C_;
   uint32_t field_50_;
-  uint32_t field_54_;
-  uint32_t field_58_;
+  // Grid dimensions: +0x54 is the signed column count and +0x58 the signed
+  // row count. The pinned control handlers compare these with signed branches
+  // (for example CheckBox 0x60F93B and SpriteBox 0x6114C2); producers store
+  // signed division results in the same slots.
+  // RECOVERY_MEMBER: v1 Dialog column_count_ 0x54 0x00611400
+  // RECOVERY_MEMBER: v1 Dialog row_count_ 0x58 0x00611400
+  int column_count_;
+  int row_count_;
   uint32_t field_5C_;
   uint32_t field_60_;
   uint32_t field_64_;

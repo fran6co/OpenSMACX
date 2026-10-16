@@ -77,7 +77,7 @@ struct GraphicWin : Win, Buffer {};
 struct Dialog {
     List item_list_;
     int field_24_, field_28_, field_34_, field_40_, field_44_;
-    int field_58_, field_64_, field_68_;
+    int row_count_, field_64_, field_68_;
     uint32_t field_F0_, field_B8_;
     int pos_to_id(int position) { assert(position == 0); ++ids; return 123; }
 };
@@ -149,7 +149,7 @@ int main() {
                 active_window->win_parent_ = path == 1 ? 0 : &parent;
                 active_dialog->field_24_ = 100; active_dialog->field_28_ = 200;
                 active_dialog->field_34_ = 9; active_dialog->field_40_ = 11;
-                active_dialog->field_44_ = 4; active_dialog->field_58_ = 3;
+                active_dialog->field_44_ = 4; active_dialog->row_count_ = 3;
                 active_dialog->field_64_ = 40; active_dialog->field_68_ = 20;
                 active_dialog->field_F0_ = current_row ? 0 : 10; active_dialog->field_B8_ = 77;
                 active_list->head_ = active_list->current_ = &old_entry;

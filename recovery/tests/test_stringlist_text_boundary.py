@@ -100,7 +100,7 @@ typedef int (*AbsFnT)(int);
 SEEK_BODY
 struct Dialog {
     uint32_t field_24_, field_28_, field_34_, field_40_, field_44_;
-    uint32_t field_54_, field_58_, field_64_, field_68_;
+    int column_count_, row_count_, field_64_, field_68_;
     StringStruct item_list_;
 };
 struct Win { Win *win_parent_; };
@@ -126,7 +126,7 @@ void Buffer::write_l(char *text, RECT *area, unsigned int length) {
     assert(writes < 8);
     labels[writes] = text; rectangles[writes++] = *area;
     if (writes == 1 && mode == 1) {
-        active->field_54_ = active->field_58_ = 1;
+        active->column_count_ = active->row_count_ = 1;
     }
     if (writes == 1 && mode == 2) active->field_68_ = 40;
 }
@@ -147,7 +147,7 @@ int main() {
         e.dib_.bmiHeader.biWidth = 80; e.dib_.bmiHeader.biHeight = -60;
         e.field_24_ = 11; e.field_28_ = 13;
         e.field_34_ = 7; e.field_40_ = 5; e.field_44_ = 6;
-        e.field_54_ = e.field_58_ = 2; e.field_64_ = 30; e.field_68_ = 20;
+        e.column_count_ = e.row_count_ = 2; e.field_64_ = 30; e.field_68_ = 20;
         e.item_list_.head_ = &entries[0]; e.item_list_.current_ = &entries[1];
         e.item_list_.entry_count_ = 3; e.item_list_.current_position_ = 1;
         e.on_redraw();
@@ -177,11 +177,11 @@ int main() {
     cached_bounds = body.replace(
         "void EditGroup::on_redraw() {",
         "void EditGroup::on_redraw() {\n"
-        "    const int cached_columns = static_cast<int>(Dialog::field_54_);\n"
-        "    const int cached_rows = static_cast<int>(Dialog::field_58_);",
-    ).replace("column < static_cast<int>(Dialog::field_54_)",
+        "    const int cached_columns = Dialog::column_count_;\n"
+        "    const int cached_rows = Dialog::row_count_;",
+    ).replace("column < Dialog::column_count_",
               "column < cached_columns").replace(
-        "row < static_cast<int>(Dialog::field_58_)", "row < cached_rows")
+        "row < Dialog::row_count_", "row < cached_rows")
     assert cached_bounds != body
     source.write_text(fixture.replace("BODY", cached_bounds))
     subprocess.run([compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror",

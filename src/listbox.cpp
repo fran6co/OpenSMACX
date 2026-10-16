@@ -470,8 +470,8 @@ void ListBox::set_selected_pos(int position, int notify) {
     if (position >= 0) {
         const int page_size = static_cast<int>(field_1C_);
         const int item_count = Dialog::item_list_.entry_count_;
-        const int step = Dialog::field_54_ < 2
-            ? 1 : static_cast<int>(Dialog::field_58_);
+        const int step = Dialog::column_count_ < 2
+            ? 1 : Dialog::row_count_;
         int scroll_position = static_cast<int>(field_18_);
         bool moved_up = false;
         bool update_scrollbar = false;
@@ -497,7 +497,7 @@ void ListBox::set_selected_pos(int position, int notify) {
         field_18_ = static_cast<uint32_t>(scroll_position);
         if (update_scrollbar) {
             Win *window = static_cast<GraphicWin *>(this);
-            if (Dialog::field_54_ < 2) {
+            if (Dialog::column_count_ < 2) {
                 window->set_vert_pos(scroll_position);
             } else {
                 window->set_horz_pos(scroll_position);
@@ -680,8 +680,8 @@ void ListBox::on_scrolling(int a, int b) {
     const int top_entry = dialog.selected_position_;
     const int old_position = static_cast<int>(front->field_18_);
     if (a == -2) {
-        front->field_18_ = static_cast<uint32_t>(
-            static_cast<int>(dialog.field_58_) * b);
+        front->field_18_ = static_cast<uint32_t>(dialog.row_count_)
+                         * static_cast<uint32_t>(b);
     } else if (a == -1) {
         front->field_18_ = static_cast<uint32_t>(b);
     }
@@ -819,7 +819,7 @@ after_scroll_position:
             - gap + row.left;
     } else {
         const int relative = index - static_cast<int>(field_18_);
-        const int columns = static_cast<int>(dialog.field_58_);
+        const int columns = dialog.row_count_;
         const int along = (static_cast<int>(dialog.field_64_)
                            + static_cast<int>(dialog.field_44_))
             * (relative / columns);
@@ -1066,7 +1066,7 @@ int ListBox::calculate_dimensions() {
     int visible_rows = static_cast<int>(dialog.field_50_);
     int rows = entries.entry_count_;
     if (visible_rows <= rows) rows = visible_rows;
-    dialog.field_58_ = static_cast<uint32_t>(rows);
+    dialog.row_count_ = rows;
 
     int max_width = 0;
     int n = 0;
@@ -1132,11 +1132,11 @@ have_width:
             if (width < min_width) width = min_width;
             dialog.field_5C_ = static_cast<uint32_t>(width);
         }
-        dialog.field_54_ = dialog.field_4C_;
+        dialog.column_count_ = dialog.field_4C_;
     } else {
         dialog.field_5C_ = static_cast<uint32_t>(tmp);
-        dialog.field_54_ = dialog.field_4C_;
-        if (dialog.field_54_ == 1)
+        dialog.column_count_ = dialog.field_4C_;
+        if (dialog.column_count_ == 1)
             dialog.field_64_ = dialog.field_5C_ - dialog.field_40_ * 2u;
         else
             dialog.field_64_ -= dialog.field_44_;
@@ -1144,28 +1144,27 @@ have_width:
 
     if ((dialog.field_20_ & 1) == 0
         || (tmp = static_cast<int>(dialog.field_30_), tmp == 0)) {
-        dialog.field_60_ = dialog.field_68_ * dialog.field_58_
+        dialog.field_60_ = dialog.field_68_ * dialog.row_count_
                          - dialog.field_44_ + dialog.field_3C_
                          + dialog.field_38_;
     } else {
         dialog.field_60_ = static_cast<uint32_t>(tmp);
         uint32_t rows_numerator = dialog.field_60_ - dialog.field_3C_
                                 - dialog.field_38_ + dialog.field_44_;
-        dialog.field_58_ = static_cast<uint32_t>(
-            static_cast<int32_t>(rows_numerator)
-            / static_cast<int32_t>(dialog.field_68_));
+        dialog.row_count_ = static_cast<int32_t>(rows_numerator)
+                          / static_cast<int32_t>(dialog.field_68_);
         if ((iFlags_ & 0x40) == 0) {
-            int columns = static_cast<int32_t>(dialog.field_54_);
-            uint32_t product = dialog.field_58_ * dialog.field_54_;
+            int columns = dialog.column_count_;
+            uint32_t product = static_cast<uint32_t>(dialog.row_count_)
+                             * static_cast<uint32_t>(dialog.column_count_);
             if (static_cast<int32_t>(product) < static_cast<int32_t>(field_20_)) {
                 if (columns < 2) {
                     dialog.field_5C_ = dialog.field_2C_ - ScrollDefaultThickness;
-                    dialog.field_54_ = 1;
+                    dialog.column_count_ = 1;
                 } else {
                     dialog.field_60_ = dialog.field_30_ - ScrollDefaultThickness;
-                    dialog.field_58_ = static_cast<uint32_t>(
-                        static_cast<int32_t>(dialog.field_60_)
-                        / static_cast<int32_t>(dialog.field_68_));
+                    dialog.row_count_ = static_cast<int32_t>(dialog.field_60_)
+                                      / static_cast<int32_t>(dialog.field_68_);
                 }
             }
         }
@@ -1187,16 +1186,17 @@ have_width:
                                      + static_cast<uint32_t>(margin);
             dialog.field_64_ = static_cast<uint32_t>(
                 static_cast<int32_t>(width_numerator)
-                / static_cast<int32_t>(dialog.field_54_))
+                / dialog.column_count_)
                 - static_cast<uint32_t>(margin);
         }
     }
 
-    uint32_t total_bits = dialog.field_58_ * dialog.field_54_;
+    uint32_t total_bits = static_cast<uint32_t>(dialog.row_count_)
+                        * static_cast<uint32_t>(dialog.column_count_);
     field_1C_ = total_bits;
     int total = static_cast<int32_t>(total_bits);
     if (total < static_cast<int32_t>(field_20_)) {
-        if (1 < static_cast<int32_t>(dialog.field_54_)) {
+        if (1 < dialog.column_count_) {
             if ((iFlags_ & 0x40) == 0)
                 dialog.field_60_ += ScrollDefaultThickness;
             field_C_ |= 1;
@@ -1205,7 +1205,7 @@ have_width:
         if ((iFlags_ & 0x40) == 0)
             dialog.field_5C_ += ScrollDefaultThickness;
         if ((dialog.field_20_ & 2) != 0)
-            dialog.field_64_ -= ScrollDefaultThickness / static_cast<int32_t>(dialog.field_54_);
+            dialog.field_64_ -= ScrollDefaultThickness / dialog.column_count_;
         field_C_ |= 2;
     }
     return 0;
@@ -1253,15 +1253,15 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
         }
         dialog.field_5C_ = dialog.field_2C_;
         dialog.field_60_ = dialog.field_30_;
-        dialog.field_54_ = 1;
-        dialog.field_58_ = 1;
+        dialog.column_count_ = 1;
+        dialog.row_count_ = 1;
     }
 
     dialog.field_24_ = static_cast<uint32_t>(a2);
     dialog.field_28_ = static_cast<uint32_t>(a3);
 
     if (static_cast<int32_t>(field_20_) > static_cast<int32_t>(field_1C_)) {
-        if (static_cast<int32_t>(dialog.field_54_) > 1) {
+        if (dialog.column_count_ > 1) {
             flags |= 4;
         } else {
             flags |= 8;
@@ -1286,12 +1286,12 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
 
     if (flags & 8) {
         window.set_vert_range(0, dialog.item_list_.entry_count_ - 1);
-        window.set_vert_paging(static_cast<int32_t>(dialog.field_58_) - 1);
+        window.set_vert_paging(dialog.row_count_ - 1);
     } else if (flags & 4) {
         int numerator = dialog.item_list_.entry_count_;
-        int quotient = numerator / static_cast<int32_t>(dialog.field_58_);
+        int quotient = numerator / dialog.row_count_;
         window.set_horz_range(0, quotient - 1);
-        window.set_horz_paging(static_cast<int32_t>(dialog.field_54_));
+        window.set_horz_paging(dialog.column_count_);
     }
 
     if (dialog.item_list_.entry_count_ == 0) {
@@ -1300,8 +1300,8 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
         while (static_cast<int32_t>(dialog.selected_position_)
                >= static_cast<int32_t>(field_1C_ + field_18_)) {
             int step;
-            if (static_cast<int32_t>(dialog.field_54_) > 1) {
-                step = static_cast<int32_t>(dialog.field_58_);
+            if (dialog.column_count_ > 1) {
+                step = dialog.row_count_;
             } else {
                 step = 1;
             }
@@ -1310,7 +1310,7 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
     }
 
     if (static_cast<int32_t>(field_20_) > static_cast<int32_t>(field_1C_)) {
-        if (static_cast<int32_t>(dialog.field_54_) > 1) {
+        if (dialog.column_count_ > 1) {
             window.set_horz_pos(static_cast<int32_t>(field_18_));
         } else {
             window.set_vert_pos(static_cast<int32_t>(field_18_));
@@ -1336,7 +1336,7 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
 
     window.set_vert_pos(static_cast<int32_t>(field_18_));
     int position = static_cast<int32_t>(field_18_);
-    int quotient = position / static_cast<int32_t>(dialog.field_54_);
+    int quotient = position / dialog.column_count_;
     window.set_horz_pos(quotient);
 
     return 0;
@@ -1478,12 +1478,12 @@ int ListBox::update_changes() {
         unsigned int win_flags = iFlags_;
         if (win_flags & 8) {
             window->set_vert_range(0, dialog->item_list_.entry_count_ - 1);
-            window->set_vert_paging(static_cast<int>(dialog->field_58_) - 1);
+            window->set_vert_paging(dialog->row_count_ - 1);
         } else if (win_flags & 4) {
             window->set_horz_range(0,
                 dialog->item_list_.entry_count_
-                    / static_cast<int>(dialog->field_58_) - 1);
-            window->set_horz_paging(static_cast<int>(dialog->field_54_));
+                    / dialog->row_count_ - 1);
+            window->set_horz_paging(dialog->column_count_);
         }
     }
 
@@ -1545,10 +1545,10 @@ static int listbox_hit_position(ListBox *list, int x, int y, int top) {
     StringList &items = dialog.item_list_;
     ListBoxHitSpanContext context = { &items };
     return listbox_hit_position_for_mode(
-        static_cast<int>(dialog.field_54_), x, y, top, items.entry_count_,
+        dialog.column_count_, x, y, top, items.entry_count_,
         static_cast<int>(dialog.field_40_),
         static_cast<int>(dialog.field_38_),
-        static_cast<int>(dialog.field_58_),
+        dialog.row_count_,
         static_cast<int>(dialog.field_64_ + dialog.field_44_),
         static_cast<int>(dialog.field_68_ + dialog.field_44_),
         static_cast<int>(dialog.field_68_ + dialog.field_44_), &context,
@@ -1672,8 +1672,8 @@ int ListBox::on_key_down(int key) {
     int next_position = position;
     const int arm = listbox_key_dispatch_arm(key);
     const int navigation = listbox_navigation_target(
-        arm, static_cast<int>(Dialog::field_54_),
-        static_cast<int>(Dialog::field_58_), count, position,
+        arm, Dialog::column_count_,
+        Dialog::row_count_, count, position,
         &next_position);
     if (navigation > 0) {
         set_selected_pos(next_position, 1);
@@ -1724,8 +1724,8 @@ void ListBox::UNK1(int direction) {
     const ListBoxScrollCopy copy = listbox_scroll_copy(
         direction, static_cast<int>(Dialog::field_64_),
         static_cast<int>(Dialog::field_40_),
-        static_cast<int>(Dialog::field_54_),
-        static_cast<int>(Dialog::field_58_),
+        Dialog::column_count_,
+        Dialog::row_count_,
         static_cast<int>(Dialog::field_68_));
     buffer->copy(buffer, copy.source_x, copy.source_y,
                  copy.destination_x, copy.destination_y,
@@ -1782,8 +1782,8 @@ void ListBox::on_redraw() {
     const int count = Dialog::item_list_.entry_count_;
     const int first = static_cast<int>(field_18_);
     const int visible_count = listbox_visible_draw_count(
-        static_cast<int>(Dialog::field_54_),
-        static_cast<int>(Dialog::field_58_), first, count);
+        Dialog::column_count_,
+        Dialog::row_count_, first, count);
     ListBoxDrawOffset = 0;
     for (int offset = 0; offset < visible_count; ++offset) {
         ListBoxDrawOffset = offset;

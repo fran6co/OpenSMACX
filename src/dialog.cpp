@@ -754,8 +754,8 @@ Dialog::Dialog() {
     field_48_ = -1;
     field_4C_ = DialogDefaults[21];
     field_50_ = DialogDefaults[22];
-    field_54_ = 0;
-    field_58_ = 0;
+    column_count_ = 0;
+    row_count_ = 0;
     field_5C_ = 0;
     field_60_ = 0;
     field_64_ = 0;
@@ -813,8 +813,8 @@ void Dialog::close() {
     field_34_ = DialogField34Default;
     field_4C_ = DialogDefaults[21];
     field_50_ = DialogDefaults[22];
-    field_54_ = 0;
-    field_58_ = 0;
+    column_count_ = 0;
+    row_count_ = 0;
     field_5C_ = 0;
     field_60_ = 0;
     field_64_ = 0;

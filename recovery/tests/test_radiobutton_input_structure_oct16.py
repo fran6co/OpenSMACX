@@ -49,7 +49,7 @@ struct Dialog {
     int selected_position_;
     uint32_t field_F0_;
     uint32_t field_20_;
-    int field_68_, field_44_, field_64_, field_58_;
+    int field_68_, field_44_, field_64_, row_count_;
     int field_4C_, field_2C_, field_40_;
 };
 struct Buffer { static int text_line_height() { return 10; } };
@@ -82,7 +82,7 @@ static void reset(ItemList &items, RadioButton &button) {
     button.field_68_ = 20;
     button.field_44_ = 4;
     button.field_64_ = 16;
-    button.field_58_ = 2;
+    button.row_count_ = 2;
     button.field_4C_ = 2;
     button.field_2C_ = 3;
     button.field_40_ = 3;
@@ -194,7 +194,7 @@ def _actual(text=None, *, validate=True):
         assert "Dialog::field_68_ + Dialog::field_44_" in move
         assert "Dialog::field_64_ + Dialog::field_44_" in left
         assert "Dialog::field_64_ + Dialog::field_44_" in move
-        assert "Dialog::field_58_" in left and "Dialog::field_58_" in move
+        assert "Dialog::row_count_" in left and "Dialog::row_count_" in move
         assert "current_ != 0" in left and "current_ != 0" in move
         assert "head_ == 0" in left and "head_ == 0" in move
         assert "payload->field_8_" in left and "payload->field_8_" in move
@@ -299,7 +299,7 @@ def test_mutated_row_count_is_caught(tmp_path):
     compiler = shutil.which("g++")
     if compiler is None:
         pytest.skip("g++ unavailable")
-    text = SOURCE.read_text().replace("Dialog::field_58_", "Dialog::field_40_")
+    text = SOURCE.read_text().replace("Dialog::row_count_", "Dialog::field_40_")
     assert text != SOURCE.read_text()
     built, exe = _compile(tmp_path, compiler, text, validate=False)
     assert built.returncode == 0, built.stdout + built.stderr

@@ -1,0 +1,21 @@
+{
+  "event_id": "31dc255697a34d4e4ad515982ce932755a94372872b88b72ffb977c649806a24",
+  "payload": {
+    "affects": [
+      "entity-0ba6e2ed3e8cf718979b7c1c1b4ec0ac15e6338fbd2872074011b7bdcf242ef4",
+      "entity-2f510eb069deabf811c2f13ec8e25ec729bb68371aa2a7491468468db345a3c4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "shared-dimension-signed-division",
+    "evidence": [
+      "SpriteBox calculate_dimensions uses IDIV at 610BB7 (30/68),610BF5 (2C/64); RadioButton uses IDIV at60D4FB,60D53A,60D697,60D6D1,60D728. Shared field40 makes two numerators unsigned. Current54/58 migration does not resolve these preexisting dimension types."
+    ],
+    "hypothesis": "Dialog dimension fields at offsets 2C,30,4C,64,68 and spacing40 require signed-arithmetic investigation across their owners; current unsigned divisions differ from original IDIV. Preserve the current grid-count recovery and expand the next dependent batch rather than discard it.",
+    "kind": "discovery"
+  },
+  "previous_event": "cb0abf715202a7c5e6fb5f04a08c86b14d7c2cb03cac6c41c10d7b432c95baf9",
+  "request_id": "shared-dimension-signed-division",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:dialog-signed-grid-counts-oct16"
+}

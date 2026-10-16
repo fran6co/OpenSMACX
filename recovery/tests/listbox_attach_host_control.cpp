@@ -79,7 +79,7 @@ struct GraphicWin : Win, Buffer {
 
 struct Dialog {
     uint32_t field_24_, field_28_, field_2C_, field_30_;
-    uint32_t field_54_, field_58_, field_5C_, field_60_;
+    int column_count_, row_count_, field_5C_, field_60_;
     StringList item_list_;
     int selected_position_;
     Font *font1_, *font2_, *font3_;
@@ -88,7 +88,7 @@ struct Dialog {
     int text_color_c_, text_color_2c_, text_color_3c_;
     int text_color_d_, text_color_2d_, text_color_3d_;
     Dialog() : field_24_(0), field_28_(0), field_2C_(2), field_30_(8),
-        field_54_(1), field_58_(2), field_5C_(4), field_60_(6),
+        column_count_(1), row_count_(2), field_5C_(4), field_60_(6),
         selected_position_(0), font1_(0), font2_(0), font3_(0),
         text_color_a_(11), text_color_2a_(21), text_color_3a_(31),
         text_color_b_(12), text_color_2b_(22), text_color_3b_(32),
@@ -169,12 +169,12 @@ static void test_fallback_and_vertical_scroll() {
     box.selected_position_ = 6;
     box.field_18_ = 0;
     box.field_2C_ = 2; box.field_30_ = 8;
-    box.field_54_ = 1; box.field_58_ = 2;
+    box.column_count_ = 1; box.row_count_ = 2;
     parent.iFlags_ = 0;
 
     assert(box.attach(&parent, 17, 19, 0) == 0);
     assert(box.field_5C_ == 2 && box.field_60_ == 8);
-    assert(box.field_54_ == 1 && box.field_58_ == 1);
+    assert(box.column_count_ == 1 && box.row_count_ == 1);
     assert(box.field_24_ == 17 && box.field_28_ == 19);
     assert(box.init_width == 8 && box.init_height == 2);
     assert((box.init_flags & 0x100000) != 0);
@@ -199,7 +199,7 @@ static void test_horizontal_branch_and_dispatch() {
     box.font1_ = &f1; box.font2_ = &f2; box.font3_ = &f3;
     box.field_1C_ = 3; box.field_20_ = 4;
     box.field_18_ = 6;
-    box.field_54_ = 2; box.field_58_ = 3;
+    box.column_count_ = 2; box.row_count_ = 3;
     box.item_list_.entry_count_ = 6;
     assert(box.attach(&parent, 3, 4, 4) == 0);
     assert((box.init_flags & 4) != 0 && (box.init_flags & 8) == 0);
@@ -227,8 +227,8 @@ static void test_signed_capacity_comparison() {
     box.field_1C_ = 3;
     box.field_18_ = 7;
     box.selected_position_ = -1;
-    box.field_54_ = 1;
-    box.field_58_ = 1;
+    box.column_count_ = 1;
+    box.row_count_ = 1;
     box.item_list_.entry_count_ = 4;
     assert(box.attach(&parent, 0, 0, 0) == 0);
     assert((box.init_flags & 4) == 0 && (box.init_flags & 8) == 0);
@@ -243,7 +243,7 @@ static void test_empty_list_and_parent_flags() {
     box.font1_ = &f1; box.font2_ = &f2; box.font3_ = &f3;
     box.item_list_.entry_count_ = 0;
     box.field_18_ = 23;
-    box.field_54_ = 2;
+    box.column_count_ = 2;
     parent.iFlags_ = 0x1000;
     assert(box.attach(&parent, -7, -9, 0x4c) == 0);
     assert(box.init_flags == 0x860);

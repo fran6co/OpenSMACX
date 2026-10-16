@@ -83,8 +83,8 @@ def test_actual_key_navigation_and_mutation_controls(tmp_path, compiler_name):
 enum { VK_LEFT=0x25, VK_UP=0x26, VK_RIGHT=0x27, VK_DOWN=0x28,
        VK_NUMPAD2=0x62, VK_NUMPAD4=0x64, VK_NUMPAD6=0x66, VK_NUMPAD8=0x68 };
 struct Dialog {
-    uint32_t field_54_;
-    uint32_t field_58_;
+    int column_count_;
+    int row_count_;
     int selected_position_;
 };
 struct SpriteList { int entry_count_; };
@@ -108,8 +108,8 @@ struct SpriteBox : Dialog {
 
 static void reset(SpriteBox &box, uint32_t rows, uint32_t columns,
                   int count, int position) {
-    box.field_54_ = rows;
-    box.field_58_ = columns;
+    box.column_count_ = rows;
+    box.row_count_ = columns;
     box.list_.entry_count_ = count;
     box.selected_position_ = position;
     box.draw_count = box.updates = 0;
@@ -218,7 +218,7 @@ int main() {
     assert cached_selection != body
     build_and_run(cached_selection, f"spritebox_reload_mutant_{compiler_name.replace('+', 'p')}", False)
     mapping_mutant = body.replace(
-        "next_position -= static_cast<int>(Dialog::field_58_);",
+        "next_position -= Dialog::row_count_;",
         "--next_position;", 1,
     )
     assert mapping_mutant != body

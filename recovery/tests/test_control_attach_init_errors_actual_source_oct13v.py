@@ -88,14 +88,15 @@ struct GraphicWin : Buffer {
 };
 struct Dialog {
   int field_24_, field_28_;
-  uint32_t field_40_, field_44_, field_4C_, field_54_, field_58_, field_5C_, field_60_, field_68_;
+  uint32_t field_40_, field_44_, field_4C_, field_5C_, field_60_, field_68_;
+  int column_count_, row_count_;
   void *font1_, *font2_, *font3_;
   uint32_t text_color_a_, text_color_b_, text_color_c_, text_color_d_;
   uint32_t text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_;
   uint32_t text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_;
   Dialog() : field_24_(0), field_28_(0), field_40_(3), field_44_(1),
-    field_4C_(1), field_54_(1), field_58_(1), field_5C_(31), field_60_(47),
-    field_68_(4), font1_(0), font2_(0), font3_(0), text_color_a_(1),
+    field_4C_(1), field_5C_(31), field_60_(47), field_68_(4),
+    column_count_(1), row_count_(1), font1_(0), font2_(0), font3_(0), text_color_a_(1),
     text_color_b_(2), text_color_c_(3), text_color_d_(4), text_color_2a_(5),
     text_color_2b_(6), text_color_2c_(7), text_color_2d_(8), text_color_3a_(9),
     text_color_3b_(10), text_color_3c_(11), text_color_3d_(12) {}

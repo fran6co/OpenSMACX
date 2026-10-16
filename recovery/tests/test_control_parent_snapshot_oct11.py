@@ -26,9 +26,17 @@ def source_bodies(baseline=False):
                                        cwd=ROOT, text=True) if baseline else path.read_text())
         signature = (f"void {owner}::on_left_click(int, int)" if owner == "CheckButton"
                      else f"void {owner}::on_redraw()")
-        output.append(extract_function(text, signature))
+        body = extract_function(text, signature)
+        if baseline:
+            body = body.replace("Dialog::field_54_", "Dialog::column_count_")
+            body = body.replace("Dialog::field_58_", "Dialog::row_count_")
+        output.append(body)
         if owner == "CheckBox":
-            output.append(extract_function(text, "void CheckBox::on_mouse_move(int x_coord, int y_coord)"))
+            body = extract_function(text, "void CheckBox::on_mouse_move(int x_coord, int y_coord)")
+            if baseline:
+                body = body.replace("Dialog::field_54_", "Dialog::column_count_")
+                body = body.replace("Dialog::field_58_", "Dialog::row_count_")
+            output.append(body)
     return "\n".join(output)
 
 
@@ -55,9 +63,9 @@ def test_actual_parent_snapshots(tmp_path, compiler, damage):
         bodies = bodies.replace("checked_ = checked_ == 0;", "const int saved = toggle_argument_; checked_ = checked_ == 0;")
         bodies = bodies.replace("parent->on_button_clicked(toggle_argument_);", "parent->on_button_clicked(saved);")
     if damage == "wrong_axes":
-        old = "static_cast<uint32_t>(x_coord / cell_width)\n                              * Dialog::field_58_\n                              + static_cast<uint32_t>(y_coord / cell_height)"
+        old = "static_cast<uint32_t>(x_coord / cell_width)\n                              * Dialog::row_count_\n                              + static_cast<uint32_t>(y_coord / cell_height)"
         assert bodies.count(old) == 1
-        bodies = bodies.replace(old, "static_cast<uint32_t>(x_coord / cell_width + (y_coord * Dialog::field_58_) / cell_height)")
+        bodies = bodies.replace(old, "static_cast<uint32_t>(x_coord / cell_width + (y_coord * Dialog::row_count_) / cell_height)")
     if damage == "lost_noop":
         old = "if (Dialog::field_F0_ == 0xFFFFFFFFu) return;"
         assert bodies.count(old) == 1
@@ -89,11 +97,12 @@ struct GraphicWin : Win {
 struct Dialog {
     struct {int entry_count_=0;} item_list_;
     int field_24_=7,field_28_=9,selected_position_=0;unsigned field_F0_=0;
-    unsigned field_44_=2,field_64_=8,field_68_=8,field_58_=3;
+    unsigned field_44_=2,field_64_=8,field_68_=8;
+    int row_count_=3;
     int pos_to_id(int p){return p;}
 };
 struct CheckBox : GraphicWin,Dialog {
-    int draws=0,redraws=0;void draw_item(int,int,int){++draws;events.push_back(6);}
+    uint32_t field_4_=0;int draws=0,redraws=0;void draw_item(int,int,int){++draws;events.push_back(6);}
     void redraw(){++redraws;}
     int get_state_id(int){return 1;}void on_redraw();void on_mouse_move(int,int);
 };
@@ -151,7 +160,7 @@ int main(){
     assert(box.field_F0_==11 && box.redraws==3);
     box.on_mouse_move(31,24);assert(box.redraws==4);
     box.on_mouse_move(-31,24);assert(box.field_F0_==0xFFFFFFF9u);
-    box.field_58_=0x80000000u;box.on_mouse_move(20,0);
+    box.row_count_=0x80000000u;box.on_mouse_move(20,0);
     assert(box.field_F0_==0);
 }
 '''.replace("BODIES", bodies)

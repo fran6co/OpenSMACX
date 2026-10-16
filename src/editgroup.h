@@ -48,7 +48,7 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
 
  public:
   // 0x00611AF0 lays out the edit controls after initializing the GraphicWin
-  // view. The original uses field_54_ columns and field_58_ rows.
+  // view. Dialog stores signed column_count_ at +0x54 and row_count_ at +0x58.
   int attach(GraphicWin *parent, int x, int y, int flags);
 
  public:

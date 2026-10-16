@@ -29,7 +29,12 @@ def test_complete_source_change_and_historical_obligations():
     for signature in ("void CheckBox::on_redraw(", "void CheckBox::on_mouse_move("):
         current_without_later_redraw = current_without_later_redraw.replace(
             extract(current, signature), extract(expected, signature), 1)
-    assert current_without_later_redraw == expected
+    # This task intentionally gives Dialog's signed grid counts their
+    # evidence-backed names; compare the retained historical edit after
+    # normalizing only those declaration/member spellings.
+    normalize_grid_names = lambda text: text.replace("column_count_", "field_54_").replace(
+        "row_count_", "field_58_")
+    assert normalize_grid_names(current_without_later_redraw) == normalize_grid_names(expected)
     prior, after = read_text(before, path), read_text(current, path)
     assert [(r.address, _continuity_fields(r), r.symbol, r.function_fragment) for r in prior] == [
         (r.address, _continuity_fields(r), r.symbol, r.function_fragment) for r in after]
@@ -95,7 +100,7 @@ def test_actual_key_body_notification_order_and_post_callback_reads(compiler, da
 CALLBACK_TYPE
 static std::vector<int> events;
 static int WinCallbackWindow;
-struct Dialog { struct { int entry_count_; } item_list_; uint32_t field_58_; };
+struct Dialog { struct { int entry_count_; } item_list_; int row_count_; };
 struct CheckBox : Dialog {
     uint32_t field_4_, selected_position_; int win_parent_;
     DECLARATION
@@ -116,7 +121,7 @@ static void notify(int value) {
 BODY
 int main() {
     CheckBox box={}; active=&box; box.win_parent_=77;
-    box.item_list_.entry_count_=4; box.field_58_=2;
+    box.item_list_.entry_count_=4; box.row_count_=2;
     box.field_4_=2; box.selected_position_=4; box.key_notification_callback_=notify;
     assert(box.on_key_down(0x20)==1);
     assert((events==std::vector<int>{0,2,1,3}));
