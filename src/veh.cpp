@@ -10242,7 +10242,7 @@ void __cdecl battle_kill_stack(int veh_id, int *attacker_out,
 
 /*
 Purpose: Set a vehicle patrolling a waypoint loop.
-// ORIGINAL: 0x004CDA30 ?action_patrol@@YAXHHH@Z 0x004CDA30-0x004CDAEA
+// ORIGINAL: 0x004CDA30 ?action_patrol@@YAXHHH@Z 0x004CDA30-0x004CDAEA BYTE_EXACT
 // size      186 bytes
 // prototype void (__cdecl ?action_patrol@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   2   call targets   1
