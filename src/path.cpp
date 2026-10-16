@@ -28,16 +28,6 @@
 
 Path Paths;                                              // 0x00945B00
 
-// Non-inline forwarder to `region_set` (map.h), for the same reason as
-// general.h's bitmask_call: the image makes real `call 0x591B90`s at both
-// region_set sites in continent (0x0059C571, 0x0059C698) and both pole loops
-// in continents, and the inline definition in the header folds those four
-// away. Same-TU forwarders stay out-of-line under /O2 - measured on this
-// file, and on the do_all_non_input forwarder this note in 0x0059C520 tried.
-void __cdecl region_set_call(int x, int y, int region) {
-    region_set(x, y, region);
-}
-
 // Same lever again, for `abstract_set` (map.h): make_abstract (0x0059C200) is
 // the image's only `call 0x00591230`, and this tree was expanding the inline
 // there - `osmx calls 0x0059C200` reported one image call and none here.
@@ -1283,12 +1273,9 @@ void Path::territory(int x, int y, int UNUSED(region), int faction_id) {
 /*
  Purpose: Populate the continent and path table for the specified tile and region.
 // ORIGINAL: 0x0059C520 ?continent@Path@@QAEXHHH@Z 0x0059C520-0x0059C781
-// LEVER: `region_set_call` - the image calls `region_set` for real at BOTH
-//   sites here (0x0059C571 and 0x0059C698) and this tree was folding the
-//   `MEASURED inline` into both. The non-inline forwarder defined at the top
-//   of this file puts the image's `push/push/push/call` back at each site,
-//   and `call_diff` now reports the call counts AGREEING (4 against 4) for
-//   the first time: similarity 0.6984, from 0.28.
+// HISTORICAL LEVER (superseded): `region_set_call` restored apparent call
+//   counts, but introduced a synthetic callee. The mapped owner is now an
+//   ordinary definition in map.cpp, so these sites call it directly.
 // LEVER: the `(uint8_t)` casts on BOTH region_set arguments come OFF. The
 //   parameter is `int` and region_set takes `int`, and the image loads the
 //   full dword at 0x0059C568 (`mov ecx,[ebp+0x10]`) where the cast makes this
@@ -1326,7 +1313,7 @@ void Path::continent(int x, int y, int region) {
     int fresh_water_count = 0;
     x_table_[index1_] = (int16_t)x;
     y_table_[index1_++] = (int16_t)y;
-    region_set_call(x, y, region);
+    region_set(x, y, region);
     BOOL is_ocean_tile = is_ocean(x, y);
     do {
         int16_t x_it = x_table_[index2_];
@@ -1342,7 +1329,7 @@ void Path::continent(int x, int y, int region) {
                 if (is_ocean_tile && bit2_at(x_radius, y_radius) & BIT2_FRESH && is_ocean_rad) {
                     fresh_water_count++;
                 }
-                region_set_call(x_radius, y_radius, region);
+                region_set(x_radius, y_radius, region);
                 x_table_[index1_] = (int16_t)x_radius;
                 y_table_[index1_++] = (int16_t)y_radius;
             }
@@ -1377,11 +1364,9 @@ void Path::continent(int x, int y, int region) {
 //   same lever base.h records for breed_mod). The image makes one real
 //   `call 0x50ba00` at 0x0059CC21 and this tree was inlining the fold; the
 //   inlined `and/cdq/sar/shl` block is gone and the call count now agrees.
-// LEVER: `region_set_call` at BOTH pole loops. The image calls `region_set`
-//   for real at 0x0059CA49 and 0x0059CAC3 and this tree was folding the
-//   `MEASURED inline` away there; the forwarder defined at the top of this
-//   file restores them. 18/414 -> 76/414 byte-matching, 0.295 -> 0.327,
-//   on the two forwarders together.
+// HISTORICAL LEVER (superseded): a `region_set_call` forwarder was used to
+//   restore apparent pole-loop calls; it is replaced by direct calls to the
+//   mapped region_set owner.
 // LEVER: the region-zeroing cursor is `int`, and `land_region`/`ocean_region`
 //   are initialised BEFORE that loop, `y_south_pole` after it. `uint32_t`
 //   against the `uint32_t MapArea` global gives `test/jbe` where the image
@@ -1463,12 +1448,12 @@ void Path::continents() {
     }
     for (int x = 0; x < MapLongitudeBounds; x += 2) { // north pole
         uint8_t pole_region = is_ocean(x, 0) ? 127 : 63;
-        region_set_call(x, 0, pole_region);
+        region_set(x, 0, pole_region);
         Continents[pole_region].tile_count++;
     }
     for (x = y_south_pole & 1; x < MapLongitudeBounds; x += 2) { // south pole
         uint8_t pole_region = is_ocean(x, y_south_pole) ? 127 : 63;
-        region_set_call(x, y_south_pole, pole_region);
+        region_set(x, y_south_pole, pole_region);
         Continents[pole_region].tile_count++;
     }
     int most_tiles = 0;

@@ -1216,7 +1216,7 @@ Status: Complete
 /*
 Purpose: Set the region for the specified tile.
 // ORIGINAL: 0x00591B90 ?region_set@@YAXHHH@Z 0x00591B90-0x00591BB8 SEMANTIC
-// body      src/map.h
+// body      src/map.cpp
 // TRIED: same plateau as alt_put_detail - byte-parameter load and
 //            map_tiles() pointer load are swapped by the compiler
 //            regardless of source order. Tried a `Map *tile` temp before
@@ -1230,10 +1230,9 @@ Purpose: Set the region for the specified tile.
 Return Value: n/a
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+void __cdecl region_set(int x, int y, int region) {
+    map_loc(x, y)->region = region;
+}
 
 
 
