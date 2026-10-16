@@ -192,8 +192,16 @@ def test_candidate_closes_all_table_aliases_but_not_buffer_scope():
     # One-past row 8 may be a loop endpoint; there must not be a ninth-row
     # field access. Buffer/RECT receiver substitutions are owned separately.
     assert not __import__("re").search(r"NetWinLobbyRows\s*\[\s*8\s*\]\s*\.", source)
-    assert "&NetWinLobbyRows[1].owner_" in source
-    assert "&NetWinLobbyRows[1].ready_or_occupied_" in source
+    session = mod.extract_function(source, "void NetWin::draw_session_info()")
+    assert "const NetWinLobbyRow *scan = &NetWinLobbyRows[1];" in session
+    assert "scan->owner_ == owned" in session
+    assert "++scan;" in session
+    assert "reinterpret_cast<unsigned long *>" not in session
+    assert "scan += 0x5F" not in session
+    players = mod.extract_function(source, "void NetWin::draw_player_names()")
+    assert "NetWinLobbyRow *lobby_row = &NetWinLobbyRows[1];" in players
+    assert "++lobby_row" in players
+    assert "lobby_row->ready_or_occupied_" in players
 
 
 def test_original_overlay_and_stride_witnesses():
