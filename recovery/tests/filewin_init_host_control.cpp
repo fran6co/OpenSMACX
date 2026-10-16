@@ -49,6 +49,10 @@ struct Sprite {
   int width_value;
   int width() const { return width_value; }
 };
+struct FileWinSpriteOwnerDouble {
+  Sprite value;
+  Sprite &sprite() { return value; }
+};
 struct Dialog {
   uint32_t field_34_;
   int init(RECT *rect, int flags) {
@@ -103,7 +107,7 @@ static char cancel_text[] = "Cancel";
 char *BasePopDefaultOkText = ok_text;
 char *BasePopDefaultCancelText = cancel_text;
 FileWinConstructPrefix FileWinInitSharedParameters;
-Sprite FileWinSprite0;
+FileWinSpriteOwnerDouble FileWinSprite0Owner;
 char FileWinListWindowTitle[32] = "";
 int SpriteScaleNumerator, SpriteScaleDenominator;
 HWND HandleMain = reinterpret_cast<HWND>(0x1234);
@@ -135,7 +139,7 @@ static void reset_controls() {
   prepare_result = edit_result = button2_result = button1_result = 0;
   list_result = create_result = 0; window_name_seen = 0;
   SpriteScaleNumerator = SpriteScaleDenominator = 0;
-  FileWinSprite0.width_value = 9;
+  FileWinSprite0Owner.sprite().width_value = 9;
 }
 
 static FileWinConstruct parameters() {

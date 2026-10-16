@@ -4,7 +4,6 @@ The expected receivers/order come from the pinned instructions, not masked
 byte equality. This does not prove VC6 ABI, original exit guards or game runtime.
 """
 from pathlib import Path
-import re
 import shutil
 import subprocess
 
@@ -27,24 +26,46 @@ def definition(text, signature):
     raise AssertionError("unterminated actual definition")
 
 
+def source_lifetime(text):
+    start = text.index("uint8_t FileWinSpritesCleanupGuard;")
+    end = text.index("// Superseded seed deleted;", start)
+    return text[start:end]
+
+
 @pytest.fixture(params=("g++", "clang++"), scope="module")
 def control(request, tmp_path_factory):
     compiler = shutil.which(request.param)
     if compiler is None:
         pytest.skip(f"host compiler unavailable: {request.param}")
     text = (ROOT / "src/jackal/filewin.cpp").read_text()
-    declarations = re.findall(r"^static Sprite FileWinSprite[012];$", text, re.M)
-    assert len(declarations) == 3
+    ownership = source_lifetime(text)
+    assert ownership.count("union FileWinSpriteStorage") == 1
+    assert ownership.count("template<unsigned char Mask> struct FileWinSpriteLifetime") == 1
+    assert ownership.count("static FileWinSpriteLifetime<") == 3
+    assert "if ((FileWinSpritesCleanupGuard & Mask) != 0) return;" in ownership
+    assert "FileWinSpritesCleanupGuard |= Mask;" in ownership
+    assert ownership.index("FileWinSpritesCleanupGuard |= Mask;") < ownership.index("sprite().Sprite::~Sprite();")
+    assert "static FileWinSpriteLifetime<1> FileWinSprite1Owner;" in ownership
+    assert "static FileWinSpriteLifetime<2> FileWinSprite0Owner;" in ownership
+    assert "static FileWinSpriteLifetime<4> FileWinSprite2Owner;" in ownership
     bodies = "\n".join(definition(text, signature) for signature in (
         "void FileWin::close()", "int FileWin::prepare_sprites()"))
     harness = r'''
 #include <assert.h>
+#include <new>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <vector>
 struct Sprite;
 static std::vector<Sprite *> construction;
 static std::vector<int> events;
+static std::vector<int> destruction_order;
 static int load_result, results[3], sheet_destructors;
+static int sprite_destructors[3];
+static uint8_t expected_initial_guard;
+extern uint8_t FileWinSpritesCleanupGuard;
 struct Buffer {
   Buffer() { events.push_back(20); }
   ~Buffer() { ++sheet_destructors; events.push_back(21); }
@@ -54,16 +75,40 @@ struct Buffer {
   }
 };
 struct Sprite {
-  Sprite() { construction.push_back(this); }
+  uint32_t bounded_payload[16];
+  Sprite() { memset(bounded_payload, 0, sizeof(bounded_payload)); construction.push_back(this); }
+  ~Sprite();
   void close();
   int extract(Buffer *,int,int,int,int,int,int);
   int create_blank(int,int,int);
 };
-''' + "\n".join(declarations) + r'''
+static int sprite_id(Sprite *p);
+struct ShutdownCheck {
+  ~ShutdownCheck() {
+    assert(FileWinSpritesCleanupGuard == static_cast<uint8_t>(expected_initial_guard | 7));
+    assert(construction.size() == 3);
+    const int ids[] = {1, 0, 2};
+    const int masks[] = {1, 2, 4};
+    int expected_order[3], expected_count=0;
+    for (int i=0; i<3; ++i) {
+      const int expected = (expected_initial_guard & masks[i]) ? 0 : 1;
+      assert(sprite_destructors[ids[i]] == expected);
+      if (expected) expected_order[expected_count++]=ids[i];
+    }
+    assert(destruction_order.size()==static_cast<unsigned>(expected_count));
+    for (int i=0; i<expected_count; ++i)
+      assert(destruction_order[i]==expected_order[expected_count-1-i]);
+  }
+} shutdown_check;
+''' + ownership + r'''
 static int sprite_id(Sprite *p) {
-  if (p==&FileWinSprite1) return 1; // pinned 0x9B9048
-  if (p==&FileWinSprite0) return 0; // pinned 0x9B9018
-  assert(p==&FileWinSprite2); return 2;
+  const int ids[] = {1, 0, 2};
+  for (int i=0; i<3; ++i) if (construction[i]==p) return ids[i];
+  assert(false); return -1;
+}
+Sprite::~Sprite() {
+  const int id=sprite_id(this);
+  ++sprite_destructors[id]; destruction_order.push_back(id);
 }
 void Sprite::close() { events.push_back(sprite_id(this)); }
 int Sprite::extract(Buffer *p,int color,int x,int y,int w,int h,int flags) {
@@ -100,11 +145,20 @@ static void expect(const int *values,int count) {
 }
 int main(int argc,char **argv) {
   assert(argc==2);
+  if (strcmp(argv[1],"guardA8")==0) expected_initial_guard=FileWinSpritesCleanupGuard=0xA8;
+  else if (strncmp(argv[1],"guard",5)==0) {
+    assert(strlen(argv[1])==6 && argv[1][5]>='0' && argv[1][5]<='7');
+    const int mask=atoi(argv[1]+5);
+    assert(mask>=0 && mask<=7);
+    expected_initial_guard=FileWinSpritesCleanupGuard=static_cast<uint8_t>(mask);
+  }
+  else assert(FileWinSpritesCleanupGuard==0);
+  if (strncmp(argv[1],"guard",5)==0) return 0;
   if (strcmp(argv[1],"construction")==0) {
     assert(construction.size()==3);
-    assert(construction[0]==&FileWinSprite1);
-    assert(construction[1]==&FileWinSprite0);
-    assert(construction[2]==&FileWinSprite2);
+    assert(construction[0]==&FileWinSprite1Owner.sprite());
+    assert(construction[1]==&FileWinSprite0Owner.sprite());
+    assert(construction[2]==&FileWinSprite2Owner.sprite());
     return 0;
   }
   if (strcmp(argv[1],"close")==0) {
@@ -148,14 +202,14 @@ int main(int argc,char **argv) {
     source = directory / "control.cpp"
     source.write_text(harness)
     binary = directory / "control"
-    compiled = subprocess.run([compiler, "-std=c++98", "-Wall", "-Wextra",
+    compiled = subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra",
                                str(source), "-o", str(binary)],
                               capture_output=True, text=True, timeout=30)
     assert compiled.returncode == 0, compiled.stdout + compiled.stderr
     return binary
 
 
-@pytest.mark.parametrize("path", ("construction", "close", "prepare"))
+@pytest.mark.parametrize("path", ("construction", "close", "prepare", *(f"guard{i}" for i in range(8)), "guardA8"))
 def test_actual_sprite_paths(control, path):
     ran = subprocess.run([str(control), path], capture_output=True, text=True,
                          timeout=30)
