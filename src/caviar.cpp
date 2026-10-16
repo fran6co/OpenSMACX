@@ -727,8 +727,13 @@ RECT CaviarViewportState;
 // 0x009B9C38. Passed twice to vox_create_record, which reads it as the
 // colour-table source (0x1800 bytes for pixel size 1) and the shadow-table
 // source (0x100 bytes) - the old "record's name" reading was the binding's,
-// not the body's. Zero at load in the image, as here; whatever filled it in
-// the shipped game is not recovered. Sized to the 0x1800 the call reads.
+// not the body's. render_mono (0x00617620) fills the complete 0x1800-byte
+// window; object_start (0x00618DA0) copies it when renderer bit 3 is set.
+// These full-width accesses bound the source backing window, whose end is
+// the independently mapped CaviarScene at 0x009BB438. This is not an original
+// symbol-table or allocation-provenance claim. The loader's virtual zero-fill
+// supplies its initial zeros; subsequent draws deliberately replace them.
+// RECOVERY_OBJECT: v2 0x009B9C38 0x009BB438 ?CaviarColourSource@?%src/caviar.cpp@@3PAEA 0x00617620
 uint8_t CaviarColourSource[0x1800];  // 0x009B9C38
 
 // The CPU rank at original0x009C0830 is owned by caviar_cpu.cpp. Preferences
