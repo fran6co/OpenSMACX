@@ -7971,7 +7971,7 @@ void __cdecl alien_fauna() {
                 altitude <= 0x5f && (tile.bit & 3) == 0 &&
                 (tile.val2 & 0x0f) >= 8 &&
                 (region & 0x3f) != 0x3f && (region & 0x3f) != 0 &&
-                Continents[region].open_terrain >= 0x32) {
+                Continents[region].tile_count >= 0x32) {
                 x = odd_x;
                 found = true;
                 break;

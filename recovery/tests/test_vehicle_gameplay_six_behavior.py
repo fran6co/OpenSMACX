@@ -51,7 +51,24 @@ def execute(tmp_path, compiler, case, body):
     (tmp_path / "fixture.h").write_bytes((FIXTURES / "fixture.h").read_bytes())
     (tmp_path / "game_data_state_host.h").write_bytes((FIXTURES / "game_data_state_host.h").read_bytes())
     program = tmp_path / "control.cpp"
-    program.write_bytes((FIXTURES / (case + ".cpp")).read_bytes())
+    fixture = (FIXTURES / (case + ".cpp")).read_text()
+    if case == "fauna":
+        header = (ROOT / "src/map.h").read_text()
+        match = re.search(r"\bstruct\s+Continent\s*\{", header)
+        assert match, "Continent declaration missing from src/map.h"
+        opening = header.index("{", match.start())
+        depth = 0
+        for end in range(opening, len(header)):
+            depth += (header[end] == "{") - (header[end] == "}")
+            if depth == 0:
+                assert header[end + 1] == ";"
+                declaration = header[match.start():end + 2]
+                break
+        else:
+            raise AssertionError("unterminated Continent declaration")
+        fixture = fixture.replace("struct Continent { uint32_t open_terrain; };", declaration)
+        assert "struct Continent { uint32_t open_terrain; };" not in fixture
+    program.write_text(fixture)
     executable = tmp_path / "control"
     subprocess.run([compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror",
                     str(program), "-o", str(executable)], check=True,
@@ -68,6 +85,7 @@ def test_current_product_bodies(tmp_path, compiler, case):
 @pytest.mark.parametrize("compiler", COMPILERS)
 @pytest.mark.parametrize("case,before,after", [
     ("combat", "Vehs[vehicle_id].state &= 0xFCFFBDFFU;", ""),
+    ("fauna", "Continents[region].tile_count >= 0x32", "Continents[region].open_terrain >= 0x32"),
     ("fauna", "3u - MapNativeLifeForms", "3u - static_cast<uint32_t>(GameDataStateStorage.fields_.diff_level_current_)"),
     ("passengers", "unk_77[region] & 0x0800", "unk_77[region] & 0x0400"),
     ("passengers", "mode < 3", "mode < 4"),

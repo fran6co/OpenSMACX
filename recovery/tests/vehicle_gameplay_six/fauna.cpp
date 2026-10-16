@@ -189,7 +189,8 @@ int main() {
     transport_site->bit = 0x20;
     transport_site->val2 = 8;
     transport_site->region = 1;
-    Continents[1].open_terrain = 0x32;
+    Continents[1].tile_count = 0x32;
+    Continents[1].open_terrain = 0;
     alien_fauna();
     assert(veh_init_calls == 2);
     assert(veh_prototypes[0] == 9 && veh_prototypes[1] == 10);
@@ -204,7 +205,8 @@ int main() {
     transport_site->bit = 0x20;
     transport_site->val2 = 8;
     transport_site->region = 1;
-    Continents[1].open_terrain = 0x32;
+    Continents[1].tile_count = 0x32;
+    Continents[1].open_terrain = 0;
     fail_prototype = 9;
     alien_fauna();
     assert(veh_init_calls == 1 && veh_prototypes[0] == 9);
@@ -226,7 +228,8 @@ int main() {
     transport_site->bit = 0x20;
     transport_site->val2 = 8;
     transport_site->region = 1;
-    Continents[1].open_terrain = 0x32;
+    Continents[1].tile_count = 0x32;
+    Continents[1].open_terrain = 0;
     alien_fauna();
     assert(veh_init_calls == 4);
     assert(veh_prototypes[0] == 9 && veh_prototypes[1] == 8 &&
@@ -247,7 +250,8 @@ int main() {
     transport_site->bit = 0x20;
     transport_site->val2 = 8;
     transport_site->region = 1;
-    Continents[1].open_terrain = 0x32;
+    Continents[1].tile_count = 0x32;
+    Continents[1].open_terrain = 0;
     alien_fauna();
     assert(veh_init_calls == 2);
     assert(veh_prototypes[0] == 9 && veh_prototypes[1] == 8);
@@ -305,7 +309,8 @@ int main() {
     transport_site->bit = 0x20;
     transport_site->val2 = 8;
     transport_site->region = 1;
-    Continents[1].open_terrain = 0x32;
+    Continents[1].tile_count = 0x32;
+    Continents[1].open_terrain = 0;
     alien_fauna();
     // Two transport coordinates, three cargo prototype choices (rand is
     // evaluated before the expansion gate), then two sampler coordinates.
@@ -313,5 +318,20 @@ int main() {
     assert(veh_init_calls == 4 && sleep_calls == 3);
     assert(veh_prototypes[0] == 9 && veh_prototypes[1] == 8 &&
            veh_prototypes[2] == 8 && veh_prototypes[3] == 8);
+
+    reset_state();
+    // A signed negative tile count fails even when open terrain exceeds 50.
+    GameDataStateStorage.fields_.turn_current_num_ = 10;
+    rand_values[0] = rand_values[1] = 2;
+    rand_count = 2;
+    transport_site = map_loc(2, 2);
+    transport_site->climate = 0x40;
+    transport_site->bit = 0x20;
+    transport_site->val2 = 8;
+    transport_site->region = 1;
+    Continents[1].tile_count = -1;
+    Continents[1].open_terrain = 0x32;
+    alien_fauna();
+    assert(veh_init_calls == 0);
     return 0;
 }
