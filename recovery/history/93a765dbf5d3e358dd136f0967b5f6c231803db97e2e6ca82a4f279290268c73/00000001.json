@@ -1,0 +1,19 @@
+{
+  "event_id": "1247af57191ac5b5ec17750502376a3a08ed395397955bfe2ebf27d2d59c7bff",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_menu_event_live_cell_oct16.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes actual-source reentrant live-cell regression controls for menu_event and hide_menus. Existing task scope already includes physically affected inline callers on_key_click and on_left_up; their emitted differences require review before integration. No baseline reset or acceptance waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "menu-live-cell-regression-controls-oct16",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:menu-signed-selection-oct15"
+}

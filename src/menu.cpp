@@ -564,13 +564,13 @@ void Menu::set_def_font(Font *font) {
 // symbol    ?menu_event@Menu@@QAEXH@Z
 void Menu::menu_event(int id) {
     if (field_A24_ != -1) {
-        MenuEntry &entry = entries_[field_A24_];
-        entry.pull_down->hide();
+        PullDown *&pull_down = entries_[field_A24_].pull_down;
+        pull_down->hide();
         field_A24_ = -1;
         MenuSelection = -1;
         redraw();
         flush_input();
-        do_all_tasks(entry.pull_down);
+        do_all_tasks(pull_down);
         do_all_tasks(this);
     }
     if (!(field_A28_ & 4)) hide();
@@ -1724,13 +1724,13 @@ void Menu::hide_menus() {
         return;
     }
 
-    MenuEntry &entry = entries_[field_A24_];
-    entry.pull_down->hide();
+    PullDown *&pull_down = entries_[field_A24_].pull_down;
+    pull_down->hide();
     field_A24_ = -1;
     MenuSelection = -1;
     redraw();
     flush_input();
-    do_all_tasks(entry.pull_down);
+    do_all_tasks(pull_down);
     do_all_tasks(this);
 }
 
