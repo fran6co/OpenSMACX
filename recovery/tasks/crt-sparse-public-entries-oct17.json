@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "task_id": "crt-sparse-public-entries-oct17",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "intent": "Bind four size-free public runtime entries in two already bounded complete library contributions, without inventing function extents or application implementations.",
+  "base_revision": "40cb844010428167d760de95780a0891bd95d55f",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6577616},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6577622},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6596976},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6596999}
+  ],
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_public_entries_oct16.py",
+    "recovery/tests/test_runtime_code_contributions_oct12d.py"
+  ],
+  "evidence": [
+    "The pinned LIBCMT archive 1ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b uniquely contains strchr.obj SHA256 68820eba347b92305d113bfe56ed5a7ca9988157dc3120b86926391a5f6b0d6c and genexcep.obj SHA256 186de7cd6dabc979883b661c9e61c089bb7deca6f338138092cfd9aca1ab8e91. Their existing complete section spans are 0x00645DC0-0x00645E8C and 0x0064A970-0x0064A9C3; retain those spans and all parent evidence unchanged.",
+    "Fresh whole-section boundary, bytes, references and exact external-function inventories pass. strchr.obj defines _strchr at offset 0x10 and ___from_strstr_to_strchr at0x16; genexcep.obj defines __startTwoArgErrorHandling at0 and __startOneArgErrorHandling at0x17. Use the installed native entry-anchor schema and target exporter; no package or compiler changes are authorized.",
+    "Entries have no independent proven extents. Keep function_extent unknown, link_target false, old function identities and all claims intact. Only freshly qualified complete parents can expose scoped reference targets; malformed/missing anchors and failed/unknown parent evidence must not publish targets. Preserve all other manifest fields and declarations. These are dependency reference bindings, not additional application recoveries or linked/runtime acceptance.",
+    "Extend actual pinned-source controls, including wrong offsets and absent parents. Two pre-existing historical-contribution tests currently fail because they assume the whole manifest still has17sections after the reviewed strcat contribution added an18th. Scope those historical tests to their17explicit expected members while preserving every hash, span, physical-symbol, byte/reference and uncertainty assertion; do not hide missing historical members or unknowns. Require native fresh targets, claim/mapping/reference continuity, build/link and destination verification before manual integration."
+  ]
+}
