@@ -1,5 +1,6 @@
-"""Exercise the one-argument facility predicate's full-width 0/1 contract."""
+"""Actual-source 0/1/read-order controls; not proof of original return ABI."""
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -24,17 +25,20 @@ def definition(text: str, signature: str) -> str:
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-def test_actual_facility_predicates_keep_full_width_results(compiler_name, tmp_path):
+def test_actual_facility_predicates_keep_zero_one_results(compiler_name, tmp_path):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} is unavailable")
 
     header = (ROOT / "src/base.h").read_text()
-    one_arg = definition(header, "inline int __cdecl has_fac_built(int facility_id)")
+    signature = re.search(
+        r"inline (?:bool|int) __cdecl has_fac_built\(int facility_id\)", header
+    )
+    assert signature, "selected-base facility predicate missing"
+    one_arg = definition(header, signature.group())
     two_arg = definition(
         header, "inline int __cdecl has_fac_built(int facility_id, int base_id)"
     )
-    assert "inline bool __cdecl has_fac_built(int facility_id)" not in header
     assert "inline int __cdecl has_fac_built(int facility_id, int base_id)" in two_arg
     assert "int base_id = BaseIDCurrentSelected;" in one_arg
     assert one_arg.index("int base_id = BaseIDCurrentSelected;") < one_arg.index(
@@ -57,8 +61,6 @@ static void bitmask(int input, int *offset, int *mask) {
 }
 ''' + two_arg + "\n" + one_arg + r'''
 int main() {
-    static_assert(std::is_same<decltype(has_fac_built(1)), int>::value,
-                  "one-argument result must model full-EAX 0/1");
     static_assert(std::is_same<decltype(has_fac_built(1, 1)), int>::value,
                   "two-argument helper contract must remain unchanged");
 

@@ -731,7 +731,7 @@ int __cdecl fac_maint(int facility_id, int faction_id);
 void __cdecl base_maint();
 void __cdecl make_base_unique(int base_id);
 // The pinned body at 0x500290 materializes 0/1 in full EAX; its mapped callers
-// consume EAX (including arithmetic), so model that machine contract here.
+// consume EAX (including arithmetic). Preserve the observed 0/1 result.
 // The historical `YA_N` label is not independent proof of the source type.
 // Keep this overload inline: other original call sites inline it, while the
 // selected-base body at 0x500290 is directly called from base_build.
@@ -787,7 +787,7 @@ inline int __cdecl has_fac_built(int facility_id, int base_id) {
     return (Bases[base_id].facilities_built[offset] & mask) != 0;
 }
 
-inline int __cdecl has_fac_built(int facility_id) {
+inline bool __cdecl has_fac_built(int facility_id) {
     int base_id = BaseIDCurrentSelected;
     return (facility_id >= FacilityRepStart) ? false : has_fac_built(facility_id, base_id);
 }
