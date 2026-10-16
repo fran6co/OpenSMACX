@@ -12895,7 +12895,7 @@ GraphicWin *Win::get_graphic_win() { return nullptr; }
 // symbol    ??_GWin@@UAEPAXI@Z
 // kind game
 
-// Original global Win message-pump family; inline definitions remain in win.h.
+// Original global Win message-pump family.
 // ORIGINAL: 0x005FC9F0 ?do_all_tasks@@YAXPAUWin@@@Z 0x005FC9F0-0x005FCA23 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005FC9F0-0x005FCA23", "git:7c6c86d9:src/recovered/units/005fc9f0.cpp"], "reason": "Clear the real queued-window globals before polling do_net; the independently remeasured seed is retired."}
 // symbol    ?do_all_tasks@@YAXPAVWin@@@Z
@@ -12982,7 +12982,6 @@ BOOL __cdecl do_non_input() {
 /*
 Purpose: Process all non-input related messages.
 // ORIGINAL: 0x005FCB20 ?do_all_non_input@@YAXXZ 0x005FCB20-0x005FCB5A BYTE_EXACT
-// body      src/win.h
 // size      58 bytes
 // prototype
 // callers   27   call targets   2
@@ -12992,26 +12991,23 @@ Purpose: Process all non-input related messages.
 Return Value: n/a
 Status: Complete - testing
 */
-// BODY IN win.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-//
-// The two lines above were prose, so `frontier.py --untouched` kept offering
-// this address as fresh. Restated as lesson lines:
-//
-// LEVER: already BYTE_EXACT 11/11 - re-measured 2026-08-22 at
-//        `/c /O2 /Gy /GR- /Oy- /GX`, unchanged. `MEASURED inline` in temp.h
-//        with the marker left in this .cpp is what makes it both reproduce
-//        and stay measurable; decomp's reader globs only *.cpp and *.c.
-// TRIED: an out-of-line `do_all_non_input_call` forwarder, the
-//        `sleep_call`/`base_cost_call` idiom, to unblock Path::continent -
-//        which this `MEASURED inline` caps because the image CALLS 0x005FCB20
-//        there. Measured and reverted in path.cpp: agreement 16/206 -> 1/206
-//        and call_diff went from MORE to FEWER, because it resolves callees by
-//        ADDRESS and a forwarder is not the address the image calls. Recorded
-//        here too so the ceiling is visible from the callee, not only from the
-//        caller that hit it.
+// The original source-owned pump body lives at this marker. The failed
+// forwarder experiment below was historical: it changed the callee identity
+// and is not evidence against an ordinary definition of this function.
+// HISTORICAL TRIED: an out-of-line `do_all_non_input_call` forwarder, using
+// the `sleep_call`/`base_cost_call` idiom, was measured and reverted in
+// path.cpp. Agreement fell from 16/206 to 1/206 and call_diff went from MORE
+// to FEWER because a forwarder has a different address from the image's
+// 0x005FCB20 target. That result applied to the forwarder, not this body.
+void __cdecl do_all_non_input() {
+    MsgStatus = 32;
+    while (do_non_input()) {
+        MsgStatus = 32;
+    }
+    MsgStatus = 0;
+    do_net();
+    check_net();
+}
 
 /*
 Purpose: Process draw related message.

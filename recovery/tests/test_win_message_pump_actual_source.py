@@ -5,13 +5,14 @@ src/win.*. This is behavior regression coverage only, not native ABI proof.
 """
 
 from pathlib import Path
+import os
 import shutil
 import subprocess
 import tempfile
 
 import pytest
 
-from match_recovery.source import read_text
+from match_recovery.source import read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -46,12 +47,62 @@ def _actual_pump_bodies():
     return "\n".join([
         _one_body("do_draw", "MEASURED inline BOOL __cdecl do_draw()", header_paths),
         _one_body("do_keyboard", "MEASURED inline BOOL __cdecl do_keyboard()", header_paths),
-        _one_body("do_all_non_input", "MEASURED inline void __cdecl do_all_non_input()", header_paths),
+        _one_body("do_all_non_input", "void __cdecl do_all_non_input()", cpp_paths),
         _one_body("do_non_input", "BOOL __cdecl do_non_input()", cpp_paths),
         _one_body("do_all_draws", "void __cdecl do_all_draws()", cpp_paths),
         _one_body("do_all_keyboard", "void __cdecl do_all_keyboard()", cpp_paths),
         _one_body("do_all_tasks(Win*)", "void __cdecl do_all_tasks(Win *window)", cpp_paths),
     ])
+
+
+def test_non_input_pump_is_an_ordinary_win_cpp_definition():
+    cpp = (ROOT / "src/win.cpp").read_text(encoding="utf-8")
+    header = (ROOT / "src/win.h").read_text(encoding="utf-8")
+    signature = "void __cdecl do_all_non_input()"
+    assert cpp.count(signature) == 1
+    assert header.count(signature) == 1
+    assert "MEASURED inline void __cdecl do_all_non_input()" not in header
+    assert _body(cpp, signature).endswith("}")
+
+
+def test_pinned_direct_pump_callers_use_the_full_mapped_spans():
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.source_inventory import image_pin
+
+    image_path = Path(os.environ.get(
+        "OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not image_path.is_file():
+        pytest.skip("pinned original required for caller-boundary verification")
+    image = PeImage(image_path.read_bytes(), image_pin(ROOT))
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+
+    # Addresses are instruction witnesses; the containing extents come from
+    # the native source reader's ORIGINAL mappings, not hand-cut decode windows.
+    witnesses = (
+        ("src/path.cpp", 0x0059C520, (0x0059C773,)),
+        ("src/map.cpp", 0x005C3F70, (0x005C4038, 0x005C40A5)),
+    )
+    for relative_path, owner_address, call_sites in witnesses:
+        records = read_file(ROOT / relative_path)
+        record, = [row for row in records if row.address == owner_address]
+        assert len(record.image_spans) == 1
+        low, high = record.image_spans[0]
+        assert low == owner_address
+        instructions = list(decoder.disasm(image.read(Span(low, high)), low))
+        cursor = low
+        by_address = {}
+        for instruction in instructions:
+            assert instruction.address == cursor, f"undecoded byte at {cursor:#x}"
+            by_address[instruction.address] = instruction
+            cursor += instruction.size
+        assert cursor == high
+        for call_site in call_sites:
+            instruction = by_address[call_site]
+            assert instruction.mnemonic == "call"
+            assert instruction.operands[0].imm == 0x005FCB20
 
 
 HARNESS = r'''

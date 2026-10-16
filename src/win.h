@@ -1421,12 +1421,4 @@ MEASURED inline BOOL __cdecl do_keyboard() {
     return true;
 }
 
-MEASURED inline void __cdecl do_all_non_input() {
-    MsgStatus = 32;
-    while (do_non_input()) {
-        MsgStatus = 32;
-    }
-    MsgStatus = 0;
-    do_net();
-    check_net();
-}
+void __cdecl do_all_non_input();
