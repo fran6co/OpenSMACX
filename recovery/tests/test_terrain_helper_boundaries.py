@@ -1,6 +1,7 @@
 """Source-order and pinned-edge controls for the terrain helper boundary."""
 
 from hashlib import sha256
+import json
 import os
 from pathlib import Path
 import re
@@ -19,6 +20,13 @@ ALT_NATURAL = 0x005918A0
 ALT_SET_BOTH = 0x005918F0
 
 
+def test_altitude_owner_has_its_measured_inline_recipe():
+    project = json.loads((ROOT / "recovery/project.json").read_text())
+    assert project["measurement"]["unit_flag_sets"]["src/map_altitude.cpp"]["flags"] == [
+        "/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2",
+    ]
+
+
 def extract_body(source: str, signature: str) -> str:
     start = source.index(signature)
     opening = source.index("{", start)
@@ -30,23 +38,20 @@ def extract_body(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated body: {signature}")
 
 
-def test_helpers_have_one_ordered_definition_after_direct_world_callers():
+def test_altitude_helpers_have_one_canonical_owner_and_world_callers():
     source = (ROOT / "src/map.cpp").read_text()
+    owner = (ROOT / "src/map_altitude.cpp").read_text()
     header = (ROOT / "src/map.h").read_text()
 
-    caller_names = (
-        "world_alt_put_detail", "world_polar_caps",
-        "world_linearize_contours", "world_rivers", "world_erosion",
-    )
-    caller_positions = [
-        source.index(f"void __cdecl {name}(") for name in caller_names
-    ]
-    put_definition = source.index("void __cdecl alt_put_detail(int x, int y, int detail) {")
-    natural_definition = source.index("int __cdecl alt_natural(int x, int y) {")
-    setter_definition = source.index(
+    put_definition = owner.index("void __cdecl alt_put_detail(int x, int y, int detail) {")
+    natural_definition = owner.index("int __cdecl alt_natural(int x, int y) {")
+    setter_definition = owner.index(
         "void __cdecl alt_set_both(int x, int y, int altitude_natural) {")
-    assert max(caller_positions) < min(put_definition, natural_definition)
-    assert put_definition < setter_definition and natural_definition < setter_definition
+    assert natural_definition < put_definition < setter_definition
+    assert "alt_natural(x, y)" not in extract_body(
+        source, "void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both)")
+    assert "void __cdecl alt_put_detail(int x, int y, int detail) {" not in source
+    assert "void __cdecl alt_set_both(int x, int y, int altitude_natural) {" not in source
 
     # Header declarations expose one real owner; there is no inline body or
     # call-shaping wrapper that would duplicate the helper implementation.
@@ -71,25 +76,29 @@ def test_helpers_have_one_ordered_definition_after_direct_world_callers():
     for name in ("world_rivers", "world_erosion"):
         assert "alt_put_detail(" in extract_body(source, f"void __cdecl {name}()")
 
-    setter = extract_body(source, "void __cdecl alt_set_both(int x, int y, int altitude_natural)")
+    setter = extract_body(owner, "void __cdecl alt_set_both(int x, int y, int altitude_natural)")
     assert "alt_natural(x, y)" in setter
     assert "alt_put_detail(x, y," in setter
 
 
-def test_mappings_parse_at_the_single_map_owner():
+def test_mappings_parse_at_the_canonical_altitude_owner():
+    assert "    src/map_altitude.cpp\n" in (ROOT / "CMakeLists.txt").read_text()
     rows = {
         row.address: row
-        for row in read_file(ROOT / "src/map.cpp")
+        for row in (read_file(ROOT / "src/map.cpp")
+                    + read_file(ROOT / "src/map_altitude.cpp"))
         if row.address in {0x005C58C0, 0x005C58E0, 0x005C5AE0,
                            0x005C38B0, 0x005C2CB0, ALT_PUT_DETAIL,
-                           ALT_NATURAL, ALT_SET_BOTH}
+                           ALT_NATURAL, ALT_SET_BOTH, 0x005C2020}
     }
     for address in (0x005C58C0, 0x005C58E0, 0x005C5AE0,
-                    ALT_PUT_DETAIL, ALT_NATURAL, ALT_SET_BOTH):
+                    ALT_PUT_DETAIL, ALT_NATURAL, ALT_SET_BOTH, 0x005C2020):
         assert address in rows
         assert not rows[address].extract_error
-    for address in (0x005C58C0, ALT_PUT_DETAIL, ALT_NATURAL):
-        assert rows[address].body == "src/map.cpp"
+    assert rows[0x005C58C0].body == "src/map.cpp"
+    assert rows[0x005C2020].body == ""
+    for address in (ALT_PUT_DETAIL, ALT_NATURAL):
+        assert rows[address].body == "src/map_altitude.cpp"
     assert rows[0x005C58E0].body == ""
     assert rows[0x005C5AE0].body == ""
     assert rows[ALT_SET_BOTH].body == ""
@@ -113,7 +122,8 @@ def test_pinned_spans_retain_direct_calls_and_the_setter_inline_exception():
     raw = image_path.read_bytes()
     assert sha256(raw).hexdigest() == PIN
     image = PeImage(raw, PIN)
-    rows = {row.address: row for row in read_file(ROOT / "src/map.cpp")}
+    rows = {row.address: row for row in read_file(ROOT / "src/map.cpp")
+            + read_file(ROOT / "src/map_altitude.cpp")}
 
     def instructions(address: int):
         row = rows[address]
@@ -134,6 +144,14 @@ def test_pinned_spans_retain_direct_calls_and_the_setter_inline_exception():
                           if site.form == "direct")
         return output
 
+    def direct_sites(address: int):
+        output = []
+        for low, high in rows[address].image_spans:
+            listing = Listing(image.read(Span(low, high)), low)
+            assert sum(instruction.size for instruction in listing.instructions) == high - low
+            output.extend(site for site in call_sites(listing) if site.form == "direct")
+        return output
+
     world_alt = instructions(0x005C58C0)
     assert next(item for item in world_alt if item.address == 0x005C58C3).op_str == (
         "eax, dword ptr [0x68fb58]"
@@ -152,3 +170,12 @@ def test_pinned_spans_retain_direct_calls_and_the_setter_inline_exception():
     assert ALT_PUT_DETAIL not in setter_targets
     assert 0x00591290 in setter_targets
     assert 0x0064601D in setter_targets
+
+    world_alt_set = direct_sites(0x005C2020)
+    assert [(site.at, site.target) for site in world_alt_set
+            if site.target == ALT_SET_BOTH] == [
+                (0x005C2073, ALT_SET_BOTH),
+                (0x005C2148, ALT_SET_BOTH),
+                (0x005C22C3, ALT_SET_BOTH),
+            ]
+    assert ALT_NATURAL not in [site.target for site in world_alt_set]

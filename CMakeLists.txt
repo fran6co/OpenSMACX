@@ -167,6 +167,7 @@ set(OPENSMACX_SOURCES
     src/log.cpp
     src/maininterface.cpp
     src/map.cpp
+    src/map_altitude.cpp
     src/mapwin.cpp
     src/basewin.cpp
     src/video.cpp
