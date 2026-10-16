@@ -8,6 +8,7 @@ legacy match token becomes a historical obligation, never a fresh measurement.
 from __future__ import annotations
 
 import base64
+import ast
 from collections import Counter, defaultdict
 from dataclasses import asdict
 import hashlib
@@ -21,6 +22,13 @@ from typing import Any
 from match_recovery.model import Dimension, Obligation, Origin, Span, digest, require_digest
 from match_recovery.memo import memoized
 from .source_config import SourceConfiguration
+
+
+_PARSER_ROOTS = (
+    "match_recovery", "match_recovery.source",
+    "match_recovery.source.reader", "match_recovery.binding_source",
+    "match_recovery.memo", "match_recovery.records", "match_recovery.model",
+    "match_recovery.source_inventory", "match_recovery.source_config")
 
 
 def image_pin(root: Path, configuration: SourceConfiguration | None = None) -> str:
@@ -125,20 +133,162 @@ def _parse_file(raw: bytes, path: Path, root: Path, pin: str, configuration: Sou
     return {"records": records, "obligations": obligations}
 
 
-def _parser_key() -> str:
-    # Include the installed source parser implementation in disposable memo keys.
-    from match_recovery import source as source_records
+def _parser_implementation_inputs(package_root: Path, roots: tuple[str, ...]) -> tuple[dict, str]:
+    """Hash a fail-closed local import closure, falling back to the package.
 
-    package = Path(source_records.__file__).parent
-    inputs = {path.relative_to(package).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
-              for path in sorted(package.rglob("*.py"))}
+    This helper takes paths and import roots explicitly so its conservative
+    handling of added, missing and dynamic imports can be tested in isolation.
+    """
+    package_root = package_root.resolve()
+    def module_path(name):
+        if name != "match_recovery" and not name.startswith("match_recovery."):
+            return None
+        relative = Path(*name.split(".")[1:])
+        candidate = package_root / relative
+        module = candidate.with_suffix(".py") if relative.parts else package_root / "__init__.py"
+        initializer = candidate / "__init__.py"
+        # FileFinder checks a package initializer before a same-named module.
+        # Fingerprinting the other file would permit stale memo reuse.
+        if initializer.is_file():
+            return initializer
+        if module.is_file():
+            return module
+        return None
+
+    def module_name(path):
+        relative = path.relative_to(package_root)
+        if relative.name == "__init__.py":
+            parts = relative.parent.parts
+        else:
+            parts = (*relative.parent.parts, relative.stem)
+        return ".".join(("match_recovery", *parts))
+
+    def resolve_import(current, node, *, package_module):
+        if node.level:
+            package = current if package_module else current.rpartition(".")[0]
+            bits = package.split(".") if package else []
+            if node.level > len(bits):
+                raise ValueError("relative import escapes the installed package")
+            base = bits[:len(bits) - node.level + 1]
+            if node.module:
+                base.extend(node.module.split("."))
+            target = ".".join(base)
+        else:
+            target = node.module or ""
+        if target == "match_recovery" or target.startswith("match_recovery."):
+            return target
+        return None
+
+    pending = list(roots)
+    discovered = set()
+    uncertain = False
+    while pending and not uncertain:
+        name = pending.pop()
+        path = module_path(name)
+        if path is None:
+            uncertain = True
+            break
+        path = path.resolve()
+        if path in discovered:
+            continue
+        discovered.add(path)
+        parts = name.split(".")
+        for index in range(1, len(parts)):
+            parent = ".".join(parts[:index])
+            parent_path = module_path(parent)
+            if parent_path is not None and parent_path.name == "__init__.py":
+                pending.append(parent)
+        try:
+            tree = ast.parse(path.read_bytes(), filename=str(path))
+        except (OSError, SyntaxError, UnicodeError):
+            uncertain = True
+            break
+        current = module_name(path)
+        for item in ast.walk(tree):
+            if (isinstance(item, ast.Name)
+                    and item.id in {"__import__", "exec", "eval"}):
+                uncertain = True
+                break
+            if (isinstance(item, ast.Attribute)
+                    and item.attr in {"import_module", "__import__", "exec", "eval"}):
+                uncertain = True
+                break
+            if isinstance(item, ast.Import) and any(
+                    alias.name == "importlib" or alias.name.startswith("importlib.")
+                    for alias in item.names):
+                uncertain = True
+                break
+            if isinstance(item, ast.Call):
+                function = item.func
+                if ((isinstance(function, ast.Name)
+                     and function.id in {"__import__", "exec", "eval"})
+                    or (isinstance(function, ast.Attribute)
+                        and function.attr in {"import_module", "__import__", "exec", "eval"})):
+                    uncertain = True
+                    break
+            if isinstance(item, ast.ImportFrom):
+                if item.module == "importlib" or (item.module or "").startswith("importlib."):
+                    uncertain = True
+                    break
+                if any(alias.name in {"import_module", "__import__", "exec", "eval"}
+                       for alias in item.names):
+                    uncertain = True
+                    break
+                if any(alias.name == "*" for alias in item.names):
+                    uncertain = True
+                    break
+                try:
+                    target = resolve_import(current, item, package_module=path.name == "__init__.py")
+                except ValueError:
+                    uncertain = True
+                    break
+                if target is None:
+                    continue
+                if module_path(target) is None:
+                    uncertain = True
+                    break
+                pending.append(target)
+                if item.module is None or module_path(target).name == "__init__.py":
+                    for alias in item.names:
+                        child = target + "." + alias.name
+                        if module_path(child) is None:
+                            uncertain = True
+                            break
+                        pending.append(child)
+            elif isinstance(item, ast.Import):
+                for alias in item.names:
+                    if alias.name == "match_recovery" or alias.name.startswith("match_recovery."):
+                        if module_path(alias.name) is None:
+                            uncertain = True
+                            break
+                        pending.append(alias.name)
+            if uncertain:
+                break
+
+    if uncertain:
+        # Optimization must never make parsing less safe. Unknown imports use
+        # the old conservative package-wide invalidation, including new files.
+        inputs = {"package/" + path.relative_to(package_root).as_posix():
+                  hashlib.sha256(path.read_bytes()).hexdigest()
+                  for path in sorted(package_root.rglob("*.py"))}
+        mode = "full_package_fallback"
+    else:
+        inputs = {"package/" + path.relative_to(package_root).as_posix():
+                  hashlib.sha256(path.read_bytes()).hexdigest()
+                  for path in sorted(discovered)}
+        mode = "local_import_closure"
+    return inputs, mode
+
+
+def _parser_key() -> str:
+    # Fingerprint only code that can affect parsing; rediscover dependencies on
+    # each call so a newly added import cannot reuse a stale memo entry.
     import match_recovery
-    for name in ("model.py", "memo.py", "records.py", "binding_source.py"):
-        inputs["framework/" + name] = hashlib.sha256(
-            (Path(match_recovery.__file__).parent / name).read_bytes()).hexdigest()
-    inputs["source_inventory.py"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-    inputs["source_config.py"] = hashlib.sha256(Path(__file__).with_name("source_config.py").read_bytes()).hexdigest()
-    return digest({"implementation": inputs, "python": sys.version})
+
+    package_root = Path(match_recovery.__file__).resolve().parent
+    inputs, mode = _parser_implementation_inputs(
+        package_root, _PARSER_ROOTS)
+    return digest({"implementation": inputs, "mode": mode, "python": sys.version})
 
 
 def _parse_cache_directory(root: Path) -> Path | None:
