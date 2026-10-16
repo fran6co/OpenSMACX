@@ -2341,7 +2341,7 @@ BOOL __cdecl map_init() {
 
 /*
 Purpose: Reset the map to a blank state. Doesn't wipe unk_1 and territory fields.
-// ORIGINAL: 0x00591040 ?map_wipe@@YAXXZ 0x00591040-0x005910B0
+// ORIGINAL: 0x00591040 ?map_wipe@@YAXXZ 0x00591040-0x005910B0 BYTE_EXACT
 // LEVER: `Map *tile = map_tiles();` walked with `tile++` each iteration,
 //        instead of indexing `map_tiles()[i]` (which re-reads the global
 //        every field access AND fails to fold the `ZeroMemory` call to a
@@ -2371,7 +2371,7 @@ void __cdecl map_wipe() {
     MapLandmarkCount = 0;
     MapRandSeed = random(0, 0x7FFF) + 1;
     Map *tile = map_tiles();
-    for (int i = 0; i < (int)MapArea; i++) {
+    for (int i = 0; i < (int)MapArea; ++i, ++tile) {
         tile->climate = ALT_BIT_OCEAN;
         tile->contour = 20;
         tile->val2 = 0xF;
@@ -2380,7 +2380,6 @@ void __cdecl map_wipe() {
         tile->bit = 0;
         tile->val3 = 0;
         ZeroMemory(&tile->bit2, sizeof(tile->bit2) + sizeof(tile->bit_visible));
-        tile++;
     }
 }
 
