@@ -1,0 +1,32 @@
+{
+  "author": "coordinator",
+  "base_revision": "b6f428276df9c47ef6a9ba3f4d5010974317b5d0",
+  "editable_files": [
+    "src/listbox.cpp",
+    "recovery/tests/test_listbox_dimensions_actual_source.py",
+    "recovery/tests/listbox_dimensions_host_control.cpp",
+    "recovery/tests/test_listbox_owner_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned calculate_dimensions 0x60A31E..0x60A33B and UNK2 0x60C851..0x60C86E test the current entry before the head. The normal path loads entry+8 then payload+4; the nonnull-current/null-head path zeroes EAX then reads EAX+4. The null-current path passes a null text without that read.",
+    "StringStructEntry::payload and StringStructPayload::text already own the +8/+4 relationships. A typed nullable payload selection followed by the declared text member may express this original malformed behavior without a fabricated address literal. No real payload object is claimed to exist at zero; undefined behavior remains an explicit original obligation, verified against VC6 effects.",
+    "Do not replace the loops with next_entry: its malformed-current behavior differs. Preserve cursor updates, count reloads, signed/wrapping arithmetic, font/color/layout accesses, return paths, abs/strcmpi targets and all source identities/spans/historical claims. No safety fix, header/layout/compiler policy change or out-of-scope body edit.",
+    "First record the current complete ListBox measurement closure and physical object baseline. Screen at most three ordinary source forms, no volatile/casts/assembly/register forcing. Enhance existing actual-source host tests and fault/safety-normalization damage controls so they test behavior rather than requiring a literal cast. Independent review, build/link, full-TU non-target preservation, claim/reference/mapping continuity and destination checks precede manual integration."
+  ],
+  "intent": "Recover ListBox payload selection through its declared payload type while preserving the original malformed-list reads and all cursor/layout behavior; measure the bounded source-form change without extended spelling iterations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6332896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6342608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "listbox-payload-selection-oct16"
+}
