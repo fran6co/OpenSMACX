@@ -37,6 +37,16 @@ def has_tech_body():
     return braced(source, source.index(signature))
 
 
+def tech_val_max_loop():
+    source = (ROOT / "src/technology_queries.cpp").read_text()
+    start = source.index("int search_lvl = 1;")
+    loop_start = source.index(
+        "for (int i = 0; i < MaxTechnologyNum; i++) {", start
+    )
+    loop = braced(source, loop_start)
+    return source[start:loop_start + len(loop)]
+
+
 def test_query_mappings_and_wrapper_calls_have_the_canonical_owner():
     query = (ROOT / "src/technology_queries.cpp").read_text()
     header = (ROOT / "src/technology.h").read_text()
@@ -145,3 +155,68 @@ int main() {
     assert built.returncode == 0, built.stderr
     ran = subprocess.run([str(exe)], capture_output=True, text=True, timeout=10)
     assert ran.returncode == 0, ran.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_actual_tech_val_loop_recomputes_only_when_candidate_raises_max(
+    tmp_path, compiler_name
+):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+
+    loop = tech_val_max_loop()
+    fixture = r"""
+#include <cassert>
+const int MaxTechnologyNum = 4;
+bool eligible[MaxTechnologyNum];
+int level[MaxTechnologyNum];
+int calls[MaxTechnologyNum];
+int has_tech(int tech_id, int faction_id) {
+    assert(faction_id == 7);
+    return eligible[tech_id];
+}
+int tech_recurse(int tech_id, int base_lvl) {
+    assert(base_lvl == 0);
+    ++calls[tech_id];
+    return level[tech_id];
+}
+int main() {
+    eligible[0] = eligible[1] = eligible[2] = true;
+    eligible[3] = false;
+    level[0] = 1; // Equal to the initial maximum: evaluate only once.
+    level[1] = 3; // Raises the maximum: compare and reevaluate for assignment.
+    level[2] = 2; // Does not raise it: evaluate only once.
+    const int faction_id = 7;
+    BODY
+    assert(search_lvl == 3);
+    assert(calls[0] == 1);
+    assert(calls[1] == 2);
+    assert(calls[2] == 1);
+    assert(calls[3] == 0);
+}
+""".replace("BODY", loop)
+
+    def compile_and_run(source, name):
+        cpp = tmp_path / f"{name}.cpp"
+        exe = tmp_path / name
+        cpp.write_text(source)
+        built = subprocess.run(
+            [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(cpp), "-o", str(exe)],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert built.returncode == 0, built.stderr
+        return subprocess.run([str(exe)], capture_output=True, text=True, timeout=10)
+
+    assert compile_and_run(fixture, "tech_val_actual_loop").returncode == 0
+
+    # Damage control: reusing current_lvl in the max-update path suppresses
+    # the original second evaluation, so the behavioral count assertion fails.
+    wrong_loop = loop.replace(
+        "search_lvl = tech_recurse(i, 0);", "search_lvl = current_lvl;"
+    )
+    assert wrong_loop != loop
+    wrong_fixture = fixture.replace(loop, wrong_loop)
+    assert compile_and_run(wrong_fixture, "tech_val_cached_mutant").returncode != 0

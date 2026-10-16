@@ -65,7 +65,7 @@ struct PlayerFixture { int soc_anti_ideology_category, soc_anti_ideology_model; 
 struct RulesFixture { int preq_tech[4]; } SocialCategories[4];
 const int MaxSocialCatNum=4;
 int denied_tech;
-bool has_tech_call(int tech, int) { return tech!=denied_tech; }
+bool has_tech(int tech, int) { return tech!=denied_tech; }
 
 int trial(int anti_category,int anti_model,int blocked_category,int blocked_model) {
     const int faction_id=0;

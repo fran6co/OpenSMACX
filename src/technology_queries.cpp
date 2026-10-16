@@ -588,7 +588,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
                 if (has_tech(i, faction_id)) {
                     int current_lvl = tech_recurse(i, 0);
                     if (search_lvl < current_lvl) {
-                        search_lvl = current_lvl;
+                        search_lvl = tech_recurse(i, 0);
                     }
                 }
             }

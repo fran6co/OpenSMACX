@@ -214,7 +214,7 @@ def test_live_vehicle_secret_project_conditions_use_typed_slots(tmp_path: Path) 
     airdrop = _definition(source, "void __cdecl sub_500380(")
     assert "action == TERRA_REMOVE_FUNGUS" in terraform
     assert "else if (GameDataStateStorage.fields_.secret_project_.weather_paradigm() >= 0" in terraform
-    assert airdrop.index("has_tech_call(Rules.tech_orb_insert_sans_spc_elev") < airdrop.index(
+    assert airdrop.index("has_tech(Rules.tech_orb_insert_sans_spc_elev") < airdrop.index(
         "GameDataStateStorage.fields_.secret_project_.space_elevator() >= 0"
     )
     _compile_and_run(tmp_path, conditions, expect_pass=True)

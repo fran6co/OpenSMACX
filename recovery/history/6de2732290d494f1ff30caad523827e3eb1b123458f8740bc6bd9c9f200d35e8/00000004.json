@@ -1,0 +1,23 @@
+{
+  "event_id": "39a68829a6a81f029f170a3ac261710097b0b5a49b6372a45b60d7ae13c8f531",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_prototype_row_boundary_owner_oct10.py",
+      "recovery/tests/test_social_ai_enumeration.py",
+      "recovery/tests/test_turn_production_chain_behavior.py",
+      "recovery/tests/test_veh_secret_project_storage_oct10.py"
+    ],
+    "evidence": [
+      "Focused baseline/candidate audit finds nine new failures from stale has_tech_call test doubles/assertions: six Social AI cases, two prototype-row controls, one vehicle assertion. Drone-riot fixture also gains a missing has_tech declaration alongside its baseline parse_say type failure.",
+      "Authorize minimal test-double symbol/assertion routing to canonical has_tech, preserving scenarios and assertions. Do not repair unrelated baseline failures or remove coverage. Actual application source semantics and taskbaseline remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3ed030ad1d49ad524df5d6d5c7da0d7e19dc64c918ea4bcdaa31369f495e51ed",
+  "request_id": "technology-wrapper-test-routing-oct16",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:technology-query-boundaries-oct16"
+}

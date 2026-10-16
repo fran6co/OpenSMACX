@@ -1,0 +1,22 @@
+{
+  "event_id": "3ed030ad1d49ad524df5d6d5c7da0d7e19dc64c918ea4bcdaa31369f495e51ed",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_technology_query_boundaries.py",
+      "src/technology_queries.cpp"
+    ],
+    "evidence": [
+      "Original tech_val5BCBE0 has tech_recurse pairs5BCF67/77 (loop comparison),5BCFAB/BB (taken max update),5BCFED/FD (post-loop tech_id). Baseline and first candidate have onlyfour calls because current_lvl is reused.",
+      "Authorize restoring tech_recurse(i,0) evaluation on the max-update assignment, preserving the comparison, guards, all other expressions and historical claims. This corrects source fidelity, not an intentional bug fix. Add actual-source repeated-evaluation host control and verify native six-call boundary and affected matching before integration.",
+      "Prior seven-body ownership candidate remains preserved at3c3938a64; do not reset baseline or discard discoveries."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "46ccb0874fe8f5e71d3f84ba80521e24ab779c4c268ef78a7228d06221be5a12",
+  "request_id": "technology-max-level-evaluation-oct16",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:technology-query-boundaries-oct16"
+}
