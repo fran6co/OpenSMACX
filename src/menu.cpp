@@ -559,7 +559,7 @@ void Menu::set_def_font(Font *font) {
     Win::update_menus();
 }
 
-// ORIGINAL: 0x005FB830 ?menu_event@Menu@@QAEHH@Z 0x005FB830-0x005FB8D8
+// ORIGINAL: 0x005FB830 ?menu_event@Menu@@QAEHH@Z 0x005FB830-0x005FB8D8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005FB830-0x005FB8D8"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}
 // symbol    ?menu_event@Menu@@QAEXH@Z
 void Menu::menu_event(int id) {
