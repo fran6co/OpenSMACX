@@ -1,0 +1,29 @@
+{
+  "author": "coordinator",
+  "base_revision": "c9e438fc62180050039bf24ae7a8a0550251e0ab",
+  "editable_files": [
+    "src/texture.cpp"
+  ],
+  "evidence": [
+    "Pinned Texture::draw61B1F0 and draw_trans61C090 load Buffer pointer into EDI, call get_data and read stride, then LEA EAX,[EDI+20], TEST EAX,EAX before reading clip coordinates through that address.",
+    "Buffer::rect1_ is the existing RECT at+0x20; Dib begins+0x7C. Texture is already a friend and both source bodies read rect1_ inside these guards. Use &buffer->rect1_ or its current_clip accessor, with no new type/layout/global guess.",
+    "Retain the derived-address condition and its ordering after get_data and raster state publication. It is not a null-buffer check; do not normalize unsafe/wrap behavior or add a safety guard. Verify emitted compiler treatment rather than assume address-of-member retains the branch.",
+    "Only these two expressions and their explanatory comments may change. Existing inner loops and all original mappings/claims stay intact. Full Texture measurements, build/link, physical collateral, references/claims and independent review required. No extended rasterizer spelling search or full-game acceptance claim."
+  ],
+  "intent": "Express two pinned derived clip-rectangle address checks through the existing Buffer member instead of raw byte offsets.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6402544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6406288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "texture-clip-member-guards-oct16"
+}
