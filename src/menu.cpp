@@ -1842,7 +1842,7 @@ Purpose: Tear the menu bar down: free every entry's label text, reset the
          its virtual deleting destructor, and return the menu to its
          just-constructed state - no proc, no items, no selection.
 
-// ORIGINAL: 0x005FAD00 ??1Menu@@QAE@XZ 0x005FAD00-0x005FADC1;0x00662D02-0x00662D22 FILE
+// ORIGINAL: 0x005FAD00 ??1Menu@@QAE@XZ 0x005FAD00-0x005FADC1;0x00662D02-0x00662D22 FILE BYTE_EXACT
 // symbol    ??1Menu@@UAE@XZ
 // size      225 bytes
 // prototype void (__thiscall ??1Menu@@QAE@XZ)(Menu* this)
