@@ -1,0 +1,54 @@
+{
+  "author": "coordinator",
+  "base_revision": "f2e3ab416a87bd1fb0f9bff1954c4cc8d13d1a6f",
+  "editable_files": [
+    "src/reportif.cpp",
+    "recovery/tests/test_report_modal_dispatch.py"
+  ],
+  "evidence": [
+    "Pinned seven modal branches call Win slot57 at vtable offset0xE4 with receiver ReportWinGlobal and arguments0,pop_wait,&MainInterfaceGlobal. Current retained compiler output devirtualizes directly to Win::set_modal with the same arguments; relocation placeholders are not null arguments.",
+    "Screen an ordinary Win base reference view before editing; compiler may still devirtualize. No manual vtables, member-pointer unions, inline assembly or changed global object layout. Preserve all original annotations and historical claims.",
+    "Only named seven command bodies and focused actual-source tests are authorized. Full TU measurements, application build/link, claims and references plus independent review precede integration. This is bounded manual recovery, not full acceptance."
+  ],
+  "intent": "Restore the evidenced virtual modal dispatch in seven report commands using ordinary C++ interfaces, preserving arguments, categories and direct-report branches.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4901280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4901360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4901440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4901520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4901600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4901680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4901760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "report-modal-dispatch-oct16"
+}
