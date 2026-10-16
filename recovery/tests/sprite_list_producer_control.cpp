@@ -99,7 +99,21 @@ public:
     virtual ~StringStruct() {}
 };
 
-class SpriteList : public StringStruct {
+class SpriteListBase : public virtual StringAllocationBase {
+public:
+    StringStructEntry *head_;
+    StringStructEntry *current_;
+    int entry_count_;
+    int current_position_;
+    Heap *allocator_;
+    SpriteListBase() : head_(0), current_(0), entry_count_(0),
+        current_position_(0), allocator_(0) {}
+    virtual int on_insert(void *) { return 0; }
+    virtual void on_remove(void *) {}
+    virtual ~SpriteListBase() {}
+};
+
+class SpriteList : public SpriteListBase {
 public:
     Sprite *pending_sprite_;
     char *pending_label_;

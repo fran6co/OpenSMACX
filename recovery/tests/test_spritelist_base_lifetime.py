@@ -1,9 +1,7 @@
-"""Actual-source controls for the SpriteListBase lifetime owner.
+"""Actual-source controls for the independent SpriteListBase ring owner.
 
-These controls fail closed: they require the actual
-header declaration and actual non-empty source destructor. The fixture contains
-only host ABI stubs and type declarations; every tested method body is extracted
-verbatim from the installed src/ files on each run.
+The fixture contains host ABI stubs and type declarations; tested list methods
+are extracted from the installed header/source on each run.
 """
 from pathlib import Path
 import os
@@ -29,6 +27,20 @@ def repo_root():
         if (candidate / "src/spritebox.h").exists():
             return candidate
     raise AssertionError("cannot locate OpenSMACX src/spritebox.h")
+
+
+def test_ring_member_annotations_are_native_layout_expectations():
+    from match_recovery.layout_source import read_members
+    from match_recovery.source_inventory import image_pin
+
+    root = repo_root()
+    members = [item for item in read_members(root, image_pin(root))
+               if item.class_name == "SpriteListBase"]
+    assert {item.member: item.offset for item in members} == {
+        "head_": 0x08, "current_": 0x0C, "entry_count_": 0x10,
+        "current_position_": 0x14, "allocator_": 0x18,
+    }
+    assert len(members) == 5
 
 
 def extract_definition(source, signature):
@@ -84,67 +96,85 @@ def extract_definition(source, signature):
 
 
 def installed_bodies(root):
-    from match_recovery.source import read
+    from match_recovery.source import read, read_file
 
     header = (root / "src/spritebox.h").read_text()
     string_source = (root / "src/stringstruct.cpp").read_text()
     sprite_source = (root / "src/spritebox.cpp").read_text()
     assert re.search(
-        r"class\s+SpriteListBase\s*:\s*public\s+StringStruct\s*\{"
-        r"(?:(?!\};).)*virtual\s+~SpriteListBase\s*\(\s*\)\s*;",
-        header, re.S), "installed genuine SpriteListBase declaration is missing"
+        r"class\s+SpriteListBase\s*:\s*public\s+virtual\s+StringAllocationBase\s*\{",
+        header), "SpriteListBase must own its virtual allocation base directly"
+    assert re.search(r"class\s+SpriteListBase\s*:\s*public\s+virtual\s+StringAllocationBase",
+                     header) and not re.search(
+                         r"class\s+SpriteListBase\s*:\s*public\s+StringStruct", header), (
+        "SpriteListBase must not add a StringStruct base teardown stage")
     assert re.search(r"class\s+SpriteList\s*:\s*public\s+SpriteListBase\b",
                      header), "SpriteList must derive from the installed base"
     assert header.index("Spot spots_;") < header.index("SpriteList list_;"), (
         "SpriteBox member declaration order must preserve list-before-Spot destruction")
 
-    base_dtor = extract_definition(sprite_source, "SpriteListBase::~SpriteListBase()")
+    base_ctor = extract_definition(header, "SpriteListBase()")
+    base_ctor = base_ctor.replace("SpriteListBase()", "SpriteListBase::SpriteListBase()", 1)
+    inline_base_dtor = extract_definition(header, "virtual ~SpriteListBase()")
+    base_dtor = inline_base_dtor.replace(
+        "virtual ~SpriteListBase()", "SpriteListBase::~SpriteListBase()", 1)
+    remove_all = extract_definition(header, "void remove_all() {")
+    remove_all = remove_all.replace("void remove_all()", "void SpriteListBase::remove_all()", 1)
+    seek_pos = extract_definition(header, "int seek_pos(int a1)")
+    seek_pos = seek_pos.replace("int seek_pos(int a1)", "int SpriteListBase::seek_pos(int a1)", 1)
+    base_insert = extract_definition(header, "virtual int on_insert(void *)")
+    base_insert = base_insert.replace("virtual int on_insert(void *)", "int SpriteListBase::on_insert(void *)", 1)
+    base_remove = extract_definition(header, "virtual void on_remove(void *)")
+    base_remove = base_remove.replace("virtual void on_remove(void *)", "void SpriteListBase::on_remove(void *)", 1)
     derived_dtor = extract_definition(sprite_source, "SpriteList::~SpriteList()")
     assert re.search(r"SpriteList::~SpriteList\(\)\s*\{\s*\}$", derived_dtor)
-    assert "remove_all()" in base_dtor, "intermediate destructor must drain the shared list"
+    assert "remove_all();" in base_dtor and "current_position_ = 0;" in base_dtor, (
+        "base destructor must drain its ring and unconditionally reset position")
     assert not re.search(r"\{\s*\}", base_dtor), "empty placeholder destructor is not recovery"
-    assert "SpriteListBase::~SpriteListBase()" in sprite_source
+    assert not re.search(
+        r"^\s*SpriteListBase::~SpriteListBase\(\)\s*\{", sprite_source, re.M), (
+        "base destructor must have only its inline header definition")
 
     # Markers/identities are read from the installed source as a separate
     # continuity check; this test does not move or manufacture any mapping.
-    rows = [row for row in read(root / "src") if row.address == 0x611730]
+    rows = [row for row in read(root / "src")
+            if row.address == 0x611730]
     assert len(rows) == 1, "611730 identity must remain unique in installed source"
     row = rows[0]
     assert row.path == root / "src/spritebox.cpp"
     assert row.image_spans == ((0x611730, 0x6117C3),)
+    base_rows = [row for row in read_file(root / "src/spritebox.cpp")
+                 if row.address == 0x402BB0]
+    assert len(base_rows) == 1, "402BB0 deleting-destructor identity must remain unique"
+    base_row, = base_rows
+    assert base_row.path == root / "src/spritebox.cpp"
+    assert base_row.mode.value == "file"
+    assert base_row.image_spans == ((0x402BB0, 0x402C16),)
+    assert base_row.symbol == "??_GSpriteListBase@@UAEPAXI@Z"
 
-    string_body = ((root / "src/stringstruct.h").read_text() + "\n"
-                   + string_source)
     sprite_body = sprite_source
     required = (
-        ((root / "src/stringstruct.cpp").read_text(), "int StringStruct::on_insert(void *)"),
-        ((root / "src/stringstruct.cpp").read_text(), "void StringStruct::on_remove(void *)"),
-        (string_body, "void remove_all() {"),
-        (string_body, "~StringStruct()"),
         (sprite_body, "int SpriteList::on_insert(void *raw_payload)"),
         (sprite_body, "void SpriteList::on_remove(void *raw_payload)"),
         (sprite_body, "void SpriteList::close()"),
         (sprite_body, "SpriteList::~SpriteList()"),
-        (sprite_body, "SpriteListBase::~SpriteListBase()"),
         (sprite_body, "void SpriteBox::close()"),
         (sprite_body, "SpriteBox::~SpriteBox()"),
     )
-    extracted = []
+    extracted = [base_ctor, base_insert, base_remove, remove_all, seek_pos, base_dtor]
     for src, sig in required:
         body = extract_definition(src, sig)
-        if sig == "void remove_all() {":
-            body = body.replace("void remove_all()", "void StringStruct::remove_all()", 1)
-        elif sig == "~StringStruct()":
-            body = body.replace("~StringStruct()", "StringStruct::~StringStruct()", 1)
         extracted.append(body)
     bodies = "\n\n".join(extracted)
-    return header, string_body, sprite_body, bodies, base_dtor
+    return header, string_source, sprite_body, bodies, base_dtor
 
 
 def fixture_source(root, bodies, string_source, base_dtor=None):
     if base_dtor is None:
         base_dtor = extract_definition(
-            (root / "src/spritebox.cpp").read_text(), "SpriteListBase::~SpriteListBase()")
+            (root / "src/spritebox.h").read_text(), "virtual ~SpriteListBase()")
+        base_dtor = base_dtor.replace(
+            "virtual ~SpriteListBase()", "SpriteListBase::~SpriteListBase()", 1)
     fixture_path = root / "recovery/tests/sprite_list_lifecycle_control.cpp"
     fixture = fixture_path.read_text()
     header = (root / "src/spritebox.h").read_text()
@@ -154,14 +184,8 @@ def fixture_source(root, bodies, string_source, base_dtor=None):
         assert re.search(r"void\s*\(\*" + member + r"\)\(int\);", fixture)
     # The checked source header above is the authority for this compact host
     # declaration scaffold; this transformation adds no product method body.
-    fixture = fixture.replace(
-        "class SpriteList : public StringStruct {",
-        "class SpriteListBase : public StringStruct {\n"
-        "public:\n  virtual ~SpriteListBase();\n};\n"
-        "class SpriteList : public SpriteListBase {", 1)
-    fixture = fixture.replace(
-        "    virtual ~StringStruct();\n};",
-        "    virtual ~StringStruct();\n    void remove_all();\n};", 1)
+    expected_base = "class SpriteListBase : public virtual StringAllocationBase {"
+    assert expected_base in fixture
     fixture = fixture.replace(
         "    SpriteList list_;\n    Spot spots_;",
         "    Spot spots_;\n    SpriteList list_;", 1)
@@ -177,18 +201,19 @@ def fixture_source(root, bodies, string_source, base_dtor=None):
         "static int track_box;\nstatic int remove_all_order;\n"
         "static int spot_destroy_order;\nstatic int lifetime_order;", 1)
 
-    # Behavior-only probes around actual extracted bodies: require the
-    # intermediate stage to empty the ring before StringStruct destruction,
-    # and observe member destruction order without changing product behavior.
+    # Instrument only the extracted ring walk: count live traversals and retain
+    # the observed ordering before the later Spot member destruction.
     instrumented_dtor = base_dtor.replace(
         "remove_all();",
-        "remove_all();\n    assert(head_ == 0); // lifecycle ordering probe", 1)
+        "remove_all();\n    assert(head_ == 0); /* lifecycle ordering probe */", 1)
     bodies = bodies.replace(base_dtor, instrumented_dtor, 1)
-    remove_all = extract_definition(string_source, "void remove_all() {")
-    remove_all = remove_all.replace("void remove_all()", "void StringStruct::remove_all()", 1)
+    remove_all = extract_definition(
+        header, "void remove_all() {").replace(
+            "void remove_all()", "void SpriteListBase::remove_all()", 1)
     instrumented_remove_all = remove_all.replace(
         "if (!head_) {",
-        "++remove_all_calls;\n    if (track_box) remove_all_order = ++lifetime_order;\n"
+        "++remove_all_calls;\n    if (head_) ++live_cleanup_walks;\n"
+        "    if (track_box) remove_all_order = ++lifetime_order;\n"
         "    if (!head_) {", 1)
     bodies = bodies.replace(remove_all, instrumented_remove_all, 1)
     bodies += "\nSpot::~Spot() { if (track_box) spot_destroy_order = ++lifetime_order; }\n"
@@ -238,7 +263,7 @@ def test_omitting_installed_intermediate_cleanup_fails(compiler):
     source = fixture_source(root, bodies, string_source, base_dtor)
     instrumented_dtor = base_dtor.replace(
         "remove_all();",
-        "remove_all();\n    assert(head_ == 0); // lifecycle ordering probe", 1)
+        "remove_all();\n    assert(head_ == 0); /* lifecycle ordering probe */", 1)
     mutated_dtor = instrumented_dtor.replace(
         "remove_all();", "/* omitted cleanup */", 1)
     assert instrumented_dtor != base_dtor and mutated_dtor != instrumented_dtor
@@ -267,6 +292,26 @@ def test_original_entry_count_walk_truncation_is_detected(compiler):
 
 
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_sibling_cursor_keeps_signed_wrap_and_failure_state(compiler):
+    root = repo_root()
+    _, string_source, _, bodies, _ = installed_bodies(root)
+    source = fixture_source(root, bodies, string_source)
+    # The installed seek_pos body is exercised by the lifecycle fixture's
+    # two-entry ring, including negative wrap and an out-of-range no-op.
+    compile_and_run(source, compiler, True)
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_sibling_cursor_negative_wrap_mutant_is_detected(compiler):
+    root = repo_root()
+    _, string_source, _, bodies, _ = installed_bodies(root)
+    source = fixture_source(root, bodies, string_source)
+    old = "current_position_ = a1 + entry_count_;"
+    assert old in source
+    compile_and_run(source.replace(old, "current_position_ = a1;", 1), compiler, False)
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
 def test_close_skipping_real_sprite_removal_hook_is_detected(compiler):
     root = repo_root()
     _, string_source, sprite_source, bodies, _ = installed_bodies(root)
@@ -279,7 +324,8 @@ def test_close_skipping_real_sprite_removal_hook_is_detected(compiler):
 
 def test_canonical_6116e0_claim_is_unique_and_keeps_its_full_span():
     from match_recovery.source import read
-    rows = [row for row in read(repo_root() / "src") if row.address == 0x6116E0]
+    rows = [row for row in read(repo_root() / "src")
+            if row.address == 0x6116E0]
     assert len(rows) == 1
     row, = rows
     assert row.path == repo_root() / "src/spritebox.cpp"

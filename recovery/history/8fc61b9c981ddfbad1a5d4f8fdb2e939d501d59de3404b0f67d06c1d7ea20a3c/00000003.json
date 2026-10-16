@@ -1,0 +1,20 @@
+{
+  "event_id": "8e2faa91e8f38b4353a40e0c7166a0d81e64413fd6d15ae4b902f68820cf39b6",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "spritelist-sibling-lifetime",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/spritebox.h models SpriteListBase as a direct virtual StringAllocationBase sibling of StringStruct, owning the five typed ring fields and a single base-hook cleanup stage. Constructor/destructor stage evidence is recorded with its inference limitations.",
+      "src/spritebox.cpp retains the original identities, shared walker provenance and historical claims; source bindings describe the sibling model without claiming exactness or full acceptance.",
+      "recovery/tests/test_spritelist_base_lifetime.py and sprite_list_lifecycle_control.cpp exercise extracted cleanup, cursor behavior, base hook dispatch and mutation controls; producer controls retain original partial failure behavior.",
+      "Native src/spritebox.cpp layout observations confirm all five SpriteListBase and three SpriteList field offsets in both configured flag sets. Whole-project layout remains unknown; this resolves incorporation, not acceptance."
+    ]
+  },
+  "previous_event": "f107da3fd40f64eb53cd062b8eb8afbad3ffe53b8afcb03ef7aaa80acdba6b72",
+  "request_id": "incorporate-spritelist-sibling-lifetime",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:spritelist-base-visibility-oct16"
+}

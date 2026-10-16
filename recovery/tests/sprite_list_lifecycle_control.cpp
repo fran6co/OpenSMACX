@@ -11,6 +11,7 @@ static char *tracked_text;
 static int tracked_text_frees;
 static int sprite_payload_destroys;
 static int entry_destroys;
+static int live_cleanup_walks;
 
 void host_free(void *memory) {
     if (memory == tracked_text) ++tracked_text_frees;
@@ -82,21 +83,24 @@ struct StringStructEntry : public virtual StringAllocationBase {
     }
 };
 
-class StringStruct {
+typedef int (*AbsFnT)(int);
+
+class SpriteListBase : public virtual StringAllocationBase {
 public:
-    virtual int on_insert(void *payload);
-    virtual void on_remove(void *payload);
     StringStructEntry *head_;
     StringStructEntry *current_;
     int entry_count_;
     int current_position_;
     Heap *allocator_;
-    StringStruct() : head_(0), current_(0), entry_count_(0),
-        current_position_(0), allocator_(0) {}
-    virtual ~StringStruct();
+    SpriteListBase();
+    virtual int on_insert(void *payload);
+    virtual void on_remove(void *payload);
+    int seek_pos(int a1);
+    void remove_all();
+    virtual ~SpriteListBase();
 };
 
-class SpriteList : public StringStruct {
+class SpriteList : public SpriteListBase {
 public:
     Sprite *pending_sprite_;
     char *pending_label_;
@@ -163,6 +167,8 @@ static StringStructEntry *make_sprite_entry(SpriteStruct *payload, int id) {
 int main() {
     const int before_payloads = sprite_payload_destroys;
     const int before_entries = entry_destroys;
+    const int before_cleanup_calls = remove_all_calls;
+    const int before_cleanup_walks = live_cleanup_walks;
     {
         SpriteList list;
         SpriteStruct *payload = new SpriteStruct;
@@ -178,7 +184,21 @@ int main() {
         list.head_ = first;
         list.current_ = list.head_;
         list.entry_count_ = 2;
+        assert(list.seek_pos(1) == 1);
+        assert(list.current_ == second && list.current_position_ == 1);
+        assert(list.seek_pos(-1) == 1);
+        assert(list.current_ == second && list.current_position_ == 1);
+        StringStructEntry *const saved_cursor = list.current_;
+        const int saved_position = list.current_position_;
+        assert(list.seek_pos(2) == 0);
+        assert(list.current_ == saved_cursor && list.current_position_ == saved_position);
+        assert(list.seek_pos(-3) == 0);
+        assert(list.current_ == first && list.current_position_ == saved_position);
+        assert(list.seek_pos(-2) == 1);
+        assert(list.current_ == first && list.current_position_ == 0);
     }
+    assert(remove_all_calls == before_cleanup_calls + 1);
+    assert(live_cleanup_walks == before_cleanup_walks + 1);
     assert(tracked_text_frees == 0); // base-stage no-op hook, not SpriteList hook
     assert(sprite_payload_destroys == before_payloads + 2);
     assert(entry_destroys == before_entries + 2);

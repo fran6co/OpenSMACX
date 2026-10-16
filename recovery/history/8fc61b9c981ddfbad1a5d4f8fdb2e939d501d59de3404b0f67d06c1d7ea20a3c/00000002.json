@@ -1,0 +1,21 @@
+{
+  "event_id": "f107da3fd40f64eb53cd062b8eb8afbad3ffe53b8afcb03ef7aaa80acdba6b72",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/sprite_list_lifecycle_control.cpp",
+      "recovery/tests/sprite_list_producer_control.cpp",
+      "recovery/tests/test_sprite_list_producer_actual_source.py"
+    ],
+    "evidence": [
+      "Coordinator independently decoded pinned611730,402BB0 and6116C0: one sprite-list stage then allocation-base teardown; authorize replacing the unsupported SpriteListBase:StringStruct edge with a sibling owning the same ring fields and virtual StringAllocationBase. Preserve original hooks, initialization, cursor behavior, callback-sensitive reloads, null/error/leak behavior and identities; no raw casts or table staging. Adapt actual-source lifecycle/producer fixtures to the real sibling declaration and add controls for exactly one cleanup and cursor behavior. Keep all current mapped consumers in the existing3511-subject verification scope; expand again before other source edits. This is investigation authority, not acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4d6834210963948dee06ceee1772cd01c5eb757cee522e1d617cfd5b9c5c0bf8",
+  "request_id": "authorize-sibling-lifetime",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:spritelist-base-visibility-oct16"
+}

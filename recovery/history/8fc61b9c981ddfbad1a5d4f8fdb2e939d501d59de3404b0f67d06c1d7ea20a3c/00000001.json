@@ -1,0 +1,28 @@
+{
+  "event_id": "4d6834210963948dee06ceee1772cd01c5eb757cee522e1d617cfd5b9c5c0bf8",
+  "payload": {
+    "affects": [
+      "entity-0a7bf6f0245b742a5a255b79c2b235abed341e22e0cb49249b6b78c789985f9e",
+      "entity-28f98a740db5eccfd91f63cdba9a1842128fb517538c6df46829de52a1349c69",
+      "entity-9dd220baa03bfa83102df034ac184063fa61a36805bfe7ab26226452d820bc9c",
+      "entity-a7993cdc0e9d81bf9d1f4bd2d3883485390a37256fd673a72ad4c461bbd3db38",
+      "entity-d2a947419d96eb0c7f6fbf01c7745189670c01b23d2e7f4da604ad96cebe15d1"
+    ],
+    "author": "coordinator",
+    "discovery_id": "spritelist-sibling-lifetime",
+    "evidence": [
+      "Pinned SpriteBox constructor60FF00 stages sprite-list tables66943C/669438 then6708A4/6708A0, without StringStruct tables6693A4/6693A0 or a call to401000.",
+      "Pinned4029F0 stages StringStruct tables and calls402970;402BB0 stages distinct sprite-list tables and calls the same walker. Shared implementation supports compatible layout, not necessarily inheritance.",
+      "Pinned6116C0 passes virtual-base view+28 to611730, then directly restores allocation-base table6693AC and owner.611730 has one guarded walk and no exception frame.",
+      "Controlled unchanged-base-destructor visibility trial expands611730 from6 to125 instructions versus63 original, with a new SEH frame. This exposes a likely duplicate lifetime stage; it is not exactness evidence or permission to discard the candidate.",
+      "Investigate sibling ownership and inherited seek_pos/field APIs before replacement; preserve original leak quirks, base-hook dispatch, shared-walker identity and all prior claims. No source hierarchy change is yet verified."
+    ],
+    "hypothesis": "SpriteListBase may be a sibling of StringStruct sharing ring layout, not its derived class; the inherited StringStruct destructor appears to add a non-original second cleanup stage.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "spritelist-sibling-lifetime",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:spritelist-base-visibility-oct16"
+}

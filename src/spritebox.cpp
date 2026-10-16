@@ -173,9 +173,9 @@ Status: Complete
 // The historical omitted-walk note above predates the real list hierarchy.
 // Original 0x6101AC enters the list at GraphicWin-view this-0x68: with that
 // view at complete+0x8C this is list_ at complete+0x24, not a separate vector.
-// Normal member destruction runs list_ before spots_. SpriteListBase's
-// remove_all() supplies the base-hook ring teardown; StringAllocationBase
-// republishes its saved allocator before Spot destruction. Do not add a
+// Normal member destruction runs list_ before spots_. SpriteListBase owns
+// the list's sole base-hook cleanup stage; its StringAllocationBase virtual
+// subobject republishes the saved allocator before Spot destruction. Do not add a
 // second manual traversal or explicitly destroy either member here.
 SpriteBox::~SpriteBox() {
     close();
@@ -1059,14 +1059,14 @@ Node *allocate_sprite_node(Heap *owner) {
 }
 
 // Pinned 0x00402BB0 receiver is the allocation virtual-base view (+0x1C);
-// it adjusts to this list, clears through 0x00402970, restores the
-// StringAllocationBase table/owner, then honors deleting bit 0. The
-// class hierarchy, not staged tables, supplies that lifecycle.
-// StringStruct::remove_all performs the no-op base hook and polymorphic
-// node deletes; 0x00611730 remains the derived SpriteList dtor identity.
-// ORIGINAL: 0x00402BB0 sub_402bb0 0x00402BB0-0x00402C16
+// it adjusts to this list, clears through the shared 0x00402970 ring walker,
+// restores the StringAllocationBase table/owner, then honors deleting bit 0.
+// The 0x66943C/0x669438 primary/vbase stage is distinct from StringStruct's
+// 0x6693A4/0x6693A0 stage; shared ring layout does not imply inheritance.
+// 0x00611730 is the SpriteList lifecycle's expanded ring-cleanup body.
+// ORIGINAL: 0x00402BB0 sub_402bb0 0x00402BB0-0x00402C16 FILE
+// kind game
 // symbol    ??_GSpriteListBase@@UAEPAXI@Z
-// kind      game
 // Historical seed fact (inactive): size      102 bytes
 // Historical seed fact (inactive): prototype
 // Historical seed fact (inactive): callers   0   call targets   2
@@ -1078,14 +1078,10 @@ Node *allocate_sprite_node(Heap *owner) {
 // Historical seed fact (inactive): Historical owner evidence: receiver is the StringAllocationBase virtual view +0x1C.
 // Historical seed fact (inactive): Historical owner evidence: restores the 0x669438/0x66943C list stage, calls 0x402970, clears +0x14, restores 0x6693AC/owner, then tests deleting bit 0 and conditionally frees.
 // Historical seed fact (inactive): Historical measurement note: the seed reported MNEMONIC_ONLY; no BYTE_EXACT or SEMANTIC claim is transferred.
-SpriteListBase::~SpriteListBase() {
-    remove_all();
-}
-
 SpriteList::SpriteList() {}
 
 // ORIGINAL: 0x005EB29F ?fill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB29F-0x005EB320 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/unrecovered/005eb29f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover the complete operation through genuine SpriteList : StringStruct and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual-base allocation and lifetime. Historical catalogue names, spans, claims and seed discoveries remain obligations, not fresh grants. The original virtual-base-view611730 maps to ??1SpriteList, not the complete-object ??_D wrapper; current32-byte emitted body delegates base destruction and is not the original147-byte extent. Base destruction selects the base no-op removal hook; ordinary derived close invokes SpriteList label cleanup. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/unrecovered/005eb29f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover SpriteList's typed payload insertion on its own ring owner and distinct polymorphic string/sprite payload siblings. SpriteListBase is modeled as a sibling owner with the compatible ring layout and virtual allocation base; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Preserve original identities, spans and historical claims; the original 611730 walk and current lifecycle structure remain matching obligations. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
 // symbol    ?on_insert@SpriteList@@UAEHPAX@Z
 // Historical seed finding: int8 catalogue spelling means char, not signed char; PAD/PAC mangling distinction
 // Historical seed finding: generated verification scaffold is not product source
@@ -1115,7 +1111,7 @@ int SpriteList::on_insert(void *raw_payload) {
 }
 
 // ORIGINAL: 0x005EB32F ?kill_entry@SpriteList@@QAEHPAUSpriteStruct@@@Z 0x005EB32F-0x005EB34B FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/recovered/units/005eb32f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover the complete operation through genuine SpriteList : StringStruct and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual-base allocation and lifetime. Historical catalogue names, spans, claims and seed discoveries remain obligations, not fresh grants. The original virtual-base-view611730 maps to ??1SpriteList, not the complete-object ??_D wrapper; current32-byte emitted body delegates base destruction and is not the original147-byte extent. Base destruction selects the base no-op removal hook; ordinary derived close invokes SpriteList label cleanup. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/recovered/units/005eb32f.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover SpriteList's typed payload removal on its own ring owner and distinct polymorphic string/sprite payload siblings. SpriteListBase is modeled as a sibling owner with the compatible ring layout and virtual allocation base; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Preserve original identities, spans and historical claims. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
 // symbol    ?on_remove@SpriteList@@UAEXPAX@Z
 // Historical seed finding: historical body reads allocator at +0x18, payload label at +8, frees only when allocator is null
 // Historical seed finding: catalogue records one _free call at 0x644EF2
@@ -1133,7 +1129,7 @@ void SpriteList::on_remove(void *raw_payload) {
 }
 
 // ORIGINAL: 0x00402550 SpriteStruct::add 0x00402550-0x00402963 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover the complete operation through genuine SpriteList : StringStruct and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual-base allocation and lifetime. Historical catalogue names, spans, claims and seed discoveries remain obligations, not fresh grants. The original virtual-base-view611730 maps to ??1SpriteList, not the complete-object ??_D wrapper; current32-byte emitted body delegates base destruction and is not the original147-byte extent. Base destruction selects the base no-op removal hook; ordinary derived close invokes SpriteList label cleanup. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and list fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_sprite_list_producer_actual_source.py"], "reason": "Recover SpriteList insertion through its sibling ring owner and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual allocation-base lifetime. Combined constructor/destructor evidence supports the separate SpriteListBase owner model; the ring fields remain layout-compatible and separately owned. Historical identities, spans, claims and seed discoveries remain obligations. Producer partial-state behavior and null/error returns remain unchanged."}
 // symbol    ?add@SpriteList@@QAEHH@Z
 // Historical seed finding: TRIED fallback __stdcall(int) signature; native ECX/prologue supports thiscall
 // Historical seed finding: signature divergence from ServiceStruct::add sibling begins at instruction 7
@@ -1169,8 +1165,8 @@ int SpriteList::add(int id) {
     return 0;
 }
 
-// StringStruct::seek_pos supplies the sibling cursor contract. SpriteList
-// owns these links directly and does not inherit StringList.
+// SpriteListBase::seek_pos supplies the cursor contract on its own ring; it
+// has StringStruct-compatible fields but does not inherit StringStruct.
 // Ordinary list clear is distinct and has no proposed original identity.
 void SpriteList::close() {
     if (head_ != 0) {
@@ -1259,7 +1255,7 @@ void SpriteList::close() {
 // its complete historical record to this genuine virtual-base destructor
 // body. Do not create a second identity or hand-author a claim/symbol fact.
 // ORIGINAL: 0x00611730 sub_611730 0x00611730-0x006117C3 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/spritebox.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover the complete operation through genuine SpriteList : StringStruct and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual-base allocation and lifetime. Historical catalogue names, spans, claims and seed discoveries remain obligations, not fresh grants. The original virtual-base-view611730 maps to ??1SpriteList, not the complete-object ??_D wrapper; current32-byte emitted body delegates base destruction and is not the original147-byte extent. Base destruction selects the base no-op removal hook; ordinary derived close invokes SpriteList label cleanup. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/spritebox.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and ring fields +8..+18; StringStruct independently uses 6693A4/6693A0", "pinned:SpriteBox constructor stages 66943C/669438 then 6708A4/6708A0", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_spritelist_base_lifetime.py", "historical-source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Retain the complete pinned ring-cleanup identity on the SpriteList lifecycle owner. The original list owner is modeled as a sibling ring type with the same entry/allocation-base layout as StringStruct; combined constructor and destructor table-stage evidence supports this model, while transient constructor-stage elision remains possible. Current SpriteListBase owns the no-op-hook cleanup stage, SpriteList adds the sprite hook and payload lifecycle, and ordinary close remains a separate cleanup path. Preserve historical identities, spans, claims, seed findings and unresolved hook-return obligation."}
 // symbol    ??1SpriteList@@UAE@XZ
 // Historical seed finding: historical two-vtable census and private-class conclusion, now explicitly superseded but retained
 // Historical seed finding: historical 0x402BB0 deleting/vector-destructor theories and all supporting evidence bullets
@@ -1271,7 +1267,7 @@ void SpriteList::close() {
 SpriteList::~SpriteList() {}
 
 // ORIGINAL: 0x006108E0 ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z 0x006108E0-0x00610965 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "source:src/spritebox.h;src/stringstruct.h", "source:recovery/tests/test_sprite_list_lifecycle_actual_source.py"], "reason": "Recover the complete operation through genuine SpriteList : StringStruct and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual-base allocation and lifetime. Historical catalogue names, spans, claims and seed discoveries remain obligations, not fresh grants. The original virtual-base-view611730 maps to ??1SpriteList, not the complete-object ??_D wrapper; current32-byte emitted body delegates base destruction and is not the original147-byte extent. Base destruction selects the base no-op removal hook; ordinary derived close invokes SpriteList label cleanup. The historical kill_entry int-return contract remains unresolved for unknown indirect callers; the current void hook follows observed result-discarding callers without inventing a return."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and ring fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_sprite_list_producer_actual_source.py"], "reason": "Recover SpriteBox::sprite through the SpriteList sibling ring owner and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual allocation-base lifetime. Combined constructor/destructor evidence supports the separate SpriteListBase owner model; transient constructor-stage elision remains possible. Historical identities, spans, claims and seed discoveries remain obligations. Producer partial-state behavior and null/error returns remain unchanged."}
 // symbol    ?sprite@SpriteBox@@QAEHPAVSprite@@PADH@Z
 // Historical seed finding: popup pops() invokes the original by name via rel32
 // Historical seed finding: sprite insertion at 0x402550 was an unhomed dependency/seam discovery
@@ -1335,9 +1331,11 @@ void SpriteBox::on_left_down(int x_coord, int y_coord) {
 }
 
 // Compiler-generated SpriteList scalar deleting destructor; not a handwritten wrapper.
+// SpriteListBase::~SpriteListBase() is inline with its sibling ring owner in
+// spritebox.h; this source site retains the original FILE identity only.
 /*
 // ORIGINAL: 0x006117D0 sub_6117d0 0x006117D0-0x006117D8;0x006117E0-0x0061181E FILE
-// RECOVERY_BINDING: v1 {"evidence":["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original 0x610120 receiver math is GraphicWin view this+0x8c minus 0x68 = complete-object+0x24, the SpriteBox::list_ member","pinned list walk addresses head/current/count at list+0x08/+0x0c/+0x10 and payload at entry+0x08; source StringStruct/StringStructEntry declarations match those roles","source lifecycle: SpriteBox::~ calls close; close performs the original ordered ring clear; reverse member destruction then runs SpriteListBase::remove_all, StringStruct final teardown/allocation-owner publication, and Spot destruction","pinned:SpriteBox constructor at 0x0060FFDB installs Win-view table 0x00670738; slot zero selects the original 0x006117D0 adjustor","physical ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z is the compiler-generated slot-zero symbol in ??_7SpriteBox@@6BWin@@@; linked PE table word selects its exact linked entry","the shared original tail 0x006117E0-0x0061181E remains separately retained in the 0x006118F0 and 0x00611910 identities; this transfer grants no matching claim"],"reason":"Transfer the original Win-virtual-base scalar-deleting adjustor identity to the actual compiler-emitted SpriteBox Win-view vftable entry. Pinned receiver arithmetic identifies the list_ member and its real compiler-owned teardown chain; no wrapper or hand-authored vtable is introduced. Original exactness remains unmeasured."}
+// RECOVERY_BINDING: v1 {"evidence":["pinned image sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original 0x610120 receiver math is GraphicWin view this+0x8c minus 0x68 = complete-object+0x24, the SpriteBox::list_ member","pinned list walk addresses head/current/count at list+0x08/+0x0c/+0x10 and payload at entry+0x08; source SpriteListBase/StringStructEntry declarations match those roles","source lifecycle: SpriteBox::~ calls close; close performs the original ordered ring clear; reverse member destruction then runs one SpriteListBase ring-cleanup stage, virtual allocation-owner publication, and Spot destruction","pinned:SpriteBox constructor at 0x0060FFDB installs Win-view table 0x00670738; slot zero selects the original 0x006117D0 adjustor","physical ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z is the compiler-generated slot-zero symbol in ??_7SpriteBox@@6BWin@@@; linked PE table word selects its exact linked entry","the shared original tail 0x006117E0-0x0061181E remains separately retained in the 0x006118F0 and 0x00611910 identities; this transfer grants no matching claim"],"reason":"Transfer the original Win-virtual-base scalar-deleting adjustor identity to the actual compiler-emitted SpriteBox Win-view vftable entry. Pinned receiver arithmetic identifies the list_ member and its real compiler-owned teardown chain; no wrapper or hand-authored vtable is introduced. Original exactness remains unmeasured."}
 // symbol    ??_ESpriteBox@@$4PPPPPPPM@A@AEPAXI@Z
 // TRIED: reproducing MSVC's own vtordisp adjustor thunk mechanism; wrote `raw - *(int*)(raw-4)` as explicit pointer arithmetic in a shim member instead - first instruction diverges (sub vs push)
 // Historical seed facts (verbatim; not new measurements):

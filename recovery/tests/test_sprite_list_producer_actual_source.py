@@ -80,6 +80,10 @@ def owner_bodies():
     root = repo_root()
     sprite_source = (root / "src/spritebox.cpp").read_text()
     string_source = (root / "src/stringstruct.cpp").read_text()
+    sprite_header = (root / "src/spritebox.h").read_text()
+    assert "class SpriteListBase : public virtual StringAllocationBase" in sprite_header
+    assert "class SpriteList : public SpriteListBase" in sprite_header
+    assert "class SpriteListBase : public StringStruct" not in sprite_header
     return "\n\n".join((
         extract_definition(sprite_source, "template<class Node>"),
         extract_definition(string_source, "int StringStruct::on_insert(void *)"),

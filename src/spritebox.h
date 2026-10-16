@@ -50,22 +50,111 @@ inline const SpriteStruct *StringStructEntry::sprite_payload() const {
   return static_cast<const SpriteStruct *>(payload);
 }
 
-// SpriteList owns the 0x1C ring entries and 0x20 SpriteStruct payloads. It is
-// deliberately independent of StringList, whose payload nodes are 0x18 bytes.
+// SpriteListBase and StringStruct are modeled as sibling list owners: both use
+// the same ring-entry/allocation-base layout, but their pinned primary-table
+// stages are distinct (0x66943C versus 0x6693A4). This supports direct ring
+// ownership without a StringStruct destructor stage; transient constructor
+// stage elision remains possible.
+// SpriteList owns the 0x20 SpriteStruct payloads; it is deliberately
+// independent of StringList, whose payload nodes are 0x18 bytes.
 // Pinned list table boundary: 0x669438 is the virtual-base deleting
 // entry; primary 0x66943C contains only on_insert (0x404250) and
 // on_remove (0x404270). The adjacent 0x669444 word starts the
 // separate SpriteStruct virtual-base table (installed by SpriteStruct
 // allocation sites 0x40267A/0x402714/0x402884/0x40291E), not a third
-// list slot. This empty-storage layer owns the list destructor stage.
-class SpriteListBase : public StringStruct {
+// list slot. The base owns the no-op-hook list cleanup stage. Original
+// SpriteBox construction stages 0x66943C/0x669438, initializes the five ring
+// fields, then stages SpriteList's 0x6708A4/0x6708A0. Together with the
+// separate 0x6693A4/0x6693A0 StringStruct teardown stage, this supports the
+// sibling-owner model; transient constructor-stage elision remains possible.
+class SpriteListBase : public virtual StringAllocationBase {
  public:
-  virtual ~SpriteListBase();
+  virtual int on_insert(void *) { return 0; }
+  virtual void on_remove(void *) {}
+  SpriteListBase()
+      : head_(0), current_(0), entry_count_(0), current_position_(0),
+        allocator_(0) {}
+  virtual ~SpriteListBase() {
+    remove_all();
+    current_position_ = 0;
+  }
+
+  int seek_pos(int a1) {
+    AbsFnT abs_fn = abs;
+    if (a1 > entry_count_ - 1) {
+      return 0;
+    }
+    current_ = head_;
+    if (a1 < 0) {
+      if (abs_fn(a1) > entry_count_) {
+        return 0;
+      }
+      int i = abs_fn(a1);
+      if (i > 0) {
+        do {
+          i--;
+          current_ = current_->previous;
+        } while (i != 0);
+      }
+      current_position_ = a1 + entry_count_;
+      return 1;
+    } else {
+      if (a1 > 0) {
+        int i = a1;
+        do {
+          i--;
+          current_ = current_->next;
+        } while (i != 0);
+      }
+      current_position_ = a1;
+      return 1;
+    }
+  }
+
+  void remove_all() {
+    // 0x00402970 remains the separate StringStruct-owned shared ring-walker
+    // identity. This sibling keeps the same traversal semantics on its own
+    // typed fields; layout compatibility does not create a base subobject.
+    if (!head_) {
+      return;
+    }
+    int index = 0;
+    if (entry_count_ > 0) {
+      do {
+        StringStructEntry *const entry = head_;
+        current_ = entry->next;
+        ListPayloadBase *const payload = entry->payload;
+        on_remove(payload);
+        delete payload;
+        head_->payload = nullptr;
+        delete head_;
+        ++index;
+        head_ = current_;
+      } while (index < entry_count_);
+    }
+    head_ = 0;
+    current_position_ = 0;
+    entry_count_ = 0;
+  }
+
+  // RECOVERY_MEMBER: v3 SpriteListBase head_ StringStructEntry* 0x08 0x00611730
+  StringStructEntry *head_;
+  // RECOVERY_MEMBER: v3 SpriteListBase current_ StringStructEntry* 0x0C 0x00611730
+  StringStructEntry *current_;
+  // RECOVERY_MEMBER: v1 SpriteListBase entry_count_ 0x10 0x00611730
+  int entry_count_;
+  // RECOVERY_MEMBER: v1 SpriteListBase current_position_ 0x14 0x00611730
+  int current_position_;
+  // RECOVERY_MEMBER: v3 SpriteListBase allocator_ Heap* 0x18 0x00402550
+  Heap *allocator_;
 };
+static_assert(sizeof(SpriteListBase) == 0x24,
+              "SpriteListBase layout must match the pinned ring owner");
 
 class SpriteList : public SpriteListBase {
  public:
-  // StringStruct owns the inherited ring, allocator and shared virtual base.
+  // SpriteListBase owns the ring and allocator; each complete list instance
+  // owns its own virtual allocation-base subobject.
   SpriteList();
   int on_insert(void *payload);
   void on_remove(void *payload);
