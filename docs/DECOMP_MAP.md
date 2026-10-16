@@ -79,7 +79,7 @@ Neither evidence channel substitutes for the other.
 
 A mapping whose original marker stays in one canonical source file but whose
 body is not emitted by the marker host's configured measurement recipe may
-carry an adjacent `// compile_context src/emitter.cpp` fact. This names the
+carry an adjacent `// compile_context <project-relative-tu>` fact. This names the
 current measurement compilation witness, not original-TU ownership or an
 assertion that no other recipe can emit the body. `body` continues to name the
 definition source; `context` names the compilation unit used for current
