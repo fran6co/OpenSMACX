@@ -1,0 +1,28 @@
+{
+  "event_id": "74afa75a2591763108f877a6fb7fb3549bfccfb83960652a67bcae61214c4989",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Seven witnessed direct calls across base_mark/base_production/random_events all target mapped bit_set; include the shared owner and random-event identity in review scope."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5370592,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5840224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "include-original-bit-owner-and-random-events",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-bit-set-caller-boundary-oct16"
+}
