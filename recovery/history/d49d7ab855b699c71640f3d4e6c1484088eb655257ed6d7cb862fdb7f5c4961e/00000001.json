@@ -1,0 +1,20 @@
+{
+  "event_id": "d76efe631c7151e95ec536fd490757350e7a2433c16277db2b2a3fcf595acde6",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "src/vehicle_orders.cpp"
+    ],
+    "evidence": [
+      "Fresh VC6 v1 physical inventory proves late same-TU sleep definition still inlines stack_veh goody_box order_veh; only five of eight pinned direct calls survive. Authorize real separate vehicle-order operation TU and build integration to preserve all eight direct boundaries. This is a reconstructed source boundary, not proof of original filename/TU; preserve task baseline and all mappings/claims, no inline-control workaround."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "separate-order-owner-oct16",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:vehicle-sleep-boundary-oct16"
+}
