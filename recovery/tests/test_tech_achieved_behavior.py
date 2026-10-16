@@ -170,7 +170,7 @@ def run_host(tmp_path, body):
         } NetDaemonNet;
         struct PlayerData {
           uint32_t flags = 0;
-          uint32_t traded_maps = 0;
+          int traded_maps = 0;
           uint32_t diplo_treaties[8] = {};
           int diff_level = 0;
           int tech_id_researching = -1;
@@ -297,7 +297,7 @@ def run_host(tmp_path, body):
             social_popup_result = 0, social_select_calls = 0;
         char *social_popup_caption = nullptr;
         const char *social_popup_label = nullptr;
-        int log_calls = 0, logged_tech = -1, logged_faction = -1,
+        int log_calls = 0, logged_faction = -1, logged_tech = -1,
             logged_other_faction = -1;
         int secrets_calls = 0, secrets_faction = -1;
         int secret_log_calls = 0, secret_log_faction = -1,
@@ -356,21 +356,21 @@ def run_host(tmp_path, body):
           return "alien-name";
         }
         void say_tech(char *out, int id, int) { (void)id; out[0] = 'T'; out[1] = 0; }
-        void log_say(const char *message, const char *leader, int tech,
-                     int faction, int other_faction) {
+        void log_say(const char *message, const char *leader, int num1,
+                     int num2, int num3) {
           if (std::strcmp(message, "Learning a SECRET") == 0) {
             ++secret_log_calls; secret_log_message = message;
-            secret_log_string_arg = leader; secret_log_faction = tech;
-            secret_log_tech = faction; secret_log_mask = other_faction;
+            secret_log_string_arg = leader; secret_log_faction = num1;
+            secret_log_tech = num2; secret_log_mask = num3;
             secret_log_order = ++event_order;
             return;
           }
           if (std::strcmp(message, "Gaining a TECH") != 0 ||
               std::strcmp(leader, "leader") != 0) return;
           ++log_calls;
-          logged_tech = tech;
-          logged_faction = faction;
-          logged_other_faction = other_faction;
+          logged_faction = num1;
+          logged_tech = num2;
+          logged_other_faction = num3;
         }
         int X_pop(const char *label, int (__cdecl *)()) {
           ++tech_popup_calls; xpop_label = label;
@@ -462,8 +462,8 @@ def run_host(tmp_path, body):
           ConsoleGlobal.faction_id_ = 1;
           mutate_local_after_spot = 1;
           tech_achieved(1, 0x270f, 2, 0);
-          if (popup_destructions != 2 || log_calls != 1 || logged_tech != 0x270f ||
-              logged_faction != 1 || logged_other_faction != 2) return 19;
+          if (popup_destructions != 2 || log_calls != 1 || logged_faction != 1 ||
+              logged_tech != 0x270f || logged_other_faction != 2) return 19;
           mutate_local_after_spot = 0;
           if (PlayersData[1].traded_maps != (1u << 2) ||
               PlayersData[2].traded_maps != (1u << 2)) return 2;
@@ -823,8 +823,8 @@ def run_host(tmp_path, body):
               last_parse_says_one != Players[2].adj_name_faction + 4 ||
               secret_log_calls != secret_logs_before + 1 ||
               std::strcmp(secret_log_message, "Learning a SECRET") != 0 ||
-              secret_log_string_arg != reinterpret_cast<const char *>(
-                  &PlayersData[0].traded_maps) ||
+              secret_log_string_arg != Players[2].name_leader ||
+              std::strcmp(secret_log_string_arg, "leader") != 0 ||
               secret_log_faction != 2 || secret_log_tech != 18 ||
               secret_log_mask != (1u << 2) ||
               !(secret_popup_order < secret_log_order &&
@@ -957,6 +957,10 @@ def test_actual_body_early_return_transfer_treaty_prototype_and_discovery_paths(
     ("social_model < 4", "social_model < 1"),
     ("while (selection == 2)", "while (false)"),
     ("faction_pop_size_intel[faction_id]", "faction_pop_size_intel[0]"),
+    ('log_say("Learning a SECRET", leader_name,',
+     'log_say("Learning a SECRET", reinterpret_cast<const char *>(&PlayersData[0].traded_maps),'),
+    ('log_say("Gaining a TECH", leader_name, faction_id, tech_id,',
+     'log_say("Gaining a TECH", leader_name, tech_id, faction_id,'),
 ])
 def test_native_branch_controls_reject_reconstruction_regressions(tmp_path, before, after):
     body = actual_body("static bool technology_shareable(") + "\n" + actual_body()

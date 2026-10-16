@@ -778,8 +778,9 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         return;
     }
 
-    log_say("Gaining a TECH", Players[faction_id].name_leader, tech_id,
-            faction_id, faction_id_with);
+    const char *leader_name = Players[faction_id].name_leader;
+    log_say("Gaining a TECH", leader_name, faction_id, tech_id,
+            faction_id_with);
 
     const uint32_t faction_mask = 1u << (faction_id & 31);
     if ((GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ & faction_mask) != 0) {
@@ -1258,10 +1259,8 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
               recipient_text, 10);
         strcat(StringTemp, recipient_text);
         X_pop(StringTemp, nullptr);
-        log_say("Learning a SECRET",
-                reinterpret_cast<const char *>(
-                    &PlayersData[0].traded_maps),
-                faction_id, tech_id, GameDataStateStorage.fields_.game_tech_achieved_[tech_id]);
+        log_say("Learning a SECRET", leader_name, faction_id, tech_id,
+                GameDataStateStorage.fields_.game_tech_achieved_[tech_id]);
     }
 
     desktop_update();
