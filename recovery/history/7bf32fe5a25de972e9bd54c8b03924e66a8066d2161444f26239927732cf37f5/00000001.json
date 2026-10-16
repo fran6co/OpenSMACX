@@ -1,0 +1,28 @@
+{
+  "event_id": "9fd5e3e6f31b2b08d80db77ed6f873c555595e2c67396950f3096d6c327c40a7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Include both free keyboard-message helpers in the Win owner correction; original inclusive bound is 0x108."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6278384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6278464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "key-message-helper-scope",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-key-range-oct16"
+}
