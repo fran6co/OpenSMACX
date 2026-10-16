@@ -1211,14 +1211,13 @@ void NetWin::draw_session_info() {
             if (owned != 0) {
                 int seen = 0;
                 if (NetDaemonNet.player_count_ > 0) {
-                    unsigned long *scan = reinterpret_cast<unsigned long *>(
-                        &NetWinLobbyRows[1].owner_);
+                    const NetWinLobbyRow *scan = &NetWinLobbyRows[1];
                     while (seen < NetDaemonNet.player_count_) {
-                        if (*scan == owned) {
+                        if (scan->owner_ == owned) {
                             break;
                         }
                         ++seen;
-                        scan += 0x5F;
+                        ++scan;
                     }
                 }
                 if (seen == NetDaemonNet.player_count_) {
