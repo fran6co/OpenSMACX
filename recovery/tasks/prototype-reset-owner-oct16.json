@@ -1,0 +1,22 @@
+{
+  "author": "coordinator",
+  "base_revision": "21b41d6ba5b00a1752b7397428366c7dac54b55e",
+  "editable_files": [
+    "src/game.cpp",
+    "recovery/tests/test_game_fixed_data_owner_actual_source_oct9.py"
+  ],
+  "evidence": [
+    "Pinned52A988 is AND byte ptr[eax],FE at VehPrototype+30;52A98B sets icon+2E toFF. Current comment/tests falsely demand a four-byte memcpy RMW across flags/preq_tech. Preserve uint16 flag owner/type and all other bytes; keep identity/name pending caller evidence. Scope only reset body and directly related tests/comments. Require original instruction witness, actual-source host damage controls, full game.cpp measurements, build/link, claims/references, independent source/physical review and fresh destination checks for manual integration; no automatic or game acceptance."
+  ],
+  "intent": "Replace the falsely documented DWORD prototype reset with the original typed flags/icon updates; preserve original state and mappings.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5417344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prototype-reset-owner-oct16"
+}
