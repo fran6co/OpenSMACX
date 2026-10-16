@@ -175,9 +175,6 @@ static_assert(sizeof(AutoSound) == 0x98,
 // object through; bound here rather than through wave.h so this file's
 // link closure stays self-contained.
 
-// Returns `int`, not `void`: the body is `xor eax, eax; ret`, where a void
-// function would emit `ret` alone. Corrected in tools/catalogue_corrections.py.
-
-MEASURED inline int __cdecl do_sound() {
-    return 0;
-}
+// The pinned hook is a real out-of-line function: every discovered mapped
+// caller reaches it with a direct CALL to 0x005FD2B0.
+int __cdecl do_sound();

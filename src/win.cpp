@@ -7218,7 +7218,7 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
 // Dispatch through the live Z-order slot each time: callbacks can replace its
 // window and change the count. get_graphic_win is only the surface predicate.
 
-// ORIGINAL: 0x005F4D00 ?update@Win@@QAAXXZ 0x005F4D00-0x005F4D4D
+// ORIGINAL: 0x005F4D00 ?update@Win@@QAAXXZ 0x005F4D00-0x005F4D4D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:3cb99d43^:src/recovered/units/005f4d00.cpp historical identity/span, no byte claim.", "image:0x005F4D00-0x005F4D4D complete body, final RET before NOP padding.", "image:0x005F4D1A,0x005F4D24,0x005F4D32 dispatch on freshly reloaded WinZOrderArray elements; getter result is only a predicate, not the update receiver.", "image:0x005F4D38 sound pump only on nonnull getter; 0x005F4D3D reloads signed count after callbacks."], "reason": "Restore the lost mapping of the extant typed Win Z-order update dispatcher. Catalogue nonstatic __cdecl signature is retained; original caller/staticness evidence remains unavailable."}
 void __cdecl Win::update() {
     for (int i = 0; i < WinZOrderCount; ++i) {
@@ -11477,18 +11477,16 @@ void Win::screen_to_client(RECT * rect) {
 // This list-wide operation is distinct from each window's virtual redraw.
 // The catalogued QAA convention is retained; its unused receiver does not
 // independently establish whether the original declaration was static.
-// The original calls do_sound at 0x005FD2B0 once per iteration. The local
-// forwarder preserves a call here, but its target still needs native binding
-// recovery; masked-byte agreement does not verify this helper's identity.
-static int __cdecl redraw_sound_call() {
-    return do_sound();
-}
-
+// The original calls do_sound at 0x005FD2B0 once per iteration. The former
+// local forwarder preserved call shape but not target identity; this owner
+// now calls the canonical out-of-line hook directly.
 void __cdecl Win::redraw_all() {
+    // The former local sound forwarder only preserved a call boundary while
+    // do_sound was inline; the original call target is do_sound itself.
     int i;
     for (i = 0; i < WinZOrderCount; ++i) {
         WinZOrderArray[i]->redraw();
-        redraw_sound_call();
+        do_sound();
     }
 }
 

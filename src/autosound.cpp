@@ -279,7 +279,7 @@ Status: Complete
 /*
 Purpose: Legacy sound processing hook retained as a no-op.
 // ORIGINAL: 0x005FD2B0 ?do_sound@@YAHXZ 0x005FD2B0-0x005FD2B3 BYTE_EXACT
-// body      src/autosound.h
+// body      src/autosound.cpp
 // CORRECTED from ?do_sound@@YAXXZ
 //   body is `xor eax, eax; ret` - a void function would emit `ret` alone
 // size      3 bytes
@@ -292,7 +292,8 @@ Purpose: Legacy sound processing hook retained as a no-op.
 Return Value: zero
 Status: Complete
 */
-// BODY IN autosound.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// The pinned caller scan found 36 direct CALL edges to this hook in mapped
+// spans. Its original body is the three-byte `xor eax, eax; ret` at 0x5FD2B0.
+int __cdecl do_sound() {
+    return 0;
+}
