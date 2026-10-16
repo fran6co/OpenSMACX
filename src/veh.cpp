@@ -6420,25 +6420,6 @@ uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
 }
 
 /*
-Purpose: Calculates the base cost of the specified prototype.
-// ORIGINAL: 0x005A5D00 ?base_cost@@YAHH@Z 0x005A5D00-0x005A5D3F BYTE_EXACT
-// body      src/veh.h
-// size      63 bytes
-// prototype int (__cdecl ?base_cost@@YAHH@Z)(int protoID)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005A5A60
-Return Value: Base cost of the prototype
-Status: Complete
-*/
-// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-
-
-/*
 Purpose: Create a new prototype. Sets initial values for everything except veh_name and preq_tech.
 // ORIGINAL: 0x005A5D40 ?make_proto@@YAXHHHHHH@Z 0x005A5D40-0x005A6269
 // size      1321 bytes
@@ -7995,13 +7976,6 @@ int __cdecl veh_drop(int veh_id, int x, int y) {
     return veh_id;
 }
 
-// See veh.h: a real, out-of-line forwarder so veh_cost's one call site gets
-// an actual `call` where `base_cost(proto_id)` directly would inline away
-// under /O2.
-int __cdecl base_cost_call(int proto_id) {
-    return base_cost(proto_id);
-}
-
 /*
 Purpose: Move the specified unit to the bottom of the stack.
 // ORIGINAL: 0x005C01D0 ?veh_demote@@YAXH@Z 0x005C01D0-0x005C0256
@@ -8516,12 +8490,11 @@ Purpose: Calculate the specified prototype's overall cost to build. Optional out
 //  (1) `prototype_factor(proto_id)` INLINED rather than called - call_diff
 //      confirmed the image has no call to 0x005C17D0 here, it open-codes
 //      the free-proto/difficulty/triad switch directly;
-//  (2) a real out-of-line `base_cost_call` forwarder (veh.h/veh.cpp,
-//      following the historical `sleep_call` workaround) for the ONE call site where the image
-//      keeps `base_cost` (0x005A5D00, "callers 1") as a genuine `call`
-//      rather than the inline every other site gets - `base_cost(proto_id)`
-//      written directly folded away under /O2, exposing the inner
-//      `proto_cost` call call_diff flagged as WRONG CALLEE;
+//  (2) the image has one direct call to base_cost (0x005A5D00, callers 1).
+//      The old same-TU `base_cost_call` workaround introduced a synthetic
+//      callee; the mapped owner now lives in vehicle_cost.cpp.
+//      This current TU boundary is not evidence of the original object file;
+//      no separate inline witness for base_cost has been established;
 //  (3) `cost`/`proto_cost_first` as plain (signed) `int`, not `uint32_t` -
 //      the image's `(cost*3)/4` and the `/100` scaling both carry the
 //      `cdq`/sign-correction fixup a signed local earns and an unsigned one
@@ -8588,7 +8561,7 @@ int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost) {
         // `base_cost` IS CALLED UNCONDITIONALLY here in the image, before the
         // FAC_SKUNKWORKS check - not short-circuited behind it the way a
         // `cond ? 0 : (factor * base_cost(...) + 50) / 100` ternary would.
-        proto_cost_first = (factor * base_cost_call(proto_id) + 50) / 100;
+        proto_cost_first = (factor * base_cost(proto_id) + 50) / 100;
         if (base_id >= 0 && has_fac_built_call(FAC_SKUNKWORKS, base_id)) {
             proto_cost_first = 0;
         }

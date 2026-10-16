@@ -737,10 +737,9 @@ int __cdecl armor_budget(int faction_id, int max_cost);
 int __cdecl hex_cost(int proto_id, int faction_id, int x_src, int y_src,
                                int x_dst, int y_dst, BOOL toggle);
 int __cdecl veh_health(int veh_id);
-// `int` throughout, matching the definition in src/veh.cpp. The `uint32_t`
-// spelling that stood here declared an overload NOTHING defines - harmless
-// while every caller lived in veh.cpp, and an unresolved symbol the moment
-// `base_cost` moved into this header and resolved to it.
+// `int` throughout, matching the definition in src/veh.cpp. The earlier
+// unsigned-parameter spelling named an undefined overload; it was corrected
+// when inline base_cost made this declaration visible to additional callers.
 uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
                             int ability, int reactor_id);
 // `int` throughout: the definition in src/veh.cpp already is, and the
@@ -789,11 +788,9 @@ int __cdecl speed(int veh_id, BOOL skip_morale);
 int __cdecl veh_cargo(int veh_id);
 // Mapped standalone operation; defined in vehicle_orders.cpp.
 void __cdecl sleep(int veh_id);
-// A REAL, out-of-line forwarder to the `MEASURED inline base_cost()` below -
-// its one caller (veh_cost, 0x005C1850) is a genuine `call` in the image
-// (0x005A5D00, "callers 1"), where `base_cost(proto_id)` written directly
-// inlines away under /O2 and exposes the inner `proto_cost` call instead.
-int __cdecl base_cost_call(int proto_id);
+// Mapped prototype-cost operation; defined outside veh.cpp to retain the
+// observed direct call from veh_cost.
+int __cdecl base_cost(int proto_id);
 int __cdecl prototype_factor(int proto_id);
 int __cdecl veh_cost(int proto_id, int base_id, BOOL *has_proto_cost);
 BOOL __cdecl veh_jail(int veh_id);
@@ -840,11 +837,6 @@ MEASURED inline int __cdecl abil_index(int ability_id) {
 
 MEASURED inline void __cdecl veh_put(int veh_id, int x, int y) {
     veh_drop(veh_lift(veh_id), x, y);
-}
-
-MEASURED inline int __cdecl base_cost(int proto_id) {
-    return proto_cost(VehPrototypes[proto_id].chassis_id, VehPrototypes[proto_id].weapon_id,
-        VehPrototypes[proto_id].armor_id, 0, VehPrototypes[proto_id].reactor_id);
 }
 
 MEASURED inline void __cdecl go_to(int veh_id, char type, int x, int y) {
