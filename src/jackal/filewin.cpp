@@ -321,21 +321,11 @@ restore_dialog_focus:
 // or this+0x208 despite their void-decorated catalogue symbols. load_map
 // consumes that result through AlphaSave::load (5AB76A..5AB778).
 char *FileWin::save() {
-    return run_file_dialog(true);
-}
-
-// ORIGINAL: 0x00613F60 ?load@FileWin@@QAEXXZ 0x00613F60-0x00614133
-// symbol    ?load@FileWin@@QAEPADXZ
-char *FileWin::load() {
-    return run_file_dialog(false);
-}
-
-char *FileWin::run_file_dialog(bool saving) {
     if (modal_window_ == 0) {
         return 0;
     }
 
-    field_638_ = saving ? 0x64 : 0xC8;
+    field_638_ = 0x64;
     GetCurrentDirectoryA(260, current_directory_);
     previous_directory_[0] = 0;
     strcat(previous_directory_, current_directory_);
@@ -352,14 +342,9 @@ char *FileWin::run_file_dialog(bool saving) {
                     matched = true;
                     break;
                 }
-                // The original load path clears a nonmatching name inside
-                // the scan; save waits until every suffix has been tried.
-                if (!saving) {
-                    file_name_[0] = 0;
-                }
             }
-            if (saving && !matched) {
-                file_name_[0] = 0;
+            if (!matched) {
+                set_def_name(0);
             }
         }
 
@@ -372,10 +357,63 @@ char *FileWin::run_file_dialog(bool saving) {
                 list_box_.redraw();
             }
             FindClose(handle);
-        } else if (saving) {
+        } else {
             edit_box_.set_text(file_name_);
             edit_box_.select_all_text();
             edit_box_.redraw();
+        }
+    }
+
+    ActiveFileWin = this;
+    modal_window_->set_modal(1, 0, 0);
+    modal_window_->hide();
+
+    if (field_638_ != 0x12C) {
+        GetCurrentDirectoryA(260, previous_directory_);
+        if (strlen(previous_directory_) < 261) {
+            directory_[0] = 0;
+            strcat(directory_, previous_directory_);
+        }
+    }
+    SetCurrentDirectoryA(current_directory_);
+    return field_638_ == 0x12C ? 0 : selected_path_;
+}
+
+// ORIGINAL: 0x00613F60 ?load@FileWin@@QAEXXZ 0x00613F60-0x00614133
+// symbol    ?load@FileWin@@QAEPADXZ
+char *FileWin::load() {
+    if (modal_window_ == 0) {
+        return 0;
+    }
+
+    field_638_ = 0xC8;
+    GetCurrentDirectoryA(260, current_directory_);
+    previous_directory_[0] = 0;
+    strcat(previous_directory_, current_directory_);
+    populate_directory(directory_);
+
+    if (file_name_[0] != 0) {
+        char *suffix = strrchr(file_name_, '.');
+        if (suffix == 0) {
+            strcat(file_name_, extension_filters_[0]);
+        } else {
+            for (int index = 0; index < extension_count_; ++index) {
+                if (_strcmpi(suffix, extension_filters_[index]) == 0) {
+                    break;
+                }
+                set_def_name(0);
+            }
+        }
+
+        WIN32_FIND_DATAA found;
+        HANDLE handle = FindFirstFileA(file_name_, &found);
+        if (handle != INVALID_HANDLE_VALUE) {
+            const int position = list_box_.UNK2(found.cFileName);
+            if (position >= 0) {
+                list_box_.set_selected_pos(position, 1);
+                list_box_.redraw();
+            }
+            FindClose(handle);
         }
     }
 

@@ -34,7 +34,7 @@ def test_actual_load_returns_full_path_or_null(compiler, tmp_path):
     alpha = (ROOT / "src/alphasave.cpp").read_text()
     bodies = "\n".join([
         definition(filewin, "char *FileWin::load()"),
-        definition(filewin, "char *FileWin::run_file_dialog(bool saving)"),
+        definition(filewin, "int FileWin::set_def_name(char *name)"),
         definition(alpha, "char *AlphaSave::load()"),
     ])
     harness = r'''
@@ -75,7 +75,8 @@ struct FileWin {
   int extension_count_,field_638_; Modal *modal_window_;
   ListBox list_box_; EditBox edit_box_;
   int populate_directory(char *) { return 0; }
-  char *load(); char *run_file_dialog(bool);
+  int set_def_name(char *name);
+  char *load();
 };
 static FileWin *ActiveFileWin;
 struct BoxSpriteParams {};

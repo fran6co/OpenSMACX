@@ -117,8 +117,6 @@ class FileWin {
   ListBox list_box_;  // 0x286C, sizeof 0xB54, ends 0x33C0
   // RECOVERY_MEMBER: v1 FileWin directory_list_handle_ 0x33C0 0x00614360
   HWND directory_list_handle_;
-
-  char *run_file_dialog(bool saving);
 };
 
 static_assert(sizeof(FileWin) == 0x33C4,
