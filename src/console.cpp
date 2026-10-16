@@ -480,7 +480,7 @@ void Console::editor_edit_veh(int vehicle_id) {
             return;
         }
         vehicle.faction_id = static_cast<uint8_t>(faction);
-        draw_tile(vehicle.x, vehicle.y, 1);
+        ::draw_tile(vehicle.x, vehicle.y, 1);
         ConsoleGlobal.update_data(0);
         return;
     }
@@ -502,7 +502,7 @@ void Console::editor_edit_veh(int vehicle_id) {
         }
         if (selected_base == 9999) selected_base = -1;
         vehicle.home_base_id = static_cast<int16_t>(selected_base);
-        draw_tile(vehicle.x, vehicle.y, 1);
+        ::draw_tile(vehicle.x, vehicle.y, 1);
         ConsoleGlobal.update_data(0);
     }
 }
@@ -564,7 +564,7 @@ void Console::sentry(int vehicle_id, int parameter) { // 0x004D2220
     NetDaemonNet.await_synch();
     NetDaemonNet.unlock_veh();
     field_23BE4_ = 0;
-    draw_tile(Vehs[vehicle_id].x, Vehs[vehicle_id].y, 1);
+    ::draw_tile(Vehs[vehicle_id].x, Vehs[vehicle_id].y, 1);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -2676,7 +2676,7 @@ void Console::hold(int veh_id, int waypoint_y) {
     NetDaemonNet.await_synch();
     NetDaemonNet.unlock_veh();
     TutWinBaseWindow.check_veh(veh_id);
-    draw_tile(x_coord, y_coord, 1);
+    ::draw_tile(x_coord, y_coord, 1);
 
     if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
         return;
@@ -2892,7 +2892,7 @@ void Console::editor_clear() {
     map_init();
     Paths.init();
     map_wipe();
-    draw_map(1);
+    ::draw_map(1);
     WorldClimateWorldWin.GraphicWin::redraw();
 }
 
@@ -3293,7 +3293,7 @@ void Console::editor_reset_tech() {
                 --base_count;
             } while (base_count != 0);
         }
-        draw_map(1);
+        ::draw_map(1);
     }
 }
 
@@ -3474,7 +3474,7 @@ void Console::editor_load() {
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
     GameDataStateStorage.fields_.game_state_ = flags;
-    draw_map(1);
+    ::draw_map(1);
     ConsoleInfoWin.set_redraw_phase(7);
     ConsoleInfoWin.on_redraw();
 }
@@ -3627,7 +3627,7 @@ void Console::editor_randomize() {
             ++record;
         } while (i < MapArea);
     }
-    draw_map(1);
+    ::draw_map(1);
 }
 
 // ORIGINAL: 0x004E1200 ?editor_clear_random@Console@@QAEXXZ 0x004E1200-0x004E128B FILE
@@ -3643,7 +3643,7 @@ void Console::editor_clear_random() {
     auto_undo();
     if (MapRandSeed == 0) {
         MapRandSeed = random(0, 0x7fff) + 1;
-        draw_map(1);
+        ::draw_map(1);
         return;
     }
     MapRandSeed = 0;
@@ -3667,7 +3667,7 @@ void Console::editor_clear_random() {
             ++tile;
         } while (i < MapArea);
     }
-    draw_map(1);
+    ::draw_map(1);
 }
 
 // Fixed-slot bindings carried from 00510490.cpp
@@ -6104,7 +6104,7 @@ void Console::editor_veh() {
             ScenarioVehicleFaction = 0;
             bit_set(x, y, 0x0028805C, 0);
             for (int bit = 1; bit <= 7; ++bit) synch_bit(x, y, bit);
-            draw_tile(x, y, 1);
+            ::draw_tile(x, y, 1);
         }
         const int vehicle = veh_init(selected_prototype, ScenarioVehicleFaction, x, y);
         if (vehicle >= 0) {
@@ -7726,7 +7726,7 @@ void Console::activate(int x, int y, int current_selection) {
     log_say("Activate AWAKENING", vehicle, Vehs[vehicle].x, Vehs[vehicle].y);
     veh_wake(vehicle);
     if (!veh_selectable(vehicle)) {
-        draw_tile(Vehs[vehicle].x, Vehs[vehicle].y, 1);
+        ::draw_tile(Vehs[vehicle].x, Vehs[vehicle].y, 1);
         if (!ConsoleGlobal.cursor_active_ && !(GameDataStateStorage.fields_.game_state_ & 2) &&
             (!IsMultiplayerNet || (!ConsoleControlTurnActive &&
              !NetDaemonNet.channels_[1].payload_.flags))) {
@@ -8316,7 +8316,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
                                                     morale > 6 ? 6 : morale);
     }
     veh_skip(veh_id);
-    draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 1);
+    ::draw_tile(Vehs[veh_id].x, Vehs[veh_id].y, 1);
     synch_veh(veh_id);
     NetDaemonNet.await_synch();
     if ((VehPrototypes[selected_proto_id].flags & PROTO_TYPED_COMPLETE) == 0) {
@@ -9630,7 +9630,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         MapFocusX = x;
         MapFocusY = y;
         if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) != 0) {
-            draw_map(1);
+            ::draw_map(1);
         }
         const int answer =
             X_pop_ask("NEWBASE", 0x17, base_name, nullptr, 0);
@@ -9640,7 +9640,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
             if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
                 return;
             }
-            draw_map(1);
+            ::draw_map(1);
             return;
         }
         std::strcpy(base_name, ParseStrBuffer[0].str);
@@ -9652,7 +9652,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
-        draw_map(1);
+        ::draw_map(1);
         return;
     }
 
@@ -9661,7 +9661,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
-        draw_map(1);
+        ::draw_map(1);
         return;
     }
 
@@ -9674,7 +9674,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
-        draw_map(1);
+        ::draw_map(1);
         return;
     }
 
@@ -9687,7 +9687,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
-        draw_map(1);
+        ::draw_map(1);
         return;
     }
     const Map *const locked_tile = map_loc(x, y);
@@ -9697,7 +9697,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
-        draw_map(1);
+        ::draw_map(1);
         return;
     }
     if ((locked_tile->bit & BIT_MONOLITH) != 0) {
@@ -9706,7 +9706,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
-        draw_map(1);
+        ::draw_map(1);
         return;
     }
     if (!veh_ready(locked_vehicle_id)) {
@@ -9715,7 +9715,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
-        draw_map(1);
+        ::draw_map(1);
         return;
     }
 
@@ -9761,7 +9761,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         if ((GameDataStateStorage.fields_.game_preferences_ & 0x200) == 0) {
             return;
         }
-        draw_map(1);
+        ::draw_map(1);
         return;
     }
 
@@ -12182,7 +12182,7 @@ if (normalized_character == '~' && (GameDataStateStorage.fields_.game_state_ & 0
         }
 
         set_dirty();
-        draw_map(1);
+        ::draw_map(1);
         WorldClimateWorldWin.redraw();
         ConsoleInfoWin.change(0);
         ConsoleStatusWin.redraw();
