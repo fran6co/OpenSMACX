@@ -10266,7 +10266,7 @@ void __cdecl action_patrol(int veh_id, int x, int y) {
         Vehs[veh_id].waypoint_y[Vehs[veh_id].waypoint_count] = (int16_t)y;
         const uint8_t count = Vehs[veh_id].waypoint_count;
         Vehs[veh_id].waypoint_count = count + 1;
-        Vehs[veh_id].waypoint_x[count + 1] = Vehs[veh_id].x;
+        Vehs[veh_id].waypoint_x[Vehs[veh_id].waypoint_count] = Vehs[veh_id].x;
         Vehs[veh_id].waypoint_y[Vehs[veh_id].waypoint_count] = Vehs[veh_id].y;
         Vehs[veh_id].state |= 0x1000200;
         Vehs[veh_id].patrol_current_point = 0;
