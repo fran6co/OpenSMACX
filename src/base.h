@@ -730,10 +730,11 @@ void __cdecl base_energy_costs();
 int __cdecl fac_maint(int facility_id, int faction_id);
 void __cdecl base_maint();
 void __cdecl make_base_unique(int base_id);
-// ?has_fac_built@@YA_NH@Z. `_N` is bool, not BOOL: the catalogue spells a
-// genuine one-byte bool, and per tools/catalogue_corrections.py that width is
-// byte-visible - a bool return clears with `xor al, al` (32 C0) where an int
-// uses `xor eax, eax` (33 C0). The two-argument overload is not catalogued.
+// The pinned body at 0x500290 materializes 0/1 in full EAX; its mapped callers
+// consume EAX (including arithmetic). Preserve the observed 0/1 result.
+// The historical `YA_N` label is not independent proof of the source type.
+// Keep this overload inline: other original call sites inline it, while the
+// selected-base body at 0x500290 is directly called from base_build.
 int __cdecl attack_from(int base_id_to_atk, int faction_id);
 // The prototype-upgrade family: do_upgrade drives the queue, upgrade_cost
 // prices one upgrade, upgrade_prototypes runs a faction's whole table and
