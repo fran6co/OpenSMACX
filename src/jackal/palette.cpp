@@ -2001,26 +2001,6 @@ void Palette::reseed() {
 //    near miss from a wrong body.
 
 
-// Non-inline forwarder to `Time::stop` - the same-TU counterpart of
-// technology.h's has_tech_call and veh.cpp's synch_bit_call, with `fastcall`
-// where those are `cdecl`: `stop` is a __thiscall member, VC6 rejects
-// `__thiscall` on a free function (C4234), and for a single pointer argument
-// `fastcall` uses the same register (`ecx`) the thiscall receiver rides in.
-// So the call site loads the Time* into ecx and calls, which is exactly the
-// image's `mov ecx,[eax+0x408]; call 0x616730`.
-//
-// Why a wrapper at all: the image CALLS 0x616730 from here rather than
-// open-coding the teardown, and `Time::stop` is `MEASURED` inline in time.h,
-// so at /O2 the optimiser inlines it into this body and costs it the frame's
-// spare registers (41 instructions against the image's 24, 16 of 24, before
-// the switch). A `cdecl` wrapper was tried first and is WRONG here - it is
-// not a member, so its own call site pushed the Time* on the stack instead of
-// loading ecx, 20 of 24 - `fastcall` is what makes the forwarder's signature
-// match the thiscall it forwards to.
-static void __fastcall stop_animation_stop_call(Time *timer) {
-    timer->stop();
-}
-
 void Palette::stop_animation(int key) {
     int i;
     for (i = 0; i < 5; i++) {
@@ -2033,7 +2013,7 @@ void Palette::stop_animation(int key) {
     // free, i is 5 and the read below is internal_[5].key - the first four
     // bytes PAST the object. The image does exactly this.
     if ((int)internal_[i].key == key) {
-        stop_animation_stop_call(internal_[i].time);
+        internal_[i].time->stop();
     }
 }
 
