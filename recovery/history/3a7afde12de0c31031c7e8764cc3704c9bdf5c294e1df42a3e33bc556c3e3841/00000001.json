@@ -1,0 +1,20 @@
+{
+  "event_id": "d24eb9242e1797c994210a916053e8acd17d87f76bb887f4c16994f58b9c2e70",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_scroll_notification_live_state_oct11.py"
+    ],
+    "evidence": [
+      "The broad87test Scroll/Win/Gamma regression suite finds one change-caused historical-symbol control refusal: notification_live_state still requires the two manufactured QAEI APIs. Authorize only adding the two exact605B80/606EA0 old-to-void symbol migrations to this existing control. Retain its immutable historical base, all claim-withdrawal damage controls and metadata/owner assertions; do not modify source outside the three mutators.",
+      "The separate arrow-destination c013 historical guard already fails unchanged master8b598 on old set_range lesson metadata. Its baseline and assertions remain retained; do not hide this preexisting failure by moving to106. A new task-specific106 complete-record guard separately passes. Actual-source fixture uses the current ordinary general.cpp swap definition and fixes two stale preexisting host extractor failures. Native full build/link, all176 physical residuals and all5581 unchanged verdicts already pass; primary reference counts unchanged1846/1181/22."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "scroll-thumb-notification-symbol-control-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:scroll-thumb-mutator-contract-oct17"
+}

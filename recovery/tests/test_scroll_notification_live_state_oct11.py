@@ -303,6 +303,8 @@ def test_original_identities_claims_and_symbols_retained():
         migrations = {
             0x605370: ("?close@Scroll@@QAEIXZ", "?close@Scroll@@QAEXXZ"),
             0x605D20: ("?set_pos@Scroll@@QAEIH@Z", "?set_pos@Scroll@@QAEXH@Z"),
+            0x605B80: ("?set_bar_thickness@Scroll@@QAEIH@Z", "?set_bar_thickness@Scroll@@QAEXH@Z"),
+            0x606EA0: ("?set_thumb_rect@Scroll@@QAEIXZ", "?set_thumb_rect@Scroll@@QAEXXZ"),
             0x406F20: ("?scroll_scalar_dtor_redirect@@YIPAXPAVScroll@@PAXI@Z",
                        "??_GScroll@@UAEPAXI@Z"),
         }

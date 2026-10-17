@@ -52,7 +52,7 @@ class Scroll : public GraphicWin {
   void set_bevel_thickness(int thickness);
   void set_bevel_upper(int color);
   void set_bevel_lower(int color);
-  uint32_t set_bar_thickness(int thickness);
+  void set_bar_thickness(int thickness);
   void set_border_color(int color);
   void set_sprite_left(Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
   void set_sprite_right(Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
@@ -64,7 +64,7 @@ class Scroll : public GraphicWin {
   void set_paging(int value) { paging_ = value; }
   void set_field_A30(int value) { field_A30_ = static_cast<uint32_t>(value); }
   void compute_thumb_rect(RECT *rect);
-  uint32_t set_thumb_rect();
+  void set_thumb_rect();
 
   // The catalogued int prototype is historical. This is the inherited
   // void Win slot-19 callback, whose pinned body returns with ret 8.

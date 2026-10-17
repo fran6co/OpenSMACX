@@ -1,0 +1,23 @@
+{
+  "event_id": "f6ac33790ba1085e6f1d48a347600c073d5d1a1ef573b016897ef3b5b913f18c",
+  "payload": {
+    "affects": [
+      "entity-00b1d35eb28f0ba788efab82e775eb43d985637e2d1b7d0974470b429f4e720b",
+      "entity-453a37751fb8ef74cec404d76d978b7da089f0bb28e34fded444ecc69b26ec63",
+      "entity-b7831bec45bdd049eb5acd12a5419ae228bff9458ef871e87d602ea6f2facb29"
+    ],
+    "author": "coordinator",
+    "discovery_id": "scroll-typed-void-thumb-mutators-oct17",
+    "evidence": [
+      "Pinned full100/96/88byte bodies reset A4C/A50/A54/A58 and apply the border!=-1 inset, with thickness atA60 and border atA1C. Named RECT/int members already own these offsets. EAX is path-dependent residue; catalogue void identities and peer border setter corroborate a void API. No source uses or mapped return consumers found for the two changed APIs; unknown indirect callers are not disproved.",
+      "Native source.write_symbol computed precisely two emitted-symbol fact replacements, applied with exact whole-file SHA correspondence before body edits. ORIGINAL identities/spans/claims and legacy source history remain intact. Source now has ordinary named-member stores, no volatile/reinterpret geometry alias, and preserves 32bit wrapping via the existing long_from_bits helper."
+    ],
+    "hypothesis": "Recover direct typed Scroll RECT mutation and coherent void setter contracts, removing manufactured EAX results and score-forcing volatile aliases without changing geometry behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "d24eb9242e1797c994210a916053e8acd17d87f76bb887f4c16994f58b9c2e70",
+  "request_id": "scroll-typed-void-thumb-mutators-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:scroll-thumb-mutator-contract-oct17"
+}

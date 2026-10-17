@@ -914,7 +914,11 @@ Purpose: Set the scrollbar thickness and reset its thumb rectangle.
 //   four memory reloads, and it is also what costs the `mov [mem],1` - the
 //   image's `inc edx` needs a compiler that leaves the zero in a register
 //   past the guard, and no spelling here reaches it. 12/22 is the ceiling.
-// symbol    ?set_bar_thickness@Scroll@@QAEIH@Z
+// This is a void state mutator. The return/local spellings above and volatile
+// aliases are preserved as historical matching experiments, not API or
+// storage contracts; the typed RECT stores and wrapped arithmetic are the
+// recovered behavior.
+// symbol    ?set_bar_thickness@Scroll@@QAEXH@Z
 // size      96 bytes
 // prototype void (__thiscall ?set_bar_thickness@Scroll@@QAEXH@Z)(Scroll* this, int)
 // callers   0   call targets   0
@@ -924,26 +928,21 @@ Purpose: Set the scrollbar thickness and reset its thumb rectangle.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-uint32_t Scroll::set_bar_thickness(int thickness) {
-    const uint32_t thickness_bits = static_cast<uint32_t>(thickness);
+void Scroll::set_bar_thickness(int thickness) {
     bar_thickness_ = thickness;
-    volatile RECT *const thumb = &thumb_rect_;
-    thumb->left = 0;
-    thumb->top = 0;
-    thumb->right = long_from_bits(thickness_bits);
-    thumb->bottom = long_from_bits(thickness_bits);
-    uint32_t result = static_cast<uint32_t>(border_color_);
-    if (result != -1) {
-        const uint32_t right = static_cast<uint32_t>(thumb->right) - 1U;
-        thumb->left = 1;
-        const uint32_t top = static_cast<uint32_t>(thumb->top) + 1U;
-        thumb->right = long_from_bits(right);
-        const uint32_t bottom = static_cast<uint32_t>(thumb->bottom) - 1U;
-        thumb->top = long_from_bits(top);
-        thumb->bottom = long_from_bits(bottom);
-        result = bottom;
+    thumb_rect_.left = 0;
+    thumb_rect_.top = 0;
+    thumb_rect_.right = long_from_bits(static_cast<uint32_t>(thickness));
+    thumb_rect_.bottom = long_from_bits(static_cast<uint32_t>(thickness));
+    if (border_color_ != -1) {
+        const uint32_t right = static_cast<uint32_t>(thumb_rect_.right) - 1U;
+        thumb_rect_.left = 1;
+        const uint32_t top = static_cast<uint32_t>(thumb_rect_.top) + 1U;
+        thumb_rect_.right = long_from_bits(right);
+        const uint32_t bottom = static_cast<uint32_t>(thumb_rect_.bottom) - 1U;
+        thumb_rect_.top = long_from_bits(top);
+        thumb_rect_.bottom = long_from_bits(bottom);
     }
-    return result;
 }
 
 /*
@@ -994,19 +993,18 @@ Status: Complete
 void Scroll::set_border_color(int color) {
     border_color_ = color;
     const uint32_t thickness = static_cast<uint32_t>(bar_thickness_);
-    volatile RECT *const thumb = &thumb_rect_;
-    thumb->left = 0;
-    thumb->top = 0;
-    thumb->right = long_from_bits(thickness);
-    thumb->bottom = long_from_bits(thickness);
+    thumb_rect_.left = 0;
+    thumb_rect_.top = 0;
+    thumb_rect_.right = long_from_bits(thickness);
+    thumb_rect_.bottom = long_from_bits(thickness);
     if (border_color_ != -1) {
-        const uint32_t right = static_cast<uint32_t>(thumb->right) - 1U;
-        thumb->left = 1;
-        const uint32_t top = static_cast<uint32_t>(thumb->top) + 1U;
-        thumb->right = long_from_bits(right);
-        const uint32_t bottom = static_cast<uint32_t>(thumb->bottom) - 1U;
-        thumb->top = long_from_bits(top);
-        thumb->bottom = long_from_bits(bottom);
+        const uint32_t right = static_cast<uint32_t>(thumb_rect_.right) - 1U;
+        thumb_rect_.left = 1;
+        const uint32_t top = static_cast<uint32_t>(thumb_rect_.top) + 1U;
+        thumb_rect_.right = long_from_bits(right);
+        const uint32_t bottom = static_cast<uint32_t>(thumb_rect_.bottom) - 1U;
+        thumb_rect_.top = long_from_bits(top);
+        thumb_rect_.bottom = long_from_bits(bottom);
     }
 }
 
@@ -1407,7 +1405,7 @@ Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
 //   TRIED), while the volatile-guard version is two.
 // TRIED (2026-08-28) `thumb_rect_.left = thumb_rect_.left + 1` and
 //   `thumb->left = thumb->left + 1` for that pair: 9/20 and 9/20. Refuted.
-// symbol    ?set_thumb_rect@Scroll@@QAEIXZ
+// symbol    ?set_thumb_rect@Scroll@@QAEXXZ
 // size      88 bytes
 // prototype void (__thiscall ?set_thumb_rect@Scroll@@QAEXXZ)(Scroll* this)
 // callers   0   call targets   0
@@ -1417,26 +1415,21 @@ Purpose: Reset the scrollbar thumb rectangle from its stored thickness.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-uint32_t Scroll::set_thumb_rect() {
-    const uint32_t thickness = static_cast<uint32_t>(
-        *reinterpret_cast<volatile int *>(&bar_thickness_));
-    volatile RECT *const thumb = &thumb_rect_;
-    thumb->left = 0;
-    thumb->top = 0;
-    thumb->right = long_from_bits(thickness);
-    thumb->bottom = long_from_bits(thickness);
-    if (*reinterpret_cast<volatile int *>(&border_color_) == -1) {
-        return thickness;
+void Scroll::set_thumb_rect() {
+    const uint32_t thickness = static_cast<uint32_t>(bar_thickness_);
+    thumb_rect_.left = 0;
+    thumb_rect_.top = 0;
+    thumb_rect_.right = long_from_bits(thickness);
+    thumb_rect_.bottom = long_from_bits(thickness);
+    if (border_color_ != -1) {
+        const uint32_t right = static_cast<uint32_t>(thumb_rect_.right) - 1U;
+        thumb_rect_.left = 1;
+        const uint32_t top = static_cast<uint32_t>(thumb_rect_.top) + 1U;
+        thumb_rect_.right = long_from_bits(right);
+        const uint32_t bottom = static_cast<uint32_t>(thumb_rect_.bottom) - 1U;
+        thumb_rect_.top = long_from_bits(top);
+        thumb_rect_.bottom = long_from_bits(bottom);
     }
-
-    const uint32_t right = static_cast<uint32_t>(thumb->right) - 1U;
-    thumb->left = 1;
-    const uint32_t top = static_cast<uint32_t>(thumb->top) + 1U;
-    thumb->right = long_from_bits(right);
-    const uint32_t bottom = static_cast<uint32_t>(thumb->bottom) - 1U;
-    thumb->top = long_from_bits(top);
-    thumb->bottom = long_from_bits(bottom);
-    return bottom;
 }
 
 

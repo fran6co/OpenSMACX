@@ -1,4 +1,4 @@
-"""Behavior controls that compile the current five Scroll mutator bodies."""
+"""Behavior controls that compile the current eight Scroll mutator bodies."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -16,14 +16,17 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
 CPP = ROOT / "src/scroll.cpp"
 HEADER = ROOT / "src/scroll.h"
 GENERAL = ROOT / "src/general.h"
-SWAP_SIGNATURE = "MEASURED inline void __cdecl swap(int *var1, int *var2)"
-RANGE_SWAP_SIGNATURE = "static void __cdecl range_swap_call(int *var1, int *var2)"
+GENERAL_CPP = ROOT / "src/general.cpp"
+SWAP_SIGNATURE = "void __cdecl swap(int *var1, int *var2)"
 FUNCTIONS = {
     "set_range": (0x006059B0, "void Scroll::set_range(int minimum, int maximum)"),
     "set_button_color": (0x00605A10, "void Scroll::set_button_color(int color)"),
     "set_bevel_thickness": (0x00605A50, "void Scroll::set_bevel_thickness(int thickness)"),
     "set_bevel_upper": (0x00605A90, "void Scroll::set_bevel_upper(int color)"),
     "set_bevel_lower": (0x00605AD0, "void Scroll::set_bevel_lower(int color)"),
+    "set_bar_thickness": (0x00605B80, "void Scroll::set_bar_thickness(int thickness)"),
+    "set_border_color": (0x00605B10, "void Scroll::set_border_color(int color)"),
+    "set_thumb_rect": (0x00606EA0, "void Scroll::set_thumb_rect()"),
 }
 
 FIXTURE = r'''#include <assert.h>
@@ -39,6 +42,8 @@ static int event_ids[8];
 static int event_min[8], event_pos[8], event_max[8], event_reversed[8];
 static uint32_t event_values[8][8];
 struct Scroll;
+typedef int32_t LONG;
+struct RECT { LONG left, top, right, bottom; };
 struct FlatButton {
     uint32_t color_, bevel_thickness_, bevel_upper_, bevel_lower_;
     int id;
@@ -49,12 +54,17 @@ struct FlatButton {
 struct Scroll {
     int range_reversed_, range_minimum_, position_, range_maximum_;
     uint32_t color_, bevel_thickness_, bevel_upper_, bevel_lower_;
+    int bar_thickness_, border_color_;
+    RECT thumb_rect_;
     FlatButton flat_button_left_, flat_button_right_;
     void set_range(int minimum, int maximum);
     void set_button_color(int color);
     void set_bevel_thickness(int thickness);
     void set_bevel_upper(int color);
     void set_bevel_lower(int color);
+    void set_bar_thickness(int thickness);
+    void set_border_color(int color);
+    void set_thumb_rect();
     virtual ~Scroll() {}
     virtual void redraw() {
         const int i = event_count++;
@@ -97,6 +107,8 @@ static void reset(Scroll &s) {
     memset(event_values, 0, sizeof(event_values)); event_count = 0;
     s.range_reversed_ = s.range_minimum_ = s.position_ = s.range_maximum_ = 0;
     s.color_ = s.bevel_thickness_ = s.bevel_upper_ = s.bevel_lower_ = 0;
+    s.bar_thickness_ = s.border_color_ = 0;
+    s.thumb_rect_.left = s.thumb_rect_.top = s.thumb_rect_.right = s.thumb_rect_.bottom = 0;
     s.flat_button_left_ = FlatButton(); s.flat_button_right_ = FlatButton();
     s.flat_button_left_.id = 1; s.flat_button_right_.id = 2;
     s.flat_button_left_.owner = s.flat_button_right_.owner = &s;
@@ -158,7 +170,62 @@ static void test_style_setters() {
     assert(event_values[0][3] == 0xFFFFFFFFu && event_values[1][3] == 0xFFFFFFFFu);
     assert(event_values[0][7] == 0xFFFFFFFFu && event_values[1][7] == 0xFFFFFFFFu);
 }
-int main() { test_ranges(); test_style_setters(); puts("scroll actual-source controls PASS"); }
+static int32_t signed_bits(uint32_t value) {
+    int32_t result; memcpy(&result, &value, sizeof(result)); return result;
+}
+static void expect_rect(const Scroll &s, int thickness, int border) {
+    const uint32_t t = static_cast<uint32_t>(thickness);
+    const int32_t edge = signed_bits(border == -1 ? t : t - 1U);
+    const int32_t inset = border == -1 ? 0 : 1;
+    assert(s.thumb_rect_.left == inset && s.thumb_rect_.top == inset);
+    assert(s.thumb_rect_.right == edge && s.thumb_rect_.bottom == edge);
+}
+static void test_geometry_setters() {
+    const int thicknesses[] = {0, 1, -1, INT_MIN, INT_MAX};
+    const int borders[] = {-1, 0, 7};
+    RedrawSpy s;
+    for (unsigned ti = 0; ti < sizeof(thicknesses) / sizeof(thicknesses[0]); ++ti) {
+        const int thickness = thicknesses[ti];
+        for (unsigned bi = 0; bi < sizeof(borders) / sizeof(borders[0]); ++bi) {
+            const int border = borders[bi];
+            reset(s);
+            s.range_reversed_ = 9; s.range_minimum_ = 10; s.position_ = 11; s.range_maximum_ = 12;
+            s.color_ = 13; s.bevel_thickness_ = 14; s.bevel_upper_ = 15; s.bevel_lower_ = 16;
+            s.border_color_ = border;
+            s.set_bar_thickness(thickness);
+            assert(s.bar_thickness_ == thickness);
+            expect_rect(s, thickness, border);
+            assert(s.range_reversed_ == 9 && s.range_minimum_ == 10 && s.position_ == 11 &&
+                   s.range_maximum_ == 12 && s.color_ == 13 && s.bevel_thickness_ == 14 &&
+                   s.bevel_upper_ == 15 && s.bevel_lower_ == 16);
+            assert(event_count == 0 && s.overrides == 0);
+
+            reset(s);
+            s.range_reversed_ = 9; s.range_minimum_ = 10; s.position_ = 11; s.range_maximum_ = 12;
+            s.color_ = 13; s.bevel_thickness_ = 14; s.bevel_upper_ = 15; s.bevel_lower_ = 16;
+            s.bar_thickness_ = thickness; s.border_color_ = -1;
+            s.set_border_color(border);
+            assert(s.border_color_ == border);
+            expect_rect(s, thickness, border);
+            assert(s.range_reversed_ == 9 && s.range_minimum_ == 10 && s.position_ == 11 &&
+                   s.range_maximum_ == 12 && s.color_ == 13 && s.bevel_thickness_ == 14 &&
+                   s.bevel_upper_ == 15 && s.bevel_lower_ == 16);
+            assert(event_count == 0 && s.overrides == 0);
+
+            reset(s);
+            s.range_reversed_ = 9; s.range_minimum_ = 10; s.position_ = 11; s.range_maximum_ = 12;
+            s.color_ = 13; s.bevel_thickness_ = 14; s.bevel_upper_ = 15; s.bevel_lower_ = 16;
+            s.bar_thickness_ = thickness; s.border_color_ = border;
+            s.set_thumb_rect();
+            expect_rect(s, thickness, border);
+            assert(s.range_reversed_ == 9 && s.range_minimum_ == 10 && s.position_ == 11 &&
+                   s.range_maximum_ == 12 && s.color_ == 13 && s.bevel_thickness_ == 14 &&
+                   s.bevel_upper_ == 15 && s.bevel_lower_ == 16 && s.border_color_ == border);
+            assert(event_count == 0 && s.overrides == 0);
+        }
+    }
+}
+int main() { test_ranges(); test_style_setters(); test_geometry_setters(); puts("scroll actual-source controls PASS"); }
 '''
 
 
@@ -198,15 +265,13 @@ def test_actual_scroll_bodies_with_return_warnings_as_errors(compiler: str) -> N
     source = CPP.read_text()
     bodies = "\n\n".join(extract_body(source, signature)
                             for _, signature in FUNCTIONS.values())
-    general = GENERAL.read_text()
-    swap_body = extract_body(general, SWAP_SIGNATURE)
-    range_swap_body = extract_body(source, RANGE_SWAP_SIGNATURE)
+    bits_helper = extract_body(source, "inline LONG long_from_bits(uint32_t bits)")
+    swap_body = extract_body(GENERAL_CPP.read_text(), SWAP_SIGNATURE)
     with tempfile.TemporaryDirectory(prefix="opensmacx-scroll-mutators-") as directory:
         root = Path(directory)
         cpp = root / "scroll.cpp"
         binary = root / "scroll"
-        cpp.write_text(FIXTURE + swap_body + "\n" + range_swap_body +
-                       "\n" + bodies + SUFFIX)
+        cpp.write_text(FIXTURE + swap_body + "\n" + bits_helper + "\n" + bodies + SUFFIX)
         result = subprocess.run(
             [executable, "-std=c++17", "-Wall", "-Wextra", "-Werror=return-type",
              str(cpp), "-o", str(binary)],
@@ -215,3 +280,49 @@ def test_actual_scroll_bodies_with_return_warnings_as_errors(compiler: str) -> N
         run = subprocess.run([str(binary)], text=True, capture_output=True, check=False)
         assert run.returncode == 0, run.stdout + run.stderr
         assert "scroll actual-source controls PASS" in run.stdout
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+@pytest.mark.parametrize("mutation", ["wrong_guard", "wrong_slot", "missing_update", "wrong_arithmetic"])
+def test_geometry_mutants_compile_but_fail_runtime(compiler: str, mutation: str) -> None:
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip(f"{compiler} is unavailable")
+    source = CPP.read_text()
+    bodies = {name: extract_body(source, signature) for name, (_, signature) in FUNCTIONS.items()}
+    if mutation == "wrong_guard":
+        target = "if (border_color_ != -1)"
+        bodies["set_border_color"] = bodies["set_border_color"].replace(
+            target, "if (border_color_ == -1)", 1)
+        assert target in extract_body(source, FUNCTIONS["set_border_color"][1])
+    elif mutation == "wrong_slot":
+        target = "thumb_rect_.right = long_from_bits(thickness);"
+        # A duplicate bottom store where the right store belongs leaves right
+        # at its zero-init value and is a compiled, behaviorally distinct mutant.
+        assert target in bodies["set_thumb_rect"]
+        bodies["set_thumb_rect"] = bodies["set_thumb_rect"].replace(
+            target, "thumb_rect_.bottom = long_from_bits(thickness);", 1)
+    elif mutation == "missing_update":
+        target = "    bar_thickness_ = thickness;\n"
+        assert target in bodies["set_bar_thickness"]
+        bodies["set_bar_thickness"] = bodies["set_bar_thickness"].replace(target, "", 1)
+    else:
+        target = "static_cast<uint32_t>(thumb_rect_.right) - 1U"
+        assert target in bodies["set_thumb_rect"]
+        bodies["set_thumb_rect"] = bodies["set_thumb_rect"].replace(
+            target, "static_cast<uint32_t>(thumb_rect_.right) + 1U", 1)
+
+    ordered_bodies = "\n\n".join(bodies[name] for name in FUNCTIONS)
+    bits_helper = extract_body(source, "inline LONG long_from_bits(uint32_t bits)")
+    swap_body = extract_body(GENERAL_CPP.read_text(), SWAP_SIGNATURE)
+    with tempfile.TemporaryDirectory(prefix="opensmacx-scroll-mutant-") as directory:
+        root = Path(directory)
+        cpp, binary = root / "scroll.cpp", root / "scroll"
+        cpp.write_text(FIXTURE + swap_body + "\n" + bits_helper + "\n" +
+                       ordered_bodies + SUFFIX)
+        build = subprocess.run(
+            [executable, "-std=c++17", "-Wall", "-Wextra", "-Werror=return-type",
+             str(cpp), "-o", str(binary)], text=True, capture_output=True, check=False)
+        assert build.returncode == 0, build.stdout + build.stderr
+        run = subprocess.run([str(binary)], text=True, capture_output=True, check=False)
+        assert run.returncode != 0, f"{mutation} mutant unexpectedly passed all runtime controls"
