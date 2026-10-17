@@ -1,0 +1,22 @@
+{
+  "event_id": "f3bbf41ea102a455d8cc82e1314d2e7738b75ad0fd40cf4bb046395201aed06a",
+  "payload": {
+    "affects": [
+      "entity-a6c2145ebba8ca7f764d1c1535b8a76636e1d14e9b8f389676069b949a50a8d1"
+    ],
+    "author": "coordinator",
+    "discovery_id": "design-on-left-click-switch-data-extent-oct17",
+    "evidence": [
+      "The original recorded code span is154bytes. Baseline and candidate actual Release COFF roots are both192bytes with six relocation sites at156,160,164,168,172,176, outside that span. Their local table target offsets are baseline68,82,96,110,124,140 and candidate66,80,94,108,122,138. The source remains the same ordinary C++ switch; the frame-policy variant improves masked original body agreement but does not establish table ownership or full allocation.",
+      "Fresh strict original row remains FAIL candidate exceeds or misses independently recorded extent. Independent linked-function checks qualify selected COFF-to-current-PE body in both builds, not original table/data identity or completeness. Preserve the code marker and all historical obligations: no span extension, fake global/table declaration, copied bytes, omission waiver or automatic acceptance. Complete original generated-data/reference qualification remains pending.",
+      "The complete physical comparison retains173whole outside-object PASS and3owner residual FAIL. Three unrelated host fixture failures reproduce on unchanged master;114focused tests including the leased two-flag workshop/layout witness pass. Those bounded controls do not close this discovery or prove game/runtime acceptance."
+    ],
+    "hypothesis": "DesignWin::on_left_click retains compiler-generated trailing switch-table storage beyond its independently recorded code span; source-specific frame recovery does not qualify that full section or data boundary.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "design-on-left-click-switch-data-extent-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:design-tutorial-popup-frame-oct17"
+}
