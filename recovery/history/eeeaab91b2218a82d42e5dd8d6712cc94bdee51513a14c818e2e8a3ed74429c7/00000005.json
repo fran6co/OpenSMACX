@@ -1,0 +1,19 @@
+{
+  "event_id": "bd1331c258494f42e86b269de14c0dd0767189432b00dbf21badbb2d91745eb4",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "scroll-distinct-sound-fields-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/autosound.h binds distinct Sound* val_32_ at+0x80; src/autosound_defaults.h preserves the same pointer view and block extent. src/scroll.cpp uses it only in pinned wheel/key/button notification consumers, retaining +0x84 for mouse-move and button-pressed. These are use-derived interfaces, not provider/ownership/lifetime claims.",
+      "recovery/tests/test_scroll_sound_fields_oct17.py pins all four original+0x80 load sites, separate mouse+0x84 load and actual-source selector controls. Expanded live-state controls use distinct decoys and reject wrong selectors. Fresh joint native layout witnessed four-byte pointer+0x80 under both historical flag sets; application compiles/links.",
+      "Coordinator reviewed shared-header collateral under the eighteen expanded existing owners, resolving private labels, instruction scheduling, frame-normalized vehicle loads, common-target register reloads, cached vptr stores and matching EH receiver slots. All eighteen owners already mismatch/refuse local matching and carry no historical byte claim. Native residual162pass14fail remains failure; no linked/full-project/runtime acceptance or blanket waiver is asserted."
+    ]
+  },
+  "previous_event": "2925e5a6384094a2a1950dc00008540a8bb63ac49662c80d581375c863321691",
+  "request_id": "scroll-distinct-sound-fields-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:scroll-decrement-spelling-oct17"
+}
