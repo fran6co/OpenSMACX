@@ -25,12 +25,12 @@
   */
 class ButtonGroup {
  public:
-  // 0x0062B8A0, a pending_bodies forwarder.
+  // Dispatch a click through the group's source-owned buttons and window.
   int button_click(int a1);
 
  public:
   ButtonGroup();
-  ~ButtonGroup();
+  ~ButtonGroup() { close(); }
   void close();
   void init(int group_id, int flags);
   void add(BaseButton *button);
@@ -54,10 +54,3 @@ class ButtonGroup {
 
 static_assert(sizeof(ButtonGroup) == 0x94,
               "ButtonGroup layout must match the original executable");
-
-
-// ButtonGroup::button_click is 471 bytes of virtual dispatch through the
-// button vtables and is not recovered yet, so set() reaches it at its
-// canonical address. Rebindable so tests can observe the call without the
-// original being present.
-
