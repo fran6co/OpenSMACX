@@ -1,0 +1,203 @@
+{
+  "author": "coordinator",
+  "base_revision": "22dba7f01080100519d457671afe1556e686bb90",
+  "editable_files": [
+    "src/heap.cpp",
+    "src/heap.h",
+    "src/strings.cpp",
+    "src/strings.h",
+    "src/textindex.cpp",
+    "src/textindex.h",
+    "recovery/tests/test_heap_lifetime_roles_oct17.py"
+  ],
+  "evidence": [
+    "Master22dba7f01 fresh retained build-1f0fcx01 compiles/links. All5581mapped CPP verdicts preserved,3015masked matches. Fresh fullmasked strict audit1824PASS1167UNKNOWN24FAIL;610private-initializer selector refusals remainUNKNOWN. Native claims/references/mappings and eight store-order controlsPASS; no automatic/game acceptance or exhaustive original coverage established.",
+    "Native pending finding heap-strings-textindex-cleanup-target-identity-oct17 in popup-default-store-order-oct17 preserves the initial contradiction; older textindex-record-recovery explicitly deferred cross-owner Heap interpretation. Fresh pinned/source/COFF review proves distinct42byte entries4580and45B0, identical cleanup operations/free target644EF2, not originalaliases/ICF/provider substitution.",
+    "Positive lifetime witnesses: Strings constructor6168D0 callsHeapctor5D4560 atthis+0, destructor6169C0 tail-jumps45B0; TextIndex constructor5FDF40 constructsHeap at+104, destructor5FDF60 clearscount/name then adjustsECX+104andtail-jumps45B0. Many other source owner destructors likewise target45B0. Live/reset paths inStrings init/shutdown, TextIndex make_index/clear_index andBasePop/Dialogclose target4580 while retaining objects for reuse. Current catalog names are address-only imported interpretations, not independently recovered symbols.",
+    "Authorize an evidence-backed corrected emitted-symbol interpretation: canonical5D4580 becomesHeap::reset; canonical5D45B0 becomesHeap::~Heap. Use native source.write_symbol, preserve every ORIGINAL catalog name/address/span/claim and seed lesson, document corrected role/evidence in adjacent source. ExistingHeap::shutdown may remain an additional shared body at45B0 to preserve explicit call targets. Replace former sharedreset4580 with canonicalreset; no duplicate marker or lost identity. Verify shared binding and exact body evidence natively.",
+    "Remove the ad hoc strings_heap_close explicit-destruction forwarder: Strings::shutdown should invoke namedHeap::reset without ending its live base lifetime. TextIndex clear helper should likewise callheap_.reset at4580, preserving count clear, iteration/order and ordinary member destruction. ExistingHeap layouts/base/member constructors, field order, free guards/null stores/error behavior, all other public callsites and compiler/link policy remain unchanged. Any additional body/source/header scope requires an explicit new journal expansion before editing.",
+    "Add focused actual-source and pinned/native controls that distinguish reset from final destruction and expose double cleanup, wrongentry/receiver/order, loss of reuse, array count/stride/reverse destruction, and binding-name swaps. Preserve all existing relevant tests; metadata guards alone cannot prove behavior. No hand-authored atexit callback, vtable/raw-address replacement or machinecode copying.",
+    "Freeze source/Git/recipes during measurement. Require fresh whole applicationbuild/link, complete physical176object inventory with every residual visible, native strict original/reference checks for allowner mappings and affected outside callers/sharedaliases, historical claim continuity, layout and relevant regression controls, independent source/lifetime review, and fresh masterdestinationverification. No full owner blanket waiver: expand only demonstrated emitted collateral and retain full masked/strict losses. Current candidateICF folds the cleanup entries; originalretainedentry distinction/linkallocation/runtime remainUNKNOWN, notaccepted by same compiled bytes."
+  ],
+  "intent": "Recover the Heap live-reset versus automatic-destruction roles across Heap, Strings and TextIndex without changing their genuine base/member lifetime or historical original identities.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5243168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5243184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5920944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6112896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6384032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6384064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "heap-lifetime-role-oct17"
+}
