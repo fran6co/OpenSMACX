@@ -1,0 +1,24 @@
+{
+  "event_id": "6c1c700462b92b43cdfb235b2e31b4835ea556b525f7321401e086abbab5ee15",
+  "payload": {
+    "affects": [
+      "entity-3bfcdbf3f3be2a9eb61552c30795e215ea7397dac48397961ade2121a0d4872e",
+      "entity-58b389704c30e16e58870f9c6d26d9726c58e4222d2a034a9150acadd1de1f1c",
+      "entity-7014bdda25c4702a25bcd763ab8fdf4890d11d62af46a48173eea50025efc9b8",
+      "entity-b168bed4340735f9575087ed33abaf465bdf988392402b92cc672de0c04b7b57",
+      "entity-f26e4854e7bd9154f9b5423fe54f5fbf235fc41aba3376e17ccf79db10027582"
+    ],
+    "author": "coordinator",
+    "discovery_id": "semantic-notification-and-undo-owners",
+    "evidence": [
+      "Council owns both8-cell tables and resolution producers, council.h already exposes the two resets, and existing game callers remain unchanged. The three undo bodies share position/path/history state and Console/editor/setup callers, distinct from ordinary autosave. This is current semantic ownership, not an inferred original TU or Jackal assignment."
+    ],
+    "hypothesis": "Council notification reset APIs belong with their owned tables; scenario-editor undo operations and position form a separate coherent current source owner rather than General utilities.",
+    "kind": "discovery"
+  },
+  "previous_event": "5d8ee2ae045057cfd457a2a835d5f9ae26b981c8082479417deb45a8b9c2e8fc",
+  "request_id": "semantic-notification-and-undo-owners",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:general-owner-split-oct17"
+}

@@ -144,7 +144,11 @@ def test_motion_index_migration_preserves_native_identities_and_lessons() -> Non
         old = subprocess.check_output(
             ["git", "show", BASE + ":" + relative], cwd=ROOT, text=True
         )
-        before, after = read_text(old, path), read_text(path.read_text(), path)
+        current = path.read_text()
+        if relative == "src/general.cpp":
+            from test_general_owner_split_oct17 import inverse_split, LIVE_PATHS
+            current = inverse_split({key: owner.read_bytes() for key, owner in LIVE_PATHS.items()})["general"].decode()
+        before, after = read_text(old, path), read_text(current, path)
         assert len(before) == len(after)
         for prior, current in zip(before, after):
             for field in fields(prior):

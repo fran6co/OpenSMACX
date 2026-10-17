@@ -75,7 +75,6 @@ char256 ParseStrBuffer[10]; // 0x009BB5E8
 #include "cursor.h"
 #include "time.h"
 
-uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
 // The default noun forms parse_set/parse_say/parse_says/get_noun fall back to,
 // at 0x009BBFEC and 0x009BBFF0 in the shipped image - REAL OBJECTS (zero at
 // load there, as here; see general.h for the conversion from the `static
@@ -1890,124 +1889,6 @@ void __cdecl auto_save_debug() {
 }
 
 /*
-Purpose: Load a Scenario Editor undo (type: 1) or redo (type: -1) auto-save. TODO: Revisit in the 
-         future to fix some of the underlying issues with the undo/redo process.
-// ORIGINAL: 0x005ABE40 ?load_undo@@YAXH@Z 0x005ABE40-0x005ABEBF BYTE_EXACT
-// LEVER: two real bugs in the committed body, fixed by transcription
-//        instead of invention. (1) WRONG CALLEE - `sprintf_s` is not in the
-//        image; it's the `strcat`/`_itoa`/`strcat`-into-StringTemp idiom,
-//        no ".SAV" suffix, matching `wipe_undo`/`auto_undo` below. (2) the
-//        image calls NEITHER an early `return` on `type==-1`, NOR
-//        `draw_map` at the end - both were invented, not transcribed; the
-//        image's only calls are the two `strcat`s, `_itoa` and
-//        `load_daemon`. (3) `static_cast<int>(ScenEditorUndoPosition)` at
-//        both comparisons - the global is `uint32_t`, and the image's own
-//        `cmp`s are signed (`jle`/`jge`), giving `jbe`/`jae` uncast.
-// size      127 bytes
-// prototype void (__cdecl ?load_undo@@YAXH@Z)(int type)
-// callers   2   call targets   3
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005A9760 0x00645470 0x0064FC88
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl load_undo(int type) {
-    if (type < 0 && static_cast<int>(ScenEditorUndoPosition) > 1) {
-        ScenEditorUndoPosition--;
-    }
-    // THE PRE-sprintf IDIOM, same as `wipe_undo`/`auto_undo` immediately
-    // below: `strcat`/`_itoa`/`strcat` into StringTemp, no ".SAV" extension
-    // appended, and no `draw_map` call - the image's own call targets are
-    // just strcat x2, _itoa and load_daemon.
-    StringTemp[0] = 0;
-    strcat(StringTemp, "saves\\auto\\Scenario Editor Undo ");
-    char number[80];
-    _itoa(ScenEditorUndoPosition, number, 10);
-    strcat(StringTemp, number);
-    if (type > 0 && static_cast<int>(ScenEditorUndoPosition) < 9) {
-        ScenEditorUndoPosition++;
-    }
-    load_daemon(StringTemp, false);
-}
-
-/*
-Purpose: Remove all the existing Scenario Editor undo auto-saves.
-// ORIGINAL: 0x005ABEC0 ?wipe_undo@@YAXXZ 0x005ABEC0-0x005ABF14 BYTE_EXACT
-// LEVER: WRONG CALLEE - `sprintf_s` is not in the image at all (the image has no C++/CRT sprintf for paths here); it builds the name with `strcat`/`_itoa`/`strcat` into the global `StringTemp` buffer (0x009B86A0) and calls `remove()` directly, with no ".SAV" extension appended - matching auto_undo's own documented idiom immediately below.
-// size      84 bytes
-// prototype
-// callers   1   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00645470 0x00646950 0x0064FC88
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl wipe_undo() {
-    for (int i = 9; i >= 1; i--) {
-        StringTemp[0] = 0;
-        strcat(StringTemp, "saves\\auto\\Scenario Editor Undo ");
-        char number[80];
-        _itoa(i, number, 10);
-        strcat(StringTemp, number);
-        remove(StringTemp);
-    }
-}
-
-/*
-Purpose: Handle the creation of an undo auto-save when certain Scenario Editor changes are made.
-// ORIGINAL: 0x005ABF20 ?auto_undo@@YAXXZ 0x005ABF20-0x005ABFEF BYTE_EXACT
-// size      207 bytes
-// prototype 
-// callers   32   call targets   7
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005A94F0 0x006453E0 0x00645460 0x00645470 0x00646950 0x006469F7 0x0064FC88
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl auto_undo() {
-    if (!(GameDataStateStorage.fields_.game_preferences_ & PREF_BSC_AUTOSAVE_EACH_TURN)) {
-        return;
-    }
-    // THREE 0x100 BUFFERS AND THE PRE-sprintf IDIOM. The image reserves 0x250
-    // bytes at 0x005ABF23 and builds each name with `strcat`, `_itoa`,
-    // `strcat` - no `sprintf` anywhere. It also carries the PREVIOUS name
-    // forward rather than formatting it twice, and decides between `remove`
-    // and `rename` on whether that carried name is empty, which is what makes
-    // the first pass delete rather than rename.
-    ScenEditorUndoPosition = 1;
-    // 0x100, 0x100 and 0x50: the image's three locals sit at [ebp-0x250],
-    // [ebp-0x150] and [ebp-0x50], which is where `sub esp, 0x250` comes from.
-    char previous[256];
-    char current[256];
-    char number[80];
-    previous[0] = 0;
-    for (int i = 9; i >= 1; i--) {
-        current[0] = 0;
-        strcat(current, "saves\\auto\\Scenario Editor Undo ");
-        _itoa(i, number, 10);
-        strcat(current, number);
-        if (strlen(previous) == 0) {
-            remove(current);
-        } else {
-            // (previous, current), in that order: the image pushes the
-            // current name and then the carried one, so the CARRIED name is
-            // the first argument - it renames the name it built last pass
-            // onto the one it just built, which collapses the history rather
-            // than rotating it. That is what the shipped code does.
-            rename(previous, current);
-        }
-        strcpy(previous, current);
-    }
-    // THE BUILT PATH, not a literal: the image pushes [ebp-0x250] at
-    // 0x005ABFE1. The loop's last pass builds "Undo 1" and carries it there,
-    // so the name is already in hand.
-    save_daemon(previous);
-}
-
-/*
 Purpose: Read the specified header from a file. This assumes the header string buffer is at least 
          256 characters. TODO: Replace built-in versions of _fgetc and change return to std::string.
 // ORIGINAL: 0x0057D1F0 ?header_check@@YAXPADPAUFILE@@@Z 0x0057D1F0-0x0057D235 BYTE_EXACT
@@ -3257,71 +3138,6 @@ extern "C" void __cdecl sub_5d4448(
 
 // The 3x3 numerical member bodies are consolidated in src/matrix3.cpp.
 
-// ORIGINAL: 0x004243F0 ?clear_council_notify@@YAXXZ 0x004243F0-0x0042440D FILE BYTE_EXACT
-// size      29 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// PRESERVED UNIT - measured BYTE_EXACT.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x004243F0
-// measured tier  BYTE_EXACT
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/004243f0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?clear_council_notify@@YAXXZ  at 0x004243F0  (29 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-
-void __cdecl clear_council_notify() {
-    memset(CouncilNotifyPluralSlots, 0, 8 * sizeof(int));
-    memset(CouncilNotifyFormSlots, 0, 8 * sizeof(int));
-}
-
 // ORIGINAL: 0x005D2E00 sub_5d2e00 0x005D2E00-0x005D2E6E FILE BYTE_EXACT
 // symbol    ?sub_5d2e00@@YIXPADHH0D@Z
 // working copy - scaffold materialised by --work
@@ -3387,26 +3203,6 @@ void __fastcall sub_5d2e00(char *a1, int a2, int a3, char *a4, char a5) {
         count = count - 1;
         dst = dst + 0x20;
     } while (count != 0);
-}
-
-// ORIGINAL: 0x004243D0 ?clear_council_notify@@YAXH@Z 0x004243D0-0x004243E8 BYTE_EXACT
-// size      24 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// 0x004243D0  ?clear_council_notify@@YAXH@Z  ->  ?clear_council_notify@@YAXH@Z
-//
-// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
-// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
-// and rewriting it in the tree's own style is a later phase. See README.md
-// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
-
-
-void __cdecl clear_council_notify(int a1) {
-    CouncilNotifyFormSlots[a1] = 0;
-    CouncilNotifyPluralSlots[a1] = 0;
 }
 
 // ORIGINAL: 0x00589550 j_GraphicWin::close 0x00589550-0x00589555 FILE BYTE_EXACT

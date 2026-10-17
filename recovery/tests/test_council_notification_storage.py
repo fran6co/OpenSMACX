@@ -10,7 +10,7 @@ def test_notification_reset_uses_shared_faction_arrays(tmp_path):
     compiler = shutil.which("g++")
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
-    source = (Path(__file__).resolve().parents[2] / "src/general.cpp").read_text()
+    source = (Path(__file__).resolve().parents[2] / "src/council.cpp").read_text()
     bodies = []
     for signature in ("void __cdecl clear_council_notify()",
                       "void __cdecl clear_council_notify(int a1)"):

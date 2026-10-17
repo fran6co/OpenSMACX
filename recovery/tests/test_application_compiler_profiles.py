@@ -146,6 +146,19 @@ VIDEO_SOUND_PROFILE_INSERTION = (
 )
 VIDEO_SOUND_PROFILE_BLOCK = (("src/video_sound.cpp",), ("/Oy-",))
 
+UNDO_BASE_REVISION = "b24ef250e686245f6075d2593b1a0d159eda1827"
+UNDO_SOURCE_BEFORE = "    src/general.cpp\n"
+UNDO_SOURCE_AFTER = "    src/general.cpp\n    src/scenario_undo.cpp\n"
+UNDO_PROFILE_COMMENT = (
+    "# Preserve the measured frame-based context of the scenario-editor undo owner.\n"
+    "# General's unrelated helpers retain their independently measured default recipe.\n"
+)
+UNDO_PROFILE_BLOCK_TEXT = (
+    'set_source_files_properties(src/scenario_undo.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")'
+)
+UNDO_PROFILE_INSERTION = "\n" + UNDO_PROFILE_COMMENT + UNDO_PROFILE_BLOCK_TEXT + "\n"
+UNDO_PROFILE_BLOCK = (("src/scenario_undo.cpp",), ("/Oy-",))
+
 FRAME_PROFILE = ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
 EXPECTED_FLAG_SETS = [
     ["/c", "/O2", "/Gy", "/GR-", "/GX"],
@@ -165,6 +178,7 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(REMAINING_OWNERS)): ("/Oy-",),
     ("src/alpha.cpp",): ("/Oy-",),
     ("src/video_sound.cpp",): ("/Oy-",),
+    ("src/scenario_undo.cpp",): ("/Oy-",),
     tuple(sorted(("src/interface_palette.cpp", "src/interface_fonts.cpp"))): ("/Oy-",),
     ("src/sound.cpp",): ("/Oy-",),
     ("src/caviar_cpu.cpp",): ("--frontend=intrinsics-i386-no-debug",),
@@ -222,12 +236,18 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
         return False
     if baseline.count(VIDEO_SOUND_SOURCE_BEFORE) != 1 or candidate.count(VIDEO_SOUND_SOURCE_AFTER) != 1:
         return False
+    if baseline.count(UNDO_PROFILE_INSERTION) or candidate.count(UNDO_PROFILE_INSERTION) != 1:
+        return False
+    if baseline.count(UNDO_SOURCE_BEFORE) != 1 or candidate.count(UNDO_SOURCE_AFTER) != 1:
+        return False
 
     projected = candidate.replace(insertion, "", 1)
     projected = projected.replace(REMAINING_PROFILE_INSERTION, "", 1)
     projected = projected.replace(ALPHA_PROFILE_INSERTION, "", 1)
     projected = projected.replace(VIDEO_SOUND_PROFILE_INSERTION, "", 1)
     projected = projected.replace(VIDEO_SOUND_SOURCE_AFTER, VIDEO_SOUND_SOURCE_BEFORE, 1)
+    projected = projected.replace(UNDO_PROFILE_INSERTION, "", 1)
+    projected = projected.replace(UNDO_SOURCE_AFTER, UNDO_SOURCE_BEFORE, 1)
     projected = projected.replace(NEW_ALPHA_DEFAULT_COMMENT, OLD_ALPHA_DEFAULT_COMMENT, 1)
     return projected == baseline
 
@@ -238,6 +258,7 @@ def cmake_profile_delta_is_exact(baseline: str, candidate: str) -> bool:
     expected[REMAINING_PROFILE_BLOCK] += 1
     expected[ALPHA_PROFILE_BLOCK] += 1
     expected[VIDEO_SOUND_PROFILE_BLOCK] += 1
+    expected[UNDO_PROFILE_BLOCK] += 1
     return (
         collections.Counter(source_property_blocks(candidate)) == expected
         and non_profile_text_matches(baseline, candidate)
@@ -252,7 +273,7 @@ def test_profile_guard_rejects_policy_mutations():
     baseline = (
         'set_source_files_properties(src/previous.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
         + OLD_ALPHA_DEFAULT_COMMENT
-        + 'set(OPENSMACX_SOURCES\n    src/video.cpp\n)\n'
+        + 'set(OPENSMACX_SOURCES\n    src/video.cpp\n    src/general.cpp\n)\n'
         + 'add_compile_options("/DDEFAULT=1")\n'
         'target_link_options(Game PRIVATE "/FIXED:NO")\n'
     )
@@ -262,7 +283,25 @@ def test_profile_guard_rejects_policy_mutations():
     candidate += ALPHA_PROFILE_INSERTION
     candidate = candidate.replace(VIDEO_SOUND_SOURCE_BEFORE, VIDEO_SOUND_SOURCE_AFTER, 1)
     candidate += VIDEO_SOUND_PROFILE_INSERTION
+    candidate = candidate.replace(UNDO_SOURCE_BEFORE, UNDO_SOURCE_AFTER, 1)
+    candidate += UNDO_PROFILE_INSERTION
     assert cmake_profile_delta_is_exact(baseline, candidate)
+
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate.replace(UNDO_PROFILE_INSERTION, "", 1))
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate + UNDO_PROFILE_INSERTION)
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate.replace(UNDO_SOURCE_AFTER, UNDO_SOURCE_BEFORE, 1))
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate.replace(UNDO_SOURCE_AFTER,
+                                    UNDO_SOURCE_AFTER + "    src/scenario_undo.cpp\n", 1))
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate.replace(UNDO_PROFILE_BLOCK_TEXT,
+                                    UNDO_PROFILE_BLOCK_TEXT.replace("src/scenario_undo.cpp", "src/general.cpp"), 1))
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate.replace(UNDO_PROFILE_BLOCK_TEXT,
+                                    UNDO_PROFILE_BLOCK_TEXT.replace("/Oy-", "/Oy- /Ob0"), 1))
 
     assert not cmake_profile_delta_is_exact(
         baseline, candidate.replace(VIDEO_SOUND_PROFILE_INSERTION, "", 1))
@@ -388,6 +427,10 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
         (ROOT / "recovery/tasks/video-sound-owner-oct17.json").read_text(encoding="utf-8")
     )
     assert video_sound_task["base_revision"] == VIDEO_SOUND_BASE_REVISION
+    undo_task = json.loads(
+        (ROOT / "recovery/tasks/general-owner-split-oct17.json").read_text(encoding="utf-8")
+    )
+    assert undo_task["base_revision"] == UNDO_BASE_REVISION
     baseline_cmake = baseline_text("CMakeLists.txt")
     current_cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     assert cmake_profile_delta_is_exact(baseline_cmake, current_cmake)
@@ -404,6 +447,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/win.cpp" in application_sources
     assert "src/video.cpp" in application_sources
     assert "src/video_sound.cpp" in application_sources
+    assert "src/scenario_undo.cpp" in application_sources
 
     actual_profiles = dict(source_property_blocks(current_cmake))
     assert actual_profiles == EXPECTED_CMAKE_PROFILES
@@ -415,6 +459,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/win.cpp" not in profiled_sources
     assert "src/video.cpp" not in profiled_sources
     assert actual_profiles[("src/video_sound.cpp",)] == ("/Oy-",)
+    assert actual_profiles[("src/scenario_undo.cpp",)] == ("/Oy-",)
+    assert "src/general.cpp" not in profiled_sources
     assert "src/sprite.cpp" not in profiled_sources
     assert "src/net_class.cpp" not in profiled_sources
     assert all(owner not in profiled_sources for owner in REJECTED_OWNERS)
@@ -434,6 +480,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     for owner in NEW_OWNERS + tuple(
         owner for owner in REMAINING_OWNERS if owner != "src/technology_queries.cpp"
     ) + REJECTED_OWNERS + PREVIOUS_REJECTED_OWNERS + (
-        "src/win.cpp", "src/alpha.cpp", "src/video.cpp", "src/video_sound.cpp"
+        "src/win.cpp", "src/alpha.cpp", "src/video.cpp", "src/video_sound.cpp",
+        "src/scenario_undo.cpp",
     ):
         assert owner not in unit_profiles, (owner, unit_profiles.get(owner))

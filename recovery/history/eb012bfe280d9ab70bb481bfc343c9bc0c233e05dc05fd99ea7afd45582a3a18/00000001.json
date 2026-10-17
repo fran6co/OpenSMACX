@@ -1,0 +1,25 @@
+{
+  "event_id": "5d8ee2ae045057cfd457a2a835d5f9ae26b981c8082479417deb45a8b9c2e8fc",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_application_link_recovery.py",
+      "recovery/tests/test_council_salvage_operands_oct10.py",
+      "recovery/tests/test_media_motion_indices_oct17.py",
+      "recovery/tests/test_player_member_reads_oct17.py"
+    ],
+    "evidence": [
+      "Fresh qualified baseline134tests has118PASS/16FAIL; first candidate166tests146PASS/18FAIL/2SKIP. All32newcontrolsPASS. Two previously passing source-freeze checks fail only because they assume records remain in General/Council. Preserve their old immutable comparison semantics by exact inverse projection of the actual current owners using the new migration helper; do not reset baselines, omit original fields or weaken equality.",
+      "Two previously passing original-image controls skip in the isolated worker solely because they hardcode a checkout-local ignored image path. Honor configured OPENSMACX_IMAGE with the same existing default/pin and all existing assertions; no new fixture or skip waiver. The previously failing salvage whole-source freeze remains failing unless its prior independent authored changes are addressed separately; inverse-project only this task delta.",
+      "Independent source review supports behavior/ownership/test coverage but requires correcting obsolete generated-artifact prose that falsely says the moved Council helpers are uncompiled/unowned and directs agents to retired tools. Admit removal or explicit correction of that obsolete plain-comment boilerplate and moved trailing whitespace, preserving all identities/metadata/claims/useful source-form rules/lessons and exact bodies. Inverse migration may restore ONLY exact known removed comment spans/whitespace for immutable comparison; body/annotation/state mutation witnesses must still fail. Task baseline remains b24, not a reset.",
+      "Initial actual165receipt179object build/linkPASS and all4selectedcurrentlinkedprobesPASS; actual101cohort gains4withoutloss and full5581census3231/1968strictPASS with priorclassificationsstable. These are pre-cleanup evidence only. Freeze revised source/tests, rerun fresh real build/link, actual/canonical/source/reference and paired qualified controls, review and destination verification before manual checkpoint. Cross-object General data residual/newowner qualification and3original strictUNKNOWN remain unfinished."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "owner-migration-controls-and-comment-cleanup",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:general-owner-split-oct17"
+}

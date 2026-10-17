@@ -1,5 +1,6 @@
 """Actual proposal case and PlayerData layout; no whole-game acceptance."""
 from dataclasses import fields
+import os
 from pathlib import Path
 import subprocess
 
@@ -19,7 +20,8 @@ def case(source):
 
 def test_existing_case_and_all_original_evidence_survives():
     path=ROOT / "src/council.cpp"
-    now=path.read_text()
+    from test_general_owner_split_oct17 import inverse_split, LIVE_PATHS
+    now=inverse_split({key: owner.read_bytes() for key, owner in LIVE_PATHS.items()})["council"].decode()
     old=subprocess.check_output(["git","show",BASE+":src/council.cpp"],cwd=ROOT).decode()
     assert now==old
     rows=read_text(now,path)
@@ -121,7 +123,7 @@ def test_pinned_peer_operand_encodings_and_row_cursor():
     from match_recovery.pe_coff import PeImage
     from match_recovery.model import Span
     from match_recovery.source_inventory import image_pin
-    path=ROOT / ".opensmacx/game/terranx_original.exe"
+    path=Path(os.environ.get("OPENSMACX_IMAGE", str(ROOT / ".opensmacx/game/terranx_original.exe")))
     if not path.exists():pytest.skip("pinned original unavailable")
     image=PeImage(path.read_bytes(),image_pin(ROOT))
     for address,encoding in ((0x52B77D,"b9aced9600"),(0x52B78C,"8b9920ffffff"),

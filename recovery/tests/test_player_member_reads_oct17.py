@@ -71,7 +71,11 @@ def test_entire_owner_delta_preserves_annotations_history_and_other_bodies(unit)
         expected = expected.replace(old, new, 1)
     # Complete source equality also protects every marker, binding, historical
     # claim, seed finding, declaration, non-target body and static initializer.
-    assert (ROOT / unit).read_text() == expected
+    current = (ROOT / unit).read_text()
+    if unit == "src/council.cpp":
+        from test_general_owner_split_oct17 import inverse_split, LIVE_PATHS
+        current = inverse_split({key: path.read_bytes() for key, path in LIVE_PATHS.items()})["council"].decode()
+    assert current == expected
 
 
 def test_pinned_original_player_width_stride_and_range_evidence():

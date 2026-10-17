@@ -5,6 +5,7 @@ executable-derived object, disassembly or fixture is stored in the repository.
 """
 
 from pathlib import Path
+import os
 import shutil
 import struct
 import subprocess
@@ -363,7 +364,7 @@ def test_net_shared_defaults_and_all_primary_tables_match_original_bindings(comp
     from match_recovery.shared_binary import check_shared
     from match_recovery.structural_requirements import check_requirements
 
-    image_path = ROOT / ".opensmacx/game/terranx_original.exe"
+    image_path = Path(os.environ.get("OPENSMACX_IMAGE", str(ROOT / ".opensmacx/game/terranx_original.exe")))
     if not image_path.is_file():
         pytest.skip("pinned original image is required for live shared-body proofs")
     view, snapshot = project_view(ROOT)
