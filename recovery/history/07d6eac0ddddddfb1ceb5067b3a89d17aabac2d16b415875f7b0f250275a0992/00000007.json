@@ -1,0 +1,18 @@
+{
+  "event_id": "07c6c880fd9ecb0986dda1a849488c2ac673da0ebcfa40c1f2ccfd825b57a4ae",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "ui-base-and-visibility-api-discovery-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/reportwin.cpp reset now qualifies exactly its six inherited Buffer calls; src/multiwin.cpp uses the two unchanged-condition child.mark_visible calls and background-to-screen draw receiver; src/win.h defines a narrow nonvirtual inline operation preserving all other flag bits and field/layout/vtable declarations. All79original identities/binding payloads/history across the three CPP owners remain unchanged; no new original helper identity is invented.",
+      "Independent actual-source review found no behavioral blocker. Native actual/two-frame owner controls calibrate to fresh full application build9bcvavvt, which compiles/links. Final125hostcases preserve every115baseline outcome (86pass/29preexistingfail), add10passing controls, no skip/error; exact source/test digests retained in candidate-final-host.json. All5581CPP/3162primarystrict/610supplemental classifications unchanged. This incorporates the source-level API/receiver finding only: satellite and broad full-build collateral discoveries remain pending; original-scope native14FAILs are not waived, no merge or automatic/runtime/game acceptance is granted."
+    ]
+  },
+  "previous_event": "cccfee406461f72f1305409c47359d4725374d8224b6e980e63fb422326545f0",
+  "request_id": "ui-base-and-visibility-api-source-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:ui-buffer-roles-oct17"
+}

@@ -691,13 +691,13 @@ void MultiWin::show() {
   if (IsMultiplayerNet == 0 && panel_open_ != 0) return;
 
   hovered_spot_ = -1;
-  // The seed sets each button's Win visibility bit directly. Use the real
-  // control interface here; reconcile any callback difference with draw().
+  // Publish only the original child visibility bits; show() also changes
+  // z-order/focus and invokes callbacks which do not belong at this point.
   if (ExpansionEnabled == 0 ||
       (Players[ConsoleGlobal.faction_id_].rule_flags & 0x80) == 0) {
-    flat_button1_.show(1);
+    flat_button1_.mark_visible();
   }
-  if (IsMultiplayerNet != 0) flat_button2_.show(1);
+  if (IsMultiplayerNet != 0) flat_button2_.mark_visible();
 
   if (GameDataStateStorage.fields_.game_preferences_ & 0x400) g_MULTIWIN_WAVE.play();
   MultiWindowVisibilityState = 2;
@@ -723,7 +723,7 @@ void MultiWin::show() {
     WinFlipClipped = 1;
     for (int frame = 0; frame < 6; ++frame) {
       const DWORD start = timeGetTime();
-      ScreenBufferOwner.buffer().draw(&background, 9, screen_rect.left, position, 1, 1);
+      background.draw(&ScreenBufferOwner.buffer(), 9, screen_rect.left, position, 1, 1);
       Win::flip(&screen_rect);
       position -= slide;
       do_sound();

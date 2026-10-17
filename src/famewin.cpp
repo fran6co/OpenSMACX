@@ -769,7 +769,7 @@ void FameWin::demote(int rank) {
   Buffer buffer;
   if (rank >= 4) return;
 
-  char number[16];
+  char number[80]; // Bounded original local at EBP-0x5C..-0x0C, above Buffer.
   StringTemp[0] = '\0';
   strcat(StringTemp, "hof_");
   _itoa(static_cast<int>(factionID_), number, 10);

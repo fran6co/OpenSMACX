@@ -1007,12 +1007,12 @@ void ReportWin::reset() {
         flatButtons1_[button].close();
     }
 
-    Buffer &buffer = buffer1_;
-    buffer.set_font(ReportIfGlobal.field_1E184_, ReportIfGlobal.field_1E184_,
+
+    Buffer::set_font(ReportIfGlobal.field_1E184_, ReportIfGlobal.field_1E184_,
                     ReportIfGlobal.field_1E190_, nullptr);
-    buffer.set_text_color(0x99, -1, 1, 1);
-    buffer.set_text_color2(0xF2, -1, 1, 1);
-    buffer.set_text_color3(0xE1, -1, 1, 1);
+    Buffer::set_text_color(0x99, -1, 1, 1);
+    Buffer::set_text_color2(0xF2, -1, 1, 1);
+    Buffer::set_text_color3(0xE1, -1, 1, 1);
 
     rect1_.left = energy_panel_rect_.left;
     rect1_.top = energy_panel_rect_.top;
@@ -1021,13 +1021,13 @@ void ReportWin::reset() {
 
     report_work_rect_ = energy_panel_rect_;
 
-    buffer.box_sprite(&report_panel_rect_, &InterfaceBoxStyles[9]);
+    Buffer::box_sprite(&report_panel_rect_, &InterfaceBoxStyles[9]);
 
     report_frame_rect_.left -= 3;
     report_frame_rect_.top -= 3;
     report_frame_rect_.right += 3;
     report_frame_rect_.bottom += 3;
-    buffer.box_sprite(&report_frame_rect_, &InterfaceBoxStyles[3]);
+    Buffer::box_sprite(&report_frame_rect_, &InterfaceBoxStyles[3]);
     report_frame_rect_.left += 3;
     report_frame_rect_.top += 3;
     report_frame_rect_.right -= 3;

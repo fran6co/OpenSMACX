@@ -348,8 +348,8 @@ class Win : public AutoSound {
   // which is why `??_GWin` emitted `call dword ptr [...]` through a seam
   // where the image emits `call rel32`. Body homed in `win.cpp`.
   ~Win();
-
-
+  // Set only visibility state; unlike show(), no callbacks or z-order work.
+  void mark_visible() { iSomeFlag_ |= 1U; }
   // Returns `this`: the image's own real `??0Win@@QAE@XZ` sets `eax = this`
   // before its epilogue, which a void-returning method never emits.
   int move(int x, int y);

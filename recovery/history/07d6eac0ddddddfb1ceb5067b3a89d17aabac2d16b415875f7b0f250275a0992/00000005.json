@@ -1,0 +1,50 @@
+{
+  "event_id": "586619d82666fcb6c14c0fbba8bf49241f6d8d1f833d55e9630041408b12ea0a",
+  "payload": {
+    "affects": [
+      "entity-16dab244dca9f6f25af43cce24d464934f39f978dc751924a872d479a7fd68d5",
+      "entity-1d8b1b7c4319986540583ca26753fda50455a6073d07350ff8f14a1d68f6e2e3",
+      "entity-1f9cd7210ae39d1e9f88a471acb224dc1c51b2254c0f882878b03dde93a23bbe",
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062",
+      "entity-29abb447a5ed543b62e98c5b39257d6007e0a3ad993b43ce4dca584104bfee54",
+      "entity-394ad3b30849977175e8ec8753bc6e2c0cd51b9d06028033e3047a4afdadc6e9",
+      "entity-3d2ed9906a5d731cbf3ad8f2aa6a302a146a224324e08704fe21b89b56c93255",
+      "entity-42b38e697a8c4dc74322f7249b30d610aad5cd8b55841dc26234e6904e083bf7",
+      "entity-43dc91f8eadeeafdfce71cef683cecd13fa360700fa853de2f6cfe053081b1f5",
+      "entity-448ef01136d5d18b9241a9cc71f50e9cdabaed5b705adc0dcb52a74aaabba67d",
+      "entity-555cc9d3b5d3bf4e6d4208d87e645cd7626b66a4685ebcb263ee6fa3177191ea",
+      "entity-5607535bc3031387a15e4a3919bfcfce81ebbb571a59ccc31006713936c1938d",
+      "entity-7a5f50d819960fe621e2bb0d4efd3335c22611cb27cd4f38ba7d492ea9e05b63",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-7e1927d2edca9bf8b87efb933e9a496195b7aec43c021555e234097bfc6b9b67",
+      "entity-84c054d6a36927f678a13177c6bedd74485393a7b255c97ff7f44a96cf56ceff",
+      "entity-96dadf05f6cba9342cacfb7f5c6dcf826d71fd85d8f5dc99c0410ad135f92a17",
+      "entity-a5a5e2e54cb505d05ee2bb07f21c34bb15a1ed4491cb6a4f85967c5203810097",
+      "entity-aa19a62cf1805738cd2b82fde89e6967b320b5ebbad395c4458fbe133673eefa",
+      "entity-b825275a563a538a20817bae6dae36b4faf002ee34891fdc02c8dcbead97b0c5",
+      "entity-b9fddddd579d58fb2311adcaeb92178a7a4a4e9636148aabe9a89b3d0d89fedc",
+      "entity-ba74171a42cb145db1b4929492636dad449e0d592574c0e703270d86502237d8",
+      "entity-c07f1ce86a5f653e22dee09a2df5ee8f3f8ff0ebb4415063e76507b1d408d578",
+      "entity-c3ab6505cda74476379be71d572ca1adfe37784f992bf5d8728e321d44f07b68",
+      "entity-c85c2df93a3a021792e2e4c164aa2dcad08864b80da56d3806fd9adf3cf38a2f",
+      "entity-f2a45ff703697b88649f83ff5b99f0f5b226c869353d3a810aa61d252a776a8c",
+      "entity-f67020b4c0b864666ea2b2c0813956d50a4e1e70b2c2fe43a9d35664220a5185",
+      "entity-fa9c794b568108252e79ecdd1f80e2a0b79b0aa34fd4e3f12abfb5be7fc2e97a",
+      "entity-fdc1b3259f87890f79d50a0ae8431b08eb2dbdb262f2c614fb93d43461bd8035"
+    ],
+    "author": "coordinator",
+    "discovery_id": "win-visibility-header-full-build-collateral-oct17",
+    "evidence": [
+      "Fresh candidate complete application build/link PASS in build-9bcvavvt. All three actual source/header overlays calibrate byte/reference-aware to actual owner COFF. Full176object comparison retains162pass/14fail under original three-body scope; including previously reviewed satellite witness yields163pass/13fail, not a pass. Preserve candidate-physical.json and all objects. No original-function source outside the three targets was edited.",
+      "Fresh complete5581CPP census has exactly the same identities/verdicts as baseline; all3162primary strict classifications and610supplemental diagnostics likewise remain. This does not qualify compiled collateral as semantically equivalent.115oldhost outcomes unchanged (29knownfailures) plus10newcontrols pass.",
+      "The13additional units are alpha,base,basewin,console,council,enemy,faction,game,net_class,netdaemon,newgame,prefwin,probe.29existing original source identities and two unmapped compiler/source helper witnesses are affected in physical diagnostics; no new origin is inferred. Six existing read-only reviewers inspect full physical bytes, entries/references, ownership and EH/data separately; do not dismiss changed private label spellings or instruction scheduling without evidence."
+    ],
+    "hypothesis": "The newly declared meaningful Win inline visibility operation changes compiler representation or code in 13 additional unchanged-source translation units.",
+    "kind": "discovery"
+  },
+  "previous_event": "9b1839fa6e9e87959aca9dc95962b97344351104ddb4898edc21333041a74ae0",
+  "request_id": "win-visibility-header-full-build-collateral-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:ui-buffer-roles-oct17"
+}
