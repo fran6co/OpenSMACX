@@ -17,7 +17,7 @@ from typing import Iterable
 from .components import relative_path
 from .journal import Journal
 from .model import Origin, require_digest, require_text
-from .records import publish_json, read_json
+from .records import parse_json, publish_json
 
 
 def task_name(value: str) -> str:
@@ -89,15 +89,22 @@ class TaskStore:
         self.root = Path(root)
         self.journal = Journal(self.root / "recovery" / "history",
                                lock_directory=self.root / relative_path(private) / "locks")
+        self._task_cache: dict[str, tuple[bytes, Task]] = {}
 
     def create(self, task: Task) -> bool:
         return publish_json(self.root / "recovery" / "tasks" / (task.task_id + ".json"),
                             task.to_dict(), allow_identical=True)
 
     def read(self, name: str) -> Task:
-        task = Task.from_dict(read_json(self.root / "recovery" / "tasks" / (task_name(name) + ".json")))
+        name = task_name(name)
+        payload = (self.root / "recovery" / "tasks" / (name + ".json")).read_bytes()
+        cached = self._task_cache.get(name)
+        if cached is not None and cached[0] == payload:
+            return cached[1]
+        task = Task.from_dict(parse_json(payload))
         if task.task_id != name:
             raise ValueError("task filename disagrees with its identity")
+        self._task_cache[name] = (payload, task)
         return task
 
     def decisions(self, name: str) -> tuple[dict, ...]:
