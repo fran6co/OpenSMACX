@@ -66,7 +66,7 @@ char FileWinListWindowTitle[1] = {0};
 Purpose: Append one default extension to FileWin's four-slot extension
          table at 0x518: five bytes per slot, the count at 0x514.
 
-// ORIGINAL: 0x00614140 ?add_def_ext@FileWin@@QAEHPAD@Z 0x00614140-0x006141BC
+// ORIGINAL: 0x00614140 ?add_def_ext@FileWin@@QAEHPAD@Z 0x00614140-0x006141BC BYTE_EXACT
 // symbol   ?add_def_ext@FileWin@@QAEHPAD@Z
 // size      124 bytes
 // prototype int (__thiscall ?add_def_ext@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)
@@ -85,12 +85,11 @@ int FileWin::add_def_ext(char *extension) {
     if (extension == 0) {
         return 0x10;
     }
-    char *const slot = extension_filters_[extension_count_];
-    slot[0] = '\0';
+    extension_filters_[extension_count_][0] = '\0';
     if (strlen(extension) > 4) {
         return 3;
     }
-    strcat(slot, extension);
+    strcat(extension_filters_[extension_count_], extension);
     ++extension_count_;
     return 0;
 }
