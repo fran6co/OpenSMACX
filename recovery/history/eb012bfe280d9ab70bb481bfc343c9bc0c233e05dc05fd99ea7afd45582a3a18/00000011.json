@@ -1,0 +1,20 @@
+{
+  "event_id": "a22cca3e149d2dd92496d1677c6cb63248c23545fef74fee36af2a32e9dfa811",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_general_owner_split_oct17.py"
+    ],
+    "evidence": [
+      "Explicitly admit only the exact old-to-new cos body normalization in the existing General inverse helper, retaining immutable b24 and fcaa baselines, every prior owner body/annotation/API/mutant and extra-source refusal. Add phase/body mutation witnesses so arbitrary current code is never replaced with historical source.",
+      "Correct the preceding activation narrative: the unmeasurable neighbor at62C8E0 is select_direct_draw_device (original sub_62c8e0), NOT get_class. This typo grants no scope or identity change for that function. Its unsupported cold EH-region extent remains unknown, unchanged and protected; the cos screen does not establish complete General task acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a8c588d8584194f9a39d74b53260d8e4eec098bb2104a71391b345dde13c6e5f",
+  "request_id": "fixed-cos-exact-inverse-scope-oct18",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:general-owner-split-oct17"
+}
