@@ -1,0 +1,22 @@
+{
+  "event_id": "a816c1a15784ced184f7a67067f5147aa724285dff90a4cc81e73a9a86462cc8",
+  "payload": {
+    "affects": [
+      "entity-3d45453e35ab2907ad04ad29e5e71f0740fa7308a4eee377fbe9fc69dda6e5b3",
+      "entity-4671d0f4308762b29ee5f31f0cfc4b96a7161e01e5edef403fa109f5cc5a5eaf"
+    ],
+    "author": "coordinator",
+    "discovery_id": "prodpicker-associated-data-callback-obligations-oct17",
+    "evidence": [
+      "edbc_fac493B70 source records67code bytes; the masked comparator additionally compares an83byte emitted data tail. Current fullCOMDAT is160bytes including alignment/table. Equal observed tail and current linked verification do not prove its independently owned original data extent or justify enlarging ORIGINAL. Strict extent/reference refusals/failures remain unwaived.",
+      "UNK2 callback4946D0 has source-declared cdecl SAX emitted identity distinct from historical QAA. It exists in the current COFF but has no unique current MAP entry; do not infer placement or acceptance from matching source bytes. No original symbol/annotation/ownership changes were made."
+    ],
+    "hypothesis": "Preserve independent original extent and callback ownership/selection obligations despite new masked agreement.",
+    "kind": "discovery"
+  },
+  "previous_event": "4c912b65253d19077485b5aa47d5d2c944efc2c7d9e096d9b08b5cf5f97a0930",
+  "request_id": "prodpicker-associated-data-callback-obligations-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:window-owner-frames-oct17"
+}
