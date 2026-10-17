@@ -1,0 +1,43 @@
+{
+  "author": "coordinator",
+  "base_revision": "fa56fb2fd04925ecf98ba55915107dd5380bf23b",
+  "editable_files": [
+    "src/worldwin.cpp",
+    "recovery/tests/test_worldwin_map_slot_oct17.py"
+  ],
+  "evidence": [
+    "Masterfa56fb2fd is clean and freshly verified after typed-player integration: build-xgrv0jti compiles/links, all176physicalobjects reproduce the reviewed candidate without omissions, all5581CPP classifications retain3161masked matches and strict1930PASS/1206UNKNOWN/25FAIL. Player/Council host226PASS/13unchangedFAIL. Current build and every receipt/input/output were requalified after superseded-build/worktree cleanup. Requalify again before native calibration. No whole original-function-universe, linked retention, hierarchy/runtime or game acceptance is established.",
+    "Pinned WorldWin::init198byte span4C49A0..4C4A66 SHA d1a929bb30ec7a73d4ec29780b827f9c21f0b349775cf6aa165e978d08927b9f:4C4A11 C786A4F2010001000000 stores1 at receiver+1F2A4. Existing WorldWin.mapWin_ starts+152C, so the target is MapWin+1DD78 (slot/index), not current source field_1DD74_ (active flag), which emits receiver+1F2A0. Adjacent whole-owner writes and native header layout agree on the same receiver. This is a real target discrepancy, not a shifted-coordinate normalization artifact.",
+    "MapWin::clear462870 stores its index at+1DD78 (46287C) and index==0 at+1DD74 (4628AF). MapWin::init470A90 sets active+1DD74 itself at470AB1 and reads slot+1DD78 on subsequent paths, including its nested clear. In WorldWin startup the slot seed precedes conditional clear(1) and unconditional init(1,0); reset_map==0 preserves an otherwise stale slot. Read-only witnesses: WorldWin::UNK1, MapWin::clear and MapWin::init, source headers and relevant callers. Do not edit witnesses or infer original complete class extent, names or TU boundaries.",
+    "Authorize exactly the one WorldWin::init expression target field_1DD74_ -> existingfield_1DD78_; preserve its value1 and ordering. No declaration/header/layout/constructor/global/callee/storage/flags/profile/linker/framework change, export, assembly/copiedcode, bound/marker/claim edit or deliberate bug fix. Preserve all other startup conditions, state/rectangle reads/stores, optional clear, Win::init arguments and virtualshow. Historical annotations and seed findings remain verbatim. This repairs the source translation to match the original; do not normalize unsafe/error paths.",
+    "Prepare a new isolated native worker and compiler lease. Before production edits, run actualRelease and the distinct settled other-frame-family baseline/unchangedoverlay/ordinaryentrythrowdamage/completecandidateoverlay, calibrating actualwholeowner to freshly requalified retained master. Freeze source/Git/recipes in each epoch. Compare all mapped WorldWin verdicts and native wholeCOFF outside only the original startup body; preserve every other code/data/reference/EH/FPO section. Reject unreviewed collateral. No invented historical positive or exactness claim.",
+    "Adapt the ignored actual-source WorldWin fixture draft into the authorized test file only after controls terminate. Preserve complete actual UNK1/init extraction; pinned full198span hash and store opcode plus independent MapWin clear/init field witnesses. GCC/Clang C++98 spies check stale slot0/6 with reset0/1/-1, initial active0/1, both StatusFlags guard outcomes and unrelated bits, tutorial RECT transfer, map clear/init/baseinit/show arguments/order and source-owned state at boundaries. Runtime-failing wrong-member/deleted-seed/reset/clear/mode/order/status mutations must demonstrate meaningful controls. Host spies establish declared call contracts, not complete MapWin/graphics/native runtime proof. Do not add a vacuous policy test or another permanent whole-file historical freeze; native snapshot/whole-object comparisons supply bounded change continuity.",
+    "After all compiler epochs terminate require focused new/old host controls, native claims/references/mappings, independent actualsource review, fresh full application build/link, complete176physicalobject comparison, fresh5581CPP and strict/reference observations. Identify gains/losses and preexistingunknown/failures rather than waiving them. Only native recover record may bank a newly measured historical exactness claim, if its configured measurement and source obligations genuinely qualify; inability to bank does not erase current observations. Coordinator-reviewed checkpoint and fresh destination checks, then safe completedworker/supersededbuild cleanup. No native automatic/full-game acceptance."
+  ],
+  "intent": "Restore the original WorldWin startup write to its embedded MapWin slot/index member, not the adjacent active flag.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4655760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4597872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4995696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4999584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "worldwin-map-slot-oct17"
+}
