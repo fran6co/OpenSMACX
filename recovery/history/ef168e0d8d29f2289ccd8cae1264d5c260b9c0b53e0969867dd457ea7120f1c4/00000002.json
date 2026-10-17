@@ -1,0 +1,20 @@
+{
+  "event_id": "7854663e28309e3924c47c48e7f01b3aa55eacf45fe107ee5022b39607938c04",
+  "payload": {
+    "affects": [
+      "entity-55b78db90a5394bf2c4c96e83ecae40fa8fc2f1ad8ddd7a8d86705c563e422ff"
+    ],
+    "author": "coordinator",
+    "discovery_id": "zero-turn-altitude-tail",
+    "evidence": [
+      "Pinned alt_set591290..591894: JE5912A0 targets591852, which computes map index, writes climate=(old&1F)|(altitude lowbyte<<5) at591882 and sets shared flag|4 at59188B before RET591893. Current src/map.cpp8289 returns before existing common tail8447. Fresh run-41gjpunt entry snapshots show candidate0land/3200altitude1 versus original2051land/3200tiles. RNGseeds differ; this snapshot does not prove full terrain equivalence or exclude further defects. Read-only triage shows setup_player original parity/retry/index/overflow behavior agrees with source. New source scope and tests required before edits."
+    ],
+    "hypothesis": "The recovered altitude setter incorrectly returns on turn zero, omitting the original common climate write and terrain invalidation flag; this can suppress all land during world generation. Restore original common-tail control flow, not a player-placement bounds fallback.",
+    "kind": "discovery"
+  },
+  "previous_event": "a3b05a3a6befcc0d389698e10a54a6bfa9a145e9b8b885591b0981bfb6cfd3da",
+  "request_id": "zero-turn-altitude-tail",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:basepop-start-init-oct17"
+}
