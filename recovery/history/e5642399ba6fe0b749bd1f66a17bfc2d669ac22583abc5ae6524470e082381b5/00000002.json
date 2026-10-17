@@ -1,0 +1,28 @@
+{
+  "event_id": "5603b02ce70fce7c7c50adaef7f915d0fa11e2273b61a9e26d0fd143f46ccf95",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_base_names_store_order_oct17.py",
+      "src/console.cpp"
+    ],
+    "evidence": [
+      "Authorize exactly one chained expression in Console::base_names to become two statements: GameDataStateStorage.fields_.game_more_preferences_ first, AlphaIniPrefs.more_preferences second, same new_flags. No other source/body/type/global/member/marker/claim or compiler-policy change.",
+      "Add actual-source host controls for all flag branches, exact values, two-write order and prefs_save/draw_map observation order, plus swapped/chained assignment mutation controls. Native original/COFF checks must confirm repaired reference order while unresolved aggregate binding remains UNKNOWN. Extend whole-object residual protection to exclude only this fifth source identity and require build/link, independent review and destination recheck.",
+      "Task baseline8a579665183d544d8118389f2cb477688594f985 and all prior obligations remain unchanged. This is one bounded cross-owner restoration batch, not automatic acceptance or a reason to weaken evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5330432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2ce35d47fa9ae48b73ec1bddaadd7661efe2ffafedbe5e7cc8bb23426bb7509e",
+  "request_id": "authorize-console-preferences-store-order-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:popup-default-store-order-oct17"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "60a39693feb0e0df4777e8b0e647fc2a6776c1088691ea90ee7a6350d43d79d0",
+  "payload": {
+    "affects": [
+      "entity-112c0d0c116ab2e371d98b3b4941dc785e844b3c0814932fde9fbadc6af02947"
+    ],
+    "author": "coordinator",
+    "discovery_id": "console-cursor-danger-string-storage-owner-oct17",
+    "evidence": [
+      "Pinned cursor_next5109B0 pushes939FF0 at5109D5. Current source constant pointer emits the same absolute immediate but no relocation; native strict check reports missing_absolute_relocations offset38. This is unfinished source ownership/reference evidence, not proof the current operand is numerically wrong.",
+      "Other inspected Console history/member offsets agree with original addresses. GameDataStateStorage remains separately unresolved. No guessed char-array capacity/content, opaque fixed-address replacement, fabricated binding or claim authorized; keep original-body identity/claims and research storage provider/consumers."
+    ],
+    "hypothesis": "CursorNextDangerMsg2 is still an original-address constant in cursor_next; establish real writable object ownership/content/extent before replacing its literal with source-owned storage.",
+    "kind": "discovery"
+  },
+  "previous_event": "21b8fe5153f9fdb7a6d5186ff100f7a66b9a6f63119434372c1725e593f43179",
+  "request_id": "console-cursor-danger-string-storage-owner-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:popup-default-store-order-oct17"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "6eb13a0dd1fbef4dc97441b029fd2b3a5bfafd023de1bf02a1cd2355c56c21ba",
+  "payload": {
+    "affects": [
+      "entity-b195d4b7bfb8cebe37982c751561ca005d1ba361f4656424ee124a81d44dae7f"
+    ],
+    "author": "coordinator",
+    "discovery_id": "popup-tutorial-inlined-popt-store-order-oct17",
+    "evidence": [
+      "Fresh candidate build-055wxpqd compiles/links. Native physical inventory compared all176objects against fresh master build-x_ab_28o:175PASS,1FAIL. The sole residual is popup.cpp popt; no ref identity, symbol or association changes are reported.",
+      "Independent own-COFF comparison: both popt bodies272bytes/30relocations; only rawbytes at60hexand65hex change addends4to0 and0to4 for BasePopDefaultField21C0. Both compile popups_tutorial setup inline and then call X_pop/popups_normal; there is no tutorial-call relocation in either candidate object.",
+      "Pinned original popt mapping48C320..48C353 is51bytes and calls5888E0,5BF480,588460. Its expanded272byte current body was already MISMATCH; all popup/console300mapped verdicts are unchanged by this batch. Do not claim popt original equality or silently change inlining/compiler policy."
+    ],
+    "hypothesis": "The corrected tutorial default-store order also changes the compiler-inlined copy inside popt; its independent original caller-body matching obligation remains.",
+    "kind": "discovery"
+  },
+  "previous_event": "60a39693feb0e0df4777e8b0e647fc2a6776c1088691ea90ee7a6350d43d79d0",
+  "request_id": "popup-tutorial-inlined-popt-store-order-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:popup-default-store-order-oct17"
+}

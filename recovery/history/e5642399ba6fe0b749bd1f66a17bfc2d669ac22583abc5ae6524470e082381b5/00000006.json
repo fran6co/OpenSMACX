@@ -1,0 +1,24 @@
+{
+  "event_id": "7212643c4fa8afbea5013dc0d32570e67e0c8f30131df447565e21609b58ab47",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize only the two proven addend changes in the already emitted tutorial inline copy within popt as necessary dependent collateral of the four explicit source-store corrections. The source popt body must remain unchanged; no other helper/body, flags, retention/export policy or annotation changes.",
+      "Keep the original strict/scoped preservation refusal report. Rerun native physical comparison with the six explicitly authorized original identities, independently verify the bounded two-byte inline delta and retain popt MISMATCH as a historical restoration obligation. Fresh destination must reproduce every physical object with zero body exclusions. This is coordinator-reviewed source recovery, not full linked preservation or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4768544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "6eb13a0dd1fbef4dc97441b029fd2b3a5bfafd023de1bf02a1cd2355c56c21ba",
+  "request_id": "authorize-popt-inline-default-store-collateral-oct17",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:popup-default-store-order-oct17"
+}
