@@ -1,0 +1,32 @@
+{
+  "author": "coordinator",
+  "base_revision": "423eb0250f4e59a19410add7c996af91582c9ed1",
+  "editable_files": [
+    "src/win.cpp",
+    "src/win.h",
+    "recovery/tests/test_win_child_cursor_types_oct17.py"
+  ],
+  "evidence": [
+    "Pinned5ECE80 compares its one four-byte argument against receiver+1A4 entries, using signed count+3FC and a null argument guard. Source-owned children_ isWin*[150]; pinned/source add_child5F5200 storesWin* and remove_child5F5270 and is_descendant5ECE20 consume the same array asWin*. Retype current is_child toWin*child and compare actual pointers. Prior win-pointer-identity-owner-oct10 intentionally left this API outside its scope; this is a separate explicitly reviewed task, not a reset or expansion of that older baseline.",
+    "No authenticated original C++ signature exists for reconstructed catalogueUNK3/H and no current direct source caller was found. Treat the typed API as a descriptive source interpretation supported by the actual child owner, not a recovered original symbol. Preserve ORIGINAL catalogue identity, all spans/claims/history; coordinator observes actual native emitted decoration and updates only the current-symbol binding through the library writer.",
+    "Pinned5EC780 first guards the input pointer, then rejects a null four-byte handle cell with7; otherwise clears188, publishes194, clears198 and callsupdate_cursor(0,1) before returning0. Source cursor_handle_ isHCURSOR*, and update_cursor5F1820 later reads that same cell asHCURSOR before SetCursor. Replace only the int*reinterpret dereference with *name==0. No altered ownership, allocation, lifetime, callbacks, bounds or validation.",
+    "Independent read-only review found both corrections supported on pinned PE32 while distinguishing current descriptive types from original debug evidence. Workers may edit only the two definitions/declarations, immediate binding/purpose evidence and focused actual-source tests. Do not rewrite old compiler history, add compatibility overloads, broaden to unrelated Win bodies, change flags or edit ORIGINAL markers. Add positive/mutation controls for pointer identity, null and nonpositive count, early return, cursor pointer/cell gates and publication/update order.",
+    "Coordinator owns Git, isolated worktree preparation, leases and immutable native epochs; capture actual symbols, preserve full-TU baseline matches, check relevant references and physical collateral, build/link, independent review and recheck after integration. Manual reviewed integration is not native automatic or whole-game acceptance. No new claim is granted by source/type review."
+  ],
+  "intent": "Recover genuine child-pointer membership and typed cursor-cell reads in Win without integer pointer punning, preserving pinned behavior and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6213248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6211456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-child-cursor-types-oct17"
+}
