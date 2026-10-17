@@ -1,0 +1,20 @@
+{
+  "event_id": "630b17d41a33d6785da071b7b010e0839fb4a51c3207f7866293bf0349a1d92f",
+  "payload": {
+    "affects": [
+      "entity-975233ef05f1aacb88542bd1ccffb766fb76714b8e90dd4d823bf46d1a58f6ec"
+    ],
+    "author": "coordinator",
+    "discovery_id": "design-lock-cap-call",
+    "evidence": [
+      "Pinned581DB0 TEST AL,CL;581DB2 MOV EAX,63;581DB7 JNE581DBB; otherwise581DB9 MOV EAX,EBX. Both paths join581DBB PUSH0,581DBD PUSHEAX,581DBE PUSHEDI,CALLweapon_budget581DBF. Sourceveh.cpp17513-17 instead treats locked99 as returned WeaponID; candidate5EEA50/52/57 bypasses the call and shifts99*16 to read Weapon[99]+8 before divide5EEA86. Independently verified and prior contrary triage explicitly retracted in ignored consider-designs-triage.md and weapon-budget-triage.md. Captured zero divisor is consistent, but existing logs do not capture branch/selectedID, so causal runtime proof remains pending. Follow-up task with explicit source/test scope is required before editing veh.cpp."
+    ],
+    "hypothesis": "The locked AI design-selection path mistakes a conditional budget cap for a conditional call: source bypasses weapon_budget and indexes Weapon[99], while original always calls the selector with locked cap99 or computed cap. Restore conditional cap and unconditional selector in the real vehicle owner; do not add divisor guards.",
+    "kind": "discovery"
+  },
+  "previous_event": "726fbaf3ab71078b14d4aa6752cf39f5c957d6a942d4efad55168875cdf98264",
+  "request_id": "design-lock-cap-call",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:zero-turn-altitude-oct17"
+}
