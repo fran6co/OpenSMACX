@@ -1,0 +1,21 @@
+{
+  "event_id": "451669bcb6f84b23856a83abc10768d9f06d0ccbc653af9875ac73c2f1c5146f",
+  "payload": {
+    "affects": [
+      "entity-38b878c6d75b4261127ffd181c25b65e7f45f1e8ec1d489a248876b9084c14b4"
+    ],
+    "author": "coordinator",
+    "discovery_id": "buffer-rect-original-body-restoration-oct17",
+    "evidence": [
+      "Pinned5DA4D0..5DA67D decodes all429bytes/180instructions and has IntersectRect plus DirectDraw Lock/Unlock virtual calls; current21instructionforwarder does not reproduce that entry body/reference topology. Existing raw-offset direct TRIED history remains evidence of prior unresolved matching work, not a reason to retain a nonmatching wrapper.",
+      "Two frozen native frame-family experiments, eight compiler calls total, calibrate actual Release to freshly requalified master, reproduce unchanged overlays and observe ordinary body-throw damage. The typed candidate changes only the RECT signature; both outside-body residuals pass and every other Buffer classification remains unchanged. The actual candidate emits165instructions and remains MISMATCH, not an exactness promotion."
+    ],
+    "hypothesis": "The original Buffer RECT remapper owns direct clipping/acquisition/remapping/cleanup rather than forwarding to the coordinate overload.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "buffer-rect-original-body-restoration-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-rect-direct-oct17"
+}

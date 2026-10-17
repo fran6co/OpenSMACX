@@ -1,0 +1,20 @@
+{
+  "event_id": "7caf312d957dff5f3649e081dfa9b6a1d924730d45684f4bfa2386766b7fcd99",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "buffer-rect-original-body-restoration-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/buffer.cpp now implements the complete RECT overload with existing typed Buffer fields and actual DirectDraw API. It preserves separate null errors, original right/bottom decrement, clipping, pre-lock gap/post-lock pitch, successful-null/acquired-base/address-zero no-release paths, live table aliasing, nested/DIB state and post-paint cleanup. Successful Lock stores pitch, updated count and bits in the observed order. No raw receiver offsets, fixed executable calls, assembly, class-layout, compiler flag/profile or framework changes.",
+      "Independent source review found no substantive blocker after the acquired-base null check and publication order were corrected before measurement. The final actual-source host suite extracts product code, has no embedded-candidate substitution, retains coordinate/fill controls, translates three RECT syntax mutants and adds direct Lock/DIB/nested/null/pitch/alias/wrap controls. Both final51tests pass with zero failure/error/skip, including direct null-DIB counts0/3. The host-only extra control leaves native build fingerprint unchanged under the same complete declared environment.",
+      "Fresh worker build-z4_b7gdf compiles/links; native claims/references/mappings pass. All176physicalobjects pass outside only the authorized RECT body, with independent complete overlay-to-actual Buffer object calibration. Complete5581CPP,3162primarystrict and610supplementalstatic classification domains remain unchanged. Original identities/spans/symbols/claims/state/mode/recipes/roles and all39binding payloads remain associated with the same original identities despite later source line movement.",
+      "Coordinator-reviewed manual integration only, followed by fresh destination verification. No new function coverage or byte claim is asserted: RECT remains MISMATCH, original180instruction/0x8C frame and residual codegen restoration remain obligations. Current full census stays3162masked matches and strict1930pass/1207unknown/25fail. No exhaustive original function universe, complete hierarchy/lifetime, retained linked selection/allocation, native DirectDraw runtime or full-game/automatic acceptance follows."
+    ]
+  },
+  "previous_event": "451669bcb6f84b23856a83abc10768d9f06d0ccbc653af9875ac73c2f1c5146f",
+  "request_id": "buffer-rect-direct-body-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:buffer-rect-direct-oct17"
+}

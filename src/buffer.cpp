@@ -7105,11 +7105,104 @@ int Buffer::map_colors(int left, int top, int right, int bottom,
 
 
 int Buffer::map_colors(RECT *area, unsigned char *table) {
-    if (area == nullptr || table == nullptr) {
+    if (area == nullptr) {
         return 16;
     }
-    return map_colors(area->left, area->top, area->right - 1,
-                      area->bottom - 1, table);
+    if (table == nullptr) {
+        return 16;
+    }
+
+    RECT clipped = *area;
+    --clipped.right;
+    --clipped.bottom;
+    if (!IntersectRect(&clipped, &clipped, &rect1_)) {
+        return 0;
+    }
+
+    int rows = clipped.bottom - clipped.top;
+    const int width = clipped.right - clipped.left;
+    const int row_gap = static_cast<int>(stride_) - width;
+    if (clipped.left >= dib_.bmiHeader.biWidth
+        || clipped.top >= -dib_.bmiHeader.biHeight) {
+        return 7;
+    }
+
+    // The image inlines this acquisition and its release. Keep each state
+    // transition visible here instead of forwarding to the coordinate
+    // overload or to out-of-line free_data(). The successful-null surface
+    // path intentionally increments before the zero-address check below.
+    if (surface_ == nullptr) {
+        locked_bits_ = dib_bits_;
+        if (dib_bits_ == nullptr) {
+            return 7;
+        }
+        ++surface_lock_count_;
+    } else if (locked_bits_ != nullptr) {
+        ++surface_lock_count_;
+    } else {
+        DDSURFACEDESC description;
+        description.dwSize = sizeof(description);
+        if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+            return 7;
+        }
+        const int acquired_lock_count = surface_lock_count_ + 1;
+        stride_ = static_cast<uint32_t>(description.lPitch);
+        surface_lock_count_ = acquired_lock_count;
+        locked_bits_ = description.lpSurface;
+    }
+
+    // The native path rejects a null acquired base before calculating an
+    // offset. In particular, a nonzero clipped origin must not turn null
+    // storage into a dereferenceable-looking low address. It still leaves
+    // the successful Lock's published count/state untouched on this return.
+    if (locked_bits_ == nullptr) {
+        return 7;
+    }
+
+    // Keep target-width modular pointer arithmetic and the native zero test.
+    // A zero result returns without undoing a successful acquisition.
+    uintptr_t address = reinterpret_cast<uintptr_t>(locked_bits_)
+        + static_cast<uintptr_t>(static_cast<int>(stride_))
+            * static_cast<uintptr_t>(clipped.top)
+        + static_cast<uintptr_t>(clipped.left);
+    if (address == 0) {
+        return 7;
+    }
+
+    do {
+        int remaining = width;
+        do {
+            unsigned char *pixel = reinterpret_cast<unsigned char *>(address);
+            // Read the translation byte at the moment it is used; table may
+            // alias pixels being updated by this same traversal.
+            *pixel = table[*pixel];
+            ++address;
+        } while (--remaining != 0);
+        address += static_cast<uintptr_t>(row_gap);
+    } while (--rows != 0);
+
+    // Do not cache surface_ across the pixel writes: the original reloads it
+    // for cleanup after processing. Keep cleanup inline and after all writes.
+    if (surface_ == nullptr) {
+        const int remaining_locks = surface_lock_count_ - 1;
+        surface_lock_count_ = remaining_locks;
+        if (remaining_locks > 0) {
+            return 0;
+        }
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+        return 0;
+    }
+
+    const int remaining_locks = surface_lock_count_ - 1;
+    surface_lock_count_ = remaining_locks;
+    if (locked_bits_ == nullptr || remaining_locks > 0) {
+        return 0;
+    }
+    surface_->Unlock(locked_bits_);
+    locked_bits_ = nullptr;
+    surface_lock_count_ = 0;
+    return 0;
 }
 
 // ORIGINAL: 0x005DD730 ?wrap@Buffer@@QAEHPADHHH@Z 0x005DD730-0x005DD91C FILE
