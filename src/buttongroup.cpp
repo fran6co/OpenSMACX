@@ -43,19 +43,6 @@ ButtonGroup::ButtonGroup() {
 }
 
 /*
-// ORIGINAL: 0x004325B0 ??1ButtonGroup@@QAE@XZ 0x004325B0-0x004325B5 BYTE_EXACT
-// size      5 bytes
-// prototype void (__thiscall ??1ButtonGroup@@QAE@XZ)(ButtonGroup* this)
-// callers   0   call targets   0
-// kind      thunk
-// flags     hidden;thunk;sp_ready;purged_ok
-// calls     (none)
-*/
-ButtonGroup::~ButtonGroup() {
-    close();
-}
-
-/*
 Purpose: Clear the active group while retaining the original selected ID and flags slots.
 // ORIGINAL: 0x0062B7F0 ?close@ButtonGroup@@QAEXXZ 0x0062B7F0-0x0062B810 BYTE_EXACT
 // size      32 bytes

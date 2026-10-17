@@ -1,0 +1,21 @@
+{
+  "event_id": "dffc902c99d3ee238471d631a11f24cf5c10f02a4d9985b99ef403b840875a66",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "buttongroup-inline-lifetime-source-interpretation-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/buttongroup.h defines the unchanged close-only destructor inline; src/buttongroup.cpp no longer duplicates its body. The existing 4325B0 identity, original name, five-byte span, BODY mode, historical claim and every old fact were transported through native source writer/read validation and guarded publication to src/maininterface.cpp, with an explicitly authorized body src/buttongroup.h and rationale. All 64 identities in those two source files retain their other facts/claims. MainInterface is one current measurement/emission witness; ButtonGroup remains semantic owner and historical TU provenance remains unknown.",
+      "The final isolated application builds and links. All 176 physical objects reproduce the initial candidate without body omissions. Both diagnostic native compiler profiles verify the original standalone entry and PrefWin direct close target; an out-of-line-header overlay supplies the old mapped destructor target and produces a measured wrong-target FAIL, not an unbound UNKNOWN. CodeView verifies ButtonGroup size 94, no bases and every declared member offset. The pinned control independently verifies the entry, global receiver/finalizer and real constructor array arguments.",
+      "Twenty-five focused tests pass, including GCC/Clang actual declaration/constructor/close/destructor behavior, pointer clearing, preserved slots, repeated live reset, reverse array cleanup, substantive missing-cleanup/clear mutants, the two native profiles, Heap role controls and Sound dispatch/lifetime controls. Independent C++/annotation/native-test review found no source blocker and supports only this limited manual checkpoint. Native whole-source integrity passes 5,646 annotations across 357 scanned source files; historical claims, references and mappings pass.",
+      "All 5,581 mapped application function verdicts retain every previous masked exact result and gain 4325B0: 3,016 exact, no losses. The primary reference-aware audit is 1,828 PASS / 1,167 UNKNOWN / 21 FAIL; separate object-qualified private diagnostics are 565 PASS / 45 UNKNOWN, fixing PrefWin 48D540 without upgrading the primary private-symbol ambiguity. The actual current MAP selects the identical FameWin destructor COMDAT, not MainInterface; its physical compilation/link input and full 16-byte current code/alignment section agree with the linked PE and close target. This is not original retained-selection proof.",
+      "Coordinator authorizes the compiling manual checkpoint under the existing structural-migration policy, with the following unresolved physical/behavioral preservation obligations. No new claims are banked, no historical claim is demoted, no existing function body is replaced by a placeholder, and no automatic/full-game acceptance is claimed."
+    ]
+  },
+  "previous_event": "848d4928f342bbc2e8fe2e36f223e4a1bca1713aaec40d8e5fbccb3099019190",
+  "request_id": "incorporate-buttongroup-inline-lifetime-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:buttongroup-lifetime-visibility-oct17"
+}

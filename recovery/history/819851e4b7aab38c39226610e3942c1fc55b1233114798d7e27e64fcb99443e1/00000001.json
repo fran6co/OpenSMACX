@@ -1,0 +1,106 @@
+{
+  "event_id": "618bffcecf98a527a706598773eb4c3937f7c6ea88e56c56ec37396f0b690d9f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh build6bs9b47b reveals18whole-object residualFAILs against original task baseline build-m9tyoy6l with only17originalsubjects scoped. Four independent read-only reviews identify17additional mapped functions with actual instruction scheduling/register/frame changes; expand precisely those original identities, without editing their bodies or resetting the70d0b2f2b task baseline. The six additional natural per-user destructor copies, unbound helper copy_rule_wire_chunk and private-label-only differences remain protected/unassigned; do not synthesize identities, suppress residuals or expand to entire owners.",
+      "The added subject files are byte-identical source before/after, and captured same-compiler Release options and included inputs match except the authorized ButtonGroup header. Native explicit-Release three-way control of faction.cpp passes whole-object equality for fresh current compilation versus candidate, same-input replica versus candidate, and original-header-only reversion replica versus baseline. This isolates the codegen trigger but does not prove bug-for-bug behavioral equivalence of large battle_plans/setup_player differences, full linked preservation, or whole-game acceptance.",
+      "Independent own-symbol-table disassembly shows bounded independent-load/register reorders in the other listed bodies, with unchanged reference targets and associated EH where observed. Larger Faction frame/control-flow changes remain restoration and semantic-verification obligations, not an approved deliberate bug fix. Coordinator admits preserving the justified inline lifetime migration for a manually reviewed compiling checkpoint with these limits explicitly recorded; no historical claims may be demoted, automatic acceptance granted or physicalFAILs relabeled green.",
+      "All5581currentapplicationmasked outcomes preserve every earlierexactresult and gain4325B0, giving3016exact. Primaryreferenceaudit1828PASS1167UNKNOWN21FAIL; qualifiedprivate diagnostics565PASS45UNKNOWN, fixing PrefWin48D540, without upgrading primaryprivate-symbol ambiguity. Both native profiles check the original standaloneclosejump and directglobalfinalizer, and a header-reversion control must fail the bound originaltarget comparison."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4235728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5250464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5261984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5293328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4538992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5550528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5071264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5120000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4883616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4850272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "buttongroup-observed-codegen-collateral-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buttongroup-lifetime-visibility-oct17"
+}

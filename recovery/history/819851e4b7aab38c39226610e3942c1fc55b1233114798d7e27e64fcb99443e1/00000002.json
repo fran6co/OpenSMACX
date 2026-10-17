@@ -1,0 +1,37 @@
+{
+  "event_id": "848d4928f342bbc2e8fe2e36f223e4a1bca1713aaec40d8e5fbccb3099019190",
+  "payload": {
+    "affects": [
+      "entity-064ae9b99ab394c3e68d9ffa4c95e6a0eb385288564f0153b951c5ca014869c6",
+      "entity-083bca597c7f9e2d471e421702388146571d520443664ae91bbd3577b0d3fdc9",
+      "entity-0898e1391e645e57d4c440e22f4da81a953167a4112ad795d0709d2accecb341",
+      "entity-20927a1c1e44e6f46cf568a1ce1a10b7cc12f061fa51b0d319a47dbebe955a2b",
+      "entity-2d56ae941ab8264954044ce4a5b555d5ea2916abc7528c807a09b1b351da1a55",
+      "entity-2e13caba0ec33bf9d5ebd0717786f98ec20fa99f66d6481502bb617e965f629e",
+      "entity-852789e9e4076e382b00915109b33fe7824eb436e71bb00be060df8afd0fa969",
+      "entity-8f336bd869c26659af02dc6060cecfb6e9dfe14cb0426ffa55c23da791460ef0",
+      "entity-8fa4840ce1f874fb41ef869ffecb9c3476993d0dbae69e3bb90334c7bb721d69",
+      "entity-a146f78d9c4507c1bff2cfd141bb8fd7ed81efb8b4f1cea693c521842d08d107",
+      "entity-c3ca163d8ecfc00518fc436163427dadb895f82365349ce4b1b37bbc99ff1d4e",
+      "entity-cb183d6202811fb02fcdd509a58f63bdab8935f16c8d964d0d4a904fcf882094",
+      "entity-dfac05d011f07e64dca64a31ea39633db22cc237973da2c828a89c6d80ff8d3f",
+      "entity-e2ef83fb7a182dbcb709855b01e125b9009dbd0ba93a105939357e5da0b03e32",
+      "entity-f155bca7637b46f2c20eb34147697e2c9f24e2bb5a5398c7e9a0b2d1c5a53982",
+      "entity-f162ef2d3c13dc1a1effd39beb2f64f96f9e4092cb545d2da9b8fe3a491fe6ac",
+      "entity-f2422b355b0201a9f58a889fd4c0a47d7cafabf20f7e8631d75bf41551c60fd1"
+    ],
+    "author": "coordinator",
+    "discovery_id": "buttongroup-inline-lifetime-source-interpretation-oct17",
+    "evidence": [
+      "Pinned destructor 4325B0..4325B5 jumps to close 62B7F0. PrefWin finalizer 48D540..48D54A instead loads its source-owned ButtonGroup at 8577F0 and jumps directly to close. Original ordinary owner teardown also calls close directly, while several associated exception-cleanup paths use the standalone destructor entry. An out-of-line-only declaration preserves the cleanup effect but gives ordinary calls the wrong intermediate target.",
+      "MainInterface constructor 45EF10 has a genuine four-element ButtonGroup member array at +1E878, stride 94, with destructor callback 4325B0. Defining the original one-operation destructor inline lets ordinary teardown inline that operation and causes natural standalone callback emission in MainInterface and six other user objects. No manufactured use, dllexport, manual array loop, virtualness, layout or flag change is required."
+    ],
+    "hypothesis": "Ordinary inline destruction is required to recover the direct close calls while retaining the genuine standalone array/EH cleanup entry.",
+    "kind": "discovery"
+  },
+  "previous_event": "618bffcecf98a527a706598773eb4c3937f7c6ea88e56c56ec37396f0b690d9f",
+  "request_id": "buttongroup-inline-lifetime-source-interpretation-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:buttongroup-lifetime-visibility-oct17"
+}

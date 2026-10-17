@@ -2636,3 +2636,15 @@ void __stdcall main_interface_bubble_callback_4396b0(char *text, int x, int y) {
     point.bottom = y;
     MainInterfaceGlobal.Win::set_bubble_text(text, &point);
 }
+
+/*
+// ORIGINAL: 0x004325B0 ??1ButtonGroup@@QAE@XZ 0x004325B0-0x004325B5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original4325B0..4325B5 jumps to ButtonGroup::close62B7F0.", "MainInterface constructor45EF10 constructs four embedded ButtonGroup objects at offset1E878, stride94, with original destructor callback4325B0.", "PrefWin finalizer48D540 loads its ButtonGroup object8577F0 and jumps directly to close62B7F0; an out-of-line-only destructor adds an incorrect intermediate target.", "Ordinary inline destruction preserves cleanup while the real MainInterface member array naturally requires the standalone callback. No dummy use, export, virtualness or compiler-policy change."], "reason": "ButtonGroup owns the inline destructor body. This current translation unit emits its standalone array-lifetime entry; original translation-unit provenance remains unknown."}
+// body src/buttongroup.h
+// size      5 bytes
+// prototype void (__thiscall ??1ButtonGroup@@QAE@XZ)(ButtonGroup* this)
+// callers   0   call targets   0
+// kind      thunk
+// flags     hidden;thunk;sp_ready;purged_ok
+// calls     (none)
+*/
