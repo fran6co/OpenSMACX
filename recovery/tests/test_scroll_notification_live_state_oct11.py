@@ -218,6 +218,41 @@ int main(){
     assert (result.returncode == 0) == (not damage), result.stderr
 
 
+def _claim_preserving_continuity_fields(prior, current):
+    from dataclasses import replace
+    from test_texture_raster_actual_source import _continuity_fields
+
+    # The recorder may add obligations; historical ones must never disappear.
+    # Compare every other continuity field unchanged, including shape claims.
+    # Preservation does not authorize a grant or verify its current matching.
+    assert not prior.byte_exact or current.byte_exact
+    return _continuity_fields(replace(current, byte_exact=prior.byte_exact))
+
+
+@pytest.mark.parametrize("old_claim,new_claim", [(False, False), (False, True), (True, True)])
+def test_claim_continuity_allows_additions_without_changing_other_history(old_claim, new_claim):
+    from dataclasses import replace
+    from match_recovery.source import read_file
+    from test_texture_raster_actual_source import _continuity_fields
+
+    row = next(row for row in read_file(ROOT / "src/scroll.cpp") if row.address == 0x606440)
+    prior = replace(row, byte_exact=old_claim)
+    current = replace(row, byte_exact=new_claim)
+    assert _claim_preserving_continuity_fields(prior, current) == _continuity_fields(prior)
+    changed_identity = replace(current, name=current.name + "_damaged")
+    assert _claim_preserving_continuity_fields(prior, changed_identity) != _continuity_fields(prior)
+
+
+def test_claim_continuity_rejects_withdrawing_the_recorded_wheel_up_obligation():
+    from dataclasses import replace
+    from match_recovery.source import read_file
+
+    row = next(row for row in read_file(ROOT / "src/scroll.cpp") if row.address == 0x606440)
+    assert row.byte_exact
+    with pytest.raises(AssertionError):
+        _claim_preserving_continuity_fields(row, replace(row, byte_exact=False))
+
+
 def test_original_identities_claims_and_symbols_retained():
     from match_recovery.source import read_text
     from test_texture_raster_actual_source import _continuity_fields
@@ -229,7 +264,7 @@ def test_original_identities_claims_and_symbols_retained():
     assert before.keys() == after.keys()
     for address, row in before.items():
         old_fields = _continuity_fields(row)
-        new_fields = _continuity_fields(after[address])
+        new_fields = _claim_preserving_continuity_fields(row, after[address])
         changed = [index for index, (old, new) in enumerate(zip(old_fields, new_fields))
                    if old != new]
         if address == 0x6059B0:
