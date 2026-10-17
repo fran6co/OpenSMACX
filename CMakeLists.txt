@@ -335,6 +335,12 @@ set_source_files_properties(
     src/map_altitude.cpp
     src/wave.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Keep the frame-based Voice and Wave_Device bodies on their measured
+# translation-unit profile without changing application-wide compiler flags.
+set_source_files_properties(
+    src/voice.cpp
+    src/wave_device.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Original interface palette initialization and font lookup retain a frame
 # pointer; generic library bodies have independently measured profiles.
 set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
