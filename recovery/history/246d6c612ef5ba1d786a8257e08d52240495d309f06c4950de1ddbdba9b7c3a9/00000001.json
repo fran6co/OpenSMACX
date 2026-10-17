@@ -1,0 +1,20 @@
+{
+  "event_id": "726fbaf3ab71078b14d4aa6752cf39f5c957d6a942d4efad55168875cdf98264",
+  "payload": {
+    "affects": [
+      "entity-975233ef05f1aacb88542bd1ccffb766fb76714b8e90dd4d823bf46d1a58f6ec"
+    ],
+    "author": "coordinator",
+    "discovery_id": "quickstart-design-division",
+    "evidence": [
+      "Completed fresh candidate build-eoyp9lba; paired run-lp71bdnw at setup_player entry records candidate1228land/3200tiles (mixedaltitudes0..6), originaldifferentseed1165land. Candidatefault5EEA86 lies inside ownMAP consider_designs5EDF30, reading signed Weapon offense byte and IDIV ECX=0. Plain nondebugger run-s74q0bfz reproduces the same division fault; original control reaches PLANETFALL. Independent original581DB0..581DE5 shows corresponding budget call/rating load/IDIV before checks, so divisor fallback is unsupported. Native strict diagnostic exits3, not green. Broader behavior and exact matching remain unfinished."
+    ],
+    "hypothesis": "After restoring original turn-zero altitude writes, generated terrain has land and startup passes the prior placement overflow, but QuickStart now divides by zero in consider_designs. Trace weapon_budget result, weapon data producer and setup inputs against original; do not add divisor guards.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "quickstart-design-division",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:zero-turn-altitude-oct17"
+}

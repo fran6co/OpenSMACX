@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #define __cdecl
 enum { MaxPlayerNum = 8 };
@@ -71,7 +72,8 @@ struct GameDataFields { int turn_current_num_; };
 struct GameDataState { GameDataFields fields_; } GameDataStateStorage;
 uint32_t WorldClimateSkipTerritoryReset;
 uint32_t UnkBitfield1;
-Map Tile;
+struct TileStorage { Map before, tile, after; } TileStorageWithGuards;
+#define Tile (TileStorageWithGuards.tile)
 Base Bases[8];
 PlayerData PlayersData[8];
 Player Players[8];
@@ -125,6 +127,7 @@ void veh_kill(int id) {
 /* ACTUAL_BODIES */
 
 void reset_fixture() {
+    memset(&TileStorageWithGuards, 0x5A, sizeof(TileStorageWithGuards));
     memset(&Tile, 0, sizeof(Tile));
     memset(Bases, 0, sizeof(Bases));
     memset(PlayersData, 0, sizeof(PlayersData));
@@ -149,7 +152,32 @@ int main() {
     GameDataStateStorage.fields_.turn_current_num_ = 0;
     Tile.climate = 0x60; Tile.bit = 0x1234;
     alt_set(4, 6, ALT_2_LEVELS_ABOVE_SEA);
-    CHECK(Tile.climate == 0x60 && UnkBitfield1 == 0 && EventCount == 0);
+    CHECK(Tile.climate == 0xA0 && UnkBitfield1 == 4 && EventCount == 0);
+    CHECK(Tile.bit == 0x1234);
+
+    // Original turn-zero branch joins the unconditional climate/dirty tail.
+    // Preserve all other tile bytes and flags, including for wraparound input.
+    const int altitudes[] = {INT_MIN, -257, -1, 0, 1, 2, 3, 5, 7, 8, 255, 256, INT_MAX};
+    const uint8_t climates[] = {0x00, 0x1F, 0x6B, 0xE3, 0xFF};
+    for (size_t a = 0; a < sizeof(altitudes) / sizeof(altitudes[0]); ++a) {
+        for (size_t c = 0; c < sizeof(climates) / sizeof(climates[0]); ++c) {
+            reset_fixture();
+            GameDataStateStorage.fields_.turn_current_num_ = 0;
+            memset(&Tile, 0xA7, sizeof(Tile));
+            Tile.climate = climates[c];
+            Map expected = Tile;
+            const Map before_guard = TileStorageWithGuards.before;
+            const Map after_guard = TileStorageWithGuards.after;
+            expected.climate = static_cast<uint8_t>((climates[c] & 0x1Fu)
+                | ((static_cast<uint32_t>(altitudes[a]) & 0xFFu) << 5));
+            UnkBitfield1 = 0xA1;
+            alt_set(4, 6, altitudes[a]);
+            CHECK(memcmp(&Tile, &expected, sizeof(Tile)) == 0);
+            CHECK(memcmp(&TileStorageWithGuards.before, &before_guard, sizeof(Map)) == 0);
+            CHECK(memcmp(&TileStorageWithGuards.after, &after_guard, sizeof(Map)) == 0);
+            CHECK(UnkBitfield1 == 0xA5 && EventCount == 0);
+        }
+    }
 
     reset_fixture();
     Tile.climate = static_cast<uint8_t>(3 << 5); Tile.val3 = 0x03;
