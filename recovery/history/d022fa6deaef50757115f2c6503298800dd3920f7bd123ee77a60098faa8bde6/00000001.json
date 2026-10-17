@@ -1,0 +1,23 @@
+{
+  "event_id": "b81b1568e7f30dabc0abf59b0ce6d059849a813e05622a132967a120ececb2c5",
+  "payload": {
+    "affects": [
+      "entity-361be00f4e85fcdd926a631b019509e8f564c7c2ddcd9eaaec897d0dc0a2244b"
+    ],
+    "author": "coordinator",
+    "discovery_id": "netdaemon-upstream-uncompress-owner-oct17",
+    "evidence": [
+      "Actual verified build-p6wah2u9 C uncompr.c.obj exports _uncompress with the same complete144-byte padded code and relocation offsets as the existing C++ netdaemon_inflate_buffer in netdaemon.cpp.obj. Pinned code141bytes634330..6343BD, version1.0.2 and inflateInit_/inflate/inflateEnd calls agree with the upstream source. PROVENANCE.md pins archive517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6; CMake already builds uncompr.c, and zlib.recovery.h already owns the dependency interpretation.",
+      "The original argument2 is read as capacity and updated only on stream end; zalloc/zfree are zeroed while opaque is untouched. Historical TRIED claiming arg2unused is disproven seed context. Upstream16-bit width checks compile away in this32-bit target; source/provenance alone is not binary or ABI acceptance.",
+      "Current selected transfer-handler output has inflate-internal relocations consistent with inlining the duplicate C++ wrapper; current MAP lacks selected _uncompress. Existing component proof must establish original binding, complete target references, archive/selected membership and fresh linked caller behavior before changing source. No same claim for deflate634280: vendored1.0.2 has no matching high-level compress implementation.",
+      "Proposed future scope: NetDaemon caller/declaration and original-record migration to the existing zlib source companion using native source/component writers, independent behavioral and dependency/claim-continuity controls, unchanged upstream source/license/defaultflags, fresh full build and destination review. This finding grants no edits, claim changes, scope expansion or automatic acceptance. Screen remains held:24gains with one pre-existing exact loss."
+    ],
+    "hypothesis": "The sole NetDaemon frame-profile exact loss634330 belongs to the already-built upstream zlib1.0.2 uncompress implementation rather than a novel app inflate algorithm. Resolve genuine dependency ownership before considering any profile; do not waive the loss or manufacture a compiler exception.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "netdaemon-upstream-uncompress-owner-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-ui-frame-oct17"
+}
