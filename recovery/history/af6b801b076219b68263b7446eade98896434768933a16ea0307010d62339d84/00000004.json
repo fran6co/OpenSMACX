@@ -1,0 +1,21 @@
+{
+  "event_id": "f4bc84aa63c9f6efce286b346b42be70a0a3e4b2763c74d8bdcd78b262527674",
+  "payload": {
+    "affects": [
+      "entity-b06fe39c24d83b700c87ce9b6f25324cf6fb68ca29428ca2aeede19cbe3b48fb"
+    ],
+    "author": "coordinator",
+    "discovery_id": "sound-compiler-switch-data-binding-obligation-oct17",
+    "evidence": [
+      "The canonical function span still ends4C6260. Its7entrydata tail4C6260..4C627C is evidenced in the source comment and bounded native controls, not folded into a larger ORIGINAL marker. Existing RECOVERY_OBJECT requires a typedCOFFdata definition and RECOVERY_FRAGMENT describes childfunctions, neither of which authorizes naming this code-sectionlocal-label table as a separate source-owned data object.",
+      "Current primary strict comparison remainsFAIL for candidate extent beyond the original128bytes. Supplemental originalcode/dataandcurrentlinkedCOMDATchecks do not change that result, qualify full retained-selection/allocation, or prove complete audio/runtime/game behavior. The complete function inventory and original ownership of all switch data remain unfinished; do not fabricate annotations or waive tables as padding."
+    ],
+    "hypothesis": "The framework still cannot independently source-bind this compiler-generated local-label switch-data tail; the original function extent failure remains an honest verification obligation after correcting its behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "acb7389238c2b30473bb18cec009a786e255bfca7d71cfad8dd4fe8667903be0",
+  "request_id": "sound-compiler-switch-data-binding-obligation-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:sound-type-dispatch-oct17"
+}
