@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "8b33712eb6b630f7543dc1bc3c53f40fb304fcc3",
+  "editable_files": [
+    "src/basepop.cpp",
+    "recovery/tests/test_basepop_text_open_admission_oct14bt.py"
+  ],
+  "evidence": [
+    "Native pending discovery start-init-argument-order in taskbasepop-menu-item-ids-oct17 is committed on master8b33712eb. Same isolated original/current QuickStart controls preserve the correct TopMenu1 selection after the preceding recovery, but current linked43928C crashes in BasePop close item_ids_ teardown where original reaches PLANETFALL. Current application builds/links; runtime is unfinished.",
+    "Pinned start601C54 testsEDI=(flags&80) and only entersinitwhenzero;601C58 pushesEDI(zero),601C59 pushesEBX(flags),601C5C calls6015B0. After four saved-register pushes init6015BB readsfirstarg [esp+14] for flag tests100000/1/2/4;601608 readssecondarg [esp+18], passing it to Heap::init5D4620 if nonzero. Correct call is init(flags,0). Current caller init(0,flags) wrongly chooses a flag-valued capacity; callee signature and interpretation are already supported.",
+    "Authorize only swapping this caller's two arguments, retaining short-circuit80 bypass, all close/kind/admission/parser/owner/default/error ordering, all original bindings, claims, notes, line coordinates and the preceding item-ID correction. No callee/header/layout/compiler/profile/allocator changes. Existing admission fixture incorrectly asserts init(0,flags); correct its argument-role oracle based on the native independent witness, exercise nonzero flags and bypass, and require old-swapped/zero-flags/nonzero-capacity damage controls to compile then fail after positive tests. Compile actual source, not a candidate transcription.",
+    "Use a new isolated native worktree/compiler lease. Capture baseline hosts, native61BasePop measurements and claims/mappings/references before production edits. Require fresh candidate and destination full compile/link, per-identity historical verdict continuity and complete176physical object comparison outside only start, independent review and fresh original/candidate runtime evidence. Five existing SetupWin stale-fixture compilation failures remain distinct from this change; do not modify that unrelated fixture or weaken checks.",
+    "Manual coordinator-reviewed recovery only, not automatic/game acceptance or a new exactness claim. Keep the old native task baseline immutable. The separate quickstart-list-teardown discovery remains pending unless fresh evidence establishes its disposition; a correct source call alone cannot establish that the node-header failure or all gameplay is fixed. Preserve additional discoveries and request separate scope before further C++ edits."
+  ],
+  "intent": "Restore the original BasePop start-to-init argument roles without changing init or heap behavior, preserving the script-ID correction and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6298608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basepop-start-init-oct17"
+}
