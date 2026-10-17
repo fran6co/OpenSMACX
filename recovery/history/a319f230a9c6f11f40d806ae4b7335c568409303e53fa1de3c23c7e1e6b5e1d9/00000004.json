@@ -1,0 +1,19 @@
+{
+  "event_id": "7848bd2b4d7d6acf85de3b849b6f07117bfb20f74bed2ce38afd48925a3c35a9",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/audits.json"
+    ],
+    "evidence": [
+      "Post-integration native model audit exposed that rewriting the historical Win refusal block dropped its machine-readable EVIDENCE-FREE tag. Two-file baseline/current controls show remaining unknown naming sites incorrectly reclassified from8 evidence-free to8 unexamined. Restore only that tag, preserving four untouched naming refusals, and add positive/removed-tag damage controls. Native complete-product count becomes31 evidence-free sites versus33 before typed UNK9 recovery; lower only that ceiling33to31. Other existing growth/slack remains failure and no ceiling is raised. No C++ tokens, layout, behavior, original mappings, claims or baselines change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7200c4caa9253368ecb7908fe80a7adcdc675f0f8ec37c2c1e44bd877b2ff001",
+  "request_id": "win-scroll-callback-refusal-ratchet-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:win-scroll-callback-interface-oct17"
+}

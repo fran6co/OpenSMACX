@@ -313,7 +313,7 @@ class Win : public AutoSound {
   int get_lbutton_state();
   void on_mousewheel_up_horz(int delta);
   void on_mousewheel_down_vert(int delta);
-  // Historical catalogue review (2026-08-25): UNK1, UNK5, UNK6 and UNK7
+  // Historical EVIDENCE-FREE review (2026-08-25): UNK1, UNK5, UNK6 and UNK7
   // remain without authenticated semantic names. The old UNK9 no-caller
   // observation is historical and superseded by the setter-entry/consumer
   // evidence documented beside its source definition; it is not proof of an

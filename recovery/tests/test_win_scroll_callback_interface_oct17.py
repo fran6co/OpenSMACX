@@ -14,10 +14,12 @@ import subprocess
 import pytest
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
 from match_recovery.binding_source import parse as parse_binding_evidence
+from match_recovery.cpp_model_audit import model_findings
 from match_recovery.model import Span
 from match_recovery.pe_coff import PeImage
 from match_recovery.source import Mode, read_text
 from match_recovery.source_inventory import image_pin
+from match_recovery.source_audits import numbered_code_lines
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,6 +29,37 @@ SIGNATURES = (
     "void Win::set_scrolling_callback(ScrollCallback callback)",
 )
 ADDRESSES = (0x005EE130, 0x005EE160)
+
+
+def _remaining_name_findings(header):
+    files = {"src/win.h": header,
+             "src/win.cpp": (ROOT / "src/win.cpp").read_text(encoding="utf-8")}
+    records = [(name, row) for name, text in files.items()
+               for row in read_text(text, ROOT / name)]
+    return model_findings(files, records, numbered_code_lines)
+
+
+def test_unrelated_unknown_methods_keep_their_naming_refusals():
+    header = (ROOT / "src/win.h").read_text(encoding="utf-8")
+    _, _, findings = _remaining_name_findings(header)
+    remaining = {"UNK1", "UNK5", "UNK6", "UNK7"}
+    seen = set()
+    for finding in findings:
+        names = remaining.intersection(finding["symbols"])
+        if names:
+            assert finding["rule"] == "evidence-free unk"
+            seen.update(names)
+    assert seen == remaining
+
+
+def test_removed_refusal_tag_is_detected_as_lost_context():
+    header = (ROOT / "src/win.h").read_text(encoding="utf-8")
+    tag = "Historical EVIDENCE-FREE review"
+    assert header.count(tag) == 1
+    before, _, _ = _remaining_name_findings(header)
+    damaged, _, _ = _remaining_name_findings(header.replace(tag, "Historical naming review", 1))
+    assert damaged["evidence-free unk"] < before["evidence-free unk"]
+    assert damaged["unk-method"] > before["unk-method"]
 
 
 def _body(text: str, signature: str) -> str:
