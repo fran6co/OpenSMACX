@@ -69,10 +69,10 @@ class Strings : public Heap {
  public:
   MEASURED Strings() : is_populated_(false) {
   } // 006168D0
-  // EMPTY. The image's is a five-byte `jmp` and this emits exactly that:
-  // the implicit call to `~Heap` IS the whole destructor, and the linker
-  // folded `~Heap` onto `Heap::shutdown`, which is why the disassembly's
-  // target reads as the latter.
+  // Ordinary base teardown: the original 6169C0 tail-jumps to the distinct
+  // Heap destruction entry at 5D45B0. Its equal-body live reset at 5D4580
+  // is not an original linker-folded alias; shutdown does not end the base
+  // lifetime. Historical compiler-locality observations follow.
   // MEASURED ~Strings (2026-09-03, the two-flag-set ladder): the five-byte
   //        `jmp` is a SIZE decision. /O1 emits it, /O2 expands ~Heap into
   //        nineteen instructions of the destructor's own body - same source,

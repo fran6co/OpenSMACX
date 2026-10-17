@@ -1,0 +1,20 @@
+{
+  "event_id": "9614f64fcc62b596a957d53f62e63ac27b5229d84db7ffd8087975fff553d0d5",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_dialog_close_recovery.py"
+    ],
+    "evidence": [
+      "Existing Dialog live-cleanup harness currently extracts its Heap destructor by original4580 and its reset using a start-to-Deflate range. The corrected canonical roles make4580reset and45B0destruction, and place more definitions inside that old text range. Update only these extraction addresses/bounds; retain real constructor/reset/destructor bodies and all original behavior/order/reuse assertions.",
+      "No Dialog production edit or function-scope waiver. Its outside caller and implicit member teardown remain protected. Run the caller host/native controls using the same corrected real source declarations; if other baseline fixture incompatibilities appear, compare against unchanged master rather than weaken assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "authorize-dialog-live-reset-harness-role-update-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:heap-lifetime-role-oct17"
+}

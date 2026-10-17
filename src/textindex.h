@@ -85,13 +85,13 @@ MEASURED inline int __cdecl text_search_index(LPCSTR source_txt, LPCSTR section_
 }
 void __cdecl text_clear_index();
 
-// INLINE: `text_clear_index` (0x005FE270) carries this whole loop - `osmx
-// calls` shows only 0x005D4580 (Heap::shutdown), never a call to this
-// helper. Body claimed at 0x005FE270 in textindex.cpp.
+// text_clear_index (5FE270) carries this loop and calls the live Heap
+// reset at 5D4580. The four member objects retain their normal lifetimes;
+// their eventual destruction reaches the distinct 5D45B0 entry.
 inline void text_clear_index_source(TextIndex *indexes) {
     for (int i = 0; i < MaxTextIndexNum; ++i) {
         if (indexes[i].section_count_ != 0) {
-            indexes[i].heap_.shutdown();
+            indexes[i].heap_.reset();
             indexes[i].section_count_ = 0;
         }
     }

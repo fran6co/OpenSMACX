@@ -47,12 +47,12 @@ class Heap {
   // instructions (and, in TextIndex's case, an SEH unwind frame) where the
   // image's own are a five-byte `jmp` and a four-instruction tail. Defined
   // in heap.cpp each site emits the one call the image makes.
-  ~Heap();  // 005D4580
+  ~Heap();  // 005D45B0: ordinary base/member teardown
 
   // Dialog::close calls the cleanup body at 005D4580 while retaining its
   // embedded Heap for later initialization. A reset does not end its lifetime.
   void reset();
-  void shutdown();
+  void shutdown(); // Live cleanup sharing the teardown entry's operations.
   void squeeze(int UNUSED(toggle) toggle);
     BOOL init(int req_size);
   LPVOID get(int req_size);

@@ -1,0 +1,20 @@
+{
+  "event_id": "61c9cfa3e04e28dd625296cb6781f860273ec7686976012ffd6888352a1502c3",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/dialog_close_harness.cpp"
+    ],
+    "evidence": [
+      "Two existing Dialog controls fail identically on untouched master ff1430391 and this candidate: the direct remove_all relocation is absent because the actual list cleanup is inlined, and the harness puts six now-unsigned Dialog members into an int-member-pointer array. Reproduced with the same leased VC6 compiler; do not revert the genuine declaration or force noinline to satisfy the obsolete fixture.",
+      "Repair only the test expectation and platform double: validate the direct list call or the real bounded inlined hook/delete loop before Heap reset, retaining prohibition on member destruction and stand-ins. Split the ten zero-field assertions into correctly typed member-pointer arrays without dropping any field. Hook both qualified and unqualified free, since corrected actual destructor extraction selects the original bare-free definition. Preserve all nonempty/empty list, order, reuse, default and lifetime assertions. No product Dialog/StringStruct code, mappings, ABI or compiler policy changes authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9614f64fcc62b596a957d53f62e63ac27b5229d84db7ffd8087975fff553d0d5",
+  "request_id": "authorize-dialog-native-control-repair-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:heap-lifetime-role-oct17"
+}

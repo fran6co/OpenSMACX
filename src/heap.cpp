@@ -75,6 +75,7 @@ void Heap::Heap2() {
 
 /*
 // ORIGINAL: 0x005D4580 ??1Heap@@QAE@XZ 0x005D4580-0x005D45AA BYTE_EXACT
+// symbol    ?reset@Heap@@QAEXXZ
 // LEVER (2026-09-03, moved out of heap.h): the in-class `MEASURED ~Heap`
 //        reproduced ITS OWN COMDAT - that claim never moved - but /Ob2 also
 //        EXPANDED it at every implicit base/member teardown site, so
@@ -93,7 +94,11 @@ void Heap::Heap2() {
 // calls     0x00644EF2
 // notes     Staged hybrid export redirect calls the source-owned destructor
 */
-Heap::~Heap() {
+// The catalogued destructor spelling above is historical, not an original
+// debug symbol. Strings::shutdown (616950), TextIndex::make_index (5FDFB9)
+// and Dialog::close (608FDB) call this entry on a still-live Heap.
+// reset is descriptive; its original name is not established.
+void Heap::reset() {
     // IMAGE ORDER, and the null goes INSIDE the guard as well as after it.
     if (base_) {
         std::free(base_);
@@ -109,6 +114,7 @@ Heap::~Heap() {
 /*
 Purpose: Shutdown the class instance.
 // ORIGINAL: 0x005D45B0 ?shutdown@Heap@@QAEXXZ 0x005D45B0-0x005D45DA BYTE_EXACT
+// symbol    ??1Heap@@QAE@XZ
 // size      42 bytes
 // prototype void (__thiscall ?shutdown@Heap@@QAEXXZ)(Heap* this)
 // callers   93   call targets   1
@@ -118,8 +124,11 @@ Purpose: Shutdown the class instance.
 Return Value: n/a
 Status: Complete
 */
-void Heap::shutdown() {
-    // SAME SHAPE AS ~Heap() (heap.h): the null goes INSIDE the guard as well
+// Strings base teardown (6169C0) and TextIndex member teardown (5FDF60,
+// receiver +104) both reach this distinct entry. Genuine C++ destruction
+// therefore owns 5D45B0, not the equal-body live reset at 5D4580.
+Heap::~Heap() {
+    // Same reset operations: the null goes INSIDE the guard as well
     // as after it, and the store order is err_flags_, current_, base_,
     // free_size_, base_size_ - not declaration order.
     if (base_) {
@@ -133,12 +142,12 @@ void Heap::shutdown() {
     base_size_ = 0;
 }
 
-// Dialog::close's call at 00608FDB targets 005D4580, not shutdown's
-// distinct 005D45B0 entry. The same cleanup is used on a still-live member;
-// reset is a descriptive API, not a recovered original spelling. Keep the
-// canonical destructor binding and measure this additional implementation.
-// RECOVERY_SHARED: v1 0x005D4580 0x005D45AA ?reset@Heap@@QAEXXZ 0x00608F50
-void Heap::reset() {
+// Existing explicit shutdown calls retain the 5D45B0 cleanup contract.
+// This additional live API shares the destructor's operations, not its
+// C++ lifetime effect. The TextIndex teardown witness anchors the entry;
+// equal bytes alone do not establish the role or original method name.
+// RECOVERY_SHARED: v1 0x005D45B0 0x005D45DA ?shutdown@Heap@@QAEXXZ 0x005FDF60
+void Heap::shutdown() {
     if (base_) {
         std::free(base_);
         base_ = nullptr;

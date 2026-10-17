@@ -1,0 +1,19 @@
+{
+  "event_id": "cfb6d924fa837722a3ce5064d22f1e47ff1fb7c40ba11336a835760a66cfaf0d",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "heap-cleanup-live-versus-final-role-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/heap.cpp current symbol facts were emitted by native source.write_symbol and its exact preview applied through the normal patch path. Original5D4580 now bindsHeap::reset and5D45B0 bindsHeap::~Heap; every ORIGINAL catalog identity/span and historical claim/lesson remains intact. Additional liveHeap::shutdown retains shared cleanup at5D45B0; native shared namespace/body checks pass.",
+      "src/strings.cpp removes the explicit-destruction strings_heap_close forwarder. Strings::shutdown now directly callsHeap::reset, clears the same flag and returns0 without ending its base lifetime. src/textindex.h clear helper callsHeap::reset while preserving four-row count/order behavior and ordinary implicit member destruction. Header field/base/layout declarations and compiler policy are unchanged.",
+      "Fresh application build/link and actual-source host/native controls support this bounded change. Strict original/reference comparison of6169C0,5FDF60,5FE270 passes; in-memory reversed canonical-role controls fail allthree, even though each cleanup body alone still compares equal. Complete3015masked-match strict audit changes exactlythose3FAIL toPASS, with no other primary verdict change. Full5581CPP masked census is identical; no claims banked, demoted or lost."
+    ]
+  },
+  "previous_event": "d84f579ec640470ddd3554441e407f7e59afb892fa7636a722dc521d95cc2b0e",
+  "request_id": "incorporate-heap-cleanup-lifetime-roles-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:heap-lifetime-role-oct17"
+}
