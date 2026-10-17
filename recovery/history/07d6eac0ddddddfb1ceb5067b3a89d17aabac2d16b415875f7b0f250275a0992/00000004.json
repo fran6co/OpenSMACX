@@ -1,0 +1,26 @@
+{
+  "event_id": "9b1839fa6e9e87959aca9dc95962b97344351104ddb4898edc21333041a74ae0",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/reportwin.cpp"
+    ],
+    "evidence": [
+      "Add sat_attack only as a read-only compiled-collateral witness; do not edit its C++ or waive its historical original extents/restoration obligations. Qualifying the two-load permutation requires exact remaining function bytes, stable ownership/references and absence of interior control-flow/address entries; preserve native FAIL under original reset-only scope. Expanded inspection scope is not behavioral or automatic acceptance.",
+      "Authorize finishing the other five diagnostic owner/frame groups despite negative outside-body reports, with baseline/replica/damage controls still mandatory and no source/Git/recipe edits. Keep native comparator results and every unscoped verdict change verbatim, label reports diagnostic_only, and return3 if preservation is missing. No such report authorizes applying/merging code or a gate waiver. New artifacts must not overwrite terminal first/v2 reports; investigate all collateral before admission."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4850272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "62c25f1cb3043af5ba48a62caf68519e13de3ed5d0bb916314e1a621db09e758",
+  "request_id": "ui-compiled-collateral-diagnostic-scope-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:ui-buffer-roles-oct17"
+}

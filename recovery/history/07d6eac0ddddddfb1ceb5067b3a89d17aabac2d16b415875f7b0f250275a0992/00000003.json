@@ -1,0 +1,20 @@
+{
+  "event_id": "62c25f1cb3043af5ba48a62caf68519e13de3ed5d0bb916314e1a621db09e758",
+  "payload": {
+    "affects": [
+      "entity-d533935f2d47dd768849be850f8a5cd727bb96d513ab0444e009d086a4d9a059"
+    ],
+    "author": "coordinator",
+    "discovery_id": "reportwin-satellite-compiled-collateral-oct17",
+    "evidence": [
+      "Retain v2-reportwin-actual-screen.json: native outside-reset comparison FAIL, no symbol/association/reference or unscoped legacy-verdict changes. sat_attack is still legacyREFUSED, not a newly certified match. Both1632byte function sections differ only at437..43D: movEDI,[EBP+C];movEBX,[EBP+10] becomes the reverse order. Independent full entry/relocation review remains pending; do not infer whole-game preservation."
+    ],
+    "hypothesis": "The legitimate canvas/header candidate changes two independent parameter loads in unchanged-source sat_attack.",
+    "kind": "discovery"
+  },
+  "previous_event": "ada61b7195d755ca579f557ffc0fedddd098076661e2218d552d94503f7ccd68",
+  "request_id": "reportwin-satellite-compiled-collateral-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:ui-buffer-roles-oct17"
+}
