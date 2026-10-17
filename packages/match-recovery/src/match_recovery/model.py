@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, is_dataclass
 from enum import StrEnum
+from functools import cached_property
 import hashlib
 import json
 import re
@@ -61,7 +62,7 @@ class Origin:
         if type(self.address) is not int or self.address < 0:
             raise ValueError("address must be a nonnegative integer")
 
-    @property
+    @cached_property
     def entity_id(self) -> str:
         return "entity-" + digest(self)
 
