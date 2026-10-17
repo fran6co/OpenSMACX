@@ -6,6 +6,7 @@ import subprocess
 import pytest
 from match_recovery.source import read_text
 from match_recovery.source.writer import write_bytes
+from recovery.tests.test_video_sound_owner_oct17 import project_video_sound_split
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "7a20029edfe4fb109e048bdcdce23f0e44cc0117"
@@ -21,6 +22,9 @@ def test_native_publication_preserves_complete_source(relative):
     candidate = path.read_text()
     candidate_projected = (_project_flic_cpp_to_structure_baseline(candidate)
                            if relative == "src/flic.cpp" else candidate)
+    if relative == "src/video.cpp":
+        candidate_projected = project_video_sound_split(
+            candidate, (ROOT / "src/video_sound.cpp").read_text())
     after = read_text(candidate_projected, path)
     promoted = [replace(row, byte_exact=True, semantic=False)
                 for row in before if row.address in SELECTED]

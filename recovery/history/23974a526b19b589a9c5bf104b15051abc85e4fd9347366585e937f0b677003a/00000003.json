@@ -1,0 +1,31 @@
+{
+  "event_id": "691575d7a6decef63db661d0de1ea15476ddf9a31499695ec65a764996ce845c",
+  "payload": {
+    "affects": [
+      "entity-005bdc063f4100bd8654aeaf28ac1ac03f5f054e06fddd954b994e1acac8de67",
+      "entity-147ff70cb2f4e5c7fa9f51394005e3761df23ac3eb7a557732a6b98093b552c4",
+      "entity-2a45c2fcbd5e56305c34bb0b6b61d856fcccbeb241ea44a00a0743705e1f3d08",
+      "entity-4a02d931b0d81097ed7d0f9390fdccafe5a3385d64ec5ee8fc5c80c0ecf7fef0",
+      "entity-509774953eb0cd8e998f9b199215ba52590ee746f87b3c3783efe96e61b6c49b",
+      "entity-5e3a76c8bae884f926cfeaad551f2cd7cd5161d3e408da197e81bcf5cb365391",
+      "entity-6b0027e98cd7af726f784cf00b4d478ef808c3695eaaec8ff7d2368d89412155",
+      "entity-85f4a83dff8eb673e49d20fdeca2f8fa48124339dd0cad4174f7a6bc34f8a5e8",
+      "entity-b9861a3f4b0611ca2a8368faa88d4740a1513213b255f052b550917943d84760",
+      "entity-bc6a98ff74d249980f17a83f686adddf456ecafc5fbbb553cfd632068fe0d1ba",
+      "entity-d54dcf591268abe919e3f5a791dff1823495dbe4b5f27298b8ef9d0c4923021a",
+      "entity-f92da0409ed98078db61dfa02dae9192d63a26fa060dbd7e3d9c7f8382b7b95a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "video-sound-cross-object-preservation",
+    "evidence": [
+      "Candidate physical176PASS/1FAIL and explicit newowner object cannot establish a cross-object retained-selection/allocation proof. Full actual new/remaining objects equal controlled prototypes and every old masked/strict outcome is retained, but those do not waive original generated data/structure/runtime obligations. The4selected linked probes have zero MAPplacements; retain UNKNOWN. All source/historical claims remain intact for later restoration and linked analysis."
+    ],
+    "hypothesis": "The source-owner move retains a native cross-object compiler/table/EH residual and lacks complete original/linked retained-selection evidence.",
+    "kind": "discovery"
+  },
+  "previous_event": "67a88f6d693350e57973bc6395452bc14ed9faed7d6fb04b0debc21fa43351ee",
+  "request_id": "video-sound-cross-object-preservation",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:video-sound-owner-oct17"
+}

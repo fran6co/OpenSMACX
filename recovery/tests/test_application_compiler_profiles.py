@@ -131,6 +131,20 @@ OLD_ALPHA_DEFAULT_COMMENT = (
 NEW_ALPHA_DEFAULT_COMMENT = (
     "# Keep all other source recipes on their independently measured defaults.\n"
 )
+VIDEO_SOUND_BASE_REVISION = "95e6bb71f2bfb0f2d9859c2b06f8cdc9c595e9b4"
+VIDEO_SOUND_SOURCE_BEFORE = "    src/video.cpp\n"
+VIDEO_SOUND_SOURCE_AFTER = "    src/video.cpp\n    src/video_sound.cpp\n"
+VIDEO_SOUND_PROFILE_COMMENT = (
+    "# Preserve the measured frame-based context of the Sound-derived video owner.\n"
+    "# Video and queue methods retain their independently measured default recipe.\n"
+)
+VIDEO_SOUND_PROFILE_BLOCK_TEXT = (
+    'set_source_files_properties(src/video_sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")'
+)
+VIDEO_SOUND_PROFILE_INSERTION = (
+    VIDEO_SOUND_PROFILE_COMMENT + VIDEO_SOUND_PROFILE_BLOCK_TEXT + "\n"
+)
+VIDEO_SOUND_PROFILE_BLOCK = (("src/video_sound.cpp",), ("/Oy-",))
 
 FRAME_PROFILE = ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
 EXPECTED_FLAG_SETS = [
@@ -150,6 +164,7 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(NEW_OWNERS)): ("/Oy-",),
     tuple(sorted(REMAINING_OWNERS)): ("/Oy-",),
     ("src/alpha.cpp",): ("/Oy-",),
+    ("src/video_sound.cpp",): ("/Oy-",),
     tuple(sorted(("src/interface_palette.cpp", "src/interface_fonts.cpp"))): ("/Oy-",),
     ("src/sound.cpp",): ("/Oy-",),
     ("src/caviar_cpu.cpp",): ("--frontend=intrinsics-i386-no-debug",),
@@ -203,10 +218,16 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
         return False
     if candidate.count(OLD_ALPHA_DEFAULT_COMMENT) or candidate.count(NEW_ALPHA_DEFAULT_COMMENT) != 1:
         return False
+    if baseline.count(VIDEO_SOUND_PROFILE_INSERTION) or candidate.count(VIDEO_SOUND_PROFILE_INSERTION) != 1:
+        return False
+    if baseline.count(VIDEO_SOUND_SOURCE_BEFORE) != 1 or candidate.count(VIDEO_SOUND_SOURCE_AFTER) != 1:
+        return False
 
     projected = candidate.replace(insertion, "", 1)
     projected = projected.replace(REMAINING_PROFILE_INSERTION, "", 1)
     projected = projected.replace(ALPHA_PROFILE_INSERTION, "", 1)
+    projected = projected.replace(VIDEO_SOUND_PROFILE_INSERTION, "", 1)
+    projected = projected.replace(VIDEO_SOUND_SOURCE_AFTER, VIDEO_SOUND_SOURCE_BEFORE, 1)
     projected = projected.replace(NEW_ALPHA_DEFAULT_COMMENT, OLD_ALPHA_DEFAULT_COMMENT, 1)
     return projected == baseline
 
@@ -216,6 +237,7 @@ def cmake_profile_delta_is_exact(baseline: str, candidate: str) -> bool:
     expected[NEW_PROFILE_BLOCK] += 1
     expected[REMAINING_PROFILE_BLOCK] += 1
     expected[ALPHA_PROFILE_BLOCK] += 1
+    expected[VIDEO_SOUND_PROFILE_BLOCK] += 1
     return (
         collections.Counter(source_property_blocks(candidate)) == expected
         and non_profile_text_matches(baseline, candidate)
@@ -230,6 +252,7 @@ def test_profile_guard_rejects_policy_mutations():
     baseline = (
         'set_source_files_properties(src/previous.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
         + OLD_ALPHA_DEFAULT_COMMENT
+        + 'set(OPENSMACX_SOURCES\n    src/video.cpp\n)\n'
         + 'add_compile_options("/DDEFAULT=1")\n'
         'target_link_options(Game PRIVATE "/FIXED:NO")\n'
     )
@@ -237,7 +260,25 @@ def test_profile_guard_rejects_policy_mutations():
     candidate += NEW_PROFILE_COMMENT + NEW_PROFILE_BLOCK_TEXT + "\n"
     candidate += REMAINING_PROFILE_INSERTION
     candidate += ALPHA_PROFILE_INSERTION
+    candidate = candidate.replace(VIDEO_SOUND_SOURCE_BEFORE, VIDEO_SOUND_SOURCE_AFTER, 1)
+    candidate += VIDEO_SOUND_PROFILE_INSERTION
     assert cmake_profile_delta_is_exact(baseline, candidate)
+
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate.replace(VIDEO_SOUND_PROFILE_INSERTION, "", 1))
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate + VIDEO_SOUND_PROFILE_INSERTION)
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate.replace(VIDEO_SOUND_SOURCE_AFTER, VIDEO_SOUND_SOURCE_BEFORE, 1))
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate.replace(VIDEO_SOUND_SOURCE_AFTER,
+                                    VIDEO_SOUND_SOURCE_AFTER + "    src/video_sound.cpp\n", 1))
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate.replace(VIDEO_SOUND_PROFILE_BLOCK_TEXT,
+                                    VIDEO_SOUND_PROFILE_BLOCK_TEXT.replace("src/video_sound.cpp", "src/video.cpp"), 1))
+    assert not cmake_profile_delta_is_exact(
+        baseline, candidate.replace(VIDEO_SOUND_PROFILE_BLOCK_TEXT,
+                                    VIDEO_SOUND_PROFILE_BLOCK_TEXT.replace("/Oy-", "/Oy- /Ob0"), 1))
 
     dropped_old_profile = candidate.replace(
         'set_source_files_properties(src/previous.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n', ""
@@ -343,6 +384,10 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
         "CMakeLists.txt",
         "recovery/tests/test_application_compiler_profiles.py",
     ]
+    video_sound_task = json.loads(
+        (ROOT / "recovery/tasks/video-sound-owner-oct17.json").read_text(encoding="utf-8")
+    )
+    assert video_sound_task["base_revision"] == VIDEO_SOUND_BASE_REVISION
     baseline_cmake = baseline_text("CMakeLists.txt")
     current_cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     assert cmake_profile_delta_is_exact(baseline_cmake, current_cmake)
@@ -357,6 +402,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/net_class.cpp" in application_sources
     assert "src/alpha.cpp" in application_sources
     assert "src/win.cpp" in application_sources
+    assert "src/video.cpp" in application_sources
+    assert "src/video_sound.cpp" in application_sources
 
     actual_profiles = dict(source_property_blocks(current_cmake))
     assert actual_profiles == EXPECTED_CMAKE_PROFILES
@@ -366,6 +413,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert all(owner in profiled_sources for owner in REMAINING_OWNERS)
     assert actual_profiles[tuple(sorted(REMAINING_OWNERS))] == ("/Oy-",)
     assert "src/win.cpp" not in profiled_sources
+    assert "src/video.cpp" not in profiled_sources
+    assert actual_profiles[("src/video_sound.cpp",)] == ("/Oy-",)
     assert "src/sprite.cpp" not in profiled_sources
     assert "src/net_class.cpp" not in profiled_sources
     assert all(owner not in profiled_sources for owner in REJECTED_OWNERS)
@@ -384,5 +433,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
         assert unit_profiles[owner] == expected, (owner, unit_profiles.get(owner))
     for owner in NEW_OWNERS + tuple(
         owner for owner in REMAINING_OWNERS if owner != "src/technology_queries.cpp"
-    ) + REJECTED_OWNERS + PREVIOUS_REJECTED_OWNERS + ("src/win.cpp", "src/alpha.cpp"):
+    ) + REJECTED_OWNERS + PREVIOUS_REJECTED_OWNERS + (
+        "src/win.cpp", "src/alpha.cpp", "src/video.cpp", "src/video_sound.cpp"
+    ):
         assert owner not in unit_profiles, (owner, unit_profiles.get(owner))

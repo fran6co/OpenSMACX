@@ -1,0 +1,31 @@
+{
+  "event_id": "bce8dec431ba24692b6cd948a4fcf7a38903b578d9800d1640debe11584d4342",
+  "payload": {
+    "affects": [
+      "entity-005bdc063f4100bd8654aeaf28ac1ac03f5f054e06fddd954b994e1acac8de67",
+      "entity-147ff70cb2f4e5c7fa9f51394005e3761df23ac3eb7a557732a6b98093b552c4",
+      "entity-2a45c2fcbd5e56305c34bb0b6b61d856fcccbeb241ea44a00a0743705e1f3d08",
+      "entity-4a02d931b0d81097ed7d0f9390fdccafe5a3385d64ec5ee8fc5c80c0ecf7fef0",
+      "entity-509774953eb0cd8e998f9b199215ba52590ee746f87b3c3783efe96e61b6c49b",
+      "entity-5e3a76c8bae884f926cfeaad551f2cd7cd5161d3e408da197e81bcf5cb365391",
+      "entity-6b0027e98cd7af726f784cf00b4d478ef808c3695eaaec8ff7d2368d89412155",
+      "entity-85f4a83dff8eb673e49d20fdeca2f8fa48124339dd0cad4174f7a6bc34f8a5e8",
+      "entity-b9861a3f4b0611ca2a8368faa88d4740a1513213b255f052b550917943d84760",
+      "entity-bc6a98ff74d249980f17a83f686adddf456ecafc5fbbb553cfd632068fe0d1ba",
+      "entity-d54dcf591268abe919e3f5a791dff1823495dbe4b5f27298b8ef9d0c4923021a",
+      "entity-f92da0409ed98078db61dfa02dae9192d63a26fa060dbd7e3d9c7f8382b7b95a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "video-sound-compilation-owner",
+    "evidence": [
+      "The existing VideoSoundState declaration has its own constructor/destructor, Sound prefix,39-slot table66E790..66E82C and scalar deleting mapping4C9360. Existing Video embeds it at+0 and retains composed member lifetimes. Whole-video frame changes lost3unrelated matches; the isolated class split restores4masked/strict matches with no old losses. This is evidence for a useful current owner, not a recovered historical TU/library boundary."
+    ],
+    "hypothesis": "The genuine embedded Sound-derived VideoSoundState group needs a separate current implementation/compilation owner from Video and its queue.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "video-sound-compilation-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:video-sound-owner-oct17"
+}

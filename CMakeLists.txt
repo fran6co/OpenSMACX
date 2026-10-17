@@ -171,6 +171,7 @@ set(OPENSMACX_SOURCES
     src/mapwin.cpp
     src/basewin.cpp
     src/video.cpp
+    src/video_sound.cpp
     src/datalink.cpp
     src/netwin.cpp
     src/socialwin.cpp
@@ -464,6 +465,9 @@ set_source_files_properties(
     src/technology_queries.cpp
     src/uv2player.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve the measured frame-based context of the Sound-derived video owner.
+# Video and queue methods retain their independently measured default recipe.
+set_source_files_properties(src/video_sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp
