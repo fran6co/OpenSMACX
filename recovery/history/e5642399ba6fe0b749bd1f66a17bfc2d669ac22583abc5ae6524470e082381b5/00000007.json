@@ -1,0 +1,21 @@
+{
+  "event_id": "3523da18db444b6cbbce001cbbf1c0c93536b5eab7b13f66a1017a9157651e31",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "console-preferences-reversed-store-order-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Five source bodies now use explicit original-order writes; fullsourceSHA256:{'src/console.cpp': '0879e914d652da35db9087a20971b7a45b1efc826beb569ee42c494968671f35', 'src/popup.cpp': '462429ce266e0225f2edccb93e9bc5ab595b70c2f18eaf1eda58335c96b5e860'}. Original identities/spans and all historical claims remain unchanged. No headers, globals, ABI/type/lifetime, compiler/link flags or gates changed.",
+      "Fresh native build-055wxpqd compiles/links. The original five-identity residual refusal is retained separately; independently reviewed popt inline copy changes exactly two operand addends with unchanged272bytebody/30references. Explicit six-identity native scope gives all176physicalobject residualsPASS. This does not establish linked retained selection/allocation or full outside-scope preservation.",
+      "All300Popup/Console current masked verdicts remain unchanged, including131masked matches and the pre-existing poptMISMATCH. Native strict checks of five repaired bodies improve fiveFAIL to twoPASS/threeUNKNOWN; both BasePopDefaultField21C0 references in fourmodes and AlphaIniPrefs reference in base_names nowPASS. DialogDefaults and GameDataStateStorage unsupported bindings remainUNKNOWN; no new byte claims granted.",
+      "Independent pinned/source review confirms original defaults696ED0then696ED4(values3/2) and Console9A6494then94B468. Eight focused host/pinned/ownership testsPASS, includingGCC/Clang and ten independent swapped/chained mutationcontrols acrossfivefunctions. Native claims/references/mappingsPASS. Two existing Popup-wrapper fixture failures reproduce unchanged on master(bytes_ missing from test double), not accepted as green.",
+      "Only manual coordinator-reviewed integration is authorized, with fresh destinationbuild/link, full zero-omission physical correspondence, strict and host/source checks still required. Pending Heap/Strings/TextIndex cleanup-target lifetime and CursorNextDangerMsg2 storage discoveries remain unresolved; no source/name/annotation guesses or automatic/runtime/game acceptance."
+    ]
+  },
+  "previous_event": "7212643c4fa8afbea5013dc0d32570e67e0c8f30131df447565e21609b58ab47",
+  "request_id": "incorporate-console-preferences-ordered-stores-oct17",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:popup-default-store-order-oct17"
+}

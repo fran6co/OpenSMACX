@@ -1,0 +1,22 @@
+{
+  "event_id": "2ce35d47fa9ae48b73ec1bddaadd7661efe2ffafedbe5e7cc8bb23426bb7509e",
+  "payload": {
+    "affects": [
+      "entity-46977d2b10071ef64b07c01897592876e0ddf7df6bb61b5f24ee0c2a4a692aa1"
+    ],
+    "author": "coordinator",
+    "discovery_id": "console-preferences-reversed-store-order-oct17",
+    "evidence": [
+      "Independent corrected raw-COFF/pinned review: original stores GameMorePreferences9A6494 then AlphaIniPrefs.more_preferences94B468; current chained assignment emits AlphaIniPrefs+4 then GameDataStateStorage+4. Each target/addend is independently correct; the original/current operand order differs.",
+      "AlphaIniPrefs recovery root94B464 plus rawCOFF addend4 is94B468. The initial scout attribution to a member-binding gap was retracted after comparing both consecutive store operands. Preserve that correction, not a fabricated target annotation or global/type change.",
+      "CursorNextDangerMsg2 raw939FF0 original immediate and unresolved ownership are separate: no body change or guessed binding authorized for that function."
+    ],
+    "hypothesis": "Console::base_names shares the same chained-assignment store-order fidelity defect as the four popup modes.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "console-preferences-reversed-store-order-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-default-store-order-oct17"
+}

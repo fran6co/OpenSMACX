@@ -1,0 +1,24 @@
+{
+  "event_id": "21b8fe5153f9fdb7a6d5186ff100f7a66b9a6f63119434372c1725e593f43179",
+  "payload": {
+    "affects": [
+      "entity-074c02db288f982ce4bbdff24112d4ed632d1b22e660faeb5dd7eb5a114d7c91",
+      "entity-f73ea71b6462368a74f6ab531b79fc518ad2a12ea9f0c1ef7a3e146259844ad5",
+      "entity-fcabb8c936e402ed2b20c41d45a17f550a500890f23f5e57113f80fc922b2580"
+    ],
+    "author": "coordinator",
+    "discovery_id": "heap-strings-textindex-cleanup-target-identity-oct17",
+    "evidence": [
+      "Independent pinned disassembly: Strings::~Strings6169C0 tail-jumps5D45B0; TextIndex::~TextIndex5FDF60 zeroes count/file head, adjustsreceiver104, tail-jumps5D45B0; text_clear_index5FE270 iterates four118-byte rows and calls5D4580 on embeddedheap. Existing original Heap identities bind5D4580destructor and5D45B0shutdown.",
+      "Fresh current build-x_ab_28o COFF own-table refs are the reverse: both implicit destructors reference??1Heap5D4580, text_clear_index references shutdown5D45B0. Their surrounding bytes/memberaddresses agree. Heap cleanup implementations appear identical, establishing a target-fidelity mismatch rather than independently demonstrating gameplay difference.",
+      "Review Heap storage/constructor/destructor/reset API together with Strings base destruction and TextIndex member destruction/clear helper; inspect potential original ICF/provider interpretation before any lifetime restructuring. Existing textindex-record-recovery task deliberately deferred this closure. No annotations, constructor/destructor mapping swaps, manual destruction, new types or body changes authorized by this discovery; retain pending for separate explicit expanded owner task."
+    ],
+    "hypothesis": "Strings/TextIndex implicit destruction and live index cleanup select opposite identical-body Heap entries from the original; recover lifetime/entry relationships across the complete owners before forcing calls.",
+    "kind": "discovery"
+  },
+  "previous_event": "5603b02ce70fce7c7c50adaef7f915d0fa11e2273b61a9e26d0fd143f46ccf95",
+  "request_id": "heap-strings-textindex-cleanup-target-identity-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:popup-default-store-order-oct17"
+}

@@ -287,7 +287,8 @@ void __cdecl popups_small() {
     BasePop::set_def_string_font(PopupSmallFont, PopupSmallBoldFont, PopupSmallItalicFont, 0);
     Dialog::set_def_dialog_font(PopupSmallFont, PopupSmallBoldFont, PopupSmallItalicFont);
     BasePop::set_def_button_font(PopupSmallFont, PopupSmallBoldFont, PopupSmallItalicFont);
-    BasePopDefaultField21C0[0] = BasePopDefaultField21C0[1] = 3;
+    BasePopDefaultField21C0[0] = 3;
+    BasePopDefaultField21C0[1] = 3;
     BasePopDefaultField3104[2] = 0;
     BasePop::set_def_string_color(MessageWinTextColor, -1, 1, 1);
     BasePop::set_def_string_color2(MessageWinTextColor, -1, 1, 1);
@@ -308,7 +309,8 @@ void __cdecl popups_tutorial() {
     BasePop::set_def_string_font(InterludeNormalFont, InterludeSecondFont, InterludeThirdFont, 0);
     Dialog::set_def_dialog_font(InterludeNormalFont, InterludeSecondFont, InterludeThirdFont);
     BasePop::set_def_button_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont);
-    BasePopDefaultField21C0[0] = BasePopDefaultField21C0[1] = 3;
+    BasePopDefaultField21C0[0] = 3;
+    BasePopDefaultField21C0[1] = 3;
     BasePopDefaultField3104[2] = 0;
     BasePop::set_def_string_color(MessageWinTextColor, -1, 1, 1);
     BasePop::set_def_string_color2(MessageWinTextColor, -1, 1, 1);
@@ -328,7 +330,8 @@ void __cdecl popups_medium() {
     BasePop::set_def_string_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont, 0);
     Dialog::set_def_dialog_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont);
     BasePop::set_def_button_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont);
-    BasePopDefaultField21C0[0] = BasePopDefaultField21C0[1] = 2;
+    BasePopDefaultField21C0[0] = 2;
+    BasePopDefaultField21C0[1] = 2;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -340,7 +343,8 @@ void __cdecl popups_interlude_medium() {
     BasePop::set_def_string_font(InterludeNormalFont, InterludeSecondFont, InterludeThirdFont, 0);
     Dialog::set_def_dialog_font(InterludeNormalFont, InterludeSecondFont, InterludeThirdFont);
     BasePop::set_def_button_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont);
-    BasePopDefaultField21C0[0] = BasePopDefaultField21C0[1] = 2;
+    BasePopDefaultField21C0[0] = 2;
+    BasePopDefaultField21C0[1] = 2;
 }
 
 // Popup owns these cdecl animation helpers; the image reaches them by direct

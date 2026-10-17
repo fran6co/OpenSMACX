@@ -4058,7 +4058,8 @@ void Console::base_names() {
     } else {
         new_flags = flags | 0x2000;
     }
-    GameDataStateStorage.fields_.game_more_preferences_ = AlphaIniPrefs.more_preferences = new_flags;
+    GameDataStateStorage.fields_.game_more_preferences_ = new_flags;
+    AlphaIniPrefs.more_preferences = new_flags;
     prefs_save(0);
     ::draw_map(1);
 }
