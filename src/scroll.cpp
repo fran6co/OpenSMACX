@@ -1697,7 +1697,7 @@ void Scroll::on_mousewheel_down(int delta) {
     redraw();
 }
 
-// ORIGINAL: 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z 0x00606440-0x0060655C
+// ORIGINAL: 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z 0x00606440-0x0060655C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Preserve the original delta gate over notifications and sound, branch-selected reversal mapping, and callback-visible reloads.","evidence":["pinned:60649C skips directly to redraw for delta zero;6064BC/6064EE invoke parent notification;6064C2..60651C reads current callback/position/ranges/id within the previously selected branch","pinned:606521 reloads live parent after callbacks for sound; no additional parent-null guard is present"]}
 void Scroll::on_mousewheel_up(int delta) {
     Win *const parent = win_parent_;
