@@ -663,8 +663,8 @@ Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
 void NetWin::config_players() {
-    unsigned char color = reinterpret_cast<const unsigned char *>(
-        &NetDaemonNet.allocation_node().max_players_)[0];
+    unsigned char color = static_cast<unsigned char>(
+        NetDaemonNet.allocation_node().max_players_);
     NetWinSessionData.mode_ = 0;
     NetWinSessionData.scenario_text_wire_tail_[0] = 0;
     NetWinSessionOptions.status_ = 0xFF;
@@ -696,8 +696,7 @@ void NetWin::config_players() {
         strcpy(row->adjective_faction_, player->adj_name_faction);
         strcpy(row->leader_title_, player->title_leader);
         strcpy(row->adjective_leader_, player->adj_leader);
-        row->tail_[0] = reinterpret_cast<const uint8_t *>(
-            &player->is_leader_female)[0];
+        row->tail_[0] = static_cast<uint8_t>(player->is_leader_female);
         ++row;
         ++player;
         ++row_index;

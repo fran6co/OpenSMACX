@@ -1,0 +1,18 @@
+{
+  "event_id": "6ef29ee2921c887326dcf5fb789a5d35a96deb4f2f456961615cefcdceac1a3f",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "typed-netwin-scalar-byte-reads-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Exactly two scalar expressions become explicit unsigned-byte conversions in place. No hoisting across label/string callbacks, boolean normalization, class/global/storage/initialization change or annotation/history edit. Entire native NetWinCOFF is identical under both actualRelease and historicalother-frame controls and the fresh final build reproduces the actual probe.",
+      "Existing GCC/Clang config_players harness retains actual Player stride/member assertions, all seven records/copy order, highword maxplayers and nonbooleanBOOL expectations. Only obsolete cast-spelling assertions change to require the typed-byte expressions. New whole-owner delta guards preserve every other source byte and all identities/claims/findings."
+    ]
+  },
+  "previous_event": "380255d1cbee51c3aa79b0a2c4ccc8cdba3bc92ed59e2b6a5a8d66c830cb489a",
+  "request_id": "typed-netwin-scalar-byte-reads-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:player-member-reads-oct17"
+}

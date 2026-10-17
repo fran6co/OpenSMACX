@@ -621,11 +621,8 @@ int __cdecl can_call_council(int faction_id, int announce) {
     }
 
     {
-        const unsigned char *rec = reinterpret_cast<const unsigned char *>(
-            &Players[1].rule_flags);
-        int i = 1;
-        for (;;) {
-            if ((*rec & 0x80) == 0) {
+        for (int i = 1; i < 8; ++i) {
+            if ((Players[i].rule_flags & 0x80) == 0) {
                 const unsigned int bit_i = 1u << (i & 0x1F);
                 if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ &
                      static_cast<unsigned char>(bit_i)) != 0 &&
@@ -659,12 +656,6 @@ int __cdecl can_call_council(int faction_id, int announce) {
                         }
                     }
                 }
-            }
-            rec += 0x59C;
-            ++i;
-            if (rec >= reinterpret_cast<const unsigned char *>(
-                           &Players[8].rule_flags)) {
-                break;
             }
         }
         return 1;

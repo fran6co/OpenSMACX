@@ -1,0 +1,18 @@
+{
+  "event_id": "3c7586ae7fb1f0987eadc3c33b2d5b159fa3aa00283ce1333fe6c901c9c55505",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "typed-seven-player-council-scan-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The typed loop visits existing Players1..7 and masks the same bit of rule_flags. Every nested condition/read, low-five-bit shift, goto blocked, return, announcement and other owner byte is retained. It no longer steps a char pointer beyond the rule_flags subobject or forms Players8.rule_flags beyond the declared production array. This repairs a translation artifact, not the original game behavior.",
+      "GCC/Clang C++98 controls extract complete current/baseline admission methods and the actual Player declaration. Independent bitset oracle covers114688alive/alien/caller configurations plus final/first/ignored0 slot, negative/highword flags, self exclusion, both treaty admission bits, multiplayer enable masks, current-human bypass, message predicates/arguments, project ownership and early sunspot/PBEM/netturn gates. Four damaging source mutants percompiler abort at runtime; source/byte controls preserve the complete two owners and original spans. Sixteen compiler calls cover two owners/twoframefamilies/baseline/replica/entrythrow/candidate. Council outside-body nativeCOFF comparisonPASS bothfamilies; actual final object reproduces the probe. Both remain measuredMISMATCH; no claim was granted or removed."
+    ]
+  },
+  "previous_event": "f29c0acc34ad681edbe098ca2bd2f7720f0b390d03ce65f1c4d7185a8400e235",
+  "request_id": "typed-seven-player-council-scan-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:player-member-reads-oct17"
+}
