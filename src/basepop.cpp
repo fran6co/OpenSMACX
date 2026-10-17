@@ -29,6 +29,9 @@
 #include "text.h"  // text_open / text_get / text_close - start's script reader
 #include <cstring>
 
+extern uint32_t BasePopDrawnBottom;
+extern uint32_t BasePopDrawnRight;
+
 // Pinned 0x006900C4 bytes are writable .data `2A 00`; only the observed two bytes are asserted. Old symbol/capacity/whole-use identity remain unknown pending native COFF object binding.
 // RECOVERY_OBJECT: v1 0x006900C4 ?BasePopItemMarkerText@@3PADA
 char BasePopItemMarkerText[2] = {'*', '\0'};
@@ -977,6 +980,27 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     // DRAW IT. Slot 0x30 - Win::on_redraw, which BasePop's table points at
     // its own override (0x00604AB0).
     on_redraw();
+
+    // Attach the selected control below the freshly drawn text. The original
+    // ignores attachment failure and still publishes the shared window.
+    int dialog_y = static_cast<int>(BasePopDrawnBottom);
+    if (field_30D4_ != 0) {
+        dialog_y += field_30E4_;
+    }
+    int dialog_x = static_cast<int>(field_21CC_);
+    if (dialog_x < 0) {
+        dialog_x = static_cast<int>(BasePopDrawnRight);
+    }
+    if (dialogs_.kind_ != -1) {
+        if ((field_30A8_ & 0x800000) != 0) {
+            dialogs_.Dialog::field_20_ |= 0x1000;
+        }
+        dialogs_.SpriteBox::field_4_ = field_30A8_ & 0x800;
+        dialogs_.Dialogs::attach(
+            dialogs_.kind_, owner_window_, dialog_x, dialog_y,
+            static_cast<int>((field_30A4_ & 0x40) | 0x80000));
+        dialogs_.show(0);
+    }
 
     // THE ROW ORIGIN. Slot 0x178 hands all three back through pointers, which
     // is why the three exist before it runs. `origin` is the value it wrote;

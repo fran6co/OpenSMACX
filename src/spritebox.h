@@ -250,9 +250,12 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   // costs nothing and the definition stays where it is.
   int calculate_dimensions();
 
- private:
+ public:
   // 0x0 is this object's own vbtable pointer, EMITTED by the compiler.
+  // BasePop::exec writes this mode at 0x602BD2 before attaching Dialogs;
+  // its SpriteBox base is Dialogs+0x70. Access does not change the layout.
   uint32_t field_4_;  // 0x4
+ private:
   uint32_t field_8_;  // 0x8
   uint8_t field_C_[0x4];  // 0xC
   // Constructed at complete-object +0x10 before list_ (0x0060FF64), then
