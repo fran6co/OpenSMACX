@@ -1,0 +1,20 @@
+{
+  "event_id": "88ce6700327cdcf8a4a72195037dc1fbf23ac26e39af27cc74d6fbe18bce95ab",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "reportwin-satellite-compiled-collateral-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/reportwin.cpp retains sat_attack source verbatim and its existing original identity/restoration state. Primary1632byte and alternate1840byte code COMDATs change only adjacent independent argument-load order; complete remaining bytes, resolved relocation targets and associated EH bytes match. Independent branch/address-entry inspection finds no interior entry to either reordered pair. The correct reset source retains its six inherited Buffer receivers. This incorporates the finding into the expanded reviewed source checkpoint, not an original exactness claim.",
+      "Original reset-only native residual remains FAIL and satellite remains REFUSED. Coordinator permits only the bounded compiler scheduling difference for manual source integration under standing user authority; no native gate waiver, automatic acceptance, whole-image preservation, runtime or playable-game claim.",
+      "Ignored bounded review sat-attack.md sha256=2195a7b6585d7d83aacb93446ad48f50c0535806d539541f448ce42ee27696b5",
+      "Ignored bounded review sat-attack-other-frame.md sha256=e914a4be93066944a15d6f90990f27371bf979c01952bd1638b6a3e5dd21a0c7"
+    ]
+  },
+  "previous_event": "907ee6f863dd9ac6aa3f1737e6724aa04c324794c4d43e606e2f2a7aa463bbd2",
+  "request_id": "reportwin-satellite-scoped-manual-review-oct17",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:ui-buffer-roles-oct17"
+}

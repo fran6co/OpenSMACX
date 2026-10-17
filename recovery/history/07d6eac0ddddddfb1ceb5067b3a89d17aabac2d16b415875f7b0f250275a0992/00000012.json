@@ -1,0 +1,28 @@
+{
+  "event_id": "6085ada5c3c09fe35a3a0b25cef2b65c327c555aa3aaa8738bdfdb069306a9de",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "win-visibility-header-full-build-collateral-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator-reviewed manual integration permission for the three corrected CPP bodies plus the meaningful nonvirtual Win visibility inline, after reviewing actual source and all affected output. No readonly collateral CPP body, layout, original identity, symbol, historical claim, flag, baseline or component changes. Preserve all source and matching/restoration duties; the structural recovery is not reverted merely to restore an old local compiler score.",
+      "All14differing actual objects received bounded independent review. Private-label/section-order churn resolves through each owning COFF to unchanged offsets/targets; genuine code changes are localized register/load/store scheduling, equivalent arithmetic/branch joins, or frame/spill coordinates. Alpha helper memmove operands, Base/Console/PrefWin/probe/Enemy load windows, game metric formulas and table writes, all mapped current-body verdicts and reference classifications remain accounted for. Unmapped helpers are not invented original functions or silently omitted.",
+      "The difficult custom_planet Popup/Scroll cleanup spill slots are produced from the same real Scroll and embedded FlatButton receivers across the4byte frame shift. Its66call sequence,34conditional destinations and seven selector arms were compared, along with live preferences address computation. battle_plans preserves its eight Base coordinates and all44branch edges/call targets; all six argument-slot-fed BaseButton cleanup receivers have matching producer stores before their EH states, with shifted frame-local objects and unchanged unwind transitions. The coordinator caught and rejected an initial false raw-REL32 fallthrough interpretation; every such tail jump was resolved through its own COFF symbol table. The apparent large setup_player byte drift reduces to a corresponding zero-assignment branch join, independent loads and shifted/padding encodings.",
+      "Manual source checkpoint only: retain native physical162pass/14fail at original three-body scope,163pass/13fail including the satellite witness, and170pass/6fail with33explicit existing mapped witness bodies projected. These are NOT native preservation passes. Remaining residuals include unprojected helpers/private identity churn; no fake source identities or wider hidden body omissions. Bounded expression/receiver/control-flow checks do not prove universal effects, asynchronous/fault/alias behavior, linked retention, runtime or game acceptance. All ordinary automatic refusal conditions remain unchanged.",
+      "Fresh candidate build/link9bcvavvt PASS,79source identities/binding/history payloads unchanged,115baseline host outcomes preserved (86pass/29preexistingfixturefails),10newactual-source controls pass withoutskip/error,5581CPP/3162primarystrict/610supplemental classifications unchanged. Three targets remain MISMATCH; no new byte or coverage claims. Before merging requalify current inputs and continuity; after merge require fresh destination build, source checks, identical full physical candidate-to-destination objects with zero body omissions, complete classification equality and the same host outcomes before any worker cleanup.",
+      "Ignored bounded review alpha-base-basewin.md sha256=767521c322e944bc4dd090c739101158902499e56d09afb2c1df1f85b0e9f6e7",
+      "Ignored bounded review prefwin-probe.md sha256=21470a705b7538a7941de3c26f31c53ca810c33bc605efdfb2525dbf63229e3c",
+      "Ignored bounded review console-council.md sha256=7e4cc422a48444edf03f85ff1496258144ffd04bc9c3e9769fa799aa917e448b",
+      "Ignored bounded review enemy-faction-coff-review.json sha256=c0534458c903fd4c7fbb3865aae89b90e4777f97c298a117c2b899e784b71b67",
+      "Ignored bounded review game-netclass-collateral.json sha256=2c90bded79f2ca1120a5140db74d6e4b88a232e3e960cd42f89923a1acb8ac07",
+      "Ignored bounded review game-changed-windows.json sha256=fb5bd9d2e5ffa6d08a6e35ac02087e713d7cdb37309e3f9197a86b0cad3735c6",
+      "Ignored bounded review netdaemon-newgame.md sha256=06279ae5eb6d2ffac8b6666a97d06795b5e26979111a2976e2a0269a4a276319"
+    ]
+  },
+  "previous_event": "88ce6700327cdcf8a4a72195037dc1fbf23ac26e39af27cc74d6fbe18bce95ab",
+  "request_id": "ui-full-collateral-manual-source-checkpoint-oct17",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:ui-buffer-roles-oct17"
+}
