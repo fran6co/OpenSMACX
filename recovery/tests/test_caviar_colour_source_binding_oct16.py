@@ -9,6 +9,7 @@ import subprocess
 import pytest
 
 from match_recovery.model import Span
+from match_recovery.cpp_storage_audit import storage_findings
 from match_recovery.object_source import parse_objects
 from test_caviar_scene_product_source import extract_definition
 
@@ -27,6 +28,11 @@ def source_binding():
     matches = [row for row in rows if row.symbol == COLOUR_SYMBOL]
     assert len(matches) == 1
     return matches[0]
+
+
+def caviar_storage_audit(text):
+    return storage_findings({"src/caviar.cpp": text}, pin=PIN,
+                            address_space=ADDRESS_SPACE, symbol_format="msvc")
 
 
 def extracted_source():
@@ -161,6 +167,34 @@ def test_current_binding_has_source_declared_bounded_identity():
     assert binding.evidence.address_space == ADDRESS_SPACE
     assert binding.evidence.address == 0x00617620
     assert binding.emitted_symbol == COLOUR_SYMBOL
+
+
+def test_actual_source_has_no_duplicate_global_identity_hint():
+    counts, per_file, findings = caviar_storage_audit(SOURCE.read_text(encoding="utf-8"))
+    assert counts["duplicate global identities"] == 0
+    assert per_file.get("src/caviar.cpp", {}).get("duplicate global identities", 0) == 0
+    assert not [finding for finding in findings
+                if finding["rule"] == "duplicate global identities"]
+
+
+def test_reintroduced_colour_address_hint_is_detected():
+    text = SOURCE.read_text(encoding="utf-8")
+    declaration = "uint8_t CaviarColourSource[0x1800];"
+    assert text.count(declaration) == 1
+    damaged = text.replace(declaration, declaration + "  // 0x009B9C38", 1)
+    counts, per_file, findings = caviar_storage_audit(damaged)
+    assert counts["duplicate global identities"] == 1
+    assert per_file["src/caviar.cpp"]["duplicate global identities"] == 2
+    related = [finding for finding in findings
+               if finding["rule"] == "duplicate global identities"
+               and finding.get("address") == COLOUR_SPAN.start]
+    assert len(related) == 2
+    sites = related[0]["related"]
+    assert {site["kind"] for site in sites} == {"address_comment", "source_object"}
+    assert {site["symbol"] for site in sites} == {
+        "CaviarColourSource", "?%src/caviar.cpp::CaviarColourSource"}
+    assert all(set(finding["symbols"]) == {
+        "CaviarColourSource", "?%src/caviar.cpp::CaviarColourSource"} for finding in related)
 
 
 def test_extracted_current_producer_and_consumer_execute_expected_paths(tmp_path):
