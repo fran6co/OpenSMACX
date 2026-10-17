@@ -1,0 +1,31 @@
+{
+  "event_id": "ada61b7195d755ca579f557ffc0fedddd098076661e2218d552d94503f7ccd68",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_multiwin_show_receivers_oct17.py",
+      "recovery/tests/test_reportwin_canvas_receiver_oct17.py",
+      "src/multiwin.cpp",
+      "src/reportwin.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Authorize nonvirtual inline Win::mark_visible(), setting only existing iSomeFlag_ bit1, with a current comment distinguishing it from show callbacks/z-order. It is a reconstructed meaningful state API, not an invented independently mapped original function. Do not expose fields, add a vtable slot, annotate an original identity, change layout/flags or alter Win::show. Place the short comment/method in the two existing blank lines after ~Win(), preserving downstream declaration/static_assert line positions; the prior MapWin controls established that gratuitous header line shifts can perturb this compiler. No #line/pragma/byte or artificial statement trick.",
+      "Use child.mark_visible() at the two already authorized MultiWin publication points. The actual-source host fixture must extract this actual inline method too, rather than replacing it with a model-only setter. Authorize reset to remove its unnecessary local Buffer alias and qualify its six inherited Buffer calls directly; no unrelated expression changes. These are within the same verified receiver/visibility roles, not a functional expansion.",
+      "Next epoch uses complete guarded source+Win-header overlays under unchanged source/Git/recipes, fresh artifact names retaining all previous results, same actual/two-frame control protocol and complete outside-body comparisons. Adding an inline helper requires fresh full-project compiled collateral review after applying the winner. Preserve every historical obligation and discovery; no compile failure or unknown result is acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6216144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "311ed1edc7da8d256bd8cd887fa8a10f0dc22a1064fa395628e5f5e81b03dbb1",
+  "request_id": "ui-base-and-visibility-api-scope-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:ui-buffer-roles-oct17"
+}

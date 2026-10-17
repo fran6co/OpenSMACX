@@ -1,0 +1,22 @@
+{
+  "event_id": "311ed1edc7da8d256bd8cd887fa8a10f0dc22a1064fa395628e5f5e81b03dbb1",
+  "payload": {
+    "affects": [
+      "entity-17972fc8b7ba189d51825e84d58d3f4936082394c40df97d6efd1a61d42a356f",
+      "entity-6c5d700fa92821e8fdbdd23149c2db98321d2b79ac68ed29a112faf216374178"
+    ],
+    "author": "coordinator",
+    "discovery_id": "ui-base-and-visibility-api-discovery-oct17",
+    "evidence": [
+      "First epoch is terminal without production edits: both ReportWin frame-family baseline/replica/damage/candidate controls preserve outside reset, but local Buffer&=*this emits an extra VC6 nullable-base adjustment at496BD3 and still mismatches. Preserve these reports. Inherited Buffer:: qualified calls express the same proven receiver directly and avoid the unnecessary conversion.",
+      "MultiWin actual baseline/replica/damage completed; candidate compile exited2 with C2248 because Win::iSomeFlag_ is protected. No candidate object or completed candidate verification exists for that attempt. Win::show(1) remains the wrong behavior: original only sets the two child visibility bits. Keep fields protected and the original state publication; source needs a legitimate narrow inlined API."
+    ],
+    "hypothesis": "Correct Buffer receiver roles need base-qualified calls and a narrow Win visibility-state API, not protected cross-object access or a nullable local base conversion.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "ui-base-and-visibility-api-discovery-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:ui-buffer-roles-oct17"
+}
