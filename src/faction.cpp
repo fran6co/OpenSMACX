@@ -13505,10 +13505,12 @@ static int battle_plans_selected_region_distance_result(
         }
     }
 
-    base_find(selected_base.x, selected_base.y, faction_id);
-    const int selected_distance = BaseFindDist;
     base_find(plan_base.x, plan_base.y, faction_id);
-    if (BaseFindDist < selected_distance * 2) {
+    const int plan_distance = BaseFindDist;
+    base_find(selected_base.x, selected_base.y, faction_id);
+    const int doubled_plan_distance =
+        (int32_t)((uint32_t)plan_distance * 2u);
+    if (BaseFindDist >= doubled_plan_distance) {
         return 2;
     }
     return 0;
@@ -15163,6 +15165,9 @@ static void battle_plans_apply_selected_target(int faction_id,
 // ORIGINAL: 0x0054B1C0 ?battle_plans@@YAXHH@Z 0x0054B1C0-0x0054BEBE;0x0065F662-0x0065F8FC
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0054B1C0:0054B1C0-0054BEBE,0065F662-0065F8FC", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
 // TRIED: same Popup-teardown-cascade shape as PickWin (mechanical EBP(x) buffer transcription, reused from that pattern). The post-BasePop::exec block (0x54B978-0x54BA25, writing g_0096cdd0/cdd4/da54/da58) is OMITTED - falls straight to the close@PlanWin cascade instead of computing those derived fields, since the base_find/tile-ownership arithmetic there wasn't independently re-verified in the time available. sim 0.18-0.61 across flag sets.
+// The TRIED note describes the former seed body; target cleanup is expressed
+// in battle_plans_apply_selected_target. Pinned 54B8F1..54B938 queries plan_b
+// before the selected base, then applies signed JL after 32-bit LEA doubling.
 void __cdecl battle_plans(int faction_a, int faction_b) {
     Popup popup;
 
@@ -15279,7 +15284,7 @@ void __cdecl battle_plans(int faction_a, int faction_b) {
 
                 const int gate_result =
                     battle_plans_selected_region_distance_result(
-                        faction_b, selected_base, Bases[plan_a]);
+                        faction_b, selected_base, Bases[plan_b]);
                 if (gate_result == 1) {
                     X_pops(BattlePlansRegionRejectedLabel, 0x100000,
                                  FactionDiplomacyPortraits[faction_b],

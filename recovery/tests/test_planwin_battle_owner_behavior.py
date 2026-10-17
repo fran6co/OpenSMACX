@@ -578,7 +578,10 @@ static BattleGameDataStateWindow GameDataStateStorage;
 static Veh Vehs[8];
 
 static int Longitude;
-static int BaseFindDist, SelectedDistance, PlannedDistance;
+struct BaseFindCall { int x, y, faction; };
+static BaseFindCall BaseFindCalls[4];
+static int BaseFindCallCount;
+static int BaseFindDist, SelectedDistance, PlanADistance, PlanBDistance;
 static int DiploScratchFA2C, DiploScratchFA48, DiploScratchFA60, DiploFriction;
 static int PopupDialogFactionID, IsMultiplayerNet;
 static int PlanBattleFactionA, PlanBattleFactionB;
@@ -604,11 +607,24 @@ static const char *LastPopupLabel;
 static int LastPopupValue;
 static int ThrowFromSuggest;
 static int ForcedInvalidPlanAttack;
+static int MutateTargetOnBattleYes;
 
 static const Map *map_loc(int x, int y) { return &Tiles[(x >> 1) + y * Longitude]; }
-static int base_find(int x, int y, int) {
-    BaseFindDist = (x == Bases[3].x && y == Bases[3].y)
-                       ? SelectedDistance : PlannedDistance;
+static int base_find(int x, int y, int faction) {
+    assert(BaseFindCallCount < 4);
+    BaseFindCalls[BaseFindCallCount].x = x;
+    BaseFindCalls[BaseFindCallCount].y = y;
+    BaseFindCalls[BaseFindCallCount].faction = faction;
+    ++BaseFindCallCount;
+    if (x == Bases[3].x && y == Bases[3].y) {
+        BaseFindDist = SelectedDistance;
+    } else if (x == Bases[5].x && y == Bases[5].y) {
+        BaseFindDist = PlanADistance;
+    } else if (x == Bases[6].x && y == Bases[6].y) {
+        BaseFindDist = PlanBDistance;
+    } else {
+        assert(0 && "unexpected base_find coordinates");
+    }
     return -1;
 }
 static int suggest_plan(int faction, int) {
@@ -626,6 +642,10 @@ static int attack_from(int base_id, int faction) {
 static int pop_wait() { return 0; }
 static int X_pops(const char *label, int value, Sprite *, int (*)()) {
     LastPopupLabel=label; LastPopupValue=value;
+    if (MutateTargetOnBattleYes && strcmp(label,"BATTLEYES")==0) {
+        PlayersData[2].x_target=2; PlayersData[2].y_target=1;
+        Tiles[(2>>1)+1*Longitude].region=5;
+    }
     return PopResultIndex < PopResultCount ? PopResults[PopResultIndex++] : 0;
 }
 static void trade_maps(int, int) { ++TradeMapsCalls; }
@@ -665,7 +685,8 @@ static void reset_fixture() {
         for(j=0;j<128;++j) PlayersData[i].region_base_plan[j]=0;
     }
     Longitude=10; GameDataStateStorage.fields_.base_current_count_=11; GameDataStateStorage.fields_.vehicle_current_count_=0; BaseFindDist=0;
-    SelectedDistance=3; PlannedDistance=6;
+    BaseFindCallCount=0;
+    SelectedDistance=3; PlanADistance=1; PlanBDistance=6;
     DiploScratchFA2C=0; DiploScratchFA48=1; DiploScratchFA60=0; DiploFriction=0;
     PopupDialogFactionID=-1; IsMultiplayerNet=0; PlanBattleFactionA=-1;
     PlanBattleFactionB=-1; GenderDefault=-1; PluralityDefault=-1;
@@ -674,7 +695,7 @@ static void reset_fixture() {
     PopResults[1]=0; PopResults[2]=0; PopResults[3]=0;
     PopResultCount=1; PopResultIndex=0; PopupSelection=3;
     PopupConstructed=0; PopupDestroyed=0; ThrowFromSuggest=0;
-    ForcedInvalidPlanAttack=0;
+    ForcedInvalidPlanAttack=0; MutateTargetOnBattleYes=0;
     TradeMapsCalls=MessageCalls=LogCalls=ParseCalls=SpotCalls=AttackCalls=0;
     for(i=0;i<8;++i) ParsedInputs[i]=0;
     for(i=0;i<16;++i) AttackTrace[i]=-1;
@@ -719,9 +740,50 @@ static void accepted_plan_checks() {
     assert(PlayersData[2].x_target==-1 && PlayersData[2].y_target==-1);
     assert(PlayersData[2].unk_71==0 && PlayersData[2].unk_72==0);
     assert(strcmp(LastPopupLabel,"BATTLEYES")==0);
+    assert(BaseFindCallCount==2);
+    assert(BaseFindCalls[0].x==Bases[6].x && BaseFindCalls[0].y==Bases[6].y);
+    assert(BaseFindCalls[1].x==Bases[3].x && BaseFindCalls[1].y==Bases[3].y);
+    assert(BaseFindCalls[0].faction==2 && BaseFindCalls[1].faction==2);
+    assert(BaseFindDist==SelectedDistance);
+}
+static void distance_gate_checks() {
+    reset_fixture();
+    SelectedDistance=3; PlanADistance=1; PlanBDistance=5;
+    battle_plans(1,2);
+    assert(strcmp(LastPopupLabel,"BATTLEYES")==0);
+    assert(BaseFindCallCount==2);
+    assert(BaseFindCalls[0].x==Bases[6].x && BaseFindCalls[0].y==Bases[6].y);
+    assert(BaseFindCalls[1].x==Bases[3].x && BaseFindCalls[1].y==Bases[3].y);
+    assert(BaseFindDist==SelectedDistance);
+
+    reset_fixture(); MutateTargetOnBattleYes=1;
+    PlayersData[2].unk_71=21; PlayersData[2].unk_72=22;
+    battle_plans(1,2);
+    assert(strcmp(LastPopupLabel,"BATTLEYES")==0);
+    assert(PlayersData[2].x_target==2 && PlayersData[2].y_target==1);
+    assert(PlayersData[2].unk_71==21 && PlayersData[2].unk_72==22);
+
+    reset_fixture(); SelectedDistance=9; PlanBDistance=5;
+    battle_plans(1,2);
+    assert(strcmp(LastPopupLabel,"BATTLEYES")==0);
+
+    reset_fixture(); SelectedDistance=10; PlanBDistance=5;
+    battle_plans(1,2);
+    assert(strcmp(LastPopupLabel,"BATTLENO")==0);
+
+    reset_fixture(); SelectedDistance=11; PlanBDistance=5;
+    battle_plans(1,2);
+    assert(strcmp(LastPopupLabel,"BATTLENO")==0);
+
+    // LEA's native 32-bit doubling wraps: 0x40000000 becomes INT_MIN, so
+    // signed JL is not taken: zero is above the wrapped INT_MIN threshold.
+    reset_fixture(); SelectedDistance=0; PlanBDistance=0x40000000;
+    battle_plans(1,2);
+    assert(strcmp(LastPopupLabel,"BATTLENO")==0);
 }
 int main() {
     accepted_plan_checks();
+    distance_gate_checks();
 
     reset_fixture(); PlayersData[1].diplo_treaties[2]=0;
     PlayersData[2].diplo_treaties[1]=0x20; battle_plans(1,2);
@@ -746,9 +808,6 @@ int main() {
     PlayersData[2].region_base_plan[7]=PLAN_NAVAL_TRANSPORT;
     battle_plans(1,2);
     assert(strcmp(LastPopupLabel,"BATTLENO")==0);
-    reset_fixture(); PlannedDistance=5; battle_plans(1,2);
-    assert(strcmp(LastPopupLabel,"BATTLENO")==0);
-
     reset_fixture(); ThrowFromSuggest=1;
     try { battle_plans(1,2); assert(0); }
     catch(int value) { assert(value==17 && PopupDestroyed==1); }
@@ -792,9 +851,31 @@ def test_extracted_battle_plans_actual_source_and_native_order_damage_cases(
         "if (plan_a < 0 || attack_b < 0)",
         1,
     )
+    wrong_distance_plan = bodies[2].replace(
+        "faction_b, selected_base, Bases[plan_b]);",
+        "faction_b, selected_base, Bases[plan_a]);",
+        1,
+    )
+    wrong_distance_order = bodies[0].replace(
+        "    base_find(plan_base.x, plan_base.y, faction_id);\n"
+        "    const int plan_distance = BaseFindDist;\n"
+        "    base_find(selected_base.x, selected_base.y, faction_id);",
+        "    base_find(selected_base.x, selected_base.y, faction_id);\n"
+        "    const int plan_distance = BaseFindDist;\n"
+        "    base_find(plan_base.x, plan_base.y, faction_id);",
+        1,
+    )
+    wrong_distance_predicate = bodies[0].replace(
+        "if (BaseFindDist >= doubled_plan_distance)",
+        "if (BaseFindDist < doubled_plan_distance)",
+        1,
+    )
     assert wrong_view != bodies[2] and wrong_line != bodies[2]
     assert wrong_parse != bodies[2]
     assert wrong_plan_guard != bodies[2]
+    assert wrong_distance_plan != bodies[2]
+    assert wrong_distance_order != bodies[0]
+    assert wrong_distance_predicate != bodies[0]
 
     compilers = [name for name in ("g++", "clang++") if shutil.which(name)]
     assert compilers, "need at least one configured host C++ compiler"
@@ -819,6 +900,9 @@ def test_extracted_battle_plans_actual_source_and_native_order_damage_cases(
             ("line-direction", (bodies[0], bodies[1], wrong_line)),
             ("parse-order", (bodies[0], bodies[1], wrong_parse)),
             ("plan-result-guard", (bodies[0], bodies[1], wrong_plan_guard)),
+            ("distance-plan", (bodies[0], bodies[1], wrong_distance_plan)),
+            ("distance-order", (wrong_distance_order, bodies[1], bodies[2])),
+            ("distance-predicate", (wrong_distance_predicate, bodies[1], bodies[2])),
         ):
             bad = compile_run(_battle_program(damaged), label)
             assert bad.returncode != 0, "damage case escaped fixture: " + label
