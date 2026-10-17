@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "d95b581a784b1dd569c9783889bc5d577e543664",
+  "editable_files": [
+    "src/map.cpp",
+    "recovery/tests/test_altitude_owner_behavior.py",
+    "recovery/tests/altitude_owners/alt_set.cpp"
+  ],
+  "evidence": [
+    "Native pending discovery zero-turn-altitude-tail in basepop-start-init-oct17 is committed in master d95b581a7. Complete debugger snapshots at setup_player entry show all3200 candidate tiles at altitude1, while the original has2051land tiles; seeds differ and no deterministic terrain equivalence is claimed. Player placement retry/parity/index/overflow agree with original, so no bounds workaround is authorized.",
+    "Pinned alt_set5912A0 JE targets591852, not RET591893: the common tail always indexes MapTiles, retains climate low5bits, inserts altitude lowbyte<<5 at591882 and sets UnkBitfield1 bit4 at59188B. Current source incorrectly returns at turnzero before that tail. Gate only the existing gameplay consequences behind turn!=0, leaving common write/invalidation unconditional. Do not change terrain algorithms, signatures, headers, compiler flags, globals, claims, annotations or historical lessons.",
+    "Existing actual-source fixture incorrectly expects no climate/flag write at turnzero. Correct that oracle from pinned independent branch/target/tail evidence, test zero-turn land/water/equal/negative/large altitude encodings and low-bit preservation with no gameplay callbacks/neighbor writes, and retain all nonzero-turn controls. Damage variants must compile and fail after positives; compile the actual full source definition with GCC/Clang, not a reimplementation.",
+    "Prepare a new isolated native worktree and compiler lease. Baseline existing host controls, all146 map.cpp measurements, and claims/mappings/references before edits. Require fresh candidate and destination build/link, original identity/claim and per-function verdict continuity outside the authorized setter, complete176-object physical preservation outside only alt_set, independent source review, and fresh original/candidate runtime and terrain observations. Unknowns/failures remain explicit; no automatic/full-game acceptance or exactness claim. No structural correctness finding is automatically reverted solely for byte regression."
+  ],
+  "intent": "Restore the original altitude setter's common tile write on turn zero, preserving the original gameplay-only side-effect guard.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5837456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "zero-turn-altitude-oct17"
+}
