@@ -12,6 +12,7 @@ import subprocess
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 BASE_REVISION = "7270943e6988505e93cff9d32d126c129f70e8ab"
 ALPHA_BASE_REVISION = "1b0f0231bd7dc49750fabd249ad11b21faf78dbe"
+REMAINING_BASE_REVISION = "02518228188b32f92a5314df56a218f415e72cd8"
 PRIOR_PROFILE_GROUPS = (
     (
         "src/game.cpp",
@@ -64,6 +65,15 @@ NEW_OWNERS = (
     "src/playerlock.cpp",
     "src/probe.cpp",
 )
+REMAINING_OWNERS = (
+    "src/base.cpp",
+    "src/multiwin.cpp",
+    "src/selectpartwin.cpp",
+    "src/socialwin.cpp",
+    "src/technology.cpp",
+    "src/technology_queries.cpp",
+    "src/uv2player.cpp",
+)
 REJECTED_OWNERS = (
     "src/buffer.cpp", "src/alphamovie.cpp", "src/basepop.cpp",
     "src/terraforming.cpp", "src/newgame.cpp",
@@ -87,6 +97,25 @@ NEW_PROFILE_BLOCK_TEXT = (
     '    PROPERTIES COMPILE_OPTIONS "/Oy-")'
 )
 NEW_PROFILE_BLOCK = (tuple(sorted(NEW_OWNERS)), ("/Oy-",))
+REMAINING_PROFILE_COMMENT = (
+    "# Preserve measured frame-based accesses in the remaining application owners.\n"
+    "# Mixed generic/application owners retain their independently measured defaults.\n"
+)
+REMAINING_PROFILE_BLOCK_TEXT = (
+    "set_source_files_properties(\n"
+    "    src/base.cpp\n"
+    "    src/multiwin.cpp\n"
+    "    src/selectpartwin.cpp\n"
+    "    src/socialwin.cpp\n"
+    "    src/technology.cpp\n"
+    "    src/technology_queries.cpp\n"
+    "    src/uv2player.cpp\n"
+    '    PROPERTIES COMPILE_OPTIONS "/Oy-")'
+)
+REMAINING_PROFILE_INSERTION = (
+    REMAINING_PROFILE_COMMENT + REMAINING_PROFILE_BLOCK_TEXT + "\n"
+)
+REMAINING_PROFILE_BLOCK = (tuple(sorted(REMAINING_OWNERS)), ("/Oy-",))
 ALPHA_PROFILE_COMMENT = (
     "# Preserve Alpha's measured frame-based application context.\n"
     "# Shared graphics language state and its setter have a separate library owner.\n"
@@ -119,6 +148,7 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(("src/map.cpp", "src/faction.cpp", "src/veh.cpp"))): ("/Oy-",),
     **{tuple(sorted(group)): ("/Oy-",) for group in PRIOR_PROFILE_GROUPS},
     tuple(sorted(NEW_OWNERS)): ("/Oy-",),
+    tuple(sorted(REMAINING_OWNERS)): ("/Oy-",),
     ("src/alpha.cpp",): ("/Oy-",),
     tuple(sorted(("src/interface_palette.cpp", "src/interface_fonts.cpp"))): ("/Oy-",),
     ("src/sound.cpp",): ("/Oy-",),
@@ -161,6 +191,10 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
         return False
     if baseline.count(NEW_PROFILE_COMMENT) or candidate.count(NEW_PROFILE_COMMENT) != 1:
         return False
+    if baseline.count(REMAINING_PROFILE_INSERTION) or candidate.count(REMAINING_PROFILE_INSERTION) != 1:
+        return False
+    if baseline.count(REMAINING_PROFILE_COMMENT) or candidate.count(REMAINING_PROFILE_COMMENT) != 1:
+        return False
     if baseline.count(ALPHA_PROFILE_INSERTION) or candidate.count(ALPHA_PROFILE_INSERTION) != 1:
         return False
     if baseline.count(ALPHA_PROFILE_COMMENT) or candidate.count(ALPHA_PROFILE_COMMENT) != 1:
@@ -171,6 +205,7 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
         return False
 
     projected = candidate.replace(insertion, "", 1)
+    projected = projected.replace(REMAINING_PROFILE_INSERTION, "", 1)
     projected = projected.replace(ALPHA_PROFILE_INSERTION, "", 1)
     projected = projected.replace(NEW_ALPHA_DEFAULT_COMMENT, OLD_ALPHA_DEFAULT_COMMENT, 1)
     return projected == baseline
@@ -179,6 +214,7 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
 def cmake_profile_delta_is_exact(baseline: str, candidate: str) -> bool:
     expected = collections.Counter(source_property_blocks(baseline))
     expected[NEW_PROFILE_BLOCK] += 1
+    expected[REMAINING_PROFILE_BLOCK] += 1
     expected[ALPHA_PROFILE_BLOCK] += 1
     return (
         collections.Counter(source_property_blocks(candidate)) == expected
@@ -199,6 +235,7 @@ def test_profile_guard_rejects_policy_mutations():
     )
     candidate = baseline.replace(OLD_ALPHA_DEFAULT_COMMENT, NEW_ALPHA_DEFAULT_COMMENT)
     candidate += NEW_PROFILE_COMMENT + NEW_PROFILE_BLOCK_TEXT + "\n"
+    candidate += REMAINING_PROFILE_INSERTION
     candidate += ALPHA_PROFILE_INSERTION
     assert cmake_profile_delta_is_exact(baseline, candidate)
 
@@ -226,6 +263,19 @@ def test_profile_guard_rejects_policy_mutations():
         "    src/ambience.cpp\n", "    src/ambience.cpp\n    src/other.cpp\n"
     )
     assert not cmake_profile_delta_is_exact(baseline, extra_owner)
+    missing_remaining = candidate.replace(REMAINING_PROFILE_INSERTION, "")
+    assert not cmake_profile_delta_is_exact(baseline, missing_remaining)
+    duplicate_remaining = candidate + "\n" + REMAINING_PROFILE_BLOCK_TEXT + "\n"
+    assert not cmake_profile_delta_is_exact(baseline, duplicate_remaining)
+    changed_remaining_options = candidate.replace(
+        REMAINING_PROFILE_BLOCK_TEXT,
+        REMAINING_PROFILE_BLOCK_TEXT.replace('COMPILE_OPTIONS "/Oy-"', 'COMPILE_OPTIONS "/Oy- /Ob0"'),
+    )
+    assert not cmake_profile_delta_is_exact(baseline, changed_remaining_options)
+    extra_remaining_owner = candidate.replace(
+        "    src/base.cpp\n", "    src/base.cpp\n    src/polygon.cpp\n"
+    )
+    assert not cmake_profile_delta_is_exact(baseline, extra_remaining_owner)
     global_flag_change = candidate.replace(
         'add_compile_options("/DDEFAULT=1")', 'add_compile_options("/DDEFAULT=1" "/Oy-")'
     )
@@ -248,7 +298,17 @@ def test_profile_guard_rejects_policy_mutations():
         '\nset_source_files_properties(src/strings.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
     )
     assert not cmake_profile_delta_is_exact(baseline, strings_profile)
-    for rejected in (*REJECTED_OWNERS, *PREVIOUS_REJECTED_OWNERS, "src/base.cpp", "src/win.cpp", "src/technology_queries.cpp"):
+    for rejected in (
+        *REJECTED_OWNERS,
+        *PREVIOUS_REJECTED_OWNERS,
+        "src/base.cpp",
+        "src/win.cpp",
+        "src/technology_queries.cpp",
+        "src/polygon.cpp",
+        "src/texture.cpp",
+        "src/general.cpp",
+        "src/popup.cpp",
+    ):
         extra_profile = candidate + (
             f'\nset_source_files_properties({rejected} PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
         )
@@ -273,6 +333,16 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
         )
     )
     assert alpha_task["base_revision"] == ALPHA_BASE_REVISION
+    remaining_task = json.loads(
+        (ROOT / "recovery/tasks/remaining-owner-frames-oct17.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert remaining_task["base_revision"] == REMAINING_BASE_REVISION
+    assert remaining_task["editable_files"] == [
+        "CMakeLists.txt",
+        "recovery/tests/test_application_compiler_profiles.py",
+    ]
     baseline_cmake = baseline_text("CMakeLists.txt")
     current_cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     assert cmake_profile_delta_is_exact(baseline_cmake, current_cmake)
@@ -280,28 +350,26 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     source_list = re.search(r"set\(OPENSMACX_SOURCES(.*?)\n\)", current_cmake, re.S)
     assert source_list is not None
     application_sources = set(source_list.group(1).split())
-    assert all(owner in application_sources for owner in NEW_OWNERS + PREVIOUS_OWNERS)
+    assert all(owner in application_sources for owner in NEW_OWNERS + REMAINING_OWNERS + PREVIOUS_OWNERS)
     assert all(owner in application_sources for owner in REJECTED_OWNERS)
     assert all(owner in application_sources for owner in PREVIOUS_REJECTED_OWNERS)
-    assert "src/base.cpp" in application_sources
     assert "src/sprite.cpp" in application_sources
     assert "src/net_class.cpp" in application_sources
     assert "src/alpha.cpp" in application_sources
     assert "src/win.cpp" in application_sources
-    assert "src/technology_queries.cpp" in application_sources
 
     actual_profiles = dict(source_property_blocks(current_cmake))
     assert actual_profiles == EXPECTED_CMAKE_PROFILES
     profiled_sources = {source for sources in actual_profiles for source in sources}
     assert "src/alpha.cpp" in profiled_sources
     assert actual_profiles[("src/alpha.cpp",)] == ("/Oy-",)
+    assert all(owner in profiled_sources for owner in REMAINING_OWNERS)
+    assert actual_profiles[tuple(sorted(REMAINING_OWNERS))] == ("/Oy-",)
     assert "src/win.cpp" not in profiled_sources
-    assert "src/technology_queries.cpp" not in profiled_sources
     assert "src/sprite.cpp" not in profiled_sources
     assert "src/net_class.cpp" not in profiled_sources
     assert all(owner not in profiled_sources for owner in REJECTED_OWNERS)
     assert all(owner not in profiled_sources for owner in PREVIOUS_REJECTED_OWNERS)
-    assert "src/base.cpp" not in profiled_sources
 
     baseline_project = json.loads(baseline_text("recovery/project.json"))
     current_project = json.loads(
@@ -314,6 +382,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     unit_profiles = current_measurement["unit_flag_sets"]
     for owner, expected in EXISTING_MEASURED_PROFILES.items():
         assert unit_profiles[owner] == expected, (owner, unit_profiles.get(owner))
-    for owner in NEW_OWNERS + REJECTED_OWNERS + PREVIOUS_REJECTED_OWNERS + ("src/base.cpp", "src/win.cpp", "src/alpha.cpp"):
+    for owner in NEW_OWNERS + tuple(
+        owner for owner in REMAINING_OWNERS if owner != "src/technology_queries.cpp"
+    ) + REJECTED_OWNERS + PREVIOUS_REJECTED_OWNERS + ("src/win.cpp", "src/alpha.cpp"):
         assert owner not in unit_profiles, (owner, unit_profiles.get(owner))
-

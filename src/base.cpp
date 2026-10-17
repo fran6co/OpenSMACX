@@ -6347,13 +6347,17 @@ Status: Complete
 */
 int __cdecl base_lose_minerals(int base_id, int UNUSED(production_id)) {
     int min_accum;
-    if (Rules.retool_pct_pen_prod_chg && is_human(Bases[base_id].faction_id_current)
-        && base_making(Bases[base_id].production_id_last, base_id)
-        != base_making(Bases[base_id].queue_production_id[0], base_id)
-        && (min_accum = Bases[base_id].minerals_accumulated_2,
-            min_accum > (int)Rules.retool_exemption)) {
-        return min_accum - (100 - (int)Rules.retool_pct_pen_prod_chg)
-            * (min_accum - (int)Rules.retool_exemption) / 100 - (int)Rules.retool_exemption;
+    if (Rules.retool_pct_pen_prod_chg && is_human(Bases[base_id].faction_id_current)) {
+        // The original classifies +0x44 before reading and classifying +0x50.
+        // Separate statements preserve that order; != operands do not.
+        const int previous = base_making(Bases[base_id].production_id_last, base_id);
+        const int queued = base_making(Bases[base_id].queue_production_id[0], base_id);
+        if (queued != previous
+            && (min_accum = Bases[base_id].minerals_accumulated_2,
+                min_accum > (int)Rules.retool_exemption)) {
+            return min_accum - (100 - (int)Rules.retool_pct_pen_prod_chg)
+                * (min_accum - (int)Rules.retool_exemption) / 100 - (int)Rules.retool_exemption;
+        }
     }
     return 0;
 }

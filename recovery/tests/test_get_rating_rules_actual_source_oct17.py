@@ -160,7 +160,9 @@ def test_owner_body_is_a_single_typed_mask_change_from_immutable_baseline():
         ["git", "show", f"{BASELINE}:src/base.cpp"],
         cwd=ROOT, text=True, timeout=30)
     assert baseline.count(OLD_MASK) == 1
-    assert cpp == baseline.replace(OLD_MASK, NEW_MASK, 1)
+    # Preserve this function's complete immutable comparison without freezing
+    # unrelated recoveries in the same owner (such as base_lose_minerals).
+    assert body == _definition(baseline, SIGNATURE).replace(OLD_MASK, NEW_MASK, 1)
     assert NEW_MASK in body and OLD_MASK not in body
 
     fields = (ROOT / "src/game_data_state_window.h").read_text(encoding="utf-8")

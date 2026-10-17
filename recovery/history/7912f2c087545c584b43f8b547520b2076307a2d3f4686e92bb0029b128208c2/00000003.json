@@ -1,0 +1,19 @@
+{
+  "event_id": "446139ac43e75bd3bb6a437b45c8e543ebe1e168a349f5834dd9a6d3923dbe04",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_get_rating_rules_actual_source_oct17.py"
+    ],
+    "evidence": [
+      "The first final-source host run passes all original runtime/mutant controls but the get_rating immutable-source assertion freezes every byte of base.cpp, preventing the separately authorized and original-backed retool correction. Keep immutable get_rating body equality, rules/storage evidence, pinned instructions and all host/runtime-failing mutants. Narrow only its whole-TU assertion to its actual function; separate final-source continuity checks still require all source bytes outside the one authorized retool definition unchanged. This is not permission to change get_rating or accept unrelated C++ collateral."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fd5152fa7231fcfc5b105b900389fedacbbf51a9e10b8b45e12b90c9cd42520c",
+  "request_id": "retain-get-rating-protection-without-freezing-base-owner",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:remaining-owner-frames-oct17"
+}

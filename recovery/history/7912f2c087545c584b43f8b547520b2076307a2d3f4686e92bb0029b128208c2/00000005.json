@@ -1,0 +1,21 @@
+{
+  "event_id": "f439f5b8285238033d48cf2f34f8c6888e0881495074cfba6cbb5e54e8105282",
+  "payload": {
+    "affects": [
+      "entity-6f11c65ed65be7d5360aeee4ae816f8a81f643d6af947ab5ec28f07f402fdcdc"
+    ],
+    "author": "coordinator",
+    "discovery_id": "resource-yield-associated-jump-table-extent",
+    "evidence": [
+      "Pinned original4E7DCB jumps through[eax*4+4E7E34]. Four absolute entries4E7E34..4E7E44 target4E7DD2,4E7DEE,4E7E0A,4E7E26. Existing original annotation4E7DC0..4E7E34 covers116codebytes but not this16-byte referenced table. Current faithful switch emits four relocations at offsets116,120,124,128, outside that recorded span, so strict extent failure remainsFAIL despite masked code equality.",
+      "Retain as pending associated-data/annotation work. Do not erase the identity, hand-edit original spans, fake an unreferenced label, replace the switch with staged addresses, or label the44gains fully strict. Correct the misleading source interpretation and establish supported source-owned table binding with dedicated scoped evidence before claiming associated-data fidelity."
+    ],
+    "hypothesis": "resource_yield4E7DC0 has associated compiler-owned jump-table data immediately following the mapped code; the current unreferenced-end-label note is contradicted by the original instructions.",
+    "kind": "discovery"
+  },
+  "previous_event": "5afcadaa880ab9082915cf3932bdd019f2f9b8d083c80396d69217be34e6f782",
+  "request_id": "resource-yield-associated-jump-table-extent",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:remaining-owner-frames-oct17"
+}

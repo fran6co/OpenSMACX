@@ -1,0 +1,21 @@
+{
+  "event_id": "be8da3e916e0913919d45dc06fdaef2564d49e1b42d1be5c33aaff0490546aab",
+  "payload": {
+    "affects": [
+      "entity-d704a48f907cb4bfa4bbdc321395d23dd0c12069413194a7b6005bfa5107e352"
+    ],
+    "author": "coordinator",
+    "discovery_id": "retool-original-field-call-order",
+    "evidence": [
+      "Fresh strict reference comparison of the44controlled gains finds Bases relocations at offsets57/71 differ for4E4810. Pinned4E4847 loads Bases+0x44 and calls4E4700, then4E4855 loads Bases+0x50 and calls4E4700. CurrentVC6 object reverses those addends even though legacy masking reports all160bytes exact. Native class member declarations identify production_id_last+44 and queue_production_id[0]+50; these are not wrong array allocations or an excuse to change layout.",
+      "Current != operands have unspecified C++ evaluation order. Use explicit typed sequential locals inside the unchanged percent/human guard, preserving live reads before each classification and all signed retool arithmetic/short-circuit behavior. This is restoring original native order, not normalizing a bug or accepting a masked score as fidelity. Keep resource_yield4E7DC0 independent extent failure unwaived pending evidence."
+    ],
+    "hypothesis": "Masked equality hides opposite Bases field addends: sequence previous-production classification before queued-production classification as the original does.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "retool-original-field-call-order",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:remaining-owner-frames-oct17"
+}

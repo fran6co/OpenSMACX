@@ -453,6 +453,17 @@ set_source_files_properties(
 # Preserve Alpha's measured frame-based application context.
 # Shared graphics language state and its setter have a separate library owner.
 set_source_files_properties(src/alpha.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve measured frame-based accesses in the remaining application owners.
+# Mixed generic/application owners retain their independently measured defaults.
+set_source_files_properties(
+    src/base.cpp
+    src/multiwin.cpp
+    src/selectpartwin.cpp
+    src/socialwin.cpp
+    src/technology.cpp
+    src/technology_queries.cpp
+    src/uv2player.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp

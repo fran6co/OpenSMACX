@@ -1,0 +1,20 @@
+{
+  "event_id": "fd5152fa7231fcfc5b105b900389fedacbbf51a9e10b8b45e12b90c9cd42520c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_retool_sequence_oct17.py",
+      "src/base.cpp"
+    ],
+    "evidence": [
+      "Authorize only base_lose_minerals4E4810 in src/base.cpp and a focused actual-body/pinned-order test. Preserve original markers, claims, every other C++ byte, native task baseline and seven-owner compiler controls. No header/layout/type/helper/guard/arithmetic change. Require compiling failing order/return/guard controls, native strict addend remeasurement, fresh complete build/census/canonical/physical/source and destination checks. Retain first-profile observations rather than overwriting or claiming them as current after the edit."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "be8da3e916e0913919d45dc06fdaef2564d49e1b42d1be5c33aaff0490546aab",
+  "request_id": "sequence-retool-classifications-in-real-owner",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:remaining-owner-frames-oct17"
+}
