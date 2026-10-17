@@ -1,0 +1,17 @@
+{
+  "event_id": "3504e16477fa056a5c6a0df522e028b38ef94c09129a53ae1c4af02e2b58d57c",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "network-whole-owner-frame-negative-oct17",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Network source/header/annotations/default recipe remain unchanged, and its complete fresh actual object reproduces the controlled baseline with zero omissions. Guard explicitly excludes its rejected profile. No per-function flags, source split, marker migration, exception or claim demotion hides these losses."
+    ]
+  },
+  "previous_event": "455f44b897c7d9db1ff751463e5365cd8b4963be75692f8c68203eca5aedd637",
+  "request_id": "network-whole-owner-frame-negative-oct17-rejected",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:fast-owner-cohort-oct17"
+}
