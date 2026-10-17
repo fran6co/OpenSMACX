@@ -1,0 +1,29 @@
+{
+  "author": "coordinator",
+  "base_revision": "453a20dc016060a19bd1b3ac06c8c3893ab900e4",
+  "editable_files": [
+    "src/caviar.cpp",
+    "recovery/tests/test_caviar_colour_source_binding_oct16.py"
+  ],
+  "evidence": [
+    "Current complete v2 RECOVERY_OBJECT binds the private CaviarColourSource symbol and exact0x009B9C38..009BB438 backing window. The trailing bare-address comment on the same declaration is redundant. Native storage audit now resolves the private PAE symbol and reports the bare and qualified spellings as two heuristic identities at one address; removing only that trailing hint changes selected-file duplicate count1 to0.",
+    "Authorize only removal of that trailing comment and focused tests using the actual source/native reader/auditor. Keep the declaration, every code token, line count, object binding, original function mappings/spans/claims, producer/consumer relationship and useful historical evidence intact. Do not suppress real aliases or relax the zero ceiling. No compiler/environment/framework changes or additional source cleanup.",
+    "Add positive single-identity and damaged reintroduced-hint controls against actual source; preserve existing pinned zero-fill/span, actual body and semantic-damage controls. Coordinator owns Git, preparations, leases, native source/build/collateral verification and integration. This is annotation cleanup, no new function coverage, claim or whole-game acceptance."
+  ],
+  "intent": "Remove a superseded ambiguous address hint while retaining the complete source-owned Caviar colour-storage binding and behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6387232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "caviar-colour-hint-cleanup-oct17"
+}
