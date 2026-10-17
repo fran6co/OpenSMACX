@@ -1,0 +1,27 @@
+{
+  "author": "coordinator",
+  "base_revision": "02b41092314e0fd895898a1b8c3fba29efee0e21",
+  "editable_files": [
+    "src/sound.cpp",
+    "recovery/tests/test_sound_type_dispatch_oct17.py"
+  ],
+  "evidence": [
+    "Master02b410923 fresh build-_z0bcg36 compiles/links; all5581CPP results retain3015masked matches. Full masked reference audit1827PASS1167UNKNOWN21FAIL. Sound::set_type is one of twenty extent failures because its compiler jump table exceeds the historical128byte span; that failure must not be waived or its span enlarged to claim a pass.",
+    "Pinned selector at4C61E0 computes unsignedtype-1, checksagainst6, indexes7ABS32entries at4C6260. Independent read-only review finds targets4C6215,4C6205,4C6255,4C61F5,4C6225,4C6235,4C6245. Target operations establish1->OR4 and4->OR10; source currentlyreverses these, based on a historical LEVER that considered instruction order but not the out-of-span table. Current nativeCOFF table relocations confirm the wrong effects. Recheck all7table targets, default3 and unsignedout-of-range inputs before editing.",
+    "Authorize correcting only the type1/type4 dispatch labels or flag effects and directly misleading current purpose/explanation in sound.cpp. Preserve the complete original marker, span, emitted symbol, historical claim and seed LEVER as historical evidence explicitly superseded by the table interpretation. Do not add logging, enums with invented names, fixed-address runtime tables, extra guards, memory copies or device behavior changes.",
+    "Prefer faithful ordinary C++ with a single type store and OR effect in each valid arm. One justified source arrangement preserving existing branch-body order may be measured; do not prolong spelling search or restore wrong behavior to protect the masked score. Coordinator permission explicitly admits a temporary byte regression in this function if necessary to preserve the independently verified original dispatch, retaining the claim/restoration obligation. No compiler/linker-policy changes, demotions, new claims or acceptance waiver.",
+    "Add actual-source GCC/Clang behavior controls for allvalidtypes,3/0/8/highunsignedinputs, preexistingflagbits, repeatcalls and mutation of1/4effects. Independently read the pinned selector/table/target effects and validate the actual nativeCOFF table entries and their section-local destinations, not a table-free prologue score. Source only stores essential table-boundary evidence; originalbytes/reports stay ignored. Existing generic source grammar lacks independent compiler switch-tail data binding; preserve that limitation.",
+    "Require fresh application build/link, complete176physicalobject inventory, strict currentowner observations and relevant layout/reference/claim checks, bounded original/native table checks and independent review. Outside the authorized Sound function, preserve compiled contents; any collateral change needs explicit evidence/scope authorization before publication. Recheck master after manual integration. No exhaustive original function coverage, original-linked selection, structural/runtime or automatic/full-game acceptance is established."
+  ],
+  "intent": "Recover Sound::set_type original type-to-flag dispatch, including its compiler-generated table outside the historical function span.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5005792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sound-type-dispatch-oct17"
+}
