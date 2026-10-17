@@ -1,0 +1,22 @@
+{
+  "event_id": "ced582c44f5d6848837c4a2161bb10262e003f13b82c4819d628211408d56b76",
+  "payload": {
+    "affects": [
+      "entity-b06fe39c24d83b700c87ce9b6f25324cf6fb68ca29428ca2aeede19cbe3b48fb",
+      "entity-da78d6fe600b13331c0536e2385fff353014d1f4a842aff5fa271e2f28509443"
+    ],
+    "author": "coordinator",
+    "discovery_id": "sound-type-table-versus-body-order-oct17",
+    "evidence": [
+      "Pinned code4C61E0..4C6260 computes unsigned type-1, bounds at6, and dispatches through7ABS32cells at4C6260..4C627C. Table entries1and4 reach4C6215(OR4)and4C61F5(OR10), respectively. The old recovery source assigned the opposite effects even while its128instructionbytes compared exact; the historical LEVER only reconciled instructions, not table destinations.",
+      "Wave constructor4C6787 calls withtype1 aftersettingbit4, making the original effect idempotent. VideoSoundState calls withtype4 afterzeroingflags and must setbit10. The other valid inputs2,5,6,7retain OR8,28,100,80; type3 and allunsignedout-of-range inputs settype0without changingflags. Two independent pinned/source reviews corroborate those exact effects, not an intentional behavior fix."
+    ],
+    "hypothesis": "The recovered type1/type4 effects were reversed by mistaking native arm instruction order for switch selector order; the separately retained table determines dispatch.",
+    "kind": "discovery"
+  },
+  "previous_event": "531774af57463ac6a1cac26c49d81da8af25faf9c13153e09625ce9342a099f8",
+  "request_id": "sound-type-table-versus-body-order-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:sound-type-dispatch-oct17"
+}

@@ -1,0 +1,25 @@
+{
+  "event_id": "531774af57463ac6a1cac26c49d81da8af25faf9c13153e09625ce9342a099f8",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh candidate build-ve4w2n1h links and preserves all33Sound maskedmatches. Complete176COFF inventory passes175residuals; the sole outside change is the Wave constructor atoriginal4C66E0 in sound.cpp. Its own C++ source is untouched. This is not a header/global policy or type/layout change.",
+      "Wave::Wave setsflags bit4 then callsSound::set_type(1). The pinned code does the same through4C6787 and table1->OR4, so originaleffectisidempotent. VC6 expands/folds this call in the current constructor and changes its flags immediate when the real Sound::set_type case is corrected. Authorize this precisely observed dependent constructor, including its existing original spans/claims, for current-code comparison and regression review. Do not omit unrelated Sound functions or invent scope for arbitrary helpers.",
+      "No additional production edit, forcedinline/noinline or compilerflag change. Preserve constructor layout/cleanup/body and allremaininghistoricalobligations. Require independent native constructor effect/control checks and allotherphysicalresiduals toremainvisible; a scoped comparison is not a full-link or structure/runtime acceptance proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5007072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "authorize-inlined-wave-type-dispatch-collateral-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:sound-type-dispatch-oct17"
+}

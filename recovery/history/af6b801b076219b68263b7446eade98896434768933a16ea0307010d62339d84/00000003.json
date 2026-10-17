@@ -1,0 +1,20 @@
+{
+  "event_id": "acb7389238c2b30473bb18cec009a786e255bfca7d71cfad8dd4fe8667903be0",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "sound-type-table-versus-body-order-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/sound.cpp swaps only case1/case4 labels, retaining the original machine arm order and every ORIGINAL identity/span/current symbol/historical claim. Corrected purpose text and adjacent switch-boundary evidence explicitly supersede, but preserve, the old LEVER. No enum/name invention, runtime address table, additional guard, changed class layout or compiler policy.",
+      "Fresh native build/link passes. Separately bounded native binary comparisons show the complete128byteinstructionprefix passes before and after; old28byteswitchdata fails exactlyentries0/3, correcteddata passes all7relocations, and swapping those entries back fails references. These observations do not extend the historical function span. The complete current160byteCOFF code/table COMDAT is uniquely placed in the current validated MAP and matches the freshly linkedPE, with its actual input and compilation receipts verified.",
+      "VC6 expanded/folded the call in Wave construction: its sole changed code byte changesOR AL14toOR AL4, preserving allotherconstructorbytes and references. Precisely that original constructor was authorized by the preceding expansion. All176physical residuals pass with only these2sourceidentities scoped; the initial175PASS/1FAILobservation is retained, not erased.",
+      "Sixteen focused tests pass: actual-source GCC/Clang behavior for everyvalid/default/highunsigned/repeatedinput, swapped-case host mutants, pinned selector/all7targeteffects, both actual VC6 flagprofiles plus freshly compiledwrong-case overlays rejected by the same native table/dataflow checker, and existing Sound construction/layout/lifetime controls. Independent source/data-region/native-control review found no blocker. Complete5581masked verdicts remain identical,3015masked exact; full3015strict primary verdicts also unchanged,1827PASS1167UNKNOWN21FAIL. Historical claims/references/mappings pass; no new claims banked or demoted."
+    ]
+  },
+  "previous_event": "ced582c44f5d6848837c4a2161bb10262e003f13b82c4819d628211408d56b76",
+  "request_id": "incorporate-original-sound-type-dispatch-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:sound-type-dispatch-oct17"
+}

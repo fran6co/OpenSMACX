@@ -777,8 +777,8 @@ void Sound::ramp(int a1, int a2, unsigned int a3) {
 /*
 Purpose: Record the sound's type. Types 1..7 - except 3, which the original's
          jump table routes to the invalid arm - store the type at 0x50 and OR
-         a per-type class bit into the flag dword at 0x40: 1 -> 0x10, 2 -> 8,
-         4 -> 4, 5 -> 0x28, 6 -> 0x100, 7 -> 0x80. Anything else stores
+         a per-type class bit into the flag dword at 0x40: 1 -> 4, 2 -> 8,
+         4 -> 0x10, 5 -> 0x28, 6 -> 0x100, 7 -> 0x80. Anything else stores
          type 0 and leaves the flags alone.
 // ORIGINAL: 0x004C61E0 ?set_type@Sound@@QAEXI@Z 0x004C61E0-0x004C6260 BYTE_EXACT
 // symbol    ?set_type@Sound@@UAEXI@Z
@@ -798,12 +798,17 @@ Purpose: Record the sound's type. Types 1..7 - except 3, which the original's
 Return Value: n/a
 Status: Complete
 */
+// The historical LEVER above mistook instruction order for selector order.
+// The original seven-entry switch table at 4C6260..4C627C lies outside the
+// recorded instruction span: its type-1 entry reaches 4C6215 (OR 4), and
+// its type-4 entry reaches 4C61F5 (OR 0x10). Keep that dispatch as well as
+// the original arm order; matching the instructions alone misses this error.
 void Sound::set_type(unsigned int type) {
     // EACH ARM INLINE, not a shared `type_ = type; flags_40_ |= class_bit;`
     // tail: the image duplicates the store-and-OR in every case block and
     // returns from each directly, rather than merging them.
     switch (type) {
-    case 1:
+    case 4:
         flags_40_ |= 0x10;
         type_ = type;
         return;
@@ -811,7 +816,7 @@ void Sound::set_type(unsigned int type) {
         flags_40_ |= 8;
         type_ = type;
         return;
-    case 4:
+    case 1:
         flags_40_ |= 4;
         type_ = type;
         return;
