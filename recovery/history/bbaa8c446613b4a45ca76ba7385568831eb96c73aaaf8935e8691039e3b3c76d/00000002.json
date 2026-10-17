@@ -1,0 +1,20 @@
+{
+  "event_id": "7983b5106e8c6cb94341e5c9a8b65c3d98438ee3d9e916a6aab323a3b3666b1e",
+  "payload": {
+    "affects": [
+      "entity-14e328e0530d3fe8a2ad2c1c2d4edaeae0c0d44532de308c183f856388a152bf"
+    ],
+    "author": "coordinator",
+    "discovery_id": "start-init-argument-order",
+    "evidence": [
+      "Pinned601C54 testsEDI and only entersinitwhenEDIiszero;601C58 pushesEDI,601C59 pushesEBX(flags),601C5C calls6015B0. Callee6015BB readsfirstarg [esp+14] afterfourpushes, tests100000/1/2/4;601608 readssecondarg [esp+18] andpassesit toHeap::init5D4620. Currentstart insteadinit(0,flags), incorrectly allocating flag-valued tinyheaps. Existing admission host fixture also asserts the wrong argument order; future edit scope must include that oracle and a pinned caller/callee argument witness. Native wholegame runtime remainsunproven; do not assume this exhausts the separately recorded teardown defect."
+    ],
+    "hypothesis": "BasePop start reverses the flags and heap-capacity arguments at its call to the correctly interpreted init method. Restore init(flags,0), not a callee-signature change; independently retest the newly reachable list teardown before declaring its cause resolved.",
+    "kind": "discovery"
+  },
+  "previous_event": "7fcd57ea4e174b7526ea36dcfb41797a6409d3ec8dd057d6f21a7eac984332e9",
+  "request_id": "start-init-argument-order",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:basepop-menu-item-ids-oct17"
+}
