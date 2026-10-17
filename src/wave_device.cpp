@@ -1466,24 +1466,7 @@ Return Value: n/a
 Status: Complete
 */
 WaveControlGroup::~WaveControlGroup() {
-    WaveGroupNode *node = this->list_.head;
-    while (node) {
-        WaveGroupNode *const next = node->next;
-        if (next) {
-            next->prev = nullptr;
-            this->list_.head = next;
-        } else {
-            // One statement: the tail clears first, the head second, the
-            // original's store order.
-            this->list_.head = (this->list_.tail = nullptr);
-        }
-        Wave *const wave = node->wave;
-        operator delete(node);
-        this->list_.count -= 1;
-        if (!wave) {
-            break;
-        }
-        node = this->list_.head;
+    while (this->list_.remove_head()) {
     }
 }
 
@@ -1547,6 +1530,7 @@ Wave_Device WaveDeviceGlobal;  // 0x0090D978
 // wave teardown paths run the release slot only while it reads nonzero. Was
 // `int *const WaveDeviceReleaseGuard = (int *)0x0090DB7C` (wave.h) and a
 // `g_0090db7c` static in sound.cpp - the same terranx.exe dword twice.
+// RECOVERY_OBJECT: v1 0x0090DB7C ?WaveDeviceReleaseGuard@@3HA
 int WaveDeviceReleaseGuard;  // 0x0090DB7C
 
 // Factory/destroy storage belongs to SoundDllProcs in sound_loader.cpp:

@@ -1,0 +1,21 @@
+{
+  "event_id": "63b4902c6572399a84fdfd90a81fef0fbc78e731415a816ca29ac9c47c77e64c",
+  "payload": {
+    "affects": [
+      "entity-f548c112a9719b36cafadde183f03198dfcf7aa109af5e2eb8c701be3726c705"
+    ],
+    "author": "coordinator",
+    "discovery_id": "audio-guard-object-binding-oct17",
+    "evidence": [
+      "Existing owner src/wave_device.cpp defines int WaveDeviceReleaseGuard at documented90DB7C; pinned init_sound4C5CE0 writes0 on initialization failure and1 on success; VoiceRx init4C8B40 and Wave load/reload independently read the same dword. It is not a pointer or member alias.",
+      "Fresh strict actual Wave checks expose this symbol as unbound, while SoundDllProcs and mapped callees resolve. Add only the source-owned v1 object-start identity beside the existing definition after original read/store checks; no new storage/layout/lifetime or function claim is asserted."
+    ],
+    "hypothesis": "WaveDeviceReleaseGuard is existing real int storage with independently evidenced original identity but lacks the load-bearing compact object binding required to resolve its references.",
+    "kind": "discovery"
+  },
+  "previous_event": "988eeacad699f145c22b89ea54b19a7a9d7dd663a0c4da3605abee2f3a1ed748",
+  "request_id": "audio-guard-object-binding-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:audio-source-forms-oct17"
+}

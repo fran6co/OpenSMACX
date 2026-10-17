@@ -1,0 +1,20 @@
+{
+  "event_id": "0c61a8744784551256d3cb61e750a17c1ba7e998c10802b38c53cf121daa7d4a",
+  "payload": {
+    "affects": [
+      "entity-b6b1bb8b734db6d0dd446005c5dab98911361d5b74edc064a24306bf762cd476"
+    ],
+    "author": "coordinator",
+    "discovery_id": "audio-header-control-qualification-oct17",
+    "evidence": [
+      "The saved candidate-native report and verifier use separate header-logic and body damage controls. Size/member-order preservation is supported by unchanged data/virtual declarations, independent source review and owner/build observations, not by a deliberately damaged layout witness."
+    ],
+    "hypothesis": "The prior incorporation evidence called its header damage a header-layout witness; the actual control mutates count decrement to increment, not layout. Do not treat that statement as native layout proof.",
+    "kind": "discovery"
+  },
+  "previous_event": "42dae01203d939ab21ccfc83a17cce7076cba49c308fba5597bacf00fdb4eb84",
+  "request_id": "audio-header-control-qualification-oct17",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:audio-source-forms-oct17"
+}

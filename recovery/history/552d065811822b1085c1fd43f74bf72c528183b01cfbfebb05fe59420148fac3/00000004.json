@@ -1,0 +1,19 @@
+{
+  "event_id": "2e9eb47aeea8be4e33ab40ffd3e68523f92849b4a45088602a49be1a6b2a0cbf",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "audio-head-pop-operation-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/wave_device.h now owns the storage-free nonvirtual WaveGroupList::remove_head operation; src/wave_device.cpp destructor drains its returned payload. Independent source review confirms existing layout, successor link repair, tail-before-head emptying, capture-before-delete, count decrement, cursor omission and stopping after removing a null-Wave node.",
+      "Actual-source lifecycle and mutation controls run under both host compilers;31 combined source/native-export tests pass. Per-profile unchanged replicas and separate voice-body/group-body/header-layout damage witnesses pass, with no previous owner exact loss and both scoped compiler residuals PASS. Group destructor still mismatches both profiles; no new claim or restoration waiver is granted.",
+      "Full candidate build links, but6unscoped application object residuals remain FAIL, including private label renamings and nonvolatile instruction scheduling. All6 preserve mapped-original verdicts, not a semantic/retained-selection proof. A final controlled private-implementation placement probe calibrates/reproduces current veh output but still fails original whole-object preservation; do not apply it or continue spelling iteration without new evidence. Structural source incorporation is not automatic/game acceptance."
+    ]
+  },
+  "previous_event": "f56ae1c2c6783c58398c5008b138b1abf54a454f237b000d9c23c123c6459ba6",
+  "request_id": "audio-head-pop-source-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:audio-source-forms-oct17"
+}

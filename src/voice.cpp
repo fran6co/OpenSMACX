@@ -35,7 +35,7 @@ VoiceRx::~VoiceRx() {
     }
 }
 
-// ORIGINAL: 0x004C8B40 ?init@VoiceRx@@QAEHKPAXK@Z 0x004C8B40-0x004C8BC5 FILE
+// ORIGINAL: 0x004C8B40 ?init@VoiceRx@@QAEHKPAXK@Z 0x004C8B40-0x004C8BC5 FILE BYTE_EXACT
 // symbol    ?init@VoiceRx@@UAEHKPAXK@Z
 // TRIED: explicit __thiscall on a plain function-pointer typedef (C4234); a member-function-pointer/union shim compiles. MISMATCH #4 'mov' vs 'push' remains open.
 int VoiceRx::init(unsigned long size, void *context, unsigned long flags) {
@@ -49,18 +49,21 @@ int VoiceRx::init(unsigned long size, void *context, unsigned long flags) {
             return result;
         }
     }
-    if (device_ != 0) {
-        result = static_cast<VoiceRxDeviceInterface *>(device_)->init(size, context, flags);
-        if (result != 0) {
-            if (WaveDeviceReleaseGuard != 0) {
-                SoundXOrdinal2DeleteSound()(device_);
-            }
-            device_ = 0;
-        }
-        // Original attaches after a device-init attempt even when that attempt
-        // failed and cleared the device. Do not add a device-presence guard.
-        attach();
+    VoiceRxDeviceInterface *const provider =
+        static_cast<VoiceRxDeviceInterface *>(device_);
+    if (provider == 0) {
+        return result;
     }
+    result = provider->init(size, context, flags);
+    if (result != 0) {
+        if (WaveDeviceReleaseGuard != 0) {
+            SoundXOrdinal2DeleteSound()(device_);
+        }
+        device_ = 0;
+    }
+    // Original attaches after a device-init attempt even when that attempt
+    // failed and cleared the device. Do not add a device-presence guard.
+    attach();
     return result;
 }
 

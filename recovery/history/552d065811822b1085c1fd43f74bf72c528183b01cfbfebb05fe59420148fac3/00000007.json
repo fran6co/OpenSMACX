@@ -1,0 +1,17 @@
+{
+  "event_id": "fdb624a000d3e5fbca9f786184eaf2bc278c89e90e1d5173e88fd1607cf570f3",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "audio-header-control-qualification-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Correction applies to the earlier decision wording only: the actual independent header control is count-operation damage. No native layout, acceptance or preservation waiver is asserted; source and historical obligations are unchanged."
+    ]
+  },
+  "previous_event": "0c61a8744784551256d3cb61e750a17c1ba7e998c10802b38c53cf121daa7d4a",
+  "request_id": "audio-header-control-corrected-oct17",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:audio-source-forms-oct17"
+}

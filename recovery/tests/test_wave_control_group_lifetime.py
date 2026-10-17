@@ -24,20 +24,27 @@ def test_actual_wave_group_stores_and_teardown(tmp_path, compiler_name):
         "missing_volume": (0, "this->volume = 0x7f;", "(void)this->volume;"),
         "missing_enabled": (0, "this->enabled = 1;", "(void)this->enabled;"),
         "wrong_enabled": (0, "this->enabled = 1;", "this->enabled = 0;"),
-        "clears_cursor": (1, "this->list_.count -= 1;", "this->list_.count -= 1; this->list_.cursor = 0;"),
-        "ignores_null_wave": (1, "if (!wave)", "if (false)"),
-        "bad_next_backlink": (1, "next->prev = 0;", "(void)next->prev;"),
-        "wrong_count_direction": (1, "this->list_.count -= 1;", "this->list_.count += 1;"),
-        "deletes_wave": (1, "operator delete(node);", "operator delete(wave);"),
+        "clears_cursor": (2, "this->count -= 1;", "this->count -= 1; this->cursor = 0;"),
+        "ignores_null_wave": (1, "while (this->list_.remove_head())", "for (; this->list_.head; this->list_.remove_head())"),
+        "bad_next_backlink": (2, "next->prev = 0;", "(void)next->prev;"),
+        "wrong_count_direction": (2, "this->count -= 1;", "this->count += 1;"),
+        "deletes_wave": (2, "operator delete(node);", "operator delete(wave);"),
     }
+    header = (ROOT / "src/wave_device.h").read_text()
+    declarations = header[header.index("struct WaveGroupNode {"):header.index(" /*\n  * Wave_Device")]
     fixture = Path(__file__).with_name("wave_control_group_lifetime_control.cpp").read_text()
     for name in ("actual", *mutations):
         bodies = list(pieces)
+        current_declarations = declarations
         if name != "actual":
-            index, before, after = mutations[name]
-            assert bodies[index].count(before) == 1, name
-            bodies[index] = bodies[index].replace(before, after, 1)
-        text = fixture.replace("// @@DECLARATIONS@@", declarations).replace("// @@BODIES@@", "\n".join(bodies))
+            target, before, after = mutations[name]
+            if target == 2:
+                assert current_declarations.count(before) == 1, name
+                current_declarations = current_declarations.replace(before, after, 1)
+            else:
+                assert bodies[target].count(before) == 1, name
+                bodies[target] = bodies[target].replace(before, after, 1)
+        text = fixture.replace("// @@DECLARATIONS@@", current_declarations).replace("// @@BODIES@@", "\n".join(bodies))
         cpp, binary = tmp_path / (name + ".cpp"), tmp_path / name
         cpp.write_text(text)
         build = subprocess.run([compiler, "-std=c++98", "-fsanitize=undefined",
