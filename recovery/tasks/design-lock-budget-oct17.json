@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "6eb6555c82f3de258e6e0ebf76869cae4689ac6e",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_consider_designs_host.py",
+    "recovery/tests/consider_designs_host_fixture.cpp"
+  ],
+  "evidence": [
+    "Native design-lock-cap-call and quickstart-design-division discoveries in zero-turn-altitude-oct17 are preserved in master6eb6555c8. Current game builds/links and generates mixed terrain after original altitude recovery, then faults at candidate5EEA86 in consider_designs. Runtime did not capture the selected weapon ID/branch, so specific causality remains unproven.",
+    "Pinned581DB0 TEST AL,CL;581DB2 MOV EAX,63;581DB7 JNE581DBB; unlocked581DB9 MOV EAX,EBX; both join PUSH0/PUSHEAX/PUSHEDI/CALLweapon_budget581DBF. Current source conditional bypasses that call and uses99 as a Weapon index. Correct only this call-role defect in consider_designs_strategy_tail: conditional cap99/computedcap, then unconditional weapon_budget(faction,cap,0), then returned-ID table lookup. Preserve original unchecked division, armor cap, flags, layouts, signatures, mappings, claims and historical notes. No callee/parser or safety changes.",
+    "Extend existing actual-owner host fixture to reach the strategy's second-chassis branch, spy selector calls, distinguish cap from returned index/rating, and check locked/unlocked and unrelated faction bits with multiple computed caps/returned IDs. Compile actual complete support/owner source under GCC and Clang. New oracle must fail old source; regressions of call placement, cap99, faction/mode or result use must compile and fail after positive controls. Pin independent original branch/join/call witness. Existing nontechnology/proposal controls remain intact.",
+    "Prepare an isolated native task worktree and compiler lease. Baseline existing hosts, all172 veh.cpp native measurements and source claims/mappings/references before production edits. Require fresh candidate/destination full build/link, identity and outside-subject verdict continuity, complete176 physical-object preservation outside only consider_designs, independent source review, and paired original/candidate QuickStart runtime. Preserve additional discoveries, do not demote claims or reset baselines, and do not call a native unknown a pass. Manual coordinator-reviewed recovery, not automatic/full-game acceptance or a new exactness grant."
+  ],
+  "intent": "Restore the original AI design strategy's conditional cost cap and unconditional weapon selector, without changing the original unchecked division.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5771872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "design-lock-budget-oct17"
+}
