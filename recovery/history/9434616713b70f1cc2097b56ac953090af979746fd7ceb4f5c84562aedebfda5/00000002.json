@@ -1,0 +1,20 @@
+{
+  "event_id": "54f10d9568f9384c3bb8a5d53e85b0c2509d490a8d9de1690970e80a6e094646",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "application-owner-three-frame-recipes-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh native candidate build-zdxnwncv compiles and links; all219 adopted and29 unchanged Alpha original observations reproduce the controlled probes. Full5581CPP census improves3016 to3049 masked exact with exactly33 gains, zero losses and no other verdict changes. src/ and all essential source annotations are byte-identical to c907; no historical claim is banked or demoted.",
+      "Native all176physical-object inventory gives173 complete-object PASS with zero omissions, including unchanged Alpha; the three adopted actual objects each correspond to the screened whole candidate COFF with zero omissions. Their own residual comparisons remain FAIL, not waived. The native primary strict audit gives1846PASS/1181UNKNOWN/22FAIL; existing strict results are unchanged and33 gains divide18PASS/14UNKNOWN/1FAIL. Widget524370 remains explicit SCAFFOLD despite matching.",
+      "Independent frozen CMake/guard/actual-receipt review found no blocker. Focused profile and actual-source ButtonGroup/Heap/Sound regressions pass27/27 under an isolated compiler lease after a sandbox-denied execution was rerun through approved Wine execution. Native claims/references/mappings pass. Prior fresh source-integrity verification plus byte-identical src tree establishes source continuity, not fresh game acceptance.",
+      "Representative current MAP-selected load_cursors and say_special whole COMDAT bytes and relocation targets pass native current-object/current-PE checks; read_tamper has no current unique MAP placement and remains UNKNOWN. These bounded checks do not prove original target contents or full linked selection/allocation. Coordinator-reviewed manual checkpoint only; pending original reference/structure/runtime and all prior task preservation debts remain."
+    ]
+  },
+  "previous_event": "3e5066ca5d03a3bbe476712856399772e04b123c259da2677553a9c97643d57c",
+  "request_id": "application-owner-three-frame-recipes-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:application-owner-frames-oct17"
+}

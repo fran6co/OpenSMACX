@@ -1,0 +1,17 @@
+{
+  "event_id": "f0af5d17d39585c06aa89c3ba7b987f1eb3481597b97090e7c7ee34edb99012a",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "application-alpha-frame-recipe-rejected-oct17",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Alpha retains the exact old default source recipe, all source/header ownership and complete original mappings. Its actual fresh object matches both the retained master baseline and the controlled baseline whole COFF with zero omissions. The consolidated guard explicitly rejects adding an Alpha profile; no artificial pragma/noinline/export, source split or marker move was used to hide the loss."
+    ]
+  },
+  "previous_event": "bb10616a7c91cce5cb688b57e381af127fdcf4eae7b109f7b4f5f7509c56976d",
+  "request_id": "application-alpha-frame-recipe-rejected-oct17-rejected",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:application-owner-frames-oct17"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "4b2c41a4fd8b5962231a1dc11716b05291e3a7bd965ccd2a552a810bf379350c",
+  "payload": {
+    "affects": [
+      "entity-6d387a2b0d4ba347d5123c0aeb035f6b3ed5ea27da762d99ff9a85f023468362"
+    ],
+    "author": "coordinator",
+    "discovery_id": "reportwin-group-switch-associated-data-oct17",
+    "evidence": [
+      "Pinned code span4989F0..498B06 is278bytes; actual candidate section is320bytes and has9 relocations at offsets280..312 outside the original code span. Native full reference audit reports extent FAIL, not pass. Source remains its ordinary C++ control flow; all original identities/spans/claims remain unchanged.",
+      "The new masked agreement does not prove the table extent, every original case/dispatch target, unresolved MainInterfaceGlobal source storage binding, complete original allocation or current retained selection. These need evidence-backed data/reference ownership, not ad hoc bytes, marker expansion or comparator weakening."
+    ],
+    "hypothesis": "ReportWin::on_group_clicked now has a matching recorded code body, but its full emitted section includes associated switch data outside the independently recorded extent. Preserve strict extent failure; do not extend the marker to the section or claim complete table/reference fidelity.",
+    "kind": "discovery"
+  },
+  "previous_event": "a3f43cede32f5ba2371447c202e17db341440b249edaa719d870ae9e63f43696",
+  "request_id": "reportwin-group-switch-associated-data-oct17",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:application-owner-frames-oct17"
+}

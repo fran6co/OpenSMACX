@@ -10,21 +10,21 @@ import subprocess
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-BASE_REVISION = "76dbc5c341e84624f7bb40c94fb396b6b06a3afd"
+BASE_REVISION = "c907aea61ee658f048846a7f275fd7ed5f074206"
 NEW_OWNERS = (
-    "src/map.cpp",
-    "src/faction.cpp",
-    "src/veh.cpp",
+    "src/game.cpp",
+    "src/reportwin.cpp",
+    "src/netwin.cpp",
 )
 NEW_PROFILE_COMMENT = (
-    "# Preserve original frame-based argument and local-slot accesses in these core\n"
-    "# owners while keeping application-wide compiler defaults unchanged.\n"
+    "# Preserve original frame-based accesses in the remaining application owners.\n"
+    "# Keep Alpha and all other source recipes on their independently measured defaults.\n"
 )
 NEW_PROFILE_BLOCK_TEXT = (
     "set_source_files_properties(\n"
-    "    src/map.cpp\n"
-    "    src/faction.cpp\n"
-    "    src/veh.cpp\n"
+    "    src/game.cpp\n"
+    "    src/reportwin.cpp\n"
+    "    src/netwin.cpp\n"
     '    PROPERTIES COMPILE_OPTIONS "/Oy-")'
 )
 NEW_PROFILE_BLOCK = (tuple(sorted(NEW_OWNERS)), ("/Oy-",))
@@ -42,6 +42,7 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(("src/mapwin.cpp", "src/basewin.cpp"))): ("/Oy-",),
     tuple(sorted(("src/designwin.cpp", "src/tutwin.cpp", "src/xpops.cpp"))): ("/Oy-",),
     tuple(sorted(("src/netdaemon.cpp", "src/diplowin.cpp", "src/diplopop.cpp", "src/worldwin.cpp"))): ("/Oy-",),
+    tuple(sorted(("src/map.cpp", "src/faction.cpp", "src/veh.cpp"))): ("/Oy-",),
     tuple(sorted(NEW_OWNERS)): ("/Oy-",),
     tuple(sorted(("src/interface_palette.cpp", "src/interface_fonts.cpp"))): ("/Oy-",),
     ("src/sound.cpp",): ("/Oy-",),
@@ -116,6 +117,10 @@ def test_profile_guard_rejects_policy_mutations():
     )
     assert not cmake_profile_delta_is_exact(baseline, dropped_old_profile)
     assert not cmake_profile_delta_is_exact(baseline, candidate + "\n" + NEW_PROFILE_BLOCK_TEXT)
+    alpha_profile = candidate + (
+        '\nset_source_files_properties(src/alpha.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
+    )
+    assert not cmake_profile_delta_is_exact(baseline, alpha_profile)
     extra_profile = candidate + (
         '\nset_source_files_properties(src/extra.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
     )
@@ -130,7 +135,7 @@ def test_profile_guard_rejects_policy_mutations():
     )
     assert not cmake_profile_delta_is_exact(baseline, changed_options)
     extra_owner = candidate.replace(
-        "    src/veh.cpp\n", "    src/veh.cpp\n    src/other.cpp\n"
+        "    src/netwin.cpp\n", "    src/netwin.cpp\n    src/other.cpp\n"
     )
     assert not cmake_profile_delta_is_exact(baseline, extra_owner)
     global_flag_change = candidate.replace(
@@ -148,7 +153,7 @@ def test_profile_guard_rejects_policy_mutations():
 
 def test_application_profiles_match_immutable_baseline_plus_three_owners():
     task = json.loads(
-        (ROOT / "recovery/tasks/core-frame-profile-oct17.json").read_text(
+        (ROOT / "recovery/tasks/application-owner-frames-oct17.json").read_text(
             encoding="utf-8"
         )
     )
@@ -161,12 +166,14 @@ def test_application_profiles_match_immutable_baseline_plus_three_owners():
     assert source_list is not None
     application_sources = set(source_list.group(1).split())
     assert all(owner in application_sources for owner in NEW_OWNERS)
+    assert "src/alpha.cpp" in application_sources
     assert "src/win.cpp" in application_sources
     assert "src/technology_queries.cpp" in application_sources
 
     actual_profiles = dict(source_property_blocks(current_cmake))
     assert actual_profiles == EXPECTED_CMAKE_PROFILES
     profiled_sources = {source for sources in actual_profiles for source in sources}
+    assert "src/alpha.cpp" not in profiled_sources
     assert "src/win.cpp" not in profiled_sources
     assert "src/technology_queries.cpp" not in profiled_sources
 
@@ -181,6 +188,6 @@ def test_application_profiles_match_immutable_baseline_plus_three_owners():
     unit_profiles = current_measurement["unit_flag_sets"]
     for owner, expected in EXISTING_MEASURED_PROFILES.items():
         assert unit_profiles[owner] == expected, (owner, unit_profiles.get(owner))
-    for owner in NEW_OWNERS + ("src/win.cpp",):
+    for owner in NEW_OWNERS + ("src/win.cpp", "src/alpha.cpp"):
         assert owner not in unit_profiles, (owner, unit_profiles.get(owner))
 
