@@ -10,21 +10,28 @@ import subprocess
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-BASE_REVISION = "c907aea61ee658f048846a7f275fd7ed5f074206"
-NEW_OWNERS = (
+BASE_REVISION = "365e29151bc5bc5f1427bdd46fbc548322ffd108"
+PREVIOUS_OWNERS = (
     "src/game.cpp",
     "src/reportwin.cpp",
     "src/netwin.cpp",
 )
+NEW_OWNERS = (
+    "src/reportif.cpp",
+    "src/statuswin.cpp",
+    "src/prodpicker.cpp",
+    "src/alphamenu.cpp",
+)
 NEW_PROFILE_COMMENT = (
-    "# Preserve original frame-based accesses in the remaining application owners.\n"
-    "# Keep Alpha and all other source recipes on their independently measured defaults.\n"
+    "# Preserve measured frame-based accesses across these application window owners.\n"
+    "# Keep all other compiler and measurement policies unchanged.\n"
 )
 NEW_PROFILE_BLOCK_TEXT = (
     "set_source_files_properties(\n"
-    "    src/game.cpp\n"
-    "    src/reportwin.cpp\n"
-    "    src/netwin.cpp\n"
+    "    src/reportif.cpp\n"
+    "    src/statuswin.cpp\n"
+    "    src/prodpicker.cpp\n"
+    "    src/alphamenu.cpp\n"
     '    PROPERTIES COMPILE_OPTIONS "/Oy-")'
 )
 NEW_PROFILE_BLOCK = (tuple(sorted(NEW_OWNERS)), ("/Oy-",))
@@ -43,6 +50,7 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(("src/designwin.cpp", "src/tutwin.cpp", "src/xpops.cpp"))): ("/Oy-",),
     tuple(sorted(("src/netdaemon.cpp", "src/diplowin.cpp", "src/diplopop.cpp", "src/worldwin.cpp"))): ("/Oy-",),
     tuple(sorted(("src/map.cpp", "src/faction.cpp", "src/veh.cpp"))): ("/Oy-",),
+    tuple(sorted(PREVIOUS_OWNERS)): ("/Oy-",),
     tuple(sorted(NEW_OWNERS)): ("/Oy-",),
     tuple(sorted(("src/interface_palette.cpp", "src/interface_fonts.cpp"))): ("/Oy-",),
     ("src/sound.cpp",): ("/Oy-",),
@@ -135,7 +143,7 @@ def test_profile_guard_rejects_policy_mutations():
     )
     assert not cmake_profile_delta_is_exact(baseline, changed_options)
     extra_owner = candidate.replace(
-        "    src/netwin.cpp\n", "    src/netwin.cpp\n    src/other.cpp\n"
+        "    src/statuswin.cpp\n", "    src/statuswin.cpp\n    src/other.cpp\n"
     )
     assert not cmake_profile_delta_is_exact(baseline, extra_owner)
     global_flag_change = candidate.replace(
@@ -151,9 +159,9 @@ def test_profile_guard_rejects_policy_mutations():
     assert not measurement_policy_is_unchanged(baseline_measurement, changed_measurement)
 
 
-def test_application_profiles_match_immutable_baseline_plus_three_owners():
+def test_application_profiles_match_immutable_baseline_plus_four_window_owners():
     task = json.loads(
-        (ROOT / "recovery/tasks/application-owner-frames-oct17.json").read_text(
+        (ROOT / "recovery/tasks/window-owner-frames-oct17.json").read_text(
             encoding="utf-8"
         )
     )
@@ -165,7 +173,7 @@ def test_application_profiles_match_immutable_baseline_plus_three_owners():
     source_list = re.search(r"set\(OPENSMACX_SOURCES(.*?)\n\)", current_cmake, re.S)
     assert source_list is not None
     application_sources = set(source_list.group(1).split())
-    assert all(owner in application_sources for owner in NEW_OWNERS)
+    assert all(owner in application_sources for owner in NEW_OWNERS + PREVIOUS_OWNERS)
     assert "src/alpha.cpp" in application_sources
     assert "src/win.cpp" in application_sources
     assert "src/technology_queries.cpp" in application_sources

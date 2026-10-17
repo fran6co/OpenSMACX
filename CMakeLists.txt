@@ -396,6 +396,14 @@ set_source_files_properties(
     src/reportwin.cpp
     src/netwin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve measured frame-based accesses across these application window owners.
+# Keep all other compiler and measurement policies unchanged.
+set_source_files_properties(
+    src/reportif.cpp
+    src/statuswin.cpp
+    src/prodpicker.cpp
+    src/alphamenu.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp

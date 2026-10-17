@@ -1,0 +1,21 @@
+{
+  "event_id": "438f98e23336741484fbb92265da131b9b8763c8466164cc9e8d0b6adf981531",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "four-window-owner-frame-recipes-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh native full application build-r5wvzfi9 compiles/links. All126 owner verdicts reproduce the screen probes. Full5581CPP census retains all source identities, improves3049 to3063 masked exact with exactly14 gains and zero losses. The only other verdict change is ProdPicker on_right_click493EA0 REFUSED to MISMATCH; its newly measurable mismatch is retained. Product source/header/annotation bytes remain identical to365e.",
+      "Primary native strict audit: {'pass': 1856, 'unknown': 1184, 'fail': 23}; all3049prior primary results and565PASS/45UNKNOWN supplemental private-storage diagnostics retain their results. New14gains divide10PASS/3UNKNOWN/1FAIL. Passing current-object comparison does not prove all linked targets or target contents. Source claims/references/mappings PASS; no historical claim granted/demoted or task baseline reset.",
+      "Current linked native full-COMDAT body/reference checks PASS for13 gains, including selected current destructor copies; callback4946D0 lacks unique current MAP placement and remains UNKNOWN. StatusWin on_redraw/redraw share one current ICF target without merging their distinct original identities. Original case-table extents/contents and original retention are not established by current linked correspondence.",
+      "Focused owner regression suite81PASS/4FAIL/2SKIP in the isolated worker with pinned-image environment. Both skips use a hardcoded worker-local ignored image path; their unchanged pinned tests pass2/2 on root. All four failures reproduce on unchanged master: two earlier ProdPicker whole-text migration guards and both StatusWin HUD host cases with stale StringTable.get(int) doubles. No tests weakened/skipped/rebaselined to hide them; the updated profile guard passes2/2.",
+      "Coordinator-reviewed manual checkpoint only, with independently reviewed source recipe and bounded current artifact evidence. All existing helper/EH/linked-preservation, reference/structure/runtime and scaffold obligations remain; no automatic/full-game acceptance."
+    ]
+  },
+  "previous_event": "a5f4582038d6a43e5f27433da27c73d5e1b84def4939ff84ed02af64ba112c03",
+  "request_id": "four-window-owner-frame-recipes-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:window-owner-frames-oct17"
+}
