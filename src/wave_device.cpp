@@ -28,7 +28,6 @@
 #include "sounddevice.h"
 #include "soundx_wave_device_abi.h"
 #include "basepop.h"
-#include <cstring>
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -454,9 +453,7 @@ int Wave_Device::get_group_volume(unsigned int group) {
     if (group > 0xF) {
         return 0;
     }
-    int value;
-    std::memcpy(&value, &groups_[group].volume, sizeof(value));
-    return value;
+    return groups_[group].volume;
 }
 
 
@@ -1022,9 +1019,7 @@ int Wave_Device::set_group_volume(unsigned int a1, unsigned int a2) {
     if (first) {
         Wave *wave = first->wave;
         while (wave) {
-            int volume;
-            std::memcpy(&volume, &wave->volume_, sizeof(volume));
-            wave->set_volume(volume);
+            wave->set_volume(wave->volume_);
             WaveGroupNode *const cursor = list.cursor;
             if (!cursor) {
                 break;
