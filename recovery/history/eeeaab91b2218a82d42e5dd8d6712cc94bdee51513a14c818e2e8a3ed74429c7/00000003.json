@@ -1,0 +1,23 @@
+{
+  "event_id": "4bffdef8041ddb5397284081bf891cd011d0028f5099b8ee88f14bfb7a513a85",
+  "payload": {
+    "affects": [
+      "entity-c6682cd629c0378fb87d49b38dbb9dfccef0f77fc39bacc849d6b75b73af7a30"
+    ],
+    "author": "coordinator",
+    "discovery_id": "scroll-mouse-move-live-state-oct17",
+    "evidence": [
+      "Pinned60610A reloads parent for WinCallbackWindow.60611A/6120 compare live position against saved entry value;606122 je6061C7 bypasses BOTH notifications and sound when unchanged. Earlier scout statement that sound was unconditional was explicitly corrected after coordinator independently decoded this branch.",
+      "Pinned606128/612E selects reversal before current parent reload606130 and virtual on_scrolling606142/6172. Normal callback606152 uses current position; reversed callback606182..6196 recomputes min-current_position+max on the already selected branch, with no reversal retest.",
+      "Pinned6061A5 reloads the current parent after notifications;6061AB reads its distinct +0x84 Sound receiver, then status+0x5C/conditional play+0x1C before redraw6061C7. Source currently reuses entry parent, retests reversal and leaves sound outside changed-position gate; fix these translation defects without adding guards or changing original game behavior.",
+      "The existing four-handler live-notification fixture does not execute mouse-move. Extend actual-source controls and mutations; all46owner identities are already inside the coordinator-expanded scope. Existing +0x84 member binding remains intact."
+    ],
+    "hypothesis": "Recover Scroll mouse-move notifications and sound from current parent state, preserving the original changed-position gate and the pre-callback selected reversal branch.",
+    "kind": "discovery"
+  },
+  "previous_event": "098d7aeb97009ae8e325a4c477bf6c742870ba4212ca3d4967ddb2fd58c58a1c",
+  "request_id": "scroll-mouse-move-live-state-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:scroll-decrement-spelling-oct17"
+}
