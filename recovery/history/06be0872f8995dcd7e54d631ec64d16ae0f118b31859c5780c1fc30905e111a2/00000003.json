@@ -1,0 +1,20 @@
+{
+  "event_id": "0616d52aa62af9af41e210810fbfb1850f435149cbcbcdccaf2d145a5980e859",
+  "payload": {
+    "affects": [
+      "entity-96a104674d778bf08babbce6887d441decde165fc54d03e6b321d63940ac2239"
+    ],
+    "author": "coordinator",
+    "discovery_id": "worldwin-binding-rationale-correction-oct17",
+    "evidence": [
+      "Independent review identified that the existing RECOVERY_BINDING on4C49A0 says Win::init and MapWin::init remains unfinished. Fresh pinned directcall4C4A53 targets mapped GraphicWin::init5D50A0 and the current MapWin owner has a complete source definition. This is inaccurate load-bearing current rationale, not a historical ORIGINAL identity or measured claim. Preserve the old evidence in Git/native discovery, not as a false current attribution."
+    ],
+    "hypothesis": "The current source binding rationale incorrectly names Win initialization and an unfinished MapWin dependency after the proven source recovery.",
+    "kind": "discovery"
+  },
+  "previous_event": "32185518acb7cffd2689b0a03e69f0ab7778bdb2d884f77070004bb14b5c0182",
+  "request_id": "worldwin-binding-rationale-correction-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:worldwin-map-slot-oct17"
+}

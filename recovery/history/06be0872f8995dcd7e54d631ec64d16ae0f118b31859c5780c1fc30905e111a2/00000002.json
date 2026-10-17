@@ -1,0 +1,35 @@
+{
+  "event_id": "32185518acb7cffd2689b0a03e69f0ab7778bdb2d884f77070004bb14b5c0182",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator explicitly extends the initial one-expression permission to correct the same WorldWin::init call from Win::init to the existing GraphicWin::init rectangle overload. This supersedes the initial no-callee-change constraint only for that proven call. Keep the corrected map slot write, all arguments/order and every other source byte/annotation. Added helper subjects are read-only lifecycle/ABI witnesses; no GraphicWin/Win header, definition, symbol, layout, storage, initialization policy, compiler flag or measurement change is authorized.",
+      "Before banking the route change, run a fresh eight-call epoch from immutablefa56 WorldWin source via in-memory overlays: baseline/replica/ordinary entrythrow/full two-change candidate under actualRelease and other-frame flags. Calibrate full baseline COFF to retained masterxgrv0jti, freeze current WIP source/Git/recipes, preserve all unscoped code/data/FPO/EH/references, and retain old controls/reports without replay. New report names must distinguish this expanded route candidate.",
+      "Update the actual-source host fixture to distinguish GraphicWin vs Win initialization at runtime, assert pinned directcall5D50A0 and receiver/address witnesses, and add a wrong-base-route mutant that compiles then fails. Retain every other stale-slot/status/rectangle/reset/mutation assertion. Fresh final full application build/link, all176physicalobjects,5581CPP and strict comparisons, source obligations, same oldhostoutcomes plusnew route control, independent review and destination recheck remain required. New final strict unknowns/failures remain visible, never accepted or hidden by masked equality."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6115056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6115488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6211120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "726e844b698d77302f7db8a0f8cf9ee4d49bf3d1f62fa6bfe10762ca70cc7809",
+  "request_id": "worldwin-graphic-route-authorization-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:worldwin-map-slot-oct17"
+}

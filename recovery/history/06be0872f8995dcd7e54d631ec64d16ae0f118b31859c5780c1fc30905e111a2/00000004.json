@@ -1,0 +1,20 @@
+{
+  "event_id": "282c28550bef196889b26b8b094b2439584526611630cc0a88387fd618824428",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/worldwin.cpp"
+    ],
+    "evidence": [
+      "Coordinator explicitly extends editing permission only to replace that one existing RECOVERY_BINDING rationale line with native binding_source.parse/render, retaining its original seed reference and adding the pinned slot/base-initializer/owner relationships. This supersedes the original preserve-annotation constraint only for that rationale line. ORIGINAL identity/spans/name, every claim, symbol, historical TRIED/seed finding, all other bindings and C++ remain unchanged. No new mapping or arbitrary annotation/claim edit is authorized.",
+      "Compiler/build/host epochs have all terminated before this metadata edit. Preserve their reports, then freshly build/link and measure the actual final source with the corrected rationale. The native renderer/parser and source-identity checks must retain the complete binding population and every other rationale. Final independent review and destination checks remain required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0616d52aa62af9af41e210810fbfb1850f435149cbcbcdccaf2d145a5980e859",
+  "request_id": "worldwin-binding-note-authorization-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:worldwin-map-slot-oct17"
+}

@@ -1,0 +1,17 @@
+{
+  "event_id": "e9e3536c5e12929087c003c9db8dd4e3bb0ddf556f68e8d0929255cbe4f92092",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "worldwin-graphic-initializer-route-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Corrected only the source qualifier to existing GraphicWin::init RECT5D50A0, the pinned original directcall4C4A53 target, instead of Win RECT5EC630. The primary WorldWin receiver and all original arguments/order/error-result handling/virtualshow remain. Existing GraphicWin wrapper delegates to its graphical Win/Buffer lifecycle; all helper definitions are unchanged read-only witnesses. The intermediate slot-only masked match actually failed strict target comparison; that report remains preserved. The final fresh strict comparison passes relocationoffset180 and has no failed WorldWin reference. Its remaining MainInterfaceGlobal references are unknown, not waived."
+    ]
+  },
+  "previous_event": "4cff52bd81253d404dfa7ad7d954101c4b281fc1af7cd886d342f3e04f5ba5fb",
+  "request_id": "worldwin-graphic-initializer-route-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:worldwin-map-slot-oct17"
+}

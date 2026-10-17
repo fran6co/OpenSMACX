@@ -1,0 +1,17 @@
+{
+  "event_id": "4cff52bd81253d404dfa7ad7d954101c4b281fc1af7cd886d342f3e04f5ba5fb",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "worldwin-embedded-map-slot-source-recovery-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "WorldWin::init retains the original receiver/value/order and all other state/rectangle/flag writes. Native eight-call expanded-route control calibrates immutablefa56 baseline/replica to master, detects ordinary entrythrow damage and preserves unscoped COFF under actualRelease and other-frame flags. ActualRelease goes SHAPE_EXACT to BYTE_EXACT; other-frame remainsMISMATCH. Fresh current-source full application build74khh4p0 compiles/links and reproduces the controlled actual owner. All176physicalobjects comparePASS with only WorldWin::init projected;175completeothers and all outside-body owner data/code/references/EH/FPO remain compared."
+    ]
+  },
+  "previous_event": "ea9f9102231514b41b5ede2f1eb278c099584e8a63e915ee7603e6cd137cccef",
+  "request_id": "worldwin-embedded-map-slot-source-recovery-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:worldwin-map-slot-oct17"
+}

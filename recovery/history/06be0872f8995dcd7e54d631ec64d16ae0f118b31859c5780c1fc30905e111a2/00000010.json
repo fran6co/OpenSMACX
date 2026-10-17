@@ -1,0 +1,22 @@
+{
+  "event_id": "1ba55a44abfe6c071c94c70d3885eb30b23dcbe9bc77b4afe7877966e15c5461",
+  "payload": {
+    "affects": [
+      "entity-96a104674d778bf08babbce6887d441decde165fc54d03e6b321d63940ac2239"
+    ],
+    "author": "coordinator",
+    "discovery_id": "worldwin-remaining-matching-reference-runtime-obligations-oct17",
+    "evidence": [
+      "Fresh5581CPP census has3162masked matches,1971MISMATCH,311REFUSED,35SHARED_TAIL,60UNRESOLVED,18SHAPE_EXACT,24MNEMONIC_ONLY. The only classification change is WorldWin startup SHAPE_EXACT toBYTE_EXACT; all5580others,3161oldstrict and610supplemental static classifications remain unchanged. New WorldWin strict row isUNKNOWN because MainInterfaceGlobal references lack qualifying actual metadata; total1930PASS/1207UNKNOWN/25FAIL. These observations are neither a banked historical claim nor full original/linked-selection/hierarchy/runtime acceptance.",
+      "Native recorder using its configured settled historical profiles returns exit1MISMATCH with no changed files. Preserve this distinction from actual applicationRelease with Ob2; do not change compiler flags, loosen verification, withdraw claims or fabricate a new historical exactness token. All existing original obligations remain intact.",
+      "Fresh selected-host baseline21PASS/1FAIL; candidate24PASS/1sameFAIL, zeroerrors/skips. The old failure is an unrelated game.cpp historical-whole-source fixture in test_mapwin_startup_allocation_oct10; all22old classifications persist and3new casespass. Actual full UNK1/init C++98 fixtures run under GCC/Clang with144state combinations plus explicit edge cases, distinguish wrong Win/GraphicWin route and ignored initresult, and reject11runtime mutants percompiler. Spies establish bounded call contracts, not native virtualdispatch, complete MapWin/graphics lifetime or game runtime. Coordinator-reviewed manual integration requires fresh destination checks and carries these limitations."
+    ],
+    "hypothesis": "Retain historical matching, parent-reference and native runtime/linked-retention obligations after this manually reviewed source recovery.",
+    "kind": "discovery"
+  },
+  "previous_event": "eee59819796fa65da96e935e777ee46ed483943132900e39361b643939059766",
+  "request_id": "worldwin-remaining-matching-reference-runtime-obligations-oct17",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:worldwin-map-slot-oct17"
+}

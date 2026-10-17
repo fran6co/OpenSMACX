@@ -1,0 +1,19 @@
+{
+  "event_id": "875a856a54be985edadb4e74af291ae7697c88858fe7d715eae85e8b46e12210",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/worldwin.cpp"
+    ],
+    "evidence": [
+      "The same incorrect Win-base attribution also appears in the two-line introductory source comment above the startup binding. Authorize correcting only that introduction to optional embedded-map reset and GraphicWin base initialization, consistent with the pinned branch/callee and corrected rationale. Preserve all ORIGINAL markers, claims, TRIED/seed history, other bindings and C++ statements. No additional behavior, source scope or compiler policy change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "282c28550bef196889b26b8b094b2439584526611630cc0a88387fd618824428",
+  "request_id": "worldwin-ownership-introduction-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:worldwin-map-slot-oct17"
+}
