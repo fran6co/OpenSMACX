@@ -1,0 +1,224 @@
+{
+  "author": "coordinator",
+  "base_revision": "106e28f429562f9aa025ea5f3162e76b99823c9b",
+  "editable_files": [
+    "src/scroll.cpp",
+    "src/scroll.h",
+    "recovery/tests/test_scroll_void_mutators_actual_source_oct9.py",
+    "recovery/tests/test_scroll_arrow_sprite_destination_oct10.py"
+  ],
+  "evidence": [
+    "Fresh master106e28 builds and links; all176 integrated objects reproduce its reviewed candidate. Full mapped CPP census3049/5581 masked exact; primary reference audit1846PASS/1181UNKNOWN/22FAIL. Existing scaffold, original inventory, linked-preservation, helper/EH, structure and runtime debts remain separate; do not reset any prior task baseline or promote a local pass to game acceptance.",
+    "Independent pinned-body/source/actual-COFF scout identifies605B80 and606EA0 as void mutators whose current uint32_t APIs manufacture results from incidental EAX; former returns vary between border color/thickness and bottom. Source has no call sites for those two and mapped caller scan has no edges, not exhaustive indirect-call proof. Historical QAEX signatures support the coherent setter family; set_border_color605B10 already has its correct void contract and Gamma caller. Change only these two declarations, definitions and emitted-symbol facts through the native source writer; retain all ORIGINAL identities/spans/claims and all seed findings.",
+    "The existing Scroll RECT member atA4C is already supported by constructor, compute_thumb_rect and layout evidence. The three bodies reset left/top0,right/bottomthickness, then when border!=-1 produce left/top1 and right/bottomthickness-1. Preserve setter stores, inputs, no callbacks and modulo32bit arithmetic at INT_MIN/MAX using the existing long_from_bits helper. No clamps, bounds fixes, signed-overflow UB, fabricated fields, layout/inheritance/virtual changes or new behavior.",
+    "Replace only these three bodies with direct nonvolatile typed member operations; avoid factoring into new call/noinline/forceinline/volatile tricks or adding compatibility wrappers. Volatile aliases are documented historical optimizer experiments, not supported source storage qualifications. Keep the unconditional reset statements in source, while explicitly retaining the compiler transient-store/reload restoration obligation. Do not bank claims or label the rewrite byte exact. All other source bodies stay byte-identical.",
+    "Extend the existing five-mutator actual-source host suite for all eight setters rather than adding an ad hoc tool. GCC/Clang controls must exercise border=-1/0/nonzero, thickness0/1/negative/INT_MIN/INT_MAX, exact bitwise rectangle state, unchanged unrelated fields and absence of redraw/callbacks. Include compile-then-runtime-fail wrong-guard, wrong-slot, missing-update and arithmetic mutants plus native full pinned span/offset/epilogue observations. Retain existing controls; update the strict historical continuity test only for these exact two symbol migrations with this immutable authorization.",
+    "Coordinator owns native writer fact publication, Git and compiler resources. Worker uses an isolated prepared worktree and only authorized files; return new discoveries instead of editing outside scope. Require fresh full build/link, native comparison of all40owner observations and all176physical objects, unrelated verdict/strict preservation, source identity/claim/reference/mapping checks, independent C++/ABI review and fresh destination checks before manual integration. Preserve UNKNOWN/FAIL and all original matching obligations; no framework/compiler-policy/gate change or automatic acceptance claim."
+  ],
+  "intent": "Recover the genuine void Scroll thumb-mutator API and direct typed RECT behavior instead of manufactured EAX results and score-forcing volatile accesses.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5800768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5800912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6312400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6312816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6313168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6318176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6317808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6319872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6314976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6315056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6315136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6315216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6315296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6319184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6319776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6315408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6316512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6316736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6316832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6317120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6317408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6318880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6318496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6316816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4222560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4222752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4223168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6312384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "scroll-thumb-mutator-contract-oct17"
+}
