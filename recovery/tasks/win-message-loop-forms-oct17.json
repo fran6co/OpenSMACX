@@ -1,0 +1,29 @@
+{
+  "author": "coordinator",
+  "base_revision": "2452a255b3823259538d6512723bf746d25dcc90",
+  "editable_files": [
+    "src/win.cpp",
+    "recovery/tests/test_win_message_loop_forms_oct17.py"
+  ],
+  "evidence": [
+    "Read-only current-source/pinned-code scouting identified two short existing mismatches: pump_all_sound_messages at0x005FD310 and win_window_nc_paint at0x005F13B0. Verify exact subjects before task creation. Current owners are genuine complete C++ implementations, so this is matching/quality work and no new function coverage is implied.",
+    "Bound initial exploration to at most three new evidence-backed natural body forms per function in native local variant decks. Preserve optional-owner and BeginPaint gates, rectangle copying, EndPaint return, user-message range, dispatch/check_net order and empty queue behavior. No volatile additions, raw IAT accesses, fixed addresses, casts for scheduling, inline assembly, signature/header/layout changes, bug fixes or repeated exhausted forms.",
+    "Only coordinator owns Git, isolated worktree preparation, compiler leases, immutable native epochs, measured symbol/reference evidence, recording, full build/link and integration. Preserve original identities/spans, all historical obligations, prior discoveries and task baselines. Independent review and relevant regression evidence required before manual integration. A local match is not strict reference-aware or whole-game acceptance. Expand scope before any other body/header changes."
+  ],
+  "intent": "Recover natural message-loop and nonclient paint source forms from pinned control flow without changing observable behavior or weakening historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6279952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6230960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-message-loop-forms-oct17"
+}
