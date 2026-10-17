@@ -1,0 +1,17 @@
+{
+  "event_id": "7200c4caa9253368ecb7908fe80a7adcdc675f0f8ec37c2c1e44bd877b2ff001",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "win-scroll-callback-interface-discovered-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.h now declares typed Win::ScrollCallback and set_scrolled_callback/set_scrolling_callback; actual src/win.cpp stores those pointers into independent optional Scroll slots without integer casts. Current emitted names were observed from real VC6 COFF and bound through source.writer.write_symbol. Preserve both original catalogue identities, complete spans, historical claims and old reconstructed-type provenance; source type/name interpretation is not authenticated original spelling. Both strict selected bodies pass bytes/boundary/references in the matching trial; all154 baseline Win matches retained and36 layout checks pass. Whole task data evidence remains unknown and full native physical residual remains161pass15fail. Bounded independent manual collateral reviews do not waive these failures or establish linked/runtime/game acceptance."
+    ]
+  },
+  "previous_event": "905cace1522d2ba15454aeee7f90abdb21bc779b78ab4362678e9f535fde212a",
+  "request_id": "win-scroll-callback-interface-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:win-scroll-callback-interface-oct17"
+}

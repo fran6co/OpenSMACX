@@ -1,0 +1,19 @@
+{
+  "event_id": "905cace1522d2ba15454aeee7f90abdb21bc779b78ab4362678e9f535fde212a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_setupwin_raii_actual_source.py"
+    ],
+    "evidence": [
+      "Broad host regressions reproduced two pre-existing SetupWin RAII fixture failures unchanged on master: it extracts removed inline clear_list_entries and out-of-line StringStruct::remove_all from cpp; the real remove_all body now lives inline in stringstruct.h. Authorize only updating the fixture to extract that actual body with its existing C++98 nullptr spelling bridge, retaining ordinary/early/exceptional teardown assertions and ASan/UBSan. No StringStruct or SetupWin C++ changes, no weakening or deleting controls. Original task baseline and all source claims remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d4e192b105776480a5913c96f3da6dd88b8ccddb47fd6f7b778f26b17db20422",
+  "request_id": "win-scroll-callback-raii-test-scope-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:win-scroll-callback-interface-oct17"
+}

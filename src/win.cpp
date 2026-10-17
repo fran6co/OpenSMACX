@@ -1590,53 +1590,50 @@ void Win::set_def_focus(Win *focus) {
 
 
 /*
-Purpose: Publish a value into both attached scrollbars' first shared slot.
+Purpose: Publish the scrolled-position callback to each attached scrollbar.
 // ORIGINAL: 0x005EE130 ?UNK8@Win@@QAEXH@Z 0x005EE130-0x005EE157 BYTE_EXACT
-// symbol    ?set_scroll_sprite@Win@@QAEXH@Z
-// notes     NAMED from its body and from popup.cpp:926, which assigns a
-//           Sprite * to the same Scroll::field_2144_ this method writes on
-//           both bars. The catalogue's UNK8 stays on the ORIGINAL line -
-//           that is the name the image was catalogued under.
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 0x005EE130 independently tests both attached Scroll pointers and stores its argument at +0x2144; the complete routine returns with ret 4. Scroll::field_2144_ is invoked as void (__cdecl *)(int, int) by recovered scroll consumers.", "set_scrolled_callback is a current source API interpretation of that use, not evidence of the original method name or parameter type. Preserve catalogue identity; the separate symbol annotation records the current compiler-emitted binding."], "reason": "Represent the observed callback store with the existing Scroll consumer type; do not infer original source spelling."}
+// symbol    ?set_scrolled_callback@Win@@QAEXP6AXHH@Z@Z
 // size      39 bytes
-// prototype void (__thiscall ?set_scroll_sprite@Win@@QAEXH@Z)(Win* this, int)
+// notes     Historical reconstructed prototype used int and the guessed name
+//           set_scroll_sprite; neither was authenticated original type/name evidence.
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
 Status: Complete
 */
-void Win::set_scroll_sprite(int value) {
+void Win::set_scrolled_callback(ScrollCallback callback) {
     // Each scrollbar is optional and tested separately, so one attached bar
     // is still updated when the other is absent.
     if (scroll_vert_) {
-        scroll_vert_->field_2144_ =
-            reinterpret_cast<void (__cdecl *)(int, int)>(value);
+        scroll_vert_->field_2144_ = callback;
     }
     if (scroll_horz_) {
-        scroll_horz_->field_2144_ =
-            reinterpret_cast<void (__cdecl *)(int, int)>(value);
+        scroll_horz_->field_2144_ = callback;
     }
 }
 
 /*
-Purpose: Publish a value into both attached scrollbars' second shared slot.
+Purpose: Publish the scrolling-position callback to each attached scrollbar.
 // ORIGINAL: 0x005EE160 ?UNK9@Win@@QAEXH@Z 0x005EE160-0x005EE187 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 0x005EE160 independently tests both attached Scroll pointers and stores its argument at +0x2148; the complete routine returns with ret 4. Scroll::field_2148_ is invoked as void (__cdecl *)(int, int) by recovered scroll consumers.", "set_scrolling_callback is a current source API interpretation of that use, not evidence of the original method name or parameter type. Preserve catalogue identity."], "reason": "Represent the observed callback store with the existing Scroll consumer type; do not infer original source spelling."}
+// symbol    ?set_scrolling_callback@Win@@QAEXP6AXHH@Z@Z
 // size      39 bytes
-// prototype void (__thiscall ?UNK9@Win@@QAEXH@Z)(Win* this, int)
+// notes     Historical reconstructed prototype used int; the catalogue UNK9
+//           identity does not authenticate that parameter type or source name.
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
 Status: Complete
 */
-void Win::UNK9(int value) {
+void Win::set_scrolling_callback(ScrollCallback callback) {
     if (scroll_vert_) {
-        scroll_vert_->field_2148_ =
-            reinterpret_cast<void (__cdecl *)(int, int)>(value);
+        scroll_vert_->field_2148_ = callback;
     }
     if (scroll_horz_) {
-        scroll_horz_->field_2148_ =
-            reinterpret_cast<void (__cdecl *)(int, int)>(value);
+        scroll_horz_->field_2148_ = callback;
     }
 }
 
