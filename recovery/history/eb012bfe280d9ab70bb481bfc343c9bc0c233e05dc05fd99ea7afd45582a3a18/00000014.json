@@ -1,0 +1,34 @@
+{
+  "event_id": "45626a967ff87f6fbab21f4a1339aeb66fbe67155368f9b863a42480b0442c28",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "docs/DECOMP_MAP.md",
+      "packages/match-recovery/src/match_recovery/application_binary.py",
+      "packages/match-recovery/src/match_recovery/associated_binary.py",
+      "packages/match-recovery/src/match_recovery/associated_source.py",
+      "packages/match-recovery/src/match_recovery/associated_writer.py",
+      "packages/match-recovery/src/match_recovery/bound_objects.py",
+      "packages/match-recovery/src/match_recovery/source_integrity.py",
+      "packages/match-recovery/tests/test_associated_application.py",
+      "packages/match-recovery/tests/test_associated_binary.py",
+      "packages/match-recovery/tests/test_associated_source.py",
+      "recovery/README.md",
+      "recovery/tests/test_general_switch_data_oct18.py"
+    ],
+    "evidence": [
+      "The complete original task remains b24 with101subjects and all prior decisions and unresolved structural/reference/runtime obligations. Published e8ec actual build is a current-step oracle, never a task baseline reset. No C++ program tokens, headers, compiler profiles, link settings, source function symbols/spans, historical claims or legacy masked comparator policy may change.",
+      "Current strict failure at stoi628950 and HSV_to_RGB628B70 is independently caused by associated switch data in their one-root code COMDATs beyond the unchanged recorded code spans. Pinned original indirect jumps reference628A00/four targets and628D94/six targets; stoi additionally references selector628A10..628A47. Fresh physical table-cell evidence proves every local DIR32 target/addend and original PE HIGHLOW, and exact55-byte selector contents. This does not authorize truncating sections, extending ORIGINAL markers, manufacturing arrays or promoting a masked result.",
+      "Add a reusable source-owned associated-data interpretation with explicit original parent identity, data extent/kind and original referencing instruction. Supported same-layout independent root COMDAT domain only. Verify original anchor, operand fixups, actual candidate local same-section target resolution, exact table cells or selector bytes, accounted alignment gaps and the entire combined section through the existing strict byte/reference comparator. All unaccounted bytes, overlap/conflicts, wrong targets/addends/maps, missing or extra PE/COFF relocations, unsupported EH/shared/multi-entry shapes and absent evidence must fail or remain unknown. Default no-annotation behavior and every prior strict refusal remain unchanged.",
+      "Pilot only the two General original identities with native guarded source publication of associated-data comments after package verification. Keep original function mappings/claims byte-for-byte. The existing closed General inverse may admit only these exact new comment lines, with explicit removal/mutation/duplicate damage controls and unchanged b24/fcaa baselines. No per-function compiler flags or invented linked-retention proof.",
+      "Require synthetic independent positive and negative controls, existing binary/object/application and full package tests, independent review, a fresh native baseline before annotations under the finalized package, fresh candidate application build/link and5581masked/strict continuity, full181object physical comparison with zero omitted bodies, claim/mapping/reference/source checks and fresh destination verification before manual integration/cleanup. Changes to native whole-project or automatic acceptance prerequisites are not authorized; linked selection/allocation/runtime remains separately unfinished."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "100790be131ffedc1ba5e39c8a5b7baa569c5487d039b54db7b8d100e20fad82",
+  "request_id": "general-generated-switch-data-proof-oct18",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:general-owner-split-oct17"
+}
