@@ -1,0 +1,22 @@
+{
+  "event_id": "51ce1f8cdefcb9c013d99eeee74c1392bfdb09b83eaa5d6ed53cd853b560fcaa",
+  "payload": {
+    "affects": [
+      "entity-b3515e1fc85d07c6885b0465bfe31bb062a546990714715b4c4ac49913e00784"
+    ],
+    "author": "coordinator",
+    "discovery_id": "core-synch-display-associated-table-extent-oct17",
+    "evidence": [
+      "Original532C30..532DA2 code ends popEBP/ret at offsets368/369. Offsets370/371 are8BFF padding; seven absolute-relocated dispatch entries start532DA4(relative372) through532DBC, then lookup bytes start532DC0.",
+      "Both actual baseline and profile candidate map.cpp root COFF sections are464bytes with the same out-of-record switch relocations372,376,380,384,388,392,396. Thus the strict370vs464extentFAIL predates this profile; it is not evidence to extend the ORIGINAL code span.",
+      "Retain the original code identity/span and all associated-data/reference qualification obligations. Do not append guessed data, fake bindings, weaken the comparator or claim full extent/reference equality. Future independently supported associated-data annotation is separate work."
+    ],
+    "hypothesis": "synch_display has compiler-generated dispatch data after its independently bounded code, which the strict single-root extent comparator cannot qualify as function code.",
+    "kind": "discovery"
+  },
+  "previous_event": "b2709250fd3375b81b8a6ee263471c38b7f48a7891aaffe08d8a47e086342ec3",
+  "request_id": "core-synch-display-associated-table-extent-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:core-frame-profile-oct17"
+}

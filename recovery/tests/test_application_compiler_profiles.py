@@ -10,32 +10,22 @@ import subprocess
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-BASE_REVISION = "a14474869c6aa9cc5b577defbbe292208ae33e22"
+BASE_REVISION = "76dbc5c341e84624f7bb40c94fb396b6b06a3afd"
 NEW_OWNERS = (
-    "src/netdaemon.cpp",
-    "src/diplowin.cpp",
-    "src/diplopop.cpp",
-    "src/worldwin.cpp",
+    "src/map.cpp",
+    "src/faction.cpp",
+    "src/veh.cpp",
 )
 NEW_PROFILE_COMMENT = (
-    "# Keep the controlled diplomacy/network/overview owners on their measured\n"
-    "# frame-preserving source profiles; application defaults and link settings stay fixed.\n"
+    "# Preserve original frame-based argument and local-slot accesses in these core\n"
+    "# owners while keeping application-wide compiler defaults unchanged.\n"
 )
 NEW_PROFILE_BLOCK_TEXT = (
     "set_source_files_properties(\n"
-    "    src/netdaemon.cpp\n"
-    "    src/diplowin.cpp\n"
-    "    src/diplopop.cpp\n"
-    "    src/worldwin.cpp\n"
+    "    src/map.cpp\n"
+    "    src/faction.cpp\n"
+    "    src/veh.cpp\n"
     '    PROPERTIES COMPILE_OPTIONS "/Oy-")'
-)
-OLD_DESIGN_PROFILE_COMMENT = (
-    "# Preserve the original frame-based stack accesses in these mapped owners;\n"
-    "# leave the global compiler defaults and neighboring NetDaemon profile alone.\n"
-)
-NEW_DESIGN_PROFILE_COMMENT = (
-    "# Preserve the original frame-based stack accesses in these mapped owners;\n"
-    "# leave the global compiler defaults unchanged.\n"
 )
 NEW_PROFILE_BLOCK = (tuple(sorted(NEW_OWNERS)), ("/Oy-",))
 
@@ -51,6 +41,7 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(("src/datalink.cpp", "src/maininterface.cpp", "src/console.cpp"))): ("/Oy-",),
     tuple(sorted(("src/mapwin.cpp", "src/basewin.cpp"))): ("/Oy-",),
     tuple(sorted(("src/designwin.cpp", "src/tutwin.cpp", "src/xpops.cpp"))): ("/Oy-",),
+    tuple(sorted(("src/netdaemon.cpp", "src/diplowin.cpp", "src/diplopop.cpp", "src/worldwin.cpp"))): ("/Oy-",),
     tuple(sorted(NEW_OWNERS)): ("/Oy-",),
     tuple(sorted(("src/interface_palette.cpp", "src/interface_fonts.cpp"))): ("/Oy-",),
     ("src/sound.cpp",): ("/Oy-",),
@@ -93,17 +84,6 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
         return False
     if baseline.count(NEW_PROFILE_COMMENT) or candidate.count(NEW_PROFILE_COMMENT) != 1:
         return False
-
-    has_old_comment = OLD_DESIGN_PROFILE_COMMENT in baseline
-    has_new_comment = NEW_DESIGN_PROFILE_COMMENT in candidate
-    if has_old_comment or has_new_comment:
-        if baseline.count(OLD_DESIGN_PROFILE_COMMENT) != 1:
-            return False
-        if candidate.count(NEW_DESIGN_PROFILE_COMMENT) != 1:
-            return False
-        candidate = candidate.replace(
-            NEW_DESIGN_PROFILE_COMMENT, OLD_DESIGN_PROFILE_COMMENT, 1
-        )
 
     projected = candidate.replace(insertion, "", 1)
     return projected == baseline
@@ -150,7 +130,7 @@ def test_profile_guard_rejects_policy_mutations():
     )
     assert not cmake_profile_delta_is_exact(baseline, changed_options)
     extra_owner = candidate.replace(
-        "    src/worldwin.cpp\n", "    src/worldwin.cpp\n    src/other.cpp\n"
+        "    src/veh.cpp\n", "    src/veh.cpp\n    src/other.cpp\n"
     )
     assert not cmake_profile_delta_is_exact(baseline, extra_owner)
     global_flag_change = candidate.replace(
@@ -166,9 +146,9 @@ def test_profile_guard_rejects_policy_mutations():
     assert not measurement_policy_is_unchanged(baseline_measurement, changed_measurement)
 
 
-def test_application_profiles_match_immutable_baseline_plus_four_owners():
+def test_application_profiles_match_immutable_baseline_plus_three_owners():
     task = json.loads(
-        (ROOT / "recovery/tasks/diplomacy-network-frame-oct17.json").read_text(
+        (ROOT / "recovery/tasks/core-frame-profile-oct17.json").read_text(
             encoding="utf-8"
         )
     )

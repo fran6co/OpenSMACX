@@ -1,0 +1,22 @@
+{
+  "event_id": "b2709250fd3375b81b8a6ee263471c38b7f48a7891aaffe08d8a47e086342ec3",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_faction_pact_parse_fields_oct17.py",
+      "src/faction.cpp"
+    ],
+    "evidence": [
+      "Supersede the initial private-overlay-only restriction ONLY for the six/four parser field pairs in pact_attacks55C730,pact_truce55D040,pact_unpact55CCA0: select title_leader then name_leader for each participant. No header/layout/global/ABI changes, broad field rename, other function edits, bug fixes or marker/claim changes.",
+      "Add actual-source host controls with deliberately distinct title/name/search strings for both participants, exact parser slots and gender/plurality snapshots, unchanged pronouns/labels/popup ordering, and mutation controls restoring each wrong field independently. Tests are bounded behavior evidence, not target ABI/runtime proof.",
+      "Preserve pre-repair candidate build-lnniytog and all screen/strict/physical evidence. Fresh revised full build must separately report its deliberate difference from the initial profile probe; require whole-COFF outside-only-three-functions preservation against the pre-repair candidate, fresh all457observations/full CPP census with no exact losses, reference-aware remeasurement, independent review, build/link and destination recheck. No baseline reset or fabricated probe equality."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9528faa4498905e1e7e62f2f4fd778bcb250a008056ff1f57c1e11b6c49d2985",
+  "request_id": "authorize-core-pact-player-field-repair-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:core-frame-profile-oct17"
+}
