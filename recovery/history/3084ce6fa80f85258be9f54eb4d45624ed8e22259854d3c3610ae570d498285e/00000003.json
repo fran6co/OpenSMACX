@@ -1,0 +1,21 @@
+{
+  "event_id": "630d10db2ddd12dc8155876adfe078de8b69ee245dca54599cece2895ad33ae1",
+  "payload": {
+    "affects": [
+      "entity-5607535bc3031387a15e4a3919bfcfce81ebbb571a59ccc31006713936c1938d",
+      "entity-895ee0c58926e0d85a300d4b82a6cb6e993eddc077d6013d8488147a58799b9f"
+    ],
+    "author": "coordinator",
+    "discovery_id": "console-inline-linked-preservation-obligation",
+    "evidence": [
+      "Fresh actual object body/stable-external signatures change only editor_clear and its existing menu_proc A50 caller. Native full object comparisonFAILS with local/association/EH/reference residuals and25mappedsubjects unresolved; projection of the owner domain is not a waiver. Current linked reset lacks unique MAP placement; original storage reference extents remain incomplete. Preserve this discovery and original historical claims during further structural/associated-data/linked proof work. Manual checkpoint does not resolve it."
+    ],
+    "hypothesis": "The reset correction propagates into menu_proc inline output; complete original references and compiler-local/linked retained-selection effects remain unproven.",
+    "kind": "discovery"
+  },
+  "previous_event": "44ff606687cf851c74ae6ab1f498dea78102ce36f160a1ca3d1725ce791b2c86",
+  "request_id": "console-inline-linked-preservation-obligation",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:console-publication-order-oct17"
+}

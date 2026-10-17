@@ -1,0 +1,21 @@
+{
+  "event_id": "fa9a485b1e4da5aa134159c8da35d0a950a070e501ec8a5403c3608c3722f230",
+  "payload": {
+    "affects": [
+      "entity-895ee0c58926e0d85a300d4b82a6cb6e993eddc077d6013d8488147a58799b9f",
+      "entity-92ec5a75f3a628218b00ad835212069df369f02e9a2ccb812a94eaafcbcaabbb"
+    ],
+    "author": "coordinator",
+    "discovery_id": "console-original-publication-order",
+    "evidence": [
+      "Pinned full original spans4E1290..4E12FB and51D760..51D7B5 establish state capture afterauto_undo, final state store after vehicle/base/cursor/selection resets, and screen-height capture after own width store before IfaceScreenWidth publication. Independent source/history review supports typed local captures with unchanged original quirks and downstream calls."
+    ],
+    "hypothesis": "Two reconstructed Console definitions sequence existing global reads/publication differently from the pinned original.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "console-original-publication-order",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-publication-order-oct17"
+}

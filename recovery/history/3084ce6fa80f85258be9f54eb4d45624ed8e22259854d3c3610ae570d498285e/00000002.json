@@ -1,0 +1,20 @@
+{
+  "event_id": "44ff606687cf851c74ae6ab1f498dea78102ce36f160a1ca3d1725ce791b2c86",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "console-original-publication-order",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/console.cpp changes only editor_clear and set_screen_geometry. Existing typed fields/global owners and original spans/symbols/claims are retained. State snapshot remains afterauto_undo, OR happens in a typed local and final assignment follows four existing resets; geometry snapshots WinScreenHeight before IfaceScreenWidth. No bug fix, volatile, raw address, layout change, source-line staging, compiler/link-policy change or claim demotion.",
+      "Fresh isolated application build/linkPASS with163compile receipts and177physical objects. All5581mappedCPP identities retained;3222->3223masked matches, zero old losses; all3222old primary and610supplemental strict classifications unchanged. New strict resultUNKNOWN; total1963PASS/1234UNKNOWN/26FAIL. All207canonical owner outcomes retain their classifications except reset20/23MNEMONIC_ONLY->23/23BYTE_EXACT, unchanged flag trials. Native record alone freshly banked4E1290; nativeclaims/mappings/referencesPASS.",
+      "All20preexisting focused host cases retained;30finalPASS including both GCC/Clang actual-body controls, compiling runtime-failing mutants and pinned complete-span order checks. Unchanged old production reset compiles on both host compilers but fails the same order oracle. These logging doubles do not prove native ABI/full-game runtime. Independent final source/caller/test review recommends bounded manual checkpoint with fresh destination verification.",
+      "Complete normalized current Console object matches controlled proposal with zero projections. Candidate physical177PASS projects all207Console owner bodies, not proof those bodies are unchanged. Unprojected native Console residual stillFAILS. Only reset and existing menu_proc51BC70 A50 inline caller change body/stable-external-reference signatures;25subjects unresolved and local/EH/association drift remains. One selected current linked body isUNKNOWN because MAP placement missing/ambiguous. Original references, linked retained selection/allocation and runtime remain obligations; no native automatic or game acceptance."
+    ]
+  },
+  "previous_event": "fa9a485b1e4da5aa134159c8da35d0a950a070e501ec8a5403c3608c3722f230",
+  "request_id": "console-order-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-publication-order-oct17"
+}

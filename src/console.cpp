@@ -2841,15 +2841,17 @@ void Console::editor_clear_vehicles() {
     ::draw_map(1);
 }
 
-// ORIGINAL: 0x004E1290 ?editor_clear@Console@@QAEXXZ 0x004E1290-0x004E12FB
+// ORIGINAL: 0x004E1290 ?editor_clear@Console@@QAEXXZ 0x004E1290-0x004E12FB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:d5d0b2c01472baa3cf01dda67b73e270d64b4db7:src/recovered/units/004e1290.cpp;source:src/console.cpp:Console::editor_clear_vehicles;source:src/map.h;source:src/path.h;source:src/worldwin.h;source:src/game.h;source:src/veh.h;source:src/base.h;source:src/console.h"], "reason": "Recover the editor map-reset coordinator through the typed GameState, vehicle/base counts, Console cursor state, map lifecycle, Path and WorldWin owners. The historical body establishes the ordered reset and redraw operations."}
 void Console::editor_clear() {
     auto_undo();
-    GameDataStateStorage.fields_.game_state_ |= STATE_UNK_4;
+    uint32_t pending_state = GameDataStateStorage.fields_.game_state_;
+    pending_state |= STATE_UNK_4;
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
     GameDataStateStorage.fields_.base_current_count_ = 0;
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
+    GameDataStateStorage.fields_.game_state_ = pending_state;
     map_wipe();
     size_of_planet(2);
     map_shutdown();
@@ -11243,9 +11245,10 @@ void Console::init(int) {
 void Console::set_screen_geometry() {
     const int width = WinScreenWidth;
     field_23BCC_ = width;
+    const int screen_height = WinScreenHeight;
     IfaceScreenWidth = width;
 
-    const int height = WinScreenHeight - MainInterfaceGlobal.panel_height();
+    const int height = screen_height - MainInterfaceGlobal.panel_height();
     field_23BD0_ = height;
     IfaceScreenHeight = height;
 
