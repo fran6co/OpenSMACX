@@ -8,6 +8,7 @@ import pytest
 
 from match_recovery.source import read_text
 from match_recovery.source.writer import write_bytes
+from test_zlib_uncompress_owner_oct17 import historical_netdaemon_view
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "0e6b4b490aea7df0e4dc5ce7961eae3de4f129db"
@@ -153,6 +154,8 @@ def test_only_native_promotions_preserve_complete_source(relative):
     assert promoted
     assert all(not row.byte_exact for row in before if row.address in SELECTED)
     current = path.read_text()
+    if relative == "src/netdaemon.cpp":
+        current = historical_netdaemon_view(current)
     if relative == "src/net_fifo.cpp":
         current = historical_netfifo_structure_view(current, relative)
     assert write_bytes(old, promoted) == current.encode()

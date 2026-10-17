@@ -1,0 +1,21 @@
+{
+  "event_id": "fb7c2e403d7ab6ed80055c53a6b8ca3f6f64ea4eaa8ab66803c9d868b6dfa2a5",
+  "payload": {
+    "affects": [
+      "entity-361be00f4e85fcdd926a631b019509e8f564c7c2ddcd9eaaec897d0dc0a2244b"
+    ],
+    "author": "coordinator",
+    "discovery_id": "uncompress-original-version-literal-binding-oct17",
+    "evidence": [
+      "Native actualC-object original634330 row has boundaryPASS, zero differing offsets and four callee-referencePASS results. The offset40 absolute version-string relocation remains compiler_artifactUNKNOWN: no independently established original data target. Do not fabricate a literal alias, extend a span, copy machine bytes or relabel the strict result.",
+      "The candidate selected zlib uncompr.c.obj member and its current linked1.0.2 literal are independently observed. These establish bounded current application correspondence, not the missing original source-owned data identity, full data allocation/retention, ABI lifecycle or game acceptance. Preserve the historicalBYTE_EXACT obligation and unchanged upstream source; later evidence should qualify the actual dependency path rather than restore the application duplicate."
+    ],
+    "hypothesis": "The genuine upstream uncompress owner still needs independent original version-literal binding/support in the vendor comparison path; current linked literal contents alone are not an original-address identity proof.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "uncompress-original-version-literal-binding-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-zlib-owner-oct17"
+}

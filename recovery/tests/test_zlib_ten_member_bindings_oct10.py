@@ -12,6 +12,7 @@ from test_zlib_inflate_group_bindings_oct10 import EXPECTED as FOURTEEN_MEMBERS,
 from match_recovery.source.reader import read_file, read_text
 from match_recovery.source.writer import write
 from test_zlib_deflate_tree_group_bindings_oct10 import EXPECTED as SIXTEEN_MEMBERS
+from test_zlib_uncompress_owner_oct17 import historical_component_view
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,10 +44,10 @@ def test_prior_twelve_identities_claims_history_and_policy_unchanged():
     assert len(previous.bindings) == 12
     assert manifest.bindings[:12] == previous.bindings
     assert replace(manifest, bindings=previous.bindings, units=previous.units) == previous
-    assert current.startswith(old[:old.index("// RECOVERY_COMPONENT_BEGIN")])
+    assert historical_component_view(current).startswith(old[:old.index("// RECOVERY_COMPONENT_BEGIN")])
     before = {row.address: row for row in read_text(old, ROOT / COMPANION)}
     after = {row.address: row for row in read_file(ROOT / COMPANION)}
-    assert set(after) == set(before) | set(EXPECTED) | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS) | set(MAIN_STATE_MACHINES) | set(ALLOCATOR_MEMBERS)
+    assert set(after) == set(before) | set(EXPECTED) | {0x00634330} | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS) | set(MAIN_STATE_MACHINES) | set(ALLOCATOR_MEMBERS)
     for address, row in before.items():
         for field in fields(row):
             if field.name not in {"line", "region", "origin"}:
@@ -57,7 +58,7 @@ def test_prior_twelve_identities_claims_history_and_policy_unchanged():
 def test_ten_exact_identity_routes_and_native_writer_roundtrip():
     text = (ROOT / COMPANION).read_text()
     manifest = parse_component(text)
-    assert len(manifest.bindings) == 58
+    assert len(manifest.bindings) == 59
     assert parse_component(render_component(manifest)) == manifest
     assert write(text, read_file(ROOT / COMPANION)) == text
     rows = {row.address: row for row in read_file(ROOT / COMPANION)}

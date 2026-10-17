@@ -1,0 +1,20 @@
+{
+  "event_id": "e3c57da4a14ec1fe38872ed0d35f99c5852380bff0bf445b0fab0fad30afb8cc",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "netdaemon-upstream-uncompress-owner-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netdaemon.cpp now calls unmodified zlib1.0.2 uncompress through zlib.h; the duplicate application wrapper and prototype are removed. src/vendor/zlib.recovery.h owns its original634330..6343BD identity, historical claim/name/kind/lessons and complete prior rationale/evidence, with actual emitted symbol_uncompress and one appended uncompr.c component binding. Prior58 rows and all upstream source/build/compiler policies remain unchanged.",
+      "Fresh full application builds/links after the separately integrated profile batch. All175outside physical objects are unchanged. Retained68NetDaemon observations remain5exact60miss2refused1shared with no exact loss; the moved identity is not a missing body. Independent original/upstream review confirms the141-byte body, four32-bit arguments, untouched opaque and native status/cleanup order. Host actual-C and damage/continuity tests pass.",
+      "Fresh selected unique zlib archive member equals its actual object; actual MAP/PE place_uncompress in zlib:uncompr.c.obj. Independent PE-call reconstruction proves the application call reaches that member and its4calls reach zlib inflate.c.obj targets; the selected version text is1.0.2. Seven collateral private helper bodies and process_message retain code and own-resolved references. The changed transfer helper replaces inlined wrapper operations with that verified API call; postcall close/free/null behavior remains.",
+      "This resolves genuine source ownership only. Whole NetDaemon physical residual remainsFAIL, moved original strict comparison remainsUNKNOWN at the unbound version literal,19previous dependency original failures remain unchanged, and complete EH/FPO/retained-selection/runtime/game acceptance remains unproved. Historical claim and task baselines are preserved, not demoted/reset; NetDaemon frame-profile adoption remains held pending a new controlled migrated-owner screen."
+    ]
+  },
+  "previous_event": "cc78b400ba21e7559c9cf117efa0fd95103cc0d3d41145ff99006cd28ce2e42e",
+  "request_id": "netdaemon-upstream-uncompress-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:map-ui-frame-oct17"
+}

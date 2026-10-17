@@ -9,6 +9,7 @@ import pytest
 
 from match_recovery.component_source import BEGIN, parse_component, render_component
 from match_recovery.source import read_file, read_text, write
+from test_zlib_uncompress_owner_oct17 import historical_component_view
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "a85e8b9e467e6d4861df2c513d03ba70879d3460"
@@ -46,19 +47,20 @@ def baseline(relative):
 def test_all_prior_history_claims_and_component_policy_preserved():
     path = ROOT / COMPANION
     old, current = baseline(COMPANION).decode(), path.read_text()
+    current = historical_component_view(current)
     previous, manifest = parse_component(old), parse_component(current)
     assert restore_allocator_source(current) == old
     assert without_allocator_bindings(manifest) == previous
     assert current.startswith(old[:old.index(BEGIN)])
     before = {r.address: r for r in read_text(old, path)}
     after = {r.address: r for r in read_file(path)}
-    assert set(after) == set(before) | set(EXPECTED)
+    assert set(after) == set(before) | set(EXPECTED) | {0x00634330}
     for address, record in before.items():
         for field in fields(record):
             if field.name not in {"line", "region"}:
                 assert getattr(record, field.name) == getattr(after[address], field.name)
     assert parse_component(render_component(manifest)) == manifest
-    assert write(current, read_file(path)) == current
+    assert write(current, read_text(current, path)) == current
     for binding in manifest.bindings[-2:]:
         row = after[binding.origin.address]
         assert binding.origin.image_sha256 == PIN

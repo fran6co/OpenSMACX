@@ -146,8 +146,8 @@ def test_zlib_component_keeps_reviewed_provider_bindings_with_witnessed_addition
     additions = {0x00642960, 0x006429F0, 0x00642A70}
     from test_zlib_ten_member_bindings_oct10 import EXPECTED as TEN_MEMBERS
     from test_zlib_deflate_tree_group_bindings_oct10 import EXPECTED as SIXTEEN_MEMBERS
-    assert len(manifest.bindings) == 55, "only independently witnessed additions are allowed"
-    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED) | set(RESTORED) | additions | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS) | set(MAIN_STATE_MACHINES)
+    assert len(manifest.bindings) == 56, "one authorized uncompress owner binding was appended"
+    assert {binding.origin.address for binding in manifest.bindings} == set(EXPECTED) | set(RESTORED) | additions | {0x00634330} | set(TEN_MEMBERS) | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS) | set(MAIN_STATE_MACHINES)
     for binding in manifest.bindings:
         witnessed = TEN_MEMBERS | SIXTEEN_MEMBERS | FOURTEEN_MEMBERS | MAIN_STATE_MACHINES
         if binding.origin.address in witnessed:
@@ -159,6 +159,12 @@ def test_zlib_component_keeps_reviewed_provider_bindings_with_witnessed_addition
             # Exact new envelopes, spans and provider symbols have their own
             # continuity/roundtrip controls; historical rows below stay intact.
             assert binding.unit == "trees.c"
+            continue
+        if binding.origin.address == 0x00634330:
+            assert [(span.start, span.end) for span in binding.spans] == [(0x00634330, 0x006343BD)]
+            assert (binding.symbol, binding.unit) == ("_uncompress", "uncompr.c")
+            assert "application archive-member selection" in binding.evidence
+            assert "shared version literal is not separately bound" in binding.evidence
             continue
         if binding.origin.address in RESTORED:
             end, symbol, unit = RESTORED[binding.origin.address]
