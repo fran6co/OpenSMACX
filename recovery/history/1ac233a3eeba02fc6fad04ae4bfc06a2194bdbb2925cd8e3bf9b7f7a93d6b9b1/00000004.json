@@ -1,0 +1,19 @@
+{
+  "event_id": "f88437b7bc273194a8aa664f3ae55e4aa24922ea58fdc82831b6c023b7197ba9",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_sound_loader_original_bindings_oct17.py"
+    ],
+    "evidence": [
+      "Coordinator explicitly adds the third native-writer emitted-symbol fact for existing4C6060 to the annotation-only exception in src/sound_loader.cpp. No production tokens, original markers/claims/types or baseline changes; test all3exactCwrapperbindings."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2c91fc107772b2730bd7b770c0b5c79921ce8a33835e2e8d768de37e095c9e1e",
+  "request_id": "sound-loader-clear-annotation-scope-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:audio-device-frame-oct17"
+}

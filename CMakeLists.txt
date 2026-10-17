@@ -341,6 +341,13 @@ set_source_files_properties(
     src/voice.cpp
     src/wave_device.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# The Midi, device-wrapper and sound-loader bodies also retain frame-based
+# argument accesses in the measured application release profile.
+set_source_files_properties(
+    src/midi.cpp
+    src/sounddevice.cpp
+    src/sound_loader.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Original interface palette initialization and font lookup retain a frame
 # pointer; generic library bodies have independently measured profiles.
 set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp

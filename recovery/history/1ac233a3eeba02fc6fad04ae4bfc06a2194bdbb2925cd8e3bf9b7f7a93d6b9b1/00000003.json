@@ -1,0 +1,20 @@
+{
+  "event_id": "2c91fc107772b2730bd7b770c0b5c79921ce8a33835e2e8d768de37e095c9e1e",
+  "payload": {
+    "affects": [
+      "entity-43b24436691ffea0fa77e0e156d3e680fecede1b82e8607239eb9c095c755890"
+    ],
+    "author": "coordinator",
+    "discovery_id": "sound-loader-clear-wrapper-symbol-oct17",
+    "evidence": [
+      "Source extern-C sub_4c6060 clears SoundDllProcs; actual build-bo202vk0 emits _sub_4c6060 and already matches7/7instructions. Same explicit-symbol repair is needed; no implementation or scope identity changes."
+    ],
+    "hypothesis": "The already matching zero-export-table wrapper4C6060 also lacks its exact emitted extern-C underscore fact.",
+    "kind": "discovery"
+  },
+  "previous_event": "80f2967af4f9d482fef3314943b5981d8d7621731ca9c349fb5bbcbd378971e5",
+  "request_id": "sound-loader-clear-wrapper-symbol-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:audio-device-frame-oct17"
+}

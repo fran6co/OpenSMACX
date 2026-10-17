@@ -1,0 +1,24 @@
+{
+  "event_id": "11fbe94cd30a8a7a72b9a3624b477b0a8eb616b16670786dcdcb826899282a20",
+  "payload": {
+    "affects": [
+      "entity-109f1a734d5fc3b0c69967f354f2f3778fa51d04827de539626a4922a4e2748a",
+      "entity-310711ff4675d7eb6a3fdfe93e682f1426ccddfde370bb1bae26d4c463eae375",
+      "entity-bd4863a31359e32ce5ac8445532cfe483e6e0b711d7e371d64b7e85b81998e62"
+    ],
+    "author": "coordinator",
+    "discovery_id": "sound-loader-explicit-bindings-oct17",
+    "evidence": [
+      "Fresh actual candidate build-bo202vk0 strict results:44PASS,3UNKNOWN. init_sound_timer4C5FB0 is unresolved only at SoundDllModule; original4C5FB3 reads90DB78 and native COFF relocates ?SoundDllModule@@3PAUHINSTANCE__@@A.",
+      "Original wrappers4C6000/4C6030 have preserved original identities, but their real extern-C definitions emit _sub_4c6000/_sub_4c6030. Source symbol facts are missing; this is not a new function, rename or missing implementation.",
+      "Do not guess reference targets from nearby objects. Source already owns the actual HMODULE and DLL lifetime; bind its evidenced start only, without inferring allocation size or initializer proof."
+    ],
+    "hypothesis": "Three masked frame gains cannot establish strict references until the real DLL module global and exact emitted C wrapper names are source-bound.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "sound-loader-explicit-bindings-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:audio-device-frame-oct17"
+}
