@@ -1,6 +1,6 @@
 """Actual SetupWin::close and destructor controls.
 
-The cleanup method, destructor and list helpers come from product source; component
+The cleanup methods and destructor come from product source; component
 and base destructors are fixture probes so C++ scope unwinding is observable.
 """
 from __future__ import annotations
@@ -30,15 +30,17 @@ def extract_body(text: str, signature: str) -> str:
     raise AssertionError("unterminated source body: " + signature)
 
 
-def actual_close_and_list_helpers() -> tuple[str, str, str]:
+def actual_close_and_list_cleanup() -> tuple[str, str]:
     setup = (ROOT / "src/setupwin.cpp").read_text()
     close = extract_body(setup, "void SetupWin::close()")
-    struct = (ROOT / "src/stringstruct.cpp").read_text()
-    clear = extract_body(struct, "inline void clear_list_entries(StringStruct *self)")
-    remove = extract_body(struct, "void StringStruct::remove_all()")
+    header = (ROOT / "src/stringstruct.h").read_text()
+    remove = extract_body(header, "void remove_all()")
+    # Keep the actual inline member body; only qualify its definition for the
+    # fixture's out-of-class declaration. The retired cpp helper is not source.
+    remove = remove.replace("void remove_all()", "void StringStruct::remove_all()", 1)
     # Existing maintained control's sole C++98 spelling bridge.
-    clear = clear.replace("nullptr", "0")
-    return close, clear, remove
+    remove = remove.replace("nullptr", "0")
+    return close, remove
 
 
 FIXTURE = r'''
@@ -131,9 +133,9 @@ void Spot::shutdown() {
 
 
 def translation_unit() -> str:
-    close, clear, remove = actual_close_and_list_helpers()
+    close, remove = actual_close_and_list_cleanup()
     destructor = extract_body((ROOT / "src/setupwin.cpp").read_text(), "SetupWin::~SetupWin()")
-    return FIXTURE + "\n" + clear + "\n" + remove + "\n" + close + "\n" + destructor + r'''
+    return FIXTURE + "\n" + remove + "\n" + close + "\n" + destructor + r'''
 static StringStructEntry *one_entry() {
     StringStructEntry *entry = new StringStructEntry;
     entry->payload = new Payload;

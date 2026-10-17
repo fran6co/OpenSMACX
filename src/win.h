@@ -113,6 +113,9 @@ typedef int (__cdecl *WinDisplayActionHookFn)();
 
 class Win : public AutoSound {
  public:
+  // The two scrollbar callback slots share Scroll's consumer signature.
+  typedef void (__cdecl *ScrollCallback)(int, int);
+
   const RECT &client_rect() const { return client_rect_; }
   const RECT &cached_outer_rect() const { return cached_outer_rect_; }
 
@@ -310,17 +313,22 @@ class Win : public AutoSound {
   int get_lbutton_state();
   void on_mousewheel_up_horz(int delta);
   void on_mousewheel_down_vert(int delta);
-  // THE FIVE UNK METHODS ARE EVIDENCE-FREE, and that is a measured result
-  // rather than an unfinished job. Searched 2026-08-25, all of it empty:
-  //   - the image records NO caller for UNK5, UNK6, UNK7 or UNK9, and the
+  // Historical catalogue review (2026-08-25): UNK1, UNK5, UNK6 and UNK7
+  // remain without authenticated semantic names. The old UNK9 no-caller
+  // observation is historical and superseded by the setter-entry/consumer
+  // evidence documented beside its source definition; it is not proof of an
+  // original name or signature.
+  // At that review:
+  //   - the image records NO caller for UNK5, UNK6 or UNK7, and the
   //     one it records for UNK1 is this declaration's own reference;
-  //   - none of the five occupies a slot in Win's 88-entry vtable at
-  //     0x0066FDD0 (read with tools/image_data.py), so no dispatch names
+  //   - none of the reviewed methods occupies a slot in Win's 88-entry
+  //     vtable at 0x0066FDD0, so that table supplies no dispatch names for
   //     them either;
   //   - docs/recovery/behaviour-member-names.csv has no entry for any;
-  //   - UNK9's only effect is writing Scroll::field_2148_ on both bars,
-  //     and NOTHING in the tree reads that field, so its behaviour names
-  //     neither the method nor the member.
+  //   - UNK9's catalogue body only wrote Scroll::field_2148_ on both bars.
+  // Current Scroll::field_2148_ consumers in mouse-move and button-pressed
+  // paths use the callback type above. That supports this source-level API
+  // interpretation, not the original method/member spelling.
   // UNK1, UNK5 and UNK6 are stubs in the image too - UNK1 is `xor eax,eax;
   // ret 0x24`, nine arguments discarded. A name invented to satisfy the
   // census would be a false statement that outlives whoever wrote it; the
@@ -399,8 +407,8 @@ class Win : public AutoSound {
   // image name above: the body reads its argument at [esp+4], with no
   // receiver on the stack.
   static void set_def_focus(Win *focus);
-  void set_scroll_sprite(int value);
-  void UNK9(int value);
+  void set_scrolled_callback(ScrollCallback callback);
+  void set_scrolling_callback(ScrollCallback callback);
   void reset_window_clip();
   void sync_palette();
   int is_child(int value);
