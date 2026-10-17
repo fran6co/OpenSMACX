@@ -1,0 +1,22 @@
+{
+  "event_id": "7e826896ad686b3b6f4f97902333d748a7179211e830caafb00387bef55f290e",
+  "payload": {
+    "affects": [
+      "entity-2dec3da77295191f2af641cab878f12122fb19a71833da333aa3d99b9a526775",
+      "entity-9eb05122bcbea0d37752b210a2fcd41860921543215c806a6168190d789c5484",
+      "entity-fa962719162780556e7f5c9461a6355982920ce7a9a383c53d604e9e6086b60e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "borrowed-raster-sibling-scalar-reads-oct17",
+    "evidence": [
+      "Pinned complete spans61C090/6212B0/622810 and load operands establish three LightThreshold lowbyte reads, two LightPackA.low_word reads and four unsigned Scratch528 bit-value reads. Existing declarations already provide signedint, unsignedshort member and signedint storage respectively. Read width/value is evidence; no more specific semantic identity is invented."
+    ],
+    "hypothesis": "Use existing declared scalar objects for nine redundant byte/word/dword reads in three sibling rasterizers.",
+    "kind": "discovery"
+  },
+  "previous_event": "f832904a506b71caef9a2d6dec2906e7382eafaa221ebbb7b12c88a6507f1731",
+  "request_id": "borrowed-raster-sibling-scalar-reads-oct17",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:texture-borrowed-raster-oct17"
+}

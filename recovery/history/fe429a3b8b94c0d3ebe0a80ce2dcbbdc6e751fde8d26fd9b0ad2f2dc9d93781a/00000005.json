@@ -1,0 +1,19 @@
+{
+  "event_id": "f832904a506b71caef9a2d6dec2906e7382eafaa221ebbb7b12c88a6507f1731",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "borrowed-raster-staged-value-recovery-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Actual source restores entry/exit texture_reset_fpu and original PC24/RZ selection; positive wrapped fixedspan stages signed32 deltaA/deltaB, consumes previous snapshots after original EdgeScan advance/refresh branches, then stages next. Existing integer texture_span_step helper is unchanged. Typed unsigned U/V/delta cursors sample256pitch with independent low8bit indices and inclusive count; shared source cells remain named and source owned. No ASM, machinecode, executable-address calls, new types/globals/exports, compiler/profile/linker changes, safety fallback or annotation/claim edit.",
+      "Independent Fraction oracle covers234signed/boundary/deterministicrandom PC24/RZ reciprocal/product cases including196608/3=65535. GCC/Clang actual-method controls cover two rows/staging, U/V fractional wrap, copied keybyte, inclusive rightclip, pre-skip, signed-negative and zero wrapped spans, borrowed_=0, left/right initial setup failure, left refresh success/right failure and left refresh failure short-circuit retaining the last row; reset/control/release order and runtime-failing precision/store/stage/UV/key/count/reset mutants pass. These tests prove bounded values/dataflow only, not targetABI, fullrenderer or x87 sticky/status equivalence.",
+      "Eight native compiler calls were completed before banking source: each actualRelease and distinct historicalframefamily baseline/unchangedreplica/ordinaryentrythrowdamage/completecandidateoverlay. Actual baseline reproduces retained master wholeCOFF. Fresh final applicationbuild-svn51zh8 compiles/links and complete actualTexture reproduces the candidate probe. All176physicalobjectsPASS with only this single original body projected;175wholeobjects and unscopedTexture sections remain checked. All5581CPP classifications,3161primarystrict and610supplementalclassifications unchanged. This is fidelity/structure progress, not a new masked match or automatic/full-game acceptance."
+    ]
+  },
+  "previous_event": "0e502e297464ec7f31e8456acacb22f4e3ba709a124e3ed848c0d131482047c0",
+  "request_id": "borrowed-raster-staged-value-recovery-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:texture-borrowed-raster-oct17"
+}

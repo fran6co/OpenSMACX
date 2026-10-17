@@ -1,0 +1,21 @@
+{
+  "event_id": "0e502e297464ec7f31e8456acacb22f4e3ba709a124e3ed848c0d131482047c0",
+  "payload": {
+    "affects": [
+      "entity-d6aaf2adfe4fc489c2af1dc77a59bf4762dbb36412f606b5c57b4855d944ec03"
+    ],
+    "author": "coordinator",
+    "discovery_id": "borrowed-raster-staged-value-recovery-oct17",
+    "evidence": [
+      "Full pinned1215byte span619D80..61A23F SHA b4831c137261abe19f3fe217ffb21cb2b4f848bca8697d228160b74fef9caba9 confirms get_data thenFNINIT, PC24/RZ after both edge setups and borrowed gate, initial positive wrappedspan FILD/FDIVR operands, edge advance before prior-snapshot UthenV FISTP stores4E4/4C8, then next snapshot preparation. Original innerloop unconditionally samples/stores, independently advances U/V byte indices, and uses inclusive uint16count+1 via DEC ECX/JNS, not keyed texture_span_pixels. Release precedes finalFNINIT. The old source calculated unused doubles, never wrote the slope cells and omitted those FP operations.",
+      "Review-only Texture::extract619710 borrowed256pitch and TexHeap::get_tex_mem635370 low16zero admission support the valid64KiBaligned payload interpretation. Their bodies, headers, ownership and mappings remain unchanged. No inference of allocation extent for arbitrary manual object states, historical return type or all x87 status effects."
+    ],
+    "hypothesis": "Replace the nonfunctional faux-register raster with the original staged slope values and opaque borrowed-texture copy path.",
+    "kind": "discovery"
+  },
+  "previous_event": "ddc04dd31430f07f3b9ce6a7483e7294e040030c607e7aec7969f74a202a863f",
+  "request_id": "borrowed-raster-staged-value-recovery-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:texture-borrowed-raster-oct17"
+}

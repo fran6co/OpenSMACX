@@ -10,6 +10,7 @@ from match_recovery.object_source import parse_objects
 from match_recovery.pe_coff import PeImage
 import pytest
 from texture_direct_storage_host import direct_storage_prelude
+from test_texture_sub61f0d0_actual_source import extract_method
 
 
 ROOT = next(
@@ -59,10 +60,17 @@ def test_live_source_owns_distinct_cells_and_mapped_identities():
     storage_end = source.index("static int texture_coast_advance_edge", storage_start)
     storage = source[storage_start:storage_end]
     assert not re.search(r"(?m)^\s*(?:static\s+)?[^;\n]*\b(?:blit_|g2_)[A-Za-z0-9_]+[^;\n]*;", storage)
-    assert "TextureRasterUAccumulator.words.high_word" in source
-    assert "TextureRasterVAccumulator.words.high_word" in source
-    assert "TextureRasterScratch4C8.bytes[2]" in source
-    assert "TextureRasterScratch4E4.bytes[2]" in source
+    # draw_trans2 uses the same source-owned cells through their full dwords,
+    # rather than requiring the retired faux-register word/byte alias spelling.
+    # The overlapping representations remain checked by the runtime controls.
+    body = extract_method(source, "int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3)")
+    for local, cell in (("u", "TextureRasterUAccumulator"),
+                        ("v", "TextureRasterVAccumulator"),
+                        ("du", "TextureRasterScratch4E4"),
+                        ("dv", "TextureRasterScratch4C8")):
+        assert re.search(r"unsigned int " + local + r" = static_cast<unsigned int>\(" +
+                         re.escape(cell) + r"\.dword\);", body)
+    assert "sourcePixels[((v >> 16) & 0xffu) * 256u + ((u >> 16) & 0xffu)]" in body
     assert "TextureRasterLightPackA.low_word" in source
     assert "{ &TextureRasterScratch520 }" in source
     assert "{ &TextureRasterScratch524 }" in source
