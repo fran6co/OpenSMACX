@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "8356c113e9de5eff772e12dd3ca86243227cda5e",
+  "editable_files": [
+    "src/basepop.cpp",
+    "src/spritebox.h",
+    "recovery/tests/test_basepop_dialog_attach_oct17.py"
+  ],
+  "evidence": [
+    "Manual coordinator-reviewed recovery after tech8356c113e. Paired originals/current QuickStart+Return25 reach firstbase naming/map; candidate text row blank and frame corruption visible. Original actual611AF0 entry trace has caller612A3D and602C03, while candidate neverhits corresponding EditGroup attach/Buffer box/hline in41second bounded runs. This is a discriminator, not fullruntimecausalproof; defaultRNGseedsdiffer. Evidence ignored .opensmacx/recovery/render-frame-oct17/run-j3vam0kr and run-syac46h5.",
+    "Complete pinned602600..6037F5 decode: after virtualonredraw602B4D,602B50..6A readsBasePopDrawnBottom9B8CE8 and addsfield30E4 only iffield30D4 nonzero;602B6E..84 uses signedfield21CC orfallbackBasePopDrawnRight9B8CEC.602B88 skipsattachmentonlyifdialogs.kind2350 equals-1.602B95..BBB ORs sharedDialog.field20 with1000 whenflags30A8 bit800000.602BC1..BD2 storesflags30A8&800 intoDialogs+74=SpriteBox+4.602BD8..BFE calls612970 withkind,owner_window,chosenx,y,(field30A4&40)|80000.602C03..18 unconditionallyvirtualshows sharedGraphicWin0 evenwhenattachreturnsnonzero. Source omits this entire block. Preserve original unsafe/ignored error path, no guessed guard or bugfix.",
+    "Scope includes onlyBasePopexec body, SpriteBox header access for existing privatefield4 (no new layout/type/signature, no syntheticoffset view), and newactualsourcecontrols. Recompute baseline existingBasePop controls/allowner measurements/claimmappingreference checks beforeedits. GCC/Clang fullactualexec fixture preferred; bounded excerpt must cover live onredraw throughreal row-placement call and independently pinoriginalbranch/call/flag/global/member facts, not copyan algorithm. Exercise sentinel/signedx,nonzerotextheight,allwidgetkinds,flags,externalowner,attachfailurestillshow,mutation-order,earlyexits. Positivebeforecompiledmutantfail. Keep both existing GUI family lifetimes and allhistoricalclaims.",
+    "Prepareisolatednativeworkercompilerlease. Candidate+destination fullappbuild/link, sourceidentityclaimscontinuity, relevantbroadBasePopcontrols, allowner measurements and complete176COFF outsideonlyexec; zeroomissioncandidate->master. Independentread-onlyreview and pairedQuickStartmapobservation required. Headeraccesschange must notalterothercompiledbehavior; unknown/refused remainsunfinished. No recordedclaims/demotion, compilerchanges,baseline reset, originalbugfixes orfullautomatic/gameacceptance."
+  ],
+  "intent": "Recover the complete original dialog attachment/show block omitted by BasePop::exec, using genuine shared Dialogs/GraphicWin/SpriteBox ownership and preserving original flags and ignored failure effects.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6301184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basepop-dialog-attach-oct17"
+}
