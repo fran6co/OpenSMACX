@@ -20,7 +20,7 @@ struct MapWin {
     unsigned char prefix[8];
     uint32_t field_8_;
     unsigned char middle[0x1dd74 - 12];
-    uint32_t field_1DD74_;
+    uint32_t view_active_;
     int calls;
     int got_x, got_y, got_radius;
     uint32_t sentinel_seen_by_call;
@@ -33,7 +33,7 @@ struct MapWin {
     }
 };
 typedef char MapWin_context_must_be_at_8[(offsetof(MapWin, field_8_) == 8) ? 1 : -1];
-typedef char MapWin_live_must_be_at_1dd74[(offsetof(MapWin, field_1DD74_) == 0x1dd74) ? 1 : -1];
+typedef char MapWin_live_must_be_at_1dd74[(offsetof(MapWin, view_active_) == 0x1dd74) ? 1 : -1];
 
 static Map tile_store[8];
 Map *MapTiles = tile_store;
@@ -117,8 +117,8 @@ int main() {
         AltBonusRainy[index] = AltBonusFlat[index] = 7;
         AltBonusOcean[index] = 7;
     }
-    windows[0].field_1DD74_ = 1;
-    windows[3].field_1DD74_ = 2;
+    windows[0].view_active_ = 1;
+    windows[3].view_active_ = 2;
     delete_landmark(x, y);
     assert(tile_store[tile_index].bit2 == 0xfd000b03u);
     assert(UnkBitfield1 == 4u);
@@ -143,14 +143,14 @@ int main() {
 
     // Zero bit2 is a strict no-op, including dirty state and window caches.
     reset();
-    windows[0].field_1DD74_ = 1;
+    windows[0].view_active_ = 1;
     delete_landmark(x, y);
     assert(UnkBitfield1 == 0 && windows[0].calls == 0);
 
     // A negative signed type only clears bit 0x80; no bonus or cache effects.
     reset();
     tile_store[tile_index].bit2 = 0xff000081u;
-    windows[0].field_1DD74_ = 1;
+    windows[0].view_active_ = 1;
     delete_landmark(x, y);
     assert(tile_store[tile_index].bit2 == 0xff000001u);
     assert(UnkBitfield1 == 0 && windows[0].calls == 0);

@@ -9,7 +9,7 @@
 typedef const char *LPCSTR;
 typedef int BOOL;
 struct MapWin {
-    uint32_t field_1DD70_, field_1DD74_, field_1DD78_;
+    uint32_t field_1DD70_, view_active_, map_view_index_;
     unsigned char gap_[0x1DD98 - 0x1DD7C];
     int field_1DD98_;
     uint32_t field_1DD9C_, field_1DDA0_;
@@ -162,7 +162,7 @@ int main() {
     assert(map_data((FILE *)1, 0, 1) == 0 && io_calls == 5);
 
     MapWin w1 = {}, w3 = {};
-    w1.field_1DD74_ = 1; w3.field_1DD74_ = 1;
+    w1.view_active_ = 1; w3.view_active_ = 1;
     MapWinTable[1] = &w1; MapWinTable[3] = &w3;
     open_fails = 1;
     assert(load_map_daemon((char *)"map.mp") == 1 && close_calls == 0);
@@ -210,7 +210,7 @@ int main() {
     assert(linearize_calls == 1 && random_seed == 0x56 && remove_calls >= 3);
     assert((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFFFF00FFu) == preserved);
     assert(((GameDataStateStorage.fields_.lock_masks_.enable_mask_ >> 8) & 0xFFu) == 0x30u);
-    assert(w3.closes_ == 1 && w3.field_1DD74_ == 0);
+    assert(w3.closes_ == 1 && w3.view_active_ == 0);
 
     // Cancellation may retain nonempty text: test the real returned pointer,
     // not a fabricated filename-is-empty cancellation contract.

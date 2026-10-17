@@ -63,7 +63,7 @@ void WorldWin::init(int reset_map) {
     field_239C0_ = 0;
     detail_map_selected_ = 0;
     viewport_outline_enabled_ = 0;
-    mapWin_.field_1DD78_ = 1;
+    mapWin_.map_view_index_ = 1;
     if (reset_map != 0) {
         mapWin_.clear(1);
     }

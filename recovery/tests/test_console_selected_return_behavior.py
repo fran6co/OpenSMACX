@@ -47,12 +47,12 @@ struct GraphicWin {
     void set_cursor(int resource_id);
 };
 struct MapWin : GraphicWin {
-    int field_1DD74_;
+    int view_active_;
     uint32_t field_1DD70_;
     void *cursor_sprite_;
     uint32_t cursor_resource_id_;
     int draws;
-    explicit MapWin(int slot_id = -1) : GraphicWin(slot_id), field_1DD74_(0),
+    explicit MapWin(int slot_id = -1) : GraphicWin(slot_id), view_active_(0),
         field_1DD70_(0), cursor_sprite_(nullptr), cursor_resource_id_(0x7f00),
         draws(0) {}
     void draw_map(int draw_type) {
@@ -97,14 +97,14 @@ static void return_and_live_slot_reload() {
     primary.cursor_sprite_ = reinterpret_cast<void *>(1);
     primary.cursor_resource_id_ = 1;
     primary.field_1DD70_ = 0xc40000;
-    original_secondary.field_1DD74_ = 1;
+    original_secondary.view_active_ = 1;
     original_secondary.cursor_sprite_ = reinterpret_cast<void *>(2);
     original_secondary.cursor_resource_id_ = 1;
-    replacement.field_1DD74_ = 1;
+    replacement.view_active_ = 1;
     replacement.field_1DD70_ = 0xc40000;
     replacement.cursor_sprite_ = reinterpret_cast<void *>(3);
     replacement.cursor_resource_id_ = 1;
-    inactive.field_1DD74_ = 0;
+    inactive.view_active_ = 0;
     inactive.field_1DD70_ = 0xc40000;
     MapWinTable[0] = &primary;
     MapWinTable[1] = &original_secondary;

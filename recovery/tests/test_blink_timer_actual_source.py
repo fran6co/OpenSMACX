@@ -47,7 +47,7 @@ struct WinLike { int visible; int is_visible() const { return visible; } };
 struct Tut { int visible, arrows; int is_visible() const { return visible; } void draw_arrow() { ++arrows; } };
 struct Plan { int blinks; void blink() { ++blinks; } };
 struct MapWin {
-    uint32_t field_1DD74_, field_1DD80_;
+    uint32_t view_active_, field_1DD80_;
     int field_1DDCC_, field_1DDD0_, field_1DDD4_, field_1DDD8_;
     uint32_t field_1DD9C_, field_1DDA0_;
     int field_1DDA8_;
@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
     window.field_1DD9C_ = 4;
     window.field_1DDA0_ = 4;
     window.field_1DDA8_ = 0;
-    window.field_1DD74_ = window.field_1DD80_ = 1;
+    window.view_active_ = window.field_1DD80_ = 1;
     window.mouse_x = 100;
     window.mouse_y = 100;
     MapWinTable[0] = &window;

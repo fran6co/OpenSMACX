@@ -41,7 +41,7 @@ def test_real_world_tutorial_members_and_slot_order(tmp_path, compiler):
     harness = r"""
 #include <stddef.h>
 #define __cdecl
-struct MapWin { int field_1DD74_; };
+struct MapWin { int view_active_; };
 struct WorldWin { MapWin mapWin_; };
 WorldWin WorldClimateWorldWin;
 struct BaseWin { char prefix[0x1E674]; MapWin mapWin_; };
@@ -55,8 +55,8 @@ void terrain_fixup(MapWin *window) { calls[count++] = window; }
 int main() {
     if (offsetof(BaseWin, mapWin_) != 0x1E674) return 3;
     for (unsigned int i=0; i<4; ++i) MapWinTable[i]=&Slots[i];
-    Slots[0].field_1DD74_=0; Slots[1].field_1DD74_=1;
-    Slots[2].field_1DD74_=0; Slots[3].field_1DD74_=-1;
+    Slots[0].view_active_=0; Slots[1].view_active_=1;
+    Slots[2].view_active_=0; Slots[3].view_active_=-1;
     mapwin_terrain_fixup();
     if (count!=6 || calls[0]!=&Slots[0] || calls[1]!=&Slots[1] ||
         calls[2]!=&Slots[3] || calls[3]!=&WorldClimateWorldWin.mapWin_ ||

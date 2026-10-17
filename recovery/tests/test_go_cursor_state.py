@@ -30,7 +30,7 @@ def braced(source,signature):
 
 def actual_source():
     header=(ROOT/"src/mapwin.h").read_text();fields=[]
-    for name in ("cursor_sprite_","cursor_resource_id_","field_1DD74_","field_1DD80_","field_1DD84_","field_1DD88_","field_1DD8C_","field_1DE0C_"):
+    for name in ("cursor_sprite_","cursor_resource_id_","view_active_","field_1DD80_","field_1DD84_","field_1DD88_","field_1DD8C_","field_1DE0C_"):
         declaration,=re.findall(r"^  (?:Sprite \*|uint32_t )"+name+r";",header,re.M);fields.append(declaration)
     bound,=re.findall(r"^static const size_t MapWinTableSlots = \d+;",header,re.M)
     return "\n".join(fields),bound,braced((ROOT/"src/time.cpp").read_text(),"void __cdecl go_reset()")
@@ -81,7 +81,7 @@ int Win::set_cursor(int resource){
 ACTUAL_BODY
 void reset(){
     for(int i=0;i<10;++i){windows[i].id=i;windows[i].cursor_sprite_=nullptr;windows[i].cursor_resource_id_=0x7f00;
-        windows[i].field_1DD74_=0;windows[i].field_1DD80_=0;
+        windows[i].view_active_=0;windows[i].field_1DD80_=0;
         windows[i].field_1DD84_=84;windows[i].field_1DD88_=88;windows[i].field_1DD8C_=140;windows[i].field_1DE0C_=12;}
     for(size_t i=0;i<MapWinTableSlots;++i)MapWinTable[i]=nullptr;MapWinTable[0]=&windows[0];
     MapWinSelectedSlot=-1;WinPointerOwner3=WinPointerOwner4=nullptr;seen.clear();
@@ -93,11 +93,11 @@ void main_walk(){
     reset();go_reset();require(seen.size()==2);initial();
     reset();MapWinTable[1]=&windows[1];MapWinTable[2]=&windows[2];MapWinTable[7]=&windows[7];
     windows[0].field_1DD80_=windows[1].field_1DD80_=windows[2].field_1DD80_=windows[7].field_1DD80_=1;
-    windows[2].field_1DD74_=windows[7].field_1DD74_=1;go_reset();
+    windows[2].view_active_=windows[7].view_active_=1;go_reset();
     require(seen.size()==8);initial();expect(2,'B',0);expect(3,'T',-1);expect(4,'B',2);expect(5,'T',-1);expect(6,'B',7);expect(7,'T',-1);
     require(cleared(windows[0]) && cleared(windows[2]) && cleared(windows[7]) && windows[1].field_1DD80_==1);
     for(int owner_case=0;owner_case<2;++owner_case){
-        reset();MapWinTable[2]=&windows[2];windows[2].field_1DD74_=windows[2].field_1DD80_=1;
+        reset();MapWinTable[2]=&windows[2];windows[2].view_active_=windows[2].field_1DD80_=1;
         WinPointerOwner3=WinPointerOwner4=base(2);replace_in04=2;owner4_after04=owner_case?9:2;
         go_reset();require(seen.size()==5);initial();expect(2,'A',2);expect(3,'B',9);expect(4,'T',-1);
         require(cleared(windows[2]) && windows[9].field_1DD88_==88 && WinPointerOwner3==nullptr);
@@ -113,7 +113,7 @@ void selected_walk(){
         if(shape==1 || shape==9){require(seen.size()==5);expect(2,'R',2);expect(3,'B',2);expect(4,'T',-1);require(windows[2].cursor_sprite_==nullptr);}
         else {require(seen.size()==4);expect(2,'B',2);expect(3,'T',-1);require(windows[2].cursor_sprite_==&g_CURSOR_SPRITES[shape]);}
     }
-    reset();MapWinTable[2]=&windows[2];MapWinSelectedSlot=2;windows[2].field_1DD74_=windows[2].field_1DD80_=1;
+    reset();MapWinTable[2]=&windows[2];MapWinSelectedSlot=2;windows[2].view_active_=windows[2].field_1DD80_=1;
     go_reset();require(seen.size()==4);expect(2,'B',2);expect(3,'T',-1); // selected excluded from main walk.
     for(int owner_case=0;owner_case<2;++owner_case){
         reset();MapWinTable[2]=&windows[2];MapWinSelectedSlot=2;WinPointerOwner3=WinPointerOwner4=base(2);
@@ -169,7 +169,7 @@ MUTANTS=[
     ("primary-cached-cursor-owner","main","primary->cursor_sprite_ = 0;","MapWinTable[0]->cursor_sprite_ = 0;"),
     ("second-go-sprite","selected","&g_CURSOR_SPRITES[9]","&g_CURSOR_SPRITES[8]"),
     ("selected-zero-slot","all","if (MapWinSelectedSlot >= 0)","if (MapWinSelectedSlot > 0)"),
-    ("primary-active-bypass","main","index == 0 || window->field_1DD74_ != 0","window->field_1DD74_ != 0"),
+    ("primary-active-bypass","main","index == 0 || window->view_active_ != 0","window->view_active_ != 0"),
     ("selected-excluded-main","main","index != MapWinSelectedSlot &&",""),
     ("clear-movement-target","all","field_1DE0C_ = -1;","field_1DE0C_ = 0;"),
     ("last-map-slot","main","index < static_cast<int>(MapWinTableSlots)","index < static_cast<int>(MapWinTableSlots) - 1"),

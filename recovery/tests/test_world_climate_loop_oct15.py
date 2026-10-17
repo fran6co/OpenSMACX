@@ -50,7 +50,7 @@ void __cdecl world_climate();
 
 struct MapWin {
     int id_;
-    unsigned int field_1DD74_;
+    unsigned int view_active_;
     void clear_terrain();
 } Windows[8], Replacement, WorldClimateWorldWin;
 MapWin *MapWinTable[MapWinTableSlots];
@@ -61,7 +61,7 @@ void MapWin::clear_terrain() {
     if (MutateLiveState && id_ == 0) {
         // Native code reads later slots and their activity fields after each
         // preceding callback; neither the receiver table nor flags are snapshotted.
-        Windows[3].field_1DD74_ = 1;
+        Windows[3].view_active_ = 1;
         MapWinTable[7] = &Replacement;
     }
 }
@@ -93,13 +93,13 @@ void reset(unsigned int territory_skip, unsigned int terrain_skip) {
     MutateLiveState = false;
     for (int slot = 0; slot < 8; ++slot) {
         Windows[slot].id_ = slot;
-        Windows[slot].field_1DD74_ = 0;
+        Windows[slot].view_active_ = 0;
         MapWinTable[slot] = &Windows[slot];
     }
     Replacement.id_ = 70;
-    Replacement.field_1DD74_ = 1;
+    Replacement.view_active_ = 1;
     WorldClimateWorldWin.id_ = 80;
-    WorldClimateWorldWin.field_1DD74_ = 1;
+    WorldClimateWorldWin.view_active_ = 1;
 }
 
 void append_prefix(std::vector<int> &expected, bool reset_territory) {
@@ -122,7 +122,7 @@ void append_suffix(std::vector<int> &expected) {
 
 void check_all_eight_and_order() {
     reset(0, 0);
-    for (int slot = 0; slot < 8; ++slot) Windows[slot].field_1DD74_ = 1;
+    for (int slot = 0; slot < 8; ++slot) Windows[slot].view_active_ = 1;
     std::vector<int> expected;
     append_prefix(expected, true);
     for (int slot = 0; slot < 8; ++slot) expected.push_back(1000 + slot);
@@ -134,8 +134,8 @@ void check_all_eight_and_order() {
 
 void check_live_callback_reads() {
     reset(0, 0);
-    Windows[0].field_1DD74_ = 1;
-    Windows[5].field_1DD74_ = 1;
+    Windows[0].view_active_ = 1;
+    Windows[5].view_active_ = 1;
     MutateLiveState = true;
     std::vector<int> expected;
     append_prefix(expected, true);
@@ -151,7 +151,7 @@ void check_live_callback_reads() {
 
 void check_skip_flags() {
     reset(1, 0);
-    Windows[7].field_1DD74_ = 1;
+    Windows[7].view_active_ = 1;
     std::vector<int> expected;
     append_prefix(expected, false);
     expected.push_back(1007);

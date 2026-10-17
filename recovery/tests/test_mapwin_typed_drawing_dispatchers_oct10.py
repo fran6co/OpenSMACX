@@ -42,12 +42,12 @@ def control(kind):
     header = (ROOT / "src/mapwin.h").read_text()
     array = re.search(r"(?m)^typedef MapWin \*MapWinSlots\[8\];", header)[0]
     bound = re.search(r"(?m)^static const size_t MapWinTableSlots = 8;", header)[0]
-    activity = re.search(r"(?m)^  uint32_t field_1DD74_;", header)[0]
+    activity = re.search(r"(?m)^  uint32_t view_active_;", header)[0]
     signature = ("void __cdecl draw_map(int draw_type)" if kind == "map" else
                  "void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type)")
     body = extract_definition((ROOT / "src/mapwin.cpp").read_text(), signature)
     assert "reinterpret_cast" not in body
-    assert "static_cast<const volatile MapWin *>(window)->field_1DD74_" in body
+    assert "static_cast<const volatile MapWin *>(window)->view_active_" in body
     call = "draw_map(expected_type);" if kind == "map" else "draw_radius(-17, 23, -4, expected_type);"
     return r'''
 #include <cassert>
@@ -73,8 +73,8 @@ static void callback(MapWin *receiver) {
     if(mutate && receiver->id==0){
         MapWinTable[0]=&replacement;
         MapWinTable[3]=&replacement;
-        windows[4].field_1DD74_=0;
-        windows[5].field_1DD74_=0xFFFFFFFFu;
+        windows[4].view_active_=0;
+        windows[5].view_active_=0xFFFFFFFFu;
         MapWinTable[6]=nullptr;
     }
 }
@@ -88,9 +88,9 @@ int main(){
         for(int type: {-2147483647-1,0,1,2147483647}){
             calls.clear();mutate=mode==0;expected_type=type;
             for(int i=0;i<8;++i){windows[i]={i,mode==2?0u:1u};MapWinTable[i]=&windows[i];}
-            if(mode==0){windows[0].field_1DD74_=0;MapWinTable[1]=nullptr;
-                windows[2].field_1DD74_=0;windows[5].field_1DD74_=0;}
-            if(mode==1){MapWinTable[0]=nullptr;windows[2].field_1DD74_=0x80000000u;}
+            if(mode==0){windows[0].view_active_=0;MapWinTable[1]=nullptr;
+                windows[2].view_active_=0;windows[5].view_active_=0;}
+            if(mode==1){MapWinTable[0]=nullptr;windows[2].view_active_=0x80000000u;}
             if(mode==3)for(auto &slot:MapWinTable)slot=nullptr;
             CALL
             if(mode==0)assert((calls==std::vector<int>{0,8,5,7}));
@@ -112,7 +112,7 @@ def test_actual_dispatchers_with_mutating_callbacks_and_damage(tmp_path, compile
         ("slot == 0 ||", "false ||"),
         ("MapWin *const window = MapWinTable[slot];", "MapWin *const window = MapWinTable[0];"),
         ("++slot)", "slot += 2)"),
-        ("field_1DD74_ != 0", "field_1DD74_ == 1"),
+        ("view_active_ != 0", "view_active_ == 1"),
     ):
         run_control(tmp_path, compiler, program, damage)
     damage = (("window->draw_map(draw_type);", "window->draw_map(2);") if kind == "map" else

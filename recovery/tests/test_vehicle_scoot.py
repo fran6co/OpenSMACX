@@ -125,7 +125,7 @@ struct Vector {
 };
 
 struct MapWin : Buffer {
-    int field_1DD74_ = 1;
+    int view_active_ = 1;
     int field_1DDA4_ = 0, field_1DDA8_ = 0;
     int field_1DDD4_ = 0, field_1DDD8_ = 0;
     int field_1DDCC_ = 100, field_1DDD0_ = 100;
@@ -334,10 +334,10 @@ void no_visible_windows() {
     require(select("scoot_start").size()==1 && select("undo").size()==8);
 }
 void multiple_windows() {
-    MapWinTable[1]=&views[1];views[1].field_1DD74_=0;
-    MapWinTable[2]=&views[2];views[2].field_1DD74_=1;
+    MapWinTable[1]=&views[1];views[1].view_active_=0;
+    MapWinTable[2]=&views[2];views[2].view_active_=1;
     // Primary view remains eligible regardless of its own secondary enable flag.
-    views[0].field_1DD74_=0;
+    views[0].view_active_=0;
     run();
     auto inits=select("init"),captures=select("capture");
     require(inits.size()==2 && captures.size()==2 && select("draw").size()==10);
@@ -360,7 +360,7 @@ int main(int argc,char **argv) {
     for(int i=0;i<8;++i) {
         views[i].view_id=i;
         MapWinTable[i]=&views[i];
-        if(i!=0)views[i].field_1DD74_=0;
+        if(i!=0)views[i].view_active_=0;
     }
     std::string s=argv[1];
     if(s=="geometry")geometry();
@@ -448,8 +448,8 @@ def test_actual_vehicle_scoot(actual_executable, scenario):
      "saved[i].copy(static_cast<Buffer *>(MapWinTable[i]),", "geometry"),
     ("saved[i].copy(static_cast<Buffer *>(MapWinTable[i]),",
      "static_cast<Buffer *>(MapWinTable[i])->copy(&saved[i],", "geometry"),
-    ("if (i != 0 && !window->field_1DD74_) continue;",
-     "if (!window->field_1DD74_) continue;", "multiple"),
+    ("if (i != 0 && !window->view_active_) continue;",
+     "if (!window->view_active_) continue;", "multiple"),
     ("Buffer saved[8];\n    Vector position[8];\n    Vector destination;\n    Vector increment[8];",
      "Vector position[8];\n    Vector destination;\n    Vector increment[8];\n    Buffer saved[8];", "throw_play"),
 ])

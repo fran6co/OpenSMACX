@@ -97,7 +97,7 @@ void __cdecl blink_timer(int a1) {
         if (window == 0) continue;
         int col = blink_col;
 
-        if (slot != 0 && window->field_1DD74_ == 0) continue;
+        if (slot != 0 && window->view_active_ == 0) continue;
         if (col != 0 && window->field_1DD80_ == 0) continue;
         if (window->field_1DDD4_ + window->field_1DDCC_
             >= MapLongitudeBounds) {
@@ -703,7 +703,7 @@ void __cdecl go_reset() {
         MapWin **const slot = &MapWinTable[index];
         MapWin *const window = *slot;
         if (window != nullptr &&
-            (index == 0 || window->field_1DD74_ != 0) &&
+            (index == 0 || window->view_active_ != 0) &&
             index != MapWinSelectedSlot &&
             window->field_1DD80_ != 0) {
             // The FIRST store runs off the window the tests loaded; the rest
@@ -867,7 +867,7 @@ void __cdecl line_timer(int a1) {
             continue;
         }
         if (slot != 0) {
-            const uint32_t active = window->field_1DD74_;
+            const uint32_t active = window->view_active_;
             if (active == 0) {
                 continue;
             }

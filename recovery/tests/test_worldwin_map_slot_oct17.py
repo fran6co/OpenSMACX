@@ -102,8 +102,8 @@ int GraphicInitResult = 0;
 static void observe_map_entry();
 
 struct MapWin {
-  unsigned int field_1DD74_;
-  unsigned int field_1DD78_;
+  unsigned int view_active_;
+  unsigned int map_view_index_;
   unsigned int active_at_clear;
   unsigned int slot_at_clear;
   unsigned int clear_argument;
@@ -112,30 +112,30 @@ struct MapWin {
   int mode_at_init;
   int update_at_init;
 
-  MapWin() : field_1DD74_(0), field_1DD78_(0), active_at_clear(0),
+  MapWin() : view_active_(0), map_view_index_(0), active_at_clear(0),
       slot_at_clear(0), clear_argument(0), active_at_init(0),
       slot_at_init(0), mode_at_init(-1), update_at_init(-1) {}
 
   void clear(int index) {
     observe_map_entry();
-    active_at_clear = field_1DD74_;
-    slot_at_clear = field_1DD78_;
+    active_at_clear = view_active_;
+    slot_at_clear = map_view_index_;
     clear_argument = (unsigned int)index;
     Events[EventCount++] = EVENT_CLEAR;
-    field_1DD78_ = (unsigned int)index;
-    field_1DD74_ = (index == 0);
+    map_view_index_ = (unsigned int)index;
+    view_active_ = (index == 0);
   }
 
   void init(int mode, int update) {
     observe_map_entry();
-    active_at_init = field_1DD74_;
-    slot_at_init = field_1DD78_;
+    active_at_init = view_active_;
+    slot_at_init = map_view_index_;
     mode_at_init = mode;
     update_at_init = update;
     Events[EventCount++] = EVENT_MAP_INIT;
     // The actual MapWin init sets the active field itself; this spy only
     // models that declared call contract, not its full rendering behavior.
-    field_1DD74_ = 1;
+    view_active_ = 1;
   }
 };
 
@@ -244,8 +244,8 @@ static int run_case(int reset_map, unsigned int stale_slot,
                     unsigned int initial_active, unsigned int initial_flags,
                     int expect_copy, int graphic_result = 0) {
   WorldWin world;
-  world.mapWin_.field_1DD74_ = initial_active;
-  world.mapWin_.field_1DD78_ = stale_slot;
+  world.mapWin_.view_active_ = initial_active;
+  world.mapWin_.map_view_index_ = stale_slot;
   StatusFlags = initial_flags;
   MapInputEnabled = 0;
   WorldMapBounds.left = -10; WorldMapBounds.top = -20;
@@ -291,7 +291,7 @@ static int run_case(int reset_map, unsigned int stale_slot,
     if (EventCount != 3 || Events[0] != EVENT_MAP_INIT ||
         Events[1] != EVENT_GRAPHIC_INIT || Events[2] != EVENT_SHOW) return 20;
   }
-  if (world.mapWin_.field_1DD78_ != 1 || world.mapWin_.field_1DD74_ != 1)
+  if (world.mapWin_.map_view_index_ != 1 || world.mapWin_.view_active_ != 1)
     return 21;
   return 0;
 }
@@ -367,15 +367,15 @@ def test_pinned_worldwin_init_span_and_member_targets():
     entry, = (row for row in records if row.address == INIT_SPAN.start)
     rationale = binding_rationales(world_source, records)[entry.line]
     assert "GraphicWin" in rationale["reason"]
-    assert "uint32_t field_1DD74_;  // 0x1DD74" in header
-    assert "uint32_t field_1DD78_;  // 0x1DD78" in header
+    assert "uint32_t view_active_;  // 0x1DD74" in header
+    assert "uint32_t map_view_index_;  // 0x1DD78" in header
     map_source = (ROOT / "src/mapwin.cpp").read_text()
     clear_body = _function_body(map_source, "void MapWin::clear(int index)")
     map_init_body = _function_body(map_source, "void MapWin::init(int mode, int update)")
-    assert "field_1DD78_ = index;" in clear_body
-    assert "field_1DD74_ = (index == 0);" in clear_body
-    assert "field_1DD74_ = 1;" in map_init_body
-    assert "field_1DD78_" in map_init_body
+    assert "map_view_index_ = index;" in clear_body
+    assert "view_active_ = (index == 0);" in clear_body
+    assert "view_active_ = 1;" in map_init_body
+    assert "map_view_index_" in map_init_body
 
 
 def test_actual_worldwin_init_preserves_embedded_map_slot(tmp_path):
@@ -383,10 +383,10 @@ def test_actual_worldwin_init_preserves_embedded_map_slot(tmp_path):
     if not compilers:
         pytest.skip("host GCC/Clang unavailable")
     unk1, init, header = _source_parts()
-    assert "mapWin_.field_1DD78_ = 1;" in init
+    assert "mapWin_.map_view_index_ = 1;" in init
     assert "GraphicWin::init(&WorldMapBounds, 0, 0x20," in init
-    assert "uint32_t field_1DD74_;  // 0x1DD74" in header
-    assert "uint32_t field_1DD78_;  // 0x1DD78" in header
+    assert "uint32_t view_active_;  // 0x1DD74" in header
+    assert "uint32_t map_view_index_;  // 0x1DD78" in header
     fixture = _fixture(init, unk1)
     for name, compiler in compilers:
         result = _compile_and_run(compiler, fixture, tmp_path, "worldwin_" + name)
@@ -400,8 +400,8 @@ def test_worldwin_slot_fixture_rejects_wrong_member_and_order_mutants(tmp_path):
     unk1, init, _ = _source_parts()
     mutants = {
         "write_active_flag": (
-            "mapWin_.field_1DD78_ = 1;", "mapWin_.field_1DD74_ = 1;"),
-        "drop_slot_seed": ("mapWin_.field_1DD78_ = 1;", ""),
+            "mapWin_.map_view_index_ = 1;", "mapWin_.view_active_ = 1;"),
+        "drop_slot_seed": ("mapWin_.map_view_index_ = 1;", ""),
         "invert_reset_test": ("if (reset_map != 0)", "if (reset_map == 0)"),
         "wrong_clear_slot": ("mapWin_.clear(1);", "mapWin_.clear(0);"),
         "wrong_map_init_args": ("mapWin_.init(1, 0);", "mapWin_.init(0, 1);"),

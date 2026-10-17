@@ -100,7 +100,7 @@ static void mutate_faction_if_ready() {
 }
 
 struct MapWin {
-    int field_1DD74_ = 0;
+    int view_active_ = 0;
     int slot = 0;
     void draw_radius(int x, int y, int radius, int faction) {
         draws.push_back({slot, x, y, radius, faction});
@@ -141,7 +141,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int wider_radius,
             if (window == 0) {
                 continue;
             }
-            if (slot != 0 && window->field_1DD74_ == 0) {
+            if (slot != 0 && window->view_active_ == 0) {
                 continue;
             }
             window->draw_radius(x_coord, y_coord, (wider_radius != 0) + 1,
@@ -153,7 +153,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int wider_radius,
             if (window == 0) {
                 continue;
             }
-            if (slot != 0 && window->field_1DD74_ == 0) {
+            if (slot != 0 && window->view_active_ == 0) {
                 continue;
             }
             window->draw_radius(x_coord, y_coord, 0, draw_type);
@@ -171,7 +171,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
             if (window == 0) {
                 continue;
             }
-            if (slot != 0 && window->field_1DD74_ == 0) {
+            if (slot != 0 && window->view_active_ == 0) {
                 continue;
             }
             window->draw_radius(x_coord, y_coord, (wider_radius != 0) + 1,
@@ -184,7 +184,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
                 if (window == 0) {
                     continue;
                 }
-                if (slot != 0 && window->field_1DD74_ == 0) {
+                if (slot != 0 && window->view_active_ == 0) {
                     continue;
                 }
                 window->draw_radius(second_x_coord, second_y_coord,
@@ -197,7 +197,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
             if (window == 0) {
                 continue;
             }
-            if (slot != 0 && window->field_1DD74_ == 0) {
+            if (slot != 0 && window->view_active_ == 0) {
                 continue;
             }
             window->draw_radius(x_coord, y_coord, 0, draw_type);
@@ -444,16 +444,16 @@ static void reset_observations() {
 static void reset_map_slots() {
     draws.clear();
     for (int i = 0; i < 8; ++i) {
-        MapWinStorage[i].field_1DD74_ = 0;
+        MapWinStorage[i].view_active_ = 0;
         MapWinStorage[i].slot = i;
         MapWinTable[i] = &MapWinStorage[i];
     }
     MapWinTable[1] = nullptr;
-    MapWinStorage[2].field_1DD74_ = 1;
-    MapWinStorage[4].field_1DD74_ = 1;
-    MapWinStorage[5].field_1DD74_ = 0;
+    MapWinStorage[2].view_active_ = 1;
+    MapWinStorage[4].view_active_ = 1;
+    MapWinStorage[5].view_active_ = 0;
     MapWinTable[6] = nullptr;
-    MapWinStorage[7].field_1DD74_ = 1;
+    MapWinStorage[7].view_active_ = 1;
 }
 
 static void test_draw_tile_fixup() {

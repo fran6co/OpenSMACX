@@ -1640,7 +1640,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
         }
         if (slot != 0) {
             const uint32_t active =
-                static_cast<const volatile MapWin *>(window)->field_1DD74_;
+                static_cast<const volatile MapWin *>(window)->view_active_;
             if (active == 0) {
                 continue;
             }
@@ -1768,7 +1768,7 @@ void Console::zoom(int zoom_command, int window_index) {
                  ++slot) {
                 MapWin *const window = MapWinTable[slot];
                 if (window == nullptr ||
-                    (slot != 0 && window->field_1DD74_ == 0) ||
+                    (slot != 0 && window->view_active_ == 0) ||
                     window->field_1DD98_ >= 0) {
                     continue;
                 }
@@ -1811,7 +1811,7 @@ void Console::zoom(int zoom_command, int window_index) {
     for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         MapWin *const window = MapWinTable[slot];
         if (window == nullptr ||
-            (slot != 0 && window->field_1DD74_ == 0) ||
+            (slot != 0 && window->view_active_ == 0) ||
             (selected_window >= 0 && slot != selected_window)) {
             continue;
         }
@@ -2930,7 +2930,7 @@ int Console::selecting(int tile_x, int tile_y) {
     const int shape = forbidden ? 5 : selecting_signed(field_23D10_);
     for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         MapWin *const window = MapWinTable[slot];
-        if (window != 0 && (slot == 0 || window->field_1DD74_ != 0)) {
+        if (window != 0 && (slot == 0 || window->view_active_ != 0)) {
             Sprite *const sprite = &g_CURSOR_SPRITES[shape];
             if (window->cursor_sprite_ != sprite) {
                 window->GraphicWin::set_cursor(sprite,
@@ -2997,7 +2997,7 @@ void Console::cursor_on(int cursor_shape) {
     // cursor sprites; neither it nor the hotspot lookup adds a bounds guard.
     for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         MapWin *const window = MapWinTable[slot];
-        if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
+        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
             Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
             if (window->cursor_sprite_ != sprite) {
                 window->GraphicWin::set_cursor(sprite,
@@ -3030,7 +3030,7 @@ int Console::selected() {
         field_23D10_ = 0;
         for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
             MapWin *const window = MapWinTable[slot];
-            if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
+            if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
                 if (window->cursor_sprite_ != nullptr ||
                     window->cursor_resource_id_ != 0x7f00) {
                     window->GraphicWin::set_cursor(0x7f00);
@@ -3065,7 +3065,7 @@ void Console::toggle_patrol() {
     int mask = first->field_1DD70_ & 0x400000;
     for (int slot = 0; slot < 8; ++slot) {
         if (MapWinTable[slot] != 0 &&
-            (slot == 0 || MapWinTable[slot]->field_1DD74_ != 0)) {
+            (slot == 0 || MapWinTable[slot]->view_active_ != 0)) {
             if (mask == 0) {
                 MapWinTable[slot]->field_1DD70_ |= 0x400000;
                 MapWinTable[slot]->draw_base_dest(1);
@@ -3648,7 +3648,7 @@ void Console::cursor_on(int cursor_shape, int veh_id) {
     field_23D10_ = static_cast<uint32_t>(cursor_shape);
     for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         MapWin *const window = MapWinTable[slot];
-        if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
+        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
             Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
             if (window->cursor_sprite_ != sprite) {
                 window->GraphicWin::set_cursor(sprite,
@@ -4574,7 +4574,7 @@ void Console::cursor_off() {
     field_23D10_ = 0;
     for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         MapWin *const window = MapWinTable[slot];
-        if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
+        if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
             if (window->cursor_sprite_ != nullptr ||
                 window->cursor_resource_id_ != 0x7f00) {
                 window->GraphicWin::set_cursor(0x7f00);
@@ -4989,10 +4989,10 @@ void Console::set_patrol(int veh_id) {
     }
     // The image walks the MapWinTable slot pointers from 0x007D3C3C to the
     // exclusive 0x007D3C5C end: the primary window always repaints, slots
-    // 1..7 only when field_1DD74_ says they hold a live view.
+    // 1..7 only when view_active_ says they hold a live view.
     for (int slot = 0; slot < 8; ++slot) {
         if (MapWinTable[slot] != 0 &&
-            (slot == 0 || MapWinTable[slot]->field_1DD74_ != 0)) {
+            (slot == 0 || MapWinTable[slot]->view_active_ != 0)) {
             MapWinTable[slot]->field_1DD70_ |= 0x400000;
             MapWinTable[slot]->draw_base_dest(1);
         }
@@ -6997,7 +6997,7 @@ void Console::cursor_key(int, int character, int) {
         const unsigned int shown = MapWinTable[0]->field_1DD70_ & 0x400000;
         for (int i = 0; i < static_cast<int>(MapWinTableSlots); ++i) {
             MapWin *const window = MapWinTable[i];
-            if (!window || (i && !window->field_1DD74_)) continue;
+            if (!window || (i && !window->view_active_)) continue;
             if (!shown) {
                 window->field_1DD70_ |= 0x400000;
                 window->draw_base_dest(1);
@@ -7607,7 +7607,7 @@ void Console::group(int vehicle_id) {
     }
     for (int slot = 0; slot < 8; ++slot) {
         MapWin *window = MapWinTable[slot];
-        if (!window || (slot && !window->field_1DD74_)) continue;
+        if (!window || (slot && !window->view_active_)) continue;
         window->field_1DD84_ = 1;
         for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; ++i) {
             Veh &vehicle = Vehs[i];
@@ -10519,7 +10519,7 @@ void Console::veh_key(int key, int character, int command) {
         const uint32_t destination_flag = MapWinTable[0]->field_1DD70_ & 0x400000u;
         for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
             MapWin *const window = MapWinTable[slot];
-            if (window != 0 && (slot == 0 || window->field_1DD74_ != 0)) {
+            if (window != 0 && (slot == 0 || window->view_active_ != 0)) {
                 if (destination_flag == 0) {
                     window->field_1DD70_ |= 0x400000u;
                     window->draw_base_dest(1);
@@ -10786,7 +10786,7 @@ void Console::menu_proc(int command) {
 
     for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         MapWin *const window = MapWinTable[slot];
-        if (window == nullptr || (slot != 0 && window->field_1DD74_ == 0)) {
+        if (window == nullptr || (slot != 0 && window->view_active_ == 0)) {
             continue;
         }
         if (window->cursor_sprite_ != nullptr ||
@@ -10928,7 +10928,7 @@ void Console::menu_proc(int command) {
                 for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
                     MapWin *const window = MapWinTable[slot];
                     if (window == nullptr ||
-                        (slot != 0 && window->field_1DD74_ == 0)) continue;
+                        (slot != 0 && window->view_active_ == 0)) continue;
                     if (base_flag == 0) {
                         window->field_1DD70_ |= 0x400000;
                         window->draw_base_dest(1);
@@ -11769,7 +11769,7 @@ if (IsMultiplayerNet != 0) {
          pan_window_slot < MapWinTableSlots; ++pan_window_slot) {
         MapWin *const window = MapWinTable[pan_window_slot];
         if (window == 0 ||
-            (pan_window_slot != 0 && window->field_1DD74_ == 0)) {
+            (pan_window_slot != 0 && window->view_active_ == 0)) {
             continue;
         }
         if ((window->field_1DD70_ & 0x00400000u) != 0 &&
@@ -11792,7 +11792,7 @@ if (IsMultiplayerNet != 0) {
          cursor_window_slot < MapWinTableSlots; ++cursor_window_slot) {
         MapWin *const window = MapWinTable[cursor_window_slot];
         if (window == 0 ||
-            (cursor_window_slot != 0 && window->field_1DD74_ == 0)) {
+            (cursor_window_slot != 0 && window->view_active_ == 0)) {
             continue;
         }
         if (window->cursor_sprite_ != 0 ||

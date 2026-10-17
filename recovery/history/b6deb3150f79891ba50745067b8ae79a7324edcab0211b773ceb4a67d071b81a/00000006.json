@@ -1,0 +1,19 @@
+{
+  "event_id": "f460849f5244e6f7182aeda96f7d3418b29e9df42b74857fad58c02fab03e5ef",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "mapwin-logical-view-roles-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/mapwin.h names the unchanged uint32 members view_active_ and map_view_index_; all active uses in the ten affected source/header files and 31 existing fixtures follow those names. Historical annotation, symbol, original-span, claim and binding payloads remain unchanged. New actual-source serialization and pinned-role tests cover six-word ordering and detached logical index usage.",
+      "Coordinator-reviewed manual integration only: native claims/references/mappings pass; fresh compile/link passes; all 176 object correspondences pass without body omissions. All 5581 legacy classifications, 3162 primary strict results and 610 supplemental static results remain identical. Host regression comparison preserves all 435 prior outcomes and adds three passes: final 388 pass, 50 preexisting fail, no errors/skips. No newly recovered function or byte claim is asserted.",
+      "This does not establish full automatic acceptance, retained linked selection/allocation, complete hierarchy/lifetime, runtime behavior, an exhaustive original function universe, or game acceptance. Existing mismatches, unknowns, historical restoration duties and scaffold qualifications remain obligations. The integrated destination must be freshly checked before cleanup."
+    ]
+  },
+  "previous_event": "085ea4048bf077ae1dbc71008bbbbb3efaba20e52193427c6682e37d7e297973",
+  "request_id": "mapwin-logical-view-roles-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:mapwin-view-role-names-oct17"
+}

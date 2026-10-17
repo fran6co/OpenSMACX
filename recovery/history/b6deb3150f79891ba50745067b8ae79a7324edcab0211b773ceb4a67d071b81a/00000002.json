@@ -1,0 +1,23 @@
+{
+  "event_id": "22dd19ad06acd8abfaebfe0d664700cc73345236e4fb9d051dae6e161f35d1d5",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize read-only base.cpp/capture_base as a compiler witness and exactly four private header-overlay variants: old/new identifiers crossed with old/new header comment line structure. Baseline/current actual whole-owner calibration and snapshot guards are required. No production edit, flag/compiler/framework/comparator change, body omission, preservation waiver, claim edit or acceptance promotion. Freeze source/Git/recipes through the epoch; retain all outcomes and replan from evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5293328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0373f63005ef956de39fc9058a79c8c94d7c3e26669fe7343417c7bd4f1bce00",
+  "request_id": "mapwin-header-factor-diagnostic-authorization-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:mapwin-view-role-names-oct17"
+}

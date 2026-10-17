@@ -1,0 +1,18 @@
+{
+  "event_id": "95f6a71a7f5c76d6c823a6a09a22df406dd3ea43245dcb0b7cff258275d406a0",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "mapwin-role-rename-compiled-collateral-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Retain the first failed physical comparison (166 pass, 10 fail) and all four native header-factor controls. They isolate the added comment lines, rather than either member identifier, in the base.cpp witness. Exact internal compiler mechanics remain unproven.",
+      "Current src/mapwin.h places the supported role evidence in its preexisting six-line public-field comment block, retaining original declaration line positions. It keeps the recovered member names without code, flag, ABI, compatibility, comparator or omission changes. Fresh build-dm41u2hs builds and links; the final native physical comparison passes all 176 objects with zero body projections."
+    ]
+  },
+  "previous_event": "d19751fec9f5a58636d668d595f1002bbac195c4313ffccbd2ca52dfa67a9745",
+  "request_id": "mapwin-role-comment-collateral-resolved-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:mapwin-view-role-names-oct17"
+}

@@ -42,7 +42,7 @@ def control_source():
 #define __cdecl
 struct RECT { int left, top, right, bottom; };
 struct MapWin {
-    uint32_t field_1DD70_, field_1DD78_;
+    uint32_t field_1DD70_, map_view_index_;
     int field_1DDA4_, field_1DDA8_, field_1DDAC_, field_1DDB0_;
     int field_1DDCC_, field_1DDD4_, field_1DDD8_;
     int field_21A44_;
@@ -65,7 +65,7 @@ static int in_box(int, int, RECT *) { return in_box_result; }
 ''' + helpers + "\n" + method + r'''
 static MapWin make_map() {
     MapWin m;
-    m.field_1DD70_ = 0; m.field_1DD78_ = 1;
+    m.field_1DD70_ = 0; m.map_view_index_ = 1;
     m.field_1DDA4_ = 20; m.field_1DDA8_ = 20;
     m.field_1DDAC_ = 0; m.field_1DDB0_ = 0;
     m.field_1DDCC_ = 2; m.field_1DDD4_ = 20; m.field_1DDD8_ = 20;
@@ -100,7 +100,7 @@ int main() {
     in_box_result = 1;
     assert(ConsoleGlobal.focus(40, 40) == 0 && ConsoleGlobal.called_ == 0);
     in_box_result = 0;
-    ConsoleGlobal.field_1DD78_ = 0;
+    ConsoleGlobal.map_view_index_ = 0;
     assert(ConsoleGlobal.focus(40, 40) == 1 && ConsoleGlobal.called_ == 1);
     assert(ConsoleGlobal.field_21A44_ == 0);
     return 0;

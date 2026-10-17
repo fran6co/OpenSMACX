@@ -181,7 +181,7 @@ struct GraphicWin : Buffer {
     RECT *buffer_working_rect() { return &work_rect; }
 };
 struct MapWin : GraphicWin {
-    int field_1DD74_, field_1DDA8_, field_1DDD8_, field_1DDD0_;
+    int view_active_, field_1DDA8_, field_1DDD8_, field_1DDD0_;
     int field_1DDA4_, field_1DDD4_, field_1DDCC_;
     int field_1DDB4_, field_1DDB8_, field_1DD98_;
     void draw_tile(int, int, int) { ++tile_draw_calls; }
@@ -221,7 +221,7 @@ void reset_case() {
         MapWinTable[i]=0;
     }
     MapWinTable[0]=&window; window.map_window_buffer=true;
-    window.field_1DD74_=1; window.field_1DDA8_=0;
+    window.view_active_=1; window.field_1DDA8_=0;
     window.field_1DDD8_=20; window.field_1DDD0_=0;
     window.field_1DDA4_=0; window.field_1DDD4_=20; window.field_1DDCC_=0;
     window.field_1DDB4_=0; window.field_1DDB8_=0; window.field_1DD98_=0;

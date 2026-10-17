@@ -41,7 +41,7 @@ def actual_source():
     parts["MAP_DECL"],=re.findall(r"  virtual void on_lose_mouse_capture\(\);",headers["mapwin"])
     parts["WIN_UPDATE_DECL"],=re.findall(r"  void __cdecl update\(\);",headers["win"])
     fields=[]
-    for name in ("cursor_sprite_","cursor_resource_id_","field_1DD74_","field_1DD80_","field_1DD84_","field_1DD88_","field_1DD8C_","field_1DE0C_"):
+    for name in ("cursor_sprite_","cursor_resource_id_","view_active_","field_1DD80_","field_1DD84_","field_1DD88_","field_1DD8C_","field_1DE0C_"):
         declaration,=re.findall(r"^  (?:Sprite \*|uint32_t )"+name+r";",headers["mapwin"],re.M);fields.append(declaration)
     parts["MAP_FIELDS"]="\n".join(fields)
     parts["SLOT_BOUND"],=re.findall(r"^static const size_t MapWinTableSlots = \d+;",headers["mapwin"],re.M)
@@ -144,7 +144,7 @@ void do_sound(){note('S',-1);if(count_on_sound!=-999){WinZOrderCount=count_on_so
 void reset(){
     seen.clear();hide_count=0;expect_inner_owner=replace_on_nested_hide=replace_on_title=title_selected=-1;replacement_id=9;
     for(int i=0;i<10;++i){maps[i].id=i;maps[i].cursor_sprite_=nullptr;maps[i].cursor_resource_id_=0x7f00;
-        maps[i].field_1DD74_=maps[i].field_1DD80_=0;maps[i].field_1DD84_=84;maps[i].field_1DD88_=88;maps[i].field_1DD8C_=140;maps[i].field_1DE0C_=12;}
+        maps[i].view_active_=maps[i].field_1DD80_=0;maps[i].field_1DD84_=84;maps[i].field_1DD88_=88;maps[i].field_1DD8C_=140;maps[i].field_1DE0C_=12;}
     for(size_t i=0;i<MapWinTableSlots;++i)MapWinTable[i]=nullptr;MapWinTable[0]=&maps[0];
     MapWinSelectedSlot=-1;WinPointerOwner3=WinPointerOwner4=nullptr;
     plain.id=20;graphic.id=21;plan.id=22;console.id=23;CoverWindow.id=24;
@@ -163,11 +163,11 @@ void inherited_dispatch(){
         seen.clear();receivers[i]->on_lose_mouse_capture();require(seen.size()==2);expect(0,'H',-1);expect(1,'C',-1);}
 }
 void main_recursion(){
-    reset();MapWinTable[2]=&maps[2];maps[2].field_1DD74_=maps[2].field_1DD80_=1;
+    reset();MapWinTable[2]=&maps[2];maps[2].view_active_=maps[2].field_1DD80_=1;
     WinPointerOwner3=WinPointerOwner4=map_base(2);expect_inner_owner=2;go_reset();
     require(seen.size()==6 && hide_count==2 && WinPointerOwner3==nullptr && WinPointerOwner4==nullptr && cleared(maps[2]));
     expect(0,'H',-1);expect(1,'C',-1);expect(2,'H',-1);expect(3,'C',-1);expect(4,'U',2);expect(5,'T',-1);
-    reset();MapWinTable[2]=&maps[2];maps[2].field_1DD74_=maps[2].field_1DD80_=1;
+    reset();MapWinTable[2]=&maps[2];maps[2].view_active_=maps[2].field_1DD80_=1;
     WinPointerOwner3=WinPointerOwner4=map_base(2);expect_inner_owner=2;replace_on_nested_hide=2;go_reset();
     require(seen.size()==6 && hide_count==2 && WinPointerOwner4==nullptr);expect(4,'U',9);expect(5,'T',-1);
     require(cleared(maps[2]) && maps[9].field_1DD88_==88);

@@ -1508,7 +1508,7 @@ void __cdecl load_interface(int mode) {
     InterfaceMidRightMetric = 10;
     for (int window_id = 1; window_id < 8; ++window_id) {
         MapWin *window = MapWinTable[window_id];
-        if (window != 0 && window->field_1DD74_ != 0) {
+        if (window != 0 && window->view_active_ != 0) {
             GraphicWin *display = static_cast<GraphicWin *>(window);
             display->set_frame_top_right(&g_UNUSED_SPRITE_VAR31);
             display->compute_min_size();
@@ -6191,7 +6191,7 @@ extern "C" int __cdecl sub_5a6510(int x, int y) {
 // TRIED: divergence at #4 (push edi/esi vs test) is register allocation for a1 not hoisting into a callee-saved reg; a hoisted `base` local and inline `(char*)a1+off` casts compile identically.
 int __cdecl game_io(MapWin *record, FILE *file) {
     void *fields[6] = {
-        &record->field_1DD78_, &record->field_1DD74_, &record->field_1DD70_,
+        &record->map_view_index_, &record->view_active_, &record->field_1DD70_,
         &record->field_1DD98_, &record->field_1DD9C_, &record->field_1DDA0_
     };
     for (int index = 0; index != 6; ++index) {
@@ -6289,8 +6289,8 @@ int __cdecl load_map_daemon(char *path) {
             if (version >= required_version) {
                 for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
                     MapWin *const window = MapWinTable[slot];
-                    if (window != nullptr && window->field_1DD74_ != 0) {
-                        window->field_1DD74_ = 0;
+                    if (window != nullptr && window->view_active_ != 0) {
+                        window->view_active_ = 0;
                         window->close();
                     }
                 }
@@ -6434,8 +6434,8 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
 
     for (size_t close_slot = 2; close_slot < MapWinTableSlots; ++close_slot) {
         MapWin *const window = MapWinTable[close_slot];
-        if (window != 0 && window->field_1DD74_ != 0) {
-            window->field_1DD74_ = 0;
+        if (window != 0 && window->view_active_ != 0) {
+            window->view_active_ = 0;
             window->close();
         }
     }
@@ -6456,7 +6456,7 @@ int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
     if (IsMultiplayerNet == 0) {
         for (size_t offline_slot = 2; offline_slot < MapWinTableSlots; ++offline_slot) {
             MapWin *const window = MapWinTable[offline_slot];
-            if (window != 0) window->field_1DD74_ = 0;
+            if (window != 0) window->view_active_ = 0;
         }
     }
 
@@ -7352,7 +7352,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
     if (saved_width != IfaceScreenWidth || saved_height != IfaceScreenHeight) {
         for (int map_slot = 1; map_slot < 8; ++map_slot) {
             if (MapWinTable[map_slot] != 0)
-                MapWinTable[map_slot]->field_1DD74_ = 0;
+                MapWinTable[map_slot]->view_active_ = 0;
         }
         return 0;
     }

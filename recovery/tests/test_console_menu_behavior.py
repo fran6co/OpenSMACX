@@ -76,7 +76,7 @@ struct AlphaMenu {
 struct GraphicWin { void redraw(){Trace.push_back("world_redraw");} };
 struct MapWin : GraphicWin {
   Sprite *cursor_sprite_;
-  uint32_t cursor_resource_id_, field_1DD74_, field_1DD70_;
+  uint32_t cursor_resource_id_, view_active_, field_1DD70_;
   void set_cursor(...) {Trace.push_back("set_cursor");}
   void draw_map(...) {Trace.push_back("member_map");}
   void draw_base_dest(...) {Trace.push_back("base_dest");}

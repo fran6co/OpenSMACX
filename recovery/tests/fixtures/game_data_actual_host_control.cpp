@@ -241,7 +241,7 @@ struct Base {
 typedef char BaseFixtureHasNativeExtent[sizeof(Base) == 0x134 ? 1 : -1];
 typedef char BaseFixtureHasNativeFacilityOffset[
     offsetof(Base, facilities_built) == 0x8C ? 1 : -1];
-struct MapWin { int field_1DD74_; };
+struct MapWin { int view_active_; };
 MapWin *MapWinTable[8];
 struct WorldWinMock { MapWin mapWin_; } WorldClimateWorldWin;
 char ScenarioSaveNameBuffer[256];
@@ -705,8 +705,8 @@ int main() {
     IfaceScreenWidth = 800;
     IfaceScreenHeight = 600;
     assert(game_data(file, 0) == 0);
-    assert(primary_map.field_1DD74_ == 0x1234567);
-    assert(loaded_map.field_1DD74_ == 0);
+    assert(primary_map.view_active_ == 0x1234567);
+    assert(loaded_map.view_active_ == 0);
     MapWinTable[0] = 0;
     MapWinTable[1] = 0;
     IfaceScreenWidth = 0;
