@@ -1572,26 +1572,26 @@ void Scroll::on_mouse_move(int x, int y) {
         }
     }
 
-    WinCallbackWindow = parent;
+    WinCallbackWindow = win_parent_;
     if (saved_position != position_) {
-        int notified_position = position_;
-        if (range_reversed_ != 0U) {
-            notified_position = (range_minimum_ - position_) + range_maximum_;
-        }
-        parent->on_scrolling(field_A18_, notified_position);
-        if (field_2148_ != nullptr) {
-            int callback_position = position_;
-            if (range_reversed_ != 0U) {
-                callback_position = (range_minimum_ - position_)
-                                    + range_maximum_;
+        if (range_reversed_ == 0U) {
+            win_parent_->on_scrolling(field_A18_, position_);
+            if (field_2148_ != nullptr) {
+                field_2148_(field_A18_, position_);
             }
-            field_2148_(field_A18_, callback_position);
+        } else {
+            win_parent_->on_scrolling(
+                field_A18_, (range_minimum_ - position_) + range_maximum_);
+            if (field_2148_ != nullptr) {
+                field_2148_(field_A18_,
+                            (range_minimum_ - position_) + range_maximum_);
+            }
         }
-    }
 
-    Sound *const target = parent->legacy_sound_33();
-    if (target != nullptr && target->is_playing() == 0) {
-        target->play();
+        Sound *const target = win_parent_->legacy_sound_33();
+        if (target != nullptr && target->is_playing() == 0) {
+            target->play();
+        }
     }
     redraw();
 }
@@ -1687,7 +1687,7 @@ void Scroll::on_mousewheel_down(int delta) {
                             (range_minimum_ - position_) + range_maximum_);
             }
         }
-        Sound *const target = win_parent_->legacy_sound_33();
+        Sound *const target = win_parent_->legacy_sound_32();
         if (target != nullptr && target->is_playing() == 0) {
             target->play();
         }
@@ -1706,10 +1706,11 @@ void Scroll::on_mousewheel_up(int delta) {
     }
     WinCallbackWindow = parent;
 
-    if (position_ - 1 < range_minimum_) {
+    const int next = position_ - 1;
+    if (next < range_minimum_) {
         position_ = range_minimum_;
     } else {
-        --position_;
+        position_ = next;
     }
     if (range_reversed_ != 0U) {
         position_ = (range_maximum_ - position_) + range_minimum_;
@@ -1729,7 +1730,7 @@ void Scroll::on_mousewheel_up(int delta) {
                             (range_maximum_ - position_) + range_minimum_);
             }
         }
-        Sound *const target = win_parent_->legacy_sound_33();
+        Sound *const target = win_parent_->legacy_sound_32();
         if (target != nullptr && target->is_playing() == 0) {
             target->play();
         }
@@ -1796,7 +1797,7 @@ int Scroll::on_key_click(int, int key) {
         }
     }
 
-    Sound *const target = win_parent_->legacy_sound_33();
+    Sound *const target = win_parent_->legacy_sound_32();
     if (target != nullptr && target->is_playing() == 0) {
         target->play();
     }
@@ -1843,7 +1844,7 @@ void Scroll::on_button_clicked(int button_id) {
         }
     }
 
-    Sound *const target = win_parent_->legacy_sound_33();
+    Sound *const target = win_parent_->legacy_sound_32();
     if (target != nullptr && target->is_playing() == 0) {
         target->play();
     }

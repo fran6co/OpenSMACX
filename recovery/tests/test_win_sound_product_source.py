@@ -217,7 +217,7 @@ def test_mixed_autosound_words_keep_neutral_storage_and_sound_views():
     assert re.search(r"int\s+val_1_;", defaults)
     assert re.search(r"int\s+val_2_;", defaults)
     assert re.search(r"int\s+val_5_;", defaults)
-    assert re.search(r"int\s+val_32_;", defaults)
+    assert re.search(r"Sound\s*\*\s*val_32_;", defaults)
     assert 'static_assert(sizeof(AutoSound) == 0x98' in header
 
 

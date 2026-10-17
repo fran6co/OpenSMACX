@@ -30,8 +30,11 @@ def control(damage=None):
             check=True, capture_output=True, text=True).stdout
     bodies = "\n".join(extract_function(source, sig) for sig in SIGNATURES)
     if damage == "entry_parent_sound":
-        assert bodies.count("win_parent_->legacy_sound_33()") == 4
-        bodies = bodies.replace("win_parent_->legacy_sound_33()", "parent->legacy_sound_33()")
+        assert bodies.count("win_parent_->legacy_sound_32()") == 4
+        bodies = bodies.replace("win_parent_->legacy_sound_32()", "parent->legacy_sound_32()")
+    elif damage == "wrong_sound_selector":
+        assert bodies.count("win_parent_->legacy_sound_32()") == 4
+        bodies = bodies.replace("win_parent_->legacy_sound_32()", "win_parent_->legacy_sound_33()")
     elif damage == "stale_position":
         assert bodies.count("field_2144_(field_A18_, position_);") == 4
         bodies = bodies.replace("field_2144_(field_A18_, position_);", "field_2144_(17, 4);")
@@ -54,10 +57,11 @@ struct Sound {
 };
 struct Scroll;
 struct Win {
-    Sound *sound=nullptr;int calls=0,id=0,pos=0;
+    Sound *sound32=nullptr,*sound33=nullptr;int calls=0,id=0,pos=0;
     bool mutate=false,remove_callback=false;Scroll *scroll=nullptr;Win *replacement=nullptr;
     void on_scrolled(int,int);
-    Sound *legacy_sound_33(){return sound;}
+    Sound *legacy_sound_32(){return sound32;}
+    Sound *legacy_sound_33(){return sound33;}
 };
 Win *WinCallbackWindow=nullptr;int ListBoxGlobalDDC=99;
 struct Scroll {
@@ -92,8 +96,9 @@ void invoke(Scroll &s,int method,int delta=1){
 }
 int main(){
     for(int method=0;method<4;++method)for(int reversed=0;reversed<2;++reversed){
-        events.clear();Scroll s;Win a,b,c;Sound sa,sb,sc;
-        a.sound=&sa;b.sound=&sb;c.sound=&sc;a.scroll=&s;a.replacement=&b;a.mutate=true;
+        events.clear();Scroll s;Win a,b,c;Sound sa,sb,sc,s33a,s33b,s33c;
+        a.sound32=&sa;a.sound33=&s33a;b.sound32=&sb;b.sound33=&s33b;
+        c.sound32=&sc;c.sound33=&s33c;a.scroll=&s;a.replacement=&b;a.mutate=true;
         s.win_parent_=&a;s.range_reversed_=reversed;active=&s;callback_parent=&c;
         // Parent installs a previously absent function callback and changes all values.
         invoke(s,method);
@@ -104,6 +109,7 @@ int main(){
         assert(callback_id==23 && callback_pos==(reversed?15:7));
         assert(s.win_parent_==&c && WinCallbackWindow==&a);
         assert(sa.queries==0 && sb.queries==0 && sc.queries==1 && sc.plays==1);
+        assert(s33a.queries==0 && s33b.queries==0 && s33c.queries==0);
         assert((events==std::vector<int>{1,2,3,4,5}));
         // Removing the callback is also observable; sound now belongs to B.
         events.clear();s=Scroll();s.win_parent_=&a;s.field_2144_=callback;
@@ -112,21 +118,21 @@ int main(){
         assert((events==std::vector<int>{1,3,4,5}));
     }
     for(int method=0;method<2;++method)for(int reversed=0;reversed<2;++reversed){
-        events.clear();Scroll s;Win a;Sound sound;a.sound=&sound;s.win_parent_=&a;
+        events.clear();Scroll s;Win a;Sound sound,wrong;a.sound32=&sound;a.sound33=&wrong;s.win_parent_=&a;
         s.range_reversed_=reversed;s.field_2144_=callback;invoke(s,method,0);
         int moved=method==0?4:2;
         assert(s.position_==(reversed?10-moved:moved));
-        assert(a.calls==0 && sound.queries==0 && s.redraws==1);
+        assert(a.calls==0 && sound.queries==0 && wrong.queries==0 && s.redraws==1);
         assert((events==std::vector<int>{5}));
         // Negative delta is nonzero, not a direction or magnitude test.
         events.clear();s.field_2144_=nullptr;invoke(s,method,-3);
-        assert(a.calls==1 && sound.queries==1 && sound.plays==1);
+        assert(a.calls==1 && sound.queries==1 && sound.plays==1 && wrong.queries==0);
     }
     events.clear();Scroll absent;
     absent.on_mousewheel_down(1);absent.on_mousewheel_up(1);absent.on_button_clicked(1);
     assert(absent.on_key_click(0,VK_HOME)==0 && events.empty());
-    Scroll s;Win a;Sound sound;a.sound=&sound;s.win_parent_=&a;
-    assert(s.on_key_click(0,0)==0 && a.calls==0 && sound.queries==0 && s.redraws==0);
+    Scroll s;Win a;Sound sound,wrong;a.sound32=&sound;a.sound33=&wrong;s.win_parent_=&a;
+    assert(s.on_key_click(0,0)==0 && a.calls==0 && sound.queries==0 && wrong.queries==0 && s.redraws==0);
     events.clear();sound.playing=1;s.on_button_clicked(0);
     assert(s.position_==3 && sound.queries==1 && sound.plays==0);
     assert((events==std::vector<int>{1,3,5}));
@@ -135,7 +141,7 @@ int main(){
 
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
-@pytest.mark.parametrize("damage", (None, "pre_change", "entry_parent_sound", "stale_position", "retest_reversal", "ungated_sound"))
+@pytest.mark.parametrize("damage", (None, "pre_change", "wrong_sound_selector", "entry_parent_sound", "stale_position", "retest_reversal", "ungated_sound"))
 def test_actual_notification_order_and_live_values(tmp_path, compiler, damage):
     executable = shutil.which(compiler)
     if executable is None:
@@ -222,12 +228,48 @@ def test_original_identities_claims_and_symbols_retained():
     after = {row.address: row for row in read_text(path.read_text(), path)}
     assert before.keys() == after.keys()
     for address, row in before.items():
-        assert _continuity_fields(row) == _continuity_fields(after[address])
-        # Only the reviewed void close (186b4ea82) and set_pos contracts
-        # change emitted symbols; their original identities remain intact.
+        old_fields = _continuity_fields(row)
+        new_fields = _continuity_fields(after[address])
+        changed = [index for index, (old, new) in enumerate(zip(old_fields, new_fields))
+                   if old != new]
+        if address == 0x6059B0:
+            # a4f46d792 removed the temporary range_swap_call adapter and its
+            # measured-forwarder LEVER when the ordinary swap declaration once
+            # again emitted the original call. Preserve the old explanation in
+            # Git history; allow only those two parsed lesson fields to retire.
+            assert changed == [8, 14]
+            assert "range_swap_call" in old_fields[8][1][0]
+            assert "file-local forwarder" in old_fields[8][1][1]
+            assert len(old_fields[14]) == 2 and len(new_fields[14]) == 1
+            assert old_fields[14][1][1].startswith("`range_swap_call`")
+            assert old_fields[14][1][2].startswith("a file-local forwarder")
+            assert new_fields[14] == old_fields[14][:1]
+            assert new_fields[8] == old_fields[8][:1]
+            old_fields = old_fields[:8] + new_fields[8:9] + old_fields[9:14] + new_fields[14:]
+        elif address == 0x406E60:
+            # 40eac3fe7 moved the complete Scroll destructor to its real inline
+            # class owner; identity, extents, claims and authored history remain.
+            assert changed == [1]
+            assert row.mode.value == "body" and after[address].mode.value == "file"
+            assert "~Scroll() { close(); }" in (ROOT / "src/scroll.h").read_text()
+            old_fields = old_fields[:1] + new_fields[1:2] + old_fields[2:]
+        elif address == 0x406F20:
+            # 84678c417 retired the hand-written deleting-destructor redirect;
+            # the virtual destructor now owns this compiler-generated entry.
+            assert changed == [1]
+            assert row.mode.value == "body" and after[address].mode.value == "file"
+            assert "existing virtual destructor owns this compiler-generated entry" in path.read_text()
+            old_fields = old_fields[:1] + new_fields[1:2] + old_fields[2:]
+        else:
+            assert changed == []
+        assert old_fields == new_fields
+        # Reviewed API and compiler-owned destructor migrations keep the same
+        # original identities while their emitted source owners change.
         migrations = {
             0x605370: ("?close@Scroll@@QAEIXZ", "?close@Scroll@@QAEXXZ"),
             0x605D20: ("?set_pos@Scroll@@QAEIH@Z", "?set_pos@Scroll@@QAEXH@Z"),
+            0x406F20: ("?scroll_scalar_dtor_redirect@@YIPAXPAVScroll@@PAXI@Z",
+                       "??_GScroll@@UAEPAXI@Z"),
         }
         if address in migrations:
             assert (row.symbol, after[address].symbol) == migrations[address]

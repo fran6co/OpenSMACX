@@ -61,7 +61,7 @@ COPY_MAP = (
     ("val_25_", 24, "Sound *"), ("val_26_", 25, "Sound *"),
     ("val_27_", 26, "Sound *"), ("val_28_", 27, "Sound *"),
     ("val_29_", 28, "Sound *"), ("val_30_", 29, "Sound *"),
-    ("val_31_", 30, "Sound *"), ("val_32_", 31, "int"),
+    ("val_31_", 30, "Sound *"), ("val_32_", 31, "Sound *"),
     ("val_33_", 32, "Sound *"), ("event_window_", 33, "Sound *"),
     ("val_35_", 34, "Sound *"), ("val_36_", 35, "Sound *"),
     ("val_37_", 36, "Sound *"),
@@ -80,6 +80,8 @@ def auto_members() -> str:
             "RECOVERY_MEMBER: v3 AutoSound val_20_ Sound* 0x50 0x005F6550" in header)
     assert ("Sound *val_31_;" in header and
             "RECOVERY_MEMBER: v3 AutoSound val_31_ Sound* 0x7C 0x00607A20" in header)
+    assert ("Sound *val_32_;" in header and
+            "RECOVERY_MEMBER: v3 AutoSound val_32_ Sound* 0x80 0x00606320" in header)
     assert "static_assert(sizeof(AutoSound) == 0x98" in header
     # The host probe intentionally does not compile that 32-bit ABI assertion.
     return "\n".join(f"  {kind} {name};" for kind, name in declarations)
@@ -158,6 +160,8 @@ public:
 /* AUTO_MEMBERS */
   Sound *legacy_sound_20() const { return val_20_; }
   Sound *legacy_sound_31() const { return val_31_; }
+  Sound *legacy_sound_32() const { return val_32_; }
+  Sound *legacy_sound_33() const { return val_33_; }
   void close(); void close2(); void init();
   AutoSoundProbe();
 };
@@ -176,6 +180,8 @@ int main() {
   check_defaults(object);
   CHECK(object.legacy_sound_20() == AutoSoundDefaults.val_20_);
   CHECK(object.legacy_sound_31() == AutoSoundDefaults.val_31_);
+  CHECK(object.legacy_sound_32() == AutoSoundDefaults.val_32_);
+  CHECK(object.legacy_sound_33() == AutoSoundDefaults.val_33_);
   object.init(); check_zero(object);
   object.close(); check_defaults(object);
   object.init(); check_zero(object);

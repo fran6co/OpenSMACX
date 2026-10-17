@@ -75,13 +75,17 @@ class AutoSound {
   // close(), deletes only when the caller's flag says so.
   void *scalar_delete(unsigned int mode);
 
-  // Scroll's pinned paths use this word through Sound slots 23/7. This is an
-  // observed interface view, not an ownership or lifetime claim.
+  // Scroll's mouse-move and button-pressed paths use this word through Sound
+  // slots 23/7. This is an observed interface view, not ownership or lifetime.
   Sound *legacy_sound_33() const { return val_33_; }
 
   // BaseButton's pinned consumers use val_31_ through Sound slots 23 and 7.
   // This establishes its receiver interface, not its provider or lifetime.
   Sound *legacy_sound_31() const { return val_31_; }
+  // Scroll's wheel/key/button notification paths use this word through Sound
+  // slots 23 and 7. Mouse-move and button-pressed retain the separate +0x84
+  // receiver view in val_33_; neither view establishes ownership or lifetime.
+  Sound *legacy_sound_32() const { return val_32_; }
   Sound *legacy_sound_36() const { return val_36_; }
   Sound *legacy_sound_37() const { return val_37_; }
   Sound *legacy_sound_28() const { return val_28_; }
@@ -148,8 +152,9 @@ class AutoSound {
   // the separate Win member at +0xC4.
   // RECOVERY_MEMBER: v3 AutoSound val_31_ Sound* 0x7C 0x00607A20
   Sound *val_31_;
-  int val_32_;
-  // Scroll uses Sound slots 23/7 at +0x84.
+  // RECOVERY_MEMBER: v3 AutoSound val_32_ Sound* 0x80 0x00606320
+  Sound *val_32_;
+  // Scroll mouse-move and button-pressed use Sound slots 23/7 at +0x84.
   // RECOVERY_MEMBER: v3 AutoSound val_33_ Sound* 0x84 0x006069A0
   Sound *val_33_;
   // Menu's original paths use Sound's slot pair 23/7 at this receiver.
