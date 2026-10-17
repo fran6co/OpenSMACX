@@ -1,0 +1,21 @@
+{
+  "event_id": "0f69bf5598058e0b11a9b0fd24714c3d7e654c4455e28ea0058cd1041470ee65",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_cursor_original_gate_oct18.py"
+    ],
+    "evidence": [
+      "Continue the existing MapWin owner task and retain immutable b15 baseline, all original subjects, expansions and pending findings. The published 0179 source and retained application artifacts are a separate paired current-step oracle, not a replacement task baseline. Edit only the cursor-family guard/early exits of MapWin::click and its local durable rationale; retain the existing correct action switch, every original mapping/claim/lesson and all other bodies/interfaces/build policies.",
+      "Pinned E11F tests captured mode==0 and branches E299. Nonzero loads selected vehicle93928C; negative goes E136 to Popup/Scroll/twoFlatButton cleanup and exitsEB38 without resetting939294. Nonnegative uses unsigned(mode-2)<=9 only to select the existing ten-cell table46EB68, otherwise joinsE216 reset939294 and same cleanup/exit. Current extra C++range predicate incorrectly falls through for other nonzero modes; current negative-vehicle guard incorrectly falls through too. Restore if(mode!=0){if(vehicle<0)return; unchanged switch; reset;return;} through existing automaticPopup lifetime. No safety normalization or new original-span/table claim.",
+      "Existing test_mapwin_click_branches.py is already in task scope; preserve all paint, callback reload, popup and in-range action cases while extending actual-source host controls for zero/nonzero signedmode extremes, negative/nonnegative vehicles, reset/noreset, action arguments and early return/cleanup. Add meaningful compiling old-guard/lifetime/reset/table damage controls and pinned complete gate/table/block evidence in the newly admitted test. Do not substitute hand-authored product code or weaken other tests. Independent source/lifetime review, full build/link, whole census/strict/reference/claim preservation, physical collateral review and destination rechecks precede manual integration. No automatic/full-game acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5bb5791ba731b2681fba7eadb3521e4acbfc679f96921441d4645f8897136d44",
+  "request_id": "cursor-family-guard-recovery-oct18",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
