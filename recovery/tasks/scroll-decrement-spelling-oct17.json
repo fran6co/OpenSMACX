@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "scroll-decrement-spelling-oct17",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "146dd0257bfb5b3f891784b0abebf227392a4ba7",
+  "intent": "Screen a bounded, evidence-backed Scroll decrement spelling without changing callback-visible state, original behavior or measurement obligations.",
+  "subjects": [
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6317120},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6316832},
+    {"image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "address_space": "pe:va", "address": 6318880}
+  ],
+  "editable_files": [
+    "src/scroll.cpp",
+    "recovery/tests/test_scroll_notification_live_state_oct11.py"
+  ],
+  "evidence": [
+    "Pinned on_mousewheel_up606440 loads position, decrements a register, compares range_minimum_, and stores the selected result before reversal. Current source compares position_-1 and decrements the member only in the alternate branch. Both express the same original operation; investigate register-local decrement spellings, not a behavior fix.",
+    "Latest local grid reports76/81 instruction pairs,81instructions on both sides,first divergence4 and no constant differences. This is only a historical masked-local lead. A new native deck must supply unchanged-replica and compiled changed-body controls under both historical flag trials; no result banks a claim.",
+    "Limit this investigation to three new source forms. Retain parent-null handling, delta-zero notification/sound gating, branch-selected reversal and all callback-visible parent, position, bounds, identity and sound reloads. Existing live-state regression tests and adjacent downward/button handlers are controls, not permission to change their behavior.",
+    "Preserve all original mappings, claims, history, compiler policy and task baselines. A useful screen still requires strict scoped measurement, review, build/link and destination checks before manual integration. Missing linked, structure and runtime proof remains unfinished. Record rejected plateaus through the native task journal rather than new source run-log comments."
+  ]
+}
