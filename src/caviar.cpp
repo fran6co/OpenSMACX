@@ -734,7 +734,7 @@ RECT CaviarViewportState;
 // symbol-table or allocation-provenance claim. The loader's virtual zero-fill
 // supplies its initial zeros; subsequent draws deliberately replace them.
 // RECOVERY_OBJECT: v2 0x009B9C38 0x009BB438 ?CaviarColourSource@?%src/caviar.cpp@@3PAEA 0x00617620
-uint8_t CaviarColourSource[0x1800];  // 0x009B9C38
+uint8_t CaviarColourSource[0x1800];
 
 // The CPU rank at original0x009C0830 is owned by caviar_cpu.cpp. Preferences
 // can force its fallback rank; detection and renderer selection share it.
