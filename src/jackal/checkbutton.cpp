@@ -166,7 +166,7 @@ int CheckButton::init_class() {
 // CheckButton's parent is a GraphicWin because this control's init contract
 // takes that exact type. GraphicWin::init sets up the base window and the
 // image then hides the newly initialized control until its caller shows it.
-// ORIGINAL: 0x006337E0 ?init@CheckButton@@QAEHHHPAUGraphicWin@@H@Z 0x006337E0-0x00633841
+// ORIGINAL: 0x006337E0 ?init@CheckButton@@QAEHHHPAUGraphicWin@@H@Z 0x006337E0-0x00633841 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["partition class:CheckButton at master 9db3d883","git:9db3d883:src/unrecovered/006337e0.cpp original signature, spans, calls and member accesses","src/graphicwin.h GraphicWin::init signature","src/sprite.h Sprite::width/height accessors and +0x18/+0x1C member offsets"],"reason":"The existing seed identity is implemented by the typed CheckButton member. Sprite::width and Sprite::height preserve the seed's reads from the selected Sprite members at +0x18 and +0x1C; GraphicWin::init and Win::show express its base setup and final hide operation."}
 // symbol    ?init@CheckButton@@QAEHHHPAVGraphicWin@@H@Z
 int CheckButton::init(int x, int y, GraphicWin *parent, int toggle_argument) {
@@ -176,8 +176,8 @@ int CheckButton::init(int x, int y, GraphicWin *parent, int toggle_argument) {
 
     // The seed reads the checked Sprite's iWidth_ at +0x18 and the
     // unchecked Sprite's iHeight_ at +0x1C.
-    const int width = checked_sprite_->width();
     const int height = unchecked_sprite_->height();
+    const int width = checked_sprite_->width();
     const int result = GraphicWin::init(x, y, width, height, 0, 0x1020,
                                         parent, 0, 0);
     if (result != 0) {
