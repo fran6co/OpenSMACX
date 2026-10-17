@@ -1,0 +1,19 @@
+{
+  "event_id": "cc78b400ba21e7559c9cf117efa0fd95103cc0d3d41145ff99006cd28ce2e42e",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "mapwin-stale-owner-fixtures-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Only the two explicitly authorized host fixtures changed: radius extracts actual MapStorage metadata declarations and bounds/flat aliases; typed closure extracts Vert and the actual TerrainLandmarkStorageWindow member declarations. Extracted production bodies remain verbatim. All old assertions, cases and mutants remain; no C++/header/global/annotation replacement.",
+      "The new live-member control sets alt_light_bit2[3] to9 and a conflicting legacy-name decoy to99; substituting the wrong owner fails. The repaired files pass67 tests. The complete focused map/base and prior-profile suite passes111 tests with1 existing pinned-fixture skip. Independent read-only source review found no blocker. These host fixtures are not original allocation, layout or runtime proof.",
+      "Fresh actual Release application candidate builds/links. Native claims, source references and mapping continuity pass. Actual-object census has2784of5582 masked exact bodies:40gains,0exact losses,0outside-owner verdict changes. Strict selected originals remain27PASS13UNKNOWN0FAIL; physical baseline comparison retains174whole outside-object PASS and2owner residual FAIL. No automatic/full-game acceptance, gate waiver, historical claim change or task-baseline reset. NetDaemon/upstream uncompress discovery remains pending."
+    ]
+  },
+  "previous_event": "b498790dad6d1c2f9738037e6f4dbc00166698a3a7e77a9b5ef49646d9cf9ed3",
+  "request_id": "mapwin-owner-fixtures-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:map-ui-frame-oct17"
+}

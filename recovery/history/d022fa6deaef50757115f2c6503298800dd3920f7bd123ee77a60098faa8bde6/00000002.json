@@ -1,0 +1,21 @@
+{
+  "event_id": "4c96b08f23797be11ca1f89ad5eef7d22468f02b2f19e15c58b16f4f539fd33c",
+  "payload": {
+    "affects": [
+      "entity-27cc156a4330fe115a50e45e9bc4508653556611f66d0917a867d11e9a3b91c0"
+    ],
+    "author": "coordinator",
+    "discovery_id": "mapwin-stale-owner-fixtures-oct17",
+    "evidence": [
+      "Baseline master7c095f720 and isolated profile candidate both fail test_mapwin_radius actual_source at retired extern map dimension/flat globals: real map.h now aliases MapStorage.metadata_ fields and MapLongitude declaration has a trailing semantic comment. All53 radius cases share this extraction failure.",
+      "Baseline typed_closure compilation independently fails because get_point_light uses genuine TerrainLandmarkStorageWindowData.alt_light_bit2 while fixture still defines standalone AltLightBit2. Actual full product build passes; no production source/header changed. Current broad suite65FAIL/44PASS/1SKIP; retain failure evidence, do not relabel as green."
+    ],
+    "hypothesis": "Existing radius/typed-cache actual-source fixtures still fabricate retired standalone globals instead of current MapStorage and terrain member ownership. They fail on unchanged verified master as well as this source-identical profile candidate; repair fixtures, never roll back genuine production ownership.",
+    "kind": "discovery"
+  },
+  "previous_event": "b81b1568e7f30dabc0abf59b0ce6d059849a813e05622a132967a120ececb2c5",
+  "request_id": "mapwin-stale-owner-fixtures-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:map-ui-frame-oct17"
+}

@@ -49,6 +49,14 @@ def actual_source():
     for unit, cls in (("win", "Win"), ("graphicwin", "GraphicWin"), ("mapwin", "MapWin"), ("console", "Console")):
         parts[cls.upper() + "_BASES"], = re.findall(r"^class " + cls + r"\s*:[^{]+\{", h[unit], re.M)
     parts["TYPES"] = braced(h["vert"], "struct Vert {") + ";\n" + braced(h["map"], "struct Map {") + ";"
+    landmark = braced(h["map"], "struct Landmark {") + ";"
+    metadata = braced(h["map"], "struct MapMetadataFields {") + ";"
+    storage = braced(h["map"], "struct MapStorageWindow {") + ";"
+    parts["MAP_STORAGE"] = (
+        landmark + "\nstatic const int MaxLandmarkNum = 64;\n" + metadata + "\n" + storage +
+        "\nMapStorageWindow MapStorage;\n" +
+        "\n".join(re.findall(r"^#define Map(?:LongitudeBounds|LatitudeBounds|IsFlat) .+$", h["map"], re.M))
+    )
     fields = []
     for name in ("field_1DD70_", "field_1DD78_", "field_1DD98_", "field_1DDC0_", "field_1DDA4_", "field_1DDA8_",
                  "field_1DDCC_", "field_1DDD0_", "field_1DDD4_", "field_1DDD8_"):
@@ -81,10 +89,10 @@ def actual_source():
     for name in ("gen_window_terrain", "gen_terrain_poly"):
         declaration, = re.findall(r"^int __cdecl " + name + r"\([^;{}]*\);", h["mapwin"], re.M)
         declarations.append(declaration)
-    for unit, names in (("map", ("MapLongitude", "MapLongitudeBounds", "MapLatitudeBounds", "MapIsFlat")),
+    for unit, names in (("map", ("MapLongitude",)),
                         ("game", ("IsMultiplayerNet",)), ("console", ("ConsoleControlTurnActive",))):
         for name in names:
-            decl, = re.findall(r"^extern (?:int|uint32_t|BOOL) " + name + r";", h[unit], re.M)
+            decl, = re.findall(r"^extern (?:int|uint32_t|BOOL) " + name + r";[^\n]*", h[unit], re.M)
             declarations.append(decl.removeprefix("extern "))
     corners, = re.findall(r"^Vert MapCornerCopy\[4\];", source, re.M)
     declarations.append(corners)
@@ -135,6 +143,7 @@ CONSOLE_BASES public:CONSOLE_FIELDS};
 struct Texture {TEXTURE_METHOD};
 MapWin window;SHARED_DECLARATIONS
 DECLARATIONS
+MAP_STORAGE
 GAME_STATE_STORAGE
 Map tiles[16000];int map_reads;
 Map *map_tiles(){++map_reads;return tiles;}

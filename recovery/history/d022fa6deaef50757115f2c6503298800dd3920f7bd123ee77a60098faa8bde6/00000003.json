@@ -1,0 +1,21 @@
+{
+  "event_id": "b498790dad6d1c2f9738037e6f4dbc00166698a3a7e77a9b5ef49646d9cf9ed3",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_radius.py",
+      "recovery/tests/test_mapwin_typed_closure.py"
+    ],
+    "evidence": [
+      "Authorize ONLY test harness/extraction updates to consume current source-owned MapStorage metadata aliases/member types and genuine TerrainLandmarkStorageWindowData alt_light_bit2 member. Extract relevant real declarations/type widths where feasible; bounded host fixtures are not original layout or allocation proofs. No C++/header/annotation/proprietary initializer edits.",
+      "Preserve extracted product method/helper bodies verbatim, all existing expected values and original-based mutation controls. Do not skip/drop failing cases, bypass current member reads, resurrect retired product aliases or weaken assertions. Add discriminating live-member ownership controls if needed, run both full fixture suites and prior focused suite, independently review diff and preserve native source/claim checks. CMake profiles and NetDaemon hold unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4c96b08f23797be11ca1f89ad5eef7d22468f02b2f19e15c58b16f4f539fd33c",
+  "request_id": "mapwin-owner-fixture-scope-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:map-ui-frame-oct17"
+}
