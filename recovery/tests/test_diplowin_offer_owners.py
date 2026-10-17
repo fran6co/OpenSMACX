@@ -10,7 +10,8 @@ import pytest
 from test_selectpart_vehicle_owners import _definition
 
 ROOT = Path(__file__).resolve().parents[2]
-SIGNATURES = ("void DiploWin::UNK3(int a1)",
+SIGNATURES = ("void DiploWin::UNK2()",
+              "void DiploWin::UNK3(int a1)",
               "void DiploWin::kill_offer(int a1, int a2)",
               "void DiploWin::add_offer(int a1, int a2, int a3)")
 
@@ -31,8 +32,8 @@ static std::vector<Message> messages;
 static std::vector<int> events;
 struct DiploWin {
   ACTUAL_FIELDS
-  virtual void redraw() { assert(!field_A24_ && !field_A28_ && DiploOffersDirty==1); events.push_back(2); }
-  void UNK3(int); void kill_offer(int,int); void add_offer(int,int,int);
+  virtual void redraw() { assert(!offer_state_[0] && !offer_state_[1] && DiploOffersDirty==1); events.push_back(2); }
+  void UNK3(int); void UNK2(); void kill_offer(int,int); void add_offer(int,int,int);
 };
 static DiploWin *message_owner;
 static int message_changes_count;
@@ -44,16 +45,23 @@ PRODUCT
 static void reset(DiploWin &w) {
   w.offer_count_[0]=w.offer_count_[1]=0;
   for(int side=0;side<2;++side)for(int i=0;i<8;++i){ w.offer_type_[side][i]=30+i; w.offer_value_[side][i]=80+i; }
-  w.field_A24_=9; w.field_A28_=10; w.faction_id_with_=73;
+  w.offer_state_[0]=9; w.offer_state_[1]=10; w.faction_id_with_=73;
   messages.clear(); events.clear(); DiploOffersDirty=0;
   message_owner=&w; message_changes_count=0;
 }
 int main() {
   DiploWin w;
+  reset(w); w.offer_count_[0]=3; w.offer_count_[1]=5;
+  w.offer_state_[0]=-123456789; w.offer_state_[1]=0x13579BDF;
+  w.UNK2();
+  assert(w.offer_state_[0]==0 && w.offer_state_[1]==0);
+  assert(w.offer_count_[0]==3 && w.offer_count_[1]==5);
+  assert(w.offer_type_[0][0]==30 && w.offer_type_[1][0]==30);
+  assert(w.offer_value_[0][0]==80 && w.offer_value_[1][0]==80);
   for(int side=0;side<2;++side) {
     reset(w); w.offer_count_[0]=4; w.offer_count_[1]=6; w.UNK3(side);
     assert(w.offer_count_[side]==0 && w.offer_count_[1-side]==(side?4:6));
-    assert(!w.field_A24_ && !w.field_A28_ && !DiploOffersDirty && events.empty());
+    assert(!w.offer_state_[0] && !w.offer_state_[1] && !DiploOffersDirty && events.empty());
     assert(w.offer_type_[side][0]==30 && w.offer_value_[side][0]==80);
     reset(w); w.offer_count_[side]=3; w.kill_offer(side,0);
     assert(w.offer_count_[side]==2 && w.offer_count_[1-side]==0);
@@ -64,10 +72,10 @@ int main() {
     reset(w); w.offer_count_[side]=3; w.kill_offer(side,2);
     assert(w.offer_count_[side]==2 && w.offer_type_[side][1]==31 && w.offer_value_[side][2]==82);
     reset(w); w.offer_count_[side]=3; w.kill_offer(side,3);
-    assert(w.offer_count_[side]==3 && w.field_A24_==9 && w.field_A28_==10 && !DiploOffersDirty);
+    assert(w.offer_count_[side]==3 && w.offer_state_[0]==9 && w.offer_state_[1]==10 && !DiploOffersDirty);
     assert(events==(side?std::vector<int>{}:std::vector<int>{1}));
     reset(w); w.kill_offer(side,0);
-    assert(!w.offer_count_[side] && w.field_A24_==9 && !DiploOffersDirty);
+    assert(!w.offer_count_[side] && w.offer_state_[0]==9 && !DiploOffersDirty);
     // All treaty classes replace the first existing treaty without appending.
     for(int type=2;type<=4;++type) {
       reset(w); w.offer_count_[side]=3; w.offer_type_[side][0]=0; w.offer_type_[side][1]=4;
@@ -89,14 +97,14 @@ int main() {
     for(int type: {0,5}) {
       reset(w); w.offer_count_[side]=1; w.offer_type_[side][0]=type; w.offer_value_[side][0]=14;
       w.add_offer(side,type,14);
-      assert(DiploOffersDirty==1 && events.empty() && w.offer_count_[side]==1 && w.field_A24_==9 && w.field_A28_==10);
+      assert(DiploOffersDirty==1 && events.empty() && w.offer_count_[side]==1 && w.offer_state_[0]==9 && w.offer_state_[1]==10);
       w.add_offer(side,type,15);
       assert(w.offer_count_[side]==2 && w.offer_type_[side][1]==type && w.offer_value_[side][1]==15);
     }
     reset(w); w.offer_count_[side]=7; w.add_offer(side,7,999);
     assert(w.offer_count_[side]==8 && w.offer_type_[side][7]==7 && w.offer_value_[side][7]==999);
     reset(w); w.offer_count_[side]=8; w.add_offer(side,7,999);
-    assert(DiploOffersDirty==1 && events.empty() && w.offer_count_[side]==8 && w.field_A24_==9);
+    assert(DiploOffersDirty==1 && events.empty() && w.offer_count_[side]==8 && w.offer_state_[0]==9);
     w.offer_type_[side][6]=2; w.add_offer(side,3,999);
     assert(w.offer_count_[side]==8 && w.offer_type_[side][6]==3 && w.offer_value_[side][6]==999);
     reset(w); w.offer_count_[side]=1; w.offer_type_[side][0]=7; w.offer_value_[side][0]=999;
@@ -111,7 +119,7 @@ int main() {
 def fixture():
     header = (ROOT / "src/diplowin.h").read_text()
     fields = []
-    for name in ("offer_count_", "field_A24_", "field_A28_", "offer_type_", "offer_value_", "faction_id_with_"):
+    for name in ("offer_count_", "offer_state_", "offer_type_", "offer_value_", "faction_id_with_"):
         declaration = re.search(r"(?m)^\s*(?:int|int32_t) " + name + r"[^;]*;", header)
         assert declaration is not None, name
         fields.append(declaration.group().strip())
@@ -130,6 +138,8 @@ def test_actual_offer_bodies_and_mutants(tmp_path, compiler_name):
         ("wrong_party", "if (a1 == 0)", "if (a1 == 1)"),
         ("wrong_capacity", "count >= 8", "count >= 7"),
         ("wrong_duplicate", "offer_value_[a1][i] == a3", "offer_value_[a1][i] != a3"),
+        ("wrong_state_clear_count", "side != 2", "side != 1"),
+        ("wrong_state_clear_lane", "offer_state_[side] = 0;", "offer_state_[1] = 0;"),
     ):
         assert old in body
         variants[label] = body.replace(old, new, 1)

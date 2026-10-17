@@ -351,7 +351,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
     for (int side = 0; side != 2; ++side) {
       OfferResetCell &cell = OfferResetCells[faction_id_][faction_id_with_];
       offer_count_[side] = cell.count_[side];
-      (side == 0 ? field_A24_ : field_A28_) = cell.state_[side];
+      offer_state_[side] = cell.state_[side];
       for (int item = 0; item != 8; ++item) {
         offer_type_[side][item] = cell.type_[side][item];
         offer_value_[side][item] = cell.value_[side][item];
@@ -360,8 +360,8 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   } else {
     offer_count_[0] = 0;
     offer_count_[1] = 0;
-    field_A24_ = 0;
-    field_A28_ = 0;
+    offer_state_[0] = 0;
+    offer_state_[1] = 0;
   }
 
   const int player_flags = static_cast<int>(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xFF);
@@ -397,7 +397,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
 
     random_value = rand() % 3;
     if (random_value == 0)
-      field_A28_ = 1;
+      offer_state_[1] = 1;
     else if (random_value == 1)
       offer_type_[0][0] = 2;
   }
@@ -429,8 +429,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
     for (int side = 0; side != 2; ++side) {
       OfferResetCell &cell = OfferResetCells[faction_id_][faction_id_with_];
       cell.count_[side] = offer_count_[side];
-      cell.state_[side] =
-          side == 0 ? field_A24_ : field_A28_;
+      cell.state_[side] = offer_state_[side];
       for (int item = 0; item != 8; ++item) {
         cell.type_[side][item] = offer_type_[side][item];
         cell.value_[side][item] = offer_value_[side][item];
@@ -439,7 +438,7 @@ void DiploWin::exec(int faction_id, int faction_id_with) {
   }
 
   if (DiploOffersDirty != 0
-      && (field_A24_ != 0 || offer_count_[0] > 0))
+      && (offer_state_[0] != 0 || offer_count_[0] > 0))
     PendingDiplomacyFlags[faction_id_with_][faction_id_] |= 1;
 
   if (CommlinkPending != 0) {
@@ -754,7 +753,7 @@ void __cdecl diplo_unlock();
 // ORIGINAL: 0x004426F0 ?check_done@DiploWin@@QAEXXZ 0x004426F0-0x00442736 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/004426f0.cpp"], "reason": "Rehome seed into typed DiploWin owner; states and counterpart are source members."}
 void DiploWin::check_done() {
-    if (field_A24_ == 1 && field_A28_ == 1) {
+    if (offer_state_[0] == 1 && offer_state_[1] == 1) {
         message_data(0x150A, faction_id_with_, 0, 0, 0, 0);
         if (IsMultiplayerPBEM != 0) {
             do_it();
@@ -811,8 +810,8 @@ void DiploWin::do_it() {
             } while (side < 2);
             diplo_unlock();
             CommlinkPending = 1;
-            field_A28_ = 3;
-            field_A24_ = 3;
+            offer_state_[1] = 3;
+            offer_state_[0] = 3;
             offer_count_[1] = 0;
             offer_count_[0] = 0;
             message_data(0x150D, faction_id_with_, 0, 0, 0, 0);
@@ -856,7 +855,7 @@ void DiploWin::draw_who() {
     surface->set_font(find_font(14, 1), 0, 0, 0);
     StringTemp[0] = 0;
     int label = -1;
-    switch (field_A24_) {
+    switch (offer_state_[0]) {
     case 0: label = 0x73C / 4; break;
     case 1: label = 0x740 / 4; break;
     case 2: label = 0x744 / 4; break;
@@ -865,7 +864,7 @@ void DiploWin::draw_who() {
     case 5: label = 0x95C / 4; break;
     case 6: label = 0x960 / 4; break;
     }
-    int state = field_A24_;
+    int state = offer_state_[0];
     if (state == 2 || state == 4 || state == 5)
         surface->set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
     if (state == 6) surface->set_text_color(251, 0, 1, 1);
@@ -910,7 +909,7 @@ void DiploWin::draw_whom() {
     surface->set_font(find_font(14, 1), 0, 0, 0);
     StringTemp[0] = 0;
     int label = -1;
-    switch (field_A28_) {
+    switch (offer_state_[1]) {
     case 0: label = 0x73C / 4; break;
     case 1: label = 0x740 / 4; break;
     case 2: label = 0x744 / 4; break;
@@ -919,7 +918,7 @@ void DiploWin::draw_whom() {
     case 5: label = 0x95C / 4; break;
     case 6: label = 0x960 / 4; break;
     }
-    int state = field_A28_;
+    int state = offer_state_[1];
     if (state == 2 || state == 4 || state == 5)
         surface->set_text_color(ChatItemIdTable[0], ChatShadowColors[0], 1, 1);
     if (state == 6) surface->set_text_color(251, 0, 1, 1);
@@ -967,8 +966,8 @@ int DiploWin::on_key_down(int key) {
 
 // ORIGINAL: 0x004429C0 ?done_deal@DiploWin@@QAEXXZ 0x004429C0-0x004429E7 BYTE_EXACT
 void DiploWin::done_deal() {
-    field_A28_ = 3;
-    field_A24_ = 3;
+    offer_state_[1] = 3;
+    offer_state_[0] = 3;
     offer_count_[1] = 0;
     offer_count_[0] = 0;
     redraw();
@@ -1267,7 +1266,7 @@ int DiploWin::on_iface_dialog_back_draw(int) {
 
 /*
 Purpose: Clear the two cached values at 0xA24 and 0xA28.
-// ORIGINAL: 0x004413B0 ?UNK2@DiploWin@@QAEXXZ 0x004413B0-0x004413BE
+// ORIGINAL: 0x004413B0 ?UNK2@DiploWin@@QAEXXZ 0x004413B0-0x004413BE BYTE_EXACT
 // size      14 bytes
 // prototype void (__thiscall ?UNK2@DiploWin@@QAEXXZ)(DiploWin* this)
 // callers   0   call targets   0
@@ -1278,8 +1277,9 @@ Return Value: n/a
 Status: Complete
 */
 void DiploWin::UNK2() {
-    field_A24_ = 0;
-    field_A28_ = 0;
+    for (int side = 0; side != 2; ++side) {
+        offer_state_[side] = 0;
+    }
 }
 
 
@@ -1300,7 +1300,7 @@ Purpose: Clear one entry of the array at 0xA1C, then clear the two words at
          and both unconditional clears retain their order. Invalid-index
          compiler effects remain a restoration obligation, not a valid
          C++ array-domain claim.
-// ORIGINAL: 0x004413C0 ?UNK3@DiploWin@@QAEXH@Z 0x004413C0-0x004413E2
+// ORIGINAL: 0x004413C0 ?UNK3@DiploWin@@QAEXH@Z 0x004413C0-0x004413E2 BYTE_EXACT
 // size      34 bytes
 // prototype void (__thiscall ?UNK3@DiploWin@@QAEXH@Z)(DiploWin* this, int)
 // callers   0   call targets   0
@@ -1312,8 +1312,9 @@ Status: Complete
 */
 void DiploWin::UNK3(int a1) {
     offer_count_[a1] = 0;
-    field_A24_ = 0;
-    field_A28_ = 0;
+    for (int side = 0; side != 2; ++side) {
+        offer_state_[side] = 0;
+    }
 }
 
 
@@ -1388,8 +1389,8 @@ void DiploWin::kill_offer(int a1, int a2) {
         count = offer_count_[a1] - 1;
         offer_count_[a1] = count;
         DiploOffersDirty = 1;
-        field_A24_ = 0;
-        field_A28_ = 0;
+        offer_state_[0] = 0;
+        offer_state_[1] = 0;
         redraw();
     }
 
@@ -1401,7 +1402,7 @@ void DiploWin::receive_clear_offer() {
 }
 
 void DiploWin::receive_channel_status(int status) {
-    field_A28_ = status;
+    offer_state_[1] = status;
     check_done();
     redraw();
 }
@@ -1409,10 +1410,10 @@ void DiploWin::receive_channel_status(int status) {
 // fields are read in the same conjunction/order as the original dispatcher;
 // the 0x150C payload deliberately sends A24 at +10 and A28 at +14.
 void DiploWin::receive_maybe_deal(int sender) {
-  if (field_A24_ == 1 && field_A28_ == 1) {
+  if (offer_state_[0] == 1 && offer_state_[1] == 1) {
     message_data(0x150B, sender, 0, 0, 0, 0);
   } else {
-    message_data(0x150C, sender, field_A24_, field_A28_, 0, 0);
+    message_data(0x150C, sender, offer_state_[0], offer_state_[1], 0, 0);
   }
 }
 
@@ -1471,8 +1472,8 @@ found:
     {
         offer_type_[a1][i] = a2;
         offer_value_[a1][i] = a3;
-        field_A24_ = 0;
-        field_A28_ = 0;
+        offer_state_[0] = 0;
+        offer_state_[1] = 0;
         if (a1 == 0) {
             message_data(0x1506, faction_id_with_,
                         a2, a3, a1, a1);
@@ -1546,10 +1547,10 @@ void DiploWin::on_button_clicked(int button_id) {
 
     case 2:
       DiploOffersDirty = 1;
-      field_A24_ = 1;
+      offer_state_[0] = 1;
       redraw();
       message_data(0x1509, faction_id_with_, 1, 0, 0, 0);
-      if (field_A24_ == 1 && field_A28_ == 1) {
+      if (offer_state_[0] == 1 && offer_state_[1] == 1) {
         message_data(0x150A, faction_id_with_, 0, 0, 0, 0);
         if (IsMultiplayerPBEM != 0) do_it();
       }
@@ -1557,7 +1558,7 @@ void DiploWin::on_button_clicked(int button_id) {
 
     case 3: {
       DiploOffersDirty = 1;
-      field_A24_ = 2;
+      offer_state_[0] = 2;
       redraw();
       message_data(0x1509, faction_id_with_, 2, 0, 0, 0);
       if (IsMultiplayerNet != 0 || IsMultiplayerPBEM != 0) return;
@@ -1588,7 +1589,7 @@ void DiploWin::on_button_clicked(int button_id) {
       // an observed raw write to this+0xA2C, even though it does not update
       // the first side's offer count.
       switch (rand() % 3) {
-        case 0: field_A28_ = 1; break;
+        case 0: offer_state_[1] = 1; break;
         case 1: offer_type_[0][0] = 2; break;
       }
       redraw();
