@@ -1,0 +1,104 @@
+{
+  "author": "coordinator",
+  "base_revision": "2b859a4e413c3a9feb0a9ac8323fcf3a0d028dfe",
+  "editable_files": [
+    "recovery/tests/test_stringbox_typed_add_oct10.py",
+    "src/stringbox.cpp",
+    "src/stringbox.h"
+  ],
+  "evidence": [
+    "Pinned57-byte original629710 calls StringStruct::add401100, testsEAX, returns its nonzero value directly, and only on success calls add_fixup629490 then explicitly clearsEAX. Current void declaration discards this contract and cannot express the success return. Historical QAEX catalogue decoration is not original linker/debug-symbol evidence; retain original marker/name/spans and use native compiler-observed emitted-symbol update if int return is supported. All six known original callers must be inspected for compatibility; source declaration change affects their emitted reference names and requires fresh full build/link and physical outside-scope checks. No other StringBox behavior, lifetime, layout, flags or matching policy changes are authorized.",
+    "Preserve the actual typed StringList pending text/flag/zero/index staging, unnormalized nonzero result propagation, one inherited insertion call, fixup only for zero and explicit zero success. Extend existing actual-source host controls, retaining every existing negative control, adding return-value damage cases that compile then fail at runtime under GCC/Clang, and pin exact original branch/callee/return effects. Native whole-StringBox measurements, original identity/claim continuity, source references, full build/link, coordinator source review and fresh destination rechecks required. No new historical claim except via native recorder; do not iterate on unrelated bodies or broaden source scope without review."
+  ],
+  "intent": "Recover the original StringBox insertion result contract while preserving typed staging and success-only row fitting.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4400576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4400928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4401008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4401200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6459664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6459920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6460112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6460560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6461200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6461264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6461312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6461616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6461824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "stringbox-add-result-oct17"
+}
