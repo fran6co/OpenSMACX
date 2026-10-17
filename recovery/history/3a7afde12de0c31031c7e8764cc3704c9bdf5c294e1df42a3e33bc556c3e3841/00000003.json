@@ -1,0 +1,20 @@
+{
+  "event_id": "8f85986dbd48241d1b5a7b2ca7bd04a0494134d85c4181fd031ed6fd1de4a3fa",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "scroll-typed-void-thumb-mutators-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Only src/scroll.cpp three mutator bodies/two emitted names and src/scroll.h two nonvirtual method return declarations change. Other bodies, class members/bases/virtual declarations, compiler/linker settings and all original annotations/claims are preserved. Native actual-Release old-source/header overlay calibration, unchanged candidate replica and body-damage control PASS; one candidate, no spelling/flag search.",
+      "Fresh full build-c3fsfb53 compiles/links. All176physical residuals PASS with exactly three mapped body projections, including175 complete protected objects; entire actual Scroll object matches the controlled candidate with zero omissions. Complete5581CPP census and all40owner verdicts are unchanged, retaining18Scroll and3049global masked matches. Full primary strict reference counts remain1846PASS/1181UNKNOWN/22FAIL with no changed existing result. This is C++ recovery quality, not additional matching/function coverage.",
+      "Native claim/reference/mapping checks PASS. Existing host fixture expanded from5to8 actual methods; boundary, untouched-state/no-callback and compiled runtime-failing guard/slot/update/arithmetic controls plus pinned span/offset/ret checks pass. Broad Scroll/Win/Gamma suite:86PASS and one preexisting arrow historical-lesson continuity failure, reproduced unchanged on master. Preserve c013 historical baseline/old assertions; separate immutable106 complete-record guard passes. Additional notification guard edit authorizes exactly the two corresponding symbol migrations, preserving its older baseline and all other assertions.",
+      "Independent source/pinned/ABI/test review supports bounded manual integration, not full original source/API proof, arbitrary indirect-caller, runtime or linked retained-selection/allocation acceptance. Original full instruction/store fidelity and prior task obligations remain pending; no historical claim granted/demoted and no failure/unknown waived."
+    ]
+  },
+  "previous_event": "f6ac33790ba1085e6f1d48a347600c073d5d1a1ef573b016897ef3b5b913f18c",
+  "request_id": "scroll-typed-void-thumb-mutators-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:scroll-thumb-mutator-contract-oct17"
+}

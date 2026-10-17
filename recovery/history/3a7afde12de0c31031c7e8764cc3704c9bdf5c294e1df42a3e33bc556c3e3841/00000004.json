@@ -1,0 +1,23 @@
+{
+  "event_id": "7d03968828c5ccda34ff14b7a12a9f71e4e6e29287fe350d4d726618c62e1c28",
+  "payload": {
+    "affects": [
+      "entity-00b1d35eb28f0ba788efab82e775eb43d985637e2d1b7d0974470b429f4e720b",
+      "entity-453a37751fb8ef74cec404d76d978b7da089f0bb28e34fded444ecc69b26ec63",
+      "entity-b7831bec45bdd049eb5acd12a5419ae228bff9458ef871e87d602ea6f2facb29"
+    ],
+    "author": "coordinator",
+    "discovery_id": "scroll-thumb-transient-store-restoration-oct17",
+    "evidence": [
+      "All three remain MISMATCH; direct ordinary member accesses permit VC6 coalescing/removal of original transient reset stores/reloads. The host final-state/ABI controls do not prove those machine-visible writes or asynchronous observation equivalence. No extended byte search or new exact claim was made.",
+      "The source retains unconditional reset statements and unsigned32bit wrapping for inset arithmetic, no clamping/safety fixes or callbacks. Future restoration requires supported original compiler/TU/alias/context evidence, not marker/span/claim edits or gate relaxation. Unknown indirect return consumers and complete linked/runtime/source provenance remain separate evidence obligations."
+    ],
+    "hypothesis": "Restore complete original instruction/transient-store fidelity across the three genuine void mutators without reintroducing unsupported volatile storage qualifications or fabricated result contracts.",
+    "kind": "discovery"
+  },
+  "previous_event": "8f85986dbd48241d1b5a7b2ca7bd04a0494134d85c4181fd031ed6fd1de4a3fa",
+  "request_id": "scroll-thumb-transient-store-restoration-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:scroll-thumb-mutator-contract-oct17"
+}
