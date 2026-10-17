@@ -10,7 +10,7 @@ import subprocess
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-BASE_REVISION = "c84e9372dd0f850ef5b91c27208258630eea347a"
+BASE_REVISION = "7270943e6988505e93cff9d32d126c129f70e8ab"
 PRIOR_PROFILE_GROUPS = (
     (
         "src/game.cpp",
@@ -40,38 +40,49 @@ PRIOR_PROFILE_GROUPS = (
         "src/pickwin.cpp",
         "src/council.cpp",
     ),
+    (
+        "src/prefwin.cpp",
+        "src/fx.cpp",
+        "src/replaywin.cpp",
+        "src/multidebug.cpp",
+        "src/newtechwin.cpp",
+        "src/quaylewin.cpp",
+        "src/battlewin.cpp",
+        "src/lock.cpp",
+        "src/monuwin.cpp",
+        "src/name_table.cpp",
+    ),
 )
 PREVIOUS_OWNERS = tuple(owner for group in PRIOR_PROFILE_GROUPS for owner in group)
 NEW_OWNERS = (
-    "src/prefwin.cpp",
-    "src/fx.cpp",
-    "src/replaywin.cpp",
-    "src/multidebug.cpp",
-    "src/newtechwin.cpp",
-    "src/quaylewin.cpp",
-    "src/battlewin.cpp",
-    "src/lock.cpp",
-    "src/monuwin.cpp",
-    "src/name_table.cpp",
+    "src/ambience.cpp",
+    "src/deletionlist.cpp",
+    "src/factionprofilewin.cpp",
+    "src/interlude.cpp",
+    "src/netmsg.cpp",
+    "src/playerlock.cpp",
+    "src/probe.cpp",
 )
-REJECTED_OWNERS = ("src/gamma.cpp", "src/credits.cpp")
-PREVIOUS_REJECTED_OWNERS = ("src/alphanet.cpp", "src/strings.cpp")
+REJECTED_OWNERS = (
+    "src/buffer.cpp", "src/alphamovie.cpp", "src/basepop.cpp",
+    "src/terraforming.cpp", "src/newgame.cpp",
+)
+PREVIOUS_REJECTED_OWNERS = (
+    "src/alphanet.cpp", "src/strings.cpp", "src/gamma.cpp", "src/credits.cpp",
+)
 NEW_PROFILE_COMMENT = (
-    "# Preserve measured frame-based accesses in the remaining owner cohort.\n"
-    "# Gamma and Credits retain their measured default source recipes.\n"
+    "# Preserve measured frame-based accesses in the core application cohort.\n"
+    "# Mixed or non-improving owners retain their measured default recipes.\n"
 )
 NEW_PROFILE_BLOCK_TEXT = (
     "set_source_files_properties(\n"
-    "    src/prefwin.cpp\n"
-    "    src/fx.cpp\n"
-    "    src/replaywin.cpp\n"
-    "    src/multidebug.cpp\n"
-    "    src/newtechwin.cpp\n"
-    "    src/quaylewin.cpp\n"
-    "    src/battlewin.cpp\n"
-    "    src/lock.cpp\n"
-    "    src/monuwin.cpp\n"
-    "    src/name_table.cpp\n"
+    "    src/ambience.cpp\n"
+    "    src/deletionlist.cpp\n"
+    "    src/factionprofilewin.cpp\n"
+    "    src/interlude.cpp\n"
+    "    src/netmsg.cpp\n"
+    "    src/playerlock.cpp\n"
+    "    src/probe.cpp\n"
     '    PROPERTIES COMPILE_OPTIONS "/Oy-")'
 )
 NEW_PROFILE_BLOCK = (tuple(sorted(NEW_OWNERS)), ("/Oy-",))
@@ -183,7 +194,7 @@ def test_profile_guard_rejects_policy_mutations():
     )
     assert not cmake_profile_delta_is_exact(baseline, changed_options)
     extra_owner = candidate.replace(
-        "    src/prefwin.cpp\n", "    src/prefwin.cpp\n    src/other.cpp\n"
+        "    src/ambience.cpp\n", "    src/ambience.cpp\n    src/other.cpp\n"
     )
     assert not cmake_profile_delta_is_exact(baseline, extra_owner)
     global_flag_change = candidate.replace(
@@ -208,7 +219,7 @@ def test_profile_guard_rejects_policy_mutations():
         '\nset_source_files_properties(src/strings.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
     )
     assert not cmake_profile_delta_is_exact(baseline, strings_profile)
-    for rejected in (*REJECTED_OWNERS, "src/base.cpp", "src/win.cpp", "src/technology_queries.cpp"):
+    for rejected in (*REJECTED_OWNERS, *PREVIOUS_REJECTED_OWNERS, "src/base.cpp", "src/win.cpp", "src/technology_queries.cpp"):
         extra_profile = candidate + (
             f'\nset_source_files_properties({rejected} PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
         )
@@ -220,9 +231,9 @@ def test_profile_guard_rejects_policy_mutations():
     assert not measurement_policy_is_unchanged(baseline_measurement, changed_measurement)
 
 
-def test_application_profiles_match_immutable_baseline_plus_ten_remaining_owners():
+def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     task = json.loads(
-        (ROOT / "recovery/tasks/owner-frame-and-rating-oct17.json").read_text(
+        (ROOT / "recovery/tasks/core-owner-and-win-flags-oct17.json").read_text(
             encoding="utf-8"
         )
     )

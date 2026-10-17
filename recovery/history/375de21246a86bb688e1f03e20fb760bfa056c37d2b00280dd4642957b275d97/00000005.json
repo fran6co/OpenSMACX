@@ -1,0 +1,21 @@
+{
+  "event_id": "4276b9a968b75ed9f0e50dcbe06fb223cec45a947fa12ff48983c1836118c716",
+  "payload": {
+    "affects": [
+      "entity-3b0985236717f976bfd67c673d96b29d197802e8cf514cadada4f3bacdb7393e",
+      "entity-3f905c3323f4749d3e847c2f13715001ef87a692be25c419706bfbe9061ac753"
+    ],
+    "author": "coordinator",
+    "discovery_id": "win-existing-typed-flag-predicates-oct17",
+    "evidence": [
+      "Pinned on_redraw_nc5F2CF9 tests byte[this+9C],2; currentuint32iSomeFlag_ followsuint32iFlags_+98. Pinned nonclient_to_screen5ED425/2B loads byte[this+98] and tests20; existing WinFlagClipToParent names that exactbit. Only these two predicates change. No semantic name for iSomeFlag bit2, new field/layout, Win flags, original mapping movement or deliberate bug fix."
+    ],
+    "hypothesis": "Replace two low-byte pointer aliases with existing typed Win fields while preserving flag meaning, callback order and original quirks.",
+    "kind": "discovery"
+  },
+  "previous_event": "3f25be8e7aefaafe5bc5d51c93b7fea7349600ab8233733514bcd7e4ce55b456",
+  "request_id": "win-existing-typed-flag-predicates-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:core-owner-and-win-flags-oct17"
+}
