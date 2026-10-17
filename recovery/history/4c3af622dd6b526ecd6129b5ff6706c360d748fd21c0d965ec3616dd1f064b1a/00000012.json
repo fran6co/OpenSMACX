@@ -1,0 +1,43 @@
+{
+  "event_id": "bfc2b2971d689462831751afe4d3e83db37d68164e169593193bfcdec8e9753b",
+  "payload": {
+    "affects": [
+      "entity-10ef60c68f429830292cb5855c3210ee1a196c779a63c976ce426654a4d2f1c7",
+      "entity-11079743105eaab389633b62a4156accc7623389b6913801170ad220e5c98a59",
+      "entity-1715d2f3652ace8753d1cfcb280de323df31263611180204eada003d65abe574",
+      "entity-189e438252e1e81cf2f4f6f8c044999157efefde77280a2a764f144af4cbbd40",
+      "entity-28291d0b67beebac52346d9626cd2353b084bc1b0fac60e6005100160665ae1f",
+      "entity-283dc8903755d96bc80097042fa34a54275959b088c539ae4239a675ef62225d",
+      "entity-2cb9a7198b4ebb9611d79c6a71b1d8e6aa52440080e6c83d37f5b60c106169f3",
+      "entity-40cece7cbfaf627242d60a6ee86962d3cf7a030850390a2c10600623114e09d1",
+      "entity-4a34ab4f393b56af2ea491bd4cd23f84a6cce2dfd0f5a535860a74c03d231efe",
+      "entity-4e58f0a2d2f3c7e4d3b4052b20391c1ca6e7ab55deac8ea7d246d5e0a31354af",
+      "entity-53052779dd3e40dbdc6ec574a12cf0822584d1ecea3820e4f2c2f82ddce72ca8",
+      "entity-666e7bce1cebce399a50ab68accdba3bad2b8fbd0b476b355384ee01a5f2ae7d",
+      "entity-78a01a620867398246462f96a2cf948bf33c484397079dd69ca79167a335aeb7",
+      "entity-864cb14f6e0efe4d1a24c26c3302b18511d6ec8cc8a4821055147878675ccba9",
+      "entity-8fa4840ce1f874fb41ef869ffecb9c3476993d0dbae69e3bb90334c7bb721d69",
+      "entity-96709e5fd6974e9f22c69812d6aee5673f0773513d17f73e912d9993750e45bd",
+      "entity-96dadf05f6cba9342cacfb7f5c6dcf826d71fd85d8f5dc99c0410ad135f92a17",
+      "entity-a6320d49d1eb682ce4f58c156895665171c86543b576021d56f0260a332d6b65",
+      "entity-ab382be6f25fd49d17ab8d6dd03e40a6922ffdd6df77ca39a1407413cf59dfac",
+      "entity-b435ba562af8aa3de3199704e833ba95011592240becdb0c7c1e62cf561c9dea",
+      "entity-cf169ababcb6833c51f5c3237d7f39b7ac66665514c5d3d077b8127271e4be85",
+      "entity-d9f3cb3ad6cb1e088d912cbac31fed1f028ca43663fde15ef7a09f85bd420d50",
+      "entity-e9de642e0565930a946e9e2533458a150504e89f9fdc741406f3a673738f1e16",
+      "entity-ed04f9b55a269043250be19d76dbb93ca57f266a09bec1525c45b1353fd8efb5"
+    ],
+    "author": "coordinator",
+    "discovery_id": "prefwin-volume-switch-extent-debt-oct17",
+    "evidence": [
+      "Newmaskedexact491380 native strictFAIL: declared102byte span ends4913E6, emittedCOMDAT128bytes contains four table relocations104through116 outside that span. Existingoriginaltable binding4913E8 is separate. Do not enlarge ORIGINAL from adjacency or label combinedcode/data exact. All previous strict failures/unknowns remain unchanged."
+    ],
+    "hypothesis": "Preserve the newly exposed PrefWin on_scrolling switch-data extent failure as an unresolved original-domain obligation.",
+    "kind": "discovery"
+  },
+  "previous_event": "58a732dcb3a83410fa927c948ea62330e9c387456c6690f360ec8703ea32da2a",
+  "request_id": "prefwin-volume-switch-extent-debt-oct17",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:owner-frame-and-rating-oct17"
+}

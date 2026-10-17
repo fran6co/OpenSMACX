@@ -1,0 +1,20 @@
+{
+  "event_id": "4c0e1d95f006e9fda748fa3966f0fc96af5b7341fe295358e334ec6038919476",
+  "payload": {
+    "affects": [
+      "entity-12aa0a027dd9c1b8d2b017393ccb7df4a0b2f7df9a9381512262ba98ca094a23"
+    ],
+    "author": "coordinator",
+    "discovery_id": "get-rating-existing-typed-rules-mask-oct17",
+    "evidence": [
+      "Existing uint32 game_rules_ is+0C in GameDataStateWindowFields, originalaccessedcell9A649C; existing enum RULES_INTENSE_RIVALRY is40. Pinned97byte body/40instructions tests byte[9A649C],40 at5AC029, conditionaljump5AC030 to5AC033, incrementsEDI5AC032, returns5AC050; no calls. This is not evidence for a new field/global or complete original allocation."
+    ],
+    "hypothesis": "Replace the get_rating byte-pointer alias with the existing typed rules member and named rivalry flag, preserving its faithful arithmetic and original access behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "a981ac529957a20a310c913018453df63dbea223109dddadc055fb99657e655f",
+  "request_id": "get-rating-existing-typed-rules-mask-oct17",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:owner-frame-and-rating-oct17"
+}

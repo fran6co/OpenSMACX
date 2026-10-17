@@ -10596,7 +10596,7 @@ int __cdecl get_rating(int faction_id, int arg2) {
     for (int i = 3; i <= value; i++) {
         rating += (i - 1) / 2;
     }
-    if (*(unsigned char *)&GameDataStateStorage.fields_.game_rules_ & 0x40) {
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) != 0) {
         rating++;
     }
     return (rating + 6) * arg2 / 0xa0;

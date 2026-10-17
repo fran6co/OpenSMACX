@@ -1,0 +1,19 @@
+{
+  "event_id": "c210d32b1bf59409b6aec933c1b5a22957fe7d8da57e2614799ef01f8ee8be86",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "get-rating-existing-typed-rules-mask-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Only that one condition in base.cpp changes. Whole-file c84e comparison allows precisely the replacement; formula, loop, signeddivision, arguments, storage/header facts and all source metadata/claims remain. No Base compiler/profile change. Eight native calls separately control actualRelease and settled historicalframefamily (/c /O2 /Gy /GR- /Oy- /GX): baseline/unchangedreplica/entrythrowdamage/typedcandidate. ActualMISMATCHtoMISMATCH; historicalBYTE_EXACTtoBYTE_EXACT. Complete get_rating function_signature identical under both families. Thus no temporary matching regression or new claim grant was needed.",
+      "New actual-source/pinned fixture12PASS across GCC/Clang, with independent bounded closed-form arithmetic reference, correctdiff4anchors12/13, negative/positive scales, eight distinct factions, all32one-bit/off-on flag variations and high-bit combinations. Wrongmask/polarity/faction/scaling mutants fail at runtime. Fullpinnedimage+97byte hashes, complete40instruction decode and unchanged identity/span/historicalclaim are checked. Hostmodel is not nativeABI/gameplay proof.",
+      "Both wholeBaseCOFF comparisons intentionally remainFAIL because unchangedcapture_base instruction scheduling changes elsewhere in the TU. Independent review verifies actual9byte and historical4byte differences are each two independent non-flag-setting stack loads into distinct registers swapping order, with no directbranch into either interior, no relocations there, equal section sizes and otherwise identical bytes/symbols/relocations. This is local commutation evidence, not wholeobject identity or automatic preservation. The existing native discovery and minimal affected-review expansion retain original202subject task/c84ebaseline and add only capture_base identity, with no extra source edit or flag permission. Its original unexpandedFAIL stays visible."
+    ]
+  },
+  "previous_event": "4c0e1d95f006e9fda748fa3966f0fc96af5b7341fe295358e334ec6038919476",
+  "request_id": "get-rating-existing-typed-rules-mask-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:owner-frame-and-rating-oct17"
+}

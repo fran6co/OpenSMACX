@@ -1,0 +1,39 @@
+{
+  "event_id": "46e676d0ed1e3c4c58cc4ee902e169065504387764ca9e931421f050f3203bd8",
+  "payload": {
+    "affects": [
+      "entity-16995d909bc52e15fcaf16178620cf3975bb7a927fc970ea2aeb76875eb42472",
+      "entity-22abc920a91e578d4e44fbe0b8802f11103244a9e720ca8e399703427d772f65",
+      "entity-31f211769e2c43138a6acaf5e958cc607b9cdc7ee6d4fa57959d0c6df7e24e35",
+      "entity-37ac42c3a2df0c8ca316569ad3ccb1e1ea0e3b0156648d913708efb153413842",
+      "entity-6841172db1c45ac47ede1868465421bbb5a7690c699701e343307078d1a0e420",
+      "entity-68d3c7c88ffe5bbb52ef3e389fe2f42ce8e4ed200560fa795217fbddb63d19ce",
+      "entity-6af22c0ff3bc3c6a934bd1a2f0cc383385af4c7724b5b4117f57f0c2a5fae302",
+      "entity-6f4473da8e2daa954da1460a09eece6c651bab1bbab424bf9c0e49043f32cc62",
+      "entity-8e4b222fb13c97f4946bbf3120525ed76affc8fe9f16776ce92887e48320141e",
+      "entity-99094ae770a7594a7fe5ff178768005faedf65e7d7882e95f2f862040ab83124",
+      "entity-9b7dd2ac1bcdcf302cb05a563152359586e91a9462dfa001216f270e4b8e03e6",
+      "entity-b0f7e9e19c8c798e9dce88507647e3ca6bb26ba07335da8100e8c0aff640c444",
+      "entity-b7ff59a495c3c30a3dccf84068b36e2788e2d3e0421f5c66cfd9bd6cdb7c5d84",
+      "entity-bc43a6e068999369c5402e26db2b2e80f170c8af05d225c87f7d9827baf0644c",
+      "entity-be8dbb08cd4d5bcdc2b7ce6216e2a12ef5c4bd4170a89985b78f5b7e6a8fa7ec",
+      "entity-c8155f69436321262c2c9ea26a12a945341de97f78db0589535306ad2ecf86ce",
+      "entity-d123a826abd53f3cb45bfd3290ba41e227fd9534cb6f68b743b4d85a700fba6e",
+      "entity-d4a8232c1c79e7ca0bf229a865ccc7c522fa54ea842ebc873cc1df5301f659a2",
+      "entity-d8bbd087a46e746aefa3f7cf13d3efb7c48934eac446cbfdbf6cd5e6e515b2f1",
+      "entity-ea47e188dac55f3f7a0cef1b59a5091ed3b638f5cd363219599429854a3b8c34"
+    ],
+    "author": "coordinator",
+    "discovery_id": "credits-frame-negative-oct17",
+    "evidence": [
+      "All four native controlsPASS; 2gains/1existingexactloss at428830; no per-function flag, source movement or claimed recovery hides it."
+    ],
+    "hypothesis": "Reject the loss-bearing owner profile and retain its original current source/default recipe.",
+    "kind": "discovery"
+  },
+  "previous_event": "99d98debc110bfe037d17a817a8083a32d1138ccc9789891afab0b26c29f7bf5",
+  "request_id": "credits-frame-negative-oct17",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:owner-frame-and-rating-oct17"
+}
