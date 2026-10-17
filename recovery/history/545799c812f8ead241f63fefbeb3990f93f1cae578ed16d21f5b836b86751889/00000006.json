@@ -1,0 +1,19 @@
+{
+  "event_id": "8a3f6b7886bb2de40801f3a1237b08f344d574f069dc27e08cc2576c7ee50ae0",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "heap-header-comment-compilation-context-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/heap.h explains live shutdown on its existing declaration line. No artificial source-line padding or compiler workaround is introduced; no outside C++ owners are edited.",
+      "Final candidate175physical object residuals pass. The remaining Heap scoped report fails because the corrected canonical/shared role removes different bodies from equal complete objects. Stronger native whole-Heap comparison with zero body omissions passes identical fingerprints, sections, references, symbols and associations. Both reports are retained: the scoped failure is not relabeled or waived, and no fictional original identity is assigned to shared aliases.",
+      "This supports bounded coordinator-reviewed manual integration, not native automatic acceptance, complete linked retained-selection/allocation preservation, exhaustive structure/lifetime or working-game proof."
+    ]
+  },
+  "previous_event": "c21f0455c931fec2cdaa1588c7ed09d46969ae8ae67c57f2abb74dd59e3d9b78",
+  "request_id": "incorporate-heap-header-role-comment-without-context-drift-oct17",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:heap-lifetime-role-oct17"
+}

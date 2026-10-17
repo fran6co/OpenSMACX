@@ -1,0 +1,24 @@
+{
+  "event_id": "144aa6c55e141844adc648005e362480c54f05751be8babc32ace5bf19eca993",
+  "payload": {
+    "affects": [
+      "entity-544318124924f35aed39520bfa71ad953925fe0241d37eccb9d594080f9873db",
+      "entity-dfd17f40288497567e9b1858ea22e6892ee79aebf9b4c63c7368142ed44b9caa",
+      "entity-f73ea71b6462368a74f6ab531b79fc518ad2a12ea9f0c1ef7a3e146259844ad5"
+    ],
+    "author": "coordinator",
+    "discovery_id": "heap-original-retention-and-name-obligations-oct17",
+    "evidence": [
+      "The original retains distinct equal cleanup entries5D4580 and5D45B0; the current link folds destructor/reset/shutdown bodies. Identical COFF cleanup bodies and corrected bounded caller references do not establish original retained-entry allocation or linked selection for all users. No export/linker-flag change or originalalias assertion is authorized.",
+      "Catalogue names are imported address-only hypotheses, not original debug names. Source comments retain that limitation. Mapped caller analysis is partial; negative caller search is not deadness proof. Unused/live explicit shutdown APIs preserve existing target contracts without claiming original spelling.",
+      "This task follows pending heap-strings-textindex-cleanup-target-identity-oct17 from popup-default-store-order-oct17 and the older deferred TextIndex/Heap boundary. Those journals and baselines are preserved rather than reset or copied; this new ownership scope does not fabricate full acceptance or silently close their wider obligations."
+    ],
+    "hypothesis": "Original entry retention, method spelling and complete caller/lifetime ownership remain obligations after the evidence-backed cleanup role correction.",
+    "kind": "discovery"
+  },
+  "previous_event": "8a3f6b7886bb2de40801f3a1237b08f344d574f069dc27e08cc2576c7ee50ae0",
+  "request_id": "heap-original-retention-and-name-obligations-oct17",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:heap-lifetime-role-oct17"
+}

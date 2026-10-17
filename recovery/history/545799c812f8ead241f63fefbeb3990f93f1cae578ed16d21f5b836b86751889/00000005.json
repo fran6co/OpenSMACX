@@ -1,0 +1,23 @@
+{
+  "event_id": "c21f0455c931fec2cdaa1588c7ed09d46969ae8ae67c57f2abb74dd59e3d9b78",
+  "payload": {
+    "affects": [
+      "entity-05f418a5b6f6cd56f722e237545107ccd95273fc6f3dae58a8275d4938450b07",
+      "entity-544318124924f35aed39520bfa71ad953925fe0241d37eccb9d594080f9873db",
+      "entity-dfd17f40288497567e9b1858ea22e6892ee79aebf9b4c63c7368142ed44b9caa"
+    ],
+    "author": "coordinator",
+    "discovery_id": "heap-header-comment-compilation-context-oct17",
+    "evidence": [
+      "src/vc6_compat.h static_assert expands to a typedef named vc6_static_assert_ plus__LINE__. An added standalone comment moved the Heap assertion81to82. The first build showed actual byte/reference/private-symbol changes in ten outside TUs, not merely debug naming. No preprocessed i artifact was captured, so the detailed compiler-internal cause is not asserted.",
+      "The one-line declaration comment form restores the existing assertion line81 without padding, line directives, macro/ABI/flag changes or deleted explanation. The two build receipts for base.cpp differ only in heap.h input; both header digests verified, including exact reconstruction of the initial formatting. A fresh complete application build removes all ten outside residual failures."
+    ],
+    "hypothesis": "A seemingly comment-only header change can alter this compiler input through the VC6 static_assert shim using __LINE__; keep the existing declaration layout when explaining a lifetime role rather than introducing unrelated compiler residue.",
+    "kind": "discovery"
+  },
+  "previous_event": "cfb6d924fa837722a3ce5064d22f1e47ff1fb7c40ba11336a835760a66cfaf0d",
+  "request_id": "heap-header-comment-compilation-context-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:heap-lifetime-role-oct17"
+}

@@ -72,7 +72,7 @@ Status: Complete
 BOOL Strings::init(size_t mem_size) {
     // BOTH HELPERS ARE HAND-INLINED. The image writes shutdown() and put()
     // out here rather than calling either - see the LEVER above - so this is
-    // shutdown()'s `~Heap(); is_populated_ = false;` and put()'s
+    // shutdown()'s live Heap reset and flag clear, and put()'s
     // strlen/Heap::get/strcpy, spelled out. Both keep their own out-of-line
     // BYTE_EXACT claims at 0x00616950 and 0x00616970.
     if (is_populated_) {
@@ -102,22 +102,10 @@ Return Value: Always zero (the mangled name decorates an `int` return; the
     image's tail is `xor eax, eax; ret`, not a bare `ret`)
 Status: Complete
 */
-// Non-inline forwarder to heap.h's `MEASURED inline` ~Heap. The image CALLS
-// the out-of-line ??1Heap (0x005D4580) here rather than open-coding it, and
-// plain /O2 expands the destructor into this body - 21 instructions against
-// the image's 7. Same idiom as faction.cpp's ascending_call: the E8 target is
-// a relocation on both sides, so this symbol's own name costs nothing.
-static void __fastcall strings_heap_close(Heap *self) {
-    self->~Heap();
-}
-
 int Strings::shutdown() {
-    // WRONG CALLEE fix: the image's one call here targets 0x005D4580,
-    // ~Heap, not Heap::shutdown() (0x005D45B0) - identical logic, different
-    // symbol. The call goes through the forwarder above because the direct
-    // pseudo-destructor spelling only stays a call while the expansion is
-    // off; see the TRIED note on the marker above.
-    strings_heap_close(this);
+    // 616950 calls the live reset at 5D4580. The base remains alive for
+    // later init/put and will be destroyed normally when Strings dies.
+    Heap::reset();
     is_populated_ = false;
     return 0;
 }

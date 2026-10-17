@@ -1,0 +1,27 @@
+{
+  "event_id": "d84f579ec640470ddd3554441e407f7e59afb892fa7636a722dc521d95cc2b0e",
+  "payload": {
+    "affects": [
+      "entity-074c02db288f982ce4bbdff24112d4ed632d1b22e660faeb5dd7eb5a114d7c91",
+      "entity-28eecb654f2d32b0cef01c0a514daa9e26f3a470e41763fa67fa06d0ce884f28",
+      "entity-544318124924f35aed39520bfa71ad953925fe0241d37eccb9d594080f9873db",
+      "entity-dfd17f40288497567e9b1858ea22e6892ee79aebf9b4c63c7368142ed44b9caa",
+      "entity-f73ea71b6462368a74f6ab531b79fc518ad2a12ea9f0c1ef7a3e146259844ad5",
+      "entity-fcabb8c936e402ed2b20c41d45a17f550a500890f23f5e57113f80fc922b2580"
+    ],
+    "author": "coordinator",
+    "discovery_id": "heap-cleanup-live-versus-final-role-oct17",
+    "evidence": [
+      "Strings constructor6168D0 constructs its Heap base at offset0 through5D4560; destructor6169C0 tail-jumps5D45B0. Live Strings init/shutdown use5D4580 and global StringTable is reused across reloads. A call to a real base destructor in live shutdown would end that base lifetime, unlike the original cleanup/reuse contract.",
+      "TextIndex constructor5FDF40 constructs the Heap member at+104. Destructor5FDF60 clears its own count/name, adjustsECX+104, then tail-jumps5D45B0. Live clear_index5FE270 conditionally calls5D4580, then clearscount and advances118 stride. Both original cleanup spans are independently present42byte bodies; equal operations do not prove originalaliases or ICF.",
+      "Independent pinned-call/source review agrees with the role interpretation. The original method name of5D4580 is unknown: reset is descriptive, and old ORIGINAL catalogue spellings remain historical. Existing scoped source roles and declared layout are retained; this is not an exhaustive caller or lifetime proof."
+    ],
+    "hypothesis": "The imported canonical method spellings for equal cleanup entries are reversed: 5D4580 is used while Heap remains live, and 5D45B0 is used for genuine base/member destruction. Correct the emitted-symbol roles, not the original identities.",
+    "kind": "discovery"
+  },
+  "previous_event": "61c9cfa3e04e28dd625296cb6781f860273ec7686976012ffd6888352a1502c3",
+  "request_id": "heap-cleanup-live-versus-final-role-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:heap-lifetime-role-oct17"
+}
