@@ -1,0 +1,18 @@
+{
+  "event_id": "a1ae63a96511c765223d6627b9719bcf2e29e28188f86d574244b11a08877002",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-right-menu-defensive-bound-deviation-20261003",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Restore native direct vehicle/prototype/chassis/weapon/production lookups, case4 recentering, base actions, quick primary-map receiver and65/66 submenu dereferences within the complete authorized owner/helper scope. Both original menu selections use get_selected and an upper-only signed slot check; existing PullDown.item_id represents that original indexed access without changing the dependency header or its convenience accessor.",
+      "No safety improvement was substituted for original behavior. The host tests deliberately use bounded indices and upper-slot refusal only: removing added guards does not establish malformed-state reachability, native fault equivalence or full runtime recovery."
+    ]
+  },
+  "previous_event": "e95a464a842567d7501a241e858dab2b5c7045083148ed355c73bc7a79b495ae",
+  "request_id": "right-menu-original-unchecked-lookups-restored-oct18",
+  "schema_version": 1,
+  "sequence": 34,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

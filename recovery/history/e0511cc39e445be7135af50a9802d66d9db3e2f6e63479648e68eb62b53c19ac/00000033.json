@@ -1,0 +1,21 @@
+{
+  "event_id": "e95a464a842567d7501a241e858dab2b5c7045083148ed355c73bc7a79b495ae",
+  "payload": {
+    "affects": [
+      "entity-13d9d167a54f174c9d78067add169b6d6dd4282388d2e9ea10e60a075046a330"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "right-menu-whole-owner-original-fidelity-oct18",
+    "evidence": [
+      "Pinned whole-primary decode and actual indexed tables distinguish quick IDs320..325, direct33 and65, and the three other action ranges. Native33 gates multiplayer then calls BaseWin.soft_zoom(base_id) and production(0,0); native67 calls NetDaemon.veh_drop, not the unrelated free function. CaseB is gated too, case8 reloads the live selected vehicle after set_move, and lock_veh has no added negative preguard.",
+      "Native682820 is a space, not a parenthesis. Original33/35..39 are space+label and34 is space+label89C+space+production name, through real shared StringTemp. Construction precedes coordinate/base/vehicle queries. Eligibility uses the entry selected snapshot; triad2 offers6E, prototype.plan9 offers66, named advanced preference400 gates69 and6A together, and wrapping happens when MapIsFlat bit0 is clear. Separate distance tests reload coordinates after intervening calls."
+    ],
+    "hypothesis": "The right-menu owner must preserve original selected-unit eligibility, shared scratch formatting, modal reads and actual action targets, not the prior transcription or its added safety behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "014779107e6cdfa252c6c58a6528fa2656cea03bed727cf48edd825ebf1c5717",
+  "request_id": "right-menu-whole-owner-original-fidelity-oct18",
+  "schema_version": 1,
+  "sequence": 33,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

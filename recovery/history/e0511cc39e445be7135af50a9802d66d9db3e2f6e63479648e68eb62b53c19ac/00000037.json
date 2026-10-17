@@ -1,0 +1,20 @@
+{
+  "event_id": "548d93c76c6c95e22f0a46ee1dfb5869dd93c63502207d4241aeb5f60adb5609",
+  "payload": {
+    "affects": [
+      "entity-13d9d167a54f174c9d78067add169b6d6dd4282388d2e9ea10e60a075046a330"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "right-menu-original-match-and-linked-lifetime-restoration-oct18",
+    "evidence": [
+      "Full original measurement is now possible after moving genuine PullDown construction, but the body remains a mismatch. Preserve both primary and cold original spans and historical restoration obligations. The current linked-function verifier still cannot qualify this shape as one independently bounded code COMDAT. Do not change compiler flags, erase associated data, add a waiver or infer whole-game acceptance from bounded host tests or selected-object observations."
+    ],
+    "hypothesis": "The corrected right-menu owner still requires complete original matching, generated lifetime/associated-data restoration and linked retained-selection/runtime qualification.",
+    "kind": "discovery"
+  },
+  "previous_event": "f308630f31f2b771506e0c7c357ac823e51b0c510f78ebb2390788300b2129e9",
+  "request_id": "right-menu-original-match-and-linked-lifetime-restoration-oct18",
+  "schema_version": 1,
+  "sequence": 37,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

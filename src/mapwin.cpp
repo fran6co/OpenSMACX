@@ -5448,37 +5448,26 @@ void MapWin::draw_base_names() {
 
 namespace {
 void mapwin_add_context_label(PullDown &menu, int label_byte_offset, int id) {
-    LPSTR text = label_get(label_byte_offset / 4);
-    if (text) menu.add_item(id, text);
+    menu.add_item(id, label_get(label_byte_offset / 4));
 }
 
-void mapwin_add_parenthesized_label(PullDown &menu, int label_byte_offset,
-                                    int id) {
-    LPSTR source = label_get(label_byte_offset / 4);
-    if (!source) return;
-    char text[512];
-    text[0] = '\0';
-    strcat(text, "(");
-    strcat(text, source);
-    strcat(text, ")");
-    menu.add_item(id, text);
+void mapwin_add_indented_label(PullDown &menu, int label_byte_offset, int id) {
+    StringTemp[0] = '\0';
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(label_byte_offset / 4));
+    menu.add_item(id, StringTemp);
 }
 
 void mapwin_add_base_production(PullDown &menu, const Base &base, int id) {
+    StringTemp[0] = '\0';
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x89C / 4));
+    strcat(StringTemp, " ");
     const int production = base.queue_production_id[0];
-    LPSTR production_name = 0;
-    if (production < 0 && -production < MaxFacilityNum) {
-        production_name = StringTable.get(Facility[-production].name);
-    } else if (production >= 0 && production < MaxVehProtoNum) {
-        production_name = VehPrototypes[production].veh_name;
-    }
-    if (!production_name) return;
-    char text[512];
-    text[0] = '\0';
-    strcat(text, "(");
-    strcat(text, production_name);
-    strcat(text, ")");
-    menu.add_item(id, text);
+    strcat(StringTemp, production < 0
+        ? StringTable.get(Facility[-production].name)
+        : VehPrototypes[production].veh_name);
+    menu.add_item(id, StringTemp);
 }
 }
 
@@ -5489,11 +5478,11 @@ void mapwin_add_base_production(PullDown &menu, const Base &base, int id) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046c0d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 // TRIED: full transcription of both menu-build paths (quick 6-item and the full context menu) and the whole 3-level action dispatch (39 item ids across 4 jump-table ranges); MISMATCH #15 is in the SEH/PullDown-construction prologue, not the menu logic - coverage is close to 100% of the original's ~5270 bytes. A few multi-arg call orderings (e.g. lock_veh) were derived from push order rather than re-verified against a second source.
 void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
+    PullDown menu;
     client_to_screen(&screen_x, &screen_y);
     int base_id = base_at(tile_x, tile_y);
     int vehicle_id = veh_at(tile_x, tile_y);
     int selected_vehicle = ConsoleGlobal.selected_vehicle_;
-    PullDown menu;
     menu.init(0);
 
     if (map_view_index_ == 1) {
@@ -5508,7 +5497,10 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         menu.show(screen_x, screen_y, pop_expire);
         if ((GameDataStateStorage.fields_.game_state_ & 0x800U) != 0) return;
 
-        const int item_id = menu.get_selected_id();
+        // Both original paths apply only a signed upper bound to the slot;
+        // the convenience get_selected_id() adds a non-original lower bound.
+        const int selected_item = menu.get_selected();
+        const int item_id = selected_item < 64 ? menu.item_id(selected_item) : -1;
         if (base_at(tile_x, tile_y) != base_id ||
             veh_at(tile_x, tile_y) != vehicle_id ||
             ConsoleGlobal.selected_vehicle_ != selected_vehicle) {
@@ -5528,7 +5520,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             MainInterfaceGlobal.button_group(1).set(0x3EE, 1);
             return;
         case 0x323:
-            if (MapWinTable[0]) MapWinTable[0]->set_center(tile_x, tile_y, 1);
+            MapWinTable[0]->set_center(tile_x, tile_y, 1);
             return;
         case 0x324:
             set_center(tile_x, tile_y, 1);
@@ -5553,8 +5545,10 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         }
     }
 
-    if (ConsoleGlobal.cursor_active_ != 0 && vehicle_id >= 0 &&
-        stack_check(vehicle_id, 1, -1, -1, -1) == 2) {
+    // Eligibility uses the entry-selected unit, not the clicked tile's stack.
+    // The original indexes its vehicle/prototype/chassis tables directly.
+    if (ConsoleGlobal.cursor_active_ != 0 &&
+        Chassis[VehPrototypes[Vehs[selected_vehicle].proto_id].chassis_id].triad == TRIAD_AIR) {
         mapwin_add_context_label(menu, 0xB18, 0x6E);
     }
     mapwin_add_context_label(menu, 0x8D4, 2);
@@ -5582,14 +5576,17 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         }
         if ((GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0 ||
             base.faction_id_current == faction) {
-            mapwin_add_parenthesized_label(menu, 0x898, 0x33);
+            // The original shares StringTemp and indents these entries with
+            // a space; production also includes the label before the name.
+            mapwin_add_indented_label(menu, 0x898, 0x33);
             mapwin_add_base_production(menu, base, 0x34);
-            mapwin_add_parenthesized_label(menu, 0x8A0, 0x35);
-            mapwin_add_parenthesized_label(menu, 0x8A4, 0x36);
-            mapwin_add_parenthesized_label(menu, 0x8A8, 0x37);
-            mapwin_add_parenthesized_label(menu, 0x8AC, 0x38);
-            if ((GameDataStateStorage.fields_.game_more_preferences_ & 4U) != 0) {
-                mapwin_add_parenthesized_label(menu, 0x8B0, 0x39);
+            mapwin_add_indented_label(menu, 0x8A0, 0x35);
+            mapwin_add_indented_label(menu, 0x8A4, 0x36);
+            mapwin_add_indented_label(menu, 0x8A8, 0x37);
+            mapwin_add_indented_label(menu, 0x8AC, 0x38);
+            if ((GameDataStateStorage.fields_.game_more_preferences_ &
+                 MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS) != 0) {
+                mapwin_add_indented_label(menu, 0x8B0, 0x39);
             }
         }
         menu.add_separator(0x63);
@@ -5597,55 +5594,49 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
 
     if (ConsoleGlobal.cursor_active_ != 0) {
         mapwin_add_context_label(menu, 0x8B4, 1);
-        const int map_vehicle = ConsoleGlobal.selected_vehicle_;
-        if (map_vehicle >= 0 &&
-            map_vehicle < static_cast<int>(sizeof(Vehs) / sizeof(Vehs[0]))) {
-            const Veh &vehicle = Vehs[map_vehicle];
-            int delta_x = abs(tile_x - vehicle.x);
-            if ((MapIsFlat & 1U) != 0 && delta_x > static_cast<int>(MapLongitude)) {
-                delta_x = static_cast<int>(MapLongitudeBounds) - delta_x;
-            }
-            const int delta_y = abs(tile_y - vehicle.y);
-            if (vehicle.x != tile_x || vehicle.y != tile_y) {
-                if ((GameDataStateStorage.fields_.game_more_preferences_ & 4U) != 0) {
-                    mapwin_add_context_label(menu, 0x8B8, 0x69);
-                }
-                const int prototype = vehicle.proto_id;
-                if (prototype >= 0 && prototype < MaxVehProtoNum) {
-                    const VehPrototype &unit = VehPrototypes[prototype];
-                    if (unit.chassis_id >= 0 &&
-                        unit.chassis_id < MaxChassisNum &&
-                        Chassis[(int)unit.chassis_id].triad == TRIAD_AIR &&
-                        unit.weapon_id < MaxWeaponNum &&
-                        Weapon[unit.weapon_id].offense_rating != 0) {
-                        mapwin_add_context_label(menu, 0x8BC, 0x6A);
-                    }
-                    if (has_abil(prototype, ABL_DROP_POD)) {
-                        mapwin_add_context_label(menu, 0x8C0, 0x67);
-                    }
-                    if (can_arty(prototype, 1)) {
-                        const int distance = (delta_y + delta_x) >> 1;
-                        if (distance <= Rules.artillery_max_rng) {
-                            mapwin_add_context_label(menu, 0x8C8, 0x68);
-                        }
-                    }
+        const Veh &vehicle = Vehs[selected_vehicle];
+        if (vehicle.x != tile_x || vehicle.y != tile_y) {
+            if ((GameDataStateStorage.fields_.game_more_preferences_ &
+                 MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS) != 0) {
+                mapwin_add_context_label(menu, 0x8B8, 0x69);
+                const VehPrototype &unit = VehPrototypes[vehicle.proto_id];
+                if (Chassis[unit.chassis_id].triad == TRIAD_AIR &&
+                    Weapon[unit.weapon_id].offense_rating != 0) {
+                    mapwin_add_context_label(menu, 0x8BC, 0x6A);
                 }
             }
-            if (((delta_y + delta_x) & ~1) <= 2) {
-                mapwin_add_context_label(menu, 0x8CC, 0x65);
-                if (stack_check(map_vehicle, 1, -1, -1, -1) == 9) {
-                    mapwin_add_context_label(menu, 0x8D0, 0x66);
+            if (has_abil(vehicle.proto_id, ABL_DROP_POD)) {
+                mapwin_add_context_label(menu, 0x8C0, 0x67);
+            }
+            if (can_arty(vehicle.proto_id, 1)) {
+                int delta_x = abs(tile_x - vehicle.x);
+                if ((MapIsFlat & 1U) == 0 && delta_x > static_cast<int>(MapLongitude)) {
+                    delta_x = static_cast<int>(MapLongitudeBounds) - delta_x;
                 }
+                const int distance = (abs(tile_y - vehicle.y) + delta_x) >> 1;
+                if (distance <= Rules.artillery_max_rng) {
+                    mapwin_add_context_label(menu, 0x8C8, 0x68);
+                }
+            }
+        }
+        // Re-read coordinates after the preceding menu/ability calls, as the
+        // original does for the separate close-range eligibility test.
+        int delta_x = abs(tile_x - vehicle.x);
+        if ((MapIsFlat & 1U) == 0 && delta_x > static_cast<int>(MapLongitude)) {
+            delta_x = static_cast<int>(MapLongitudeBounds) - delta_x;
+        }
+        if (((abs(tile_y - vehicle.y) + delta_x) & ~1) <= 2) {
+            mapwin_add_context_label(menu, 0x8CC, 0x65);
+            if (VehPrototypes[vehicle.proto_id].plan == 9) {
+                mapwin_add_context_label(menu, 0x8D0, 0x66);
             }
         }
         mapwin_add_context_label(menu, 0xE1C, 0xC7);
         mapwin_add_context_label(menu, 0x1098, 0xC8);
         menu.add_separator(0x63);
-        if (ConsoleGlobal.edit_lock() != 0) {
-            mapwin_add_context_label(menu, 0x8D8, 4);
-        } else {
-            mapwin_add_context_label(menu, 0x8DC, 3);
-        }
+    }
+    if (ConsoleGlobal.cursor_active_ != 0) {
+        mapwin_add_context_label(menu, 0x8D8, 4);
     } else if (ConsoleGlobal.edit_lock() == 0) {
         mapwin_add_context_label(menu, 0x8DC, 3);
     }
@@ -5658,7 +5649,8 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             6);
     }
     mapwin_add_context_label(menu, 0x8E8, 8);
-    if ((GameDataStateStorage.fields_.game_more_preferences_ & 4U) != 0) {
+    if ((GameDataStateStorage.fields_.game_more_preferences_ &
+         MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS) != 0) {
         menu.add_separator(0x63);
         if (find_landmark(tile_x, tile_y, 1) >= 0) {
             mapwin_add_context_label(menu, 0x8EC, 9);
@@ -5688,7 +5680,8 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
 
     menu.show(screen_x, screen_y, pop_expire);
     if ((GameDataStateStorage.fields_.game_state_ & 0x800U) != 0) return;
-    const int item_id = menu.get_selected_id();
+    const int selected_item = menu.get_selected();
+    const int item_id = selected_item < 64 ? menu.item_id(selected_item) : -1;
     if (base_at(tile_x, tile_y) != base_id ||
         veh_at(tile_x, tile_y) != vehicle_id ||
         ConsoleGlobal.selected_vehicle_ != selected_vehicle) {
@@ -5713,8 +5706,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
     case 1: {
         if (edi || esi) return;
         int locked_vehicle = selected_vehicle;
-        if (locked_vehicle < 0 ||
-            NetDaemonNet.lock_veh(&locked_vehicle, esi, -1, -1, esi) != 0) return;
+        if (NetDaemonNet.lock_veh(&locked_vehicle, esi, -1, -1, esi) != 0) return;
         Vehs[locked_vehicle].order = ORDER_MOVE_TO;
         Vehs[locked_vehicle].waypoint_x[0] = static_cast<int16_t>(tile_x);
         Vehs[locked_vehicle].waypoint_y[0] = static_cast<int16_t>(tile_y);
@@ -5736,14 +5728,11 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         ConsoleGlobal.field_23BE4_ = static_cast<uint32_t>(esi);
         return;
     case 4:
-        if (selected_vehicle >= 0 &&
-            selected_vehicle < static_cast<int>(sizeof(Vehs) / sizeof(Vehs[0]))) {
-            const Veh &vehicle = Vehs[selected_vehicle];
-            ConsoleGlobal.set_center(vehicle.x, vehicle.y, 1);
-        }
+        ConsoleGlobal.set_center(Vehs[selected_vehicle].x,
+                                 Vehs[selected_vehicle].y, 1);
         return;
     case 5:
-        if (base_id >= 0) TutWinBaseWindow.zoom(base_id, 0);
+        TutWinBaseWindow.zoom(base_id, 0);
         return;
     case 6:
         if (vehicle_id >= 0 &&
@@ -5760,7 +5749,8 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         if (edi || esi) return;
         if ((GameDataStateStorage.fields_.game_state_ & 2U) == 0) {
             ConsoleGlobal.set_move(1);
-            if (ConsoleGlobal.cursor_active_ != 0 && selected_vehicle >= 0) {
+            if (ConsoleGlobal.cursor_active_ != 0 &&
+                ConsoleGlobal.selected_vehicle_ >= 0) {
                 if (X_pop("REALLYOVER", nullptr) == 0) return;
             }
         }
@@ -5776,49 +5766,46 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
         help_any();
         return;
     case 0xB:
+        if (edi || esi) return;
         ConsoleGlobal.erase_landmark(tile_x, tile_y);
         return;
     case 0x33:
+        if (edi || esi) return;
+        TutWinBaseWindow.soft_zoom(base_id);
+        TutWinBaseWindow.production(0, 0);
+        return;
     case 0x65: {
         Menu &main_menu = ConsoleGlobal.alpha_menu_;
         const int index = main_menu.id_to_index(3);
-        if (index >= 0 && index < 15 && main_menu.entries_[index].pull_down) {
-            main_menu.entries_[index].pull_down->show(screen_x, screen_y, 0);
-        }
+        main_menu.entries_[index].pull_down->show(screen_x, screen_y, 0);
         return;
     }
     case 0x34:
         if (edi || esi) return;
-        if (base_id >= 0) {
-            TutWinBaseWindow.soft_zoom(base_id);
-            TutWinBaseWindow.hurry();
-        }
+        TutWinBaseWindow.soft_zoom(base_id);
+        TutWinBaseWindow.hurry();
         return;
     case 0x35:
     case 0x36:
     case 0x37:
     case 0x38:
         if (edi || esi) return;
-        if (base_id >= 0) {
-            TutWinBaseWindow.soft_zoom(base_id);
-            TutWinBaseWindow.gov_on(0x01000000U << (item_id - 0x35));
-        }
+        TutWinBaseWindow.soft_zoom(base_id);
+        TutWinBaseWindow.gov_on(0x01000000U << (item_id - 0x35));
         return;
     case 0x39:
         if (edi || esi) return;
-        if (base_id >= 0) ConsoleGlobal.go_to(base_id, -1, esi);
+        ConsoleGlobal.go_to(base_id, -1, esi);
         return;
     case 0x66: {
         Menu &main_menu = ConsoleGlobal.alpha_menu_;
         const int index = main_menu.id_to_index(9);
-        if (index >= 0 && index < 15 && main_menu.entries_[index].pull_down) {
-            main_menu.entries_[index].pull_down->show(screen_x, screen_y, 0);
-        }
+        main_menu.entries_[index].pull_down->show(screen_x, screen_y, 0);
         return;
     }
     case 0x67:
         if (edi || esi) return;
-        veh_drop(selected_vehicle, tile_x, tile_y);
+        NetDaemonNet.veh_drop(selected_vehicle, tile_x, tile_y);
         return;
     case 0x68:
         if (edi || esi) return;

@@ -1,0 +1,17 @@
+{
+  "event_id": "3a80d07d3dfe982b90dbe5275552fab3a85d44960bc6b67de8318125ca6f81b1",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "right-menu-selected-air-triad-eligibility-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The typed owner follows Vehs[entry-selected].proto_id through VehPrototypes.chassis_id and Chassis.triad for6E; clicked-stack counts are not a substitute. The nearby66 check separately follows the selected prototype.plan field. Source-extracted behavior controls distinguish both predicates, and pinned instruction controls bind them to their original field displacements."
+    ]
+  },
+  "previous_event": "a1ae63a96511c765223d6627b9719bcf2e29e28188f86d574244b11a08877002",
+  "request_id": "right-menu-selected-air-triad-incorporated-oct18",
+  "schema_version": 1,
+  "sequence": 35,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
