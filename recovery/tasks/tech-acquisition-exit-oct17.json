@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "bdec2555c05ffb2a86b42144e35a2618a808e985",
+  "editable_files": [
+    "src/technology.cpp",
+    "recovery/tests/test_tech_achieved_behavior.py"
+  ],
+  "evidence": [
+    "Native technology-post-count-early-exit and startup-technology-presentation findings in design-lock-budget-oct17 are committed in master bdec2555c. After the preceding faithful selector recovery, paired QuickStart candidate presents AppliedPhysics while original reaches PLANETFALL; no specific dynamic granting call was captured, so causal equivalence remains unproven.",
+    "Pinned5BB476 writes ownership;5BB47C loads player acquisition count;5BB482 reads TurnCurrentNum9A64D4;5BB487 increments count;5BB488 TEST;5BB48A stores count;5BB490 JE5BCAB3 cleanup. Nonzero path5BB496 reads TechAchievedGate945F40;5BB49B TEST;5BB49D JNE same cleanup. Both repeated ranking increments5BB4A3 onward are original. Current source guards only ranking and continues the entire tail. Restore the whole early return after count write, not an invented UI-only condition; real Popup scope must clean up normally. Keep all negative, map/treaty/prototype pseudo-technology paths and acquisition ownership/research cancellation/count writes before the guard unchanged.",
+    "Use actual complete source definition in host controls under GCC/Clang. Exercise turnzero and nonzero, arbitrary nonzero gate values, ordinary and repeated technology ownership, research cancellation, count updates, untouched ranking/theory/prototypes/global presentation state and no post-guard callbacks, plus Popup destruction. Continuing path must retain original double ranking increments and tail behaviors. Existing downstream fixture scenarios currently run at implicit turnzero or leave it zero before recursion: move those scenarios to nonzero turn explicitly, correct muted-presentation counts without weakening assertions, and preserve original special-case controls. New oracle must fail old C++; guard-order, missing-condition, premature-return and count damage controls must compile then fail after positives. Pin independent original branch/write/cleanup evidence.",
+    "Prepare a new isolated native worktree and compiler lease. Baseline existing hosts, all18 technology.cpp measurements and claims/mappings/references before production edits. Require fresh candidate/destination full application build/link, all identities/claims and outside-subject verdict continuity, complete176 physical-object preservation outside only tech_achieved, independent source review and paired original/candidate QuickStart observations. Preserve new discoveries. No new claims, demotion, baseline reset, compiler/header/layout changes, original bug fixes or automatic/full-game acceptance. Manual coordinator-reviewed recovery only."
+  ],
+  "intent": "Restore the original whole-tail early return after ordinary technology acquisition bookkeeping, preserving original lifetime, count and repeated ranking effects.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6008832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "tech-acquisition-exit-oct17"
+}
