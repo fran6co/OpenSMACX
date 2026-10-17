@@ -115,6 +115,25 @@ def test_redundant_address_comment_removal_retains_the_canonical_object():
     assert all(row["symbols"] == ["?%unit.cc::Global", "Distinct"] for row in rows)
 
 
+def test_anonymous_byte_array_keeps_binding_extent_and_alias_findings():
+    from match_recovery.object_source import parse_objects
+    source = ("namespace {\n"
+              "// RECOVERY_OBJECT: v2 0x12345678 0x12345690 "
+              "?Pixels@?%nested/unit.cc@@3PAEA 0x10000000\n"
+              "unsigned char Pixels[24];\n}\n")
+    binding, = parse_objects(source, "nested/unit.cc", PIN, address_space="custom:address")
+    assert binding.span.start == 0x12345678 and binding.span.end == 0x12345690
+    counts, _, rows = findings({"nested/unit.cc": source}, "msvc")
+    assert sum(counts.values()) == 0 and rows == []
+    counts, _, rows = findings({"nested/unit.cc": source,
+                               "other.hpp": "int Distinct; // 0x12345678\n"}, "msvc")
+    assert counts["duplicate global identities"] == 1
+    assert all(row["symbols"] == ["?%nested/unit.cc::Pixels", "Distinct"]
+               for row in rows)
+    assert binding == parse_objects(source, "nested/unit.cc", PIN,
+                                    address_space="custom:address")[0]
+
+
 @pytest.mark.parametrize("second", [
     "// RECOVERY_OBJECT: v1 0x23456789 ?Global@?%unit.cc@@3HA\n",
     "// RECOVERY_OBJECT: v1 0x12345678 ?Other@?%other/unit.cc@@3HA\n",
