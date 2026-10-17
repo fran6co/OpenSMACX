@@ -1,0 +1,33 @@
+{
+  "event_id": "c2e136c85a895f60df35373827446df5dd6398f4d5be89f7a32bf503bfe6ce18",
+  "payload": {
+    "affects": [
+      "entity-072b19423a8439ad2259f3fdf91a190e008c2b2c9899131baf38596903f61178",
+      "entity-08e0818c8d61d141711f049672db5bd336489e50303ef1bfafce56c9c7950b8b",
+      "entity-0fb31e5ca9a9139d1521ccae4d70fd5a7c613597d0ee91c668e14181673f3bb7",
+      "entity-22a520ea4929e13706f59cdcae4ab7bc8b5241ff3fa001a1c1d915be3dc2cb36",
+      "entity-4a37dfe33fd9a466623cf01cba374c571914b9c17684b1c5739d3e661fd3db16",
+      "entity-5764c7163447f4672400e024699e363c9944776b1937930149beab8a1e472f5a",
+      "entity-98b94a94c791c9d62dd4eb896c320d1b2fbe0f09f92ddd10003c9a1f787b40d8",
+      "entity-ba231b24ef00eb8b72893cd9a7306f82bbc3da0fef52f21f45f6881a4a53a57a",
+      "entity-c329d316dc2dd1fc2d33f7eef9dc0713e607a3957a7b65c2ffedbcebe6734418",
+      "entity-e4aa62d84eb46c4b46099b055b5b9ea3b6824ae3b07a92c0638ba13e3e33e068",
+      "entity-ee588712a020f4288507f7bb26d07e9d9fda88bf1a700c0d31e6efa4f539e626",
+      "entity-f398f737dfbd612fb2dc33e8dcb5aea2413ab63cd019e2f39d3fe25762c02d0c"
+    ],
+    "author": "coordinator",
+    "discovery_id": "frame-profile-linked-header-owners-oct17",
+    "evidence": [
+      "Fresh three-owner Release candidate build-w2vya4y0 links and adds18 mapped owner-body matches;173 outside-owner objects are physically unchanged, but all3 scoped owner residuals fail because unscoped inline code/FPO metadata also changes.",
+      "Independent review verified bounded baseline/candidate PE-vs-selected-COFF code and references for62 stable unchanged-owner helpers and13 changed technology_queries-owned helpers. This is not retained-selection proof. Repo-wide mapped-helper original comparisons show9 help-wrapper gains,3 Log losses625FC0/6260F0/626190,62 other mapped verdicts unchanged; fprintf_s has no mapped original identity.",
+      "The13 changed helpers preserve semantic branches, topic/format constants and call order but their frame and stack addressing change. No historical claim is demoted and no comparison failure is waived. The full3-owner proposal is not integrated. Stage only terrain/Wave source-specific profiles after a fresh build and helper/preservation review; technology_queries stays unchanged until genuine header-inline emission/owner evidence reconciles Log and help contracts. No function-specific compiler pragma, link-order trick or export workaround is authorized."
+    ],
+    "hypothesis": "Changing technology_queries to /Oy- also changes MAP-selected header-inline Log and help wrappers. The original Log bodies are frame-free while help wrappers retain EBP; canonical-TU local measurements alone miss this conflicting emission ownership.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "frame-profile-linked-header-owners-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-frame-profile-oct17"
+}

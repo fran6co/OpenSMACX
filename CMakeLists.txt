@@ -328,6 +328,13 @@ endif()
 # subsystems remain direct application inputs until their membership is
 # established. This is not a claim of complete JACKAL.LIB recovery.
 add_subdirectory(src/jackal)
+# These owners retain frame-based parameter accesses. Match their
+# existing explicit recovery measurement profiles without changing the
+# application's default compiler flags.
+set_source_files_properties(
+    src/map_altitude.cpp
+    src/wave.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Original interface palette initialization and font lookup retain a frame
 # pointer; generic library bodies have independently measured profiles.
 set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
