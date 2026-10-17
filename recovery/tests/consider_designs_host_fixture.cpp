@@ -121,6 +121,10 @@ static int g_pick_calls;
 static int g_pick_args[64][3];
 static int g_last_proposal[7];
 static int g_proposal_log[128][7];
+static bool g_budget_tail_test;
+static int g_budget_result;
+static int g_budget_calls;
+static int g_budget_args[8][3];
 
 static int has_tech(int tech, int) { return tech == 777; }
 static void enemy_capabilities(int) { ++g_enemy_calls; }
@@ -131,9 +135,19 @@ static int pick_chassis(int faction, int triad, int request) {
         g_pick_args[g_pick_calls][2] = request;
     }
     ++g_pick_calls;
+    if (g_budget_tail_test && g_pick_calls == 2) return 1;
     return -1;
 }
-static int weapon_budget(int, int, int) { return 0; }
+static int weapon_budget(int faction, int cap, int mode) {
+    if (!g_budget_tail_test) return 0;
+    if (g_budget_calls < 8) {
+        g_budget_args[g_budget_calls][0] = faction;
+        g_budget_args[g_budget_calls][1] = cap;
+        g_budget_args[g_budget_calls][2] = mode;
+    }
+    ++g_budget_calls;
+    return g_budget_result;
+}
 static int proto_cost(int, int, int, int, int) { return 0; }
 static int great_satan(int, int) { return 1; }
 static int bit_count(int value) {
@@ -181,6 +195,59 @@ int main(int argc, char **argv) {
     }
     GameDataStateStorage.fields_.secret_project_.dream_twister() = -1;
     GameDataStateStorage.fields_.secret_project_.neural_amplifier() = -1;
+
+    if (argc > 1 && (strcmp(argv[1], "budget-lock") == 0
+                     || strcmp(argv[1], "budget-zero") == 0)) {
+        g_budget_tail_test = true;
+        const bool zero_rating = strcmp(argv[1], "budget-zero") == 0;
+        const int factions[] = {1, 3, 7};
+        const int result_ids[] = {2, 4};
+        const int ratings[] = {17, 23};
+        const int powers[] = {0, 3};
+        const int ordinary_caps[] = {7, 8};
+        int cases = 0;
+        for (int f = 0; f < 3; ++f) {
+            const int faction = factions[f];
+            const unsigned int own_bit = 1u << faction;
+            const unsigned int unrelated_bit = 1u << (faction == 1 ? 2 : 1);
+            for (int mask_case = 0; mask_case < 4; ++mask_case) {
+                for (int power = 0; power < 2; ++power) {
+                    for (int result_case = 0; result_case < 2; ++result_case) {
+                        GameDataStateStorage.fields_.lock_masks_.enable_mask_ =
+                            (mask_case & 1 ? own_bit : 0)
+                            | (mask_case & 2 ? unrelated_bit : 0);
+                        PlayersData[faction].ai_power = powers[power];
+                        Armor[0].preq_tech = 777;
+                        Armor[0].cost = 1;
+                        Armor[0].defense_rating = 2;
+                        g_budget_result = result_ids[result_case];
+                        Weapon[g_budget_result].offense_rating =
+                            zero_rating ? 0 : ratings[result_case];
+                        g_pick_calls = g_budget_calls = g_proposals = 0;
+                        const ConsiderDesignsTailInput input = {1, 0, 1, 2, 0};
+                        const ConsiderDesignsTailOutput output =
+                            consider_designs_strategy_tail(faction, input);
+                        const int expected_cap = mask_case & 1 ? 99 : ordinary_caps[power];
+                        if (g_budget_calls != 2 || g_pick_calls != 2
+                            || g_budget_args[0][0] != faction
+                            || g_budget_args[0][1] != expected_cap
+                            || g_budget_args[0][2] != 0
+                            || g_budget_args[1][0] != faction
+                            || g_budget_args[1][1] != ratings[result_case]
+                            || g_budget_args[1][2] != 0
+                            || output.weapon_id != g_budget_result
+                            || output.armor_id != 0 || output.chassis_id != 1
+                            || g_proposals != 1
+                            || g_last_proposal[0] != faction
+                            || g_last_proposal[2] != g_budget_result) return 31;
+                        ++cases;
+                    }
+                }
+            }
+        }
+        printf("BUDGET_CASES %d\n", cases);
+        return cases == 48 ? 0 : 32;
+    }
 
     if (prototype_plan0) {
         Weapon[2].preq_tech = 777;

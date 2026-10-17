@@ -1,0 +1,20 @@
+{
+  "event_id": "53229af1007dc2cdcc4d3c1a969f911415a50514062443e077dad20bb2cdd77d",
+  "payload": {
+    "affects": [
+      "entity-36d0cb2cbd52d912455a184a4f6bb8b671bd9eb400d69020794d91f7a2abe9fc"
+    ],
+    "author": "coordinator",
+    "discovery_id": "startup-technology-presentation",
+    "evidence": [
+      "Paired terminal run-ld4fqw9j with same assets/preferences/headless Wine and identical Down10/Return12 inputs: candidate screen20/40 AppliedPhysics breakthrough, original screen20/40 PLANETFALL. No unhandled exception found in candidate runtime log during41second observation. Both private servers terminated and source executables unchanged. Current technology.cpp963-1014 performs presentation/NewTechWindow.exec; setup_player awards initial tech at faction.cpp5669 onward. Seeds differ and selected IDs/guard state are not captured, so this does not establish the precise missing predicate or general gameplay acceptance. Preserve pending issue outside this two-line vehicle-owner scope."
+    ],
+    "hypothesis": "Correcting the selector call gets QuickStart past the former divide fault, but the recovered program presents an initial technology-breakthrough modal where the original reaches PLANETFALL. Investigate original presentation suppression and startup caller/state inputs; do not add a guessed turn-zero guard or change UI policy without pinned evidence.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "startup-technology-presentation",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:design-lock-budget-oct17"
+}

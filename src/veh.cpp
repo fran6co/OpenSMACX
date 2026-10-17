@@ -17513,8 +17513,8 @@ static ConsiderDesignsTailOutput consider_designs_strategy_tail(
     const int armor_cost_limit =
         (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_mask) != 0
             ? 0x63
-            : weapon_budget(faction_id, armor_cost_cap, 0);
-    const int budget_weapon_id = armor_cost_limit;
+            : armor_cost_cap;
+    const int budget_weapon_id = weapon_budget(faction_id, armor_cost_limit, 0);
     const int offense_rating = Weapon[budget_weapon_id].offense_rating;
     int armor_defense_limit = consider_designs_tail_defense_limit(
         input.reactor_capacity, input.armor_scale_value, armor_cost_cap,

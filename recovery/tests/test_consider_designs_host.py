@@ -69,7 +69,8 @@ def _actual_owner_block():
     return owner_block
 
 
-def _compile(tmp_path, owner_block=None):
+def _compile(tmp_path, owner_block=None, compiler=None):
+    tmp_path.mkdir(parents=True, exist_ok=True)
     owner_block = _actual_owner_block() if owner_block is None else owner_block
     fixture = FIXTURE.read_text(encoding="utf-8")
     marker = "/* __SOURCE_EXTRACTED_FROM_MAPPED_VEH_OWNER__ */"
@@ -77,7 +78,7 @@ def _compile(tmp_path, owner_block=None):
     cpp = tmp_path / "consider_designs_actual_owner.cpp"
     binary = tmp_path / "consider_designs_actual_owner"
     cpp.write_text(fixture.replace(marker, owner_block), encoding="utf-8")
-    compiler = shutil.which("clang++") or shutil.which("g++")
+    compiler = compiler or shutil.which("clang++") or shutil.which("g++")
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
     command = [
@@ -187,3 +188,72 @@ def test_pinned_native_sentinel_and_armor_prerequisite_edges():
                and insn.op_str == "0x5b9f20" for insn in prereq)
     assert any(insn.address == 0x005814EA and insn.mnemonic == "je"
                and insn.op_str == "0x581587" for insn in prereq)
+
+
+COMPILERS = [name for name in ('g++', 'clang++') if shutil.which(name)]
+
+
+@pytest.mark.parametrize('compiler', COMPILERS)
+def test_actual_owner_budget_cap_is_not_a_weapon_index(tmp_path, compiler):
+    result = _run(_compile(tmp_path, compiler=compiler), 'budget-lock')
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.stdout.strip() == 'BUDGET_CASES 48'
+
+
+@pytest.mark.parametrize('compiler', COMPILERS)
+def test_actual_owner_keeps_original_zero_rating_division(tmp_path, compiler):
+    binary = _compile(tmp_path, compiler=compiler)
+    positive = _run(binary, 'budget-lock')
+    assert positive.returncode == 0, positive.stdout + positive.stderr
+    result = _run(binary, 'budget-zero')
+    assert result.returncode != 0
+    assert 'division by zero' in result.stderr
+
+
+@pytest.mark.parametrize('compiler', COMPILERS)
+@pytest.mark.parametrize('damage', ['skip-locked-call', 'always-99', 'never-99', 'wrong-faction', 'wrong-mode', 'cap-as-result'])
+def test_budget_call_mutations_are_observed(tmp_path, compiler, damage):
+    owner = _actual_owner_block()
+    positive = _run(_compile(tmp_path / 'positive', owner, compiler), 'budget-lock')
+    assert positive.returncode == 0, positive.stdout + positive.stderr
+    call = 'weapon_budget(faction_id, armor_cost_limit, 0)'
+    if damage == 'skip-locked-call':
+        before, after = call, '(armor_cost_limit == 99 ? 99 : ' + call + ')'
+    elif damage == 'always-99':
+        before, after = call, 'weapon_budget(faction_id, (static_cast<void>(armor_cost_limit), 99), 0)'
+    elif damage == 'never-99':
+        before, after = call, 'weapon_budget(faction_id, (static_cast<void>(armor_cost_limit), armor_cost_cap), 0)'
+    elif damage == 'wrong-faction':
+        before, after = call, 'weapon_budget(faction_id + 1, armor_cost_limit, 0)'
+    elif damage == 'wrong-mode':
+        before, after = call, 'weapon_budget(faction_id, armor_cost_limit, 1)'
+    else:
+        before, after = call, '(' + call + ', armor_cost_limit)'
+    assert owner.count(before) == 1
+    result = _run(_compile(tmp_path / 'damaged', owner.replace(before, after, 1), compiler), 'budget-lock')
+    assert result.returncode != 0, 'compiled mutation escaped the actual-owner controls'
+
+
+def test_pinned_lock_paths_join_before_weapon_selector_call():
+    import hashlib
+    pin = image_pin(ROOT)
+    path = Path(os.environ.get('OPENSMACX_IMAGE', str(ROOT / '.opensmacx/game/terranx_original.exe')))
+    if not path.is_file():
+        pytest.skip('pinned original unavailable')
+    data = path.read_bytes()
+    assert hashlib.sha256(data).hexdigest() == pin
+    image = PeImage(data, pin)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    span = Span(0x581DB0, 0x581DE7)
+    code = {i.address: (i.mnemonic, i.op_str) for i in decoder.disasm(image.read(span), span.start)}
+    assert code[0x581DB0] == ('test', 'al, cl')
+    assert code[0x581DB2] == ('mov', 'eax, 0x63')
+    assert code[0x581DB7] == ('jne', '0x581dbb')
+    assert code[0x581DB9] == ('mov', 'eax, ebx')
+    assert code[0x581DBB] == ('push', '0')
+    assert code[0x581DBD] == ('push', 'eax')
+    assert code[0x581DBE] == ('push', 'edi')
+    assert code[0x581DBF] == ('call', '0x57f0b0')
+    assert code[0x581DC4] == ('shl', 'eax, 4')
+    assert code[0x581DCA] == ('movsx', 'ecx, byte ptr [eax + 0x94ae68]')
+    assert code[0x581DE5] == ('idiv', 'ecx')
