@@ -1,0 +1,110 @@
+{
+  "author": "coordinator",
+  "base_revision": "70d0b2f2b3a51c98784f4e3c3066513276bade6f",
+  "editable_files": [
+    "src/buttongroup.h",
+    "src/buttongroup.cpp",
+    "src/maininterface.cpp",
+    "recovery/tests/test_buttongroup_lifetime_visibility_oct17.py"
+  ],
+  "evidence": [
+    "Master70d0b2f2b fresh build-m9tyoy6l compiles/links. All5581CPP masked results retain3015exact. Full strict masked audit1827PASS1167UNKNOWN21FAIL; private static diagnostics564PASS45UNKNOWN1FAIL, whose soleFAIL is PrefWinButtonGroup finalizer48D540 calling the external destructor rather than originalclose62B7F0. Selector ambiguity remainsUNKNOWN; this task does not promote it.",
+    "Read-only framework Compiler.overlay trial of real ButtonGroup inline destructor in its class declaration corrects PrefWin_$E11 tocallclose. The original4325B0 destructor is naturally emitted, with the same5byteclosejump+sectionpadding, in maininterface.cpp because its real four-element ButtonGroup array needs a lifetime callback. It is no longer emitted in buttongroup.cpp. No dummy use/export/noinline/flag change is needed. Trial inputs/objects/results are preserved under build/recovery/buttongroup-inline-visibility-probe-oct17; complete user-TU qualification is still required.",
+    "Authorize the single-line in-class ~ButtonGroup(){close();} definition and remove its old out-of-line definition. Preserve class layout, nonvirtualness, count/selected/flags fields and close semantics. Retire directly obsolete header comments that still call the already recovered click body a pending forwarder, without changing that function.",
+    "Authorize transporting canonical original4325B0 unchanged to maininterface.cpp as the current measured compiler-emission host, with explicit body reference src/buttongroup.h and source rationale identifying the actual array-lifetime witness. The semantic owner remains ButtonGroup. Original TU provenance is unknown; this must not claim a historical MainInterface source file or function ownership. Use native source reader/writer and guarded source.publication primitives with exact before/after identity/span/claim/fact validation. The new header body path is an explicit coordinator-reviewed interpretation, not an ordinary worker-continuity-preserving move. Never use compile_context as an unsupported verification bypass.",
+    "Initial subjects derive from actual current COFF sections referencing the ButtonGroup destructor, joined to source-bound parent/associative ownership, plus the destructor identity itself. Measure every object and every annotated function in allten listed units and all actual header users, including generated initialization/teardown/EH and new destructor copies. Unassigned supporting sections remain unknown and protected; no invented entity, blanket owner omission or hidden helper waiver. Any additional observed source-owned collateral needs explicit expansion before publication.",
+    "Retain all ORIGINAL names/modes/spans/claims and useful seed evidence. Ordinary destruction may be inlined while the standalone array callback retains its existing historical exactness obligation. Do not manufacture callback code, manually end live objects, add dllexport, reinterpret layouts or alter compiler/link policy. Evidence-backed faithful structure takes priority over a local score; coordinator permission admits explicitly reviewed necessary local matching regressions with claims/restoration obligations preserved, not demoted or labeled accepted.",
+    "Add actual-source host lifetime/array/reverse-order/null/default-state controls and damage witnesses, and native both-profile/current-application observations of the standalone5byteentry, original constructor arraycallback and PrefWin cleanup target. Require fresh whole build/link, all physical residuals visible, historical claims/references/mappings/restoration observations and independent C++/lifetime review. Fresh masterdestinationverification follows any manual integration; no native automatic, complete linked preservation, runtime/audio/game or exhaustive executable acceptance is granted."
+  ],
+  "intent": "Recover ordinary inline ButtonGroup destruction and its naturally emitted array-lifetime entry, preserving the original callback identity and cleanup behavior across its real users.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4362176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4399760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4400560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4501760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4502016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4582272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4583184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4737040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4737488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4761824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4773184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4902304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4903280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4903856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4904624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4909536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4930688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buttongroup-lifetime-visibility-oct17"
+}
