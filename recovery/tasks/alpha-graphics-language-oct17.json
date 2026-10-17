@@ -1,0 +1,179 @@
+{
+  "author": "coordinator",
+  "base_revision": "1b0f0231bd7dc49750fabd249ad11b21faf78dbe",
+  "editable_files": [
+    "CMakeLists.txt",
+    "src/alpha.cpp",
+    "src/alpha.h",
+    "src/game.cpp",
+    "src/jackal/CMakeLists.txt",
+    "src/jackal/graphics_language.h",
+    "src/jackal/graphics_language.cpp",
+    "recovery/tests/test_application_compiler_profiles.py",
+    "recovery/tests/test_graphics_language_owner_oct17.py"
+  ],
+  "evidence": [
+    "Master 1b0f0231b is clean and builds/links. Its retained fresh application build is build/recovery/builds/build-xg7p0w7f; qualify all current fingerprints, compiler receipts and outputs before reuse. Existing native compiler preparation was regenerated at this same source checkpoint; the build fingerprint still qualifies. No concurrent compiler epoch or other editable worker exists.",
+    "Read-only native Alpha measurement covers all 29 identities: 20 pass and 9 fail over the two existing canonical profiles. A four-call actual Release control calibrated the complete Alpha object, reproduced an unchanged private overlay, detected an ordinary default_prefs entry throw, then changed only the whole-owner frame option. Actual Release Alpha goes 5 to 19 masked exact with 15 gains and one loss, set_language 627100. Controls and both complete objects are retained ignored under .opensmacx/recovery/preferences-family-oct17/alpha-screen.json. No source spelling change is warranted for already exact preference helpers.",
+    "Investigate and implement the evidence-backed shared API boundary: existing jackal/graphics_language.h declares Language for generic Buffer and application users; storage is currently misplaced in alpha.cpp and its setter is an exported inline in alpha.h. Original 627100 is a separately called ten-byte FPO setter; original prefs_load and system_init call it. Move the existing Language definition/object binding and the complete existing set_language identity/spans/claim, unchanged, to separately compiled jackal/graphics_language.cpp. Expose an ordinary declaration in the existing shared header, remove only the old inline definition/annotation carrier and obsolete setter-inlining comment, and add the library source. No new class, layout, type, signature, data initialization, assembly, per-function pragma, export/retention anchor or hand-edited original marker. The semantic shared owner is supported; exact historical Jackal archive/TU membership remains a separate unproven fact.",
+    "Only after controls/review, add exactly one /Oy- source property for alpha.cpp, leaving all other application/library compiler/linker policies and the complete recovery/project.json measurement configuration unchanged. Preserve the entire prior CMake profile inventory and all negative/mutation controls in the minimally advanced consolidated project test. This task may correct the old Alpha exclusion only on fresh full-object and whole-project evidence. Do not trade away set_language or any old exact identity for the 15 gains.",
+    "Source changes are bounded to moving the complete shared storage/setter binding and ordinary declaration, one whole-Alpha frame profile, the library source list and focused tests/comments. No other C++ body rewrites. The actual caller closure is prefs_load and system_init; all other units can lose only unreferenced exported inline setter copies due to the ordinary external API. Enumerate any other compiled collateral; do not hide helper, data, EH or retained-selection unknowns under a broad body waiver. Preserve all original identities and historical obligations, including unmapped discoveries.",
+    "Prepare an isolated committed native worker with its immutable baseline and compiler lease. Require host controls of the real new source under GCC/Clang, original setter store and both call-site pins, failing storage/value/ABI-facing declaration mutations, fresh full application build/link, native source/claims/reference checks, complete 5581-identity actual-object and strict-reference census with no old exact losses, independent source review and fresh destination rechecks before cleanup. Candidate code must reproduce the controlled whole-Alpha profile apart from the explicit setter/caller ownership correction. Physical helper removals and storage transfers must remain visible evidence. This is coordinator-reviewed manual recovery, not automatic/game acceptance or a new historical exact claim."
+  ],
+  "intent": "Recover Alpha application frame context and make the shared graphics language setter a genuine separately compiled library API, preserving all source behavior and original obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5786976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5788016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5795632,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5796304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5796416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5796800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5290144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5889264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5891344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5891376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5891536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5892432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6451456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5920896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5828672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alpha-graphics-language-oct17"
+}
