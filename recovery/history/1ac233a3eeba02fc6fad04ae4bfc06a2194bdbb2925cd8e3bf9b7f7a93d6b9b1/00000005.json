@@ -1,0 +1,18 @@
+{
+  "event_id": "fb48a3e27161e75b970a11df245e6cef4297663aacd4badc8837f57775812cfd",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "sound-loader-explicit-bindings-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/sound_loader.cpp explicit native-writer emitted-symbol facts and start-only90DB78SoundDllModule binding; no original identities or claims changed.",
+      "Fresh application build-_aualplj PASS; all47newgains and existing4C6060strict original code/references PASS. Wrong3symbolcontrols and wrongmoduleaddresscontrol all refused/fail,9focusedhosttestsPASS. No allocationbound, fullselection, EH, structure/runtime or game acceptance inferred."
+    ]
+  },
+  "previous_event": "f88437b7bc273194a8aa664f3ae55e4aa24922ea58fdc82831b6c023b7197ba9",
+  "request_id": "sound-loader-explicit-bindings-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:audio-device-frame-oct17"
+}

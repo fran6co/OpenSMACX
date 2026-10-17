@@ -1,0 +1,20 @@
+{
+  "event_id": "80f2967af4f9d482fef3314943b5981d8d7621731ca9c349fb5bbcbd378971e5",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_sound_loader_original_bindings_oct17.py"
+    ],
+    "evidence": [
+      "Coordinator explicitly expands the original diagnostic-only CPP constraint for src/sound_loader.cpp: production changes may ONLY add native-writer emitted-symbol facts for4C6000/4C6030 and a compact start-only object binding beside existing SoundDllModule with pinned read/write evidence. No C++ runtime/body/type/header/marker/claim changes.",
+      "Add focused native reader/object-binding tests with wrong-symbol and wrong-address controls. Preserve original identities, useful evidence and claims byte-for-byte; fresh build/link/strict47original checks and helper review are still required. This decision is authorization, not a passing check or baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "11fbe94cd30a8a7a72b9a3624b477b0a8eb616b16670786dcdcb826899282a20",
+  "request_id": "sound-loader-annotation-scope-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:audio-device-frame-oct17"
+}
