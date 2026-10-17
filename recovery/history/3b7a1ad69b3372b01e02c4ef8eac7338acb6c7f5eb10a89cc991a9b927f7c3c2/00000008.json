@@ -1,0 +1,18 @@
+{
+  "event_id": "6dcf54f9e5027a6347064d7ac57cfb28e5be3d0ddf8da1a528d3cd6238679452",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "win-direct-typed-flag-mask-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Only the authorized mask expression changes; original metadata/comments/globals/signature/spans/historical claim and all other source bytes match immutable7ae. Candidate flags are unchanged, not an /Oy- trial. Both spellings measure BYTE_EXACT; the entire old/candidate Win COFF and its full actual fresh object match with zero body omissions, changed sections/symbols/associations. No temporary matching regression was needed.",
+      "Actual-source host/pinned test14PASS across GCC/Clang, with null/low/high/full flag cases, ignored argument/result, exact API argument/order and untouched flags; wrong-mask/guard/null/parent mutants fail at runtime. Whole-file baseline delta and source identity checks preserve all old obligations. Current MAP has no unique linked callback placement, so linked retention/indirect callers/runtime remain unproved. This is a source-quality improvement, not additional function coverage or a deliberate behavior fix."
+    ]
+  },
+  "previous_event": "3dd41d2c27228dc8f50fda989fd325a7212d0b03ee90ebd6b6f2929a400fc9fe",
+  "request_id": "win-direct-typed-flag-mask-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:fast-owner-cohort-oct17"
+}

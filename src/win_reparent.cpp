@@ -89,8 +89,7 @@ int __stdcall win_reparent_window(HWND hwnd, int unused) {
     Win *const owner = reinterpret_cast<Win *>(
         GetWindowLongA(hwnd, GWL_USERDATA));
     if (owner != 0 &&
-        (*reinterpret_cast<const uint8_t *>(&owner->iFlags_) &
-         WinFlagClipToParent) == 0) {
+        (owner->iFlags_ & WinFlagClipToParent) == 0) {
         const HWND parent = GetParent(hwnd);
         if (parent == WinReparentMatchParent) {
             SetParent(hwnd, WinReparentTargetParent);

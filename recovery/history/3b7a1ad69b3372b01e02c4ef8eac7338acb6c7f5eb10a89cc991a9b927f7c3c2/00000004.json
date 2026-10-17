@@ -1,0 +1,17 @@
+{
+  "event_id": "7d8c36765f16858c26630695dd48173883b5e4766c4fed2388efd35e97d26bb7",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "sprite-whole-owner-frame-negative-oct17",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Sprite source/header/annotations/default recipe remain unchanged, and its complete fresh actual object reproduces the controlled baseline with zero omissions. Guard explicitly excludes adding its rejected profile. Fixed helper dimensions, addresses and similar loader behavior do not prove a different owner/TU; mapped callers are incomplete and no independent owner/lifetime proof supports rehoming. Shared PCX Buffer retains existing Buffer lifetime ownership."
+    ]
+  },
+  "previous_event": "6336a2b31fab584eae75514d84f9e7c81199ac30599effe35569fece2fa41db1",
+  "request_id": "sprite-whole-owner-frame-negative-oct17-rejected",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:fast-owner-cohort-oct17"
+}

@@ -404,6 +404,13 @@ set_source_files_properties(
     src/prodpicker.cpp
     src/alphamenu.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve measured frame-based accesses in the qualifying owner cohort.
+# Sprite and networking retain their measured default source recipes.
+set_source_files_properties(
+    src/stringstruct.cpp
+    src/councwin.cpp
+    src/planwin.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp

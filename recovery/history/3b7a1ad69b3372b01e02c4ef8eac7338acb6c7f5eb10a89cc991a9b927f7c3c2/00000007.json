@@ -1,0 +1,20 @@
+{
+  "event_id": "3dd41d2c27228dc8f50fda989fd325a7212d0b03ee90ebd6b6f2929a400fc9fe",
+  "payload": {
+    "affects": [
+      "entity-a1b922220b611b6de043eb7b35ea225157299e483e47cc79d699af9f2a281c76"
+    ],
+    "author": "coordinator",
+    "discovery_id": "win-direct-typed-flag-mask-oct17",
+    "evidence": [
+      "Pinned full64byte/20instruction body tests bit20 at this+98 and preserves null-owner, GetWindowLongA/GetParent/SetParent order and ret8. Existing uint32 iFlags_ and WinFlagClipToParent already express this contract; the old alias was not evidence of a different field/type. Keep the required integer-to-Win pointer conversion at the userdata API boundary."
+    ],
+    "hypothesis": "Use the existing uint32 Win flag field directly instead of a forced byte-pointer alias, preserving the genuine Win32 callback boundary.",
+    "kind": "discovery"
+  },
+  "previous_event": "3504e16477fa056a5c6a0df522e028b38ef94c09129a53ae1c4af02e2b58d57c",
+  "request_id": "win-direct-typed-flag-mask-oct17",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:fast-owner-cohort-oct17"
+}
