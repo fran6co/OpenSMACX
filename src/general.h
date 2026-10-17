@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+#include "header_io.h"
+#include "crt_random.h"
 
 // Source-owned file checksum used by the network transfer protocol (538FE0).
 unsigned char __cdecl checksum_file(char *file_path);
@@ -131,13 +133,11 @@ void __cdecl filefind_set_alternative(LPCSTR path);
 LPSTR __cdecl filefind_get(LPCSTR file_name);
 int __cdecl bit_count(int bitfield);
 uint32_t __cdecl bit_count_signed(int bitfield);
-void __cdecl my_srand(int reseed);
 int __cdecl fixed_div(int numerator, int denominator);
 const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value);
 int __cdecl quick_root(int input);
 uint8_t __cdecl checksum(char *input, int length, uint8_t seed);
 uint32_t __cdecl checksum_password(LPCSTR password);
-uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input) input);
 void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3);
 void __cdecl kill_auto_save();
 void __cdecl auto_save();
@@ -145,8 +145,6 @@ void __cdecl auto_save_debug();
 void __cdecl load_undo(int type);
 void __cdecl wipe_undo();
 void __cdecl auto_undo();
-void __cdecl header_check(LPSTR header, FILE *file);
-void __cdecl header_write(LPCSTR header, FILE *file);
 void __cdecl sort(int count, int *id, int *value);
 void __cdecl sort_descending(uint32_t count, int *id, int *value);
 

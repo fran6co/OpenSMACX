@@ -1,0 +1,24 @@
+{
+  "event_id": "ec19794d19c736bfa2287718eb94e971f53d5569873cce21f1efdb4a2e4b21ca",
+  "payload": {
+    "affects": [
+      "entity-08c3aaa0adeabb815933d633f301f92c28cd7ee7512e9f591b45458c5e2d8d06",
+      "entity-6773c8909f765a42efcee2fef09b2eaf2a5923b3cf641d31d9cec79fd8f0b29a",
+      "entity-911ba3897e76f0099c7dcff58e909a03c0b9fef1c9aac51b7504975a7ca2c153",
+      "entity-dffe05f421cd2a23b722d537070e29f7e2332e715e9e8b712a4b2ffbf05c3103"
+    ],
+    "author": "coordinator",
+    "discovery_id": "header-api-compiler-residual-and-original-targets-oct18",
+    "evidence": [
+      "Do not waive native General removed-literal and fifteen other TU residual failures: public header order/identifier context changes compiler-local labels and instruction scheduling/register/stack choices even with otherwise identical sources and equivalent API types. Their defined public function names/types/storage are unchanged outside the four moved General definitions. Full source equality, no old masked/reference classification losses and bounded host controls do not prove compiled outside-scope semantic or linked preservation.",
+      "Both new whole objects lack original whole-object baselines. my_srand original literal/target evidence remains UNKNOWN. Selected current linked code probes do not prove target contents, original runtime-provider equivalence, complete retained selection/allocation or game runtime. Preserve these observations and the earlier pending cross-owner discovery rather than resetting baselines, demoting claims or fabricating acceptance."
+    ],
+    "hypothesis": "Public API rehoming has observed collateral compiler outputs and unresolved original data/reference and final retained-selection obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "e018a3ed0cd2de887537c7d4dd8ba223fba27e1eeb9040a4c254394daaafe833",
+  "request_id": "header-api-compiler-residual-and-original-targets-oct18",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:general-owner-split-oct17"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "e4b0f779fecfe0af59785e3e33708eadbc4b0389363520aa5519a9af05ff0f0c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_caption_icons.py"
+    ],
+    "evidence": [
+      "Independent review found test_caption_icons.actual_source extracts the my_srand declaration text directly from general.h. It must follow the exact same void(int) declaration into crt_random.h; read that real publicheader and change only this extraction owner. Preserve every existing actualcaption/startupbody, ABI/type/callback/sanitizer/negative control and expectation. Do not replace the declaration with a handwritten fixture or weaken the guard. Native101subjects/b24baseline/allpriorfindings unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "beee9dc2e70bce11d42f4c5df1a2b0a9f8bb2e6e7dc9c96eacc749e2733f1dde",
+  "request_id": "caption-declaration-owner-oct18",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:general-owner-split-oct17"
+}

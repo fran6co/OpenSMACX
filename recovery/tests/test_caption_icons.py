@@ -38,7 +38,7 @@ def one(pattern, source):
 
 def actual_source():
     h = {n: (ROOT / "src" / (n + ".h")).read_text() for n in
-         ("imagebutton", "basebutton", "graphicwin", "win", "sprite", "buffer", "game", "strings", "alpha", "map", "time", "general", "random", "log", "basepop")}
+         ("imagebutton", "basebutton", "graphicwin", "win", "sprite", "buffer", "game", "strings", "alpha", "map", "time", "general", "random", "log", "basepop", "crt_random")}
     c = {n: (ROOT / "src" / (n + ".cpp")).read_text() for n in
          ("imagebutton", "win", "sprite", "game", "strings", "alpha", "map")}
     parts = {}
@@ -79,7 +79,7 @@ def actual_source():
     parts["STRINGS_INIT"] = one(r"^  BOOL init\(size_t mem_size\);", h["strings"])
     parts["SETTERS"] = "\n".join(one(r"^  static MEASURED int __cdecl set_def_" + n + r"_text\(LPSTR text\);", h["basepop"]) for n in ("ok", "cancel"))
     declarations = [one(r"^void __cdecl load_sprites\(\);", h["game"])]
-    for unit, pattern in (("general", r"^void __cdecl my_srand\([^;]+;"),
+    for unit, pattern in (("crt_random", r"^void __cdecl my_srand\([^;]+;"),
                           ("random", r"^void __cdecl random_reseed\([^;]+;"),
                           ("log", r"^void __cdecl log_set_state\([^;]+;"),
                           ("alpha", r"^BOOL __cdecl read_rules\([^;]+;"),

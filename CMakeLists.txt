@@ -163,6 +163,8 @@ set(OPENSMACX_SOURCES
     src/newgame.cpp
     src/general.cpp
     src/scenario_undo.cpp
+    src/header_io.cpp
+    src/crt_random.cpp
     src/graphicwin.cpp
     src/heap.cpp
     src/log.cpp
@@ -473,6 +475,10 @@ set_source_files_properties(src/video_sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-
 # Preserve the measured frame-based context of the scenario-editor undo owner.
 # General's unrelated helpers retain their independently measured default recipe.
 set_source_files_properties(src/scenario_undo.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve the measured frame-based contexts of the shared stream wrappers.
+# General's unrelated helpers retain their independently measured default recipe.
+set_source_files_properties(src/header_io.cpp src/crt_random.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp

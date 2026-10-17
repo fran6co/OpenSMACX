@@ -1,0 +1,19 @@
+{
+  "event_id": "e018a3ed0cd2de887537c7d4dd8ba223fba27e1eeb9040a4c254394daaafe833",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "shared-framing-and-crt-wrapper-owners-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Move intact annotated header_check/header_write blocks to src/header_io.cpp and my_srand/rnd to src/crt_random.cpp. Their public headers own the same current ABI; General reexports them rather than keeping duplicate prototypes. Existing LPSTR/LPCSTR and uint32_t mean char*/const char* and unsigned int. Original marker/prototype disagreements remain preserved seed evidence, not silently reinterpreted signatures.",
+      "Keep original signed-char fgetc/fputc behavior, EOF narrowing and unconditional extra read, NUL and 0x1A output, one seed call after logging, unused second rnd pointer and native INT_MIN subtraction-wrap branch. No new safety behavior or modern CRT-provider claim. The sole admitted status-prose cleanup removes the obsolete DLL-redirection instruction; exact inverse tests restore just that sentence for historical comparison.",
+      "Add two sources with measured source-local frame contexts while General and all other application/link/measurement policies remain unchanged. Both new owners and residual General have controlled native whole-object counterparts. Preserve the immutable b24 task baseline, all original identities/claims/lessons and existing pending cross-owner findings. This source-ownership decision is a coordinator-reviewed manual checkpoint, not automatic change or full-project acceptance."
+    ]
+  },
+  "previous_event": "5160a86f8cb1efc29004d174212f95652c812e41d684bd5e824eeb639d773ab3",
+  "request_id": "header-rng-source-owners-incorporated-oct18",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:general-owner-split-oct17"
+}

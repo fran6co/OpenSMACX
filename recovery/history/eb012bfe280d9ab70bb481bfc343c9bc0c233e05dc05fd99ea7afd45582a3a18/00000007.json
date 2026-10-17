@@ -1,0 +1,23 @@
+{
+  "event_id": "5160a86f8cb1efc29004d174212f95652c812e41d684bd5e824eeb639d773ab3",
+  "payload": {
+    "affects": [
+      "entity-08c3aaa0adeabb815933d633f301f92c28cd7ee7512e9f591b45458c5e2d8d06",
+      "entity-6773c8909f765a42efcee2fef09b2eaf2a5923b3cf641d31d9cec79fd8f0b29a",
+      "entity-911ba3897e76f0099c7dcff58e909a03c0b9fef1c9aac51b7504975a7ca2c153",
+      "entity-dffe05f421cd2a23b722d537070e29f7e2332e715e9e8b712a4b2ffbf05c3103"
+    ],
+    "author": "coordinator",
+    "discovery_id": "shared-framing-and-crt-wrapper-owners-oct18",
+    "evidence": [
+      "The original save_game/load_game/map_load/map_save call sites use shared NUL-plus-marker framing; FILE ownership remains with callers. AlphaSave only chooses paths, so framing does not belong to its UI class. my_srand logs then calls the CRT seed provider once; rnd draws from that same CRT stream, separate from source Random/Rand state. Current semantic grouping is not original TU-boundary or Jackal-membership proof."
+    ],
+    "hypothesis": "Shared game/map stream framing and CRT random wrappers have coherent current source owners distinct from catch-all General and the separate Random/Rand LCG.",
+    "kind": "discovery"
+  },
+  "previous_event": "e4b0f779fecfe0af59785e3e33708eadbc4b0389363520aa5519a9af05ff0f0c",
+  "request_id": "shared-framing-and-crt-wrapper-owners-oct18",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:general-owner-split-oct17"
+}

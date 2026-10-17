@@ -1362,28 +1362,6 @@ uint32_t __cdecl bit_count_signed(int input) {
     return count;
 }
 
-/*
-Purpose: Initialize the pseudo-random number generator.
-// ORIGINAL: 0x00538FB0 ?my_srand@@YAHH@Z 0x00538FB0-0x00538FD2 BYTE_EXACT
-// symbol    ?my_srand@@YAXH@Z
-// size      34 bytes
-// prototype int (__cdecl ?my_srand@@YAHH@Z)(int reseed)
-// callers   6   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x006262F0 0x00646010
-Return Value: n/a
-Status: Complete with built in version of srand(). Revisit once more code is redirected to dll.
-*/
-void __cdecl my_srand(int reseed) {
-    // ONE `srand`, not two. The image's `add esp, 0x14` accounts for exactly
-    // log_say's four arguments and one seed; ours was `add esp, 0x18`, four
-    // bytes and one `push`/`call` more. Seeding twice with the same value is
-    // the same as seeding once, so nothing about the game changes.
-    log_say("Reseed to", reseed, 0, 0);
-    srand(reseed);
-}
-
 // Current structural interpretation supersedes the seed-history binding's
 // integer parallel-base rationale: pinned 4D5F92 loads arg0 as the parallel
 // cursor and 4D5F95 loads arg1 as the sorted values. The body advances both by
@@ -1720,30 +1698,6 @@ uint32_t __cdecl checksum_password(LPCSTR password) {
 }
 
 /*
-Purpose: Calculate a random value within the provided bounds. The unused 2nd parameter was possibly 
-         meant to have the random value append to it.
-// ORIGINAL: 0x00579770 ?rnd@@YAHHPAD@Z 0x00579770-0x00579790 BYTE_EXACT
-// LEVER: ternary flipped to a guard-clause `if (bounds - 1 <= 0) return 0;`
-//        then fall through to `return rand() % bounds;` - the image jumps
-//        TO the rand() work and falls through to the early return.
-// symbol    ?rnd@@YAIHPAD@Z
-// size      32 bytes
-// prototype int (__cdecl ?rnd@@YAHHPAD@Z)(int seed, int8*)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0064601D
-Return Value: Bounded random value
-Status: Complete
-*/
-uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input)) {
-    if (bounds - 1 <= 0) {
-        return 0;
-    }
-    return rand() % bounds;
-}
-
-/*
 Purpose: Create a debug error pop-up then write all the parameters to the log file.
 // ORIGINAL: 0x00538F30 ?danger@@YAXPADPADHHH@Z 0x00538F30-0x00538FAA BYTE_EXACT
 // symbol    ?danger@@YAXPBD0HHH@Z
@@ -1886,68 +1840,6 @@ void __cdecl auto_save_debug() {
     rename("saves\\auto\\Alpha Centauri Autosave 1.SAV",
         "saves\\auto\\Alpha Centauri Autosave 2.SAV");
     save_daemon(const_cast<char *>("saves\\auto\\Alpha Centauri Autosave 1"));
-}
-
-/*
-Purpose: Read the specified header from a file. This assumes the header string buffer is at least 
-         256 characters. TODO: Replace built-in versions of _fgetc and change return to std::string.
-// ORIGINAL: 0x0057D1F0 ?header_check@@YAXPADPAUFILE@@@Z 0x0057D1F0-0x0057D235 BYTE_EXACT
-// LEVER: `header_chr` as `char` (not `int`) so the compare/store stay byte
-//        width; `int i` declared and zeroed BEFORE the first `fgetc` call,
-//        not inside the guard block; and the do-while-with-break rewritten
-//        as a plain `while (header_chr) { if (++i >= 256) break; ... }` -
-//        the do-while shape let VC6 fold the loop counter's first
-//        increment into its initial value and rotate the loop, which the
-//        image's own top-tested-counter / bottom-tested-char shape never
-//        does.
-// symbol    ?header_check@@YAXPADPAU_iobuf@@@Z
-// size      69 bytes
-// prototype void (__cdecl ?header_check@@YAXPADPAUFILE@@@Z)(int8* header, FILE* file)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00646855
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl header_check(LPSTR header, FILE *file) {
-    int i = 0;
-    char header_chr = (char)fgetc(file);
-    *header++ = header_chr;
-    while (header_chr) {
-        if (++i >= 256) {
-            break;
-        }
-        header_chr = (char)fgetc(file);
-        *header++ = header_chr;
-    }
-    fgetc(file);
-}
-
-/*
-Purpose: Write the specified header to a file. TODO: Replace built-in versions of _fputc.
-// ORIGINAL: 0x0057D240 ?header_write@@YAXPADPAUFILE@@@Z 0x0057D240-0x0057D270 BYTE_EXACT
-// LEVER: `header_chr` as `char`, not `int` - the image keeps the byte in
-//        `bl` for the loop's `test bl,bl` and only sign-extends it
-//        (`movsx eax, bl`) at the `fputc` push, which is the local matching
-//        the width it reads from.
-// symbol    ?header_write@@YAXPBDPAU_iobuf@@@Z
-// size      48 bytes
-// prototype 
-// callers   2   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00646886
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl header_write(LPCSTR header, FILE *file) {
-    char header_chr;
-    do {
-        header_chr = *header++;
-        fputc(header_chr, file);
-    } while (header_chr);
-    fputc(0x1A, file);
 }
 
 /*

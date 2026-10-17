@@ -159,6 +159,18 @@ UNDO_PROFILE_BLOCK_TEXT = (
 UNDO_PROFILE_INSERTION = "\n" + UNDO_PROFILE_COMMENT + UNDO_PROFILE_BLOCK_TEXT + "\n"
 UNDO_PROFILE_BLOCK = (("src/scenario_undo.cpp",), ("/Oy-",))
 
+HEADER_RNG_SOURCE_BEFORE = "    src/scenario_undo.cpp\n"
+HEADER_RNG_SOURCE_AFTER = (
+    "    src/scenario_undo.cpp\n    src/header_io.cpp\n    src/crt_random.cpp\n"
+)
+HEADER_RNG_PROFILE_INSERTION = (
+    "# Preserve the measured frame-based contexts of the shared stream wrappers.\n"
+    "# General's unrelated helpers retain their independently measured default recipe.\n"
+    "set_source_files_properties(src/header_io.cpp src/crt_random.cpp\n"
+    '    PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
+)
+HEADER_RNG_PROFILE_BLOCK = (("src/crt_random.cpp", "src/header_io.cpp"), ("/Oy-",))
+
 FRAME_PROFILE = ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
 EXPECTED_FLAG_SETS = [
     ["/c", "/O2", "/Gy", "/GR-", "/GX"],
@@ -179,6 +191,7 @@ EXPECTED_CMAKE_PROFILES = {
     ("src/alpha.cpp",): ("/Oy-",),
     ("src/video_sound.cpp",): ("/Oy-",),
     ("src/scenario_undo.cpp",): ("/Oy-",),
+    ("src/crt_random.cpp", "src/header_io.cpp"): ("/Oy-",),
     tuple(sorted(("src/interface_palette.cpp", "src/interface_fonts.cpp"))): ("/Oy-",),
     ("src/sound.cpp",): ("/Oy-",),
     ("src/caviar_cpu.cpp",): ("--frontend=intrinsics-i386-no-debug",),
@@ -240,8 +253,14 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
         return False
     if baseline.count(UNDO_SOURCE_BEFORE) != 1 or candidate.count(UNDO_SOURCE_AFTER) != 1:
         return False
+    if baseline.count(HEADER_RNG_PROFILE_INSERTION) or candidate.count(HEADER_RNG_PROFILE_INSERTION) != 1:
+        return False
+    if baseline.count(HEADER_RNG_SOURCE_BEFORE) or candidate.count(HEADER_RNG_SOURCE_AFTER) != 1:
+        return False
 
-    projected = candidate.replace(insertion, "", 1)
+    projected = candidate.replace(HEADER_RNG_PROFILE_INSERTION, "", 1)
+    projected = projected.replace(HEADER_RNG_SOURCE_AFTER, HEADER_RNG_SOURCE_BEFORE, 1)
+    projected = projected.replace(insertion, "", 1)
     projected = projected.replace(REMAINING_PROFILE_INSERTION, "", 1)
     projected = projected.replace(ALPHA_PROFILE_INSERTION, "", 1)
     projected = projected.replace(VIDEO_SOUND_PROFILE_INSERTION, "", 1)
@@ -259,6 +278,7 @@ def cmake_profile_delta_is_exact(baseline: str, candidate: str) -> bool:
     expected[ALPHA_PROFILE_BLOCK] += 1
     expected[VIDEO_SOUND_PROFILE_BLOCK] += 1
     expected[UNDO_PROFILE_BLOCK] += 1
+    expected[HEADER_RNG_PROFILE_BLOCK] += 1
     return (
         collections.Counter(source_property_blocks(candidate)) == expected
         and non_profile_text_matches(baseline, candidate)
@@ -285,7 +305,24 @@ def test_profile_guard_rejects_policy_mutations():
     candidate += VIDEO_SOUND_PROFILE_INSERTION
     candidate = candidate.replace(UNDO_SOURCE_BEFORE, UNDO_SOURCE_AFTER, 1)
     candidate += UNDO_PROFILE_INSERTION
+    candidate = candidate.replace(HEADER_RNG_SOURCE_BEFORE, HEADER_RNG_SOURCE_AFTER, 1)
+    candidate += HEADER_RNG_PROFILE_INSERTION
     assert cmake_profile_delta_is_exact(baseline, candidate)
+
+    for damaged in (
+        candidate.replace(HEADER_RNG_PROFILE_INSERTION, "", 1),
+        candidate + HEADER_RNG_PROFILE_INSERTION,
+        candidate.replace(HEADER_RNG_SOURCE_AFTER, HEADER_RNG_SOURCE_BEFORE, 1),
+        candidate.replace(HEADER_RNG_SOURCE_AFTER,
+                          HEADER_RNG_SOURCE_AFTER + "    src/header_io.cpp\n", 1),
+        candidate.replace(HEADER_RNG_SOURCE_AFTER,
+                          HEADER_RNG_SOURCE_AFTER + "    src/crt_random.cpp\n", 1),
+        candidate.replace(HEADER_RNG_PROFILE_INSERTION,
+                          HEADER_RNG_PROFILE_INSERTION.replace("/Oy-", "/Oy- /Ob0"), 1),
+        candidate.replace(HEADER_RNG_PROFILE_INSERTION,
+                          HEADER_RNG_PROFILE_INSERTION.replace("src/header_io.cpp", "src/general.cpp"), 1),
+    ):
+        assert not cmake_profile_delta_is_exact(baseline, damaged)
 
     assert not cmake_profile_delta_is_exact(
         baseline, candidate.replace(UNDO_PROFILE_INSERTION, "", 1))
@@ -448,6 +485,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/video.cpp" in application_sources
     assert "src/video_sound.cpp" in application_sources
     assert "src/scenario_undo.cpp" in application_sources
+    assert "src/header_io.cpp" in application_sources
+    assert "src/crt_random.cpp" in application_sources
 
     actual_profiles = dict(source_property_blocks(current_cmake))
     assert actual_profiles == EXPECTED_CMAKE_PROFILES
@@ -460,6 +499,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/video.cpp" not in profiled_sources
     assert actual_profiles[("src/video_sound.cpp",)] == ("/Oy-",)
     assert actual_profiles[("src/scenario_undo.cpp",)] == ("/Oy-",)
+    assert actual_profiles[("src/crt_random.cpp", "src/header_io.cpp")] == ("/Oy-",)
     assert "src/general.cpp" not in profiled_sources
     assert "src/sprite.cpp" not in profiled_sources
     assert "src/net_class.cpp" not in profiled_sources
@@ -482,5 +522,6 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     ) + REJECTED_OWNERS + PREVIOUS_REJECTED_OWNERS + (
         "src/win.cpp", "src/alpha.cpp", "src/video.cpp", "src/video_sound.cpp",
         "src/scenario_undo.cpp",
+        "src/header_io.cpp", "src/crt_random.cpp",
     ):
         assert owner not in unit_profiles, (owner, unit_profiles.get(owner))

@@ -125,6 +125,162 @@ def _unique_insert(data: bytes, anchor: bytes, value: bytes) -> bytes:
     return data.replace(anchor, value + anchor, 1)
 
 
+HEADER_RNG_OLD_STATUS = (
+    b"Status: Complete with built in version of srand(). Revisit once more code is redirected to dll.\n"
+)
+HEADER_RNG_CURRENT_STATUS = b"Status: Complete\n"
+HEADER_RNG_OLD_DECLARATIONS = (
+    b"void __cdecl my_srand(int reseed);\n",
+    b"uint32_t __cdecl rnd(int bounds, LPSTR UNUSED(input) input);\n",
+    b"void __cdecl header_check(LPSTR header, FILE *file);\n"
+    b"void __cdecl header_write(LPCSTR header, FILE *file);\n",
+)
+HEADER_RNG_API_DECLARATIONS = (
+    b"void __cdecl header_check(char *header, FILE *file);",
+    b"void __cdecl header_write(const char *header, FILE *file);",
+    b"void __cdecl my_srand(int reseed);",
+    b"unsigned int __cdecl rnd(int bounds, char *input);",
+)
+
+
+def _header_rng_license() -> bytes:
+    return (
+        b"/*\n"
+        b" * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.\n"
+        b" * Copyright (C) 2013-2021 Brendan Casey\n"
+        b" *\n"
+        b" * OpenSMACX is free software: you can redistribute it and / or modify\n"
+        b" * it under the terms of the GNU General Public License as published by\n"
+        b" * the Free Software Foundation, either version 3 of the License, or\n"
+        b" * (at your option) any later version.\n"
+        b" *\n"
+        b" * OpenSMACX is distributed in the hope that it will be useful,\n"
+        b" * but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+        b" * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+        b" * GNU General Public License for more details.\n"
+        b" *\n"
+        b" * You should have received a copy of the GNU General Public License\n"
+        b" * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.\n"
+        b" */\n"
+    )
+
+
+def _header_rng_record(data: bytes, address: str) -> bytes:
+    marker = f"// ORIGINAL: {address} ".encode()
+    assert data.count(marker) == 1, f"expected one owner record {address}"
+    marker_at = data.index(marker)
+    start = data.rfind(b"/*\nPurpose:", 0, marker_at)
+    assert start >= 0
+    next_start = data.find(b"\n/*\nPurpose:", marker_at)
+    if next_start >= 0:
+        end = next_start + 1
+    else:
+        end = len(data)
+    return data[start:end]
+
+
+def _validate_header_rng_sources(
+    header_io_cpp: bytes,
+    header_io_h: bytes,
+    crt_random_cpp: bytes,
+    crt_random_h: bytes,
+) -> dict[str, bytes]:
+    # Closed owner prologues and exactly the two authorized definitions in
+    # each source file. The canonical comments are validated as APIs too.
+    header_io_prologue = _header_rng_license() + b'#include "stdafx.h"\n#include "header_io.h"\n\n'
+    random_prologue = (
+        _header_rng_license()
+        + b'#include "stdafx.h"\n#include "crt_random.h"\n#include "log.h"\n\n'
+    )
+    assert header_io_cpp.startswith(header_io_prologue)
+    assert crt_random_cpp.startswith(random_prologue)
+    header_check = _header_rng_record(header_io_cpp, "0x0057D1F0")
+    header_write = _header_rng_record(header_io_cpp, "0x0057D240")
+    my_srand = _header_rng_record(crt_random_cpp, "0x00538FB0")
+    rnd = _header_rng_record(crt_random_cpp, "0x00579770")
+    assert header_io_cpp == header_io_prologue + header_check + header_write
+    assert crt_random_cpp == random_prologue + my_srand + rnd
+
+    header_io_expected = (
+        _header_rng_license()
+        + b"#pragma once\n#include <stdio.h>\n\n"
+        + b"// Shared game/map stream framing. The caller retains ownership of the FILE.\n"
+        + b"// Headers include their terminating NUL and are followed by a 0x1A byte.\n"
+        + HEADER_RNG_API_DECLARATIONS[0] + b"\n"
+        + HEADER_RNG_API_DECLARATIONS[1] + b"\n"
+    )
+    crt_random_expected = (
+        _header_rng_license()
+        + b"#pragma once\n\n"
+        + b"// These wrappers use the CRT stream, not the separate Random/Rand LCG.\n"
+        + HEADER_RNG_API_DECLARATIONS[2] + b"\n"
+        + HEADER_RNG_API_DECLARATIONS[3] + b"\n"
+    )
+    assert header_io_h == header_io_expected, "header I/O API/prologue is not closed"
+    assert crt_random_h == crt_random_expected, "CRT RNG API/prologue is not closed"
+    assert my_srand.count(HEADER_RNG_OLD_STATUS) == 0
+    assert my_srand.count(HEADER_RNG_CURRENT_STATUS) == 1
+
+    # The one reviewed stale status sentence is a comment-only migration. Its
+    # exact old bytes are reinstated for the historical source projection.
+    restored_my_srand = my_srand.replace(
+        HEADER_RNG_CURRENT_STATUS, HEADER_RNG_OLD_STATUS, 1
+    )
+    assert restored_my_srand.count(HEADER_RNG_OLD_STATUS) == 1
+    return {
+        "my_srand": restored_my_srand,
+        "rnd": rnd,
+        "header_check": header_check,
+        "header_write": header_write,
+    }
+
+
+def _project_header_rng_general(
+    general_bytes: bytes,
+    header_io_cpp: bytes,
+    header_io_h: bytes,
+    crt_random_cpp: bytes,
+    crt_random_h: bytes,
+) -> bytes:
+    records = _validate_header_rng_sources(
+        header_io_cpp, header_io_h, crt_random_cpp, crt_random_h
+    )
+    general_bytes = _unique_insert(
+        general_bytes,
+        b"// Current structural interpretation supersedes the seed-history binding's\n",
+        records["my_srand"],
+    )
+    general_bytes = _unique_insert(
+        general_bytes,
+        b"/*\nPurpose: Create a debug error pop-up then write all the parameters to the log file.\n",
+        records["rnd"],
+    )
+    general_bytes = _unique_insert(
+        general_bytes,
+        b"/*\nPurpose: For the count, sort both id and value arrays by the least to greatest value (ascending).\n",
+        records["header_check"] + records["header_write"],
+    )
+    return general_bytes
+
+
+def project_header_rng_general(general_bytes: bytes) -> bytes:
+    """Inverse the header/RNG move using only its actual source owners/APIs."""
+    live = {
+        "header_io_cpp": ROOT / "src/header_io.cpp",
+        "header_io_h": ROOT / "src/header_io.h",
+        "crt_random_cpp": ROOT / "src/crt_random.cpp",
+        "crt_random_h": ROOT / "src/crt_random.h",
+    }
+    sources = {key: path.read_bytes() for key, path in live.items()}
+    return _project_header_rng_general(
+        general_bytes,
+        sources["header_io_cpp"],
+        sources["header_io_h"],
+        sources["crt_random_cpp"],
+        sources["crt_random_h"],
+    )
+
+
 def _git_source(relative_path: str) -> bytes:
     return subprocess.run(
         ["git", "show", f"{BASE_REVISION}:{relative_path}"],
@@ -148,7 +304,7 @@ def _actual_split(paths: dict[str, Path]) -> dict[str, bytes]:
 def inverse_split(parts: dict[str, bytes]) -> dict[str, bytes]:
     """Rebuild original general/council bytes from actual split contents."""
     assert set(parts) == {"general", "council", "undo"}
-    general = parts["general"]
+    general = project_header_rng_general(parts["general"])
     council = parts["council"]
     undo_owner = parts["undo"]
     baseline = _baseline_sources()
@@ -241,6 +397,7 @@ def assert_parser_continuity(parts: dict[str, bytes], paths: dict[str, Path]) ->
         {"general": ROOT / "src/general.cpp", "council": ROOT / "src/council.cpp"},
     )
     parser_parts = dict(parts)
+    parser_parts["general"] = project_header_rng_general(parts["general"])
     parser_parts["council"] = _restore_admitted_council_context(parts["council"])
     after = _records(parser_parts, paths)
     assert after.keys() == before.keys()
