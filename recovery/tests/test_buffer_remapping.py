@@ -1,15 +1,14 @@
-"""Actual remapping/fill bodies, independent byte oracles and strict sanitizers.
+"""Actual-source Buffer remapping/fill controls with explicit host doubles.
 
-Remappers and free_data are unchanged source. get_data is a scripted acquisition
-double: the real VC6 helper returns a 32-bit int pointer and cannot be compiled
-unchanged on this 64-bit host. Its COM implementation is NOT proved here; the
-tests observe remappers' handling of published pitch, nested counts and null
-results, including a simulated successful Lock returning null pixels. The real
-RECT fill has its own acquisition path. All extracted bodies are unchanged;
-USER32/DirectDraw are explicit doubles. No native ABI, DirectDraw runtime or
-game acceptance is claimed. The numeric start-address-zero control wraps at
-host pointer width; it is analogous to, not an exact 32-bit address proof of,
-the native check. No fabricated pointer is dereferenced on that path.
+Both remappers, free_data, fill and fields are extracted unchanged from src.
+The coordinate overload uses a scripted get_data double; the direct RECT path
+executes its actual acquisition and cleanup with a configurable DirectDraw Lock.
+Independent pixel oracles and damage cases check aliasing, pitch publication,
+nested/DIB state and native no-release failure paths. Host controls and source
+ordering assertions do not prove native ABI, DirectDraw runtime or game
+acceptance. Host-width numeric wrapping is analogous to, not an exact 32-bit
+proof of, the native zero-address check; no fabricated pointer is dereferenced
+on the supported zero-address path.
 """
 
 from pathlib import Path
@@ -69,7 +68,7 @@ const int DDLOCK_WAIT=1,DDBLT_COLORFILL=2,DDBLT_WAIT=4;
 void check(bool ok,int line){if(!ok){std::fprintf(stderr,"assertion line %d\n",line);std::exit(95);}}
 #define require(x) check((x),__LINE__)
 struct IDirectDrawSurface {
-    int Lock(void *,DDSURFACEDESC *,int,void *){require(false);return 1;}
+    int Lock(void *,DDSURFACEDESC *,int,void *);
     int Unlock(void *);
     int Blt(RECT *,void *,void *,int,DDBLTFX *);
 } surface;
@@ -90,6 +89,7 @@ ACTUAL_BODIES
 alignas(16) unsigned char pixels[4096],expected[4096];
 unsigned char lut[256];
 int get_calls,unlock_calls,blt_calls,mode,published_pitch;
+int lock_calls,lock_status,lock_pitch;void *lock_bits;
 bool publish_pitch;
 unsigned char *published_pixels;
 RECT blt_rect;int blt_color;
@@ -99,6 +99,15 @@ void *Buffer::get_data(){
     if(publish_pitch)stride_=published_pitch;
     if(mode==3){locked_bits_=nullptr;++surface_lock_count_;return nullptr;}
     locked_bits_=published_pixels;++surface_lock_count_;return published_pixels;
+}
+int IDirectDrawSurface::Lock(void *area,DDSURFACEDESC *description,int flags,void *event){
+    require(this==&surface && area==nullptr && event==nullptr);
+    require(flags==DDLOCK_WAIT && description->dwSize==sizeof(DDSURFACEDESC));
+    ++lock_calls;
+    if(mode==2 || lock_status!=0)return mode==2?1:lock_status;
+    description->lPitch=mode==3?published_pitch:lock_pitch;
+    description->lpSurface=mode==3?nullptr:lock_bits;
+    return 0;
 }
 int IDirectDrawSurface::Unlock(void *p){
     require(this==&surface && p==published_pixels);++unlock_calls;return 37;
@@ -113,7 +122,8 @@ void start(){
     std::memcpy(expected,pixels,sizeof(pixels));
     buffer.rect1_={0,0,20,12};buffer.dib_.bmiHeader={20,-12};buffer.stride_=24;
     buffer.dib_bits_=pixels+512;buffer.locked_bits_=nullptr;buffer.surface_=nullptr;buffer.surface_lock_count_=0;
-    get_calls=unlock_calls=blt_calls=0;mode=0;publish_pitch=false;published_pitch=24;published_pixels=pixels+512;
+    get_calls=unlock_calls=blt_calls=lock_calls=0;mode=0;publish_pitch=false;published_pitch=24;published_pixels=pixels+512;
+    lock_status=0;lock_pitch=24;lock_bits=pixels+512;
     BufferFillRowGap=777;
 }
 void unchanged(){require(std::memcmp(pixels,expected,sizeof(pixels))==0);}
@@ -129,6 +139,7 @@ void remap_oracle(RECT area,int old_pitch,int new_pitch,bool alias){
 void remaps(){
     for(bool rect_form : {false,true})for(bool acquired_surface : {false,true})
       for(bool nested : {false,true})for(bool changed_pitch : {false,true}){
+        if(rect_form)continue; // direct RECT acquisition has dedicated controls below
         start();buffer.surface_=acquired_surface?&surface:nullptr;
         buffer.surface_lock_count_=nested?3:0;
         if(nested)buffer.locked_bits_=published_pixels;
@@ -152,7 +163,7 @@ void remaps(){
         remap_oracle({0,0,8,3},16,16,true);
         RECT rect={0,0,9,4};
         require((rect_form?buffer.map_colors(&rect,pixels+512):buffer.map_colors(0,0,8,3,pixels+512))==0);
-        unchanged();require(get_calls==1 && buffer.surface_lock_count_==0);
+        unchanged();require(get_calls==(rect_form?0:1) && buffer.surface_lock_count_==0);
     }
     for(RECT clip : {RECT{0,0,20,12},RECT{3,2,10,7},RECT{1,1,2,2}})
       for(RECT input : {RECT{-3,-2,9,6},RECT{0,0,20,12},RECT{4,3,30,20}}){
@@ -175,6 +186,7 @@ void remaps(){
         require(get_calls==0);unchanged();
     }
     for(int failure : {2,3})for(bool rect_form : {false,true}){
+        if(rect_form)continue;
         start();buffer.surface_=&surface;buffer.surface_lock_count_=4;mode=failure;
         publish_pitch=true;published_pitch=32;
         rect={1,1,5,5};
@@ -189,6 +201,87 @@ void remaps(){
     require(buffer.map_colors(1,0,2,1,lut)==7);
     require(get_calls==1 && unlock_calls==0 && buffer.surface_lock_count_==5);
     require(buffer.locked_bits_==published_pixels);unchanged();
+}
+void rect_remaps(){
+    start();RECT nonnull={0,0,5,5};
+    require(buffer.map_colors(nullptr,lut)==16);
+    require(buffer.map_colors(&nonnull,nullptr)==16);
+    require(lock_calls==0 && get_calls==0);unchanged();
+    for(bool surface_path : {false,true})for(bool nested : {false,true})
+      for(bool changed_pitch : {false,true}){
+        start();buffer.surface_=surface_path?&surface:nullptr;
+        buffer.surface_lock_count_=nested?3:0;
+        if(nested)buffer.locked_bits_=published_pixels;
+        lock_pitch=changed_pitch?32:24;lock_bits=published_pixels;
+        int pitch=(surface_path && !nested && changed_pitch)?32:24;
+        RECT area={2,2,10,7};remap_oracle({2,2,9,6},24,pitch,false);
+        require(buffer.map_colors(&area,lut)==0);unchanged();
+        require(get_calls==0);
+        require(lock_calls==(surface_path && !nested?1:0));
+        require(unlock_calls==(surface_path && !nested?1:0));
+        require(buffer.surface_lock_count_==(nested?3:0));
+        if(surface_path && nested)require(buffer.locked_bits_==published_pixels);
+        else if(!surface_path && nested)require(buffer.locked_bits_==buffer.dib_bits_);
+        else require(buffer.locked_bits_==nullptr);
+        require(buffer.stride_==uint32_t(pitch));
+    }
+    // Direct DIB mode overwrites a nested cached pointer with dib_bits_ and
+    // leaves that pointer published when the reference count remains positive.
+    start();buffer.surface_lock_count_=3;buffer.locked_bits_=pixels+600;
+    RECT dib_nested={1,1,5,5};
+    require(buffer.map_colors(&dib_nested,lut)==0);
+    require(buffer.surface_lock_count_==3 && buffer.locked_bits_==buffer.dib_bits_);
+    require(lock_calls==0 && get_calls==0 && unlock_calls==0);
+
+    // No DIB storage publishes null, but must not acquire or decrement a
+    // holder. Exercise both a fresh count and stale nested state.
+    for(int holders : {0,3}){
+        start();buffer.dib_bits_=nullptr;buffer.locked_bits_=pixels+600;
+        buffer.surface_lock_count_=holders;RECT missing_dib={1,1,5,5};
+        require(buffer.map_colors(&missing_dib,lut)==7);
+        require(buffer.locked_bits_==nullptr && buffer.surface_lock_count_==holders);
+        require(lock_calls==0 && get_calls==0 && unlock_calls==0);unchanged();
+    }
+
+    // A successful Lock returning null increments/publishes state, then the
+    // native base-pointer check returns7 before offset calculation. Exercise
+    // both zero and nonzero clipped origins; no low address may be touched.
+    for(RECT area : {RECT{0,0,5,5},RECT{2,2,6,6}}){
+        start();buffer.surface_=&surface;lock_pitch=32;lock_bits=nullptr;
+        require(buffer.map_colors(&area,lut)==7);
+        require(lock_calls==1 && get_calls==0 && unlock_calls==0);
+        require(buffer.surface_lock_count_==1 && buffer.locked_bits_==nullptr);
+        require(buffer.stride_==32);unchanged();
+    }
+    start();buffer.surface_=&surface;lock_status=19;lock_pitch=32;
+    RECT failure={1,1,5,5};
+    require(buffer.map_colors(&failure,lut)==7);
+    require(lock_calls==1 && get_calls==0 && unlock_calls==0);
+    require(buffer.surface_lock_count_==0 && buffer.locked_bits_==nullptr);
+    require(buffer.stride_==24);unchanged();
+
+    // Alias the translation table into the target bytes: each lookup must
+    // observe earlier writes, rather than a copied table snapshot.
+    start();buffer.stride_=16;buffer.rect1_={0,0,8,4};
+    pixels[512]=1;pixels[513]=0;pixels[514]=0;std::memcpy(expected,pixels,sizeof(pixels));
+    remap_oracle({0,0,8,3},16,16,true);RECT alias={0,0,9,4};
+    require(buffer.map_colors(&alias,pixels+512)==0);unchanged();
+    require(lock_calls==0 && buffer.surface_lock_count_==0);
+
+    start();RECT empty={2,2,3,3};
+    require(buffer.map_colors(&empty,lut)==0 && lock_calls==0);unchanged();
+    start();buffer.rect1_={0,0,100,100};RECT beyond_x={20,0,26,3};
+    require(buffer.map_colors(&beyond_x,lut)==7 && lock_calls==0);unchanged();
+    start();buffer.rect1_={0,0,100,100};RECT beyond_y={0,12,3,18};
+    require(buffer.map_colors(&beyond_y,lut)==7 && lock_calls==0);unchanged();
+
+    // Null acquired storage and numeric address wrap both retain acquired
+    // state without cleanup, matching the original early-return paths.
+    start();buffer.surface_=&surface;lock_bits=reinterpret_cast<void *>(UINTPTR_MAX);
+    RECT wrapped={1,0,3,2};
+    require(buffer.map_colors(&wrapped,lut)==7);
+    require(lock_calls==1 && unlock_calls==0 && buffer.surface_lock_count_==1);
+    require(buffer.locked_bits_==lock_bits);unchanged();
 }
 void fills(){
     for(int pitch : {8,9,12,13})for(int left : {0,1,3})for(int width=1;width<=8-left;++width)
@@ -220,6 +313,7 @@ void fills(){
 }
 int main(int argc,char **argv){
     if(argc==1 || std::string(argv[1])=="remap")remaps();
+    if(argc==1 || std::string(argv[1])=="rect")rect_remaps();
     if(argc==1 || std::string(argv[1])=="fill")fills();
 }
 '''
@@ -245,6 +339,22 @@ def test_actual_buffer_remapping(tmp_path):
     assert result.returncode==0,result.stderr
 
 
+def test_actual_direct_rectangle_remapping(tmp_path):
+    result=run_host(tmp_path,*actual_source(),only="rect")
+    assert result.returncode==0,result.stderr
+
+
+def test_actual_source_preserves_direct_lock_publication_order():
+    body = actual_source()[1][1]
+    ordered = ["const int acquired_lock_count = surface_lock_count_ + 1;",
+               "stride_ = static_cast<uint32_t>(description.lPitch);",
+               "surface_lock_count_ = acquired_lock_count;",
+               "locked_bits_ = description.lpSurface;"]
+    positions = [body.index(fragment) for fragment in ordered]
+    assert positions == sorted(positions)
+    assert body.index("if (locked_bits_ == nullptr) {") < body.index("uintptr_t address =")
+
+
 def test_actual_buffer_rectangle_fill(tmp_path):
     result=run_host(tmp_path,*actual_source(),only="fill")
     assert result.returncode==0,result.stderr
@@ -267,9 +377,16 @@ def test_actual_buffer_rectangle_fill(tmp_path):
     (0,"return 7;","return 0;","remap"),
     (0,"*pixel = table[*pixel];","*pixel = table[static_cast<unsigned char>(*pixel + 1)];","remap"),
     (0,"RECT clipped;","unsigned char copied[256]; memcpy(copied, table, 256); table=copied; RECT clipped;","remap"),
-    (1,"area->right - 1","area->right","remap"),
-    (1,"area->bottom - 1","area->bottom","remap"),
-    (1,"return 16;","return 0;","remap"),
+    (1,"--clipped.right;","/* omitted right decrement */","rect"),
+    (1,"--clipped.bottom;","/* omitted bottom decrement */","rect"),
+    (1,"return 16;","return 0;","rect"),
+    (1,"if (locked_bits_ == nullptr) {","if (false) {","rect"),
+    (1,"if (address == 0) {","if (false) {","rect"),
+    (1,"surface_->Unlock(locked_bits_);","/* omitted Unlock */","rect"),
+    (1,"const int row_gap = static_cast<int>(stride_) - width;","const int row_gap = 0;","rect"),
+    (1,"*pixel = table[*pixel];","*pixel = table[static_cast<unsigned char>(*pixel + 1)];","rect"),
+    (1,"surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr)",
+       "surface_->Lock(nullptr, &description, 0, nullptr)","rect"),
     (3,"destination = reinterpret_cast<uintptr_t>(tail) + BufferFillRowGap;",
        "destination += BufferFillRowGap;","fill"),
     (3,"memcpy(tail, &quad, sizeof(quad));",
