@@ -10,7 +10,7 @@ import subprocess
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-BASE_REVISION = "7ae732328ee74d7dbbb3ee069950146fa550140e"
+BASE_REVISION = "153cf0bc7e3b16ff2c1608baf1731bc5e674bb2d"
 PRIOR_PROFILE_GROUPS = (
     (
         "src/game.cpp",
@@ -23,22 +23,42 @@ PRIOR_PROFILE_GROUPS = (
         "src/prodpicker.cpp",
         "src/alphamenu.cpp",
     ),
+    (
+        "src/stringstruct.cpp",
+        "src/councwin.cpp",
+        "src/planwin.cpp",
+    ),
 )
 PREVIOUS_OWNERS = tuple(owner for group in PRIOR_PROFILE_GROUPS for owner in group)
 NEW_OWNERS = (
-    "src/stringstruct.cpp",
-    "src/councwin.cpp",
-    "src/planwin.cpp",
+    "src/infowin.cpp",
+    "src/alphasave.cpp",
+    "src/famewin.cpp",
+    "src/messagewin.cpp",
+    "src/setupwin.cpp",
+    "src/path.cpp",
+    "src/dipedit.cpp",
+    "src/picktech.cpp",
+    "src/pickwin.cpp",
+    "src/council.cpp",
 )
+REJECTED_OWNERS = ("src/alphanet.cpp", "src/strings.cpp")
 NEW_PROFILE_COMMENT = (
-    "# Preserve measured frame-based accesses in the qualifying owner cohort.\n"
-    "# Sprite and networking retain their measured default source recipes.\n"
+    "# Preserve measured frame-based accesses across the application owner batch.\n"
+    "# Mixed AlphaNet and Strings recipes retain their measured default profiles.\n"
 )
 NEW_PROFILE_BLOCK_TEXT = (
     "set_source_files_properties(\n"
-    "    src/stringstruct.cpp\n"
-    "    src/councwin.cpp\n"
-    "    src/planwin.cpp\n"
+    "    src/infowin.cpp\n"
+    "    src/alphasave.cpp\n"
+    "    src/famewin.cpp\n"
+    "    src/messagewin.cpp\n"
+    "    src/setupwin.cpp\n"
+    "    src/path.cpp\n"
+    "    src/dipedit.cpp\n"
+    "    src/picktech.cpp\n"
+    "    src/pickwin.cpp\n"
+    "    src/council.cpp\n"
     '    PROPERTIES COMPILE_OPTIONS "/Oy-")'
 )
 NEW_PROFILE_BLOCK = (tuple(sorted(NEW_OWNERS)), ("/Oy-",))
@@ -150,7 +170,7 @@ def test_profile_guard_rejects_policy_mutations():
     )
     assert not cmake_profile_delta_is_exact(baseline, changed_options)
     extra_owner = candidate.replace(
-        "    src/stringstruct.cpp\n", "    src/stringstruct.cpp\n    src/other.cpp\n"
+        "    src/infowin.cpp\n", "    src/infowin.cpp\n    src/other.cpp\n"
     )
     assert not cmake_profile_delta_is_exact(baseline, extra_owner)
     global_flag_change = candidate.replace(
@@ -167,6 +187,14 @@ def test_profile_guard_rejects_policy_mutations():
         '\nset_source_files_properties(src/net_class.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
     )
     assert not cmake_profile_delta_is_exact(baseline, network_profile)
+    alphanet_profile = candidate + (
+        '\nset_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
+    )
+    assert not cmake_profile_delta_is_exact(baseline, alphanet_profile)
+    strings_profile = candidate + (
+        '\nset_source_files_properties(src/strings.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
+    )
+    assert not cmake_profile_delta_is_exact(baseline, strings_profile)
 
     baseline_measurement = {"flag_sets": [EXPECTED_FLAG_SETS[0]], "unit_flag_sets": {}}
     changed_measurement = copy.deepcopy(baseline_measurement)
@@ -174,9 +202,9 @@ def test_profile_guard_rejects_policy_mutations():
     assert not measurement_policy_is_unchanged(baseline_measurement, changed_measurement)
 
 
-def test_application_profiles_match_immutable_baseline_plus_three_cohort_owners():
+def test_application_profiles_match_immutable_baseline_plus_ten_owner_batch():
     task = json.loads(
-        (ROOT / "recovery/tasks/fast-owner-cohort-oct17.json").read_text(
+        (ROOT / "recovery/tasks/application-frame-batch-oct17.json").read_text(
             encoding="utf-8"
         )
     )
@@ -189,6 +217,7 @@ def test_application_profiles_match_immutable_baseline_plus_three_cohort_owners(
     assert source_list is not None
     application_sources = set(source_list.group(1).split())
     assert all(owner in application_sources for owner in NEW_OWNERS + PREVIOUS_OWNERS)
+    assert all(owner in application_sources for owner in REJECTED_OWNERS)
     assert "src/sprite.cpp" in application_sources
     assert "src/net_class.cpp" in application_sources
     assert "src/alpha.cpp" in application_sources
@@ -201,9 +230,9 @@ def test_application_profiles_match_immutable_baseline_plus_three_cohort_owners(
     assert "src/alpha.cpp" not in profiled_sources
     assert "src/win.cpp" not in profiled_sources
     assert "src/technology_queries.cpp" not in profiled_sources
-    # Rejected owner profiles must not leak into later recipe changes.
     assert "src/sprite.cpp" not in profiled_sources
     assert "src/net_class.cpp" not in profiled_sources
+    assert all(owner not in profiled_sources for owner in REJECTED_OWNERS)
 
     baseline_project = json.loads(baseline_text("recovery/project.json"))
     current_project = json.loads(
@@ -216,6 +245,6 @@ def test_application_profiles_match_immutable_baseline_plus_three_cohort_owners(
     unit_profiles = current_measurement["unit_flag_sets"]
     for owner, expected in EXISTING_MEASURED_PROFILES.items():
         assert unit_profiles[owner] == expected, (owner, unit_profiles.get(owner))
-    for owner in NEW_OWNERS + ("src/win.cpp", "src/alpha.cpp"):
+    for owner in NEW_OWNERS + REJECTED_OWNERS + ("src/win.cpp", "src/alpha.cpp"):
         assert owner not in unit_profiles, (owner, unit_profiles.get(owner))
 

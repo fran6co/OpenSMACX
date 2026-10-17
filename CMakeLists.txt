@@ -411,6 +411,20 @@ set_source_files_properties(
     src/councwin.cpp
     src/planwin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve measured frame-based accesses across the application owner batch.
+# Mixed AlphaNet and Strings recipes retain their measured default profiles.
+set_source_files_properties(
+    src/infowin.cpp
+    src/alphasave.cpp
+    src/famewin.cpp
+    src/messagewin.cpp
+    src/setupwin.cpp
+    src/path.cpp
+    src/dipedit.cpp
+    src/picktech.cpp
+    src/pickwin.cpp
+    src/council.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp

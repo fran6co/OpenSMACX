@@ -1,0 +1,44 @@
+{
+  "event_id": "9c73b5cb636b7d6dc8b06bb528033a0eec88780f42f7c8338ca2979054ea7f35",
+  "payload": {
+    "affects": [
+      "entity-0c00e4b293a88e2e4c2c87d33fc7a6bcf43814fbfa228ba35579c03d22baf30d",
+      "entity-1da6b0f0d4c886d663812c0048287bdbf367866c22218a37d2f22e0b251ffe94",
+      "entity-28af6aa17069c4dce8d5aaa72d2840cc95da553c19a143be8f8e989e54759818",
+      "entity-3070f07825a5fed3210362352005c72f9542e373b35aea9c91ee54b19c218ed9",
+      "entity-31e9432a9994dfbd411931740fd4034a1f46106ea4ccaa7793ab47b44b71dc13",
+      "entity-332e623dd1fef9c3bba8c48935b2e3e24007271bfc1be9d1fed5925c0e12b31d",
+      "entity-3578be3652b278b3e601dda1f1395b45db9fc206e275dd0c51ac3de30074bcac",
+      "entity-45127a5676f453458eae7542941bd350897b352620b1e40b3905f6c703105357",
+      "entity-477a337212f70accab4b67e0731b23675538e58dde4b99c06f62643182610f67",
+      "entity-71ae567bb887f227216130b073ba6a89eec35b498a0d5f02a9ebed7bc8ef706b",
+      "entity-7468a046578f56db84d183935b681b6f32cc3e990665dd396bc5d609373c1ded",
+      "entity-7813fef5e54e03c1ac7bd8a594c27efa544cf9a5116beb546e0ab0032499599b",
+      "entity-8da7cc8ad7bb810adada6c300f24b48e8e3b16e73a0f6f43d15856c8584746f0",
+      "entity-912116a15bf06dcd93143334e7db4b84e6885d4637ab89e8c2560e952737e3e1",
+      "entity-9a6101b42ba227d16c6faaa95dccd04de2e0e5d0456b03f24deda840dbff24ab",
+      "entity-d108c4df8afefa8edaaa9abceb25ae1e1d83a5a3060e505a82e26488722fcff1",
+      "entity-d31453f2914cf5c6006a2c3a7e9e280b28f9e8f67a099ddb6ae49c65aeb796da",
+      "entity-df16d547f8b8157975f47a7c9eee7b6ab18fa56b3d7dce637292321261cd2db8",
+      "entity-e02f840a53d5030821e1928f6d5fec1599165b919fc5532c096c0382df1c42b0",
+      "entity-ea6b8b53df3aa0430a0c06bc18c75acd285e5f167c154c82b7039d9cfe6cd0fe",
+      "entity-ed05701aad7f52f58f97dc800207a9eea75ce228c1da8c50264ab98526f255c2",
+      "entity-f3ccd3b4e8a744eb684318b53494e7eb7060417a41fc7fd3e5fbabec35e90544",
+      "entity-fb513b474ad18db372d48f5e436ad54aa7e6d7553e5efbbfb59a37389c0ae594",
+      "entity-fcc1d0cba21a9cea32edf19f620ec1aa712fa76873f2a49a25d0adf90d7b5a57"
+    ],
+    "author": "coordinator",
+    "discovery_id": "infowin-state-valid-switch-extent-debt-oct17",
+    "evidence": [
+      "Native primary strictFAIL at458DC0: declared original282byte function extent ends458EDA; actual COFF section336bytes includes12table relocations at284through328 outside that extent. Original known table binding starts458EDC. Preserve this FAIL and all current original boundaries; do not enlarge metadata from adjacency or waive table/relocations to advertise a strict match.",
+      "Fresh body matching does not establish complete table ownership/allocation/reference contents. Current linked native section verification passes, a separate current-image observation, not original combined extent proof. GameDataStateStorage references and other newly visible original bindings remain UNKNOWN. Previous3075strict classifications remain unchanged."
+    ],
+    "hypothesis": "The newly masked-exact state_valid body exposes an unresolved code-plus-switch-table extent, not a new strict success.",
+    "kind": "discovery"
+  },
+  "previous_event": "980d755a40e0f3314626906f40d4971f195913803f554fe6b946c9051ffa30b9",
+  "request_id": "infowin-state-valid-switch-extent-debt-oct17",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:application-frame-batch-oct17"
+}
