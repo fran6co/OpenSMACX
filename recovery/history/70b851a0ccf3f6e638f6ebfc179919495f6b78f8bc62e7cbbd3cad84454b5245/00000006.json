@@ -1,0 +1,20 @@
+{
+  "event_id": "ae4ce1354a921946641af7de5a3e8ca58da6abdf8262c38a3bb91fa2e85e31e2",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_input_flush_owner_oct17.py"
+    ],
+    "evidence": [
+      "Explicit source-annotation exception forWin.cpp: bind existing WinPointerOwner1/2 at9B7ACC/9B7AD0 withv1objectrecords and pinned write/read rationale; bind __imp__PeekMessageA@20 toUSER32.dll name:PeekMessageA. No source storage/type/function/body change and no library decompilation target is created.",
+      "Keep the bindings source-owned and validate native parsing. A fresh strict pump must pass and wrong pointer-start/import-name controls must not pass. Unknown library/ABI, object extents, other globals and linked retained-selection evidence remain unknown; no automatic acceptance or claim grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "343d4cd3c5023686cccf31bfa521d7cae5a5225d706fec55412d7957a41e1237",
+  "request_id": "win-input-reference-scope-oct17",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:interface-frame-oct17"
+}

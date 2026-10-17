@@ -1,0 +1,20 @@
+{
+  "event_id": "390900fcc4ff5b4c4b06431b72f5462ffbb30575dc34ba386e64d6a3695345e0",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_datalink_source_text_owner_oct9.py"
+    ],
+    "evidence": [
+      "Production exception: change ONLY Datalink::set_cat_unit loop bound100toexistingMaxVehProtoFactionNum64, and correct its false100-record purpose prose with pinned end/stride evidence. Preserve filtering, slot4skip, callback timing, row IDs, later drawing, all markers/claims and other body tokens. No type/header/global/schema or record changes.",
+      "Adapt the existing actual-source harness to expose the real64constant and add a boundary/callback control with active prototypes63,64,99: only63may appear, slot4staysskipped, no future record cached across callbacks. The former100-bound mutant must compile and fail. Native actualbody/address comparison must observe9AC568; retain unknownmember-layout and strict bounds obligations separately."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3edf084f1474ba0e9ad4201d3a09606bdf34eca0ee119d843dda8ce7ae7ba68c",
+  "request_id": "datalink-prefix-body-scope-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:interface-frame-oct17"
+}
