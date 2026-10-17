@@ -439,6 +439,17 @@ set_source_files_properties(
     src/monuwin.cpp
     src/name_table.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve measured frame-based accesses in the core application cohort.
+# Mixed or non-improving owners retain their measured default recipes.
+set_source_files_properties(
+    src/ambience.cpp
+    src/deletionlist.cpp
+    src/factionprofilewin.cpp
+    src/interlude.cpp
+    src/netmsg.cpp
+    src/playerlock.cpp
+    src/probe.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp

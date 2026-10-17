@@ -8893,7 +8893,7 @@ typedef int (__stdcall *IntersectRectFn)(RECT *, const RECT *, const RECT *);
 // indirect  0x005F2E85 0x005F30E4 0x005F319C 0x005F332B 0x005F33D3 0x005F3544 0x005F35FC 0x005F37AA
 // TRIED: first 9 instructions match (prologue, flag tests); diverges at instr #10 (je vs mov). Field map (buffer1_..4_ at 0xB4/0xB8/0xBC/0xC0, heap_.base_ at 0xE0 as the title char*, client_rect_/outer_rect_ at 0x14C/0x13C) cross-checked against param_1[N]*4 in the Ghidra listing and is consistent across all 4 near-identical edge blocks.
 void Win::on_redraw_nc(RECT * area, int flags) {
-    if ((*(unsigned char *)&this->iSomeFlag_ & 2) == 0) return;
+    if ((this->iSomeFlag_ & 2U) == 0) return;
     unsigned int win_flags = this->iFlags_;
     if ((win_flags & 0x11) == 0) return;
 
@@ -9485,7 +9485,7 @@ void Win::client_to_nonclient(int * points, int * count) {
 void Win::nonclient_to_screen(int * x, int * y) {
     *x = *x + outer_rect_.left + client_rect_.left;
     *y = *y + outer_rect_.top + client_rect_.top;
-    if ((*(unsigned char *)&iFlags_ & 0x20) != 0 && win_parent_ != 0) {
+    if ((iFlags_ & WinFlagClipToParent) != 0 && win_parent_ != 0) {
         win_parent_->client_to_screen(x, y);
         if ((iFlags_ & 0x8000) != 0) {
             *x = *x - win_parent_->outer_rect_.left;

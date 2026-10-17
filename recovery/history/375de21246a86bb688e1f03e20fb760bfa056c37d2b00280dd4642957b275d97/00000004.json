@@ -1,0 +1,17 @@
+{
+  "event_id": "3f25be8e7aefaafe5bc5d51c93b7fea7349600ab8233733514bcd7e4ce55b456",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "mixed-or-nonimproving-core-owner-contexts-oct17",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Each rejected CPP/header/mapping/default recipe stays unchanged. Candidate wholeCOFF outputs match their controlled baseline variants with zero omissions. Consolidated guard explicitly refuses their frame profiles and retains prior Gamma/Credits/AlphaNet/Strings/Base/Win and other default exclusions."
+    ]
+  },
+  "previous_event": "163124f2ed7957da9d24532da74c0aa768a8855382c650f1928e31c262226a77",
+  "request_id": "mixed-or-nonimproving-core-owner-contexts-oct17-rejected",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:core-owner-and-win-flags-oct17"
+}

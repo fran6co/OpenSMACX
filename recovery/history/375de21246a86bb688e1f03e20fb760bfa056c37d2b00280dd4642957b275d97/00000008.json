@@ -1,0 +1,21 @@
+{
+  "event_id": "eafd2ff80d864e344f614009c5aaa78bef29b669cfe4dc8021eb118149c36d41",
+  "payload": {
+    "affects": [
+      "entity-57d6507265293542f9eeb7c7a761c7d8599c8223db20285a2ee3cc42690f99ad",
+      "entity-d711e3a8f0be40591a07913f391559ac963b8e5d2dc4256a8c42cb008dcf11a8"
+    ],
+    "author": "coordinator",
+    "discovery_id": "ambience-shared-deleting-identity-debt-oct17",
+    "evidence": [
+      "Both mapped bodies newly match masked bytes under the selected actualowner frame context, and currentlinked observations share the same generated symbol. Native primary strict selection refuses both with ambiguous source symbol binding. Preserve their complete original identities/spans/claims and investigate original emissions/callers before any shared-equivalence relation or source rebinding. No inference from adjacency or score resolves ownership."
+    ],
+    "hypothesis": "Retain the two original deleting-destructor identities sharing one current Ambience symbol as a strict ambiguity, not two independently qualified C++ bodies.",
+    "kind": "discovery"
+  },
+  "previous_event": "900f392ea5803ed81915dc60f49c46ce2ede8534eae25b36c122aec1bcdda883",
+  "request_id": "ambience-shared-deleting-identity-debt-oct17",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:core-owner-and-win-flags-oct17"
+}
