@@ -3927,11 +3927,11 @@ Status: homed 2026-09-03 out of the recovered-units archive
 void __cdecl pact_attacks(int faction_id, int faction_id_with) {
     PluralityDefault = FALSE;
     GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(0, Players[faction_id].name_leader, -1, -1);
+    parse_says(0, Players[faction_id].title_leader, -1, -1);
 
     GenderDefault = Players[faction_id].is_leader_female;
     PluralityDefault = FALSE;
-    parse_says(1, Players[faction_id].search_key, -1, -1);
+    parse_says(1, Players[faction_id].name_leader, -1, -1);
 
     GenderDefault = Players[faction_id].noun_gender;
     PluralityDefault = Players[faction_id].is_noun_plural;
@@ -4426,10 +4426,10 @@ Status: homed 2026-09-03 out of the recovered-units archive
 void __cdecl pact_truce(int faction_id, int faction_id_with) {
     PluralityDefault = FALSE;
     GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(0, Players[faction_id].name_leader, -1, -1);
+    parse_says(0, Players[faction_id].title_leader, -1, -1);
     GenderDefault = Players[faction_id].is_leader_female;
     PluralityDefault = FALSE;
-    parse_says(1, Players[faction_id].search_key, -1, -1);
+    parse_says(1, Players[faction_id].name_leader, -1, -1);
     GenderDefault = Players[faction_id].noun_gender;
     PluralityDefault = Players[faction_id].is_noun_plural;
     parse_says(2, Players[faction_id].noun_faction, -1, -1);
@@ -4437,10 +4437,10 @@ void __cdecl pact_truce(int faction_id, int faction_id_with) {
 
     PluralityDefault = FALSE;
     GenderDefault = Players[faction_id_with].is_leader_female;
-    parse_says(4, Players[faction_id_with].name_leader, -1, -1);
+    parse_says(4, Players[faction_id_with].title_leader, -1, -1);
     GenderDefault = Players[faction_id_with].is_leader_female;
     PluralityDefault = FALSE;
-    parse_says(5, Players[faction_id_with].search_key, -1, -1);
+    parse_says(5, Players[faction_id_with].name_leader, -1, -1);
     GenderDefault = Players[faction_id_with].noun_gender;
     PluralityDefault = Players[faction_id_with].is_noun_plural;
     parse_says(6, Players[faction_id_with].noun_faction, -1, -1);
@@ -4475,10 +4475,10 @@ Status: homed 2026-09-03 out of the recovered-units archive
 void __cdecl pact_unpact(int faction_id, int faction_id_with) {
     PluralityDefault = FALSE;
     GenderDefault = Players[faction_id].is_leader_female;
-    parse_says(0, Players[faction_id].name_leader, -1, -1);
+    parse_says(0, Players[faction_id].title_leader, -1, -1);
     GenderDefault = Players[faction_id].is_leader_female;
     PluralityDefault = FALSE;
-    parse_says(1, Players[faction_id].search_key, -1, -1);
+    parse_says(1, Players[faction_id].name_leader, -1, -1);
     GenderDefault = Players[faction_id].noun_gender;
     PluralityDefault = Players[faction_id].is_noun_plural;
     parse_says(2, Players[faction_id].noun_faction, -1, -1);
@@ -4488,10 +4488,10 @@ void __cdecl pact_unpact(int faction_id, int faction_id_with) {
 
     PluralityDefault = FALSE;
     GenderDefault = Players[faction_id_with].is_leader_female;
-    parse_says(6, Players[faction_id_with].name_leader, -1, -1);
+    parse_says(6, Players[faction_id_with].title_leader, -1, -1);
     GenderDefault = Players[faction_id_with].is_leader_female;
     PluralityDefault = FALSE;
-    parse_says(7, Players[faction_id_with].search_key, -1, -1);
+    parse_says(7, Players[faction_id_with].name_leader, -1, -1);
     GenderDefault = Players[faction_id_with].noun_gender;
     PluralityDefault = Players[faction_id_with].is_noun_plural;
     parse_says(8, Players[faction_id_with].noun_faction, -1, -1);

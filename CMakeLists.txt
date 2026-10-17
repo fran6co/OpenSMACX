@@ -382,6 +382,13 @@ set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
 # The co-located Sound-family lifetimes retain the original frame-based
 # cleanup/deleting entries. Release already supplies /Ob2 for base inlining.
 set_source_files_properties(src/sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve original frame-based argument and local-slot accesses in these core
+# owners while keeping application-wide compiler defaults unchanged.
+set_source_files_properties(
+    src/map.cpp
+    src/faction.cpp
+    src/veh.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
 set_source_files_properties(src/caviar_cpu.cpp

@@ -1,0 +1,24 @@
+{
+  "event_id": "9528faa4498905e1e7e62f2f4fd778bcb250a008056ff1f57c1e11b6c49d2985",
+  "payload": {
+    "affects": [
+      "entity-4731bfdefdb58a9d32a3238398954d9e8cc349e74b5b80200d3379c72fa78039",
+      "entity-8048abfe230867142790596048b51da8e8a6d98f87ddef1297ecdf6ced5699f7",
+      "entity-b318e9e69b0541eedaf2c42a5eaa5e340192db690ab58f277cad317df1a55667"
+    ],
+    "author": "coordinator",
+    "discovery_id": "core-pact-player-field-selection-oct17",
+    "evidence": [
+      "Fresh profile strict failures pact_attacks55C730 offsets44/71 and pact_truce55D040 offsets43/69/197/225 are exactly Player pointer operands. Other references and code extents pass; source/COFF use the same0x59C stride and Players base946A50 as pinned instructions.",
+      "Independent pinned loads at55C730+2A/+45 select Players+4C(title_leader) then+34(name_leader); current COFF addends+34/+1C select name_leader/search_key. Same title/name pair independently confirmed for both factions in55D040 and55CCA0. Declared fields and actual record indexing corroborate: search_key+1C,name_leader+34,title_leader+4C.",
+      "This is a replicated semantic mistranslation, not a library/global-root binding defect or justified unsafe-path normalization. Original Player layout, parse ordering, gender/plurality globals, pronouns, labels and popup effects must remain unchanged."
+    ],
+    "hypothesis": "Three pact dialogue owners pass the wrong Player fields to their parser slots; correct shared title/name selection rather than preserving relocation-masked false positives.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "core-pact-player-field-selection-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:core-frame-profile-oct17"
+}

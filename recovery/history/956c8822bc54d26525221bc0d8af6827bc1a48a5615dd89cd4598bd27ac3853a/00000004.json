@@ -1,0 +1,21 @@
+{
+  "event_id": "5f547a1286df772e09674c0333663dc62766c678423d32585d676f133d927816",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "core-pact-player-field-selection-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/faction.cpp SHA256 b55039d48aa15201248fe3fa7415b3f153fc46bb699eb32b336babaa5f057918 implements exactly ten field substitutions in pact_attacks,pact_truce,pact_unpact; original identities/spans/claims and every surrounding parser slot/global/noun/pronoun/label/popup operation remain unchanged.",
+      "Fresh revised build-qnwkb6eq compiles/links. Whole Faction differs deliberately from the original profile probe; native whole-COFF comparison outside exactly the three repaired functions PASS. Map/Veh whole objects still correspond to their controlled probes. All457owner observations and complete5581CPP census retain the134gains,zeroexactlosses,andzerooutside-owner verdict changes.",
+      "Fresh native reference-aware checks of134gains improve69PASS/62UNKNOWN/3FAIL to71PASS/62UNKNOWN/1FAIL; pact_attacks55C730 and pact_truce55D040 now pass all native extent,bytes and original-reference checks. pact_unpact remains MISMATCH; correct ten selected field operands do not claim complete function equivalence.",
+      "Independent original/source/test review confirms the exact ten operands; actual-source host fixture tests both compilers and rejects ten independent wrong-field mutations. Combined focused host suite39PASS. Native claim/reference/mapping checksPASS. Source fix is implemented, not an automatic admission or linked/runtime/game acceptance.",
+      "synch_display code/associated-table extent discovery remains pending, as do all unsupported original target, selected-helper/EH/FPO, full linked preservation, structure and runtime obligations. No span extension, fake data, claim demotion or comparator/gate waiver."
+    ]
+  },
+  "previous_event": "51ce1f8cdefcb9c013d99eeee74c1392bfdb09b83eaa5d6ed53cd853b560fcaa",
+  "request_id": "incorporate-core-pact-player-field-repair-oct17",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:core-frame-profile-oct17"
+}
