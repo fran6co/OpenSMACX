@@ -1,0 +1,48 @@
+{
+  "event_id": "bb10616a7c91cce5cb688b57e381af127fdcf4eae7b109f7b4f5f7509c56976d",
+  "payload": {
+    "affects": [
+      "entity-060e9ae4b2af519f8e9cbd32ef4b84550c173e695e56bdac1ffda97e66e48124",
+      "entity-258877ced379d6abc0c0f17af3b2cac7777257fa56d0a7c6bd47d51ae81ea311",
+      "entity-30dba7c0acd45e7530adc1d293e864dbfbbb5be09cd8072dbdb2f63d65b0fb32",
+      "entity-310fc4b65f5d96d99ff37a28e028094289eae9cd81419a358d2ea2d9098b4022",
+      "entity-320a7f993ba6ff20d95aec0ae5eceb4031879e9a048e78ffc955d3772eb92929",
+      "entity-366e2b00efe2a95cefc1a275ff5861d0afc4dd491d7341789cf9c326f729502a",
+      "entity-454387af396cd4b6d732ebfee7c0a2b042f1a2f081bfe905bf708f8d4dbbf5d6",
+      "entity-45c90ee4a4402458da77bcb4f215f81eb90641c6f1b9fd2deeb434444616db01",
+      "entity-4c62f8829576f2d500e3778e36e7d79d2f893ce6a926d6172fd14227c8a953d2",
+      "entity-5483c6d2fa3d18e380b1db9f48a484f005d7314843a8f76cd7226943c68e3121",
+      "entity-54a39ba90fabb98a47c2eb50d528e8e5e018f15b5a5729492e0f24d8cc52ca76",
+      "entity-5607c3ff4ad9e4573f76992257564ceb99fe70d131ea6ac09c608754e8b5d492",
+      "entity-5c379e3a94b00ace344b441da56aee3b5729a607f315a172b47caa6d0dc3ad54",
+      "entity-66bfbc394623b7399ebc227ad067d9c3cded3f7be550d1a70acac27b485d918d",
+      "entity-6fba00491396ecea5cd1b7e02093f00e5b4b44b428f51fd66f3119966a0a03f9",
+      "entity-7d0d90b79e59a3cc012ad55db027afcc098e936c49cd8e7c8df8d77cd0c09af1",
+      "entity-8940ae2b62c823711a3e4d3a632ebc4d95474108dc26f5ee249fa5d302c500af",
+      "entity-909342cc7e21c8c48ff4d566b3dcd45fceb252481887eb7151ad02a5d7b29f3d",
+      "entity-94caeeaf24f8ebae277fcd7f60924927bafe25b26159c8ef0fe8d9ddbc51927b",
+      "entity-bd23184169c4f4589e84ce100b93693434713e314bad72e92a1e61c1cda6bacb",
+      "entity-ce34e442fbfc790cf23d55380722f8796419bf22508ec88c4b552217e1ffee61",
+      "entity-d467a62ba36a09d381cb76d7fffc8b3c6a5b4c52e3dc6b3f819021ab56cb3d00",
+      "entity-d836be41e02b05ac46f45fc43450f6084cd294a4d480ed0885135cded9994710",
+      "entity-d886e74340b39eba98cf6c7a7689d434c33dc40cfdebbfb95f8684bb04f82307",
+      "entity-e0006586f7b77bde3b7624862d2255308c1d16adbed1ff986f3f5f1c04899b73",
+      "entity-e12af0fb177a9f8a245d985b363e857997526dd2d7b42378ca50d95ffe2826b5",
+      "entity-eb7ae4fa5dc794e6938aea11d65d617ad409ee18774636600a3c4b53e8237403",
+      "entity-f5fce7274b7028c39af7c3f53c50e0772b83910dd3a603bb232f39af351465ab",
+      "entity-fcbf6f2397462ab0cd9cfaa505a874b56bacf1fb50d9acbecc61717ee0f6eb4e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "application-alpha-frame-recipe-rejected-oct17",
+    "evidence": [
+      "All four Alpha native protocol controls pass. Baseline5 exact becomes19, with15 gains and one loss at627100. The small inline header setter is naturally emitted frameless; its source/annotation location is not evidence permitting a profile-specific ownership move."
+    ],
+    "hypothesis": "Applying the same owner profile to Alpha would gain15 masked matches but lose its existing set_language627100 match; reject this candidate under the authorized zero-loss recipe qualification.",
+    "kind": "discovery"
+  },
+  "previous_event": "54f10d9568f9384c3bb8a5d53e85b0c2509d490a8d9de1690970e80a6e094646",
+  "request_id": "application-alpha-frame-recipe-rejected-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:application-owner-frames-oct17"
+}
