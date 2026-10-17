@@ -1,0 +1,43 @@
+{
+  "author": "coordinator",
+  "base_revision": "8cbcdaacb11883b5f8813e5216994b35cbf7e593",
+  "editable_files": [
+    "src/reportwin.cpp",
+    "src/multiwin.cpp",
+    "src/famewin.cpp",
+    "recovery/tests/test_reportwin_canvas_receiver_oct17.py",
+    "recovery/tests/test_multiwin_show_receivers_oct17.py",
+    "recovery/tests/test_famewin_local_extent_oct17.py"
+  ],
+  "evidence": [
+    "Clean master8cbcdaacb freshly builds/links in build-6iawr71a; all176physicalobjects reproduce the reviewed Buffer candidate with zero body omissions.51focusedcontrols pass; all5581CPP classifications retain3162masked matches and strict1930pass/1207unknown/25fail. Current build, every compiler receipt/input/output and physical link input were requalified before superseded generated build/worker cleanup. This is not exhaustive original-function coverage, linked retention, complete structure/lifetime, runtime or game acceptance.",
+    "Pinned ReportWin reset496BB0 forms EDI=this+444 at496BE0 and uses it as receiver for set_font, three text-color setups and two box_sprite calls. ReportWin derives GraphicWin, whose Buffer base starts444 (sizeofWin444); its constructor separately constructs Buffer membersE320/E8A8. Current reset instead binds buffer1_ atE320, the independently used explosion snapshot. Authorize only that local binding to inherited *this; do not change the member/layout/animation uses. Full read-only closure found no second buffer1_-as-canvas misuse.",
+    "Pinned MultiWin show479970 directly ORs visibility1 into child Win words+1260 (flat_button1_11C4+Win.iSomeFlag_9C) and+1DAC (flat_button2_1D10+9C); it does not call child show there. Current child.show(1) can alter z-order/focus/resize/callback state beyond the observed bit publication. Use existing iSomeFlag_ and WinFlagVisible, preserve conditions and unrelated bits. Original479B38 uses local background as ECX,479B33 passes screen9B7490, then479B40 calls Buffer::draw5D84C0: restore background.draw(&ScreenBufferOwner.buffer(),...). Hide already uses that direction and stays read-only. Keep the legitimate final solo Win::show(3) and all animation/wave/geometry/reset/callback boundaries unchanged.",
+    "Pinned FameWin demote44AC10 establishes EH record atEBP-C and allocates5D8 down toEBP-5E4; Buffer ctor/dtor use5E4 and its independently asserted native size588 ends atEBP-5C. Every _itoa destination isEBP-5C, bounding50hex=80bytes before the EH record with no other local references in that interval. Current char number[16] accounts for the64byte frame delta. Authorize char number[80] as this bounded frame-storage inference, not an original debug spelling or arbitrary score padding; preserve Buffer RAII, early returns, filenames, record copies and original unsafe/error behavior.",
+    "No header/class-layout/field/global/callee implementation, compiler flag/profile/build/link/framework/dependency change, hardcoded executable call, raw receiver offset, assembly, copied code, marker or claim edit. Preserve all historical bindings, original spans, symbols, obligations and TRIED/LEVER payloads. Only the three described C++ bodies and current ordinary explanatory comments may change. Cross-owner discoveries remain pending until explicitly authorized.",
+    "Use a new isolated native worker/compiler lease. Baseline related ReportWin/MultiWin/FameWin host modules before edits; three fresh actual-source/damage controls must distinguish inherited vs member canvas, draw source vs destination, direct visible-bit vs callback and bounded local extent, with existing behavior fixtures retained. Read-only class/callee witnesses do not authorize their mutation. Do not embed candidate bodies in product tests or depend on ignored/history imports. Host spies are bounded contracts, not native ABI/runtime proof.",
+    "Before production edits, freeze source/Git/recipes and score complete owner baselines/unchanged overlays/ordinary body-throw damage/typed candidates in actualRelease and the distinct settled frame family. Calibrate actual owner COFF to freshly requalified retained master. Only the corresponding authorized function body may project in outside-function preservation; compare every other owner verdict and material, retain any collateral report and investigate it. Do not change flags, weaken checks, demote claims or label unknowns accepted.",
+    "Require independent actual C++/evidence review, fresh full build/link, source identity/claim/binding checks, focused regressions, complete native object/outside-body comparison and5581CPP/strict-reference census. Preserve discoveries and remaining matching duties even if a justified correction still misses. Only native recover record may grant a measured historical exact claim, if all obligations qualify. Coordinator-reviewed manual merge and fresh destination checks precede completed-worker/generated-output cleanup; no automatic/full-game acceptance claim."
+  ],
+  "intent": "Restore report/panel Buffer receiver roles, direct child visibility and independently bounded hall-of-fame local storage.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4500496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4692336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4811696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "ui-buffer-roles-oct17"
+}
