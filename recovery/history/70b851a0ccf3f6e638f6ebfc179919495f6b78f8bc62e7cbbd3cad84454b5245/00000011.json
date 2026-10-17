@@ -1,0 +1,21 @@
+{
+  "event_id": "eb4325d0aaf2ea59990f78a189cef0aedda67c1de9b5c62eddbe2b55142d8957",
+  "payload": {
+    "affects": [
+      "entity-8f81344e1ec1d0a5abe6bdc0c100e307efef87193d6f4f98a029d76c20cd6ae8"
+    ],
+    "author": "coordinator",
+    "discovery_id": "maininterface-button-dispatch-data-boundary-oct17",
+    "evidence": [
+      "Pinned on_iface_button_clicked code45D170..45D271 has dispatch subtract1003,compare7,then jump through8entries at45D274..45D294, after3bytes of gap. Relative case targets B2,E1,FD,FD,FD,1B,1B,41 agree with the actual candidate table.",
+      "The source remains an ordinary switch. Candidate code/body masked agreement and bounded selected MAP/PE correspondence do not replace full table-data/reference mapping; the strict complete-section extent failure remains a failure. Preserve the independently recorded code span and future data-proof obligation."
+    ],
+    "hypothesis": "The real C++ switch emits original auxiliary jump-table data beyond the independent function-code span; strict table/data ownership proof remains unsupported, not a reason to extend its ORIGINAL marker.",
+    "kind": "discovery"
+  },
+  "previous_event": "a1df4eaa2d40c53b28ecd58e8d2d0b2714b70fd6e5ec8b2995ce97a1b9d71195",
+  "request_id": "maininterface-button-dispatch-data-boundary-oct17",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:interface-frame-oct17"
+}

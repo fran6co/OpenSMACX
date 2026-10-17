@@ -1,0 +1,19 @@
+{
+  "event_id": "a3807bce71097f73bbe29b35e43c345f1785d8d2ad144c4443fbb12e47864f55",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "interface-shared-input-owner-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp owns the unchanged flush_input original mapping and complete body; src/win.h declares it beside the keyboard/mouse pumps, and src/console.cpp/console.h no longer duplicate its ownership.",
+      "Native actual/historical calibration, unchanged replica and missing-final-network-poll damage control qualify this literal move. The complete moved body and external relocations match the old Console output. Actual-source controls preserve filter endpoints, pointer clearing and three network polls, including callback-visible mutations.",
+      "The profile remains source-specific for Datalink/MainInterface/Console; Win retains defaults. Compiler-inlined call-boundary and outside-object scheduling/cleanup deltas were independently reviewed, not automatically waived. This incorporation is source ownership, not historic TU, linked preservation or game acceptance."
+    ]
+  },
+  "previous_event": "ae4ce1354a921946641af7de5a3e8ca58da6abdf8262c38a3bb91fa2e85e31e2",
+  "request_id": "interface-shared-input-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:interface-frame-oct17"
+}

@@ -348,6 +348,13 @@ set_source_files_properties(
     src/sounddevice.cpp
     src/sound_loader.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve the frame-based argument accesses in these interface owners while
+# keeping Win and the application-wide compiler defaults unchanged.
+set_source_files_properties(
+    src/datalink.cpp
+    src/maininterface.cpp
+    src/console.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Original interface palette initialization and font lookup retain a frame
 # pointer; generic library bodies have independently measured profiles.
 set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp

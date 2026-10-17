@@ -1,0 +1,21 @@
+{
+  "event_id": "343d4cd3c5023686cccf31bfa521d7cae5a5225d706fec55412d7957a41e1237",
+  "payload": {
+    "affects": [
+      "entity-91436df3dec53eea2022c80cdb003676d818e5f8ab685320982b98dd0a30f241"
+    ],
+    "author": "coordinator",
+    "discovery_id": "win-input-reference-bindings-oct17",
+    "evidence": [
+      "Fresh strict row for5FD120 isUNKNOWN solelyatWinPointerOwner1/2 and__imp__PeekMessageA@20; complete movedcode/native externalrelocations equal oldConsole body. Pinned5FD15D/163 and5FD19E/1A4 clear9B7ACC/9B7AD0, and5FD128 loadsPeekMessageAfromIAT669358.",
+      "These are already realWin*objects defined inWin.cpp. Add only evidenced starts, not sizes/initializers; importbinding derives its slot from pinned PE USER32.dll!PeekMessageA, not a hardcoded runtime address."
+    ],
+    "hypothesis": "The unchanged moved pump has no current strict original target proof because its Win pointer cells and PeekMessageA import are not source-bound.",
+    "kind": "discovery"
+  },
+  "previous_event": "390900fcc4ff5b4c4b06431b72f5462ffbb30575dc34ba386e64d6a3695345e0",
+  "request_id": "win-input-reference-bindings-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:interface-frame-oct17"
+}

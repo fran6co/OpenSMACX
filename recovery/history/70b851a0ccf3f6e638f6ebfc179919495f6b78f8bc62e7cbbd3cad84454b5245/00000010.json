@@ -1,0 +1,21 @@
+{
+  "event_id": "a1df4eaa2d40c53b28ecd58e8d2d0b2714b70fd6e5ec8b2995ce97a1b9d71195",
+  "payload": {
+    "affects": [
+      "entity-112c0d0c116ab2e371d98b3b4941dc785e844b3c0814932fde9fbadc6af02947"
+    ],
+    "author": "coordinator",
+    "discovery_id": "console-cursor-opaque-diagnostic-reference-oct17",
+    "evidence": [
+      "src/console.h retains CursorNextDangerMsg2 at939FF0 as an explicitly unresolved dependency; the final strict actual object detects its missing relocatable source target at offset38. Current profile changes do not fix or grant this reference.",
+      "Pinned exact-address reads5109D5,518931,5189BD,5189EE,519F80,579B95 all pass the address as danger text. PE .data VirtualSize3401F8 fromVA682000 covers it in writable zero-fill; RawSize26000 is not its mapped extent. No direct writer or subobject extent/owner proved. Do not synthesize an arbitrary array or infer ownership from adjacent939FEC."
+    ],
+    "hypothesis": "Console::cursor_next retains an unresolved executable-address text view despite historical masked exactness; restore genuine storage/owner only with positive producer/extent evidence.",
+    "kind": "discovery"
+  },
+  "previous_event": "99569700cd75ed434b7b7173e7ba137963abaac298788aa8b40048d75c0591d0",
+  "request_id": "console-cursor-opaque-diagnostic-reference-oct17",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:interface-frame-oct17"
+}

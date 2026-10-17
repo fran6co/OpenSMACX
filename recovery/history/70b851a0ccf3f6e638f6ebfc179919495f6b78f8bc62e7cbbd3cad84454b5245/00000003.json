@@ -1,0 +1,21 @@
+{
+  "event_id": "3edf084f1474ba0e9ad4201d3a09606bdf34eca0ee119d843dda8ce7ae7ba68c",
+  "payload": {
+    "affects": [
+      "entity-d8a5450c3c0d7c36c49c978adbe50c446e298fe94dfd9e68e18e65d845929330"
+    ],
+    "author": "coordinator",
+    "discovery_id": "datalink-original-prototype-prefix-oct17",
+    "evidence": [
+      "Fresh strict actual-object comparison fails the VehPrototypes relocation at4Coffoffset142 in set_cat_unit42A630. Original bytes at42A6BC compare ESI with9AC568, whereas current output has VehPrototypes+5200=9ACCB8.",
+      "The independently source-bound prototype bank starts9AB868 and the pinned loop advancesESIby0x34. (9AC568-9AB868)/0x34=64. The current sizeofVehPrototype0x34 and existingMaxVehProtoFactionNum64 agree; this is a restored original bound, not a game bug fix."
+    ],
+    "hypothesis": "The current 100-prototype scan is not bug-for-bug equivalent: the pinned original scans64records. Masking the relocated end pointer hid this source error behind a historical exact claim.",
+    "kind": "discovery"
+  },
+  "previous_event": "9e52fea380222a9962d2e72b192f875f0a75ad4df18739e1087a7e2dff736846",
+  "request_id": "datalink-original-prototype-prefix-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:interface-frame-oct17"
+}
