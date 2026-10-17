@@ -58,7 +58,7 @@ def actual_source():
         "\n".join(re.findall(r"^#define Map(?:LongitudeBounds|LatitudeBounds|IsFlat) .+$", h["map"], re.M))
     )
     fields = []
-    for name in ("field_1DD70_", "field_1DD78_", "field_1DD98_", "field_1DDC0_", "field_1DDA4_", "field_1DDA8_",
+    for name in ("field_1DD70_", "map_view_index_", "field_1DD98_", "field_1DDC0_", "field_1DDA4_", "field_1DDA8_",
                  "field_1DDCC_", "field_1DDD0_", "field_1DDD4_", "field_1DDD8_"):
         field, = re.findall(r"^  (?:int|int32_t|uint32_t) " + name + r";", h["mapwin"], re.M)
         fields.append(field)
@@ -203,7 +203,7 @@ void reset(){
     scenario=clip_calls=conversion_fail=adapter_mode=terrain_calls=vehicle_calls=overlay_calls=map_reads=0;
     center_x=center_y=50;expected_faction=3;left_y=right_y=48;clip_results[0]=clip_results[1]=1;
     proposed_clip={4,6,80,90};window.rect1_=proposed_clip;window.rect2_={0,0,200,160};
-    window.field_1DD70_=window.field_1DD78_=0;window.field_1DD98_=0;window.field_1DDC0_=7;
+    window.field_1DD70_=window.map_view_index_=0;window.field_1DD98_=0;window.field_1DDC0_=7;
     window.field_1DDA4_=window.field_1DDA8_=0;window.field_1DDCC_=100;window.field_1DDD4_=100;window.field_1DDD0_=80;window.field_1DDD8_=80;
     MapLongitudeBounds=200;MapLongitude=100;MapLatitudeBounds=160;MapIsFlat=0;GameDataStateStorage.fields_.game_state_=0;IsMultiplayerNet=ConsoleControlTurnActive=0;
     ConsoleGlobal.faction_id_=3;ConsoleGlobal.cursor_active_=0;ConsoleGlobal.field_23BF8_=1;ConsoleGlobal.survey_mode_=0;ConsoleGlobal.field_23BE4_=1;
@@ -297,10 +297,10 @@ void draw_controls(){
     for(int gate=0;gate<8;++gate){reset();clip_results[0]=clip_results[1]=0;
         switch(gate){case 0:ConsoleGlobal.cursor_active_=1;break;case 1:IsMultiplayerNet=ConsoleControlTurnActive=1;break;
         case 2:ConsoleGlobal.field_23BF8_=ConsoleGlobal.survey_mode_=0;break;case 3:ConsoleGlobal.field_23BE4_=0;break;
-        case 4:window.field_1DD78_=1;break;case 5:ConsoleGlobal.cursor_history_y_[2]=-1;break;
+        case 4:window.map_view_index_=1;break;case 5:ConsoleGlobal.cursor_history_y_[2]=-1;break;
         case 6:ConsoleGlobal.cursor_history_x_[2]=-250;break;case 7:ConsoleGlobal.cursor_history_y_[2]=160;break;}
         window.draw_radius(50,50,0,0);require(events('X').empty());}
-    reset();clip_results[0]=0;ConsoleGlobal.field_23BF8_=0;ConsoleGlobal.survey_mode_=2;window.field_1DD78_=1;window.field_1DD70_=0x80000000;
+    reset();clip_results[0]=0;ConsoleGlobal.field_23BF8_=0;ConsoleGlobal.survey_mode_=2;window.map_view_index_=1;window.field_1DD70_=0x80000000;
     ConsoleGlobal.field_23BE4_=0;IsMultiplayerNet=1;GameDataStateStorage.fields_.game_state_=2;window.field_1DD98_=uint32_t(-8);window.draw_radius(50,50,0,0);require(events('X').size()==1&&events('X')[0].a[0]==2);
     for(int draw=-1;draw<4;++draw){reset();clip_results[0]=0;window.draw_radius(50,50,0,draw);
         require(events('U').size()==size_t(draw!=0)&&events('D').size()==size_t(draw>=2)&&events('X').size()==size_t(draw>=0));
@@ -379,7 +379,7 @@ DAMAGE = [
     ("network_turn", "DRAW", "network == 0 || ConsoleControlTurnActive == 0", "true"),
     ("negative_no_marker", "DRAW", "draw_type >= 0", "true"),
     ("survey_alternative", "DRAW", "ConsoleGlobal.field_23BF8_ != 0 || ConsoleGlobal.survey_mode_ != 0", "ConsoleGlobal.field_23BF8_ != 0"),
-    ("display_mode_gate", "DRAW", "field_1DD78_ == 0 || (field_1DD70_ & 0x80000000U) != 0", "true"),
+    ("display_mode_gate", "DRAW", "map_view_index_ == 0 || (field_1DD70_ & 0x80000000U) != 0", "true"),
     ("network_game_override", "DRAW", "network != 0 && (GameDataStateStorage.fields_.game_state_ & 2) != 0", "false"),
     ("history_index", "DRAW", "const int history = ConsoleGlobal.cursor_history_index_", "const int history = 0"),
     ("history_view", "DRAW", "map_dest_in_view(*this, cursor_x, cursor_y)", "true"),

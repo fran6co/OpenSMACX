@@ -1,0 +1,21 @@
+{
+  "event_id": "0373f63005ef956de39fc9058a79c8c94d7c3e26669fe7343417c7bd4f1bce00",
+  "payload": {
+    "affects": [
+      "entity-828ee4593ce6d93d554d008c35bed586eacf2a085c78db2c6f61bdf7c5f224fb",
+      "entity-fa9c794b568108252e79ecdd1f80e2a0b79b0aa34fd4e3f12abfb5be7fc2e97a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "mapwin-role-rename-compiled-collateral-oct17",
+    "evidence": [
+      "Fresh candidate build-lm446g9b passes compile/link and all5581legacy/3162strict classifications remain. Zero-omission native correspondence reports166PASS/10FAIL, retained without waiver. Differences include local-label identities and instruction-register/load-order differences in previously mismatching capture_base and gen_terrain_poly. Do not assume metadata-only differences or call the failed comparison green."
+    ],
+    "hypothesis": "The pure member rename plus seven added header-comment lines leaves all match/reference classifications unchanged but perturbs ten actual COFF objects.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "mapwin-role-rename-compiled-collateral-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mapwin-view-role-names-oct17"
+}

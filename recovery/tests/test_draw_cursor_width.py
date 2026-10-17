@@ -27,7 +27,7 @@ HARNESS = r'''#include <stddef.h>
 void require(bool ok,int line){if(!ok){fprintf(stderr,"line %d\n",line);exit(91);}}
 #define CHECK(x) require((x),__LINE__)
 struct MapWin {
-    int field_1DD74_,field_1DDA8_,field_1DDA4_,field_1DDD4_,field_1DDCC_,field_1DDD8_,field_1DDD0_;
+    int view_active_,field_1DDA8_,field_1DDA4_,field_1DDD4_,field_1DDCC_,field_1DDD8_,field_1DDD0_;
     int calls,last_x,last_y,last_c,last_d;
     void draw_radius(int x,int y,int c,int d){++calls;last_x=x;last_y=y;last_c=c;last_d=d;}
 };
@@ -43,7 +43,7 @@ ACTUAL_BODY
 int main(){
     CHECK(MapLongitudeBounds==16 && MapLongitude==8);
     MapWin first={};
-    first.field_1DD74_=1;
+    first.view_active_=1;
     first.field_1DDA8_=0; first.field_1DDD8_=0; first.field_1DDD0_=4;
     // left=14, right=18; tile 1 must wrap by full map width to 17.
     first.field_1DDA4_=14; first.field_1DDD4_=0; first.field_1DDCC_=4;

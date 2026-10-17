@@ -154,7 +154,7 @@ PlanWin::~PlanWin() {
 void PlanWin::init(char *) {
     field_21A68_ = 1;
     line_count_ = 0;
-    field_1DD78_ = 1;
+    map_view_index_ = 1;
     MapWin::clear(1);
     MapWin::init(3, 0);
     field_1DD98_ = -14;

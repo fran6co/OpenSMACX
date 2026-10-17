@@ -31,7 +31,7 @@ def braced(source,signature):
 def actual_source():
     cpp=(ROOT/"src/console.cpp").read_text();map_header=(ROOT/"src/mapwin.h").read_text();console=(ROOT/"src/console.h").read_text()
     fields=[]
-    for name in ("cursor_sprite_","cursor_resource_id_","field_1DD74_","field_1DD70_"):
+    for name in ("cursor_sprite_","cursor_resource_id_","view_active_","field_1DD70_"):
         declaration,=re.findall(r"^  (?:Sprite \*|uint32_t )"+name+r";",map_header,re.M);fields.append(declaration)
     console_fields=[]
     for name in ("field_23D10_","field_23D14_"):
@@ -85,13 +85,13 @@ void MapWin::draw_map(int full){require(full==1 && !(field_1DD70_&0xc40000u));se
 void do_non_input(){
     require(console.field_23D10_==expected_mode && console.field_23D14_==expected_vehicle);
     seen.push_back({'P',-1,0,0,nullptr});
-    if(activate_on_pump>=0){MapWinTable[activate_on_pump]->field_1DD74_=1;activate_on_pump=-1;}
+    if(activate_on_pump>=0){MapWinTable[activate_on_pump]->view_active_=1;activate_on_pump=-1;}
     if(change_mode_on_pump>=0){console.field_23D10_=expected_mode=change_mode_on_pump;change_mode_on_pump=-1;}
 }
 ACTUAL_BODIES
 void reset(){
     for(int i=0;i<10;++i){windows[i].id=i;windows[i].cursor_sprite_=nullptr;windows[i].cursor_resource_id_=0x7f00;
-        windows[i].field_1DD74_=0;windows[i].field_1DD70_=0;}
+        windows[i].view_active_=0;windows[i].field_1DD70_=0;}
     for(size_t i=0;i<MapWinTableSlots;++i)MapWinTable[i]=nullptr;
     for(int i=0;i<12;++i){g_CURSOR_SPRITES[i].id=i;CursorHotspotX[i]=10+i;CursorHotspotY[i]=30+i;}
     console.field_23D10_=expected_mode=71;console.field_23D14_=expected_vehicle=73;
@@ -103,7 +103,7 @@ void on_controls(){
     for(int overload=0;overload<2;++overload){
         reset();run_on(overload);require(seen.size()==1);expect(0,'P',-1);
         reset();MapWinTable[0]=&windows[0];MapWinTable[1]=&windows[1];MapWinTable[2]=&windows[2];MapWinTable[7]=&windows[7];
-        windows[2].field_1DD74_=windows[7].field_1DD74_=1;windows[2].cursor_sprite_=&g_CURSOR_SPRITES[4];
+        windows[2].view_active_=windows[7].view_active_=1;windows[2].cursor_sprite_=&g_CURSOR_SPRITES[4];
         hotspot_shape=4;run_on(overload);
         require(seen.size()==3);expect(0,'S',0);expect(1,'S',7);expect(2,'P',-1);
         require(seen[0].a==14 && seen[0].b==34 && seen[1].a==114 && seen[1].b==234);
@@ -113,7 +113,7 @@ void on_controls(){
         require(MapWinTable[0]==&windows[9] && windows[0].cursor_sprite_==&g_CURSOR_SPRITES[4] && windows[9].cursor_sprite_==nullptr);
         require(seen.size()==2);expect(0,'S',0);expect(1,'P',-1);
         reset();MapWinTable[0]=&windows[0];MapWinTable[2]=&windows[2];
-        windows[2].field_1DD74_=windows[9].field_1DD74_=1;
+        windows[2].view_active_=windows[9].view_active_=1;
         replace_source_slot=0;replace_slot=2;replace_id=9;run_on(overload);
         require(MapWinTable[2]==&windows[9]);
         require(seen.size()==3);expect(0,'S',0);expect(1,'S',9);expect(2,'P',-1);
@@ -127,7 +127,7 @@ void off_controls(){
         reset();MapWinTable[0]=&windows[0];MapWinTable[1]=&windows[1];MapWinTable[2]=&windows[2];MapWinTable[7]=&windows[7];
         windows[0].cursor_sprite_=&g_CURSOR_SPRITES[4];windows[0].field_1DD70_=0xffffffffu;
         windows[1].cursor_sprite_=&g_CURSOR_SPRITES[4];windows[1].field_1DD70_=0xffffffffu;
-        windows[2].field_1DD74_=windows[7].field_1DD74_=1;windows[2].field_1DD70_=0xc40021;
+        windows[2].view_active_=windows[7].view_active_=1;windows[2].field_1DD70_=0xc40021;
         windows[7].cursor_resource_id_=123;
         require(run_off(selected,7)==(selected?7:-1));require(seen.size()==7);
         expect(0,'R',0);expect(1,'D',0);expect(2,'P',-1);expect(3,'D',2);expect(4,'P',-1);expect(5,'R',7);expect(6,'P',-1);
@@ -141,7 +141,7 @@ void off_controls(){
         require(windows[9].cursor_sprite_==&g_CURSOR_SPRITES[2] && windows[9].cursor_resource_id_==99 && windows[9].field_1DD70_==0x11);
         reset();MapWinTable[0]=&windows[0];MapWinTable[1]=&windows[1];activate_on_pump=1;
         require(run_off(selected,7)==(selected?7:-1));require(seen.size()==2);expect(0,'P',-1);expect(1,'P',-1);
-        reset();MapWinTable[0]=&windows[0];MapWinTable[1]=&windows[1];windows[1].field_1DD74_=1;change_mode_on_pump=77;
+        reset();MapWinTable[0]=&windows[0];MapWinTable[1]=&windows[1];windows[1].view_active_=1;change_mode_on_pump=77;
         require(run_off(selected,7)==(selected?7:-1));require(seen.size()==2 && console.field_23D10_==77);
     }
     reset();MapWinTable[0]=&windows[0];windows[0].cursor_sprite_=&g_CURSOR_SPRITES[4];console.field_23D10_=0;
@@ -166,8 +166,8 @@ def test_actual_console_cursor_state(tmp_path):
 
 
 MUTANTS=[
-    ("primary-active-bypass","slot == 0 || window->field_1DD74_ != 0","window->field_1DD74_ != 0"),
-    ("inactive-filter","slot == 0 || window->field_1DD74_ != 0","true"),
+    ("primary-active-bypass","slot == 0 || window->view_active_ != 0","window->view_active_ != 0"),
+    ("inactive-filter","slot == 0 || window->view_active_ != 0","true"),
     ("last-slot","slot < static_cast<int>(MapWinTableSlots)","slot < static_cast<int>(MapWinTableSlots) - 1"),
     ("sprite-cached-writeback","window->cursor_sprite_ = sprite;","MapWinTable[slot]->cursor_sprite_ = sprite;"),
     ("resource-cached-writeback","window->cursor_resource_id_ = 0x7f00;","MapWinTable[slot]->cursor_resource_id_ = 0x7f00;"),

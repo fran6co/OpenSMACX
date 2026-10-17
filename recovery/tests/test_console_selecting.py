@@ -44,7 +44,7 @@ def actual_source():
         parts[cls.upper() + "_BASES"], = re.findall(r"^class " + cls + r"\s*:[^{]+\{", h[unit], re.M)
     parts["VEH"] = braced(h["veh"], "struct Veh {") + ";"
     fields = []
-    for name in ("field_1DD74_", "cursor_sprite_", "cursor_resource_id_"):
+    for name in ("view_active_", "cursor_sprite_", "cursor_resource_id_"):
         declaration, = re.findall(r"^  (?:uint32_t |Sprite \*)" + name + r";", h["mapwin"], re.M)
         fields.append(declaration)
     parts["MAP_MEMBERS"] = "\n".join(fields)
@@ -114,16 +114,16 @@ int Win::set_cursor(Sprite *sprite,int x,int y){
     int shape=-1;for(int i=0;i<12;++i)if(sprite==&g_CURSOR_SPRITES[i])shape=i;
     require(shape>=0);seen.push_back({'S',owner->id,shape,x,y});
     if(scenario==3&&owner==&windows[0]){
-        MapWinTable[0]=&windows[9];MapWinTable[7]=&windows[7];windows[7].field_1DD74_=1;
+        MapWinTable[0]=&windows[9];MapWinTable[7]=&windows[7];windows[7].view_active_=1;
         console.field_23D10_=4;CursorHotspotX[shape]=101;CursorHotspotY[shape]=202;
     }
     if(scenario==4){console.field_23D10_=4;CursorHotspotX[shape]+=100;CursorHotspotY[shape]+=200;}
-    if(scenario==5&&owner==&windows[0]){MapWinTable[2]=&windows[8];windows[8].field_1DD74_=1;}
-    if(scenario==6&&owner==&windows[0]){windows[2].field_1DD74_=1;}
+    if(scenario==5&&owner==&windows[0]){MapWinTable[2]=&windows[8];windows[8].view_active_=1;}
+    if(scenario==6&&owner==&windows[0]){windows[2].view_active_=1;}
     return -3;
 }
 void do_non_input(){seen.push_back({'P',-1,0,0,0});
-    if(scenario==7){console.field_23D10_=77;MapWinTable[7]=&windows[7];windows[7].field_1DD74_=1;}}
+    if(scenario==7){console.field_23D10_=77;MapWinTable[7]=&windows[7];windows[7].view_active_=1;}}
 HELPER
 BODY
 void reset(){
@@ -132,7 +132,7 @@ void reset(){
     std::memset(Vehs,0,sizeof(Vehs));Vehs[1].x=4;Vehs[1].y=6;
     MapLongitudeBounds=64;MapLongitude=32;MapIsFlat=0;
     for(size_t i=0;i<MapWinTableSlots;++i)MapWinTable[i]=nullptr;
-    for(int i=0;i<10;++i){windows[i].id=i;windows[i].field_1DD74_=0;windows[i].cursor_sprite_=nullptr;windows[i].cursor_resource_id_=1000+i;}
+    for(int i=0;i<10;++i){windows[i].id=i;windows[i].view_active_=0;windows[i].cursor_sprite_=nullptr;windows[i].cursor_resource_id_=1000+i;}
     for(int i=0;i<12;++i){CursorHotspotX[i]=10+i;CursorHotspotY[i]=30+i;}
 }
 void event(size_t index,char kind,int id,int shape=-1){require(index<seen.size()&&seen[index].kind==kind&&seen[index].id==id);
@@ -189,10 +189,10 @@ void callback_controls(){
         require(windows[7].cursor_sprite_==&g_CURSOR_SPRITES[shape]&&console.field_23D10_==4);
         require(windows[0].cursor_resource_id_==1000&&windows[7].cursor_resource_id_==1007);}
     reset();one_window();MapWinTable[1]=&windows[1];MapWinTable[2]=&windows[2];MapWinTable[7]=&windows[7];
-    windows[2].field_1DD74_=windows[7].field_1DD74_=1;windows[2].cursor_sprite_=&g_CURSOR_SPRITES[2];scenario=4;
+    windows[2].view_active_=windows[7].view_active_=1;windows[2].cursor_sprite_=&g_CURSOR_SPRITES[2];scenario=4;
     require(choose()==1&&seen.size()==3);event(0,'S',0,2);event(1,'S',7,2);event(2,'P',-1);
     require(!windows[1].cursor_sprite_&&seen[1].x==112&&seen[1].y==232);
-    reset();one_window();MapWinTable[2]=&windows[2];windows[2].field_1DD74_=1;scenario=5;
+    reset();one_window();MapWinTable[2]=&windows[2];windows[2].view_active_=1;scenario=5;
     require(choose()==1&&seen.size()==3);event(1,'S',8,2);require(!windows[2].cursor_sprite_);
     reset();one_window();MapWinTable[2]=&windows[2];scenario=6;require(choose()==1&&seen.size()==3);event(1,'S',2,2);
     reset();one_window();windows[0].cursor_sprite_=&g_CURSOR_SPRITES[2];require(choose()==1&&seen.size()==1);event(0,'P',-1);
@@ -241,8 +241,8 @@ MUTATIONS = [
     ("patrol_result", "valid_patrol(selected_vehicle_, tile_x, tile_y) == 0", "valid_patrol(selected_vehicle_, tile_x, tile_y) != 0"),
     ("initial_instead_of_post_patrol_mode", "forbidden ? 5 : selecting_signed(field_23D10_)", "forbidden ? 5 : selecting_signed(initial_mode)"),
     ("wrong_forbidden_sprite", "forbidden ? 5 :", "forbidden ? 4 :"),
-    ("primary_active_gate", "slot == 0 || window->field_1DD74_ != 0", "window->field_1DD74_ != 0"),
-    ("inactive_window_admitted", "slot == 0 || window->field_1DD74_ != 0", "true"),
+    ("primary_active_gate", "slot == 0 || window->view_active_ != 0", "window->view_active_ != 0"),
+    ("inactive_window_admitted", "slot == 0 || window->view_active_ != 0", "true"),
     ("last_table_slot", "slot < static_cast<int>(MapWinTableSlots)", "slot < static_cast<int>(MapWinTableSlots) - 1"),
     ("redundant_cursor_install", "window->cursor_sprite_ != sprite", "true"),
     ("hotspot_axes", "CursorHotspotX[shape], CursorHotspotY[shape]", "CursorHotspotY[shape], CursorHotspotX[shape]"),

@@ -58,9 +58,9 @@ static void note(int event) { events.push_back(event); }
 
 struct Popup { Popup() { note(90); } ~Popup() { note(91); } };
 struct MapWin {
-    int id, field_1DD8C_, field_1DD74_, field_1DD88_;
+    int id, field_1DD8C_, view_active_, field_1DD88_;
     explicit MapWin(int value = 0) : id(value), field_1DD8C_(2),
-        field_1DD74_(1), field_1DD88_(0) {}
+        view_active_(1), field_1DD88_(0) {}
     void editor(int x, int y, int erase);
     void draw_map(int draw_type);
     void paint_branch(int tile_x, int tile_y);
@@ -76,12 +76,12 @@ static std::vector<int> action_args;
 
 static void world_climate() {
     note(20);
-    if (mutate_in_climate) MapWinTable[1]->field_1DD74_ = 0;
+    if (mutate_in_climate) MapWinTable[1]->view_active_ = 0;
 }
 static void draw_map(int draw_type) {
     REQUIRE(draw_type == 1);
     note(21);
-    if (mutate_in_free_draw) MapWinTable[1]->field_1DD74_ = 0;
+    if (mutate_in_free_draw) MapWinTable[1]->view_active_ = 0;
 }
 struct ConsoleMock {
     int selected_vehicle_;
@@ -113,7 +113,7 @@ void MapWin::editor(int x, int y, int erase) {
 void MapWin::draw_map(int draw_type) {
     REQUIRE(draw_type == 1);
     note(30 + id);
-    if (mutate_in_member_draw && id == 1) MapWinTable[2]->field_1DD74_ = 0;
+    if (mutate_in_member_draw && id == 1) MapWinTable[2]->view_active_ = 0;
 }
 void MapWin::paint_branch(int tile_x, int tile_y) {
     PAINT_BLOCK
@@ -145,8 +145,8 @@ static void paint_cases() {
         reset();
         MapWin primary(0), secondary(1), inactive(2);
         primary.field_1DD8C_ = 3;
-        secondary.field_1DD74_ = 1;
-        inactive.field_1DD74_ = 0;
+        secondary.view_active_ = 1;
+        inactive.view_active_ = 0;
         MapWinTable[0] = &primary; MapWinTable[1] = &secondary; MapWinTable[2] = &inactive;
         MapEditorPaintId = special;
         primary.paint_branch(12, 14);
@@ -167,7 +167,7 @@ static void paint_cases() {
     // secondary's active flag; the loop reads that live state on its turn.
     reset();
     MapWin p(0), s(1);
-    s.field_1DD74_ = 1;
+    s.view_active_ = 1;
     MapWinTable[0] = &p; MapWinTable[1] = &s;
     mutate_in_free_draw = 1;
     p.paint_branch(12, 14);
@@ -176,7 +176,7 @@ static void paint_cases() {
     // A prior member callback can similarly deactivate a not-yet-visited slot.
     reset();
     MapWin p2(0), s2(1), t2(2);
-    s2.field_1DD74_ = 1; t2.field_1DD74_ = 1;
+    s2.view_active_ = 1; t2.view_active_ = 1;
     MapWinTable[0] = &p2; MapWinTable[1] = &s2; MapWinTable[2] = &t2;
     MapEditorPaintId = 0;
     mutate_in_member_draw = 1;

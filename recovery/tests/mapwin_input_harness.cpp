@@ -25,7 +25,7 @@ struct MapWin : public virtual GraphicWin {
     void close();
     void on_right_down(int, int);
     void on_mouse_move(int, int);
-    uint32_t field_1DD74_, field_1DD78_, field_1DD7C_, field_1DD80_;
+    uint32_t view_active_, map_view_index_, field_1DD7C_, field_1DD80_;
     uint32_t field_1DD84_, field_1DD88_, field_1DD8C_;
     int32_t field_1DD90_, field_1DD94_, field_1DE0C_;
     void *owned_;
@@ -44,7 +44,7 @@ void tracked_free(void *pointer) {
 }
 #define free tracked_free
 
-MapWin::MapWin() : field_1DD74_(0), field_1DD78_(0), field_1DD7C_(0),
+MapWin::MapWin() : view_active_(0), map_view_index_(0), field_1DD7C_(0),
     field_1DD80_(0), field_1DD84_(0), field_1DD88_(0), field_1DD8C_(0),
     field_1DD90_(0), field_1DD94_(0), field_1DE0C_(0), owned_(0),
     move_calls(0), last_x(0), last_y(0), callback_saw_published_owners(false),
@@ -186,22 +186,22 @@ static void test_close_lifecycle() {
     assert(static_cast<void *>(static_cast<GraphicWin *>(&map)) !=
            static_cast<void *>(&map));
     close_observed_map = &map;
-    map.field_1DD78_ = 0;
-    map.field_1DD74_ = 0xA5;
+    map.map_view_index_ = 0;
+    map.view_active_ = 0xA5;
     map.owned_ = std::malloc(16);
     assert(map.owned_ != 0);
     map.on_sys_close();
-    assert(map.field_1DD74_ == 0xA5);
+    assert(map.view_active_ == 0xA5);
     assert(free_calls == 0 && map.close_calls == 0);
     std::free(map.owned_);
     map.owned_ = 0;
 
-    map.field_1DD78_ = 1;
-    map.field_1DD74_ = 0xA5;
+    map.map_view_index_ = 1;
+    map.view_active_ = 0xA5;
     map.owned_ = std::malloc(16);
     assert(map.owned_ != 0);
     map.on_sys_close();
-    assert(map.field_1DD74_ == 0);
+    assert(map.view_active_ == 0);
     assert(map.owned_ == 0 && free_calls == 1 && map.close_calls == 1);
     assert(events.size() == 2 && events[0] == 'F' && events[1] == 'C');
     map.on_sys_close();

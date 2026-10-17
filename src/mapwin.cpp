@@ -226,13 +226,13 @@ void MapWin::UNK5(int panel) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/00470a90.cpp retains the complete 1074-byte seed; mode zero uses MapWin_UNK5 panels and Players records, mode two uses BaseWin::rect1_, and mode three selects label 0x204.", "git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/00588aa0.cpp stores find_font(10, 1) at the original display-font slot."], "reason": "Home the map modes through typed source owners; resolve the font through its real lookup while its startup cache remains unowned."}
 void MapWin::init(int mode, int update) {
     buffer_a_.init(100, 50, 0, 0);
-    field_1DD74_ = 1;
+    view_active_ = 1;
     RECT bounds;
     if (this == MapWinTable[1]) {
         bounds = WorldMapBounds;
         field_1DD98_ = -8;
     } else if (mode == 0) {
-        unsigned int index = field_1DD78_;
+        unsigned int index = map_view_index_;
         const int panel_count = IsMultiplayerNet ? 2 : 1;
         if (index < static_cast<unsigned int>(panel_count)) {
             if ((MapPanelDirtyMask & (1U << index)) == 0) {
@@ -258,7 +258,7 @@ void MapWin::init(int mode, int update) {
     StringTemp[0] = '\0';
     if (mode == 0) {
         strcat(StringTemp, label_get(0x1D));
-        if (field_1DD78_ == 0) {
+        if (map_view_index_ == 0) {
             StringTemp[0] = '\0';
             const Player &player = Players[ConsoleGlobal.faction_id_];
             GenderDefault = player.noun_gender;
@@ -272,7 +272,7 @@ void MapWin::init(int mode, int update) {
             strcat(StringTemp, " ");
             strcat(StringTemp, "#");
             char number[80];
-            _itoa(static_cast<int>(field_1DD78_) + 1, number, 10);
+            _itoa(static_cast<int>(map_view_index_) + 1, number, 10);
             strcat(StringTemp, number);
         }
     } else {
@@ -280,19 +280,19 @@ void MapWin::init(int mode, int update) {
     }
 
     int flags = mode == 3 ? 0x400020 : 0x20000430;
-    if (mode == 0 && field_1DD78_ != 0) flags = 0x20010430;
+    if (mode == 0 && map_view_index_ != 0) flags = 0x20010430;
     if (this == &WorldClimateWorldWin.mapWin_) {
         flags = (flags & ~0x10) | 0x40400001;
     }
     init(&bounds, StringTemp, flags);
     if (mode == 0) {
         field_1DD70_ = 0x10EE3;
-        field_1DD98_ = field_1DD78_ != 0 ? -8 : 0;
+        field_1DD98_ = map_view_index_ != 0 ? -8 : 0;
     } else {
         field_1DD70_ = 0x80000082;
         field_1DD98_ = -7;
     }
-    if (field_1DD78_ != 0) {
+    if (map_view_index_ != 0) {
         // The original font-table initializer caches find_font(10, 1) at
         // 0x00945778. Resolve the same Font through its typed owner until
         // that initializer and cache have source-owned lifetimes.
@@ -301,10 +301,10 @@ void MapWin::init(int mode, int update) {
     if (mode == 0) {
         do_image_buttons();
         field_1DD70_ &= 0x9FFFFFFF;
-        if (field_1DD78_ == 0) {
+        if (map_view_index_ == 0) {
             field_1DD70_ |= IsMultiplayerNet ? 0x20000000 : 0x60000000;
         } else {
-            if (field_1DD78_ == 1) field_1DD70_ |= 0x40000000;
+            if (map_view_index_ == 1) field_1DD70_ |= 0x40000000;
             standard_caption();
         }
         if (update == 0) {
@@ -322,9 +322,9 @@ void MapWin::init(int mode, int update) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470920.cpp; original calls clear, cache setup and GraphicWin::init(RECT*) for the PlanWin, secondary MapWin slot, WorldWin and ordinary receivers.", "Original 0x004709EB identifies the complete PlanWin at 0x00834D70 and 0x004709F3 tests DiplomacyPopup; 0x005D50A0 supplies null-RECT behavior."], "reason": "Home receiver selection through real PlanWin, popup, interface and WorldWin owners and the original GraphicWin rectangle overload."}
 // symbol    ?init@MapWin@@QAEXPAUtagRECT@@PADH@Z
 void MapWin::init(RECT *bounds, char *caption, int flags) {
-    clear(field_1DD78_);
+    clear(map_view_index_);
     init_dummy();
-    field_1DD74_ = 1;
+    view_active_ = 1;
 
     if ((field_1DD70_ & 0x1000000U) != 0 || this == MapWinTable[0]) {
         return;
@@ -640,13 +640,13 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
         changed > 1) {
         for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
             MapWin *window = MapWinTable[slot];
-            if (window && (slot == 0 || window->field_1DD74_ != 0))
+            if (window && (slot == 0 || window->view_active_ != 0))
                 window->draw_map(1);
         }
     } else if (changed != 0) {
         for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
             MapWin *window = MapWinTable[slot];
-            if (window && (slot == 0 || window->field_1DD74_ != 0))
+            if (window && (slot == 0 || window->view_active_ != 0))
                 window->draw_radius(tile_x, tile_y, 0, 2);
         }
     }
@@ -668,7 +668,7 @@ void MapWin::UNK4(int tile_x, int tile_y) {
     for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         MapWin *const window = MapWinTable[slot];
         if (window != nullptr &&
-            (slot == 0 || window->field_1DD74_ != 0)) {
+            (slot == 0 || window->view_active_ != 0)) {
             window->draw_map(1);
         }
     }
@@ -696,7 +696,7 @@ graphic_win+0x444. The body keeps the eight scalar clears, which the image
 runs after the members.
 */
 MapWin::MapWin() {
-    field_1DD74_ = 0;
+    view_active_ = 0;
     owned_ = 0;
     field_1DD80_ = 0;
     field_1DD8C_ = 0;
@@ -857,7 +857,7 @@ void MapWin::close() {
 void __cdecl mapwin_system_shutdown() {
     for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
         MapWin *window = MapWinTable[slot];
-        if (window != nullptr && window->field_1DD74_ != 0) {
+        if (window != nullptr && window->view_active_ != 0) {
             window->close();
         }
     }
@@ -877,10 +877,10 @@ void __cdecl mapwin_system_init(int reset_windows) {
         if (window == nullptr) continue;
         if (reset_windows != 0) {
             window->clear(static_cast<int>(slot));
-            window->field_1DD74_ = slot == 0;
-            if (slot == 1) MapWinTable[1]->field_1DD74_ = 1;
+            window->view_active_ = slot == 0;
+            if (slot == 1) MapWinTable[1]->view_active_ = 1;
         }
-        if (slot == 0 || window->field_1DD74_ != 0) {
+        if (slot == 0 || window->view_active_ != 0) {
             window->init(0, 0);
         }
     }
@@ -898,8 +898,8 @@ void __cdecl mapwin_system_init(int reset_windows) {
 void __cdecl mapwin_activate_free_slot(int tile_x, int tile_y) {
     for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
         MapWin *window = MapWinTable[slot];
-        if (window == nullptr || window->field_1DD74_ != 0) continue;
-        window->clear(window->field_1DD78_);
+        if (window == nullptr || window->view_active_ != 0) continue;
+        window->clear(window->map_view_index_);
         window->init(0, 1);
         window->field_1DD9C_ = tile_x;
         window->field_1DDA0_ = tile_y;
@@ -937,8 +937,8 @@ Return Value: n/a
 Status: Complete
 */
 void MapWin::on_sys_close() {
-    if (field_1DD78_ != 0) {
-        field_1DD74_ = 0;
+    if (map_view_index_ != 0) {
+        view_active_ = 0;
         close();
     }
 }
@@ -954,19 +954,19 @@ void MapWin::on_button_clicked(int button) {
     ConsoleStatusWin.reset();
     switch (button) {
     case 0:
-        if (field_1DD78_ != 0) {
-            field_1DD74_ = 0;
+        if (map_view_index_ != 0) {
+            view_active_ = 0;
             close();
         }
         break;
     case 1:
-        ConsoleGlobal.zoom(0x203, static_cast<int>(field_1DD78_));
+        ConsoleGlobal.zoom(0x203, static_cast<int>(map_view_index_));
         break;
     case 2:
-        ConsoleGlobal.zoom(0x204, static_cast<int>(field_1DD78_));
+        ConsoleGlobal.zoom(0x204, static_cast<int>(map_view_index_));
         break;
     case 3:
-        if (field_1DD78_ != 0) {
+        if (map_view_index_ != 0) {
             field_1DD70_ ^= 0x40000000U;
             StringTemp[0] = '\0';
             const int label = (field_1DD70_ & 0x40000000U) != 0
@@ -1114,7 +1114,7 @@ void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
         // exempt from the activity gate.
         if (slot != 0) {
             const uint32_t active =
-                static_cast<const volatile MapWin *>(window)->field_1DD74_;
+                static_cast<const volatile MapWin *>(window)->view_active_;
             if (active == 0) {
                 continue;
             }
@@ -1158,7 +1158,7 @@ void __cdecl draw_tiles(int x_coord, int y_coord, int draw_type) {
         // 0x0046B157 `cmp esi, 0x7d3c3c` / 0x0046B15D je.
         if (slot != 0) {
             const uint32_t active =
-                static_cast<const volatile MapWin *>(window)->field_1DD74_;
+                static_cast<const volatile MapWin *>(window)->view_active_;
             if (active == 0) {
                 continue;
             }
@@ -1213,7 +1213,7 @@ int MapWin::focus(int x_coord, int y_coord) {
         if (in_box(x_coord, y_coord, &MapWinPrimaryCorner) != 0) {
             return 0;
         }
-        if (field_1DD78_ == 0) {
+        if (map_view_index_ == 0) {
             ConsoleGlobal.field_23BFC_ = 1;
             ConsoleGlobal.field_23BF8_ = ConsoleGlobal.cursor_active_ == 0;
         }
@@ -1296,7 +1296,7 @@ int MapWin::focus(int x_coord, int y_coord) {
     if (moved == 0) {
         return 0;
     }
-    if (field_1DD78_ == 0) {
+    if (map_view_index_ == 0) {
         ConsoleGlobal.field_23BFC_ = 1;
         ConsoleGlobal.field_23BF8_ = ConsoleGlobal.cursor_active_ == 0;
     }
@@ -1342,7 +1342,7 @@ void MapWin::set_center(int x, int y, int draw_type) {
     }
     if (old_x != field_1DD9C_ || old_y != field_1DDA0_) {
         draw_map(draw_type);
-        if (field_1DD78_ == 0) {
+        if (map_view_index_ == 0) {
             WorldClimateWorldWin.follow_center(x, y);
         }
     }
@@ -2006,7 +2006,7 @@ int MapWin::on_nc_hittest(int x, int y) {
 void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
     if (MapMouseFeedbackBusy != 0 || UnkGlobal0093A934 != 0 ||
         ConsoleControlTurnActive != 0 || MapInputEnabled == 0 ||
-        field_1DD78_ != 0) {
+        map_view_index_ != 0) {
         return;
     }
 
@@ -2508,7 +2508,7 @@ void MapWin::draw_radius(int x, int y, int radius, int draw_type) {
         if ((network == 0 || ConsoleControlTurnActive == 0) && draw_type >= 0 &&
             (ConsoleGlobal.field_23BF8_ != 0 || ConsoleGlobal.survey_mode_ != 0) &&
             (ConsoleGlobal.field_23BE4_ != 0 || (network != 0 && (GameDataStateStorage.fields_.game_state_ & 2) != 0)) &&
-            (field_1DD78_ == 0 || (field_1DD70_ & 0x80000000U) != 0)) {
+            (map_view_index_ == 0 || (field_1DD70_ & 0x80000000U) != 0)) {
             const int history = ConsoleGlobal.cursor_history_index_;
             const int cursor_y = ConsoleGlobal.cursor_history_y_[history];
             const int cursor_x = ConsoleGlobal.cursor_history_x_[history];
@@ -2540,7 +2540,7 @@ void MapWin::draw_radius(int x, int y, int draw_type) {
 Purpose: Repaint every live MapWin slot - the FREE draw_map, not the method
          above. Mirrors draw_tile/draw_tiles in mapwin.h: slot 0 is exempt
          from the activity gate, every other slot only draws when its
-         field_1DD74_ dword is non-zero.
+         view_active_ dword is non-zero.
 // ORIGINAL: 0x0046B190 ?draw_map@@YAXH@Z 0x0046B190-0x0046B1CA BYTE_EXACT
 // size      58 bytes
 // prototype void (__cdecl ?draw_map@@YAXH@Z)(int)
@@ -2558,7 +2558,7 @@ void __cdecl draw_map(int draw_type) {
         MapWin *const window = MapWinTable[slot];
         if (window != nullptr) {
             if (slot == 0 ||
-                static_cast<const volatile MapWin *>(window)->field_1DD74_ != 0) {
+                static_cast<const volatile MapWin *>(window)->view_active_ != 0) {
                 window->draw_map(draw_type);
             }
         }
@@ -2584,7 +2584,7 @@ void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type) {
         MapWin *const window = MapWinTable[slot];
         if (window != nullptr) {
             if (slot == 0 ||
-                static_cast<const volatile MapWin *>(window)->field_1DD74_ != 0) {
+                static_cast<const volatile MapWin *>(window)->view_active_ != 0) {
                 window->draw_radius(x_coord, y_coord, a3, draw_type);
             }
         }
@@ -2617,7 +2617,7 @@ void __cdecl mapwin_terrain_fixup() {
         // WITHOUT first checking that the slot itself is non-null - only
         // slot 0 skips the read. An unpopulated
         // later slot would dereference a null MapWin*. Reproduced as-is.
-        if (slot == 0 || MapWinTable[slot]->field_1DD74_ != 0) {
+        if (slot == 0 || MapWinTable[slot]->view_active_ != 0) {
             terrain_fixup(MapWinTable[slot]);
         }
     }
@@ -5496,7 +5496,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
     PullDown menu;
     menu.init(0);
 
-    if (field_1DD78_ == 1) {
+    if (map_view_index_ == 1) {
         mapwin_add_context_label(menu, 0xC04, 0x320);
         menu.add_separator(0x63);
         mapwin_add_context_label(menu, 0xC68, 0x323);
@@ -6024,7 +6024,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
                 MapWin *const window = MapWinTable[slot];
                 if (window != nullptr &&
-                    (slot == 0 || window->field_1DD74_ != 0)) {
+                    (slot == 0 || window->view_active_ != 0)) {
                     window->draw_map(1);
                 }
             }
@@ -6207,14 +6207,14 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             }
             return;
         }
-        if (((GameDataStateStorage.fields_.game_state_ & STATE_UNK_100) != 0 || field_1DD78_ == 1) &&
+        if (((GameDataStateStorage.fields_.game_state_ & STATE_UNK_100) != 0 || map_view_index_ == 1) &&
             ConsoleControlTurnActive == 0) {
             right_menu(tile_x, tile_y, pixel_x, pixel_y);
             return;
         }
     }
 
-    if (field_1DD78_ == 0) {
+    if (map_view_index_ == 0) {
         const bool skip_cursor_update = ConsoleGlobal.cursor_active_ == 0 &&
             ConsoleGlobal.selected_vehicle_ == 0 && button == 0 &&
             ConsoleControlTurnActive == 0 && ConsoleGlobal.edit_lock() == 0;
@@ -6227,7 +6227,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
 
     const int base_id = base_at(tile_x, tile_y);
     const int local_faction = ConsoleGlobal.faction_id_;
-    if (field_1DD78_ != 1 && base_id >= 0 && button == 0 &&
+    if (map_view_index_ != 1 && base_id >= 0 && button == 0 &&
         ConsoleControlTurnActive == 0) {
         const Base &base = Bases[base_id];
         const int owner = base.faction_id_current;
@@ -6239,7 +6239,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
             (PlayersData[local_faction].diplo_treaties[owner] & 1U) != 0;
         if ((visible || omniscient) && access) {
             set_center(tile_x, tile_y, 0);
-            if (field_1DD78_ != 0 && (field_1DD70_ & 0x40000000U) != 0)
+            if (map_view_index_ != 0 && (field_1DD70_ & 0x40000000U) != 0)
                 MapWinTable[0]->set_center(tile_x, tile_y, 0);
             TutWinBaseWindow.zoom(base_id, 0);
             return;
@@ -6251,7 +6251,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
     set_center(tile_x, tile_y, 1);
     if (primary) field_21A44_ = 0;
     const int vehicle_id = veh_at(tile_x, tile_y);
-    if (field_1DD78_ != 1 && vehicle_id >= 0 &&
+    if (map_view_index_ != 1 && vehicle_id >= 0 &&
         Vehs[vehicle_id].faction_id == local_faction && button == 0 &&
         ConsoleControlTurnActive == 0 && ConsoleGlobal.edit_lock() == 0) {
         ConsoleGlobal.activate(tile_x, tile_y, 0);
@@ -7272,7 +7272,7 @@ void __cdecl draw_cursor() {
             MapWin *window = *slot;
             if (window != 0 &&
                 (slot == table ||
-                 window->field_1DD74_ != 0)) {
+                 window->view_active_ != 0)) {
                 int index = ConsoleGlobal.cursor_history_index_;
                 int tile_y = ConsoleGlobal.cursor_history_y_[index];
                 int tile_x = ConsoleGlobal.cursor_history_x_[index];
@@ -7329,10 +7329,10 @@ void __cdecl draw_cursor() {
 // calls     0x00644EF2
 
 void MapWin::clear(int index) {
-    field_1DD78_ = index;
+    map_view_index_ = index;
     field_1DD70_ = 0;
     field_1DD98_ = (((IfaceScreenWidth < 1000) - 1) & 6) - 6;
-    field_1DD74_ = (index == 0);
+    view_active_ = (index == 0);
 
     int halfHeight = MapLatitudeBounds / 2;
     field_1DDA0_ = halfHeight;
@@ -8017,7 +8017,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int wider_radius,
             if (window == 0) {
                 continue;
             }
-            if (slot != 0 && window->field_1DD74_ == 0) {
+            if (slot != 0 && window->view_active_ == 0) {
                 continue;
             }
             window->draw_radius(x_coord, y_coord, (wider_radius != 0) + 1,
@@ -8029,7 +8029,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int wider_radius,
             if (window == 0) {
                 continue;
             }
-            if (slot != 0 && window->field_1DD74_ == 0) {
+            if (slot != 0 && window->view_active_ == 0) {
                 continue;
             }
             window->draw_radius(x_coord, y_coord, 0, draw_type);
@@ -8067,7 +8067,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
             if (window == 0) {
                 continue;
             }
-            if (slot != 0 && window->field_1DD74_ == 0) {
+            if (slot != 0 && window->view_active_ == 0) {
                 continue;
             }
             window->draw_radius(x_coord, y_coord, (wider_radius != 0) + 1,
@@ -8080,7 +8080,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
                 if (window == 0) {
                     continue;
                 }
-                if (slot != 0 && window->field_1DD74_ == 0) {
+                if (slot != 0 && window->view_active_ == 0) {
                     continue;
                 }
                 window->draw_radius(second_x_coord, second_y_coord,
@@ -8093,7 +8093,7 @@ void __cdecl draw_tile_fixup(int x_coord, int y_coord, int second_x_coord,
             if (window == 0) {
                 continue;
             }
-            if (slot != 0 && window->field_1DD74_ == 0) {
+            if (slot != 0 && window->view_active_ == 0) {
                 continue;
             }
             window->draw_radius(x_coord, y_coord, 0, draw_type);
@@ -8192,7 +8192,7 @@ void MapWin::on_left_down(int x_coord, int y_coord) {
     field_1DD88_ = 0;
     field_1DD84_ = 0;
 
-    if (ConsoleControlTurnActive != 0 || field_1DD78_ != 0) return;
+    if (ConsoleControlTurnActive != 0 || map_view_index_ != 0) return;
     if (ConsoleGlobal.field_23D10_ != 0) {
         if (ConsoleGlobal.field_23D10_ != 8) return;
         field_1DD80_ = 1;
@@ -8252,7 +8252,7 @@ after_undo:
         }
     }
 
-    MapWinSelectedSlot = static_cast<int>(field_1DD78_);
+    MapWinSelectedSlot = static_cast<int>(map_view_index_);
     if ((static_cast<uint16_t>(GetAsyncKeyState(VK_SHIFT)) & 0xFF00) != 0 &&
         (GameDataStateStorage.fields_.game_state_ & 0x40) == 0) {
         go_timer(3);

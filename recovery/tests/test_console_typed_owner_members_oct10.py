@@ -19,7 +19,7 @@ def set_patrol_control():
 #include <vector>
 struct Vehicle { int waypoint_count; } Vehs[2];
 struct MapWin {
-    int id, field_1DD70_, field_1DD74_;
+    int id, field_1DD70_, view_active_;
     void draw_base_dest(int);
 };
 MapWin *MapWinTable[8], *replacement;
@@ -44,8 +44,8 @@ int main() {
     for (int i = 0; i < 8; ++i) {
         windows[i] = MapWin{i, 0x40, 1}; MapWinTable[i] = &windows[i];
     }
-    windows[0].field_1DD74_ = 0;
-    windows[2].field_1DD74_ = 0; MapWinTable[1] = 0;
+    windows[0].view_active_ = 0;
+    windows[2].view_active_ = 0; MapWinTable[1] = 0;
     Console local = {8}; Vehs[0].waypoint_count = 4; Vehs[1].waypoint_count = 5;
     local.set_patrol(1);
     assert(Vehs[1].waypoint_count == 0 && Vehs[0].waypoint_count == 4);
@@ -94,7 +94,7 @@ def patrol_control():
 #include <vector>
 struct MapWin {
     int id;
-    uint32_t field_1DD70_,field_1DD74_;
+    uint32_t field_1DD70_,view_active_;
     void draw_base_dest(int);void draw_map(int);
 };
 static MapWin *MapWinTable[8],*replacement;
@@ -113,8 +113,8 @@ int main(){
     for(int mode=0;mode!=2;++mode){
         calls.clear();rebind=mode==0;
         for(int i=0;i!=8;++i){windows[i]={i,static_cast<uint32_t>(mode?0x400040:0x40),1};MapWinTable[i]=&windows[i];}
-        windows[0].field_1DD74_=0; // First slot is admitted anyway.
-        MapWinTable[1]=nullptr;windows[2].field_1DD74_=0;
+        windows[0].view_active_=0; // First slot is admitted anyway.
+        MapWinTable[1]=nullptr;windows[2].view_active_=0;
         Console console;console.toggle_patrol();
         if(!mode){
             assert((calls==std::vector<int>{0,8,4,5,6,7}));

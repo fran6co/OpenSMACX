@@ -69,7 +69,7 @@ def harness(methods):
                                         + declaration(header, "cursor_history_y_"))
     map_header = (ROOT / "src/mapwin.h").read_text()
     map_fields = "\n".join(declaration(map_header, name) for name in (
-        "field_1DD70_", "field_1DD74_", "field_1DDA4_", "field_1DDA8_",
+        "field_1DD70_", "view_active_", "field_1DDA4_", "field_1DDA8_",
         "field_1DDCC_", "field_1DDD0_", "field_1DDD4_", "field_1DDD8_"))
     return r'''
         #include <cstdint>

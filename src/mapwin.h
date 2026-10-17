@@ -310,17 +310,17 @@ class MapWin : public virtual GraphicWin {
   void on_left_up(int, int);
   void close();
   int UNK2();
-  // Resets the "this window is live" flag (field_1DD74_) and other
+  // Resets the "this window is live" flag (view_active_) and other
   // per-window state; reached from this class's destructor, including the
   // compiler-generated MapWin destruction within Console and PlanWin.
   void clear(int index);
 
-  // THE FIELD BLOCK IS PUBLIC, deliberately. go_reset (time.cpp, a free
-  // function) resets several of these dwords on every window of the table,
-  // and the mapwin_terrain_fixup / draw_map family reads field_1DD74_ from
-  // outside. These offsets are already carved members, so hiding them behind raw-offset
-  // writes would model the same bytes twice. Access changes no offset; the
-  // static_assert below still pins the layout.
+  // Public fields serve go_reset and free draw helpers; do not duplicate raw offsets.
+  // clear writes map_view_index_ at 0x0046287C and activity at 0x004628AF.
+  // clear activates only index 0; init activates the view at 0x00470AB1.
+  // Detached PlanWin/WorldWin also use logical index 1, not table membership.
+  // Historical field_1DD74_/field_1DD78_ labels name these same two words.
+  // Keep uint32 widths, declared offsets and the six-word save/load order.
   // RECOVERY_MEMBER: v3 MapWin owned_ TerrainCacheEntry* 0x4 0x0046FD90
   TerrainCacheEntry *owned_;
   uint32_t field_8_;  // 0x8
@@ -342,8 +342,8 @@ class MapWin : public virtual GraphicWin {
   // on_resize suppresses image-button refresh when the high bit is set.
   // RECOVERY_MEMBER: v1 MapWin field_1DD70_ 0x1DD70 0x0046FA00
   uint32_t field_1DD70_;  // 0x1DD70
-  uint32_t field_1DD74_;  // 0x1DD74
-  uint32_t field_1DD78_;  // 0x1DD78
+  uint32_t view_active_;  // 0x1DD74
+  uint32_t map_view_index_;  // 0x1DD78
   // DWORD, not uint8_t[4]: the image writes it whole
   // (`mov dword ptr [entered - 0x3cf0], 0` in on_right_down), and the
   // byte-array form made that a member pun.
@@ -544,7 +544,7 @@ extern int MapWinCaptionDivisor;  // 0x00691E70, initially -1
 // Per-window "this window is live" dword. The MapWin constructor clears it
 // (0x00462822), MapWin::clear writes it (0x004628AF), and mapwin_system_init
 // sets it per slot (0x00471090, 0x0047109E). Every free drawing helper gates
-// on field_1DD74_ for slots 1..7; the primary slot is exempt.
+// on view_active_ for slots 1..7; the primary slot is exempt.
 
 // Original4712D0 performs a nullable MapWin-to-Buffer base conversion before
 // entering the common terrain renderer. It does not own another canvas.

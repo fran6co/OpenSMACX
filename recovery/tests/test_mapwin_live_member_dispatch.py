@@ -69,7 +69,7 @@ PREFIX = r'''
 #define MEASURED
 #define __cdecl
 struct MapWin {
-    uint32_t field_1DD74_;
+    uint32_t view_active_;
     int id;
     void draw_radius(int, int, int, int);
 };
@@ -116,7 +116,7 @@ int main() {{
 @pytest.mark.parametrize("name", ["draw_tile", "draw_tiles"])
 def test_actual_broadcaster_primary_gate_and_live_table(tmp_path, compiler, name):
     body = broadcaster(name)
-    assert "static_cast<const volatile MapWin *>(window)->field_1DD74_" in body
+    assert "static_cast<const volatile MapWin *>(window)->view_active_" in body
     assert run_control(tmp_path, compiler, name, body) == 0
     assert run_control(tmp_path, compiler, name, body, null_primary=True) == 0
 

@@ -59,7 +59,7 @@ PlanWindowType PlanWindow;
 
 struct MapWin {
     int id_;
-    unsigned int field_1DD74_;
+    unsigned int view_active_;
     unsigned int field_1DD70_;
     void draw_base_dest(int value);
 } Windows[8], Replacement;
@@ -76,7 +76,7 @@ void MapWin::draw_base_dest(int value) {
     Events.push_back(id_ == 60 ? draw_replacement : draw_base + id_);
     if (MutateLaterSlots && id_ == 0) {
         // The image reloads later receivers and flags after this call returns.
-        Windows[4].field_1DD74_ = 1;
+        Windows[4].view_active_ = 1;
         MapWinTable[6] = &Replacement;
     }
 }
@@ -93,12 +93,12 @@ void reset() {
     MutateLaterSlots = false;
     for (int slot = 0; slot < MapWinTableSlots; ++slot) {
         Windows[slot].id_ = slot;
-        Windows[slot].field_1DD74_ = 0;
+        Windows[slot].view_active_ = 0;
         Windows[slot].field_1DD70_ = 0;
         MapWinTable[slot] = &Windows[slot];
     }
     Replacement.id_ = 60;
-    Replacement.field_1DD74_ = 1;
+    Replacement.view_active_ = 1;
     Replacement.field_1DD70_ = 0xC40000;
 }
 
@@ -140,14 +140,14 @@ void check_all_slots_null_primary_mask_and_live_reads() {
     // the mask. Slot three draws. Slot four starts inactive and is activated
     // by slot zero's callback. Slot six is replaced by that same callback.
     Windows[0].field_1DD70_ = 0x400000;
-    Windows[1].field_1DD74_ = 1;
+    Windows[1].view_active_ = 1;
     Windows[1].field_1DD70_ = 0x20000;
-    Windows[3].field_1DD74_ = 1;
+    Windows[3].view_active_ = 1;
     Windows[3].field_1DD70_ = 0x40000;
     Windows[4].field_1DD70_ = 0xC40000;
-    Windows[6].field_1DD74_ = 1;
+    Windows[6].view_active_ = 1;
     Windows[6].field_1DD70_ = 0xC40000;
-    Windows[7].field_1DD74_ = 1;
+    Windows[7].view_active_ = 1;
     Windows[7].field_1DD70_ = 0x400000;
     MutateLaterSlots = true;
     line_timer(0);

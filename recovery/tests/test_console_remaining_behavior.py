@@ -51,7 +51,7 @@ static int can_arty(int proto, int sea) {
 
 struct MapWin {
     unsigned int field_1DD70_ = 0;
-    int field_1DD74_ = 0;
+    int view_active_ = 0;
     int id = 0;
     void draw_base_dest(int type) { record("draw_base_dest", id, type); }
     void draw_map(int type) { record("draw_map", id, type); }
@@ -181,7 +181,7 @@ static void test_first_key_stage() {
     reset(c);
     MapWin primary, active, inactive, active2;
     primary.id = 0; active.id = 1; inactive.id = 2; active2.id = 4;
-    active.field_1DD74_ = 1; inactive.field_1DD74_ = 0; active2.field_1DD74_ = 1;
+    active.view_active_ = 1; inactive.view_active_ = 0; active2.view_active_ = 1;
     MapWinTable[0] = &primary; MapWinTable[1] = &active;
     MapWinTable[2] = &inactive; MapWinTable[4] = &active2;
     c.veh_key('P', 0x7f, 0);

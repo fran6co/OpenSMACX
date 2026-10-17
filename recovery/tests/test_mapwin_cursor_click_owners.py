@@ -56,7 +56,7 @@ struct PrimaryBase { virtual ~PrimaryBase() {} };
 static void mutate_cursor();
 struct MapWin : PrimaryBase, virtual GraphicWin {
     virtual GraphicWin *base_view() { return static_cast<GraphicWin *>(this); }
-    int field_1DD74_;
+    int view_active_;
     int field_1DDA4_, field_1DDA8_;
     int field_1DDCC_, field_1DDD0_, field_1DDD4_, field_1DDD8_;
     int radius_calls, radius_x, radius_y, radius_a, radius_b;
@@ -99,7 +99,7 @@ LEFT_CLICK
 RIGHT_CLICK
 
 static void reset(MapWin &w) {
-    w.field_1DD74_=1;
+    w.view_active_=1;
     w.field_1DDA4_=14; w.field_1DDA8_=0;
     w.field_1DDCC_=4; w.field_1DDD0_=4;
     w.field_1DDD4_=0; w.field_1DDD8_=0;
@@ -162,7 +162,7 @@ static void free_cursor_cases() {
     first.field_1DDA4_=14; first.field_1DDCC_=4;
     second.field_1DDA4_=40; second.field_1DDCC_=4;
     inactive.field_1DDA4_=14; inactive.field_1DDCC_=4;
-    first.field_1DD74_=0; second.field_1DD74_=1; inactive.field_1DD74_=0;
+    first.view_active_=0; second.view_active_=1; inactive.view_active_=0;
     first.mutate_cursor_on_radius=1;
     MapWinTable[0]=&first; MapWinTable[1]=&second; MapWinTable[2]=&inactive;
     ConsoleGlobal.cursor_history_index_=0;

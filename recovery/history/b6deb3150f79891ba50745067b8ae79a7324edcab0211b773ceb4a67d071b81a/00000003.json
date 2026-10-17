@@ -1,0 +1,24 @@
+{
+  "event_id": "d19751fec9f5a58636d668d595f1002bbac195c4313ffccbd2ca52dfa67a9745",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_view_roles_oct17.py",
+      "src/console.cpp",
+      "src/mapwin.cpp",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Four native controls on unchanged base.cpp isolate added header comment lines, not member names, as the cause of actual COFF drift in that witness. Old comment structure reproduces baseline with either old or new field names; new comment structure reproduces the first candidate with either spelling. The VC6 compatibility static_assert uses __LINE__ in its typedef name; attribution to exact internal compiler allocation mechanics remains an inference. Do not change compiler/shim/flags/comparator or waive any object.",
+      "Authorize expressing the new role evidence inside the existing six-line public-field explanation, instead of adding seven new lines to mapwin.h. Keep the recovered names, exact declaration line positions, current clear/init/PlanWin/WorldWin/serialization facts and historical old-field alias clarification. Replace only that current ordinary comment block, remove only the newly added redundant comment lines, and update the two reviewed ordinary draw_map/Console current-prose labels to view_active_ without adding lines. All ORIGINAL/machine annotations/historical TRIED/LEVER/binding strings remain verbatim. No __LINE__/pragma trick, artificial code, algorithm or ABI edit.",
+      "All prior compiler/host/source/observation epochs are terminal; retain every report, including166PASS/10FAIL physical comparison and388PASS/50sameFAIL host results. Freshly verify final source/build/hosts/classification/176zero-omission object correspondence after these comment-only revisions. The native physical condition is not weakened; compare failures still block integration. The new focused test may additionally check current startup publishes newly allocated MapWin table members and Console slot0, rather than treating an object address outside pointer-array storage by itself as proof it cannot be a pointee."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "22dd19ad06acd8abfaebfe0d664700cc73345236e4fb9d051dae6e161f35d1d5",
+  "request_id": "mapwin-compact-current-role-evidence-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:mapwin-view-role-names-oct17"
+}

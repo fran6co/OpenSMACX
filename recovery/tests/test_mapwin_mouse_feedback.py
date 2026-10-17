@@ -48,7 +48,7 @@ def actual_source():
     parts["STRUCTURES"] = "\n".join(structures)
     parts["DIB"] = braced(h["buffer"], "struct Dib : BITMAPINFO") + ";"
     members = []
-    for name in ("field_1DD78_", "field_1DD80_", "field_1DD84_", "field_1DD8C_", "field_1DDB8_",
+    for name in ("map_view_index_", "field_1DD80_", "field_1DD84_", "field_1DD8C_", "field_1DDB8_",
                  "feedback_x_", "feedback_y_", "field_1DE0C_", "feedback_hover_y_", "feedback_proto_",
                  "feedback_triad_", "feedback_repeat_", "feedback_segment_count_", "field_1DE24_",
                  "cursor_sprite_", "cursor_resource_id_"):
@@ -189,7 +189,7 @@ void kinds(const char *expected){size_t i=0;for(const auto&e:seen){require(expec
 void reset(){
     scenario=0;pixel_result=0;selected_result=1;tile_x=12;tile_y=14;pixel_calls=pump_calls=0;
     MapLongitudeBounds=64;MapLatitudeBounds=32;MapMouseFeedbackBusy=0;MapInputEnabled=1;UnkGlobal0093A934=ConsoleControlTurnActive=0;
-    window.field_1DD78_=window.field_1DD84_=window.field_1DD8C_=0;window.field_1DD80_=1;
+    window.map_view_index_=window.field_1DD84_=window.field_1DD8C_=0;window.field_1DD80_=1;
     window.field_1DE0C_=99;window.feedback_hover_y_=98;window.feedback_proto_=97;window.feedback_triad_=96;
     window.feedback_repeat_=95;window.feedback_segment_count_=94;window.field_1DE24_=1;
     window.cursor_sprite_=nullptr;window.cursor_resource_id_=0x7f00;
@@ -207,7 +207,7 @@ void reset(){
 }
 void admission(){
     for(int guard=0;guard<5;++guard){reset();switch(guard){case 0:MapMouseFeedbackBusy=1;break;case 1:UnkGlobal0093A934=1;break;
-        case 2:ConsoleControlTurnActive=1;break;case 3:MapInputEnabled=0;break;case 4:window.field_1DD78_=1;break;}
+        case 2:ConsoleControlTurnActive=1;break;case 3:MapInputEnabled=0;break;case 4:window.map_view_index_=1;break;}
         window.on_mouse_move(25,30);require(seen.empty()&&pixel_calls==0);}
     for(int invalid=0;invalid<5;++invalid){reset();switch(invalid){case 0:pixel_result=1;break;case 1:tile_y=-1;break;case 2:tile_y=32;break;
         case 3:tile_x=-1;break;case 4:tile_x=64;break;}window.on_mouse_move(25,30);kinds("P");}
@@ -312,7 +312,7 @@ MUTATIONS = [
     ("modal_gate", "BODY", "UnkGlobal0093A934 != 0", "false"),
     ("turn_gate", "BODY", "ConsoleControlTurnActive != 0", "false"),
     ("input_gate", "BODY", "MapInputEnabled == 0", "false"),
-    ("window_gate", "BODY", "field_1DD78_ != 0", "false"),
+    ("window_gate", "BODY", "map_view_index_ != 0", "false"),
     ("bad_conversion_admitted", "BODY", "pixel_to_tile(pixel_x, pixel_y, &tile_x, &tile_y) != 0", "pixel_to_tile(pixel_x, pixel_y, &tile_x, &tile_y) < 0"),
     ("latitude_endpoint", "BODY", "tile_y >= MapLatitudeBounds", "tile_y > MapLatitudeBounds"),
     ("longitude_endpoint", "BODY", "tile_x >= MapLongitudeBounds", "tile_x > MapLongitudeBounds"),

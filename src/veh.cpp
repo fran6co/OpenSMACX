@@ -986,7 +986,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
         MapWin *window = MapWinTable[i];
         if (!window) continue;
         active[i] = 0;
-        if (i != 0 && !window->field_1DD74_) continue;
+        if (i != 0 && !window->view_active_) continue;
         bool visible = false;
         for (int endpoint = 0; endpoint < 2; ++endpoint) {
             int x = endpoint ? next_x : tile_x;
@@ -1651,7 +1651,7 @@ int __cdecl boom(int x, int y, int flags) {
     for (int slot = 0; slot < 8; ++slot) {
         MapWin *window = MapWinTable[slot];
         active_windows[slot] = false;
-        if (window == nullptr || (slot != 0 && window->field_1DD74_ == 0)) {
+        if (window == nullptr || (slot != 0 && window->view_active_ == 0)) {
             continue;
         }
         if (y < window->field_1DDA8_ ||

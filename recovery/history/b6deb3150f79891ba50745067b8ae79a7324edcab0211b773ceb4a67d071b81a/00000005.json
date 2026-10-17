@@ -1,0 +1,23 @@
+{
+  "event_id": "085ea4048bf077ae1dbc71008bbbbb3efaba20e52193427c6682e37d7e297973",
+  "payload": {
+    "affects": [
+      "entity-5dfc4257852707ab99a6615dff2b71b39d4a441d08d9ad8e7dd86522cb9bdebd",
+      "entity-828ee4593ce6d93d554d008c35bed586eacf2a085c78db2c6f61bdf7c5f224fb",
+      "entity-ceada8a2d0646e82f29d6067dc32d18f1acc6c0af754b8e82278833b09be644a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "mapwin-logical-view-roles-oct17",
+    "evidence": [
+      "Pinned clear 0x462870 writes its index at 0x46287C and (index == 0) activity at 0x4628AF; init 0x470A90 writes activity 1 at 0x470AB1. PlanWin init assigns index 1 and calls clear(1); WorldWin also assigns logical index 1. Startup independently allocates MapWinTable entries 1..7 and publishes ConsoleGlobal at slot 0.",
+      "game_io 0x5A6890 transfers exactly six existing 32-bit words in index, activity, +1DD70, +1DD98, +1DD9C, +1DDA0 order. The semantic names do not assert original debug identifiers, full class identity or complete lifetime proof."
+    ],
+    "hypothesis": "MapWin words +1DD74 and +1DD78 represent view activity and a logical map-view index, not proof of membership in MapWinTable.",
+    "kind": "discovery"
+  },
+  "previous_event": "95f6a71a7f5c76d6c823a6a09a22df406dd3ea43245dcb0b7cff258275d406a0",
+  "request_id": "mapwin-logical-view-roles-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:mapwin-view-role-names-oct17"
+}

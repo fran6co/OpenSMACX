@@ -4265,7 +4265,7 @@ void __cdecl world_climate() {
     if (WorldClimateSkipTerrainClear == 0) {
         for (int slot = 0; slot < 8; ++slot) {
             MapWin *const window = MapWinTable[slot];
-            if (window->field_1DD74_ != 0) {
+            if (window->view_active_ != 0) {
                 window->clear_terrain();
             }
         }
@@ -7725,7 +7725,7 @@ void __cdecl world_build() {
     if (WorldClimateSkipTerrainClear == 0) {
         MapWinSlots &table = MapWinTable;
         for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); slot++) {
-            if (table[slot]->field_1DD74_ != 0) {
+            if (table[slot]->view_active_ != 0) {
                 table[slot]->clear_terrain();
             }
         }
@@ -8489,7 +8489,7 @@ void __cdecl delete_landmark(int x, int y) {
 
     for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         MapWin *window = MapWinTable[slot];
-        if (window->field_1DD74_ != 0) {
+        if (window->view_active_ != 0) {
             // Native 0x592915 stores immediate 0x0098967F at +8; this is a
             // numeric cache sentinel (9,999,999), not a pointer.
             window->field_8_ = 0x0098967Fu;

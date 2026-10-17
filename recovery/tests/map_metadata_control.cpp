@@ -83,7 +83,7 @@ static struct {
     uint32_t rivers_base, rivers_rain_mod, solar_energy, thermal_band, thermal_deviance, global_warming;
 } WorldBuilder;
 static struct { struct { uint32_t game_state_; } fields_; } GameDataStateStorage;
-struct MapWinMock { int field_1DD74_; void clear_terrain() {} };
+struct MapWinMock { int view_active_; void clear_terrain() {} };
 typedef MapWinMock *MapWinSlots[8];
 static MapWinSlots MapWinTable;
 static const unsigned MapWinTableSlots = 8;
