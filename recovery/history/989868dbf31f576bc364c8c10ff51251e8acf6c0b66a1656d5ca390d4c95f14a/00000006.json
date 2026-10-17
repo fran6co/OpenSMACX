@@ -1,0 +1,17 @@
+{
+  "event_id": "3cf28c798e073d41737be9ca7bdf43d57d80e5e7e6a7e07ee520f266cdf25add",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "strings-frame-negative-oct17",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Production source, headers, annotations and default profile unchanged. Actual final owner object matches the controlled baseline in full, with zero body omissions. Explicit guard forbids adding this profile or a per-unit measurement override; no per-function workaround, source split or hidden claim regression."
+    ]
+  },
+  "previous_event": "e576a3b36704edd7920b59551ecc2eefe8e63fc64ffc1ec87b98e8d31156ceba",
+  "request_id": "strings-frame-negative-oct17-rejected",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:application-frame-batch-oct17"
+}

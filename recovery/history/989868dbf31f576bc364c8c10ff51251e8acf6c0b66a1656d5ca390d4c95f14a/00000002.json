@@ -1,0 +1,20 @@
+{
+  "event_id": "4276dab9d102c7c5a701655cb3bdce07a043f54bb27a92b93e8ac5dc6c8f140a",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "qualifying-ten-application-owner-frame-profiles-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "CMake inserts exactly one whole-owner block for these ten, with no C++/header/annotation changes. No global/linker flags, /Ob2, old profiles, unit/flag measurement policy or exclusions change. Guard pins complete immutable153cf CMake plus exactly this insertion, retaining prior profile groups and every previous exclusion/mutation, and explicitly rejects AlphaNet/Strings.",
+      "The first build refused freshness because the guard test was finalized during it; no result from that run is used. Tracked files were frozen and a new native build-13g7upuo prepared, compiled/linked successfully with all compile/link observations. Complete5581CPP census improves3075to3116masked with exactly41gains, zero old exact losses and no other verdict changes. All3075prior primary strict classifications and all610private supplemental results are unchanged. New41split33PASS/7UNKNOWN/1FAIL; current primary1898PASS/1194UNKNOWN/24FAIL. No claims banked/demoted or marker/symbol/span changes.",
+      "Fresh physical inventory covers176objects:166outside-owner whole objects PASS, ten owner helper/FPO/EH residualFAILs remain unwaived after only162genuine mapped bodies projected. All12final actual owner objects reproduce chosen complete controlled probes, including rejected baseline profiles. No new omission or helper/data/lifetime waiver. Linked41selectedrows31PASS/10MAPUNKNOWN; all target_contentsUNKNOWN and complete linked selection/allocation/runtime remain unproved. Native source claims/references/mappings PASS. Independent source/guard and paired-object review found no bounded-manual blocker; this is not automatic/full-game acceptance.",
+      "Broad19-file actual-source/host/profile suite baseline and provisioned candidate both121PASS/24FAIL, with identical classifications after normalizing only the renamed profile policy test. Earlier isolated failure to find the pinned executable was test setup, corrected by an ignored symlink to the same pinned image; no test assertion or source behavior changed. Existing stale fixtures remain failures, not green or behavioral acceptance. Fresh master integration checks remain required."
+    ]
+  },
+  "previous_event": "4bc8edbe150b212b49262bbcb24e5693d8a702f31342660526e8641383d65096",
+  "request_id": "qualifying-ten-application-owner-frame-profiles-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:application-frame-batch-oct17"
+}

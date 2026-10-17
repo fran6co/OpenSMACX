@@ -1,0 +1,38 @@
+{
+  "event_id": "e576a3b36704edd7920b59551ecc2eefe8e63fc64ffc1ec87b98e8d31156ceba",
+  "payload": {
+    "affects": [
+      "entity-007139a7f1af4528a1e6cffcbc894ed81d0a8d611d35daf5e74093229de7ed4b",
+      "entity-074c02db288f982ce4bbdff24112d4ed632d1b22e660faeb5dd7eb5a114d7c91",
+      "entity-12fcb215d0351cd800616d0b8d6968cfc6e138eb2d7f9cb5e7d9038bb2b0edae",
+      "entity-16bb5409045d0592d48a2d710f8aad13c4d294994c8673942a37358445f08406",
+      "entity-243b31cc5f038b1b47bdaac28cdba2c13873b6ea94f3b9cff620c6cf06e90338",
+      "entity-28eecb654f2d32b0cef01c0a514daa9e26f3a470e41763fa67fa06d0ce884f28",
+      "entity-4bcf124db5bccfb7e262dd2d2d3883eb37122855db94ba81f6f48485265935bc",
+      "entity-5b86b9eae223d83fa83cc2335e591b8f989d6187f6ba11b5b95010d01bb7dea9",
+      "entity-5de921392e8e5eeca752e9daef2e48acea1f898a842404aa3aa9ac61da7fe225",
+      "entity-7726863523136e24e5c65d08db8ca82f5156b182946dddcad3b4022d2b1758e2",
+      "entity-79607e44f34535de65fba5dbf0365152ea3714b46c86b9e8fa4acdc5c1c5fc9a",
+      "entity-7e16b05cd3eade560cf72f2aece144ed96cdc7b0892ba76a1802db4b300d1b6f",
+      "entity-860ad2315f1b8711beb734282ff72b62a9d8f8b82d37e7923078bf29b7d643fd",
+      "entity-860da6ec298371e8184c680ab1e19b885af4f39d6f8e3daefe97d98f736b0f9e",
+      "entity-8bb7c654bc70970cca94837fb42beed5fb6ec9f6be527db4ef0e8033600ad548",
+      "entity-9618262256a8d3dfbad0a17310c65a61c6d46370af6f51ed18a5f3972fff175a",
+      "entity-b0ae0fba6c22fcae977de7ca96f77b549994643537153bf6bb4bb10d5e2aa287",
+      "entity-d290798a7cc477ae1ff8652e3d1922e7fb489856634ffff694e4e87562980bf3",
+      "entity-fb654962b0f3d092fda1dea85f561a8c6915d40b43b4f82ce0c44f64a96c6cba"
+    ],
+    "author": "coordinator",
+    "discovery_id": "strings-frame-negative-oct17",
+    "evidence": [
+      "All four native controls PASS; 1gain/3existingexactlosses at6168F0/616970/6169A0. Global string helpers and their current inline/header witnesses are not permission to split a TU for score."
+    ],
+    "hypothesis": "Reject the loss-bearing whole-owner profile and preserve its source/default recipe.",
+    "kind": "discovery"
+  },
+  "previous_event": "fee9a372f9ebba76aa57d653344a8fd4104da19228163e1b3dd810e7b1cb9232",
+  "request_id": "strings-frame-negative-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:application-frame-batch-oct17"
+}
