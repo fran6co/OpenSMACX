@@ -1,0 +1,19 @@
+{
+  "event_id": "3ee0e28d8acf2d67db4855a8f2956a73fcba4dda84b474a141cd3bb8375d84c2",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "graphics-language-real-shared-api-owner",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One unchanged typed global/object binding and one unchanged original setter identity/span/claim move into an ordinary library source definition, declared by the existing shared header. No inline/export/retention anchor, raw executable receiver, layout/type/signature/initializer or original bug fix is added. The current compiler/link verifier explicitly captures and qualifies the new archive member as the163rd compilation.",
+      "Fresh full application build/link passes. Physical caller witnesses find exactly one relative direct setter call in each intended compiled caller, with a10-byte setter body plus6 NOP alignment bytes and the sole relocation to its owned4-byte BSS Language object. Fresh MAP/PE observation confirms zero initial storage. Host GCC/Clang actual-file controls check signed extrema and compile-and-run wrong-value/storage mutants after positive controls; pinned source/ABI-facing declarations, exact original store and both call edges are checked separately. Independent source and physical-residual review found no concrete unintended source behavior change, without claiming proof of all emitted semantics.",
+      "Paired original/candidate same-assets/INI QuickStart/base-confirmation observations reach a founded AlphaPrime base and active ScoutPatrol in51seconds without an observed unhandled exception. RNG/state differs and current interface rendering is still defective; this is not playability, game equivalence or full acceptance."
+    ]
+  },
+  "previous_event": "d4022dd379ec7661214186cf3dad93e9bed6877931f3bf828c48452578ba8464",
+  "request_id": "graphics-language-real-shared-api-owner-incorporated",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:alpha-graphics-language-oct17"
+}

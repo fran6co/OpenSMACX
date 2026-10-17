@@ -11,6 +11,7 @@ import subprocess
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 BASE_REVISION = "7270943e6988505e93cff9d32d126c129f70e8ab"
+ALPHA_BASE_REVISION = "1b0f0231bd7dc49750fabd249ad11b21faf78dbe"
 PRIOR_PROFILE_GROUPS = (
     (
         "src/game.cpp",
@@ -86,6 +87,21 @@ NEW_PROFILE_BLOCK_TEXT = (
     '    PROPERTIES COMPILE_OPTIONS "/Oy-")'
 )
 NEW_PROFILE_BLOCK = (tuple(sorted(NEW_OWNERS)), ("/Oy-",))
+ALPHA_PROFILE_COMMENT = (
+    "# Preserve Alpha's measured frame-based application context.\n"
+    "# Shared graphics language state and its setter have a separate library owner.\n"
+)
+ALPHA_PROFILE_BLOCK_TEXT = (
+    'set_source_files_properties(src/alpha.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")'
+)
+ALPHA_PROFILE_INSERTION = ALPHA_PROFILE_COMMENT + ALPHA_PROFILE_BLOCK_TEXT + "\n"
+ALPHA_PROFILE_BLOCK = (("src/alpha.cpp",), ("/Oy-",))
+OLD_ALPHA_DEFAULT_COMMENT = (
+    "# Keep Alpha and all other source recipes on their independently measured defaults.\n"
+)
+NEW_ALPHA_DEFAULT_COMMENT = (
+    "# Keep all other source recipes on their independently measured defaults.\n"
+)
 
 FRAME_PROFILE = ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
 EXPECTED_FLAG_SETS = [
@@ -103,6 +119,7 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(("src/map.cpp", "src/faction.cpp", "src/veh.cpp"))): ("/Oy-",),
     **{tuple(sorted(group)): ("/Oy-",) for group in PRIOR_PROFILE_GROUPS},
     tuple(sorted(NEW_OWNERS)): ("/Oy-",),
+    ("src/alpha.cpp",): ("/Oy-",),
     tuple(sorted(("src/interface_palette.cpp", "src/interface_fonts.cpp"))): ("/Oy-",),
     ("src/sound.cpp",): ("/Oy-",),
     ("src/caviar_cpu.cpp",): ("--frontend=intrinsics-i386-no-debug",),
@@ -144,14 +161,25 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
         return False
     if baseline.count(NEW_PROFILE_COMMENT) or candidate.count(NEW_PROFILE_COMMENT) != 1:
         return False
+    if baseline.count(ALPHA_PROFILE_INSERTION) or candidate.count(ALPHA_PROFILE_INSERTION) != 1:
+        return False
+    if baseline.count(ALPHA_PROFILE_COMMENT) or candidate.count(ALPHA_PROFILE_COMMENT) != 1:
+        return False
+    if baseline.count(OLD_ALPHA_DEFAULT_COMMENT) != 1:
+        return False
+    if candidate.count(OLD_ALPHA_DEFAULT_COMMENT) or candidate.count(NEW_ALPHA_DEFAULT_COMMENT) != 1:
+        return False
 
     projected = candidate.replace(insertion, "", 1)
+    projected = projected.replace(ALPHA_PROFILE_INSERTION, "", 1)
+    projected = projected.replace(NEW_ALPHA_DEFAULT_COMMENT, OLD_ALPHA_DEFAULT_COMMENT, 1)
     return projected == baseline
 
 
 def cmake_profile_delta_is_exact(baseline: str, candidate: str) -> bool:
     expected = collections.Counter(source_property_blocks(baseline))
     expected[NEW_PROFILE_BLOCK] += 1
+    expected[ALPHA_PROFILE_BLOCK] += 1
     return (
         collections.Counter(source_property_blocks(candidate)) == expected
         and non_profile_text_matches(baseline, candidate)
@@ -165,10 +193,13 @@ def measurement_policy_is_unchanged(baseline: dict, candidate: dict) -> bool:
 def test_profile_guard_rejects_policy_mutations():
     baseline = (
         'set_source_files_properties(src/previous.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
-        'add_compile_options("/DDEFAULT=1")\n'
+        + OLD_ALPHA_DEFAULT_COMMENT
+        + 'add_compile_options("/DDEFAULT=1")\n'
         'target_link_options(Game PRIVATE "/FIXED:NO")\n'
     )
-    candidate = baseline + NEW_PROFILE_COMMENT + NEW_PROFILE_BLOCK_TEXT + "\n"
+    candidate = baseline.replace(OLD_ALPHA_DEFAULT_COMMENT, NEW_ALPHA_DEFAULT_COMMENT)
+    candidate += NEW_PROFILE_COMMENT + NEW_PROFILE_BLOCK_TEXT + "\n"
+    candidate += ALPHA_PROFILE_INSERTION
     assert cmake_profile_delta_is_exact(baseline, candidate)
 
     dropped_old_profile = candidate.replace(
@@ -176,10 +207,8 @@ def test_profile_guard_rejects_policy_mutations():
     )
     assert not cmake_profile_delta_is_exact(baseline, dropped_old_profile)
     assert not cmake_profile_delta_is_exact(baseline, candidate + "\n" + NEW_PROFILE_BLOCK_TEXT)
-    alpha_profile = candidate + (
-        '\nset_source_files_properties(src/alpha.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
-    )
-    assert not cmake_profile_delta_is_exact(baseline, alpha_profile)
+    duplicate_alpha_profile = candidate + "\n" + ALPHA_PROFILE_BLOCK_TEXT + "\n"
+    assert not cmake_profile_delta_is_exact(baseline, duplicate_alpha_profile)
     extra_profile = candidate + (
         '\nset_source_files_properties(src/extra.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
     )
@@ -238,6 +267,12 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
         )
     )
     assert task["base_revision"] == BASE_REVISION
+    alpha_task = json.loads(
+        (ROOT / "recovery/tasks/alpha-graphics-language-oct17.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert alpha_task["base_revision"] == ALPHA_BASE_REVISION
     baseline_cmake = baseline_text("CMakeLists.txt")
     current_cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
     assert cmake_profile_delta_is_exact(baseline_cmake, current_cmake)
@@ -258,7 +293,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     actual_profiles = dict(source_property_blocks(current_cmake))
     assert actual_profiles == EXPECTED_CMAKE_PROFILES
     profiled_sources = {source for sources in actual_profiles for source in sources}
-    assert "src/alpha.cpp" not in profiled_sources
+    assert "src/alpha.cpp" in profiled_sources
+    assert actual_profiles[("src/alpha.cpp",)] == ("/Oy-",)
     assert "src/win.cpp" not in profiled_sources
     assert "src/technology_queries.cpp" not in profiled_sources
     assert "src/sprite.cpp" not in profiled_sources

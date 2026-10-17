@@ -1,0 +1,22 @@
+{
+  "event_id": "d4022dd379ec7661214186cf3dad93e9bed6877931f3bf828c48452578ba8464",
+  "payload": {
+    "affects": [
+      "entity-d467a62ba36a09d381cb76d7fffc8b3c6a5b4c52e3dc6b3f819021ab56cb3d00",
+      "entity-d6e43b59659158cb5b612147bc93e428b670e3a851d0bd60ec35ef52fd691a59",
+      "entity-d886e74340b39eba98cf6c7a7689d434c33dc40cfdebbfb95f8684bb04f82307"
+    ],
+    "author": "coordinator",
+    "discovery_id": "graphics-language-real-shared-api-owner",
+    "evidence": [
+      "Pinned627100 is a10-byte cdecl argument store to9BC054. Original prefs_load59DD5A and system_init58F0A1 call it directly. The existing graphics_language.h already decouples the shared uint32 Language declaration from application classes; an exported inline in alpha.h suppresses those call boundaries and causes owner-profile coupling. Historical archive/TU membership is not proven merely by semantic grouping."
+    ],
+    "hypothesis": "The original standalone language setter and shared graphics configuration form one ordinary API used by both application and library code.",
+    "kind": "discovery"
+  },
+  "previous_event": "9c75ca3556ec6e70711f214279f1f547716b523ba6cb254a007b6e82a49846b3",
+  "request_id": "graphics-language-real-shared-api-owner",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:alpha-graphics-language-oct17"
+}

@@ -790,10 +790,6 @@ MEASURED inline uint32_t __cdecl default_warn() {
 
 void __cdecl labels_shutdown();
 
-MEASURED inline void __cdecl set_language(int language) {
-    Language = language;
-}
-
 // Forward declarations from text.h: alpha.h is included before text.h at
 // most of its call sites (e.g. alpha.cpp itself), so tech_item below needs
 // these visible without pulling in the whole header.

@@ -4,3 +4,4 @@
 #include <stdint.h>
 
 extern uint32_t Language;
+void __cdecl set_language(int language);

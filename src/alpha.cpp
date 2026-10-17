@@ -151,14 +151,6 @@ Base Bases[MaxBaseNum];                             // 0x0097D040
 // range are views of named project fields, never separate allocations.
 // Historical object identity moved to GameDataStateStorage; see the transport manifest.
 // 0x009A6514
-// AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
-// load at every use where the image addresses the storage directly, and
-// the address is terranx.exe's data, unmapped in a standalone build.
-// set_language (0x00627100) is exactly `mov eax, [esp+4];
-// mov dword ptr [0x9BC054], eax; ret`.
-// RECOVERY_OBJECT: v1 0x009BC054 ?Language@@3IA
-uint32_t Language;  // 0x009BC054
-
 /*
 Purpose: Convert the tech name string to a numeric tech id.
 // ORIGINAL: 0x00584D60 ?tech_name@@YAHPAD@Z 0x00584D60-0x00584E3B BYTE_EXACT
@@ -2283,25 +2275,6 @@ void __cdecl prefs_use() {
     GameDataStateStorage.fields_.game_more_preferences_ = more;
     GameDataStateStorage.fields_.game_warnings_ = announce;
 }
-
-/*
-Purpose: Set the game's language.
-// ORIGINAL: 0x00627100 ?set_language@@YAXH@Z 0x00627100-0x0062710A BYTE_EXACT
-// body      src/alpha.h
-// size      10 bytes
-// prototype void (__cdecl ?set_language@@YAXH@Z)(int lang)
-// callers   2   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-// BODY IN alpha.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-
 
 /*
 Purpose: Get the label string and concatenate it to the stringTemp buffer.

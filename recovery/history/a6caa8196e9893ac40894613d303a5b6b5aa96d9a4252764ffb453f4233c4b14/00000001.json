@@ -1,0 +1,19 @@
+{
+  "event_id": "3d39d8254758ef8604d2be69c943908e8975593374e820b9d29e378c252ed722",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/build.json"
+    ],
+    "evidence": [
+      "The configured native compile/link verifier explicitly enumerates every Jackal archive member in recovery/build.json. Adding the genuine graphics_language.cpp owner requires adding exactly its physical object/member row, so the fresh native application check captures and qualifies this compilation too. Preserve the complete other build configuration, all compiler/linker flags and all existing members; this is increased evidence coverage, not a weakened gate or a new compiler policy."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "graphics-language-archive-receipt-membership",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alpha-graphics-language-oct17"
+}

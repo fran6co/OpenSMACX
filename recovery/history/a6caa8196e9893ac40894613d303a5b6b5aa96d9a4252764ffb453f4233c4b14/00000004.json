@@ -1,0 +1,18 @@
+{
+  "event_id": "9c75ca3556ec6e70711f214279f1f547716b523ba6cb254a007b6e82a49846b3",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "alpha-frame-context-with-shared-owner-correction",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh complete 5581-identity actual-object census increases masked equality 3162 to3177 with zero old exact losses. All3162 prior primary strict classifications and610 prior supplemental classifications remain; gains are6 strict pass and9 unknown. Only other verdict change is say_label MISMATCH to MNEMONIC_ONLY. Complete historical identity/claims/mapping/reference checks pass. No new claim is granted or demoted.",
+      "All84 explicitly expanded collateral originals were freshly measured in parallel under canonical baseline/current compiler profiles on separate leased prefixes: both53 pass,22 fail,9 unknown, with identical per-identity verdicts/results. This is additional restoration evidence, not full semantic/linked preservation. Nine old host fixture failures remain unchanged: eight stale LPSTR/int-overload alpha controls and one obsolete whole-game source-baseline assertion. Four new controls pass. The immutable prior profile inventory, measurement policy and all negative/damage controls are preserved."
+    ]
+  },
+  "previous_event": "6f48d966d95a0069118ee5911067e60248830ae0049dae44575efb3b57294f2b",
+  "request_id": "alpha-frame-context-with-shared-owner-correction-incorporated",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:alpha-graphics-language-oct17"
+}

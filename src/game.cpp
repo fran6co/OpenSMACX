@@ -2817,11 +2817,8 @@ Purpose: Bring the shared system up, once per process: create the four data
 //   (messagewin.cpp defines nothing at 0x7F67F8) and WinBubbleWindow is a
 //   `Win`, so both stay address spellings, the way game_reload reaches
 //   0x008E9F60.
-// TRIED: set_language as a real `call` - alpha.h spells it `MEASURED inline`,
-//   so VC6 expands it to `mov [Language], eax` where the image has
-//   `push eax / call 0x627100`. `#pragma auto_inline(off)` is C2156 inside a
-//   function, so this tree cannot scope it to the one site, and alpha.h is not
-//   this batch's file. One instruction.
+// The shared graphics-language API is separately compiled: the original
+// calls set_language at 0x0058F0A1, rather than inlining its global store.
 // TRIED: the two caption builds spelled `label_get(102)` / `label_get(101)`
 //   instead of the local `LPSTR *labels` plus `StringTable.get(labels[n])` now
 //   in the body - that spelling scores 32/135 against this one's 34, and
