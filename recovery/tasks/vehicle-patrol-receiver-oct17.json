@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "91118a2e27f80388a474b7b06af478c378727fdb",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_vehicle_patrol_receiver_oct17.py"
+  ],
+  "evidence": [
+    "Read-only scout verified original4CDA30..4CDAEA valid_patrol guard, order18, byte-indexed x/y waypoint stores, modulo256 count increment, current-position stores at the incremented byte index, state1000200 publication and current-point clear. The source-owned Vehs array is stable storage, not a callback-replaceable pointer. Explore an explicit Veh receiver only after valid_patrol returns, preserving all live count reads and native unchecked indexing.",
+    "At most three new natural body forms; no raw addresses, pointer-global aliases, assembly, volatile additions, new casts for scheduling, bounds checks, initialization, flags, headers or API changes. Existing historical fixed-const-pointer trial is not a new candidate. Use complete ordinary TU overlays with fresh input fingerprints and physical unchanged-replica and changed-target controls per flag. Local results are masked diagnostics, not references or acceptance.",
+    "Coordinator owns worktree/Git, compiler leases, fresh builds, independent review and integration. Preserve original identity, complete spans, all historical claims, discoveries and baseline. Do not publish a mere similarity improvement: require a faithful source-quality correction or restored exactness with scoped reference/preservation evidence, build/link and regression controls. No game acceptance claim."
+  ],
+  "intent": "Restore the vehicle patrol setup through its genuine vehicle receiver and byte-counted waypoint members, retaining original ordering and historical byte obligation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5036592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vehicle-patrol-receiver-oct17"
+}
