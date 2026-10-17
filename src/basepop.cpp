@@ -3309,7 +3309,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
     }
 
     int result = 0;
-    if ((flags & 0x80) != 0 || (result = init(0, flags)) == 0) {
+    if ((flags & 0x80) != 0 || (result = init(flags, 0)) == 0) {
         if ((flags & 0x100000) == 0) {
             external_window_ = 0;
         }

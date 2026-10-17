@@ -1,0 +1,20 @@
+{
+  "event_id": "a3b05a3a6befcc0d389698e10a54a6bfa9a145e9b8b885591b0981bfb6cfd3da",
+  "payload": {
+    "affects": [
+      "entity-f2a45ff703697b88649f83ff5b99f0f5b226c869353d3a810aa61d252a776a8c"
+    ],
+    "author": "coordinator",
+    "discovery_id": "quickstart-player-map-access",
+    "evidence": [
+      "Fresh original/candidate run-2qi4o6_u: original reaches PLANETFALL, candidate now faults linked45D3D8 inside setup_player45C790+0C48 (ownMAP), reading0624E5EB from byte[ESI+EDX+3]. RegistersESI010C8828 EDX05185DC0; native candidate PE computes tile index from y times stride plus x/2, multiplies2C, then reads Map pointer. The earlier43928C popup fault is not in this trace. Full logs/screenshots/hash/terminal server cleanup in ignored .opensmacx/recovery/basepop-start-init-oct17/run-2qi4o6_u. No outside-owner edits authorized and no full-game acceptance."
+    ],
+    "hypothesis": "Correct popup init argument roles remove the observed old popup deletion fault from this control but QuickStart now faults during setup_player map access. Investigate coordinate and map allocation/geometry producers across real owners; preserve original behavior and do not add a bounds fallback.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "quickstart-player-map-access",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:basepop-start-init-oct17"
+}

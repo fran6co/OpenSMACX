@@ -5,12 +5,15 @@ continuation is explicitly replaced with a counter and sentinel return. This
 does not validate parser behavior or establish native/runtime acceptance.
 """
 from pathlib import Path
+import hashlib
 import shutil
 import subprocess
 import os
 
 import pytest
 from match_recovery.source import read_file
+from match_recovery.model import Span
+from match_recovery.pe_coff import PeImage
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -59,8 +62,8 @@ static int visible_calls;
 static int override_calls;
 static int override_order;
 static int open_order;
-static int last_init_mode;
 static int last_init_flags;
+static long last_init_heap_base;
 static int text_open(char *file, const char *section) {
     ++text_open_calls;
     std::strncpy(opened_file, file, sizeof(opened_file) - 1);
@@ -96,8 +99,8 @@ struct BasePop {
     BasePop() : external_window_(reinterpret_cast<void *>(1)),
                 owner_window_(0), value_(-99) {}
     void close() { ++close_calls; note("close"); }
-    int init(int mode, int flags) {
-        ++init_calls; last_init_mode = mode; last_init_flags = flags;
+    int init(int flags, long heap_base) {
+        ++init_calls; last_init_flags = flags; last_init_heap_base = heap_base;
         note("init"); return init_result;
     }
     int start(char *text_file, const char *text_label, int value,
@@ -121,7 +124,7 @@ static void reset_case() {
     opened_file[0] = opened_section[0] = '\0';
     init_result = init_calls = close_calls = visible_calls = 0;
     override_calls = override_order = open_order = 0;
-    last_init_mode = last_init_flags = 0;
+    last_init_flags = 0; last_init_heap_base = -1;
     expected_file = ""; expected_section = "";
 }
 
@@ -146,9 +149,9 @@ static void check_success_default_and_side_effect_order() {
             "owner visibility callback precedes ownership publication");
     require(popup.external_window_ == nullptr,
             "default flags clear external owner slot");
-    require(close_calls == 1 && init_calls == 1 && last_init_mode == 0 &&
-            last_init_flags == 1,
-            "normal admission closes and initializes with original arguments");
+    require(close_calls == 1 && init_calls == 1 && last_init_flags == 1 &&
+            last_init_heap_base == 0,
+            "normal admission initializes flags without a heap request");
     require(override_calls == 1 && override_order < open_order,
             "override default is set before opening text");
     require(event_index("close") < event_index("init") &&
@@ -228,19 +231,41 @@ static void check_null_section() {
             "owner and value side effects precede null-section return");
 }
 
+static void check_init_argument_roles_and_bypass() {
+    const int cases[] = {0, 1, 2, 4, 7, 0x40, 0x40000, 0x100000,
+                         0x100040, 0x80, 0x84, 0x100080};
+    for (unsigned i = 0; i != sizeof(cases) / sizeof(cases[0]); ++i) {
+        reset_case();
+        BasePop popup;
+        const int flags = cases[i];
+        require(popup.start(nullptr, "MENU", 0, nullptr, flags, nullptr) == parser_result,
+                "flag matrix preserves successful admission");
+        if (flags & 0x80) {
+            require(init_calls == 0 && close_calls == 0 && last_init_heap_base == -1,
+                    "0x80 bypass does not request flags or heap initialization");
+        } else {
+            require(init_calls == 1 && close_calls == 1 && last_init_flags == flags &&
+                    last_init_heap_base == 0,
+                    "every ordinary start preserves flags and requests zero heap capacity");
+        }
+    }
+}
+
 int main() {
     check_success_default_and_side_effect_order();
     check_open_errors();
     check_init_failure();
     check_flags_80_bypass();
     check_null_section();
+    check_init_argument_roles_and_bypass();
     return 0;
 }
 '''
 
 
-def compile_source(tmp_path, body):
-    compiler = shutil.which("clang++") or shutil.which("g++")
+def compile_source(tmp_path, body, compiler_name=None):
+    compiler = (shutil.which(compiler_name) if compiler_name is not None
+                else shutil.which("clang++") or shutil.which("g++"))
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
     path = tmp_path / "basepop-admission.cpp"
@@ -259,12 +284,19 @@ def test_actual_admission_prefix_cases(tmp_path):
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_actual_init_argument_roles_gcc(tmp_path):
+    result = compile_source(tmp_path, actual_admission_prefix(), "g++")
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
 @pytest.mark.parametrize("mutation,diagnostic", [
     ("inverted_guard", "successful text open admits parser"),
     ("wrong_error_result", "text-open error returns 1"),
 ])
 def test_admission_mutants_compile_and_fail_semantically(tmp_path, mutation, diagnostic):
     prefix = actual_admission_prefix()
+    positive = compile_source(tmp_path, prefix)
+    assert positive.returncode == 0, positive.stdout + positive.stderr
     good = "if (text_open(text_file != 0 ? text_file : (char *)PopupStartCaption,\n                      text_label) != 0) {\n            return 1;\n        }"
     assert good in prefix
     if mutation == "inverted_guard":
@@ -274,3 +306,47 @@ def test_admission_mutants_compile_and_fail_semantically(tmp_path, mutation, dia
     result = compile_source(tmp_path, prefix.replace(good, bad, 1))
     assert result.returncode == 97, result.stdout + result.stderr
     assert ("SEMANTIC97: " + diagnostic) in result.stderr
+
+
+@pytest.mark.parametrize("wrong_call", ["init(0, flags)", "init(0, 0)", "init(flags, flags)"])
+def test_wrong_init_argument_roles_fail_after_positive_control(tmp_path, wrong_call):
+    prefix = actual_admission_prefix()
+    assert prefix.count("init(flags, 0)") == 1
+    positive = compile_source(tmp_path, prefix)
+    assert positive.returncode == 0, positive.stdout + positive.stderr
+    negative = compile_source(tmp_path, prefix.replace("init(flags, 0)", wrong_call, 1))
+    assert negative.returncode == 97, negative.stdout + negative.stderr
+    assert "normal admission initializes flags without a heap request" in negative.stderr
+
+
+def test_pinned_start_init_argument_roles():
+    image = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not image.is_file():
+        pytest.skip("pinned original required for caller/callee instruction evidence")
+    data = image.read_bytes()
+    pin = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    assert hashlib.sha256(data).hexdigest() == pin
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    pe = PeImage(data, pin)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    def decode(start, end):
+        return {i.address: (i.mnemonic, i.op_str) for i in decoder.disasm(pe.read(Span(start, end)), start)}
+    caller = decode(0x601BF0, 0x601C69)
+    assert caller[0x601BF7] == ("mov", "ebx, dword ptr [esp + 0x124]")
+    assert caller[0x601C01] == ("mov", "edi, ebx")
+    assert caller[0x601C08] == ("and", "edi, 0x80")
+    assert [caller[a] for a in (0x601C54, 0x601C56, 0x601C58, 0x601C59, 0x601C5A, 0x601C5C)] == [
+        ("test", "edi, edi"), ("jne", "0x601c69"), ("push", "edi"),
+        ("push", "ebx"), ("mov", "ecx, esi"), ("call", "0x6015b0")]
+    # Four saved registers shift arguments from entry ESP+4/+8 to +14/+18.
+    callee = decode(0x6015B0, 0x60162E)
+    assert [callee[a] for a in range(0x6015B0, 0x6015B4)] == [
+        ("push", "ebx"), ("push", "ebp"), ("push", "esi"), ("push", "edi")]
+    assert callee[0x6015BB] == ("mov", "eax, dword ptr [esp + 0x14]")
+    assert callee[0x6015BF] == ("xor", "ebx, ebx")
+    assert callee[0x6015C1] == ("test", "eax, 0x100000")
+    assert [callee[a] for a in (0x6015CE, 0x6015DE, 0x6015EE)] == [
+        ("test", "al, 1"), ("test", "al, 2"), ("test", "al, 4")]
+    assert [callee[a] for a in (0x601608, 0x60160C, 0x60160E, 0x601610, 0x601616, 0x601617, 0x601619)] == [
+        ("mov", "eax, dword ptr [esp + 0x18]"), ("cmp", "eax, ebx"), ("je", "0x60166e"),
+        ("lea", "ebp, [esi + 0xa28]"), ("push", "eax"), ("mov", "ecx, ebp"), ("call", "0x5d4620")]
