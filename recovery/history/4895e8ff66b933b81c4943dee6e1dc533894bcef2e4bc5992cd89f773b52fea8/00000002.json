@@ -1,0 +1,20 @@
+{
+  "event_id": "2e1885bb06a89c6c7264d9d9dc37b0f0b8c2118a61ab7ad7262330aadb9dadd6",
+  "payload": {
+    "affects": [
+      "entity-36d0cb2cbd52d912455a184a4f6bb8b671bd9eb400d69020794d91f7a2abe9fc"
+    ],
+    "author": "coordinator",
+    "discovery_id": "technology-post-count-early-exit",
+    "evidence": [
+      "Independent pinned decode:5BB476 writes ownership byte;5BB47C loads player acquisition count;5BB482 loads TurnCurrentNum9A64D4;5BB487 increments count;5BB488 TEST EAX;5BB48A writes count;5BB490 JE5BCAB3 cleanup. Continuing5BB496 loads945F40 TechAchievedGate;5BB49B TEST EAX;5BB49D JNE5BCAB3 same cleanup. Double ranking updates5BB4A3 onward are original and must not be deduplicated. Current technology.cpp857 wraps only ranking and bypasses neither later work nor UI. Source setup grants run after turn reset0; paired completed runtime candidate AppliedPhysics dialog differs from original PLANETFALL, but specific source invocation is not dynamically traced. Separate native source/test task required; no guessed guard or normalization of original quirks."
+    ],
+    "hypothesis": "The technology owner omits the original whole-tail early exit after recording an ordinary acquisition: original returns when turn is zero OR TechAchievedGate is nonzero; current source gates only ranking increments and continues reactor/prototype/presentation/facility paths. Recover the original cleanup-return boundary, preserving pre-return ownership/count writes and both repeated ranking increments on the continuing path.",
+    "kind": "discovery"
+  },
+  "previous_event": "53229af1007dc2cdcc4d3c1a969f911415a50514062443e077dad20bb2cdd77d",
+  "request_id": "technology-post-count-early-exit",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:design-lock-budget-oct17"
+}
