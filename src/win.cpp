@@ -1077,7 +1077,9 @@ kept as the legacy body has it rather than because a test distinguishes it.
 //    prologue), it had enough register pressure to do so. That is a
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
+// Purpose: Accept a null cell pointer or publish a nonnull HCURSOR cell.
 // ORIGINAL: 0x005EC780 ?set_cursor@Win@@QAEHPAUHCURSOR@@@Z 0x005EC780-0x005EC7BC FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 0x005EC780 guards the cell pointer before dereferencing its four-byte HCURSOR value, rejects a null cell, then clears cursor_sprite_ and cursor_name_, stores the cell in cursor_handle_, and calls update_cursor(0, 1). Win::cursor_handle_ is HCURSOR*, and update_cursor reads the same cell as HCURSOR before SetCursor.", "The source HCURSOR cell type follows its typed storage and consumer; this does not infer an original source spelling or ownership/lifetime."], "reason": "Read the cursor cell through its evidenced pointer type while preserving the original guard and publication sequence."}
 // symbol    ?set_cursor@Win@@QAEHPAPAUHICON__@@@Z
 // notes     the HCURSOR overload. `HCURSOR` is `struct HICON__ *`, so a
 //           `HCURSOR *` parameter mangles PAPAUHICON__. Stated because
@@ -1869,25 +1871,25 @@ int Win::OnSetCursor(void *, void *, unsigned int, unsigned int) {
 
 
 /*
-Purpose: Report whether a value is present in the window's id table - the
-         array at 0x1A4 with its count at 0x3FC. A zero value and an empty
-         table both report absent.
+Purpose: Report whether a child pointer is present in the window's child
+         table - the array at 0x1A4 with its signed count at 0x3FC. A null
+         pointer and an empty table both report absent.
 // ORIGINAL: 0x005ECE80 ?UNK3@Win@@QAEHH@Z 0x005ECE80-0x005ECEB6 BYTE_EXACT
-// symbol    ?is_child@Win@@QAEHH@Z
-// notes     NAMED from the body: it walks children_[0..child_count_) and
-//           returns 1 when the argument is one of them - the direct-child
-//           test beside is_descendant (0x005ECE20), which recurses.
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 0x005ECE80 rejects a null argument, iterates the signed count at receiver+0x3FC, and compares it against pointer-sized four-byte entries at +0x1A4. The source-owned children_ is Win*[150]; add_child stores Win*, while remove_child and is_descendant compare/traverse Win* entries.", "The current is_child(Win*) source signature expresses the owner and comparisons; no authenticated original C++ prototype or name is established."], "reason": "Compare child identities using the actual Win* array type, without asserting original source spelling."}
+// symbol    ?is_child@Win@@QAEHPAV1@@Z
+// notes     Current source interpretation: tests direct pointer membership
+//           in children_, beside is_descendant (0x005ECE20), which recurses.
 // size      54 bytes
 // prototype int (__thiscall ?UNK3@Win@@QAEHH@Z)(Win* this, int)
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-Return Value: 1 when the value is in the table, 0 otherwise
+Return Value: 1 when the child pointer is in the table, 0 otherwise
 Status: Complete
 */
-int Win::is_child(int value) {
-    if (value == 0) {
+int Win::is_child(Win *child) {
+    if (child == nullptr) {
         return 0;
     }
     // THE CHILD LIST, BY ITS NAME. This arrived from the artifact walking
@@ -1896,7 +1898,7 @@ int Win::is_child(int value) {
     // `child_count_` from add_child's own `mov [ecx + eax*4 + 0x1a4], esi`.
     // A pun of `this` is banned here precisely because the members exist.
     for (int index = 0; index < child_count_; ++index) {
-        if (reinterpret_cast<int>(children_[index]) == value) {
+        if (children_[index] == child) {
             return 1;
         }
     }
@@ -9256,7 +9258,7 @@ void Win::on_char(char param2, int param3) {
 // ===== homed from src/recovered/units/005ec780.cpp =====
 
 int Win::set_cursor(HCURSOR *name) {
-    if (name != 0 && *reinterpret_cast<int *>(name) == 0) {
+    if (name != 0 && *name == 0) {
         return 7;
     }
     cursor_sprite_ = 0;
