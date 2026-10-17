@@ -1,0 +1,32 @@
+{
+  "author": "coordinator",
+  "base_revision": "b922c7a6e8e960d7f6089f1c752b97ee35fcbd73",
+  "editable_files": [
+    "src/win.cpp",
+    "src/win.h",
+    "recovery/tests/test_win_scroll_callback_interface_oct17.py"
+  ],
+  "evidence": [
+    "The current Win setters store one four-byte argument into each independently optional attached Scroll at+0x2144 or+0x2148, returning with ret4. Scroll consumers already invoke both slots as void(__cdecl*)(int,int): wheel/key/button-click use2144; mouse-move/button-pressed use2148. Use those observed callback interfaces; do not infer callback producers, ownership, original names or richer parameter meanings.",
+    "The pinned PE has stripped symbols, no debug directory and no export names. Retained ?UNK8/9@Win@@QAEXH@Z names are reconstructed catalogue labels, not authenticated original int types. A pointer parameter keeps the observed four-byte machine call shape while changing current C++ decoration. Preserve ORIGINAL identities/spans/claims/history and update only current source-symbol bindings from actual fresh COFF emission.",
+    "Correct the stale Win header assertion that2148 has no readers and the unsupported set_scroll_sprite rationale. Choose readable current names by the existing on_scrolled/on_scrolling roles; record them as source interpretations, never recovered original names. Remove integer-to-callback casts through the typed API, without compatibility aliases, stand-ins, body-byte injection or behavior fixes.",
+    "Only the two setter definitions/declarations and their focused controls may change. Keep separate vertical/horizontal null tests, null callback clearing, assignment without callback invocation, and the other slot unchanged. Add actual-source positive and damaged-slot/omitted-bar controls. Coordinator owns Git, preparations, leases, native baseline/candidate measurements, actual symbol binding, independent review, build/link and integration. Discoveries outside this scope require expansion; no other Win or Scroll bodies may be changed to chase matching.",
+    "Require fresh two-flag source measurements for both setters, preservation of historical obligations, strict body/reference evidence where measurable, actual header/layout/build and physical collateral review before manual integration. Never reset this task baseline or alter compiler flags. Native unknowns and whole-game acceptance remain explicit; no claim is granted by this task."
+  ],
+  "intent": "Recover typed Scroll callback setters on the genuine Win owner and retire the unsupported Sprite interpretation, preserving pinned machine ABI and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6218032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6218080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-scroll-callback-interface-oct17"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "d4e192b105776480a5913c96f3da6dd88b8ccddb47fd6f7b778f26b17db20422",
+  "payload": {
+    "affects": [
+      "entity-8e17320cd174823e0596610e501b81fc6b20cbc2826518643a27dd8351d0fc74",
+      "entity-a4369ebdff94732959e82361a46464dc5c23b04958da13796475533ef1081a0f"
+    ],
+    "author": "coordinator",
+    "discovery_id": "win-scroll-callback-interface-discovered-oct17",
+    "evidence": [
+      "src/win.cpp:Win::set_scroll_sprite and Win::UNK9; src/win.h stale no-readers/Sprite comments; src/scroll.h callback field declarations; src/scroll.cpp six typed callback consumer paths.",
+      "Pinned entries005EE130/005EE160 copy one dword to corresponding Scroll slots and ret4; the stripped PE cannot authenticate the retained catalogue type spellings. Scope authorizes only this observed source-interface recovery."
+    ],
+    "hypothesis": "The two Win setters publish callback pointers, not sprites or arithmetic values; callback consumers justify typed C++ parameters without treating guessed catalogue H decorations as original type evidence.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "win-scroll-callback-interface-discovered-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-scroll-callback-interface-oct17"
+}
