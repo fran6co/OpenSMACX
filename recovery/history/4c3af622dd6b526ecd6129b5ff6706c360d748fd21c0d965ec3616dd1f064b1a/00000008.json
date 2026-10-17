@@ -1,0 +1,17 @@
+{
+  "event_id": "a981ac529957a20a310c913018453df63dbea223109dddadc055fb99657e655f",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "credits-frame-negative-oct17",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "CPP/header/mappings/default profile unchanged. Final actual object equals the complete controlled baseline with zero omissions. New guard explicitly refuses the rejected CMake/per-unit profile; previous negative owners stay excluded."
+    ]
+  },
+  "previous_event": "46e676d0ed1e3c4c58cc4ee902e169065504387764ca9e931421f050f3203bd8",
+  "request_id": "credits-frame-negative-oct17-rejected",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:owner-frame-and-rating-oct17"
+}

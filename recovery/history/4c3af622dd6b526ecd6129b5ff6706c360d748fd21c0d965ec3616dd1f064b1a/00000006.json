@@ -1,0 +1,17 @@
+{
+  "event_id": "99d98debc110bfe037d17a817a8083a32d1138ccc9789891afab0b26c29f7bf5",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "gamma-frame-negative-oct17",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "CPP/header/mappings/default profile unchanged. Final actual object equals the complete controlled baseline with zero omissions. New guard explicitly refuses the rejected CMake/per-unit profile; previous negative owners stay excluded."
+    ]
+  },
+  "previous_event": "f200f6b6c84fcbb7fb35e14f934217013b4737e308792d0565ef288183f6ff3c",
+  "request_id": "gamma-frame-negative-oct17-rejected",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:owner-frame-and-rating-oct17"
+}

@@ -1,0 +1,38 @@
+{
+  "event_id": "f200f6b6c84fcbb7fb35e14f934217013b4737e308792d0565ef288183f6ff3c",
+  "payload": {
+    "affects": [
+      "entity-0d663d1ff3b75f8c877540672a984d089999e317e57f86b9679a49175b9b5312",
+      "entity-18255b24351cb8050fd41c6853cfdf6fab30977968ad1012c76d4a3619cb41d3",
+      "entity-270f3015e155de81903d9b182140291ba0bcb6b37173759c2436b3bd14e12eec",
+      "entity-2bc0fc678f58e16dda22425f7abceaef97b87beaebccfafba3a622f9a613900a",
+      "entity-35ad32902e6e9eb6ced88ac95540147b7d0f2613bc894843b42493b4acc19d1a",
+      "entity-3bd83f1392b9d9755438a48f2bc9f9b22e4d087a1c89604d59b705fe135dd79b",
+      "entity-3f1c618bc5bfe9b77efe42e42055a6a95f830216f6a45dec8338b15ee44f7857",
+      "entity-535cb726f450a084bc40b6cb00dee5a5f29429a216b6028edfcddf59e05dd5da",
+      "entity-622e074f1bc6a9eaf98d8299c58516f7c46f94e90a47e3d212257e9335778cbd",
+      "entity-726d8eed58aeb61667bfe5dbad4be0bbc8b97e2e11cd27804f5ffb85462b8c3a",
+      "entity-766b5f7c4931a0e8e6fc20304a9edee0d30b606337efb8b6a123e9f568ffc023",
+      "entity-80357eedf8c5ab295e2fb66d031ef5a27bd2a8ac11ca02a1d283af687a1df7f5",
+      "entity-864e5fe3a50133a69c1acc49b6621f0773c159731fb954177fbb82e0ea73f775",
+      "entity-977d75b7be3f9d548b714e0df1cb04cba88d99b1bf4b5265ea398994f48f73ba",
+      "entity-9c33c02f0abb5098fd864ec4750e2c3a1573fec8c4747ec124de47bf849a46cb",
+      "entity-a1fc0ffd00b766fe8f8ada66a6af4bb57b8fec0d031af472daacc225852cc679",
+      "entity-af20e80aa0fbbec8d19296e46e6e99133e2ec2530e0fdd55993e27c0ddb38606",
+      "entity-c1cf34add26ebcef07b4d7f09d037309874e4f78bcab821ffcdf8f7c6b93493c",
+      "entity-d42e2e8eacd48a3c247fe8420a7c3eb533e811171c5775fdef0c90b1e96fd209"
+    ],
+    "author": "coordinator",
+    "discovery_id": "gamma-frame-negative-oct17",
+    "evidence": [
+      "All four native controlsPASS; 2gains/1existingexactloss at62C830; original frame preference is mixed and does not prove an original TU split."
+    ],
+    "hypothesis": "Reject the loss-bearing owner profile and retain its original current source/default recipe.",
+    "kind": "discovery"
+  },
+  "previous_event": "d5015d5f66e6f4bcbec1c9406baa0eb38ff241a938711d54878d2ab08dc5d2a4",
+  "request_id": "gamma-frame-negative-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:owner-frame-and-rating-oct17"
+}

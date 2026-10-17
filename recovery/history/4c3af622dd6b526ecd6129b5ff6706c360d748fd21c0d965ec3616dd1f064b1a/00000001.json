@@ -1,0 +1,22 @@
+{
+  "event_id": "af2a24e12c2fa11de37a5c6b7b1058385fa6df54cf1fa05faf50c070f3fade43",
+  "payload": {
+    "affects": [
+      "entity-12aa0a027dd9c1b8d2b017393ccb7df4a0b2f7df9a9381512262ba98ca094a23",
+      "entity-fa9c794b568108252e79ecdd1f80e2a0b79b0aa34fd4e3f12abfb5be7fc2e97a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "capture-base-compiler-coupled-mov-order-oct17",
+    "evidence": [
+      "Both actualRelease and settled historical four-call controls PASS. get_rating complete native function_signature is identical before/after under both families; historicalBYTE_EXACT is reproduced. WholeBaseCOFF comparison fails only capture_base text, with no symbol, association or relocation changes. This is observed collateral, not a whole-object identity claim.",
+      "Actual capture_base6960byte region differs in9bytes where MOV EDI,[ESP+4C] and MOV EBP,[ESP+19C] exchange order at16F5..1700; historical6144byte region differs in4bytes where MOV EAX,[EBP+10] and MOV EDI,[EBP-1C] exchange order at1325..132B. Source remains byte-identical outside the one earlier condition. Local instruction commutation requires independent review and does not prove whole-game behavior or full outside preservation."
+    ],
+    "hypothesis": "The one get_rating typed-mask edit perturbs register-load scheduling in unchanged capture_base; retain its real original identity and compiled preservation footprint.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "capture-base-compiler-coupled-mov-order-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-frame-and-rating-oct17"
+}

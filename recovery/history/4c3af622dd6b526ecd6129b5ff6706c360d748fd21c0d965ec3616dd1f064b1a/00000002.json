@@ -1,0 +1,24 @@
+{
+  "event_id": "6649a608a2e81681dbc72baad3028740571e3d8cae3bbf899afe4f1e1cfb6426",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator expands the affected review/measurement scope by exactly the existing capture_base50C510 identity. Original task basec84e and every claim/discovery remain unchanged. No additional source edit, flag/measurement change, or full-Base body waiver is authorized. The actual capture_base body must reproduce the controlled candidate, all other Base output remains protected and original matching classifications must not regress.",
+      "Record the original unexpanded outside-get_ratingFAIL even if a later genuine two-function scoped residual passes. Independent MOV-order review and fresh physical/source/build checks remain required; this expansion does not grant native automatic/full acceptance or erase unknowns."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5293328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "af2a24e12c2fa11de37a5c6b7b1058385fa6df54cf1fa05faf50c070f3fade43",
+  "request_id": "review-capture-base-codegen-footprint-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:owner-frame-and-rating-oct17"
+}
