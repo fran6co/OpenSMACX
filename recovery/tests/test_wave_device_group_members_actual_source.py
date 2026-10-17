@@ -33,6 +33,7 @@ def source_bodies() -> dict[str, str]:
         "pull": body(device, "int Wave_Device::pull_from_group("),
         "set": body(wave, "void Wave::set_volume("),
     }
+    assert "return groups_[group].volume;" in result["get"]
     assert "groups_[group].volume" in result["get"]
     assert "wave->group_slot_ = group;" in result["add"]
     assert "a1->group_slot_ = 0x10;" in result["pull"]
@@ -184,3 +185,23 @@ def test_actual_bodies_preserve_group_semantics() -> None:
             assert built.returncode == 0, built.stderr
             ran = subprocess.run([str(binary)], check=False, timeout=10)
             assert ran.returncode == 0, (compiler, ran.returncode)
+
+
+def test_wrong_group_volume_field_read_is_observed() -> None:
+    bodies = source_bodies()
+    assert bodies["get"].count("return groups_[group].volume;") == 1
+    bodies["get"] = bodies["get"].replace(
+        "return groups_[group].volume;", "return groups_[group].enabled;", 1
+    )
+    compilers = [p for p in (shutil.which("g++"), shutil.which("clang++")) if p]
+    assert compilers
+    for compiler in compilers:
+        with tempfile.TemporaryDirectory(prefix="osmx-wave-wrong-volume-field-") as tmp:
+            binary = Path(tmp) / "controls"
+            built = subprocess.run(
+                [compiler, "-std=c++11", "-O0", "-x", "c++", "-", "-o", str(binary)],
+                input=harness(bodies), text=True, capture_output=True, timeout=45,
+            )
+            assert built.returncode == 0, built.stderr
+            ran = subprocess.run([str(binary)], check=False, timeout=10)
+            assert ran.returncode != 0, compiler

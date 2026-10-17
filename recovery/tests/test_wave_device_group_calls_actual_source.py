@@ -37,7 +37,7 @@ def extracted_bodies(root: Path) -> dict[str, str]:
         "disable_group": "int Wave_Device::disable_group(",
     }
     result = {name: body(source, signature) for name, signature in signatures.items()}
-    assert "wave->set_volume(volume);" in result["set_group_volume"]
+    assert "wave->set_volume(wave->volume_);" in result["set_group_volume"]
     assert "wave->load();" in result["enable_group"]
     assert "wave->unload();" in result["disable_group"]
     for value in result.values():
@@ -251,7 +251,8 @@ def test_group_walks_execute_actual_wave_apis() -> None:
 @pytest.mark.parametrize(
     ("function", "old", "new"),
     [
-        ("set_group_volume", "wave->set_volume(volume);", "wave->set_volume(volume + 1);"),
+        ("set_group_volume", "wave->set_volume(wave->volume_);", "wave->set_volume(wave->volume_ + 1);"),
+        ("set_group_volume", "wave->set_volume(wave->volume_);", "wave->set_volume(wave->id);"),
         ("enable_group", "wave->load();", "wave->unload();"),
         ("disable_group", "wave->unload();", "wave->load();"),
     ],
