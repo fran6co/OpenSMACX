@@ -360,8 +360,16 @@ set_source_files_properties(
     src/mapwin.cpp
     src/basewin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Keep the controlled diplomacy/network/overview owners on their measured
+# frame-preserving source profiles; application defaults and link settings stay fixed.
+set_source_files_properties(
+    src/netdaemon.cpp
+    src/diplowin.cpp
+    src/diplopop.cpp
+    src/worldwin.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the original frame-based stack accesses in these mapped owners;
-# leave the global compiler defaults and neighboring NetDaemon profile alone.
+# leave the global compiler defaults unchanged.
 set_source_files_properties(
     src/designwin.cpp
     src/tutwin.cpp
