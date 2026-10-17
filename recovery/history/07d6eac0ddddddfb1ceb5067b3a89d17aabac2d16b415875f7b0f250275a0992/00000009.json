@@ -1,0 +1,20 @@
+{
+  "event_id": "d5b83b77cf8d8064a27ff152feade558f8fe06379a8c2ed0dc376c8ebe9d7bab",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/win.h"
+    ],
+    "evidence": [
+      "Authorize one legitimate header-definition placement alternative, diagnostic only initially. Use current fresh actual application objects as calibration; baseline/unchanged-copy/body-throw damage/alternative-header compiler controls under the actual unchanged recipe, frozen source/Git/recipes and one provisioned compiler lease. Compare resulting complete objects against both current candidate and original retained master, not a weaker matcher. Preserve all previous reports and any new negative evidence, no artifact replay/overwrite.",
+      "This is not authorization to drop MultiWin, revert justified source structure, waive preservation, change flags, demote claims, modify readonly collateral functions or claim acceptance. If the alternative helps, perform fresh required owner/frame and full build/regression/reference comparisons before applying/integrating; otherwise preserve the negative result and investigate the existing legitimate source rather than extended spelling search."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "54544b2f853a61f5b61ddd4d1070c683f6262d71734a5fb07c545b9dec24f88b",
+  "request_id": "win-inline-definition-placement-control-oct17",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:ui-buffer-roles-oct17"
+}

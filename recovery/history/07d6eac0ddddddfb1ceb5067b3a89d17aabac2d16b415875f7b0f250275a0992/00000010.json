@@ -1,0 +1,18 @@
+{
+  "event_id": "907ee6f863dd9ac6aa3f1737e6724aa04c324794c4d43e606e2f2a7aa463bbd2",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "win-inline-definition-placement-investigation-oct17",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Eight actual-recipe compiler controls are terminal: current candidate calibration, unchanged header/source replica and ordinary selected-body throw damage all qualify in each of newgame and faction. The equivalent out-of-class inline Win definition remains a private overlay only; no product source changed.",
+      "The alternative reproduces the existing newgame candidate physical object (native PASS against current), still fails against original master, and changes more faction material without restoring its original physical correspondence. Retain placement-newgame-actual.json, placement-faction-actual.json and all generated objects; exit3 is negative diagnostic evidence, not green. Reject this unhelpful alternative and do not repeat it without new evidence. Preserve the original proper in-class visibility API checkpoint and pending custom_planet/setup_player/battle_plans investigations; no scope, claim, compiler or baseline weakening and no acceptance."
+    ]
+  },
+  "previous_event": "d5b83b77cf8d8064a27ff152feade558f8fe06379a8c2ed0dc376c8ebe9d7bab",
+  "request_id": "win-inline-definition-placement-rejected-oct17",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:ui-buffer-roles-oct17"
+}

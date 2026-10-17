@@ -1,0 +1,21 @@
+{
+  "event_id": "54544b2f853a61f5b61ddd4d1070c683f6262d71734a5fb07c545b9dec24f88b",
+  "payload": {
+    "affects": [
+      "entity-17972fc8b7ba189d51825e84d58d3f4936082394c40df97d6efd1a61d42a356f"
+    ],
+    "author": "coordinator",
+    "discovery_id": "win-inline-definition-placement-investigation-oct17",
+    "evidence": [
+      "Independent whole-build reviews retain genuine unresolved custom_planet, setup_player and battle_plans frame/code differences after the Win header addition, beyond the bounded scheduling/private-label cases already explained. Keep all native FAILs and prior compiled source checkpointabda13980. Do not integrate unexplained changes or infer causality from header coincidence alone.",
+      "One source-equivalent alternative: keep the public nonvirtual inline declaration at the same Win class line, and define the same iSomeFlag_|=1U method out of class at the end of win.h. Every includer still sees the complete inline definition. No field/ABI/vtable, access control, caller, flag, baseline, source identity or original obligation changes; no assembly, volatile, padding, #line or artificial statement. Test only in guarded private Compiler overlays before editing source."
+    ],
+    "hypothesis": "An equivalent out-of-class inline definition may avoid some unrelated compiler frame/register perturbations while keeping the meaningful visibility API.",
+    "kind": "discovery"
+  },
+  "previous_event": "07c6c880fd9ecb0986dda1a849488c2ac673da0ebcfa40c1f2ccfd825b57a4ae",
+  "request_id": "win-inline-definition-placement-investigation-oct17",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:ui-buffer-roles-oct17"
+}
