@@ -1,0 +1,27 @@
+{
+  "author": "coordinator",
+  "base_revision": "564c9c0255e90586964d085c1c205b9b41bdaa3b",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/tests/test_planwin_battle_owner_behavior.py"
+  ],
+  "evidence": [
+    "Pinned54B3D5..54B3E7 caches plan_b base offset from EBX. At54B8F1..54B905 it queries base_find(plan_b.x,plan_b.y,faction_b), saves BaseFindDist, then queries the selected base54B90A..54B923. Native LEA54B92E doubles the saved32-bit planned distance and signedJL54B938 accepts only selected_distance < doubled_plan_b_distance; equality/farther reject via BATTLENO. BaseFindDist remains the selected query result.",
+    "Current battle_plans_selected_region_distance_result queries selected then plan, uses the opposite distance predicate, and its caller passes Bases[plan_a]. The existing fixture selected3,planned5 expects reject where the pinned branch accepts. This is a source recovery error, not an original game defect or prospective behavior improvement.",
+    "Production scope is ONLY that existing helper query/capture/comparison sequence and its battle_plans call Bases[plan_a] to Bases[plan_b]. Preserve region gate, callback-visible live reads, target assignment before popup, post-popup region/vehicle/target cleanup, unsafe/native error paths and every original identity/span/claim. Use defined32-bit wrap for the nativeLEA doubling if needed, not signed-overflowUB or saturating arithmetic. No headers/types/globals/lifetimes/compiler/linker/schema/framework changes, new ABI identity or byte-claim edits.",
+    "The old TRIED omission note is historical: current battle_plans_apply_selected_target and its actual-source tests already implement the post-popup mutation block. A brief source-history clarification may distinguish it from current behavior while preserving its useful seed text. Do not reintroduce raw offsets or duplicate the recovered cleanup.",
+    "Update actual-source tests to distinguish plan_a,plan_b and selected-base distances/coordinates, verify native query order and final BaseFindDist, below/equal/above thresholds and32-bit doubling behavior. Independent wrong-plan, wrong-order and wrong-predicate mutations must fail. Preserve existing region/cleanup/lifetime/callback controls. At most three evidence-backed source forms; do not chase byte equality before semantic correction.",
+    "Require fresh build/link, all-faction physical collateral and existing exact continuity, relevant host tests and native source/claim/reference checks, independent actual-source/original review and destination recheck. Task baseline stays this verified master. Manual coordinator integration is not automatic, linked-selection, runtime or game acceptance; missing evidence and old restoration obligations remain explicit."
+  ],
+  "intent": "Restore the native battle-plan distance gate, planned-base identity and observable query ordering using the genuine existing faction/Base owners, preserving all cleanup and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5550528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "battle-distance-oct17"
+}
