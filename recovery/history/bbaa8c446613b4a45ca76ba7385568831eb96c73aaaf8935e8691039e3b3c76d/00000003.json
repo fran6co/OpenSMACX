@@ -1,0 +1,17 @@
+{
+  "event_id": "c49922df887e59697559e613ee24e7237a0a9099620d120b982e135bd72f3048",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "start-init-argument-order",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Master b00fdfe22 src/basepop.cpp BasePop::start now calls init(flags,0), as original601C54-601C5C and init6015BB-601619 establish. Fresh destination build/link passes; all61 historical classifications and claims/mappings/references are preserved;17 host controls pass with5 unchanged preexisting SetupWin fixture failures; complete candidate-to-destination176 physical objects pass with zero omissions. Fresh QuickStart advances past former popup failure but crashes in setup_player; quickstart-list-teardown remains pending and new quickstart-player-map-access is separately preserved. This resolves only the original caller argument-role discovery, not universal teardown/runtime/full acceptance."
+    ]
+  },
+  "previous_event": "7983b5106e8c6cb94341e5c9a8b65c3d98438ee3d9e916a6aab323a3b3666b1e",
+  "request_id": "resolve-start-init-argument-order-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:basepop-menu-item-ids-oct17"
+}
