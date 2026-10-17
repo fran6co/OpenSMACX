@@ -1,0 +1,20 @@
+{
+  "event_id": "7fcd57ea4e174b7526ea36dcfb41797a6409d3ec8dd057d6f21a7eac984332e9",
+  "payload": {
+    "affects": [
+      "entity-b45f8b7bb6aba647522382131954544e265891cb57bd9476ba1ea8b84ffcee22"
+    ],
+    "author": "coordinator",
+    "discovery_id": "quickstart-list-teardown",
+    "evidence": [
+      "Fresh candidate compile/link and original comparison run-fql_olt_: sameKeyboardQuickStart reaches originalPLANETFALL. Candidate now persists TopMenu1 but faults43928C at native BasePop::close439040+24C, nullEDX during item_ids_ head scalar deletion. Physical176object residuals pass outside start; all61BasePop verdicts and historicalclaims unchanged. Logs/screenshots and own linkedPE/MAP decode remain ignored. Complete dynamic cause is not yet established; do not add null guards or claim runtime acceptance."
+    ],
+    "hypothesis": "Correct script item IDs dispatch QuickStart rather than StartGame, exposing a null virtual deletion target during BasePop close item_ids_ teardown. Investigate the separate node lifetime and allocator/teardown chain; do not revert the pinned count operand to hide it.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "quickstart-list-teardown",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:basepop-menu-item-ids-oct17"
+}

@@ -3367,7 +3367,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
                 unit_ids_.field_24_ = 0;
                 unit_ids_.add(0);
             } else if ((field_30A8_ & 4) == 0) {
-                dialogs_.item(tok, 0);
+                dialogs_.item(tok, dialogs_.Dialog::item_list_.entry_count_);
             } else {
                 if (dialogs_.get_num_items() < 10) {
                     if (flags == 0 || dialogs_.get_num_items() != 0) {
