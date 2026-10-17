@@ -1463,7 +1463,7 @@ uint32_t Scroll::set_thumb_rect() {
 Purpose: Drag the thumb or repeat a track-page movement while the scroll owns
          the pointer, then notify its parent of an actual position change.
 // ORIGINAL: 0x00605D90 ?on_mouse_move@Scroll@@QAEXHH@Z 0x00605D90-0x006061DB FILE
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/00605d90.cpp","source:src/scroll.h:Scroll","source:src/win.h:WinPointerOwner1","source:src/win.h:WinSizingFlag"],"reason":"Home the drag and held-track behavior on real Scroll/Win members, source-owned pointer state and parent callbacks; remove seed vtable facades and executable-address globals."}
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/00605d90.cpp","source:src/scroll.h:Scroll","source:src/win.h:WinPointerOwner1","source:src/win.h:WinSizingFlag","pinned:60610A reloads the current parent for WinCallbackWindow;606120..606122 compares the entry position and skips notifications AND sound to redraw6061C7 when unchanged","pinned:606128..606196 selects reversal before the parent callback and reloads callback/id/position/bounds inside that selected branch, without retesting reversal after the callback","pinned:6061A5 reloads the current parent after notifications;6061AB uses its Sound view at+0x84, distinct from the wheel/key/button notification view at+0x80"],"reason":"Home the drag and held-track behavior on real Scroll/Win members, source-owned pointer state and parent callbacks; preserve change-gated notifications/sound, branch-selected reversal and live parent reloads, without seed vtable facades or executable-address globals."}
 // symbol    ?on_mouse_move@Scroll@@UAEXHH@Z
 */
 void Scroll::on_mouse_move(int x, int y) {
