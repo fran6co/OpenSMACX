@@ -1,0 +1,40 @@
+{
+  "author": "coordinator",
+  "base_revision": "8a579665183d544d8118389f2cb477688594f985",
+  "editable_files": [
+    "src/popup.cpp",
+    "recovery/tests/test_popup_default_store_order_oct17.py"
+  ],
+  "evidence": [
+    "Current master builds/links in retained build-x_ab_28o. Fresh receipt/hash/source-pin-verified read-only strict audit of all3015masked CPP matches gives1822PASS1164UNKNOWN29FAIL; this does not qualify scaffolds, exhaustive coverage, linked selection, structure or runtime. No new historical claims banked.",
+    "Independent source/pinned/COFF review: BasePopDefaultField21C0 is the already-bound real two-word global at696ED0, initialized{10,4}; current captured object references addends4then0 while pinned writes0then4 in each of popups_small588800/tutorial5888E0 (value3), medium5889C0/interlude_medium588A30 (value2). Source chained assignment reverses these store operands; both final values agree, so this is reference/order fidelity restoration, not a proven gameplay fix.",
+    "Scope authorizes only replacing these four chained assignments with explicit index0 thenindex1 statements and adding focused actual-source controls. No other body, annotation, original extent, claim, global/type/layout/header, compiler/link policy or gate change. Preserve historical TRIED comments as seed history rather than adding new run logs. DialogDefaults binding absence stays UNKNOWN; do not fabricate that table binding or use these writes to infer complete owner layout.",
+    "Require fresh isolated full application build/link, native strict four-body/reference comparisons with unknowns retained, zero masked match losses, complete physical object inventory and outside-four-body comparison, independent source/operand review, relevant host/native controls and claim/reference/mapping continuity. Verify destination again after coordinator-reviewed manual merge. No baseline reset, automatic acceptance claim, blanket body waiver or interpretation of same final values as original fidelity."
+  ],
+  "intent": "Restore the original ordered writes to the two real BasePop defaults across all four popup font/default configuration modes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5801984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5802208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5802432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5802544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-default-store-order-oct17"
+}
