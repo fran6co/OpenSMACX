@@ -1,0 +1,20 @@
+{
+  "event_id": "26ffe591b73a78da60a4157010ec9b75dd1c456c61c9df955f27ba7e707a0167",
+  "payload": {
+    "affects": [
+      "entity-336e00903bce61448619ab3c1bc81a4d44c04cbb4a5f2cf0fb124fc6ce322402"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "cursor-family-original-exits-oct18",
+    "evidence": [
+      "Pinned E11F..E134 separates mode zero from the nonzero family and tests the later live selected vehicle. Negative selection performs only the existing Popup/Scroll/FlatButton cleanup and shared exit; nonnegative out-of-table modes join E216 reset instead of continuing normal click processing. Exact ten-cell table decoding confirms the existing action switch is already correct; its linear block order is not selector order."
+    ],
+    "hypothesis": "MapWin cursor processing must exit for every nonzero captured mode; the original negative live selection exits without the order-state reset.",
+    "kind": "discovery"
+  },
+  "previous_event": "0f69bf5598058e0b11a9b0fd24714c3d7e654c4455e28ea0058cd1041470ee65",
+  "request_id": "cursor-family-original-exits-oct18",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

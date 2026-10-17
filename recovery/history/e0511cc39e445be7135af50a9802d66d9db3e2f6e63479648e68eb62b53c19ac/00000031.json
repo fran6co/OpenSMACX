@@ -1,0 +1,20 @@
+{
+  "event_id": "071e054f5ae138a20d9a8234f62c9bcd44997a787129f5708aec2b084131a9c8",
+  "payload": {
+    "affects": [
+      "entity-13d9d167a54f174c9d78067add169b6d6dd4282388d2e9ea10e60a075046a330"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "right-menu-selected-air-triad-eligibility-oct18",
+    "evidence": [
+      "Main and independent read-only triage decoded original46C425..46C47D: after cursor_active, it loads the entry-snapshotted selected vehicle, its proto_id/chassis_id and Chassis triad, adding item0x6E only for triad2. Current right_menu instead tests clicked-tile vehicle_id and stack_check(type1)==2, whose current real implementation counts stack entries. This remains pending for a complete right_menu/helper owner review together with the existing defensive-bound finding; the current cursor-only correction does not grant editing scope for that broader change."
+    ],
+    "hypothesis": "The right-menu item0x6E eligibility appears mistranslated as clicked-stack size rather than the selected vehicle air-triad test.",
+    "kind": "discovery"
+  },
+  "previous_event": "3712028055f45061b2b3b9a76f5732f2a8dc2768b4378f2b77e4c79ac9fab8d9",
+  "request_id": "right-menu-selected-air-triad-eligibility-oct18",
+  "schema_version": 1,
+  "sequence": 31,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

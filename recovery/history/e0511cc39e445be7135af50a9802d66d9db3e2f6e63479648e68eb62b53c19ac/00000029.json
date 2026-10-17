@@ -1,0 +1,19 @@
+{
+  "event_id": "74b0f3efe48485131a6dcea3b9a104cb2e058b3c4d7552df3044371673393908",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "cursor-family-original-exits-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/mapwin.cpp retains the genuine automatic Popup and existing action switch, changes the outer gate to nonzero mode, and returns immediately for a negative live selected vehicle. Every remaining nonzero mode follows the switch/default, clears field_23BE4_ and returns. Mode zero retains the separate later click path. No manual cleanup calls, new range protection, source-owned storage/layout/API/build-policy change or original-span widening was introduced.",
+      "The actual-source host controls retain all paint, per-slot callback reload, earlier popup and in-range dispatch cases, correcting only their prior wrong negative-selection continuation expectation. Expanded signed-extreme mode/vehicle cases check arguments, action/reset ordering and lexical Popup cleanup. Each damage mutant must compile and fail its specific behavioral witness. Independently pinned complete-primary decode, table cells and cleanup target/source identities support the interpretation; bounded host doubles do not prove original full lifetime or game runtime.",
+      "Preserve all original MapWin task subjects, scope expansions, immutable b15 baseline and pending findings. The 0179 source-step oracle is not a replacement task baseline. Keep every source identity/span/claim/lesson and all other source bytes; current-step compilation/physical/diagnostic evidence supports only a coordinator-reviewed manual checkpoint, not automatic acceptance or full recovery."
+    ]
+  },
+  "previous_event": "26ffe591b73a78da60a4157010ec9b75dd1c456c61c9df955f27ba7e707a0167",
+  "request_id": "cursor-family-exits-incorporated-oct18",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

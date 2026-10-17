@@ -6141,8 +6141,11 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
         return;
     }
 
-    if (cursor_mode != 0 && ConsoleGlobal.selected_vehicle_ >= 0 &&
-        cursor_mode >= 2 && cursor_mode <= 11) {
+    // Original46E11F..E216 exits for every nonzero captured cursor mode.
+    // A negative live selection takes cleanup only, without clearing the
+    // order state; an out-of-table mode with a vehicle still clears it.
+    if (cursor_mode != 0) {
+        if (ConsoleGlobal.selected_vehicle_ < 0) return;
         switch (cursor_mode) {
         case 2:
             ConsoleGlobal.set_road_to(ConsoleGlobal.selected_vehicle_,

@@ -1,0 +1,20 @@
+{
+  "event_id": "3712028055f45061b2b3b9a76f5732f2a8dc2768b4378f2b77e4c79ac9fab8d9",
+  "payload": {
+    "affects": [
+      "entity-336e00903bce61448619ab3c1bc81a4d44c04cbb4a5f2cf0fb124fc6ce322402"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "cursor-generated-lifetime-and-linked-boundary-oct18",
+    "evidence": [
+      "The current linked function verifier refuses this emitted shape because it requires one independently bounded code COMDAT. Do not waive the refusal, change compilation flags to hide it, infer original instruction equality from host behavior, or treat scoped compiled-residual equality as full linked retained-selection/allocation/runtime proof. Source-owned primary and cold original spans remain unchanged, as do historical restoration obligations."
+    ],
+    "hypothesis": "The restored source exits retain unfinished complete original generated-lifetime, associated-data and linked-function qualification.",
+    "kind": "discovery"
+  },
+  "previous_event": "74b0f3efe48485131a6dcea3b9a104cb2e058b3c4d7552df3044371673393908",
+  "request_id": "cursor-generated-lifetime-and-linked-boundary-oct18",
+  "schema_version": 1,
+  "sequence": 30,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

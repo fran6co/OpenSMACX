@@ -35,7 +35,7 @@ def source_blocks():
 
     paint_start = click.index("if (field_1DD8C_ != 0)")
     paint = balanced_block(click, paint_start)
-    cursor_start = click.index("if (cursor_mode != 0 && ConsoleGlobal.selected_vehicle_ >= 0")
+    cursor_start = click.index("if (cursor_mode != 0", click.index("if (cursor_sprite_1)"))
     cursor = balanced_block(click, cursor_start)
     popup_decl, = [line.strip() for line in click.splitlines()
                    if line.strip() == "Popup popup;"]
@@ -201,8 +201,10 @@ static void cursor_cases() {
     }
     reset(); MapWin window; ConsoleGlobal.selected_vehicle_ = -1;
     window.cursor_dispatch(2, 12, 14);
-    expect(events, {98});
+    // Original46E136 takes local cleanup and returns, without the order reset.
+    expect(events, {});
     REQUIRE(action_args.empty());
+    REQUIRE(ConsoleGlobal.field_23BE4_ == -1);
 }
 
 static void popup_cleanup() {
@@ -233,3 +235,202 @@ def test_actual_click_branch_controls(compiler, tmp_path):
     subprocess.run([executable, "-std=c++11", "-Wall", "-Wextra", "-Werror",
                     str(cpp), "-o", str(binary)], check=True, timeout=30)
     subprocess.run([str(binary)], check=True, timeout=30)
+
+
+CURSOR_HARNESS = r'''#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <vector>
+
+static std::vector<int> events;
+static std::vector<int> action_args;
+static int *mutate_reset_target;
+static void need(bool value, const char *label, int mode, int vehicle) {
+    if (!value) {
+        std::fprintf(stderr, "FAIL: %s mode=%d vehicle=%d\n", label, mode, vehicle);
+        std::exit(1);
+    }
+}
+static void note(int value) { events.push_back(value); }
+struct Popup { Popup() { note(90); } ~Popup() { note(91); } };
+struct MapWin {
+    void cursor_dispatch(int cursor_mode, int tile_x, int tile_y);
+};
+struct ConsoleMock {
+    int selected_vehicle_;
+    int field_23BE4_;
+    void mutate() { if (mutate_reset_target) *mutate_reset_target = 77; }
+    void set_road_to(int v, int x, int y, int order) {
+        action_args = {1, v, x, y, order}; note(1); mutate();
+    }
+    void set_bombing_run(int v, int x, int y) {
+        action_args = {6, v, x, y}; note(6); mutate();
+    }
+};
+static ConsoleMock ConsoleGlobal;
+struct NetDaemonMock {
+    void veh_drop(int v, int x, int y) {
+        action_args = {3, v, x, y}; note(3);
+        if (mutate_reset_target) *mutate_reset_target = 77;
+    }
+};
+static NetDaemonMock NetDaemonNet;
+static void action_patrol(int v, int x, int y) {
+    action_args = {4, v, x, y}; note(4);
+    if (mutate_reset_target) *mutate_reset_target = 77;
+}
+static void action_arty(int v, int x, int y) {
+    action_args = {5, v, x, y}; note(5);
+    if (mutate_reset_target) *mutate_reset_target = 77;
+}
+
+void MapWin::cursor_dispatch(int cursor_mode, int tile_x, int tile_y) {
+    POPUP_DECL
+    CURSOR_BLOCK
+    note(98); // Observable continuation after the extracted cursor-family block.
+}
+
+static bool same(const std::vector<int> &a, const std::vector<int> &b) {
+    return a == b;
+}
+static void run_case(int mode, int vehicle) {
+    events.clear(); action_args.clear();
+    ConsoleGlobal.selected_vehicle_ = vehicle;
+    ConsoleGlobal.field_23BE4_ = 0x13579;
+    mutate_reset_target = &ConsoleGlobal.field_23BE4_;
+    MapWin window;
+    window.cursor_dispatch(mode, 12, 14);
+    mutate_reset_target = 0;
+
+    if (mode == 0) {
+        need(action_args.empty(), "zero mode does not dispatch", mode, vehicle);
+        need(ConsoleGlobal.field_23BE4_ == 0x13579,
+             "zero mode does not reset order state", mode, vehicle);
+        need(same(events, std::vector<int>{90, 98, 91}),
+             "zero mode continues and closes popup", mode, vehicle);
+        return;
+    }
+    if (vehicle < 0) {
+        need(action_args.empty(), "negative vehicle performs cleanup only", mode, vehicle);
+        need(ConsoleGlobal.field_23BE4_ == 0x13579,
+             "negative vehicle does not reset order state", mode, vehicle);
+        need(same(events, std::vector<int>{90, 91}),
+             "negative vehicle exits through popup cleanup", mode, vehicle);
+        return;
+    }
+
+    std::vector<int> wanted;
+    int event = 0;
+    switch (mode) {
+    case 2: wanted = {1, vehicle, 12, 14, 0x1B}; event = 1; break;
+    case 3: wanted = {1, vehicle, 12, 14, 0x1C}; event = 1; break;
+    case 4: wanted = {3, vehicle, 12, 14}; event = 3; break;
+    case 8: wanted = {4, vehicle, 12, 14}; event = 4; break;
+    case 10: wanted = {5, vehicle, 12, 14}; event = 5; break;
+    case 11: wanted = {6, vehicle, 12, 14}; event = 6; break;
+    default: break;
+    }
+    need(same(action_args, wanted), "mode dispatch/table arguments", mode, vehicle);
+    need(ConsoleGlobal.field_23BE4_ == 0,
+         "nonzero nonnegative mode resets order state", mode, vehicle);
+    if (event) {
+        need(same(events, std::vector<int>{90, event, 91}),
+             "action occurs within popup lifetime", mode, vehicle);
+    } else {
+        need(same(events, std::vector<int>{90, 91}),
+             "unmapped nonzero mode resets then exits", mode, vehicle);
+    }
+}
+
+int main() {
+    const int modes[] = {INT_MIN, -23, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8,
+                         9, 10, 11, 12, INT_MAX};
+    const int vehicles[] = {0, 17, INT_MIN, -23, -1};
+    for (int mode : modes)
+        for (int vehicle : vehicles)
+            run_case(mode, vehicle);
+}
+'''
+
+
+def _compile_run(tmp_path: Path, compiler: str, cursor: str, tag: str):
+    popup, _, _, _ = source_blocks()
+    fixture = CURSOR_HARNESS.replace("POPUP_DECL", popup).replace("CURSOR_BLOCK", cursor)
+    cpp = tmp_path / f"mapwin_cursor_{tag}.cpp"
+    binary = tmp_path / f"mapwin_cursor_{tag}"
+    cpp.write_text(fixture, encoding="utf-8")
+    built = subprocess.run(
+        [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+         str(cpp), "-o", str(binary)], text=True, capture_output=True, timeout=30)
+    assert built.returncode == 0, f"{tag} must compile before behavior is judged:\n{built.stderr}"
+    return subprocess.run([str(binary)], text=True, capture_output=True, timeout=30)
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_live_cursor_branch_matches_expanded_gate_and_cleanup_matrix(
+        compiler_name, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    _, _, _, cursor = source_blocks()
+    result = _compile_run(tmp_path, compiler, cursor, "actual")
+    assert result.returncode == 0, result.stderr
+
+
+def _replace_once(text: str, old: str, new: str, name: str) -> str:
+    assert old in text, f"live source no longer has {name} mutation anchor"
+    return text.replace(old, new, 1)
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("damage", [
+    "old_range_guard",
+    "no_negative_vehicle_return",
+    "wrong_table_interpretation",
+    "reset_on_negative_vehicle",
+    "dropped_reset",
+    "falls_through_after_reset",
+])
+def test_compiling_cursor_branch_mutants_fail_named_witnesses(
+        compiler_name, damage, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    _, _, _, actual = source_blocks()
+    mutations = {
+        "old_range_guard": (
+            "if (cursor_mode != 0) {",
+            "if (cursor_mode != 0 && ConsoleGlobal.selected_vehicle_ >= 0 && "
+            "cursor_mode >= 2 && cursor_mode <= 11) {"),
+        "no_negative_vehicle_return": (
+            "if (ConsoleGlobal.selected_vehicle_ < 0) return;", ""),
+        "reset_on_negative_vehicle": (
+            "if (ConsoleGlobal.selected_vehicle_ < 0) return;",
+            "if (ConsoleGlobal.selected_vehicle_ < 0) { "
+            "ConsoleGlobal.field_23BE4_ = 0; return; }"),
+        "dropped_reset": ("ConsoleGlobal.field_23BE4_ = 0;", ";"),
+        "falls_through_after_reset": (
+            "ConsoleGlobal.field_23BE4_ = 0;\n        return;",
+            "ConsoleGlobal.field_23BE4_ = 0;"),
+    }
+    if damage == "wrong_table_interpretation":
+        veh_drop = ("NetDaemonNet.veh_drop(ConsoleGlobal.selected_vehicle_,\n"
+                    "                                  tile_x, tile_y);")
+        patrol = "action_patrol(ConsoleGlobal.selected_vehicle_, tile_x, tile_y);"
+        mutant = _replace_once(actual, veh_drop, "WRONG_CASE_FOUR_ACTION;", damage)
+        mutant = _replace_once(mutant, patrol, veh_drop, damage)
+        mutant = mutant.replace("WRONG_CASE_FOUR_ACTION;", patrol, 1)
+    else:
+        before, after = mutations[damage]
+        mutant = _replace_once(actual, before, after, damage)
+    result = _compile_run(tmp_path, compiler, mutant, damage)
+    assert result.returncode != 0, f"behavior witness missed {damage}"
+    witnesses = {
+        "old_range_guard": "nonzero nonnegative mode resets order state",
+        "no_negative_vehicle_return": "negative vehicle does not reset order state",
+        "wrong_table_interpretation": "mode dispatch/table arguments",
+        "reset_on_negative_vehicle": "negative vehicle does not reset order state",
+        "dropped_reset": "nonzero nonnegative mode resets order state",
+        "falls_through_after_reset": "unmapped nonzero mode resets then exits",
+    }
+    assert "FAIL: " + witnesses[damage] in result.stderr, (damage, result.stdout, result.stderr)
