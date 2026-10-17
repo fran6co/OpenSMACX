@@ -1,0 +1,22 @@
+{
+  "event_id": "96e20610da249d2d21a2110627629ed9e587130eb6f8f7fb2bff07079daabef9",
+  "payload": {
+    "affects": [
+      "entity-91436df3dec53eea2022c80cdb003676d818e5f8ab685320982b98dd0a30f241"
+    ],
+    "author": "coordinator",
+    "discovery_id": "interface-shared-input-owner-oct17",
+    "evidence": [
+      "Fresh actual controls: Console gains15but loses5FD120flush_input (52/52exact to55instructions) under/Oy-. Datalink gains47, MainInterface32; none of their previous matches are lost. This is a recorded failed local profile observation, not permission to drop a claim.",
+      "flush_input uses only MSG, PeekMessage, WinPointerOwner1/2 and check_net; no Console object/state. Win.cpp defines the same pointer globals and sibling flush_keyboard5FD1C0/flush_mouse5FD220. Independent source/caller review confirms all direct callers already include win.h; the Console pointer typedef is unused.",
+      "The original distinct sequence is keyboard drain, clear both, check_net, mouse drain, clear both, check_net twice. Source ownership is supported by this state/call coupling, not address proximity or a historical-TU assertion."
+    ],
+    "hypothesis": "Console contains the shared Win input pump; one frame policy cannot preserve both its original no-frame pump and Console frame-bearing methods. Rehome the unchanged shared behavior to its actual current Win state owner.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "interface-shared-input-owner-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:interface-frame-oct17"
+}
