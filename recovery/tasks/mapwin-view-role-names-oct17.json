@@ -1,0 +1,342 @@
+{
+  "author": "coordinator",
+  "base_revision": "da305e833453674f757d6cc91a734525abf441d8",
+  "editable_files": [
+    "recovery/tests/altitude_owners/control.cpp",
+    "recovery/tests/fixtures/game_data_actual_host_control.cpp",
+    "recovery/tests/fixtures/remaining_game_leaf_owner_host.cpp",
+    "recovery/tests/game_save_load_host_control.cpp",
+    "recovery/tests/map_metadata_control.cpp",
+    "recovery/tests/mapwin_input_harness.cpp",
+    "recovery/tests/test_altitude_owner_behavior.py",
+    "recovery/tests/test_artillery_action.py",
+    "recovery/tests/test_blink_timer_actual_source.py",
+    "recovery/tests/test_console_cursor_storage.py",
+    "recovery/tests/test_console_menu_behavior.py",
+    "recovery/tests/test_console_remaining_behavior.py",
+    "recovery/tests/test_console_selected_return_behavior.py",
+    "recovery/tests/test_console_selecting.py",
+    "recovery/tests/test_console_typed_owner_members_oct10.py",
+    "recovery/tests/test_cursor_state.py",
+    "recovery/tests/test_draw_cursor_width.py",
+    "recovery/tests/test_go_cursor_state.py",
+    "recovery/tests/test_line_timer_loop_oct15.py",
+    "recovery/tests/test_mapwin_click_branches.py",
+    "recovery/tests/test_mapwin_cursor_click_owners.py",
+    "recovery/tests/test_mapwin_focus.py",
+    "recovery/tests/test_mapwin_live_member_dispatch.py",
+    "recovery/tests/test_mapwin_mouse_feedback.py",
+    "recovery/tests/test_mapwin_radius.py",
+    "recovery/tests/test_mapwin_typed_drawing_dispatchers_oct10.py",
+    "recovery/tests/test_mapwin_view_roles_oct17.py",
+    "recovery/tests/test_vehicle_scoot.py",
+    "recovery/tests/test_window_dispatch.py",
+    "recovery/tests/test_world_climate_loop_oct15.py",
+    "recovery/tests/test_world_map_terrain_owner.py",
+    "recovery/tests/test_worldwin_map_slot_oct17.py",
+    "src/console.cpp",
+    "src/console.h",
+    "src/game.cpp",
+    "src/map.cpp",
+    "src/mapwin.cpp",
+    "src/mapwin.h",
+    "src/planwin.cpp",
+    "src/time.cpp",
+    "src/veh.cpp",
+    "src/worldwin.cpp"
+  ],
+  "evidence": [
+    "Current clean masterda305e833 freshly builds/links after WorldWin recovery. All176physicalobjects reproduce the reviewed candidate without body omissions;5581CPP comparisons have3162masked matches, strict1930PASS/1207UNKNOWN/25FAIL. No full original-function universe, complete structure/lifetime/linked-retention/runtime or game acceptance follows. Preserve every original mapping, historical claim and unfinished finding.",
+    "Pinned MapWin::clear462870 writes its int argument at+1DD78 (46287C) and index==0 at+1DD74 (4628AF); init470A90 writes active1 at470AB1 and consumes1DD78 for view geometry/flags/caption. Free-slot activation470FA0 tests activity separately and reloads the stored index into clear. Naming these two existing uint32 members does not infer a new type, extent, constructor, ownership or ABI.",
+    "Pinned PlanWin::init48BC60 writes logical index1 at48BC79 then clear1/init3,0; WorldWin4C49A0 independently seeds index1 in its embedded MapWin before optional clear1/init1,0. Neither receiver is physically in the eight-pointer MapWinTable. Existing source reads distinguish primary0/secondary1 view behavior and copy the index to MapWinSelectedSlot. Therefore use map_view_index_, not table_slot_. Use view_active_ for the separate active/eligible state, retaining all zero/nonzero tests and primary-slot exceptions.",
+    "The six-word game_io transfer reads the view-index and activity words in its existing non-declaration order. Preserve all uint32 widths, offsets, save/wire order, volatile qualifiers, callback-sensitive reloads, reference expressions, initializer values, reset quirks and direct/virtual dispatch. This is exactly two lexical member-identifier replacements and essential current role comments; no behavior fix or helper/extraction/algorithm rewrite.",
+    "Authorize source/header files listed plus existing affected fixture files and one new evidence/control module. Preserve all ORIGINAL markers, symbols, claims and historical TRIED/LEVER/binding rationale verbatim; those historical old-member spellings may remain. Do not rename inside annotation payloads or historical journals/tasks. Update active test fixtures and expected member-identifier spellings only, retaining every oracle, scenario, mutant, sanitizer and failure expectation. Historical full-source projection fixtures may need an explicit semantics-preserving name projection; do not weaken or delete assertions. Any other source/test change needs fresh explicit scope.",
+    "Use a new isolated native prepared worker with unchanged immutable baseline and configured compiler lease. Run selected affected host fixtures against unchanged baseline first. The final source must compile/link freshly and compare all176physicalCOFF objects to the freshly requalified retained baseline with zero omissions, not just function-scope waivers. All5581legacy and3162strict classifications and610supplemental outcomes must remain identical. Native source claims/references/mappings, original identity/claim/binding continuity, current byte source and constructor/clear/init/readers/save-order evidence plus independent source/test review precede coordinator-reviewed integration. Recheck fresh master destination and clean completed worker/builds. Unknowns/failures remain visible; do not bank claims, alter flags/measurement/gates, reset baselines or claim automatic/full-game acceptance."
+  ],
+  "intent": "Recover MapWin logical view-index and activity member names coherently across declarations, readers/writers and serialization.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5310624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5329104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5309888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5309440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5310432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5332720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5309584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5309728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5078752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5334736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5083856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5337552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5356656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5339328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4544016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5925008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5938192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5936992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5925568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6052400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6063840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5842896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4655760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4655392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4633872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4636704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4597472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4657376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4657200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4657056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4651136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4651200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4632384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4632896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4633360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4633072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4648960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4629152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4629808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4632976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4632304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4657728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4636880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4642256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4632064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4597872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4632464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4632640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4648240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4766816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5302848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5304144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5303936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5611856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5266720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4999584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mapwin-view-role-names-oct17"
+}
