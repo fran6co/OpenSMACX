@@ -1,0 +1,29 @@
+{
+  "author": "coordinator",
+  "base_revision": "f1a8a3675debf7c9b43f41c743415e3abe681418",
+  "editable_files": [
+    "src/jackal/checkbutton.cpp",
+    "recovery/tests/test_checkbutton_source_forms_oct17.py"
+  ],
+  "evidence": [
+    "Read-only pinned scout6337E0..633841 observes unchecked-sprite height read before checked-sprite width, while source declares width first; parent-null3, GraphicWin::init argument/failure order, toggle publication and virtual show0 remain fixed. Test one natural height-first declaration form without artificial register controls.",
+    "Pinned633850..633912 copies into the parent using actual GraphicWin/Buffer views, then tests checked_ and draws the corresponding Sprite with its transparent index. Test at most three evidence-backed natural branch/select forms, retaining live reads after copy, dimensions, signs and parent guard. No caching across callbacks, merging sprite identities, raw addresses, assembly, volatile additions, casts for matching, flags/header/signature changes or behavior fixes.",
+    "Only bounded native controlled one-TU overlays are authorized for screening; physical unchanged replicas and target damage witnesses per flag are mandatory. Preserve original identities/spans/claims/history and compiler policy. Coordinator alone owns Git/resources/isolation/recording/integration. Only a real source correction or exactness restoration proceeds to independent review, build/link, scoped references/preservation and destination verification. No source is banked from a diagnostic or mere similarity improvement; no whole-game acceptance."
+  ],
+  "intent": "Recover natural CheckButton initialization and selected-sprite drawing forms from the pinned control flow, preserving genuine Win/GraphicWin/Sprite ownership.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6502368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6502480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "checkbutton-source-forms-oct17"
+}
