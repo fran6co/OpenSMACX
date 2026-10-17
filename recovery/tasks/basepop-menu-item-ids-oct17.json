@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "500d98bb3daa2823c28cb2b8ba986f8bd3e3c781",
+  "editable_files": [
+    "src/basepop.cpp",
+    "recovery/tests/test_basepop_menu_item_ids_oct17.py"
+  ],
+  "evidence": [
+    "Pinned original and current build500d98bb3 both render the full main menu under identical isolated Wine/Xvfb/assets/preferences. Same QuickStart mouse and keyboard actions reach original PLANETFALL but candidate MAPMENU; keyboard capture proves row1 is visibly selected, saved Top Menu is1 original versus0 candidate. Ignored runtime controls run-1kvohl1o and run-jrrdwtmz contain hashes, observations, screenshots and clean server termination.",
+    "Original BasePop::start6025AD..6025C9 computes Dialogs atthis+21D0, reads its vbtable+8 shared Dialog offset, then loads list count at+CC (21D0+CC=229C), pushes that current count as item ID and calls Dialogs::item612A70. Current code instead calls dialogs_.item(tok,0), making every scripted menu item IDzero. Current Dialog::pos_to_id returns selected node ID, not row position.",
+    "Authorize only replacing the plain non-escaped non-editbox item ID with dialogs_.Dialog::item_list_.entry_count_ and a short ordinary explanatory comment, plus actual-source bounded host and pinned semantic-instruction controls. Do not substitute kind-guarded get_num_items(), a local increment, dialog position, or an invented new counter. Leave escaped unit_ids_.add(0), editbox behavior, caller/callee implementations, declarations, signatures, layouts, original markers/claims/history and flags unchanged.",
+    "Use a new isolated coordinator-owned worker and compiler lease. Capture original source checks and relevant BasePop host outcomes before edits. Require the new host control to fail specifically on the old zero-ID behavior, then pass actual corrected source and reject zero/count-snapshot/kind-guard mutants after successful compilation. Native original decode and independent review must support the exact count read.",
+    "Before coordinator-reviewed manual integration require fresh application compile/link, scoped measurement and all same-TU historical claim/reference classifications compared with baseline, claims/mappings/references continuity and related existing tests. Recheck destination after integration. Keep unknown/native preservation and game-runtime limits explicit; do not weaken gates, demote claims, reset baselines, bank unmeasured tokens or claim full-game acceptance. A corrected QuickStart runtime comparison is required; further runtime defects become distinct discoveries rather than silent fixes."
+  ],
+  "intent": "Restore BasePop script item IDs from the current shared Dialog list count, preserving native parsing and error behavior, so menu selections retain their actual IDs.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6298608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basepop-menu-item-ids-oct17"
+}
