@@ -1,0 +1,33 @@
+{
+  "event_id": "beee9dc2e70bce11d42f4c5df1a2b0a9f8bb2e6e7dc9c96eacc749e2733f1dde",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_crt_random_owner_oct18.py",
+      "recovery/tests/test_header_io_owner_oct18.py",
+      "recovery/tests/test_header_rng_owner_oct18.py",
+      "src/crt_random.cpp",
+      "src/crt_random.h",
+      "src/general.h",
+      "src/header_io.cpp",
+      "src/header_io.h"
+    ],
+    "evidence": [
+      "Continue the same native General/Council task after its reviewed fcaa712ff source checkpoint. Its101subjects, original b24baseline, all decisions/discoveries and preservation/restoration obligations remain intact. This new step uses fcaa only as the already-published authored-source oracle and current physical comparison input; never replace the task baseline with it. Master clean, one retained165receipt179object build/link,3231actualmasked/1968strictPASS,134oldqualifiedtests118PASS/16FAIL plus36newPASS, noeditableworker.",
+      "Move header_check57D1F0/header_write57D240 intact to header_io.cpp: generic byte stream framing shared by game and map save/load callers, not AlphaSaveUI or format/version orchestration. Move my_srand538FB0/rnd579770 intact to crt_random.cpp: CRT shared random-state wrappers, not the separate Random/RandLCG. Original TU/library identity is not inferred from proximity or measured flags. No class/layout/lifetime/storage changes are proposed.",
+      "Dedicated public header_io.h usesstdioFILE,char*/constchar* matching current typedef-expanded interfaces; crt_random.h exposesvoidmy_srand(int)/unsignedint_rnd(int,char*) with the same ABI. General.h includes these purpose-owned headers and removes only the four duplicate declarations. Other General declarations/inlines and all callers stay unchanged. New CPP owners include their public headers; CRT logging uses existing log.h. Do not invent class providers or replace the actual CRT.",
+      "Nine native complete-private-tree calls calibrated the entire current General object and unchanged replica, then tested proposedGeneral/header/API closure plus default/framed owners and two ordinary body-damage witnesses. Over89currentGeneralidentities, both/Oy-newowners restore4matches with nooldloss; defaultsplit hasnogain/loss. The two new headers are present in the private tree; this is still existing-host prototype evidence, not actual new-TU recipes/build/link or acceptance. A preliminary source extraction failed before compiler invocation because the sort-prefix end anchor was ambiguous; corrected to its full ascending-sort label, no source edits.",
+      "Preserve all implementation effects and useful history. In particular original header_check writes the initialbyte, caps256writtenbytes and alwaysperformsoneextra_fgetc; header_write emitsNULthen0x1A and signedchar argument extension. Original rnd uses wrapped32bitbounds-1: INT_MIN stilldraws; do not normalize tobounds<=1 or add safety fixes. Host-fwrapv is only an explicit model of that observed edge, not portable C++ overflow proof. Keep all historical claims/spans/symbols and both canonical flagsets unchanged; no source-only exports/volatile/assembler/retention forcing.",
+      "Add exactlytwoCMakeCPPentries and/Oy-profiles only for thoseowners; General remainsdefault, all earlierprofiles/global/link/measurementpolicies unchanged. Extend the consolidated profile guard for this exactdelta, preserving immutable prior baselines/negative controls. New exact-inverse controls reconstruct fcaaGeneral.cpp/General.h from actual relocatedcode and the closedpublicheaders, rejecting changedbodies/claims/declarations/prologues. Chain this inverse into the previous b24 General-owner test BEFORE its existing inverse and parser checks, preserving old guards/discoveries rather than substituting baseline text. Any newly exposed dependency outside these editable files needs separate explicit admission.",
+      "Require independent source/test review before final source freeze; correct any materially false historical DLL-redirect guidance with a precise admitted prose-only inverse, keeping lessons/metadata/body intact. Then fresh167receipt181object fullbuild/link, actual5581masked/strictoldclassification continuity, all101canonical subjects, pinned/host/API/migration/mutation controls, native source/claims/mappings/references and wholeactualowner/prototype correspondence plus explicit physical/linked review. Recheck at destination before removing worker/branch/oldbuild. Do not repeat unrelated native tests merely to relabel their16knownfailures; preserve relevant old regression controls and document what is not rerun.",
+      "User-authorized coordinator-reviewed manual integration remains available, not nativeautomatic/fullgame acceptance. Old Generaldata/newowner cross-object residuals, original unknownreference/literal/type/extent evidence, complete linked retained-selection/allocation and runtime remain pending and may not be waived. Four fresh bodygains do not grant new historicalclaims; only native recorder may bank separately measured claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ee88ff03e55300d37a0b050ac1e97b153faa98957aae4c5e31a10782931d2161",
+  "request_id": "header-framing-and-crt-stream-owners-oct18",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:general-owner-split-oct17"
+}
