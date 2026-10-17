@@ -1,0 +1,21 @@
+{
+  "event_id": "704adf86802cc8c0fea18fb6fcf8eb05d724ead136b94604f0d329fcf22f1e33",
+  "payload": {
+    "affects": [
+      "entity-d6aaf2adfe4fc489c2af1dc77a59bf4762dbb36412f606b5c57b4855d944ec03"
+    ],
+    "author": "coordinator",
+    "discovery_id": "borrowed-raster-remaining-fidelity-debt-oct17",
+    "evidence": [
+      "The integer helper establishes checked slope values, not inexact/exception sticky flags observable by callbacks such as free_data. Entry/control/exit operations are restored but complete hardware state equivalence remains unproved. The pinned epilogue does not assign EAX, so the retained intreturn0 API is not evidence of the original return contract. No source caller is currently established; absence of mapped callers is not proof of unreachability.",
+      "Manual misaligned/invalid borrowed states, unrestricted allocation/geometry/errorpaths, all edge refresh cases, signed row-address/edge overflow effects, nativeABI and fullruntime remain unproved. Currentlinked fourtargetrows include onePASS and three missing/ambiguousMAPUNKNOWN; all targetcontentsUNKNOWN. No forced export, fabricated retention proof, demoted claim or fullgame/automaticacceptance. Preserve source work and obligations for later restoration."
+    ],
+    "hypothesis": "Retain unresolved original x87 status, historical return contract and pathological allocation/edge/runtime behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "599dba12e2040834438b208d62933144ac91494b47c68d55236e34f45bff60ed",
+  "request_id": "borrowed-raster-remaining-fidelity-debt-oct17",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:texture-borrowed-raster-oct17"
+}

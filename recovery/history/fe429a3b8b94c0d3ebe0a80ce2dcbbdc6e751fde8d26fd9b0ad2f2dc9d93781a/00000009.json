@@ -1,0 +1,23 @@
+{
+  "event_id": "0beee57cdfe0f8b1698d37674f8c56eb99288f928775eee5e5d1c39b592f5bd3",
+  "payload": {
+    "affects": [
+      "entity-2dec3da77295191f2af641cab878f12122fb19a71833da333aa3d99b9a526775",
+      "entity-9eb05122bcbea0d37752b210a2fcd41860921543215c806a6168190d789c5484",
+      "entity-d6aaf2adfe4fc489c2af1dc77a59bf4762dbb36412f606b5c57b4855d944ec03",
+      "entity-fa962719162780556e7f5c9461a6355982920ce7a9a383c53d604e9e6086b60e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "borrowed-raster-baseline-host-debt-oct17",
+    "evidence": [
+      "Fresh full root/candidate reports retain all456old classifications under the same native host environment;22newcontrolsPASS. Old historical projection assertions were not rewritten to accept arbitrary current source. The new all56record/history and wholef47delta guard supplies bounded continuity for this migration, not a false pass for those older guards. Their separately reviewed maintenance and complete application/runtime acceptance remain work."
+    ],
+    "hypothesis": "Retain preexisting historical whole-source fixture failures without hiding or weakening them.",
+    "kind": "discovery"
+  },
+  "previous_event": "704adf86802cc8c0fea18fb6fcf8eb05d724ead136b94604f0d329fcf22f1e33",
+  "request_id": "borrowed-raster-baseline-host-debt-oct17",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:texture-borrowed-raster-oct17"
+}

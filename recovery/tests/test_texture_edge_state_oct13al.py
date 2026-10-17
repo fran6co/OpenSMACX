@@ -19,6 +19,7 @@ from recovery.tests.texture_direct_storage_host import (
     PRELUDE_MARKER, direct_storage_prelude, direct_storage_projection,
 )
 from recovery.tests.test_texture_shaded_edge_record_oct13an import _strip_authorized_edge_delta
+from recovery.tests.test_texture_draw_trans_actual_source import _definition
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -278,9 +279,17 @@ static void test_edge_recurrences() {
 
 def _translation_unit(body: str) -> str:
     fixture = FIXTURE.read_text(encoding="utf-8")
+    source = SOURCE.read_text(encoding="utf-8")
     assert fixture.count(PRELUDE_MARKER) == 1
     fixture = fixture.replace(PRELUDE_MARKER,
-                              direct_storage_prelude(SOURCE.read_text(encoding="utf-8")), 1)
+                              direct_storage_prelude(source), 1)
+    # The complete installed raster body now consumes these existing helpers.
+    # Extract their real definitions; keep the edge oracle and mutants intact.
+    helper_marker = "// ACTUAL_TRANS3_HELPER_INSERTION"
+    assert fixture.count(helper_marker) == 1
+    helpers = "\n\n".join(_definition(source, name) for name in (
+        "texture_difference", "texture_fixed", "texture_span_step"))
+    fixture = fixture.replace(helper_marker, helpers, 1)
     assert fixture.count(INSERTION) == 1
     assert fixture.count(SETUP_STUB) == 1
     fixture = fixture.replace(SETUP_STUB, SCRIPTED_SETUP, 1)

@@ -1,0 +1,26 @@
+{
+  "event_id": "e917750b3571333c344fb4e1cb0cfbad26e6a0f3e9dc2903a0b8381c6a2e4a31",
+  "payload": {
+    "affects": [
+      "entity-1617caeec719d5dec0691ee81da625fae2201aa70e1e0f53a20fe38ca87ee400",
+      "entity-23b646aef26b72076fecebe4e0930adf1f8e7c8a2eaed9bbb515fed93adffd1f",
+      "entity-2dec3da77295191f2af641cab878f12122fb19a71833da333aa3d99b9a526775",
+      "entity-9eb05122bcbea0d37752b210a2fcd41860921543215c806a6168190d789c5484",
+      "entity-d6aaf2adfe4fc489c2af1dc77a59bf4762dbb36412f606b5c57b4855d944ec03",
+      "entity-fa962719162780556e7f5c9461a6355982920ce7a9a383c53d604e9e6086b60e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "borrowed-raster-fixture-dependencies-oct17",
+    "evidence": [
+      "The complete36-file candidate suite exposes13additional failures against the fresh444PASS/12FAIL baseline:12EdgeScan runtime controls cannot compile because their shell omits texture_difference, texture_fixed and texture_span_step; one storage-source guard requires four removed alias spellings. The22new actual-source controls all pass. Two formerly failing sanitizer cases now pass outside the sandbox: their original log reports LeakSanitizer cannot operate under ptrace, not a C++ failure. Require a fresh same-environment root baseline rather than claiming a behavioral improvement. No actual EdgeScan recurrence, storage declaration or original mapping changed.",
+      "Fresh final candidatebuild-svn51zh8 compiles/links. Native original comparison reproduces all5581CPP and3161strict classifications; all176physicalobjects pass with only draw_trans2 projected,175wholeobjects and allunscopedTexturesections preserved. Three sibling function signatures remain equal under actualRelease and historicalframefamily. These observations do not waive the failing fixtures."
+    ],
+    "hypothesis": "The restored draw_trans2 introduces actual helper dependencies into the complete-body edge fixture and supersedes four word/byte-view usage assertions without changing storage identities.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "borrowed-raster-fixture-dependencies-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-borrowed-raster-oct17"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "b78fa8b992fbe44782f1a62a8d8da16a29f21c8d14563e7bc6b63f90f3b6e26e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_edge_state_oct13al.py",
+      "recovery/tests/test_texture_raster_storage_live.py"
+    ],
+    "evidence": [
+      "Authorize test-only repair: splice the three unchanged helpers extracted from current production into the old full-body EdgeScan fixture. Keep its exact recurrence snapshots, both positive compiler controls and all runtime-failing mutants, existing task-baseline/history tests and source-projection assertions unchanged.",
+      "Replace only four obsolete live-usage alias assertions in the storage test with checks for the actual draw_trans2 typed U/V and slope reads and the unsigned byte-index expressions. Preserve all49storagebindings, distinct addresses, overlap/word-layout controls, pinnedimage/relocation assertions, old-address refusals and runtime storage mutations. Do not change C++, old12failing test bodies, taskbaseline, compiler/measurement/build policy or claims. Require all444oldpasses restored and all22newcasespassing; expose any other classification change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e917750b3571333c344fb4e1cb0cfbad26e6a0f3e9dc2903a0b8381c6a2e4a31",
+  "request_id": "borrowed-raster-fixture-scope-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-borrowed-raster-oct17"
+}

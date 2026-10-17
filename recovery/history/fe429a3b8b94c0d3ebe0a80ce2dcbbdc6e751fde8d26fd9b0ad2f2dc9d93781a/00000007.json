@@ -1,0 +1,17 @@
+{
+  "event_id": "599dba12e2040834438b208d62933144ac91494b47c68d55236e34f45bff60ed",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "borrowed-raster-sibling-scalar-reads-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Exactly nine read-site replacements preserve expression position and reload frequency. Three byte reads use existing lowbyte static_cast<unsignedchar> context, two word reads use the declared member, four signed-to-unsigned conversions use static_cast<unsignedint>. Three complete function signatures remain unchanged under both actualRelease and historicalframefamily; no additional body projection is used for them. Fullf47source guard allows only these nine substitutions and the separately exercised draw_trans2 definition; all56functionidentity/spans/states/claims/history records remain equal. Actual extracted-expression GCC/Clang controls and byte/word/signedness runtime mutants pass."
+    ]
+  },
+  "previous_event": "7e826896ad686b3b6f4f97902333d748a7179211e830caafb00387bef55f290e",
+  "request_id": "borrowed-raster-sibling-scalar-reads-oct17-incorporated",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:texture-borrowed-raster-oct17"
+}

@@ -2197,8 +2197,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int *zvals,
                                         static_cast<unsigned int>(TextureRasterRowOffset) +
                                         static_cast<unsigned int>(clipped_left)));
                             const unsigned char key = static_cast<unsigned char>(
-                                *reinterpret_cast<unsigned char *>(
-                                    &(TextureRasterLightThreshold)));
+                                TextureRasterLightThreshold);
                             texture_draw_keyed_lit_span(
                                 row_destination,
                                 pixels_,
@@ -3016,6 +3015,7 @@ epilogue_only:
 
 int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
     TextureRasterPixelBase = a1->get_data();
+    texture_reset_fpu();
     TextureRasterEdgeVerticesB = a2;
     TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
@@ -3081,14 +3081,14 @@ int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
                     rightEdge.f0 = 1;
                     setupResult = this->setup_edge(&rightEdge, minYIdx);
                     if (setupResult != 0 && this->borrowed_ != 0) {
-                        double invDz = 1.0;
-                        double duVal = 0.0;
-                        double dvVal = 0.0;
-                        int dz16 = (rightEdge.accumC - leftEdge.accumC) * 0x10000;
-                        if (dz16 > 0) {
-                            duVal = static_cast<double>(rightEdge.accumB - leftEdge.accumB);
-                            dvVal = static_cast<double>(rightEdge.accumA - leftEdge.accumA);
-                            invDz = 1.0 / static_cast<double>(dz16);
+                        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+                        int stagedSpan = texture_fixed(texture_difference(
+                            rightEdge.accumC, leftEdge.accumC));
+                        int stagedU = 0;
+                        int stagedV = 0;
+                        if (stagedSpan > 0) {
+                            stagedU = texture_difference(rightEdge.accumA, leftEdge.accumA);
+                            stagedV = texture_difference(rightEdge.accumB, leftEdge.accumB);
                         }
 
                         if (TextureRasterRowOffset < TextureRasterClipBottom) {
@@ -3136,11 +3136,17 @@ int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
                                     }
                                 }
 
-                                dz16 = (rightEdge.accumC - leftEdge.accumC) * 0x10000;
-                                if (dz16 > 0) {
-                                    duVal = static_cast<double>(rightEdge.accumB - leftEdge.accumB);
-                                    dvVal = static_cast<double>(rightEdge.accumA - leftEdge.accumA);
-                                    invDz = 1.0 / static_cast<double>(dz16);
+                                // Consume the snapshot staged before advancing the edges.
+                                // The original publishes U first, then V, using 24-bit RZ.
+                                if (stagedSpan > 0) {
+                                    TextureRasterScratch4E4.dword = texture_span_step(stagedU, stagedSpan >> 16);
+                                    TextureRasterScratch4C8.dword = texture_span_step(stagedV, stagedSpan >> 16);
+                                }
+                                stagedSpan = texture_fixed(texture_difference(
+                                    rightEdge.accumC, leftEdge.accumC));
+                                if (stagedSpan > 0) {
+                                    stagedU = texture_difference(rightEdge.accumA, leftEdge.accumA);
+                                    stagedV = texture_difference(rightEdge.accumB, leftEdge.accumB);
                                 }
 
                                 if (TextureRasterClipBottom <= TextureRasterRowOffset) {
@@ -3154,54 +3160,35 @@ int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
                                         rowRight = TextureRasterClipRight;
                                     }
                                     if (TextureRasterSpanRight < TextureRasterClipLeft) {
-                                        int preStepX = (TextureRasterSpanRight - TextureRasterClipLeft) * -0x10000;
+                                        int preStepX = texture_fixed(texture_difference(
+                                            TextureRasterClipLeft, TextureRasterSpanRight));
                                         TextureRasterUAccumulator.dword = static_cast<int>(
-                                            (static_cast<__int64>(TextureRasterScratch4E4.dword) * static_cast<__int64>(preStepX)) >> 16) + TextureRasterUAccumulator.dword;
-                                        TextureRasterVAccumulator.dword = TextureRasterVAccumulator.dword + static_cast<int>(
-                                            (static_cast<__int64>(TextureRasterScratch4C8.dword) * static_cast<__int64>(preStepX)) >> 16);
+                                            static_cast<unsigned int>((static_cast<__int64>(TextureRasterScratch4E4.dword) * preStepX) >> 16) +
+                                            static_cast<unsigned int>(TextureRasterUAccumulator.dword));
+                                        TextureRasterVAccumulator.dword = static_cast<int>(
+                                            static_cast<unsigned int>(TextureRasterVAccumulator.dword) +
+                                            static_cast<unsigned int>((static_cast<__int64>(TextureRasterScratch4C8.dword) * preStepX) >> 16));
                                         TextureRasterSpanRight = TextureRasterClipLeft;
                                     }
 
                                     int spanCount = rowRight - TextureRasterSpanRight;
 
-                                    unsigned int ebxReg = static_cast<unsigned int>(texture_pointer_address(TextureRasterScratch544));
-                                    ebxReg = (ebxReg & 0xffff00ffu) | (static_cast<unsigned int>(*reinterpret_cast<unsigned char *>(&(TextureRasterVAccumulator.words.high_word))) << 8);
-                                    ebxReg = (ebxReg & 0xffffff00u) | ((ebxReg + *reinterpret_cast<unsigned char *>(&(TextureRasterUAccumulator.words.high_word))) & 0xffu);
-
+                                    // Borrowed TexHeap payloads are 64-KiB aligned with 256-byte rows.
+                                    const unsigned char *sourcePixels =
+                                        static_cast<const unsigned char *>(TextureRasterScratch544);
                                     unsigned char *destPtr = reinterpret_cast<unsigned char *>(TextureRasterRowOffset + TextureRasterSpanRight);
-
-                                    unsigned int edxReg = static_cast<unsigned int>(TextureRasterUAccumulator.dword) << 16;
-                                    edxReg = (edxReg & 0xffff00ffu) | (static_cast<unsigned int>(*reinterpret_cast<unsigned char *>(&(TextureRasterScratch4C8.bytes[2]))) << 8);
-                                    edxReg = (edxReg & 0xffffff00u) | (*reinterpret_cast<unsigned char *>(&(TextureRasterScratch4E4.bytes[2])));
-
-                                    unsigned int esiReg = static_cast<unsigned int>(TextureRasterScratch4E4.dword) << 16;
-
-                                    unsigned int eaxReg = static_cast<unsigned int>(spanCount);
-                                    unsigned int ecxReg = static_cast<unsigned int>(TextureRasterScratch4C8.dword) << 16;
-                                    ecxReg = (ecxReg & 0xffff0000u) | (eaxReg & 0xffffu);
-
-                                    eaxReg = static_cast<unsigned int>(TextureRasterVAccumulator.dword) << 16;
-                                    eaxReg = (eaxReg & 0xffff00ffu) | (static_cast<unsigned int>(*reinterpret_cast<unsigned char *>(&(TextureRasterLightThreshold))) << 8);
-
-                                    unsigned int ebpReg = ecxReg & 0xffff0000u;
-                                    int loopCount = static_cast<int>(ecxReg & 0xffffu);
-
-                                    do {
-                                        unsigned char al = *reinterpret_cast<unsigned char *>(ebxReg);
-                                        unsigned __int64 sum1 = static_cast<unsigned __int64>(edxReg) + esiReg;
-                                        unsigned int carry1 = (sum1 > 0xffffffffu) ? 1u : 0u;
-                                        edxReg = static_cast<unsigned int>(sum1);
-                                        *destPtr = al;
-                                        unsigned int blSum = (ebxReg & 0xffu) + (edxReg & 0xffu) + carry1;
-                                        ebxReg = (ebxReg & 0xffffff00u) | (blSum & 0xffu);
-                                        unsigned __int64 sum2 = static_cast<unsigned __int64>(eaxReg) + ebpReg;
-                                        unsigned int carry2 = (sum2 > 0xffffffffu) ? 1u : 0u;
-                                        eaxReg = static_cast<unsigned int>(sum2);
-                                        unsigned int bhSum = ((ebxReg >> 8) & 0xffu) + ((edxReg >> 8) & 0xffu) + carry2;
-                                        ebxReg = (ebxReg & 0xffff00ffu) | ((bhSum & 0xffu) << 8);
-                                        destPtr++;
-                                        loopCount--;
-                                    } while (loopCount >= 0);
+                                    unsigned int u = static_cast<unsigned int>(TextureRasterUAccumulator.dword);
+                                    unsigned int v = static_cast<unsigned int>(TextureRasterVAccumulator.dword);
+                                    const unsigned int du = static_cast<unsigned int>(TextureRasterScratch4E4.dword);
+                                    const unsigned int dv = static_cast<unsigned int>(TextureRasterScratch4C8.dword);
+                                    unsigned int remaining = static_cast<unsigned short>(spanCount) + 1u;
+                                    while (remaining != 0) {
+                                        *destPtr = sourcePixels[((v >> 16) & 0xffu) * 256u + ((u >> 16) & 0xffu)];
+                                        u += du;
+                                        v += dv;
+                                        ++destPtr;
+                                        --remaining;
+                                    }
                                 }
 
                                 if (done) {
@@ -3219,6 +3206,7 @@ int Texture::draw_trans2(Buffer *a1, Vert *a2, int a3) {
     if (a1 != 0) {
         a1->free_data(1);
     }
+    texture_reset_fpu();
     return 0;
 }
 
@@ -4409,15 +4397,15 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
                                 unsigned int span = concat22((unsigned short)(((short)right_x - (short)TextureRasterSpanRight) - 1), (unsigned short)TextureRasterUAccumulator.dword);
                                 TextureRasterScratch498 = TextureRasterScratch498 >> 8;
                                 unsigned short light = (unsigned short)TextureRasterScratch498;
-                                unsigned short light_step = *(unsigned short *)&(TextureRasterLightPackA.low_word);
-                                unsigned char threshold = *(unsigned char *)&(TextureRasterLightThreshold);
+                                unsigned short light_step = TextureRasterLightPackA.low_word;
+                                unsigned char threshold = static_cast<unsigned char>(TextureRasterLightThreshold);
 
                                 unsigned int off = 0;
                                 for (;;) {
                                     unsigned short light_next = (unsigned short)(light + light_step);
                                     unsigned char light_hi = (unsigned char)(light_next >> 8);
-                                    int carry = carry4(u_acc, *(unsigned int *)&(TextureRasterScratch528));
-                                    u_acc = u_acc + *(unsigned int *)&(TextureRasterScratch528);
+                                    int carry = carry4(u_acc, static_cast<unsigned int>(TextureRasterScratch528));
+                                    u_acc = u_acc + static_cast<unsigned int>(TextureRasterScratch528);
                                     ++dest;
                                     unsigned int selected_row = carry ? (unsigned int)TextureRasterAlternateRowBase.value : (unsigned int)TextureRasterAlternateRowNext.value;
                                     off = selected_row + off + (unsigned int)(carry2((unsigned short)span, (unsigned short)u_acc) ? 1 : 0);
@@ -4612,15 +4600,15 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
                                 unsigned int span = concat22((unsigned short)(((short)right_x - (short)TextureRasterSpanRight) - 1), (unsigned short)TextureRasterUAccumulator.dword);
                                 TextureRasterScratch498 = TextureRasterScratch498 >> 8;
                                 unsigned short light = (unsigned short)TextureRasterScratch498;
-                                unsigned short light_step = *(unsigned short *)&(TextureRasterLightPackA.low_word);
-                                unsigned char threshold = *(unsigned char *)&(TextureRasterLightThreshold);
+                                unsigned short light_step = TextureRasterLightPackA.low_word;
+                                unsigned char threshold = static_cast<unsigned char>(TextureRasterLightThreshold);
 
                                 unsigned int off = 0;
                                 for (;;) {
                                     unsigned short light_next = (unsigned short)(light + light_step);
                                     unsigned char light_hi = (unsigned char)(light_next >> 8);
-                                    int carry = carry4(u_acc, *(unsigned int *)&(TextureRasterScratch528));
-                                    u_acc = u_acc + *(unsigned int *)&(TextureRasterScratch528);
+                                    int carry = carry4(u_acc, static_cast<unsigned int>(TextureRasterScratch528));
+                                    u_acc = u_acc + static_cast<unsigned int>(TextureRasterScratch528);
                                     ++dest;
                                     unsigned int selected_row = carry ? (unsigned int)TextureRasterAlternateRowBase.value : (unsigned int)TextureRasterAlternateRowNext.value;
                                     off = selected_row + off + (unsigned int)(carry2((unsigned short)span, (unsigned short)u_acc) ? 1 : 0);
