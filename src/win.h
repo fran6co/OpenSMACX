@@ -411,7 +411,7 @@ class Win : public AutoSound {
   void set_scrolling_callback(ScrollCallback callback);
   void reset_window_clip();
   void sync_palette();
-  int is_child(int value);
+  int is_child(Win *child);
   static int OnSetCursor(void *hwnd, void *window, unsigned int hittest,
                          unsigned int message);
   void set_vert_pos(int position);
