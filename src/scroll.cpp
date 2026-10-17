@@ -1463,7 +1463,7 @@ uint32_t Scroll::set_thumb_rect() {
 Purpose: Drag the thumb or repeat a track-page movement while the scroll owns
          the pointer, then notify its parent of an actual position change.
 // ORIGINAL: 0x00605D90 ?on_mouse_move@Scroll@@QAEXHH@Z 0x00605D90-0x006061DB FILE
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/00605d90.cpp","source:src/scroll.h:Scroll","source:src/win.h:WinPointerOwner1","source:src/win.h:WinSizingFlag"],"reason":"Home the drag and held-track behavior on real Scroll/Win members, source-owned pointer state and parent callbacks; remove seed vtable facades and executable-address globals."}
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/00605d90.cpp","source:src/scroll.h:Scroll","source:src/win.h:WinPointerOwner1","source:src/win.h:WinSizingFlag","pinned:60610A reloads the current parent for WinCallbackWindow;606120..606122 compares the entry position and skips notifications AND sound to redraw6061C7 when unchanged","pinned:606128..606196 selects reversal before the parent callback and reloads callback/id/position/bounds inside that selected branch, without retesting reversal after the callback","pinned:6061A5 reloads the current parent after notifications;6061AB uses its Sound view at+0x84, distinct from the wheel/key/button notification view at+0x80"],"reason":"Home the drag and held-track behavior on real Scroll/Win members, source-owned pointer state and parent callbacks; preserve change-gated notifications/sound, branch-selected reversal and live parent reloads, without seed vtable facades or executable-address globals."}
 // symbol    ?on_mouse_move@Scroll@@UAEXHH@Z
 */
 void Scroll::on_mouse_move(int x, int y) {
@@ -1572,26 +1572,26 @@ void Scroll::on_mouse_move(int x, int y) {
         }
     }
 
-    WinCallbackWindow = parent;
+    WinCallbackWindow = win_parent_;
     if (saved_position != position_) {
-        int notified_position = position_;
-        if (range_reversed_ != 0U) {
-            notified_position = (range_minimum_ - position_) + range_maximum_;
-        }
-        parent->on_scrolling(field_A18_, notified_position);
-        if (field_2148_ != nullptr) {
-            int callback_position = position_;
-            if (range_reversed_ != 0U) {
-                callback_position = (range_minimum_ - position_)
-                                    + range_maximum_;
+        if (range_reversed_ == 0U) {
+            win_parent_->on_scrolling(field_A18_, position_);
+            if (field_2148_ != nullptr) {
+                field_2148_(field_A18_, position_);
             }
-            field_2148_(field_A18_, callback_position);
+        } else {
+            win_parent_->on_scrolling(
+                field_A18_, (range_minimum_ - position_) + range_maximum_);
+            if (field_2148_ != nullptr) {
+                field_2148_(field_A18_,
+                            (range_minimum_ - position_) + range_maximum_);
+            }
         }
-    }
 
-    Sound *const target = parent->legacy_sound_33();
-    if (target != nullptr && target->is_playing() == 0) {
-        target->play();
+        Sound *const target = win_parent_->legacy_sound_33();
+        if (target != nullptr && target->is_playing() == 0) {
+            target->play();
+        }
     }
     redraw();
 }
@@ -1687,7 +1687,7 @@ void Scroll::on_mousewheel_down(int delta) {
                             (range_minimum_ - position_) + range_maximum_);
             }
         }
-        Sound *const target = win_parent_->legacy_sound_33();
+        Sound *const target = win_parent_->legacy_sound_32();
         if (target != nullptr && target->is_playing() == 0) {
             target->play();
         }
@@ -1697,7 +1697,7 @@ void Scroll::on_mousewheel_down(int delta) {
     redraw();
 }
 
-// ORIGINAL: 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z 0x00606440-0x0060655C
+// ORIGINAL: 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z 0x00606440-0x0060655C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Preserve the original delta gate over notifications and sound, branch-selected reversal mapping, and callback-visible reloads.","evidence":["pinned:60649C skips directly to redraw for delta zero;6064BC/6064EE invoke parent notification;6064C2..60651C reads current callback/position/ranges/id within the previously selected branch","pinned:606521 reloads live parent after callbacks for sound; no additional parent-null guard is present"]}
 void Scroll::on_mousewheel_up(int delta) {
     Win *const parent = win_parent_;
@@ -1706,10 +1706,11 @@ void Scroll::on_mousewheel_up(int delta) {
     }
     WinCallbackWindow = parent;
 
-    if (position_ - 1 < range_minimum_) {
+    const int next = position_ - 1;
+    if (next < range_minimum_) {
         position_ = range_minimum_;
     } else {
-        --position_;
+        position_ = next;
     }
     if (range_reversed_ != 0U) {
         position_ = (range_maximum_ - position_) + range_minimum_;
@@ -1729,7 +1730,7 @@ void Scroll::on_mousewheel_up(int delta) {
                             (range_maximum_ - position_) + range_minimum_);
             }
         }
-        Sound *const target = win_parent_->legacy_sound_33();
+        Sound *const target = win_parent_->legacy_sound_32();
         if (target != nullptr && target->is_playing() == 0) {
             target->play();
         }
@@ -1796,7 +1797,7 @@ int Scroll::on_key_click(int, int key) {
         }
     }
 
-    Sound *const target = win_parent_->legacy_sound_33();
+    Sound *const target = win_parent_->legacy_sound_32();
     if (target != nullptr && target->is_playing() == 0) {
         target->play();
     }
@@ -1843,7 +1844,7 @@ void Scroll::on_button_clicked(int button_id) {
         }
     }
 
-    Sound *const target = win_parent_->legacy_sound_33();
+    Sound *const target = win_parent_->legacy_sound_32();
     if (target != nullptr && target->is_playing() == 0) {
         target->play();
     }

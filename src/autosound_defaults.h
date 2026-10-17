@@ -46,7 +46,7 @@ struct AutoSoundDefaultsBlock {
   Sound *val_29_;
   Sound *val_30_;
   Sound *val_31_;
-  int val_32_;
+  Sound *val_32_;
   Sound *val_33_;
   Sound *event_window_;
   Sound *val_35_;

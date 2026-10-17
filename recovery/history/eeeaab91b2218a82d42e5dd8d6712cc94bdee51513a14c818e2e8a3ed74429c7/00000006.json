@@ -1,0 +1,19 @@
+{
+  "event_id": "e29640153ed3edcd0c13e28dbe23439157aacded174f1fdb906494cf6605bf19",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "scroll-mouse-move-live-state-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/scroll.cpp original605D90 now keeps the pinned saved-position gate over both notifications and sound, selects reversal before callbacks, and reloads current parent for WinCallbackWindow, notification and post-callback Sound receiver. The existing source binding retains exact pinned branch/reload evidence.",
+      "recovery/tests/test_scroll_sound_fields_oct17.py extracts the actual complete source definition and rejects stale-parent, reversal-retest and unconditional-sound mutations. Controls include unchanged positions, callback mutations and current parent/null/playing sound paths. Independent source review found no fidelity blocker.",
+      "Forty-six local owner measurements preserve all24 prior passes and add606440; installed record banks that historical claim only after fresh81/81 measurement, with separate strict bytes/boundary/references pass. Full scoped strict matching remains unknown and whole-game fidelity unfinished. Broader tests pass66 with one independently reproduced preexisting Win initializer-symbol continuity failure; no test is weakened or baseline reset."
+    ]
+  },
+  "previous_event": "bd1331c258494f42e86b269de14c0dd0767189432b00dbf21badbb2d91745eb4",
+  "request_id": "scroll-mouse-move-live-state-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:scroll-decrement-spelling-oct17"
+}
