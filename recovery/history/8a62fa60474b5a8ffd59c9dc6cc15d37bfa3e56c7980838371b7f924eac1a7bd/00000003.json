@@ -1,0 +1,20 @@
+{
+  "event_id": "380255d1cbee51c3aa79b0a2c4ccc8cdba3bc92ed59e2b6a5a8d66c830cb489a",
+  "payload": {
+    "affects": [
+      "entity-be02b7f209ef435968c60a962d148f263e520d6279f3960af39f5328d544cfb5"
+    ],
+    "author": "coordinator",
+    "discovery_id": "typed-netwin-scalar-byte-reads-oct17",
+    "evidence": [
+      "Pinned full313byte span SHA fb8f9a93698eccda0331d0f855cdda0df14ba54837d04cd95aa4787d428c2775 begins with byte read93D4B0 (NetAllocationNode.max_players_+20) and481F9E reads byte[EDI-384] from Player.is_leader_female+0. Existing source declarations already provide uint32 and32bitBOOL; narrowing to unsigned8 preserves the original lowbyte, including nonboolean/negative values."
+    ],
+    "hypothesis": "Use existing uint32 max_players_ and BOOL is_leader_female as scalar byte values, not address aliases.",
+    "kind": "discovery"
+  },
+  "previous_event": "3c7586ae7fb1f0987eadc3c33b2d5b159fa3aa00283ce1333fe6c901c9c55505",
+  "request_id": "typed-netwin-scalar-byte-reads-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:player-member-reads-oct17"
+}

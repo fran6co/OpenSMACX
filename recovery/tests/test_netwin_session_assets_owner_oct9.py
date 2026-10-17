@@ -35,8 +35,9 @@ def _body(signature: str) -> str:
 
 def test_config_players_reads_the_max_player_member_as_a_byte():
     body = _body("void NetWin::config_players()")
-    assert "reinterpret_cast<const unsigned char *>(" in body
-    assert "&NetDaemonNet.allocation_node().max_players_)[0]" in body
+    assert "unsigned char color = static_cast<unsigned char>(" in body
+    assert "NetDaemonNet.allocation_node().max_players_);" in body
+    assert "reinterpret_cast" not in body
     assert "NetWinConfigColor" not in body
     assert "0x0093D4B0" not in SOURCE
 
@@ -51,7 +52,7 @@ def test_config_players_uses_typed_player_fields_and_native_copy_order():
         "strcpy(row->adjective_faction_, player->adj_name_faction)",
         "strcpy(row->leader_title_, player->title_leader)",
         "strcpy(row->adjective_leader_, player->adj_leader)",
-        "&player->is_leader_female)[0]",
+        "static_cast<uint8_t>(player->is_leader_female)",
     ]
     offsets = [body.index(item) for item in copies]
     assert offsets == sorted(offsets)

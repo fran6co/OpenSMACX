@@ -1,0 +1,22 @@
+{
+  "event_id": "95976bbb377d6d1812a147c5c94c852b7f4b889eba52075550ca330db1a0310c",
+  "payload": {
+    "affects": [
+      "entity-be02b7f209ef435968c60a962d148f263e520d6279f3960af39f5328d544cfb5",
+      "entity-da3bbcbc3eeb9c62b08afe24f32141709b088a9e75b6fd8f537e78371f9ec4b2"
+    ],
+    "author": "coordinator",
+    "discovery_id": "player-member-remaining-fidelity-and-host-debt-oct17",
+    "evidence": [
+      "Fresh candidate full application compiles/links. All176physicalCOFF objectsPASS with only the existing Council function projected;175whole objects remain compared. All5581CPP classifications and3161primarystrict classifications unchanged:3161masked; strict1930PASS/1206UNKNOWN/25FAIL. Both scoped functions remainMISMATCH and no historical obligations are demoted. Independent source review found no blocker. This is neither automatic acceptance nor complete runtime/ABI/linked-retention proof.",
+      "Fresh same-environment baseline34hostfiles213PASS/13FAIL and candidate35files226PASS/13sameFAIL retain every226old test classification and add13passing cases. First candidate run had two legacy fixture skips because those tests ignored OPENSMACX_IMAGE and read worktree-local pinned paths; that report is retained. A local ignored symlink to the identical pinned image supplies the missing fixture prerequisite, without production/test changes, and the complete fresh rerun restores both oldpasses. Preexisting historical projection/fixture failures stay visible, not waived or fixed to admit this batch."
+    ],
+    "hypothesis": "Retain original matching/restoration and preexisting host/structure/runtime obligations after this manually reviewed source checkpoint.",
+    "kind": "discovery"
+  },
+  "previous_event": "6ef29ee2921c887326dcf5fb789a5d35a96deb4f2f456961615cefcdceac1a3f",
+  "request_id": "player-member-remaining-fidelity-and-host-debt-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:player-member-reads-oct17"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "f29c0acc34ad681edbe098ca2bd2f7720f0b390d03ce65f1c4d7185a8400e235",
+  "payload": {
+    "affects": [
+      "entity-da3bbcbc3eeb9c62b08afe24f32141709b088a9e75b6fd8f537e78371f9ec4b2"
+    ],
+    "author": "coordinator",
+    "discovery_id": "typed-seven-player-council-scan-oct17",
+    "evidence": [
+      "Pinned full525byte span SHA a85b752b683b205c2c130d77fd8699ab059800142a080fc68c32f89cd0239cf1:52C781 loads9474F4 (Players1+508);52C78E tests byte[EDI] mask80;52C81A adds59C,52C820 incrementsESI,52C821 comparesEDI with949C38 (nonloaded Players8+508). The initial task prose placed CMP at52C820; the fresh full opcode control corrects that coordinate without altering source identities or original behavior. Existing Player has rule_flags+508 and stride59C."
+    ],
+    "hypothesis": "Replace the raw rule_flags byte cursor and out-of-array member sentinel with the existing Player array and exact seven-slot indexed range.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "typed-seven-player-council-scan-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:player-member-reads-oct17"
+}
