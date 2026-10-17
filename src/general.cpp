@@ -4635,8 +4635,5 @@ int __cdecl apply_scale_adjustment(int value) {
 Status: Complete
 */
 int __cdecl cos(int a1, int a2) {
-    uint32_t wrapped = static_cast<uint32_t>(a1) + 0x3fffffffU;
-    int32_t biased_angle;
-    std::memcpy(&biased_angle, &wrapped, sizeof(biased_angle));
-    return sin(biased_angle, a2);
+    return sin(static_cast<int>(static_cast<uint32_t>(a1) + 0x3fffffffU), a2);
 }

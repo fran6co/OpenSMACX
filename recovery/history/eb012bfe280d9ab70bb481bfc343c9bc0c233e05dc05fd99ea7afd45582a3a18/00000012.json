@@ -1,0 +1,21 @@
+{
+  "event_id": "612f29a5e4c1ea16630a27029e950f958a11e8794214db0c61532dd803e24b24",
+  "payload": {
+    "affects": [
+      "entity-d62fc4da1530058d4b24f6f17ca44ad7996d0da60dbfad1a6c26ced40f7ae077"
+    ],
+    "author": "coordinator",
+    "discovery_id": "fixed-cos-original-wrapping-phase-oct18",
+    "evidence": [
+      "Pinned63BAC0..63BAD9 forwards angle+3fffffff modulo32bits and the original signed scale to the mapped int sin63B9B0. Native controlled default-profile local screening, then the fresh full application output and canonical101subject measurement, establish eight-instruction byte restoration. /Oy- remains a different compiler trial and no flags are changed.",
+      "The old named memcpy local is replaced by unsigned32 addition followed by int conversion in the actual first call argument. Host actual-source controls use an independent memcpy oracle, boundary cross-product,4096deterministic32-bit cases, one-call/argument/result checks and four compiling damage witnesses under GCC/Clang O0/O2+UBSan. This is target-specific conversion behavior, not universal C++ portability or runtime proof."
+    ],
+    "hypothesis": "Restore the pinned fixed-point cosine wrapper without materializing the biased-angle bit copy before loading its scale argument.",
+    "kind": "discovery"
+  },
+  "previous_event": "a22cca3e149d2dd92496d1677c6cb63248c23545fef74fee36af2a32e9dfa811",
+  "request_id": "fixed-cos-original-wrapping-phase-oct18",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:general-owner-split-oct17"
+}

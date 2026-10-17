@@ -235,6 +235,30 @@ def _validate_header_rng_sources(
     }
 
 
+FIXED_COS_PRIOR = (
+    b"int __cdecl cos(int a1, int a2) {\n"
+    b"    uint32_t wrapped = static_cast<uint32_t>(a1) + 0x3fffffffU;\n"
+    b"    int32_t biased_angle;\n"
+    b"    std::memcpy(&biased_angle, &wrapped, sizeof(biased_angle));\n"
+    b"    return sin(biased_angle, a2);\n"
+    b"}\n"
+)
+FIXED_COS_CURRENT = (
+    b"int __cdecl cos(int a1, int a2) {\n"
+    b"    return sin(static_cast<int>(static_cast<uint32_t>(a1) + 0x3fffffffU), a2);\n"
+    b"}\n"
+)
+
+
+def _restore_admitted_fixed_cos(general_bytes: bytes) -> bytes:
+    """Undo only the reviewed whole body; never replace an arbitrary function."""
+    assert general_bytes.count(b"int __cdecl cos(int a1, int a2) {") == 1
+    old_count = general_bytes.count(FIXED_COS_PRIOR)
+    new_count = general_bytes.count(FIXED_COS_CURRENT)
+    assert (old_count, new_count) in ((1, 0), (0, 1)), "unadmitted fixed cosine body"
+    return general_bytes.replace(FIXED_COS_CURRENT, FIXED_COS_PRIOR, 1)
+
+
 def _project_header_rng_general(
     general_bytes: bytes,
     header_io_cpp: bytes,
@@ -242,6 +266,7 @@ def _project_header_rng_general(
     crt_random_cpp: bytes,
     crt_random_h: bytes,
 ) -> bytes:
+    general_bytes = _restore_admitted_fixed_cos(general_bytes)
     records = _validate_header_rng_sources(
         header_io_cpp, header_io_h, crt_random_cpp, crt_random_h
     )
@@ -469,5 +494,19 @@ def test_inverse_rejects_duplicate_undo_body_and_extra_council_prefix():
 
     parts = _actual_split(LIVE_PATHS)
     parts["council"] = b"// unadmitted prefix\n" + parts["council"]
+    with pytest.raises(AssertionError):
+        inverse_split(parts)
+
+
+@pytest.mark.parametrize("damage", ["wrong-phase", "missing-body", "duplicate-body"])
+def test_inverse_rejects_unadmitted_fixed_cos_changes(damage):
+    parts = _actual_split(LIVE_PATHS)
+    assert parts["general"].count(FIXED_COS_CURRENT) == 1
+    changed = {
+        "wrong-phase": FIXED_COS_CURRENT.replace(b"0x3fffffffU", b"0x40000000U"),
+        "missing-body": b"",
+        "duplicate-body": FIXED_COS_CURRENT + FIXED_COS_CURRENT,
+    }[damage]
+    parts["general"] = parts["general"].replace(FIXED_COS_CURRENT, changed, 1)
     with pytest.raises(AssertionError):
         inverse_split(parts)
