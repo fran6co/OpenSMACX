@@ -83,7 +83,7 @@ def test_migrated_history_identity_and_native_writer_roundtrip():
                             0x00642960, 0x006429F0, 0x00642A70,
                             0x0063CF30, 0x0063D120, 0x0063D1A0, 0x0063D560,
                             0x00640BB0, 0x00640C30, 0x00640E50, 0x00640EC0,
-                            0x00640F40, 0x00641000} | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS) | set(MAIN_STATE_MACHINES)
+                            0x00640F40, 0x00641000, 0x00634330} | set(SIXTEEN_MEMBERS) | set(FOURTEEN_MEMBERS) | set(MAIN_STATE_MACHINES)
     assert set(manifest.units) == UNITS
     for address, (end, symbol, unit, claimed, history_digest) in EXPECTED.items():
         row = rows[address]

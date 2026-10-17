@@ -62,10 +62,8 @@
 #include "filemap.h"
 #include "zlib.h"
 
-// Original mapped file-transfer wrappers, now implemented in this owner TU.
+// Original mapped file-transfer deflate helper, implemented in this owner TU.
 int __cdecl netdaemon_deflate_buffer(unsigned char *, unsigned long *,
-                                      unsigned char *, unsigned int);
-int __cdecl netdaemon_inflate_buffer(unsigned char *, unsigned long *,
                                       unsigned char *, unsigned int);
 #include <direct.h>
 #include <new>
@@ -4333,9 +4331,8 @@ bool NetDaemon::process_file_transfer_message(char *message,
             const uint32_t compressed_size =
                 (chunk_packet.chunk_index() << 11) +
                 static_cast<uint32_t>(message_size);
-            netdaemon_inflate_buffer(mapped, &decompressed_size,
-                                    NetDaemonFileTransferReceiveBuffer,
-                                    static_cast<unsigned int>(compressed_size));
+            uncompress(mapped, &decompressed_size,
+                       NetDaemonFileTransferReceiveBuffer, compressed_size);
             filemap.close();
             if (NetDaemonFileTransferReceiveBuffer != 0) {
                 free(NetDaemonFileTransferReceiveBuffer);
@@ -8312,49 +8309,4 @@ int __cdecl netdaemon_deflate_buffer(unsigned char *next_out,
     }
     *out_size = stream.total_out;
     return deflateEnd(&stream);
-}
-
-
-/*
-Purpose: Inflate compressed input into next_out with *out_size as the
-         output capacity, writing total_out back only on stream end.
-         On other inflate statuses, call inflateEnd and return the
-         original inflate status unchanged.
-
-// ORIGINAL: 0x00634330 sub_634330 0x00634330-0x006343BD FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00634330.cpp", "Historical seed spelling sub_634330; current source mapping sub_634330; emitted symbol ?sub_634330@@YAHPAEHPAKI@Z.", "Pinned caller 0x00534C81 pushes destination, destination-size pointer, compressed input pointer and compressed byte count in cdecl order.", "Pinned callee 0x00634330 loads *arg2 into avail_out, arg3 into next_in, arg4 into avail_in, and stores total_out through arg2 only on Z_STREAM_END; the old seed second-argument-unused transcription is false.", "Pinned stream initialization zeros zalloc and zfree but leaves opaque untouched; preserve this original stack-field quirk."], "reason": "Recover the original four-argument inflate wrapper on the NetDaemon transfer path, preserving its size-write and error/cleanup order. Correct the old seed's disproven argument interpretation; this grants no new byte or ABI match."}
-// TRIED: the wrapper's second argument is never read - the in-place work pointer (third argument) carries both the input and the output-size handback, which the seed's dword-indexed reading had assigned to the wrong slot.
-// symbol    ?netdaemon_inflate_buffer@@YAHPAEPAK0I@Z
-// size      141 bytes
-// callers   1   call targets   3
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// indirect  0x0063436D 0x00634380 0x00634394 0x006343AF
-// Pinned correction: 0x00534C81 passes dest, &file_size, compressed source, source size; 0x00634330 reads capacity from arg2 and input from arg3.
-Status: Coverage transcription - unclaimed body
-*/
-
-int __cdecl netdaemon_inflate_buffer(unsigned char *next_out,
-                                      unsigned long *out_size,
-                                      unsigned char *next_in,
-                                      unsigned int avail_in) {
-    z_stream stream;
-    stream.next_in = next_in;
-    stream.avail_in = static_cast<uInt>(avail_in);
-    stream.next_out = next_out;
-    stream.avail_out = static_cast<uInt>(*out_size);
-    stream.zalloc = Z_NULL;
-    stream.zfree = Z_NULL;
-    const int init_status = inflateInit_(&stream, ZLIB_VERSION,
-                                         static_cast<int>(sizeof(z_stream)));
-    if (init_status != 0) {
-        return init_status;
-    }
-    const int inflate_status = inflate(&stream, Z_FINISH);
-    if (inflate_status != Z_STREAM_END) {
-        inflateEnd(&stream);
-        return inflate_status;
-    }
-    *out_size = stream.total_out;
-    return inflateEnd(&stream);
 }

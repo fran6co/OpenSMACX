@@ -23,7 +23,7 @@ OWNER_PATHS = {
     0x63BEB0: "src/net_session_picker.cpp",
     0x63BEE0: "src/net_session_picker.cpp",
     0x634280: "src/netdaemon.cpp",
-    0x634330: "src/netdaemon.cpp",
+    0x634330: "src/vendor/zlib.recovery.h",
 }
 
 
@@ -94,8 +94,10 @@ def test_original_identity_spans_claims_and_lessons_survive_owner_transfer():
     assert any("second argument is never read" in note
                for note in inflate_old.ruled_out)
     net_text = (ROOT / "src/netdaemon.cpp").read_text()
-    marker = net_text.index("// ORIGINAL: 0x00634330")
-    envelope = net_text[marker:net_text.find("int __cdecl netdaemon_inflate_buffer", marker)]
+    component_text = (ROOT / "src/vendor/zlib.recovery.h").read_text()
+    marker = component_text.index("// ORIGINAL: 0x00634330")
+    envelope = component_text[component_text.rfind("/*", 0, marker):
+                              component_text.find("*/", marker) + 2]
     assert "second argument is never read" in envelope
     assert "Pinned correction: 0x00534C81" in envelope
 
@@ -174,9 +176,9 @@ def test_real_call_paths_use_both_recovered_transfer_operations():
         "src/netdaemon.cpp", "NetDaemon::process_file_transfer_message"
     )
     assert "netdaemon_deflate_buffer(static_cast<unsigned char *>(compressed)," in send
-    assert "netdaemon_inflate_buffer(mapped, &decompressed_size," in transfer
-    assert "static_cast<unsigned int>(compressed_size)" in transfer
-    assert "uncompress(" not in transfer
+    assert "uncompress(mapped, &decompressed_size," in transfer
+    assert "NetDaemonFileTransferReceiveBuffer, compressed_size);" in transfer
+    assert "netdaemon_inflate_buffer" not in transfer
     assert "process_file_transfer_message(message, message_size, sender_id," in dispatch
 
 
@@ -210,11 +212,7 @@ def test_actual_owner_definitions_preserve_wrap_scale_and_zlib_paths():
     deflate_body = _function_body(
         "src/netdaemon.cpp", "netdaemon_deflate_buffer"
     )
-    inflate_body = _function_body(
-        "src/netdaemon.cpp", "netdaemon_inflate_buffer"
-    )
     assert "stream.opaque" not in deflate_body
-    assert "stream.opaque" not in inflate_body
 
     source = r'''#include <cassert>
 #include <stdint.h>
@@ -280,7 +278,7 @@ struct NetSessionPickerWin {
   struct Tail { int client_width_; int client_height_; } tail_;
   int scale_client_width(int); int scale_client_height(int);
 };
-'''+cos_body+"\n"+width_body+"\n"+height_body+"\n"+deflate_body+"\n"+inflate_body+r'''
+  '''+cos_body+"\n"+width_body+"\n"+height_body+"\n"+deflate_body+r'''
 static int signed_product_div(int a, int b, int divisor) {
   const uint32_t product = static_cast<uint32_t>(a) * static_cast<uint32_t>(b);
       int32_t signed_product; std::memcpy(&signed_product, &product, sizeof(product));
@@ -319,14 +317,6 @@ int main() {
   operation_result = Z_STREAM_END; produced = 23; end_result = -6;
   assert(netdaemon_deflate_buffer(dst, &capacity, src, 11) == -6 && capacity == 23);
 
-  capacity = 19; init_result = -5; end_calls = operation_calls = 0;
-  assert(netdaemon_inflate_buffer(dst, &capacity, src, 11) == -5);
-  assert(end_calls == 0 && operation_calls == 0 && capacity == 19);
-  init_result = 0; operation_result = Z_NEED_DICT; end_calls = operation_calls = 0;
-  assert(netdaemon_inflate_buffer(dst, &capacity, src, 11) == Z_NEED_DICT);
-  assert(end_calls == 1 && operation_calls == 1 && capacity == 19);
-  operation_result = Z_STREAM_END; produced = 31; end_result = 5;
-  assert(netdaemon_inflate_buffer(dst, &capacity, src, 11) == 5 && capacity == 31);
 }
 '''
     _compile_and_run(source)
@@ -338,8 +328,9 @@ def test_installed_definitions_retain_reviewed_semantic_choices():
         "src/net_session_picker.cpp", "NetSessionPickerWin::scale_client_width"
     )
     assert "client_width_" in width and "client_height_" not in width
-    assert "*out_size" in _function_body("src/netdaemon.cpp", "netdaemon_inflate_buffer")
-    assert "stream.opaque" not in _function_body("src/netdaemon.cpp", "netdaemon_inflate_buffer")
-    assert "netdaemon_inflate_buffer(mapped, &decompressed_size," in _function_body(
-        "src/netdaemon.cpp", "NetDaemon::process_file_transfer_message"
-    )
+    transfer = _function_body("src/netdaemon.cpp", "NetDaemon::process_file_transfer_message")
+    assert "uncompress(mapped, &decompressed_size," in transfer
+    assert "netdaemon_inflate_buffer" not in transfer
+    from test_zlib_uncompress_owner_oct17 import upstream_body
+    assert "*destLen = stream.total_out;" in upstream_body()
+    assert "stream.opaque" not in upstream_body()
