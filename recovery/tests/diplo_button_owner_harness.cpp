@@ -123,10 +123,10 @@ struct DiploWin {
   int offer_value_[2][8];
   int faction_id_;
   int faction_id_with_;
-  int field_A24_;
-  int field_A28_;
+  int32_t offer_state_[2];
 
-  DiploWin() : faction_id_(0), faction_id_with_(1), field_A24_(0), field_A28_(0) {
+  DiploWin() : faction_id_(0), faction_id_with_(1) {
+    offer_state_[0] = offer_state_[1] = 0;
     clear();
   }
   void clear() {
@@ -223,8 +223,8 @@ static void reset_controls(DiploWin &window) {
   window.clear();
   window.faction_id_ = 0;
   window.faction_id_with_ = 1;
-  window.field_A24_ = 0;
-  window.field_A28_ = 0;
+  window.offer_state_[0] = 0;
+  window.offer_state_[1] = 0;
   std::memset(Players, 0, sizeof(Players));
   std::memset(PlayersData, 0, sizeof(PlayersData));
   std::memset(selected_tech, 0, sizeof(selected_tech));
@@ -295,17 +295,17 @@ static void controls_dispatch_and_simple_offers() {
   assert(last_offer_side[2] == 0 && last_offer_type[2] == 2);
 
   reset_controls(window);
-  window.field_A28_ = 1;
+  window.offer_state_[1] = 1;
   IsMultiplayerPBEM = 1;
   window.on_button_clicked(2);
-  assert(DiploOffersDirty == 1 && window.field_A24_ == 1);
+  assert(DiploOffersDirty == 1 && window.offer_state_[0] == 1);
   assert(redraw_count == 1 && do_it_count == 1);
   assert(last_message_opcode == 0x150A);
 
   reset_controls(window);
   IsMultiplayerNet = 1;
   window.on_button_clicked(3);
-  assert(DiploOffersDirty == 1 && window.field_A24_ == 2);
+  assert(DiploOffersDirty == 1 && window.offer_state_[0] == 2);
   assert(window.offer_count_[1] == 0 && add_offer_count == 0);
   assert(popup_destruct_count == 1);
 
@@ -313,12 +313,12 @@ static void controls_dispatch_and_simple_offers() {
   random_values[0] = 1;  // energy offer branch
   random_values[1] = 10; // energy amount: (10*5+5)*5 = 275
   random_values[2] = 3;  // no treaty offer
-  random_values[3] = 0;  // native writes field_A28_ = 1
+  random_values[3] = 0;  // native writes offer_state_[1] = 1
   random_value_count = 4;
   window.on_button_clicked(3);
   assert(window.offer_count_[1] == 1 && window.offer_type_[1][0] == 1 &&
          window.offer_value_[1][0] == 275);
-  assert(window.field_A28_ == 1 && redraw_count == 2);
+  assert(window.offer_state_[1] == 1 && redraw_count == 2);
   assert(random_call_count == 4);
 
   reset_controls(window);
@@ -342,7 +342,7 @@ static void controls_dispatch_and_simple_offers() {
   random_values[3] = 2;  // third status arm leaves both fields unchanged
   random_value_count = 4;
   window.on_button_clicked(3);
-  assert(window.field_A28_ == 0 && window.offer_type_[0][0] == 0 &&
+  assert(window.offer_state_[1] == 0 && window.offer_type_[0][0] == 0 &&
          redraw_count == 2);
   assert(random_call_count == 4);
 

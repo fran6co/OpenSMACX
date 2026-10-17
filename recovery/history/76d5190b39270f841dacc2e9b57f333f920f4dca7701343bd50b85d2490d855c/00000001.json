@@ -1,0 +1,39 @@
+{
+  "event_id": "ccd5e7ebd209b7478c861222f3397f85c6d9068378822afac1debf0ba59fc6f4",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Expand verification ownership to the four source-unchanged bodies whose Release codegen responds to the DiploWin member-array header correction: communicate,setup_player,proposal_menu,load_interface. No edits to faction.cpp/game.cpp are authorized. Preserve original task baseline and every historical claim. Actual nondebug differences must be reviewed explicitly; no whole-TU/generated-code waiver.",
+      "Fresh baseline/current local measurements preserve communicate/proposal_menu refusals and setup_player/load_interface mismatches. Unchanged candidate and restored-source Release replica controls reproduce retained DiploWin and faction objects. Native residual is not asserted green: physical private-label renumbering and four scheduled-body differences remain explicit. Manual review, original value/evaluation order, fresh link and destination checks are required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5561584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "diplo-array-header-codegen-collateral-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:diplowin-offer-state-array-oct17"
+}

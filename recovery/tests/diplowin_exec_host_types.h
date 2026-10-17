@@ -58,17 +58,65 @@ struct Buffer {
   int box_sprite(RECT *, BoxSpriteParams *) { DiploControlEvents.add(13); return 0; }
 };
 struct StringStructPayload { char *text; };
+struct StringStructEntry {
+  int id;
+  StringStructPayload *payload;
+  StringStructEntry *next;
+  StringStructEntry *previous;
+  StringStructPayload *string_payload() { return payload; }
+};
 struct StringList {
+  StringStructEntry *head_, *current_;
   int entry_count_, current_position_;
   char *pending_text_;
   uint32_t field_20_, field_24_;
-  int ids[32]; char *texts[32];
-  StringList() : entry_count_(0), current_position_(0), pending_text_(0), field_20_(0), field_24_(0) {}
-  int seek_pos(int index) { if (index < 0 || index >= entry_count_) return 0; current_position_ = index; return 1; }
-  int current_id() const { return entry_count_ ? ids[current_position_] : 0; }
-  StringStructPayload *current_entry() { static StringStructPayload payload; payload.text = entry_count_ ? texts[current_position_] : 0; return entry_count_ ? &payload : 0; }
-  char *current_text() { return entry_count_ ? texts[current_position_] : 0; }
-  int add(int id) { if (entry_count_ == 32) return 4; ids[entry_count_] = id; texts[entry_count_] = pending_text_; current_position_ = entry_count_++; return 0; }
+  StringStructEntry entries_[32];
+  StringStructPayload payloads_[32];
+  StringList() : head_(0), current_(0), entry_count_(0), current_position_(0), pending_text_(0), field_20_(0), field_24_(0) {}
+  int seek_pos(int index) {
+    if (index < 0 || index >= entry_count_ || !head_) return 0;
+    current_ = head_;
+    for (int i = 0; i < index; ++i) current_ = current_->next;
+    current_position_ = index;
+    return 1;
+  }
+  int current_id() const { return head_ ? current_->id : 0; }
+  StringStructPayload *current_entry() { return head_ ? current_->string_payload() : 0; }
+  char *current_text() { return head_ ? current_->string_payload()->text : 0; }
+  int add(int id) {
+    if (entry_count_ == 32) return 4;
+    StringStructEntry *entry = &entries_[entry_count_];
+    entry->id = id;
+    entry->payload = &payloads_[entry_count_];
+    entry->payload->text = pending_text_;
+    if (!head_) {
+      entry->next = entry->previous = entry;
+      head_ = entry;
+    } else {
+      StringStructEntry *tail = head_->previous;
+      entry->next = head_;
+      entry->previous = tail;
+      tail->next = entry;
+      head_->previous = entry;
+    }
+    current_ = entry;
+    current_position_ = entry_count_++;
+    return 0;
+  }
+  void clear() {
+    if (!head_) return;
+    int index = 0;
+    if (entry_count_ > 0) {
+      do {
+        current_ = head_->next;
+        head_ = current_;
+        ++index;
+      } while (index < entry_count_);
+    }
+    head_ = 0;
+    current_position_ = 0;
+    entry_count_ = 0;
+  }
 };
 struct Win {
   virtual int set_modal(int, int (__cdecl *)(), Win *) { DiploControlEvents.add(20); return 0; }
@@ -96,7 +144,7 @@ struct StringBox : GraphicWin {
   StringList list;
   StringList &strings() { return list; }
   void init(int, int, int, int, Win *, void *, int) { DiploControlEvents.add(4); }
-  void clear() { list.entry_count_ = 0; DiploControlEvents.add(5); }
+  void clear() { list.clear(); DiploControlEvents.add(5); }
   void add(char *text, int id, int) { list.pending_text_ = text; list.add(id); }
 };
 struct EditBox : GraphicWin {
@@ -131,7 +179,7 @@ struct OfferResetCell {
 };
 struct DiploWin : GraphicWin, SubInterface {
   Spot spot_;
-  int offer_count_[2]; int field_A24_, field_A28_;
+  int offer_count_[2]; int32_t offer_state_[2];
   int faction_id_, faction_id_with_;
   int field_16C_;
   int offer_type_[2][8]; int offer_value_[2][8];
@@ -142,7 +190,7 @@ struct DiploWin : GraphicWin, SubInterface {
   RECT button_rects_[13];
   FlatButton flatButtons_[13]; StringBox stringBox_; EditBox editBox_;
   int calls[16], call_count;
-  DiploWin() : field_A24_(0), field_A28_(0), faction_id_(0), faction_id_with_(0), field_16C_(0), call_count(0) {}
+  DiploWin() : faction_id_(0), faction_id_with_(0), field_16C_(0), call_count(0) { offer_state_[0] = offer_state_[1] = 0; }
   static void __cdecl string_callback(int, int);
   void exec(int, int);
   StringBox &shared_string_box() { return stringBox_; }

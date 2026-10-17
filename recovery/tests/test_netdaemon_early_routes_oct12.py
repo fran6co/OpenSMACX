@@ -91,17 +91,14 @@ def source_material():
         methods.append(match.group(0))
     declarations += "\nstruct PictureAPIs { Dialogs dialogs_; Sprite *caller_sprite_;\n" + "\n".join(methods) + "\n};"
     diplo = (ROOT / "src/diplowin.h").read_text()
-    state_fields = []
-    for name in ("field_A24_", "field_A28_"):
-        match = re.search(r"^\s*int32_t " + name + ";", diplo, re.M)
-        assert match, name
-        state_fields.append(match.group(0))
+    state_field = re.search(r"^\s*int32_t offer_state_\[2\];", diplo, re.M)
+    assert state_field
     setter = _definition(diplo, r"void\s+set_offer_state", "set_offer_state")
     assert "receive_no_deal" not in diplo
     assert "receive_no_deal" not in (ROOT / "src/diplowin.cpp").read_text()
-    # These are actual private-owner scalar types and the actual inline setter;
+    # This is the actual private-owner state-array declaration and inline setter;
     # the fixture's preceding storage below is not original layout evidence.
-    return wire + "\n" + declarations, functions, "\n".join(state_fields), setter
+    return wire + "\n" + declarations, functions, state_field.group(0), setter
 
 
 PREAMBLE = r'''
@@ -185,11 +182,11 @@ struct Diplo : GraphicWin {
     /* ACTUAL DIPLO STATE */
  public:
     /* ACTUAL DIPLO SETTER */
-    int state_for_test(int side) const { return side == 0 ? field_A24_ : field_A28_; }
+    int state_for_test(int side) const { return side == 0 ? offer_state_[0] : offer_state_[1]; }
     unsigned char *alias_packet_for_test() {
         unsigned char *begin = reinterpret_cast<unsigned char *>(this);
-        const size_t offset = reinterpret_cast<unsigned char *>(&field_A24_) - begin;
-        assert(offset>=0x10 && reinterpret_cast<unsigned char *>(&field_A28_) == begin+offset+4);
+        const size_t offset = reinterpret_cast<unsigned char *>(&offer_state_[0]) - begin;
+        assert(offset>=0x10 && reinterpret_cast<unsigned char *>(&offer_state_[1]) == begin+offset+4);
         return begin+offset-0x10;
     }
     int visible=0, maybe_sender=-1;

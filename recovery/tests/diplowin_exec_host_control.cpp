@@ -175,7 +175,7 @@ int main() {
   assert(second.calls[2] == ((1 << 24) | (4 << 16)));
   assert(second.calls[3] == ((1 << 24) | (3 << 16)));
   assert(second.calls[4] == ((1 << 24) | (2 << 16)));
-  assert(second.field_A28_ == 1);
+  assert(second.offer_state_[1] == 1 && second.offer_state_[0] == 0);
 
   // Pair ordering is asymmetric: saved dialogue uses [low][high], while
   // offer reset state uses the original faction order [current][counterpart].
@@ -183,7 +183,7 @@ int main() {
   MessageDataCalls = 0; CommlinkPending = 0;
   OfferResetCell &cell = OfferResetCells[5][2];
   cell.count_[0] = 2; cell.count_[1] = 1;
-  cell.state_[0] = 4; cell.state_[1] = 5;
+  cell.state_[0] = -123456789; cell.state_[1] = 0x13579BDF;
   cell.type_[0][0] = 1; cell.type_[0][1] = 4;
   cell.value_[0][0] = 10; cell.value_[0][1] = 20;
   cell.type_[1][0] = 3; cell.value_[1][0] = 30;
@@ -196,16 +196,30 @@ int main() {
   saved.pending_text_ = const_cast<char *>("fourth"); saved.add(14);
   DiploWindow.exec(5, 2);
   assert(DiploWindow.offer_count_[0] == 2 && DiploWindow.offer_count_[1] == 1);
-  assert(DiploWindow.field_A24_ == 4 && DiploWindow.field_A28_ == 5);
+  assert(DiploWindow.offer_state_[0] == -123456789);
+  assert(DiploWindow.offer_state_[1] == 0x13579BDF);
+  assert(cell.state_[0] == -123456789 && cell.state_[1] == 0x13579BDF);
   assert(cell.type_[0][1] == 4 && cell.value_[1][0] == 30);
   assert(saved.entry_count_ == 7 && saved.current_id() == 14);
   assert(opposite.entry_count_ == 1 && opposite.current_id() == 99);
   StringList &visible = DiploWindow.stringBox_.strings();
   assert(visible.entry_count_ == 3);
   assert(visible.seek_pos(0) && visible.current_id() == 12);
+  assert(strcmp(visible.current_text(), "second") == 0);
   assert(visible.seek_pos(1) && visible.current_id() == 13);
+  assert(strcmp(visible.current_text(), "third") == 0);
   assert(visible.seek_pos(2) && visible.current_id() == 14);
+  assert(strcmp(visible.current_text(), "fourth") == 0);
   assert(MessageDataCalls == 1 && MessageDataTarget == 2);
+
+  // An empty pair transcript copies no synthetic row into either list. The
+  // real remove_all leaves current_ untouched; after the earlier nonempty
+  // visible list it may therefore remain a stale cursor while head_ is null.
+  DiploWindow.exec(6, 1);
+  StringList &empty_saved = DiplomacyTranscriptLists[1][6];
+  StringList &empty_visible = DiploWindow.stringBox_.strings();
+  assert(empty_saved.entry_count_ == 0 && !empty_saved.head_);
+  assert(empty_visible.entry_count_ == 0 && !empty_visible.head_);
 
   BufferWriteStringsCallback callback = &DiploWin::string_callback;
   assert(DiploWindow.stringBox_.field_C_ == callback);

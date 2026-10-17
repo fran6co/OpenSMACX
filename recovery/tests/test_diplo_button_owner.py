@@ -129,10 +129,15 @@ def test_native_diplomacy_button_dispatch_layout_and_popup_lifetime():
     for flags in settings.flag_sets:
         obj = Coff(compiler(ROOT / "src/diplowin.cpp", (), flags + settings.layout_flags))
         layout = class_layout(obj, "DiploWin")
-        for name, offset in (("field_A24_",0xA24), ("field_A28_",0xA28),
+        for name, offset in (("offer_state_",0xA24),
                              ("offer_type_",0xA2C), ("offer_value_",0xA6C),
                              ("faction_id_",0xAB4), ("faction_id_with_",0xAB8)):
             assert layout["members"][name] == offset
+        assert layout["member_type_kinds"]["offer_state_"] == "array"
+        assert layout["member_types"]["offer_state_"]["count"] == 2
+        assert layout["member_types"]["offer_state_"]["size"] == 8
+        assert layout["member_types"]["offer_state_"]["size"] // \
+            layout["member_types"]["offer_state_"]["count"] == 4
         assert [(b["class"], b["offset"]) for b in layout["bases"]] == [("GraphicWin",0), ("SubInterface",0xA14)]
         table, = (s for s in obj.symbols.values() if s.name == "??_7DiploWin@@6BWin@@@" and s.section > 0)
         section = obj.sections[table.section - 1]

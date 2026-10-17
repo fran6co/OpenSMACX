@@ -67,7 +67,7 @@ class DiploWin : public GraphicWin, public SubInterface {
   // The two-party state lanes used by exec's PBEM restoration. Callers own
   // the ordering of separate state stores and any subsequent redraw.
   void set_offer_state(int side, int state) {
-    (side == 0 ? field_A24_ : field_A28_) = state;
+    (side == 0 ? offer_state_[0] : offer_state_[1]) = state;
   }
   void receive_maybe_deal(int sender);
 
@@ -104,11 +104,12 @@ class DiploWin : public GraphicWin, public SubInterface {
   int on_iface_dialog_back_draw(int a1);
 
  private:
-  // UNK2/UNK3 clear the two party-status dwords at 0xA24 and 0xA28.
-  // SubInterface occupies 0xA14..0xA1B; these are not two scalar members.
   int offer_count_[2];  // 0xA1C: one count for each party
-  int32_t field_A24_;
-  int32_t field_A28_;
+  // exec walks +0xA24 in four-byte steps for two parties (0x444896..44494C).
+  // Its save path walks the same pair (0x444B7A..444D05). Descriptive name;
+  // neither an original debug name nor an unchecked-index domain claim.
+  // RECOVERY_MEMBER: v1 DiploWin offer_state_ 0xA24 0x00443F10
+  int32_t offer_state_[2];
 
   // add_offer/kill_offer and exchange execution share these parallel lanes.
   // Their two-party/eight-offer shape does not validate unchecked indices
