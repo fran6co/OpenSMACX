@@ -1,0 +1,24 @@
+{
+  "event_id": "726e844b698d77302f7db8a0f8cf9ee4d49bf3d1f62fa6bfe10762ca70cc7809",
+  "payload": {
+    "affects": [
+      "entity-79c5d471789ed17bb8ef92be1c7b04ae8b5258555afe8dc46c4adc76e1922f58",
+      "entity-96a104674d778bf08babbce6887d441decde165fc54d03e6b321d63940ac2239",
+      "entity-ae20eaab825a49af6a815f3a1f1c0b0d24d71b619446156b1cbfdde22bd14af4",
+      "entity-cf7ffae7c60f84c38f5d9fc93634a3dc26ea53a62b1e658f1213cdcce25347b1"
+    ],
+    "author": "coordinator",
+    "discovery_id": "worldwin-graphic-initializer-route-oct17",
+    "evidence": [
+      "Fresh actual application build207018co measures WorldWin startup masked-exact after the member correction, but native strict verification fails at function offset180: emitted Win::init RECT resolves5EC630 whereas pinned directCALL4C4A53 resolves5D50A0. Other strict unknowns concern MainInterfaceGlobal, not permission to waive this wrong target. Preserve the intermediate failure report.",
+      "Existing genuine source owns GraphicWin::init RECT5D50A0 forwarding to GraphicWin nine-arg5D4EF0 (close/Win/Buffer initialization); Win::init RECT5EC630 instead only forwards into Win and has different null behavior. WorldWin already derivesGraphicWin at its primary receiver. Independent original/source review confirms same receiver/arguments and this is the sole external source-qualified Win RECT bypass. No original unsafe/error path is normalized."
+    ],
+    "hypothesis": "WorldWin bypasses its GraphicWin initializer through a wrong Win-qualified rectangle initializer call despite masked local equality.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worldwin-graphic-initializer-route-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:worldwin-map-slot-oct17"
+}

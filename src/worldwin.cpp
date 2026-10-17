@@ -49,10 +49,10 @@ void WorldWin::UNK1() {
     StatusFlags |= 8;
 }
 
-// The original startup path copies the tutorial bounds once, resets the
-// embedded map and passes the same typed rectangle to the Win base init.
+// The original startup path copies the tutorial bounds once, optionally resets
+// the embedded map and passes the same typed rectangle to GraphicWin::init.
 // ORIGINAL: 0x004C49A0 ?init@WorldWin@@QAEXH@Z 0x004C49A0-0x004C4A66
-// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004c49a0.cpp complete seed; original 0x004C49A0-0x004C4A66 shows tutorial RECT copy, map clear/init, Win::init and virtual show."], "reason": "Home WorldWin startup through owned map, tutorial bounds and Win base; MapWin::init remains an explicit unfinished dependency."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004c49a0.cpp retains the complete historical seed for0x004C49A0-0x004C4A66.", "Pinned0x004C4A11 stores1 at WorldWin+0x1F2A4: embedded MapWin+0x152C plus slot/index+0x1DD78, distinct from its active flag+0x1DD74. Existing MapWin::clear0x00462870 and MapWin::init0x00470A90 establish the separate slot and activity roles.", "Pinned directCALL0x004C4A53 targets GraphicWin::init(RECT*,...)0x005D50A0 with the WorldWin receiver, tutorial bounds,flags0x20 and MainInterface parent; it does not target Win::init(RECT*,...)0x005EC630. WorldWin derives GraphicWin; keep graphical/Buffer initialization and the original ignored result before virtualshow(0)."], "reason": "Recover WorldWin startup through its embedded map slot, tutorial bounds and GraphicWin initialization, preserving optional reset and inherited virtual show."}
 // TRIED: custom VCallW(int) shim for slot001 (scaffold's slot001 is nullary); byte-read/dword-write split for g_00939ed8's flag bit. MISMATCH from #4: register push scheduling around the four af51c/af520/af524/af528 locals differs
 void WorldWin::init(int reset_map) {
     if ((StatusFlags & 8) == 0) {
@@ -63,13 +63,13 @@ void WorldWin::init(int reset_map) {
     field_239C0_ = 0;
     detail_map_selected_ = 0;
     viewport_outline_enabled_ = 0;
-    mapWin_.field_1DD74_ = 1;
+    mapWin_.field_1DD78_ = 1;
     if (reset_map != 0) {
         mapWin_.clear(1);
     }
     mapWin_.init(1, 0);
     field_239BC_ = 8;
-    Win::init(&WorldMapBounds, 0, 0x20, &MainInterfaceGlobal, 0, 0);
+    GraphicWin::init(&WorldMapBounds, 0, 0x20, &MainInterfaceGlobal, 0, 0);
     show(0);
 }
 

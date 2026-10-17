@@ -1,0 +1,20 @@
+{
+  "event_id": "ea9f9102231514b41b5ede2f1eb278c099584e8a63e915ee7603e6cd137cccef",
+  "payload": {
+    "affects": [
+      "entity-96a104674d778bf08babbce6887d441decde165fc54d03e6b321d63940ac2239"
+    ],
+    "author": "coordinator",
+    "discovery_id": "worldwin-embedded-map-slot-source-recovery-oct17",
+    "evidence": [
+      "Pinned4C4A11 writes1 to WorldWin+1F2A4, which is MapWin+152C plus slot1DD78. Independent MapWin clear462870 stores its argument in1DD78 and activity in1DD74; init470A90 owns its own activity write and consumes the slot. Current source now writes field_1DD78_ before the original optional clear and unconditional init; the reset_map0 stale-slot case is covered."
+    ],
+    "hypothesis": "WorldWin startup must seed the embedded map slot/index, not the neighboring active flag.",
+    "kind": "discovery"
+  },
+  "previous_event": "875a856a54be985edadb4e74af291ae7697c88858fe7d715eae85e8b46e12210",
+  "request_id": "worldwin-embedded-map-slot-source-recovery-oct17",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:worldwin-map-slot-oct17"
+}
