@@ -1,0 +1,20 @@
+{
+  "event_id": "22eb3f328bb338090764dc9054445047b543e57ef9392c399e74a38da6739adf",
+  "payload": {
+    "affects": [
+      "entity-8e6c1ddbf8f7e0dc4253a1ea99e06891965cca3ca17a3117d2e994ab1ae56d24"
+    ],
+    "author": "coordinator",
+    "discovery_id": "stringbox-historical-return-type-remains-unproven",
+    "evidence": [
+      "All six mapped original call sites ignoreEAX. The historicalQAEX name encodesvoid if trustworthy, but is a decompiler/catalogue hint, not original debug/link-symbol evidence. CurrentQAEH compiler name proves only this source compilation. Keep this obligation pending; do not claim the historical C++ int declaration or full executable caller coverage proven from a byte match."
+    ],
+    "hypothesis": "The original C++ declaration and unenumerated caller set remain unknown even though source now expresses the complete measured native result behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "8135cb67b6738c1788a9890fb8be42d78b188d1d609312b9e0cee0ad534c1244",
+  "request_id": "stringbox-historical-return-type-remains-unproven",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:stringbox-add-result-oct17"
+}

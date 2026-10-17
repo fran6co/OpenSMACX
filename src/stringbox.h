@@ -60,7 +60,7 @@ class StringBox : public GraphicWin {
   // base and its Scroll member, and carries the unwind frame that implies.
   StringBox();
   ~StringBox();
-  void add(char *text, int index, int flag);
+  int add(char *text, int index, int flag);
   void set_visible_rows(uint32_t rows) { visible_rows_ = rows; }
 
   void set_draw_mode(uint32_t mode) { per_line_draw_ = mode; }

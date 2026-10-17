@@ -438,18 +438,22 @@ StringBox::StringBox() {
 /*
 Purpose: Add a string to the box - stage the text, index and a cleared flag
          into the string struct at 0x2B70, add it, and run the fixup pass when
-         the struct reports it did not take.
+         insertion succeeds. Return the insertion error unchanged or zero.
 // ORIGINAL: 0x00629710 ?add@StringBox@@QAEXPADHH@Z 0x00629710-0x00629749
+// symbol    ?add@StringBox@@QAEHPADHH@Z
 // size      57 bytes
 // prototype void (__thiscall ?add@StringBox@@QAEXPADHH@Z)(StringBox* this, int8*, int, int)
 // callers   6   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00401100 0x00629490
-Return Value: n/a
+Return Value: StringStruct insertion result; zero after successful fixup.
 Status: Complete
 */
-void StringBox::add(char *text, int index, int flag) {
+// The catalogue's void decoration is a historical hint, not a proven return
+// contract. At 0x00629738 the original returns nonzero EAX unchanged; only
+// success calls add_fixup and then explicitly clears EAX at 0x00629743.
+int StringBox::add(char *text, int index, int flag) {
     // The original stages this embedded StringList's pending fields before
     // its inherited StringStruct insertion. Dialog::item uses the same
     // declared fields; StringList's real base supplies the receiver.
@@ -457,19 +461,12 @@ void StringBox::add(char *text, int index, int flag) {
     list.pending_text_ = text;
     list.field_20_ = static_cast<uint32_t>(flag);
     list.field_24_ = 0;
-    if (list.add(index) == 0) {
-        StringBox::add_fixup();
+    const int result = list.add(index);
+    if (result != 0) {
+        return result;
     }
-    // Historical spelling experiment: the raw member stores took one list
-    // address and reused its register; named members changed address
-    // materialization. That experiment does not override declared ownership.
-    // TRIED: the image emits one further `xor eax, eax` right before the
-    // epilogue, on the fixup-taken path only - MISMATCH stays at 14/18
-    // (0.971 similar) without it. Tried: an early-return guard clause
-    // instead of the if-block (`if (result != 0) return;`); dropping the
-    // `StringBox::` qualifier on the call. Neither changes the codegen, and
-    // `add` is genuinely void (`...QAEX...`), so there is no return value
-    // to re-materialise. Plateaued here.
+    StringBox::add_fixup();
+    return 0;
 }
 
 

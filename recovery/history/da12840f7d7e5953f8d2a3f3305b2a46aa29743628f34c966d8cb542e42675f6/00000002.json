@@ -1,0 +1,19 @@
+{
+  "event_id": "8135cb67b6738c1788a9890fb8be42d78b188d1d609312b9e0cee0ad534c1244",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "stringbox-native-insertion-status-protocol",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The existing typed StringList staging and single insertion are unchanged; return its nonzero result unchanged, fit rows only after success, then return0. Source and header agree. Native symbol observation QAEH is current compiler evidence only. Original identity/span and historical claims remain untouched. No original bug fix, layout, flags, helper, caller-body or library policy change.",
+      "Coordinator-reviewed checkpoint: fresh full VC6 build/link,25 passing host cases including all previous damage controls and added compile-success failing return-value mutations, pinned full-image branch/callee evidence, native claims/mappings/source-reference checks, all17 canonical StringBox observations with only629710 becoming exact, complete5581actual-body/strict census with3177->3178 masked and1936->1937 strictPASS, no prior verdict/classification changes, and independent source review. No new historical exact claim banked.",
+      "Native physical residuals174PASS/3FAIL remain visible. Every residual is only old void to current int target-symbol renaming at the six unchanged call instructions in DiploWin/MainInterface/NetWin. Explicit native residual-field checks exclude code/data/helper/directive/association changes; fresh MAP/PE checks independently follow all six linked calls to the new current definition. These bounded witnesses do not establish complete retained-selection, original C++ signature, unenumerated callers, runtime/game or automatic acceptance. Fresh destination rechecks remain required before worker cleanup."
+    ]
+  },
+  "previous_event": "78a2e5df1a9de4c53243ff805537aa55158e63cf23455b63cd7b98a0687cbc33",
+  "request_id": "stringbox-native-insertion-status-protocol-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:stringbox-add-result-oct17"
+}

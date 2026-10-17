@@ -1,0 +1,21 @@
+{
+  "event_id": "78a2e5df1a9de4c53243ff805537aa55158e63cf23455b63cd7b98a0687cbc33",
+  "payload": {
+    "affects": [
+      "entity-8e6c1ddbf8f7e0dc4253a1ea99e06891965cca3ca17a3117d2e994ab1ae56d24"
+    ],
+    "author": "coordinator",
+    "discovery_id": "stringbox-native-insertion-status-protocol",
+    "evidence": [
+      "Pinned57-byte629710 stages typed list fields, calls401100, testsEAX and returns the nonzero register unchanged. Only zero calls629490 then explicitly clearsEAX. Independent original-callee inspection finds four allocation-failure paths returning4 and success returning0. All six known mapped callers ignoreEAX.",
+      "An int source return is a faithful expression of these observed machine effects, not independently proven original declaration recovery. Preserve the catalogue marker and its void name as historical evidence; observe the current emitted name from the configured compiler and apply exactly the native writer output. Do not reinterpret unused return registers as evidence that callers consumed a status."
+    ],
+    "hypothesis": "Preserve the observed insertion status in EAX rather than treating historical catalogue void decoration as an original C++ proof.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "stringbox-native-insertion-status-protocol",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:stringbox-add-result-oct17"
+}
