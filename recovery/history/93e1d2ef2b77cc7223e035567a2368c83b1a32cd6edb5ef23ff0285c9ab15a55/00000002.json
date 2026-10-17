@@ -1,0 +1,17 @@
+{
+  "event_id": "4fc6ad706a7424d671088632008eb839d102b72ddf9c3e897b5c4ab10596a135",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "prechecked-remap-fill-oct17",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The guarded do-while candidate with i=end before its guard is byte-identical to the existing for-loop in the configured Jackal flag trial. Exact unchanged replica and negative-control checks passed; primary target remains46/53 instructions, CMP before MOV, with no source correction justified. Product source unchanged. No more spellings authorized without new evidence."
+    ]
+  },
+  "previous_event": "914a5fa266c44e3c95922cc62ed93286bf136cf9be89a6552b8eb8f8dc5e2b21",
+  "request_id": "reject-prechecked-remap-fill-oct17",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:palette-remap-loop-oct17"
+}

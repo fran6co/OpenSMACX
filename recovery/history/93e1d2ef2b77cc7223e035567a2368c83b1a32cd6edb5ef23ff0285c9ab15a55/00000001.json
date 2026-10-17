@@ -1,0 +1,20 @@
+{
+  "event_id": "914a5fa266c44e3c95922cc62ed93286bf136cf9be89a6552b8eb8f8dc5e2b21",
+  "payload": {
+    "affects": [
+      "entity-4e75dbeafc72fde299479f0f28a037489cb94dc4555d3ca9f7c5f84dc82d0eee"
+    ],
+    "author": "coordinator",
+    "discovery_id": "prechecked-remap-fill-oct17",
+    "evidence": [
+      "Pinned source body original5FF1A0 and existing TRIED source note show CMP/MOV register allocation wall. Explicit prechecked do-while has not been screened in that history."
+    ],
+    "hypothesis": "A prechecked do-while form may recover the MOV-before-CMP identity-fill code without ABI/type or behavior changes.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "prechecked-remap-fill-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:palette-remap-loop-oct17"
+}
