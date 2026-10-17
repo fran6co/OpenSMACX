@@ -1,0 +1,42 @@
+{
+  "author": "coordinator",
+  "base_revision": "411e792673abf819c2404367d2fd53b1d47f8451",
+  "editable_files": [
+    "src/buffer.cpp",
+    "recovery/tests/test_buffer_remapping.py"
+  ],
+  "evidence": [
+    "Fresh master411e79267 compiles and links in build-lccnrni6 after MapWin role cleanup; native all176whole-object correspondence passes with zero body omissions. All5581CPP classifications retain3162masked matches; primary strict1930pass/1207unknown/25fail. Current build inputs/outputs/receipts/link files were freshly requalified before superseded generated build cleanup. This does not qualify full original function universe, structure/lifetime, runtime, linked retention or full-game acceptance.",
+    "Pinned RECT remapper5DA4D0..5DA67D has180instructions and429bytes; current21instructionbody forwards to coordinate5DA330. Original body explicitly copies RECT, decrements right/bottom, calls IntersectRect, snapshots pre-lock row gap, checks native upper extents, obtains pixels, calculates start with post-lock pitch, remaps through live potentially aliased table and cleans up only after paint. A source-equivalent direct implementation is justified for original-body fidelity, not a discovered semantic bug or new coverage claim.",
+    "Existing TRIED records an earlier raw-offset hand-inlined acquisition/release variant that still mismatched at instruction6 due to allocation. Preserve this evidence and historical spans/claims verbatim; no assertion that direct transcription is novel or exact. Use existing named Buffer fields and actual DirectDraw Lock/Unlock calls, never raw offsets, fixed executable addresses, assembly, emitted bytes, fake source owners, changed bounds or claims. No header, class layout, compiler flag/profile, build/link, framework or dependency changes.",
+    "Editable C++ is only the existing RECT overload body; coordinate overload/get_data/free_data are read-only witnesses. Up to three idiomatic source spellings may be scored in private native overlays after unchanged actual-owner calibration, replica and ordinary body-damage controls, with production source/Git/recipes frozen. Compare every other mapped Buffer body and physical object material outside only the RECT body; preserve any collateral report and investigate before integrating. Use actual Release and the distinct settled frame family diagnostically, not a flag change.",
+    "Baseline actual-source remapping/fill tests must terminate before production edits. Adapt their Lock double to test the direct RECT implementation using actual descriptor size/flags, successful and failed locks, successful-null locks, pre-lock gap/post-lock pitch, nested locks, DIB publication, original null/no-release paths and numeric-zero check. Preserve all existing coordinate and fill scenarios/damage controls; do not silently delete behavior coverage merely because the path no longer calls the scripted get_data. The old RECT syntax mutants may be translated to the new corresponding direct operation, not weakened. These host controls do not prove native DirectDraw runtime/ABI or game acceptance.",
+    "Require independent review, source identity/claim/binding continuity, fresh scoped measurement/reference diagnostics, full compile/link and whole-object/outside-body checks before coordinator-reviewed manual integration. Recheck the destination and remove only safely merged/disposable worker/generated outputs afterward. Do not delay semantic complete direct recovery for extended instruction tuning, demote obligations, waive failed checks or assert automatic/full-game acceptance."
+  ],
+  "intent": "Restore the original direct typed Buffer RECT remapping body and preserve its acquisition, pixel and cleanup quirks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6173555,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6173859,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6136624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6137040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-rect-direct-oct17"
+}
