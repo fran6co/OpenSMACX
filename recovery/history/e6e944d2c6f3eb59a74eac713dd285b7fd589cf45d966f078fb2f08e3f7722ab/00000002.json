@@ -1,0 +1,18 @@
+{
+  "event_id": "353f9bdd60bb10ef6b37f1bf9556d8cdf3614906a96c6c5dc3a9b01448a1ffcb",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "application-debug-types-proposal-oct17",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "No application compiler flag, CMake, C++ source, annotation, claim or framework change is adopted. Existing application_check.check_task calls verify_task(debug_types=True); application_binary.verify_task appends configured layout_flags and follows referenced owner compilation. data_check.check_data likewise uses configured standalone layout flags. Scoped strict/layout work already has the intended distinct measurement context.",
+      "The actual Release artifact census remains separate and unchanged. Metadata-bearing task objects are not interchangeable with actual Release objects and do not upgrade its unknown references or whole-game linked preservation. Actual Release type/target evidence remains a limitation, not a reason to expand this rejected flag experiment into unrelated framework work. Retain the bounded diagnostic objects/reports ignored and safely remove the clean completed worker."
+    ]
+  },
+  "previous_event": "dfbda7096cf65794bed701de793f002098973ca799e4efde2c6e85ba95ef9cb2",
+  "request_id": "application-debug-types-proposal-oct17-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:layout-metadata-oct17"
+}

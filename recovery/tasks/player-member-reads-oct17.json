@@ -1,0 +1,34 @@
+{
+  "author": "coordinator",
+  "base_revision": "11075a39a9833b37a559061163eaea0b0f83656c",
+  "editable_files": [
+    "src/council.cpp",
+    "src/netwin.cpp",
+    "recovery/tests/test_player_member_reads_oct17.py",
+    "recovery/tests/test_netwin_session_assets_owner_oct9.py"
+  ],
+  "evidence": [
+    "Master source remains70763829a with actual retained build-zc3l4y1e: fresh build/link and176wholeobjects verified;5581CPP classifications3161masked, strict1930PASS/1206UNKNOWN/25FAIL. Current11075 is task-only. Requalify retained outputs/inputs/environment/image before controls. Scope only two existing definitions; no marker/claim, class/header/global/storage/compiler/profile/linker or framework changes. Preserve all original quirks and historical findings.",
+    "Council52C670 pinned52C781 selects Players[1].rule_flags at9474F4,52C78E tests byte mask80,52C81A advances59C and52C820 compares949C38 (Players[8].rule_flags). Existing Player has native stride59C and rule_flags+508. Replace only scan cursor/stride/end scaffolding with typed indexed Players[1..7].rule_flags mask80, retaining every admission gate, body read/reload, goto blocked, callback/message and shift behavior. Leave historical comments as provenance, add no run logs.",
+    "NetWin481E90 pinned initial byte read93D4B0 is existing uint32 max_players_ at NetAllocationNode+20;481F9E reads byte[EDI-384], corresponding to existing BOOL Player::is_leader_female+0 in stride59C records. Use explicit unsigned byte conversions of the existing scalar values at the same two expression positions. Do not normalize BOOL to boolean, read a fullword value into the byte destination without narrowing intent, hoist callbacks/reads, change storage or add safety fixes.",
+    "Prepare a new isolated native worker and compiler leases; no repurposing retained workers. Before editing production, compile baseline/unchanged overlay/entrythrow damage/full candidate overlay for each actual owner, under actual Release flags and the other settled historical frame family when distinct. Freeze source/Git/recipes during epochs. Native wholeCOFF calibration, mapped verdicts and outside-body comparison must retain all unscoped code/data/EH/FPO/references. Current targets have no invented positive historical match.",
+    "New controls verify exact whole baseline source plus only the authorized transformations and all function annotation/history records, full pinned spans and actual original load/stride/end operands. GCC/Clang extracted actual-body tests compare baseline/candidate with independent faction-admission cases, exhaustive seven-player mask domains, alien/dead/self/treaty exclusions, final player/end exclusion, multiplayer masks, early blocked and message behavior; runtime-failing mutants must reject wrong player range/flag. Existing config_players host tests already test nonboolean BOOL and high-word maxplayers values; preserve every assertion while changing only obsolete alias-spelling requirements to explicit typed-byte requirements.",
+    "After controls terminate, require relevant existing/new host tests, independent review, a fresh full application build/link, whole physical object collateral checks, full CPP and strict classification comparison, native source claims/references/mappings, coordinator-reviewed checkpoint and fresh destination recheck. Known whole-project failures/unknowns remain. No full-game/runtime/automatic acceptance or evidence of original TU/class completeness is granted. Clean completed workspaces and superseded builds only after source/history work is safely preserved."
+  ],
+  "intent": "Replace raw player-record byte aliases and stride arithmetic with existing typed members, preserving original values and sequencing.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5424752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4726416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "player-member-reads-oct17"
+}
