@@ -1,0 +1,21 @@
+{
+  "event_id": "f56ae1c2c6783c58398c5008b138b1abf54a454f237b000d9c23c123c6459ba6",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_wave_group_head_pop_oct17.py",
+      "src/wave_device.h"
+    ],
+    "evidence": [
+      "Fresh coordinator permission expands the earlier body-only experiment to the corroborated typed list head-pop API and destructor condition, plus sole compact WaveDeviceReleaseGuard data binding in already editable wave_device.cpp. Do not edit ORIGINAL/function bindings, signatures of mapped functions, unrelated headers or compiler settings.",
+      "Preserve list layout/trivial member initialization, cursor omission, tail-before-head emptying, capture-before-delete, decrement-before-result, and null-wave stopping. No forced inline/noinline/compiler pragma, invented emitted original method identity, copied code or bug fix. Require unchanged-replica and independent header/body damage controls, all affected owner/caller comparisons, actual-source tests and full physical build collateral. Retain failed/unknown evidence and historical obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "63b4902c6572399a84fdfd90a81fef0fbc78e731415a816ca29ac9c47c77e64c",
+  "request_id": "audio-structure-scope-oct17",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:audio-source-forms-oct17"
+}

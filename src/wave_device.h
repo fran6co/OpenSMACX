@@ -24,8 +24,8 @@ class Wave;
 struct EAX_REVERB_PROPERTIES;
 struct IDirectSound;
 
-// One node of a group's wave list, allocated on the game CRT heap by the
-// insert helper and freed by pull_from_group.
+// One node of a group's wave list, allocated on the game CRT heap by insert
+// and freed by group removal operations.
 struct WaveGroupNode {
   WaveGroupNode *prev;
   WaveGroupNode *next;
@@ -33,7 +33,7 @@ struct WaveGroupNode {
 };
 
 // The list subobject at WaveControlGroup+8, used by the group administrators
-// and by the list-insert helper.
+// and by its insertion/removal operations.
 struct WaveGroupList {
   // RECOVERY_MEMBER: v3 WaveGroupList head WaveGroupNode* 0x0 0x004C5BF0
   WaveGroupNode *head;
@@ -46,6 +46,26 @@ struct WaveGroupList {
 
   // 0x004C5BF0, the original typed list insertion operation.
   void insert(Wave *wave);
+
+  // Recovered head removal used by group teardown. A null payload is still
+  // removed and returned as the stopping value; cursor is not adjusted.
+  Wave *remove_head() {
+    WaveGroupNode *node = this->head;
+    if (!node) {
+      return 0;
+    }
+    WaveGroupNode *const next = node->next;
+    if (next) {
+      next->prev = 0;
+      this->head = next;
+    } else {
+      this->head = (this->tail = 0);
+    }
+    Wave *const wave = node->wave;
+    operator delete(node);
+    this->count -= 1;
+    return wave;
+  }
 };
 
 // One 24-byte group record; the device holds sixteen of them from 0x24.

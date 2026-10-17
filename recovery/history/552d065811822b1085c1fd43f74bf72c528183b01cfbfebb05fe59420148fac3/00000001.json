@@ -1,0 +1,21 @@
+{
+  "event_id": "988eeacad699f145c22b89ea54b19a7a9d7dd663a0c4da3605abee2f3a1ed748",
+  "payload": {
+    "affects": [
+      "entity-b6b1bb8b734db6d0dd446005c5dab98911361d5b74edc064a24306bf762cd476"
+    ],
+    "author": "coordinator",
+    "discovery_id": "audio-head-pop-operation-oct17",
+    "evidence": [
+      "Pinned4C5B87..4C5BB7 and4C5BB9..4C5BE9 each guard head, repair links/head/tail, capture Wave*, delete node, decrement count and test the returned Wave*. Existing4C5BF0 insert and4C5280 pull independently corroborate typed list links and deletion/count effects.",
+      "One explicit peeled body screen improved41/49but52instructions and was not applied. A natural inline WaveGroupList::remove_head returning null for empty, otherwise popped Wave*, explains the repeated condition blocks and stop-after-free null-wave quirk. It is a reconstructed source API, not a newly asserted original function identity."
+    ],
+    "hypothesis": "WaveControlGroup destructor repeats a genuine head-pop operation as its loop condition; recover it on the existing typed list rather than duplicating peeled cleanup code.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "audio-head-pop-operation-oct17",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:audio-source-forms-oct17"
+}

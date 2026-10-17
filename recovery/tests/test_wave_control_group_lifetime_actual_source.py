@@ -33,6 +33,9 @@ def test_wave_control_group_actual_member_lifetime(compiler_name: str, tmp_path:
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} is unavailable")
+    header = (ROOT / "src/wave_device.h").read_text(encoding="utf-8")
+    declarations = header[header.index("struct WaveGroupNode {"):
+                         header.index(" /*\n  * Wave_Device class")]
     owner = (ROOT / "src/wave_device.cpp").read_text(encoding="utf-8")
     ctor = extract_function(owner, "WaveControlGroup::WaveControlGroup()")
     dtor = extract_function(owner, "WaveControlGroup::~WaveControlGroup()")
@@ -41,29 +44,17 @@ def test_wave_control_group_actual_member_lifetime(compiler_name: str, tmp_path:
     harness.write_text(r"""
 #include <cassert>
 #include <cstdlib>
+#include <stdint.h>
 #define __fastcall
 #define nullptr 0
-struct Wave {};
-struct WaveGroupNode { WaveGroupNode *prev, *next; Wave *wave; };
-struct WaveGroupList {
-    WaveGroupNode *head, *tail, *cursor;
-    unsigned int count;
-};
 static void *freed[8];
 static unsigned int freed_count;
 void operator delete(void *p) throw() {
     if (p) freed[freed_count++] = p;
     std::free(p);
 }
-struct WaveControlGroup {
-    unsigned char enabled;
-    unsigned char pad[3];
-    unsigned int volume;
-    WaveGroupList list_;
-    WaveControlGroup();
-    ~WaveControlGroup();
-};
-""" + ctor + "\n" + dtor + r"""
+struct Wave {};
+""" + declarations + "\n" + ctor + "\n" + dtor + r"""
 static WaveGroupNode *node(Wave *wave, WaveGroupNode *prev, WaveGroupNode *next) {
     WaveGroupNode *value = static_cast<WaveGroupNode *>(std::malloc(sizeof(WaveGroupNode)));
     assert(value != 0);
@@ -86,6 +77,26 @@ static WaveGroupNode *node(Wave *wave, WaveGroupNode *prev, WaveGroupNode *next)
         }
         assert(freed_count == 3);
         assert(freed[0] == n1 && freed[1] == n2 && freed[2] == n3);
+
+    freed_count = 0;
+    WaveGroupList list = {0, 0, &cursor, 0};
+    assert(list.remove_head() == 0);
+    assert(!list.head && !list.tail && list.cursor == &cursor && list.count == 0);
+    WaveGroupNode *pop_tail = node(&b, 0, 0);
+    WaveGroupNode *pop_empty = node(0, 0, pop_tail);
+    WaveGroupNode *pop_head = node(&a, 0, pop_empty);
+    pop_empty->prev = pop_head; pop_tail->prev = pop_empty;
+    list.head = pop_head; list.tail = pop_tail; list.count = 3;
+    assert(list.remove_head() == &a);
+    assert(list.head == pop_empty && list.tail == pop_tail && pop_empty->prev == 0);
+    assert(list.cursor == &cursor && list.count == 2);
+    assert(list.remove_head() == 0);
+    assert(list.head == pop_tail && list.tail == pop_tail && pop_tail->prev == 0);
+    assert(list.cursor == &cursor && list.count == 1);
+    assert(list.remove_head() == &b);
+    assert(!list.head && !list.tail && list.cursor == &cursor && list.count == 0);
+    assert(list.remove_head() == 0 && freed_count == 3);
+    assert(freed[0] == pop_head && freed[1] == pop_empty && freed[2] == pop_tail);
 
     freed_count = 0;
     WaveGroupNode *tail = node(&b, 0, 0);

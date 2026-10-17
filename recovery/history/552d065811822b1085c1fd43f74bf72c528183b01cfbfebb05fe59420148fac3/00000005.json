@@ -1,0 +1,18 @@
+{
+  "event_id": "42dae01203d939ab21ccfc83a17cce7076cba49c308fba5597bacf00fdb4eb84",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "audio-guard-object-binding-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/wave_device.cpp retains one existing int WaveDeviceReleaseGuard and now declares its compact source object-start identity90DB7C. Pinned4C5D26/4C5D7D stores and4C8B53/4C8B9A reads independently confirm dword storage. No new object, extent, lifecycle or alias is invented.",
+      "Fresh strict VoiceRx init57instruction original code/reference check passes under the existing frame profile with native data target resolution. The guarded installed recorder banks only that VoiceRx claim with exit0; all older claims survive. This does not waive unscoped collateral, prove selected linkage/runtime or establish full-game acceptance."
+    ]
+  },
+  "previous_event": "2e9eb47aeea8be4e33ab40ffd3e68523f92849b4a45088602a49be1a6b2a0cbf",
+  "request_id": "audio-guard-binding-source-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:audio-source-forms-oct17"
+}
