@@ -1,0 +1,55 @@
+{
+  "author": "coordinator",
+  "base_revision": "f47ece84bbccd8e9ea34b440e6e0b7d4640853b2",
+  "editable_files": [
+    "src/texture.cpp",
+    "recovery/tests/test_texture_scalar_reads_actual_source_oct17.py",
+    "recovery/tests/test_texture_borrowed_raster_actual_source_oct17.py"
+  ],
+  "evidence": [
+    "Masterf47ece84b has fresh native retained build-pzvqi3h5: compiles/links, all176objects reproduce the reviewed candidate without omissions, full5581CPP census3161masked, strict1930PASS1206UNKNOWN25FAIL, claims/references/mappingsPASS. Requalify native Build fingerprint, all outputs/receipts/inputs and pinned image before using its wholeTexture calibration. No full original universe, hierarchy/runtime/retained-selection or game acceptance is established. The preliminary four-subject scalar-only proposal was never checkpointed, run or given a worktree/journal; it is superseded before work by this six-subject structural authorization, on the same immutablef47 baseline. Private preliminary evidence remains ignored, not a second task ledger.",
+    "Actual source confirms draw_trans2 computes unused local doubles but never publishes Scratch4E4/4C8, omits FPU entry/exit resets and omits original PC24/truncation selection. Independent full pinned decode: get_data precedes FNINIT619DA1; after two successful edge setups and borrowed_ gate, FSTCW/AND FCFF/OR0C00/FLDCW619F23..36 select24bit/RZ. Initial FILD differences and wrapped fixedspan stage ratios; common61A077 consumes the previous positive span after edge advancement, FISTP4E4 receives right.accumA-left.accumA then4C8 receives right.accumB-left.accumB, each scaled65536. Next ratios stage after those stores. free_data precedes finalFNINIT61A234. Preserve that sequencing and nonpositive wrapped-span gating; no safe fallback or deliberate bug fix.",
+    "Authorize full draw_trans2 definition recovery within its existing original span: genuine EdgeScan fields, existing texture_reset_fpu at entryafterget_data and exitafterrelease, original _control87(PC24|RC_CHOP,MCW_PC|MCW_RC), captured wrapped32bit deltaA/deltaB and wrappedfixedspan staging, existing texture_span_step value model for positive span highword. Verify helper against an independent24bit reciprocal/product oracle. Preserve global snapshots, original edge refresh/branch ordering, clipping, borrowed gate, unchanged unsafe/error paths and original identities/claims. Integer emulation does not establish x87 sticky/status exceptions or complete runtime behavior; retain those explicit obligations, never call this exact/full acceptance.",
+    "Replace the register-emulating pixel loop with unsigned32bit U/V and steps, independent8bit row/column wrap, 256byte pitch, sample then unconditionalstore (key bytes are copied), Uadvance,Vadvance,destinationadvance, inclusive uint16(spanCount)+1 count (original DEC ECX, not CX). Texture::extract619710 and TexHeap::get_tex_mem635370 are review-only allocation witnesses: original borrowed rows have256pitch and heap admission requires64KiB-aligned cursor. Their bodies/headers/mappings are not editable. Misaligned or invalid manual object states remain unverified, not a new guard or allocation claim.",
+    "The old faux loop removes five redundant scalar aliases. Authorize exactly nine additional read substitutions in the other three existing methods61C090/6212B0/622810: three LightThreshold byte aliases become static_cast<unsigned char> of existingstaticint; two LightPackA.low_word aliases become existingunsignedshortmember; four Scratch528unsignedint aliases become static_cast<unsigned int> of existingstaticint. Do not hoist reads, change writes/types/storage/other helpers or source outside the one definition and those nine sites. No compiler/CMake/linker/global/measurement changes, exports, ASM/machinecode, original-marker edit or claim demotion/grant.",
+    "Prepare one isolated committed worker under native compiler resources. Before any production edit, four native actualRelease calls and four settled historicalframefamily calls: baseline, unchanged overlay, entrythrow in allfourproductiontargets, one complete proposed source overlay. Calibrate actualwholeTexture against retained master, compare all56mappedrecords and wholeCOFF including unscoped sections. Freeze source/Git/recipes during each epoch. No historical positive is invented for these currentlyMISMATCH targets. Preserve every other body/claim; any outside-body collateral needs fresh discovery/minimal reviewed footprint, not broad header/helper exemptions.",
+    "New scalar fixture must guard wholef47 source plus exactly nine sibling replacements and the separately exercised draw_trans2 definition, all56existing function records identities/spans/states/history unchanged, original declaration widths, fullpinnedimage/fourspan hashes and original load operands. GCC/Clang actual-expression controls and runtime-failing byte/width/signedness mutants. New full actual draw_trans2 host fixture must test stale slopes, one-row staging, U/V direction, fractional carry/wrap, inclusive rightedge and unmasked keycopy, clip preskip, positive/nonpositive wrapped span gates, edge failures/refresh, borrowed selector, original FPU reset/control/release order and semantic mutants. Existing helper value tests plus independent24bit oracle, not copied candidate algorithm. Host allocations/FPU stubs establish only their bounded domains, not full x87/environment/rendering proof.",
+    "All34existing Texture host files were freshly baselined on unchangedf47:444PASS/12FAIL. The four earlier historical whole-source projection guards are among baselineFAIL and stay unchanged; do not weaken or hide them to admit a later legitimate transformation. Preserve all444oldpasses and report any classification change. Finalize source/tests only after diagnostic epochs terminate; require fresh full application build/link, complete5581CPP census/strict continuity, native claims/references/mappings, all176physical objects with only four genuinely scoped mapped-body projections if needed and unwaived residuals, selected currentlinked observations, independent review and a coordinator manual checkpoint. Fresh master build/source/host/object/reference recheck after integration, followed by safe completed-worker and superseded-build cleanup. No automatic/full-game acceptance grant."
+  ],
+  "intent": "Restore Texture::draw_trans2 staged fixed-point raster behavior and remove proven scalar-read pointer aliases from three sibling methods.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6509424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6406288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6397312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6427312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6432784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "texture-borrowed-raster-oct17"
+}
