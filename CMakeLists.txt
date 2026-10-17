@@ -355,6 +355,11 @@ set_source_files_properties(
     src/maininterface.cpp
     src/console.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve original frame-based arguments in the map and base interface owners.
+set_source_files_properties(
+    src/mapwin.cpp
+    src/basewin.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Original interface palette initialization and font lookup retain a frame
 # pointer; generic library bodies have independently measured profiles.
 set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp

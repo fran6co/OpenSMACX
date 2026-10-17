@@ -28,12 +28,17 @@ def extract(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated body: {signature}")
 
 
-def actual_inputs() -> tuple[str, str, str]:
+def actual_inputs() -> tuple[str, str, str, str, str]:
     candidate = CANDIDATE.read_text()
     mapwin_h = MAPWIN_H.read_text()
     map_h = MAP_H.read_text()
     cache = extract(mapwin_h, "struct TerrainCacheEntry") + ";"
     map_pod = extract(map_h, "struct Map") + ";"
+    vert = extract((ROOT / "src/vert.h").read_text(), "struct Vert {") + ";"
+    terrain_storage = "\n\n".join(
+        extract(candidate, signature) + ";"
+        for signature in ("struct LandmarkTextureChoice {", "struct TerrainLandmarkStorageWindow {")
+    ) + "\nTerrainLandmarkStorageWindow TerrainLandmarkStorageWindowData = {};"
     map_source = (ROOT / "src/map.cpp").read_text()
     tables = "\n".join(extract(map_source, "const int " + name + "[4][4]") + ";"
                        for name in ("CornerOffsetX", "CornerOffsetY"))
@@ -47,7 +52,7 @@ def actual_inputs() -> tuple[str, str, str]:
             "int MapWin::get_point_light(int x, int y, int corner)",
         )
     )
-    return cache, map_pod, tables + "\n" + bodies
+    return cache, map_pod, vert, terrain_storage, tables + "\n" + bodies
 
 
 HARNESS = r"""
@@ -59,6 +64,8 @@ HARNESS = r"""
 
 ACTUAL_CACHE
 ACTUAL_MAP
+ACTUAL_VERT
+ACTUAL_TERRAIN_STORAGE
 
 int MapLongitudeBounds=8, MapLatitudeBounds=6;
 uint32_t MapLongitude=4;
@@ -189,8 +196,7 @@ int main() {
         }
     }
 
-    // get_point_light reads the named Map::bit2 word and preserves the
-    // corner-zero brighting callback order and result.
+    // The bit1 path retains the corner-zero brighting callback order/result.
     memset(AltDirectionTable,0,sizeof(AltDirectionTable));
     tile_storage[tile_index(4,1)].bit2=1;
     AltDirectionTable[0]=3;
@@ -199,6 +205,15 @@ int main() {
     assert(w.get_point_light(4,1,0)==11);
     assert(bright_calls==4);
     for (int i=0;i<4;++i) assert(bright_values[i]==i);
+
+    // The bit2 path reads the actual member-backed source table, not a
+    // legacy standalone array with the same historical name.
+    tile_storage[tile_index(4,1)].bit2=2;
+    TerrainLandmarkStorageWindowData.alt_light_bit2[3]=9;
+    AltLightBit2[3]=99;
+    bright_calls=0;
+    assert(w.get_point_light(4,1,0)==11);
+    assert(bright_calls==4);
 
     // The pinned AltBonusRainy table contains 206 (signed -50). With ratio
     // 25 and base altitude 25, truncation toward zero yields 25-12 == 13.
@@ -262,15 +277,19 @@ int main() {
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 @pytest.mark.parametrize("damage", (None, "AltBonusMoist", "AltBonusRainy",
-                                   "AltBonusFlat", "AltBonusOcean", "AltBonusArid"))
+                                   "AltBonusFlat", "AltBonusOcean", "AltBonusArid",
+                                   "point_light_wrong_owner"))
 def test_actual_mapwin_typed_closure(compiler_name, damage, tmp_path):
     compiler = shutil.which(compiler_name)
     if not compiler:
         pytest.skip(f"{compiler_name} unavailable")
-    cache, map_pod, bodies = actual_inputs()
+    cache, map_pod, vert, terrain_storage, bodies = actual_inputs()
     if damage == "AltBonusArid":
         before = "bonus = (int)AltBonusArid[byteVal];"
         after = "bonus = static_cast<signed char>(AltBonusArid[byteVal]);"
+    elif damage == "point_light_wrong_owner":
+        before = "TerrainLandmarkStorageWindowData.alt_light_bit2[idx]"
+        after = "AltLightBit2[idx]"
     elif damage:
         before = f"bonus = static_cast<signed char>({damage}[byteVal]);"
         after = f"bonus = (int){damage}[byteVal];"
@@ -284,6 +303,8 @@ def test_actual_mapwin_typed_closure(compiler_name, damage, tmp_path):
     source = tmp_path / "mapwin-typed.cpp"
     source.write_text(HARNESS.replace("ACTUAL_CACHE", cache)
                       .replace("ACTUAL_MAP", map_pod)
+                      .replace("ACTUAL_VERT", vert)
+                      .replace("ACTUAL_TERRAIN_STORAGE", terrain_storage)
                       .replace("ACTUAL_BODIES", bodies))
     binary = tmp_path / "mapwin-typed"
     built = subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
