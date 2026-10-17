@@ -854,14 +854,14 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
     const bool was_new = GameDataStateStorage.fields_.game_tech_achieved_[tech_id] == 0;
     GameDataStateStorage.fields_.game_tech_achieved_[tech_id] |= static_cast<uint8_t>(faction_mask);
     ++player.tech_achieved;
-    if (GameDataStateStorage.fields_.turn_current_num_ != 0 && TechAchievedGate == 0) {
-        ++player.tech_ranking;
-        if (player.unk_26 != 0) --player.unk_26;
-        ++player.tech_ranking;
-        if (player.unk_26 != 0) --player.unk_26;
-        if (tech_id == 0x58) ++player.theory_of_everything;
+    if (GameDataStateStorage.fields_.turn_current_num_ == 0 || TechAchievedGate != 0) {
+        return;
     }
-
+    ++player.tech_ranking;
+    if (player.unk_26 != 0) --player.unk_26;
+    ++player.tech_ranking;
+    if (player.unk_26 != 0) --player.unk_26;
+    if (tech_id == 0x58) ++player.theory_of_everything;
     // Reactor unlocks are checked against the three non-initial reactor
     // levels (native starts at Reactor[1].preq_tech and advances by one
     // 0x0C-byte RulesReactor record). Each matching tier offers eligible

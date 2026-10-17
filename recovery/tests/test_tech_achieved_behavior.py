@@ -1,6 +1,8 @@
 """Actual-source controls for technology acquisition phases and lifetimes."""
 
 from pathlib import Path
+import hashlib
+import os
 import shutil
 import subprocess
 import re
@@ -33,14 +35,17 @@ def actual_body(signature="void __cdecl tech_achieved("):
     raise AssertionError("unterminated tech_achieved body")
 
 
-def run_host(tmp_path, body):
-    compiler = shutil.which("g++")
-    if compiler is None:
-        pytest.skip("host g++ required")
+def run_host(tmp_path, body, *, compiler="g++", control=None):
+    compiler_path = shutil.which(compiler)
+    if compiler_path is None:
+        pytest.skip(f"host {compiler} required")
+    tmp_path.mkdir(parents=True, exist_ok=True)
     source = r'''
         #include <cstdint>
         #include <cstring>
         #include <cstdio>
+        #include <array>
+        #include <initializer_list>
         /* EXTRACTED_GAME_DATA_LOCK_MASK_TYPES */
         #define __cdecl
         constexpr int MaxReactorNum = 4;
@@ -86,8 +91,8 @@ def run_host(tmp_path, body):
         const char *popp_caption = nullptr, *popp_label = nullptr,
                    *popp_picture = nullptr;
         const char *xpop_label = nullptr;
-        int parse_say_ids[8] = {}, parse_say_calls = 0;
-        const char *parse_say_inputs[8] = {};
+        int parse_say_ids[32] = {}, parse_say_calls = 0;
+        const char *parse_say_inputs[32] = {};
         struct GraphicWin;
         struct Sprite { int identity = 0; };
         Sprite g_TECH_ICON_SPRITES[89];
@@ -334,7 +339,7 @@ def run_host(tmp_path, body):
         int parse_say(int id, const char *input, int, int) {
           parsed_say_id = id;
           parsed_say_input = input;
-          if (parse_say_calls < 8) {
+          if (parse_say_calls < 32) {
             parse_say_ids[parse_say_calls] = id;
             parse_say_inputs[parse_say_calls] = input;
           }
@@ -506,6 +511,8 @@ def run_host(tmp_path, body):
           tech_achieved(3, 0x62, 0, 0);
           if (popup_destructions != 6 || pruned != 3009 || upgraded != 3) return 9;
 
+          // Ordinary acquisition tail scenarios require a nonzero turn.
+          TurnCurrentNum = 1;
           const char reactor_tier_three[] = "tier-three-reactor";
           Reactor[2].name = reactor_tier_three;
           Reactor[2].preq_tech = 4;
@@ -615,17 +622,24 @@ def run_host(tmp_path, body):
           const int netmsg_before_ability = netmsg_calls;
           const int parse_before_ability = parse_say_calls;
           const int secrets_before_ability = secrets_calls;
+          const int secret_popups_before_ability = tech_popup_calls;
+          const int secret_logs_before_ability = secret_log_calls;
           tech_achieved(2, 12, 0, 0);
           if (netmsg_calls != netmsg_before_ability + 1 ||
               secrets_calls != secrets_before_ability + 1 ||
               secrets_faction != 2 ||
               std::strcmp(netmsg_label, "FREEABILTECH") != 0 ||
               netmsg_duration != -5000 || netmsg_channel != 0 ||
-              parse_say_calls != parse_before_ability + 2 ||
+              parse_say_calls != parse_before_ability + 3 ||
               parse_say_ids[parse_before_ability] != 0 ||
               parse_say_inputs[parse_before_ability] != tech_twelve ||
               parse_say_ids[parse_before_ability + 1] != 1 ||
-              parse_say_inputs[parse_before_ability + 1] != ability_name) return 26;
+              parse_say_inputs[parse_before_ability + 1] != ability_name ||
+              parse_say_ids[parse_before_ability + 2] != 0 ||
+              parse_say_inputs[parse_before_ability + 2] != tech_twelve ||
+              tech_popup_calls != secret_popups_before_ability + 1 ||
+              secret_log_calls != secret_logs_before_ability + 1 ||
+              (PlayersData[2].flags & 0x40) == 0) return 26;
           Players[2].faction_bonus_count = 4;
           Players[2].faction_bonus_id[3] = RULE_FREEFAC;
           Players[2].faction_bonus_val1[3] = 5;
@@ -699,21 +713,23 @@ def run_host(tmp_path, body):
               PlayersData[6].unk_26 != 0 ||
               GameTechAchieved[0] != (1u << 6)) return 10;
 
+          const int faction7_rank_before_gate = PlayersData[7].tech_ranking;
+          const int popup_execs_before_gate = popup_execs;
           TechAchievedGate = 1;
           tech_achieved(7, 1, 0, 0);
-          if (PlayersData[7].tech_ranking != 0 ||
+          if (PlayersData[7].tech_ranking != faction7_rank_before_gate ||
               PlayersData[7].unk_26 != 0) return 11;
 
           TechAchievedGate = 0;
           tech_achieved(7, 0x58, 0, 0);
-          if (PlayersData[7].tech_ranking != 2 ||
+          if (PlayersData[7].tech_ranking != faction7_rank_before_gate + 2 ||
               PlayersData[7].theory_of_everything != 1) return 12;
 
           tech_achieved(7, 3, -2, 0);
           if (label_lookup_count != 1 || label_offset_seen != 0x35c / 4 ||
               std::strcmp(parsed_noun, "alien-name") != 0) return 14;
           if (std::strcmp(popup_last_text, "THEYACQUIRE") != 0 ||
-              popup_execs != 5) return 22;
+              popup_execs != popup_execs_before_gate + 2) return 22;
 
           GamePreferences = PREF_BSC_AUTO_DESIGN_VEH;
           LockEnableMask = 1u << 1;
@@ -846,6 +862,7 @@ def run_host(tmp_path, body):
 
           // Native Datalinks waits for three positive factions and skips
           // disabled rules, existing owners, and faction-zero acquisitions.
+          TurnCurrentNum = 1;
           GamePreferences = 0; LockEnableMask = 0;
           ConsoleGlobal.faction_id_ = 7;
           Bases[0].faction_id_current = 2;
@@ -925,11 +942,17 @@ def run_host(tmp_path, body):
         }
     '''.replace("BODY", body).replace(
         "/* EXTRACTED_GAME_DATA_LOCK_MASK_TYPES */", _mask_declarations())
+    if control is not None:
+        # Keep the same declarations/stubs and complete production bodies.
+        # Only replace the scenario sequence, never duplicate the algorithm.
+        prefix, separator, _ = source.partition("\n        int main() {")
+        assert separator
+        source = prefix + "\nint main() {\n" + control + "\n}\n"
     cpp = tmp_path / "tech_achieved.cpp"
     exe = tmp_path / "tech_achieved"
     cpp.write_text(source)
     built = subprocess.run(
-        [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+        [compiler_path, "-std=c++17", "-Wall", "-Wextra", "-Werror",
          "-Wno-unused-parameter", str(cpp), "-o", str(exe)],
         capture_output=True, text=True, timeout=30,
     )
@@ -961,9 +984,181 @@ def test_actual_body_early_return_transfer_treaty_prototype_and_discovery_paths(
      'log_say("Learning a SECRET", reinterpret_cast<const char *>(&PlayersData[0].traded_maps),'),
     ('log_say("Gaining a TECH", leader_name, faction_id, tech_id,',
      'log_say("Gaining a TECH", leader_name, tech_id, faction_id,'),
+    ("++player.tech_ranking;", "player.tech_ranking += 0;"),
 ])
 def test_native_branch_controls_reject_reconstruction_regressions(tmp_path, before, after):
     body = actual_body("static bool technology_shareable(") + "\n" + actual_body()
     assert before in body
-    result = run_host(tmp_path, body.replace(before, after))
+    positive = run_host(tmp_path / "positive", body)
+    assert positive.returncode == 0, positive.stdout + positive.stderr
+    result = run_host(tmp_path / "damaged", body.replace(before, after, 1))
     assert result.returncode != 0, "damaged native branch unexpectedly passed"
+
+
+def test_continuing_acquisition_paths_clang(tmp_path):
+    body = actual_body("static bool technology_shareable(") + "\n" + actual_body()
+    result = run_host(tmp_path, body, compiler="clang++")
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+# Original5BB490/5BB49D both jump to Popup cleanup AFTER ownership/count writes.
+# Deliberately include repeated ownership, negative turns, arbitrary nonzero
+# gate values, human ambience, active reactor prototypes and presentation state.
+BLOCKED_ACQUISITION = r'''
+  int cases = 0;
+  for (int faction : {1, 2, 7})
+  for (int tech : {4, 0x58})
+  for (int turn : {0, 1, -1})
+  for (int gate : {0, 1, -1, 0x100})
+  for (int owned : {0, 1})
+  for (int network : {0, 1}) {
+    if (turn != 0 && gate == 0) continue;
+    ++cases;
+    PlayerData &player = PlayersData[faction];
+    player = PlayerData{};
+    player.tech_id_researching = tech;
+    player.tech_achieved = 7;
+    player.tech_ranking = 11;
+    player.unk_26 = 3;
+    player.theory_of_everything = 17;
+    player.flags = 0x50;
+    const uint8_t owners = 1u | (owned ? (1u << faction) : 0);
+    GameTechAchieved[tech] = owners;
+    TurnCurrentNum = turn;
+    TechAchievedGate = gate;
+    GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 1u << faction;
+    ConsoleGlobal.faction_id_ = faction;
+    IsMultiplayerNet = network;
+    GamePreferences = PREF_BSC_AUTO_DESIGN_VEH;
+    Reactor[1].preq_tech = tech;
+    Reactor[1].name = "reactor";
+    VehPrototypes[faction * 64].flags = PROTO_ACTIVE;
+    VehPrototypes[faction * 64].reactor_id = 1;
+    VehPrototypes[4].flags = PROTO_ACTIVE;
+    VehPrototypes[4].preq_tech = tech;
+    FirstProposedPrototype = 317;
+    char help_name[] = "unchanged-help";
+    TechnologyHelpEntryName = help_name;
+    TechnologyHelpEntryKind = 29;
+    std::strcpy(StringTemp, "unchanged-string");
+    std::strcpy(TechName, "unchanged-tech-name");
+    const int destructors = popup_destructions;
+    const int logs = log_calls, ambience_before = ambience_calls;
+    // Every observed callback after the original guard must stay untouched.
+    const auto tail_state = [] {
+      return std::array<int, 35>{
+        popup_inits, popup_starts, popup_strings, popup_execs,
+        spritebox_constructs, spritebox_destructions, spritebox_calls,
+        newtech_calls, fx_calls, help_info_calls, netmsg_calls, synch_calls,
+        popp_calls, parse_say_calls, social_avail_calls, social_popup_calls,
+        social_select_calls, tech_effects_calls, interlude_calls, desktop_updates,
+        considered_design_faction, proposed_faction, pruned, upgraded,
+        design_window_shutdowns, prototype_upgrades, design_new_calls,
+        secrets_calls, secret_log_calls, tech_popup_calls, drawn_maps,
+        dirty_calls, WorldClimateWorldWin.redraws, label_lookup_count,
+        event_order};
+    };
+    const auto before = tail_state();
+    std::array<VehPrototype, 512> prototypes;
+    std::memcpy(prototypes.data(), VehPrototypes, sizeof(VehPrototypes));
+    tech_achieved(faction, tech, 0, 0);
+    if (player.tech_id_researching != -1 || player.tech_achieved != 8 ||
+        GameTechAchieved[tech] != static_cast<uint8_t>(owners | (1u << faction)))
+      return 61;
+    if (player.tech_ranking != 11 || player.unk_26 != 3 ||
+        player.theory_of_everything != 17 || player.flags != 0x50) return 62;
+    if (popup_destructions != destructors + 1 || log_calls != logs + 1 ||
+        ambience_calls != ambience_before + 1 || logged_faction != faction ||
+        logged_tech != tech || logged_other_faction != 0) return 63;
+    if (tail_state() != before ||
+        std::memcmp(prototypes.data(), VehPrototypes, sizeof(VehPrototypes)) != 0)
+      return 64;
+    if (FirstProposedPrototype != 317 || TechnologyHelpEntryName != help_name ||
+        TechnologyHelpEntryKind != 29 ||
+        std::strcmp(StringTemp, "unchanged-string") != 0 ||
+        std::strcmp(TechName, "unchanged-tech-name") != 0) return 65;
+  }
+  return cases == 240 ? 0 : 66;
+'''
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_blocked_acquisition_records_only_bookkeeping_and_cleans_popup(tmp_path, compiler):
+    body = actual_body("static bool technology_shareable(") + "\n" + actual_body()
+    result = run_host(tmp_path, body, compiler=compiler, control=BLOCKED_ACQUISITION)
+    assert result.returncode == 0, (result.returncode, result.stdout, result.stderr)
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+@pytest.mark.parametrize("damage", [
+    "missing-turn", "missing-gate", "both-required", "only-gate-one",
+    "premature-return", "missing-count",
+])
+def test_blocked_acquisition_damage_controls(tmp_path, compiler, damage):
+    body = actual_body("static bool technology_shareable(") + "\n" + actual_body()
+    positive = run_host(tmp_path / "positive", body, compiler=compiler,
+                        control=BLOCKED_ACQUISITION)
+    assert positive.returncode == 0, (positive.returncode, positive.stderr)
+    condition = "GameDataStateStorage.fields_.turn_current_num_ == 0 || TechAchievedGate != 0"
+    guard = "    if (" + condition + ") {\n        return;\n    }\n"
+    assert guard in body
+    if damage == "premature-return":
+        mutated = body.replace(guard, "", 1).replace(
+            "    PlayerData &player = PlayersData[faction_id];",
+            guard + "    PlayerData &player = PlayersData[faction_id];", 1)
+    else:
+        before, after = {
+            "missing-turn": (condition, "TechAchievedGate != 0"),
+            "missing-gate": (condition, "GameDataStateStorage.fields_.turn_current_num_ == 0"),
+            "both-required": (condition, condition.replace(" || ", " && ")),
+            "only-gate-one": (condition, condition.replace("!= 0", "== 1")),
+            "missing-count": ("++player.tech_achieved;", "player.tech_achieved += 0;"),
+        }[damage]
+        assert before in body
+        mutated = body.replace(before, after, 1)
+    damaged = run_host(tmp_path / "damaged", mutated, compiler=compiler,
+                       control=BLOCKED_ACQUISITION)
+    assert damaged.returncode in {61, 62, 63, 64, 65}, (
+        "damage must reach a behavioral assertion, not crash", damaged.returncode,
+        damaged.stdout, damaged.stderr,
+    )
+
+
+def test_pinned_acquisition_guard_follows_writes_and_joins_popup_cleanup():
+    """Independent original instructions, not a candidate-spelling assertion."""
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.model import Span
+    pin = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    path = Path(os.environ.get("OPENSMACX_IMAGE", str(ROOT / ".opensmacx/game/terranx_original.exe")))
+    if not path.is_file():
+        pytest.skip("pinned original unavailable")
+    data = path.read_bytes()
+    assert hashlib.sha256(data).hexdigest() == pin
+    image = PeImage(data, pin)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    def listing(start, end):
+        return {i.address: (i.mnemonic, i.op_str)
+                for i in decoder.disasm(image.read(Span(start, end)), start)}
+    code = listing(0x5BB476, 0x5BB4DF)
+    assert code[0x5BB476] == ("mov", "byte ptr [ecx + 0x9a6670], bl")
+    assert code[0x5BB47C] == ("mov", "ebx, dword ptr [edx + 0x96ea30]")
+    assert code[0x5BB482] == ("mov", "eax, dword ptr [0x9a64d4]")
+    assert code[0x5BB487] == ("inc", "ebx")
+    assert code[0x5BB488] == ("test", "eax, eax")
+    assert code[0x5BB48A] == ("mov", "dword ptr [edx + 0x96ea30], ebx")
+    assert code[0x5BB490] == ("je", "0x5bcab3")
+    assert code[0x5BB496] == ("mov", "eax, dword ptr [0x945f40]")
+    assert code[0x5BB49B] == ("test", "eax, eax")
+    assert code[0x5BB49D] == ("jne", "0x5bcab3")
+    assert code[0x5BB4A9] == code[0x5BB4C7] == ("inc", "eax")
+    assert code[0x5BB4AA] == code[0x5BB4C8] == ("mov", "dword ptr [edx + 0x96cd3c], eax")
+    entry = listing(0x5BB000, 0x5BB035)
+    assert entry[0x5BB025] == ("lea", "ecx, [ebp - 0x5400]")
+    assert entry[0x5BB02B] == ("call", "0x4048a0")
+    cleanup = listing(0x5BCAB3, 0x5BCB55)
+    for address, callee in ((0x5BCAD4, "0x404900"), (0x5BCB00, "0x605370"),
+                            (0x5BCB0F, "0x406880"), (0x5BCB1E, "0x406880"),
+                            (0x5BCB2D, "0x5d4dd0"), (0x5BCB3F, "0x4064d0")):
+        assert cleanup[address] == ("call", callee)
+    assert cleanup[0x5BCB54] == ("ret", "")
