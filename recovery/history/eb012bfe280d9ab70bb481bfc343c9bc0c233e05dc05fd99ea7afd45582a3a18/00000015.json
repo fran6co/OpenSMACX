@@ -1,0 +1,19 @@
+{
+  "event_id": "241e2c3c37d60b1a71c67b65fc3ed092f79116f34f388ea31a9026744363cc6d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/variants.py"
+    ],
+    "evidence": [
+      "The same explicit associated-data source interpretations must be consumed by ordinary task checks and strict exploratory source trials, not only a private pilot. Admit the existing package variants.py consumer. Reject candidate overlays that alter associated interpretations rather than silently reusing stale source metadata; ordinary body-only candidates retain their source bindings. No new public/project CLI, no changes to driver/full acceptance prerequisites, no linked or runtime waiver, and no relaxation of the previous bounded permission."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "45626a967ff87f6fbab21f4a1339aeb66fbe67155368f9b863a42480b0442c28",
+  "request_id": "associated-data-native-variant-consumption-oct18",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:general-owner-split-oct17"
+}
