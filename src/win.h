@@ -999,6 +999,7 @@ void __cdecl wait_task();
 void __cdecl do_all_tasks();
 int __cdecl do_mouse();
 void __cdecl do_all_mouse();
+void __cdecl flush_input();
 void __cdecl flush_keyboard();
 void __cdecl flush_mouse();
 

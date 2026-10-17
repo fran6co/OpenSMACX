@@ -30,6 +30,10 @@
 #include "stdafx.h"
 #include "win_callbacks.h"
 
+// SDK dependency used by the keyboard/mouse pumps; the pinned PE supplies
+// its IAT slot. This is not an application-function recovery identity.
+// RECOVERY_IMPORT: v1 __imp__PeekMessageA@20 USER32.dll name:PeekMessageA
+
 // Win constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066FDD0 ? ??_7Win@@6B@ 0x005EB3D0
@@ -755,8 +759,12 @@ int WinScreenWidth;        // 0x009B7B1C
 int WinScreenHeight;       // 0x009B7B20
 Win *WinTrackingWindow;    // 0x009B7AAC
 Win *WinHoverWindow;      // 0x009B7A7C
-Win *WinPointerOwner1;     // 0x009B7ACC
-Win *WinPointerOwner2;     // 0x009B7AD0
+// flush_input clears these Win pointer cells at 5FD15D/5FD163 and again
+// at 5FD19E/5FD1A4. These bind starts only, not allocation or lifetime bounds.
+// RECOVERY_OBJECT: v1 0x009B7ACC ?WinPointerOwner1@@3PAVWin@@A
+Win *WinPointerOwner1;
+// RECOVERY_OBJECT: v1 0x009B7AD0 ?WinPointerOwner2@@3PAVWin@@A
+Win *WinPointerOwner2;
 // Independent DWORD loads/stores at 615E60/615E6C and 615E72/615EDB;
 // 5F60DD/5F60E5 compare and clear the second pointer, not its pointee.
 // RECOVERY_OBJECT: v2 0x009B7ABC 0x009B7AC0 ?WinPointerOwner3@@3PAVWin@@A 0x00615E60
@@ -4427,6 +4435,42 @@ void __cdecl do_all_mouse() {
     do_net();
 }
 
+/*
+Purpose: Drain the keyboard queue, clear the two pointer-owner slots and let
+         the network layer poll, then do the same for the mouse queue - each
+         PeekMessage loop PEELED, one check outside before the do-while, as
+         the image has it.
+// ORIGINAL: 0x005FD120 ?flush_input@@YAXXZ 0x005FD120-0x005FD1BA BYTE_EXACT
+// size      154 bytes
+// prototype void (__cdecl ?flush_input@@YAXXZ)()
+// callers   17   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0062D5D0
+// indirect  0x005FD13F 0x005FD157 0x005FD180 0x005FD198
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl flush_input() {
+    MSG msg;
+    if (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE)) {
+        do {
+        } while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
+    }
+    WinPointerOwner1 = nullptr;
+    WinPointerOwner2 = nullptr;
+    check_net();
+    if (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE)) {
+        do {
+        } while (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST,
+                             PM_REMOVE));
+    }
+    WinPointerOwner1 = nullptr;
+    WinPointerOwner2 = nullptr;
+    check_net();
+    check_net();
+}
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FD1C0 ?flush_keyboard@@YAXXZ 0x005FD1C0-0x005FD21A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/005fd1c0.cpp", "image:terranx_original.exe:0x005FD1C0"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
@@ -5809,7 +5853,6 @@ struct PAINTSTRUCT_ {
 // Menu's real slot-90 contract is Menu::init(Win*), declared on Menu
 // and selected by the constructor-installed Menu table.
 
-void __cdecl flush_input();
 void __cdecl wait_task();
 // The HDC acquire/release pair, recovered from the artifact that defined
 // it: the bodies that paint non-client areas all use it, and a macro

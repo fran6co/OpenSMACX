@@ -1,0 +1,19 @@
+{
+  "event_id": "54dc52720f9700dbb28eda81de90a5c064f86f11e5c87fabc74cbe7e8c530a4b",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "datalink-original-prototype-prefix-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/datalink.cpp::Datalink::set_cat_unit now uses the existing MaxVehProtoFactionNum from src/veh.h. Its source rationale retains pinned bank9AB868,end9AC568,stride34hex:64records. Original identity, historical claim and all other behavior remain intact.",
+      "The native final actual Release object changes only the formerly wrong prototype-end operand; its strict offset142 relocation now passes against the pinned original, while the preserved former100 result fails there. Remaining GameDataStateWindow layout evidence is still unknown.",
+      "recovery/tests/test_datalink_source_text_owner_oct9.py exercises active63/64/99 and skipped4, callback-time activation of the next visited record and compiled former100-bound mutation failure. This restores original behavior, not a bug fix."
+    ]
+  },
+  "previous_event": "a3807bce71097f73bbe29b35e43c345f1785d8d2ad144c4443fbb12e47864f55",
+  "request_id": "datalink-prefix-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:interface-frame-oct17"
+}

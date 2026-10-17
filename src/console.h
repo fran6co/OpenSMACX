@@ -727,15 +727,8 @@ inline MapWin *&console_map_win() {
 // MapWin::draw_map (0x0046A550, ret 4) repaints one. Both are unrecovered -
 // focus reaches in_box and set_center, draw_map is 2049 bytes - so both stay
 // original behind a seam.
-// ?flush_input@@YAXXZ at 0x005FD120 - __cdecl, no arguments - drains the queued
-// input once the focus walk actually moved the primary view. Still original; it
-// pumps the message loop through check_net.
-typedef void(__cdecl func_console_flush_input)(void);
-
 // Map repainting uses MapWin::draw_map directly; there is no second
 // Console-owned pointer binding for the same original function.
-// 0x005FD120, defined in src/console.cpp.
-void __cdecl flush_input();
 // THE OBJECT, at 0x009156B0 in the image - REAL STORAGE, defined in
 // console.cpp. Static zero-initialization precedes its real constructor.
 // The constructor only clears history slot zero, and does not initialize

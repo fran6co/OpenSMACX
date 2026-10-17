@@ -1,0 +1,19 @@
+{
+  "event_id": "99569700cd75ed434b7b7173e7ba137963abaac298788aa8b40048d75c0591d0",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "win-input-reference-bindings-oct17",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp binds the existing WinPointerOwner1/2 objects at9B7ACC/9B7AD0 using start-only records and binds SDK __imp__PeekMessageA@20 to USER32.dll!PeekMessageA without a copied IAT address.",
+      "Fresh final strict original flush_input passes. Independently wrong pointer origins and wrong import export controls do not pass. Host parsing checks preserve unknown storage bounds, no invented initializer/type/layout or system-function recovery identity.",
+      "Full linked selection, object extents, original lifetime and runtime/full-game fidelity remain separate obligations; incorporation grants no historical byte claim."
+    ]
+  },
+  "previous_event": "54dc52720f9700dbb28eda81de90a5c064f86f11e5c87fabc74cbe7e8c530a4b",
+  "request_id": "win-input-references-incorporated-oct17",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:interface-frame-oct17"
+}

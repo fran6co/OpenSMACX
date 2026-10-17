@@ -1848,42 +1848,6 @@ void Console::zoom(int zoom_command, int window_index) {
 
 
 /*
-Purpose: Drain the keyboard queue, clear the two pointer-owner slots and let
-         the network layer poll, then do the same for the mouse queue - each
-         PeekMessage loop PEELED, one check outside before the do-while, as
-         the image has it.
-// ORIGINAL: 0x005FD120 ?flush_input@@YAXXZ 0x005FD120-0x005FD1BA BYTE_EXACT
-// size      154 bytes
-// prototype void (__cdecl ?flush_input@@YAXXZ)()
-// callers   17   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x0062D5D0
-// indirect  0x005FD13F 0x005FD157 0x005FD180 0x005FD198
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl flush_input() {
-    MSG msg;
-    if (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE)) {
-        do {
-        } while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
-    }
-    WinPointerOwner1 = nullptr;
-    WinPointerOwner2 = nullptr;
-    check_net();
-    if (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE)) {
-        do {
-        } while (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST,
-                             PM_REMOVE));
-    }
-    WinPointerOwner1 = nullptr;
-    WinPointerOwner2 = nullptr;
-    check_net();
-    check_net();
-}
-
-/*
 Purpose: Record that the console was closed from the system menu, by raising
          the flag the turn loop watches.
 // ORIGINAL: 0x0051D7C0 ?on_sys_close@Console@@QAEXXZ 0x0051D7C0-0x0051D7CB BYTE_EXACT

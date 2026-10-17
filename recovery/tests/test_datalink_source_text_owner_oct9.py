@@ -66,6 +66,10 @@ def test_datalink_text_arrays_and_actual_consumers(tmp_path: Path) -> None:
     player_declaration = re.search(r"struct Player\s*\{.*?\n\};", faction_header, re.DOTALL)
     order_declaration = re.search(r"struct RulesOrder\s*\{.*?\n\};", veh_header, re.DOTALL)
     assert player_declaration and order_declaration
+    max_prototype_count = re.search(
+        r"static const int MaxVehProtoFactionNum\s*=\s*(\d+)\s*;", veh_header
+    )
+    assert max_prototype_count and int(max_prototype_count.group(1)) == 64
     declarations = []
     for name in NAMES:
         match = re.search(rf"char {name}\[\] = \"[^\"]*\";", source)
@@ -90,12 +94,16 @@ typedef int BOOL;
 typedef char *LPSTR;
 struct RECT { int left,top,right,bottom; };
 static char StringTemp[1024];
+static void (*item_callback)(int)=0;
 int Language=0;
 struct GameFields { uint32_t game_state_; };
 struct { GameFields fields_; } GameDataStateStorage={{0x1000u}};
 struct Entry { std::string text; int id; };
 struct ListBox { std::vector<Entry> entries;
-  void item(const char *s,int n) { Entry e={s,n}; entries.push_back(e); }
+  void item(const char *s,int n) {
+    Entry e={s,n}; entries.push_back(e);
+    if(item_callback) item_callback(n);
+  }
 } list;
 struct Datalink {
   ListBox &listBox_; RECT category_rect_; int font3_;
@@ -107,7 +115,11 @@ struct Datalink {
   void set_cat_effect(); void set_cat_faction(); void set_cat_terraform();
 };
 struct VehPrototype { unsigned flags; const char *veh_name; };
+''' + f"const int MaxVehProtoFactionNum={max_prototype_count.group(1)};\n" + r'''
 VehPrototype VehPrototypes[100];
+static void activate_next_unit_during_item(int id) {
+  if(id==30062) VehPrototypes[63].flags|=1;
+}
 struct RulesTechnology {
   uint32_t flags; char *name; char id[8]; int padding;
   int growth_value, tech_value, wealth_value, power_value;
@@ -183,6 +195,7 @@ char *decimal(int n,char *out,int) { std::sprintf(out,"%d",n); return out; }
 '''+"\n".join(declarations)+"\n"+bodies+r'''
 static void reset() {
   list.entries.clear(); StringTemp[0]=0; open_result=0;
+  item_callback=0;
   open_calls=get_calls=close_calls=text_line=0;
   opened_section[0]=opened_file[0]=0;
   text_lines[0]=const_cast<char *>("First concept");
@@ -197,6 +210,7 @@ static void reset() {
   std::memset(Terraforming,0,sizeof(Terraforming));
   for(int i=0;i<MaxTerrainNum;++i) Terraforming[i].preq_tech_sea=-2;
   std::memset(Order,0,sizeof(Order));
+  std::memset(VehPrototypes,0,sizeof(VehPrototypes));
   std::memset(Players,0,sizeof(Players));
   GameDataStateStorage.fields_.game_state_=0x1000u; Language=0;
 }
@@ -271,6 +285,29 @@ int main() {
     std::sprintf(expected,"Faction %d|%d",i+1,150001+i);
     assert(list.entries[i].text==expected);
   }
+
+  // The pinned scan includes slot 63, skips placeholder slot 4, and stops
+  // before active records 64 and 99. Keep oversized host backing only so
+  // the former bound-100 mutation remains a safe, observable negative control.
+  reset();
+  VehPrototypes[4].flags=1; VehPrototypes[4].veh_name="placeholder";
+  VehPrototypes[63].flags=1; VehPrototypes[63].veh_name="unit63";
+  VehPrototypes[64].flags=1; VehPrototypes[64].veh_name="unit64";
+  VehPrototypes[99].flags=1; VehPrototypes[99].veh_name="unit99";
+  win.set_cat_unit();
+  assert(list.entries.size()==1);
+  assert(list.entries[0].id==30063 && list.entries[0].text=="unit63|30063");
+
+  // The list callback changes a not-yet-visited record. The next iteration
+  // must observe its live flags rather than a value cached before the callback.
+  reset();
+  VehPrototypes[62].flags=1; VehPrototypes[62].veh_name="unit62";
+  VehPrototypes[63].flags=0; VehPrototypes[63].veh_name="unit63";
+  item_callback=activate_next_unit_during_item;
+  win.set_cat_unit();
+  assert(list.entries.size()==2);
+  assert(list.entries[0].id==30062 && list.entries[0].text=="unit62|30062");
+  assert(list.entries[1].id==30063 && list.entries[1].text=="unit63|30063");
 }
 '''
     cpp = tmp_path / "datalink_text.cpp"
@@ -281,6 +318,20 @@ int main() {
     assert built.returncode == 0, built.stdout + built.stderr
     ran = subprocess.run([str(exe)], capture_output=True, text=True)
     assert ran.returncode == 0, ran.stdout + ran.stderr
+
+    # The former 100-record bound must be caught by the active 64/99 sentinels.
+    unit_body = _definition(source, "void Datalink::set_cat_unit()")
+    assert unit_body.count("index < MaxVehProtoFactionNum") == 1
+    overrun_body = unit_body.replace("index < MaxVehProtoFactionNum", "index < 100", 1)
+    overrun_harness = harness.replace(unit_body, overrun_body, 1)
+    overrun_cpp, overrun_exe = tmp_path / "unit-bound-100.cpp", tmp_path / "unit-bound-100"
+    overrun_cpp.write_text(overrun_harness)
+    overrun_build = subprocess.run(
+        [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+         str(overrun_cpp), "-o", str(overrun_exe)], capture_output=True, text=True)
+    assert overrun_build.returncode == 0, overrun_build.stdout + overrun_build.stderr
+    overrun_run = subprocess.run([str(overrun_exe)], capture_output=True, text=True)
+    assert overrun_run.returncode != 0, "100-record bound escaped boundary control"
 
     mutants = (
         ("concept-file-swapped", "text_open(DatalinkConceptSection, DatalinkConceptFile)",

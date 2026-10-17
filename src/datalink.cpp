@@ -2238,8 +2238,8 @@ void Datalink::set_cat_all() {
 Purpose: List the built unit designs, ids 30000 upward.
 
          Prototype 4 is skipped outright - it is the placeholder slot - and
-         the walk stops after a hundred prototypes regardless of how many the
-         rules file defines.
+         the pinned end is 0x009AC568, exactly 64 records after the bank at
+         0x009AB868 using the 0x34-byte prototype stride.
 // ORIGINAL: 0x0042A630 ?set_cat_unit@Datalink@@QAEXXZ 0x0042A630-0x0042A78E BYTE_EXACT
 // size      350 bytes
 // prototype void (__thiscall ?set_cat_unit@Datalink@@QAEXXZ)(Datalink* this)
@@ -2251,7 +2251,7 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_unit() {
-    for (int index = 0; index < 100; ++index) {
+    for (int index = 0; index < MaxVehProtoFactionNum; ++index) {
         VehPrototype &proto = VehPrototypes[index];
         if ((proto.flags & 1) != 0 && index != 4) {
             StringTemp[0] = '\0';
