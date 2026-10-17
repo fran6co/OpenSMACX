@@ -360,6 +360,13 @@ set_source_files_properties(
     src/mapwin.cpp
     src/basewin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve the original frame-based stack accesses in these mapped owners;
+# leave the global compiler defaults and neighboring NetDaemon profile alone.
+set_source_files_properties(
+    src/designwin.cpp
+    src/tutwin.cpp
+    src/xpops.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Original interface palette initialization and font lookup retain a frame
 # pointer; generic library bodies have independently measured profiles.
 set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
