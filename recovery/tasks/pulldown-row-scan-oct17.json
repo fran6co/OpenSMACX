@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "cf110635588ce0c78debe950b02772c76ab2bb89",
+  "editable_files": [
+    "src/pulldown.cpp",
+    "recovery/tests/test_pulldown_handlers_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned 5F9480..5F9563 scans actual items: bit1 advances the enabled-row counter, bit4 forbids selection, count<=0 bypasses scanning, and the signed bounds and empty/selected redraw/hide order remain original. Screen only bounded natural scan spellings; no safety normalizations or ownership changes without new evidence.",
+    "Read-only controlled native overlays may screen at most three genuinely distinct evidence-backed body forms per function. Preserve all original identities, spans, historical claims, compiler policy and error paths. Require unchanged-replica and target-damage controls for each flag trial; a diagnostic is not a claim or acceptance.",
+    "No artificial volatile, raw addresses, assembly, matching casts, unsupported type changes or behavior fixes. The coordinator alone owns resources, Git, preparation, recording and integration. Only actual faithful corrections or exactness gains proceed to isolated implementation, independent source review, build/link, scoped reference/preservation checks and destination verification. No full-game acceptance is claimed."
+  ],
+  "intent": "Recover PullDown selected-row scan from pinned enabled and unselectable row behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6263936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "pulldown-row-scan-oct17"
+}

@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "cf110635588ce0c78debe950b02772c76ab2bb89",
+  "editable_files": [
+    "src/jackal/filewin.cpp",
+    "recovery/tests/test_filewin_extension_behavior.py"
+  ],
+  "evidence": [
+    "Pinned 614140..6141BC guards count equality and null first, clears the indexed destination before strlen, and reloads the count/recomputes the destination after strlen. Current source retains a slot pointer across strlen. Screen direct indexed expressions and late slot materialization without changing alias behavior, four-character boundary or failure mutation.",
+    "Read-only controlled native overlays may screen at most three genuinely distinct evidence-backed body forms per function. Preserve all original identities, spans, historical claims, compiler policy and error paths. Require unchanged-replica and target-damage controls for each flag trial; a diagnostic is not a claim or acceptance.",
+    "No artificial volatile, raw addresses, assembly, matching casts, unsupported type changes or behavior fixes. The coordinator alone owns resources, Git, preparation, recording and integration. Only actual faithful corrections or exactness gains proceed to isolated implementation, independent source review, build/link, scoped reference/preservation checks and destination verification. No full-game acceptance is claimed."
+  ],
+  "intent": "Recover FileWin default-extension destination lifetime from the pinned clear, length-check and append sequence.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6373696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "filewin-extension-source-oct17"
+}
