@@ -228,6 +228,20 @@ in C++, do not infer their original addresses from the operand under test, and d
 reuse another TU's same-named literal. No game literal binding is introduced by this
 framework extension. Exception metadata remains a separate unsupported case.
 
+Source-owned `RECOVERY_ASSOCIATED: v1` interpretations can account for trailing
+compiler switch data without changing a function's original code span or historical
+claims. Native strict task checks and source trials compare the complete declared
+code/data envelope and its original/candidate relocations; no table is discarded.
+The supported domain is an independent same-layout i386 root COMDAT with verified
+original indexing instructions, a guard-derived complete dispatch domain, local
+target cells and exact selector bytes. A reference alone does not prove table
+extent. The bounded alignment rules compare every gap byte, including the narrow
+original/candidate-identical two-byte `MOV EDI,EDI` case before a DWORD-aligned
+table; they do not treat arbitrary instructions as padding.
+Unsupported layouts, extra bytes, wrong targets and missing evidence remain
+failures or unknowns. See `docs/DECOMP_MAP.md`; linked retention/allocation,
+structural/runtime evidence and full acceptance prerequisites are unchanged.
+
 Unplaced compiler labels and all unbound pooled literals remain unknown references
 in strict checks. Their names and same-object definitions are diagnostic hints,
 not permission to mask operands into success. Even a unique content occurrence cannot

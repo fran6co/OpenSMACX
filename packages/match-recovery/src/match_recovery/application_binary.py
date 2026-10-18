@@ -17,6 +17,7 @@ from match_recovery.object_source import (emitted_object_symbols, object_targets
                                           require_disjoint_object_symbols,
                                           read_objects, referenced_object_units)
 from .literal_source import read_literals
+from .associated_source import read_associated
 from .literal_data import check_literals
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.tasks import TaskStore
@@ -314,15 +315,18 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
 
 
 def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
-                   import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=()):
+                   import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=(),
+                   associated_bindings=()):
     """Same strict target resolution for ordinary measurements and source trials."""
     return _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals,
                               errors=errors, import_bindings=import_bindings, shared_bindings=shared_bindings,
-                              literal_bindings=literal_bindings, fragments=fragments)[0]
+                              literal_bindings=literal_bindings, fragments=fragments,
+                              associated_bindings=associated_bindings)[0]
 
 
 def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
-                       import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=()):
+                       import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=(),
+                       associated_bindings=()):
     """Resolve targets from product objects, never from a retention probe."""
     data_targets, checked_objects = object_targets(object_bindings, objects)
     object_symbols = set(require_disjoint_object_symbols(
@@ -355,7 +359,7 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
     rows = check_objects(bindings, objects, image,
                          external_targets=targets,
                          import_targets=imports, literal_targets=literal_targets, errors=errors,
-                         fragments=fragments)
+                         fragments=fragments, associated_bindings=associated_bindings)
     return (rows, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals), targets, imports
 
 
@@ -388,6 +392,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     image = PeImage(image_data, snapshot["image_sha256"])
     object_bindings = read_objects(root, snapshot["image_sha256"])
     literal_bindings = read_literals(root, snapshot["image_sha256"])
+    associated_bindings = read_associated(root, snapshot["image_sha256"])
     if any(item.span is not None for item in object_bindings):
         flag_sets = tuple(flags + settings.layout_flags for flags in settings.flag_sets)
     generated_bindings = read_generated(root, snapshot["image_sha256"])
@@ -542,7 +547,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         checked, product_targets, product_imports = _compiled_evidence(
             bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors,
             import_bindings=import_bindings, shared_bindings=active_shared, literal_bindings=literal_bindings,
-            fragments=fragment_bindings)
+            fragments=fragment_bindings, associated_bindings=associated_bindings)
         checked_functions, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals = checked
         if retained_diagnostics:
             from .function_witness import retained_definition
@@ -580,7 +585,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                     observation["measurement"], = check_objects(
                         [binding], {binding.unit: probe}, image,
                         external_targets=product_targets, import_targets=product_imports,
-                        literal_targets=probe_literals)
+                        literal_targets=probe_literals, associated_bindings=associated_bindings)
                 retained_observations.append(observation)
         def stamped(item):
             unit = item.get("unit")

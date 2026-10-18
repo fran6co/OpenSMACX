@@ -98,7 +98,8 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                   literal_targets: Mapping[tuple[str, str], BoundedTarget | None] | None = None,
                   errors: Mapping[str, str] | None = None, member_functions: bool = False,
                   section_bases: Mapping[tuple[str, int], int] | None = None,
-                  fragments: Sequence[FunctionFragmentBinding] = ()) -> list[dict]:
+                  fragments: Sequence[FunctionFragmentBinding] = (),
+                  associated_bindings=()) -> list[dict]:
     """One report per selected binding, including missing objects and symbols.
 
     External targets must be unambiguous source-owned mappings supplied by the
@@ -109,9 +110,14 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
     """
     if len({item.origin.entity_id for item in bindings}) != len(bindings):
         raise ValueError("ambiguous original function selection")
+    from .associated_source import validate_associated
+    associated_bindings = validate_associated(associated_bindings)
     pin = hashlib.sha256(image.data).hexdigest()
     if any(item.origin.image_sha256 != pin or item.origin.address_space != "pe:va" for item in bindings):
         raise ValueError("function binding refers to a different image/address space")
+    if any(item.owner.image_sha256 != pin or item.owner.address_space != "pe:va"
+           for item in associated_bindings):
+        raise ValueError("associated data refers to a different image/address space")
     if len({item.origin.entity_id for item in fragments}) != len(fragments):
         raise ValueError("ambiguous original fragment selection")
     parents = {item.origin.entity_id: item for item in bindings}
@@ -258,11 +264,21 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
             row["diagnostic"] = _emitted_references(obj, subject, targets)
             if layout is None:
                 raise ValueError("code sections require one entry and at most one uniquely associated recorded tail")
+            associated = tuple(item for item in associated_bindings
+                               if item.owner.entity_id == binding.origin.entity_id)
+            if associated and (member_functions or len(layout) != 1 or binding.source_spans
+                               or any(item.unit != binding.unit for item in associated)
+                               or any(item.parent_entity_id == binding.origin.entity_id for item in fragments)):
+                raise ValueError("associated data requires one independent product source body, not a fragment or EH layout")
             proofs = []
             for number, span in layout:
                 code, relocations, alignment = obj.section_subject(number)
-                proof = compare_bound_code(span, image.read(span), code, relocations, targets,
-                                           original_absolute_sites=image.absolute_sites(span), alignment=alignment)
+                if associated:
+                    from .associated_binary import compare_associated_code
+                    proof = compare_associated_code(obj, subject, span, image, associated, targets)
+                else:
+                    proof = compare_bound_code(span, image.read(span), code, relocations, targets,
+                                               original_absolute_sites=image.absolute_sites(span), alignment=alignment)
                 for relocation in proof.get("relocations", []):
                     relocation["symbol"] = obj.symbols[int(relocation["target"])].name
                 proofs.append({**proof, "span": {"start": span.start, "end": span.end},

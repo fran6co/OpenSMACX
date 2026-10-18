@@ -22,6 +22,7 @@ from .source_config import SourceConfiguration
 RULES = (
     "marker_coverage", "noop_identity", "keyword_isolation",
     "demotion_line_count", "demotion_lessons", "lesson_deletion", "binding_evidence", "literal_bindings",
+    "associated_data_bindings",
 )
 # Independent, deliberately broader than the parser's accepted address grammar.
 # Only standalone comment marker heads count here, not quoted documentation,
@@ -50,6 +51,15 @@ def check_annotation_text(path: Path, text: str) -> dict:
         parse_literals(text, path.name, "0" * 64, address_space="pe:va")
     except ValueError as error:
         fail("literal_bindings", 1, str(error))
+
+    from .associated_source import parse_associated, validate_associated
+    try:
+        # Syntax only, as with literals above. Independent source ownership and
+        # physical code/data/fixup evidence belong to their native readers and
+        # binary checks; this text control does not supply them.
+        validate_associated(parse_associated(text, path.name, "0" * 64, address_space="pe:va"))
+    except ValueError as error:
+        fail("associated_data_bindings", 1, str(error))
 
     parsed_lines = {record.line for record in records}
     for line, content in enumerate(text.splitlines(), 1):

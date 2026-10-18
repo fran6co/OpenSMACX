@@ -16,6 +16,7 @@ from .measurement import Measurement
 from .model import Origin, Result, Span, digest, require_digest, require_text
 from .object_source import read_objects, referenced_object_units, require_disjoint_object_symbols
 from .literal_source import read_literals
+from .associated_source import parse_associated, read_associated, validate_associated
 from .import_source import read_imports, parse_imports
 from .ownership_source import class_hint, project_view
 from .partition import Candidate, partition
@@ -23,6 +24,18 @@ from .pe_coff import Coff, PeImage
 from .source.reader import read_text
 from .tasks import TaskStore
 from .shared_source import read_shared, parse_shared, referenced_shared_units, validate_shared
+
+
+def _require_associated_unchanged(originals, replacements, pin, address_space):
+    """Body trials cannot silently replace their frozen data interpretations."""
+    def meanings(raw, unit):
+        records = validate_associated(parse_associated(raw.decode("utf-8"), unit, pin,
+                                                      address_space=address_space))
+        return {(row.owner, row.span, row.kind, row.evidence, row.unit) for row in records}
+
+    for unit, changed in replacements.items():
+        if meanings(originals[unit], unit) != meanings(changed, unit):
+            raise ValueError("candidate changes associated-data interpretations; checkpoint source bindings first")
 
 
 def _rank_trials(baselines, trials):
@@ -276,6 +289,10 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         raise ValueError("candidate task refers to another original image")
     image_data = image_path.read_bytes()
     image = PeImage(image_data, pin)
+    for path, (_, contents) in damage_controls.items():
+        _require_associated_unchanged(originals, {path: contents}, pin, settings.source.address_space)
+    for contents in candidates.values():
+        _require_associated_unchanged(originals, contents, pin, settings.source.address_space)
     all_entities = frozenset(entity["entity_id"] for group in view["groups"] for entity in group["entities"])
     bindings, all_refused, externals = select_bindings(view, all_entities)
     refused = [row for row in all_refused if row["entity_id"] in selected]
@@ -284,6 +301,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         raise ValueError("candidate target requires one unambiguous mapped product definition with image spans")
     data_bindings, generated = read_objects(root, pin), read_generated(root, pin)
     literal_bindings = read_literals(root, pin)
+    associated_bindings = read_associated(root, pin)
     shared = read_shared(root, pin)
     validate_shared(shared, view)
     # Compile every mapped task TU together, not just the primary target. This
@@ -412,7 +430,8 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         active_shared = [item for item in trial_shared if item.unit in objects or item.unit in errors]
         rows, data_rows, generated_rows, import_rows, shared_rows, literal_rows = check_compiled(
             measured, data_bindings, generated, objects, image, trial_externals, errors=errors,
-            import_bindings=imports, shared_bindings=active_shared, literal_bindings=literal_bindings)
+            import_bindings=imports, shared_bindings=active_shared, literal_bindings=literal_bindings,
+            associated_bindings=associated_bindings)
         selected_row = next(row for row in rows if row["entity_id"] == target.origin.entity_id)
         neighbors = [row for row in rows if row is not selected_row]
         selected_row = {**selected_row, "flags": list(effective(target.unit, flags)), "graph_flags": list(flags)}

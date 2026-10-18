@@ -1,0 +1,22 @@
+{
+  "event_id": "4d271b746b4ddee22c108d90aeb426565d98ff9e786fb1b8c07b322fecfa0c7d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/associated_binary.py",
+      "packages/match-recovery/tests/test_associated_binary.py"
+    ],
+    "evidence": [
+      "Independent pinned-image and retained actual-application COFF reads establish identical two-byte 8B FF gaps for stoi628950 at recorded body end6289FE and HSV_to_RGB628B70 at recorded body end628D92. Their explicit following target tables begin at DWORD-aligned628A00 and628D94. Existing function identities/spans and every original byte remain unchanged.",
+      "In the already authorized narrow i386 associated-data verifier, permit exactly the two-byte MOV EDI,EDI self-move as alignment only at an independently decoded terminating body end congruent2 modulo4, immediately before an explicitly declared DWORD-aligned switch-target table. Require the original and candidate gaps to be byte-identical8BFF with no relocations and compare both bytes normally. This does not permit arbitrary instructions, wider gaps, backward searches for returns, implicit data, truncation, or ignoring bytes. Add wrong-gap, alignment and extent damage controls.",
+      "The independent review correctly distinguishes an operand reference from proof of complete dispatch extent. Require a recognized original unsigned compare/out-of-range-branch guarded dispatch, unchanged index and compare EFLAGS along its bounded straight-line path, and table length equal to the complete guard-derived domain. A selector variant may use one declared indexed MOVZX byte map or an explicitly proven XOR-zeroed register followed by its low-byte MOV load, with map length equal to the guard-derived domain, every map value in the target-table range, and complete target domain accounted. Intervening floating-point instructions are supported only with independently established non-modification of the compared general register and integer EFLAGS. Reject unsupported dataflow/control flow, alternate entries or register-alias writes rather than inferring bounds from candidate section size. Source/table metadata alone never grants this physical proof. Preserve all previous acceptance and publication prerequisites."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "241e2c3c37d60b1a71c67b65fc3ed092f79116f34f388ea31a9026744363cc6d",
+  "request_id": "associated-data-bounded-alignment-and-extent-oct18",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:general-owner-split-oct17"
+}

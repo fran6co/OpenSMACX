@@ -233,6 +233,38 @@ stale/incomplete snapshots, duplicate identities, parent/target-owner aliases an
 insertion inside a block comment. The caller still owns fresh on-disk validation,
 review and guarded publication; the transformation itself writes no files.
 
+## Source-owned associated compiler data
+
+`// RECOVERY_ASSOCIATED: v1 <kind> <owner-entry> <data-start> <exclusive-end> <referencing-instruction>`
+
+The supported kinds are `switch_targets` and `switch_selector`. These are
+interpretations of compiler-emitted storage, not C++ arrays to manufacture and
+not new function identities. The owner is an existing, uniquely mapped function
+in the same source unit. Its original code spans and historical claims remain
+unchanged. The evidence address identifies the original instruction that indexes
+the declared data, not a guessed compiler label or a nearby return instruction.
+
+The bounded strict checker supports one independent i386 root COMDAT with
+same-layout code and trailing data. It checks the original instruction and PE
+relocation, the corresponding candidate operand and local COFF relocation, every
+jump-table target or selector byte, and the complete comparison envelope including
+alignment gaps. A recognized unsigned guarded-dispatch path must establish the
+complete table domain; a single operand reference is insufficient extent evidence.
+The narrow i386 alignment domain admits NOP/INT3 fill and exactly an identical
+two-byte `MOV EDI,EDI` between an independently terminated body and its immediately
+following DWORD-aligned target table. It does not trim at a return, mask table cells, infer bounds from
+the candidate's length, or replace an unresolved relocation with a passing mask.
+Unclaimed bytes, overlaps, extra entries, wrong targets/maps, absent evidence and
+unsupported EH/multi-entry layouts cannot pass. Ordinary checks without these
+explicit bindings retain their existing boundary rules.
+
+Use the package's guarded pure `associated_writer.write_associated_bytes` for
+additions against a complete parsed source snapshot; the coordinator owns
+on-disk freshness and publication. Source trials use frozen interpretations and
+refuse attempts to replace them inside a body experiment. Syntax checking alone
+does not prove physical emission, ownership, linked retention or runtime behavior.
+This proof does not weaken any full-project or automatic acceptance prerequisite.
+
 ## TU-private literal bindings
 
 `// RECOVERY_LITERAL: v1 <start> <exclusive-end> <emitted-symbol> <evidence-address>`
