@@ -222,29 +222,47 @@ int main() {
   vox_draw_part(&record,&shape,&position,&matrix,&matrix,&direction,1.0f,1);
   assert(event_count==2);
 
-  // Shadow uses its separate two-coordinate slots and non-null final arg.
+  // Shadow's fifth argument is an integer visibility value, normalized to a
+  // single flag bit before the direction/light flags are ORed into it.
   reset(record); set_box(1,1,3,3); shape.field_0_=8; shape.item_count_=0;
-  vox_draw_shadow(&record,&shape,&position,&matrix,(const void*)1);
+  vox_draw_shadow(&record,&shape,&position,&matrix,1);
   assert(event_count==1 && events[0].slot==3 && events[0].count==0 && events[0].flags==0x21);
   reset(record); set_box(8,8,12,12); shape.field_0_=0; shape.item_count_=3;
   vox_draw_shadow(&record,&shape,&position,&matrix,0);
   assert(event_count==1 && events[0].slot==4 && events[0].flags==0);
   assert(events[0].clip[2]==10 && events[0].clip[3]==10);
+  // Zero visibility stays clear even when the shape contributes bit 0x20.
+  reset(record); set_box(1,1,3,3); shape.field_0_=8; shape.item_count_=0;
+  vox_draw_shadow(&record,&shape,&position,&matrix,0);
+  assert(event_count==1 && events[0].slot==3 && events[0].flags==0x20);
+  // Any nonzero integer, not just pointer-shaped 1, normalizes to bit 0.
+  reset(record); set_box(8,8,12,12); shape.field_0_=0; shape.item_count_=3;
+  vox_draw_shadow(&record,&shape,&position,&matrix,-7);
+  assert(event_count==1 && events[0].slot==4 && events[0].flags==1);
   reset(record); set_box(1,1,3,3); shape.field_0_=2; shape.item_count_=0;
-  vox_draw_shadow(&record,&shape,&position,&matrix,(const void*)1);
+  vox_draw_shadow(&record,&shape,&position,&matrix,1);
   assert(event_count==0);
   memset(item_bytes,0,sizeof(item_bytes)); item=reinterpret_cast<CvrRasterItemHeaderCandidate*>(item_bytes);
   item->item_count_=1; item->flags_=1; shape.item_stream_=item_bytes; shape.item_count_=1; shape.field_0_=2|8;
   reset(record); set_box(1,1,3,3);
-  vox_draw_shadow(&record,&shape,&position,&matrix,(const void*)1);
+  vox_draw_shadow(&record,&shape,&position,&matrix,1);
   assert(event_count==1 && events[0].slot==3 && events[0].flags==0x31 && inverse_direction_calls==1);
+  // A clipped tiled item combines normalized visibility, item bit 0x10, and
+  // shape bit 0x20; a forced-one/forced-zero/inverted source mutant fails.
+  reset(record); set_box(8,8,12,12);
+  vox_draw_shadow(&record,&shape,&position,&matrix,-7);
+  assert(event_count==1 && events[0].slot==4 && events[0].flags==0x31);
+  // With tiled item direction but no visibility or shape-light bit, only 0x10 remains.
+  reset(record); set_box(1,1,3,3); shape.field_0_=2; item->flags_=1;
+  vox_draw_shadow(&record,&shape,&position,&matrix,0);
+  assert(event_count==1 && events[0].slot==3 && events[0].flags==0x10);
   // Two-record shadow loop; third record is a safe loop-condition mutant witness.
   memset(item_bytes,0,sizeof(item_bytes)); item=reinterpret_cast<CvrRasterItemHeaderCandidate*>(item_bytes);
   second=reinterpret_cast<CvrRasterItemHeaderCandidate*>(item->inline_payload_+3);
   third=reinterpret_cast<CvrRasterItemHeaderCandidate*>(second->inline_payload_+3);
   item->item_count_=second->item_count_=third->item_count_=1; item->flags_=second->flags_=third->flags_=0;
   reset(record); set_box(1,1,3,3); shape.field_0_=2; shape.item_count_=2; shape.item_stream_=item_bytes;
-  vox_draw_shadow(&record,&shape,&position,&matrix,(const void*)1);
+  vox_draw_shadow(&record,&shape,&position,&matrix,1);
   assert(event_count==2);
 
   // Encoded byte extents include the size dword. Seven payload bytes put
@@ -264,7 +282,7 @@ int main() {
   assert(event_count==2 && events[0].stream==item_bytes+0x20 &&
          events[1].stream==item_bytes+0x47);
   reset(record); set_box(1,1,3,3);
-  vox_draw_shadow(&record,&shape,&position,&matrix,(const void*)1);
+  vox_draw_shadow(&record,&shape,&position,&matrix,1);
   assert(event_count==2 && events[0].stream==item_bytes+0x20 &&
          events[1].stream==item_bytes+0x47);
   return 0;
@@ -320,6 +338,12 @@ def test_loop_and_dispatch_route_mutants_are_rejected() -> None:
         (part, shadow.replace("} while (visited_items < shape->item_count_);",
                               "} while (visited_items <= shape->item_count_);", 1)),
         (part, shadow.replace("if (contained) {", "if (!contained) {", 1)),
+        (part, shadow.replace("int flags = visible != 0;",
+                              "int flags = 1 | (visible & 0);", 1)),
+        (part, shadow.replace("int flags = visible != 0;",
+                              "int flags = 0 | (visible & 0);", 1)),
+        (part, shadow.replace("int flags = visible != 0;",
+                              "int flags = visible == 0;", 1)),
     )
     compilers = [shutil.which(name) for name in ("g++", "clang++")]
     assert all(compilers), "GCC and Clang required"

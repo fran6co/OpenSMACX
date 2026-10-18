@@ -64,11 +64,16 @@ def test_actual_source_callback_identity_and_post_part_edge():
                          source.index("int Caviar::init_class()") + 8000]
     draw = extract(source, "void __cdecl vox_draw_scene(")
 
-    # Preserve the original identity while the coordinator later updates the
-    # current emitted symbol through the native annotation writer.
-    assert ("// ORIGINAL: 0x00618DA0 ?object_start@Caviar@@QAAX"
-            "PAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@"
-            "PAUVOX_Rect@@PAUVOX_Vect@@@Z 0x00618DA0-0x00618E06 SEMANTIC") in source
+    # Preserve the original identity and the stronger historical claim now
+    # banked by the native recorder; do not freeze the former weaker token.
+    from match_recovery.source import read_text
+    callback, = [row for row in read_text(source, SOURCE)
+                 if row.address == 0x00618DA0]
+    assert callback.name == ("?object_start@Caviar@@QAAX"
+                             "PAUVOX_ScnRenderHnd@@JPAUVOX_Vect@@PAUVOX_Matrix@@"
+                             "PAUVOX_Rect@@PAUVOX_Vect@@@Z")
+    assert callback.image_spans == ((0x00618DA0, 0x00618E06),)
+    assert callback.byte_exact
     assert "static void __cdecl object_start(VOX_ScnRenderHnd *handle" in header
     assert "record->object_start_callback_ = &Caviar::object_start;" in initializer
     assert "record->object_callback_[0] = 0x00618DA0" not in initializer

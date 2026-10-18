@@ -4544,16 +4544,17 @@ void __cdecl vox_draw_part(
 OPENSMACX_NOINLINE
 // SEED HISTORY: archived draw seed mapping used FILE mode; current source ownership is a BODY mapping.
 // ORIGINAL: 0x0063F000 sub_63f000 0x0063F000-0x0063F5D7
-// symbol    ?vox_draw_shadow@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@PBX@Z
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x0063F000 reserves 0x58 bytes and saves four registers; after helper-argument cleanup at 0x0063F026, load 0x0063F0C1 from ESP+0x7C is entry ESP+0x14, the fifth cdecl argument. XOR EDI,EDI at 0x0063F02B and CMP ESI,EDI / SETNE BL at 0x0063F0CB / 0x0063F0D5 establish 0/1 normalization.", "The original caller supplies its scalar LOD local, not camera bounds. Flat/tiled and contained/clipped paths preserve this low bit while independently setting 0x10/0x20 flags. This corrects a source type/value interpretation without changing original identities, layout or quirks."], "reason": "Interpret the fifth shadow argument as scalar visibility and normalize its nonzero value into the dispatch low bit."}
+// symbol    ?vox_draw_shadow@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@H@Z
 // kind      game
 // TRIED: 5-int __cdecl signature transcribed faithfully from the two branches (bit2==0 single-shot vs bit2-set do/while loop over pbVar6); prologue diverges at instr #0 (sub esp,0x58 vs push) - not chased further, large FP-heavy function, landed for coverage.
 void __cdecl vox_draw_shadow(
     VoxRenderRecord *record, const CvrShape *shape,
     const VOX_Vect *position, VOX_Matrix *part_matrix,
-    const void *camera_nonnull) {
+    int visible) {
     CaviarSceneProjectionScratchCandidate &scratch = CaviarSceneProjectionScratch;
     int clip[4];
-    int flags = camera_nonnull != 0;
+    int flags = visible != 0;
     int item_box[6];
 
     sub_63fa80(part_matrix);
@@ -4648,6 +4649,7 @@ Purpose: Draw the scene. Refuses to re-enter, stages the record and the
          the state asks for it, draws the part and its shadow through the
          second view.
 // ORIGINAL: 0x00639E60 sub_639e60 0x00639E60-0x0063A279 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00639FA9 seeds local ESP+0x10 with 1 and 0x00639FC9 clears it above the LOD cut. At 0x0063A1EC three outstanding matrix-multiply arguments make ESP+0x1C that same local; cleanup at 0x0063A1F0 removes 0x0C bytes, then 0x0063A1FB pushes the scalar as argument 5 to 0x0063F000 at 0x0063A23B.", "The main and shadow passes consume the same precomputed visibility, including shadow-only paths. Existing caller bounds checks and callback ordering are unchanged; the former bounds-pointer argument incorrectly forced the shadow low flag on."], "reason": "Pass the computed scalar LOD visibility to shadow rendering, not the address of the camera bounds."}
 // symbol    ?vox_draw_scene@@YAXPAUVoxRenderRecord@@PAUCaviarSceneContext@@PAUVoxCameraBlock@@H@Z
 // size      1049 bytes
 // callers   2   call targets   9
@@ -4807,8 +4809,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
                         shadow_part.values[shadow_row][shadow_column] *= extent;
                     }
                 }
-                vox_draw_shadow(record, node, &shadow, &shadow_part,
-                                &view->bounds_);
+                vox_draw_shadow(record, node, &shadow, &shadow_part, visible);
             }
         }
     }

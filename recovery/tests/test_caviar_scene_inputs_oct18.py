@@ -66,7 +66,7 @@ static uint16_t **vox_active_ramp_a_;
 static const int32_t *vox_active_ramp_b_;
 static uint8_t vox_active_size_code_;
 static bool behind=false;
-static int main_calls,shadow_calls,start_calls,post_calls,clip_calls,last_visible,setup_calls,stage_calls;
+static int main_calls,shadow_calls,start_calls,post_calls,clip_calls,last_visible,last_shadow_visibility,setup_calls,stage_calls;
 static int setup_mutation=-1,post_mutation=-1;
 static CaviarSceneContext *active_context;
 static VoxRenderRecord *active_record;
@@ -89,8 +89,8 @@ static void caviar_clip_shape(VoxRenderRecord *,const CvrShape *,const VOX_Vect 
 static void vox_draw_part(VoxRenderRecord *,const CvrShape *,const VOX_Vect *,const VOX_Matrix *m,const VOX_Matrix *,const VOX_Vect *,float,int visible) {
     ++main_calls;last_visible=visible;if(m->values[2][2]!=1)std::exit(81);
 }
-static void vox_draw_shadow(VoxRenderRecord *,const CvrShape *,const VOX_Vect *,const VOX_Matrix *m,const Bounds *) {
-    ++shadow_calls;if(m->values[2][2]!=1)std::exit(82);
+static void vox_draw_shadow(VoxRenderRecord *,const CvrShape *,const VOX_Vect *,const VOX_Matrix *m,int visible) {
+    ++shadow_calls;last_shadow_visibility=visible;if(m->values[2][2]!=1)std::exit(82);
 }
 static bool scratch_staged() {
     Setup&s=*active_record->setup_block_;
@@ -133,7 +133,7 @@ struct Fixture {
         record.setup_block_=&setup;record.setup_callback_=setup_callback;record.object_start_callback_=start_callback;record.post_part_callback_=post_callback;
         vox_active_colour_table_=0;vox_active_ramp_a_=0;vox_active_ramp_b_=0;vox_active_size_code_=0;
         std::memset(&vox_setup_copy_,0,sizeof(vox_setup_copy_));
-        active_context=&context;active_record=&record;main_calls=shadow_calls=start_calls=post_calls=clip_calls=setup_calls=stage_calls=0;last_visible=-1;setup_mutation=post_mutation=-1;behind=false;
+        active_context=&context;active_record=&record;main_calls=shadow_calls=start_calls=post_calls=clip_calls=setup_calls=stage_calls=0;last_visible=last_shadow_visibility=-1;setup_mutation=post_mutation=-1;behind=false;
     }
     void draw() {vox_draw_scene(&record,&context,&camera,0);require(vox_scene_busy==0,"busy-cleared");}
 };
@@ -151,12 +151,13 @@ int main() {
         std::puts("null-setup-returned");return 0;
     }
     {Fixture f;f.context.state_.instance_count_=0;f.draw();require(setup_calls==1&&main_calls==0&&shadow_calls==0,"empty-scene-still-calls-setup-once");}
-    {Fixture f;f.draw();require(main_calls==1 && shadow_calls==1 && start_calls==1 && post_calls==1,"normal-complete-chain");require(last_visible==1,"visibility-below-cut");}
-    {Fixture f;CaviarSceneProjectionScratch.projected_scale_=0.5f;f.draw();require(last_visible==1,"visibility-equal-cut");}
-    {Fixture f;CaviarSceneProjectionScratch.projected_scale_=0.75f;f.draw();require(last_visible==0,"visibility-above-cut");}
-    {Fixture f;behind=true;f.draw();require(main_calls==0 && start_calls==0 && post_calls==0,"behind-skips-main");require(shadow_calls==1,"behind-keeps-shadow");require(f.record.secondary_clip_.width_==3,"load-behind-keeps-shadow");}
+    {Fixture f;f.draw();require(main_calls==1 && shadow_calls==1 && start_calls==1 && post_calls==1,"normal-complete-chain");require(last_visible==1,"visibility-below-cut");require(last_shadow_visibility==1,"shadow-visibility-below-cut");}
+    {Fixture f;CaviarSceneProjectionScratch.projected_scale_=0.5f;f.draw();require(last_visible==1,"visibility-equal-cut");require(last_shadow_visibility==1,"shadow-visibility-equal-cut");}
+    {Fixture f;CaviarSceneProjectionScratch.projected_scale_=0.75f;f.draw();require(last_visible==0,"visibility-above-cut");require(last_shadow_visibility==0,"shadow-visibility-above-cut");}
+    {Fixture f;behind=true;f.draw();require(main_calls==0 && start_calls==0 && post_calls==0,"behind-skips-main");require(shadow_calls==1,"behind-keeps-shadow");require(last_shadow_visibility==1,"behind-shadow-visibility-below-cut");require(f.record.secondary_clip_.width_==3,"load-behind-keeps-shadow");}
+    {Fixture f;behind=true;CaviarSceneProjectionScratch.projected_scale_=0.75f;f.draw();require(main_calls==0 && start_calls==0 && post_calls==0,"behind-skips-hidden-main");require(shadow_calls==1,"behind-keeps-hidden-shadow");require(last_shadow_visibility==0,"behind-shadow-visibility-above-cut");}
     {Fixture f;post_mutation=0;f.draw();require(shadow_calls==0,"post-callback-disables-shadow");}
-    {Fixture f;f.context.shadow_enabled_=0;post_mutation=1;f.draw();require(shadow_calls==1,"post-callback-enables-shadow");}
+    {Fixture f;f.context.shadow_enabled_=0;post_mutation=1;CaviarSceneProjectionScratch.projected_scale_=0.75f;f.draw();require(shadow_calls==1,"post-callback-enables-shadow");require(last_shadow_visibility==0,"post-callback-keeps-shadow-visibility");}
     {Fixture f;setup_mutation=0;f.draw();require(shadow_calls==0,"setup-disables-shadow");}
     {Fixture f;f.context.shadow_enabled_=0;setup_mutation=1;f.draw();require(shadow_calls==1,"setup-enables-shadow");}
     {Fixture f;f.colour=0x80;f.draw();require(main_calls==0 && shadow_calls==0 && clip_calls==0,"hidden-skips-both");}
@@ -189,11 +190,16 @@ def _inputs():
     return "\n".join(constants), extract_definition(source, "vox_load_scene_view"), extract_definition(source, "vox_draw_scene")
 
 
-def _run(tmp_path, compiler, constants, load, draw, null_setup=False):
+def _compile(tmp_path, compiler, constants, load, draw):
     unit = HARNESS.replace("/* CONSTANTS */", constants).replace("/* LOAD_BODY */", load).replace("/* DRAW_BODY */", draw)
     cpp, exe = tmp_path / "scene.cpp", tmp_path / "scene"
     cpp.write_text(unit)
     result = subprocess.run([compiler,"-std=c++98","-O0",str(cpp),"-o",str(exe)],capture_output=True,text=True,timeout=40)
+    return result,exe
+
+
+def _run(tmp_path, compiler, constants, load, draw, null_setup=False):
+    result,exe=_compile(tmp_path,compiler,constants,load,draw)
     assert result.returncode==0,result.stderr
     env={**os.environ,**({"CAVIAR_NULL_SETUP":"1"} if null_setup else {})}
     def disable_core():
@@ -266,6 +272,31 @@ def test_compiling_scene_damage_controls(tmp_path,damage,witness):
         draw=draw.replace(marker,"if (vox_part_behind(&position, extent, view)) continue;\n        "+marker,1)
     result=_run(tmp_path,compiler,constants,load,draw)
     assert result.returncode!=0 and "witness: "+witness in result.stderr,result.stderr
+
+
+@pytest.mark.parametrize("forced,witness", (("0","shadow-visibility-below-cut"),
+                                             ("1","shadow-visibility-above-cut")))
+def test_compiling_forced_shadow_visibility_damage_fails_actual_scene_body(tmp_path,forced,witness):
+    compiler=shutil.which("g++") or shutil.which("clang++")
+    if not compiler:pytest.skip("host C++ compiler unavailable")
+    constants,load,draw=_inputs()
+    call="vox_draw_shadow(record, node, &shadow, &shadow_part, visible);"
+    assert draw.count(call)==1
+    draw=draw.replace(call,"vox_draw_shadow(record, node, &shadow, &shadow_part, "+forced+");")
+    result=_run(tmp_path,compiler,constants,load,draw)
+    assert result.returncode!=0 and "witness: "+witness in result.stderr,result.stderr
+
+
+def test_compiling_old_bounds_pointer_shadow_argument_is_rejected(tmp_path):
+    compiler=shutil.which("g++") or shutil.which("clang++")
+    if not compiler:pytest.skip("host C++ compiler unavailable")
+    constants,load,draw=_inputs()
+    call="vox_draw_shadow(record, node, &shadow, &shadow_part, visible);"
+    assert draw.count(call)==1
+    draw=draw.replace(call,"vox_draw_shadow(record, node, &shadow, &shadow_part, &view->bounds_);")
+    result,_=_compile(tmp_path,compiler,constants,load,draw)
+    assert result.returncode!=0
+    assert "cannot convert" in result.stderr or "invalid conversion" in result.stderr
 
 
 def test_pinned_constants_and_whole_function_control_flow_anchors():

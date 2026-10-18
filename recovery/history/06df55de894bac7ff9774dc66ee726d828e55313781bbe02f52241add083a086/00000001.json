@@ -1,0 +1,21 @@
+{
+  "event_id": "26301da9a7c26ec0c8c98d0747088de9b51b6cbdc2c0c20a7f2ee82188109ff3",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_object_callback_owner_oct9.py"
+    ],
+    "evidence": [
+      "The related object-callback test fails identically on unchanged master and this worker because its literal annotation freezes object_start618DA0 as SEMANTIC although the source now retains a stronger historical BYTE_EXACT claim. Native source identity/spans are unchanged by the scalar-visibility recovery.",
+      "Authorize replacing only that brittle literal with native source-reader assertions of the exact original name, complete extent and existing BYTE_EXACT claim. This strengthens claim protection; retain every callback identity/type/palette/order/behavior/damage assertion and do not edit callback C++ or its mapping. No gate relaxation, baseline reset or new claim grant.",
+      "Current C++ is frozen and already built. This test/journal-only expansion changes no compiler inputs, two-function code scope, original interpretation, flags or physical preservation allowance. Rerun the affected module plus focused controls before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "caviar-shadow-callback-claim-control-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-shadow-visibility-oct18"
+}
