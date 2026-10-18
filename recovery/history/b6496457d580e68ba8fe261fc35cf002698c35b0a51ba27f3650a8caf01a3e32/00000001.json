@@ -1,0 +1,21 @@
+{
+  "event_id": "a992b3e3e88c76745a1185ed403b5066de30d5b1a37038fde729425e92edd063",
+  "payload": {
+    "affects": [
+      "entity-2d63ef556c42517a9d5b8ad4e57f78e35a8156569df84665bc75be2dd3828afa",
+      "entity-8e663eb9780798f9f52831d31ffeab1e0b2b8b090f2d707a2cf75ac5e3e2c247"
+    ],
+    "author": "coordinator",
+    "discovery_id": "console-typed-loop-and-delegation-screen-oct18",
+    "evidence": [
+      "Source snapshot and bounded authorized native local deck at a03e0d1e; unchanged physical replica and observable target-damage controls qualify both settled flag trials. Candidate source and derived report remain ignored."
+    ],
+    "hypothesis": "Typed pointer-loop traversal or delegating the duplicate overload may recover the original induction-pointer home.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "console-typed-loop-and-delegation-screen-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-cursor-loop-oct18"
+}

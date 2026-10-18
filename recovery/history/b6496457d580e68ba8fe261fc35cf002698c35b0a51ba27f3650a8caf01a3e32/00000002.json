@@ -1,0 +1,18 @@
+{
+  "event_id": "e4a1054521a4520198c74e8adb90b3b0c891b3af5f26f047b53f982221898f67",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "console-typed-loop-and-delegation-screen-oct18",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject this bounded source-form proposal: neither pointer-loop spelling nor overload delegation qualifies an exact target. Delegation does not inline; typed pointer traversal changes branch form without repairing the parameter-slot home. No candidate is adopted and the current C++/claims remain unchanged.",
+      "Do not repeat this deck without new structural/compiler evidence. This is a coordinator negative decision, not recovery acceptance, a semantic exclusion or a weaker matching claim."
+    ]
+  },
+  "previous_event": "a992b3e3e88c76745a1185ed403b5066de30d5b1a37038fde729425e92edd063",
+  "request_id": "console-typed-loop-and-delegation-screen-oct18-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-cursor-loop-oct18"
+}
