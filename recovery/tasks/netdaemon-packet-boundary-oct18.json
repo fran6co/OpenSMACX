@@ -1,0 +1,128 @@
+{
+  "author": "coordinator",
+  "base_revision": "bffedcf01d88ec837f56df4762bdcbb6ce5eff97",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "src/netdaemon_message_data.cpp",
+    "src/netdaemon_message_record.h",
+    "CMakeLists.txt",
+    "recovery/tests/test_message_data_actual_source.py",
+    "recovery/tests/test_netdaemon_project_actual_source.py",
+    "recovery/tests/test_netdaemon_double_cross_actual_source_oct12.py",
+    "recovery/tests/test_netdaemon_entry_prefix_oct14az.py",
+    "recovery/tests/test_netdaemon_early_routes_oct12.py",
+    "recovery/tests/test_netdaemon_waiting_mask_owner_oct9.py",
+    "recovery/tests/test_netdaemon_receiver_wire_views_oct14di.py",
+    "recovery/tests/test_netdaemon_command_wire_actual_source_oct13ac.py",
+    "recovery/tests/test_netdaemon_diplomacy_wire_actual_source_oct13z.py",
+    "recovery/tests/test_netdaemon_typed_storage_oct11.py",
+    "recovery/tests/test_netdaemon_council_wire_oct11.py",
+    "recovery/tests/test_netdaemon_turn_packet_views_oct13s.py",
+    "recovery/tests/test_netdaemon_wire_owner_oct11.py",
+    "recovery/tests/test_netdaemon_table_e_reads_oct11.py",
+    "recovery/tests/test_netdaemon_entity_fixup_actual_source_oct13aa.py",
+    "recovery/tests/test_netdaemon_session_lobby_wire_actual_source_oct13ad.py",
+    "recovery/tests/test_application_link_recovery.py",
+    "recovery/tests/netdaemon_packet_source.py",
+    "recovery/tests/test_netdaemon_packet_boundary_oct18.py"
+  ],
+  "evidence": [
+    "Pinned complete spans and actual application COFF identify15 current MISMATCH callers that inline the packet construction despite original direct592EE0 calls. Include all15, REFUSED process_message534400 and the genuine existing592EE0 helper. This is a topology finding, not a promise of15 exact gains or historical TU/file identity. Retain process_message refusal and all independent restoration debt.",
+    "Move only the complete existing int-return message_data implementation and its native identity/span/binding/symbol/claim/history envelope to independently compiled src/netdaemon_message_data.cpp. Keep every caller body, public declaration, source-owned global and class layout/lifetime unchanged; no noinline, pragmas, compiler flags, forwarding wrappers or original-address dispatch.",
+    "Move the exact MessageDataRecord declaration, original unwritten-byte rationale and eight layout assertions to src/netdaemon_message_record.h, used by both the receiver owner and new sender. Keep all receiver views and per-field memcpy reads unchanged. Use real netdaemon.h and console.h declarations for NetDaemonNet/ConsoleGlobal; no duplicate class prefix, fake storage or raw member offsets.",
+    "Preserve the six-int API and live32-bit send EAX result consumed by unlock_veh, low16 opcode, unwritten bytes2..3, timestamp callback before sequence read, busy-count ordering and original unsafe/error paths. Existing message-data-owner-oct5 evidence disproves a nonvoid no-return body and returning the busy counter; retain its complete reasoning.",
+    "Adapt actual-source test readers to the real new header/TU. Historical full-token and identity controls must retain their immutable baselines and strict reversal/mutation assertions, using only an explicit tested inverse source-home projection if needed. New controls must reject extra definitions, altered record/body/return/ordering and wrong direct-call boundaries. Do not hide arbitrary new-file code or waive tests.",
+    "Require fresh full application build/link, native original/candidate call edges across the full closure, full source/claim/mapping/reference continuity, actual-artifact matching and physical outside-subject preservation. Inspect every new-unit code/data contribution including all compiler-associated sections. Identical preexisting compiler inline copies may be separately documented but do not waive native unit-presence failures or establish linked retained selection/allocation, automatic or game acceptance."
+  ],
+  "intent": "Recover the observed out-of-line message_data packet-builder boundary across its complete NetDaemon caller closure, preserving packet bytes, return contract and receiver views.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5442896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5432176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5443824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5442816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5441024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5431376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5449920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5440672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5442208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5443152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5444352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5448000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5449072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5445504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5451264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-packet-boundary-oct18"
+}
