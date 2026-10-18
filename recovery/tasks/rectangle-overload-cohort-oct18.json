@@ -1,0 +1,37 @@
+{
+  "author": "coordinator",
+  "base_revision": "05dd1963c798e2c82d436b7bbdde6c2c6e33458e",
+  "editable_files": [
+    "src/graphicwin.cpp",
+    "src/win.cpp",
+    "src/buffer.cpp",
+    "recovery/tests/test_rectangle_overload_cohort_oct18.py"
+  ],
+  "evidence": [
+    "Pinned GraphicWin rectangle update5D5630..5D56AA snapshots top/left/height/width before visibility, selecting Buffer+474 for null, then expands the existing coordinate overload's update_window/client_to_screen/flip flow and deliberately returns zero. Forward the original unused fifth GraphicWin* argument explicitly; no new defaults or return changes.",
+    "Pinned Win point nonclient_to_screen5ED3F0..5ED48D expands the point client_to_screen5ED240 body, then subtracts fresh own outer left/top. Pass original caller pointers, retaining x==y/member aliases, recursive parent receiver, postcall flags/parent reloads and late own-outer reads. No pointer-null checks or zero-origin substitution.",
+    "Pinned Buffer rectangle dotted_box5E32F3..5E3370 snapshots four input fields before drawing, decrements right/bottom and expands the existing coordinate dotted_box5E3283 four edge calls. Null returns0x10; success returns0 while coordinate overload is void. Preserve inclusive endpoints, reversed/empty rectangles, callback mutations and unchecked original arithmetic.",
+    "These are evidence-backed source-boundary experiments, not established new behavioral defects or promised byte matches. Preserve all source identities, spans, claims and useful history. Require actual-body host alias/geometry/order/mutation controls, pinned anchors, controlled native comparison, full fresh compile/link, physical outside-body preservation, source/claim/mapping/reference continuity, independent review and destination recheck. Do not change flags, fabricate acceptance or grind repeated source spellings."
+  ],
+  "intent": "Recover three natural typed overload boundaries with original rectangle snapshots, pointer aliasing, late field reads and distinct return contracts; measure the batch under unchanged build policy.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6116912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6214640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6173427,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "rectangle-overload-cohort-oct18"
+}
