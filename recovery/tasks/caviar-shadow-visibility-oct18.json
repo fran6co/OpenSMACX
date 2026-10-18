@@ -1,0 +1,34 @@
+{
+  "author": "coordinator",
+  "base_revision": "e8e447a765430a244463eaac7f6b58cda49ce19c",
+  "editable_files": [
+    "src/caviar.cpp",
+    "recovery/tests/test_caviar_scene_inputs_oct18.py",
+    "recovery/tests/test_caviar_draw_callbacks_actual_source.py",
+    "recovery/tests/test_caviar_shadow_visibility_oct18.py"
+  ],
+  "evidence": [
+    "Pinned scene639E60 seeds visibility1 at639FA9, clears it at639FC9 when the LOD cut is exceeded, and passes that same scalar as arg5 to shadow63F000 at63A23B. Account for transient pushes around matrix multiply and its caller cleanup: the load at63A1EC uses ESP-relative local visibility, not camera/view bounds storage.",
+    "Pinned shadow63F000 reads arg5 at63F0C1 after its stack frame/call cleanup, normalizes it to nonzero and carries that bit through flat/tiled contained/clipped dispatch while ORing the independent10/20 flags. Current scene instead passes nonnull &view->bounds_, so the dispatch low bit incorrectly remains1 above the cut. Recover original behavior, not an approved bug fix or safety normalization.",
+    "Authorize coordinated changes to the two complete C++ definitions: scalar int visibility fifth parameter, flags initialized from visibility!=0, and caller passes the already computed visible local. No new gates, clamping, order changes, layout, headers, compiler flags, dependency substitutions, raw casts or hand-authored ABI/vtables. Preserve original quirks, original identities/spans and all historical claims/lessons.",
+    "The consumed symbol decoration changes with the genuine type correction. Only coordinator updates //symbol through native source.writer.write_symbol after observing actual fresh VC6 COFF; do not guess/type a symbol, edit ORIGINAL or grant a byte token. New outside callers/references/layout effects require explicit scope expansion.",
+    "Update actual-source scene controls to capture fifth arg below/equal/above cut, including behind-main/shadow-only paths and callback mutation ordering. Use actual shadow body controls to inspect contained/clipped and flat/tiled flags with0/1 and an additional nonzero scalar; replace pointer-1 test inputs by genuine scalar values. Add pinned caller/callee stack-adjustment evidence and damage controls that reject forced-visible, dropped-visible and inverted flags. Host substitutes are bounded and not Windows/x87/runtime proof.",
+    "Coordinator owns Git/compiler resources. Require fresh full build/link, scoped original/strict observations and claim continuity, all known5581 observations without unrelated exact loss, complete physical outside-scoped residual, source/claim/reference checks, actual C++/original review and destination recheck before manual integration. Preserve matching obligations if correctness changes a miss; native/full-game/runtime acceptance remains unproved."
+  ],
+  "intent": "Recover the scalar LOD visibility contract between scene and shadow rendering, removing a wrong bounds-pointer interpretation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6549504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6528608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "caviar-shadow-visibility-oct18"
+}
