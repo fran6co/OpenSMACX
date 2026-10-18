@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "2933e615740414c4b3bcacb4b9df1e9f820a2ad4",
+  "editable_files": [
+    "src/alphamenu.cpp",
+    "recovery/tests/test_alphamenu_mouse_hit_output_oct18.py"
+  ],
+  "evidence": [
+    "Pinned403589 takes &y at EBP+0C as Spot::check output,403597 calls the four-argument overload, and hit4035EC consumes that same slot. Current actual build has63 instructions against62 original, including an extra initialization of the separate position local. Native COFF references resolve Spot::check and MenuSelection; zero relocation operands are not literals.",
+    "Authorize one immutable full-TU body-only candidate: remove int position=y, pass &y to spot_.check, and use y for MenuSelection only on hit. Spot::check5FAB00 reads value arguments before writing the successful output and always writes a nonnull position output on hit; miss never consumes it. Preserve all capture globals, inherited call, redraw/update/release ordering, signatures, original spans, claims and useful historical findings. No bug fix, flags, layout, headers, unsafe cast, volatile or ABI changes.",
+    "First screen the single candidate with native local variants and physical unchanged-replica/target-damage controls under the settled compiler trials. A rejected candidate ends this hypothesis; no extended spelling search. Scores do not bank claims or prove strict references.",
+    "A winning candidate is applied in an isolated coordinator-prepared worktree. Require actual-source hit/miss/base/capture callback tests and pinned dataflow evidence, fresh build/link, scoped strict byte/reference checks, physical outside-task preservation, source/claim/reference continuity and destination recheck before coordinator-reviewed integration. Whole5581 census may be shared with the next batch checkpoint rather than repeated for this one speculative body. Only native record may bank a claim. Full executable/runtime/automatic acceptance remains unproved."
+  ],
+  "intent": "Restore original AlphaMenu hit-test output ownership by reusing the y parameter, avoiding a redundant initialized local.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4207952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alpha-menu-hit-output-oct18"
+}
