@@ -1,0 +1,104 @@
+{
+  "author": "coordinator",
+  "base_revision": "69f1324cd7dba683ba3b410b92119096246f1f2e",
+  "editable_files": [
+    "src/log.cpp",
+    "src/log.h",
+    "recovery/tests/test_log_filename_reset_oct18.py"
+  ],
+  "evidence": [
+    "Pinned626040..6260C3 returns16 on null input before touching state;626056..626065 conditionally frees the old filename then clears its slot before strlen62606C/allocation626073. Pinned626020..62603A destructor has the same free-then-clear sequence. Current Log::init explicitly invokes this->~Log(), ending its C++ lifetime before assigning fields; game.cpp and console.cpp then continue using that same Log. Recover a resource reset, not an object destruction/reconstruction or safety fix.",
+    "Read-only independent review confirms the original cleanup/allocator/open order and its caller relevance. Filename constructor intentionally leaves is_disabled_ untouched; neither reset nor destructor may initialize it. Retain null-input/alloc/open failures, incoming input pointer, free callback effects and dangling-input behavior. Do not compute strlen before releasing the old name, add alias copies, null guards, safe fallback, placement construction or initialize formerly untouched state.",
+    "Authorize at most three atomic diagnostic source forms: ordinary in-place free/null cleanup in init and destructor; an ordinary shared private inline filename-release member; or in-place cleanup with a naturally qualified pointer reference retaining the existing observable null store without reinterpret_cast. No new virtuals, field type/layout/name changes, ABI, compiler flags, original spans, claims or generated symbol guesses. Source helpers are not new original identities. Use the simplest justified form that preserves original effects; do not retain an ended receiver lifetime just to protect matching.",
+    "The optional sub_51e6f0 cleanup may replace only the three redundant same-prototype StrcatFn reinterpret casts with ordinary declared CRT strcat calls; stdafx.h already disables that named intrinsic. It needs its own original evidence/measurement/control and is not permission to tune unrelated logging routines. No other production body changes or external owner edits are granted.",
+    "Prepare an isolated native worker. Score the small atomic header/TU deck under frozen original image/source/compiler inputs, with actual-object calibration, unchanged replicas and separate header-destructor and init-body damage witnesses in each configured trial. This is preliminary exploration, not header or caller acceptance; all affected actual application output and strict reference classifications must be checked after source freeze.",
+    "Tests must compile actual Log class/init, observe init failure/success/reinitialization and destruction, preserve the filename-constructor untouched state policy, and distinguish ordinary resource release from unexpected receiver destruction without executing uncontrolled post-lifetime accesses. Intercept original dangling-input effects only in a declared bounded dependency spy; do not claim native use-after-free outcome. Include named compiling damage controls and full pinned span/hash/operation anchors. Permanent tests must not freeze unrelated whole-TU source.",
+    "Only coordinator performs Git/native compilation/publication. Require fresh full application build/link, all5581 current masked/strict observations with historical claims preserved, complete physical outside-scope comparison, relevant declaration/ABI/reference checks and independent source review before manual integration, then destination recheck. Header effects that escape this bounded owner are discoveries for explicit scope expansion, not silently waived. Preserve justified structural work and restoration obligations on a regression; no full linked-selection/runtime/game or native automatic acceptance claim."
+  ],
+  "intent": "Recover Log filename reset without ending the receiver lifetime; replace unnecessary pointer-punning with ordinary typed cleanup while preserving the original free/null/failure ordering.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6447168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6446880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6446992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5367536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6448112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6448208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "log-filename-lifetime-oct18"
+}
