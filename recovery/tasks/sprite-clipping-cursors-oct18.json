@@ -1,0 +1,45 @@
+{
+  "author": "coordinator",
+  "base_revision": "221db8f9d1eedbf782b26b647bc1c4d69f0b7310",
+  "editable_files": [
+    "src/sprite.cpp",
+    "recovery/tests/test_sprite_clipping_cursors_oct18.py"
+  ],
+  "evidence": [
+    "Independent pinned/actual COFF review identifies a paired six-instruction allocation residue in5EAC6F and5EACFF. Original uses source EDX/output ECX; current second loops use source ECX/output EDX. SourceScalingSteps and both clipped arrays have actual mapped owners, not fixed-address casts. No existing TRIED covers typed pointer cursors for these second loops.",
+    "Authorize at most three paired body-only source/output cursor variants. Preserve the prefix walk, original source index even for negative skip, zero-extent early no-write return, negative-extent behavior, every source load then output store then alias-visible source_count update, and exact mapped return array. No source-count hoisting, unchecked-path fixes, casts, volatile, restrict, flags/header/global/storage/signature or claim changes.",
+    "All existing clipping/fill helper originals remain measurement/review scope, but only the two shrinking second loops may change initially. Any structural/caller discovery requires explicit expansion before edits. Private controlled whole-TU overlays must prove physical unchanged replica and changed-target damage under each existing flag context; score alone banks no claim.",
+    "If useful candidates are evidenced, coordinator creates isolated checkout and verifies actual-source behavior/alias damage controls, full build/link and original strict/masked/reference checks, outside-body collateral and source/claim continuity, independent review and fresh destination checks. Keep unresolved original spans, linked selection/runtime and automatic acceptance unknown. Existing tests are not authorized for weakening; request expansion if a demonstrated fixture blocker needs a bounded repair."
+  ],
+  "intent": "Restore the shared typed source/output traversal in paired Sprite shrink clipping tables.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6205967,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6204175,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6204351,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6204527,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6204671,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sprite-clipping-cursors-oct18"
+}
