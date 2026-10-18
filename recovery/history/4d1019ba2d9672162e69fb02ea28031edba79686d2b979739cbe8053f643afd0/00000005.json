@@ -1,0 +1,36 @@
+{
+  "event_id": "1fc528dfb82bd1e7c8fcac3dcad3a4a6a6b342b3483b0ebf5ad591328fd5da8d",
+  "payload": {
+    "affects": [
+      "entity-04c82398ee7502b43f916b8b4c9d685842fec6cc57f1c91674abe3257dc1bdc4",
+      "entity-121adabe47341cec1355a311c9dfb2422dc7e68e197e214e3bead5c38317a901",
+      "entity-12d4a638999cb338570e8d9ef3d61881f7e364687f15303bcab91a67040ffd68",
+      "entity-2d2dbab435a0f2cb7fa04549ac701648afc32f8361788eb48cb0b27734125d65",
+      "entity-2fc709c4916ff5974c699974de3c9080ec9342421bd1575f45d969da4df05d34",
+      "entity-4590216d16a1c9cb149b0d5a9a1e7daf531e1277c68b9bb14db4f2c45ca8b032",
+      "entity-6d387a2b0d4ba347d5123c0aeb035f6b3ed5ea27da762d99ff9a85f023468362",
+      "entity-6f11c65ed65be7d5360aeee4ae816f8a81f643d6af947ab5ec28f07f402fdcdc",
+      "entity-912116a15bf06dcd93143334e7db4b84e6885d4637ab89e8c2560e952737e3e1",
+      "entity-94687df138a7e90be71008ec9555587ec54f28910608a81b91e92e3f0bbf5092",
+      "entity-952c528d595899fdc1116738d6467a2b0876092aa57868dbd2f781472915fa28",
+      "entity-98d5ed0a8fa30104c9c1ae1bd26d6b56039f7e9b1e2327b720819fbf482adcdb",
+      "entity-b3515e1fc85d07c6885b0465bfe31bb062a546990714715b4c4ac49913e00784",
+      "entity-dce6f94fe86bcbec30a1b9eb964a3539a32ebfbacdd55b7f6c6dd456d754b206"
+    ],
+    "author": "coordinator",
+    "discovery_id": "dispatch-proof-obligations-remain-oct18",
+    "evidence": [
+      "Eight Dialogs roots, ReportIf and DDInit retain unsupported associative debug/FPO children. Two Dialogs roots also have an unsupported three-byte LEA gap. DDInit additionally has five distinct dispatch domains and a three-byte LEA gap; neither those children nor those gaps are waived or absorbed by extending a function span.",
+      "InfoWin, ReportWin, resource_yield and synch_display retain unresolved references after their dispatch storage is interpreted. Native unknowns remain unknown; moving a former extent failure into an unsupported or unresolved domain is not an exactness gain.",
+      "Only the PrefWin scrolling, ProdPicker edbc_fac and Sound set_type source-data cohorts currently qualify in the strict comparison. Preserve original baselines and every existing historical matching obligation; do not reset them to the current output or count annotations as new functions.",
+      "Coordinator authorizes manual integration of the reviewed source-data recovery and narrow reader blocker repair after fresh build/link, zero-body-omission physical correspondence, original identity/match continuity, regression tests and destination rechecking. This does not authorize native automatic acceptance, full linked retention, layout/lifetime completeness or runtime/game acceptance."
+    ],
+    "hypothesis": "The remaining 14 annotated owners require additional physical or reference evidence; correct source-owned data interpretations are not enough to qualify them.",
+    "kind": "discovery"
+  },
+  "previous_event": "8a3d32a94979138e89f8f4deb5afc30f0914fe0da8bcd1d457ffd9e72ae88a5a",
+  "request_id": "dispatch-proof-obligations-remain-oct18",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:switch-owner-storage-oct18"
+}

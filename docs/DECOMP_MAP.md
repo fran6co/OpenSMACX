@@ -265,6 +265,13 @@ refuse attempts to replace them inside a body experiment. Syntax checking alone
 does not prove physical emission, ownership, linked retention or runtime behavior.
 This proof does not weaken any full-project or automatic acceptance prerequisite.
 
+The associated-data reader and writer admit only the lexically understood
+prefix strictly before the first physical backslash/trigraph line splice.
+Later splicing cannot affect that earlier prefix. At or after the first splice,
+apparent association records refuse even if the partial lexical walker would
+consider them block-comment or raw-string text; it does not guess the remaining
+translation-phase context. Other guarded source writers retain their own rules.
+
 ## TU-private literal bindings
 
 `// RECOVERY_LITERAL: v1 <start> <exclusive-end> <emitted-symbol> <evidence-address>`

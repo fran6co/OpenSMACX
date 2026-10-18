@@ -643,6 +643,7 @@ void ReportIf::on_iface_group_clicked(int group, int, int item) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004A3FC0 0x004A4020 0x004A4044 0x004A3FD0
 // ORIGINAL: 0x004A3FC0 ?on_redraw@ReportIf@@QAEXXZ 0x004A3FC0-0x004A401F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004a3fc0.cpp", "image:0x004A3FC0-0x004A401F and dispatch table0x004A4020", "source:src/reportif.h"], "reason": "Recover the report-interface redraw operation through its real category member, reset and owned drawing methods. Original direct calls and nine-entry dispatch preserve the default/no-draw category without vtable or executable-address dispatch."}
 void ReportIf::on_redraw() {

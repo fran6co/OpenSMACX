@@ -1,0 +1,24 @@
+{
+  "event_id": "218a1c4abf2a55d599256eb90dc8caddc7f48242d83c37193814745fc7743357",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "docs/DECOMP_MAP.md",
+      "packages/match-recovery/src/match_recovery/associated_source.py",
+      "packages/match-recovery/tests/test_associated_source.py"
+    ],
+    "evidence": [
+      "The initial guarded36-annotation publication refused before writing any file: associated_writer already permits insertion strictly before the first physical line splice, but associated_source.parse_associated rejects every association in a file containing any splice, even a later one. Win report_error annotations are around line3298 and the first splice is a multiline macro at12818. Preserving the actual Win source owner, complete function/body/profile and original task baseline exposes this concrete library blocker.",
+      "Authorize the generic reader to accept only the lexically parsed prefix strictly before the first physical backslash/trigraph splice. Later translation-phase splicing cannot affect that earlier prefix. At/after the first splice, every physical annotation-looking head must still refuse, even when a partial lexical walker considers it block/raw text; do not guess a post-splice lexical state. Empty/no-prefix behavior, earlier block/raw literal exclusion, all typed/bounded/ownership/overlap guards and the existing writer freshness/insertion checks must remain.",
+      "This decision extends only source interpretation syntax, not associated_binary proof support. Do not edit comparator/ABI/measurement/acceptance code, admit associated debug/FPO/EH children, five-dispatch envelopes or three-byte LEA gaps, change function spans/claims, or normalize C++ macros. Existing unsupported binary obligations remain unknown.",
+      "Require independent synthetic LF/CRLF/backslash/trigraph/whitespace prefix controls, actual guarded writer roundtrips, earlier-splice mutation and at/after-splice/raw/block shadow negatives, all existing associated source/binary/application/measurement controls and independent review. Finish the whole17-owner source-data cohort with fresh application build and zero-body-omission physical comparison; do not use the parser fix as a substitute for recovered source data."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5dcabdb9ff9e26c79cd49ef0c65c7e4bc11a25f37de6cdcfdba73f90006f3365",
+  "request_id": "safe-unspliced-association-prefix-oct18",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:switch-owner-storage-oct18"
+}

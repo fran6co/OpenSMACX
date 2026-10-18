@@ -569,6 +569,8 @@ Purpose: Route mouse move by the owned kind_ through qualified widget bases.
          unused scaffold pointing at this function's own end address and
          did not come with it.
 */
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00612B80 0x00612BF8 0x00612C0C 0x00612B91
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00612B80 0x00612C0C 0x00612C1C 0x00612B8B
 // ORIGINAL: 0x00612B80 ?on_mouse_move@Dialogs@@QAEXHH@Z 0x00612B80-0x00612BF8 FILE BYTE_EXACT
 // symbol    ?on_mouse_move@Dialogs@@UAEXHH@Z
 // size      120 bytes
@@ -868,6 +870,8 @@ Scroll *Dialogs::on_scroll_create() {
     return 0;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x006132A0 0x006132F8 0x00613310 0x006132B4
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x006132A0 0x00613310 0x00613320 0x006132AE
 // ORIGINAL: 0x006132A0 ?calculate_dimensions@Dialogs@@QAEHXZ 0x006132A0-0x006132F8 BYTE_EXACT
 // size      88 bytes
 // prototype int (__thiscall ?calculate_dimensions@Dialogs@@QAEHXZ)(Dialogs* this)
@@ -917,6 +921,8 @@ int Dialogs::calculate_dimensions() {
 // different receiver seen by the old bodies (the GraphicWin view is +0x188);
 // this source implementation begins with a proper Dialogs receiver, reads
 // kind_ and lets qualified base calls perform the compiler-known adjustment.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00612C20 0x00612C98 0x00612CB0 0x00612C31
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00612C20 0x00612CB0 0x00612CC0 0x00612C2B
 // ORIGINAL: 0x00612C20 ?on_left_down@Dialogs@@QAEXHH@Z 0x00612C20-0x00612C98 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612C20 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_left_down as a typed Dialogs kind dispatcher"}
 // symbol    ?on_left_down@Dialogs@@UAEXHH@Z
@@ -939,6 +945,8 @@ void Dialogs::on_left_down(int x, int y) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00612D60 0x00612DD8 0x00612DEC 0x00612D71
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00612D60 0x00612DEC 0x00612DFC 0x00612D6B
 // ORIGINAL: 0x00612D60 ?on_left_double_click@Dialogs@@QAEXHH@Z 0x00612D60-0x00612DD8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612D60 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_left_double_click as a typed Dialogs kind dispatcher"}
 // symbol    ?on_left_double_click@Dialogs@@UAEXHH@Z
@@ -981,6 +989,8 @@ void Dialogs::on_mouse_leave(int x, int y) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00612CC0 0x00612D2C 0x00612D44 0x00612CD1
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00612CC0 0x00612D44 0x00612D54 0x00612CCB
 // ORIGINAL: 0x00612CC0 ?on_key_down@Dialogs@@QAEHH@Z 0x00612CC0-0x00612D29 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612CC0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_key_down as a typed Dialogs kind dispatcher"}
 // symbol    ?on_key_down@Dialogs@@UAEHH@Z
@@ -1002,6 +1012,8 @@ int Dialogs::on_key_down(int key) {
     return 0;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x006130E0 0x00613154 0x0061316C 0x006130F1
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x006130E0 0x0061316C 0x0061317C 0x006130EB
 // ORIGINAL: 0x006130E0 ?on_dialog_focus@Dialogs@@QAEXH@Z 0x006130E0-0x00613154 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x006130E0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_dialog_focus as a typed Dialogs kind dispatcher"}
 // symbol    ?on_dialog_focus@Dialogs@@UAEXH@Z
@@ -1025,6 +1037,8 @@ void Dialogs::on_dialog_focus(int focus_id) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00612FE0 0x006130B0 0x006130C8 0x00612FF8
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00612FE0 0x006130C8 0x006130D8 0x00612FF2
 // ORIGINAL: 0x00612FE0 ?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z 0x00612FE0-0x006130AE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612FE0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home attach as a typed Dialogs kind dispatcher"}
 // symbol    ?attach@Dialogs@@UAEHPAVGraphicWin@@HHH@Z
@@ -1067,6 +1081,8 @@ int Dialogs::attach(int kind, GraphicWin *parent, int x, int y, int flags) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00612E00 0x00612E50 0x00612E68 0x00612E11
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00612E00 0x00612E68 0x00612E78 0x00612E0B
 // ORIGINAL: 0x00612E00 ?on_redraw@Dialogs@@QAEXXZ 0x00612E00-0x00612E4D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00612E00 reads the selector from the shared GraphicWin receiver's -8 location, corresponding to Dialogs::kind_ at complete-object +0x180.","The retained seed's direct tail targets identify cases 1/2/4/8/16 as CheckBox/ListBox/EditGroup/SpriteBox/RadioButton::on_redraw. The five typed base views are already declared by Dialogs."],"reason":"Home the redraw kind dispatcher through its named selector and declared widget base subobjects."}
 // symbol    ?on_redraw@Dialogs@@UAEXXZ

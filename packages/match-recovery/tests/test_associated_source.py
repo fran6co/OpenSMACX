@@ -89,6 +89,50 @@ def test_parser_keeps_empty_behavior_for_spliced_source_without_association() ->
                              address_space=SPACE) == ()
 
 
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+@pytest.mark.parametrize("splice", ["\\", "??/"])
+@pytest.mark.parametrize("trailing", ["", " \t"])
+def test_unspliced_prefix_is_independent_of_a_later_splice(newline, splice, trailing):
+    text = newline.join(("int first;", ANNOTATION,
+                         "#define LATER " + splice + trailing, "int next;", ""))
+    row, = parse_associated(text, "src/a.cpp", PIN, address_space=SPACE)
+    assert row == binding(line=2)
+    with pytest.raises(ValueError, match="line-spliced source"):
+        parse_associated("// earlier " + splice + trailing + newline + text,
+                         "src/a.cpp", PIN, address_space=SPACE)
+
+
+@pytest.mark.parametrize("splice", ["\\", "??/"])
+@pytest.mark.parametrize("prefix", ["", "/*\n", 'const char *s = R"tag(\n'])
+def test_post_splice_apparent_record_refuses_even_under_untrusted_lexical_context(splice, prefix):
+    text = ANNOTATION + "\n#define LATER " + splice + "\nvalue\n" + prefix + ANNOTATION + "\n"
+    with pytest.raises(ValueError, match="line-spliced source"):
+        parse_associated(text, "src/a.cpp", PIN, address_space=SPACE)
+
+
+@pytest.mark.parametrize("splice", ["\\", "??/"])
+def test_record_on_the_first_spliced_line_refuses(splice):
+    with pytest.raises(ValueError, match="line-spliced source"):
+        parse_associated(ANNOTATION + " " + splice + "\nvalue\n",
+                         "src/a.cpp", PIN, address_space=SPACE)
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n"])
+@pytest.mark.parametrize("splice", [b"\\", b"??/"])
+def test_writer_round_trips_only_the_prefix_before_a_later_macro(newline, splice):
+    raw = newline.join((b"int first;", b"int second;", b"#define LATER " + splice, b"value", b""))
+    row = binding(line=2)
+    changed = write_associated_bytes(raw, expected=(), additions=(row,),
+                                    path="src/a.cpp", pin=PIN, address_space=SPACE)
+    assert changed == b"int first;" + newline + _marker_bytes(row) + newline + raw.split(newline, 1)[1]
+    parsed = parse_associated(changed.decode(), "src/a.cpp", PIN, address_space=SPACE)
+    assert len(parsed) == 1 and _identity(parsed[0]) == _identity(row)
+    for line in (3, 4, 5):
+        with pytest.raises(ValueError, match="line-spliced source"):
+            write_associated_bytes(raw, expected=(), additions=(binding(line=line),),
+                                   path="src/a.cpp", pin=PIN, address_space=SPACE)
+
+
 @pytest.mark.parametrize("record", [
     "v2 switch_targets 0x1000 0x2000 0x2008 0x1004",
     "v1 unknown_kind 0x1000 0x2000 0x2008 0x1004",

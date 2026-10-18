@@ -55,6 +55,8 @@ static const float ProdPickerRotationRadiansPerDegree = 0.017444444820284843f;
 static const float ProdPickerVehicleScaleFactor = 0.000699999975040555f;
 
 // The production editor groups facilities into four display categories.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00493B70 0x00493BB4 0x00493BC4 0x00493B94
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00493B70 0x00493BC4 0x00493C06 0x00493B8E
 // ORIGINAL: 0x00493B70 ?edbc_fac@ProdPicker@@QAEHH@Z 0x00493B70-0x00493BB3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:9a9fb225:src/recovered/units/00493b70.cpp", "source:src/prodpicker.h"], "reason": "Home the category mapping in the real ProdPicker owner; this method reads no object storage and needs no fixed-image binding."}
 int ProdPicker::edbc_fac(int facility_id) {

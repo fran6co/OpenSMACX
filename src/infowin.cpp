@@ -938,6 +938,7 @@ void InfoWin::on_left_click(int, int) {
 // State numbers are presentation modes; their display names remain unknown.
 // Difficulty and contact tests use the owning faction record, not absolute
 // addresses or a manually scaled 0x20CC stride.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00458DC0 0x00458EDC 0x00458F0C 0x00458DE6
 // ORIGINAL: 0x00458DC0 ?state_valid@InfoWin@@QAEHH@Z 0x00458DC0-0x00458EDA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00458DC0-0x00458EDA; jump table 0x00458EDC-0x00458F0C", "source:src/faction.h:PlayerData.diff_level and diplo_treaties", "git:6455075f:src/unrecovered/00458dc0.cpp"], "reason": "Recover InfoWin mode eligibility using game state and typed faction difficulty/contact fields; switch destinations checked in original image; retired seed is a hint, not product code."}
 int InfoWin::state_valid(int state) {

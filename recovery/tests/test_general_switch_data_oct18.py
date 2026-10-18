@@ -53,7 +53,8 @@ def _original():
 
 
 def test_live_associated_source_population_is_exact_and_mapped():
-    rows = read_associated(ROOT, PIN_SHA256)
+    rows = tuple(row for row in read_associated(ROOT, PIN_SHA256)
+                 if row.unit == "src/general.cpp")
     actual = {
         (row.owner.address, row.span, row.kind, row.evidence.address, row.unit)
         for row in rows

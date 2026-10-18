@@ -6530,6 +6530,8 @@ void __cdecl world_UNK1(int x, int y) {
     climate_set(x, y, rainfall);
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00532C30 0x00532DA4 0x00532DC0 0x00532C47
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00532C30 0x00532DC0 0x00532DF1 0x00532C41
 // ORIGINAL: 0x00532C30 ?synch_display@@YAXHHHH@Z 0x00532C30-0x00532DA2 FILE BYTE_EXACT
 // size      370 bytes
 // prototype 

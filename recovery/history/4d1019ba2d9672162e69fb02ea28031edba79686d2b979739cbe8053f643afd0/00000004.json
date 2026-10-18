@@ -1,0 +1,19 @@
+{
+  "event_id": "8a3d32a94979138e89f8f4deb5afc30f0914fe0da8bcd1d457ffd9e72ae88a5a",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "source-owned-dispatch-storage-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/{base,dialogs,infowin,map,prefwin,prodpicker,reportif,reportwin,sound,win}.cpp now retain all 36 individual target/selector bindings in their actual existing owners; original function markers and body spans are untouched.",
+      "recovery/tests/test_switch_owner_storage_oct18.py checks the complete new population, inverse transport against the immutable task baseline, original guards/cells/map domains and damage refusals. The earlier General cohort keeps its three unchanged source bindings and tests.",
+      "This incorporates source interpretation only. In particular it does not incorporate the outstanding associated-child/multi-dispatch/gap/reference proof obligations, qualify every owner, establish full linked preservation or accept the game."
+    ]
+  },
+  "previous_event": "31beaacb343cb1782ce4319480d52a940303453c6daf4ec2a42d0d78739515b4",
+  "request_id": "incorporate-source-dispatch-storage-oct18",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:switch-owner-storage-oct18"
+}

@@ -10229,6 +10229,7 @@ int __cdecl facility_offset(LPCSTR facil_search) {
     return offset;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7DC0 0x004E7E34 0x004E7E44 0x004E7DCB
 // ORIGINAL: 0x004E7DC0 ?resource_yield@@YAHHHHHH@Z 0x004E7DC0-0x004E7E34 FILE BYTE_EXACT
 // LEVER: TileYieldRestricted (0x0090E998, already declared in base.h) replaces
 //        the carried `g_0090e998` binding; the scaffold's `g_004e7e34` was the

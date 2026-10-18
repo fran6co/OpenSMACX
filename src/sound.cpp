@@ -774,6 +774,7 @@ void Sound::ramp(int a1, int a2, unsigned int a3) {
 
 
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004C61E0 0x004C6260 0x004C627C 0x004C61EE
 /*
 Purpose: Record the sound's type. Types 1..7 - except 3, which the original's
          jump table routes to the invalid arm - store the type at 0x50 and OR

@@ -108,16 +108,20 @@ def parse_associated(text: str, path: str, pin: str, *,
     # This parser intentionally does not implement C++ translation-phase
     # splicing. A physical annotation-looking line can be part of a continued
     # // comment or ordinary string, or splicing can alter its lexical context.
-    # Refuse any such apparent record in a file containing a splice. Files
-    # without association records retain the ordinary no-binding behavior.
-    has_splice = any(_LINE_SPLICE.search(line) for line in text.splitlines())
+    # Later splicing cannot affect the earlier unspliced lexical prefix. Once
+    # a splice is encountered, however, this walker cannot establish context:
+    # refuse even apparent records it would otherwise consider block/raw text.
+    # Files without association records retain the ordinary empty behavior.
+    first_splice = next((number for number, line in enumerate(text.splitlines(), 1)
+                         if _LINE_SPLICE.search(line)), None)
     for line, source_line, in_block, in_raw, continued in _source_comment_lines(text):
         stripped = source_line.strip()
-        if in_block or in_raw or not stripped.startswith(PREFIX):
-            continue
-        if has_splice:
+        if (first_splice is not None and line >= first_splice
+                and stripped.startswith(PREFIX)):
             raise ValueError(
                 f"associated-data annotation in line-spliced source at {path}:{line}")
+        if in_block or in_raw or not stripped.startswith(PREFIX):
+            continue
         if continued:
             continue
         match = PATTERN.fullmatch(stripped)
