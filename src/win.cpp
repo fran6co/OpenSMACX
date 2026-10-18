@@ -11766,7 +11766,7 @@ void __cdecl pump_mouse_messages() {
 }
 
 // ===== homed from src/unrecovered/005f4d90.cpp =====
-// ORIGINAL: 0x005F4D90 sub_5f4d90 0x005F4D90-0x005F4EB1
+// ORIGINAL: 0x005F4D90 sub_5f4d90 0x005F4D90-0x005F4EB1 BYTE_EXACT
 // symbol    ?set_base_window@Win@@QAEHPAVGraphicWin@@@Z
 // size      289 bytes
 // prototype
@@ -11808,8 +11808,8 @@ int Win::set_base_window(GraphicWin *window) {
     }
     poWinBase_ = window;
 
-    int i = 0;
     WinZOrderCount = 0;
+    int i = 0;
     if (WinRootCount > 0) {
         do {
             if (WinZOrderWindow != 0 && WinZOrderWindow == WinRootWindows[i]) {
