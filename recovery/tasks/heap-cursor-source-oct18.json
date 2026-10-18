@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "6ba9c2d188a83ee5bc6c4d2c9a15bb19b59bc821",
+  "editable_files": [
+    "src/heap.cpp",
+    "recovery/tests/test_heap_cursor_source_oct18.py"
+  ],
+  "evidence": [
+    "Pinned5D46D2 computes next cursor with LEA oldcursor+request. Current source first saves current_ for return, subtracts request from free_size_, then rereads current_ for increment. A callbackfree epilogue may instead increment the captured free_mem_addr value, preserving original return/stores/arithmetic and all growth/error behavior. This is an unmeasured candidate, not permission to assert improved matching.",
+    "Native localvariant deck must compare unchanged replica, candidate and wrongconstant +1 damage control in one measured epoch under both configuredflagsets. No bank/edit by the screen. Preserve every original identity/span/historicalclaim, type/header/layout, realloc failure/relocation quirks, negative-request semantics, messages and original providers. Do not add sanitization, newalignment or boundedstorage assertions.",
+    "Only a reviewed winner may be incorporated. Require actualsource behavior controls, independent review, fresh application build/link, physical outsidebody and source/reference/claim continuity, native recording only if exact, then destination verification. Zero improvement means preserve the evidence and do not change the source to manufacture progress. No automatic, full linkedselection, structure/runtime/game acceptance follows."
+  ],
+  "intent": "Screen the original captured-cursor epilogue in Heap::get without changing allocation behavior, providers, ABI or failure quirks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6112896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "heap-cursor-source-oct18"
+}

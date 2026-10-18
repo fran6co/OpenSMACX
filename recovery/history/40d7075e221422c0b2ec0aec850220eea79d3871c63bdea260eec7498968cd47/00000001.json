@@ -1,0 +1,21 @@
+{
+  "event_id": "70da107ef7b6fbf0e66dc76d7bd747491660310308ec4c50e9f611be498dd5f3",
+  "payload": {
+    "affects": [
+      "entity-8b80856eba861673daa26724149c7b9e87efa653cfe035daded0bcd9d5c2a1ce"
+    ],
+    "author": "coordinator",
+    "discovery_id": "captured-cursor-no-codegen-gain",
+    "evidence": [
+      "Pinned5D46CA loads current_ into EAX;5D46D2 LEA computes capturedcursor+request, then publishes free_size_ and current_. The callbackfree source epilogue can express that value without changing allocation behavior.",
+      "Native controlled localvariant screen against6ba9c2d188a83ee5bc6c4d2c9a15bb19b59bc821: both configured flagsets passed unchangedreplica and wrongconstant+1 controls;10compiles; candidate reused exactly the unchanged emitted object. PlainO2 stayed83/104matchinginstructions;Oy- stayed7/104. No C++ edit, claim or acceptance follows."
+    ],
+    "hypothesis": "Replacing the final current_ reread with captured free_mem_addr could restore the original captured-register epilogue.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "captured-cursor-no-codegen-gain",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:heap-cursor-source-oct18"
+}

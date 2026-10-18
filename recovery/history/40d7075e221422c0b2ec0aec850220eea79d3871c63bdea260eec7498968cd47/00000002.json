@@ -1,0 +1,18 @@
+{
+  "event_id": "975d156eca16dea6b8ae07ffa58ceec40353217cef6709086fe548bf49ecf3eb",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "captured-cursor-no-codegen-gain",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The proposed spelling has no emitted-code improvement in either configuredflagset. Keep src/heap.cpp byte-for-byte unchanged rather than manufacturing recovery progress.",
+      "This rejects only this spelling as a useful matching step. Heap::get remains MISMATCH with its original identity and obligations; no allocation bugfix or claim demotion is authorized. Derived screen output remains disposable ignored evidence."
+    ]
+  },
+  "previous_event": "70da107ef7b6fbf0e66dc76d7bd747491660310308ec4c50e9f611be498dd5f3",
+  "request_id": "reject-identical-cursor-emission",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:heap-cursor-source-oct18"
+}
