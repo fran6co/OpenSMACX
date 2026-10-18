@@ -1,0 +1,81 @@
+{
+  "author": "coordinator",
+  "base_revision": "f19a1b97eec538cbbbf99d670ae51f36606f06ce",
+  "editable_files": [
+    "src/matrix3.cpp",
+    "recovery/tests/test_matrix3_loop_cohort_oct18.py"
+  ],
+  "evidence": [
+    "Fresh master actual application has twelve numerical mappings: four exact controls and eight arithmetic mismatches. Several original comments identify nested three-count walks; current source uses ascending indexed loops and a flat nine-cell scaled loop. Counts alone are not semantic defects; inspect complete pinned spans and preserve arithmetic order, alias staging and explicit result protocol.",
+    "The chosen Matrix3 numerical receiver remains authored SCAFFOLD with unknown original class, complete extent, owner, callers, lifetime and historical TU. This assignment does not establish them, authorize role removal, dependency exclusion, header/layout changes or a new ownership claim.",
+    "Keep all original identities/spans, native emitted symbols, claims and useful seed history. Do not hand-edit markers or bank claims. No compiler/flag/data changes, fake padding, volatile forcing, pointer-to-integer differences, assembly, intrinsics substituting bytes or manual vtable code.",
+    "Use one small atomic variant deck with genuine typed/countdown/index traversal choices before applying winners. Do not repeat prior documented pointer-to-int delta or value-result prototype experiments. Keep four exact controls exact and stop unproductive spelling axes after the bounded screen.",
+    "Only coordinator owns Git, compiler resources, publication and scope expansion. Require actual-source existing/new tests, fresh build/link and original/physical/source continuity before coordinator-reviewed manual integration; keep all native unknowns unwaived."
+  ],
+  "intent": "Restore original bounded Matrix3 arithmetic traversal and staging using ordinary C++, preserving explicit unresolved ownership/ABI/x87 obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6506176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "matrix3-loop-cohort-oct18"
+}
