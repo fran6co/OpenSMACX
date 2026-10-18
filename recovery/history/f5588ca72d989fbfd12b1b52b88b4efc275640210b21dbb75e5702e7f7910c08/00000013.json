@@ -1,0 +1,17 @@
+{
+  "event_id": "0dceccc0a72444f060ee3b814f947ae8fda43f9143f50738938181ea09936303",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "remaining-created-record-reloads",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/caviar.cpp render refreshes created record immediately aftervox_draw_scene before renderer clear, before secondary clip after primaryUnionRect, and for shadow table after secondaryUnionRect/context reread. Existing ordinary record/header ownership and lifetimes unchanged. Complete actual-body controls switch among still-live A/B/C/D records for each call boundary and reject three compiled stale-provider mutations. Fresh full build/link,180object outside-two-body physical residualPASS and source/claim/reference continuity pass. This does not prove ordinary gameplay performs provider replacement or full lifetime/runtime equivalence."
+    ]
+  },
+  "previous_event": "e375179d628f4d3cb4e7fe95197a80248324292199b25c6c2a88d8f305d4cf12",
+  "request_id": "incorporate-live-created-record-groups-oct18",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:caviar-render-inputs-oct18"
+}

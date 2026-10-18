@@ -4713,9 +4713,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
     vox_setup_copy_.shadow_buffer_ = record->setup_block_->shadow_buffer_;
 
     // The record's own setup hook, called once before the walk.
-    if (VoxRenderRecord::SetupCallback callback = record->setup_callback_) {
-        callback();
-    }
+    record->setup_callback_();
 
     for (int index = 0; index < state->instance_count_; ++index) {
         VoxInstance &instance = state->instances_[index];
@@ -5267,6 +5265,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
 
     CaviarScene.renderer_ = this;
     vox_draw_scene(CaviarScene.created_, &scene_context_, &camera_view_, 0);
+    record = CaviarScene.created_;
     CaviarScene.renderer_ = 0;
 
     RECT covered;
@@ -5277,6 +5276,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
     UnionRect(&CaviarViewportState, &covered, &CaviarViewportState);
 
     if (scene_context_.shadow_enabled_ != 0) {
+        record = CaviarScene.created_;
         RECT scene;
         scene.left = record->secondary_clip_.left_;
         scene.top = record->secondary_clip_.top_;
@@ -5285,7 +5285,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
         UnionRect(&CaviarScene.scene_rect_, &scene,
                   &CaviarScene.scene_rect_);
         if (scene_context_.shadow_enabled_ != 0) {
-            unsigned char *shadow_table = static_cast<unsigned char *>(record->shadow_table_);
+            unsigned char *shadow_table = static_cast<unsigned char *>(CaviarScene.created_->shadow_table_);
             int mode;
             int origin_x;
             int origin_y;
