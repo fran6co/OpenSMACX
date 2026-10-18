@@ -142,12 +142,6 @@ template<class List> inline void clear_owned_list(List *list) {
     }
 }
 
-template<class List, class Node> inline Node *allocate_owned_node(List *list, Node *) {
-    Heap *const explicit_owner = list->allocator_;
-    if (explicit_owner != 0) return new(explicit_owner) Node;
-    return new(list) Node;
-}
-
 template<class List> inline int seek_owned_list(List *list, int position) {
     AbsFnT abs_fn = &abs;
     if (position > list->entry_count_ - 1) return 0;
@@ -3722,25 +3716,34 @@ int ServiceProviderList::seek_pos(int position) { return seek_owned_list(this, p
 ServiceStruct *ServiceProviderList::next_entry() { return next_owned_list(this); }
 
 int ServiceProviderList::add(int id) {
+    // The original captures the explicit allocator before testing the count;
+    // payload allocation reloads it after entry construction and ring updates.
+    Heap *const entry_allocator = allocator_;
     if (entry_count_ == 0) {
-        head_ = allocate_owned_node(this, static_cast<ServiceListEntry *>(0));
+        head_ = entry_allocator != 0
+            ? new(entry_allocator) ServiceListEntry : new(this) ServiceListEntry;
         if (head_ == 0) return 4;
         head_->id_ = id;
         head_->next_ = head_;
         head_->previous_ = head_;
-        head_->payload_ = allocate_owned_node(this, static_cast<ServiceStruct *>(0));
+        Heap *const payload_allocator = allocator_;
+        head_->payload_ = payload_allocator != 0
+            ? new(payload_allocator) ServiceStruct : new(this) ServiceStruct;
         if (head_->payload_ == 0) return 4;
         on_insert(head_->payload_);
         current_ = head_;
     } else {
-        head_->previous_->next_ = allocate_owned_node(this, static_cast<ServiceListEntry *>(0));
+        head_->previous_->next_ = entry_allocator != 0
+            ? new(entry_allocator) ServiceListEntry : new(this) ServiceListEntry;
         if (head_->previous_->next_ == 0) return 4;
         head_->previous_->next_->previous_ = head_->previous_;
         head_->previous_->next_->next_ = head_;
         head_->previous_ = head_->previous_->next_;
         current_ = head_->previous_;
         current_->id_ = id;
-        current_->payload_ = allocate_owned_node(this, static_cast<ServiceStruct *>(0));
+        Heap *const payload_allocator = allocator_;
+        current_->payload_ = payload_allocator != 0
+            ? new(payload_allocator) ServiceStruct : new(this) ServiceStruct;
         if (current_->payload_ == 0) return 4;
         on_insert(current_->payload_);
     }
