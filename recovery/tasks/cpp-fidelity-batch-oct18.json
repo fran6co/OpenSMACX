@@ -1,0 +1,163 @@
+{
+  "author": "coordinator",
+  "base_revision": "ca5426f702edccf36713910899fbb7fa7dba91c5",
+  "editable_files": [
+    "src/alphamovie.cpp",
+    "src/flic.cpp",
+    "src/stringstruct.cpp",
+    "src/spritebox.cpp",
+    "recovery/tests/test_alphamovie_exec_actual_source.py",
+    "recovery/tests/test_flic_close_lifetime_actual_source.py",
+    "recovery/tests/test_string_sprite_add_actual_source.py",
+    "recovery/tests/test_sprite_list_producer_actual_source.py"
+  ],
+  "evidence": [
+    "Previous fresh build-b7e866t4 and throughput-oct18 destination census at ca5426f70 are the paired current-step baseline, not a reset of older task obligations. Keep all original identities/spans, symbols, historical claims and useful seed findings intact. Only native record may bank a claim; no claims are requested by this task.",
+    "AlphaMovie exec404070..4041BF: pinned code captures screen height then width, tests null input, calls init/fill/virtual show/task/load; after failed first load it clears only stack fallback[0], appends the prefix6827AC and movie_name into source-owned StringTemp9B86A0 WITHOUT clearing that global, then retries load with the separate EMPTY stack buffer. Current local path construction and length guard are behavior changes. Restore actual original operands/order, error exits and all playback/palette/modal effects, including reloading the live window handle after stop/palette calls rather than caching across callbacks. No safe path substitution, null-name normalization, buffer-capacity guessing or new original-address aliases. Existing improvements remain preserved in Git history; the first milestone is bug-for-bug recovery.",
+    "Flic owner: authorize moving the intact close definition/marker after its destructor so a normal close() expression has original opaque declaration visibility at the destructor. Replace only its artificial pointer-to-member call with direct C++. Preserve all close stores, fclose condition/order, member/base teardown and historical comments as explicitly historical. No Buffer header/get_data/copy changes, no forced-inline/noinline pragmas or attributes, flags, helpers, ABI or decoder changes. Whole Flic subject set admits observed compiler visibility effects, not arbitrary method rewrites.",
+    "StringStruct401100 and SpriteList402550: pinned complete328-instruction bodies snapshot explicit allocator before count, reuse it for entry allocation and reload before each payload allocation; fallback virtual allocation owner is read per allocation only when explicit is null. Replace StringStruct dummy-pointer template dispatch with explicit node template arguments and explicit-owner/context helper parameters; analogous Sprite helper takes original explicit-owner snapshot plus context, not one pre-resolved owner for both allocations. Preserve existing allocation helper behavior, fatal Heap versus nullable CRT policy, constructor handoff, partial ring stores, ignored hooks and count/cursor ordering. Do not invent allocation operators or merge classes. No manual repeated allocator boilerplate, layout/header changes or new placeholders.",
+    "Three manual workers share this bounded parent assignment in separate raw worktrees but receive disjoint named editable subsets. Workers run host tests only and request scope before any extra file edit. Coordinator may compose their reviewed exact patches in one worker checkout and run one stable native candidate build/check epoch, then one destination recheck. This is not a native overlapping dispatch or autonomous acceptance claim. No Git/native compiler/Wine actions by workers.",
+    "Add actual-product-source controls for complete movie success/retry/error ordering and native string destinations without executing buffer overflow, for Flic close/teardown and natural declaration visibility, and for String/Sprite both branches, allocator reload/fallback, failure-side partial effects, handoff and ignored hooks. Retarget existing Sprite producer extraction to changed helper signature without dropping behavioral assertions. Coordinator reviews original bytes, matching/restoration, complete outside-owner/compiler-helper residual, build/link and claims/references continuity; preserve justified structure through mismatches and report limitations rather than weakening checks."
+  ],
+  "intent": "Recover original playback and allocator-read behavior and remove the artificial Flic destructor call idiom, through parallel isolated C++ owner batches with one verified integration checkpoint.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4198656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4203856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4210800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4401056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6465296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6465312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6467392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6467984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "cpp-fidelity-batch-oct18"
+}
