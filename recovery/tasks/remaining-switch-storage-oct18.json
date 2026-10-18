@@ -1,0 +1,47 @@
+{
+  "author": "coordinator",
+  "base_revision": "ad705eedea1a28b5060491124b73ee97fdcf806a",
+  "editable_files": [
+    "src/designwin.cpp",
+    "src/dialogs.cpp",
+    "src/win.cpp",
+    "recovery/tests/test_remaining_switch_storage_oct18.py"
+  ],
+  "evidence": [
+    "The current original-reference report has six boundary failures from trailing switch tables, not missing C++ effects. Read-only strict-failures.md independently resolves every local candidate COFF table relocation and compares original HIGHLOW cells/selector bytes. Authorize only DesignWin on_left_click439960 six targets4399FC..439A14 via43999B; Dialogs attach612970 six targets612A48..612A60 via61298F and16selectors612A60..612A70 via612989; mouse-leave612AE0 six targets612B58..612B70 via612AF1 and16selectors612B70..612B80 via612AEB; get-num-items613740 three targets613774..613780 via613754 and16selectors613780..613790 via61374E; Win redraw-nc-buffer5F4C30 four targets5F4C84..5F4C94 via5F4C48. Each domain must be independently established by the original guard, not candidate length.",
+    "Use existing native associated_writer and guarded publication for add-only source-owned switch_targets/switch_selector interpretations. Preserve all source function records, original spans, body tokens, associated existing records and historical obligations; exact inverse must restore baseline source bytes. No C++ array manufacturing, assembly, original span changes, claim grants, flags, class layouts, compiler/link policy, package changes or acceptance waivers.",
+    "MainInterface45D170 has unsupported three-byte LEA alignment and remains out of scope and failed. CursorNextDangerMsg2 at939FF0 remains unresolved original-address storage and failed. GameDataStateStorage member metadata remains unknown. These are separate pending obligations, not permission to weaken the format or invent data owners.",
+    "Require pinned guard/domain/target/selector and source-inverse regression controls, fresh application build/link, zero-function-omission physical correspondence with qualified master artifacts, current strict comparison and all original mapping/claim continuity. Unsupported associative children and unresolved references remain unknown even with correct table bindings. Independent review and fresh destination checks precede manual integration; these checks do not prove linked retained selection, structure/runtime or game acceptance."
+  ],
+  "intent": "Recover eight compiler-generated switch storage bindings in five genuine existing source owners without changing bodies, spans, claims or comparison policy.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4430176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6367600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6367968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6371136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6245424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "remaining-switch-storage-oct18"
+}
